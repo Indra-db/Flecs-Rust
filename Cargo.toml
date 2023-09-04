@@ -13,7 +13,9 @@ keywords = [
     "entity",
     "component",
     "system",
-    "game development",
+    "game-development",
+    "game-engine",
+    "gamedev",
     "simulation",
 ]
 categories = ["game-development", "api-bindings"]
