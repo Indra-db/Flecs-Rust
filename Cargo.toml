@@ -3,10 +3,17 @@ name = "flecs_ecs_bridge"
 version = "0.0.1"
 edition = "2021"
 authors = ["Indra de Backere <debackere.indra@gmail.com>"]
-description = "Rust binding for the C flecs ECS library <https://github.com/SanderMertens/flecs>"
+description = "Rust API for the C flecs ECS library <https://github.com/SanderMertens/flecs>"
 license = "MIT"
-keywords = ["ecs", "flecs", "c-binding"]
-categories = ["ffi"]
+keywords = [
+    "ecs",
+    "flecs",
+    "c-binding",
+    "entity component system",
+    "game development",
+    "simulation",
+]
+categories = ["game-development", "api-bindings"]
 
 
 [dependencies]
