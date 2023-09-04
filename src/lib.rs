@@ -1,6 +1,8 @@
 pub mod core {
     pub mod c_binding;
     pub mod c_types;
+    pub mod entity;
+    pub mod id;
 }
 
 pub mod addons {}
