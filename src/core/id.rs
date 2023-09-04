@@ -3,6 +3,7 @@ use log::error;
 use super::c_binding::bindings::*;
 use super::c_types::*;
 use super::entity::*;
+use super::world::World;
 use crate::core::utility::{errors::*, functions::*};
 pub struct Id {
     pub world: *mut WorldT,
@@ -176,21 +177,59 @@ impl Id {
 
     /// Convert id to string
     #[inline(always)]
-    pub fn str(&self) -> Result<&'static str, InvalidStrFromId> {
+    pub fn to_str(&self) -> &'static str {
+        // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
+        // C string with a static lifetime. The caller must ensure this invariant.
+        // ecs_id_ptr never returns null, so we don't need to check for that.
+        unsafe { std::ffi::CStr::from_ptr(ecs_id_str(self.world, self.id)) }
+            .to_str()
+            .unwrap_or_else(|_| {
+                error!("Failed to convert id to string (id: {})", self.id);
+                "invalid_str_from_id"
+            })
+    }
+
+    /// Convert id to string
+    /// SAFETY: This function is unsafe because it assumes that the id is valid.
+    #[inline(always)]
+    pub unsafe fn to_str_unchecked(&self) -> &'static str {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
         // C string with a static lifetime. The caller must ensure this invariant.
         // ecs_id_ptr never returns null, so we don't need to check for that.
         let c_str_ptr = unsafe { ecs_id_str(self.world, self.id) };
 
-        if c_str_ptr.is_null() {
-            error!("ecs_id_str returned null");
-            return Err(InvalidStrFromId { id: self.id });
-        }
+        // SAFETY: We assume the C string is valid UTF-8. This is risky if not certain.
+        unsafe { std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(c_str_ptr).to_bytes()) }
+    }
 
-        let c_str = unsafe { std::ffi::CStr::from_ptr(c_str_ptr) };
-        c_str.to_str().map_err(|_| {
-            error!("ecs_id_str returned invalid string");
-            InvalidStrFromId { id: self.id }
-        })
+    /// Convert role of id to string.
+    #[inline(always)]
+    pub fn to_flags_str(&self) -> &'static str {
+        // SAFETY: We assume that `ecs_role_str` returns a pointer to a null-terminated
+        // C string with a static lifetime. The caller must ensure this invariant.
+        // ecs_role_str never returns null, so we don't need to check for that.
+        unsafe { std::ffi::CStr::from_ptr(ecs_id_flag_str(self.id & RUST_ECS_ID_FLAGS_MASK)) }
+            .to_str()
+            .unwrap_or_else(|_| {
+                error!("Failed to convert id to string (id: {})", self.id);
+                "invalid_str_from_id"
+            })
+    }
+
+    /// Convert role of id to string.
+    /// SAFETY: This function is unsafe because it assumes that the id is valid.
+    #[inline(always)]
+    pub unsafe fn to_flags_str_unchecked(&self) -> &'static str {
+        // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
+        // C string with a static lifetime. The caller must ensure this invariant.
+        // ecs_id_ptr never returns null, so we don't need to check for that.
+        let c_str_ptr = unsafe { ecs_id_flag_str(self.id & RUST_ECS_ID_FLAGS_MASK) };
+
+        // SAFETY: We assume the C string is valid UTF-8. This is risky if not certain.
+        unsafe { std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(c_str_ptr).to_bytes()) }
+    }
+
+    pub fn get_world(&self) -> World {
+        World { world: self.world }
     }
 }
