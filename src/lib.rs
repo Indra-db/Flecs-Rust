@@ -1,3 +1,10 @@
+pub mod core {
+    pub mod c_binding;
+    pub mod c_types;
+}
+
+pub mod addons {}
+
 pub fn add(left: usize, right: usize) -> usize {
     left + right
 }
