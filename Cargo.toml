@@ -9,7 +9,10 @@ keywords = [
     "ecs",
     "flecs",
     "c-binding",
-    "entity component system",
+    "entity-component-system",
+    "entity",
+    "component",
+    "system",
     "game development",
     "simulation",
 ]
