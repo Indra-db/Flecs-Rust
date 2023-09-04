@@ -4,6 +4,7 @@ pub mod core {
     pub mod entity;
     pub mod id;
     pub mod utility {
+        pub mod errors;
         pub mod functions;
     }
 }

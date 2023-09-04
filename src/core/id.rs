@@ -1,8 +1,9 @@
+use log::error;
+
 use super::c_binding::bindings::*;
 use super::c_types::*;
 use super::entity::*;
-use crate::core::utility::functions::*;
-
+use crate::core::utility::{errors::*, functions::*};
 pub struct Id {
     pub world: *mut WorldT,
     pub id: IdT,
@@ -134,7 +135,62 @@ impl Id {
         if !self.is_pair() {
             return false;
         }
-        false
-        //ecs_entity_t_hi
+
+        ecs_pair_first(self.id) == first
+    }
+
+    /// Get first element from a pair.
+    ///
+    /// If the id is not a pair, this operation will fail. When the id has a
+    /// world, the operation will ensure that the returned id has the correct generation count.
+    #[inline(always)]
+    pub fn first(&self) -> Entity {
+        #[cfg(feature = "enable_core_asserts")]
+        assert!(self.is_pair());
+
+        let entity = ecs_pair_first(self.id);
+
+        if self.world.is_null() {
+            Entity::new_only_id(entity)
+        } else {
+            Entity::new(self.world, unsafe { ecs_get_alive(self.world, entity) })
+        }
+    }
+
+    /// Get second element from a pair.
+    ///
+    /// If the id is not a pair, this operation will fail. When the id has a
+    /// world, the operation will ensure that the returned id has the correct generation count.
+    pub fn second(&self) -> Entity {
+        #[cfg(feature = "enable_core_asserts")]
+        assert!(self.is_pair());
+
+        let entity = ecs_pair_second(self.id);
+
+        if self.world.is_null() {
+            Entity::new_only_id(entity)
+        } else {
+            Entity::new(self.world, unsafe { ecs_get_alive(self.world, entity) })
+        }
+    }
+
+    /// Convert id to string
+    #[inline(always)]
+    pub fn str(&self) -> Result<&'static str, InvalidStrFromId> {
+        // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
+        // C string with a static lifetime. The caller must ensure this invariant.
+        // ecs_id_ptr never returns null, so we don't need to check for that.
+        let c_str_ptr = unsafe { ecs_id_str(self.world, self.id) };
+
+        if c_str_ptr.is_null() {
+            error!("ecs_id_str returned null");
+            return Err(InvalidStrFromId { id: self.id });
+        }
+
+        let c_str = unsafe { std::ffi::CStr::from_ptr(c_str_ptr) };
+        c_str.to_str().map_err(|_| {
+            error!("ecs_id_str returned invalid string");
+            InvalidStrFromId { id: self.id }
+        })
     }
 }

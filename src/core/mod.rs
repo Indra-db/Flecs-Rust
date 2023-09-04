@@ -2,6 +2,7 @@ pub mod c_types;
 pub mod entity;
 pub mod id;
 pub mod utility {
+    pub mod errors;
     pub mod functions;
 }
 pub mod c_binding {
