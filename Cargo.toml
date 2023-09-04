@@ -1,8 +1,12 @@
 [package]
 name = "flecs_ecs_bridge"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
+authors = ["Indra de Backere <debackere.indra@gmail.com>"]
+description = "Rust binding for the C flecs ECS library <https://github.com/SanderMertens/flecs>"
+license = "MIT"
+keywords = ["ecs", "flecs", "c-binding"]
+categories = ["ffi"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
