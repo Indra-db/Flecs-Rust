@@ -16,3 +16,9 @@ lazy_static = "1.4.0"
 bindgen = "0.66.1"
 cc = "1.0.83"
 regex = "1.9.5"
+
+[features]
+generate_bindings = []
+enable_core_asserts = []
+enable_all_asserts = ["enable_core_asserts"]
+default = ["enable_all_asserts", "generate_bindings"]
