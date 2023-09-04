@@ -1,6 +1,6 @@
 [package]
 name = "flecs_ecs_bridge"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 authors = ["Indra de Backere <debackere.indra@gmail.com>"]
 description = "Rust API for the C flecs ECS library <https://github.com/SanderMertens/flecs>"
