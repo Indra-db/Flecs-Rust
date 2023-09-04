@@ -3,6 +3,9 @@ pub mod core {
     pub mod c_types;
     pub mod entity;
     pub mod id;
+    pub mod utility {
+        pub mod functions;
+    }
 }
 
 pub mod addons {}

@@ -1,14 +1,7 @@
 use super::c_binding::bindings::*;
 use super::c_types::*;
 use super::entity::*;
-
-fn ecs_entity_t_comb(lo: u64, hi: u64) -> u64 {
-    (hi << 32) + lo
-}
-
-fn ecs_pair(pred: u64, obj: u64) -> u64 {
-    PAIR.0 | ecs_entity_t_comb(obj, pred)
-}
+use crate::core::utility::functions::*;
 
 pub struct Id {
     pub world: *mut WorldT,
