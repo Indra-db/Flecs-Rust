@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["Indra de Backere <debackere.indra@gmail.com>"]
 description = "Rust API for the C flecs ECS library <https://github.com/SanderMertens/flecs>"
 license = "MIT"
-keywords = ["ecs", "flecs", "entity", "component", "system", "simulation"]
+keywords = ["ecs", "flecs", "entity", "component", "system"]
 categories = ["game-development", "api-bindings"]
 
 
