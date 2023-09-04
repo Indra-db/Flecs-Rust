@@ -10,3 +10,8 @@ categories = ["game-development", "api-bindings"]
 
 
 [dependencies]
+
+[build-dependencies]
+bindgen = "0.66.1"
+cc = "1.0.83"
+regex = "1.9.5"
