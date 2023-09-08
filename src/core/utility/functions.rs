@@ -28,5 +28,5 @@ pub fn ecs_entity_t_lo(value: u64) -> u64 {
 
 #[inline(always)]
 pub fn ecs_entity_t_hi(value: u64) -> u64 {
-    (value >> 32)
+    value >> 32
 }

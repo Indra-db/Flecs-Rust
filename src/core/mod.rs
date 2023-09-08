@@ -1,4 +1,5 @@
 pub mod c_types;
+pub mod component;
 pub mod entity;
 pub mod id;
 pub mod world;
@@ -12,6 +13,7 @@ pub mod c_binding {
 
 pub use c_binding::bindings::*;
 pub use c_types::*;
+pub use component::*;
 pub use entity::*;
 pub use id::*;
 pub use utility::*;

@@ -12,6 +12,7 @@ categories = ["game-development", "api-bindings"]
 [dependencies]
 lazy_static = "1.4.0"
 log = "0.4.20"
+rand = "0.8"
 
 [build-dependencies]
 bindgen = "0.66.1"
