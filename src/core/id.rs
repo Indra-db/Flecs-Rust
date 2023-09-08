@@ -6,6 +6,7 @@ use super::entity::*;
 use super::world::World;
 use crate::core::utility::{errors::*, functions::*};
 pub struct Id {
+    /// World is optional, but guarantees that entity identifiers extracted from the id are valid
     pub world: *mut WorldT,
     pub id: IdT,
 }

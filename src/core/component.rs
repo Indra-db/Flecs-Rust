@@ -12,7 +12,6 @@ fn generate_data() -> ComponentData {
         id: generate_id(),
         size: 0,
         alignment: 0,
-        reset_counter: 0,
         allow_tags: false,
     }
 }
@@ -21,7 +20,6 @@ pub struct ComponentData {
     pub id: u64,
     pub size: usize,
     pub alignment: usize,
-    pub reset_counter: u32,
     pub allow_tags: bool,
 }
 
@@ -38,10 +36,6 @@ pub trait CachedComponentData {
 
     fn get_alignment() -> usize {
         Self::get_data().alignment
-    }
-
-    fn get_reset_counter() -> u32 {
-        Self::get_data().reset_counter
     }
 
     fn get_allow_tags() -> bool {
