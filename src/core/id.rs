@@ -73,8 +73,7 @@ impl Id {
         #[cfg(feature = "enable_core_asserts")]
         {
             assert!(!self.is_pair());
-            //TODO
-            //assert!(!self.flags());
+            assert!(self.flags().id == 0);
         }
         Entity::new(self.world, self.id)
     }
@@ -87,11 +86,10 @@ impl Id {
 
     /// Return id without role
     #[inline(always)]
-    pub fn remove_flags_check(&self, _flags: IdT) -> Entity {
+    pub fn remove_flags_checked(&self, _flags: IdT) -> Entity {
         #[cfg(feature = "enable_core_asserts")]
-        {
-            assert!(self.id & RUST_ECS_ID_FLAGS_MASK == _flags);
-        }
+        assert!(self.id & RUST_ECS_ID_FLAGS_MASK == _flags);
+
         Entity::new(self.world, self.id & RUST_ECS_COMPONENT_MASK)
     }
 

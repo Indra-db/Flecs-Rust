@@ -78,16 +78,20 @@ extern "C" fn generic_ctor<T: Default>(
     count: i32,
     _type_info: *const ecs_type_info_t,
 ) {
+    #[cfg(feature = "enable_core_asserts")]
+    assert!(unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 });
+
     let arr = ptr as *mut T;
     for i in 0..count as isize {
         unsafe {
-            let item = arr.offset(i);
-            std::ptr::write(item, T::default());
+            std::ptr::write(arr.offset(i), T::default());
         }
     }
 }
 
 extern "C" fn generic_dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const ecs_type_info_t) {
+    #[cfg(feature = "enable_core_asserts")]
+    assert!(unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 });
     let arr = ptr as *mut T;
     for i in 0..count as isize {
         unsafe {
@@ -103,6 +107,8 @@ extern "C" fn generic_copy<T: Default + Clone>(
     count: i32,
     _type_info: *const ecs_type_info_t,
 ) {
+    #[cfg(feature = "enable_core_asserts")]
+    assert!(unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 });
     let dst_arr = dst_ptr as *mut T;
     let src_arr = src_ptr as *const T;
     for i in 0..count as isize {
@@ -121,6 +127,8 @@ extern "C" fn generic_move<T: Default>(
     count: i32,
     _type_info: *const ecs_type_info_t,
 ) {
+    #[cfg(feature = "enable_core_asserts")]
+    assert!(unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 });
     let dst_arr = dst_ptr as *mut T;
     let src_arr = src_ptr as *mut T;
     for i in 0..count as isize {
@@ -129,7 +137,6 @@ extern "C" fn generic_move<T: Default>(
             // Leave the source in a default (empty) state, not dropping the previous
             // allocated memory it might hold
             let moved_value = std::ptr::replace(src_arr.offset(i), T::default());
-            std::mem::take(&mut *src_arr.offset(i));
             // Write moved src to dst without dropping src since src is being moved to dst
             ptr::write(dst_arr.offset(i), moved_value);
         }
