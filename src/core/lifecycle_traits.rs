@@ -42,8 +42,9 @@
 //! Note: C does the same, where the user needs to opt in for non trivial types. We can do the same.
 //! Note2: zerobit pattern
 
-use crate::core::c_binding::bindings::*;
 use crate::core::c_types::*;
+use crate::core::utility::errors::FlecsErrorCode;
+use crate::{core::c_binding::bindings::*, ecs_assert};
 use std::{ffi::c_void, ptr};
 
 pub fn register_lifecycle_actions<T: Clone + Default>(
@@ -78,8 +79,10 @@ extern "C" fn generic_ctor<T: Default>(
     count: i32,
     _type_info: *const ecs_type_info_t,
 ) {
-    #[cfg(feature = "enable_core_asserts")]
-    assert!(unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 });
+    ecs_assert!(
+        unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 },
+        FlecsErrorCode::InternalError
+    );
 
     let arr = ptr as *mut T;
     for i in 0..count as isize {
@@ -90,8 +93,10 @@ extern "C" fn generic_ctor<T: Default>(
 }
 
 extern "C" fn generic_dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const ecs_type_info_t) {
-    #[cfg(feature = "enable_core_asserts")]
-    assert!(unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 });
+    ecs_assert!(
+        unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 },
+        FlecsErrorCode::InternalError
+    );
     let arr = ptr as *mut T;
     for i in 0..count as isize {
         unsafe {
@@ -107,8 +112,10 @@ extern "C" fn generic_copy<T: Default + Clone>(
     count: i32,
     _type_info: *const ecs_type_info_t,
 ) {
-    #[cfg(feature = "enable_core_asserts")]
-    assert!(unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 });
+    ecs_assert!(
+        unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 },
+        FlecsErrorCode::InternalError
+    );
     let dst_arr = dst_ptr as *mut T;
     let src_arr = src_ptr as *const T;
     for i in 0..count as isize {
@@ -127,8 +134,10 @@ extern "C" fn generic_move<T: Default>(
     count: i32,
     _type_info: *const ecs_type_info_t,
 ) {
-    #[cfg(feature = "enable_core_asserts")]
-    assert!(unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 });
+    ecs_assert!(
+        unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 },
+        FlecsErrorCode::InternalError
+    );
     let dst_arr = dst_ptr as *mut T;
     let src_arr = src_ptr as *mut T;
     for i in 0..count as isize {

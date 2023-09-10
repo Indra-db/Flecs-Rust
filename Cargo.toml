@@ -15,12 +15,12 @@ log = "0.4.20"
 rand = "0.8"
 
 [build-dependencies]
-bindgen = "0.66.1"
+bindgen = "0.68.1"
 cc = "1.0.83"
 regex = "1.9.5"
 
 [features]
 generate_bindings = []
-enable_core_asserts = []
-enable_all_asserts = ["enable_core_asserts"]
+ecs_asserts = []
+enable_all_asserts = ["ecs_asserts"]
 default = ["enable_all_asserts", "generate_bindings"]

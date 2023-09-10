@@ -5,6 +5,7 @@ use super::c_types::*;
 use super::entity::*;
 use super::world::World;
 use crate::core::utility::{errors::*, functions::*};
+use crate::ecs_assert;
 pub struct Id {
     /// World is optional, but guarantees that entity identifiers extracted from the id are valid
     pub world: *mut WorldT,
@@ -70,10 +71,9 @@ impl Id {
     /// Return id as entity (only allowed when id is valid entity)
     #[inline(always)]
     pub fn entity(&self) -> Entity {
-        #[cfg(feature = "enable_core_asserts")]
         {
-            assert!(!self.is_pair());
-            assert!(self.flags().id == 0);
+            ecs_assert!(!self.is_pair(), FlecsErrorCode::InvalidOperation);
+            ecs_assert!(self.flags().id == 0, FlecsErrorCode::InvalidOperation);
         }
         Entity::new(self.world, self.id)
     }
@@ -87,8 +87,10 @@ impl Id {
     /// Return id without role
     #[inline(always)]
     pub fn remove_flags_checked(&self, _flags: IdT) -> Entity {
-        #[cfg(feature = "enable_core_asserts")]
-        assert!(self.id & RUST_ECS_ID_FLAGS_MASK == _flags);
+        ecs_assert!(
+            self.id & RUST_ECS_ID_FLAGS_MASK == _flags,
+            FlecsErrorCode::InvalidParameter
+        );
 
         Entity::new(self.world, self.id & RUST_ECS_COMPONENT_MASK)
     }
@@ -145,8 +147,7 @@ impl Id {
     /// world, the operation will ensure that the returned id has the correct generation count.
     #[inline(always)]
     pub fn first(&self) -> Entity {
-        #[cfg(feature = "enable_core_asserts")]
-        assert!(self.is_pair());
+        ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
 
         let entity = ecs_pair_first(self.id);
 
@@ -162,8 +163,8 @@ impl Id {
     /// If the id is not a pair, this operation will fail. When the id has a
     /// world, the operation will ensure that the returned id has the correct generation count.
     pub fn second(&self) -> Entity {
-        #[cfg(feature = "enable_core_asserts")]
-        assert!(self.is_pair());
+        //TODO add the assert to cpp flecs
+        ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
 
         let entity = ecs_pair_second(self.id);
 
