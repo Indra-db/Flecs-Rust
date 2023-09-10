@@ -9,6 +9,7 @@ pub mod core {
     pub mod component;
     pub mod entity;
     pub mod id;
+    pub mod lifecycle_traits;
     pub mod world;
     pub mod utility {
         pub mod errors;

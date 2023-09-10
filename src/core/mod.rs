@@ -2,6 +2,7 @@ pub mod c_types;
 pub mod component;
 pub mod entity;
 pub mod id;
+pub mod lifecycle_traits;
 pub mod world;
 pub mod utility {
     pub mod errors;
@@ -16,5 +17,6 @@ pub use c_types::*;
 pub use component::*;
 pub use entity::*;
 pub use id::*;
+pub use lifecycle_traits::*;
 pub use utility::*;
 pub use world::*;
