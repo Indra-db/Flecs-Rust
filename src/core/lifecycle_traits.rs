@@ -15,7 +15,7 @@
 //! - Bypass the need for `placement_new` with a `placement_ctor` function.
 //!   - Drawback: Each field needs manual setting, which impacts user experience.
 //!      - example code:
-//!      ```
+//!      ```ignore
 //!           struct MyType {
 //!               vec: Vec<i32>,
 //!           }
