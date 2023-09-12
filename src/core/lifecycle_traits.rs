@@ -56,10 +56,10 @@ pub fn register_lifecycle_actions<T: Clone + Default>(
         dtor: Some(generic_dtor::<T>),
         copy: Some(generic_copy::<T>),
         move_: Some(generic_move::<T>),
-        copy_ctor: None,
-        move_ctor: None,
-        ctor_move_dtor: None,
-        move_dtor: None,
+        copy_ctor: Some(generic_copy::<T>), //same implementation as copy
+        move_ctor: Some(generic_move::<T>), //same implementation as move
+        ctor_move_dtor: Some(generic_ctor_move_dtor::<T>),
+        move_dtor: Some(generic_ctor_move_dtor::<T>), //same implementation as ctor_move_dtor
         on_add: None,
         on_set: None,
         on_remove: None,
@@ -148,6 +148,34 @@ extern "C" fn generic_move<T: Default>(
             let moved_value = std::ptr::replace(src_arr.offset(i), T::default());
             // Write moved src to dst without dropping src since src is being moved to dst
             ptr::write(dst_arr.offset(i), moved_value);
+        }
+    }
+}
+
+/// when the struct is non trivial, this will move the value and replace it with a default (heap allocation) and then drop it (deallocating the heap allocation)
+/// TODO: improve this so we can avoid the heap allocation
+extern "C" fn generic_ctor_move_dtor<T: Default + Clone>(
+    dst_ptr: *mut c_void,
+    src_ptr: *mut c_void,
+    count: i32,
+    _type_info: *const ecs_type_info_t,
+) {
+    ecs_assert!(
+        unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 },
+        FlecsErrorCode::InternalError
+    );
+    let dst_arr = dst_ptr as *mut T;
+    let src_arr = src_ptr as *mut T;
+    for i in 0..count as isize {
+        //this is safe because C manages the memory and we are just moving the internal data around
+        unsafe {
+            ptr::drop_in_place(src_arr.offset(i));
+            // Leave the source in a default (empty) state, not dropping the previous
+            // allocated memory it might hold
+            let moved_value = std::ptr::replace(src_arr.offset(i), T::default());
+            // Write moved src to dst without dropping src since src is being moved to dst
+            ptr::write(dst_arr.offset(i), moved_value);
+            ptr::drop_in_place(src_arr.offset(i));
         }
     }
 }
