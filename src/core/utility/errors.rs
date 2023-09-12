@@ -96,8 +96,20 @@ macro_rules! ecs_assert {
     ($condition:expr $(,)?, $error_code:expr $(,)?) => {
         assert!($condition, "{}", $error_code);
     };
-    ($condition:expr $(,)?, $error_code:expr, $($arg:tt)+ $(,)?) => {
-        assert!($condition, "{}: {}", $error_code, format!($($arg)+));
+    ($condition:expr $(,)?, $error_code:expr, $msg:expr $(,)?) => {
+        assert!($condition, "{}: {}", $error_code, $msg);
+    };
+    ($condition:expr $(,)?, $error_code:expr, $arg:ident: *const c_char $(,)?) => {
+        assert!($condition, "{}: {}", $error_code,
+            if $arg.is_null() {
+                "<null>"
+            } else {
+                unsafe { CStr::from_ptr($arg).to_str().unwrap_or("<invalid>") }
+            }
+        );
+    };
+    ($condition:expr $(,)?, $error_code:expr, $fmt:expr, $($arg:tt)+) => {
+        assert!($condition, "{}: {}", $error_code, format!($fmt, $($arg)+));
     };
 }
 
