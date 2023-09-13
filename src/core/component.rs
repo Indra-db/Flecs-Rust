@@ -1,26 +1,17 @@
-use rand::random;
-use std::ffi::CStr;
-use std::sync::OnceLock;
-use std::{any::type_name, os::raw::c_char};
-
-use crate::core::c_binding::bindings::{ecs_cpp_component_register_explicit, ecs_get_path_w_sep};
-use crate::{
-    core::{
-        c_binding::bindings::{ecs_get_symbol, ecs_set_scope, ecs_set_symbol},
-        c_types::IdT,
-        utility::errors::FlecsErrorCode,
-        utility::functions::{get_full_type_name, get_only_type_name},
-    },
-    ecs_assert,
-};
-
-use super::c_binding::bindings::ecs_lookup_symbol;
-use super::utility::functions::is_empty_type;
 use super::{
-    c_binding::bindings::{ecs_exists, ecs_set_with},
-    c_types::{EntityT, WorldT},
+    c_binding::bindings::{
+        ecs_cpp_component_register_explicit, ecs_exists, ecs_get_path_w_sep, ecs_get_symbol,
+        ecs_lookup_symbol, ecs_set_scope, ecs_set_symbol, ecs_set_with,
+    },
+    c_types::{EntityT, IdT, WorldT},
     lifecycle_traits::register_lifecycle_actions,
+    utility::{
+        errors::FlecsErrorCode,
+        functions::{get_full_type_name, get_only_type_name, is_empty_type},
+    },
 };
+use crate::ecs_assert;
+use std::{any::type_name, ffi::CStr, os::raw::c_char, sync::OnceLock};
 
 #[derive(Debug)]
 pub struct ComponentDescriptor {
@@ -264,15 +255,6 @@ pub struct ComponentData {
     pub size: usize,
     pub alignment: usize,
     pub allow_tag: bool,
-}
-
-pub fn test() -> ComponentData {
-    ComponentData {
-        id: random(),
-        size: 0,
-        alignment: 0,
-        allow_tag: false,
-    }
 }
 
 //TODO consider adding safe functions, although it's likely never going to be used by the end user, only internally here.
