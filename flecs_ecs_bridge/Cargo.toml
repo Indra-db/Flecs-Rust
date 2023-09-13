@@ -8,12 +8,13 @@ license = "MIT"
 keywords = ["ecs", "flecs", "entity", "component", "system"]
 categories = ["game-development", "api-bindings"]
 
-
 [dependencies]
 lazy_static = "1.4.0"
 log = "0.4.20"
 rand = "0.8"
 debug-here = "0.2.2"
+flecs_ecs_bridge_derive = { path = "../flecs_ecs_bridge_derive" }
+
 [build-dependencies]
 bindgen = "0.68.1"
 cc = "1.0.83"
@@ -24,3 +25,6 @@ generate_bindings = []
 ecs_asserts = []
 enable_all_asserts = ["ecs_asserts"]
 default = ["enable_all_asserts", "generate_bindings"]
+
+[target.'cfg(any())'.dependencies]
+flecs_ecs_bridge_derive = { version = "=0.1.0", path = "../flecs_ecs_bridge_derive" }
