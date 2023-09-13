@@ -13,15 +13,6 @@ use super::{
 use crate::ecs_assert;
 use std::{any::type_name, ffi::CStr, os::raw::c_char, sync::OnceLock};
 
-/// component descriptor that is used to register components with the world. Passed into C
-#[derive(Debug)]
-pub struct ComponentDescriptor {
-    pub symbol: String,
-    pub name: String,
-    pub custom_id: Option<u64>,
-    pub layout: std::alloc::Layout,
-}
-
 /// returns the pre-registered component data for the component or an initial component data if it's not pre-registered.
 fn init<T: CachedComponentData>(
     entity: EntityT,
@@ -62,48 +53,6 @@ fn init<T: CachedComponentData>(
         allow_tag,
     }
 }
-
-//we might not need this if the cpp registration works for rust too, but we will see
-//fn ecs_rust_component_register_explicit(
-//    world: *mut WorldT,
-//    s_id: EntityT,
-//    id: EntityT,
-//    name: *const c_char,
-//    typename: &'static str,
-//    symbol: &'static str,
-//    size: usize,
-//    aligment: usize,
-//    is_component: bool,
-//    is_existing: *mut bool,
-//) {
-//    static SEP: &'static [u8] = b"::\0";
-//
-//    let mut existing_name: &CStr = CStr::from_bytes_with_nul(b"\0").unwrap();
-//    unsafe {
-//        if *is_existing == true {
-//            *is_existing = false;
-//        }
-//    }
-//    let mut id = id;
-//
-//    if id != 0 {
-//        if !name.is_null() {
-//            // If no name was provided first check if a type with the provided
-//            // symbol was already registered.
-//            id = unsafe { ecs_lookup_symbol(world, symbol.as_ptr() as *const i8, false) };
-//            if id != 0 {
-//                unsafe {
-//                    let sep = SEP.as_ptr() as *const i8;
-//                    existing_name = CStr::from_ptr(ecs_get_path_w_sep(world, 0, id, sep, sep));
-//                    name = existing_name;
-//                    if !is_existing.is_null() {
-//                        *is_existing = true;
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
 
 /// registers the component with the world.
 //this is WIP. We can likely optimize this function by replacing the cpp func call by our own implementation
@@ -377,6 +326,7 @@ pub trait CachedComponentData: Clone + Default {
     }
 }
 
+//TODO need to support getting the id of a component if it's a pair type
 /// attempts to register the component with the world. If it's already registered, it does nothing.
 fn try_register_component<T: CachedComponentData>(world: *mut WorldT) {
     let is_registered = T::is_registered();
@@ -406,6 +356,53 @@ macro_rules! impl_cached_component_data  {
     };
 }
 
+/// component descriptor that is used to register components with the world. Passed into C
+#[derive(Debug)]
+pub struct ComponentDescriptor {
+    pub symbol: String,
+    pub name: String,
+    pub custom_id: Option<u64>,
+    pub layout: std::alloc::Layout,
+}
 
+//we might not need this if the cpp registration works for rust too, but we will see
+/*fn ecs_rust_component_register_explicit(
+    world: *mut WorldT,
+    s_id: EntityT,
+    id: EntityT,
+    name: *const c_char,
+    typename: &'static str,
+    symbol: &'static str,
+    size: usize,
+    aligment: usize,
+    is_component: bool,
+    is_existing: *mut bool,
+) {
+    static SEP: &'static [u8] = b"::\0";
 
-///TODO need to support getting the id of a component if it's a pair type
+    let mut existing_name: &CStr = CStr::from_bytes_with_nul(b"\0").unwrap();
+    unsafe {
+        if *is_existing == true {
+            *is_existing = false;
+        }
+    }
+    let mut id = id;
+
+    if id != 0 {
+        if !name.is_null() {
+            // If no name was provided first check if a type with the provided
+            // symbol was already registered.
+            id = unsafe { ecs_lookup_symbol(world, symbol.as_ptr() as *const i8, false) };
+            if id != 0 {
+                unsafe {
+                    let sep = SEP.as_ptr() as *const i8;
+                    existing_name = CStr::from_ptr(ecs_get_path_w_sep(world, 0, id, sep, sep));
+                    name = existing_name;
+                    if !is_existing.is_null() {
+                        *is_existing = true;
+                    }
+                }
+            }
+        }
+    }
+}*/
