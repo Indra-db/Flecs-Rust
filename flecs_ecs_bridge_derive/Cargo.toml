@@ -1,0 +1,13 @@
+[package]
+name = "flecs_ecs_bridge_derive"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+name = "flecs_ecs_bridge_derive"
+
+[dependencies]
+syn = "2.0.33"
+quote = "1.0.33"
+proc-macro2 = "1.0.67"
