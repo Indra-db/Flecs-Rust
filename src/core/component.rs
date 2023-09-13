@@ -341,7 +341,7 @@ pub trait CachedComponentData: Clone + Default {
         static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
         &ONCE_LOCK
     }
-            
+
     // Not public API.
     #[doc(hidden)]
     fn __initialize<F: FnOnce() -> ComponentData>(f: F) -> &'static ComponentData {
@@ -357,13 +357,19 @@ fn try_register_component<T: CachedComponentData>(world: *mut WorldT) {
     }
 }
 
+#[macro_export]
 macro_rules! impl_cached_component_data  {
     ($($t:ty),*) => {
         $(
             impl CachedComponentData for $t {
-                fn get_once_lock_data() -> &'static OnceLock<ComponentData> {
+                fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
                     static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
                     &ONCE_LOCK
+                }
+                fn get_symbol_name() -> &'static str {
+                    use std::any::type_name;
+                    static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
+                    SYMBOL_NAME.get_or_init(|| type_name::<Self>().replace("::", "."))
                 }
             }
         )*
