@@ -33,15 +33,6 @@ pub fn ecs_entity_t_hi(value: u64) -> u64 {
     value >> 32
 }
 
-/// returns [module].[type]
-pub fn get_symbol_name<T>() -> &'static str {
-    use std::any::type_name;
-    static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
-    SYMBOL_NAME.get_or_init(|| {
-        let name = type_name::<T>();
-        name.replace("::", ".")
-    })
-}
 /// returns [type]
 #[inline(always)]
 pub fn get_only_type_name<T>() -> &'static str {
