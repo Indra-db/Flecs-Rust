@@ -27,29 +27,6 @@ struct Test1 {
 #[derive(Clone, Default)]
 struct Test2 {}
 
-//impl CachedComponentData for Test1 {
-//    fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
-//        static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
-//        &ONCE_LOCK
-//    }
-//    fn get_symbol_name() -> &'static str {
-//        use std::any::type_name;
-//        static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
-//        SYMBOL_NAME.get_or_init(|| type_name::<Self>().replace("::", "."))
-//    }
-//}
-//impl CachedComponentData for Test2 {
-//    fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
-//        static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
-//        &ONCE_LOCK
-//    }
-//    fn get_symbol_name() -> &'static str {
-//        use std::any::type_name;
-//        static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
-//        SYMBOL_NAME.get_or_init(|| type_name::<Self>().replace("::", "."))
-//    }
-//}
-
 impl_cached_component_data!(Test1, Test2);
 
 fn main() {

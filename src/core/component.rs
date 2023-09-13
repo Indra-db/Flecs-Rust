@@ -13,6 +13,7 @@ use super::{
 use crate::ecs_assert;
 use std::{any::type_name, ffi::CStr, os::raw::c_char, sync::OnceLock};
 
+/// component descriptor that is used to register components with the world. Passed into C
 #[derive(Debug)]
 pub struct ComponentDescriptor {
     pub symbol: String,
@@ -21,6 +22,7 @@ pub struct ComponentDescriptor {
     pub layout: std::alloc::Layout,
 }
 
+/// returns the pre-registered component data for the component or an initial component data if it's not pre-registered.
 fn init<T: CachedComponentData>(
     entity: EntityT,
     allow_tag: bool,
@@ -103,6 +105,7 @@ fn init<T: CachedComponentData>(
 //    }
 //}
 
+/// registers the component with the world.
 //this is WIP. We can likely optimize this function by replacing the cpp func call by our own implementation
 //TODO merge explicit and non explicit functions -> not necessary to have a similar impl as c++.
 fn register_componment_data_explicit<T: CachedComponentData + Clone + Default>(
@@ -197,6 +200,7 @@ fn register_componment_data_explicit<T: CachedComponentData + Clone + Default>(
     }
 }
 
+/// checks if the component is registered with a world.
 /// this function is unsafe because it assumes that the component is registered with a world, not necessarily the world passed in.
 unsafe fn is_component_registered_with_world<T: CachedComponentData>(world: *const WorldT) -> bool {
     // we know this is safe because we checked if world is not null & if the component is registered
@@ -207,7 +211,7 @@ unsafe fn is_component_registered_with_world<T: CachedComponentData>(world: *con
     true
 }
 
-///TODO remove this comment, similar to id func
+/// registers the component with the world.
 fn register_component_data<T: CachedComponentData + Clone + Default>(
     world: *mut WorldT,
     name: *const c_char,
@@ -249,6 +253,9 @@ fn register_component_data<T: CachedComponentData + Clone + Default>(
     }
 }
 
+/// Component data that is cached by the `CachedComponentData` trait.
+/// This data is used to register components with the world.
+/// It is also used to ensure that components are registered consistently across different worlds.
 #[derive(Clone, Debug, Default)]
 pub struct ComponentData {
     pub id: u64,
@@ -257,39 +264,65 @@ pub struct ComponentData {
     pub allow_tag: bool,
 }
 
+/// Trait that manages component IDs across multiple worlds & binaries.
+///
+/// impl_cached_component_data macro should be used to implement this trait
+///
+///      ```ignore
+///           struct Position { //an example struct meant to be used as a component
+///               vec: Vec<i32>,
+///           }
+///           impl_cached_component_data!(Position); //this macro implements the trait for Position
+///      ```
+///
+/// The `CachedComponentData` trait is designed to maintain component IDs for a Rust type
+/// in a manner that is consistent across different worlds (or instances).
+/// When a component is utilized, this trait will determine whether it has already been registered.
+/// If it hasn't, it registers the component with the current world.
+///
+/// If the ID has been previously established, the trait ensures the world recognizes it.
+/// If the world doesn't, this implies the component was registered by a different world.
+/// In such a case, the component is registered with the present world using the pre-existing ID.
+/// If the ID is already known, the trait takes care of the component registration and checks for consistency in the input.
 pub trait CachedComponentData: Clone + Default {
     /// attempts to register the component with the world. If it's already registered, it does nothing.
     fn register_explicit(world: *mut WorldT) {
         try_register_component::<Self>(world);
     }
 
+    /// checks if the component is registered with a world.
     fn is_registered() -> bool {
         !Self::__get_once_lock_data().get().is_none()
     }
 
+    /// returns the component data of the component. If the component is not registered, it will register it.
     fn get_data(world: *mut WorldT) -> &'static ComponentData {
         try_register_component::<Self>(world);
         unsafe { Self::get_data_unchecked() }
     }
 
+    /// returns the component id of the component. If the component is not registered, it will register it.
     fn get_id(world: *mut WorldT) -> IdT {
         try_register_component::<Self>(world);
         //this is safe because we checked if the component is registered / registered it
         unsafe { Self::get_id_unchecked() }
     }
 
+    /// returns the component size of the component. If the component is not registered, it will register it.
     fn get_size(world: *mut WorldT) -> usize {
         try_register_component::<Self>(world);
         //this is safe because we checked if the component is registered / registered it
         unsafe { Self::get_size_unchecked() }
     }
 
+    /// returns the component alignment of the component. If the component is not registered, it will register it.
     fn get_alignment(world: *mut WorldT) -> usize {
         try_register_component::<Self>(world);
         //this is safe because we checked if the component is registered / registered it
         unsafe { Self::get_alignment_unchecked() }
     }
 
+    /// returns the component allow_tag of the component. If the component is not registered, it will register it.
     fn get_allow_tag(world: *mut WorldT) -> bool {
         try_register_component::<Self>(world);
         //this is safe because we checked if the component is registered / registered it
@@ -297,39 +330,37 @@ pub trait CachedComponentData: Clone + Default {
     }
 
     // this could live on ComponentData, but it would create more heap allocations when creating default Component
-    /// returns [module].[type]
+    /// gets the symbol name of the compoentn in the format of [module].[type]
     /// possibly replaceable by const typename if it ever gets stabilized. Currently it outputs different results with different compilers
-    fn get_symbol_name() -> &'static str {
-        use std::any::type_name;
-        static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
-        SYMBOL_NAME.get_or_init(|| {
-            let name = type_name::<Self>();
-            name.replace("::", ".")
-        })
-    }
+    fn get_symbol_name() -> &'static str;
 
+    /// returns the component data of the component.
     /// this function is unsafe because it assumes that the component is registered,
-    /// the lock data being initialized is not checked.
+    /// the lock data being initialized is not checked and will panic if it's not.
     unsafe fn get_data_unchecked() -> &'static ComponentData {
         Self::__get_once_lock_data().get().unwrap_unchecked()
     }
 
+    /// returns the component id of the component.
     /// does not check if the component is registered in the world, if not, it might cause problems depending on usage.
     /// only use this if you know what you are doing and you are sure the component is registered in the world
     unsafe fn get_id_unchecked() -> IdT {
         Self::get_data_unchecked().id
     }
 
+    /// returns the component size of the component.
     /// this function is unsafe because it assumes that the component is registered
     unsafe fn get_size_unchecked() -> usize {
         Self::get_data_unchecked().size
     }
 
+    /// returns the component alignment of the component.
     /// this function is unsafe because it assumes that the component is registered,
     unsafe fn get_alignment_unchecked() -> usize {
         Self::get_data_unchecked().alignment
     }
 
+    /// returns the component allow_tag of the component.
     /// this function is unsafe because it assumes that the component is registered,
     unsafe fn get_allow_tag_unchecked() -> bool {
         Self::get_data_unchecked().allow_tag
@@ -337,10 +368,7 @@ pub trait CachedComponentData: Clone + Default {
 
     // Not public API.
     #[doc(hidden)]
-    fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
-        static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
-        &ONCE_LOCK
-    }
+    fn __get_once_lock_data() -> &'static OnceLock<ComponentData>;
 
     // Not public API.
     #[doc(hidden)]
@@ -349,6 +377,7 @@ pub trait CachedComponentData: Clone + Default {
     }
 }
 
+/// attempts to register the component with the world. If it's already registered, it does nothing.
 fn try_register_component<T: CachedComponentData>(world: *mut WorldT) {
     let is_registered = T::is_registered();
 
@@ -357,6 +386,7 @@ fn try_register_component<T: CachedComponentData>(world: *mut WorldT) {
     }
 }
 
+/// implements the necessary functions for CachedComponentData to make sure that each component has unique static data.
 #[macro_export]
 macro_rules! impl_cached_component_data  {
     ($($t:ty),*) => {
@@ -375,3 +405,7 @@ macro_rules! impl_cached_component_data  {
         )*
     };
 }
+
+
+
+///TODO need to support getting the id of a component if it's a pair type
