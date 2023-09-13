@@ -44,7 +44,7 @@ fn init<T: CachedComponentData>(
         );
         ecs_assert!(
             // we know this is safe because we checked it it's registered.
-            allow_tag == unsafe { T::get_allow_tag() },
+            allow_tag == unsafe { T::get_allow_tag_unchecked() },
             FlecsErrorCode::InvalidParameter
         );
 
@@ -244,8 +244,8 @@ fn register_component_data<T: CachedComponentData + Clone + Default>(
             is_comp_pre_registered,
         );
 
-        if unsafe { T::get_size() } != 0 && !existing {
-            // we know this is safe because the component should be registered by now
+        // we know this is safe because the component should be registered by now
+        if unsafe { T::get_size_unchecked() } != 0 && !existing {
             register_lifecycle_actions::<T>(world, unsafe { T::get_id_unchecked() })
         }
 
@@ -278,30 +278,61 @@ pub fn test() -> ComponentData {
 //TODO consider adding safe functions, although it's likely never going to be used by the end user, only internally here.
 // if that's the case, we can #[doc(hidden)] the unsafe functions and only expose the safe ones.
 pub trait CachedComponentData: Clone + Default {
-    //fn get_data() -> &'static ComponentData {
-    //    let once_lock = Self::get_once_lock_data();
-    //    once_lock.get_or_init(|| test())
-    //}
+    fn get_data(world: *mut WorldT) -> &'static ComponentData {
+        try_register_component::<Self>(world);
+        unsafe { Self::get_data_unchecked() }
+    }
 
-    fn get_once_lock_data() -> &'static OnceLock<ComponentData> {
+    // Not public API.
+    #[doc(hidden)]
+    fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
         static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
         &ONCE_LOCK
     }
 
     fn is_registered() -> bool {
-        !Self::get_once_lock_data().get().is_none()
+        !Self::__get_once_lock_data().get().is_none()
     }
 
     // Not public API.
     #[doc(hidden)]
     fn __initialize<F: FnOnce() -> ComponentData>(f: F) -> &'static ComponentData {
-        Self::get_once_lock_data().get_or_init(f)
+        Self::__get_once_lock_data().get_or_init(f)
     }
 
     /// this function is unsafe because it assumes that the component is registered,
     /// the lock data being initialized is not checked.
     unsafe fn get_data_unchecked() -> &'static ComponentData {
-        Self::get_once_lock_data().get().unwrap()
+        Self::__get_once_lock_data().get().unwrap_unchecked()
+    }
+
+    /// attempts to register the component with the world. If it's already registered, it does nothing.
+    fn register_explicit(world: *mut WorldT) {
+        try_register_component::<Self>(world);
+    }
+
+    fn get_id(world: *mut WorldT) -> IdT {
+        try_register_component::<Self>(world);
+        //this is safe because we checked if the component is registered / registered it
+        unsafe { Self::get_id_unchecked() }
+    }
+
+    fn get_size(world: *mut WorldT) -> usize {
+        try_register_component::<Self>(world);
+        //this is safe because we checked if the component is registered / registered it
+        unsafe { Self::get_size_unchecked() }
+    }
+
+    fn get_alignment(world: *mut WorldT) -> usize {
+        try_register_component::<Self>(world);
+        //this is safe because we checked if the component is registered / registered it
+        unsafe { Self::get_alignment_unchecked() }
+    }
+
+    fn get_allow_tag(world: *mut WorldT) -> bool {
+        try_register_component::<Self>(world);
+        //this is safe because we checked if the component is registered / registered it
+        unsafe { Self::get_allow_tag_unchecked() }
     }
 
     /// does not check if the component is registered in the world, if not, it might cause problems depending on usage.
@@ -310,31 +341,18 @@ pub trait CachedComponentData: Clone + Default {
         Self::get_data_unchecked().id
     }
 
-    //for the future: get_id_explicit will
-    fn get_id(world: *mut WorldT) -> IdT {
-        let is_registered = Self::is_registered();
-
-        //TODO we can pass if it's registered with world.
-        if !is_registered || unsafe { !is_component_registered_with_world::<Self>(world) } {
-            register_component_data::<Self>(world, std::ptr::null(), true, is_registered);
-        }
-
-        //this is safe because we checked if the component is registered / registered it
-        unsafe { Self::get_id_unchecked() }
-    }
-
-    /// this function is unsafe because it assumes that the component is registered,
-    unsafe fn get_size() -> usize {
+    /// this function is unsafe because it assumes that the component is registered
+    unsafe fn get_size_unchecked() -> usize {
         Self::get_data_unchecked().size
     }
 
     /// this function is unsafe because it assumes that the component is registered,
-    unsafe fn get_alignment() -> usize {
+    unsafe fn get_alignment_unchecked() -> usize {
         Self::get_data_unchecked().alignment
     }
 
     /// this function is unsafe because it assumes that the component is registered,
-    unsafe fn get_allow_tag() -> bool {
+    unsafe fn get_allow_tag_unchecked() -> bool {
         Self::get_data_unchecked().allow_tag
     }
 
@@ -346,6 +364,14 @@ pub trait CachedComponentData: Clone + Default {
             let name = type_name::<Self>();
             name.replace("::", ".")
         })
+    }
+}
+
+fn try_register_component<T: CachedComponentData>(world: *mut WorldT) {
+    let is_registered = T::is_registered();
+
+    if !is_registered || unsafe { !is_component_registered_with_world::<T>(world) } {
+        register_component_data::<T>(world, std::ptr::null(), true, is_registered);
     }
 }
 
