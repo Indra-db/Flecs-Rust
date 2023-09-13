@@ -336,34 +336,14 @@ fn try_register_component<T: CachedComponentData>(world: *mut WorldT) {
     }
 }
 
-/// implements the necessary functions for CachedComponentData to make sure that each component has unique static data.
-#[macro_export]
-macro_rules! impl_cached_component_data  {
-    ($($t:ty),*) => {
-        $(
-            impl CachedComponentData for $t {
-                fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
-                    static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
-                    &ONCE_LOCK
-                }
-                fn get_symbol_name() -> &'static str {
-                    use std::any::type_name;
-                    static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
-                    SYMBOL_NAME.get_or_init(|| type_name::<Self>().replace("::", "."))
-                }
-            }
-        )*
-    };
-}
-
 /// component descriptor that is used to register components with the world. Passed into C
-#[derive(Debug)]
-pub struct ComponentDescriptor {
-    pub symbol: String,
-    pub name: String,
-    pub custom_id: Option<u64>,
-    pub layout: std::alloc::Layout,
-}
+//#[derive(Debug)]
+//pub struct ComponentDescriptor {
+//    pub symbol: String,
+//    pub name: String,
+//    pub custom_id: Option<u64>,
+//    pub layout: std::alloc::Layout,
+//}
 
 //we might not need this if the cpp registration works for rust too, but we will see
 /*fn ecs_rust_component_register_explicit(

@@ -3,6 +3,9 @@ use std::sync::OnceLock;
 use flecs_ecs_bridge::core::component::{CachedComponentData, ComponentData};
 use flecs_ecs_bridge::core::world::World;
 use flecs_ecs_bridge::impl_cached_component_data;
+use flecs_ecs_bridge_derive::Component;
+
+//use flecs_ecs_bridge_derive::print_foo;
 
 #[macro_use]
 extern crate debug_here;
@@ -18,16 +21,14 @@ impl Drop for Test {
         println!("dropped");
     }
 }
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Component)]
 struct Test1 {
     x: i32,
     v: Test,
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Component)]
 struct Test2 {}
-
-impl_cached_component_data!(Test1, Test2);
 
 fn main() {
     println!("Hello, world!");
