@@ -257,40 +257,19 @@ pub struct ComponentData {
     pub allow_tag: bool,
 }
 
-//TODO consider adding safe functions, although it's likely never going to be used by the end user, only internally here.
-// if that's the case, we can #[doc(hidden)] the unsafe functions and only expose the safe ones.
 pub trait CachedComponentData: Clone + Default {
-    fn get_data(world: *mut WorldT) -> &'static ComponentData {
+    /// attempts to register the component with the world. If it's already registered, it does nothing.
+    fn register_explicit(world: *mut WorldT) {
         try_register_component::<Self>(world);
-        unsafe { Self::get_data_unchecked() }
-    }
-
-    // Not public API.
-    #[doc(hidden)]
-    fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
-        static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
-        &ONCE_LOCK
     }
 
     fn is_registered() -> bool {
         !Self::__get_once_lock_data().get().is_none()
     }
 
-    // Not public API.
-    #[doc(hidden)]
-    fn __initialize<F: FnOnce() -> ComponentData>(f: F) -> &'static ComponentData {
-        Self::__get_once_lock_data().get_or_init(f)
-    }
-
-    /// this function is unsafe because it assumes that the component is registered,
-    /// the lock data being initialized is not checked.
-    unsafe fn get_data_unchecked() -> &'static ComponentData {
-        Self::__get_once_lock_data().get().unwrap_unchecked()
-    }
-
-    /// attempts to register the component with the world. If it's already registered, it does nothing.
-    fn register_explicit(world: *mut WorldT) {
+    fn get_data(world: *mut WorldT) -> &'static ComponentData {
         try_register_component::<Self>(world);
+        unsafe { Self::get_data_unchecked() }
     }
 
     fn get_id(world: *mut WorldT) -> IdT {
@@ -317,6 +296,24 @@ pub trait CachedComponentData: Clone + Default {
         unsafe { Self::get_allow_tag_unchecked() }
     }
 
+    // this could live on ComponentData, but it would create more heap allocations when creating default Component
+    /// returns [module].[type]
+    /// possibly replaceable by const typename if it ever gets stabilized. Currently it outputs different results with different compilers
+    fn get_symbol_name() -> &'static str {
+        use std::any::type_name;
+        static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
+        SYMBOL_NAME.get_or_init(|| {
+            let name = type_name::<Self>();
+            name.replace("::", ".")
+        })
+    }
+
+    /// this function is unsafe because it assumes that the component is registered,
+    /// the lock data being initialized is not checked.
+    unsafe fn get_data_unchecked() -> &'static ComponentData {
+        Self::__get_once_lock_data().get().unwrap_unchecked()
+    }
+
     /// does not check if the component is registered in the world, if not, it might cause problems depending on usage.
     /// only use this if you know what you are doing and you are sure the component is registered in the world
     unsafe fn get_id_unchecked() -> IdT {
@@ -338,14 +335,17 @@ pub trait CachedComponentData: Clone + Default {
         Self::get_data_unchecked().allow_tag
     }
 
-    /// returns [module].[type]
-    fn get_symbol_name() -> &'static str {
-        use std::any::type_name;
-        static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
-        SYMBOL_NAME.get_or_init(|| {
-            let name = type_name::<Self>();
-            name.replace("::", ".")
-        })
+    // Not public API.
+    #[doc(hidden)]
+    fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
+        static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
+        &ONCE_LOCK
+    }
+            
+    // Not public API.
+    #[doc(hidden)]
+    fn __initialize<F: FnOnce() -> ComponentData>(f: F) -> &'static ComponentData {
+        Self::__get_once_lock_data().get_or_init(f)
     }
 }
 

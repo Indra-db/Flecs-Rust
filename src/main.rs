@@ -1,7 +1,8 @@
 use std::sync::OnceLock;
 
-use flecs_ecs_bridge::core::component::{test, CachedComponentData, ComponentData};
+use flecs_ecs_bridge::core::component::{CachedComponentData, ComponentData};
 use flecs_ecs_bridge::core::world::World;
+
 #[macro_use]
 extern crate debug_here;
 
@@ -26,7 +27,7 @@ struct Test1 {
 struct Test2 {}
 
 impl CachedComponentData for Test1 {
-    fn get_once_lock_data() -> &'static OnceLock<ComponentData> {
+    fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
         static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
         &ONCE_LOCK
     }
@@ -37,7 +38,7 @@ impl CachedComponentData for Test1 {
     }
 }
 impl CachedComponentData for Test2 {
-    fn get_once_lock_data() -> &'static OnceLock<ComponentData> {
+    fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
         static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
         &ONCE_LOCK
     }
