@@ -2,7 +2,6 @@ use std::sync::OnceLock;
 
 use flecs_ecs_bridge::core::component::{CachedComponentData, ComponentData};
 use flecs_ecs_bridge::core::world::World;
-use flecs_ecs_bridge::impl_cached_component_data;
 use flecs_ecs_bridge_derive::Component;
 
 //use flecs_ecs_bridge_derive::print_foo;
