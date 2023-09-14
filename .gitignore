@@ -1,2 +1,3 @@
 /target
 /Cargo.lock
+flecs_ecs_bridge/src/main.rs
