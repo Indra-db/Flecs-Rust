@@ -335,7 +335,7 @@ fn try_register_component<T: CachedComponentData>(world: *mut WorldT) {
         register_component_data::<T>(world, std::ptr::null(), true, is_registered);
     }
 }
-
+/*
 /// component descriptor that is used to register components with the world. Passed into C
 //#[derive(Debug)]
 //pub struct ComponentDescriptor {
@@ -346,7 +346,7 @@ fn try_register_component<T: CachedComponentData>(world: *mut WorldT) {
 //}
 
 //we might not need this if the cpp registration works for rust too, but we will see
-/*fn ecs_rust_component_register_explicit(
+fn ecs_rust_component_register_explicit(
     world: *mut WorldT,
     s_id: EntityT,
     id: EntityT,
