@@ -215,13 +215,13 @@ pub struct ComponentData {
 
 /// Trait that manages component IDs across multiple worlds & binaries.
 ///
-/// impl_cached_component_data macro should be used to implement this trait
+/// proc macro Component should be used to implement this trait automatically
 ///
 ///      ```ignore
-///           struct Position { //an example struct meant to be used as a component
+///          #[derive(Component)] //this will implement the trait for the type
+///           struct Position {t
 ///               vec: Vec<i32>,
 ///           }
-///           impl_cached_component_data!(Position); //this macro implements the trait for Position
 ///      ```
 ///
 /// The `CachedComponentData` trait is designed to maintain component IDs for a Rust type
