@@ -11,10 +11,14 @@ pub mod core {
     pub mod flecs_type;
     pub mod id;
     pub mod lifecycle_traits;
+    pub mod table;
     pub mod world;
     pub mod utility {
         pub mod errors;
         pub mod functions;
+    }
+    pub mod data_structures {
+        pub mod pair;
     }
 }
 

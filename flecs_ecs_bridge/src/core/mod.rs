@@ -4,6 +4,7 @@ pub mod entity;
 pub mod flecs_type;
 pub mod id;
 pub mod lifecycle_traits;
+pub mod table;
 pub mod world;
 pub mod utility {
     pub mod errors;
@@ -22,3 +23,4 @@ pub use id::*;
 pub use lifecycle_traits::*;
 pub use utility::*;
 pub use world::*;
+pub use Table::*;
