@@ -29,10 +29,7 @@ impl Default for Table {
 
 impl Table {
     pub fn new(world: *mut WorldT, table: *mut TableT) -> Self {
-        Self {
-            world: world,
-            table: table,
-        }
+        Self { world, table }
     }
 
     pub fn to_string(&self) -> Option<String> {
@@ -127,5 +124,51 @@ impl Table {
 
     pub fn get_depth_for_relationship<Rel: CachedComponentData>(&self) -> i32 {
         self.get_depth_for_relationship_id(Rel::get_id(self.world))
+    }
+}
+
+struct TableRange {
+    pub table: Table,
+    offset: i32,
+    count: i32,
+}
+
+impl Default for TableRange {
+    fn default() -> Self {
+        Self {
+            table: Table::default(),
+            offset: 0,
+            count: 0,
+        }
+    }
+}
+
+impl TableRange {
+    pub fn new(table: Table, offset: i32, count: i32) -> Self {
+        Self {
+            table,
+            offset,
+            count,
+        }
+    }
+
+    pub fn new_raw(world: *mut WorldT, table: *mut TableT, offset: i32, count: i32) -> Self {
+        Self {
+            table: Table::new(world, table),
+            offset,
+            count,
+        }
+    }
+
+    pub fn get_offset(&self) -> i32 {
+        self.offset
+    }
+
+    pub fn get_count(&self) -> i32 {
+        self.count
+    }
+
+    pub fn get_component_array_ptr_by_column_index(&self, index: i32) -> *mut c_void {
+        unsafe { ecs_table_get_column(self.table.table, index, self.offset) }
     }
 }
