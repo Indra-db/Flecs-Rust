@@ -5,7 +5,7 @@ use crate::core::c_binding::bindings::ecs_get_world;
 use super::{
     c_binding::bindings::{ecs_get_name, ecs_get_path_w_sep, ecs_get_symbol, ecs_is_alive},
     c_types::*,
-    component::{CachedComponentData, ComponentType},
+    component::CachedComponentData,
     id::Id,
 };
 

@@ -26,7 +26,8 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 fn impl_cached_component_data_struct(ast: &syn::DeriveInput) -> TokenStream {
     let name = &ast.ident;
     let gen = quote! {
-        impl CachedComponentData<StructComponent> for #name {
+        impl ComponentType<Struct> for #name {}
+        impl CachedComponentData for #name {
             fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
                 static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
                 &ONCE_LOCK
@@ -44,7 +45,9 @@ fn impl_cached_component_data_struct(ast: &syn::DeriveInput) -> TokenStream {
 fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
     let name = &ast.ident;
     let gen = quote! {
-        impl CachedComponentData<EnumComponent> for #name {
+        impl ComponentType<Enum> for #name {}
+
+        impl CachedComponentData for #name {
             fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
                 static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
                 &ONCE_LOCK
