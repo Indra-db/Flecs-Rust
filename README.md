@@ -5,6 +5,7 @@ Hello there! Welcome to my Rust wrapper around the ECS library called [Flecs](ht
 ## ⚠️ Status: Early Stages
 
 Please note that this wrapper is currently in its **early stages**. It's heavily under work in progress and is **not recommended for consumption**. While you're encouraged to explore, test, and provide feedback, please be aware of potential bugs and incomplete features.
+
 This library has not been advertized nor published yet to crates.io for that reason.
 
 ## The Aim
