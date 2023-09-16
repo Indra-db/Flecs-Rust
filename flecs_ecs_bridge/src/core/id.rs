@@ -6,10 +6,20 @@ use super::entity::*;
 use super::world::World;
 use crate::core::utility::{errors::*, functions::*};
 use crate::ecs_assert;
+
 pub struct Id {
     /// World is optional, but guarantees that entity identifiers extracted from the id are valid
     pub world: *mut WorldT,
     pub id: IdT,
+}
+
+impl Default for Id {
+    fn default() -> Self {
+        Self {
+            world: std::ptr::null_mut(),
+            id: 0,
+        }
+    }
 }
 
 impl Id {
@@ -73,7 +83,10 @@ impl Id {
     pub fn entity(&self) -> Entity {
         {
             ecs_assert!(!self.is_pair(), FlecsErrorCode::InvalidOperation);
-            ecs_assert!(self.flags().id == 0, FlecsErrorCode::InvalidOperation);
+            ecs_assert!(
+                self.flags().id.get_raw_id() == 0,
+                FlecsErrorCode::InvalidOperation
+            );
         }
         Entity::new(self.world, self.id)
     }
@@ -231,5 +244,9 @@ impl Id {
 
     pub fn get_world(&self) -> World {
         World { world: self.world }
+    }
+
+    pub fn get_raw_id(&self) -> IdT {
+        self.id
     }
 }

@@ -53,6 +53,8 @@ impl ComponentType for StructComponent {}
 /// In such a case, the component is registered with the present world using the pre-existing ID.
 /// If the ID is already known, the trait takes care of the component registration and checks for consistency in the input.
 pub trait CachedComponentData<T: ComponentType>: Clone + Default {
+    type ComponentType: ComponentType;
+
     /// attempts to register the component with the world. If it's already registered, it does nothing.
     fn register_explicit(world: *mut WorldT) {
         try_register_component::<T, Self>(world);
