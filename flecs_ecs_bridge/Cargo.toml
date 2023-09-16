@@ -14,6 +14,7 @@ log = "0.4.20"
 rand = "0.8"
 debug-here = "0.2.2"
 flecs_ecs_bridge_derive = { path = "../flecs_ecs_bridge_derive" }
+libc = "0.2.148"
 
 [build-dependencies]
 bindgen = "0.68.1"
