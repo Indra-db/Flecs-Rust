@@ -12,13 +12,14 @@ use super::{
     c_binding::bindings::{
         ecs_add_id, ecs_clear, ecs_delete, ecs_get_id, ecs_get_name, ecs_get_path_w_sep,
         ecs_get_symbol, ecs_get_table, ecs_get_target, ecs_get_type, ecs_has_id, ecs_is_alive,
-        ecs_is_valid, ecs_record_find, ecs_record_t, EcsDisabled, EcsUnion,
+        ecs_is_valid, ecs_record_find, ecs_record_t, ecs_search_offset, ecs_table_get_type,
+        ecs_table_t, EcsDisabled, EcsUnion,
     },
     c_types::*,
     component::{CachedComponentData, NotEmptyComponent},
     id::Id,
     table::{Table, TableRange},
-    utility::functions::{ecs_pair_first, ecs_pair_second, ecs_record_to_row},
+    utility::functions::{ecs_pair, ecs_pair_first, ecs_pair_second, ecs_record_to_row},
 };
 
 static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\0") };
@@ -271,6 +272,55 @@ impl Entity {
 
                 func(ent);
             }
+        }
+    }
+
+    /// Iterates over matching pair IDs of an entity.
+    ///
+    /// # Arguments
+    ///
+    /// * `first` - The first ID to match against.
+    /// * `second` - The second ID to match against.
+    /// * `func` - The closure invoked for each matching ID. Must match the signature `FnMut(Id)`.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// entity.for_each_matching_pair(id1, id2, |id| {
+    ///     // Do something with the matching ID
+    /// });
+    /// ```
+    fn for_each_matching_pair<F>(&self, pred: IdT, obj: IdT, mut func: F)
+    where
+        F: FnMut(Id),
+    {
+        // this is safe because we are only reading the world
+        let real_world = unsafe { ecs_get_world(self.id.world as *const c_void) as *mut WorldT };
+
+        let table: *mut ecs_table_t = unsafe { ecs_get_table(self.id.world, self.id.id) };
+
+        if table.is_null() {
+            return;
+        }
+
+        let table_type = unsafe { ecs_table_get_type(table) };
+        if table_type.is_null() {
+            return;
+        }
+
+        let mut pattern: IdT = pred;
+        if obj != 0 {
+            pattern = ecs_pair(pred, obj);
+        }
+
+        let mut cur: i32 = 0;
+        let ids: *mut IdT = unsafe { (*table_type).array };
+        let id_out: *mut IdT = &mut 0;
+
+        while -1 != unsafe { ecs_search_offset(real_world, table, cur, pattern, id_out) } {
+            let ent = Id::new(self.id.world, unsafe { *(ids.add(cur as usize)) });
+            func(ent);
+            cur = cur + 1;
         }
     }
     //
