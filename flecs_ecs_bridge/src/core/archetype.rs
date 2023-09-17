@@ -27,11 +27,8 @@ impl Default for Archetype {
 }
 
 impl Archetype {
-    pub fn new(world: *mut WorldT, t: *const TypeT) -> Self {
-        Archetype {
-            world: world,
-            type_vec: t,
-        }
+    pub fn new(world: *mut WorldT, type_vec: *const TypeT) -> Self {
+        Archetype { world, type_vec }
     }
 
     /// Convert type to comma-separated string

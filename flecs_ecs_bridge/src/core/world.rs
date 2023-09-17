@@ -7,6 +7,12 @@ pub struct World {
     pub world: *mut WorldT,
 }
 
+impl Default for World {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl World {
     pub fn new() -> Self {
         Self {

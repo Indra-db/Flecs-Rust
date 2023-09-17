@@ -24,7 +24,7 @@ use super::{
 
 static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\0") };
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct Entity {
     pub id: Id,
 }
@@ -64,12 +64,12 @@ impl Entity {
 
     /// checks if entity is valid
     pub fn get_is_valid(&self) -> bool {
-        self.id.world != std::ptr::null_mut() && unsafe { ecs_is_valid(self.id.world, self.id.id) }
+        !self.id.world.is_null() && unsafe { ecs_is_valid(self.id.world, self.id.id) }
     }
 
     /// Checks if entity is alive.
     pub fn get_is_alive(&self) -> bool {
-        self.id.world != std::ptr::null_mut() && unsafe { ecs_is_alive(self.id.world, self.id.id) }
+        !self.id.world.is_null() && unsafe { ecs_is_alive(self.id.world, self.id.id) }
     }
 
     /// Returns the entity name.
@@ -126,13 +126,14 @@ impl Entity {
                 )
             }
         } else {
+            let c_init_sep = CString::new(init_sep).unwrap();
             unsafe {
                 ecs_get_path_w_sep(
                     self.id.world,
                     parent,
                     self.id.id,
                     c_sep.as_ptr(),
-                    CString::new(init_sep).unwrap().as_ptr(),
+                    c_init_sep.as_ptr(),
                 )
             }
         };
@@ -312,11 +313,10 @@ impl Entity {
         while -1 != unsafe { ecs_search_offset(real_world, table, cur, pattern, id_out) } {
             let ent = Id::new(self.id.world, unsafe { *(ids.add(cur as usize)) });
             func(ent);
-            cur = cur + 1;
+            cur += 1;
         }
     }
 
-    //TODO: maybe stick with passing id, not the Entity?
     /// Iterate over targets for a given relationship.
     ///
     /// ### Arguments
@@ -333,7 +333,6 @@ impl Entity {
         });
     }
 
-    //TODO: maybe stick with passing id, not the Entity?
     /// Iterate over targets for a given relationship.
     ///
     /// ### Type Parameters

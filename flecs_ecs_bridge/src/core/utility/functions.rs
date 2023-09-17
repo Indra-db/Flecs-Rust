@@ -17,7 +17,7 @@ pub fn ecs_pair(pred: u64, obj: u64) -> u64 {
 
 #[inline(always)]
 pub fn ecs_pair_first(e: u64) -> u64 {
-    ecs_entity_t_hi(e & RUST_ECS_COMPONENT_MASK) as u64
+    ecs_entity_t_hi(e & RUST_ECS_COMPONENT_MASK)
 }
 
 #[inline(always)]

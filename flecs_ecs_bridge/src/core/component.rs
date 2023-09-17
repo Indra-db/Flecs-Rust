@@ -64,7 +64,7 @@ pub trait CachedComponentData: Clone + Default {
 
     /// checks if the component is registered with a world.
     fn is_registered() -> bool {
-        !Self::__get_once_lock_data().get().is_none()
+        Self::__get_once_lock_data().get().is_some()
     }
 
     /// returns the component data of the component. If the component is not registered, it will register it.
@@ -107,33 +107,50 @@ pub trait CachedComponentData: Clone + Default {
     fn get_symbol_name() -> &'static str;
 
     /// returns the component data of the component.
+    /// ### Safety
+    /// safe version is `get_data`
     /// this function is unsafe because it assumes that the component is registered,
     /// the lock data being initialized is not checked and will panic if it's not.
+
     unsafe fn get_data_unchecked() -> &'static ComponentData {
         Self::__get_once_lock_data().get().unwrap_unchecked()
     }
 
     /// returns the component id of the component.
+    /// ### Safety
+    /// safe version is `get_id`
+    /// this function is unsafe because it assumes that the component is registered,
+    /// the lock data being initialized is not checked and will panic if it's not.
     /// does not check if the component is registered in the world, if not, it might cause problems depending on usage.
     /// only use this if you know what you are doing and you are sure the component is registered in the world
+
     unsafe fn get_id_unchecked() -> IdT {
         Self::get_data_unchecked().id
     }
 
     /// returns the component size of the component.
-    /// this function is unsafe because it assumes that the component is registered
+    /// ### Safety
+    /// safe version is `get_size`
+    /// this function is unsafe because it assumes that the component is registered,
+    /// the lock data being initialized is not checked and will panic if it's not.
     unsafe fn get_size_unchecked() -> usize {
         Self::get_data_unchecked().size
     }
 
     /// returns the component alignment of the component.
+    /// ### Safety
+    /// safe version is `get_alignment`
     /// this function is unsafe because it assumes that the component is registered,
+    /// the lock data being initialized is not checked and will panic if it's not.
     unsafe fn get_alignment_unchecked() -> usize {
         Self::get_data_unchecked().alignment
     }
 
     /// returns the component allow_tag of the component.
+    /// ### Safety
+    /// safe version is `get_allow_tag`
     /// this function is unsafe because it assumes that the component is registered,
+    /// the lock data being initialized is not checked and will panic if it's not.
     unsafe fn get_allow_tag_unchecked() -> bool {
         Self::get_data_unchecked().allow_tag
     }

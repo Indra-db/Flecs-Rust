@@ -7,6 +7,7 @@ use super::world::World;
 use crate::core::utility::{errors::*, functions::*};
 use crate::ecs_assert;
 
+#[derive(Debug, Clone, Copy)]
 pub struct Id {
     /// World is optional, but guarantees that entity identifiers extracted from the id are valid
     pub world: *mut WorldT,
@@ -34,6 +35,10 @@ impl Id {
         }
     }
 
+    /// Create a new id with the specified generation count.
+    /// ### Safety
+    /// This function is unsafe because it assumes that the world is not null.
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new_only_world(world: *mut WorldT) -> Self {
         unsafe {
             Self {
@@ -88,10 +93,7 @@ impl Id {
     pub fn entity(&self) -> Entity {
         {
             ecs_assert!(!self.is_pair(), FlecsErrorCode::InvalidOperation);
-            ecs_assert!(
-                self.flags().id.get_raw_id() == 0,
-                FlecsErrorCode::InvalidOperation
-            );
+            ecs_assert!(self.flags().id.id == 0, FlecsErrorCode::InvalidOperation);
         }
         Entity::new(self.world, self.id)
     }
@@ -208,7 +210,9 @@ impl Id {
     }
 
     /// Convert id to string
-    /// SAFETY: This function is unsafe because it assumes that the id is valid.
+    /// ### Safety
+    /// safe version : 'to_str'
+    /// This function is unsafe because it assumes that the id is valid.
     #[inline(always)]
     pub unsafe fn to_str_unchecked(&self) -> &'static str {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
@@ -235,7 +239,9 @@ impl Id {
     }
 
     /// Convert role of id to string.
-    /// SAFETY: This function is unsafe because it assumes that the id is valid.
+    /// ### Safety
+    /// safe version : 'to_flags_str'
+    /// This function is unsafe because it assumes that the id is valid.
     #[inline(always)]
     pub unsafe fn to_flags_str_unchecked(&self) -> &'static str {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
@@ -247,11 +253,7 @@ impl Id {
         unsafe { std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(c_str_ptr).to_bytes()) }
     }
 
-    pub fn get_world(&self) -> World {
+    pub fn get_as_world(&self) -> World {
         World { world: self.world }
-    }
-
-    pub fn get_raw_id(&self) -> IdT {
-        self.id
     }
 }

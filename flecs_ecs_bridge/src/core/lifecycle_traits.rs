@@ -47,11 +47,12 @@ use crate::core::utility::errors::FlecsErrorCode;
 use crate::{core::c_binding::bindings::*, ecs_assert};
 use std::{ffi::c_void, ptr};
 
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn register_lifecycle_actions<T: Clone + Default>(
     world: *mut ecs_world_t,
     component: ecs_entity_t,
 ) {
-    let mut cl = ecs_type_hooks_t {
+    let cl = ecs_type_hooks_t {
         ctor: Some(generic_ctor::<T>),
         dtor: Some(generic_dtor::<T>),
         copy: Some(generic_copy::<T>),
@@ -70,7 +71,7 @@ pub fn register_lifecycle_actions<T: Clone + Default>(
     };
 
     unsafe {
-        ecs_set_hooks_id(world, component, &mut cl);
+        ecs_set_hooks_id(world, component, &cl);
     }
 }
 

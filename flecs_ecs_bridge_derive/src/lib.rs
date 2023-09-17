@@ -131,7 +131,7 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
         }
     };
 
-    let gen = quote! {
+    quote! {
         impl ComponentType<Enum> for #name {}
 
         impl CachedComponentData for #name {
@@ -147,7 +147,5 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
         }
 
         #not_empty_trait_or_error
-    };
-
-    gen.into()
+    }
 }

@@ -35,10 +35,7 @@ pub enum InOutKindT {
 //TODO: this is a test
 impl InOutKindT {
     pub fn is_read_only(&self) -> bool {
-        match self {
-            Self::In => true,
-            _ => false,
-        }
+        matches!(self, Self::In)
     }
 }
 
@@ -56,10 +53,7 @@ pub enum OperKindT {
 //TODO: this is a test
 impl OperKindT {
     pub fn is_negation(&self) -> bool {
-        match self {
-            Self::Not | Self::NotFrom => true,
-            _ => false,
-        }
+        matches!(self, Self::Not | Self::NotFrom)
     }
 }
 

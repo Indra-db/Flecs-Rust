@@ -13,6 +13,7 @@ use super::{
     utility::functions::ecs_pair,
 };
 
+#[derive(Debug)]
 pub struct Table {
     world: *mut WorldT,
     table: *mut TableT,
@@ -127,20 +128,11 @@ impl Table {
     }
 }
 
+#[derive(Debug, Default)]
 pub struct TableRange {
     pub table: Table,
     offset: i32,
     count: i32,
-}
-
-impl Default for TableRange {
-    fn default() -> Self {
-        Self {
-            table: Table::default(),
-            offset: 0,
-            count: 0,
-        }
-    }
 }
 
 impl TableRange {
