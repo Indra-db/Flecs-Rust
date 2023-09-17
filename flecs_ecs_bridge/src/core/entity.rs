@@ -10,8 +10,8 @@ use crate::{core::c_binding::bindings::ecs_get_world, ecs_assert};
 use super::{
     archetype::Archetype,
     c_binding::bindings::{
-        ecs_add_id, ecs_get_id, ecs_get_name, ecs_get_path_w_sep, ecs_get_symbol, ecs_get_type,
-        ecs_has_id, ecs_is_alive, ecs_is_valid, EcsDisabled,
+        ecs_add_id, ecs_clear, ecs_delete, ecs_get_id, ecs_get_name, ecs_get_path_w_sep,
+        ecs_get_symbol, ecs_get_type, ecs_has_id, ecs_is_alive, ecs_is_valid, EcsDisabled,
     },
     c_types::*,
     component::{CachedComponentData, NotEmptyComponent},
@@ -49,6 +49,12 @@ impl Entity {
     pub const fn new_only_id(id: EntityT) -> Self {
         Self {
             id: Id::new_only_id(id),
+        }
+    }
+
+    pub fn new_only_world(world: *mut WorldT) -> Self {
+        Self {
+            id: Id::new_only_world(world),
         }
     }
 
@@ -201,9 +207,17 @@ impl Entity {
         unsafe { (ecs_get_id(self.id.world, self.id.id, component_id) as *const T).as_ref() }
     }
 
-    pub fn add_component<T: CachedComponentData>(self, component: T) -> Self {
+    pub fn add_component<T: CachedComponentData>(self) -> Self {
         let component_id = T::get_id(self.id.world);
         unsafe { ecs_add_id(self.id.world, self.id.id, component_id) }
         self
+    }
+
+    pub fn destruct(self) {
+        unsafe { ecs_delete(self.id.world, self.id.id) }
+    }
+
+    pub fn clear(&self) {
+        unsafe { ecs_clear(self.id.world, self.id.id) }
     }
 }

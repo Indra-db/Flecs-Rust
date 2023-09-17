@@ -34,8 +34,13 @@ impl Id {
         }
     }
 
-    pub const fn new_only_world(world: *mut WorldT) -> Self {
-        Self { world, id: 0 }
+    pub fn new_only_world(world: *mut WorldT) -> Self {
+        unsafe {
+            Self {
+                world,
+                id: ecs_new_w_id(world, 0),
+            }
+        }
     }
 
     pub fn new_world_pair(world: *mut WorldT, first: IdT, second: IdT) -> Self {
