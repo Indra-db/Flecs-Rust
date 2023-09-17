@@ -13,7 +13,7 @@ use super::{
         ecs_add_id, ecs_clear, ecs_delete, ecs_get_id, ecs_get_name, ecs_get_path_w_sep,
         ecs_get_symbol, ecs_get_table, ecs_get_target, ecs_get_type, ecs_has_id, ecs_is_alive,
         ecs_is_valid, ecs_record_find, ecs_record_t, ecs_search_offset, ecs_table_get_type,
-        ecs_table_t, EcsDisabled, EcsUnion,
+        ecs_table_t, EcsDisabled, EcsUnion, EcsWildcard,
     },
     c_types::*,
     component::{CachedComponentData, NotEmptyComponent},
@@ -240,8 +240,8 @@ impl Entity {
 
     /// Iterate over component ids of an entity.
     ///
-    /// The function parameter must match the following signature:
-    ///   `FnMut(Id)`
+    /// ### Arguments
+    /// * `func` - The closure invoked for each matching ID. Must match the signature `FnMut(Id)`.
     fn for_each_component<F>(&self, mut func: F)
     where
         F: FnMut(Id),
@@ -277,19 +277,11 @@ impl Entity {
 
     /// Iterates over matching pair IDs of an entity.
     ///
-    /// # Arguments
+    /// ### Arguments
     ///
     /// * `first` - The first ID to match against.
     /// * `second` - The second ID to match against.
     /// * `func` - The closure invoked for each matching ID. Must match the signature `FnMut(Id)`.
-    ///
-    /// # Examples
-    ///
-    /// ```ignore
-    /// entity.for_each_matching_pair(id1, id2, |id| {
-    ///     // Do something with the matching ID
-    /// });
-    /// ```
     fn for_each_matching_pair<F>(&self, pred: IdT, obj: IdT, mut func: F)
     where
         F: FnMut(Id),
@@ -323,6 +315,23 @@ impl Entity {
             cur = cur + 1;
         }
     }
+
+    /// Iterate over targets for a given relationship.
+    ///
+    /// ### Arguments
+    ///
+    /// * `relationship` - The relationship for which to iterate the targets.
+    /// * `func` - The closure invoked for each target. Must match the signature `FnMut(Entity)`.
+    pub fn for_each_target_in_relationship_by_entity<F>(&self, relationship: &Entity, mut func: F)
+    where
+        F: FnMut(Entity),
+    {
+        self.for_each_matching_pair(relationship.id.id, unsafe { EcsWildcard }, |id| {
+            let obj = id.second();
+            func(obj);
+        });
+    }
+
     //
     //
     //
