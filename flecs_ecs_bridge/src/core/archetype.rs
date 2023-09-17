@@ -12,12 +12,12 @@ use super::{
 };
 
 /// A type is a vector of component ids which can be requested from entities or tables.
-pub struct Type {
+pub struct Archetype {
     world: *mut WorldT,
     type_vec: *const TypeT,
 }
 
-impl Default for Type {
+impl Default for Archetype {
     fn default() -> Self {
         Self {
             world: std::ptr::null_mut(),
@@ -26,9 +26,9 @@ impl Default for Type {
     }
 }
 
-impl Type {
+impl Archetype {
     pub fn new(world: *mut WorldT, t: *const TypeT) -> Self {
-        Type {
+        Archetype {
             world: world,
             type_vec: t,
         }

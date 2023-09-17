@@ -4,11 +4,11 @@
 #![allow(unused_macros)]
 
 pub mod core {
+    pub mod archetype;
     pub mod c_binding;
     pub mod c_types;
     pub mod component;
     pub mod entity;
-    pub mod flecs_type;
     pub mod id;
     pub mod lifecycle_traits;
     pub mod table;

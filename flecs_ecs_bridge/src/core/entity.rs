@@ -8,13 +8,13 @@ use libc::strlen;
 use crate::core::c_binding::bindings::ecs_get_world;
 
 use super::{
+    archetype::Archetype,
     c_binding::bindings::{
         ecs_get_name, ecs_get_path_w_sep, ecs_get_symbol, ecs_get_type, ecs_has_id, ecs_is_alive,
         ecs_is_valid, EcsDisabled,
     },
     c_types::*,
     component::CachedComponentData,
-    flecs_type::Type,
     id::Id,
 };
 
@@ -190,8 +190,8 @@ impl Entity {
         unsafe { !ecs_has_id(self.id.world, self.id.id, EcsDisabled) }
     }
 
-    pub fn get_entity_type(&self) -> Type {
-        Type::new(self.id.world, unsafe {
+    pub fn get_entity_type(&self) -> Archetype {
+        Archetype::new(self.id.world, unsafe {
             ecs_get_type(self.id.world, self.id.id)
         })
     }
