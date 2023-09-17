@@ -27,6 +27,8 @@ pub struct ComponentData {
 pub struct Enum;
 pub struct Struct;
 
+pub trait EmptyComponent {}
+pub trait NotEmptyComponent {}
 pub trait ECSComponentType {}
 
 impl ECSComponentType for Enum {}

@@ -3,7 +3,7 @@ extern crate proc_macro;
 use proc_macro::TokenStream as ProcMacroTokenStream;
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{Data, DeriveInput};
+use syn::{Data, DeriveInput, Fields};
 
 #[proc_macro_derive(Component)]
 pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
@@ -12,7 +12,7 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
     // Build the output
     let expanded: TokenStream = match &input.data {
-        Data::Struct(_) => impl_cached_component_data_struct(&input),
+        Data::Struct(data_struct) => impl_cached_component_data_struct(data_struct, &input.ident),
         Data::Enum(_) => impl_cached_component_data_enum(&input),
         _ => quote! {
             compile_error!("The type is neither a struct nor an enum!");
@@ -23,27 +23,75 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     ProcMacroTokenStream::from(expanded)
 }
 
-fn impl_cached_component_data_struct(ast: &syn::DeriveInput) -> TokenStream {
-    let name = &ast.ident;
-    let gen = quote! {
-        impl ComponentType<Struct> for #name {}
-        impl CachedComponentData for #name {
-            fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
-                static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
-                &ONCE_LOCK
-            }
-            fn get_symbol_name() -> &'static str {
-                use std::any::type_name;
-                static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
-                SYMBOL_NAME.get_or_init(|| type_name::<Self>().replace("::", "."))
+fn impl_cached_component_data_struct(
+    data_struct: &syn::DataStruct,
+    name: &syn::Ident,
+) -> proc_macro2::TokenStream {
+    let has_fields = match &data_struct.fields {
+        Fields::Named(fields) => !fields.named.is_empty(),
+        Fields::Unnamed(fields) => !fields.unnamed.is_empty(),
+        Fields::Unit => false,
+    };
+
+    if has_fields {
+        quote! {
+            impl NotEmptyComponent for #name {}
+
+            impl ComponentType<Struct> for #name {}
+
+            impl CachedComponentData for #name {
+                fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
+                    static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
+                    &ONCE_LOCK
+                }
+                fn get_symbol_name() -> &'static str {
+                    use std::any::type_name;
+                    static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
+                    SYMBOL_NAME.get_or_init(|| type_name::<Self>().replace("::", "."))
+                }
             }
         }
-    };
-    gen.into()
+    } else {
+        quote! {
+            impl EmptyComponent for #name {}
+
+            impl ComponentType<Struct> for #name {}
+
+            impl CachedComponentData for #name {
+                fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
+                    static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
+                    &ONCE_LOCK
+                }
+                fn get_symbol_name() -> &'static str {
+                    use std::any::type_name;
+                    static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
+                    SYMBOL_NAME.get_or_init(|| type_name::<Self>().replace("::", "."))
+                }
+            }
+        }
+    }
 }
 
 fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
     let name = &ast.ident;
+
+    // Check if the enum has any variants
+    let has_variants = match &ast.data {
+        Data::Enum(data_enum) => !data_enum.variants.is_empty(),
+        _ => panic!("Expected enum data!"), // This shouldn't happen as we check before calling this function
+    };
+
+    // If it has variants, produce the NotEmptyTrait implementation. Otherwise, produce a compile error.
+    let not_empty_trait_or_error = if has_variants {
+        quote! {
+            impl NotEmptyComponent for #name {}
+        }
+    } else {
+        quote! {
+            compile_error!("Enum components should have at least one variant!");
+        }
+    };
+
     let gen = quote! {
         impl ComponentType<Enum> for #name {}
 
@@ -58,6 +106,9 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
                 SYMBOL_NAME.get_or_init(|| type_name::<Self>().replace("::", "."))
             }
         }
+
+        #not_empty_trait_or_error
     };
+
     gen.into()
 }
