@@ -18,23 +18,23 @@ impl World {
         Self { world }
     }
 
-    // /// Get id from a type.
-    //  fn get_id<T: CachedComponentData>(&self) -> Id {
-    //      Id::new(self.world, T::get_id())
-    //  }
-    //
-    //  /// get pair id from relationship, object.
-    //  fn get_id_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> Id {
-    //      Id::new_world_pair(self.world, T::get_id(), U::get_id())
-    //  }
-    //
-    //  /// get pair id from relationship, object.
-    //  fn get_id_pair_with_id<T: CachedComponentData>(&self, id: EntityT) -> Id {
-    //      Id::new_world_pair(self.world, T::get_id(), id)
-    //  }
-    //
-    //  /// get pair id from relationship, object.
-    //  fn get_id_pair_from_ids(&self, id: EntityT, id2: EntityT) -> Id {
-    //      Id::new_world_pair(self.world, id, id2)
-    //  }
+    /// Get id from a type.
+    fn get_id<T: CachedComponentData>(&self) -> Id {
+        Id::new(self.world, T::get_id(self.world))
+    }
+
+    /// get pair id from relationship, object.
+    fn get_id_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> Id {
+        Id::new_world_pair(self.world, T::get_id(self.world), U::get_id(self.world))
+    }
+
+    /// get pair id from relationship, object.
+    fn get_id_pair_with_id<T: CachedComponentData>(&self, id: EntityT) -> Id {
+        Id::new_world_pair(self.world, T::get_id(self.world), id)
+    }
+
+    /// get pair id from relationship, object.
+    fn get_id_pair_from_ids(&self, id: EntityT, id2: EntityT) -> Id {
+        Id::new_world_pair(self.world, id, id2)
+    }
 }
