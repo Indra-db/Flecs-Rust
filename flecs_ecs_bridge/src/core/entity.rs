@@ -11,11 +11,14 @@ use super::{
     archetype::Archetype,
     c_binding::bindings::{
         ecs_add_id, ecs_clear, ecs_delete, ecs_get_id, ecs_get_name, ecs_get_path_w_sep,
-        ecs_get_symbol, ecs_get_type, ecs_has_id, ecs_is_alive, ecs_is_valid, EcsDisabled,
+        ecs_get_symbol, ecs_get_table, ecs_get_target, ecs_get_type, ecs_has_id, ecs_is_alive,
+        ecs_is_valid, ecs_record_find, ecs_record_t, EcsDisabled, EcsUnion,
     },
     c_types::*,
     component::{CachedComponentData, NotEmptyComponent},
     id::Id,
+    table::{Table, TableRange},
+    utility::functions::{ecs_pair_first, ecs_pair_second, ecs_record_to_row},
 };
 
 static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\0") };
@@ -196,12 +199,86 @@ impl Entity {
         unsafe { !ecs_has_id(self.id.world, self.id.id, EcsDisabled) }
     }
 
-    pub fn get_entity_type(&self) -> Archetype {
+    /// get the entity's archetype
+    #[inline(always)]
+    pub fn get_archetype(&self) -> Archetype {
         Archetype::new(self.id.world, unsafe {
             ecs_get_type(self.id.world, self.id.id)
         })
     }
 
+    /// get the entity's table
+    #[inline(always)]
+    pub fn get_table(&self) -> Table {
+        Table::new(self.id.world, unsafe {
+            ecs_get_table(self.id.world, self.id.id)
+        })
+    }
+
+    /// Get table range for the entity.
+    /// ### Returns
+    /// Returns a range with the entity's row as offset and count set to 1. If
+    /// the entity is not stored in a table, the function returns a range with
+    /// count 0.
+    #[inline]
+    pub fn get_table_range(&self) -> TableRange {
+        let ecs_record: *mut ecs_record_t = unsafe { ecs_record_find(self.id.world, self.id.id) };
+        if !ecs_record.is_null() {
+            unsafe {
+                TableRange::new_raw(
+                    self.id.world,
+                    (*ecs_record).table,
+                    ecs_record_to_row((*ecs_record).row),
+                    1,
+                )
+            }
+        } else {
+            TableRange::default()
+        }
+    }
+
+    /// Iterate over component ids of an entity.
+    ///
+    /// The function parameter must match the following signature:
+    ///   `FnMut(Id)`
+    fn for_each_component<F>(&self, mut func: F)
+    where
+        F: FnMut(Id),
+    {
+        let type_ptr = unsafe { ecs_get_type(self.id.world, self.id.id) };
+
+        if type_ptr.is_null() {
+            return;
+        }
+
+        let type_ref: &TypeT = unsafe { &*type_ptr };
+        let ids = type_ref.array;
+        let count = type_ref.count;
+
+        for i in 0..count as usize {
+            let id: IdT = unsafe { *ids.add(i) };
+            let ent = Id {
+                world: self.id.world,
+                id,
+            };
+            func(ent);
+
+            // Union object is not stored in type, so handle separately
+            if unsafe { ecs_pair_first(id) == EcsUnion } {
+                let ent = Id::new_world_pair(self.id.world, ecs_pair_second(id), unsafe {
+                    ecs_get_target(self.id.world, self.id.id, ecs_pair_second(self.id.id), 0)
+                });
+
+                func(ent);
+            }
+        }
+    }
+    //
+    //
+    //
+    /*
+    temp placed seperately
+    */
     pub fn get_component<T: CachedComponentData + NotEmptyComponent>(&self) -> Option<&T> {
         let component_id = T::get_id(self.id.world);
         unsafe { (ecs_get_id(self.id.world, self.id.id, component_id) as *const T).as_ref() }

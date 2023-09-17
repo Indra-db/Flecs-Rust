@@ -1,5 +1,7 @@
 use std::sync::OnceLock;
 
+use crate::core::c_binding::bindings::ECS_ROW_MASK;
+
 use super::super::c_types::{PAIR, RUST_ECS_COMPONENT_MASK};
 
 #[inline(always)]
@@ -51,4 +53,9 @@ pub fn get_full_type_name<T>() -> &'static str {
 #[inline(always)]
 pub fn is_empty_type<T>() -> bool {
     std::mem::size_of::<T>() == 0
+}
+
+#[inline(always)]
+pub fn ecs_record_to_row(row: u32) -> i32 {
+    (row & ECS_ROW_MASK) as i32
 }

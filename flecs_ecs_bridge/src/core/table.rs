@@ -127,7 +127,7 @@ impl Table {
     }
 }
 
-struct TableRange {
+pub struct TableRange {
     pub table: Table,
     offset: i32,
     count: i32,
