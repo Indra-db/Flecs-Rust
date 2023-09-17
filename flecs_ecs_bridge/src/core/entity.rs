@@ -5,16 +5,16 @@ use std::{
 
 use libc::strlen;
 
-use crate::core::c_binding::bindings::ecs_get_world;
+use crate::{core::c_binding::bindings::ecs_get_world, ecs_assert};
 
 use super::{
     archetype::Archetype,
     c_binding::bindings::{
-        ecs_get_name, ecs_get_path_w_sep, ecs_get_symbol, ecs_get_type, ecs_has_id, ecs_is_alive,
-        ecs_is_valid, EcsDisabled,
+        ecs_add_id, ecs_get_id, ecs_get_name, ecs_get_path_w_sep, ecs_get_symbol, ecs_get_type,
+        ecs_has_id, ecs_is_alive, ecs_is_valid, EcsDisabled,
     },
     c_types::*,
-    component::CachedComponentData,
+    component::{CachedComponentData, NotEmptyComponent},
     id::Id,
 };
 
@@ -194,5 +194,16 @@ impl Entity {
         Archetype::new(self.id.world, unsafe {
             ecs_get_type(self.id.world, self.id.id)
         })
+    }
+
+    pub fn get_component<T: CachedComponentData + NotEmptyComponent>(&self) -> Option<&T> {
+        let component_id = T::get_id(self.id.world);
+        unsafe { (ecs_get_id(self.id.world, self.id.id, component_id) as *const T).as_ref() }
+    }
+
+    pub fn add_component<T: CachedComponentData>(self, component: T) -> Self {
+        let component_id = T::get_id(self.id.world);
+        unsafe { ecs_add_id(self.id.world, self.id.id, component_id) }
+        self
     }
 }
