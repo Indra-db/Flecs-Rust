@@ -316,13 +316,14 @@ impl Entity {
         }
     }
 
+    //TODO: maybe stick with passing id, not the Entity?
     /// Iterate over targets for a given relationship.
     ///
     /// ### Arguments
     ///
     /// * `relationship` - The relationship for which to iterate the targets.
     /// * `func` - The closure invoked for each target. Must match the signature `FnMut(Entity)`.
-    pub fn for_each_target_in_relationship_by_entity<F>(&self, relationship: &Entity, mut func: F)
+    pub fn for_each_target_in_relationship_by_entity<F>(&self, relationship: Entity, mut func: F)
     where
         F: FnMut(Entity),
     {
@@ -332,6 +333,26 @@ impl Entity {
         });
     }
 
+    //TODO: maybe stick with passing id, not the Entity?
+    /// Iterate over targets for a given relationship.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `Relationship` - The relationship for which to iterate the targets.
+    ///
+    /// ### Arguments
+    ///
+    /// * `func` - The function invoked for each target.
+    pub fn for_each_target_in_relationship<T, F>(&self, func: F)
+    where
+        T: CachedComponentData,
+        F: FnMut(Entity),
+    {
+        self.for_each_target_in_relationship_by_entity(
+            Entity::new_only_id(T::get_id(self.id.world)),
+            func,
+        );
+    }
     //
     //
     //
