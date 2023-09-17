@@ -27,14 +27,14 @@ pub struct ComponentData {
 pub struct Enum;
 pub struct Struct;
 
-pub trait EmptyComponent {}
-pub trait NotEmptyComponent {}
+pub trait EmptyComponent: CachedComponentData {}
+pub trait NotEmptyComponent: CachedComponentData {}
 pub trait ECSComponentType {}
 
 impl ECSComponentType for Enum {}
 impl ECSComponentType for Struct {}
 
-pub trait ComponentType<T: ECSComponentType> {}
+pub trait ComponentType<T: ECSComponentType>: CachedComponentData {}
 
 /// Trait that manages component IDs across multiple worlds & binaries.
 ///

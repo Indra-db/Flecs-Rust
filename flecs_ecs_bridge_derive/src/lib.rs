@@ -5,6 +5,45 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Data, DeriveInput, Fields};
 
+/// `Component` macro for defining ECS components.
+///
+/// When a type is decorated with `#[derive(Component)]`, several trait implementations are automatically added based on its structure:
+///
+/// - Depending on whether the type is a struct or an enum, the relevant `ComponentType<Struct>` or `ComponentType<Enum>` trait is implemented.
+/// - Based on the presence of fields or variants, the type will implement either `EmptyComponent` or `NotEmptyComponent`.
+/// - The `CachedComponentData` trait is implemented, providing storage mechanisms for the component.
+///
+/// # Requirements:
+///
+/// - Types deriving `CachedComponentData` should also implement `Clone` and `Default`.
+///   For enums, you'll need to provide an explicit implementation of `Default`. Structs can often use `#[derive(Default)]` for a derived implementation.
+///
+/// # Note:
+///
+/// Ensure that enums annotated with `Component` have at least one variant; otherwise, a compile-time error will be triggered.
+///
+/// # Example:
+///
+/// ```ignore
+/// #[derive(Clone, Default, Component)]
+/// struct Position {
+///     x: f32,
+///     y: f32,
+/// }
+///
+/// #[derive(Clone, Component)]
+/// enum State {
+///     Idle,
+///     Running,
+///     Jumping,
+/// }
+///
+/// impl Default for State {
+///     fn default() -> Self {
+///         State::Idle
+///     }
+/// }
+/// ```
 #[proc_macro_derive(Component)]
 pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     // Parse the input tokens into a syntax tree
