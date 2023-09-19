@@ -1,25 +1,32 @@
 use std::{
     ffi::{c_void, CStr, CString},
+    mem::MaybeUninit,
     sync::OnceLock,
 };
 
 use libc::strlen;
 
-use crate::{core::c_binding::bindings::ecs_get_world, ecs_assert};
+use crate::{
+    core::{c_binding::bindings::ecs_get_world, utility::errors::FlecsErrorCode},
+    ecs_assert,
+};
 
 use super::{
     archetype::Archetype,
     c_binding::bindings::{
-        ecs_add_id, ecs_clear, ecs_delete, ecs_get_id, ecs_get_name, ecs_get_path_w_sep,
+        ecs_add_id, ecs_clear, ecs_delete, ecs_filter_desc_t, ecs_filter_init, ecs_filter_iter,
+        ecs_filter_next, ecs_filter_t, ecs_get_id, ecs_get_name, ecs_get_path_w_sep,
         ecs_get_symbol, ecs_get_table, ecs_get_target, ecs_get_type, ecs_has_id, ecs_is_alive,
-        ecs_is_valid, ecs_record_find, ecs_record_t, ecs_search_offset, ecs_table_get_type,
-        ecs_table_t, EcsDisabled, EcsUnion, EcsWildcard,
+        ecs_is_valid, ecs_iter_t, ecs_oper_kind_t_EcsOptional, ecs_record_find, ecs_record_t,
+        ecs_search_offset, ecs_table_get_type, ecs_table_t, ecs_term_t, EcsAny, EcsChildOf,
+        EcsDisabled, EcsIsEntity, EcsPrefab, EcsUnion, EcsWildcard, ECS_FILTER_INIT,
     },
     c_types::*,
-    component::{CachedComponentData, NotEmptyComponent},
+    component::{CachedComponentData, ComponentType, Enum, NotEmptyComponent, Struct},
     id::Id,
     table::{Table, TableRange},
     utility::functions::{ecs_pair, ecs_pair_first, ecs_pair_second, ecs_record_to_row},
+    world::World,
 };
 
 static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\0") };
@@ -352,16 +359,127 @@ impl Entity {
             func,
         );
     }
+
+    /// Iterate children for entity
+    ///
+    /// ### Arguments
+    ///
+    /// * `relationship` - The relationship to follow
+    /// * `func` - The function invoked for each child. Must match the signature `FnMut(Entity)`.
+    pub fn for_each_children<F>(&self, relationship: EntityT, mut func: F)
+    where
+        F: FnMut(Entity),
+    {
+        // When the entity is a wildcard, this would attempt to query for all
+        //entities with (ChildOf, *) or (ChildOf, _) instead of querying for
+        //the children of the wildcard entity.
+        if unsafe { self.id.id == EcsWildcard || self.id.id == EcsAny } {
+            // this is correct, wildcard entities don't have children
+            return;
+        }
+
+        let world: World = World::new_from_world(self.id.world);
+
+        let mut terms: [ecs_term_t; 2] = unsafe { MaybeUninit::zeroed().assume_init() };
+
+        let mut filter: ecs_filter_t = unsafe { ECS_FILTER_INIT };
+        filter.terms = terms.as_mut_ptr();
+        filter.term_count = 2;
+
+        let mut desc: ecs_filter_desc_t = unsafe { MaybeUninit::zeroed().assume_init() };
+        desc.terms[0].first.id = relationship;
+        desc.terms[0].second.id = self.id.id;
+        unsafe {
+            desc.terms[0].second.flags = EcsIsEntity;
+            desc.terms[1].id = EcsPrefab;
+            desc.terms[1].oper = ecs_oper_kind_t_EcsOptional;
+        }
+        desc.storage = &mut filter;
+
+        if !unsafe { ecs_filter_init(self.id.world, &desc) }.is_null() {
+            let mut it: ecs_iter_t = unsafe { ecs_filter_iter(self.id.world, &filter) };
+            while unsafe { ecs_filter_next(&mut it) } {
+                todo!("yet to implement");
+            }
+        }
+    }
+
+    /// Iterate children for entity
+    ///
+    /// ### Arguments
+    ///
+    /// * T - The relationship to follow
+    /// * `func` - The function invoked for each child. Must match the signature `FnMut(Entity)`.
+    pub fn for_each_children1<T, F>(&self, mut func: F)
+    where
+        T: CachedComponentData,
+        F: FnMut(Entity),
+    {
+        self.for_each_children(T::get_id(self.id.world), func);
+    }
+
+    /// Iterate children for entity
+    /// This operation follows the ChildOf relationship.
+    /// ### Arguments
+    ///
+    /// * `func` - The function invoked for each child. Must match the signature `FnMut(Entity)`.
+    pub fn for_each_children2<F>(&self, mut func: F)
+    where
+        F: FnMut(Entity),
+    {
+        self.for_each_children(unsafe { EcsChildOf }, func);
+    }
+
+    /// Get (struct) Component from entity
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `T` - The component type to get
+    ///
+    /// ### Returns
+    ///
+    /// * `*const T` - The enum component, nullptr if the entity does not have the component
+    pub fn get<T: CachedComponentData + ComponentType<Struct>>(&self) -> *const T {
+        let component_id = T::get_id(self.id.world);
+        unsafe { (ecs_get_id(self.id.world, self.id.id, component_id) as *const T) }
+    }
+
+    /// Get (enum) Component from entity
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `T` - The enum component type to get
+    ///
+    /// ### Returns
+    ///
+    /// * `*const T` - The enum component, nullptr if the entity does not have the component
+    pub fn get1<T: CachedComponentData + ComponentType<Enum>>(&self) -> *const T {
+        let component_id: IdT = T::get_id(self.id.world);
+        let target: IdT = unsafe { ecs_get_target(self.id.world, self.id.id, component_id, 0) };
+
+        if target == 0 {
+            unsafe { ecs_get_id(self.id.world, self.id.id, component_id) as *const T }
+        } else {
+            // get constant value from constant entity
+            let constant_value =
+                unsafe { ecs_get_id(self.id.world, target, component_id) as *const T };
+
+            ecs_assert!(
+                !constant_value.is_null(),
+                FlecsErrorCode::InternalError,
+                "missing enum constant value {}",
+                T::get_symbol_name()
+            );
+
+            constant_value
+        }
+    }
     //
     //
     //
     /*
     temp placed seperately
     */
-    pub fn get_component<T: CachedComponentData + NotEmptyComponent>(&self) -> Option<&T> {
-        let component_id = T::get_id(self.id.world);
-        unsafe { (ecs_get_id(self.id.world, self.id.id, component_id) as *const T).as_ref() }
-    }
 
     pub fn add_component<T: CachedComponentData>(self) -> Self {
         let component_id = T::get_id(self.id.world);
