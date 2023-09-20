@@ -17,7 +17,7 @@ use super::{
     archetype::Archetype,
     c_binding::bindings::{
         ecs_add_id, ecs_clear, ecs_delete, ecs_filter_desc_t, ecs_filter_init, ecs_filter_iter,
-        ecs_filter_next, ecs_filter_t, ecs_get_id, ecs_get_name, ecs_get_path_w_sep,
+        ecs_filter_next, ecs_filter_t, ecs_get_depth, ecs_get_id, ecs_get_name, ecs_get_path_w_sep,
         ecs_get_symbol, ecs_get_table, ecs_get_target, ecs_get_type, ecs_has_id, ecs_is_alive,
         ecs_is_valid, ecs_iter_t, ecs_oper_kind_t_EcsOptional, ecs_record_find, ecs_record_t,
         ecs_search_offset, ecs_table_get_type, ecs_table_t, ecs_term_t, EcsAny, EcsChildOf,
@@ -629,6 +629,46 @@ impl Entity {
             relationship,
             ecs_pair(First::get_id(self.id.world), Second::get_id(self.id.world)),
         )
+    }
+
+    /// Retrieves the depth for the given relationship.
+    ///
+    /// ### Arguments
+    ///
+    /// * `relationship` - The relationship for which to get the depth.
+    ///
+    /// ### Returns
+    ///
+    /// * The depth of the relationship.
+    pub fn get_depth_by_id(&self, relationship: EntityT) -> i32 {
+        unsafe { ecs_get_depth(self.id.world, self.id.id, relationship) }
+    }
+
+    /// Retrieves the depth for a specified relationship.
+    ///
+    /// This function is a convenient wrapper around `get_depth_by_id`, allowing callers
+    /// to provide a type and automatically deriving the relationship id.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `T` - The relationship type to use for deriving the id.
+    ///
+    /// ### Returns
+    ///
+    /// * The depth of the relationship.
+    pub fn get_depth<T: CachedComponentData>(&self) -> i32 {
+        self.get_depth_by_id(T::get_id(self.id.world))
+    }
+
+    /// Retrieves the parent of the entity.
+    ///
+    /// This function is shorthand for getting the target using the `EcsChildOf` relationship.
+    ///
+    /// ### Returns
+    ///
+    /// * The parent of the entity.
+    pub fn parent(&self) -> Entity {
+        self.get_target_from_entity(unsafe { EcsChildOf }, 0)
     }
 
     //
