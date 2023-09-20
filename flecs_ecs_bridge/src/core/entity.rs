@@ -399,7 +399,14 @@ impl Entity {
         if !unsafe { ecs_filter_init(self.id.world, &desc) }.is_null() {
             let mut it: ecs_iter_t = unsafe { ecs_filter_iter(self.id.world, &filter) };
             while unsafe { ecs_filter_next(&mut it) } {
-                todo!("yet to implement");
+                for i in 0..it.count as usize {
+                    unsafe {
+                        //TODO should investigate if this is correct
+                        let id = it.entities.add(i);
+                        let ent = Entity::new(self.id.world, *id);
+                        func(ent);
+                    }
+                }
             }
         }
     }
