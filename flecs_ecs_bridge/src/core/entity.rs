@@ -4,9 +4,11 @@ use std::{
     sync::OnceLock,
 };
 
+use flecs_ecs_bridge_derive::Component;
 use libc::strlen;
 
 use crate::{
+    core::data_structures::pair::{PairT, PairTT},
     core::{c_binding::bindings::ecs_get_world, utility::errors::FlecsErrorCode},
     ecs_assert,
 };
@@ -571,19 +573,62 @@ impl Entity {
     /// ### Returns
     ///
     /// * The entity for which the target has been found.
-    pub fn get_target_by_relationship_and_component_id(
-        &self,
-        relationship: EntityT,
-        component_id: IdT,
-    ) -> Entity {
+    pub fn get_target_by_component_id(&self, relationship: EntityT, component_id: IdT) -> Entity {
         Entity::new(self.id.world, unsafe {
             ecs_get_target(self.id.world, self.id.id, relationship, component_id as i32)
         })
     }
 
+    /// Get the target for a given component and relationship.
+    ///
+    /// This function is a convenient wrapper around `get_target_by_relationship_and_component_id`,
+    /// allowing callers to provide a type and automatically deriving the component id.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `T` - The component type to use for deriving the id.
+    ///
+    /// ### Arguments
+    ///
+    /// * `relationship` - The relationship to follow.
+    ///
+    /// ### Returns
+    ///
+    /// * The entity for which the target has been found.
     #[inline(always)]
-    pub fn get_target<T: CachedComponentData>(&self, relationship: EntityT) -> Entity {
-        self.get_target_by_relationship_and_component_id(relationship, T::get_id(self.id.world))
+    pub fn get_target_for_component<T: CachedComponentData>(
+        &self,
+        relationship: EntityT,
+    ) -> Entity {
+        self.get_target_by_component_id(relationship, T::get_id(self.id.world))
+    }
+
+    /// Get the target for a given pair of components and a relationship.
+    ///
+    /// This function extends `get_target`, allowing callers to provide two component types.
+    /// It retrieves the target entity for the combined pair of those component ids.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `First` - The first component type to use for deriving the id.
+    /// * `Second` - The second component type to use for deriving the id.
+    ///
+    /// ### Arguments
+    ///
+    /// * `relationship` - The relationship to follow.
+    ///
+    /// ### Returns
+    ///
+    /// * The entity for which the target has been found.
+    #[inline(always)]
+    pub fn get_target_for_pair<First: CachedComponentData, Second: CachedComponentData>(
+        &self,
+        relationship: EntityT,
+    ) -> Entity {
+        self.get_target_by_component_id(
+            relationship,
+            ecs_pair(First::get_id(self.id.world), Second::get_id(self.id.world)),
+        )
     }
 
     //
@@ -607,3 +652,11 @@ impl Entity {
         unsafe { ecs_clear(self.id.world, self.id.id) }
     }
 }
+
+use crate::core::component::{ComponentData, EmptyComponent};
+
+#[derive(Component, Default, Clone)]
+struct Test1 {}
+
+#[derive(Component, Default, Clone)]
+struct Test2 {}

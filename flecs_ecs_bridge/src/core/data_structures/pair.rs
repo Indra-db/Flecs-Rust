@@ -1,40 +1,52 @@
 //prototype, temporary probably
 
-use crate::core::component::CachedComponentData;
+use crate::core::{
+    c_types::{IdT, WorldT},
+    component::CachedComponentData,
+    utility::functions::ecs_pair,
+};
 
-struct PairT<T: CachedComponentData, U: CachedComponentData> {
+#[derive(Default)]
+pub struct PairT<T: CachedComponentData, U: CachedComponentData> {
     first: T,
     second: U,
 }
 
-trait Pair<T: CachedComponentData, U: CachedComponentData> {
-    fn get_first_component_id(&self) -> IdT;
-    fn get_first_component(&self) -> &T;
-    fn get_first_component_mut(&self) -> &mut T;
-    fn get_second_component_id(&self) -> IdT;
-    fn get_second_component(&self) -> &U;
-    fn get_second_component_mut(&self) -> &mut U;
+pub trait PairTT {
+    type First: CachedComponentData;
+    type Second: CachedComponentData;
+    fn get_first_component_id(world: *mut WorldT) -> IdT;
+    fn get_first_component(&self) -> &Self::First;
+    fn get_first_component_mut(&mut self) -> &mut Self::First;
+    fn get_second_component_id(world: *mut WorldT) -> IdT;
+    fn get_second_component(&self) -> &Self::Second;
+    fn get_second_component_mut(&mut self) -> &mut Self::Second;
+    fn get_pair_id(world: *mut WorldT) -> IdT {
+        ecs_pair(Self::First::get_id(world), Self::Second::get_id(world))
+    }
 }
 
-impl<T: CachedComponentData, U: CachedComponentData> Pair<T, U> for PairT<T, U> {
-    fn get_first_component_id(&self, world: WorldT) -> IdT {
+impl<T: CachedComponentData, U: CachedComponentData> PairTT for PairT<T, U> {
+    type First = T;
+    type Second = U;
+    fn get_first_component_id(world: *mut WorldT) -> IdT {
         T::get_id(world)
     }
     fn get_first_component(&self) -> &T {
         &self.first
     }
-    fn get_second_component_id(&self, world: WorldT) -> IdT {
+    fn get_second_component_id(world: *mut WorldT) -> IdT {
         U::get_id(world)
     }
     fn get_second_component(&self) -> &U {
         &self.second
     }
 
-    fn get_first_component_mut(&self) -> &mut T {
+    fn get_first_component_mut(&mut self) -> &mut T {
         &mut self.first
     }
 
-    fn get_second_component_mut(&self) -> &mut U {
+    fn get_second_component_mut(&mut self) -> &mut U {
         &mut self.second
     }
 }
