@@ -41,7 +41,7 @@ impl Entity {
     /// # Arguments
     /// * `world` - The world the entity belongs to.
     /// * `id` - The entity id.
-    pub fn new(world: *mut WorldT, id: EntityT) -> Self {
+    pub fn new(world: *mut WorldT, id: IdT) -> Self {
         unsafe {
             Self {
                 id: Id::new(
@@ -446,21 +446,21 @@ impl Entity {
     /// ### Returns
     ///
     /// * `*const T` - The enum component, nullptr if the entity does not have the component
-    pub fn get<T: CachedComponentData + ComponentType<Struct>>(&self) -> *const T {
+    pub fn get_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> *const T {
         let component_id = T::get_id(self.id.world);
         unsafe { (ecs_get_id(self.id.world, self.id.id, component_id) as *const T) }
     }
 
-    /// Get (enum) Component from entity
+    /// Get enum constant
     ///
     /// ### Type Parameters
     ///
-    /// * `T` - The enum component type to get
+    /// * `T` - The enum component type which to get the constant
     ///
     /// ### Returns
     ///
     /// * `*const T` - The enum component, nullptr if the entity does not have the component
-    pub fn get1<T: CachedComponentData + ComponentType<Enum>>(&self) -> *const T {
+    pub fn get_enum_constant<T: CachedComponentData + ComponentType<Enum>>(&self) -> *const T {
         let component_id: IdT = T::get_id(self.id.world);
         let target: IdT = unsafe { ecs_get_target(self.id.world, self.id.id, component_id, 0) };
 
@@ -481,6 +481,111 @@ impl Entity {
             constant_value
         }
     }
+
+    /// Get component value as untyped pointer
+    ///
+    /// ### Arguments
+    ///
+    /// * `component_id` - The component to get
+    ///
+    /// ### Returns
+    ///
+    /// * `*const c_void` - Pointer to the component value, nullptr if the entity does not have the component
+    pub fn get_component_by_id(&self, component_id: IdT) -> *const c_void {
+        unsafe { ecs_get_id(self.id.world, self.id.id, component_id) as *const c_void }
+    }
+
+    /// get a pair as untyped pointer
+    /// This operation gets the value for a pair from the entity. If neither the
+    /// first nor the second part of the pair are components, the operation
+    /// will fail.
+    ///
+    /// ### Arguments
+    ///
+    /// * `first` - The first element of the pair
+    /// * `second` - The second element of the pair
+    pub fn get_pair_untyped(&self, first: EntityT, second: EntityT) -> *const c_void {
+        unsafe { ecs_get_id(self.id.world, self.id.id, ecs_pair(first, second)) as *const c_void }
+    }
+
+    /// Get target for a given pair.
+    ///
+    /// This operation returns the target for a given pair. The optional
+    /// index can be used to iterate through targets, in case the entity has
+    /// multiple instances for the same relationship.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `First` - The first element of the pair.
+    ///
+    /// ### Arguments
+    ///
+    /// * `index` - The index (0 for the first instance of the relationship).
+    pub fn get_target_from_component<First: CachedComponentData>(&self, index: i32) -> Entity {
+        Entity::new(self.id.world, unsafe {
+            ecs_get_target(
+                self.id.world,
+                self.id.id,
+                First::get_id(self.id.world),
+                index,
+            )
+        })
+    }
+
+    /// Get target for a given pair.
+    ///
+    /// This operation returns the target for a given pair. The optional
+    /// index can be used to iterate through targets, in case the entity has
+    /// multiple instances for the same relationship.
+    ///
+    /// ### Arguments
+    ///
+    /// * `first` - The first element of the pair for which to retrieve the target.
+    /// * `index` - The index (0 for the first instance of the relationship).
+    pub fn get_target_from_entity(&self, first: EntityT, index: i32) -> Entity {
+        Entity::new(self.id.world, unsafe {
+            ecs_get_target(self.id.world, self.id.id, first, index)
+        })
+    }
+
+    /// Get the target of a pair for a given relationship id.
+    ///
+    /// This operation returns the first entity that has the provided id by following
+    /// the specified relationship. If the entity itself has the id then entity will
+    /// be returned. If the id cannot be found on the entity or by following the
+    /// relationship, the operation will return 0.
+    ///
+    /// This operation can be used to lookup, for example, which prefab is providing
+    /// a component by specifying the IsA pair:
+    ///
+    /// ```ignore
+    /// // Is Position provided by the entity or one of its base entities?
+    /// // get_target_by_relationship_and_component_id(world, EcsIsA, T::get_id<Position>(world))
+    /// ```
+    ///
+    /// ### Arguments
+    ///
+    /// * `relationship` - The relationship to follow.
+    /// * `id` - The id to lookup.
+    ///
+    /// ### Returns
+    ///
+    /// * The entity for which the target has been found.
+    pub fn get_target_by_relationship_and_component_id(
+        &self,
+        relationship: EntityT,
+        component_id: IdT,
+    ) -> Entity {
+        Entity::new(self.id.world, unsafe {
+            ecs_get_target(self.id.world, self.id.id, relationship, component_id as i32)
+        })
+    }
+
+    #[inline(always)]
+    pub fn get_target<T: CachedComponentData>(&self, relationship: EntityT) -> Entity {
+        self.get_target_by_relationship_and_component_id(relationship, T::get_id(self.id.world))
+    }
+
     //
     //
     //
