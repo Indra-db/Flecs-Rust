@@ -1,6 +1,9 @@
 use std::sync::OnceLock;
 
-use crate::core::c_binding::bindings::ECS_ROW_MASK;
+use crate::core::{
+    c_binding::bindings::{ecs_has_id, ECS_ROW_MASK},
+    c_types::WorldT,
+};
 
 use super::super::c_types::{PAIR, RUST_ECS_COMPONENT_MASK};
 
@@ -13,6 +16,11 @@ pub fn ecs_entity_t_comb(lo: u64, hi: u64) -> u64 {
 #[inline(always)]
 pub fn ecs_pair(pred: u64, obj: u64) -> u64 {
     PAIR.0 | ecs_entity_t_comb(obj, pred)
+}
+
+#[inline(always)]
+pub fn ecs_has_pair(world: *const WorldT, entity: u64, first: u64, second: u64) -> bool {
+    unsafe { ecs_has_id(world, entity, ecs_pair(first, second)) }
 }
 
 #[inline(always)]

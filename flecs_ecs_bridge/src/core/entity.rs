@@ -19,15 +19,18 @@ use super::{
         ecs_add_id, ecs_clear, ecs_delete, ecs_filter_desc_t, ecs_filter_init, ecs_filter_iter,
         ecs_filter_next, ecs_filter_t, ecs_get_depth, ecs_get_id, ecs_get_name, ecs_get_path_w_sep,
         ecs_get_symbol, ecs_get_table, ecs_get_target, ecs_get_type, ecs_has_id, ecs_is_alive,
-        ecs_is_valid, ecs_iter_t, ecs_oper_kind_t_EcsOptional, ecs_record_find, ecs_record_t,
-        ecs_search_offset, ecs_table_get_type, ecs_table_t, ecs_term_t, EcsAny, EcsChildOf,
-        EcsDisabled, EcsIsEntity, EcsPrefab, EcsUnion, EcsWildcard, ECS_FILTER_INIT,
+        ecs_is_valid, ecs_iter_t, ecs_lookup_path_w_sep, ecs_oper_kind_t_EcsOptional,
+        ecs_record_find, ecs_record_t, ecs_search_offset, ecs_table_get_type, ecs_table_t,
+        ecs_term_t, EcsAny, EcsChildOf, EcsDisabled, EcsIsEntity, EcsPrefab, EcsUnion, EcsWildcard,
+        ECS_FILTER_INIT,
     },
     c_types::*,
     component::{CachedComponentData, ComponentType, Enum, NotEmptyComponent, Struct},
     id::Id,
     table::{Table, TableRange},
-    utility::functions::{ecs_pair, ecs_pair_first, ecs_pair_second, ecs_record_to_row},
+    utility::functions::{
+        ecs_has_pair, ecs_pair, ecs_pair_first, ecs_pair_second, ecs_record_to_row,
+    },
     world::World,
 };
 
@@ -462,7 +465,7 @@ impl Entity {
     /// ### Returns
     ///
     /// * `*const T` - The enum component, nullptr if the entity does not have the component
-    pub fn get_enum_constant<T: CachedComponentData + ComponentType<Enum>>(&self) -> *const T {
+    pub fn get_enum_component<T: CachedComponentData + ComponentType<Enum>>(&self) -> *const T {
         let component_id: IdT = T::get_id(self.id.world);
         let target: IdT = unsafe { ecs_get_target(self.id.world, self.id.id, component_id, 0) };
 
@@ -640,6 +643,7 @@ impl Entity {
     /// ### Returns
     ///
     /// * The depth of the relationship.
+    #[inline(always)]
     pub fn get_depth_by_id(&self, relationship: EntityT) -> i32 {
         unsafe { ecs_get_depth(self.id.world, self.id.id, relationship) }
     }
@@ -656,6 +660,7 @@ impl Entity {
     /// ### Returns
     ///
     /// * The depth of the relationship.
+    #[inline(always)]
     pub fn get_depth<T: CachedComponentData>(&self) -> i32 {
         self.get_depth_by_id(T::get_id(self.id.world))
     }
@@ -667,8 +672,43 @@ impl Entity {
     /// ### Returns
     ///
     /// * The parent of the entity.
+    #[inline(always)]
     pub fn parent(&self) -> Entity {
         self.get_target_from_entity(unsafe { EcsChildOf }, 0)
+    }
+
+    #[inline(always)]
+    pub fn lookup_entity_by_name(&self, path: &str) -> Entity {
+        ecs_assert!(
+            self.id.id != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid lookup from null handle"
+        );
+        let c_path = CString::new(path).unwrap();
+        Entity::new(self.id.world, unsafe {
+            ecs_lookup_path_w_sep(
+                self.id.world,
+                self.id.id,
+                c_path.as_ptr(),
+                SEPARATOR.as_ptr(),
+                SEPARATOR.as_ptr(),
+                false,
+            )
+        })
+    }
+
+    #[inline(always)]
+    pub fn has_entity(&self, entity: IdT) -> bool {
+        unsafe { ecs_has_id(self.id.world, self.id.id, entity) }
+    }
+
+    pub fn has_struct_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> bool {
+        unsafe { ecs_has_id(self.id.world, self.id.id, T::get_id(self.id.world)) }
+    }
+
+    pub fn has_enum_component<T: CachedComponentData + ComponentType<Enum>>(&self) -> bool {
+        let component_id: IdT = T::get_id(self.id.world);
+        unsafe { ecs_has_pair(self.id.world, self.id.id, component_id, EcsWildcard) }
     }
 
     //
