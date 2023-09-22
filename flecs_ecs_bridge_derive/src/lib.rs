@@ -122,8 +122,9 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
 
     // Check if the enum has any variants
     let has_variants = !variants.is_empty();
-    let size_variants = variants.len();
+    let size_variants = variants.len() as u32;
     // If it has variants, produce the NotEmptyTrait implementation. Otherwise, produce a compile error.
+
     let variant_constructors: Vec<_> = variants
         .iter()
         .map(|variant| {
@@ -154,7 +155,7 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
         })
         .collect();
 
-    let expanded = quote! {
+    let enum_iter = quote! {
         impl #name {
             pub fn iter() -> impl Iterator<Item = Self> {
                 vec![#(#variant_constructors),*].into_iter()
@@ -245,7 +246,7 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
 
     let cached_enum_data = quote! {
         impl CachedEnumData for #name {
-            //const SIZE_ENUM_FIELDS: u8 = #size_variants;
+            const SIZE_ENUM_FIELDS: u32 = #size_variants;
 
             fn get_cstr_name(&self) -> &std::ffi::CStr {
                 match self {
@@ -282,6 +283,6 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
 
         #cached_enum_data
 
-        #expanded
+        #enum_iter
     }
 }
