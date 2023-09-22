@@ -62,49 +62,121 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     ProcMacroTokenStream::from(expanded)
 }
 
+// This function generates a series of trait implementations for structs.
+// The implementations depend on the presence or absence of fields in the struct.
 fn impl_cached_component_data_struct(
-    data_struct: &syn::DataStruct,
-    name: &syn::Ident,
+    data_struct: &syn::DataStruct, // Parsed data structure from the input token stream
+    name: &syn::Ident,             // Name of the structure
 ) -> proc_macro2::TokenStream {
+    // Determine if the struct has fields
     let has_fields = match &data_struct.fields {
         Fields::Named(fields) => !fields.named.is_empty(),
         Fields::Unnamed(fields) => !fields.unnamed.is_empty(),
         Fields::Unit => false,
     };
 
-    if has_fields {
+    // Common trait implementation for ComponentType and CachedComponentData
+    let common_traits = quote! {
+        impl ComponentType<Struct> for #name {}
+
+        impl CachedComponentData for #name {
+            fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
+                static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
+                &ONCE_LOCK
+            }
+
+            fn get_symbol_name() -> &'static str {
+                use std::any::type_name;
+                static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
+                SYMBOL_NAME.get_or_init(|| type_name::<Self>().replace("::", "."))
+            }
+        }
+    };
+
+    // Specific trait implementation based on the presence of fields
+    let specific_trait = if has_fields {
+        quote! { impl NotEmptyComponent for #name {} }
+    } else {
+        quote! { impl EmptyComponent for #name {} }
+    };
+
+    // Combine common and specific trait implementations
+    quote! {
+        #specific_trait
+        #common_traits
+    }
+}
+
+fn generate_variant_constructor(
+    variant: &syn::Variant,
+    name: &syn::Ident,
+) -> proc_macro2::TokenStream {
+    let variant_ident = &variant.ident;
+    match &variant.fields {
+        syn::Fields::Unit => quote! { #name::#variant_ident },
+        syn::Fields::Unnamed(fields) => {
+            let defaults: Vec<_> = fields
+                .unnamed
+                .iter()
+                .map(|_| quote! { Default::default() })
+                .collect();
+            quote! { #name::#variant_ident(#(#defaults),*) }
+        }
+        syn::Fields::Named(fields) => {
+            let field_names: Vec<_> = fields
+                .named
+                .iter()
+                .map(|f| f.ident.as_ref().unwrap())
+                .collect();
+            let defaults: Vec<_> = field_names
+                .iter()
+                .map(|_| quote! { Default::default() })
+                .collect();
+            quote! { #name::#variant_ident { #(#field_names: #defaults),* } }
+        }
+    }
+}
+
+fn generate_variant_match_arm(
+    variant: &syn::Variant,
+    name: &syn::Ident,
+    use_index: bool,
+    index: usize,
+) -> proc_macro2::TokenStream {
+    let variant_ident = &variant.ident;
+
+    let inner = if use_index {
+        quote! { #index }
+    } else {
         quote! {
-            impl NotEmptyComponent for #name {}
+            unsafe {
+                let slice = concat!(stringify!(#variant_ident), "\0").as_bytes();
+                std::ffi::CStr::from_bytes_with_nul_unchecked(slice)
+            }
+        }
+    };
 
-            impl ComponentType<Struct> for #name {}
-
-            impl CachedComponentData for #name {
-                fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
-                    static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
-                    &ONCE_LOCK
-                }
-                fn get_symbol_name() -> &'static str {
-                    use std::any::type_name;
-                    static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
-                    SYMBOL_NAME.get_or_init(|| type_name::<Self>().replace("::", "."))
+    match &variant.fields {
+        syn::Fields::Unnamed(fields) => {
+            let field_names: Vec<_> = fields.unnamed.iter().map(|_| quote!(_)).collect();
+            quote! {
+                #name::#variant_ident(#(#field_names),*) => {
+                    #inner
                 }
             }
         }
-    } else {
-        quote! {
-            impl EmptyComponent for #name {}
-
-            impl ComponentType<Struct> for #name {}
-
-            impl CachedComponentData for #name {
-                fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
-                    static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
-                    &ONCE_LOCK
+        syn::Fields::Named(fields) => {
+            let field_names: Vec<_> = fields.named.iter().map(|f| &f.ident).collect();
+            quote! {
+                #name::#variant_ident { #(#field_names),* } => {
+                    #inner
                 }
-                fn get_symbol_name() -> &'static str {
-                    use std::any::type_name;
-                    static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
-                    SYMBOL_NAME.get_or_init(|| type_name::<Self>().replace("::", "."))
+            }
+        }
+        syn::Fields::Unit => {
+            quote! {
+                #name::#variant_ident => {
+                    #inner
                 }
             }
         }
@@ -114,135 +186,35 @@ fn impl_cached_component_data_struct(
 fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
     let name = &ast.ident;
 
-    let variants = if let syn::Data::Enum(data_enum) = &ast.data {
-        &data_enum.variants
-    } else {
-        panic!("#[derive(VariantName)] is only defined for enums");
+    // Ensure it's an enum and get the variants
+    let variants = match &ast.data {
+        syn::Data::Enum(data_enum) => &data_enum.variants,
+        _ => panic!("#[derive(VariantName)] is only defined for enums"),
     };
-
-    // Check if the enum has any variants
-    let has_variants = !variants.is_empty();
-    let size_variants = variants.len() as u32;
-    // If it has variants, produce the NotEmptyTrait implementation. Otherwise, produce a compile error.
 
     let variant_constructors: Vec<_> = variants
         .iter()
-        .map(|variant| {
-            let variant_ident = &variant.ident;
-            match &variant.fields {
-                syn::Fields::Unit => quote! { #name::#variant_ident },
-                syn::Fields::Unnamed(fields) => {
-                    let defaults: Vec<_> = fields
-                        .unnamed
-                        .iter()
-                        .map(|_| quote! { Default::default() })
-                        .collect();
-                    quote! { #name::#variant_ident(#(#defaults),*) }
-                }
-                syn::Fields::Named(fields) => {
-                    let field_names: Vec<_> = fields
-                        .named
-                        .iter()
-                        .map(|f| f.ident.as_ref().unwrap())
-                        .collect();
-                    let defaults: Vec<_> = field_names
-                        .iter()
-                        .map(|_| quote! { Default::default() })
-                        .collect();
-                    quote! { #name::#variant_ident { #(#field_names: #defaults),* } }
-                }
-            }
-        })
+        .map(|variant| generate_variant_constructor(variant, name))
         .collect();
 
-    let enum_iter = quote! {
-        impl #name {
-            pub fn iter() -> impl Iterator<Item = Self> {
-                vec![#(#variant_constructors),*].into_iter()
-            }
-        }
-    };
+    let variant_name_arms: Vec<_> = variants
+        .iter()
+        .map(|variant| generate_variant_match_arm(variant, name, false, 0))
+        .collect();
 
+    let variant_index_arms: Vec<_> = variants
+        .iter()
+        .enumerate()
+        .map(|(index, variant)| generate_variant_match_arm(variant, name, true, index))
+        .collect();
+
+    let has_variants = !variants.is_empty();
+    let size_variants = variants.len() as u32;
     let not_empty_trait_or_error = if has_variants {
-        quote! {
-            impl NotEmptyComponent for #name {}
-        }
+        quote! { impl NotEmptyComponent for #name {} }
     } else {
-        quote! {
-            compile_error!("Enum components should have at least one variant!");
-        }
+        quote! { compile_error!("Enum components should have at least one variant!"); }
     };
-
-    let variant_name_arms = variants.iter().map(|v| {
-        let variant_ident = &v.ident;
-
-        match &v.fields {
-            syn::Fields::Unnamed(fields) => {
-                let field_names: Vec<_> = fields.unnamed.iter().map(|_| quote!(_)).collect();
-                quote! {
-                    #name::#variant_ident(#(#field_names),*) => {
-                        unsafe {
-                            let slice = concat!(stringify!(#variant_ident), "\0").as_bytes();
-                            std::ffi::CStr::from_bytes_with_nul_unchecked(slice)
-                        }
-                    }
-                }
-            }
-            syn::Fields::Named(fields) => {
-                // Extract the names of the fields into a Vec
-                let field_names: Vec<_> = fields.named.iter().map(|f| &f.ident).collect();
-                quote! {
-                    #name::#variant_ident { #(#field_names),* } => {
-                        unsafe {
-                            let slice = concat!(stringify!(#variant_ident), "\0").as_bytes();
-                            std::ffi::CStr::from_bytes_with_nul_unchecked(slice)
-                        }
-                    }
-                }
-            }
-            syn::Fields::Unit => {
-                quote! {
-                    #name::#variant_ident => {
-                        unsafe {
-                            let slice = concat!(stringify!(#variant_ident), "\0").as_bytes();
-                            std::ffi::CStr::from_bytes_with_nul_unchecked(slice)
-                        }
-                    }
-                }
-            }
-        }
-    });
-
-    let variant_index_arms = variants.iter().enumerate().map(|(index, v)| {
-        let variant_ident = &v.ident;
-
-        match &v.fields {
-            syn::Fields::Unnamed(fields) => {
-                let field_names: Vec<_> = fields.unnamed.iter().map(|_| quote!(_)).collect();
-                quote! {
-                    #name::#variant_ident(#(#field_names),*) => {
-                        #index
-                    }
-                }
-            }
-            syn::Fields::Named(fields) => {
-                // Extract the names of the fields into a Vec
-                let field_names: Vec<_> = fields.named.iter().map(|f| &f.ident).collect();
-                quote! {
-                    #name::#variant_ident { #(#field_names),* } => {
-                        #index
-                    }
-                }
-            }
-            syn::Fields::Unit => {
-                quote! {
-                    #name::#variant_ident => {
-                        #index
-                    }
-                }
-            }
-        }
-    });
 
     let cached_enum_data = quote! {
         impl CachedEnumData for #name {
@@ -258,8 +230,14 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
                 match self {
                     #(#variant_index_arms),*
                 }
+            }
+        }
+    };
 
-
+    let enum_iter = quote! {
+        impl #name {
+            pub fn iter() -> impl Iterator<Item = Self> {
+                vec![#(#variant_constructors),*].into_iter()
             }
         }
     };
