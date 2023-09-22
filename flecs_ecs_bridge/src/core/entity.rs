@@ -732,11 +732,3 @@ impl Entity {
         unsafe { ecs_clear(self.id.world, self.id.id) }
     }
 }
-
-use crate::core::component::{ComponentData, EmptyComponent};
-
-#[derive(Component, Default, Clone)]
-struct Test1 {}
-
-#[derive(Component, Default, Clone)]
-struct Test2 {}

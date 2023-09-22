@@ -24,3 +24,5 @@ pub mod core {
 }
 
 pub mod addons {}
+
+use core::component::*;
