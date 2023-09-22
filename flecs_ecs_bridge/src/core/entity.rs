@@ -1,18 +1,25 @@
+// Standard Library imports
 use std::{
     ffi::{c_void, CStr, CString},
     mem::MaybeUninit,
     sync::OnceLock,
 };
 
+// External crate imports
 use flecs_ecs_bridge_derive::Component;
 use libc::strlen;
 
+// Module imports from within the current crate
 use crate::{
-    core::data_structures::pair::{PairT, PairTT},
-    core::{c_binding::bindings::ecs_get_world, utility::errors::FlecsErrorCode},
+    core::{
+        c_binding::bindings::ecs_get_world,
+        data_structures::pair::{PairT, PairTT},
+        utility::errors::FlecsErrorCode,
+    },
     ecs_assert,
 };
 
+// Super module imports
 use super::{
     archetype::Archetype,
     c_binding::bindings::{
