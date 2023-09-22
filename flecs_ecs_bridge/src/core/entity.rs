@@ -1032,7 +1032,7 @@ impl Entity {
             "cannot use readonly world/stage to create mutable handle"
         );
 
-        Entity::new_only_id(self.id.id).set_stage(stage.world)
+        Entity::new(stage.world, self.id.id)
     }
 
     /// Returns a mutable entity handle for the current stage from another entity.
@@ -1053,11 +1053,12 @@ impl Entity {
             "cannot use entity created for readonly world/stage to create mutable handle"
         );
 
-        Entity::new_only_id(self.id.id).set_stage(entity.id.world)
+        Entity::new(entity.id.world, self.id.id)
     }
 
+    //might not be needed, in the original c++ impl it was used in the get_mut functions.
     fn set_stage(&self, stage: *mut WorldT) -> Entity {
-        Entity::new(self.id.world, self.id.id)
+        Entity::new(stage, self.id.id)
     }
 
     //
