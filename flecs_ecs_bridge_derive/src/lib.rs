@@ -114,13 +114,17 @@ fn impl_cached_component_data_struct(
 fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
     let name = &ast.ident;
 
-    // Check if the enum has any variants
-    let has_variants = match &ast.data {
-        Data::Enum(data_enum) => !data_enum.variants.is_empty(),
-        _ => panic!("Expected enum data!"), // This shouldn't happen as we check before calling this function
+    let variants = if let syn::Data::Enum(data_enum) = &ast.data {
+        &data_enum.variants
+    } else {
+        panic!("#[derive(VariantName)] is only defined for enums");
     };
 
+    // Check if the enum has any variants
+    let has_variants = !variants.is_empty();
+    let size_variants = variants.len();
     // If it has variants, produce the NotEmptyTrait implementation. Otherwise, produce a compile error.
+
     let not_empty_trait_or_error = if has_variants {
         quote! {
             impl NotEmptyComponent for #name {}
@@ -128,6 +132,97 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
     } else {
         quote! {
             compile_error!("Enum components should have at least one variant!");
+        }
+    };
+
+    let variant_name_arms = variants.iter().map(|v| {
+        let variant_ident = &v.ident;
+
+        match &v.fields {
+            syn::Fields::Unnamed(fields) => {
+                let field_names: Vec<_> = fields.unnamed.iter().map(|_| quote!(_)).collect();
+                quote! {
+                    #name::#variant_ident(#(#field_names),*) => {
+                        unsafe {
+                            let slice = concat!(stringify!(#variant_ident), "\0").as_bytes();
+                            std::ffi::CStr::from_bytes_with_nul_unchecked(slice)
+                        }
+                    }
+                }
+            }
+            syn::Fields::Named(fields) => {
+                // Extract the names of the fields into a Vec
+                let field_names: Vec<_> = fields.named.iter().map(|f| &f.ident).collect();
+                quote! {
+                    #name::#variant_ident { #(#field_names),* } => {
+                        unsafe {
+                            let slice = concat!(stringify!(#variant_ident), "\0").as_bytes();
+                            std::ffi::CStr::from_bytes_with_nul_unchecked(slice)
+                        }
+                    }
+                }
+            }
+            syn::Fields::Unit => {
+                quote! {
+                    #name::#variant_ident => {
+                        unsafe {
+                            let slice = concat!(stringify!(#variant_ident), "\0").as_bytes();
+                            std::ffi::CStr::from_bytes_with_nul_unchecked(slice)
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    let variant_index_arms = variants.iter().enumerate().map(|(index, v)| {
+        let variant_ident = &v.ident;
+
+        match &v.fields {
+            syn::Fields::Unnamed(fields) => {
+                let field_names: Vec<_> = fields.unnamed.iter().map(|_| quote!(_)).collect();
+                quote! {
+                    #name::#variant_ident(#(#field_names),*) => {
+                        #index
+                    }
+                }
+            }
+            syn::Fields::Named(fields) => {
+                // Extract the names of the fields into a Vec
+                let field_names: Vec<_> = fields.named.iter().map(|f| &f.ident).collect();
+                quote! {
+                    #name::#variant_ident { #(#field_names),* } => {
+                        #index
+                    }
+                }
+            }
+            syn::Fields::Unit => {
+                quote! {
+                    #name::#variant_ident => {
+                        #index
+                    }
+                }
+            }
+        }
+    });
+
+    let cached_enum_data = quote! {
+        impl CachedEnumData for #name {
+            //const SIZE_ENUM_FIELDS: u8 = #size_variants;
+
+            fn get_cstr_name(&self) -> &std::ffi::CStr {
+                match self {
+                    #(#variant_name_arms),*
+                }
+            }
+
+            fn get_enum_index(&self) -> usize {
+                match self {
+                    #(#variant_index_arms),*
+                }
+
+
+            }
         }
     };
 
@@ -147,5 +242,7 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
         }
 
         #not_empty_trait_or_error
+
+        #cached_enum_data
     }
 }

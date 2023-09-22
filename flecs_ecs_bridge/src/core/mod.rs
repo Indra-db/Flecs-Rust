@@ -13,6 +13,7 @@ pub mod utility {
 pub mod c_binding {
     pub mod bindings;
 }
+pub mod enum_type;
 
 pub use archetype::*;
 pub use c_binding::bindings::*;
