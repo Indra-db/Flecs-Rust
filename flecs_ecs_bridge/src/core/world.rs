@@ -1,4 +1,4 @@
-use super::c_binding::bindings::ecs_init;
+use super::c_binding::bindings::{ecs_init, ecs_stage_is_readonly};
 use super::c_types::{EntityT, WorldT};
 use super::component::CachedComponentData;
 use super::id::Id;
@@ -42,5 +42,10 @@ impl World {
     /// get pair id from relationship, object.
     fn get_id_pair_from_ids(&self, id: EntityT, id2: EntityT) -> Id {
         Id::new_world_pair(self.world, id, id2)
+    }
+
+    //TODO DOCUMENT
+    pub fn is_readonly(&self) -> bool {
+        unsafe { ecs_stage_is_readonly(self.world) }
     }
 }

@@ -2,10 +2,10 @@ use std::ffi::CStr;
 
 use super::{
     c_types::{EntityT, WorldT},
-    component::{CachedComponentData, ComponentType, Enum},
+    component::{try_register_enum_component, CachedComponentData, ComponentType, Enum},
 };
 
-pub trait CachedEnumData: Clone + Default + ComponentType<Enum> {
+pub trait CachedEnumData: ComponentType<Enum> {
     const SIZE_ENUM_FIELDS: u32;
     type VariantIterator: Iterator<Item = Self>;
 
@@ -24,6 +24,13 @@ pub trait CachedEnumData: Clone + Default + ComponentType<Enum> {
         // not the most elegant solution, but it works. (temporarily)
         unsafe { *Self::__get_enum_data_ptr_mut() != 0 }
     }
+
+    fn get_entity_id_from_enum_field(&self, world: *mut WorldT) -> EntityT {
+        //try_register_enum_component::<Self>(world); //TODO evaluate if we actually need this
+        let index = self.get_enum_index();
+        unsafe { *Self::__get_enum_data_ptr_mut().add(index) }
+    }
+
     /// # Safety
     /// This function is unsafe because it dereferences a raw pointer and you must ensure that the
     /// index is within the bounds of the number of variants in the enum.

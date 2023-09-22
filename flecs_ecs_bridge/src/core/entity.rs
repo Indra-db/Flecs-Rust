@@ -16,16 +16,18 @@ use crate::{
 use super::{
     archetype::Archetype,
     c_binding::bindings::{
-        ecs_add_id, ecs_clear, ecs_delete, ecs_filter_desc_t, ecs_filter_init, ecs_filter_iter,
-        ecs_filter_next, ecs_filter_t, ecs_get_depth, ecs_get_id, ecs_get_name, ecs_get_path_w_sep,
-        ecs_get_symbol, ecs_get_table, ecs_get_target, ecs_get_type, ecs_has_id, ecs_is_alive,
-        ecs_is_valid, ecs_iter_t, ecs_lookup_path_w_sep, ecs_oper_kind_t_EcsOptional,
+        ecs_add_id, ecs_clear, ecs_clone, ecs_delete, ecs_filter_desc_t, ecs_filter_init,
+        ecs_filter_iter, ecs_filter_next, ecs_filter_t, ecs_get_depth, ecs_get_id, ecs_get_name,
+        ecs_get_path_w_sep, ecs_get_symbol, ecs_get_table, ecs_get_target, ecs_get_type,
+        ecs_has_id, ecs_is_alive, ecs_is_enabled_id, ecs_is_valid, ecs_iter_t,
+        ecs_lookup_path_w_sep, ecs_new_id, ecs_oper_kind_t_EcsOptional, ecs_owns_id,
         ecs_record_find, ecs_record_t, ecs_search_offset, ecs_table_get_type, ecs_table_t,
         ecs_term_t, EcsAny, EcsChildOf, EcsDisabled, EcsIsEntity, EcsPrefab, EcsUnion, EcsWildcard,
         ECS_FILTER_INIT,
     },
     c_types::*,
     component::{CachedComponentData, ComponentType, Enum, NotEmptyComponent, Struct},
+    enum_type::CachedEnumData,
     id::Id,
     table::{Table, TableRange},
     utility::functions::{
@@ -677,6 +679,18 @@ impl Entity {
         self.get_target_from_entity(unsafe { EcsChildOf }, 0)
     }
 
+    /// Lookup an entity by name.
+    ///
+    /// Lookup an entity in the scope of this entity. The provided path may
+    /// contain double colons as scope separators, for example: "Foo::Bar".
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The name of the entity to lookup.
+    ///
+    /// # Returns
+    ///
+    /// The found entity, or `Entity::null` if no entity matched.
     #[inline(always)]
     pub fn lookup_entity_by_name(&self, path: &str) -> Entity {
         ecs_assert!(
@@ -697,25 +711,353 @@ impl Entity {
         })
     }
 
+    /// Check if entity has the provided entity.
+    ///
+    /// # Arguments
+    ///
+    /// * `entity` - The entity to check.
+    ///
+    /// # Returns
+    ///
+    /// True if the entity has the provided entity, false otherwise.
     #[inline(always)]
     pub fn has_entity(&self, entity: IdT) -> bool {
         unsafe { ecs_has_id(self.id.world, self.id.id, entity) }
     }
 
+    /// Check if entity has the provided struct component.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The component to check.
+    ///
+    /// # Returns
+    ///
+    /// True if the entity has the provided component, false otherwise.
     pub fn has_struct_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> bool {
         unsafe { ecs_has_id(self.id.world, self.id.id, T::get_id(self.id.world)) }
     }
 
+    /// Check if entity has the provided enum component.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The component to check.
+    ///
+    /// # Returns
+    ///
+    /// True if the entity has the provided component, false otherwise.
     pub fn has_enum_component<T: CachedComponentData + ComponentType<Enum>>(&self) -> bool {
         let component_id: IdT = T::get_id(self.id.world);
-        unsafe { ecs_has_pair(self.id.world, self.id.id, component_id, EcsWildcard) }
+        ecs_has_pair(self.id.world, self.id.id, component_id, unsafe {
+            EcsWildcard
+        })
+    }
+
+    /// Check if entity has the provided enum constant.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The enum type.
+    ///
+    /// # Arguments
+    ///
+    /// * `constant` - The enum constant to check.
+    ///
+    /// # Returns
+    ///
+    /// True if the entity has the provided constant, false otherwise.
+    pub fn has_enum_constant<T>(&self, constant: T) -> bool
+    where
+        T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
+    {
+        let component_id: IdT = T::get_id(self.id.world);
+        let enum_constant_entity_id: IdT = constant.get_entity_id_from_enum_field(self.id.world);
+        ecs_has_pair(
+            self.id.world,
+            self.id.id,
+            component_id,
+            enum_constant_entity_id,
+        )
+    }
+
+    /// Check if entity has the provided pair.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The first element of the pair.
+    /// * `U` - The second element of the pair.
+    ///
+    /// # Returns
+    ///
+    /// True if the entity has the provided component, false otherwise.
+    pub fn has_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
+        ecs_has_pair(
+            self.id.world,
+            self.id.id,
+            T::get_id(self.id.world),
+            U::get_id(self.id.world),
+        )
+    }
+
+    /// Check if entity has the provided pair.
+    ///
+    /// # Arguments
+    ///
+    /// * `first` - The first element of the pair.
+    /// * `second` - The second element of the pair.
+    ///
+    /// # Returns
+    ///
+    /// True if the entity has the provided component, false otherwise.
+    pub fn has_pair_by_id(&self, first: IdT, second: IdT) -> bool {
+        ecs_has_pair(self.id.world, self.id.id, first, second)
+    }
+
+    /// Check if entity has the provided pair with an enum constant.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The first element of the pair.
+    /// * `U` - The second element of the pair as an enum constant.
+    ///
+    /// # Arguments
+    ///
+    /// * `constant` - The enum constant.
+    ///
+    /// # Returns
+    ///
+    /// True if the entity has the provided component, false otherwise.
+    pub fn has_pair_with_enum_constant<
+        T: CachedComponentData,
+        U: CachedComponentData + CachedEnumData,
+    >(
+        &self,
+        constant: U,
+    ) -> bool {
+        let component_id: IdT = T::get_id(self.id.world);
+        let enum_constant_entity_id: IdT = constant.get_entity_id_from_enum_field(self.id.world);
+
+        ecs_has_pair(
+            self.id.world,
+            self.id.id,
+            component_id,
+            enum_constant_entity_id,
+        )
+    }
+
+    /// Check if the entity owns the provided entity.
+    /// An entity is owned if it is not shared from a base entity.
+    ///
+    /// # Parameters
+    /// - `entity_id`: The entity to check.
+    ///
+    /// # Returns
+    /// - `true` if the entity owns the provided entity, `false` otherwise.
+    pub fn get_is_entity_owner_of_id(&self, entity_id: IdT) -> bool {
+        unsafe { ecs_owns_id(self.id.world, self.id.id, entity_id) }
+    }
+
+    /// Check if the entity owns the provided entity.
+    ///
+    /// # Parameters
+    /// - `entity`: The entity to check.
+    ///
+    /// # Returns
+    /// - `true` if the entity owns the provided entity, `false` otherwise.
+    pub fn get_is_entity_owner_of_entity(&self, entity: Entity) -> bool {
+        unsafe { ecs_owns_id(self.id.world, self.id.id, entity.id.id) }
+    }
+
+    /// Check if the entity owns the provided component.
+    /// A component is owned if it is not shared from a base entity.
+    ///
+    /// # Type Parameters
+    /// - `T`: The component to check.
+    ///
+    /// # Returns
+    /// - `true` if the entity owns the provided component, `false` otherwise.
+    pub fn get_is_entity_owner_of<T: CachedComponentData>(&self) -> bool {
+        unsafe { ecs_owns_id(self.id.world, self.id.id, T::get_id(self.id.world)) }
+    }
+
+    /// Check if the entity owns the provided pair.
+    ///
+    /// # Parameters
+    /// - `first`: The first element of the pair.
+    /// - `second`: The second element of the pair.
+    ///
+    /// # Returns
+    /// - `true` if the entity owns the provided pair, `false` otherwise.
+    pub fn get_is_entity_owner_of_pair_ids(&self, first: IdT, second: IdT) -> bool {
+        unsafe { ecs_owns_id(self.id.world, self.id.id, ecs_pair(first, second)) }
+    }
+
+    /// Check if the entity owns the provided pair.
+    ///
+    /// # Type Parameters
+    /// - `T`: The first element of the pair.
+    /// - `U`: The second element of the pair.
+    ///
+    /// # Returns
+    /// - `true` if the entity owns the provided pair, `false` otherwise.
+    pub fn get_is_entity_owner_of_pair<T: CachedComponentData, U: CachedComponentData>(
+        &self,
+    ) -> bool {
+        unsafe {
+            ecs_owns_id(
+                self.id.world,
+                self.id.id,
+                ecs_pair(T::get_id(self.id.world), U::get_id(self.id.world)),
+            )
+        }
+    }
+
+    /// Test if id is enabled.
+    ///
+    /// # Parameters
+    /// - `id`: The id to test.
+    ///
+    /// # Returns
+    /// - `true` if enabled, `false` if not.
+    pub fn get_is_id_enabled(&self, id: IdT) -> bool {
+        unsafe { ecs_is_enabled_id(self.id.world, self.id.id, id) }
+    }
+
+    /// Test if component is enabled.
+    ///
+    /// # Type Parameters
+    /// - `T`: The component to test.
+    ///
+    /// # Returns
+    /// - `true` if enabled, `false` if not.
+    pub fn get_is_component_enabled<T: CachedComponentData>(&self) -> bool {
+        unsafe { ecs_is_enabled_id(self.id.world, self.id.id, T::get_id(self.id.world)) }
+    }
+
+    /// Test if pair is enabled.
+    ///
+    /// # Parameters
+    /// - `first`: The first element of the pair.
+    /// - `second`: The second element of the pair.
+    ///
+    /// # Returns
+    /// - `true` if enabled, `false` if not.
+    pub fn get_is_pair_ids_enabled(&self, first: IdT, second: IdT) -> bool {
+        unsafe { ecs_is_enabled_id(self.id.world, self.id.id, ecs_pair(first, second)) }
+    }
+
+    /// Test if pair is enabled.
+    ///
+    /// # Type Parameters
+    /// - `T`: The first element of the pair.
+    /// - `U`: The second element of the pair.
+    ///
+    /// # Returns
+    /// - `true` if enabled, `false` if not.
+    pub fn get_is_pair_enabled<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
+        unsafe {
+            ecs_is_enabled_id(
+                self.id.world,
+                self.id.id,
+                ecs_pair(T::get_id(self.id.world), U::get_id(self.id.world)),
+            )
+        }
+    }
+
+    /// Clones the current entity to a new or specified entity.
+    ///
+    /// This function creates a clone of the current entity. If `dest_id` is provided
+    /// (i.e., not zero), it will clone the current entity to the entity with `dest_id`.
+    /// If `dest_id` is zero, it will create a new entity and clone the current entity
+    /// to the newly created entity.
+    ///
+    /// If `copy_value` is set to `true`, the value of the current entity is also copied to
+    /// the destination entity. Otherwise, only the entity's structure is cloned without copying the value.
+    ///
+    /// # Parameters
+    /// - `copy_value`: A boolean indicating whether to copy the entity's value to the destination entity.
+    /// - `dest_id`: The identifier of the destination entity. If zero, a new entity is created.
+    ///
+    /// # Returns
+    /// - An `Entity` object representing the destination entity.
+    ///
+    /// # Safety
+    /// This function makes use of `unsafe` operations to interact with the underlying ECS.
+    /// Ensure that the provided `dest_id` is valid or zero
+    #[inline(always)]
+    pub fn clone(&self, copy_value: bool, mut dest_id: EntityT) -> Entity {
+        if dest_id == 0 {
+            dest_id = unsafe { ecs_new_id(self.id.world) };
+        }
+
+        let dest_entity = Entity::new(self.id.world, dest_id);
+        unsafe { ecs_clone(self.id.world, dest_id, self.id.id, copy_value) };
+        dest_entity
+    }
+
+    /// Returns a mutable entity handle for the current stage.
+    ///
+    /// When an entity handle created from the world is used while the world is
+    /// in staged mode, it will only allow for readonly operations since
+    /// structural changes are not allowed on the world while in staged mode.
+    ///
+    /// To perform mutations on the entity, this operation provides a handle to the
+    /// entity that uses the stage instead of the actual world.
+    ///
+    /// Note that staged entity handles should never be stored persistently, in
+    /// components or elsewhere. An entity handle should always point to the
+    /// main world.
+    ///
+    /// Also note that this operation is not necessary when doing mutations on an
+    /// entity outside of a system. It is allowed to perform entity operations
+    /// directly on the world, as long as the world is not in staged mode.
+    ///
+    /// # Parameters
+    /// - `stage`: The current stage.
+    ///
+    /// # Returns
+    /// - An entity handle that allows for mutations in the current stage.
+    pub fn get_mutable_handle_for_stage(&self, stage: &World) -> Entity {
+        ecs_assert!(
+            !stage.is_readonly(),
+            FlecsErrorCode::InvalidParameter,
+            "cannot use readonly world/stage to create mutable handle"
+        );
+
+        Entity::new_only_id(self.id.id).set_stage(stage.world)
+    }
+
+    /// Returns a mutable entity handle for the current stage from another entity.
+    ///
+    /// This operation allows for the construction of a mutable entity handle
+    /// from another entity. This is useful in `each` functions, which only
+    /// provide a handle to the entity being iterated over.
+    ///
+    /// # Parameters
+    /// - `entity`: Another mutable entity.
+    ///
+    /// # Returns
+    /// - An entity handle that allows for mutations in the current stage.
+    pub fn get_mutable_handle_from_entity(&self, entity: &Entity) -> Entity {
+        ecs_assert!(
+            !entity.id.get_as_world().is_readonly(),
+            FlecsErrorCode::InvalidParameter,
+            "cannot use entity created for readonly world/stage to create mutable handle"
+        );
+
+        Entity::new_only_id(self.id.id).set_stage(entity.id.world)
+    }
+
+    fn set_stage(&self, stage: *mut WorldT) -> Entity {
+        Entity::new(self.id.world, self.id.id)
     }
 
     //
     //
     //
     /*
-    temp placed seperately
+    temp placed seperately -> this will be mnoved to the Mut class
     */
 
     pub fn add_component<T: CachedComponentData>(self) -> Self {
