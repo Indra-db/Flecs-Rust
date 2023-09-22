@@ -124,6 +124,43 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
     let has_variants = !variants.is_empty();
     let size_variants = variants.len();
     // If it has variants, produce the NotEmptyTrait implementation. Otherwise, produce a compile error.
+    let variant_constructors: Vec<_> = variants
+        .iter()
+        .map(|variant| {
+            let variant_ident = &variant.ident;
+            match &variant.fields {
+                syn::Fields::Unit => quote! { #name::#variant_ident },
+                syn::Fields::Unnamed(fields) => {
+                    let defaults: Vec<_> = fields
+                        .unnamed
+                        .iter()
+                        .map(|_| quote! { Default::default() })
+                        .collect();
+                    quote! { #name::#variant_ident(#(#defaults),*) }
+                }
+                syn::Fields::Named(fields) => {
+                    let field_names: Vec<_> = fields
+                        .named
+                        .iter()
+                        .map(|f| f.ident.as_ref().unwrap())
+                        .collect();
+                    let defaults: Vec<_> = field_names
+                        .iter()
+                        .map(|_| quote! { Default::default() })
+                        .collect();
+                    quote! { #name::#variant_ident { #(#field_names: #defaults),* } }
+                }
+            }
+        })
+        .collect();
+
+    let expanded = quote! {
+        impl #name {
+            pub fn iter() -> impl Iterator<Item = Self> {
+                vec![#(#variant_constructors),*].into_iter()
+            }
+        }
+    };
 
     let not_empty_trait_or_error = if has_variants {
         quote! {
@@ -244,5 +281,7 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
         #not_empty_trait_or_error
 
         #cached_enum_data
+
+        #expanded
     }
 }
