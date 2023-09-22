@@ -80,6 +80,43 @@ fn impl_cached_component_data_struct(
         impl ComponentType<Struct> for #name {}
 
         impl CachedComponentData for #name {
+
+            fn register_explicit(world: *mut WorldT)
+            {
+                try_register_struct_component::<Self>(world);
+            }
+
+            fn get_data(world: *mut WorldT) -> &'static ComponentData
+            {
+                try_register_struct_component::<Self>(world);
+                //this is safe because we checked if the component is registered / registered it
+                unsafe { Self::get_data_unchecked() }
+            }
+
+            fn get_id(world: *mut WorldT) -> IdT {
+                try_register_struct_component::<Self>(world);
+                //this is safe because we checked if the component is registered / registered it
+                unsafe { Self::get_id_unchecked() }
+            }
+
+            fn get_size(world: *mut WorldT) -> usize {
+                try_register_struct_component::<Self>(world);
+                //this is safe because we checked if the component is registered / registered it
+                unsafe { Self::get_size_unchecked() }
+            }
+
+            fn get_alignment(world: *mut WorldT) -> usize {
+                try_register_struct_component::<Self>(world);
+                //this is safe because we checked if the component is registered / registered it
+                unsafe { Self::get_alignment_unchecked() }
+            }
+
+            fn get_allow_tag(world: *mut WorldT) -> bool {
+                try_register_struct_component::<Self>(world);
+                //this is safe because we checked if the component is registered / registered it
+                unsafe { Self::get_allow_tag_unchecked() }
+            }
+
             fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
                 static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
                 &ONCE_LOCK
@@ -219,6 +256,7 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
     let cached_enum_data = quote! {
         impl CachedEnumData for #name {
             const SIZE_ENUM_FIELDS: u32 = #size_variants;
+            type VariantIterator = std::vec::IntoIter<#name>;
 
             fn get_cstr_name(&self) -> &std::ffi::CStr {
                 match self {
@@ -231,12 +269,13 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
                     #(#variant_index_arms),*
                 }
             }
-        }
-    };
 
-    let enum_iter = quote! {
-        impl #name {
-            pub fn iter() -> impl Iterator<Item = Self> {
+            fn __get_enum_data_ptr_mut() -> *mut u64 {
+                static mut ENUM_FIELD_ENTITY_ID: [u64; #size_variants as usize] = [0; #size_variants as usize];
+                unsafe { ENUM_FIELD_ENTITY_ID.as_mut_ptr() }
+            }
+
+            fn iter() -> Self::VariantIterator {
                 vec![#(#variant_constructors),*].into_iter()
             }
         }
@@ -246,6 +285,43 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
         impl ComponentType<Enum> for #name {}
 
         impl CachedComponentData for #name {
+
+            fn register_explicit(world: *mut WorldT)
+            {
+                try_register_enum_component::<Self>(world);
+            }
+
+            fn get_data(world: *mut WorldT) -> &'static ComponentData
+            {
+                try_register_enum_component::<Self>(world);
+                //this is safe because we checked if the component is registered / registered it
+                unsafe { Self::get_data_unchecked() }
+            }
+
+            fn get_id(world: *mut WorldT) -> IdT {
+                try_register_enum_component::<Self>(world);
+                //this is safe because we checked if the component is registered / registered it
+                unsafe { Self::get_id_unchecked() }
+            }
+
+            fn get_size(world: *mut WorldT) -> usize {
+                try_register_enum_component::<Self>(world);
+                //this is safe because we checked if the component is registered / registered it
+                unsafe { Self::get_size_unchecked() }
+            }
+
+            fn get_alignment(world: *mut WorldT) -> usize {
+                try_register_enum_component::<Self>(world);
+                //this is safe because we checked if the component is registered / registered it
+                unsafe { Self::get_alignment_unchecked() }
+            }
+
+            fn get_allow_tag(world: *mut WorldT) -> bool {
+                try_register_enum_component::<Self>(world);
+                //this is safe because we checked if the component is registered / registered it
+                unsafe { Self::get_allow_tag_unchecked() }
+            }
+
             fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
                 static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
                 &ONCE_LOCK
@@ -260,7 +336,5 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
         #not_empty_trait_or_error
 
         #cached_enum_data
-
-        #enum_iter
     }
 }

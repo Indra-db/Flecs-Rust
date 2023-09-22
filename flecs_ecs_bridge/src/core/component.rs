@@ -1,9 +1,11 @@
 use super::{
     c_binding::bindings::{
-        ecs_cpp_component_register_explicit, ecs_exists, ecs_get_path_w_sep, ecs_get_symbol,
-        ecs_lookup_symbol, ecs_set_scope, ecs_set_symbol, ecs_set_with,
+        ecs_cpp_component_register_explicit, ecs_cpp_enum_constant_register, ecs_cpp_enum_init,
+        ecs_exists, ecs_get_path_w_sep, ecs_get_symbol, ecs_lookup_symbol, ecs_set_scope,
+        ecs_set_symbol, ecs_set_with,
     },
     c_types::{EntityT, IdT, WorldT},
+    enum_type::CachedEnumData,
     lifecycle_traits::register_lifecycle_actions,
     utility::{
         errors::FlecsErrorCode,
@@ -58,9 +60,7 @@ pub trait ComponentType<T: ECSComponentType>: CachedComponentData {}
 /// If the ID is already known, the trait takes care of the component registration and checks for consistency in the input.
 pub trait CachedComponentData: Clone + Default {
     /// attempts to register the component with the world. If it's already registered, it does nothing.
-    fn register_explicit(world: *mut WorldT) {
-        try_register_component::<Self>(world);
-    }
+    fn register_explicit(world: *mut WorldT);
 
     /// checks if the component is registered with a world.
     fn is_registered() -> bool {
@@ -68,38 +68,19 @@ pub trait CachedComponentData: Clone + Default {
     }
 
     /// returns the component data of the component. If the component is not registered, it will register it.
-    fn get_data(world: *mut WorldT) -> &'static ComponentData {
-        try_register_component::<Self>(world);
-        unsafe { Self::get_data_unchecked() }
-    }
+    fn get_data(world: *mut WorldT) -> &'static ComponentData;
 
     /// returns the component id of the component. If the component is not registered, it will register it.
-    fn get_id(world: *mut WorldT) -> IdT {
-        try_register_component::<Self>(world);
-        //this is safe because we checked if the component is registered / registered it
-        unsafe { Self::get_id_unchecked() }
-    }
+    fn get_id(world: *mut WorldT) -> IdT;
 
     /// returns the component size of the component. If the component is not registered, it will register it.
-    fn get_size(world: *mut WorldT) -> usize {
-        try_register_component::<Self>(world);
-        //this is safe because we checked if the component is registered / registered it
-        unsafe { Self::get_size_unchecked() }
-    }
+    fn get_size(world: *mut WorldT) -> usize;
 
     /// returns the component alignment of the component. If the component is not registered, it will register it.
-    fn get_alignment(world: *mut WorldT) -> usize {
-        try_register_component::<Self>(world);
-        //this is safe because we checked if the component is registered / registered it
-        unsafe { Self::get_alignment_unchecked() }
-    }
+    fn get_alignment(world: *mut WorldT) -> usize;
 
     /// returns the component allow_tag of the component. If the component is not registered, it will register it.
-    fn get_allow_tag(world: *mut WorldT) -> bool {
-        try_register_component::<Self>(world);
-        //this is safe because we checked if the component is registered / registered it
-        unsafe { Self::get_allow_tag_unchecked() }
-    }
+    fn get_allow_tag(world: *mut WorldT) -> bool;
 
     // this could live on ComponentData, but it would create more heap allocations when creating default Component
     /// gets the symbol name of the compoentn in the format of [module].[type]
@@ -168,14 +149,65 @@ pub trait CachedComponentData: Clone + Default {
 
 //TODO need to support getting the id of a component if it's a pair type
 /// attempts to register the component with the world. If it's already registered, it does nothing.
-fn try_register_component<T>(world: *mut WorldT)
+pub fn try_register_struct_component<T>(world: *mut WorldT)
 where
     T: CachedComponentData,
 {
     let is_registered = T::is_registered();
+    let is_registered_with_world = unsafe { is_component_registered_with_world::<T>(world) };
+    if !is_registered || !is_registered_with_world {
+        register_component_data::<T>(
+            world,
+            std::ptr::null(),
+            true,
+            is_registered,
+            is_registered_with_world,
+        );
+    }
+}
 
-    if !is_registered || unsafe { !is_component_registered_with_world::<T>(world) } {
-        register_component_data::<T>(world, std::ptr::null(), true, is_registered);
+pub fn try_register_enum_component<T>(world: *mut WorldT)
+where
+    T: CachedComponentData + CachedEnumData,
+{
+    let is_registered = T::is_registered();
+    let is_registered_with_world = if is_registered {
+        unsafe { is_component_registered_with_world::<T>(world) }
+    } else {
+        false
+    };
+
+    if !is_registered || !is_registered_with_world {
+        let has_newly_registered = register_component_data::<T>(
+            world,
+            std::ptr::null(),
+            true,
+            is_registered,
+            is_registered_with_world,
+        );
+
+        if has_newly_registered {
+            if !is_registered_with_world {
+                unsafe { ecs_cpp_enum_init(world, T::get_id_unchecked()) };
+                let enum_array_ptr = T::__get_enum_data_ptr_mut();
+
+                for (index, enum_item) in T::iter().enumerate() {
+                    let name = enum_item.get_cstr_name();
+                    let entity_id: EntityT = unsafe {
+                        ecs_cpp_enum_constant_register(
+                            world,
+                            T::get_id_unchecked(),
+                            T::get_entity_id_from_enum_field_index(enum_item.get_enum_index()),
+                            name.as_ptr(),
+                            index as i32,
+                        )
+                    };
+                    if !T::are_fields_registered_as_entities() {
+                        unsafe { *enum_array_ptr.add(index) = entity_id };
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -222,6 +254,7 @@ where
 /// registers the component with the world.
 //this is WIP. We can likely optimize this function by replacing the cpp func call by our own implementation
 //TODO merge explicit and non explicit functions -> not necessary to have a similar impl as c++.
+//need to cleanup this function.
 fn register_componment_data_explicit<T>(
     world: *mut WorldT,
     name: *const c_char,
@@ -230,7 +263,8 @@ fn register_componment_data_explicit<T>(
     is_componment: bool,
     existing: &mut bool,
     is_comp_pre_registered: bool,
-) where
+) -> bool
+where
     T: CachedComponentData + Clone + Default,
 {
     let mut component_data: ComponentData = Default::default();
@@ -285,7 +319,6 @@ fn register_componment_data_explicit<T>(
         let type_name = get_full_type_name::<T>();
 
         let entity: EntityT = unsafe {
-            //TODO check if this works for rust, likely not from the looks of it.
             ecs_cpp_component_register_explicit(
                 world,
                 component_data.id,
@@ -313,12 +346,14 @@ fn register_componment_data_explicit<T>(
         if !is_comp_pre_registered {
             T::__initialize(|| component_data);
         }
+        return true;
     }
+    return false;
 }
 
 /// checks if the component is registered with a world.
 /// this function is unsafe because it assumes that the component is registered with a world, not necessarily the world passed in.
-unsafe fn is_component_registered_with_world<T>(world: *const WorldT) -> bool
+pub(crate) unsafe fn is_component_registered_with_world<T>(world: *const WorldT) -> bool
 where
     T: CachedComponentData,
 {
@@ -331,16 +366,19 @@ where
 }
 
 /// registers the component with the world.
-fn register_component_data<T>(
+pub(crate) fn register_component_data<T>(
     world: *mut WorldT,
     name: *const c_char,
     allow_tag: bool,
     is_comp_pre_registered: bool,
-) where
+    is_comp_pre_registered_with_world: bool,
+) -> bool
+where
     T: CachedComponentData + Clone + Default,
 {
+    let mut has_registered = false;
     //this is safe because we checked if the component is pre-registered
-    if !is_comp_pre_registered || unsafe { !is_component_registered_with_world::<T>(world) } {
+    if !is_comp_pre_registered || !is_comp_pre_registered_with_world {
         let mut prev_scope: EntityT = 0;
         let mut prev_with: EntityT = 0;
 
@@ -350,7 +388,7 @@ fn register_component_data<T>(
         }
 
         let mut existing = false;
-        register_componment_data_explicit::<T>(
+        has_registered = register_componment_data_explicit::<T>(
             world,
             name,
             allow_tag,
@@ -372,6 +410,8 @@ fn register_component_data<T>(
             unsafe { ecs_set_scope(world, prev_scope) };
         }
     }
+
+    has_registered
 }
 
 /*
