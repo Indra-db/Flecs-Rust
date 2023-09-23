@@ -2,3 +2,4 @@
 /Cargo.lock
 flecs_ecs_bridge/src/main.rs
 flecs_ecs_bridge/rustfmt.toml
+rustfmt.toml
