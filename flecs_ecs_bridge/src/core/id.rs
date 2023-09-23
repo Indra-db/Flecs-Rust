@@ -2,7 +2,7 @@ use log::error;
 
 use super::c_binding::bindings::*;
 use super::c_types::*;
-use super::entity::*;
+use super::entity_view::*;
 use super::world::World;
 use crate::core::utility::{errors::*, functions::*};
 use crate::ecs_assert;

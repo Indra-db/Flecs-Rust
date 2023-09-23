@@ -9,6 +9,7 @@ pub mod core {
     pub mod c_types;
     pub mod component;
     pub mod entity;
+    pub mod entity_view;
     pub mod enum_type;
     pub mod id;
     pub mod lifecycle_traits;
