@@ -35,6 +35,7 @@ use super::{
     },
     c_types::*,
     component::{CachedComponentData, ComponentType, Enum, NotEmptyComponent, Struct},
+    entity::Entity,
     enum_type::CachedEnumData,
     id::Id,
     table::{Table, TableRange},
@@ -47,11 +48,11 @@ use super::{
 static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\0") };
 
 #[derive(Default, Debug, Clone, Copy)]
-pub struct Entity {
+pub struct EntityView {
     pub id: Id,
 }
 
-impl Deref for Entity {
+impl Deref for EntityView {
     type Target = Id;
 
     fn deref(&self) -> &Self::Target {
@@ -59,7 +60,7 @@ impl Deref for Entity {
     }
 }
 
-impl Entity {
+impl EntityView {
     /// Wrap an existing entity id.
     /// # Arguments
     /// * `world` - The world the entity belongs to.
@@ -79,16 +80,10 @@ impl Entity {
         }
     }
 
-    // Explicit conversion from flecs::entity_t to Entity
+    // Explicit conversion from flecs::entity_t to EntityView
     pub const fn new_only_id(id: EntityT) -> Self {
         Self {
             id: Id::new_only_id(id),
-        }
-    }
-
-    pub fn new_only_world(world: *mut WorldT) -> Self {
-        Self {
-            id: Id::new_only_world(world),
         }
     }
 
@@ -351,8 +346,11 @@ impl Entity {
     ///
     /// * `relationship` - The relationship for which to iterate the targets.
     /// * `func` - The closure invoked for each target. Must match the signature `FnMut(Entity)`.
-    pub fn for_each_target_in_relationship_by_entity<F>(&self, relationship: Entity, mut func: F)
-    where
+    pub fn for_each_target_in_relationship_by_entity<F>(
+        &self,
+        relationship: EntityView,
+        mut func: F,
+    ) where
         F: FnMut(Entity),
     {
         self.for_each_matching_pair(relationship.raw_id, unsafe { EcsWildcard }, |id| {
@@ -376,7 +374,7 @@ impl Entity {
         F: FnMut(Entity),
     {
         self.for_each_target_in_relationship_by_entity(
-            Entity::new_only_id(T::get_id(self.world)),
+            EntityView::new_only_id(T::get_id(self.world)),
             func,
         );
     }
@@ -424,7 +422,7 @@ impl Entity {
                     unsafe {
                         //TODO should investigate if this is correct
                         let id = it.entities.add(i);
-                        let ent = Entity::new(self.world, *id);
+                        let ent = Entity::new_from_existing(self.world, *id);
                         func(ent);
                     }
                 }
@@ -543,7 +541,7 @@ impl Entity {
     ///
     /// * `index` - The index (0 for the first instance of the relationship).
     pub fn get_target_from_component<First: CachedComponentData>(&self, index: i32) -> Entity {
-        Entity::new(self.world, unsafe {
+        Entity::new_from_existing(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, First::get_id(self.world), index)
         })
     }
@@ -559,7 +557,7 @@ impl Entity {
     /// * `first` - The first element of the pair for which to retrieve the target.
     /// * `index` - The index (0 for the first instance of the relationship).
     pub fn get_target_from_entity(&self, first: EntityT, index: i32) -> Entity {
-        Entity::new(self.world, unsafe {
+        Entity::new_from_existing(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, first, index)
         })
     }
@@ -588,7 +586,7 @@ impl Entity {
     ///
     /// * The entity for which the target has been found.
     pub fn get_target_by_component_id(&self, relationship: EntityT, component_id: IdT) -> Entity {
-        Entity::new(self.world, unsafe {
+        Entity::new_from_existing(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, relationship, component_id as i32)
         })
     }
@@ -708,7 +706,7 @@ impl Entity {
             "invalid lookup from null handle"
         );
         let c_path = CString::new(path).unwrap();
-        Entity::new(self.world, unsafe {
+        Entity::new_from_existing(self.world, unsafe {
             ecs_lookup_path_w_sep(
                 self.world,
                 self.raw_id,
@@ -1000,7 +998,7 @@ impl Entity {
             dest_id = unsafe { ecs_new_id(self.world) };
         }
 
-        let dest_entity = Entity::new(self.world, dest_id);
+        let dest_entity = Entity::new_from_existing(self.world, dest_id);
         unsafe { ecs_clone(self.world, dest_id, self.raw_id, copy_value) };
         dest_entity
     }
@@ -1034,7 +1032,7 @@ impl Entity {
             "cannot use readonly world/stage to create mutable handle"
         );
 
-        Entity::new(stage.world, self.raw_id)
+        Entity::new_from_existing(stage.world, self.raw_id)
     }
 
     /// Returns a mutable entity handle for the current stage from another entity.
@@ -1048,19 +1046,19 @@ impl Entity {
     ///
     /// # Returns
     /// - An entity handle that allows for mutations in the current stage.
-    pub fn get_mutable_handle_from_entity(&self, entity: &Entity) -> Entity {
+    pub fn get_mutable_handle_from_entity(&self, entity: &EntityView) -> Entity {
         ecs_assert!(
             !entity.get_as_world().is_readonly(),
             FlecsErrorCode::InvalidParameter,
             "cannot use entity created for readonly world/stage to create mutable handle"
         );
 
-        Entity::new(entity.world, self.raw_id)
+        Entity::new_from_existing(entity.world, self.raw_id)
     }
 
     //might not be needed, in the original c++ impl it was used in the get_mut functions.
     fn set_stage(&self, stage: *mut WorldT) -> Entity {
-        Entity::new(stage, self.raw_id)
+        Entity::new_from_existing(stage, self.raw_id)
     }
 
     //

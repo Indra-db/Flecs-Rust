@@ -2,7 +2,7 @@ use log::error;
 
 use super::c_binding::bindings::*;
 use super::c_types::*;
-use super::entity_view::*;
+use super::entity::*;
 use super::world::World;
 use crate::core::utility::{errors::*, functions::*};
 use crate::ecs_assert;
@@ -32,19 +32,6 @@ impl Id {
         Self {
             world: std::ptr::null_mut(),
             raw_id: id,
-        }
-    }
-
-    /// Create a new id with the specified generation count.
-    /// ### Safety
-    /// This function is unsafe because it assumes that the world is not null.
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new_only_world(world: *mut WorldT) -> Self {
-        unsafe {
-            Self {
-                world,
-                raw_id: ecs_new_w_id(world, 0),
-            }
         }
     }
 
@@ -98,13 +85,13 @@ impl Id {
                 FlecsErrorCode::InvalidOperation
             );
         }
-        Entity::new(self.world, self.raw_id)
+        Entity::new_from_existing(self.world, self.raw_id)
     }
 
     /// Return id with role added
     #[inline(always)]
     pub fn add_flags(&self, flags: IdT) -> Entity {
-        Entity::new(self.world, self.raw_id | flags)
+        Entity::new_from_existing(self.world, self.raw_id | flags)
     }
 
     /// Return id without role
@@ -115,19 +102,19 @@ impl Id {
             FlecsErrorCode::InvalidParameter
         );
 
-        Entity::new(self.world, self.raw_id & RUST_ECS_COMPONENT_MASK)
+        Entity::new_from_existing(self.world, self.raw_id & RUST_ECS_COMPONENT_MASK)
     }
 
     /// Return id without role
     #[inline(always)]
     pub fn remove_flags(&self) -> Entity {
-        Entity::new(self.world, self.raw_id & RUST_ECS_COMPONENT_MASK)
+        Entity::new_from_existing(self.world, self.raw_id & RUST_ECS_COMPONENT_MASK)
     }
 
     /// Return id flags set on id
     #[inline(always)]
     pub fn flags(&self) -> Entity {
-        Entity::new(self.world, self.raw_id & RUST_ECS_ID_FLAGS_MASK)
+        Entity::new_from_existing(self.world, self.raw_id & RUST_ECS_ID_FLAGS_MASK)
     }
 
     /// Test if id has specified role
@@ -145,13 +132,13 @@ impl Id {
     /// Return id without role
     #[inline(always)]
     pub fn remove_generation(&self) -> Entity {
-        Entity::new(self.world, self.raw_id as u32 as u64)
+        Entity::new_from_existing(self.world, self.raw_id as u32 as u64)
     }
 
     /// Return component type of id
     #[inline(always)]
     pub fn type_id(&self) -> Entity {
-        Entity::new(self.world, unsafe {
+        Entity::new_from_existing(self.world, unsafe {
             ecs_get_typeid(self.world, self.raw_id)
         })
     }
@@ -179,7 +166,7 @@ impl Id {
         if self.world.is_null() {
             Entity::new_only_id(entity)
         } else {
-            Entity::new(self.world, unsafe { ecs_get_alive(self.world, entity) })
+            Entity::new_from_existing(self.world, unsafe { ecs_get_alive(self.world, entity) })
         }
     }
 
@@ -196,7 +183,7 @@ impl Id {
         if self.world.is_null() {
             Entity::new_only_id(entity)
         } else {
-            Entity::new(self.world, unsafe { ecs_get_alive(self.world, entity) })
+            Entity::new_from_existing(self.world, unsafe { ecs_get_alive(self.world, entity) })
         }
     }
 
