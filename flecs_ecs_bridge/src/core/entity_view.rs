@@ -65,10 +65,10 @@ impl EntityView {
     /// # Arguments
     /// * `world` - The world the entity belongs to.
     /// * `id` - The entity id.
-    pub fn new(world: *mut WorldT, id: IdT) -> Self {
+    pub fn new_from_existing(world: *mut WorldT, id: IdT) -> Self {
         unsafe {
             Self {
-                id: Id::new(
+                id: Id::new_from_existing(
                     if world.is_null() {
                         std::ptr::null_mut()
                     } else {
@@ -334,7 +334,7 @@ impl EntityView {
         let id_out: *mut IdT = &mut 0;
 
         while -1 != unsafe { ecs_search_offset(real_world, table, cur, pattern, id_out) } {
-            let ent = Id::new(self.world, unsafe { *(ids.add(cur as usize)) });
+            let ent = Id::new_from_existing(self.world, unsafe { *(ids.add(cur as usize)) });
             func(ent);
             cur += 1;
         }

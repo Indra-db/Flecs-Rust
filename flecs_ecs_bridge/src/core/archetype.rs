@@ -84,7 +84,7 @@ impl Archetype {
             None
         } else {
             // this is safe because we did checks above
-            Some(Id::new(self.world, unsafe {
+            Some(Id::new_from_existing(self.world, unsafe {
                 *(*self.type_vec).array.add(index as usize)
             }))
         }

@@ -26,7 +26,7 @@ impl World {
 
     /// Get id from a type.
     fn get_id<T: CachedComponentData>(&self) -> Id {
-        Id::new(self.world, T::get_id(self.world))
+        Id::new_from_existing(self.world, T::get_id(self.world))
     }
 
     /// get pair id from relationship, object.

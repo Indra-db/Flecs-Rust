@@ -24,7 +24,7 @@ impl Default for Id {
 }
 
 impl Id {
-    pub const fn new(world: *mut WorldT, id: IdT) -> Self {
+    pub const fn new_from_existing(world: *mut WorldT, id: IdT) -> Self {
         Self { world, raw_id: id }
     }
 

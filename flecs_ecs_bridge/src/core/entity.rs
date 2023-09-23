@@ -34,7 +34,7 @@ impl Entity {
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new(world: *mut WorldT) -> Self {
         Self {
-            entity_view: EntityView::new(world, unsafe { ecs_new_w_id(world, 0) }),
+            entity_view: EntityView::new_from_existing(world, unsafe { ecs_new_w_id(world, 0) }),
         }
     }
 
@@ -44,7 +44,7 @@ impl Entity {
     /// * `id` - The entity id.
     pub fn new_from_existing(world: *mut WorldT, id: IdT) -> Self {
         Self {
-            entity_view: EntityView::new(world, id),
+            entity_view: EntityView::new_from_existing(world, id),
         }
     }
 
