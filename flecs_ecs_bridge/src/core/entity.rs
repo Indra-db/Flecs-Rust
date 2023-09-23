@@ -2,6 +2,7 @@
 use std::{
     ffi::{c_void, CStr, CString},
     mem::MaybeUninit,
+    ops::Deref,
     sync::OnceLock,
 };
 
@@ -50,6 +51,14 @@ pub struct Entity {
     pub id: Id,
 }
 
+impl Deref for Entity {
+    type Target = Id;
+
+    fn deref(&self) -> &Self::Target {
+        &self.id
+    }
+}
+
 impl Entity {
     /// Wrap an existing entity id.
     /// # Arguments
@@ -85,18 +94,18 @@ impl Entity {
 
     /// checks if entity is valid
     pub fn get_is_valid(&self) -> bool {
-        !self.id.world.is_null() && unsafe { ecs_is_valid(self.id.world, self.id.id) }
+        !self.world.is_null() && unsafe { ecs_is_valid(self.world, self.raw_id) }
     }
 
     /// Checks if entity is alive.
     pub fn get_is_alive(&self) -> bool {
-        !self.id.world.is_null() && unsafe { ecs_is_alive(self.id.world, self.id.id) }
+        !self.world.is_null() && unsafe { ecs_is_alive(self.world, self.raw_id) }
     }
 
     /// Returns the entity name.
     pub fn get_name(&self) -> &'static str {
         unsafe {
-            CStr::from_ptr(ecs_get_name(self.id.world, self.id.id))
+            CStr::from_ptr(ecs_get_name(self.world, self.raw_id))
                 .to_str()
                 .unwrap_or("")
         }
@@ -106,7 +115,7 @@ impl Entity {
     /// Returns the entity symbol.
     pub fn get_symbol(&self) -> &'static str {
         unsafe {
-            CStr::from_ptr(ecs_get_symbol(self.id.world, self.id.id))
+            CStr::from_ptr(ecs_get_symbol(self.world, self.raw_id))
                 .to_str()
                 .unwrap_or("")
         }
@@ -139,9 +148,9 @@ impl Entity {
         let raw_ptr = if sep == init_sep {
             unsafe {
                 ecs_get_path_w_sep(
-                    self.id.world,
+                    self.world,
                     parent,
-                    self.id.id,
+                    self.raw_id,
                     c_sep.as_ptr(),
                     c_sep.as_ptr(),
                 )
@@ -150,9 +159,9 @@ impl Entity {
             let c_init_sep = CString::new(init_sep).unwrap();
             unsafe {
                 ecs_get_path_w_sep(
-                    self.id.world,
+                    self.world,
                     parent,
-                    self.id.id,
+                    self.raw_id,
                     c_sep.as_ptr(),
                     c_init_sep.as_ptr(),
                 )
@@ -176,9 +185,9 @@ impl Entity {
     pub fn get_hierachy_path_from_parent_id_default(&self, parent: EntityT) -> Option<String> {
         unsafe {
             let raw_ptr = ecs_get_path_w_sep(
-                self.id.world,
+                self.world,
                 parent,
-                self.id.id,
+                self.raw_id,
                 SEPARATOR.as_ptr(),
                 SEPARATOR.as_ptr(),
             );
@@ -208,33 +217,31 @@ impl Entity {
         sep: &str,
         init_sep: &str,
     ) -> Option<String> {
-        self.get_hierachy_path_from_parent_id(T::get_id(self.id.world), sep, init_sep)
+        self.get_hierachy_path_from_parent_id(T::get_id(self.world), sep, init_sep)
     }
 
     /// Return the hierarchical entity path relative to a parent type using the default separator "::".
     pub fn get_hierachy_path_from_parent_type_default<T: CachedComponentData>(
         &self,
     ) -> Option<String> {
-        self.get_hierachy_path_from_parent_id_default(T::get_id(self.id.world))
+        self.get_hierachy_path_from_parent_id_default(T::get_id(self.world))
     }
 
     pub fn get_is_enabled(&self) -> bool {
-        unsafe { !ecs_has_id(self.id.world, self.id.id, EcsDisabled) }
+        unsafe { !ecs_has_id(self.world, self.raw_id, EcsDisabled) }
     }
 
     /// get the entity's archetype
     #[inline(always)]
     pub fn get_archetype(&self) -> Archetype {
-        Archetype::new(self.id.world, unsafe {
-            ecs_get_type(self.id.world, self.id.id)
-        })
+        Archetype::new(self.world, unsafe { ecs_get_type(self.world, self.raw_id) })
     }
 
     /// get the entity's table
     #[inline(always)]
     pub fn get_table(&self) -> Table {
-        Table::new(self.id.world, unsafe {
-            ecs_get_table(self.id.world, self.id.id)
+        Table::new(self.world, unsafe {
+            ecs_get_table(self.world, self.raw_id)
         })
     }
 
@@ -245,11 +252,11 @@ impl Entity {
     /// count 0.
     #[inline]
     pub fn get_table_range(&self) -> TableRange {
-        let ecs_record: *mut ecs_record_t = unsafe { ecs_record_find(self.id.world, self.id.id) };
+        let ecs_record: *mut ecs_record_t = unsafe { ecs_record_find(self.world, self.raw_id) };
         if !ecs_record.is_null() {
             unsafe {
                 TableRange::new_raw(
-                    self.id.world,
+                    self.world,
                     (*ecs_record).table,
                     ecs_record_to_row((*ecs_record).row),
                     1,
@@ -268,7 +275,7 @@ impl Entity {
     where
         F: FnMut(Id),
     {
-        let type_ptr = unsafe { ecs_get_type(self.id.world, self.id.id) };
+        let type_ptr = unsafe { ecs_get_type(self.world, self.raw_id) };
 
         if type_ptr.is_null() {
             return;
@@ -281,15 +288,15 @@ impl Entity {
         for i in 0..count as usize {
             let id: IdT = unsafe { *ids.add(i) };
             let ent = Id {
-                world: self.id.world,
-                id,
+                world: self.world,
+                raw_id: id,
             };
             func(ent);
 
             // Union object is not stored in type, so handle separately
             if unsafe { ecs_pair_first(id) == EcsUnion } {
-                let ent = Id::new_world_pair(self.id.world, ecs_pair_second(id), unsafe {
-                    ecs_get_target(self.id.world, self.id.id, ecs_pair_second(self.id.id), 0)
+                let ent = Id::new_world_pair(self.world, ecs_pair_second(id), unsafe {
+                    ecs_get_target(self.world, self.raw_id, ecs_pair_second(self.raw_id), 0)
                 });
 
                 func(ent);
@@ -309,9 +316,9 @@ impl Entity {
         F: FnMut(Id),
     {
         // this is safe because we are only reading the world
-        let real_world = unsafe { ecs_get_world(self.id.world as *const c_void) as *mut WorldT };
+        let real_world = unsafe { ecs_get_world(self.world as *const c_void) as *mut WorldT };
 
-        let table: *mut ecs_table_t = unsafe { ecs_get_table(self.id.world, self.id.id) };
+        let table: *mut ecs_table_t = unsafe { ecs_get_table(self.world, self.raw_id) };
 
         if table.is_null() {
             return;
@@ -332,7 +339,7 @@ impl Entity {
         let id_out: *mut IdT = &mut 0;
 
         while -1 != unsafe { ecs_search_offset(real_world, table, cur, pattern, id_out) } {
-            let ent = Id::new(self.id.world, unsafe { *(ids.add(cur as usize)) });
+            let ent = Id::new(self.world, unsafe { *(ids.add(cur as usize)) });
             func(ent);
             cur += 1;
         }
@@ -348,7 +355,7 @@ impl Entity {
     where
         F: FnMut(Entity),
     {
-        self.for_each_matching_pair(relationship.id.id, unsafe { EcsWildcard }, |id| {
+        self.for_each_matching_pair(relationship.raw_id, unsafe { EcsWildcard }, |id| {
             let obj = id.second();
             func(obj);
         });
@@ -369,7 +376,7 @@ impl Entity {
         F: FnMut(Entity),
     {
         self.for_each_target_in_relationship_by_entity(
-            Entity::new_only_id(T::get_id(self.id.world)),
+            Entity::new_only_id(T::get_id(self.world)),
             func,
         );
     }
@@ -387,12 +394,12 @@ impl Entity {
         // When the entity is a wildcard, this would attempt to query for all
         //entities with (ChildOf, *) or (ChildOf, _) instead of querying for
         //the children of the wildcard entity.
-        if unsafe { self.id.id == EcsWildcard || self.id.id == EcsAny } {
+        if unsafe { self.raw_id == EcsWildcard || self.raw_id == EcsAny } {
             // this is correct, wildcard entities don't have children
             return;
         }
 
-        let world: World = World::new_from_world(self.id.world);
+        let world: World = World::new_from_world(self.world);
 
         let mut terms: [ecs_term_t; 2] = unsafe { MaybeUninit::zeroed().assume_init() };
 
@@ -402,7 +409,7 @@ impl Entity {
 
         let mut desc: ecs_filter_desc_t = unsafe { MaybeUninit::zeroed().assume_init() };
         desc.terms[0].first.id = relationship;
-        desc.terms[0].second.id = self.id.id;
+        desc.terms[0].second.id = self.raw_id;
         unsafe {
             desc.terms[0].second.flags = EcsIsEntity;
             desc.terms[1].id = EcsPrefab;
@@ -410,14 +417,14 @@ impl Entity {
         }
         desc.storage = &mut filter;
 
-        if !unsafe { ecs_filter_init(self.id.world, &desc) }.is_null() {
-            let mut it: ecs_iter_t = unsafe { ecs_filter_iter(self.id.world, &filter) };
+        if !unsafe { ecs_filter_init(self.world, &desc) }.is_null() {
+            let mut it: ecs_iter_t = unsafe { ecs_filter_iter(self.world, &filter) };
             while unsafe { ecs_filter_next(&mut it) } {
                 for i in 0..it.count as usize {
                     unsafe {
                         //TODO should investigate if this is correct
                         let id = it.entities.add(i);
-                        let ent = Entity::new(self.id.world, *id);
+                        let ent = Entity::new(self.world, *id);
                         func(ent);
                     }
                 }
@@ -436,7 +443,7 @@ impl Entity {
         T: CachedComponentData,
         F: FnMut(Entity),
     {
-        self.for_each_children(T::get_id(self.id.world), func);
+        self.for_each_children(T::get_id(self.world), func);
     }
 
     /// Iterate children for entity
@@ -461,8 +468,8 @@ impl Entity {
     ///
     /// * `*const T` - The enum component, nullptr if the entity does not have the component
     pub fn get_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> *const T {
-        let component_id = T::get_id(self.id.world);
-        unsafe { (ecs_get_id(self.id.world, self.id.id, component_id) as *const T) }
+        let component_id = T::get_id(self.world);
+        unsafe { (ecs_get_id(self.world, self.raw_id, component_id) as *const T) }
     }
 
     /// Get enum constant
@@ -475,15 +482,15 @@ impl Entity {
     ///
     /// * `*const T` - The enum component, nullptr if the entity does not have the component
     pub fn get_enum_component<T: CachedComponentData + ComponentType<Enum>>(&self) -> *const T {
-        let component_id: IdT = T::get_id(self.id.world);
-        let target: IdT = unsafe { ecs_get_target(self.id.world, self.id.id, component_id, 0) };
+        let component_id: IdT = T::get_id(self.world);
+        let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
 
         if target == 0 {
-            unsafe { ecs_get_id(self.id.world, self.id.id, component_id) as *const T }
+            unsafe { ecs_get_id(self.world, self.raw_id, component_id) as *const T }
         } else {
             // get constant value from constant entity
             let constant_value =
-                unsafe { ecs_get_id(self.id.world, target, component_id) as *const T };
+                unsafe { ecs_get_id(self.world, target, component_id) as *const T };
 
             ecs_assert!(
                 !constant_value.is_null(),
@@ -506,7 +513,7 @@ impl Entity {
     ///
     /// * `*const c_void` - Pointer to the component value, nullptr if the entity does not have the component
     pub fn get_component_by_id(&self, component_id: IdT) -> *const c_void {
-        unsafe { ecs_get_id(self.id.world, self.id.id, component_id) as *const c_void }
+        unsafe { ecs_get_id(self.world, self.raw_id, component_id) as *const c_void }
     }
 
     /// get a pair as untyped pointer
@@ -519,7 +526,7 @@ impl Entity {
     /// * `first` - The first element of the pair
     /// * `second` - The second element of the pair
     pub fn get_pair_untyped(&self, first: EntityT, second: EntityT) -> *const c_void {
-        unsafe { ecs_get_id(self.id.world, self.id.id, ecs_pair(first, second)) as *const c_void }
+        unsafe { ecs_get_id(self.world, self.raw_id, ecs_pair(first, second)) as *const c_void }
     }
 
     /// Get target for a given pair.
@@ -536,13 +543,8 @@ impl Entity {
     ///
     /// * `index` - The index (0 for the first instance of the relationship).
     pub fn get_target_from_component<First: CachedComponentData>(&self, index: i32) -> Entity {
-        Entity::new(self.id.world, unsafe {
-            ecs_get_target(
-                self.id.world,
-                self.id.id,
-                First::get_id(self.id.world),
-                index,
-            )
+        Entity::new(self.world, unsafe {
+            ecs_get_target(self.world, self.raw_id, First::get_id(self.world), index)
         })
     }
 
@@ -557,8 +559,8 @@ impl Entity {
     /// * `first` - The first element of the pair for which to retrieve the target.
     /// * `index` - The index (0 for the first instance of the relationship).
     pub fn get_target_from_entity(&self, first: EntityT, index: i32) -> Entity {
-        Entity::new(self.id.world, unsafe {
-            ecs_get_target(self.id.world, self.id.id, first, index)
+        Entity::new(self.world, unsafe {
+            ecs_get_target(self.world, self.raw_id, first, index)
         })
     }
 
@@ -586,8 +588,8 @@ impl Entity {
     ///
     /// * The entity for which the target has been found.
     pub fn get_target_by_component_id(&self, relationship: EntityT, component_id: IdT) -> Entity {
-        Entity::new(self.id.world, unsafe {
-            ecs_get_target(self.id.world, self.id.id, relationship, component_id as i32)
+        Entity::new(self.world, unsafe {
+            ecs_get_target(self.world, self.raw_id, relationship, component_id as i32)
         })
     }
 
@@ -612,7 +614,7 @@ impl Entity {
         &self,
         relationship: EntityT,
     ) -> Entity {
-        self.get_target_by_component_id(relationship, T::get_id(self.id.world))
+        self.get_target_by_component_id(relationship, T::get_id(self.world))
     }
 
     /// Get the target for a given pair of components and a relationship.
@@ -639,7 +641,7 @@ impl Entity {
     ) -> Entity {
         self.get_target_by_component_id(
             relationship,
-            ecs_pair(First::get_id(self.id.world), Second::get_id(self.id.world)),
+            ecs_pair(First::get_id(self.world), Second::get_id(self.world)),
         )
     }
 
@@ -654,7 +656,7 @@ impl Entity {
     /// * The depth of the relationship.
     #[inline(always)]
     pub fn get_depth_by_id(&self, relationship: EntityT) -> i32 {
-        unsafe { ecs_get_depth(self.id.world, self.id.id, relationship) }
+        unsafe { ecs_get_depth(self.world, self.raw_id, relationship) }
     }
 
     /// Retrieves the depth for a specified relationship.
@@ -671,7 +673,7 @@ impl Entity {
     /// * The depth of the relationship.
     #[inline(always)]
     pub fn get_depth<T: CachedComponentData>(&self) -> i32 {
-        self.get_depth_by_id(T::get_id(self.id.world))
+        self.get_depth_by_id(T::get_id(self.world))
     }
 
     /// Retrieves the parent of the entity.
@@ -701,15 +703,15 @@ impl Entity {
     #[inline(always)]
     pub fn lookup_entity_by_name(&self, path: &str) -> Entity {
         ecs_assert!(
-            self.id.id != 0,
+            self.raw_id != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid lookup from null handle"
         );
         let c_path = CString::new(path).unwrap();
-        Entity::new(self.id.world, unsafe {
+        Entity::new(self.world, unsafe {
             ecs_lookup_path_w_sep(
-                self.id.world,
-                self.id.id,
+                self.world,
+                self.raw_id,
                 c_path.as_ptr(),
                 SEPARATOR.as_ptr(),
                 SEPARATOR.as_ptr(),
@@ -729,7 +731,7 @@ impl Entity {
     /// True if the entity has the provided entity, false otherwise.
     #[inline(always)]
     pub fn has_entity(&self, entity: IdT) -> bool {
-        unsafe { ecs_has_id(self.id.world, self.id.id, entity) }
+        unsafe { ecs_has_id(self.world, self.raw_id, entity) }
     }
 
     /// Check if entity has the provided struct component.
@@ -742,7 +744,7 @@ impl Entity {
     ///
     /// True if the entity has the provided component, false otherwise.
     pub fn has_struct_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> bool {
-        unsafe { ecs_has_id(self.id.world, self.id.id, T::get_id(self.id.world)) }
+        unsafe { ecs_has_id(self.world, self.raw_id, T::get_id(self.world)) }
     }
 
     /// Check if entity has the provided enum component.
@@ -755,8 +757,8 @@ impl Entity {
     ///
     /// True if the entity has the provided component, false otherwise.
     pub fn has_enum_component<T: CachedComponentData + ComponentType<Enum>>(&self) -> bool {
-        let component_id: IdT = T::get_id(self.id.world);
-        ecs_has_pair(self.id.world, self.id.id, component_id, unsafe {
+        let component_id: IdT = T::get_id(self.world);
+        ecs_has_pair(self.world, self.raw_id, component_id, unsafe {
             EcsWildcard
         })
     }
@@ -778,11 +780,11 @@ impl Entity {
     where
         T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
     {
-        let component_id: IdT = T::get_id(self.id.world);
-        let enum_constant_entity_id: IdT = constant.get_entity_id_from_enum_field(self.id.world);
+        let component_id: IdT = T::get_id(self.world);
+        let enum_constant_entity_id: IdT = constant.get_entity_id_from_enum_field(self.world);
         ecs_has_pair(
-            self.id.world,
-            self.id.id,
+            self.world,
+            self.raw_id,
             component_id,
             enum_constant_entity_id,
         )
@@ -800,10 +802,10 @@ impl Entity {
     /// True if the entity has the provided component, false otherwise.
     pub fn has_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
         ecs_has_pair(
-            self.id.world,
-            self.id.id,
-            T::get_id(self.id.world),
-            U::get_id(self.id.world),
+            self.world,
+            self.raw_id,
+            T::get_id(self.world),
+            U::get_id(self.world),
         )
     }
 
@@ -818,7 +820,7 @@ impl Entity {
     ///
     /// True if the entity has the provided component, false otherwise.
     pub fn has_pair_by_id(&self, first: IdT, second: IdT) -> bool {
-        ecs_has_pair(self.id.world, self.id.id, first, second)
+        ecs_has_pair(self.world, self.raw_id, first, second)
     }
 
     /// Check if entity has the provided pair with an enum constant.
@@ -842,12 +844,12 @@ impl Entity {
         &self,
         constant: U,
     ) -> bool {
-        let component_id: IdT = T::get_id(self.id.world);
-        let enum_constant_entity_id: IdT = constant.get_entity_id_from_enum_field(self.id.world);
+        let component_id: IdT = T::get_id(self.world);
+        let enum_constant_entity_id: IdT = constant.get_entity_id_from_enum_field(self.world);
 
         ecs_has_pair(
-            self.id.world,
-            self.id.id,
+            self.world,
+            self.raw_id,
             component_id,
             enum_constant_entity_id,
         )
@@ -862,7 +864,7 @@ impl Entity {
     /// # Returns
     /// - `true` if the entity owns the provided entity, `false` otherwise.
     pub fn get_is_entity_owner_of_id(&self, entity_id: IdT) -> bool {
-        unsafe { ecs_owns_id(self.id.world, self.id.id, entity_id) }
+        unsafe { ecs_owns_id(self.world, self.raw_id, entity_id) }
     }
 
     /// Check if the entity owns the provided entity.
@@ -873,7 +875,7 @@ impl Entity {
     /// # Returns
     /// - `true` if the entity owns the provided entity, `false` otherwise.
     pub fn get_is_entity_owner_of_entity(&self, entity: Entity) -> bool {
-        unsafe { ecs_owns_id(self.id.world, self.id.id, entity.id.id) }
+        unsafe { ecs_owns_id(self.world, self.raw_id, entity.raw_id) }
     }
 
     /// Check if the entity owns the provided component.
@@ -885,7 +887,7 @@ impl Entity {
     /// # Returns
     /// - `true` if the entity owns the provided component, `false` otherwise.
     pub fn get_is_entity_owner_of<T: CachedComponentData>(&self) -> bool {
-        unsafe { ecs_owns_id(self.id.world, self.id.id, T::get_id(self.id.world)) }
+        unsafe { ecs_owns_id(self.world, self.raw_id, T::get_id(self.world)) }
     }
 
     /// Check if the entity owns the provided pair.
@@ -897,7 +899,7 @@ impl Entity {
     /// # Returns
     /// - `true` if the entity owns the provided pair, `false` otherwise.
     pub fn get_is_entity_owner_of_pair_ids(&self, first: IdT, second: IdT) -> bool {
-        unsafe { ecs_owns_id(self.id.world, self.id.id, ecs_pair(first, second)) }
+        unsafe { ecs_owns_id(self.world, self.raw_id, ecs_pair(first, second)) }
     }
 
     /// Check if the entity owns the provided pair.
@@ -913,9 +915,9 @@ impl Entity {
     ) -> bool {
         unsafe {
             ecs_owns_id(
-                self.id.world,
-                self.id.id,
-                ecs_pair(T::get_id(self.id.world), U::get_id(self.id.world)),
+                self.world,
+                self.raw_id,
+                ecs_pair(T::get_id(self.world), U::get_id(self.world)),
             )
         }
     }
@@ -928,7 +930,7 @@ impl Entity {
     /// # Returns
     /// - `true` if enabled, `false` if not.
     pub fn get_is_id_enabled(&self, id: IdT) -> bool {
-        unsafe { ecs_is_enabled_id(self.id.world, self.id.id, id) }
+        unsafe { ecs_is_enabled_id(self.world, self.raw_id, id) }
     }
 
     /// Test if component is enabled.
@@ -939,7 +941,7 @@ impl Entity {
     /// # Returns
     /// - `true` if enabled, `false` if not.
     pub fn get_is_component_enabled<T: CachedComponentData>(&self) -> bool {
-        unsafe { ecs_is_enabled_id(self.id.world, self.id.id, T::get_id(self.id.world)) }
+        unsafe { ecs_is_enabled_id(self.world, self.raw_id, T::get_id(self.world)) }
     }
 
     /// Test if pair is enabled.
@@ -951,7 +953,7 @@ impl Entity {
     /// # Returns
     /// - `true` if enabled, `false` if not.
     pub fn get_is_pair_ids_enabled(&self, first: IdT, second: IdT) -> bool {
-        unsafe { ecs_is_enabled_id(self.id.world, self.id.id, ecs_pair(first, second)) }
+        unsafe { ecs_is_enabled_id(self.world, self.raw_id, ecs_pair(first, second)) }
     }
 
     /// Test if pair is enabled.
@@ -965,9 +967,9 @@ impl Entity {
     pub fn get_is_pair_enabled<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
         unsafe {
             ecs_is_enabled_id(
-                self.id.world,
-                self.id.id,
-                ecs_pair(T::get_id(self.id.world), U::get_id(self.id.world)),
+                self.world,
+                self.raw_id,
+                ecs_pair(T::get_id(self.world), U::get_id(self.world)),
             )
         }
     }
@@ -995,11 +997,11 @@ impl Entity {
     #[inline(always)]
     pub fn clone(&self, copy_value: bool, mut dest_id: EntityT) -> Entity {
         if dest_id == 0 {
-            dest_id = unsafe { ecs_new_id(self.id.world) };
+            dest_id = unsafe { ecs_new_id(self.world) };
         }
 
-        let dest_entity = Entity::new(self.id.world, dest_id);
-        unsafe { ecs_clone(self.id.world, dest_id, self.id.id, copy_value) };
+        let dest_entity = Entity::new(self.world, dest_id);
+        unsafe { ecs_clone(self.world, dest_id, self.raw_id, copy_value) };
         dest_entity
     }
 
@@ -1032,7 +1034,7 @@ impl Entity {
             "cannot use readonly world/stage to create mutable handle"
         );
 
-        Entity::new(stage.world, self.id.id)
+        Entity::new(stage.world, self.raw_id)
     }
 
     /// Returns a mutable entity handle for the current stage from another entity.
@@ -1048,17 +1050,17 @@ impl Entity {
     /// - An entity handle that allows for mutations in the current stage.
     pub fn get_mutable_handle_from_entity(&self, entity: &Entity) -> Entity {
         ecs_assert!(
-            !entity.id.get_as_world().is_readonly(),
+            !entity.get_as_world().is_readonly(),
             FlecsErrorCode::InvalidParameter,
             "cannot use entity created for readonly world/stage to create mutable handle"
         );
 
-        Entity::new(entity.id.world, self.id.id)
+        Entity::new(entity.world, self.raw_id)
     }
 
     //might not be needed, in the original c++ impl it was used in the get_mut functions.
     fn set_stage(&self, stage: *mut WorldT) -> Entity {
-        Entity::new(stage, self.id.id)
+        Entity::new(stage, self.raw_id)
     }
 
     //
@@ -1069,16 +1071,16 @@ impl Entity {
     */
 
     pub fn add_component<T: CachedComponentData>(self) -> Self {
-        let component_id = T::get_id(self.id.world);
-        unsafe { ecs_add_id(self.id.world, self.id.id, component_id) }
+        let component_id = T::get_id(self.world);
+        unsafe { ecs_add_id(self.world, self.raw_id, component_id) }
         self
     }
 
     pub fn destruct(self) {
-        unsafe { ecs_delete(self.id.world, self.id.id) }
+        unsafe { ecs_delete(self.world, self.raw_id) }
     }
 
     pub fn clear(&self) {
-        unsafe { ecs_clear(self.id.world, self.id.id) }
+        unsafe { ecs_clear(self.world, self.raw_id) }
     }
 }
