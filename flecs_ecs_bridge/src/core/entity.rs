@@ -1,10 +1,14 @@
 use std::{ops::Deref, os::raw::c_void};
 
 use super::{
-    c_binding::bindings::{ecs_get_world, ecs_new_w_id},
+    c_binding::bindings::{ecs_add_id, ecs_clear, ecs_delete, ecs_get_world, ecs_new_w_id},
     c_types::{EntityT, IdT, WorldT},
+    component::{CachedComponentData, ComponentType, Enum, Struct},
     entity_view::EntityView,
+    enum_type::CachedEnumData,
     id::Id,
+    utility::functions::ecs_pair,
+    utility::macros::*,
 };
 
 pub struct Entity {
@@ -53,5 +57,86 @@ impl Entity {
         Self {
             entity_view: EntityView::new_only_id(id),
         }
+    }
+
+    pub fn add_component<T: CachedComponentData>(self) -> Self {
+        unsafe { ecs_add_id(self.world, self.raw_id, T::get_id(self.world)) }
+        self
+    }
+
+    pub fn add_component_with_id(self, component_id: IdT) -> Self {
+        unsafe { ecs_add_id(self.world, self.raw_id, component_id) }
+        self
+    }
+
+    pub fn add_pair_from_ids(self, id: EntityT, id2: EntityT) -> Self {
+        unsafe { ecs_add_id(self.world, self.raw_id, ecs_pair(id, id2)) }
+        self
+    }
+
+    pub fn add_pair<T, U>(self) -> Self
+    where
+        T: CachedComponentData,
+        U: CachedComponentData + ComponentType<Struct>,
+    {
+        unsafe {
+            ecs_add_id(
+                self.world,
+                self.raw_id,
+                ecs_pair(T::get_id(self.world), U::get_id(self.world)),
+            )
+        }
+        self
+    }
+
+    pub fn add_enum_tag<T, U>(self, enum_value: U) -> Self
+    where
+        T: CachedComponentData,
+        U: CachedComponentData + ComponentType<Enum> + CachedEnumData,
+    {
+        unsafe {
+            ecs_add_id(
+                self.world,
+                self.raw_id,
+                ecs_pair(
+                    T::get_id(self.world),
+                    enum_value.get_entity_id_from_enum_field(self.world),
+                ),
+            )
+        }
+        self
+    }
+
+    pub fn add_pair_second<Second: CachedComponentData>(self, first: EntityT) -> Self {
+        unsafe {
+            ecs_add_id(
+                self.world,
+                self.raw_id,
+                ecs_pair(first, Second::get_id(self.world)),
+            )
+        }
+        self
+    }
+
+    pub fn add_component_with_id_if(self, component_id: IdT, condition: bool) -> Self {
+        if condition {
+            unsafe { ecs_add_id(self.world, self.raw_id, component_id) }
+        }
+        todo!("remove");
+
+        self
+    }
+
+    //
+    //
+    //
+    //
+    //
+    pub fn destruct(self) {
+        unsafe { ecs_delete(self.world, self.raw_id) }
+    }
+
+    pub fn clear(&self) {
+        unsafe { ecs_clear(self.world, self.raw_id) }
     }
 }

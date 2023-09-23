@@ -154,7 +154,12 @@ where
     T: CachedComponentData,
 {
     let is_registered = T::is_registered();
-    let is_registered_with_world = unsafe { is_component_registered_with_world::<T>(world) };
+    let is_registered_with_world = if is_registered {
+        unsafe { is_component_registered_with_world::<T>(world) }
+    } else {
+        false
+    };
+
     if !is_registered || !is_registered_with_world {
         register_component_data::<T>(
             world,

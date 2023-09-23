@@ -779,7 +779,9 @@ impl EntityView {
         T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
     {
         let component_id: IdT = T::get_id(self.world);
-        let enum_constant_entity_id: IdT = constant.get_entity_id_from_enum_field(self.world);
+        // Safety: we know the enum fields are registered because of the previous T::get_id call
+        let enum_constant_entity_id: IdT =
+            unsafe { constant.get_entity_id_from_enum_field_unchecked(self.world) };
         ecs_has_pair(
             self.world,
             self.raw_id,
@@ -1059,26 +1061,5 @@ impl EntityView {
     //might not be needed, in the original c++ impl it was used in the get_mut functions.
     fn set_stage(&self, stage: *mut WorldT) -> Entity {
         Entity::new_from_existing(stage, self.raw_id)
-    }
-
-    //
-    //
-    //
-    /*
-    temp placed seperately -> this will be mnoved to the Mut class
-    */
-
-    pub fn add_component<T: CachedComponentData>(self) -> Self {
-        let component_id = T::get_id(self.world);
-        unsafe { ecs_add_id(self.world, self.raw_id, component_id) }
-        self
-    }
-
-    pub fn destruct(self) {
-        unsafe { ecs_delete(self.world, self.raw_id) }
-    }
-
-    pub fn clear(&self) {
-        unsafe { ecs_clear(self.world, self.raw_id) }
     }
 }
