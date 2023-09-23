@@ -11,6 +11,18 @@ use super::{
     utility::macros::*,
 };
 
+macro_rules! add_pair {
+    ($self:expr, $id:expr, $id2:expr) => {
+        unsafe { ecs_add_id($self.world, $self.raw_id, ecs_pair($id, $id2)) }
+    };
+}
+
+macro_rules! add_id {
+    ($self:expr, $id:expr) => {
+        unsafe { ecs_add_id($self.world, $self.raw_id, $id) }
+    };
+}
+
 pub struct Entity {
     entity_view: EntityView,
 }
@@ -60,17 +72,17 @@ impl Entity {
     }
 
     pub fn add_component<T: CachedComponentData>(self) -> Self {
-        unsafe { ecs_add_id(self.world, self.raw_id, T::get_id(self.world)) }
+        add_id!(self, T::get_id(self.world));
         self
     }
 
     pub fn add_component_with_id(self, component_id: IdT) -> Self {
-        unsafe { ecs_add_id(self.world, self.raw_id, component_id) }
+        add_id!(self, component_id);
         self
     }
 
     pub fn add_pair_from_ids(self, id: EntityT, id2: EntityT) -> Self {
-        unsafe { ecs_add_id(self.world, self.raw_id, ecs_pair(id, id2)) }
+        add_pair!(self, id, id2);
         self
     }
 
@@ -79,13 +91,7 @@ impl Entity {
         T: CachedComponentData,
         U: CachedComponentData + ComponentType<Struct>,
     {
-        unsafe {
-            ecs_add_id(
-                self.world,
-                self.raw_id,
-                ecs_pair(T::get_id(self.world), U::get_id(self.world)),
-            )
-        }
+        add_pair!(self, T::get_id(self.world), U::get_id(self.world));
         self
     }
 
@@ -94,33 +100,22 @@ impl Entity {
         T: CachedComponentData,
         U: CachedComponentData + ComponentType<Enum> + CachedEnumData,
     {
-        unsafe {
-            ecs_add_id(
-                self.world,
-                self.raw_id,
-                ecs_pair(
-                    T::get_id(self.world),
-                    enum_value.get_entity_id_from_enum_field(self.world),
-                ),
-            )
-        }
+        add_pair!(
+            self,
+            T::get_id(self.world),
+            enum_value.get_entity_id_from_enum_field(self.world)
+        );
         self
     }
 
     pub fn add_pair_second<Second: CachedComponentData>(self, first: EntityT) -> Self {
-        unsafe {
-            ecs_add_id(
-                self.world,
-                self.raw_id,
-                ecs_pair(first, Second::get_id(self.world)),
-            )
-        }
+        add_pair!(self, first, Second::get_id(self.world));
         self
     }
 
     pub fn add_component_with_id_if(self, component_id: IdT, condition: bool) -> Self {
         if condition {
-            unsafe { ecs_add_id(self.world, self.raw_id, component_id) }
+            add_id!(self, component_id);
         }
         todo!("remove");
 
