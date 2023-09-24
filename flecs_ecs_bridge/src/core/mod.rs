@@ -1,6 +1,7 @@
 pub mod archetype;
 pub mod c_types;
 pub mod component;
+pub mod component_ref;
 pub mod entity;
 pub mod id;
 pub mod lifecycle_traits;

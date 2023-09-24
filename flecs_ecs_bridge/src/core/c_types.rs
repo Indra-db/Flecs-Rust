@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{ffi::CStr, ops::Deref};
 
 use super::c_binding::bindings::*;
 use lazy_static::lazy_static;
@@ -22,6 +22,8 @@ pub type IterT = ecs_iter_t;
 pub type TypeInfoT = ecs_type_info_t;
 pub type TypeHooksT = ecs_type_hooks_t;
 pub type Flags32T = ecs_flags32_t;
+
+pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\0") };
 
 #[repr(C)]
 pub enum InOutKindT {

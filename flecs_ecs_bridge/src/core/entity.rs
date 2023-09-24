@@ -10,12 +10,13 @@ use crate::{
 
 use super::{
     c_binding::bindings::{
-        ecs_add_id, ecs_clear, ecs_delete, ecs_enable, ecs_enable_id, ecs_get_id, ecs_get_mut_id,
-        ecs_get_world, ecs_has_id, ecs_modified_id, ecs_new_w_id, ecs_remove_id, ecs_set_alias,
-        ecs_set_scope, ecs_set_with, EcsChildOf, EcsComponent, EcsDependsOn, EcsExclusive, EcsIsA,
-        EcsSlotOf, EcsWildcard, FLECS__EEcsComponent,
+        ecs_add_id, ecs_clear, ecs_delete, ecs_enable, ecs_enable_id, ecs_entity_desc_t,
+        ecs_entity_init, ecs_get_id, ecs_get_mut_id, ecs_get_world, ecs_has_id, ecs_modified_id,
+        ecs_new_w_id, ecs_remove_id, ecs_set_alias, ecs_set_scope, ecs_set_with, EcsChildOf,
+        EcsComponent, EcsDependsOn, EcsExclusive, EcsIsA, EcsSlotOf, EcsWildcard,
+        FLECS__EEcsComponent,
     },
-    c_types::{EntityT, IdT, WorldT},
+    c_types::{EntityT, IdT, WorldT, SEPARATOR},
     component::{CachedComponentData, ComponentType, Enum, Struct},
     entity_view::EntityView,
     enum_type::CachedEnumData,
@@ -76,6 +77,26 @@ impl Entity {
     pub const fn new_only_id(id: EntityT) -> Self {
         Self {
             entity_view: EntityView::new_only_id(id),
+        }
+    }
+
+    pub fn new_named(world: *mut WorldT, name: &str) -> Self {
+        let c_name = std::ffi::CString::new(name).expect("Failed to convert to CString");
+
+        let desc = ecs_entity_desc_t {
+            name: c_name.as_ptr(),
+            sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
+            _canary: 0,
+            id: 0,
+            symbol: std::ptr::null(),
+            use_low_id: false,
+            add: [0; 32],
+            add_expr: std::ptr::null(),
+        };
+        let id = unsafe { ecs_entity_init(world, &desc) };
+        Self {
+            entity_view: EntityView::new_from_existing(world, id),
         }
     }
 
@@ -641,29 +662,20 @@ impl Entity {
         self
     }
 
-    //
-    //
-    //
-    //
-    //
-
-    pub fn destruct(self) {
-        unsafe { ecs_delete(self.world, self.raw_id) }
-    }
-
-    pub fn clear(&self) {
-        unsafe { ecs_clear(self.world, self.raw_id) }
-    }
-
-    /// Get mut (struct) Component from entity
+    /// Gets a mutable pointer to a component value.
     ///
-    /// ### Type Parameters
+    /// This operation returns a mutable pointer to the component. If the entity
+    /// did not yet have the component, it will be added. If a base entity had
+    /// the component, it will be overridden, and the value of the base component
+    /// will be copied to the entity before this function returns.
     ///
-    /// * `T` - The component type to get
+    /// # Type Parameters
     ///
-    /// ### Returns
+    /// * `T`: The component to get.
     ///
-    /// * `*mut T` - The enum component, nullptr if the entity does not have the component
+    /// # Returns
+    ///
+    /// A mutable pointer to the component value.
     pub fn get_component_mut<T: CachedComponentData + ComponentType<Struct>>(&self) -> *mut T {
         let component_id = T::get_id(self.world);
         ecs_assert!(
@@ -675,15 +687,152 @@ impl Entity {
         unsafe { ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T }
     }
 
-    pub fn get_pair_mut<T: CachedComponentData>(&self, first: IdT, second: EntityT) -> *mut T {
-        let component_id = ecs_pair(first, second);
+    /// Get mutable component value (untyped).
+    /// This operation returns a mutable pointer to the component. If the entity
+    /// did not yet have the component, it will be added. If a base entity had
+    /// the component, it will be overridden, and the value of the base component
+    /// will be copied to the entity before this function returns.
+    ///
+    /// # Parameters
+    ///
+    /// * `comp`: The component to get.
+    ///
+    /// # Returns
+    ///
+    /// Pointer to the component value.
+    pub fn get_component_by_id_mut(&self, component_id: EntityT) -> *mut c_void {
+        unsafe { ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut c_void }
+    }
+
+    /// Get mutable pointer for a pair (untyped).
+    /// This operation gets the value for a pair from the entity. If neither the
+    /// first nor second element of the pair is a component, the operation will
+    /// fail.
+    ///
+    /// # Parameters
+    ///
+    /// * `first`: The first element of the pair.
+    /// * `second`: The second element of the pair.
+    pub fn get_pair_ids_mut(&self, id: EntityT, id2: EntityT) -> *mut c_void {
+        unsafe { ecs_get_mut_id(self.world, self.raw_id, ecs_pair(id, id2)) as *mut c_void }
+    }
+
+    /// Get mutable pointer for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first part of the pair.
+    ///
+    /// # Parameters
+    ///
+    /// * `second`: The second element of the pair.
+    pub fn get_pair_first_mut<First: CachedComponentData>(&self, second: EntityT) -> *mut First {
+        let component_id = First::get_id(self.world);
+        ecs_assert!(
+            First::get_size(self.world) != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid type: {}",
+            First::get_symbol_name()
+        );
+        unsafe {
+            ecs_get_mut_id(self.world, self.raw_id, ecs_pair(component_id, second)) as *mut First
+        }
+    }
+
+    /// Get mutable pointer for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Second`: The second element of the pair.
+    ///
+    /// # Parameters
+    ///
+    /// * `first`: The first element of the pair.
+    pub fn get_pair_second_mut<Second: CachedComponentData>(&self, first: EntityT) -> *mut Second {
+        let component_id = Second::get_id(self.world);
+        ecs_assert!(
+            Second::get_size(self.world) != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid type: {}",
+            Second::get_symbol_name()
+        );
+        unsafe {
+            ecs_get_mut_id(self.world, self.raw_id, ecs_pair(first, component_id)) as *mut Second
+        }
+    }
+
+    /// Signal that component was modified.
+    ///
+    /// # Arguments
+    ///
+    /// * `comp` - The component that was modified.
+    ///
+    pub fn mark_component_id_modified(&self, component_id: IdT) {
+        unsafe { ecs_modified_id(self.world, self.raw_id, component_id) }
+    }
+
+    /// Signal that component was modified.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The type of the component that was modified.
+    ///
+    pub fn mark_component_modified<T: CachedComponentData>(&self) {
         ecs_assert!(
             T::get_size(self.world) != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid type: {}",
-            T::get_symbol_name()
+            T::get_symbol_name(),
         );
-        unsafe { ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T }
+        self.mark_component_id_modified(T::get_id(self.world));
+    }
+
+    /// Signal that a pair has been modified (untyped).
+    /// If neither the first nor the second element of the pair are a component, the
+    /// operation will fail.
+    ///
+    /// # Parameters
+    ///
+    /// * `first` - The first element of the pair.
+    /// * `second` - The second element of the pair.
+    ///
+    pub fn mark_pair_ids_modified(&self, id: EntityT, id2: EntityT) {
+        self.mark_component_id_modified(ecs_pair(id, id2));
+    }
+
+    /// Signal that the first element of a pair was modified.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First` - The first part of the pair.
+    /// * `Second` - The second part of the pair.
+    pub fn mark_pair_modified<First, Second>(&self)
+    where
+        First: CachedComponentData,
+        Second: CachedComponentData,
+    {
+        self.mark_pair_ids_modified(First::get_id(self.world), Second::get_id(self.world))
+    }
+
+    /// Signal that the first part of a pair was modified.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First` - The first part of the pair.
+    ///
+    /// # Parameters
+    ///
+    /// * `second` - The second element of the pair.
+    pub fn mark_pair_first_modified<First: CachedComponentData>(&self, second: EntityT) {
+        ecs_assert!(
+            First::get_size(self.world) != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid type: {}",
+            First::get_symbol_name(),
+        );
+        self.mark_pair_ids_modified(First::get_id(self.world), second)
     }
 
     /// Get mut enum constant
@@ -717,16 +866,11 @@ impl Entity {
         }
     }
 
-    /// Get mut component value as untyped pointer
-    ///
-    /// ### Arguments
-    ///
-    /// * `component_id` - The component to get
-    ///
-    /// ### Returns
-    ///
-    /// * `*mut c_void` - Pointer to the component value, nullptr if the entity does not have the component
-    pub fn get_component_by_id_mut(&self, component_id: EntityT) -> *mut c_void {
-        unsafe { ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut c_void }
+    pub fn destruct(self) {
+        unsafe { ecs_delete(self.world, self.raw_id) }
+    }
+
+    pub fn clear(&self) {
+        unsafe { ecs_clear(self.world, self.raw_id) }
     }
 }

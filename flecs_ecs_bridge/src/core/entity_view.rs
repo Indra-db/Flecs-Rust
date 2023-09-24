@@ -45,8 +45,6 @@ use super::{
     world::World,
 };
 
-static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\0") };
-
 #[derive(Default, Debug, Clone, Copy)]
 pub struct EntityView {
     pub id: Id,
