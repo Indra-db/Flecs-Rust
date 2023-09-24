@@ -62,19 +62,19 @@ impl Entity {
         }
     }
 
-    pub fn add_component_with_id(self, component_id: IdT) -> Self {
+    pub fn add_component_id(self, component_id: IdT) -> Self {
         unsafe { ecs_add_id(self.world, self.raw_id, component_id) }
         self
     }
 
     pub fn add_component<T: CachedComponentData>(self) -> Self {
         let world = self.world;
-        self.add_component_with_id(T::get_id(world))
+        self.add_component_id(T::get_id(world))
     }
 
     pub fn add_pair_from_ids(self, id: EntityT, id2: EntityT) -> Self {
         let world = self.world;
-        self.add_component_with_id(ecs_pair(id, id2))
+        self.add_component_id(ecs_pair(id, id2))
     }
 
     pub fn add_pair<T, U>(self) -> Self
@@ -103,10 +103,10 @@ impl Entity {
         self.add_pair_from_ids(first, Second::get_id(world))
     }
 
-    pub fn add_component_with_id_if(self, component_id: IdT, condition: bool) -> Self {
+    pub fn add_component_id_if(self, component_id: IdT, condition: bool) -> Self {
         if condition {
             let world = self.world;
-            return self.add_component_with_id(component_id);
+            return self.add_component_id(component_id);
         }
 
         self
@@ -114,15 +114,10 @@ impl Entity {
 
     pub fn add_component_if<T: CachedComponentData>(self, condition: bool) -> Self {
         let world = self.world;
-        self.add_component_with_id_if(T::get_id(world), condition)
+        self.add_component_id_if(T::get_id(world), condition)
     }
 
-    pub fn add_pair_from_ids_if(
-        self,
-        first: EntityT,
-        mut second: EntityT,
-        condition: bool,
-    ) -> Self {
+    pub fn add_pair_ids_if(self, first: EntityT, mut second: EntityT, condition: bool) -> Self {
         let world = self.world;
         if condition {
             self.add_pair_from_ids(first, second)
@@ -144,22 +139,35 @@ impl Entity {
         U: CachedComponentData + ComponentType<Struct>,
     {
         let world = self.world;
-        self.add_pair_from_ids_if(T::get_id(world), U::get_id(world), condition)
+        self.add_pair_ids_if(T::get_id(world), U::get_id(world), condition)
     }
 
-    pub fn remove_component_with_id(self, component_id: IdT) -> Self {
+    pub fn add_enum_tag_if<T, U>(self, enum_value: U, condition: bool) -> Self
+    where
+        T: CachedComponentData,
+        U: CachedComponentData + ComponentType<Enum> + CachedEnumData,
+    {
+        let world = self.world;
+        self.add_pair_ids_if(
+            T::get_id(world),
+            enum_value.get_entity_id_from_enum_field(world),
+            condition,
+        )
+    }
+
+    pub fn remove_component_id(self, component_id: IdT) -> Self {
         unsafe { ecs_remove_id(self.world, self.raw_id, component_id) }
         self
     }
 
     pub fn remove_struct_component<T: CachedComponentData + ComponentType<Struct>>(self) -> Self {
         let world = self.world;
-        self.remove_component_with_id(T::get_id(world))
+        self.remove_component_id(T::get_id(world))
     }
 
     pub fn remove_pair_from_ids(self, id: EntityT, id2: EntityT) -> Self {
         let world = self.world;
-        self.remove_component_with_id(ecs_pair(id, id2))
+        self.remove_component_id(ecs_pair(id, id2))
     }
 
     pub fn remove_pair<T, U>(self) -> Self
