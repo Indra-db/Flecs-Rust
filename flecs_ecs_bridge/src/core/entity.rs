@@ -991,11 +991,11 @@ impl Entity {
     /// - `U`: The second element of the pair.
     pub fn enable_pair<First, Second>(self) -> Self
     where
-        T: CachedComponentData,
-        U: CachedComponentData,
+        First: CachedComponentData,
+        Second: CachedComponentData,
     {
         let world = self.world;
-        self.enable_pair_ids(T::get_id(world), U::get_id(world))
+        self.enable_pair_ids(First::get_id(world), Second::get_id(world))
     }
 
     /// Enables a pair with a specific ID for the second element.
@@ -1062,11 +1062,11 @@ impl Entity {
     /// - `U`: The second element of the pair.
     pub fn disable_pair<First, Second>(self) -> Self
     where
-        T: CachedComponentData,
-        U: CachedComponentData,
+        First: CachedComponentData,
+        Second: CachedComponentData,
     {
         let world = self.world;
-        self.disable_pair_ids(T::get_id(world), U::get_id(world))
+        self.disable_pair_ids(First::get_id(world), Second::get_id(world))
     }
 
     /// Disables a pair with a specific ID for the second element.
