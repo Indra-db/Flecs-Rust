@@ -10,8 +10,9 @@ use crate::{
 
 use super::{
     c_binding::bindings::{
-        ecs_add_id, ecs_clear, ecs_delete, ecs_get_world, ecs_has_id, ecs_new_w_id, ecs_remove_id,
-        EcsChildOf, EcsDependsOn, EcsExclusive, EcsIsA, EcsSlotOf, EcsWildcard,
+        ecs_add_id, ecs_clear, ecs_delete, ecs_get_mut_id, ecs_get_world, ecs_has_id,
+        ecs_modified_id, ecs_new_w_id, ecs_remove_id, EcsChildOf, EcsDependsOn, EcsExclusive,
+        EcsIsA, EcsSlotOf, EcsWildcard,
     },
     c_types::{EntityT, IdT, WorldT},
     component::{CachedComponentData, ComponentType, Enum, Struct},
@@ -342,16 +343,101 @@ impl Entity {
         let world = self.world;
         self.mark_pair_ids_for_override(First::get_id(world), second)
     }
+
+    pub fn set_component_id_mark_override(self, component_id: IdT) -> Self {
+        unsafe { ecs_add_id(self.world, self.raw_id, ECS_OVERRIDE | component_id) }
+        self
+    }
+
+    pub fn set_component_mark_override<T: CachedComponentData>(self, component: T) -> Self {
+        self.mark_component_for_override::<T>()
+            .set_component(component)
+    }
     //
     //
     //
     //
     //
+
+    pub fn set_component<T: CachedComponentData>(self, component: T) -> Self {
+        let world = self.world;
+        let comp = self.get_component_mut::<T>();
+        unsafe {
+            *comp = component;
+            ecs_modified_id(world, self.raw_id, T::get_id(world))
+        };
+        self
+    }
+
     pub fn destruct(self) {
         unsafe { ecs_delete(self.world, self.raw_id) }
     }
 
     pub fn clear(&self) {
         unsafe { ecs_clear(self.world, self.raw_id) }
+    }
+
+    /// Get mut (struct) Component from entity
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `T` - The component type to get
+    ///
+    /// ### Returns
+    ///
+    /// * `*mut T` - The enum component, nullptr if the entity does not have the component
+    pub fn get_component_mut<T: CachedComponentData + ComponentType<Struct>>(&self) -> *mut T {
+        let component_id = T::get_id(self.world);
+        ecs_assert!(
+            T::get_size(self.world) != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid type: {}",
+            T::get_symbol_name()
+        );
+        unsafe { ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T }
+    }
+
+    /// Get mut enum constant
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `T` - The enum component type which to get the constant
+    ///
+    /// ### Returns
+    ///
+    /// * `*mut T` - The enum component, nullptr if the entity does not have the component
+    pub fn get_enum_component_mut<T: CachedComponentData + ComponentType<Enum>>(&self) -> *mut T {
+        let component_id: IdT = T::get_id(self.world);
+        let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
+
+        if target == 0 {
+            unsafe { ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T }
+        } else {
+            // get constant value from constant entity
+            let constant_value =
+                unsafe { ecs_get_mut_id(self.world, target, component_id) as *mut T };
+
+            ecs_assert!(
+                !constant_value.is_null(),
+                FlecsErrorCode::InternalError,
+                "missing enum constant value {}",
+                T::get_symbol_name()
+            );
+
+            constant_value
+        }
+    }
+
+    /// Get mut component value as untyped pointer
+    ///
+    /// ### Arguments
+    ///
+    /// * `component_id` - The component to get
+    ///
+    /// ### Returns
+    ///
+    /// * `*mut c_void` - Pointer to the component value, nullptr if the entity does not have the component
+    pub fn get_component_by_id_mut(&self, component_id: EntityT) -> *mut c_void {
+        unsafe { ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut c_void }
     }
 }
