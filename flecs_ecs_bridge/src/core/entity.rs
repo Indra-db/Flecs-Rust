@@ -86,11 +86,52 @@ impl Entity {
         self.add_pair_from_ids(T::get_id(world), U::get_id(world))
     }
 
+    /// Adds a pair to the entity composed of a tag and an enum constant.
+    ///
+    /// # Type Parameters
+    ///
+    /// - `T`: The tag (first element of the pair).
+    /// - `U`: The enum constant (second element of the pair).
+    ///
+    /// # Parameters
+    ///
+    /// - `enum_value`: The enum constant.
+    ///
+    /// # Returns
+    ///
+    /// Returns the updated entity.
     pub fn add_enum_tag<T, U>(self, enum_value: U) -> Self
     where
         T: CachedComponentData,
         U: CachedComponentData + ComponentType<Enum> + CachedEnumData,
     {
+        let world = self.world;
+        self.add_pair_from_ids(
+            T::get_id(world),
+            enum_value.get_entity_id_from_enum_field(world),
+        )
+    }
+
+    /// Adds a pair to the entity where the first element is the enumeration type,
+    /// and the second element is the enumeration constant.
+    ///
+    /// This function works with regular (C style) enumerations as well as enum classes.
+    ///
+    /// # Type Parameters
+    ///
+    /// - `T`: The enumeration type, which derives from `CachedComponentData`, `ComponentType<Enum>`, and `CachedEnumData`.
+    ///
+    /// # Parameters
+    ///
+    /// - `enum_value`: The enumeration value.
+    ///
+    /// # Returns
+    ///
+    /// Returns the updated entity.
+    pub fn add_enum_constant<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
+        self,
+        enum_value: T,
+    ) -> Self {
         let world = self.world;
         self.add_pair_from_ids(
             T::get_id(world),
@@ -160,9 +201,19 @@ impl Entity {
         self
     }
 
-    pub fn remove_struct_component<T: CachedComponentData + ComponentType<Struct>>(self) -> Self {
+    pub fn remove_component<T: CachedComponentData + ComponentType<Struct>>(self) -> Self {
         let world = self.world;
         self.remove_component_id(T::get_id(world))
+    }
+
+    /// Remove pair for enum
+    /// This operation will remove any (Enum, *) pair from the entity.
+    ///
+    /// # Type parameters
+    /// * `T` - The enum type.
+    pub fn remove_component_enum<T: CachedComponentData + ComponentType<Enum>>(self) -> Self {
+        let world = self.world;
+        self.remove_pair_from_ids(T::get_id(world), unsafe { EcsWildcard })
     }
 
     pub fn remove_pair_from_ids(self, id: EntityT, id2: EntityT) -> Self {
