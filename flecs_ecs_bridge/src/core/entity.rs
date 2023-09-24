@@ -647,12 +647,27 @@ impl Entity {
         self.mark_pair_ids_for_override(First::get_id(world), second)
     }
 
+    /// Sets a component of type `T` on the entity.
+    ///
+    /// # Arguments
+    ///
+    /// * `component` - The component to set on the entity.
     pub fn set_component<T: CachedComponentData>(self, component: T) -> Self {
         let raw_id = self.raw_id;
         let world = self.world;
         self.set_helper(raw_id, component, T::get_id(world))
     }
 
+    /// Set a pair
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first element of the pair.
+    /// * `Second`: The second element of the pair.
+    ///
+    /// # Parameters
+    ///
+    /// * `first`: The first element of the pair to be set.
     pub fn set_pair_first<First, Second>(self, first: First) -> Self
     where
         First: CachedComponentData + ComponentType<Struct>,
@@ -667,7 +682,17 @@ impl Entity {
         )
     }
 
-    pub fn set_pair_first_id<First: CachedComponentData>(
+    /// Set a pair for an entity using the first element type and a second id.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first element of the pair. Must implement `CachedComponentData`.
+    ///
+    /// # Parameters
+    ///
+    /// * `first`: The ID of the first element of the pair.
+    /// * `second`: The second element of the pair to be set.
+    pub fn set_pair_second_id<First: CachedComponentData>(
         self,
         first: First,
         second: EntityT,
@@ -677,6 +702,18 @@ impl Entity {
         self.set_helper(raw_id, first, ecs_pair(First::get_id(world), second))
     }
 
+    /// Set a pair for an entity.
+    /// This operation sets the pair value, and uses Second as type. If the
+    /// entity did not yet have the pair, it will be added.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Second`: The second element of the pair
+    ///
+    /// # Parameters
+    ///
+    /// * `first`: The first element of the pair.
+    /// * `value`: The value to set.
     pub fn set_pair_second<First, Second>(self, second: Second) -> Self
     where
         First: CachedComponentData + ComponentType<Struct>,
@@ -691,7 +728,17 @@ impl Entity {
         )
     }
 
-    pub fn set_pair_second_id<Second: CachedComponentData>(
+    /// Set a pair for an entity using the second element type and a first component ID.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Second`: The second element of the pair. Must implement `CachedComponentData`.
+    ///
+    /// # Parameters
+    ///
+    /// * `first`: The ID of the first element of the pair.
+    /// * `second`: The second element of the pair to be set.
+    pub fn set_pair_first_id<Second: CachedComponentData>(
         self,
         first: EntityT,
         second: Second,
@@ -701,12 +748,25 @@ impl Entity {
         self.set_helper(raw_id, second, ecs_pair(first, Second::get_id(world)))
     }
 
-    //not sure if this is correct
+    /// Set a pair for an entity.
+    /// This operation sets the pair value, and uses First as type. If the
+    /// entity did not yet have the pair, it will be added.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first element of the pair.
+    /// * `Second`: The second element of the pair.
+    ///
+    /// # Parameters
+    ///
+    /// * `constant`: The enum constant.
+    /// * `value`: The value to set.
     pub fn set_enum_pair_first<First, Second>(self, first: First, constant: Second) -> Self
     where
         First: CachedComponentData + ComponentType<Struct>,
         Second: CachedComponentData + ComponentType<Enum> + CachedEnumData,
     {
+        //not sure if this is correct
         let raw_id = self.raw_id;
         let world = self.world;
         self.set_helper(
@@ -719,6 +779,20 @@ impl Entity {
         )
     }
 
+    /// Internal helper function to set a component for an entity.
+    ///
+    /// This function sets the given value for an entity in the ECS world, ensuring
+    /// that the type of the component is valid.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: The type of the component data. Must implement `CachedComponentData`.
+    ///
+    /// # Parameters
+    ///
+    /// * `entity`: The ID of the entity.
+    /// * `value`: The value to set for the component.
+    /// * `id`: The ID of the component type.
     fn set_helper<T: CachedComponentData>(self, entity: EntityT, value: T, id: IdT) -> Self {
         ecs_assert!(
             T::get_size(self.world) != 0,
@@ -735,6 +809,15 @@ impl Entity {
         self
     }
 
+    /// Sets a component for an entity and marks it as overridden.
+    ///
+    /// This function sets a component for an entity and marks the component
+    /// as overridden, meaning that it will not be updated by systems that
+    /// typically update this component.
+    ///
+    /// # Parameters
+    ///
+    /// * `component_id`: The ID of the component to set and mark as overridden.
     pub fn set_component_id_mark_override(self, component_id: IdT) -> Self {
         unsafe { ecs_add_id(self.world, self.raw_id, ECS_OVERRIDE | component_id) }
         self
@@ -758,21 +841,66 @@ impl Entity {
             .set_component(component)
     }
 
+    /// Sets a pair, mark component for auto-overriding.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The type of the first element of the pair.
+    ///
+    /// # Parameters
+    ///
+    /// * `first`: The first element of the pair.
+    /// * `second`: The ID of the second element of the pair.
     pub fn set_pair_first_override<First: CachedComponentData + ComponentType<Struct>>(
         self,
         first: First,
         second: EntityT,
     ) -> Self {
         let world = self.world;
-        self.mark_pair_for_override_with_first_id::<First>(second)
+        self.mark_pair_for_override_with_second_id::<First>(second)
+            .set_pair_second_id(first, second)
+    }
+
+    /// Sets a pair, mark component for auto-overriding.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Second`: The type of the second element of the pair.
+    ///
+    /// # Parameters
+    ///
+    /// * `first`: The ID of the second element of the pair.
+    /// * `second`: The first element of the pair.
+    pub fn set_pair_second_override<Second: CachedComponentData + ComponentType<Struct>>(
+        self,
+        second: Second,
+        first: EntityT,
+    ) -> Self {
+        let world = self.world;
+        self.mark_pair_for_override_with_first_id::<Second>(first)
             .set_pair_first_id(first, second)
     }
 
+    /// Sets a pointer to a component of an entity with a given component ID and size.
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - A mutable reference to the entity.
+    /// * `component_id` - The ID of the component to set the pointer to.
+    /// * `size` - The size of the component.
+    /// * `ptr` - A pointer to the component.
     pub fn set_ptr_w_size(self, component_id: EntityT, size: usize, ptr: *const c_void) -> Self {
         unsafe { ecs_set_id(self.world, self.raw_id, component_id, size, ptr) };
         self
     }
 
+    /// Sets a pointer to a component of an entity with a given component ID.
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - A mutable reference to the entity.
+    /// * `component_id` - The ID of the component to set the pointer to.
+    /// * `ptr` - A pointer to the component.
     pub fn set_ptr(self, component_id: EntityT, ptr: *const c_void) -> Self {
         let cptr: *const EcsComponent =
             unsafe { ecs_get_id(self.world, component_id, FLECS__EEcsComponent) }
