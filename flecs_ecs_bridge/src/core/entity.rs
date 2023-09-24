@@ -2,7 +2,7 @@ use std::{ops::Deref, os::raw::c_void};
 
 use crate::{
     core::{
-        c_binding::bindings::{ecs_get_target, ECS_OVERRIDE},
+        c_binding::bindings::{ecs_get_target, ecs_set_id, ecs_set_name, ECS_OVERRIDE},
         utility::errors::FlecsErrorCode,
     },
     ecs_assert,
@@ -10,9 +10,10 @@ use crate::{
 
 use super::{
     c_binding::bindings::{
-        ecs_add_id, ecs_clear, ecs_delete, ecs_get_mut_id, ecs_get_world, ecs_has_id,
-        ecs_modified_id, ecs_new_w_id, ecs_remove_id, EcsChildOf, EcsDependsOn, EcsExclusive,
-        EcsIsA, EcsSlotOf, EcsWildcard,
+        ecs_add_id, ecs_clear, ecs_delete, ecs_enable, ecs_enable_id, ecs_get_id, ecs_get_mut_id,
+        ecs_get_world, ecs_has_id, ecs_modified_id, ecs_new_w_id, ecs_remove_id, ecs_set_alias,
+        ecs_set_scope, ecs_set_with, EcsChildOf, EcsComponent, EcsDependsOn, EcsExclusive, EcsIsA,
+        EcsSlotOf, EcsWildcard, FLECS__EEcsComponent,
     },
     c_types::{EntityT, IdT, WorldT},
     component::{CachedComponentData, ComponentType, Enum, Struct},
@@ -49,6 +50,7 @@ impl From<Entity> for u64 {
     }
 }
 
+// functions in here match most of the functions in the c++ entity and entity_builder class
 impl Entity {
     /// Create new entity.
     /// ### Safety
@@ -327,16 +329,24 @@ impl Entity {
         self.mark_component_id_for_override(ecs_pair(id, id2))
     }
 
-    pub fn mark_pair_for_override<T, U>(self) -> Self
+    pub fn mark_pair_for_override<First, Second>(self) -> Self
     where
-        T: CachedComponentData,
-        U: CachedComponentData,
+        First: CachedComponentData,
+        Second: CachedComponentData,
     {
         let world = self.world;
-        self.mark_pair_ids_for_override(T::get_id(world), U::get_id(world))
+        self.mark_pair_ids_for_override(First::get_id(world), Second::get_id(world))
     }
 
-    pub fn mark_pair_second_id_for_override<First: CachedComponentData>(
+    pub fn mark_pair_for_override_with_first_id<Second: CachedComponentData>(
+        self,
+        first: EntityT,
+    ) -> Self {
+        let world = self.world;
+        self.mark_pair_ids_for_override(first, Second::get_id(world))
+    }
+
+    pub fn mark_pair_for_override_with_second_id<First: CachedComponentData>(
         self,
         second: EntityT,
     ) -> Self {
@@ -344,30 +354,298 @@ impl Entity {
         self.mark_pair_ids_for_override(First::get_id(world), second)
     }
 
+    pub fn set_component<T: CachedComponentData>(self, component: T) -> Self {
+        let raw_id = self.raw_id;
+        let world = self.world;
+        self.set_helper(raw_id, component, T::get_id(world))
+    }
+
+    pub fn set_pair_first<First, Second>(self, first: First) -> Self
+    where
+        First: CachedComponentData + ComponentType<Struct>,
+        Second: CachedComponentData + ComponentType<Struct>,
+    {
+        let raw_id = self.raw_id;
+        let world = self.world;
+        self.set_helper(
+            raw_id,
+            first,
+            ecs_pair(First::get_id(world), Second::get_id(world)),
+        )
+    }
+
+    pub fn set_pair_first_id<First: CachedComponentData>(
+        self,
+        first: First,
+        second: EntityT,
+    ) -> Self {
+        let raw_id = self.raw_id;
+        let world = self.world;
+        self.set_helper(raw_id, first, ecs_pair(First::get_id(world), second))
+    }
+
+    pub fn set_pair_second<First, Second>(self, second: Second) -> Self
+    where
+        First: CachedComponentData + ComponentType<Struct>,
+        Second: CachedComponentData + ComponentType<Struct>,
+    {
+        let raw_id = self.raw_id;
+        let world = self.world;
+        self.set_helper(
+            raw_id,
+            second,
+            ecs_pair(First::get_id(world), Second::get_id(world)),
+        )
+    }
+
+    pub fn set_pair_second_id<Second: CachedComponentData>(
+        self,
+        first: EntityT,
+        second: Second,
+    ) -> Self {
+        let raw_id = self.raw_id;
+        let world = self.world;
+        self.set_helper(raw_id, second, ecs_pair(first, Second::get_id(world)))
+    }
+
+    //not sure if this is correct
+    pub fn set_enum_pair_first<First, Second>(self, first: First, constant: Second) -> Self
+    where
+        First: CachedComponentData + ComponentType<Struct>,
+        Second: CachedComponentData + ComponentType<Enum> + CachedEnumData,
+    {
+        let raw_id = self.raw_id;
+        let world = self.world;
+        self.set_helper(
+            raw_id,
+            first,
+            ecs_pair(
+                First::get_id(world),
+                constant.get_entity_id_from_enum_field(world),
+            ),
+        )
+    }
+
+    fn set_helper<T: CachedComponentData>(self, entity: EntityT, value: T, id: IdT) -> Self {
+        ecs_assert!(
+            T::get_size(self.world) != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid type: {}",
+            T::get_symbol_name()
+        );
+
+        let comp = unsafe { ecs_get_mut_id(self.world, self.raw_id, id) as *mut T };
+        unsafe {
+            *comp = value;
+            ecs_modified_id(self.world, entity, id)
+        };
+        self
+    }
+
     pub fn set_component_id_mark_override(self, component_id: IdT) -> Self {
         unsafe { ecs_add_id(self.world, self.raw_id, ECS_OVERRIDE | component_id) }
         self
     }
 
+    /// Sets a component mark override for the entity and sets the component data.
+    ///
+    /// # Arguments
+    ///
+    /// * `component` - The component data to set.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The type of the component data.
+    ///
+    /// # Returns
+    ///
+    /// The modified entity.
     pub fn set_component_mark_override<T: CachedComponentData>(self, component: T) -> Self {
         self.mark_component_for_override::<T>()
             .set_component(component)
     }
-    //
-    //
-    //
-    //
-    //
 
-    pub fn set_component<T: CachedComponentData>(self, component: T) -> Self {
+    pub fn set_pair_first_override<First: CachedComponentData + ComponentType<Struct>>(
+        self,
+        first: First,
+        second: EntityT,
+    ) -> Self {
         let world = self.world;
-        let comp = self.get_component_mut::<T>();
-        unsafe {
-            *comp = component;
-            ecs_modified_id(world, self.raw_id, T::get_id(world))
-        };
+        self.mark_pair_for_override_with_first_id::<First>(second)
+            .set_pair_first_id(first, second)
+    }
+
+    pub fn set_ptr_w_size(self, component_id: EntityT, size: usize, ptr: *const c_void) -> Self {
+        unsafe { ecs_set_id(self.world, self.raw_id, component_id, size, ptr) };
         self
     }
+
+    pub fn set_ptr(self, component_id: EntityT, ptr: *const c_void) -> Self {
+        let cptr: *const EcsComponent =
+            unsafe { ecs_get_id(self.world, component_id, FLECS__EEcsComponent) }
+                as *const EcsComponent;
+
+        ecs_assert!(
+            !cptr.is_null(),
+            FlecsErrorCode::InvalidParameter,
+            "invalid component id: {:?}",
+            component_id
+        );
+
+        self.set_ptr_w_size(component_id, unsafe { (*cptr).size } as usize, ptr)
+    }
+
+    pub fn set_name(self, name: &str) -> Self {
+        let c_name = std::ffi::CString::new(name).expect("Failed to convert to CString");
+        unsafe {
+            ecs_set_name(self.world, self.raw_id, c_name.as_ptr());
+        }
+        self
+    }
+
+    pub fn set_alias_name(self, name: &str) -> Self {
+        let c_name = std::ffi::CString::new(name).expect("Failed to convert to CString");
+        unsafe {
+            ecs_set_alias(self.world, self.raw_id, c_name.as_ptr());
+        }
+        self
+    }
+
+    pub fn enable(self) -> Self {
+        unsafe { ecs_enable(self.world, self.raw_id, true) }
+        self
+    }
+
+    pub fn enable_component_id(self, component_id: IdT) -> Self {
+        unsafe { ecs_enable_id(self.world, self.raw_id, component_id, true) }
+        self
+    }
+
+    pub fn enable_component<T: CachedComponentData>(self) -> Self {
+        let world = self.world;
+        self.enable_component_id(T::get_id(world))
+    }
+
+    pub fn enable_pair_ids(self, id: EntityT, id2: EntityT) -> Self {
+        self.enable_component_id(ecs_pair(id, id2))
+    }
+
+    pub fn enable_pair<T, U>(self) -> Self
+    where
+        T: CachedComponentData,
+        U: CachedComponentData,
+    {
+        let world = self.world;
+        self.enable_pair_ids(T::get_id(world), U::get_id(world))
+    }
+
+    pub fn enable_pair_with_id<First: CachedComponentData>(self, second: EntityT) -> Self {
+        let world = self.world;
+        self.enable_pair_ids(First::get_id(world), second)
+    }
+
+    pub fn disable(self) -> Self {
+        unsafe { ecs_enable(self.world, self.raw_id, false) }
+        self
+    }
+
+    pub fn disable_component_id(self, component_id: IdT) -> Self {
+        unsafe { ecs_enable_id(self.world, self.raw_id, component_id, false) }
+        self
+    }
+
+    pub fn disable_component<T: CachedComponentData>(self) -> Self {
+        let world = self.world;
+        self.disable_component_id(T::get_id(world))
+    }
+
+    pub fn disable_pair_ids(self, id: EntityT, id2: EntityT) -> Self {
+        self.disable_component_id(ecs_pair(id, id2))
+    }
+
+    pub fn disable_pair<T, U>(self) -> Self
+    where
+        T: CachedComponentData,
+        U: CachedComponentData,
+    {
+        let world = self.world;
+        self.disable_pair_ids(T::get_id(world), U::get_id(world))
+    }
+
+    pub fn disable_pair_with_id<First: CachedComponentData>(self, second: EntityT) -> Self {
+        let world = self.world;
+        self.disable_pair_ids(First::get_id(world), second)
+    }
+
+    pub fn with<F>(&self, func: F) -> &Self
+    where
+        F: FnOnce(),
+    {
+        unsafe {
+            let prev = ecs_set_with(self.world, self.raw_id);
+            func();
+            ecs_set_with(self.world, prev);
+        }
+        self
+    }
+
+    pub fn with_pair_first_id<F>(&self, first: EntityT, func: F) -> &Self
+    where
+        F: FnOnce(),
+    {
+        unsafe {
+            let prev = ecs_set_with(self.world, ecs_pair(first, self.raw_id));
+            func();
+            ecs_set_with(self.world, prev);
+        }
+        self
+    }
+
+    pub fn with_pair_second_id<F>(&self, second: EntityT, func: F) -> &Self
+    where
+        F: FnOnce(),
+    {
+        unsafe {
+            let prev = ecs_set_with(self.world, ecs_pair(self.raw_id, second));
+            func();
+            ecs_set_with(self.world, prev);
+        }
+        self
+    }
+
+    pub fn with_pair_first<First: CachedComponentData, F>(&self, func: F) -> &Self
+    where
+        F: FnOnce(),
+    {
+        let world = self.world;
+        self.with_pair_first_id(First::get_id(world), func)
+    }
+
+    pub fn with_pair_second<Second: CachedComponentData, F>(&self, func: F) -> &Self
+    where
+        F: FnOnce(),
+    {
+        let world = self.world;
+        self.with_pair_second_id(Second::get_id(world), func)
+    }
+
+    pub fn scope<F>(&self, func: F) -> &Self
+    where
+        F: FnOnce(),
+    {
+        unsafe {
+            let prev = ecs_set_scope(self.world, self.raw_id);
+            func();
+            ecs_set_scope(self.world, prev);
+        }
+        self
+    }
+
+    //
+    //
+    //
+    //
+    //
 
     pub fn destruct(self) {
         unsafe { ecs_delete(self.world, self.raw_id) }
@@ -388,6 +666,17 @@ impl Entity {
     /// * `*mut T` - The enum component, nullptr if the entity does not have the component
     pub fn get_component_mut<T: CachedComponentData + ComponentType<Struct>>(&self) -> *mut T {
         let component_id = T::get_id(self.world);
+        ecs_assert!(
+            T::get_size(self.world) != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid type: {}",
+            T::get_symbol_name()
+        );
+        unsafe { ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T }
+    }
+
+    pub fn get_pair_mut<T: CachedComponentData>(&self, first: IdT, second: EntityT) -> *mut T {
+        let component_id = ecs_pair(first, second);
         ecs_assert!(
             T::get_size(self.world) != 0,
             FlecsErrorCode::InvalidParameter,
