@@ -81,6 +81,17 @@ impl Entity {
         }
     }
 
+    /// Create a named entity.
+    ///
+    /// Named entities can be looked up with the lookup functions. Entity names
+    /// may be scoped, where each element in the name is separated by "::".
+    /// For example: "Foo::Bar". If parts of the hierarchy in the scoped name do
+    /// not yet exist, they will be automatically created.
+    ///
+    /// # Parameters
+    ///
+    /// - `world`: The world in which to create the entity.
+    /// - `name`: The entity name.
     pub fn new_named(world: *mut WorldT, name: &str) -> Self {
         let c_name = std::ffi::CString::new(name).expect("Failed to convert to CString");
 
@@ -101,21 +112,50 @@ impl Entity {
         }
     }
 
+    /// Add an entity to an entity.
+    ///
+    /// Add an entity to the entity. This is typically used for tagging.
+    ///
+    /// # Parameters
+    ///
+    /// - `component_id`: The component to add.
     pub fn add_component_id(self, component_id: IdT) -> Self {
         unsafe { ecs_add_id(self.world, self.raw_id, component_id) }
         self
     }
 
+    /// Add a component to an entity.
+    ///
+    /// To ensure the component is initialized, it should have a constructor.
+    ///
+    /// # Type Parameters
+    ///
+    /// - `T`: The component type to add.
     pub fn add_component<T: CachedComponentData>(self) -> Self {
         let world = self.world;
         self.add_component_id(T::get_id(world))
     }
 
+    /// Add a pair to an entity.
+    ///
+    /// This operation adds a pair to the entity.
+    ///
+    /// # Parameters
+    ///
+    /// - `first`: The first element of the pair.
+    /// - `second`: The second element of the pair.
     pub fn add_pair_ids(self, id: EntityT, id2: EntityT) -> Self {
         let world = self.world;
         self.add_component_id(ecs_pair(id, id2))
     }
 
+    /// Add a pair.
+    /// This operation adds a pair to the entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first element of the pair
+    /// * `Second`: The second element of the pair
     pub fn add_pair<T, U>(self) -> Self
     where
         T: CachedComponentData,
@@ -123,6 +163,34 @@ impl Entity {
     {
         let world = self.world;
         self.add_pair_ids(T::get_id(world), U::get_id(world))
+    }
+
+    /// Adds a pair to the entity
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Second` - the second element of the pair
+    ///
+    /// # Arguments
+    ///
+    /// * `first` - the first element of the pair
+    pub fn add_pair_first_id<Second: CachedComponentData>(self, first: EntityT) -> Self {
+        let world = self.world;
+        self.add_pair_ids(first, Second::get_id(world))
+    }
+
+    /// Adds a pair to the entity
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First` - the first element of the pair
+    ///
+    /// # Arguments
+    ///
+    /// * `second` - the second element of the pair
+    pub fn add_pair_second_id<First: CachedComponentData>(self, second: EntityT) -> Self {
+        let world = self.world;
+        self.add_pair_ids(First::get_id(world), second)
     }
 
     /// Adds a pair to the entity composed of a tag and an enum constant.
@@ -135,10 +203,6 @@ impl Entity {
     /// # Parameters
     ///
     /// - `enum_value`: The enum constant.
-    ///
-    /// # Returns
-    ///
-    /// Returns the updated entity.
     pub fn add_enum_tag<T, U>(self, enum_value: U) -> Self
     where
         T: CachedComponentData,
@@ -163,10 +227,6 @@ impl Entity {
     /// # Parameters
     ///
     /// - `enum_value`: The enumeration value.
-    ///
-    /// # Returns
-    ///
-    /// Returns the updated entity.
     pub fn add_enum_constant<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
         self,
         enum_value: T,
@@ -178,11 +238,13 @@ impl Entity {
         )
     }
 
-    pub fn add_pair_second<Second: CachedComponentData>(self, first: EntityT) -> Self {
-        let world = self.world;
-        self.add_pair_ids(first, Second::get_id(world))
-    }
-
+    /// Conditional add.
+    /// This operation adds if condition is true, removes if condition is false.
+    ///
+    /// # Parameters
+    ///
+    /// * `condition`: The condition to evaluate.
+    /// * `component`: The component to add.
     pub fn add_component_id_if(self, component_id: IdT, condition: bool) -> Self {
         if condition {
             let world = self.world;
@@ -192,11 +254,29 @@ impl Entity {
         self
     }
 
+    /// Conditional add.
+    /// This operation adds if condition is true, removes if condition is false.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: The component to add.
+    ///
+    /// # Parameters
+    ///
+    /// * `condition`: The condition to evaluate.
     pub fn add_component_if<T: CachedComponentData>(self, condition: bool) -> Self {
         let world = self.world;
         self.add_component_id_if(T::get_id(world), condition)
     }
 
+    /// Conditional add.
+    /// This operation adds if condition is true, removes if condition is false.
+    ///
+    /// # Parameters
+    ///
+    /// * `condition`: The condition to evaluate.
+    /// * `first`: The first element of the pair.
+    /// * `second`: The second element of the pair.
     pub fn add_pair_ids_if(self, first: EntityT, mut second: EntityT, condition: bool) -> Self {
         let world = self.world;
         if condition {
@@ -213,6 +293,17 @@ impl Entity {
         }
     }
 
+    /// Conditional add.
+    /// This operation adds if condition is true, removes if condition is false.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first element of the pair
+    /// * `Second`: The second element of the pair
+    ///
+    /// # Parameters
+    ///
+    /// * `condition`: The condition to evaluate.
     pub fn add_pair_if<T, U>(self, condition: bool) -> Self
     where
         T: CachedComponentData,
@@ -222,10 +313,60 @@ impl Entity {
         self.add_pair_ids_if(T::get_id(world), U::get_id(world), condition)
     }
 
-    pub fn add_enum_tag_if<T, U>(self, enum_value: U, condition: bool) -> Self
+    /// Conditional add.
+    /// This operation adds if condition is true, removes if condition is false.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Second`: The second element of the pair
+    ///
+    /// # Parameters
+    ///
+    /// * `condition`: The condition to evaluate.
+    /// * `first`: The first element of the pair.
+    pub fn add_pair_first_id_if<Second: CachedComponentData>(
+        self,
+        first: EntityT,
+        condition: bool,
+    ) -> Self {
+        let world = self.world;
+        self.add_pair_ids_if(first, Second::get_id(world), condition)
+    }
+
+    /// Conditional add.
+    /// This operation adds if condition is true, removes if condition is false.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first element of the pair
+    ///
+    /// # Parameters
+    ///
+    /// * `condition`: The condition to evaluate.
+    /// * `second`: The second element of the pair.
+    pub fn add_pair_second_id_if<First: CachedComponentData>(
+        self,
+        second: EntityT,
+        condition: bool,
+    ) -> Self {
+        let world = self.world;
+        self.add_pair_ids_if(First::get_id(world), second, condition)
+    }
+
+    /// Conditional add.
+    /// This operation adds if condition is true, removes if condition is false.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: enum type
+    ///
+    /// # Parameters
+    ///
+    /// * `condition`: The condition to evaluate.
+    /// * `enum_value`: The enumeration constant.
+    pub fn add_enum_tag_if<T>(self, enum_value: T, condition: bool) -> Self
     where
-        T: CachedComponentData,
-        U: CachedComponentData + ComponentType<Enum> + CachedEnumData,
+        T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
     {
         let world = self.world;
         self.add_pair_ids_if(
@@ -235,11 +376,21 @@ impl Entity {
         )
     }
 
+    /// Remove an entity from an entity.
+    ///
+    /// # Parameters
+    ///
+    /// * `component_id`: The entity to remove.
     pub fn remove_component_id(self, component_id: IdT) -> Self {
         unsafe { ecs_remove_id(self.world, self.raw_id, component_id) }
         self
     }
 
+    /// Remove a component from an entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: the type of the component to remove.
     pub fn remove_component<T: CachedComponentData + ComponentType<Struct>>(self) -> Self {
         let world = self.world;
         self.remove_component_id(T::get_id(world))
@@ -255,20 +406,45 @@ impl Entity {
         self.remove_pair_ids(T::get_id(world), unsafe { EcsWildcard })
     }
 
-    pub fn remove_pair_ids(self, id: EntityT, id2: EntityT) -> Self {
+    /// Remove a pair.
+    /// This operation removes a pair from the entity.
+    ///
+    /// # Parameters
+    ///
+    /// * `first`: The first element of the pair.
+    /// * `second`: The second element of the pair.
+    pub fn remove_pair_ids(self, first: EntityT, second: EntityT) -> Self {
         let world = self.world;
-        self.remove_component_id(ecs_pair(id, id2))
+        self.remove_component_id(ecs_pair(first, second))
     }
 
-    pub fn remove_pair<T, U>(self) -> Self
+    /// Removes a pair.
+    /// This operation removes a pair from the entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The type of the first element of the pair.
+    /// * `Second`: The type of the second element of the pair.
+    pub fn remove_pair<First, Second>(self) -> Self
     where
-        T: CachedComponentData,
-        U: CachedComponentData + ComponentType<Struct>,
+        First: CachedComponentData,
+        Second: CachedComponentData + ComponentType<Struct>,
     {
         let world = self.world;
-        self.remove_pair_ids(T::get_id(world), U::get_id(world))
+        self.remove_pair_ids(First::get_id(world), Second::get_id(world))
     }
 
+    /// Remove a pair.
+    /// This operation removes a pair to the entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: The type of the first element of the pair.
+    /// * `U`: The type of the second element of the pair.
+    ///
+    /// # Parameters
+    ///
+    /// * `enum_value`: the enum constant.
     pub fn remove_enum_tag<T, U>(self, enum_value: U) -> Self
     where
         T: CachedComponentData,
@@ -281,52 +457,103 @@ impl Entity {
         )
     }
 
+    /// Removes a pair.
+    /// This operation removes a pair from the entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Second`: The second element of the pair.
+    ///
+    /// # Parameters
+    ///
+    /// * `first`: The first element of the pair.
     pub fn remove_pair_first_id<Second: CachedComponentData>(self, first: EntityT) -> Self {
         let world = self.world;
         self.remove_pair_ids(first, Second::get_id(world))
     }
 
+    /// Shortcut for add(IsA, entity).
+    ///
+    /// # Parameters
+    ///
+    /// * `second`: The second element of the pair.
     pub fn is_a_id(self, second: EntityT) -> Self {
         let world = self.world;
         self.add_pair_ids(unsafe { EcsIsA }, second)
     }
 
+    /// Shortcut for add(IsA, entity).
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: the type associated with the entity.
     pub fn is_a<T: CachedComponentData>(self) -> Self {
         let world = self.world;
         self.is_a_id(T::get_id(world))
     }
 
+    /// Shortcut for add(ChildOf, entity).
+    ///
+    /// # Parameters
+    ///
+    /// * `second`: The second element of the pair.
     pub fn child_of_id(self, second: EntityT) -> Self {
         let world = self.world;
         self.add_pair_ids(unsafe { EcsChildOf }, second)
     }
 
+    /// Shortcut for add(ChildOf, entity).
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: the type associated with the entity.
     pub fn child_of<T: CachedComponentData>(self) -> Self {
         let world = self.world;
         self.child_of_id(T::get_id(world))
     }
 
+    /// Shortcut for add(DependsOn, entity).
+    ///
+    /// # Parameters
+    ///
+    /// * `second`: The second element of the pair.
     pub fn depends_on_id(self, second: EntityT) -> Self {
         let world = self.world;
         self.add_pair_ids(unsafe { EcsDependsOn }, second)
     }
 
+    /// Shortcut for add(DependsOn, entity).
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: the type associated with the entity.
     pub fn depends_on<T: CachedComponentData>(self) -> Self {
         let world = self.world;
         self.depends_on_id(T::get_id(world))
     }
 
+    /// Shortcut for add(SlotOf, entity).
+    ///
+    /// # Parameters
+    ///
+    /// * `second`: The second element of the pair.
     pub fn slot_of_id(self, second: EntityT) -> Self {
         let world = self.world;
         self.add_pair_ids(unsafe { EcsSlotOf }, second)
     }
 
+    /// Shortcut for add(SlotOf, entity).
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: the type associated with the entity.
     pub fn slot_of<T: CachedComponentData>(self) -> Self {
         let world = self.world;
         self.slot_of_id(T::get_id(world))
     }
 
-    pub fn slot(self) -> Self {
+    /// Shortcut for add(SlotOf, target(ChildOf)).
+    pub fn slot_child(self) -> Self {
         ecs_assert!(
             unsafe { ecs_get_target(self.world, self.raw_id, EcsChildOf, 0) } != 0,
             FlecsErrorCode::InvalidParameter,
@@ -336,21 +563,47 @@ impl Entity {
         self.slot_of_id(id)
     }
 
+    /// Mark id for auto-overriding.
+    ///
+    /// When an entity inherits from a base entity (using the IsA relationship)
+    /// any ids marked for auto-overriding on the base will be overridden
+    /// automatically by the entity.
+    ///
+    /// # Parameters
+    ///
+    /// * `id`: The id to mark for overriding.
     pub fn mark_component_id_for_override(self, id: IdT) -> Self {
         let world = self.world;
         self.add_component_id(unsafe { ECS_OVERRIDE | id })
     }
 
+    /// Mark component for auto-overriding.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: The component to mark for overriding.
     pub fn mark_component_for_override<T: CachedComponentData>(self) -> Self {
         let world = self.world;
         self.mark_component_id_for_override(T::get_id(world))
     }
 
-    pub fn mark_pair_ids_for_override(self, id: EntityT, id2: EntityT) -> Self {
+    /// Mark pair for auto-overriding.
+    ///
+    /// # Parameters
+    ///
+    /// * `first`: The first element of the pair.
+    /// * `second`: The second element of the pair.
+    pub fn mark_pair_ids_for_override(self, first: EntityT, second: EntityT) -> Self {
         let world = self.world;
-        self.mark_component_id_for_override(ecs_pair(id, id2))
+        self.mark_component_id_for_override(ecs_pair(first, second))
     }
 
+    /// Mark pair for auto-overriding.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first element of the pair.
+    /// * `Second`: The second element of the pair.
     pub fn mark_pair_for_override<First, Second>(self) -> Self
     where
         First: CachedComponentData,
@@ -360,6 +613,15 @@ impl Entity {
         self.mark_pair_ids_for_override(First::get_id(world), Second::get_id(world))
     }
 
+    /// Mark pair for auto-overriding with a given first ID.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Second`: The second element of the pair.
+    ///
+    /// # Parameters
+    ///
+    /// * `first`: The first element of the pair.
     pub fn mark_pair_for_override_with_first_id<Second: CachedComponentData>(
         self,
         first: EntityT,
@@ -368,6 +630,15 @@ impl Entity {
         self.mark_pair_ids_for_override(first, Second::get_id(world))
     }
 
+    /// Mark pair for auto-overriding with a given second ID.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first element of the pair.
+    ///
+    /// # Parameters
+    ///
+    /// * `second`: The second element of the pair.
     pub fn mark_pair_for_override_with_second_id<First: CachedComponentData>(
         self,
         second: EntityT,
