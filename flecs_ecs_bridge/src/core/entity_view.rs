@@ -482,6 +482,7 @@ impl EntityView {
         let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
 
         if target == 0 {
+            // if there is no matching pair for (r,*), try just r
             unsafe { ecs_get_id(self.world, self.raw_id, component_id) as *const T }
         } else {
             // get constant value from constant entity
@@ -1057,6 +1058,7 @@ impl EntityView {
     }
 
     //might not be needed, in the original c++ impl it was used in the get_mut functions.
+    #[doc(hidden)]
     fn set_stage(&self, stage: *mut WorldT) -> Entity {
         Entity::new_from_existing(stage, self.raw_id)
     }

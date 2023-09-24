@@ -11,13 +11,14 @@ use crate::{
 use super::{
     c_binding::bindings::{
         ecs_add_id, ecs_clear, ecs_delete, ecs_enable, ecs_enable_id, ecs_entity_desc_t,
-        ecs_entity_init, ecs_get_id, ecs_get_mut_id, ecs_get_world, ecs_has_id, ecs_modified_id,
-        ecs_new_w_id, ecs_remove_id, ecs_set_alias, ecs_set_scope, ecs_set_with, EcsChildOf,
-        EcsComponent, EcsDependsOn, EcsExclusive, EcsIsA, EcsSlotOf, EcsWildcard,
-        FLECS__EEcsComponent,
+        ecs_entity_init, ecs_flatten, ecs_flatten_desc_t, ecs_get_id, ecs_get_mut_id,
+        ecs_get_world, ecs_has_id, ecs_modified_id, ecs_new_w_id, ecs_remove_id, ecs_set_alias,
+        ecs_set_scope, ecs_set_with, EcsChildOf, EcsComponent, EcsDependsOn, EcsExclusive, EcsIsA,
+        EcsSlotOf, EcsWildcard, FLECS__EEcsComponent,
     },
     c_types::{EntityT, IdT, WorldT, SEPARATOR},
     component::{CachedComponentData, ComponentType, Enum, Struct},
+    component_ref::Ref,
     entity_view::EntityView,
     enum_type::CachedEnumData,
     id::Id,
@@ -687,6 +688,38 @@ impl Entity {
         unsafe { ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T }
     }
 
+    /// Get mut enum constant
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `T` - The enum component type which to get the constant
+    ///
+    /// ### Returns
+    ///
+    /// * `*mut T` - The enum component, nullptr if the entity does not have the component
+    pub fn get_enum_component_mut<T: CachedComponentData + ComponentType<Enum>>(&self) -> *mut T {
+        let component_id: IdT = T::get_id(self.world);
+        let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
+
+        if target == 0 {
+            // if there is no matching pair for (r,*), try just r
+            unsafe { ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T }
+        } else {
+            // get constant value from constant entity
+            let constant_value =
+                unsafe { ecs_get_mut_id(self.world, target, component_id) as *mut T };
+
+            ecs_assert!(
+                !constant_value.is_null(),
+                FlecsErrorCode::InternalError,
+                "missing enum constant value {}",
+                T::get_symbol_name()
+            );
+
+            constant_value
+        }
+    }
+
     /// Get mutable component value (untyped).
     /// This operation returns a mutable pointer to the component. If the entity
     /// did not yet have the component, it will be added. If a base entity had
@@ -835,42 +868,107 @@ impl Entity {
         self.mark_pair_ids_modified(First::get_id(self.world), second)
     }
 
-    /// Get mut enum constant
+    /// Get a reference to a component.
     ///
-    /// ### Type Parameters
+    /// A reference allows for quick and safe access to a component value, and is
+    /// a faster alternative to repeatedly calling `get` for the same component.
     ///
-    /// * `T` - The enum component type which to get the constant
+    /// - `T`: Component for which to get a reference.
     ///
-    /// ### Returns
-    ///
-    /// * `*mut T` - The enum component, nullptr if the entity does not have the component
-    pub fn get_enum_component_mut<T: CachedComponentData + ComponentType<Enum>>(&self) -> *mut T {
-        let component_id: IdT = T::get_id(self.world);
-        let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
+    /// Returns: The reference.
+    pub fn get_ref<T: CachedComponentData>(&self) -> Ref<T> {
+        Ref::<T>::new(self.world, self.raw_id, T::get_id(self.world))
+    }
 
-        if target == 0 {
-            unsafe { ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T }
-        } else {
-            // get constant value from constant entity
-            let constant_value =
-                unsafe { ecs_get_mut_id(self.world, target, component_id) as *mut T };
+    /// Get a reference to the first component of pair
+    ///
+    /// A reference allows for quick and safe access to a component value, and is
+    /// a faster alternative to repeatedly calling `get` for the same component.
+    ///
+    /// # Arguments
+    ///
+    /// * `second` - The entity associated with the second component in the pair.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First` - The type of the first component in the pair.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the first component in the pair.
+    pub fn get_ref_pair_first<First: CachedComponentData>(&self, second: EntityT) -> Ref<First> {
+        Ref::<First>::new(
+            self.world,
+            self.raw_id,
+            ecs_pair(First::get_id(self.world), second),
+        )
+    }
 
-            ecs_assert!(
-                !constant_value.is_null(),
-                FlecsErrorCode::InternalError,
-                "missing enum constant value {}",
-                T::get_symbol_name()
-            );
+    /// Get a reference to the second component of pair
+    ///
+    /// A reference allows for quick and safe access to a component value, and is
+    /// a faster alternative to repeatedly calling `get` for the same component.
+    ///
+    /// # Arguments
+    ///
+    /// * `first` - The entity associated with the first component in the pair.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Second` - The type of the second component in the pair.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the first component in the pair.
+    pub fn get_ref_pair_second<Second: CachedComponentData>(&self, first: EntityT) -> Ref<Second> {
+        Ref::<Second>::new(
+            self.world,
+            self.raw_id,
+            ecs_pair(first, Second::get_id(self.world)),
+        )
+    }
 
-            constant_value
+    /// Recursively flatten relationship.
+    pub fn flatten(&self, relationship: EntityT) {
+        unsafe {
+            ecs_flatten(
+                self.world,
+                ecs_pair(relationship, self.raw_id),
+                std::ptr::null_mut(),
+            )
         }
     }
 
+    /// Recursively flatten relationship with desc.
+    pub fn flatten_w_desc(&self, relationship: EntityT, desc: *const ecs_flatten_desc_t) {
+        unsafe { ecs_flatten(self.world, ecs_pair(relationship, self.raw_id), desc) }
+    }
+
+    /// Clear an entity.
+    ///
+    /// This operation removes all components from an entity without recycling
+    /// the entity id.
+    pub fn clear(&self) {
+        unsafe { ecs_clear(self.world, self.raw_id) }
+    }
+
+    /// Delete an entity.
+    ///
+    /// Entities have to be deleted explicitly, and are not deleted when the
+    /// entity object goes out of scope.
     pub fn destruct(self) {
         unsafe { ecs_delete(self.world, self.raw_id) }
     }
 
-    pub fn clear(&self) {
-        unsafe { ecs_clear(self.world, self.raw_id) }
+    pub fn get_view(&self) -> EntityView {
+        self.entity_view
+    }
+
+    pub fn null_w_world(world: *const WorldT) -> Entity {
+        Entity::new(world as *mut WorldT)
+    }
+
+    pub fn null() -> Entity {
+        Entity::default()
     }
 }

@@ -16,6 +16,7 @@ use super::{
     entity::Entity,
 };
 
+/// A reference to a component from a specific entity.
 pub struct Ref<T: CachedComponentData> {
     world: *mut WorldT,
     component_ref: RefT,
