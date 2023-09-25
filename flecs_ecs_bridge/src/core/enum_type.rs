@@ -9,7 +9,7 @@ pub trait CachedEnumData: ComponentType<Enum> {
     const SIZE_ENUM_FIELDS: u32;
     type VariantIterator: Iterator<Item = Self>;
 
-    /// # Note
+    /// ### Note
     /// this function is used to pass the name to the C API.
     fn get_cstr_name(&self) -> &CStr;
 
@@ -17,7 +17,7 @@ pub trait CachedEnumData: ComponentType<Enum> {
 
     fn iter() -> Self::VariantIterator;
 
-    /// # Note
+    /// ### Note
     /// it only means that the enum is registered with a particular world, not necessarily yours.
     fn are_fields_registered_as_entities() -> bool {
         // when the enum is registered, the fields are registered as entities
@@ -33,7 +33,7 @@ pub trait CachedEnumData: ComponentType<Enum> {
         unsafe { *Self::__get_enum_data_ptr_mut().add(index) }
     }
 
-    /// # Safety
+    /// ## Safety
     /// this function assumes you're sure that the enum fields are registered as entities in the world you're passing in
     /// if uncertain, use et_entity_id_from_enum_field
     unsafe fn get_entity_id_from_enum_field_unchecked(&self, world: *mut WorldT) -> EntityT {
@@ -41,7 +41,7 @@ pub trait CachedEnumData: ComponentType<Enum> {
         unsafe { *Self::__get_enum_data_ptr_mut().add(index) }
     }
 
-    /// # Safety
+    /// ## Safety
     /// This function is unsafe because it dereferences a raw pointer and you must ensure that the
     /// index is within the bounds of the number of variants in the enum.
     /// if uncertain, use SIZE_ENUM_FIELDS to check the number of variants.

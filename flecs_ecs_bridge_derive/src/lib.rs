@@ -13,16 +13,16 @@ use syn::{Data, DeriveInput, Fields};
 /// - Based on the presence of fields or variants, the type will implement either `EmptyComponent` or `NotEmptyComponent`.
 /// - The `CachedComponentData` trait is implemented, providing storage mechanisms for the component.
 ///
-/// # Requirements:
+/// ## Requirements:
 ///
 /// - Types deriving `CachedComponentData` should also implement `Clone` and `Default`.
 ///   For enums, you'll need to provide an explicit implementation of `Default`. Structs can often use `#[derive(Default)]` for a derived implementation.
 ///
-/// # Note:
+/// ### Note:
 ///
 /// Ensure that enums annotated with `Component` have at least one variant; otherwise, a compile-time error will be triggered.
 ///
-/// # Example:
+/// ## Example:
 ///
 /// ```ignore
 /// #[derive(Clone, Default, Component)]

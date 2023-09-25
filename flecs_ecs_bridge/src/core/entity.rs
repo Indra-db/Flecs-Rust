@@ -1,12 +1,11 @@
-use std::{ops::Deref, os::raw::c_void};
+use std::ops::Deref;
+use std::os::raw::c_void;
 
-use crate::{
-    core::{
-        c_binding::bindings::{ecs_get_target, ecs_set_id, ecs_set_name, ECS_OVERRIDE},
-        utility::errors::FlecsErrorCode,
-    },
-    ecs_assert,
+use crate::core::{
+    c_binding::bindings::{ecs_get_target, ecs_set_id, ecs_set_name, ECS_OVERRIDE},
+    utility::errors::FlecsErrorCode,
 };
+use crate::ecs_assert;
 
 use super::{
     c_binding::bindings::{
@@ -23,7 +22,6 @@ use super::{
     enum_type::CachedEnumData,
     id::Id,
     utility::functions::ecs_pair,
-    utility::macros::*,
 };
 
 pub struct Entity {
@@ -65,7 +63,7 @@ impl Entity {
     }
 
     /// Wrap an existing entity id.
-    /// # Arguments
+    /// ### Arguments
     /// * `world` - The world the entity belongs to.
     /// * `id` - The entity id.
     pub fn new_from_existing(world: *mut WorldT, id: IdT) -> Self {
@@ -88,7 +86,7 @@ impl Entity {
     /// For example: "Foo::Bar". If parts of the hierarchy in the scoped name do
     /// not yet exist, they will be automatically created.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// - `world`: The world in which to create the entity.
     /// - `name`: The entity name.
@@ -116,7 +114,7 @@ impl Entity {
     ///
     /// Add an entity to the entity. This is typically used for tagging.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// - `component_id`: The component to add.
     pub fn add_component_id(self, component_id: IdT) -> Self {
@@ -128,7 +126,7 @@ impl Entity {
     ///
     /// To ensure the component is initialized, it should have a constructor.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// - `T`: The component type to add.
     pub fn add_component<T: CachedComponentData>(self) -> Self {
@@ -140,7 +138,7 @@ impl Entity {
     ///
     /// This operation adds a pair to the entity.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// - `first`: The first element of the pair.
     /// - `second`: The second element of the pair.
@@ -152,7 +150,7 @@ impl Entity {
     /// Add a pair.
     /// This operation adds a pair to the entity.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `First`: The first element of the pair
     /// * `Second`: The second element of the pair
@@ -167,11 +165,11 @@ impl Entity {
 
     /// Adds a pair to the entity
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `Second` - the second element of the pair
     ///
-    /// # Arguments
+    /// ### Arguments
     ///
     /// * `first` - the first element of the pair
     pub fn add_pair_first_id<Second: CachedComponentData>(self, first: EntityT) -> Self {
@@ -181,11 +179,11 @@ impl Entity {
 
     /// Adds a pair to the entity
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `First` - the first element of the pair
     ///
-    /// # Arguments
+    /// ### Arguments
     ///
     /// * `second` - the second element of the pair
     pub fn add_pair_second_id<First: CachedComponentData>(self, second: EntityT) -> Self {
@@ -195,12 +193,12 @@ impl Entity {
 
     /// Adds a pair to the entity composed of a tag and an enum constant.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// - `T`: The tag (first element of the pair).
     /// - `U`: The enum constant (second element of the pair).
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// - `enum_value`: The enum constant.
     pub fn add_enum_tag<First, Second>(self, enum_value: Second) -> Self
@@ -220,11 +218,11 @@ impl Entity {
     ///
     /// This function works with regular (C style) enumerations as well as enum classes.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// - `T`: The enumeration type, which derives from `CachedComponentData`, `ComponentType<Enum>`, and `CachedEnumData`.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// - `enum_value`: The enumeration value.
     pub fn add_enum_constant<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
@@ -241,7 +239,7 @@ impl Entity {
     /// Conditional add.
     /// This operation adds if condition is true, removes if condition is false.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `condition`: The condition to evaluate.
     /// * `component`: The component to add.
@@ -257,11 +255,11 @@ impl Entity {
     /// Conditional add.
     /// This operation adds if condition is true, removes if condition is false.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `T`: The component to add.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `condition`: The condition to evaluate.
     pub fn add_component_if<T: CachedComponentData>(self, condition: bool) -> Self {
@@ -272,7 +270,7 @@ impl Entity {
     /// Conditional add.
     /// This operation adds if condition is true, removes if condition is false.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `condition`: The condition to evaluate.
     /// * `first`: The first element of the pair.
@@ -296,12 +294,12 @@ impl Entity {
     /// Conditional add.
     /// This operation adds if condition is true, removes if condition is false.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `First`: The first element of the pair
     /// * `Second`: The second element of the pair
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `condition`: The condition to evaluate.
     pub fn add_pair_if<First, Second>(self, condition: bool) -> Self
@@ -316,11 +314,11 @@ impl Entity {
     /// Conditional add.
     /// This operation adds if condition is true, removes if condition is false.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `Second`: The second element of the pair
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `condition`: The condition to evaluate.
     /// * `first`: The first element of the pair.
@@ -336,11 +334,11 @@ impl Entity {
     /// Conditional add.
     /// This operation adds if condition is true, removes if condition is false.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `First`: The first element of the pair
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `condition`: The condition to evaluate.
     /// * `second`: The second element of the pair.
@@ -356,11 +354,11 @@ impl Entity {
     /// Conditional add.
     /// This operation adds if condition is true, removes if condition is false.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `T`: enum type
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `condition`: The condition to evaluate.
     /// * `enum_value`: The enumeration constant.
@@ -378,7 +376,7 @@ impl Entity {
 
     /// Remove an entity from an entity.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `component_id`: The entity to remove.
     pub fn remove_component_id(self, component_id: IdT) -> Self {
@@ -388,7 +386,7 @@ impl Entity {
 
     /// Remove a component from an entity.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `T`: the type of the component to remove.
     pub fn remove_component<T: CachedComponentData + ComponentType<Struct>>(self) -> Self {
@@ -399,7 +397,7 @@ impl Entity {
     /// Remove pair for enum
     /// This operation will remove any (Enum, *) pair from the entity.
     ///
-    /// # Type parameters
+    /// ### Type Parameters
     /// * `T` - The enum type.
     pub fn remove_component_enum<T: CachedComponentData + ComponentType<Enum>>(self) -> Self {
         let world = self.world;
@@ -409,7 +407,7 @@ impl Entity {
     /// Remove a pair.
     /// This operation removes a pair from the entity.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `first`: The first element of the pair.
     /// * `second`: The second element of the pair.
@@ -421,7 +419,7 @@ impl Entity {
     /// Removes a pair.
     /// This operation removes a pair from the entity.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `First`: The type of the first element of the pair.
     /// * `Second`: The type of the second element of the pair.
@@ -437,12 +435,12 @@ impl Entity {
     /// Remove a pair.
     /// This operation removes a pair to the entity.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `T`: The type of the first element of the pair.
     /// * `U`: The type of the second element of the pair.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `enum_value`: the enum constant.
     pub fn remove_enum_tag<First, Second>(self, enum_value: Second) -> Self
@@ -460,11 +458,11 @@ impl Entity {
     /// Removes a pair.
     /// This operation removes a pair from the entity.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `Second`: The second element of the pair.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `first`: The first element of the pair.
     pub fn remove_pair_first_id<Second: CachedComponentData>(self, first: EntityT) -> Self {
@@ -474,7 +472,7 @@ impl Entity {
 
     /// Shortcut for add(IsA, entity).
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `second`: The second element of the pair.
     pub fn is_a_id(self, second: EntityT) -> Self {
@@ -484,7 +482,7 @@ impl Entity {
 
     /// Shortcut for add(IsA, entity).
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `T`: the type associated with the entity.
     pub fn is_a<T: CachedComponentData>(self) -> Self {
@@ -494,7 +492,7 @@ impl Entity {
 
     /// Shortcut for add(ChildOf, entity).
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `second`: The second element of the pair.
     pub fn child_of_id(self, second: EntityT) -> Self {
@@ -504,7 +502,7 @@ impl Entity {
 
     /// Shortcut for add(ChildOf, entity).
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `T`: the type associated with the entity.
     pub fn child_of<T: CachedComponentData>(self) -> Self {
@@ -514,7 +512,7 @@ impl Entity {
 
     /// Shortcut for add(DependsOn, entity).
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `second`: The second element of the pair.
     pub fn depends_on_id(self, second: EntityT) -> Self {
@@ -524,7 +522,7 @@ impl Entity {
 
     /// Shortcut for add(DependsOn, entity).
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `T`: the type associated with the entity.
     pub fn depends_on<T: CachedComponentData>(self) -> Self {
@@ -534,7 +532,7 @@ impl Entity {
 
     /// Shortcut for add(SlotOf, entity).
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `second`: The second element of the pair.
     pub fn slot_of_id(self, second: EntityT) -> Self {
@@ -544,7 +542,7 @@ impl Entity {
 
     /// Shortcut for add(SlotOf, entity).
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `T`: the type associated with the entity.
     pub fn slot_of<T: CachedComponentData>(self) -> Self {
@@ -569,7 +567,7 @@ impl Entity {
     /// any ids marked for auto-overriding on the base will be overridden
     /// automatically by the entity.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `id`: The id to mark for overriding.
     pub fn mark_component_id_for_override(self, id: IdT) -> Self {
@@ -579,7 +577,7 @@ impl Entity {
 
     /// Mark component for auto-overriding.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `T`: The component to mark for overriding.
     pub fn mark_component_for_override<T: CachedComponentData>(self) -> Self {
@@ -589,7 +587,7 @@ impl Entity {
 
     /// Mark pair for auto-overriding.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `first`: The first element of the pair.
     /// * `second`: The second element of the pair.
@@ -600,7 +598,7 @@ impl Entity {
 
     /// Mark pair for auto-overriding.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `First`: The first element of the pair.
     /// * `Second`: The second element of the pair.
@@ -615,11 +613,11 @@ impl Entity {
 
     /// Mark pair for auto-overriding with a given first ID.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `Second`: The second element of the pair.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `first`: The first element of the pair.
     pub fn mark_pair_for_override_with_first_id<Second: CachedComponentData>(
@@ -632,11 +630,11 @@ impl Entity {
 
     /// Mark pair for auto-overriding with a given second ID.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `First`: The first element of the pair.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `second`: The second element of the pair.
     pub fn mark_pair_for_override_with_second_id<First: CachedComponentData>(
@@ -649,7 +647,7 @@ impl Entity {
 
     /// Sets a component of type `T` on the entity.
     ///
-    /// # Arguments
+    /// ### Arguments
     ///
     /// * `component` - The component to set on the entity.
     pub fn set_component<T: CachedComponentData>(self, component: T) -> Self {
@@ -660,12 +658,12 @@ impl Entity {
 
     /// Set a pair
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `First`: The first element of the pair.
     /// * `Second`: The second element of the pair.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `first`: The first element of the pair to be set.
     pub fn set_pair_first<First, Second>(self, first: First) -> Self
@@ -684,11 +682,11 @@ impl Entity {
 
     /// Set a pair for an entity using the first element type and a second id.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `First`: The first element of the pair. Must implement `CachedComponentData`.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `first`: The ID of the first element of the pair.
     /// * `second`: The second element of the pair to be set.
@@ -706,11 +704,11 @@ impl Entity {
     /// This operation sets the pair value, and uses Second as type. If the
     /// entity did not yet have the pair, it will be added.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `Second`: The second element of the pair
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `first`: The first element of the pair.
     /// * `value`: The value to set.
@@ -730,11 +728,11 @@ impl Entity {
 
     /// Set a pair for an entity using the second element type and a first component ID.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `Second`: The second element of the pair. Must implement `CachedComponentData`.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `first`: The ID of the first element of the pair.
     /// * `second`: The second element of the pair to be set.
@@ -752,12 +750,12 @@ impl Entity {
     /// This operation sets the pair value, and uses First as type. If the
     /// entity did not yet have the pair, it will be added.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `First`: The first element of the pair.
     /// * `Second`: The second element of the pair.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `constant`: The enum constant.
     /// * `value`: The value to set.
@@ -784,11 +782,11 @@ impl Entity {
     /// This function sets the given value for an entity in the ECS world, ensuring
     /// that the type of the component is valid.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `T`: The type of the component data. Must implement `CachedComponentData`.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `entity`: The ID of the entity.
     /// * `value`: The value to set for the component.
@@ -815,7 +813,7 @@ impl Entity {
     /// as overridden, meaning that it will not be updated by systems that
     /// typically update this component.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `component_id`: The ID of the component to set and mark as overridden.
     pub fn set_component_id_mark_override(self, component_id: IdT) -> Self {
@@ -825,17 +823,13 @@ impl Entity {
 
     /// Sets a component mark override for the entity and sets the component data.
     ///
-    /// # Arguments
+    /// ### Arguments
     ///
     /// * `component` - The component data to set.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `T` - The type of the component data.
-    ///
-    /// # Returns
-    ///
-    /// The modified entity.
     pub fn set_component_mark_override<T: CachedComponentData>(self, component: T) -> Self {
         self.mark_component_for_override::<T>()
             .set_component(component)
@@ -843,11 +837,11 @@ impl Entity {
 
     /// Sets a pair, mark component for auto-overriding.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `First`: The type of the first element of the pair.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `first`: The first element of the pair.
     /// * `second`: The ID of the second element of the pair.
@@ -863,11 +857,11 @@ impl Entity {
 
     /// Sets a pair, mark component for auto-overriding.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `Second`: The type of the second element of the pair.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `first`: The ID of the second element of the pair.
     /// * `second`: The first element of the pair.
@@ -883,7 +877,7 @@ impl Entity {
 
     /// Sets a pointer to a component of an entity with a given component ID and size.
     ///
-    /// # Arguments
+    /// ### Arguments
     ///
     /// * `self` - A mutable reference to the entity.
     /// * `component_id` - The ID of the component to set the pointer to.
@@ -896,7 +890,7 @@ impl Entity {
 
     /// Sets a pointer to a component of an entity with a given component ID.
     ///
-    /// # Arguments
+    /// ### Arguments
     ///
     /// * `self` - A mutable reference to the entity.
     /// * `component_id` - The ID of the component to set the pointer to.
@@ -918,7 +912,7 @@ impl Entity {
 
     /// Sets the name of the entity.
     ///
-    /// # Arguments
+    /// ### Arguments
     ///
     /// * `name` - A string slice that holds the name to be set.
     pub fn set_name(self, name: &str) -> Self {
@@ -931,7 +925,7 @@ impl Entity {
 
     /// Sets the alias name of the entity.
     ///
-    /// # Arguments
+    /// ### Arguments
     ///
     /// * `name` - A string slice that holds the alias name to be set.
     pub fn set_alias_name(self, name: &str) -> Self {
@@ -954,7 +948,7 @@ impl Entity {
     /// This sets the enabled bit for this component. If this is the first time the component is
     /// enabled or disabled, the bitset is added.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// - `component_id`: The ID to enable.
     /// - `toggle`: True to enable, false to disable (default = true).
@@ -965,7 +959,7 @@ impl Entity {
 
     /// Enables a component.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// - `T`: The component to enable.
     pub fn enable_component<T: CachedComponentData>(self) -> Self {
@@ -975,7 +969,7 @@ impl Entity {
 
     /// Enables a pair using IDs.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// - `first`: The first element of the pair.
     /// - `second`: The second element of the pair.
@@ -985,7 +979,7 @@ impl Entity {
 
     /// Enables a pair.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// - `T`: The first element of the pair.
     /// - `U`: The second element of the pair.
@@ -1000,11 +994,11 @@ impl Entity {
 
     /// Enables a pair with a specific ID for the second element.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// - `First`: The first element of the pair.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// - `second`: The ID of the second element of the pair.
     pub fn enable_pair_with_id<First: CachedComponentData>(self, second: EntityT) -> Self {
@@ -1026,7 +1020,7 @@ impl Entity {
     /// This sets the enabled bit for this ID. If this is the first time the ID is
     /// enabled or disabled, the bitset is added.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// - `component_id`: The ID to disable.
     pub fn disable_component_id(self, component_id: IdT) -> Self {
@@ -1036,7 +1030,7 @@ impl Entity {
 
     /// Disables a component.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// - `T`: The component to disable.
     pub fn disable_component<T: CachedComponentData>(self) -> Self {
@@ -1046,7 +1040,7 @@ impl Entity {
 
     /// Disables a pair using IDs.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// - `first`: The first element of the pair.
     /// - `second`: The second element of the pair.
@@ -1056,7 +1050,7 @@ impl Entity {
 
     /// Disables a pair.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// - `T`: The first element of the pair.
     /// - `U`: The second element of the pair.
@@ -1071,11 +1065,11 @@ impl Entity {
 
     /// Disables a pair with a specific ID for the second element.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// - `First`: The first element of the pair.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// - `second`: The ID of the second element of the pair.
     pub fn disable_pair_with_id<First: CachedComponentData>(self, second: EntityT) -> Self {
@@ -1084,7 +1078,7 @@ impl Entity {
     }
     /// Entities created in the function will have the current entity.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// - `func`: The function to call.
     pub fn with<F>(&self, func: F) -> &Self
@@ -1101,7 +1095,7 @@ impl Entity {
 
     /// Entities created in the function will have a pair consisting of a specified ID and the current entity.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// - `first`: The first element of the pair.
     /// - `func`: The function to call.
@@ -1119,7 +1113,7 @@ impl Entity {
 
     /// Entities created in the function will have a pair consisting of the current entity and a specified ID.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// - `second`: The second element of the pair.
     /// - `func`: The function to call.
@@ -1137,11 +1131,11 @@ impl Entity {
 
     /// Entities created in the function will have a pair consisting of a specified component and the current entity.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// - `First`: The first element of the pair.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// - `func`: The function to call.
     pub fn with_pair_first<First: CachedComponentData, F>(&self, func: F) -> &Self
@@ -1154,11 +1148,11 @@ impl Entity {
 
     /// Entities created in the function will have a pair consisting of the current entity and a specified component.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// - `Second`: The second element of the pair.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// - `func`: The function to call.
     pub fn with_pair_second<Second: CachedComponentData, F>(&self, func: F) -> &Self
@@ -1171,7 +1165,7 @@ impl Entity {
 
     /// The function will be ran with the scope set to the current entity.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// - `func`: The function to call.
     pub fn scope<F>(&self, func: F) -> &Self
@@ -1193,11 +1187,11 @@ impl Entity {
     /// the component, it will be overridden, and the value of the base component
     /// will be copied to the entity before this function returns.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `T`: The component to get.
     ///
-    /// # Returns
+    /// ### Returns
     ///
     /// A mutable pointer to the component value.
     pub fn get_component_mut<T: CachedComponentData + ComponentType<Struct>>(&self) -> *mut T {
@@ -1249,11 +1243,11 @@ impl Entity {
     /// the component, it will be overridden, and the value of the base component
     /// will be copied to the entity before this function returns.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `comp`: The component to get.
     ///
-    /// # Returns
+    /// ### Returns
     ///
     /// Pointer to the component value.
     pub fn get_component_by_id_mut(&self, component_id: EntityT) -> *mut c_void {
@@ -1265,7 +1259,7 @@ impl Entity {
     /// first nor second element of the pair is a component, the operation will
     /// fail.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `first`: The first element of the pair.
     /// * `second`: The second element of the pair.
@@ -1276,11 +1270,11 @@ impl Entity {
     /// Get mutable pointer for the first element of a pair
     /// This operation gets the value for a pair from the entity.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `First`: The first part of the pair.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `second`: The second element of the pair.
     pub fn get_pair_first_mut<First: CachedComponentData>(&self, second: EntityT) -> *mut First {
@@ -1299,11 +1293,11 @@ impl Entity {
     /// Get mutable pointer for the second element of a pair.
     /// This operation gets the value for a pair from the entity.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `Second`: The second element of the pair.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `first`: The first element of the pair.
     pub fn get_pair_second_mut<Second: CachedComponentData>(&self, first: EntityT) -> *mut Second {
@@ -1321,7 +1315,7 @@ impl Entity {
 
     /// Signal that component was modified.
     ///
-    /// # Arguments
+    /// ### Arguments
     ///
     /// * `comp` - The component that was modified.
     ///
@@ -1331,7 +1325,7 @@ impl Entity {
 
     /// Signal that component was modified.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `T` - The type of the component that was modified.
     ///
@@ -1349,7 +1343,7 @@ impl Entity {
     /// If neither the first nor the second element of the pair are a component, the
     /// operation will fail.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `first` - The first element of the pair.
     /// * `second` - The second element of the pair.
@@ -1359,7 +1353,7 @@ impl Entity {
 
     /// Signal that the first element of a pair was modified.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `First` - The first part of the pair.
     /// * `Second` - The second part of the pair.
@@ -1373,11 +1367,11 @@ impl Entity {
 
     /// Signal that the first part of a pair was modified.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `First` - The first part of the pair.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `second` - The second element of the pair.
     pub fn mark_pair_first_modified<First: CachedComponentData>(&self, second: EntityT) {
@@ -1407,15 +1401,15 @@ impl Entity {
     /// A reference allows for quick and safe access to a component value, and is
     /// a faster alternative to repeatedly calling `get` for the same component.
     ///
-    /// # Arguments
+    /// ### Arguments
     ///
     /// * `second` - The entity associated with the second component in the pair.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `First` - The type of the first component in the pair.
     ///
-    /// # Returns
+    /// ### Returns
     ///
     /// A reference to the first component in the pair.
     pub fn get_ref_pair_first<First: CachedComponentData>(&self, second: EntityT) -> Ref<First> {
@@ -1431,15 +1425,15 @@ impl Entity {
     /// A reference allows for quick and safe access to a component value, and is
     /// a faster alternative to repeatedly calling `get` for the same component.
     ///
-    /// # Arguments
+    /// ### Arguments
     ///
     /// * `first` - The entity associated with the first component in the pair.
     ///
-    /// # Type Parameters
+    /// ### Type Parameters
     ///
     /// * `Second` - The type of the second component in the pair.
     ///
-    /// # Returns
+    /// ### Returns
     ///
     /// A reference to the first component in the pair.
     pub fn get_ref_pair_second<Second: CachedComponentData>(&self, first: EntityT) -> Ref<Second> {
@@ -1452,7 +1446,7 @@ impl Entity {
 
     /// Recursively flatten relationship.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `relationship`: The relationship to flatten.
     pub fn flatten(&self, relationship: EntityT) {
@@ -1467,7 +1461,7 @@ impl Entity {
 
     /// Recursively flatten relationship with desc.
     ///
-    /// # Parameters
+    /// ### Parameters
     ///
     /// * `relationship`: The relationship to flatten.
     /// * `desc`: The flatten desc.
