@@ -383,7 +383,7 @@ impl EntityView {
     ///
     /// * `relationship` - The relationship to follow
     /// * `func` - The function invoked for each child. Must match the signature `FnMut(Entity)`.
-    pub fn for_each_children<F>(&self, relationship: EntityT, mut func: F)
+    pub fn for_each_children_by_relationship_id<F>(&self, relationship: EntityT, mut func: F)
     where
         F: FnMut(Entity),
     {
@@ -434,12 +434,12 @@ impl EntityView {
     ///
     /// * T - The relationship to follow
     /// * `func` - The function invoked for each child. Must match the signature `FnMut(Entity)`.
-    pub fn for_each_children1<T, F>(&self, mut func: F)
+    pub fn for_each_children_by_relationship<T, F>(&self, func: F)
     where
         T: CachedComponentData,
         F: FnMut(Entity),
     {
-        self.for_each_children(T::get_id(self.world), func);
+        self.for_each_children_by_relationship_id(T::get_id(self.world), func);
     }
 
     /// Iterate children for entity
@@ -447,11 +447,11 @@ impl EntityView {
     /// ### Arguments
     ///
     /// * `func` - The function invoked for each child. Must match the signature `FnMut(Entity)`.
-    pub fn for_each_children2<F>(&self, mut func: F)
+    pub fn for_each_child_of<F>(&self, func: F)
     where
         F: FnMut(Entity),
     {
-        self.for_each_children(unsafe { EcsChildOf }, func);
+        self.for_each_children_by_relationship_id(unsafe { EcsChildOf }, func);
     }
 
     /// Get (struct) Component from entity

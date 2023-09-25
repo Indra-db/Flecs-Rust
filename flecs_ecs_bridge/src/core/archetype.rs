@@ -1,6 +1,3 @@
-// Assuming the definitions of WorldT, TypeT, flecs::string, flecs::id_t, and flecs::id
-// are known and have been translated to Rust already.
-
 use libc::strlen;
 
 use crate::{core::utility::errors::FlecsErrorCode, ecs_assert};
