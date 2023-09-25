@@ -19,6 +19,7 @@ pub mod core {
     pub mod utility {
         pub mod errors;
         pub mod functions;
+        pub mod log;
         pub mod macros;
     }
     pub mod data_structures {
