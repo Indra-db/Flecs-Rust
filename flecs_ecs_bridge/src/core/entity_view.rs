@@ -465,7 +465,7 @@ impl EntityView {
     /// * `*const T` - The enum component, nullptr if the entity does not have the component
     pub fn get_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> *const T {
         let component_id = T::get_id(self.world);
-        unsafe { (ecs_get_id(self.world, self.raw_id, component_id) as *const T) }
+        unsafe { ecs_get_id(self.world, self.raw_id, component_id) as *const T }
     }
 
     /// Get enum constant
@@ -510,7 +510,7 @@ impl EntityView {
     ///
     /// * `*const c_void` - Pointer to the component value, nullptr if the entity does not have the component
     pub fn get_component_by_id(&self, component_id: IdT) -> *const c_void {
-        unsafe { ecs_get_id(self.world, self.raw_id, component_id) as *const c_void }
+        unsafe { ecs_get_id(self.world, self.raw_id, component_id) }
     }
 
     /// get a pair as untyped pointer
@@ -523,7 +523,7 @@ impl EntityView {
     /// * `first` - The first element of the pair
     /// * `second` - The second element of the pair
     pub fn get_pair_untyped(&self, first: EntityT, second: EntityT) -> *const c_void {
-        unsafe { ecs_get_id(self.world, self.raw_id, ecs_pair(first, second)) as *const c_void }
+        unsafe { ecs_get_id(self.world, self.raw_id, ecs_pair(first, second)) }
     }
 
     /// Get target for a given pair.

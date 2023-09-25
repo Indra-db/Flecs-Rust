@@ -149,6 +149,7 @@ pub trait CachedComponentData: Clone + Default {
 
 //TODO need to support getting the id of a component if it's a pair type
 /// attempts to register the component with the world. If it's already registered, it does nothing.
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn try_register_struct_component<T>(world: *mut WorldT)
 where
     T: CachedComponentData,
@@ -171,6 +172,7 @@ where
     }
 }
 
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn try_register_enum_component<T>(world: *mut WorldT)
 where
     T: CachedComponentData + CachedEnumData,
@@ -191,25 +193,23 @@ where
             is_registered_with_world,
         );
 
-        if has_newly_registered {
-            if !is_registered_with_world {
-                unsafe { ecs_cpp_enum_init(world, T::get_id_unchecked()) };
-                let enum_array_ptr = T::__get_enum_data_ptr_mut();
+        if has_newly_registered && !is_registered_with_world {
+            unsafe { ecs_cpp_enum_init(world, T::get_id_unchecked()) };
+            let enum_array_ptr = T::__get_enum_data_ptr_mut();
 
-                for (index, enum_item) in T::iter().enumerate() {
-                    let name = enum_item.get_cstr_name();
-                    let entity_id: EntityT = unsafe {
-                        ecs_cpp_enum_constant_register(
-                            world,
-                            T::get_id_unchecked(),
-                            T::get_entity_id_from_enum_field_index(enum_item.get_enum_index()),
-                            name.as_ptr(),
-                            index as i32,
-                        )
-                    };
-                    if !T::are_fields_registered_as_entities() {
-                        unsafe { *enum_array_ptr.add(index) = entity_id };
-                    }
+            for (index, enum_item) in T::iter().enumerate() {
+                let name = enum_item.get_cstr_name();
+                let entity_id: EntityT = unsafe {
+                    ecs_cpp_enum_constant_register(
+                        world,
+                        T::get_id_unchecked(),
+                        T::get_entity_id_from_enum_field_index(enum_item.get_enum_index()),
+                        name.as_ptr(),
+                        index as i32,
+                    )
+                };
+                if !T::are_fields_registered_as_entities() {
+                    unsafe { *enum_array_ptr.add(index) = entity_id };
                 }
             }
         }
@@ -353,7 +353,7 @@ where
         }
         return true;
     }
-    return false;
+    false
 }
 
 /// checks if the component is registered with a world.

@@ -24,16 +24,9 @@ use super::{
     utility::functions::ecs_pair,
 };
 
+#[derive(Default)]
 pub struct Entity {
     entity_view: EntityView,
-}
-
-impl Default for Entity {
-    fn default() -> Self {
-        Self {
-            entity_view: EntityView::default(),
-        }
-    }
 }
 
 impl Deref for Entity {
@@ -90,6 +83,7 @@ impl Entity {
     ///
     /// - `world`: The world in which to create the entity.
     /// - `name`: The entity name.
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new_named(world: *mut WorldT, name: &str) -> Self {
         let c_name = std::ffi::CString::new(name).expect("Failed to convert to CString");
 
@@ -883,6 +877,7 @@ impl Entity {
     /// * `component_id` - The ID of the component to set the pointer to.
     /// * `size` - The size of the component.
     /// * `ptr` - A pointer to the component.
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn set_ptr_w_size(self, component_id: EntityT, size: usize, ptr: *const c_void) -> Self {
         unsafe { ecs_set_id(self.world, self.raw_id, component_id, size, ptr) };
         self
@@ -1465,6 +1460,7 @@ impl Entity {
     ///
     /// * `relationship`: The relationship to flatten.
     /// * `desc`: The flatten desc.
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn flatten_w_desc(&self, relationship: EntityT, desc: *const ecs_flatten_desc_t) {
         unsafe { ecs_flatten(self.world, ecs_pair(relationship, self.raw_id), desc) }
     }
@@ -1473,6 +1469,7 @@ impl Entity {
     ///
     /// This operation removes all components from an entity without recycling
     /// the entity id.
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn clear(&self) {
         unsafe { ecs_clear(self.world, self.raw_id) }
     }

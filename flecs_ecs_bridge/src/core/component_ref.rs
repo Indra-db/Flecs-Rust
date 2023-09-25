@@ -24,6 +24,7 @@ pub struct Ref<T: CachedComponentData> {
 }
 
 impl<T: CachedComponentData> Ref<T> {
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new(mut world: *mut WorldT, entity: EntityT, mut id: IdT) -> Self {
         // the world we were called with may be a stage; convert it to a world
         // here if that is the case

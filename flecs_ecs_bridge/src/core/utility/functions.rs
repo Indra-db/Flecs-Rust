@@ -18,6 +18,7 @@ pub fn ecs_pair(pred: u64, obj: u64) -> u64 {
     PAIR.0 | ecs_entity_t_comb(obj, pred)
 }
 
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 #[inline(always)]
 pub fn ecs_has_pair(world: *const WorldT, entity: u64, first: u64, second: u64) -> bool {
     unsafe { ecs_has_id(world, entity, ecs_pair(first, second)) }
