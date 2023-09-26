@@ -1,7 +1,7 @@
 #![allow(clippy::all)]
 #![allow(warnings)]
 
-#[cfg(feature = "generate_bindings")]
+#[cfg(feature = "flecs_generate_bindings")]
 fn generate_bindings() {
     use std::env;
     use std::path::PathBuf;
@@ -40,7 +40,7 @@ fn main() {
     println!("cargo:rerun-if-changed=src/core/c_binding/flecs.c");
     println!("cargo:rerun-if-changed=build.rs");
 
-    #[cfg(feature = "generate_bindings")]
+    #[cfg(feature = "flecs_generate_bindings")]
     generate_bindings();
 
     // Compile flecs C right into our Rust crate
@@ -52,11 +52,11 @@ fn main() {
         .compile("flecs");
 }
 
-#[cfg(feature = "generate_bindings")]
+#[cfg(feature = "flecs_generate_bindings")]
 #[derive(Debug)]
 struct CommentsCallbacks;
 
-#[cfg(feature = "generate_bindings")]
+#[cfg(feature = "flecs_generate_bindings")]
 impl bindgen::callbacks::ParseCallbacks for CommentsCallbacks {
     fn process_comment(&self, comment: &str) -> Option<String> {
         // 1: trimming the comments

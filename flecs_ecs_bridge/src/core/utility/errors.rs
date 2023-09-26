@@ -90,7 +90,7 @@ impl Display for FlecsErrorCode {
     }
 }
 
-#[cfg(feature = "ecs_asserts")]
+#[cfg(feature = "flecs_ecs_asserts")]
 #[macro_export]
 macro_rules! ecs_assert {
     ($condition:expr $(,)?, $error_code:expr $(,)?) => {
@@ -113,7 +113,7 @@ macro_rules! ecs_assert {
     };
 }
 
-#[cfg(not(feature = "ecs_asserts"))]
+#[cfg(not(feature = "flecs_ecs_asserts"))]
 #[macro_export]
 macro_rules! ecs_assert {
     ($($args:tt)*) => {};

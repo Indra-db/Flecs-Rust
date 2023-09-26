@@ -22,10 +22,23 @@ cc = "1.0.83"
 regex = "1.9.5"
 
 [features]
-generate_bindings = []
-ecs_asserts = []
-enable_all_asserts = ["ecs_asserts"]
-default = ["enable_all_asserts", "generate_bindings"]
+flecs_generate_bindings = []
+flecs_systems = []
+flecs_timer = []
+flecs_doc = []
+flecs_rest = []
+flecs_meta = []
+flecs_ecs_asserts = []
+flecs_enable_all_asserts = ["flecs_ecs_asserts"]
+default = [
+    "flecs_enable_all_asserts",
+    "flecs_generate_bindings",
+    "flecs_systems",
+    "flecs_timer",
+    "flecs_doc",
+    "flecs_rest",
+    "flecs_meta",
+]
 
 [target.'cfg(any())'.dependencies]
 flecs_ecs_bridge_derive = { version = "=0.1.0", path = "../flecs_ecs_bridge_derive" }
