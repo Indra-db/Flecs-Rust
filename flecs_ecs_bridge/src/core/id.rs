@@ -246,6 +246,9 @@ impl Id {
     }
 
     pub fn get_as_world(&self) -> World {
-        World { world: self.world }
+        World {
+            world: self.world,
+            is_owned: false,
+        }
     }
 }
