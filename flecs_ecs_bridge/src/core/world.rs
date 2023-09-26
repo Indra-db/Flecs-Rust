@@ -10,11 +10,12 @@ use super::c_binding::bindings::{
     ecs_async_stage_free, ecs_async_stage_new, ecs_atfini, ecs_defer_begin, ecs_defer_end, ecs_dim,
     ecs_enable_range_check, ecs_fini, ecs_fini_action_t, ecs_frame_begin, ecs_frame_end,
     ecs_get_context, ecs_get_scope, ecs_get_stage, ecs_get_stage_count, ecs_get_stage_id,
-    ecs_get_world, ecs_get_world_info, ecs_init, ecs_is_deferred, ecs_merge, ecs_quit,
-    ecs_readonly_begin, ecs_readonly_end, ecs_set_automerge, ecs_set_context, ecs_set_entity_range,
-    ecs_set_scope, ecs_set_stage_count, ecs_should_quit, ecs_stage_is_async, ecs_stage_is_readonly,
+    ecs_get_world, ecs_get_world_info, ecs_init, ecs_is_deferred, ecs_lookup_path_w_sep, ecs_merge,
+    ecs_quit, ecs_readonly_begin, ecs_readonly_end, ecs_set_automerge, ecs_set_context,
+    ecs_set_entity_range, ecs_set_lookup_path, ecs_set_scope, ecs_set_stage_count, ecs_should_quit,
+    ecs_stage_is_async, ecs_stage_is_readonly,
 };
-use super::c_types::{EntityT, WorldT};
+use super::c_types::{EntityT, WorldT, SEPARATOR};
 use super::component::CachedComponentData;
 use super::entity::Entity;
 use super::id::Id;
@@ -540,6 +541,71 @@ impl World {
     #[inline(always)]
     pub fn set_scope<T: CachedComponentData>(&self) -> Entity {
         Entity::new_only_id(unsafe { ecs_set_scope(self.world, T::get_id(self.world)) })
+    }
+
+    /// Sets the search path for entity lookup operations.
+    ///
+    /// This function configures the search path used for looking up entities. The search path is an array of entity IDs that define the scopes within which lookup operations will search for entities.
+    ///
+    /// ### Best Practices
+    ///
+    /// * It's advisable to restore the previous search path after making temporary changes.
+    ///
+    /// ### Search Path Evaluation
+    ///
+    /// * The search path is evaluated starting from the last element of the array.
+    ///
+    /// ### Default Behavior
+    ///
+    /// * The default search path includes `flecs.core`.
+    ///
+    /// ### Overwriting
+    ///
+    /// * Providing a custom search path will overwrite the existing search path.
+    ///
+    /// ### Considerations
+    ///
+    /// * If the custom search path doesn't include `flecs.core`, operations that rely on looking up names from `flecs.core` may fail.
+    /// * The search path array is not managed by the Rust runtime. Ensure the array remains valid for as long as it is used as the search path.
+    ///
+    /// ### Array Termination
+    ///
+    /// * The provided array must be terminated with a 0 element. This allows for pushing/popping elements onto/from an existing array without needing to call `ecs_set_lookup_path` again.
+    ///
+    /// ### Arguments
+    ///
+    /// * `search_path` - A 0-terminated array of entity IDs defining the new search path.
+    ///
+    /// ### Returns
+    ///
+    /// Returns the current search path after the operation.
+    pub fn set_lookup_path(&self, search_path: *const EntityT) -> *mut EntityT {
+        unsafe { ecs_set_lookup_path(self.world, search_path) }
+    }
+
+    /// Lookup entity by name
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the entity to lookup.
+    pub fn lookup_entity_by_name(&self, name: &str) -> Option<Entity> {
+        let c_name = std::ffi::CString::new(name).unwrap();
+        let c_name_ptr = c_name.as_ptr();
+        let entity_id = unsafe {
+            ecs_lookup_path_w_sep(
+                self.world,
+                0,
+                c_name_ptr,
+                SEPARATOR.as_ptr(),
+                SEPARATOR.as_ptr(),
+                true,
+            )
+        };
+        if entity_id == 0 {
+            None
+        } else {
+            Some(Entity::new_from_existing(self.world, entity_id))
+        }
     }
 
     /// Get id from a type.
