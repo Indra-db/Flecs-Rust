@@ -1,8 +1,13 @@
 use std::sync::OnceLock;
 
-use crate::core::{
-    c_binding::bindings::{ecs_has_id, ECS_ROW_MASK},
-    c_types::WorldT,
+use crate::{
+    core::{
+        c_binding::bindings::{ecs_get_mut_id, ecs_has_id, ecs_modified_id, ECS_ROW_MASK},
+        c_types::{EntityT, IdT, WorldT},
+        component::CachedComponentData,
+        utility::errors::FlecsErrorCode,
+    },
+    ecs_assert,
 };
 
 use super::super::c_types::{PAIR, RUST_ECS_COMPONENT_MASK};
@@ -67,4 +72,38 @@ pub fn is_empty_type<T>() -> bool {
 #[inline(always)]
 pub fn ecs_record_to_row(row: u32) -> i32 {
     (row & ECS_ROW_MASK) as i32
+}
+
+/// Internal helper function to set a component for an entity.
+///
+/// This function sets the given value for an entity in the ECS world, ensuring
+/// that the type of the component is valid.
+///
+/// ### Type Parameters
+///
+/// * `T`: The type of the component data. Must implement `CachedComponentData`.
+///
+/// ### Parameters
+///
+/// * `entity`: The ID of the entity.
+/// * `value`: The value to set for the component.
+/// * `id`: The ID of the component type.
+pub(crate) fn set_helper<T: CachedComponentData>(
+    world: *mut WorldT,
+    entity: EntityT,
+    value: T,
+    id: IdT,
+) {
+    ecs_assert!(
+        T::get_size(world) != 0,
+        FlecsErrorCode::InvalidParameter,
+        "invalid type: {}",
+        T::get_symbol_name()
+    );
+
+    let comp = unsafe { ecs_get_mut_id(world, entity, id) as *mut T };
+    unsafe {
+        *comp = value;
+        ecs_modified_id(world, entity, id)
+    };
 }

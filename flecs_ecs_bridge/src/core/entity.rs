@@ -21,7 +21,7 @@ use super::{
     entity_view::EntityView,
     enum_type::CachedEnumData,
     id::Id,
-    utility::functions::ecs_pair,
+    utility::functions::{ecs_pair, set_helper},
 };
 
 #[derive(Default)]
@@ -645,9 +645,8 @@ impl Entity {
     ///
     /// * `component` - The component to set on the entity.
     pub fn set_component<T: CachedComponentData>(self, component: T) -> Self {
-        let raw_id = self.raw_id;
-        let world = self.world;
-        self.set_helper(raw_id, component, T::get_id(world))
+        set_helper(self.world, self.raw_id, component, T::get_id(self.world));
+        self
     }
 
     /// Set a pair
@@ -665,13 +664,13 @@ impl Entity {
         First: CachedComponentData + ComponentType<Struct>,
         Second: CachedComponentData + ComponentType<Struct>,
     {
-        let raw_id = self.raw_id;
-        let world = self.world;
-        self.set_helper(
-            raw_id,
+        set_helper(
+            self.world,
+            self.raw_id,
             first,
-            ecs_pair(First::get_id(world), Second::get_id(world)),
-        )
+            ecs_pair(First::get_id(self.world), Second::get_id(self.world)),
+        );
+        self
     }
 
     /// Set a pair for an entity using the first element type and a second id.
@@ -689,9 +688,13 @@ impl Entity {
         first: First,
         second: EntityT,
     ) -> Self {
-        let raw_id = self.raw_id;
-        let world = self.world;
-        self.set_helper(raw_id, first, ecs_pair(First::get_id(world), second))
+        set_helper(
+            self.world,
+            self.raw_id,
+            first,
+            ecs_pair(First::get_id(self.world), second),
+        );
+        self
     }
 
     /// Set a pair for an entity.
@@ -711,13 +714,13 @@ impl Entity {
         First: CachedComponentData + ComponentType<Struct>,
         Second: CachedComponentData + ComponentType<Struct>,
     {
-        let raw_id = self.raw_id;
-        let world = self.world;
-        self.set_helper(
-            raw_id,
+        set_helper(
+            self.world,
+            self.raw_id,
             second,
-            ecs_pair(First::get_id(world), Second::get_id(world)),
-        )
+            ecs_pair(First::get_id(self.world), Second::get_id(self.world)),
+        );
+        self
     }
 
     /// Set a pair for an entity using the second element type and a first component ID.
@@ -735,9 +738,13 @@ impl Entity {
         first: EntityT,
         second: Second,
     ) -> Self {
-        let raw_id = self.raw_id;
-        let world = self.world;
-        self.set_helper(raw_id, second, ecs_pair(first, Second::get_id(world)))
+        set_helper(
+            self.world,
+            self.raw_id,
+            second,
+            ecs_pair(first, Second::get_id(self.world)),
+        );
+        self
     }
 
     /// Set a pair for an entity.
@@ -759,45 +766,15 @@ impl Entity {
         Second: CachedComponentData + ComponentType<Enum> + CachedEnumData,
     {
         //not sure if this is correct
-        let raw_id = self.raw_id;
-        let world = self.world;
-        self.set_helper(
-            raw_id,
+        set_helper(
+            self.world,
+            self.raw_id,
             first,
             ecs_pair(
-                First::get_id(world),
-                constant.get_entity_id_from_enum_field(world),
+                First::get_id(self.world),
+                constant.get_entity_id_from_enum_field(self.world),
             ),
-        )
-    }
-
-    /// Internal helper function to set a component for an entity.
-    ///
-    /// This function sets the given value for an entity in the ECS world, ensuring
-    /// that the type of the component is valid.
-    ///
-    /// ### Type Parameters
-    ///
-    /// * `T`: The type of the component data. Must implement `CachedComponentData`.
-    ///
-    /// ### Parameters
-    ///
-    /// * `entity`: The ID of the entity.
-    /// * `value`: The value to set for the component.
-    /// * `id`: The ID of the component type.
-    fn set_helper<T: CachedComponentData>(self, entity: EntityT, value: T, id: IdT) -> Self {
-        ecs_assert!(
-            T::get_size(self.world) != 0,
-            FlecsErrorCode::InvalidParameter,
-            "invalid type: {}",
-            T::get_symbol_name()
         );
-
-        let comp = unsafe { ecs_get_mut_id(self.world, self.raw_id, id) as *mut T };
-        unsafe {
-            *comp = value;
-            ecs_modified_id(self.world, entity, id)
-        };
         self
     }
 

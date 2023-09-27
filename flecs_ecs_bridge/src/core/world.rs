@@ -2,7 +2,9 @@ use std::ops::Deref;
 
 use libc::c_void;
 
-use crate::core::c_binding::bindings::{_ecs_poly_is, ecs_stage_t_magic, ecs_world_t_magic};
+use crate::core::c_binding::bindings::{
+    _ecs_poly_is, ecs_get_mut_id, ecs_stage_t_magic, ecs_world_t_magic,
+};
 use crate::core::utility::errors::FlecsErrorCode;
 use crate::ecs_assert;
 
@@ -15,7 +17,7 @@ use super::c_binding::bindings::{
     ecs_set_entity_range, ecs_set_lookup_path, ecs_set_scope, ecs_set_stage_count, ecs_should_quit,
     ecs_stage_is_async, ecs_stage_is_readonly,
 };
-use super::c_types::{EntityT, WorldT, SEPARATOR};
+use super::c_types::{EntityT, IdT, WorldT, SEPARATOR};
 use super::component::CachedComponentData;
 use super::entity::Entity;
 use super::id::Id;
