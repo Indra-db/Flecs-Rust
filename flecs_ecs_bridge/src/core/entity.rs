@@ -464,6 +464,21 @@ impl Entity {
         self.remove_pair_ids(first, Second::get_id(world))
     }
 
+    /// Removes a pair.
+    /// This operation removes a pair from the entity.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `First`: The first element of the pair.
+    ///
+    /// ### Parameters
+    ///
+    /// * `second`: The second element of the pair.
+    pub fn remove_pair_second_id<First: CachedComponentData>(self, second: EntityT) -> Self {
+        let world = self.world;
+        self.remove_pair_ids(First::get_id(world), second)
+    }
+
     /// Shortcut for add(IsA, entity).
     ///
     /// ### Parameters
@@ -1241,6 +1256,29 @@ impl Entity {
         unsafe { ecs_get_mut_id(self.world, self.raw_id, ecs_pair(first, second)) as *mut c_void }
     }
 
+    /// Get const pointer for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `First`: The first part of the pair.
+    ///
+    /// ### Parameters
+    ///
+    /// * `second`: The second element of the pair.
+    pub fn get_pair_first<First: CachedComponentData>(&self, second: EntityT) -> *const First {
+        let component_id = First::get_id(self.world);
+        ecs_assert!(
+            First::get_size(self.world) != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid type: {}",
+            First::get_symbol_name()
+        );
+        unsafe {
+            ecs_get_mut_id(self.world, self.raw_id, ecs_pair(component_id, second)) as *const First
+        }
+    }
+
     /// Get mutable pointer for the first element of a pair
     /// This operation gets the value for a pair from the entity.
     ///
@@ -1261,6 +1299,29 @@ impl Entity {
         );
         unsafe {
             ecs_get_mut_id(self.world, self.raw_id, ecs_pair(component_id, second)) as *mut First
+        }
+    }
+
+    /// Get const pointer for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `Second`: The second element of the pair.
+    ///
+    /// ### Parameters
+    ///
+    /// * `first`: The first element of the pair.
+    pub fn get_pair_second<Second: CachedComponentData>(&self, first: EntityT) -> *const Second {
+        let component_id = Second::get_id(self.world);
+        ecs_assert!(
+            Second::get_size(self.world) != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid type: {}",
+            Second::get_symbol_name()
+        );
+        unsafe {
+            ecs_get_mut_id(self.world, self.raw_id, ecs_pair(first, component_id)) as *const Second
         }
     }
 
@@ -1365,8 +1426,8 @@ impl Entity {
     ///
     /// - `T`: Component for which to get a reference.
     ///
-    /// Returns: The reference.
-    pub fn get_ref<T: CachedComponentData>(&self) -> Ref<T> {
+    /// Returns: The reference component.
+    pub fn get_ref_component<T: CachedComponentData>(&self) -> Ref<T> {
         Ref::<T>::new(self.world, self.raw_id, T::get_id(self.world))
     }
 

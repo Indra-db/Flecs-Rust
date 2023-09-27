@@ -529,7 +529,7 @@ impl EntityView {
     /// Get target for a given pair.
     ///
     /// This operation returns the target for a given pair. The optional
-    /// index can be used to iterate through targets, in case the entity has
+    /// index can be used to iterate through targets, in case the entity get_has
     /// multiple instances for the same relationship.
     ///
     /// ### Type Parameters
@@ -548,7 +548,7 @@ impl EntityView {
     /// Get target for a given pair.
     ///
     /// This operation returns the target for a given pair. The optional
-    /// index can be used to iterate through targets, in case the entity has
+    /// index can be used to iterate through targets, in case the entity get_has
     /// multiple instances for the same relationship.
     ///
     /// ### Arguments
@@ -583,7 +583,7 @@ impl EntityView {
     ///
     /// ### Returns
     ///
-    /// * The entity for which the target has been found.
+    /// * The entity for which the target get_has been found.
     pub fn get_target_by_component_id(&self, relationship: EntityT, component_id: IdT) -> Entity {
         Entity::new_from_existing(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, relationship, component_id as i32)
@@ -605,7 +605,7 @@ impl EntityView {
     ///
     /// ### Returns
     ///
-    /// * The entity for which the target has been found.
+    /// * The entity for which the target get_has been found.
     #[inline(always)]
     pub fn get_target_for_component<T: CachedComponentData>(
         &self,
@@ -630,7 +630,7 @@ impl EntityView {
     ///
     /// ### Returns
     ///
-    /// * The entity for which the target has been found.
+    /// * The entity for which the target get_has been found.
     #[inline(always)]
     pub fn get_target_for_pair<First: CachedComponentData, Second: CachedComponentData>(
         &self,
@@ -727,7 +727,7 @@ impl EntityView {
     ///
     /// True if the entity has the provided entity, false otherwise.
     #[inline(always)]
-    pub fn has_entity(&self, entity: IdT) -> bool {
+    pub fn get_has_entity(&self, entity: IdT) -> bool {
         unsafe { ecs_has_id(self.world, self.raw_id, entity) }
     }
 
@@ -740,7 +740,7 @@ impl EntityView {
     /// ### Returns
     ///
     /// True if the entity has the provided component, false otherwise.
-    pub fn has_struct_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> bool {
+    pub fn get_has_struct_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> bool {
         unsafe { ecs_has_id(self.world, self.raw_id, T::get_id(self.world)) }
     }
 
@@ -753,7 +753,7 @@ impl EntityView {
     /// ### Returns
     ///
     /// True if the entity has the provided component, false otherwise.
-    pub fn has_enum_component<T: CachedComponentData + ComponentType<Enum>>(&self) -> bool {
+    pub fn get_has_enum_component<T: CachedComponentData + ComponentType<Enum>>(&self) -> bool {
         let component_id: IdT = T::get_id(self.world);
         ecs_has_pair(self.world, self.raw_id, component_id, unsafe {
             EcsWildcard
@@ -773,7 +773,7 @@ impl EntityView {
     /// ### Returns
     ///
     /// True if the entity has the provided constant, false otherwise.
-    pub fn has_enum_constant<T>(&self, constant: T) -> bool
+    pub fn get_has_enum_constant<T>(&self, constant: T) -> bool
     where
         T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
     {
@@ -799,7 +799,7 @@ impl EntityView {
     /// ### Returns
     ///
     /// True if the entity has the provided component, false otherwise.
-    pub fn has_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
+    pub fn get_has_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
         ecs_has_pair(
             self.world,
             self.raw_id,
@@ -818,7 +818,7 @@ impl EntityView {
     /// ### Returns
     ///
     /// True if the entity has the provided component, false otherwise.
-    pub fn has_pair_by_id(&self, first: IdT, second: IdT) -> bool {
+    pub fn get_has_pair_by_id(&self, first: IdT, second: IdT) -> bool {
         ecs_has_pair(self.world, self.raw_id, first, second)
     }
 
@@ -836,7 +836,7 @@ impl EntityView {
     /// ### Returns
     ///
     /// True if the entity has the provided component, false otherwise.
-    pub fn has_pair_with_enum_constant<
+    pub fn get_has_pair_with_enum_constant<
         T: CachedComponentData,
         U: CachedComponentData + CachedEnumData,
     >(
