@@ -704,6 +704,257 @@ impl World {
         self
     }
 
+    /// Gets a const singleton component of type `T` from the world.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `T`: The type of the component data.
+    ///
+    /// ### Returns
+    ///
+    /// Returns a const ptr to the singleton component of type `T` from the world.
+    #[inline(always)]
+    pub fn get_component<T>(&self) -> *const T
+    where
+        T: CachedComponentData + ComponentType<Struct>,
+    {
+        Entity::new_from_existing(self.world, T::get_id(self.world)).get_component::<T>()
+    }
+
+    /// Gets a mut singleton component of type `T` from the world.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `T`: The type of the component data.
+    ///
+    /// ### Returns
+    ///
+    /// Returns a mut ptr to the singleton component of type `T` from the world.
+    #[inline(always)]
+    pub fn get_component_mut<T>(&self) -> *mut T
+    where
+        T: CachedComponentData + ComponentType<Struct>,
+    {
+        Entity::new_from_existing(self.world, T::get_id(self.world)).get_component_mut::<T>()
+    }
+
+    /// Get singleton entity for component type
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `T` - The component type to get the singleton entity for.
+    ///
+    /// ### Returns
+    ///
+    /// The singleton entity for the component type.
+    pub fn get_singleton_entity<T: CachedComponentData>(&self) -> Entity {
+        Entity::new_from_existing(self.world, T::get_id(self.world))
+    }
+
+    /// Signal that singleton component was modified.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `T` - The type of the component that was modified.
+    ///
+    #[inline(always)]
+    pub fn mark_component_modified<T>(self) -> Self
+    where
+        T: CachedComponentData,
+    {
+        Entity::new_from_existing(self.world, T::get_id(self.world)).mark_component_modified::<T>();
+        self
+    }
+
+    /// signal that singleton component was modified.
+    ///
+    /// ### Arguments
+    ///
+    /// * `id` - The id of the component that was modified.
+    #[inline(always)]
+    pub fn mark_component_modified_with_id(&self, id: EntityT) {
+        Entity::new_from_existing(self.world, id).mark_component_id_modified(id)
+    }
+
+    /// Get a reference to a singleton component.
+    ///
+    /// A reference allows for quick and safe access to a component value, and is
+    /// a faster alternative to repeatedly calling `get` for the same component.
+    ///
+    /// - `T`: Component for which to get a reference.
+    ///
+    /// Returns: The reference singleton component.
+    #[inline(always)]
+    pub fn get_ref_component<T>(&self) -> Ref<T>
+    where
+        T: CachedComponentData,
+    {
+        Entity::new_from_existing(self.world, T::get_id(self.world)).get_ref_component::<T>()
+    }
+
+    /// Get const pointer for the first element of a singleton pair
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `First`: The first part of the pair.
+    ///
+    /// ### Parameters
+    ///
+    /// * `second`: The second element of the pair.
+    #[inline(always)]
+    pub fn get_pair_first<First>(&self, second: EntityT) -> *const First
+    where
+        First: CachedComponentData,
+    {
+        Entity::new_from_existing(self.world, First::get_id(self.world))
+            .get_pair_first::<First>(second)
+    }
+
+    /// Get mutable pointer for the first element of a singleton pair
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `First`: The first part of the pair.
+    ///
+    /// ### Parameters
+    ///
+    /// * `second`: The second element of the pair.
+    #[inline(always)]
+    pub fn get_pair_first_mut<First>(&self, second: EntityT) -> *mut First
+    where
+        First: CachedComponentData,
+    {
+        Entity::new_from_existing(self.world, First::get_id(self.world))
+            .get_pair_first_mut::<First>(second)
+    }
+
+    /// Get mutable pointer for the second element of a singleton pair
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `second`: The second part of the pair.
+    ///
+    /// ### Parameters
+    ///
+    /// * `first`: The first element of the pair.
+    #[inline(always)]
+    pub fn get_pair_second<Second>(&self, first: EntityT) -> *const Second
+    where
+        Second: CachedComponentData,
+    {
+        Entity::new_from_existing(self.world, Second::get_id(self.world))
+            .get_pair_second::<Second>(first)
+    }
+
+    /// Get mutable pointer for the second element of a singleton pair
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `second`: The second part of the pair.
+    ///
+    /// ### Parameters
+    ///
+    /// * `first`: The first element of the pair.
+    #[inline(always)]
+    pub fn get_pair_second_mut<Second>(&self, first: EntityT) -> *mut Second
+    where
+        Second: CachedComponentData,
+    {
+        Entity::new_from_existing(self.world, Second::get_id(self.world))
+            .get_pair_second_mut::<Second>(first)
+    }
+
+    /// Check if world has the provided struct component.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `T` - The component to check.
+    ///
+    /// ### Returns
+    ///
+    /// True if the world has the provided component, false otherwise.
+    #[inline(always)]
+    pub fn get_has_struct_component<T>(&self) -> bool
+    where
+        T: CachedComponentData + ComponentType<Struct>,
+    {
+        Entity::new_from_existing(self.world, T::get_id(self.world)).get_has_struct_component::<T>()
+    }
+
+    /// Check if world has the provided enum component.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `T` - The component to check.
+    ///
+    /// ### Returns
+    ///
+    /// True if the world has the enum provided component, false otherwise.
+    #[inline(always)]
+    pub fn get_has_enum_component<T>(&self) -> bool
+    where
+        T: CachedComponentData + ComponentType<Enum>,
+    {
+        Entity::new_from_existing(self.world, T::get_id(self.world)).get_has_enum_component::<T>()
+    }
+
+    /// Check if world has the provided enum constant.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `T` - The enum type.
+    ///
+    /// ### Arguments
+    ///
+    /// * `constant` - The enum constant to check.
+    ///
+    /// ### Returns
+    ///
+    /// True if the world has the provided constant, false otherwise.
+    #[inline(always)]
+    pub fn get_has_enum_constant_component<T>(&self, constant: T) -> bool
+    where
+        T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
+    {
+        Entity::new_from_existing(self.world, T::get_id(self.world))
+            .get_has_enum_constant::<T>(constant)
+    }
+
+    /// Check if world has the provided pair.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `T` - The first element of the pair.
+    /// * `U` - The second element of the pair.
+    ///
+    /// ### Returns
+    ///
+    /// True if the world has the provided component, false otherwise.
+    #[inline(always)]
+    pub fn get_has_pair_component<First, Second>(&self) -> bool
+    where
+        First: CachedComponentData + ComponentType<Struct>,
+        Second: CachedComponentData + ComponentType<Struct>,
+    {
+        Entity::new_from_existing(self.world, First::get_id(self.world))
+            .get_has_pair::<First, Second>()
+    }
+
+    /// Check if world has the provided pair.
+    ///
+    /// ### Arguments
+    ///
+    /// * `first`: The first element of the pair.
+    /// * `second`: The second element of the pair.
+    ///
+    /// ### Returns
+    ///
+    /// True if the world has the provided component, false otherwise.
+    #[inline(always)]
+    pub fn get_has_pair_by_id(&self, first: EntityT, second: EntityT) -> bool {
+        Entity::new_from_existing(self.world, first).get_has_pair_by_id(first, second)
+    }
+
     /// Get id from a type.
     fn get_id<T: CachedComponentData>(&self) -> Id {
         Id::new_from_existing(self.world, T::get_id(self.world))
