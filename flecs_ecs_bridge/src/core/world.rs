@@ -1,3 +1,4 @@
+use std::ffi::c_char;
 use std::ops::Deref;
 
 use libc::c_void;
@@ -6,16 +7,18 @@ use crate::core::c_binding::bindings::{
     _ecs_poly_is, ecs_get_mut_id, ecs_stage_t_magic, ecs_world_t_magic,
 };
 use crate::core::utility::errors::FlecsErrorCode;
+use crate::core::utility::functions::ecs_pair;
 use crate::ecs_assert;
 
 use super::c_binding::bindings::{
-    ecs_async_stage_free, ecs_async_stage_new, ecs_atfini, ecs_defer_begin, ecs_defer_end, ecs_dim,
-    ecs_enable_range_check, ecs_fini, ecs_fini_action_t, ecs_frame_begin, ecs_frame_end,
-    ecs_get_context, ecs_get_scope, ecs_get_stage, ecs_get_stage_count, ecs_get_stage_id,
-    ecs_get_world, ecs_get_world_info, ecs_init, ecs_is_deferred, ecs_lookup_path_w_sep, ecs_merge,
-    ecs_quit, ecs_readonly_begin, ecs_readonly_end, ecs_set_automerge, ecs_set_context,
-    ecs_set_entity_range, ecs_set_lookup_path, ecs_set_scope, ecs_set_stage_count, ecs_should_quit,
-    ecs_stage_is_async, ecs_stage_is_readonly,
+    ecs_async_stage_free, ecs_async_stage_new, ecs_atfini, ecs_count_id, ecs_defer_begin,
+    ecs_defer_end, ecs_dim, ecs_enable_range_check, ecs_fini, ecs_fini_action_t, ecs_frame_begin,
+    ecs_frame_end, ecs_get_context, ecs_get_name, ecs_get_scope, ecs_get_stage,
+    ecs_get_stage_count, ecs_get_stage_id, ecs_get_world, ecs_get_world_info, ecs_init,
+    ecs_is_deferred, ecs_lookup_path_w_sep, ecs_merge, ecs_quit, ecs_readonly_begin,
+    ecs_readonly_end, ecs_set_alias, ecs_set_automerge, ecs_set_context, ecs_set_entity_range,
+    ecs_set_lookup_path, ecs_set_scope, ecs_set_stage_count, ecs_should_quit, ecs_stage_is_async,
+    ecs_stage_is_readonly,
 };
 use super::c_types::{EntityT, IdT, WorldT, SEPARATOR};
 use super::component::{CachedComponentData, ComponentType, Enum, Struct};
@@ -1066,6 +1069,159 @@ impl World {
             .remove_pair_second_id::<First>(second);
         self
     }
+
+    /// Iterate children in root of world
+    /// This operation follows the ChildOf relationship.
+    /// ### Arguments
+    ///
+    /// * `func` - The function invoked for each child. Must match the signature `FnMut(Entity)`.
+    #[inline(always)]
+    pub fn for_each_children_by_relationship<T: CachedComponentData, F: FnMut(Entity)>(
+        &self,
+        callback: F,
+    ) {
+        Entity::new(self.world).for_each_child_of(callback);
+    }
+
+    /// create alias for component
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `T` - The component type to create an alias for.
+    ///
+    /// ### Arguments
+    ///
+    /// * `alias` - The alias to create.
+    ///
+    /// ### Returns
+    ///
+    /// The entity representing the component.
+    #[inline(always)]
+    pub fn set_alias_component<T: CachedComponentData>(&self, alias: &str) -> Entity {
+        let id = T::get_id(self.world);
+        if alias.is_empty() {
+            unsafe { ecs_set_alias(self.world, id, ecs_get_name(self.world, id)) };
+        } else {
+            let c_alias = std::ffi::CString::new(alias).unwrap();
+            let c_alias_ptr = c_alias.as_ptr();
+            unsafe { ecs_set_alias(self.world, id, c_alias_ptr) };
+        }
+        Entity::new_from_existing(self.world, id)
+    }
+
+    /// create alias for entity by name
+    ///
+    /// ### Arguments
+    ///
+    /// * `name` - The name of the entity to create an alias for.
+    /// * `alias` - The alias to create.
+    ///
+    /// ### Returns
+    ///
+    /// The entity found by name.
+    #[inline(always)]
+    pub fn set_alias_entity_by_name(&self, name: &str, alias: &str) -> Entity {
+        let c_name = std::ffi::CString::new(name).unwrap();
+        let c_name_ptr = c_name.as_ptr();
+        let c_alias = std::ffi::CString::new(alias).unwrap();
+        let c_alias_ptr = c_alias.as_ptr();
+        let id = unsafe {
+            ecs_lookup_path_w_sep(
+                self.world,
+                0,
+                c_name_ptr,
+                SEPARATOR.as_ptr(),
+                SEPARATOR.as_ptr(),
+                true,
+            )
+        };
+        ecs_assert!(id != 0, FlecsErrorCode::InvalidParameter);
+        unsafe { ecs_set_alias(self.world, id, c_alias_ptr) };
+        Entity::new_from_existing(self.world, id)
+    }
+
+    /// create alias for entity
+    ///
+    /// ### Arguments
+    ///
+    /// * `entity` - The entity to create an alias for.
+    /// * `alias` - The alias to create.
+    #[inline(always)]
+    pub fn set_alias_entity(&self, entity: Entity, alias: &str) {
+        if alias.is_empty() {
+            unsafe {
+                ecs_set_alias(
+                    self.world,
+                    entity.raw_id,
+                    ecs_get_name(self.world, entity.raw_id),
+                )
+            };
+        } else {
+            let c_alias = std::ffi::CString::new(alias).unwrap();
+            let c_alias_ptr = c_alias.as_ptr();
+            unsafe { ecs_set_alias(self.world, entity.raw_id, c_alias_ptr) };
+        }
+    }
+
+    pub fn count_component_id(&self, component_id: IdT) -> i32 {
+        unsafe { ecs_count_id(self.world, component_id) }
+    }
+
+    pub fn count_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> i32 {
+        self.count_component_id(T::get_id(self.world))
+    }
+
+    pub fn count_pair_ids(&self, first: EntityT, second: EntityT) -> i32 {
+        self.count_component_id(ecs_pair(first, second))
+    }
+
+    pub fn count_pair<First, Second>(&self) -> i32
+    where
+        First: CachedComponentData,
+        Second: CachedComponentData + ComponentType<Struct>,
+    {
+        self.count_pair_ids(First::get_id(self.world), Second::get_id(self.world))
+    }
+
+    pub fn count_pair_first_id<Second: CachedComponentData>(&self, first: EntityT) -> i32 {
+        self.count_pair_ids(first, Second::get_id(self.world))
+    }
+
+    pub fn count_pair_second_id<First: CachedComponentData>(&self, second: EntityT) -> i32 {
+        self.count_pair_ids(First::get_id(self.world), second)
+    }
+
+    pub fn count_enum_constant<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
+        &self,
+        enum_value: T,
+    ) -> i32 {
+        unsafe {
+            ecs_count_id(
+                self.world,
+                enum_value.get_entity_id_from_enum_field(self.world),
+            )
+        }
+    }
+
+    pub fn count_enum_tag_pair<First, Second>(&self, enum_value: Second) -> i32
+    where
+        First: CachedComponentData,
+        Second: CachedComponentData + ComponentType<Enum> + CachedEnumData,
+    {
+        unsafe {
+            ecs_count_id(
+                self.world,
+                ecs_pair(
+                    First::get_id(self.world),
+                    enum_value.get_entity_id_from_enum_field(self.world),
+                ),
+            )
+        }
+    }
+
+    //
+    //
+    //
 
     /// Get id from a type.
     fn get_id<T: CachedComponentData>(&self) -> Id {
