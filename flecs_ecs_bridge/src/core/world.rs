@@ -1013,6 +1013,60 @@ impl World {
         self
     }
 
+    #[inline(always)]
+    pub fn remove_component<T: CachedComponentData + ComponentType<Struct>>(self) -> Self {
+        Entity::new_from_existing(self.world, T::get_id(self.world)).remove_component::<T>();
+        self
+    }
+
+    #[inline(always)]
+    pub fn remove_component_enum<T: CachedComponentData + ComponentType<Enum>>(self) -> Self {
+        Entity::new_from_existing(self.world, T::get_id(self.world)).remove_component_enum::<T>();
+        self
+    }
+
+    #[inline(always)]
+    pub fn remove_enum_tag<First, Second>(self, enum_value: Second) -> Self
+    where
+        First: CachedComponentData,
+        Second: CachedComponentData + ComponentType<Enum> + CachedEnumData,
+    {
+        Entity::new_from_existing(self.world, First::get_id(self.world))
+            .remove_enum_tag::<First, Second>(enum_value);
+        self
+    }
+
+    #[inline(always)]
+    pub fn remove_pair_ids(self, first: EntityT, second: EntityT) -> Self {
+        Entity::new_from_existing(self.world, first).remove_pair_ids(first, second);
+        self
+    }
+
+    #[inline(always)]
+    pub fn remove_pair<First, Second>(self) -> Self
+    where
+        First: CachedComponentData,
+        Second: CachedComponentData + ComponentType<Struct>,
+    {
+        Entity::new_from_existing(self.world, First::get_id(self.world))
+            .remove_pair::<First, Second>();
+        self
+    }
+
+    #[inline(always)]
+    pub fn remove_pair_first_id<Second: CachedComponentData>(self, first: EntityT) -> Self {
+        Entity::new_from_existing(self.world, Second::get_id(self.world))
+            .remove_pair_first_id::<Second>(first);
+        self
+    }
+
+    #[inline(always)]
+    pub fn remove_pair_second_id<First: CachedComponentData>(self, second: EntityT) -> Self {
+        Entity::new_from_existing(self.world, First::get_id(self.world))
+            .remove_pair_second_id::<First>(second);
+        self
+    }
+
     /// Get id from a type.
     fn get_id<T: CachedComponentData>(&self) -> Id {
         Id::new_from_existing(self.world, T::get_id(self.world))
