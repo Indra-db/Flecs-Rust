@@ -18,9 +18,12 @@ use super::c_binding::bindings::{
     ecs_stage_is_async, ecs_stage_is_readonly,
 };
 use super::c_types::{EntityT, IdT, WorldT, SEPARATOR};
-use super::component::CachedComponentData;
+use super::component::{CachedComponentData, ComponentType, Enum, Struct};
+use super::component_ref::Ref;
 use super::entity::Entity;
+use super::enum_type::CachedEnumData;
 use super::id::Id;
+use super::utility::functions::set_helper;
 
 pub struct World {
     pub world: *mut WorldT,
@@ -608,6 +611,97 @@ impl World {
         } else {
             Some(Entity::new_from_existing(self.world, entity_id))
         }
+    }
+
+    /// Sets a singleton component of type `T` on the world.
+    ///
+    /// ### Arguments
+    ///
+    /// * `component` - The singleton component to set on the world.
+    pub fn set_component<T: CachedComponentData>(self, component: T) -> Self {
+        let id = T::get_id(self.world);
+        set_helper(self.world, id, component, id);
+        self
+    }
+
+    /// Set a singleton pair using the second element type and a first id.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `Second`: The second element of the pair.
+    ///
+    /// ### Parameters
+    ///
+    /// * `first`: The ID of the first element of the pair.
+    /// * `second`: The second element of the pair to be set.
+    pub fn set_pair_first_id<First>(self, second: EntityT, first: First) -> Self
+    where
+        First: CachedComponentData + ComponentType<Struct>,
+    {
+        let entity = Entity::new_from_existing(self.world, First::get_id(self.world));
+        entity.set_pair_first_id::<First>(second, first);
+        self
+    }
+
+    /// Set singleton pair.
+    /// This operation sets the pair value, and uses First as type. If it does not yet exist, it will be added.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `First`: The first element of the pair
+    /// * `Second`: The second element of the pair
+    ///
+    /// ### Parameters
+    ///
+    /// * `first`: The value to set for first component.
+    pub fn set_pair_first<First, Second>(self, first: First) -> Self
+    where
+        First: CachedComponentData + ComponentType<Struct>,
+        Second: CachedComponentData + ComponentType<Struct>,
+    {
+        let entity = Entity::new_from_existing(self.world, First::get_id(self.world));
+        entity.set_pair_first::<First, Second>(first);
+        self
+    }
+
+    /// Set a singleton pair using the second element type and a first id.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `Second`: The second element of the pair.
+    ///
+    /// ### Parameters
+    ///
+    /// * `first`: The ID of the first element of the pair.
+    /// * `second`: The second element of the pair to be set.
+    pub fn set_pair_second_id<Second>(self, first: EntityT, second: Second) -> Self
+    where
+        Second: CachedComponentData + ComponentType<Struct>,
+    {
+        let entity = Entity::new_from_existing(self.world, Second::get_id(self.world));
+        entity.set_pair_second_id::<Second>(first, second);
+        self
+    }
+
+    /// Set singleton pair.
+    /// This operation sets the pair value, and uses Second as type. If it does not yet exist, it will be added.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `Second`: The second element of the pair
+    ///
+    /// ### Parameters
+    ///
+    /// * `first`: The first element of the pair.
+    /// * `value`: The value to set.
+    pub fn set_pair_second<First, Second>(self, second: Second) -> Self
+    where
+        First: CachedComponentData + ComponentType<Struct>,
+        Second: CachedComponentData + ComponentType<Struct>,
+    {
+        let entity = Entity::new_from_existing(self.world, First::get_id(self.world));
+        entity.set_pair_second::<First, Second>(second);
+        self
     }
 
     /// Get id from a type.
