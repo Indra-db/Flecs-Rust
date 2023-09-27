@@ -1,5 +1,3 @@
-use std::sync::OnceLock;
-
 use crate::{
     core::{
         c_binding::bindings::{ecs_get_mut_id, ecs_has_id, ecs_modified_id, ECS_ROW_MASK},
@@ -9,6 +7,7 @@ use crate::{
     },
     ecs_assert,
 };
+use std::sync::OnceLock;
 
 use super::super::c_types::{PAIR, RUST_ECS_COMPONENT_MASK};
 
@@ -103,7 +102,7 @@ pub(crate) fn set_helper<T: CachedComponentData>(
 
     let comp = unsafe { ecs_get_mut_id(world, entity, id) as *mut T };
     unsafe {
-        *comp = value;
+        std::ptr::write(comp, value);
         ecs_modified_id(world, entity, id)
     };
 }

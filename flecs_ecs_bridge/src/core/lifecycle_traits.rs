@@ -170,13 +170,20 @@ extern "C" fn generic_ctor_move_dtor<T: Default + Clone>(
     for i in 0..count as isize {
         //this is safe because C manages the memory and we are just moving the internal data around
         unsafe {
-            ptr::drop_in_place(src_arr.offset(i));
-            // Leave the source in a default (empty) state, not dropping the previous
-            // allocated memory it might hold
             let moved_value = std::ptr::replace(src_arr.offset(i), T::default());
             // Write moved src to dst without dropping src since src is being moved to dst
             ptr::write(dst_arr.offset(i), moved_value);
             ptr::drop_in_place(src_arr.offset(i));
+
+            //TODO evaluate if this could under here could potentially improve performance
+            //my suspicion is that it's dangerous to do this because it could lead to double free / premature free
+            {
+                //// Read out the source value, effectively moving it.
+                //let moved_value = std::ptr::read(src_arr.offset(i));
+                //
+                //// Write the moved value to the destination.
+                //std::ptr::write(dst_arr.offset(i), moved_value);
+            }
         }
     }
 }

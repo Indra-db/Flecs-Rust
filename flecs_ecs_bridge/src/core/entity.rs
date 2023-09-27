@@ -24,7 +24,7 @@ use super::{
     utility::functions::{ecs_pair, set_helper},
 };
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Entity {
     entity_view: EntityView,
 }
