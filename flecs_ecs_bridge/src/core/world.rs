@@ -955,6 +955,64 @@ impl World {
         Entity::new_from_existing(self.world, first).get_has_pair_by_id(first, second)
     }
 
+    #[inline(always)]
+    pub fn add_component<T: CachedComponentData>(self) -> Self {
+        Entity::new_from_existing(self.world, T::get_id(self.world)).add_component::<T>();
+        self
+    }
+
+    #[inline(always)]
+    pub fn add_pair_ids(self, first: EntityT, second: EntityT) -> Self {
+        Entity::new_from_existing(self.world, first).add_pair_ids(first, second);
+        self
+    }
+
+    #[inline(always)]
+    pub fn add_pair<First, Second>(self) -> Self
+    where
+        First: CachedComponentData,
+        Second: CachedComponentData + ComponentType<Struct>,
+    {
+        Entity::new_from_existing(self.world, First::get_id(self.world))
+            .add_pair::<First, Second>();
+        self
+    }
+
+    #[inline(always)]
+    pub fn add_pair_first_id<Second: CachedComponentData>(self, first: EntityT) -> Self {
+        Entity::new_from_existing(self.world, Second::get_id(self.world))
+            .add_pair_first_id::<Second>(first);
+        self
+    }
+
+    #[inline(always)]
+    pub fn add_pair_second_id<First: CachedComponentData>(self, second: EntityT) -> Self {
+        Entity::new_from_existing(self.world, First::get_id(self.world))
+            .add_pair_second_id::<First>(second);
+        self
+    }
+
+    #[inline(always)]
+    pub fn add_enum_tag<First, Second>(self, enum_value: Second) -> Self
+    where
+        First: CachedComponentData,
+        Second: CachedComponentData + ComponentType<Enum> + CachedEnumData,
+    {
+        Entity::new_from_existing(self.world, First::get_id(self.world))
+            .add_enum_tag::<First, Second>(enum_value);
+        self
+    }
+
+    #[inline(always)]
+    pub fn add_enum_constant<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
+        self,
+        enum_value: T,
+    ) -> Self {
+        Entity::new_from_existing(self.world, T::get_id(self.world))
+            .add_enum_constant::<T>(enum_value);
+        self
+    }
+
     /// Get id from a type.
     fn get_id<T: CachedComponentData>(&self) -> Id {
         Id::new_from_existing(self.world, T::get_id(self.world))
