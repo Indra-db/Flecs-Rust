@@ -5,6 +5,7 @@ pub mod component_ref;
 pub mod entity;
 pub mod id;
 pub mod lifecycle_traits;
+pub mod scoped_world;
 pub mod table;
 pub mod world;
 pub mod utility {

@@ -12,13 +12,14 @@ use crate::ecs_assert;
 
 use super::c_binding::bindings::{
     ecs_async_stage_free, ecs_async_stage_new, ecs_atfini, ecs_count_id, ecs_defer_begin,
-    ecs_defer_end, ecs_dim, ecs_enable_range_check, ecs_fini, ecs_fini_action_t, ecs_frame_begin,
-    ecs_frame_end, ecs_get_context, ecs_get_name, ecs_get_scope, ecs_get_stage,
+    ecs_defer_end, ecs_defer_resume, ecs_defer_suspend, ecs_delete_with, ecs_dim,
+    ecs_enable_range_check, ecs_exists, ecs_fini, ecs_fini_action_t, ecs_frame_begin,
+    ecs_frame_end, ecs_get_alive, ecs_get_context, ecs_get_name, ecs_get_scope, ecs_get_stage,
     ecs_get_stage_count, ecs_get_stage_id, ecs_get_world, ecs_get_world_info, ecs_init,
-    ecs_is_deferred, ecs_lookup_path_w_sep, ecs_merge, ecs_quit, ecs_readonly_begin,
-    ecs_readonly_end, ecs_set_alias, ecs_set_automerge, ecs_set_context, ecs_set_entity_range,
-    ecs_set_lookup_path, ecs_set_scope, ecs_set_stage_count, ecs_should_quit, ecs_stage_is_async,
-    ecs_stage_is_readonly,
+    ecs_is_alive, ecs_is_deferred, ecs_is_valid, ecs_lookup_path_w_sep, ecs_merge, ecs_quit,
+    ecs_readonly_begin, ecs_readonly_end, ecs_remove_all, ecs_set_alias, ecs_set_automerge,
+    ecs_set_context, ecs_set_entity_range, ecs_set_lookup_path, ecs_set_scope, ecs_set_stage_count,
+    ecs_set_with, ecs_should_quit, ecs_stage_is_async, ecs_stage_is_readonly,
 };
 use super::c_types::{EntityT, IdT, WorldT, SEPARATOR};
 use super::component::{CachedComponentData, ComponentType, Enum, Struct};
@@ -26,6 +27,7 @@ use super::component_ref::Ref;
 use super::entity::Entity;
 use super::enum_type::CachedEnumData;
 use super::id::Id;
+use super::scoped_world::ScopedWorld;
 use super::utility::functions::set_helper;
 
 pub struct World {
@@ -73,16 +75,16 @@ impl World {
     }
 
     fn init_builtin_components(&self) {
-        #[cfg(feature = "flecs_system")]
-        todo!();
-        #[cfg(feature = "flecs_timer")]
-        todo!();
-        #[cfg(feature = "flecs_doc")]
-        todo!();
-        #[cfg(feature = "flecs_rest")]
-        todo!();
-        #[cfg(feature = "flecs_meta")]
-        todo!();
+        //#[cfg(feature = "flecs_system")]
+        //todo!();
+        //#[cfg(feature = "flecs_timer")]
+        //todo!();
+        //#[cfg(feature = "flecs_doc")]
+        //todo!();
+        //#[cfg(feature = "flecs_rest")]
+        //todo!();
+        //#[cfg(feature = "flecs_meta")]
+        //todo!();
     }
 
     /// deletes and recreates the world
@@ -707,53 +709,6 @@ impl World {
         self
     }
 
-    /// Gets a const singleton component of type `T` from the world.
-    ///
-    /// ### Type Parameters
-    ///
-    /// * `T`: The type of the component data.
-    ///
-    /// ### Returns
-    ///
-    /// Returns a const ptr to the singleton component of type `T` from the world.
-    #[inline(always)]
-    pub fn get_component<T>(&self) -> *const T
-    where
-        T: CachedComponentData + ComponentType<Struct>,
-    {
-        Entity::new_from_existing(self.world, T::get_id(self.world)).get_component::<T>()
-    }
-
-    /// Gets a mut singleton component of type `T` from the world.
-    ///
-    /// ### Type Parameters
-    ///
-    /// * `T`: The type of the component data.
-    ///
-    /// ### Returns
-    ///
-    /// Returns a mut ptr to the singleton component of type `T` from the world.
-    #[inline(always)]
-    pub fn get_component_mut<T>(&self) -> *mut T
-    where
-        T: CachedComponentData + ComponentType<Struct>,
-    {
-        Entity::new_from_existing(self.world, T::get_id(self.world)).get_component_mut::<T>()
-    }
-
-    /// Get singleton entity for component type
-    ///
-    /// ### Type Parameters
-    ///
-    /// * `T` - The component type to get the singleton entity for.
-    ///
-    /// ### Returns
-    ///
-    /// The singleton entity for the component type.
-    pub fn get_singleton_entity<T: CachedComponentData>(&self) -> Entity {
-        Entity::new_from_existing(self.world, T::get_id(self.world))
-    }
-
     /// Signal that singleton component was modified.
     ///
     /// ### Type Parameters
@@ -1219,27 +1174,272 @@ impl World {
         }
     }
 
-    //
-    //
-    //
+    pub fn scope<F: FnMut()>(&self, parent_id: IdT, mut func: F) {
+        let prev: IdT = unsafe { ecs_set_scope(self.world, parent_id) };
+        func();
+        unsafe {
+            ecs_set_scope(self.world, prev);
+        }
+    }
 
-    /// Get id from a type.
-    fn get_id<T: CachedComponentData>(&self) -> Id {
+    pub fn scope_with<T: CachedComponentData, F: FnMut()>(&self, mut func: F) {
+        self.scope(T::get_id(self.world), func);
+    }
+
+    pub fn get_scoped_world_id(&self, parent_id: IdT) -> ScopedWorld {
+        ScopedWorld::new(self.world, parent_id)
+    }
+
+    pub fn get_scoped_world<T: CachedComponentData>(&self) -> ScopedWorld {
+        self.get_scoped_world_id(T::get_id(self.world))
+    }
+
+    /// all entities created in function are created with id
+    pub fn with_id<F: FnMut()>(&self, with_id: IdT, mut func: F) {
+        let prev: IdT = unsafe { ecs_set_with(self.world, with_id) };
+        func();
+        unsafe {
+            ecs_set_with(self.world, prev);
+        }
+    }
+
+    pub fn with<T: CachedComponentData, F: FnMut()>(&self, func: F) {
+        self.with_id(T::get_id(self.world), func);
+    }
+
+    pub fn with_pair_ids<F: FnMut()>(&self, first: IdT, second: IdT, func: F) {
+        self.with_id(ecs_pair(first, second), func);
+    }
+
+    pub fn with_pair<First, Second, F: FnMut()>(&self, func: F)
+    where
+        First: CachedComponentData,
+        Second: CachedComponentData,
+    {
+        self.with_id(
+            ecs_pair(First::get_id(self.world), Second::get_id(self.world)),
+            func,
+        );
+    }
+
+    pub fn with_pair_first_id<Second: CachedComponentData, F: FnMut()>(&self, first: IdT, func: F) {
+        self.with_id(ecs_pair(first, Second::get_id(self.world)), func);
+    }
+
+    pub fn with_pair_second_id<First: CachedComponentData, F: FnMut()>(
+        &self,
+        second: IdT,
+        func: F,
+    ) {
+        self.with_id(ecs_pair(First::get_id(self.world), second), func);
+    }
+
+    pub fn with_enum_constant<T, F>(&self, enum_value: T, func: F)
+    where
+        T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
+        F: FnMut(),
+    {
+        self.with_id(enum_value.get_entity_id_from_enum_field(self.world), func);
+    }
+
+    pub fn with_enum_tag_pair<First, Second, F>(&self, enum_value: Second, func: F)
+    where
+        First: CachedComponentData,
+        Second: CachedComponentData + ComponentType<Enum> + CachedEnumData,
+        F: FnMut(),
+    {
+        self.with_id(
+            ecs_pair(
+                First::get_id(self.world),
+                enum_value.get_entity_id_from_enum_field(self.world),
+            ),
+            func,
+        );
+    }
+
+    pub fn delete_with_id(&self, with_id: IdT) {
+        unsafe {
+            ecs_delete_with(self.world, with_id);
+        }
+    }
+
+    pub fn delete<T: CachedComponentData>(&self) {
+        self.delete_with_id(T::get_id(self.world));
+    }
+
+    pub fn delete_pair_ids(&self, first: IdT, second: IdT) {
+        self.delete_with_id(ecs_pair(first, second));
+    }
+
+    pub fn delete_pair<First, Second>(&self)
+    where
+        First: CachedComponentData,
+        Second: CachedComponentData,
+    {
+        self.delete_with_id(ecs_pair(
+            First::get_id(self.world),
+            Second::get_id(self.world),
+        ));
+    }
+
+    pub fn delete_pair_first_id<Second: CachedComponentData>(&self, first: IdT) {
+        self.delete_with_id(ecs_pair(first, Second::get_id(self.world)));
+    }
+
+    pub fn delete_pair_second_id<First: CachedComponentData>(&self, second: IdT) {
+        self.delete_with_id(ecs_pair(First::get_id(self.world), second));
+    }
+
+    pub fn delete_enum_constant<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
+        &self,
+        enum_value: T,
+    ) {
+        self.delete_with_id(enum_value.get_entity_id_from_enum_field(self.world));
+    }
+
+    pub fn delete_enum_tag_pair<First, Second>(&self, enum_value: Second)
+    where
+        First: CachedComponentData,
+        Second: CachedComponentData + ComponentType<Enum> + CachedEnumData,
+    {
+        self.delete_with_id(ecs_pair(
+            First::get_id(self.world),
+            enum_value.get_entity_id_from_enum_field(self.world),
+        ));
+    }
+
+    pub fn remove_all_ids(&self, id: IdT) {
+        unsafe {
+            ecs_remove_all(self.world, id);
+        }
+    }
+
+    pub fn remove_all<T: CachedComponentData>(&self) {
+        self.remove_all_ids(T::get_id(self.world));
+    }
+
+    pub fn remove_all_pair_ids(&self, first: IdT, second: IdT) {
+        self.remove_all_ids(ecs_pair(first, second));
+    }
+
+    pub fn remove_all_pair<First, Second>(&self)
+    where
+        First: CachedComponentData,
+        Second: CachedComponentData,
+    {
+        self.remove_all_ids(ecs_pair(
+            First::get_id(self.world),
+            Second::get_id(self.world),
+        ));
+    }
+
+    pub fn remove_all_pair_first_id<Second: CachedComponentData>(&self, first: IdT) {
+        self.remove_all_ids(ecs_pair(first, Second::get_id(self.world)));
+    }
+
+    pub fn remove_all_pair_second_id<First: CachedComponentData>(&self, second: IdT) {
+        self.remove_all_ids(ecs_pair(First::get_id(self.world), second));
+    }
+
+    pub fn remove_all_enum_constant<
+        T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
+    >(
+        &self,
+        enum_value: T,
+    ) {
+        self.remove_all_ids(enum_value.get_entity_id_from_enum_field(self.world));
+    }
+
+    pub fn remove_all_enum_tag_pair<First, Second>(&self, enum_value: Second)
+    where
+        First: CachedComponentData,
+        Second: CachedComponentData + ComponentType<Enum> + CachedEnumData,
+    {
+        self.remove_all_ids(ecs_pair(
+            First::get_id(self.world),
+            enum_value.get_entity_id_from_enum_field(self.world),
+        ));
+    }
+
+    /// Defers all operations executed in the passed-in closure. If the world
+    /// is already in deferred mode, does nothing.
+    //
+    /// # Examples
+    /// ```ignore
+    /// world.defer(|| {
+    ///     // deferred operations here
+    /// });
+    /// ```
+    pub fn defer<F: FnOnce()>(&self, func: F) {
+        unsafe {
+            ecs_defer_begin(self.world);
+        }
+        func();
+        unsafe {
+            ecs_defer_end(self.world);
+        }
+    }
+
+    /// Suspends deferring of operations.
+    pub fn defer_suspend(&self) {
+        unsafe {
+            ecs_defer_suspend(self.world);
+        }
+    }
+
+    /// Resumes deferring of operations.
+    pub fn defer_resume(&self) {
+        unsafe {
+            ecs_defer_resume(self.world);
+        }
+    }
+
+    /// Checks if the given entity ID exists in the world.
+    pub fn exists(&self, entity: EntityT) -> bool {
+        unsafe { ecs_exists(self.world, entity) }
+    }
+
+    /// Checks if the given entity ID is alive in the world.
+    pub fn is_alive_entity(&self, entity: EntityT) -> bool {
+        unsafe { ecs_is_alive(self.world, entity) }
+    }
+
+    /// Checks if the given entity ID is valid.
+    pub fn is_valid(&self, entity: EntityT) -> bool {
+        unsafe { ecs_is_valid(self.world, entity) }
+    }
+
+    /// Checks if the given entity ID is alive in the world with the current generation.
+    pub fn get_alive_entity(&self, entity: EntityT) -> Entity {
+        let entity = unsafe { ecs_get_alive(self.world, entity) };
+        Entity::new_from_existing(self.world, entity)
+    }
+
+    /// get  id of (struct) component.
+    pub fn get_id_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> Id {
         Id::new_from_existing(self.world, T::get_id(self.world))
     }
 
     /// get pair id from relationship, object.
-    fn get_id_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> Id {
-        Id::new_world_pair(self.world, T::get_id(self.world), U::get_id(self.world))
+    pub fn get_id_pair_from_ids(&self, first: EntityT, second: EntityT) -> Id {
+        Id::new_world_pair(self.world, first, second)
     }
 
     /// get pair id from relationship, object.
-    fn get_id_pair_with_id<T: CachedComponentData>(&self, id: EntityT) -> Id {
-        Id::new_world_pair(self.world, T::get_id(self.world), id)
+    pub fn get_id_pair<First, Second>(&self) -> Id
+    where
+        First: CachedComponentData,
+        Second: CachedComponentData + ComponentType<Struct>,
+    {
+        Id::new_world_pair(
+            self.world,
+            First::get_id(self.world),
+            Second::get_id(self.world),
+        )
     }
 
     /// get pair id from relationship, object.
-    fn get_id_pair_from_ids(&self, id: EntityT, id2: EntityT) -> Id {
-        Id::new_world_pair(self.world, id, id2)
+    pub fn get_id_pair_with_id<First: CachedComponentData>(&self, second: EntityT) -> Id {
+        Id::new_world_pair(self.world, First::get_id(self.world), second)
     }
 }

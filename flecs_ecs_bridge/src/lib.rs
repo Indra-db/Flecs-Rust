@@ -14,6 +14,7 @@ pub mod core {
     pub mod enum_type;
     pub mod id;
     pub mod lifecycle_traits;
+    pub mod scoped_world;
     pub mod table;
     pub mod world;
     pub mod utility {
