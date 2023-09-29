@@ -1,6 +1,9 @@
 use crate::{
     core::{
-        c_binding::bindings::{ecs_get_mut_id, ecs_has_id, ecs_modified_id, ECS_ROW_MASK},
+        c_binding::bindings::{
+            ecs_get_mut_id, ecs_has_id, ecs_modified_id, ecs_strip_generation, ECS_GENERATION_MASK,
+            ECS_ROW_MASK,
+        },
         c_types::{EntityT, IdT, WorldT},
         component::CachedComponentData,
         utility::errors::FlecsErrorCode,
@@ -105,4 +108,14 @@ pub(crate) fn set_helper<T: CachedComponentData>(
         std::ptr::write(comp, value);
         ecs_modified_id(world, entity, id)
     };
+}
+
+#[inline(always)]
+pub fn strip_generation(entity: EntityT) -> IdT {
+    unsafe { ecs_strip_generation(entity) }
+}
+
+#[inline(always)]
+pub fn get_generation(entity: EntityT) -> u32 {
+    ((entity & ECS_GENERATION_MASK) >> 32) as u32
 }

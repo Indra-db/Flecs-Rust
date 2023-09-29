@@ -13,13 +13,13 @@ use crate::ecs_assert;
 use super::c_binding::bindings::{
     ecs_async_stage_free, ecs_async_stage_new, ecs_atfini, ecs_count_id, ecs_defer_begin,
     ecs_defer_end, ecs_defer_resume, ecs_defer_suspend, ecs_delete_with, ecs_dim,
-    ecs_enable_range_check, ecs_exists, ecs_fini, ecs_fini_action_t, ecs_frame_begin,
+    ecs_enable_range_check, ecs_ensure, ecs_exists, ecs_fini, ecs_fini_action_t, ecs_frame_begin,
     ecs_frame_end, ecs_get_alive, ecs_get_context, ecs_get_name, ecs_get_scope, ecs_get_stage,
     ecs_get_stage_count, ecs_get_stage_id, ecs_get_world, ecs_get_world_info, ecs_init,
     ecs_is_alive, ecs_is_deferred, ecs_is_valid, ecs_lookup_path_w_sep, ecs_merge, ecs_quit,
-    ecs_readonly_begin, ecs_readonly_end, ecs_remove_all, ecs_set_alias, ecs_set_automerge,
-    ecs_set_context, ecs_set_entity_range, ecs_set_lookup_path, ecs_set_scope, ecs_set_stage_count,
-    ecs_set_with, ecs_should_quit, ecs_stage_is_async, ecs_stage_is_readonly,
+    ecs_readonly_begin, ecs_readonly_end, ecs_remove_all, ecs_run_post_frame, ecs_set_alias,
+    ecs_set_automerge, ecs_set_context, ecs_set_entity_range, ecs_set_lookup_path, ecs_set_scope,
+    ecs_set_stage_count, ecs_set_with, ecs_should_quit, ecs_stage_is_async, ecs_stage_is_readonly,
 };
 use super::c_types::{EntityT, IdT, WorldT, SEPARATOR};
 use super::component::{CachedComponentData, ComponentType, Enum, Struct};
@@ -1441,5 +1441,20 @@ impl World {
     /// get pair id from relationship, object.
     pub fn get_id_pair_with_id<First: CachedComponentData>(&self, second: EntityT) -> Id {
         Id::new_world_pair(self.world, First::get_id(self.world), second)
+    }
+
+    /// Ensures that entity with provided generation is alive.
+    /// Ths operation will fail if an entity exists with the same id and a
+    /// different, non-zero generation.
+    pub fn ensure_entity(&self, entity: EntityT) -> Entity {
+        unsafe { ecs_ensure(self.world, entity) };
+        Entity::new_from_existing(self.world, entity)
+    }
+
+    /// Run callback after completing frame
+    pub fn run_post_frame(&self, action: ecs_fini_action_t, ctx: *mut c_void) {
+        unsafe {
+            ecs_run_post_frame(self.world, action, ctx);
+        }
     }
 }
