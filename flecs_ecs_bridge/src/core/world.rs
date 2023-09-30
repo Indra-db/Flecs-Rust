@@ -1182,7 +1182,7 @@ impl World {
         }
     }
 
-    pub fn scope_with<T: CachedComponentData, F: FnMut()>(&self, mut func: F) {
+    pub fn scope_with<T: CachedComponentData, F: FnMut()>(&self, func: F) {
         self.scope(T::get_id(self.world), func);
     }
 
@@ -1365,7 +1365,8 @@ impl World {
     /// is already in deferred mode, does nothing.
     //
     /// # Examples
-    /// ```ignore
+    #[cfg_attr(doctest, doc = " ````no_test")]
+    /// ```
     /// world.defer(|| {
     ///     // deferred operations here
     /// });

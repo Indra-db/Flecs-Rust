@@ -14,7 +14,6 @@ use super::{
 };
 use crate::ecs_assert;
 use std::{any::type_name, ffi::CStr, os::raw::c_char, sync::OnceLock};
-
 /// Component data that is cached by the `CachedComponentData` trait.
 /// This data is used to register components with the world.
 /// It is also used to ensure that components are registered consistently across different worlds.
@@ -42,12 +41,13 @@ pub trait ComponentType<T: ECSComponentType>: CachedComponentData {}
 ///
 /// proc macro Component should be used to implement this trait automatically
 ///
-///      ```ignore
-///          #[derive(Component)] //this will implement the trait for the type
-///           struct Position {t
-///               vec: Vec<i32>,
-///           }
-///      ```
+#[cfg_attr(doctest, doc = " ````no_test")]
+/// ```
+///     #[derive(Component)] //this will implement the trait for the type
+///      struct Position {t
+///          vec: Vec<i32>,
+///      }
+/// ```
 ///
 /// The `CachedComponentData` trait is designed to maintain component IDs for a Rust type
 /// in a manner that is consistent across different worlds (or instances).

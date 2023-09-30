@@ -571,9 +571,10 @@ impl EntityView {
     /// This operation can be used to lookup, for example, which prefab is providing
     /// a component by specifying the IsA pair:
     ///
-    /// ```ignore
+    #[cfg_attr(doctest, doc = " ````no_test")]
+    /// ```
     /// // Is Position provided by the entity or one of its base entities?
-    /// // get_target_by_relationship_and_component_id(world, EcsIsA, T::get_id<Position>(world))
+    /// get_target_by_relationship_and_component_id(world, EcsIsA, T::get_id<Position>(world))
     /// ```
     ///
     /// ### Arguments

@@ -24,6 +24,7 @@ use syn::{Data, DeriveInput, Fields};
 ///
 /// ## Example:
 ///
+#[cfg_attr(doctest, doc = " ````no_test")]
 /// ```ignore
 /// #[derive(Clone, Default, Component)]
 /// struct Position {

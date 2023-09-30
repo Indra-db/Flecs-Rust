@@ -15,7 +15,8 @@
 //! - Bypass the need for `placement_new` with a `placement_ctor` function.
 //!   - Drawback: Each field needs manual setting, which impacts user experience.
 //!      - example code:
-//!      ```ignore
+#![cfg_attr(doctest, doc = " ````no_test")]
+//!      ```
 //!           struct MyType {
 //!               vec: Vec<i32>,
 //!           }
@@ -81,7 +82,7 @@ extern "C" fn generic_ctor<T: Default>(
     _type_info: *const ecs_type_info_t,
 ) {
     ecs_assert!(
-        unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 },
+        check_type_info::<T>(_type_info),
         FlecsErrorCode::InternalError
     );
 
@@ -95,7 +96,7 @@ extern "C" fn generic_ctor<T: Default>(
 
 extern "C" fn generic_dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const ecs_type_info_t) {
     ecs_assert!(
-        unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 },
+        check_type_info::<T>(_type_info),
         FlecsErrorCode::InternalError
     );
     let arr = ptr as *mut T;
@@ -114,7 +115,7 @@ extern "C" fn generic_copy<T: Default + Clone>(
     _type_info: *const ecs_type_info_t,
 ) {
     ecs_assert!(
-        unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 },
+        check_type_info::<T>(_type_info),
         FlecsErrorCode::InternalError
     );
     let dst_arr = dst_ptr as *mut T;
@@ -136,7 +137,7 @@ extern "C" fn generic_move<T: Default>(
     _type_info: *const ecs_type_info_t,
 ) {
     ecs_assert!(
-        unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 },
+        check_type_info::<T>(_type_info),
         FlecsErrorCode::InternalError
     );
     let dst_arr = dst_ptr as *mut T;
@@ -162,7 +163,7 @@ extern "C" fn generic_ctor_move_dtor<T: Default + Clone>(
     _type_info: *const ecs_type_info_t,
 ) {
     ecs_assert!(
-        unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 },
+        check_type_info::<T>(_type_info),
         FlecsErrorCode::InternalError
     );
     let dst_arr = dst_ptr as *mut T;
@@ -185,6 +186,14 @@ extern "C" fn generic_ctor_move_dtor<T: Default + Clone>(
                 //std::ptr::write(dst_arr.offset(i), moved_value);
             }
         }
+    }
+}
+
+fn check_type_info<T>(_type_info: *const ecs_type_info_t) -> bool {
+    if !_type_info.is_null() {
+        unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 }
+    } else {
+        true
     }
 }
 
