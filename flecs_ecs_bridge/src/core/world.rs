@@ -22,7 +22,9 @@ use super::c_binding::bindings::{
     ecs_set_stage_count, ecs_set_with, ecs_should_quit, ecs_stage_is_async, ecs_stage_is_readonly,
 };
 use super::c_types::{EntityT, IdT, WorldT, SEPARATOR};
-use super::component::{CachedComponentData, ComponentType, Enum, Struct};
+use super::component::{
+    register_entity_w_component_explicit, CachedComponentData, ComponentType, Enum, Struct,
+};
 use super::component_ref::Ref;
 use super::entity::Entity;
 use super::enum_type::CachedEnumData;
@@ -1371,6 +1373,7 @@ impl World {
     ///     // deferred operations here
     /// });
     /// ```
+
     pub fn defer<F: FnOnce()>(&self, func: F) {
         unsafe {
             ecs_defer_begin(self.world);
@@ -1457,5 +1460,55 @@ impl World {
         unsafe {
             ecs_run_post_frame(self.world, action, ctx);
         }
+    }
+
+    //convert enum constant to entity
+    pub fn get_entity_from_enum_constant<T>(&self, enum_value: T) -> Entity
+    where
+        T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
+    {
+        Entity::new_from_existing(
+            self.world,
+            enum_value.get_entity_id_from_enum_field(self.world),
+        )
+    }
+
+    //convert enum constant to id
+    pub fn get_id_from_enum_constant<T>(&self, enum_value: T) -> Id
+    where
+        T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
+    {
+        Id::new_from_existing(
+            self.world,
+            enum_value.get_entity_id_from_enum_field(self.world),
+        )
+    }
+
+    //convert enum constant to raw id
+    pub fn get_raw_id_from_enum_constant<T>(&self, enum_value: T) -> IdT
+    where
+        T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
+    {
+        enum_value.get_entity_id_from_enum_field(self.world)
+    }
+
+    //create an entity that's associated with a type and name
+    pub fn new_entity_name_type<T: CachedComponentData>(&self, name: &str) -> Entity {
+        let c_name = std::ffi::CString::new(name).unwrap();
+        let c_name_ptr = c_name.as_ptr();
+
+        Entity::new_from_existing(
+            self.world,
+            register_entity_w_component_explicit::<T>(self.world, c_name_ptr, true, 0),
+        )
+    }
+
+    //create an entity that's associated with a name
+    pub fn new_entity_named(&self, name: &str) -> Entity {
+        Entity::new_named(self.world, name)
+    }
+
+    pub fn new_entity(&self) -> Entity {
+        Entity::new(self.world)
     }
 }

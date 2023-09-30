@@ -356,6 +356,100 @@ where
     false
 }
 
+pub(crate) fn register_entity_w_component_explicit<T>(
+    world: *mut WorldT,
+    name: *const c_char,
+    allow_tag: bool,
+    id: EntityT,
+) -> EntityT
+where
+    T: CachedComponentData + Clone + Default,
+{
+    let is_comp_pre_registered = T::is_registered();
+    let mut component_data: ComponentData = Default::default();
+    if is_comp_pre_registered {
+        // we know this is safe because we checked if the component is pre-registered
+        component_data.id = unsafe { T::get_id_unchecked() };
+    }
+
+    if component_data.id != 0 {
+        ecs_assert!(
+            !world.is_null(),
+            FlecsErrorCode::ComponentNotRegistered,
+            name: *const c_char
+        );
+    } else {
+        ecs_assert!(id == 0, FlecsErrorCode::InconsistentComponentId,);
+    }
+
+    //TODO evaluate if we can pass the ecs_exists result of the non explicit function.
+    if !is_comp_pre_registered
+        || (!world.is_null() && unsafe { !ecs_exists(world, component_data.id) })
+    {
+        component_data = init::<T>(
+            if component_data.id == 0 {
+                id
+            } else {
+                component_data.id
+            },
+            allow_tag,
+            is_comp_pre_registered,
+        );
+
+        ecs_assert!(
+            id == 0 || component_data.id == id,
+            FlecsErrorCode::InternalError
+        );
+
+        let symbol = if id != 0 {
+            let symbol_ptr = unsafe { ecs_get_symbol(world, id) };
+            if symbol_ptr.is_null() {
+                T::get_symbol_name()
+            } else {
+                unsafe { CStr::from_ptr(symbol_ptr).to_str() }.unwrap_or_else(|_| {
+                    ecs_assert!(false, FlecsErrorCode::InternalError);
+                    T::get_symbol_name()
+                })
+            }
+        } else {
+            T::get_symbol_name()
+        };
+
+        let type_name = get_full_type_name::<T>();
+
+        let entity: EntityT = unsafe {
+            ecs_cpp_component_register_explicit(
+                world,
+                component_data.id,
+                id,
+                name,
+                type_name.as_ptr() as *const i8,
+                symbol.as_ptr() as *const i8,
+                component_data.size,
+                component_data.alignment,
+                false,
+                std::ptr::null_mut(),
+            )
+        };
+
+        component_data.id = entity;
+        ecs_assert!(
+            if !is_comp_pre_registered {
+                component_data.id != 0 && unsafe { ecs_exists(world, component_data.id) }
+            } else {
+                true
+            },
+            FlecsErrorCode::InternalError
+        );
+
+        if !is_comp_pre_registered {
+            T::__initialize(|| component_data);
+        }
+        return entity;
+    }
+    return 0;
+}
+
 /// checks if the component is registered with a world.
 /// this function is unsafe because it assumes that the component is registered with a world, not necessarily the world passed in.
 pub(crate) unsafe fn is_component_registered_with_world<T>(world: *const WorldT) -> bool
