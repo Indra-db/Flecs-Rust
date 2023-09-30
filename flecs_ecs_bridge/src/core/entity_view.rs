@@ -86,12 +86,12 @@ impl EntityView {
     }
 
     /// checks if entity is valid
-    pub fn get_is_valid(&self) -> bool {
+    pub fn is_valid(&self) -> bool {
         !self.world.is_null() && unsafe { ecs_is_valid(self.world, self.raw_id) }
     }
 
     /// Checks if entity is alive.
-    pub fn get_is_alive(&self) -> bool {
+    pub fn is_alive(&self) -> bool {
         !self.world.is_null() && unsafe { ecs_is_alive(self.world, self.raw_id) }
     }
 
@@ -220,7 +220,7 @@ impl EntityView {
         self.get_hierachy_path_from_parent_id_default(T::get_id(self.world))
     }
 
-    pub fn get_is_enabled(&self) -> bool {
+    pub fn is_enabled(&self) -> bool {
         unsafe { !ecs_has_id(self.world, self.raw_id, EcsDisabled) }
     }
 
@@ -728,7 +728,7 @@ impl EntityView {
     ///
     /// True if the entity has the provided entity, false otherwise.
     #[inline(always)]
-    pub fn get_has_entity(&self, entity: IdT) -> bool {
+    pub fn has_entity(&self, entity: IdT) -> bool {
         unsafe { ecs_has_id(self.world, self.raw_id, entity) }
     }
 
@@ -741,7 +741,7 @@ impl EntityView {
     /// ### Returns
     ///
     /// True if the entity has the provided component, false otherwise.
-    pub fn get_has_struct_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> bool {
+    pub fn has_struct_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> bool {
         unsafe { ecs_has_id(self.world, self.raw_id, T::get_id(self.world)) }
     }
 
@@ -754,7 +754,7 @@ impl EntityView {
     /// ### Returns
     ///
     /// True if the entity has the provided component, false otherwise.
-    pub fn get_has_enum_component<T: CachedComponentData + ComponentType<Enum>>(&self) -> bool {
+    pub fn has_enum_component<T: CachedComponentData + ComponentType<Enum>>(&self) -> bool {
         let component_id: IdT = T::get_id(self.world);
         ecs_has_pair(self.world, self.raw_id, component_id, unsafe {
             EcsWildcard
@@ -774,7 +774,7 @@ impl EntityView {
     /// ### Returns
     ///
     /// True if the entity has the provided constant, false otherwise.
-    pub fn get_has_enum_constant<T>(&self, constant: T) -> bool
+    pub fn has_enum_constant<T>(&self, constant: T) -> bool
     where
         T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
     {
@@ -800,7 +800,7 @@ impl EntityView {
     /// ### Returns
     ///
     /// True if the entity has the provided component, false otherwise.
-    pub fn get_has_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
+    pub fn has_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
         ecs_has_pair(
             self.world,
             self.raw_id,
@@ -819,7 +819,7 @@ impl EntityView {
     /// ### Returns
     ///
     /// True if the entity has the provided component, false otherwise.
-    pub fn get_has_pair_by_id(&self, first: IdT, second: IdT) -> bool {
+    pub fn has_pair_by_ids(&self, first: IdT, second: IdT) -> bool {
         ecs_has_pair(self.world, self.raw_id, first, second)
     }
 
@@ -837,7 +837,7 @@ impl EntityView {
     /// ### Returns
     ///
     /// True if the entity has the provided component, false otherwise.
-    pub fn get_has_pair_with_enum_constant<
+    pub fn has_pair_with_enum_constant<
         T: CachedComponentData,
         U: CachedComponentData + CachedEnumData,
     >(
@@ -863,7 +863,7 @@ impl EntityView {
     ///
     /// ### Returns
     /// - `true` if the entity owns the provided entity, `false` otherwise.
-    pub fn get_is_entity_owner_of_id(&self, entity_id: IdT) -> bool {
+    pub fn is_entity_owner_of_id(&self, entity_id: IdT) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, entity_id) }
     }
 
@@ -874,7 +874,7 @@ impl EntityView {
     ///
     /// ### Returns
     /// - `true` if the entity owns the provided entity, `false` otherwise.
-    pub fn get_is_entity_owner_of_entity(&self, entity: Entity) -> bool {
+    pub fn is_entity_owner_of_entity(&self, entity: Entity) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, entity.raw_id) }
     }
 
@@ -886,7 +886,7 @@ impl EntityView {
     ///
     /// ### Returns
     /// - `true` if the entity owns the provided component, `false` otherwise.
-    pub fn get_is_entity_owner_of<T: CachedComponentData>(&self) -> bool {
+    pub fn is_entity_owner_of<T: CachedComponentData>(&self) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, T::get_id(self.world)) }
     }
 
@@ -898,7 +898,7 @@ impl EntityView {
     ///
     /// ### Returns
     /// - `true` if the entity owns the provided pair, `false` otherwise.
-    pub fn get_is_entity_owner_of_pair_ids(&self, first: IdT, second: IdT) -> bool {
+    pub fn is_entity_owner_of_pair_ids(&self, first: IdT, second: IdT) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, ecs_pair(first, second)) }
     }
 
@@ -910,9 +910,7 @@ impl EntityView {
     ///
     /// ### Returns
     /// - `true` if the entity owns the provided pair, `false` otherwise.
-    pub fn get_is_entity_owner_of_pair<T: CachedComponentData, U: CachedComponentData>(
-        &self,
-    ) -> bool {
+    pub fn is_entity_owner_of_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
         unsafe {
             ecs_owns_id(
                 self.world,
@@ -929,7 +927,7 @@ impl EntityView {
     ///
     /// ### Returns
     /// - `true` if enabled, `false` if not.
-    pub fn get_is_id_enabled(&self, id: IdT) -> bool {
+    pub fn is_id_enabled(&self, id: IdT) -> bool {
         unsafe { ecs_is_enabled_id(self.world, self.raw_id, id) }
     }
 
@@ -940,7 +938,7 @@ impl EntityView {
     ///
     /// ### Returns
     /// - `true` if enabled, `false` if not.
-    pub fn get_is_component_enabled<T: CachedComponentData>(&self) -> bool {
+    pub fn is_component_enabled<T: CachedComponentData>(&self) -> bool {
         unsafe { ecs_is_enabled_id(self.world, self.raw_id, T::get_id(self.world)) }
     }
 
@@ -952,7 +950,7 @@ impl EntityView {
     ///
     /// ### Returns
     /// - `true` if enabled, `false` if not.
-    pub fn get_is_pair_ids_enabled(&self, first: IdT, second: IdT) -> bool {
+    pub fn is_pair_ids_enabled(&self, first: IdT, second: IdT) -> bool {
         unsafe { ecs_is_enabled_id(self.world, self.raw_id, ecs_pair(first, second)) }
     }
 
@@ -964,7 +962,7 @@ impl EntityView {
     ///
     /// ### Returns
     /// - `true` if enabled, `false` if not.
-    pub fn get_is_pair_enabled<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
+    pub fn is_pair_enabled<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
         unsafe {
             ecs_is_enabled_id(
                 self.world,

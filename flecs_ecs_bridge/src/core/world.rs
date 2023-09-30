@@ -834,11 +834,11 @@ impl World {
     ///
     /// True if the world has the provided component, false otherwise.
     #[inline(always)]
-    pub fn get_has_struct_component<T>(&self) -> bool
+    pub fn has_struct_component<T>(&self) -> bool
     where
         T: CachedComponentData + ComponentType<Struct>,
     {
-        Entity::new_from_existing(self.world, T::get_id(self.world)).get_has_struct_component::<T>()
+        Entity::new_from_existing(self.world, T::get_id(self.world)).has_struct_component::<T>()
     }
 
     /// Check if world has the provided enum component.
@@ -851,11 +851,11 @@ impl World {
     ///
     /// True if the world has the enum provided component, false otherwise.
     #[inline(always)]
-    pub fn get_has_enum_component<T>(&self) -> bool
+    pub fn has_enum_component<T>(&self) -> bool
     where
         T: CachedComponentData + ComponentType<Enum>,
     {
-        Entity::new_from_existing(self.world, T::get_id(self.world)).get_has_enum_component::<T>()
+        Entity::new_from_existing(self.world, T::get_id(self.world)).has_enum_component::<T>()
     }
 
     /// Check if world has the provided enum constant.
@@ -872,12 +872,12 @@ impl World {
     ///
     /// True if the world has the provided constant, false otherwise.
     #[inline(always)]
-    pub fn get_has_enum_constant_component<T>(&self, constant: T) -> bool
+    pub fn has_enum_constant_component<T>(&self, constant: T) -> bool
     where
         T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
     {
         Entity::new_from_existing(self.world, T::get_id(self.world))
-            .get_has_enum_constant::<T>(constant)
+            .has_enum_constant::<T>(constant)
     }
 
     /// Check if world has the provided pair.
@@ -891,13 +891,12 @@ impl World {
     ///
     /// True if the world has the provided component, false otherwise.
     #[inline(always)]
-    pub fn get_has_pair_component<First, Second>(&self) -> bool
+    pub fn has_pair_component<First, Second>(&self) -> bool
     where
         First: CachedComponentData + ComponentType<Struct>,
         Second: CachedComponentData + ComponentType<Struct>,
     {
-        Entity::new_from_existing(self.world, First::get_id(self.world))
-            .get_has_pair::<First, Second>()
+        Entity::new_from_existing(self.world, First::get_id(self.world)).has_pair::<First, Second>()
     }
 
     /// Check if world has the provided pair.
@@ -911,8 +910,8 @@ impl World {
     ///
     /// True if the world has the provided component, false otherwise.
     #[inline(always)]
-    pub fn get_has_pair_by_id(&self, first: EntityT, second: EntityT) -> bool {
-        Entity::new_from_existing(self.world, first).get_has_pair_by_id(first, second)
+    pub fn has_pair_by_id(&self, first: EntityT, second: EntityT) -> bool {
+        Entity::new_from_existing(self.world, first).has_pair_by_ids(first, second)
     }
 
     #[inline(always)]
@@ -1493,7 +1492,7 @@ impl World {
     }
 
     //create an entity that's associated with a type and name
-    pub fn new_entity_name_type<T: CachedComponentData>(&self, name: &str) -> Entity {
+    pub fn new_entity_named_type<T: CachedComponentData>(&self, name: &str) -> Entity {
         let c_name = std::ffi::CString::new(name).unwrap();
         let c_name_ptr = c_name.as_ptr();
 

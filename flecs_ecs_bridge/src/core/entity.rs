@@ -37,8 +37,8 @@ impl Deref for Entity {
     }
 }
 
-impl From<Entity> for u64 {
-    fn from(entity: Entity) -> Self {
+impl From<&Entity> for u64 {
+    fn from(entity: &Entity) -> Self {
         entity.raw_id
     }
 }
@@ -111,7 +111,7 @@ impl Entity {
     /// ### Parameters
     ///
     /// - `component_id`: The component to add.
-    pub fn add_component_id(self, component_id: IdT) -> Self {
+    pub fn add_id(self, component_id: IdT) -> Self {
         unsafe { ecs_add_id(self.world, self.raw_id, component_id) }
         self
     }
@@ -125,7 +125,7 @@ impl Entity {
     /// - `T`: The component type to add.
     pub fn add_component<T: CachedComponentData>(self) -> Self {
         let world = self.world;
-        self.add_component_id(T::get_id(world))
+        self.add_id(T::get_id(world))
     }
 
     /// Add a pair to an entity.
@@ -138,7 +138,7 @@ impl Entity {
     /// - `second`: The second element of the pair.
     pub fn add_pair_ids(self, first: EntityT, second: EntityT) -> Self {
         let world = self.world;
-        self.add_component_id(ecs_pair(first, second))
+        self.add_id(ecs_pair(first, second))
     }
 
     /// Add a pair.
@@ -237,10 +237,10 @@ impl Entity {
     ///
     /// * `condition`: The condition to evaluate.
     /// * `component`: The component to add.
-    pub fn add_component_id_if(self, component_id: IdT, condition: bool) -> Self {
+    pub fn add_id_if(self, component_id: IdT, condition: bool) -> Self {
         if condition {
             let world = self.world;
-            return self.add_component_id(component_id);
+            return self.add_id(component_id);
         }
 
         self
@@ -258,7 +258,7 @@ impl Entity {
     /// * `condition`: The condition to evaluate.
     pub fn add_component_if<T: CachedComponentData>(self, condition: bool) -> Self {
         let world = self.world;
-        self.add_component_id_if(T::get_id(world), condition)
+        self.add_id_if(T::get_id(world), condition)
     }
 
     /// Conditional add.
@@ -581,7 +581,7 @@ impl Entity {
     /// * `id`: The id to mark for overriding.
     pub fn mark_component_id_for_override(self, id: IdT) -> Self {
         let world = self.world;
-        self.add_component_id(unsafe { ECS_OVERRIDE | id })
+        self.add_id(unsafe { ECS_OVERRIDE | id })
     }
 
     /// Mark component for auto-overriding.
