@@ -2,7 +2,7 @@
 
 use crate::core::{
     c_types::{IdT, WorldT},
-    component::CachedComponentData,
+    component_registration::CachedComponentData,
     utility::functions::ecs_pair,
 };
 

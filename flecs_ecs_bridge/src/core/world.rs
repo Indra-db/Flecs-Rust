@@ -22,10 +22,10 @@ use super::c_binding::bindings::{
     ecs_set_stage_count, ecs_set_with, ecs_should_quit, ecs_stage_is_async, ecs_stage_is_readonly,
 };
 use super::c_types::{EntityT, IdT, WorldT, SEPARATOR};
-use super::component::{
+use super::component_ref::Ref;
+use super::component_registration::{
     register_entity_w_component_explicit, CachedComponentData, ComponentType, Enum, Struct,
 };
-use super::component_ref::Ref;
 use super::entity::Entity;
 use super::enum_type::CachedEnumData;
 use super::id::Id;

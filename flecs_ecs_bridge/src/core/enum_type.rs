@@ -2,7 +2,9 @@ use std::ffi::CStr;
 
 use super::{
     c_types::{EntityT, WorldT},
-    component::{try_register_enum_component, CachedComponentData, ComponentType, Enum},
+    component_registration::{
+        try_register_enum_component, CachedComponentData, ComponentType, Enum,
+    },
 };
 
 pub trait CachedEnumData: ComponentType<Enum> {

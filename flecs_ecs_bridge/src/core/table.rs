@@ -9,7 +9,7 @@ use super::{
         ecs_table_get_depth, ecs_table_get_type, ecs_table_str,
     },
     c_types::{EntityT, IdT, TableT, WorldT},
-    component::CachedComponentData,
+    component_registration::CachedComponentData,
     utility::functions::ecs_pair,
 };
 

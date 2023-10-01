@@ -12,7 +12,7 @@ use crate::{
 
 use super::{
     c_types::{EntityT, IdT, RefT, WorldT},
-    component::CachedComponentData,
+    component_registration::CachedComponentData,
     entity::Entity,
 };
 

@@ -34,7 +34,7 @@ use super::{
         ECS_FILTER_INIT,
     },
     c_types::*,
-    component::{CachedComponentData, ComponentType, Enum, NotEmptyComponent, Struct},
+    component_registration::{CachedComponentData, ComponentType, Enum, NotEmptyComponent, Struct},
     entity::Entity,
     enum_type::CachedEnumData,
     id::Id,

@@ -7,8 +7,8 @@ pub mod core {
     pub mod archetype;
     pub mod c_binding;
     pub mod c_types;
-    pub mod component;
     pub mod component_ref;
+    pub mod component_registration;
     pub mod entity;
     pub mod entity_view;
     pub mod enum_type;
@@ -30,4 +30,4 @@ pub mod core {
 
 pub mod addons {}
 
-use core::component::*;
+use core::component_registration::*;

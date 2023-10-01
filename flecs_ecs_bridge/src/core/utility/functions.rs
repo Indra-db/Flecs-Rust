@@ -5,7 +5,7 @@ use crate::{
             ECS_ROW_MASK,
         },
         c_types::{EntityT, IdT, WorldT, ECS_PAIR},
-        component::CachedComponentData,
+        component_registration::CachedComponentData,
         utility::errors::FlecsErrorCode,
     },
     ecs_assert,
