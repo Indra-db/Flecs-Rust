@@ -24,9 +24,9 @@ use super::{
     utility::functions::{ecs_pair, set_helper},
 };
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Copy, Clone)]
 pub struct Entity {
-    entity_view: EntityView,
+    pub entity_view: EntityView,
 }
 
 impl Deref for Entity {
@@ -373,7 +373,7 @@ impl Entity {
     /// ### Parameters
     ///
     /// * `component_id`: The entity to remove.
-    pub fn remove_component_id(self, component_id: IdT) -> Self {
+    pub fn remove_id(self, component_id: IdT) -> Self {
         unsafe { ecs_remove_id(self.world, self.raw_id, component_id) }
         self
     }
@@ -385,7 +385,7 @@ impl Entity {
     /// * `T`: the type of the component to remove.
     pub fn remove_component<T: CachedComponentData + ComponentType<Struct>>(self) -> Self {
         let world = self.world;
-        self.remove_component_id(T::get_id(world))
+        self.remove_id(T::get_id(world))
     }
 
     /// Remove pair for enum
@@ -407,7 +407,7 @@ impl Entity {
     /// * `second`: The second element of the pair.
     pub fn remove_pair_ids(self, first: EntityT, second: EntityT) -> Self {
         let world = self.world;
-        self.remove_component_id(ecs_pair(first, second))
+        self.remove_id(ecs_pair(first, second))
     }
 
     /// Removes a pair.

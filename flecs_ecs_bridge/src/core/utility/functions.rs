@@ -4,7 +4,7 @@ use crate::{
             ecs_get_mut_id, ecs_has_id, ecs_modified_id, ecs_strip_generation, ECS_GENERATION_MASK,
             ECS_ROW_MASK,
         },
-        c_types::{EntityT, IdT, WorldT},
+        c_types::{EntityT, IdT, WorldT, ECS_PAIR},
         component::CachedComponentData,
         utility::errors::FlecsErrorCode,
     },
@@ -12,7 +12,7 @@ use crate::{
 };
 use std::sync::OnceLock;
 
-use super::super::c_types::{PAIR, RUST_ECS_COMPONENT_MASK};
+use super::super::c_types::RUST_ECS_COMPONENT_MASK;
 
 #[inline(always)]
 pub fn ecs_entity_t_comb(lo: u64, hi: u64) -> u64 {
@@ -22,7 +22,7 @@ pub fn ecs_entity_t_comb(lo: u64, hi: u64) -> u64 {
 
 #[inline(always)]
 pub fn ecs_pair(pred: u64, obj: u64) -> u64 {
-    PAIR.0 | ecs_entity_t_comb(obj, pred)
+    ECS_PAIR | ecs_entity_t_comb(obj, pred)
 }
 
 #[allow(clippy::not_unsafe_ptr_arg_deref)]

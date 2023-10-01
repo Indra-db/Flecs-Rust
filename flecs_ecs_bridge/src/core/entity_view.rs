@@ -728,7 +728,7 @@ impl EntityView {
     ///
     /// True if the entity has the provided entity, false otherwise.
     #[inline(always)]
-    pub fn has_entity(&self, entity: IdT) -> bool {
+    pub fn has_id(&self, entity: IdT) -> bool {
         unsafe { ecs_has_id(self.world, self.raw_id, entity) }
     }
 

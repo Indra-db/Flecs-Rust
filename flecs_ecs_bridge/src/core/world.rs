@@ -625,10 +625,9 @@ impl World {
     /// ### Arguments
     ///
     /// * `component` - The singleton component to set on the world.
-    pub fn set_component<T: CachedComponentData>(self, component: T) -> Self {
+    pub fn set_component<T: CachedComponentData>(&self, component: T) {
         let id = T::get_id(self.world);
         set_helper(self.world, id, component, id);
-        self
     }
 
     /// Set a singleton pair using the second element type and a first id.
@@ -641,13 +640,12 @@ impl World {
     ///
     /// * `first`: The ID of the first element of the pair.
     /// * `second`: The second element of the pair to be set.
-    pub fn set_pair_first_id<First>(self, second: EntityT, first: First) -> Self
+    pub fn set_pair_first_id<First>(&self, second: EntityT, first: First)
     where
         First: CachedComponentData + ComponentType<Struct>,
     {
         let entity = Entity::new_from_existing(self.world, First::get_id(self.world));
         entity.set_pair_first_id::<First>(second, first);
-        self
     }
 
     /// Set singleton pair.
@@ -661,14 +659,13 @@ impl World {
     /// ### Parameters
     ///
     /// * `first`: The value to set for first component.
-    pub fn set_pair_first<First, Second>(self, first: First) -> Self
+    pub fn set_pair_first<First, Second>(&self, first: First)
     where
         First: CachedComponentData + ComponentType<Struct>,
         Second: CachedComponentData + ComponentType<Struct>,
     {
         let entity = Entity::new_from_existing(self.world, First::get_id(self.world));
         entity.set_pair_first::<First, Second>(first);
-        self
     }
 
     /// Set a singleton pair using the second element type and a first id.
@@ -681,13 +678,12 @@ impl World {
     ///
     /// * `first`: The ID of the first element of the pair.
     /// * `second`: The second element of the pair to be set.
-    pub fn set_pair_second_id<Second>(self, first: EntityT, second: Second) -> Self
+    pub fn set_pair_second_id<Second>(&self, first: EntityT, second: Second)
     where
         Second: CachedComponentData + ComponentType<Struct>,
     {
         let entity = Entity::new_from_existing(self.world, Second::get_id(self.world));
         entity.set_pair_second_id::<Second>(first, second);
-        self
     }
 
     /// Set singleton pair.
@@ -701,14 +697,13 @@ impl World {
     ///
     /// * `first`: The first element of the pair.
     /// * `value`: The value to set.
-    pub fn set_pair_second<First, Second>(self, second: Second) -> Self
+    pub fn set_pair_second<First, Second>(&self, second: Second)
     where
         First: CachedComponentData + ComponentType<Struct>,
         Second: CachedComponentData + ComponentType<Struct>,
     {
         let entity = Entity::new_from_existing(self.world, First::get_id(self.world));
         entity.set_pair_second::<First, Second>(second);
-        self
     }
 
     /// Signal that singleton component was modified.
@@ -718,12 +713,11 @@ impl World {
     /// * `T` - The type of the component that was modified.
     ///
     #[inline(always)]
-    pub fn mark_component_modified<T>(self) -> Self
+    pub fn mark_component_modified<T>(&self)
     where
         T: CachedComponentData,
     {
         Entity::new_from_existing(self.world, T::get_id(self.world)).mark_component_modified::<T>();
-        self
     }
 
     /// signal that singleton component was modified.
@@ -915,115 +909,100 @@ impl World {
     }
 
     #[inline(always)]
-    pub fn add_component<T: CachedComponentData>(self) -> Self {
-        Entity::new_from_existing(self.world, T::get_id(self.world)).add_component::<T>();
-        self
+    pub fn add_component<T: CachedComponentData>(&self) -> Entity {
+        Entity::new_from_existing(self.world, T::get_id(self.world)).add_component::<T>()
     }
 
     #[inline(always)]
-    pub fn add_pair_ids(self, first: EntityT, second: EntityT) -> Self {
-        Entity::new_from_existing(self.world, first).add_pair_ids(first, second);
-        self
+    pub fn add_pair_ids(&self, first: EntityT, second: EntityT) -> Entity {
+        Entity::new_from_existing(self.world, first).add_pair_ids(first, second)
     }
 
     #[inline(always)]
-    pub fn add_pair<First, Second>(self) -> Self
+    pub fn add_pair<First, Second>(&self) -> Entity
     where
         First: CachedComponentData,
         Second: CachedComponentData + ComponentType<Struct>,
     {
-        Entity::new_from_existing(self.world, First::get_id(self.world))
-            .add_pair::<First, Second>();
-        self
+        Entity::new_from_existing(self.world, First::get_id(self.world)).add_pair::<First, Second>()
     }
 
     #[inline(always)]
-    pub fn add_pair_first_id<Second: CachedComponentData>(self, first: EntityT) -> Self {
+    pub fn add_pair_first_id<Second: CachedComponentData>(&self, first: EntityT) -> Entity {
         Entity::new_from_existing(self.world, Second::get_id(self.world))
-            .add_pair_first_id::<Second>(first);
-        self
+            .add_pair_first_id::<Second>(first)
     }
 
     #[inline(always)]
-    pub fn add_pair_second_id<First: CachedComponentData>(self, second: EntityT) -> Self {
+    pub fn add_pair_second_id<First: CachedComponentData>(&self, second: EntityT) -> Entity {
         Entity::new_from_existing(self.world, First::get_id(self.world))
-            .add_pair_second_id::<First>(second);
-        self
+            .add_pair_second_id::<First>(second)
     }
 
     #[inline(always)]
-    pub fn add_enum_tag<First, Second>(self, enum_value: Second) -> Self
+    pub fn add_enum_tag<First, Second>(&self, enum_value: Second) -> Entity
     where
         First: CachedComponentData,
         Second: CachedComponentData + ComponentType<Enum> + CachedEnumData,
     {
         Entity::new_from_existing(self.world, First::get_id(self.world))
-            .add_enum_tag::<First, Second>(enum_value);
-        self
+            .add_enum_tag::<First, Second>(enum_value)
     }
 
     #[inline(always)]
     pub fn add_enum_constant<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
-        self,
+        &self,
         enum_value: T,
-    ) -> Self {
+    ) -> Entity {
         Entity::new_from_existing(self.world, T::get_id(self.world))
-            .add_enum_constant::<T>(enum_value);
-        self
+            .add_enum_constant::<T>(enum_value)
     }
 
     #[inline(always)]
-    pub fn remove_component<T: CachedComponentData + ComponentType<Struct>>(self) -> Self {
-        Entity::new_from_existing(self.world, T::get_id(self.world)).remove_component::<T>();
-        self
+    pub fn remove_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> Entity {
+        Entity::new_from_existing(self.world, T::get_id(self.world)).remove_component::<T>()
     }
 
     #[inline(always)]
-    pub fn remove_component_enum<T: CachedComponentData + ComponentType<Enum>>(self) -> Self {
-        Entity::new_from_existing(self.world, T::get_id(self.world)).remove_component_enum::<T>();
-        self
+    pub fn remove_component_enum<T: CachedComponentData + ComponentType<Enum>>(&self) -> Entity {
+        Entity::new_from_existing(self.world, T::get_id(self.world)).remove_component_enum::<T>()
     }
 
     #[inline(always)]
-    pub fn remove_enum_tag<First, Second>(self, enum_value: Second) -> Self
+    pub fn remove_enum_tag<First, Second>(&self, enum_value: Second) -> Entity
     where
         First: CachedComponentData,
         Second: CachedComponentData + ComponentType<Enum> + CachedEnumData,
     {
         Entity::new_from_existing(self.world, First::get_id(self.world))
-            .remove_enum_tag::<First, Second>(enum_value);
-        self
+            .remove_enum_tag::<First, Second>(enum_value)
     }
 
     #[inline(always)]
-    pub fn remove_pair_ids(self, first: EntityT, second: EntityT) -> Self {
-        Entity::new_from_existing(self.world, first).remove_pair_ids(first, second);
-        self
+    pub fn remove_pair_ids(&self, first: EntityT, second: EntityT) -> Entity {
+        Entity::new_from_existing(self.world, first).remove_pair_ids(first, second)
     }
 
     #[inline(always)]
-    pub fn remove_pair<First, Second>(self) -> Self
+    pub fn remove_pair<First, Second>(&self) -> Entity
     where
         First: CachedComponentData,
         Second: CachedComponentData + ComponentType<Struct>,
     {
         Entity::new_from_existing(self.world, First::get_id(self.world))
-            .remove_pair::<First, Second>();
-        self
+            .remove_pair::<First, Second>()
     }
 
     #[inline(always)]
-    pub fn remove_pair_first_id<Second: CachedComponentData>(self, first: EntityT) -> Self {
+    pub fn remove_pair_first_id<Second: CachedComponentData>(&self, first: EntityT) -> Entity {
         Entity::new_from_existing(self.world, Second::get_id(self.world))
-            .remove_pair_first_id::<Second>(first);
-        self
+            .remove_pair_first_id::<Second>(first)
     }
 
     #[inline(always)]
-    pub fn remove_pair_second_id<First: CachedComponentData>(self, second: EntityT) -> Self {
+    pub fn remove_pair_second_id<First: CachedComponentData>(&self, second: EntityT) -> Entity {
         Entity::new_from_existing(self.world, First::get_id(self.world))
-            .remove_pair_second_id::<First>(second);
-        self
+            .remove_pair_second_id::<First>(second)
     }
 
     /// Iterate children in root of world
@@ -1372,7 +1351,6 @@ impl World {
     ///     // deferred operations here
     /// });
     /// ```
-
     pub fn defer<F: FnOnce()>(&self, func: F) {
         unsafe {
             ecs_defer_begin(self.world);
