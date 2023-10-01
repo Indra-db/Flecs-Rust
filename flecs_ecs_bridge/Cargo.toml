@@ -28,6 +28,7 @@ flecs_timer = []
 flecs_doc = []
 flecs_rest = []
 flecs_meta = []
+flecs_metrics = []
 flecs_ecs_asserts = []
 flecs_enable_all_asserts = ["flecs_ecs_asserts"]
 default = [
@@ -38,6 +39,7 @@ default = [
     "flecs_doc",
     "flecs_rest",
     "flecs_meta",
+    "flecs_metrics",
 ]
 
 [target.'cfg(any())'.dependencies]

@@ -67,6 +67,14 @@ pub trait CachedComponentData: Clone + Default {
         Self::__get_once_lock_data().get().is_some()
     }
 
+    fn is_registered_with_world(world: *mut WorldT) -> bool {
+        if Self::is_registered() {
+            unsafe { is_component_registered_with_world::<Self>(world) }
+        } else {
+            false
+        }
+    }
+
     /// returns the component data of the component. If the component is not registered, it will register it.
     fn get_data(world: *mut WorldT) -> &'static ComponentData;
 

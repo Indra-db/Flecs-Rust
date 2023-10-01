@@ -7,6 +7,7 @@ pub mod core {
     pub mod archetype;
     pub mod c_binding;
     pub mod c_types;
+    pub mod component;
     pub mod component_ref;
     pub mod component_registration;
     pub mod entity;
