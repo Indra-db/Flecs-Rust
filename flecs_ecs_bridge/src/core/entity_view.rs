@@ -741,7 +741,7 @@ impl EntityView {
     /// ### Returns
     ///
     /// True if the entity has the provided component, false otherwise.
-    pub fn has_struct_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> bool {
+    pub fn has<T: CachedComponentData + ComponentType<Struct>>(&self) -> bool {
         unsafe { ecs_has_id(self.world, self.raw_id, T::get_id(self.world)) }
     }
 
@@ -754,7 +754,7 @@ impl EntityView {
     /// ### Returns
     ///
     /// True if the entity has the provided component, false otherwise.
-    pub fn has_enum_component<T: CachedComponentData + ComponentType<Enum>>(&self) -> bool {
+    pub fn has_enum<T: CachedComponentData + ComponentType<Enum>>(&self) -> bool {
         let component_id: IdT = T::get_id(self.world);
         ecs_has_pair(self.world, self.raw_id, component_id, unsafe {
             EcsWildcard

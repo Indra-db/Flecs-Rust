@@ -83,7 +83,7 @@ fn entity_new_add() {
     assert!(entity.is_valid());
 
     // Verify that the entity has the Position component
-    assert_eq!(entity.has_struct_component::<Position>(), true);
+    assert_eq!(entity.has::<Position>(), true);
 }
 
 #[test]
@@ -101,10 +101,10 @@ fn entity_new_add_2() {
     assert!(entity.is_valid());
 
     // Verify that the entity has the Position component
-    assert_eq!(entity.has_struct_component::<Position>(), true);
+    assert_eq!(entity.has::<Position>(), true);
 
     // Verify that the entity has the Velocity component
-    assert_eq!(entity.has_struct_component::<Velocity>(), true);
+    assert_eq!(entity.has::<Velocity>(), true);
 }
 
 #[test]
@@ -121,7 +121,7 @@ fn entity_new_set() {
     assert!(entity.is_valid());
 
     // Verify that the entity has the Position component
-    assert_eq!(entity.has_struct_component::<Position>(), true);
+    assert_eq!(entity.has::<Position>(), true);
 
     // Verify the component data
     let p = entity.get_component::<Position>();
@@ -141,8 +141,8 @@ fn entity_new_set_2() {
         .set_component(Velocity { x: 1.0, y: 2.0 });
 
     assert!(entity.is_valid());
-    assert_eq!(entity.has_struct_component::<Position>(), true);
-    assert_eq!(entity.has_struct_component::<Velocity>(), true);
+    assert_eq!(entity.has::<Position>(), true);
+    assert_eq!(entity.has::<Velocity>(), true);
 
     let p = entity.get_component::<Position>();
     unsafe {
@@ -167,7 +167,7 @@ fn entity_add() {
 
     entity.add_component::<Position>();
 
-    assert_eq!(entity.has_struct_component::<Position>(), true);
+    assert_eq!(entity.has::<Position>(), true);
 }
 
 #[test]
@@ -178,10 +178,10 @@ fn entity_remove() {
     assert!(entity.is_valid());
 
     entity.add_component::<Position>();
-    assert_eq!(entity.has_struct_component::<Position>(), true);
+    assert_eq!(entity.has::<Position>(), true);
 
     entity.remove_component::<Position>();
-    assert_eq!(entity.has_struct_component::<Position>(), false);
+    assert_eq!(entity.has::<Position>(), false);
 }
 
 #[test]
@@ -192,7 +192,7 @@ fn entity_set() {
     assert!(entity.is_valid());
 
     entity.set_component(Position { x: 10.0, y: 20.0 });
-    assert_eq!(entity.has_struct_component::<Position>(), true);
+    assert_eq!(entity.has::<Position>(), true);
 
     let p = entity.get_component::<Position>();
     unsafe {
@@ -212,8 +212,8 @@ fn entity_add_2() {
         .add_component::<Position>()
         .add_component::<Velocity>();
 
-    assert_eq!(entity.has_struct_component::<Position>(), true);
-    assert_eq!(entity.has_struct_component::<Velocity>(), true);
+    assert_eq!(entity.has::<Position>(), true);
+    assert_eq!(entity.has::<Velocity>(), true);
 }
 
 #[test]
@@ -267,15 +267,15 @@ fn entity_remove_2() {
         .add_component::<Position>()
         .add_component::<Velocity>();
 
-    assert_eq!(entity.has_struct_component::<Position>(), true);
-    assert_eq!(entity.has_struct_component::<Velocity>(), true);
+    assert_eq!(entity.has::<Position>(), true);
+    assert_eq!(entity.has::<Velocity>(), true);
 
     entity
         .remove_component::<Position>()
         .remove_component::<Velocity>();
 
-    assert_eq!(entity.has_struct_component::<Position>(), false);
-    assert_eq!(entity.has_struct_component::<Velocity>(), false);
+    assert_eq!(entity.has::<Position>(), false);
+    assert_eq!(entity.has::<Velocity>(), false);
 }
 
 #[test]
@@ -287,8 +287,8 @@ fn entity_set_2() {
         .set_component::<Position>(Position { x: 10.0, y: 20.0 })
         .set_component::<Velocity>(Velocity { x: 1.0, y: 2.0 });
 
-    assert_eq!(entity.has_struct_component::<Position>(), true);
-    assert_eq!(entity.has_struct_component::<Velocity>(), true);
+    assert_eq!(entity.has::<Position>(), true);
+    assert_eq!(entity.has::<Velocity>(), true);
 
     let p = entity.get_component::<Position>();
     unsafe {
@@ -365,7 +365,7 @@ fn entity_get_generic() {
         .set_component(Position { x: 10.0, y: 20.0 });
 
     assert!(entity.is_valid());
-    assert_eq!(entity.has_struct_component::<Position>(), true);
+    assert_eq!(entity.has::<Position>(), true);
 
     let pos_void = entity.get_component_by_id(position.raw_id);
     assert!(pos_void != std::ptr::null());
@@ -384,7 +384,7 @@ fn entity_get_generic_w_id() {
         .set_component(Position { x: 10.0, y: 20.0 });
 
     assert!(entity.is_valid());
-    assert_eq!(entity.has_struct_component::<Position>(), true);
+    assert_eq!(entity.has::<Position>(), true);
 
     let pos_void = entity.get_component_by_id(position.raw_id);
     assert!(!pos_void.is_null());
@@ -403,7 +403,7 @@ fn entity_get_generic_w_id_t() {
         .set_component(Position { x: 10.0, y: 20.0 });
 
     assert!(entity.is_valid());
-    assert_eq!(entity.has_struct_component::<Position>(), true);
+    assert_eq!(entity.has::<Position>(), true);
 
     let pos_void = entity.get_component_by_id(position.raw_id);
     assert!(!pos_void.is_null());
@@ -426,7 +426,7 @@ fn entity_set_generic() {
         &pos as *const _ as *const std::ffi::c_void,
     );
 
-    assert!(entity.has_struct_component::<Position>());
+    assert!(entity.has::<Position>());
     assert!(entity.has_id(position.raw_id));
 
     let pos = unsafe { &*entity.get_component::<Position>() };
@@ -445,7 +445,7 @@ fn entity_set_generic_no_size() {
         .new_entity()
         .set_ptr(position.raw_id, &pos as *const _ as *const std::ffi::c_void);
 
-    assert!(entity.has_struct_component::<Position>());
+    assert!(entity.has::<Position>());
     assert!(entity.has_id(position.raw_id));
 
     let pos = unsafe { &*entity.get_component::<Position>() };

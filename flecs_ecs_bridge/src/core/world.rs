@@ -828,11 +828,11 @@ impl World {
     ///
     /// True if the world has the provided component, false otherwise.
     #[inline(always)]
-    pub fn has_struct_component<T>(&self) -> bool
+    pub fn has<T>(&self) -> bool
     where
         T: CachedComponentData + ComponentType<Struct>,
     {
-        Entity::new_from_existing(self.world, T::get_id(self.world)).has_struct_component::<T>()
+        Entity::new_from_existing(self.world, T::get_id(self.world)).has::<T>()
     }
 
     /// Check if world has the provided enum component.
@@ -845,11 +845,11 @@ impl World {
     ///
     /// True if the world has the enum provided component, false otherwise.
     #[inline(always)]
-    pub fn has_enum_component<T>(&self) -> bool
+    pub fn has_enum<T>(&self) -> bool
     where
         T: CachedComponentData + ComponentType<Enum>,
     {
-        Entity::new_from_existing(self.world, T::get_id(self.world)).has_enum_component::<T>()
+        Entity::new_from_existing(self.world, T::get_id(self.world)).has_enum::<T>()
     }
 
     /// Check if world has the provided enum constant.
@@ -1344,12 +1344,11 @@ impl World {
     /// Defers all operations executed in the passed-in closure. If the world
     /// is already in deferred mode, does nothing.
     //
+    //#[cfg_attr(doctest, doc = " ````no_test")]
     /// # Examples
-    #[cfg_attr(doctest, doc = " ````no_test")]
+    /// ```no_test
+    /// let x = 50;
     /// ```
-    /// world.defer(|| {
-    ///     // deferred operations here
-    /// });
     /// ```
     pub fn defer<F: FnOnce()>(&self, func: F) {
         unsafe {
