@@ -1346,9 +1346,11 @@ impl World {
     //
     //#[cfg_attr(doctest, doc = " ````no_test")]
     /// # Examples
-    /// ```no_test
-    /// let x = 50;
+    #[cfg_attr(doctest, doc = " ````no_test")]
     /// ```
+    /// world.defer(|| {
+    ///     // deferred operations here
+    /// });
     /// ```
     pub fn defer<F: FnOnce()>(&self, func: F) {
         unsafe {
