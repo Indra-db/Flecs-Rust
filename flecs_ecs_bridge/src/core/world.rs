@@ -866,7 +866,7 @@ impl World {
     ///
     /// True if the world has the provided constant, false otherwise.
     #[inline(always)]
-    pub fn has_enum_constant_component<T>(&self, constant: T) -> bool
+    pub fn has_enum_constant<T>(&self, constant: T) -> bool
     where
         T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
     {
