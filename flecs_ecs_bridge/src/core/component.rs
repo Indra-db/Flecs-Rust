@@ -2,8 +2,10 @@ use crate::core::c_binding::bindings::ecs_set_hooks_id;
 use crate::core::utility::errors::FlecsErrorCode;
 use crate::ecs_assert;
 
-use super::c_binding::bindings::{ecs_cpp_component_validate, ecs_get_hooks_id, ecs_get_scope};
-use super::utility::functions::get_full_type_name;
+use super::c_binding::bindings::{
+    ecs_cpp_component_validate, ecs_field_w_size, ecs_get_hooks_id, ecs_get_scope,
+};
+use super::utility::functions::{ecs_field, get_full_type_name};
 use super::{c_types::*, component_registration::*, entity::Entity};
 use flecs_ecs_bridge_derive::Component;
 use std::ffi::c_char;
@@ -158,10 +160,8 @@ impl<T: CachedComponentData + Default> Component<T> {
 
     pub fn on_add<Func>(&mut self, func: Func) -> &mut Self
     where
-        Func: FnMut() + 'static,
+        Func: FnMut(Entity, &mut T) + 'static,
     {
-        println!("registering on add");
-
         let mut type_hooks: TypeHooksT = self.get_hooks();
 
         ecs_assert!(
@@ -183,7 +183,7 @@ impl<T: CachedComponentData + Default> Component<T> {
 
     pub fn on_remove<Func>(&mut self, func: Func) -> &mut Self
     where
-        Func: FnMut() + 'static,
+        Func: FnMut(Entity, &mut T) + 'static,
     {
         let mut type_hooks = self.get_hooks();
 
@@ -199,13 +199,14 @@ impl<T: CachedComponentData + Default> Component<T> {
         let static_ref = Box::leak(boxed_func);
         binding_ctx.on_remove = Some(static_ref as *mut _ as *mut c_void);
         binding_ctx.free_on_remove = Some(Self::on_remove_drop::<Func>);
+        type_hooks.on_remove = Some(Self::run_remove::<Func>);
         unsafe { ecs_set_hooks_id(self.world, self.raw_id, &type_hooks) };
         self
     }
 
     pub fn on_set<Func>(&mut self, func: Func) -> &mut Self
     where
-        Func: FnMut() + 'static,
+        Func: FnMut(Entity, &mut T) + 'static,
     {
         let mut type_hooks = self.get_hooks();
 
@@ -221,15 +222,15 @@ impl<T: CachedComponentData + Default> Component<T> {
         let static_ref = Box::leak(boxed_func);
         binding_ctx.on_set = Some(static_ref as *mut _ as *mut c_void);
         binding_ctx.free_on_set = Some(Self::on_set_drop::<Func>);
+        type_hooks.on_set = Some(Self::run_set::<Func>);
         unsafe { ecs_set_hooks_id(self.world, self.raw_id, &type_hooks) };
         self
     }
 
     extern "C" fn on_add_drop<Func>(func: *mut c_void)
     where
-        Func: FnMut() + 'static,
+        Func: FnMut(Entity, &mut T) + 'static,
     {
-        print!("dropping on add");
         let ptr_func: *mut Func = func as *mut Func;
         unsafe {
             ptr::drop_in_place(ptr_func);
@@ -238,7 +239,7 @@ impl<T: CachedComponentData + Default> Component<T> {
 
     extern "C" fn on_remove_drop<Func>(func: *mut c_void)
     where
-        Func: FnMut() + 'static,
+        Func: FnMut(Entity, &mut T) + 'static,
     {
         let ptr_func: *mut Func = func as *mut Func;
         unsafe {
@@ -248,7 +249,7 @@ impl<T: CachedComponentData + Default> Component<T> {
 
     extern "C" fn on_set_drop<Func>(func: *mut c_void)
     where
-        Func: FnMut() + 'static,
+        Func: FnMut(Entity, &mut T) + 'static,
     {
         let ptr_func: *mut Func = func as *mut Func;
         unsafe {
@@ -258,16 +259,41 @@ impl<T: CachedComponentData + Default> Component<T> {
 
     extern "C" fn run_add<Func>(iter: *mut IterT)
     where
-        Func: FnMut() + 'static,
+        Func: FnMut(Entity, &mut T) + 'static,
     {
         let ctx: *mut ComponentBindingCtx = unsafe { (*iter).binding_ctx as *mut _ };
         let on_add = unsafe { (*ctx).on_add.unwrap() };
         let on_add = on_add as *mut Func;
         let on_add = unsafe { &mut *on_add };
-        on_add();
-        //let on_add = unsafe { (*ctx).on_add.unwrap() as *mut dyn FnMut()};
-        //call on_add
-        //unsafe { (*on_add)((*iter).id, (*iter).ptr as *mut T) };
+        let entity = unsafe { Entity::new_from_existing((*iter).world, *(*iter).entities) };
+        let component: *mut T = unsafe { ecs_field::<T>(iter, 1) };
+        on_add(entity, unsafe { &mut *component });
+    }
+
+    extern "C" fn run_set<Func>(iter: *mut IterT)
+    where
+        Func: FnMut(Entity, &mut T) + 'static,
+    {
+        let ctx: *mut ComponentBindingCtx = unsafe { (*iter).binding_ctx as *mut _ };
+        let on_set = unsafe { (*ctx).on_set.unwrap() };
+        let on_set = on_set as *mut Func;
+        let on_set = unsafe { &mut *on_set };
+        let entity = unsafe { Entity::new_from_existing((*iter).world, *(*iter).entities) };
+        let component: *mut T = unsafe { ecs_field::<T>(iter, 1) };
+        on_set(entity, unsafe { &mut *component });
+    }
+
+    extern "C" fn run_remove<Func>(iter: *mut IterT)
+    where
+        Func: FnMut(Entity, &mut T) + 'static,
+    {
+        let ctx: *mut ComponentBindingCtx = unsafe { (*iter).binding_ctx as *mut _ };
+        let on_remove = unsafe { (*ctx).on_remove.unwrap() };
+        let on_remove = on_remove as *mut Func;
+        let on_remove = unsafe { &mut *on_remove };
+        let entity = unsafe { Entity::new_from_existing((*iter).world, *(*iter).entities) };
+        let component: *mut T = unsafe { ecs_field::<T>(iter, 1) };
+        on_remove(entity, unsafe { &mut *component });
     }
 }
 

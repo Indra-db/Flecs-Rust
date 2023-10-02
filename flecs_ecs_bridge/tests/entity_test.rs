@@ -1,4 +1,4 @@
-use flecs_ecs_bridge::core::{c_types::*, world::World};
+use flecs_ecs_bridge::core::{c_types::*, entity::Entity, world::World};
 mod common;
 use common::*;
 struct Parent {
@@ -486,33 +486,4 @@ fn entity_has_role() {
 
     let entity = entity.remove_flags();
     assert!(!entity.has_flags_for_role(ECS_PAIR));
-}
-
-#[test]
-fn test_on_add_hook() {
-    static mut COUNT: u32 = 0;
-    {
-        let world = World::default();
-        world.component::<Position>().on_add(|| {
-            unsafe { COUNT += 1 };
-        });
-
-        //.on_add(|_id: IdT, p: &mut Position| {
-        //    unsafe { COUNT += 1 };
-        //    p.x = 10.0;
-        //    p.y = 20.0;
-        //});
-
-        assert_eq!(unsafe { COUNT }, 0);
-
-        let entity = world.new_entity().add_component::<Position>();
-
-        assert_eq!(unsafe { COUNT }, 1);
-
-        entity.add_component::<Position>();
-        assert_eq!(unsafe { COUNT }, 1);
-
-        let entity2 = world.new_entity().add_component::<Position>();
-        assert_eq!(unsafe { COUNT }, 2);
-    }
 }

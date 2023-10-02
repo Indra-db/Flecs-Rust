@@ -1,10 +1,10 @@
 use crate::{
     core::{
         c_binding::bindings::{
-            ecs_get_mut_id, ecs_has_id, ecs_modified_id, ecs_strip_generation, ECS_GENERATION_MASK,
-            ECS_ROW_MASK,
+            ecs_field_w_size, ecs_get_mut_id, ecs_has_id, ecs_modified_id, ecs_strip_generation,
+            ECS_GENERATION_MASK, ECS_ROW_MASK,
         },
-        c_types::{EntityT, IdT, WorldT, ECS_PAIR},
+        c_types::{EntityT, IdT, IterT, WorldT, ECS_PAIR},
         component_registration::CachedComponentData,
         utility::errors::FlecsErrorCode,
     },
@@ -118,4 +118,13 @@ pub fn strip_generation(entity: EntityT) -> IdT {
 #[inline(always)]
 pub fn get_generation(entity: EntityT) -> u32 {
     ((entity & ECS_GENERATION_MASK) >> 32) as u32
+}
+
+/// gets the component data from the iterator
+/// # Safety
+/// This function is unsafe because it dereferences the iterator and uses the index to get the component data.
+/// ensure that the iterator is valid and the index is valid.
+pub unsafe fn ecs_field<T: CachedComponentData>(it: *const IterT, index: i32) -> *mut T {
+    let size = std::mem::size_of::<T>();
+    ecs_field_w_size(it, size, index) as *mut T
 }
