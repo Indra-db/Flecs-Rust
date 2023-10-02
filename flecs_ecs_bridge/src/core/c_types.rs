@@ -59,6 +59,28 @@ impl OperKindT {
     }
 }
 
+impl Default for TypeHooksT {
+    fn default() -> Self {
+        TypeHooksT {
+            ctor: None,
+            dtor: None,
+            copy: None,
+            move_: None,
+            copy_ctor: None,
+            move_ctor: None,
+            ctor_move_dtor: None,
+            move_dtor: None,
+            on_add: None,
+            on_set: None,
+            on_remove: None,
+            ctx: std::ptr::null_mut(),
+            binding_ctx: std::ptr::null_mut(),
+            ctx_free: None,
+            binding_ctx_free: None,
+        }
+    }
+}
+
 // Id flags
 pub const ECS_PAIR: u64 = 1 << 63;
 pub const ECS_OVERRIDE: u64 = 1 << 62;

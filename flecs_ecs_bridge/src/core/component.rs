@@ -1,83 +1,18 @@
-use super::c_binding::bindings::{ecs_cpp_component_validate, ecs_get_scope};
+use crate::core::c_binding::bindings::ecs_set_hooks_id;
+use crate::core::utility::errors::FlecsErrorCode;
+use crate::ecs_assert;
+
+use super::c_binding::bindings::{ecs_cpp_component_validate, ecs_get_hooks_id, ecs_get_scope};
 use super::utility::functions::get_full_type_name;
 use super::{c_types::*, component_registration::*, entity::Entity};
 use flecs_ecs_bridge_derive::Component;
 use std::ffi::c_char;
+use std::mem::transmute;
 use std::os::raw::c_void;
+use std::ptr;
 use std::sync::OnceLock;
 
 use std::{marker::PhantomData, ops::Deref};
-
-pub struct UntypedComponent {
-    pub entity: Entity,
-}
-
-impl Deref for UntypedComponent {
-    type Target = Entity;
-
-    fn deref(&self) -> &Self::Target {
-        &self.entity
-    }
-}
-
-impl UntypedComponent {
-    pub fn new(world: *mut WorldT, id: IdT) -> Self {
-        UntypedComponent {
-            entity: Entity::new_from_existing(world, id),
-        }
-    }
-}
-
-#[cfg(feature = "flecs_meta")]
-impl UntypedComponent {}
-
-#[cfg(feature = "flecs_metrics")]
-impl UntypedComponent {}
-
-struct Component<T: CachedComponentData> {
-    pub base: UntypedComponent,
-    _marker: PhantomData<T>,
-}
-
-impl<T: CachedComponentData> Component<T> {
-    pub fn new(world: *mut WorldT, id: IdT, name: Option<&str>, allow_tag: bool) -> Self {
-        let mut implicit_name = false;
-        let name = if let Some(name) = name {
-            name
-        } else {
-            // Keep track of whether name was explicitly set. If not, and the
-            // component was already registered, just use the registered name.
-            //
-            // The registered name may differ from the typename as the registered
-            // name includes the flecs scope. This can in theory be different from
-            // the Rust namespace though it is good practice to keep them the same
-            implicit_name = true;
-            get_full_type_name::<T>()
-        };
-
-        if T::is_registered_with_world(world) {
-            return Self {
-                base: UntypedComponent::new(world, unsafe { T::get_id_unchecked() }),
-                _marker: PhantomData,
-            };
-        } else {
-            T::register_explicit(world);
-        }
-
-        Component {
-            base: UntypedComponent::new(world, id),
-            _marker: PhantomData,
-        }
-    }
-}
-
-impl<T: CachedComponentData> Deref for Component<T> {
-    type Target = UntypedComponent;
-
-    fn deref(&self) -> &Self::Target {
-        &self.base
-    }
-}
 
 type EcsCtxFreeT = extern "C" fn(*mut std::ffi::c_void);
 
@@ -140,3 +75,201 @@ impl ComponentBindingCtx {
         }
     }
 }
+
+pub struct UntypedComponent {
+    pub entity: Entity,
+}
+
+impl Deref for UntypedComponent {
+    type Target = Entity;
+
+    fn deref(&self) -> &Self::Target {
+        &self.entity
+    }
+}
+
+impl UntypedComponent {
+    pub fn new(world: *mut WorldT, id: IdT) -> Self {
+        UntypedComponent {
+            entity: Entity::new_from_existing(world, id),
+        }
+    }
+}
+
+#[cfg(feature = "flecs_meta")]
+impl UntypedComponent {}
+
+#[cfg(feature = "flecs_metrics")]
+impl UntypedComponent {}
+
+pub struct Component<T: CachedComponentData + Default> {
+    pub base: UntypedComponent,
+    _marker: PhantomData<T>,
+}
+
+impl<T: CachedComponentData + Default> Deref for Component<T> {
+    type Target = UntypedComponent;
+
+    fn deref(&self) -> &Self::Target {
+        &self.base
+    }
+}
+
+impl<T: CachedComponentData + Default> Component<T> {
+    pub fn new(world: *mut WorldT) -> Self {
+        if !T::is_registered_with_world(world) {
+            T::register_explicit(world);
+        }
+
+        Self {
+            base: UntypedComponent::new(world, unsafe { T::get_id_unchecked() }),
+            _marker: PhantomData,
+        }
+    }
+
+    fn get_binding_ctx(&self, type_hooks: &mut TypeHooksT) -> &mut ComponentBindingCtx {
+        let mut binding_ctx: *mut ComponentBindingCtx = type_hooks.binding_ctx as *mut _;
+
+        if binding_ctx.is_null() {
+            let new_binding_ctx = Box::new(ComponentBindingCtx::default());
+            let static_ref = Box::leak(new_binding_ctx);
+            binding_ctx = static_ref;
+            type_hooks.binding_ctx = binding_ctx as *mut c_void;
+            type_hooks.binding_ctx_free = Some(Self::binding_ctx_drop);
+        }
+        unsafe { &mut *binding_ctx }
+    }
+
+    fn get_hooks(&self) -> TypeHooksT {
+        let type_hooks: *const TypeHooksT = unsafe { ecs_get_hooks_id(self.world, self.raw_id) };
+        if type_hooks.is_null() {
+            TypeHooksT::default()
+        } else {
+            unsafe { *type_hooks }
+        }
+    }
+
+    extern "C" fn binding_ctx_drop(ptr: *mut c_void) {
+        let ptr_struct: *mut ComponentBindingCtx = ptr as *mut ComponentBindingCtx;
+        unsafe {
+            ptr::drop_in_place(ptr_struct);
+        }
+    }
+
+    pub fn on_add<Func>(&mut self, func: Func) -> &mut Self
+    where
+        Func: FnMut() + 'static,
+    {
+        println!("registering on add");
+
+        let mut type_hooks: TypeHooksT = self.get_hooks();
+
+        ecs_assert!(
+            type_hooks.on_add.is_none(),
+            FlecsErrorCode::InvalidOperation,
+            "on_add hook already set for component {}",
+            get_full_type_name::<T>()
+        );
+
+        let binding_ctx = self.get_binding_ctx(&mut type_hooks);
+        let boxed_func = Box::new(func);
+        let static_ref = Box::leak(boxed_func);
+        binding_ctx.on_add = Some(static_ref as *mut _ as *mut c_void);
+        binding_ctx.free_on_add = Some(Self::on_add_drop::<Func>);
+        type_hooks.on_add = Some(Self::run_add::<Func>);
+        unsafe { ecs_set_hooks_id(self.world, self.raw_id, &type_hooks) };
+        self
+    }
+
+    pub fn on_remove<Func>(&mut self, func: Func) -> &mut Self
+    where
+        Func: FnMut() + 'static,
+    {
+        let mut type_hooks = self.get_hooks();
+
+        ecs_assert!(
+            type_hooks.on_remove.is_none(),
+            FlecsErrorCode::InvalidOperation,
+            "on_remove hook already set for component {}",
+            get_full_type_name::<T>()
+        );
+
+        let binding_ctx = self.get_binding_ctx(&mut type_hooks);
+        let boxed_func = Box::new(func);
+        let static_ref = Box::leak(boxed_func);
+        binding_ctx.on_remove = Some(static_ref as *mut _ as *mut c_void);
+        binding_ctx.free_on_remove = Some(Self::on_remove_drop::<Func>);
+        unsafe { ecs_set_hooks_id(self.world, self.raw_id, &type_hooks) };
+        self
+    }
+
+    pub fn on_set<Func>(&mut self, func: Func) -> &mut Self
+    where
+        Func: FnMut() + 'static,
+    {
+        let mut type_hooks = self.get_hooks();
+
+        ecs_assert!(
+            type_hooks.on_set.is_none(),
+            FlecsErrorCode::InvalidOperation,
+            "on_set hook already set for component {}",
+            get_full_type_name::<T>()
+        );
+
+        let binding_ctx = self.get_binding_ctx(&mut type_hooks);
+        let boxed_func = Box::new(func);
+        let static_ref = Box::leak(boxed_func);
+        binding_ctx.on_set = Some(static_ref as *mut _ as *mut c_void);
+        binding_ctx.free_on_set = Some(Self::on_set_drop::<Func>);
+        unsafe { ecs_set_hooks_id(self.world, self.raw_id, &type_hooks) };
+        self
+    }
+
+    extern "C" fn on_add_drop<Func>(func: *mut c_void)
+    where
+        Func: FnMut() + 'static,
+    {
+        print!("dropping on add");
+        let ptr_func: *mut Func = func as *mut Func;
+        unsafe {
+            ptr::drop_in_place(ptr_func);
+        }
+    }
+
+    extern "C" fn on_remove_drop<Func>(func: *mut c_void)
+    where
+        Func: FnMut() + 'static,
+    {
+        let ptr_func: *mut Func = func as *mut Func;
+        unsafe {
+            ptr::drop_in_place(ptr_func);
+        }
+    }
+
+    extern "C" fn on_set_drop<Func>(func: *mut c_void)
+    where
+        Func: FnMut() + 'static,
+    {
+        let ptr_func: *mut Func = func as *mut Func;
+        unsafe {
+            ptr::drop_in_place(ptr_func);
+        }
+    }
+
+    extern "C" fn run_add<Func>(iter: *mut IterT)
+    where
+        Func: FnMut() + 'static,
+    {
+        let ctx: *mut ComponentBindingCtx = unsafe { (*iter).binding_ctx as *mut _ };
+        let on_add = unsafe { (*ctx).on_add.unwrap() };
+        let on_add = on_add as *mut Func;
+        let on_add = unsafe { &mut *on_add };
+        on_add();
+        //let on_add = unsafe { (*ctx).on_add.unwrap() as *mut dyn FnMut()};
+        //call on_add
+        //unsafe { (*on_add)((*iter).id, (*iter).ptr as *mut T) };
+    }
+}
+
+#[cfg(feature = "flecs_meta")]
+impl<T: CachedComponentData> Component<T> {}

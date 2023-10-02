@@ -11,3 +11,7 @@ name = "flecs_ecs_bridge_derive"
 syn = "2.0.33"
 quote = "1.0.33"
 proc-macro2 = "1.0.67"
+
+[profile.dev]
+opt-level = 0
+debuginfo = 0

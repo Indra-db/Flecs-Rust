@@ -22,6 +22,7 @@ use super::c_binding::bindings::{
     ecs_set_stage_count, ecs_set_with, ecs_should_quit, ecs_stage_is_async, ecs_stage_is_readonly,
 };
 use super::c_types::{EntityT, IdT, WorldT, SEPARATOR};
+use super::component::{Component, UntypedComponent};
 use super::component_ref::Ref;
 use super::component_registration::{
     register_entity_w_component_explicit, CachedComponentData, ComponentType, Enum, Struct,
@@ -1488,5 +1489,34 @@ impl World {
 
     pub fn new_entity(&self) -> Entity {
         Entity::new(self.world)
+    }
+}
+
+impl World {
+    /// Find or register component.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The component type.
+    pub fn component<T: CachedComponentData>(&self) -> Component<T> {
+        Component::<T>::new(self.world)
+    }
+
+    /// Find or register untyped component.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The component type.
+    pub fn component_untyped<T: CachedComponentData>(&self) -> UntypedComponent {
+        UntypedComponent::new(self.world, T::get_id(self.world))
+    }
+
+    /// Find or register untyped component.
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The component id.
+    pub fn component_untyped_id(&self, id: IdT) -> UntypedComponent {
+        UntypedComponent::new(self.world, id)
     }
 }
