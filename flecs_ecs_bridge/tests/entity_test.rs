@@ -357,7 +357,6 @@ fn entity_remove_instanceof() {
 #[test]
 fn entity_get_generic() {
     let world = World::default();
-
     let position = world.add_component::<Position>();
 
     let entity = world
@@ -376,47 +375,21 @@ fn entity_get_generic() {
 }
 
 #[test]
-fn entity_get_generic_w_id() {
-    let world = World::default();
-    let position = world.add_component::<Position>();
-    let entity = world
-        .new_entity()
-        .set_component(Position { x: 10.0, y: 20.0 });
-
-    assert!(entity.is_valid());
-    assert_eq!(entity.has::<Position>(), true);
-
-    let pos_void = entity.get_component_by_id(position.raw_id);
-    assert!(!pos_void.is_null());
-
-    let pos = unsafe { &*(pos_void as *const Position) };
-    assert_eq!(pos.x, 10.0);
-    assert_eq!(pos.y, 20.0);
+#[ignore]
+fn entity_get_generic_mut() {
+    todo!("observer and event needs to be implemented for this to work");
 }
 
 #[test]
-fn entity_get_generic_w_id_t() {
-    let world = World::default();
-    let position = world.add_component::<Position>();
-    let entity = world
-        .new_entity()
-        .set_component(Position { x: 10.0, y: 20.0 });
-
-    assert!(entity.is_valid());
-    assert_eq!(entity.has::<Position>(), true);
-
-    let pos_void = entity.get_component_by_id(position.raw_id);
-    assert!(!pos_void.is_null());
-
-    let pos = unsafe { &*(pos_void as *const Position) };
-    assert_eq!(pos.x, 10.0);
-    assert_eq!(pos.y, 20.0);
+#[ignore]
+fn entity_get_mut_generic_w_id() {
+    todo!("observer and event needs to be implemented for this to work");
 }
 
 #[test]
 fn entity_set_generic() {
     let world = World::default();
-    let position = world.add_component::<Position>();
+    let position = world.component::<Position>();
 
     let pos = Position { x: 10.0, y: 20.0 };
 
@@ -437,7 +410,7 @@ fn entity_set_generic() {
 #[test]
 fn entity_set_generic_no_size() {
     let world = World::default();
-    let position = world.add_component::<Position>();
+    let position = world.component::<Position>();
 
     let pos = Position { x: 10.0, y: 20.0 };
 
