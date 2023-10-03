@@ -52,7 +52,7 @@ This library has not been advertized nor published yet to crates.io for that rea
 
 ## The Aim
 
-The plan is to match feature parity of the C++ API, starting with the core library. 
+The plan is to match feature parity of the C++ API, starting with the core library while also being fully documented and tested.
 
 ## Contributions
 
