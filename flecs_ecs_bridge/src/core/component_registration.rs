@@ -286,14 +286,17 @@ where
         component_data.id = unsafe { T::get_id_unchecked() };
     }
 
-    if component_data.id != 0 {
+    if component_data.id == 0 {
         ecs_assert!(
             !world.is_null(),
             FlecsErrorCode::ComponentNotRegistered,
             name: *const c_char
         );
     } else {
-        ecs_assert!(id == 0, FlecsErrorCode::InconsistentComponentId,);
+        ecs_assert!(
+            id == 0 || component_data.id == id,
+            FlecsErrorCode::InconsistentComponentId,
+        );
     }
 
     //TODO evaluate if we can pass the ecs_exists result of the non explicit function.
