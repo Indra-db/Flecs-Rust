@@ -6,14 +6,6 @@ Hello there! Welcome to my Rust wrapper around the ECS library called [Flecs](ht
 
 Please note that this wrapper is currently in its **early stages**. It's heavily under work in progress and is **not recommended for consumption**. While you're encouraged to explore, test, and provide feedback, please be aware of potential bugs and incomplete features.
 
-This library has not been advertized nor published yet to crat# Flecs ECS Bridge :: Rust Wrapper for Flecs
-
-Hello there! Welcome to my Rust wrapper around the ECS library called [Flecs](https://github.com/SanderMertens/flecs). This project endeavors to offer Rust developers an intuitive and streamlined interface to harness the full potential of Flecs.
-
-## ⚠️ Status: Early Stages
-
-Please note that this wrapper is currently in its **early stages**. It's heavily under work in progress and is **not recommended for consumption**. While you're encouraged to explore, test, and provide feedback, please be aware of potential bugs and incomplete features.
-
 This library has not been advertized nor published yet to crates.io for that reason.
 
 ### To-Do List
