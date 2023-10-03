@@ -37,9 +37,9 @@ impl Deref for Entity {
     }
 }
 
-impl From<&Entity> for u64 {
-    fn from(entity: &Entity) -> Self {
-        entity.raw_id
+impl Into<IdT> for Entity {
+    fn into(self) -> IdT {
+        self.entity_view.id.raw_id
     }
 }
 

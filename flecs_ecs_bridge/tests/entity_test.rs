@@ -840,22 +840,97 @@ fn entity_is_component_enabled_disabled() {
 fn entity_is_pair_enabled() {
     let world = World::default();
 
-    //let entity = world.new_entity().add_pair::<Position, TagA>();
-    //
-    //assert_eq!(entity.is_pair_enabled::<Position, TagA>(), true);
-    //assert_eq!(entity.is_pair_enabled::<Position, TagB>(), false);
-    //
-    //entity.enable_pair::<Position, TagB>();
-    //assert_eq!(entity.is_pair_enabled::<Position, TagB>(), false);
-    //
-    //entity.disable_pair::<Position, TagA>();
-    //assert_eq!(entity.is_pair_enabled::<Position, TagA>(), false);
-    //
-    //entity.enable_pair::<Position, TagA>();
-    //assert_eq!(entity.is_pair_enabled::<Position, TagA>(), true);
+    let entity = world
+        .new_entity()
+        .add_pair::<Position, TagA>()
+        .add_pair::<TagB, TagC>()
+        .disable_pair::<Position, TagC>();
+
+    assert_eq!(entity.is_pair_enabled::<Position, TagA>(), true);
+    assert_eq!(entity.is_pair_enabled::<Position, TagB>(), false);
+    assert_eq!(entity.is_pair_enabled::<Position, TagC>(), false);
+
+    entity.enable_pair::<Position, TagB>();
+    assert_eq!(entity.is_pair_enabled::<Position, TagB>(), true);
+
+    entity.disable_pair::<Position, TagA>();
+    assert_eq!(entity.is_pair_enabled::<Position, TagA>(), false);
+
+    entity.enable_pair::<Position, TagA>();
+    entity.enable_pair::<Position, TagC>();
+    assert_eq!(entity.is_pair_enabled::<Position, TagA>(), true);
+    assert_eq!(entity.is_pair_enabled::<Position, TagC>(), true);
+
+    entity.disable_pair::<Position, TagB>();
+    assert_eq!(entity.is_pair_enabled::<Position, TagB>(), false);
 }
 
-//todo entity_is_pair_enabled
-//todo entity_is_pair_enabled
-//todo entity_is_pair_enabled
-//todo entity_is_pair_enabled
+#[test]
+fn entity_is_pair_enabled_ids() {
+    let world = World::default();
+
+    let rel = world.new_entity();
+    let tgt_a = world.new_entity();
+    let tgt_b = world.new_entity();
+
+    let e = world.new_entity().add_pair_ids(rel.raw_id, tgt_a.raw_id);
+
+    assert!(e.is_pair_ids_enabled(rel.raw_id, tgt_a.raw_id));
+    assert!(!e.is_pair_ids_enabled(rel.raw_id, tgt_b.raw_id));
+
+    e.disable_pair_ids(rel.raw_id, tgt_a.raw_id);
+    assert!(!e.is_pair_ids_enabled(rel.raw_id, tgt_a.raw_id));
+
+    e.enable_pair_ids(rel.raw_id, tgt_a.raw_id);
+    assert!(e.is_pair_ids_enabled(rel.raw_id, tgt_a.raw_id));
+
+    e.add_pair_ids(rel.raw_id, tgt_b.raw_id)
+        .disable_pair_ids(rel.raw_id, tgt_b.raw_id);
+    assert!(!e.is_pair_ids_enabled(rel.raw_id, tgt_b.raw_id));
+
+    e.enable_pair_ids(rel.raw_id, tgt_b.raw_id);
+    assert!(e.is_pair_ids_enabled(rel.raw_id, tgt_b.raw_id));
+}
+
+#[test]
+fn entity_is_pair_first_enabled() {
+    let world = World::default();
+
+    let tgt_a = world.new_entity();
+    let tgt_b = world.new_entity();
+
+    let e = world
+        .new_entity()
+        .add_pair_second_id::<Position>(tgt_a.into());
+
+    assert!(e.is_pair_enabled_first::<Position>(tgt_a.into()));
+    assert!(!e.is_pair_enabled_first::<Position>(tgt_b.into()));
+}
+
+#[test]
+fn entity_get_type() {
+    let world = World::default();
+
+    let entity = world.new_entity();
+    assert!(entity.is_valid());
+
+    let type_1 = entity.get_archetype();
+    assert_eq!(type_1.get_count(), 0);
+
+    entity.add_component::<Position>();
+
+    let type_2 = entity.get_archetype();
+    assert_eq!(type_2.get_count(), 1);
+    assert_eq!(
+        type_2.get_id_at_index(0).unwrap(),
+        world.get_id_component::<Position>()
+    );
+
+    entity.add_component::<Velocity>();
+    let type_3 = entity.get_archetype();
+    assert_eq!(type_3.get_count(), 2);
+    assert_eq!(
+        type_3.get_id_at_index(1).unwrap(),
+        world.get_id_component::<Velocity>()
+    );
+}

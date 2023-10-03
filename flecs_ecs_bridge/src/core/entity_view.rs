@@ -980,13 +980,35 @@ impl EntityView {
     /// ### Returns
     /// - `true` if enabled, `false` if not.
     pub fn is_pair_enabled<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
-        unsafe {
-            ecs_is_enabled_id(
-                self.world,
-                self.raw_id,
-                ecs_pair(T::get_id(self.world), U::get_id(self.world)),
-            )
-        }
+        self.is_pair_ids_enabled(T::get_id(self.world), U::get_id(self.world))
+    }
+
+    /// Test if pair is enabled.
+    ///
+    /// ### Type Parameters
+    /// - `T`: The first element of the pair.
+    ///
+    /// ### Arguments
+    /// - `second`: The second element of the pair.
+    ///
+    /// ### Returns
+    /// - `true` if enabled, `false` if not.
+    pub fn is_pair_enabled_first<T: CachedComponentData>(&self, second: IdT) -> bool {
+        self.is_pair_ids_enabled(T::get_id(self.world), second)
+    }
+
+    /// Test if pair is enabled.
+    ///
+    /// ### Type Parameters
+    /// - `T`: The second element of the pair.
+    ///
+    /// ### Arguments
+    /// - `first`: The second element of the pair.
+    ///
+    /// ### Returns
+    /// - `true` if enabled, `false` if not.
+    pub fn is_pair_enabled_second<U: CachedComponentData>(&self, first: IdT) -> bool {
+        self.is_pair_ids_enabled(first, U::get_id(self.world))
     }
 
     /// Clones the current entity to a new or specified entity.
