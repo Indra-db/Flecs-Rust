@@ -1,11 +1,13 @@
-use flecs_ecs_bridge::core::{c_types::*, entity::Entity, world::World};
+use flecs_ecs_bridge::core::{
+    c_binding::bindings::EcsComponent, c_types::*, entity::Entity, world::World,
+};
 mod common;
 use common::*;
-struct Parent {
-    entity_type: EntityType,
-}
-
-struct EntityType;
+//struct Parent {
+//    entity_type: EntityType,
+//}
+//
+//struct EntityType;
 
 #[test]
 fn entity_new() {
@@ -455,8 +457,293 @@ fn entity_has_role() {
     let entity = world.new_entity();
 
     let entity = entity.add_flags(ECS_PAIR);
-    assert!(entity.has_flags_for_role(ECS_PAIR));
+    assert!(entity.has_flags_for(ECS_PAIR));
 
     let entity = entity.remove_flags();
-    assert!(!entity.has_flags_for_role(ECS_PAIR));
+    assert!(!entity.has_flags_for(ECS_PAIR));
+}
+
+#[test]
+fn entity_pair_role() {
+    let world = World::default();
+    let entity = world.new_entity();
+    let entity2 = world.new_entity();
+
+    let mut pair = Entity::new_pair_only(entity.raw_id, entity2.raw_id);
+    pair = pair.add_flags(ECS_PAIR);
+
+    assert!(pair.has_flags_for(ECS_PAIR));
+
+    let rel = pair.first();
+    let obj = pair.second();
+
+    assert_eq!(rel, entity);
+    assert_eq!(obj, entity2);
+}
+
+#[test]
+fn entity_equals() {
+    let world = World::default();
+    let e1 = world.new_entity();
+    let e2 = world.new_entity();
+
+    let e1_2 = e1.clone();
+    let e2_2 = e2.clone();
+
+    assert!(e1 == e1_2);
+    assert!(e2 == e2_2);
+    assert!(e1 >= e1_2);
+    assert!(e1 <= e1_2);
+    assert!(e2 >= e2_2);
+    assert!(e2 <= e2_2);
+    assert!(e1 != e2);
+
+    assert!(!(e2 == e1_2));
+    assert!(!(e1 == e2_2));
+    assert!(!(e2 <= e1_2));
+    assert!(!(e1 >= e2_2));
+    assert!(!(e2 != e2));
+}
+
+#[test]
+fn entity_compare_0() {
+    let world = World::default();
+    let e = world.new_entity();
+    let e0 = world.new_entity_w_id(0);
+    let e0_2 = world.new_entity_w_id(0);
+
+    assert!(e != e0);
+    assert!(e > e0);
+    assert!(e >= e0);
+    assert!(e0 < e);
+    assert!(e0 <= e);
+
+    assert!(e0 == e0_2);
+    assert!(e0 >= e0_2);
+    assert!(e0 <= e0_2);
+}
+
+#[test]
+fn entity_compare_literal() {
+    let world = World::default();
+
+    let e1 = world.new_entity_w_id(500);
+    let e2 = world.new_entity_w_id(600);
+
+    assert_eq!(e1.raw_id, 500);
+    assert_eq!(e2.raw_id, 600);
+
+    assert_ne!(e1.raw_id, 600);
+    assert_ne!(e2.raw_id, 500);
+
+    assert!(e1.raw_id >= 500);
+    assert!(e2.raw_id >= 600);
+
+    assert!(e1.raw_id <= 500);
+    assert!(e2.raw_id <= 600);
+
+    assert!(e1.raw_id <= 600);
+    assert!(e2.raw_id >= 500);
+
+    assert!(e1.raw_id < 600);
+    assert!(e2.raw_id > 500);
+
+    assert!(e2.raw_id != 500);
+    assert!(e1.raw_id != 600);
+
+    assert!(e2.raw_id == 600);
+    assert!(e1.raw_id == 500);
+
+    assert!(e1.raw_id < 600);
+    assert!(e2.raw_id > 500);
+}
+
+#[test]
+fn entity_greater_than() {
+    let world = World::default();
+
+    let e1 = world.new_entity();
+    let e2 = world.new_entity();
+
+    assert!(e2 > e1);
+    assert!(e2 >= e1);
+}
+
+#[test]
+fn entity_less_than() {
+    let world = World::default();
+
+    let e1 = world.new_entity();
+    let e2 = world.new_entity();
+
+    assert!(e1 < e2);
+    assert!(e1 <= e2);
+}
+
+#[test]
+fn entity_not_0_or_1() {
+    let world = World::default();
+
+    let e = world.new_entity();
+
+    let id = e.raw_id;
+
+    assert_ne!(id, 0);
+    assert_ne!(id, 1);
+}
+
+#[test]
+fn entity_has_childof() {
+    let world = World::default();
+
+    let parent = world.new_entity();
+
+    let child = world.new_entity().add_pair_ids(ECS_CHILD_OF, parent.raw_id);
+
+    assert!(child.has_pair_by_ids(ECS_CHILD_OF, parent.raw_id));
+}
+
+#[test]
+fn entity_has_instanceof() {
+    let world = World::default();
+
+    let base = world.new_entity();
+
+    let instance = world.new_entity().add_pair_ids(ECS_IS_A, base.raw_id);
+
+    assert!(instance.has_pair_by_ids(ECS_IS_A, base.raw_id));
+}
+
+#[test]
+fn entity_has_instanceof_indirect() {
+    let world = World::default();
+
+    let base_of_base = world.new_entity();
+    let base = world
+        .new_entity()
+        .add_pair_ids(ECS_IS_A, base_of_base.raw_id);
+
+    let instance = world.new_entity().add_pair_ids(ECS_IS_A, base.raw_id);
+
+    assert!(instance.has_pair_by_ids(ECS_IS_A, base_of_base.raw_id));
+}
+
+#[test]
+fn entity_null_string() {
+    let world = World::default();
+
+    let entity = world.new_entity();
+
+    assert_eq!(entity.get_name(), "");
+}
+
+#[test]
+fn entity_none_string() {
+    let world = World::default();
+
+    let entity = world.new_entity();
+
+    assert_eq!(entity.get_name_optional(), None);
+}
+
+#[test]
+fn entity_set_name() {
+    let world = World::default();
+
+    let entity = world.new_entity();
+
+    entity.set_name("Foo");
+
+    assert_eq!(entity.get_name(), "Foo");
+}
+
+#[test]
+fn entity_set_name_optional() {
+    let world = World::default();
+
+    let entity = world.new_entity();
+
+    entity.set_name("Foo");
+
+    assert_eq!(entity.get_name_optional(), Some("Foo"));
+}
+
+#[test]
+fn entity_change_name() {
+    let world = World::default();
+
+    let entity = world.new_entity_named("Bar");
+    assert_eq!(entity.get_name(), "Bar");
+
+    entity.set_name("Foo");
+    assert_eq!(entity.get_name(), "Foo");
+
+    entity.set_name("Bar");
+    assert_eq!(entity.get_name(), "Bar");
+}
+
+#[test]
+fn entity_delete() {
+    let world = World::default();
+
+    let entity = world
+        .new_entity()
+        .add_component::<Position>()
+        .add_component::<Velocity>();
+
+    entity.destruct();
+    assert!(!entity.is_alive());
+
+    let entity2 = world.new_entity();
+    assert_eq!(entity2.raw_id as u32, entity.raw_id as u32);
+    assert_ne!(entity2, entity);
+}
+
+#[test]
+fn entity_clear() {
+    let world = World::default();
+
+    let entity = world
+        .new_entity()
+        .add_component::<Position>()
+        .add_component::<Velocity>();
+
+    entity.clear();
+    assert!(!entity.has::<Position>());
+    assert!(!entity.has::<Velocity>());
+
+    let entity2 = world.new_entity();
+    assert!(entity2 > entity);
+}
+
+#[test]
+#[ignore]
+fn entity_force_owned() {
+    todo!("prefab not get implemented");
+}
+
+#[test]
+#[ignore]
+fn entity_force_owned_2() {
+    todo!("prefab not get implemented");
+}
+
+#[test]
+#[ignore]
+fn entity_force_owned_nested() {
+    todo!("prefab not get implemented");
+}
+
+#[test]
+fn entity_tag_has_size_zero() {
+    let world = World::default();
+
+    world.component::<EcsComponent>();
+    let comp = world.component::<MyTag>();
+    //let ptr: *const EcsComponent = comp.get_component_by_id(unsafe {
+    //    flecs_ecs_bridge::core::c_binding::bindings::FLECS__EEcsComponent
+    //}) as *const _ as *const EcsComponent;
+    let ptr = comp.get_component::<Component>();
+    assert_eq!(unsafe { (*ptr).size }, 0);
+    assert_eq!(unsafe { (*ptr).alignment }, 0);
 }
