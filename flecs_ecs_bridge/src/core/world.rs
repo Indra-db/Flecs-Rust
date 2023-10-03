@@ -1490,6 +1490,10 @@ impl World {
     pub fn new_entity(&self) -> Entity {
         Entity::new(self.world)
     }
+
+    pub fn new_entity_w_id(&self, id: EntityT) -> Entity {
+        Entity::new_from_existing(self.world, id)
+    }
 }
 
 impl World {
