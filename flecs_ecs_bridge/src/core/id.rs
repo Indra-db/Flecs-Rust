@@ -7,7 +7,7 @@ use super::world::World;
 use crate::core::utility::{errors::*, functions::*};
 use crate::ecs_assert;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq)]
 pub struct Id {
     /// World is optional, but guarantees that entity identifiers extracted from the id are valid
     pub world: *mut WorldT,
@@ -20,6 +20,24 @@ impl Default for Id {
             world: std::ptr::null_mut(),
             raw_id: 0,
         }
+    }
+}
+
+impl PartialEq for Id {
+    fn eq(&self, other: &Self) -> bool {
+        self.raw_id == other.raw_id
+    }
+}
+
+impl PartialOrd for Id {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.raw_id.cmp(&other.raw_id))
+    }
+}
+
+impl Ord for Id {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.raw_id.cmp(&other.raw_id)
     }
 }
 
@@ -119,13 +137,13 @@ impl Id {
 
     /// Test if id has specified role
     #[inline(always)]
-    pub fn has_flags_for_role(&self, flags: IdT) -> bool {
+    pub fn has_flags_for(&self, flags: IdT) -> bool {
         self.raw_id & flags == flags
     }
 
     /// Test if id has any role
     #[inline(always)]
-    pub fn has_flags_any_role(&self) -> bool {
+    pub fn has_flags_any(&self) -> bool {
         self.raw_id & RUST_ECS_ID_FLAGS_MASK != 0
     }
 

@@ -24,7 +24,7 @@ use super::{
     utility::functions::{ecs_pair, set_helper},
 };
 
-#[derive(Default, Debug, Copy, Clone)]
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Entity {
     pub entity_view: EntityView,
 }
@@ -69,6 +69,18 @@ impl Entity {
     pub const fn new_only_id(id: EntityT) -> Self {
         Self {
             entity_view: EntityView::new_only_id(id),
+        }
+    }
+
+    pub fn new_pair(world: *mut WorldT, first: EntityT, second: EntityT) -> Self {
+        Self {
+            entity_view: EntityView::new_from_existing(world, ecs_pair(first, second)),
+        }
+    }
+
+    pub fn new_pair_only(first: EntityT, second: EntityT) -> Self {
+        Self {
+            entity_view: EntityView::new_only_id(ecs_pair(first, second)),
         }
     }
 

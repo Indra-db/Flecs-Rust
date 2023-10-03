@@ -45,7 +45,7 @@ use super::{
     world::World,
 };
 
-#[derive(Default, Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct EntityView {
     pub id: Id,
 }
@@ -96,12 +96,29 @@ impl EntityView {
     }
 
     /// Returns the entity name.
+    ///
+    /// if the entity has no name, this will return an empty string
     pub fn get_name(&self) -> &'static str {
-        unsafe {
-            CStr::from_ptr(ecs_get_name(self.world, self.raw_id))
-                .to_str()
-                .unwrap_or("")
+        let name_ptr = unsafe { ecs_get_name(self.world, self.raw_id) };
+
+        if name_ptr.is_null() {
+            return "";
         }
+
+        unsafe { CStr::from_ptr(name_ptr).to_str().unwrap_or("") }
+    }
+
+    /// Returns the entity name.
+    ///
+    /// if the entity has no name, this will return none
+    pub fn get_name_optional(&self) -> Option<&'static str> {
+        let name_ptr = unsafe { ecs_get_name(self.world, self.raw_id) };
+
+        if name_ptr.is_null() {
+            return None;
+        }
+
+        Some(unsafe { CStr::from_ptr(name_ptr).to_str().unwrap_or("") })
     }
 
     //TODO check if we need this -> can we use get_symbol from CachedComponentData?
