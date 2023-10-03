@@ -1,7 +1,9 @@
-use std::{ffi::CStr, ops::Deref};
-
 use super::c_binding::bindings::*;
+use super::component_registration::{ComponentType, Struct};
+use crate::core::component_registration::{CachedComponentData, ComponentData};
 use lazy_static::lazy_static;
+use std::sync::OnceLock;
+use std::{ffi::CStr, ops::Deref};
 
 pub const RUST_ECS_ID_FLAGS_MASK: u64 = 0xFF << 60;
 pub const RUST_ECS_COMPONENT_MASK: u64 = !RUST_ECS_ID_FLAGS_MASK;
@@ -157,3 +159,87 @@ pub const ECS_ON_DELETE_TRIGGER: u64 = FLECS_HI_COMPONENT_ID + 43;
 pub const ECS_ON_DELETE_OBSERVABLE: u64 = FLECS_HI_COMPONENT_ID + 44;
 pub const ECS_ON_COMPONENT_HOOKS: u64 = FLECS_HI_COMPONENT_ID + 45;
 pub const ECS_ON_DELETE_TARGET: u64 = FLECS_HI_COMPONENT_ID + 46;
+
+pub type Component = EcsComponent;
+pub type Identifier = EcsIdentifier;
+pub type Poly = EcsPoly;
+pub type Target = EcsTarget;
+
+impl Default for EcsComponent {
+    fn default() -> Self {
+        Self {
+            size: Default::default(),
+            alignment: Default::default(),
+        }
+    }
+}
+
+fn get_ecs_component_data() -> ComponentData {
+    ComponentData {
+        id: unsafe { FLECS__EEcsComponent },
+        size: std::mem::size_of::<EcsComponent>(),
+        alignment: std::mem::align_of::<EcsComponent>(),
+        allow_tag: true,
+    }
+}
+
+impl ComponentType<Struct> for EcsComponent {}
+
+impl CachedComponentData for EcsComponent {
+    fn register_explicit(_world: *mut WorldT) {
+        //this is already registered as FLECS__EEcsComponent
+        Self::__get_once_lock_data().get_or_init(get_ecs_component_data);
+    }
+
+    fn is_registered() -> bool {
+        Self::__get_once_lock_data().get().is_some()
+    }
+
+    fn is_registered_with_world(world: *mut WorldT) -> bool {
+        if Self::is_registered() {
+            //because this is always registered in the c world
+            true
+        } else {
+            false
+        }
+    }
+
+    fn get_data(world: *mut WorldT) -> &'static ComponentData {
+        Self::__get_once_lock_data().get_or_init(get_ecs_component_data)
+    }
+
+    fn get_id(world: *mut WorldT) -> IdT {
+        Self::__get_once_lock_data()
+            .get_or_init(get_ecs_component_data)
+            .id
+    }
+
+    fn get_size(world: *mut WorldT) -> usize {
+        Self::__get_once_lock_data()
+            .get_or_init(get_ecs_component_data)
+            .size
+    }
+
+    fn get_alignment(world: *mut WorldT) -> usize {
+        Self::__get_once_lock_data()
+            .get_or_init(get_ecs_component_data)
+            .alignment
+    }
+
+    fn get_allow_tag(world: *mut WorldT) -> bool {
+        Self::__get_once_lock_data()
+            .get_or_init(get_ecs_component_data)
+            .allow_tag
+    }
+
+    fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
+        static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
+        &ONCE_LOCK
+    }
+
+    fn get_symbol_name() -> &'static str {
+        use std::any::type_name;
+        static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
+        SYMBOL_NAME.get_or_init(|| String::from("EcsComponent"))
+    }
+}
