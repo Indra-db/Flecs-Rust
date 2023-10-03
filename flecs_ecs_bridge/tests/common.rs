@@ -16,4 +16,20 @@ pub struct Velocity {
 }
 
 #[derive(Clone, Debug, Component, Default)]
-pub struct MyTag {}
+pub struct Mass {
+    pub value: f32,
+}
+
+#[derive(Clone, Debug, Component, Default)]
+pub struct TypeA {
+    pub value: f32,
+}
+
+#[derive(Clone, Debug, Component, Default)]
+pub struct TagA {}
+
+#[derive(Clone, Debug, Component, Default)]
+pub struct TagB {}
+
+#[derive(Clone, Debug, Component, Default)]
+pub struct TagC {}

@@ -699,7 +699,7 @@ impl EntityView {
     ///
     /// * The parent of the entity.
     #[inline(always)]
-    pub fn parent(&self) -> Entity {
+    pub fn get_parent(&self) -> Entity {
         self.get_target_from_entity(unsafe { EcsChildOf }, 0)
     }
 

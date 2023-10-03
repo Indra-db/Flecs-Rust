@@ -1,6 +1,4 @@
-use flecs_ecs_bridge::core::{
-    c_binding::bindings::EcsComponent, c_types::*, entity::Entity, world::World,
-};
+use flecs_ecs_bridge::core::{c_types::*, entity::Entity, world::World};
 mod common;
 use common::*;
 //struct Parent {
@@ -738,12 +736,126 @@ fn entity_force_owned_nested() {
 fn entity_tag_has_size_zero() {
     let world = World::default();
 
-    world.component::<EcsComponent>();
-    let comp = world.component::<MyTag>();
-    //let ptr: *const EcsComponent = comp.get_component_by_id(unsafe {
-    //    flecs_ecs_bridge::core::c_binding::bindings::FLECS__EEcsComponent
-    //}) as *const _ as *const EcsComponent;
+    let comp = world.component::<TagA>();
     let ptr = comp.get_component::<Component>();
+
     assert_eq!(unsafe { (*ptr).size }, 0);
     assert_eq!(unsafe { (*ptr).alignment }, 0);
 }
+
+#[test]
+fn entity_get_target() {
+    let world = World::default();
+
+    let rel = world.new_entity();
+
+    let obj1 = world.new_entity().add_component::<Position>();
+    let obj2 = world.new_entity().add_component::<Velocity>();
+    let obj3 = world.new_entity().add_component::<Mass>();
+    let child = world
+        .new_entity()
+        .add_pair_ids(rel.raw_id, obj1.raw_id)
+        .add_pair_ids(rel.raw_id, obj2.raw_id)
+        .add_pair_ids(rel.raw_id, obj3.raw_id);
+
+    let mut target = child.get_target_from_entity(rel.raw_id, 0);
+    assert!(target.is_valid());
+    assert_eq!(target, obj1);
+
+    target = child.get_target_from_entity(rel.raw_id, 1);
+    assert!(target.is_valid());
+    assert_eq!(target, obj2);
+
+    target = child.get_target_from_entity(rel.raw_id, 2);
+    assert!(target.is_valid());
+    assert_eq!(target, obj3);
+
+    target = child.get_target_from_entity(rel.raw_id, 3);
+    assert!(!target.is_valid());
+}
+
+#[test]
+fn entity_get_parent() {
+    let world = World::default();
+
+    let parent = world.new_entity();
+    let child = world.new_entity().child_of_id(parent.raw_id);
+
+    assert_eq!(child.get_target_from_entity(ECS_CHILD_OF, 0), parent);
+    assert_eq!(child.get_parent(), parent);
+}
+
+#[test]
+fn entity_is_component_enabled_disabled() {
+    let world = World::default();
+
+    let entity = world
+        .new_entity()
+        .add_component::<Position>()
+        .add_component::<Velocity>()
+        .add_component::<Mass>();
+
+    assert_eq!(entity.is_component_enabled::<Position>(), true);
+    assert_eq!(entity.is_component_enabled::<Velocity>(), true);
+    assert_eq!(entity.is_component_enabled::<Mass>(), true);
+
+    entity.disable_component::<Position>();
+
+    assert_eq!(entity.is_component_enabled::<Position>(), false);
+    assert_eq!(entity.is_component_enabled::<Velocity>(), true);
+    assert_eq!(entity.is_component_enabled::<Mass>(), true);
+
+    entity.disable_component::<Velocity>();
+
+    assert_eq!(entity.is_component_enabled::<Position>(), false);
+    assert_eq!(entity.is_component_enabled::<Velocity>(), false);
+    assert_eq!(entity.is_component_enabled::<Mass>(), true);
+
+    entity.disable_component::<Mass>();
+
+    assert_eq!(entity.is_component_enabled::<Position>(), false);
+    assert_eq!(entity.is_component_enabled::<Velocity>(), false);
+    assert_eq!(entity.is_component_enabled::<Mass>(), false);
+
+    entity.enable_component::<Position>();
+
+    assert_eq!(entity.is_component_enabled::<Position>(), true);
+    assert_eq!(entity.is_component_enabled::<Velocity>(), false);
+    assert_eq!(entity.is_component_enabled::<Mass>(), false);
+
+    entity.enable_component::<Velocity>();
+
+    assert_eq!(entity.is_component_enabled::<Position>(), true);
+    assert_eq!(entity.is_component_enabled::<Velocity>(), true);
+    assert_eq!(entity.is_component_enabled::<Mass>(), false);
+
+    entity.enable_component::<Mass>();
+
+    assert_eq!(entity.is_component_enabled::<Position>(), true);
+    assert_eq!(entity.is_component_enabled::<Velocity>(), true);
+    assert_eq!(entity.is_component_enabled::<Mass>(), true);
+}
+
+#[test]
+fn entity_is_pair_enabled() {
+    let world = World::default();
+
+    //let entity = world.new_entity().add_pair::<Position, TagA>();
+    //
+    //assert_eq!(entity.is_pair_enabled::<Position, TagA>(), true);
+    //assert_eq!(entity.is_pair_enabled::<Position, TagB>(), false);
+    //
+    //entity.enable_pair::<Position, TagB>();
+    //assert_eq!(entity.is_pair_enabled::<Position, TagB>(), false);
+    //
+    //entity.disable_pair::<Position, TagA>();
+    //assert_eq!(entity.is_pair_enabled::<Position, TagA>(), false);
+    //
+    //entity.enable_pair::<Position, TagA>();
+    //assert_eq!(entity.is_pair_enabled::<Position, TagA>(), true);
+}
+
+//todo entity_is_pair_enabled
+//todo entity_is_pair_enabled
+//todo entity_is_pair_enabled
+//todo entity_is_pair_enabled
