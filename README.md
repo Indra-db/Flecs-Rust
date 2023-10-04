@@ -27,7 +27,10 @@ This library has not been advertized nor published yet to crates.io for that rea
 - [x] world + scoped_world
 - [ ] filter
 - [ ] query
+
+#### non-core
 - [ ] event
+- [ ] observer
 
 #### addons
 - [ ] systems
