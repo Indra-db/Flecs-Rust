@@ -18,11 +18,13 @@ This library has not been advertized nor published yet to crates.io for that rea
 - [x] 4 byte sized enum component
 - [ ] rust enum variant component (wip changes to flecs)
 - [x] component id registration
+- [x] enum constants registration
 - [x] ref component
 - [x] lifecycle_traits (which adds support to hold dynamic memory in components, e.g. vector, string, etc.)
 - [x] table + table_range
 - [x] c_types
-- [x] world
+- [x] type (archetype)
+- [x] world + scoped_world
 - [ ] filter
 - [ ] query
 - [ ] event
