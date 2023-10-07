@@ -24,10 +24,10 @@ use super::{
 /// A term identifier describes a single identifier in a term. Identifier
 /// descriptions can reference entities by id, name or by variable, which means
 /// the entity will be resolved when the term is evaluated.
-struct Term {
-    term_id: TermIdT,
-    term: TermT,
-    world: *mut WorldT,
+pub struct Term {
+    pub term_id: TermIdT,
+    pub term: TermT,
+    pub world: *mut WorldT,
 }
 
 impl Default for Term {
