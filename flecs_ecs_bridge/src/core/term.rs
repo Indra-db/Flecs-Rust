@@ -10,44 +10,39 @@ use super::{
     component_registration::CachedComponentData,
 };
 
+/// Struct that describes a term identifier.
+///
+/// A term is a single element of a query expression.
+///
 /// A term identifier describes a single identifier in a term. Identifier
 /// descriptions can reference entities by id, name or by variable, which means
 /// the entity will be resolved when the term is evaluated.
-///
-/// A term is a single element of a query expression.
 struct Term {
-    term_id: *mut TermIdT,
-    term: *mut TermT,
+    term_id: TermIdT,
+    term: TermT,
     world: *mut WorldT,
 }
 
 impl Term {
-    pub fn new(world: *mut WorldT, term_ptr: *mut TermT) -> Self {
-        let mut term = Self {
-            world,
-            term_id: std::ptr::null_mut(),
-            term: std::ptr::null_mut(),
-        };
-        term.set_term(term_ptr);
-        term
-    }
+    //pub fn new(world: *mut WorldT, term_ptr: *mut TermT) -> Self {
+    //    let mut term = Self {
+    //        world,
+    //        term_id: std::ptr::null_mut(),
+    //        term_ptr: std::ptr::null_mut(),
+    //    };
+    //    term.set_term(term_ptr);
+    //    term
+    //}
 
-    fn set_term(&mut self, term: *mut TermT) {
+    fn set_term(&mut self, term: TermT) {
         self.term = term;
-        if !term.is_null() {
-            unsafe {
-                (*self.term_id) = (*self.term).src; // default to subject
-            }
-        } else {
-            unsafe {
-                self.term_id = std::ptr::null_mut();
-            }
-        }
+
+        self.term_id = self.term.src; // default to subject
     }
 
     fn assert_term_id(&self) {
         ecs_assert!(
-            self.term_id != std::ptr::null_mut(),
+            self.term_id.id != 0,
             FlecsErrorCode::InvalidParameter,
             "no active term (call .term() first"
         );
@@ -55,16 +50,16 @@ impl Term {
 
     fn assert_term(&self) {
         ecs_assert!(
-            self.term != std::ptr::null_mut(),
+            self.term.id != 0,
             FlecsErrorCode::InvalidParameter,
             "no active term (call .term() first"
         );
     }
 
     /// The self flag indicates the term identifier itself is used
-    pub fn self_term(self) -> Self {
+    pub fn self_term(mut self) -> Self {
         self.assert_term_id();
-        unsafe { (*self.term_id).flags |= ECS_SELF };
+        self.term_id.flags |= ECS_SELF;
         self
     }
 
@@ -75,11 +70,11 @@ impl Term {
     /// # Arguments
     ///
     /// * `traverse_relationship` - The optional relationship to traverse.
-    pub fn up_id(self, traverse_relationship: Option<EntityT>) -> Self {
+    pub fn up_id(mut self, traverse_relationship: Option<EntityT>) -> Self {
         self.assert_term_id();
-        unsafe { (*self.term_id).flags |= ECS_UP };
+        self.term_id.flags |= ECS_UP;
         if let Some(trav_rel) = traverse_relationship {
-            unsafe { (*self.term_id).trav = trav_rel };
+            self.term_id.trav = trav_rel;
         }
         self
     }
@@ -91,12 +86,10 @@ impl Term {
     /// # Type Arguments
     ///
     /// * `TravRel` - The relationship to traverse.
-    pub fn up<TravRel: CachedComponentData>(self) -> Self {
+    pub fn up<TravRel: CachedComponentData>(mut self) -> Self {
         self.assert_term_id();
-        unsafe {
-            (*self.term_id).flags |= ECS_UP;
-            (*self.term_id).trav = TravRel::get_id(self.world)
-        };
+        self.term_id.flags |= ECS_UP;
+        self.term_id.trav = TravRel::get_id(self.world);
         self
     }
 
@@ -106,11 +99,11 @@ impl Term {
     /// # Arguments
     ///
     /// * `traverse_relationship` - The optional relationship to traverse.
-    pub fn cascade_id(self, traverse_relationship: Option<EntityT>) -> Self {
+    pub fn cascade_id(mut self, traverse_relationship: Option<EntityT>) -> Self {
         self.assert_term_id();
-        unsafe { (*self.term_id).flags |= ECS_CASCADE };
+        self.term_id.flags |= ECS_CASCADE;
         if let Some(trav_rel) = traverse_relationship {
-            unsafe { (*self.term_id).trav = trav_rel };
+            self.term_id.trav = trav_rel;
         }
         self
     }
@@ -121,21 +114,17 @@ impl Term {
     /// # Type Arguments
     ///
     /// * `TravRel` - The relationship to traverse.
-    pub fn cascade<TravRel: CachedComponentData>(self) -> Self {
+    pub fn cascade<TravRel: CachedComponentData>(mut self) -> Self {
         self.assert_term_id();
-        unsafe {
-            (*self.term_id).flags |= ECS_CASCADE;
-            (*self.term_id).trav = TravRel::get_id(self.world)
-        };
+        self.term_id.flags |= ECS_CASCADE;
+        self.term_id.trav = TravRel::get_id(self.world);
         self
     }
 
     /// the parent flag is short for up (flecs::ChildOf)
-    pub fn parent(self) -> Self {
+    pub fn parent(mut self) -> Self {
         self.assert_term_id();
-        unsafe {
-            (*self.term_id).flags |= ECS_PARENT;
-        };
+        self.term_id.flags |= ECS_PARENT;
         self
     }
 
@@ -145,12 +134,10 @@ impl Term {
     ///
     /// * `traverse_relationship` - The relationship to traverse.
     /// * `flags` - The direction to traverse.
-    pub fn trav(self, traverse_relationship: EntityT, flags: Flags32T) -> Self {
+    pub fn trav(mut self, traverse_relationship: EntityT, flags: Flags32T) -> Self {
         self.assert_term_id();
-        unsafe {
-            (*self.term_id).trav = traverse_relationship;
-            (*self.term_id).flags |= flags;
-        };
+        self.term_id.trav = traverse_relationship;
+        self.term_id.flags |= flags;
         self
     }
 
@@ -159,11 +146,9 @@ impl Term {
     /// # Arguments
     ///
     /// * `id` - The id to set.
-    pub fn id(self, id: EntityT) -> Self {
+    pub fn id(mut self, id: EntityT) -> Self {
         self.assert_term_id();
-        unsafe {
-            (*self.term_id).id = id;
-        };
+        self.term_id.id = id;
         self
     }
 
@@ -187,12 +172,10 @@ impl Term {
     /// # Arguments
     ///
     /// * `id` - The id to set.
-    pub fn entity(self, id: EntityT) -> Self {
+    pub fn entity(mut self, id: EntityT) -> Self {
         self.assert_term_id();
-        unsafe {
-            (*self.term_id).flags |= ECS_IS_ENTITY;
-            (*self.term_id).id = id;
-        };
+        self.term_id.flags |= ECS_IS_ENTITY;
+        self.term_id.id = id;
         self
     }
 
@@ -201,14 +184,12 @@ impl Term {
     /// # Arguments
     ///
     /// * `name` - The name to set.
-    pub fn name(self, name: &str) -> Self {
+    pub fn name(mut self, name: &str) -> Self {
         self.assert_term_id();
         let c_name = CString::new(name).unwrap();
-        unsafe {
-            let leak_name = CString::into_raw(c_name);
-            (*self.term_id).name = leak_name as *mut i8;
-            (*self.term_id).flags |= ECS_IS_NAME;
-        };
+        let leak_name = CString::into_raw(c_name);
+        self.term_id.name = leak_name as *mut i8;
+        self.term_id.flags |= ECS_IS_NAME;
         self
     }
 
@@ -217,14 +198,12 @@ impl Term {
     /// # Arguments
     ///
     /// * `var_name` - The name of the variable.
-    pub fn var(self, var_name: &str) -> Self {
+    pub fn var(mut self, var_name: &str) -> Self {
         self.assert_term_id();
         let c_name = CString::new(var_name).unwrap();
-        unsafe {
-            let leak_name = CString::into_raw(c_name);
-            (*self.term_id).flags |= ECS_IS_VARIABLE;
-            (*self.term_id).name = leak_name as *mut i8;
-        };
+        let leak_name = CString::into_raw(c_name);
+        self.term_id.flags |= ECS_IS_VARIABLE;
+        self.term_id.name = leak_name as *mut i8;
         self
     }
 
@@ -233,41 +212,33 @@ impl Term {
     /// # Arguments
     ///
     /// * `flags` - The flags to set.
-    pub fn flags(self, flags: Flags32T) -> Self {
+    pub fn flags(mut self, flags: Flags32T) -> Self {
         self.assert_term_id();
-        unsafe {
-            (*self.term_id).flags = flags;
-        };
+        self.term_id.flags = flags;
         self
     }
 
     /// Call prior to setting values for src identifier
-    pub fn setup_src(self) -> Self {
+    pub fn setup_src(mut self) -> Self {
         self.assert_term();
-        unsafe {
-            (*self.term_id) = (*self.term).src;
-        };
+        self.term_id = self.term.src;
         self
     }
 
     /// Call prior to setting values for first identifier. This is either the
     /// component identifier, or first element of a pair (in case second is
     /// populated as well).
-    pub fn setup_first(self) -> Self {
+    pub fn setup_first(mut self) -> Self {
         self.assert_term();
-        unsafe {
-            (*self.term_id) = (*self.term).first;
-        };
+        self.term_id = self.term.first;
         self
     }
 
     /// Call prior to setting values for second identifier. This is the second
     /// element of a pair. Requires that first() is populated as well.
-    pub fn setup_second(self) -> Self {
+    pub fn setup_second(mut self) -> Self {
         self.assert_term();
-        unsafe {
-            (*self.term_id) = (*self.term).second;
-        };
+        self.term_id = self.term.second;
         self
     }
 
@@ -396,9 +367,9 @@ impl Term {
     /// # Arguments
     ///
     /// * `role` - The role to set.
-    pub fn role(self, role: IdT) -> Self {
+    pub fn role(mut self, role: IdT) -> Self {
         self.assert_term();
-        unsafe { (*self.term).id_flags = role };
+        self.term.id_flags = role;
         self
     }
 
@@ -407,9 +378,9 @@ impl Term {
     /// # Arguments
     ///
     /// * `inout` - The inout to set.
-    pub fn set_inout(self, inout: InOutKind) -> Self {
+    pub fn set_inout(mut self, inout: InOutKind) -> Self {
         self.assert_term();
-        unsafe { (*self.term).inout = inout as i32 };
+        self.term.inout = inout as i32;
         self
     }
 
@@ -427,7 +398,7 @@ impl Term {
     pub fn inout_stage(self, inout: InOutKind) -> Self {
         self.assert_term();
         self.set_inout(inout);
-        if unsafe { (*self.term).inout != OperKind::Not as i32 } {
+        if self.term.inout != OperKind::Not as i32 {
             self.setup_src().entity(0);
         }
         self
@@ -477,9 +448,9 @@ impl Term {
     /// # Arguments
     ///
     /// * `oper` - The operator to set.
-    pub fn oper(self, oper: OperKind) -> Self {
+    pub fn oper(mut self, oper: OperKind) -> Self {
         self.assert_term_id();
-        unsafe { (*self.term).oper = oper as i32 };
+        self.term.oper = oper as i32;
         self
     }
 
@@ -523,29 +494,27 @@ impl Term {
         self.assert_term();
 
         ecs_assert!(
-            unsafe { (*self.term).id != 0 || (*self.term).first.id != 0 },
+            self.term.id != 0 || self.term.first.id != 0,
             FlecsErrorCode::InvalidParameter,
             "no component specified for singleton"
         );
 
         let sid = unsafe {
-            if (*self.term).id != 0 {
-                (*self.term).id
+            if self.term.id != 0 {
+                self.term.id
             } else {
-                (*self.term).first.id
+                self.term.first.id
             }
         };
 
         ecs_assert!(sid != 0, FlecsErrorCode::InvalidParameter, "invalid id");
-
-        unsafe { (*self.term).src.id = sid };
-
+        self.term.src.id = sid;
         self
     }
 
     /// Filter terms are not triggered on by observers
-    pub fn filter(self) -> Self {
-        unsafe { (*self.term).src.flags |= ECS_FILTER };
+    pub fn filter(mut self) -> Self {
+        self.term.src.flags |= ECS_FILTER;
         self
     }
 }
@@ -553,8 +522,8 @@ impl Term {
 impl Drop for Term {
     fn drop(&mut self) {
         unsafe {
-            if !(*self.term_id).name.is_null() {
-                let _ = CString::from_raw((*self.term_id).name);
+            if !self.term_id.name.is_null() {
+                let _ = CString::from_raw(self.term_id.name);
             }
         }
     }
