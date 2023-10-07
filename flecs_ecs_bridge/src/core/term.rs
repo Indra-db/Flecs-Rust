@@ -3,11 +3,18 @@ use std::ffi::CString;
 use crate::{core::utility::errors::FlecsErrorCode, ecs_assert};
 
 use super::{
+    c_binding::bindings::{
+        ecs_term_copy, ecs_term_finalize, ecs_term_fini, ecs_term_is_initialized, ecs_term_move,
+        ECS_ID_FLAGS_MASK,
+    },
     c_types::{
         EntityT, Flags32T, IdT, InOutKind, OperKind, TermIdT, TermT, WorldT, ECS_CASCADE,
         ECS_FILTER, ECS_IS_ENTITY, ECS_IS_NAME, ECS_IS_VARIABLE, ECS_PARENT, ECS_SELF, ECS_UP,
     },
     component_registration::CachedComponentData,
+    entity::Entity,
+    id::Id,
+    utility::functions::ecs_pair,
 };
 
 /// Struct that describes a term identifier.
@@ -23,21 +30,142 @@ struct Term {
     world: *mut WorldT,
 }
 
+impl Default for Term {
+    fn default() -> Self {
+        let mut obj = Self {
+            term_id: Default::default(),
+            term: Default::default(),
+            world: std::ptr::null_mut(),
+        };
+        obj.term.move_ = true;
+        obj
+    }
+}
+
+/// this is for copying the term
+impl Clone for Term {
+    fn clone(&self) -> Self {
+        let mut obj = Self {
+            term_id: Default::default(),
+            term: Default::default(),
+            world: self.world,
+        };
+        obj.term = unsafe { ecs_term_copy(&self.term) };
+        obj.term_id = obj.term.src;
+        obj
+    }
+}
+
 impl Term {
-    //pub fn new(world: *mut WorldT, term_ptr: *mut TermT) -> Self {
-    //    let mut term = Self {
-    //        world,
-    //        term_id: std::ptr::null_mut(),
-    //        term_ptr: std::ptr::null_mut(),
-    //    };
-    //    term.set_term(term_ptr);
-    //    term
-    //}
+    pub fn new(world: *mut WorldT, term: TermT) -> Self {
+        let mut obj = Self {
+            world,
+            term_id: term.src, // default to subject
+            term: term,
+        };
+        obj.term.move_ = false;
+        obj
+    }
 
-    fn set_term(&mut self, term: TermT) {
-        self.term = term;
+    pub fn new_only_world(world: *mut WorldT) -> Self {
+        let mut obj = Self {
+            world,
+            term_id: Default::default(),
+            term: Default::default(),
+        };
+        obj.term_id = obj.term.src;
+        obj.term.move_ = true;
+        obj
+    }
 
-        self.term_id = self.term.src; // default to subject
+    pub fn new_id(world: *mut WorldT, id: IdT) -> Self {
+        let mut obj = Self {
+            world,
+            term_id: Default::default(),
+            term: Default::default(),
+        };
+        if id & ECS_ID_FLAGS_MASK as u64 != 0 {
+            obj.term.id = id;
+        } else {
+            obj.term.first.id = id;
+        }
+        obj.term.move_ = false;
+        obj.term_id = obj.term.src;
+        obj
+    }
+
+    pub fn new_only_id(id: IdT) -> Self {
+        let mut obj = Self {
+            world: std::ptr::null_mut(),
+            term_id: Default::default(),
+            term: Default::default(),
+        };
+        if id & ECS_ID_FLAGS_MASK as u64 != 0 {
+            obj.term.id = id;
+        } else {
+            obj.term.first.id = id;
+        }
+        obj.term.move_ = false;
+        obj.term_id = obj.term.src;
+        obj
+    }
+
+    pub fn new_rel_target(world: *mut WorldT, rel: EntityT, target: EntityT) -> Self {
+        let mut obj = Self {
+            world,
+            term_id: Default::default(),
+            term: Default::default(),
+        };
+        obj.term.id = ecs_pair(rel, target);
+        obj.term.move_ = false;
+        obj.term_id = obj.term.src;
+        obj
+    }
+
+    pub fn new_only_rel_target(rel: EntityT, target: EntityT) -> Self {
+        let mut obj = Self {
+            world: std::ptr::null_mut(),
+            term_id: Default::default(),
+            term: Default::default(),
+        };
+        obj.term.id = ecs_pair(rel, target);
+        obj.term.move_ = true;
+        obj.term_id = obj.term.src;
+        obj
+    }
+
+    pub fn new_from_type<T: CachedComponentData>(world: *mut WorldT) -> Self {
+        Self::new_id(world, T::get_id(world))
+    }
+
+    pub fn new_only_from_type<T: CachedComponentData>() -> Self {
+        Self::new_only_id(T::get_id(std::ptr::null_mut()))
+    }
+
+    pub fn new_from_pair_type<T: CachedComponentData, U: CachedComponentData>(
+        world: *mut WorldT,
+    ) -> Self {
+        Self::new_rel_target(world, T::get_id(world), U::get_id(world))
+    }
+
+    pub fn new_only_from_pair_type<T: CachedComponentData, U: CachedComponentData>() -> Self {
+        Self::new_only_rel_target(
+            T::get_id(std::ptr::null_mut()),
+            U::get_id(std::ptr::null_mut()),
+        )
+    }
+
+    /// This is how you should move a term, not the default rust way
+    pub fn move_term(&mut self) -> Self {
+        let mut obj = Self {
+            world: self.world,
+            term_id: Default::default(),
+            term: Default::default(),
+        };
+        obj.term = unsafe { ecs_term_move(&mut self.term) };
+        self.reset();
+        obj.term_id = obj.term.src;
+        obj
     }
 
     fn assert_term_id(&self) {
@@ -61,6 +189,45 @@ impl Term {
         self.assert_term_id();
         self.term_id.flags |= ECS_SELF;
         self
+    }
+
+    pub fn reset(&mut self) {
+        // we don't for certain if this causes any side effects not using the nullptr and just using the default value.
+        // if it does we can use Option.
+        self.term = Default::default();
+        self.term_id = Default::default();
+    }
+
+    pub fn finalize(&mut self) -> i32 {
+        unsafe { ecs_term_finalize(self.world, &mut self.term) }
+    }
+
+    pub fn is_set(&mut self) -> bool {
+        unsafe { ecs_term_is_initialized(&mut self.term) }
+    }
+
+    pub fn get_id(&self) -> Id {
+        Id::new_from_existing(self.world, self.term.id)
+    }
+
+    pub fn get_inout(&self) -> InOutKind {
+        self.term.inout.into()
+    }
+
+    pub fn get_oper(&self) -> OperKind {
+        self.term.oper.into()
+    }
+
+    pub fn get_src(&self) -> Entity {
+        Entity::new_from_existing(self.world, self.term.src.id)
+    }
+
+    pub fn get_first(&self) -> Entity {
+        Entity::new_from_existing(self.world, self.term.first.id)
+    }
+
+    pub fn get_second(&self) -> Entity {
+        Entity::new_from_existing(self.world, self.term.second.id)
     }
 
     /// The up flag indicates that the term identifier may be substituted by
@@ -525,6 +692,7 @@ impl Drop for Term {
             if !self.term_id.name.is_null() {
                 let _ = CString::from_raw(self.term_id.name);
             }
+            ecs_term_fini(&mut self.term);
         }
     }
 }

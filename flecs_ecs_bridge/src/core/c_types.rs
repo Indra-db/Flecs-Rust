@@ -31,17 +31,30 @@ pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\
 
 #[repr(C)]
 pub enum InOutKind {
-    InOutDefault, // InOut for regular terms, In for shared terms
-    InOutNone,    // Term is neither read nor written
-    InOut,        // Term is both read and written
-    In,           // Term is only read
-    Out,          // Term is only written
+    InOutDefault = 0, // InOut for regular terms, In for shared terms
+    InOutNone = 1,    // Term is neither read nor written
+    InOut = 2,        // Term is both read and written
+    In = 3,           // Term is only read
+    Out = 4,          // Term is only written
 }
 
 //TODO: this is a test
 impl InOutKind {
     pub fn is_read_only(&self) -> bool {
         matches!(self, Self::In)
+    }
+}
+
+impl From<i32> for InOutKind {
+    fn from(value: i32) -> Self {
+        match value {
+            0 => InOutKind::InOutDefault,
+            1 => InOutKind::InOutNone,
+            2 => InOutKind::InOut,
+            3 => InOutKind::In,
+            4 => InOutKind::Out,
+            _ => InOutKind::InOutDefault,
+        }
     }
 }
 
@@ -60,6 +73,21 @@ pub enum OperKind {
 impl OperKind {
     pub fn is_negation(&self) -> bool {
         matches!(self, Self::Not | Self::NotFrom)
+    }
+}
+
+impl From<i32> for OperKind {
+    fn from(value: i32) -> Self {
+        match value {
+            0 => OperKind::And,
+            1 => OperKind::Or,
+            2 => OperKind::Not,
+            3 => OperKind::Optional,
+            4 => OperKind::AndFrom,
+            5 => OperKind::OrFrom,
+            6 => OperKind::NotFrom,
+            _ => OperKind::And,
+        }
     }
 }
 
