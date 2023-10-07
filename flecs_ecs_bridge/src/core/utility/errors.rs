@@ -90,6 +90,46 @@ impl Display for FlecsErrorCode {
     }
 }
 
+impl FlecsErrorCode {
+    pub fn to_int(&self) -> i32 {
+        match self {
+            FlecsErrorCode::InvalidOperation => 1,
+            FlecsErrorCode::InvalidParameter => 2,
+            FlecsErrorCode::ConstraintViolated => 3,
+            FlecsErrorCode::OutOfMemory => 4,
+            FlecsErrorCode::OutOfRange => 5,
+            FlecsErrorCode::Unsupported => 6,
+            FlecsErrorCode::InternalError => 7,
+            FlecsErrorCode::AlreadyDefined => 8,
+            FlecsErrorCode::MissingOsApi => 9,
+            FlecsErrorCode::OperationFailed => 10,
+            FlecsErrorCode::InvalidConversion => 11,
+            FlecsErrorCode::IdInUse => 12,
+            FlecsErrorCode::CycleDetected => 13,
+            FlecsErrorCode::LeakDetected => 14,
+            FlecsErrorCode::InconsistentName => 20,
+            FlecsErrorCode::NameInUse => 21,
+            FlecsErrorCode::NotAComponent => 22,
+            FlecsErrorCode::InvalidComponentSize => 23,
+            FlecsErrorCode::InvalidComponentAlignment => 24,
+            FlecsErrorCode::ComponentNotRegistered => 25,
+            FlecsErrorCode::InconsistentComponentId => 26,
+            FlecsErrorCode::InconsistentComponentAction => 27,
+            FlecsErrorCode::ModuleUndefined => 28,
+            FlecsErrorCode::MissingSymbol => 29,
+            FlecsErrorCode::AlreadyInUse => 30,
+            FlecsErrorCode::AccessViolation => 40,
+            FlecsErrorCode::ColumnIndexOutOfRange => 41,
+            FlecsErrorCode::ColumnIsNotShared => 42,
+            FlecsErrorCode::ColumnIsShared => 43,
+            FlecsErrorCode::ColumnTypeMismatch => 45,
+            FlecsErrorCode::InvalidWhileReadonly => 70,
+            FlecsErrorCode::LockedStorage => 71,
+            FlecsErrorCode::InvalidFromWorker => 72,
+        }
+    }
+}
+
 #[cfg(feature = "flecs_ecs_asserts")]
 #[macro_export]
 macro_rules! ecs_assert {
