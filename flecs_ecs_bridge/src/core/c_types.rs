@@ -24,38 +24,40 @@ pub type IterT = ecs_iter_t;
 pub type TypeInfoT = ecs_type_info_t;
 pub type TypeHooksT = ecs_type_hooks_t;
 pub type Flags32T = ecs_flags32_t;
+pub type TermIdT = ecs_term_id_t;
+pub type TermT = ecs_term_t;
 
 pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\0") };
 
 #[repr(C)]
-pub enum InOutKindT {
-    InOutDefault = 0,
-    InOutNone,
-    InOut,
-    In,
-    Out,
+pub enum InOutKind {
+    InOutDefault, // InOut for regular terms, In for shared terms
+    InOutNone,    // Term is neither read nor written
+    InOut,        // Term is both read and written
+    In,           // Term is only read
+    Out,          // Term is only written
 }
 
 //TODO: this is a test
-impl InOutKindT {
+impl InOutKind {
     pub fn is_read_only(&self) -> bool {
         matches!(self, Self::In)
     }
 }
 
 #[repr(C)]
-pub enum OperKindT {
-    And = 0,
-    Or,
-    Not,
-    Optional,
-    AndFrom,
-    OrFrom,
-    NotFrom,
+pub enum OperKind {
+    And,      // The term must match
+    Or,       // One of the terms in an or chain must match
+    Not,      // The term must not match
+    Optional, // The term may match
+    AndFrom,  // Term must match all components from term id
+    OrFrom,   // Term must match at least one component from term id
+    NotFrom,  // Term must match none of the components from term id
 }
 
 //TODO: this is a test
-impl OperKindT {
+impl OperKind {
     pub fn is_negation(&self) -> bool {
         matches!(self, Self::Not | Self::NotFrom)
     }
@@ -243,3 +245,37 @@ impl CachedComponentData for EcsComponent {
         SYMBOL_NAME.get_or_init(|| String::from("EcsComponent"))
     }
 }
+
+/// Match on self
+pub const ECS_SELF: u32 = 1 << 1;
+
+/// Match by traversing upwards
+pub const ECS_UP: u32 = 1 << 2;
+
+/// Match by traversing downwards (derived, cannot be set)
+pub const ECS_DOWN: u32 = 1 << 3;
+
+/// Match all entities encountered through traversal
+pub const ECS_TRAVERSE_ALL: u32 = 1 << 4;
+
+/// Sort results breadth first
+pub const ECS_CASCADE: u32 = 1 << 5;
+
+/// Short for up(ChildOf)
+pub const ECS_PARENT: u32 = 1 << 6;
+
+/// Term id is a variable
+pub const ECS_IS_VARIABLE: u32 = 1 << 7;
+
+/// Term id is an entity
+pub const ECS_IS_ENTITY: u32 = 1 << 8;
+
+/// Term id is a name (don't attempt to lookup as entity)
+pub const ECS_IS_NAME: u32 = 1 << 9;
+
+/// Prevent observer from triggering on term
+pub const ECS_FILTER: u32 = 1 << 10;
+
+/// Union of flags used for traversing (EcsUp|EcsDown|EcsTraverseAll|EcsSelf|EcsCascade|EcsParent)
+pub const ECS_TRAVERSE_FLAGS: u32 =
+    ECS_UP | ECS_DOWN | ECS_TRAVERSE_ALL | ECS_SELF | ECS_CASCADE | ECS_PARENT;
