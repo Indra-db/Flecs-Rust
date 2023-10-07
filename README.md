@@ -25,6 +25,7 @@ This library has not been advertized nor published yet to crates.io for that rea
 - [x] c_types
 - [x] type (archetype)
 - [x] world + scoped_world
+- [x] term
 - [ ] filter
 - [ ] query
 
