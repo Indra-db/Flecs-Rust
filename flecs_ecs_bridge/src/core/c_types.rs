@@ -279,3 +279,33 @@ pub const ECS_FILTER: u32 = 1 << 10;
 /// Union of flags used for traversing (EcsUp|EcsDown|EcsTraverseAll|EcsSelf|EcsCascade|EcsParent)
 pub const ECS_TRAVERSE_FLAGS: u32 =
     ECS_UP | ECS_DOWN | ECS_TRAVERSE_ALL | ECS_SELF | ECS_CASCADE | ECS_PARENT;
+
+impl Default for ecs_term_id_t {
+    fn default() -> Self {
+        Self {
+            id: Default::default(),
+            name: std::ptr::null_mut(),
+            trav: Default::default(),
+            flags: Default::default(),
+        }
+    }
+}
+
+impl Default for ecs_term_t {
+    fn default() -> Self {
+        Self {
+            id: Default::default(),
+            src: Default::default(),
+            first: Default::default(),
+            second: Default::default(),
+            inout: Default::default(),
+            oper: Default::default(),
+            id_flags: Default::default(),
+            name: std::ptr::null_mut(),
+            field_index: Default::default(),
+            idr: std::ptr::null_mut(),
+            flags: Default::default(),
+            move_: Default::default(),
+        }
+    }
+}
