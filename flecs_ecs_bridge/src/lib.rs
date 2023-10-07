@@ -13,10 +13,12 @@ pub mod core {
     pub mod entity;
     pub mod entity_view;
     pub mod enum_type;
+    pub mod filter;
     pub mod id;
     pub mod lifecycle_traits;
     pub mod scoped_world;
     pub mod table;
+    pub mod term;
     pub mod world;
     pub mod utility {
         pub mod errors;
