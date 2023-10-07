@@ -415,8 +415,7 @@ impl Term {
     ///
     /// * `id` - The id to set.
     pub fn src_id(self, id: EntityT) -> Self {
-        self.setup_src();
-        self.id(id)
+        self.setup_src().id(id)
     }
 
     /// Select src identifier, initialize it with id associated with type
@@ -425,7 +424,8 @@ impl Term {
     ///
     /// * `T` - The type to use.
     pub fn src<T: CachedComponentData>(self) -> Self {
-        self.src_id(T::get_id(self.world))
+        let world = self.world;
+        self.src_id(T::get_id(world))
     }
 
     /// Select src identifier, initialize it with name. If name starts with a $
@@ -434,14 +434,14 @@ impl Term {
     /// # Arguments
     ///
     /// * `name` - The name to set.
-    pub fn src_name(self, name: &str) -> Self {
+    pub fn src_name(mut self, name: &str) -> Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
             "name is empty"
         );
 
-        self.setup_src();
+        self = self.setup_src();
         if name.starts_with('$') {
             self.var(&name[1..])
         } else {
@@ -455,8 +455,7 @@ impl Term {
     ///
     /// * `id` - The id to set.
     pub fn first_id(self, id: EntityT) -> Self {
-        self.setup_first();
-        self.id(id)
+        self.setup_first().id(id)
     }
 
     /// Select first identifier, initialize it with id associated with type
@@ -465,7 +464,8 @@ impl Term {
     ///
     /// * `T` - The type to use.
     pub fn first<T: CachedComponentData>(self) -> Self {
-        self.first_id(T::get_id(self.world))
+        let world = self.world;
+        self.first_id(T::get_id(world))
     }
 
     /// Select first identifier, initialize it with name. If name starts with a $
@@ -474,14 +474,14 @@ impl Term {
     /// # Arguments
     ///
     /// * `name` - The name to set.
-    pub fn first_name(self, name: &str) -> Self {
+    pub fn first_name(mut self, name: &str) -> Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
             "name is empty"
         );
 
-        self.setup_first();
+        self = self.setup_first();
         if name.starts_with('$') {
             self.var(&name[1..])
         } else {
@@ -495,8 +495,7 @@ impl Term {
     ///
     /// * `id` - The id to set.
     pub fn second_id(self, id: EntityT) -> Self {
-        self.setup_second();
-        self.id(id)
+        self.setup_second().id(id)
     }
 
     /// Select second identifier, initialize it with id associated with type
@@ -505,7 +504,8 @@ impl Term {
     ///
     /// * `T` - The type to use.
     pub fn second<T: CachedComponentData>(self) -> Self {
-        self.second_id(T::get_id(self.world))
+        let world = self.world;
+        self.second_id(T::get_id(world))
     }
 
     /// Select second identifier, initialize it with name. If name starts with a $
@@ -514,14 +514,14 @@ impl Term {
     /// # Arguments
     ///
     /// * `name` - The name to set.
-    pub fn second_name(self, name: &str) -> Self {
+    pub fn second_name(mut self, name: &str) -> Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
             "name is empty"
         );
 
-        self.setup_second();
+        self = self.setup_second();
         if name.starts_with('$') {
             self.var(&name[1..])
         } else {
@@ -562,11 +562,11 @@ impl Term {
     /// # Arguments
     ///
     /// * 'inout' - The inout to set.
-    pub fn inout_stage(self, inout: InOutKind) -> Self {
+    pub fn inout_stage(mut self, inout: InOutKind) -> Self {
         self.assert_term();
-        self.set_inout(inout);
+        self = self.set_inout(inout);
         if self.term.inout != OperKind::Not as i32 {
-            self.setup_src().entity(0);
+            self = self.setup_src().entity(0);
         }
         self
     }
