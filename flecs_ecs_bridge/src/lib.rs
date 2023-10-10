@@ -15,6 +15,7 @@ pub mod core {
     pub mod enum_type;
     pub mod filter;
     pub mod id;
+    pub mod iterable;
     pub mod lifecycle_traits;
     pub mod scoped_world;
     pub mod table;

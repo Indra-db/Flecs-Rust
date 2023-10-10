@@ -168,29 +168,6 @@ impl Term {
         obj
     }
 
-    fn assert_term_id(&self) {
-        ecs_assert!(
-            self.term_id.id != 0,
-            FlecsErrorCode::InvalidParameter,
-            "no active term (call .term() first"
-        );
-    }
-
-    fn assert_term(&self) {
-        ecs_assert!(
-            self.term.id != 0,
-            FlecsErrorCode::InvalidParameter,
-            "no active term (call .term() first"
-        );
-    }
-
-    /// The self flag indicates the term identifier itself is used
-    pub fn self_term(mut self) -> Self {
-        self.assert_term_id();
-        self.term_id.flags |= ECS_SELF;
-        self
-    }
-
     pub fn reset(&mut self) {
         // we don't for certain if this causes any side effects not using the nullptr and just using the default value.
         // if it does we can use Option.
@@ -228,6 +205,32 @@ impl Term {
 
     pub fn get_second(&self) -> Entity {
         Entity::new_from_existing(self.world, self.term.second.id)
+    }
+}
+
+/// Builder pattern functions
+impl Term {
+    fn assert_term_id(&self) {
+        ecs_assert!(
+            self.term_id.id != 0,
+            FlecsErrorCode::InvalidParameter,
+            "no active term (call .term() first"
+        );
+    }
+
+    fn assert_term(&self) {
+        ecs_assert!(
+            self.term.id != 0,
+            FlecsErrorCode::InvalidParameter,
+            "no active term (call .term() first"
+        );
+    }
+
+    /// The self flag indicates the term identifier itself is used
+    pub fn self_term(mut self) -> Self {
+        self.assert_term_id();
+        self.term_id.flags |= ECS_SELF;
+        self
     }
 
     /// The up flag indicates that the term identifier may be substituted by
@@ -666,12 +669,10 @@ impl Term {
             "no component specified for singleton"
         );
 
-        let sid = unsafe {
-            if self.term.id != 0 {
-                self.term.id
-            } else {
-                self.term.first.id
-            }
+        let sid = if self.term.id != 0 {
+            self.term.id
+        } else {
+            self.term.first.id
         };
 
         ecs_assert!(sid != 0, FlecsErrorCode::InvalidParameter, "invalid id");

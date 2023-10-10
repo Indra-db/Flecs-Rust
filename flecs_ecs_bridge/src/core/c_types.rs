@@ -337,3 +337,19 @@ impl Default for ecs_term_t {
         }
     }
 }
+
+impl Default for ecs_filter_desc_t {
+    fn default() -> Self {
+        Self {
+            _canary: Default::default(),
+            terms: Default::default(),
+            terms_buffer: std::ptr::null_mut(),
+            terms_buffer_count: Default::default(),
+            storage: std::ptr::null_mut(),
+            instanced: Default::default(),
+            flags: Default::default(),
+            expr: std::ptr::null(),
+            entity: Default::default(),
+        }
+    }
+}
