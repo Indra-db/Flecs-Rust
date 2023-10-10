@@ -37,13 +37,10 @@ impl Iterable for ()
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t){}
 
     fn get_array_ptrs_of_components(it: &IterT) -> Self::ArrayType {
-        return [];
+        []
     }
 
-    fn get_tuple(array_components: &Self::ArrayType, index: usize) -> Self::TupleType
-    {
-        return ();
-    }
+    fn get_tuple(array_components: &Self::ArrayType, index: usize) -> Self::TupleType{}
     
 }
 #[rustfmt::skip]
@@ -69,8 +66,8 @@ where
 
     fn get_array_ptrs_of_components(it: &IterT) -> Self::ArrayType{
         unsafe { 
-        return [ecs_field::<A>(it,1) as *mut u8];
-        };
+        [ecs_field::<A>(it,1) as *mut u8]
+        }
     }
 
     fn get_tuple(array_components: &Self::ArrayType, index: usize) -> Self::TupleType
@@ -78,7 +75,7 @@ where
         unsafe {
             let array_a = array_components[0] as *mut A;
             let ref_a = &mut (*array_a.add(index));
-            return (ref_a,);
+            (ref_a,)
         }
     }
 }
@@ -111,9 +108,9 @@ where
 
     fn get_array_ptrs_of_components(it: &IterT) -> Self::ArrayType{
         unsafe { 
-            return [ecs_field::<A>(it,1) as *mut u8,
-                    ecs_field::<B>(it,2) as *mut u8];
-            };
+            [ecs_field::<A>(it,1) as *mut u8, 
+            ecs_field::<B>(it,2) as *mut u8]
+            }
     }
     fn get_tuple(array_components: &Self::ArrayType, index: usize) -> Self::TupleType
     {
@@ -122,7 +119,7 @@ where
             let array_b = array_components[1] as *mut B;
             let ref_a = &mut (*array_a.add(index));
             let ref_b = &mut (*array_b.add(index));
-            return (ref_a, ref_b,);
+            (ref_a, ref_b,)
         }
     }
 }
@@ -160,10 +157,10 @@ where
 
     fn get_array_ptrs_of_components(it: &IterT) -> Self::ArrayType{
         unsafe { 
-            return [ecs_field::<A>(it,1) as *mut u8,
+            [ecs_field::<A>(it,1) as *mut u8,
                     ecs_field::<B>(it,2) as *mut u8,
-                    ecs_field::<C>(it,3) as *mut u8];
-            };
+                    ecs_field::<C>(it,3) as *mut u8]
+            }
     }
 
     fn get_tuple(array_components: &Self::ArrayType, index: usize) -> Self::TupleType
@@ -175,7 +172,7 @@ where
             let ref_a = &mut (*array_a.add(index));
             let ref_b = &mut (*array_b.add(index));
             let ref_c = &mut (*array_c.add(index));
-            return (ref_a, ref_b, ref_c,);
+            (ref_a, ref_b, ref_c,)
         }
     }
 }

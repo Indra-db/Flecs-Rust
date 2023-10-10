@@ -58,8 +58,7 @@ where
                 let array_ptr = T::get_array_ptrs_of_components(&iter);
                 ecs_table_lock(self.world, iter.table);
                 for i in 0..iter_count {
-                    let mut entity =
-                        Entity::new_from_existing(self.world, *iter.entities.add(i as usize));
+                    let mut entity = Entity::new_from_existing(self.world, *iter.entities.add(i));
                     let tuple = T::get_tuple(&array_ptr, i);
                     func_ref(&mut entity, tuple);
                 }
@@ -107,7 +106,7 @@ where
         }
 
         unsafe {
-            if ecs_filter_init(filter_obj.world, desc) == std::ptr::null_mut() {
+            if ecs_filter_init(filter_obj.world, desc).is_null() {
                 _ecs_abort(
                     FlecsErrorCode::InvalidParameter.to_int(),
                     file!().as_ptr() as *const i8,
@@ -134,16 +133,13 @@ where
         let mut desc = ecs_filter_desc_t::default();
         T::register_ids_descriptor(world.world, &mut desc);
         let raw_filter = unsafe { ecs_filter_init(world.world, &desc) };
-        let filter = Filter {
+        Filter {
             world: world.world,
             filter_ptr: raw_filter,
             desc,
             next_term_index: 0,
             _phantom: std::marker::PhantomData,
-        };
-        filter
-
-        //T::populate(&mut filter);
+        }
     }
 
     pub fn current_term(&mut self) -> &mut TermT {
@@ -170,15 +166,14 @@ where
     }
 
     pub fn get_term(&self, index: usize) -> Term {
-        Term::new(self.world, unsafe {
-            *(*self.filter_ptr).terms.add(index as usize)
-        })
+        Term::new(self.world, unsafe { *(*self.filter_ptr).terms.add(index) })
     }
 
     pub fn field_count(&self) -> i32 {
         unsafe { (*self.filter_ptr).field_count }
     }
 
+    #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
     pub fn to_string(&self) -> String {
         let result: *mut c_char =
             unsafe { ecs_filter_str(self.world, self.filter_ptr as *const _) };
@@ -209,10 +204,12 @@ where
     T: Iterable,
 {
     fn clone(&self) -> Self {
-        let mut new_filter = Filter::default();
-        new_filter.world = self.world;
+        let mut new_filter = Filter::<T> {
+            world: self.world,
+            ..Default::default()
+        };
         if !self.filter_ptr.is_null() {
-            new_filter.filter_ptr = self.filter_ptr.clone();
+            new_filter.filter_ptr = self.filter_ptr;
         } else {
             new_filter.filter_ptr = std::ptr::null_mut();
         }

@@ -61,7 +61,7 @@ impl Term {
         let mut obj = Self {
             world,
             term_id: term.src, // default to subject
-            term: term,
+            term,
         };
         obj.term.move_ = false;
         obj
@@ -180,7 +180,7 @@ impl Term {
     }
 
     pub fn is_set(&mut self) -> bool {
-        unsafe { ecs_term_is_initialized(&mut self.term) }
+        unsafe { ecs_term_is_initialized(&self.term) }
     }
 
     pub fn get_id(&self) -> Id {
@@ -358,7 +358,7 @@ impl Term {
         self.assert_term_id();
         let c_name = CString::new(name).unwrap();
         let leak_name = CString::into_raw(c_name);
-        self.term_id.name = leak_name as *mut i8;
+        self.term_id.name = leak_name;
         self.term_id.flags |= ECS_IS_NAME;
         self
     }
@@ -373,7 +373,7 @@ impl Term {
         let c_name = CString::new(var_name).unwrap();
         let leak_name = CString::into_raw(c_name);
         self.term_id.flags |= ECS_IS_VARIABLE;
-        self.term_id.name = leak_name as *mut i8;
+        self.term_id.name = leak_name;
         self
     }
 
@@ -445,8 +445,8 @@ impl Term {
         );
 
         self = self.setup_src();
-        if name.starts_with('$') {
-            self.var(&name[1..])
+        if let Some(stripped_name) = name.strip_prefix('$') {
+            self.var(stripped_name)
         } else {
             self.name(name)
         }
@@ -485,8 +485,8 @@ impl Term {
         );
 
         self = self.setup_first();
-        if name.starts_with('$') {
-            self.var(&name[1..])
+        if let Some(stripped_name) = name.strip_prefix('$') {
+            self.var(stripped_name)
         } else {
             self.name(name)
         }
@@ -525,8 +525,8 @@ impl Term {
         );
 
         self = self.setup_second();
-        if name.starts_with('$') {
-            self.var(&name[1..])
+        if let Some(stripped_name) = name.strip_prefix('$') {
+            self.var(stripped_name)
         } else {
             self.name(name)
         }
@@ -635,6 +635,7 @@ impl Term {
     }
 
     /// short for oper(flecs::Not)
+    #[allow(clippy::should_implement_trait)]
     pub fn not(self) -> Self {
         self.oper(OperKind::Not)
     }

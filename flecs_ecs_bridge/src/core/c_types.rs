@@ -134,7 +134,7 @@ pub const ECS_SYSTEM: u64 = 7;
 pub const FLECS_HI_COMPONENT_ID: u64 = 256;
 
 // Core scopes & entities
-pub const ECS_WORLD: u64 = FLECS_HI_COMPONENT_ID + 0;
+pub const ECS_WORLD: u64 = FLECS_HI_COMPONENT_ID;
 pub const ECS_FLECS: u64 = FLECS_HI_COMPONENT_ID + 1;
 pub const ECS_FLECS_CORE: u64 = FLECS_HI_COMPONENT_ID + 2;
 pub const ECS_FLECS_INTERNALS: u64 = FLECS_HI_COMPONENT_ID + 3;
@@ -195,6 +195,7 @@ pub type Identifier = EcsIdentifier;
 pub type Poly = EcsPoly;
 pub type Target = EcsTarget;
 
+#[allow(clippy::derivable_impls)]
 impl Default for EcsComponent {
     fn default() -> Self {
         Self {

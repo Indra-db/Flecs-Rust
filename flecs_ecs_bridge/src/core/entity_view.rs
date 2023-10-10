@@ -74,6 +74,7 @@ impl EntityView {
     /// ### Arguments
     /// * `world` - The world the entity belongs to as void*.
     /// * `id` - The entity id.
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new_from_existing_poly_world(world: *mut c_void, id: IdT) -> Self {
         unsafe {
             Self {

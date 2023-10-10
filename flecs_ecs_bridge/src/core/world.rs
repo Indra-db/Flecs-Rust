@@ -147,6 +147,7 @@ impl World {
     }
 
     /// Registers an action to be executed when the world is destroyed.
+    #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     pub fn atfini(&self, action: ecs_fini_action_t, ctx: *mut std::ffi::c_void) {
         unsafe {
             ecs_atfini(self.world, action, ctx);
@@ -409,11 +410,10 @@ impl World {
     ///
     /// The stage.
     pub fn get_async_stage(&self) -> Self {
-        let result = Self {
+        Self {
             world: unsafe { ecs_async_stage_new(self.world) },
             is_owned: true,
-        };
-        result
+        }
     }
 
     /// Get actual world.
@@ -455,6 +455,7 @@ impl World {
     /// # Arguments
     ///
     /// * `ctx` - The world context.
+    #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     pub fn set_context(&self, ctx: *mut std::ffi::c_void) {
         unsafe { ecs_set_context(self.world, ctx) }
     }
@@ -592,6 +593,7 @@ impl World {
     /// ### Returns
     ///
     /// Returns the current search path after the operation.
+    #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     pub fn set_lookup_path(&self, search_path: *const EntityT) -> *mut EntityT {
         unsafe { ecs_set_lookup_path(self.world, search_path) }
     }
@@ -1435,6 +1437,7 @@ impl World {
     }
 
     /// Run callback after completing frame
+    #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     pub fn run_post_frame(&self, action: ecs_fini_action_t, ctx: *mut c_void) {
         unsafe {
             ecs_run_post_frame(self.world, action, ctx);

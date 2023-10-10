@@ -67,6 +67,12 @@ pub trait CachedComponentData: Clone + Default {
         Self::__get_once_lock_data().get().is_some()
     }
 
+    /// checks if the component is registered with a world.
+    /// # Safety
+    /// This function is unsafe because it assumes world is not nullptr
+    /// this is highly unlikely a world would be nullptr, hence this function is not marked as unsafe.
+    /// this will be changed in the future where we get rid of the pointers.
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     fn is_registered_with_world(world: *mut WorldT) -> bool {
         if Self::is_registered() {
             unsafe { is_component_registered_with_world::<Self>(world) }
@@ -458,7 +464,7 @@ where
         }
         return entity;
     }
-    return 0;
+    0
 }
 
 /// checks if the component is registered with a world.

@@ -46,6 +46,8 @@ impl Drop for ComponentBindingCtx {
         }
     }
 }
+
+#[allow(clippy::derivable_impls)]
 impl Default for ComponentBindingCtx {
     fn default() -> Self {
         Self {
@@ -129,11 +131,11 @@ impl<T: CachedComponentData + Default> Component<T> {
         }
     }
 
-    fn get_binding_ctx(&self, type_hooks: &mut TypeHooksT) -> &mut ComponentBindingCtx {
+    fn get_binding_ctx(&mut self, type_hooks: &mut TypeHooksT) -> &mut ComponentBindingCtx {
         let mut binding_ctx: *mut ComponentBindingCtx = type_hooks.binding_ctx as *mut _;
 
         if binding_ctx.is_null() {
-            let new_binding_ctx = Box::new(ComponentBindingCtx::default());
+            let new_binding_ctx = Box::<ComponentBindingCtx>::default();
             let static_ref = Box::leak(new_binding_ctx);
             binding_ctx = static_ref;
             type_hooks.binding_ctx = binding_ctx as *mut c_void;
