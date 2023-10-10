@@ -124,6 +124,7 @@ pub fn get_generation(entity: EntityT) -> u32 {
 /// # Safety
 /// This function is unsafe because it dereferences the iterator and uses the index to get the component data.
 /// ensure that the iterator is valid and the index is valid.
+#[inline(always)]
 pub unsafe fn ecs_field<T: CachedComponentData>(it: *const IterT, index: i32) -> *mut T {
     let size = std::mem::size_of::<T>();
     ecs_field_w_size(it, size, index) as *mut T
