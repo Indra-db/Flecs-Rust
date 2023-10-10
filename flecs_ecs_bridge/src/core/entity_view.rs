@@ -64,13 +64,23 @@ impl EntityView {
     /// * `world` - The world the entity belongs to.
     /// * `id` - The entity id.
     pub fn new_from_existing(world: *mut WorldT, id: IdT) -> Self {
+        Self {
+            id: Id::new_from_existing(world, id),
+        }
+    }
+
+    /// Wrap an existing entity id.
+    /// ### Arguments
+    /// * `world` - The world the entity belongs to as void*.
+    /// * `id` - The entity id.
+    pub fn new_from_existing_poly_world(world: *mut c_void, id: IdT) -> Self {
         unsafe {
             Self {
                 id: Id::new_from_existing(
                     if world.is_null() {
                         std::ptr::null_mut()
                     } else {
-                        ecs_get_world(world as *mut c_void) as *mut WorldT
+                        ecs_get_world(world) as *mut WorldT
                     },
                     id,
                 ),
