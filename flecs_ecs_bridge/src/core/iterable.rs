@@ -4,17 +4,16 @@ use super::c_binding::bindings::{ecs_field_w_size, ecs_filter_desc_t};
 use super::c_types::{IterT, WorldT};
 use super::component_registration::CachedComponentData;
 use super::entity::Entity;
-use super::filter::Filter;
+use super::filter::{Filter, Filterable};
 use super::utility::functions::ecs_field;
 use super::world::World;
 
-pub trait Iterable<F>: Sized
-where
-    F: FnMut(Entity, Self),
-{
-    fn get_data(it: &IterT, index: usize) -> Self;
+pub trait Iterable: Sized {
+    type TupleType;
 
-    fn populate(filter: &mut Filter<Self, F>);
+    fn get_data(it: &IterT, index: usize) -> Self::TupleType;
+
+    fn populate(filter: &mut impl Filterable);
 
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t);
 }
@@ -25,26 +24,26 @@ where
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 #[rustfmt::skip]
-impl<F> Iterable<F> for ()
-where
-    F: FnMut(Entity, ()),
+impl Iterable for ()
 {
-    fn get_data(_it: &IterT, _index: usize) -> Self {
+    type TupleType = ();
+    fn get_data(_it: &IterT, _index: usize) -> Self::TupleType{
         return ();
     }
 
-    fn populate(filter : &mut Filter<Self, F>){}
+    fn populate(filter : &mut impl Filterable){}
 
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t){}
     
 }
 #[rustfmt::skip]
-impl<'a, A, F> Iterable<F> for (&'a mut A,)
+impl<'a, A> Iterable for (&'a mut A,)
 where
-    F: FnMut(Entity, (&'a mut A,)),
     A: CachedComponentData,
 {
-    fn get_data(it: &IterT, index: usize) -> Self 
+    type TupleType = (&'a mut A,);
+
+    fn get_data(it: &IterT, index: usize) -> Self::TupleType
     {
         unsafe {
             let mut data = std::mem::MaybeUninit::<Self>::uninit();
@@ -55,9 +54,9 @@ where
         }
     }
 
-    fn populate(filter : &mut Filter<Self, F>)
+    fn populate(filter : &mut impl Filterable)
     {
-        let world = filter.world;
+        let world = filter.get_world();
         let term = filter.current_term();
         term.id = A::get_id(world);
         filter.next_term();
@@ -70,29 +69,28 @@ where
 }
 
 #[rustfmt::skip]
-impl<'a, A, B, F> Iterable<F> for (&'a mut A, &'a mut B)
+impl<'a, A, B> Iterable for (&'a mut A, &'a mut B)
 where
-    F: FnMut(Entity, (&'a mut A, &'a mut B)),
     A: CachedComponentData,
     B: CachedComponentData,
 {
-    fn get_data(it: &IterT, index: usize) -> Self 
+    type TupleType = (&'a mut A, &'a mut B);
+
+    fn get_data(it: &IterT, index: usize) -> Self::TupleType
     {
         unsafe {
             let mut data = std::mem::MaybeUninit::<Self>::uninit();
             let data_ptr = data.as_mut_ptr();
-            let ptr_a = ecs_field::<A>(it,1);
-            let ptr_a_offset = ptr_a.add(index);
-            let ref_a = &mut(*ptr_a_offset);
+            let ref_a = &mut(*ecs_field::<A>(it,1).add(index));
             let ref_b = &mut(*ecs_field::<B>(it,2).add(index));
             ptr::write(data_ptr, (ref_a,ref_b,));
             data.assume_init()
         }
     }
 
-    fn populate(filter : &mut Filter<Self, F>)
+    fn populate(filter : &mut impl Filterable)
     {
-        let world = filter.world;
+        let world = filter.get_world();
         let term = filter.current_term();
         term.id = A::get_id(world);
         filter.next_term();
@@ -109,14 +107,15 @@ where
 }
 
 #[rustfmt::skip]
-impl<'a, A, B, C, F> Iterable<F> for (&'a mut A, &'a mut B, &'a mut C)
+impl<'a, A, B, C> Iterable for (&'a mut A, &'a mut B, &'a mut C)
 where
-    F: FnMut(Entity, (&'a mut A, &'a mut B, &'a mut C)),
     A: CachedComponentData,
     B: CachedComponentData,
     C: CachedComponentData,
 {
-    fn get_data(it: &IterT, index: usize) -> Self 
+    type TupleType = (&'a mut A, &'a mut B, &'a mut C);
+    
+    fn get_data(it: &IterT, index: usize) -> Self::TupleType
     {
         unsafe {
             let mut data = std::mem::MaybeUninit::<Self>::uninit();
@@ -129,9 +128,9 @@ where
         }
     }
 
-    fn populate(filter : &mut Filter<Self, F>)
+    fn populate(filter : &mut impl Filterable)
     {
-        let world = filter.world;
+        let world = filter.get_world();
         let term = filter.current_term();
         term.id = A::get_id(world);
         filter.next_term();
@@ -216,7 +215,7 @@ mod test {
             .add_component::<Vel>();
         print!("test");
         //let mut filter = Filter::<(&mut Pos,), FnMut(Entity, (&mut Pos,))>::new(world.world);
-        let mut filter = Filter::<(&mut Pos, &mut Vel), fn(_, _)>::new(world.world);
+        // let mut filter = Filter::<(&mut Pos, &mut Vel), fn(_, _)>::new(world.world);
         //filter.each::<(&mut Pos, &mut Vel), _>(|e, (pos, vel)| {
         //    print!("xxxx");
         //    //println!("Pos: {}, Vel: {}", pos, vel);

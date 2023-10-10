@@ -9,27 +9,25 @@ use super::{
     iterable::Iterable,
     term::Term,
     utility::errors::FlecsErrorCode,
+    world::World,
 };
 use std::ffi::c_char;
 use std::ops::Deref;
 
-pub struct Filter<T, F>
+pub struct Filter<T>
 where
-    T: Iterable<F>,
-    F: FnMut(Entity, T),
+    T: Iterable,
 {
     pub world: *mut WorldT,
     pub filter_ptr: *mut FilterT,
     pub desc: ecs_filter_desc_t,
     next_term_index: usize,
     _phantom: std::marker::PhantomData<T>,
-    _phantom2: std::marker::PhantomData<F>,
 }
 
-impl<T, F> Default for Filter<T, F>
+impl<T> Default for Filter<T>
 where
-    T: Iterable<F>,
-    F: FnMut(Entity, T),
+    T: Iterable,
 {
     fn default() -> Self {
         Filter {
@@ -38,19 +36,17 @@ where
             desc: Default::default(),
             next_term_index: 0,
             _phantom: std::marker::PhantomData,
-            _phantom2: std::marker::PhantomData,
         }
     }
 }
-impl<T, F> Filter<T, F>
+impl<T> Filter<T>
 where
-    T: Iterable<F>,
-    F: FnMut(Entity, T),
+    T: Iterable,
 {
-    pub fn each(&self, mut func: F) {
+    pub fn each(&self, mut func: impl FnMut(Entity, T::TupleType)) {
         unsafe {
             let mut iter = ecs_filter_iter(self.world, self.filter_ptr);
-            let mut func_ref = &mut func;
+            let func_ref = &mut func;
             while ecs_filter_next(&mut iter) {
                 for i in 0..iter.count as usize {
                     let entity =
@@ -69,7 +65,6 @@ where
             desc: Default::default(),
             next_term_index: 0,
             _phantom: std::marker::PhantomData,
-            _phantom2: std::marker::PhantomData,
         }
     }
 
@@ -80,7 +75,6 @@ where
             desc: Default::default(),
             next_term_index: 0,
             _phantom: std::marker::PhantomData,
-            _phantom2: std::marker::PhantomData,
         };
 
         unsafe { ecs_filter_move(filter_obj.filter_ptr, filter as *mut FilterT) };
@@ -95,7 +89,6 @@ where
             desc: Default::default(),
             next_term_index: 0,
             _phantom: std::marker::PhantomData,
-            _phantom2: std::marker::PhantomData,
         };
 
         todo!("this seems wrong");
@@ -127,21 +120,19 @@ where
         filter_obj
     }
 
-    pub fn new(world: *mut WorldT) -> Self {
-        unsafe {
-            let mut desc = ecs_filter_desc_t::default();
-            T::register_ids_descriptor(world, &mut desc);
-            let raw_filter = unsafe { ecs_filter_init(world, &desc) };
-            let filter = Filter {
-                world,
-                filter_ptr: raw_filter,
-                desc,
-                next_term_index: 0,
-                _phantom: std::marker::PhantomData,
-                _phantom2: std::marker::PhantomData,
-            };
-            filter
-        }
+    pub fn new(world: &World) -> Self {
+        let mut desc = ecs_filter_desc_t::default();
+        T::register_ids_descriptor(world.world, &mut desc);
+        let raw_filter = unsafe { ecs_filter_init(world.world, &desc) };
+        let filter = Filter {
+            world: world.world,
+            filter_ptr: raw_filter,
+            desc,
+            next_term_index: 0,
+            _phantom: std::marker::PhantomData,
+        };
+        filter
+
         //T::populate(&mut filter);
     }
 
@@ -159,10 +150,7 @@ where
         })
     }
 
-    pub fn each_term(&self, mut func: F)
-    where
-        F: FnMut(Term),
-    {
+    pub fn each_term(&self, mut func: impl FnMut(Term)) {
         unsafe {
             for i in 0..(*self.filter_ptr).term_count {
                 let term = Term::new(self.world, *(*self.filter_ptr).terms.add(i as usize));
@@ -195,10 +183,9 @@ where
     }
 }
 
-impl<T, F> Drop for Filter<T, F>
+impl<T> Drop for Filter<T>
 where
-    T: Iterable<F>,
-    F: FnMut(Entity, T),
+    T: Iterable,
 {
     fn drop(&mut self) {
         if !self.filter_ptr.is_null() {
@@ -207,10 +194,9 @@ where
     }
 }
 
-impl<T, F> Clone for Filter<T, F>
+impl<T> Clone for Filter<T>
 where
-    T: Iterable<F>,
-    F: FnMut(Entity, T),
+    T: Iterable,
 {
     fn clone(&self) -> Self {
         let mut new_filter = Filter::default();
@@ -222,5 +208,28 @@ where
         }
         unsafe { ecs_filter_copy(new_filter.filter_ptr, self.filter_ptr) };
         new_filter
+    }
+}
+
+pub trait Filterable: Sized {
+    fn current_term(&mut self) -> &mut TermT;
+    fn next_term(&mut self);
+    fn get_world(&self) -> *mut WorldT;
+}
+
+impl<T> Filterable for Filter<T>
+where
+    T: Iterable,
+{
+    fn current_term(&mut self) -> &mut TermT {
+        self.current_term()
+    }
+
+    fn next_term(&mut self) {
+        self.next_term()
+    }
+
+    fn get_world(&self) -> *mut WorldT {
+        self.world
     }
 }
