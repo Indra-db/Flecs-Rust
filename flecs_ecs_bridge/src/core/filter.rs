@@ -13,25 +13,41 @@ use super::{
 use std::ffi::c_char;
 use std::ops::Deref;
 
-pub struct FilterBase {
+pub struct Filter<T, F>
+where
+    T: Iterable<F>,
+    F: FnMut(Entity, T),
+{
     pub world: *mut WorldT,
     pub filter_ptr: *mut FilterT,
+    pub desc: ecs_filter_desc_t,
+    next_term_index: usize,
+    _phantom: std::marker::PhantomData<T>,
+    _phantom2: std::marker::PhantomData<F>,
 }
 
-impl Default for FilterBase {
+impl<T, F> Default for Filter<T, F>
+where
+    T: Iterable<F>,
+    F: FnMut(Entity, T),
+{
     fn default() -> Self {
-        FilterBase {
+        Filter {
             world: std::ptr::null_mut(),
             filter_ptr: std::ptr::null_mut(),
+            desc: Default::default(),
+            next_term_index: 0,
+            _phantom: std::marker::PhantomData,
+            _phantom2: std::marker::PhantomData,
         }
     }
 }
-impl FilterBase {
-    pub fn each<T, F>(&self, mut func: F)
-    where
-        T: Iterable<F>,
-        F: FnMut(Entity, T),
-    {
+impl<T, F> Filter<T, F>
+where
+    T: Iterable<F>,
+    F: FnMut(Entity, T),
+{
+    pub fn each(&self, mut func: F) {
         unsafe {
             let mut iter = ecs_filter_iter(self.world, self.filter_ptr);
             let mut func_ref = &mut func;
@@ -40,23 +56,31 @@ impl FilterBase {
                     let entity =
                         Entity::new_from_existing(self.world, *iter.entities.add(i as usize));
                     let tuple = T::get_data(&iter, i);
-                    tuple.apply(entity, &mut func_ref);
+                    func_ref(entity, tuple);
                 }
             }
         }
     }
 
-    pub fn new(world: *mut WorldT, filter: *mut FilterT) -> Self {
-        FilterBase {
+    fn new_w_filter(world: *mut WorldT, filter: *mut FilterT) -> Self {
+        Filter {
             world,
             filter_ptr: filter,
+            desc: Default::default(),
+            next_term_index: 0,
+            _phantom: std::marker::PhantomData,
+            _phantom2: std::marker::PhantomData,
         }
     }
 
-    pub fn new_ownership(world: *mut WorldT, filter: *mut FilterT) -> Self {
-        let filter_obj = FilterBase {
+    fn new_ownership(world: *mut WorldT, filter: *mut FilterT) -> Self {
+        let filter_obj = Filter {
             world,
             filter_ptr: std::ptr::null_mut(),
+            desc: Default::default(),
+            next_term_index: 0,
+            _phantom: std::marker::PhantomData,
+            _phantom2: std::marker::PhantomData,
         };
 
         unsafe { ecs_filter_move(filter_obj.filter_ptr, filter as *mut FilterT) };
@@ -64,10 +88,14 @@ impl FilterBase {
         filter_obj
     }
 
-    pub fn new_from_desc(world: *mut WorldT, desc: *mut ecs_filter_desc_t) -> Self {
-        let filter_obj = FilterBase {
+    fn new_from_desc(world: *mut WorldT, desc: *mut ecs_filter_desc_t) -> Self {
+        let filter_obj = Filter {
             world,
             filter_ptr: std::ptr::null_mut(),
+            desc: Default::default(),
+            next_term_index: 0,
+            _phantom: std::marker::PhantomData,
+            _phantom2: std::marker::PhantomData,
         };
 
         todo!("this seems wrong");
@@ -99,13 +127,39 @@ impl FilterBase {
         filter_obj
     }
 
+    pub fn new(world: *mut WorldT) -> Self {
+        unsafe {
+            let mut desc = ecs_filter_desc_t::default();
+            T::register_ids_descriptor(world, &mut desc);
+            let raw_filter = unsafe { ecs_filter_init(world, &desc) };
+            let filter = Filter {
+                world,
+                filter_ptr: raw_filter,
+                desc,
+                next_term_index: 0,
+                _phantom: std::marker::PhantomData,
+                _phantom2: std::marker::PhantomData,
+            };
+            filter
+        }
+        //T::populate(&mut filter);
+    }
+
+    pub fn current_term(&mut self) -> &mut TermT {
+        &mut self.desc.terms[self.next_term_index]
+    }
+
+    pub fn next_term(&mut self) {
+        self.next_term_index += 1;
+    }
+
     pub fn entity(&self) -> Entity {
         Entity::new_from_existing(self.world, unsafe {
             ecs_get_entity(self.filter_ptr as *const _)
         })
     }
 
-    pub fn each_term<F>(&self, mut func: F)
+    pub fn each_term(&self, mut func: F)
     where
         F: FnMut(Term),
     {
@@ -141,7 +195,11 @@ impl FilterBase {
     }
 }
 
-impl Drop for FilterBase {
+impl<T, F> Drop for Filter<T, F>
+where
+    T: Iterable<F>,
+    F: FnMut(Entity, T),
+{
     fn drop(&mut self) {
         if !self.filter_ptr.is_null() {
             unsafe { ecs_filter_fini(&mut self.filter_ptr as *const _ as *mut _) }
@@ -149,9 +207,13 @@ impl Drop for FilterBase {
     }
 }
 
-impl Clone for FilterBase {
+impl<T, F> Clone for Filter<T, F>
+where
+    T: Iterable<F>,
+    F: FnMut(Entity, T),
+{
     fn clone(&self) -> Self {
-        let mut new_filter = FilterBase::default();
+        let mut new_filter = Filter::default();
         new_filter.world = self.world;
         if !self.filter_ptr.is_null() {
             new_filter.filter_ptr = self.filter_ptr.clone();
@@ -160,66 +222,5 @@ impl Clone for FilterBase {
         }
         unsafe { ecs_filter_copy(new_filter.filter_ptr, self.filter_ptr) };
         new_filter
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
-
-pub struct Filter<T, F>
-where
-    T: Iterable<F>,
-    F: FnMut(Entity, T),
-{
-    pub filter: FilterBase,
-    pub desc: ecs_filter_desc_t,
-    next_term_index: usize,
-    _phantom: std::marker::PhantomData<T>,
-    _phantom2: std::marker::PhantomData<F>,
-}
-
-impl<T, F> Deref for Filter<T, F>
-where
-    T: Iterable<F>,
-    F: FnMut(Entity, T),
-{
-    type Target = FilterBase;
-
-    fn deref(&self) -> &Self::Target {
-        &self.filter
-    }
-}
-impl<T, F> Filter<T, F>
-where
-    T: Iterable<F>,
-    F: FnMut(Entity, T),
-{
-    pub fn new(world: *mut WorldT) -> Self {
-        unsafe {
-            let mut desc = ecs_filter_desc_t::default();
-            T::register_ids_descriptor(world, &mut desc);
-            let raw_filter = unsafe { ecs_filter_init(world, &desc) };
-            let filter = Filter {
-                filter: FilterBase {
-                    world,
-                    filter_ptr: raw_filter,
-                },
-                desc,
-                next_term_index: 0,
-                _phantom: std::marker::PhantomData,
-                _phantom2: std::marker::PhantomData,
-            };
-            filter
-        }
-        //T::populate(&mut filter);
-    }
-
-    pub fn current_term(&mut self) -> &mut TermT {
-        &mut self.desc.terms[self.next_term_index]
-    }
-
-    pub fn next_term(&mut self) {
-        self.next_term_index += 1;
     }
 }

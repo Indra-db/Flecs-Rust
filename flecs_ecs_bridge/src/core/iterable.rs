@@ -12,9 +12,6 @@ pub trait Iterable<F>: Sized
 where
     F: FnMut(Entity, Self),
 {
-    const SIZE: u8;
-    fn apply(self, entity: Entity, func: &mut F);
-
     fn get_data(it: &IterT, index: usize) -> Self;
 
     fn populate(filter: &mut Filter<Self, F>);
@@ -32,11 +29,6 @@ impl<F> Iterable<F> for ()
 where
     F: FnMut(Entity, ()),
 {
-    const SIZE: u8 = 0;
-    fn apply(self, entity: Entity, mut f: &mut F) {
-        f(entity, self);
-    }
-
     fn get_data(_it: &IterT, _index: usize) -> Self {
         return ();
     }
@@ -52,11 +44,6 @@ where
     F: FnMut(Entity, (&'a mut A,)),
     A: CachedComponentData,
 {
-    const SIZE: u8 = 1;
-    fn apply(self, entity: Entity,  f: &mut F) {
-        f(entity, self);
-    }
-
     fn get_data(it: &IterT, index: usize) -> Self 
     {
         unsafe {
@@ -89,11 +76,6 @@ where
     A: CachedComponentData,
     B: CachedComponentData,
 {
-    const SIZE: u8 = 2;
-    fn apply(self, entity: Entity,  f: &mut F) {
-        f(entity, self);
-    }
-
     fn get_data(it: &IterT, index: usize) -> Self 
     {
         unsafe {
@@ -134,11 +116,6 @@ where
     B: CachedComponentData,
     C: CachedComponentData,
 {
-    const SIZE: u8 = 3;
-    fn apply(self, entity: Entity, f: &mut F) {
-        f(entity, self);
-    }
-
     fn get_data(it: &IterT, index: usize) -> Self 
     {
         unsafe {
@@ -240,10 +217,10 @@ mod test {
         print!("test");
         //let mut filter = Filter::<(&mut Pos,), FnMut(Entity, (&mut Pos,))>::new(world.world);
         let mut filter = Filter::<(&mut Pos, &mut Vel), fn(_, _)>::new(world.world);
-        filter.each::<(&mut Pos, &mut Vel), _>(|e, (pos, vel)| {
-            print!("xxxx");
-            //println!("Pos: {}, Vel: {}", pos, vel);
-        });
+        //filter.each::<(&mut Pos, &mut Vel), _>(|e, (pos, vel)| {
+        //    print!("xxxx");
+        //    //println!("Pos: {}, Vel: {}", pos, vel);
+        //});
         let entity = Entity::default();
         let mut pos = Pos::default();
         let mut vel = Vel::default();
