@@ -10,12 +10,15 @@ use super::world::World;
 
 pub trait Iterable: Sized {
     type TupleType;
-
-    fn get_data(it: &IterT, index: usize) -> Self::TupleType;
+    type ArrayType;
 
     fn populate(filter: &mut impl Filterable);
 
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t);
+
+    fn get_array_ptrs_of_components(it: &IterT) -> Self::ArrayType;
+
+    fn get_tuple(array_components: &Self::ArrayType, index: usize) -> Self::TupleType;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -27,13 +30,20 @@ pub trait Iterable: Sized {
 impl Iterable for ()
 {
     type TupleType = ();
-    fn get_data(_it: &IterT, _index: usize) -> Self::TupleType{
-        return ();
-    }
+    type ArrayType = [*mut u8; 0];
 
     fn populate(filter : &mut impl Filterable){}
 
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t){}
+
+    fn get_array_ptrs_of_components(it: &IterT) -> Self::ArrayType {
+        return [];
+    }
+
+    fn get_tuple(array_components: &Self::ArrayType, index: usize) -> Self::TupleType
+    {
+        return ();
+    }
     
 }
 #[rustfmt::skip]
@@ -42,17 +52,7 @@ where
     A: CachedComponentData,
 {
     type TupleType = (&'a mut A,);
-
-    fn get_data(it: &IterT, index: usize) -> Self::TupleType
-    {
-        unsafe {
-            let mut data = std::mem::MaybeUninit::<Self>::uninit();
-            let data_ptr = data.as_mut_ptr();
-            let ref_a = &mut(*ecs_field::<A>(it,1).add(index));
-            ptr::write(data_ptr, (ref_a,));
-            data.assume_init()
-        }
-    }
+    type ArrayType = [*mut u8; 1];
 
     fn populate(filter : &mut impl Filterable)
     {
@@ -66,6 +66,21 @@ where
     {
         desc.terms[0].id = A::get_id(world);
     }
+
+    fn get_array_ptrs_of_components(it: &IterT) -> Self::ArrayType{
+        unsafe { 
+        return [ecs_field::<A>(it,1) as *mut u8];
+        };
+    }
+
+    fn get_tuple(array_components: &Self::ArrayType, index: usize) -> Self::TupleType
+    {
+        unsafe {
+            let array_a = array_components[0] as *mut A;
+            let ref_a = &mut (*array_a.add(index));
+            return (ref_a,);
+        }
+    }
 }
 
 #[rustfmt::skip]
@@ -75,18 +90,7 @@ where
     B: CachedComponentData,
 {
     type TupleType = (&'a mut A, &'a mut B);
-
-    fn get_data(it: &IterT, index: usize) -> Self::TupleType
-    {
-        unsafe {
-            let mut data = std::mem::MaybeUninit::<Self>::uninit();
-            let data_ptr = data.as_mut_ptr();
-            let ref_a = &mut(*ecs_field::<A>(it,1).add(index));
-            let ref_b = &mut(*ecs_field::<B>(it,2).add(index));
-            ptr::write(data_ptr, (ref_a,ref_b,));
-            data.assume_init()
-        }
-    }
+    type ArrayType = [*mut u8; 2];
 
     fn populate(filter : &mut impl Filterable)
     {
@@ -104,6 +108,23 @@ where
         desc.terms[0].id = A::get_id(world);
         desc.terms[1].id = B::get_id(world);
     }
+
+    fn get_array_ptrs_of_components(it: &IterT) -> Self::ArrayType{
+        unsafe { 
+            return [ecs_field::<A>(it,1) as *mut u8,
+                    ecs_field::<B>(it,2) as *mut u8];
+            };
+    }
+    fn get_tuple(array_components: &Self::ArrayType, index: usize) -> Self::TupleType
+    {
+        unsafe {
+            let array_a = array_components[0] as *mut A;
+            let array_b = array_components[1] as *mut B;
+            let ref_a = &mut (*array_a.add(index));
+            let ref_b = &mut (*array_b.add(index));
+            return (ref_a, ref_b,);
+        }
+    }
 }
 
 #[rustfmt::skip]
@@ -114,19 +135,7 @@ where
     C: CachedComponentData,
 {
     type TupleType = (&'a mut A, &'a mut B, &'a mut C);
-    
-    fn get_data(it: &IterT, index: usize) -> Self::TupleType
-    {
-        unsafe {
-            let mut data = std::mem::MaybeUninit::<Self>::uninit();
-            let data_ptr = data.as_mut_ptr();
-            let ref_a = &mut(*ecs_field::<A>(it,1).add(index));
-            let ref_b = &mut(*ecs_field::<B>(it,2).add(index));
-            let ref_c = &mut(*ecs_field::<C>(it,3).add(index));
-            ptr::write(data_ptr, (ref_a,ref_b,ref_c,));
-            data.assume_init()
-        }
-    }
+    type ArrayType = [*mut u8; 3];
 
     fn populate(filter : &mut impl Filterable)
     {
@@ -148,97 +157,25 @@ where
         desc.terms[1].id = B::get_id(world);
         desc.terms[2].id = C::get_id(world);
     }
-}
 
-//pub fn apply_to_func<T, F>(entity: Entity, t: T, mut f: &mut F)
-//where
-//    F: FnMut(Entity, T),
-//    T: Iterable<F>,
-//{
-//    t.apply(entity, &mut f);
-//}
-
-#[cfg(test)]
-mod test {
-    //use super::apply_to_func;
-    use crate::core::c_types::*;
-    use crate::core::component_registration::*;
-    use crate::core::entity::Entity;
-    use crate::core::filter::Filter;
-    use crate::core::world::World;
-    use flecs_ecs_bridge_derive::Component;
-    use std::fmt::Display;
-    use std::sync::OnceLock;
-
-    #[derive(Debug, Default, Component, Clone)]
-    struct Pos {
-        pub x: f32,
-        pub y: f32,
+    fn get_array_ptrs_of_components(it: &IterT) -> Self::ArrayType{
+        unsafe { 
+            return [ecs_field::<A>(it,1) as *mut u8,
+                    ecs_field::<B>(it,2) as *mut u8,
+                    ecs_field::<C>(it,3) as *mut u8];
+            };
     }
 
-    #[derive(Debug, Default, Component, Clone)]
-    struct Vel {
-        pub x: f32,
-        pub y: f32,
-    }
-
-    #[derive(Debug, Default, Component, Clone)]
-    struct Rot {
-        pub x: f32,
-        pub y: f32,
-    }
-
-    impl Display for Pos {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "(x: {}, y: {})", self.x, self.y)
+    fn get_tuple(array_components: &Self::ArrayType, index: usize) -> Self::TupleType
+    {
+        unsafe {
+            let array_a = array_components[0] as *mut A;
+            let array_b = array_components[1] as *mut B;
+            let array_c = array_components[2] as *mut C;
+            let ref_a = &mut (*array_a.add(index));
+            let ref_b = &mut (*array_b.add(index));
+            let ref_c = &mut (*array_c.add(index));
+            return (ref_a, ref_b, ref_c,);
         }
-    }
-
-    impl Display for Vel {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "(x: {}, y: {})", self.x, self.y)
-        }
-    }
-
-    impl Display for Rot {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "(x: {}, y: {})", self.x, self.y)
-        }
-    }
-
-    #[test]
-    fn test() {
-        let world = World::default();
-        let ee = world
-            .new_entity()
-            .add_component::<Pos>()
-            .add_component::<Vel>();
-        print!("test");
-        //let mut filter = Filter::<(&mut Pos,), FnMut(Entity, (&mut Pos,))>::new(world.world);
-        // let mut filter = Filter::<(&mut Pos, &mut Vel), fn(_, _)>::new(world.world);
-        //filter.each::<(&mut Pos, &mut Vel), _>(|e, (pos, vel)| {
-        //    print!("xxxx");
-        //    //println!("Pos: {}, Vel: {}", pos, vel);
-        //});
-        let entity = Entity::default();
-        let mut pos = Pos::default();
-        let mut vel = Vel::default();
-        let mut rot = Rot::default();
-
-        // apply_to_func(entity, &(&mut pos,), &mut |e, (a,)| {
-        //     println!("One arg: {:?}", a.x);
-        // });
-        //
-        // apply_to_func(entity, &(&mut pos, &mut vel), &mut |e, (a, b)| {
-        //     println!("Two args: {} and {}", a, b);
-        // });
-        //
-        // apply_to_func(
-        //     entity,
-        //     &(&mut pos, &mut vel, &mut rot),
-        //     &mut |e, (a, b, c)| {
-        //         println!("Three args: {}, {}, and {}", a, b, c);
-        //     },
-        // );
     }
 }

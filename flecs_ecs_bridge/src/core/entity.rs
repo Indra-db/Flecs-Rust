@@ -32,6 +32,7 @@ pub struct Entity {
 impl Deref for Entity {
     type Target = EntityView;
 
+    #[inline]
     fn deref(&self) -> &Self::Target {
         &self.entity_view
     }

@@ -1,18 +1,22 @@
+use super::c_types::*;
+use super::component_registration::*;
 use super::{
     c_binding::bindings::{
         _ecs_abort, ecs_filter_copy, ecs_filter_desc_t, ecs_filter_fini, ecs_filter_init,
         ecs_filter_iter, ecs_filter_move, ecs_filter_next, ecs_filter_str, ecs_get_entity,
-        ecs_os_api, ECS_FILTER_INIT,
+        ecs_os_api, ecs_table_lock, ecs_table_unlock, ECS_FILTER_INIT,
     },
     c_types::{FilterT, TermT, WorldT},
     entity::Entity,
     iterable::Iterable,
     term::Term,
-    utility::errors::FlecsErrorCode,
+    utility::{errors::FlecsErrorCode, functions::ecs_field},
     world::World,
 };
+use flecs_ecs_bridge_derive::Component;
 use std::ffi::c_char;
 use std::ops::Deref;
+use std::sync::OnceLock;
 
 pub struct Filter<T>
 where
@@ -43,17 +47,23 @@ impl<T> Filter<T>
 where
     T: Iterable,
 {
-    pub fn each(&self, mut func: impl FnMut(Entity, T::TupleType)) {
+    pub fn each(&mut self, mut func: impl FnMut(&mut Entity, T::TupleType)) {
         unsafe {
             let mut iter = ecs_filter_iter(self.world, self.filter_ptr);
+
             let func_ref = &mut func;
             while ecs_filter_next(&mut iter) {
-                for i in 0..iter.count as usize {
-                    let entity =
+                T::populate(self);
+                let iter_count = iter.count as usize;
+                let array_ptr = T::get_array_ptrs_of_components(&iter);
+                ecs_table_lock(self.world, iter.table);
+                for i in 0..iter_count {
+                    let mut entity =
                         Entity::new_from_existing(self.world, *iter.entities.add(i as usize));
-                    let tuple = T::get_data(&iter, i);
-                    func_ref(entity, tuple);
+                    let tuple = T::get_tuple(&array_ptr, i);
+                    func_ref(&mut entity, tuple);
                 }
+                ecs_table_unlock(self.world, iter.table);
             }
         }
     }
@@ -189,7 +199,7 @@ where
 {
     fn drop(&mut self) {
         if !self.filter_ptr.is_null() {
-            unsafe { ecs_filter_fini(&mut self.filter_ptr as *const _ as *mut _) }
+            //unsafe { ecs_filter_fini(&mut self.filter_ptr as *const _ as *mut _) }
         }
     }
 }
