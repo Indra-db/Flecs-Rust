@@ -58,6 +58,7 @@ This library has not been advertized nor published yet to crates.io for that rea
 #### future plans
 - [ ] make the API rustier, no more pointers.
 - [ ] use custom string type to avoid re-allocating C allocated strings instead of using String with new allocation
+- [ ] add a non-heap allocating way of creating filters.
 
 ## The Aim
 
