@@ -47,23 +47,16 @@ impl<T> Filter<T>
 where
     T: Iterable,
 {
-    pub fn each(&mut self, mut func: impl FnMut(&mut Entity, T::TupleType)) {
-        unsafe {
-            let mut iter = ecs_filter_iter(self.world, self.filter_ptr);
-
-            let func_ref = &mut func;
-            while ecs_filter_next(&mut iter) {
-                T::populate(self);
-                let iter_count = iter.count as usize;
-                let array_ptr = T::get_array_ptrs_of_components(&iter);
-                ecs_table_lock(self.world, iter.table);
-                for i in 0..iter_count {
-                    let mut entity = Entity::new_from_existing(self.world, *iter.entities.add(i));
-                    let tuple = T::get_tuple(&array_ptr, i);
-                    func_ref(&mut entity, tuple);
-                }
-                ecs_table_unlock(self.world, iter.table);
-            }
+    pub fn new(world: &World) -> Self {
+        let mut desc = ecs_filter_desc_t::default();
+        T::register_ids_descriptor(world.world, &mut desc);
+        let raw_filter = unsafe { ecs_filter_init(world.world, &desc) };
+        Filter {
+            world: world.world,
+            filter_ptr: raw_filter,
+            desc,
+            next_term_index: 0,
+            _phantom: std::marker::PhantomData,
         }
     }
 
@@ -91,6 +84,7 @@ where
         filter_obj
     }
 
+    //TODO: this is not production ready
     fn new_from_desc(world: *mut WorldT, desc: *mut ecs_filter_desc_t) -> Self {
         let filter_obj = Filter {
             world,
@@ -100,7 +94,6 @@ where
             _phantom: std::marker::PhantomData,
         };
 
-        todo!("this seems wrong");
         unsafe {
             (*desc).storage = filter_obj.filter_ptr;
         }
@@ -129,16 +122,21 @@ where
         filter_obj
     }
 
-    pub fn new(world: &World) -> Self {
-        let mut desc = ecs_filter_desc_t::default();
-        T::register_ids_descriptor(world.world, &mut desc);
-        let raw_filter = unsafe { ecs_filter_init(world.world, &desc) };
-        Filter {
-            world: world.world,
-            filter_ptr: raw_filter,
-            desc,
-            next_term_index: 0,
-            _phantom: std::marker::PhantomData,
+    pub fn each(&mut self, mut func: impl FnMut(&mut Entity, T::TupleType)) {
+        unsafe {
+            let mut iter = ecs_filter_iter(self.world, self.filter_ptr);
+            let func_ref = &mut func;
+            while ecs_filter_next(&mut iter) {
+                let iter_count = iter.count as usize;
+                let array_ptr = T::get_array_ptrs_of_components(&iter);
+                ecs_table_lock(self.world, iter.table);
+                for i in 0..iter_count {
+                    let mut entity = Entity::new_from_existing(self.world, *iter.entities.add(i));
+                    let tuple = T::get_tuple(&array_ptr, i);
+                    func_ref(&mut entity, tuple);
+                }
+                ecs_table_unlock(self.world, iter.table);
+            }
         }
     }
 
@@ -194,7 +192,7 @@ where
 {
     fn drop(&mut self) {
         if !self.filter_ptr.is_null() {
-            //unsafe { ecs_filter_fini(&mut self.filter_ptr as *const _ as *mut _) }
+            unsafe { ecs_filter_fini(self.filter_ptr) }
         }
     }
 }

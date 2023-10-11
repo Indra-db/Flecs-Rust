@@ -354,3 +354,41 @@ impl Default for ecs_filter_desc_t {
         }
     }
 }
+
+impl Default for ecs_header_t {
+    fn default() -> Self {
+        Self {
+            magic: ecs_filter_t_magic as i32,
+            type_: Default::default(),
+            mixins: std::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for ecs_iterable_t {
+    fn default() -> Self {
+        Self {
+            init: Default::default(),
+        }
+    }
+}
+
+impl Default for ecs_filter_t {
+    fn default() -> Self {
+        Self {
+            hdr: Default::default(),
+            terms: std::ptr::null_mut(),
+            term_count: Default::default(),
+            field_count: Default::default(),
+            owned: Default::default(),
+            terms_owned: Default::default(),
+            flags: Default::default(),
+            variable_names: [std::ptr::null_mut()],
+            sizes: std::ptr::null_mut(),
+            entity: Default::default(),
+            iterable: Default::default(),
+            dtor: Default::default(),
+            world: std::ptr::null_mut(),
+        }
+    }
+}
