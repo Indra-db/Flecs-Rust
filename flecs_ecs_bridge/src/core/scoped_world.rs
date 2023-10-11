@@ -21,10 +21,16 @@ impl Deref for ScopedWorld {
 }
 
 impl ScopedWorld {
+    /// Creates a new scoped world
+    /// # Safety
+    /// This function is unsafe because it assumes world is not nullptr
+    /// this is highly unlikely a world would be nullptr, hence this function is not marked as unsafe.
+    /// this will be changed in the future where we get rid of the pointers.
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new(world: *mut WorldT, scope: EntityT) -> Self {
         let prev_scope = unsafe { ecs_set_scope(world, scope) };
         let world = World {
-            world: world,
+            world,
             is_owned: false,
         };
         Self { world, prev_scope }

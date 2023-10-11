@@ -2,17 +2,12 @@ use crate::core::c_binding::bindings::ecs_set_hooks_id;
 use crate::core::utility::errors::FlecsErrorCode;
 use crate::ecs_assert;
 
-use super::c_binding::bindings::{
-    ecs_cpp_component_validate, ecs_field_w_size, ecs_get_hooks_id, ecs_get_scope,
-};
+use super::c_binding::bindings::ecs_get_hooks_id;
 use super::utility::functions::{ecs_field, get_full_type_name};
 use super::{c_types::*, component_registration::*, entity::Entity};
-use flecs_ecs_bridge_derive::Component;
-use std::ffi::c_char;
-use std::mem::transmute;
+
 use std::os::raw::c_void;
 use std::ptr;
-use std::sync::OnceLock;
 
 use std::{marker::PhantomData, ops::Deref};
 
@@ -46,6 +41,8 @@ impl Drop for ComponentBindingCtx {
         }
     }
 }
+
+#[allow(clippy::derivable_impls)]
 impl Default for ComponentBindingCtx {
     fn default() -> Self {
         Self {
@@ -129,11 +126,11 @@ impl<T: CachedComponentData + Default> Component<T> {
         }
     }
 
-    fn get_binding_ctx(&self, type_hooks: &mut TypeHooksT) -> &mut ComponentBindingCtx {
+    fn get_binding_ctx(&mut self, type_hooks: &mut TypeHooksT) -> &mut ComponentBindingCtx {
         let mut binding_ctx: *mut ComponentBindingCtx = type_hooks.binding_ctx as *mut _;
 
         if binding_ctx.is_null() {
-            let new_binding_ctx = Box::new(ComponentBindingCtx::default());
+            let new_binding_ctx = Box::<ComponentBindingCtx>::default();
             let static_ref = Box::leak(new_binding_ctx);
             binding_ctx = static_ref;
             type_hooks.binding_ctx = binding_ctx as *mut c_void;

@@ -1,19 +1,18 @@
 use super::{
     c_binding::bindings::{
         ecs_cpp_component_register_explicit, ecs_cpp_enum_constant_register, ecs_cpp_enum_init,
-        ecs_exists, ecs_get_path_w_sep, ecs_get_symbol, ecs_lookup_symbol, ecs_set_scope,
-        ecs_set_symbol, ecs_set_with,
+        ecs_exists, ecs_get_symbol, ecs_set_scope, ecs_set_with,
     },
     c_types::{EntityT, IdT, WorldT},
     enum_type::CachedEnumData,
     lifecycle_traits::register_lifecycle_actions,
     utility::{
         errors::FlecsErrorCode,
-        functions::{get_full_type_name, get_only_type_name, is_empty_type},
+        functions::{get_full_type_name, is_empty_type},
     },
 };
 use crate::ecs_assert;
-use std::{any::type_name, ffi::CStr, os::raw::c_char, sync::OnceLock};
+use std::{ffi::CStr, os::raw::c_char, sync::OnceLock};
 /// Component data that is cached by the `CachedComponentData` trait.
 /// This data is used to register components with the world.
 /// It is also used to ensure that components are registered consistently across different worlds.
@@ -67,6 +66,12 @@ pub trait CachedComponentData: Clone + Default {
         Self::__get_once_lock_data().get().is_some()
     }
 
+    /// checks if the component is registered with a world.
+    /// # Safety
+    /// This function is unsafe because it assumes world is not nullptr
+    /// this is highly unlikely a world would be nullptr, hence this function is not marked as unsafe.
+    /// this will be changed in the future where we get rid of the pointers.
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     fn is_registered_with_world(world: *mut WorldT) -> bool {
         if Self::is_registered() {
             unsafe { is_component_registered_with_world::<Self>(world) }
@@ -458,7 +463,7 @@ where
         }
         return entity;
     }
-    return 0;
+    0
 }
 
 /// checks if the component is registered with a world.

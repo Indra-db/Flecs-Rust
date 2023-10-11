@@ -10,17 +10,16 @@ use crate::ecs_assert;
 use super::{
     c_binding::bindings::{
         ecs_add_id, ecs_clear, ecs_delete, ecs_enable, ecs_enable_id, ecs_entity_desc_t,
-        ecs_entity_init, ecs_flatten, ecs_flatten_desc_t, ecs_get_id, ecs_get_mut_id,
-        ecs_get_world, ecs_has_id, ecs_modified_id, ecs_new_w_id, ecs_remove_id, ecs_set_alias,
-        ecs_set_scope, ecs_set_with, EcsChildOf, EcsComponent, EcsDependsOn, EcsExclusive, EcsIsA,
-        EcsSlotOf, EcsWildcard, FLECS__EEcsComponent,
+        ecs_entity_init, ecs_flatten, ecs_flatten_desc_t, ecs_get_id, ecs_get_mut_id, ecs_has_id,
+        ecs_modified_id, ecs_new_w_id, ecs_remove_id, ecs_set_alias, ecs_set_scope, ecs_set_with,
+        EcsChildOf, EcsComponent, EcsDependsOn, EcsExclusive, EcsIsA, EcsSlotOf, EcsWildcard,
+        FLECS__EEcsComponent,
     },
     c_types::{EntityT, IdT, WorldT, SEPARATOR},
     component_ref::Ref,
     component_registration::{CachedComponentData, ComponentType, Enum, Struct},
     entity_view::EntityView,
     enum_type::CachedEnumData,
-    id::Id,
     utility::functions::{ecs_pair, set_helper},
 };
 
@@ -32,14 +31,15 @@ pub struct Entity {
 impl Deref for Entity {
     type Target = EntityView;
 
+    #[inline]
     fn deref(&self) -> &Self::Target {
         &self.entity_view
     }
 }
 
-impl Into<IdT> for Entity {
-    fn into(self) -> IdT {
-        self.entity_view.id.raw_id
+impl From<Entity> for IdT {
+    fn from(entity: Entity) -> Self {
+        entity.entity_view.id.raw_id
     }
 }
 

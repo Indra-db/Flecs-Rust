@@ -1,9 +1,9 @@
 use super::c_binding::bindings::*;
 use super::component_registration::{ComponentType, Struct};
 use crate::core::component_registration::{CachedComponentData, ComponentData};
-use lazy_static::lazy_static;
+
+use std::ffi::CStr;
 use std::sync::OnceLock;
-use std::{ffi::CStr, ops::Deref};
 
 pub const RUST_ECS_ID_FLAGS_MASK: u64 = 0xFF << 60;
 pub const RUST_ECS_COMPONENT_MASK: u64 = !RUST_ECS_ID_FLAGS_MASK;
@@ -134,7 +134,7 @@ pub const ECS_SYSTEM: u64 = 7;
 pub const FLECS_HI_COMPONENT_ID: u64 = 256;
 
 // Core scopes & entities
-pub const ECS_WORLD: u64 = FLECS_HI_COMPONENT_ID + 0;
+pub const ECS_WORLD: u64 = FLECS_HI_COMPONENT_ID;
 pub const ECS_FLECS: u64 = FLECS_HI_COMPONENT_ID + 1;
 pub const ECS_FLECS_CORE: u64 = FLECS_HI_COMPONENT_ID + 2;
 pub const ECS_FLECS_INTERNALS: u64 = FLECS_HI_COMPONENT_ID + 3;
@@ -195,6 +195,7 @@ pub type Identifier = EcsIdentifier;
 pub type Poly = EcsPoly;
 pub type Target = EcsTarget;
 
+#[allow(clippy::derivable_impls)]
 impl Default for EcsComponent {
     fn default() -> Self {
         Self {
@@ -268,7 +269,6 @@ impl CachedComponentData for EcsComponent {
     }
 
     fn get_symbol_name() -> &'static str {
-        use std::any::type_name;
         static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
         SYMBOL_NAME.get_or_init(|| String::from("EcsComponent"))
     }
@@ -334,6 +334,61 @@ impl Default for ecs_term_t {
             idr: std::ptr::null_mut(),
             flags: Default::default(),
             move_: Default::default(),
+        }
+    }
+}
+
+impl Default for ecs_filter_desc_t {
+    fn default() -> Self {
+        Self {
+            _canary: Default::default(),
+            terms: Default::default(),
+            terms_buffer: std::ptr::null_mut(),
+            terms_buffer_count: Default::default(),
+            storage: std::ptr::null_mut(),
+            instanced: Default::default(),
+            flags: Default::default(),
+            expr: std::ptr::null(),
+            entity: Default::default(),
+        }
+    }
+}
+
+impl Default for ecs_header_t {
+    fn default() -> Self {
+        Self {
+            magic: ecs_filter_t_magic as i32,
+            type_: Default::default(),
+            mixins: std::ptr::null_mut(),
+        }
+    }
+}
+
+#[allow(clippy::derivable_impls)]
+impl Default for ecs_iterable_t {
+    fn default() -> Self {
+        Self {
+            init: Default::default(),
+        }
+    }
+}
+
+impl Default for ecs_filter_t {
+    fn default() -> Self {
+        Self {
+            hdr: Default::default(),
+            terms: std::ptr::null_mut(),
+            term_count: Default::default(),
+            field_count: Default::default(),
+            owned: Default::default(),
+            terms_owned: Default::default(),
+            flags: Default::default(),
+            variable_names: [std::ptr::null_mut()],
+            sizes: std::ptr::null_mut(),
+            entity: Default::default(),
+            iterable: Default::default(),
+            dtor: Default::default(),
+            world: std::ptr::null_mut(),
         }
     }
 }

@@ -19,6 +19,7 @@ pub mod c_binding {
 pub mod entity;
 pub mod enum_type;
 pub mod filter;
+pub mod iterable;
 pub mod term;
 
 pub use archetype::*;
@@ -29,6 +30,7 @@ pub use component_registration::*;
 pub use entity::*;
 pub use filter::*;
 pub use id::*;
+pub use iterable::*;
 pub use lifecycle_traits::*;
 pub use term::*;
 pub use utility::*;
