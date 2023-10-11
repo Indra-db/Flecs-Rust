@@ -195,7 +195,6 @@ fn check_type_info<T>(_type_info: *const ecs_type_info_t) -> bool {
 }
 
 mod tests {
-    use super::*;
 
     #[derive(Default, Debug, Clone)]
     struct MyType {

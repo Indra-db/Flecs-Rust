@@ -10,7 +10,6 @@ use crate::{
     },
     ecs_assert,
 };
-use std::sync::OnceLock;
 
 use super::super::c_types::RUST_ECS_COMPONENT_MASK;
 

@@ -2,17 +2,12 @@ use crate::core::c_binding::bindings::ecs_set_hooks_id;
 use crate::core::utility::errors::FlecsErrorCode;
 use crate::ecs_assert;
 
-use super::c_binding::bindings::{
-    ecs_cpp_component_validate, ecs_field_w_size, ecs_get_hooks_id, ecs_get_scope,
-};
+use super::c_binding::bindings::ecs_get_hooks_id;
 use super::utility::functions::{ecs_field, get_full_type_name};
 use super::{c_types::*, component_registration::*, entity::Entity};
-use flecs_ecs_bridge_derive::Component;
-use std::ffi::c_char;
-use std::mem::transmute;
+
 use std::os::raw::c_void;
 use std::ptr;
-use std::sync::OnceLock;
 
 use std::{marker::PhantomData, ops::Deref};
 

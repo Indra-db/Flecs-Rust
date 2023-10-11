@@ -1,11 +1,8 @@
-use std::ffi::c_char;
 use std::ops::Deref;
 
 use libc::c_void;
 
-use crate::core::c_binding::bindings::{
-    _ecs_poly_is, ecs_get_mut_id, ecs_stage_t_magic, ecs_world_t_magic,
-};
+use crate::core::c_binding::bindings::{_ecs_poly_is, ecs_stage_t_magic, ecs_world_t_magic};
 use crate::core::utility::errors::FlecsErrorCode;
 use crate::core::utility::functions::ecs_pair;
 use crate::ecs_assert;

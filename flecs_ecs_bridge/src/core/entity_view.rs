@@ -3,20 +3,15 @@ use std::{
     ffi::{c_void, CStr, CString},
     mem::MaybeUninit,
     ops::Deref,
-    sync::OnceLock,
 };
 
 // External crate imports
-use flecs_ecs_bridge_derive::Component;
+
 use libc::strlen;
 
 // Module imports from within the current crate
 use crate::{
-    core::{
-        c_binding::bindings::ecs_get_world,
-        data_structures::pair::{PairT, PairTT},
-        utility::errors::FlecsErrorCode,
-    },
+    core::{c_binding::bindings::ecs_get_world, utility::errors::FlecsErrorCode},
     ecs_assert,
 };
 
@@ -24,17 +19,16 @@ use crate::{
 use super::{
     archetype::Archetype,
     c_binding::bindings::{
-        ecs_add_id, ecs_clear, ecs_clone, ecs_delete, ecs_filter_desc_t, ecs_filter_init,
-        ecs_filter_iter, ecs_filter_next, ecs_filter_t, ecs_get_depth, ecs_get_id, ecs_get_name,
-        ecs_get_path_w_sep, ecs_get_symbol, ecs_get_table, ecs_get_target, ecs_get_type,
-        ecs_has_id, ecs_is_alive, ecs_is_enabled_id, ecs_is_valid, ecs_iter_t,
-        ecs_lookup_path_w_sep, ecs_new_id, ecs_oper_kind_t_EcsOptional, ecs_owns_id,
-        ecs_record_find, ecs_record_t, ecs_search_offset, ecs_table_get_type, ecs_table_t,
-        ecs_term_t, EcsAny, EcsChildOf, EcsDisabled, EcsIsEntity, EcsPrefab, EcsUnion, EcsWildcard,
-        ECS_FILTER_INIT,
+        ecs_clone, ecs_filter_desc_t, ecs_filter_init, ecs_filter_iter, ecs_filter_next,
+        ecs_filter_t, ecs_get_depth, ecs_get_id, ecs_get_name, ecs_get_path_w_sep, ecs_get_symbol,
+        ecs_get_table, ecs_get_target, ecs_get_type, ecs_has_id, ecs_is_alive, ecs_is_enabled_id,
+        ecs_is_valid, ecs_iter_t, ecs_lookup_path_w_sep, ecs_new_id, ecs_oper_kind_t_EcsOptional,
+        ecs_owns_id, ecs_record_find, ecs_record_t, ecs_search_offset, ecs_table_get_type,
+        ecs_table_t, ecs_term_t, EcsAny, EcsChildOf, EcsDisabled, EcsIsEntity, EcsPrefab, EcsUnion,
+        EcsWildcard, ECS_FILTER_INIT,
     },
     c_types::*,
-    component_registration::{CachedComponentData, ComponentType, Enum, NotEmptyComponent, Struct},
+    component_registration::{CachedComponentData, ComponentType, Enum, Struct},
     entity::Entity,
     enum_type::CachedEnumData,
     id::Id,

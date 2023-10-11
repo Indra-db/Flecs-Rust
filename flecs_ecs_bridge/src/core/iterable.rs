@@ -1,12 +1,9 @@
-use std::ptr;
-
-use super::c_binding::bindings::{ecs_field_w_size, ecs_filter_desc_t};
+use super::c_binding::bindings::ecs_filter_desc_t;
 use super::c_types::{IterT, WorldT};
 use super::component_registration::CachedComponentData;
-use super::entity::Entity;
-use super::filter::{Filter, Filterable};
+
+use super::filter::Filterable;
 use super::utility::functions::ecs_field;
-use super::world::World;
 
 pub trait Iterable: Sized {
     type TupleType;

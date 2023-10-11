@@ -1,9 +1,9 @@
 use super::c_binding::bindings::*;
 use super::component_registration::{ComponentType, Struct};
 use crate::core::component_registration::{CachedComponentData, ComponentData};
-use lazy_static::lazy_static;
+
+use std::ffi::CStr;
 use std::sync::OnceLock;
-use std::{ffi::CStr, ops::Deref};
 
 pub const RUST_ECS_ID_FLAGS_MASK: u64 = 0xFF << 60;
 pub const RUST_ECS_COMPONENT_MASK: u64 = !RUST_ECS_ID_FLAGS_MASK;
@@ -269,7 +269,6 @@ impl CachedComponentData for EcsComponent {
     }
 
     fn get_symbol_name() -> &'static str {
-        use std::any::type_name;
         static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
         SYMBOL_NAME.get_or_init(|| String::from("EcsComponent"))
     }
@@ -365,6 +364,7 @@ impl Default for ecs_header_t {
     }
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for ecs_iterable_t {
     fn default() -> Self {
         Self {

@@ -1,22 +1,18 @@
-use super::c_types::*;
-use super::component_registration::*;
 use super::{
     c_binding::bindings::{
         _ecs_abort, ecs_filter_copy, ecs_filter_desc_t, ecs_filter_fini, ecs_filter_init,
         ecs_filter_iter, ecs_filter_move, ecs_filter_next, ecs_filter_str, ecs_get_entity,
-        ecs_os_api, ecs_table_lock, ecs_table_unlock, ECS_FILTER_INIT,
+        ecs_os_api, ecs_table_lock, ecs_table_unlock,
     },
     c_types::{FilterT, TermT, WorldT},
     entity::Entity,
     iterable::Iterable,
     term::Term,
-    utility::{errors::FlecsErrorCode, functions::ecs_field},
+    utility::errors::FlecsErrorCode,
     world::World,
 };
-use flecs_ecs_bridge_derive::Component;
+
 use std::ffi::c_char;
-use std::ops::Deref;
-use std::sync::OnceLock;
 
 pub struct Filter<T>
 where
