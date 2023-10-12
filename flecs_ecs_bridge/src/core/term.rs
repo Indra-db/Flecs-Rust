@@ -550,7 +550,7 @@ impl Term {
     /// * `inout` - The inout to set.
     pub fn set_inout(mut self, inout: InOutKind) -> Self {
         self.assert_term();
-        self.term.inout = inout as i32;
+        self.term.inout = inout as ::std::os::raw::c_int;
         self
     }
 
@@ -568,7 +568,7 @@ impl Term {
     pub fn inout_stage(mut self, inout: InOutKind) -> Self {
         self.assert_term();
         self = self.set_inout(inout);
-        if self.term.inout != OperKind::Not as i32 {
+        if self.term.inout != OperKind::Not as ::std::os::raw::c_int {
             self = self.setup_src().entity(0);
         }
         self
@@ -620,7 +620,7 @@ impl Term {
     /// * `oper` - The operator to set.
     pub fn oper(mut self, oper: OperKind) -> Self {
         self.assert_term_id();
-        self.term.oper = oper as i32;
+        self.term.oper = oper as ::std::os::raw::c_int;
         self
     }
 

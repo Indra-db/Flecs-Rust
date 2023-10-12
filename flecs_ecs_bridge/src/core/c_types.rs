@@ -45,8 +45,8 @@ impl InOutKind {
     }
 }
 
-impl From<i32> for InOutKind {
-    fn from(value: i32) -> Self {
+impl From<::std::os::raw::c_int> for InOutKind {
+    fn from(value: ::std::os::raw::c_int) -> Self {
         match value {
             0 => InOutKind::InOutDefault,
             1 => InOutKind::InOutNone,
@@ -76,8 +76,8 @@ impl OperKind {
     }
 }
 
-impl From<i32> for OperKind {
-    fn from(value: i32) -> Self {
+impl From<::std::os::raw::c_int> for OperKind {
+    fn from(value: ::std::os::raw::c_int) -> Self {
         match value {
             0 => OperKind::And,
             1 => OperKind::Or,
@@ -357,7 +357,7 @@ impl Default for ecs_filter_desc_t {
 impl Default for ecs_header_t {
     fn default() -> Self {
         Self {
-            magic: ecs_filter_t_magic as i32,
+            magic: ecs_filter_t_magic as ::std::os::raw::c_int,
             type_: Default::default(),
             mixins: std::ptr::null_mut(),
         }

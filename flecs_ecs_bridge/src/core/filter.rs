@@ -38,7 +38,28 @@ impl<'a, T> FilterBase<'a, T>
 where
     T: Iterable<'a>,
 {
-    fn each_impl(&mut self, mut func: impl FnMut(&mut Entity, T::TupleType), filter: *mut FilterT) {
+    fn each_impl(&mut self, mut func: impl FnMut(T::TupleType), filter: *mut FilterT) {
+        unsafe {
+            let mut iter = ecs_filter_iter(self.world, filter);
+            let func_ref = &mut func;
+            while ecs_filter_next(&mut iter) {
+                let iter_count = iter.count as usize;
+                let array_ptr = T::get_array_ptrs_of_components(&iter);
+                ecs_table_lock(self.world, iter.table);
+                for i in 0..iter_count {
+                    let tuple = T::get_tuple(&array_ptr, i);
+                    func_ref(tuple);
+                }
+                ecs_table_unlock(self.world, iter.table);
+            }
+        }
+    }
+
+    fn each_entity_impl(
+        &mut self,
+        mut func: impl FnMut(&mut Entity, T::TupleType),
+        filter: *mut FilterT,
+    ) {
         unsafe {
             let mut iter = ecs_filter_iter(self.world, filter);
             let func_ref = &mut func;
@@ -140,8 +161,12 @@ where
         }
     }
 
-    pub fn each(&mut self, func: impl FnMut(&mut Entity, T::TupleType)) {
+    pub fn each(&mut self, func: impl FnMut(T::TupleType)) {
         self.base.each_impl(func, self.filter_ptr);
+    }
+
+    pub fn each_entity(&mut self, func: impl FnMut(&mut Entity, T::TupleType)) {
+        self.base.each_entity_impl(func, self.filter_ptr);
     }
 
     pub fn entity(&self) -> Entity {
@@ -257,8 +282,12 @@ where
         filter_obj
     }
 
-    pub fn each(&mut self, func: impl FnMut(&mut Entity, T::TupleType)) {
-        self.base.each_impl(func, &mut self.filter)
+    pub fn each(&mut self, func: impl FnMut(T::TupleType)) {
+        self.base.each_impl(func, &mut self.filter);
+    }
+
+    pub fn each_entity(&mut self, func: impl FnMut(&mut Entity, T::TupleType)) {
+        self.base.each_entity_impl(func, &mut self.filter);
     }
 
     pub fn current_term(&mut self) -> &mut TermT {
