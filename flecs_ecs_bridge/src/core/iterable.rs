@@ -5,16 +5,13 @@ use super::component_registration::CachedComponentData;
 use super::filter::Filterable;
 use super::utility::functions::ecs_field;
 
-pub trait Iterable: Sized {
-    type TupleType;
-    type ArrayType;
+pub trait Iterable<'a>: Sized {
+    type TupleType: 'a;
+    type ArrayType: 'a;
 
-    fn populate(filter: &mut impl Filterable);
-
+    fn populate(&self, filter: &'a mut impl Filterable<'a>);
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t);
-
     fn get_array_ptrs_of_components(it: &IterT) -> Self::ArrayType;
-
     fn get_tuple(array_components: &Self::ArrayType, index: usize) -> Self::TupleType;
 }
 
@@ -24,12 +21,12 @@ pub trait Iterable: Sized {
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 #[rustfmt::skip]
-impl Iterable for ()
+impl<'a> Iterable<'a> for ()
 {
     type TupleType = ();
     type ArrayType = [*mut u8; 0];
 
-    fn populate(filter : &mut impl Filterable){}
+    fn populate(&self, filter : &'a mut impl Filterable<'a>){}
 
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t){}
 
@@ -41,34 +38,31 @@ impl Iterable for ()
     
 }
 #[rustfmt::skip]
-impl<'a, A> Iterable for (&'a mut A,)
+impl<'a, A: 'a> Iterable<'a> for (A,)
 where
     A: CachedComponentData,
 {
     type TupleType = (&'a mut A,);
     type ArrayType = [*mut u8; 1];
 
-    fn populate(filter : &mut impl Filterable)
-    {
+    fn populate(&self, filter: &'a mut impl Filterable<'a>) {
         let world = filter.get_world();
         let term = filter.current_term();
         term.id = A::get_id(world);
         filter.next_term();
     }
 
-    fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t)
-    {
+    fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
         desc.terms[0].id = A::get_id(world);
     }
 
-    fn get_array_ptrs_of_components(it: &IterT) -> Self::ArrayType{
-        unsafe { 
-        [ecs_field::<A>(it,1) as *mut u8]
+    fn get_array_ptrs_of_components(it: &IterT) -> Self::ArrayType {
+        unsafe {
+            [ecs_field::<A>(it, 1) as *mut u8]
         }
     }
 
-    fn get_tuple(array_components: &Self::ArrayType, index: usize) -> Self::TupleType
-    {
+    fn get_tuple(array_components: &Self::ArrayType, index: usize) -> Self::TupleType {
         unsafe {
             let array_a = array_components[0] as *mut A;
             let ref_a = &mut (*array_a.add(index));
@@ -78,7 +72,7 @@ where
 }
 
 #[rustfmt::skip]
-impl<'a, A, B> Iterable for (&'a mut A, &'a mut B)
+impl<'a, A: 'a, B: 'a> Iterable<'a> for (A, B)
 where
     A: CachedComponentData,
     B: CachedComponentData,
@@ -86,7 +80,7 @@ where
     type TupleType = (&'a mut A, &'a mut B);
     type ArrayType = [*mut u8; 2];
 
-    fn populate(filter : &mut impl Filterable)
+    fn populate(&self,filter : &'a mut impl Filterable<'a>)
     {
         let world = filter.get_world();
         let term = filter.current_term();
@@ -122,7 +116,7 @@ where
 }
 
 #[rustfmt::skip]
-impl<'a, A, B, C> Iterable for (&'a mut A, &'a mut B, &'a mut C)
+impl<'a, A: 'a, B: 'a, C: 'a> Iterable<'a> for (A,B,C)
 where
     A: CachedComponentData,
     B: CachedComponentData,
@@ -131,7 +125,7 @@ where
     type TupleType = (&'a mut A, &'a mut B, &'a mut C);
     type ArrayType = [*mut u8; 3];
 
-    fn populate(filter : &mut impl Filterable)
+    fn populate(&self, filter : &'a mut impl Filterable<'a>)
     {
         let world = filter.get_world();
         let term = filter.current_term();

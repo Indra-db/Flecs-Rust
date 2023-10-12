@@ -14,17 +14,17 @@ use super::{
 
 use std::ffi::c_char;
 
-struct FilterBase<T>
+struct FilterBase<'a, T>
 where
-    T: Iterable,
+    T: Iterable<'a>,
 {
     pub world: *mut WorldT,
-    _phantom: std::marker::PhantomData<T>,
+    _phantom: std::marker::PhantomData<&'a T>,
 }
 
-impl<T> Default for FilterBase<T>
+impl<'a, T> Default for FilterBase<'a, T>
 where
-    T: Iterable,
+    T: Iterable<'a>,
 {
     fn default() -> Self {
         Self {
@@ -34,9 +34,9 @@ where
     }
 }
 
-impl<T> FilterBase<T>
+impl<'a, T> FilterBase<'a, T>
 where
-    T: Iterable,
+    T: Iterable<'a>,
 {
     fn each_impl(&mut self, mut func: impl FnMut(&mut Entity, T::TupleType), filter: *mut FilterT) {
         unsafe {
@@ -91,17 +91,17 @@ where
     }
 }
 
-pub struct FilterView<T>
+pub struct FilterView<'a, T>
 where
-    T: Iterable,
+    T: Iterable<'a>,
 {
-    base: FilterBase<T>,
+    base: FilterBase<'a, T>,
     filter_ptr: *mut FilterT,
 }
 
-impl<T> Default for FilterView<T>
+impl<'a, T> Default for FilterView<'a, T>
 where
-    T: Iterable,
+    T: Iterable<'a>,
 {
     fn default() -> Self {
         Self {
@@ -111,9 +111,9 @@ where
     }
 }
 
-impl<T> Clone for FilterView<T>
+impl<'a, T> Clone for FilterView<'a, T>
 where
-    T: Iterable,
+    T: Iterable<'a>,
 {
     fn clone(&self) -> Self {
         Self {
@@ -126,9 +126,9 @@ where
     }
 }
 
-impl<T> FilterView<T>
+impl<'a, T> FilterView<'a, T>
 where
-    T: Iterable,
+    T: Iterable<'a>,
 {
     pub fn new_view(world: *mut WorldT, filter: *const FilterT) -> Self {
         Self {
@@ -160,25 +160,26 @@ where
         self.base.field_count_impl(self.filter_ptr)
     }
 
+    #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
     pub fn to_string(&self) -> String {
         self.base.to_string_impl(self.filter_ptr)
     }
 }
 
 #[derive(Default)]
-pub struct Filter<T>
+pub struct Filter<'a, T>
 where
-    T: Iterable,
+    T: Iterable<'a>,
 {
-    base: FilterBase<T>,
+    base: FilterBase<'a, T>,
     filter: FilterT,
     desc: ecs_filter_desc_t,
     next_term_index: usize,
 }
 
-impl<T> Filter<T>
+impl<'a, T> Filter<'a, T>
 where
-    T: Iterable,
+    T: Iterable<'a>,
 {
     pub fn new(world: &World) -> Self {
         let mut desc = ecs_filter_desc_t::default();
@@ -197,6 +198,7 @@ where
         }
     }
 
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new_ownership(world: *mut WorldT, filter: *mut FilterT) -> Self {
         let mut filter_obj = Filter {
             base: FilterBase {
@@ -215,6 +217,7 @@ where
 
     //TODO: this needs testing -> desc.storage pointer becomes invalid after this call as it re-allocates after this new
     // determine if this is a problem
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new_from_desc(world: *mut WorldT, desc: *mut ecs_filter_desc_t) -> Self {
         let mut filter_obj = Filter {
             base: FilterBase {
@@ -288,9 +291,9 @@ where
     }
 }
 
-impl<T> Drop for Filter<T>
+impl<'a, T> Drop for Filter<'a, T>
 where
-    T: Iterable,
+    T: Iterable<'a>,
 {
     fn drop(&mut self) {
         // this is a hack to prevent ecs_filter_fini from freeing the memory of our stack allocated filter
@@ -300,12 +303,12 @@ where
     }
 }
 
-impl<T> Clone for Filter<T>
+impl<'a, T> Clone for Filter<'a, T>
 where
-    T: Iterable,
+    T: Iterable<'a>,
 {
     fn clone(&self) -> Self {
-        let mut new_filter = Filter::<T> {
+        let mut new_filter = Filter::<'a, T> {
             base: FilterBase {
                 world: self.base.world,
                 _phantom: std::marker::PhantomData,
@@ -320,15 +323,15 @@ where
     }
 }
 
-pub trait Filterable: Sized {
+pub trait Filterable<'a>: Sized {
     fn current_term(&mut self) -> &mut TermT;
     fn next_term(&mut self);
     fn get_world(&self) -> *mut WorldT;
 }
 
-impl<T> Filterable for Filter<T>
+impl<'a, T> Filterable<'a> for Filter<'a, T>
 where
-    T: Iterable,
+    T: Iterable<'a>,
 {
     fn current_term(&mut self) -> &mut TermT {
         self.current_term()
