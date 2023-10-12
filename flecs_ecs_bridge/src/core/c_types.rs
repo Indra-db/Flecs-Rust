@@ -375,20 +375,6 @@ impl Default for ecs_iterable_t {
 
 impl Default for ecs_filter_t {
     fn default() -> Self {
-        Self {
-            hdr: Default::default(),
-            terms: std::ptr::null_mut(),
-            term_count: Default::default(),
-            field_count: Default::default(),
-            owned: Default::default(),
-            terms_owned: Default::default(),
-            flags: Default::default(),
-            variable_names: [std::ptr::null_mut()],
-            sizes: std::ptr::null_mut(),
-            entity: Default::default(),
-            iterable: Default::default(),
-            dtor: Default::default(),
-            world: std::ptr::null_mut(),
-        }
+        unsafe { ECS_FILTER_INIT }
     }
 }
