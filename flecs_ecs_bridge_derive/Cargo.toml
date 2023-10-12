@@ -15,3 +15,10 @@ proc-macro2 = "1.0.67"
 [profile.dev]
 opt-level = 0
 debuginfo = 0
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+overflow-checks = false

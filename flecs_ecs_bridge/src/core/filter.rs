@@ -286,6 +286,7 @@ where
         self.base.each_impl(func, &mut self.filter);
     }
 
+    #[inline]
     pub fn each_entity(&mut self, func: impl FnMut(&mut Entity, T::TupleType)) {
         self.base.each_entity_impl(func, &mut self.filter);
     }
@@ -352,13 +353,13 @@ where
     }
 }
 
-pub trait Filterable<'a>: Sized {
+pub trait Filterable: Sized {
     fn current_term(&mut self) -> &mut TermT;
     fn next_term(&mut self);
     fn get_world(&self) -> *mut WorldT;
 }
 
-impl<'a, T> Filterable<'a> for Filter<'a, T>
+impl<'a, T> Filterable for Filter<'a, T>
 where
     T: Iterable<'a>,
 {

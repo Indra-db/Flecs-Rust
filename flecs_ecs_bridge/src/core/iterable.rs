@@ -9,7 +9,7 @@ pub trait Iterable<'a>: Sized {
     type TupleType: 'a;
     type ArrayType: 'a;
 
-    fn populate(&self, filter: &'a mut impl Filterable<'a>);
+    fn populate(filter: &mut impl Filterable);
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t);
     fn get_array_ptrs_of_components(it: &IterT) -> Self::ArrayType;
     fn get_tuple(array_components: &Self::ArrayType, index: usize) -> Self::TupleType;
@@ -26,7 +26,7 @@ impl<'a> Iterable<'a> for ()
     type TupleType = ();
     type ArrayType = [*mut u8; 0];
 
-    fn populate(&self, filter : &'a mut impl Filterable<'a>){}
+    fn populate(filter : &mut impl Filterable){}
 
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t){}
 
@@ -45,7 +45,7 @@ where
     type TupleType = (&'a mut A,);
     type ArrayType = [*mut u8; 1];
 
-    fn populate(&self, filter: &'a mut impl Filterable<'a>) {
+    fn populate(filter: &mut impl Filterable) {
         let world = filter.get_world();
         let term = filter.current_term();
         term.id = A::get_id(world);
@@ -80,7 +80,7 @@ where
     type TupleType = (&'a mut A, &'a mut B);
     type ArrayType = [*mut u8; 2];
 
-    fn populate(&self,filter : &'a mut impl Filterable<'a>)
+    fn populate(filter : &mut impl Filterable)
     {
         let world = filter.get_world();
         let term = filter.current_term();
@@ -125,7 +125,7 @@ where
     type TupleType = (&'a mut A, &'a mut B, &'a mut C);
     type ArrayType = [*mut u8; 3];
 
-    fn populate(&self, filter : &'a mut impl Filterable<'a>)
+    fn populate(filter : &mut impl Filterable)
     {
         let world = filter.get_world();
         let term = filter.current_term();
