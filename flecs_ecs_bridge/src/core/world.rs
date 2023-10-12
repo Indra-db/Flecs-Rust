@@ -9,7 +9,7 @@ use crate::ecs_assert;
 
 use super::c_binding::bindings::{
     ecs_async_stage_free, ecs_async_stage_new, ecs_atfini, ecs_count_id, ecs_defer_begin,
-    ecs_defer_end, ecs_defer_resume, ecs_defer_suspend, ecs_delete_with, ecs_dim,
+    ecs_defer_end, ecs_defer_resume, ecs_defer_suspend, ecs_delete, ecs_delete_with, ecs_dim,
     ecs_enable_range_check, ecs_ensure, ecs_exists, ecs_fini, ecs_fini_action_t, ecs_frame_begin,
     ecs_frame_end, ecs_get_alive, ecs_get_context, ecs_get_name, ecs_get_scope, ecs_get_stage,
     ecs_get_stage_count, ecs_get_stage_id, ecs_get_world, ecs_get_world_info, ecs_init,
@@ -1237,52 +1237,54 @@ impl World {
         );
     }
 
-    pub fn delete_with_id(&self, with_id: IdT) {
+    pub fn delete_all_with_id(&self, with_id: IdT) {
         unsafe {
             ecs_delete_with(self.world, with_id);
         }
     }
 
-    pub fn delete<T: CachedComponentData>(&self) {
-        self.delete_with_id(T::get_id(self.world));
+    pub fn delete_all<T: CachedComponentData>(&self) {
+        self.delete_all_with_id(T::get_id(self.world));
     }
 
     pub fn delete_pair_ids(&self, first: IdT, second: IdT) {
-        self.delete_with_id(ecs_pair(first, second));
+        self.delete_all_with_id(ecs_pair(first, second));
     }
 
-    pub fn delete_pair<First, Second>(&self)
+    pub fn delete_all_pair<First, Second>(&self)
     where
         First: CachedComponentData,
         Second: CachedComponentData,
     {
-        self.delete_with_id(ecs_pair(
+        self.delete_all_with_id(ecs_pair(
             First::get_id(self.world),
             Second::get_id(self.world),
         ));
     }
 
-    pub fn delete_pair_first_id<Second: CachedComponentData>(&self, first: IdT) {
-        self.delete_with_id(ecs_pair(first, Second::get_id(self.world)));
+    pub fn delete_all_pair_first_id<Second: CachedComponentData>(&self, first: IdT) {
+        self.delete_all_with_id(ecs_pair(first, Second::get_id(self.world)));
     }
 
-    pub fn delete_pair_second_id<First: CachedComponentData>(&self, second: IdT) {
-        self.delete_with_id(ecs_pair(First::get_id(self.world), second));
+    pub fn delete_all_pair_second_id<First: CachedComponentData>(&self, second: IdT) {
+        self.delete_all_with_id(ecs_pair(First::get_id(self.world), second));
     }
 
-    pub fn delete_enum_constant<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
+    pub fn delete_all_enum_constant<
+        T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
+    >(
         &self,
         enum_value: T,
     ) {
-        self.delete_with_id(enum_value.get_entity_id_from_enum_field(self.world));
+        self.delete_all_with_id(enum_value.get_entity_id_from_enum_field(self.world));
     }
 
-    pub fn delete_enum_tag_pair<First, Second>(&self, enum_value: Second)
+    pub fn delete_all_enum_tag_pair<First, Second>(&self, enum_value: Second)
     where
         First: CachedComponentData,
         Second: CachedComponentData + ComponentType<Enum> + CachedEnumData,
     {
-        self.delete_with_id(ecs_pair(
+        self.delete_all_with_id(ecs_pair(
             First::get_id(self.world),
             enum_value.get_entity_id_from_enum_field(self.world),
         ));

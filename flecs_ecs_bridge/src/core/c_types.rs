@@ -38,7 +38,6 @@ pub enum InOutKind {
     Out = 4,          // Term is only written
 }
 
-//TODO: this is a test
 impl InOutKind {
     pub fn is_read_only(&self) -> bool {
         matches!(self, Self::In)
@@ -69,7 +68,6 @@ pub enum OperKind {
     NotFrom,  // Term must match none of the components from term id
 }
 
-//TODO: this is a test
 impl OperKind {
     pub fn is_negation(&self) -> bool {
         matches!(self, Self::Not | Self::NotFrom)

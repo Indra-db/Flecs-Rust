@@ -11,9 +11,9 @@ use super::{
     c_binding::bindings::{
         ecs_add_id, ecs_clear, ecs_delete, ecs_enable, ecs_enable_id, ecs_entity_desc_t,
         ecs_entity_init, ecs_flatten, ecs_flatten_desc_t, ecs_get_id, ecs_get_mut_id, ecs_has_id,
-        ecs_modified_id, ecs_new_w_id, ecs_remove_id, ecs_set_alias, ecs_set_scope, ecs_set_with,
-        EcsChildOf, EcsComponent, EcsDependsOn, EcsExclusive, EcsIsA, EcsSlotOf, EcsWildcard,
-        FLECS__EEcsComponent,
+        ecs_modified_id, ecs_new_id, ecs_new_w_id, ecs_remove_id, ecs_set_alias, ecs_set_scope,
+        ecs_set_with, EcsChildOf, EcsComponent, EcsDependsOn, EcsExclusive, EcsIsA, EcsSlotOf,
+        EcsWildcard, FLECS__EEcsComponent,
     },
     c_types::{EntityT, IdT, WorldT, SEPARATOR},
     component_ref::Ref,
@@ -51,7 +51,7 @@ impl Entity {
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new(world: *mut WorldT) -> Self {
         Self {
-            entity_view: EntityView::new_from_existing(world, unsafe { ecs_new_w_id(world, 0) }),
+            entity_view: EntityView::new_from_existing(world, unsafe { ecs_new_id(world) }),
         }
     }
 
