@@ -28,11 +28,11 @@ fn entity_new_named_from_scope() {
     let entity = world.new_entity_named("Foo");
     assert!(entity.is_valid());
 
-    let prev = world.set_scope_id(entity.raw_id);
+    let prev = world.set_scope_with_id(entity.raw_id);
     let child = world.new_entity_named("Bar");
     assert_eq!(child.is_valid(), true);
 
-    world.set_scope_id(prev.raw_id);
+    world.set_scope_with_id(prev.raw_id);
 
     assert_eq!(child.get_name(), "Bar");
     assert_eq!(child.get_hierachy_path_default().unwrap(), "::Foo::Bar");
@@ -52,7 +52,7 @@ fn entity_new_nested_named_from_nested_scope() {
     assert_eq!(entity.get_hierachy_path_default().unwrap(), "::Foo::Bar");
 
     // Set the current scope to `entity`
-    let prev = world.set_scope_id(entity.raw_id);
+    let prev = world.set_scope_with_id(entity.raw_id);
 
     // Create a child entity with nested name "Hello::World" under the current scope
     let child = world.new_entity_named("Hello::World");
@@ -61,7 +61,7 @@ fn entity_new_nested_named_from_nested_scope() {
     assert_eq!(child.is_valid(), true);
 
     // Restore the previous scope
-    world.set_scope_id(prev.raw_id);
+    world.set_scope_with_id(prev.raw_id);
 
     // Verify the name and hierarchical path of the child entity
     assert_eq!(child.get_name(), "World");
