@@ -11,6 +11,7 @@ This library has not been advertized nor published yet to crates.io for that rea
 ### To-Do List
 
 #### core
+```[tasklist]
 - [x] id
 - [x] entity_view
 - [x] entity
@@ -27,13 +28,19 @@ This library has not been advertized nor published yet to crates.io for that rea
 - [x] world + scoped_world
 - [x] term
 - [ ] filter
+    - [x] create filter & loop over components
+    - [ ] add support for optional components
+    - [ ] filter builder
 - [ ] query
+```
 
 #### non-core
+```[tasklist]
 - [ ] event
 - [ ] observer
-
+```
 #### addons
+```[tasklist]
 - [ ] systems
 - [ ] alerts
 - [ ] app
@@ -54,11 +61,14 @@ This library has not been advertized nor published yet to crates.io for that rea
 - [ ] logging
     - [x] leveling, colors, timestamp, timedelta
     - [ ] log with level
+```
 
 #### future plans
+```[tasklist]
 - [ ] make the API rustier, no more pointers.
 - [ ] use custom string type to avoid re-allocating C allocated strings instead of using String with new allocation
-- [ ] add a non-heap allocating way of creating filters. This is useful for creating filters regularly in hot path code, e.g. systems. 
+- [x] add a non-heap allocating way of creating filters. This is useful for creating filters regularly in hot path code, e.g. systems. 
+```
 
 ## The Aim
 
