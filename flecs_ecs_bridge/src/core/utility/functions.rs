@@ -4,14 +4,17 @@ use crate::{
             ecs_field_w_size, ecs_get_mut_id, ecs_has_id, ecs_modified_id, ecs_strip_generation,
             ECS_GENERATION_MASK, ECS_ROW_MASK,
         },
-        c_types::{EntityT, IdT, IterT, WorldT, ECS_PAIR},
+        c_types::{EntityT, IdT, InOutKind, IterT, OperKind, WorldT, ECS_PAIR},
         component_registration::CachedComponentData,
         utility::errors::FlecsErrorCode,
     },
     ecs_assert,
 };
 
-use super::super::c_types::RUST_ECS_COMPONENT_MASK;
+use super::{
+    super::c_types::RUST_ECS_COMPONENT_MASK,
+    traits::{InOutType, OperType},
+};
 
 #[inline(always)]
 pub fn ecs_entity_t_comb(lo: u64, hi: u64) -> u64 {
@@ -127,4 +130,12 @@ pub fn get_generation(entity: EntityT) -> u32 {
 pub unsafe fn ecs_field<T: CachedComponentData>(it: *const IterT, index: i32) -> *mut T {
     let size = std::mem::size_of::<T>();
     ecs_field_w_size(it, size, index) as *mut T
+}
+
+pub(crate) fn type_to_inout<T: InOutType>() -> InOutKind {
+    T::IN_OUT
+}
+
+pub(crate) fn type_to_oper<T: OperType>() -> OperKind {
+    T::OPER
 }

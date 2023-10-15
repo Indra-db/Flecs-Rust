@@ -1,18 +1,27 @@
+use libc::{memcpy, memset};
+
+use crate::{
+    core::c_binding::bindings::{ecs_term_is_initialized, ecs_term_t, FLECS_TERM_DESC_MAX},
+    ecs_assert,
+};
+
 use super::{
     c_binding::bindings::{
         _ecs_abort, ecs_filter_copy, ecs_filter_desc_t, ecs_filter_fini, ecs_filter_init,
-        ecs_filter_iter, ecs_filter_move, ecs_filter_next, ecs_filter_str, ecs_get_entity,
-        ecs_os_api, ecs_table_lock, ecs_table_unlock,
+        ecs_filter_iter, ecs_filter_move, ecs_filter_next, ecs_filter_str, ecs_flags32_t,
+        ecs_get_entity, ecs_os_api, ecs_table_lock, ecs_table_unlock,
     },
-    c_types::{FilterT, TermT, WorldT},
+    c_types::{FilterT, IdT, TermT, WorldT},
+    component_registration::{CachedComponentData, ComponentType, Enum},
     entity::Entity,
+    enum_type::CachedEnumData,
     iterable::Iterable,
-    term::Term,
-    utility::errors::FlecsErrorCode,
+    term::{Term, TermBuilder},
+    utility::{errors::FlecsErrorCode, functions::type_to_inout, traits::InOutType},
     world::World,
 };
 
-use std::ffi::c_char;
+use std::{ffi::c_char, os::raw::c_void};
 
 struct FilterBase<'a, T>
 where

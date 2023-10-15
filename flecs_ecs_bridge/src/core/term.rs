@@ -206,30 +206,74 @@ impl Term {
     pub fn get_second(&self) -> Entity {
         Entity::new_from_existing(self.world, self.term.second.id)
     }
+
+    pub fn move_raw_term(&mut self) -> TermT {
+        unsafe { ecs_term_move(&mut self.term) }
+    }
 }
 
 /// Builder pattern functions
-impl Term {
-    fn assert_term_id(&self) {
+impl Term {}
+
+impl Drop for Term {
+    fn drop(&mut self) {
+        unsafe {
+            if !self.term_id.name.is_null() {
+                let _ = CString::from_raw(self.term_id.name);
+            }
+            ecs_term_fini(&mut self.term);
+        }
+    }
+}
+
+pub trait TermBuilder: Sized {
+    fn get_world(&self) -> *mut WorldT;
+
+    fn get_term(&mut self) -> &mut TermT;
+
+    fn get_term_id(&mut self) -> &mut TermIdT;
+
+    /// Set term to a specific term
+    ///
+    /// # Arguments
+    ///
+    /// * `term` - The term to set.
+    ///
+    /// # C++ API Equivalent
+    ///
+    /// term_builder_i::set_term`
+    fn set_term(&mut self, term: *mut TermT) {
+        let mut self_term = self.get_term();
+        self_term = unsafe { &mut *term };
+        let mut self_term_id = self.get_term_id();
+        if !term.is_null() {
+            self_term_id = &mut self_term.src;
+        } else {
+            // this might be wrong as we're not using ptrs. but we'll see.
+            self_term_id = &mut Default::default();
+        }
+    }
+
+    fn assert_term_id(&mut self) {
         ecs_assert!(
-            self.term_id.id != 0,
+            self.get_term_id().id != 0,
             FlecsErrorCode::InvalidParameter,
             "no active term (call .term() first"
         );
     }
 
-    fn assert_term(&self) {
+    fn assert_term(&mut self) {
         ecs_assert!(
-            self.term.id != 0,
+            self.get_term().id != 0,
             FlecsErrorCode::InvalidParameter,
             "no active term (call .term() first"
         );
     }
 
     /// The self flag indicates the term identifier itself is used
-    pub fn self_term(mut self) -> Self {
+    fn self_term(mut self) -> Self {
         self.assert_term_id();
-        self.term_id.flags |= ECS_SELF;
+        self.get_term_id().flags |= ECS_SELF;
         self
     }
 
@@ -240,11 +284,11 @@ impl Term {
     /// # Arguments
     ///
     /// * `traverse_relationship` - The optional relationship to traverse.
-    pub fn up_id(mut self, traverse_relationship: Option<EntityT>) -> Self {
+    fn up_id(mut self, traverse_relationship: Option<EntityT>) -> Self {
         self.assert_term_id();
-        self.term_id.flags |= ECS_UP;
+        self.get_term_id().flags |= ECS_UP;
         if let Some(trav_rel) = traverse_relationship {
-            self.term_id.trav = trav_rel;
+            self.get_term_id().trav = trav_rel;
         }
         self
     }
@@ -256,10 +300,10 @@ impl Term {
     /// # Type Arguments
     ///
     /// * `TravRel` - The relationship to traverse.
-    pub fn up<TravRel: CachedComponentData>(mut self) -> Self {
+    fn up<TravRel: CachedComponentData>(mut self) -> Self {
         self.assert_term_id();
-        self.term_id.flags |= ECS_UP;
-        self.term_id.trav = TravRel::get_id(self.world);
+        self.get_term_id().flags |= ECS_UP;
+        self.get_term_id().trav = TravRel::get_id(self.get_world());
         self
     }
 
@@ -269,11 +313,11 @@ impl Term {
     /// # Arguments
     ///
     /// * `traverse_relationship` - The optional relationship to traverse.
-    pub fn cascade_id(mut self, traverse_relationship: Option<EntityT>) -> Self {
+    fn cascade_id(mut self, traverse_relationship: Option<EntityT>) -> Self {
         self.assert_term_id();
-        self.term_id.flags |= ECS_CASCADE;
+        self.get_term_id().flags |= ECS_CASCADE;
         if let Some(trav_rel) = traverse_relationship {
-            self.term_id.trav = trav_rel;
+            self.get_term_id().trav = trav_rel;
         }
         self
     }
@@ -284,17 +328,17 @@ impl Term {
     /// # Type Arguments
     ///
     /// * `TravRel` - The relationship to traverse.
-    pub fn cascade<TravRel: CachedComponentData>(mut self) -> Self {
+    fn cascade<TravRel: CachedComponentData>(mut self) -> Self {
         self.assert_term_id();
-        self.term_id.flags |= ECS_CASCADE;
-        self.term_id.trav = TravRel::get_id(self.world);
+        self.get_term_id().flags |= ECS_CASCADE;
+        self.get_term_id().trav = TravRel::get_id(self.get_world());
         self
     }
 
     /// the parent flag is short for up (flecs::ChildOf)
-    pub fn parent(mut self) -> Self {
+    fn parent(mut self) -> Self {
         self.assert_term_id();
-        self.term_id.flags |= ECS_PARENT;
+        self.get_term_id().flags |= ECS_PARENT;
         self
     }
 
@@ -304,10 +348,10 @@ impl Term {
     ///
     /// * `traverse_relationship` - The relationship to traverse.
     /// * `flags` - The direction to traverse.
-    pub fn trav(mut self, traverse_relationship: EntityT, flags: Flags32T) -> Self {
+    fn trav(mut self, traverse_relationship: EntityT, flags: Flags32T) -> Self {
         self.assert_term_id();
-        self.term_id.trav = traverse_relationship;
-        self.term_id.flags |= flags;
+        self.get_term_id().trav = traverse_relationship;
+        self.get_term_id().flags |= flags;
         self
     }
 
@@ -316,9 +360,9 @@ impl Term {
     /// # Arguments
     ///
     /// * `id` - The id to set.
-    pub fn id(mut self, id: EntityT) -> Self {
+    fn id(mut self, id: EntityT) -> Self {
         self.assert_term_id();
-        self.term_id.id = id;
+        self.get_term_id().id = id;
         self
     }
 
@@ -327,7 +371,7 @@ impl Term {
     /// # Arguments
     ///
     /// * `id` - The id to set.
-    pub fn term(self, id: IdT) -> Self {
+    fn set_term_id(self, id: IdT) -> Self {
         self.id(id)
     }
 
@@ -342,10 +386,10 @@ impl Term {
     /// # Arguments
     ///
     /// * `id` - The id to set.
-    pub fn entity(mut self, id: EntityT) -> Self {
+    fn entity(mut self, id: EntityT) -> Self {
         self.assert_term_id();
-        self.term_id.flags |= ECS_IS_ENTITY;
-        self.term_id.id = id;
+        self.get_term_id().flags |= ECS_IS_ENTITY;
+        self.get_term_id().id = id;
         self
     }
 
@@ -354,12 +398,12 @@ impl Term {
     /// # Arguments
     ///
     /// * `name` - The name to set.
-    pub fn name(mut self, name: &str) -> Self {
+    fn name(mut self, name: &str) -> Self {
         self.assert_term_id();
         let c_name = CString::new(name).unwrap();
         let leak_name = CString::into_raw(c_name);
-        self.term_id.name = leak_name;
-        self.term_id.flags |= ECS_IS_NAME;
+        self.get_term_id().name = leak_name;
+        self.get_term_id().flags |= ECS_IS_NAME;
         self
     }
 
@@ -368,12 +412,12 @@ impl Term {
     /// # Arguments
     ///
     /// * `var_name` - The name of the variable.
-    pub fn var(mut self, var_name: &str) -> Self {
+    fn var(mut self, var_name: &str) -> Self {
         self.assert_term_id();
         let c_name = CString::new(var_name).unwrap();
         let leak_name = CString::into_raw(c_name);
-        self.term_id.flags |= ECS_IS_VARIABLE;
-        self.term_id.name = leak_name;
+        self.get_term_id().flags |= ECS_IS_VARIABLE;
+        self.get_term_id().name = leak_name;
         self
     }
 
@@ -382,33 +426,33 @@ impl Term {
     /// # Arguments
     ///
     /// * `flags` - The flags to set.
-    pub fn flags(mut self, flags: Flags32T) -> Self {
+    fn flags(mut self, flags: Flags32T) -> Self {
         self.assert_term_id();
-        self.term_id.flags = flags;
+        self.get_term_id().flags = flags;
         self
     }
 
     /// Call prior to setting values for src identifier
-    pub fn setup_src(mut self) -> Self {
+    fn setup_src(mut self) -> Self {
         self.assert_term();
-        self.term_id = self.term.src;
+        *self.get_term_id() = self.get_term().src;
         self
     }
 
     /// Call prior to setting values for first identifier. This is either the
     /// component identifier, or first element of a pair (in case second is
     /// populated as well).
-    pub fn setup_first(mut self) -> Self {
+    fn setup_first(mut self) -> Self {
         self.assert_term();
-        self.term_id = self.term.first;
+        *self.get_term_id() = self.get_term().first;
         self
     }
 
     /// Call prior to setting values for second identifier. This is the second
     /// element of a pair. Requires that first() is populated as well.
-    pub fn setup_second(mut self) -> Self {
+    fn setup_second(mut self) -> Self {
         self.assert_term();
-        self.term_id = self.term.second;
+        *self.get_term_id() = self.get_term().second;
         self
     }
 
@@ -417,7 +461,7 @@ impl Term {
     /// # Arguments
     ///
     /// * `id` - The id to set.
-    pub fn src_id(self, id: EntityT) -> Self {
+    fn src_id(self, id: EntityT) -> Self {
         self.setup_src().id(id)
     }
 
@@ -426,8 +470,8 @@ impl Term {
     /// # Type Arguments
     ///
     /// * `T` - The type to use.
-    pub fn src<T: CachedComponentData>(self) -> Self {
-        let world = self.world;
+    fn src<T: CachedComponentData>(self) -> Self {
+        let world = self.get_world();
         self.src_id(T::get_id(world))
     }
 
@@ -437,7 +481,7 @@ impl Term {
     /// # Arguments
     ///
     /// * `name` - The name to set.
-    pub fn src_name(mut self, name: &str) -> Self {
+    fn src_name(mut self, name: &str) -> Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
@@ -457,7 +501,7 @@ impl Term {
     /// # Arguments
     ///
     /// * `id` - The id to set.
-    pub fn first_id(self, id: EntityT) -> Self {
+    fn first_id(self, id: EntityT) -> Self {
         self.setup_first().id(id)
     }
 
@@ -466,8 +510,8 @@ impl Term {
     /// # Type Arguments
     ///
     /// * `T` - The type to use.
-    pub fn first<T: CachedComponentData>(self) -> Self {
-        let world = self.world;
+    fn first<T: CachedComponentData>(self) -> Self {
+        let world = self.get_world();
         self.first_id(T::get_id(world))
     }
 
@@ -477,7 +521,7 @@ impl Term {
     /// # Arguments
     ///
     /// * `name` - The name to set.
-    pub fn first_name(mut self, name: &str) -> Self {
+    fn first_name(mut self, name: &str) -> Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
@@ -497,7 +541,7 @@ impl Term {
     /// # Arguments
     ///
     /// * `id` - The id to set.
-    pub fn second_id(self, id: EntityT) -> Self {
+    fn second_id(self, id: EntityT) -> Self {
         self.setup_second().id(id)
     }
 
@@ -506,8 +550,8 @@ impl Term {
     /// # Type Arguments
     ///
     /// * `T` - The type to use.
-    pub fn second<T: CachedComponentData>(self) -> Self {
-        let world = self.world;
+    fn second<T: CachedComponentData>(self) -> Self {
+        let world = self.get_world();
         self.second_id(T::get_id(world))
     }
 
@@ -517,7 +561,7 @@ impl Term {
     /// # Arguments
     ///
     /// * `name` - The name to set.
-    pub fn second_name(mut self, name: &str) -> Self {
+    fn second_name(mut self, name: &str) -> Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
@@ -537,9 +581,9 @@ impl Term {
     /// # Arguments
     ///
     /// * `role` - The role to set.
-    pub fn role(mut self, role: IdT) -> Self {
+    fn role(mut self, role: IdT) -> Self {
         self.assert_term();
-        self.term.id_flags = role;
+        self.get_term().id_flags = role;
         self
     }
 
@@ -548,9 +592,9 @@ impl Term {
     /// # Arguments
     ///
     /// * `inout` - The inout to set.
-    pub fn set_inout(mut self, inout: InOutKind) -> Self {
+    fn set_inout(mut self, inout: InOutKind) -> Self {
         self.assert_term();
-        self.term.inout = inout as ::std::os::raw::c_int;
+        self.get_term().inout = inout as ::std::os::raw::c_int;
         self
     }
 
@@ -565,10 +609,10 @@ impl Term {
     /// # Arguments
     ///
     /// * 'inout' - The inout to set.
-    pub fn inout_stage(mut self, inout: InOutKind) -> Self {
+    fn inout_stage(mut self, inout: InOutKind) -> Self {
         self.assert_term();
         self = self.set_inout(inout);
-        if self.term.inout != OperKind::Not as ::std::os::raw::c_int {
+        if self.get_term().inout != OperKind::Not as ::std::os::raw::c_int {
             self = self.setup_src().entity(0);
         }
         self
@@ -577,39 +621,39 @@ impl Term {
     /// Short for inout_stage(flecs::Out).
     ///  Use when system uses add, remove or set.
     ///
-    pub fn write(self) -> Self {
+    fn write(self) -> Self {
         self.inout_stage(InOutKind::Out)
     }
 
     /// Short for inout_stage(flecs::In).
     /// Use when system uses get
-    pub fn read(self) -> Self {
+    fn read(self) -> Self {
         self.inout_stage(InOutKind::In)
     }
 
     /// Short for inout_stage(flecs::InOut).
     /// Use when system uses get_mut
-    pub fn read_write(self) -> Self {
+    fn read_write(self) -> Self {
         self.inout_stage(InOutKind::InOut)
     }
 
     /// short for inout(flecs::In)
-    pub fn in_(self) -> Self {
+    fn in_(self) -> Self {
         self.set_inout(InOutKind::In)
     }
 
     /// short for inout(flecs::Out)
-    pub fn out(self) -> Self {
+    fn out(self) -> Self {
         self.set_inout(InOutKind::Out)
     }
 
     /// short for inout(flecs::InOut)
-    pub fn inout(self) -> Self {
+    fn inout(self) -> Self {
         self.set_inout(InOutKind::InOut)
     }
 
     /// short for inout(flecs::InOutNone)
-    pub fn inout_none(self) -> Self {
+    fn inout_none(self) -> Self {
         self.set_inout(InOutKind::InOutNone)
     }
 
@@ -618,83 +662,86 @@ impl Term {
     /// # Arguments
     ///
     /// * `oper` - The operator to set.
-    pub fn oper(mut self, oper: OperKind) -> Self {
+    fn oper(mut self, oper: OperKind) -> Self {
         self.assert_term_id();
-        self.term.oper = oper as ::std::os::raw::c_int;
+        self.get_term().oper = oper as ::std::os::raw::c_int;
         self
     }
 
     /// short for oper(flecs::And)
-    pub fn and(self) -> Self {
+    fn and(self) -> Self {
         self.oper(OperKind::And)
     }
 
     /// short for oper(flecs::Or)
-    pub fn or(self) -> Self {
+    fn or(self) -> Self {
         self.oper(OperKind::Or)
     }
 
     /// short for oper(flecs::Not)
     #[allow(clippy::should_implement_trait)]
-    pub fn not(self) -> Self {
+    fn not(self) -> Self {
         self.oper(OperKind::Not)
     }
 
     /// short for oper(flecs::Optional)
-    pub fn optional(self) -> Self {
+    fn optional(self) -> Self {
         self.oper(OperKind::Optional)
     }
 
     /// short for oper(flecs::AndFrom)
-    pub fn and_from(self) -> Self {
+    fn and_from(self) -> Self {
         self.oper(OperKind::AndFrom)
     }
 
     /// short for oper(flecs::OrFrom)
-    pub fn or_from(self) -> Self {
+    fn or_from(self) -> Self {
         self.oper(OperKind::OrFrom)
     }
 
     /// short for oper(flecs::NotFrom)
-    pub fn not_from(self) -> Self {
+    fn not_from(self) -> Self {
         self.oper(OperKind::NotFrom)
     }
 
     /// Match singleton
-    pub fn singleton(mut self) -> Self {
+    fn singleton(mut self) -> Self {
         self.assert_term();
 
         ecs_assert!(
-            self.term.id != 0 || self.term.first.id != 0,
+            self.get_term().id != 0 || self.get_term().first.id != 0,
             FlecsErrorCode::InvalidParameter,
             "no component specified for singleton"
         );
 
-        let sid = if self.term.id != 0 {
-            self.term.id
+        let sid = if self.get_term().id != 0 {
+            self.get_term().id
         } else {
-            self.term.first.id
+            self.get_term().first.id
         };
 
         ecs_assert!(sid != 0, FlecsErrorCode::InvalidParameter, "invalid id");
-        self.term.src.id = sid;
+        self.get_term().src.id = sid;
         self
     }
 
     /// Filter terms are not triggered on by observers
-    pub fn filter(mut self) -> Self {
-        self.term.src.flags |= ECS_FILTER;
+    fn filter(mut self) -> Self {
+        self.get_term().src.flags |= ECS_FILTER;
         self
     }
 }
 
-impl Drop for Term {
-    fn drop(&mut self) {
-        unsafe {
-            if !self.term_id.name.is_null() {
-                let _ = CString::from_raw(self.term_id.name);
-            }
-            ecs_term_fini(&mut self.term);
-        }
+impl TermBuilder for Term {
+    fn get_world(&self) -> *mut WorldT {
+        self.world
+    }
+
+    fn get_term(&mut self) -> &mut TermT {
+        &mut self.term
+    }
+
+    fn get_term_id(&mut self) -> &mut TermIdT {
+        &mut self.term_id
     }
 }

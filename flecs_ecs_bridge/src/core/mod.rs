@@ -12,27 +12,35 @@ pub mod world;
 pub mod utility {
     pub mod errors;
     pub mod functions;
+    pub mod traits;
+    pub mod types;
 }
 pub mod c_binding {
     pub mod bindings;
 }
+pub mod builder;
 pub mod entity;
 pub mod enum_type;
 pub mod filter;
+pub mod filter_builder;
 pub mod iterable;
 pub mod term;
 
 pub use archetype::*;
+pub use builder::*;
 pub use c_binding::bindings::*;
 pub use c_types::*;
 pub use component::*;
 pub use component_registration::*;
 pub use entity::*;
 pub use filter::*;
+pub use filter_builder::*;
 pub use id::*;
 pub use iterable::*;
 pub use lifecycle_traits::*;
+pub use table::*;
 pub use term::*;
+pub use traits::*;
+pub use types::*;
 pub use utility::*;
 pub use world::*;
-pub use Table::*;
