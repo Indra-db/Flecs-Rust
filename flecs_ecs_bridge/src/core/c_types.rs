@@ -376,3 +376,19 @@ impl Default for ecs_filter_t {
         unsafe { ECS_FILTER_INIT }
     }
 }
+
+impl Default for ecs_entity_desc_t {
+    fn default() -> Self {
+        Self {
+            _canary: Default::default(),
+            id: Default::default(),
+            name: std::ptr::null(),
+            sep: std::ptr::null(),
+            root_sep: std::ptr::null(),
+            symbol: std::ptr::null(),
+            use_low_id: Default::default(),
+            add: Default::default(),
+            add_expr: std::ptr::null(),
+        }
+    }
+}

@@ -4,8 +4,8 @@ use crate::{core::utility::errors::FlecsErrorCode, ecs_assert};
 
 use super::{
     c_binding::bindings::{
-        ecs_term_copy, ecs_term_finalize, ecs_term_fini, ecs_term_is_initialized, ecs_term_move,
-        ECS_ID_FLAGS_MASK,
+        ecs_term_copy, ecs_term_finalize, ecs_term_fini, ecs_term_id_t, ecs_term_is_initialized,
+        ecs_term_move, ecs_term_t, ECS_ID_FLAGS_MASK,
     },
     c_types::{
         EntityT, Flags32T, IdT, InOutKind, OperKind, TermIdT, TermT, WorldT, ECS_CASCADE,
@@ -25,20 +25,20 @@ use super::{
 /// descriptions can reference entities by id, name or by variable, which means
 /// the entity will be resolved when the term is evaluated.
 pub struct Term {
-    pub term_id: TermIdT,
+    pub term_id: *mut TermIdT,
+    pub term_ptr: *mut TermT,
     pub term: TermT,
     pub world: *mut WorldT,
 }
 
 impl Default for Term {
     fn default() -> Self {
-        let mut obj = Self {
-            term_id: Default::default(),
+        Self {
+            term_id: std::ptr::null_mut(),
+            term_ptr: std::ptr::null_mut(),
             term: Default::default(),
             world: std::ptr::null_mut(),
-        };
-        obj.term.move_ = true;
-        obj
+        }
     }
 }
 
@@ -46,12 +46,14 @@ impl Default for Term {
 impl Clone for Term {
     fn clone(&self) -> Self {
         let mut obj = Self {
-            term_id: Default::default(),
+            term_id: std::ptr::null_mut(),
+            term_ptr: std::ptr::null_mut(),
             term: Default::default(),
             world: self.world,
         };
         obj.term = unsafe { ecs_term_copy(&self.term) };
-        obj.term_id = obj.term.src;
+        let obj_term = &mut obj.term as *mut TermT;
+        obj.set_term(obj_term);
         obj
     }
 }
@@ -60,20 +62,23 @@ impl Term {
     pub fn new(world: *mut WorldT, term: TermT) -> Self {
         let mut obj = Self {
             world,
-            term_id: term.src, // default to subject
+            term_id: std::ptr::null_mut(),
             term,
+            term_ptr: std::ptr::null_mut(),
         };
         obj.term.move_ = false;
+        let obj_term = &mut obj.term as *mut TermT;
+        obj.set_term(obj_term);
         obj
     }
 
     pub fn new_only_world(world: *mut WorldT) -> Self {
         let mut obj = Self {
             world,
-            term_id: Default::default(),
+            term_id: std::ptr::null_mut(),
             term: Default::default(),
+            term_ptr: std::ptr::null_mut(),
         };
-        obj.term_id = obj.term.src;
         obj.term.move_ = true;
         obj
     }
@@ -81,7 +86,8 @@ impl Term {
     pub fn new_id(world: *mut WorldT, id: IdT) -> Self {
         let mut obj = Self {
             world,
-            term_id: Default::default(),
+            term_id: std::ptr::null_mut(),
+            term_ptr: std::ptr::null_mut(),
             term: Default::default(),
         };
         if id & ECS_ID_FLAGS_MASK as u64 != 0 {
@@ -90,14 +96,16 @@ impl Term {
             obj.term.first.id = id;
         }
         obj.term.move_ = false;
-        obj.term_id = obj.term.src;
+        let obj_term = &mut obj.term as *mut TermT;
+        obj.set_term(obj_term);
         obj
     }
 
     pub fn new_only_id(id: IdT) -> Self {
         let mut obj = Self {
             world: std::ptr::null_mut(),
-            term_id: Default::default(),
+            term_id: std::ptr::null_mut(),
+            term_ptr: std::ptr::null_mut(),
             term: Default::default(),
         };
         if id & ECS_ID_FLAGS_MASK as u64 != 0 {
@@ -105,32 +113,33 @@ impl Term {
         } else {
             obj.term.first.id = id;
         }
-        obj.term.move_ = false;
-        obj.term_id = obj.term.src;
+        obj.term.move_ = true;
         obj
     }
 
     pub fn new_rel_target(world: *mut WorldT, rel: EntityT, target: EntityT) -> Self {
         let mut obj = Self {
             world,
-            term_id: Default::default(),
+            term_id: std::ptr::null_mut(),
+            term_ptr: std::ptr::null_mut(),
             term: Default::default(),
         };
         obj.term.id = ecs_pair(rel, target);
         obj.term.move_ = false;
-        obj.term_id = obj.term.src;
+        let obj_term = &mut obj.term as *mut TermT;
+        obj.set_term(obj_term);
         obj
     }
 
     pub fn new_only_rel_target(rel: EntityT, target: EntityT) -> Self {
         let mut obj = Self {
             world: std::ptr::null_mut(),
-            term_id: Default::default(),
+            term_id: std::ptr::null_mut(),
+            term_ptr: std::ptr::null_mut(),
             term: Default::default(),
         };
         obj.term.id = ecs_pair(rel, target);
         obj.term.move_ = true;
-        obj.term_id = obj.term.src;
         obj
     }
 
@@ -156,15 +165,17 @@ impl Term {
     }
 
     /// This is how you should move a term, not the default rust way
-    pub fn move_term(&mut self) -> Self {
+    pub fn move_term(mut self) -> Self {
         let mut obj = Self {
             world: self.world,
-            term_id: Default::default(),
+            term_id: std::ptr::null_mut(),
+            term_ptr: std::ptr::null_mut(),
             term: Default::default(),
         };
         obj.term = unsafe { ecs_term_move(&mut self.term) };
         self.reset();
-        obj.term_id = obj.term.src;
+        let obj_term = &mut obj.term as *mut TermT;
+        obj.set_term(obj_term);
         obj
     }
 
@@ -172,7 +183,7 @@ impl Term {
         // we don't for certain if this causes any side effects not using the nullptr and just using the default value.
         // if it does we can use Option.
         self.term = Default::default();
-        self.term_id = Default::default();
+        self.set_term(std::ptr::null_mut());
     }
 
     pub fn finalize(&mut self) -> i32 {
@@ -218,8 +229,8 @@ impl Term {}
 impl Drop for Term {
     fn drop(&mut self) {
         unsafe {
-            if !self.term_id.name.is_null() {
-                let _ = CString::from_raw(self.term_id.name);
+            if !self.term_id.is_null() && !(*self.term_id).name.is_null() {
+                let _ = CString::from_raw((*self.term_id).name);
             }
             ecs_term_fini(&mut self.term);
         }
@@ -229,9 +240,11 @@ impl Drop for Term {
 pub trait TermBuilder: Sized {
     fn get_world(&self) -> *mut WorldT;
 
-    fn get_term(&mut self) -> &mut TermT;
+    fn get_term(&mut self) -> &mut Term;
 
-    fn get_term_id(&mut self) -> &mut TermIdT;
+    fn get_raw_term(&mut self) -> *mut TermT;
+
+    fn get_term_id(&mut self) -> *mut TermIdT;
 
     /// Set term to a specific term
     ///
@@ -243,20 +256,19 @@ pub trait TermBuilder: Sized {
     ///
     /// term_builder_i::set_term`
     fn set_term(&mut self, term: *mut TermT) {
-        let mut self_term = self.get_term();
-        self_term = unsafe { &mut *term };
-        let mut self_term_id = self.get_term_id();
-        if !term.is_null() {
-            self_term_id = &mut self_term.src;
+        let self_term: &mut Term = self.get_term();
+        self_term.term_ptr = term;
+
+        self_term.term_id = if !term.is_null() {
+            unsafe { &mut (*term).src }
         } else {
-            // this might be wrong as we're not using ptrs. but we'll see.
-            self_term_id = &mut Default::default();
-        }
+            std::ptr::null_mut()
+        };
     }
 
     fn assert_term_id(&mut self) {
         ecs_assert!(
-            self.get_term_id().id != 0,
+            self.get_term_id() != std::ptr::null_mut(),
             FlecsErrorCode::InvalidParameter,
             "no active term (call .term() first"
         );
@@ -264,7 +276,7 @@ pub trait TermBuilder: Sized {
 
     fn assert_term(&mut self) {
         ecs_assert!(
-            self.get_term().id != 0,
+            self.get_raw_term() != std::ptr::null_mut(),
             FlecsErrorCode::InvalidParameter,
             "no active term (call .term() first"
         );
@@ -273,7 +285,7 @@ pub trait TermBuilder: Sized {
     /// The self flag indicates the term identifier itself is used
     fn self_term(mut self) -> Self {
         self.assert_term_id();
-        self.get_term_id().flags |= ECS_SELF;
+        unsafe { (*self.get_term_id()).flags |= ECS_SELF };
         self
     }
 
@@ -286,9 +298,9 @@ pub trait TermBuilder: Sized {
     /// * `traverse_relationship` - The optional relationship to traverse.
     fn up_id(mut self, traverse_relationship: Option<EntityT>) -> Self {
         self.assert_term_id();
-        self.get_term_id().flags |= ECS_UP;
+        unsafe { (*self.get_term_id()).flags |= ECS_UP };
         if let Some(trav_rel) = traverse_relationship {
-            self.get_term_id().trav = trav_rel;
+            unsafe { (*self.get_term_id()).trav = trav_rel };
         }
         self
     }
@@ -302,8 +314,10 @@ pub trait TermBuilder: Sized {
     /// * `TravRel` - The relationship to traverse.
     fn up<TravRel: CachedComponentData>(mut self) -> Self {
         self.assert_term_id();
-        self.get_term_id().flags |= ECS_UP;
-        self.get_term_id().trav = TravRel::get_id(self.get_world());
+        unsafe {
+            (*self.get_term_id()).flags |= ECS_UP;
+            (*self.get_term_id()).trav = TravRel::get_id(self.get_world())
+        };
         self
     }
 
@@ -315,9 +329,9 @@ pub trait TermBuilder: Sized {
     /// * `traverse_relationship` - The optional relationship to traverse.
     fn cascade_id(mut self, traverse_relationship: Option<EntityT>) -> Self {
         self.assert_term_id();
-        self.get_term_id().flags |= ECS_CASCADE;
+        unsafe { (*self.get_term_id()).flags |= ECS_CASCADE };
         if let Some(trav_rel) = traverse_relationship {
-            self.get_term_id().trav = trav_rel;
+            unsafe { (*self.get_term_id()).trav = trav_rel };
         }
         self
     }
@@ -330,15 +344,17 @@ pub trait TermBuilder: Sized {
     /// * `TravRel` - The relationship to traverse.
     fn cascade<TravRel: CachedComponentData>(mut self) -> Self {
         self.assert_term_id();
-        self.get_term_id().flags |= ECS_CASCADE;
-        self.get_term_id().trav = TravRel::get_id(self.get_world());
+        unsafe {
+            (*self.get_term_id()).flags |= ECS_CASCADE;
+            (*self.get_term_id()).trav = TravRel::get_id(self.get_world())
+        };
         self
     }
 
     /// the parent flag is short for up (flecs::ChildOf)
     fn parent(mut self) -> Self {
         self.assert_term_id();
-        self.get_term_id().flags |= ECS_PARENT;
+        unsafe { (*self.get_term_id()).flags |= ECS_PARENT };
         self
     }
 
@@ -350,8 +366,10 @@ pub trait TermBuilder: Sized {
     /// * `flags` - The direction to traverse.
     fn trav(mut self, traverse_relationship: EntityT, flags: Flags32T) -> Self {
         self.assert_term_id();
-        self.get_term_id().trav = traverse_relationship;
-        self.get_term_id().flags |= flags;
+        unsafe {
+            (*self.get_term_id()).trav = traverse_relationship;
+            (*self.get_term_id()).flags |= flags
+        };
         self
     }
 
@@ -362,7 +380,7 @@ pub trait TermBuilder: Sized {
     /// * `id` - The id to set.
     fn id(mut self, id: EntityT) -> Self {
         self.assert_term_id();
-        self.get_term_id().id = id;
+        unsafe { (*self.get_term_id()).id = id };
         self
     }
 
@@ -388,8 +406,10 @@ pub trait TermBuilder: Sized {
     /// * `id` - The id to set.
     fn entity(mut self, id: EntityT) -> Self {
         self.assert_term_id();
-        self.get_term_id().flags |= ECS_IS_ENTITY;
-        self.get_term_id().id = id;
+        unsafe {
+            (*self.get_term_id()).flags |= ECS_IS_ENTITY;
+            (*self.get_term_id()).id = id
+        };
         self
     }
 
@@ -402,8 +422,10 @@ pub trait TermBuilder: Sized {
         self.assert_term_id();
         let c_name = CString::new(name).unwrap();
         let leak_name = CString::into_raw(c_name);
-        self.get_term_id().name = leak_name;
-        self.get_term_id().flags |= ECS_IS_NAME;
+        unsafe {
+            (*self.get_term_id()).name = leak_name;
+            (*self.get_term_id()).flags |= ECS_IS_NAME
+        };
         self
     }
 
@@ -416,8 +438,10 @@ pub trait TermBuilder: Sized {
         self.assert_term_id();
         let c_name = CString::new(var_name).unwrap();
         let leak_name = CString::into_raw(c_name);
-        self.get_term_id().flags |= ECS_IS_VARIABLE;
-        self.get_term_id().name = leak_name;
+        unsafe {
+            (*self.get_term_id()).flags |= ECS_IS_VARIABLE;
+            (*self.get_term_id()).name = leak_name
+        };
         self
     }
 
@@ -428,14 +452,14 @@ pub trait TermBuilder: Sized {
     /// * `flags` - The flags to set.
     fn flags(mut self, flags: Flags32T) -> Self {
         self.assert_term_id();
-        self.get_term_id().flags = flags;
+        unsafe { (*self.get_term_id()).flags = flags };
         self
     }
 
     /// Call prior to setting values for src identifier
     fn setup_src(mut self) -> Self {
         self.assert_term();
-        *self.get_term_id() = self.get_term().src;
+        unsafe { *self.get_term_id() = (*self.get_raw_term()).src };
         self
     }
 
@@ -444,7 +468,7 @@ pub trait TermBuilder: Sized {
     /// populated as well).
     fn setup_first(mut self) -> Self {
         self.assert_term();
-        *self.get_term_id() = self.get_term().first;
+        unsafe { *self.get_term_id() = (*self.get_raw_term()).first };
         self
     }
 
@@ -452,7 +476,7 @@ pub trait TermBuilder: Sized {
     /// element of a pair. Requires that first() is populated as well.
     fn setup_second(mut self) -> Self {
         self.assert_term();
-        *self.get_term_id() = self.get_term().second;
+        unsafe { *self.get_term_id() = (*self.get_raw_term()).second };
         self
     }
 
@@ -583,7 +607,7 @@ pub trait TermBuilder: Sized {
     /// * `role` - The role to set.
     fn role(mut self, role: IdT) -> Self {
         self.assert_term();
-        self.get_term().id_flags = role;
+        unsafe { (*self.get_raw_term()).id_flags = role };
         self
     }
 
@@ -594,7 +618,7 @@ pub trait TermBuilder: Sized {
     /// * `inout` - The inout to set.
     fn set_inout(mut self, inout: InOutKind) -> Self {
         self.assert_term();
-        self.get_term().inout = inout as ::std::os::raw::c_int;
+        unsafe { (*self.get_raw_term()).inout = inout as ::std::os::raw::c_int };
         self
     }
 
@@ -612,8 +636,10 @@ pub trait TermBuilder: Sized {
     fn inout_stage(mut self, inout: InOutKind) -> Self {
         self.assert_term();
         self = self.set_inout(inout);
-        if self.get_term().inout != OperKind::Not as ::std::os::raw::c_int {
-            self = self.setup_src().entity(0);
+        unsafe {
+            if (*self.get_raw_term()).inout != OperKind::Not as ::std::os::raw::c_int {
+                self = self.setup_src().entity(0);
+            }
         }
         self
     }
@@ -664,7 +690,7 @@ pub trait TermBuilder: Sized {
     /// * `oper` - The operator to set.
     fn oper(mut self, oper: OperKind) -> Self {
         self.assert_term_id();
-        self.get_term().oper = oper as ::std::os::raw::c_int;
+        unsafe { (*self.get_raw_term()).oper = oper as ::std::os::raw::c_int };
         self
     }
 
@@ -709,25 +735,27 @@ pub trait TermBuilder: Sized {
         self.assert_term();
 
         ecs_assert!(
-            self.get_term().id != 0 || self.get_term().first.id != 0,
+            unsafe { (*self.get_raw_term()).id != 0 || (*self.get_raw_term()).first.id != 0 },
             FlecsErrorCode::InvalidParameter,
             "no component specified for singleton"
         );
 
-        let sid = if self.get_term().id != 0 {
-            self.get_term().id
-        } else {
-            self.get_term().first.id
-        };
+        unsafe {
+            let sid = if (*self.get_raw_term()).id != 0 {
+                (*self.get_raw_term()).id
+            } else {
+                (*self.get_raw_term()).first.id
+            };
 
-        ecs_assert!(sid != 0, FlecsErrorCode::InvalidParameter, "invalid id");
-        self.get_term().src.id = sid;
+            ecs_assert!(sid != 0, FlecsErrorCode::InvalidParameter, "invalid id");
+            (*self.get_raw_term()).src.id = sid;
+        }
         self
     }
 
     /// Filter terms are not triggered on by observers
     fn filter(mut self) -> Self {
-        self.get_term().src.flags |= ECS_FILTER;
+        unsafe { (*self.get_raw_term()).src.flags |= ECS_FILTER };
         self
     }
 }
@@ -737,11 +765,15 @@ impl TermBuilder for Term {
         self.world
     }
 
-    fn get_term(&mut self) -> &mut TermT {
-        &mut self.term
+    fn get_term(&mut self) -> &mut Term {
+        self
     }
 
-    fn get_term_id(&mut self) -> &mut TermIdT {
-        &mut self.term_id
+    fn get_raw_term(&mut self) -> *mut TermT {
+        self.term_ptr
+    }
+
+    fn get_term_id(&mut self) -> *mut TermIdT {
+        self.term_id
     }
 }

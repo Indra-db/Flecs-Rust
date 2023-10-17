@@ -1,12 +1,7 @@
-use super::{filter::Filter, iterable::Iterable};
+use super::{filter::Filter, iterable::Iterable, term::TermBuilder};
 
-pub trait Builder {
+pub trait Builder: TermBuilder {
     type BuiltType;
-}
 
-impl<'a, T> Builder for Filter<'a, T>
-where
-    T: Iterable<'a>,
-{
-    type BuiltType = Filter<'a, T>;
+    fn build(self) -> Self::BuiltType;
 }

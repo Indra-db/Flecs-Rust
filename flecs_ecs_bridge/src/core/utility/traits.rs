@@ -3,12 +3,12 @@ use crate::core::{
     component_registration::CachedComponentData,
 };
 
-pub(crate) trait InOutType {
+pub trait InOutType {
     const IN_OUT: InOutKind;
     type Type: CachedComponentData;
 }
 
-pub(crate) trait OperType {
+pub trait OperType {
     const OPER: OperKind;
     type Type: CachedComponentData;
 }
