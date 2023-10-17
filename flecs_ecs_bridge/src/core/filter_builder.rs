@@ -52,7 +52,6 @@ where
             _phantom: std::marker::PhantomData,
         };
         T::populate(&mut obj);
-        //T::register_ids_descriptor(world, &mut obj.desc);
         obj
     }
 
@@ -67,7 +66,6 @@ where
             _phantom: std::marker::PhantomData,
         };
         T::populate(&mut obj);
-        //T::register_ids_descriptor(world, &mut obj.desc);
         let mut desc = ecs_entity_desc_t::default();
         desc.name = std::ffi::CString::new(name).unwrap().into_raw();
         desc.sep = SEPARATOR.as_ptr();
@@ -290,11 +288,15 @@ pub trait FilterBuilderImpl: TermBuilder {
     }
 
     fn term(&mut self) {
-        //ecs_assert!(
-        //    unsafe { ecs_term_is_initialized(self.get_raw_term()) },
-        //    FlecsErrorCode::InvalidOperation,
-        //    "FilterBuilder::term() called without initializing term"
-        //);
+        ecs_assert!(
+            if !self.get_raw_term().is_null() {
+                unsafe { ecs_term_is_initialized(self.get_raw_term()) }
+            } else {
+                true
+            },
+            FlecsErrorCode::InvalidOperation,
+            "FilterBuilder::term() called without initializing term"
+        );
 
         let term_index = *self.get_term_index();
         if term_index >= FLECS_TERM_DESC_MAX as i32 {
