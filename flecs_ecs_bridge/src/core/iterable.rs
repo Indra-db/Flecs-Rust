@@ -5,16 +5,6 @@ use super::component_registration::CachedComponentData;
 use super::filter::Filterable;
 use super::utility::functions::ecs_field;
 
-//pub trait Iterable<'a>: Sized {
-//    type TupleType: 'a;
-//    type ArrayType: 'a;
-//
-//    fn populate(filter: &mut impl Filterable);
-//    fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t);
-//    fn get_array_ptrs_of_components(it: &IterT);
-//    fn get_tuple(array_components: &Self::ArrayType, index: usize);
-//}
-
 pub trait Iterable<'a>: Sized {
     type TupleType: 'a;
     type ArrayType: 'a;
@@ -25,11 +15,10 @@ pub trait Iterable<'a>: Sized {
     fn get_tuple(array_components: &Self::ArrayType, index: usize) -> Self::TupleType;
 }
 
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-//these will be replaced with a macro later, for now I'm keeping it like this for easier testing / debugging / development
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
+/////////////////////
+// first three tuple sizes are implemented manually for easier debugging and testing and understanding.
+// The higher sized tuples are done by a macro towards the bottom of this file.
+/////////////////////
 
 #[rustfmt::skip]
 impl<'a> Iterable<'a> for ()
@@ -48,6 +37,7 @@ impl<'a> Iterable<'a> for ()
     fn get_tuple(array_components: &Self::ArrayType, index: usize) -> Self::TupleType{}
 
 }
+
 #[rustfmt::skip]
 impl<'a, A: 'a> Iterable<'a> for (A,)
 where
@@ -529,3 +519,201 @@ where
         }
     }
 }
+
+pub struct Wrapper<T>(T);
+
+pub trait TupleForm<'a, T, U> {
+    type Tuple;
+    const IS_OPTION: bool;
+
+    fn return_type_for_tuple(array: *mut U, index: usize) -> Self::Tuple;
+}
+
+impl<'a, T: 'a> TupleForm<'a, T, T> for Wrapper<T> {
+    type Tuple = &'a mut T;
+    const IS_OPTION: bool = false;
+
+    #[inline(always)]
+    fn return_type_for_tuple(array: *mut T, index: usize) -> Self::Tuple {
+        unsafe { &mut (*array.add(index)) }
+    }
+}
+
+impl<'a, T: 'a> TupleForm<'a, Option<T>, T> for Wrapper<T> {
+    type Tuple = Option<&'a mut T>;
+
+    const IS_OPTION: bool = true;
+
+    #[inline(always)]
+    fn return_type_for_tuple(array: *mut T, index: usize) -> Self::Tuple {
+        unsafe {
+            if array.is_null() {
+                None
+            } else {
+                Some(&mut (*array.add(index)))
+            }
+        }
+    }
+}
+
+macro_rules! tuple_count {
+    () => { 0 };
+    ($head:ident) => { 1 };
+    ($head:ident, $($tail:ident),*) => { 1 + tuple_count!($($tail),*) };
+}
+
+macro_rules! impl_iterable {
+    ($($t:ident: $tuple_t:ty),*) => {
+        impl<'a, $($t: 'a + CachedComponentData),*> Iterable<'a> for ($($tuple_t,)*) {
+            type TupleType = ($(
+                <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::Tuple
+            ),*);
+
+            type ArrayType = [*mut u8; tuple_count!($($t),*)];
+
+            fn populate(filter: &mut impl Filterable) {
+                let world = filter.get_world();
+                $(
+                    let term = filter.current_term();
+                    term.id = <$t as CachedComponentData>::get_id(world);
+                    if <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::IS_OPTION {
+                        term.oper = OperKind::Optional as i32;
+                    }
+                    filter.next_term();
+                )*
+            }
+
+            #[allow(unused)]
+            fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
+                let mut term_index = 0;
+                $(
+                    desc.terms[term_index].id = <$t as CachedComponentData>::get_id(world);
+                    if <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::IS_OPTION {
+                        desc.terms[term_index].oper = OperKind::Optional as i32;
+                    }
+
+                    term_index += 1;
+                )*
+            }
+            #[allow(unused)]
+            fn get_array_ptrs_of_components(it: &IterT) -> Self::ArrayType
+            {
+                let mut index = 1;
+                unsafe {
+
+                    [ $(
+                        {
+                            let ptr = ecs_field::<$t>(it, index) as *mut u8;
+                            index += 1;
+                            ptr
+                        },
+                    )* ]
+                }
+            }
+
+            #[allow(unused)]
+            fn get_tuple(array_components: &Self::ArrayType, index: usize) -> Self::TupleType {
+                    let mut array_index = 0;
+                    (
+                        $(
+                            {
+                                let ptr = array_components[array_index] as *mut $t;
+                                array_index += 1;
+                                <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::return_type_for_tuple(ptr,index)
+                            },
+                        )*
+                    )
+            }
+        }
+    };
+}
+
+impl_iterable!(A: A, B: B, C: C, D: D); //size 4
+impl_iterable!(A: A, B: B, C: C, D: Option<D>); //size 4
+impl_iterable!(A: A, B: B, C: Option<C>, D: Option<D>); //size 4
+impl_iterable!(A: A, B: Option<B>, C: Option<C>, D: Option<D>); //size 4
+impl_iterable!(A: Option<A>, B: Option<B>, C: Option<C>, D: Option<D>); //size 4
+
+impl_iterable!(A: A, B: B, C: C, D: D, E: E); //size 5
+impl_iterable!(A: A, B: B, C: C, D: D, E: Option<E>); //size 5
+impl_iterable!(A: A, B: B, C: C, D: Option<D>, E: Option<E>); //size 5
+impl_iterable!(A: A, B: B, C: Option<C>, D: Option<D>, E: Option<E>); //size 5
+impl_iterable!(A: A, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>); //size 5
+impl_iterable!(A: Option<A>, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>); //size 5
+
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F); //size 6
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: Option<F>); //size 6
+impl_iterable!(A: A, B: B, C: C, D: D, E: Option<E>, F: Option<F>); //size 6
+impl_iterable!(A: A, B: B, C: C, D: Option<D>, E: Option<E>, F: Option<F>); //size 6
+impl_iterable!(A: A, B: B, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>); //size 6
+impl_iterable!(A: A, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>); //size 6
+impl_iterable!(A: Option<A>, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>); //size 6
+
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G); //size 7
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: Option<G>); //size 7
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: Option<F>, G: Option<G>); //size 7
+impl_iterable!(A: A, B: B, C: C, D: D, E: Option<E>, F: Option<F>, G: Option<G>); //size 7
+impl_iterable!(A: A, B: B, C: C, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>); //size 7
+impl_iterable!(A: A, B: B, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>); //size 7
+impl_iterable!(A: A, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>); //size 7
+impl_iterable!(A: Option<A>, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>); //size 7
+
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H); //size 8
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: Option<H>); //size 8
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: Option<G>, H: Option<H>); //size 8
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: Option<F>, G: Option<G>, H: Option<H>); //size 8
+impl_iterable!(A: A, B: B, C: C, D: D, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>); //size 8
+impl_iterable!(A: A, B: B, C: C, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>); //size 8
+impl_iterable!(A: A, B: B, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>); //size 8
+impl_iterable!(A: A, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>); //size 8
+impl_iterable!(A: Option<A>, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>); //size 8
+
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I); //size 9
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: Option<I>); //size 9
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: Option<H>, I: Option<I>); //size 9
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: Option<G>, H: Option<H>, I: Option<I>); //size 9
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>); //size 9
+impl_iterable!(A: A, B: B, C: C, D: D, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>); //size 9
+impl_iterable!(A: A, B: B, C: C, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>); //size 9
+impl_iterable!(A: A, B: B, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>); //size 9
+impl_iterable!(A: A, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>); //size 9
+impl_iterable!(A: Option<A>, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>); //size 9
+
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I, J: J); //size 10
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I, J: Option<J>); //size 10
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: Option<I>, J: Option<J>); //size 10
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: Option<H>, I: Option<I>, J: Option<J>); //size 10
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>); //size 10
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>); //size 10
+impl_iterable!(A: A, B: B, C: C, D: D, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>); //size 10
+impl_iterable!(A: A, B: B, C: C, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>); //size 10
+impl_iterable!(A: A, B: B, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>); //size 10
+impl_iterable!(A: A, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>); //size 10
+impl_iterable!(A: Option<A>, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>); //size 10
+
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I, J: J, K: K); //size 11
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I, J: J, K: Option<K>); //size 11
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I, J: Option<J>, K: Option<K>); //size 11
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: Option<I>, J: Option<J>, K: Option<K>); //size 11
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>); //size 11
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>); //size 11
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>); //size 11
+impl_iterable!(A: A, B: B, C: C, D: D, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>); //size 11
+impl_iterable!(A: A, B: B, C: C, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>); //size 11
+impl_iterable!(A: A, B: B, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>); //size 11
+impl_iterable!(A: A, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>); //size 11
+impl_iterable!(A: Option<A>, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>); //size 11
+
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I, J: J, K: K, L: L); //size 12
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I, J: J, K: K, L: Option<L>); //size 12
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I, J: J, K: Option<K>, L: Option<L>); //size 12
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
+impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
+impl_iterable!(A: A, B: B, C: C, D: D, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
+impl_iterable!(A: A, B: B, C: C, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
+impl_iterable!(A: A, B: B, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
+impl_iterable!(A: A, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
+impl_iterable!(A: Option<A>, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
