@@ -15,7 +15,7 @@ use crate::{
 use super::{
     builder::Builder,
     c_binding::bindings::{ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_flags32_t},
-    c_types::{IdT, TermT, WorldT, SEPARATOR},
+    c_types::{IdT, OperKind, TermT, WorldT, SEPARATOR},
     component_registration::{CachedComponentData, ComponentType, Enum},
     enum_type::CachedEnumData,
     filter::{Filter, Filterable},
@@ -30,7 +30,6 @@ where
 {
     desc: ecs_filter_desc_t,
     expr_count: i32,
-    term_index: i32,
     term: Term,
     world: *mut WorldT,
     next_term_index: i32,
@@ -45,7 +44,6 @@ where
         let mut obj = Self {
             desc: Default::default(),
             expr_count: 0,
-            term_index: 0,
             term: Term::new_only_world(world),
             world,
             next_term_index: 0,
@@ -59,7 +57,6 @@ where
         let mut obj = Self {
             desc: Default::default(),
             expr_count: 0,
-            term_index: 0,
             term: Term::default(),
             world,
             next_term_index: 0,
@@ -82,7 +79,6 @@ where
         Self {
             desc: unsafe { *desc },
             expr_count: 0,
-            term_index,
             term: Term::default(),
             world,
             next_term_index: 0,
@@ -160,8 +156,8 @@ where
 {
     type BuiltType = Filter<'a, T>;
 
-    fn build(mut self) -> Self::BuiltType {
-        Filter::<'a, T>::new_from_desc(TermBuilder::get_world(&self), &mut self.desc as *mut _)
+    fn build(&mut self) -> Self::BuiltType {
+        Filter::<'a, T>::new_from_desc(TermBuilder::get_world(self), &mut self.desc as *mut _)
     }
 }
 
@@ -177,7 +173,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # C++ API Equivalent
     ///
     /// `filter_builder_i::instanced`
-    fn instanced(mut self) -> Self {
+    fn instanced(&mut self) -> &mut Self {
         self.get_desc().instanced = true;
         self
     }
@@ -191,7 +187,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # C++ API Equivalent
     ///
     /// `filter_builder_i::filter_flags`
-    fn filter_flags(mut self, flags: ecs_flags32_t) -> Self {
+    fn filter_flags(&mut self, flags: ecs_flags32_t) -> &mut Self {
         self.get_desc().flags |= flags;
         self
     }
@@ -205,7 +201,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # C++ API Equivalent
     ///
     /// `filter_builder_i::expr`
-    fn expr(mut self, expr: &str) -> Self {
+    fn expr(&mut self, expr: &str) -> &mut Self {
         ecs_assert!(
             *self.get_expr_count() == 0,
             FlecsErrorCode::InvalidOperation,
@@ -217,7 +213,7 @@ pub trait FilterBuilderImpl: TermBuilder {
         self
     }
 
-    fn with(self, with: With) -> Self {
+    fn with(&mut self, with: With) -> &mut Self {
         match with {
             With::Id(id) => self.term_with_id(id),
             With::Name(name) => self.term_with_name(name),
@@ -228,30 +224,30 @@ pub trait FilterBuilderImpl: TermBuilder {
         }
     }
 
-    fn with_pair_id<Rel: CachedComponentData>(self, target: IdT) -> Self {
+    fn with_pair_id<Rel: CachedComponentData>(&mut self, target: IdT) -> &mut Self {
         self.term_with_pair_id::<Rel>(target)
     }
 
-    fn with_pair_name<Rel: CachedComponentData>(self, target: &str) -> Self {
+    fn with_pair_name<Rel: CachedComponentData>(&mut self, target: &str) -> &mut Self {
         self.term_with_pair_name::<Rel>(target)
     }
 
     fn with_enum<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
-        self,
+        &mut self,
         value: T,
-    ) -> Self {
+    ) -> &mut Self {
         self.term_with_enum(value)
     }
 
-    fn with_pair<Rel: CachedComponentData, Target: CachedComponentData>(self) -> Self {
+    fn with_pair<Rel: CachedComponentData, Target: CachedComponentData>(&mut self) -> &mut Self {
         self.term_with_pair::<Rel, Target>()
     }
 
-    fn with_type<T: InOutType>(self) -> Self {
+    fn with_type<T: InOutType>(&mut self) -> &mut Self {
         self.term_with::<T>()
     }
 
-    fn without(self, without: Without) -> Self {
+    fn without(&mut self, without: Without) -> &mut Self {
         match without {
             Without::Id(id) => self.term_with_id(id).not(),
             Without::Name(name) => self.term_with_name(name).not(),
@@ -262,28 +258,28 @@ pub trait FilterBuilderImpl: TermBuilder {
         }
     }
 
-    fn without_pair_id<Rel: CachedComponentData>(self, target: IdT) -> Self {
+    fn without_pair_id<Rel: CachedComponentData>(&mut self, target: IdT) -> &mut Self {
         self.term_with_pair_id::<Rel>(target).not()
     }
 
-    fn without_pair_name<Rel: CachedComponentData>(self, target: &str) -> Self {
+    fn without_pair_name<Rel: CachedComponentData>(&mut self, target: &str) -> &mut Self {
         self.term_with_pair_name::<Rel>(target).not()
     }
 
     fn without_enum<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
-        self,
+        &mut self,
         value: T,
-    ) -> Self {
+    ) -> &mut Self {
         self.term_with_enum(value).not()
     }
 
-    fn without_pair<Rel: CachedComponentData, Target: CachedComponentData>(self) -> Self {
+    fn without_pair<Rel: CachedComponentData, Target: CachedComponentData>(&mut self) -> &mut Self {
         let world = self.get_world();
         self.term_with_pair_ids(Rel::get_id(world), Target::get_id(world))
             .not()
     }
 
-    fn without_type<T: InOutType>(self) -> Self {
+    fn without_type<T: InOutType>(&mut self) -> &mut Self {
         self.term_with::<T>().not()
     }
 
@@ -337,7 +333,7 @@ pub trait FilterBuilderImpl: TermBuilder {
         *self.get_term_index() += 1;
     }
 
-    fn term_at(mut self, index: i32) -> Self {
+    fn term_at(&mut self, index: i32) -> &mut Self {
         ecs_assert!(
             index > 0,
             FlecsErrorCode::InvalidParameter,
@@ -362,11 +358,11 @@ pub trait FilterBuilderImpl: TermBuilder {
         self
     }
 
-    fn arg(self, index: i32) -> Self {
+    fn arg(&mut self, index: i32) -> &mut Self {
         self.term_at(index)
     }
 
-    fn term_with<T: InOutType>(mut self) -> Self {
+    fn term_with<T: InOutType>(&mut self) -> &mut Self {
         self.term();
         unsafe {
             *self.get_raw_term() =
@@ -376,17 +372,16 @@ pub trait FilterBuilderImpl: TermBuilder {
         self
     }
 
-    fn term_with_id(mut self, id: IdT) -> Self {
+    fn term_with_id(&mut self, id: IdT) -> &mut Self {
         self.term();
         let new_term: ecs_term_t = Term::new_only_id(id).move_raw_term();
         let term: &mut Term = self.get_term();
         let term_ptr: *mut TermT = term.term_ptr;
         unsafe { *term_ptr = new_term };
-        //(*to_set_term).id = 517;
         self
     }
 
-    fn term_with_name(mut self, name: &str) -> Self {
+    fn term_with_name(&mut self, name: &str) -> &mut Self {
         self.term();
         unsafe {
             *self.get_raw_term() = Term::default().first_name(name).move_raw_term();
@@ -394,7 +389,7 @@ pub trait FilterBuilderImpl: TermBuilder {
         self
     }
 
-    fn term_with_pair_ids(mut self, rel: IdT, target: IdT) -> Self {
+    fn term_with_pair_ids(&mut self, rel: IdT, target: IdT) -> &mut Self {
         self.term();
         unsafe {
             *self.get_raw_term() = Term::new_only_rel_target(rel, target).move_raw_term();
@@ -402,7 +397,7 @@ pub trait FilterBuilderImpl: TermBuilder {
         self
     }
 
-    fn term_with_pair_names(mut self, rel: &str, target: &str) -> Self {
+    fn term_with_pair_names(&mut self, rel: &str, target: &str) -> &mut Self {
         self.term();
         unsafe {
             *self.get_raw_term() = Term::default()
@@ -413,7 +408,7 @@ pub trait FilterBuilderImpl: TermBuilder {
         self
     }
 
-    fn term_with_pair_id_name(mut self, rel: IdT, target: &str) -> Self {
+    fn term_with_pair_id_name(&mut self, rel: IdT, target: &str) -> &mut Self {
         self.term();
         unsafe {
             *self.get_raw_term() = Term::new_only_id(rel).second_name(target).move_raw_term();
@@ -421,31 +416,33 @@ pub trait FilterBuilderImpl: TermBuilder {
         self
     }
 
-    fn term_with_pair_id<Rel: CachedComponentData>(self, target: IdT) -> Self {
+    fn term_with_pair_id<Rel: CachedComponentData>(&mut self, target: IdT) -> &mut Self {
         let world = self.get_world();
         self.term_with_pair_ids(Rel::get_id(world), target)
     }
 
-    fn term_with_pair_name<Rel: CachedComponentData>(self, target: &str) -> Self {
+    fn term_with_pair_name<Rel: CachedComponentData>(&mut self, target: &str) -> &mut Self {
         let world = self.get_world();
         self.term_with_id(Rel::get_id(world)).second_name(target)
     }
 
-    fn term_with_pair<Rel: CachedComponentData, Target: CachedComponentData>(self) -> Self {
+    fn term_with_pair<Rel: CachedComponentData, Target: CachedComponentData>(
+        &mut self,
+    ) -> &mut Self {
         let world = self.get_world();
         self.term_with_pair_ids(Rel::get_id(world), Target::get_id(world))
     }
 
     fn term_with_enum<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
-        self,
+        &mut self,
         value: T,
-    ) -> Self {
+    ) -> &mut Self {
         let enum_id = T::get_id(self.get_world());
         let enum_field_id = value.get_entity_id_from_enum_field(self.get_world());
         self.term_with_pair_ids(enum_id, enum_field_id)
     }
 
-    fn term_with_term(mut self, mut term: Term) -> Self {
+    fn term_with_term(&mut self, mut term: Term) -> &mut Self {
         self.term();
         unsafe {
             *self.get_raw_term() = term.move_raw_term();
