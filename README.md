@@ -27,10 +27,10 @@ This library has not been advertized nor published yet to crates.io for that rea
 - [x] type (archetype)
 - [x] world + scoped_world
 - [x] term
-- [ ] filter
+- [x] filter
     - [x] create filter & loop over components
-    - [ ] add support for optional components
-    - [ ] filter builder
+    - [x] add support for optional components
+    - [x] filter builder
 - [ ] query
 ```
 
