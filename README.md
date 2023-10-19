@@ -28,10 +28,15 @@ This library has not been advertized nor published yet to crates.io for that rea
 - [x] world + scoped_world
 - [x] term
 - [x] filter
-    - [x] create filter & loop over components
+    - [x] create filter 
+    - [x] create filter builder
     - [x] add support for optional components
-    - [x] filter builder
+    - [x] add support for parent / instancing matching
 - [ ] query
+    - [x] create query
+    - [ ] create query builder
+    - [x] add support for optional components
+    - [x] add support for parent / instancing matching
 ```
 
 #### non-core
