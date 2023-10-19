@@ -18,8 +18,8 @@ use super::{
     c_types::{IdT, OperKind, TermT, WorldT, SEPARATOR},
     component_registration::{CachedComponentData, ComponentType, Enum},
     enum_type::CachedEnumData,
-    filter::{Filter, Filterable},
-    iterable::Iterable,
+    filter::Filter,
+    iterable::{Filterable, Iterable},
     term::{Term, TermBuilder},
     utility::{functions::type_to_inout, traits::InOutType},
 };

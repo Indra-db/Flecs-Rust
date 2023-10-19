@@ -15,7 +15,7 @@ use super::{
     component_registration::{CachedComponentData, ComponentType, Enum},
     entity::Entity,
     enum_type::CachedEnumData,
-    iterable::Iterable,
+    iterable::{Filterable, Iterable},
     term::{Term, TermBuilder},
     utility::{errors::FlecsErrorCode, functions::type_to_inout, traits::InOutType},
     world::World,
@@ -360,12 +360,6 @@ where
         unsafe { ecs_filter_copy(&mut new_filter.filter, &self.filter) };
         new_filter
     }
-}
-
-pub trait Filterable: Sized {
-    fn current_term(&mut self) -> &mut TermT;
-    fn next_term(&mut self);
-    fn get_world(&self) -> *mut WorldT;
 }
 
 impl<'a, T> Filterable for Filter<'a, T>

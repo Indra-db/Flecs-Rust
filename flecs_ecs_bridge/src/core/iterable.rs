@@ -1,9 +1,14 @@
 use super::c_binding::bindings::ecs_filter_desc_t;
-use super::c_types::{IterT, OperKind, WorldT};
+use super::c_types::{IterT, OperKind, TermT, WorldT};
 use super::component_registration::CachedComponentData;
 
-use super::filter::Filterable;
 use super::utility::functions::ecs_field;
+
+pub trait Filterable: Sized {
+    fn current_term(&mut self) -> &mut TermT;
+    fn next_term(&mut self);
+    fn get_world(&self) -> *mut WorldT;
+}
 
 pub trait Iterable<'a>: Sized {
     type TupleType: 'a;

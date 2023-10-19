@@ -19,6 +19,8 @@ pub mod core {
     pub mod id;
     pub mod iterable;
     pub mod lifecycle_traits;
+    pub mod query;
+    pub mod query_builder;
     pub mod scoped_world;
     pub mod table;
     pub mod term;

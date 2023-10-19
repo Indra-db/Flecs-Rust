@@ -24,6 +24,8 @@ pub mod enum_type;
 pub mod filter;
 pub mod filter_builder;
 pub mod iterable;
+pub mod query;
+pub mod query_builder;
 pub mod term;
 
 pub use archetype::*;
@@ -38,6 +40,8 @@ pub use filter_builder::*;
 pub use id::*;
 pub use iterable::*;
 pub use lifecycle_traits::*;
+pub use query::*;
+pub use query_builder::*;
 pub use table::*;
 pub use term::*;
 pub use traits::*;

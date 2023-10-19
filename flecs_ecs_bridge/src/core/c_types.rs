@@ -352,6 +352,25 @@ impl Default for ecs_filter_desc_t {
     }
 }
 
+impl Default for ecs_query_desc_t {
+    fn default() -> Self {
+        Self {
+            _canary: Default::default(),
+            filter: Default::default(),
+            order_by_component: Default::default(),
+            order_by: Default::default(),
+            sort_table: Default::default(),
+            group_by_id: Default::default(),
+            group_by: Default::default(),
+            on_group_create: Default::default(),
+            on_group_delete: Default::default(),
+            group_by_ctx: std::ptr::null_mut(),
+            group_by_ctx_free: Default::default(),
+            parent: std::ptr::null_mut(),
+        }
+    }
+}
+
 impl Default for ecs_header_t {
     fn default() -> Self {
         Self {
