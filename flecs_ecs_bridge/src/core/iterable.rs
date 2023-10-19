@@ -924,7 +924,6 @@ where
         }
     }
 }
-/*
 pub struct Wrapper<T>(T);
 
 pub trait TupleForm<'a, T, U> {
@@ -932,6 +931,7 @@ pub trait TupleForm<'a, T, U> {
     const IS_OPTION: bool;
 
     fn return_type_for_tuple(array: *mut U, index: usize) -> Self::Tuple;
+    fn return_type_for_tuple_with_ref(array: *mut U, is_ref: bool, index: usize) -> Self::Tuple;
 }
 
 impl<'a, T: 'a> TupleForm<'a, T, T> for Wrapper<T> {
@@ -941,6 +941,17 @@ impl<'a, T: 'a> TupleForm<'a, T, T> for Wrapper<T> {
     #[inline(always)]
     fn return_type_for_tuple(array: *mut T, index: usize) -> Self::Tuple {
         unsafe { &mut (*array.add(index)) }
+    }
+
+    #[inline(always)]
+    fn return_type_for_tuple_with_ref(array: *mut T, is_ref: bool, index: usize) -> Self::Tuple {
+        unsafe {
+            if is_ref {
+                &mut (*array.add(0))
+            } else {
+                &mut (*array.add(index))
+            }
+        }
     }
 }
 
@@ -959,12 +970,28 @@ impl<'a, T: 'a> TupleForm<'a, Option<T>, T> for Wrapper<T> {
             }
         }
     }
+
+    fn return_type_for_tuple_with_ref(array: *mut T, is_ref: bool, index: usize) -> Self::Tuple {
+        unsafe {
+            if array.is_null() {
+                None
+            } else if is_ref {
+                Some(&mut (*array.add(0)))
+            } else {
+                Some(&mut (*array.add(index)))
+            }
+        }
+    }
 }
 
 macro_rules! tuple_count {
     () => { 0 };
     ($head:ident) => { 1 };
     ($head:ident, $($tail:ident),*) => { 1 + tuple_count!($($tail),*) };
+}
+
+macro_rules! ignore {
+    ($_:tt) => {};
 }
 
 macro_rules! impl_iterable {
@@ -975,6 +1002,7 @@ macro_rules! impl_iterable {
             ),*);
 
             type ComponentsArray = [*mut u8; tuple_count!($($t),*)];
+            type BoolArray = [bool; tuple_count!($($t),*)];
 
             fn populate(filter: &mut impl Filterable) {
                 let world = filter.get_world();
@@ -1004,17 +1032,57 @@ macro_rules! impl_iterable {
             fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self>
             {
                 let mut index = 1;
-                unsafe {
+                let mut index_ref = 0;
+                let mut index_is_any_ref = 0;
 
-                    [ $(
+                unsafe {
+                    let array_components = [ $(
                         {
                             let ptr = ecs_field::<$t>(it, index) as *mut u8;
                             index += 1;
                             ptr
                         },
-                    )* ]
+                    )* ];
+
+                    let array_components2 = [ $(
+                        {
+                            let ptr = ecs_field::<$t>(it, index) as *mut u8;
+                            index += 1;
+                            ptr
+                        },
+                    )* ];
+
+                    let is_ref_array_components = if !it.sources.is_null() { unsafe {
+                        [ $(
+                            {
+                                ignore!($t);
+                                let is_ref = *it.sources.add(index_ref) != 0;
+                                index_ref += 1;
+                                is_ref
+                            },
+                        )* ]
+                    }} else {
+                        [false; tuple_count!($($t),*)]
+                    };
+
+                    let is_any_array_a_ref = $(
+                        {
+                            ignore!($t);
+                            let is_ref = is_ref_array_components[index_is_any_ref];
+                            index_is_any_ref += 1;
+                            is_ref
+                        } ||
+                    )* false;
+
+                    ComponentsData {
+                        array_components,
+                        is_ref_array_components,
+                        is_any_array_a_ref,
+                    }
                 }
-            }
+
+                }
+
 
             #[allow(unused)]
             fn get_tuple(array_components: &Self::ComponentsArray, index: usize) -> Self::TupleType {
@@ -1029,8 +1097,23 @@ macro_rules! impl_iterable {
                         )*
                     )
             }
+
+            #[allow(unused)]
+            fn get_tuple_with_ref(array_components: &Self::ComponentsArray, is_ref_array_components: &Self::BoolArray, index: usize) -> Self::TupleType {
+                    let mut array_index = 0;
+                    (
+                        $(
+                            {
+                                let ptr = array_components[array_index] as *mut $t;
+                                let is_ref = is_ref_array_components[array_index];
+                                array_index += 1;
+                                <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::return_type_for_tuple_with_ref(ptr, is_ref, index)
+                            },
+                        )*
+                    )
+            }
         }
-    };
+    }
 }
 
 impl_iterable!(A: A, B: B, C: C, D: D); //size 4
@@ -1122,4 +1205,3 @@ impl_iterable!(A: A, B: B, C: C, D: Option<D>, E: Option<E>, F: Option<F>, G: Op
 impl_iterable!(A: A, B: B, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
 impl_iterable!(A: A, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
 impl_iterable!(A: Option<A>, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
-*/
