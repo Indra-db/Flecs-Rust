@@ -275,43 +275,57 @@ where
         unsafe { ecs_query_iter(self.world, self.query) }
     }
 
-    #[inline]
-    pub fn each_entity(&mut self, func: impl FnMut(&mut Entity, T::TupleType)) {}
-
     pub fn each(&mut self, mut func: impl FnMut(T::TupleType)) {
         unsafe {
             let mut iter = ecs_query_iter(self.world, self.query);
-            let func_ref = &mut func;
+
             while ecs_query_next(&mut iter) {
+                let components_data = T::get_array_ptrs_of_components(&iter);
                 let iter_count = iter.count as usize;
-                let array_ptr = T::get_array_ptrs_of_components(&iter);
+                let array_components = &components_data.array_components;
+
                 ecs_table_lock(self.world, iter.table);
+
                 for i in 0..iter_count {
-                    let tuple = T::get_tuple(&array_ptr, i);
-                    func_ref(tuple);
+                    let tuple = if components_data.is_any_array_a_ref {
+                        let is_ref_array_components = &components_data.is_ref_array_components;
+                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+                    } else {
+                        T::get_tuple(array_components, i)
+                    };
+
+                    func(tuple);
                 }
+
                 ecs_table_unlock(self.world, iter.table);
             }
         }
     }
 
-    fn each_entity_impl(
-        &mut self,
-        mut func: impl FnMut(&mut Entity, T::TupleType),
-        filter: *mut FilterT,
-    ) {
+    fn each_entity(&mut self, mut func: impl FnMut(&mut Entity, T::TupleType)) {
         unsafe {
             let mut iter = ecs_query_iter(self.world, self.query);
-            let func_ref = &mut func;
+
             while ecs_query_next(&mut iter) {
+                let components_data = T::get_array_ptrs_of_components(&iter);
                 let iter_count = iter.count as usize;
-                let array_ptr = T::get_array_ptrs_of_components(&iter);
+                let array_components = &components_data.array_components;
+
                 ecs_table_lock(self.world, iter.table);
+
                 for i in 0..iter_count {
                     let mut entity = Entity::new_from_existing(self.world, *iter.entities.add(i));
-                    let tuple = T::get_tuple(&array_ptr, i);
-                    func_ref(&mut entity, tuple);
+
+                    let tuple = if components_data.is_any_array_a_ref {
+                        let is_ref_array_components = &components_data.is_ref_array_components;
+                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+                    } else {
+                        T::get_tuple(array_components, i)
+                    };
+
+                    func(&mut entity, tuple);
                 }
+
                 ecs_table_unlock(self.world, iter.table);
             }
         }

@@ -1,7 +1,10 @@
 use libc::{memcpy, memset};
 
 use crate::{
-    core::c_binding::bindings::{ecs_term_is_initialized, ecs_term_t, FLECS_TERM_DESC_MAX},
+    core::{
+        c_binding::bindings::{ecs_term_is_initialized, ecs_term_t, FLECS_TERM_DESC_MAX},
+        iterable::ArrayElement,
+    },
     ecs_assert,
 };
 
@@ -9,7 +12,7 @@ use super::{
     c_binding::bindings::{
         _ecs_abort, ecs_filter_copy, ecs_filter_desc_t, ecs_filter_fini, ecs_filter_init,
         ecs_filter_iter, ecs_filter_move, ecs_filter_next, ecs_filter_str, ecs_flags32_t,
-        ecs_get_entity, ecs_os_api, ecs_table_lock, ecs_table_unlock,
+        ecs_get_entity, ecs_iter_t, ecs_os_api, ecs_table_lock, ecs_table_unlock,
     },
     c_types::{FilterT, IdT, TermT, WorldT},
     component_registration::{CachedComponentData, ComponentType, Enum},
@@ -50,15 +53,25 @@ where
     fn each_impl(&mut self, mut func: impl FnMut(T::TupleType), filter: *mut FilterT) {
         unsafe {
             let mut iter = ecs_filter_iter(self.world, filter);
-            let func_ref = &mut func;
+
             while ecs_filter_next(&mut iter) {
+                let components_data = T::get_array_ptrs_of_components(&iter);
                 let iter_count = iter.count as usize;
-                let array_ptr = T::get_array_ptrs_of_components(&iter);
+                let array_components = &components_data.array_components;
+
                 ecs_table_lock(self.world, iter.table);
+
                 for i in 0..iter_count {
-                    let tuple = T::get_tuple(&array_ptr, i);
-                    func_ref(tuple);
+                    let tuple = if components_data.is_any_array_a_ref {
+                        let is_ref_array_components = &components_data.is_ref_array_components;
+                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+                    } else {
+                        T::get_tuple(array_components, i)
+                    };
+
+                    func(tuple);
                 }
+
                 ecs_table_unlock(self.world, iter.table);
             }
         }
@@ -71,16 +84,27 @@ where
     ) {
         unsafe {
             let mut iter = ecs_filter_iter(self.world, filter);
-            let func_ref = &mut func;
+
             while ecs_filter_next(&mut iter) {
+                let components_data = T::get_array_ptrs_of_components(&iter);
                 let iter_count = iter.count as usize;
-                let array_ptr = T::get_array_ptrs_of_components(&iter);
+                let array_components = &components_data.array_components;
+
                 ecs_table_lock(self.world, iter.table);
+
                 for i in 0..iter_count {
                     let mut entity = Entity::new_from_existing(self.world, *iter.entities.add(i));
-                    let tuple = T::get_tuple(&array_ptr, i);
-                    func_ref(&mut entity, tuple);
+
+                    let tuple = if components_data.is_any_array_a_ref {
+                        let is_ref_array_components = &components_data.is_ref_array_components;
+                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+                    } else {
+                        T::get_tuple(array_components, i)
+                    };
+
+                    func(&mut entity, tuple);
                 }
+
                 ecs_table_unlock(self.world, iter.table);
             }
         }
