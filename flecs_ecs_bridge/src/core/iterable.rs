@@ -971,6 +971,7 @@ impl<'a, T: 'a> TupleForm<'a, Option<T>, T> for Wrapper<T> {
         }
     }
 
+    #[inline(always)]
     fn return_type_for_tuple_with_ref(array: *mut T, is_ref: bool, index: usize) -> Self::Tuple {
         unsafe {
             if array.is_null() {

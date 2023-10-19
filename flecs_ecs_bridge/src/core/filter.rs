@@ -231,8 +231,6 @@ where
 {
     base: FilterBase<'a, T>,
     filter: FilterT,
-    desc: ecs_filter_desc_t,
-    next_term_index: usize,
 }
 
 impl<'a, T> Filter<'a, T>
@@ -251,8 +249,6 @@ where
                 _phantom: std::marker::PhantomData,
             },
             filter,
-            desc,
-            next_term_index: 0,
         }
     }
 
@@ -264,8 +260,6 @@ where
                 _phantom: std::marker::PhantomData,
             },
             filter: Default::default(),
-            desc: Default::default(),
-            next_term_index: 0,
         };
 
         unsafe { ecs_filter_move(&mut filter_obj.filter, filter) };
@@ -283,8 +277,6 @@ where
                 _phantom: std::marker::PhantomData,
             },
             filter: Default::default(),
-            desc: Default::default(),
-            next_term_index: 0,
         };
 
         unsafe {
@@ -322,14 +314,6 @@ where
     #[inline]
     pub fn each_entity(&mut self, func: impl FnMut(&mut Entity, T::TupleType)) {
         self.base.each_entity_impl(func, &mut self.filter);
-    }
-
-    pub fn current_term(&mut self) -> &mut TermT {
-        &mut self.desc.terms[self.next_term_index]
-    }
-
-    pub fn next_term(&mut self) {
-        self.next_term_index += 1;
     }
 
     pub fn entity(&mut self) -> Entity {
@@ -377,28 +361,9 @@ where
                 _phantom: std::marker::PhantomData,
             },
             filter: Default::default(),
-            desc: Default::default(),
-            next_term_index: 0,
         };
 
         unsafe { ecs_filter_copy(&mut new_filter.filter, &self.filter) };
         new_filter
-    }
-}
-
-impl<'a, T> Filterable for Filter<'a, T>
-where
-    T: Iterable<'a>,
-{
-    fn current_term(&mut self) -> &mut TermT {
-        self.current_term()
-    }
-
-    fn next_term(&mut self) {
-        self.next_term()
-    }
-
-    fn get_world(&self) -> *mut WorldT {
-        self.base.world
     }
 }
