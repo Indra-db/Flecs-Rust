@@ -1077,7 +1077,7 @@ impl EntityView {
             "cannot use readonly world/stage to create mutable handle"
         );
 
-        Entity::new_from_existing(stage.world, self.raw_id)
+        Entity::new_from_existing(stage.raw_world, self.raw_id)
     }
 
     /// Returns a mutable entity handle for the current stage from another entity.

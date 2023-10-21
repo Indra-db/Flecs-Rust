@@ -30,7 +30,7 @@ impl ScopedWorld {
     pub fn new(world: *mut WorldT, scope: EntityT) -> Self {
         let prev_scope = unsafe { ecs_set_scope(world, scope) };
         let world = World {
-            world,
+            raw_world: world,
             is_owned: false,
         };
         Self { world, prev_scope }
@@ -39,7 +39,7 @@ impl ScopedWorld {
     pub fn new_from_scoped_world(scoped_world: &ScopedWorld) -> Self {
         let prev_scope = scoped_world.prev_scope;
         let world = World {
-            world: scoped_world.world.world,
+            raw_world: scoped_world.raw_world,
             is_owned: scoped_world.is_owned,
         };
         Self { world, prev_scope }
@@ -48,6 +48,6 @@ impl ScopedWorld {
 
 impl Drop for ScopedWorld {
     fn drop(&mut self) {
-        unsafe { ecs_set_scope(self.world.world, self.prev_scope) };
+        unsafe { ecs_set_scope(self.world.raw_world, self.prev_scope) };
     }
 }

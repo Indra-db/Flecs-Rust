@@ -16,6 +16,7 @@ use super::{
     iterable::{Filterable, Iterable},
     query::{Query, QueryBase},
     term::TermBuilder,
+    world::World,
 };
 
 pub struct QueryBuilder<'a, T>
@@ -24,7 +25,7 @@ where
 {
     pub filter_builder: FilterBuilder<'a, T>,
     pub desc: ecs_query_desc_t,
-    pub world: *mut WorldT,
+    pub world: &'static World,
 }
 
 impl<'a, T> Deref for QueryBuilder<'a, T>
@@ -42,18 +43,18 @@ impl<'a, T> QueryBuilder<'a, T>
 where
     T: Iterable<'a>,
 {
-    pub fn new(world: *mut WorldT) -> Self {
+    pub fn new(world: &'static World) -> Self {
+        let mut desc = Default::default();
         let mut obj = Self {
-            desc: Default::default(),
-            filter_builder: Default::default(),
+            desc,
+            filter_builder: FilterBuilder::new_with_desc(world, &mut desc.filter, 0),
             world,
         };
-        obj.filter_builder = FilterBuilder::new_with_desc(world, &mut obj.desc.filter, 0);
         T::populate(&mut obj);
         obj
     }
 
-    pub fn new_named(world: *mut WorldT, name: &str) -> Self {
+    pub fn new_named(world: &'static World, name: &str) -> Self {
         let mut obj = Self {
             desc: Default::default(),
             filter_builder: FilterBuilder::new(world),
@@ -64,7 +65,7 @@ where
         desc.name = std::ffi::CString::new(name).unwrap().into_raw();
         desc.sep = SEPARATOR.as_ptr();
         desc.root_sep = SEPARATOR.as_ptr();
-        obj.desc.filter.entity = unsafe { ecs_entity_init(world, &mut desc) };
+        obj.desc.filter.entity = unsafe { ecs_entity_init(world.raw_world, &mut desc) };
         obj
     }
 }
@@ -74,7 +75,7 @@ where
     T: Iterable<'a>,
 {
     fn get_world(&self) -> *mut WorldT {
-        self.filter_builder.world
+        self.filter_builder.world.raw_world
     }
 
     fn current_term(&mut self) -> &mut TermT {
@@ -111,7 +112,7 @@ where
 {
     #[inline]
     fn get_world(&self) -> *mut WorldT {
-        self.filter_builder.world
+        self.filter_builder.world.raw_world
     }
 
     #[inline]

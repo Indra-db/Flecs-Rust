@@ -19,7 +19,7 @@ use super::{
     entity::Entity,
     enum_type::CachedEnumData,
     iterable::{Filterable, Iterable},
-    term::{Term, TermBuilder},
+    term::{Term, TermBuilder, With},
     utility::{errors::FlecsErrorCode, functions::type_to_inout, traits::InOutType},
     world::World,
 };
@@ -30,20 +30,8 @@ struct FilterBase<'a, T>
 where
     T: Iterable<'a>,
 {
-    pub world: *mut WorldT,
+    pub world: &'static World,
     _phantom: std::marker::PhantomData<&'a T>,
-}
-
-impl<'a, T> Default for FilterBase<'a, T>
-where
-    T: Iterable<'a>,
-{
-    fn default() -> Self {
-        Self {
-            world: std::ptr::null_mut(),
-            _phantom: std::marker::PhantomData,
-        }
-    }
 }
 
 impl<'a, T> FilterBase<'a, T>
@@ -52,14 +40,14 @@ where
 {
     fn each_impl(&mut self, mut func: impl FnMut(T::TupleType), filter: *mut FilterT) {
         unsafe {
-            let mut iter = ecs_filter_iter(self.world, filter);
+            let mut iter = ecs_filter_iter(self.world.raw_world, filter);
 
             while ecs_filter_next(&mut iter) {
                 let components_data = T::get_array_ptrs_of_components(&iter);
                 let iter_count = iter.count as usize;
                 let array_components = &components_data.array_components;
 
-                ecs_table_lock(self.world, iter.table);
+                ecs_table_lock(self.world.raw_world, iter.table);
 
                 for i in 0..iter_count {
                     let tuple = if components_data.is_any_array_a_ref {
@@ -72,7 +60,7 @@ where
                     func(tuple);
                 }
 
-                ecs_table_unlock(self.world, iter.table);
+                ecs_table_unlock(self.world.raw_world, iter.table);
             }
         }
     }
@@ -83,17 +71,18 @@ where
         filter: *mut FilterT,
     ) {
         unsafe {
-            let mut iter = ecs_filter_iter(self.world, filter);
+            let mut iter = ecs_filter_iter(self.world.raw_world, filter);
 
             while ecs_filter_next(&mut iter) {
                 let components_data = T::get_array_ptrs_of_components(&iter);
                 let iter_count = iter.count as usize;
                 let array_components = &components_data.array_components;
 
-                ecs_table_lock(self.world, iter.table);
+                ecs_table_lock(self.world.raw_world, iter.table);
 
                 for i in 0..iter_count {
-                    let mut entity = Entity::new_from_existing(self.world, *iter.entities.add(i));
+                    let mut entity =
+                        Entity::new_from_existing(self.world.raw_world, *iter.entities.add(i));
 
                     let tuple = if components_data.is_any_array_a_ref {
                         let is_ref_array_components = &components_data.is_ref_array_components;
@@ -105,26 +94,34 @@ where
                     func(&mut entity, tuple);
                 }
 
-                ecs_table_unlock(self.world, iter.table);
+                ecs_table_unlock(self.world.raw_world, iter.table);
             }
         }
     }
 
     fn entity_impl(&self, filter: *mut FilterT) -> Entity {
-        Entity::new_from_existing(self.world, unsafe { ecs_get_entity(filter as *const _) })
+        Entity::new_from_existing(self.world.raw_world, unsafe {
+            ecs_get_entity(filter as *const _)
+        })
     }
 
     fn each_term_impl(&self, mut func: impl FnMut(Term), filter: *mut FilterT) {
         unsafe {
             for i in 0..(*filter).term_count {
-                let term = Term::new(self.world, *(*filter).terms.add(i as usize));
+                let term = Term::new(
+                    Some(self.world),
+                    With::Term(*(*filter).terms.add(i as usize)),
+                );
                 func(term);
             }
         }
     }
 
     fn get_term_impl(&self, index: usize, filter: *mut FilterT) -> Term {
-        Term::new(self.world, unsafe { *(*filter).terms.add(index) })
+        Term::new(
+            Some(self.world),
+            With::Term(unsafe { *(*filter).terms.add(index as usize) }),
+        )
     }
 
     fn field_count_impl(&self, filter: *mut FilterT) -> i32 {
@@ -133,7 +130,8 @@ where
 
     #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
     fn to_string_impl(&self, filter: *mut FilterT) -> String {
-        let result: *mut c_char = unsafe { ecs_filter_str(self.world, filter as *const _) };
+        let result: *mut c_char =
+            unsafe { ecs_filter_str(self.world.raw_world, filter as *const _) };
         let rust_string =
             String::from(unsafe { std::ffi::CStr::from_ptr(result).to_str().unwrap() });
         unsafe {
@@ -151,18 +149,6 @@ where
 {
     base: FilterBase<'a, T>,
     filter_ptr: *mut FilterT,
-}
-
-impl<'a, T> Default for FilterView<'a, T>
-where
-    T: Iterable<'a>,
-{
-    fn default() -> Self {
-        Self {
-            base: Default::default(),
-            filter_ptr: std::ptr::null_mut(),
-        }
-    }
 }
 
 impl<'a, T> Clone for FilterView<'a, T>
@@ -184,7 +170,7 @@ impl<'a, T> FilterView<'a, T>
 where
     T: Iterable<'a>,
 {
-    pub fn new_view(world: *mut WorldT, filter: *const FilterT) -> Self {
+    pub fn new_view(world: &'static World, filter: *const FilterT) -> Self {
         Self {
             base: FilterBase {
                 world,
@@ -224,7 +210,6 @@ where
     }
 }
 
-#[derive(Default)]
 pub struct Filter<'a, T>
 where
     T: Iterable<'a>,
@@ -237,15 +222,15 @@ impl<'a, T> Filter<'a, T>
 where
     T: Iterable<'a>,
 {
-    pub fn new(world: &World) -> Self {
+    pub fn new(world: &'static World) -> Self {
         let mut desc = ecs_filter_desc_t::default();
-        T::register_ids_descriptor(world.world, &mut desc);
+        T::register_ids_descriptor(world.raw_world, &mut desc);
         let mut filter: FilterT = Default::default();
         desc.storage = &mut filter;
-        unsafe { ecs_filter_init(world.world, &desc) };
+        unsafe { ecs_filter_init(world.raw_world, &desc) };
         Filter {
             base: FilterBase {
-                world: world.world,
+                world,
                 _phantom: std::marker::PhantomData,
             },
             filter,
@@ -253,7 +238,7 @@ where
     }
 
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new_ownership(world: *mut WorldT, filter: *mut FilterT) -> Self {
+    pub fn new_ownership(world: &'static World, filter: *mut FilterT) -> Self {
         let mut filter_obj = Filter {
             base: FilterBase {
                 world,
@@ -270,7 +255,7 @@ where
     //TODO: this needs testing -> desc.storage pointer becomes invalid after this call as it re-allocates after this new
     // determine if this is a problem
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new_from_desc(world: *mut WorldT, desc: *mut ecs_filter_desc_t) -> Self {
+    pub fn new_from_desc(world: &'static World, desc: *mut ecs_filter_desc_t) -> Self {
         let mut filter_obj = Filter {
             base: FilterBase {
                 world,
@@ -284,7 +269,7 @@ where
         }
 
         unsafe {
-            if ecs_filter_init(filter_obj.base.world, desc).is_null() {
+            if ecs_filter_init(filter_obj.base.world.raw_world, desc).is_null() {
                 _ecs_abort(
                     FlecsErrorCode::InvalidParameter.to_int(),
                     file!().as_ptr() as *const i8,
