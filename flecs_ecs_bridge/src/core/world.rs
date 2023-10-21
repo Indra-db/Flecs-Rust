@@ -26,7 +26,7 @@ use super::component_registration::{
 };
 use super::entity::Entity;
 use super::enum_type::CachedEnumData;
-use super::id::Id;
+use super::id::{Id, With};
 use super::scoped_world::ScopedWorld;
 use super::term::Term;
 use super::utility::functions::set_helper;
@@ -674,7 +674,7 @@ impl World {
     /// `world::set_scope`
     #[inline(always)]
     pub fn set_scope_with_id(&self, id: EntityT) -> Entity {
-        Entity::new_only_id(unsafe { ecs_set_scope(self.raw_world, id) })
+        Entity::new_id_only(unsafe { ecs_set_scope(self.raw_world, id) })
     }
 
     /// Sets the current scope, but allows the scope type to be inferred from the type parameter.
@@ -1486,7 +1486,7 @@ impl World {
     /// `world::children`
     #[inline(always)]
     pub fn for_each_children<F: FnMut(Entity)>(&self, callback: F) {
-        Entity::new(self.raw_world).for_each_child_of(callback);
+        Entity::new(self).for_each_child_of(callback);
     }
 
     /// create alias for component
@@ -2386,12 +2386,12 @@ impl World {
 
     /// get  id of (struct) component.
     pub fn get_id_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> Id {
-        Id::new_from_existing(self.raw_world, T::get_id(self.raw_world))
+        Id::new(Some(&self), With::Id(T::get_id(self.raw_world)))
     }
 
     /// get pair id from relationship, object.
     pub fn get_id_pair_from_ids(&self, first: EntityT, second: EntityT) -> Id {
-        Id::new_world_pair(self.raw_world, first, second)
+        Id::new(Some(&self), With::Pair(first, second))
     }
 
     /// get pair id from relationship, object.
@@ -2400,16 +2400,21 @@ impl World {
         First: CachedComponentData,
         Second: CachedComponentData + ComponentType<Struct>,
     {
-        Id::new_world_pair(
-            self.raw_world,
-            First::get_id(self.raw_world),
-            Second::get_id(self.raw_world),
+        Id::new(
+            Some(&self),
+            With::Pair(
+                First::get_id(self.raw_world),
+                Second::get_id(self.raw_world),
+            ),
         )
     }
 
     /// get pair id from relationship, object.
     pub fn get_id_pair_second_with_id<First: CachedComponentData>(&self, second: EntityT) -> Id {
-        Id::new_world_pair(self.raw_world, First::get_id(self.raw_world), second)
+        Id::new(
+            Some(&self),
+            With::Pair(First::get_id(self.raw_world), second),
+        )
     }
 
     /// Ensures that entity with provided generation is alive.
@@ -2497,9 +2502,9 @@ impl World {
     where
         T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
     {
-        Id::new_from_existing(
-            self.raw_world,
-            enum_value.get_entity_id_from_enum_field(self.raw_world),
+        Id::new(
+            Some(&self),
+            With::Id(enum_value.get_entity_id_from_enum_field(self.raw_world)),
         )
     }
 
@@ -2560,7 +2565,7 @@ impl World {
     ///
     /// `world::entity`
     pub fn new_entity_named(&self, name: &str) -> Entity {
-        Entity::new_named(self.raw_world, name)
+        Entity::new_named(self, name)
     }
 
     /// Create a new entity.
@@ -2569,7 +2574,7 @@ impl World {
     ///
     /// `world::entity`
     pub fn new_entity(&self) -> Entity {
-        Entity::new(self.raw_world)
+        Entity::new(self)
     }
 
     /// Create a new entity with the provided id.

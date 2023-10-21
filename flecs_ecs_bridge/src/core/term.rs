@@ -62,7 +62,7 @@ impl Clone for Term {
 pub enum With {
     Term(TermT),
     Id(IdT),
-    RelTarget(EntityT, EntityT),
+    Pair(EntityT, EntityT),
 }
 
 impl Term {
@@ -71,7 +71,7 @@ impl Term {
             match with {
                 With::Term(term) => Self::new_term(world.raw_world, term),
                 With::Id(id) => Self::new_id(world.raw_world, id),
-                With::RelTarget(rel, target) => Self::new_rel_target(world.raw_world, rel, target),
+                With::Pair(rel, target) => Self::new_rel_target(world.raw_world, rel, target),
             }
         } else {
             match with {
@@ -80,7 +80,7 @@ impl Term {
                     Self::new_term(std::ptr::null_mut(), term)
                 }
                 With::Id(id) => Self::new_id_only(id),
-                With::RelTarget(rel, target) => Self::new_rel_target_only(rel, target),
+                With::Pair(rel, target) => Self::new_rel_target_only(rel, target),
             }
         }
     }

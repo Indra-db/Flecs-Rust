@@ -401,8 +401,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     fn term_with_pair_ids(&mut self, rel: IdT, target: IdT) -> &mut Self {
         self.term();
         unsafe {
-            *self.get_raw_term() =
-                Term::new(None, TermWith::RelTarget(rel, target)).move_raw_term();
+            *self.get_raw_term() = Term::new(None, TermWith::Pair(rel, target)).move_raw_term();
         }
         self
     }

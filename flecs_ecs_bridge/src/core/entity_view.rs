@@ -58,9 +58,19 @@ impl EntityView {
     /// ### Arguments
     /// * `world` - The world the entity belongs to.
     /// * `id` - The entity id.
-    pub fn new_from_existing(world: *mut WorldT, id: IdT) -> Self {
-        Self {
-            id: Id::new_from_existing(world, id),
+    ///
+    /// # Safety
+    ///
+    /// if the world is passed as None, it's not safe to use this entity for operations on it
+    pub fn new(world: Option<&World>, id: IdT) -> Self {
+        if let Some(world) = world {
+            Self {
+                id: Id::new_from_existing(world.raw_world, id),
+            }
+        } else {
+            Self {
+                id: Id::new_id_only(id),
+            }
         }
     }
 
@@ -69,7 +79,7 @@ impl EntityView {
     /// * `world` - The world the entity belongs to as void*.
     /// * `id` - The entity id.
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new_from_existing_poly_world(world: *mut c_void, id: IdT) -> Self {
+    pub fn new_from_existing_with_poly_world(world: *mut c_void, id: IdT) -> Self {
         unsafe {
             Self {
                 id: Id::new_from_existing(
@@ -84,10 +94,20 @@ impl EntityView {
         }
     }
 
-    // Explicit conversion from flecs::entity_t to EntityView
-    pub const fn new_only_id(id: EntityT) -> Self {
+    /// Wrap an existing entity id.
+    /// ### Arguments
+    /// * `world` - The world the entity belongs to.
+    /// * `id` - The entity id.
+    pub(crate) fn new_from_existing(world: *mut WorldT, id: IdT) -> Self {
         Self {
-            id: Id::new_only_id(id),
+            id: Id::new_from_existing(world, id),
+        }
+    }
+
+    // Explicit conversion from flecs::entity_t to EntityView
+    pub const fn new_id_only(id: EntityT) -> Self {
+        Self {
+            id: Id::new_id_only(id),
         }
     }
 
@@ -395,7 +415,7 @@ impl EntityView {
         F: FnMut(Entity),
     {
         self.for_each_target_in_relationship_by_entity(
-            EntityView::new_only_id(T::get_id(self.world)),
+            EntityView::new_id_only(T::get_id(self.world)),
             func,
         );
     }
