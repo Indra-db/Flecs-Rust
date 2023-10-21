@@ -15,6 +15,7 @@ use super::{
     entity::Entity,
     id::Id,
     utility::functions::ecs_pair,
+    world::World,
 };
 
 /// Struct that describes a term identifier.
@@ -28,7 +29,7 @@ pub struct Term {
     pub term_id: *mut TermIdT,
     pub term_ptr: *mut TermT,
     pub term: TermT,
-    pub world: *mut WorldT,
+    world: *mut WorldT,
 }
 
 impl Default for Term {
@@ -58,8 +59,96 @@ impl Clone for Term {
     }
 }
 
+pub enum With {
+    Term(TermT),
+    Id(IdT),
+    Pair(EntityT, EntityT),
+}
+
 impl Term {
-    pub fn new(world: *mut WorldT, term: TermT) -> Self {
+    pub fn new(world: Option<&World>, with: With) -> Self {
+        if let Some(world) = world {
+            match with {
+                With::Term(term) => Self::new_term(world.raw_world, term),
+                With::Id(id) => Self::new_id(world.raw_world, id),
+                With::Pair(rel, target) => Self::new_rel_target(world.raw_world, rel, target),
+            }
+        } else {
+            match with {
+                With::Term(term) => {
+                    ecs_assert!(false, FlecsErrorCode::InvalidParameter, "world is None");
+                    Self::new_term(std::ptr::null_mut(), term)
+                }
+                With::Id(id) => Self::new_id_only(id),
+                With::Pair(rel, target) => Self::new_rel_target_only(rel, target),
+            }
+        }
+    }
+
+    pub fn new_world_only(world: &World) -> Self {
+        let mut obj = Self {
+            world: world.raw_world,
+            term_id: std::ptr::null_mut(),
+            term: Default::default(),
+            term_ptr: std::ptr::null_mut(),
+        };
+        obj.term.move_ = true;
+        obj
+    }
+
+    pub fn new_component<T: CachedComponentData>(world: Option<&World>) -> Self {
+        if let Some(world) = world {
+            Self::new_id(world.raw_world, T::get_id(world.raw_world))
+        } else {
+            let id: IdT = if T::is_registered() {
+                unsafe { T::get_id_unchecked() }
+            } else {
+                ecs_assert!(
+                    false,
+                    FlecsErrorCode::InvalidOperation,
+                    "component not registered"
+                );
+                0
+            };
+            Self::new_id_only(id)
+        }
+    }
+
+    pub fn new_pair<T: CachedComponentData, U: CachedComponentData>(world: Option<&World>) -> Self {
+        if let Some(world) = world {
+            Self::new_rel_target(
+                world.raw_world,
+                T::get_id(world.raw_world),
+                U::get_id(world.raw_world),
+            )
+        } else {
+            let id_rel = if T::is_registered() {
+                unsafe { T::get_id_unchecked() }
+            } else {
+                ecs_assert!(
+                    false,
+                    FlecsErrorCode::InvalidOperation,
+                    "component not registered"
+                );
+                0
+            };
+
+            let id_target = if U::is_registered() {
+                unsafe { U::get_id_unchecked() }
+            } else {
+                ecs_assert!(
+                    false,
+                    FlecsErrorCode::InvalidOperation,
+                    "component not registered"
+                );
+                0
+            };
+
+            Self::new_rel_target_only(id_rel, id_target)
+        }
+    }
+
+    fn new_term(world: *mut WorldT, term: TermT) -> Self {
         let mut obj = Self {
             world,
             term_id: std::ptr::null_mut(),
@@ -72,18 +161,7 @@ impl Term {
         obj
     }
 
-    pub fn new_only_world(world: *mut WorldT) -> Self {
-        let mut obj = Self {
-            world,
-            term_id: std::ptr::null_mut(),
-            term: Default::default(),
-            term_ptr: std::ptr::null_mut(),
-        };
-        obj.term.move_ = true;
-        obj
-    }
-
-    pub fn new_id(world: *mut WorldT, id: IdT) -> Self {
+    fn new_id(world: *mut WorldT, id: IdT) -> Self {
         let mut obj = Self {
             world,
             term_id: std::ptr::null_mut(),
@@ -101,7 +179,7 @@ impl Term {
         obj
     }
 
-    pub fn new_only_id(id: IdT) -> Self {
+    fn new_id_only(id: IdT) -> Self {
         let mut obj = Self {
             world: std::ptr::null_mut(),
             term_id: std::ptr::null_mut(),
@@ -117,7 +195,7 @@ impl Term {
         obj
     }
 
-    pub fn new_rel_target(world: *mut WorldT, rel: EntityT, target: EntityT) -> Self {
+    fn new_rel_target(world: *mut WorldT, rel: EntityT, target: EntityT) -> Self {
         let mut obj = Self {
             world,
             term_id: std::ptr::null_mut(),
@@ -131,7 +209,7 @@ impl Term {
         obj
     }
 
-    pub fn new_only_rel_target(rel: EntityT, target: EntityT) -> Self {
+    fn new_rel_target_only(rel: EntityT, target: EntityT) -> Self {
         let mut obj = Self {
             world: std::ptr::null_mut(),
             term_id: std::ptr::null_mut(),
@@ -141,27 +219,6 @@ impl Term {
         obj.term.id = ecs_pair(rel, target);
         obj.term.move_ = true;
         obj
-    }
-
-    pub fn new_from_type<T: CachedComponentData>(world: *mut WorldT) -> Self {
-        Self::new_id(world, T::get_id(world))
-    }
-
-    pub fn new_only_from_type<T: CachedComponentData>() -> Self {
-        Self::new_only_id(T::get_id(std::ptr::null_mut()))
-    }
-
-    pub fn new_from_pair_type<T: CachedComponentData, U: CachedComponentData>(
-        world: *mut WorldT,
-    ) -> Self {
-        Self::new_rel_target(world, T::get_id(world), U::get_id(world))
-    }
-
-    pub fn new_only_from_pair_type<T: CachedComponentData, U: CachedComponentData>() -> Self {
-        Self::new_only_rel_target(
-            T::get_id(std::ptr::null_mut()),
-            U::get_id(std::ptr::null_mut()),
-        )
     }
 
     /// This is how you should move a term, not the default rust way

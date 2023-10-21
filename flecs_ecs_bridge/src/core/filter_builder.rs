@@ -20,47 +20,32 @@ use super::{
     enum_type::CachedEnumData,
     filter::Filter,
     iterable::{Filterable, Iterable},
-    term::{Term, TermBuilder},
+    term::{self, Term, TermBuilder, With as TermWith},
     utility::{functions::type_to_inout, traits::InOutType},
+    world::World,
 };
 
-pub struct FilterBuilder<'a, T>
+pub struct FilterBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
     pub desc: ecs_filter_desc_t,
     expr_count: i32,
     term: Term,
-    pub world: *mut WorldT,
+    pub world: &'w World,
     next_term_index: i32,
     _phantom: std::marker::PhantomData<&'a T>,
 }
 
-impl<'a, T> Default for FilterBuilder<'a, T>
+impl<'a, 'w, T> FilterBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    fn default() -> Self {
-        Self {
-            desc: Default::default(),
-            expr_count: 0,
-            term: Term::default(),
-            world: std::ptr::null_mut(),
-            next_term_index: 0,
-            _phantom: std::marker::PhantomData,
-        }
-    }
-}
-
-impl<'a, T> FilterBuilder<'a, T>
-where
-    T: Iterable<'a>,
-{
-    pub fn new(world: *mut WorldT) -> Self {
+    pub fn new(world: &'w World) -> Self {
         let mut obj = Self {
             desc: Default::default(),
             expr_count: 0,
-            term: Term::new_only_world(world),
+            term: Term::new_world_only(world),
             world,
             next_term_index: 0,
             _phantom: std::marker::PhantomData,
@@ -69,7 +54,7 @@ where
         obj
     }
 
-    pub fn new_named(world: *mut WorldT, name: &str) -> Self {
+    pub fn new_named(world: &'w World, name: &str) -> Self {
         let mut obj = Self {
             desc: Default::default(),
             expr_count: 0,
@@ -83,15 +68,11 @@ where
         desc.name = std::ffi::CString::new(name).unwrap().into_raw();
         desc.sep = SEPARATOR.as_ptr();
         desc.root_sep = SEPARATOR.as_ptr();
-        obj.desc.entity = unsafe { ecs_entity_init(world, &mut desc) };
+        obj.desc.entity = unsafe { ecs_entity_init(world.raw_world, &mut desc) };
         obj
     }
 
-    pub fn new_with_desc(
-        world: *mut WorldT,
-        desc: *mut ecs_filter_desc_t,
-        term_index: i32,
-    ) -> Self {
+    pub fn new_with_desc(world: &'w World, desc: *mut ecs_filter_desc_t, term_index: i32) -> Self {
         Self {
             desc: unsafe { *desc },
             expr_count: 0,
@@ -111,12 +92,12 @@ where
     }
 }
 
-impl<'a, T> Filterable for FilterBuilder<'a, T>
+impl<'a, 'w, T> Filterable for FilterBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
     fn get_world(&self) -> *mut WorldT {
-        self.world
+        self.world.raw_world
     }
 
     fn current_term(&mut self) -> &mut TermT {
@@ -128,7 +109,7 @@ where
     }
 }
 
-impl<'a, T> FilterBuilderImpl for FilterBuilder<'a, T>
+impl<'a, 'w, T> FilterBuilderImpl for FilterBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
@@ -148,13 +129,13 @@ where
     }
 }
 
-impl<'a, T> TermBuilder for FilterBuilder<'a, T>
+impl<'a, 'w, T> TermBuilder for FilterBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
     #[inline]
-    fn get_world(&self) -> *mut super::c_types::WorldT {
-        self.world
+    fn get_world(&self) -> *mut WorldT {
+        self.world.raw_world
     }
 
     #[inline]
@@ -173,15 +154,15 @@ where
     }
 }
 
-impl<'a, T> Builder for FilterBuilder<'a, T>
+impl<'a, 'w, T> Builder for FilterBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    type BuiltType = Filter<'a, T>;
+    type BuiltType = Filter<'a, 'w, T>;
 
     #[inline]
     fn build(&mut self) -> Self::BuiltType {
-        Filter::<'a, T>::new_from_desc(self.world, &mut self.desc as *mut _)
+        Filter::<'a, 'w, T>::new_from_desc(self.world, &mut self.desc as *mut _)
     }
 }
 
@@ -394,7 +375,7 @@ pub trait FilterBuilderImpl: TermBuilder {
         self.term();
         unsafe {
             *self.get_raw_term() =
-                Term::new_only_id(T::Type::get_id(self.get_world())).move_raw_term();
+                Term::new(None, TermWith::Id(T::Type::get_id(self.get_world()))).move_raw_term();
             (*self.get_raw_term()).inout = type_to_inout::<T>() as i32;
         }
         self
@@ -402,7 +383,7 @@ pub trait FilterBuilderImpl: TermBuilder {
 
     fn term_with_id(&mut self, id: IdT) -> &mut Self {
         self.term();
-        let new_term: ecs_term_t = Term::new_only_id(id).move_raw_term();
+        let new_term: ecs_term_t = Term::new(None, TermWith::Id(id)).move_raw_term();
         let term: &mut Term = self.get_term();
         let term_ptr: *mut TermT = term.term_ptr;
         unsafe { *term_ptr = new_term };
@@ -420,7 +401,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     fn term_with_pair_ids(&mut self, rel: IdT, target: IdT) -> &mut Self {
         self.term();
         unsafe {
-            *self.get_raw_term() = Term::new_only_rel_target(rel, target).move_raw_term();
+            *self.get_raw_term() = Term::new(None, TermWith::Pair(rel, target)).move_raw_term();
         }
         self
     }
@@ -439,7 +420,9 @@ pub trait FilterBuilderImpl: TermBuilder {
     fn term_with_pair_id_name(&mut self, rel: IdT, target: &str) -> &mut Self {
         self.term();
         unsafe {
-            *self.get_raw_term() = Term::new_only_id(rel).second_name(target).move_raw_term();
+            *self.get_raw_term() = Term::new(None, TermWith::Id(rel))
+                .second_name(target)
+                .move_raw_term();
         }
         self
     }

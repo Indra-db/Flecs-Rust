@@ -13,37 +13,24 @@ use super::c_types::*;
 use super::entity::Entity;
 use super::filter::FilterView;
 use super::iterable::Iterable;
-use super::term::Term;
+use super::term::{Term, With};
 use super::utility::errors::FlecsErrorCode;
 use super::world::World;
 
-pub struct QueryBase<'a, T>
+pub struct QueryBase<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    pub world: *mut WorldT,
+    pub world: &'w World,
     pub query: *mut QueryT,
     _phantom: std::marker::PhantomData<&'a T>,
 }
 
-impl<'a, T> Default for QueryBase<'a, T>
+impl<'a, 'w, T> QueryBase<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    fn default() -> Self {
-        Self {
-            world: std::ptr::null_mut(),
-            query: std::ptr::null_mut(),
-            _phantom: std::marker::PhantomData,
-        }
-    }
-}
-
-impl<'a, T> QueryBase<'a, T>
-where
-    T: Iterable<'a>,
-{
-    fn new(world: *mut WorldT, query: *mut QueryT) -> Self {
+    fn new(world: &'w World, query: *mut QueryT) -> Self {
         Self {
             world,
             query,
@@ -51,10 +38,10 @@ where
         }
     }
 
-    fn new_from_desc(world: *mut WorldT, desc: *mut ecs_query_desc_t) -> Self {
+    fn new_from_desc(world: &'w World, desc: *mut ecs_query_desc_t) -> Self {
         let obj = Self {
             world,
-            query: unsafe { ecs_query_init(world, desc) },
+            query: unsafe { ecs_query_init(world.raw_world, desc) },
             _phantom: std::marker::PhantomData,
         };
         unsafe {
@@ -156,9 +143,8 @@ where
     }
 
     /// Free the query
-    pub fn destruct(&mut self) {
+    pub fn destruct(mut self) {
         unsafe { ecs_query_fini(self.query) }
-        self.world = std::ptr::null_mut();
         self.query = std::ptr::null_mut();
     }
 
@@ -166,13 +152,16 @@ where
         unsafe {
             let filter = ecs_query_get_filter(query);
             for i in 0..(*filter).term_count {
-                let term = Term::new(self.world, *(*filter).terms.add(i as usize));
+                let term = Term::new(
+                    Some(self.world),
+                    With::Term(*(*filter).terms.add(i as usize)),
+                );
                 func(term);
             }
         }
     }
 
-    pub fn filter(&self) -> FilterView<'a, T> {
+    pub fn filter(&self) -> FilterView<'a, 'w, T> {
         FilterView::<T>::new_view(self.world, unsafe { ecs_query_get_filter(self.query) })
     }
     fn term(&self, index: i32) -> Term {
@@ -182,7 +171,10 @@ where
             FlecsErrorCode::InvalidParameter,
             "query filter is null"
         );
-        Term::new(self.world, unsafe { *(*filter).terms.add(index as usize) })
+        Term::new(
+            Some(self.world),
+            With::Term(unsafe { *(*filter).terms.add(index as usize) }),
+        )
     }
 
     fn field_count(&self) -> i32 {
@@ -192,7 +184,8 @@ where
     #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
     fn to_string(&self) -> String {
         let filter = unsafe { ecs_query_get_filter(self.query) };
-        let result: *mut c_char = unsafe { ecs_filter_str(self.world, filter as *const _) };
+        let result: *mut c_char =
+            unsafe { ecs_filter_str(self.world.raw_world, filter as *const _) };
         let rust_string =
             String::from(unsafe { std::ffi::CStr::from_ptr(result).to_str().unwrap() });
         unsafe {
@@ -204,25 +197,24 @@ where
     }
 
     pub fn entity(&self) -> Entity {
-        Entity::new_from_existing(self.world, unsafe {
+        Entity::new_from_existing(self.world.raw_world, unsafe {
             ecs_get_entity(self.query as *const c_void)
         })
     }
 }
 
-#[derive(Default)]
-pub struct Query<'a, T>
+pub struct Query<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    pub base: QueryBase<'a, T>,
+    pub base: QueryBase<'a, 'w, T>,
 }
 
-impl<'a, T> Deref for Query<'a, T>
+impl<'a, 'w, T> Deref for Query<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    type Target = QueryBase<'a, T>;
+    type Target = QueryBase<'a, 'w, T>;
 
     #[inline(always)]
     fn deref(&self) -> &Self::Target {
@@ -230,7 +222,7 @@ where
     }
 }
 
-impl<'a, T> DerefMut for Query<'a, T>
+impl<'a, 'w, T> DerefMut for Query<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
@@ -240,50 +232,50 @@ where
     }
 }
 
-impl<'a, T> Query<'a, T>
+impl<'a, 'w, T> Query<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    pub fn new(world: &World) -> Self {
+    pub fn new(world: &'w World) -> Self {
         let mut desc = ecs_query_desc_t::default();
-        T::register_ids_descriptor(world.world, &mut desc.filter);
+        T::register_ids_descriptor(world.raw_world, &mut desc.filter);
         let mut filter: FilterT = Default::default();
         desc.filter.storage = &mut filter;
-        let query = unsafe { ecs_query_init(world.world, &desc) };
-        Self {
-            base: QueryBase::new(world.world, query),
-        }
-    }
-
-    pub fn new_ownership(world: *mut WorldT, query: *mut QueryT) -> Self {
+        let query = unsafe { ecs_query_init(world.raw_world, &desc) };
         Self {
             base: QueryBase::new(world, query),
         }
     }
 
-    pub fn new_from_desc(world: *mut WorldT, desc: *mut ecs_query_desc_t) -> Self {
+    pub fn new_ownership(world: &'w World, query: *mut QueryT) -> Self {
+        Self {
+            base: QueryBase::new(world, query),
+        }
+    }
+
+    pub fn new_from_desc(world: &'w World, desc: *mut ecs_query_desc_t) -> Self {
         Self {
             base: QueryBase::new_from_desc(world, desc),
         }
     }
 
-    fn get_iter(&mut self, world: *mut WorldT) -> IterT {
+    fn get_iter(&mut self, world: &'w World) -> IterT {
         if !world.is_null() {
             self.world = world;
         }
-        unsafe { ecs_query_iter(self.world, self.query) }
+        unsafe { ecs_query_iter(self.world.raw_world, self.query) }
     }
 
     pub fn each(&mut self, mut func: impl FnMut(T::TupleType)) {
         unsafe {
-            let mut iter = ecs_query_iter(self.world, self.query);
+            let mut iter = ecs_query_iter(self.world.raw_world, self.query);
 
             while ecs_query_next(&mut iter) {
                 let components_data = T::get_array_ptrs_of_components(&iter);
                 let iter_count = iter.count as usize;
                 let array_components = &components_data.array_components;
 
-                ecs_table_lock(self.world, iter.table);
+                ecs_table_lock(self.world.raw_world, iter.table);
 
                 for i in 0..iter_count {
                     let tuple = if components_data.is_any_array_a_ref {
@@ -296,24 +288,25 @@ where
                     func(tuple);
                 }
 
-                ecs_table_unlock(self.world, iter.table);
+                ecs_table_unlock(self.world.raw_world, iter.table);
             }
         }
     }
 
     fn each_entity(&mut self, mut func: impl FnMut(&mut Entity, T::TupleType)) {
         unsafe {
-            let mut iter = ecs_query_iter(self.world, self.query);
+            let mut iter = ecs_query_iter(self.world.raw_world, self.query);
 
             while ecs_query_next(&mut iter) {
                 let components_data = T::get_array_ptrs_of_components(&iter);
                 let iter_count = iter.count as usize;
                 let array_components = &components_data.array_components;
 
-                ecs_table_lock(self.world, iter.table);
+                ecs_table_lock(self.world.raw_world, iter.table);
 
                 for i in 0..iter_count {
-                    let mut entity = Entity::new_from_existing(self.world, *iter.entities.add(i));
+                    let mut entity =
+                        Entity::new_from_existing(self.world.raw_world, *iter.entities.add(i));
 
                     let tuple = if components_data.is_any_array_a_ref {
                         let is_ref_array_components = &components_data.is_ref_array_components;
@@ -325,17 +318,17 @@ where
                     func(&mut entity, tuple);
                 }
 
-                ecs_table_unlock(self.world, iter.table);
+                ecs_table_unlock(self.world.raw_world, iter.table);
             }
         }
     }
 }
 
-impl<'a, T> Drop for Query<'a, T>
+impl<'a, 'w, T> Drop for Query<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
     fn drop(&mut self) {
-        self.destruct();
+        unsafe { ecs_query_fini(self.query) }
     }
 }

@@ -1,4 +1,8 @@
-use flecs_ecs_bridge::core::{c_types::*, entity::Entity, world::World};
+use flecs_ecs_bridge::core::{
+    c_types::*,
+    entity::{Entity, With},
+    world::World,
+};
 mod common;
 use common::*;
 //struct Parent {
@@ -467,7 +471,7 @@ fn entity_pair_role() {
     let entity = world.new_entity();
     let entity2 = world.new_entity();
 
-    let mut pair = Entity::new_pair_only(entity.raw_id, entity2.raw_id);
+    let mut pair = Entity::new_wrapper(None, With::Pair(entity.raw_id, entity2.raw_id));
     pair = pair.add_flags(ECS_PAIR);
 
     assert!(pair.has_flags_for(ECS_PAIR));

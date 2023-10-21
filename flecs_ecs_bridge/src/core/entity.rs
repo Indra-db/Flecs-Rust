@@ -21,6 +21,7 @@ use super::{
     entity_view::EntityView,
     enum_type::CachedEnumData,
     utility::functions::{ecs_pair, set_helper},
+    world::World,
 };
 
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -43,44 +44,55 @@ impl From<Entity> for IdT {
     }
 }
 
+pub enum With {
+    Id(IdT),
+    Pair(IdT, IdT),
+}
+
 // functions in here match most of the functions in the c++ entity and entity_builder class
 impl Entity {
     /// Create new entity.
-    /// ### Safety
-    /// This function is unsafe because it assumes that the world is not null.
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new(world: *mut WorldT) -> Self {
+    pub fn new(world: &World) -> Self {
         Self {
-            entity_view: EntityView::new_from_existing(world, unsafe { ecs_new_id(world) }),
+            entity_view: EntityView::new_from_existing(world.raw_world, unsafe {
+                ecs_new_id(world.raw_world)
+            }),
         }
     }
 
-    /// Wrap an existing entity id.
+    /// Creates a wrapper around an existing entity / id.
+    ///
     /// ### Arguments
-    /// * `world` - The world the entity belongs to.
+    ///
+    /// * `world` - The world the entity belongs to. If strictly only a storage is needed, this can be None.
     /// * `id` - The entity id.
-    pub fn new_from_existing(world: *mut WorldT, id: IdT) -> Self {
-        Self {
-            entity_view: EntityView::new_from_existing(world, id),
-        }
-    }
-
-    // Explicit conversion from flecs::entity_t to Entity
-    pub const fn new_only_id(id: EntityT) -> Self {
-        Self {
-            entity_view: EntityView::new_only_id(id),
-        }
-    }
-
-    pub fn new_pair(world: *mut WorldT, first: EntityT, second: EntityT) -> Self {
-        Self {
-            entity_view: EntityView::new_from_existing(world, ecs_pair(first, second)),
-        }
-    }
-
-    pub fn new_pair_only(first: EntityT, second: EntityT) -> Self {
-        Self {
-            entity_view: EntityView::new_only_id(ecs_pair(first, second)),
+    ///
+    /// ### Safety
+    ///
+    /// The world must be not be None if you want to do operations on the entity.
+    pub fn new_wrapper(world: Option<&World>, with: With) -> Self {
+        if let Some(world) = world {
+            match with {
+                With::Id(id) => Self {
+                    entity_view: EntityView::new_from_existing(world.raw_world, id),
+                },
+                With::Pair(first, second) => Self {
+                    entity_view: EntityView::new_from_existing(
+                        world.raw_world,
+                        ecs_pair(first, second),
+                    ),
+                },
+            }
+        } else {
+            match with {
+                With::Id(id) => Self {
+                    entity_view: EntityView::new_id_only(id),
+                },
+                With::Pair(first, second) => Self {
+                    entity_view: EntityView::new_id_only(ecs_pair(first, second)),
+                },
+            }
         }
     }
 
@@ -96,7 +108,7 @@ impl Entity {
     /// - `world`: The world in which to create the entity.
     /// - `name`: The entity name.
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new_named(world: *mut WorldT, name: &str) -> Self {
+    pub fn new_named(world: &World, name: &str) -> Self {
         let c_name = std::ffi::CString::new(name).expect("Failed to convert to CString");
 
         let desc = ecs_entity_desc_t {
@@ -110,9 +122,38 @@ impl Entity {
             add: [0; 32],
             add_expr: std::ptr::null(),
         };
-        let id = unsafe { ecs_entity_init(world, &desc) };
+        let id = unsafe { ecs_entity_init(world.raw_world, &desc) };
+        Self {
+            entity_view: EntityView::new_from_existing(world.raw_world, id),
+        }
+    }
+
+    /// Wrap an existing entity id.
+    /// ### Arguments
+    /// * `world` - The world the entity belongs to.
+    /// * `id` - The entity id.
+    pub(crate) fn new_from_existing(world: *mut WorldT, id: IdT) -> Self {
         Self {
             entity_view: EntityView::new_from_existing(world, id),
+        }
+    }
+
+    // Explicit conversion from flecs::entity_t to Entity
+    pub(crate) const fn new_id_only(id: EntityT) -> Self {
+        Self {
+            entity_view: EntityView::new_id_only(id),
+        }
+    }
+
+    pub(crate) fn new_pair(world: *mut WorldT, first: EntityT, second: EntityT) -> Self {
+        Self {
+            entity_view: EntityView::new_from_existing(world, ecs_pair(first, second)),
+        }
+    }
+
+    pub(crate) fn new_pair_only(first: EntityT, second: EntityT) -> Self {
+        Self {
+            entity_view: EntityView::new_id_only(ecs_pair(first, second)),
         }
     }
 
@@ -1545,7 +1586,7 @@ impl Entity {
     /// This function is useful when the API must provide an entity that
     /// belongs to a world, but the entity id is 0.
     pub fn null_w_world(world: *const WorldT) -> Entity {
-        Entity::new(world as *mut WorldT)
+        Entity::new_from_existing(world as *mut _, 0)
     }
 
     /// Entity id 0.

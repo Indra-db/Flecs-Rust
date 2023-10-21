@@ -39,43 +39,57 @@ impl Ord for Id {
     }
 }
 
+pub enum With {
+    Id(IdT),
+    Pair(IdT, IdT),
+}
 impl Id {
-    pub const fn new_from_existing(world: *mut WorldT, id: IdT) -> Self {
-        Self { world, raw_id: id }
+    pub fn new(world: Option<&World>, with: With) -> Self {
+        if let Some(world) = world {
+            match with {
+                With::Id(id) => Self::new_from_existing(world.raw_world, id),
+                With::Pair(id1, id2) => Self::new_world_pair(world.raw_world, id1, id2),
+            }
+        } else {
+            match with {
+                With::Id(id) => Self::new_id_only(id),
+                With::Pair(id1, id2) => Self::new_pair_only(id1, id2),
+            }
+        }
     }
 
-    pub const fn new_only_id(id: IdT) -> Self {
+    pub(crate) const fn new_from_existing(world: *mut WorldT, id: IdT) -> Self {
+        Self {
+            world: world,
+            raw_id: id,
+        }
+    }
+
+    pub(crate) const fn new_id_only(id: IdT) -> Self {
         Self {
             world: std::ptr::null_mut(),
             raw_id: id,
         }
     }
 
-    pub fn new_world_pair(world: *mut WorldT, first: IdT, second: IdT) -> Self {
+    pub(crate) fn new_world_pair(world: *mut WorldT, first: IdT, second: IdT) -> Self {
         Self {
             world,
             raw_id: ecs_pair(first, second),
         }
     }
 
-    pub fn new_pair_only(first: IdT, second: IdT) -> Self {
+    pub(crate) fn new_pair_only(first: IdT, second: IdT) -> Self {
         Self {
             world: std::ptr::null_mut(),
             raw_id: ecs_pair(first, second),
         }
     }
 
-    pub fn new_from_ids(id: Id, id2: Id) -> Self {
+    pub(crate) fn new_from_ids(id: Id, id2: Id) -> Self {
         Self {
             world: id.world,
             raw_id: ecs_pair(id.raw_id, id2.raw_id),
-        }
-    }
-
-    pub const fn default() -> Self {
-        Self {
-            world: std::ptr::null_mut(),
-            raw_id: 0,
         }
     }
 
@@ -180,7 +194,7 @@ impl Id {
         let entity = ecs_pair_first(self.raw_id);
 
         if self.world.is_null() {
-            Entity::new_only_id(entity)
+            Entity::new_id_only(entity)
         } else {
             Entity::new_from_existing(self.world, unsafe { ecs_get_alive(self.world, entity) })
         }
@@ -197,7 +211,7 @@ impl Id {
         let entity = ecs_pair_second(self.raw_id);
 
         if self.world.is_null() {
-            Entity::new_only_id(entity)
+            Entity::new_id_only(entity)
         } else {
             Entity::new_from_existing(self.world, unsafe { ecs_get_alive(self.world, entity) })
         }
@@ -273,7 +287,7 @@ impl Id {
 
     pub fn get_as_world(&self) -> World {
         World {
-            world: self.world,
+            raw_world: self.world,
             is_owned: false,
         }
     }
