@@ -44,6 +44,15 @@ pub enum With {
     Pair(IdT, IdT),
 }
 impl Id {
+    /// Wraps an id or pair
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world to the id belongs to
+    /// * `with` - The id or pair to wrap
+    ///
+    /// # Example
+    ///
     pub fn new(world: Option<&World>, with: With) -> Self {
         if let Some(world) = world {
             match with {
@@ -165,7 +174,18 @@ impl Id {
         Entity::new_from_existing(self.world, self.raw_id as u32 as u64)
     }
 
-    /// Return component type of id
+    /// Get the type for an id. This operation returns the component id for an id,
+    /// if the id is associated with a type. For a regular component with a non-zero size
+    /// (an entity with the EcsComponent component) the operation will return the entity itself.
+    /// For an entity that does not have the EcsComponent component, or with an EcsComponent
+    /// value with size 0, the operation will return an Entity wrapping 0
+    ///
+    /// For a pair id the operation will return the type associated with the pair, by applying the following rules in order:
+    ///
+    /// The first pair element is returned if it is a component
+    /// Entity wrapping 0 is returned if the relationship entity has the Tag property
+    /// The second pair element is returned if it is a component
+    /// Entity wrapping 0 is returned
     #[inline(always)]
     pub fn type_id(&self) -> Entity {
         Entity::new_from_existing(self.world, unsafe {

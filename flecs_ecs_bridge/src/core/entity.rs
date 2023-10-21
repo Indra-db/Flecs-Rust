@@ -20,6 +20,7 @@ use super::{
     component_registration::{CachedComponentData, ComponentType, Enum, Struct},
     entity_view::EntityView,
     enum_type::CachedEnumData,
+    id::Id,
     utility::functions::{ecs_pair, set_helper},
     world::World,
 };
@@ -44,11 +45,6 @@ impl From<Entity> for IdT {
     }
 }
 
-pub enum With {
-    Id(IdT),
-    Pair(IdT, IdT),
-}
-
 // functions in here match most of the functions in the c++ entity and entity_builder class
 impl Entity {
     /// Create new entity.
@@ -71,27 +67,14 @@ impl Entity {
     /// ### Safety
     ///
     /// The world must be not be None if you want to do operations on the entity.
-    pub fn new_wrapper(world: Option<&World>, with: With) -> Self {
+    pub fn new_wrapper(world: Option<&World>, id: IdT) -> Self {
         if let Some(world) = world {
-            match with {
-                With::Id(id) => Self {
-                    entity_view: EntityView::new_from_existing(world.raw_world, id),
-                },
-                With::Pair(first, second) => Self {
-                    entity_view: EntityView::new_from_existing(
-                        world.raw_world,
-                        ecs_pair(first, second),
-                    ),
-                },
+            Self {
+                entity_view: EntityView::new_from_existing(world.raw_world, id),
             }
         } else {
-            match with {
-                With::Id(id) => Self {
-                    entity_view: EntityView::new_id_only(id),
-                },
-                With::Pair(first, second) => Self {
-                    entity_view: EntityView::new_id_only(ecs_pair(first, second)),
-                },
+            Self {
+                entity_view: EntityView::new_id_only(id),
             }
         }
     }
@@ -142,18 +125,6 @@ impl Entity {
     pub(crate) const fn new_id_only(id: EntityT) -> Self {
         Self {
             entity_view: EntityView::new_id_only(id),
-        }
-    }
-
-    pub(crate) fn new_pair(world: *mut WorldT, first: EntityT, second: EntityT) -> Self {
-        Self {
-            entity_view: EntityView::new_from_existing(world, ecs_pair(first, second)),
-        }
-    }
-
-    pub(crate) fn new_pair_only(first: EntityT, second: EntityT) -> Self {
-        Self {
-            entity_view: EntityView::new_id_only(ecs_pair(first, second)),
         }
     }
 

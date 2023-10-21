@@ -1,6 +1,6 @@
 use flecs_ecs_bridge::core::{
     c_types::*,
-    entity::{Entity, With},
+    id::{Id, With},
     world::World,
 };
 mod common;
@@ -471,8 +471,8 @@ fn entity_pair_role() {
     let entity = world.new_entity();
     let entity2 = world.new_entity();
 
-    let mut pair = Entity::new_wrapper(None, With::Pair(entity.raw_id, entity2.raw_id));
-    pair = pair.add_flags(ECS_PAIR);
+    let mut pair: Id = Id::new(None, With::Pair(entity.raw_id, entity2.raw_id));
+    let mut pair = pair.add_flags(ECS_PAIR);
 
     assert!(pair.has_flags_for(ECS_PAIR));
 
