@@ -26,15 +26,15 @@ use super::{
 
 use std::{ffi::c_char, os::raw::c_void};
 
-struct FilterBase<'a, T>
+struct FilterBase<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    pub world: &'static World,
+    pub world: &'w World,
     _phantom: std::marker::PhantomData<&'a T>,
 }
 
-impl<'a, T> FilterBase<'a, T>
+impl<'a, 'w, T> FilterBase<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
@@ -143,15 +143,15 @@ where
     }
 }
 
-pub struct FilterView<'a, T>
+pub struct FilterView<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    base: FilterBase<'a, T>,
+    base: FilterBase<'a, 'w, T>,
     filter_ptr: *mut FilterT,
 }
 
-impl<'a, T> Clone for FilterView<'a, T>
+impl<'a, 'w, T> Clone for FilterView<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
@@ -166,11 +166,11 @@ where
     }
 }
 
-impl<'a, T> FilterView<'a, T>
+impl<'a, 'w, T> FilterView<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    pub fn new_view(world: &'static World, filter: *const FilterT) -> Self {
+    pub fn new_view(world: &'w World, filter: *const FilterT) -> Self {
         Self {
             base: FilterBase {
                 world,
@@ -210,19 +210,19 @@ where
     }
 }
 
-pub struct Filter<'a, T>
+pub struct Filter<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    base: FilterBase<'a, T>,
+    base: FilterBase<'a, 'w, T>,
     filter: FilterT,
 }
 
-impl<'a, T> Filter<'a, T>
+impl<'a, 'w, T> Filter<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    pub fn new(world: &'static World) -> Self {
+    pub fn new(world: &'w World) -> Self {
         let mut desc = ecs_filter_desc_t::default();
         T::register_ids_descriptor(world.raw_world, &mut desc);
         let mut filter: FilterT = Default::default();
@@ -238,7 +238,7 @@ where
     }
 
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new_ownership(world: &'static World, filter: *mut FilterT) -> Self {
+    pub fn new_ownership(world: &'w World, filter: *mut FilterT) -> Self {
         let mut filter_obj = Filter {
             base: FilterBase {
                 world,
@@ -255,7 +255,7 @@ where
     //TODO: this needs testing -> desc.storage pointer becomes invalid after this call as it re-allocates after this new
     // determine if this is a problem
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new_from_desc(world: &'static World, desc: *mut ecs_filter_desc_t) -> Self {
+    pub fn new_from_desc(world: &'w World, desc: *mut ecs_filter_desc_t) -> Self {
         let mut filter_obj = Filter {
             base: FilterBase {
                 world,
@@ -323,7 +323,7 @@ where
     }
 }
 
-impl<'a, T> Drop for Filter<'a, T>
+impl<'a, 'w, T> Drop for Filter<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
@@ -335,12 +335,12 @@ where
     }
 }
 
-impl<'a, T> Clone for Filter<'a, T>
+impl<'a, 'w, T> Clone for Filter<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
     fn clone(&self) -> Self {
-        let mut new_filter = Filter::<'a, T> {
+        let mut new_filter = Filter::<'a, 'w, T> {
             base: FilterBase {
                 world: self.base.world,
                 _phantom: std::marker::PhantomData,

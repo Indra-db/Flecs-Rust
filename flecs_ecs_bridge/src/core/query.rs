@@ -17,20 +17,20 @@ use super::term::{Term, With};
 use super::utility::errors::FlecsErrorCode;
 use super::world::World;
 
-pub struct QueryBase<'a, T>
+pub struct QueryBase<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    pub world: &'static World,
+    pub world: &'w World,
     pub query: *mut QueryT,
     _phantom: std::marker::PhantomData<&'a T>,
 }
 
-impl<'a, T> QueryBase<'a, T>
+impl<'a, 'w, T> QueryBase<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    fn new(world: &'static World, query: *mut QueryT) -> Self {
+    fn new(world: &'w World, query: *mut QueryT) -> Self {
         Self {
             world,
             query,
@@ -38,7 +38,7 @@ where
         }
     }
 
-    fn new_from_desc(world: &'static World, desc: *mut ecs_query_desc_t) -> Self {
+    fn new_from_desc(world: &'w World, desc: *mut ecs_query_desc_t) -> Self {
         let obj = Self {
             world,
             query: unsafe { ecs_query_init(world.raw_world, desc) },
@@ -161,7 +161,7 @@ where
         }
     }
 
-    pub fn filter(&self) -> FilterView<'a, T> {
+    pub fn filter(&self) -> FilterView<'a, 'w, T> {
         FilterView::<T>::new_view(self.world, unsafe { ecs_query_get_filter(self.query) })
     }
     fn term(&self, index: i32) -> Term {
@@ -203,18 +203,18 @@ where
     }
 }
 
-pub struct Query<'a, T>
+pub struct Query<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    pub base: QueryBase<'a, T>,
+    pub base: QueryBase<'a, 'w, T>,
 }
 
-impl<'a, T> Deref for Query<'a, T>
+impl<'a, 'w, T> Deref for Query<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    type Target = QueryBase<'a, T>;
+    type Target = QueryBase<'a, 'w, T>;
 
     #[inline(always)]
     fn deref(&self) -> &Self::Target {
@@ -222,7 +222,7 @@ where
     }
 }
 
-impl<'a, T> DerefMut for Query<'a, T>
+impl<'a, 'w, T> DerefMut for Query<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
@@ -232,11 +232,11 @@ where
     }
 }
 
-impl<'a, T> Query<'a, T>
+impl<'a, 'w, T> Query<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    pub fn new(world: &'static World) -> Self {
+    pub fn new(world: &'w World) -> Self {
         let mut desc = ecs_query_desc_t::default();
         T::register_ids_descriptor(world.raw_world, &mut desc.filter);
         let mut filter: FilterT = Default::default();
@@ -247,19 +247,19 @@ where
         }
     }
 
-    pub fn new_ownership(world: &'static World, query: *mut QueryT) -> Self {
+    pub fn new_ownership(world: &'w World, query: *mut QueryT) -> Self {
         Self {
             base: QueryBase::new(world, query),
         }
     }
 
-    pub fn new_from_desc(world: &'static World, desc: *mut ecs_query_desc_t) -> Self {
+    pub fn new_from_desc(world: &'w World, desc: *mut ecs_query_desc_t) -> Self {
         Self {
             base: QueryBase::new_from_desc(world, desc),
         }
     }
 
-    fn get_iter(&mut self, world: &'static World) -> IterT {
+    fn get_iter(&mut self, world: &'w World) -> IterT {
         if !world.is_null() {
             self.world = world;
         }
@@ -324,7 +324,7 @@ where
     }
 }
 
-impl<'a, T> Drop for Query<'a, T>
+impl<'a, 'w, T> Drop for Query<'a, 'w, T>
 where
     T: Iterable<'a>,
 {

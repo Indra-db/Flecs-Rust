@@ -25,23 +25,23 @@ use super::{
     world::World,
 };
 
-pub struct FilterBuilder<'a, T>
+pub struct FilterBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
     pub desc: ecs_filter_desc_t,
     expr_count: i32,
     term: Term,
-    pub world: &'static World,
+    pub world: &'w World,
     next_term_index: i32,
     _phantom: std::marker::PhantomData<&'a T>,
 }
 
-impl<'a, T> FilterBuilder<'a, T>
+impl<'a, 'w, T> FilterBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    pub fn new(world: &'static World) -> Self {
+    pub fn new(world: &'w World) -> Self {
         let mut obj = Self {
             desc: Default::default(),
             expr_count: 0,
@@ -54,7 +54,7 @@ where
         obj
     }
 
-    pub fn new_named(world: &'static World, name: &str) -> Self {
+    pub fn new_named(world: &'w World, name: &str) -> Self {
         let mut obj = Self {
             desc: Default::default(),
             expr_count: 0,
@@ -72,11 +72,7 @@ where
         obj
     }
 
-    pub fn new_with_desc(
-        world: &'static World,
-        desc: *mut ecs_filter_desc_t,
-        term_index: i32,
-    ) -> Self {
+    pub fn new_with_desc(world: &'w World, desc: *mut ecs_filter_desc_t, term_index: i32) -> Self {
         Self {
             desc: unsafe { *desc },
             expr_count: 0,
@@ -96,7 +92,7 @@ where
     }
 }
 
-impl<'a, T> Filterable for FilterBuilder<'a, T>
+impl<'a, 'w, T> Filterable for FilterBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
@@ -113,7 +109,7 @@ where
     }
 }
 
-impl<'a, T> FilterBuilderImpl for FilterBuilder<'a, T>
+impl<'a, 'w, T> FilterBuilderImpl for FilterBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
@@ -133,7 +129,7 @@ where
     }
 }
 
-impl<'a, T> TermBuilder for FilterBuilder<'a, T>
+impl<'a, 'w, T> TermBuilder for FilterBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
@@ -158,15 +154,15 @@ where
     }
 }
 
-impl<'a, T> Builder for FilterBuilder<'a, T>
+impl<'a, 'w, T> Builder for FilterBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    type BuiltType = Filter<'a, T>;
+    type BuiltType = Filter<'a, 'w, T>;
 
     #[inline]
     fn build(&mut self) -> Self::BuiltType {
-        Filter::<'a, T>::new_from_desc(self.world, &mut self.desc as *mut _)
+        Filter::<'a, 'w, T>::new_from_desc(self.world, &mut self.desc as *mut _)
     }
 }
 

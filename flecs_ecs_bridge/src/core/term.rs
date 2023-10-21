@@ -85,7 +85,7 @@ impl Term {
         }
     }
 
-    pub fn new_world_only(world: &'static World) -> Self {
+    pub fn new_world_only<'w>(world: &'w World) -> Self {
         let mut obj = Self {
             world: world.raw_world,
             term_id: std::ptr::null_mut(),

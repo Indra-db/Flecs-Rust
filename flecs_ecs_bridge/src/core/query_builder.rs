@@ -19,31 +19,31 @@ use super::{
     world::World,
 };
 
-pub struct QueryBuilder<'a, T>
+pub struct QueryBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    pub filter_builder: FilterBuilder<'a, T>,
+    pub filter_builder: FilterBuilder<'a, 'w, T>,
     pub desc: ecs_query_desc_t,
-    pub world: &'static World,
+    pub world: &'w World,
 }
 
-impl<'a, T> Deref for QueryBuilder<'a, T>
+impl<'a, 'w, T> Deref for QueryBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    type Target = FilterBuilder<'a, T>;
+    type Target = FilterBuilder<'a, 'w, T>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
         &self.filter_builder
     }
 }
-impl<'a, T> QueryBuilder<'a, T>
+impl<'a, 'w, T> QueryBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    pub fn new(world: &'static World) -> Self {
+    pub fn new(world: &'w World) -> Self {
         let mut desc = Default::default();
         let mut obj = Self {
             desc,
@@ -54,7 +54,7 @@ where
         obj
     }
 
-    pub fn new_named(world: &'static World, name: &str) -> Self {
+    pub fn new_named(world: &'w World, name: &str) -> Self {
         let mut obj = Self {
             desc: Default::default(),
             filter_builder: FilterBuilder::new(world),
@@ -70,7 +70,7 @@ where
     }
 }
 
-impl<'a, T> Filterable for QueryBuilder<'a, T>
+impl<'a, 'w, T> Filterable for QueryBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
@@ -87,7 +87,7 @@ where
     }
 }
 
-impl<'a, T> FilterBuilderImpl for QueryBuilder<'a, T>
+impl<'a, 'w, T> FilterBuilderImpl for QueryBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
@@ -106,7 +106,7 @@ where
     }
 }
 
-impl<'a, T> TermBuilder for QueryBuilder<'a, T>
+impl<'a, 'w, T> TermBuilder for QueryBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
@@ -131,16 +131,16 @@ where
     }
 }
 
-impl<'a, T> Builder for QueryBuilder<'a, T>
+impl<'a, 'w, T> Builder for QueryBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    type BuiltType = Query<'a, T>;
+    type BuiltType = Query<'a, 'w, T>;
 
     fn build(&mut self) -> Self::BuiltType {
         let desc_filter = self.filter_builder.desc;
         self.desc.filter = desc_filter;
-        Query::<'a, T>::new_from_desc(self.world, &mut self.desc)
+        Query::<'a, 'w, T>::new_from_desc(self.world, &mut self.desc)
     }
 }
 
@@ -321,14 +321,14 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     }
 
     /// Specify parent query (creates subquery)
-    fn observable<'a, T: Iterable<'a>>(&mut self, parent: &QueryBase<'a, T>) -> &mut Self {
+    fn observable<'a, 'w, T: Iterable<'a>>(&mut self, parent: &QueryBase<'a, 'w, T>) -> &mut Self {
         let desc = self.get_desc_query();
         desc.parent = parent.query;
         self
     }
 }
 
-impl<'a, T> QueryBuilderImpl for QueryBuilder<'a, T>
+impl<'a, 'w, T> QueryBuilderImpl for QueryBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
