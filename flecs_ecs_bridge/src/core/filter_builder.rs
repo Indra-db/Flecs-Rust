@@ -28,12 +28,28 @@ pub struct FilterBuilder<'a, T>
 where
     T: Iterable<'a>,
 {
-    desc: ecs_filter_desc_t,
+    pub desc: ecs_filter_desc_t,
     expr_count: i32,
     term: Term,
-    world: *mut WorldT,
+    pub world: *mut WorldT,
     next_term_index: i32,
     _phantom: std::marker::PhantomData<&'a T>,
+}
+
+impl<'a, T> Default for FilterBuilder<'a, T>
+where
+    T: Iterable<'a>,
+{
+    fn default() -> Self {
+        Self {
+            desc: Default::default(),
+            expr_count: 0,
+            term: Term::default(),
+            world: std::ptr::null_mut(),
+            next_term_index: 0,
+            _phantom: std::marker::PhantomData,
+        }
+    }
 }
 
 impl<'a, T> FilterBuilder<'a, T>
@@ -116,14 +132,17 @@ impl<'a, T> FilterBuilderImpl for FilterBuilder<'a, T>
 where
     T: Iterable<'a>,
 {
-    fn get_desc(&mut self) -> &mut ecs_filter_desc_t {
+    #[inline]
+    fn get_desc_filter(&mut self) -> &mut ecs_filter_desc_t {
         &mut self.desc
     }
 
+    #[inline]
     fn get_expr_count(&mut self) -> &mut i32 {
         &mut self.expr_count
     }
 
+    #[inline]
     fn get_term_index(&mut self) -> &mut i32 {
         &mut self.next_term_index
     }
@@ -133,18 +152,22 @@ impl<'a, T> TermBuilder for FilterBuilder<'a, T>
 where
     T: Iterable<'a>,
 {
+    #[inline]
     fn get_world(&self) -> *mut super::c_types::WorldT {
         self.world
     }
 
+    #[inline]
     fn get_term(&mut self) -> &mut Term {
         &mut self.term
     }
 
+    #[inline]
     fn get_raw_term(&mut self) -> *mut super::c_types::TermT {
         self.term.term_ptr
     }
 
+    #[inline]
     fn get_term_id(&mut self) -> *mut super::c_types::TermIdT {
         self.term.term_id
     }
@@ -156,13 +179,14 @@ where
 {
     type BuiltType = Filter<'a, T>;
 
+    #[inline]
     fn build(&mut self) -> Self::BuiltType {
-        Filter::<'a, T>::new_from_desc(TermBuilder::get_world(self), &mut self.desc as *mut _)
+        Filter::<'a, T>::new_from_desc(self.world, &mut self.desc as *mut _)
     }
 }
 
 pub trait FilterBuilderImpl: TermBuilder {
-    fn get_desc(&mut self) -> &mut ecs_filter_desc_t;
+    fn get_desc_filter(&mut self) -> &mut ecs_filter_desc_t;
 
     fn get_expr_count(&mut self) -> &mut i32;
 
@@ -174,7 +198,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     ///
     /// `filter_builder_i::instanced`
     fn instanced(&mut self) -> &mut Self {
-        self.get_desc().instanced = true;
+        self.get_desc_filter().instanced = true;
         self
     }
 
@@ -188,7 +212,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     ///
     /// `filter_builder_i::filter_flags`
     fn filter_flags(&mut self, flags: ecs_flags32_t) -> &mut Self {
-        self.get_desc().flags |= flags;
+        self.get_desc_filter().flags |= flags;
         self
     }
 
@@ -208,7 +232,7 @@ pub trait FilterBuilderImpl: TermBuilder {
             "filter_builder::expr() called more than once"
         );
 
-        self.get_desc().expr = std::ffi::CString::new(expr).unwrap().into_raw();
+        self.get_desc_filter().expr = std::ffi::CString::new(expr).unwrap().into_raw();
         *self.get_expr_count() += 1;
         self
     }
@@ -296,7 +320,7 @@ pub trait FilterBuilderImpl: TermBuilder {
 
         let term_index = *self.get_term_index();
         if term_index >= FLECS_TERM_DESC_MAX as i32 {
-            let desc = self.get_desc();
+            let desc = self.get_desc_filter();
             let size_term = std::mem::size_of::<ecs_term_t>();
             if term_index == FLECS_TERM_DESC_MAX as i32 {
                 unsafe {
@@ -326,8 +350,12 @@ pub trait FilterBuilderImpl: TermBuilder {
             let term_to_set = unsafe { desc.terms_buffer.add(term_index as usize) };
             self.set_term(term_to_set);
         } else {
-            let term_to_set =
-                unsafe { self.get_desc().terms.as_mut_ptr().add(term_index as usize) };
+            let term_to_set = unsafe {
+                self.get_desc_filter()
+                    .terms
+                    .as_mut_ptr()
+                    .add(term_index as usize)
+            };
             self.set_term(term_to_set);
         }
         *self.get_term_index() += 1;

@@ -21,8 +21,8 @@ pub struct QueryBase<'a, T>
 where
     T: Iterable<'a>,
 {
-    world: *mut WorldT,
-    query: *mut QueryT,
+    pub world: *mut WorldT,
+    pub query: *mut QueryT,
     _phantom: std::marker::PhantomData<&'a T>,
 }
 
@@ -51,11 +51,10 @@ where
         }
     }
 
-    fn new_with_desc(world: *mut WorldT, desc: *mut ecs_query_desc_t) -> Self {
-        let query = unsafe { ecs_query_init(world, desc) };
+    fn new_from_desc(world: *mut WorldT, desc: *mut ecs_query_desc_t) -> Self {
         let obj = Self {
             world,
-            query,
+            query: unsafe { ecs_query_init(world, desc) },
             _phantom: std::marker::PhantomData,
         };
         unsafe {
@@ -262,9 +261,9 @@ where
         }
     }
 
-    pub fn new_with_desc(world: *mut WorldT, desc: *mut ecs_query_desc_t) -> Self {
+    pub fn new_from_desc(world: *mut WorldT, desc: *mut ecs_query_desc_t) -> Self {
         Self {
-            base: QueryBase::new_with_desc(world, desc),
+            base: QueryBase::new_from_desc(world, desc),
         }
     }
 
