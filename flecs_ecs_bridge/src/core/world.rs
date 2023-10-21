@@ -9,7 +9,7 @@ use crate::ecs_assert;
 
 use super::c_binding::bindings::{
     ecs_async_stage_free, ecs_async_stage_new, ecs_atfini, ecs_count_id, ecs_defer_begin,
-    ecs_defer_end, ecs_defer_resume, ecs_defer_suspend, ecs_delete, ecs_delete_with, ecs_dim,
+    ecs_defer_end, ecs_defer_resume, ecs_defer_suspend, ecs_delete_with, ecs_dim,
     ecs_enable_range_check, ecs_ensure, ecs_exists, ecs_fini, ecs_fini_action_t, ecs_frame_begin,
     ecs_frame_end, ecs_get_alive, ecs_get_context, ecs_get_name, ecs_get_scope, ecs_get_stage,
     ecs_get_stage_count, ecs_get_stage_id, ecs_get_world, ecs_get_world_info, ecs_init,
@@ -2386,12 +2386,12 @@ impl World {
 
     /// get  id of (struct) component.
     pub fn get_id_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> Id {
-        Id::new(Some(&self), With::Id(T::get_id(self.raw_world)))
+        Id::new(Some(self), With::Id(T::get_id(self.raw_world)))
     }
 
     /// get pair id from relationship, object.
     pub fn get_id_pair_from_ids(&self, first: EntityT, second: EntityT) -> Id {
-        Id::new(Some(&self), With::Pair(first, second))
+        Id::new(Some(self), With::Pair(first, second))
     }
 
     /// get pair id from relationship, object.
@@ -2401,7 +2401,7 @@ impl World {
         Second: CachedComponentData + ComponentType<Struct>,
     {
         Id::new(
-            Some(&self),
+            Some(self),
             With::Pair(
                 First::get_id(self.raw_world),
                 Second::get_id(self.raw_world),
@@ -2412,7 +2412,7 @@ impl World {
     /// get pair id from relationship, object.
     pub fn get_id_pair_second_with_id<First: CachedComponentData>(&self, second: EntityT) -> Id {
         Id::new(
-            Some(&self),
+            Some(self),
             With::Pair(First::get_id(self.raw_world), second),
         )
     }
@@ -2503,7 +2503,7 @@ impl World {
         T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
     {
         Id::new(
-            Some(&self),
+            Some(self),
             With::Id(enum_value.get_entity_id_from_enum_field(self.raw_world)),
         )
     }
@@ -2622,7 +2622,7 @@ impl World {
 
 impl World {
     pub fn term_component<T: CachedComponentData>(&self) -> Term {
-        Term::new_component::<T>(Some(&self))
+        Term::new_component::<T>(Some(self))
     }
 
     pub fn term_pair<First, Second>(&self) -> Term
@@ -2630,6 +2630,6 @@ impl World {
         First: CachedComponentData,
         Second: CachedComponentData,
     {
-        Term::new_pair::<First, Second>(Some(&self))
+        Term::new_pair::<First, Second>(Some(self))
     }
 }

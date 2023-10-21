@@ -34,9 +34,9 @@ pub trait CachedEnumData: ComponentType<Enum> {
     }
 
     /// ## Safety
-    /// this function assumes you're sure that the enum fields are registered as entities in the world you're passing in
-    /// if uncertain, use et_entity_id_from_enum_field
-    unsafe fn get_entity_id_from_enum_field_unchecked(&self, world: *mut WorldT) -> EntityT {
+    /// this function assumes you're sure that the enum fields are registered previously
+    /// if uncertain use get_entity_id_from_enum_field
+    unsafe fn get_entity_id_from_enum_field_unchecked(&self) -> EntityT {
         let index = self.get_enum_index();
         unsafe { *Self::__get_enum_data_ptr_mut().add(index) }
     }

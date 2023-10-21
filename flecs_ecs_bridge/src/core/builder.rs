@@ -1,4 +1,4 @@
-use super::{filter::Filter, iterable::Iterable, term::TermBuilder};
+use super::term::TermBuilder;
 
 pub trait Builder: TermBuilder {
     type BuiltType;

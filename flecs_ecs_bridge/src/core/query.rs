@@ -4,10 +4,10 @@ use std::os::raw::{c_char, c_void};
 use crate::ecs_assert;
 
 use super::c_binding::bindings::{
-    _ecs_abort, ecs_filter_iter, ecs_filter_next, ecs_filter_str, ecs_filter_t, ecs_get_entity,
-    ecs_os_api, ecs_query_changed, ecs_query_desc_t, ecs_query_fini, ecs_query_get_filter,
-    ecs_query_get_group_info, ecs_query_init, ecs_query_iter, ecs_query_next, ecs_query_orphaned,
-    ecs_table_lock, ecs_table_unlock,
+    _ecs_abort, ecs_filter_str, ecs_filter_t, ecs_get_entity, ecs_os_api, ecs_query_changed,
+    ecs_query_desc_t, ecs_query_fini, ecs_query_get_filter, ecs_query_get_group_info,
+    ecs_query_init, ecs_query_iter, ecs_query_next, ecs_query_orphaned, ecs_table_lock,
+    ecs_table_unlock,
 };
 use super::c_types::*;
 use super::entity::Entity;

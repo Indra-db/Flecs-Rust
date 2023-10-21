@@ -8,7 +8,7 @@ use super::{
     c_binding::bindings::{
         ecs_ctx_free_t, ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t,
         ecs_group_by_action_t, ecs_group_create_action_t, ecs_group_delete_action_t,
-        ecs_order_by_action_t, ecs_query_desc_t, ecs_query_init,
+        ecs_order_by_action_t, ecs_query_desc_t,
     },
     c_types::{EntityT, IdT, TableT, TermT, WorldT, SEPARATOR},
     component_registration::CachedComponentData,
@@ -61,11 +61,14 @@ where
             world,
         };
         T::populate(&mut obj);
-        let mut desc = ecs_entity_desc_t::default();
-        desc.name = std::ffi::CString::new(name).unwrap().into_raw();
-        desc.sep = SEPARATOR.as_ptr();
-        desc.root_sep = SEPARATOR.as_ptr();
-        obj.desc.filter.entity = unsafe { ecs_entity_init(world.raw_world, &mut desc) };
+        let entity_desc = ecs_entity_desc_t {
+            name: std::ffi::CString::new(name).unwrap().into_raw(),
+            sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
+            ..Default::default()
+        };
+
+        obj.desc.filter.entity = unsafe { ecs_entity_init(world.raw_world, &entity_desc) };
         obj
     }
 }

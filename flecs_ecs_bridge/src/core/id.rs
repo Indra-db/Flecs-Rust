@@ -68,10 +68,7 @@ impl Id {
     }
 
     pub(crate) const fn new_from_existing(world: *mut WorldT, id: IdT) -> Self {
-        Self {
-            world: world,
-            raw_id: id,
-        }
+        Self { world, raw_id: id }
     }
 
     pub(crate) const fn new_id_only(id: IdT) -> Self {

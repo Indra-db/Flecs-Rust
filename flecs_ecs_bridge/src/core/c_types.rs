@@ -229,33 +229,34 @@ impl CachedComponentData for EcsComponent {
             //because this is always registered in the c world
             true
         } else {
-            false
+            Self::register_explicit(world);
+            true
         }
     }
 
-    fn get_data(world: *mut WorldT) -> &'static ComponentData {
+    fn get_data(_world: *mut WorldT) -> &'static ComponentData {
         Self::__get_once_lock_data().get_or_init(get_ecs_component_data)
     }
 
-    fn get_id(world: *mut WorldT) -> IdT {
+    fn get_id(_world: *mut WorldT) -> IdT {
         Self::__get_once_lock_data()
             .get_or_init(get_ecs_component_data)
             .id
     }
 
-    fn get_size(world: *mut WorldT) -> usize {
+    fn get_size(_world: *mut WorldT) -> usize {
         Self::__get_once_lock_data()
             .get_or_init(get_ecs_component_data)
             .size
     }
 
-    fn get_alignment(world: *mut WorldT) -> usize {
+    fn get_alignment(_world: *mut WorldT) -> usize {
         Self::__get_once_lock_data()
             .get_or_init(get_ecs_component_data)
             .alignment
     }
 
-    fn get_allow_tag(world: *mut WorldT) -> bool {
+    fn get_allow_tag(_world: *mut WorldT) -> bool {
         Self::__get_once_lock_data()
             .get_or_init(get_ecs_component_data)
             .allow_tag

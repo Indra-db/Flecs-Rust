@@ -195,9 +195,9 @@ fn check_type_info<T>(_type_info: *const ecs_type_info_t) -> bool {
 }
 
 mod tests {
-    use std::os::raw::c_void;
-
+    #![allow(unused_imports)]
     use crate::core::lifecycle_traits::{generic_copy, generic_move};
+    use std::os::raw::c_void;
 
     #[derive(Default, Debug, Clone)]
     struct MyType {

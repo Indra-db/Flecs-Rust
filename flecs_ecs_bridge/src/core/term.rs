@@ -4,8 +4,8 @@ use crate::{core::utility::errors::FlecsErrorCode, ecs_assert};
 
 use super::{
     c_binding::bindings::{
-        ecs_term_copy, ecs_term_finalize, ecs_term_fini, ecs_term_id_t, ecs_term_is_initialized,
-        ecs_term_move, ecs_term_t, ECS_ID_FLAGS_MASK,
+        ecs_term_copy, ecs_term_finalize, ecs_term_fini, ecs_term_is_initialized, ecs_term_move,
+        ECS_ID_FLAGS_MASK,
     },
     c_types::{
         EntityT, Flags32T, IdT, InOutKind, OperKind, TermIdT, TermT, WorldT, ECS_CASCADE,
@@ -312,6 +312,7 @@ pub trait TermBuilder: Sized {
     /// # C++ API Equivalent
     ///
     /// term_builder_i::set_term`
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     fn set_term(&mut self, term: *mut TermT) {
         let self_term: &mut Term = self.get_term();
         self_term.term_ptr = term;
@@ -325,7 +326,7 @@ pub trait TermBuilder: Sized {
 
     fn assert_term_id(&mut self) {
         ecs_assert!(
-            self.get_term_id() != std::ptr::null_mut(),
+            !self.get_term_id().is_null(),
             FlecsErrorCode::InvalidParameter,
             "no active term (call .term() first"
         );
@@ -333,7 +334,7 @@ pub trait TermBuilder: Sized {
 
     fn assert_term(&mut self) {
         ecs_assert!(
-            self.get_raw_term() != std::ptr::null_mut(),
+            !self.get_raw_term().is_null(),
             FlecsErrorCode::InvalidParameter,
             "no active term (call .term() first"
         );

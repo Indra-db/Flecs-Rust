@@ -1,30 +1,18 @@
-use libc::{memcpy, memset};
-
-use crate::{
-    core::{
-        c_binding::bindings::{ecs_term_is_initialized, ecs_term_t, FLECS_TERM_DESC_MAX},
-        iterable::ArrayElement,
-    },
-    ecs_assert,
-};
-
 use super::{
     c_binding::bindings::{
         _ecs_abort, ecs_filter_copy, ecs_filter_desc_t, ecs_filter_fini, ecs_filter_init,
-        ecs_filter_iter, ecs_filter_move, ecs_filter_next, ecs_filter_str, ecs_flags32_t,
-        ecs_get_entity, ecs_iter_t, ecs_os_api, ecs_table_lock, ecs_table_unlock,
+        ecs_filter_iter, ecs_filter_move, ecs_filter_next, ecs_filter_str, ecs_get_entity,
+        ecs_os_api, ecs_table_lock, ecs_table_unlock,
     },
-    c_types::{FilterT, IdT, TermT, WorldT},
-    component_registration::{CachedComponentData, ComponentType, Enum},
+    c_types::FilterT,
     entity::Entity,
-    enum_type::CachedEnumData,
-    iterable::{Filterable, Iterable},
-    term::{Term, TermBuilder, With},
-    utility::{errors::FlecsErrorCode, functions::type_to_inout, traits::InOutType},
+    iterable::Iterable,
+    term::{Term, With},
+    utility::errors::FlecsErrorCode,
     world::World,
 };
 
-use std::{ffi::c_char, os::raw::c_void};
+use std::ffi::c_char;
 
 struct FilterBase<'a, 'w, T>
 where
@@ -120,7 +108,7 @@ where
     fn get_term_impl(&self, index: usize, filter: *mut FilterT) -> Term {
         Term::new(
             Some(self.world),
-            With::Term(unsafe { *(*filter).terms.add(index as usize) }),
+            With::Term(unsafe { *(*filter).terms.add(index) }),
         )
     }
 

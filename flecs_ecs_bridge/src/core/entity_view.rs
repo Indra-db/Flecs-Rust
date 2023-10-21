@@ -438,8 +438,6 @@ impl EntityView {
             return;
         }
 
-        let world: World = World::new_from_world(self.world);
-
         let mut terms: [ecs_term_t; 2] = unsafe { MaybeUninit::zeroed().assume_init() };
 
         let mut filter: ecs_filter_t = unsafe { ECS_FILTER_INIT };
@@ -823,8 +821,7 @@ impl EntityView {
     {
         let component_id: IdT = T::get_id(self.world);
         // Safety: we know the enum fields are registered because of the previous T::get_id call
-        let enum_constant_entity_id: IdT =
-            unsafe { constant.get_entity_id_from_enum_field_unchecked(self.world) };
+        let enum_constant_entity_id: IdT = constant.get_entity_id_from_enum_field(self.world);
         ecs_has_pair(
             self.world,
             self.raw_id,

@@ -11,16 +11,15 @@ use super::{
     c_binding::bindings::{
         ecs_add_id, ecs_clear, ecs_delete, ecs_enable, ecs_enable_id, ecs_entity_desc_t,
         ecs_entity_init, ecs_flatten, ecs_flatten_desc_t, ecs_get_id, ecs_get_mut_id, ecs_has_id,
-        ecs_modified_id, ecs_new_id, ecs_new_w_id, ecs_remove_id, ecs_set_alias, ecs_set_scope,
-        ecs_set_with, EcsChildOf, EcsComponent, EcsDependsOn, EcsExclusive, EcsIsA, EcsSlotOf,
-        EcsWildcard, FLECS__EEcsComponent,
+        ecs_modified_id, ecs_new_id, ecs_remove_id, ecs_set_alias, ecs_set_scope, ecs_set_with,
+        EcsChildOf, EcsComponent, EcsDependsOn, EcsExclusive, EcsIsA, EcsSlotOf, EcsWildcard,
+        FLECS__EEcsComponent,
     },
     c_types::{EntityT, IdT, WorldT, SEPARATOR},
     component_ref::Ref,
     component_registration::{CachedComponentData, ComponentType, Enum, Struct},
     entity_view::EntityView,
     enum_type::CachedEnumData,
-    id::Id,
     utility::functions::{ecs_pair, set_helper},
     world::World,
 };
@@ -161,7 +160,6 @@ impl Entity {
     /// - `first`: The first element of the pair.
     /// - `second`: The second element of the pair.
     pub fn add_pair_ids(self, first: EntityT, second: EntityT) -> Self {
-        let world = self.world;
         self.add_id(ecs_pair(first, second))
     }
 
@@ -263,7 +261,6 @@ impl Entity {
     /// * `component`: The component to add.
     pub fn add_id_if(self, component_id: IdT, condition: bool) -> Self {
         if condition {
-            let world = self.world;
             return self.add_id(component_id);
         }
 
@@ -294,7 +291,6 @@ impl Entity {
     /// * `first`: The first element of the pair.
     /// * `second`: The second element of the pair.
     pub fn add_pair_ids_if(self, first: EntityT, mut second: EntityT, condition: bool) -> Self {
-        let world = self.world;
         if condition {
             self.add_pair_ids(first, second)
         } else {
@@ -430,7 +426,6 @@ impl Entity {
     /// * `first`: The first element of the pair.
     /// * `second`: The second element of the pair.
     pub fn remove_pair_ids(self, first: EntityT, second: EntityT) -> Self {
-        let world = self.world;
         self.remove_id(ecs_pair(first, second))
     }
 
@@ -509,7 +504,6 @@ impl Entity {
     ///
     /// * `second`: The second element of the pair.
     pub fn is_a_id(self, second: EntityT) -> Self {
-        let world = self.world;
         self.add_pair_ids(unsafe { EcsIsA }, second)
     }
 
@@ -529,7 +523,6 @@ impl Entity {
     ///
     /// * `second`: The second element of the pair.
     pub fn child_of_id(self, second: EntityT) -> Self {
-        let world = self.world;
         self.add_pair_ids(unsafe { EcsChildOf }, second)
     }
 
@@ -549,7 +542,6 @@ impl Entity {
     ///
     /// * `second`: The second element of the pair.
     pub fn depends_on_id(self, second: EntityT) -> Self {
-        let world = self.world;
         self.add_pair_ids(unsafe { EcsDependsOn }, second)
     }
 
@@ -569,7 +561,6 @@ impl Entity {
     ///
     /// * `second`: The second element of the pair.
     pub fn slot_of_id(self, second: EntityT) -> Self {
-        let world = self.world;
         self.add_pair_ids(unsafe { EcsSlotOf }, second)
     }
 
@@ -604,7 +595,6 @@ impl Entity {
     ///
     /// * `id`: The id to mark for overriding.
     pub fn mark_component_id_for_override(self, id: IdT) -> Self {
-        let world = self.world;
         self.add_id(unsafe { ECS_OVERRIDE | id })
     }
 
@@ -625,7 +615,6 @@ impl Entity {
     /// * `first`: The first element of the pair.
     /// * `second`: The second element of the pair.
     pub fn mark_pair_ids_for_override(self, first: EntityT, second: EntityT) -> Self {
-        let world = self.world;
         self.mark_component_id_for_override(ecs_pair(first, second))
     }
 
@@ -862,7 +851,6 @@ impl Entity {
         second: EntityT,
         first: First,
     ) -> Self {
-        let world = self.world;
         self.mark_pair_for_override_with_second_id::<First>(second)
             .set_pair_first_id(second, first)
     }
@@ -882,7 +870,6 @@ impl Entity {
         second: Second,
         first: EntityT,
     ) -> Self {
-        let world = self.world;
         self.mark_pair_for_override_with_first_id::<Second>(first)
             .set_pair_first_id(first, second)
     }

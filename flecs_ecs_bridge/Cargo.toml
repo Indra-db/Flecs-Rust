@@ -54,17 +54,3 @@ default = [
 
 [target.'cfg(any())'.dependencies]
 flecs_ecs_bridge_derive = { version = "=0.1.0", path = "../flecs_ecs_bridge_derive" }
-
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-panic = "abort"
-overflow-checks = false
-
-[profile.bench]
-opt-level = 3
-lto = true
-codegen-units = 1
-panic = "abort"
-overflow-checks = false

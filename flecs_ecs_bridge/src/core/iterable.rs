@@ -29,12 +29,9 @@ pub trait Iterable<'a>: Sized {
     fn populate(filter: &mut impl Filterable);
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t);
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self>;
-    fn get_array_ptrs_of_components2(
-        it: &IterT,
-    ) -> Option<(Self::ComponentsArray, [bool; 2], bool)> {
-        None
-    }
+
     fn get_tuple(array_components: &Self::ComponentsArray, index: usize) -> Self::TupleType;
+
     fn get_tuple_with_ref(
         array_components: &Self::ComponentsArray,
         is_ref_array_components: &Self::BoolArray,
@@ -54,11 +51,11 @@ impl<'a> Iterable<'a> for ()
     type ComponentsArray = [*mut u8; 0];
     type BoolArray = [bool; 0];
 
-    fn populate(filter : &mut impl Filterable){}
+    fn populate(_filter : &mut impl Filterable){}
 
-    fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t){}
+    fn register_ids_descriptor(_world: *mut WorldT, _desc: &mut ecs_filter_desc_t){}
 
-    fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
+    fn get_array_ptrs_of_components(_it: &IterT) -> ComponentsData<'a, Self> {
         ComponentsData {
             array_components: [],
             is_ref_array_components: [],
@@ -66,12 +63,12 @@ impl<'a> Iterable<'a> for ()
         }
     }
 
-    fn get_tuple(array_components: &Self::ComponentsArray, index: usize) -> Self::TupleType{}
+    fn get_tuple(_array_components: &Self::ComponentsArray, _index: usize) -> Self::TupleType{}
 
     fn get_tuple_with_ref(
-        array_components: &Self::ComponentsArray,
-        is_ref_array_components: &Self::BoolArray,
-        index: usize,
+        _array_components: &Self::ComponentsArray,
+        _is_ref_array_components: &Self::BoolArray,
+        _index: usize,
     ) -> Self::TupleType {}
 
 }
@@ -938,11 +935,13 @@ impl<'a, T: 'a> TupleForm<'a, T, T> for Wrapper<T> {
     type Tuple = &'a mut T;
     const IS_OPTION: bool = false;
 
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
     fn return_type_for_tuple(array: *mut T, index: usize) -> Self::Tuple {
         unsafe { &mut (*array.add(index)) }
     }
 
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
     fn return_type_for_tuple_with_ref(array: *mut T, is_ref: bool, index: usize) -> Self::Tuple {
         unsafe {
@@ -960,6 +959,7 @@ impl<'a, T: 'a> TupleForm<'a, Option<T>, T> for Wrapper<T> {
 
     const IS_OPTION: bool = true;
 
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
     fn return_type_for_tuple(array: *mut T, index: usize) -> Self::Tuple {
         unsafe {
@@ -971,6 +971,7 @@ impl<'a, T: 'a> TupleForm<'a, Option<T>, T> for Wrapper<T> {
         }
     }
 
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
     fn return_type_for_tuple_with_ref(array: *mut T, is_ref: bool, index: usize) -> Self::Tuple {
         unsafe {

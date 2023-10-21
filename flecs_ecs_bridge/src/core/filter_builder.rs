@@ -1,5 +1,3 @@
-use std::default;
-
 use libc::{c_void, memcpy, memset};
 
 use crate::{
@@ -15,12 +13,12 @@ use crate::{
 use super::{
     builder::Builder,
     c_binding::bindings::{ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_flags32_t},
-    c_types::{IdT, OperKind, TermT, WorldT, SEPARATOR},
+    c_types::{IdT, TermT, WorldT, SEPARATOR},
     component_registration::{CachedComponentData, ComponentType, Enum},
     enum_type::CachedEnumData,
     filter::Filter,
     iterable::{Filterable, Iterable},
-    term::{self, Term, TermBuilder, With as TermWith},
+    term::{Term, TermBuilder, With as TermWith},
     utility::{functions::type_to_inout, traits::InOutType},
     world::World,
 };
@@ -64,21 +62,25 @@ where
             _phantom: std::marker::PhantomData,
         };
         T::populate(&mut obj);
-        let mut desc = ecs_entity_desc_t::default();
-        desc.name = std::ffi::CString::new(name).unwrap().into_raw();
-        desc.sep = SEPARATOR.as_ptr();
-        desc.root_sep = SEPARATOR.as_ptr();
-        obj.desc.entity = unsafe { ecs_entity_init(world.raw_world, &mut desc) };
+
+        let entity_desc = ecs_entity_desc_t {
+            name: std::ffi::CString::new(name).unwrap().into_raw(),
+            sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
+            ..Default::default()
+        };
+
+        obj.desc.entity = unsafe { ecs_entity_init(world.raw_world, &entity_desc) };
         obj
     }
 
-    pub fn new_with_desc(world: &'w World, desc: *mut ecs_filter_desc_t, term_index: i32) -> Self {
+    pub fn new_with_desc(world: &'w World, desc: &mut ecs_filter_desc_t, term_index: i32) -> Self {
         Self {
-            desc: unsafe { *desc },
+            desc: *desc,
             expr_count: 0,
             term: Term::default(),
             world,
-            next_term_index: 0,
+            next_term_index: term_index,
             _phantom: std::marker::PhantomData,
         }
     }
