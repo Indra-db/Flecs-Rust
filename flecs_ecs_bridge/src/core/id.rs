@@ -1,5 +1,3 @@
-use log::error;
-
 use super::c_binding::bindings::*;
 use super::c_types::*;
 use super::entity::*;
@@ -214,7 +212,12 @@ impl Id {
         unsafe { std::ffi::CStr::from_ptr(ecs_id_str(self.world, self.raw_id)) }
             .to_str()
             .unwrap_or_else(|_| {
-                error!("Failed to convert id to string (id: {})", self.raw_id);
+                ecs_assert!(
+                    false,
+                    FlecsErrorCode::UnwrapFailed,
+                    "Failed to convert id to string (id: {})",
+                    self.raw_id
+                );
                 "invalid_str_from_id"
             })
     }
@@ -243,7 +246,12 @@ impl Id {
         unsafe { std::ffi::CStr::from_ptr(ecs_id_flag_str(self.raw_id & RUST_ECS_ID_FLAGS_MASK)) }
             .to_str()
             .unwrap_or_else(|_| {
-                error!("Failed to convert id to string (id: {})", self.raw_id);
+                ecs_assert!(
+                    false,
+                    FlecsErrorCode::UnwrapFailed,
+                    "Failed to convert id to string (id: {})",
+                    self.raw_id
+                );
                 "invalid_str_from_id"
             })
     }

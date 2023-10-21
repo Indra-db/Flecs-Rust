@@ -9,19 +9,27 @@ keywords = ["ecs", "flecs", "entity", "component", "system"]
 categories = ["game-development", "api-bindings"]
 
 [dependencies]
-lazy_static = "1.4.0"
-log = "0.4.20"
-rand = "0.8"
-debug-here = "0.2.2"
+#debug-here = "0.2.2" #temp for development
 flecs_ecs_bridge_derive = { path = "../flecs_ecs_bridge_derive" }
 libc = "0.2.148"
+
+[dev-dependencies]
+criterion = "0.5.1"
+seq-macro = "0.3.5"
+rand = "0.8.5" 
+
+[[bench]]
+name = "query"
+harness = false
 
 [build-dependencies]
 bindgen = "0.68.1"
 cc = "1.0.83"
 regex = "1.9.5"
 
-#beware of this issue: macos generated u32 for the underlying enum, but windows generated i32
+# ---> Bindgen <--- with bindgen macos generates u32 for the underlying enum of some bindings, 
+#which is a bug. It should be generating i32. If you generate from macos, you'll need to revert the
+# u32 to i32 in the generated bindings for the enums. More info on the issue here:
 #https://github.com/rust-lang/rust-bindgen/issues/1966
 
 [features]
@@ -36,7 +44,6 @@ flecs_ecs_asserts = []
 flecs_enable_all_asserts = ["flecs_ecs_asserts"]
 default = [
     "flecs_enable_all_asserts",
-    #"flecs_generate_bindings",
     "flecs_systems",
     "flecs_timer",
     "flecs_doc",
@@ -49,6 +56,13 @@ default = [
 flecs_ecs_bridge_derive = { version = "=0.1.0", path = "../flecs_ecs_bridge_derive" }
 
 [profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+overflow-checks = false
+
+[profile.bench]
 opt-level = 3
 lto = true
 codegen-units = 1

@@ -44,6 +44,7 @@ pub enum FlecsErrorCode {
     InvalidWhileReadonly,
     LockedStorage,
     InvalidFromWorker,
+    UnwrapFailed,
 }
 
 impl Display for FlecsErrorCode {
@@ -85,6 +86,7 @@ impl Display for FlecsErrorCode {
                 FlecsErrorCode::InvalidWhileReadonly => "ECS_INVALID_WHILE_READONLY",
                 FlecsErrorCode::LockedStorage => "ECS_LOCKED_STORAGE",
                 FlecsErrorCode::InvalidFromWorker => "ECS_INVALID_FROM_WORKER",
+                FlecsErrorCode::UnwrapFailed => "ECS_UNWRAP_FAILED",
             }
         )
     }
@@ -126,6 +128,7 @@ impl FlecsErrorCode {
             FlecsErrorCode::InvalidWhileReadonly => 70,
             FlecsErrorCode::LockedStorage => 71,
             FlecsErrorCode::InvalidFromWorker => 72,
+            FlecsErrorCode::UnwrapFailed => 73,
         }
     }
 }
