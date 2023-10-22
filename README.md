@@ -86,7 +86,7 @@ If you're excited about this project and would like to contribute, or if you've 
 
 ## License
 
-This wrapper is licensed under the [MIT License](LICENSE).
+This wrapper will be licensed under the MIT license upon release, just like Flecs.
 
 ## Acknowledgements
 

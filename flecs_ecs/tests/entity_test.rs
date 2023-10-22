@@ -1,4 +1,4 @@
-use flecs_ecs_bridge::core::{
+use flecs_ecs::core::{
     c_types::*,
     id::{Id, With},
     world::World,

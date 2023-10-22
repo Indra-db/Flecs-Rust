@@ -1,4 +1,4 @@
-use flecs_ecs_bridge::core::{entity::Entity, world::World};
+use flecs_ecs::core::{entity::Entity, world::World};
 
 mod common;
 use common::*;

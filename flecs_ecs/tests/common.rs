@@ -1,6 +1,6 @@
-use flecs_ecs_bridge::core::c_types::*;
-use flecs_ecs_bridge::core::component_registration::*;
-use flecs_ecs_bridge_derive::Component;
+use flecs_ecs::core::c_types::*;
+use flecs_ecs::core::component_registration::*;
+use flecs_ecs_derive::Component;
 use std::sync::OnceLock;
 
 #[derive(Clone, Debug, Component, Default)]

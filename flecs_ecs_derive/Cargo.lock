@@ -3,7 +3,7 @@
 version = 3
 
 [[package]]
-name = "flecs_ecs_bridge_derive"
+name = "flecs_ecs_derive"
 version = "0.1.0"
 dependencies = [
  "quote",

@@ -1,5 +1,5 @@
 /target
 /Cargo.lock
-flecs_ecs_bridge/src/main.rs
-flecs_ecs_bridge/rustfmt.toml
+flecs_ecs/src/main.rs
+flecs_ecs/rustfmt.toml
 rustfmt.toml

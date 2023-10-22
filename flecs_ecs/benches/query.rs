@@ -4,11 +4,11 @@
 #![allow(warnings)]
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use flecs_ecs_bridge::core::c_types::{EntityT, IdT, WorldT};
-use flecs_ecs_bridge::core::component_registration::*;
-use flecs_ecs_bridge::core::query::Query;
-use flecs_ecs_bridge::core::{utility::functions::*, world::World};
-use flecs_ecs_bridge_derive::Component;
+use flecs_ecs::core::c_types::{EntityT, IdT, WorldT};
+use flecs_ecs::core::component_registration::*;
+use flecs_ecs::core::query::Query;
+use flecs_ecs::core::{utility::functions::*, world::World};
+use flecs_ecs_derive::Component;
 use seq_macro::seq;
 use std::sync::OnceLock;
 

@@ -1,16 +1,16 @@
 [package]
-name = "flecs_ecs_bridge"
+name = "flecs_ecs"
 version = "0.0.2"
 edition = "2021"
 authors = ["Indra de Backere <debackere.indra@gmail.com>"]
 description = "Rust API for the C flecs ECS library <https://github.com/SanderMertens/flecs>"
-license = "MIT"
+license = ""
 keywords = ["ecs", "flecs", "entity", "component", "system"]
 categories = ["game-development", "api-bindings"]
 
 [dependencies]
 #debug-here = "0.2.2" #temp for development
-flecs_ecs_bridge_derive = { path = "../flecs_ecs_bridge_derive" }
+flecs_ecs_derive = { path = "../flecs_ecs_derive" }
 libc = "0.2.148"
 #seq-macro = "0.3.5" #temp for testing / development
 #rand = "0.8.5"  #temp for testing / development
@@ -56,4 +56,4 @@ default = [
 ]
 
 [target.'cfg(any())'.dependencies]
-flecs_ecs_bridge_derive = { version = "=0.1.0", path = "../flecs_ecs_bridge_derive" }
+flecs_ecs_derive = { version = "=0.1.0", path = "../flecs_ecs_derive" }
