@@ -27,14 +27,14 @@ use super::{
     Type::Type,
 };
 
-pub struct Iter {
-    iter: *mut IterT,
+pub struct Iter<'a> {
+    iter: &'a mut IterT,
     begin: usize,
     end: usize,
     current: usize,
 }
 
-impl Iter {
+impl<'a> Iter<'a> {
     /// Constructs iterator from C iterator object
     /// this operation is typically not invoked directly by the user
     ///
@@ -45,7 +45,7 @@ impl Iter {
     /// # Safety
     ///
     /// This function is unsafe because it dereferences raw pointer
-    pub unsafe fn new(iter: *mut IterT) -> Self {
+    pub unsafe fn new(iter: &mut IterT) -> Self {
         Self {
             iter,
             begin: 0,
@@ -486,9 +486,9 @@ impl Iter {
 }
 
 #[cfg(feature = "flecs_rules")]
-impl Iter {}
+impl<'a> Iter<'a> {}
 
-impl Iterator for Iter {
+impl<'a> Iterator for Iter<'a> {
     type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {

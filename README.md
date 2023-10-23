@@ -45,7 +45,7 @@ This library has not been advertized nor published yet to crates.io for that rea
 - [ ] observer
 - [x] type
 - [x] iter
-- [x] column
+- [x] column, untyped_column
 ```
 #### addons
 ```[tasklist]

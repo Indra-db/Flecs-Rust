@@ -12,6 +12,7 @@ use super::c_binding::bindings::{
 use super::c_types::*;
 use super::entity::Entity;
 use super::filter::FilterView;
+use super::iter::Iter;
 use super::iterable::Iterable;
 use super::term::{Term, With};
 use super::utility::errors::FlecsErrorCode;
@@ -304,6 +305,10 @@ where
 
                 ecs_table_lock(self.world.raw_world, iter.table);
 
+                // TODO random thought, I think I can determine the elements is a ref or not before the for loop and then pass two arrays with the indices of the ref and non ref elements
+                // I will come back to this in the future, my thoughts are somewhere else right now. If my assumption is correct, this will get rid of the branch in the for loop
+                // and potentially allow for more conditions for vectorization to happen. This could potentially offer a (small) performance boost since the branch predictor avoids probably
+                // most of the cost since the branch is almost always the same.
                 for i in 0..iter_count {
                     let mut entity =
                         Entity::new_from_existing(self.world.raw_world, *iter.entities.add(i));
