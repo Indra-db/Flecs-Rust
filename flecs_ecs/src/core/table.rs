@@ -144,7 +144,7 @@ impl TableRange {
         }
     }
 
-    pub fn new_raw(world: *mut WorldT, table: *mut TableT, offset: i32, count: i32) -> Self {
+    pub(crate) fn new_raw(world: *mut WorldT, table: *mut TableT, offset: i32, count: i32) -> Self {
         Self {
             table: Table::new(world, table),
             offset,

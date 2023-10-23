@@ -4,10 +4,13 @@
 #![allow(unused_macros)]
 
 pub mod core {
+    #![allow(non_snake_case)]
+    pub mod Type;
     pub mod archetype;
     pub mod builder;
     pub mod c_binding;
     pub mod c_types;
+    pub mod column;
     pub mod component;
     pub mod component_ref;
     pub mod component_registration;
@@ -17,6 +20,7 @@ pub mod core {
     pub mod filter;
     pub mod filter_builder;
     pub mod id;
+    pub mod iter;
     pub mod iterable;
     pub mod lifecycle_traits;
     pub mod query;

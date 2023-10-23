@@ -43,6 +43,9 @@ This library has not been advertized nor published yet to crates.io for that rea
 ```[tasklist]
 - [ ] event
 - [ ] observer
+- [x] type
+- [x] iter
+- [x] column
 ```
 #### addons
 ```[tasklist]

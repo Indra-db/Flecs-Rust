@@ -108,3 +108,5 @@ where
     type Type = T;
     const OPER: OperKind = OperKind::Optional;
 }
+
+pub type FTime = f32;

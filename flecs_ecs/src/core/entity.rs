@@ -66,7 +66,7 @@ impl Entity {
     /// ### Safety
     ///
     /// The world must be not be None if you want to do operations on the entity.
-    pub fn new_wrapper(world: Option<&World>, id: IdT) -> Self {
+    pub fn from_existing(world: Option<&World>, id: IdT) -> Self {
         if let Some(world) = world {
             Self {
                 entity_view: EntityView::new_from_existing(world.raw_world, id),
