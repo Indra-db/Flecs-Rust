@@ -45,11 +45,12 @@ impl<'a> Iter<'a> {
     /// # Safety
     ///
     /// This function is unsafe because it dereferences raw pointer
-    pub unsafe fn new(iter: &mut IterT) -> Self {
+    pub unsafe fn new(iter: &'a mut IterT) -> Self {
+        let end = iter.count as usize;
         Self {
             iter,
             begin: 0,
-            end: unsafe { (*iter).count as usize },
+            end,
             current: 0,
         }
     }
@@ -58,28 +59,28 @@ impl<'a> Iter<'a> {
     ///
     /// `iter::system`
     pub fn system(&self) -> Entity {
-        unsafe { Entity::new_from_existing((*self.iter).world, (*self.iter).system) }
+        Entity::new_from_existing(self.iter.world, self.iter.system)
     }
 
     /// # C++ API equivalent
     ///
     /// `iter::event`
     pub fn event(&self) -> Entity {
-        unsafe { Entity::new_from_existing((*self.iter).world, (*self.iter).event) }
+        Entity::new_from_existing(self.iter.world, self.iter.event)
     }
 
     /// # C++ API equivalent
     ///
     /// `iter::event_id`
     pub fn event_id(&self) -> Id {
-        unsafe { Id::new_from_existing((*self.iter).world, (*self.iter).event_id) }
+        Id::new_from_existing(self.iter.world, self.iter.event_id)
     }
 
     /// # C++ API equivalent
     ///
     /// `iter::world`
     pub fn get_world(&self) -> World {
-        unsafe { World::new_from_world((*self.iter).world) }
+        World::new_from_world(self.iter.world)
     }
 
     /// Obtain mutable handle to entity being iterated over.
@@ -92,13 +93,13 @@ impl<'a> Iter<'a> {
     ///
     /// `iter::entity`
     pub fn entity(&self, row: usize) -> Entity {
-        unsafe { Entity::new_from_existing((*self.iter).world, *(*self.iter).entities.add(row)) }
+        unsafe { Entity::new_from_existing(self.iter.world, *self.iter.entities.add(row)) }
     }
 
     /// # C++ API equivalent
     ///
     /// `iter::c_ptr`
-    pub fn get_c_ptr(&self) -> *mut IterT {
+    pub fn get_raw_ref(&mut self) -> &mut IterT {
         self.iter
     }
 
@@ -106,42 +107,42 @@ impl<'a> Iter<'a> {
     ///
     /// `iter::count`
     pub fn count(&self) -> usize {
-        unsafe { (*self.iter).count as usize }
+        self.iter.count as usize
     }
 
     /// # C++ API equivalent
     ///
     /// `iter::delta_time`
     pub fn get_delta_time(&self) -> FTime {
-        unsafe { (*self.iter).delta_time }
+        self.iter.delta_time
     }
 
     /// # C++ API equivalent
     ///
     /// `iter::delta_system_time`
     pub fn get_delta_system_time(&self) -> FTime {
-        unsafe { (*self.iter).delta_system_time }
+        self.iter.delta_system_time
     }
 
     /// # C++ API equivalent
     ///
     /// `iter::type`
     pub fn get_type(&self) -> Type {
-        unsafe { Type::new((*self.iter).world, ecs_table_get_type((*self.iter).table)) }
+        unsafe { Type::new(self.iter.world, ecs_table_get_type(self.iter.table)) }
     }
 
     /// # C++ API equivalent
     ///
     /// `iter::table`
     pub fn get_table(&self) -> Table {
-        unsafe { Table::new((*self.iter).world, (*self.iter).table) }
+        Table::new(self.iter.world, self.iter.table)
     }
 
     /// # C++ API equivalent
     ///
     /// `iter::range`
-    pub fn get_table_range(&self) -> TableRange {
-        let iter = unsafe { *self.iter };
+    pub fn get_table_range(&mut self) -> TableRange {
+        let iter: &mut IterT = self.iter;
         TableRange::new_raw(iter.world, iter.table, iter.offset, iter.count)
     }
 
@@ -153,7 +154,7 @@ impl<'a> Iter<'a> {
     ///
     /// `iter::has_module`
     pub fn has_module(&self) -> bool {
-        unsafe { ecs_table_has_module((*self.iter).table) }
+        unsafe { ecs_table_has_module(self.iter.table) }
     }
 
     /// Access ctx.
@@ -163,7 +164,7 @@ impl<'a> Iter<'a> {
     ///
     /// `iter::ctx`
     pub fn get_context_ptr<T: CachedComponentData>(&mut self) -> &mut T {
-        unsafe { &mut *((*self.iter).ctx as *mut T) }
+        unsafe { &mut *(self.iter.ctx as *mut T) }
     }
 
     /// Access ctx.
@@ -173,7 +174,7 @@ impl<'a> Iter<'a> {
     ///
     /// `iter::ctx`
     pub fn get_context_ptr_untyped(&self) -> *mut c_void {
-        unsafe { (*self.iter).ctx }
+        self.iter.ctx
     }
 
     /// Access param.
@@ -183,7 +184,7 @@ impl<'a> Iter<'a> {
     ///
     /// `iter::param`
     pub fn param_untyped(&self) -> *mut c_void {
-        unsafe { (*self.iter).param }
+        self.iter.param
     }
 
     /// Access param.
@@ -193,7 +194,7 @@ impl<'a> Iter<'a> {
     ///
     /// `iter::param`
     pub fn param<T: CachedComponentData>(&mut self) -> &mut T {
-        unsafe { &mut *((*self.iter).param as *mut T) }
+        unsafe { &mut *(self.iter.param as *mut T) }
     }
 
     /// # Arguments
@@ -247,7 +248,7 @@ impl<'a> Iter<'a> {
     ///
     /// `iter::field_count`
     pub fn get_field_count(&self) -> i32 {
-        unsafe { (*self.iter).field_count }
+        self.iter.field_count
     }
 
     /// Size of field data type.
@@ -273,7 +274,7 @@ impl<'a> Iter<'a> {
     ///
     /// `iter::src`
     pub fn get_field_src(&self, index: i32) -> Entity {
-        unsafe { Entity::new_from_existing((*self.iter).world, ecs_field_src(self.iter, index)) }
+        unsafe { Entity::new_from_existing(self.iter.world, ecs_field_src(self.iter, index)) }
     }
 
     /// Obtain id matched for field.
@@ -286,7 +287,7 @@ impl<'a> Iter<'a> {
     ///
     /// `iter::id`
     pub fn get_field_id(&self, index: i32) -> Id {
-        unsafe { Id::new_from_existing((*self.iter).world, ecs_field_id(self.iter, index)) }
+        unsafe { Id::new_from_existing(self.iter.world, ecs_field_id(self.iter, index)) }
     }
 
     /// Obtain pair id matched for field.
@@ -299,7 +300,7 @@ impl<'a> Iter<'a> {
         unsafe {
             let id = ecs_field_id(self.iter, index);
             if ecs_id_is_pair(id) {
-                Some(Id::new_from_existing((*self.iter).world, id))
+                Some(Id::new_from_existing(self.iter.world, id))
             } else {
                 None
             }
@@ -383,7 +384,7 @@ impl<'a> Iter<'a> {
     ///
     /// `iter::table_count`
     pub fn get_table_count(&self) -> i32 {
-        unsafe { (*self.iter).table_count }
+        self.iter.table_count
     }
 
     /// Check if the current table has changed since the last iteration.
@@ -414,7 +415,7 @@ impl<'a> Iter<'a> {
     /// # C++ API equivalent
     ///
     /// `iter::skip`
-    pub fn skip(&self) {
+    pub fn skip(&mut self) {
         unsafe { ecs_query_skip(self.iter) };
     }
 
@@ -430,7 +431,7 @@ impl<'a> Iter<'a> {
     ///
     /// `iter::group_id`
     pub fn get_group_id(&self) -> IdT {
-        unsafe { (*self.iter).group_id }
+        self.iter.group_id
     }
 
     fn get_field_internal<T: CachedComponentData>(&self, index: i32) -> Column<T> {
@@ -439,7 +440,7 @@ impl<'a> Iter<'a> {
                 unsafe {
                     let term_id = ecs_field_id(self.iter, index);
                     let is_pair = ecs_id_is_pair(term_id);
-                    let is_id_correct = T::get_id((*self.iter).world) == term_id;
+                    let is_id_correct = T::get_id(self.iter.world) == term_id;
                     is_pair || is_id_correct
                 }
             },
@@ -454,9 +455,7 @@ impl<'a> Iter<'a> {
         let count = if is_shared { 1 } else { self.count() };
 
         Column::<T>::new_from_array(
-            unsafe {
-                ecs_field_w_size(self.iter, T::get_size((*self.iter).world), index) as *mut T
-            },
+            unsafe { ecs_field_w_size(self.iter, T::get_size(self.iter.world), index) as *mut T },
             count,
             is_shared,
         )
@@ -484,7 +483,6 @@ impl<'a> Iter<'a> {
         )
     }
 }
-
 #[cfg(feature = "flecs_rules")]
 impl<'a> Iter<'a> {}
 
