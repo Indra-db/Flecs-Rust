@@ -6,6 +6,7 @@ use super::{
     },
     c_types::FilterT,
     entity::Entity,
+    iter::Iter,
     iterable::Iterable,
     term::{Term, With},
     utility::errors::FlecsErrorCode,
@@ -83,6 +84,44 @@ where
                 }
 
                 ecs_table_unlock(self.world.raw_world, iter.table);
+            }
+        }
+    }
+
+    fn iter_impl(&mut self, mut func: impl FnMut(&Iter, T::TupleSliceType), filter: *mut FilterT) {
+        unsafe {
+            let mut iter = ecs_filter_iter(self.world.raw_world, filter);
+
+            while ecs_filter_next(&mut iter) {
+                let components_data = T::get_array_ptrs_of_components(&iter);
+                let iter_count = iter.count as usize;
+                let array_components = &components_data.array_components;
+
+                ecs_table_lock(self.world.raw_world, iter.table);
+
+                let tuple = if components_data.is_any_array_a_ref {
+                    let is_ref_array_components = &components_data.is_ref_array_components;
+                    T::get_tuple_slices_with_ref(
+                        array_components,
+                        is_ref_array_components,
+                        iter_count,
+                    )
+                } else {
+                    T::get_tuple_slices(array_components, iter_count)
+                };
+                let iterT = Iter::new(&mut iter);
+                func(&iterT, tuple);
+                ecs_table_unlock(self.world.raw_world, iter.table);
+            }
+        }
+    }
+
+    pub fn iter_only_impl(&mut self, mut func: impl FnMut(&Iter), filter: *mut FilterT) {
+        unsafe {
+            let mut iter = ecs_filter_iter(self.world.raw_world, filter);
+            while ecs_filter_next(&mut iter) {
+                let iterT = Iter::new(&mut iter);
+                func(&iterT);
             }
         }
     }
@@ -280,6 +319,7 @@ where
         filter_obj
     }
 
+    #[inline]
     pub fn each(&mut self, func: impl FnMut(T::TupleType)) {
         self.base.each_impl(func, &mut self.filter);
     }
@@ -287,6 +327,16 @@ where
     #[inline]
     pub fn each_entity(&mut self, func: impl FnMut(&mut Entity, T::TupleType)) {
         self.base.each_entity_impl(func, &mut self.filter);
+    }
+
+    #[inline]
+    pub fn iter(&mut self, func: impl FnMut(&Iter, T::TupleSliceType)) {
+        self.base.iter_impl(func, &mut self.filter);
+    }
+
+    #[inline]
+    pub fn iter_only(&mut self, func: impl FnMut(&Iter)) {
+        self.base.iter_only_impl(func, &mut self.filter);
     }
 
     pub fn entity(&mut self) -> Entity {

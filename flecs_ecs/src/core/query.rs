@@ -260,7 +260,7 @@ where
         }
     }
 
-    fn get_iter(&mut self, world: &'w World) -> IterT {
+    fn get_iter_raw(&mut self, world: &'w World) -> IterT {
         if !world.is_null() {
             self.world = world;
         }
