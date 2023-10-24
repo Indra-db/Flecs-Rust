@@ -25,6 +25,7 @@ pub trait Iterable<'a>: Sized {
     type TupleType: 'a;
     type ComponentsArray: 'a + std::ops::Index<usize, Output = *mut u8> + std::ops::IndexMut<usize>;
     type BoolArray: 'a + std::ops::Index<usize, Output = bool> + std::ops::IndexMut<usize>;
+    type TupleSliceType: 'a;
 
     fn populate(filter: &mut impl Filterable);
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t);
@@ -37,6 +38,17 @@ pub trait Iterable<'a>: Sized {
         is_ref_array_components: &Self::BoolArray,
         index: usize,
     ) -> Self::TupleType;
+
+    fn get_tuple_slices(
+        array_components: &Self::ComponentsArray,
+        count: usize,
+    ) -> Self::TupleSliceType;
+
+    fn get_tuple_slices_with_ref(
+        array_components: &Self::ComponentsArray,
+        is_ref_array_components: &Self::BoolArray,
+        count: usize,
+    ) -> Self::TupleSliceType;
 }
 
 /////////////////////
@@ -50,6 +62,7 @@ impl<'a> Iterable<'a> for ()
     type TupleType = ();
     type ComponentsArray = [*mut u8; 0];
     type BoolArray = [bool; 0];
+    type TupleSliceType = ();
 
     fn populate(_filter : &mut impl Filterable){}
 
@@ -71,6 +84,17 @@ impl<'a> Iterable<'a> for ()
         _index: usize,
     ) -> Self::TupleType {}
 
+    fn get_tuple_slices(
+        array_components: &Self::ComponentsArray,
+        count: usize,
+    ) -> Self::TupleSliceType {}
+
+    fn get_tuple_slices_with_ref(
+        array_components: &Self::ComponentsArray,
+        is_ref_array_components: &Self::BoolArray,
+        count: usize,
+    ) -> Self::TupleSliceType {}
+
 }
 
 #[rustfmt::skip]
@@ -81,6 +105,7 @@ where
     type TupleType = (&'a mut A,);
     type ComponentsArray = [*mut u8; 1];
     type BoolArray = [bool; 1];
+    type TupleSliceType = (&'a mut [A],);
 
     fn populate(filter: &mut impl Filterable) {
         let world = filter.get_world();
@@ -118,6 +143,8 @@ where
         }
     }
 
+    // TODO since it's only one component, we don't need to check if it's a ref array or not, we can just return the first element of the array
+    // I think this is the case for all tuples of size 1
     fn get_tuple_with_ref(
         array_components: &Self::ComponentsArray,
         is_ref_array_components: &Self::BoolArray,
@@ -133,6 +160,34 @@ where
             (ref_a,)
         }
     }
+
+    fn get_tuple_slices(
+        array_components: &Self::ComponentsArray,
+        count: usize,
+    ) -> Self::TupleSliceType {
+        unsafe {
+            let array_a = array_components[0] as *mut A;
+            let slice_a = std::slice::from_raw_parts_mut(array_a, count);
+            (slice_a,)
+        }
+    }
+
+    fn get_tuple_slices_with_ref(
+        array_components: &Self::ComponentsArray,
+        is_ref_array_components: &Self::BoolArray,
+        count: usize,
+    ) -> Self::TupleSliceType {
+        unsafe {
+            let array_a = array_components[0] as *mut A;
+            let slice_a = if is_ref_array_components[0] {
+                std::slice::from_raw_parts_mut(array_a, 1)
+            } else {
+                std::slice::from_raw_parts_mut(array_a, count)
+            };
+            (slice_a,)
+        }
+    
+    }
 }
 
 #[rustfmt::skip]
@@ -143,12 +198,13 @@ where
     type TupleType = (Option<&'a mut A>,);
     type ComponentsArray = [*mut u8; 1];
     type BoolArray = [bool; 1];
+    type TupleSliceType = (Option<&'a mut [A]>,);
 
     fn populate(filter: &mut impl Filterable) {
         let world = filter.get_world();
         let term = filter.current_term();
         term.id = A::get_id(world);
-        term.oper = OperKind::Optional as i32; 
+        term.oper = OperKind::Optional as i32;
         filter.next_term();
     }
 
@@ -165,7 +221,7 @@ where
         let is_ref_array_components = if !it.sources.is_null() { unsafe {
             [*it.sources.add(0) != 0]
         }} else { [false] };
-        
+
         let is_any_array_a_ref = is_ref_array_components[0];
 
         ComponentsData {
@@ -175,6 +231,9 @@ where
         }
     }
 
+    /// TODO I think potentially I can determine if the component array is null before the loop as well to reduce the branching per iteration.
+    /// potentially by working with two arrays with indices, one containing the indices of the component arrays that are null, and one containing the indices of the component arrays that are not null.
+    /// reducing overall branching and increasing performance and conditions for vectorization
     fn get_tuple(array_components: &Self::ComponentsArray, index: usize) -> Self::TupleType {
         unsafe {
             let array_a = array_components[0] as *mut A;
@@ -186,7 +245,7 @@ where
             };
 
             (option_a,)
-            
+
         }
     }
 
@@ -208,6 +267,49 @@ where
 
             (option_a,)
         }
+
+    }
+
+    fn get_tuple_slices(
+        array_components: &Self::ComponentsArray,
+        count: usize,
+    ) -> Self::TupleSliceType {
+        unsafe {
+
+            let array_a = array_components[0] as *mut A; // array_components is an array [*mut u8; 3];
+            
+            let option_a = if array_a.is_null() {
+                None
+            } else {
+                let slice_a = std::slice::from_raw_parts_mut(array_a, count);
+                Some(slice_a)
+            };
+
+            (option_a,)
+        }
+    }
+
+    fn get_tuple_slices_with_ref(
+        array_components: &Self::ComponentsArray,
+        is_ref_array_components: &Self::BoolArray,
+        count: usize,
+    ) -> Self::TupleSliceType {
+        unsafe {
+
+            let array_a = array_components[0] as *mut A; // array_components is an array [*mut u8; 3];
+            
+            let option_a = if array_a.is_null() {
+                None
+            } else if is_ref_array_components[0] {
+                let slice_a = std::slice::from_raw_parts_mut(array_a, 1);
+                Some(slice_a)
+            } else {
+                let slice_a = std::slice::from_raw_parts_mut(array_a, count);
+                Some(slice_a)
+            };
+
+            (option_a,)
+        }
     
     }
 }
@@ -221,6 +323,7 @@ where
     type TupleType = (&'a mut A, &'a mut B);
     type ComponentsArray = [*mut u8; 2];
     type BoolArray = [bool; 2];
+    type TupleSliceType = (&'a mut [A], &'a mut [B]);
 
     fn populate(filter : &mut impl Filterable)
     {
@@ -241,12 +344,12 @@ where
 
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
         let array_components = unsafe {
-            [ecs_field::<A>(it, 1) as *mut u8, 
+            [ecs_field::<A>(it, 1) as *mut u8,
             ecs_field::<B>(it, 2) as *mut u8]
         };
 
         let is_ref_array_components = if !it.sources.is_null() { unsafe {
-            [*it.sources.add(0) != 0, 
+            [*it.sources.add(0) != 0,
             *it.sources.add(1) != 0]
         }} else { [false, false] };
 
@@ -291,6 +394,42 @@ where
             (ref_a, ref_b,)
         }
     }
+
+    fn get_tuple_slices(
+        array_components: &Self::ComponentsArray,
+        count: usize,
+    ) -> Self::TupleSliceType {
+        unsafe {
+            let array_a = array_components[0] as *mut A;
+            let array_b = array_components[1] as *mut B;
+            let slice_a = std::slice::from_raw_parts_mut(array_a, count);
+            let slice_b = std::slice::from_raw_parts_mut(array_b, count);
+            (slice_a, slice_b,)
+        }
+    }
+
+    fn get_tuple_slices_with_ref(
+        array_components: &Self::ComponentsArray,
+        is_ref_array_components: &Self::BoolArray,
+        count: usize,
+    ) -> Self::TupleSliceType {
+        unsafe {
+            let array_a = array_components[0] as *mut A;
+            let array_b = array_components[1] as *mut B;
+            let slice_a = if is_ref_array_components[0] {
+                std::slice::from_raw_parts_mut(array_a, 1)
+            } else {
+                std::slice::from_raw_parts_mut(array_a, count)
+            };
+            let slice_b = if is_ref_array_components[1] {
+                std::slice::from_raw_parts_mut(array_b, 1)
+            } else {
+                std::slice::from_raw_parts_mut(array_b, count)
+            };
+            (slice_a, slice_b,)
+        }
+    
+    }
 }
 
 #[rustfmt::skip]
@@ -302,6 +441,7 @@ where
     type TupleType = (&'a mut A, Option<&'a mut B>);
     type ComponentsArray = [*mut u8; 2];
     type BoolArray = [bool; 2];
+    type TupleSliceType = (&'a mut [A], Option<&'a mut [B]>);
 
     fn populate(filter: &mut impl Filterable) {
         let world = filter.get_world();
@@ -322,12 +462,12 @@ where
 
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
         let array_components = unsafe {
-            [ecs_field::<A>(it, 1) as *mut u8, 
+            [ecs_field::<A>(it, 1) as *mut u8,
             ecs_field::<B>(it, 2) as *mut u8]
         };
 
         let is_ref_array_components = if !it.sources.is_null() { unsafe {
-            [*it.sources.add(0) != 0, 
+            [*it.sources.add(0) != 0,
             *it.sources.add(1) != 0]
         }} else { [false, false] };
 
@@ -379,6 +519,51 @@ where
             (ref_a, option_b)
         }
     }
+
+    fn get_tuple_slices(
+        array_components: &Self::ComponentsArray,
+        count: usize,
+    ) -> Self::TupleSliceType {
+        unsafe {
+            let array_a = array_components[0] as *mut A;
+            let array_b = array_components[1] as *mut B;
+
+            let slice_a = std::slice::from_raw_parts_mut(array_a, count);
+
+            let slice_b = if array_b.is_null() {
+                None
+            } else {
+                let slice_b = std::slice::from_raw_parts_mut(array_b, count);
+                Some(slice_b)
+            };
+
+            (slice_a, slice_b)
+        }
+    
+    }
+
+    fn get_tuple_slices_with_ref(
+        array_components: &Self::ComponentsArray,
+        is_ref_array_components: &Self::BoolArray,
+        count: usize,
+    ) -> Self::TupleSliceType {
+        unsafe {
+            let array_a = array_components[0] as *mut A;
+            let array_b = array_components[1] as *mut B;
+
+            let slice_a = std::slice::from_raw_parts_mut(array_a, count);
+
+            let slice_b = if is_ref_array_components[1] {
+                let slice_b = std::slice::from_raw_parts_mut(array_b, 1);
+                Some(slice_b)
+            } else {
+                let slice_b = std::slice::from_raw_parts_mut(array_b, count);
+                Some(slice_b)
+            };
+
+            (slice_a, slice_b)
+        }
+    }
 }
 
 impl<'a, A: 'a, B: 'a> Iterable<'a> for (Option<A>, Option<B>)
@@ -389,6 +574,7 @@ where
     type TupleType = (Option<&'a mut A>, Option<&'a mut B>);
     type ComponentsArray = [*mut u8; 2];
     type BoolArray = [bool; 2];
+    type TupleSliceType = (Option<&'a mut [A]>, Option<&'a mut [B]>);
 
     fn populate(filter: &mut impl Filterable) {
         let world = filter.get_world();
@@ -484,6 +670,65 @@ where
             (option_a, option_b)
         }
     }
+
+    fn get_tuple_slices(
+        array_components: &Self::ComponentsArray,
+        count: usize,
+    ) -> Self::TupleSliceType {
+        unsafe {
+            let array_a = array_components[0] as *mut A;
+            let array_b = array_components[1] as *mut B;
+
+            let slice_a = if array_a.is_null() {
+                None
+            } else {
+                let slice_a = std::slice::from_raw_parts_mut(array_a, count);
+                Some(slice_a)
+            };
+
+            let slice_b = if array_b.is_null() {
+                None
+            } else {
+                let slice_b = std::slice::from_raw_parts_mut(array_b, count);
+                Some(slice_b)
+            };
+
+            (slice_a, slice_b)
+        }
+    }
+
+    fn get_tuple_slices_with_ref(
+        array_components: &Self::ComponentsArray,
+        is_ref_array_components: &Self::BoolArray,
+        count: usize,
+    ) -> Self::TupleSliceType {
+        unsafe {
+            let array_a = array_components[0] as *mut A;
+            let array_b = array_components[1] as *mut B;
+
+            let slice_a = if array_a.is_null() {
+                None
+            } else if is_ref_array_components[0] {
+                let slice_a = std::slice::from_raw_parts_mut(array_a, 1);
+                Some(slice_a)
+            } else {
+                let slice_a = std::slice::from_raw_parts_mut(array_a, count);
+                Some(slice_a)
+            };
+
+            let slice_b = if array_b.is_null() {
+                None
+            } else if is_ref_array_components[1] {
+                let slice_b = std::slice::from_raw_parts_mut(array_b, 1);
+                Some(slice_b)
+            } else {
+                let slice_b = std::slice::from_raw_parts_mut(array_b, count);
+                Some(slice_b)
+            };
+
+            (slice_a, slice_b)
+        }
+    }
 }
 
 #[rustfmt::skip]
@@ -496,6 +741,7 @@ where
     type TupleType = (&'a mut A, &'a mut B, &'a mut C);
     type ComponentsArray = [*mut u8; 3];
     type BoolArray = [bool; 3];
+    type TupleSliceType = (&'a mut [A], &'a mut [B], &'a mut [C]);
 
     fn populate(filter : &mut impl Filterable)
     {
@@ -519,15 +765,15 @@ where
     }
 
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self>{
-       let array_components = unsafe { 
-            [ecs_field::<A>(it, 1) as *mut u8, 
-            ecs_field::<B>(it, 2) as *mut u8, 
+       let array_components = unsafe {
+            [ecs_field::<A>(it, 1) as *mut u8,
+            ecs_field::<B>(it, 2) as *mut u8,
             ecs_field::<C>(it, 3) as *mut u8]
         };
 
         let is_ref_array_components = if !it.sources.is_null() { unsafe {
-            [*it.sources.add(0) != 0, 
-            *it.sources.add(1) != 0, 
+            [*it.sources.add(0) != 0,
+            *it.sources.add(1) != 0,
             *it.sources.add(2) != 0]
         }} else { [false, false, false] };
 
@@ -580,6 +826,49 @@ where
             (ref_a, ref_b, ref_c,)
         }
     }
+
+    fn get_tuple_slices(
+        array_components: &Self::ComponentsArray,
+        count: usize,
+    ) -> Self::TupleSliceType {
+        unsafe {
+            let array_a = array_components[0] as *mut A;
+            let array_b = array_components[1] as *mut B;
+            let array_c = array_components[2] as *mut C;
+            let slice_a = std::slice::from_raw_parts_mut(array_a, count);
+            let slice_b = std::slice::from_raw_parts_mut(array_b, count);
+            let slice_c = std::slice::from_raw_parts_mut(array_c, count);
+            (slice_a, slice_b, slice_c,)
+        }    
+    }
+
+    fn get_tuple_slices_with_ref(
+        array_components: &Self::ComponentsArray,
+        is_ref_array_components: &Self::BoolArray,
+        count: usize,
+    ) -> Self::TupleSliceType {
+        unsafe {
+            let array_a = array_components[0] as *mut A;
+            let array_b = array_components[1] as *mut B;
+            let array_c = array_components[2] as *mut C;
+            let slice_a = if is_ref_array_components[0] {
+                std::slice::from_raw_parts_mut(array_a, 1)
+            } else {
+                std::slice::from_raw_parts_mut(array_a, count)
+            };
+            let slice_b = if is_ref_array_components[1] {
+                std::slice::from_raw_parts_mut(array_b, 1)
+            } else {
+                std::slice::from_raw_parts_mut(array_b, count)
+            };
+            let slice_c = if is_ref_array_components[2] {
+                std::slice::from_raw_parts_mut(array_c, 1)
+            } else {
+                std::slice::from_raw_parts_mut(array_c, count)
+            };
+            (slice_a, slice_b, slice_c,)
+        }
+    }
 }
 
 #[rustfmt::skip]
@@ -592,6 +881,7 @@ where
     type TupleType = (&'a mut A, &'a mut B, Option<&'a mut C>);
     type ComponentsArray = [*mut u8; 3];
     type BoolArray = [bool; 3];
+    type TupleSliceType = (&'a mut [A], &'a mut [B], Option<&'a mut [C]>);
 
     fn populate(filter : &mut impl Filterable) {
         let world = filter.get_world();
@@ -615,15 +905,15 @@ where
     }
 
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
-        let array_components = unsafe { 
-            [ecs_field::<A>(it, 1) as *mut u8, 
-            ecs_field::<B>(it, 2) as *mut u8, 
+        let array_components = unsafe {
+            [ecs_field::<A>(it, 1) as *mut u8,
+            ecs_field::<B>(it, 2) as *mut u8,
             ecs_field::<C>(it, 3) as *mut u8]
         };
 
         let is_ref_array_components = if !it.sources.is_null() { unsafe {
-            [*it.sources.add(0) != 0, 
-            *it.sources.add(1) != 0, 
+            [*it.sources.add(0) != 0,
+            *it.sources.add(1) != 0,
             *it.sources.add(2) != 0]
         }} else { [false, false, false] };
 
@@ -683,6 +973,68 @@ where
             (ref_a, ref_b, option_c,)
         }
     }
+
+    fn get_tuple_slices(
+        array_components: &Self::ComponentsArray,
+        count: usize,
+    ) -> Self::TupleSliceType {
+        unsafe {
+
+            let array_a = array_components[0] as *mut A;
+            let array_b = array_components[1] as *mut B;
+            let array_c = array_components[2] as *mut C;
+
+            let slice_a = std::slice::from_raw_parts_mut(array_a, count);
+            let slice_b = std::slice::from_raw_parts_mut(array_b, count);
+
+            let slice_c = if array_c.is_null() {
+                None
+            } else {
+                let slice_c = std::slice::from_raw_parts_mut(array_c, count);
+                Some(slice_c)
+            };
+
+            (slice_a, slice_b, slice_c,)
+        }
+    }
+
+    fn get_tuple_slices_with_ref(
+        array_components: &Self::ComponentsArray,
+        is_ref_array_components: &Self::BoolArray,
+        count: usize,
+    ) -> Self::TupleSliceType {
+        unsafe {
+
+            let array_a = array_components[0] as *mut A;
+            let array_b = array_components[1] as *mut B;
+            let array_c = array_components[2] as *mut C;
+
+            let slice_a = if is_ref_array_components[0] {
+                std::slice::from_raw_parts_mut(array_a, 1)
+            } else {
+                std::slice::from_raw_parts_mut(array_a, count)
+            };
+
+            let slice_b = if is_ref_array_components[1] {
+                std::slice::from_raw_parts_mut(array_b, 1)
+            } else {
+                std::slice::from_raw_parts_mut(array_b, count)
+            };
+
+            let slice_c = if array_c.is_null() {
+                None
+            } else if is_ref_array_components[2] {
+                let slice_c = std::slice::from_raw_parts_mut(array_c, 1);
+                Some(slice_c)
+            } else {
+                let slice_c = std::slice::from_raw_parts_mut(array_c, count);
+                Some(slice_c)
+            };
+
+            (slice_a, slice_b, slice_c,)
+        }
+    
+    }
 }
 
 #[rustfmt::skip]
@@ -695,6 +1047,7 @@ where
     type TupleType = (&'a mut A, Option<&'a mut B>, Option<&'a mut C>);
     type ComponentsArray = [*mut u8; 3];
     type BoolArray = [bool; 3];
+    type TupleSliceType = (&'a mut [A], Option<&'a mut [B]>, Option<&'a mut [C]>);
 
     fn populate(filter : &mut impl Filterable) {
         let world = filter.get_world();
@@ -720,15 +1073,15 @@ where
     }
 
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
-        let array_components = unsafe { 
-            [ecs_field::<A>(it, 1) as *mut u8, 
-            ecs_field::<B>(it, 2) as *mut u8, 
+        let array_components = unsafe {
+            [ecs_field::<A>(it, 1) as *mut u8,
+            ecs_field::<B>(it, 2) as *mut u8,
             ecs_field::<C>(it, 3) as *mut u8]
         };
 
         let is_ref_array_components = if !it.sources.is_null() { unsafe {
-            [*it.sources.add(0) != 0, 
-            *it.sources.add(1) != 0, 
+            [*it.sources.add(0) != 0,
+            *it.sources.add(1) != 0,
             *it.sources.add(2) != 0]
         }} else { [false, false, false] };
 
@@ -793,7 +1146,78 @@ where
 
             (ref_a, option_b, option_c)
         }
+
+    }
+
+    fn get_tuple_slices(
+        array_components: &Self::ComponentsArray,
+        count: usize,
+    ) -> Self::TupleSliceType {
+        unsafe {
+
+            let array_a = array_components[0] as *mut A;
+            let array_b = array_components[1] as *mut B;
+            let array_c = array_components[2] as *mut C;
+
+            let slice_a = std::slice::from_raw_parts_mut(array_a, count);
+
+            let slice_b = if array_b.is_null() {
+                None
+            } else {
+                let slice_b = std::slice::from_raw_parts_mut(array_b, count);
+                Some(slice_b)
+            };
+
+            let slice_c = if array_c.is_null() {
+                None
+            } else {
+                let slice_c = std::slice::from_raw_parts_mut(array_c, count);
+                Some(slice_c)
+            };
+
+            (slice_a, slice_b, slice_c)
+        }
     
+    }
+
+    fn get_tuple_slices_with_ref(
+        array_components: &Self::ComponentsArray,
+        is_ref_array_components: &Self::BoolArray,
+        count: usize,
+    ) -> Self::TupleSliceType {
+        unsafe {
+            let array_a = array_components[0] as *mut A;
+            let array_b = array_components[1] as *mut B;
+            let array_c = array_components[2] as *mut C;
+
+            let slice_a = if is_ref_array_components[0] {
+                std::slice::from_raw_parts_mut(array_a, 1)
+            } else {
+                std::slice::from_raw_parts_mut(array_a, count)
+            };
+
+            let slice_b = if array_b.is_null() {
+                None
+            } else if is_ref_array_components[1] {
+                let slice_b = std::slice::from_raw_parts_mut(array_b, 1);
+                Some(slice_b)
+            } else {
+                let slice_b = std::slice::from_raw_parts_mut(array_b, count);
+                Some(slice_b)
+            };
+
+            let slice_c = if array_c.is_null() {
+                None
+            } else if is_ref_array_components[2] {
+                let slice_c = std::slice::from_raw_parts_mut(array_c, 1);
+                Some(slice_c)
+            } else {
+                let slice_c = std::slice::from_raw_parts_mut(array_c, count);
+                Some(slice_c)
+            };
+
+            (slice_a, slice_b, slice_c)
+        }
     }
 }
 
@@ -807,6 +1231,7 @@ where
     type TupleType = (Option<&'a mut A>, Option<&'a mut B>, Option<&'a mut C>);
     type ComponentsArray = [*mut u8; 3];
     type BoolArray = [bool; 3];
+    type TupleSliceType = (Option<&'a mut [A]>, Option<&'a mut [B]>, Option<&'a mut [C]>);
 
     fn populate(filter : &mut impl Filterable) {
         let world = filter.get_world();
@@ -834,15 +1259,15 @@ where
     }
 
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
-        let array_components = unsafe { 
-            [ecs_field::<A>(it, 1) as *mut u8, 
-            ecs_field::<B>(it, 2) as *mut u8, 
+        let array_components = unsafe {
+            [ecs_field::<A>(it, 1) as *mut u8,
+            ecs_field::<B>(it, 2) as *mut u8,
             ecs_field::<C>(it, 3) as *mut u8]
         };
 
         let is_ref_array_components = if !it.sources.is_null() { unsafe {
-            [*it.sources.add(0) != 0, 
-            *it.sources.add(1) != 0, 
+            [*it.sources.add(0) != 0,
+            *it.sources.add(1) != 0,
             *it.sources.add(2) != 0]
         }} else { [false, false, false] };
 
@@ -920,19 +1345,107 @@ where
             (option_a, option_b, option_c)
         }
     }
+
+    fn get_tuple_slices(
+        array_components: &Self::ComponentsArray,
+        count: usize,
+    ) -> Self::TupleSliceType {
+        unsafe {
+
+            let array_a = array_components[0] as *mut A;
+            let array_b = array_components[1] as *mut B;
+            let array_c = array_components[2] as *mut C;
+
+            let slice_a = if array_a.is_null() {
+                None
+            } else {
+                let slice_a = std::slice::from_raw_parts_mut(array_a, count);
+                Some(slice_a)
+            };
+
+            let slice_b = if array_b.is_null() {
+                None
+            } else {
+                let slice_b = std::slice::from_raw_parts_mut(array_b, count);
+                Some(slice_b)
+            };
+
+            let slice_c = if array_c.is_null() {
+                None
+            } else {
+                let slice_c = std::slice::from_raw_parts_mut(array_c, count);
+                Some(slice_c)
+            };
+
+            (slice_a, slice_b, slice_c)
+        }
+    }
+
+    fn get_tuple_slices_with_ref(
+        array_components: &Self::ComponentsArray,
+        is_ref_array_components: &Self::BoolArray,
+        count: usize,
+    ) -> Self::TupleSliceType {
+        unsafe {
+
+            let array_a = array_components[0] as *mut A;
+            let array_b = array_components[1] as *mut B;
+            let array_c = array_components[2] as *mut C;
+
+            let slice_a = if array_a.is_null() {
+                None
+            } else if is_ref_array_components[0] {
+                let slice_a = std::slice::from_raw_parts_mut(array_a, 1);
+                Some(slice_a)
+            } else {
+                let slice_a = std::slice::from_raw_parts_mut(array_a, count);
+                Some(slice_a)
+            };
+
+            let slice_b = if array_b.is_null() {
+                None
+            } else if is_ref_array_components[1] {
+                let slice_b = std::slice::from_raw_parts_mut(array_b, 1);
+                Some(slice_b)
+            } else {
+                let slice_b = std::slice::from_raw_parts_mut(array_b, count);
+                Some(slice_b)
+            };
+
+            let slice_c = if array_c.is_null() {
+                None
+            } else if is_ref_array_components[2] {
+                let slice_c = std::slice::from_raw_parts_mut(array_c, 1);
+                Some(slice_c)
+            } else {
+                let slice_c = std::slice::from_raw_parts_mut(array_c, count);
+                Some(slice_c)
+            };
+
+            (slice_a, slice_b, slice_c)
+        }
+    }
 }
 pub struct Wrapper<T>(T);
 
 pub trait TupleForm<'a, T, U> {
     type Tuple;
+    type TupleSlice;
     const IS_OPTION: bool;
 
     fn return_type_for_tuple(array: *mut U, index: usize) -> Self::Tuple;
     fn return_type_for_tuple_with_ref(array: *mut U, is_ref: bool, index: usize) -> Self::Tuple;
+    fn return_type_for_tuple_slices(array: *mut U, count: usize) -> Self::TupleSlice;
+    fn return_type_for_tuple_slices_with_ref(
+        array: *mut U,
+        is_ref: bool,
+        count: usize,
+    ) -> Self::TupleSlice;
 }
 
 impl<'a, T: 'a> TupleForm<'a, T, T> for Wrapper<T> {
     type Tuple = &'a mut T;
+    type TupleSlice = &'a mut [T];
     const IS_OPTION: bool = false;
 
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
@@ -952,11 +1465,33 @@ impl<'a, T: 'a> TupleForm<'a, T, T> for Wrapper<T> {
             }
         }
     }
+
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
+    #[inline(always)]
+    fn return_type_for_tuple_slices(array: *mut T, count: usize) -> Self::TupleSlice {
+        unsafe { std::slice::from_raw_parts_mut(array, count) }
+    }
+
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
+    #[inline(always)]
+    fn return_type_for_tuple_slices_with_ref(
+        array: *mut T,
+        is_ref: bool,
+        count: usize,
+    ) -> Self::TupleSlice {
+        unsafe {
+            if is_ref {
+                std::slice::from_raw_parts_mut(array, 1)
+            } else {
+                std::slice::from_raw_parts_mut(array, count)
+            }
+        }
+    }
 }
 
 impl<'a, T: 'a> TupleForm<'a, Option<T>, T> for Wrapper<T> {
     type Tuple = Option<&'a mut T>;
-
+    type TupleSlice = Option<&'a mut [T]>;
     const IS_OPTION: bool = true;
 
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
@@ -984,6 +1519,39 @@ impl<'a, T: 'a> TupleForm<'a, Option<T>, T> for Wrapper<T> {
             }
         }
     }
+
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
+    #[inline(always)]
+    fn return_type_for_tuple_slices(array: *mut T, count: usize) -> Self::TupleSlice {
+        unsafe {
+            if array.is_null() {
+                None
+            } else {
+                let slice = std::slice::from_raw_parts_mut(array, count);
+                Some(slice)
+            }
+        }
+    }
+
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
+    #[inline(always)]
+    fn return_type_for_tuple_slices_with_ref(
+        array: *mut T,
+        is_ref: bool,
+        count: usize,
+    ) -> Self::TupleSlice {
+        unsafe {
+            if array.is_null() {
+                None
+            } else if is_ref {
+                let slice = std::slice::from_raw_parts_mut(array, 1);
+                Some(slice)
+            } else {
+                let slice = std::slice::from_raw_parts_mut(array, count);
+                Some(slice)
+            }
+        }
+    }
 }
 
 macro_rules! tuple_count {
@@ -1003,8 +1571,12 @@ macro_rules! impl_iterable {
                 <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::Tuple
             ),*);
 
+            type TupleSliceType = ($(
+                <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::TupleSlice
+            ),*);
             type ComponentsArray = [*mut u8; tuple_count!($($t),*)];
             type BoolArray = [bool; tuple_count!($($t),*)];
+
 
             fn populate(filter: &mut impl Filterable) {
                 let world = filter.get_world();
@@ -1110,6 +1682,42 @@ macro_rules! impl_iterable {
                                 let is_ref = is_ref_array_components[array_index];
                                 array_index += 1;
                                 <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::return_type_for_tuple_with_ref(ptr, is_ref, index)
+                            },
+                        )*
+                    )
+            }
+
+            #[allow(unused)]
+            fn get_tuple_slices(
+                array_components: &Self::ComponentsArray,
+                count: usize,
+            ) -> Self::TupleSliceType {
+                    let mut array_index = 0;
+                    (
+                        $(
+                            {
+                                let ptr = array_components[array_index] as *mut $t;
+                                array_index += 1;
+                                <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::return_type_for_tuple_slices(ptr, count)
+                            },
+                        )*
+                    )
+            }
+
+            #[allow(unused)]
+            fn get_tuple_slices_with_ref(
+                array_components: &Self::ComponentsArray,
+                is_ref_array_components: &Self::BoolArray,
+                count: usize,
+            ) -> Self::TupleSliceType {
+                    let mut array_index = 0;
+                    (
+                        $(
+                            {
+                                let ptr = array_components[array_index] as *mut $t;
+                                let is_ref = is_ref_array_components[array_index];
+                                array_index += 1;
+                                <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::return_type_for_tuple_slices_with_ref(ptr, is_ref, count)
                             },
                         )*
                     )

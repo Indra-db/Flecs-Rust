@@ -267,6 +267,10 @@ where
         unsafe { ecs_query_iter(self.world.raw_world, self.query) }
     }
 
+    // TODO once we have tests in place, I will split this functionality up into multiple functions, which should give a small performance boost
+    // by caching if the query has used a "is_ref" operation.
+    // is_ref is true for any query that contains fields that are not matched on the entity itself
+    // so parents, prefabs but also singletons, or fields that are matched on a fixed entity (.with<Foo>().src(my_entity))
     pub fn each(&mut self, mut func: impl FnMut(T::TupleType)) {
         unsafe {
             let mut iter = ecs_query_iter(self.world.raw_world, self.query);
@@ -285,7 +289,6 @@ where
                     } else {
                         T::get_tuple(array_components, i)
                     };
-
                     func(tuple);
                 }
 
@@ -309,6 +312,7 @@ where
                 // I will come back to this in the future, my thoughts are somewhere else right now. If my assumption is correct, this will get rid of the branch in the for loop
                 // and potentially allow for more conditions for vectorization to happen. This could potentially offer a (small) performance boost since the branch predictor avoids probably
                 // most of the cost since the branch is almost always the same.
+                // update: I believe it's not possible due to not knowing the order of the components in the tuple. I will leave this here for now, maybe I will come back to it in the future.
                 for i in 0..iter_count {
                     let mut entity =
                         Entity::new_from_existing(self.world.raw_world, *iter.entities.add(i));
@@ -324,6 +328,44 @@ where
                 }
 
                 ecs_table_unlock(self.world.raw_world, iter.table);
+            }
+        }
+    }
+
+    pub fn iter(&mut self, mut func: impl FnMut(&Iter, T::TupleSliceType)) {
+        unsafe {
+            let mut iter = ecs_query_iter(self.world.raw_world, self.query);
+
+            while ecs_query_next(&mut iter) {
+                let components_data = T::get_array_ptrs_of_components(&iter);
+                let iter_count = iter.count as usize;
+                let array_components = &components_data.array_components;
+
+                ecs_table_lock(self.world.raw_world, iter.table);
+
+                let tuple = if components_data.is_any_array_a_ref {
+                    let is_ref_array_components = &components_data.is_ref_array_components;
+                    T::get_tuple_slices_with_ref(
+                        array_components,
+                        is_ref_array_components,
+                        iter_count,
+                    )
+                } else {
+                    T::get_tuple_slices(array_components, iter_count)
+                };
+                let iterT = Iter::new(&mut iter);
+                func(&iterT, tuple);
+                ecs_table_unlock(self.world.raw_world, iter.table);
+            }
+        }
+    }
+
+    pub fn iter_only(&mut self, mut func: impl FnMut(&Iter)) {
+        unsafe {
+            let mut iter = ecs_query_iter(self.world.raw_world, self.query);
+            while ecs_query_next(&mut iter) {
+                let iterT = Iter::new(&mut iter);
+                func(&iterT);
             }
         }
     }
