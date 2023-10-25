@@ -51,7 +51,7 @@ This library has not been advertized nor published yet to crates.io for that rea
 ```[tasklist]
 - [ ] systems
 - [ ] alerts
-- [ ] app
+- [x] app
 - [ ] doc
 - [ ] doc
 - [ ] json
