@@ -123,10 +123,21 @@ fn impl_cached_component_data_struct(
                 &ONCE_LOCK
             }
 
-            fn get_symbol_name() -> &'static str {
+            // Function for C compatibility, returns null-terminated string.
+            fn get_symbol_name_c() -> &'static str {
                 use std::any::type_name;
-                static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
-                SYMBOL_NAME.get_or_init(|| type_name::<Self>().replace("::", "."))
+                static SYMBOL_NAME_C: OnceLock<String> = OnceLock::new();
+                SYMBOL_NAME_C.get_or_init(|| {
+                    let mut name = type_name::<Self>().replace("::", ".");
+                    name.push('\0');  // Add null terminator to make it C compatible.
+                    name
+                })
+            }
+
+            // Function to return a &str slice without the null termination for Rust.
+            fn get_symbol_name() -> &'static str {
+                let name = Self::get_symbol_name_c();
+                &name[..name.len() - 1]
             }
         }
     };
@@ -327,10 +338,22 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
                 static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
                 &ONCE_LOCK
             }
-            fn get_symbol_name() -> &'static str {
+
+            // Function for C compatibility, returns null-terminated string.
+            fn get_symbol_name_c() -> &'static str {
                 use std::any::type_name;
-                static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
-                SYMBOL_NAME.get_or_init(|| type_name::<Self>().replace("::", "."))
+                static SYMBOL_NAME_C: OnceLock<String> = OnceLock::new();
+                SYMBOL_NAME_C.get_or_init(|| {
+                    let mut name = type_name::<Self>().replace("::", ".");
+                    name.push('\0');  // Add null terminator to make it C compatible.
+                    name
+                })
+            }
+
+            // Function to return a &str slice without the null termination for Rust.
+            fn get_symbol_name() -> &'static str {
+                let name = Self::get_symbol_name_c();
+                &name[..name.len() - 1]
             }
         }
 

@@ -42,4 +42,6 @@ pub mod core {
     }
 }
 
-pub mod addons {}
+pub mod addons {
+    pub mod app;
+}

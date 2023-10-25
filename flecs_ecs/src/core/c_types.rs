@@ -267,9 +267,15 @@ impl CachedComponentData for EcsComponent {
         &ONCE_LOCK
     }
 
+    fn get_symbol_name_c() -> &'static str {
+        use std::any::type_name;
+        static SYMBOL_NAME_C: OnceLock<String> = OnceLock::new();
+        SYMBOL_NAME_C.get_or_init(|| String::from("EcsComponent\0"))
+    }
+
     fn get_symbol_name() -> &'static str {
-        static SYMBOL_NAME: OnceLock<String> = OnceLock::new();
-        SYMBOL_NAME.get_or_init(|| String::from("EcsComponent"))
+        let name = Self::get_symbol_name_c();
+        &name[..name.len() - 1]
     }
 }
 
@@ -409,6 +415,22 @@ impl Default for ecs_entity_desc_t {
             use_low_id: Default::default(),
             add: Default::default(),
             add_expr: std::ptr::null(),
+        }
+    }
+}
+
+impl Default for ecs_app_desc_t {
+    fn default() -> Self {
+        Self {
+            target_fps: Default::default(),
+            delta_time: Default::default(),
+            threads: Default::default(),
+            frames: Default::default(),
+            enable_rest: Default::default(),
+            enable_monitor: Default::default(),
+            port: Default::default(),
+            init: Default::default(),
+            ctx: std::ptr::null_mut(),
         }
     }
 }

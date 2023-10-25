@@ -43,11 +43,14 @@ fn main() {
     #[cfg(feature = "flecs_generate_bindings")]
     generate_bindings();
 
-    // Compile flecs C right into our Rust crate
+    // Compile flecs
     cc::Build::new()
+        //.compiler("clang")
+        //.opt_level(3)
+        //.shared_flag(true)
         .warnings(true)
         .extra_warnings(true)
-        .define("NDEBUG", None)
+        //.define("NDEBUG", None)
         .file("src/core/c_binding/flecs.c")
         .compile("flecs");
 }

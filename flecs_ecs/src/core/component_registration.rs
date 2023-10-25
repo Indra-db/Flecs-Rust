@@ -11,7 +11,7 @@ use super::{
         functions::{get_full_type_name, is_empty_type},
     },
 };
-use crate::ecs_assert;
+use crate::{core::utility::functions::get_only_type_name, ecs_assert};
 use std::{ffi::CStr, os::raw::c_char, sync::OnceLock};
 /// Component data that is cached by the `CachedComponentData` trait.
 /// This data is used to register components with the world.
@@ -98,6 +98,10 @@ pub trait CachedComponentData: Clone + Default {
     // this could live on ComponentData, but it would create more heap allocations when creating default Component
     /// gets the symbol name of the compoentn in the format of [module].[type]
     /// possibly replaceable by const typename if it ever gets stabilized. Currently it outputs different results with different compilers
+    // Function for C compatibility, returns null-terminated string.
+    fn get_symbol_name_c() -> &'static str;
+
+    // Function to return a &str slice without the null termination for Rust.
     fn get_symbol_name() -> &'static str;
 
     /// returns the component data of the component.
@@ -326,18 +330,30 @@ where
         let symbol = if id != 0 {
             let symbol_ptr = unsafe { ecs_get_symbol(world, id) };
             if symbol_ptr.is_null() {
-                T::get_symbol_name()
+                T::get_symbol_name_c()
             } else {
                 unsafe { CStr::from_ptr(symbol_ptr).to_str() }.unwrap_or_else(|_| {
                     ecs_assert!(false, FlecsErrorCode::InternalError);
-                    T::get_symbol_name()
+                    T::get_symbol_name_c()
                 })
             }
         } else {
-            T::get_symbol_name()
+            T::get_symbol_name_c()
         };
 
         let type_name = get_full_type_name::<T>();
+
+        //let rust_string = String::from(get_only_type_name::<T>());
+        //let c_string = std::ffi::CString::new(rust_string).expect("Failed to create CString");
+        //
+        //// Convert the CString into a raw pointer
+        //let name = c_string.into_raw();
+
+        let name = if name.is_null() {
+            unsafe { symbol.split(".").last().unwrap_unchecked().as_ptr() as *const i8 }
+        } else {
+            name
+        };
 
         let entity: EntityT = unsafe {
             ecs_cpp_component_register_explicit(
@@ -420,15 +436,15 @@ where
         let symbol = if id != 0 {
             let symbol_ptr = unsafe { ecs_get_symbol(world, id) };
             if symbol_ptr.is_null() {
-                T::get_symbol_name()
+                T::get_symbol_name_c()
             } else {
                 unsafe { CStr::from_ptr(symbol_ptr).to_str() }.unwrap_or_else(|_| {
                     ecs_assert!(false, FlecsErrorCode::InternalError);
-                    T::get_symbol_name()
+                    T::get_symbol_name_c()
                 })
             }
         } else {
-            T::get_symbol_name()
+            T::get_symbol_name_c()
         };
 
         let type_name = get_full_type_name::<T>();
