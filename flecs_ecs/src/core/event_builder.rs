@@ -22,6 +22,7 @@ use super::{
 };
 
 pub struct EventBuilder {
+    /// non-owning world reference
     world: World,
     desc: ecs_event_desc_t,
     ids: TypeT,

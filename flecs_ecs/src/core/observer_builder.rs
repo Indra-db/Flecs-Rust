@@ -14,12 +14,14 @@ pub struct ObserverBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
 {
-    pub filter_builder: FilterBuilder<'a, 'w, T>,
-    pub desc: ecs_observer_desc_t,
-    pub event_count: i32,
-    pub world: &'w World,
+    filter_builder: FilterBuilder<'a, 'w, T>,
+    desc: ecs_observer_desc_t,
+    event_count: i32,
+    /// non-owning world reference
+    world: World,
 }
 
+/// Deref to FilterBuilder to allow access to FilterBuilder methods without having to access FilterBuilder through ObserverBuilder
 impl<'a, 'w, T> Deref for ObserverBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
@@ -41,7 +43,7 @@ where
         let mut obj = Self {
             desc,
             filter_builder: FilterBuilder::new_with_desc(world, &mut desc.filter, 0),
-            world,
+            world: world.clone(),
             event_count: 0,
         };
         T::populate(&mut obj);
@@ -52,7 +54,7 @@ where
         let mut obj = Self {
             desc: Default::default(),
             filter_builder: FilterBuilder::new(world),
-            world,
+            world: world.clone(),
             event_count: 0,
         };
         T::populate(&mut obj);
