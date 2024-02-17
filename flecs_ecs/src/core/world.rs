@@ -26,6 +26,8 @@ use super::component_registration::{
 };
 use super::entity::Entity;
 use super::enum_type::CachedEnumData;
+use super::event::EventData;
+use super::event_builder::EventBuilder;
 use super::id::{Id, With};
 use super::scoped_world::ScopedWorld;
 use super::term::Term;
@@ -2631,5 +2633,16 @@ impl World {
         Second: CachedComponentData,
     {
         Term::new_pair::<First, Second>(Some(self))
+    }
+}
+
+// event_builder
+impl World {
+    pub fn event_untyped(&self, event: EntityT) -> EventBuilder {
+        EventBuilder::new(self.raw_world, event)
+    }
+
+    pub fn event<T: EventData + CachedComponentData>(&self) -> EventBuilder {
+        EventBuilder::new(self.raw_world, T::get_id(self.raw_world))
     }
 }
