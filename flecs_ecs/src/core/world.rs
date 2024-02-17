@@ -2647,6 +2647,10 @@ impl World {
     /// # Returns
     ///
     /// A new (untyped) event builder.
+    ///
+    /// # C++ API Equivalent
+    ///
+    /// `world::event`
     pub fn event_untyped(&self, event: EntityT) -> EventBuilder {
         EventBuilder::new(self.raw_world, event)
     }
@@ -2660,6 +2664,10 @@ impl World {
     /// # Returns
     ///
     /// A new (typed) event builder.
+    ///
+    /// # C++ API Equivalent
+    ///
+    /// `world::event`
     pub fn event<T: EventData + CachedComponentData>(&self) -> EventBuilderTyped<T> {
         EventBuilderTyped::<T>::new(self.raw_world, T::get_id(self.raw_world))
     }
