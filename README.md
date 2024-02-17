@@ -51,11 +51,10 @@ This library has not been advertized nor published yet to crates.io for that rea
 ```[tasklist]
 - [ ] systems
 - [ ] alerts
-- [ ] app
-- [ ] doc
+- [wip] app
 - [ ] doc
 - [ ] json
-- [ ] meta
+- [wip] meta
 - [ ] modules
 - [ ] monitor
 - [ ] pipelines
