@@ -683,6 +683,21 @@ impl EntityView {
             ecs_pair(First::get_id(self.world), Second::get_id(self.world)),
         )
     }
+    //todo!("this needs a better name and documentation, the rest of the cpp functions still have to be done as well")
+    //double todo, I removed the second template parameter and changed the fn parameter second to entityT, check validity
+    pub fn get_target_for_pair_as_first<First: CachedComponentData>(
+        &self,
+        second: EntityT,
+    ) -> *const First {
+        let comp_id = First::get_id(self.world);
+        ecs_assert!(
+            //this is safe because the previous line guarantees registration
+            unsafe { First::get_size_unchecked() != 0 },
+            FlecsErrorCode::InvalidParameter,
+            "First element is size 0"
+        );
+        unsafe { ecs_get_id(self.world, comp_id, ecs_pair(comp_id, second)) as *const First }
+    }
 
     /// Retrieves the depth for the given relationship.
     ///
