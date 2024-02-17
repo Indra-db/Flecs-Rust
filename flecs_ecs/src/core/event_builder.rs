@@ -39,9 +39,9 @@ impl EventBuilder {
     /// # C++ API equivalent
     ///
     /// event_builder_base::event_builder_base
-    pub fn new(world: *mut WorldT, event: EntityT) -> Self {
+    pub fn new(world: &World, event: EntityT) -> Self {
         let mut obj = Self {
-            world: World::new_from_world(world),
+            world: world.clone(),
             desc: Default::default(),
             ids: Default::default(),
             ids_array: Default::default(),
@@ -256,7 +256,7 @@ impl<'a, T: EventData + CachedComponentData> EventBuilderTyped<'a, T> {
     /// # C++ API equivalent
     ///
     /// event_builder_typed::event_builder_typed
-    pub fn new(world: *mut WorldT, event: EntityT) -> Self {
+    pub fn new(world: &World, event: EntityT) -> Self {
         Self {
             builder: EventBuilder::new(world, event),
             _phantom: std::marker::PhantomData,

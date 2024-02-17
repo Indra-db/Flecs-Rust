@@ -38,6 +38,16 @@ pub struct World {
     pub is_owned: bool,
 }
 
+impl Clone for World {
+    fn clone(&self) -> Self {
+        World {
+            raw_world: self.raw_world,
+            // Set is_owned to false to prevent double free, meaning that the new world is not owned.
+            is_owned: false,
+        }
+    }
+}
+
 impl Default for World {
     fn default() -> Self {
         let world = Self {
@@ -2652,7 +2662,7 @@ impl World {
     ///
     /// `world::event`
     pub fn event_untyped(&self, event: EntityT) -> EventBuilder {
-        EventBuilder::new(self.raw_world, event)
+        EventBuilder::new(self, event)
     }
 
     /// Create a new event.
@@ -2669,6 +2679,6 @@ impl World {
     ///
     /// `world::event`
     pub fn event<T: EventData + CachedComponentData>(&self) -> EventBuilderTyped<T> {
-        EventBuilderTyped::<T>::new(self.raw_world, T::get_id(self.raw_world))
+        EventBuilderTyped::<T>::new(self, T::get_id(self.raw_world))
     }
 }

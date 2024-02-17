@@ -3,7 +3,7 @@
 /// this is to ensure that the event data is of the correct type and the component is meant to be used with EventBuilderTyped
 pub trait EventData {}
 
-/// Event builder trait to set event data for untyped and typed EventBuilder
+/// Event builder trait to implement 'set_event_data' for untyped and typed EventBuilder
 pub trait EventBuilderImpl {
     type BuiltType;
 
