@@ -27,7 +27,7 @@ use super::component_registration::{
 use super::entity::Entity;
 use super::enum_type::CachedEnumData;
 use super::event::EventData;
-use super::event_builder::EventBuilder;
+use super::event_builder::{EventBuilder, EventBuilderTyped};
 use super::id::{Id, With};
 use super::scoped_world::ScopedWorld;
 use super::term::Term;
@@ -2638,11 +2638,29 @@ impl World {
 
 // event_builder
 impl World {
+    /// Create a new event.
+    ///
+    /// # Arguments
+    ///
+    /// * `event` - The event id
+    ///
+    /// # Returns
+    ///
+    /// A new (untyped) event builder.
     pub fn event_untyped(&self, event: EntityT) -> EventBuilder {
         EventBuilder::new(self.raw_world, event)
     }
 
-    pub fn event<T: EventData + CachedComponentData>(&self) -> EventBuilder {
-        EventBuilder::new(self.raw_world, T::get_id(self.raw_world))
+    /// Create a new event.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The event type.
+    ///
+    /// # Returns
+    ///
+    /// A new (typed) event builder.
+    pub fn event<T: EventData + CachedComponentData>(&self) -> EventBuilderTyped<T> {
+        EventBuilderTyped::<T>::new(self.raw_world, T::get_id(self.raw_world))
     }
 }
