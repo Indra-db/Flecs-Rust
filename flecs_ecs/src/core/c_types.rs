@@ -23,9 +23,11 @@ pub type RefT = ecs_ref_t;
 pub type IterT = ecs_iter_t;
 pub type TypeInfoT = ecs_type_info_t;
 pub type TypeHooksT = ecs_type_hooks_t;
+pub type TypeKindT = ecs_type_kind_t;
 pub type Flags32T = ecs_flags32_t;
 pub type TermIdT = ecs_term_id_t;
 pub type TermT = ecs_term_t;
+pub type PrimitiveKindT = ecs_primitive_kind_t;
 
 pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\0") };
 
@@ -188,6 +190,90 @@ pub const ECS_ON_DELETE_OBSERVABLE: u64 = FLECS_HI_COMPONENT_ID + 44;
 pub const ECS_ON_COMPONENT_HOOKS: u64 = FLECS_HI_COMPONENT_ID + 45;
 pub const ECS_ON_DELETE_TARGET: u64 = FLECS_HI_COMPONENT_ID + 46;
 
+// Timers
+pub const ECS_TICK_SOURCE: u64 = FLECS_HI_COMPONENT_ID + 47;
+pub const ECS_TIMER: u64 = FLECS_HI_COMPONENT_ID + 48;
+pub const ECS_RATE_FILTER: u64 = FLECS_HI_COMPONENT_ID + 49;
+
+// Actions
+pub const ECS_REMOVE: u64 = FLECS_HI_COMPONENT_ID + 50;
+pub const ECS_DELETE: u64 = FLECS_HI_COMPONENT_ID + 51;
+pub const ECS_PANIC: u64 = FLECS_HI_COMPONENT_ID + 52;
+
+// Misc
+pub const ECS_TARGET: u64 = FLECS_HI_COMPONENT_ID + 53;
+pub const ECS_FLATTEN: u64 = FLECS_HI_COMPONENT_ID + 54;
+pub const ECS_DEFAULT_CHILD_COMPONENT: u64 = FLECS_HI_COMPONENT_ID + 55;
+
+// Builtin predicate ids (used by rule engine)
+pub const ECS_PRED_EQ: u64 = FLECS_HI_COMPONENT_ID + 56;
+pub const ECS_PRED_MATCH: u64 = FLECS_HI_COMPONENT_ID + 57;
+pub const ECS_PRED_LOOKUP: u64 = FLECS_HI_COMPONENT_ID + 58;
+pub const ECS_SCOPE_OPEN: u64 = FLECS_HI_COMPONENT_ID + 59;
+pub const ECS_SCOPE_CLOSE: u64 = FLECS_HI_COMPONENT_ID + 60;
+
+// Systems
+pub const ECS_MONITOR: u64 = FLECS_HI_COMPONENT_ID + 61;
+pub const ECS_EMPTY: u64 = FLECS_HI_COMPONENT_ID + 62;
+pub const ECS_PIPELINE: u64 = FLECS_HI_COMPONENT_ID + 63;
+pub const ECS_ON_START: u64 = FLECS_HI_COMPONENT_ID + 64;
+pub const ECS_PRE_FRAME: u64 = FLECS_HI_COMPONENT_ID + 65;
+pub const ECS_ON_LOAD: u64 = FLECS_HI_COMPONENT_ID + 66;
+pub const ECS_POST_LOAD: u64 = FLECS_HI_COMPONENT_ID + 67;
+pub const ECS_PRE_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 68;
+pub const ECS_ON_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 69;
+pub const ECS_ON_VALIDATE: u64 = FLECS_HI_COMPONENT_ID + 70;
+pub const ECS_POST_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 71;
+pub const ECS_PRE_STORE: u64 = FLECS_HI_COMPONENT_ID + 72;
+pub const ECS_ON_STORE: u64 = FLECS_HI_COMPONENT_ID + 73;
+pub const ECS_POST_FRAME: u64 = FLECS_HI_COMPONENT_ID + 74;
+pub const ECS_PHASE: u64 = FLECS_HI_COMPONENT_ID + 75;
+
+// Meta primitive components (don't use low ids to save id space)
+pub const ECS_BOOL_T: u64 = FLECS_HI_COMPONENT_ID + 80;
+pub const ECS_CHAR_T: u64 = FLECS_HI_COMPONENT_ID + 81;
+pub const ECS_BYTE_T: u64 = FLECS_HI_COMPONENT_ID + 82;
+pub const ECS_U8_T: u64 = FLECS_HI_COMPONENT_ID + 83;
+pub const ECS_U16_T: u64 = FLECS_HI_COMPONENT_ID + 84;
+pub const ECS_U32_T: u64 = FLECS_HI_COMPONENT_ID + 85;
+pub const ECS_U64_T: u64 = FLECS_HI_COMPONENT_ID + 86;
+pub const ECS_UPTR_T: u64 = FLECS_HI_COMPONENT_ID + 87;
+pub const ECS_I8_T: u64 = FLECS_HI_COMPONENT_ID + 88;
+pub const ECS_I16_T: u64 = FLECS_HI_COMPONENT_ID + 89;
+pub const ECS_I32_T: u64 = FLECS_HI_COMPONENT_ID + 90;
+pub const ECS_I64_T: u64 = FLECS_HI_COMPONENT_ID + 91;
+pub const ECS_IPTR_T: u64 = FLECS_HI_COMPONENT_ID + 92;
+pub const ECS_F32_T: u64 = FLECS_HI_COMPONENT_ID + 93;
+pub const ECS_F64_T: u64 = FLECS_HI_COMPONENT_ID + 94;
+pub const ECS_STRING_T: u64 = FLECS_HI_COMPONENT_ID + 95;
+pub const ECS_ENTITY_T: u64 = FLECS_HI_COMPONENT_ID + 96;
+
+// Meta module component ids
+pub const ECS_META_TYPE: u64 = FLECS_HI_COMPONENT_ID + 97;
+pub const ECS_META_TYPE_SERIALIZED: u64 = FLECS_HI_COMPONENT_ID + 98;
+pub const ECS_PRIMITIVE: u64 = FLECS_HI_COMPONENT_ID + 99;
+pub const ECS_ENUM: u64 = FLECS_HI_COMPONENT_ID + 100;
+pub const ECS_BITMASK: u64 = FLECS_HI_COMPONENT_ID + 101;
+pub const ECS_MEMBER: u64 = FLECS_HI_COMPONENT_ID + 102;
+pub const ECS_STRUCT: u64 = FLECS_HI_COMPONENT_ID + 103;
+pub const ECS_ARRAY: u64 = FLECS_HI_COMPONENT_ID + 104;
+pub const ECS_VECTOR: u64 = FLECS_HI_COMPONENT_ID + 105;
+pub const ECS_OPAQUE: u64 = FLECS_HI_COMPONENT_ID + 106;
+pub const ECS_UNIT: u64 = FLECS_HI_COMPONENT_ID + 107;
+pub const ECS_UNIT_PREFIX: u64 = FLECS_HI_COMPONENT_ID + 108;
+pub const ECS_CONSTANT: u64 = FLECS_HI_COMPONENT_ID + 109;
+pub const ECS_QUANTITY: u64 = FLECS_HI_COMPONENT_ID + 110;
+
+// Doc module components
+pub const ECS_DOC_DESCRIPTION: u64 = FLECS_HI_COMPONENT_ID + 111;
+pub const ECS_DOC_BRIEF: u64 = FLECS_HI_COMPONENT_ID + 112;
+pub const ECS_DOC_DETAIL: u64 = FLECS_HI_COMPONENT_ID + 113;
+pub const ECS_DOC_LINK: u64 = FLECS_HI_COMPONENT_ID + 114;
+pub const ECS_DOC_COLOR: u64 = FLECS_HI_COMPONENT_ID + 115;
+
+// REST module components
+pub const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 116;
+
 pub type Component = EcsComponent;
 pub type Identifier = EcsIdentifier;
 pub type Poly = EcsPoly;
@@ -208,6 +294,15 @@ fn get_ecs_component_data() -> ComponentData {
         id: unsafe { FLECS__EEcsComponent },
         size: std::mem::size_of::<EcsComponent>(),
         alignment: std::mem::align_of::<EcsComponent>(),
+        allow_tag: true,
+    }
+}
+
+fn get_ecs_poly_data() -> ComponentData {
+    ComponentData {
+        id: ECS_POLY,
+        size: std::mem::size_of::<Poly>(),
+        alignment: std::mem::align_of::<Poly>(),
         allow_tag: true,
     }
 }
@@ -279,6 +374,81 @@ impl CachedComponentData for EcsComponent {
     }
 }
 
+impl Default for Poly {
+    fn default() -> Self {
+        Self {
+            poly: std::ptr::null_mut(),
+        }
+    }
+}
+
+impl ComponentType<Struct> for Poly {}
+
+impl CachedComponentData for Poly {
+    fn register_explicit(_world: *mut WorldT) {
+        //this is already registered as FLECS__EEcsComponent
+        Self::__get_once_lock_data().get_or_init(get_ecs_poly_data);
+    }
+
+    fn is_registered() -> bool {
+        Self::__get_once_lock_data().get().is_some()
+    }
+
+    fn is_registered_with_world(world: *mut WorldT) -> bool {
+        if Self::is_registered() {
+            //because this is always registered in the c world
+            true
+        } else {
+            Self::register_explicit(world);
+            true
+        }
+    }
+
+    fn get_data(_world: *mut WorldT) -> &'static ComponentData {
+        Self::__get_once_lock_data().get_or_init(get_ecs_poly_data)
+    }
+
+    fn get_id(_world: *mut WorldT) -> IdT {
+        Self::__get_once_lock_data()
+            .get_or_init(get_ecs_poly_data)
+            .id
+    }
+
+    fn get_size(_world: *mut WorldT) -> usize {
+        Self::__get_once_lock_data()
+            .get_or_init(get_ecs_poly_data)
+            .size
+    }
+
+    fn get_alignment(_world: *mut WorldT) -> usize {
+        Self::__get_once_lock_data()
+            .get_or_init(get_ecs_poly_data)
+            .alignment
+    }
+
+    fn get_allow_tag(_world: *mut WorldT) -> bool {
+        Self::__get_once_lock_data()
+            .get_or_init(get_ecs_poly_data)
+            .allow_tag
+    }
+
+    fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
+        static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
+        &ONCE_LOCK
+    }
+
+    fn get_symbol_name_c() -> &'static str {
+        use std::any::type_name;
+        static SYMBOL_NAME_C: OnceLock<String> = OnceLock::new();
+        SYMBOL_NAME_C.get_or_init(|| String::from("Poly\0"))
+    }
+
+    fn get_symbol_name() -> &'static str {
+        let name = Self::get_symbol_name_c();
+        &name[..name.len() - 1]
+    }
+}
+
 /// Match on self
 pub const ECS_SELF: u32 = 1 << 1;
 
@@ -312,6 +482,15 @@ pub const ECS_FILTER: u32 = 1 << 10;
 /// Union of flags used for traversing (EcsUp|EcsDown|EcsTraverseAll|EcsSelf|EcsCascade|EcsParent)
 pub const ECS_TRAVERSE_FLAGS: u32 =
     ECS_UP | ECS_DOWN | ECS_TRAVERSE_ALL | ECS_SELF | ECS_CASCADE | ECS_PARENT;
+
+impl Default for ecs_type_t {
+    fn default() -> Self {
+        Self {
+            array: std::ptr::null_mut(),
+            count: Default::default(),
+        }
+    }
+}
 
 impl Default for ecs_term_id_t {
     fn default() -> Self {
@@ -378,6 +557,27 @@ impl Default for ecs_query_desc_t {
     }
 }
 
+impl Default for ecs_observer_desc_t {
+    fn default() -> Self {
+        Self {
+            _canary: Default::default(),
+            entity: Default::default(),
+            filter: Default::default(),
+            events: Default::default(),
+            yield_existing: Default::default(),
+            callback: Default::default(),
+            run: Default::default(),
+            ctx: std::ptr::null_mut(),
+            binding_ctx: std::ptr::null_mut(),
+            ctx_free: Default::default(),
+            binding_ctx_free: Default::default(),
+            observable: std::ptr::null_mut(),
+            last_event_id: std::ptr::null_mut(),
+            term_index: Default::default(),
+        }
+    }
+}
+
 impl Default for ecs_header_t {
     fn default() -> Self {
         Self {
@@ -419,6 +619,19 @@ impl Default for ecs_entity_desc_t {
     }
 }
 
+impl Default for ecs_event_desc_t {
+    fn default() -> Self {
+        Self {
+            ids: std::ptr::null(),
+            table: std::ptr::null_mut(),
+            other_table: std::ptr::null_mut(),
+            param: std::ptr::null(),
+            observable: std::ptr::null_mut(),
+            ..Default::default()
+        }
+    }
+}
+
 impl Default for ecs_app_desc_t {
     fn default() -> Self {
         Self {
@@ -431,6 +644,28 @@ impl Default for ecs_app_desc_t {
             port: Default::default(),
             init: Default::default(),
             ctx: std::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for EcsOpaque {
+    fn default() -> Self {
+        Self {
+            as_type: Default::default(),
+            serialize: Default::default(),
+            assign_bool: Default::default(),
+            assign_char: Default::default(),
+            assign_int: Default::default(),
+            assign_uint: Default::default(),
+            assign_float: Default::default(),
+            assign_string: Default::default(),
+            assign_entity: Default::default(),
+            assign_null: Default::default(),
+            clear: Default::default(),
+            ensure_element: Default::default(),
+            ensure_member: Default::default(),
+            count: Default::default(),
+            resize: Default::default(),
         }
     }
 }
