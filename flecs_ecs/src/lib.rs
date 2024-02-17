@@ -17,12 +17,16 @@ pub mod core {
     pub mod entity;
     pub mod entity_view;
     pub mod enum_type;
+    pub mod event;
+    pub mod event_builder;
     pub mod filter;
     pub mod filter_builder;
     pub mod id;
     pub mod iter;
     pub mod iterable;
     pub mod lifecycle_traits;
+    pub mod observer;
+    pub mod observer_builder;
     pub mod query;
     pub mod query_builder;
     pub mod scoped_world;
@@ -44,4 +48,10 @@ pub mod core {
 
 pub mod addons {
     pub mod app;
+    /// addon meta, flecs reflection framework
+    #[cfg(feature = "flecs_meta")]
+    pub mod meta {
+        pub mod declarations;
+        pub mod opaque;
+    }
 }
