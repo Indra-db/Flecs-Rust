@@ -19,6 +19,7 @@ use super::{
     world::World,
 };
 
+// todo! does this need its own world? filter builder already has one?
 pub struct QueryBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
@@ -39,6 +40,7 @@ where
         &self.filter_builder
     }
 }
+
 impl<'a, 'w, T> QueryBuilder<'a, 'w, T>
 where
     T: Iterable<'a>,
@@ -99,6 +101,7 @@ where
         self.filter_builder.get_desc_filter()
     }
 
+    #[inline]
     fn get_expr_count(&mut self) -> &mut i32 {
         self.filter_builder.get_expr_count()
     }
