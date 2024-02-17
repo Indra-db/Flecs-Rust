@@ -41,8 +41,8 @@ This library has not been advertized nor published yet to crates.io for that rea
 
 #### non-core
 ```[tasklist]
-- [ ] event
-- [ ] observer
+- [x] event
+- [x] observer
 - [x] type
 - [x] iter
 - [x] column, untyped_column
