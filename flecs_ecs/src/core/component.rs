@@ -1,9 +1,11 @@
+use crate::addons::meta::opaque::Opaque;
 use crate::core::c_binding::bindings::ecs_set_hooks_id;
 use crate::core::utility::errors::FlecsErrorCode;
 use crate::ecs_assert;
 
-use super::c_binding::bindings::ecs_get_hooks_id;
+use super::c_binding::bindings::{ecs_get_hooks_id, ecs_opaque_init};
 use super::utility::functions::{ecs_field, get_full_type_name};
+use super::world::World;
 use super::{c_types::*, component_registration::*, entity::Entity};
 
 use std::os::raw::c_void;
@@ -295,4 +297,32 @@ impl<T: CachedComponentData + Default> Component<T> {
 }
 
 #[cfg(feature = "flecs_meta")]
-impl<T: CachedComponentData> Component<T> {}
+impl<T: CachedComponentData> Component<T> {
+    // todo!("Check if this is correctly ported")
+    pub fn opaque<OpaqueType>(&mut self) -> &mut Self
+    where
+        OpaqueType: CachedComponentData,
+    {
+        let world = World::new_from_world(self.world);
+        let mut ts = Opaque::<OpaqueType>::new(self.world);
+        ts.desc.entity = T::get_id(self.world);
+        unsafe { ecs_opaque_init(self.world, &ts.desc) };
+        self
+    }
+
+    pub fn opaque_entity_id_type(&mut self, as_type: EntityT) -> Opaque<T> {
+        let mut opaque = Opaque::<T>::new(self.world);
+        opaque.as_type(as_type);
+        opaque
+    }
+
+    pub fn opaque_entity_type(&mut self, as_type: Entity) -> Opaque<T> {
+        self.opaque_entity_id_type(as_type.raw_id)
+    }
+
+    pub fn opaque_untyped_component(&mut self, as_type: UntypedComponent) -> Opaque<T> {
+        self.opaque_entity_id_type(as_type.raw_id)
+    }
+
+    //todo!("untyped component constant function")
+}
