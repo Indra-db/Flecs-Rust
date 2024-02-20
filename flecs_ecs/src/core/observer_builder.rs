@@ -1,14 +1,68 @@
-use std::{ops::Deref, os::raw::c_void};
+use std::{ops::Deref, os::raw::c_void, ptr};
 
 use super::{
-    c_binding::bindings::{ecs_filter_desc_t, ecs_iter_action_t, ecs_observer_desc_t},
-    c_types::{EntityT, TermT, WorldT, SEPARATOR},
+    c_binding::bindings::{
+        ecs_filter_desc_t, ecs_filter_next, ecs_iter_action_t, ecs_iter_t, ecs_observer_desc_t,
+        ecs_table_lock, ecs_table_unlock,
+    },
+    c_types::{EntityT, IterT, TermT, WorldT, SEPARATOR},
     component_registration::CachedComponentData,
     filter_builder::{FilterBuilder, FilterBuilderImpl},
     iterable::{Filterable, Iterable},
     term::TermBuilder,
     world::World,
 };
+
+type EcsCtxFreeT = extern "C" fn(*mut std::ffi::c_void);
+
+struct ObserverBindingCtx {
+    each: Option<*mut c_void>,
+    entity_each: Option<*mut c_void>,
+    free_each: Option<EcsCtxFreeT>,
+    free_entity_each: Option<EcsCtxFreeT>,
+}
+
+impl Drop for ObserverBindingCtx {
+    fn drop(&mut self) {
+        if let Some(each) = self.each {
+            if let Some(free_each) = self.free_each {
+                free_each(each);
+            }
+        }
+        if let Some(entity_each) = self.entity_each {
+            if let Some(free_entity_each) = self.free_entity_each {
+                free_entity_each(entity_each);
+            }
+        }
+    }
+}
+
+#[allow(clippy::derivable_impls)]
+impl Default for ObserverBindingCtx {
+    fn default() -> Self {
+        Self {
+            each: None,
+            entity_each: None,
+            free_each: None,
+            free_entity_each: None,
+        }
+    }
+}
+impl ObserverBindingCtx {
+    pub fn new(
+        each: Option<*mut std::ffi::c_void>,
+        entity_each: Option<*mut std::ffi::c_void>,
+        free_each: Option<EcsCtxFreeT>,
+        free_entity_each: Option<EcsCtxFreeT>,
+    ) -> Self {
+        Self {
+            each,
+            entity_each,
+            free_each,
+            free_entity_each,
+        }
+    }
+}
 
 pub struct ObserverBuilder<'a, 'w, T>
 where
@@ -59,6 +113,72 @@ where
         };
         T::populate(&mut obj);
         obj
+    }
+
+    fn get_binding_ctx(&mut self) -> &mut ObserverBindingCtx {
+        let mut binding_ctx: *mut ObserverBindingCtx = self.desc.binding_ctx as *mut _;
+
+        if binding_ctx.is_null() {
+            let new_binding_ctx = Box::<ObserverBindingCtx>::default();
+            let static_ref = Box::leak(new_binding_ctx);
+            binding_ctx = static_ref;
+            self.desc.binding_ctx = binding_ctx as *mut c_void;
+            self.desc.binding_ctx_free = Some(Self::binding_ctx_drop);
+        }
+        unsafe { &mut *binding_ctx }
+    }
+
+    extern "C" fn binding_ctx_drop(ptr: *mut c_void) {
+        let ptr_struct: *mut ObserverBindingCtx = ptr as *mut ObserverBindingCtx;
+        unsafe {
+            ptr::drop_in_place(ptr_struct);
+        }
+    }
+
+    pub fn on_each(&mut self, func: impl FnMut(T::TupleType)) -> &mut Self {
+        let binding_ctx = self.get_binding_ctx();
+        let each_func = Box::new(func);
+        let each_static_ref = Box::leak(each_func);
+        binding_ctx.each = Some(each_static_ref as *mut _ as *mut c_void);
+        binding_ctx.free_each = Some(Self::on_free_each);
+
+        self
+    }
+
+    extern "C" fn on_free_each(ptr: *mut c_void) {
+        let ptr_func: *mut fn(T::TupleType) = ptr as *mut fn(T::TupleType);
+        unsafe {
+            ptr::drop_in_place(ptr_func);
+        }
+    }
+
+    unsafe extern "C" fn run_each<Func>(iter: *mut IterT)
+    where
+        Func: FnMut(T::TupleType),
+    {
+        let ctx: *mut ObserverBindingCtx = (*iter).binding_ctx as *mut _;
+        let each = (*ctx).each.unwrap();
+        let each = &mut *(each as *mut Func);
+
+        while ecs_filter_next(iter) {
+            let components_data = T::get_array_ptrs_of_components(&*iter);
+            let iter_count = (*iter).count as usize;
+            let array_components = &components_data.array_components;
+
+            ecs_table_lock((*iter).world, (*iter).table);
+
+            for i in 0..iter_count {
+                let tuple = if components_data.is_any_array_a_ref {
+                    let is_ref_array_components = &components_data.is_ref_array_components;
+                    T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+                } else {
+                    T::get_tuple(array_components, i)
+                };
+                each(tuple);
+            }
+
+            ecs_table_unlock((*iter).world, (*iter).table);
+        }
     }
 }
 
