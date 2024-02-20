@@ -65,14 +65,14 @@ impl<'a> Iter<'a> {
     /// # C++ API equivalent
     ///
     /// `iter::event`
-    pub fn event(&self) -> Entity {
+    pub fn get_event_as_entity(&self) -> Entity {
         Entity::new_from_existing(self.iter.world, self.iter.event)
     }
 
     /// # C++ API equivalent
     ///
     /// `iter::event_id`
-    pub fn event_id(&self) -> Id {
+    pub fn get_event_id(&self) -> Id {
         Id::new_from_existing(self.iter.world, self.iter.event_id)
     }
 
@@ -92,7 +92,7 @@ impl<'a> Iter<'a> {
     /// # C++ API equivalent
     ///
     /// `iter::entity`
-    pub fn entity(&self, row: usize) -> Entity {
+    pub fn get_entity_handle(&self, row: usize) -> Entity {
         unsafe { Entity::new_from_existing(self.iter.world, *self.iter.entities.add(row)) }
     }
 
