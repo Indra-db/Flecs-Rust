@@ -48,11 +48,12 @@ impl Id {
     ///
     /// # Arguments
     ///
-    /// * `world` - The world to the id belongs to
+    /// * `world` - The optional world to the id belongs to
     /// * `with` - The id or pair to wrap
     ///
-    /// # Example
+    /// # C++ API equivalent
     ///
+    /// id::id constructors
     pub fn new(world: Option<&World>, with: With) -> Self {
         if let Some(world) = world {
             match with {
@@ -67,10 +68,29 @@ impl Id {
         }
     }
 
+    /// wraps a raw id
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The optional raw world to the id belongs to
+    /// * `id` - The id to wrap
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::id
     pub(crate) const fn new_from_existing(world: *mut WorldT, id: IdT) -> Self {
         Self { world, raw_id: id }
     }
 
+    /// wraps a raw id without a world
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The id to wrap
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::id
     pub(crate) const fn new_id_only(id: IdT) -> Self {
         Self {
             world: std::ptr::null_mut(),
@@ -78,6 +98,17 @@ impl Id {
         }
     }
 
+    /// wraps a pair of raw ids without an optional world
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The optional world to the id belongs to
+    /// * `first` - The first id to wrap
+    /// * `second` - The second id to wrap
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::id
     pub(crate) fn new_world_pair(world: *mut WorldT, first: IdT, second: IdT) -> Self {
         Self {
             world,
@@ -85,6 +116,16 @@ impl Id {
         }
     }
 
+    /// wraps a pair of raw ids without a world
+    ///
+    /// # Arguments
+    ///
+    /// * `first` - The first id to wrap
+    /// * `second` - The second id to wrap
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::id
     pub(crate) fn new_pair_only(first: IdT, second: IdT) -> Self {
         Self {
             world: std::ptr::null_mut(),
@@ -92,6 +133,16 @@ impl Id {
         }
     }
 
+    /// wraps a pair of Ids
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The first id to wrap
+    /// * `id2` - The second id to wrap
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::id
     pub(crate) fn new_from_ids(id: Id, id2: Id) -> Self {
         Self {
             world: id.world,
@@ -99,25 +150,44 @@ impl Id {
         }
     }
 
+    /// checks if the id is a pair
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::is_pair
     pub fn is_pair(&self) -> bool {
         unsafe { ecs_id_is_pair(self.raw_id) }
     }
 
+    /// checks if the id is a wildcard
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::is_wildcard
     pub fn is_wildcard(&self) -> bool {
         unsafe { ecs_id_is_wildcard(self.raw_id) }
     }
 
+    /// checks if the id is a entity
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::is_entity
     pub fn is_entity(&self) -> bool {
         self.raw_id & RUST_ECS_ID_FLAGS_MASK == 0
     }
 
     /// Return id as entity (only allowed when id is valid entity)
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::entity
     #[inline(always)]
     pub fn entity(&self) -> Entity {
         {
             ecs_assert!(!self.is_pair(), FlecsErrorCode::InvalidOperation);
             ecs_assert!(
-                self.flags().id.raw_id == 0,
+                self.get_flags().id.raw_id == 0,
                 FlecsErrorCode::InvalidOperation
             );
         }
@@ -125,12 +195,20 @@ impl Id {
     }
 
     /// Return id with role added
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::add_flags
     #[inline(always)]
     pub fn add_flags(&self, flags: IdT) -> Entity {
         Entity::new_from_existing(self.world, self.raw_id | flags)
     }
 
-    /// Return id without role
+    /// Return id with role removed. This function checks if the id has the specified role, and if it does not, the function will assert.
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::remove_flags
     #[inline(always)]
     pub fn remove_flags_checked(&self, _flags: IdT) -> Entity {
         ecs_assert!(
@@ -141,37 +219,59 @@ impl Id {
         Entity::new_from_existing(self.world, self.raw_id & RUST_ECS_COMPONENT_MASK)
     }
 
-    /// Return id without role
+    /// Return id with role removed
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::remove_flags
     #[inline(always)]
     pub fn remove_flags(&self) -> Entity {
         Entity::new_from_existing(self.world, self.raw_id & RUST_ECS_COMPONENT_MASK)
     }
 
     /// Return id flags set on id
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::flags
     #[inline(always)]
     pub fn flags(&self) -> Entity {
         Entity::new_from_existing(self.world, self.raw_id & RUST_ECS_ID_FLAGS_MASK)
     }
 
     /// Test if id has specified role
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::has_flags
     #[inline(always)]
     pub fn has_flags_for(&self, flags: IdT) -> bool {
         self.raw_id & flags == flags
     }
 
     /// Test if id has any role
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::has_flags
     #[inline(always)]
-    pub fn has_flags_any(&self) -> bool {
+    pub fn has_any_flags(&self) -> bool {
         self.raw_id & RUST_ECS_ID_FLAGS_MASK != 0
     }
 
     /// Return id without role
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::remove_generation
     #[inline(always)]
     pub fn remove_generation(&self) -> Entity {
         Entity::new_from_existing(self.world, self.raw_id as u32 as u64)
     }
 
-    /// Get the type for an id. This operation returns the component id for an id,
+    /// Get the component type for the id.
+    ///
+    /// This operation returns the component id for an id,
     /// if the id is associated with a type. For a regular component with a non-zero size
     /// (an entity with the EcsComponent component) the operation will return the entity itself.
     /// For an entity that does not have the EcsComponent component, or with an EcsComponent
@@ -183,6 +283,10 @@ impl Id {
     /// Entity wrapping 0 is returned if the relationship entity has the Tag property
     /// The second pair element is returned if it is a component
     /// Entity wrapping 0 is returned
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::type_id
     #[inline(always)]
     pub fn type_id(&self) -> Entity {
         Entity::new_from_existing(self.world, unsafe {
@@ -191,6 +295,14 @@ impl Id {
     }
 
     /// Test if id has specified first
+    ///
+    /// # Arguments
+    ///
+    /// * `first` - The first id to test
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::has_relationship
     #[inline(always)]
     pub fn has_relationship(&self, first: IdT) -> bool {
         if !self.is_pair() {
@@ -204,6 +316,10 @@ impl Id {
     ///
     /// If the id is not a pair, this operation will fail. When the id has a
     /// world, the operation will ensure that the returned id has the correct generation count.
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::first
     #[inline(always)]
     pub fn first(&self) -> Entity {
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
@@ -221,6 +337,10 @@ impl Id {
     ///
     /// If the id is not a pair, this operation will fail. When the id has a
     /// world, the operation will ensure that the returned id has the correct generation count.
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::second
     pub fn second(&self) -> Entity {
         //TODO add the assert to cpp flecs
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
@@ -235,6 +355,10 @@ impl Id {
     }
 
     /// Convert id to string
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::str
     #[inline(always)]
     pub fn to_str(&self) -> &'static str {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
@@ -254,9 +378,14 @@ impl Id {
     }
 
     /// Convert id to string
+    ///
     /// ### Safety
     /// safe version : 'to_str'
     /// This function is unsafe because it assumes that the id is valid.
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::str
     #[inline(always)]
     pub unsafe fn to_str_unchecked(&self) -> &'static str {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
@@ -269,6 +398,10 @@ impl Id {
     }
 
     /// Convert role of id to string.
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::flag_str
     #[inline(always)]
     pub fn to_flags_str(&self) -> &'static str {
         // SAFETY: We assume that `ecs_role_str` returns a pointer to a null-terminated
@@ -291,6 +424,10 @@ impl Id {
     /// ### Safety
     /// safe version : 'to_flags_str'
     /// This function is unsafe because it assumes that the id is valid.
+    ///
+    /// # C++ API equivalent
+    ///
+    /// id::flag_str
     #[inline(always)]
     pub unsafe fn to_flags_str_unchecked(&self) -> &'static str {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
