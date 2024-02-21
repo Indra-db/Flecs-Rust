@@ -5,6 +5,13 @@ use super::world::World;
 use crate::core::utility::{errors::*, functions::*};
 use crate::ecs_assert;
 
+/// Class that wraps around a flecs::id_t
+///
+/// A flecs id is an identifier that can be added to entities. Ids can be:
+///
+/// * entities (including components, tags)
+/// * pair ids
+/// * entities with id flags set (like flecs::Override, flecs::Toggle)
 #[derive(Debug, Clone, Copy, Eq)]
 pub struct Id {
     /// World is optional, but guarantees that entity identifiers extracted from the id are valid
