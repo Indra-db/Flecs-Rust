@@ -7,8 +7,11 @@ use super::{
     },
     c_types::{EntityT, IterT, TermT, WorldT, SEPARATOR},
     component_registration::CachedComponentData,
+    entity::Entity,
     filter_builder::{FilterBuilder, FilterBuilderImpl},
+    iter::Iter,
     iterable::{Filterable, Iterable},
+    observer::Observer,
     term::TermBuilder,
     world::World,
 };
@@ -17,9 +20,13 @@ type EcsCtxFreeT = extern "C" fn(*mut std::ffi::c_void);
 
 struct ObserverBindingCtx {
     each: Option<*mut c_void>,
-    entity_each: Option<*mut c_void>,
+    each_entity: Option<*mut c_void>,
+    iter: Option<*mut c_void>,
+    iter_only: Option<*mut c_void>,
     free_each: Option<EcsCtxFreeT>,
-    free_entity_each: Option<EcsCtxFreeT>,
+    free_each_entity: Option<EcsCtxFreeT>,
+    free_iter: Option<EcsCtxFreeT>,
+    free_iter_only: Option<EcsCtxFreeT>,
 }
 
 impl Drop for ObserverBindingCtx {
@@ -29,9 +36,19 @@ impl Drop for ObserverBindingCtx {
                 free_each(each);
             }
         }
-        if let Some(entity_each) = self.entity_each {
-            if let Some(free_entity_each) = self.free_entity_each {
-                free_entity_each(entity_each);
+        if let Some(each_entity) = self.each_entity {
+            if let Some(free_each_entity) = self.free_each_entity {
+                free_each_entity(each_entity);
+            }
+        }
+        if let Some(iter) = self.iter {
+            if let Some(free_iter) = self.free_iter {
+                free_iter(iter);
+            }
+        }
+        if let Some(iter_only) = self.iter_only {
+            if let Some(free_iter_only) = self.free_iter_only {
+                free_iter_only(iter_only);
             }
         }
     }
@@ -42,24 +59,36 @@ impl Default for ObserverBindingCtx {
     fn default() -> Self {
         Self {
             each: None,
-            entity_each: None,
+            each_entity: None,
+            iter: None,
+            iter_only: None,
             free_each: None,
-            free_entity_each: None,
+            free_each_entity: None,
+            free_iter: None,
+            free_iter_only: None,
         }
     }
 }
 impl ObserverBindingCtx {
     pub fn new(
         each: Option<*mut std::ffi::c_void>,
-        entity_each: Option<*mut std::ffi::c_void>,
+        each_entity: Option<*mut std::ffi::c_void>,
+        iter: Option<*mut std::ffi::c_void>,
+        iter_only: Option<*mut std::ffi::c_void>,
         free_each: Option<EcsCtxFreeT>,
-        free_entity_each: Option<EcsCtxFreeT>,
+        free_each_entity: Option<EcsCtxFreeT>,
+        free_iter: Option<EcsCtxFreeT>,
+        free_iter_only: Option<EcsCtxFreeT>,
     ) -> Self {
         Self {
             each,
-            entity_each,
+            each_entity,
+            iter,
+            iter_only,
             free_each,
-            free_entity_each,
+            free_each_entity,
+            free_iter,
+            free_iter_only,
         }
     }
 }
@@ -73,6 +102,7 @@ where
     event_count: i32,
     /// non-owning world reference
     world: World,
+    is_instanced: bool,
 }
 
 /// Deref to FilterBuilder to allow access to FilterBuilder methods without having to access FilterBuilder through ObserverBuilder
@@ -96,11 +126,13 @@ where
         let mut desc = Default::default();
         let mut obj = Self {
             desc,
-            filter_builder: FilterBuilder::new_with_desc(world, &mut desc.filter, 0),
+            filter_builder: FilterBuilder::<T>::new_with_desc(world, &mut desc.filter, 0),
             world: world.clone(),
             event_count: 0,
+            is_instanced: false,
         };
         T::populate(&mut obj);
+        obj.desc.filter = *obj.filter_builder.get_desc_filter();
         obj
     }
 
@@ -110,8 +142,10 @@ where
             filter_builder: FilterBuilder::new(world),
             world: world.clone(),
             event_count: 0,
+            is_instanced: false,
         };
         T::populate(&mut obj);
+        obj.desc.filter = *obj.filter_builder.get_desc_filter();
         obj
     }
 
@@ -135,18 +169,100 @@ where
         }
     }
 
-    pub fn on_each(&mut self, func: impl FnMut(T::TupleType)) -> &mut Self {
+    pub fn on_each<Func>(&mut self, func: Func) -> &mut Self
+    where
+        Func: FnMut(T::TupleType) + 'static,
+    {
         let binding_ctx = self.get_binding_ctx();
+
         let each_func = Box::new(func);
         let each_static_ref = Box::leak(each_func);
+
         binding_ctx.each = Some(each_static_ref as *mut _ as *mut c_void);
         binding_ctx.free_each = Some(Self::on_free_each);
+
+        self.desc.callback = Some(Self::run_each::<Func> as unsafe extern "C" fn(_));
+
+        self
+    }
+
+    pub fn build(&mut self) -> Observer {
+        Observer::new(&self.world, self.desc, self.is_instanced)
+    }
+
+    pub fn on_each_entity<Func>(&mut self, func: Func) -> &mut Self
+    where
+        Func: FnMut(&mut Entity, T::TupleType) + 'static,
+    {
+        let binding_ctx = self.get_binding_ctx();
+
+        let each_entity_func = Box::new(func);
+        let each_entity_static_ref = Box::leak(each_entity_func);
+
+        binding_ctx.each_entity = Some(each_entity_static_ref as *mut _ as *mut c_void);
+        binding_ctx.free_each_entity = Some(Self::on_free_each);
+
+        self.desc.callback = Some(Self::run_each_entity::<Func> as unsafe extern "C" fn(_));
+
+        self
+    }
+
+    pub fn on_iter_only<Func>(&mut self, func: Func) -> &mut Self
+    where
+        Func: FnMut(&Iter) + 'static,
+    {
+        let binding_ctx = self.get_binding_ctx();
+        let iter_func = Box::new(func);
+        let iter_static_ref = Box::leak(iter_func);
+        binding_ctx.iter_only = Some(iter_static_ref as *mut _ as *mut c_void);
+        binding_ctx.free_iter_only = Some(Self::on_free_iter_only);
+
+        self.desc.callback = Some(Self::run_iter_only::<Func> as unsafe extern "C" fn(_));
+
+        self
+    }
+
+    pub fn on_iter<Func>(&mut self, func: Func) -> &mut Self
+    where
+        Func: FnMut(&Iter, T::TupleSliceType) + 'static,
+    {
+        let binding_ctx = self.get_binding_ctx();
+
+        let iter_func = Box::new(func);
+        let iter_static_ref = Box::leak(iter_func);
+
+        binding_ctx.iter = Some(iter_static_ref as *mut _ as *mut c_void);
+        binding_ctx.free_iter = Some(Self::on_free_iter);
+
+        self.desc.callback = Some(Self::run_iter::<Func> as unsafe extern "C" fn(_));
 
         self
     }
 
     extern "C" fn on_free_each(ptr: *mut c_void) {
         let ptr_func: *mut fn(T::TupleType) = ptr as *mut fn(T::TupleType);
+        unsafe {
+            ptr::drop_in_place(ptr_func);
+        }
+    }
+
+    extern "C" fn on_free_each_entity(ptr: *mut c_void) {
+        let ptr_func: *mut fn(&mut Entity, T::TupleType) =
+            ptr as *mut fn(&mut Entity, T::TupleType);
+        unsafe {
+            ptr::drop_in_place(ptr_func);
+        }
+    }
+
+    extern "C" fn on_free_iter_only(ptr: *mut c_void) {
+        let ptr_func: *mut fn(&Iter) = ptr as *mut fn(&Iter);
+        unsafe {
+            ptr::drop_in_place(ptr_func);
+        }
+    }
+
+    extern "C" fn on_free_iter(ptr: *mut c_void) {
+        let ptr_func: *mut fn(&Iter, T::TupleSliceType) = ptr as *mut fn(&Iter, T::TupleSliceType);
         unsafe {
             ptr::drop_in_place(ptr_func);
         }
@@ -160,25 +276,87 @@ where
         let each = (*ctx).each.unwrap();
         let each = &mut *(each as *mut Func);
 
-        while ecs_filter_next(iter) {
-            let components_data = T::get_array_ptrs_of_components(&*iter);
-            let iter_count = (*iter).count as usize;
-            let array_components = &components_data.array_components;
+        //while ecs_filter_next(iter) {
+        let components_data = T::get_array_ptrs_of_components(&*iter);
+        let array_components = &components_data.array_components;
 
-            ecs_table_lock((*iter).world, (*iter).table);
+        ecs_table_lock((*iter).world, (*iter).table);
 
-            for i in 0..iter_count {
-                let tuple = if components_data.is_any_array_a_ref {
-                    let is_ref_array_components = &components_data.is_ref_array_components;
-                    T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-                } else {
-                    T::get_tuple(array_components, i)
-                };
-                each(tuple);
-            }
+        let tuple = if components_data.is_any_array_a_ref {
+            let is_ref_array_components = &components_data.is_ref_array_components;
+            T::get_tuple_with_ref(array_components, is_ref_array_components, 0)
+        } else {
+            T::get_tuple(array_components, 0)
+        };
 
-            ecs_table_unlock((*iter).world, (*iter).table);
+        each(tuple);
+
+        ecs_table_unlock((*iter).world, (*iter).table);
+    }
+
+    unsafe extern "C" fn run_each_entity<Func>(iter: *mut IterT)
+    where
+        Func: FnMut(&mut Entity, T::TupleType),
+    {
+        let ctx: *mut ObserverBindingCtx = (*iter).binding_ctx as *mut _;
+        let each_entity = (*ctx).each_entity.unwrap();
+        let each_entity = &mut *(each_entity as *mut Func);
+
+        let components_data = T::get_array_ptrs_of_components(&*iter);
+        let array_components = &components_data.array_components;
+
+        ecs_table_lock((*iter).world, (*iter).table);
+
+        let mut entity = Entity::new_from_existing((*iter).world, *(*iter).entities.add(0));
+        let tuple = if components_data.is_any_array_a_ref {
+            let is_ref_array_components = &components_data.is_ref_array_components;
+            T::get_tuple_with_ref(array_components, is_ref_array_components, 0)
+        } else {
+            T::get_tuple(array_components, 0)
+        };
+
+        each_entity(&mut entity, tuple);
+
+        ecs_table_unlock((*iter).world, (*iter).table);
+    }
+
+    unsafe extern "C" fn run_iter_only<Func>(iter: *mut IterT)
+    where
+        Func: FnMut(&Iter),
+    {
+        unsafe {
+            let ctx: *mut ObserverBindingCtx = (*iter).binding_ctx as *mut _;
+            let iter_only = (*ctx).iter_only.unwrap();
+            let iter_only = &mut *(iter_only as *mut Func);
+
+            let iterT = Iter::new(&mut *iter);
+            iter_only(&iterT);
         }
+    }
+
+    unsafe extern "C" fn run_iter<Func>(iter: *mut IterT)
+    where
+        Func: FnMut(&Iter, T::TupleSliceType),
+    {
+        let ctx: *mut ObserverBindingCtx = (*iter).binding_ctx as *mut _;
+        let iter_func = (*ctx).iter.unwrap();
+        let iter_func = &mut *(iter_func as *mut Func);
+
+        let components_data = T::get_array_ptrs_of_components(&*iter);
+        let array_components = &components_data.array_components;
+
+        ecs_table_lock((*iter).world, (*iter).table);
+
+        let tuple = if components_data.is_any_array_a_ref {
+            let is_ref_array_components = &components_data.is_ref_array_components;
+            T::get_tuple_slices_with_ref(array_components, is_ref_array_components, 0)
+        } else {
+            T::get_tuple_slices(array_components, 0)
+        };
+        let iterT = Iter::new(&mut *iter);
+        iter_func(&iterT, tuple);
+
+        ecs_table_unlock((*iter).world, (*iter).table);
     }
 }
 
@@ -245,30 +423,30 @@ where
 }
 
 pub trait ObserverBuilderImpl: FilterBuilderImpl {
-    fn get_desc_observer(&self) -> &mut ecs_observer_desc_t;
+    fn get_desc_observer(&mut self) -> &mut ecs_observer_desc_t;
 
     fn get_event_count(&self) -> i32;
 
     fn increment_event_count(&mut self);
 
     fn add_event(&mut self, event: EntityT) -> &mut Self {
-        let desc = self.get_desc_observer();
         let event_count = self.get_event_count() as usize;
-        desc.events[event_count] = event;
         self.increment_event_count();
+        let desc = self.get_desc_observer();
+        desc.events[event_count] = event;
         self
     }
 
-    //todo!()
+    //todo!() function name
     fn add_event_of_type<T>(&mut self) -> &mut Self
     where
         T: CachedComponentData,
     {
-        let desc = self.get_desc_observer();
         let event_count = self.get_event_count() as usize;
-        let id = T::get_id(self.get_world());
-        desc.events[event_count] = id;
         self.increment_event_count();
+        let id = T::get_id(self.get_world());
+        let desc = self.get_desc_observer();
+        desc.events[event_count] = id;
         self
     }
 
@@ -286,5 +464,22 @@ pub trait ObserverBuilderImpl: FilterBuilderImpl {
     fn set_run_callback(&mut self, callback: ecs_iter_action_t) -> &mut Self {
         self.get_desc_observer().run = callback;
         self
+    }
+}
+
+impl<'a, 'w, T> ObserverBuilderImpl for ObserverBuilder<'a, 'w, T>
+where
+    T: Iterable<'a>,
+{
+    fn get_desc_observer(&mut self) -> &mut ecs_observer_desc_t {
+        &mut self.desc
+    }
+
+    fn get_event_count(&self) -> i32 {
+        self.event_count
+    }
+
+    fn increment_event_count(&mut self) {
+        self.event_count += 1;
     }
 }

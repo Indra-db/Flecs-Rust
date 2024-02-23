@@ -10,13 +10,14 @@ use super::{
     world::World,
 };
 
-#[derive(Copy, Clone)]
-pub struct Observer<'w> {
+//todo!() should implement copy?
+#[derive(Clone)]
+pub struct Observer {
     pub entity: Entity,
-    world_ref: &'w World,
+    world: World,
 }
 
-impl<'w> Deref for Observer<'w> {
+impl Deref for Observer {
     type Target = Entity;
 
     #[inline]
@@ -25,9 +26,9 @@ impl<'w> Deref for Observer<'w> {
     }
 }
 
-impl<'w> Observer<'w> {
+impl Observer {
     //todo!() in query ect desc is a pointer, does it need to be?
-    pub fn new(world: &'w World, mut desc: ecs_observer_desc_t, is_instanced: bool) -> Self {
+    pub fn new(world: &World, mut desc: ecs_observer_desc_t, is_instanced: bool) -> Self {
         //todo!() this code can be rustified, ask chatgpt
 
         if !desc.filter.instanced {
@@ -47,7 +48,7 @@ impl<'w> Observer<'w> {
 
         Self {
             entity,
-            world_ref: world,
+            world: world.clone(),
         }
     }
 
@@ -56,12 +57,12 @@ impl<'w> Observer<'w> {
         desc.entity = self.raw_id;
         desc.ctx = context;
         unsafe {
-            ecs_observer_init(self.world, &desc);
+            ecs_observer_init(self.world.raw_world, &desc);
         }
     }
 
     pub fn get_context(&self) -> *mut c_void {
-        unsafe { ecs_get_observer_ctx(self.world, self.raw_id) }
+        unsafe { ecs_get_observer_ctx(self.world.raw_world, self.raw_id) }
     }
 
     pub fn query(&mut self) -> Filter<()> {
@@ -70,6 +71,6 @@ impl<'w> Observer<'w> {
         let poly: *const Poly = self.get_target_for_pair_as_first::<Poly>(ECS_OBSERVER);
         let obj: *mut ecs_observer_t = unsafe { (*poly).poly as *mut ecs_observer_t };
         let world: World = self.get_as_world();
-        Filter::<()>::new_ownership(self.world_ref, unsafe { &mut (*obj).filter })
+        Filter::<()>::new_ownership(&self.world, unsafe { &mut (*obj).filter })
     }
 }
