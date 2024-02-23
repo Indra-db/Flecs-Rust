@@ -32,11 +32,13 @@ This library has not been advertized nor published yet to crates.io for that rea
     - [x] create filter builder
     - [x] add support for optional components
     - [x] add support for parent / instancing matching
+    - [ ] const only components
 - [x] query
     - [x] create query
     - [x] create query builder
     - [x] add support for optional components
     - [x] add support for parent / instancing matching
+    - [ ] const only components
 ```
 
 #### non-core
