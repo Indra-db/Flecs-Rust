@@ -3,9 +3,9 @@
     "configurations": [
         {
             "name": "(Windows) Launch",
-            "type": "cppvsdbg",
+            "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/target/debug/flecs_ecs.exe",
+            "program": "${workspaceFolder}/target/debug/flecs_ecs",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

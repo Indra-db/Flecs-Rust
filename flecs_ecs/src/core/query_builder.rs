@@ -53,6 +53,7 @@ where
             world,
         };
         T::populate(&mut obj);
+        //todo!() should probably copy desc.filter to desc see observer, investigate this
         obj
     }
 
