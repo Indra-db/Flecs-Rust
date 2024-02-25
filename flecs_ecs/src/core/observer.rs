@@ -4,7 +4,7 @@ use super::{
     c_binding::bindings::{
         ecs_get_observer_ctx, ecs_observer_desc_t, ecs_observer_init, ecs_observer_t, ecs_os_api,
     },
-    c_types::{ObserverT, Poly, ECS_OBSERVER},
+    c_types::{EntityT, ObserverT, Poly, ECS_OBSERVER},
     entity::Entity,
     filter::{self, Filter},
     world::World,
@@ -29,14 +29,14 @@ impl Deref for Observer {
 impl Observer {
     //todo!() in query ect desc is a pointer, does it need to be?
     pub fn new(world: &World, mut desc: ecs_observer_desc_t, is_instanced: bool) -> Self {
-        //todo!() this code can be rustified, ask chatgpt
+        //todo!() this code can be rustified, ask
 
         if !desc.filter.instanced {
             desc.filter.instanced = is_instanced;
         }
 
         let id = unsafe { ecs_observer_init(world.raw_world, &desc) };
-        let entity = Entity::new_from_existing(world.raw_world, id);
+        let entity = Entity::new_from_existing_raw(world.raw_world, id);
 
         unsafe {
             if !desc.filter.terms_buffer.is_null() {
@@ -49,6 +49,13 @@ impl Observer {
         Self {
             entity,
             world: world.clone(),
+        }
+    }
+
+    pub fn new_from_existing(world: &World, observer_entity: Entity) -> Self {
+        Self {
+            world: world.clone(),
+            entity: observer_entity,
         }
     }
 
