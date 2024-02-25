@@ -12,7 +12,9 @@ use crate::{
 
 use super::{
     builder::Builder,
-    c_binding::bindings::{ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_flags32_t},
+    c_binding::bindings::{
+        ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_flags32_t, EcsWildcard,
+    },
     c_types::{IdT, TermT, WorldT, SEPARATOR},
     component_registration::{CachedComponentData, ComponentType, Enum},
     enum_type::CachedEnumData,
@@ -244,6 +246,12 @@ pub trait FilterBuilderImpl: TermBuilder {
         value: T,
     ) -> &mut Self {
         self.term_with_enum(value)
+    }
+
+    fn with_enum_wildcard<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
+        &mut self,
+    ) -> &mut Self {
+        self.term_with_pair_id::<T>(unsafe { EcsWildcard })
     }
 
     fn with_pair<Rel: CachedComponentData, Target: CachedComponentData>(&mut self) -> &mut Self {

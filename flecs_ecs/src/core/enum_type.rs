@@ -17,14 +17,29 @@ pub trait CachedEnumData: ComponentType<Enum> {
 
     fn iter() -> Self::VariantIterator;
 
-    /// ### Note
+    /// # Note
     /// it only means that the enum is registered with a particular world, not necessarily yours.
     fn are_fields_registered_as_entities() -> bool {
-        // when the enum is registered, the fields are registered as entities
-        // and any entity id stored in the array should not be 0
-        // as 0 represents an invalid entity id.
-        // not the most elegant solution, but it works. (temporarily)
-        unsafe { *Self::__get_enum_data_ptr_mut() != 0 }
+        let mut result = true;
+        let ptr = Self::__get_enum_data_ptr_mut();
+        for i in 0..Self::SIZE_ENUM_FIELDS {
+            unsafe {
+                if *ptr.add(i as usize) == 0 {
+                    result = false;
+                    break;
+                }
+            }
+        }
+        result
+    }
+
+    fn is_field_registered_as_entity(&self) -> bool {
+        let index = self.get_enum_index();
+        unsafe { *Self::__get_enum_data_ptr_mut().add(index) != 0 }
+    }
+
+    fn is_index_registered_as_entity(index: usize) -> bool {
+        unsafe { *Self::__get_enum_data_ptr_mut().add(index) != 0 }
     }
 
     fn get_entity_id_from_enum_field(&self, world: *mut WorldT) -> EntityT {

@@ -297,7 +297,7 @@ where
         }
     }
 
-    fn each_entity(&mut self, mut func: impl FnMut(&mut Entity, T::TupleType)) {
+    pub fn each_entity(&mut self, mut func: impl FnMut(&mut Entity, T::TupleType)) {
         unsafe {
             let mut iter = ecs_query_iter(self.world.raw_world, self.query);
 

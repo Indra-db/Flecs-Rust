@@ -225,7 +225,7 @@ where
                         index as i32,
                     )
                 };
-                if !T::are_fields_registered_as_entities() {
+                if !T::is_index_registered_as_entity(index) {
                     unsafe { *enum_array_ptr.add(index) = entity_id };
                 }
             }
