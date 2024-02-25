@@ -3,7 +3,7 @@ use std::{default, ops::Deref, os::raw::c_void, ptr};
 use super::{
     c_binding::bindings::{
         ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_filter_next, ecs_iter_action_t,
-        ecs_iter_t, ecs_observer_desc_t, ecs_table_lock, ecs_table_unlock,
+        ecs_iter_next, ecs_iter_t, ecs_observer_desc_t, ecs_table_lock, ecs_table_unlock,
     },
     c_types::{EntityT, IterT, TermT, WorldT, SEPARATOR},
     component_registration::CachedComponentData,
@@ -285,25 +285,23 @@ where
         let each = (*ctx).each.unwrap();
         let each = &mut *(each as *mut Func);
 
-        while ecs_filter_next(iter) {
-            let components_data = T::get_array_ptrs_of_components(&*iter);
-            let iter_count = (*iter).count as usize;
-            let array_components = &components_data.array_components;
+        let components_data = T::get_array_ptrs_of_components(&*iter);
+        let iter_count = (*iter).count as usize;
+        let array_components = &components_data.array_components;
 
-            ecs_table_lock((*iter).world, (*iter).table);
+        ecs_table_lock((*iter).world, (*iter).table);
 
-            for i in 0..iter_count {
-                let tuple = if components_data.is_any_array_a_ref {
-                    let is_ref_array_components = &components_data.is_ref_array_components;
-                    T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-                } else {
-                    T::get_tuple(array_components, i)
-                };
-                each(tuple);
-            }
-
-            ecs_table_unlock((*iter).world, (*iter).table);
+        for i in 0..iter_count {
+            let tuple = if components_data.is_any_array_a_ref {
+                let is_ref_array_components = &components_data.is_ref_array_components;
+                T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+            } else {
+                T::get_tuple(array_components, i)
+            };
+            each(tuple);
         }
+
+        ecs_table_unlock((*iter).world, (*iter).table);
     }
 
     unsafe extern "C" fn run_each_entity<Func>(iter: *mut IterT)
@@ -316,19 +314,21 @@ where
 
         let components_data = T::get_array_ptrs_of_components(&*iter);
         let array_components = &components_data.array_components;
+        let iter_count = (*iter).count as usize;
 
         ecs_table_lock((*iter).world, (*iter).table);
 
-        let mut entity = Entity::new_from_existing_raw((*iter).world, *(*iter).entities.add(0));
-        let tuple = if components_data.is_any_array_a_ref {
-            let is_ref_array_components = &components_data.is_ref_array_components;
-            T::get_tuple_with_ref(array_components, is_ref_array_components, 0)
-        } else {
-            T::get_tuple(array_components, 0)
-        };
+        for i in 0..iter_count {
+            let mut entity = Entity::new_from_existing_raw((*iter).world, *(*iter).entities.add(i));
+            let tuple = if components_data.is_any_array_a_ref {
+                let is_ref_array_components = &components_data.is_ref_array_components;
+                T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+            } else {
+                T::get_tuple(array_components, i)
+            };
 
-        each_entity(&mut entity, tuple);
-
+            each_entity(&mut entity, tuple);
+        }
         ecs_table_unlock((*iter).world, (*iter).table);
     }
 
@@ -341,8 +341,12 @@ where
             let iter_only = (*ctx).iter_only.unwrap();
             let iter_only = &mut *(iter_only as *mut Func);
 
-            let iterT = Iter::new(&mut *iter);
-            iter_only(&iterT);
+            let iter_count = (*iter).count as usize;
+
+            for i in 0..iter_count {
+                let iterT = Iter::new(&mut *iter);
+                iter_only(&iterT);
+            }
         }
     }
 
@@ -356,17 +360,20 @@ where
 
         let components_data = T::get_array_ptrs_of_components(&*iter);
         let array_components = &components_data.array_components;
+        let iter_count = (*iter).count as usize;
 
         ecs_table_lock((*iter).world, (*iter).table);
 
-        let tuple = if components_data.is_any_array_a_ref {
-            let is_ref_array_components = &components_data.is_ref_array_components;
-            T::get_tuple_slices_with_ref(array_components, is_ref_array_components, 0)
-        } else {
-            T::get_tuple_slices(array_components, 0)
-        };
-        let iterT = Iter::new(&mut *iter);
-        iter_func(&iterT, tuple);
+        for i in 0..iter_count {
+            let tuple = if components_data.is_any_array_a_ref {
+                let is_ref_array_components = &components_data.is_ref_array_components;
+                T::get_tuple_slices_with_ref(array_components, is_ref_array_components, i)
+            } else {
+                T::get_tuple_slices(array_components, i)
+            };
+            let iterT = Iter::new(&mut *iter);
+            iter_func(&iterT, tuple);
+        }
 
         ecs_table_unlock((*iter).world, (*iter).table);
     }
