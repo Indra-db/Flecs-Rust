@@ -15,15 +15,15 @@ use super::{
 
 use std::ffi::c_char;
 
-struct FilterBase<'a, 'w, T>
+struct FilterBase<'a, T>
 where
     T: Iterable<'a>,
 {
-    pub world: &'w World,
+    pub world: World,
     _phantom: std::marker::PhantomData<&'a T>,
 }
 
-impl<'a, 'w, T> FilterBase<'a, 'w, T>
+impl<'a, T> FilterBase<'a, T>
 where
     T: Iterable<'a>,
 {
@@ -71,7 +71,7 @@ where
 
                 for i in 0..iter_count {
                     let mut entity =
-                        Entity::new_from_existing(self.world.raw_world, *iter.entities.add(i));
+                        Entity::new_from_existing_raw(self.world.raw_world, *iter.entities.add(i));
 
                     let tuple = if components_data.is_any_array_a_ref {
                         let is_ref_array_components = &components_data.is_ref_array_components;
@@ -127,7 +127,7 @@ where
     }
 
     fn entity_impl(&self, filter: *mut FilterT) -> Entity {
-        Entity::new_from_existing(self.world.raw_world, unsafe {
+        Entity::new_from_existing_raw(self.world.raw_world, unsafe {
             ecs_get_entity(filter as *const _)
         })
     }
@@ -136,7 +136,7 @@ where
         unsafe {
             for i in 0..(*filter).term_count {
                 let term = Term::new(
-                    Some(self.world),
+                    Some(&self.world),
                     With::Term(*(*filter).terms.add(i as usize)),
                 );
                 func(term);
@@ -146,7 +146,7 @@ where
 
     fn get_term_impl(&self, index: usize, filter: *mut FilterT) -> Term {
         Term::new(
-            Some(self.world),
+            Some(&self.world),
             With::Term(unsafe { *(*filter).terms.add(index) }),
         )
     }
@@ -170,22 +170,22 @@ where
     }
 }
 
-pub struct FilterView<'a, 'w, T>
+pub struct FilterView<'a, T>
 where
     T: Iterable<'a>,
 {
-    base: FilterBase<'a, 'w, T>,
+    base: FilterBase<'a, T>,
     filter_ptr: *mut FilterT,
 }
 
-impl<'a, 'w, T> Clone for FilterView<'a, 'w, T>
+impl<'a, T> Clone for FilterView<'a, T>
 where
     T: Iterable<'a>,
 {
     fn clone(&self) -> Self {
         Self {
             base: FilterBase {
-                world: self.base.world,
+                world: self.base.world.clone(),
                 _phantom: std::marker::PhantomData,
             },
             filter_ptr: self.filter_ptr,
@@ -193,14 +193,14 @@ where
     }
 }
 
-impl<'a, 'w, T> FilterView<'a, 'w, T>
+impl<'a, T> FilterView<'a, T>
 where
     T: Iterable<'a>,
 {
-    pub fn new_view(world: &'w World, filter: *const FilterT) -> Self {
+    pub fn new_view(world: &World, filter: *const FilterT) -> Self {
         Self {
             base: FilterBase {
-                world,
+                world: world.clone(),
                 _phantom: std::marker::PhantomData,
             },
             filter_ptr: filter as *mut FilterT,
@@ -237,19 +237,19 @@ where
     }
 }
 
-pub struct Filter<'a, 'w, T>
+pub struct Filter<'a, T>
 where
     T: Iterable<'a>,
 {
-    base: FilterBase<'a, 'w, T>,
+    base: FilterBase<'a, T>,
     filter: FilterT,
 }
 
-impl<'a, 'w, T> Filter<'a, 'w, T>
+impl<'a, T> Filter<'a, T>
 where
     T: Iterable<'a>,
 {
-    pub fn new(world: &'w World) -> Self {
+    pub fn new(world: &World) -> Self {
         let mut desc = ecs_filter_desc_t::default();
         T::register_ids_descriptor(world.raw_world, &mut desc);
         let mut filter: FilterT = Default::default();
@@ -257,7 +257,7 @@ where
         unsafe { ecs_filter_init(world.raw_world, &desc) };
         Filter {
             base: FilterBase {
-                world,
+                world: world.clone(),
                 _phantom: std::marker::PhantomData,
             },
             filter,
@@ -265,10 +265,10 @@ where
     }
 
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new_ownership(world: &'w World, filter: *mut FilterT) -> Self {
+    pub fn new_ownership(world: &World, filter: *mut FilterT) -> Self {
         let mut filter_obj = Filter {
             base: FilterBase {
-                world,
+                world: world.clone(),
                 _phantom: std::marker::PhantomData,
             },
             filter: Default::default(),
@@ -282,10 +282,10 @@ where
     //TODO: this needs testing -> desc.storage pointer becomes invalid after this call as it re-allocates after this new
     // determine if this is a problem
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new_from_desc(world: &'w World, desc: *mut ecs_filter_desc_t) -> Self {
+    pub fn new_from_desc(world: &World, desc: *mut ecs_filter_desc_t) -> Self {
         let mut filter_obj = Filter {
             base: FilterBase {
-                world,
+                world: world.clone(),
                 _phantom: std::marker::PhantomData,
             },
             filter: Default::default(),
@@ -361,7 +361,7 @@ where
     }
 }
 
-impl<'a, 'w, T> Drop for Filter<'a, 'w, T>
+impl<'a, T> Drop for Filter<'a, T>
 where
     T: Iterable<'a>,
 {
@@ -373,14 +373,14 @@ where
     }
 }
 
-impl<'a, 'w, T> Clone for Filter<'a, 'w, T>
+impl<'a, T> Clone for Filter<'a, T>
 where
     T: Iterable<'a>,
 {
     fn clone(&self) -> Self {
-        let mut new_filter = Filter::<'a, 'w, T> {
+        let mut new_filter = Filter::<'a, T> {
             base: FilterBase {
-                world: self.base.world,
+                world: self.base.world.clone(),
                 _phantom: std::marker::PhantomData,
             },
             filter: Default::default(),

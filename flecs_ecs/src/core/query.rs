@@ -18,30 +18,30 @@ use super::term::{Term, With};
 use super::utility::errors::FlecsErrorCode;
 use super::world::World;
 
-pub struct QueryBase<'a, 'w, T>
+pub struct QueryBase<'a, T>
 where
     T: Iterable<'a>,
 {
-    pub world: &'w World,
+    pub world: World,
     pub query: *mut QueryT,
     _phantom: std::marker::PhantomData<&'a T>,
 }
 
-impl<'a, 'w, T> QueryBase<'a, 'w, T>
+impl<'a, T> QueryBase<'a, T>
 where
     T: Iterable<'a>,
 {
-    fn new(world: &'w World, query: *mut QueryT) -> Self {
+    fn new(world: &World, query: *mut QueryT) -> Self {
         Self {
-            world,
+            world: world.clone(),
             query,
             _phantom: std::marker::PhantomData,
         }
     }
 
-    fn new_from_desc(world: &'w World, desc: *mut ecs_query_desc_t) -> Self {
+    fn new_from_desc(world: &World, desc: *mut ecs_query_desc_t) -> Self {
         let obj = Self {
-            world,
+            world: world.clone(),
             query: unsafe { ecs_query_init(world.raw_world, desc) },
             _phantom: std::marker::PhantomData,
         };
@@ -154,7 +154,7 @@ where
             let filter = ecs_query_get_filter(query);
             for i in 0..(*filter).term_count {
                 let term = Term::new(
-                    Some(self.world),
+                    Some(&self.world),
                     With::Term(*(*filter).terms.add(i as usize)),
                 );
                 func(term);
@@ -162,8 +162,8 @@ where
         }
     }
 
-    pub fn filter(&self) -> FilterView<'a, 'w, T> {
-        FilterView::<T>::new_view(self.world, unsafe { ecs_query_get_filter(self.query) })
+    pub fn filter(&self) -> FilterView<'a, T> {
+        FilterView::<T>::new_view(&self.world, unsafe { ecs_query_get_filter(self.query) })
     }
     fn term(&self, index: i32) -> Term {
         let filter: *const ecs_filter_t = unsafe { ecs_query_get_filter(self.query) };
@@ -173,7 +173,7 @@ where
             "query filter is null"
         );
         Term::new(
-            Some(self.world),
+            Some(&self.world),
             With::Term(unsafe { *(*filter).terms.add(index as usize) }),
         )
     }
@@ -198,24 +198,24 @@ where
     }
 
     pub fn entity(&self) -> Entity {
-        Entity::new_from_existing(self.world.raw_world, unsafe {
+        Entity::new_from_existing_raw(self.world.raw_world, unsafe {
             ecs_get_entity(self.query as *const c_void)
         })
     }
 }
 
-pub struct Query<'a, 'w, T>
+pub struct Query<'a, T>
 where
     T: Iterable<'a>,
 {
-    pub base: QueryBase<'a, 'w, T>,
+    pub base: QueryBase<'a, T>,
 }
 
-impl<'a, 'w, T> Deref for Query<'a, 'w, T>
+impl<'a, T> Deref for Query<'a, T>
 where
     T: Iterable<'a>,
 {
-    type Target = QueryBase<'a, 'w, T>;
+    type Target = QueryBase<'a, T>;
 
     #[inline(always)]
     fn deref(&self) -> &Self::Target {
@@ -223,7 +223,7 @@ where
     }
 }
 
-impl<'a, 'w, T> DerefMut for Query<'a, 'w, T>
+impl<'a, T> DerefMut for Query<'a, T>
 where
     T: Iterable<'a>,
 {
@@ -233,11 +233,11 @@ where
     }
 }
 
-impl<'a, 'w, T> Query<'a, 'w, T>
+impl<'a, T> Query<'a, T>
 where
     T: Iterable<'a>,
 {
-    pub fn new(world: &'w World) -> Self {
+    pub fn new(world: &World) -> Self {
         let mut desc = ecs_query_desc_t::default();
         T::register_ids_descriptor(world.raw_world, &mut desc.filter);
         let mut filter: FilterT = Default::default();
@@ -248,21 +248,21 @@ where
         }
     }
 
-    pub fn new_ownership(world: &'w World, query: *mut QueryT) -> Self {
+    pub fn new_ownership(world: &World, query: *mut QueryT) -> Self {
         Self {
             base: QueryBase::new(world, query),
         }
     }
 
-    pub fn new_from_desc(world: &'w World, desc: *mut ecs_query_desc_t) -> Self {
+    pub fn new_from_desc(world: &World, desc: *mut ecs_query_desc_t) -> Self {
         Self {
             base: QueryBase::new_from_desc(world, desc),
         }
     }
 
-    fn get_iter_raw(&mut self, world: &'w World) -> IterT {
+    fn get_iter_raw(&mut self, world: &World) -> IterT {
         if !world.is_null() {
-            self.world = world;
+            self.world = world.clone();
         }
         unsafe { ecs_query_iter(self.world.raw_world, self.query) }
     }
@@ -315,7 +315,7 @@ where
                 // update: I believe it's not possible due to not knowing the order of the components in the tuple. I will leave this here for now, maybe I will come back to it in the future.
                 for i in 0..iter_count {
                     let mut entity =
-                        Entity::new_from_existing(self.world.raw_world, *iter.entities.add(i));
+                        Entity::new_from_existing_raw(self.world.raw_world, *iter.entities.add(i));
 
                     let tuple = if components_data.is_any_array_a_ref {
                         let is_ref_array_components = &components_data.is_ref_array_components;
@@ -371,7 +371,7 @@ where
     }
 }
 
-impl<'a, 'w, T> Drop for Query<'a, 'w, T>
+impl<'a, T> Drop for Query<'a, T>
 where
     T: Iterable<'a>,
 {

@@ -20,20 +20,20 @@ use super::{
 };
 
 // todo! does this need its own world? filter builder already has one?
-pub struct QueryBuilder<'a, 'w, T>
+pub struct QueryBuilder<'a, T>
 where
     T: Iterable<'a>,
 {
-    pub filter_builder: FilterBuilder<'a, 'w, T>,
+    pub filter_builder: FilterBuilder<'a, T>,
     pub desc: ecs_query_desc_t,
-    pub world: &'w World,
+    pub world: World,
 }
 
-impl<'a, 'w, T> Deref for QueryBuilder<'a, 'w, T>
+impl<'a, T> Deref for QueryBuilder<'a, T>
 where
     T: Iterable<'a>,
 {
-    type Target = FilterBuilder<'a, 'w, T>;
+    type Target = FilterBuilder<'a, T>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -41,27 +41,27 @@ where
     }
 }
 
-impl<'a, 'w, T> QueryBuilder<'a, 'w, T>
+impl<'a, T> QueryBuilder<'a, T>
 where
     T: Iterable<'a>,
 {
-    pub fn new(world: &'w World) -> Self {
+    pub fn new(world: &World) -> Self {
         let mut desc = Default::default();
         let mut obj = Self {
             desc,
             filter_builder: FilterBuilder::new_with_desc(world, &mut desc.filter, 0),
-            world,
+            world: world.clone(),
         };
         T::populate(&mut obj);
         //todo!() should probably copy desc.filter to desc see observer, investigate this
         obj
     }
 
-    pub fn new_named(world: &'w World, name: &str) -> Self {
+    pub fn new_named(world: &World, name: &str) -> Self {
         let mut obj = Self {
             desc: Default::default(),
             filter_builder: FilterBuilder::new(world),
-            world,
+            world: world.clone(),
         };
         T::populate(&mut obj);
         let entity_desc = ecs_entity_desc_t {
@@ -76,7 +76,7 @@ where
     }
 }
 
-impl<'a, 'w, T> Filterable for QueryBuilder<'a, 'w, T>
+impl<'a, T> Filterable for QueryBuilder<'a, T>
 where
     T: Iterable<'a>,
 {
@@ -93,7 +93,7 @@ where
     }
 }
 
-impl<'a, 'w, T> FilterBuilderImpl for QueryBuilder<'a, 'w, T>
+impl<'a, T> FilterBuilderImpl for QueryBuilder<'a, T>
 where
     T: Iterable<'a>,
 {
@@ -113,7 +113,7 @@ where
     }
 }
 
-impl<'a, 'w, T> TermBuilder for QueryBuilder<'a, 'w, T>
+impl<'a, T> TermBuilder for QueryBuilder<'a, T>
 where
     T: Iterable<'a>,
 {
@@ -138,16 +138,16 @@ where
     }
 }
 
-impl<'a, 'w, T> Builder for QueryBuilder<'a, 'w, T>
+impl<'a, T> Builder for QueryBuilder<'a, T>
 where
     T: Iterable<'a>,
 {
-    type BuiltType = Query<'a, 'w, T>;
+    type BuiltType = Query<'a, T>;
 
     fn build(&mut self) -> Self::BuiltType {
         let desc_filter = self.filter_builder.desc;
         self.desc.filter = desc_filter;
-        Query::<'a, 'w, T>::new_from_desc(self.world, &mut self.desc)
+        Query::<'a, T>::new_from_desc(&self.world, &mut self.desc)
     }
 }
 
@@ -328,14 +328,14 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     }
 
     /// Specify parent query (creates subquery)
-    fn observable<'a, 'w, T: Iterable<'a>>(&mut self, parent: &QueryBase<'a, 'w, T>) -> &mut Self {
+    fn observable<'a, T: Iterable<'a>>(&mut self, parent: &QueryBase<'a, T>) -> &mut Self {
         let desc = self.get_desc_query();
         desc.parent = parent.query;
         self
     }
 }
 
-impl<'a, 'w, T> QueryBuilderImpl for QueryBuilder<'a, 'w, T>
+impl<'a, T> QueryBuilderImpl for QueryBuilder<'a, T>
 where
     T: Iterable<'a>,
 {
