@@ -92,7 +92,7 @@ impl Deref for UntypedComponent {
 impl UntypedComponent {
     pub fn new(world: *mut WorldT, id: IdT) -> Self {
         UntypedComponent {
-            entity: Entity::new_from_existing(world, id),
+            entity: Entity::new_from_existing_raw(world, id),
         }
     }
 }
@@ -264,7 +264,7 @@ impl<T: CachedComponentData + Default> Component<T> {
         let on_add = unsafe { (*ctx).on_add.unwrap() };
         let on_add = on_add as *mut Func;
         let on_add = unsafe { &mut *on_add };
-        let entity = unsafe { Entity::new_from_existing((*iter).world, *(*iter).entities) };
+        let entity = unsafe { Entity::new_from_existing_raw((*iter).world, *(*iter).entities) };
         let component: *mut T = unsafe { ecs_field::<T>(iter, 1) };
         on_add(entity, unsafe { &mut *component });
     }
@@ -277,7 +277,7 @@ impl<T: CachedComponentData + Default> Component<T> {
         let on_set = unsafe { (*ctx).on_set.unwrap() };
         let on_set = on_set as *mut Func;
         let on_set = unsafe { &mut *on_set };
-        let entity = unsafe { Entity::new_from_existing((*iter).world, *(*iter).entities) };
+        let entity = unsafe { Entity::new_from_existing_raw((*iter).world, *(*iter).entities) };
         let component: *mut T = unsafe { ecs_field::<T>(iter, 1) };
         on_set(entity, unsafe { &mut *component });
     }
@@ -290,7 +290,7 @@ impl<T: CachedComponentData + Default> Component<T> {
         let on_remove = unsafe { (*ctx).on_remove.unwrap() };
         let on_remove = on_remove as *mut Func;
         let on_remove = unsafe { &mut *on_remove };
-        let entity = unsafe { Entity::new_from_existing((*iter).world, *(*iter).entities) };
+        let entity = unsafe { Entity::new_from_existing_raw((*iter).world, *(*iter).entities) };
         let component: *mut T = unsafe { ecs_field::<T>(iter, 1) };
         on_remove(entity, unsafe { &mut *component });
     }

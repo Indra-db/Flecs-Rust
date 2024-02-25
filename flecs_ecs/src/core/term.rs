@@ -264,15 +264,15 @@ impl Term {
     }
 
     pub fn get_src(&self) -> Entity {
-        Entity::new_from_existing(self.world, self.term.src.id)
+        Entity::new_from_existing_raw(self.world, self.term.src.id)
     }
 
     pub fn get_first(&self) -> Entity {
-        Entity::new_from_existing(self.world, self.term.first.id)
+        Entity::new_from_existing_raw(self.world, self.term.first.id)
     }
 
     pub fn get_second(&self) -> Entity {
-        Entity::new_from_existing(self.world, self.term.second.id)
+        Entity::new_from_existing_raw(self.world, self.term.second.id)
     }
 
     pub fn move_raw_term(&mut self) -> TermT {

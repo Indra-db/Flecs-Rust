@@ -56,6 +56,6 @@ impl<T: CachedComponentData> Ref<T> {
     }
 
     pub fn entity(&self) -> Entity {
-        Entity::new_from_existing(self.world, self.component_ref.entity)
+        Entity::new_from_existing_raw(self.world, self.component_ref.entity)
     }
 }

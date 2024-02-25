@@ -461,7 +461,7 @@ impl EntityView {
                     unsafe {
                         //TODO should investigate if this is correct
                         let id = it.entities.add(i);
-                        let ent = Entity::new_from_existing(self.world, *id);
+                        let ent = Entity::new_from_existing_raw(self.world, *id);
                         func(ent);
                     }
                 }
@@ -581,7 +581,7 @@ impl EntityView {
     ///
     /// * `index` - The index (0 for the first instance of the relationship).
     pub fn get_target_from_component<First: CachedComponentData>(&self, index: i32) -> Entity {
-        Entity::new_from_existing(self.world, unsafe {
+        Entity::new_from_existing_raw(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, First::get_id(self.world), index)
         })
     }
@@ -597,7 +597,7 @@ impl EntityView {
     /// * `first` - The first element of the pair for which to retrieve the target.
     /// * `index` - The index (0 for the first instance of the relationship).
     pub fn get_target_from_entity(&self, first: EntityT, index: i32) -> Entity {
-        Entity::new_from_existing(self.world, unsafe {
+        Entity::new_from_existing_raw(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, first, index)
         })
     }
@@ -627,7 +627,7 @@ impl EntityView {
     ///
     /// * The entity for which the target get_has been found.
     pub fn get_target_by_component_id(&self, relationship: EntityT, component_id: IdT) -> Entity {
-        Entity::new_from_existing(self.world, unsafe {
+        Entity::new_from_existing_raw(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, relationship, component_id as i32)
         })
     }
@@ -762,7 +762,7 @@ impl EntityView {
             "invalid lookup from null handle"
         );
         let c_path = CString::new(path).unwrap();
-        Entity::new_from_existing(self.world, unsafe {
+        Entity::new_from_existing_raw(self.world, unsafe {
             ecs_lookup_path_w_sep(
                 self.world,
                 self.raw_id,
@@ -1075,7 +1075,7 @@ impl EntityView {
             dest_id = unsafe { ecs_new_id(self.world) };
         }
 
-        let dest_entity = Entity::new_from_existing(self.world, dest_id);
+        let dest_entity = Entity::new_from_existing_raw(self.world, dest_id);
         unsafe { ecs_clone(self.world, dest_id, self.raw_id, copy_value) };
         dest_entity
     }
@@ -1109,7 +1109,7 @@ impl EntityView {
             "cannot use readonly world/stage to create mutable handle"
         );
 
-        Entity::new_from_existing(stage.raw_world, self.raw_id)
+        Entity::new_from_existing_raw(stage.raw_world, self.raw_id)
     }
 
     /// Returns a mutable entity handle for the current stage from another entity.
@@ -1130,12 +1130,12 @@ impl EntityView {
             "cannot use entity created for readonly world/stage to create mutable handle"
         );
 
-        Entity::new_from_existing(entity.world, self.raw_id)
+        Entity::new_from_existing_raw(entity.world, self.raw_id)
     }
 
     //might not be needed, in the original c++ impl it was used in the get_mut functions.
     #[doc(hidden)]
     fn set_stage(&self, stage: *mut WorldT) -> Entity {
-        Entity::new_from_existing(stage, self.raw_id)
+        Entity::new_from_existing_raw(stage, self.raw_id)
     }
 }

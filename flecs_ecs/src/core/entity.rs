@@ -66,7 +66,7 @@ impl Entity {
     /// ### Safety
     ///
     /// The world must be not be None if you want to do operations on the entity.
-    pub fn from_existing(world: Option<&World>, id: IdT) -> Self {
+    pub fn new_from_existing(world: Option<&World>, id: IdT) -> Self {
         if let Some(world) = world {
             Self {
                 entity_view: EntityView::new_from_existing(world.raw_world, id),
@@ -114,7 +114,7 @@ impl Entity {
     /// ### Arguments
     /// * `world` - The world the entity belongs to.
     /// * `id` - The entity id.
-    pub(crate) fn new_from_existing(world: *mut WorldT, id: IdT) -> Self {
+    pub(crate) fn new_from_existing_raw(world: *mut WorldT, id: IdT) -> Self {
         Self {
             entity_view: EntityView::new_from_existing(world, id),
         }
@@ -1544,7 +1544,7 @@ impl Entity {
     /// This function is useful when the API must provide an entity that
     /// belongs to a world, but the entity id is 0.
     pub fn null_w_world(world: *const WorldT) -> Entity {
-        Entity::new_from_existing(world as *mut _, 0)
+        Entity::new_from_existing_raw(world as *mut _, 0)
     }
 
     /// Entity id 0.

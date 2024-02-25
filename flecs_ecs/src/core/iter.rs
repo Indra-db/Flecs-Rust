@@ -59,14 +59,14 @@ impl<'a> Iter<'a> {
     ///
     /// `iter::system`
     pub fn system(&self) -> Entity {
-        Entity::new_from_existing(self.iter.world, self.iter.system)
+        Entity::new_from_existing_raw(self.iter.world, self.iter.system)
     }
 
     /// # C++ API equivalent
     ///
     /// `iter::event`
     pub fn get_event_as_entity(&self) -> Entity {
-        Entity::new_from_existing(self.iter.world, self.iter.event)
+        Entity::new_from_existing_raw(self.iter.world, self.iter.event)
     }
 
     /// # C++ API equivalent
@@ -93,7 +93,7 @@ impl<'a> Iter<'a> {
     ///
     /// `iter::entity`
     pub fn get_entity_handle(&self, row: usize) -> Entity {
-        unsafe { Entity::new_from_existing(self.iter.world, *self.iter.entities.add(row)) }
+        unsafe { Entity::new_from_existing_raw(self.iter.world, *self.iter.entities.add(row)) }
     }
 
     /// # C++ API equivalent
@@ -274,7 +274,7 @@ impl<'a> Iter<'a> {
     ///
     /// `iter::src`
     pub fn get_field_src(&self, index: i32) -> Entity {
-        unsafe { Entity::new_from_existing(self.iter.world, ecs_field_src(self.iter, index)) }
+        unsafe { Entity::new_from_existing_raw(self.iter.world, ecs_field_src(self.iter, index)) }
     }
 
     /// Obtain id matched for field.
