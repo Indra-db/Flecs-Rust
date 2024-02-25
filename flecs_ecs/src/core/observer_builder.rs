@@ -13,85 +13,9 @@ use super::{
     iterable::{Filterable, Iterable},
     observer::Observer,
     term::TermBuilder,
+    utility::types::ObserverSystemBindingCtx,
     world::World,
 };
-
-type EcsCtxFreeT = extern "C" fn(*mut std::ffi::c_void);
-
-struct ObserverBindingCtx {
-    each: Option<*mut c_void>,
-    each_entity: Option<*mut c_void>,
-    iter: Option<*mut c_void>,
-    iter_only: Option<*mut c_void>,
-    free_each: Option<EcsCtxFreeT>,
-    free_each_entity: Option<EcsCtxFreeT>,
-    free_iter: Option<EcsCtxFreeT>,
-    free_iter_only: Option<EcsCtxFreeT>,
-}
-
-impl Drop for ObserverBindingCtx {
-    fn drop(&mut self) {
-        if let Some(each) = self.each {
-            if let Some(free_each) = self.free_each {
-                free_each(each);
-            }
-        }
-        if let Some(each_entity) = self.each_entity {
-            if let Some(free_each_entity) = self.free_each_entity {
-                free_each_entity(each_entity);
-            }
-        }
-        if let Some(iter) = self.iter {
-            if let Some(free_iter) = self.free_iter {
-                free_iter(iter);
-            }
-        }
-        if let Some(iter_only) = self.iter_only {
-            if let Some(free_iter_only) = self.free_iter_only {
-                free_iter_only(iter_only);
-            }
-        }
-    }
-}
-
-#[allow(clippy::derivable_impls)]
-impl Default for ObserverBindingCtx {
-    fn default() -> Self {
-        Self {
-            each: None,
-            each_entity: None,
-            iter: None,
-            iter_only: None,
-            free_each: None,
-            free_each_entity: None,
-            free_iter: None,
-            free_iter_only: None,
-        }
-    }
-}
-impl ObserverBindingCtx {
-    pub fn new(
-        each: Option<*mut std::ffi::c_void>,
-        each_entity: Option<*mut std::ffi::c_void>,
-        iter: Option<*mut std::ffi::c_void>,
-        iter_only: Option<*mut std::ffi::c_void>,
-        free_each: Option<EcsCtxFreeT>,
-        free_each_entity: Option<EcsCtxFreeT>,
-        free_iter: Option<EcsCtxFreeT>,
-        free_iter_only: Option<EcsCtxFreeT>,
-    ) -> Self {
-        Self {
-            each,
-            each_entity,
-            iter,
-            iter_only,
-            free_each,
-            free_each_entity,
-            free_iter,
-            free_iter_only,
-        }
-    }
-}
 
 pub struct ObserverBuilder<'a, T>
 where
@@ -158,11 +82,11 @@ where
         obj
     }
 
-    fn get_binding_ctx(&mut self) -> &mut ObserverBindingCtx {
-        let mut binding_ctx: *mut ObserverBindingCtx = self.desc.binding_ctx as *mut _;
+    fn get_binding_ctx(&mut self) -> &mut ObserverSystemBindingCtx {
+        let mut binding_ctx: *mut ObserverSystemBindingCtx = self.desc.binding_ctx as *mut _;
 
         if binding_ctx.is_null() {
-            let new_binding_ctx = Box::<ObserverBindingCtx>::default();
+            let new_binding_ctx = Box::<ObserverSystemBindingCtx>::default();
             let static_ref = Box::leak(new_binding_ctx);
             binding_ctx = static_ref;
             self.desc.binding_ctx = binding_ctx as *mut c_void;
@@ -172,7 +96,7 @@ where
     }
 
     extern "C" fn binding_ctx_drop(ptr: *mut c_void) {
-        let ptr_struct: *mut ObserverBindingCtx = ptr as *mut ObserverBindingCtx;
+        let ptr_struct: *mut ObserverSystemBindingCtx = ptr as *mut ObserverSystemBindingCtx;
         unsafe {
             ptr::drop_in_place(ptr_struct);
         }
@@ -281,7 +205,7 @@ where
     where
         Func: FnMut(T::TupleType),
     {
-        let ctx: *mut ObserverBindingCtx = (*iter).binding_ctx as *mut _;
+        let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
         let each = (*ctx).each.unwrap();
         let each = &mut *(each as *mut Func);
 
@@ -308,7 +232,7 @@ where
     where
         Func: FnMut(&mut Entity, T::TupleType),
     {
-        let ctx: *mut ObserverBindingCtx = (*iter).binding_ctx as *mut _;
+        let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
         let each_entity = (*ctx).each_entity.unwrap();
         let each_entity = &mut *(each_entity as *mut Func);
 
@@ -337,7 +261,7 @@ where
         Func: FnMut(&Iter),
     {
         unsafe {
-            let ctx: *mut ObserverBindingCtx = (*iter).binding_ctx as *mut _;
+            let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
             let iter_only = (*ctx).iter_only.unwrap();
             let iter_only = &mut *(iter_only as *mut Func);
 
@@ -354,7 +278,7 @@ where
     where
         Func: FnMut(&Iter, T::TupleSliceType),
     {
-        let ctx: *mut ObserverBindingCtx = (*iter).binding_ctx as *mut _;
+        let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
         let iter_func = (*ctx).iter.unwrap();
         let iter_func = &mut *(iter_func as *mut Func);
 

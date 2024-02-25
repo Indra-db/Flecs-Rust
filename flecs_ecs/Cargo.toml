@@ -37,7 +37,7 @@ regex = "1.9.5"
 
 [features]
 flecs_generate_bindings = [] 
-flecs_systems = []
+flecs_system = []
 flecs_rules = []
 flecs_timer = []
 flecs_doc = []
@@ -48,7 +48,7 @@ flecs_ecs_asserts = []
 flecs_enable_all_asserts = ["flecs_ecs_asserts"]
 default = [
     "flecs_enable_all_asserts",
-    "flecs_systems",
+    "flecs_system",
     "flecs_timer",
     "flecs_doc",
     "flecs_rest",
