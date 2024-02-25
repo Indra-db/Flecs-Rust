@@ -622,12 +622,16 @@ impl Default for ecs_entity_desc_t {
 impl Default for ecs_event_desc_t {
     fn default() -> Self {
         Self {
+            event: Default::default(),
             ids: std::ptr::null(),
             table: std::ptr::null_mut(),
             other_table: std::ptr::null_mut(),
+            offset: Default::default(),
+            count: Default::default(),
+            entity: Default::default(),
             param: std::ptr::null(),
             observable: std::ptr::null_mut(),
-            ..Default::default()
+            flags: Default::default(),
         }
     }
 }
