@@ -120,6 +120,8 @@ where
 
         self.desc.callback = Some(Self::run_each::<Func> as unsafe extern "C" fn(_));
 
+        self.is_instanced = true;
+
         self.build()
     }
 
@@ -136,6 +138,8 @@ where
         binding_ctx.free_each_entity = Some(Self::on_free_each);
 
         self.desc.callback = Some(Self::run_each_entity::<Func> as unsafe extern "C" fn(_));
+
+        self.is_instanced = true;
 
         self.build()
     }
