@@ -1,5 +1,9 @@
 use super::c_binding::bindings::*;
-use super::component_registration::{ComponentType, Struct};
+use super::component_registration::{
+    try_register_enum_component, try_register_struct_component,
+    try_register_struct_component_named, ComponentType, Struct,
+};
+use super::world;
 use crate::core::component_registration::{CachedComponentData, ComponentData};
 
 use std::ffi::CStr;
@@ -704,5 +708,80 @@ impl Default for EcsOpaque {
             count: Default::default(),
             resize: Default::default(),
         }
+    }
+}
+
+impl Default for TickSource {
+    fn default() -> Self {
+        Self {
+            tick: false,
+            time_elapsed: 0.0,
+        }
+    }
+}
+
+impl CachedComponentData for TickSource {
+    fn register_explicit(world: *mut WorldT) {
+        try_register_struct_component::<Self>(world);
+    }
+
+    fn register_explicit_named(world: *mut WorldT, name: &str) {
+        try_register_struct_component_named::<Self>(world, name);
+    }
+
+    fn is_registered() -> bool {
+        Self::__get_once_lock_data().get().is_some()
+    }
+
+    fn get_data(world: *mut WorldT) -> &'static ComponentData {
+        try_register_struct_component::<Self>(world);
+        //this is safe because we checked if the component is registered / registered it
+        unsafe { Self::get_data_unchecked() }
+    }
+
+    fn get_id(world: *mut WorldT) -> IdT {
+        try_register_struct_component::<Self>(world);
+        //this is safe because we checked if the component is registered / registered it
+        unsafe { Self::get_id_unchecked() }
+    }
+
+    fn get_size(world: *mut WorldT) -> usize {
+        try_register_struct_component::<Self>(world);
+        //this is safe because we checked if the component is registered / registered it
+        unsafe { Self::get_size_unchecked() }
+    }
+
+    fn get_alignment(world: *mut WorldT) -> usize {
+        try_register_struct_component::<Self>(world);
+        //this is safe because we checked if the component is registered / registered it
+        unsafe { Self::get_alignment_unchecked() }
+    }
+
+    fn get_allow_tag(world: *mut WorldT) -> bool {
+        try_register_struct_component::<Self>(world);
+        //this is safe because we checked if the component is registered / registered it
+        unsafe { Self::get_allow_tag_unchecked() }
+    }
+
+    fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
+        static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
+        &ONCE_LOCK
+    }
+
+    // Function for C compatibility, returns null-terminated string.
+    fn get_symbol_name_c() -> &'static str {
+        use std::any::type_name;
+        static SYMBOL_NAME_C: OnceLock<String> = OnceLock::new();
+        SYMBOL_NAME_C.get_or_init(|| {
+            let mut name = type_name::<Self>().replace("::", ".");
+            name.push('\0'); // Add null terminator to make it C compatible.
+            name
+        })
+    }
+
+    // Function to return a &str slice without the null termination for Rust.
+    fn get_symbol_name() -> &'static str {
+        let name = Self::get_symbol_name_c();
+        &name[..name.len() - 1]
     }
 }
