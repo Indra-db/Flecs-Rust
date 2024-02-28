@@ -29,6 +29,7 @@ pub type TermIdT = ecs_term_id_t;
 pub type TermT = ecs_term_t;
 pub type PrimitiveKindT = ecs_primitive_kind_t;
 pub type FTimeT = f32;
+pub type TickSource = EcsTickSource;
 
 pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\0") };
 
@@ -316,6 +317,11 @@ impl CachedComponentData for EcsComponent {
         Self::__get_once_lock_data().get_or_init(get_ecs_component_data);
     }
 
+    fn register_explicit_named(world: *mut WorldT, name: &str) {
+        //this is already registered as FLECS__EEcsComponent
+        Self::__get_once_lock_data().get_or_init(get_ecs_component_data);
+    }
+
     fn is_registered() -> bool {
         Self::__get_once_lock_data().get().is_some()
     }
@@ -387,6 +393,11 @@ impl ComponentType<Struct> for Poly {}
 
 impl CachedComponentData for Poly {
     fn register_explicit(_world: *mut WorldT) {
+        //this is already registered as FLECS__EEcsComponent
+        Self::__get_once_lock_data().get_or_init(get_ecs_poly_data);
+    }
+
+    fn register_explicit_named(world: *mut WorldT, name: &str) {
         //this is already registered as FLECS__EEcsComponent
         Self::__get_once_lock_data().get_or_init(get_ecs_poly_data);
     }

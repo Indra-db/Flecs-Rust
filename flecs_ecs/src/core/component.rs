@@ -128,6 +128,17 @@ impl<T: CachedComponentData + Default> Component<T> {
         }
     }
 
+    pub fn new_named(world: *mut WorldT, name: &str) -> Self {
+        if !T::is_registered_with_world(world) {
+            T::register_explicit_named(world, name);
+        }
+
+        Self {
+            base: UntypedComponent::new(world, unsafe { T::get_id_unchecked() }),
+            _marker: PhantomData,
+        }
+    }
+
     fn get_binding_ctx(&mut self, type_hooks: &mut TypeHooksT) -> &mut ComponentBindingCtx {
         let mut binding_ctx: *mut ComponentBindingCtx = type_hooks.binding_ctx as *mut _;
 

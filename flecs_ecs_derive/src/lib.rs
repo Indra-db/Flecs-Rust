@@ -87,6 +87,11 @@ fn impl_cached_component_data_struct(
                 try_register_struct_component::<Self>(world);
             }
 
+            fn register_explicit_named(world: *mut WorldT, name: &str)
+            {
+                try_register_struct_component_named::<Self>(world, name);
+            }
+
             fn get_data(world: *mut WorldT) -> &'static ComponentData
             {
                 try_register_struct_component::<Self>(world);
@@ -301,6 +306,11 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
             fn register_explicit(world: *mut WorldT)
             {
                 try_register_enum_component::<Self>(world);
+            }
+
+            fn register_explicit_named(world: *mut WorldT, name: &str)
+            {
+                try_register_enum_component_named::<Self>(world, name);
             }
 
             fn get_data(world: *mut WorldT) -> &'static ComponentData

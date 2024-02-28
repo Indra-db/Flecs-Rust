@@ -8,7 +8,7 @@ use super::{
     lifecycle_traits::register_lifecycle_actions,
     utility::{
         errors::FlecsErrorCode,
-        functions::{get_full_type_name, is_empty_type},
+        functions::{copy_and_allocate_c_char_from_rust_str, get_full_type_name, is_empty_type},
     },
 };
 use crate::{core::utility::functions::get_only_type_name, ecs_assert};
@@ -60,6 +60,9 @@ pub trait ComponentType<T: ECSComponentType>: CachedComponentData {}
 pub trait CachedComponentData: Clone + Default {
     /// attempts to register the component with the world. If it's already registered, it does nothing.
     fn register_explicit(world: *mut WorldT);
+
+    /// attemps to register the component with name with the world. If it's already registered, it does nothing.
+    fn register_explicit_named(world: *mut WorldT, name: &str);
 
     /// checks if the component is registered with a world.
     fn is_registered() -> bool {
@@ -167,7 +170,7 @@ pub trait CachedComponentData: Clone + Default {
 //TODO need to support getting the id of a component if it's a pair type
 /// attempts to register the component with the world. If it's already registered, it does nothing.
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub fn try_register_struct_component<T>(world: *mut WorldT)
+pub(crate) fn try_register_struct_component_impl<T>(world: *mut WorldT, name: *const c_char)
 where
     T: CachedComponentData,
 {
@@ -179,18 +182,28 @@ where
     };
 
     if !is_registered || !is_registered_with_world {
-        register_component_data::<T>(
-            world,
-            std::ptr::null(),
-            true,
-            is_registered,
-            is_registered_with_world,
-        );
+        register_component_data::<T>(world, name, true, is_registered, is_registered_with_world);
     }
 }
 
+/// attempts to register the component with the world. If it's already registered, it does nothing.
+pub fn try_register_struct_component<T>(world: *mut WorldT)
+where
+    T: CachedComponentData,
+{
+    try_register_struct_component_impl::<T>(world, std::ptr::null());
+}
+
+pub fn try_register_struct_component_named<T>(world: *mut WorldT, name: &str)
+where
+    T: CachedComponentData,
+{
+    let name = copy_and_allocate_c_char_from_rust_str(name);
+    try_register_struct_component_impl::<T>(world, name);
+}
+
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub fn try_register_enum_component<T>(world: *mut WorldT)
+pub fn try_register_enum_component_impl<T>(world: *mut WorldT, name: *const c_char)
 where
     T: CachedComponentData + CachedEnumData,
 {
@@ -204,7 +217,7 @@ where
     if !is_registered || !is_registered_with_world {
         let has_newly_registered = register_component_data::<T>(
             world,
-            std::ptr::null(),
+            name,
             true,
             is_registered,
             is_registered_with_world,
@@ -231,6 +244,21 @@ where
             }
         }
     }
+}
+
+pub fn try_register_enum_component<T>(world: *mut WorldT)
+where
+    T: CachedComponentData + CachedEnumData,
+{
+    try_register_enum_component_impl::<T>(world, std::ptr::null());
+}
+
+pub fn try_register_enum_component_named<T>(world: *mut WorldT, name: &str)
+where
+    T: CachedComponentData + CachedEnumData,
+{
+    let name = copy_and_allocate_c_char_from_rust_str(name);
+    try_register_enum_component_impl::<T>(world, name);
 }
 
 /// returns the pre-registered component data for the component or an initial component data if it's not pre-registered.
@@ -342,12 +370,6 @@ where
         };
 
         let type_name = get_full_type_name::<T>();
-
-        //let rust_string = String::from(get_only_type_name::<T>());
-        //let c_string = std::ffi::CString::new(rust_string).expect("Failed to create CString");
-        //
-        //// Convert the CString into a raw pointer
-        //let name = c_string.into_raw();
 
         let name = if name.is_null() {
             unsafe { symbol.split(".").last().unwrap_unchecked().as_ptr() as *const i8 }

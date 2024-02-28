@@ -150,7 +150,7 @@ pub(crate) fn type_to_oper<T: OperType>() -> OperKind {
 /// Copies the given Rust &str to a C string and returns a pointer to the C string.
 /// this is intended to be used when the C code needs to take ownership of the string.
 /// for example when naming a component where the rust function takes &str and the C function takes *mut c_char
-pub fn copy_and_allocate_c_char_from_rust(data: &str) -> *mut c_char {
+pub fn copy_and_allocate_c_char_from_rust_str(data: &str) -> *mut c_char {
     ecs_assert!(
         data.is_ascii(),
         FlecsErrorCode::InvalidParameter,

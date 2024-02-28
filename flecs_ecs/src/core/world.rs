@@ -2618,6 +2618,19 @@ impl World {
         Component::<T>::new(self.raw_world)
     }
 
+    /// Find or register component.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The component type.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the component.
+    pub fn component_named<T: CachedComponentData>(&self, name: &str) -> Component<T> {
+        Component::<T>::new_named(self.raw_world, name)
+    }
+
     /// Find or register untyped component.
     ///
     /// # Type Parameters
