@@ -26,7 +26,7 @@ name = "query"
 harness = false
 
 [build-dependencies]
-bindgen = "0.68.1"
+bindgen = "0.69.4"
 cc = "1.0.83"
 regex = "1.9.5"
 
@@ -55,6 +55,7 @@ default = [
     "flecs_meta",
     "flecs_metrics",
     "flecs_rules",
+    #"flecs_generate_bindings"
 ]
 
 [target.'cfg(any())'.dependencies]
