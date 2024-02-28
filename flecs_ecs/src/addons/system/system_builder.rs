@@ -69,16 +69,20 @@ where
             query_builder: QueryBuilder::<T>::new_with_desc(world, &mut desc.query),
             is_instanced: false,
         };
+        obj.desc.query = *obj.query_builder.get_desc_query();
+        obj.desc.query.filter = *obj.filter_builder.get_desc_filter();
         T::populate(&mut obj);
         obj
     }
 
-    pub fn new_with_desc(world: &World, mut desc: ecs_system_desc_t) -> Self {
+    pub fn new_from_desc(world: &World, mut desc: ecs_system_desc_t) -> Self {
         let mut obj = Self {
             desc: desc,
             query_builder: QueryBuilder::<T>::new_with_desc(world, &mut desc.query),
             is_instanced: false,
         };
+        obj.desc.query = *obj.query_builder.get_desc_query();
+        obj.desc.query.filter = *obj.filter_builder.get_desc_filter();
         T::populate(&mut obj);
         obj
     }
@@ -90,7 +94,8 @@ where
             is_instanced: false,
         };
         T::populate(&mut obj);
-        //obj.desc.filter = *obj.filter_builder.get_desc_filter();
+        obj.desc.query = *obj.query_builder.get_desc_query();
+        obj.desc.query.filter = *obj.filter_builder.get_desc_filter();
         let mut entity_desc: ecs_entity_desc_t = Default::default();
         let c_name = std::ffi::CString::new(name).expect("Failed to convert to CString");
         entity_desc.name = c_name.as_ptr() as *const i8;
@@ -280,6 +285,8 @@ where
 
         self.desc.callback = Some(Self::run_each::<Func> as unsafe extern "C" fn(_));
 
+        self.is_instanced = true;
+
         self.build()
     }
 
@@ -296,6 +303,8 @@ where
         binding_ctx.free_each_entity = Some(Self::on_free_each);
 
         self.desc.callback = Some(Self::run_each_entity::<Func> as unsafe extern "C" fn(_));
+
+        self.is_instanced = true;
 
         self.build()
     }
@@ -398,27 +407,26 @@ where
         let each_entity = (*ctx).each_entity.unwrap();
         let each_entity = &mut *(each_entity as *mut Func);
 
-        while ecs_iter_next(iter) {
-            let components_data = T::get_array_ptrs_of_components(&*iter);
-            let array_components = &components_data.array_components;
-            let iter_count = (*iter).count as usize;
+        //while ecs_iter_next(iter) {
+        let components_data = T::get_array_ptrs_of_components(&*iter);
+        let array_components = &components_data.array_components;
+        let iter_count = (*iter).count as usize;
 
-            ecs_table_lock((*iter).world, (*iter).table);
+        ecs_table_lock((*iter).world, (*iter).table);
 
-            for i in 0..iter_count {
-                let mut entity =
-                    Entity::new_from_existing_raw((*iter).world, *(*iter).entities.add(i));
-                let tuple = if components_data.is_any_array_a_ref {
-                    let is_ref_array_components = &components_data.is_ref_array_components;
-                    T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-                } else {
-                    T::get_tuple(array_components, i)
-                };
+        for i in 0..iter_count {
+            let mut entity = Entity::new_from_existing_raw((*iter).world, *(*iter).entities.add(i));
+            let tuple = if components_data.is_any_array_a_ref {
+                let is_ref_array_components = &components_data.is_ref_array_components;
+                T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+            } else {
+                T::get_tuple(array_components, i)
+            };
 
-                each_entity(&mut entity, tuple);
-            }
-            ecs_table_unlock((*iter).world, (*iter).table);
+            each_entity(&mut entity, tuple);
         }
+        ecs_table_unlock((*iter).world, (*iter).table);
+        //}
     }
 
     unsafe extern "C" fn run_iter_only<Func>(iter: *mut IterT)

@@ -2,6 +2,8 @@ use std::ops::Deref;
 
 use libc::c_void;
 
+use crate::addons::system::system::System;
+use crate::addons::system::system_builder::SystemBuilder;
 use crate::core::c_binding::bindings::{_ecs_poly_is, ecs_stage_t_magic, ecs_world_t_magic};
 use crate::core::utility::errors::FlecsErrorCode;
 use crate::core::utility::functions::ecs_pair;
@@ -17,6 +19,7 @@ use super::c_binding::bindings::{
     ecs_readonly_begin, ecs_readonly_end, ecs_remove_all, ecs_run_post_frame, ecs_set_alias,
     ecs_set_automerge, ecs_set_context, ecs_set_entity_range, ecs_set_lookup_path, ecs_set_scope,
     ecs_set_stage_count, ecs_set_with, ecs_should_quit, ecs_stage_is_async, ecs_stage_is_readonly,
+    ecs_system_desc_t,
 };
 use super::c_types::{EntityT, IdT, WorldT, SEPARATOR};
 use super::component::{Component, UntypedComponent};
@@ -2664,7 +2667,7 @@ impl World {
     }
 }
 
-// event_builder
+// EventBuilder
 impl World {
     /// Create a new event.
     ///
@@ -2701,7 +2704,7 @@ impl World {
     }
 }
 
-// observer
+// Observer
 impl World {
     /// Upcast entity to an observer.
     /// The provided entity must be an observer.
@@ -2731,5 +2734,46 @@ impl World {
         Components: Iterable<'a>,
     {
         ObserverBuilder::<'a, Components>::new(self)
+    }
+
+    pub fn observer_builder_named<'a, Components>(
+        &self,
+        name: &str,
+    ) -> ObserverBuilder<'a, Components>
+    where
+        Components: Iterable<'a>,
+    {
+        ObserverBuilder::<'a, Components>::new_named(self, name)
+    }
+}
+
+/// System
+impl World {
+    pub fn system(&self, entity: Entity) -> System {
+        System::new_from_existing(self, entity)
+    }
+
+    pub fn system_builder<'a, Components>(&self) -> SystemBuilder<'a, Components>
+    where
+        Components: Iterable<'a>,
+    {
+        SystemBuilder::<'a, Components>::new(self)
+    }
+
+    pub fn system_builder_named<'a, Components>(&self, name: &str) -> SystemBuilder<'a, Components>
+    where
+        Components: Iterable<'a>,
+    {
+        SystemBuilder::<'a, Components>::new_named(self, name)
+    }
+
+    pub fn system_builder_from_desc<'a, Components>(
+        &self,
+        desc: ecs_system_desc_t,
+    ) -> SystemBuilder<'a, Components>
+    where
+        Components: Iterable<'a>,
+    {
+        SystemBuilder::<'a, Components>::new_from_desc(self, desc)
     }
 }
