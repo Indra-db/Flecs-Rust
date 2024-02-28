@@ -4,7 +4,7 @@ use crate::{
             ecs_field_w_size, ecs_get_mut_id, ecs_has_id, ecs_modified_id, ecs_strip_generation,
             ECS_GENERATION_MASK, ECS_ROW_MASK,
         },
-        c_types::{EntityT, IdT, InOutKind, IterT, OperKind, WorldT, ECS_PAIR},
+        c_types::{EntityT, IdT, InOutKind, IterT, OperKind, WorldT, ECS_DEPENDS_ON, ECS_PAIR},
         component_registration::CachedComponentData,
         utility::errors::FlecsErrorCode,
     },
@@ -25,6 +25,11 @@ pub fn ecs_entity_t_comb(lo: u64, hi: u64) -> u64 {
 #[inline(always)]
 pub fn ecs_pair(pred: u64, obj: u64) -> u64 {
     ECS_PAIR | ecs_entity_t_comb(obj, pred)
+}
+
+#[inline(always)]
+pub fn ecs_dependson(entity: EntityT) -> EntityT {
+    ecs_pair(ECS_DEPENDS_ON, entity)
 }
 
 #[allow(clippy::not_unsafe_ptr_arg_deref)]

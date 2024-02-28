@@ -28,6 +28,7 @@ pub type Flags32T = ecs_flags32_t;
 pub type TermIdT = ecs_term_id_t;
 pub type TermT = ecs_term_t;
 pub type PrimitiveKindT = ecs_primitive_kind_t;
+pub type FTimeT = f32;
 
 pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\0") };
 
@@ -632,6 +633,27 @@ impl Default for ecs_event_desc_t {
             param: std::ptr::null(),
             observable: std::ptr::null_mut(),
             flags: Default::default(),
+        }
+    }
+}
+
+impl Default for ecs_system_desc_t {
+    fn default() -> Self {
+        Self {
+            _canary: Default::default(),
+            entity: Default::default(),
+            query: Default::default(),
+            run: Default::default(),
+            callback: Default::default(),
+            ctx: std::ptr::null_mut(),
+            binding_ctx: std::ptr::null_mut(),
+            ctx_free: Default::default(),
+            binding_ctx_free: Default::default(),
+            interval: Default::default(),
+            rate: Default::default(),
+            tick_source: Default::default(),
+            multi_threaded: Default::default(),
+            no_readonly: Default::default(),
         }
     }
 }

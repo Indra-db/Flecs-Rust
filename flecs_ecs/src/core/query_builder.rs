@@ -74,6 +74,16 @@ where
         obj.desc.filter.entity = unsafe { ecs_entity_init(world.raw_world, &entity_desc) };
         obj
     }
+
+    pub fn new_with_desc(world: &World, desc: &mut ecs_query_desc_t) -> Self {
+        let mut obj = Self {
+            desc: *desc,
+            filter_builder: FilterBuilder::new_with_desc(world, &mut desc.filter, 0),
+            world: world.clone(),
+        };
+        T::populate(&mut obj);
+        obj
+    }
 }
 
 impl<'a, T> Filterable for QueryBuilder<'a, T>
