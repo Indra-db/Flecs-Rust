@@ -53,8 +53,8 @@ where
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
             world: world.clone(),
         };
+        obj.desc.filter = *obj.filter_builder.get_desc_filter();
         T::populate(&mut obj);
-        //todo!() should probably copy desc.filter to desc see observer, investigate this
         obj
     }
 
@@ -64,15 +64,15 @@ where
             filter_builder: FilterBuilder::new(world),
             world: world.clone(),
         };
-        T::populate(&mut obj);
         let entity_desc = ecs_entity_desc_t {
             name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
-
+        obj.desc.filter = *obj.filter_builder.get_desc_filter();
         obj.desc.filter.entity = unsafe { ecs_entity_init(world.raw_world, &entity_desc) };
+        T::populate(&mut obj);
         obj
     }
 
@@ -82,6 +82,7 @@ where
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
             world: world.clone(),
         };
+        obj.desc.filter = *obj.filter_builder.get_desc_filter();
         T::populate(&mut obj);
         obj
     }

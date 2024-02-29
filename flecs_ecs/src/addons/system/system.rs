@@ -138,11 +138,10 @@ impl System {
         }
     }
 
-    pub(crate) fn system_init(&mut self, world: &World) -> &mut Self {
+    pub(crate) fn system_init(world: &World) {
         world.component_named::<TickSource>(
             CStr::from_bytes_with_nul(b"flecs::system::TickSource\0").unwrap(),
         );
-        self
     }
 
     pub fn set_context(&mut self, context: *mut c_void) {

@@ -725,13 +725,13 @@ fn entity_clear() {
 #[test]
 #[ignore]
 fn entity_force_owned() {
-    todo!("prefab not get implemented");
+    todo!("prefab not yet implemented");
 }
 
 #[test]
 #[ignore]
 fn entity_force_owned_2() {
-    todo!("prefab not get implemented");
+    todo!("prefab not yet implemented");
 }
 
 #[test]

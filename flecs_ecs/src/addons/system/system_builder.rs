@@ -95,13 +95,13 @@ where
             query_builder: QueryBuilder::new_named(world, name),
             is_instanced: false,
         };
-        T::populate(&mut obj);
         obj.desc.query = *obj.query_builder.get_desc_query();
         obj.desc.query.filter = *obj.filter_builder.get_desc_filter();
         let mut entity_desc: ecs_entity_desc_t = Default::default();
         entity_desc.name = name.as_ptr();
         entity_desc.sep = SEPARATOR.as_ptr() as *const i8;
         obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
+        T::populate(&mut obj);
 
         #[cfg(feature = "flecs_pipeline")]
         unsafe {

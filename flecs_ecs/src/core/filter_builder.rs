@@ -65,7 +65,6 @@ where
             next_term_index: 0,
             _phantom: std::marker::PhantomData,
         };
-        T::populate(&mut obj);
 
         let entity_desc = ecs_entity_desc_t {
             name: name.as_ptr(),
@@ -75,6 +74,7 @@ where
         };
 
         obj.desc.entity = unsafe { ecs_entity_init(world.raw_world, &entity_desc) };
+        T::populate(&mut obj);
         obj
     }
 
