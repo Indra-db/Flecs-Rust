@@ -1,7 +1,6 @@
 use std::ffi::CStr;
 use std::ops::Deref;
-
-use libc::c_void;
+use std::os::raw::c_void;
 
 #[cfg(feature = "flecs_system")]
 use crate::addons::system::system::System;

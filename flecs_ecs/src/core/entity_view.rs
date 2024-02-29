@@ -5,10 +5,6 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-// External crate imports
-
-use libc::strlen;
-
 // Module imports from within the current crate
 use crate::{
     core::{c_binding::bindings::ecs_get_world, utility::errors::FlecsErrorCode},
@@ -203,7 +199,7 @@ impl EntityView {
             return None;
         }
 
-        let len = unsafe { strlen(raw_ptr) } as usize;
+        let len = unsafe { CStr::from_ptr(raw_ptr).to_bytes().len() };
 
         // Convert the C string to a Rust String without any new heap allocation.
         // The String will de-allocate the C string when it goes out of scope.
@@ -227,7 +223,7 @@ impl EntityView {
                 return None;
             }
 
-            let len = strlen(raw_ptr) as usize;
+            let len = CStr::from_ptr(raw_ptr).to_bytes().len();
 
             // Convert the C string to a Rust String without any new heap allocation.
             // The String will de-allocate the C string when it goes out of scope.

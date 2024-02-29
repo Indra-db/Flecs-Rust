@@ -1,6 +1,4 @@
-use std::os::raw::c_void;
-
-use libc::strlen;
+use std::{ffi::CStr, os::raw::c_void};
 
 use super::{
     archetype::Archetype,
@@ -41,7 +39,8 @@ impl Table {
                 return None;
             }
 
-            let len = strlen(raw_ptr) as usize;
+            let len = CStr::from_ptr(raw_ptr).to_bytes().len();
+
             Some(String::from_utf8_unchecked(Vec::from_raw_parts(
                 raw_ptr as *mut u8,
                 len,

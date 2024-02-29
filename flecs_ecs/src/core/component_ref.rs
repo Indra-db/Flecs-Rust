@@ -1,6 +1,4 @@
-use std::marker::PhantomData;
-
-use libc::c_void;
+use std::{marker::PhantomData, os::raw::c_void};
 
 use crate::{
     core::{

@@ -1,6 +1,4 @@
-use std::ffi::CStr;
-
-use libc::{c_void, memcpy, memset};
+use std::{ffi::CStr, os::raw::c_void, ptr};
 
 use crate::{
     core::{
@@ -323,12 +321,16 @@ pub trait FilterBuilderImpl: TermBuilder {
                     desc.terms_buffer =
                         ecs_os_api.calloc_.unwrap()(size_term as i32 * term_index + 1)
                             as *mut ecs_term_t;
-                    memcpy(
+                    // SAFETY: The following conditions must hold:
+                    // - `src` and `dst` must not overlap.
+                    // - `src` and `dst` must be valid for reads and writes of `src.len()` elements.
+                    // - `src.len()` must be equal to `dst.len()`.
+                    ptr::copy_nonoverlapping(
+                        desc.terms.as_ptr() as *mut c_void,
                         desc.terms_buffer as *mut _,
-                        desc.terms.as_ptr() as *const c_void,
                         size_term * term_index as usize,
                     );
-                    memset(
+                    ptr::write_bytes(
                         desc.terms.as_mut_ptr() as *mut _,
                         0,
                         size_term * FLECS_TERM_DESC_MAX as usize,

@@ -1,4 +1,4 @@
-use libc::strlen;
+use std::ffi::CStr;
 
 use crate::{core::utility::errors::FlecsErrorCode, ecs_assert};
 
@@ -37,8 +37,7 @@ impl Archetype {
                 return None;
             }
 
-            let len = strlen(raw_ptr) as usize;
-
+            let len = CStr::from_ptr(raw_ptr).to_bytes().len();
             // Convert the C string to a Rust String without any new heap allocation.
             // The String will de-allocate the C string when it goes out of scope.
             Some(String::from_utf8_unchecked(Vec::from_raw_parts(
