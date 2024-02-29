@@ -9,7 +9,7 @@ pub trait CachedEnumData: ComponentType<Enum> {
     const SIZE_ENUM_FIELDS: u32;
     type VariantIterator: Iterator<Item = Self>;
 
-    /// ### Note
+    /// # Note
     /// this function is used to pass the name to the C API.
     fn get_cstr_name(&self) -> &CStr;
 

@@ -108,7 +108,7 @@ impl World {
 
     /// deletes and recreates the world
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::reset`
     pub fn reset(&mut self) {
@@ -128,7 +128,7 @@ impl World {
     ///
     /// Returns a pointer to the C world object.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::c_ptr`
     pub fn get_as_ptr(&self) -> *mut WorldT {
@@ -139,7 +139,7 @@ impl World {
     ///
     /// Returns the time that has passed since the last frame.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::delta_time`
     pub fn delta_time(&self) -> f32 {
@@ -153,7 +153,7 @@ impl World {
     ///
     /// Returns the total number of frames that have passed.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::tick`
     pub fn tick(&self) -> i64 {
@@ -167,7 +167,7 @@ impl World {
     ///
     /// Returns the total time that has passed in the simulation.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::time`
     pub fn time(&self) -> f32 {
@@ -181,7 +181,7 @@ impl World {
     ///
     /// After calling this function, the next call to progress() returns false.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::quit`
     pub fn quit(&self) {
@@ -192,7 +192,7 @@ impl World {
 
     /// Registers an action to be executed when the world is destroyed.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::atfini`
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
@@ -208,7 +208,7 @@ impl World {
     ///
     /// True if quit has been called, false otherwise.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::should_quit`
     pub fn should_quit(&self) -> bool {
@@ -228,7 +228,7 @@ impl World {
     /// function needs to sleep to ensure it does not exceed the target_fps, when
     /// it is set. When 0 is provided for delta_time, the time will be measured.
     ///
-    /// ### safety
+    /// # Safety
     /// This function should only be ran from the main thread.
     ///
     /// # Parameters
@@ -237,7 +237,7 @@ impl World {
     /// # Returns
     /// The provided `delta_time`, or the measured time if 0 was provided.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::frame_begin`
     pub fn frame_begin(&self, delta_time: f32) -> f32 {
@@ -249,10 +249,10 @@ impl World {
     /// This operation must be called at the end of the frame, and always after
     /// `frame_begin`.
     ///
-    /// ### safety
+    /// # Safety
     /// The function should only be run from the main thread.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::frame_end`
     pub fn frame_end(&self) {
@@ -279,10 +279,10 @@ impl World {
     /// ## safety
     /// This function should only be ran from the main thread.
     ///
-    /// ### Returns
+    /// # Returns
     /// Whether the world is currently staged.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::readonly_begin`
     pub fn readonly_begin(&self) -> bool {
@@ -298,7 +298,7 @@ impl World {
     /// ## safety
     /// This function should only be run from the main thread.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// Whether the world is currently staged.
     pub fn readonly_end(&self) {
@@ -318,7 +318,7 @@ impl World {
     /// # Returns
     /// Whether the operation was successful.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::defer_begin`
     pub fn defer_begin(&self) -> bool {
@@ -335,7 +335,7 @@ impl World {
     /// # Returns
     /// Whether the operation was successful.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::defer_end`
     pub fn defer_end(&self) -> bool {
@@ -348,7 +348,7 @@ impl World {
     ///
     /// Whether deferring is enabled.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::is_deferred`
     pub fn is_deferred(&self) -> bool {
@@ -370,7 +370,7 @@ impl World {
     ///
     /// * `stages`: The number of stages.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::set_stage_count`
     pub fn set_stage_count(&self, stages: i32) {
@@ -387,7 +387,7 @@ impl World {
     ///
     /// The number of stages used for threading.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::get_stage_count`
     pub fn get_stage_count(&self) -> i32 {
@@ -403,7 +403,7 @@ impl World {
     ///
     /// The stage id.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::get_stage_id`
     pub fn get_stage_id(&self) -> i32 {
@@ -419,7 +419,7 @@ impl World {
     ///
     /// True if the world is a stage, false if not.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::is_stage`
     pub fn is_stage(&self) -> bool {
@@ -453,7 +453,7 @@ impl World {
     ///
     /// * `automerge` - Whether to enable or disable automerging.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::set_automerge`
     pub fn set_automerge(&self, automerge: bool) {
@@ -469,7 +469,7 @@ impl World {
     ///
     /// This operation may be called on an already merged stage or world.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::merge`
     pub fn merge(&self) {
@@ -496,7 +496,7 @@ impl World {
     ///
     /// A thread-specific pointer to the world.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::get_stage`
     pub fn get_stage(&self, stage_id: i32) -> Self {
@@ -526,7 +526,7 @@ impl World {
     ///
     /// The stage.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::async_stage`
     pub fn get_async_stage(&self) -> Self {
@@ -545,7 +545,7 @@ impl World {
     ///
     /// The actual world.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::get_world`
     pub fn get_world(&self) -> Self {
@@ -568,7 +568,7 @@ impl World {
     ///
     /// True if the world or stage is readonly.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::is_readonly`
     pub fn is_readonly(&self) -> bool {
@@ -584,7 +584,7 @@ impl World {
     ///
     /// * `ctx` - The world context.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::set_context`
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
@@ -598,7 +598,7 @@ impl World {
     ///
     /// The configured world context.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::get_context`
     pub fn get_context(&self) -> *mut std::ffi::c_void {
@@ -613,7 +613,7 @@ impl World {
     ///
     /// * `entity_count` - Number of entities to preallocate memory for.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::dim`
     pub fn preallocate_entity_count(&self, entity_count: i32) {
@@ -629,7 +629,7 @@ impl World {
     /// * `min` - Minimum entity ID issued.
     /// * `max` - Maximum entity ID issued.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::set_entity_range`
     pub fn set_entity_range(&self, min: EntityT, max: EntityT) {
@@ -646,7 +646,7 @@ impl World {
     ///
     /// * `enabled` - True if the range check should be enabled, false otherwise.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::enable_range_check`
     pub fn enable_range_check(&self, enabled: bool) {
@@ -663,7 +663,7 @@ impl World {
     ///
     /// Refer to `ecs_get_scope` for underlying implementation details.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::get_scope`
     #[inline(always)]
@@ -687,7 +687,7 @@ impl World {
     ///
     /// Refer to `ecs_set_scope` for underlying implementation details.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::set_scope`
     #[inline(always)]
@@ -709,7 +709,7 @@ impl World {
     ///
     /// Refer to `ecs_set_scope` for underlying implementation details.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::set_scope`
     #[inline(always)]
@@ -721,40 +721,40 @@ impl World {
     ///
     /// This function configures the search path used for looking up entities. The search path is an array of entity IDs that define the scopes within which lookup operations will search for entities.
     ///
-    /// ### Best Practices
+    /// # Best Practices
     ///
     /// * It's advisable to restore the previous search path after making temporary changes.
     ///
-    /// ### Search Path Evaluation
+    /// # Search Path Evaluation
     ///
     /// * The search path is evaluated starting from the last element of the array.
     ///
-    /// ### Default Behavior
+    /// # Default Behavior
     ///
     /// * The default search path includes `flecs.core`.
     ///
-    /// ### Overwriting
+    /// # Overwriting
     ///
     /// * Providing a custom search path will overwrite the existing search path.
     ///
-    /// ### Considerations
+    /// # Considerations
     ///
     /// * If the custom search path doesn't include `flecs.core`, operations that rely on looking up names from `flecs.core` may fail.
     /// * The search path array is not managed by the Rust runtime. Ensure the array remains valid for as long as it is used as the search path.
     ///
-    /// ### Array Termination
+    /// # Array Termination
     ///
     /// * The provided array must be terminated with a 0 element. This allows for pushing/popping elements onto/from an existing array without needing to call `ecs_set_lookup_path` again.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `search_path` - A 0-terminated array of entity IDs defining the new search path.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// Returns the current search path after the operation.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::set_lookup_path`
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
@@ -772,7 +772,7 @@ impl World {
     ///
     /// The entity if found, otherwise None.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::lookup`
     pub fn lookup_entity_by_name(&self, name: &str) -> Option<Entity> {
@@ -797,11 +797,11 @@ impl World {
 
     /// Sets a singleton component of type `T` on the world.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `component` - The singleton component to set on the world.
     ///  
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::set`
     pub fn set_component<T: CachedComponentData>(&self, component: T) {
@@ -811,16 +811,16 @@ impl World {
 
     /// Set a singleton pair using the second element type and a first id.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `Second`: The second element of the pair.
     ///
-    /// ### Parameters
+    /// # Parameters
     ///
     /// * `first`: The ID of the first element of the pair.
     /// * `second`: The second element of the pair to be set.
     ///  
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::set`
     pub fn set_pair_first_id<First>(&self, second: EntityT, first: First)
@@ -834,16 +834,16 @@ impl World {
     /// Set singleton pair.
     /// This operation sets the pair value, and uses First as type. If it does not yet exist, it will be added.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `First`: The first element of the pair
     /// * `Second`: The second element of the pair
     ///
-    /// ### Parameters
+    /// # Parameters
     ///
     /// * `first`: The value to set for first component.
     ///  
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::set`
     pub fn set_pair_first<First, Second>(&self, first: First)
@@ -857,16 +857,16 @@ impl World {
 
     /// Set a singleton pair using the second element type and a first id.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `Second`: The second element of the pair.
     ///
-    /// ### Parameters
+    /// # Parameters
     ///
     /// * `first`: The ID of the first element of the pair.
     /// * `second`: The second element of the pair to be set.
     ///  
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::set`
     pub fn set_pair_second_id<Second>(&self, first: EntityT, second: Second)
@@ -880,16 +880,16 @@ impl World {
     /// Set singleton pair.
     /// This operation sets the pair value, and uses Second as type. If it does not yet exist, it will be added.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `Second`: The second element of the pair
     ///
-    /// ### Parameters
+    /// # Parameters
     ///
     /// * `first`: The first element of the pair.
     /// * `value`: The value to set.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::set`
     pub fn set_pair_second<First, Second>(&self, second: Second)
@@ -903,13 +903,13 @@ impl World {
 
     /// signal that singleton component was modified.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `id` - The id of the component that was modified.
     ///
-    /// ### C++ API Equivalent
+    /// # See also
     ///
-    /// `world::modified`
+    /// * C++ API: `world::modified`
     #[inline(always)]
     pub fn mark_component_modified_with_id(&self, id: EntityT) {
         Entity::new_from_existing_raw(self.raw_world, id).mark_component_id_modified(id)
@@ -917,13 +917,13 @@ impl World {
 
     /// Signal that singleton component was modified.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The type of the component that was modified.
     ///
-    /// ### C++ API Equivalent
+    /// # See also
     ///
-    /// `world::modified`
+    /// * C++ API: `world::modified`
     #[inline(always)]
     pub fn mark_component_modified_with<T>(&self)
     where
@@ -934,15 +934,15 @@ impl World {
 
     /// Get singleton component as const.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The type of the component to get.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// The singleton component as const.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::get`
     #[inline(always)]
@@ -956,15 +956,15 @@ impl World {
 
     /// Get singleton component as mutable.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The type of the component to get.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// The singleton component as mutable.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::get_mut`
     #[inline(always)]
@@ -985,7 +985,7 @@ impl World {
     ///
     /// Returns: The reference singleton component.
     ///   
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::get_ref`
     #[inline(always)]
@@ -999,15 +999,15 @@ impl World {
 
     /// Get singleton entity for type.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The component type to get the singleton entity for.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// The entity representing the component.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::singleton`
     #[inline(always)]
@@ -1017,15 +1017,15 @@ impl World {
 
     /// Get const pointer for the first element of a singleton pair
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `First`: The first part of the pair.
     ///
-    /// ### Parameters
+    /// # Parameters
     ///
     /// * `second`: The second element of the pair.
     ///   
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::get`
     #[inline(always)]
@@ -1039,15 +1039,15 @@ impl World {
 
     /// Get mutable pointer for the first element of a singleton pair
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `First`: The first part of the pair.
     ///
-    /// ### Parameters
+    /// # Parameters
     ///
     /// * `second`: The second element of the pair.
     ///   
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::get_mut`
     #[inline(always)]
@@ -1061,15 +1061,15 @@ impl World {
 
     /// Get mutable pointer for the second element of a singleton pair
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `second`: The second part of the pair.
     ///
-    /// ### Parameters
+    /// # Parameters
     ///
     /// * `first`: The first element of the pair.
     ///   
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::get`
     #[inline(always)]
@@ -1083,15 +1083,15 @@ impl World {
 
     /// Get mutable pointer for the second element of a singleton pair
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `second`: The second part of the pair.
     ///
-    /// ### Parameters
+    /// # Parameters
     ///
     /// * `first`: The first element of the pair.
     ///  
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::get_mut`
     #[inline(always)]
@@ -1105,15 +1105,15 @@ impl World {
 
     /// Check if world has the provided struct component.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The component to check.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// True if the world has the provided component, false otherwise.
     ///  
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::has`
     #[inline(always)]
@@ -1126,15 +1126,15 @@ impl World {
 
     /// Check if world has the provided enum component.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The component to check.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// True if the world has the enum provided component, false otherwise.
     ///  
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::has`
     #[inline(always)]
@@ -1147,19 +1147,19 @@ impl World {
 
     /// Check if world has the provided enum constant.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The enum type.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `constant` - The enum constant to check.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// True if the world has the provided constant, false otherwise.
     ///  
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::has`
     #[inline(always)]
@@ -1173,16 +1173,16 @@ impl World {
 
     /// Check if world has the provided pair.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The first element of the pair.
     /// * `U` - The second element of the pair.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// True if the world has the provided component, false otherwise.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::has`
     #[inline(always)]
@@ -1197,16 +1197,16 @@ impl World {
 
     /// Check if world has the provided pair.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `first`: The first element of the pair.
     /// * `second`: The second element of the pair.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// True if the world has the provided component, false otherwise.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::has`
     #[inline(always)]
@@ -1216,7 +1216,7 @@ impl World {
 
     /// Add a singleton component.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The component to add.
     ///
@@ -1224,7 +1224,7 @@ impl World {
     ///
     /// Entity handle to the singleton component.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::add`
     #[inline(always)]
@@ -1235,7 +1235,7 @@ impl World {
 
     /// Add a singleton enum component.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The enum component to add.
     ///
@@ -1243,7 +1243,7 @@ impl World {
     ///
     /// Entity handle to the singleton enum component.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::add`
     #[inline(always)]
@@ -1257,7 +1257,7 @@ impl World {
 
     /// Add a singleton pair by ids
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `first`: The first element of the pair.
     /// * `second`: The second element of the pair.
@@ -1266,7 +1266,7 @@ impl World {
     ///
     /// Entity handle to the singleton pair.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::add`
     #[inline(always)]
@@ -1276,7 +1276,7 @@ impl World {
 
     /// Add a singleton pair.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `First` - The first element of the pair.
     /// * `Second` - The second element of the pair.
@@ -1285,7 +1285,7 @@ impl World {
     ///
     /// Entity handle to the singleton pair.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::add`
     #[inline(always)]
@@ -1300,11 +1300,11 @@ impl World {
 
     /// Add a singleton pair by first id.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `Second` - The second element of the pair.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `first`: The first element of the pair.
     ///
@@ -1319,11 +1319,11 @@ impl World {
 
     /// Add a singleton pair by second id.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `First` - The first element of the pair.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `second`: The second element of the pair.
     ///
@@ -1331,7 +1331,7 @@ impl World {
     ///
     /// Entity handle to the singleton pair.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::add`
     #[inline(always)]
@@ -1342,12 +1342,12 @@ impl World {
 
     /// Add a singleton pair with enum tag.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `First` - The first element of the pair.
     /// * `Second` - The second element of the pair of type enum.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `enum_value`: The enum value to add.
     ///
@@ -1355,7 +1355,7 @@ impl World {
     ///
     /// Entity handle to the singleton pair.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::add`
     #[inline(always)]
@@ -1370,11 +1370,11 @@ impl World {
 
     /// Remove singleton component.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The component to remove.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::remove`
     #[inline(always)]
@@ -1385,11 +1385,11 @@ impl World {
 
     /// Remove singleton enum component.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The enum component to remove.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::remove`
     #[inline(always)]
@@ -1400,16 +1400,16 @@ impl World {
 
     /// Remove singleton pair with enum tag.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `First` - The first element of the pair.
     /// * `Second` - The second element of the pair.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `enum_value` - The enum value to remove.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::remove`
     #[inline(always)]
@@ -1424,12 +1424,12 @@ impl World {
 
     /// Remove singleton pair by ids.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `first`: The first element of the pair.
     /// * `second`: The second element of the pair.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::remove`
     #[inline(always)]
@@ -1439,12 +1439,12 @@ impl World {
 
     /// Remove singleton pair.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `First` - The first element of the pair.
     /// * `Second` - The second element of the pair.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::remove`
     #[inline(always)]
@@ -1459,15 +1459,15 @@ impl World {
 
     /// Remove singleton pair by first id.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `Second` - The second element of the pair.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `first`: The first element of the pair.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::remove`
     #[inline(always)]
@@ -1478,15 +1478,15 @@ impl World {
 
     /// Remove singleton pair by second id.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `First` - The first element of the pair.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `second`: The second element of the pair.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::remove`
     #[inline(always)]
@@ -1497,11 +1497,11 @@ impl World {
 
     /// Iterate entities in root of world
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `func` - The function invoked for each child. Must match the signature `FnMut(Entity)`.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::children`
     #[inline(always)]
@@ -1511,19 +1511,19 @@ impl World {
 
     /// create alias for component
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The component type to create an alias for.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `alias` - The alias to create.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// The entity representing the component.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::use`
     #[inline(always)]
@@ -1541,16 +1541,16 @@ impl World {
 
     /// create alias for entity by name
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `name` - The name of the entity to create an alias for.
     /// * `alias` - The alias to create.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// The entity found by name.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::use`
     #[inline(always)]
@@ -1576,12 +1576,12 @@ impl World {
 
     /// create alias for entity
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `entity` - The entity to create an alias for.
     /// * `alias` - The alias to create.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::use`
     #[inline(always)]
@@ -1603,70 +1603,70 @@ impl World {
 
     /// Count entities with the provided id.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `id` - The id to count.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// The number of entities with the provided id.
     ///
-    /// ### C++ API Equivalent
+    /// # See also
     ///
-    /// `world::count`
+    /// * C++ API: `world::count`
     pub fn count_id(&self, id: IdT) -> i32 {
         unsafe { ecs_count_id(self.raw_world, id) }
     }
 
     /// Count entities with the provided component.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The component to count.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// The number of entities with the provided component.
     ///
-    /// ### C++ API Equivalent
+    /// # See also
     ///
-    /// `world::count`
+    /// * C++ API: `world::count`
     pub fn count_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> i32 {
         self.count_id(T::get_id(self.raw_world))
     }
 
     /// Count entities with the provided pair ids.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `first` - The ID of the first element of the pair.
     /// * `second` - The ID of the second element of the pair.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// The number of entities with the provided pair.
     ///
-    /// ### C++ API Equivalent
+    /// # See also
     ///
-    /// `world::count`
+    /// * C++ API: `world::count`
     pub fn count_pair_ids(&self, first: EntityT, second: EntityT) -> i32 {
         self.count_id(ecs_pair(first, second))
     }
 
     /// Count entities with the provided pair.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `First` - The first element of the pair.
     /// * `Second` - The second element of the pair.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// The number of entities with the provided pair.
     ///
-    /// ### C++ API Equivalent
+    /// # See also
     ///
-    /// `world::count`
+    /// * C++ API: `world::count`
     pub fn count_pair<First, Second>(&self) -> i32
     where
         First: CachedComponentData,
@@ -1680,63 +1680,63 @@ impl World {
 
     /// Count entities with the provided pair.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `Second` - The second element of the pair.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `first` - The ID of the first element of the pair.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// The number of entities with the provided pair.
     ///
-    /// ### C++ API Equivalent
+    /// # See also
     ///
-    /// `world::count`
+    /// * C++ API: `world::count`
     pub fn count_pair_first_id<Second: CachedComponentData>(&self, first: EntityT) -> i32 {
         self.count_pair_ids(first, Second::get_id(self.raw_world))
     }
 
     /// Count entities with the provided pair.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `First` - The first element of the pair.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `second` - The ID of the second element of the pair.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// The number of entities with the provided pair.
     ///
-    /// ### C++ API Equivalent
+    /// # See also
     ///
-    /// `world::count`
+    /// * C++ API: `world::count`
     pub fn count_pair_second_id<First: CachedComponentData>(&self, second: EntityT) -> i32 {
         self.count_pair_ids(First::get_id(self.raw_world), second)
     }
 
     /// Count entities with the provided enum constant.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The enum type.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `constant` - The enum constant to count.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// The number of entities with the provided enum constant.
     ///
-    /// ### C++ API Equivalent
+    /// # See also
     ///
-    /// `world::count`
+    /// * C++ API: `world::count`
     pub fn count_enum_constant<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
         &self,
         enum_value: T,
@@ -1751,22 +1751,22 @@ impl World {
 
     /// Count entities with the provided pair enum tag.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `First` - The first element of the pair.
     /// * `Second` - The second element of the pair.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `enum_value` - The enum value to count.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// The number of entities with the provided pair enum tag.
     ///
-    /// ### C++ API Equivalent
+    /// # See also
     ///
-    /// `world::count`
+    /// * C++ API: `world::count`
     pub fn count_enum_tag_pair<First, Second>(&self, enum_value: Second) -> i32
     where
         First: CachedComponentData,
@@ -1791,7 +1791,7 @@ impl World {
     /// * `parent_id` - The id of the scope to use.
     /// * `func` - The function to run.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::scope`
     pub fn run_in_scope_with_id<F: FnMut()>(&self, parent_id: IdT, mut func: F) {
@@ -1813,7 +1813,7 @@ impl World {
     ///
     /// * `func` - The function to run.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::scope`
     pub fn run_in_scope_with<T: CachedComponentData, F: FnMut()>(&self, func: F) {
@@ -1831,7 +1831,7 @@ impl World {
     ///
     /// A scoped world.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::scope`
     pub fn get_scoped_world_with_id(&self, parent_id: IdT) -> ScopedWorld {
@@ -1849,7 +1849,7 @@ impl World {
     ///
     /// A scoped world.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::scope`
     pub fn get_scoped_world_with<T: CachedComponentData>(&self) -> ScopedWorld {
@@ -1863,7 +1863,7 @@ impl World {
     /// * `id`: The id to create entities with.
     /// * `func`: The function to run.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::with`
     pub fn create_with_id<F: FnMut()>(&self, id: IdT, mut func: F) {
@@ -1884,7 +1884,7 @@ impl World {
     ///
     /// * `func`: The function to run.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::with`
     pub fn create_with<T: CachedComponentData, F: FnMut()>(&self, func: F) {
@@ -1899,7 +1899,7 @@ impl World {
     /// * `second`: The second element of the pair.
     /// * `func`: The function to run.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::with`
     pub fn create_with_pair_ids<F: FnMut()>(&self, first: IdT, second: IdT, func: F) {
@@ -1917,7 +1917,7 @@ impl World {
     ///
     /// * `func`: The function to run.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::with`
     pub fn create_with_pair<First, Second, F: FnMut()>(&self, func: F)
@@ -1945,7 +1945,7 @@ impl World {
     /// * `first`: The first element of the pair.
     /// * `func`: The function to run.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::with`
     pub fn create_with_pair_first_id<Second: CachedComponentData, F: FnMut()>(
@@ -1967,7 +1967,7 @@ impl World {
     /// * `second`: The second element of the pair.
     /// * `func`: The function to run.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::with`
     pub fn create_with_pair_second_id<First: CachedComponentData, F: FnMut()>(
@@ -1989,7 +1989,7 @@ impl World {
     /// * `enum_value`: The enum value to give the entity.
     /// * `func`: The function to run.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::with`
     pub fn create_with_enum_constant<T, F>(&self, enum_value: T, func: F)
@@ -2015,7 +2015,7 @@ impl World {
     /// * `enum_value`: The enum value to give the entity.
     /// * `func`: The function to run.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::with`
     pub fn create_with_enum_tag_pair<First, Second, F>(&self, enum_value: Second, func: F)
@@ -2039,7 +2039,7 @@ impl World {
     ///
     /// * `id`: The id to delete.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::delete_with`
     pub fn delete_entities_with_id(&self, id: IdT) {
@@ -2054,7 +2054,7 @@ impl World {
     ///
     /// * `T`: The component type to delete.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::delete_with`
     pub fn delete_entities_with<T: CachedComponentData>(&self) {
@@ -2068,7 +2068,7 @@ impl World {
     /// * `first`: The first id of the pair.
     /// * `second`: The second id of the pair.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::delete_with`
     pub fn delete_entities_with_pair_ids(&self, first: IdT, second: IdT) {
@@ -2082,7 +2082,7 @@ impl World {
     /// * `First`: The first element of the pair.
     /// * `Second`: The second element of the pair.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::delete_with`
     pub fn delete_entities_with_pair<First, Second>(&self)
@@ -2106,7 +2106,7 @@ impl World {
     ///
     /// * `first`: The first id of the pair.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::delete_with`
     pub fn delete_entities_with_pair_first_id<Second: CachedComponentData>(&self, first: IdT) {
@@ -2123,7 +2123,7 @@ impl World {
     ///
     /// * `second`: The second id of the pair.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::delete_with`
     pub fn delete_entities_with_pair_second_id<First: CachedComponentData>(&self, second: IdT) {
@@ -2140,7 +2140,7 @@ impl World {
     ///
     /// * `enum_value`: The enum value to filter against for deletion.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::delete_with`
     pub fn delete_entities_with_enum_constant<
@@ -2163,7 +2163,7 @@ impl World {
     ///
     /// * `enum_value`: The enum value to filter against for deletion.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// * `world::delete_with`
     pub fn delete_entities_with_enum_tag_pair<First, Second>(&self, enum_value: Second)
@@ -2183,7 +2183,7 @@ impl World {
     ///
     /// * `id`: The id to remove.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::remove_all`
     pub fn remove_all_id(&self, id: IdT) {
@@ -2198,7 +2198,7 @@ impl World {
     ///
     /// * `T`: The component type to remove.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::remove_all`
     pub fn remove_all<T: CachedComponentData>(&self) {
@@ -2212,7 +2212,7 @@ impl World {
     /// * `first`: The first id of the pair.
     /// * `second`: The second id of the pair.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::remove_all`
     pub fn remove_all_pair_ids(&self, first: IdT, second: IdT) {
@@ -2226,7 +2226,7 @@ impl World {
     /// * `First`: The first element of the pair.
     /// * `Second`: The second element of the pair.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::remove_all`
     pub fn remove_all_pair<First, Second>(&self)
@@ -2250,7 +2250,7 @@ impl World {
     ///
     /// * `first`: The first id of the pair.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::remove_all`
     pub fn remove_all_pair_first_id<Second: CachedComponentData>(&self, first: IdT) {
@@ -2267,7 +2267,7 @@ impl World {
     ///
     /// * `second`: The second id of the pair.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::remove_all`
     pub fn remove_all_pair_second_id<First: CachedComponentData>(&self, second: IdT) {
@@ -2284,7 +2284,7 @@ impl World {
     ///
     /// * `enum_value`: The enum value to filter against for removal.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::remove_all`
     pub fn remove_all_enum_constant<
@@ -2307,7 +2307,7 @@ impl World {
     ///
     /// * `enum_value`: The enum value to filter against for removal.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::remove_all`
     pub fn remove_all_enum_tag_pair<First, Second>(&self, enum_value: Second)
@@ -2336,7 +2336,7 @@ impl World {
     /// });
     /// ```
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::defer`
     pub fn defer<F: FnOnce()>(&self, func: F) {
@@ -2351,7 +2351,7 @@ impl World {
 
     /// Suspends deferring of operations.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::defer_suspend`
     pub fn defer_suspend(&self) {
@@ -2362,7 +2362,7 @@ impl World {
 
     /// Resumes deferring of operations.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::defer_resume`
     pub fn defer_resume(&self) {
@@ -2381,7 +2381,7 @@ impl World {
     ///
     /// True if the entity exists, false otherwise.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::exists`
     pub fn is_entity_existing(&self, entity: EntityT) -> bool {
@@ -2449,7 +2449,7 @@ impl World {
     ///
     /// The entity with the provided generation.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::ensure`
     pub fn ensure_entity_with_generation_is_alive(&self, entity: EntityT) -> Entity {
@@ -2464,7 +2464,7 @@ impl World {
     /// * `action` - The action to run.
     /// * `ctx` - The context to pass to the action.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::run_post_frame`
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
@@ -2488,7 +2488,7 @@ impl World {
     ///
     /// Entity wrapping the id of the enum constant.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::entity`
     pub fn get_entity_from_enum_constant<T>(&self, enum_value: T) -> Entity
@@ -2515,7 +2515,7 @@ impl World {
     ///
     /// The Id type of the enum constant.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::id`
     pub fn get_id_from_enum_constant<T>(&self, enum_value: T) -> Id
@@ -2542,7 +2542,7 @@ impl World {
     ///
     /// The raw id of the enum constant.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::id`
     pub fn get_raw_id_from_enum_constant<T>(&self, enum_value: T) -> IdT
@@ -2562,7 +2562,7 @@ impl World {
     ///
     /// * `name` - The name to use for the new entity.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::entity`
     pub fn new_entity_named_type<T: CachedComponentData>(&self, name: &str) -> Entity {
@@ -2581,7 +2581,7 @@ impl World {
     ///
     /// * `name` - The name to use for the new entity.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::entity`
     pub fn new_entity_named(&self, name: &str) -> Entity {
@@ -2590,7 +2590,7 @@ impl World {
 
     /// Create a new entity.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::entity`
     pub fn new_entity(&self) -> Entity {
@@ -2603,7 +2603,7 @@ impl World {
     ///
     /// * `id` - The id to use for the new entity.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::entity`
     pub fn new_entity_w_id(&self, id: EntityT) -> Entity {
@@ -2679,7 +2679,7 @@ impl World {
     ///
     /// A new (untyped) event builder.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::event`
     pub fn event_untyped(&self, event: EntityT) -> EventBuilder {
@@ -2696,7 +2696,7 @@ impl World {
     ///
     /// A new (typed) event builder.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
     /// `world::event`
     pub fn event<T: EventData + CachedComponentData>(&self) -> EventBuilderTyped<T> {

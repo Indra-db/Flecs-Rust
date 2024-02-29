@@ -309,9 +309,9 @@ pub trait TermBuilder: Sized {
     ///
     /// * `term` - The term to set.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
-    /// term_builder_i::set_term`
+    /// * C++ API: `term_builder_i::set_term`
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     fn set_term(&mut self, term: *mut TermT) {
         let self_term: &mut Term = self.get_term();
@@ -715,7 +715,6 @@ pub trait TermBuilder: Sized {
         self.inout_stage(InOutKind::In)
     }
 
-    /// Short for inout_stage(flecs::InOut).
     /// Use when system uses get_mut
     fn read_write(&mut self) -> &mut Self {
         self.inout_stage(InOutKind::InOut)

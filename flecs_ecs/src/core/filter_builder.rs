@@ -179,9 +179,9 @@ pub trait FilterBuilderImpl: TermBuilder {
 
     /// set itself to be instanced
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
-    /// `filter_builder_i::instanced`
+    /// * C++ API: `filter_builder_i::instanced`
     fn instanced(&mut self) -> &mut Self {
         self.get_desc_filter().instanced = true;
         self
@@ -193,9 +193,9 @@ pub trait FilterBuilderImpl: TermBuilder {
     ///
     /// * `flags` - the flags to set
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
-    /// `filter_builder_i::filter_flags`
+    /// * C++ API: `filter_builder_i::filter_flags`
     fn filter_flags(&mut self, flags: ecs_flags32_t) -> &mut Self {
         self.get_desc_filter().flags |= flags;
         self
@@ -207,9 +207,9 @@ pub trait FilterBuilderImpl: TermBuilder {
     ///
     /// * `expr` - the expression to set
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
-    /// `filter_builder_i::expr`
+    /// * C++ API: `filter_builder_i::expr`
     fn expr(&mut self, expr: &str) -> &mut Self {
         ecs_assert!(
             *self.get_expr_count() == 0,

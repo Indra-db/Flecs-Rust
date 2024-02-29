@@ -26,7 +26,7 @@ impl Type {
 
     /// Convert type to comma-separated string
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// * `type::str`
     pub fn to_str(&self) -> CString {
@@ -37,7 +37,7 @@ impl Type {
 
     /// Return number of ids in type
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// * `type::count`
     #[inline]
@@ -47,7 +47,7 @@ impl Type {
 
     /// Return slice to array.
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// * `type::array`
     #[inline]
@@ -57,7 +57,7 @@ impl Type {
 
     /// Get id at specified index in type
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// * `type::get`
     pub fn get_id(&self, index: usize) -> Id {

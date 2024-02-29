@@ -79,9 +79,9 @@ where
     ///
     /// return true if entities changed, otherwise false.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
-    /// `query_base::changed`
+    /// * C++ API: `query_base::changed`
     pub fn changed(&mut self) -> bool {
         unsafe { ecs_query_changed(self.query, std::ptr::null()) }
     }
@@ -95,9 +95,9 @@ where
     ///
     /// true if query is orphaned, otherwise false.
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
-    /// `query_base::orphaned`
+    /// * C++ API: `query_base::orphaned`
     pub fn orphaned(&mut self) -> bool {
         unsafe { ecs_query_orphaned(self.query) }
     }
@@ -112,9 +112,9 @@ where
     ///
     /// Returns a pointer to the group info
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
-    /// `query_base::get_group_info`
+    /// * C++ API: `query_base::get_group_info`
     pub fn get_group_info(&mut self, group_id: u64) -> *const QueryGroupInfoT {
         unsafe { ecs_query_get_group_info(self.query, group_id) }
     }
@@ -129,9 +129,9 @@ where
     ///
     /// Returns a (void) pointer to the group context
     ///
-    /// # C++ API Equivalent
+    /// # See also
     ///
-    /// `query_base::group_ctx`
+    /// * C++ API: `query_base::group_ctx`
 
     pub fn get_group_context(&mut self, group_id: u64) -> *mut c_void {
         let group_info = self.get_group_info(group_id);

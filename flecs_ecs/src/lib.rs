@@ -5,5 +5,4 @@
 
 pub mod core;
 
-// lib.rs
 pub mod addons;

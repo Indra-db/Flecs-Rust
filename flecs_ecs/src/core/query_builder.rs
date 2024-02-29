@@ -193,7 +193,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// * `compare`: The compare function used to sort the components.
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `query_builder_i::order_by`
     fn order_by<T>(&mut self, compare: OrderByFn<T>) -> &mut Self
@@ -213,7 +213,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// * `component`: The component used to sort.
     /// * `compare`: The compare function used to sort the components.
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `query_builder_i::order_by`
     fn order_by_id(&mut self, component: IdT, compare: ecs_order_by_action_t) -> &mut Self {
@@ -246,7 +246,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// * `group_by_action`: Callback that determines group id for table.
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `query_builder_i::group_by`
     fn group_by<T>(&mut self, group_by_action: GroupByFn) -> &mut Self
@@ -267,7 +267,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     /// * `component`: The component used to determine the group rank.
     /// * `group_by_action`: Callback that determines group id for table.
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `query_builder_i::group_by`
     fn group_by_id(&mut self, component: IdT, group_by_action: ecs_group_by_action_t) -> &mut Self {

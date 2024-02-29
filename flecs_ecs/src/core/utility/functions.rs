@@ -90,11 +90,11 @@ pub fn ecs_record_to_row(row: u32) -> i32 {
 /// This function sets the given value for an entity in the ECS world, ensuring
 /// that the type of the component is valid.
 ///
-/// ### Type Parameters
+/// # Type Parameters
 ///
 /// * `T`: The type of the component data. Must implement `CachedComponentData`.
 ///
-/// ### Parameters
+/// # Parameters
 ///
 /// * `entity`: The ID of the entity.
 /// * `value`: The value to set for the component.
@@ -160,7 +160,6 @@ pub fn copy_and_allocate_c_char_from_rust_str(data: &str) -> *mut c_char {
     let len = bytes.len() + 1; // +1 for the null terminator
     let memory_c_str = unsafe { ecs_os_api.malloc_.unwrap()(len as i32) } as *mut u8;
 
-    // Iterate over the byte slice and write each byte to the memory
     for (i, &byte) in bytes.iter().enumerate() {
         unsafe {
             memory_c_str.add(i).write(byte);

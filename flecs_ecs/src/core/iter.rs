@@ -55,28 +55,28 @@ impl<'a> Iter<'a> {
         }
     }
 
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::system`
     pub fn system(&self) -> Entity {
         Entity::new_from_existing_raw(self.iter.world, self.iter.system)
     }
 
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::event`
     pub fn get_event_as_entity(&self) -> Entity {
         Entity::new_from_existing_raw(self.iter.world, self.iter.event)
     }
 
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::event_id`
     pub fn get_event_id(&self) -> Id {
         Id::new_from_existing(self.iter.world, self.iter.event_id)
     }
 
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::world`
     pub fn get_world(&self) -> World {
@@ -89,56 +89,56 @@ impl<'a> Iter<'a> {
     ///
     /// * `row` - Row being iterated over
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::entity`
     pub fn get_entity_handle(&self, row: usize) -> Entity {
         unsafe { Entity::new_from_existing_raw(self.iter.world, *self.iter.entities.add(row)) }
     }
 
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::c_ptr`
     pub fn get_raw_ref(&mut self) -> &mut IterT {
         self.iter
     }
 
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::count`
     pub fn count(&self) -> usize {
         self.iter.count as usize
     }
 
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::delta_time`
     pub fn get_delta_time(&self) -> FTime {
         self.iter.delta_time
     }
 
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::delta_system_time`
     pub fn get_delta_system_time(&self) -> FTime {
         self.iter.delta_system_time
     }
 
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::type`
     pub fn get_type(&self) -> Type {
         unsafe { Type::new(self.iter.world, ecs_table_get_type(self.iter.table)) }
     }
 
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::table`
     pub fn get_table(&self) -> Table {
         Table::new(self.iter.world, self.iter.table)
     }
 
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::range`
     pub fn get_table_range(&mut self) -> TableRange {
@@ -150,7 +150,7 @@ impl<'a> Iter<'a> {
     ///
     /// returns true if current type is a module or it contains module contents
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::has_module`
     pub fn has_module(&self) -> bool {
@@ -160,7 +160,7 @@ impl<'a> Iter<'a> {
     /// Access ctx.
     /// ctx contains the context pointer assigned to a system
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::ctx`
     pub fn get_context_ptr<T: CachedComponentData>(&mut self) -> &mut T {
@@ -170,7 +170,7 @@ impl<'a> Iter<'a> {
     /// Access ctx.
     /// ctx contains the context pointer assigned to a system
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::ctx`
     pub fn get_context_ptr_untyped(&self) -> *mut c_void {
@@ -180,7 +180,7 @@ impl<'a> Iter<'a> {
     /// Access param.
     /// param contains the pointer passed to the param argument of system::run
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::param`
     pub fn param_untyped(&self) -> *mut c_void {
@@ -190,7 +190,7 @@ impl<'a> Iter<'a> {
     /// Access param.
     /// param contains the pointer passed to the param argument of system::run
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::param`
     pub fn param<T: CachedComponentData>(&mut self) -> &mut T {
@@ -205,7 +205,7 @@ impl<'a> Iter<'a> {
     ///
     /// Returns whether field is matched on self
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::is_self`
     pub fn is_self(&self, index: i32) -> bool {
@@ -220,7 +220,7 @@ impl<'a> Iter<'a> {
     ///
     /// Returns whether field is set
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::is_set`
     pub fn is_set(&self, index: i32) -> bool {
@@ -235,7 +235,7 @@ impl<'a> Iter<'a> {
     ///
     /// Returns whether field is readonly
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::is_readonly`
     pub fn is_readonly(&self, index: i32) -> bool {
@@ -244,7 +244,7 @@ impl<'a> Iter<'a> {
 
     /// Number of fields in iterator.
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::field_count`
     pub fn get_field_count(&self) -> i32 {
@@ -257,7 +257,7 @@ impl<'a> Iter<'a> {
     ///
     /// * `index` - The field id.
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::size`
     pub fn get_field_size(&self, index: i32) -> usize {
@@ -270,7 +270,7 @@ impl<'a> Iter<'a> {
     ///
     /// * `index` - The field index.
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::src`
     pub fn get_field_src(&self, index: i32) -> Entity {
@@ -283,7 +283,7 @@ impl<'a> Iter<'a> {
     ///
     /// * `index` - The field index.
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::id`
     pub fn get_field_id(&self, index: i32) -> Id {
@@ -313,7 +313,7 @@ impl<'a> Iter<'a> {
     ///
     /// * `index` - The field index.
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::column_index`
     pub fn get_field_column_index(&self, index: i32) -> i32 {
@@ -322,7 +322,7 @@ impl<'a> Iter<'a> {
 
     /// Convert current iterator result to string
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::str`
     pub fn to_str(&self) -> CString {
@@ -349,7 +349,7 @@ impl<'a> Iter<'a> {
     ///
     /// Returns a column object that can be used to access the field data.
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::field`
     pub fn get_field_data<T: CachedComponentData>(&self, index: i32) -> Column<T> {
@@ -367,7 +367,7 @@ impl<'a> Iter<'a> {
     ///
     /// Returns an UntypedColumn object that can be used to access the field data.
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::field`
     pub fn get_untyped_field_data(&self, index: i32) -> UntypedColumn {
@@ -380,7 +380,7 @@ impl<'a> Iter<'a> {
     ///
     /// The total number of tables that will be iterated over.
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::table_count`
     pub fn get_table_count(&self) -> i32 {
@@ -397,7 +397,7 @@ impl<'a> Iter<'a> {
     ///
     /// Can only be used when iterating queries and/or systems.
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::changed`
     pub fn is_changed(&self) -> bool {
@@ -412,7 +412,7 @@ impl<'a> Iter<'a> {
     /// When this operation is invoked, the components of the current table will
     /// not be marked dirty.
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::skip`
     pub fn skip(&mut self) {
@@ -427,7 +427,7 @@ impl<'a> Iter<'a> {
     ///
     /// grouped queries only
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
     /// `iter::group_id`
     pub fn get_group_id(&self) -> IdT {

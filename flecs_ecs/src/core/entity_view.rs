@@ -55,7 +55,7 @@ impl Deref for EntityView {
 
 impl EntityView {
     /// Wrap an existing entity id.
-    /// ### Arguments
+    /// # Arguments
     /// * `world` - The world the entity belongs to.
     /// * `id` - The entity id.
     ///
@@ -75,7 +75,7 @@ impl EntityView {
     }
 
     /// Wrap an existing entity id.
-    /// ### Arguments
+    /// # Arguments
     /// * `world` - The world the entity belongs to as void*.
     /// * `id` - The entity id.
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
@@ -95,7 +95,7 @@ impl EntityView {
     }
 
     /// Wrap an existing entity id.
-    /// ### Arguments
+    /// # Arguments
     /// * `world` - The world the entity belongs to.
     /// * `id` - The entity id.
     pub(crate) fn new_from_existing(world: *mut WorldT, id: IdT) -> Self {
@@ -158,7 +158,7 @@ impl EntityView {
     }
 
     /// Return the hierarchical entity path.
-    /// ### Note
+    /// # Note
     /// if you're using the default separator "::" you can use get_hierachy_path_default
     /// which does no extra heap allocations to communicate with C
     pub fn get_hierachy_path(&self, sep: &str, init_sep: &str) -> Option<String> {
@@ -171,7 +171,7 @@ impl EntityView {
     }
 
     /// Return the hierarchical entity path relative to a parent.
-    /// ### Note
+    ///
     /// if you're using the default separator "::" you can use get_hierachy_path_default
     /// which does no extra heap allocations to communicate with C
     pub fn get_hierachy_path_from_parent_id(
@@ -245,7 +245,7 @@ impl EntityView {
     }
 
     /// Return the hierarchical entity path relative to a parent type.
-    /// ### Note
+    /// # Note
     /// if you're using the default separator "::" you can use get_hierachy_path_default
     /// which does no extra heap allocations to communicate with C
     pub fn get_hierachy_path_from_parent_type<T: CachedComponentData>(
@@ -282,7 +282,7 @@ impl EntityView {
     }
 
     /// Get table range for the entity.
-    /// ### Returns
+    /// # Returns
     /// Returns a range with the entity's row as offset and count set to 1. If
     /// the entity is not stored in a table, the function returns a range with
     /// count 0.
@@ -305,7 +305,7 @@ impl EntityView {
 
     /// Iterate over component ids of an entity.
     ///
-    /// ### Arguments
+    /// # Arguments
     /// * `func` - The closure invoked for each matching ID. Must match the signature `FnMut(Id)`.
     fn for_each_component<F>(&self, mut func: F)
     where
@@ -342,7 +342,7 @@ impl EntityView {
 
     /// Iterates over matching pair IDs of an entity.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `first` - The first ID to match against.
     /// * `second` - The second ID to match against.
@@ -383,7 +383,7 @@ impl EntityView {
 
     /// Iterate over targets for a given relationship.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `relationship` - The relationship for which to iterate the targets.
     /// * `func` - The closure invoked for each target. Must match the signature `FnMut(Entity)`.
@@ -402,11 +402,11 @@ impl EntityView {
 
     /// Iterate over targets for a given relationship.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `Relationship` - The relationship for which to iterate the targets.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `func` - The function invoked for each target.
     pub fn for_each_target_in_relationship<T, F>(&self, func: F)
@@ -422,7 +422,7 @@ impl EntityView {
 
     /// Iterate children for entity
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `relationship` - The relationship to follow
     /// * `func` - The function invoked for each child. Must match the signature `FnMut(Entity)`.
@@ -471,7 +471,7 @@ impl EntityView {
 
     /// Iterate children for entity
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * T - The relationship to follow
     /// * `func` - The function invoked for each child. Must match the signature `FnMut(Entity)`.
@@ -485,7 +485,7 @@ impl EntityView {
 
     /// Iterate children for entity
     /// This operation follows the ChildOf relationship.
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `func` - The function invoked for each child. Must match the signature `FnMut(Entity)`.
     pub fn for_each_child_of<F>(&self, func: F)
@@ -497,11 +497,11 @@ impl EntityView {
 
     /// Get (struct) Component from entity
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The component type to get
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// * `*const T` - The enum component, nullptr if the entity does not have the component
     pub fn get_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> *const T {
@@ -511,11 +511,11 @@ impl EntityView {
 
     /// Get enum constant
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The enum component type which to get the constant
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// * `*const T` - The enum component, nullptr if the entity does not have the component
     pub fn get_enum_component<T: CachedComponentData + ComponentType<Enum>>(&self) -> *const T {
@@ -543,11 +543,11 @@ impl EntityView {
 
     /// Get component value as untyped pointer
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `component_id` - The component to get
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// * `*const c_void` - Pointer to the component value, nullptr if the entity does not have the component
     pub fn get_component_by_id(&self, component_id: IdT) -> *const c_void {
@@ -559,7 +559,7 @@ impl EntityView {
     /// first nor the second part of the pair are components, the operation
     /// will fail.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `first` - The first element of the pair
     /// * `second` - The second element of the pair
@@ -573,11 +573,11 @@ impl EntityView {
     /// index can be used to iterate through targets, in case the entity get_has
     /// multiple instances for the same relationship.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `First` - The first element of the pair.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `index` - The index (0 for the first instance of the relationship).
     pub fn get_target_from_component<First: CachedComponentData>(&self, index: i32) -> Entity {
@@ -592,7 +592,7 @@ impl EntityView {
     /// index can be used to iterate through targets, in case the entity get_has
     /// multiple instances for the same relationship.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `first` - The first element of the pair for which to retrieve the target.
     /// * `index` - The index (0 for the first instance of the relationship).
@@ -618,12 +618,12 @@ impl EntityView {
     /// get_target_by_relationship_and_component_id(world, EcsIsA, T::get_id<Position>(world))
     /// ```
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `relationship` - The relationship to follow.
     /// * `id` - The id to lookup.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// * The entity for which the target get_has been found.
     pub fn get_target_by_component_id(&self, relationship: EntityT, component_id: IdT) -> Entity {
@@ -637,15 +637,15 @@ impl EntityView {
     /// This function is a convenient wrapper around `get_target_by_relationship_and_component_id`,
     /// allowing callers to provide a type and automatically deriving the component id.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The component type to use for deriving the id.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `relationship` - The relationship to follow.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// * The entity for which the target get_has been found.
     #[inline(always)]
@@ -661,16 +661,16 @@ impl EntityView {
     /// This function extends `get_target`, allowing callers to provide two component types.
     /// It retrieves the target entity for the combined pair of those component ids.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `First` - The first component type to use for deriving the id.
     /// * `Second` - The second component type to use for deriving the id.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `relationship` - The relationship to follow.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// * The entity for which the target get_has been found.
     #[inline(always)]
@@ -701,11 +701,11 @@ impl EntityView {
 
     /// Retrieves the depth for the given relationship.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `relationship` - The relationship for which to get the depth.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// * The depth of the relationship.
     #[inline(always)]
@@ -718,11 +718,11 @@ impl EntityView {
     /// This function is a convenient wrapper around `get_depth_by_id`, allowing callers
     /// to provide a type and automatically deriving the relationship id.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The relationship type to use for deriving the id.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// * The depth of the relationship.
     #[inline(always)]
@@ -734,7 +734,7 @@ impl EntityView {
     ///
     /// This function is shorthand for getting the target using the `EcsChildOf` relationship.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// * The parent of the entity.
     #[inline(always)]
@@ -747,11 +747,11 @@ impl EntityView {
     /// Lookup an entity in the scope of this entity. The provided path may
     /// contain double colons as scope separators, for example: "Foo::Bar".
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `path` - The name of the entity to lookup.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// The found entity, or `Entity::null` if no entity matched.
     #[inline(always)]
@@ -776,11 +776,11 @@ impl EntityView {
 
     /// Check if entity has the provided entity.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `entity` - The entity to check.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// True if the entity has the provided entity, false otherwise.
     #[inline(always)]
@@ -790,11 +790,11 @@ impl EntityView {
 
     /// Check if entity has the provided struct component.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The component to check.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// True if the entity has the provided component, false otherwise.
     pub fn has<T: CachedComponentData + ComponentType<Struct>>(&self) -> bool {
@@ -803,11 +803,11 @@ impl EntityView {
 
     /// Check if entity has the provided enum component.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The component to check.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// True if the entity has the provided component, false otherwise.
     pub fn has_enum<T: CachedComponentData + ComponentType<Enum>>(&self) -> bool {
@@ -819,15 +819,15 @@ impl EntityView {
 
     /// Check if entity has the provided enum constant.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The enum type.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `constant` - The enum constant to check.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// True if the entity has the provided constant, false otherwise.
     pub fn has_enum_constant<T>(&self, constant: T) -> bool
@@ -847,12 +847,12 @@ impl EntityView {
 
     /// Check if entity has the provided pair.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The first element of the pair.
     /// * `U` - The second element of the pair.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// True if the entity has the provided component, false otherwise.
     pub fn has_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
@@ -866,12 +866,12 @@ impl EntityView {
 
     /// Check if entity has the provided pair.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `first` - The first element of the pair.
     /// * `second` - The second element of the pair.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// True if the entity has the provided component, false otherwise.
     pub fn has_pair_by_ids(&self, first: IdT, second: IdT) -> bool {
@@ -880,16 +880,16 @@ impl EntityView {
 
     /// Check if entity has the provided pair with an enum constant.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     ///
     /// * `T` - The first element of the pair.
     /// * `U` - The second element of the pair as an enum constant.
     ///
-    /// ### Arguments
+    /// # Arguments
     ///
     /// * `constant` - The enum constant.
     ///
-    /// ### Returns
+    /// # Returns
     ///
     /// True if the entity has the provided component, false otherwise.
     pub fn has_pair_with_enum_constant<
@@ -913,10 +913,10 @@ impl EntityView {
     /// Check if the entity owns the provided entity.
     /// An entity is owned if it is not shared from a base entity.
     ///
-    /// ### Parameters
+    /// # Parameters
     /// - `entity_id`: The entity to check.
     ///
-    /// ### Returns
+    /// # Returns
     /// - `true` if the entity owns the provided entity, `false` otherwise.
     pub fn is_entity_owner_of_id(&self, entity_id: IdT) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, entity_id) }
@@ -924,10 +924,10 @@ impl EntityView {
 
     /// Check if the entity owns the provided entity.
     ///
-    /// ### Parameters
+    /// # Parameters
     /// - `entity`: The entity to check.
     ///
-    /// ### Returns
+    /// # Returns
     /// - `true` if the entity owns the provided entity, `false` otherwise.
     pub fn is_entity_owner_of_entity(&self, entity: Entity) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, entity.raw_id) }
@@ -936,10 +936,10 @@ impl EntityView {
     /// Check if the entity owns the provided component.
     /// A component is owned if it is not shared from a base entity.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     /// - `T`: The component to check.
     ///
-    /// ### Returns
+    /// # Returns
     /// - `true` if the entity owns the provided component, `false` otherwise.
     pub fn is_entity_owner_of<T: CachedComponentData>(&self) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, T::get_id(self.world)) }
@@ -947,11 +947,11 @@ impl EntityView {
 
     /// Check if the entity owns the provided pair.
     ///
-    /// ### Parameters
+    /// # Parameters
     /// - `first`: The first element of the pair.
     /// - `second`: The second element of the pair.
     ///
-    /// ### Returns
+    /// # Returns
     /// - `true` if the entity owns the provided pair, `false` otherwise.
     pub fn is_entity_owner_of_pair_ids(&self, first: IdT, second: IdT) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, ecs_pair(first, second)) }
@@ -959,11 +959,11 @@ impl EntityView {
 
     /// Check if the entity owns the provided pair.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     /// - `T`: The first element of the pair.
     /// - `U`: The second element of the pair.
     ///
-    /// ### Returns
+    /// # Returns
     /// - `true` if the entity owns the provided pair, `false` otherwise.
     pub fn is_entity_owner_of_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
         unsafe {
@@ -977,10 +977,10 @@ impl EntityView {
 
     /// Test if id is enabled.
     ///
-    /// ### Parameters
+    /// # Parameters
     /// - `id`: The id to test.
     ///
-    /// ### Returns
+    /// # Returns
     /// - `true` if enabled, `false` if not.
     pub fn is_id_enabled(&self, id: IdT) -> bool {
         unsafe { ecs_is_enabled_id(self.world, self.raw_id, id) }
@@ -988,10 +988,10 @@ impl EntityView {
 
     /// Test if component is enabled.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     /// - `T`: The component to test.
     ///
-    /// ### Returns
+    /// # Returns
     /// - `true` if enabled, `false` if not.
     pub fn is_component_enabled<T: CachedComponentData>(&self) -> bool {
         unsafe { ecs_is_enabled_id(self.world, self.raw_id, T::get_id(self.world)) }
@@ -999,11 +999,11 @@ impl EntityView {
 
     /// Test if pair is enabled.
     ///
-    /// ### Parameters
+    /// # Parameters
     /// - `first`: The first element of the pair.
     /// - `second`: The second element of the pair.
     ///
-    /// ### Returns
+    /// # Returns
     /// - `true` if enabled, `false` if not.
     pub fn is_pair_ids_enabled(&self, first: IdT, second: IdT) -> bool {
         unsafe { ecs_is_enabled_id(self.world, self.raw_id, ecs_pair(first, second)) }
@@ -1011,11 +1011,11 @@ impl EntityView {
 
     /// Test if pair is enabled.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     /// - `T`: The first element of the pair.
     /// - `U`: The second element of the pair.
     ///
-    /// ### Returns
+    /// # Returns
     /// - `true` if enabled, `false` if not.
     pub fn is_pair_enabled<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
         self.is_pair_ids_enabled(T::get_id(self.world), U::get_id(self.world))
@@ -1023,13 +1023,13 @@ impl EntityView {
 
     /// Test if pair is enabled.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     /// - `T`: The first element of the pair.
     ///
-    /// ### Arguments
+    /// # Arguments
     /// - `second`: The second element of the pair.
     ///
-    /// ### Returns
+    /// # Returns
     /// - `true` if enabled, `false` if not.
     pub fn is_pair_enabled_first<T: CachedComponentData>(&self, second: IdT) -> bool {
         self.is_pair_ids_enabled(T::get_id(self.world), second)
@@ -1037,13 +1037,13 @@ impl EntityView {
 
     /// Test if pair is enabled.
     ///
-    /// ### Type Parameters
+    /// # Type Parameters
     /// - `T`: The second element of the pair.
     ///
-    /// ### Arguments
+    /// # Arguments
     /// - `first`: The second element of the pair.
     ///
-    /// ### Returns
+    /// # Returns
     /// - `true` if enabled, `false` if not.
     pub fn is_pair_enabled_second<U: CachedComponentData>(&self, first: IdT) -> bool {
         self.is_pair_ids_enabled(first, U::get_id(self.world))
@@ -1059,11 +1059,11 @@ impl EntityView {
     /// If `copy_value` is set to `true`, the value of the current entity is also copied to
     /// the destination entity. Otherwise, only the entity's structure is cloned without copying the value.
     ///
-    /// ### Parameters
+    /// # Parameters
     /// - `copy_value`: A boolean indicating whether to copy the entity's value to the destination entity.
     /// - `dest_id`: The identifier of the destination entity. If zero, a new entity is created.
     ///
-    /// ### Returns
+    /// # Returns
     /// - An `Entity` object representing the destination entity.
     ///
     /// ## Safety
@@ -1097,10 +1097,10 @@ impl EntityView {
     /// entity outside of a system. It is allowed to perform entity operations
     /// directly on the world, as long as the world is not in staged mode.
     ///
-    /// ### Parameters
+    /// # Parameters
     /// - `stage`: The current stage.
     ///
-    /// ### Returns
+    /// # Returns
     /// - An entity handle that allows for mutations in the current stage.
     pub fn get_mutable_handle_for_stage(&self, stage: &World) -> Entity {
         ecs_assert!(
@@ -1118,10 +1118,10 @@ impl EntityView {
     /// from another entity. This is useful in `each` functions, which only
     /// provide a handle to the entity being iterated over.
     ///
-    /// ### Parameters
+    /// # Parameters
     /// - `entity`: Another mutable entity.
     ///
-    /// ### Returns
+    /// # Returns
     /// - An entity handle that allows for mutations in the current stage.
     pub fn get_mutable_handle_from_entity(&self, entity: &EntityView) -> Entity {
         ecs_assert!(

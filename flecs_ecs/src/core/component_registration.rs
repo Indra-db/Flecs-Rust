@@ -108,7 +108,7 @@ pub trait CachedComponentData: Clone + Default {
     fn get_symbol_name() -> &'static str;
 
     /// returns the component data of the component.
-    /// ### Safety
+    /// # Safety
     /// safe version is `get_data`
     /// this function is unsafe because it assumes that the component is registered,
     /// the lock data being initialized is not checked and will panic if it's not.
@@ -118,7 +118,7 @@ pub trait CachedComponentData: Clone + Default {
     }
 
     /// returns the component id of the component.
-    /// ### Safety
+    /// # Safety
     /// safe version is `get_id`
     /// this function is unsafe because it assumes that the component is registered,
     /// the lock data being initialized is not checked and will panic if it's not.
@@ -130,7 +130,7 @@ pub trait CachedComponentData: Clone + Default {
     }
 
     /// returns the component size of the component.
-    /// ### Safety
+    /// # Safety
     /// safe version is `get_size`
     /// this function is unsafe because it assumes that the component is registered,
     /// the lock data being initialized is not checked and will panic if it's not.
@@ -139,7 +139,7 @@ pub trait CachedComponentData: Clone + Default {
     }
 
     /// returns the component alignment of the component.
-    /// ### Safety
+    /// # Safety
     /// safe version is `get_alignment`
     /// this function is unsafe because it assumes that the component is registered,
     /// the lock data being initialized is not checked and will panic if it's not.
@@ -148,7 +148,7 @@ pub trait CachedComponentData: Clone + Default {
     }
 
     /// returns the component allow_tag of the component.
-    /// ### Safety
+    /// # Safety
     /// safe version is `get_allow_tag`
     /// this function is unsafe because it assumes that the component is registered,
     /// the lock data being initialized is not checked and will panic if it's not.

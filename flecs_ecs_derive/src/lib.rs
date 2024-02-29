@@ -18,7 +18,7 @@ use syn::{Data, DeriveInput, Fields};
 /// - Types deriving `CachedComponentData` should also implement `Clone` and `Default`.
 ///   For enums, you'll need to provide an explicit implementation of `Default`. Structs can often use `#[derive(Default)]` for a derived implementation.
 ///
-/// ### Note:
+/// # Note:
 ///
 /// Ensure that enums annotated with `Component` have at least one variant; otherwise, a compile-time error will be triggered.
 ///

@@ -410,7 +410,7 @@ impl Id {
 
     /// Convert id to string
     ///
-    /// ### Safety
+    /// # Safety
     /// safe version : 'to_str'
     /// This function is unsafe because it assumes that the id is valid.
     ///
@@ -454,7 +454,7 @@ impl Id {
     }
 
     /// Convert role of id to string.
-    /// ### Safety
+    /// # Safety
     /// safe version : 'to_flags_str'
     /// This function is unsafe because it assumes that the id is valid.
     ///

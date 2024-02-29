@@ -5,7 +5,7 @@ use crate::core::c_binding::bindings::{
 
 /// Sets the logging level to the specified value.
 ///
-/// ### Arguments
+/// # Arguments
 ///
 /// * `level` - An integer representing the logging level.
 pub fn set_log_level(level: i32) {
@@ -16,7 +16,7 @@ pub fn set_log_level(level: i32) {
 
 /// Returns the current logging level.
 ///
-/// ### Returns
+/// # Returns
 ///
 /// An integer representing the current logging level.
 pub fn get_log_level() -> i32 {
@@ -25,7 +25,7 @@ pub fn get_log_level() -> i32 {
 
 /// Enables or disables colors in logging.
 ///
-/// ### Arguments
+/// # Arguments
 ///
 /// * `enabled` - A boolean value indicating whether to enable or disable colors.
 pub fn enable_color_logging(enabled: bool) {
@@ -36,7 +36,7 @@ pub fn enable_color_logging(enabled: bool) {
 
 /// Enables or disables timestamps in logging.
 ///
-/// ### Arguments
+/// # Arguments
 ///
 /// * `enabled` - A boolean value indicating whether to enable or disable timestamps.
 pub fn enable_timestamp_logging(enabled: bool) {
@@ -47,7 +47,7 @@ pub fn enable_timestamp_logging(enabled: bool) {
 
 /// Enables or disables time delta in logging.
 ///
-/// ### Arguments
+/// # Arguments
 ///
 /// * `enabled` - A boolean value indicating whether to enable or disable time delta.
 pub fn enable_timedelta_logging(enabled: bool) {

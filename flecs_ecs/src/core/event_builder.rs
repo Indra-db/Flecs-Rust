@@ -37,9 +37,9 @@ impl EventBuilder {
     /// * `world` - The world to create the EventBuilder in
     /// * `event` - The event to create the EventBuilder for
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
-    /// event_builder_base::event_builder_base
+    /// * C++ API: `event_builder_base::event_builder_base`
     pub fn new(world: &World, event: EntityT) -> Self {
         let mut obj = Self {
             world: world.clone(),
@@ -57,9 +57,9 @@ impl EventBuilder {
     ///
     /// * `C` - The component to add to the event
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
-    /// event_builder_base::id
+    /// * C++ API: `event_builder_base::id`
     pub fn add_component_to_emit<C>(&mut self) -> &mut Self
     where
         C: CachedComponentData,
@@ -78,9 +78,9 @@ impl EventBuilder {
     ///
     /// * `id` - The id of the component to add to the event
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
-    /// event_builder_base::id
+    /// * C++ API: event_builder_base::id
     pub fn add_component_id_to_emit(&mut self, id: IdT) -> &mut Self {
         self.ids.array = self.ids_array.as_mut_ptr();
         unsafe {
@@ -97,9 +97,9 @@ impl EventBuilder {
     /// * `C1` - The first component to add to the event
     /// * `C2` - The second component to add to the event
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
-    /// event_builder_base::id
+    /// * C++ API: event_builder_base::id
     pub fn add_pair_to_emit<C1, C2>(&mut self) -> &mut Self
     where
         C1: CachedComponentData,
@@ -118,9 +118,9 @@ impl EventBuilder {
     /// * `first` - The id of the first component to add to the event
     /// * `second` - The id of the second component to add to the event
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
-    /// event_builder_base::id
+    /// * C++ API: event_builder_base::id
     pub fn add_pair_ids_to_emit(&mut self, first: IdT, second: IdT) -> &mut Self {
         self.add_component_id_to_emit(ecs_pair(first, second))
     }
@@ -135,9 +135,9 @@ impl EventBuilder {
     ///
     /// * `second` - The id of the second component to add to the event
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
-    /// event_builder_base::id
+    /// * C++ API: event_builder_base::id
     pub fn add_pair_second_id_to_emit<First>(&mut self, second: IdT) -> &mut Self
     where
         First: CachedComponentData,
@@ -151,9 +151,9 @@ impl EventBuilder {
     ///
     /// * `entity` - The entity to emit for the event
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
-    /// event_builder_base::entity
+    /// * C++ API: event_builder_base::entity
     pub fn set_entity_to_emit(&mut self, entity: EntityT) -> &mut Self {
         let record: *mut ecs_record_t = unsafe { ecs_record_find(self.world.raw_world, entity) };
 
@@ -183,9 +183,9 @@ impl EventBuilder {
     /// * `offset` - The offset tof the table to emit for the event
     /// * `count` - The count of the table to emit for the event
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
-    /// event_builder_base::table
+    /// * C++ API: event_builder_base::table
     pub fn set_table_to_emit(&mut self, table: *mut TableT, offset: i32, count: i32) -> &mut Self {
         self.desc.table = table;
         self.desc.offset = offset;
@@ -195,9 +195,9 @@ impl EventBuilder {
 
     /// Emit the event
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
-    /// event_builder_base::emit
+    /// * C++ API: event_builder_base::emit
     pub fn emit(&mut self) {
         ecs_assert!(self.ids.count > 0, ECS_INVALID_PARAMETER, "No ids to emit");
         ecs_assert!(
@@ -225,7 +225,7 @@ impl EventBuilderImpl for EventBuilder {
     ///
     /// C++ API equivalent
     ///
-    /// event_builder_base::ctx
+    /// * C++ API: event_builder_base::ctx
     fn set_event_data(&mut self, data: Self::BuiltType) -> &mut Self {
         self.desc.param = data as *const c_void;
         self
@@ -254,9 +254,9 @@ impl<'a, T: EventData + CachedComponentData> EventBuilderTyped<'a, T> {
     /// * `world` - The world to create the EventBuilder in
     /// * `event` - The event to create the EventBuilder for
     ///
-    /// # C++ API equivalent
+    /// # See also
     ///
-    /// event_builder_typed::event_builder_typed
+    /// * C++ API: event_builder_typed::event_builder_typed
     pub fn new(world: &World, event: EntityT) -> Self {
         Self {
             builder: EventBuilder::new(world, event),
@@ -297,7 +297,7 @@ where
     ///
     /// C++ API equivalent
     ///
-    /// event_builder_typed::ctx
+    /// * C++ API: event_builder_typed::ctx
     fn set_event_data(&mut self, data: Self::BuiltType) -> &mut Self {
         self.desc.param = data as *const T as *const c_void;
         self
