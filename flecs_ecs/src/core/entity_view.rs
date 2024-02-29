@@ -156,12 +156,8 @@ impl EntityView {
 
     //TODO check if we need this -> can we use get_symbol from CachedComponentData?
     /// Returns the entity symbol.
-    pub fn get_symbol(&self) -> &'static str {
-        unsafe {
-            CStr::from_ptr(ecs_get_symbol(self.world, self.raw_id))
-                .to_str()
-                .unwrap_or("")
-        }
+    pub fn get_symbol(&self) -> &'static CStr {
+        unsafe { CStr::from_ptr(ecs_get_symbol(self.world, self.raw_id)) }
     }
 
     /// Return the hierarchical entity path.
@@ -682,8 +678,8 @@ impl EntityView {
             ecs_pair(First::get_id(self.world), Second::get_id(self.world)),
         )
     }
-    //todo!("this needs a better name and documentation, the rest of the cpp functions still have to be done as well")
-    //double todo, I removed the second template parameter and changed the fn parameter second to entityT, check validity
+    // TODO this needs a better name and documentation, the rest of the cpp functions still have to be done as well
+    // TODO, I removed the second template parameter and changed the fn parameter second to entityT, check validity
     pub fn get_target_for_pair_as_first<First: CachedComponentData>(
         &self,
         second: EntityT,

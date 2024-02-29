@@ -331,8 +331,6 @@ impl<'a> Iter<'a> {
         unsafe { CStr::from_ptr(c_str) }
     }
 
-    // TODO? in C++ API there is a mutable and immutable version of this function
-    // Maybe we should create a ColumnView struct that is immutable and use the Column struct for mutable access?
     /// Get read/write acccess to field data.
     /// If the matched id for the specified field does not match with the provided
     /// type or if the field is readonly, the function will assert.
@@ -351,7 +349,9 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// `iter::field`
+    /// * C++ API: `iter::field`
+    // TODO? in C++ API there is a mutable and immutable version of this function
+    // Maybe we should create a ColumnView struct that is immutable and use the Column struct for mutable access?
     pub fn get_field_data<T: CachedComponentData>(&self, index: i32) -> Column<T> {
         self.get_field_internal::<T>(index)
     }

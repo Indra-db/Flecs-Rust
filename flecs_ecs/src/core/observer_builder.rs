@@ -375,6 +375,15 @@ pub trait ObserverBuilderImpl: FilterBuilderImpl {
 
     fn increment_event_count(&mut self);
 
+    /// Specify the event(s) for when the observer should run.
+    ///
+    /// # Arguments
+    ///
+    /// * `event` - The event to add
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `observer_builder_i::event`
     fn add_event(&mut self, event: EntityT) -> &mut Self {
         let event_count = self.get_event_count() as usize;
         self.increment_event_count();
@@ -383,7 +392,15 @@ pub trait ObserverBuilderImpl: FilterBuilderImpl {
         self
     }
 
-    //todo!() function name
+    /// Specify the event(s) for when the observer should run.
+    ///
+    /// # Type parameters
+    ///
+    /// * `T` - The type of the event
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `observer_builder_i::event`
     fn add_event_of_type<T>(&mut self) -> &mut Self
     where
         T: CachedComponentData,
@@ -396,7 +413,15 @@ pub trait ObserverBuilderImpl: FilterBuilderImpl {
         self
     }
 
-    //todo!() better function name
+    /// Invoke observer for anything that matches its filter on creation
+    ///
+    /// # Arguments
+    ///
+    /// * `should_yield` - If true, the observer will be invoked for all existing entities that match its filter
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `observer_builder_i::yield_existing`
     fn yield_existing(&mut self, should_yield: bool) -> &mut Self {
         self.get_desc_observer().yield_existing = should_yield;
         self

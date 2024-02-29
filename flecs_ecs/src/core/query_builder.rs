@@ -20,14 +20,12 @@ use super::{
     world::World,
 };
 
-// todo! does this need its own world? filter builder already has one?
 pub struct QueryBuilder<'a, T>
 where
     T: Iterable<'a>,
 {
     pub filter_builder: FilterBuilder<'a, T>,
     pub desc: ecs_query_desc_t,
-    pub world: World,
 }
 
 impl<'a, T> Deref for QueryBuilder<'a, T>
@@ -51,7 +49,6 @@ where
         let mut obj = Self {
             desc,
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
-            world: world.clone(),
         };
         obj.desc.filter = *obj.filter_builder.get_desc_filter();
         T::populate(&mut obj);
@@ -62,7 +59,6 @@ where
         let mut obj = Self {
             desc: Default::default(),
             filter_builder: FilterBuilder::new(world),
-            world: world.clone(),
         };
         let entity_desc = ecs_entity_desc_t {
             name: name.as_ptr(),
@@ -80,7 +76,6 @@ where
         let mut obj = Self {
             desc: *desc,
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
-            world: world.clone(),
         };
         obj.desc.filter = *obj.filter_builder.get_desc_filter();
         T::populate(&mut obj);
@@ -95,7 +90,6 @@ where
         let mut obj = Self {
             desc: *desc,
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, term_index),
-            world: world.clone(),
         };
         T::populate(&mut obj);
         obj
@@ -173,7 +167,8 @@ where
     fn build(&mut self) -> Self::BuiltType {
         let desc_filter = self.filter_builder.desc;
         self.desc.filter = desc_filter;
-        Query::<'a, T>::new_from_desc(&self.world, &mut self.desc)
+        let world = &self.filter_builder.world;
+        Query::<'a, T>::new_from_desc(world, &mut self.desc)
     }
 }
 

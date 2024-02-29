@@ -10,7 +10,6 @@ use super::{
     world::World,
 };
 
-//todo!() should implement copy?
 #[derive(Clone)]
 pub struct Observer {
     pub entity: Entity,
@@ -27,10 +26,8 @@ impl Deref for Observer {
 }
 
 impl Observer {
-    //todo!() in query ect desc is a pointer, does it need to be?
+    //TODO in query ect desc is a pointer, does it need to be?
     pub fn new(world: &World, mut desc: ecs_observer_desc_t, is_instanced: bool) -> Self {
-        //todo!() this code can be rustified, ask
-
         if !desc.filter.instanced {
             desc.filter.instanced = is_instanced;
         }
@@ -73,8 +70,6 @@ impl Observer {
     }
 
     pub fn query(&mut self) -> Filter<()> {
-        //todo check if get_target_for_pair_as_first is correct
-        //todo!("see above");
         let poly: *const Poly = self.get_target_for_pair_as_first::<Poly>(ECS_OBSERVER);
         let obj: *mut ecs_observer_t = unsafe { (*poly).poly as *mut ecs_observer_t };
         let world: World = self.get_as_world();
