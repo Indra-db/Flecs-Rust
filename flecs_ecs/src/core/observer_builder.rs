@@ -50,7 +50,7 @@ where
         let mut desc = Default::default();
         let mut obj = Self {
             desc,
-            filter_builder: FilterBuilder::<T>::new_with_desc(world, &mut desc.filter, 0),
+            filter_builder: FilterBuilder::<T>::new_from_desc(world, &mut desc.filter, 0),
             world: world.clone(),
             event_count: 0,
             is_instanced: false,

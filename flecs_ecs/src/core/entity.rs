@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 use std::os::raw::c_void;
 
 use crate::core::{
@@ -35,6 +35,13 @@ impl Deref for Entity {
     #[inline]
     fn deref(&self) -> &Self::Target {
         &self.entity_view
+    }
+}
+
+impl DerefMut for Entity {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.entity_view
     }
 }
 

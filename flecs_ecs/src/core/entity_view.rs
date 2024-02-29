@@ -2,7 +2,7 @@
 use std::{
     ffi::{c_void, CStr, CString},
     mem::MaybeUninit,
-    ops::Deref,
+    ops::{Deref, DerefMut},
 };
 
 // External crate imports
@@ -50,6 +50,13 @@ impl Deref for EntityView {
     #[inline]
     fn deref(&self) -> &Self::Target {
         &self.id
+    }
+}
+
+impl DerefMut for EntityView {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.id
     }
 }
 

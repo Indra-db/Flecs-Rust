@@ -677,6 +677,15 @@ impl Default for ecs_system_desc_t {
     }
 }
 
+impl Default for ecs_pipeline_desc_t {
+    fn default() -> Self {
+        Self {
+            entity: Default::default(),
+            query: Default::default(),
+        }
+    }
+}
+
 impl Default for ecs_app_desc_t {
     fn default() -> Self {
         Self {

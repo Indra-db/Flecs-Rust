@@ -161,3 +161,55 @@ macro_rules! ecs_assert {
 macro_rules! ecs_assert {
     ($($args:tt)*) => {};
 }
+
+#[macro_export]
+macro_rules! ecs_abort {
+    ($error_code:expr $(,)?) => {
+        let file = file!();
+        let line = line!();
+
+        eprintln!("{}:{}: {}", file, line, $error_code);
+
+        //unsafe {
+        //    if let Some(abort_func) = ecs_os_api.abort_ {
+        //        abort_func();
+        //    }
+        //};
+
+        std::process::abort();
+    };
+    ($error_code:expr, $msg:expr $(,)?) => {
+        eprintln!("{}: {}", $error_code, $msg);
+        //unsafe {
+        //    if let Some(abort_func) = ecs_os_api.abort_ {
+        //        abort_func();
+        //    }
+        //};
+        std::process::abort();
+    };
+    ($error_code:expr, $arg:ident: *const c_char $(,)?) => {
+        eprintln!("{}: {}",
+            $error_code,
+            if $arg.is_null() {
+                "<null>"
+            } else {
+                unsafe { CStr::from_ptr($arg).to_str().unwrap_or("<invalid>") }
+            }
+        );
+        //unsafe {
+        //    if let Some(abort_func) = ecs_os_api.abort_ {
+        //        abort_func();
+        //    }
+        //};
+        std::process::abort();
+    };
+    ($error_code:expr, $fmt:expr, $($arg:tt)+) => {
+        eprintln!("{}: {}", $error_code, format!($fmt, $($arg)+));
+        //unsafe {
+        //    if let Some(abort_func) = ecs_os_api.abort_ {
+        //        abort_func();
+        //    }
+        //};
+        std::process::abort();
+    };
+}

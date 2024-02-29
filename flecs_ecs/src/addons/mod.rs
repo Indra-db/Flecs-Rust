@@ -12,3 +12,8 @@ pub use meta::*;
 pub mod system;
 #[cfg(feature = "flecs_system")]
 pub use system::*;
+
+#[cfg(feature = "flecs_pipeline")]
+pub mod pipeline;
+#[cfg(feature = "flecs_pipeline")]
+pub use pipeline::*;

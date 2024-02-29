@@ -38,6 +38,7 @@ regex = "1.9.5"
 [features]
 flecs_generate_bindings = [] 
 flecs_app = []
+flecs_pipeline = []
 flecs_system = []
 flecs_rules = []
 flecs_timer = []
@@ -57,6 +58,7 @@ default = [
     "flecs_metrics",
     "flecs_rules",
     "flecs_app",
+    "flecs_pipeline",
     #"flecs_generate_bindings"
 ]
 

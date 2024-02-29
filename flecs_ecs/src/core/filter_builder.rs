@@ -76,7 +76,7 @@ where
         obj
     }
 
-    pub fn new_with_desc(world: &World, desc: &mut ecs_filter_desc_t, term_index: i32) -> Self {
+    pub fn new_from_desc(world: &World, desc: &mut ecs_filter_desc_t, term_index: i32) -> Self {
         Self {
             desc: *desc,
             expr_count: 0,

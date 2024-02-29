@@ -66,7 +66,7 @@ where
         let mut desc = Default::default();
         let mut obj = Self {
             desc,
-            query_builder: QueryBuilder::<T>::new_with_desc(world, &mut desc.query),
+            query_builder: QueryBuilder::<T>::new_from_desc(world, &mut desc.query),
             is_instanced: false,
         };
         obj.desc.query = *obj.query_builder.get_desc_query();
@@ -78,7 +78,7 @@ where
     pub fn new_from_desc(world: &World, mut desc: ecs_system_desc_t) -> Self {
         let mut obj = Self {
             desc: desc,
-            query_builder: QueryBuilder::<T>::new_with_desc(world, &mut desc.query),
+            query_builder: QueryBuilder::<T>::new_from_desc(world, &mut desc.query),
             is_instanced: false,
         };
         obj.desc.query = *obj.query_builder.get_desc_query();

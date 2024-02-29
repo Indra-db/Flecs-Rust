@@ -49,7 +49,7 @@ where
         let mut desc = Default::default();
         let mut obj = Self {
             desc,
-            filter_builder: FilterBuilder::new_with_desc(world, &mut desc.filter, 0),
+            filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
             world: world.clone(),
         };
         T::populate(&mut obj);
@@ -75,10 +75,24 @@ where
         obj
     }
 
-    pub fn new_with_desc(world: &World, desc: &mut ecs_query_desc_t) -> Self {
+    pub fn new_from_desc(world: &World, desc: &mut ecs_query_desc_t) -> Self {
         let mut obj = Self {
             desc: *desc,
-            filter_builder: FilterBuilder::new_with_desc(world, &mut desc.filter, 0),
+            filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
+            world: world.clone(),
+        };
+        T::populate(&mut obj);
+        obj
+    }
+
+    pub fn new_from_desc_term_index(
+        world: &World,
+        desc: &mut ecs_query_desc_t,
+        term_index: i32,
+    ) -> Self {
+        let mut obj = Self {
+            desc: *desc,
+            filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, term_index),
             world: world.clone(),
         };
         T::populate(&mut obj);
