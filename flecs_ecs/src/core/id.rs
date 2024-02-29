@@ -51,7 +51,7 @@ impl Ord for Id {
     }
 }
 
-pub enum With {
+pub enum IdType {
     Id(IdT),
     Pair(IdT, IdT),
 }
@@ -67,16 +67,16 @@ impl Id {
     ///
     /// * C++ API: Id::Id constructors
     /// * C API: ecs_id_t
-    pub fn new(world: Option<&World>, with: With) -> Self {
+    pub fn new(world: Option<&World>, with: IdType) -> Self {
         if let Some(world) = world {
             match with {
-                With::Id(id) => Self::new_from_existing(world.raw_world, id),
-                With::Pair(id1, id2) => Self::new_world_pair(world.raw_world, id1, id2),
+                IdType::Id(id) => Self::new_from_existing(world.raw_world, id),
+                IdType::Pair(id1, id2) => Self::new_world_pair(world.raw_world, id1, id2),
             }
         } else {
             match with {
-                With::Id(id) => Self::new_id_only(id),
-                With::Pair(id1, id2) => Self::new_pair_only(id1, id2),
+                IdType::Id(id) => Self::new_id_only(id),
+                IdType::Pair(id1, id2) => Self::new_pair_only(id1, id2),
             }
         }
     }
@@ -219,6 +219,7 @@ impl Id {
     /// # See also
     ///
     /// * C++ API: id::add_flags
+    #[doc(alias = "id::add_flags")]
     #[inline(always)]
     pub fn add_flags(&self, flags: IdT) -> Entity {
         Entity::new_from_existing_raw(self.world, self.raw_id | flags)

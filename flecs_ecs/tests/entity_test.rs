@@ -1,7 +1,8 @@
 use flecs_ecs::core::{
     c_types::*,
-    id::{Id, With},
+    id::{Id, IdType},
     world::World,
+    EcsComponent,
 };
 mod common;
 use common::*;
@@ -471,7 +472,7 @@ fn entity_pair_role() {
     let entity = world.new_entity();
     let entity2 = world.new_entity();
 
-    let pair: Id = Id::new(None, With::Pair(entity.raw_id, entity2.raw_id));
+    let pair: Id = Id::new(None, IdType::Pair(entity.raw_id, entity2.raw_id));
     let pair = pair.add_flags(ECS_PAIR);
 
     assert!(pair.has_flags_for(ECS_PAIR));
@@ -741,7 +742,7 @@ fn entity_tag_has_size_zero() {
     let world = World::default();
 
     let comp = world.component::<TagA>();
-    let ptr = comp.get_component::<Component>();
+    let ptr = comp.get_component::<EcsComponent>();
 
     assert_eq!(unsafe { (*ptr).size }, 0);
     assert_eq!(unsafe { (*ptr).alignment }, 0);

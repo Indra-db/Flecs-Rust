@@ -59,28 +59,28 @@ impl Clone for Term {
     }
 }
 
-pub enum With {
+pub enum TermType {
     Term(TermT),
     Id(IdT),
     Pair(EntityT, EntityT),
 }
 
 impl Term {
-    pub fn new(world: Option<&World>, with: With) -> Self {
+    pub fn new(world: Option<&World>, with: TermType) -> Self {
         if let Some(world) = world {
             match with {
-                With::Term(term) => Self::new_term(world.raw_world, term),
-                With::Id(id) => Self::new_id(world.raw_world, id),
-                With::Pair(rel, target) => Self::new_rel_target(world.raw_world, rel, target),
+                TermType::Term(term) => Self::new_term(world.raw_world, term),
+                TermType::Id(id) => Self::new_id(world.raw_world, id),
+                TermType::Pair(rel, target) => Self::new_rel_target(world.raw_world, rel, target),
             }
         } else {
             match with {
-                With::Term(term) => {
+                TermType::Term(term) => {
                     ecs_assert!(false, FlecsErrorCode::InvalidParameter, "world is None");
                     Self::new_term(std::ptr::null_mut(), term)
                 }
-                With::Id(id) => Self::new_id_only(id),
-                With::Pair(rel, target) => Self::new_rel_target_only(rel, target),
+                TermType::Id(id) => Self::new_id_only(id),
+                TermType::Pair(rel, target) => Self::new_rel_target_only(rel, target),
             }
         }
     }

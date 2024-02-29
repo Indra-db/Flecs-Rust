@@ -20,7 +20,7 @@ use super::{
     enum_type::CachedEnumData,
     filter::Filter,
     iterable::{Filterable, Iterable},
-    term::{Term, TermBuilder, With as TermWith},
+    term::{Term, TermBuilder, TermType},
     utility::{functions::type_to_inout, traits::InOutType},
     world::World,
 };
@@ -222,14 +222,14 @@ pub trait FilterBuilderImpl: TermBuilder {
         self
     }
 
-    fn with(&mut self, with: With) -> &mut Self {
+    fn with(&mut self, with: FilterType) -> &mut Self {
         match with {
-            With::Id(id) => self.term_with_id(id),
-            With::Name(name) => self.term_with_name(name),
-            With::PairIds(rel, target) => self.term_with_pair_ids(rel, target),
-            With::PairNames(rel, target) => self.term_with_pair_names(rel, target),
-            With::PairIdName(rel, target) => self.term_with_pair_id_name(rel, target),
-            With::Term(term) => self.term_with_term(term),
+            FilterType::Id(id) => self.term_with_id(id),
+            FilterType::Name(name) => self.term_with_name(name),
+            FilterType::PairIds(rel, target) => self.term_with_pair_ids(rel, target),
+            FilterType::PairNames(rel, target) => self.term_with_pair_names(rel, target),
+            FilterType::PairIdName(rel, target) => self.term_with_pair_id_name(rel, target),
+            FilterType::Term(term) => self.term_with_term(term),
         }
     }
 
@@ -262,14 +262,14 @@ pub trait FilterBuilderImpl: TermBuilder {
         self.term_with::<T>()
     }
 
-    fn without(&mut self, without: Without) -> &mut Self {
+    fn without(&mut self, without: FilterType) -> &mut Self {
         match without {
-            Without::Id(id) => self.term_with_id(id).not(),
-            Without::Name(name) => self.term_with_name(name).not(),
-            Without::PairIds(rel, target) => self.term_with_pair_ids(rel, target).not(),
-            Without::PairNames(rel, target) => self.term_with_pair_names(rel, target).not(),
-            Without::PairIdName(rel, target) => self.term_with_pair_id_name(rel, target).not(),
-            Without::Term(term) => self.term_with_term(term).not(),
+            FilterType::Id(id) => self.term_with_id(id).not(),
+            FilterType::Name(name) => self.term_with_name(name).not(),
+            FilterType::PairIds(rel, target) => self.term_with_pair_ids(rel, target).not(),
+            FilterType::PairNames(rel, target) => self.term_with_pair_names(rel, target).not(),
+            FilterType::PairIdName(rel, target) => self.term_with_pair_id_name(rel, target).not(),
+            FilterType::Term(term) => self.term_with_term(term).not(),
         }
     }
 
@@ -385,7 +385,7 @@ pub trait FilterBuilderImpl: TermBuilder {
         self.term();
         unsafe {
             *self.get_raw_term() =
-                Term::new(None, TermWith::Id(T::Type::get_id(self.get_world()))).move_raw_term();
+                Term::new(None, TermType::Id(T::Type::get_id(self.get_world()))).move_raw_term();
             (*self.get_raw_term()).inout = type_to_inout::<T>() as i32;
         }
         self
@@ -393,7 +393,7 @@ pub trait FilterBuilderImpl: TermBuilder {
 
     fn term_with_id(&mut self, id: IdT) -> &mut Self {
         self.term();
-        let new_term: ecs_term_t = Term::new(None, TermWith::Id(id)).move_raw_term();
+        let new_term: ecs_term_t = Term::new(None, TermType::Id(id)).move_raw_term();
         let term: &mut Term = self.get_term();
         let term_ptr: *mut TermT = term.term_ptr;
         unsafe { *term_ptr = new_term };
@@ -411,7 +411,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     fn term_with_pair_ids(&mut self, rel: IdT, target: IdT) -> &mut Self {
         self.term();
         unsafe {
-            *self.get_raw_term() = Term::new(None, TermWith::Pair(rel, target)).move_raw_term();
+            *self.get_raw_term() = Term::new(None, TermType::Pair(rel, target)).move_raw_term();
         }
         self
     }
@@ -430,7 +430,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     fn term_with_pair_id_name(&mut self, rel: IdT, target: &str) -> &mut Self {
         self.term();
         unsafe {
-            *self.get_raw_term() = Term::new(None, TermWith::Id(rel))
+            *self.get_raw_term() = Term::new(None, TermType::Id(rel))
                 .second_name(target)
                 .move_raw_term();
         }
@@ -472,16 +472,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     }
 }
 
-pub enum With {
-    Id(IdT),
-    Name(&'static str),
-    PairIds(IdT, IdT),
-    PairNames(&'static str, &'static str),
-    PairIdName(IdT, &'static str),
-    Term(Term),
-}
-
-pub enum Without {
+pub enum FilterType {
     Id(IdT),
     Name(&'static str),
     PairIds(IdT, IdT),

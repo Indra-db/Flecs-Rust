@@ -8,7 +8,7 @@ use super::{
     entity::Entity,
     iter::Iter,
     iterable::Iterable,
-    term::{Term, With},
+    term::{Term, TermType},
     utility::errors::FlecsErrorCode,
     world::World,
 };
@@ -137,7 +137,7 @@ where
             for i in 0..(*filter).term_count {
                 let term = Term::new(
                     Some(&self.world),
-                    With::Term(*(*filter).terms.add(i as usize)),
+                    TermType::Term(*(*filter).terms.add(i as usize)),
                 );
                 func(term);
             }
@@ -147,7 +147,7 @@ where
     fn get_term_impl(&self, index: usize, filter: *mut FilterT) -> Term {
         Term::new(
             Some(&self.world),
-            With::Term(unsafe { *(*filter).terms.add(index) }),
+            TermType::Term(unsafe { *(*filter).terms.add(index) }),
         )
     }
 

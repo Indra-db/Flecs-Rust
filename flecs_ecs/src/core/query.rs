@@ -14,7 +14,7 @@ use super::entity::Entity;
 use super::filter::FilterView;
 use super::iter::Iter;
 use super::iterable::Iterable;
-use super::term::{Term, With};
+use super::term::{Term, TermType};
 use super::utility::errors::FlecsErrorCode;
 use super::world::World;
 
@@ -155,7 +155,7 @@ where
             for i in 0..(*filter).term_count {
                 let term = Term::new(
                     Some(&self.world),
-                    With::Term(*(*filter).terms.add(i as usize)),
+                    TermType::Term(*(*filter).terms.add(i as usize)),
                 );
                 func(term);
             }
@@ -174,7 +174,7 @@ where
         );
         Term::new(
             Some(&self.world),
-            With::Term(unsafe { *(*filter).terms.add(index as usize) }),
+            TermType::Term(unsafe { *(*filter).terms.add(index as usize) }),
         )
     }
 

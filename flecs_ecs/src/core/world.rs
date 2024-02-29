@@ -31,7 +31,7 @@ use super::entity::Entity;
 use super::enum_type::CachedEnumData;
 use super::event::EventData;
 use super::event_builder::{EventBuilder, EventBuilderTyped};
-use super::id::{Id, With};
+use super::id::{Id, IdType};
 use super::iterable::Iterable;
 use super::observer::Observer;
 use super::observer_builder::ObserverBuilder;
@@ -2406,12 +2406,12 @@ impl World {
 
     /// get  id of (struct) component.
     pub fn get_id_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> Id {
-        Id::new(Some(self), With::Id(T::get_id(self.raw_world)))
+        Id::new(Some(self), IdType::Id(T::get_id(self.raw_world)))
     }
 
     /// get pair id from relationship, object.
     pub fn get_id_pair_from_ids(&self, first: EntityT, second: EntityT) -> Id {
-        Id::new(Some(self), With::Pair(first, second))
+        Id::new(Some(self), IdType::Pair(first, second))
     }
 
     /// get pair id from relationship, object.
@@ -2422,7 +2422,7 @@ impl World {
     {
         Id::new(
             Some(self),
-            With::Pair(
+            IdType::Pair(
                 First::get_id(self.raw_world),
                 Second::get_id(self.raw_world),
             ),
@@ -2433,7 +2433,7 @@ impl World {
     pub fn get_id_pair_second_with_id<First: CachedComponentData>(&self, second: EntityT) -> Id {
         Id::new(
             Some(self),
-            With::Pair(First::get_id(self.raw_world), second),
+            IdType::Pair(First::get_id(self.raw_world), second),
         )
     }
 
@@ -2524,7 +2524,7 @@ impl World {
     {
         Id::new(
             Some(self),
-            With::Id(enum_value.get_entity_id_from_enum_field(self.raw_world)),
+            IdType::Id(enum_value.get_entity_id_from_enum_field(self.raw_world)),
         )
     }
 
@@ -2747,12 +2747,36 @@ impl World {
     }
 }
 
-/// System
+/// A part of the `World` structure responsible for managing systems.
 impl World {
+    /// Constructs a `System` from an existing entity.
+    ///
+    /// This function upcasts the given `entity` to a `System`, assuming the entity represents a system.
+    /// The purpose is to facilitate the interaction with entities that are specifically systems within the ECS.
+    ///
+    /// # Arguments
+    /// * `entity` - An `Entity` that represents a system within the world.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::system`
+    #[doc(alias = "world::system")]
     pub fn system(&self, entity: Entity) -> System {
         System::new_from_existing(self, entity)
     }
 
+    /// Creates a new `SystemBuilder` instance for constructing systems.
+    ///
+    /// This function initializes a `SystemBuilder` which is used to create systems that match specific components.
+    /// It is a generic method that works with any component types that implement the `Iterable` trait.
+    ///
+    /// # Type Parameters
+    /// - `Components`: The components to match on. Must implement the `Iterable` trait.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::system_builder`
+    #[doc(alias = "world::system_builder")]
     pub fn system_builder<'a, Components>(&self) -> SystemBuilder<'a, Components>
     where
         Components: Iterable<'a>,
@@ -2760,6 +2784,21 @@ impl World {
         SystemBuilder::<'a, Components>::new(self)
     }
 
+    /// Creates a new named `SystemBuilder` instance.
+    ///
+    /// Similar to `system_builder`, but allows naming the system for easier identification and debugging.
+    /// The name does not affect the system's behavior.
+    ///
+    /// # Arguments
+    /// * `name` - A string slice representing the name of the system.
+    ///
+    /// # Type Parameters
+    /// - `Components`: The components to match on. Must implement the `Iterable` trait.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::system_builder`
+    #[doc(alias = "world::system_builder")]
     pub fn system_builder_named<'a, Components>(&self, name: &str) -> SystemBuilder<'a, Components>
     where
         Components: Iterable<'a>,
@@ -2767,6 +2806,21 @@ impl World {
         SystemBuilder::<'a, Components>::new_named(self, name)
     }
 
+    /// Creates a `SystemBuilder` from a system description.
+    ///
+    /// This function allows creating a system based on a predefined system description,
+    /// facilitating more dynamic or configuration-driven system creation.
+    ///
+    /// # Arguments
+    /// * `desc` - A system description that outlines the parameters for the system builder.
+    ///
+    /// # Type Parameters
+    /// - `Components`: The components to match on. Must implement the `Iterable` trait.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::system_builder`
+    #[doc(alias = "world::system_builder")]
     pub fn system_builder_from_desc<'a, Components>(
         &self,
         desc: ecs_system_desc_t,
