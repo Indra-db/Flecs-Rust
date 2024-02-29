@@ -2,11 +2,19 @@ use std::ops::Deref;
 
 use libc::c_void;
 
+#[cfg(feature = "flecs_system")]
 use crate::addons::system::system::System;
+
+#[cfg(feature = "flecs_system")]
 use crate::addons::system::system_builder::SystemBuilder;
+
+#[cfg(feature = "flecs_pipeline")]
+use crate::addons::PipelineBuilder;
+
 use crate::core::c_binding::bindings::{_ecs_poly_is, ecs_stage_t_magic, ecs_world_t_magic};
 use crate::core::utility::errors::FlecsErrorCode;
 use crate::core::utility::functions::ecs_pair;
+
 use crate::ecs_assert;
 
 use super::c_binding::bindings::{
@@ -27,6 +35,7 @@ use super::component_ref::Ref;
 use super::component_registration::{
     register_entity_w_component_explicit, CachedComponentData, ComponentType, Enum, Struct,
 };
+
 use super::entity::Entity;
 use super::enum_type::CachedEnumData;
 use super::event::EventData;
@@ -2757,7 +2766,8 @@ impl World {
     }
 }
 
-/// A part of the `World` structure responsible for managing systems.
+/// Systems
+#[cfg(feature = "flecs_system")]
 impl World {
     /// Constructs a `System` from an existing entity.
     ///
@@ -2839,5 +2849,388 @@ impl World {
         Components: Iterable<'a>,
     {
         SystemBuilder::<'a, Components>::new_from_desc(self, desc)
+    }
+}
+
+/// Pipeline
+#[cfg(feature = "flecs_pipeline")]
+impl World {
+    /// Create a new pipeline.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::pipeline`
+    #[doc(alias = "world::pipeline")]
+    #[inline(always)]
+    pub fn pipeline(&self) -> PipelineBuilder<()> {
+        PipelineBuilder::<()>::new(self)
+    }
+
+    /// Create a new pipeline with the provided associated type
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Pipeline` - The associated type to use for the pipeline.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::pipeline`
+    #[doc(alias = "world::pipeline")]
+    #[inline(always)]
+    pub fn pipeline_type<Pipeline>(&self) -> PipelineBuilder<()>
+    where
+        Pipeline: ComponentType<Struct> + CachedComponentData,
+    {
+        PipelineBuilder::<()>::new_entity(self, Pipeline::get_id(self.raw_world))
+    }
+
+    /// Set a custom pipeline. This operation sets the pipeline to run when ecs_progress is invoked.
+    ///
+    /// # Arguments
+    ///
+    /// * `pipeline` - The pipeline to set.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::set_pipeline`
+    #[doc(alias = "world::set_pipeline")]
+    #[inline(always)]
+    pub fn set_pipeline(&self, pipeline: Entity) {
+        unsafe {
+            super::ecs_set_pipeline(self.raw_world, pipeline.raw_id);
+        }
+    }
+
+    /// Set a custom pipeline by type. This operation sets the pipeline to run when ecs_progress is invoked.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Pipeline` - The associated type to use for the pipeline.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::set_pipeline`
+    #[doc(alias = "world::set_pipeline")]
+    #[inline(always)]
+    pub fn set_pipeline_type<Pipeline>(&self)
+    where
+        Pipeline: ComponentType<Struct> + CachedComponentData,
+    {
+        unsafe {
+            super::ecs_set_pipeline(self.raw_world, Pipeline::get_id(self.raw_world));
+        }
+    }
+
+    /// Get the current pipeline.
+    ///
+    /// # Returns
+    ///
+    /// The current pipeline as an entity.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_pipeline`
+    #[doc(alias = "world::get_pipeline")]
+    #[inline(always)]
+    pub fn get_pipeline(&self) -> Entity {
+        Entity::new_from_existing_raw(self.raw_world, unsafe {
+            super::ecs_get_pipeline(self.raw_world)
+        })
+    }
+
+    /// Progress world one tick.
+    ///
+    /// Progresses the world by running all enabled and periodic systems
+    /// on their matching entities. Automatically measures the time passed
+    /// since the last frame by passing 0.0 to `delta_time`. This mode is
+    /// useful for applications that do not manage time explicitly and want
+    /// the system to measure the time automatically.
+    ///
+    /// # Returns
+    ///
+    /// True if the world has been progressed, false if `ecs_quit` has been called.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::progress`
+    #[doc(alias = "world::progress")]
+    #[inline(always)]
+    pub fn progress(&self) -> bool {
+        self.progress_time(0.0)
+    }
+
+    /// Progress world by delta time.
+    ///
+    /// Progresses the world by running all enabled and periodic systems
+    /// on their matching entities for the specified time since the last frame.
+    /// When `delta_time` is 0, `ecs_progress` will automatically measure the time passed
+    /// since the last frame. For applications not using time management, passing a
+    /// non-zero `delta_time` (1.0 recommended) skips automatic time measurement to avoid overhead.
+    ///
+    /// # Arguments
+    ///
+    /// * `delta_time` - The time to progress the world by. Pass 0.0 for automatic time measurement.
+    ///
+    /// # Returns
+    ///
+    /// True if the world has been progressed, false if `ecs_quit` has been called.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::progress`
+    #[doc(alias = "world::progress")]
+    #[inline(always)]
+    pub fn progress_time(&self, delta_time: f32) -> bool {
+        unsafe { super::ecs_progress(self.raw_world, delta_time) }
+    }
+
+    /// Run pipeline.
+    /// Runs all systems in the specified pipeline. Can be invoked from multiple
+    /// threads if staging is disabled, managing staging and, if needed, thread
+    /// synchronization.
+    ///
+    /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
+    /// set_pipeline()). Using progress() auto-invokes this for the default pipeline.
+    /// Additional pipelines may be run explicitly.
+    ///
+    /// # Note
+    ///
+    /// Only supports single-threaded applications with a single stage when called from an application.
+    ///
+    /// # Arguments
+    ///
+    /// * `pipeline` - Pipeline to run.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::run_pipeline`
+    #[doc(alias = "world::run_pipeline")]
+    #[inline(always)]
+    pub fn run_pipeline(&self, pipeline: Entity) {
+        Self::run_pipeline_time(&self, pipeline, 0.0)
+    }
+
+    /// Run pipeline.
+    /// Runs all systems in the specified pipeline. Can be invoked from multiple
+    /// threads if staging is disabled, managing staging and, if needed, thread
+    /// synchronization.
+    ///
+    /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
+    /// set_pipeline()). Using progress() auto-invokes this for the default pipeline.
+    /// Additional pipelines may be run explicitly.
+    ///
+    /// # Note
+    ///
+    /// Only supports single-threaded applications with a single stage when called from an application.
+    ///
+    /// # Arguments
+    ///
+    /// * `pipeline` - Pipeline to run.
+    /// * `delta_time` - Time to advance the world.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::run_pipeline`
+    #[doc(alias = "world::run_pipeline")]
+    #[inline(always)]
+    pub fn run_pipeline_time(&self, pipeline: Entity, delta_time: super::FTime) {
+        unsafe {
+            super::ecs_run_pipeline(self.raw_world, pipeline.raw_id, delta_time);
+        }
+    }
+
+    /// Set time scale. Increase or decrease simulation speed by the provided multiplier.
+    ///
+    /// # Arguments
+    ///
+    /// * `mul` - The multiplier to set the time scale to.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::set_time_scale`
+    #[doc(alias = "world::set_time_scale")]
+    #[inline(always)]
+    pub fn set_time_scale(&self, mul: super::FTime) {
+        unsafe {
+            super::ecs_set_time_scale(self.raw_world, mul);
+        }
+    }
+
+    /// Get time scale.
+    ///
+    /// Retrieves the current time scale of the world, which affects the speed
+    /// at which time passes within the simulation. A time scale of 1.0 means
+    /// real-time, values greater than 1.0 speed up the simulation, and values
+    /// less than 1.0 slow it down.
+    ///
+    /// # Returns
+    ///
+    /// The current time scale as a floating point number.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_time_scale`
+    #[doc(alias = "world::get_time_scale")]
+    #[inline(always)]
+    pub fn get_time_scale(&self) -> super::FTime {
+        let stats = unsafe { super::ecs_get_world_info(self.raw_world) };
+        unsafe { (*stats).time_scale }
+    }
+
+    /// Get current tick.
+    ///
+    /// Retrieves the total number of simulation ticks (frames) that have been
+    /// processed by the world. This can be used to track the simulation's
+    /// progress over time.
+    ///
+    /// # Returns
+    ///
+    /// The total number of ticks as an integer.
+    #[inline(always)]
+    pub fn get_tick(&self) -> i64 {
+        let stats = unsafe { super::ecs_get_world_info(self.raw_world) };
+        unsafe { (*stats).frame_count_total }
+    }
+
+    /// Get target frames per second (FPS).
+    ///
+    /// Retrieves the target FPS for the world. This value is used to calculate
+    /// the time step for each simulation tick when the automatic time step is
+    /// enabled. Adjusting the target FPS can be used to control simulation
+    /// speed.
+    ///
+    /// # Returns
+    ///
+    /// The target FPS as a floating point number.
+    #[inline(always)]
+    pub fn get_target_fps(&self) -> super::FTime {
+        let stats = unsafe { super::ecs_get_world_info(self.raw_world) };
+        unsafe { (*stats).target_fps }
+    }
+
+    /// Set target frames per second (FPS).
+    ///
+    /// Configures the world to run at the specified target FPS, ensuring that
+    /// `ecs_progress` is not called more frequently than this rate. This mechanism
+    /// enables tracking the elapsed time since the last `ecs_progress` call and
+    /// sleeping for any remaining time in the frame, if applicable.
+    ///
+    /// Utilizing this feature promotes consistent system execution intervals and
+    /// conserves CPU resources by avoiding more frequent system runs than necessary.
+    ///
+    /// It's important to note that `ecs_progress` will only introduce sleep periods
+    /// when there is surplus time within a frame. This accounts for time consumed both
+    /// within Flecs and in external operations.
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world context.
+    /// * `fps` - The desired target FPS as a floating-point number.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::set_target_fps`
+    #[doc(alias = "world::set_target_fps")]
+    #[inline(always)]
+    pub fn set_target_fps(&self, target_fps: super::FTime) {
+        unsafe {
+            super::ecs_set_target_fps(self.raw_world, target_fps);
+        }
+    }
+
+    /// Reset world clock. Reset the clock that keeps track of the total time passed in the simulation.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::reset_clock`
+    #[doc(alias = "world::reset_clock")]
+    #[inline(always)]
+    pub fn reset_clock(&self) {
+        unsafe {
+            super::ecs_reset_clock(self.raw_world);
+        }
+    }
+
+    /// Set number of worker threads.
+    ///
+    /// Setting this value to a value higher than 1 will start as many threads and
+    /// will cause systems to evenly distribute matched entities across threads.
+    /// The operation may be called multiple times to reconfigure the number of threads used,
+    /// but never while running a system / pipeline. Calling ecs_set_threads will also end the use
+    /// of task threads setup with ecs_set_task_threads and vice-versa
+    ///
+    /// # Arguments
+    ///
+    /// * `threads` - The number of threads to use.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::set_threads`
+    #[doc(alias = "world::set_threads")]
+    #[inline(always)]
+    pub fn set_threads(&self, threads: i32) {
+        unsafe {
+            super::ecs_set_threads(self.raw_world, threads);
+        }
+    }
+
+    /// Get number of configured stages. Return number of stages set by ecs_set_stage_count.
+    ///
+    /// # Returns
+    ///
+    /// The number of stages as an integer.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_threads`
+    #[doc(alias = "world::get_threads")]
+    #[inline(always)]
+    pub fn get_threads(&self) -> i32 {
+        unsafe { super::ecs_get_stage_count(self.raw_world) }
+    }
+
+    /// Set number of worker task threads.
+    ///
+    /// Configures the world to use a specified number of short-lived task threads,
+    /// distinct from `ecs_set_threads` where threads persist. Here, threads are
+    /// created and joined for each world update, leveraging the `os_api_t` tasks
+    /// APIs for task management instead of traditional thread APIs. This approach
+    /// is advantageous for integrating with external asynchronous job systems,
+    /// allowing for the dynamic creation and synchronization of tasks specific to
+    /// each world update.
+    ///
+    /// This function can be invoked multiple times to adjust the count of task threads,
+    /// but must not be called concurrently with system or pipeline execution. Switching
+    /// to `ecs_set_task_threads` from `ecs_set_threads` (or vice versa) will terminate
+    /// the use of the previously configured threading model.
+    ///
+    /// # Arguments
+    ///
+    /// * `task_threads` - The number of task threads to use.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::set_task_threads`
+    #[doc(alias = "world::set_task_threads")]
+    #[inline(always)]
+    pub fn set_task_threads(&self, task_threads: i32) {
+        unsafe {
+            super::ecs_set_task_threads(self.raw_world, task_threads);
+        }
+    }
+
+    /// Returns true if task thread use have been requested.
+    ///
+    /// # Returns
+    ///
+    /// True if task threads are being used, false otherwise.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::using_task_threads`
+    #[doc(alias = "world::using_task_threads")]
+    #[inline(always)]
+    pub fn using_task_threads(&self) -> bool {
+        unsafe { super::ecs_using_task_threads(self.raw_world) }
     }
 }
