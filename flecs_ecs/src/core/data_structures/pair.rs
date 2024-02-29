@@ -1,5 +1,5 @@
 //prototype, temporary probably
-
+// not used anywhere. Keeping the code just in case.
 use crate::core::{
     c_types::{IdT, WorldT},
     component_registration::CachedComponentData,
@@ -7,12 +7,12 @@ use crate::core::{
 };
 
 #[derive(Default)]
-pub struct PairT<T: CachedComponentData, U: CachedComponentData> {
+struct PairT<T: CachedComponentData, U: CachedComponentData> {
     first: T,
     second: U,
 }
 
-pub trait PairTT {
+trait PairTT {
     type First: CachedComponentData;
     type Second: CachedComponentData;
     fn get_first_component_id(world: *mut WorldT) -> IdT;

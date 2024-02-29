@@ -1,3 +1,3 @@
-pub mod pair;
+mod pair;
 
-pub use pair::*;
+use pair::*;

@@ -1,48 +1,43 @@
+#![allow(non_snake_case)]
 pub mod Type;
 pub mod archetype;
+pub mod builder;
+pub mod c_binding;
 pub mod c_types;
 pub mod column;
 pub mod component;
 pub mod component_ref;
 pub mod component_registration;
 pub mod entity;
-pub mod id;
-pub mod iter;
-pub mod lifecycle_traits;
-pub mod scoped_world;
-pub mod table;
-pub mod world;
-pub mod utility {
-    pub mod errors;
-    pub mod functions;
-    pub mod traits;
-    pub mod types;
-}
-pub mod c_binding {
-    pub mod bindings;
-}
-pub mod builder;
-pub mod entity;
+pub mod entity_view;
 pub mod enum_type;
 pub mod event;
 pub mod event_builder;
 pub mod filter;
 pub mod filter_builder;
+pub mod id;
+pub mod iter;
 pub mod iterable;
+pub mod lifecycle_traits;
 pub mod observer;
 pub mod observer_builder;
 pub mod query;
 pub mod query_builder;
+pub mod scoped_world;
+pub mod table;
 pub mod term;
+pub mod utility;
+pub mod world;
 
 pub use archetype::*;
 pub use builder::*;
-pub use c_binding::bindings::*;
+pub use c_binding::*;
 pub use c_types::*;
 pub use column::*;
 pub use component::*;
 pub use component_registration::*;
 pub use entity::*;
+pub use entity_view::*;
 pub use event::*;
 pub use event_builder::*;
 pub use filter::*;
@@ -55,6 +50,7 @@ pub use observer::*;
 pub use observer_builder::*;
 pub use query::*;
 pub use query_builder::*;
+pub use scoped_world::*;
 pub use table::*;
 pub use term::*;
 pub use traits::*;

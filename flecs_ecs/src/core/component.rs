@@ -1,4 +1,4 @@
-use crate::addons::meta::opaque::Opaque;
+use crate::addons::Opaque;
 use crate::core::c_binding::bindings::ecs_set_hooks_id;
 use crate::core::utility::errors::FlecsErrorCode;
 use crate::ecs_assert;
