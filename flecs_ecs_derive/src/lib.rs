@@ -87,8 +87,9 @@ fn impl_cached_component_data_struct(
                 try_register_struct_component::<Self>(world);
             }
 
-            fn register_explicit_named(world: *mut WorldT, name: &str)
+            fn register_explicit_named(world: *mut WorldT, name: &CStr)
             {
+                use std::ffi::CStr;
                 try_register_struct_component_named::<Self>(world, name);
             }
 
@@ -308,8 +309,9 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
                 try_register_enum_component::<Self>(world);
             }
 
-            fn register_explicit_named(world: *mut WorldT, name: &str)
+            fn register_explicit_named(world: *mut WorldT, name: &CStr)
             {
+                use std::ffi::CStr;
                 try_register_enum_component_named::<Self>(world, name);
             }
 

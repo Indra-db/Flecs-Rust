@@ -1,3 +1,5 @@
+use std::ffi::CStr;
+
 use libc::{c_void, memcpy, memset};
 
 use crate::{
@@ -54,7 +56,7 @@ where
         obj
     }
 
-    pub fn new_named(world: &World, name: &str) -> Self {
+    pub fn new_named(world: &World, name: &CStr) -> Self {
         let mut obj = Self {
             desc: Default::default(),
             expr_count: 0,
@@ -66,7 +68,7 @@ where
         T::populate(&mut obj);
 
         let entity_desc = ecs_entity_desc_t {
-            name: std::ffi::CString::new(name).unwrap().into_raw(),
+            name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
@@ -213,14 +215,14 @@ pub trait FilterBuilderImpl: TermBuilder {
     ///
     /// * C++ API: `filter_builder_i::expr`
     #[doc(alias = "filter_builder_i::expr")]
-    fn expr(&mut self, expr: &str) -> &mut Self {
+    fn expr(&mut self, expr: &CStr) -> &mut Self {
         ecs_assert!(
             *self.get_expr_count() == 0,
             FlecsErrorCode::InvalidOperation,
             "filter_builder::expr() called more than once"
         );
 
-        self.get_desc_filter().expr = std::ffi::CString::new(expr).unwrap().into_raw();
+        self.get_desc_filter().expr = expr.as_ptr();
         *self.get_expr_count() += 1;
         self
     }
@@ -240,7 +242,7 @@ pub trait FilterBuilderImpl: TermBuilder {
         self.term_with_pair_id::<Rel>(target)
     }
 
-    fn with_pair_name<Rel: CachedComponentData>(&mut self, target: &str) -> &mut Self {
+    fn with_pair_name<Rel: CachedComponentData>(&mut self, target: &'static CStr) -> &mut Self {
         self.term_with_pair_name::<Rel>(target)
     }
 
@@ -280,7 +282,7 @@ pub trait FilterBuilderImpl: TermBuilder {
         self.term_with_pair_id::<Rel>(target).not()
     }
 
-    fn without_pair_name<Rel: CachedComponentData>(&mut self, target: &str) -> &mut Self {
+    fn without_pair_name<Rel: CachedComponentData>(&mut self, target: &'static CStr) -> &mut Self {
         self.term_with_pair_name::<Rel>(target).not()
     }
 
@@ -403,7 +405,7 @@ pub trait FilterBuilderImpl: TermBuilder {
         self
     }
 
-    fn term_with_name(&mut self, name: &str) -> &mut Self {
+    fn term_with_name(&mut self, name: &'static CStr) -> &mut Self {
         self.term();
         unsafe {
             *self.get_raw_term() = Term::default().first_name(name).move_raw_term();
@@ -419,7 +421,7 @@ pub trait FilterBuilderImpl: TermBuilder {
         self
     }
 
-    fn term_with_pair_names(&mut self, rel: &str, target: &str) -> &mut Self {
+    fn term_with_pair_names(&mut self, rel: &'static CStr, target: &'static CStr) -> &mut Self {
         self.term();
         unsafe {
             *self.get_raw_term() = Term::default()
@@ -430,7 +432,7 @@ pub trait FilterBuilderImpl: TermBuilder {
         self
     }
 
-    fn term_with_pair_id_name(&mut self, rel: IdT, target: &str) -> &mut Self {
+    fn term_with_pair_id_name(&mut self, rel: IdT, target: &'static CStr) -> &mut Self {
         self.term();
         unsafe {
             *self.get_raw_term() = Term::new(None, TermType::Id(rel))
@@ -445,7 +447,10 @@ pub trait FilterBuilderImpl: TermBuilder {
         self.term_with_pair_ids(Rel::get_id(world), target)
     }
 
-    fn term_with_pair_name<Rel: CachedComponentData>(&mut self, target: &str) -> &mut Self {
+    fn term_with_pair_name<Rel: CachedComponentData>(
+        &mut self,
+        target: &'static CStr,
+    ) -> &mut Self {
         let world = self.get_world();
         self.term_with_id(Rel::get_id(world)).second_name(target)
     }
@@ -477,9 +482,9 @@ pub trait FilterBuilderImpl: TermBuilder {
 
 pub enum FilterType {
     Id(IdT),
-    Name(&'static str),
+    Name(&'static CStr),
     PairIds(IdT, IdT),
-    PairNames(&'static str, &'static str),
-    PairIdName(IdT, &'static str),
+    PairNames(&'static CStr, &'static CStr),
+    PairIdName(IdT, &'static CStr),
     Term(Term),
 }

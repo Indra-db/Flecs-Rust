@@ -1,6 +1,9 @@
-use std::ffi::CString;
+use std::ffi::CStr;
 
-use crate::{core::utility::errors::FlecsErrorCode, ecs_assert};
+use crate::{
+    core::{strip_prefix_cstr_raw, utility::errors::FlecsErrorCode},
+    ecs_assert,
+};
 
 use super::{
     c_binding::bindings::{
@@ -285,12 +288,7 @@ impl Term {}
 
 impl Drop for Term {
     fn drop(&mut self) {
-        unsafe {
-            if !self.term_id.is_null() && !(*self.term_id).name.is_null() {
-                let _ = CString::from_raw((*self.term_id).name);
-            }
-            ecs_term_fini(&mut self.term);
-        }
+        unsafe { ecs_term_fini(&mut self.term) };
     }
 }
 
@@ -477,12 +475,10 @@ pub trait TermBuilder: Sized {
     /// # Arguments
     ///
     /// * `name` - The name to set.
-    fn name(&mut self, name: &str) -> &mut Self {
+    fn name(&mut self, name: &CStr) -> &mut Self {
         self.assert_term_id();
-        let c_name = CString::new(name).unwrap();
-        let leak_name = CString::into_raw(c_name);
         unsafe {
-            (*self.get_term_id()).name = leak_name;
+            (*self.get_term_id()).name = name.as_ptr() as *mut i8;
             (*self.get_term_id()).flags |= ECS_IS_NAME
         };
         self
@@ -493,13 +489,11 @@ pub trait TermBuilder: Sized {
     /// # Arguments
     ///
     /// * `var_name` - The name of the variable.
-    fn var(&mut self, var_name: &str) -> &mut Self {
+    fn var(&mut self, var_name: &CStr) -> &mut Self {
         self.assert_term_id();
-        let c_name = CString::new(var_name).unwrap();
-        let leak_name = CString::into_raw(c_name);
         unsafe {
             (*self.get_term_id()).flags |= ECS_IS_VARIABLE;
-            (*self.get_term_id()).name = leak_name
+            (*self.get_term_id()).name = var_name.as_ptr() as *mut i8
         };
         self
     }
@@ -564,7 +558,7 @@ pub trait TermBuilder: Sized {
     /// # Arguments
     ///
     /// * `name` - The name to set.
-    fn src_name(&mut self, name: &str) -> &mut Self {
+    fn src_name(&mut self, name: &'static CStr) -> &mut Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
@@ -572,7 +566,9 @@ pub trait TermBuilder: Sized {
         );
 
         self.setup_src();
-        if let Some(stripped_name) = name.strip_prefix('$') {
+        if let Some(stripped_name) =
+            strip_prefix_cstr_raw(name, CStr::from_bytes_with_nul(b"$\0").unwrap())
+        {
             self.var(stripped_name)
         } else {
             self.name(name)
@@ -604,7 +600,7 @@ pub trait TermBuilder: Sized {
     /// # Arguments
     ///
     /// * `name` - The name to set.
-    fn first_name(&mut self, name: &str) -> &mut Self {
+    fn first_name(&mut self, name: &'static CStr) -> &mut Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
@@ -612,7 +608,9 @@ pub trait TermBuilder: Sized {
         );
 
         self.setup_first();
-        if let Some(stripped_name) = name.strip_prefix('$') {
+        if let Some(stripped_name) =
+            strip_prefix_cstr_raw(name, CStr::from_bytes_with_nul(b"$\0").unwrap())
+        {
             self.var(stripped_name)
         } else {
             self.name(name)
@@ -644,7 +642,7 @@ pub trait TermBuilder: Sized {
     /// # Arguments
     ///
     /// * `name` - The name to set.
-    fn second_name(&mut self, name: &str) -> &mut Self {
+    fn second_name(&mut self, name: &'static CStr) -> &mut Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
@@ -652,7 +650,9 @@ pub trait TermBuilder: Sized {
         );
 
         self.setup_second();
-        if let Some(stripped_name) = name.strip_prefix('$') {
+        if let Some(stripped_name) =
+            strip_prefix_cstr_raw(name, CStr::from_bytes_with_nul(b"$\0").unwrap())
+        {
             self.var(stripped_name)
         } else {
             self.name(name)

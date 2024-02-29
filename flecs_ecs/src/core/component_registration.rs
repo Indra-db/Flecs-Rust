@@ -8,7 +8,7 @@ use super::{
     lifecycle_traits::register_lifecycle_actions,
     utility::{
         errors::FlecsErrorCode,
-        functions::{copy_and_allocate_c_char_from_rust_str, get_full_type_name, is_empty_type},
+        functions::{get_full_type_name, is_empty_type},
     },
 };
 use crate::{core::utility::functions::get_only_type_name, ecs_assert};
@@ -62,7 +62,7 @@ pub trait CachedComponentData: Clone + Default {
     fn register_explicit(world: *mut WorldT);
 
     /// attemps to register the component with name with the world. If it's already registered, it does nothing.
-    fn register_explicit_named(world: *mut WorldT, name: &str);
+    fn register_explicit_named(world: *mut WorldT, name: &CStr);
 
     /// checks if the component is registered with a world.
     fn is_registered() -> bool {
@@ -194,12 +194,11 @@ where
     try_register_struct_component_impl::<T>(world, std::ptr::null());
 }
 
-pub fn try_register_struct_component_named<T>(world: *mut WorldT, name: &str)
+pub fn try_register_struct_component_named<T>(world: *mut WorldT, name: &CStr)
 where
     T: CachedComponentData,
 {
-    let name = copy_and_allocate_c_char_from_rust_str(name);
-    try_register_struct_component_impl::<T>(world, name);
+    try_register_struct_component_impl::<T>(world, name.as_ptr());
 }
 
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
@@ -253,12 +252,11 @@ where
     try_register_enum_component_impl::<T>(world, std::ptr::null());
 }
 
-pub fn try_register_enum_component_named<T>(world: *mut WorldT, name: &str)
+pub fn try_register_enum_component_named<T>(world: *mut WorldT, name: &CStr)
 where
     T: CachedComponentData + CachedEnumData,
 {
-    let name = copy_and_allocate_c_char_from_rust_str(name);
-    try_register_enum_component_impl::<T>(world, name);
+    try_register_enum_component_impl::<T>(world, name.as_ptr());
 }
 
 /// returns the pre-registered component data for the component or an initial component data if it's not pre-registered.

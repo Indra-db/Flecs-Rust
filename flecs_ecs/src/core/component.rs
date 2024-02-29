@@ -8,6 +8,7 @@ use super::utility::functions::{ecs_field, get_full_type_name};
 use super::world::World;
 use super::{c_types::*, component_registration::*, entity::Entity};
 
+use std::ffi::CStr;
 use std::os::raw::c_void;
 use std::ptr;
 
@@ -128,7 +129,7 @@ impl<T: CachedComponentData + Default> Component<T> {
         }
     }
 
-    pub fn new_named(world: *mut WorldT, name: &str) -> Self {
+    pub fn new_named(world: *mut WorldT, name: &CStr) -> Self {
         if !T::is_registered_with_world(world) {
             T::register_explicit_named(world, name);
         }

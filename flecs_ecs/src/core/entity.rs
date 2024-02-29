@@ -1,3 +1,4 @@
+use std::ffi::CStr;
 use std::ops::{Deref, DerefMut};
 use std::os::raw::c_void;
 
@@ -97,11 +98,9 @@ impl Entity {
     /// - `world`: The world in which to create the entity.
     /// - `name`: The entity name.
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new_named(world: &World, name: &str) -> Self {
-        let c_name = std::ffi::CString::new(name).expect("Failed to convert to CString");
-
+    pub fn new_named(world: &World, name: &CStr) -> Self {
         let desc = ecs_entity_desc_t {
-            name: c_name.as_ptr(),
+            name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             _canary: 0,
@@ -922,10 +921,9 @@ impl Entity {
     /// # Arguments
     ///
     /// * `name` - A string slice that holds the name to be set.
-    pub fn set_name(self, name: &str) -> Self {
-        let c_name = std::ffi::CString::new(name).expect("Failed to convert to CString");
+    pub fn set_name(self, name: &CStr) -> Self {
         unsafe {
-            ecs_set_name(self.world, self.raw_id, c_name.as_ptr());
+            ecs_set_name(self.world, self.raw_id, name.as_ptr());
         }
         self
     }
@@ -935,10 +933,9 @@ impl Entity {
     /// # Arguments
     ///
     /// * `name` - A string slice that holds the alias name to be set.
-    pub fn set_alias_name(self, name: &str) -> Self {
-        let c_name = std::ffi::CString::new(name).expect("Failed to convert to CString");
+    pub fn set_alias_name(self, name: &CStr) -> Self {
         unsafe {
-            ecs_set_alias(self.world, self.raw_id, c_name.as_ptr());
+            ecs_set_alias(self.world, self.raw_id, name.as_ptr());
         }
         self
     }

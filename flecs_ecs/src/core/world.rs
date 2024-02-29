@@ -1,3 +1,4 @@
+use std::ffi::CStr;
 use std::ops::Deref;
 
 use libc::c_void;
@@ -784,14 +785,12 @@ impl World {
     /// # See also
     ///
     /// `world::lookup`
-    pub fn lookup_entity_by_name(&self, name: &str) -> Option<Entity> {
-        let c_name = std::ffi::CString::new(name).unwrap();
-        let c_name_ptr = c_name.as_ptr();
+    pub fn lookup_entity_by_name(&self, name: &CStr) -> Option<Entity> {
         let entity_id = unsafe {
             ecs_lookup_path_w_sep(
                 self.raw_world,
                 0,
-                c_name_ptr,
+                name.as_ptr(),
                 SEPARATOR.as_ptr(),
                 SEPARATOR.as_ptr(),
                 true,
@@ -1538,14 +1537,12 @@ impl World {
     ///
     /// `world::use`
     #[inline(always)]
-    pub fn set_alias_component<T: CachedComponentData>(&self, alias: &str) -> Entity {
+    pub fn set_alias_component<T: CachedComponentData>(&self, alias: &CStr) -> Entity {
         let id = T::get_id(self.raw_world);
         if alias.is_empty() {
             unsafe { ecs_set_alias(self.raw_world, id, ecs_get_name(self.raw_world, id)) };
         } else {
-            let c_alias = std::ffi::CString::new(alias).unwrap();
-            let c_alias_ptr = c_alias.as_ptr();
-            unsafe { ecs_set_alias(self.raw_world, id, c_alias_ptr) };
+            unsafe { ecs_set_alias(self.raw_world, id, alias.as_ptr()) };
         }
         Entity::new_from_existing_raw(self.raw_world, id)
     }
@@ -1565,23 +1562,19 @@ impl World {
     ///
     /// `world::use`
     #[inline(always)]
-    pub fn set_alias_entity_by_name(&self, name: &str, alias: &str) -> Entity {
-        let c_name = std::ffi::CString::new(name).unwrap();
-        let c_name_ptr = c_name.as_ptr();
-        let c_alias = std::ffi::CString::new(alias).unwrap();
-        let c_alias_ptr = c_alias.as_ptr();
+    pub fn set_alias_entity_by_name(&self, name: &CStr, alias: &CStr) -> Entity {
         let id = unsafe {
             ecs_lookup_path_w_sep(
                 self.raw_world,
                 0,
-                c_name_ptr,
+                name.as_ptr(),
                 SEPARATOR.as_ptr(),
                 SEPARATOR.as_ptr(),
                 true,
             )
         };
         ecs_assert!(id != 0, FlecsErrorCode::InvalidParameter);
-        unsafe { ecs_set_alias(self.raw_world, id, c_alias_ptr) };
+        unsafe { ecs_set_alias(self.raw_world, id, alias.as_ptr()) };
         Entity::new_from_existing_raw(self.raw_world, id)
     }
 
@@ -1596,7 +1589,7 @@ impl World {
     ///
     /// `world::use`
     #[inline(always)]
-    pub fn set_alias_entity(&self, entity: Entity, alias: &str) {
+    pub fn set_alias_entity(&self, entity: Entity, alias: &CStr) {
         if alias.is_empty() {
             unsafe {
                 ecs_set_alias(
@@ -1606,9 +1599,7 @@ impl World {
                 )
             };
         } else {
-            let c_alias = std::ffi::CString::new(alias).unwrap();
-            let c_alias_ptr = c_alias.as_ptr();
-            unsafe { ecs_set_alias(self.raw_world, entity.raw_id, c_alias_ptr) };
+            unsafe { ecs_set_alias(self.raw_world, entity.raw_id, alias.as_ptr()) };
         }
     }
 
@@ -2584,13 +2575,10 @@ impl World {
     /// # See also
     ///
     /// `world::entity`
-    pub fn new_entity_named_type<T: CachedComponentData>(&self, name: &str) -> Entity {
-        let c_name = std::ffi::CString::new(name).unwrap();
-        let c_name_ptr = c_name.as_ptr();
-
+    pub fn new_entity_named_type<T: CachedComponentData>(&self, name: &CStr) -> Entity {
         Entity::new_from_existing_raw(
             self.raw_world,
-            register_entity_w_component_explicit::<T>(self.raw_world, c_name_ptr, true, 0),
+            register_entity_w_component_explicit::<T>(self.raw_world, name.as_ptr(), true, 0),
         )
     }
 
@@ -2603,7 +2591,7 @@ impl World {
     /// # See also
     ///
     /// `world::entity`
-    pub fn new_entity_named(&self, name: &str) -> Entity {
+    pub fn new_entity_named(&self, name: &CStr) -> Entity {
         Entity::new_named(self, name)
     }
 
@@ -2649,7 +2637,7 @@ impl World {
     /// # Arguments
     ///
     /// * `name` - The name of the component.
-    pub fn component_named<T: CachedComponentData>(&self, name: &str) -> Component<T> {
+    pub fn component_named<T: CachedComponentData>(&self, name: &CStr) -> Component<T> {
         Component::<T>::new_named(self.raw_world, name)
     }
 
@@ -2757,7 +2745,7 @@ impl World {
 
     pub fn observer_builder_named<'a, Components>(
         &self,
-        name: &str,
+        name: &CStr,
     ) -> ObserverBuilder<'a, Components>
     where
         Components: Iterable<'a>,
@@ -2819,7 +2807,7 @@ impl World {
     ///
     /// * C++ API: `world::system_builder`
     #[doc(alias = "world::system_builder")]
-    pub fn system_builder_named<'a, Components>(&self, name: &str) -> SystemBuilder<'a, Components>
+    pub fn system_builder_named<'a, Components>(&self, name: &CStr) -> SystemBuilder<'a, Components>
     where
         Components: Iterable<'a>,
     {

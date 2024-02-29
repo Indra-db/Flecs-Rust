@@ -1,4 +1,4 @@
-use std::{ops::Deref, os::raw::c_void};
+use std::{ffi::CStr, ops::Deref, os::raw::c_void};
 
 use crate::core::{
     c_binding::bindings::{
@@ -139,7 +139,9 @@ impl System {
     }
 
     pub(crate) fn system_init(&mut self, world: &World) -> &mut Self {
-        world.component_named::<TickSource>("flecs::system::TickSource");
+        world.component_named::<TickSource>(
+            CStr::from_bytes_with_nul(b"flecs::system::TickSource\0").unwrap(),
+        );
         self
     }
 

@@ -6,3 +6,5 @@
 pub mod core;
 
 pub mod addons;
+
+use std::ffi::CStr;

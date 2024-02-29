@@ -1,4 +1,4 @@
-use std::os::raw::c_char;
+use std::{ffi::CStr, os::raw::c_char};
 
 use crate::{
     core::{
@@ -150,7 +150,7 @@ pub(crate) fn type_to_oper<T: OperType>() -> OperKind {
 /// Copies the given Rust &str to a C string and returns a pointer to the C string.
 /// this is intended to be used when the C code needs to take ownership of the string.
 /// for example when naming a component where the rust function takes &str and the C function takes *mut c_char
-pub fn copy_and_allocate_c_char_from_rust_str(data: &str) -> *mut c_char {
+pub(crate) fn copy_and_allocate_c_char_from_rust_str(data: &str) -> *mut c_char {
     ecs_assert!(
         data.is_ascii(),
         FlecsErrorCode::InvalidParameter,
@@ -172,7 +172,7 @@ pub fn copy_and_allocate_c_char_from_rust_str(data: &str) -> *mut c_char {
     memory_c_str as *mut c_char
 }
 
-pub unsafe fn print_c_string(c_string: *const c_char) {
+pub(crate) unsafe fn print_c_string(c_string: *const c_char) {
     // Ensure the pointer is not null
     assert!(!c_string.is_null(), "Null pointer passed to print_c_string");
 
@@ -184,5 +184,27 @@ pub unsafe fn print_c_string(c_string: *const c_char) {
     match c_str.to_str() {
         Ok(s) => println!("{}", s),
         Err(_) => println!("Failed to convert C string to Rust string"),
+    }
+}
+
+/// Strips the given prefix from the given C string, returning a new C string with the prefix removed.
+/// If the given C string does not start with the given prefix, returns None.
+
+pub(crate) fn strip_prefix_cstr_raw(cstr: &'static CStr, prefix: &CStr) -> Option<&'static CStr> {
+    let cstr_bytes = cstr.to_bytes();
+    let prefix_bytes = prefix.to_bytes();
+
+    if cstr_bytes.starts_with(prefix_bytes) {
+        // SAFETY: We are slicing `cstr_bytes` which is guaranteed to be a valid
+        // C string since it comes from a `&CStr`. We also check that it starts
+        // with `prefix_bytes`, and we only slice off `prefix_bytes`, so the rest
+        // remains a valid C string.
+        unsafe {
+            Some(CStr::from_bytes_with_nul_unchecked(
+                &cstr_bytes[prefix_bytes.len()..],
+            ))
+        }
+    } else {
+        None
     }
 }

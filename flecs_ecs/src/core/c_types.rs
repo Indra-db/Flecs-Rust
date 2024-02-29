@@ -325,7 +325,7 @@ impl CachedComponentData for EcsComponent {
         Self::__get_once_lock_data().get_or_init(get_ecs_component_data);
     }
 
-    fn register_explicit_named(world: *mut WorldT, name: &str) {
+    fn register_explicit_named(world: *mut WorldT, name: &CStr) {
         //this is already registered as FLECS__EEcsComponent
         Self::__get_once_lock_data().get_or_init(get_ecs_component_data);
     }
@@ -405,7 +405,7 @@ impl CachedComponentData for Poly {
         Self::__get_once_lock_data().get_or_init(get_ecs_poly_data);
     }
 
-    fn register_explicit_named(world: *mut WorldT, name: &str) {
+    fn register_explicit_named(world: *mut WorldT, name: &CStr) {
         //this is already registered as FLECS__EEcsComponent
         Self::__get_once_lock_data().get_or_init(get_ecs_poly_data);
     }
@@ -738,7 +738,7 @@ impl CachedComponentData for TickSource {
         try_register_struct_component::<Self>(world);
     }
 
-    fn register_explicit_named(world: *mut WorldT, name: &str) {
+    fn register_explicit_named(world: *mut WorldT, name: &CStr) {
         try_register_struct_component_named::<Self>(world, name);
     }
 

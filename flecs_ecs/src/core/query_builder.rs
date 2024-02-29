@@ -1,4 +1,5 @@
 use std::{
+    ffi::CStr,
     ops::Deref,
     os::raw::{c_int, c_void},
 };
@@ -57,7 +58,7 @@ where
         obj
     }
 
-    pub fn new_named(world: &World, name: &str) -> Self {
+    pub fn new_named(world: &World, name: &CStr) -> Self {
         let mut obj = Self {
             desc: Default::default(),
             filter_builder: FilterBuilder::new(world),
@@ -65,7 +66,7 @@ where
         };
         T::populate(&mut obj);
         let entity_desc = ecs_entity_desc_t {
-            name: std::ffi::CString::new(name).unwrap().into_raw(),
+            name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()

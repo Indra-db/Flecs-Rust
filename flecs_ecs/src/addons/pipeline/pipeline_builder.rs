@@ -1,4 +1,7 @@
-use std::ops::{Deref, DerefMut};
+use std::{
+    ffi::CStr,
+    ops::{Deref, DerefMut},
+};
 
 use crate::core::{
     ecs_entity_desc_t, ecs_entity_init, ecs_pipeline_desc_t, Builder, EntityT, FilterBuilderImpl,
@@ -95,7 +98,7 @@ where
         obj
     }
 
-    pub fn new_named(world: &World, name: &str) -> Self {
+    pub fn new_named(world: &World, name: &CStr) -> Self {
         let mut obj = Self {
             desc: Default::default(),
             query_builder: QueryBuilder::new_named(world, name),
@@ -105,8 +108,7 @@ where
         obj.desc.query = *obj.query_builder.get_desc_query();
         obj.desc.query.filter = *obj.filter_builder.get_desc_filter();
         let mut entity_desc: ecs_entity_desc_t = Default::default();
-        let c_name = std::ffi::CString::new(name).expect("Failed to convert to CString");
-        entity_desc.name = c_name.as_ptr() as *const i8;
+        entity_desc.name = name.as_ptr();
         entity_desc.sep = SEPARATOR.as_ptr() as *const i8;
         obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
         obj

@@ -10,6 +10,7 @@ use flecs_ecs::core::query::Query;
 use flecs_ecs::core::{utility::functions::*, world::World};
 use flecs_ecs_derive::Component;
 use seq_macro::seq;
+use std::ffi::CStr;
 use std::sync::OnceLock;
 
 #[derive(Debug, Default, Component, Clone)]

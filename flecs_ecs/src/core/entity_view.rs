@@ -1,6 +1,6 @@
 // Standard Library imports
 use std::{
-    ffi::{c_void, CStr, CString},
+    ffi::{c_void, CStr},
     mem::MaybeUninit,
     ops::{Deref, DerefMut},
 };
@@ -168,7 +168,7 @@ impl EntityView {
     /// # Note
     /// if you're using the default separator "::" you can use get_hierachy_path_default
     /// which does no extra heap allocations to communicate with C
-    pub fn get_hierachy_path(&self, sep: &str, init_sep: &str) -> Option<String> {
+    pub fn get_hierachy_path(&self, sep: &CStr, init_sep: &CStr) -> Option<String> {
         self.get_hierachy_path_from_parent_id(0, sep, init_sep)
     }
 
@@ -184,29 +184,21 @@ impl EntityView {
     pub fn get_hierachy_path_from_parent_id(
         &self,
         parent: EntityT,
-        sep: &str,
-        init_sep: &str,
+        sep: &CStr,
+        init_sep: &CStr,
     ) -> Option<String> {
-        let c_sep = CString::new(sep).unwrap();
         let raw_ptr = if sep == init_sep {
             unsafe {
-                ecs_get_path_w_sep(
-                    self.world,
-                    parent,
-                    self.raw_id,
-                    c_sep.as_ptr(),
-                    c_sep.as_ptr(),
-                )
+                ecs_get_path_w_sep(self.world, parent, self.raw_id, sep.as_ptr(), sep.as_ptr())
             }
         } else {
-            let c_init_sep = CString::new(init_sep).unwrap();
             unsafe {
                 ecs_get_path_w_sep(
                     self.world,
                     parent,
                     self.raw_id,
-                    c_sep.as_ptr(),
-                    c_init_sep.as_ptr(),
+                    sep.as_ptr(),
+                    init_sep.as_ptr(),
                 )
             }
         };
@@ -257,8 +249,8 @@ impl EntityView {
     /// which does no extra heap allocations to communicate with C
     pub fn get_hierachy_path_from_parent_type<T: CachedComponentData>(
         &self,
-        sep: &str,
-        init_sep: &str,
+        sep: &CStr,
+        init_sep: &CStr,
     ) -> Option<String> {
         self.get_hierachy_path_from_parent_id(T::get_id(self.world), sep, init_sep)
     }
@@ -762,18 +754,17 @@ impl EntityView {
     ///
     /// The found entity, or `Entity::null` if no entity matched.
     #[inline(always)]
-    pub fn lookup_entity_by_name(&self, path: &str) -> Entity {
+    pub fn lookup_entity_by_name(&self, path: &CStr) -> Entity {
         ecs_assert!(
             self.raw_id != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid lookup from null handle"
         );
-        let c_path = CString::new(path).unwrap();
         Entity::new_from_existing_raw(self.world, unsafe {
             ecs_lookup_path_w_sep(
                 self.world,
                 self.raw_id,
-                c_path.as_ptr(),
+                path.as_ptr(),
                 SEPARATOR.as_ptr(),
                 SEPARATOR.as_ptr(),
                 false,

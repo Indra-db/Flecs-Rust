@@ -1,4 +1,4 @@
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 
 use crate::{core::utility::errors::FlecsErrorCode, ecs_assert};
 
@@ -24,15 +24,15 @@ impl Type {
         }
     }
 
-    /// Convert type to comma-separated string
+    /// Convert type to comma-separated c-string reference
     ///
     /// # See also
     ///
     /// * `type::str`
-    pub fn to_str(&self) -> CString {
+    pub fn to_str(&self) -> &CStr {
         let c_str = unsafe { ecs_type_str(self.world, self.types) };
         ecs_assert!(!c_str.is_null(), FlecsErrorCode::InvalidParameter);
-        unsafe { CString::from_raw(c_str) }
+        unsafe { CStr::from_ptr(c_str) }
     }
 
     /// Return number of ids in type

@@ -1,4 +1,4 @@
-use std::{ffi::CString, os::raw::c_void};
+use std::{ffi::CStr, os::raw::c_void};
 
 use crate::{
     core::{
@@ -325,10 +325,10 @@ impl<'a> Iter<'a> {
     /// # See also
     ///
     /// `iter::str`
-    pub fn to_str(&self) -> CString {
+    pub fn to_str(&self) -> &CStr {
         let c_str = unsafe { ecs_iter_str(self.iter) };
         ecs_assert!(!c_str.is_null(), FlecsErrorCode::InvalidParameter);
-        unsafe { CString::from_raw(c_str) }
+        unsafe { CStr::from_ptr(c_str) }
     }
 
     // TODO? in C++ API there is a mutable and immutable version of this function

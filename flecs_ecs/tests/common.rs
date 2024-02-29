@@ -1,6 +1,7 @@
 use flecs_ecs::core::c_types::*;
 use flecs_ecs::core::component_registration::*;
 use flecs_ecs_derive::Component;
+use std::ffi::CStr;
 use std::sync::OnceLock;
 
 #[derive(Clone, Debug, Component, Default)]
