@@ -223,7 +223,7 @@ impl EventBuilderImpl for EventBuilder {
     ///
     /// * `data` - The data to set for the event which is type-erased of type `*const c_void`
     ///
-    /// C++ API equivalent
+    /// # See also
     ///
     /// * C++ API: event_builder_base::ctx
     fn set_event_data(&mut self, data: Self::BuiltType) -> &mut Self {
@@ -295,7 +295,7 @@ where
     ///
     /// * `data` - The data to set for the event which is specific to the type `T`
     ///
-    /// C++ API equivalent
+    /// # See also
     ///
     /// * C++ API: event_builder_typed::ctx
     fn set_event_data(&mut self, data: Self::BuiltType) -> &mut Self {
