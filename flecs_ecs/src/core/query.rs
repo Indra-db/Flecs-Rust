@@ -82,6 +82,7 @@ where
     /// # See also
     ///
     /// * C++ API: `query_base::changed`
+    #[doc(alias = "query_base::changed")]
     pub fn changed(&mut self) -> bool {
         unsafe { ecs_query_changed(self.query, std::ptr::null()) }
     }
@@ -98,6 +99,7 @@ where
     /// # See also
     ///
     /// * C++ API: `query_base::orphaned`
+    #[doc(alias = "query_base::orphaned")]
     pub fn orphaned(&mut self) -> bool {
         unsafe { ecs_query_orphaned(self.query) }
     }
@@ -115,6 +117,7 @@ where
     /// # See also
     ///
     /// * C++ API: `query_base::get_group_info`
+    #[doc(alias = "query_base::get_group_info")]
     pub fn get_group_info(&mut self, group_id: u64) -> *const QueryGroupInfoT {
         unsafe { ecs_query_get_group_info(self.query, group_id) }
     }
@@ -132,7 +135,7 @@ where
     /// # See also
     ///
     /// * C++ API: `query_base::group_ctx`
-
+    #[doc(alias = "query_base::group_ctx")]
     pub fn get_group_context(&mut self, group_id: u64) -> *mut c_void {
         let group_info = self.get_group_info(group_id);
 

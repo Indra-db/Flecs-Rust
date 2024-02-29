@@ -910,6 +910,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::modified`
+    #[doc(alias = "world::modified")]
     #[inline(always)]
     pub fn mark_component_modified_with_id(&self, id: EntityT) {
         Entity::new_from_existing_raw(self.raw_world, id).mark_component_id_modified(id)
@@ -924,6 +925,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::modified`
+    #[doc(alias = "world::modified")]
     #[inline(always)]
     pub fn mark_component_modified_with<T>(&self)
     where
@@ -1614,6 +1616,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::count`
+    #[doc(alias = "world::count")]
     pub fn count_id(&self, id: IdT) -> i32 {
         unsafe { ecs_count_id(self.raw_world, id) }
     }
@@ -1631,6 +1634,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::count`
+    #[doc(alias = "world::count")]
     pub fn count_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> i32 {
         self.count_id(T::get_id(self.raw_world))
     }
@@ -1649,6 +1653,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::count`
+    #[doc(alias = "world::count")]
     pub fn count_pair_ids(&self, first: EntityT, second: EntityT) -> i32 {
         self.count_id(ecs_pair(first, second))
     }
@@ -1667,6 +1672,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::count`
+    #[doc(alias = "world::count")]
     pub fn count_pair<First, Second>(&self) -> i32
     where
         First: CachedComponentData,
@@ -1695,6 +1701,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::count`
+    #[doc(alias = "world::count")]
     pub fn count_pair_first_id<Second: CachedComponentData>(&self, first: EntityT) -> i32 {
         self.count_pair_ids(first, Second::get_id(self.raw_world))
     }
@@ -1716,6 +1723,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::count`
+    #[doc(alias = "world::count")]
     pub fn count_pair_second_id<First: CachedComponentData>(&self, second: EntityT) -> i32 {
         self.count_pair_ids(First::get_id(self.raw_world), second)
     }
@@ -1737,6 +1745,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::count`
+    #[doc(alias = "world::count")]
     pub fn count_enum_constant<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
         &self,
         enum_value: T,
@@ -1767,6 +1776,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::count`
+    #[doc(alias = "world::count")]
     pub fn count_enum_tag_pair<First, Second>(&self, enum_value: Second) -> i32
     where
         First: CachedComponentData,

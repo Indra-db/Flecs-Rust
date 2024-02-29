@@ -112,7 +112,8 @@ where
     ///
     /// # See also
     ///
-    /// * C++ API: system_builder_i::kind
+    /// * C++ API: `system_builder_i::kind`
+    #[doc(alias = "system_builder_i::kind")]
     pub fn kind_id(&mut self, phase: EntityT) -> &mut Self {
         let current_phase: EntityT =
             unsafe { ecs_get_target(self.world.raw_world, self.desc.entity, ECS_DEPENDS_ON, 0) };
@@ -141,7 +142,8 @@ where
     ///
     /// # See also
     ///
-    /// * C++ API: system_builder_i::kind
+    /// * C++ API: `system_builder_i::kind`
+    #[doc(alias = "system_builder_i::kind")]
     pub fn kind<Phase>(&mut self) -> &mut Self
     where
         Phase: CachedComponentData,
@@ -247,7 +249,8 @@ where
     ///
     /// # See also
     ///
-    /// * C++ API: system_builder_i::ctx
+    /// * C++ API: `system_builder_i::ctx`
+    #[doc(alias = "system_builder_i::ctx")]
     fn set_context(&mut self, context: *mut c_void) -> &mut Self {
         self.desc.ctx = context;
         self
@@ -261,7 +264,8 @@ where
     ///
     /// # See also
     ///
-    /// * C++ API: system_builder_i::run
+    /// * C++ API: `system_builder_i::run`
+    #[doc(alias = "system_builder_i::run")]
     fn set_run_callback(&mut self, callback: ecs_iter_action_t) -> &mut Self {
         self.desc.run = callback;
         self

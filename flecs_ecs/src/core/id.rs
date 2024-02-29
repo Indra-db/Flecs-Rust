@@ -65,8 +65,10 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: Id::Id constructors
-    /// * C API: ecs_id_t
+    /// * C++ API: `Id::Id`
+    #[doc(alias = "Id::Id")]
+    /// * C API: `ecs_id_t`
+    #[doc(alias = "ecs_id_t")]
     pub fn new(world: Option<&World>, with: IdType) -> Self {
         if let Some(world) = world {
             match with {
@@ -90,8 +92,10 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: Id::Id constructor
-    /// * C API: ecs_id_t
+    /// * C++ API: `Id::Id`
+    #[doc(alias = "Id::Id")]
+    /// * C API: `ecs_id_t`
+    #[doc(alias = "ecs_id_t")]
     pub(crate) const fn new_from_existing(world: *mut WorldT, id: IdT) -> Self {
         Self { world, raw_id: id }
     }
@@ -104,8 +108,10 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: Id::Id constructor
-    /// * C API: ecs_id_t
+    /// * C++ API: `Id::Id`
+    #[doc(alias = "Id::Id")]
+    /// * C API: `ecs_id_t`
+    #[doc(alias = "ecs_id_t")]
     pub(crate) const fn new_id_only(id: IdT) -> Self {
         Self {
             world: std::ptr::null_mut(),
@@ -123,8 +129,10 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: Id::Id constructor
-    /// * C API: ecs_id_t
+    /// * C++ API: `Id::Id`
+    #[doc(alias = "Id::Id")]
+    /// * C API: `ecs_id_t`
+    #[doc(alias = "ecs_id_t")]
     pub(crate) fn new_world_pair(world: *mut WorldT, first: IdT, second: IdT) -> Self {
         Self {
             world,
@@ -141,8 +149,10 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: Id::Id constructor
-    /// * C API: ecs_id_t
+    /// * C++ API: `Id::Id`
+    #[doc(alias = "Id::Id")]
+    /// * C API: `ecs_id_t`
+    #[doc(alias = "ecs_id_t")]
     pub(crate) fn new_pair_only(first: IdT, second: IdT) -> Self {
         Self {
             world: std::ptr::null_mut(),
@@ -159,8 +169,10 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: Id::Id constructor
-    /// * C API: ecs_id_t
+    /// * C++ API: `Id::Id`
+    #[doc(alias = "Id::Id")]
+    /// * C API: `ecs_id_t`
+    #[doc(alias = "ecs_id_t")]
     pub(crate) fn new_from_ids(id: Id, id2: Id) -> Self {
         Self {
             world: id.world,
@@ -172,8 +184,10 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: id::is_pair
-    /// * C API: ecs_id_is_pair
+    /// * C++ API: `id::is_pair`
+    #[doc(alias = "id::is_pair")]
+    /// * C API: `ecs_id_is_pair`
+    #[doc(alias = "ecs_id_is_pair")]
     pub fn is_pair(&self) -> bool {
         unsafe { ecs_id_is_pair(self.raw_id) }
     }
@@ -182,8 +196,10 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: id::is_wildcard
-    /// * C API: ecs_id_is_wildcard
+    /// * C++ API: `id::is_wildcard`
+    #[doc(alias = "id::is_wildcard")]
+    /// * C API: `ecs_id_is_wildcard`
+    #[doc(alias = "ecs_id_is_wildcard")]
     pub fn is_wildcard(&self) -> bool {
         unsafe { ecs_id_is_wildcard(self.raw_id) }
     }
@@ -192,7 +208,8 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: id::is_entity
+    /// * C++ API: `id::is_entity`
+    #[doc(alias = "id::is_entity")]
     pub fn is_entity(&self) -> bool {
         self.raw_id & RUST_ECS_ID_FLAGS_MASK == 0
     }
@@ -201,7 +218,8 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: id::entity
+    /// * C++ API: `id::entity`
+    #[doc(alias = "id::entity")]
     #[inline(always)]
     pub fn entity(&self) -> Entity {
         {
@@ -218,7 +236,7 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: id::add_flags
+    /// * C++ API: `id::add_flags`
     #[doc(alias = "id::add_flags")]
     #[inline(always)]
     pub fn add_flags(&self, flags: IdT) -> Entity {
@@ -229,7 +247,8 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: id::remove_flags
+    /// * C++ API: `id::remove_flags`
+    #[doc(alias = "id::remove_flags")]
     #[inline(always)]
     pub fn remove_flags_checked(&self, _flags: IdT) -> Entity {
         ecs_assert!(
@@ -244,7 +263,8 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: id::remove_flags
+    /// * C++ API: `id::remove_flags`
+    #[doc(alias = "id::remove_flags")]
     #[inline(always)]
     pub fn remove_flags(&self) -> Entity {
         Entity::new_from_existing_raw(self.world, self.raw_id & RUST_ECS_COMPONENT_MASK)
@@ -258,7 +278,8 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: id::flags
+    /// * C++ API: `id::flags`
+    #[doc(alias = "id::flags")]
     #[inline(always)]
     pub fn flags(&self) -> Entity {
         Entity::new_from_existing_raw(self.world, self.raw_id & RUST_ECS_ID_FLAGS_MASK)
@@ -268,7 +289,8 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: id::has_flags
+    /// * C++ API: `id::has_flags`
+    #[doc(alias = "id::has_flags")]
     #[inline(always)]
     pub fn has_flags_for(&self, flags: IdT) -> bool {
         self.raw_id & flags == flags
@@ -278,7 +300,8 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: id::has_flags
+    /// * C++ API: `id::has_flags`
+    #[doc(alias = "id::has_flags")]
     #[inline(always)]
     pub fn has_any_flags(&self) -> bool {
         self.raw_id & RUST_ECS_ID_FLAGS_MASK != 0
@@ -288,7 +311,8 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: id::remove_flags
+    /// * C++ API: `id::remove_flags`
+    #[doc(alias = "id::remove_flags")]
     #[inline(always)]
     pub fn remove_generation(&self) -> Entity {
         Entity::new_from_existing_raw(self.world, self.raw_id as u32 as u64)
@@ -315,8 +339,10 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: id::type_id
-    /// * C API: ecs_get_typeid
+    /// * C++ API: `id::type_id`
+    #[doc(alias = "id::type_id")]
+    /// * C API: `ecs_get_typeid`
+    #[doc(alias = "ecs_get_typeid")]
     #[inline(always)]
     pub fn type_id(&self) -> Entity {
         Entity::new_from_existing_raw(self.world, unsafe {
@@ -332,7 +358,8 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: id::has_relationship
+    /// * C++ API: `id::has_relationship`
+    #[doc(alias = "id::has_relationship")]
     #[inline(always)]
     pub fn has_relationship(&self, first: IdT) -> bool {
         if !self.is_pair() {
@@ -349,7 +376,8 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: id::first
+    /// * C++ API: `id::first`
+    #[doc(alias = "id::first")]
     #[inline(always)]
     pub fn first(&self) -> Entity {
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
@@ -370,7 +398,8 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: id::second
+    /// * C++ API: `id::second`
+    #[doc(alias = "id::second")]
     pub fn second(&self) -> Entity {
         //TODO add the assert to cpp flecs
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
@@ -388,8 +417,10 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: id::str
-    /// * C API: ecs_id_str
+    /// * C++ API: `id::str`
+    #[doc(alias = "id::str")]
+    /// * C API: `ecs_id_str`
+    #[doc(alias = "ecs_id_str")]
     #[inline(always)]
     pub fn to_str(&self) -> &'static str {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
@@ -416,8 +447,10 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: id::str
-    /// * C API: ecs_id_str
+    /// * C++ API: `id::str`
+    #[doc(alias = "id::str")]
+    /// * C API: `ecs_id_str`
+    #[doc(alias = "ecs_id_str")]
     #[inline(always)]
     pub unsafe fn to_str_unchecked(&self) -> &'static str {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
@@ -433,8 +466,10 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: id::flag_str
-    /// * C API: ecs_id_flag_str
+    /// * C++ API: `id::flag_str`
+    #[doc(alias = "id::flag_str")]
+    /// * C API: `ecs_id_flag_str`
+    #[doc(alias = "ecs_id_flag_str")]
     #[inline(always)]
     pub fn flags_str(&self) -> &'static str {
         // SAFETY: We assume that `ecs_role_str` returns a pointer to a null-terminated
@@ -460,8 +495,10 @@ impl Id {
     ///
     /// # See also
     ///
-    /// * C++ API: id::flag_str
-    /// * C API: ecs_id_flag_str
+    /// * C++ API: `id::flag_str`
+    #[doc(alias = "id::flag_str")]
+    /// * C API: `ecs_id_flag_str`
+    #[doc(alias = "ecs_id_flag_str")]
     #[inline(always)]
     pub unsafe fn to_flags_str_unchecked(&self) -> &'static str {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated

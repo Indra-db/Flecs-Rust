@@ -312,6 +312,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::set_term`
+    #[doc(alias = "term_builder_i::set_term")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     fn set_term(&mut self, term: *mut TermT) {
         let self_term: &mut Term = self.get_term();
