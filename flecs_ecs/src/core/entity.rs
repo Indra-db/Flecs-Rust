@@ -2,7 +2,7 @@ use std::ops::Deref;
 use std::os::raw::c_void;
 
 use crate::core::{
-    c_binding::bindings::{ecs_get_target, ecs_set_id, ecs_set_name, ECS_OVERRIDE},
+    c_binding::bindings::{ecs_get_target, ecs_set_id, ecs_set_name},
     utility::errors::FlecsErrorCode,
 };
 use crate::ecs_assert;
@@ -18,10 +18,10 @@ use super::{
     c_types::{EntityT, IdT, WorldT, SEPARATOR},
     component_ref::Ref,
     component_registration::{CachedComponentData, ComponentType, Enum, Struct},
-    entity_view::EntityView,
     enum_type::CachedEnumData,
     utility::functions::{ecs_pair, set_helper},
     world::World,
+    EntityView, ECS_OVERRIDE,
 };
 
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -595,7 +595,7 @@ impl Entity {
     ///
     /// * `id`: The id to mark for overriding.
     pub fn mark_component_id_for_override(self, id: IdT) -> Self {
-        self.add_id(unsafe { ECS_OVERRIDE | id })
+        self.add_id(ECS_OVERRIDE | id)
     }
 
     /// Mark component for auto-overriding.

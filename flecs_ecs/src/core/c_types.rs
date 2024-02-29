@@ -120,9 +120,14 @@ impl Default for TypeHooksT {
 }
 
 // Id flags
+
+/// Indicates that the id is a pair.
 pub const ECS_PAIR: u64 = 1 << 63;
+/// Automatically override component when it is inherited
 pub const ECS_OVERRIDE: u64 = 1 << 62;
+/// Adds bitset to storage which allows component to be enabled/disabled
 pub const ECS_TOGGLE: u64 = 1 << 61;
+/// Include all components from entity to which AND is applied
 pub const ECS_AND: u64 = 1 << 60;
 
 // Builtin component ids
@@ -280,7 +285,6 @@ pub const ECS_DOC_COLOR: u64 = FLECS_HI_COMPONENT_ID + 115;
 // REST module components
 pub const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 116;
 
-pub type Component = EcsComponent;
 pub type Identifier = EcsIdentifier;
 pub type Poly = EcsPoly;
 pub type Target = EcsTarget;

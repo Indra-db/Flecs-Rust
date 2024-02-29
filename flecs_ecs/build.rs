@@ -8,6 +8,11 @@ fn generate_bindings() {
 
     let mut bindings = bindgen::Builder::default()
         .header("src/core/c_binding/flecs.h")
+        .blocklist_item("FLECS_HI_COMPONENT_ID")
+        .blocklist_item("ECS_PAIR")
+        .blocklist_item("ECS_OVERRIDE")
+        .blocklist_item("ECS_TOGGLE")
+        .blocklist_item("ECS_AND")
         .generate_comments(false)
         .layout_tests(false)
         .raw_line("#![allow(clippy::all)]")

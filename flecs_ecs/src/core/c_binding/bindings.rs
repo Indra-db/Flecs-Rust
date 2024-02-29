@@ -3,7 +3,6 @@
 #![allow(clippy::all)]
 #![allow(warnings)]
 
-pub const FLECS_HI_COMPONENT_ID: u32 = 256;
 pub const FLECS_HI_ID_RECORD_ID: u32 = 1024;
 pub const FLECS_SPARSE_PAGE_BITS: u32 = 12;
 pub const FLECS_ENTITY_PAGE_BITS: u32 = 12;
@@ -2351,22 +2350,7 @@ pub struct EcsTarget {
 }
 #[doc = "Component for iterable entities"]
 pub type EcsIterable = ecs_iterable_t;
-extern "C" {
-    #[doc = "Indicates that the id is a pair."]
-    pub static ECS_PAIR: ecs_id_t;
-}
-extern "C" {
-    #[doc = "Automatically override component when it is inherited"]
-    pub static ECS_OVERRIDE: ecs_id_t;
-}
-extern "C" {
-    #[doc = "Adds bitset to storage which allows component to be enabled/disabled"]
-    pub static ECS_TOGGLE: ecs_id_t;
-}
-extern "C" {
-    #[doc = "Include all components from entity to which AND is applied"]
-    pub static ECS_AND: ecs_id_t;
-}
+
 extern "C" {
     pub static FLECS__EEcsComponent: ecs_entity_t;
 }
