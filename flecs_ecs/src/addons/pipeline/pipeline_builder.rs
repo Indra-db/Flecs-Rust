@@ -68,7 +68,7 @@ where
 
     pub fn new_from_desc(world: &World, mut desc: ecs_pipeline_desc_t) -> Self {
         let mut obj = Self {
-            desc: desc,
+            desc,
             query_builder: QueryBuilder::<T>::new_from_desc(world, &mut desc.query),
             is_instanced: false,
         };
@@ -84,7 +84,7 @@ where
         term_index: i32,
     ) -> Self {
         let mut obj = Self {
-            desc: desc,
+            desc,
             query_builder: QueryBuilder::<T>::new_from_desc_term_index(
                 world,
                 &mut desc.query,
@@ -106,9 +106,12 @@ where
         };
         obj.desc.query = *obj.query_builder.get_desc_query();
         obj.desc.query.filter = *obj.filter_builder.get_desc_filter();
-        let mut entity_desc: ecs_entity_desc_t = Default::default();
-        entity_desc.name = name.as_ptr();
-        entity_desc.sep = SEPARATOR.as_ptr() as *const i8;
+        let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
+            name: name.as_ptr(),
+            sep: SEPARATOR.as_ptr(),
+            ..Default::default()
+        };
+
         obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
         T::populate(&mut obj);
         obj

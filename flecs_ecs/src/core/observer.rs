@@ -57,9 +57,12 @@ impl Observer {
     }
 
     pub fn set_context(&mut self, context: *mut c_void) {
-        let mut desc: ecs_observer_desc_t = Default::default();
-        desc.entity = self.raw_id;
-        desc.ctx = context;
+        let desc: ecs_observer_desc_t = ecs_observer_desc_t {
+            entity: self.raw_id,
+            ctx: context,
+            ..Default::default()
+        };
+
         unsafe {
             ecs_observer_init(self.world.raw_world, &desc);
         }

@@ -370,7 +370,7 @@ where
         let type_name = get_full_type_name::<T>();
 
         let name = if name.is_null() {
-            unsafe { symbol.split(".").last().unwrap_unchecked().as_ptr() as *const i8 }
+            unsafe { symbol.split('.').last().unwrap_unchecked().as_ptr() as *const i8 }
         } else {
             name
         };

@@ -167,6 +167,7 @@ impl Default for ObserverSystemBindingCtx {
     }
 }
 impl ObserverSystemBindingCtx {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
         each: Option<*mut std::ffi::c_void>,
         each_entity: Option<*mut std::ffi::c_void>,

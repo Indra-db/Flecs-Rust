@@ -70,7 +70,7 @@ impl EventBuilder {
         unsafe {
             *self.ids.array.add(self.ids.count as usize) = C::get_id(self.world.raw_world);
         }
-        self.ids.count = self.ids.count + 1;
+        self.ids.count += 1;
         self
     }
 
@@ -89,7 +89,7 @@ impl EventBuilder {
         unsafe {
             *self.ids.array.add(self.ids.count as usize) = id;
         }
-        self.ids.count = self.ids.count + 1;
+        self.ids.count += 1;
         self
     }
 
@@ -166,7 +166,7 @@ impl EventBuilder {
 
         // can't emit for empty entity
         ecs_assert!(
-            record != std::ptr::null_mut(),
+            !record.is_null(),
             ECS_INVALID_PARAMETER,
             "Can't emit for empty record"
         );

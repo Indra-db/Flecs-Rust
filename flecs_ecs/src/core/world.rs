@@ -3,10 +3,9 @@ use std::ops::Deref;
 use std::os::raw::c_void;
 
 #[cfg(feature = "flecs_system")]
-use crate::addons::system::system::System;
-
-#[cfg(feature = "flecs_system")]
 use crate::addons::system::system_builder::SystemBuilder;
+#[cfg(feature = "flecs_system")]
+use crate::addons::System;
 
 #[cfg(feature = "flecs_pipeline")]
 use crate::addons::PipelineBuilder;
@@ -2723,7 +2722,7 @@ impl World {
     ///
     /// An observer object.
     pub fn observer(&self, e: Entity) -> Observer {
-        Observer::new_from_existing(&self, e)
+        Observer::new_from_existing(self, e)
     }
 
     /// Create a new observer.
@@ -2994,7 +2993,7 @@ impl World {
     #[doc(alias = "world::run_pipeline")]
     #[inline(always)]
     pub fn run_pipeline(&self, pipeline: Entity) {
-        Self::run_pipeline_time(&self, pipeline, 0.0)
+        Self::run_pipeline_time(self, pipeline, 0.0)
     }
 
     /// Run pipeline.

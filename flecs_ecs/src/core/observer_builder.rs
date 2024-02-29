@@ -57,9 +57,12 @@ where
         };
         T::populate(&mut obj);
         obj.desc.filter = *obj.filter_builder.get_desc_filter();
-        let mut entity_desc: ecs_entity_desc_t = Default::default();
-        entity_desc.name = std::ptr::null();
-        entity_desc.sep = SEPARATOR.as_ptr() as *const i8;
+        let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
+            name: std::ptr::null(),
+            sep: SEPARATOR.as_ptr(),
+            ..default::Default::default()
+        };
+
         obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
         obj
     }
@@ -74,9 +77,12 @@ where
         };
         T::populate(&mut obj);
         obj.desc.filter = *obj.filter_builder.get_desc_filter();
-        let mut entity_desc: ecs_entity_desc_t = Default::default();
-        entity_desc.name = name.as_ptr();
-        entity_desc.sep = SEPARATOR.as_ptr() as *const i8;
+        let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
+            name: name.as_ptr(),
+            sep: SEPARATOR.as_ptr(),
+            ..default::Default::default()
+        };
+
         obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
         obj
     }

@@ -6,27 +6,26 @@ use std::{
     ptr,
 };
 
-use crate::{
-    addons::system::system::System,
-    core::{
-        c_binding::bindings::{
-            ecs_add_id, ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_get_target,
-            ecs_iter_action_t, ecs_iter_next, ecs_query_desc_t, ecs_remove_id, ecs_system_desc_t,
-            ecs_table_lock, ecs_table_unlock, EcsDependsOn,
-        },
-        c_types::{EntityT, FTimeT, IterT, TermIdT, TermT, WorldT, ECS_DEPENDS_ON, SEPARATOR},
-        component_registration::CachedComponentData,
-        entity::Entity,
-        filter_builder::FilterBuilderImpl,
-        iter::Iter,
-        iterable::{Filterable, Iterable},
-        query_builder::{QueryBuilder, QueryBuilderImpl},
-        term::{Term, TermBuilder},
-        utility::{functions::ecs_dependson, types::ObserverSystemBindingCtx},
-        world::World,
-        ECS_ON_UPDATE,
+use crate::core::{
+    c_binding::bindings::{
+        ecs_add_id, ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_get_target,
+        ecs_iter_action_t, ecs_iter_next, ecs_query_desc_t, ecs_remove_id, ecs_system_desc_t,
+        ecs_table_lock, ecs_table_unlock, EcsDependsOn,
     },
+    c_types::{EntityT, FTimeT, IterT, TermIdT, TermT, WorldT, ECS_DEPENDS_ON, SEPARATOR},
+    component_registration::CachedComponentData,
+    entity::Entity,
+    filter_builder::FilterBuilderImpl,
+    iter::Iter,
+    iterable::{Filterable, Iterable},
+    query_builder::{QueryBuilder, QueryBuilderImpl},
+    term::{Term, TermBuilder},
+    utility::{functions::ecs_dependson, types::ObserverSystemBindingCtx},
+    world::World,
+    ECS_ON_UPDATE,
 };
+
+use super::System;
 
 pub struct SystemBuilder<'a, T>
 where
@@ -79,7 +78,7 @@ where
 
     pub fn new_from_desc(world: &World, mut desc: ecs_system_desc_t) -> Self {
         let mut obj = Self {
-            desc: desc,
+            desc,
             query_builder: QueryBuilder::<T>::new_from_desc(world, &mut desc.query),
             is_instanced: false,
         };
@@ -97,9 +96,11 @@ where
         };
         obj.desc.query = *obj.query_builder.get_desc_query();
         obj.desc.query.filter = *obj.filter_builder.get_desc_filter();
-        let mut entity_desc: ecs_entity_desc_t = Default::default();
-        entity_desc.name = name.as_ptr();
-        entity_desc.sep = SEPARATOR.as_ptr() as *const i8;
+        let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
+            name: name.as_ptr(),
+            sep: SEPARATOR.as_ptr(),
+            ..Default::default()
+        };
         obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
         T::populate(&mut obj);
 
