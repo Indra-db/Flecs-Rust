@@ -393,7 +393,7 @@ pub trait FilterBuilderImpl: TermBuilder {
         unsafe {
             *self.get_raw_term() =
                 Term::new(None, TermType::Id(T::Type::get_id(self.get_world()))).move_raw_term();
-            (*self.get_raw_term()).inout = type_to_inout::<T>() as i32;
+            (*self.get_raw_term()).inout = type_to_inout::<T>() as u32;
         }
         self
     }

@@ -1,8 +1,8 @@
 use super::c_binding::bindings::*;
 use super::component_registration::{
-    try_register_struct_component,
-    try_register_struct_component_named, ComponentType, Struct,
+    try_register_struct_component, try_register_struct_component_named, ComponentType, Struct,
 };
+use super::{ecs_primitive_kind_t, ecs_type_kind_t};
 
 use crate::core::component_registration::{CachedComponentData, ComponentData};
 
@@ -52,8 +52,8 @@ impl InOutKind {
     }
 }
 
-impl From<::std::os::raw::c_int> for InOutKind {
-    fn from(value: ::std::os::raw::c_int) -> Self {
+impl From<::std::os::raw::c_uint> for InOutKind {
+    fn from(value: ::std::os::raw::c_uint) -> Self {
         match value {
             0 => InOutKind::InOutDefault,
             1 => InOutKind::InOutNone,
@@ -82,8 +82,8 @@ impl OperKind {
     }
 }
 
-impl From<::std::os::raw::c_int> for OperKind {
-    fn from(value: ::std::os::raw::c_int) -> Self {
+impl From<::std::os::raw::c_uint> for OperKind {
+    fn from(value: ::std::os::raw::c_uint) -> Self {
         match value {
             0 => OperKind::And,
             1 => OperKind::Or,
@@ -378,7 +378,6 @@ impl CachedComponentData for EcsComponent {
     }
 
     fn get_symbol_name_c() -> &'static str {
-        
         static SYMBOL_NAME_C: OnceLock<String> = OnceLock::new();
         SYMBOL_NAME_C.get_or_init(|| String::from("EcsComponent\0"))
     }
@@ -458,7 +457,6 @@ impl CachedComponentData for Poly {
     }
 
     fn get_symbol_name_c() -> &'static str {
-        
         static SYMBOL_NAME_C: OnceLock<String> = OnceLock::new();
         SYMBOL_NAME_C.get_or_init(|| String::from("Poly\0"))
     }

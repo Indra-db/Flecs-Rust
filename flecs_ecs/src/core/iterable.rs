@@ -204,13 +204,13 @@ where
         let world = filter.get_world();
         let term = filter.current_term();
         term.id = A::get_id(world);
-        term.oper = OperKind::Optional as i32;
+        term.oper = OperKind::Optional as u32;
         filter.next_term();
     }
 
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
         desc.terms[0].id = A::get_id(world);
-        desc.terms[0].oper = OperKind::Optional as i32;
+        desc.terms[0].oper = OperKind::Optional as u32;
     }
 
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
@@ -450,14 +450,14 @@ where
         filter.next_term();
         let term = filter.current_term();
         term.id = B::get_id(world);
-        term.oper = OperKind::Optional as i32;
+        term.oper = OperKind::Optional as u32;
         filter.next_term();
     }
 
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
         desc.terms[0].id = A::get_id(world);
         desc.terms[1].id = B::get_id(world);
-        desc.terms[1].oper = OperKind::Optional as i32;
+        desc.terms[1].oper = OperKind::Optional as u32;
     }
 
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
@@ -581,21 +581,21 @@ where
 
         let term = filter.current_term();
         term.id = A::get_id(world);
-        term.oper = OperKind::Optional as i32;
+        term.oper = OperKind::Optional as u32;
         filter.next_term();
 
         let term = filter.current_term();
         term.id = B::get_id(world);
-        term.oper = OperKind::Optional as i32;
+        term.oper = OperKind::Optional as u32;
         filter.next_term();
     }
 
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
         desc.terms[0].id = A::get_id(world);
-        desc.terms[0].oper = OperKind::Optional as i32;
+        desc.terms[0].oper = OperKind::Optional as u32;
 
         desc.terms[1].id = B::get_id(world);
-        desc.terms[1].oper = OperKind::Optional as i32;
+        desc.terms[1].oper = OperKind::Optional as u32;
     }
 
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
@@ -893,7 +893,7 @@ where
         filter.next_term();
         let term = filter.current_term();
         term.id = C::get_id(world);
-        term.oper = OperKind::Optional as i32;
+        term.oper = OperKind::Optional as u32;
         filter.next_term();
     }
 
@@ -901,7 +901,7 @@ where
         desc.terms[0].id = A::get_id(world);
         desc.terms[1].id = B::get_id(world);
         desc.terms[2].id = C::get_id(world);
-        desc.terms[2].oper = OperKind::Optional as i32;
+        desc.terms[2].oper = OperKind::Optional as u32;
     }
 
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
@@ -1056,20 +1056,20 @@ where
         filter.next_term();
         let term = filter.current_term();
         term.id = B::get_id(world);
-        term.oper = OperKind::Optional as i32;
+        term.oper = OperKind::Optional as u32;
         filter.next_term();
         let term = filter.current_term();
         term.id = C::get_id(world);
-        term.oper = OperKind::Optional as i32;
+        term.oper = OperKind::Optional as u32;
         filter.next_term();
     }
 
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
         desc.terms[0].id = A::get_id(world);
         desc.terms[1].id = B::get_id(world);
-        desc.terms[1].oper = OperKind::Optional as i32;
+        desc.terms[1].oper = OperKind::Optional as u32;
         desc.terms[2].id = C::get_id(world);
-        desc.terms[2].oper = OperKind::Optional as i32;
+        desc.terms[2].oper = OperKind::Optional as u32;
     }
 
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
@@ -1237,25 +1237,25 @@ where
         let world = filter.get_world();
         let term = filter.current_term();
         term.id = A::get_id(world);
-        term.oper = OperKind::Optional as i32;
+        term.oper = OperKind::Optional as u32;
         filter.next_term();
         let term = filter.current_term();
         term.id = B::get_id(world);
-        term.oper = OperKind::Optional as i32;
+        term.oper = OperKind::Optional as u32;
         filter.next_term();
         let term = filter.current_term();
         term.id = C::get_id(world);
-        term.oper = OperKind::Optional as i32;
+        term.oper = OperKind::Optional as u32;
         filter.next_term();
     }
 
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
         desc.terms[0].id = A::get_id(world);
-        desc.terms[0].oper = OperKind::Optional as i32;
+        desc.terms[0].oper = OperKind::Optional as u32;
         desc.terms[1].id = B::get_id(world);
-        desc.terms[1].oper = OperKind::Optional as i32;
+        desc.terms[1].oper = OperKind::Optional as u32;
         desc.terms[2].id = C::get_id(world);
-        desc.terms[2].oper = OperKind::Optional as i32;
+        desc.terms[2].oper = OperKind::Optional as u32;
     }
 
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
@@ -1584,7 +1584,7 @@ macro_rules! impl_iterable {
                     let term = filter.current_term();
                     term.id = <$t as CachedComponentData>::get_id(world);
                     if <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::IS_OPTION {
-                        term.oper = OperKind::Optional as i32;
+                        term.oper = OperKind::Optional as u32;
                     }
                     filter.next_term();
                 )*
@@ -1596,7 +1596,7 @@ macro_rules! impl_iterable {
                 $(
                     desc.terms[term_index].id = <$t as CachedComponentData>::get_id(world);
                     if <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::IS_OPTION {
-                        desc.terms[term_index].oper = OperKind::Optional as i32;
+                        desc.terms[term_index].oper = OperKind::Optional as u32;
                     }
 
                     term_index += 1;

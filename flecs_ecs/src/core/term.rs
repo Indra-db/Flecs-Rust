@@ -677,7 +677,7 @@ pub trait TermBuilder: Sized {
     /// * `inout` - The inout to set.
     fn set_inout(&mut self, inout: InOutKind) -> &mut Self {
         self.assert_term();
-        unsafe { (*self.get_raw_term()).inout = inout as ::std::os::raw::c_int };
+        unsafe { (*self.get_raw_term()).inout = inout as ::std::os::raw::c_uint };
         self
     }
 
@@ -696,7 +696,7 @@ pub trait TermBuilder: Sized {
         self.assert_term();
         self.set_inout(inout);
         unsafe {
-            if (*self.get_raw_term()).inout != OperKind::Not as ::std::os::raw::c_int {
+            if (*self.get_raw_term()).inout != OperKind::Not as ::std::os::raw::c_uint {
                 self.setup_src().entity(0);
             }
         }
@@ -748,7 +748,7 @@ pub trait TermBuilder: Sized {
     /// * `oper` - The operator to set.
     fn oper(&mut self, oper: OperKind) -> &mut Self {
         self.assert_term_id();
-        unsafe { (*self.get_raw_term()).oper = oper as ::std::os::raw::c_int };
+        unsafe { (*self.get_raw_term()).oper = oper as ::std::os::raw::c_uint };
         self
     }
 
