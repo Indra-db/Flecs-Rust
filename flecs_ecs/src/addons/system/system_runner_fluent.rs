@@ -1,14 +1,10 @@
-use std::{ffi::CStr, ops::Deref, os::raw::c_void};
+use std::{os::raw::c_void};
 
 use crate::core::{
     c_binding::bindings::{
-        ecs_get_system_ctx, ecs_os_api, ecs_run_w_filter, ecs_run_worker, ecs_system_desc_t,
-        ecs_system_get_query, ecs_system_init,
+        ecs_run_w_filter, ecs_run_worker,
     },
-    c_types::{EntityT, TickSource},
-    entity::Entity,
-    id::Id,
-    query::Query,
+    c_types::{EntityT},
     utility::types::FTime,
     world::World,
 };

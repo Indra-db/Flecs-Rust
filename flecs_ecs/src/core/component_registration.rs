@@ -11,7 +11,7 @@ use super::{
         functions::{get_full_type_name, is_empty_type},
     },
 };
-use crate::{core::utility::functions::get_only_type_name, ecs_assert};
+use crate::{ecs_assert};
 use std::{ffi::CStr, os::raw::c_char, sync::OnceLock};
 /// Component data that is cached by the `CachedComponentData` trait.
 /// This data is used to register components with the world.

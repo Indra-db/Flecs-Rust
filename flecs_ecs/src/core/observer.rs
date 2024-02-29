@@ -4,9 +4,9 @@ use super::{
     c_binding::bindings::{
         ecs_get_observer_ctx, ecs_observer_desc_t, ecs_observer_init, ecs_observer_t, ecs_os_api,
     },
-    c_types::{EntityT, ObserverT, Poly, ECS_OBSERVER},
+    c_types::{Poly, ECS_OBSERVER},
     entity::Entity,
-    filter::{self, Filter},
+    filter::{Filter},
     world::World,
 };
 

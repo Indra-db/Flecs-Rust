@@ -3,7 +3,7 @@ use crate::core::{
     c_types::{
         EntityT, ECS_BOOL_T, ECS_BYTE_T, ECS_CHAR_T, ECS_CONSTANT, ECS_ENTITY_T, ECS_F32_T,
         ECS_F64_T, ECS_I16_T, ECS_I32_T, ECS_I64_T, ECS_I8_T, ECS_IPTR_T, ECS_QUANTITY,
-        ECS_STRING_T, ECS_U16_T, ECS_U32_T, ECS_U64_T, ECS_U8_T, ECS_UPTR_T,
+        ECS_STRING_T, ECS_U32_T, ECS_U64_T, ECS_UPTR_T,
     },
 };
 

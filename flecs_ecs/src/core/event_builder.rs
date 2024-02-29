@@ -1,5 +1,4 @@
 use std::{
-    default,
     ops::{Deref, DerefMut},
     os::raw::c_void,
 };
@@ -14,7 +13,7 @@ use crate::{
 
 use super::{
     c_binding::bindings::{ecs_event_desc_t, ecs_record_find, ecs_record_t, FLECS_EVENT_DESC_MAX},
-    c_types::{EntityT, IdT, TableT, TypeT, WorldT},
+    c_types::{EntityT, IdT, TableT, TypeT},
     component_registration::CachedComponentData,
     event::{EventBuilderImpl, EventData},
     utility::functions::ecs_pair,

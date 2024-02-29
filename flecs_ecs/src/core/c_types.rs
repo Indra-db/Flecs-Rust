@@ -1,9 +1,9 @@
 use super::c_binding::bindings::*;
 use super::component_registration::{
-    try_register_enum_component, try_register_struct_component,
+    try_register_struct_component,
     try_register_struct_component_named, ComponentType, Struct,
 };
-use super::world;
+
 use crate::core::component_registration::{CachedComponentData, ComponentData};
 
 use std::ffi::CStr;
@@ -378,7 +378,7 @@ impl CachedComponentData for EcsComponent {
     }
 
     fn get_symbol_name_c() -> &'static str {
-        use std::any::type_name;
+        
         static SYMBOL_NAME_C: OnceLock<String> = OnceLock::new();
         SYMBOL_NAME_C.get_or_init(|| String::from("EcsComponent\0"))
     }
@@ -458,7 +458,7 @@ impl CachedComponentData for Poly {
     }
 
     fn get_symbol_name_c() -> &'static str {
-        use std::any::type_name;
+        
         static SYMBOL_NAME_C: OnceLock<String> = OnceLock::new();
         SYMBOL_NAME_C.get_or_init(|| String::from("Poly\0"))
     }

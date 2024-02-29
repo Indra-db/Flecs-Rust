@@ -18,11 +18,11 @@ use super::{
     },
     c_types::{IdT, IterT},
     column::{Column, UntypedColumn},
-    component_registration::{CachedComponentData, ComponentType},
+    component_registration::{CachedComponentData},
     entity::Entity,
     id::Id,
     table::{Table, TableRange},
-    utility::{functions::ecs_has_pair, types::FTime},
+    utility::{types::FTime},
     world::World,
     Type::Type,
 };
