@@ -23,6 +23,7 @@ use crate::{
         term::{Term, TermBuilder},
         utility::{functions::ecs_dependson, types::ObserverSystemBindingCtx},
         world::World,
+        ECS_ON_UPDATE,
     },
 };
 
@@ -101,6 +102,16 @@ where
         entity_desc.name = c_name.as_ptr() as *const i8;
         entity_desc.sep = SEPARATOR.as_ptr() as *const i8;
         obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
+
+        #[cfg(feature = "flecs_pipeline")]
+        unsafe {
+            ecs_add_id(
+                world.raw_world,
+                obj.desc.entity,
+                ecs_dependson(ECS_ON_UPDATE),
+            );
+            ecs_add_id(world.raw_world, obj.desc.entity, ECS_ON_UPDATE);
+        }
         obj
     }
 
