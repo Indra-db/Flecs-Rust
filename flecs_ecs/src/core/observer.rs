@@ -6,7 +6,7 @@ use super::{
     },
     c_types::{Poly, ECS_OBSERVER},
     entity::Entity,
-    filter::{Filter},
+    filter::Filter,
     world::World,
 };
 
