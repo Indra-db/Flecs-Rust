@@ -18,13 +18,13 @@ use super::{
     },
     c_types::{IdT, IterT},
     column::{Column, UntypedColumn},
-    component_registration::{CachedComponentData},
+    component_registration::CachedComponentData,
     entity::Entity,
     id::Id,
     table::{Table, TableRange},
-    utility::{types::FTime},
+    utility::types::FTime,
     world::World,
-    Type::Type,
+    Archetype,
 };
 
 pub struct Iter<'a> {
@@ -127,8 +127,8 @@ impl<'a> Iter<'a> {
     /// # See also
     ///
     /// `iter::type`
-    pub fn get_type(&self) -> Type {
-        unsafe { Type::new(self.iter.world, ecs_table_get_type(self.iter.table)) }
+    pub fn get_type(&self) -> Archetype {
+        unsafe { Archetype::new(self.iter.world, ecs_table_get_type(self.iter.table)) }
     }
 
     /// # See also
@@ -483,8 +483,6 @@ impl<'a> Iter<'a> {
         )
     }
 }
-#[cfg(feature = "flecs_rules")]
-impl<'a> Iter<'a> {}
 
 impl<'a> Iterator for Iter<'a> {
     type Item = usize;

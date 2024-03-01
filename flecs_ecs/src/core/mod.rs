@@ -1,5 +1,4 @@
 #![allow(non_snake_case)]
-pub mod Type;
 pub mod archetype;
 pub mod builder;
 pub mod c_binding;
@@ -54,7 +53,5 @@ pub use scoped_world::*;
 pub use table::*;
 pub use term::*;
 
-
 pub use utility::*;
 pub use world::*;
-

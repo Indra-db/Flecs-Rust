@@ -923,22 +923,22 @@ fn entity_get_type() {
     assert!(entity.is_valid());
 
     let type_1 = entity.get_archetype();
-    assert_eq!(type_1.get_count(), 0);
+    assert_eq!(type_1.count(), 0);
 
     entity.add_component::<Position>();
 
     let type_2 = entity.get_archetype();
-    assert_eq!(type_2.get_count(), 1);
+    assert_eq!(type_2.count(), 1);
     assert_eq!(
-        type_2.get_id_at_index(0).unwrap(),
+        type_2.id_at_index(0).unwrap(),
         world.get_id_component::<Position>()
     );
 
     entity.add_component::<Velocity>();
     let type_3 = entity.get_archetype();
-    assert_eq!(type_3.get_count(), 2);
+    assert_eq!(type_3.count(), 2);
     assert_eq!(
-        type_3.get_id_at_index(1).unwrap(),
+        type_3.id_at_index(1).unwrap(),
         world.get_id_component::<Velocity>()
     );
 }
