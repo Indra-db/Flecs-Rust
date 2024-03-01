@@ -10,6 +10,7 @@ impl std::fmt::Display for InvalidStrFromId {
     }
 }
 
+/// Enum representing the error codes that can be used by ecs_asserts and ecs_abort
 pub enum FlecsErrorCode {
     InvalidOperation,
     InvalidParameter,
@@ -133,6 +134,9 @@ impl FlecsErrorCode {
     }
 }
 
+/// Macro to assert a condition.
+/// In release mode, the condition is not checked.
+/// Can be turned off by disabling the `flecs_ecs_asserts` feature
 #[cfg(feature = "flecs_ecs_asserts")]
 #[macro_export]
 macro_rules! ecs_assert {
@@ -162,6 +166,7 @@ macro_rules! ecs_assert {
     ($($args:tt)*) => {};
 }
 
+/// Macro to abort the application when an error occurs.
 #[macro_export]
 macro_rules! ecs_abort {
     ($error_code:expr $(,)?) => {

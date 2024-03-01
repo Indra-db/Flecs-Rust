@@ -37,13 +37,26 @@ pub type TickSource = EcsTickSource;
 
 pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\0") };
 
+/// Specify read/write access for term
+/// Specifies the access pattern of a system to a component term.
+///
+/// This enum is used to indicate how a system interacts with a component term during its execution,
+/// differentiating between read-only access, write-only access, both, or neither.
+///
+/// Variants:
+///
+/// - `InOutDefault`: Default behavior, which is `InOut` for regular terms and `In` for shared terms.
+/// - `InOutNone`: Indicates the term is neither read nor written by the system.
+/// - `InOut`: The term is both read and written, implying a mutable access to the component data.
+/// - `In`: The term is only read, implying an immutable access to the component data.
+/// - `Out`: The term is only written, providing exclusive access to modify the component data.
 #[repr(C)]
 pub enum InOutKind {
-    InOutDefault = 0, // InOut for regular terms, In for shared terms
-    InOutNone = 1,    // Term is neither read nor written
-    InOut = 2,        // Term is both read and written
-    In = 3,           // Term is only read
-    Out = 4,          // Term is only written
+    InOutDefault = 0,
+    InOutNone = 1,
+    InOut = 2,
+    In = 3,
+    Out = 4,
 }
 
 impl InOutKind {
@@ -65,15 +78,33 @@ impl From<::std::os::raw::c_uint> for InOutKind {
     }
 }
 
+/// Specify operator for term
+/// Represents the logical operation applied to a term within a query.
+///
+/// This enum defines how a term within a query is matched against entities in the ECS,
+/// supporting complex query compositions through logical operations.
+///
+/// Variants:
+///
+/// - `And`: The term must be present for an entity to match.
+/// - `Or`: At least one of the terms in an `Or` chain must be present for an entity to match.
+/// - `Not`: The term must not be present for an entity to match.
+/// - `Optional`: The presence or absence of the term does not affect matching.
+/// - `AndFrom`: All components identified by the term's ID must be present for an entity to match.
+/// - `OrFrom`: At least one component identified by the term's ID must be present for an entity to match.
+/// - `NotFrom`: None of the components identified by the term's ID should be present for an entity to match.
+///
+/// These operations allow for flexible and powerful queries within an ECS framework, enabling
+/// systems to precisely specify the conditions under which entities are selected for processing.
 #[repr(C)]
 pub enum OperKind {
-    And,      // The term must match
-    Or,       // One of the terms in an or chain must match
-    Not,      // The term must not match
-    Optional, // The term may match
-    AndFrom,  // Term must match all components from term id
-    OrFrom,   // Term must match at least one component from term id
-    NotFrom,  // Term must match none of the components from term id
+    And,
+    Or,
+    Not,
+    Optional,
+    AndFrom,
+    OrFrom,
+    NotFrom,
 }
 
 impl OperKind {

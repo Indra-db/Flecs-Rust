@@ -1,7 +1,6 @@
 pub mod errors;
 pub mod functions;
 pub mod log;
-pub mod macros;
 pub mod traits;
 pub mod types;
 
