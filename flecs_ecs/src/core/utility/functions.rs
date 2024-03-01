@@ -144,7 +144,7 @@ pub fn ecs_entity_t_hi(value: u64) -> u64 {
 ///
 /// # Returns
 ///
-/// [Type] string slice.
+/// `[Type]` string slice.
 ///
 /// # Example
 ///
@@ -173,7 +173,7 @@ pub fn get_only_type_name<T>() -> &'static str {
 ///
 /// # Returns
 ///
-/// [module]::[type] string slice.
+/// `[module]::[type]` string slice.
 ///
 /// # Example
 ///

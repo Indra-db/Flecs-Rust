@@ -1,5 +1,5 @@
-pub mod declarations;
-pub mod opaque;
+mod declarations;
+mod opaque;
 
 pub use declarations::*;
 pub use opaque::*;

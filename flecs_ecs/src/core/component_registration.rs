@@ -99,7 +99,7 @@ pub trait CachedComponentData: Clone + Default {
     fn get_allow_tag(world: *mut WorldT) -> bool;
 
     // this could live on ComponentData, but it would create more heap allocations when creating default Component
-    /// gets the symbol name of the component in the format of [module].[type]
+    /// gets the symbol name of the component in the format of `[module].[type]`
     /// possibly replaceable by const typename if it ever gets stabilized. Currently it outputs different results with different compilers
     // Function for C compatibility, returns null-terminated string.
     fn get_symbol_name_c() -> &'static str;

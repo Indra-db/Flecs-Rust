@@ -1,5 +1,11 @@
-pub mod system_builder;
-pub mod system_runner_fluent;
+//! System module.
+//!
+//! The system module allows for creating and running systems. A system is a
+//! query in combination with a callback function. In addition systems have
+//! support for time management, scheduling via pipeline and can be monitored by the stats addon.
+
+mod system_builder;
+mod system_runner_fluent;
 
 use std::{ffi::CStr, ops::Deref, os::raw::c_void};
 

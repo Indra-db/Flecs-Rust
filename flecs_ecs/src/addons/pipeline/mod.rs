@@ -1,4 +1,4 @@
-pub mod pipeline_builder;
+mod pipeline_builder;
 
 pub use pipeline_builder::*;
 

@@ -3,12 +3,10 @@ use std::ops::Deref;
 use std::os::raw::c_void;
 
 #[cfg(feature = "flecs_system")]
-use crate::addons::system::system_builder::SystemBuilder;
-#[cfg(feature = "flecs_system")]
-use crate::addons::System;
+use crate::addons::system::{System, SystemBuilder};
 
 #[cfg(feature = "flecs_pipeline")]
-use crate::addons::PipelineBuilder;
+use crate::addons::pipeline::PipelineBuilder;
 
 use crate::core::c_binding::bindings::{_ecs_poly_is, ecs_stage_t_magic, ecs_world_t_magic};
 use crate::core::utility::errors::FlecsErrorCode;
