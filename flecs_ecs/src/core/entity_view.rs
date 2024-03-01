@@ -161,7 +161,7 @@ impl EntityView {
 
     /// Return the hierarchical entity path.
     /// # Note
-    /// if you're using the default separator "::" you can use get_hierachy_path_default
+    /// if you're using the default separator "::" you can use `get_hierachy_path_default`
     /// which does no extra heap allocations to communicate with C
     pub fn get_hierachy_path(&self, sep: &CStr, init_sep: &CStr) -> Option<String> {
         self.get_hierachy_path_from_parent_id(0, sep, init_sep)
@@ -174,7 +174,7 @@ impl EntityView {
 
     /// Return the hierarchical entity path relative to a parent.
     ///
-    /// if you're using the default separator "::" you can use get_hierachy_path_default
+    /// if you're using the default separator "::" you can use `get_hierachy_path_default`
     /// which does no extra heap allocations to communicate with C
     pub fn get_hierachy_path_from_parent_id(
         &self,
@@ -240,7 +240,7 @@ impl EntityView {
 
     /// Return the hierarchical entity path relative to a parent type.
     /// # Note
-    /// if you're using the default separator "::" you can use get_hierachy_path_default
+    /// if you're using the default separator "::" you can use `get_hierachy_path_default`
     /// which does no extra heap allocations to communicate with C
     pub fn get_hierachy_path_from_parent_type<T: CachedComponentData>(
         &self,
@@ -478,7 +478,7 @@ impl EntityView {
     }
 
     /// Iterate children for entity
-    /// This operation follows the ChildOf relationship.
+    /// This operation follows the `ChildOf` relationship.
     /// # Arguments
     ///
     /// * `func` - The function invoked for each child. Must match the signature `FnMut(Entity)`.
@@ -564,7 +564,7 @@ impl EntityView {
     /// Get target for a given pair.
     ///
     /// This operation returns the target for a given pair. The optional
-    /// index can be used to iterate through targets, in case the entity get_has
+    /// index can be used to iterate through targets, in case the entity `get_has`
     /// multiple instances for the same relationship.
     ///
     /// # Type Parameters
@@ -583,7 +583,7 @@ impl EntityView {
     /// Get target for a given pair.
     ///
     /// This operation returns the target for a given pair. The optional
-    /// index can be used to iterate through targets, in case the entity get_has
+    /// index can be used to iterate through targets, in case the entity `get_has`
     /// multiple instances for the same relationship.
     ///
     /// # Arguments
@@ -604,7 +604,7 @@ impl EntityView {
     /// relationship, the operation will return 0.
     ///
     /// This operation can be used to lookup, for example, which prefab is providing
-    /// a component by specifying the IsA pair:
+    /// a component by specifying the `IsA` pair:
     ///
     #[cfg_attr(doctest, doc = " ````no_test")]
     /// ```
@@ -619,7 +619,7 @@ impl EntityView {
     ///
     /// # Returns
     ///
-    /// * The entity for which the target get_has been found.
+    /// * The entity for which the target `get_has` been found.
     pub fn get_target_by_component_id(&self, relationship: EntityT, component_id: IdT) -> Entity {
         Entity::new_from_existing_raw(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, relationship, component_id as i32)
@@ -641,7 +641,7 @@ impl EntityView {
     ///
     /// # Returns
     ///
-    /// * The entity for which the target get_has been found.
+    /// * The entity for which the target `get_has` been found.
     #[inline(always)]
     pub fn get_target_for_component<T: CachedComponentData>(
         &self,
@@ -666,7 +666,7 @@ impl EntityView {
     ///
     /// # Returns
     ///
-    /// * The entity for which the target get_has been found.
+    /// * The entity for which the target `get_has` been found.
     #[inline(always)]
     pub fn get_target_for_pair<First: CachedComponentData, Second: CachedComponentData>(
         &self,
@@ -739,7 +739,7 @@ impl EntityView {
     /// Lookup an entity by name.
     ///
     /// Lookup an entity in the scope of this entity. The provided path may
-    /// contain double colons as scope separators, for example: "Foo::Bar".
+    /// contain double colons as scope separators, for example: "`Foo::Bar`".
     ///
     /// # Arguments
     ///

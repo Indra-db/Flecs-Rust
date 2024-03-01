@@ -29,12 +29,12 @@ pub struct EventBuilder {
 }
 
 impl EventBuilder {
-    /// Create a new (untyped) EventBuilder
+    /// Create a new (untyped) `EventBuilder`
     ///
     /// # Arguments
     ///
-    /// * `world` - The world to create the EventBuilder in
-    /// * `event` - The event to create the EventBuilder for
+    /// * `world` - The world to create the `EventBuilder` in
+    /// * `event` - The event to create the `EventBuilder` for
     ///
     /// # See also
     ///
@@ -246,7 +246,7 @@ impl EventBuilderImpl for EventBuilder {
 /// # Type parameters
 ///
 /// * `T` - The type of the event data to set for the event, which must implement `EventData` and `CachedComponentData`.
-/// EventData is a trait used to mark components compatible with events to be used as event data.
+/// `EventData` is a trait used to mark components compatible with events to be used as event data.
 /// Ensures the use of appropriate data types for events, enhancing type safety and data integrity.
 /// This design aims to prevent the utilization of incompatible components as event data,
 /// thereby ensuring greater explicitness and correctness in event handling.
@@ -256,12 +256,12 @@ pub struct EventBuilderTyped<'a, T: EventData + CachedComponentData> {
 }
 
 impl<'a, T: EventData + CachedComponentData> EventBuilderTyped<'a, T> {
-    /// Create a new typed EventBuilder
+    /// Create a new typed `EventBuilder`
     ///
     /// # Arguments
     ///
-    /// * `world` - The world to create the EventBuilder in
-    /// * `event` - The event to create the EventBuilder for
+    /// * `world` - The world to create the `EventBuilder` in
+    /// * `event` - The event to create the `EventBuilder` for
     ///
     /// # See also
     ///

@@ -90,7 +90,7 @@ impl Entity {
     ///
     /// Named entities can be looked up with the lookup functions. Entity names
     /// may be scoped, where each element in the name is separated by "::".
-    /// For example: "Foo::Bar". If parts of the hierarchy in the scoped name do
+    /// For example: "`Foo::Bar`". If parts of the hierarchy in the scoped name do
     /// not yet exist, they will be automatically created.
     ///
     /// # Parameters
@@ -593,7 +593,7 @@ impl Entity {
 
     /// Mark id for auto-overriding.
     ///
-    /// When an entity inherits from a base entity (using the IsA relationship)
+    /// When an entity inherits from a base entity (using the `IsA` relationship)
     /// any ids marked for auto-overriding on the base will be overridden
     /// automatically by the entity.
     ///
@@ -1537,8 +1537,8 @@ impl Entity {
         unsafe { ecs_delete(self.world, self.raw_id) }
     }
 
-    /// Return entity as entity_view.
-    /// This returns an entity_view instance for the entity which is a readonly
+    /// Return entity as `entity_view`.
+    /// This returns an `entity_view` instance for the entity which is a readonly
     /// version of the entity class.
     pub fn get_view(&self) -> EntityView {
         self.entity_view

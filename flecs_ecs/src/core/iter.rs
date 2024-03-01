@@ -178,7 +178,7 @@ impl<'a> Iter<'a> {
     }
 
     /// Access param.
-    /// param contains the pointer passed to the param argument of system::run
+    /// param contains the pointer passed to the param argument of `system::run`
     ///
     /// # See also
     ///
@@ -188,7 +188,7 @@ impl<'a> Iter<'a> {
     }
 
     /// Access param.
-    /// param contains the pointer passed to the param argument of system::run
+    /// param contains the pointer passed to the param argument of `system::run`
     ///
     /// # See also
     ///
@@ -365,7 +365,7 @@ impl<'a> Iter<'a> {
     ///
     /// # Returns
     ///
-    /// Returns an UntypedColumn object that can be used to access the field data.
+    /// Returns an `UntypedColumn` object that can be used to access the field data.
     ///
     /// # See also
     ///
@@ -407,7 +407,7 @@ impl<'a> Iter<'a> {
     /// Skip current table.
     /// This indicates to the query that the data in the current table is not
     /// modified. By default, iterating a table with a query will mark the
-    /// iterated components as dirty if they are annotated with InOut or Out.
+    /// iterated components as dirty if they are annotated with `InOut` or Out.
     ///
     /// When this operation is invoked, the components of the current table will
     /// not be marked dirty.

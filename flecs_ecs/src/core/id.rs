@@ -5,13 +5,13 @@ use super::world::World;
 use crate::core::utility::{errors::*, functions::*};
 use crate::ecs_assert;
 
-/// Class that wraps around a flecs::id_t
+/// Class that wraps around a `flecs::id_t`
 ///
 /// A flecs id is an identifier that can be added to entities. Ids can be:
 ///
 /// * entities (including components, tags)
 /// * pair ids
-/// * entities with id flags set (like flecs::Override, flecs::Toggle)
+/// * entities with id flags set (like `flecs::Override`, `flecs::Toggle`)
 ///
 /// # See also
 ///
@@ -322,8 +322,8 @@ impl Id {
     ///
     /// This operation returns the component id for an id,
     /// if the id is associated with a type. For a regular component with a non-zero size
-    /// (an entity with the EcsComponent component) the operation will return the entity itself.
-    /// For an entity that does not have the EcsComponent component, or with an EcsComponent
+    /// (an entity with the `EcsComponent` component) the operation will return the entity itself.
+    /// For an entity that does not have the `EcsComponent` component, or with an `EcsComponent`
     /// value with size 0, the operation will return an Entity wrapping 0
     ///
     /// For a pair id the operation will return the type associated with the pair, by applying the following rules in order:
@@ -442,7 +442,7 @@ impl Id {
     /// Convert id to string
     ///
     /// # Safety
-    /// safe version : 'to_str'
+    /// safe version : '`to_str`'
     /// This function is unsafe because it assumes that the id is valid.
     ///
     /// # See also
@@ -490,7 +490,7 @@ impl Id {
 
     /// Convert role of id to string.
     /// # Safety
-    /// safe version : 'to_flags_str'
+    /// safe version : '`to_flags_str`'
     /// This function is unsafe because it assumes that the id is valid.
     ///
     /// # See also

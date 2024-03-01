@@ -33,7 +33,7 @@ pub fn ecs_entity_t_comb(lo: u64, hi: u64) -> u64 {
     (hi << 32) + lo
 }
 
-/// Combines two 32 bit integers into a 64 bit integer and adds the ECS_PAIR flag.
+/// Combines two 32 bit integers into a 64 bit integer and adds the `ECS_PAIR` flag.
 ///
 /// # Parameters
 ///
@@ -42,21 +42,21 @@ pub fn ecs_entity_t_comb(lo: u64, hi: u64) -> u64 {
 ///
 /// # Returns
 ///
-/// The combined 64 bit integer with the ECS_PAIR flag set.
+/// The combined 64 bit integer with the `ECS_PAIR` flag set.
 #[inline(always)]
 pub fn ecs_pair(pred: u64, obj: u64) -> u64 {
     ECS_PAIR | ecs_entity_t_comb(obj, pred)
 }
 
-/// Set the ECS_DEPENDS_ON flag for the given entity.
+/// Set the `ECS_DEPENDS_ON` flag for the given entity.
 ///
 /// # Parameters
 ///
-/// * `entity`: The entity to set the ECS_DEPENDS_ON flag for.
+/// * `entity`: The entity to set the `ECS_DEPENDS_ON` flag for.
 ///
 /// # Returns
 ///
-/// The entity with the ECS_DEPENDS_ON flag set.
+/// The entity with the `ECS_DEPENDS_ON` flag set.
 #[inline(always)]
 pub fn ecs_dependson(entity: EntityT) -> EntityT {
     ecs_pair(ECS_DEPENDS_ON, entity)
@@ -326,11 +326,11 @@ pub unsafe fn ecs_field<T: CachedComponentData>(it: *const IterT, index: i32) ->
     ecs_field_w_size(it, size, index) as *mut T
 }
 
-/// Get the InOutKind for the given type.
+/// Get the `InOutKind` for the given type.
 ///
 /// # Type Parameters
 ///
-/// * `T`: The type to get the InOutKind for.
+/// * `T`: The type to get the `InOutKind` for.
 ///
 /// # See also
 ///
@@ -339,11 +339,11 @@ pub(crate) fn type_to_inout<T: InOutType>() -> InOutKind {
     T::IN_OUT
 }
 
-/// Get the OperKind for the given type.
+/// Get the `OperKind` for the given type.
 ///
 /// # Type Parameters
 ///
-/// * `T`: The type to get the OperKind for.
+/// * `T`: The type to get the `OperKind` for.
 ///
 /// # See also
 ///

@@ -348,7 +348,7 @@ pub trait TermBuilder: Sized {
 
     /// The up flag indicates that the term identifier may be substituted by
     /// traversing a relationship upwards. For example: substitute the identifier
-    /// with its parent by traversing the ChildOf relationship.
+    /// with its parent by traversing the `ChildOf` relationship.
     ///
     /// # Arguments
     ///
@@ -364,7 +364,7 @@ pub trait TermBuilder: Sized {
 
     /// The up flag indicates that the term identifier may be substituted by
     /// traversing a relationship upwards. For example: substitute the identifier
-    /// with its parent by traversing the ChildOf relationship.
+    /// with its parent by traversing the `ChildOf` relationship.
     ///
     /// # Type Arguments
     ///
@@ -379,7 +379,7 @@ pub trait TermBuilder: Sized {
     }
 
     /// The cascade flag is like up, but returns results in breadth-first order.
-    /// Only supported for flecs::query
+    /// Only supported for `flecs::query`
     ///
     /// # Arguments
     ///
@@ -394,7 +394,7 @@ pub trait TermBuilder: Sized {
     }
 
     /// The cascade flag is like up, but returns results in breadth-first order.
-    /// Only supported for flecs::query
+    /// Only supported for `flecs::query`
     ///
     /// # Type Arguments
     ///
@@ -408,7 +408,7 @@ pub trait TermBuilder: Sized {
         self
     }
 
-    /// the parent flag is short for up (flecs::ChildOf)
+    /// the parent flag is short for up (`flecs::ChildOf`)
     fn parent(&mut self) -> &mut Self {
         self.assert_term_id();
         unsafe { (*self.get_term_id()).flags |= ECS_PARENT };
@@ -451,9 +451,9 @@ pub trait TermBuilder: Sized {
     }
 
     /// Specify value of identifier by id. Amost the same as id(entity), but this
-    /// operation explicitly sets the flecs::IsEntity flag. This forces the id to
+    /// operation explicitly sets the `flecs::IsEntity` flag. This forces the id to
     /// be interpreted as entity, whereas not setting the flag would implicitly
-    /// convert ids for builtin variables such as flecs::This to a variable.
+    /// convert ids for builtin variables such as `flecs::This` to a variable.
     ///
     /// This function can also be used to disambiguate id(0), which would match
     /// both id(EntityT) and id(&str).
@@ -703,40 +703,40 @@ pub trait TermBuilder: Sized {
         self
     }
 
-    /// Short for inout_stage(flecs::Out).
+    /// Short for `inout_stage(flecs::Out`).
     ///  Use when system uses add, remove or set.
     ///
     fn write(&mut self) -> &mut Self {
         self.inout_stage(InOutKind::Out)
     }
 
-    /// Short for inout_stage(flecs::In).
+    /// Short for `inout_stage(flecs::In`).
     /// Use when system uses get
     fn read(&mut self) -> &mut Self {
         self.inout_stage(InOutKind::In)
     }
 
-    /// Use when system uses get_mut
+    /// Use when system uses `get_mut`
     fn read_write(&mut self) -> &mut Self {
         self.inout_stage(InOutKind::InOut)
     }
 
-    /// short for inout(flecs::In)
+    /// short for `inout(flecs::In`)
     fn in_(&mut self) -> &mut Self {
         self.set_inout(InOutKind::In)
     }
 
-    /// short for inout(flecs::Out)
+    /// short for `inout(flecs::Out`)
     fn out(&mut self) -> &mut Self {
         self.set_inout(InOutKind::Out)
     }
 
-    /// short for inout(flecs::InOut)
+    /// short for `inout(flecs::InOut`)
     fn inout(&mut self) -> &mut Self {
         self.set_inout(InOutKind::InOut)
     }
 
-    /// short for inout(flecs::InOutNone)
+    /// short for `inout(flecs::InOutNone`)
     fn inout_none(&mut self) -> &mut Self {
         self.set_inout(InOutKind::InOutNone)
     }
@@ -752,38 +752,38 @@ pub trait TermBuilder: Sized {
         self
     }
 
-    /// short for oper(flecs::And)
+    /// short for `oper(flecs::And`)
     fn and(&mut self) -> &mut Self {
         self.oper(OperKind::And)
     }
 
-    /// short for oper(flecs::Or)
+    /// short for `oper(flecs::Or`)
     fn or(&mut self) -> &mut Self {
         self.oper(OperKind::Or)
     }
 
-    /// short for oper(flecs::Not)
+    /// short for `oper(flecs::Not`)
     #[allow(clippy::should_implement_trait)]
     fn not(&mut self) -> &mut Self {
         self.oper(OperKind::Not)
     }
 
-    /// short for oper(flecs::Optional)
+    /// short for `oper(flecs::Optional`)
     fn optional(&mut self) -> &mut Self {
         self.oper(OperKind::Optional)
     }
 
-    /// short for oper(flecs::AndFrom)
+    /// short for `oper(flecs::AndFrom`)
     fn and_from(&mut self) -> &mut Self {
         self.oper(OperKind::AndFrom)
     }
 
-    /// short for oper(flecs::OrFrom)
+    /// short for `oper(flecs::OrFrom`)
     fn or_from(&mut self) -> &mut Self {
         self.oper(OperKind::OrFrom)
     }
 
-    /// short for oper(flecs::NotFrom)
+    /// short for `oper(flecs::NotFrom`)
     fn not_from(&mut self) -> &mut Self {
         self.oper(OperKind::NotFrom)
     }

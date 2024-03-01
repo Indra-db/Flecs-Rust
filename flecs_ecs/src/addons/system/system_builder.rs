@@ -35,7 +35,7 @@ where
     is_instanced: bool,
 }
 
-/// Deref to QueryBuilder to allow access to QueryBuilder methods without having to access QueryBuilder through SystemBuilder
+/// Deref to `QueryBuilder` to allow access to `QueryBuilder` methods without having to access `QueryBuilder` through `SystemBuilder`
 impl<'a, T> Deref for SystemBuilder<'a, T>
 where
     T: Iterable<'a>,
@@ -183,7 +183,7 @@ where
     }
 
     /// Set system interval. This operation will cause the system to be ran at the specified interval.
-    /// The timer is synchronous, and is incremented each frame by delta_time.
+    /// The timer is synchronous, and is incremented each frame by `delta_time`.
     ///
     /// # Arguments
     ///

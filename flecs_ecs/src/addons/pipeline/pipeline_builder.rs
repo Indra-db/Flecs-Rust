@@ -20,7 +20,7 @@ where
     is_instanced: bool,
 }
 
-/// Deref to QueryBuilder to allow access to QueryBuilder methods without having to access QueryBuilder through PipelineBuilder
+/// Deref to `QueryBuilder` to allow access to `QueryBuilder` methods without having to access `QueryBuilder` through `PipelineBuilder`
 impl<'a, T> Deref for PipelineBuilder<'a, T>
 where
     T: Iterable<'a>,

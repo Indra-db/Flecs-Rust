@@ -130,7 +130,7 @@ impl Archetype {
     ///
     /// # Returns
     ///
-    /// Some(*mut IdT) - if the type is not null.
+    /// Some(*mut `IdT`) - if the type is not null.
     /// None - if the type is null.
     ///
     /// # See also
@@ -148,7 +148,7 @@ impl Archetype {
     ///
     /// # Returns
     ///
-    /// Some(*mut IdT) - if the type is not null.
+    /// Some(*mut `IdT`) - if the type is not null.
     /// None - if the type is null.
     ///
     /// # See also
@@ -163,7 +163,7 @@ impl Archetype {
     }
 
     /// Return pointer to type.
-    /// Implicit conversion to type_t*.
+    /// Implicit conversion to `type_t`*.
     ///
     /// # Safety
     ///

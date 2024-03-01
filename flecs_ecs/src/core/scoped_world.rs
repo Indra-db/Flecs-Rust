@@ -6,7 +6,7 @@ use super::{
     world::World,
 };
 
-/// Utility class used by the world::scope method to create entities in a scope
+/// Utility class used by the `world::scope` method to create entities in a scope
 pub struct ScopedWorld {
     pub world: World,
     pub prev_scope: EntityT,

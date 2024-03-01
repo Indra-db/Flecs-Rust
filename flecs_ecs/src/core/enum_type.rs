@@ -50,7 +50,7 @@ pub trait CachedEnumData: ComponentType<Enum> {
 
     /// ## Safety
     /// this function assumes you're sure that the enum fields are registered previously
-    /// if uncertain use get_entity_id_from_enum_field
+    /// if uncertain use `get_entity_id_from_enum_field`
     unsafe fn get_entity_id_from_enum_field_unchecked(&self) -> EntityT {
         let index = self.get_enum_index();
         unsafe { *Self::__get_enum_data_ptr_mut().add(index) }
@@ -59,7 +59,7 @@ pub trait CachedEnumData: ComponentType<Enum> {
     /// ## Safety
     /// This function is unsafe because it dereferences a raw pointer and you must ensure that the
     /// index is within the bounds of the number of variants in the enum.
-    /// if uncertain, use SIZE_ENUM_FIELDS to check the number of variants.
+    /// if uncertain, use `SIZE_ENUM_FIELDS` to check the number of variants.
     unsafe fn get_entity_id_from_enum_field_index(index: usize) -> u64 {
         unsafe { *Self::__get_enum_data_ptr_mut().add(index) }
     }

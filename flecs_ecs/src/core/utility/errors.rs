@@ -10,7 +10,7 @@ impl std::fmt::Display for InvalidStrFromId {
     }
 }
 
-/// Enum representing the error codes that can be used by ecs_asserts and ecs_abort
+/// Enum representing the error codes that can be used by `ecs_asserts` and `ecs_abort`
 pub enum FlecsErrorCode {
     InvalidOperation,
     InvalidParameter,

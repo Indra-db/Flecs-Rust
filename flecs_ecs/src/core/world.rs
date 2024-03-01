@@ -143,7 +143,7 @@ impl World {
         self.raw_world
     }
 
-    /// Gets the last delta_time.
+    /// Gets the last `delta_time`.
     ///
     /// Returns the time that has passed since the last frame.
     ///
@@ -229,12 +229,12 @@ impl World {
     /// can still use Flecs features such as FPS limiting and time measurements.
     /// can still use Flecs features such as FPS limiting and time measurements processed.
     ///
-    /// Calls to frame_begin must always be followed by frame_end.
+    /// Calls to `frame_begin` must always be followed by `frame_end`.
     ///
-    /// The function accepts a delta_time parameter, which will get passed to
+    /// The function accepts a `delta_time` parameter, which will get passed to
     /// systems. This value is also used to compute the amount of time the
-    /// function needs to sleep to ensure it does not exceed the target_fps, when
-    /// it is set. When 0 is provided for delta_time, the time will be measured.
+    /// function needs to sleep to ensure it does not exceed the `target_fps`, when
+    /// it is set. When 0 is provided for `delta_time`, the time will be measured.
     ///
     /// # Safety
     /// This function should only be ran from the main thread.
@@ -2870,7 +2870,7 @@ impl World {
         PipelineBuilder::<()>::new_entity(self, Pipeline::get_id(self.raw_world))
     }
 
-    /// Set a custom pipeline. This operation sets the pipeline to run when ecs_progress is invoked.
+    /// Set a custom pipeline. This operation sets the pipeline to run when `ecs_progress` is invoked.
     ///
     /// # Arguments
     ///
@@ -2887,7 +2887,7 @@ impl World {
         }
     }
 
-    /// Set a custom pipeline by type. This operation sets the pipeline to run when ecs_progress is invoked.
+    /// Set a custom pipeline by type. This operation sets the pipeline to run when `ecs_progress` is invoked.
     ///
     /// # Type Parameters
     ///
@@ -2976,7 +2976,7 @@ impl World {
     /// synchronization.
     ///
     /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
-    /// set_pipeline()). Using progress() auto-invokes this for the default pipeline.
+    /// `set_pipeline`()). Using progress() auto-invokes this for the default pipeline.
     /// Additional pipelines may be run explicitly.
     ///
     /// # Note
@@ -3002,7 +3002,7 @@ impl World {
     /// synchronization.
     ///
     /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
-    /// set_pipeline()). Using progress() auto-invokes this for the default pipeline.
+    /// `set_pipeline`()). Using progress() auto-invokes this for the default pipeline.
     /// Additional pipelines may be run explicitly.
     ///
     /// # Note
@@ -3142,8 +3142,8 @@ impl World {
     /// Setting this value to a value higher than 1 will start as many threads and
     /// will cause systems to evenly distribute matched entities across threads.
     /// The operation may be called multiple times to reconfigure the number of threads used,
-    /// but never while running a system / pipeline. Calling ecs_set_threads will also end the use
-    /// of task threads setup with ecs_set_task_threads and vice-versa
+    /// but never while running a system / pipeline. Calling `ecs_set_threads` will also end the use
+    /// of task threads setup with `ecs_set_task_threads` and vice-versa
     ///
     /// # Arguments
     ///
@@ -3160,7 +3160,7 @@ impl World {
         }
     }
 
-    /// Get number of configured stages. Return number of stages set by ecs_set_stage_count.
+    /// Get number of configured stages. Return number of stages set by `ecs_set_stage_count`.
     ///
     /// # Returns
     ///

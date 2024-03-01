@@ -29,7 +29,7 @@ where
     is_instanced: bool,
 }
 
-/// Deref to FilterBuilder to allow access to FilterBuilder methods without having to access FilterBuilder through ObserverBuilder
+/// Deref to `FilterBuilder` to allow access to `FilterBuilder` methods without having to access `FilterBuilder` through `ObserverBuilder`
 impl<'a, T> Deref for ObserverBuilder<'a, T>
 where
     T: Iterable<'a>,

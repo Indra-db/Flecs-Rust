@@ -95,7 +95,7 @@ pub trait CachedComponentData: Clone + Default {
     /// returns the component alignment of the component. If the component is not registered, it will register it.
     fn get_alignment(world: *mut WorldT) -> usize;
 
-    /// returns the component allow_tag of the component. If the component is not registered, it will register it.
+    /// returns the component `allow_tag` of the component. If the component is not registered, it will register it.
     fn get_allow_tag(world: *mut WorldT) -> bool;
 
     // this could live on ComponentData, but it would create more heap allocations when creating default Component
@@ -147,7 +147,7 @@ pub trait CachedComponentData: Clone + Default {
         Self::get_data_unchecked().alignment
     }
 
-    /// returns the component allow_tag of the component.
+    /// returns the component `allow_tag` of the component.
     /// # Safety
     /// safe version is `get_allow_tag`
     /// this function is unsafe because it assumes that the component is registered,
