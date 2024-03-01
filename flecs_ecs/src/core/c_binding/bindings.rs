@@ -2,6 +2,8 @@
 
 #![allow(clippy::all)]
 #![allow(warnings)]
+#[doc(hidden)]
+pub mod bindings {}
 
 pub const FLECS_HI_ID_RECORD_ID: u32 = 1024;
 pub const FLECS_SPARSE_PAGE_BITS: u32 = 12;

@@ -109,8 +109,8 @@ where
                 } else {
                     T::get_tuple_slices(array_components, iter_count)
                 };
-                let iterT = Iter::new(&mut iter);
-                func(&iterT, tuple);
+                let iter_t = Iter::new(&mut iter);
+                func(&iter_t, tuple);
                 ecs_table_unlock(self.world.raw_world, iter.table);
             }
         }
@@ -120,8 +120,8 @@ where
         unsafe {
             let mut iter = ecs_filter_iter(self.world.raw_world, filter);
             while ecs_filter_next(&mut iter) {
-                let iterT = Iter::new(&mut iter);
-                func(&iterT);
+                let iter_t = Iter::new(&mut iter);
+                func(&iter_t);
             }
         }
     }

@@ -1,7 +1,6 @@
-#![allow(non_snake_case)]
 pub mod archetype;
 pub mod builder;
-pub mod c_binding;
+pub(crate) mod c_binding;
 pub mod c_types;
 pub mod column;
 pub mod component;
@@ -30,7 +29,6 @@ pub mod world;
 
 pub use archetype::*;
 pub use builder::*;
-pub use c_binding::*;
 pub use c_types::*;
 pub use column::*;
 pub use component::*;

@@ -17,6 +17,8 @@ fn generate_bindings() {
         .layout_tests(false)
         .raw_line("#![allow(clippy::all)]")
         .raw_line("#![allow(warnings)]")
+        .raw_line("#[doc(hidden)]")
+        .raw_line("pub mod bindings {}")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks));
 
     // export comments from flecs source

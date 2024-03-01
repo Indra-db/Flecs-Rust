@@ -1,10 +1,12 @@
 use std::ffi::CStr;
 
-use flecs_ecs::core::{
-    c_types::*,
-    id::{Id, IdType},
-    world::World,
-    EcsComponent,
+use flecs_ecs::{
+    core::{
+        c_types::*,
+        id::{Id, IdType},
+        world::World,
+    },
+    sys::EcsComponent,
 };
 
 mod common;

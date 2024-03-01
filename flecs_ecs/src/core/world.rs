@@ -2883,7 +2883,7 @@ impl World {
     #[inline(always)]
     pub fn set_pipeline(&self, pipeline: Entity) {
         unsafe {
-            super::ecs_set_pipeline(self.raw_world, pipeline.raw_id);
+            super::c_binding::ecs_set_pipeline(self.raw_world, pipeline.raw_id);
         }
     }
 
@@ -2903,7 +2903,7 @@ impl World {
         Pipeline: ComponentType<Struct> + CachedComponentData,
     {
         unsafe {
-            super::ecs_set_pipeline(self.raw_world, Pipeline::get_id(self.raw_world));
+            super::c_binding::ecs_set_pipeline(self.raw_world, Pipeline::get_id(self.raw_world));
         }
     }
 
@@ -2920,7 +2920,7 @@ impl World {
     #[inline(always)]
     pub fn get_pipeline(&self) -> Entity {
         Entity::new_from_existing_raw(self.raw_world, unsafe {
-            super::ecs_get_pipeline(self.raw_world)
+            super::c_binding::ecs_get_pipeline(self.raw_world)
         })
     }
 
@@ -2967,7 +2967,7 @@ impl World {
     #[doc(alias = "world::progress")]
     #[inline(always)]
     pub fn progress_time(&self, delta_time: f32) -> bool {
-        unsafe { super::ecs_progress(self.raw_world, delta_time) }
+        unsafe { super::c_binding::ecs_progress(self.raw_world, delta_time) }
     }
 
     /// Run pipeline.
@@ -3021,7 +3021,7 @@ impl World {
     #[inline(always)]
     pub fn run_pipeline_time(&self, pipeline: Entity, delta_time: super::FTime) {
         unsafe {
-            super::ecs_run_pipeline(self.raw_world, pipeline.raw_id, delta_time);
+            super::c_binding::ecs_run_pipeline(self.raw_world, pipeline.raw_id, delta_time);
         }
     }
 
@@ -3038,7 +3038,7 @@ impl World {
     #[inline(always)]
     pub fn set_time_scale(&self, mul: super::FTime) {
         unsafe {
-            super::ecs_set_time_scale(self.raw_world, mul);
+            super::c_binding::ecs_set_time_scale(self.raw_world, mul);
         }
     }
 
@@ -3059,7 +3059,7 @@ impl World {
     #[doc(alias = "world::get_time_scale")]
     #[inline(always)]
     pub fn get_time_scale(&self) -> super::FTime {
-        let stats = unsafe { super::ecs_get_world_info(self.raw_world) };
+        let stats = unsafe { super::c_binding::ecs_get_world_info(self.raw_world) };
         unsafe { (*stats).time_scale }
     }
 
@@ -3074,7 +3074,7 @@ impl World {
     /// The total number of ticks as an integer.
     #[inline(always)]
     pub fn get_tick(&self) -> i64 {
-        let stats = unsafe { super::ecs_get_world_info(self.raw_world) };
+        let stats = unsafe { ecs_get_world_info(self.raw_world) };
         unsafe { (*stats).frame_count_total }
     }
 
@@ -3090,7 +3090,7 @@ impl World {
     /// The target FPS as a floating point number.
     #[inline(always)]
     pub fn get_target_fps(&self) -> super::FTime {
-        let stats = unsafe { super::ecs_get_world_info(self.raw_world) };
+        let stats = unsafe { ecs_get_world_info(self.raw_world) };
         unsafe { (*stats).target_fps }
     }
 
@@ -3120,7 +3120,7 @@ impl World {
     #[inline(always)]
     pub fn set_target_fps(&self, target_fps: super::FTime) {
         unsafe {
-            super::ecs_set_target_fps(self.raw_world, target_fps);
+            super::c_binding::ecs_set_target_fps(self.raw_world, target_fps);
         }
     }
 
@@ -3133,7 +3133,7 @@ impl World {
     #[inline(always)]
     pub fn reset_clock(&self) {
         unsafe {
-            super::ecs_reset_clock(self.raw_world);
+            super::c_binding::ecs_reset_clock(self.raw_world);
         }
     }
 
@@ -3156,7 +3156,7 @@ impl World {
     #[inline(always)]
     pub fn set_threads(&self, threads: i32) {
         unsafe {
-            super::ecs_set_threads(self.raw_world, threads);
+            super::c_binding::ecs_set_threads(self.raw_world, threads);
         }
     }
 
@@ -3172,7 +3172,7 @@ impl World {
     #[doc(alias = "world::get_threads")]
     #[inline(always)]
     pub fn get_threads(&self) -> i32 {
-        unsafe { super::ecs_get_stage_count(self.raw_world) }
+        unsafe { super::c_binding::ecs_get_stage_count(self.raw_world) }
     }
 
     /// Set number of worker task threads.
@@ -3201,7 +3201,7 @@ impl World {
     #[inline(always)]
     pub fn set_task_threads(&self, task_threads: i32) {
         unsafe {
-            super::ecs_set_task_threads(self.raw_world, task_threads);
+            super::c_binding::ecs_set_task_threads(self.raw_world, task_threads);
         }
     }
 
@@ -3217,6 +3217,6 @@ impl World {
     #[doc(alias = "world::using_task_threads")]
     #[inline(always)]
     pub fn using_task_threads(&self) -> bool {
-        unsafe { super::ecs_using_task_threads(self.raw_world) }
+        unsafe { super::c_binding::ecs_using_task_threads(self.raw_world) }
     }
 }

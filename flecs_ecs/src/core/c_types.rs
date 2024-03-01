@@ -2,7 +2,6 @@ use super::c_binding::bindings::*;
 use super::component_registration::{
     try_register_struct_component, try_register_struct_component_named, ComponentType, Struct,
 };
-use super::{ecs_primitive_kind_t, ecs_type_kind_t};
 
 use crate::core::component_registration::{CachedComponentData, ComponentData};
 

@@ -99,4 +99,4 @@ A big shoutout to [Sander Mertens](https://github.com/SanderMertens) and all con
 
 ---
 
-**Thank you for stopping by, and stay tuned for updates as we progress on this exciting journey to bridge Rust and Flecs!
+**Thank you for stopping by, and stay tuned for updates as we progress on this exciting journey to bridge Rust and Flecs!**

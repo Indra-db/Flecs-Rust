@@ -4,9 +4,9 @@ use std::{
 };
 
 use crate::core::{
-    ecs_entity_desc_t, ecs_entity_init, ecs_pipeline_desc_t, Builder, EntityT, FilterBuilderImpl,
-    Filterable, Iterable, QueryBuilder, QueryBuilderImpl, Term, TermBuilder, TermIdT, TermT, World,
-    WorldT, SEPARATOR,
+    c_binding::{ecs_entity_desc_t, ecs_entity_init, ecs_pipeline_desc_t},
+    Builder, EntityT, FilterBuilderImpl, Filterable, Iterable, QueryBuilder, QueryBuilderImpl,
+    Term, TermBuilder, TermIdT, TermT, World, WorldT, SEPARATOR,
 };
 
 use super::Pipeline;

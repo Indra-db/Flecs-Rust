@@ -277,8 +277,8 @@ where
             let iter_count = (*iter).count as usize;
 
             for _ in 0..iter_count {
-                let iterT = Iter::new(&mut *iter);
-                iter_only(&iterT);
+                let iter_t = Iter::new(&mut *iter);
+                iter_only(&iter_t);
             }
         }
     }
@@ -304,8 +304,8 @@ where
             } else {
                 T::get_tuple_slices(array_components, i)
             };
-            let iterT = Iter::new(&mut *iter);
-            iter_func(&iterT, tuple);
+            let iter_t = Iter::new(&mut *iter);
+            iter_func(&iter_t, tuple);
         }
 
         ecs_table_unlock((*iter).world, (*iter).table);

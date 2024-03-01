@@ -7,7 +7,9 @@ pub use system_builder::*;
 pub use system_runner_fluent::*;
 
 use crate::core::{
-    ecs_get_system_ctx, ecs_os_api, ecs_system_desc_t, ecs_system_get_query, ecs_system_init,
+    c_binding::{
+        ecs_get_system_ctx, ecs_os_api, ecs_system_desc_t, ecs_system_get_query, ecs_system_init,
+    },
     Entity, FTime, Query, TickSource, World,
 };
 

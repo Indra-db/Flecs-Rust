@@ -58,7 +58,7 @@ default = [
     "flecs_rules",
     "flecs_app",
     "flecs_pipeline",
-    #"flecs_generate_bindings"
+    "flecs_generate_bindings"
 ]
 
 [target.'cfg(any())'.dependencies]

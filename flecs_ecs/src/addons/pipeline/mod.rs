@@ -6,8 +6,8 @@ use std::ops::{Deref, DerefMut};
 
 use crate::{
     core::{
-        ecs_pipeline_desc_t, ecs_pipeline_init, Entity, Iterable, World, ecs_os_api,
-        FlecsErrorCode,
+        c_binding::{ecs_os_api, ecs_pipeline_desc_t, ecs_pipeline_init},
+        Entity, FlecsErrorCode, Iterable, World,
     },
     ecs_abort,
 };
