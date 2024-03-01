@@ -163,7 +163,7 @@ where
             String::from(unsafe { std::ffi::CStr::from_ptr(result).to_str().unwrap() });
         unsafe {
             if let Some(free_func) = ecs_os_api.free_ {
-                free_func(result as *mut _)
+                free_func(result as *mut _);
             }
         }
         rust_string
@@ -305,13 +305,13 @@ where
                 );
 
                 if let Some(abort_func) = ecs_os_api.abort_ {
-                    abort_func()
+                    abort_func();
                 }
             }
 
             if !(*desc).terms_buffer.is_null() {
                 if let Some(free_func) = ecs_os_api.free_ {
-                    free_func((*desc).terms_buffer as *mut _)
+                    free_func((*desc).terms_buffer as *mut _);
                 }
             }
         }
@@ -344,7 +344,7 @@ where
     }
 
     pub fn each_term(&mut self, func: impl FnMut(Term)) {
-        self.base.each_term_impl(func, &mut self.filter)
+        self.base.each_term_impl(func, &mut self.filter);
     }
 
     pub fn get_term(&mut self, index: usize) -> Term {

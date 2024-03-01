@@ -109,7 +109,7 @@ where
     }
 
     fn next_term(&mut self) {
-        self.filter_builder.next_term()
+        self.filter_builder.next_term();
     }
 }
 

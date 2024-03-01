@@ -373,7 +373,7 @@ pub trait TermBuilder: Sized {
         self.assert_term_id();
         unsafe {
             (*self.get_term_id()).flags |= ECS_UP;
-            (*self.get_term_id()).trav = TravRel::get_id(self.get_world())
+            (*self.get_term_id()).trav = TravRel::get_id(self.get_world());
         };
         self
     }
@@ -403,7 +403,7 @@ pub trait TermBuilder: Sized {
         self.assert_term_id();
         unsafe {
             (*self.get_term_id()).flags |= ECS_CASCADE;
-            (*self.get_term_id()).trav = TravRel::get_id(self.get_world())
+            (*self.get_term_id()).trav = TravRel::get_id(self.get_world());
         };
         self
     }
@@ -425,7 +425,7 @@ pub trait TermBuilder: Sized {
         self.assert_term_id();
         unsafe {
             (*self.get_term_id()).trav = traverse_relationship;
-            (*self.get_term_id()).flags |= flags
+            (*self.get_term_id()).flags |= flags;
         };
         self
     }
@@ -465,7 +465,7 @@ pub trait TermBuilder: Sized {
         self.assert_term_id();
         unsafe {
             (*self.get_term_id()).flags |= ECS_IS_ENTITY;
-            (*self.get_term_id()).id = id
+            (*self.get_term_id()).id = id;
         };
         self
     }
@@ -479,7 +479,7 @@ pub trait TermBuilder: Sized {
         self.assert_term_id();
         unsafe {
             (*self.get_term_id()).name = name.as_ptr() as *mut i8;
-            (*self.get_term_id()).flags |= ECS_IS_NAME
+            (*self.get_term_id()).flags |= ECS_IS_NAME;
         };
         self
     }
@@ -493,7 +493,7 @@ pub trait TermBuilder: Sized {
         self.assert_term_id();
         unsafe {
             (*self.get_term_id()).flags |= ECS_IS_VARIABLE;
-            (*self.get_term_id()).name = var_name.as_ptr() as *mut i8
+            (*self.get_term_id()).name = var_name.as_ptr() as *mut i8;
         };
         self
     }

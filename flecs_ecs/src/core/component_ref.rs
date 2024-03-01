@@ -33,7 +33,7 @@ impl<T: CachedComponentData> Ref<T> {
         };
 
         if id == 0 {
-            id = T::get_id(world)
+            id = T::get_id(world);
         }
 
         ecs_assert!(T::get_size(world) != 0, FlecsErrorCode::InvalidParameter);

@@ -1412,7 +1412,7 @@ impl Entity {
         First: CachedComponentData,
         Second: CachedComponentData,
     {
-        self.mark_pair_ids_modified(First::get_id(self.world), Second::get_id(self.world))
+        self.mark_pair_ids_modified(First::get_id(self.world), Second::get_id(self.world));
     }
 
     /// Signal that the first part of a pair was modified.
@@ -1431,7 +1431,7 @@ impl Entity {
             "invalid type: {}",
             First::get_symbol_name(),
         );
-        self.mark_pair_ids_modified(First::get_id(self.world), second)
+        self.mark_pair_ids_modified(First::get_id(self.world), second);
     }
 
     /// Get a reference to a component.
@@ -1505,7 +1505,7 @@ impl Entity {
                 self.world,
                 ecs_pair(relationship, self.raw_id),
                 std::ptr::null_mut(),
-            )
+            );
         }
     }
 

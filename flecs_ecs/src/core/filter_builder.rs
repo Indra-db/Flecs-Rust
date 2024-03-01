@@ -109,7 +109,7 @@ where
     }
 
     fn next_term(&mut self) {
-        self.next_term()
+        self.next_term();
     }
 }
 

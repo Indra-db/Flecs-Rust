@@ -165,6 +165,10 @@ impl Archetype {
     /// Return pointer to type.
     /// Implicit conversion to type_t*.
     ///
+    /// # Safety
+    ///
+    /// This method is considered unsafe because it returns a raw pointer to the type data.
+    ///
     /// # See also
     ///
     /// * C++ API: `type::operator`

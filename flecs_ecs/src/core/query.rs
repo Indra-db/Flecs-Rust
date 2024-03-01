@@ -55,13 +55,13 @@ where
                 );
 
                 if let Some(abort_func) = ecs_os_api.abort_ {
-                    abort_func()
+                    abort_func();
                 };
             }
 
             if !(*desc).filter.terms_buffer.is_null() {
                 if let Some(free_func) = ecs_os_api.free_ {
-                    free_func((*desc).filter.terms_buffer as *mut _)
+                    free_func((*desc).filter.terms_buffer as *mut _);
                 }
             }
         };
@@ -194,7 +194,7 @@ where
             String::from(unsafe { std::ffi::CStr::from_ptr(result).to_str().unwrap() });
         unsafe {
             if let Some(free_func) = ecs_os_api.free_ {
-                free_func(result as *mut _)
+                free_func(result as *mut _);
             }
         }
         rust_string

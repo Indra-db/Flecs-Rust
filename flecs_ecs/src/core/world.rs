@@ -919,7 +919,7 @@ impl World {
     #[doc(alias = "world::modified")]
     #[inline(always)]
     pub fn mark_component_modified_with_id(&self, id: EntityT) {
-        Entity::new_from_existing_raw(self.raw_world, id).mark_component_id_modified(id)
+        Entity::new_from_existing_raw(self.raw_world, id).mark_component_id_modified(id);
     }
 
     /// Signal that singleton component was modified.
@@ -937,7 +937,7 @@ impl World {
     where
         T: CachedComponentData,
     {
-        self.mark_component_modified_with_id(T::get_id(self.raw_world))
+        self.mark_component_modified_with_id(T::get_id(self.raw_world));
     }
 
     /// Get singleton component as const.
@@ -1594,7 +1594,7 @@ impl World {
                     self.raw_world,
                     entity.raw_id,
                     ecs_get_name(self.raw_world, entity.raw_id),
-                )
+                );
             };
         } else {
             unsafe { ecs_set_alias(self.raw_world, entity.raw_id, alias.as_ptr()) };
@@ -2993,7 +2993,7 @@ impl World {
     #[doc(alias = "world::run_pipeline")]
     #[inline(always)]
     pub fn run_pipeline(&self, pipeline: Entity) {
-        Self::run_pipeline_time(self, pipeline, 0.0)
+        Self::run_pipeline_time(self, pipeline, 0.0);
     }
 
     /// Run pipeline.

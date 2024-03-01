@@ -551,7 +551,7 @@ where
 
         // we know this is safe because the component should be registered by now
         if unsafe { T::get_size_unchecked() } != 0 && !existing {
-            register_lifecycle_actions::<T>(world, unsafe { T::get_id_unchecked() })
+            register_lifecycle_actions::<T>(world, unsafe { T::get_id_unchecked() });
         }
 
         if prev_with != 0 {

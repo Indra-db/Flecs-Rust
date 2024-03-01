@@ -250,7 +250,7 @@ pub(crate) fn set_helper<T: CachedComponentData>(
     let comp = unsafe { ecs_get_mut_id(world, entity, id) as *mut T };
     unsafe {
         std::ptr::write(comp, value);
-        ecs_modified_id(world, entity, id)
+        ecs_modified_id(world, entity, id);
     };
 }
 

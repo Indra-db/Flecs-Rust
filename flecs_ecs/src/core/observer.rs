@@ -38,7 +38,7 @@ impl Observer {
         unsafe {
             if !desc.filter.terms_buffer.is_null() {
                 if let Some(free_func) = ecs_os_api.free_ {
-                    free_func(desc.filter.terms_buffer as *mut _)
+                    free_func(desc.filter.terms_buffer as *mut _);
                 }
             }
         }
