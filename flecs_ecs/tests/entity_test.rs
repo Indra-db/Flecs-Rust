@@ -45,7 +45,7 @@ fn entity_new_named_from_scope() {
     world.set_scope_with_id(prev.raw_id);
 
     assert_eq!(child.get_name(), "Bar");
-    assert_eq!(child.get_hierachy_path_default().unwrap(), "::Foo::Bar");
+    assert_eq!(child.get_hierarchy_path_default().unwrap(), "::Foo::Bar");
 }
 
 #[test]
@@ -59,7 +59,7 @@ fn entity_new_nested_named_from_nested_scope() {
     // Verify that the entity exists and its name and path are correct
     assert!(entity.is_valid());
     assert_eq!(entity.get_name(), "Bar");
-    assert_eq!(entity.get_hierachy_path_default().unwrap(), "::Foo::Bar");
+    assert_eq!(entity.get_hierarchy_path_default().unwrap(), "::Foo::Bar");
 
     // Set the current scope to `entity`
     let prev = world.set_scope_with_id(entity.raw_id);
@@ -76,7 +76,7 @@ fn entity_new_nested_named_from_nested_scope() {
     // Verify the name and hierarchical path of the child entity
     assert_eq!(child.get_name(), "World");
     assert_eq!(
-        child.get_hierachy_path_default().unwrap(),
+        child.get_hierarchy_path_default().unwrap(),
         "::Foo::Bar::Hello::World"
     );
 }

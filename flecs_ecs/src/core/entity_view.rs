@@ -159,22 +159,22 @@ impl EntityView {
 
     /// Return the hierarchical entity path.
     /// # Note
-    /// if you're using the default separator "::" you can use `get_hierachy_path_default`
+    /// if you're using the default separator "::" you can use `get_hierarchy_path_default`
     /// which does no extra heap allocations to communicate with C
-    pub fn get_hierachy_path(&self, sep: &CStr, init_sep: &CStr) -> Option<String> {
-        self.get_hierachy_path_from_parent_id(0, sep, init_sep)
+    pub fn get_hierarchy_path(&self, sep: &CStr, init_sep: &CStr) -> Option<String> {
+        self.get_hierarchy_path_from_parent_id(0, sep, init_sep)
     }
 
     /// Return the hierarchical entity path using the default separator "::".
-    pub fn get_hierachy_path_default(&self) -> Option<String> {
-        self.get_hierachy_path_from_parent_id_default(0)
+    pub fn get_hierarchy_path_default(&self) -> Option<String> {
+        self.get_hierarchy_path_from_parent_id_default(0)
     }
 
     /// Return the hierarchical entity path relative to a parent.
     ///
-    /// if you're using the default separator "::" you can use `get_hierachy_path_default`
+    /// if you're using the default separator "::" you can use `get_hierarchy_path_default`
     /// which does no extra heap allocations to communicate with C
-    pub fn get_hierachy_path_from_parent_id(
+    pub fn get_hierarchy_path_from_parent_id(
         &self,
         parent: EntityT,
         sep: &CStr,
@@ -210,7 +210,7 @@ impl EntityView {
     }
 
     /// Return the hierarchical entity path relative to a parent id using the default separator "::".
-    pub fn get_hierachy_path_from_parent_id_default(&self, parent: EntityT) -> Option<String> {
+    pub fn get_hierarchy_path_from_parent_id_default(&self, parent: EntityT) -> Option<String> {
         unsafe {
             let raw_ptr = ecs_get_path_w_sep(
                 self.world,
@@ -238,21 +238,21 @@ impl EntityView {
 
     /// Return the hierarchical entity path relative to a parent type.
     /// # Note
-    /// if you're using the default separator "::" you can use `get_hierachy_path_default`
+    /// if you're using the default separator "::" you can use `get_hierarchy_path_default`
     /// which does no extra heap allocations to communicate with C
-    pub fn get_hierachy_path_from_parent_type<T: CachedComponentData>(
+    pub fn get_hierarchy_path_from_parent_type<T: CachedComponentData>(
         &self,
         sep: &CStr,
         init_sep: &CStr,
     ) -> Option<String> {
-        self.get_hierachy_path_from_parent_id(T::get_id(self.world), sep, init_sep)
+        self.get_hierarchy_path_from_parent_id(T::get_id(self.world), sep, init_sep)
     }
 
     /// Return the hierarchical entity path relative to a parent type using the default separator "::".
-    pub fn get_hierachy_path_from_parent_type_default<T: CachedComponentData>(
+    pub fn get_hierarchy_path_from_parent_type_default<T: CachedComponentData>(
         &self,
     ) -> Option<String> {
-        self.get_hierachy_path_from_parent_id_default(T::get_id(self.world))
+        self.get_hierarchy_path_from_parent_id_default(T::get_id(self.world))
     }
 
     pub fn is_enabled(&self) -> bool {
