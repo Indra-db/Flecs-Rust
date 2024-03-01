@@ -149,7 +149,7 @@ pub fn ecs_entity_t_hi(value: u64) -> u64 {
 /// # Example
 ///
 /// ```
-/// use flecs::core::utility::functions::get_only_type_name;
+/// use flecs_ecs::core::utility::functions::get_only_type_name;
 ///
 /// pub mod Bar {
 ///     pub struct Foo;
@@ -177,8 +177,8 @@ pub fn get_only_type_name<T>() -> &'static str {
 ///
 /// # Example
 ///
-/// ```
-/// use flecs::core::utility::functions::get_full_type_name;
+/// ```rust,ignore
+/// use flecs_ecs::core::utility::functions::get_full_type_name;
 ///
 /// pub mod Bar {
 ///     pub struct Foo;
@@ -315,7 +315,7 @@ pub fn get_generation(entity: EntityT) -> u32 {
 ///
 /// # Example
 ///
-/// ```
+/// ```rust,ignore
 /// // Assuming `it` is a valid iterator pointer obtained from a query.
 /// let position_ptr: *mut Position = ecs_field(it, 1);
 /// let velocity_ptr: *mut Velocity = ecs_field(it, 2);

@@ -102,8 +102,8 @@ impl World {
     }
 
     fn init_builtin_components(&self) {
-        #[cfg(feature = "flecs_system")]
-        System::system_init(self);
+        //#[cfg(feature = "flecs_system")]
+        //System::system_init(self);
         //#[cfg(feature = "flecs_timer")]
         //todo!();
         //#[cfg(feature = "flecs_doc")]
