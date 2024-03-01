@@ -2,7 +2,8 @@ use std::{default, ffi::CStr, ops::Deref, os::raw::c_void, ptr};
 
 use super::{
     c_binding::bindings::{
-        ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_iter_action_t, ecs_observer_desc_t, ecs_table_lock, ecs_table_unlock,
+        ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_iter_action_t,
+        ecs_observer_desc_t, ecs_table_lock, ecs_table_unlock,
     },
     c_types::{EntityT, IterT, TermT, WorldT, SEPARATOR},
     component_registration::CachedComponentData,
@@ -275,7 +276,7 @@ where
 
             let iter_count = (*iter).count as usize;
 
-            for i in 0..iter_count {
+            for _ in 0..iter_count {
                 let iterT = Iter::new(&mut *iter);
                 iter_only(&iterT);
             }

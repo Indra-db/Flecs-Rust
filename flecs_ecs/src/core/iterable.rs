@@ -85,14 +85,14 @@ impl<'a> Iterable<'a> for ()
     ) -> Self::TupleType {}
 
     fn get_tuple_slices(
-        array_components: &Self::ComponentsArray,
-        count: usize,
+        _array_components: &Self::ComponentsArray,
+        _count: usize,
     ) -> Self::TupleSliceType {}
 
     fn get_tuple_slices_with_ref(
-        array_components: &Self::ComponentsArray,
-        is_ref_array_components: &Self::BoolArray,
-        count: usize,
+        _array_components: &Self::ComponentsArray,
+        _is_ref_array_components: &Self::BoolArray,
+        _count: usize,
     ) -> Self::TupleSliceType {}
 
 }

@@ -75,7 +75,6 @@ impl Observer {
     pub fn query(&mut self) -> Filter<()> {
         let poly: *const Poly = self.get_target_for_pair_as_first::<Poly>(ECS_OBSERVER);
         let obj: *mut ecs_observer_t = unsafe { (*poly).poly as *mut ecs_observer_t };
-        let world: World = self.get_as_world();
         Filter::<()>::new_ownership(&self.world, unsafe { &mut (*obj).filter })
     }
 }

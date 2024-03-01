@@ -5,7 +5,6 @@ use crate::ecs_assert;
 
 use super::c_binding::bindings::{ecs_get_hooks_id, ecs_opaque_init};
 use super::utility::functions::{ecs_field, get_full_type_name};
-use super::world::World;
 use super::{c_types::*, component_registration::*, entity::Entity};
 
 use std::ffi::CStr;
@@ -315,7 +314,6 @@ impl<T: CachedComponentData> Component<T> {
     where
         OpaqueType: CachedComponentData,
     {
-        let world = World::new_from_world(self.world);
         let mut ts = Opaque::<OpaqueType>::new(self.world);
         ts.desc.entity = T::get_id(self.world);
         unsafe { ecs_opaque_init(self.world, &ts.desc) };
