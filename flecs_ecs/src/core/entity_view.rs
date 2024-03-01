@@ -7,7 +7,7 @@ use std::{
 
 // Module imports from within the current crate
 use crate::{
-    core::{c_binding::bindings::ecs_get_world, utility::errors::FlecsErrorCode},
+    core::{c_binding::bindings::ecs_get_world, FlecsErrorCode},
     ecs_assert,
 };
 
@@ -28,13 +28,11 @@ use super::{
     },
     c_types::*,
     component_registration::{CachedComponentData, ComponentType, Enum, Struct},
+    ecs_has_pair, ecs_pair, ecs_pair_first, ecs_pair_second, ecs_record_to_row,
     entity::Entity,
     enum_type::CachedEnumData,
     id::Id,
     table::{Table, TableRange},
-    utility::functions::{
-        ecs_has_pair, ecs_pair, ecs_pair_first, ecs_pair_second, ecs_record_to_row,
-    },
     world::World,
 };
 

@@ -1,10 +1,10 @@
 use crate::addons::meta::Opaque;
 use crate::core::c_binding::bindings::ecs_set_hooks_id;
-use crate::core::utility::errors::FlecsErrorCode;
+use crate::core::{get_full_type_name, FlecsErrorCode};
 use crate::ecs_assert;
 
 use super::c_binding::bindings::{ecs_get_hooks_id, ecs_opaque_init};
-use super::utility::functions::{ecs_field, get_full_type_name};
+use super::ecs_field;
 use super::{c_types::*, component_registration::*, entity::Entity};
 
 use std::ffi::CStr;

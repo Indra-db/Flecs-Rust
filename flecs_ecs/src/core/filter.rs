@@ -9,8 +9,8 @@ use super::{
     iter::Iter,
     iterable::Iterable,
     term::{Term, TermType},
-    utility::errors::FlecsErrorCode,
     world::World,
+    FlecsErrorCode,
 };
 
 use std::ffi::c_char;

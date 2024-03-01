@@ -2,10 +2,8 @@ use std::ffi::CStr;
 use std::ops::{Deref, DerefMut};
 use std::os::raw::c_void;
 
-use crate::core::{
-    c_binding::bindings::{ecs_get_target, ecs_set_id, ecs_set_name},
-    utility::errors::FlecsErrorCode,
-};
+use crate::core::c_binding::bindings::{ecs_get_target, ecs_set_id, ecs_set_name};
+use crate::core::FlecsErrorCode;
 use crate::ecs_assert;
 
 use super::{
@@ -20,10 +18,10 @@ use super::{
     component_ref::Ref,
     component_registration::{CachedComponentData, ComponentType, Enum, Struct},
     enum_type::CachedEnumData,
-    utility::functions::{ecs_pair, set_helper},
     world::World,
     EntityView, ECS_OVERRIDE,
 };
+use super::{ecs_pair, set_helper};
 
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Entity {

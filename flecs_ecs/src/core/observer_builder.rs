@@ -13,8 +13,8 @@ use super::{
     iterable::{Filterable, Iterable},
     observer::Observer,
     term::TermBuilder,
-    utility::types::ObserverSystemBindingCtx,
     world::World,
+    ObserverSystemBindingCtx,
 };
 
 pub struct ObserverBuilder<'a, T>

@@ -1,8 +1,8 @@
-pub mod errors;
-pub mod functions;
-pub mod log;
-pub mod traits;
-pub mod types;
+mod errors;
+mod functions;
+mod log;
+mod traits;
+mod types;
 
 pub use errors::*;
 pub use functions::*;

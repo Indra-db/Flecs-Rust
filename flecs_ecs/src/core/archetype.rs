@@ -1,6 +1,6 @@
 use std::{ffi::CStr, ops::Index};
 
-use crate::{core::utility::errors::FlecsErrorCode, ecs_assert};
+use crate::{core::FlecsErrorCode, ecs_assert};
 
 use super::{
     c_binding::bindings::ecs_type_str,

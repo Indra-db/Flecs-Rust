@@ -5,13 +5,13 @@ use super::{
     },
     c_types::{EntityT, IdT, WorldT},
     enum_type::CachedEnumData,
+    is_empty_type,
     lifecycle_traits::register_lifecycle_actions,
-    utility::{
-        errors::FlecsErrorCode,
-        functions::{get_full_type_name, is_empty_type},
-    },
 };
-use crate::ecs_assert;
+use crate::{
+    core::{get_full_type_name, FlecsErrorCode},
+    ecs_assert,
+};
 use std::{ffi::CStr, os::raw::c_char, sync::OnceLock};
 /// Component data that is cached by the `CachedComponentData` trait.
 /// This data is used to register components with the world.

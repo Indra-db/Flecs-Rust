@@ -1,7 +1,7 @@
 use std::ffi::CStr;
 
 use crate::{
-    core::{strip_prefix_cstr_raw, utility::errors::FlecsErrorCode},
+    core::{strip_prefix_cstr_raw, FlecsErrorCode},
     ecs_assert,
 };
 
@@ -15,9 +15,9 @@ use super::{
         ECS_FILTER, ECS_IS_ENTITY, ECS_IS_NAME, ECS_IS_VARIABLE, ECS_PARENT, ECS_SELF, ECS_UP,
     },
     component_registration::CachedComponentData,
+    ecs_pair,
     entity::Entity,
     id::Id,
-    utility::functions::ecs_pair,
     world::World,
 };
 

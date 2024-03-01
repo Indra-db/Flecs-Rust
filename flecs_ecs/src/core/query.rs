@@ -9,14 +9,13 @@ use super::c_binding::bindings::{
     ecs_query_init, ecs_query_iter, ecs_query_next, ecs_query_orphaned, ecs_table_lock,
     ecs_table_unlock,
 };
-use super::c_types::*;
 use super::entity::Entity;
 use super::filter::FilterView;
 use super::iter::Iter;
 use super::iterable::Iterable;
 use super::term::{Term, TermType};
-use super::utility::errors::FlecsErrorCode;
 use super::world::World;
+use super::{c_types::*, FlecsErrorCode};
 
 pub struct QueryBase<'a, T>
 where

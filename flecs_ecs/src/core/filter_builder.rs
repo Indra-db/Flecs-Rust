@@ -5,7 +5,7 @@ use crate::{
         c_binding::bindings::{
             ecs_os_api, ecs_term_is_initialized, ecs_term_t, FLECS_TERM_DESC_MAX,
         },
-        utility::errors::FlecsErrorCode,
+        FlecsErrorCode,
     },
     ecs_assert,
 };
@@ -21,8 +21,9 @@ use super::{
     filter::Filter,
     iterable::{Filterable, Iterable},
     term::{Term, TermBuilder, TermType},
-    utility::{functions::type_to_inout, traits::InOutType},
+    type_to_inout,
     world::World,
+    InOutType,
 };
 
 pub struct FilterBuilder<'a, T>

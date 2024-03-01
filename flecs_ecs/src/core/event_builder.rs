@@ -6,7 +6,7 @@ use std::{
 use crate::{
     core::{
         c_binding::bindings::{ecs_emit, ecs_get_world, ECS_INVALID_PARAMETER},
-        utility::functions::ecs_record_to_row,
+        ecs_record_to_row,
     },
     ecs_assert,
 };
@@ -15,8 +15,8 @@ use super::{
     c_binding::bindings::{ecs_event_desc_t, ecs_record_find, ecs_record_t, FLECS_EVENT_DESC_MAX},
     c_types::{EntityT, IdT, TableT, TypeT},
     component_registration::CachedComponentData,
+    ecs_pair,
     event::{EventBuilderImpl, EventData},
-    utility::functions::ecs_pair,
     world::World,
 };
 

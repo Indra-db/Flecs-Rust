@@ -45,8 +45,7 @@
 //! Note: C does the same, where the user needs to opt in for non trivial types. We can do the same.
 //! Note2: zerobit pattern
 
-use crate::core::c_types::*;
-use crate::core::utility::errors::FlecsErrorCode;
+use crate::core::{c_types::*, FlecsErrorCode};
 use crate::{core::c_binding::bindings::*, ecs_assert};
 use std::{ffi::c_void, ptr};
 

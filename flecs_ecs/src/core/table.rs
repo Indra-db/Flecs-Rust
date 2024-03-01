@@ -8,7 +8,7 @@ use super::{
     },
     c_types::{EntityT, IdT, TableT, WorldT},
     component_registration::CachedComponentData,
-    utility::functions::ecs_pair,
+    ecs_pair,
 };
 
 #[derive(Debug)]

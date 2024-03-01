@@ -1,4 +1,4 @@
-use crate::{core::utility::errors::FlecsErrorCode, ecs_assert};
+use crate::{core::FlecsErrorCode, ecs_assert};
 
 use super::{component_registration::CachedComponentData, iter::Iter};
 use std::{

@@ -3,7 +3,7 @@ use std::{marker::PhantomData, os::raw::c_void};
 use crate::{
     core::{
         c_binding::bindings::{ecs_get_world, ecs_ref_get_id, ecs_ref_init_id},
-        utility::errors::FlecsErrorCode,
+        FlecsErrorCode,
     },
     ecs_assert,
 };

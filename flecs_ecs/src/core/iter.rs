@@ -5,7 +5,7 @@ use crate::{
         c_binding::bindings::{
             ecs_field_is_set, ecs_field_w_size, ecs_iter_str, ecs_table_has_module,
         },
-        utility::errors::FlecsErrorCode,
+        FlecsErrorCode,
     },
     ecs_assert,
 };
@@ -22,9 +22,8 @@ use super::{
     entity::Entity,
     id::Id,
     table::{Table, TableRange},
-    utility::types::FTime,
     world::World,
-    Archetype,
+    Archetype, FTime,
 };
 
 pub struct Iter<'a> {

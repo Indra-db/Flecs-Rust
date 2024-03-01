@@ -13,15 +13,15 @@ use crate::core::{
     },
     c_types::{EntityT, FTimeT, IterT, TermIdT, TermT, WorldT, ECS_DEPENDS_ON, SEPARATOR},
     component_registration::CachedComponentData,
+    ecs_dependson,
     entity::Entity,
     filter_builder::FilterBuilderImpl,
     iter::Iter,
     iterable::{Filterable, Iterable},
     query_builder::{QueryBuilder, QueryBuilderImpl},
     term::{Term, TermBuilder},
-    utility::{functions::ecs_dependson, types::ObserverSystemBindingCtx},
     world::World,
-    ECS_ON_UPDATE,
+    ObserverSystemBindingCtx, ECS_ON_UPDATE,
 };
 
 use super::System;

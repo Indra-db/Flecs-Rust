@@ -9,9 +9,8 @@ use crate::addons::system::{System, SystemBuilder};
 use crate::addons::pipeline::PipelineBuilder;
 
 use crate::core::c_binding::bindings::{_ecs_poly_is, ecs_stage_t_magic, ecs_world_t_magic};
-use crate::core::utility::errors::FlecsErrorCode;
-use crate::core::utility::functions::ecs_pair;
 
+use crate::core::FlecsErrorCode;
 use crate::ecs_assert;
 
 use super::c_binding::bindings::{
@@ -43,7 +42,7 @@ use super::observer::Observer;
 use super::observer_builder::ObserverBuilder;
 use super::scoped_world::ScopedWorld;
 use super::term::Term;
-use super::utility::functions::set_helper;
+use super::{ecs_pair, set_helper};
 
 pub struct World {
     pub raw_world: *mut WorldT,

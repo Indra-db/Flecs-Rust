@@ -1,8 +1,11 @@
 use super::c_binding::bindings::*;
 use super::c_types::*;
+use super::ecs_pair;
+use super::ecs_pair_first;
 use super::entity::*;
 use super::world::World;
-use crate::core::utility::{errors::*, functions::*};
+use crate::core::ecs_pair_second;
+use crate::core::FlecsErrorCode;
 use crate::ecs_assert;
 
 /// Class that wraps around a `flecs::id_t`
