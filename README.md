@@ -51,7 +51,7 @@ This library has not been advertized nor published yet to crates.io for that rea
 ```
 #### addons
 ```[tasklist]
-- [ ] systems
+- [x] systems
 - [ ] alerts
 - [x] app
 - [ ] doc
@@ -60,7 +60,7 @@ This library has not been advertized nor published yet to crates.io for that rea
 - [wip] meta
 - [ ] modules
 - [ ] monitor
-- [ ] pipelines
+- [x] pipelines
 - [ ] plecs
 - [ ] rest
 - [ ] rules
