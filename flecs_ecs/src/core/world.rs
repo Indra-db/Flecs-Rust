@@ -2702,6 +2702,14 @@ impl World {
     /// # Type Parameters
     ///
     /// * `T` - The component type.
+    ///
+    /// # Returns
+    ///
+    /// The found or registered component.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::component`
     pub fn component<T: CachedComponentData>(&self) -> Component<T> {
         Component::<T>::new(self.raw_world)
     }
@@ -3133,7 +3141,7 @@ impl World {
     /// synchronization.
     ///
     /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
-    /// * C++ API: `set_pipeline`()). Using progress() auto-invokes this for the default pipeline.
+    /// `set_pipeline`()). Using progress() auto-invokes this for the default pipeline.
     /// Additional pipelines may be run explicitly.
     ///
     /// # Note
@@ -3159,7 +3167,7 @@ impl World {
     /// synchronization.
     ///
     /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
-    /// * C++ API: `set_pipeline`()). Using progress() auto-invokes this for the default pipeline.
+    /// `set_pipeline`()). Using progress() auto-invokes this for the default pipeline.
     /// Additional pipelines may be run explicitly.
     ///
     /// # Note
@@ -3254,7 +3262,7 @@ impl World {
     /// Set target frames per second (FPS).
     ///
     /// Configures the world to run at the specified target FPS, ensuring that
-    /// * C++ API: `ecs_progress` is not called more frequently than this rate. This mechanism
+    /// `ecs_progress` is not called more frequently than this rate. This mechanism
     /// enables tracking the elapsed time since the last `ecs_progress` call and
     /// sleeping for any remaining time in the frame, if applicable.
     ///
