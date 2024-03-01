@@ -51,7 +51,7 @@ This library has not been advertized nor published yet to crates.io for that rea
 ```
 #### addons
 ```[tasklist]
-- [ ] systems
+- [x] systems
 - [ ] alerts
 - [x] app
 - [ ] doc
@@ -60,7 +60,7 @@ This library has not been advertized nor published yet to crates.io for that rea
 - [wip] meta
 - [ ] modules
 - [ ] monitor
-- [ ] pipelines
+- [x] pipelines
 - [ ] plecs
 - [ ] rest
 - [ ] rules
@@ -77,7 +77,6 @@ This library has not been advertized nor published yet to crates.io for that rea
 ```[tasklist]
 - [ ] make the public API rustier, no more pointers.
     - [x] Filter, Query, FilterBuilder, QueryBuilder, Term, Entity, EntityView and Id construction in public API no more pointers.
-- [ ] use custom string type to avoid re-allocating C allocated strings instead of using String with new allocation
 - [x] add a non-heap allocating way of creating filters. This is useful for creating filters regularly in hot path code, e.g. systems. 
 ```
 
