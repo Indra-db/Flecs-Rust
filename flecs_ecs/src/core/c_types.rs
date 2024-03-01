@@ -813,11 +813,9 @@ impl CachedComponentData for TickSource {
 
     // Function for C compatibility, returns null-terminated string.
     fn get_symbol_name_c() -> &'static str {
-        use std::any::type_name;
         static SYMBOL_NAME_C: OnceLock<String> = OnceLock::new();
         SYMBOL_NAME_C.get_or_init(|| {
-            let mut name = type_name::<Self>().replace("::", ".");
-            name.push('\0'); // Add null terminator to make it C compatible.
+            let name = "EcsTickSource\0".to_string();
             name
         })
     }
