@@ -57,6 +57,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::entity`
+    #[doc(alias = "entity::entity")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new(world: &World) -> Self {
         Self {
@@ -80,6 +81,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::entity`
+    #[doc(alias = "entity::entity")]
     pub fn new_from_existing(world: Option<&World>, id: IdT) -> Self {
         if let Some(world) = world {
             Self {
@@ -107,6 +109,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::entity`
+    #[doc(alias = "entity::entity")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new_named(world: &World, name: &CStr) -> Self {
         let desc = ecs_entity_desc_t {
@@ -134,6 +137,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::entity`
+    #[doc(alias = "entity::entity")]
     pub(crate) fn new_from_existing_raw(world: *mut WorldT, id: IdT) -> Self {
         Self {
             entity_view: EntityView::new_from_existing(world, id),
@@ -145,6 +149,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::entity`
+    #[doc(alias = "entity::entity")]
     pub(crate) const fn new_id_only(id: EntityT) -> Self {
         Self {
             entity_view: EntityView::new_id_only(id),
@@ -162,6 +167,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::add`
+    #[doc(alias = "entity::add")]
     pub fn add_id(self, component_id: IdT) -> Self {
         unsafe { ecs_add_id(self.world, self.raw_id, component_id) }
         self
@@ -178,6 +184,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::add`
+    #[doc(alias = "entity::add")]
     pub fn add_component<T: CachedComponentData>(self) -> Self {
         let world = self.world;
         self.add_id(T::get_id(world))
@@ -195,6 +202,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::add`
+    #[doc(alias = "entity::add")]
     pub fn add_pair_ids(self, first: EntityT, second: EntityT) -> Self {
         self.add_id(ecs_pair(first, second))
     }
@@ -210,6 +218,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::add`
+    #[doc(alias = "entity::add")]
     pub fn add_pair<First, Second>(self) -> Self
     where
         First: CachedComponentData,
@@ -232,6 +241,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::add`
+    #[doc(alias = "entity::add")]
     pub fn add_pair_first_id<Second: CachedComponentData>(self, first: EntityT) -> Self {
         let world = self.world;
         self.add_pair_ids(first, Second::get_id(world))
@@ -250,6 +260,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::add`
+    #[doc(alias = "entity::add")]
     pub fn add_pair_second_id<First: CachedComponentData>(self, second: EntityT) -> Self {
         let world = self.world;
         self.add_pair_ids(First::get_id(world), second)
@@ -269,6 +280,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::add`
+    #[doc(alias = "entity::add")]
     pub fn add_enum_tag<First, Second>(self, enum_value: Second) -> Self
     where
         First: CachedComponentData,
@@ -297,6 +309,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::add`
+    #[doc(alias = "entity::add")]
     pub fn add_enum_constant<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
         self,
         enum_value: T,
@@ -319,6 +332,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::add_if`
+    #[doc(alias = "entity::add_if")]
     pub fn add_id_if(self, component_id: IdT, condition: bool) -> Self {
         if condition {
             return self.add_id(component_id);
@@ -341,6 +355,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::add_if`
+    #[doc(alias = "entity::add_if")]
     pub fn add_component_if<T: CachedComponentData>(self, condition: bool) -> Self {
         let world = self.world;
         self.add_id_if(T::get_id(world), condition)
@@ -358,6 +373,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::add_if`
+    #[doc(alias = "entity::add_if")]
     pub fn add_pair_ids_if(self, first: EntityT, mut second: EntityT, condition: bool) -> Self {
         if condition {
             self.add_pair_ids(first, second)
@@ -388,6 +404,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::add_if`
+    #[doc(alias = "entity::add_if")]
     pub fn add_pair_if<First, Second>(self, condition: bool) -> Self
     where
         First: CachedComponentData,
@@ -412,6 +429,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::add_if`
+    #[doc(alias = "entity::add_if")]
     pub fn add_pair_first_id_if<Second: CachedComponentData>(
         self,
         first: EntityT,
@@ -436,6 +454,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::add_if`
+    #[doc(alias = "entity::add_if")]
     pub fn add_pair_second_id_if<First: CachedComponentData>(
         self,
         second: EntityT,
@@ -460,6 +479,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::add_if`
+    #[doc(alias = "entity::add_if")]
     pub fn add_enum_tag_if<T>(self, enum_value: T, condition: bool) -> Self
     where
         T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
@@ -481,6 +501,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::remove`
+    #[doc(alias = "entity::remove")]
     pub fn remove_id(self, component_id: IdT) -> Self {
         unsafe { ecs_remove_id(self.world, self.raw_id, component_id) }
         self
@@ -495,6 +516,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::remove`
+    #[doc(alias = "entity::remove")]
     pub fn remove_component<T: CachedComponentData + ComponentType<Struct>>(self) -> Self {
         let world = self.world;
         self.remove_id(T::get_id(world))
@@ -509,6 +531,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::remove`
+    #[doc(alias = "entity::remove")]
     pub fn remove_component_enum<T: CachedComponentData + ComponentType<Enum>>(self) -> Self {
         let world = self.world;
         self.remove_pair_ids(T::get_id(world), unsafe { EcsWildcard })
@@ -525,6 +548,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::remove`
+    #[doc(alias = "entity::remove")]
     pub fn remove_pair_ids(self, first: EntityT, second: EntityT) -> Self {
         self.remove_id(ecs_pair(first, second))
     }
@@ -540,6 +564,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::remove`
+    #[doc(alias = "entity::remove")]
     pub fn remove_pair<First, Second>(self) -> Self
     where
         First: CachedComponentData,
@@ -564,6 +589,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::remove`
+    #[doc(alias = "entity::remove")]
     pub fn remove_enum_tag<First, Second>(self, enum_value: Second) -> Self
     where
         First: CachedComponentData,
@@ -590,6 +616,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::remove_second`
+    #[doc(alias = "entity::remove_second")]
     pub fn remove_pair_first_id<Second: CachedComponentData>(self, first: EntityT) -> Self {
         let world = self.world;
         self.remove_pair_ids(first, Second::get_id(world))
@@ -609,6 +636,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::remove_second`
+    #[doc(alias = "entity::remove_second")]
     pub fn remove_pair_second_id<First: CachedComponentData>(self, second: EntityT) -> Self {
         let world = self.world;
         self.remove_pair_ids(First::get_id(world), second)
@@ -623,6 +651,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::is_a`
+    #[doc(alias = "entity::is_a")]
     pub fn is_a_id(self, second: EntityT) -> Self {
         self.add_pair_ids(unsafe { EcsIsA }, second)
     }
@@ -636,6 +665,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::is_a`
+    #[doc(alias = "entity::is_a")]
     pub fn is_a<T: CachedComponentData>(self) -> Self {
         let world = self.world;
         self.is_a_id(T::get_id(world))
@@ -650,6 +680,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::child_of`
+    #[doc(alias = "entity::child_of")]
     pub fn child_of_id(self, second: EntityT) -> Self {
         self.add_pair_ids(unsafe { EcsChildOf }, second)
     }
@@ -663,6 +694,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::child_of`
+    #[doc(alias = "entity::child_of")]
     pub fn child_of<T: CachedComponentData>(self) -> Self {
         let world = self.world;
         self.child_of_id(T::get_id(world))
@@ -677,6 +709,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::depends_on`
+    #[doc(alias = "entity::depends_on")]
     pub fn depends_on_id(self, second: EntityT) -> Self {
         self.add_pair_ids(unsafe { EcsDependsOn }, second)
     }
@@ -690,6 +723,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::depends_on`
+    #[doc(alias = "entity::depends_on")]
     pub fn depends_on<T: CachedComponentData>(self) -> Self {
         let world = self.world;
         self.depends_on_id(T::get_id(world))
@@ -704,6 +738,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::slot_of`
+    #[doc(alias = "entity::slot_of")]
     pub fn slot_of_id(self, second: EntityT) -> Self {
         self.add_pair_ids(unsafe { EcsSlotOf }, second)
     }
@@ -717,6 +752,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::slot_of`
+    #[doc(alias = "entity::slot_of")]
     pub fn slot_of<T: CachedComponentData>(self) -> Self {
         let world = self.world;
         self.slot_of_id(T::get_id(world))
@@ -727,6 +763,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::slot`
+    #[doc(alias = "entity::slot")]
     pub fn slot_child(self) -> Self {
         ecs_assert!(
             unsafe { ecs_get_target(self.world, self.raw_id, EcsChildOf, 0) } != 0,
@@ -750,6 +787,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::override`
+    #[doc(alias = "entity::override")]
     pub fn mark_override_component_id(self, id: IdT) -> Self {
         self.add_id(ECS_OVERRIDE | id)
     }
@@ -763,6 +801,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::override`
+    #[doc(alias = "entity::override")]
     pub fn mark_override_component<T: CachedComponentData>(self) -> Self {
         let world = self.world;
         self.mark_override_component_id(T::get_id(world))
@@ -778,6 +817,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::override`
+    #[doc(alias = "entity::override")]
     pub fn mark_override_pair_ids(self, first: EntityT, second: EntityT) -> Self {
         self.mark_override_component_id(ecs_pair(first, second))
     }
@@ -792,6 +832,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::override`
+    #[doc(alias = "entity::override")]
     pub fn mark_override_pair<First, Second>(self) -> Self
     where
         First: CachedComponentData,
@@ -814,6 +855,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::override`
+    #[doc(alias = "entity::override")]
     pub fn mark_override_pair_first<Second: CachedComponentData>(self, first: EntityT) -> Self {
         let world = self.world;
         self.mark_override_pair_ids(first, Second::get_id(world))
@@ -832,6 +874,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::override`
+    #[doc(alias = "entity::override")]
     pub fn mark_override_pair_second_id<First: CachedComponentData>(self, second: EntityT) -> Self {
         let world = self.world;
         self.mark_override_pair_ids(First::get_id(world), second)
@@ -850,6 +893,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::set_override`
+    #[doc(alias = "entity::set_override")]
     pub fn set_mark_override_component_id(self, component_id: IdT) -> Self {
         unsafe { ecs_add_id(self.world, self.raw_id, ECS_OVERRIDE | component_id) }
         self
@@ -868,6 +912,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::set_override`
+    #[doc(alias = "entity::set_override")]
     pub fn set_mark_override_component<T: CachedComponentData>(self, component: T) -> Self {
         self.mark_override_component::<T>().set_component(component)
     }
@@ -886,6 +931,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::set_override`
+    #[doc(alias = "entity::set_override")]
     pub fn set_mark_override_pair_first<First: CachedComponentData + ComponentType<Struct>>(
         self,
         second: EntityT,
@@ -909,6 +955,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::set_override`
+    #[doc(alias = "entity::set_override")]
     pub fn set_mark_override_pair_second<Second: CachedComponentData + ComponentType<Struct>>(
         self,
         second: Second,
@@ -927,6 +974,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::set`
+    #[doc(alias = "entity::set")]
     pub fn set_component<T: CachedComponentData>(self, component: T) -> Self {
         set_helper(self.world, self.raw_id, component, T::get_id(self.world));
         self
@@ -946,6 +994,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::set`
+    #[doc(alias = "entity::set")]
     pub fn set_pair_first_id<First: CachedComponentData>(
         self,
         second: EntityT,
@@ -976,6 +1025,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::set`
+    #[doc(alias = "entity::set")]
     pub fn set_pair_first<First, Second>(self, first: First) -> Self
     where
         First: CachedComponentData + ComponentType<Struct>,
@@ -1004,6 +1054,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::set_second`
+    #[doc(alias = "entity::set_second")]
     pub fn set_pair_second_id<Second: CachedComponentData>(
         self,
         first: EntityT,
@@ -1034,6 +1085,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::set_second`
+    #[doc(alias = "entity::set_second")]
     pub fn set_pair_second<First, Second>(self, second: Second) -> Self
     where
         First: CachedComponentData + ComponentType<Struct>,
@@ -1065,6 +1117,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::set`
+    #[doc(alias = "entity::set")]
     pub fn set_enum_pair_first<First, Second>(self, first: First, constant: Second) -> Self
     where
         First: CachedComponentData + ComponentType<Struct>,
@@ -1095,6 +1148,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::set_ptr`
+    #[doc(alias = "entity::set_ptr")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn set_ptr_w_size(self, component_id: EntityT, size: usize, ptr: *const c_void) -> Self {
         unsafe { ecs_set_id(self.world, self.raw_id, component_id, size, ptr) };
@@ -1112,6 +1166,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::set_ptr`
+    #[doc(alias = "entity::set_ptr")]
     pub fn set_ptr(self, component_id: EntityT, ptr: *const c_void) -> Self {
         let cptr: *const EcsComponent =
             unsafe { ecs_get_id(self.world, component_id, FLECS__EEcsComponent) }
@@ -1136,6 +1191,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::set_name`
+    #[doc(alias = "entity::set_name")]
     pub fn set_name(self, name: &CStr) -> Self {
         unsafe {
             ecs_set_name(self.world, self.raw_id, name.as_ptr());
@@ -1152,6 +1208,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::set_alias`
+    #[doc(alias = "entity::set_alias")]
     pub fn set_alias_name(self, name: &CStr) -> Self {
         unsafe {
             ecs_set_alias(self.world, self.raw_id, name.as_ptr());
@@ -1166,6 +1223,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::enable`
+    #[doc(alias = "entity::enable")]
     pub fn enable(self) -> Self {
         unsafe { ecs_enable(self.world, self.raw_id, true) }
         self
@@ -1183,6 +1241,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::enable`
+    #[doc(alias = "entity::enable")]
     pub fn enable_component_id(self, component_id: IdT) -> Self {
         unsafe { ecs_enable_id(self.world, self.raw_id, component_id, true) }
         self
@@ -1197,6 +1256,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::enable`
+    #[doc(alias = "entity::enable")]
     pub fn enable_component<T: CachedComponentData>(self) -> Self {
         let world = self.world;
         self.enable_component_id(T::get_id(world))
@@ -1212,6 +1272,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::enable`
+    #[doc(alias = "entity::enable")]
     pub fn enable_pair_ids(self, first: EntityT, second: EntityT) -> Self {
         self.enable_component_id(ecs_pair(first, second))
     }
@@ -1226,6 +1287,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::enable`
+    #[doc(alias = "entity::enable")]
     pub fn enable_pair<First, Second>(self) -> Self
     where
         First: CachedComponentData,
@@ -1248,6 +1310,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::enable`
+    #[doc(alias = "entity::enable")]
     pub fn enable_pair_second<First: CachedComponentData>(self, second: EntityT) -> Self {
         let world = self.world;
         self.enable_pair_ids(First::get_id(world), second)
@@ -1261,6 +1324,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::disable`
+    #[doc(alias = "entity::disable")]
     pub fn disable(self) -> Self {
         unsafe { ecs_enable(self.world, self.raw_id, false) }
         self
@@ -1278,6 +1342,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::disable`
+    #[doc(alias = "entity::disable")]
     pub fn disable_component_id(self, component_id: IdT) -> Self {
         unsafe { ecs_enable_id(self.world, self.raw_id, component_id, false) }
         self
@@ -1292,6 +1357,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::disable`
+    #[doc(alias = "entity::disable")]
     pub fn disable_component<T: CachedComponentData>(self) -> Self {
         let world = self.world;
         self.disable_component_id(T::get_id(world))
@@ -1307,6 +1373,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::disable`
+    #[doc(alias = "entity::disable")]
     pub fn disable_pair_ids(self, first: EntityT, second: EntityT) -> Self {
         self.disable_component_id(ecs_pair(first, second))
     }
@@ -1321,6 +1388,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::disable`
+    #[doc(alias = "entity::disable")]
     pub fn disable_pair<First, Second>(self) -> Self
     where
         First: CachedComponentData,
@@ -1343,6 +1411,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::disable`
+    #[doc(alias = "entity::disable")]
     pub fn disable_pair_second<First: CachedComponentData>(self, second: EntityT) -> Self {
         let world = self.world;
         self.disable_pair_ids(First::get_id(world), second)
@@ -1356,6 +1425,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::with`
+    #[doc(alias = "entity::with")]
     pub fn with<F>(&self, func: F) -> &Self
     where
         F: FnOnce(),
@@ -1377,6 +1447,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::with`
+    #[doc(alias = "entity::with")]
     pub fn with_pair_first_id<F>(&self, first: EntityT, func: F) -> &Self
     where
         F: FnOnce(),
@@ -1399,6 +1470,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::with`
+    #[doc(alias = "entity::with")]
     pub fn with_pair_second_id<F>(&self, second: EntityT, func: F) -> &Self
     where
         F: FnOnce(),
@@ -1424,6 +1496,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::with`
+    #[doc(alias = "entity::with")]
     pub fn with_pair_first<First: CachedComponentData, F>(&self, func: F) -> &Self
     where
         F: FnOnce(),
@@ -1445,6 +1518,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::with`
+    #[doc(alias = "entity::with")]
     pub fn with_pair_second<Second: CachedComponentData, F>(&self, func: F) -> &Self
     where
         F: FnOnce(),
@@ -1462,6 +1536,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::scope`
+    #[doc(alias = "entity::scope")]
     pub fn scope<F>(&self, func: F) -> &Self
     where
         F: FnOnce(),
@@ -1492,6 +1567,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::get_mut`
+    #[doc(alias = "entity::get_mut")]
     pub fn get_component_mut<T: CachedComponentData + ComponentType<Struct>>(&self) -> *mut T {
         let component_id = T::get_id(self.world);
         ecs_assert!(
@@ -1516,6 +1592,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::get_mut`
+    #[doc(alias = "entity::get_mut")]
     pub fn get_enum_component_mut<T: CachedComponentData + ComponentType<Enum>>(&self) -> *mut T {
         let component_id: IdT = T::get_id(self.world);
         let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
@@ -1556,6 +1633,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::get_mut`
+    #[doc(alias = "entity::get_mut")]
     pub fn get_component_by_id_mut(&self, component_id: EntityT) -> *mut c_void {
         unsafe { ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut c_void }
     }
@@ -1573,6 +1651,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::get_mut`
+    #[doc(alias = "entity::get_mut")]
     pub fn get_pair_ids_mut(&self, first: EntityT, second: EntityT) -> *mut c_void {
         unsafe { ecs_get_mut_id(self.world, self.raw_id, ecs_pair(first, second)) as *mut c_void }
     }
@@ -1591,6 +1670,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::get_mut`
+    #[doc(alias = "entity::get_mut")]
     pub fn get_pair_first<First: CachedComponentData>(&self, second: EntityT) -> *const First {
         let component_id = First::get_id(self.world);
         ecs_assert!(
@@ -1618,6 +1698,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::get_mut`
+    #[doc(alias = "entity::get_mut")]
     pub fn get_pair_first_mut<First: CachedComponentData>(&self, second: EntityT) -> *mut First {
         let component_id = First::get_id(self.world);
         ecs_assert!(
@@ -1645,6 +1726,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::get_mut`
+    #[doc(alias = "entity::get_mut")]
     pub fn get_pair_second<Second: CachedComponentData>(&self, first: EntityT) -> *const Second {
         let component_id = Second::get_id(self.world);
         ecs_assert!(
@@ -1672,6 +1754,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::get_mut`
+    #[doc(alias = "entity::get_mut")]
     pub fn get_pair_second_mut<Second: CachedComponentData>(&self, first: EntityT) -> *mut Second {
         let component_id = Second::get_id(self.world);
         ecs_assert!(
@@ -1694,6 +1777,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::modified`
+    #[doc(alias = "entity::modified")]
     pub fn mark_modified_component_id(&self, component_id: IdT) {
         unsafe { ecs_modified_id(self.world, self.raw_id, component_id) }
     }
@@ -1707,6 +1791,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::modified`
+    #[doc(alias = "entity::modified")]
     pub fn mark_modified_component<T: CachedComponentData>(&self) {
         ecs_assert!(
             T::get_size(self.world) != 0,
@@ -1729,6 +1814,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::modified`
+    #[doc(alias = "entity::modified")]
     pub fn mark_modified_pair_ids(&self, first: EntityT, second: EntityT) {
         self.mark_modified_component_id(ecs_pair(first, second));
     }
@@ -1743,6 +1829,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::modified`
+    #[doc(alias = "entity::modified")]
     pub fn mark_modified_pair<First, Second>(&self)
     where
         First: CachedComponentData,
@@ -1764,6 +1851,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::modified`
+    #[doc(alias = "entity::modified")]
     pub fn mark_modified_pair_first<First: CachedComponentData>(&self, second: EntityT) {
         ecs_assert!(
             First::get_size(self.world) != 0,
@@ -1786,6 +1874,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::get_ref`
+    #[doc(alias = "entity::get_ref")]
     pub fn get_ref_component<T: CachedComponentData>(&self) -> Ref<T> {
         Ref::<T>::new(self.world, self.raw_id, T::get_id(self.world))
     }
@@ -1810,6 +1899,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::get_ref`
+    #[doc(alias = "entity::get_ref")]
     pub fn get_ref_pair_first<First: CachedComponentData>(&self, second: EntityT) -> Ref<First> {
         Ref::<First>::new(
             self.world,
@@ -1838,6 +1928,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::get_ref`
+    #[doc(alias = "entity::get_ref")]
     pub fn get_ref_pair_second<Second: CachedComponentData>(&self, first: EntityT) -> Ref<Second> {
         Ref::<Second>::new(
             self.world,
@@ -1855,6 +1946,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::flatten`
+    #[doc(alias = "entity::flatten")]
     pub fn flatten(&self, relationship: EntityT) {
         unsafe {
             ecs_flatten(
@@ -1875,6 +1967,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::flatten`
+    #[doc(alias = "entity::flatten")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn flatten_w_desc(&self, relationship: EntityT, desc: *const ecs_flatten_desc_t) {
         unsafe { ecs_flatten(self.world, ecs_pair(relationship, self.raw_id), desc) }
@@ -1888,6 +1981,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::clear`
+    #[doc(alias = "entity::clear")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn clear(&self) {
         unsafe { ecs_clear(self.world, self.raw_id) }
@@ -1901,6 +1995,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::destruct`
+    #[doc(alias = "entity::destruct")]
     pub fn destruct(self) {
         unsafe { ecs_delete(self.world, self.raw_id) }
     }
@@ -1912,6 +2007,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::view`
+    #[doc(alias = "entity::view")]
     pub fn get_view(&self) -> EntityView {
         self.entity_view
     }
@@ -1923,6 +2019,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::null`
+    #[doc(alias = "entity::null")]
     pub fn null_w_world(world: *const WorldT) -> Entity {
         Entity::new_from_existing_raw(world as *mut _, 0)
     }
@@ -1933,6 +2030,7 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::null`
+    #[doc(alias = "entity::null")]
     pub fn null() -> Entity {
         Entity::default()
     }

@@ -83,6 +83,7 @@ impl Term {
     /// # See also
     ///
     /// * C++ API: `term::term`
+    #[doc(alias = "term::term")]
     pub fn new(world: Option<&World>, with: TermType) -> Self {
         if let Some(world) = world {
             match with {
@@ -111,6 +112,7 @@ impl Term {
     /// # See also
     ///
     /// * C++ API: `term::term`
+    #[doc(alias = "term::term")]
     pub fn new_world_only(world: &World) -> Self {
         let mut obj = Self {
             world: world.raw_world,
@@ -135,6 +137,7 @@ impl Term {
     /// # See also
     ///
     /// * C++ API: `term::term`
+    #[doc(alias = "term::term")]
     pub fn new_component<T: CachedComponentData>(world: Option<&World>) -> Self {
         if let Some(world) = world {
             Self::new_id(world.raw_world, T::get_id(world.raw_world))
@@ -266,6 +269,7 @@ impl Term {
     /// # See also
     ///
     /// * C++ API: `term::move`
+    #[doc(alias = "term::move")]
     pub fn move_term(mut self) -> Self {
         let mut obj = Self {
             world: self.world,
@@ -285,6 +289,7 @@ impl Term {
     /// # See also
     ///
     /// * C++ API: `term::reset`
+    #[doc(alias = "term::reset")]
     pub fn reset(&mut self) {
         // we don't for certain if this causes any side effects not using the nullptr and just using the default value.
         // if it does we can use Option.
@@ -304,6 +309,7 @@ impl Term {
     /// # See also
     ///
     /// * C++ API: `term::finalize`
+    #[doc(alias = "term::finalize")]
     pub fn finalize(&mut self) -> i32 {
         unsafe { ecs_term_finalize(self.world, &mut self.term) }
     }
@@ -319,6 +325,7 @@ impl Term {
     /// # See also
     ///
     /// * C++ API: `term::is_set`
+    #[doc(alias = "term::is_set")]
     pub fn is_set(&mut self) -> bool {
         unsafe { ecs_term_is_initialized(&self.term) }
     }
@@ -332,6 +339,7 @@ impl Term {
     /// # See also
     ///
     /// * C++ API: `term::id`
+    #[doc(alias = "term::id")]
     pub fn get_id(&self) -> Id {
         Id::new_from_existing(self.world, self.term.id)
     }
@@ -341,6 +349,7 @@ impl Term {
     /// # See also
     ///
     /// * C++ API: `term::inout`
+    #[doc(alias = "term::inout")]
     pub fn get_inout(&self) -> InOutKind {
         self.term.inout.into()
     }
@@ -350,6 +359,7 @@ impl Term {
     /// # See also
     ///
     /// * C++ API: `term::oper`
+    #[doc(alias = "term::oper")]
     pub fn get_oper(&self) -> OperKind {
         self.term.oper.into()
     }
@@ -359,6 +369,7 @@ impl Term {
     /// # See also
     ///
     /// * C++ API: `term::src`
+    #[doc(alias = "term::src")]
     pub fn get_src(&self) -> Entity {
         Entity::new_from_existing_raw(self.world, self.term.src.id)
     }
@@ -368,6 +379,7 @@ impl Term {
     /// # See also
     ///
     /// * C++ API: `term::first`
+    #[doc(alias = "term::first")]
     pub fn get_first(&self) -> Entity {
         Entity::new_from_existing_raw(self.world, self.term.first.id)
     }
@@ -377,6 +389,7 @@ impl Term {
     /// # See also
     ///
     /// * C++ API: `term::second`
+    #[doc(alias = "term::second")]
     pub fn get_second(&self) -> Entity {
         Entity::new_from_existing_raw(self.world, self.term.second.id)
     }
@@ -388,6 +401,7 @@ impl Term {
     /// # See also
     ///
     /// * C++ API: `term::move`
+    #[doc(alias = "term::move")]
     pub fn move_raw_term(&mut self) -> TermT {
         unsafe { ecs_term_move(&mut self.term) }
     }
@@ -469,6 +483,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::up`
+    #[doc(alias = "term_builder_i::up")]
     fn up_id(&mut self, traverse_relationship: Option<EntityT>) -> &mut Self {
         self.assert_term_id();
         unsafe { (*self.get_term_id()).flags |= ECS_UP };
@@ -489,6 +504,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::up`
+    #[doc(alias = "term_builder_i::up")]
     fn up<TravRel: CachedComponentData>(&mut self) -> &mut Self {
         self.assert_term_id();
         unsafe {
@@ -508,6 +524,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::cascade`
+    #[doc(alias = "term_builder_i::cascade")]
     fn cascade_id(&mut self, traverse_relationship: Option<EntityT>) -> &mut Self {
         self.assert_term_id();
         unsafe { (*self.get_term_id()).flags |= ECS_CASCADE };
@@ -527,6 +544,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::cascade`
+    #[doc(alias = "term_builder_i::cascade")]
     fn cascade<TravRel: CachedComponentData>(&mut self) -> &mut Self {
         self.assert_term_id();
         unsafe {
@@ -541,6 +559,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::parent`
+    #[doc(alias = "term_builder_i::parent")]
     fn parent(&mut self) -> &mut Self {
         self.assert_term_id();
         unsafe { (*self.get_term_id()).flags |= ECS_PARENT };
@@ -557,6 +576,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::trav`
+    #[doc(alias = "term_builder_i::trav")]
     fn trav(&mut self, traverse_relationship: EntityT, flags: Flags32T) -> &mut Self {
         self.assert_term_id();
         unsafe {
@@ -575,6 +595,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::set_term_id`
+    #[doc(alias = "term_builder_i::set_term_id")]
     fn set_term_id(&mut self, id: IdT) -> &mut Self {
         self.assert_term_id();
         unsafe { (*self.get_term_id()).id = id };
@@ -596,6 +617,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::entity`
+    #[doc(alias = "term_builder_i::entity")]
     fn entity(&mut self, id: EntityT) -> &mut Self {
         self.assert_term_id();
         unsafe {
@@ -614,6 +636,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::name`
+    #[doc(alias = "term_builder_i::name")]
     fn name(&mut self, name: &CStr) -> &mut Self {
         self.assert_term_id();
         unsafe {
@@ -632,6 +655,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::var`
+    #[doc(alias = "term_builder_i::var")]
     fn var(&mut self, var_name: &CStr) -> &mut Self {
         self.assert_term_id();
         unsafe {
@@ -650,6 +674,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::flags`
+    #[doc(alias = "term_builder_i::flags")]
     fn flags(&mut self, flags: Flags32T) -> &mut Self {
         self.assert_term_id();
         unsafe { (*self.get_term_id()).flags = flags };
@@ -661,6 +686,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::src`
+    #[doc(alias = "term_builder_i::src")]
     fn setup_src(&mut self) -> &mut Self {
         self.assert_term();
         unsafe { *self.get_term_id() = (*self.get_raw_term()).src };
@@ -674,6 +700,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::first`
+    #[doc(alias = "term_builder_i::first")]
     fn setup_first(&mut self) -> &mut Self {
         self.assert_term();
         unsafe { *self.get_term_id() = (*self.get_raw_term()).first };
@@ -686,6 +713,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::second`
+    #[doc(alias = "term_builder_i::second")]
     fn setup_second(&mut self) -> &mut Self {
         self.assert_term();
         unsafe { *self.get_term_id() = (*self.get_raw_term()).second };
@@ -701,6 +729,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::src`
+    #[doc(alias = "term_builder_i::src")]
     fn select_src_id(&mut self, id: EntityT) -> &mut Self {
         self.setup_src().set_term_id(id)
     }
@@ -714,6 +743,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::src`
+    #[doc(alias = "term_builder_i::src")]
     fn select_src<T: CachedComponentData>(&mut self) -> &mut Self {
         let world = self.get_world();
         self.select_src_id(T::get_id(world))
@@ -729,6 +759,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::src`
+    #[doc(alias = "term_builder_i::src")]
     fn select_src_name(&mut self, name: &'static CStr) -> &mut Self {
         ecs_assert!(
             !name.is_empty(),
@@ -755,6 +786,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::first`
+    #[doc(alias = "term_builder_i::first")]
     fn select_first_id(&mut self, id: EntityT) -> &mut Self {
         self.setup_first().set_term_id(id)
     }
@@ -768,6 +800,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::first`
+    #[doc(alias = "term_builder_i::first")]
     fn select_first<T: CachedComponentData>(&mut self) -> &mut Self {
         let world = self.get_world();
         self.select_first_id(T::get_id(world))
@@ -783,6 +816,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::first`
+    #[doc(alias = "term_builder_i::first")]
     fn select_first_name(&mut self, name: &'static CStr) -> &mut Self {
         ecs_assert!(
             !name.is_empty(),
@@ -809,6 +843,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::second`
+    #[doc(alias = "term_builder_i::second")]
     fn select_second_id(&mut self, id: EntityT) -> &mut Self {
         self.setup_second().set_term_id(id)
     }
@@ -822,6 +857,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::second`
+    #[doc(alias = "term_builder_i::second")]
     fn select_second<T: CachedComponentData>(&mut self) -> &mut Self {
         let world = self.get_world();
         self.select_second_id(T::get_id(world))
@@ -837,6 +873,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::second`
+    #[doc(alias = "term_builder_i::second")]
     fn select_second_name(&mut self, name: &'static CStr) -> &mut Self {
         ecs_assert!(
             !name.is_empty(),
@@ -863,6 +900,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::role`
+    #[doc(alias = "term_builder_i::role")]
     fn role(&mut self, role: IdT) -> &mut Self {
         self.assert_term();
         unsafe { (*self.get_raw_term()).id_flags = role };
@@ -878,6 +916,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::inout`
+    #[doc(alias = "term_builder_i::inout")]
     fn set_inout(&mut self, inout: InOutKind) -> &mut Self {
         self.assert_term();
         unsafe { (*self.get_raw_term()).inout = inout as ::std::os::raw::c_uint };
@@ -899,6 +938,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::inout_stage`
+    #[doc(alias = "term_builder_i::inout_stage")]
     fn inout_stage(&mut self, inout: InOutKind) -> &mut Self {
         self.assert_term();
         self.set_inout(inout);
@@ -916,6 +956,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::write`
+    #[doc(alias = "term_builder_i::write")]
     fn write(&mut self) -> &mut Self {
         self.inout_stage(InOutKind::Out)
     }
@@ -926,6 +967,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::read`
+    #[doc(alias = "term_builder_i::read")]
     fn read(&mut self) -> &mut Self {
         self.inout_stage(InOutKind::In)
     }
@@ -936,6 +978,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::read_write`
+    #[doc(alias = "term_builder_i::read_write")]
     fn read_write(&mut self) -> &mut Self {
         self.inout_stage(InOutKind::InOut)
     }
@@ -945,6 +988,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::in`
+    #[doc(alias = "term_builder_i::in")]
     fn in_(&mut self) -> &mut Self {
         self.set_inout(InOutKind::In)
     }
@@ -954,10 +998,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::out`
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `term_builder_i::out`
+    #[doc(alias = "term_builder_i::out")]
     fn out(&mut self) -> &mut Self {
         self.set_inout(InOutKind::Out)
     }
@@ -967,6 +1008,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::inout`
+    #[doc(alias = "term_builder_i::inout")]
     fn inout(&mut self) -> &mut Self {
         self.set_inout(InOutKind::InOut)
     }
@@ -976,6 +1018,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::inout_none`
+    #[doc(alias = "term_builder_i::inout_none")]
     fn inout_none(&mut self) -> &mut Self {
         self.set_inout(InOutKind::InOutNone)
     }
@@ -989,6 +1032,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::oper`
+    #[doc(alias = "term_builder_i::oper")]
     fn oper(&mut self, oper: OperKind) -> &mut Self {
         self.assert_term_id();
         unsafe { (*self.get_raw_term()).oper = oper as ::std::os::raw::c_uint };
@@ -1000,6 +1044,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::and`
+    #[doc(alias = "term_builder_i::and")]
     fn and(&mut self) -> &mut Self {
         self.oper(OperKind::And)
     }
@@ -1009,6 +1054,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::or`
+    #[doc(alias = "term_builder_i::or")]
     fn or(&mut self) -> &mut Self {
         self.oper(OperKind::Or)
     }
@@ -1018,6 +1064,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::not`
+    #[doc(alias = "term_builder_i::not")]
     #[allow(clippy::should_implement_trait)]
     fn not(&mut self) -> &mut Self {
         self.oper(OperKind::Not)
@@ -1028,6 +1075,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::optional`
+    #[doc(alias = "term_builder_i::optional")]
     fn optional(&mut self) -> &mut Self {
         self.oper(OperKind::Optional)
     }
@@ -1037,6 +1085,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::and_from`
+    #[doc(alias = "term_builder_i::and_from")]
     fn and_from(&mut self) -> &mut Self {
         self.oper(OperKind::AndFrom)
     }
@@ -1046,6 +1095,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::or_from`
+    #[doc(alias = "term_builder_i::or_from")]
     fn or_from(&mut self) -> &mut Self {
         self.oper(OperKind::OrFrom)
     }
@@ -1055,6 +1105,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::not_from`
+    #[doc(alias = "term_builder_i::not_from")]
     fn not_from(&mut self) -> &mut Self {
         self.oper(OperKind::NotFrom)
     }
@@ -1064,6 +1115,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::singleton`
+    #[doc(alias = "term_builder_i::singleton")]
     fn singleton(&mut self) -> &mut Self {
         self.assert_term();
 
@@ -1091,6 +1143,7 @@ pub trait TermBuilder: Sized {
     /// # See also
     ///
     /// * C++ API: `term_builder_i::filter`
+    #[doc(alias = "term_builder_i::filter")]
     fn filter(&mut self) -> &mut Self {
         unsafe { (*self.get_raw_term()).src.flags |= ECS_FILTER };
         self

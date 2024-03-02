@@ -37,6 +37,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iterable::each`
+    #[doc(alias = "iterable::each")]
     fn each_impl(&mut self, mut func: impl FnMut(T::TupleType), filter: *mut FilterT) {
         unsafe {
             let mut iter = ecs_filter_iter(self.world.raw_world, filter);
@@ -74,6 +75,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iterable::each`
+    #[doc(alias = "iterable::each")]
     fn each_entity_impl(
         &mut self,
         mut func: impl FnMut(&mut Entity, T::TupleType),
@@ -121,6 +123,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iterable::iter`
+    #[doc(alias = "iterable::iter")]
     fn iter_impl(&mut self, mut func: impl FnMut(&Iter, T::TupleSliceType), filter: *mut FilterT) {
         unsafe {
             let mut iter = ecs_filter_iter(self.world.raw_world, filter);
@@ -162,6 +165,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iterable::iter`
+    #[doc(alias = "iterable::iter")]
     pub fn iter_only_impl(&mut self, mut func: impl FnMut(&Iter), filter: *mut FilterT) {
         unsafe {
             let mut iter = ecs_filter_iter(self.world.raw_world, filter);
@@ -185,6 +189,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_base::entity`
+    #[doc(alias = "filter_base::entity")]
     fn entity_impl(&self, filter: *mut FilterT) -> Entity {
         Entity::new_from_existing_raw(self.world.raw_world, unsafe {
             ecs_get_entity(filter as *const _)
@@ -199,6 +204,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_base::term`
+    #[doc(alias = "filter_base::term")]
     fn each_term_impl(&self, mut func: impl FnMut(Term), filter: *mut FilterT) {
         unsafe {
             for i in 0..(*filter).term_count {
@@ -225,6 +231,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_base::term`
+    #[doc(alias = "filter_base::term")]
     fn get_term_impl(&self, index: usize, filter: *mut FilterT) -> Term {
         Term::new(
             Some(&self.world),
@@ -245,6 +252,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_base::field_count`
+    #[doc(alias = "filter_base::field_count")]
     fn field_count_impl(&self, filter: *mut FilterT) -> i32 {
         unsafe { (*filter).field_count }
     }
@@ -263,6 +271,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_base::str`
+    #[doc(alias = "filter_base::str")]
     #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
     fn to_string_impl(&self, filter: *mut FilterT) -> String {
         let result: *mut c_char =
@@ -315,6 +324,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_view::filter_view`
+    #[doc(alias = "filter_view::filter_view")]
     pub fn new(world: &World, filter: *const FilterT) -> Self {
         Self {
             base: FilterBase {
@@ -335,6 +345,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iterable::each`
+    #[doc(alias = "iterable::each")]
     pub fn each(&mut self, func: impl FnMut(T::TupleType)) {
         self.base.each_impl(func, self.filter_ptr);
     }
@@ -352,6 +363,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_base::entity`
+    #[doc(alias = "filter_base::entity")]
     pub fn each_entity(&mut self, func: impl FnMut(&mut Entity, T::TupleType)) {
         self.base.each_entity_impl(func, self.filter_ptr);
     }
@@ -365,6 +377,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_base::entity`
+    #[doc(alias = "filter_base::entity")]
     pub fn entity(&self) -> Entity {
         self.base.entity_impl(self.filter_ptr)
     }
@@ -377,6 +390,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_base::term`
+    #[doc(alias = "filter_base::term")]
     pub fn each_term(&self, func: impl FnMut(Term)) {
         self.base.each_term_impl(func, self.filter_ptr);
     }
@@ -394,6 +408,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_base::term`
+    #[doc(alias = "filter_base::term")]
     pub fn get_term(&self, index: usize) -> Term {
         self.base.get_term_impl(index, self.filter_ptr)
     }
@@ -407,6 +422,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_base::field_count`
+    #[doc(alias = "filter_base::field_count")]
     pub fn field_count(&self) -> i32 {
         self.base.field_count_impl(self.filter_ptr)
     }
@@ -421,6 +437,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_base::str`
+    #[doc(alias = "filter_base::str")]
     #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
     pub fn to_string(&self) -> String {
         self.base.to_string_impl(self.filter_ptr)
@@ -448,6 +465,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter::filter`
+    #[doc(alias = "filter::filter")]
     pub fn new(world: &World) -> Self {
         let mut desc = ecs_filter_desc_t::default();
         T::register_ids_descriptor(world.raw_world, &mut desc);
@@ -473,6 +491,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter::filter`
+    #[doc(alias = "filter::filter")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new_ownership(world: &World, filter: *mut FilterT) -> Self {
         let mut filter_obj = Filter {
@@ -500,6 +519,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter::filter`
+    #[doc(alias = "filter::filter")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new_from_desc(world: &World, desc: *mut ecs_filter_desc_t) -> Self {
         let mut filter_obj = Filter {
@@ -548,6 +568,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iterable::each`
+    #[doc(alias = "iterable::each")]
     #[inline]
     pub fn each(&mut self, func: impl FnMut(T::TupleType)) {
         self.base.each_impl(func, &mut self.filter);
@@ -563,6 +584,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iterable::each`
+    #[doc(alias = "iterable::each")]
     #[inline]
     pub fn each_entity(&mut self, func: impl FnMut(&mut Entity, T::TupleType)) {
         self.base.each_entity_impl(func, &mut self.filter);
@@ -578,6 +600,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iterable::iter`
+    #[doc(alias = "iterable::iter")]
     #[inline]
     pub fn iter(&mut self, func: impl FnMut(&Iter, T::TupleSliceType)) {
         self.base.iter_impl(func, &mut self.filter);
@@ -596,6 +619,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iterable::iter`
+    #[doc(alias = "iterable::iter")]
     #[inline]
     pub fn iter_only(&mut self, func: impl FnMut(&Iter)) {
         self.base.iter_only_impl(func, &mut self.filter);
@@ -610,6 +634,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_base::entity`
+    #[doc(alias = "filter_base::entity")]
     pub fn entity(&mut self) -> Entity {
         self.base.entity_impl(&mut self.filter)
     }
@@ -622,6 +647,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_base::term`
+    #[doc(alias = "filter_base::term")]
     pub fn each_term(&mut self, func: impl FnMut(Term)) {
         self.base.each_term_impl(func, &mut self.filter);
     }
@@ -639,6 +665,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_base::term`
+    #[doc(alias = "filter_base::term")]
     pub fn get_term(&mut self, index: usize) -> Term {
         self.base.get_term_impl(index, &mut self.filter)
     }
@@ -652,6 +679,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_base::field_count`
+    #[doc(alias = "filter_base::field_count")]
     pub fn field_count(&mut self) -> i32 {
         self.base.field_count_impl(&mut self.filter)
     }
@@ -666,6 +694,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_base::str`
+    #[doc(alias = "filter_base::str")]
     #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
     pub fn to_string(&mut self) -> String {
         self.base.to_string_impl(&mut self.filter)

@@ -32,6 +32,7 @@ impl Observer {
     /// # See also
     ///
     /// * C++ API: `observer::observer`
+    #[doc(alias = "observer::observer")]
     pub fn new(world: &World, mut desc: ecs_observer_desc_t, is_instanced: bool) -> Self {
         if !desc.filter.instanced {
             desc.filter.instanced = is_instanced;
@@ -67,6 +68,7 @@ impl Observer {
     /// # See also
     ///
     /// * C++ API: `observer::ctx`
+    #[doc(alias = "observer::ctx")]
     pub fn set_context(&mut self, context: *mut c_void) {
         let desc: ecs_observer_desc_t = ecs_observer_desc_t {
             entity: self.raw_id,
@@ -84,6 +86,7 @@ impl Observer {
     /// # See also
     ///
     /// * C++ API: `observer::ctx`
+    #[doc(alias = "observer::ctx")]
     pub fn get_context(&self) -> *mut c_void {
         unsafe { ecs_get_observer_ctx(self.world.raw_world, self.raw_id) }
     }
@@ -93,6 +96,7 @@ impl Observer {
     /// # See also
     ///
     /// * C++ API: `observer::query`
+    #[doc(alias = "observer::query")]
     pub fn query(&mut self) -> Filter<()> {
         let poly: *const Poly = self.get_target_for_pair_as_first::<Poly>(ECS_OBSERVER);
         let obj: *mut ecs_observer_t = unsafe { (*poly).poly as *mut ecs_observer_t };

@@ -103,6 +103,7 @@ impl UntypedComponent {
     /// # See also
     ///
     /// * C++ API: `untyped_component::untyped_component`
+    #[doc(alias = "untyped_component::untyped_component")]
     pub fn new(world: *mut WorldT, id: IdT) -> Self {
         UntypedComponent {
             entity: Entity::new_from_existing_raw(world, id),
@@ -141,6 +142,7 @@ impl<T: CachedComponentData + Default> Component<T> {
     /// # See also
     ///
     /// * C++ API: `component::component`
+    #[doc(alias = "component::component")]
     pub fn new(world: *mut WorldT) -> Self {
         if !T::is_registered_with_world(world) {
             T::register_explicit(world);
@@ -162,6 +164,7 @@ impl<T: CachedComponentData + Default> Component<T> {
     /// # See also
     ///
     /// * C++ API: `component::component`
+    #[doc(alias = "component::component")]
     pub fn new_named(world: *mut WorldT, name: &CStr) -> Self {
         if !T::is_registered_with_world(world) {
             T::register_explicit_named(world, name);
@@ -182,6 +185,7 @@ impl<T: CachedComponentData + Default> Component<T> {
     /// # See also
     ///
     /// * C++ API: `component::get_binding_ctx`
+    #[doc(alias = "component::get_binding_ctx")]
     fn get_binding_ctx(&mut self, type_hooks: &mut TypeHooksT) -> &mut ComponentBindingCtx {
         let mut binding_ctx: *mut ComponentBindingCtx = type_hooks.binding_ctx as *mut _;
 
@@ -200,6 +204,7 @@ impl<T: CachedComponentData + Default> Component<T> {
     /// # See also
     ///
     /// * C++ API: `component::get_hooks`
+    #[doc(alias = "component::get_hooks")]
     fn get_hooks(&self) -> TypeHooksT {
         let type_hooks: *const TypeHooksT = unsafe { ecs_get_hooks_id(self.world, self.raw_id) };
         if type_hooks.is_null() {
@@ -214,6 +219,7 @@ impl<T: CachedComponentData + Default> Component<T> {
     /// # See also
     ///
     /// * C++ API: `component::binding_ctx_free`
+    #[doc(alias = "component::binding_ctx_free")]
     extern "C" fn binding_ctx_drop(ptr: *mut c_void) {
         let ptr_struct: *mut ComponentBindingCtx = ptr as *mut ComponentBindingCtx;
         unsafe {
@@ -226,6 +232,7 @@ impl<T: CachedComponentData + Default> Component<T> {
     /// # See also
     ///
     /// * C++ API: `component::on_add`
+    #[doc(alias = "component::on_add")]
     pub fn on_add<Func>(&mut self, func: Func) -> &mut Self
     where
         Func: FnMut(Entity, &mut T) + 'static,
@@ -254,6 +261,7 @@ impl<T: CachedComponentData + Default> Component<T> {
     /// # See also
     ///
     /// * C++ API: `component::on_remove`
+    #[doc(alias = "component::on_remove")]
     pub fn on_remove<Func>(&mut self, func: Func) -> &mut Self
     where
         Func: FnMut(Entity, &mut T) + 'static,
@@ -282,6 +290,7 @@ impl<T: CachedComponentData + Default> Component<T> {
     /// # See also
     ///
     /// * C++ API: `component::on_set`
+    #[doc(alias = "component::on_set")]
     pub fn on_set<Func>(&mut self, func: Func) -> &mut Self
     where
         Func: FnMut(Entity, &mut T) + 'static,
@@ -387,6 +396,7 @@ impl<T: CachedComponentData> Component<T> {
     /// # See also
     ///
     /// * C++ API: `component::opque`
+    #[doc(alias = "component::opque")]
     pub fn opaque<OpaqueType>(&mut self) -> &mut Self
     where
         OpaqueType: CachedComponentData,
@@ -400,6 +410,7 @@ impl<T: CachedComponentData> Component<T> {
     /// # See also
     ///
     /// * C++ API: `component::opaque`
+    #[doc(alias = "component::opaque")]
     pub fn opaque_entity_id_type(&mut self, as_type: EntityT) -> Opaque<T> {
         let mut opaque = Opaque::<T>::new(self.world);
         opaque.as_type(as_type);
@@ -409,6 +420,7 @@ impl<T: CachedComponentData> Component<T> {
     /// # See also
     ///
     /// * C++ API: `component::opaque`
+    #[doc(alias = "component::opaque")]
     pub fn opaque_entity_type(&mut self, as_type: Entity) -> Opaque<T> {
         self.opaque_entity_id_type(as_type.raw_id)
     }
@@ -416,6 +428,7 @@ impl<T: CachedComponentData> Component<T> {
     /// # See also
     ///
     /// * C++ API: `component::opaque`
+    #[doc(alias = "component::opaque")]
     pub fn opaque_untyped_component(&mut self, as_type: UntypedComponent) -> Opaque<T> {
         self.opaque_entity_id_type(as_type.raw_id)
     }

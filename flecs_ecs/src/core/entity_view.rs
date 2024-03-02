@@ -70,6 +70,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::entity_view`
+    #[doc(alias = "entity_view::entity_view")]
     pub fn new(world: Option<&World>, id: IdT) -> Self {
         if let Some(world) = world {
             Self {
@@ -90,6 +91,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::entity_view`
+    #[doc(alias = "entity_view::entity_view")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new_from_existing_with_poly_world(world: *mut c_void, id: IdT) -> Self {
         unsafe {
@@ -114,6 +116,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::entity_view`
+    #[doc(alias = "entity_view::entity_view")]
     pub(crate) fn new_from_existing(world: *mut WorldT, id: IdT) -> Self {
         Self {
             id: Id::new_from_existing(world, id),
@@ -125,6 +128,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::entity_view`
+    #[doc(alias = "entity_view::entity_view")]
     pub const fn new_id_only(id: EntityT) -> Self {
         Self {
             id: Id::new_id_only(id),
@@ -136,6 +140,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::is_valid`
+    #[doc(alias = "entity_view::is_valid")]
     pub fn is_valid(&self) -> bool {
         !self.world.is_null() && unsafe { ecs_is_valid(self.world, self.raw_id) }
     }
@@ -145,6 +150,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::is_alive`
+    #[doc(alias = "entity_view::is_alive")]
     pub fn is_alive(&self) -> bool {
         !self.world.is_null() && unsafe { ecs_is_alive(self.world, self.raw_id) }
     }
@@ -156,6 +162,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::name`
+    #[doc(alias = "entity_view::name")]
     pub fn get_name(&self) -> &'static str {
         let name_ptr = unsafe { ecs_get_name(self.world, self.raw_id) };
 
@@ -173,6 +180,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::name`
+    #[doc(alias = "entity_view::name")]
     pub fn get_name_optional(&self) -> Option<&'static str> {
         let name_ptr = unsafe { ecs_get_name(self.world, self.raw_id) };
 
@@ -189,6 +197,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::symbol`
+    #[doc(alias = "entity_view::symbol")]
     pub fn get_symbol(&self) -> &'static CStr {
         unsafe { CStr::from_ptr(ecs_get_symbol(self.world, self.raw_id)) }
     }
@@ -201,6 +210,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::path`
+    #[doc(alias = "entity_view::path")]
     pub fn get_hierarchy_path(&self, sep: &CStr, init_sep: &CStr) -> Option<String> {
         self.get_hierarchy_path_from_parent_id(0, sep, init_sep)
     }
@@ -210,6 +220,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::path`
+    #[doc(alias = "entity_view::path")]
     pub fn get_hierarchy_path_default(&self) -> Option<String> {
         self.get_hierarchy_path_from_parent_id_default(0)
     }
@@ -222,6 +233,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::path_from`
+    #[doc(alias = "entity_view::path_from")]
     pub fn get_hierarchy_path_from_parent_id(
         &self,
         parent: EntityT,
@@ -262,6 +274,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::path_from`
+    #[doc(alias = "entity_view::path_from")]
     pub fn get_hierarchy_path_from_parent_id_default(&self, parent: EntityT) -> Option<String> {
         unsafe {
             let raw_ptr = ecs_get_path_w_sep(
@@ -296,6 +309,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::path_from`
+    #[doc(alias = "entity_view::path_from")]
     pub fn get_hierarchy_path_from_parent_type<T: CachedComponentData>(
         &self,
         sep: &CStr,
@@ -309,6 +323,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::path_from`
+    #[doc(alias = "entity_view::path_from")]
     pub fn get_hierarchy_path_from_parent_type_default<T: CachedComponentData>(
         &self,
     ) -> Option<String> {
@@ -324,6 +339,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::enabled`
+    #[doc(alias = "entity_view::enabled")]
     pub fn is_enabled(&self) -> bool {
         unsafe { !ecs_has_id(self.world, self.raw_id, EcsDisabled) }
     }
@@ -333,6 +349,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::type`
+    #[doc(alias = "entity_view::type")]
     #[inline(always)]
     pub fn get_archetype(&self) -> Archetype {
         Archetype::new(self.world, unsafe { ecs_get_type(self.world, self.raw_id) })
@@ -343,6 +360,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::table`
+    #[doc(alias = "entity_view::table")]
     #[inline(always)]
     pub fn get_table(&self) -> Table {
         Table::new(&self.get_world(), unsafe {
@@ -359,6 +377,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::range`
+    #[doc(alias = "entity_view::range")]
     #[inline]
     pub fn get_table_range(&self) -> TableRange {
         let ecs_record: *mut ecs_record_t = unsafe { ecs_record_find(self.world, self.raw_id) };
@@ -384,6 +403,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::each`
+    #[doc(alias = "entity_view::each")]
     fn for_each_component<F>(&self, mut func: F)
     where
         F: FnMut(Id),
@@ -428,6 +448,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::each`
+    #[doc(alias = "entity_view::each")]
     fn for_each_matching_pair<F>(&self, pred: IdT, obj: IdT, mut func: F)
     where
         F: FnMut(Id),
@@ -472,6 +493,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::each`
+    #[doc(alias = "entity_view::each")]
     pub fn for_each_target_in_relationship_by_entity<F>(
         &self,
         relationship: EntityView,
@@ -498,6 +520,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::each`
+    #[doc(alias = "entity_view::each")]
     pub fn for_each_target_in_relationship<T, F>(&self, func: F)
     where
         T: CachedComponentData,
@@ -519,6 +542,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::children`
+    #[doc(alias = "entity_view::children")]
     pub fn for_each_children_by_relationship_id<F>(&self, relationship: EntityT, mut func: F)
     where
         F: FnMut(Entity),
@@ -572,6 +596,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::children`
+    #[doc(alias = "entity_view::children")]
     pub fn for_each_children_by_relationship<T, F>(&self, func: F)
     where
         T: CachedComponentData,
@@ -589,6 +614,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::children`
+    #[doc(alias = "entity_view::children")]
     pub fn for_each_child_of<F>(&self, func: F)
     where
         F: FnMut(Entity),
@@ -609,6 +635,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
     pub fn get_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> *const T {
         let component_id = T::get_id(self.world);
         unsafe { ecs_get_id(self.world, self.raw_id, component_id) as *const T }
@@ -627,6 +654,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
     pub fn get_enum_component<T: CachedComponentData + ComponentType<Enum>>(&self) -> *const T {
         let component_id: IdT = T::get_id(self.world);
         let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
@@ -663,6 +691,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
     pub fn get_component_by_id(&self, component_id: IdT) -> *const c_void {
         unsafe { ecs_get_id(self.world, self.raw_id, component_id) }
     }
@@ -680,6 +709,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
     pub fn get_pair_untyped(&self, first: EntityT, second: EntityT) -> *const c_void {
         unsafe { ecs_get_id(self.world, self.raw_id, ecs_pair(first, second)) }
     }
@@ -701,6 +731,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
     pub fn get_target_from_component<First: CachedComponentData>(&self, index: i32) -> Entity {
         Entity::new_from_existing_raw(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, First::get_id(self.world), index)
@@ -721,6 +752,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
     pub fn get_target_from_entity(&self, first: EntityT, index: i32) -> Entity {
         Entity::new_from_existing_raw(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, first, index)
@@ -755,6 +787,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
     pub fn get_target_by_component_id(&self, relationship: EntityT, component_id: IdT) -> Entity {
         Entity::new_from_existing_raw(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, relationship, component_id as i32)
@@ -781,6 +814,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
     #[inline(always)]
     pub fn get_target_for_component<T: CachedComponentData>(
         &self,
@@ -810,6 +844,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
     #[inline(always)]
     pub fn get_target_for_pair<First: CachedComponentData, Second: CachedComponentData>(
         &self,
@@ -839,6 +874,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
     pub fn get_target_for_pair_as_first<First: CachedComponentData>(
         &self,
         second: EntityT,
@@ -866,6 +902,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::depth`
+    #[doc(alias = "entity_view::depth")]
     #[inline(always)]
     pub fn get_depth_by_id(&self, relationship: EntityT) -> i32 {
         unsafe { ecs_get_depth(self.world, self.raw_id, relationship) }
@@ -887,6 +924,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::depth`
+    #[doc(alias = "entity_view::depth")]
     #[inline(always)]
     pub fn get_depth<T: CachedComponentData>(&self) -> i32 {
         self.get_depth_by_id(T::get_id(self.world))
@@ -903,6 +941,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::parent`
+    #[doc(alias = "entity_view::parent")]
     #[inline(always)]
     pub fn get_parent(&self) -> Entity {
         self.get_target_from_entity(unsafe { EcsChildOf }, 0)
@@ -924,6 +963,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::lookup`
+    #[doc(alias = "entity_view::lookup")]
     #[inline(always)]
     pub fn lookup_entity_by_name(&self, path: &CStr) -> Entity {
         ecs_assert!(
@@ -956,6 +996,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::has`
+    #[doc(alias = "entity_view::has")]
     #[inline(always)]
     pub fn has_id(&self, entity: IdT) -> bool {
         unsafe { ecs_has_id(self.world, self.raw_id, entity) }
@@ -974,6 +1015,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::has`
+    #[doc(alias = "entity_view::has")]
     pub fn has<T: CachedComponentData + ComponentType<Struct>>(&self) -> bool {
         unsafe { ecs_has_id(self.world, self.raw_id, T::get_id(self.world)) }
     }
@@ -991,6 +1033,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::has`
+    #[doc(alias = "entity_view::has")]
     pub fn has_enum<T: CachedComponentData + ComponentType<Enum>>(&self) -> bool {
         let component_id: IdT = T::get_id(self.world);
         ecs_has_pair(self.world, self.raw_id, component_id, unsafe {
@@ -1015,6 +1058,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::has`
+    #[doc(alias = "entity_view::has")]
     pub fn has_enum_constant<T>(&self, constant: T) -> bool
     where
         T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
@@ -1044,6 +1088,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::has`
+    #[doc(alias = "entity_view::has")]
     pub fn has_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
         ecs_has_pair(
             self.world,
@@ -1067,6 +1112,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::has`
+    #[doc(alias = "entity_view::has")]
     pub fn has_pair_by_ids(&self, first: IdT, second: IdT) -> bool {
         ecs_has_pair(self.world, self.raw_id, first, second)
     }
@@ -1089,6 +1135,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::has`
+    #[doc(alias = "entity_view::has")]
     pub fn has_pair_with_enum_constant<
         T: CachedComponentData,
         U: CachedComponentData + CachedEnumData,
@@ -1119,6 +1166,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::owns`
+    #[doc(alias = "entity_view::owns")]
     pub fn is_owner_of_id(&self, entity_id: IdT) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, entity_id) }
     }
@@ -1134,6 +1182,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::owns`
+    #[doc(alias = "entity_view::owns")]
     pub fn is_owner_of_entity(&self, entity: Entity) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, entity.raw_id) }
     }
@@ -1150,6 +1199,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::owns`
+    #[doc(alias = "entity_view::owns")]
     pub fn is_owner_of<T: CachedComponentData>(&self) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, T::get_id(self.world)) }
     }
@@ -1166,6 +1216,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::owns`
+    #[doc(alias = "entity_view::owns")]
     pub fn is_owner_of_pair_ids(&self, first: IdT, second: IdT) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, ecs_pair(first, second)) }
     }
@@ -1182,6 +1233,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::owns`
+    #[doc(alias = "entity_view::owns")]
     pub fn is_owner_of_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
         unsafe {
             ecs_owns_id(
@@ -1203,6 +1255,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::enabled`
+    #[doc(alias = "entity_view::enabled")]
     pub fn is_enabled_id(&self, id: IdT) -> bool {
         unsafe { ecs_is_enabled_id(self.world, self.raw_id, id) }
     }
@@ -1218,6 +1271,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::enabled`
+    #[doc(alias = "entity_view::enabled")]
     pub fn is_enabled_component<T: CachedComponentData>(&self) -> bool {
         unsafe { ecs_is_enabled_id(self.world, self.raw_id, T::get_id(self.world)) }
     }
@@ -1234,6 +1288,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::enabled`
+    #[doc(alias = "entity_view::enabled")]
     pub fn is_enabled_pair_ids(&self, first: IdT, second: IdT) -> bool {
         unsafe { ecs_is_enabled_id(self.world, self.raw_id, ecs_pair(first, second)) }
     }
@@ -1250,6 +1305,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::enabled`
+    #[doc(alias = "entity_view::enabled")]
     pub fn is_enabled_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
         self.is_enabled_pair_ids(T::get_id(self.world), U::get_id(self.world))
     }
@@ -1268,6 +1324,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::enabled`
+    #[doc(alias = "entity_view::enabled")]
     pub fn is_enabled_pair_first<T: CachedComponentData>(&self, second: IdT) -> bool {
         self.is_enabled_pair_ids(T::get_id(self.world), second)
     }
@@ -1286,6 +1343,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::enabled`
+    #[doc(alias = "entity_view::enabled")]
     pub fn is_enabled_pair_second<U: CachedComponentData>(&self, first: IdT) -> bool {
         self.is_enabled_pair_ids(first, U::get_id(self.world))
     }
@@ -1314,6 +1372,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::clone`
+    #[doc(alias = "entity_view::clone")]
     #[inline(always)]
     pub fn clone(&self, copy_value: bool, mut dest_id: EntityT) -> Entity {
         if dest_id == 0 {
@@ -1351,6 +1410,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::mut`
+    #[doc(alias = "entity_view::mut")]
     pub fn get_mutable_handle_for_stage(&self, stage: &World) -> Entity {
         ecs_assert!(
             !stage.is_readonly(),
@@ -1376,6 +1436,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::mut`
+    #[doc(alias = "entity_view::mut")]
     pub fn get_mutable_handle_from_entity(&self, entity: &EntityView) -> Entity {
         ecs_assert!(
             !entity.get_world().is_readonly(),
@@ -1391,6 +1452,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::set_stage`
+    #[doc(alias = "entity_view::set_stage")]
     #[doc(hidden)]
     fn set_stage(&self, stage: *mut WorldT) -> Entity {
         Entity::new_from_existing_raw(stage, self.raw_id)

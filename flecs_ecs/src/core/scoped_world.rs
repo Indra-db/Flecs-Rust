@@ -27,6 +27,7 @@ impl ScopedWorld {
     /// # See also
     ///
     /// * C++ API: `scoped_world::scoped_world`
+    #[doc(alias = "scoped_world::scoped_world")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new(world: &World, scope: EntityT) -> Self {
         let prev_scope = unsafe { ecs_set_scope(world.raw_world, scope) };
@@ -45,6 +46,7 @@ impl ScopedWorld {
     /// # See also
     ///
     /// * C++ API: `scoped_world::scoped_world`
+    #[doc(alias = "scoped_world::scoped_world")]
     pub fn new_from_scoped_world(scoped_world: &ScopedWorld) -> Self {
         let prev_scope = scoped_world.prev_scope;
         Self::new(&scoped_world.world, prev_scope)
@@ -57,6 +59,7 @@ impl Drop for ScopedWorld {
     /// # See also
     ///
     /// * C++ API: `scoped_world::~scoped_world`
+    #[doc(alias = "scoped_world::~scoped_world")]
     fn drop(&mut self) {
         unsafe { ecs_set_scope(self.world.raw_world, self.prev_scope) };
     }

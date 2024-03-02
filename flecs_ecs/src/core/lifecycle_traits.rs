@@ -90,6 +90,7 @@ pub fn register_lifecycle_actions<T: Clone + Default>(world: *mut ecs_world_t, i
 /// # See also
 ///
 /// * C++ API: `ctor_impl`
+#[doc(alias = "ctor_impl")]
 extern "C" fn generic_ctor<T: Default>(
     ptr: *mut c_void,
     count: i32,
@@ -114,6 +115,7 @@ extern "C" fn generic_ctor<T: Default>(
 /// # See also
 ///
 /// * C++ API: `dtor_impl`
+#[doc(alias = "dtor_impl")]
 extern "C" fn generic_dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const ecs_type_info_t) {
     ecs_assert!(
         check_type_info::<T>(_type_info),
@@ -134,6 +136,7 @@ extern "C" fn generic_dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const e
 /// # See also
 ///
 /// * C++ API: `copy_impl`
+#[doc(alias = "copy_impl")]
 extern "C" fn generic_copy<T: Default + Clone>(
     dst_ptr: *mut c_void,
     src_ptr: *const c_void,
@@ -162,6 +165,7 @@ extern "C" fn generic_copy<T: Default + Clone>(
 /// # See also
 ///
 /// * C++ API: `move_impl`
+#[doc(alias = "move_impl")]
 extern "C" fn generic_move<T: Default>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,
@@ -192,6 +196,7 @@ extern "C" fn generic_move<T: Default>(
 /// # See also
 ///
 /// * C++ API: `move_ctor_impl`
+#[doc(alias = "move_ctor_impl")]
 extern "C" fn generic_ctor_move_dtor<T: Default + Clone>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,

@@ -333,7 +333,7 @@ pub unsafe fn ecs_field<T: CachedComponentData>(it: *const IterT, index: i32) ->
 ///
 /// # See also
 ///
-/// C++ API: `type_to_inout`
+/// * C++ API: `type_to_inout`
 pub(crate) fn type_to_inout<T: InOutType>() -> InOutKind {
     T::IN_OUT
 }
@@ -346,7 +346,7 @@ pub(crate) fn type_to_inout<T: InOutType>() -> InOutKind {
 ///
 /// # See also
 ///
-/// C++ API: `type_to_oper`
+/// * C++ API: `type_to_oper`
 pub(crate) fn type_to_oper<T: OperType>() -> OperKind {
     T::OPER
 }

@@ -34,6 +34,7 @@ where
     /// # See also
     ///
     /// * C++ API: `column::column`
+    #[doc(alias = "column::column")]
     pub fn new_from_array(array: *const T, count: usize, is_shared: bool) -> Self {
         Self {
             slice_components: unsafe { std::slice::from_raw_parts_mut(array as *mut T, count) },

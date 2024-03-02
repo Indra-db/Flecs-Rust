@@ -51,6 +51,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_builder::filter_builder`
+    #[doc(alias = "filter_builder::filter_builder")]
     pub fn new(world: &World) -> Self {
         let mut obj = Self {
             desc: Default::default(),
@@ -74,6 +75,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_builder::filter_builder`
+    #[doc(alias = "filter_builder::filter_builder")]
     pub fn new_named(world: &World, name: &CStr) -> Self {
         let mut obj = Self {
             desc: Default::default(),
@@ -107,6 +109,7 @@ where
     /// # See also
     ///
     /// * C++ API: `filter_builder::filter_builder`
+    #[doc(alias = "filter_builder::filter_builder")]
     pub fn new_from_desc(world: &World, desc: &mut ecs_filter_desc_t, term_index: i32) -> Self {
         Self {
             desc: *desc,
@@ -263,6 +266,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::with`
+    #[doc(alias = "filter_builder_i::with")]
     fn with(&mut self, with: FilterType) -> &mut Self {
         match with {
             FilterType::Id(id) => self.term_with_id(id),
@@ -279,6 +283,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::with`
+    #[doc(alias = "filter_builder_i::with")]
     fn with_pair_id<Rel: CachedComponentData>(&mut self, target: IdT) -> &mut Self {
         self.term_with_pair_id::<Rel>(target)
     }
@@ -288,6 +293,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::with`
+    #[doc(alias = "filter_builder_i::with")]
     fn with_pair_name<Rel: CachedComponentData>(&mut self, target: &'static CStr) -> &mut Self {
         self.term_with_pair_name::<Rel>(target)
     }
@@ -297,6 +303,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::with`
+    #[doc(alias = "filter_builder_i::with")]
     fn with_enum<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
         &mut self,
         value: T,
@@ -309,6 +316,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::with`
+    #[doc(alias = "filter_builder_i::with")]
     fn with_enum_wildcard<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
         &mut self,
     ) -> &mut Self {
@@ -320,6 +328,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::with`
+    #[doc(alias = "filter_builder_i::with")]
     fn with_pair<Rel: CachedComponentData, Target: CachedComponentData>(&mut self) -> &mut Self {
         self.term_with_pair::<Rel, Target>()
     }
@@ -329,6 +338,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::with`
+    #[doc(alias = "filter_builder_i::with")]
     fn with_type<T: InOutType>(&mut self) -> &mut Self {
         self.term_with::<T>()
     }
@@ -338,6 +348,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::without`
+    #[doc(alias = "filter_builder_i::without")]
     fn without(&mut self, without: FilterType) -> &mut Self {
         match without {
             FilterType::Id(id) => self.term_with_id(id).not(),
@@ -354,6 +365,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::without`
+    #[doc(alias = "filter_builder_i::without")]
     fn without_pair_id<Rel: CachedComponentData>(&mut self, target: IdT) -> &mut Self {
         self.term_with_pair_id::<Rel>(target).not()
     }
@@ -363,6 +375,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::without`
+    #[doc(alias = "filter_builder_i::without")]
     fn without_pair_name<Rel: CachedComponentData>(&mut self, target: &'static CStr) -> &mut Self {
         self.term_with_pair_name::<Rel>(target).not()
     }
@@ -372,6 +385,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::without`
+    #[doc(alias = "filter_builder_i::without")]
     fn without_enum<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
         &mut self,
         value: T,
@@ -384,6 +398,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::without`
+    #[doc(alias = "filter_builder_i::without")]
     fn without_pair<Rel: CachedComponentData, Target: CachedComponentData>(&mut self) -> &mut Self {
         let world = self.get_world();
         self.term_with_pair_ids(Rel::get_id(world), Target::get_id(world))
@@ -395,6 +410,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::without`
+    #[doc(alias = "filter_builder_i::without")]
     fn without_type<T: InOutType>(&mut self) -> &mut Self {
         self.term_with::<T>().not()
     }
@@ -404,6 +420,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::term`
+    #[doc(alias = "filter_builder_i::term")]
     fn term(&mut self) {
         ecs_assert!(
             if !self.get_raw_term().is_null() {
@@ -467,6 +484,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::term_at`
+    #[doc(alias = "filter_builder_i::term_at")]
     fn term_at(&mut self, index: i32) -> &mut Self {
         ecs_assert!(
             index > 0,
@@ -501,6 +519,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::term`
+    #[doc(alias = "filter_builder_i::term")]
     fn term_with<T: InOutType>(&mut self) -> &mut Self {
         self.term();
         unsafe {
@@ -516,6 +535,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::term`
+    #[doc(alias = "filter_builder_i::term")]
     fn term_with_id(&mut self, id: IdT) -> &mut Self {
         self.term();
         let new_term: ecs_term_t = Term::new(None, TermType::Id(id)).move_raw_term();
@@ -530,6 +550,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::term`
+    #[doc(alias = "filter_builder_i::term")]
     fn term_with_name(&mut self, name: &'static CStr) -> &mut Self {
         self.term();
         unsafe {
@@ -543,6 +564,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::term`
+    #[doc(alias = "filter_builder_i::term")]
     fn term_with_pair_ids(&mut self, rel: IdT, target: IdT) -> &mut Self {
         self.term();
         unsafe {
@@ -556,6 +578,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::term`
+    #[doc(alias = "filter_builder_i::term")]
     fn term_with_pair_names(&mut self, rel: &'static CStr, target: &'static CStr) -> &mut Self {
         self.term();
         unsafe {
@@ -572,6 +595,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::term`
+    #[doc(alias = "filter_builder_i::term")]
     fn term_with_pair_id_name(&mut self, rel: IdT, target: &'static CStr) -> &mut Self {
         self.term();
         unsafe {
@@ -587,6 +611,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::term`
+    #[doc(alias = "filter_builder_i::term")]
     fn term_with_pair_id<Rel: CachedComponentData>(&mut self, target: IdT) -> &mut Self {
         let world = self.get_world();
         self.term_with_pair_ids(Rel::get_id(world), target)
@@ -597,6 +622,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::term`
+    #[doc(alias = "filter_builder_i::term")]
     fn term_with_pair_name<Rel: CachedComponentData>(
         &mut self,
         target: &'static CStr,
@@ -611,6 +637,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::term`
+    #[doc(alias = "filter_builder_i::term")]
     fn term_with_pair<Rel: CachedComponentData, Target: CachedComponentData>(
         &mut self,
     ) -> &mut Self {
@@ -623,6 +650,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::term`
+    #[doc(alias = "filter_builder_i::term")]
     fn term_with_enum<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
         &mut self,
         value: T,
@@ -637,6 +665,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// # See also
     ///
     /// * C++ API: `filter_builder_i::term`
+    #[doc(alias = "filter_builder_i::term")]
     fn term_with_term(&mut self, mut term: Term) -> &mut Self {
         self.term();
         unsafe {

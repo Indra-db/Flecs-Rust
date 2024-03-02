@@ -55,6 +55,7 @@ where
     /// See also
     ///
     /// * C++ API: `observer_builder::observer_builder`
+    #[doc(alias = "observer_builder::observer_builder")]
     pub fn new(world: &World) -> Self {
         let mut desc = Default::default();
         let mut obj = Self {
@@ -86,6 +87,7 @@ where
     /// See also
     ///
     /// * C++ API: `node_builder::node_builder`
+    #[doc(alias = "node_builder::node_builder")]
     pub fn new_named(world: &World, name: &CStr) -> Self {
         let mut obj = Self {
             desc: Default::default(),
@@ -116,6 +118,7 @@ where
     /// See also
     ///
     /// * C++ API: `observer_builder::observer_builder`
+    #[doc(alias = "observer_builder::observer_builder")]
     pub fn new_from_desc(world: &World, mut desc: ecs_observer_desc_t) -> Self {
         let mut obj = Self {
             desc: desc,
@@ -133,7 +136,8 @@ where
     ///
     /// See also
     ///
-    /// * C++ API: `node_builder::build` (partly)
+    /// * C++ API: `node_builder::build`
+    #[doc(alias = "node_builder::build")]
     fn get_binding_ctx(&mut self) -> &mut ObserverSystemBindingCtx {
         let mut binding_ctx: *mut ObserverSystemBindingCtx = self.desc.binding_ctx as *mut _;
 
@@ -160,6 +164,7 @@ where
     /// See also
     ///
     /// * C++ API: `node_builder::build`
+    #[doc(alias = "node_builder::build")]
     pub fn build(&mut self) -> Observer {
         Observer::new(&self.world, self.desc, self.is_instanced)
     }
@@ -177,6 +182,7 @@ where
     /// See also
     ///
     /// * C++ API: `node_builder::each`
+    #[doc(alias = "node_builder::each")]
     pub fn on_each<Func>(&mut self, func: Func) -> Observer
     where
         Func: FnMut(T::TupleType) + 'static,
@@ -209,6 +215,7 @@ where
     /// See also
     ///
     /// * C++ API: `node_builder::each`
+    #[doc(alias = "node_builder::each")]
     pub fn on_each_entity<Func>(&mut self, func: Func) -> Observer
     where
         Func: FnMut(&mut Entity, T::TupleType) + 'static,
@@ -241,6 +248,7 @@ where
     /// See also
     ///
     /// * C++ API: `node_builder::iter`
+    #[doc(alias = "node_builder::iter")]
     pub fn on_iter_only<Func>(&mut self, func: Func) -> Observer
     where
         Func: FnMut(&Iter) + 'static,
@@ -269,6 +277,7 @@ where
     /// See also
     ///
     /// * C++ API: `node_builder::iter`
+    #[doc(alias = "node_builder::iter")]
     pub fn on_iter<Func>(&mut self, func: Func) -> Observer
     where
         Func: FnMut(&Iter, T::TupleSliceType) + 'static,
@@ -328,6 +337,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iter_invoker::invoke_callback`
+    #[doc(alias = "iter_invoker::invoke_callback")]
     unsafe extern "C" fn run_each<Func>(iter: *mut IterT)
     where
         Func: FnMut(T::TupleType),
@@ -364,6 +374,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iter_invoker::invoke_callback`
+    #[doc(alias = "iter_invoker::invoke_callback")]
     unsafe extern "C" fn run_each_entity<Func>(iter: *mut IterT)
     where
         Func: FnMut(&mut Entity, T::TupleType),
@@ -401,6 +412,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iter_invoker::invoke_callback`
+    #[doc(alias = "iter_invoker::invoke_callback")]
     unsafe extern "C" fn run_iter_only<Func>(iter: *mut IterT)
     where
         Func: FnMut(&Iter),
@@ -428,6 +440,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iter_invoker::invoke_callback`
+    #[doc(alias = "iter_invoker::invoke_callback")]
     unsafe extern "C" fn run_iter<Func>(iter: *mut IterT)
     where
         Func: FnMut(&Iter, T::TupleSliceType),
@@ -535,6 +548,7 @@ pub trait ObserverBuilderImpl: FilterBuilderImpl {
     /// # See also
     ///
     /// * C++ API: `observer_builder_i::event`
+    #[doc(alias = "observer_builder_i::event")]
     fn add_event(&mut self, event: EntityT) -> &mut Self {
         let event_count = self.get_event_count() as usize;
         self.increment_event_count();
@@ -552,6 +566,7 @@ pub trait ObserverBuilderImpl: FilterBuilderImpl {
     /// # See also
     ///
     /// * C++ API: `observer_builder_i::event`
+    #[doc(alias = "observer_builder_i::event")]
     fn add_event_of_type<T>(&mut self) -> &mut Self
     where
         T: CachedComponentData,
@@ -573,6 +588,7 @@ pub trait ObserverBuilderImpl: FilterBuilderImpl {
     /// # See also
     ///
     /// * C++ API: `observer_builder_i::yield_existing`
+    #[doc(alias = "observer_builder_i::yield_existing")]
     fn yield_existing(&mut self, should_yield: bool) -> &mut Self {
         self.get_desc_observer().yield_existing = should_yield;
         self
@@ -583,6 +599,7 @@ pub trait ObserverBuilderImpl: FilterBuilderImpl {
     /// # See also
     ///
     /// * C++ API: `observer_builder_i::ctx`
+    #[doc(alias = "observer_builder_i::ctx")]
     fn set_context(&mut self, context: *mut c_void) -> &mut Self {
         self.get_desc_observer().ctx = context;
         self
@@ -593,6 +610,7 @@ pub trait ObserverBuilderImpl: FilterBuilderImpl {
     /// # See also
     ///
     /// * C++ API: `observer_builder_i::run`
+    #[doc(alias = "observer_builder_i::run")]
     fn set_run_callback(&mut self, callback: ecs_iter_action_t) -> &mut Self {
         self.get_desc_observer().run = callback;
         self

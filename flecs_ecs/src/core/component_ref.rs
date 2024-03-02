@@ -38,6 +38,7 @@ impl<T: CachedComponentData> Ref<T> {
     /// # See also
     ///
     /// * C++ API: `ref::ref`
+    #[doc(alias = "ref::ref")]
     pub fn new(mut world: *mut WorldT, entity: EntityT, mut id: IdT) -> Self {
         // the world we were called with may be a stage; convert it to a world
         // here if that is the case
@@ -67,6 +68,7 @@ impl<T: CachedComponentData> Ref<T> {
     /// # See also
     ///
     /// * C++ API: `ref::get`
+    #[doc(alias = "ref::get")]
     pub fn get(&mut self) -> *mut T {
         unsafe {
             ecs_ref_get_id(self.world, &mut self.component_ref, self.component_ref.id) as *mut T

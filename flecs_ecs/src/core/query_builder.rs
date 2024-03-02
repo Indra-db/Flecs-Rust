@@ -53,6 +53,7 @@ where
     /// See also
     ///
     /// * C++ API: `builder::builder`
+    #[doc(alias = "builder::builder")]
     pub fn new(world: &World) -> Self {
         let mut desc = Default::default();
         let mut obj = Self {
@@ -74,6 +75,7 @@ where
     /// See also
     ///
     /// * C++ API: `query_builder::query_builder`
+    #[doc(alias = "query_builder::query_builder")]
     pub fn new_named(world: &World, name: &CStr) -> Self {
         let mut obj = Self {
             desc: Default::default(),
@@ -101,6 +103,7 @@ where
     /// See also
     ///
     /// * C++ API: `query_builder_i::query_builder_i`
+    #[doc(alias = "query_builder_i::query_builder_i")]
     pub fn new_from_desc(world: &World, desc: &mut ecs_query_desc_t) -> Self {
         let mut obj = Self {
             desc: *desc,
@@ -122,6 +125,7 @@ where
     /// See also
     ///
     /// * C++ API: `query_builder_i::query_builder_i`
+    #[doc(alias = "query_builder_i::query_builder_i")]
     pub fn new_from_desc_term_index(
         world: &World,
         desc: &mut ecs_query_desc_t,
@@ -209,6 +213,7 @@ where
     /// See also
     ///
     /// * C++ API: `node_builder::build`
+    #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
         let desc_filter = self.filter_builder.desc;
         self.desc.filter = desc_filter;
@@ -251,7 +256,8 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// # See also
     ///
-    /// C++ API: `query_builder_i::order_by`
+    /// * C++ API: `query_builder_i::order_by`
+    #[doc(alias = "query_builder_i::order_by")]
     fn order_by<T>(&mut self, compare: OrderByFn<T>) -> &mut Self
     where
         T: CachedComponentData,
@@ -271,7 +277,8 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     /// * `compare`: The compare function used to sort the components.
     /// # See also
     ///
-    /// C++ API: `query_builder_i::order_by`
+    /// * C++ API: `query_builder_i::order_by`
+    #[doc(alias = "query_builder_i::order_by")]
     fn order_by_id(&mut self, component: IdT, compare: ecs_order_by_action_t) -> &mut Self {
         let desc = self.get_desc_query();
         desc.order_by = compare;
@@ -304,7 +311,8 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// # See also
     ///
-    /// C++ API: `query_builder_i::group_by`
+    /// * C++ API: `query_builder_i::group_by`
+    #[doc(alias = "query_builder_i::group_by")]
     fn group_by<T>(&mut self, group_by_action: GroupByFn) -> &mut Self
     where
         T: CachedComponentData,
@@ -325,7 +333,8 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// # See also
     ///
-    /// C++ API: `query_builder_i::group_by`
+    /// * C++ API: `query_builder_i::group_by`
+    #[doc(alias = "query_builder_i::group_by")]
     fn group_by_id(&mut self, component: IdT, group_by_action: ecs_group_by_action_t) -> &mut Self {
         let desc = self.get_desc_query();
         desc.group_by = group_by_action;
@@ -343,7 +352,8 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// # See also
     ///
-    /// C++ API: `query_builder_i::group_by`
+    /// * C++ API: `query_builder_i::group_by`
+    #[doc(alias = "query_builder_i::group_by")]
     fn group_by_default<T>(&mut self) -> &mut Self
     where
         T: CachedComponentData,
@@ -361,7 +371,8 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// # See also
     ///
-    /// C++ API: `query_builder_i::group_by`
+    /// * C++ API: `query_builder_i::group_by`
+    #[doc(alias = "query_builder_i::group_by")]
     fn group_by_with_component(&mut self, component: IdT) -> &mut Self {
         self.group_by_id(component, None)
     }
@@ -375,7 +386,8 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// # See also
     ///
-    /// C++ API: `query_builder_i::group_by_ctx`
+    /// * C++ API: `query_builder_i::group_by_ctx`
+    #[doc(alias = "query_builder_i::group_by_ctx")]
     fn group_by_ctx(&mut self, ctx: *mut c_void, ctx_free: ecs_ctx_free_t) -> &mut Self {
         let desc = self.get_desc_query();
         desc.group_by_ctx = ctx;
@@ -391,7 +403,8 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// # See also
     ///
-    /// C++ API: `query_builder_i::on_group_create`
+    /// * C++ API: `query_builder_i::on_group_create`
+    #[doc(alias = "query_builder_i::on_group_create")]
     fn on_group_create(&mut self, action: ecs_group_create_action_t) -> &mut Self {
         let desc = self.get_desc_query();
         desc.on_group_create = action;
@@ -406,7 +419,8 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// # See also
     ///
-    /// C++ API: `query_builder_i::on_group_delete`
+    /// * C++ API: `query_builder_i::on_group_delete`
+    #[doc(alias = "query_builder_i::on_group_delete")]
     fn on_group_delete(&mut self, action: ecs_group_delete_action_t) -> &mut Self {
         let desc = self.get_desc_query();
         desc.on_group_delete = action;
@@ -417,7 +431,8 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// # See also
     ///
-    /// C++ API: `query_builder_i::observable`
+    /// * C++ API: `query_builder_i::observable`
+    #[doc(alias = "query_builder_i::observable")]
     fn observable<'a, T: Iterable<'a>>(&mut self, parent: &QueryBase<'a, T>) -> &mut Self {
         let desc = self.get_desc_query();
         desc.parent = parent.query;

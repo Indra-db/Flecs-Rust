@@ -124,6 +124,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::reset`
+    #[doc(alias = "world::reset")]
     pub fn reset(&mut self) {
         // can only reset the world if we own the world object.
         ecs_assert!(
@@ -144,6 +145,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::c_ptr`
+    #[doc(alias = "world::c_ptr")]
     pub fn get_as_ptr(&self) -> *mut WorldT {
         self.raw_world
     }
@@ -155,6 +157,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::delta_time`
+    #[doc(alias = "world::delta_time")]
     pub fn delta_time(&self) -> f32 {
         unsafe {
             let stats = ecs_get_world_info(self.raw_world);
@@ -169,6 +172,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::tick`
+    #[doc(alias = "world::tick")]
     pub fn tick(&self) -> i64 {
         unsafe {
             let stats = ecs_get_world_info(self.raw_world);
@@ -183,6 +187,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::time`
+    #[doc(alias = "world::time")]
     pub fn time(&self) -> f32 {
         unsafe {
             let stats = ecs_get_world_info(self.raw_world);
@@ -197,6 +202,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::quit`
+    #[doc(alias = "world::quit")]
     pub fn quit(&self) {
         unsafe {
             ecs_quit(self.raw_world);
@@ -208,6 +214,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::atfini`
+    #[doc(alias = "world::atfini")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     pub fn on_destroyed(&self, action: ecs_fini_action_t, ctx: *mut std::ffi::c_void) {
         unsafe {
@@ -224,6 +231,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::should_quit`
+    #[doc(alias = "world::should_quit")]
     pub fn should_quit(&self) -> bool {
         unsafe { ecs_should_quit(self.raw_world) }
     }
@@ -253,14 +261,14 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::frame_begin`
+    #[doc(alias = "world::frame_begin")]
     pub fn frame_begin(&self, delta_time: f32) -> f32 {
         unsafe { ecs_frame_begin(self.raw_world, delta_time) }
     }
 
     /// Ends a frame.
     ///
-    /// This operation must be called at the end of the frame, and always after
-    /// * C++ API: `frame_begin`.
+    /// This operation must be called at the end of the frame, and always after `frame_begin`
     ///
     /// # Safety
     /// The function should only be run from the main thread.
@@ -268,6 +276,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::frame_end`
+    #[doc(alias = "world::frame_end")]
     pub fn frame_end(&self) {
         unsafe {
             ecs_frame_end(self.raw_world);
@@ -298,6 +307,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::readonly_begin`
+    #[doc(alias = "world::readonly_begin")]
     pub fn readonly_begin(&self) -> bool {
         unsafe { ecs_readonly_begin(self.raw_world) }
     }
@@ -322,8 +332,8 @@ impl World {
 
     /// Defers operations until the end of the frame.
     ///
-    /// When this operation is invoked while iterating, the operations between
-    /// * C++ API: `defer_begin` and `defer_end` are executed at the end of the frame.
+    /// When this operation is invoked while iterating, the operations between `defer_begin`
+    /// and `defer_end` are executed at the end of the frame.
     ///
     /// ## safety
     /// this operation is thread safe
@@ -334,6 +344,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::defer_begin`
+    #[doc(alias = "world::defer_begin")]
     pub fn defer_begin(&self) -> bool {
         unsafe { ecs_defer_begin(self.raw_world) }
     }
@@ -351,6 +362,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::defer_end`
+    #[doc(alias = "world::defer_end")]
     pub fn defer_end(&self) -> bool {
         unsafe { ecs_defer_end(self.raw_world) }
     }
@@ -364,6 +376,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::is_deferred`
+    #[doc(alias = "world::is_deferred")]
     pub fn is_deferred(&self) -> bool {
         unsafe { ecs_is_deferred(self.raw_world) }
     }
@@ -386,6 +399,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::set_stage_count`
+    #[doc(alias = "world::set_stage_count")]
     pub fn set_stage_count(&self, stages: i32) {
         unsafe {
             ecs_set_stage_count(self.raw_world, stages);
@@ -403,6 +417,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get_stage_count`
+    #[doc(alias = "world::get_stage_count")]
     pub fn get_stage_count(&self) -> i32 {
         unsafe { ecs_get_stage_count(self.raw_world) }
     }
@@ -419,6 +434,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get_stage_id`
+    #[doc(alias = "world::get_stage_id")]
     pub fn get_stage_id(&self) -> i32 {
         unsafe { ecs_get_stage_id(self.raw_world) }
     }
@@ -435,6 +451,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::is_stage`
+    #[doc(alias = "world::is_stage")]
     pub fn is_stage(&self) -> bool {
         unsafe {
             ecs_assert!(
@@ -469,6 +486,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::set_automerge`
+    #[doc(alias = "world::set_automerge")]
     pub fn set_automerge(&self, automerge: bool) {
         unsafe { ecs_set_automerge(self.raw_world, automerge) };
     }
@@ -485,6 +503,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::merge`
+    #[doc(alias = "world::merge")]
     pub fn merge(&self) {
         unsafe { ecs_merge(self.raw_world) };
     }
@@ -512,6 +531,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get_stage`
+    #[doc(alias = "world::get_stage")]
     pub fn get_stage(&self, stage_id: i32) -> Self {
         Self {
             raw_world: unsafe { ecs_get_stage(self.raw_world, stage_id) },
@@ -526,8 +546,8 @@ impl World {
     /// stage, except that it does not allow reading from the world.
     ///
     /// Asynchronous stages are never merged automatically, and must therefore be
-    /// manually merged with the `ecs_merge` function. It is not necessary to call
-    /// * C++ API: `defer_begin` or `defer_end` before and after enqueuing commands, as an
+    /// manually merged with the `ecs_merge` function. It is not necessary to call `defer_begin`
+    /// or `defer_end` before and after enqueuing commands, as an
     /// asynchronous stage unconditionally defers operations.
     ///
     /// The application must ensure that no commands are added to the stage while the
@@ -542,6 +562,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::async_stage`
+    #[doc(alias = "world::async_stage")]
     pub fn get_async_stage(&self) -> Self {
         Self {
             raw_world: unsafe { ecs_async_stage_new(self.raw_world) },
@@ -561,6 +582,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get_world`
+    #[doc(alias = "world::get_world")]
     pub fn get_world(&self) -> Self {
         Self {
             raw_world: if !self.raw_world.is_null() {
@@ -584,6 +606,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::is_readonly`
+    #[doc(alias = "world::is_readonly")]
     pub fn is_readonly(&self) -> bool {
         unsafe { ecs_stage_is_readonly(self.raw_world) }
     }
@@ -600,6 +623,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::set_context`
+    #[doc(alias = "world::set_context")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     pub fn set_context(&self, ctx: *mut std::ffi::c_void) {
         unsafe { ecs_set_context(self.raw_world, ctx) }
@@ -614,6 +638,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get_context`
+    #[doc(alias = "world::get_context")]
     pub fn get_context(&self) -> *mut std::ffi::c_void {
         unsafe { ecs_get_context(self.raw_world) }
     }
@@ -629,6 +654,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::dim`
+    #[doc(alias = "world::dim")]
     pub fn preallocate_entity_count(&self, entity_count: i32) {
         unsafe { ecs_dim(self.raw_world, entity_count) };
     }
@@ -645,6 +671,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::set_entity_range`
+    #[doc(alias = "world::set_entity_range")]
     pub fn set_entity_range(&self, min: EntityT, max: EntityT) {
         unsafe { ecs_set_entity_range(self.raw_world, min, max) };
     }
@@ -662,6 +689,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::enable_range_check`
+    #[doc(alias = "world::enable_range_check")]
     pub fn enable_range_check(&self, enabled: bool) {
         unsafe { ecs_enable_range_check(self.raw_world, enabled) };
     }
@@ -675,6 +703,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get_scope`
+    #[doc(alias = "world::get_scope")]
     #[inline(always)]
     pub fn get_scope<T: CachedComponentData>(&self) -> Entity {
         Entity::new_from_existing_raw(self.raw_world, unsafe { ecs_get_scope(self.raw_world) })
@@ -697,6 +726,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::set_scope`
+    #[doc(alias = "world::set_scope")]
     #[inline(always)]
     pub fn set_scope_with_id(&self, id: EntityT) -> Entity {
         Entity::new_id_only(unsafe { ecs_set_scope(self.raw_world, id) })
@@ -718,6 +748,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::set_scope`
+    #[doc(alias = "world::set_scope")]
     #[inline(always)]
     pub fn set_scope_with<T: CachedComponentData>(&self) -> Entity {
         self.set_scope_with_id(T::get_id(self.raw_world))
@@ -763,6 +794,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::set_lookup_path`
+    #[doc(alias = "world::set_lookup_path")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     pub fn set_lookup_path(&self, search_path: *const EntityT) -> *mut EntityT {
         unsafe { ecs_set_lookup_path(self.raw_world, search_path) }
@@ -781,6 +813,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::lookup`
+    #[doc(alias = "world::lookup")]
     pub fn lookup_entity_by_name(&self, name: &CStr) -> Option<Entity> {
         let entity_id = unsafe {
             ecs_lookup_path_w_sep(
@@ -808,6 +841,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::set`
+    #[doc(alias = "world::set")]
     pub fn set_component<T: CachedComponentData>(&self, component: T) {
         let id = T::get_id(self.raw_world);
         set_helper(self.raw_world, id, component, id);
@@ -827,6 +861,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::set`
+    #[doc(alias = "world::set")]
     pub fn set_pair_first_id<First>(&self, second: EntityT, first: First)
     where
         First: CachedComponentData + ComponentType<Struct>,
@@ -850,6 +885,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::set`
+    #[doc(alias = "world::set")]
     pub fn set_pair_first<First, Second>(&self, first: First)
     where
         First: CachedComponentData + ComponentType<Struct>,
@@ -873,6 +909,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::set`
+    #[doc(alias = "world::set")]
     pub fn set_pair_second_id<Second>(&self, first: EntityT, second: Second)
     where
         Second: CachedComponentData + ComponentType<Struct>,
@@ -896,6 +933,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::set`
+    #[doc(alias = "world::set")]
     pub fn set_pair_second<First, Second>(&self, second: Second)
     where
         First: CachedComponentData + ComponentType<Struct>,
@@ -951,6 +989,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
     #[inline(always)]
     pub fn get_component<T>(&self) -> *const T
     where
@@ -973,6 +1012,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
     #[inline(always)]
     pub fn get_component_mut<T>(&self) -> *mut T
     where
@@ -994,6 +1034,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get_ref`
+    #[doc(alias = "world::get_ref")]
     #[inline(always)]
     pub fn get_ref_component<T>(&self) -> Ref<T>
     where
@@ -1016,6 +1057,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::singleton`
+    #[doc(alias = "world::singleton")]
     #[inline(always)]
     pub fn get_component_as_entity<T: CachedComponentData>(&self) -> Entity {
         Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
@@ -1034,6 +1076,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
     #[inline(always)]
     pub fn get_pair_first<First>(&self, second: EntityT) -> *const First
     where
@@ -1056,6 +1099,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
     #[inline(always)]
     pub fn get_pair_first_mut<First>(&self, second: EntityT) -> *mut First
     where
@@ -1078,6 +1122,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
     #[inline(always)]
     pub fn get_pair_second<Second>(&self, first: EntityT) -> *const Second
     where
@@ -1100,6 +1145,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
     #[inline(always)]
     pub fn get_pair_second_mut<Second>(&self, first: EntityT) -> *mut Second
     where
@@ -1122,6 +1168,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::has`
+    #[doc(alias = "world::has")]
     #[inline(always)]
     pub fn has<T>(&self) -> bool
     where
@@ -1143,6 +1190,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::has`
+    #[doc(alias = "world::has")]
     #[inline(always)]
     pub fn has_enum<T>(&self) -> bool
     where
@@ -1168,6 +1216,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::has`
+    #[doc(alias = "world::has")]
     #[inline(always)]
     pub fn has_enum_constant<T>(&self, constant: T) -> bool
     where
@@ -1191,6 +1240,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::has`
+    #[doc(alias = "world::has")]
     #[inline(always)]
     pub fn has_pair_component<First, Second>(&self) -> bool
     where
@@ -1215,6 +1265,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::has`
+    #[doc(alias = "world::has")]
     #[inline(always)]
     pub fn has_pair_by_id(&self, first: EntityT, second: EntityT) -> bool {
         Entity::new_from_existing_raw(self.raw_world, first).has_pair_by_ids(first, second)
@@ -1233,6 +1284,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::add`
+    #[doc(alias = "world::add")]
     #[inline(always)]
     pub fn add_component<T: CachedComponentData>(&self) -> Entity {
         Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
@@ -1252,6 +1304,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::add`
+    #[doc(alias = "world::add")]
     #[inline(always)]
     pub fn add_enum_constant<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
         &self,
@@ -1275,6 +1328,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::add`
+    #[doc(alias = "world::add")]
     #[inline(always)]
     pub fn add_pair_ids(&self, first: EntityT, second: EntityT) -> Entity {
         Entity::new_from_existing_raw(self.raw_world, first).add_pair_ids(first, second)
@@ -1294,6 +1348,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::add`
+    #[doc(alias = "world::add")]
     #[inline(always)]
     pub fn add_pair<First, Second>(&self) -> Entity
     where
@@ -1340,6 +1395,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::add`
+    #[doc(alias = "world::add")]
     #[inline(always)]
     pub fn add_pair_second_id<First: CachedComponentData>(&self, second: EntityT) -> Entity {
         Entity::new_from_existing_raw(self.raw_world, First::get_id(self.raw_world))
@@ -1364,6 +1420,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::add`
+    #[doc(alias = "world::add")]
     #[inline(always)]
     pub fn add_enum_tag<First, Second>(&self, enum_value: Second) -> Entity
     where
@@ -1383,6 +1440,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::remove`
+    #[doc(alias = "world::remove")]
     #[inline(always)]
     pub fn remove_component<T: CachedComponentData + ComponentType<Struct>>(&self) {
         Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
@@ -1398,6 +1456,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::remove`
+    #[doc(alias = "world::remove")]
     #[inline(always)]
     pub fn remove_component_enum<T: CachedComponentData + ComponentType<Enum>>(&self) {
         Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
@@ -1418,6 +1477,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::remove`
+    #[doc(alias = "world::remove")]
     #[inline(always)]
     pub fn remove_enum_tag<First, Second>(&self, enum_value: Second)
     where
@@ -1438,6 +1498,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::remove`
+    #[doc(alias = "world::remove")]
     #[inline(always)]
     pub fn remove_pair_ids(&self, first: EntityT, second: EntityT) {
         Entity::new_from_existing_raw(self.raw_world, first).remove_pair_ids(first, second);
@@ -1453,6 +1514,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::remove`
+    #[doc(alias = "world::remove")]
     #[inline(always)]
     pub fn remove_pair<First, Second>(&self)
     where
@@ -1476,6 +1538,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::remove`
+    #[doc(alias = "world::remove")]
     #[inline(always)]
     pub fn remove_pair_first_id<Second: CachedComponentData>(&self, first: EntityT) {
         Entity::new_from_existing_raw(self.raw_world, Second::get_id(self.raw_world))
@@ -1495,6 +1558,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::remove`
+    #[doc(alias = "world::remove")]
     #[inline(always)]
     pub fn remove_pair_second_id<First: CachedComponentData>(&self, second: EntityT) {
         Entity::new_from_existing_raw(self.raw_world, First::get_id(self.raw_world))
@@ -1510,6 +1574,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::children`
+    #[doc(alias = "world::children")]
     #[inline(always)]
     pub fn for_each_children<F: FnMut(Entity)>(&self, callback: F) {
         Entity::new(self).for_each_child_of(callback);
@@ -1532,6 +1597,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::use`
+    #[doc(alias = "world::use")]
     #[inline(always)]
     pub fn set_alias_component<T: CachedComponentData>(&self, alias: &CStr) -> Entity {
         let id = T::get_id(self.raw_world);
@@ -1557,6 +1623,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::use`
+    #[doc(alias = "world::use")]
     #[inline(always)]
     pub fn set_alias_entity_by_name(&self, name: &CStr, alias: &CStr) -> Entity {
         let id = unsafe {
@@ -1584,6 +1651,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::use`
+    #[doc(alias = "world::use")]
     #[inline(always)]
     pub fn set_alias_entity(&self, entity: Entity, alias: &CStr) {
         if alias.is_empty() {
@@ -1800,6 +1868,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::scope`
+    #[doc(alias = "world::scope")]
     pub fn run_in_scope_with_id<F: FnMut()>(&self, parent_id: IdT, mut func: F) {
         let prev: IdT = unsafe { ecs_set_scope(self.raw_world, parent_id) };
         func();
@@ -1822,6 +1891,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::scope`
+    #[doc(alias = "world::scope")]
     pub fn run_in_scope_with<T: CachedComponentData, F: FnMut()>(&self, func: F) {
         self.run_in_scope_with_id(T::get_id(self.raw_world), func);
     }
@@ -1840,6 +1910,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::scope`
+    #[doc(alias = "world::scope")]
     pub fn get_scoped_world_with_id(&self, parent_id: IdT) -> ScopedWorld {
         ScopedWorld::new(self, parent_id)
     }
@@ -1858,6 +1929,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::scope`
+    #[doc(alias = "world::scope")]
     pub fn get_scoped_world_with<T: CachedComponentData>(&self) -> ScopedWorld {
         self.get_scoped_world_with_id(T::get_id(self.raw_world))
     }
@@ -1872,6 +1944,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::with`
+    #[doc(alias = "world::with")]
     pub fn create_with_id<F: FnMut()>(&self, id: IdT, mut func: F) {
         let prev: IdT = unsafe { ecs_set_with(self.raw_world, id) };
         func();
@@ -1893,6 +1966,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::with`
+    #[doc(alias = "world::with")]
     pub fn create_with<T: CachedComponentData, F: FnMut()>(&self, func: F) {
         self.create_with_id(T::get_id(self.raw_world), func);
     }
@@ -1908,6 +1982,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::with`
+    #[doc(alias = "world::with")]
     pub fn create_with_pair_ids<F: FnMut()>(&self, first: IdT, second: IdT, func: F) {
         self.create_with_id(ecs_pair(first, second), func);
     }
@@ -1926,6 +2001,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::with`
+    #[doc(alias = "world::with")]
     pub fn create_with_pair<First, Second, F: FnMut()>(&self, func: F)
     where
         First: CachedComponentData,
@@ -1954,6 +2030,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::with`
+    #[doc(alias = "world::with")]
     pub fn create_with_pair_first_id<Second: CachedComponentData, F: FnMut()>(
         &self,
         first: IdT,
@@ -1976,6 +2053,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::with`
+    #[doc(alias = "world::with")]
     pub fn create_with_pair_second_id<First: CachedComponentData, F: FnMut()>(
         &self,
         second: IdT,
@@ -1998,6 +2076,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::with`
+    #[doc(alias = "world::with")]
     pub fn create_with_enum_constant<T, F>(&self, enum_value: T, func: F)
     where
         T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
@@ -2024,6 +2103,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::with`
+    #[doc(alias = "world::with")]
     pub fn create_with_enum_tag_pair<First, Second, F>(&self, enum_value: Second, func: F)
     where
         First: CachedComponentData,
@@ -2048,6 +2128,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::delete_with`
+    #[doc(alias = "world::delete_with")]
     pub fn delete_entities_with_id(&self, id: IdT) {
         unsafe {
             ecs_delete_with(self.raw_world, id);
@@ -2063,6 +2144,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::delete_with`
+    #[doc(alias = "world::delete_with")]
     pub fn delete_entities_with<T: CachedComponentData>(&self) {
         self.delete_entities_with_id(T::get_id(self.raw_world));
     }
@@ -2077,6 +2159,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::delete_with`
+    #[doc(alias = "world::delete_with")]
     pub fn delete_entities_with_pair_ids(&self, first: IdT, second: IdT) {
         self.delete_entities_with_id(ecs_pair(first, second));
     }
@@ -2091,6 +2174,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::delete_with`
+    #[doc(alias = "world::delete_with")]
     pub fn delete_entities_with_pair<First, Second>(&self)
     where
         First: CachedComponentData,
@@ -2115,6 +2199,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::delete_with`
+    #[doc(alias = "world::delete_with")]
     pub fn delete_entities_with_pair_first_id<Second: CachedComponentData>(&self, first: IdT) {
         self.delete_entities_with_id(ecs_pair(first, Second::get_id(self.raw_world)));
     }
@@ -2132,6 +2217,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::delete_with`
+    #[doc(alias = "world::delete_with")]
     pub fn delete_entities_with_pair_second_id<First: CachedComponentData>(&self, second: IdT) {
         self.delete_entities_with_id(ecs_pair(First::get_id(self.raw_world), second));
     }
@@ -2149,6 +2235,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::delete_with`
+    #[doc(alias = "world::delete_with")]
     pub fn delete_entities_with_enum_constant<
         T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
     >(
@@ -2192,6 +2279,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::remove_all`
+    #[doc(alias = "world::remove_all")]
     pub fn remove_all_id(&self, id: IdT) {
         unsafe {
             ecs_remove_all(self.raw_world, id);
@@ -2207,6 +2295,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::remove_all`
+    #[doc(alias = "world::remove_all")]
     pub fn remove_all<T: CachedComponentData>(&self) {
         self.remove_all_id(T::get_id(self.raw_world));
     }
@@ -2221,6 +2310,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::remove_all`
+    #[doc(alias = "world::remove_all")]
     pub fn remove_all_pair_ids(&self, first: IdT, second: IdT) {
         self.remove_all_id(ecs_pair(first, second));
     }
@@ -2235,6 +2325,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::remove_all`
+    #[doc(alias = "world::remove_all")]
     pub fn remove_all_pair<First, Second>(&self)
     where
         First: CachedComponentData,
@@ -2259,6 +2350,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::remove_all`
+    #[doc(alias = "world::remove_all")]
     pub fn remove_all_pair_first_id<Second: CachedComponentData>(&self, first: IdT) {
         self.remove_all_id(ecs_pair(first, Second::get_id(self.raw_world)));
     }
@@ -2276,6 +2368,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::remove_all`
+    #[doc(alias = "world::remove_all")]
     pub fn remove_all_pair_second_id<First: CachedComponentData>(&self, second: IdT) {
         self.remove_all_id(ecs_pair(First::get_id(self.raw_world), second));
     }
@@ -2293,6 +2386,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::remove_all`
+    #[doc(alias = "world::remove_all")]
     pub fn remove_all_enum_constant<
         T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
     >(
@@ -2316,6 +2410,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::remove_all`
+    #[doc(alias = "world::remove_all")]
     pub fn remove_all_enum_tag_pair<First, Second>(&self, enum_value: Second)
     where
         First: CachedComponentData,
@@ -2345,6 +2440,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::defer`
+    #[doc(alias = "world::defer")]
     pub fn defer<F: FnOnce()>(&self, func: F) {
         unsafe {
             ecs_defer_begin(self.raw_world);
@@ -2360,6 +2456,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::defer_suspend`
+    #[doc(alias = "world::defer_suspend")]
     pub fn defer_suspend(&self) {
         unsafe {
             ecs_defer_suspend(self.raw_world);
@@ -2371,6 +2468,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::defer_resume`
+    #[doc(alias = "world::defer_resume")]
     pub fn defer_resume(&self) {
         unsafe {
             ecs_defer_resume(self.raw_world);
@@ -2390,6 +2488,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::exists`
+    #[doc(alias = "world::exists")]
     pub fn is_entity_existing(&self, entity: EntityT) -> bool {
         unsafe { ecs_exists(self.raw_world, entity) }
     }
@@ -2399,6 +2498,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::is_alive`
+    #[doc(alias = "world::is_alive")]
     pub fn is_alive_entity(&self, entity: EntityT) -> bool {
         unsafe { ecs_is_alive(self.raw_world, entity) }
     }
@@ -2409,6 +2509,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::is_valid`
+    #[doc(alias = "world::is_valid")]
     pub fn is_id_valid(&self, entity: EntityT) -> bool {
         unsafe { ecs_is_valid(self.raw_world, entity) }
     }
@@ -2426,6 +2527,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get_alive`
+    #[doc(alias = "world::get_alive")]
     pub fn get_alive(&self, entity: EntityT) -> Entity {
         let entity = unsafe { ecs_get_alive(self.raw_world, entity) };
         Entity::new_from_existing_raw(self.raw_world, entity)
@@ -2446,6 +2548,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::ensure`
+    #[doc(alias = "world::ensure")]
     pub fn ensure_entity_with_generation_is_alive(&self, entity: EntityT) -> Entity {
         unsafe { ecs_ensure(self.raw_world, entity) };
         Entity::new_from_existing_raw(self.raw_world, entity)
@@ -2461,6 +2564,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::run_post_frame`
+    #[doc(alias = "world::run_post_frame")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     pub fn run_post_frame(&self, action: ecs_fini_action_t, ctx: *mut c_void) {
         unsafe {
@@ -2488,6 +2592,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::entity`
+    #[doc(alias = "world::entity")]
     pub fn get_entity_from_enum_constant<T>(&self, enum_value: T) -> Entity
     where
         T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
@@ -2517,6 +2622,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::id`
+    #[doc(alias = "world::id")]
     pub fn get_id_from_enum_constant<T>(&self, enum_value: T) -> Id
     where
         T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
@@ -2544,6 +2650,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::id`
+    #[doc(alias = "world::id")]
     pub fn get_raw_id_from_enum_constant<T>(&self, enum_value: T) -> IdT
     where
         T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
@@ -2564,6 +2671,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::entity`
+    #[doc(alias = "world::entity")]
     pub fn new_entity_named_type<T: CachedComponentData>(&self, name: &CStr) -> Entity {
         Entity::new_from_existing_raw(
             self.raw_world,
@@ -2580,6 +2688,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::entity`
+    #[doc(alias = "world::entity")]
     pub fn new_entity_named(&self, name: &CStr) -> Entity {
         Entity::new_named(self, name)
     }
@@ -2589,6 +2698,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::entity`
+    #[doc(alias = "world::entity")]
     pub fn new_entity(&self) -> Entity {
         Entity::new(self)
     }
@@ -2602,6 +2712,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::entity`
+    #[doc(alias = "world::entity")]
     pub fn new_entity_w_id(&self, id: EntityT) -> Entity {
         Entity::new_from_existing_raw(self.raw_world, id)
     }
@@ -2621,6 +2732,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::id`
+    #[doc(alias = "world::id")]
     pub fn get_id_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> Id {
         Id::new(Some(self), IdType::Id(T::get_id(self.raw_world)))
     }
@@ -2639,6 +2751,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::pair`
+    #[doc(alias = "world::pair")]
     pub fn get_id_pair_from_ids(&self, first: EntityT, second: EntityT) -> Id {
         Id::new(Some(self), IdType::Pair(first, second))
     }
@@ -2657,6 +2770,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::pair`
+    #[doc(alias = "world::pair")]
     pub fn get_id_pair<First, Second>(&self) -> Id
     where
         First: CachedComponentData,
@@ -2688,6 +2802,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::pair`
+    #[doc(alias = "world::pair")]
     pub fn get_id_pair_second_with_id<First: CachedComponentData>(&self, second: EntityT) -> Id {
         Id::new(
             Some(self),
@@ -2711,6 +2826,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::component`
+    #[doc(alias = "world::component")]
     pub fn component<T: CachedComponentData>(&self) -> Component<T> {
         Component::<T>::new(self.raw_world)
     }
@@ -2732,6 +2848,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::component`
+    #[doc(alias = "world::component")]
     pub fn component_named<T: CachedComponentData>(&self, name: &CStr) -> Component<T> {
         Component::<T>::new_named(self.raw_world, name)
     }
@@ -2749,6 +2866,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::component`
+    #[doc(alias = "world::component")]
     pub fn component_untyped<T: CachedComponentData>(&self) -> UntypedComponent {
         UntypedComponent::new(self.raw_world, T::get_id(self.raw_world))
     }
@@ -2766,6 +2884,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::component`
+    #[doc(alias = "world::component")]
     pub fn component_untyped_id(&self, id: IdT) -> UntypedComponent {
         UntypedComponent::new(self.raw_world, id)
     }
@@ -2786,6 +2905,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::term`
+    #[doc(alias = "world::term")]
     pub fn term_component<T: CachedComponentData>(&self) -> Term {
         Term::new_component::<T>(Some(self))
     }
@@ -2804,6 +2924,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::term`
+    #[doc(alias = "world::term")]
     pub fn term_pair<First, Second>(&self) -> Term
     where
         First: CachedComponentData,
@@ -2828,6 +2949,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::event`
+    #[doc(alias = "world::event")]
     pub fn event_untyped(&self, event: EntityT) -> EventBuilder {
         EventBuilder::new(self, event)
     }
@@ -2845,6 +2967,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::event`
+    #[doc(alias = "world::event")]
     pub fn event<T: EventData + CachedComponentData>(&self) -> EventBuilderTyped<T> {
         EventBuilderTyped::<T>::new(self, T::get_id(self.raw_world))
     }
@@ -2866,6 +2989,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::observer`
+    #[doc(alias = "world::observer")]
     pub fn observer(&self, e: Entity) -> Observer {
         Observer::new_from_existing(self, e)
     }
@@ -2883,6 +3007,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::observer`
+    #[doc(alias = "world::observer")]
     pub fn observer_builder<'a, Components>(&self) -> ObserverBuilder<'a, Components>
     where
         Components: Iterable<'a>,
@@ -2907,6 +3032,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::observer`
+    #[doc(alias = "world::observer")]
     pub fn observer_builder_named<'a, Components>(
         &self,
         name: &CStr,
@@ -2933,6 +3059,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::filter`
+    #[doc(alias = "world::filter")]
     pub fn filter<'a, Components>(&self) -> Filter<'a, Components>
     where
         Components: Iterable<'a>,
@@ -2957,6 +3084,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::filter`
+    #[doc(alias = "world::filter")]
     pub fn filter_named<'a, Components>(&self, name: &CStr) -> Filter<'a, Components>
     where
         Components: Iterable<'a>,
@@ -2977,6 +3105,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::filter_builder`
+    #[doc(alias = "world::filter_builder")]
     pub fn filter_builder<'a, Components>(&self) -> FilterBuilder<'a, Components>
     where
         Components: Iterable<'a>,
@@ -3001,6 +3130,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::filter_builder`
+    #[doc(alias = "world::filter_builder")]
     pub fn filter_builder_named<'a, Components>(&self, name: &CStr) -> FilterBuilder<'a, Components>
     where
         Components: Iterable<'a>,
@@ -3048,6 +3178,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::query`
+    #[doc(alias = "world::query")]
     pub fn query<'a, Components>(&self) -> Query<'a, Components>
     where
         Components: Iterable<'a>,
@@ -3072,6 +3203,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::query`
+    #[doc(alias = "world::query")]
     pub fn query_named<'a, Components>(&self, name: &CStr) -> Query<'a, Components>
     where
         Components: Iterable<'a>,
@@ -3092,6 +3224,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::query_builder`
+    #[doc(alias = "world::query_builder")]
     pub fn query_builder<'a, Components>(&self) -> QueryBuilder<'a, Components>
     where
         Components: Iterable<'a>,
@@ -3116,6 +3249,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::query_builder`
+    #[doc(alias = "world::query_builder")]
     pub fn query_builder_named<'a, Components>(&self, name: &CStr) -> QueryBuilder<'a, Components>
     where
         Components: Iterable<'a>,
@@ -3448,6 +3582,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::tick`
+    #[doc(alias = "world::tick")]
     #[inline(always)]
     pub fn get_tick(&self) -> i64 {
         let stats = unsafe { ecs_get_world_info(self.raw_world) };
@@ -3468,6 +3603,7 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get_target_fps`
+    #[doc(alias = "world::get_target_fps")]
     #[inline(always)]
     pub fn get_target_fps(&self) -> super::FTime {
         let stats = unsafe { ecs_get_world_info(self.raw_world) };

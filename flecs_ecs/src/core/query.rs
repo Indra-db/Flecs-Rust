@@ -44,6 +44,7 @@ where
     /// # See also
     ///
     /// * C++ API: `query_base::query_base`
+    #[doc(alias = "query_base::query_base")]
     fn new(world: &World, query: *mut QueryT) -> Self {
         Self {
             world: world.clone(),
@@ -62,6 +63,7 @@ where
     /// # See also
     ///
     /// * C++ API: `query_base::query_base`
+    #[doc(alias = "query_base::query_base")]
     fn new_from_desc(world: &World, desc: *mut ecs_query_desc_t) -> Self {
         let obj = Self {
             world: world.clone(),
@@ -177,6 +179,7 @@ where
     /// # See also
     ///
     /// * C++ API: `query_base::destruct`
+    #[doc(alias = "query_base::destruct")]
     pub fn destruct(mut self) {
         unsafe { ecs_query_fini(self.query) }
         self.query = std::ptr::null_mut();
@@ -200,6 +203,7 @@ where
     /// # See also
     ///
     /// * C++ API: `query_base::filter`
+    #[doc(alias = "query_base::filter")]
     pub fn filter(&self) -> FilterView<'a, T> {
         FilterView::<T>::new(&self.world, unsafe { ecs_query_get_filter(self.query) })
     }
@@ -213,6 +217,7 @@ where
     /// # See also
     ///
     /// * C++ API: `query_base::term`
+    #[doc(alias = "query_base::term")]
     fn term(&self, index: i32) -> Term {
         let filter: *const ecs_filter_t = unsafe { ecs_query_get_filter(self.query) };
         ecs_assert!(
@@ -235,6 +240,7 @@ where
     /// # See also
     ///
     /// * C++ API: `query_base::term_count`
+    #[doc(alias = "query_base::term_count")]
     fn field_count(&self) -> i32 {
         unsafe { (*ecs_query_get_filter(self.query)).term_count }
     }
@@ -245,6 +251,7 @@ where
     /// # See also
     ///
     /// * C++ API: `query_base::str`
+    #[doc(alias = "query_base::str")]
     #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
     fn to_string(&self) -> String {
         let filter = unsafe { ecs_query_get_filter(self.query) };
@@ -269,6 +276,7 @@ where
     /// # See also
     ///
     /// * C++ API: `query_base::entity`
+    #[doc(alias = "query_base::entity")]
     pub fn entity(&self) -> Entity {
         Entity::new_from_existing_raw(self.world.raw_world, unsafe {
             ecs_get_entity(self.query as *const c_void)
@@ -319,6 +327,7 @@ where
     /// # See also
     ///
     /// * C++ API: `query::query`
+    #[doc(alias = "query::query")]
     pub fn new(world: &World) -> Self {
         let mut desc = ecs_query_desc_t::default();
         T::register_ids_descriptor(world.raw_world, &mut desc.filter);
@@ -340,6 +349,7 @@ where
     /// # See also
     ///
     /// * C++ API: `query::query`
+    #[doc(alias = "query::query")]
     pub fn new_ownership(world: &World, query: *mut QueryT) -> Self {
         Self {
             base: QueryBase::new(world, query),
@@ -356,6 +366,7 @@ where
     /// # See also
     ///
     /// * C++ API: `query::query`
+    #[doc(alias = "query::query")]
     pub fn new_from_desc(world: &World, desc: *mut ecs_query_desc_t) -> Self {
         Self {
             base: QueryBase::new_from_desc(world, desc),
@@ -371,6 +382,7 @@ where
     /// # See also
     ///
     /// * C++ API: `query::get_iter`
+    #[doc(alias = "query::get_iter")]
     fn get_iter_raw(&mut self, world: &World) -> IterT {
         if !world.is_null() {
             self.world = world.clone();
@@ -392,6 +404,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iterable::each`
+    #[doc(alias = "iterable::each")]
     pub fn each(&mut self, mut func: impl FnMut(T::TupleType)) {
         unsafe {
             let mut iter = ecs_query_iter(self.world.raw_world, self.query);
@@ -428,6 +441,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iterable::each`
+    #[doc(alias = "iterable::each")]
     pub fn each_entity(&mut self, mut func: impl FnMut(&mut Entity, T::TupleType)) {
         unsafe {
             let mut iter = ecs_query_iter(self.world.raw_world, self.query);
@@ -476,6 +490,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iterable::iter`
+    #[doc(alias = "iterable::iter")]
     pub fn iter(&mut self, mut func: impl FnMut(&Iter, T::TupleSliceType)) {
         unsafe {
             let mut iter = ecs_query_iter(self.world.raw_world, self.query);
@@ -517,6 +532,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iterable::iter`
+    #[doc(alias = "iterable::iter")]
     pub fn iter_only(&mut self, mut func: impl FnMut(&Iter)) {
         unsafe {
             let mut iter = ecs_query_iter(self.world.raw_world, self.query);
@@ -539,6 +555,7 @@ where
     /// # See also
     ///
     /// * C++ API: `query_base::~query_base`
+    #[doc(alias = "query_base::~query_base")]
     fn drop(&mut self) {
         unsafe { ecs_query_fini(self.query) }
     }

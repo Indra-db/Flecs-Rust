@@ -48,6 +48,7 @@ impl<'a> Iter<'a> {
     /// # See also
     ///
     /// * C++ API: `iter::iter`
+    #[doc(alias = "iter::iter")]
     pub unsafe fn new(iter: &'a mut IterT) -> Self {
         let end = iter.count as usize;
         Self {
@@ -62,7 +63,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::system`
+    /// * C++ API: `iter::system`
+    #[doc(alias = "iter::system")]
     pub fn system(&self) -> Entity {
         Entity::new_from_existing_raw(self.iter.world, self.iter.system)
     }
@@ -71,7 +73,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::event`
+    /// * C++ API: `iter::event`
+    #[doc(alias = "iter::event")]
     pub fn get_event_as_entity(&self) -> Entity {
         Entity::new_from_existing_raw(self.iter.world, self.iter.event)
     }
@@ -80,7 +83,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::event_id`
+    /// * C++ API: `iter::event_id`
+    #[doc(alias = "iter::event_id")]
     pub fn get_event_id(&self) -> Id {
         Id::new_from_existing(self.iter.world, self.iter.event_id)
     }
@@ -89,7 +93,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::world`
+    /// * C++ API: `iter::world`
+    #[doc(alias = "iter::world")]
     pub fn get_world(&self) -> World {
         World::new_wrap_raw_world(self.iter.world)
     }
@@ -102,7 +107,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::entity`
+    /// * C++ API: `iter::entity`
+    #[doc(alias = "iter::entity")]
     pub fn get_entity_handle(&self, row: usize) -> Entity {
         unsafe { Entity::new_from_existing_raw(self.iter.world, *self.iter.entities.add(row)) }
     }
@@ -111,7 +117,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::c_ptr`
+    /// * C++ API: `iter::c_ptr`
+    #[doc(alias = "iter::c_ptr")]
     pub fn get_raw_ref(&mut self) -> &mut IterT {
         self.iter
     }
@@ -120,7 +127,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::count`
+    /// * C++ API: `iter::count`
+    #[doc(alias = "iter::count")]
     pub fn count(&self) -> usize {
         self.iter.count as usize
     }
@@ -129,7 +137,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::delta_time`
+    /// * C++ API: `iter::delta_time`
+    #[doc(alias = "iter::delta_time")]
     pub fn get_delta_time(&self) -> FTime {
         self.iter.delta_time
     }
@@ -138,7 +147,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::delta_system_time`
+    /// * C++ API: `iter::delta_system_time`
+    #[doc(alias = "iter::delta_system_time")]
     pub fn get_delta_system_time(&self) -> FTime {
         self.iter.delta_system_time
     }
@@ -147,21 +157,24 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::type`
+    /// * C++ API: `iter::type`
+    #[doc(alias = "iter::type")]
     pub fn get_type(&self) -> Archetype {
         unsafe { Archetype::new(self.iter.world, ecs_table_get_type(self.iter.table)) }
     }
 
     /// # See also
     ///
-    /// C++ API: `iter::table`
+    /// * C++ API: `iter::table`
+    #[doc(alias = "iter::table")]
     pub fn get_table(&self) -> Table {
         Table::new(&World::new_wrap_raw_world(self.iter.world), self.iter.table)
     }
 
     /// # See also
     ///
-    /// C++ API: `iter::range`
+    /// * C++ API: `iter::range`
+    #[doc(alias = "iter::range")]
     pub fn get_table_range(&mut self) -> TableRange {
         let iter: &mut IterT = self.iter;
         TableRange::new_raw(iter.world, iter.table, iter.offset, iter.count)
@@ -173,7 +186,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::has_module`
+    /// * C++ API: `iter::has_module`
+    #[doc(alias = "iter::has_module")]
     pub fn has_module(&self) -> bool {
         unsafe { ecs_table_has_module(self.iter.table) }
     }
@@ -183,7 +197,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::ctx`
+    /// * C++ API: `iter::ctx`
+    #[doc(alias = "iter::ctx")]
     pub fn get_context_ptr<T: CachedComponentData>(&mut self) -> &mut T {
         unsafe { &mut *(self.iter.ctx as *mut T) }
     }
@@ -193,7 +208,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::ctx`
+    /// * C++ API: `iter::ctx`
+    #[doc(alias = "iter::ctx")]
     pub fn get_context_ptr_untyped(&self) -> *mut c_void {
         self.iter.ctx
     }
@@ -203,7 +219,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::param`
+    /// * C++ API: `iter::param`
+    #[doc(alias = "iter::param")]
     pub fn param_untyped(&self) -> *mut c_void {
         self.iter.param
     }
@@ -213,7 +230,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::param`
+    /// * C++ API: `iter::param`
+    #[doc(alias = "iter::param")]
     pub fn param<T: CachedComponentData>(&mut self) -> &mut T {
         unsafe { &mut *(self.iter.param as *mut T) }
     }
@@ -228,7 +246,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::is_self`
+    /// * C++ API: `iter::is_self`
+    #[doc(alias = "iter::is_self")]
     pub fn is_self(&self, index: i32) -> bool {
         unsafe { ecs_field_is_self(self.iter, index) }
     }
@@ -243,7 +262,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::is_set`
+    /// * C++ API: `iter::is_set`
+    #[doc(alias = "iter::is_set")]
     pub fn is_set(&self, index: i32) -> bool {
         unsafe { ecs_field_is_set(self.iter, index) }
     }
@@ -258,7 +278,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::is_readonly`
+    /// * C++ API: `iter::is_readonly`
+    #[doc(alias = "iter::is_readonly")]
     pub fn is_readonly(&self, index: i32) -> bool {
         unsafe { ecs_field_is_readonly(self.iter, index) }
     }
@@ -267,7 +288,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::field_count`
+    /// * C++ API: `iter::field_count`
+    #[doc(alias = "iter::field_count")]
     pub fn get_field_count(&self) -> i32 {
         self.iter.field_count
     }
@@ -280,7 +302,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::size`
+    /// * C++ API: `iter::size`
+    #[doc(alias = "iter::size")]
     pub fn get_field_size(&self, index: i32) -> usize {
         unsafe { ecs_field_size(self.iter, index) }
     }
@@ -293,7 +316,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::src`
+    /// * C++ API: `iter::src`
+    #[doc(alias = "iter::src")]
     pub fn get_field_src(&self, index: i32) -> Entity {
         unsafe { Entity::new_from_existing_raw(self.iter.world, ecs_field_src(self.iter, index)) }
     }
@@ -306,7 +330,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::id`
+    /// * C++ API: `iter::id`
+    #[doc(alias = "iter::id")]
     pub fn get_field_id(&self, index: i32) -> Id {
         unsafe { Id::new_from_existing(self.iter.world, ecs_field_id(self.iter, index)) }
     }
@@ -321,6 +346,7 @@ impl<'a> Iter<'a> {
     /// # See also
     ///
     /// * C++ API: `iter::pair`
+    #[doc(alias = "iter::pair")]
     pub fn get_field_pair_id(&self, index: i32) -> Option<Id> {
         unsafe {
             let id = ecs_field_id(self.iter, index);
@@ -340,7 +366,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::column_index`
+    /// * C++ API: `iter::column_index`
+    #[doc(alias = "iter::column_index")]
     pub fn get_field_column_index(&self, index: i32) -> i32 {
         unsafe { ecs_field_column_index(self.iter, index) }
     }
@@ -349,7 +376,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::str`
+    /// * C++ API: `iter::str`
+    #[doc(alias = "iter::str")]
     pub fn to_str(&self) -> &CStr {
         let c_str = unsafe { ecs_iter_str(self.iter) };
         ecs_assert!(!c_str.is_null(), FlecsErrorCode::InvalidParameter);
@@ -375,6 +403,7 @@ impl<'a> Iter<'a> {
     /// # See also
     ///
     /// * C++ API: `iter::field`
+    #[doc(alias = "iter::field")]
     // TODO? in C++ API there is a mutable and immutable version of this function
     // Maybe we should create a ColumnView struct that is immutable and use the Column struct for mutable access?
     pub fn get_field_data<T: CachedComponentData>(&self, index: i32) -> Column<T> {
@@ -394,7 +423,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::field`
+    /// * C++ API: `iter::field`
+    #[doc(alias = "iter::field")]
     pub fn get_untyped_field_data(&self, index: i32) -> UntypedColumn {
         self.get_field_untyped_internal(index)
     }
@@ -407,7 +437,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::table_count`
+    /// * C++ API: `iter::table_count`
+    #[doc(alias = "iter::table_count")]
     pub fn get_table_count(&self) -> i32 {
         self.iter.table_count
     }
@@ -424,7 +455,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::changed`
+    /// * C++ API: `iter::changed`
+    #[doc(alias = "iter::changed")]
     pub fn is_changed(&self) -> bool {
         unsafe { ecs_query_changed(std::ptr::null_mut(), self.iter) }
     }
@@ -439,7 +471,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::skip`
+    /// * C++ API: `iter::skip`
+    #[doc(alias = "iter::skip")]
     pub fn skip(&mut self) {
         unsafe { ecs_query_skip(self.iter) };
     }
@@ -454,7 +487,8 @@ impl<'a> Iter<'a> {
     ///
     /// # See also
     ///
-    /// C++ API: `iter::group_id`
+    /// * C++ API: `iter::group_id`
+    #[doc(alias = "iter::group_id")]
     pub fn get_group_id(&self) -> IdT {
         self.iter.group_id
     }

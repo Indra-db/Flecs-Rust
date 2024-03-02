@@ -40,6 +40,7 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::table`
+    #[doc(alias = "table::table")]
     pub fn new(world: &World, table: *mut TableT) -> Self {
         Self {
             world: world.raw_world,
@@ -52,6 +53,7 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::str`
+    #[doc(alias = "table::str")]
     pub fn to_string(&self) -> Option<String> {
         unsafe {
             let raw_ptr = ecs_table_str(self.world, self.table);
@@ -75,6 +77,7 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::type`
+    #[doc(alias = "table::type")]
     pub fn get_type(&self) -> Archetype {
         Archetype::new(self.world, unsafe { ecs_table_get_type(self.table) })
     }
@@ -84,6 +87,7 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::count`
+    #[doc(alias = "table::count")]
     pub fn get_count(&self) -> i32 {
         unsafe { ecs_table_count(self.table) }
     }
@@ -105,6 +109,7 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::search`
+    #[doc(alias = "table::search")]
     pub fn find_component_index<T: CachedComponentData>(&self) -> Option<i32> {
         self.find_component_id_index(T::get_id(self.world))
     }
@@ -127,6 +132,7 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::search`
+    #[doc(alias = "table::search")]
     pub fn find_component_id_index(&self, id: IdT) -> Option<i32> {
         let mut out_id: u64 = 0;
         let id_out_ptr: *mut u64 = &mut out_id;
@@ -156,6 +162,7 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::search`
+    #[doc(alias = "table::search")]
     pub fn find_pair_index<First: CachedComponentData, Second: CachedComponentData>(
         &self,
     ) -> Option<i32> {
@@ -180,6 +187,7 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::search`
+    #[doc(alias = "table::search")]
     pub fn find_pair_index_by_ids(&self, first: EntityT, second: EntityT) -> Option<i32> {
         self.find_component_id_index(ecs_pair(first, second))
     }
@@ -199,6 +207,7 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::has`
+    #[doc(alias = "table::has")]
     pub fn has_type<T: CachedComponentData>(&self) -> bool {
         self.find_component_index::<T>().is_some()
     }
@@ -218,6 +227,7 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::has`
+    #[doc(alias = "table::has")]
     pub fn has_type_id(&self, id: IdT) -> bool {
         self.find_component_id_index(id).is_some()
     }
@@ -238,6 +248,7 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::has`
+    #[doc(alias = "table::has")]
     pub fn has_pair<First: CachedComponentData, Second: CachedComponentData>(&self) -> bool {
         self.find_pair_index::<First, Second>().is_some()
     }
@@ -258,6 +269,7 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::has`
+    #[doc(alias = "table::has")]
     pub fn has_pair_by_ids(&self, first: EntityT, second: EntityT) -> bool {
         self.find_pair_index_by_ids(first, second).is_some()
     }
@@ -275,6 +287,7 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::get_by_index`
+    #[doc(alias = "table::get_by_index")]
     pub fn get_component_array_ptr_by_column_index(&self, index: i32) -> Option<*mut c_void> {
         let ptr = unsafe { ecs_table_get_column(self.table, index, 0) };
         if ptr.is_null() {
@@ -297,6 +310,7 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::get`
+    #[doc(alias = "table::get")]
     pub fn get_component_array_ptr<T: CachedComponentData>(&self) -> Option<*mut T> {
         if let Some(ptr) = self.get_component_array_ptr_by_id(T::get_id(self.world)) {
             Some(ptr as *mut T)
@@ -331,6 +345,7 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::get`
+    #[doc(alias = "table::get")]
     pub fn get_component_array_ptr_by_pair_ids(
         &self,
         first: EntityT,
@@ -353,6 +368,7 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::get`
+    #[doc(alias = "table::get")]
     pub fn get_component_array_ptr_by_pair<
         First: CachedComponentData,
         Second: CachedComponentData,
@@ -380,6 +396,7 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::column_size`
+    #[doc(alias = "table::column_size")]
     pub fn get_column_size(&self, column_index: i32) -> usize {
         unsafe { ecs_table_get_column_size(self.table, column_index) }
     }
@@ -399,6 +416,7 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::depth`
+    #[doc(alias = "table::depth")]
     pub fn get_depth_for_relationship<Rel: CachedComponentData>(&self) -> i32 {
         self.get_depth_for_relationship_id(Rel::get_id(self.world))
     }
@@ -418,6 +436,7 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::depth`
+    #[doc(alias = "table::depth")]
     pub fn get_depth_for_relationship_id(&self, rel: EntityT) -> i32 {
         unsafe { ecs_table_get_depth(self.world, self.table, rel) }
     }
@@ -446,6 +465,7 @@ impl TableRange {
     /// # See also
     ///
     /// * C++ API: `table_range::table_range`
+    #[doc(alias = "table_range::table_range")]
     pub fn new(table: Table, offset: i32, count: i32) -> Self {
         Self {
             table,
@@ -483,6 +503,7 @@ impl TableRange {
     /// # See also
     ///
     /// * C++ API: `table_range::offset`
+    #[doc(alias = "table_range::offset")]
     pub fn get_offset(&self) -> i32 {
         self.offset
     }
@@ -492,6 +513,7 @@ impl TableRange {
     /// # See also
     ///
     /// * C++ API: `table_range::count`
+    #[doc(alias = "table_range::count")]
     pub fn get_count(&self) -> i32 {
         self.count
     }
@@ -509,6 +531,7 @@ impl TableRange {
     /// # See also
     ///
     /// * C++ API: `table::get_by_index`
+    #[doc(alias = "table::get_by_index")]
     pub fn get_component_array_ptr_by_column_index(&self, index: i32) -> Option<*mut c_void> {
         let ptr = unsafe { ecs_table_get_column(self.table.table, index, self.offset) };
         if ptr.is_null() {

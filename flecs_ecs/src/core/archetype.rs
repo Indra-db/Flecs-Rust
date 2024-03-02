@@ -14,6 +14,7 @@ use super::{
 /// # See also
 ///
 /// * C++ API: `type`
+#[doc(alias = "type")]
 pub struct Archetype {
     world: *mut WorldT,
     type_vec: *const TypeT,
@@ -33,6 +34,7 @@ impl Archetype {
     /// # See also
     ///
     /// * C++ API: `Type::str()`
+    #[doc(alias = "Type::str()")]
     pub fn to_string(&self) -> Option<String> {
         unsafe {
             let raw_ptr = ecs_type_str(self.world, self.type_vec);
@@ -57,6 +59,7 @@ impl Archetype {
     /// # See also
     ///
     /// * C++ API: `Type::count()`
+    #[doc(alias = "Type::count()")]
     pub fn count(&self) -> i32 {
         if self.type_vec.is_null() {
             0
@@ -83,6 +86,7 @@ impl Archetype {
     /// # See also
     ///
     /// * C++ API: `type::array()`
+    #[doc(alias = "type::array()")]
     pub fn as_slice(&self) -> Option<&[IdT]> {
         if self.type_vec.is_null() {
             None
@@ -108,6 +112,7 @@ impl Archetype {
     /// # See also
     ///
     /// * C++ API: `type::get`
+    #[doc(alias = "type::get")]
     pub fn id_at_index(&self, index: i32) -> Option<Id> {
         ecs_assert!(!self.type_vec.is_null(), FlecsErrorCode::InvalidParameter);
         ecs_assert!(
@@ -136,6 +141,7 @@ impl Archetype {
     /// # See also
     ///
     /// * C++ API: `type::begin`
+    #[doc(alias = "type::begin")]
     pub fn begin_ptr_array(&self) -> Option<*mut IdT> {
         if self.type_vec.is_null() {
             None
@@ -154,6 +160,7 @@ impl Archetype {
     /// # See also
     ///
     /// * C++ API: `type::end`
+    #[doc(alias = "type::end")]
     pub fn end_ptr_array(&self) -> Option<*mut IdT> {
         if self.type_vec.is_null() {
             None
@@ -172,6 +179,7 @@ impl Archetype {
     /// # See also
     ///
     /// * C++ API: `type::operator`
+    #[doc(alias = "type::operator")]
     pub unsafe fn get_raw_type_ptr(&self) -> *const TypeT {
         self.type_vec
     }
