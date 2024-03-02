@@ -1,10 +1,6 @@
 use std::ops::Deref;
 
-use super::{
-    c_binding::bindings::ecs_set_scope,
-    c_types::{EntityT, WorldT},
-    world::World,
-};
+use super::{c_binding::bindings::ecs_set_scope, c_types::EntityT, world::World};
 
 /// Utility class used by the `world::scope` method to create entities in a scope
 pub struct ScopedWorld {
@@ -22,31 +18,45 @@ impl Deref for ScopedWorld {
 
 impl ScopedWorld {
     /// Creates a new scoped world
-    /// # Safety
-    /// This function is unsafe because it assumes world is not nullptr
-    /// this is highly unlikely a world would be nullptr, hence this function is not marked as unsafe.
-    /// this will be changed in the future where we get rid of the pointers.
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world to create the scope in
+    /// * `scope` - The entity to scope to
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `scoped_world::scoped_world`
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new(world: *mut WorldT, scope: EntityT) -> Self {
-        let prev_scope = unsafe { ecs_set_scope(world, scope) };
-        let world = World {
-            raw_world: world,
-            is_owned: false,
-        };
-        Self { world, prev_scope }
+    pub fn new(world: &World, scope: EntityT) -> Self {
+        let prev_scope = unsafe { ecs_set_scope(world.raw_world, scope) };
+        Self {
+            world: world.clone(),
+            prev_scope,
+        }
     }
 
+    /// Creates a new scoped world
+    ///
+    /// # Arguments
+    ///
+    /// * `scoped_world` - The scoped world to create the scope from
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `scoped_world::scoped_world`
     pub fn new_from_scoped_world(scoped_world: &ScopedWorld) -> Self {
         let prev_scope = scoped_world.prev_scope;
-        let world = World {
-            raw_world: scoped_world.raw_world,
-            is_owned: scoped_world.is_owned,
-        };
-        Self { world, prev_scope }
+        Self::new(&scoped_world.world, prev_scope)
     }
 }
 
 impl Drop for ScopedWorld {
+    /// Restores the previous scope
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `scoped_world::~scoped_world`
     fn drop(&mut self) {
         unsafe { ecs_set_scope(self.world.raw_world, self.prev_scope) };
     }

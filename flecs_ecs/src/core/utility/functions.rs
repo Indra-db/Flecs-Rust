@@ -149,7 +149,7 @@ pub fn ecs_entity_t_hi(value: u64) -> u64 {
 /// # Example
 ///
 /// ```
-/// use flecs_ecs::core::utility::functions::get_only_type_name;
+/// use flecs_ecs::core::get_only_type_name;
 ///
 /// pub mod Bar {
 ///     pub struct Foo;
@@ -178,7 +178,6 @@ pub fn get_only_type_name<T>() -> &'static str {
 /// # Example
 ///
 /// ```rust,ignore
-/// use flecs_ecs::core::utility::functions::get_full_type_name;
 ///
 /// pub mod Bar {
 ///     pub struct Foo;

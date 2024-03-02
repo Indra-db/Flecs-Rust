@@ -1,3 +1,6 @@
+//! Query API. Queries are used to iterate over entities that match a filter.
+//! Queries are better for persistance than filters, but are slower to create.
+
 use std::ops::{Deref, DerefMut};
 use std::os::raw::{c_char, c_void};
 
@@ -17,6 +20,7 @@ use super::term::{Term, TermType};
 use super::world::World;
 use super::{c_types::*, FlecsErrorCode};
 
+/// Cached query implementation. Fast to iterate, but slower to create than `Filters`
 pub struct QueryBase<'a, T>
 where
     T: Iterable<'a>,
@@ -30,6 +34,16 @@ impl<'a, T> QueryBase<'a, T>
 where
     T: Iterable<'a>,
 {
+    /// Create a query base, not public API
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world to create the query in
+    /// * `query` - The query to create
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query_base::query_base`
     fn new(world: &World, query: *mut QueryT) -> Self {
         Self {
             world: world.clone(),
@@ -38,6 +52,16 @@ where
         }
     }
 
+    /// Create a query base from a query descriptor, not public API
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world to create the query in
+    /// * `desc` - The query descriptor to create the query from
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query_base::query_base`
     fn new_from_desc(world: &World, desc: *mut ecs_query_desc_t) -> Self {
         let obj = Self {
             world: world.clone(),
@@ -146,6 +170,13 @@ where
     }
 
     /// Free the query
+    /// Destroy a query. This operation destroys a query and its resources.
+    /// If the query is used as the parent of subqueries, those subqueries will be
+    /// orphaned and must be deinitialized as well.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query_base::destruct`
     pub fn destruct(mut self) {
         unsafe { ecs_query_fini(self.query) }
         self.query = std::ptr::null_mut();
@@ -164,9 +195,24 @@ where
         }
     }
 
+    /// Get the filter of the query as read only
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query_base::filter`
     pub fn filter(&self) -> FilterView<'a, T> {
         FilterView::<T>::new(&self.world, unsafe { ecs_query_get_filter(self.query) })
     }
+
+    /// Get the Term at index stored on the filter of the query
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The index of the term to get
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query_base::term`
     fn term(&self, index: i32) -> Term {
         let filter: *const ecs_filter_t = unsafe { ecs_query_get_filter(self.query) };
         ecs_assert!(
@@ -180,10 +226,25 @@ where
         )
     }
 
+    /// Get the number of terms in the filter of the query
+    ///
+    /// # Returns
+    ///
+    /// The number of terms in the filter of the query
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query_base::term_count`
     fn field_count(&self) -> i32 {
         unsafe { (*ecs_query_get_filter(self.query)).term_count }
     }
 
+    /// Convert filter to string expression. Convert filter terms to a string expression.
+    /// The resulting expression can be parsed to create the same filter.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query_base::str`
     #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
     fn to_string(&self) -> String {
         let filter = unsafe { ecs_query_get_filter(self.query) };
@@ -199,6 +260,15 @@ where
         rust_string
     }
 
+    /// Get the query as an `Entity`
+    ///
+    /// # Returns
+    ///
+    /// The query as an `Entity`
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query_base::entity`
     pub fn entity(&self) -> Entity {
         Entity::new_from_existing_raw(self.world.raw_world, unsafe {
             ecs_get_entity(self.query as *const c_void)
@@ -206,6 +276,7 @@ where
     }
 }
 
+/// Cached query implementation. Fast to iterate, but slower to create than `Filters`
 pub struct Query<'a, T>
 where
     T: Iterable<'a>,
@@ -239,6 +310,15 @@ impl<'a, T> Query<'a, T>
 where
     T: Iterable<'a>,
 {
+    /// Create a new query
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world to create the query in
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query::query`
     pub fn new(world: &World) -> Self {
         let mut desc = ecs_query_desc_t::default();
         T::register_ids_descriptor(world.raw_world, &mut desc.filter);
@@ -250,18 +330,47 @@ where
         }
     }
 
+    /// Create a new query from a query descriptor
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world to create the query in
+    /// * `desc` - The query descriptor to create the query from
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query::query`
     pub fn new_ownership(world: &World, query: *mut QueryT) -> Self {
         Self {
             base: QueryBase::new(world, query),
         }
     }
 
+    /// Create a new query from a query descriptor
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world to create the query in
+    /// * `desc` - The query descriptor to create the query from
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query::query`
     pub fn new_from_desc(world: &World, desc: *mut ecs_query_desc_t) -> Self {
         Self {
             base: QueryBase::new_from_desc(world, desc),
         }
     }
 
+    /// Get the iterator for the query
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world to get the iterator for
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query::get_iter`
     fn get_iter_raw(&mut self, world: &World) -> IterT {
         if !world.is_null() {
             self.world = world.clone();
@@ -273,6 +382,16 @@ where
     // by caching if the query has used a "is_ref" operation.
     // is_ref is true for any query that contains fields that are not matched on the entity itself
     // so parents, prefabs but also singletons, or fields that are matched on a fixed entity (.with<Foo>().src(my_entity))
+    /// Each iterator.
+    /// The "each" iterator accepts a function that is invoked for each matching entity.
+    /// The following function signatures is valid:
+    ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///
+    /// Each iterators are automatically instanced.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iterable::each`
     pub fn each(&mut self, mut func: impl FnMut(T::TupleType)) {
         unsafe {
             let mut iter = ecs_query_iter(self.world.raw_world, self.query);
@@ -299,6 +418,16 @@ where
         }
     }
 
+    /// Each iterator.
+    /// The "each" iterator accepts a function that is invoked for each matching entity.
+    /// The following function signatures is valid:
+    ///  - func(e : Entity , comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///
+    /// Each iterators are automatically instanced.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iterable::each`
     pub fn each_entity(&mut self, mut func: impl FnMut(&mut Entity, T::TupleType)) {
         unsafe {
             let mut iter = ecs_query_iter(self.world.raw_world, self.query);
@@ -334,6 +463,19 @@ where
         }
     }
 
+    /// iter iterator.
+    /// The "iter" iterator accepts a function that is invoked for each matching
+    /// table. The following function signature is valid:
+    ///  - func(it: &mut Iter, comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///
+    /// Iter iterators are not automatically instanced. When a result contains
+    /// shared components, entities of the result will be iterated one by one.
+    /// This ensures that applications can't accidentally read out of bounds by
+    /// accessing a shared component as an array.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iterable::iter`
     pub fn iter(&mut self, mut func: impl FnMut(&Iter, T::TupleSliceType)) {
         unsafe {
             let mut iter = ecs_query_iter(self.world.raw_world, self.query);
@@ -362,6 +504,19 @@ where
         }
     }
 
+    /// iter iterator.
+    /// The "iter" iterator accepts a function that is invoked for each matching
+    /// table. The following function signature is valid:
+    ///  - func(it: &mut Iter)
+    ///
+    /// Iter iterators are not automatically instanced. When a result contains
+    /// shared components, entities of the result will be iterated one by one.
+    /// This ensures that applications can't accidentally read out of bounds by
+    /// accessing a shared component as an array.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iterable::iter`
     pub fn iter_only(&mut self, mut func: impl FnMut(&Iter)) {
         unsafe {
             let mut iter = ecs_query_iter(self.world.raw_world, self.query);
@@ -377,6 +532,13 @@ impl<'a, T> Drop for Query<'a, T>
 where
     T: Iterable<'a>,
 {
+    /// Destroy a query. This operation destroys a query and its resources.
+    /// If the query is used as the parent of subqueries, those subqueries will be orphaned
+    /// and must be deinitialized as well.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query_base::~query_base`
     fn drop(&mut self) {
         unsafe { ecs_query_fini(self.query) }
     }

@@ -533,7 +533,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     fn term_with_name(&mut self, name: &'static CStr) -> &mut Self {
         self.term();
         unsafe {
-            *self.get_raw_term() = Term::default().first_name(name).move_raw_term();
+            *self.get_raw_term() = Term::default().select_first_name(name).move_raw_term();
         }
         self
     }
@@ -560,8 +560,8 @@ pub trait FilterBuilderImpl: TermBuilder {
         self.term();
         unsafe {
             *self.get_raw_term() = Term::default()
-                .first_name(rel)
-                .second_name(target)
+                .select_first_name(rel)
+                .select_second_name(target)
                 .move_raw_term();
         }
         self
@@ -576,7 +576,7 @@ pub trait FilterBuilderImpl: TermBuilder {
         self.term();
         unsafe {
             *self.get_raw_term() = Term::new(None, TermType::Id(rel))
-                .second_name(target)
+                .select_second_name(target)
                 .move_raw_term();
         }
         self
@@ -602,7 +602,8 @@ pub trait FilterBuilderImpl: TermBuilder {
         target: &'static CStr,
     ) -> &mut Self {
         let world = self.get_world();
-        self.term_with_id(Rel::get_id(world)).second_name(target)
+        self.term_with_id(Rel::get_id(world))
+            .select_second_name(target)
     }
 
     /// set term with Pair

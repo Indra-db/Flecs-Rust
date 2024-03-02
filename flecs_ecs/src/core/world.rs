@@ -89,13 +89,21 @@ impl Drop for World {
 }
 
 impl World {
-    pub fn new_from_world(world: *mut WorldT) -> Self {
+    pub fn new() -> Self {
         let world = Self {
-            raw_world: world,
+            raw_world: unsafe { ecs_init() },
             is_owned: true,
         };
         world.init_builtin_components();
         world
+    }
+
+    /// Wrapper around raw world, takes no ownership.
+    pub fn new_wrap_raw_world(world: *mut WorldT) -> Self {
+        Self {
+            raw_world: world,
+            is_owned: false,
+        }
     }
 
     fn init_builtin_components(&self) {
@@ -1833,7 +1841,7 @@ impl World {
     ///
     /// * C++ API: `world::scope`
     pub fn get_scoped_world_with_id(&self, parent_id: IdT) -> ScopedWorld {
-        ScopedWorld::new(self.raw_world, parent_id)
+        ScopedWorld::new(self, parent_id)
     }
 
     /// Use provided scope for operations ran on returned world.

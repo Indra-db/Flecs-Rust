@@ -46,6 +46,15 @@ impl<'a, T> ObserverBuilder<'a, T>
 where
     T: Iterable<'a>,
 {
+    /// Create a new observer builder
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world to create the observer in
+    ///
+    /// See also
+    ///
+    /// * C++ API: `observer_builder::observer_builder`
     pub fn new(world: &World) -> Self {
         let mut desc = Default::default();
         let mut obj = Self {
@@ -67,6 +76,16 @@ where
         obj
     }
 
+    /// Create a new observer builder with a name
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world to create the observer in
+    /// * `name` - The name of the observer
+    ///
+    /// See also
+    ///
+    /// * C++ API: `node_builder::node_builder`
     pub fn new_named(world: &World, name: &CStr) -> Self {
         let mut obj = Self {
             desc: Default::default(),
@@ -87,6 +106,34 @@ where
         obj
     }
 
+    /// Create a new observer builder from an existing descriptor
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world to create the observer in
+    /// * `desc` - The descriptor to create the observer from
+    ///
+    /// See also
+    ///
+    /// * C++ API: `observer_builder::observer_builder`
+    pub fn new_from_desc(world: &World, mut desc: ecs_observer_desc_t) -> Self {
+        let mut obj = Self {
+            desc: desc,
+            filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
+            world: world.clone(),
+            event_count: 0,
+            is_instanced: false,
+        };
+        obj.desc.filter = *obj.filter_builder.get_desc_filter();
+        T::populate(&mut obj);
+        obj
+    }
+
+    /// Returns or creates the binding context for the observer
+    ///
+    /// See also
+    ///
+    /// * C++ API: `node_builder::build` (partly)
     fn get_binding_ctx(&mut self) -> &mut ObserverSystemBindingCtx {
         let mut binding_ctx: *mut ObserverSystemBindingCtx = self.desc.binding_ctx as *mut _;
 
@@ -100,6 +147,7 @@ where
         unsafe { &mut *binding_ctx }
     }
 
+    /// Executes the drop for the binding context, meant to be used as a callback
     extern "C" fn binding_ctx_drop(ptr: *mut c_void) {
         let ptr_struct: *mut ObserverSystemBindingCtx = ptr as *mut ObserverSystemBindingCtx;
         unsafe {
@@ -107,10 +155,28 @@ where
         }
     }
 
+    /// Build the observer_builder into an observer
+    ///
+    /// See also
+    ///
+    /// * C++ API: `node_builder::build`
     pub fn build(&mut self) -> Observer {
         Observer::new(&self.world, self.desc, self.is_instanced)
     }
 
+    /// Register the callback for the observer for `each``
+    ///
+    /// The "each" iterator accepts a function that is invoked for each matching entity.
+    /// The following function signatures is valid:
+    ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The callback function
+    ///
+    /// See also
+    ///
+    /// * C++ API: `node_builder::each`
     pub fn on_each<Func>(&mut self, func: Func) -> Observer
     where
         Func: FnMut(T::TupleType) + 'static,
@@ -130,6 +196,19 @@ where
         self.build()
     }
 
+    /// Register the callback for the observer for `each_entity`
+    ///
+    /// The "each_entity" iterator accepts a function that is invoked for each matching entity.
+    /// The following function signatures is valid:
+    ///  - func(entity: &mut Entity, comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The callback function
+    ///
+    /// See also
+    ///
+    /// * C++ API: `node_builder::each`
     pub fn on_each_entity<Func>(&mut self, func: Func) -> Observer
     where
         Func: FnMut(&mut Entity, T::TupleType) + 'static,
@@ -149,6 +228,19 @@ where
         self.build()
     }
 
+    /// Register the callback for the observer for `iter_only`
+    ///
+    /// The "iter" iterator accepts a function that is invoked for each matching
+    /// table. The following function signature is valid:
+    ///  - func(it: &mut Iter)
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The callback function
+    ///
+    /// See also
+    ///
+    /// * C++ API: `node_builder::iter`
     pub fn on_iter_only<Func>(&mut self, func: Func) -> Observer
     where
         Func: FnMut(&Iter) + 'static,
@@ -164,6 +256,19 @@ where
         self.build()
     }
 
+    /// Register the callback for the observer for `iter`
+    ///
+    /// The "each" iterator accepts a function that is invoked for each matching entity.
+    /// The following function signatures is valid:
+    ///  - func(e : Entity , comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The callback function
+    ///
+    /// See also
+    ///
+    /// * C++ API: `node_builder::iter`
     pub fn on_iter<Func>(&mut self, func: Func) -> Observer
     where
         Func: FnMut(&Iter, T::TupleSliceType) + 'static,
@@ -181,6 +286,7 @@ where
         self.build()
     }
 
+    /// Callback to free the memory of the `each` callback
     extern "C" fn on_free_each(ptr: *mut c_void) {
         let ptr_func: *mut fn(T::TupleType) = ptr as *mut fn(T::TupleType);
         unsafe {
@@ -188,6 +294,7 @@ where
         }
     }
 
+    /// Callback to free the memory of the `each_entity` callback
     extern "C" fn on_free_each_entity(ptr: *mut c_void) {
         let ptr_func: *mut fn(&mut Entity, T::TupleType) =
             ptr as *mut fn(&mut Entity, T::TupleType);
@@ -196,6 +303,7 @@ where
         }
     }
 
+    /// Callback to free the memory of the `iter_only` callback
     extern "C" fn on_free_iter_only(ptr: *mut c_void) {
         let ptr_func: *mut fn(&Iter) = ptr as *mut fn(&Iter);
         unsafe {
@@ -203,6 +311,7 @@ where
         }
     }
 
+    /// Callback to free the memory of the `iter` callback
     extern "C" fn on_free_iter(ptr: *mut c_void) {
         let ptr_func: *mut fn(&Iter, T::TupleSliceType) = ptr as *mut fn(&Iter, T::TupleSliceType);
         unsafe {
@@ -210,6 +319,15 @@ where
         }
     }
 
+    /// Callback of the each functionality
+    ///
+    /// # Arguments
+    ///
+    /// * `iter` - The iterator which gets passed in from `C`
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter_invoker::invoke_callback`
     unsafe extern "C" fn run_each<Func>(iter: *mut IterT)
     where
         Func: FnMut(T::TupleType),
@@ -237,6 +355,15 @@ where
         ecs_table_unlock((*iter).world, (*iter).table);
     }
 
+    /// Callback of the each_entity functionality
+    ///
+    /// # Arguments
+    ///
+    /// * `iter` - The iterator which gets passed in from `C`
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter_invoker::invoke_callback`
     unsafe extern "C" fn run_each_entity<Func>(iter: *mut IterT)
     where
         Func: FnMut(&mut Entity, T::TupleType),
@@ -265,6 +392,15 @@ where
         ecs_table_unlock((*iter).world, (*iter).table);
     }
 
+    /// Callback of the iter_only functionality
+    ///
+    /// # Arguments
+    ///
+    /// * `iter` - The iterator which gets passed in from `C`
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter_invoker::invoke_callback`
     unsafe extern "C" fn run_iter_only<Func>(iter: *mut IterT)
     where
         Func: FnMut(&Iter),
@@ -283,6 +419,15 @@ where
         }
     }
 
+    /// Callback of the iter functionality
+    ///
+    /// # Arguments
+    ///
+    /// * `iter` - The iterator which gets passed in from `C`
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter_invoker::invoke_callback`
     unsafe extern "C" fn run_iter<Func>(iter: *mut IterT)
     where
         Func: FnMut(&Iter, T::TupleSliceType),
@@ -433,11 +578,21 @@ pub trait ObserverBuilderImpl: FilterBuilderImpl {
         self
     }
 
+    /// Set observer context
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `observer_builder_i::ctx`
     fn set_context(&mut self, context: *mut c_void) -> &mut Self {
         self.get_desc_observer().ctx = context;
         self
     }
 
+    /// Set observer run callback
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `observer_builder_i::run`
     fn set_run_callback(&mut self, callback: ecs_iter_action_t) -> &mut Self {
         self.get_desc_observer().run = callback;
         self

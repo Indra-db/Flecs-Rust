@@ -111,7 +111,7 @@ where
     /// iter iterator.
     /// The "iter" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:
-    ///  - func(flecs::iter& it, Components* ...)
+    ///  - func(it: &mut Iter, comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
     /// Iter iterators are not automatically instanced. When a result contains
     /// shared components, entities of the result will be iterated one by one.
@@ -577,7 +577,7 @@ where
     ///
     /// # See also
     ///
-    /// * C++ API: `iterable::each`
+    /// * C++ API: `iterable::iter`
     #[inline]
     pub fn iter(&mut self, func: impl FnMut(&Iter, T::TupleSliceType)) {
         self.base.iter_impl(func, &mut self.filter);

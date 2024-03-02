@@ -23,7 +23,7 @@ use crate::ecs_assert;
 #[derive(Debug, Clone, Copy, Eq)]
 pub struct Id {
     /// World is optional, but guarantees that entity identifiers extracted from the id are valid
-    pub world: *mut WorldT,
+    pub(crate) world: *mut WorldT,
     pub raw_id: IdT,
 }
 
@@ -513,10 +513,14 @@ impl Id {
         unsafe { std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(c_str_ptr).to_bytes()) }
     }
 
-    pub fn get_as_world(&self) -> World {
+    pub fn get_world(&self) -> World {
         World {
             raw_world: self.world,
             is_owned: false,
         }
+    }
+
+    pub(crate) fn get_world_raw(&self) -> *mut WorldT {
+        self.world
     }
 }

@@ -74,6 +74,22 @@ pub fn register_lifecycle_actions<T: Clone + Default>(world: *mut ecs_world_t, i
     }
 }
 
+/// This is the generic constructor for trivial types
+/// It will initialize the memory with the default value of the type
+///
+/// # Safety
+///
+/// Can't coexist with T(Entity) or T(World, Entity)
+///
+/// # Arguments
+///
+/// * `ptr` - pointer to the memory to be initialized
+/// * `count` - number of elements to be initialized
+/// * `_type_info` - type info for the type to be initialized
+///
+/// # See also
+///
+/// * C++ API: `ctor_impl`
 extern "C" fn generic_ctor<T: Default>(
     ptr: *mut c_void,
     count: i32,
@@ -92,6 +108,12 @@ extern "C" fn generic_ctor<T: Default>(
     }
 }
 
+/// This is the generic destructor for trivial types
+/// It will drop the memory
+///
+/// # See also
+///
+/// * C++ API: `dtor_impl`
 extern "C" fn generic_dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const ecs_type_info_t) {
     ecs_assert!(
         check_type_info::<T>(_type_info),
@@ -106,6 +128,12 @@ extern "C" fn generic_dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const e
     }
 }
 
+/// This is the generic copy for trivial types
+/// It will copy the memory
+///
+/// # See also
+///
+/// * C++ API: `copy_impl`
 extern "C" fn generic_copy<T: Default + Clone>(
     dst_ptr: *mut c_void,
     src_ptr: *const c_void,
@@ -128,6 +156,12 @@ extern "C" fn generic_copy<T: Default + Clone>(
     }
 }
 
+/// This is the generic move for trivial types
+/// It will move the memory
+///
+/// # See also
+///
+/// * C++ API: `move_impl`
 extern "C" fn generic_move<T: Default>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,
@@ -152,8 +186,12 @@ extern "C" fn generic_move<T: Default>(
     }
 }
 
+// TODO: improve this so we can avoid the heap allocation
 /// when the struct is non trivial, this will move the value and replace it with a default (heap allocation) and then drop it (deallocating the heap allocation)
-/// TODO: improve this so we can avoid the heap allocation
+///
+/// # See also
+///
+/// * C++ API: `move_ctor_impl`
 extern "C" fn generic_ctor_move_dtor<T: Default + Clone>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,
