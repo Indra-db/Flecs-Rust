@@ -345,7 +345,7 @@ impl EntityView {
     /// * C++ API: `entity_view::table`
     #[inline(always)]
     pub fn get_table(&self) -> Table {
-        Table::new(self.world, unsafe {
+        Table::new(&self.get_world(), unsafe {
             ecs_get_table(self.world, self.raw_id)
         })
     }
@@ -1378,7 +1378,7 @@ impl EntityView {
     /// * C++ API: `entity_view::mut`
     pub fn get_mutable_handle_from_entity(&self, entity: &EntityView) -> Entity {
         ecs_assert!(
-            !entity.get_as_world().is_readonly(),
+            !entity.get_world().is_readonly(),
             FlecsErrorCode::InvalidParameter,
             "cannot use entity created for readonly world/stage to create mutable handle"
         );

@@ -91,7 +91,7 @@ impl<'a> Iter<'a> {
     ///
     /// C++ API: `iter::world`
     pub fn get_world(&self) -> World {
-        World::new_from_world(self.iter.world)
+        World::new_wrap_raw_world(self.iter.world)
     }
 
     /// Obtain mutable handle to entity being iterated over.
@@ -156,7 +156,7 @@ impl<'a> Iter<'a> {
     ///
     /// C++ API: `iter::table`
     pub fn get_table(&self) -> Table {
-        Table::new(self.iter.world, self.iter.table)
+        Table::new(&World::new_wrap_raw_world(self.iter.world), self.iter.table)
     }
 
     /// # See also
