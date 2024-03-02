@@ -250,7 +250,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// * `T`: The component used to sort.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `compare`: The compare function used to sort the components.
     ///
@@ -271,7 +271,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// This is similar to `order_by<T>`, but uses a component identifier instead.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `component`: The component used to sort.
     /// * `compare`: The compare function used to sort the components.
@@ -305,7 +305,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// * `T`: The component used to determine the group rank.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `group_by_action`: Callback that determines group id for table.
     ///
@@ -326,7 +326,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// This is similar to `group_by<T>`, but uses a component identifier instead.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `component`: The component used to determine the group rank.
     /// * `group_by_action`: Callback that determines group id for table.
@@ -365,7 +365,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// This is similar to `group_by_default<T>`, but uses a component identifier instead.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `component`: The component used to determine the group rank.
     ///
@@ -379,7 +379,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
 
     /// Specify context to be passed to the `group_by` function.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `ctx`: Context to pass to the `group_by` function.
     /// * `ctx_free`: Function to clean up the context (called when the query is deleted).
@@ -397,7 +397,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
 
     /// Specify the `on_group_create` action.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `action`: The action to execute when a group is created.
     ///
@@ -413,7 +413,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
 
     /// Specify the `on_group_delete` action.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `action`: The action to execute when a group is deleted.
     ///

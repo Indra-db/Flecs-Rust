@@ -101,7 +101,7 @@ impl Entity {
     /// For example: "`Foo::Bar`". If parts of the hierarchy in the scoped name do
     /// not yet exist, they will be automatically created.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `world`: The world in which to create the entity.
     /// - `name`: The entity name.
@@ -160,7 +160,7 @@ impl Entity {
     ///
     /// Add an entity to the entity. This is typically used for tagging.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `component_id`: The component to add.
     ///
@@ -194,7 +194,7 @@ impl Entity {
     ///
     /// This operation adds a pair to the entity.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `first`: The first element of the pair.
     /// - `second`: The second element of the pair.
@@ -273,7 +273,7 @@ impl Entity {
     /// - `T`: The tag (first element of the pair).
     /// - `U`: The enum constant (second element of the pair).
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `enum_value`: The enum constant.
     ///
@@ -302,7 +302,7 @@ impl Entity {
     ///
     /// - `T`: The enumeration type, which derives from `CachedComponentData`, `ComponentType<Enum>`, and `CachedEnumData`.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `enum_value`: The enumeration value.
     ///
@@ -324,7 +324,7 @@ impl Entity {
     /// Conditional add.
     /// This operation adds if condition is true, removes if condition is false.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `condition`: The condition to evaluate.
     /// * `component`: The component to add.
@@ -348,7 +348,7 @@ impl Entity {
     ///
     /// * `T`: The component to add.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `condition`: The condition to evaluate.
     ///
@@ -364,7 +364,7 @@ impl Entity {
     /// Conditional add.
     /// This operation adds if condition is true, removes if condition is false.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `condition`: The condition to evaluate.
     /// * `first`: The first element of the pair.
@@ -397,7 +397,7 @@ impl Entity {
     /// * `First`: The first element of the pair
     /// * `Second`: The second element of the pair
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `condition`: The condition to evaluate.
     ///
@@ -421,7 +421,7 @@ impl Entity {
     ///
     /// * `Second`: The second element of the pair
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `condition`: The condition to evaluate.
     /// * `first`: The first element of the pair.
@@ -446,7 +446,7 @@ impl Entity {
     ///
     /// * `First`: The first element of the pair
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `condition`: The condition to evaluate.
     /// * `second`: The second element of the pair.
@@ -471,7 +471,7 @@ impl Entity {
     ///
     /// * `T`: enum type
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `condition`: The condition to evaluate.
     /// * `enum_value`: The enumeration constant.
@@ -494,7 +494,7 @@ impl Entity {
 
     /// Remove an entity from an entity.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `component_id`: The entity to remove.
     ///
@@ -540,7 +540,7 @@ impl Entity {
     /// Remove a pair.
     /// This operation removes a pair from the entity.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first`: The first element of the pair.
     /// * `second`: The second element of the pair.
@@ -582,7 +582,7 @@ impl Entity {
     /// * `T`: The type of the first element of the pair.
     /// * `U`: The type of the second element of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `enum_value`: the enum constant.
     ///
@@ -609,7 +609,7 @@ impl Entity {
     ///
     /// * `Second`: The second element of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first`: The first element of the pair.
     ///
@@ -629,7 +629,7 @@ impl Entity {
     ///
     /// * `First`: The first element of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `second`: The second element of the pair.
     ///
@@ -644,7 +644,7 @@ impl Entity {
 
     /// Shortcut for add(IsA, entity).
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `second`: The second element of the pair.
     ///
@@ -673,7 +673,7 @@ impl Entity {
 
     /// Shortcut for add(ChildOf, entity).
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `second`: The second element of the pair.
     ///
@@ -702,7 +702,7 @@ impl Entity {
 
     /// Shortcut for add(DependsOn, entity).
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `second`: The second element of the pair.
     ///
@@ -731,7 +731,7 @@ impl Entity {
 
     /// Shortcut for add(SlotOf, entity).
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `second`: The second element of the pair.
     ///
@@ -780,7 +780,7 @@ impl Entity {
     /// any ids marked for auto-overriding on the base will be overridden
     /// automatically by the entity.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `id`: The id to mark for overriding.
     ///
@@ -809,7 +809,7 @@ impl Entity {
 
     /// Mark pair for auto-overriding.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first`: The first element of the pair.
     /// * `second`: The second element of the pair.
@@ -848,7 +848,7 @@ impl Entity {
     ///
     /// * `Second`: The second element of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first`: The first element of the pair.
     ///
@@ -867,7 +867,7 @@ impl Entity {
     ///
     /// * `First`: The first element of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `second`: The second element of the pair.
     ///
@@ -886,7 +886,7 @@ impl Entity {
     /// as overridden, meaning that it will not be updated by systems that
     /// typically update this component.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `component_id`: The ID of the component to set and mark as overridden.
     ///
@@ -923,7 +923,7 @@ impl Entity {
     ///
     /// * `First`: The type of the first element of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first`: The first element of the pair.
     /// * `second`: The ID of the second element of the pair.
@@ -947,7 +947,7 @@ impl Entity {
     ///
     /// * `Second`: The type of the second element of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first`: The ID of the second element of the pair.
     /// * `second`: The first element of the pair.
@@ -986,7 +986,7 @@ impl Entity {
     ///
     /// * `First`: The first element of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first`: The ID of the first element of the pair.
     /// * `second`: The second element of the pair to be set.
@@ -1018,7 +1018,7 @@ impl Entity {
     /// * `First`: The first element of the pair
     /// * `Second`: The second element of the pair
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first`: The value to set for first component.
     ///
@@ -1046,7 +1046,7 @@ impl Entity {
     ///
     /// * `Second`: The second element of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first`: The ID of the first element of the pair.
     /// * `second`: The second element of the pair to be set.
@@ -1077,7 +1077,7 @@ impl Entity {
     ///
     /// * `Second`: The second element of the pair
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first`: The first element of the pair.
     /// * `value`: The value to set.
@@ -1109,7 +1109,7 @@ impl Entity {
     /// * `First`: The first element of the pair.
     /// * `Second`: The second element of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `constant`: The enum constant.
     /// * `value`: The value to set.
@@ -1233,7 +1233,7 @@ impl Entity {
     /// This sets the enabled bit for this component. If this is the first time the component is
     /// enabled or disabled, the bitset is added.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `component_id`: The ID to enable.
     /// - `toggle`: True to enable, false to disable (default = true).
@@ -1264,7 +1264,7 @@ impl Entity {
 
     /// Enables a pair using IDs.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `first`: The first element of the pair.
     /// - `second`: The second element of the pair.
@@ -1303,7 +1303,7 @@ impl Entity {
     ///
     /// - `First`: The first element of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `second`: The ID of the second element of the pair.
     ///
@@ -1335,7 +1335,7 @@ impl Entity {
     /// This sets the enabled bit for this ID. If this is the first time the ID is
     /// enabled or disabled, the bitset is added.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `component_id`: The ID to disable.
     ///
@@ -1365,7 +1365,7 @@ impl Entity {
 
     /// Disables a pair using IDs.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `first`: The first element of the pair.
     /// - `second`: The second element of the pair.
@@ -1404,7 +1404,7 @@ impl Entity {
     ///
     /// - `First`: The first element of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `second`: The ID of the second element of the pair.
     ///
@@ -1418,7 +1418,7 @@ impl Entity {
     }
     /// Entities created in the function will have the current entity.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `func`: The function to call.
     ///
@@ -1440,7 +1440,7 @@ impl Entity {
 
     /// Entities created in the function will have a pair consisting of a specified ID and the current entity.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `first`: The first element of the pair.
     /// - `func`: The function to call.///
@@ -1462,7 +1462,7 @@ impl Entity {
 
     /// Entities created in the function will have a pair consisting of the current entity and a specified ID.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `second`: The second element of the pair.
     /// - `func`: The function to call.
@@ -1489,7 +1489,7 @@ impl Entity {
     ///
     /// - `First`: The first element of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `func`: The function to call.
     ///
@@ -1511,7 +1511,7 @@ impl Entity {
     ///
     /// - `Second`: The second element of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `func`: The function to call.
     ///
@@ -1529,7 +1529,7 @@ impl Entity {
 
     /// The function will be ran with the scope set to the current entity.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `func`: The function to call.
     ///
@@ -1622,7 +1622,7 @@ impl Entity {
     /// the component, it will be overridden, and the value of the base component
     /// will be copied to the entity before this function returns.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `comp`: The component to get.
     ///
@@ -1643,7 +1643,7 @@ impl Entity {
     /// first nor second element of the pair is a component, the operation will
     /// fail.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first`: The first element of the pair.
     /// * `second`: The second element of the pair.
@@ -1663,7 +1663,7 @@ impl Entity {
     ///
     /// * `First`: The first part of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `second`: The second element of the pair.
     ///
@@ -1691,7 +1691,7 @@ impl Entity {
     ///
     /// * `First`: The first part of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `second`: The second element of the pair.
     ///
@@ -1719,7 +1719,7 @@ impl Entity {
     ///
     /// * `Second`: The second element of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first`: The first element of the pair.
     ///
@@ -1747,7 +1747,7 @@ impl Entity {
     ///
     /// * `Second`: The second element of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first`: The first element of the pair.
     ///
@@ -1806,7 +1806,7 @@ impl Entity {
     /// If neither the first nor the second element of the pair are a component, the
     /// operation will fail.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first` - The first element of the pair.
     /// * `second` - The second element of the pair.
@@ -1844,7 +1844,7 @@ impl Entity {
     ///
     /// * `First` - The first part of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `second` - The second element of the pair.
     ///
@@ -1939,7 +1939,7 @@ impl Entity {
 
     /// Recursively flatten relationship.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `relationship`: The relationship to flatten.
     ///
@@ -1959,7 +1959,7 @@ impl Entity {
 
     /// Recursively flatten relationship with desc.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `relationship`: The relationship to flatten.
     /// * `desc`: The flatten desc.

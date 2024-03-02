@@ -44,7 +44,7 @@ where
 {
     /// Create a new filter builder.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `world`: the world to create the filter builder in.
     ///
@@ -67,7 +67,7 @@ where
 
     /// Create a new filter builder with a name.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `world`: the world to create the filter builder in.
     /// * `name`: the name of the filter.
@@ -100,7 +100,7 @@ where
 
     /// Create a new filter builder from a filter description.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `world`: the world to create the filter builder in.
     /// * `desc`: the filter description to create the filter builder from.

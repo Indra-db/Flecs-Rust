@@ -20,7 +20,7 @@ use super::{
 
 /// Combines two 32 bit integers into a 64 bit integer.
 ///
-/// # Parameters
+/// # Arguments
 ///
 /// * `lo`: The lower 32 bit integer.
 /// * `hi`: The higher 32 bit integer.
@@ -35,7 +35,7 @@ pub fn ecs_entity_t_comb(lo: u64, hi: u64) -> u64 {
 
 /// Combines two 32 bit integers into a 64 bit integer and adds the `ECS_PAIR` flag.
 ///
-/// # Parameters
+/// # Arguments
 ///
 /// * `pred`: The first 32 bit integer.
 /// * `obj`: The second 32 bit integer.
@@ -50,7 +50,7 @@ pub fn ecs_pair(pred: u64, obj: u64) -> u64 {
 
 /// Set the `ECS_DEPENDS_ON` flag for the given entity.
 ///
-/// # Parameters
+/// # Arguments
 ///
 /// * `entity`: The entity to set the `ECS_DEPENDS_ON` flag for.
 ///
@@ -64,7 +64,7 @@ pub fn ecs_dependson(entity: EntityT) -> EntityT {
 
 /// Returns true if the entity has the given pair.
 ///
-/// # Parameters
+/// # Arguments
 ///
 /// * `world`: The world to check in.
 /// * `entity`: The entity to check.
@@ -82,7 +82,7 @@ pub fn ecs_has_pair(world: *const WorldT, entity: u64, first: u64, second: u64) 
 
 /// Get the first entity from a pair.
 ///
-/// # Parameters
+/// # Arguments
 ///
 /// * `e`: The pair to get the first entity from.
 ///
@@ -96,7 +96,7 @@ pub fn ecs_pair_first(e: u64) -> u64 {
 
 /// Get the second entity from a pair.
 ///
-/// # Parameters
+/// # Arguments
 ///
 /// * `e`: The pair to get the second entity from.
 ///
@@ -110,7 +110,7 @@ pub fn ecs_pair_second(e: u64) -> u64 {
 
 /// Get the lower 32 bits of an entity id.
 ///
-/// # Parameters
+/// # Arguments
 ///
 /// * `value`: The entity id to get the lower 32 bits from.
 ///
@@ -124,7 +124,7 @@ pub fn ecs_entity_t_lo(value: u64) -> u64 {
 
 /// Get the higher 32 bits of an entity id.
 ///
-/// # Parameters
+/// # Arguments
 ///
 /// * `value`: The entity id to get the higher 32 bits from.
 ///
@@ -208,7 +208,7 @@ pub fn is_empty_type<T>() -> bool {
 /// and returns the result as an `i32`. This function is typically used to decode
 /// information about an entity's components or position encoded within the record identifier.
 ///
-/// # Parameters
+/// # Arguments
 ///
 /// * `row`: A `u32` representing an ECS record identifier.
 ///
@@ -228,7 +228,7 @@ pub fn ecs_record_to_row(row: u32) -> i32 {
 ///
 /// * `T`: The type of the component data. Must implement `CachedComponentData`.
 ///
-/// # Parameters
+/// # Arguments
 ///
 /// * `entity`: The ID of the entity.
 /// * `value`: The value to set for the component.
@@ -255,7 +255,7 @@ pub(crate) fn set_helper<T: CachedComponentData>(
 
 /// Remove generation from entity id.
 ///
-/// # Parameters
+/// # Arguments
 ///
 /// * `entity`: The entity id to strip the generation from.
 ///
@@ -269,7 +269,7 @@ pub fn strip_generation(entity: EntityT) -> IdT {
 
 /// Get the generation from an entity id.
 ///
-/// # Parameters
+/// # Arguments
 ///
 /// * `entity`: The entity id to get the generation from.
 ///
@@ -303,7 +303,7 @@ pub fn get_generation(entity: EntityT) -> u32 {
 /// This function is unsafe because it dereferences the iterator and uses the index to get the component data.
 /// Ensure that the iterator is valid and the index is valid.
 ///
-/// # Parameters
+/// # Arguments
 ///
 /// - `it`: A pointer to the iterator.
 /// - `index`: The index of the field in the iterator, starting from 1.

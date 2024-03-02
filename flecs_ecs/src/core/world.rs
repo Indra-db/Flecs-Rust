@@ -252,7 +252,7 @@ impl World {
     /// # Safety
     /// This function should only be ran from the main thread.
     ///
-    /// # Parameters
+    /// # Arguments
     /// * `delta_time`: Time elapsed since the last frame.
     ///
     /// # Returns
@@ -392,7 +392,7 @@ impl World {
     /// The `set_stage_count()` operation is useful for applications that want to manage
     /// their own stages and/or threads.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `stages`: The number of stages.
     ///
@@ -853,7 +853,7 @@ impl World {
     ///
     /// * `Second`: The second element of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first`: The ID of the first element of the pair.
     /// * `second`: The second element of the pair to be set.
@@ -878,7 +878,7 @@ impl World {
     /// * `First`: The first element of the pair
     /// * `Second`: The second element of the pair
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first`: The value to set for first component.
     ///  
@@ -901,7 +901,7 @@ impl World {
     ///
     /// * `Second`: The second element of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first`: The ID of the first element of the pair.
     /// * `second`: The second element of the pair to be set.
@@ -925,7 +925,7 @@ impl World {
     ///
     /// * `Second`: The second element of the pair
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first`: The first element of the pair.
     /// * `value`: The value to set.
@@ -1069,7 +1069,7 @@ impl World {
     ///
     /// * `First`: The first part of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `second`: The second element of the pair.
     ///   
@@ -1092,7 +1092,7 @@ impl World {
     ///
     /// * `First`: The first part of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `second`: The second element of the pair.
     ///   
@@ -1115,7 +1115,7 @@ impl World {
     ///
     /// * `second`: The second part of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first`: The first element of the pair.
     ///   
@@ -1138,7 +1138,7 @@ impl World {
     ///
     /// * `second`: The second part of the pair.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `first`: The first element of the pair.
     ///  

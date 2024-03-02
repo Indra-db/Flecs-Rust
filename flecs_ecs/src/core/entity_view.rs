@@ -1157,7 +1157,7 @@ impl EntityView {
     /// Check if the entity owns the provided entity.
     /// An entity is owned if it is not shared from a base entity.
     ///
-    /// # Parameters
+    /// # Arguments
     /// - `entity_id`: The entity to check.
     ///
     /// # Returns
@@ -1173,7 +1173,7 @@ impl EntityView {
 
     /// Check if the entity owns the provided entity.
     ///
-    /// # Parameters
+    /// # Arguments
     /// - `entity`: The entity to check.
     ///
     /// # Returns
@@ -1206,7 +1206,7 @@ impl EntityView {
 
     /// Check if the entity owns the provided pair.
     ///
-    /// # Parameters
+    /// # Arguments
     /// - `first`: The first element of the pair.
     /// - `second`: The second element of the pair.
     ///
@@ -1246,7 +1246,7 @@ impl EntityView {
 
     /// Test if id is enabled.
     ///
-    /// # Parameters
+    /// # Arguments
     /// - `id`: The id to test.
     ///
     /// # Returns
@@ -1278,7 +1278,7 @@ impl EntityView {
 
     /// Test if pair is enabled.
     ///
-    /// # Parameters
+    /// # Arguments
     /// - `first`: The first element of the pair.
     /// - `second`: The second element of the pair.
     ///
@@ -1358,7 +1358,7 @@ impl EntityView {
     /// If `copy_value` is set to `true`, the value of the current entity is also copied to
     /// the destination entity. Otherwise, only the entity's structure is cloned without copying the value.
     ///
-    /// # Parameters
+    /// # Arguments
     /// - `copy_value`: A boolean indicating whether to copy the entity's value to the destination entity.
     /// - `dest_id`: The identifier of the destination entity. If zero, a new entity is created.
     ///
@@ -1401,7 +1401,7 @@ impl EntityView {
     /// entity outside of a system. It is allowed to perform entity operations
     /// directly on the world, as long as the world is not in staged mode.
     ///
-    /// # Parameters
+    /// # Arguments
     /// - `stage`: The current stage.
     ///
     /// # Returns
@@ -1427,7 +1427,7 @@ impl EntityView {
     /// from another entity. This is useful in `each` functions, which only
     /// provide a handle to the entity being iterated over.
     ///
-    /// # Parameters
+    /// # Arguments
     /// - `entity`: Another mutable entity.
     ///
     /// # Returns

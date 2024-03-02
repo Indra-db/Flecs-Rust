@@ -29,7 +29,7 @@ impl<T: CachedComponentData> Ref<T> {
 
     /// Create a new ref to a component.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `world`: the world.
     /// * `entity`: the entity to reference.

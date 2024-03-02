@@ -95,7 +95,7 @@ impl Deref for UntypedComponent {
 impl UntypedComponent {
     /// Create a new untyped component.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `world`: the world.
     /// * `id`: the id of the component to reference.
@@ -135,7 +135,7 @@ impl<T: CachedComponentData + Default> Deref for Component<T> {
 impl<T: CachedComponentData + Default> Component<T> {
     /// Create a new component.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `world`: the world.
     ///
@@ -156,7 +156,7 @@ impl<T: CachedComponentData + Default> Component<T> {
 
     /// Create a new component with a name.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `world`: the world.
     /// * `name`: the name of the component.
@@ -178,7 +178,7 @@ impl<T: CachedComponentData + Default> Component<T> {
 
     /// Get the binding context for the component.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `type_hooks`: the type hooks.
     ///

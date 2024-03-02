@@ -178,7 +178,7 @@ where
 
     /// Get the entity of the current filter
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `filter`: the filter to get the entity from
     ///
@@ -219,7 +219,7 @@ where
 
     /// Get the term of the current filter at the given index
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `index`: the index of the term to get
     /// * `filter`: the filter to get the term from
@@ -241,7 +241,7 @@ where
 
     /// Get the field count of the current filter
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `filter`: the filter to get the field count from
     ///
@@ -260,7 +260,7 @@ where
     /// Convert filter to string expression. Convert filter terms to a string expression.
     /// The resulting expression can be parsed to create the same filter.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `filter`: the filter to convert to a string
     ///
@@ -316,7 +316,7 @@ where
 {
     /// Create a new filter view
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `world`: the world to create the filter view from
     /// * `filter`: the filter to create the view from
@@ -352,7 +352,7 @@ where
 
     /// Get the entity of the current filter
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `filter`: the filter to get the entity from
     ///
@@ -397,7 +397,7 @@ where
 
     /// Get the term of the current filter at the given index
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `index`: the index of the term to get
     ///
@@ -458,7 +458,7 @@ where
 {
     /// Create a new filter
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `world`: the world to create the filter from
     ///
@@ -483,7 +483,7 @@ where
 
     /// Wrap an existing raw filter
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `world`: the world to create the filter from
     /// * `filter`: the filter to wrap
@@ -511,7 +511,7 @@ where
     // determine if this is a problem
     /// Create a new filter from a filter descriptor
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `world`: the world to create the filter from
     /// * `desc`: the filter descriptor to create the filter from
@@ -654,7 +654,7 @@ where
 
     /// Get the term of the current filter at the given index
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `index`: the index of the term to get
     ///

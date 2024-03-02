@@ -25,7 +25,7 @@ where
 {
     /// Create a new column from component array.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `array`: pointer to the component array.
     /// * `count`: number of elements in the array.
@@ -44,7 +44,7 @@ where
 
     /// Create a new column from an iterator.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// * `iter`: the iterator to create the column from.
     /// * `index_column`: the index of the signature of the query being iterated over.
