@@ -42,7 +42,7 @@ use super::observer::Observer;
 use super::observer_builder::ObserverBuilder;
 use super::scoped_world::ScopedWorld;
 use super::term::Term;
-use super::{ecs_pair, set_helper};
+use super::{ecs_pair, set_helper, Builder, Filter, FilterBuilder, Query, QueryBuilder};
 
 pub struct World {
     pub raw_world: *mut WorldT,
@@ -2914,6 +2914,212 @@ impl World {
         Components: Iterable<'a>,
     {
         ObserverBuilder::<'a, Components>::new_named(self, name)
+    }
+}
+
+// Filter mixin implementation
+impl World {
+    /// Create a new filter.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Components` - The components to match on.
+    ///
+    /// # Returns
+    ///
+    /// A new filter.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::filter`
+    pub fn filter<'a, Components>(&self) -> Filter<'a, Components>
+    where
+        Components: Iterable<'a>,
+    {
+        Filter::<'a, Components>::new(self)
+    }
+
+    /// Create a new named filter.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Components` - The components to match on.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the observer.
+    ///
+    /// # Returns
+    ///
+    /// A new filter.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::filter`
+    pub fn filter_named<'a, Components>(&self, name: &CStr) -> Filter<'a, Components>
+    where
+        Components: Iterable<'a>,
+    {
+        FilterBuilder::<'a, Components>::new_named(self, name).build()
+    }
+
+    /// Create a filter_builder
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Components` - The components to match on.
+    ///
+    /// # Returns
+    ///
+    /// Filter builder.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::filter_builder`
+    pub fn filter_builder<'a, Components>(&self) -> FilterBuilder<'a, Components>
+    where
+        Components: Iterable<'a>,
+    {
+        FilterBuilder::<'a, Components>::new(self)
+    }
+
+    /// Create a new named filter_builder.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Components` - The components to match on.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the observer.
+    ///
+    /// # Returns
+    ///
+    /// Filter builder.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::filter_builder`
+    pub fn filter_builder_named<'a, Components>(&self, name: &CStr) -> FilterBuilder<'a, Components>
+    where
+        Components: Iterable<'a>,
+    {
+        FilterBuilder::<'a, Components>::new_named(self, name)
+    }
+
+    pub fn each<'a, Components>(
+        &self,
+        func: impl FnMut(Components::TupleType),
+    ) -> Filter<'a, Components>
+    where
+        Components: Iterable<'a>,
+    {
+        let mut filter = Filter::<'a, Components>::new(self);
+        filter.each(func);
+        filter
+    }
+
+    pub fn each_entity<'a, Components>(
+        &self,
+        func: impl FnMut(&mut Entity, Components::TupleType),
+    ) -> Filter<'a, Components>
+    where
+        Components: Iterable<'a>,
+    {
+        let mut filter = Filter::<'a, Components>::new(self);
+        filter.each_entity(func);
+        filter
+    }
+}
+
+/// Query mixin implementation
+impl World {
+    /// Create a new query.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Components` - The components to match on.
+    ///
+    /// # Returns
+    ///
+    /// A new query.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::query`
+    pub fn query<'a, Components>(&self) -> Query<'a, Components>
+    where
+        Components: Iterable<'a>,
+    {
+        Query::<'a, Components>::new(self)
+    }
+
+    /// Create a new named query.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Components` - The components to match on.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the query.
+    ///
+    /// # Returns
+    ///
+    /// A new query.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::query`
+    pub fn query_named<'a, Components>(&self, name: &CStr) -> Query<'a, Components>
+    where
+        Components: Iterable<'a>,
+    {
+        QueryBuilder::<'a, Components>::new_named(self, name).build()
+    }
+
+    /// Create a new query builder.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Components` - The components to match on.
+    ///
+    /// # Returns
+    ///
+    /// A new query builder.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::query_builder`
+    pub fn query_builder<'a, Components>(&self) -> QueryBuilder<'a, Components>
+    where
+        Components: Iterable<'a>,
+    {
+        QueryBuilder::<'a, Components>::new(self)
+    }
+
+    /// Create a new named query builder.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Components` - The components to match on.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the query.
+    ///
+    /// # Returns
+    ///
+    /// A new query builder.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::query_builder`
+    pub fn query_builder_named<'a, Components>(&self, name: &CStr) -> QueryBuilder<'a, Components>
+    where
+        Components: Iterable<'a>,
+    {
+        QueryBuilder::<'a, Components>::new_named(self, name)
     }
 }
 
