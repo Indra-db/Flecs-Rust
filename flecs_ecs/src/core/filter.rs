@@ -27,6 +27,16 @@ impl<'a, T> FilterBase<'a, T>
 where
     T: Iterable<'a>,
 {
+    /// Each iterator.
+    /// The "each" iterator accepts a function that is invoked for each matching entity.
+    /// The following function signatures is valid:
+    ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///
+    /// Each iterators are automatically instanced.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iterable::each`
     fn each_impl(&mut self, mut func: impl FnMut(T::TupleType), filter: *mut FilterT) {
         unsafe {
             let mut iter = ecs_filter_iter(self.world.raw_world, filter);
@@ -54,6 +64,16 @@ where
         }
     }
 
+    /// Each iterator.
+    /// The "each" iterator accepts a function that is invoked for each matching entity.
+    /// The following function signatures is valid:
+    ///  - func(e : Entity , comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///
+    /// Each iterators are automatically instanced.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iterable::each`
     fn each_entity_impl(
         &mut self,
         mut func: impl FnMut(&mut Entity, T::TupleType),
@@ -88,6 +108,19 @@ where
         }
     }
 
+    /// iter iterator.
+    /// The "iter" iterator accepts a function that is invoked for each matching
+    /// table. The following function signature is valid:
+    ///  - func(flecs::iter& it, Components* ...)
+    ///
+    /// Iter iterators are not automatically instanced. When a result contains
+    /// shared components, entities of the result will be iterated one by one.
+    /// This ensures that applications can't accidentally read out of bounds by
+    /// accessing a shared component as an array.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iterable::iter`
     fn iter_impl(&mut self, mut func: impl FnMut(&Iter, T::TupleSliceType), filter: *mut FilterT) {
         unsafe {
             let mut iter = ecs_filter_iter(self.world.raw_world, filter);
@@ -116,6 +149,19 @@ where
         }
     }
 
+    /// iter iterator.
+    /// The "iter" iterator accepts a function that is invoked for each matching
+    /// table. The following function signature is valid:
+    ///  - func(it: &mut Iter)
+    ///
+    /// Iter iterators are not automatically instanced. When a result contains
+    /// shared components, entities of the result will be iterated one by one.
+    /// This ensures that applications can't accidentally read out of bounds by
+    /// accessing a shared component as an array.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iterable::iter`
     pub fn iter_only_impl(&mut self, mut func: impl FnMut(&Iter), filter: *mut FilterT) {
         unsafe {
             let mut iter = ecs_filter_iter(self.world.raw_world, filter);
@@ -126,12 +172,33 @@ where
         }
     }
 
+    /// Get the entity of the current filter
+    ///
+    /// # Parameters
+    ///
+    /// * `filter`: the filter to get the entity from
+    ///
+    /// # Returns
+    ///
+    /// The entity of the current filter
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter_base::entity`
     fn entity_impl(&self, filter: *mut FilterT) -> Entity {
         Entity::new_from_existing_raw(self.world.raw_world, unsafe {
             ecs_get_entity(filter as *const _)
         })
     }
 
+    /// Each term iterator.
+    /// The "each_term" iterator accepts a function that is invoked for each term
+    /// in the filter. The following function signature is valid:
+    ///  - func(term: &mut Term)
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter_base::term`
     fn each_term_impl(&self, mut func: impl FnMut(Term), filter: *mut FilterT) {
         unsafe {
             for i in 0..(*filter).term_count {
@@ -144,6 +211,20 @@ where
         }
     }
 
+    /// Get the term of the current filter at the given index
+    ///
+    /// # Parameters
+    ///
+    /// * `index`: the index of the term to get
+    /// * `filter`: the filter to get the term from
+    ///
+    /// # Returns
+    ///
+    /// The term requested
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter_base::term`
     fn get_term_impl(&self, index: usize, filter: *mut FilterT) -> Term {
         Term::new(
             Some(&self.world),
@@ -151,10 +232,37 @@ where
         )
     }
 
+    /// Get the field count of the current filter
+    ///
+    /// # Parameters
+    ///
+    /// * `filter`: the filter to get the field count from
+    ///
+    /// # Returns
+    ///
+    /// The field count of the current filter
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter_base::field_count`
     fn field_count_impl(&self, filter: *mut FilterT) -> i32 {
         unsafe { (*filter).field_count }
     }
 
+    /// Convert filter to string expression. Convert filter terms to a string expression.
+    /// The resulting expression can be parsed to create the same filter.
+    ///
+    /// # Parameters
+    ///
+    /// * `filter`: the filter to convert to a string
+    ///
+    /// # Returns
+    ///
+    /// The string representation of the filter
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter_base::str`
     #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
     fn to_string_impl(&self, filter: *mut FilterT) -> String {
         let result: *mut c_char =
@@ -197,7 +305,17 @@ impl<'a, T> FilterView<'a, T>
 where
     T: Iterable<'a>,
 {
-    pub fn new_view(world: &World, filter: *const FilterT) -> Self {
+    /// Create a new filter view
+    ///
+    /// # Parameters
+    ///
+    /// * `world`: the world to create the filter view from
+    /// * `filter`: the filter to create the view from
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter_view::filter_view`
+    pub fn new(world: &World, filter: *const FilterT) -> Self {
         Self {
             base: FilterBase {
                 world: world.clone(),
@@ -207,30 +325,102 @@ where
         }
     }
 
+    /// Each iterator.
+    /// The "each" iterator accepts a function that is invoked for each matching entity.
+    /// The following function signatures is valid:
+    ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///
+    /// Each iterators are automatically instanced.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iterable::each`
     pub fn each(&mut self, func: impl FnMut(T::TupleType)) {
         self.base.each_impl(func, self.filter_ptr);
     }
 
+    /// Get the entity of the current filter
+    ///
+    /// # Parameters
+    ///
+    /// * `filter`: the filter to get the entity from
+    ///
+    /// # Returns
+    ///
+    /// The entity of the current filter
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter_base::entity`
     pub fn each_entity(&mut self, func: impl FnMut(&mut Entity, T::TupleType)) {
         self.base.each_entity_impl(func, self.filter_ptr);
     }
 
+    /// Get the entity of the current filter
+    ///
+    /// # Returns
+    ///
+    /// The entity of the current filter
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter_base::entity`
     pub fn entity(&self) -> Entity {
         self.base.entity_impl(self.filter_ptr)
     }
 
+    /// Each term iterator.
+    /// The "each_term" iterator accepts a function that is invoked for each term
+    /// in the filter. The following function signature is valid:
+    ///  - func(term: &mut Term)
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter_base::term`
     pub fn each_term(&self, func: impl FnMut(Term)) {
         self.base.each_term_impl(func, self.filter_ptr);
     }
 
+    /// Get the term of the current filter at the given index
+    ///
+    /// # Parameters
+    ///
+    /// * `index`: the index of the term to get
+    ///
+    /// # Returns
+    ///
+    /// The term requested
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter_base::term`
     pub fn get_term(&self, index: usize) -> Term {
         self.base.get_term_impl(index, self.filter_ptr)
     }
 
+    /// Get the field count of the current filter
+    ///
+    /// # Returns
+    ///
+    /// The field count of the current filter
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter_base::field_count`
     pub fn field_count(&self) -> i32 {
         self.base.field_count_impl(self.filter_ptr)
     }
 
+    /// Convert filter to string expression. Convert filter terms to a string expression.
+    /// The resulting expression can be parsed to create the same filter.
+    ///
+    /// # Returns
+    ///
+    /// The string representation of the filter
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter_base::str`
     #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
     pub fn to_string(&self) -> String {
         self.base.to_string_impl(self.filter_ptr)
@@ -249,6 +439,15 @@ impl<'a, T> Filter<'a, T>
 where
     T: Iterable<'a>,
 {
+    /// Create a new filter
+    ///
+    /// # Parameters
+    ///
+    /// * `world`: the world to create the filter from
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter::filter`
     pub fn new(world: &World) -> Self {
         let mut desc = ecs_filter_desc_t::default();
         T::register_ids_descriptor(world.raw_world, &mut desc);
@@ -264,6 +463,16 @@ where
         }
     }
 
+    /// Wrap an existing raw filter
+    ///
+    /// # Parameters
+    ///
+    /// * `world`: the world to create the filter from
+    /// * `filter`: the filter to wrap
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter::filter`
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new_ownership(world: &World, filter: *mut FilterT) -> Self {
         let mut filter_obj = Filter {
@@ -281,6 +490,16 @@ where
 
     //TODO: this needs testing -> desc.storage pointer becomes invalid after this call as it re-allocates after this new
     // determine if this is a problem
+    /// Create a new filter from a filter descriptor
+    ///
+    /// # Parameters
+    ///
+    /// * `world`: the world to create the filter from
+    /// * `desc`: the filter descriptor to create the filter from
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter::filter`
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new_from_desc(world: &World, desc: *mut ecs_filter_desc_t) -> Self {
         let mut filter_obj = Filter {
@@ -319,42 +538,134 @@ where
         filter_obj
     }
 
+    /// Each iterator.
+    /// The "each" iterator accepts a function that is invoked for each matching entity.
+    /// The following function signatures is valid:
+    ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///
+    /// Each iterators are automatically instanced.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iterable::each`
     #[inline]
     pub fn each(&mut self, func: impl FnMut(T::TupleType)) {
         self.base.each_impl(func, &mut self.filter);
     }
 
+    /// Each iterator.
+    /// The "each" iterator accepts a function that is invoked for each matching entity.
+    /// The following function signatures is valid:
+    ///  - func(e : Entity , comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///
+    /// Each iterators are automatically instanced.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iterable::each`
     #[inline]
     pub fn each_entity(&mut self, func: impl FnMut(&mut Entity, T::TupleType)) {
         self.base.each_entity_impl(func, &mut self.filter);
     }
 
+    /// Each iterator.
+    /// The "each" iterator accepts a function that is invoked for each matching entity.
+    /// The following function signatures is valid:
+    ///  - func(e : Entity , comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///
+    /// Each iterators are automatically instanced.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iterable::each`
     #[inline]
     pub fn iter(&mut self, func: impl FnMut(&Iter, T::TupleSliceType)) {
         self.base.iter_impl(func, &mut self.filter);
     }
 
+    /// iter iterator.
+    /// The "iter" iterator accepts a function that is invoked for each matching
+    /// table. The following function signature is valid:
+    ///  - func(it: &mut Iter)
+    ///
+    /// Iter iterators are not automatically instanced. When a result contains
+    /// shared components, entities of the result will be iterated one by one.
+    /// This ensures that applications can't accidentally read out of bounds by
+    /// accessing a shared component as an array.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iterable::iter`
     #[inline]
     pub fn iter_only(&mut self, func: impl FnMut(&Iter)) {
         self.base.iter_only_impl(func, &mut self.filter);
     }
 
+    /// Get the entity of the current filter
+    ///
+    /// # Returns
+    ///
+    /// The entity of the current filter
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter_base::entity`
     pub fn entity(&mut self) -> Entity {
         self.base.entity_impl(&mut self.filter)
     }
 
+    /// Each term iterator.
+    /// The "each_term" iterator accepts a function that is invoked for each term
+    /// in the filter. The following function signature is valid:
+    ///  - func(term: &mut Term)
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter_base::term`
     pub fn each_term(&mut self, func: impl FnMut(Term)) {
         self.base.each_term_impl(func, &mut self.filter);
     }
 
+    /// Get the term of the current filter at the given index
+    ///
+    /// # Parameters
+    ///
+    /// * `index`: the index of the term to get
+    ///
+    /// # Returns
+    ///
+    /// The term requested
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter_base::term`
     pub fn get_term(&mut self, index: usize) -> Term {
         self.base.get_term_impl(index, &mut self.filter)
     }
 
+    /// Get the field count of the current filter
+    ///
+    /// # Returns
+    ///
+    /// The field count of the current filter
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter_base::field_count`
     pub fn field_count(&mut self) -> i32 {
         self.base.field_count_impl(&mut self.filter)
     }
 
+    /// Convert filter to string expression. Convert filter terms to a string expression.
+    /// The resulting expression can be parsed to create the same filter.
+    ///
+    /// # Returns
+    ///
+    /// The string representation of the filter
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `filter_base::str`
     #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
     pub fn to_string(&mut self) -> String {
         self.base.to_string_impl(&mut self.filter)

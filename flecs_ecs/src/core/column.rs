@@ -6,6 +6,11 @@ use std::{
     os::raw::c_void,
 };
 
+/// Wrapper class around a column.
+///
+/// # Type parameters
+///
+/// * `T`: The type of the column.
 pub struct Column<'a, T>
 where
     T: CachedComponentData,
@@ -18,6 +23,17 @@ impl<'a, T> Column<'a, T>
 where
     T: CachedComponentData,
 {
+    /// Create a new column from component array.
+    ///
+    /// # Parameters
+    ///
+    /// * `array`: pointer to the component array.
+    /// * `count`: number of elements in the array.
+    /// * `is_shared`: whether the component is shared.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `column::column`
     pub fn new_from_array(array: *const T, count: usize, is_shared: bool) -> Self {
         Self {
             slice_components: unsafe { std::slice::from_raw_parts_mut(array as *mut T, count) },
@@ -25,10 +41,17 @@ where
         }
     }
 
+    /// Create a new column from an iterator.
+    ///
+    /// # Parameters
+    ///
+    /// * `iter`: the iterator to create the column from.
+    /// * `index_column`: the index of the signature of the query being iterated over.
     pub fn new_from_iter(iter: &'a mut Iter, index_column: i32) -> Self {
         iter.get_field_data::<T>(index_column)
     }
 
+    /// wether the column / component is shared.
     pub fn is_shared(&self) -> bool {
         self.is_shared
     }
@@ -80,6 +103,17 @@ pub struct UntypedColumn {
 /// Unsafe wrapper class around a column.
 /// This class can be used when a system does not know the type of a column at
 /// compile time.
+///
+/// # Arguments
+///
+/// * `array`: pointer to the component array.
+/// * `size`: size of the component type.
+/// * `count`: number of elements in the array.
+/// * `is_shared`: whether the component is shared.
+///
+/// # See also
+///
+/// * C++ API: `untyped_column::untyped_column`
 impl UntypedColumn {
     pub fn new(array: *mut c_void, size: usize, count: usize, is_shared: bool) -> Self {
         Self {

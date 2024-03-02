@@ -124,7 +124,6 @@ pub trait CachedComponentData: Clone + Default {
     /// the lock data being initialized is not checked and will panic if it's not.
     /// does not check if the component is registered in the world, if not, it might cause problems depending on usage.
     /// only use this if you know what you are doing and you are sure the component is registered in the world
-
     unsafe fn get_id_unchecked() -> IdT {
         Self::get_data_unchecked().id
     }

@@ -165,7 +165,7 @@ where
     }
 
     pub fn filter(&self) -> FilterView<'a, T> {
-        FilterView::<T>::new_view(&self.world, unsafe { ecs_query_get_filter(self.query) })
+        FilterView::<T>::new(&self.world, unsafe { ecs_query_get_filter(self.query) })
     }
     fn term(&self, index: i32) -> Term {
         let filter: *const ecs_filter_t = unsafe { ecs_query_get_filter(self.query) };

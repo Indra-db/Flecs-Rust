@@ -1,3 +1,5 @@
+//! Refs are a fast mechanism for referring to a specific entity/component
+
 use std::{marker::PhantomData, os::raw::c_void};
 
 use crate::{
@@ -15,6 +17,7 @@ use super::{
 };
 
 /// A reference to a component from a specific entity.
+/// Refs are a fast mechanism for referring to a specific entity/component
 pub struct Ref<T: CachedComponentData> {
     world: *mut WorldT,
     component_ref: RefT,
@@ -23,6 +26,18 @@ pub struct Ref<T: CachedComponentData> {
 
 impl<T: CachedComponentData> Ref<T> {
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
+
+    /// Create a new ref to a component.
+    ///
+    /// # Parameters
+    ///
+    /// * `world`: the world.
+    /// * `entity`: the entity to reference.
+    /// * `id`: the id of the component to reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `ref::ref`
     pub fn new(mut world: *mut WorldT, entity: EntityT, mut id: IdT) -> Self {
         // the world we were called with may be a stage; convert it to a world
         // here if that is the case
@@ -46,7 +61,12 @@ impl<T: CachedComponentData> Ref<T> {
             _marker: PhantomData,
         }
     }
-
+    /// Get component from ref.
+    /// Get component pointer from ref.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `ref::get`
     pub fn get(&mut self) -> *mut T {
         unsafe {
             ecs_ref_get_id(self.world, &mut self.component_ref, self.component_ref.id) as *mut T
