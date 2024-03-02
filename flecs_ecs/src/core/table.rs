@@ -312,20 +312,13 @@ impl Table {
     /// * C++ API: `table::get`
     #[doc(alias = "table::get")]
     pub fn get_component_array_ptr<T: CachedComponentData>(&self) -> Option<*mut T> {
-        if let Some(ptr) = self.get_component_array_ptr_by_id(T::get_id(self.world)) {
-            Some(ptr as *mut T)
-        } else {
-            None
-        }
+        self.get_component_array_ptr_by_id(T::get_id(self.world))
+            .map(|ptr| ptr as *mut T)
     }
 
     pub fn get_component_array_ptr_by_id(&self, id: IdT) -> Option<*mut c_void> {
         if let Some(index) = self.find_component_id_index(id) {
-            if let Some(ptr) = self.get_component_array_ptr_by_column_index(index) {
-                Some(ptr)
-            } else {
-                None
-            }
+            self.get_component_array_ptr_by_column_index(index)
         } else {
             None
         }

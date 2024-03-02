@@ -319,7 +319,7 @@ impl Term {
     /// Test whether a term is set. This operation can be used to test whether a term has been initialized with values or whether it is empty.
     ///
     /// An application generally does not need to invoke this operation.
-    /// It is useful when initializing a 0-initialized array of terms (like in `ecs_term_desc_t``)
+    /// It is useful when initializing a 0-initialized array of terms (like in `ecs_term_desc_t`)
     /// as this operation can be used to find the last initialized element.
     ///
     /// # See also

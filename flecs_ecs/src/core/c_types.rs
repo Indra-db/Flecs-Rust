@@ -814,10 +814,7 @@ impl CachedComponentData for TickSource {
     // Function for C compatibility, returns null-terminated string.
     fn get_symbol_name_c() -> &'static str {
         static SYMBOL_NAME_C: OnceLock<String> = OnceLock::new();
-        SYMBOL_NAME_C.get_or_init(|| {
-            let name = "EcsTickSource\0".to_string();
-            name
-        })
+        SYMBOL_NAME_C.get_or_init(|| "EcsTickSource\0".to_string())
     }
 
     // Function to return a &str slice without the null termination for Rust.

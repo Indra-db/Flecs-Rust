@@ -694,7 +694,7 @@ impl World {
         unsafe { ecs_enable_range_check(self.raw_world, enabled) };
     }
 
-    /// Get the current scope. Get the scope set by ecs_set_scope. If no scope is set, this operation will return 0.
+    /// Get the current scope. Get the scope set by `ecs_set_scope`. If no scope is set, this operation will return 0.
     ///
     /// # Returns
     ///
@@ -2431,11 +2431,11 @@ impl World {
     ///
     /// # Examples
     #[cfg_attr(doctest, doc = " ````no_test")]
-    /// * C++ API: ```
+    /// ```
     /// world.defer(|| {
     ///     // deferred operations here
     /// });
-    /// * C++ API: ```
+    /// ```
     ///
     /// # See also
     ///
@@ -3092,7 +3092,7 @@ impl World {
         FilterBuilder::<'a, Components>::new_named(self, name).build()
     }
 
-    /// Create a filter_builder
+    /// Create a `filter_builder`
     ///
     /// # Type Parameters
     ///
@@ -3113,7 +3113,7 @@ impl World {
         FilterBuilder::<'a, Components>::new(self)
     }
 
-    /// Create a new named filter_builder.
+    /// Create a new named `filter_builder`.
     ///
     /// # Type Parameters
     ///

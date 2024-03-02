@@ -208,7 +208,7 @@ where
 {
     type BuiltType = Query<'a, T>;
 
-    /// Build the observer_builder into an query
+    /// Build the `observer_builder` into an query
     ///
     /// See also
     ///

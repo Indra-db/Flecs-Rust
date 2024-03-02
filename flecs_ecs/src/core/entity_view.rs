@@ -123,7 +123,7 @@ impl EntityView {
         }
     }
 
-    /// Explicit conversion from flecs::entity_t to EntityView
+    /// Explicit conversion from `EntityT` to `EntityView`.
     ///
     /// # See also
     ///

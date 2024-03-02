@@ -197,7 +197,7 @@ where
     }
 
     /// Each term iterator.
-    /// The "each_term" iterator accepts a function that is invoked for each term
+    /// The "`each_term`" iterator accepts a function that is invoked for each term
     /// in the filter. The following function signature is valid:
     ///  - func(term: &mut Term)
     ///
@@ -383,7 +383,7 @@ where
     }
 
     /// Each term iterator.
-    /// The "each_term" iterator accepts a function that is invoked for each term
+    /// The "`each_term`" iterator accepts a function that is invoked for each term
     /// in the filter. The following function signature is valid:
     ///  - func(term: &mut Term)
     ///
@@ -640,7 +640,7 @@ where
     }
 
     /// Each term iterator.
-    /// The "each_term" iterator accepts a function that is invoked for each term
+    /// The "`each_term`" iterator accepts a function that is invoked for each term
     /// in the filter. The following function signature is valid:
     ///  - func(term: &mut Term)
     ///

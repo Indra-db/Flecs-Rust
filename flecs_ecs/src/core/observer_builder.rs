@@ -121,7 +121,7 @@ where
     #[doc(alias = "observer_builder::observer_builder")]
     pub fn new_from_desc(world: &World, mut desc: ecs_observer_desc_t) -> Self {
         let mut obj = Self {
-            desc: desc,
+            desc,
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
             world: world.clone(),
             event_count: 0,
@@ -159,7 +159,7 @@ where
         }
     }
 
-    /// Build the observer_builder into an observer
+    /// Build the `observer_builder` into an observer
     ///
     /// See also
     ///
@@ -169,7 +169,7 @@ where
         Observer::new(&self.world, self.desc, self.is_instanced)
     }
 
-    /// Register the callback for the observer for `each``
+    /// Register the callback for the observer for `each`
     ///
     /// The "each" iterator accepts a function that is invoked for each matching entity.
     /// The following function signatures is valid:
@@ -204,7 +204,7 @@ where
 
     /// Register the callback for the observer for `each_entity`
     ///
-    /// The "each_entity" iterator accepts a function that is invoked for each matching entity.
+    /// The "`each_entity`" iterator accepts a function that is invoked for each matching entity.
     /// The following function signatures is valid:
     ///  - func(entity: &mut Entity, comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
@@ -365,7 +365,7 @@ where
         ecs_table_unlock((*iter).world, (*iter).table);
     }
 
-    /// Callback of the each_entity functionality
+    /// Callback of the `each_entity` functionality
     ///
     /// # Arguments
     ///
@@ -403,7 +403,7 @@ where
         ecs_table_unlock((*iter).world, (*iter).table);
     }
 
-    /// Callback of the iter_only functionality
+    /// Callback of the `iter_only` functionality
     ///
     /// # Arguments
     ///
