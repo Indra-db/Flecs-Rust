@@ -796,7 +796,7 @@ fn entity_get_parent() {
 }
 
 #[test]
-fn entity_is_component_enabled_disabled() {
+fn entity_is_enabled_component_disabled() {
     let world = World::default();
 
     let entity = world
@@ -805,49 +805,49 @@ fn entity_is_component_enabled_disabled() {
         .add_component::<Velocity>()
         .add_component::<Mass>();
 
-    assert_eq!(entity.is_component_enabled::<Position>(), true);
-    assert_eq!(entity.is_component_enabled::<Velocity>(), true);
-    assert_eq!(entity.is_component_enabled::<Mass>(), true);
+    assert_eq!(entity.is_enabled_component::<Position>(), true);
+    assert_eq!(entity.is_enabled_component::<Velocity>(), true);
+    assert_eq!(entity.is_enabled_component::<Mass>(), true);
 
     entity.disable_component::<Position>();
 
-    assert_eq!(entity.is_component_enabled::<Position>(), false);
-    assert_eq!(entity.is_component_enabled::<Velocity>(), true);
-    assert_eq!(entity.is_component_enabled::<Mass>(), true);
+    assert_eq!(entity.is_enabled_component::<Position>(), false);
+    assert_eq!(entity.is_enabled_component::<Velocity>(), true);
+    assert_eq!(entity.is_enabled_component::<Mass>(), true);
 
     entity.disable_component::<Velocity>();
 
-    assert_eq!(entity.is_component_enabled::<Position>(), false);
-    assert_eq!(entity.is_component_enabled::<Velocity>(), false);
-    assert_eq!(entity.is_component_enabled::<Mass>(), true);
+    assert_eq!(entity.is_enabled_component::<Position>(), false);
+    assert_eq!(entity.is_enabled_component::<Velocity>(), false);
+    assert_eq!(entity.is_enabled_component::<Mass>(), true);
 
     entity.disable_component::<Mass>();
 
-    assert_eq!(entity.is_component_enabled::<Position>(), false);
-    assert_eq!(entity.is_component_enabled::<Velocity>(), false);
-    assert_eq!(entity.is_component_enabled::<Mass>(), false);
+    assert_eq!(entity.is_enabled_component::<Position>(), false);
+    assert_eq!(entity.is_enabled_component::<Velocity>(), false);
+    assert_eq!(entity.is_enabled_component::<Mass>(), false);
 
     entity.enable_component::<Position>();
 
-    assert_eq!(entity.is_component_enabled::<Position>(), true);
-    assert_eq!(entity.is_component_enabled::<Velocity>(), false);
-    assert_eq!(entity.is_component_enabled::<Mass>(), false);
+    assert_eq!(entity.is_enabled_component::<Position>(), true);
+    assert_eq!(entity.is_enabled_component::<Velocity>(), false);
+    assert_eq!(entity.is_enabled_component::<Mass>(), false);
 
     entity.enable_component::<Velocity>();
 
-    assert_eq!(entity.is_component_enabled::<Position>(), true);
-    assert_eq!(entity.is_component_enabled::<Velocity>(), true);
-    assert_eq!(entity.is_component_enabled::<Mass>(), false);
+    assert_eq!(entity.is_enabled_component::<Position>(), true);
+    assert_eq!(entity.is_enabled_component::<Velocity>(), true);
+    assert_eq!(entity.is_enabled_component::<Mass>(), false);
 
     entity.enable_component::<Mass>();
 
-    assert_eq!(entity.is_component_enabled::<Position>(), true);
-    assert_eq!(entity.is_component_enabled::<Velocity>(), true);
-    assert_eq!(entity.is_component_enabled::<Mass>(), true);
+    assert_eq!(entity.is_enabled_component::<Position>(), true);
+    assert_eq!(entity.is_enabled_component::<Velocity>(), true);
+    assert_eq!(entity.is_enabled_component::<Mass>(), true);
 }
 
 #[test]
-fn entity_is_pair_enabled() {
+fn entity_is_enabled_pair() {
     let world = World::default();
 
     let entity = world
@@ -856,27 +856,27 @@ fn entity_is_pair_enabled() {
         .add_pair::<TagB, TagC>()
         .disable_pair::<Position, TagC>();
 
-    assert_eq!(entity.is_pair_enabled::<Position, TagA>(), true);
-    assert_eq!(entity.is_pair_enabled::<Position, TagB>(), false);
-    assert_eq!(entity.is_pair_enabled::<Position, TagC>(), false);
+    assert_eq!(entity.is_enabled_pair::<Position, TagA>(), true);
+    assert_eq!(entity.is_enabled_pair::<Position, TagB>(), false);
+    assert_eq!(entity.is_enabled_pair::<Position, TagC>(), false);
 
     entity.enable_pair::<Position, TagB>();
-    assert_eq!(entity.is_pair_enabled::<Position, TagB>(), true);
+    assert_eq!(entity.is_enabled_pair::<Position, TagB>(), true);
 
     entity.disable_pair::<Position, TagA>();
-    assert_eq!(entity.is_pair_enabled::<Position, TagA>(), false);
+    assert_eq!(entity.is_enabled_pair::<Position, TagA>(), false);
 
     entity.enable_pair::<Position, TagA>();
     entity.enable_pair::<Position, TagC>();
-    assert_eq!(entity.is_pair_enabled::<Position, TagA>(), true);
-    assert_eq!(entity.is_pair_enabled::<Position, TagC>(), true);
+    assert_eq!(entity.is_enabled_pair::<Position, TagA>(), true);
+    assert_eq!(entity.is_enabled_pair::<Position, TagC>(), true);
 
     entity.disable_pair::<Position, TagB>();
-    assert_eq!(entity.is_pair_enabled::<Position, TagB>(), false);
+    assert_eq!(entity.is_enabled_pair::<Position, TagB>(), false);
 }
 
 #[test]
-fn entity_is_pair_enabled_ids() {
+fn entity_is_enabled_pair_ids() {
     let world = World::default();
 
     let rel = world.new_entity();
@@ -885,21 +885,21 @@ fn entity_is_pair_enabled_ids() {
 
     let e = world.new_entity().add_pair_ids(rel.raw_id, tgt_a.raw_id);
 
-    assert!(e.is_pair_ids_enabled(rel.raw_id, tgt_a.raw_id));
-    assert!(!e.is_pair_ids_enabled(rel.raw_id, tgt_b.raw_id));
+    assert!(e.is_enabled_pair_ids(rel.raw_id, tgt_a.raw_id));
+    assert!(!e.is_enabled_pair_ids(rel.raw_id, tgt_b.raw_id));
 
     e.disable_pair_ids(rel.raw_id, tgt_a.raw_id);
-    assert!(!e.is_pair_ids_enabled(rel.raw_id, tgt_a.raw_id));
+    assert!(!e.is_enabled_pair_ids(rel.raw_id, tgt_a.raw_id));
 
     e.enable_pair_ids(rel.raw_id, tgt_a.raw_id);
-    assert!(e.is_pair_ids_enabled(rel.raw_id, tgt_a.raw_id));
+    assert!(e.is_enabled_pair_ids(rel.raw_id, tgt_a.raw_id));
 
     e.add_pair_ids(rel.raw_id, tgt_b.raw_id)
         .disable_pair_ids(rel.raw_id, tgt_b.raw_id);
-    assert!(!e.is_pair_ids_enabled(rel.raw_id, tgt_b.raw_id));
+    assert!(!e.is_enabled_pair_ids(rel.raw_id, tgt_b.raw_id));
 
     e.enable_pair_ids(rel.raw_id, tgt_b.raw_id);
-    assert!(e.is_pair_ids_enabled(rel.raw_id, tgt_b.raw_id));
+    assert!(e.is_enabled_pair_ids(rel.raw_id, tgt_b.raw_id));
 }
 
 #[test]
@@ -913,8 +913,8 @@ fn entity_is_pair_first_enabled() {
         .new_entity()
         .add_pair_second_id::<Position>(tgt_a.into());
 
-    assert!(e.is_pair_enabled_first::<Position>(tgt_a.into()));
-    assert!(!e.is_pair_enabled_first::<Position>(tgt_b.into()));
+    assert!(e.is_enabled_pair_first::<Position>(tgt_a.into()));
+    assert!(!e.is_enabled_pair_first::<Position>(tgt_b.into()));
 }
 
 #[test]

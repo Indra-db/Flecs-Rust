@@ -66,6 +66,10 @@ impl EntityView {
     /// # Safety
     ///
     /// if the world is passed as None, it's not safe to use this entity for operations on it
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::entity_view`
     pub fn new(world: Option<&World>, id: IdT) -> Self {
         if let Some(world) = world {
             Self {
@@ -82,6 +86,10 @@ impl EntityView {
     /// # Arguments
     /// * `world` - The world the entity belongs to as void*.
     /// * `id` - The entity id.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::entity_view`
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new_from_existing_with_poly_world(world: *mut c_void, id: IdT) -> Self {
         unsafe {
@@ -102,13 +110,21 @@ impl EntityView {
     /// # Arguments
     /// * `world` - The world the entity belongs to.
     /// * `id` - The entity id.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::entity_view`
     pub(crate) fn new_from_existing(world: *mut WorldT, id: IdT) -> Self {
         Self {
             id: Id::new_from_existing(world, id),
         }
     }
 
-    // Explicit conversion from flecs::entity_t to EntityView
+    /// Explicit conversion from flecs::entity_t to EntityView
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::entity_view`
     pub const fn new_id_only(id: EntityT) -> Self {
         Self {
             id: Id::new_id_only(id),
@@ -116,11 +132,19 @@ impl EntityView {
     }
 
     /// checks if entity is valid
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::is_valid`
     pub fn is_valid(&self) -> bool {
         !self.world.is_null() && unsafe { ecs_is_valid(self.world, self.raw_id) }
     }
 
     /// Checks if entity is alive.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::is_alive`
     pub fn is_alive(&self) -> bool {
         !self.world.is_null() && unsafe { ecs_is_alive(self.world, self.raw_id) }
     }
@@ -128,6 +152,10 @@ impl EntityView {
     /// Returns the entity name.
     ///
     /// if the entity has no name, this will return an empty string
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::name`
     pub fn get_name(&self) -> &'static str {
         let name_ptr = unsafe { ecs_get_name(self.world, self.raw_id) };
 
@@ -141,6 +169,10 @@ impl EntityView {
     /// Returns the entity name.
     ///
     /// if the entity has no name, this will return none
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::name`
     pub fn get_name_optional(&self) -> Option<&'static str> {
         let name_ptr = unsafe { ecs_get_name(self.world, self.raw_id) };
 
@@ -153,6 +185,10 @@ impl EntityView {
 
     //TODO check if we need this -> can we use get_symbol from CachedComponentData?
     /// Returns the entity symbol.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::symbol`
     pub fn get_symbol(&self) -> &'static CStr {
         unsafe { CStr::from_ptr(ecs_get_symbol(self.world, self.raw_id)) }
     }
@@ -161,11 +197,19 @@ impl EntityView {
     /// # Note
     /// if you're using the default separator "::" you can use `get_hierarchy_path_default`
     /// which does no extra heap allocations to communicate with C
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::path`
     pub fn get_hierarchy_path(&self, sep: &CStr, init_sep: &CStr) -> Option<String> {
         self.get_hierarchy_path_from_parent_id(0, sep, init_sep)
     }
 
     /// Return the hierarchical entity path using the default separator "::".
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::path`
     pub fn get_hierarchy_path_default(&self) -> Option<String> {
         self.get_hierarchy_path_from_parent_id_default(0)
     }
@@ -174,6 +218,10 @@ impl EntityView {
     ///
     /// if you're using the default separator "::" you can use `get_hierarchy_path_default`
     /// which does no extra heap allocations to communicate with C
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::path_from`
     pub fn get_hierarchy_path_from_parent_id(
         &self,
         parent: EntityT,
@@ -210,6 +258,10 @@ impl EntityView {
     }
 
     /// Return the hierarchical entity path relative to a parent id using the default separator "::".
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::path_from`
     pub fn get_hierarchy_path_from_parent_id_default(&self, parent: EntityT) -> Option<String> {
         unsafe {
             let raw_ptr = ecs_get_path_w_sep(
@@ -240,6 +292,10 @@ impl EntityView {
     /// # Note
     /// if you're using the default separator "::" you can use `get_hierarchy_path_default`
     /// which does no extra heap allocations to communicate with C
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::path_from`
     pub fn get_hierarchy_path_from_parent_type<T: CachedComponentData>(
         &self,
         sep: &CStr,
@@ -249,23 +305,44 @@ impl EntityView {
     }
 
     /// Return the hierarchical entity path relative to a parent type using the default separator "::".
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::path_from`
     pub fn get_hierarchy_path_from_parent_type_default<T: CachedComponentData>(
         &self,
     ) -> Option<String> {
         self.get_hierarchy_path_from_parent_id_default(T::get_id(self.world))
     }
 
+    /// Checks if the entity is enabled.
+    ///
+    /// # Returns
+    ///
+    /// True if the entity is enabled, false if disabled.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::enabled`
     pub fn is_enabled(&self) -> bool {
         unsafe { !ecs_has_id(self.world, self.raw_id, EcsDisabled) }
     }
 
     /// get the entity's archetype
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::type`
     #[inline(always)]
     pub fn get_archetype(&self) -> Archetype {
         Archetype::new(self.world, unsafe { ecs_get_type(self.world, self.raw_id) })
     }
 
-    /// get the entity's table
+    /// get the entity's type/table
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::table`
     #[inline(always)]
     pub fn get_table(&self) -> Table {
         Table::new(self.world, unsafe {
@@ -278,6 +355,10 @@ impl EntityView {
     /// Returns a range with the entity's row as offset and count set to 1. If
     /// the entity is not stored in a table, the function returns a range with
     /// count 0.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::range`
     #[inline]
     pub fn get_table_range(&self) -> TableRange {
         let ecs_record: *mut ecs_record_t = unsafe { ecs_record_find(self.world, self.raw_id) };
@@ -299,6 +380,10 @@ impl EntityView {
     ///
     /// # Arguments
     /// * `func` - The closure invoked for each matching ID. Must match the signature `FnMut(Id)`.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::each`
     fn for_each_component<F>(&self, mut func: F)
     where
         F: FnMut(Id),
@@ -339,6 +424,10 @@ impl EntityView {
     /// * `first` - The first ID to match against.
     /// * `second` - The second ID to match against.
     /// * `func` - The closure invoked for each matching ID. Must match the signature `FnMut(Id)`.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::each`
     fn for_each_matching_pair<F>(&self, pred: IdT, obj: IdT, mut func: F)
     where
         F: FnMut(Id),
@@ -379,6 +468,10 @@ impl EntityView {
     ///
     /// * `relationship` - The relationship for which to iterate the targets.
     /// * `func` - The closure invoked for each target. Must match the signature `FnMut(Entity)`.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::each`
     pub fn for_each_target_in_relationship_by_entity<F>(
         &self,
         relationship: EntityView,
@@ -401,6 +494,10 @@ impl EntityView {
     /// # Arguments
     ///
     /// * `func` - The function invoked for each target.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::each`
     pub fn for_each_target_in_relationship<T, F>(&self, func: F)
     where
         T: CachedComponentData,
@@ -418,6 +515,10 @@ impl EntityView {
     ///
     /// * `relationship` - The relationship to follow
     /// * `func` - The function invoked for each child. Must match the signature `FnMut(Entity)`.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::children`
     pub fn for_each_children_by_relationship_id<F>(&self, relationship: EntityT, mut func: F)
     where
         F: FnMut(Entity),
@@ -467,6 +568,10 @@ impl EntityView {
     ///
     /// * T - The relationship to follow
     /// * `func` - The function invoked for each child. Must match the signature `FnMut(Entity)`.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::children`
     pub fn for_each_children_by_relationship<T, F>(&self, func: F)
     where
         T: CachedComponentData,
@@ -480,6 +585,10 @@ impl EntityView {
     /// # Arguments
     ///
     /// * `func` - The function invoked for each child. Must match the signature `FnMut(Entity)`.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::children`
     pub fn for_each_child_of<F>(&self, func: F)
     where
         F: FnMut(Entity),
@@ -496,6 +605,10 @@ impl EntityView {
     /// # Returns
     ///
     /// * `*const T` - The enum component, nullptr if the entity does not have the component
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
     pub fn get_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> *const T {
         let component_id = T::get_id(self.world);
         unsafe { ecs_get_id(self.world, self.raw_id, component_id) as *const T }
@@ -510,6 +623,10 @@ impl EntityView {
     /// # Returns
     ///
     /// * `*const T` - The enum component, nullptr if the entity does not have the component
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
     pub fn get_enum_component<T: CachedComponentData + ComponentType<Enum>>(&self) -> *const T {
         let component_id: IdT = T::get_id(self.world);
         let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
@@ -542,6 +659,10 @@ impl EntityView {
     /// # Returns
     ///
     /// * `*const c_void` - Pointer to the component value, nullptr if the entity does not have the component
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
     pub fn get_component_by_id(&self, component_id: IdT) -> *const c_void {
         unsafe { ecs_get_id(self.world, self.raw_id, component_id) }
     }
@@ -555,6 +676,10 @@ impl EntityView {
     ///
     /// * `first` - The first element of the pair
     /// * `second` - The second element of the pair
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
     pub fn get_pair_untyped(&self, first: EntityT, second: EntityT) -> *const c_void {
         unsafe { ecs_get_id(self.world, self.raw_id, ecs_pair(first, second)) }
     }
@@ -572,6 +697,10 @@ impl EntityView {
     /// # Arguments
     ///
     /// * `index` - The index (0 for the first instance of the relationship).
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
     pub fn get_target_from_component<First: CachedComponentData>(&self, index: i32) -> Entity {
         Entity::new_from_existing_raw(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, First::get_id(self.world), index)
@@ -588,6 +717,10 @@ impl EntityView {
     ///
     /// * `first` - The first element of the pair for which to retrieve the target.
     /// * `index` - The index (0 for the first instance of the relationship).
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
     pub fn get_target_from_entity(&self, first: EntityT, index: i32) -> Entity {
         Entity::new_from_existing_raw(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, first, index)
@@ -618,6 +751,10 @@ impl EntityView {
     /// # Returns
     ///
     /// * The entity for which the target `get_has` been found.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
     pub fn get_target_by_component_id(&self, relationship: EntityT, component_id: IdT) -> Entity {
         Entity::new_from_existing_raw(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, relationship, component_id as i32)
@@ -640,6 +777,10 @@ impl EntityView {
     /// # Returns
     ///
     /// * The entity for which the target `get_has` been found.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
     #[inline(always)]
     pub fn get_target_for_component<T: CachedComponentData>(
         &self,
@@ -665,6 +806,10 @@ impl EntityView {
     /// # Returns
     ///
     /// * The entity for which the target `get_has` been found.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
     #[inline(always)]
     pub fn get_target_for_pair<First: CachedComponentData, Second: CachedComponentData>(
         &self,
@@ -677,6 +822,23 @@ impl EntityView {
     }
     // TODO this needs a better name and documentation, the rest of the cpp functions still have to be done as well
     // TODO, I removed the second template parameter and changed the fn parameter second to entityT, check validity
+    /// Get the target for a given pair of components and a relationship.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First` - The first component type to use for deriving the id.
+    ///
+    /// # Arguments
+    ///
+    /// * `second` - The second element of the pair.
+    ///
+    /// # Returns
+    ///
+    /// * The entity for which the target has been found.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
     pub fn get_target_for_pair_as_first<First: CachedComponentData>(
         &self,
         second: EntityT,
@@ -691,7 +853,7 @@ impl EntityView {
         unsafe { ecs_get_id(self.world, comp_id, ecs_pair(comp_id, second)) as *const First }
     }
 
-    /// Retrieves the depth for the given relationship.
+    /// Get the depth for the given relationship.
     ///
     /// # Arguments
     ///
@@ -700,6 +862,10 @@ impl EntityView {
     /// # Returns
     ///
     /// * The depth of the relationship.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::depth`
     #[inline(always)]
     pub fn get_depth_by_id(&self, relationship: EntityT) -> i32 {
         unsafe { ecs_get_depth(self.world, self.raw_id, relationship) }
@@ -717,6 +883,10 @@ impl EntityView {
     /// # Returns
     ///
     /// * The depth of the relationship.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::depth`
     #[inline(always)]
     pub fn get_depth<T: CachedComponentData>(&self) -> i32 {
         self.get_depth_by_id(T::get_id(self.world))
@@ -729,6 +899,10 @@ impl EntityView {
     /// # Returns
     ///
     /// * The parent of the entity.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::parent`
     #[inline(always)]
     pub fn get_parent(&self) -> Entity {
         self.get_target_from_entity(unsafe { EcsChildOf }, 0)
@@ -746,6 +920,10 @@ impl EntityView {
     /// # Returns
     ///
     /// The found entity, or `Entity::null` if no entity matched.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::lookup`
     #[inline(always)]
     pub fn lookup_entity_by_name(&self, path: &CStr) -> Entity {
         ecs_assert!(
@@ -774,6 +952,10 @@ impl EntityView {
     /// # Returns
     ///
     /// True if the entity has the provided entity, false otherwise.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::has`
     #[inline(always)]
     pub fn has_id(&self, entity: IdT) -> bool {
         unsafe { ecs_has_id(self.world, self.raw_id, entity) }
@@ -788,6 +970,10 @@ impl EntityView {
     /// # Returns
     ///
     /// True if the entity has the provided component, false otherwise.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::has`
     pub fn has<T: CachedComponentData + ComponentType<Struct>>(&self) -> bool {
         unsafe { ecs_has_id(self.world, self.raw_id, T::get_id(self.world)) }
     }
@@ -801,6 +987,10 @@ impl EntityView {
     /// # Returns
     ///
     /// True if the entity has the provided component, false otherwise.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::has`
     pub fn has_enum<T: CachedComponentData + ComponentType<Enum>>(&self) -> bool {
         let component_id: IdT = T::get_id(self.world);
         ecs_has_pair(self.world, self.raw_id, component_id, unsafe {
@@ -821,6 +1011,10 @@ impl EntityView {
     /// # Returns
     ///
     /// True if the entity has the provided constant, false otherwise.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::has`
     pub fn has_enum_constant<T>(&self, constant: T) -> bool
     where
         T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
@@ -846,6 +1040,10 @@ impl EntityView {
     /// # Returns
     ///
     /// True if the entity has the provided component, false otherwise.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::has`
     pub fn has_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
         ecs_has_pair(
             self.world,
@@ -865,6 +1063,10 @@ impl EntityView {
     /// # Returns
     ///
     /// True if the entity has the provided component, false otherwise.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::has`
     pub fn has_pair_by_ids(&self, first: IdT, second: IdT) -> bool {
         ecs_has_pair(self.world, self.raw_id, first, second)
     }
@@ -883,6 +1085,10 @@ impl EntityView {
     /// # Returns
     ///
     /// True if the entity has the provided component, false otherwise.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::has`
     pub fn has_pair_with_enum_constant<
         T: CachedComponentData,
         U: CachedComponentData + CachedEnumData,
@@ -909,7 +1115,11 @@ impl EntityView {
     ///
     /// # Returns
     /// - `true` if the entity owns the provided entity, `false` otherwise.
-    pub fn is_entity_owner_of_id(&self, entity_id: IdT) -> bool {
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::owns`
+    pub fn is_owner_of_id(&self, entity_id: IdT) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, entity_id) }
     }
 
@@ -920,7 +1130,11 @@ impl EntityView {
     ///
     /// # Returns
     /// - `true` if the entity owns the provided entity, `false` otherwise.
-    pub fn is_entity_owner_of_entity(&self, entity: Entity) -> bool {
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::owns`
+    pub fn is_owner_of_entity(&self, entity: Entity) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, entity.raw_id) }
     }
 
@@ -932,7 +1146,11 @@ impl EntityView {
     ///
     /// # Returns
     /// - `true` if the entity owns the provided component, `false` otherwise.
-    pub fn is_entity_owner_of<T: CachedComponentData>(&self) -> bool {
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::owns`
+    pub fn is_owner_of<T: CachedComponentData>(&self) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, T::get_id(self.world)) }
     }
 
@@ -944,7 +1162,11 @@ impl EntityView {
     ///
     /// # Returns
     /// - `true` if the entity owns the provided pair, `false` otherwise.
-    pub fn is_entity_owner_of_pair_ids(&self, first: IdT, second: IdT) -> bool {
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::owns`
+    pub fn is_owner_of_pair_ids(&self, first: IdT, second: IdT) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, ecs_pair(first, second)) }
     }
 
@@ -956,7 +1178,11 @@ impl EntityView {
     ///
     /// # Returns
     /// - `true` if the entity owns the provided pair, `false` otherwise.
-    pub fn is_entity_owner_of_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::owns`
+    pub fn is_owner_of_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
         unsafe {
             ecs_owns_id(
                 self.world,
@@ -973,7 +1199,11 @@ impl EntityView {
     ///
     /// # Returns
     /// - `true` if enabled, `false` if not.
-    pub fn is_id_enabled(&self, id: IdT) -> bool {
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::enabled`
+    pub fn is_enabled_id(&self, id: IdT) -> bool {
         unsafe { ecs_is_enabled_id(self.world, self.raw_id, id) }
     }
 
@@ -984,7 +1214,11 @@ impl EntityView {
     ///
     /// # Returns
     /// - `true` if enabled, `false` if not.
-    pub fn is_component_enabled<T: CachedComponentData>(&self) -> bool {
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::enabled`
+    pub fn is_enabled_component<T: CachedComponentData>(&self) -> bool {
         unsafe { ecs_is_enabled_id(self.world, self.raw_id, T::get_id(self.world)) }
     }
 
@@ -996,7 +1230,11 @@ impl EntityView {
     ///
     /// # Returns
     /// - `true` if enabled, `false` if not.
-    pub fn is_pair_ids_enabled(&self, first: IdT, second: IdT) -> bool {
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::enabled`
+    pub fn is_enabled_pair_ids(&self, first: IdT, second: IdT) -> bool {
         unsafe { ecs_is_enabled_id(self.world, self.raw_id, ecs_pair(first, second)) }
     }
 
@@ -1008,8 +1246,12 @@ impl EntityView {
     ///
     /// # Returns
     /// - `true` if enabled, `false` if not.
-    pub fn is_pair_enabled<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
-        self.is_pair_ids_enabled(T::get_id(self.world), U::get_id(self.world))
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::enabled`
+    pub fn is_enabled_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
+        self.is_enabled_pair_ids(T::get_id(self.world), U::get_id(self.world))
     }
 
     /// Test if pair is enabled.
@@ -1022,8 +1264,12 @@ impl EntityView {
     ///
     /// # Returns
     /// - `true` if enabled, `false` if not.
-    pub fn is_pair_enabled_first<T: CachedComponentData>(&self, second: IdT) -> bool {
-        self.is_pair_ids_enabled(T::get_id(self.world), second)
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::enabled`
+    pub fn is_enabled_pair_first<T: CachedComponentData>(&self, second: IdT) -> bool {
+        self.is_enabled_pair_ids(T::get_id(self.world), second)
     }
 
     /// Test if pair is enabled.
@@ -1036,8 +1282,12 @@ impl EntityView {
     ///
     /// # Returns
     /// - `true` if enabled, `false` if not.
-    pub fn is_pair_enabled_second<U: CachedComponentData>(&self, first: IdT) -> bool {
-        self.is_pair_ids_enabled(first, U::get_id(self.world))
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::enabled`
+    pub fn is_enabled_pair_second<U: CachedComponentData>(&self, first: IdT) -> bool {
+        self.is_enabled_pair_ids(first, U::get_id(self.world))
     }
 
     /// Clones the current entity to a new or specified entity.
@@ -1060,6 +1310,10 @@ impl EntityView {
     /// ## Safety
     /// This function makes use of `unsafe` operations to interact with the underlying ECS.
     /// Ensure that the provided `dest_id` is valid or zero
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::clone`
     #[inline(always)]
     pub fn clone(&self, copy_value: bool, mut dest_id: EntityT) -> Entity {
         if dest_id == 0 {
@@ -1093,6 +1347,10 @@ impl EntityView {
     ///
     /// # Returns
     /// - An entity handle that allows for mutations in the current stage.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::mut`
     pub fn get_mutable_handle_for_stage(&self, stage: &World) -> Entity {
         ecs_assert!(
             !stage.is_readonly(),
@@ -1114,6 +1372,10 @@ impl EntityView {
     ///
     /// # Returns
     /// - An entity handle that allows for mutations in the current stage.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::mut`
     pub fn get_mutable_handle_from_entity(&self, entity: &EntityView) -> Entity {
         ecs_assert!(
             !entity.get_as_world().is_readonly(),
@@ -1125,6 +1387,10 @@ impl EntityView {
     }
 
     //might not be needed, in the original c++ impl it was used in the get_mut functions.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::set_stage`
     #[doc(hidden)]
     fn set_stage(&self, stage: *mut WorldT) -> Entity {
         Entity::new_from_existing_raw(stage, self.raw_id)

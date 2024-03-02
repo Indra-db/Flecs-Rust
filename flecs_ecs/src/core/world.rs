@@ -658,15 +658,11 @@ impl World {
         unsafe { ecs_enable_range_check(self.raw_world, enabled) };
     }
 
-    /// Gets the current scope.
+    /// Get the current scope. Get the scope set by ecs_set_scope. If no scope is set, this operation will return 0.
     ///
     /// # Returns
     ///
     /// Returns an `Entity` representing the current scope.
-    ///
-    /// # See Also
-    ///
-    /// Refer to `ecs_get_scope` for underlying implementation details.
     ///
     /// # See also
     ///
@@ -676,7 +672,9 @@ impl World {
         Entity::new_from_existing_raw(self.raw_world, unsafe { ecs_get_scope(self.raw_world) })
     }
 
-    /// Sets the current scope.
+    /// Set the current scope. This operation sets the scope of the current stage to the provided entity.
+    /// As a result new entities will be created in this scope, and lookups will be relative to the provided scope.
+    /// It is considered good practice to restore the scope to the old value.
     ///
     /// This method changes the current scope to the entity represented by the provided `id`.
     ///
@@ -688,10 +686,6 @@ impl World {
     ///
     /// Returns an `Entity` representing the newly set scope.
     ///
-    /// # See Also
-    ///
-    /// Refer to `ecs_set_scope` for underlying implementation details.
-    ///
     /// # See also
     ///
     /// * C++ API: `world::set_scope`
@@ -701,6 +695,9 @@ impl World {
     }
 
     /// Sets the current scope, but allows the scope type to be inferred from the type parameter.
+    /// This operation sets the scope of the current stage to the provided entity.
+    /// As a result new entities will be created in this scope, and lookups will be relative to the provided scope.
+    /// It is considered good practice to restore the scope to the old value.
     ///
     /// # Type Parameters
     ///
@@ -709,10 +706,6 @@ impl World {
     /// # Returns
     ///
     /// Returns an `Entity` representing the newly set scope.
-    ///
-    /// # See Also
-    ///
-    /// Refer to `ecs_set_scope` for underlying implementation details.
     ///
     /// # See also
     ///
@@ -3442,7 +3435,11 @@ impl World {
     ///
     /// # Returns
     ///
-    /// The total number of ticks as an integer.
+    /// Monotonically increasing frame time. The total number of ticks as an integer.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::tick`
     #[inline(always)]
     pub fn get_tick(&self) -> i64 {
         let stats = unsafe { ecs_get_world_info(self.raw_world) };
@@ -3459,6 +3456,10 @@ impl World {
     /// # Returns
     ///
     /// The target FPS as a floating point number.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_target_fps`
     #[inline(always)]
     pub fn get_target_fps(&self) -> super::FTime {
         let stats = unsafe { ecs_get_world_info(self.raw_world) };
