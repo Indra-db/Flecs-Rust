@@ -868,7 +868,7 @@ impl World {
                 name.as_ptr(),
                 SEPARATOR.as_ptr(),
                 SEPARATOR.as_ptr(),
-                true,
+                search_path,
             )
         };
         if entity_id == 0 {

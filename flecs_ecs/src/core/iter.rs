@@ -166,7 +166,10 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::table`
     #[doc(alias = "iter::table")]
     pub fn get_table(&self) -> Table {
-        Table::new(&World::new_wrap_raw_world(self.iter.world), self.iter.table)
+        Table::new(
+            &World::new_wrap_raw_world(self.iter.real_world),
+            self.iter.table,
+        )
     }
 
     /// # See also
@@ -175,7 +178,7 @@ impl<'a> Iter<'a> {
     #[doc(alias = "iter::range")]
     pub fn get_table_range(&mut self) -> TableRange {
         let iter: &mut IterT = self.iter;
-        TableRange::new_raw(iter.world, iter.table, iter.offset, iter.count)
+        TableRange::new_raw(iter.real_world, iter.table, iter.offset, iter.count)
     }
 
     /// Access ctx.

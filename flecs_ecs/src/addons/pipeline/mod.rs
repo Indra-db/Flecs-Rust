@@ -46,6 +46,17 @@ impl<'a, T> Pipeline<'a, T>
 where
     T: Iterable<'a>,
 {
+    /// Create a new pipeline.
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world to create the pipeline in.
+    /// * `desc` - The pipeline description.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `pipeline::pipeline`
+    #[doc(alias = "pipeline::pipeline")]
     pub fn new(world: &World, desc: ecs_pipeline_desc_t) -> Self {
         let entity = Entity::new(world);
         let mut pipeline = Self {
