@@ -61,7 +61,7 @@ pub trait CachedComponentData: Clone + Default {
     /// attempts to register the component with the world. If it's already registered, it does nothing.
     fn register_explicit(world: *mut WorldT);
 
-    /// attemps to register the component with name with the world. If it's already registered, it does nothing.
+    /// attempts to register the component with name with the world. If it's already registered, it does nothing.
     fn register_explicit_named(world: *mut WorldT, name: &CStr);
 
     /// checks if the component is registered with a world.
@@ -583,7 +583,7 @@ fn ecs_rust_component_register_explicit(
     typename: &'static str,
     symbol: &'static str,
     size: usize,
-    aligment: usize,
+    alignment: usize,
     is_component: bool,
     is_existing: *mut bool,
 ) {

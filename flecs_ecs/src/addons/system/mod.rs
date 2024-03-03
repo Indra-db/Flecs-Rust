@@ -35,7 +35,7 @@ impl Deref for System {
 }
 
 impl System {
-    //todo!() in query ect desc is a pointer, does it need to be?
+    //todo!() in query etc desc is a pointer, does it need to be?
     pub fn new(world: &World, mut desc: ecs_system_desc_t, is_instanced: bool) -> Self {
         if !desc.query.filter.instanced {
             desc.query.filter.instanced = is_instanced;

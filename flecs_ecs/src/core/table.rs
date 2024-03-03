@@ -94,7 +94,7 @@ impl Table {
 
     /// Find index for component type in table
     ///
-    /// This operation returns the index of first occurrance of the type in the table type.
+    /// This operation returns the index of first occurrence of the type in the table type.
     ///
     /// This is a constant time operation.
     ///
@@ -116,7 +116,7 @@ impl Table {
 
     /// Find index for (component) id in table type
     ///
-    /// This operation returns the index of first occurrance of the id in the table type. The id may be a wildcard.
+    /// This operation returns the index of first occurrence of the id in the table type. The id may be a wildcard.
     /// The found id may be different from the provided id if it is a wildcard.
     ///
     /// This is a constant time operation.
@@ -146,7 +146,7 @@ impl Table {
 
     /// Find index for pair of component types in table
     ///
-    /// This operation returns the index of first occurrance of the pair in the table type.
+    /// This operation returns the index of first occurrence of the pair in the table type.
     ///
     /// This is a constant time operation.
     ///
@@ -171,7 +171,7 @@ impl Table {
 
     /// Find index for pair of component ids in table type
     ///
-    /// This operation returns the index of first occurrance of the pair in the table type.
+    /// This operation returns the index of first occurrence of the pair in the table type.
     ///
     /// This is a constant time operation.
     ///

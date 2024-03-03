@@ -27,7 +27,7 @@ impl Deref for Observer {
 }
 
 impl Observer {
-    //TODO in query ect desc is a pointer, does it need to be?
+    //TODO in query etc desc is a pointer, does it need to be?
     /// Create a new observer
     ///
     /// # See also

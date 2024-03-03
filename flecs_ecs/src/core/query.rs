@@ -1,5 +1,5 @@
 //! Query API. Queries are used to iterate over entities that match a filter.
-//! Queries are better for persistance than filters, but are slower to create.
+//! Queries are better for persistence than filters, but are slower to create.
 
 use std::ops::{Deref, DerefMut};
 use std::os::raw::{c_char, c_void};

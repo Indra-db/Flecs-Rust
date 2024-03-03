@@ -19,14 +19,14 @@ use common::*;
 
 #[test]
 fn entity_new() {
-    let world = World::default();
+    let world = World::new();
     let entity = world.new_entity();
     assert!(entity.is_valid());
 }
 
 #[test]
 fn entity_new_named() {
-    let world = World::default();
+    let world = World::new();
     let entity = world.new_entity_named(CStr::from_bytes_with_nul(b"test\0").unwrap());
     assert!(entity.is_valid());
     assert_eq!(entity.get_name(), "test");
@@ -34,7 +34,7 @@ fn entity_new_named() {
 
 #[test]
 fn entity_new_named_from_scope() {
-    let world = World::default();
+    let world = World::new();
     let entity = world.new_entity_named(CStr::from_bytes_with_nul(b"Foo\0").unwrap());
     assert!(entity.is_valid());
 
@@ -51,7 +51,7 @@ fn entity_new_named_from_scope() {
 #[test]
 fn entity_new_nested_named_from_nested_scope() {
     // Create a world
-    let world = World::default();
+    let world = World::new();
 
     // Create an entity with nested name "Foo::Bar"
     let entity = world.new_entity_named(CStr::from_bytes_with_nul(b"Foo::Bar\0").unwrap());
@@ -84,7 +84,7 @@ fn entity_new_nested_named_from_nested_scope() {
 #[test]
 fn entity_new_add() {
     // Create a world
-    let world = World::default();
+    let world = World::new();
 
     // Create an entity and add the Position component to it
     let entity = world.new_entity().add_component::<Position>();
@@ -99,7 +99,7 @@ fn entity_new_add() {
 #[test]
 fn entity_new_add_2() {
     // Create a world
-    let world = World::default();
+    let world = World::new();
 
     // Create an entity and add the Position and Velocity components to it
     let entity = world
@@ -120,7 +120,7 @@ fn entity_new_add_2() {
 #[test]
 fn entity_new_set() {
     // Create a world
-    let world = World::default();
+    let world = World::new();
 
     // Create an entity and set the Position component data
     let entity = world
@@ -143,7 +143,7 @@ fn entity_new_set() {
 
 #[test]
 fn entity_new_set_2() {
-    let world = World::default();
+    let world = World::new();
 
     let entity = world
         .new_entity()
@@ -169,7 +169,7 @@ fn entity_new_set_2() {
 
 #[test]
 fn entity_add() {
-    let world = World::default();
+    let world = World::new();
 
     let entity = world.new_entity();
 
@@ -182,7 +182,7 @@ fn entity_add() {
 
 #[test]
 fn entity_remove() {
-    let world = World::default();
+    let world = World::new();
 
     let entity = world.new_entity();
     assert!(entity.is_valid());
@@ -196,7 +196,7 @@ fn entity_remove() {
 
 #[test]
 fn entity_set() {
-    let world = World::default();
+    let world = World::new();
 
     let entity = world.new_entity();
     assert!(entity.is_valid());
@@ -213,7 +213,7 @@ fn entity_set() {
 
 #[test]
 fn entity_add_2() {
-    let world = World::default();
+    let world = World::new();
 
     let entity = world.new_entity();
     assert!(entity.is_valid());
@@ -228,7 +228,7 @@ fn entity_add_2() {
 
 #[test]
 fn entity_add_entity() {
-    let world = World::default();
+    let world = World::new();
 
     let tag = world.new_entity();
     assert_eq!(tag.is_valid(), true);
@@ -242,7 +242,7 @@ fn entity_add_entity() {
 
 #[test]
 fn entity_add_childof() {
-    let world = World::default();
+    let world = World::new();
 
     let parent = world.new_entity();
     assert_eq!(parent.is_valid(), true);
@@ -256,7 +256,7 @@ fn entity_add_childof() {
 
 #[test]
 fn entity_add_instanceof() {
-    let world = World::default();
+    let world = World::new();
 
     let base = world.new_entity();
     assert_eq!(base.is_valid(), true);
@@ -270,7 +270,7 @@ fn entity_add_instanceof() {
 
 #[test]
 fn entity_remove_2() {
-    let world = World::default();
+    let world = World::new();
 
     let entity = world
         .new_entity()
@@ -290,7 +290,7 @@ fn entity_remove_2() {
 
 #[test]
 fn entity_set_2() {
-    let world = World::default();
+    let world = World::new();
 
     let entity = world
         .new_entity()
@@ -315,7 +315,7 @@ fn entity_set_2() {
 
 #[test]
 fn entity_remove_entity() {
-    let world = World::default();
+    let world = World::new();
 
     let tag = world.new_entity();
     assert_eq!(tag.is_valid(), true);
@@ -332,7 +332,7 @@ fn entity_remove_entity() {
 
 #[test]
 fn entity_remove_childof() {
-    let world = World::default();
+    let world = World::new();
 
     let parent = world.new_entity();
     assert_eq!(parent.is_valid(), true);
@@ -349,7 +349,7 @@ fn entity_remove_childof() {
 
 #[test]
 fn entity_remove_instanceof() {
-    let world = World::default();
+    let world = World::new();
 
     let base = world.new_entity();
     assert_eq!(base.is_valid(), true);
@@ -366,7 +366,7 @@ fn entity_remove_instanceof() {
 
 #[test]
 fn entity_get_generic() {
-    let world = World::default();
+    let world = World::new();
     let position = world.add_component::<Position>();
 
     let entity = world
@@ -398,7 +398,7 @@ fn entity_get_mut_generic_w_id() {
 
 #[test]
 fn entity_set_generic() {
-    let world = World::default();
+    let world = World::new();
     let position = world.component::<Position>();
 
     let pos = Position { x: 10.0, y: 20.0 };
@@ -419,7 +419,7 @@ fn entity_set_generic() {
 
 #[test]
 fn entity_set_generic_no_size() {
-    let world = World::default();
+    let world = World::new();
     let position = world.component::<Position>();
 
     let pos = Position { x: 10.0, y: 20.0 };
@@ -438,7 +438,7 @@ fn entity_set_generic_no_size() {
 
 #[test]
 fn entity_add_role() {
-    let world = World::default();
+    let world = World::new();
     let entity = world.new_entity();
 
     let entity = entity.add_flags(ECS_PAIR);
@@ -448,7 +448,7 @@ fn entity_add_role() {
 
 #[test]
 fn entity_remove_role() {
-    let world = World::default();
+    let world = World::new();
     let entity = world.new_entity();
     let id = entity.raw_id;
 
@@ -461,7 +461,7 @@ fn entity_remove_role() {
 
 #[test]
 fn entity_has_role() {
-    let world = World::default();
+    let world = World::new();
     let entity = world.new_entity();
 
     let entity = entity.add_flags(ECS_PAIR);
@@ -473,7 +473,7 @@ fn entity_has_role() {
 
 #[test]
 fn entity_pair_role() {
-    let world = World::default();
+    let world = World::new();
     let entity = world.new_entity();
     let entity2 = world.new_entity();
 
@@ -491,7 +491,7 @@ fn entity_pair_role() {
 
 #[test]
 fn entity_equals() {
-    let world = World::default();
+    let world = World::new();
     let e1 = world.new_entity();
     let e2 = world.new_entity();
 
@@ -515,7 +515,7 @@ fn entity_equals() {
 
 #[test]
 fn entity_compare_0() {
-    let world = World::default();
+    let world = World::new();
     let e = world.new_entity();
     let e0 = world.new_entity_w_id(0);
     let e0_2 = world.new_entity_w_id(0);
@@ -533,7 +533,7 @@ fn entity_compare_0() {
 
 #[test]
 fn entity_compare_literal() {
-    let world = World::default();
+    let world = World::new();
 
     let e1 = world.new_entity_w_id(500);
     let e2 = world.new_entity_w_id(600);
@@ -568,7 +568,7 @@ fn entity_compare_literal() {
 
 #[test]
 fn entity_greater_than() {
-    let world = World::default();
+    let world = World::new();
 
     let e1 = world.new_entity();
     let e2 = world.new_entity();
@@ -579,7 +579,7 @@ fn entity_greater_than() {
 
 #[test]
 fn entity_less_than() {
-    let world = World::default();
+    let world = World::new();
 
     let e1 = world.new_entity();
     let e2 = world.new_entity();
@@ -590,7 +590,7 @@ fn entity_less_than() {
 
 #[test]
 fn entity_not_0_or_1() {
-    let world = World::default();
+    let world = World::new();
 
     let e = world.new_entity();
 
@@ -602,7 +602,7 @@ fn entity_not_0_or_1() {
 
 #[test]
 fn entity_has_childof() {
-    let world = World::default();
+    let world = World::new();
 
     let parent = world.new_entity();
 
@@ -613,7 +613,7 @@ fn entity_has_childof() {
 
 #[test]
 fn entity_has_instanceof() {
-    let world = World::default();
+    let world = World::new();
 
     let base = world.new_entity();
 
@@ -624,7 +624,7 @@ fn entity_has_instanceof() {
 
 #[test]
 fn entity_has_instanceof_indirect() {
-    let world = World::default();
+    let world = World::new();
 
     let base_of_base = world.new_entity();
     let base = world
@@ -638,7 +638,7 @@ fn entity_has_instanceof_indirect() {
 
 #[test]
 fn entity_null_string() {
-    let world = World::default();
+    let world = World::new();
 
     let entity = world.new_entity();
 
@@ -647,7 +647,7 @@ fn entity_null_string() {
 
 #[test]
 fn entity_none_string() {
-    let world = World::default();
+    let world = World::new();
 
     let entity = world.new_entity();
 
@@ -656,7 +656,7 @@ fn entity_none_string() {
 
 #[test]
 fn entity_set_name() {
-    let world = World::default();
+    let world = World::new();
 
     let entity = world.new_entity();
 
@@ -667,7 +667,7 @@ fn entity_set_name() {
 
 #[test]
 fn entity_set_name_optional() {
-    let world = World::default();
+    let world = World::new();
 
     let entity = world.new_entity();
 
@@ -678,7 +678,7 @@ fn entity_set_name_optional() {
 
 #[test]
 fn entity_change_name() {
-    let world = World::default();
+    let world = World::new();
 
     let entity = world.new_entity_named(CStr::from_bytes_with_nul(b"Bar\0").unwrap());
     assert_eq!(entity.get_name(), "Bar");
@@ -692,7 +692,7 @@ fn entity_change_name() {
 
 #[test]
 fn entity_delete() {
-    let world = World::default();
+    let world = World::new();
 
     let entity = world
         .new_entity()
@@ -709,7 +709,7 @@ fn entity_delete() {
 
 #[test]
 fn entity_clear() {
-    let world = World::default();
+    let world = World::new();
 
     let entity = world
         .new_entity()
@@ -744,7 +744,7 @@ fn entity_force_owned_nested() {
 
 #[test]
 fn entity_tag_has_size_zero() {
-    let world = World::default();
+    let world = World::new();
 
     let comp = world.component::<TagA>();
     let ptr = comp.get_component::<EcsComponent>();
@@ -755,7 +755,7 @@ fn entity_tag_has_size_zero() {
 
 #[test]
 fn entity_get_target() {
-    let world = World::default();
+    let world = World::new();
 
     let rel = world.new_entity();
 
@@ -786,7 +786,7 @@ fn entity_get_target() {
 
 #[test]
 fn entity_get_parent() {
-    let world = World::default();
+    let world = World::new();
 
     let parent = world.new_entity();
     let child = world.new_entity().child_of_id(parent.raw_id);
@@ -797,7 +797,7 @@ fn entity_get_parent() {
 
 #[test]
 fn entity_is_enabled_component_disabled() {
-    let world = World::default();
+    let world = World::new();
 
     let entity = world
         .new_entity()
@@ -848,7 +848,7 @@ fn entity_is_enabled_component_disabled() {
 
 #[test]
 fn entity_is_enabled_pair() {
-    let world = World::default();
+    let world = World::new();
 
     let entity = world
         .new_entity()
@@ -877,7 +877,7 @@ fn entity_is_enabled_pair() {
 
 #[test]
 fn entity_is_enabled_pair_ids() {
-    let world = World::default();
+    let world = World::new();
 
     let rel = world.new_entity();
     let tgt_a = world.new_entity();
@@ -904,7 +904,7 @@ fn entity_is_enabled_pair_ids() {
 
 #[test]
 fn entity_is_pair_first_enabled() {
-    let world = World::default();
+    let world = World::new();
 
     let tgt_a = world.new_entity();
     let tgt_b = world.new_entity();
@@ -919,7 +919,7 @@ fn entity_is_pair_first_enabled() {
 
 #[test]
 fn entity_get_type() {
-    let world = World::default();
+    let world = World::new();
 
     let entity = world.new_entity();
     assert!(entity.is_valid());

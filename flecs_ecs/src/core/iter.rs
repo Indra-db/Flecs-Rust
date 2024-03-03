@@ -370,7 +370,7 @@ impl<'a> Iter<'a> {
         unsafe { CStr::from_ptr(c_str) }
     }
 
-    /// Get read/write acccess to field data.
+    /// Get read/write access to field data.
     /// If the matched id for the specified field does not match with the provided
     /// type or if the field is readonly, the function will assert.
     ///

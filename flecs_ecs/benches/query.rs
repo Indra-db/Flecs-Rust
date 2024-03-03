@@ -40,7 +40,7 @@ fn flip_coin() -> bool {
 
 fn query_each_benchmark(c: &mut Criterion) {
     // Setup world and entities
-    let world = World::default();
+    let world = World::new();
 
     for _ in 0..1000_000 {
         let mut e = world.new_entity();

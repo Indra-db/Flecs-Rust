@@ -52,7 +52,7 @@ where
         iter.get_field_data::<T>(index_column)
     }
 
-    /// wether the column / component is shared.
+    /// whether the column / component is shared.
     pub fn is_shared(&self) -> bool {
         self.is_shared
     }

@@ -1,4 +1,3 @@
-
 use std::ffi::c_char;
 use std::ffi::c_void;
 
@@ -21,7 +20,7 @@ type AssignStringFn<T> = extern "C" fn(*mut T, *const c_char);
 type AssignEntityFn<T> = extern "C" fn(*mut T, *mut WorldT, EntityT);
 type AssignNullFn<T> = extern "C" fn(*mut T);
 type ClearFn<T> = extern "C" fn(*mut T);
-//todo!("still have to do ensure_element function fpr collections")
+//todo!("still have to do ensure_element function for collections")
 type EnsureMemberFn<T> = extern "C" fn(*mut T, *const c_char) -> *mut c_void;
 type CountFn<T> = extern "C" fn(*mut T) -> usize;
 type ResizeFn<T> = extern "C" fn(*mut T, usize);

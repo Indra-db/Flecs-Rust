@@ -8,7 +8,7 @@ fn temp_test_hook() {
     static mut COUNT: u32 = 0;
     static mut COUNT2: u32 = 0;
     {
-        let world = World::default();
+        let world = World::new();
         world
             .component::<Position>()
             .on_add(|_e: Entity, p: &mut Position| {
