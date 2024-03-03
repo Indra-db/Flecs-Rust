@@ -1127,42 +1127,13 @@ impl World {
     ///
     /// * C++ API: `world::target`
     #[doc(alias = "world::target")]
-    pub fn get_pair_target<First>(&self, index: Option<i32>) -> Entity
+    pub fn get_target_rel<First>(&self, index: Option<i32>) -> Entity
     where
         First: CachedComponentData,
     {
         let id = First::get_id(self.raw_world);
         Entity::new_from_existing_raw(self.raw_world, unsafe {
             ecs_get_target(self.raw_world, id, id, index.unwrap_or(0))
-        })
-    }
-
-    /// Gets the target for a given pair from a singleton entity.
-    ///
-    /// This operation returns the target for a given pair. The optional
-    /// `index` can be used to iterate through targets, in case the entity has
-    /// multiple instances for the same relationship.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first` - The first element of the pair for which to retrieve the target.
-    /// * `index` - The index (None for the first instance of the relationship).
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::target`
-    #[doc(alias = "world::target")]
-    pub fn get_pair_target_with<T>(&self, relationship: EntityT, index: Option<i32>) -> Entity
-    where
-        T: CachedComponentData,
-    {
-        let id = T::get_id(self.raw_world);
-        Entity::new_from_existing_raw(self.raw_world, unsafe {
-            ecs_get_target(self.raw_world, id, relationship, index.unwrap_or(0))
         })
     }
 
@@ -1181,7 +1152,7 @@ impl World {
     ///
     /// * C++ API: `world::target`
     #[doc(alias = "world::target")]
-    pub fn get_pair_target_with_id(&self, relationship: EntityT, index: Option<usize>) -> Entity {
+    pub fn get_target_rel_id(&self, relationship: EntityT, index: Option<usize>) -> Entity {
         Entity::new_from_existing_raw(self.raw_world, unsafe {
             ecs_get_target(
                 self.raw_world,
