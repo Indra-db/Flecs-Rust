@@ -14,7 +14,7 @@ use crate::addons::pipeline::PipelineBuilder;
 use crate::core::c_binding::bindings::{ecs_stage_t_magic, ecs_world_t_magic};
 
 use crate::core::c_binding::ecs_poly_is_;
-use crate::core::FlecsErrorCode;
+use crate::core::{ecs_is_pair, FlecsErrorCode};
 use crate::ecs_assert;
 
 use super::c_binding::bindings::{
@@ -42,7 +42,7 @@ use super::entity::Entity;
 use super::enum_type::CachedEnumData;
 use super::event::EventData;
 use super::event_builder::{EventBuilder, EventBuilderTyped};
-use super::id::{self, Id, IdType};
+use super::id::{Id, IdType};
 use super::iterable::Iterable;
 use super::observer::Observer;
 use super::observer_builder::ObserverBuilder;
@@ -669,6 +669,7 @@ impl World {
     ///
     /// * C++ API: `world::set_binding_ctx`
     #[doc(alias = "world::set_binding_ctx")]
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn set_binding_context(&self, ctx: *mut c_void, ctx_free: ecs_ctx_free_t) {
         unsafe { ecs_set_ctx(self.raw_world, ctx, ctx_free) }
     }
@@ -2873,6 +2874,11 @@ impl World {
     /// * C++ API: `world::pair`
     #[doc(alias = "world::pair")]
     pub fn get_id_pair_from_ids(&self, first: EntityT, second: EntityT) -> Id {
+        ecs_assert!(
+            !ecs_is_pair(first) && !ecs_is_pair(second),
+            FlecsErrorCode::InvalidParameter,
+            "cannot create nested pairs"
+        );
         Id::new(Some(self), IdType::Pair(first, second))
     }
 
@@ -2924,6 +2930,11 @@ impl World {
     /// * C++ API: `world::pair`
     #[doc(alias = "world::pair")]
     pub fn get_id_pair_second_with_id<First: CachedComponentData>(&self, second: EntityT) -> Id {
+        ecs_assert!(
+            !ecs_is_pair(second),
+            FlecsErrorCode::InvalidParameter,
+            "cannot create nested pairs"
+        );
         Id::new(
             Some(self),
             IdType::Pair(First::get_id(self.raw_world), second),
@@ -3618,8 +3629,8 @@ impl World {
     /// * C++ API: `world::run_pipeline`
     #[doc(alias = "world::run_pipeline")]
     #[inline(always)]
-    pub fn run_pipeline(&self, pipeline: Entity) {
-        Self::run_pipeline_time(self, pipeline, 0.0);
+    pub fn run_pipeline_id(&self, pipeline: Entity) {
+        Self::run_pipeline_id_time(self, pipeline, 0.0);
     }
 
     /// Run pipeline.
@@ -3645,10 +3656,76 @@ impl World {
     /// * C++ API: `world::run_pipeline`
     #[doc(alias = "world::run_pipeline")]
     #[inline(always)]
-    pub fn run_pipeline_time(&self, pipeline: Entity, delta_time: super::FTime) {
+    pub fn run_pipeline_id_time(&self, pipeline: Entity, delta_time: super::FTime) {
         unsafe {
             super::c_binding::ecs_run_pipeline(self.raw_world, pipeline.raw_id, delta_time);
         }
+    }
+
+    /// Run pipeline.
+    /// Runs all systems in the specified pipeline. Can be invoked from multiple
+    /// threads if staging is disabled, managing staging and, if needed, thread
+    /// synchronization.
+    ///
+    /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
+    /// `set_pipeline`()). Using progress() auto-invokes this for the default pipeline.
+    /// Additional pipelines may be run explicitly.
+    ///
+    /// # Note
+    ///
+    /// Only supports single-threaded applications with a single stage when called from an application.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Component` - The associated type to use for the pipeline.
+    ///
+    /// # Arguments
+    ///
+    /// * `delta_time` - Time to advance the world.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::run_pipeline`
+    #[doc(alias = "world::run_pipeline")]
+    pub fn run_pipeline_time<Component>(&self, delta_time: super::FTime)
+    where
+        Component: ComponentType<Struct> + CachedComponentData,
+    {
+        unsafe {
+            super::c_binding::ecs_run_pipeline(
+                self.raw_world,
+                Component::get_id(self.raw_world),
+                delta_time,
+            );
+        }
+    }
+
+    /// Run pipeline.
+    /// Runs all systems in the specified pipeline. Can be invoked from multiple
+    /// threads if staging is disabled, managing staging and, if needed, thread
+    /// synchronization.
+    ///
+    /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
+    /// `set_pipeline`()). Using progress() auto-invokes this for the default pipeline.
+    /// Additional pipelines may be run explicitly.
+    ///
+    /// # Note
+    ///
+    /// Only supports single-threaded applications with a single stage when called from an application.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Component` - The associated type to use for the pipeline.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::run_pipeline`
+    #[doc(alias = "world::run_pipeline")]
+    pub fn run_pipeline<Component>(&self)
+    where
+        Component: ComponentType<Struct> + CachedComponentData,
+    {
+        Self::run_pipeline_time::<Component>(self, 0.0);
     }
 
     /// Set time scale. Increase or decrease simulation speed by the provided multiplier.
@@ -3685,8 +3762,7 @@ impl World {
     #[doc(alias = "world::get_time_scale")]
     #[inline(always)]
     pub fn get_time_scale(&self) -> super::FTime {
-        let stats = unsafe { super::c_binding::ecs_get_world_info(self.raw_world) };
-        unsafe { (*stats).time_scale }
+        self.get_world_info().time_scale
     }
 
     /// Get current tick.
@@ -3705,8 +3781,7 @@ impl World {
     #[doc(alias = "world::tick")]
     #[inline(always)]
     pub fn get_tick(&self) -> i64 {
-        let stats = unsafe { ecs_get_world_info(self.raw_world) };
-        unsafe { (*stats).frame_count_total }
+        self.get_world_info().frame_count_total
     }
 
     /// Get target frames per second (FPS).
@@ -3726,8 +3801,7 @@ impl World {
     #[doc(alias = "world::get_target_fps")]
     #[inline(always)]
     pub fn get_target_fps(&self) -> super::FTime {
-        let stats = unsafe { ecs_get_world_info(self.raw_world) };
-        unsafe { (*stats).target_fps }
+        self.get_world_info().target_fps
     }
 
     /// Set target frames per second (FPS).
@@ -3862,7 +3936,7 @@ impl World {
 impl World {
     /// Create a new app.
     /// The app builder is a convenience wrapper around a loop that runs
-    /// world::progress. An app allows for writing platform agnostic code,
+    /// `world::progress`. An app allows for writing platform agnostic code,
     /// as it provides hooks to modules for overtaking the main loop which is
     /// required for frameworks like emscripten.
     ///

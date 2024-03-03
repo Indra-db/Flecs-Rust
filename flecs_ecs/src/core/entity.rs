@@ -21,7 +21,7 @@ use super::{
     world::World,
     EntityView, ECS_OVERRIDE,
 };
-use super::{ecs_pair, set_helper};
+use super::{ecs_pair, set_helper, ScopedWorld};
 
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Entity {
@@ -1417,6 +1417,7 @@ impl Entity {
         self.disable_pair_ids(First::get_id(world), second)
     }
     /// Entities created in the function will have the current entity.
+    /// This operation is thread safe.
     ///
     /// # Arguments
     ///
@@ -1439,6 +1440,7 @@ impl Entity {
     }
 
     /// Entities created in the function will have a pair consisting of a specified ID and the current entity.
+    /// This operation is thread safe.
     ///
     /// # Arguments
     ///
@@ -1461,6 +1463,7 @@ impl Entity {
     }
 
     /// Entities created in the function will have a pair consisting of the current entity and a specified ID.
+    /// This operation is thread safe.
     ///
     /// # Arguments
     ///
@@ -1484,6 +1487,7 @@ impl Entity {
     }
 
     /// Entities created in the function will have a pair consisting of a specified component and the current entity.
+    /// This operation is thread safe.
     ///
     /// # Type Parameters
     ///
@@ -1506,6 +1510,7 @@ impl Entity {
     }
 
     /// Entities created in the function will have a pair consisting of the current entity and a specified component.
+    /// This operation is thread safe.
     ///
     /// # Type Parameters
     ///
@@ -1537,7 +1542,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::scope`
     #[doc(alias = "entity_builder::scope")]
-    pub fn scope<F>(&self, func: F) -> &Self
+    pub fn run_in_scope<F>(&self, func: F) -> &Self
     where
         F: FnOnce(),
     {
@@ -1547,6 +1552,20 @@ impl Entity {
             ecs_set_scope(self.world, prev);
         }
         self
+    }
+
+    /// Return world scoped to entity
+    ///
+    /// # Returns
+    ///
+    /// A world scoped to the entity.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_builder::get_world`
+    #[doc(alias = "entity_builder::get_world")]
+    pub fn scope(&self) -> ScopedWorld {
+        ScopedWorld::new(&World::new_wrap_raw_world(self.world), self.raw_id)
     }
 
     /// Gets a mutable pointer to a component value.

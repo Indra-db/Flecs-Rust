@@ -167,7 +167,7 @@ impl App {
     }
 
     /// Run application. This will run the application with the parameters specified in desc.
-    /// After the application quits (ecs_quit() is called) the world will be cleaned up.
+    /// After the application quits (`ecs_quit`() is called) the world will be cleaned up.
     /// If a custom run action is set, it will be invoked by this operation.
     /// The default run action calls the frame action in a loop until it returns a non-zero value.
     ///

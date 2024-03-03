@@ -5,14 +5,15 @@ use std::{
 
 use crate::{
     core::{
-        c_binding::bindings::{ecs_emit, ecs_get_world, ECS_INVALID_PARAMETER},
-        ecs_record_to_row,
+        c_binding::bindings::{ecs_emit, ecs_get_world},
     },
-    ecs_assert,
 };
 
 use super::{
-    c_binding::bindings::{ecs_event_desc_t, ecs_record_find, ecs_record_t, FLECS_EVENT_DESC_MAX},
+    c_binding::{
+        bindings::{ecs_event_desc_t, FLECS_EVENT_DESC_MAX},
+        ecs_enqueue,
+    },
     c_types::{EntityT, IdT, TableT, TypeT},
     component_registration::CachedComponentData,
     ecs_pair,
@@ -161,23 +162,7 @@ impl EventBuilder {
     /// * C++ API: `event_builder_base::entity`
     #[doc(alias = "event_builder_base::entity")]
     pub fn set_entity_to_emit(&mut self, entity: EntityT) -> &mut Self {
-        let record: *mut ecs_record_t = unsafe { ecs_record_find(self.world.raw_world, entity) };
-
-        // can't emit for empty entity
-        ecs_assert!(
-            !record.is_null(),
-            ECS_INVALID_PARAMETER,
-            "Can't emit for empty record"
-        );
-        ecs_assert!(
-            unsafe { !(*record).table.is_null() },
-            ECS_INVALID_PARAMETER,
-            "Can't emit for empty record tble"
-        );
-
-        self.desc.table = unsafe { (*record).table };
-        self.desc.offset = ecs_record_to_row(unsafe { (*record).row });
-        self.desc.count = 1;
+        self.desc.entity = entity;
         self
     }
 
@@ -207,18 +192,24 @@ impl EventBuilder {
     /// * C++ API: `event_builder_base::emit`
     #[doc(alias = "event_builder_base::emit")]
     pub fn emit(&mut self) {
-        ecs_assert!(self.ids.count > 0, ECS_INVALID_PARAMETER, "No ids to emit");
-        ecs_assert!(
-            !self.desc.table.is_null(),
-            ECS_INVALID_PARAMETER,
-            "No table to emit"
-        );
-
         self.ids.array = self.ids_array.as_mut_ptr();
         self.desc.ids = &self.ids;
         self.desc.observable =
             unsafe { ecs_get_world(self.world.raw_world as *const c_void) } as *mut c_void;
         unsafe { ecs_emit(self.world.raw_world, &mut self.desc) };
+    }
+
+    pub fn enqueue(&mut self) {
+        self.ids.array = self.ids_array.as_mut_ptr();
+        self.desc.ids = &self.ids;
+        self.desc.observable =
+            unsafe { ecs_get_world(self.world.raw_world as *const c_void) } as *mut c_void;
+        unsafe {
+            ecs_enqueue(
+                self.world.raw_world,
+                &mut self.desc as *mut ecs_event_desc_t,
+            );
+        };
     }
 }
 

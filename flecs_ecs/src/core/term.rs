@@ -1,14 +1,16 @@
 use std::ffi::CStr;
 
 use crate::{
-    core::{strip_prefix_cstr_raw, FlecsErrorCode},
+    core::{
+        c_binding::ecs_get_alive, ecs_is_pair, ecs_pair_first, strip_prefix_cstr_raw,
+        FlecsErrorCode,
+    },
     ecs_assert,
 };
 
 use super::{
     c_binding::bindings::{
         ecs_term_copy, ecs_term_finalize, ecs_term_fini, ecs_term_is_initialized, ecs_term_move,
-        ECS_ID_FLAGS_MASK,
     },
     c_types::{
         EntityT, Flags32T, IdT, InOutKind, OperKind, TermIdT, TermT, WorldT, ECS_CASCADE,
@@ -19,6 +21,7 @@ use super::{
     entity::Entity,
     id::Id,
     world::World,
+    ECS_DESC, RUST_ECS_ID_FLAGS_MASK,
 };
 
 /// Struct that describes a term identifier.
@@ -210,7 +213,7 @@ impl Term {
             term_ptr: std::ptr::null_mut(),
             term: Default::default(),
         };
-        if id & ECS_ID_FLAGS_MASK as u64 != 0 {
+        if id & RUST_ECS_ID_FLAGS_MASK != 0 {
             obj.term.id = id;
         } else {
             obj.term.first.id = id;
@@ -228,7 +231,7 @@ impl Term {
             term_ptr: std::ptr::null_mut(),
             term: Default::default(),
         };
-        if id & ECS_ID_FLAGS_MASK as u64 != 0 {
+        if id & RUST_ECS_ID_FLAGS_MASK != 0 {
             obj.term.id = id;
         } else {
             obj.term.first.id = id;
@@ -554,6 +557,13 @@ pub trait TermBuilder: Sized {
         self
     }
 
+    /// Use with cascade to iterate results in descending (bottom + top) order.
+    fn desc(&mut self) -> &mut Self {
+        self.assert_term_id();
+        unsafe { (*self.get_term_id()).flags |= ECS_DESC };
+        self
+    }
+
     /// the parent flag is short for up (`flecs::ChildOf`)
     ///
     /// # See also
@@ -602,7 +612,7 @@ pub trait TermBuilder: Sized {
         self
     }
 
-    /// Specify value of identifier by id. Amost the same as id(entity), but this
+    /// Specify value of identifier by id. Almost the same as id(entity), but this
     /// operation explicitly sets the `flecs::IsEntity` flag. This forces the id to
     /// be interpreted as entity, whereas not setting the flag would implicitly
     /// convert ids for builtin variables such as `flecs::This` to a variable.
@@ -1133,7 +1143,13 @@ pub trait TermBuilder: Sized {
             };
 
             ecs_assert!(sid != 0, FlecsErrorCode::InvalidParameter, "invalid id");
-            (*self.get_raw_term()).src.id = sid;
+
+            if !ecs_is_pair(sid) {
+                (*self.get_raw_term()).src.id = sid;
+            } else {
+                (*self.get_raw_term()).src.id =
+                    ecs_get_alive(self.get_world(), ecs_pair_first(sid));
+            }
         }
         self
     }

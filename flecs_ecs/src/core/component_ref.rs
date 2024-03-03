@@ -63,16 +63,34 @@ impl<T: CachedComponentData> Ref<T> {
         }
     }
     /// Get component from ref.
-    /// Get component pointer from ref.
+    ///
+    /// # Safety
+    ///
+    /// This function assumes you know what you are doing and that the component is valid.
+    /// Dereferences the component ref without checking.
     ///
     /// # See also
     ///
     /// * C++ API: `ref::get`
     #[doc(alias = "ref::get")]
-    pub fn get(&mut self) -> *mut T {
+    pub fn get_unchecked(&mut self) -> &mut T {
         unsafe {
-            ecs_ref_get_id(self.world, &mut self.component_ref, self.component_ref.id) as *mut T
+            &mut *(ecs_ref_get_id(self.world, &mut self.component_ref, self.component_ref.id)
+                as *mut T)
         }
+    }
+
+    /// Try to get component from ref.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `ref::try_get`
+    #[doc(alias = "ref::try_get")]
+    pub fn get(&mut self) -> Option<&mut T> {
+        if self.world.is_null() || self.component_ref.entity == 0 {
+            return None;
+        }
+        Some(self.get_unchecked())
     }
 
     pub fn entity(&self) -> Entity {

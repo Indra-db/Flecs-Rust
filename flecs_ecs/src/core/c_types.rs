@@ -171,8 +171,47 @@ pub const ECS_QUERY: u64 = 5;
 pub const ECS_OBSERVER: u64 = 6;
 pub const ECS_SYSTEM: u64 = 7;
 
-// The base ID, equivalent to the C #define
+///Term flags
+
+///  The base ID, equivalent to the C #define
 pub const FLECS_HI_COMPONENT_ID: u64 = 256;
+
+/// Match on self
+pub const ECS_SELF: u32 = 1 << 1;
+
+/// Match by traversing upwards
+pub const ECS_UP: u32 = 1 << 2;
+
+/// Match by traversing downwards (derived, cannot be set)
+pub const ECS_DOWN: u32 = 1 << 3;
+
+/// Match all entities encountered through traversal
+pub const ECS_TRAVERSE_ALL: u32 = 1 << 4;
+
+/// Sort results breadth first
+pub const ECS_CASCADE: u32 = 1 << 5;
+
+/// Iterate groups in descending order (used for ordering)
+pub const ECS_DESC: u32 = 1 << 6;
+
+/// Short for up(ChildOf)
+pub const ECS_PARENT: u32 = 1 << 7;
+
+/// Term id is a variable
+pub const ECS_IS_VARIABLE: u32 = 1 << 8;
+
+/// Term id is an entity
+pub const ECS_IS_ENTITY: u32 = 1 << 9;
+
+/// Term id is a name (don't attempt to lookup as entity)
+pub const ECS_IS_NAME: u32 = 1 << 10;
+
+/// Prevent observer from triggering on term
+pub const ECS_FILTER: u32 = 1 << 11;
+
+/// Union of flags used for traversing (EcsUp|EcsDown|EcsTraverseAll|EcsSelf|EcsCascade|EcsParent)
+pub const ECS_TRAVERSE_FLAGS: u32 =
+    ECS_UP | ECS_DOWN | ECS_TRAVERSE_ALL | ECS_SELF | ECS_CASCADE | ECS_DESC | ECS_PARENT;
 
 // Core scopes & entities
 pub const ECS_WORLD: u64 = FLECS_HI_COMPONENT_ID;
@@ -496,40 +535,6 @@ impl CachedComponentData for Poly {
         &name[..name.len() - 1]
     }
 }
-
-/// Match on self
-pub const ECS_SELF: u32 = 1 << 1;
-
-/// Match by traversing upwards
-pub const ECS_UP: u32 = 1 << 2;
-
-/// Match by traversing downwards (derived, cannot be set)
-pub const ECS_DOWN: u32 = 1 << 3;
-
-/// Match all entities encountered through traversal
-pub const ECS_TRAVERSE_ALL: u32 = 1 << 4;
-
-/// Sort results breadth first
-pub const ECS_CASCADE: u32 = 1 << 5;
-
-/// Short for up(ChildOf)
-pub const ECS_PARENT: u32 = 1 << 6;
-
-/// Term id is a variable
-pub const ECS_IS_VARIABLE: u32 = 1 << 7;
-
-/// Term id is an entity
-pub const ECS_IS_ENTITY: u32 = 1 << 8;
-
-/// Term id is a name (don't attempt to lookup as entity)
-pub const ECS_IS_NAME: u32 = 1 << 9;
-
-/// Prevent observer from triggering on term
-pub const ECS_FILTER: u32 = 1 << 10;
-
-/// Union of flags used for traversing (EcsUp|EcsDown|EcsTraverseAll|EcsSelf|EcsCascade|EcsParent)
-pub const ECS_TRAVERSE_FLAGS: u32 =
-    ECS_UP | ECS_DOWN | ECS_TRAVERSE_ALL | ECS_SELF | ECS_CASCADE | ECS_PARENT;
 
 impl Default for ecs_type_t {
     fn default() -> Self {

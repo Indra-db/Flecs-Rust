@@ -101,6 +101,7 @@ where
         let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
             name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
             ..default::Default::default()
         };
 

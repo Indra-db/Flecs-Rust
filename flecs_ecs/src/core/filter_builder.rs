@@ -1,3 +1,4 @@
+//! Filters are cheaper to create, but slower to iterate than queries.
 use std::{ffi::CStr, os::raw::c_void, ptr};
 
 use crate::{
@@ -26,6 +27,7 @@ use super::{
     InOutType,
 };
 
+/// Filters are cheaper to create, but slower to iterate than queries.
 pub struct FilterBuilder<'a, T>
 where
     T: Iterable<'a>,
@@ -269,12 +271,16 @@ pub trait FilterBuilderImpl: TermBuilder {
     #[doc(alias = "filter_builder_i::with")]
     fn with(&mut self, with: FilterType) -> &mut Self {
         match with {
-            FilterType::Id(id) => self.term_with_id(id),
-            FilterType::Name(name) => self.term_with_name(name),
-            FilterType::PairIds(rel, target) => self.term_with_pair_ids(rel, target),
-            FilterType::PairNames(rel, target) => self.term_with_pair_names(rel, target),
-            FilterType::PairIdName(rel, target) => self.term_with_pair_id_name(rel, target),
-            FilterType::Term(term) => self.term_with_term(term),
+            FilterType::Id(id) => self.term_with_id(id).inout_none(),
+            FilterType::Name(name) => self.term_with_name(name).inout_none(),
+            FilterType::PairIds(rel, target) => self.term_with_pair_ids(rel, target).inout_none(),
+            FilterType::PairNames(rel, target) => {
+                self.term_with_pair_names(rel, target).inout_none()
+            }
+            FilterType::PairIdName(rel, target) => {
+                self.term_with_pair_id_name(rel, target).inout_none()
+            }
+            FilterType::Term(term) => self.term_with_term(term).inout_none(),
         }
     }
 

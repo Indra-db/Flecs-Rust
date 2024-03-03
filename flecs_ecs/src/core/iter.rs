@@ -418,6 +418,26 @@ impl<'a> Iter<'a> {
         self.get_field_untyped_internal(index)
     }
 
+    /// Get readonly access to entity ids.
+    ///
+    /// # Returns
+    ///
+    /// The entity ids.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter::entities`
+    #[doc(alias = "iter::entities")]
+    pub fn get_entities(&self) -> &[Entity] {
+        unsafe {
+            std::slice::from_raw_parts(
+                self.iter.entities as *const Entity,
+                self.iter.count as usize,
+            )
+        }
+        //TODO this should return our Column struct. check cpp.
+    }
+
     /// Obtain the total number of tables the iterator will iterate over.
     ///
     /// # Returns

@@ -1,3 +1,5 @@
+//! Cached query implementation. Fast to iterate, but slower to create than Filter
+
 use std::{
     ffi::CStr,
     ops::Deref,
@@ -20,6 +22,7 @@ use super::{
     world::World,
 };
 
+/// Fast to iterate, but slower to create than Filter
 pub struct QueryBuilder<'a, T>
 where
     T: Iterable<'a>,

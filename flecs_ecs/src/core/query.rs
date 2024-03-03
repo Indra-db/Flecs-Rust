@@ -185,17 +185,8 @@ where
         self.query = std::ptr::null_mut();
     }
 
-    fn each_term(&self, mut func: impl FnMut(Term), query: *mut QueryT) {
-        unsafe {
-            let filter = ecs_query_get_filter(query);
-            for i in 0..(*filter).term_count {
-                let term = Term::new(
-                    Some(&self.world),
-                    TermType::Term(*(*filter).terms.add(i as usize)),
-                );
-                func(term);
-            }
-        }
+    fn each_term(&self, func: impl FnMut(&mut Term)) {
+        self.filter().each_term(func);
     }
 
     /// Get the filter of the query as read only

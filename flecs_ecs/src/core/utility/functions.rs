@@ -12,6 +12,7 @@ use crate::{
         c_types::{EntityT, IdT, InOutKind, IterT, OperKind, WorldT, ECS_DEPENDS_ON, ECS_PAIR},
         component_registration::CachedComponentData,
         utility::errors::FlecsErrorCode,
+        RUST_ECS_ID_FLAGS_MASK,
     },
     ecs_assert,
 };
@@ -49,6 +50,11 @@ pub fn ecs_entity_t_comb(lo: u64, hi: u64) -> u64 {
 #[inline(always)]
 pub fn ecs_pair(pred: u64, obj: u64) -> u64 {
     ECS_PAIR | ecs_entity_t_comb(obj, pred)
+}
+
+/// Checks if given entity is a pair
+pub fn ecs_is_pair(entity: EntityT) -> bool {
+    entity & RUST_ECS_ID_FLAGS_MASK == ECS_PAIR
 }
 
 /// Set the `ECS_DEPENDS_ON` flag for the given entity.

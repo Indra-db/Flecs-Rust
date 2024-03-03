@@ -1,3 +1,5 @@
+//! Pipelines order and schedule systems for execution.
+
 mod pipeline_builder;
 
 pub use pipeline_builder::*;
@@ -12,6 +14,7 @@ use crate::{
     ecs_abort,
 };
 
+/// Pipelines order and schedule systems for execution.
 pub struct Pipeline<'a, T>
 where
     T: Iterable<'a>,

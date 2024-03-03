@@ -1,4 +1,4 @@
-//! System module.
+//! Systems are a query + function that can be ran manually or by a pipeline.
 //!
 //! The system module allows for creating and running systems. A system is a
 //! query in combination with a callback function. In addition systems have
@@ -87,7 +87,7 @@ impl System {
         }
     }
 
-    /// Initialize the system module and register the TickSource component
+    /// Initialize the system module and register the `TickSource` component
     ///
     /// # Arguments
     ///

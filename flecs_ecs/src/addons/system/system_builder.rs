@@ -1,3 +1,4 @@
+//! Systems are a query + function that can be ran manually or by a pipeline.
 use std::{
     ffi::CStr,
     ops::{Deref, DerefMut},
@@ -98,6 +99,7 @@ where
         let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
             name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
         obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
@@ -167,6 +169,11 @@ where
     /// # Arguments
     ///
     /// * `value` - if false, the system will always run on a single thread.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `system_builder_i::multi_threaded`
+    #[doc(alias = "system_builder_i::multi_threaded")]
     pub fn multi_threaded(&mut self, value: bool) -> &mut Self {
         self.desc.multi_threaded = value;
         self
@@ -177,6 +184,11 @@ where
     /// # Arguments
     ///
     /// * `value` - If false,  system will always run staged.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `system_builder_i::no_readonly`
+    #[doc(alias = "system_builder_i::no_readonly")]
     pub fn no_readonly(&mut self, value: bool) -> &mut Self {
         self.desc.no_readonly = value;
         self
@@ -188,6 +200,11 @@ where
     /// # Arguments
     ///
     /// * `interval` - The interval value.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `system_builder_i::interval`
+    #[doc(alias = "system_builder_i::interval")]
     pub fn interval(&mut self, interval: FTimeT) -> &mut Self {
         self.desc.interval = interval;
         self
@@ -202,6 +219,11 @@ where
     ///
     /// * `tick_source` - The tick source.
     /// * `rate` - The multiple at which to run the system
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `system_builder_i::rate`
+    #[doc(alias = "system_builder_i::rate")]
     pub fn rate_w_tick_source(&mut self, tick_source: EntityT, rate: i32) -> &mut Self {
         self.desc.rate = rate;
         self.desc.tick_source = tick_source;
@@ -216,6 +238,11 @@ where
     /// # Arguments
     ///
     /// * `rate` - The multiple at which to run the system
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `system_builder_i::rate`
+    #[doc(alias = "system_builder_i::rate")]
     pub fn rate(&mut self, rate: i32) -> &mut Self {
         self.desc.rate = rate;
         self
@@ -227,29 +254,33 @@ where
     /// # Arguments
     ///
     /// * `tick_source` - The tick source.
-    pub fn tick_source(&mut self, tick_source: EntityT) -> &mut Self {
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `system_builder_i::tick_source`
+    #[doc(alias = "system_builder_i::tick_source")]
+    pub fn tick_source_id(&mut self, tick_source: EntityT) -> &mut Self {
         self.desc.tick_source = tick_source;
         self
     }
 
-    fn get_binding_ctx(&mut self) -> &mut ObserverSystemBindingCtx {
-        let mut binding_ctx: *mut ObserverSystemBindingCtx = self.desc.binding_ctx as *mut _;
-
-        if binding_ctx.is_null() {
-            let new_binding_ctx = Box::<ObserverSystemBindingCtx>::default();
-            let static_ref = Box::leak(new_binding_ctx);
-            binding_ctx = static_ref;
-            self.desc.binding_ctx = binding_ctx as *mut c_void;
-            self.desc.binding_ctx_free = Some(Self::binding_ctx_drop);
-        }
-        unsafe { &mut *binding_ctx }
-    }
-
-    extern "C" fn binding_ctx_drop(ptr: *mut c_void) {
-        let ptr_struct: *mut ObserverSystemBindingCtx = ptr as *mut ObserverSystemBindingCtx;
-        unsafe {
-            ptr::drop_in_place(ptr_struct);
-        }
+    /// Set tick source.
+    /// This operation sets a shared tick source for the system.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The type associated with the singleton tick source to use for the system
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `system_builder_i::tick_source`
+    #[doc(alias = "system_builder_i::tick_source")]
+    pub fn tick_source<Component>(&mut self) -> &mut Self
+    where
+        Component: CachedComponentData,
+    {
+        self.desc.tick_source = Component::get_id(self.world.raw_world);
+        self
     }
 
     /// Set system context
@@ -486,6 +517,28 @@ where
             }
 
             ecs_table_unlock((*iter).world, (*iter).table);
+        }
+    }
+
+    /// Set system callback `binding_ctx`
+    fn get_binding_ctx(&mut self) -> &mut ObserverSystemBindingCtx {
+        let mut binding_ctx: *mut ObserverSystemBindingCtx = self.desc.binding_ctx as *mut _;
+
+        if binding_ctx.is_null() {
+            let new_binding_ctx = Box::<ObserverSystemBindingCtx>::default();
+            let static_ref = Box::leak(new_binding_ctx);
+            binding_ctx = static_ref;
+            self.desc.binding_ctx = binding_ctx as *mut c_void;
+            self.desc.binding_ctx_free = Some(Self::binding_ctx_drop);
+        }
+        unsafe { &mut *binding_ctx }
+    }
+
+    /// drop callback `binding_ctx`
+    extern "C" fn binding_ctx_drop(ptr: *mut c_void) {
+        let ptr_struct: *mut ObserverSystemBindingCtx = ptr as *mut ObserverSystemBindingCtx;
+        unsafe {
+            ptr::drop_in_place(ptr_struct);
         }
     }
 }

@@ -1,3 +1,5 @@
+//! Filters are cheaper to create, but slower to iterate than queries.
+
 use super::{
     c_binding::{
         bindings::{
@@ -208,14 +210,15 @@ where
     ///
     /// * C++ API: `filter_base::term`
     #[doc(alias = "filter_base::term")]
-    fn each_term_impl(&self, mut func: impl FnMut(Term), filter: *mut FilterT) {
+    fn each_term_impl(&self, mut func: impl FnMut(&mut Term), filter: *mut FilterT) {
         unsafe {
             for i in 0..(*filter).term_count {
-                let term = Term::new(
+                let mut term = Term::new(
                     Some(&self.world),
                     TermType::Term(*(*filter).terms.add(i as usize)),
                 );
-                func(term);
+                func(&mut term);
+                term.reset(); // prevent freeing resources
             }
         }
     }
@@ -394,7 +397,7 @@ where
     ///
     /// * C++ API: `filter_base::term`
     #[doc(alias = "filter_base::term")]
-    pub fn each_term(&self, func: impl FnMut(Term)) {
+    pub fn each_term(&self, func: impl FnMut(&mut Term)) {
         self.base.each_term_impl(func, self.filter_ptr);
     }
 
@@ -447,6 +450,7 @@ where
     }
 }
 
+/// Filters are cheaper to create, but slower to iterate than queries.
 pub struct Filter<'a, T>
 where
     T: Iterable<'a>,
@@ -649,9 +653,9 @@ where
     ///
     /// # See also
     ///
-    /// * C++ API: `filter_base::term`
-    #[doc(alias = "filter_base::term")]
-    pub fn each_term(&mut self, func: impl FnMut(Term)) {
+    /// * C++ API: `filter_base::each_term`
+    #[doc(alias = "filter_base::each_term")]
+    pub fn each_term(&mut self, func: impl FnMut(&mut Term)) {
         self.base.each_term_impl(func, &mut self.filter);
     }
 
