@@ -7,7 +7,7 @@ use std::os::raw::{c_char, c_void};
 use crate::ecs_assert;
 
 use super::c_binding::bindings::{
-    _ecs_abort, ecs_filter_str, ecs_filter_t, ecs_get_entity, ecs_os_api, ecs_query_changed,
+    ecs_abort_, ecs_filter_str, ecs_filter_t, ecs_get_entity, ecs_os_api, ecs_query_changed,
     ecs_query_desc_t, ecs_query_fini, ecs_query_get_filter, ecs_query_get_group_info,
     ecs_query_init, ecs_query_iter, ecs_query_next, ecs_query_orphaned, ecs_table_lock,
     ecs_table_unlock,
@@ -72,7 +72,7 @@ where
         };
         unsafe {
             if obj.query.is_null() {
-                _ecs_abort(
+                ecs_abort_(
                     FlecsErrorCode::InvalidParameter.to_int(),
                     file!().as_ptr() as *const i8,
                     line!() as i32,
@@ -241,7 +241,7 @@ where
     ///
     /// * C++ API: `query_base::term_count`
     #[doc(alias = "query_base::term_count")]
-    fn field_count(&self) -> i32 {
+    fn field_count(&self) -> i8 {
         unsafe { (*ecs_query_get_filter(self.query)).term_count }
     }
 

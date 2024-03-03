@@ -246,7 +246,8 @@ impl Id {
         Entity::new_from_existing_raw(self.world, self.raw_id | flags)
     }
 
-    /// Return id with role removed. This function checks if the id has the specified role, and if it does not, the function will assert.
+    /// Return id with role removed.
+    /// This function checks if the id has the specified role, and if it does not, the function will assert.
     ///
     /// # See also
     ///

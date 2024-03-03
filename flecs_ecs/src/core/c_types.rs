@@ -331,7 +331,7 @@ impl Default for EcsComponent {
 
 fn get_ecs_component_data() -> ComponentData {
     ComponentData {
-        id: unsafe { FLECS__EEcsComponent },
+        id: unsafe { FLECS_IDEcsComponentID_ },
         size: std::mem::size_of::<EcsComponent>(),
         alignment: std::mem::align_of::<EcsComponent>(),
         allow_tag: true,
@@ -351,12 +351,12 @@ impl ComponentType<Struct> for EcsComponent {}
 
 impl CachedComponentData for EcsComponent {
     fn register_explicit(_world: *mut WorldT) {
-        //this is already registered as FLECS__EEcsComponent
+        //this is already registered as FLECS_IDEcsComponentID_
         Self::__get_once_lock_data().get_or_init(get_ecs_component_data);
     }
 
     fn register_explicit_named(_world: *mut WorldT, _name: &CStr) {
-        //this is already registered as FLECS__EEcsComponent
+        //this is already registered as FLECS_IDEcsComponentID_
         Self::__get_once_lock_data().get_or_init(get_ecs_component_data);
     }
 
@@ -430,12 +430,12 @@ impl ComponentType<Struct> for Poly {}
 
 impl CachedComponentData for Poly {
     fn register_explicit(_world: *mut WorldT) {
-        //this is already registered as FLECS__EEcsComponent
+        //this is already registered as FLECS_IDEcsComponentID_
         Self::__get_once_lock_data().get_or_init(get_ecs_poly_data);
     }
 
     fn register_explicit_named(_world: *mut WorldT, _name: &CStr) {
-        //this is already registered as FLECS__EEcsComponent
+        //this is already registered as FLECS_IDEcsComponentID_
         Self::__get_once_lock_data().get_or_init(get_ecs_poly_data);
     }
 
@@ -601,6 +601,10 @@ impl Default for ecs_query_desc_t {
             group_by_ctx: std::ptr::null_mut(),
             group_by_ctx_free: Default::default(),
             parent: std::ptr::null_mut(),
+            ctx: std::ptr::null_mut(),
+            binding_ctx: std::ptr::null_mut(),
+            ctx_free: Default::default(),
+            binding_ctx_free: Default::default(),
         }
     }
 }
@@ -677,9 +681,10 @@ impl Default for ecs_event_desc_t {
             offset: Default::default(),
             count: Default::default(),
             entity: Default::default(),
-            param: std::ptr::null(),
+            param: std::ptr::null_mut(),
             observable: std::ptr::null_mut(),
             flags: Default::default(),
+            const_param: std::ptr::null(),
         }
     }
 }
@@ -750,6 +755,7 @@ impl Default for EcsOpaque {
             ensure_member: Default::default(),
             count: Default::default(),
             resize: Default::default(),
+            assign_id: Default::default(),
         }
     }
 }

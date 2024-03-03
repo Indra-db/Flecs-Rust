@@ -6,6 +6,8 @@ pub trait EventData {}
 /// Event builder trait to implement '`set_event_data`' for untyped and typed `EventBuilder`
 pub trait EventBuilderImpl {
     type BuiltType;
+    type ConstBuiltType;
 
     fn set_event_data(&mut self, data: Self::BuiltType) -> &mut Self;
+    fn set_event_data_const(&mut self, data: Self::ConstBuiltType) -> &mut Self;
 }

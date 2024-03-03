@@ -1,8 +1,9 @@
 use std::{ops::Deref, os::raw::c_void};
 
 use super::{
-    c_binding::bindings::{
-        ecs_get_observer_ctx, ecs_observer_desc_t, ecs_observer_init, ecs_observer_t, ecs_os_api,
+    c_binding::{
+        bindings::{ecs_observer_desc_t, ecs_observer_init, ecs_observer_t, ecs_os_api},
+        ecs_observer_get_ctx,
     },
     c_types::{Poly, ECS_OBSERVER},
     entity::Entity,
@@ -88,7 +89,7 @@ impl Observer {
     /// * C++ API: `observer::ctx`
     #[doc(alias = "observer::ctx")]
     pub fn get_context(&self) -> *mut c_void {
-        unsafe { ecs_get_observer_ctx(self.world.raw_world, self.raw_id) }
+        unsafe { ecs_observer_get_ctx(self.world.raw_world, self.raw_id) }
     }
 
     /// Get the filter for the observer

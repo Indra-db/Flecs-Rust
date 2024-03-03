@@ -223,9 +223,25 @@ impl EventBuilder {
 }
 
 impl EventBuilderImpl for EventBuilder {
-    type BuiltType = *const c_void;
+    type BuiltType = *mut c_void;
+    type ConstBuiltType = *const c_void;
 
     /// Set the event data for the event
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The data to set for the event which is type-erased of type `*mut c_void`
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `event_builder_base::ctx`
+    #[doc(alias = "event_builder_base::ctx")]
+    fn set_event_data(&mut self, data: Self::BuiltType) -> &mut Self {
+        self.desc.param = data as *mut c_void;
+        self
+    }
+
+    /// Set the const event data for the event
     ///
     /// # Arguments
     ///
@@ -235,8 +251,8 @@ impl EventBuilderImpl for EventBuilder {
     ///
     /// * C++ API: `event_builder_base::ctx`
     #[doc(alias = "event_builder_base::ctx")]
-    fn set_event_data(&mut self, data: Self::BuiltType) -> &mut Self {
-        self.desc.param = data as *const c_void;
+    fn set_event_data_const(&mut self, data: Self::ConstBuiltType) -> &mut Self {
+        self.desc.const_param = data as *const c_void;
         self
     }
 }
@@ -297,7 +313,8 @@ impl<'a, T: EventData + CachedComponentData> EventBuilderImpl for EventBuilderTy
 where
     T: EventData + CachedComponentData,
 {
-    type BuiltType = &'a T;
+    type BuiltType = &'a mut T;
+    type ConstBuiltType = &'a T;
 
     /// Set the event data for the event
     ///
@@ -310,7 +327,12 @@ where
     /// * C++ API: `event_builder_typed::ctx`
     #[doc(alias = "event_builder_typed::ctx")]
     fn set_event_data(&mut self, data: Self::BuiltType) -> &mut Self {
-        self.desc.param = data as *const T as *const c_void;
+        self.desc.param = data as *mut T as *mut c_void;
+        self
+    }
+
+    fn set_event_data_const(&mut self, data: Self::ConstBuiltType) -> &mut Self {
+        self.desc.const_param = data as *const T as *const c_void;
         self
     }
 }

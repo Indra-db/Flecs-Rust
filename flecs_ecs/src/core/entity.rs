@@ -3,6 +3,7 @@ use std::ops::{Deref, DerefMut};
 use std::os::raw::c_void;
 
 use crate::core::c_binding::bindings::{ecs_get_target, ecs_set_id, ecs_set_name};
+use crate::core::c_binding::FLECS_IDEcsComponentID_;
 use crate::core::FlecsErrorCode;
 use crate::ecs_assert;
 
@@ -12,7 +13,6 @@ use super::{
         ecs_entity_init, ecs_flatten, ecs_flatten_desc_t, ecs_get_id, ecs_get_mut_id, ecs_has_id,
         ecs_modified_id, ecs_new_id, ecs_remove_id, ecs_set_alias, ecs_set_scope, ecs_set_with,
         EcsChildOf, EcsComponent, EcsDependsOn, EcsExclusive, EcsIsA, EcsSlotOf, EcsWildcard,
-        FLECS__EEcsComponent,
     },
     c_types::{EntityT, IdT, WorldT, SEPARATOR},
     component_ref::Ref,
@@ -1169,7 +1169,7 @@ impl Entity {
     #[doc(alias = "entity::set_ptr")]
     pub fn set_ptr(self, component_id: EntityT, ptr: *const c_void) -> Self {
         let cptr: *const EcsComponent =
-            unsafe { ecs_get_id(self.world, component_id, FLECS__EEcsComponent) }
+            unsafe { ecs_get_id(self.world, component_id, FLECS_IDEcsComponentID_) }
                 as *const EcsComponent;
 
         ecs_assert!(

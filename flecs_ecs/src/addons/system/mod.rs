@@ -14,7 +14,7 @@ pub use system_runner_fluent::*;
 
 use crate::core::{
     c_binding::{
-        ecs_get_system_ctx, ecs_os_api, ecs_system_desc_t, ecs_system_get_query, ecs_system_init,
+        ecs_os_api, ecs_system_desc_t, ecs_system_get_ctx, ecs_system_get_query, ecs_system_init,
     },
     Entity, FTime, Query, TickSource, World,
 };
@@ -84,7 +84,7 @@ impl System {
     }
 
     pub fn get_context(&self) -> *mut c_void {
-        unsafe { ecs_get_system_ctx(self.world.raw_world, self.raw_id) }
+        unsafe { ecs_system_get_ctx(self.world.raw_world, self.raw_id) }
     }
 
     pub fn query(&mut self) -> Query<()> {

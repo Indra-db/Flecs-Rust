@@ -1,8 +1,11 @@
 use super::{
-    c_binding::bindings::{
-        _ecs_abort, ecs_filter_copy, ecs_filter_desc_t, ecs_filter_fini, ecs_filter_init,
-        ecs_filter_iter, ecs_filter_move, ecs_filter_next, ecs_filter_str, ecs_get_entity,
-        ecs_os_api, ecs_table_lock, ecs_table_unlock,
+    c_binding::{
+        bindings::{
+            ecs_filter_copy, ecs_filter_desc_t, ecs_filter_fini, ecs_filter_init, ecs_filter_iter,
+            ecs_filter_move, ecs_filter_next, ecs_filter_str, ecs_get_entity, ecs_os_api,
+            ecs_table_lock, ecs_table_unlock,
+        },
+        ecs_abort_,
     },
     c_types::FilterT,
     entity::Entity,
@@ -253,7 +256,7 @@ where
     ///
     /// * C++ API: `filter_base::field_count`
     #[doc(alias = "filter_base::field_count")]
-    fn field_count_impl(&self, filter: *mut FilterT) -> i32 {
+    fn field_count_impl(&self, filter: *mut FilterT) -> i8 {
         unsafe { (*filter).field_count }
     }
 
@@ -423,7 +426,7 @@ where
     ///
     /// * C++ API: `filter_base::field_count`
     #[doc(alias = "filter_base::field_count")]
-    pub fn field_count(&self) -> i32 {
+    pub fn field_count(&self) -> i8 {
         self.base.field_count_impl(self.filter_ptr)
     }
 
@@ -536,7 +539,7 @@ where
 
         unsafe {
             if ecs_filter_init(filter_obj.base.world.raw_world, desc).is_null() {
-                _ecs_abort(
+                ecs_abort_(
                     FlecsErrorCode::InvalidParameter.to_int(),
                     file!().as_ptr() as *const i8,
                     line!() as i32,
@@ -680,7 +683,7 @@ where
     ///
     /// * C++ API: `filter_base::field_count`
     #[doc(alias = "filter_base::field_count")]
-    pub fn field_count(&mut self) -> i32 {
+    pub fn field_count(&mut self) -> i8 {
         self.base.field_count_impl(&mut self.filter)
     }
 
@@ -708,7 +711,9 @@ where
     fn drop(&mut self) {
         // this is a hack to prevent ecs_filter_fini from freeing the memory of our stack allocated filter
         // we do actually own this filter. ecs_filter_fini is called to free the memory of the terms
-        self.filter.owned = false;
+        //self.filter.owned = false;
+        //TODO the above code, `.owned` got removed in upgrading flecs from 3.2.4 to 3.2.11,
+        // so we need to find a new? way to prevent the memory from being freed if it's stack allocated
         unsafe { ecs_filter_fini(&mut self.filter) }
     }
 }

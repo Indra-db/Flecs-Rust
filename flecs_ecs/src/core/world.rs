@@ -8,8 +8,9 @@ use crate::addons::system::{System, SystemBuilder};
 #[cfg(feature = "flecs_pipeline")]
 use crate::addons::pipeline::PipelineBuilder;
 
-use crate::core::c_binding::bindings::{_ecs_poly_is, ecs_stage_t_magic, ecs_world_t_magic};
+use crate::core::c_binding::bindings::{ecs_stage_t_magic, ecs_world_t_magic};
 
+use crate::core::c_binding::ecs_poly_is_;
 use crate::core::FlecsErrorCode;
 use crate::ecs_assert;
 
@@ -17,14 +18,14 @@ use super::c_binding::bindings::{
     ecs_async_stage_free, ecs_async_stage_new, ecs_atfini, ecs_count_id, ecs_defer_begin,
     ecs_defer_end, ecs_defer_resume, ecs_defer_suspend, ecs_delete_with, ecs_dim,
     ecs_enable_range_check, ecs_ensure, ecs_exists, ecs_fini, ecs_fini_action_t, ecs_frame_begin,
-    ecs_frame_end, ecs_get_alive, ecs_get_context, ecs_get_name, ecs_get_scope, ecs_get_stage,
-    ecs_get_stage_count, ecs_get_stage_id, ecs_get_world, ecs_get_world_info, ecs_init,
-    ecs_is_alive, ecs_is_deferred, ecs_is_valid, ecs_lookup_path_w_sep, ecs_merge, ecs_quit,
-    ecs_readonly_begin, ecs_readonly_end, ecs_remove_all, ecs_run_post_frame, ecs_set_alias,
-    ecs_set_automerge, ecs_set_context, ecs_set_entity_range, ecs_set_lookup_path, ecs_set_scope,
-    ecs_set_stage_count, ecs_set_with, ecs_should_quit, ecs_stage_is_async, ecs_stage_is_readonly,
-    ecs_system_desc_t,
+    ecs_frame_end, ecs_get_alive, ecs_get_name, ecs_get_scope, ecs_get_stage, ecs_get_stage_count,
+    ecs_get_stage_id, ecs_get_world, ecs_get_world_info, ecs_init, ecs_is_alive, ecs_is_deferred,
+    ecs_is_valid, ecs_lookup_path_w_sep, ecs_merge, ecs_quit, ecs_readonly_begin, ecs_readonly_end,
+    ecs_remove_all, ecs_run_post_frame, ecs_set_alias, ecs_set_automerge, ecs_set_entity_range,
+    ecs_set_lookup_path, ecs_set_scope, ecs_set_stage_count, ecs_set_with, ecs_should_quit,
+    ecs_stage_is_async, ecs_stage_is_readonly, ecs_system_desc_t,
 };
+use super::c_binding::{ecs_ctx_free_t, ecs_get_ctx, ecs_set_ctx};
 use super::c_types::{EntityT, IdT, WorldT, SEPARATOR};
 use super::component::{Component, UntypedComponent};
 use super::component_ref::Ref;
@@ -455,12 +456,12 @@ impl World {
     pub fn is_stage(&self) -> bool {
         unsafe {
             ecs_assert!(
-                _ecs_poly_is(self.raw_world as *const c_void, ecs_world_t_magic as i32)
-                    || _ecs_poly_is(self.raw_world as *const c_void, ecs_stage_t_magic as i32),
+                ecs_poly_is_(self.raw_world as *const c_void, ecs_world_t_magic as i32)
+                    || ecs_poly_is_(self.raw_world as *const c_void, ecs_stage_t_magic as i32),
                 FlecsErrorCode::InvalidParameter,
                 "Parameter is not a world or stage"
             );
-            _ecs_poly_is(self.raw_world as *const c_void, ecs_stage_t_magic as i32)
+            ecs_poly_is_(self.raw_world as *const c_void, ecs_stage_t_magic as i32)
         }
     }
 
@@ -622,11 +623,11 @@ impl World {
     ///
     /// # See also
     ///
-    /// * C++ API: `world::set_context`
-    #[doc(alias = "world::set_context")]
+    /// * C++ API: `world::set_ctx`
+    #[doc(alias = "world::set_ctx")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
-    pub fn set_context(&self, ctx: *mut std::ffi::c_void) {
-        unsafe { ecs_set_context(self.raw_world, ctx) }
+    pub fn set_context(&self, ctx: *mut c_void, ctx_free: ecs_ctx_free_t) {
+        unsafe { ecs_set_ctx(self.raw_world, ctx, ctx_free) }
     }
 
     /// Get world context.
@@ -637,10 +638,10 @@ impl World {
     ///
     /// # See also
     ///
-    /// * C++ API: `world::get_context`
-    #[doc(alias = "world::get_context")]
+    /// * C++ API: `world::get_ctx`
+    #[doc(alias = "world::get_ctx")]
     pub fn get_context(&self) -> *mut std::ffi::c_void {
-        unsafe { ecs_get_context(self.raw_world) }
+        unsafe { ecs_get_ctx(self.raw_world) }
     }
 
     /// Preallocate memory for a number of entities.

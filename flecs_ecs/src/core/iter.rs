@@ -2,9 +2,7 @@ use std::{ffi::CStr, os::raw::c_void};
 
 use crate::{
     core::{
-        c_binding::bindings::{
-            ecs_field_is_set, ecs_field_w_size, ecs_iter_str, ecs_table_has_module,
-        },
+        c_binding::bindings::{ecs_field_is_set, ecs_field_w_size, ecs_iter_str},
         FlecsErrorCode,
     },
     ecs_assert,
@@ -178,18 +176,6 @@ impl<'a> Iter<'a> {
     pub fn get_table_range(&mut self) -> TableRange {
         let iter: &mut IterT = self.iter;
         TableRange::new_raw(iter.world, iter.table, iter.offset, iter.count)
-    }
-
-    /// # Returns
-    ///
-    /// returns true if current type is a module or it contains module contents
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::has_module`
-    #[doc(alias = "iter::has_module")]
-    pub fn has_module(&self) -> bool {
-        unsafe { ecs_table_has_module(self.iter.table) }
     }
 
     /// Access ctx.
