@@ -1,3 +1,5 @@
+use std::ffi::c_void;
+
 use crate::core::{
     c_binding::bindings::{
         ecs_app_desc_t, ecs_app_init_action_t, ecs_app_run, ecs_fini, ecs_get_world_info,
@@ -64,7 +66,7 @@ impl App {
         self
     }
 
-    pub fn context(&mut self, ctx: *mut std::ffi::c_void) -> &mut Self {
+    pub fn context(&mut self, ctx: *mut c_void) -> &mut Self {
         self.desc.ctx = ctx;
         self
     }

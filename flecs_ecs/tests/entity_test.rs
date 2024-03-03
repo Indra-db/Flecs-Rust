@@ -1,4 +1,4 @@
-use std::ffi::CStr;
+use std::ffi::{c_void, CStr};
 
 use flecs_ecs::{
     core::{
@@ -406,7 +406,7 @@ fn entity_set_generic() {
     let entity = world.new_entity().set_ptr_w_size(
         position.raw_id,
         std::mem::size_of::<Position>(),
-        &pos as *const _ as *const std::ffi::c_void,
+        &pos as *const _ as *const c_void,
     );
 
     assert!(entity.has::<Position>());
@@ -426,7 +426,7 @@ fn entity_set_generic_no_size() {
 
     let entity = world
         .new_entity()
-        .set_ptr(position.raw_id, &pos as *const _ as *const std::ffi::c_void);
+        .set_ptr(position.raw_id, &pos as *const _ as *const c_void);
 
     assert!(entity.has::<Position>());
     assert!(entity.has_id(position.raw_id));

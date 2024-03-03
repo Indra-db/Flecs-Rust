@@ -1,3 +1,5 @@
+//! World operations.
+
 use std::ffi::CStr;
 use std::ops::Deref;
 use std::os::raw::c_void;
@@ -25,7 +27,9 @@ use super::c_binding::bindings::{
     ecs_set_lookup_path, ecs_set_scope, ecs_set_stage_count, ecs_set_with, ecs_should_quit,
     ecs_stage_is_async, ecs_stage_is_readonly, ecs_system_desc_t,
 };
-use super::c_binding::{ecs_ctx_free_t, ecs_get_ctx, ecs_set_ctx};
+use super::c_binding::{
+    ecs_ctx_free_t, ecs_get_ctx, ecs_get_target, ecs_set_ctx, ecs_world_info_t,
+};
 use super::c_types::{EntityT, IdT, WorldT, SEPARATOR};
 use super::component::{Component, UntypedComponent};
 use super::component_ref::Ref;
@@ -37,7 +41,7 @@ use super::entity::Entity;
 use super::enum_type::CachedEnumData;
 use super::event::EventData;
 use super::event_builder::{EventBuilder, EventBuilderTyped};
-use super::id::{Id, IdType};
+use super::id::{self, Id, IdType};
 use super::iterable::Iterable;
 use super::observer::Observer;
 use super::observer_builder::ObserverBuilder;
@@ -151,6 +155,17 @@ impl World {
         self.raw_world
     }
 
+    /// Get the world's info.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_info`
+    #[doc(alias = "world::get_info")]
+    fn get_world_info(&self) -> &ecs_world_info_t {
+        // SAFETY: The pointer is valid for the lifetime of the world.
+        unsafe { &*ecs_get_world_info(self.raw_world) }
+    }
+
     /// Gets the last `delta_time`.
     ///
     /// Returns the time that has passed since the last frame.
@@ -160,10 +175,7 @@ impl World {
     /// * C++ API: `world::delta_time`
     #[doc(alias = "world::delta_time")]
     pub fn delta_time(&self) -> f32 {
-        unsafe {
-            let stats = ecs_get_world_info(self.raw_world);
-            (*stats).delta_time
-        }
+        self.get_world_info().delta_time
     }
 
     /// Gets the current tick.
@@ -175,10 +187,7 @@ impl World {
     /// * C++ API: `world::tick`
     #[doc(alias = "world::tick")]
     pub fn tick(&self) -> i64 {
-        unsafe {
-            let stats = ecs_get_world_info(self.raw_world);
-            (*stats).frame_count_total
-        }
+        self.get_world_info().frame_count_total
     }
 
     /// Gets the current simulation time.
@@ -190,10 +199,7 @@ impl World {
     /// * C++ API: `world::time`
     #[doc(alias = "world::time")]
     pub fn time(&self) -> f32 {
-        unsafe {
-            let stats = ecs_get_world_info(self.raw_world);
-            (*stats).world_time_total
-        }
+        self.get_world_info().world_time_total
     }
 
     /// Signals the application to quit.
@@ -217,7 +223,7 @@ impl World {
     /// * C++ API: `world::atfini`
     #[doc(alias = "world::atfini")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
-    pub fn on_destroyed(&self, action: ecs_fini_action_t, ctx: *mut std::ffi::c_void) {
+    pub fn on_destroyed(&self, action: ecs_fini_action_t, ctx: *mut c_void) {
         unsafe {
             ecs_atfini(self.raw_world, action, ctx);
         }
@@ -316,7 +322,7 @@ impl World {
     /// End staging.
     ///
     /// Leaves staging mode. After this operation, the world may be directly mutated again.
-    /// By default, this operation also merges data back into the world, unless automerging
+    /// By default, this operation also merges data back into the world, unless auto-merging
     /// was disabled explicitly.
     ///
     /// ## safety
@@ -325,6 +331,11 @@ impl World {
     /// # Returns
     ///
     /// Whether the world is currently staged.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::readonly_end`
+    #[doc(alias = "world::readonly_end")]
     pub fn readonly_end(&self) {
         unsafe {
             ecs_readonly_end(self.raw_world);
@@ -465,24 +476,24 @@ impl World {
         }
     }
 
-    /// Enable/disable automerging for world or stage.
+    /// Enable/disable auto-merging for world or stage.
     ///
-    /// When automerging is enabled, staged data will automatically be merged
+    /// When auto-merging is enabled, staged data will automatically be merged
     /// with the world when staging ends. This happens at the end of `progress()`,
     /// at a sync point or when `readonly_end()` is called.
     ///
     /// Applications can exercise more control over when data from a stage is
-    /// merged by disabling automerging. This requires an application to
+    /// merged by disabling auto-merging. This requires an application to
     /// explicitly call `merge()` on the stage.
     ///
     /// When this function is invoked on the world, it sets all current stages to
     /// the provided value and sets the default for new stages. When this
-    /// function is invoked on a stage, automerging is only set for that specific
+    /// function is invoked on a stage, auto-merging is only set for that specific
     /// stage.
     ///
     /// # Arguments
     ///
-    /// * `automerge` - Whether to enable or disable automerging.
+    /// * `automerge` - Whether to enable or disable auto-merging.
     ///
     /// # See also
     ///
@@ -620,6 +631,7 @@ impl World {
     /// # Arguments
     ///
     /// * `ctx` - The world context.
+    /// * `ctx_free` - The free function for the context. Can pass `None` if no free function is needed.
     ///
     /// # See also
     ///
@@ -640,7 +652,37 @@ impl World {
     ///
     /// * C++ API: `world::get_ctx`
     #[doc(alias = "world::get_ctx")]
-    pub fn get_context(&self) -> *mut std::ffi::c_void {
+    pub fn get_context(&self) -> *mut c_void {
+        unsafe { ecs_get_ctx(self.raw_world) }
+    }
+
+    /// Set world binding context
+    /// Set a context value that can be accessed by anyone that has a reference to the world.
+    ///
+    /// # Arguments
+    ///
+    /// * `ctx` - The world context.
+    /// * `ctx_free` - The free function for the context. Can pass `None` if no free function is needed.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::set_binding_ctx`
+    #[doc(alias = "world::set_binding_ctx")]
+    pub fn set_binding_context(&self, ctx: *mut c_void, ctx_free: ecs_ctx_free_t) {
+        unsafe { ecs_set_ctx(self.raw_world, ctx, ctx_free) }
+    }
+
+    /// Get world binding context.
+    ///
+    /// # Returns
+    ///
+    /// The configured world context.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_binding_ctx`
+    #[doc(alias = "world::get_binding_ctx")]
+    pub fn get_binding_context(&self) -> *mut c_void {
         unsafe { ecs_get_ctx(self.raw_world) }
     }
 
@@ -795,7 +837,9 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::set_lookup_path`
+    /// * C API: `ecs_set_lookup_path`
     #[doc(alias = "world::set_lookup_path")]
+    #[doc(alias = "wecs_set_lookup_path")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     pub fn set_lookup_path(&self, search_path: *const EntityT) -> *mut EntityT {
         unsafe { ecs_set_lookup_path(self.raw_world, search_path) }
@@ -806,6 +850,7 @@ impl World {
     /// # Arguments
     ///
     /// * `name` - The name of the entity to lookup.
+    /// * `search_path` - When false, only the current scope is searched.
     ///
     /// # Returns
     ///
@@ -815,7 +860,7 @@ impl World {
     ///
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
-    pub fn lookup_entity_by_name(&self, name: &CStr) -> Option<Entity> {
+    pub fn lookup_entity_by_name(&self, name: &CStr, search_path: bool) -> Option<Entity> {
         let entity_id = unsafe {
             ecs_lookup_path_w_sep(
                 self.raw_world,
@@ -1062,6 +1107,89 @@ impl World {
     #[inline(always)]
     pub fn get_component_as_entity<T: CachedComponentData>(&self) -> Entity {
         Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
+    }
+
+    /// Gets the target for a given pair from a singleton entity.
+    ///
+    /// This operation returns the target for a given pair. The optional
+    /// `index` can be used to iterate through targets, in case the entity has
+    /// multiple instances for the same relationship.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First` - The first element of the pair.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The index (None for the first instance of the relationship).
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::target`
+    #[doc(alias = "world::target")]
+    pub fn get_pair_target<First>(&self, index: Option<i32>) -> Entity
+    where
+        First: CachedComponentData,
+    {
+        let id = First::get_id(self.raw_world);
+        Entity::new_from_existing_raw(self.raw_world, unsafe {
+            ecs_get_target(self.raw_world, id, id, index.unwrap_or(0))
+        })
+    }
+
+    /// Gets the target for a given pair from a singleton entity.
+    ///
+    /// This operation returns the target for a given pair. The optional
+    /// `index` can be used to iterate through targets, in case the entity has
+    /// multiple instances for the same relationship.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The first element of the pair.
+    ///
+    /// # Arguments
+    ///
+    /// * `first` - The first element of the pair for which to retrieve the target.
+    /// * `index` - The index (None for the first instance of the relationship).
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::target`
+    #[doc(alias = "world::target")]
+    pub fn get_pair_target_with<T>(&self, relationship: EntityT, index: Option<i32>) -> Entity
+    where
+        T: CachedComponentData,
+    {
+        let id = T::get_id(self.raw_world);
+        Entity::new_from_existing_raw(self.raw_world, unsafe {
+            ecs_get_target(self.raw_world, id, relationship, index.unwrap_or(0))
+        })
+    }
+
+    /// Retrieves the target for a given pair from a singleton entity.
+    ///
+    /// This operation fetches the target associated with a specific pair. An optional
+    /// `index` parameter allows iterating through multiple targets if the entity
+    /// has more than one instance of the same relationship.
+    ///
+    /// # Arguments
+    ///
+    /// * `first` - The first element of the pair for which to retrieve the target.
+    /// * `index` - The index (0 for the first instance of the relationship).
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::target`
+    #[doc(alias = "world::target")]
+    pub fn get_pair_target_with_id(&self, relationship: EntityT, index: Option<usize>) -> Entity {
+        Entity::new_from_existing_raw(self.raw_world, unsafe {
+            ecs_get_target(
+                self.raw_world,
+                relationship,
+                relationship,
+                index.unwrap_or(0) as i32,
+            )
+        })
     }
 
     /// Get const pointer for the first element of a singleton pair
@@ -1935,6 +2063,25 @@ impl World {
         self.get_scoped_world_with_id(T::get_id(self.raw_world))
     }
 
+    /// Use provided scope of name for operations ran on returned world.
+    /// Operations need to be ran in a single statement
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the scope to use.
+    ///
+    /// # Returns
+    ///
+    /// A scoped world.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::scope`
+    #[doc(alias = "world::scope")]
+    pub fn get_scoped_world_with_name(&self, name: &CStr) -> ScopedWorld {
+        self.get_scoped_world_with_id(Entity::new_named(self, name).raw_id)
+    }
+
     /// all entities created in function are created with id
     ///
     /// # Arguments
@@ -2535,7 +2682,7 @@ impl World {
     }
 
     /// Ensures that entity with provided generation is alive.
-    /// Ths operation will fail if an entity exists with the same id and a
+    /// This operation will fail if an entity exists with the same id and a
     /// different, non-zero generation.
     ///
     /// # Arguments

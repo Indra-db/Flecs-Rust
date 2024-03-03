@@ -15,7 +15,7 @@ use std::ptr;
 
 use std::{marker::PhantomData, ops::Deref};
 
-type EcsCtxFreeT = extern "C" fn(*mut std::ffi::c_void);
+type EcsCtxFreeT = extern "C" fn(*mut c_void);
 
 struct ComponentBindingCtx {
     on_add: Option<*mut c_void>,
@@ -61,9 +61,9 @@ impl Default for ComponentBindingCtx {
 }
 impl ComponentBindingCtx {
     pub fn new(
-        on_add: Option<*mut std::ffi::c_void>,
-        on_remove: Option<*mut std::ffi::c_void>,
-        on_set: Option<*mut std::ffi::c_void>,
+        on_add: Option<*mut c_void>,
+        on_remove: Option<*mut c_void>,
+        on_set: Option<*mut c_void>,
         free_on_add: Option<EcsCtxFreeT>,
         free_on_remove: Option<EcsCtxFreeT>,
         free_on_set: Option<EcsCtxFreeT>,

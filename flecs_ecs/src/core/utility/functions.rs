@@ -2,9 +2,12 @@ use std::{ffi::CStr, os::raw::c_char};
 
 use crate::{
     core::{
-        c_binding::bindings::{
-            ecs_field_w_size, ecs_get_mut_id, ecs_has_id, ecs_modified_id, ecs_os_api,
-            ecs_strip_generation, ECS_GENERATION_MASK, ECS_ROW_MASK,
+        c_binding::{
+            bindings::{
+                ecs_field_w_size, ecs_get_mut_id, ecs_has_id, ecs_modified_id, ecs_os_api,
+                ecs_strip_generation, ECS_GENERATION_MASK, ECS_ROW_MASK,
+            },
+            ecs_get_mut_modified_id, ecs_is_deferred,
         },
         c_types::{EntityT, IdT, InOutKind, IterT, OperKind, WorldT, ECS_DEPENDS_ON, ECS_PAIR},
         component_registration::CachedComponentData,
@@ -245,12 +248,18 @@ pub(crate) fn set_helper<T: CachedComponentData>(
         "invalid type: {}",
         T::get_symbol_name()
     );
-
-    let comp = unsafe { ecs_get_mut_id(world, entity, id) as *mut T };
     unsafe {
-        std::ptr::write(comp, value);
-        ecs_modified_id(world, entity, id);
-    };
+        if !ecs_is_deferred(world) {
+            let comp = ecs_get_mut_id(world, entity, id) as *mut T;
+
+            std::ptr::write(comp, value);
+            ecs_modified_id(world, entity, id);
+        } else {
+            let comp = ecs_get_mut_modified_id(world, entity, id) as *mut T;
+            std::ptr::write(comp, value);
+            ecs_modified_id(world, entity, id);
+        }
+    }
 }
 
 /// Remove generation from entity id.

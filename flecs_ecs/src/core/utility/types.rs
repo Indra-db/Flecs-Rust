@@ -9,7 +9,7 @@ use super::traits::{InOutType, OperType};
 
 pub type FTime = f32;
 
-pub(crate) type EcsCtxFreeT = extern "C" fn(*mut std::ffi::c_void);
+pub(crate) type EcsCtxFreeT = extern "C" fn(*mut c_void);
 
 pub(crate) struct ObserverSystemBindingCtx {
     pub(crate) each: Option<*mut c_void>,
@@ -65,10 +65,10 @@ impl Default for ObserverSystemBindingCtx {
 impl ObserverSystemBindingCtx {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
-        each: Option<*mut std::ffi::c_void>,
-        each_entity: Option<*mut std::ffi::c_void>,
-        iter: Option<*mut std::ffi::c_void>,
-        iter_only: Option<*mut std::ffi::c_void>,
+        each: Option<*mut c_void>,
+        each_entity: Option<*mut c_void>,
+        iter: Option<*mut c_void>,
+        iter_only: Option<*mut c_void>,
         free_each: Option<EcsCtxFreeT>,
         free_each_entity: Option<EcsCtxFreeT>,
         free_iter: Option<EcsCtxFreeT>,
