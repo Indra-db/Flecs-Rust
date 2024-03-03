@@ -4,6 +4,14 @@ use flecs_ecs_derive::Component;
 use std::ffi::CStr;
 use std::sync::OnceLock;
 
+#[cfg(test)]
+#[ctor::ctor]
+fn init() {
+    unsafe {
+        flecs_ecs::sys::ecs_os_init();
+    }
+}
+
 #[derive(Clone, Debug, Component, Default)]
 pub struct Position {
     pub x: f32,
