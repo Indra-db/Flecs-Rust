@@ -58,6 +58,4 @@ fn main() {
     // Output
     //  Bob's got [Position, Velocity, (Identifier,Name), (Eats,Apples)]
     //  Bob's position: Position { x: 2.0, y: 4.0 }
-
-    //do the same for bevy
 }
