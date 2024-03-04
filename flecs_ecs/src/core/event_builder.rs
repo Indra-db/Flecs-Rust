@@ -3,11 +3,7 @@ use std::{
     os::raw::c_void,
 };
 
-use crate::{
-    core::{
-        c_binding::bindings::{ecs_emit, ecs_get_world},
-    },
-};
+use crate::core::c_binding::bindings::{ecs_emit, ecs_get_world};
 
 use super::{
     c_binding::{
