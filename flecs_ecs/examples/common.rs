@@ -1,5 +1,8 @@
+#![allow(dead_code)]
+
 pub use flecs_ecs::core::*;
 pub use flecs_ecs_derive::Component;
+
 #[allow(unused_imports)]
 pub use std::ffi::CStr;
 
@@ -16,6 +19,11 @@ pub struct Velocity {
 }
 
 #[derive(Default, Clone, Component)]
+struct Mass {
+    pub value: f32,
+}
+
+#[derive(Default, Clone, Component)]
 pub struct Eats;
 #[derive(Default, Clone, Component)]
 pub struct Apples;
@@ -28,6 +36,29 @@ pub struct Tag;
 
 #[derive(Default, Clone, Component)]
 pub struct Human;
+
+#[derive(Default, Clone, Component)]
+pub struct Attack {
+    pub value: f32,
+}
+
+#[derive(Default, Clone, Component)]
+pub struct Defence {
+    pub value: f32,
+}
+
+#[derive(Default, Clone, Component)]
+pub struct FreightCapacity {
+    pub value: f32,
+}
+
+#[derive(Default, Clone, Component)]
+pub struct ImpulseSpeed {
+    pub value: f32,
+}
+
+#[derive(Default, Clone, Component)]
+pub struct HasFlt;
 
 #[allow(dead_code)]
 fn main() {

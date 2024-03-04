@@ -651,7 +651,7 @@ impl Entity {
         self.remove_pair_ids(First::get_id(world), second)
     }
 
-    /// Shortcut for add(IsA, entity).
+    /// Shortcut for add(IsA, id).
     ///
     /// # Arguments
     ///
@@ -675,9 +675,23 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::is_a`
     #[doc(alias = "entity_builder::is_a")]
-    pub fn is_a<T: CachedComponentData>(self) -> Self {
+    pub fn is_a_type<T: CachedComponentData>(self) -> Self {
         let world = self.world;
         self.is_a_id(T::get_id(world))
+    }
+
+    /// Shortcut for add(IsA, entity).
+    ///
+    /// # Arguments
+    ///
+    /// * `parent`: The second element of the pair.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_builder::is_a`
+    #[doc(alias = "entity_builder::is_a")]
+    pub fn is_a(self, parent: &Entity) -> Self {
+        self.is_a_id(parent.raw_id)
     }
 
     /// Shortcut for add(ChildOf, entity).
