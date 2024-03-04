@@ -23,6 +23,12 @@ pub struct Apples;
 #[derive(Default, Clone, Component)]
 pub struct Walking;
 
+#[derive(Default, Clone, Component)]
+pub struct Tag;
+
+#[derive(Default, Clone, Component)]
+pub struct Human;
+
 #[allow(dead_code)]
 fn main() {
     //this file is for common structs and functions used in the examples

@@ -402,7 +402,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    fn for_each_component<F>(&self, mut func: F)
+    pub fn for_each_component<F>(&self, mut func: F)
     where
         F: FnMut(Id),
     {
@@ -447,7 +447,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    fn for_each_matching_pair<F>(&self, pred: IdT, obj: IdT, mut func: F)
+    pub fn for_each_matching_pair<F>(&self, pred: IdT, obj: IdT, mut func: F)
     where
         F: FnMut(Id),
     {
