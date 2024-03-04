@@ -3,9 +3,10 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
   merge_group:
+  workflow-dispatch:
 
 jobs:
   rustfmt:
