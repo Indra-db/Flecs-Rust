@@ -4,7 +4,7 @@ use std::{ffi::CStr, os::raw::c_void, ptr};
 use crate::{
     core::{
         c_binding::bindings::{
-            ecs_os_api, ecs_term_is_initialized, ecs_term_t, FLECS_TERM_DESC_MAX,
+            ecs_inout_kind_t, ecs_os_api, ecs_term_is_initialized, ecs_term_t, FLECS_TERM_DESC_MAX,
         },
         FlecsErrorCode,
     },
@@ -531,7 +531,7 @@ pub trait FilterBuilderImpl: TermBuilder {
         unsafe {
             *self.get_raw_term() =
                 Term::new(None, TermType::Id(T::Type::get_id(self.get_world()))).move_raw_term();
-            (*self.get_raw_term()).inout = type_to_inout::<T>() as u32;
+            (*self.get_raw_term()).inout = type_to_inout::<T>() as ecs_inout_kind_t;
         }
         self
     }
