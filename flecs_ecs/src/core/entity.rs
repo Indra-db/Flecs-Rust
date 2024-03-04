@@ -526,7 +526,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::remove`
     #[doc(alias = "entity_builder::remove")]
-    pub fn remove_component<T: CachedComponentData + ComponentType<Struct>>(self) -> Self {
+    pub fn remove<T: CachedComponentData + ComponentType<Struct>>(self) -> Self {
         let world = self.world;
         self.remove_id(T::get_id(world))
     }
@@ -541,7 +541,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::remove`
     #[doc(alias = "entity_builder::remove")]
-    pub fn remove_component_enum<T: CachedComponentData + ComponentType<Enum>>(self) -> Self {
+    pub fn remove_enum<T: CachedComponentData + ComponentType<Enum>>(self) -> Self {
         let world = self.world;
         self.remove_pair_ids(T::get_id(world), unsafe { EcsWildcard })
     }

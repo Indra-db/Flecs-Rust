@@ -1,24 +1,5 @@
-use std::ffi::CStr;
-
-use flecs_ecs::core::*;
-use flecs_ecs_derive::Component;
-
-#[derive(Debug, Default, Clone, Component)]
-struct Position {
-    x: f32,
-    y: f32,
-}
-
-#[derive(Default, Clone, Component)]
-struct Velocity {
-    x: f32,
-    y: f32,
-}
-
-#[derive(Default, Clone, Component)]
-struct Eats {}
-#[derive(Default, Clone, Component)]
-struct Apples {}
+mod common;
+use common::*;
 
 fn main() {
     // Create a new world

@@ -1566,9 +1566,8 @@ impl World {
     /// * C++ API: `world::remove`
     #[doc(alias = "world::remove")]
     #[inline(always)]
-    pub fn remove_component<T: CachedComponentData + ComponentType<Struct>>(&self) {
-        Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
-            .remove_component::<T>();
+    pub fn remove<T: CachedComponentData + ComponentType<Struct>>(&self) {
+        Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world)).remove::<T>();
     }
 
     /// Remove singleton enum component.
@@ -1582,9 +1581,8 @@ impl World {
     /// * C++ API: `world::remove`
     #[doc(alias = "world::remove")]
     #[inline(always)]
-    pub fn remove_component_enum<T: CachedComponentData + ComponentType<Enum>>(&self) {
-        Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
-            .remove_component_enum::<T>();
+    pub fn remove_enum<T: CachedComponentData + ComponentType<Enum>>(&self) {
+        Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world)).remove_enum::<T>();
     }
 
     /// Remove singleton pair with enum tag.

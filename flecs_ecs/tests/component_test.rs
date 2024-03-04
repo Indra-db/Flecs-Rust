@@ -56,9 +56,9 @@ fn temp_test_hook() {
         let vel_e1 = entity.get::<Velocity>().unwrap();
         assert_eq!(vel_e1.x, 0.0);
         assert_eq!(vel_e1.y, 0.0);
-        entity.remove_component::<Velocity>();
+        entity.remove::<Velocity>();
 
-        entity.remove_component::<Position>();
+        entity.remove::<Position>();
         assert_eq!(unsafe { COUNT }, 1);
 
         entity2.set(Velocity { x: 3.0, y: 5.0 });
@@ -67,9 +67,9 @@ fn temp_test_hook() {
         assert_eq!(vel_e2.y, 50.0);
         assert_eq!(unsafe { COUNT2 }, 1);
 
-        entity.remove_component::<Position>();
+        entity.remove::<Position>();
         assert_eq!(unsafe { COUNT }, 1);
-        entity2.remove_component::<Position>();
+        entity2.remove::<Position>();
         assert_eq!(unsafe { COUNT }, 0);
     }
 }

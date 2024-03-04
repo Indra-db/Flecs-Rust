@@ -179,7 +179,7 @@ fn entity_remove() {
     entity.add::<Position>();
     assert!(entity.has::<Position>());
 
-    entity.remove_component::<Position>();
+    entity.remove::<Position>();
     assert!(!entity.has::<Position>());
 }
 
@@ -262,9 +262,7 @@ fn entity_remove_2() {
     assert!(entity.has::<Position>());
     assert!(entity.has::<Velocity>());
 
-    entity
-        .remove_component::<Position>()
-        .remove_component::<Velocity>();
+    entity.remove::<Position>().remove::<Velocity>();
 
     assert!(!entity.has::<Position>());
     assert!(!entity.has::<Velocity>());
