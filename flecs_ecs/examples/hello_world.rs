@@ -27,7 +27,8 @@ fn main() {
     // Register system
     let _sys = world
         .system_builder::<(Position, Velocity)>()
-        .on_each_entity(|_entity, (pos, vel)| {
+        // .on_each_entity if you want the entity to be added in the parameter list
+        .on_each(|(pos, vel)| {
             pos.x += vel.x;
             pos.y += vel.y;
         });
