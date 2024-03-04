@@ -597,7 +597,7 @@ pub trait TermBuilder: Sized {
         self
     }
 
-    /// Specify value of identifier by id, same as id()
+    /// Specify value of identifier by id, same as `id()`.
     ///
     /// # Arguments
     ///
@@ -719,7 +719,7 @@ pub trait TermBuilder: Sized {
     }
 
     /// Call prior to setting values for second identifier. This is the second
-    /// element of a pair. Requires that first() is populated as well.
+    /// element of a pair. Requires that `first()` is populated as well.
     ///
     /// # See also
     ///
