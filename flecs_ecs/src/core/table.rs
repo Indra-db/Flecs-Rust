@@ -4,9 +4,12 @@ use std::{ffi::CStr, os::raw::c_void};
 
 use super::{
     archetype::Archetype,
-    c_binding::bindings::{
-        ecs_search, ecs_table_count, ecs_table_get_column, ecs_table_get_column_size,
-        ecs_table_get_depth, ecs_table_get_type, ecs_table_str,
+    c_binding::{
+        bindings::{
+            ecs_table_count, ecs_table_get_column, ecs_table_get_column_size, ecs_table_get_depth,
+            ecs_table_get_type, ecs_table_str,
+        },
+        ecs_table_get_column_index, ecs_table_get_type_index,
     },
     c_types::{EntityT, IdT, TableT, WorldT},
     component_registration::CachedComponentData,
@@ -92,11 +95,30 @@ impl Table {
         unsafe { ecs_table_count(self.table) }
     }
 
-    /// Find index for component type in table
+    /// Find type index for (component) id
     ///
-    /// This operation returns the index of first occurrence of the type in the table type.
+    /// # Arguments
     ///
-    /// This is a constant time operation.
+    /// * `id` - The id of the component
+    ///
+    /// # Returns
+    ///
+    /// The index of the id in the table type, or None if the id is not found
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `table::type_index`
+    #[doc(alias = "table::type_index")]
+    pub fn find_type_index_id(&self, id: IdT) -> Option<i32> {
+        let index = unsafe { ecs_table_get_type_index(self.world, self.table, id) };
+        if index == -1 {
+            None
+        } else {
+            Some(index)
+        }
+    }
+
+    /// Find type index for component type
     ///
     /// # Type parameters
     ///
@@ -104,14 +126,79 @@ impl Table {
     ///
     /// # Returns
     ///
-    /// The index of the component in the table, or None if the component is not in the table
+    /// The index of the component in the table type, or None if the component is not in the table
     ///
     /// # See also
     ///
-    /// * C++ API: `table::search`
-    #[doc(alias = "table::search")]
-    pub fn find_component_index<T: CachedComponentData>(&self) -> Option<i32> {
-        self.find_component_id_index(T::get_id(self.world))
+    /// * C++ API: `table::type_index`
+    #[doc(alias = "table::type_index")]
+    pub fn find_type_index<T: CachedComponentData>(&self) -> Option<i32> {
+        self.find_type_index_id(T::get_id(self.world))
+    }
+
+    /// Find type index for pair of component types
+    ///
+    /// # Arguments
+    ///
+    /// * `first` - First element of the pair
+    /// * `second` - Second element of the pair
+    ///
+    /// # Returns
+    ///
+    /// The index of the pair in the table type, or None if the pair is not in the table
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `table::type_index`
+    #[doc(alias = "table::type_index")]
+    pub fn find_type_index_pair_ids(&self, first: EntityT, second: EntityT) -> Option<i32> {
+        self.find_type_index_id(ecs_pair(first, second))
+    }
+
+    /// Find type index for pair of component types
+    ///
+    /// # Type parameters
+    ///
+    /// * `First` - The type of the first component
+    /// * `Second` - The type of the second component
+    ///
+    /// # Returns
+    ///
+    /// The index of the pair in the table type, or None if the pair is not in the table
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `table::type_index`
+    #[doc(alias = "table::type_index")]
+    pub fn find_type_index_pair<First: CachedComponentData, Second: CachedComponentData>(
+        &self,
+    ) -> Option<i32> {
+        self.find_type_index_pair_ids(First::get_id(self.world), Second::get_id(self.world))
+    }
+
+    /// Find type index for pair of component types
+    ///
+    /// # Type parameters
+    ///
+    /// * `First` - The type of the first component
+    ///
+    /// # Arguments
+    ///
+    /// * `second` - The id of the second component
+    ///
+    /// # Returns
+    ///
+    /// The index of the pair in the table type, or None if the pair is not in the table
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `table::type_index`
+    #[doc(alias = "table::type_index")]
+    pub fn find_type_index_pair_second_id<First: CachedComponentData>(
+        &self,
+        second: EntityT,
+    ) -> Option<i32> {
+        self.find_type_index_pair_ids(First::get_id(self.world), second)
     }
 
     /// Find index for (component) id in table type
@@ -131,17 +218,37 @@ impl Table {
     ///
     /// # See also
     ///
-    /// * C++ API: `table::search`
-    #[doc(alias = "table::search")]
-    pub fn find_component_id_index(&self, id: IdT) -> Option<i32> {
-        let mut out_id: u64 = 0;
-        let id_out_ptr: *mut u64 = &mut out_id;
-        let found_index = unsafe { ecs_search(self.world, self.table, id, id_out_ptr) };
-        if found_index == -1 {
+    /// * C++ API: `table::column_index`
+    #[doc(alias = "table::column_index")]
+    pub fn find_column_index_id(&self, id: IdT) -> Option<i32> {
+        let index = unsafe { ecs_table_get_column_index(self.world, self.table, id) };
+        if index == -1 {
             None
         } else {
-            Some(found_index)
+            Some(index)
         }
+    }
+
+    /// Find column index for component type in table
+    ///
+    /// This operation returns the index of first occurrence of the type in the table type.
+    ///
+    /// This is a constant time operation.
+    ///
+    /// # Type parameters
+    ///
+    /// * `T` - The type of the component
+    ///
+    /// # Returns
+    ///
+    /// The index of the component in the table, or None if the component is not in the table
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `table::column_index`
+    #[doc(alias = "table::column_index")]
+    pub fn find_column_index<T: CachedComponentData>(&self) -> Option<i32> {
+        self.find_column_index_id(T::get_id(self.world))
     }
 
     /// Find index for pair of component types in table
@@ -161,12 +268,15 @@ impl Table {
     ///
     /// # See also
     ///
-    /// * C++ API: `table::search`
-    #[doc(alias = "table::search")]
-    pub fn find_pair_index<First: CachedComponentData, Second: CachedComponentData>(
+    /// * C++ API: `table::column_index`
+    #[doc(alias = "table::column_index")]
+    pub fn find_column_index_pair<First: CachedComponentData, Second: CachedComponentData>(
         &self,
     ) -> Option<i32> {
-        self.find_pair_index_by_ids(First::get_id(self.world), Second::get_id(self.world))
+        self.find_column_index_id(ecs_pair(
+            First::get_id(self.world),
+            Second::get_id(self.world),
+        ))
     }
 
     /// Find index for pair of component ids in table type
@@ -186,10 +296,35 @@ impl Table {
     ///
     /// # See also
     ///
-    /// * C++ API: `table::search`
-    #[doc(alias = "table::search")]
-    pub fn find_pair_index_by_ids(&self, first: EntityT, second: EntityT) -> Option<i32> {
-        self.find_component_id_index(ecs_pair(first, second))
+    /// * C++ API: `table::column_index`
+    #[doc(alias = "table::column_index")]
+    pub fn find_column_index_pair_ids(&self, first: EntityT, second: EntityT) -> Option<i32> {
+        self.find_column_index_id(ecs_pair(first, second))
+    }
+
+    /// Find index for pair of component types in table type
+    ///
+    /// # Type parameters
+    ///
+    /// * `First` - The type of the first component
+    ///
+    /// # Arguments
+    ///
+    /// * `second` - The id of the second component
+    ///
+    /// # Returns
+    ///
+    /// The index of the pair in the table, or None if the pair is not in the table
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `table::column_index`
+    #[doc(alias = "table::column_index")]
+    pub fn find_column_index_pair_second_id<First: CachedComponentData>(
+        &self,
+        second: EntityT,
+    ) -> Option<i32> {
+        self.find_column_index_pair_ids(First::get_id(self.world), second)
     }
 
     /// Test if table has component type
@@ -209,7 +344,7 @@ impl Table {
     /// * C++ API: `table::has`
     #[doc(alias = "table::has")]
     pub fn has_type<T: CachedComponentData>(&self) -> bool {
-        self.find_component_index::<T>().is_some()
+        self.find_type_index::<T>().is_some()
     }
 
     /// Test if table has (component) id
@@ -229,7 +364,7 @@ impl Table {
     /// * C++ API: `table::has`
     #[doc(alias = "table::has")]
     pub fn has_type_id(&self, id: IdT) -> bool {
-        self.find_component_id_index(id).is_some()
+        self.find_type_index_id(id).is_some()
     }
 
     /// Test if table has pair of component types
@@ -250,7 +385,7 @@ impl Table {
     /// * C++ API: `table::has`
     #[doc(alias = "table::has")]
     pub fn has_pair<First: CachedComponentData, Second: CachedComponentData>(&self) -> bool {
-        self.find_pair_index::<First, Second>().is_some()
+        self.find_type_index_pair::<First, Second>().is_some()
     }
 
     /// Test if table has pair of component ids
@@ -271,7 +406,7 @@ impl Table {
     /// * C++ API: `table::has`
     #[doc(alias = "table::has")]
     pub fn has_pair_by_ids(&self, first: EntityT, second: EntityT) -> bool {
-        self.find_pair_index_by_ids(first, second).is_some()
+        self.find_type_index_pair_ids(first, second).is_some()
     }
 
     /// Get column, components array ptr from table by column index.
@@ -286,9 +421,9 @@ impl Table {
     ///
     /// # See also
     ///
-    /// * C++ API: `table::get_by_index`
-    #[doc(alias = "table::get_by_index")]
-    pub fn get_component_array_ptr_by_column_index(&self, index: i32) -> Option<*mut c_void> {
+    /// * C++ API: `table::get_column`
+    #[doc(alias = "table::get_column")]
+    pub fn get_column(&self, index: i32) -> Option<*mut c_void> {
         let ptr = unsafe { ecs_table_get_column(self.table, index, 0) };
         if ptr.is_null() {
             None
@@ -312,13 +447,26 @@ impl Table {
     /// * C++ API: `table::get`
     #[doc(alias = "table::get")]
     pub fn get_component_array_ptr<T: CachedComponentData>(&self) -> Option<*mut T> {
-        self.get_component_array_ptr_by_id(T::get_id(self.world))
+        self.get_component_array_ptr_id(T::get_id(self.world))
             .map(|ptr| ptr as *mut T)
     }
 
-    pub fn get_component_array_ptr_by_id(&self, id: IdT) -> Option<*mut c_void> {
-        if let Some(index) = self.find_component_id_index(id) {
-            self.get_component_array_ptr_by_column_index(index)
+    /// Get column, components array ptr from table by component type.
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The id of the component
+    ///
+    /// # Returns
+    ///
+    /// Some(Pointer) to the column, or None if not found
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `table::get`
+    pub fn get_component_array_ptr_id(&self, id: IdT) -> Option<*mut c_void> {
+        if let Some(index) = self.find_column_index_id(id) {
+            self.get_column(index)
         } else {
             None
         }
@@ -339,12 +487,12 @@ impl Table {
     ///
     /// * C++ API: `table::get`
     #[doc(alias = "table::get")]
-    pub fn get_component_array_ptr_by_pair_ids(
+    pub fn get_component_array_ptr_pair_ids(
         &self,
         first: EntityT,
         second: EntityT,
     ) -> Option<*mut c_void> {
-        self.get_component_array_ptr_by_id(ecs_pair(first, second))
+        self.get_component_array_ptr_id(ecs_pair(first, second))
     }
 
     /// Get column, components array ptr from table by pair of component types.
@@ -362,16 +510,10 @@ impl Table {
     ///
     /// * C++ API: `table::get`
     #[doc(alias = "table::get")]
-    pub fn get_component_array_ptr_by_pair<
-        First: CachedComponentData,
-        Second: CachedComponentData,
-    >(
+    pub fn get_component_array_ptr_pair<First: CachedComponentData, Second: CachedComponentData>(
         &self,
     ) -> Option<*mut c_void> {
-        self.get_component_array_ptr_by_pair_ids(
-            First::get_id(self.world),
-            Second::get_id(self.world),
-        )
+        self.get_component_array_ptr_pair_ids(First::get_id(self.world), Second::get_id(self.world))
     }
 
     //TODO pair generic
@@ -380,7 +522,7 @@ impl Table {
     ///
     /// # Arguments
     ///
-    /// * `column_index` - The index of the column
+    /// * `index` - The index of the column
     ///
     /// # Returns
     ///
@@ -390,8 +532,8 @@ impl Table {
     ///
     /// * C++ API: `table::column_size`
     #[doc(alias = "table::column_size")]
-    pub fn get_column_size(&self, column_index: i32) -> usize {
-        unsafe { ecs_table_get_column_size(self.table, column_index) }
+    pub fn get_column_size(&self, index: i32) -> usize {
+        unsafe { ecs_table_get_column_size(self.table, index) }
     }
 
     /// Return depth for table in tree for relationship type.
@@ -523,9 +665,9 @@ impl TableRange {
     ///
     /// # See also
     ///
-    /// * C++ API: `table::get_by_index`
-    #[doc(alias = "table::get_by_index")]
-    pub fn get_component_array_ptr_by_column_index(&self, index: i32) -> Option<*mut c_void> {
+    /// * C++ API: `table::get_column`
+    #[doc(alias = "table::get_column")]
+    pub fn get_column(&self, index: i32) -> Option<*mut c_void> {
         let ptr = unsafe { ecs_table_get_column(self.table.table, index, self.offset) };
         if ptr.is_null() {
             None
