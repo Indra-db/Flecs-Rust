@@ -10,7 +10,8 @@ use crate::{
 
 use super::{
     c_binding::bindings::{
-        ecs_term_copy, ecs_term_finalize, ecs_term_fini, ecs_term_is_initialized, ecs_term_move,
+        ecs_inout_kind_t, ecs_oper_kind_t, ecs_term_copy, ecs_term_finalize, ecs_term_fini,
+        ecs_term_is_initialized, ecs_term_move,
     },
     c_types::{
         EntityT, Flags32T, IdT, InOutKind, OperKind, TermIdT, TermT, WorldT, ECS_CASCADE,
@@ -929,7 +930,7 @@ pub trait TermBuilder: Sized {
     #[doc(alias = "term_builder_i::inout")]
     fn set_inout(&mut self, inout: InOutKind) -> &mut Self {
         self.assert_term();
-        unsafe { (*self.get_raw_term()).inout = inout as ::std::os::raw::c_uint };
+        unsafe { (*self.get_raw_term()).inout = inout as ecs_inout_kind_t };
         self
     }
 
@@ -953,7 +954,7 @@ pub trait TermBuilder: Sized {
         self.assert_term();
         self.set_inout(inout);
         unsafe {
-            if (*self.get_raw_term()).oper != OperKind::Not as ::std::os::raw::c_uint {
+            if (*self.get_raw_term()).oper != OperKind::Not as ecs_oper_kind_t {
                 self.setup_src().entity(0);
             }
         }
@@ -1045,7 +1046,7 @@ pub trait TermBuilder: Sized {
     #[doc(alias = "term_builder_i::oper")]
     fn oper(&mut self, oper: OperKind) -> &mut Self {
         self.assert_term_id();
-        unsafe { (*self.get_raw_term()).oper = oper as ::std::os::raw::c_uint };
+        unsafe { (*self.get_raw_term()).oper = oper as ecs_oper_kind_t };
         self
     }
 
