@@ -51,11 +51,13 @@ fn main() {
     world.progress();
 
     // See if Bob has moved (he has)
-    let pos = bob.get_component::<Position>();
+    let pos = bob.get::<Position>();
     let pos_ref = unsafe { pos.as_ref().unwrap() };
     println!("Bob's position: {:?}", pos_ref);
 
     // Output
     //  Bob's got [Position, Velocity, (Identifier,Name), (Eats,Apples)]
     //  Bob's position: Position { x: 2.0, y: 4.0 }
+
+    //do the same for bevy
 }

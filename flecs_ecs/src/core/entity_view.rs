@@ -211,7 +211,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path`
     #[doc(alias = "entity_view::path")]
-    pub fn get_hierarchy_path(&self, sep: &CStr, init_sep: &CStr) -> Option<String> {
+    pub fn get_hierarchy_path_w_sep(&self, sep: &CStr, init_sep: &CStr) -> Option<String> {
         self.get_hierarchy_path_from_parent_id(0, sep, init_sep)
     }
 
@@ -221,7 +221,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path`
     #[doc(alias = "entity_view::path")]
-    pub fn get_hierarchy_path_default(&self) -> Option<String> {
+    pub fn get_hierarchy_path(&self) -> Option<String> {
         self.get_hierarchy_path_from_parent_id_default(0)
     }
 
@@ -636,7 +636,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> *const T {
+    pub fn get<T: CachedComponentData + ComponentType<Struct>>(&self) -> *const T {
         let component_id = T::get_id(self.world);
         unsafe { ecs_get_id(self.world, self.raw_id, component_id) as *const T }
     }
@@ -655,7 +655,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get_enum_component<T: CachedComponentData + ComponentType<Enum>>(&self) -> *const T {
+    pub fn get_enum<T: CachedComponentData + ComponentType<Enum>>(&self) -> *const T {
         let component_id: IdT = T::get_id(self.world);
         let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
 
@@ -692,7 +692,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get_component_by_id(&self, component_id: IdT) -> *const c_void {
+    pub fn get_untyped(&self, component_id: IdT) -> *const c_void {
         unsafe { ecs_get_id(self.world, self.raw_id, component_id) }
     }
 
@@ -710,7 +710,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get_pair_untyped(&self, first: EntityT, second: EntityT) -> *const c_void {
+    pub fn get_untyped_pair(&self, first: EntityT, second: EntityT) -> *const c_void {
         unsafe { ecs_get_id(self.world, self.raw_id, ecs_pair(first, second)) }
     }
 

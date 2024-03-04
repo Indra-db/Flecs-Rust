@@ -45,7 +45,7 @@ fn entity_new_named_from_scope() {
     world.set_scope_with_id(prev.raw_id);
 
     assert_eq!(child.get_name(), "Bar");
-    assert_eq!(child.get_hierarchy_path_default().unwrap(), "::Foo::Bar");
+    assert_eq!(child.get_hierarchy_path().unwrap(), "::Foo::Bar");
 }
 
 #[test]
@@ -59,7 +59,7 @@ fn entity_new_nested_named_from_nested_scope() {
     // Verify that the entity exists and its name and path are correct
     assert!(entity.is_valid());
     assert_eq!(entity.get_name(), "Bar");
-    assert_eq!(entity.get_hierarchy_path_default().unwrap(), "::Foo::Bar");
+    assert_eq!(entity.get_hierarchy_path().unwrap(), "::Foo::Bar");
 
     // Set the current scope to `entity`
     let prev = world.set_scope_with_id(entity.raw_id);
@@ -76,7 +76,7 @@ fn entity_new_nested_named_from_nested_scope() {
     // Verify the name and hierarchical path of the child entity
     assert_eq!(child.get_name(), "World");
     assert_eq!(
-        child.get_hierarchy_path_default().unwrap(),
+        child.get_hierarchy_path().unwrap(),
         "::Foo::Bar::Hello::World"
     );
 }
@@ -134,7 +134,7 @@ fn entity_new_set() {
     assert!(entity.has::<Position>());
 
     // Verify the component data
-    let p = entity.get_component::<Position>();
+    let p = entity.get::<Position>();
     unsafe {
         assert_eq!((*p).x, 10.0);
         assert_eq!((*p).y, 20.0);
@@ -154,13 +154,13 @@ fn entity_new_set_2() {
     assert!(entity.has::<Position>());
     assert!(entity.has::<Velocity>());
 
-    let p = entity.get_component::<Position>();
+    let p = entity.get::<Position>();
     unsafe {
         assert_eq!((*p).x, 10.0);
         assert_eq!((*p).y, 20.0);
     }
 
-    let v = entity.get_component::<Velocity>();
+    let v = entity.get::<Velocity>();
     unsafe {
         assert_eq!((*v).x, 1.0);
         assert_eq!((*v).y, 2.0);
@@ -204,7 +204,7 @@ fn entity_set() {
     entity.set_component(Position { x: 10.0, y: 20.0 });
     assert!(entity.has::<Position>());
 
-    let p = entity.get_component::<Position>();
+    let p = entity.get::<Position>();
     unsafe {
         assert_eq!((*p).x, 10.0);
         assert_eq!((*p).y, 20.0);
@@ -300,13 +300,13 @@ fn entity_set_2() {
     assert!(entity.has::<Position>());
     assert!(entity.has::<Velocity>());
 
-    let p = entity.get_component::<Position>();
+    let p = entity.get::<Position>();
     unsafe {
         assert_eq!((*p).x, 10.0);
         assert_eq!((*p).y, 20.0);
     }
 
-    let v = entity.get_component::<Velocity>();
+    let v = entity.get::<Velocity>();
     unsafe {
         assert_eq!((*v).x, 1.0);
         assert_eq!((*v).y, 2.0);
@@ -376,7 +376,7 @@ fn entity_get_generic() {
     assert!(entity.is_valid());
     assert!(entity.has::<Position>());
 
-    let pos_void = entity.get_component_by_id(position.raw_id);
+    let pos_void = entity.get_untyped(position.raw_id);
     assert!(!pos_void.is_null());
 
     let pos = unsafe { &*(pos_void as *const Position) };
@@ -412,7 +412,7 @@ fn entity_set_generic() {
     assert!(entity.has::<Position>());
     assert!(entity.has_id(position.raw_id));
 
-    let pos = unsafe { &*entity.get_component::<Position>() };
+    let pos = unsafe { &*entity.get::<Position>() };
     assert_eq!(pos.x, 10.0);
     assert_eq!(pos.y, 20.0);
 }
@@ -431,7 +431,7 @@ fn entity_set_generic_no_size() {
     assert!(entity.has::<Position>());
     assert!(entity.has_id(position.raw_id));
 
-    let pos = unsafe { &*entity.get_component::<Position>() };
+    let pos = unsafe { &*entity.get::<Position>() };
     assert_eq!(pos.x, 10.0);
     assert_eq!(pos.y, 20.0);
 }
@@ -747,7 +747,7 @@ fn entity_tag_has_size_zero() {
     let world = World::new();
 
     let comp = world.component::<TagA>();
-    let ptr = comp.get_component::<EcsComponent>();
+    let ptr = comp.get::<EcsComponent>();
 
     assert_eq!(unsafe { (*ptr).size }, 0);
     assert_eq!(unsafe { (*ptr).alignment }, 0);

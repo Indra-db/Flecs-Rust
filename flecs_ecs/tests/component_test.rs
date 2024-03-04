@@ -33,19 +33,19 @@ fn temp_test_hook() {
         let entity = world.new_entity().add_component::<Position>();
 
         assert_eq!(unsafe { COUNT }, 1);
-        let pos_e1 = entity.get_component::<Position>();
+        let pos_e1 = entity.get::<Position>();
         assert_eq!(unsafe { (*pos_e1).x }, 10.0);
         assert_eq!(unsafe { (*pos_e1).y }, 20.0);
 
         entity.add_component::<Position>();
         assert_eq!(unsafe { COUNT }, 1);
-        let pos_e1 = entity.get_component::<Position>();
+        let pos_e1 = entity.get::<Position>();
         assert_eq!(unsafe { (*pos_e1).x }, 10.0);
         assert_eq!(unsafe { (*pos_e1).y }, 20.0);
 
         let entity2 = world.new_entity().add_component::<Position>();
         assert_eq!(unsafe { COUNT }, 2);
-        let pos_e2 = entity2.get_component::<Position>();
+        let pos_e2 = entity2.get::<Position>();
         assert_eq!(unsafe { (*pos_e1).x }, 10.0);
         assert_eq!(unsafe { (*pos_e1).y }, 20.0);
         assert_eq!(unsafe { (*pos_e2).x }, 10.0);
@@ -53,7 +53,7 @@ fn temp_test_hook() {
 
         entity.add_component::<Velocity>();
         assert_eq!(unsafe { COUNT2 }, 0);
-        let vel_e1 = entity.get_component::<Velocity>();
+        let vel_e1 = entity.get::<Velocity>();
         assert_eq!(unsafe { (*vel_e1).x }, 0.0);
         assert_eq!(unsafe { (*vel_e1).y }, 0.0);
         entity.remove_component::<Velocity>();
@@ -62,7 +62,7 @@ fn temp_test_hook() {
         assert_eq!(unsafe { COUNT }, 1);
 
         entity2.set_component(Velocity { x: 3.0, y: 5.0 });
-        let vel_e2 = entity2.get_component::<Velocity>();
+        let vel_e2 = entity2.get::<Velocity>();
         assert_eq!(unsafe { (*vel_e2).x }, 30.0);
         assert_eq!(unsafe { (*vel_e2).y }, 50.0);
         assert_eq!(unsafe { COUNT2 }, 1);

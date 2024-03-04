@@ -1596,7 +1596,7 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_component_mut<T: CachedComponentData + ComponentType<Struct>>(&self) -> *mut T {
+    pub fn get_mut<T: CachedComponentData + ComponentType<Struct>>(&self) -> *mut T {
         let component_id = T::get_id(self.world);
         ecs_assert!(
             T::get_size(self.world) != 0,
@@ -1621,7 +1621,7 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_enum_component_mut<T: CachedComponentData + ComponentType<Enum>>(&self) -> *mut T {
+    pub fn get_enum_mut<T: CachedComponentData + ComponentType<Enum>>(&self) -> *mut T {
         let component_id: IdT = T::get_id(self.world);
         let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
 
@@ -1662,7 +1662,7 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_component_by_id_mut(&self, component_id: EntityT) -> *mut c_void {
+    pub fn get_untyped_mut(&self, component_id: EntityT) -> *mut c_void {
         unsafe { ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut c_void }
     }
 

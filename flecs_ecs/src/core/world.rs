@@ -1046,12 +1046,11 @@ impl World {
     /// * C++ API: `world::get`
     #[doc(alias = "world::get")]
     #[inline(always)]
-    pub fn get_component<T>(&self) -> *const T
+    pub fn get<T>(&self) -> *const T
     where
         T: CachedComponentData + ComponentType<Struct>,
     {
-        Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
-            .get_component::<T>()
+        Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world)).get::<T>()
     }
 
     /// Get singleton component as mutable.
@@ -1069,12 +1068,11 @@ impl World {
     /// * C++ API: `world::get_mut`
     #[doc(alias = "world::get_mut")]
     #[inline(always)]
-    pub fn get_component_mut<T>(&self) -> *mut T
+    pub fn get_mut<T>(&self) -> *mut T
     where
         T: CachedComponentData + ComponentType<Struct>,
     {
-        Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
-            .get_component_mut::<T>()
+        Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world)).get_mut::<T>()
     }
 
     /// Get a reference to a singleton component.
@@ -1114,7 +1112,7 @@ impl World {
     /// * C++ API: `world::singleton`
     #[doc(alias = "world::singleton")]
     #[inline(always)]
-    pub fn get_component_as_entity<T: CachedComponentData>(&self) -> Entity {
+    pub fn get_singleton<T: CachedComponentData>(&self) -> Entity {
         Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
     }
 
