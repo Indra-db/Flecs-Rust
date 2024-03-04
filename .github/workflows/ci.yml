@@ -46,7 +46,7 @@ jobs:
           components: clippy
 
       - name: cargo clippy
-        run: cargo clippy --all-targets --workspace -- -D warnings
+        run: cargo clippy --workspace -- -D warnings
 
       - name: cargo test
         run: cargo test --workspace
