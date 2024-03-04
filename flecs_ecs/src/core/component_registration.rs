@@ -1,3 +1,5 @@
+//! Registering and working with components.
+
 use super::{
     c_binding::bindings::{
         ecs_cpp_component_register_explicit, ecs_cpp_enum_constant_register, ecs_cpp_enum_init,
@@ -334,6 +336,10 @@ where
     }
 
     //TODO evaluate if we can pass the ecs_exists result of the non explicit function.
+    // If no id has been registered yet for the component (indicating the
+    // component has not yet been registered, or the component is used
+    // across more than one binary), or if the id does not exists in the
+    // world (indicating a multi-world application), register it.
     if !is_comp_pre_registered
         || (!world.is_null() && unsafe { !ecs_exists(world, component_data.id) })
     {
@@ -550,6 +556,9 @@ where
 
         // we know this is safe because the component should be registered by now
         if unsafe { T::get_size_unchecked() } != 0 && !existing {
+            // Register lifecycle callbacks, but only if the component has a
+            // size. Components that don't have a size are tags, and tags don't
+            // require construction/destruction/copy/move's.
             register_lifecycle_actions::<T>(world, unsafe { T::get_id_unchecked() });
         }
 
