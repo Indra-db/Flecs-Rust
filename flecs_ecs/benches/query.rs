@@ -46,37 +46,37 @@ fn query_each_benchmark(c: &mut Criterion) {
 
     for _ in 0..1000_000 {
         let mut e = world.new_entity();
-        e.set_component(Pos { x: 10.0, y: 20.0 });
-        e.set_component(Vel { x: 5.0, y: 5.0 });
+        e.set(Pos { x: 10.0, y: 20.0 });
+        e.set(Vel { x: 5.0, y: 5.0 });
         if flip_coin() {
-            e.add_component::<X2>();
+            e.add::<X2>();
         }
         if flip_coin() {
-            e.add_component::<X3>();
+            e.add::<X3>();
         }
         if flip_coin() {
-            e.add_component::<X4>();
+            e.add::<X4>();
         }
         if flip_coin() {
-            e.add_component::<X5>();
+            e.add::<X5>();
         }
         if flip_coin() {
-            e.add_component::<X6>();
+            e.add::<X6>();
         }
         if flip_coin() {
-            e.add_component::<X7>();
+            e.add::<X7>();
         }
         if flip_coin() {
-            e.add_component::<X8>();
+            e.add::<X8>();
         }
         if flip_coin() {
-            e.add_component::<X9>();
+            e.add::<X9>();
         }
         if flip_coin() {
-            e.add_component::<X10>();
+            e.add::<X10>();
         }
         if flip_coin() {
-            e.add_component::<X11>();
+            e.add::<X11>();
         }
     }
 

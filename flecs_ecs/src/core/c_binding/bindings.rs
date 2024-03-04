@@ -6835,10 +6835,7 @@ extern "C" {
 }
 extern "C" {
     #[doc = "Set field with (component) id value"]
-    pub fn ecs_meta_set_component(
-        cursor: *mut ecs_meta_cursor_t,
-        value: ecs_id_t,
-    ) -> ::std::os::raw::c_int;
+    pub fn ecs_meta_set(cursor: *mut ecs_meta_cursor_t, value: ecs_id_t) -> ::std::os::raw::c_int;
 }
 extern "C" {
     #[doc = "Set field with null value"]

@@ -58,7 +58,7 @@ impl EventBuilder {
     ///
     /// * C++ API: `event_builder_base::id`
     #[doc(alias = "event_builder_base::id")]
-    pub fn add_component_to_emit<C>(&mut self) -> &mut Self
+    pub fn add_to_emit<C>(&mut self) -> &mut Self
     where
         C: CachedComponentData,
     {
@@ -80,7 +80,7 @@ impl EventBuilder {
     ///
     /// * C++ API: `event_builder_base::id`
     #[doc(alias = "event_builder_base::id")]
-    pub fn add_component_id_to_emit(&mut self, id: IdT) -> &mut Self {
+    pub fn add_id_to_emit(&mut self, id: IdT) -> &mut Self {
         self.ids.array = self.ids_array.as_mut_ptr();
         unsafe {
             *self.ids.array.add(self.ids.count as usize) = id;
@@ -105,7 +105,7 @@ impl EventBuilder {
         C1: CachedComponentData,
         C2: CachedComponentData,
     {
-        self.add_component_id_to_emit(ecs_pair(
+        self.add_id_to_emit(ecs_pair(
             C1::get_id(self.world.raw_world),
             C2::get_id(self.world.raw_world),
         ))
@@ -123,7 +123,7 @@ impl EventBuilder {
     /// * C++ API: `event_builder_base::id`
     #[doc(alias = "event_builder_base::id")]
     pub fn add_pair_ids_to_emit(&mut self, first: IdT, second: IdT) -> &mut Self {
-        self.add_component_id_to_emit(ecs_pair(first, second))
+        self.add_id_to_emit(ecs_pair(first, second))
     }
 
     /// Add a pair of components to emit for the event
@@ -144,7 +144,7 @@ impl EventBuilder {
     where
         First: CachedComponentData,
     {
-        self.add_component_id_to_emit(ecs_pair(First::get_id(self.world.raw_world), second))
+        self.add_id_to_emit(ecs_pair(First::get_id(self.world.raw_world), second))
     }
 
     /// Set the entity to emit for the event

@@ -14105,7 +14105,7 @@ int ecs_meta_set_id(
 
 /** Set field with (component) id value */
 FLECS_API
-int ecs_meta_set_component(
+int ecs_meta_set(
     ecs_meta_cursor_t *cursor,
     ecs_id_t value);
 

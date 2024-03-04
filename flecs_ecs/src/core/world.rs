@@ -899,7 +899,7 @@ impl World {
     ///
     /// * C++ API: `world::set`
     #[doc(alias = "world::set")]
-    pub fn set_component<T: CachedComponentData>(&self, component: T) {
+    pub fn set<T: CachedComponentData>(&self, component: T) {
         let id = T::get_id(self.raw_world);
         set_helper(self.raw_world, id, component, id);
     }
@@ -1411,9 +1411,8 @@ impl World {
     /// * C++ API: `world::add`
     #[doc(alias = "world::add")]
     #[inline(always)]
-    pub fn add_component<T: CachedComponentData>(&self) -> Entity {
-        Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
-            .add_component::<T>()
+    pub fn add<T: CachedComponentData>(&self) -> Entity {
+        Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world)).add::<T>()
     }
 
     /// Add a singleton enum component.

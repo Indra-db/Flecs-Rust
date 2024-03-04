@@ -87,7 +87,7 @@ fn entity_new_add() {
     let world = World::new();
 
     // Create an entity and add the Position component to it
-    let entity = world.new_entity().add_component::<Position>();
+    let entity = world.new_entity().add::<Position>();
 
     // Verify that the entity exists
     assert!(entity.is_valid());
@@ -102,10 +102,7 @@ fn entity_new_add_2() {
     let world = World::new();
 
     // Create an entity and add the Position and Velocity components to it
-    let entity = world
-        .new_entity()
-        .add_component::<Position>()
-        .add_component::<Velocity>();
+    let entity = world.new_entity().add::<Position>().add::<Velocity>();
 
     // Verify that the entity exists
     assert!(entity.is_valid());
@@ -123,9 +120,7 @@ fn entity_new_set() {
     let world = World::new();
 
     // Create an entity and set the Position component data
-    let entity = world
-        .new_entity()
-        .set_component(Position { x: 10.0, y: 20.0 });
+    let entity = world.new_entity().set(Position { x: 10.0, y: 20.0 });
 
     // Verify that the entity exists
     assert!(entity.is_valid());
@@ -145,8 +140,8 @@ fn entity_new_set_2() {
 
     let entity = world
         .new_entity()
-        .set_component(Position { x: 10.0, y: 20.0 })
-        .set_component(Velocity { x: 1.0, y: 2.0 });
+        .set(Position { x: 10.0, y: 20.0 })
+        .set(Velocity { x: 1.0, y: 2.0 });
 
     assert!(entity.is_valid());
     assert!(entity.has::<Position>());
@@ -169,7 +164,7 @@ fn entity_add() {
 
     assert!(entity.is_valid());
 
-    entity.add_component::<Position>();
+    entity.add::<Position>();
 
     assert!(entity.has::<Position>());
 }
@@ -181,7 +176,7 @@ fn entity_remove() {
     let entity = world.new_entity();
     assert!(entity.is_valid());
 
-    entity.add_component::<Position>();
+    entity.add::<Position>();
     assert!(entity.has::<Position>());
 
     entity.remove_component::<Position>();
@@ -195,7 +190,7 @@ fn entity_set() {
     let entity = world.new_entity();
     assert!(entity.is_valid());
 
-    entity.set_component(Position { x: 10.0, y: 20.0 });
+    entity.set(Position { x: 10.0, y: 20.0 });
     assert!(entity.has::<Position>());
 
     let p = entity.get::<Position>().unwrap();
@@ -210,9 +205,7 @@ fn entity_add_2() {
     let entity = world.new_entity();
     assert!(entity.is_valid());
 
-    entity
-        .add_component::<Position>()
-        .add_component::<Velocity>();
+    entity.add::<Position>().add::<Velocity>();
 
     assert!(entity.has::<Position>());
     assert!(entity.has::<Velocity>());
@@ -264,10 +257,7 @@ fn entity_add_instanceof() {
 fn entity_remove_2() {
     let world = World::new();
 
-    let entity = world
-        .new_entity()
-        .add_component::<Position>()
-        .add_component::<Velocity>();
+    let entity = world.new_entity().add::<Position>().add::<Velocity>();
 
     assert!(entity.has::<Position>());
     assert!(entity.has::<Velocity>());
@@ -286,8 +276,8 @@ fn entity_set_2() {
 
     let entity = world
         .new_entity()
-        .set_component::<Position>(Position { x: 10.0, y: 20.0 })
-        .set_component::<Velocity>(Velocity { x: 1.0, y: 2.0 });
+        .set::<Position>(Position { x: 10.0, y: 20.0 })
+        .set::<Velocity>(Velocity { x: 1.0, y: 2.0 });
 
     assert!(entity.has::<Position>());
     assert!(entity.has::<Velocity>());
@@ -355,11 +345,9 @@ fn entity_remove_instanceof() {
 #[test]
 fn entity_get_generic() {
     let world = World::new();
-    let position = world.add_component::<Position>();
+    let position = world.add::<Position>();
 
-    let entity = world
-        .new_entity()
-        .set_component(Position { x: 10.0, y: 20.0 });
+    let entity = world.new_entity().set(Position { x: 10.0, y: 20.0 });
 
     assert!(entity.is_valid());
     assert!(entity.has::<Position>());
@@ -682,10 +670,7 @@ fn entity_change_name() {
 fn entity_delete() {
     let world = World::new();
 
-    let entity = world
-        .new_entity()
-        .add_component::<Position>()
-        .add_component::<Velocity>();
+    let entity = world.new_entity().add::<Position>().add::<Velocity>();
 
     entity.destruct();
     assert!(!entity.is_alive());
@@ -699,10 +684,7 @@ fn entity_delete() {
 fn entity_clear() {
     let world = World::new();
 
-    let entity = world
-        .new_entity()
-        .add_component::<Position>()
-        .add_component::<Velocity>();
+    let entity = world.new_entity().add::<Position>().add::<Velocity>();
 
     entity.clear();
     assert!(!entity.has::<Position>());
@@ -747,9 +729,9 @@ fn entity_get_target() {
 
     let rel = world.new_entity();
 
-    let obj1 = world.new_entity().add_component::<Position>();
-    let obj2 = world.new_entity().add_component::<Velocity>();
-    let obj3 = world.new_entity().add_component::<Mass>();
+    let obj1 = world.new_entity().add::<Position>();
+    let obj2 = world.new_entity().add::<Velocity>();
+    let obj3 = world.new_entity().add::<Mass>();
     let child = world
         .new_entity()
         .add_pair_ids(rel.raw_id, obj1.raw_id)
@@ -789,9 +771,9 @@ fn entity_is_enabled_component_disabled() {
 
     let entity = world
         .new_entity()
-        .add_component::<Position>()
-        .add_component::<Velocity>()
-        .add_component::<Mass>();
+        .add::<Position>()
+        .add::<Velocity>()
+        .add::<Mass>();
 
     assert!(entity.is_enabled_component::<Position>());
     assert!(entity.is_enabled_component::<Velocity>());
@@ -915,7 +897,7 @@ fn entity_get_type() {
     let type_1 = entity.get_archetype();
     assert_eq!(type_1.count(), 0);
 
-    entity.add_component::<Position>();
+    entity.add::<Position>();
 
     let type_2 = entity.get_archetype();
     assert_eq!(type_2.count(), 1);
@@ -924,7 +906,7 @@ fn entity_get_type() {
         world.get_id_component::<Position>()
     );
 
-    entity.add_component::<Velocity>();
+    entity.add::<Velocity>();
     let type_3 = entity.get_archetype();
     assert_eq!(type_3.count(), 2);
     assert_eq!(

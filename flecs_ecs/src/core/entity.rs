@@ -194,7 +194,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    pub fn add_component<T: CachedComponentData>(self) -> Self {
+    pub fn add<T: CachedComponentData>(self) -> Self {
         let world = self.world;
         self.add_id(T::get_id(world))
     }
@@ -365,7 +365,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::add_if`
     #[doc(alias = "entity_builder::add_if")]
-    pub fn add_component_if<T: CachedComponentData>(self, condition: bool) -> Self {
+    pub fn add_if<T: CachedComponentData>(self, condition: bool) -> Self {
         let world = self.world;
         self.add_id_if(T::get_id(world), condition)
     }
@@ -923,7 +923,7 @@ impl Entity {
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
     pub fn set_mark_override_component<T: CachedComponentData>(self, component: T) -> Self {
-        self.mark_override_component::<T>().set_component(component)
+        self.mark_override_component::<T>().set(component)
     }
 
     /// Sets a pair, mark component for auto-overriding.
@@ -984,7 +984,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::set`
     #[doc(alias = "entity_builder::set")]
-    pub fn set_component<T: CachedComponentData>(self, component: T) -> Self {
+    pub fn set<T: CachedComponentData>(self, component: T) -> Self {
         set_helper(self.world, self.raw_id, component, T::get_id(self.world));
         self
     }
