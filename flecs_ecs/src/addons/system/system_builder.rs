@@ -462,25 +462,23 @@ where
         let each = (*ctx).each.unwrap();
         let each = &mut *(each as *mut Func);
 
-        while ecs_iter_next(iter) {
-            let components_data = T::get_array_ptrs_of_components(&*iter);
-            let iter_count = (*iter).count as usize;
-            let array_components = &components_data.array_components;
+        let components_data = T::get_array_ptrs_of_components(&*iter);
+        let iter_count = (*iter).count as usize;
+        let array_components = &components_data.array_components;
 
-            ecs_table_lock((*iter).world, (*iter).table);
+        ecs_table_lock((*iter).world, (*iter).table);
 
-            for i in 0..iter_count {
-                let tuple = if components_data.is_any_array_a_ref {
-                    let is_ref_array_components = &components_data.is_ref_array_components;
-                    T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-                } else {
-                    T::get_tuple(array_components, i)
-                };
-                each(tuple);
-            }
-
-            ecs_table_unlock((*iter).world, (*iter).table);
+        for i in 0..iter_count {
+            let tuple = if components_data.is_any_array_a_ref {
+                let is_ref_array_components = &components_data.is_ref_array_components;
+                T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+            } else {
+                T::get_tuple(array_components, i)
+            };
+            each(tuple);
         }
+
+        ecs_table_unlock((*iter).world, (*iter).table);
     }
 
     unsafe extern "C" fn run_each_entity<Func>(iter: *mut IterT)

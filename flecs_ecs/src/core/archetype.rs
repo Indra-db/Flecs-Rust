@@ -1,4 +1,8 @@
-use std::{ffi::CStr, ops::Index};
+use std::{
+    ffi::CStr,
+    fmt::{Debug, Display},
+    ops::Index,
+};
 
 use crate::{core::FlecsErrorCode, ecs_assert};
 
@@ -18,6 +22,26 @@ use super::{
 pub struct Archetype {
     world: *mut WorldT,
     type_vec: *const TypeT,
+}
+
+impl Display for Archetype {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(s) = self.to_string() {
+            write!(f, "{}", s)
+        } else {
+            write!(f, "empty archetype")
+        }
+    }
+}
+
+impl Debug for Archetype {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(s) = self.to_string() {
+            write!(f, "{}", s)
+        } else {
+            write!(f, "empty archetype")
+        }
+    }
 }
 
 impl Archetype {

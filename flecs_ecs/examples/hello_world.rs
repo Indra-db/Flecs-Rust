@@ -41,11 +41,7 @@ fn main() {
         .add_pair::<Eats, Apples>();
 
     // Show us what you got
-    println!(
-        "{}'s got [{}]",
-        bob.get_name(),
-        bob.get_archetype().to_string().unwrap()
-    );
+    println!("{}'s got [{}]", bob.get_name(), bob.get_archetype());
 
     // Run systems twice. Usually this function is called once per frame
     world.progress();

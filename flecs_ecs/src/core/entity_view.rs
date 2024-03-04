@@ -212,7 +212,7 @@ impl EntityView {
     /// * C++ API: `entity_view::path`
     #[doc(alias = "entity_view::path")]
     pub fn get_hierarchy_path_w_sep(&self, sep: &CStr, init_sep: &CStr) -> Option<String> {
-        self.get_hierarchy_path_from_parent_id(0, sep, init_sep)
+        self.get_hierarchy_path_from_parent_id_w_sep(0, sep, init_sep)
     }
 
     /// Return the hierarchical entity path using the default separator "::".
@@ -222,7 +222,7 @@ impl EntityView {
     /// * C++ API: `entity_view::path`
     #[doc(alias = "entity_view::path")]
     pub fn get_hierarchy_path(&self) -> Option<String> {
-        self.get_hierarchy_path_from_parent_id_default(0)
+        self.get_hierarchy_path_from_parent_id(0)
     }
 
     /// Return the hierarchical entity path relative to a parent.
@@ -234,7 +234,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    pub fn get_hierarchy_path_from_parent_id(
+    pub fn get_hierarchy_path_from_parent_id_w_sep(
         &self,
         parent: EntityT,
         sep: &CStr,
@@ -275,7 +275,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    pub fn get_hierarchy_path_from_parent_id_default(&self, parent: EntityT) -> Option<String> {
+    pub fn get_hierarchy_path_from_parent_id(&self, parent: EntityT) -> Option<String> {
         unsafe {
             let raw_ptr = ecs_get_path_w_sep(
                 self.world,
@@ -310,12 +310,12 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    pub fn get_hierarchy_path_from_parent_type<T: CachedComponentData>(
+    pub fn get_hierarchy_path_from_parent_type_w_sep<T: CachedComponentData>(
         &self,
         sep: &CStr,
         init_sep: &CStr,
     ) -> Option<String> {
-        self.get_hierarchy_path_from_parent_id(T::get_id(self.world), sep, init_sep)
+        self.get_hierarchy_path_from_parent_id_w_sep(T::get_id(self.world), sep, init_sep)
     }
 
     /// Return the hierarchical entity path relative to a parent type using the default separator "::".
@@ -324,10 +324,8 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    pub fn get_hierarchy_path_from_parent_type_default<T: CachedComponentData>(
-        &self,
-    ) -> Option<String> {
-        self.get_hierarchy_path_from_parent_id_default(T::get_id(self.world))
+    pub fn get_hierarchy_path_from_parent_type<T: CachedComponentData>(&self) -> Option<String> {
+        self.get_hierarchy_path_from_parent_id(T::get_id(self.world))
     }
 
     /// Checks if the entity is enabled.
