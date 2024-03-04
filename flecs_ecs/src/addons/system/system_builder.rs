@@ -72,7 +72,26 @@ where
         };
         obj.desc.query = *obj.query_builder.get_desc_query();
         obj.desc.query.filter = *obj.filter_builder.get_desc_filter();
+        let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
+            name: std::ptr::null(),
+            sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
+            ..Default::default()
+        };
+        obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
+
         T::populate(&mut obj);
+
+        #[cfg(feature = "flecs_pipeline")]
+        unsafe {
+            ecs_add_id(
+                world.raw_world,
+                obj.desc.entity,
+                ecs_dependson(ECS_ON_UPDATE),
+            );
+            ecs_add_id(world.raw_world, obj.desc.entity, ECS_ON_UPDATE);
+        }
+
         obj
     }
 
@@ -84,7 +103,26 @@ where
         };
         obj.desc.query = *obj.query_builder.get_desc_query();
         obj.desc.query.filter = *obj.filter_builder.get_desc_filter();
+        let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
+            name: std::ptr::null(),
+            sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
+            ..Default::default()
+        };
+        obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
+
         T::populate(&mut obj);
+
+        #[cfg(feature = "flecs_pipeline")]
+        unsafe {
+            ecs_add_id(
+                world.raw_world,
+                obj.desc.entity,
+                ecs_dependson(ECS_ON_UPDATE),
+            );
+            ecs_add_id(world.raw_world, obj.desc.entity, ECS_ON_UPDATE);
+        }
+
         obj
     }
 

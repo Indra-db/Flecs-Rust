@@ -3411,7 +3411,7 @@ impl World {
     ///
     /// * C++ API: `world::system`
     #[doc(alias = "world::system")]
-    pub fn system(&self, entity: Entity) -> System {
+    pub fn system_from_entity(&self, entity: Entity) -> System {
         System::new_from_existing(self, entity)
     }
 
