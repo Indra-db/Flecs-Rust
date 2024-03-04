@@ -18,6 +18,7 @@ use crate::{
 };
 
 use super::c_binding::ecs_get_id;
+use super::ECS_PREFAB;
 use super::{
     c_binding::{
         bindings::{
@@ -2857,6 +2858,88 @@ impl World {
     pub fn new_entity_w_id(&self, id: EntityT) -> Entity {
         Entity::new_from_existing_raw(self.raw_world, id)
     }
+
+    /// Creates a prefab
+    ///
+    /// # Returns
+    ///
+    /// The prefab entity.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::prefab`
+    #[doc(alias = "world::prefab")]
+    pub fn prefab(&self) -> Entity {
+        let result = Entity::new(self);
+        result.add_id(ECS_PREFAB);
+        result
+    }
+
+    /// Creates a named prefab
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name to use for the new prefab.
+    ///
+    /// # Returns
+    ///
+    /// The prefab entity.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::prefab`
+    #[doc(alias = "world::prefab")]
+    pub fn prefab_named(&self, name: &CStr) -> Entity {
+        let result = Entity::new_named(self, name);
+        result.add_id(ECS_PREFAB);
+        result
+    }
+
+    /// Creates a prefab that's associated with a type
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The component type to associate with the new prefab.
+    ///
+    /// # Returns
+    ///
+    /// The prefab entity.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::prefab`
+    #[doc(alias = "world::prefab")]
+    pub fn prefab_type<T: CachedComponentData>(&self) -> Entity {
+        let result = Component::<T>::new(self).entity();
+        result.add_id(ECS_PREFAB);
+        result.add::<T>();
+        result
+    }
+
+    /// Creates a named prefab that's associated with a type
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The component type to associate with the new prefab.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name to use for the new prefab.
+    ///
+    /// # Returns
+    ///
+    /// The prefab entity.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::prefab`
+    #[doc(alias = "world::prefab")]
+    pub fn prefab_type_named<T: CachedComponentData>(&self, name: &CStr) -> Entity {
+        let result = Component::<T>::new_named(self, name).entity();
+        result.add_id(ECS_PREFAB);
+        result.add::<T>();
+        result
+    }
 }
 /// Id mixin implementation
 impl World {
@@ -2979,7 +3062,7 @@ impl World {
     /// * C++ API: `world::component`
     #[doc(alias = "world::component")]
     pub fn component<T: CachedComponentData>(&self) -> Component<T> {
-        Component::<T>::new(self.raw_world)
+        Component::<T>::new(self)
     }
 
     /// Find or register component.
@@ -3001,7 +3084,7 @@ impl World {
     /// * C++ API: `world::component`
     #[doc(alias = "world::component")]
     pub fn component_named<T: CachedComponentData>(&self, name: &CStr) -> Component<T> {
-        Component::<T>::new_named(self.raw_world, name)
+        Component::<T>::new_named(self, name)
     }
 
     /// Find or register untyped component.
@@ -3019,7 +3102,7 @@ impl World {
     /// * C++ API: `world::component`
     #[doc(alias = "world::component")]
     pub fn component_untyped<T: CachedComponentData>(&self) -> UntypedComponent {
-        UntypedComponent::new(self.raw_world, T::get_id(self.raw_world))
+        UntypedComponent::new(self, T::get_id(self.raw_world))
     }
 
     /// Find or register untyped component.
@@ -3037,7 +3120,7 @@ impl World {
     /// * C++ API: `world::component`
     #[doc(alias = "world::component")]
     pub fn component_untyped_id(&self, id: IdT) -> UntypedComponent {
-        UntypedComponent::new(self.raw_world, id)
+        UntypedComponent::new(self, id)
     }
 }
 

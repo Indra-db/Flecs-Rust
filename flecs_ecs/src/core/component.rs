@@ -12,6 +12,7 @@ use super::{
     component_registration::*,
     ecs_field,
     entity::Entity,
+    World,
 };
 
 use std::{ffi::CStr, os::raw::c_void, ptr};
@@ -107,9 +108,9 @@ impl UntypedComponent {
     ///
     /// * C++ API: `untyped_component::untyped_component`
     #[doc(alias = "untyped_component::untyped_component")]
-    pub fn new(world: *mut WorldT, id: IdT) -> Self {
+    pub fn new(world: &World, id: IdT) -> Self {
         UntypedComponent {
-            entity: Entity::new_from_existing_raw(world, id),
+            entity: Entity::new_from_existing_raw(world.raw_world, id),
         }
     }
 }
@@ -146,9 +147,9 @@ impl<T: CachedComponentData + Default> Component<T> {
     ///
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
-    pub fn new(world: *mut WorldT) -> Self {
-        if !T::is_registered_with_world(world) {
-            T::register_explicit(world);
+    pub fn new(world: &World) -> Self {
+        if !T::is_registered_with_world(world.raw_world) {
+            T::register_explicit(world.raw_world);
         }
 
         Self {
@@ -168,9 +169,9 @@ impl<T: CachedComponentData + Default> Component<T> {
     ///
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
-    pub fn new_named(world: *mut WorldT, name: &CStr) -> Self {
-        if !T::is_registered_with_world(world) {
-            T::register_explicit_named(world, name);
+    pub fn new_named(world: &World, name: &CStr) -> Self {
+        if !T::is_registered_with_world(world.raw_world) {
+            T::register_explicit_named(world.raw_world, name);
         }
 
         Self {
