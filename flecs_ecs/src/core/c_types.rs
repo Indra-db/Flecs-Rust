@@ -1,3 +1,5 @@
+#![allow(non_upper_case_globals)]
+
 use super::c_binding::bindings::*;
 use super::component_registration::{
     try_register_struct_component, try_register_struct_component_named, ComponentType, Struct,
@@ -49,13 +51,14 @@ pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\
 /// - `InOut`: The term is both read and written, implying a mutable access to the component data.
 /// - `In`: The term is only read, implying an immutable access to the component data.
 /// - `Out`: The term is only written, providing exclusive access to modify the component data.
-#[repr(C)]
+#[allow(clippy::unnecessary_cast)]
+#[repr(u32)]
 pub enum InOutKind {
-    InOutDefault = 0,
-    InOutNone = 1,
-    InOut = 2,
-    In = 3,
-    Out = 4,
+    InOutDefault = ecs_inout_kind_t_EcsInOutDefault as u32,
+    InOutNone = ecs_inout_kind_t_EcsInOutNone as u32,
+    InOut = ecs_inout_kind_t_EcsInOut as u32,
+    In = ecs_inout_kind_t_EcsIn as u32,
+    Out = ecs_inout_kind_t_EcsOut as u32,
 }
 
 impl InOutKind {
@@ -64,14 +67,14 @@ impl InOutKind {
     }
 }
 
-impl From<::std::os::raw::c_uint> for InOutKind {
-    fn from(value: ::std::os::raw::c_uint) -> Self {
+impl From<ecs_inout_kind_t> for InOutKind {
+    fn from(value: ecs_inout_kind_t) -> Self {
         match value {
-            0 => InOutKind::InOutDefault,
-            1 => InOutKind::InOutNone,
-            2 => InOutKind::InOut,
-            3 => InOutKind::In,
-            4 => InOutKind::Out,
+            ecs_inout_kind_t_EcsInOutDefault => InOutKind::InOutDefault,
+            ecs_inout_kind_t_EcsInOutNone => InOutKind::InOutNone,
+            ecs_inout_kind_t_EcsInOut => InOutKind::InOut,
+            ecs_inout_kind_t_EcsIn => InOutKind::In,
+            ecs_inout_kind_t_EcsOut => InOutKind::Out,
             _ => InOutKind::InOutDefault,
         }
     }
@@ -95,15 +98,16 @@ impl From<::std::os::raw::c_uint> for InOutKind {
 ///
 /// These operations allow for flexible and powerful queries within an ECS framework, enabling
 /// systems to precisely specify the conditions under which entities are selected for processing.
-#[repr(C)]
+#[allow(clippy::unnecessary_cast)]
+#[repr(u32)]
 pub enum OperKind {
-    And,
-    Or,
-    Not,
-    Optional,
-    AndFrom,
-    OrFrom,
-    NotFrom,
+    And = ecs_oper_kind_t_EcsAnd as u32,
+    Or = ecs_oper_kind_t_EcsOr as u32,
+    Not = ecs_oper_kind_t_EcsNot as u32,
+    Optional = ecs_oper_kind_t_EcsOptional as u32,
+    AndFrom = ecs_oper_kind_t_EcsAndFrom as u32,
+    OrFrom = ecs_oper_kind_t_EcsOrFrom as u32,
+    NotFrom = ecs_oper_kind_t_EcsNotFrom as u32,
 }
 
 impl OperKind {
@@ -112,16 +116,16 @@ impl OperKind {
     }
 }
 
-impl From<::std::os::raw::c_uint> for OperKind {
-    fn from(value: ::std::os::raw::c_uint) -> Self {
+impl From<ecs_oper_kind_t> for OperKind {
+    fn from(value: ecs_oper_kind_t) -> Self {
         match value {
-            0 => OperKind::And,
-            1 => OperKind::Or,
-            2 => OperKind::Not,
-            3 => OperKind::Optional,
-            4 => OperKind::AndFrom,
-            5 => OperKind::OrFrom,
-            6 => OperKind::NotFrom,
+            ecs_oper_kind_t_EcsAnd => OperKind::And,
+            ecs_oper_kind_t_EcsOr => OperKind::Or,
+            ecs_oper_kind_t_EcsNot => OperKind::Not,
+            ecs_oper_kind_t_EcsOptional => OperKind::Optional,
+            ecs_oper_kind_t_EcsAndFrom => OperKind::AndFrom,
+            ecs_oper_kind_t_EcsOrFrom => OperKind::OrFrom,
+            ecs_oper_kind_t_EcsNotFrom => OperKind::NotFrom,
             _ => OperKind::And,
         }
     }
