@@ -7,38 +7,38 @@ fn generate_bindings() {
 
     let mut bindings = bindgen::Builder::default()
         .header("src/core/c_binding/flecs.h")
+        // Only keep things that we've allowlisted rather than
+        // recursively keeping nested uses around.
+        .allowlist_file("src/core/c_binding/flecs.h")
+        .allowlist_recursively(false)
+        // Keep comments and keep all of them, not just doc comments.
+        .generate_comments(true)
+        .clang_arg("-fparse-all-comments")
+        .parse_callbacks(Box::new(CommentsCallbacks))
         .blocklist_item("FLECS_HI_COMPONENT_ID")
         .blocklist_item("ECS_PAIR")
         .blocklist_item("ECS_OVERRIDE")
         .blocklist_item("ECS_TOGGLE")
         .blocklist_item("ECS_AND")
+        // We'll use `libc::FILE` instead.
         .blocklist_type("FILE")
+        // These have doc comments that trigger doc tests.
         .blocklist_type("ecs_alert_desc_t")
         .blocklist_function("ecs_http_server_http_request")
         .blocklist_function("ecs_log_enable_timedelta")
-        .blocklist_type("__sFILE")
-        .generate_comments(false)
+        // These use va_list
+        .blocklist_function("ecs_logv_")
+        .blocklist_function("ecs_printv_")
+        .blocklist_function("ecs_parser_errorv_")
+        .blocklist_function("ecs_strbuf_vappend")
+        .blocklist_function("ecs_vasprintf")
         .layout_tests(false)
         .raw_line("#![allow(clippy::all)]")
         .raw_line("#![allow(warnings)]")
         .raw_line("use super::*;")
-        .raw_line("#[doc(hidden)]")
-        .raw_line("pub mod bindings {}")
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks));
+        .raw_line("use libc::FILE;");
 
-    // export comments from flecs source
-    let bindings = bindings
-        .generate_comments(true)
-        .clang_arg("-fparse-all-comments")
-        // this yields two small comments
-        .clang_arg("-fretain-comments-from-system-headers")
-        .parse_callbacks(Box::new(CommentsCallbacks));
-
-    let bindings = bindings
-        .allowlist_file("src/core/c_binding/flecs.c")
-        .allowlist_file("src/core/c_binding/flecs.h")
-        .generate()
-        .expect("Unable to generate bindings");
+    let bindings = bindings.generate().expect("Unable to generate bindings");
 
     let crate_root: PathBuf = env::var("CARGO_MANIFEST_DIR").unwrap().into();
     bindings

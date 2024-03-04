@@ -3,8 +3,7 @@
 #![allow(clippy::all)]
 #![allow(warnings)]
 use super::*;
-#[doc(hidden)]
-pub mod bindings {}
+use libc::FILE;
 
 pub const FLECS_HI_ID_RECORD_ID: u32 = 1024;
 pub const FLECS_SPARSE_PAGE_BITS: u32 = 12;
@@ -237,9 +236,6 @@ pub const ECS_ALERT_MAX_SEVERITY_FILTERS: u32 = 4;
 pub const ECS_MEMBER_DESC_CACHE_SIZE: u32 = 32;
 pub const ECS_META_MAX_SCOPE_DEPTH: u32 = 32;
 pub const ECS_PARSER_MAX_ARGS: u32 = 16;
-pub type va_list = __builtin_va_list;
-pub type __int64_t = ::std::os::raw::c_longlong;
-pub type __darwin_off_t = __int64_t;
 #[doc = "Utility types to indicate usage as bitmask"]
 pub type ecs_flags8_t = u8;
 pub type ecs_flags16_t = u16;
@@ -772,14 +768,6 @@ extern "C" {
     pub fn ecs_strbuf_append(buffer: *mut ecs_strbuf_t, fmt: *const ::std::os::raw::c_char, ...);
 }
 extern "C" {
-    #[doc = "Append format string with argument list to a buffer.\n Returns false when max is reached, true when there is still space"]
-    pub fn ecs_strbuf_vappend(
-        buffer: *mut ecs_strbuf_t,
-        fmt: *const ::std::os::raw::c_char,
-        args: va_list,
-    );
-}
-extern "C" {
     #[doc = "Append string to buffer.\n Returns false when max is reached, true when there is still space"]
     pub fn ecs_strbuf_appendstr(buffer: *mut ecs_strbuf_t, str_: *const ::std::os::raw::c_char);
 }
@@ -875,20 +863,6 @@ extern "C" {
 }
 extern "C" {
     pub fn ecs_strbuf_written(buffer: *const ecs_strbuf_t) -> i32;
-}
-pub type fpos_t = __darwin_off_t;
-#[doc = "stdio buffers"]
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct __sbuf {
-    pub _base: *mut ::std::os::raw::c_uchar,
-    pub _size: ::std::os::raw::c_int,
-}
-#[doc = "hold a buncha junk that would grow the ABI"]
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct __sFILEX {
-    _unused: [u8; 0],
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1913,13 +1887,6 @@ extern "C" {
         count: i32,
         ctx: *const ecs_type_info_t,
     );
-}
-extern "C" {
-    #[doc = "Create allocated string from format"]
-    pub fn ecs_vasprintf(
-        fmt: *const ::std::os::raw::c_char,
-        args: va_list,
-    ) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
     #[doc = "Create allocated string from format"]
@@ -4067,30 +4034,12 @@ extern "C" {
     );
 }
 extern "C" {
-    pub fn ecs_printv_(
-        level: ::std::os::raw::c_int,
-        file: *const ::std::os::raw::c_char,
-        line: i32,
-        fmt: *const ::std::os::raw::c_char,
-        args: va_list,
-    );
-}
-extern "C" {
     pub fn ecs_log_(
         level: i32,
         file: *const ::std::os::raw::c_char,
         line: i32,
         fmt: *const ::std::os::raw::c_char,
         ...
-    );
-}
-extern "C" {
-    pub fn ecs_logv_(
-        level: ::std::os::raw::c_int,
-        file: *const ::std::os::raw::c_char,
-        line: i32,
-        fmt: *const ::std::os::raw::c_char,
-        args: va_list,
     );
 }
 extern "C" {
@@ -4119,15 +4068,6 @@ extern "C" {
         column: i64,
         fmt: *const ::std::os::raw::c_char,
         ...
-    );
-}
-extern "C" {
-    pub fn ecs_parser_errorv_(
-        name: *const ::std::os::raw::c_char,
-        expr: *const ::std::os::raw::c_char,
-        column: i64,
-        fmt: *const ::std::os::raw::c_char,
-        args: va_list,
     );
 }
 extern "C" {
@@ -7615,7 +7555,6 @@ extern "C" {
         type_: ecs_entity_t,
     ) -> *const ecs_member_t;
 }
-pub type __builtin_va_list = *mut ::std::os::raw::c_char;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_event_id_record_t {

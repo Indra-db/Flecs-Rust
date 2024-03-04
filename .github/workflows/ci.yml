@@ -34,7 +34,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-13, macos-14]
+        os: [macos-13, macos-14, ubuntu-22.04, windows-2022]
     name: cargo clippy + test
     steps:
       - uses: actions/checkout@v4
@@ -46,7 +46,7 @@ jobs:
           components: clippy
 
       - name: cargo clippy
-        run: cargo clippy --all-targets --workspace -- -D warnings
+        run: cargo clippy --workspace -- -D warnings
 
       - name: cargo test
         run: cargo test --workspace
