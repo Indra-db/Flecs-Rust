@@ -704,9 +704,23 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::child_of`
     #[doc(alias = "entity_builder::child_of")]
-    pub fn child_of<T: CachedComponentData>(self) -> Self {
+    pub fn child_of_type<T: CachedComponentData>(self) -> Self {
         let world = self.world;
         self.child_of_id(T::get_id(world))
+    }
+
+    /// Shortcut for add(ChildOf, entity).
+    ///
+    /// # Arguments
+    ///
+    /// * `parent`: The second element of the pair.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_builder::child_of`
+    #[doc(alias = "entity_builder::child_of")]
+    pub fn child_of(self, parent: &Entity) -> Self {
+        self.child_of_id(parent.raw_id)
     }
 
     /// Shortcut for add(DependsOn, entity).

@@ -405,7 +405,7 @@ impl Table {
     ///
     /// * C++ API: `table::has`
     #[doc(alias = "table::has")]
-    pub fn has_pair_by_ids(&self, first: EntityT, second: EntityT) -> bool {
+    pub fn has_pair_ids(&self, first: EntityT, second: EntityT) -> bool {
         self.find_type_index_pair_ids(first, second).is_some()
     }
 

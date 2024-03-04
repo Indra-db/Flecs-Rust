@@ -1189,7 +1189,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    pub fn has_pair_by_ids(&self, first: IdT, second: IdT) -> bool {
+    pub fn has_pair_ids(&self, first: IdT, second: IdT) -> bool {
         ecs_has_pair(self.world, self.raw_id, first, second)
     }
 

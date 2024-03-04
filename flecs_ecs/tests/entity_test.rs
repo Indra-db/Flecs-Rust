@@ -236,7 +236,7 @@ fn entity_add_childof() {
     assert!(entity.is_valid());
 
     entity.add_pair_ids(ECS_CHILD_OF, parent.raw_id);
-    assert!(entity.has_pair_by_ids(ECS_CHILD_OF, parent.raw_id));
+    assert!(entity.has_pair_ids(ECS_CHILD_OF, parent.raw_id));
 }
 
 #[test]
@@ -250,7 +250,7 @@ fn entity_add_instanceof() {
     assert!(entity.is_valid());
 
     entity.add_pair_ids(ECS_IS_A, base.raw_id);
-    assert!(entity.has_pair_by_ids(ECS_IS_A, base.raw_id));
+    assert!(entity.has_pair_ids(ECS_IS_A, base.raw_id));
 }
 
 #[test]
@@ -317,10 +317,10 @@ fn entity_remove_childof() {
     assert!(entity.is_valid());
 
     entity.add_pair_ids(ECS_CHILD_OF, parent.raw_id);
-    assert!(entity.has_pair_by_ids(ECS_CHILD_OF, parent.raw_id));
+    assert!(entity.has_pair_ids(ECS_CHILD_OF, parent.raw_id));
 
     entity.remove_pair_ids(ECS_CHILD_OF, parent.raw_id);
-    assert!(!entity.has_pair_by_ids(ECS_CHILD_OF, parent.raw_id));
+    assert!(!entity.has_pair_ids(ECS_CHILD_OF, parent.raw_id));
 }
 
 #[test]
@@ -334,10 +334,10 @@ fn entity_remove_instanceof() {
     assert!(entity.is_valid());
 
     entity.add_pair_ids(ECS_IS_A, base.raw_id);
-    assert!(entity.has_pair_by_ids(ECS_IS_A, base.raw_id));
+    assert!(entity.has_pair_ids(ECS_IS_A, base.raw_id));
 
     entity.remove_pair_ids(ECS_IS_A, base.raw_id);
-    assert!(!entity.has_pair_by_ids(ECS_IS_A, base.raw_id));
+    assert!(!entity.has_pair_ids(ECS_IS_A, base.raw_id));
 }
 
 #[test]
@@ -582,7 +582,7 @@ fn entity_has_childof() {
 
     let child = world.new_entity().add_pair_ids(ECS_CHILD_OF, parent.raw_id);
 
-    assert!(child.has_pair_by_ids(ECS_CHILD_OF, parent.raw_id));
+    assert!(child.has_pair_ids(ECS_CHILD_OF, parent.raw_id));
 }
 
 #[test]
@@ -593,7 +593,7 @@ fn entity_has_instanceof() {
 
     let instance = world.new_entity().add_pair_ids(ECS_IS_A, base.raw_id);
 
-    assert!(instance.has_pair_by_ids(ECS_IS_A, base.raw_id));
+    assert!(instance.has_pair_ids(ECS_IS_A, base.raw_id));
 }
 
 #[test]
@@ -607,7 +607,7 @@ fn entity_has_instanceof_indirect() {
 
     let instance = world.new_entity().add_pair_ids(ECS_IS_A, base.raw_id);
 
-    assert!(instance.has_pair_by_ids(ECS_IS_A, base_of_base.raw_id));
+    assert!(instance.has_pair_ids(ECS_IS_A, base_of_base.raw_id));
 }
 
 #[test]

@@ -1393,7 +1393,7 @@ impl World {
     #[doc(alias = "world::has")]
     #[inline(always)]
     pub fn has_pair_by_id(&self, first: EntityT, second: EntityT) -> bool {
-        Entity::new_from_existing_raw(self.raw_world, first).has_pair_by_ids(first, second)
+        Entity::new_from_existing_raw(self.raw_world, first).has_pair_ids(first, second)
     }
 
     /// Add a singleton component.
