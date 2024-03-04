@@ -623,6 +623,7 @@ impl EntityView {
     }
 
     /// Get (struct) Component from entity
+    /// use `.unwrap()` or `.unwrap_unchecked()` or `get_unchecked()` if you're sure the entity has the component
     ///
     /// # Type Parameters
     ///
@@ -630,18 +631,49 @@ impl EntityView {
     ///
     /// # Returns
     ///
-    /// * `*const T` - The enum component, nullptr if the entity does not have the component
+    /// * Option<&T> - The component, None if the entity does not have the component
     ///
     /// # See also
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get<T: CachedComponentData + ComponentType<Struct>>(&self) -> *const T {
+    pub fn get<T: CachedComponentData + ComponentType<Struct>>(&self) -> Option<&T> {
         let component_id = T::get_id(self.world);
-        unsafe { ecs_get_id(self.world, self.raw_id, component_id) as *const T }
+        unsafe { (ecs_get_id(self.world, self.raw_id, component_id) as *const T).as_ref() }
     }
 
-    /// Get enum constant
+    /// Get (struct) Component from entity unchecked
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The component type to get
+    ///
+    /// # Returns
+    ///
+    /// * &T - The component
+    ///
+    /// # Safety
+    ///
+    /// if the entity does not have the component, this will cause a panic
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
+    pub unsafe fn get_unchecked<T: CachedComponentData + ComponentType<Struct>>(&self) -> &T {
+        let component_id = T::get_id(self.world);
+        let ptr = ecs_get_id(self.world, self.raw_id, component_id) as *const T;
+        ecs_assert!(
+            !ptr.is_null(),
+            FlecsErrorCode::InternalError,
+            "missing component {}",
+            T::get_symbol_name()
+        );
+        &*ptr
+    }
+
+    /// Get enum constant.
+    /// Use `.unwrap()` or `.unwrap_unchecked()` or `.get_enum_unchecked` if you're sure the entity has the component
     ///
     /// # Type Parameters
     ///
@@ -649,19 +681,19 @@ impl EntityView {
     ///
     /// # Returns
     ///
-    /// * `*const T` - The enum component, nullptr if the entity does not have the component
+    /// * Option<&T> - The enum component, None if the entity does not have the component
     ///
     /// # See also
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get_enum<T: CachedComponentData + ComponentType<Enum>>(&self) -> *const T {
+    pub fn get_enum<T: CachedComponentData + ComponentType<Enum>>(&self) -> Option<&T> {
         let component_id: IdT = T::get_id(self.world);
         let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
 
         if target == 0 {
             // if there is no matching pair for (r,*), try just r
-            unsafe { ecs_get_id(self.world, self.raw_id, component_id) as *const T }
+            unsafe { (ecs_get_id(self.world, self.raw_id, component_id) as *const T).as_ref() }
         } else {
             // get constant value from constant entity
             let constant_value =
@@ -674,7 +706,52 @@ impl EntityView {
                 T::get_symbol_name()
             );
 
-            constant_value
+            unsafe { constant_value.as_ref() }
+        }
+    }
+
+    /// Get enum constant from entity unchecked
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The component type to get
+    ///
+    /// # Returns
+    ///
+    /// * &T - The component
+    ///
+    /// # Safety
+    ///
+    /// if the entity does not have the component, this will cause a panic
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
+    pub unsafe fn get_enum_unchecked<T: CachedComponentData + ComponentType<Enum>>(&self) -> &T {
+        let component_id: IdT = T::get_id(self.world);
+        let target: IdT = ecs_get_target(self.world, self.raw_id, component_id, 0);
+
+        if target == 0 {
+            // if there is no matching pair for (r,*), try just r
+            let ptr = ecs_get_id(self.world, self.raw_id, component_id) as *const T;
+            ecs_assert!(
+                !ptr.is_null(),
+                FlecsErrorCode::InternalError,
+                "missing enum constant value {}",
+                T::get_symbol_name()
+            );
+            &*ptr
+        } else {
+            // get constant value from constant entity
+            let constant_value = ecs_get_id(self.world, target, component_id) as *const T;
+            ecs_assert!(
+                !constant_value.is_null(),
+                FlecsErrorCode::InternalError,
+                "missing enum constant value {}",
+                T::get_symbol_name()
+            );
+            &*constant_value
         }
     }
 

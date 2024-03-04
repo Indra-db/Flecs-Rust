@@ -134,11 +134,9 @@ fn entity_new_set() {
     assert!(entity.has::<Position>());
 
     // Verify the component data
-    let p = entity.get::<Position>();
-    unsafe {
-        assert_eq!((*p).x, 10.0);
-        assert_eq!((*p).y, 20.0);
-    }
+    let p = entity.get::<Position>().unwrap();
+    assert_eq!(p.x, 10.0);
+    assert_eq!(p.y, 20.0);
 }
 
 #[test]
@@ -154,17 +152,13 @@ fn entity_new_set_2() {
     assert!(entity.has::<Position>());
     assert!(entity.has::<Velocity>());
 
-    let p = entity.get::<Position>();
-    unsafe {
-        assert_eq!((*p).x, 10.0);
-        assert_eq!((*p).y, 20.0);
-    }
+    let p = entity.get::<Position>().unwrap();
+    assert_eq!(p.x, 10.0);
+    assert_eq!(p.y, 20.0);
 
-    let v = entity.get::<Velocity>();
-    unsafe {
-        assert_eq!((*v).x, 1.0);
-        assert_eq!((*v).y, 2.0);
-    }
+    let v = entity.get::<Velocity>().unwrap();
+    assert_eq!(v.x, 1.0);
+    assert_eq!(v.y, 2.0);
 }
 
 #[test]
@@ -204,11 +198,9 @@ fn entity_set() {
     entity.set_component(Position { x: 10.0, y: 20.0 });
     assert!(entity.has::<Position>());
 
-    let p = entity.get::<Position>();
-    unsafe {
-        assert_eq!((*p).x, 10.0);
-        assert_eq!((*p).y, 20.0);
-    }
+    let p = entity.get::<Position>().unwrap();
+    assert_eq!(p.x, 10.0);
+    assert_eq!(p.y, 20.0);
 }
 
 #[test]
@@ -300,17 +292,13 @@ fn entity_set_2() {
     assert!(entity.has::<Position>());
     assert!(entity.has::<Velocity>());
 
-    let p = entity.get::<Position>();
-    unsafe {
-        assert_eq!((*p).x, 10.0);
-        assert_eq!((*p).y, 20.0);
-    }
+    let p = entity.get::<Position>().unwrap();
+    assert_eq!(p.x, 10.0);
+    assert_eq!(p.y, 20.0);
 
-    let v = entity.get::<Velocity>();
-    unsafe {
-        assert_eq!((*v).x, 1.0);
-        assert_eq!((*v).y, 2.0);
-    }
+    let v = entity.get::<Velocity>().unwrap();
+    assert_eq!(v.x, 1.0);
+    assert_eq!(v.y, 2.0);
 }
 
 #[test]
@@ -412,7 +400,7 @@ fn entity_set_generic() {
     assert!(entity.has::<Position>());
     assert!(entity.has_id(position.raw_id));
 
-    let pos = unsafe { &*entity.get::<Position>() };
+    let pos = entity.get::<Position>().unwrap();
     assert_eq!(pos.x, 10.0);
     assert_eq!(pos.y, 20.0);
 }
@@ -431,7 +419,7 @@ fn entity_set_generic_no_size() {
     assert!(entity.has::<Position>());
     assert!(entity.has_id(position.raw_id));
 
-    let pos = unsafe { &*entity.get::<Position>() };
+    let pos = entity.get::<Position>().unwrap();
     assert_eq!(pos.x, 10.0);
     assert_eq!(pos.y, 20.0);
 }
@@ -747,10 +735,10 @@ fn entity_tag_has_size_zero() {
     let world = World::new();
 
     let comp = world.component::<TagA>();
-    let ptr = comp.get::<EcsComponent>();
+    let ptr = comp.get::<EcsComponent>().unwrap();
 
-    assert_eq!(unsafe { (*ptr).size }, 0);
-    assert_eq!(unsafe { (*ptr).alignment }, 0);
+    assert_eq!(ptr.size, 0);
+    assert_eq!(ptr.alignment, 0);
 }
 
 #[test]

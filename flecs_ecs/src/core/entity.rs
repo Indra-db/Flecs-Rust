@@ -1577,9 +1577,10 @@ impl Entity {
         ScopedWorld::new(&World::new_wrap_raw_world(self.world), self.raw_id)
     }
 
-    /// Gets a mutable pointer to a component value.
+    /// Gets mut component.
+    /// Use `.unwrap()` or `.unwrap_unchecked()` or `.get_unchecked_mut` if you're sure the entity has the component
     ///
-    /// This operation returns a mutable pointer to the component. If the entity
+    /// This operation returns a mutable optional reference to the component. If the entity
     /// did not yet have the component, it will be added. If a base entity had
     /// the component, it will be overridden, and the value of the base component
     /// will be copied to the entity before this function returns.
@@ -1590,13 +1591,13 @@ impl Entity {
     ///
     /// # Returns
     ///
-    /// A mutable pointer to the component value.
+    /// A mutable option ref to the component value.
     ///
     /// # See also
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_mut<T: CachedComponentData + ComponentType<Struct>>(&self) -> *mut T {
+    pub fn get_mut<T: CachedComponentData + ComponentType<Struct>>(&self) -> Option<&mut T> {
         let component_id = T::get_id(self.world);
         ecs_assert!(
             T::get_size(self.world) != 0,
@@ -1604,10 +1605,55 @@ impl Entity {
             "invalid type: {}",
             T::get_symbol_name()
         );
-        unsafe { ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T }
+        unsafe { (ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T).as_mut() }
     }
 
-    /// Get mut enum constant
+    /// Gets mut component unchecked
+    ///
+    /// This operation returns a mutable reference to the component. If the entity
+    /// did not yet have the component, it will be added. If a base entity had
+    /// the component, it will be overridden, and the value of the base component
+    /// will be copied to the entity before this function returns.
+    ///
+    /// # Safety
+    ///
+    /// If the entity does not have the component, this will cause a panic
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: The component to get.
+    ///
+    /// # Returns
+    ///
+    /// A mutable ref to the component value.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity::get_mut`
+    #[doc(alias = "entity::get_mut")]
+    pub unsafe fn get_unchecked_mut<T: CachedComponentData + ComponentType<Struct>>(
+        &mut self,
+    ) -> &mut T {
+        let component_id = T::get_id(self.world);
+        ecs_assert!(
+            T::get_size(self.world) != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid type: {}",
+            T::get_symbol_name()
+        );
+        let ptr = ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T;
+        ecs_assert!(
+            !ptr.is_null(),
+            FlecsErrorCode::InternalError,
+            "missing component {}",
+            T::get_symbol_name()
+        );
+
+        &mut *ptr
+    }
+
+    /// Get mut enum constant.
+    /// Use `.unwrap()` or `.unwrap_unchecked()` or `.get_enum_unchecked_mut` if you're sure the entity has the component
     ///
     /// # Type Parameters
     ///
@@ -1621,13 +1667,13 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_enum_mut<T: CachedComponentData + ComponentType<Enum>>(&self) -> *mut T {
+    pub fn get_enum_mut<T: CachedComponentData + ComponentType<Enum>>(&self) -> Option<&mut T> {
         let component_id: IdT = T::get_id(self.world);
         let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
 
         if target == 0 {
             // if there is no matching pair for (r,*), try just r
-            unsafe { ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T }
+            unsafe { (ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T).as_mut() }
         } else {
             // get constant value from constant entity
             let constant_value =
@@ -1640,7 +1686,56 @@ impl Entity {
                 T::get_symbol_name()
             );
 
-            constant_value
+            unsafe { constant_value.as_mut() }
+        }
+    }
+
+    /// Get mut enum constant unchecked
+    ///
+    /// # Safety
+    ///
+    /// If the entity does not have the component, this will cause a panic
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The enum component type which to get the constant
+    ///
+    /// # Returns
+    ///
+    /// * `*mut T` - The enum component, nullptr if the entity does not have the component
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity::get_mut`
+    #[doc(alias = "entity::get_mut")]
+    pub unsafe fn get_enum_unchecked_mut<T: CachedComponentData + ComponentType<Enum>>(
+        &mut self,
+    ) -> &mut T {
+        let component_id: IdT = T::get_id(self.world);
+        let target: IdT = ecs_get_target(self.world, self.raw_id, component_id, 0);
+
+        if target == 0 {
+            // if there is no matching pair for (r,*), try just r
+            let ptr = ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T;
+            ecs_assert!(
+                !ptr.is_null(),
+                FlecsErrorCode::InternalError,
+                "missing enum constant value {}",
+                T::get_symbol_name()
+            );
+
+            &mut *ptr
+        } else {
+            // get constant value from constant entity
+            let constant_value = ecs_get_mut_id(self.world, target, component_id) as *mut T;
+            ecs_assert!(
+                !constant_value.is_null(),
+                FlecsErrorCode::InternalError,
+                "missing enum constant value {}",
+                T::get_symbol_name()
+            );
+
+            &mut *constant_value
         }
     }
 
@@ -1680,7 +1775,7 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_ids_mut(&self, first: EntityT, second: EntityT) -> *mut c_void {
+    pub fn get_untyped_pair_mut(&self, first: EntityT, second: EntityT) -> *mut c_void {
         unsafe { ecs_get_mut_id(self.world, self.raw_id, ecs_pair(first, second)) as *mut c_void }
     }
 

@@ -50,10 +50,10 @@ fn main() {
     world.progress();
     world.progress();
 
+    //you can use `.unwrap_unchecked()` if you are sure the component exists or `get_unchecked()`
+    let pos = bob.get::<Position>().unwrap();
     // See if Bob has moved (he has)
-    let pos = bob.get::<Position>();
-    let pos_ref = unsafe { pos.as_ref().unwrap() };
-    println!("Bob's position: {:?}", pos_ref);
+    println!("Bob's position: {:?}", pos);
 
     // Output
     //  Bob's got [Position, Velocity, (Identifier,Name), (Eats,Apples)]

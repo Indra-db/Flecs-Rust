@@ -11,11 +11,13 @@ use crate::addons::pipeline::PipelineBuilder;
 
 use crate::core::c_binding::bindings::{ecs_stage_t_magic, ecs_world_t_magic};
 
+use crate::core::c_binding::ecs_get_mut_id;
 use crate::{
     core::{c_binding::ecs_poly_is_, ecs_is_pair, FlecsErrorCode},
     ecs_assert,
 };
 
+use super::c_binding::ecs_get_id;
 use super::{
     c_binding::{
         bindings::{
@@ -1046,11 +1048,15 @@ impl World {
     /// * C++ API: `world::get`
     #[doc(alias = "world::get")]
     #[inline(always)]
-    pub fn get<T>(&self) -> *const T
+    pub fn get<T>(&self) -> Option<&T>
     where
         T: CachedComponentData + ComponentType<Struct>,
     {
-        Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world)).get::<T>()
+        let component_id = T::get_id(self.raw_world);
+        let singleton_entity = Entity::new_from_existing_raw(self.raw_world, component_id);
+        unsafe {
+            (ecs_get_id(self.raw_world, singleton_entity.raw_id, component_id) as *mut T).as_ref()
+        }
     }
 
     /// Get singleton component as mutable.
@@ -1068,11 +1074,23 @@ impl World {
     /// * C++ API: `world::get_mut`
     #[doc(alias = "world::get_mut")]
     #[inline(always)]
-    pub fn get_mut<T>(&self) -> *mut T
+    pub fn get_mut<T>(&self) -> Option<&mut T>
     where
         T: CachedComponentData + ComponentType<Struct>,
     {
-        Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world)).get_mut::<T>()
+        let component_id = T::get_id(self.raw_world);
+        let singleton_entity = Entity::new_from_existing_raw(self.raw_world, component_id);
+
+        ecs_assert!(
+            T::get_size(self.raw_world) != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid type: {}",
+            T::get_symbol_name()
+        );
+        unsafe {
+            (ecs_get_mut_id(self.raw_world, singleton_entity.raw_id, component_id) as *mut T)
+                .as_mut()
+        }
     }
 
     /// Get a reference to a singleton component.
