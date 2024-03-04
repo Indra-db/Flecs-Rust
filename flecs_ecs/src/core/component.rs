@@ -1,17 +1,20 @@
 //! Registering and working with components
 
-use crate::addons::meta::Opaque;
-use crate::core::c_binding::bindings::ecs_set_hooks_id;
-use crate::core::{get_full_type_name, FlecsErrorCode};
-use crate::ecs_assert;
+use crate::{
+    addons::meta::Opaque,
+    core::{c_binding::bindings::ecs_set_hooks_id, get_full_type_name, FlecsErrorCode},
+    ecs_assert,
+};
 
-use super::c_binding::bindings::{ecs_get_hooks_id, ecs_opaque_init};
-use super::ecs_field;
-use super::{c_types::*, component_registration::*, entity::Entity};
+use super::{
+    c_binding::bindings::{ecs_get_hooks_id, ecs_opaque_init},
+    c_types::*,
+    component_registration::*,
+    ecs_field,
+    entity::Entity,
+};
 
-use std::ffi::CStr;
-use std::os::raw::c_void;
-use std::ptr;
+use std::{ffi::CStr, os::raw::c_void, ptr};
 
 use std::{marker::PhantomData, ops::Deref};
 

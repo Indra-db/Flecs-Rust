@@ -1,7 +1,9 @@
-use super::c_binding::bindings::{ecs_filter_desc_t, ecs_oper_kind_t};
-use super::c_types::{IterT, OperKind, TermT, WorldT};
-use super::component_registration::CachedComponentData;
-use super::ecs_field;
+use super::{
+    c_binding::bindings::{ecs_filter_desc_t, ecs_oper_kind_t},
+    c_types::{IterT, OperKind, TermT, WorldT},
+    component_registration::CachedComponentData,
+    ecs_field,
+};
 
 pub trait Filterable: Sized {
     fn current_term(&mut self) -> &mut TermT;

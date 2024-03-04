@@ -7,8 +7,7 @@ use crate::core::component_registration::{
     ComponentData, ComponentType, Struct,
 };
 
-use std::ffi::CStr;
-use std::sync::OnceLock;
+use std::{ffi::CStr, sync::OnceLock};
 
 pub const RUST_ECS_ID_FLAGS_MASK: u64 = 0xFF << 60;
 pub const RUST_ECS_COMPONENT_MASK: u64 = !RUST_ECS_ID_FLAGS_MASK;

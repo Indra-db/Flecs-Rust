@@ -1,11 +1,19 @@
-use std::ffi::CStr;
-use std::ops::{Deref, DerefMut};
-use std::os::raw::c_void;
+use std::{
+    ffi::CStr,
+    ops::{Deref, DerefMut},
+    os::raw::c_void,
+};
 
-use crate::core::c_binding::bindings::{ecs_get_target, ecs_set_id, ecs_set_name};
-use crate::core::c_binding::FLECS_IDEcsComponentID_;
-use crate::core::FlecsErrorCode;
-use crate::ecs_assert;
+use crate::{
+    core::{
+        c_binding::{
+            bindings::{ecs_get_target, ecs_set_id, ecs_set_name},
+            FLECS_IDEcsComponentID_,
+        },
+        FlecsErrorCode,
+    },
+    ecs_assert,
+};
 
 use super::{
     c_binding::bindings::{
@@ -17,11 +25,12 @@ use super::{
     c_types::{EntityT, IdT, WorldT, SEPARATOR},
     component_ref::Ref,
     component_registration::{CachedComponentData, ComponentType, Enum, Struct},
+    ecs_pair,
     enum_type::CachedEnumData,
+    set_helper,
     world::World,
-    EntityView, ECS_OVERRIDE,
+    EntityView, ScopedWorld, ECS_OVERRIDE,
 };
-use super::{ecs_pair, set_helper, ScopedWorld};
 
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Entity {

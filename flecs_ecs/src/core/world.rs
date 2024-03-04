@@ -1,8 +1,6 @@
 //! World operations.
 
-use std::ffi::CStr;
-use std::ops::Deref;
-use std::os::raw::c_void;
+use std::{ffi::CStr, ops::Deref, os::raw::c_void};
 
 use crate::addons::app::App;
 #[cfg(feature = "flecs_system")]
@@ -13,42 +11,51 @@ use crate::addons::pipeline::PipelineBuilder;
 
 use crate::core::c_binding::bindings::{ecs_stage_t_magic, ecs_world_t_magic};
 
-use crate::core::c_binding::ecs_poly_is_;
-use crate::core::{ecs_is_pair, FlecsErrorCode};
-use crate::ecs_assert;
-
-use super::c_binding::bindings::{
-    ecs_async_stage_free, ecs_async_stage_new, ecs_atfini, ecs_count_id, ecs_defer_begin,
-    ecs_defer_end, ecs_defer_resume, ecs_defer_suspend, ecs_delete_with, ecs_dim,
-    ecs_enable_range_check, ecs_ensure, ecs_exists, ecs_fini, ecs_fini_action_t, ecs_frame_begin,
-    ecs_frame_end, ecs_get_alive, ecs_get_name, ecs_get_scope, ecs_get_stage, ecs_get_stage_count,
-    ecs_get_stage_id, ecs_get_world, ecs_get_world_info, ecs_init, ecs_is_alive, ecs_is_deferred,
-    ecs_is_valid, ecs_lookup_path_w_sep, ecs_merge, ecs_quit, ecs_readonly_begin, ecs_readonly_end,
-    ecs_remove_all, ecs_run_post_frame, ecs_set_alias, ecs_set_automerge, ecs_set_entity_range,
-    ecs_set_lookup_path, ecs_set_scope, ecs_set_stage_count, ecs_set_with, ecs_should_quit,
-    ecs_stage_is_async, ecs_stage_is_readonly, ecs_system_desc_t,
-};
-use super::c_binding::{
-    ecs_ctx_free_t, ecs_get_ctx, ecs_get_target, ecs_set_ctx, ecs_world_info_t,
-};
-use super::c_types::{EntityT, IdT, WorldT, SEPARATOR};
-use super::component::{Component, UntypedComponent};
-use super::component_ref::Ref;
-use super::component_registration::{
-    register_entity_w_component_explicit, CachedComponentData, ComponentType, Enum, Struct,
+use crate::{
+    core::{c_binding::ecs_poly_is_, ecs_is_pair, FlecsErrorCode},
+    ecs_assert,
 };
 
-use super::entity::Entity;
-use super::enum_type::CachedEnumData;
-use super::event::EventData;
-use super::event_builder::{EventBuilder, EventBuilderTyped};
-use super::id::{Id, IdType};
-use super::iterable::Iterable;
-use super::observer::Observer;
-use super::observer_builder::ObserverBuilder;
-use super::scoped_world::ScopedWorld;
-use super::term::Term;
-use super::{ecs_pair, set_helper, Builder, Filter, FilterBuilder, Query, QueryBuilder};
+use super::{
+    c_binding::{
+        bindings::{
+            ecs_async_stage_free, ecs_async_stage_new, ecs_atfini, ecs_count_id, ecs_defer_begin,
+            ecs_defer_end, ecs_defer_resume, ecs_defer_suspend, ecs_delete_with, ecs_dim,
+            ecs_enable_range_check, ecs_ensure, ecs_exists, ecs_fini, ecs_fini_action_t,
+            ecs_frame_begin, ecs_frame_end, ecs_get_alive, ecs_get_name, ecs_get_scope,
+            ecs_get_stage, ecs_get_stage_count, ecs_get_stage_id, ecs_get_world,
+            ecs_get_world_info, ecs_init, ecs_is_alive, ecs_is_deferred, ecs_is_valid,
+            ecs_lookup_path_w_sep, ecs_merge, ecs_quit, ecs_readonly_begin, ecs_readonly_end,
+            ecs_remove_all, ecs_run_post_frame, ecs_set_alias, ecs_set_automerge,
+            ecs_set_entity_range, ecs_set_lookup_path, ecs_set_scope, ecs_set_stage_count,
+            ecs_set_with, ecs_should_quit, ecs_stage_is_async, ecs_stage_is_readonly,
+            ecs_system_desc_t,
+        },
+        ecs_ctx_free_t, ecs_get_ctx, ecs_get_target, ecs_set_ctx, ecs_world_info_t,
+    },
+    c_types::{EntityT, IdT, WorldT, SEPARATOR},
+    component::{Component, UntypedComponent},
+    component_ref::Ref,
+    component_registration::{
+        register_entity_w_component_explicit, CachedComponentData, ComponentType, Enum, Struct,
+    },
+};
+
+use super::{
+    ecs_pair,
+    entity::Entity,
+    enum_type::CachedEnumData,
+    event::EventData,
+    event_builder::{EventBuilder, EventBuilderTyped},
+    id::{Id, IdType},
+    iterable::Iterable,
+    observer::Observer,
+    observer_builder::ObserverBuilder,
+    scoped_world::ScopedWorld,
+    set_helper,
+    term::Term,
+    Builder, Filter, FilterBuilder, Query, QueryBuilder,
+};
 
 pub struct World {
     pub raw_world: *mut WorldT,

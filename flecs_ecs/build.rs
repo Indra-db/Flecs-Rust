@@ -3,8 +3,7 @@
 
 #[cfg(feature = "flecs_generate_bindings")]
 fn generate_bindings() {
-    use std::env;
-    use std::path::PathBuf;
+    use std::{env, path::PathBuf};
 
     let mut bindings = bindgen::Builder::default()
         .header("src/core/c_binding/flecs.h")

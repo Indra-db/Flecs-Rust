@@ -1,14 +1,12 @@
 //! Class for working with entity, component, tag and pair ids.
 
-use super::c_binding::bindings::*;
-use super::c_types::*;
-use super::ecs_pair;
-use super::ecs_pair_first;
-use super::entity::*;
-use super::world::World;
-use crate::core::ecs_pair_second;
-use crate::core::FlecsErrorCode;
-use crate::ecs_assert;
+use super::{
+    c_binding::bindings::*, c_types::*, ecs_pair, ecs_pair_first, entity::*, world::World,
+};
+use crate::{
+    core::{ecs_pair_second, FlecsErrorCode},
+    ecs_assert,
+};
 
 /// Class for working with entity, component, tag and pair ids.
 /// Class that wraps around a `flecs::id_t`

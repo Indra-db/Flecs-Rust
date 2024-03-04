@@ -1,11 +1,9 @@
-use std::ffi::c_char;
-use std::ffi::c_void;
+use std::ffi::{c_char, c_void};
 
-use crate::core::c_binding::bindings::ecs_meta_serialize_t;
-use crate::core::c_binding::bindings::ecs_opaque_init;
-use crate::core::c_binding::bindings::ecs_serializer_t;
 use crate::core::{
-    c_binding::bindings::ecs_opaque_desc_t,
+    c_binding::bindings::{
+        ecs_meta_serialize_t, ecs_opaque_desc_t, ecs_opaque_init, ecs_serializer_t,
+    },
     c_types::{EntityT, IdT, WorldT},
     component_registration::CachedComponentData,
 };

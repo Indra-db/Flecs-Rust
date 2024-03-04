@@ -1,8 +1,6 @@
-use flecs_ecs::core::c_types::*;
-use flecs_ecs::core::component_registration::*;
+use flecs_ecs::core::{c_types::*, component_registration::*};
 use flecs_ecs_derive::Component;
-use std::ffi::CStr;
-use std::sync::OnceLock;
+use std::{ffi::CStr, sync::OnceLock};
 
 #[cfg(test)]
 #[ctor::ctor]

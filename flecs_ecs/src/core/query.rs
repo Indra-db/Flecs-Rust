@@ -1,24 +1,29 @@
 //! Query API. Queries are used to iterate over entities that match a filter.
 //! Queries are better for persistence than filters, but are slower to create.
 
-use std::ops::{Deref, DerefMut};
-use std::os::raw::{c_char, c_void};
+use std::{
+    ops::{Deref, DerefMut},
+    os::raw::{c_char, c_void},
+};
 
 use crate::ecs_assert;
 
-use super::c_binding::bindings::{
-    ecs_abort_, ecs_filter_str, ecs_filter_t, ecs_get_entity, ecs_os_api, ecs_query_changed,
-    ecs_query_desc_t, ecs_query_fini, ecs_query_get_filter, ecs_query_get_group_info,
-    ecs_query_init, ecs_query_iter, ecs_query_next, ecs_query_orphaned, ecs_table_lock,
-    ecs_table_unlock,
+use super::{
+    c_binding::bindings::{
+        ecs_abort_, ecs_filter_str, ecs_filter_t, ecs_get_entity, ecs_os_api, ecs_query_changed,
+        ecs_query_desc_t, ecs_query_fini, ecs_query_get_filter, ecs_query_get_group_info,
+        ecs_query_init, ecs_query_iter, ecs_query_next, ecs_query_orphaned, ecs_table_lock,
+        ecs_table_unlock,
+    },
+    c_types::*,
+    entity::Entity,
+    filter::FilterView,
+    iter::Iter,
+    iterable::Iterable,
+    term::{Term, TermType},
+    world::World,
+    FlecsErrorCode,
 };
-use super::entity::Entity;
-use super::filter::FilterView;
-use super::iter::Iter;
-use super::iterable::Iterable;
-use super::term::{Term, TermType};
-use super::world::World;
-use super::{c_types::*, FlecsErrorCode};
 
 /// Cached query implementation. Fast to iterate, but slower to create than `Filters`
 pub struct QueryBase<'a, T>
