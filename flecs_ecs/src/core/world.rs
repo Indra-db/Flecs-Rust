@@ -205,7 +205,7 @@ impl World {
 
     /// Signals the application to quit.
     ///
-    /// After calling this function, the next call to progress() returns false.
+    /// After calling this function, the next call to `progress()` returns false.
     ///
     /// # See also
     ///
@@ -246,7 +246,7 @@ impl World {
 
     /// Begins a frame.
     ///
-    /// When an application does not use progress() to control the main loop, it
+    /// When an application does not use `progress()` to control the main loop, it
     /// can still use Flecs features such as FPS limiting and time measurements.
     /// can still use Flecs features such as FPS limiting and time measurements processed.
     ///
@@ -3613,7 +3613,7 @@ impl World {
     /// synchronization.
     ///
     /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
-    /// `set_pipeline`()). Using progress() auto-invokes this for the default pipeline.
+    /// `set_pipeline()`). Using `progress()` auto-invokes this for the default pipeline.
     /// Additional pipelines may be run explicitly.
     ///
     /// # Note
@@ -3639,7 +3639,7 @@ impl World {
     /// synchronization.
     ///
     /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
-    /// `set_pipeline`()). Using progress() auto-invokes this for the default pipeline.
+    /// `set_pipeline()`). Using `progress()` auto-invokes this for the default pipeline.
     /// Additional pipelines may be run explicitly.
     ///
     /// # Note
@@ -3668,7 +3668,7 @@ impl World {
     /// synchronization.
     ///
     /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
-    /// `set_pipeline`()). Using progress() auto-invokes this for the default pipeline.
+    /// `set_pipeline()`). Using `progress()` auto-invokes this for the default pipeline.
     /// Additional pipelines may be run explicitly.
     ///
     /// # Note
@@ -3706,7 +3706,7 @@ impl World {
     /// synchronization.
     ///
     /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
-    /// `set_pipeline`()). Using progress() auto-invokes this for the default pipeline.
+    /// `set_pipeline()`). Using `progress()` auto-invokes this for the default pipeline.
     /// Additional pipelines may be run explicitly.
     ///
     /// # Note

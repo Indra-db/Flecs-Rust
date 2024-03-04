@@ -1,5 +1,7 @@
 # Flecs ECS Bridge :: Rust Wrapper for Flecs
 
+[![CI](https://github.com/indra-db/flecs_ecs_rs/actions/workflows/ci.yml/badge.svg)](https://github.com/indra-db/flecs_ecs_rs/actions/workflows/ci.yml)
+
 Hello there! Welcome to my Rust wrapper around the ECS library called [Flecs](https://github.com/SanderMertens/flecs). This project endeavors to offer Rust developers an intuitive and streamlined interface to harness the full potential of Flecs.
 
 ## ⚠️ Status: Early Stages
