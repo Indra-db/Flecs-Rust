@@ -40,7 +40,7 @@ fn entity_new_named_from_scope() {
 
     let prev = world.set_scope_with_id(entity.raw_id);
     let child = world.new_entity_named(CStr::from_bytes_with_nul(b"Bar\0").unwrap());
-    assert_eq!(child.is_valid(), true);
+    assert!(child.is_valid());
 
     world.set_scope_with_id(prev.raw_id);
 
@@ -68,7 +68,7 @@ fn entity_new_nested_named_from_nested_scope() {
     let child = world.new_entity_named(CStr::from_bytes_with_nul(b"Hello::World\0").unwrap());
 
     // Verify that the child entity exists
-    assert_eq!(child.is_valid(), true);
+    assert!(child.is_valid());
 
     // Restore the previous scope
     world.set_scope_with_id(prev.raw_id);
@@ -93,7 +93,7 @@ fn entity_new_add() {
     assert!(entity.is_valid());
 
     // Verify that the entity has the Position component
-    assert_eq!(entity.has::<Position>(), true);
+    assert!(entity.has::<Position>());
 }
 
 #[test]
@@ -111,10 +111,10 @@ fn entity_new_add_2() {
     assert!(entity.is_valid());
 
     // Verify that the entity has the Position component
-    assert_eq!(entity.has::<Position>(), true);
+    assert!(entity.has::<Position>());
 
     // Verify that the entity has the Velocity component
-    assert_eq!(entity.has::<Velocity>(), true);
+    assert!(entity.has::<Velocity>());
 }
 
 #[test]
@@ -131,7 +131,7 @@ fn entity_new_set() {
     assert!(entity.is_valid());
 
     // Verify that the entity has the Position component
-    assert_eq!(entity.has::<Position>(), true);
+    assert!(entity.has::<Position>());
 
     // Verify the component data
     let p = entity.get_component::<Position>();
@@ -151,8 +151,8 @@ fn entity_new_set_2() {
         .set_component(Velocity { x: 1.0, y: 2.0 });
 
     assert!(entity.is_valid());
-    assert_eq!(entity.has::<Position>(), true);
-    assert_eq!(entity.has::<Velocity>(), true);
+    assert!(entity.has::<Position>());
+    assert!(entity.has::<Velocity>());
 
     let p = entity.get_component::<Position>();
     unsafe {
@@ -177,7 +177,7 @@ fn entity_add() {
 
     entity.add_component::<Position>();
 
-    assert_eq!(entity.has::<Position>(), true);
+    assert!(entity.has::<Position>());
 }
 
 #[test]
@@ -188,10 +188,10 @@ fn entity_remove() {
     assert!(entity.is_valid());
 
     entity.add_component::<Position>();
-    assert_eq!(entity.has::<Position>(), true);
+    assert!(entity.has::<Position>());
 
     entity.remove_component::<Position>();
-    assert_eq!(entity.has::<Position>(), false);
+    assert!(!entity.has::<Position>());
 }
 
 #[test]
@@ -202,7 +202,7 @@ fn entity_set() {
     assert!(entity.is_valid());
 
     entity.set_component(Position { x: 10.0, y: 20.0 });
-    assert_eq!(entity.has::<Position>(), true);
+    assert!(entity.has::<Position>());
 
     let p = entity.get_component::<Position>();
     unsafe {
@@ -222,8 +222,8 @@ fn entity_add_2() {
         .add_component::<Position>()
         .add_component::<Velocity>();
 
-    assert_eq!(entity.has::<Position>(), true);
-    assert_eq!(entity.has::<Velocity>(), true);
+    assert!(entity.has::<Position>());
+    assert!(entity.has::<Velocity>());
 }
 
 #[test]
@@ -231,13 +231,13 @@ fn entity_add_entity() {
     let world = World::new();
 
     let tag = world.new_entity();
-    assert_eq!(tag.is_valid(), true);
+    assert!(tag.is_valid());
 
     let entity = world.new_entity();
     assert!(entity.is_valid());
 
     entity.add_id(tag.raw_id);
-    assert_eq!(entity.has_id(tag.raw_id), true);
+    assert!(entity.has_id(tag.raw_id));
 }
 
 #[test]
@@ -245,13 +245,13 @@ fn entity_add_childof() {
     let world = World::new();
 
     let parent = world.new_entity();
-    assert_eq!(parent.is_valid(), true);
+    assert!(parent.is_valid());
 
     let entity = world.new_entity();
     assert!(entity.is_valid());
 
     entity.add_pair_ids(ECS_CHILD_OF, parent.raw_id);
-    assert_eq!(entity.has_pair_by_ids(ECS_CHILD_OF, parent.raw_id), true);
+    assert!(entity.has_pair_by_ids(ECS_CHILD_OF, parent.raw_id));
 }
 
 #[test]
@@ -259,13 +259,13 @@ fn entity_add_instanceof() {
     let world = World::new();
 
     let base = world.new_entity();
-    assert_eq!(base.is_valid(), true);
+    assert!(base.is_valid());
 
     let entity = world.new_entity();
     assert!(entity.is_valid());
 
     entity.add_pair_ids(ECS_IS_A, base.raw_id);
-    assert_eq!(entity.has_pair_by_ids(ECS_IS_A, base.raw_id), true);
+    assert!(entity.has_pair_by_ids(ECS_IS_A, base.raw_id));
 }
 
 #[test]
@@ -277,15 +277,15 @@ fn entity_remove_2() {
         .add_component::<Position>()
         .add_component::<Velocity>();
 
-    assert_eq!(entity.has::<Position>(), true);
-    assert_eq!(entity.has::<Velocity>(), true);
+    assert!(entity.has::<Position>());
+    assert!(entity.has::<Velocity>());
 
     entity
         .remove_component::<Position>()
         .remove_component::<Velocity>();
 
-    assert_eq!(entity.has::<Position>(), false);
-    assert_eq!(entity.has::<Velocity>(), false);
+    assert!(!entity.has::<Position>());
+    assert!(!entity.has::<Velocity>());
 }
 
 #[test]
@@ -297,8 +297,8 @@ fn entity_set_2() {
         .set_component::<Position>(Position { x: 10.0, y: 20.0 })
         .set_component::<Velocity>(Velocity { x: 1.0, y: 2.0 });
 
-    assert_eq!(entity.has::<Position>(), true);
-    assert_eq!(entity.has::<Velocity>(), true);
+    assert!(entity.has::<Position>());
+    assert!(entity.has::<Velocity>());
 
     let p = entity.get_component::<Position>();
     unsafe {
@@ -318,16 +318,16 @@ fn entity_remove_entity() {
     let world = World::new();
 
     let tag = world.new_entity();
-    assert_eq!(tag.is_valid(), true);
+    assert!(tag.is_valid());
 
     let entity = world.new_entity();
     assert!(entity.is_valid());
 
     entity.add_id(tag.raw_id);
-    assert_eq!(entity.has_id(tag.raw_id), true);
+    assert!(entity.has_id(tag.raw_id));
 
     entity.remove_id(tag.raw_id);
-    assert_eq!(entity.has_id(tag.raw_id), false);
+    assert!(!entity.has_id(tag.raw_id));
 }
 
 #[test]
@@ -335,16 +335,16 @@ fn entity_remove_childof() {
     let world = World::new();
 
     let parent = world.new_entity();
-    assert_eq!(parent.is_valid(), true);
+    assert!(parent.is_valid());
 
     let entity = world.new_entity();
     assert!(entity.is_valid());
 
     entity.add_pair_ids(ECS_CHILD_OF, parent.raw_id);
-    assert_eq!(entity.has_pair_by_ids(ECS_CHILD_OF, parent.raw_id), true);
+    assert!(entity.has_pair_by_ids(ECS_CHILD_OF, parent.raw_id));
 
     entity.remove_pair_ids(ECS_CHILD_OF, parent.raw_id);
-    assert_eq!(entity.has_pair_by_ids(ECS_CHILD_OF, parent.raw_id), false);
+    assert!(!entity.has_pair_by_ids(ECS_CHILD_OF, parent.raw_id));
 }
 
 #[test]
@@ -352,16 +352,16 @@ fn entity_remove_instanceof() {
     let world = World::new();
 
     let base = world.new_entity();
-    assert_eq!(base.is_valid(), true);
+    assert!(base.is_valid());
 
     let entity = world.new_entity();
     assert!(entity.is_valid());
 
     entity.add_pair_ids(ECS_IS_A, base.raw_id);
-    assert_eq!(entity.has_pair_by_ids(ECS_IS_A, base.raw_id), true);
+    assert!(entity.has_pair_by_ids(ECS_IS_A, base.raw_id));
 
     entity.remove_pair_ids(ECS_IS_A, base.raw_id);
-    assert_eq!(entity.has_pair_by_ids(ECS_IS_A, base.raw_id), false);
+    assert!(!entity.has_pair_by_ids(ECS_IS_A, base.raw_id));
 }
 
 #[test]
@@ -374,10 +374,10 @@ fn entity_get_generic() {
         .set_component(Position { x: 10.0, y: 20.0 });
 
     assert!(entity.is_valid());
-    assert_eq!(entity.has::<Position>(), true);
+    assert!(entity.has::<Position>());
 
     let pos_void = entity.get_component_by_id(position.raw_id);
-    assert!(pos_void != std::ptr::null());
+    assert!(!pos_void.is_null());
 
     let pos = unsafe { &*(pos_void as *const Position) };
     assert_eq!(pos.x, 10.0);
@@ -495,8 +495,8 @@ fn entity_equals() {
     let e1 = world.new_entity();
     let e2 = world.new_entity();
 
-    let e1_2 = e1.clone();
-    let e2_2 = e2.clone();
+    let e1_2 = e1;
+    let e2_2 = e2;
 
     assert!(e1 == e1_2);
     assert!(e2 == e2_2);
@@ -506,11 +506,11 @@ fn entity_equals() {
     assert!(e2 <= e2_2);
     assert!(e1 != e2);
 
-    assert!(!(e2 == e1_2));
-    assert!(!(e1 == e2_2));
-    assert!(!(e2 <= e1_2));
-    assert!(!(e1 >= e2_2));
-    assert!(!(e2 != e2));
+    assert!(e2 != e1_2);
+    assert!(e1 != e2_2);
+    assert!(e2 > e1_2);
+    assert!(e1 < e2_2);
+    assert!(e2 == e2);
 }
 
 #[test]
@@ -805,45 +805,45 @@ fn entity_is_enabled_component_disabled() {
         .add_component::<Velocity>()
         .add_component::<Mass>();
 
-    assert_eq!(entity.is_enabled_component::<Position>(), true);
-    assert_eq!(entity.is_enabled_component::<Velocity>(), true);
-    assert_eq!(entity.is_enabled_component::<Mass>(), true);
+    assert!(entity.is_enabled_component::<Position>());
+    assert!(entity.is_enabled_component::<Velocity>());
+    assert!(entity.is_enabled_component::<Mass>());
 
     entity.disable_component::<Position>();
 
-    assert_eq!(entity.is_enabled_component::<Position>(), false);
-    assert_eq!(entity.is_enabled_component::<Velocity>(), true);
-    assert_eq!(entity.is_enabled_component::<Mass>(), true);
+    assert!(!entity.is_enabled_component::<Position>());
+    assert!(entity.is_enabled_component::<Velocity>());
+    assert!(entity.is_enabled_component::<Mass>());
 
     entity.disable_component::<Velocity>();
 
-    assert_eq!(entity.is_enabled_component::<Position>(), false);
-    assert_eq!(entity.is_enabled_component::<Velocity>(), false);
-    assert_eq!(entity.is_enabled_component::<Mass>(), true);
+    assert!(!entity.is_enabled_component::<Position>());
+    assert!(!entity.is_enabled_component::<Velocity>());
+    assert!(entity.is_enabled_component::<Mass>());
 
     entity.disable_component::<Mass>();
 
-    assert_eq!(entity.is_enabled_component::<Position>(), false);
-    assert_eq!(entity.is_enabled_component::<Velocity>(), false);
-    assert_eq!(entity.is_enabled_component::<Mass>(), false);
+    assert!(!entity.is_enabled_component::<Position>());
+    assert!(!entity.is_enabled_component::<Velocity>());
+    assert!(!entity.is_enabled_component::<Mass>());
 
     entity.enable_component::<Position>();
 
-    assert_eq!(entity.is_enabled_component::<Position>(), true);
-    assert_eq!(entity.is_enabled_component::<Velocity>(), false);
-    assert_eq!(entity.is_enabled_component::<Mass>(), false);
+    assert!(entity.is_enabled_component::<Position>());
+    assert!(!entity.is_enabled_component::<Velocity>());
+    assert!(!entity.is_enabled_component::<Mass>());
 
     entity.enable_component::<Velocity>();
 
-    assert_eq!(entity.is_enabled_component::<Position>(), true);
-    assert_eq!(entity.is_enabled_component::<Velocity>(), true);
-    assert_eq!(entity.is_enabled_component::<Mass>(), false);
+    assert!(entity.is_enabled_component::<Position>());
+    assert!(entity.is_enabled_component::<Velocity>());
+    assert!(!entity.is_enabled_component::<Mass>());
 
     entity.enable_component::<Mass>();
 
-    assert_eq!(entity.is_enabled_component::<Position>(), true);
-    assert_eq!(entity.is_enabled_component::<Velocity>(), true);
-    assert_eq!(entity.is_enabled_component::<Mass>(), true);
+    assert!(entity.is_enabled_component::<Position>());
+    assert!(entity.is_enabled_component::<Velocity>());
+    assert!(entity.is_enabled_component::<Mass>());
 }
 
 #[test]
@@ -856,23 +856,23 @@ fn entity_is_enabled_pair() {
         .add_pair::<TagB, TagC>()
         .disable_pair::<Position, TagC>();
 
-    assert_eq!(entity.is_enabled_pair::<Position, TagA>(), true);
-    assert_eq!(entity.is_enabled_pair::<Position, TagB>(), false);
-    assert_eq!(entity.is_enabled_pair::<Position, TagC>(), false);
+    assert!(entity.is_enabled_pair::<Position, TagA>());
+    assert!(!entity.is_enabled_pair::<Position, TagB>());
+    assert!(!entity.is_enabled_pair::<Position, TagC>());
 
     entity.enable_pair::<Position, TagB>();
-    assert_eq!(entity.is_enabled_pair::<Position, TagB>(), true);
+    assert!(entity.is_enabled_pair::<Position, TagB>());
 
     entity.disable_pair::<Position, TagA>();
-    assert_eq!(entity.is_enabled_pair::<Position, TagA>(), false);
+    assert!(!entity.is_enabled_pair::<Position, TagA>());
 
     entity.enable_pair::<Position, TagA>();
     entity.enable_pair::<Position, TagC>();
-    assert_eq!(entity.is_enabled_pair::<Position, TagA>(), true);
-    assert_eq!(entity.is_enabled_pair::<Position, TagC>(), true);
+    assert!(entity.is_enabled_pair::<Position, TagA>());
+    assert!(entity.is_enabled_pair::<Position, TagC>());
 
     entity.disable_pair::<Position, TagB>();
-    assert_eq!(entity.is_enabled_pair::<Position, TagB>(), false);
+    assert!(!entity.is_enabled_pair::<Position, TagB>());
 }
 
 #[test]
