@@ -13,6 +13,7 @@ categories = ["game-development", "api-bindings"]
 flecs_ecs_derive = { path = "../flecs_ecs_derive" }
 seq-macro = "0.3.5" #temp for testing / development
 rand = "0.8.5"  #temp for testing / development
+libc = "0.2.153"
 #cargo-show-asm = "0.2.21"  #temp for testing / development
 
 [dev-dependencies]
