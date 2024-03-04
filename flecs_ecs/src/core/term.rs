@@ -953,7 +953,7 @@ pub trait TermBuilder: Sized {
         self.assert_term();
         self.set_inout(inout);
         unsafe {
-            if (*self.get_raw_term()).inout != OperKind::Not as ::std::os::raw::c_uint {
+            if (*self.get_raw_term()).oper != OperKind::Not as ::std::os::raw::c_uint {
                 self.setup_src().entity(0);
             }
         }

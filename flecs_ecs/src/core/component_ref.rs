@@ -62,6 +62,7 @@ impl<T: CachedComponentData> Ref<T> {
             _marker: PhantomData,
         }
     }
+
     /// Get component from ref.
     ///
     /// # Safety
