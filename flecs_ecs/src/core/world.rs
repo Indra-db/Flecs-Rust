@@ -189,36 +189,6 @@ impl World {
         self.get_world_info().delta_time
     }
 
-    /// Get current tick.
-    ///
-    /// Retrieves the total number of simulation ticks (frames) that have been
-    /// processed by the world. This can be used to track the simulation's
-    /// progress over time.
-    ///
-    /// # Returns
-    ///
-    /// Monotonically increasing frame time. The total number of ticks as an integer.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::tick`
-    #[doc(alias = "world::tick")]
-    pub fn get_tick(&self) -> i64 {
-        self.get_world_info().frame_count_total
-    }
-
-    /// Gets the current simulation time.
-    ///
-    /// Returns the total time that has passed in the simulation.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::time`
-    #[doc(alias = "world::time")]
-    pub fn get_time(&self) -> f32 {
-        self.get_world_info().world_time_total
-    }
-
     /// Signals the application to quit.
     ///
     /// After calling this function, the next call to `progress()` returns false.
