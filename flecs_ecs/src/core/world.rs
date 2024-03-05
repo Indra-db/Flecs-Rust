@@ -185,19 +185,25 @@ impl World {
     ///
     /// * C++ API: `world::delta_time`
     #[doc(alias = "world::delta_time")]
-    pub fn delta_time(&self) -> f32 {
+    pub fn get_delta_time(&self) -> f32 {
         self.get_world_info().delta_time
     }
 
-    /// Gets the current tick.
+    /// Get current tick.
     ///
-    /// Returns the total number of frames that have passed.
+    /// Retrieves the total number of simulation ticks (frames) that have been
+    /// processed by the world. This can be used to track the simulation's
+    /// progress over time.
+    ///
+    /// # Returns
+    ///
+    /// Monotonically increasing frame time. The total number of ticks as an integer.
     ///
     /// # See also
     ///
     /// * C++ API: `world::tick`
     #[doc(alias = "world::tick")]
-    pub fn tick(&self) -> i64 {
+    pub fn get_tick(&self) -> i64 {
         self.get_world_info().frame_count_total
     }
 
@@ -209,7 +215,7 @@ impl World {
     ///
     /// * C++ API: `world::time`
     #[doc(alias = "world::time")]
-    pub fn time(&self) -> f32 {
+    pub fn get_time(&self) -> f32 {
         self.get_world_info().world_time_total
     }
 
@@ -3866,25 +3872,6 @@ impl World {
     #[inline(always)]
     pub fn get_time_scale(&self) -> super::FTime {
         self.get_world_info().time_scale
-    }
-
-    /// Get current tick.
-    ///
-    /// Retrieves the total number of simulation ticks (frames) that have been
-    /// processed by the world. This can be used to track the simulation's
-    /// progress over time.
-    ///
-    /// # Returns
-    ///
-    /// Monotonically increasing frame time. The total number of ticks as an integer.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::tick`
-    #[doc(alias = "world::tick")]
-    #[inline(always)]
-    pub fn get_tick(&self) -> i64 {
-        self.get_world_info().frame_count_total
     }
 
     /// Get target frames per second (FPS).
