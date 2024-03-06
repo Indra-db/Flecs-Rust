@@ -18,6 +18,8 @@ fn iterate_tree(entity: Entity, position_parent: &Position) {
         entity.get_archetype()
     );
 
+    let option = Some(());
+
     // Get the position of the entity
     let pos = entity.get::<Position>().unwrap();
 

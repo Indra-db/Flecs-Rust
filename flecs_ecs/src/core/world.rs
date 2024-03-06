@@ -3037,8 +3037,8 @@ impl World {
     ///
     /// * C++ API: `world::component`
     #[doc(alias = "world::component")]
-    pub fn component<T: CachedComponentData>(&self) -> Component<T> {
-        Component::<T>::new(self)
+    pub fn component<T: CachedComponentData>(&self) -> Component<T::UnderlyingType> {
+        Component::<T::UnderlyingType>::new(self)
     }
 
     /// Find or register component.

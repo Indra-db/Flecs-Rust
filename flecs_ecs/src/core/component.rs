@@ -123,12 +123,12 @@ impl UntypedComponent {}
 
 /// Component class.
 /// Class used to register components and component metadata.
-pub struct Component<T: CachedComponentData + Default> {
+pub struct Component<T: CachedComponentData> {
     pub base: UntypedComponent,
     _marker: PhantomData<T>,
 }
 
-impl<T: CachedComponentData + Default> Deref for Component<T> {
+impl<T: CachedComponentData> Deref for Component<T> {
     type Target = UntypedComponent;
 
     fn deref(&self) -> &Self::Target {
@@ -136,7 +136,7 @@ impl<T: CachedComponentData + Default> Deref for Component<T> {
     }
 }
 
-impl<T: CachedComponentData + Default> Component<T> {
+impl<T: CachedComponentData> Component<T> {
     /// Create a new component.
     ///
     /// # Arguments

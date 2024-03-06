@@ -476,24 +476,40 @@ pub trait TermBuilder: Sized {
         self
     }
 
+    /// default up where trav is set to 0.
+    /// The up flag indicates that the term identifier may be substituted by
+    /// traversing a relationship upwards. For example: substitute the identifier
+    /// with its parent by traversing the `ChildOf` relationship.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `term_builder_i::up`
+    #[doc(alias = "term_builder_i::up")]
+    fn up(&mut self) -> &mut Self {
+        self.assert_term_id();
+        unsafe {
+            (*self.get_term_id()).flags |= ECS_UP;
+            (*self.get_term_id()).trav = 0;
+        };
+        self
+    }
+
     /// The up flag indicates that the term identifier may be substituted by
     /// traversing a relationship upwards. For example: substitute the identifier
     /// with its parent by traversing the `ChildOf` relationship.
     ///
     /// # Arguments
     ///
-    /// * `traverse_relationship` - The optional relationship to traverse.
+    /// * `traverse_relationship` - The relationship to traverse.
     ///
     /// # See also
     ///
     /// * C++ API: `term_builder_i::up`
     #[doc(alias = "term_builder_i::up")]
-    fn up_id(&mut self, traverse_relationship: Option<EntityT>) -> &mut Self {
+    fn up_id(&mut self, traverse_relationship: EntityT) -> &mut Self {
         self.assert_term_id();
         unsafe { (*self.get_term_id()).flags |= ECS_UP };
-        if let Some(trav_rel) = traverse_relationship {
-            unsafe { (*self.get_term_id()).trav = trav_rel };
-        }
+        unsafe { (*self.get_term_id()).trav = traverse_relationship };
         self
     }
 
@@ -509,7 +525,7 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::up`
     #[doc(alias = "term_builder_i::up")]
-    fn up<TravRel: CachedComponentData>(&mut self) -> &mut Self {
+    fn up_type<TravRel: CachedComponentData>(&mut self) -> &mut Self {
         self.assert_term_id();
         unsafe {
             (*self.get_term_id()).flags |= ECS_UP;

@@ -1,8 +1,11 @@
 use super::{
-    c_binding::bindings::{ecs_filter_desc_t, ecs_oper_kind_t},
+    c_binding::{
+        bindings::{ecs_filter_desc_t, ecs_oper_kind_t},
+        ecs_inout_kind_t, ecs_term_t,
+    },
     c_types::{IterT, OperKind, TermT, WorldT},
     component_registration::CachedComponentData,
-    ecs_field,
+    ecs_field, InOutKind,
 };
 
 pub trait Filterable: Sized {
@@ -20,6 +23,269 @@ pub struct ComponentsData<'a, T: Iterable<'a>> {
     pub array_components: T::ComponentsArray,
     pub is_ref_array_components: T::BoolArray,
     pub is_any_array_a_ref: bool,
+}
+
+struct Singleton<T>(T);
+
+pub trait IterableTypeOperation {
+    type CastType;
+    type ActualType;
+    type SliceType;
+    type OnlyType: CachedComponentData;
+
+    fn populate_term(world: *mut WorldT, term: &mut super::c_binding::ecs_term_t);
+    fn get_tuple_data(array_components_data: *mut u8, index: usize) -> Self::ActualType;
+    fn get_tuple_with_ref_data(
+        array_components_data: *mut u8,
+        is_ref: bool,
+        index: usize,
+    ) -> Self::ActualType;
+    fn get_tuple_slice_data(array_components_data: *mut u8, count: usize) -> Self::SliceType;
+    fn get_tuple_slices_with_ref_data(
+        array_components_data: *mut u8,
+        is_ref_array_components: bool,
+        count: usize,
+    ) -> Self::SliceType;
+}
+
+impl<'a, T> IterableTypeOperation for &'a T
+where
+    T: CachedComponentData,
+{
+    type CastType = *const T;
+    type ActualType = &'a T;
+    type SliceType = &'a [T];
+    type OnlyType = T;
+
+    fn populate_term(world: *mut WorldT, term: &mut super::c_binding::ecs_term_t) {
+        term.id = T::get_id(world);
+        term.inout = InOutKind::In as ecs_inout_kind_t;
+    }
+
+    fn get_tuple_data(array_components_data: *mut u8, index: usize) -> Self::ActualType {
+        let data_ptr = array_components_data as Self::CastType;
+        unsafe { &*data_ptr.add(index) }
+    }
+
+    fn get_tuple_with_ref_data(
+        array_components_data: *mut u8,
+        is_ref: bool,
+        index: usize,
+    ) -> Self::ActualType {
+        let data_ptr = array_components_data as Self::CastType;
+        unsafe {
+            if is_ref {
+                &*data_ptr.add(0)
+            } else {
+                &*data_ptr.add(index)
+            }
+        }
+    }
+
+    fn get_tuple_slice_data(array_components_data: *mut u8, count: usize) -> Self::SliceType {
+        let data_ptr = array_components_data as Self::CastType;
+        unsafe { std::slice::from_raw_parts(data_ptr, count) }
+    }
+
+    fn get_tuple_slices_with_ref_data(
+        array_components_data: *mut u8,
+        is_ref_array_components: bool,
+        count: usize,
+    ) -> Self::SliceType {
+        let data_ptr = array_components_data as Self::CastType;
+        unsafe {
+            if is_ref_array_components {
+                std::slice::from_raw_parts(data_ptr, 1)
+            } else {
+                std::slice::from_raw_parts(data_ptr, count)
+            }
+        }
+    }
+}
+
+struct Const<T>(T);
+
+impl<'a, T> IterableTypeOperation for &'a mut T
+where
+    T: CachedComponentData,
+{
+    type CastType = *mut T;
+    type ActualType = &'a mut T;
+    type SliceType = &'a mut [T];
+    type OnlyType = T;
+
+    fn populate_term(world: *mut WorldT, term: &mut super::c_binding::ecs_term_t) {
+        term.id = T::get_id(world);
+        term.inout = InOutKind::InOut as ecs_inout_kind_t;
+    }
+
+    fn get_tuple_data(array_components_data: *mut u8, index: usize) -> Self::ActualType {
+        let data_ptr = array_components_data as Self::CastType;
+        unsafe { &mut *data_ptr.add(index) }
+    }
+
+    fn get_tuple_with_ref_data(
+        array_components_data: *mut u8,
+        is_ref: bool,
+        index: usize,
+    ) -> Self::ActualType {
+        let data_ptr = array_components_data as Self::CastType;
+        unsafe {
+            if is_ref {
+                &mut *data_ptr.add(0)
+            } else {
+                &mut *data_ptr.add(index)
+            }
+        }
+    }
+
+    fn get_tuple_slice_data(array_components_data: *mut u8, count: usize) -> Self::SliceType {
+        let data_ptr = array_components_data as Self::CastType;
+        unsafe { std::slice::from_raw_parts_mut(data_ptr, count) }
+    }
+
+    fn get_tuple_slices_with_ref_data(
+        array_components_data: *mut u8,
+        is_ref_array_components: bool,
+        count: usize,
+    ) -> Self::SliceType {
+        let data_ptr = array_components_data as Self::CastType;
+        unsafe {
+            if is_ref_array_components {
+                std::slice::from_raw_parts_mut(data_ptr, 1)
+            } else {
+                std::slice::from_raw_parts_mut(data_ptr, count)
+            }
+        }
+    }
+}
+
+impl<'a, T> IterableTypeOperation for Option<&'a T>
+where
+    T: CachedComponentData,
+{
+    type CastType = *const T;
+    type ActualType = Option<&'a T>;
+    type SliceType = Option<&'a [T]>;
+    type OnlyType = T;
+
+    fn populate_term(world: *mut WorldT, term: &mut super::c_binding::ecs_term_t) {
+        term.id = T::get_id(world);
+        term.inout = InOutKind::In as ecs_inout_kind_t;
+        term.oper = OperKind::Optional as ecs_oper_kind_t;
+    }
+
+    fn get_tuple_data(array_components_data: *mut u8, index: usize) -> Self::ActualType {
+        let data_ptr = array_components_data as Self::CastType;
+        if data_ptr.is_null() {
+            None
+        } else {
+            Some(unsafe { &*data_ptr.add(index) })
+        }
+    }
+
+    fn get_tuple_with_ref_data(
+        array_components_data: *mut u8,
+        is_ref: bool,
+        index: usize,
+    ) -> Self::ActualType {
+        let data_ptr = array_components_data as Self::CastType;
+        if data_ptr.is_null() {
+            None
+        } else if is_ref {
+            Some(unsafe { &*data_ptr.add(0) })
+        } else {
+            Some(unsafe { &*data_ptr.add(index) })
+        }
+    }
+
+    fn get_tuple_slice_data(array_components_data: *mut u8, count: usize) -> Self::SliceType {
+        let data_ptr = array_components_data as Self::CastType;
+        if data_ptr.is_null() {
+            None
+        } else {
+            Some(unsafe { std::slice::from_raw_parts(data_ptr, count) })
+        }
+    }
+
+    fn get_tuple_slices_with_ref_data(
+        array_components_data: *mut u8,
+        is_ref_array_components: bool,
+        count: usize,
+    ) -> Self::SliceType {
+        let data_ptr = array_components_data as Self::CastType;
+        if data_ptr.is_null() {
+            None
+        } else if is_ref_array_components {
+            Some(unsafe { std::slice::from_raw_parts(data_ptr, 1) })
+        } else {
+            Some(unsafe { std::slice::from_raw_parts(data_ptr, count) })
+        }
+    }
+}
+
+impl<'a, T> IterableTypeOperation for Option<&'a mut T>
+where
+    T: CachedComponentData,
+{
+    type CastType = *mut T;
+    type ActualType = Option<&'a mut T>;
+    type SliceType = Option<&'a mut [T]>;
+    type OnlyType = T;
+
+    fn populate_term(world: *mut WorldT, term: &mut super::c_binding::ecs_term_t) {
+        term.id = T::get_id(world);
+        term.inout = InOutKind::InOut as ecs_inout_kind_t;
+        term.oper = OperKind::Optional as ecs_oper_kind_t;
+    }
+
+    fn get_tuple_data(array_components_data: *mut u8, index: usize) -> Self::ActualType {
+        let data_ptr = array_components_data as Self::CastType;
+        if data_ptr.is_null() {
+            None
+        } else {
+            Some(unsafe { &mut *data_ptr.add(index) })
+        }
+    }
+
+    fn get_tuple_with_ref_data(
+        array_components_data: *mut u8,
+        is_ref: bool,
+        index: usize,
+    ) -> Self::ActualType {
+        let data_ptr = array_components_data as Self::CastType;
+        if data_ptr.is_null() {
+            None
+        } else if is_ref {
+            Some(unsafe { &mut *data_ptr.add(0) })
+        } else {
+            Some(unsafe { &mut *data_ptr.add(index) })
+        }
+    }
+
+    fn get_tuple_slice_data(array_components_data: *mut u8, count: usize) -> Self::SliceType {
+        let data_ptr = array_components_data as Self::CastType;
+        if data_ptr.is_null() {
+            None
+        } else {
+            Some(unsafe { std::slice::from_raw_parts_mut(data_ptr, count) })
+        }
+    }
+
+    fn get_tuple_slices_with_ref_data(
+        array_components_data: *mut u8,
+        is_ref_array_components: bool,
+        count: usize,
+    ) -> Self::SliceType {
+        let data_ptr = array_components_data as Self::CastType;
+        if data_ptr.is_null() {
+            None
+        } else if is_ref_array_components {
+            Some(unsafe { std::slice::from_raw_parts_mut(data_ptr, 1) })
+        } else {
+            Some(unsafe { std::slice::from_raw_parts_mut(data_ptr, count) })
+        }
+    }
 }
 
 pub trait Iterable<'a>: Sized {
@@ -101,27 +367,27 @@ impl<'a> Iterable<'a> for ()
 #[rustfmt::skip]
 impl<'a, A: 'a> Iterable<'a> for (A,)
 where
-    A: CachedComponentData,
+    A: IterableTypeOperation,
 {
-    type TupleType = (&'a mut A,);
+    type TupleType = (A::ActualType,);
     type ComponentsArray = [*mut u8; 1];
     type BoolArray = [bool; 1];
-    type TupleSliceType = (&'a mut [A],);
+    type TupleSliceType = (A::SliceType,);
 
     fn populate(filter: &mut impl Filterable) {
         let world = filter.get_world();
         let term = filter.current_term();
-        term.id = A::get_id(world);
+        A::populate_term(world, term);
         filter.next_term();
     }
 
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
-        desc.terms[0].id = A::get_id(world);
+        A::populate_term(world, &mut desc.terms[0]);
     }
 
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
         let array_components = unsafe {
-            [ecs_field::<A>(it, 1) as *mut u8]
+            [ecs_field::<A::OnlyType>(it, 1) as *mut u8]
         };
         let is_ref_array_components = if !it.sources.is_null() { unsafe {
             [*it.sources.add(0) != 0]
@@ -137,11 +403,7 @@ where
     }
 
     fn get_tuple(array_components: &Self::ComponentsArray, index: usize) -> Self::TupleType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let ref_a = &mut (*array_a.add(index));
-            (ref_a,)
-        }
+            (A::get_tuple_data(array_components[0], index),)
     }
 
     // TODO since it's only one component, we don't need to check if it's a ref array or not, we can just return the first element of the array
@@ -151,26 +413,14 @@ where
         is_ref_array_components: &Self::BoolArray,
         index: usize,
     ) -> Self::TupleType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let ref_a = if is_ref_array_components[0] {
-                &mut (*array_a.add(0))
-            } else {
-                &mut (*array_a.add(index))
-            };
-            (ref_a,)
-        }
+        (A::get_tuple_with_ref_data(array_components[0], is_ref_array_components[0], index),)
     }
 
     fn get_tuple_slices(
         array_components: &Self::ComponentsArray,
         count: usize,
     ) -> Self::TupleSliceType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let slice_a = std::slice::from_raw_parts_mut(array_a, count);
-            (slice_a,)
-        }
+        (A::get_tuple_slice_data(array_components[0], count),)
     }
 
     fn get_tuple_slices_with_ref(
@@ -178,139 +428,7 @@ where
         is_ref_array_components: &Self::BoolArray,
         count: usize,
     ) -> Self::TupleSliceType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let slice_a = if is_ref_array_components[0] {
-                std::slice::from_raw_parts_mut(array_a, 1)
-            } else {
-                std::slice::from_raw_parts_mut(array_a, count)
-            };
-            (slice_a,)
-        }
-    
-    }
-}
-
-#[rustfmt::skip]
-impl<'a, A: 'a> Iterable<'a> for (Option<A>,)
-where
-    A: CachedComponentData,
-{
-    type TupleType = (Option<&'a mut A>,);
-    type ComponentsArray = [*mut u8; 1];
-    type BoolArray = [bool; 1];
-    type TupleSliceType = (Option<&'a mut [A]>,);
-
-    fn populate(filter: &mut impl Filterable) {
-        let world = filter.get_world();
-        let term = filter.current_term();
-        term.id = A::get_id(world);
-        term.oper = OperKind::Optional as ecs_oper_kind_t;
-        filter.next_term();
-    }
-
-    fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
-        desc.terms[0].id = A::get_id(world);
-        desc.terms[0].oper = OperKind::Optional as ecs_oper_kind_t;
-    }
-
-    fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
-        let array_components = unsafe {
-            [ecs_field::<A>(it, 1) as *mut u8]
-        };
-
-        let is_ref_array_components = if !it.sources.is_null() { unsafe {
-            [*it.sources.add(0) != 0]
-        }} else { [false] };
-
-        let is_any_array_a_ref = is_ref_array_components[0];
-
-        ComponentsData {
-            array_components,
-            is_ref_array_components,
-            is_any_array_a_ref,
-        }
-    }
-
-    /// TODO I think potentially I can determine if the component array is null before the loop as well to reduce the branching per iteration.
-    /// potentially by working with two arrays with indices, one containing the indices of the component arrays that are null, and one containing the indices of the component arrays that are not null.
-    /// reducing overall branching and increasing performance and conditions for vectorization
-    fn get_tuple(array_components: &Self::ComponentsArray, index: usize) -> Self::TupleType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-
-            let option_a = if array_a.is_null() {
-                None
-            } else {
-                Some(&mut (*array_a.add(index)))
-            };
-
-            (option_a,)
-
-        }
-    }
-
-    fn get_tuple_with_ref(
-        array_components: &Self::ComponentsArray,
-        is_ref_array_components: &Self::BoolArray,
-        index: usize,
-    ) -> Self::TupleType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-
-            let option_a = if array_a.is_null() {
-                None
-            } else if is_ref_array_components[0] {
-                Some(&mut (*array_a.add(0)))
-            } else {
-                Some(&mut (*array_a.add(index)))
-            };
-
-            (option_a,)
-        }
-
-    }
-
-    fn get_tuple_slices(
-        array_components: &Self::ComponentsArray,
-        count: usize,
-    ) -> Self::TupleSliceType {
-        unsafe {
-
-            let array_a = array_components[0] as *mut A; // array_components is an array [*mut u8; 3];
-            
-            let option_a = if array_a.is_null() {
-                None
-            } else {
-                let slice_a = std::slice::from_raw_parts_mut(array_a, count);
-                Some(slice_a)
-            };
-
-            (option_a,)
-        }
-    }
-
-    fn get_tuple_slices_with_ref(
-        array_components: &Self::ComponentsArray,
-        is_ref_array_components: &Self::BoolArray,
-        count: usize,
-    ) -> Self::TupleSliceType {
-        unsafe {
-
-            let array_a = array_components[0] as *mut A; // array_components is an array [*mut u8; 3];
-            
-            let option_a = if array_a.is_null() {
-                None
-            } else if is_ref_array_components[0] {
-                let slice_a = std::slice::from_raw_parts_mut(array_a, 1);
-                Some(slice_a)
-            } else {
-                let slice_a = std::slice::from_raw_parts_mut(array_a, count);
-                Some(slice_a)
-            };
-
-            (option_a,)
-        }
+        (A::get_tuple_slices_with_ref_data(array_components[0], is_ref_array_components[0], count),)
     
     }
 }
@@ -318,35 +436,35 @@ where
 #[rustfmt::skip]
 impl<'a, A: 'a, B: 'a> Iterable<'a> for (A, B)
 where
-    A: CachedComponentData,
-    B: CachedComponentData,
+    A: IterableTypeOperation,
+    B: IterableTypeOperation,
 {
-    type TupleType = (&'a mut A, &'a mut B);
+    type TupleType = (A::ActualType, B::ActualType);
     type ComponentsArray = [*mut u8; 2];
     type BoolArray = [bool; 2];
-    type TupleSliceType = (&'a mut [A], &'a mut [B]);
+    type TupleSliceType = (A::SliceType, B::SliceType);
 
     fn populate(filter : &mut impl Filterable)
     {
         let world = filter.get_world();
         let term = filter.current_term();
-        term.id = A::get_id(world);
+        A::populate_term(world, term);
         filter.next_term();
         let term = filter.current_term();
-        term.id = B::get_id(world);
+        B::populate_term(world, term);
         filter.next_term();
     }
 
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t)
     {
-        desc.terms[0].id = A::get_id(world);
-        desc.terms[1].id = B::get_id(world);
+        A::populate_term(world, &mut desc.terms[0]);
+        B::populate_term(world, &mut desc.terms[1]);
     }
 
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
         let array_components = unsafe {
-            [ecs_field::<A>(it, 1) as *mut u8,
-            ecs_field::<B>(it, 2) as *mut u8]
+            [ecs_field::<A::OnlyType>(it, 1) as *mut u8,
+            ecs_field::<B::OnlyType>(it, 2) as *mut u8]
         };
 
         let is_ref_array_components = if !it.sources.is_null() { unsafe {
@@ -365,13 +483,7 @@ where
 
     fn get_tuple(array_components: &Self::ComponentsArray, index: usize) -> Self::TupleType
     {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let ref_a = &mut (*array_a.add(index));
-            let ref_b = &mut (*array_b.add(index));
-            (ref_a, ref_b,)
-        }
+        (A::get_tuple_data(array_components[0], index),B::get_tuple_data(array_components[1], index),)
     }
 
     fn get_tuple_with_ref(
@@ -379,34 +491,14 @@ where
         is_ref_array_components: &Self::BoolArray,
         index: usize,
     ) -> Self::TupleType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let ref_a = if is_ref_array_components[0] {
-                &mut (*array_a.add(0))
-            } else {
-                &mut (*array_a.add(index))
-            };
-            let ref_b = if is_ref_array_components[1] {
-                &mut (*array_b.add(0))
-            } else {
-                &mut (*array_b.add(index))
-            };
-            (ref_a, ref_b,)
-        }
+        (A::get_tuple_with_ref_data(array_components[0], is_ref_array_components[0], index),B::get_tuple_with_ref_data(array_components[1], is_ref_array_components[1], index),)
     }
 
     fn get_tuple_slices(
         array_components: &Self::ComponentsArray,
         count: usize,
     ) -> Self::TupleSliceType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let slice_a = std::slice::from_raw_parts_mut(array_a, count);
-            let slice_b = std::slice::from_raw_parts_mut(array_b, count);
-            (slice_a, slice_b,)
-        }
+        (A::get_tuple_slice_data(array_components[0], count),B::get_tuple_slice_data(array_components[1], count),)
     }
 
     fn get_tuple_slices_with_ref(
@@ -414,362 +506,48 @@ where
         is_ref_array_components: &Self::BoolArray,
         count: usize,
     ) -> Self::TupleSliceType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let slice_a = if is_ref_array_components[0] {
-                std::slice::from_raw_parts_mut(array_a, 1)
-            } else {
-                std::slice::from_raw_parts_mut(array_a, count)
-            };
-            let slice_b = if is_ref_array_components[1] {
-                std::slice::from_raw_parts_mut(array_b, 1)
-            } else {
-                std::slice::from_raw_parts_mut(array_b, count)
-            };
-            (slice_a, slice_b,)
-        }
-    
-    }
-}
-
-#[rustfmt::skip]
-impl<'a, A: 'a, B: 'a> Iterable<'a> for (A, Option<B>)
-where
-    A: CachedComponentData,
-    B: CachedComponentData,
-{
-    type TupleType = (&'a mut A, Option<&'a mut B>);
-    type ComponentsArray = [*mut u8; 2];
-    type BoolArray = [bool; 2];
-    type TupleSliceType = (&'a mut [A], Option<&'a mut [B]>);
-
-    fn populate(filter: &mut impl Filterable) {
-        let world = filter.get_world();
-        let term = filter.current_term();
-        term.id = A::get_id(world);
-        filter.next_term();
-        let term = filter.current_term();
-        term.id = B::get_id(world);
-        term.oper = OperKind::Optional as ecs_oper_kind_t;
-        filter.next_term();
-    }
-
-    fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
-        desc.terms[0].id = A::get_id(world);
-        desc.terms[1].id = B::get_id(world);
-        desc.terms[1].oper = OperKind::Optional as ecs_oper_kind_t;
-    }
-
-    fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
-        let array_components = unsafe {
-            [ecs_field::<A>(it, 1) as *mut u8,
-            ecs_field::<B>(it, 2) as *mut u8]
-        };
-
-        let is_ref_array_components = if !it.sources.is_null() { unsafe {
-            [*it.sources.add(0) != 0,
-            *it.sources.add(1) != 0]
-        }} else { [false, false] };
-
-        let is_any_array_a_ref = is_ref_array_components[0] || is_ref_array_components[1];
-
-        ComponentsData {
-            array_components,
-            is_ref_array_components,
-            is_any_array_a_ref,
-        }
-    }
-
-    fn get_tuple(array_components: &Self::ComponentsArray, index: usize) -> Self::TupleType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let ref_a = &mut (*array_a.add(index));
-
-            let option_b = if array_b.is_null() {
-                None
-            } else {
-                Some(&mut (*array_b.add(index)))
-            };
-
-            (ref_a, option_b)
-        }
-    }
-
-    fn get_tuple_with_ref(
-        array_components: &Self::ComponentsArray,
-        is_ref_array_components: &Self::BoolArray,
-        index: usize,
-    ) -> Self::TupleType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let ref_a = if is_ref_array_components[0] {
-                &mut (*array_a.add(0))
-            } else {
-                &mut (*array_a.add(index))
-            };
-
-            let option_b = if is_ref_array_components[1] {
-                Some(&mut (*array_b.add(0)))
-            } else {
-                Some(&mut (*array_b.add(index)))
-            };
-
-            (ref_a, option_b)
-        }
-    }
-
-    fn get_tuple_slices(
-        array_components: &Self::ComponentsArray,
-        count: usize,
-    ) -> Self::TupleSliceType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-
-            let slice_a = std::slice::from_raw_parts_mut(array_a, count);
-
-            let slice_b = if array_b.is_null() {
-                None
-            } else {
-                let slice_b = std::slice::from_raw_parts_mut(array_b, count);
-                Some(slice_b)
-            };
-
-            (slice_a, slice_b)
-        }
-    
-    }
-
-    fn get_tuple_slices_with_ref(
-        array_components: &Self::ComponentsArray,
-        is_ref_array_components: &Self::BoolArray,
-        count: usize,
-    ) -> Self::TupleSliceType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-
-            let slice_a = std::slice::from_raw_parts_mut(array_a, count);
-
-            let slice_b = if is_ref_array_components[1] {
-                let slice_b = std::slice::from_raw_parts_mut(array_b, 1);
-                Some(slice_b)
-            } else {
-                let slice_b = std::slice::from_raw_parts_mut(array_b, count);
-                Some(slice_b)
-            };
-
-            (slice_a, slice_b)
-        }
-    }
-}
-
-impl<'a, A: 'a, B: 'a> Iterable<'a> for (Option<A>, Option<B>)
-where
-    A: CachedComponentData,
-    B: CachedComponentData,
-{
-    type TupleType = (Option<&'a mut A>, Option<&'a mut B>);
-    type ComponentsArray = [*mut u8; 2];
-    type BoolArray = [bool; 2];
-    type TupleSliceType = (Option<&'a mut [A]>, Option<&'a mut [B]>);
-
-    fn populate(filter: &mut impl Filterable) {
-        let world = filter.get_world();
-
-        let term = filter.current_term();
-        term.id = A::get_id(world);
-        term.oper = OperKind::Optional as ecs_oper_kind_t;
-        filter.next_term();
-
-        let term = filter.current_term();
-        term.id = B::get_id(world);
-        term.oper = OperKind::Optional as ecs_oper_kind_t;
-        filter.next_term();
-    }
-
-    fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
-        desc.terms[0].id = A::get_id(world);
-        desc.terms[0].oper = OperKind::Optional as ecs_oper_kind_t;
-
-        desc.terms[1].id = B::get_id(world);
-        desc.terms[1].oper = OperKind::Optional as ecs_oper_kind_t;
-    }
-
-    fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
-        let array_components = unsafe {
-            [
-                ecs_field::<A>(it, 1) as *mut u8,
-                ecs_field::<B>(it, 2) as *mut u8,
-            ]
-        };
-
-        let is_ref_array_components = if !it.sources.is_null() {
-            unsafe { [*it.sources.add(0) != 0, *it.sources.add(1) != 0] }
-        } else {
-            [false, false]
-        };
-
-        let is_any_array_a_ref = is_ref_array_components[0] || is_ref_array_components[1];
-
-        ComponentsData {
-            array_components,
-            is_ref_array_components,
-            is_any_array_a_ref,
-        }
-    }
-
-    fn get_tuple(array_components: &Self::ComponentsArray, index: usize) -> Self::TupleType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-
-            let option_a = if array_a.is_null() {
-                None
-            } else {
-                Some(&mut (*array_a.add(index)))
-            };
-
-            let option_b = if array_b.is_null() {
-                None
-            } else {
-                Some(&mut (*array_b.add(index)))
-            };
-
-            (option_a, option_b)
-        }
-    }
-
-    fn get_tuple_with_ref(
-        array_components: &Self::ComponentsArray,
-        is_ref_array_components: &Self::BoolArray,
-        index: usize,
-    ) -> Self::TupleType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-
-            let option_a = if array_a.is_null() {
-                None
-            } else if is_ref_array_components[0] {
-                Some(&mut (*array_a.add(0)))
-            } else {
-                Some(&mut (*array_a.add(index)))
-            };
-
-            let option_b = if array_b.is_null() {
-                None
-            } else if is_ref_array_components[1] {
-                Some(&mut (*array_b.add(0)))
-            } else {
-                Some(&mut (*array_b.add(index)))
-            };
-
-            (option_a, option_b)
-        }
-    }
-
-    fn get_tuple_slices(
-        array_components: &Self::ComponentsArray,
-        count: usize,
-    ) -> Self::TupleSliceType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-
-            let slice_a = if array_a.is_null() {
-                None
-            } else {
-                let slice_a = std::slice::from_raw_parts_mut(array_a, count);
-                Some(slice_a)
-            };
-
-            let slice_b = if array_b.is_null() {
-                None
-            } else {
-                let slice_b = std::slice::from_raw_parts_mut(array_b, count);
-                Some(slice_b)
-            };
-
-            (slice_a, slice_b)
-        }
-    }
-
-    fn get_tuple_slices_with_ref(
-        array_components: &Self::ComponentsArray,
-        is_ref_array_components: &Self::BoolArray,
-        count: usize,
-    ) -> Self::TupleSliceType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-
-            let slice_a = if array_a.is_null() {
-                None
-            } else if is_ref_array_components[0] {
-                let slice_a = std::slice::from_raw_parts_mut(array_a, 1);
-                Some(slice_a)
-            } else {
-                let slice_a = std::slice::from_raw_parts_mut(array_a, count);
-                Some(slice_a)
-            };
-
-            let slice_b = if array_b.is_null() {
-                None
-            } else if is_ref_array_components[1] {
-                let slice_b = std::slice::from_raw_parts_mut(array_b, 1);
-                Some(slice_b)
-            } else {
-                let slice_b = std::slice::from_raw_parts_mut(array_b, count);
-                Some(slice_b)
-            };
-
-            (slice_a, slice_b)
-        }
+        (A::get_tuple_slices_with_ref_data(array_components[0], is_ref_array_components[0], count),B::get_tuple_slices_with_ref_data(array_components[1], is_ref_array_components[1], count),)
     }
 }
 
 #[rustfmt::skip]
 impl<'a, A: 'a, B: 'a, C: 'a> Iterable<'a> for (A,B,C)
 where
-    A: CachedComponentData,
-    B: CachedComponentData,
-    C: CachedComponentData,
+    A: IterableTypeOperation,
+    B: IterableTypeOperation,
+    C: IterableTypeOperation,
 {
-    type TupleType = (&'a mut A, &'a mut B, &'a mut C);
+    type TupleType = (A::ActualType, B::ActualType, C::ActualType);
     type ComponentsArray = [*mut u8; 3];
     type BoolArray = [bool; 3];
-    type TupleSliceType = (&'a mut [A], &'a mut [B], &'a mut [C]);
+    type TupleSliceType = (A::SliceType, B::SliceType, C::SliceType);
 
     fn populate(filter : &mut impl Filterable)
     {
         let world = filter.get_world();
         let term = filter.current_term();
-        term.id = A::get_id(world);
+        A::populate_term(world, term);
         filter.next_term();
         let term = filter.current_term();
-        term.id = B::get_id(world);
+        B::populate_term(world, term);
         filter.next_term();
         let term = filter.current_term();
-        term.id = C::get_id(world);
+        C::populate_term(world, term);
         filter.next_term();
     }
 
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t)
     {
-        desc.terms[0].id = A::get_id(world);
-        desc.terms[1].id = B::get_id(world);
-        desc.terms[2].id = C::get_id(world);
+        A::populate_term(world, &mut desc.terms[0]);
+        B::populate_term(world, &mut desc.terms[1]);
+        C::populate_term(world, &mut desc.terms[2]);
     }
 
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self>{
        let array_components = unsafe {
-            [ecs_field::<A>(it, 1) as *mut u8,
-            ecs_field::<B>(it, 2) as *mut u8,
-            ecs_field::<C>(it, 3) as *mut u8]
+            [ecs_field::<A::OnlyType>(it, 1) as *mut u8,
+            ecs_field::<B::OnlyType>(it, 2) as *mut u8,
+            ecs_field::<C::OnlyType>(it, 3) as *mut u8]
         };
 
         let is_ref_array_components = if !it.sources.is_null() { unsafe {
@@ -789,15 +567,7 @@ where
 
     fn get_tuple(array_components: &Self::ComponentsArray, index: usize) -> Self::TupleType
     {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let array_c = array_components[2] as *mut C;
-            let ref_a = &mut (*array_a.add(index));
-            let ref_b = &mut (*array_b.add(index));
-            let ref_c = &mut (*array_c.add(index));
-            (ref_a, ref_b, ref_c,)
-        }
+        (A::get_tuple_data(array_components[0], index),B::get_tuple_data(array_components[1], index),C::get_tuple_data(array_components[2], index),)
     }
 
     fn get_tuple_with_ref(
@@ -805,42 +575,14 @@ where
         is_ref_array_components: &Self::BoolArray,
         index: usize,
     ) -> Self::TupleType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let array_c = array_components[2] as *mut C;
-            let ref_a = if is_ref_array_components[0] {
-                &mut (*array_a.add(0))
-            } else {
-                &mut (*array_a.add(index))
-            };
-            let ref_b = if is_ref_array_components[1] {
-                &mut (*array_b.add(0))
-            } else {
-                &mut (*array_b.add(index))
-            };
-            let ref_c = if is_ref_array_components[2] {
-                &mut (*array_c.add(0))
-            } else {
-                &mut (*array_c.add(index))
-            };
-            (ref_a, ref_b, ref_c,)
-        }
+        (A::get_tuple_with_ref_data(array_components[0], is_ref_array_components[0], index),B::get_tuple_with_ref_data(array_components[1], is_ref_array_components[1], index),C::get_tuple_with_ref_data(array_components[2], is_ref_array_components[2], index),)
     }
 
     fn get_tuple_slices(
         array_components: &Self::ComponentsArray,
         count: usize,
     ) -> Self::TupleSliceType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let array_c = array_components[2] as *mut C;
-            let slice_a = std::slice::from_raw_parts_mut(array_a, count);
-            let slice_b = std::slice::from_raw_parts_mut(array_b, count);
-            let slice_c = std::slice::from_raw_parts_mut(array_c, count);
-            (slice_a, slice_b, slice_c,)
-        }    
+        (A::get_tuple_slice_data(array_components[0], count),B::get_tuple_slice_data(array_components[1], count),C::get_tuple_slice_data(array_components[2], count),)
     }
 
     fn get_tuple_slices_with_ref(
@@ -848,585 +590,10 @@ where
         is_ref_array_components: &Self::BoolArray,
         count: usize,
     ) -> Self::TupleSliceType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let array_c = array_components[2] as *mut C;
-            let slice_a = if is_ref_array_components[0] {
-                std::slice::from_raw_parts_mut(array_a, 1)
-            } else {
-                std::slice::from_raw_parts_mut(array_a, count)
-            };
-            let slice_b = if is_ref_array_components[1] {
-                std::slice::from_raw_parts_mut(array_b, 1)
-            } else {
-                std::slice::from_raw_parts_mut(array_b, count)
-            };
-            let slice_c = if is_ref_array_components[2] {
-                std::slice::from_raw_parts_mut(array_c, 1)
-            } else {
-                std::slice::from_raw_parts_mut(array_c, count)
-            };
-            (slice_a, slice_b, slice_c,)
-        }
+        (A::get_tuple_slices_with_ref_data(array_components[0], is_ref_array_components[0], count),B::get_tuple_slices_with_ref_data(array_components[1], is_ref_array_components[1], count),C::get_tuple_slices_with_ref_data(array_components[2], is_ref_array_components[2], count),)
     }
 }
 
-#[rustfmt::skip]
-impl<'a, A: 'a, B: 'a, C: 'a> Iterable<'a> for (A, B, Option<C>)
-where
-    A: CachedComponentData,
-    B: CachedComponentData,
-    C: CachedComponentData,
-{
-    type TupleType = (&'a mut A, &'a mut B, Option<&'a mut C>);
-    type ComponentsArray = [*mut u8; 3];
-    type BoolArray = [bool; 3];
-    type TupleSliceType = (&'a mut [A], &'a mut [B], Option<&'a mut [C]>);
-
-    fn populate(filter : &mut impl Filterable) {
-        let world = filter.get_world();
-        let term = filter.current_term();
-        term.id = A::get_id(world);
-        filter.next_term();
-        let term = filter.current_term();
-        term.id = B::get_id(world);
-        filter.next_term();
-        let term = filter.current_term();
-        term.id = C::get_id(world);
-        term.oper = OperKind::Optional as ecs_oper_kind_t;
-        filter.next_term();
-    }
-
-    fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
-        desc.terms[0].id = A::get_id(world);
-        desc.terms[1].id = B::get_id(world);
-        desc.terms[2].id = C::get_id(world);
-        desc.terms[2].oper = OperKind::Optional as ecs_oper_kind_t;
-    }
-
-    fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
-        let array_components = unsafe {
-            [ecs_field::<A>(it, 1) as *mut u8,
-            ecs_field::<B>(it, 2) as *mut u8,
-            ecs_field::<C>(it, 3) as *mut u8]
-        };
-
-        let is_ref_array_components = if !it.sources.is_null() { unsafe {
-            [*it.sources.add(0) != 0,
-            *it.sources.add(1) != 0,
-            *it.sources.add(2) != 0]
-        }} else { [false, false, false] };
-
-        let is_any_array_a_ref = is_ref_array_components[0] || is_ref_array_components[1] || is_ref_array_components[2];
-
-        ComponentsData {
-            array_components,
-            is_ref_array_components,
-            is_any_array_a_ref,
-        }
-    }
-
-    fn get_tuple(array_components: &Self::ComponentsArray, index: usize) -> Self::TupleType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let array_c = array_components[2] as *mut C;
-            let ref_a = &mut (*array_a.add(index));
-            let ref_b = &mut (*array_b.add(index));
-
-            let option_c = if array_c.is_null() {
-                None
-            } else {
-                Some(&mut (*array_c.add(index)))
-            };
-
-            (ref_a, ref_b, option_c,)
-        }
-    }
-
-    fn get_tuple_with_ref(
-        array_components: &Self::ComponentsArray,
-        is_ref_array_components: &Self::BoolArray,
-        index: usize,
-    ) -> Self::TupleType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let array_c = array_components[2] as *mut C;
-            let ref_a = if is_ref_array_components[0] {
-                &mut (*array_a.add(0))
-            } else {
-                &mut (*array_a.add(index))
-            };
-            let ref_b = if is_ref_array_components[1] {
-                &mut (*array_b.add(0))
-            } else {
-                &mut (*array_b.add(index))
-            };
-
-            let option_c = if is_ref_array_components[2] {
-                Some(&mut (*array_c.add(0)))
-            } else {
-                Some(&mut (*array_c.add(index)))
-            };
-
-            (ref_a, ref_b, option_c,)
-        }
-    }
-
-    fn get_tuple_slices(
-        array_components: &Self::ComponentsArray,
-        count: usize,
-    ) -> Self::TupleSliceType {
-        unsafe {
-
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let array_c = array_components[2] as *mut C;
-
-            let slice_a = std::slice::from_raw_parts_mut(array_a, count);
-            let slice_b = std::slice::from_raw_parts_mut(array_b, count);
-
-            let slice_c = if array_c.is_null() {
-                None
-            } else {
-                let slice_c = std::slice::from_raw_parts_mut(array_c, count);
-                Some(slice_c)
-            };
-
-            (slice_a, slice_b, slice_c,)
-        }
-    }
-
-    fn get_tuple_slices_with_ref(
-        array_components: &Self::ComponentsArray,
-        is_ref_array_components: &Self::BoolArray,
-        count: usize,
-    ) -> Self::TupleSliceType {
-        unsafe {
-
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let array_c = array_components[2] as *mut C;
-
-            let slice_a = if is_ref_array_components[0] {
-                std::slice::from_raw_parts_mut(array_a, 1)
-            } else {
-                std::slice::from_raw_parts_mut(array_a, count)
-            };
-
-            let slice_b = if is_ref_array_components[1] {
-                std::slice::from_raw_parts_mut(array_b, 1)
-            } else {
-                std::slice::from_raw_parts_mut(array_b, count)
-            };
-
-            let slice_c = if array_c.is_null() {
-                None
-            } else if is_ref_array_components[2] {
-                let slice_c = std::slice::from_raw_parts_mut(array_c, 1);
-                Some(slice_c)
-            } else {
-                let slice_c = std::slice::from_raw_parts_mut(array_c, count);
-                Some(slice_c)
-            };
-
-            (slice_a, slice_b, slice_c,)
-        }
-    
-    }
-}
-
-#[rustfmt::skip]
-impl<'a, A: 'a, B: 'a, C: 'a> Iterable<'a> for (A, Option<B>, Option<C>)
-where
-    A: CachedComponentData,
-    B: CachedComponentData,
-    C: CachedComponentData,
-{
-    type TupleType = (&'a mut A, Option<&'a mut B>, Option<&'a mut C>);
-    type ComponentsArray = [*mut u8; 3];
-    type BoolArray = [bool; 3];
-    type TupleSliceType = (&'a mut [A], Option<&'a mut [B]>, Option<&'a mut [C]>);
-
-    fn populate(filter : &mut impl Filterable) {
-        let world = filter.get_world();
-        let term = filter.current_term();
-        term.id = A::get_id(world);
-        filter.next_term();
-        let term = filter.current_term();
-        term.id = B::get_id(world);
-        term.oper = OperKind::Optional as ecs_oper_kind_t;
-        filter.next_term();
-        let term = filter.current_term();
-        term.id = C::get_id(world);
-        term.oper = OperKind::Optional as ecs_oper_kind_t;
-        filter.next_term();
-    }
-
-    fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
-        desc.terms[0].id = A::get_id(world);
-        desc.terms[1].id = B::get_id(world);
-        desc.terms[1].oper = OperKind::Optional as ecs_oper_kind_t;
-        desc.terms[2].id = C::get_id(world);
-        desc.terms[2].oper = OperKind::Optional as ecs_oper_kind_t;
-    }
-
-    fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
-        let array_components = unsafe {
-            [ecs_field::<A>(it, 1) as *mut u8,
-            ecs_field::<B>(it, 2) as *mut u8,
-            ecs_field::<C>(it, 3) as *mut u8]
-        };
-
-        let is_ref_array_components = if !it.sources.is_null() { unsafe {
-            [*it.sources.add(0) != 0,
-            *it.sources.add(1) != 0,
-            *it.sources.add(2) != 0]
-        }} else { [false, false, false] };
-
-        let is_any_array_a_ref = is_ref_array_components[0] || is_ref_array_components[1] || is_ref_array_components[2];
-
-        ComponentsData {
-            array_components,
-            is_ref_array_components,
-            is_any_array_a_ref,
-        }
-    }
-
-    fn get_tuple(array_components: &Self::ComponentsArray, index: usize) -> Self::TupleType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let array_c = array_components[2] as *mut C;
-            let ref_a = &mut (*array_a.add(index));
-
-            let option_b = if array_b.is_null() {
-                None
-            } else {
-                Some(&mut (*array_b.add(index)))
-            };
-
-            let option_c = if array_c.is_null() {
-                None
-            } else {
-                Some(&mut (*array_c.add(index)))
-            };
-
-            (ref_a, option_b, option_c)
-        }
-    }
-
-    fn get_tuple_with_ref(
-        array_components: &Self::ComponentsArray,
-        is_ref_array_components: &Self::BoolArray,
-        index: usize,
-    ) -> Self::TupleType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let array_c = array_components[2] as *mut C;
-            let ref_a = if is_ref_array_components[0] {
-                &mut (*array_a.add(0))
-            } else {
-                &mut (*array_a.add(index))
-            };
-
-            let option_b = if is_ref_array_components[1] {
-                Some(&mut (*array_b.add(0)))
-            } else {
-                Some(&mut (*array_b.add(index)))
-            };
-
-            let option_c = if is_ref_array_components[2] {
-                Some(&mut (*array_c.add(0)))
-            } else {
-                Some(&mut (*array_c.add(index)))
-            };
-
-            (ref_a, option_b, option_c)
-        }
-
-    }
-
-    fn get_tuple_slices(
-        array_components: &Self::ComponentsArray,
-        count: usize,
-    ) -> Self::TupleSliceType {
-        unsafe {
-
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let array_c = array_components[2] as *mut C;
-
-            let slice_a = std::slice::from_raw_parts_mut(array_a, count);
-
-            let slice_b = if array_b.is_null() {
-                None
-            } else {
-                let slice_b = std::slice::from_raw_parts_mut(array_b, count);
-                Some(slice_b)
-            };
-
-            let slice_c = if array_c.is_null() {
-                None
-            } else {
-                let slice_c = std::slice::from_raw_parts_mut(array_c, count);
-                Some(slice_c)
-            };
-
-            (slice_a, slice_b, slice_c)
-        }
-    
-    }
-
-    fn get_tuple_slices_with_ref(
-        array_components: &Self::ComponentsArray,
-        is_ref_array_components: &Self::BoolArray,
-        count: usize,
-    ) -> Self::TupleSliceType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let array_c = array_components[2] as *mut C;
-
-            let slice_a = if is_ref_array_components[0] {
-                std::slice::from_raw_parts_mut(array_a, 1)
-            } else {
-                std::slice::from_raw_parts_mut(array_a, count)
-            };
-
-            let slice_b = if array_b.is_null() {
-                None
-            } else if is_ref_array_components[1] {
-                let slice_b = std::slice::from_raw_parts_mut(array_b, 1);
-                Some(slice_b)
-            } else {
-                let slice_b = std::slice::from_raw_parts_mut(array_b, count);
-                Some(slice_b)
-            };
-
-            let slice_c = if array_c.is_null() {
-                None
-            } else if is_ref_array_components[2] {
-                let slice_c = std::slice::from_raw_parts_mut(array_c, 1);
-                Some(slice_c)
-            } else {
-                let slice_c = std::slice::from_raw_parts_mut(array_c, count);
-                Some(slice_c)
-            };
-
-            (slice_a, slice_b, slice_c)
-        }
-    }
-}
-
-#[rustfmt::skip]
-impl<'a, A: 'a, B: 'a, C: 'a> Iterable<'a> for (Option<A>, Option<B>, Option<C>)
-where
-    A: CachedComponentData,
-    B: CachedComponentData,
-    C: CachedComponentData,
-{
-    type TupleType = (Option<&'a mut A>, Option<&'a mut B>, Option<&'a mut C>);
-    type ComponentsArray = [*mut u8; 3];
-    type BoolArray = [bool; 3];
-    type TupleSliceType = (Option<&'a mut [A]>, Option<&'a mut [B]>, Option<&'a mut [C]>);
-
-    fn populate(filter : &mut impl Filterable) {
-        let world = filter.get_world();
-        let term = filter.current_term();
-        term.id = A::get_id(world);
-        term.oper = OperKind::Optional as ecs_oper_kind_t;
-        filter.next_term();
-        let term = filter.current_term();
-        term.id = B::get_id(world);
-        term.oper = OperKind::Optional as ecs_oper_kind_t;
-        filter.next_term();
-        let term = filter.current_term();
-        term.id = C::get_id(world);
-        term.oper = OperKind::Optional as ecs_oper_kind_t;
-        filter.next_term();
-    }
-
-    fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
-        desc.terms[0].id = A::get_id(world);
-        desc.terms[0].oper = OperKind::Optional as ecs_oper_kind_t;
-        desc.terms[1].id = B::get_id(world);
-        desc.terms[1].oper = OperKind::Optional as ecs_oper_kind_t;
-        desc.terms[2].id = C::get_id(world);
-        desc.terms[2].oper = OperKind::Optional as ecs_oper_kind_t;
-    }
-
-    fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
-        let array_components = unsafe {
-            [ecs_field::<A>(it, 1) as *mut u8,
-            ecs_field::<B>(it, 2) as *mut u8,
-            ecs_field::<C>(it, 3) as *mut u8]
-        };
-
-        let is_ref_array_components = if !it.sources.is_null() { unsafe {
-            [*it.sources.add(0) != 0,
-            *it.sources.add(1) != 0,
-            *it.sources.add(2) != 0]
-        }} else { [false, false, false] };
-
-        let is_any_array_a_ref = is_ref_array_components[0] || is_ref_array_components[1] || is_ref_array_components[2];
-
-        ComponentsData {
-            array_components,
-            is_ref_array_components,
-            is_any_array_a_ref,
-        }
-    }
-
-    fn get_tuple(array_components: &Self::ComponentsArray, index: usize) -> Self::TupleType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let array_c = array_components[2] as *mut C;
-
-            let option_a = if array_a.is_null() {
-                None
-            } else {
-                Some(&mut (*array_a.add(index)))
-            };
-
-            let option_b = if array_b.is_null() {
-                None
-            } else {
-                Some(&mut (*array_b.add(index)))
-            };
-
-            let option_c = if array_c.is_null() {
-                None
-            } else {
-                Some(&mut (*array_c.add(index)))
-            };
-
-            (option_a, option_b, option_c)
-        }
-    }
-
-    fn get_tuple_with_ref(
-        array_components: &Self::ComponentsArray,
-        is_ref_array_components: &Self::BoolArray,
-        index: usize,
-    ) -> Self::TupleType {
-        unsafe {
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let array_c = array_components[2] as *mut C;
-
-            let option_a = if array_a.is_null() {
-                None
-            } else if is_ref_array_components[0] {
-                Some(&mut (*array_a.add(0)))
-            } else {
-                Some(&mut (*array_a.add(index)))
-            };
-
-            let option_b = if array_b.is_null() {
-                None
-            } else if is_ref_array_components[1] {
-                Some(&mut (*array_b.add(0)))
-            } else {
-                Some(&mut (*array_b.add(index)))
-            };
-
-            let option_c = if array_c.is_null() {
-                None
-            } else if is_ref_array_components[2] {
-                Some(&mut (*array_c.add(0)))
-            } else {
-                Some(&mut (*array_c.add(index)))
-            };
-
-            (option_a, option_b, option_c)
-        }
-    }
-
-    fn get_tuple_slices(
-        array_components: &Self::ComponentsArray,
-        count: usize,
-    ) -> Self::TupleSliceType {
-        unsafe {
-
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let array_c = array_components[2] as *mut C;
-
-            let slice_a = if array_a.is_null() {
-                None
-            } else {
-                let slice_a = std::slice::from_raw_parts_mut(array_a, count);
-                Some(slice_a)
-            };
-
-            let slice_b = if array_b.is_null() {
-                None
-            } else {
-                let slice_b = std::slice::from_raw_parts_mut(array_b, count);
-                Some(slice_b)
-            };
-
-            let slice_c = if array_c.is_null() {
-                None
-            } else {
-                let slice_c = std::slice::from_raw_parts_mut(array_c, count);
-                Some(slice_c)
-            };
-
-            (slice_a, slice_b, slice_c)
-        }
-    }
-
-    fn get_tuple_slices_with_ref(
-        array_components: &Self::ComponentsArray,
-        is_ref_array_components: &Self::BoolArray,
-        count: usize,
-    ) -> Self::TupleSliceType {
-        unsafe {
-
-            let array_a = array_components[0] as *mut A;
-            let array_b = array_components[1] as *mut B;
-            let array_c = array_components[2] as *mut C;
-
-            let slice_a = if array_a.is_null() {
-                None
-            } else if is_ref_array_components[0] {
-                let slice_a = std::slice::from_raw_parts_mut(array_a, 1);
-                Some(slice_a)
-            } else {
-                let slice_a = std::slice::from_raw_parts_mut(array_a, count);
-                Some(slice_a)
-            };
-
-            let slice_b = if array_b.is_null() {
-                None
-            } else if is_ref_array_components[1] {
-                let slice_b = std::slice::from_raw_parts_mut(array_b, 1);
-                Some(slice_b)
-            } else {
-                let slice_b = std::slice::from_raw_parts_mut(array_b, count);
-                Some(slice_b)
-            };
-
-            let slice_c = if array_c.is_null() {
-                None
-            } else if is_ref_array_components[2] {
-                let slice_c = std::slice::from_raw_parts_mut(array_c, 1);
-                Some(slice_c)
-            } else {
-                let slice_c = std::slice::from_raw_parts_mut(array_c, count);
-                Some(slice_c)
-            };
-
-            (slice_a, slice_b, slice_c)
-        }
-    }
-}
 pub struct Wrapper<T>(T);
 
 pub trait TupleForm<'a, T, U> {
@@ -1567,13 +734,13 @@ macro_rules! ignore {
 
 macro_rules! impl_iterable {
     ($($t:ident: $tuple_t:ty),*) => {
-        impl<'a, $($t: 'a + CachedComponentData),*> Iterable<'a> for ($($tuple_t,)*) {
+        impl<'a, $($t: 'a + IterableTypeOperation),*> Iterable<'a> for ($($tuple_t,)*) {
             type TupleType = ($(
-                <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::Tuple
+                $t::ActualType
             ),*);
 
             type TupleSliceType = ($(
-                <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::TupleSlice
+                $t::SliceType
             ),*);
             type ComponentsArray = [*mut u8; tuple_count!($($t),*)];
             type BoolArray = [bool; tuple_count!($($t),*)];
@@ -1583,10 +750,7 @@ macro_rules! impl_iterable {
                 let world = filter.get_world();
                 $(
                     let term = filter.current_term();
-                    term.id = <$t as CachedComponentData>::get_id(world);
-                    if <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::IS_OPTION {
-                        term.oper = OperKind::Optional as ecs_oper_kind_t;
-                    }
+                    $t::populate_term(world, term);
                     filter.next_term();
                 )*
             }
@@ -1595,11 +759,7 @@ macro_rules! impl_iterable {
             fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
                 let mut term_index = 0;
                 $(
-                    desc.terms[term_index].id = <$t as CachedComponentData>::get_id(world);
-                    if <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::IS_OPTION {
-                        desc.terms[term_index].oper = OperKind::Optional as ecs_oper_kind_t;
-                    }
-
+                    $t::populate_term(world, &mut desc.terms[term_index]);
                     term_index += 1;
                 )*
             }
@@ -1613,15 +773,7 @@ macro_rules! impl_iterable {
                 unsafe {
                     let array_components = [ $(
                         {
-                            let ptr = ecs_field::<$t>(it, index) as *mut u8;
-                            index += 1;
-                            ptr
-                        },
-                    )* ];
-
-                    let array_components2 = [ $(
-                        {
-                            let ptr = ecs_field::<$t>(it, index) as *mut u8;
+                            let ptr = ecs_field::<$t::OnlyType>(it, index) as *mut u8;
                             index += 1;
                             ptr
                         },
@@ -1661,13 +813,12 @@ macro_rules! impl_iterable {
 
             #[allow(unused)]
             fn get_tuple(array_components: &Self::ComponentsArray, index: usize) -> Self::TupleType {
-                    let mut array_index = 0;
+                    let mut array_index = -1;
                     (
                         $(
                             {
-                                let ptr = array_components[array_index] as *mut $t;
                                 array_index += 1;
-                                <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::return_type_for_tuple(ptr,index)
+                                $t::get_tuple_data(array_components[array_index as usize] /*as *mut $t*/, index)
                             },
                         )*
                     )
@@ -1675,14 +826,12 @@ macro_rules! impl_iterable {
 
             #[allow(unused)]
             fn get_tuple_with_ref(array_components: &Self::ComponentsArray, is_ref_array_components: &Self::BoolArray, index: usize) -> Self::TupleType {
-                    let mut array_index = 0;
+                    let mut array_index = -1;
                     (
                         $(
                             {
-                                let ptr = array_components[array_index] as *mut $t;
-                                let is_ref = is_ref_array_components[array_index];
                                 array_index += 1;
-                                <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::return_type_for_tuple_with_ref(ptr, is_ref, index)
+                                $t::get_tuple_with_ref_data(array_components[array_index as usize] /*as *mut $t*/, is_ref_array_components[array_index as usize], index)
                             },
                         )*
                     )
@@ -1693,13 +842,12 @@ macro_rules! impl_iterable {
                 array_components: &Self::ComponentsArray,
                 count: usize,
             ) -> Self::TupleSliceType {
-                    let mut array_index = 0;
+                    let mut array_index = -1;
                     (
                         $(
                             {
-                                let ptr = array_components[array_index] as *mut $t;
                                 array_index += 1;
-                                <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::return_type_for_tuple_slices(ptr, count)
+                                $t::get_tuple_slice_data(array_components[array_index as usize], count)
                             },
                         )*
                     )
@@ -1711,14 +859,12 @@ macro_rules! impl_iterable {
                 is_ref_array_components: &Self::BoolArray,
                 count: usize,
             ) -> Self::TupleSliceType {
-                    let mut array_index = 0;
+                    let mut array_index = -1;
                     (
                         $(
                             {
-                                let ptr = array_components[array_index] as *mut $t;
-                                let is_ref = is_ref_array_components[array_index];
                                 array_index += 1;
-                                <Wrapper::<$t> as TupleForm<'a, $tuple_t, $t>>::return_type_for_tuple_slices_with_ref(ptr, is_ref, count)
+                                $t::get_tuple_slices_with_ref_data(array_components[array_index as usize], is_ref_array_components[array_index as usize], count)
                             },
                         )*
                     )
@@ -1728,91 +874,11 @@ macro_rules! impl_iterable {
 }
 
 impl_iterable!(A: A, B: B, C: C, D: D); //size 4
-impl_iterable!(A: A, B: B, C: C, D: Option<D>); //size 4
-impl_iterable!(A: A, B: B, C: Option<C>, D: Option<D>); //size 4
-impl_iterable!(A: A, B: Option<B>, C: Option<C>, D: Option<D>); //size 4
-impl_iterable!(A: Option<A>, B: Option<B>, C: Option<C>, D: Option<D>); //size 4
-
 impl_iterable!(A: A, B: B, C: C, D: D, E: E); //size 5
-impl_iterable!(A: A, B: B, C: C, D: D, E: Option<E>); //size 5
-impl_iterable!(A: A, B: B, C: C, D: Option<D>, E: Option<E>); //size 5
-impl_iterable!(A: A, B: B, C: Option<C>, D: Option<D>, E: Option<E>); //size 5
-impl_iterable!(A: A, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>); //size 5
-impl_iterable!(A: Option<A>, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>); //size 5
-
 impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F); //size 6
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: Option<F>); //size 6
-impl_iterable!(A: A, B: B, C: C, D: D, E: Option<E>, F: Option<F>); //size 6
-impl_iterable!(A: A, B: B, C: C, D: Option<D>, E: Option<E>, F: Option<F>); //size 6
-impl_iterable!(A: A, B: B, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>); //size 6
-impl_iterable!(A: A, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>); //size 6
-impl_iterable!(A: Option<A>, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>); //size 6
-
 impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G); //size 7
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: Option<G>); //size 7
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: Option<F>, G: Option<G>); //size 7
-impl_iterable!(A: A, B: B, C: C, D: D, E: Option<E>, F: Option<F>, G: Option<G>); //size 7
-impl_iterable!(A: A, B: B, C: C, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>); //size 7
-impl_iterable!(A: A, B: B, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>); //size 7
-impl_iterable!(A: A, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>); //size 7
-impl_iterable!(A: Option<A>, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>); //size 7
-
 impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H); //size 8
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: Option<H>); //size 8
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: Option<G>, H: Option<H>); //size 8
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: Option<F>, G: Option<G>, H: Option<H>); //size 8
-impl_iterable!(A: A, B: B, C: C, D: D, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>); //size 8
-impl_iterable!(A: A, B: B, C: C, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>); //size 8
-impl_iterable!(A: A, B: B, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>); //size 8
-impl_iterable!(A: A, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>); //size 8
-impl_iterable!(A: Option<A>, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>); //size 8
-
 impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I); //size 9
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: Option<I>); //size 9
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: Option<H>, I: Option<I>); //size 9
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: Option<G>, H: Option<H>, I: Option<I>); //size 9
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>); //size 9
-impl_iterable!(A: A, B: B, C: C, D: D, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>); //size 9
-impl_iterable!(A: A, B: B, C: C, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>); //size 9
-impl_iterable!(A: A, B: B, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>); //size 9
-impl_iterable!(A: A, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>); //size 9
-impl_iterable!(A: Option<A>, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>); //size 9
-
 impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I, J: J); //size 10
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I, J: Option<J>); //size 10
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: Option<I>, J: Option<J>); //size 10
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: Option<H>, I: Option<I>, J: Option<J>); //size 10
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>); //size 10
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>); //size 10
-impl_iterable!(A: A, B: B, C: C, D: D, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>); //size 10
-impl_iterable!(A: A, B: B, C: C, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>); //size 10
-impl_iterable!(A: A, B: B, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>); //size 10
-impl_iterable!(A: A, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>); //size 10
-impl_iterable!(A: Option<A>, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>); //size 10
-
 impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I, J: J, K: K); //size 11
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I, J: J, K: Option<K>); //size 11
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I, J: Option<J>, K: Option<K>); //size 11
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: Option<I>, J: Option<J>, K: Option<K>); //size 11
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>); //size 11
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>); //size 11
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>); //size 11
-impl_iterable!(A: A, B: B, C: C, D: D, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>); //size 11
-impl_iterable!(A: A, B: B, C: C, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>); //size 11
-impl_iterable!(A: A, B: B, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>); //size 11
-impl_iterable!(A: A, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>); //size 11
-impl_iterable!(A: Option<A>, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>); //size 11
-
 impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I, J: J, K: K, L: L); //size 12
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I, J: J, K: K, L: Option<L>); //size 12
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I, J: J, K: Option<K>, L: Option<L>); //size 12
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: I, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: H, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: G, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: F, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
-impl_iterable!(A: A, B: B, C: C, D: D, E: E, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
-impl_iterable!(A: A, B: B, C: C, D: D, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
-impl_iterable!(A: A, B: B, C: C, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
-impl_iterable!(A: A, B: B, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
-impl_iterable!(A: A, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12
-impl_iterable!(A: Option<A>, B: Option<B>, C: Option<C>, D: Option<D>, E: Option<E>, F: Option<F>, G: Option<G>, H: Option<H>, I: Option<I>, J: Option<J>, K: Option<K>, L: Option<L>); //size 12

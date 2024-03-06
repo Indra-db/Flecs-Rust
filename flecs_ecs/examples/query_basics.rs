@@ -1,18 +1,33 @@
 mod common;
 use common::*;
 
+use flecs_ecs::core::enum_type::CachedEnumData;
+
+#[repr(C)]
+#[derive(Debug, Default, Clone, Component)]
+enum Colorx {
+    Green,
+    #[default]
+    Red,
+    Blue,
+}
+
 fn main() {
     let world = World::new();
 
     // Create a query for Position, Velocity. Queries are the fastest way to
     // iterate entities as they cache results.
-    let mut query = world.query::<(Position, Velocity)>();
+    let mut query = world.query::<(&mut Position, &Velocity)>();
+    let mut query2 = world.query::<(&mut Position, &Velocity, Option<&Walking>, &Attack)>();
+    let mut query3 = world.query::<(&Walking, &mut Colorx)>();
 
     // Create a few test entities for a Position, Velocity query
     world
         .new_entity_named(CStr::from_bytes_with_nul(b"e1\0").unwrap())
         .set(Position { x: 10.0, y: 20.0 })
-        .set(Velocity { x: 1.0, y: 2.0 });
+        .set(Velocity { x: 1.0, y: 2.0 })
+        .add::<Walking>()
+        .add::<Attack>();
 
     world
         .new_entity_named(CStr::from_bytes_with_nul(b"e2\0").unwrap())
@@ -34,6 +49,16 @@ fn main() {
         println!("{}: [{:?}]", e.get_name(), pos)
     });
 
+    query2.each_entity(|e, (pos, vel, walk, attack)| {
+        println!("q@@@@@@@@@@@@@@@@@@@@@@@");
+        pos.x += vel.x;
+        pos.y += vel.y;
+        println!("{}: [{:?}]", e.get_name(), pos)
+    });
+
+    query3.each_entity(|e, (walk, pos)| {
+        println!("q$$$$$$$$$$$$$$$$$$$");
+    });
     // There's an equivalent function that does not include the entity argument
     query.each(|(pos, vel)| {
         pos.x += vel.x;
