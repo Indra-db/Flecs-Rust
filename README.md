@@ -1,6 +1,12 @@
 # Flecs ECS Bridge :: Rust Wrapper for Flecs
 
+[![Generic badge](https://img.shields.io/badge/Flecs_Version-3.2.11-<COLOR>.svg)](https://github.com/SanderMertens/flecs/releases)
+[![PyPi license](https://badgen.net/pypi/license/pip/)](https://pypi.org/project/pip/)
 [![CI](https://github.com/indra-db/flecs_ecs_rs/actions/workflows/ci.yml/badge.svg)](https://github.com/indra-db/flecs_ecs_rs/actions/workflows/ci.yml)
+[![C# Discord](https://badgen.net/discord/members/jkEZ2jQD6F)](https://discord.gg/jkEZ2jQD6F)
+
+
+
 
 Hello there! Welcome to my Rust wrapper around the ECS library called [Flecs](https://github.com/SanderMertens/flecs). This project endeavors to offer Rust developers an intuitive and streamlined interface to harness the full potential of Flecs.
 
