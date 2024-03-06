@@ -81,7 +81,7 @@ pub trait CachedComponentData: Sized {
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     fn is_registered_with_world(world: *mut WorldT) -> bool {
         if Self::is_registered() {
-            unsafe { is_component_registered_with_world::<Self>(world) }
+            unsafe { is_component_registered_with_world::<Self::UnderlyingType>(world) }
         } else {
             false
         }

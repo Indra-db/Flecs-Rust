@@ -1,4 +1,4 @@
-use flecs_ecs::core::{c_types::*, component_registration::*};
+use flecs_ecs::core::component_registration::*;
 use flecs_ecs_derive::Component;
 
 #[cfg(test)]

@@ -446,9 +446,11 @@ impl Table {
     ///
     /// * C++ API: `table::get`
     #[doc(alias = "table::get")]
-    pub fn get_component_array_ptr<T: CachedComponentData>(&self) -> Option<*mut T> {
+    pub fn get_component_array_slice<T: CachedComponentData>(&self) -> Option<&mut [T]> {
         self.get_component_array_ptr_id(T::get_id(self.world))
-            .map(|ptr| ptr as *mut T)
+            .map(|ptr| unsafe {
+                std::slice::from_raw_parts_mut(ptr as *mut T, self.get_count() as usize)
+            })
     }
 
     /// Get column, components array ptr from table by component type.

@@ -1625,7 +1625,9 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_mut<T: CachedComponentData + ComponentType<Struct>>(&self) -> Option<&mut T> {
+    pub fn get_mut<T: CachedComponentData + ComponentType<Struct>>(
+        &self,
+    ) -> Option<&mut T::UnderlyingType> {
         let component_id = T::get_id(self.world);
         ecs_assert!(
             T::get_size(self.world) != 0,
@@ -1633,7 +1635,10 @@ impl Entity {
             "invalid type: {}",
             T::get_symbol_name()
         );
-        unsafe { (ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T).as_mut() }
+        unsafe {
+            (ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T::UnderlyingType)
+                .as_mut()
+        }
     }
 
     /// Gets mut component unchecked
@@ -1661,7 +1666,7 @@ impl Entity {
     #[doc(alias = "entity::get_mut")]
     pub unsafe fn get_unchecked_mut<T: CachedComponentData + ComponentType<Struct>>(
         &mut self,
-    ) -> &mut T {
+    ) -> &mut T::UnderlyingType {
         let component_id = T::get_id(self.world);
         ecs_assert!(
             T::get_size(self.world) != 0,
@@ -1669,7 +1674,7 @@ impl Entity {
             "invalid type: {}",
             T::get_symbol_name()
         );
-        let ptr = ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T;
+        let ptr = ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T::UnderlyingType;
         ecs_assert!(
             !ptr.is_null(),
             FlecsErrorCode::InternalError,
@@ -1695,17 +1700,23 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_enum_mut<T: CachedComponentData + ComponentType<Enum>>(&self) -> Option<&mut T> {
+    pub fn get_enum_mut<T: CachedComponentData + ComponentType<Enum>>(
+        &self,
+    ) -> Option<&mut T::UnderlyingType> {
         let component_id: IdT = T::get_id(self.world);
         let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
 
         if target == 0 {
             // if there is no matching pair for (r,*), try just r
-            unsafe { (ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T).as_mut() }
+            unsafe {
+                (ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T::UnderlyingType)
+                    .as_mut()
+            }
         } else {
             // get constant value from constant entity
-            let constant_value =
-                unsafe { ecs_get_mut_id(self.world, target, component_id) as *mut T };
+            let constant_value = unsafe {
+                ecs_get_mut_id(self.world, target, component_id) as *mut T::UnderlyingType
+            };
 
             ecs_assert!(
                 !constant_value.is_null(),
@@ -1738,13 +1749,14 @@ impl Entity {
     #[doc(alias = "entity::get_mut")]
     pub unsafe fn get_enum_unchecked_mut<T: CachedComponentData + ComponentType<Enum>>(
         &mut self,
-    ) -> &mut T {
+    ) -> &mut T::UnderlyingType {
         let component_id: IdT = T::get_id(self.world);
         let target: IdT = ecs_get_target(self.world, self.raw_id, component_id, 0);
 
         if target == 0 {
             // if there is no matching pair for (r,*), try just r
-            let ptr = ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T;
+            let ptr =
+                ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T::UnderlyingType;
             ecs_assert!(
                 !ptr.is_null(),
                 FlecsErrorCode::InternalError,
@@ -1755,7 +1767,8 @@ impl Entity {
             &mut *ptr
         } else {
             // get constant value from constant entity
-            let constant_value = ecs_get_mut_id(self.world, target, component_id) as *mut T;
+            let constant_value =
+                ecs_get_mut_id(self.world, target, component_id) as *mut T::UnderlyingType;
             ecs_assert!(
                 !constant_value.is_null(),
                 FlecsErrorCode::InternalError,
@@ -2026,8 +2039,8 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
-    pub fn get_ref_component<T: CachedComponentData>(&self) -> Ref<T> {
-        Ref::<T>::new(self.world, self.raw_id, T::get_id(self.world))
+    pub fn get_ref_component<T: CachedComponentData>(&self) -> Ref<T::UnderlyingType> {
+        Ref::<T::UnderlyingType>::new(self.world, self.raw_id, T::get_id(self.world))
     }
 
     /// Get a reference to the first component of pair

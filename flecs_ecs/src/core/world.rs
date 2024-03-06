@@ -1084,7 +1084,7 @@ impl World {
     /// * C++ API: `world::get_ref`
     #[doc(alias = "world::get_ref")]
     #[inline(always)]
-    pub fn get_ref_component<T>(&self) -> Ref<T>
+    pub fn get_ref_component<T>(&self) -> Ref<T::UnderlyingType>
     where
         T: CachedComponentData,
     {
@@ -3059,8 +3059,11 @@ impl World {
     ///
     /// * C++ API: `world::component`
     #[doc(alias = "world::component")]
-    pub fn component_named<T: CachedComponentData>(&self, name: &CStr) -> Component<T> {
-        Component::<T>::new_named(self, name)
+    pub fn component_named<T: CachedComponentData>(
+        &self,
+        name: &CStr,
+    ) -> Component<T::UnderlyingType> {
+        Component::<T::UnderlyingType>::new_named(self, name)
     }
 
     /// Find or register untyped component.

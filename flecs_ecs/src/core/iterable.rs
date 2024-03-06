@@ -1,7 +1,7 @@
 use super::{
     c_binding::{
         bindings::{ecs_filter_desc_t, ecs_oper_kind_t},
-        ecs_inout_kind_t, ecs_term_t,
+        ecs_inout_kind_t,
     },
     c_types::{IterT, OperKind, TermT, WorldT},
     component_registration::CachedComponentData,
