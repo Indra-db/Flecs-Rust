@@ -129,7 +129,11 @@ where
     ///
     /// * C++ API: `iterable::iter`
     #[doc(alias = "iterable::iter")]
-    fn iter_impl(&mut self, mut func: impl FnMut(&Iter, T::TupleSliceType), filter: *mut FilterT) {
+    fn iter_impl(
+        &mut self,
+        mut func: impl FnMut(&mut Iter, T::TupleSliceType),
+        filter: *mut FilterT,
+    ) {
         unsafe {
             let mut iter = ecs_filter_iter(self.world.raw_world, filter);
 
@@ -150,8 +154,8 @@ where
                 } else {
                     T::get_tuple_slices(array_components, iter_count)
                 };
-                let iter_t = Iter::new(&mut iter);
-                func(&iter_t, tuple);
+                let mut iter_t = Iter::new(&mut iter);
+                func(&mut iter_t, tuple);
                 ecs_table_unlock(self.world.raw_world, iter.table);
             }
         }
@@ -171,12 +175,12 @@ where
     ///
     /// * C++ API: `iterable::iter`
     #[doc(alias = "iterable::iter")]
-    pub fn iter_only_impl(&mut self, mut func: impl FnMut(&Iter), filter: *mut FilterT) {
+    pub fn iter_only_impl(&mut self, mut func: impl FnMut(&mut Iter), filter: *mut FilterT) {
         unsafe {
             let mut iter = ecs_filter_iter(self.world.raw_world, filter);
             while ecs_filter_next(&mut iter) {
-                let iter_t = Iter::new(&mut iter);
-                func(&iter_t);
+                let mut iter_t = Iter::new(&mut iter);
+                func(&mut iter_t);
             }
         }
     }
@@ -609,7 +613,7 @@ where
     /// * C++ API: `iterable::iter`
     #[doc(alias = "iterable::iter")]
     #[inline]
-    pub fn iter(&mut self, func: impl FnMut(&Iter, T::TupleSliceType)) {
+    pub fn iter(&mut self, func: impl FnMut(&mut Iter, T::TupleSliceType)) {
         self.base.iter_impl(func, &mut self.filter);
     }
 
@@ -628,7 +632,7 @@ where
     /// * C++ API: `iterable::iter`
     #[doc(alias = "iterable::iter")]
     #[inline]
-    pub fn iter_only(&mut self, func: impl FnMut(&Iter)) {
+    pub fn iter_only(&mut self, func: impl FnMut(&mut Iter)) {
         self.base.iter_only_impl(func, &mut self.filter);
     }
 

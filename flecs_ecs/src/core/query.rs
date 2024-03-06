@@ -487,7 +487,7 @@ where
     ///
     /// * C++ API: `iterable::iter`
     #[doc(alias = "iterable::iter")]
-    pub fn iter(&mut self, mut func: impl FnMut(&Iter, T::TupleSliceType)) {
+    pub fn iter(&mut self, mut func: impl FnMut(&mut Iter, T::TupleSliceType)) {
         unsafe {
             let mut iter = ecs_query_iter(self.world.raw_world, self.query);
 
@@ -508,8 +508,8 @@ where
                 } else {
                     T::get_tuple_slices(array_components, iter_count)
                 };
-                let iter_t = Iter::new(&mut iter);
-                func(&iter_t, tuple);
+                let mut iter_t = Iter::new(&mut iter);
+                func(&mut iter_t, tuple);
                 ecs_table_unlock(self.world.raw_world, iter.table);
             }
         }
@@ -529,12 +529,12 @@ where
     ///
     /// * C++ API: `iterable::iter`
     #[doc(alias = "iterable::iter")]
-    pub fn iter_only(&mut self, mut func: impl FnMut(&Iter)) {
+    pub fn iter_only(&mut self, mut func: impl FnMut(&mut Iter)) {
         unsafe {
             let mut iter = ecs_query_iter(self.world.raw_world, self.query);
             while ecs_query_next(&mut iter) {
-                let iter_t = Iter::new(&mut iter);
-                func(&iter_t);
+                let mut iter_t = Iter::new(&mut iter);
+                func(&mut iter_t);
             }
         }
     }

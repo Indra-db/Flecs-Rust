@@ -253,7 +253,7 @@ where
     #[doc(alias = "node_builder::iter")]
     pub fn on_iter_only<Func>(&mut self, func: Func) -> Observer
     where
-        Func: FnMut(&Iter) + 'static,
+        Func: FnMut(&mut Iter) + 'static,
     {
         let binding_ctx = self.get_binding_ctx();
         let iter_func = Box::new(func);
@@ -282,7 +282,7 @@ where
     #[doc(alias = "node_builder::iter")]
     pub fn on_iter<Func>(&mut self, func: Func) -> Observer
     where
-        Func: FnMut(&Iter, T::TupleSliceType) + 'static,
+        Func: FnMut(&mut Iter, T::TupleSliceType) + 'static,
     {
         let binding_ctx = self.get_binding_ctx();
 
@@ -417,7 +417,7 @@ where
     #[doc(alias = "iter_invoker::invoke_callback")]
     unsafe extern "C" fn run_iter_only<Func>(iter: *mut IterT)
     where
-        Func: FnMut(&Iter),
+        Func: FnMut(&mut Iter),
     {
         unsafe {
             let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
@@ -427,8 +427,8 @@ where
             let iter_count = (*iter).count as usize;
 
             for _ in 0..iter_count {
-                let iter_t = Iter::new(&mut *iter);
-                iter_only(&iter_t);
+                let mut iter_t = Iter::new(&mut *iter);
+                iter_only(&mut iter_t);
             }
         }
     }
@@ -445,7 +445,7 @@ where
     #[doc(alias = "iter_invoker::invoke_callback")]
     unsafe extern "C" fn run_iter<Func>(iter: *mut IterT)
     where
-        Func: FnMut(&Iter, T::TupleSliceType),
+        Func: FnMut(&mut Iter, T::TupleSliceType),
     {
         let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
         let iter_func = (*ctx).iter.unwrap();
@@ -464,8 +464,8 @@ where
             } else {
                 T::get_tuple_slices(array_components, i)
             };
-            let iter_t = Iter::new(&mut *iter);
-            iter_func(&iter_t, tuple);
+            let mut iter_t = Iter::new(&mut *iter);
+            iter_func(&mut iter_t, tuple);
         }
 
         ecs_table_unlock((*iter).world, (*iter).table);
