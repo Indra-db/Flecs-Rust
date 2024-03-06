@@ -1,15 +1,6 @@
 mod common;
 use common::*;
 
-#[repr(C)]
-#[derive(Debug, Default, Clone, Component)]
-enum Colorx {
-    Green,
-    #[default]
-    Red,
-    Blue,
-}
-
 fn main() {
     let world = World::new();
 
