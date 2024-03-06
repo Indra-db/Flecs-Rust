@@ -1,9 +1,9 @@
 # Flecs ECS Bridge :: Rust Wrapper for Flecs
 
-[![Generic badge](https://img.shields.io/badge/Flecs_Version-3.2.11-<COLOR>.svg)](https://github.com/SanderMertens/flecs/releases)
+[![Generic badge](https://img.shields.io/badge/Flecs_Version-3.2.11-E56717.svg)](https://github.com/SanderMertens/flecs/releases)
 [![PyPi license](https://badgen.net/pypi/license/pip/)](https://pypi.org/project/pip/)
 [![CI](https://github.com/indra-db/flecs_ecs_rs/actions/workflows/ci.yml/badge.svg)](https://github.com/indra-db/flecs_ecs_rs/actions/workflows/ci.yml)
-[![C# Discord](https://badgen.net/discord/members/jkEZ2jQD6F)](https://discord.gg/jkEZ2jQD6F)
+[![Discord Badge](https://img.shields.io/badge/Join%20Flecs%20Discord-5865F2?logo=discord&logoColor=fff&style=flat)](https://discord.gg/jkEZ2jQD6F)
 
 
 
