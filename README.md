@@ -3,8 +3,8 @@
 [![Generic badge](https://img.shields.io/badge/Flecs_Version-3.2.11-E56717.svg)](https://github.com/SanderMertens/flecs/releases)
 [![PyPi license](https://badgen.net/pypi/license/pip/)](https://pypi.org/project/pip/)
 [![CI](https://github.com/indra-db/flecs_ecs_rs/actions/workflows/ci.yml/badge.svg)](https://github.com/indra-db/flecs_ecs_rs/actions/workflows/ci.yml)
+[![Flecs C/C++ Docs](https://img.shields.io/badge/Flecs%20C%2FC%2B%2B%20Docs-View-161b22)](https://www.flecs.dev/flecs/md_docs_2Docs.html)
 [![Discord Badge](https://img.shields.io/badge/Join%20Flecs%20Discord-5865F2?logo=discord&logoColor=fff&style=flat)](https://discord.gg/jkEZ2jQD6F)
-
 
 
 
