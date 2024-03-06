@@ -1,12 +1,15 @@
 name: CI
 
-on: [ push, pull_request ],
+on:
   push:
     branches:
       - master
   pull_request:
-  merge_group:
+    branches:
+      - master
   workflow_dispatch:
+
+
 
 jobs:
   rustfmt:
