@@ -113,7 +113,7 @@ where
     ///
     /// * C++ API: `query_base::changed`
     #[doc(alias = "query_base::changed")]
-    pub fn changed(&mut self) -> bool {
+    pub fn is_changed(&self) -> bool {
         unsafe { ecs_query_changed(self.query, std::ptr::null()) }
     }
 
@@ -130,7 +130,7 @@ where
     ///
     /// * C++ API: `query_base::orphaned`
     #[doc(alias = "query_base::orphaned")]
-    pub fn orphaned(&mut self) -> bool {
+    pub fn is_orphaned(&mut self) -> bool {
         unsafe { ecs_query_orphaned(self.query) }
     }
 
@@ -533,8 +533,10 @@ where
         unsafe {
             let mut iter = ecs_query_iter(self.world.raw_world, self.query);
             while ecs_query_next(&mut iter) {
+                ecs_table_lock(self.world.raw_world, iter.table);
                 let mut iter_t = Iter::new(&mut iter);
                 func(&mut iter_t);
+                ecs_table_unlock(self.world.raw_world, iter.table);
             }
         }
     }

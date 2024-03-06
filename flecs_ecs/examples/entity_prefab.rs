@@ -55,7 +55,7 @@ fn main() {
     println!("ImpulseSpeed: {}", impulse_speed.unwrap().value);
 
     // Prefab components can be iterated just like regular components:
-    world.each_entity::<(ImpulseSpeed, Position)>(|entity, (impulse_speed, position)| {
+    world.each_entity::<(&ImpulseSpeed, &mut Position)>(|entity, (impulse_speed, position)| {
         position.x += impulse_speed.value;
         println!("Entity {}: {:?}", entity.get_name(), position);
     });

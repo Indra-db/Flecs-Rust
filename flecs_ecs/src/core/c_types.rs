@@ -392,6 +392,7 @@ fn get_ecs_poly_data() -> ComponentData {
 impl ComponentType<Struct> for EcsComponent {}
 
 impl CachedComponentData for EcsComponent {
+    type UnderlyingType = EcsComponent;
     fn register_explicit(_world: *mut WorldT) {
         //this is already registered as FLECS_IDEcsComponentID_
         Self::__get_once_lock_data().get_or_init(get_ecs_component_data);
@@ -471,6 +472,7 @@ impl Default for Poly {
 impl ComponentType<Struct> for Poly {}
 
 impl CachedComponentData for Poly {
+    type UnderlyingType = Poly;
     fn register_explicit(_world: *mut WorldT) {
         //this is already registered as FLECS_IDEcsComponentID_
         Self::__get_once_lock_data().get_or_init(get_ecs_poly_data);
@@ -778,6 +780,7 @@ impl Default for TickSource {
 }
 
 impl CachedComponentData for TickSource {
+    type UnderlyingType = TickSource;
     fn register_explicit(world: *mut WorldT) {
         try_register_struct_component::<Self>(world);
     }

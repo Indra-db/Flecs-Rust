@@ -6,7 +6,7 @@ fn main() {
 
     // Create a query for Position, Velocity. Queries are the fastest way to
     // iterate entities as they cache results.
-    let mut query = world.query::<(Position, Velocity)>();
+    let mut query = world.query::<(&mut Position, &Velocity)>();
 
     // Create a few test entities for a Position, Velocity query
     world

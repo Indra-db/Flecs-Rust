@@ -37,7 +37,7 @@ fn main() {
     alice.remove::<Walking>();
 
     // Iterate all entities with position
-    world.each_entity::<(Position,)>(|entity, pos| {
+    world.each_entity::<(&Position,)>(|entity, pos| {
         println!("{} has {:?}", entity.get_name(), pos);
     });
 

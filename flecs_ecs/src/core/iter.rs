@@ -157,7 +157,7 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::type`
     #[doc(alias = "iter::type")]
-    pub fn get_type(&self) -> Archetype {
+    pub fn get_archetype(&self) -> Archetype {
         unsafe { Archetype::new(self.iter.world, ecs_table_get_type(self.iter.table)) }
     }
 

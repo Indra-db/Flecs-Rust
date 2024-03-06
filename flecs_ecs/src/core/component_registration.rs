@@ -59,7 +59,9 @@ pub trait ComponentType<T: ECSComponentType>: CachedComponentData {}
 /// If the world doesn't, this implies the component was registered by a different world.
 /// In such a case, the component is registered with the present world using the pre-existing ID.
 /// If the ID is already known, the trait takes care of the component registration and checks for consistency in the input.
-pub trait CachedComponentData: Clone + Default {
+pub trait CachedComponentData: Sized {
+    type UnderlyingType: CachedComponentData + Default + Clone;
+
     /// attempts to register the component with the world. If it's already registered, it does nothing.
     fn register_explicit(world: *mut WorldT);
 
@@ -79,7 +81,7 @@ pub trait CachedComponentData: Clone + Default {
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     fn is_registered_with_world(world: *mut WorldT) -> bool {
         if Self::is_registered() {
-            unsafe { is_component_registered_with_world::<Self>(world) }
+            unsafe { is_component_registered_with_world::<Self::UnderlyingType>(world) }
         } else {
             false
         }
@@ -314,7 +316,7 @@ fn register_componment_data_explicit<T>(
     is_comp_pre_registered: bool,
 ) -> bool
 where
-    T: CachedComponentData + Clone + Default,
+    T: CachedComponentData,
 {
     let mut component_data: ComponentData = Default::default();
     if is_comp_pre_registered {
@@ -420,7 +422,7 @@ pub(crate) fn register_entity_w_component_explicit<T>(
     id: EntityT,
 ) -> EntityT
 where
-    T: CachedComponentData + Clone + Default,
+    T: CachedComponentData,
 {
     let is_comp_pre_registered = T::is_registered();
     let mut component_data: ComponentData = Default::default();
@@ -530,7 +532,7 @@ pub(crate) fn register_component_data<T>(
     is_comp_pre_registered_with_world: bool,
 ) -> bool
 where
-    T: CachedComponentData + Clone + Default,
+    T: CachedComponentData,
 {
     let mut has_registered = false;
     //this is safe because we checked if the component is pre-registered
@@ -559,7 +561,9 @@ where
             // Register lifecycle callbacks, but only if the component has a
             // size. Components that don't have a size are tags, and tags don't
             // require construction/destruction/copy/move's.
-            register_lifecycle_actions::<T>(world, unsafe { T::get_id_unchecked() });
+            register_lifecycle_actions::<T::UnderlyingType>(world, unsafe {
+                T::get_id_unchecked()
+            });
         }
 
         if prev_with != 0 {
