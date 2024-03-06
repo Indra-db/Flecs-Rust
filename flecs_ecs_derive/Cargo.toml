@@ -2,6 +2,7 @@
 name = "flecs_ecs_derive"
 version = "0.1.0"
 edition = "2021"
+license-file = "LICENSE"
 
 [lib]
 proc-macro = true

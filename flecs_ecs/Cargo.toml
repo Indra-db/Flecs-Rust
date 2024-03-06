@@ -3,8 +3,9 @@ name = "flecs_ecs"
 version = "0.0.2"
 edition = "2021"
 authors = ["Indra de Backere <debackere.indra@gmail.com>"]
-description = "Rust API for the C flecs ECS library <https://github.com/SanderMertens/flecs>"
-license = ""
+description = "Rust API for the C/CPP flecs ECS library <https://github.com/SanderMertens/flecs>"
+license-file = "LICENSE"
+repository = "https://github.com/Indra-db/flecs_ecs_rs"
 keywords = ["ecs", "flecs", "entity", "component", "system"]
 categories = ["game-development", "api-bindings"]
 
