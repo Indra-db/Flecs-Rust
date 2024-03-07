@@ -1,4 +1,4 @@
-# Flecs ECS Bridge :: Rust Wrapper for Flecs
+# Flecs ECS Rust API
 
 [![Generic badge](https://img.shields.io/badge/Flecs_Version-3.2.11-E56717.svg)](https://github.com/SanderMertens/flecs/releases)
 [![PyPi license](https://badgen.net/pypi/license/pip/)](https://pypi.org/project/pip/)
@@ -8,89 +8,25 @@
 
 
 
-Hello there! Welcome to my Rust wrapper around the ECS library called [Flecs](https://github.com/SanderMertens/flecs). This project endeavors to offer Rust developers an intuitive and streamlined interface to harness the full potential of Flecs.
+Hello there! Welcome to my Rust wrapper around the ECS library called [Flecs](https://github.com/SanderMertens/flecs). This project endeavors to offer Rust developers an intuitive and streamlined interface to harness the full potential of Flecs, the most advanced open source Entity Component System (ECS) library available today.
 
-## ⚠️ Status: Early Stages
+## ⚠️ Status: Alpha release happening this month
 
-Please note that this wrapper is currently in its **early stages**. It's heavily under work in progress and is **not recommended for consumption**. While you're encouraged to explore, test, and provide feedback, please be aware of potential bugs and incomplete features.
+The project is at a stage where the **core functionality** of Flecs has been **ported succesfully** and is available to use today. While you're encouraged to explore, test, and provide feedback, please be aware of potential bugs and breaking changes as we continue to refine the API and add new features.
 
-This library has not been advertized nor published yet to crates.io for that reason.
+This library has not been advertized nor published yet on crates.io or other platforms until it's ready for a full alpha release.
 
 ### The progress
 
-#### core
-```[tasklist]
-- [x] id
-- [x] entity_view
-- [x] entity
-- [x] component
-- [x] 4 byte sized enum component
-- [WIP] rust enum variant component (wip changes to flecs, I believe to have an idea to solve this)
-- [x] component id registration
-- [x] enum constants registration
-- [x] ref component
-- [x] lifecycle_traits (which adds support to hold dynamic memory in components, e.g. vector, string, etc.)
-- [x] table + table_range
-- [x] c_types
-- [x] type (archetype)
-- [x] world + scoped_world
-- [x] term
-- [x] filter
-    - [x] create filter 
-    - [x] create filter builder
-    - [x] add support for optional components
-    - [x] add support for parent / instancing matching
-    - [x] immutable only components
-- [x] query
-    - [x] create query
-    - [x] create query builder
-    - [x] add support for optional components
-    - [x] add support for parent / instancing matching
-    - [x] immutable only components
-```
-
-#### non-core
-```[tasklist]
-- [x] event
-- [x] observer
-- [x] type
-- [x] iter
-- [x] column, untyped_column
-```
-#### addons
-```[tasklist]
-- [x] systems
-- [ ] alerts
-- [x] app
-- [ ] doc
-- [ ] doc
-- [ ] json
-- [wip] meta
-- [ ] modules
-- [ ] monitor
-- [x] pipelines
-- [ ] plecs
-- [ ] rest
-- [ ] rules
-- [ ] snapshots
-- [ ] timer
-- [ ] units
-- [ ] metrics
-- [ ] logging
-    - [x] leveling, colors, timestamp, timedelta
-    - [ ] log with level
-```
-
-#### future plans
-```[tasklist]
-- [ ] make the public API rustier, no more pointers.
-    - [x] Filter, Query, FilterBuilder, QueryBuilder, Term, Entity, EntityView and Id construction in public API no more pointers.
-- [x] add a non-heap allocating way of creating filters. This is useful for creating filters regularly in hot path code, e.g. systems. 
-```
+- [x] Core library ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600)
+- [ ] Addons ![](https://geps.dev/progress/30?dangerColor=800000&warningColor=ff9900&successColor=006600) (most important ones are done!)
+- [ ] Documentation ![](https://geps.dev/progress/70?dangerColor=800000&warningColor=ff9900&successColor=006600) All functions documented + C++ alias attribute. No custom documentation site **yet**.
+- [ ] Test suite ![](https://geps.dev/progress/15?dangerColor=800000&warningColor=ff9900&successColor=006600)
+- [ ] Examples ![](https://geps.dev/progress/40?dangerColor=800000&warningColor=ff9900&successColor=006600)
 
 ## The Aim
 
-The plan is to match feature parity of the C++ API, starting with the core library while also being fully documented and tested.
+The plan is to match feature parity of the C++ API, starting with the core library (done!) while also being fully documented and tested.
 
 ## Contributions
 
