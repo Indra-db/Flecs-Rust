@@ -12,7 +12,7 @@ Hello there! Welcome to my Rust wrapper around the ECS library called [Flecs](ht
 
 ## ⚠️ Status: Alpha release happening this month
 
-The project is at a stage where the **core functionality** of Flecs has been **ported succesfully** and is available to use today. While you're encouraged to explore, test, and provide feedback, please be aware of potential bugs and breaking changes as we continue to refine the API and add new features.
+The project is at a stage where the **core functionality** of Flecs has been **ported successfully** and is available to use today. While you're encouraged to explore, test, and provide feedback, please be aware of potential bugs and breaking changes as we continue to refine the API and add new features.
 
 This library has not been advertized nor published yet on crates.io or other platforms until it's ready for a full alpha release.
 
