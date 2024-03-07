@@ -18,6 +18,9 @@ This library has not been advertized nor published yet on crates.io or other pla
 
 ### The progress
 
+For detailed feature progress, please visit the [issues](https://github.com/Indra-db/flecs-ecs-rs/issues) page.
+
+
 - [x] Core library ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600)
 - [ ] Addons ![](https://geps.dev/progress/30?dangerColor=800000&warningColor=ff9900&successColor=006600) (most important ones are done!)
 - [ ] Documentation ![](https://geps.dev/progress/70?dangerColor=800000&warningColor=ff9900&successColor=006600) codebase documented with C++ alias. Missing documentation site.
