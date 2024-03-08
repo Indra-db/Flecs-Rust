@@ -6,13 +6,13 @@ use std::{
     os::raw::{c_int, c_void},
 };
 
+use crate::sys::{
+    ecs_ctx_free_t, ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_group_by_action_t,
+    ecs_group_create_action_t, ecs_group_delete_action_t, ecs_order_by_action_t, ecs_query_desc_t,
+};
+
 use super::{
     builder::Builder,
-    c_binding::bindings::{
-        ecs_ctx_free_t, ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t,
-        ecs_group_by_action_t, ecs_group_create_action_t, ecs_group_delete_action_t,
-        ecs_order_by_action_t, ecs_query_desc_t,
-    },
     c_types::{EntityT, IdT, TableT, TermT, WorldT, SEPARATOR},
     component_registration::CachedComponentData,
     filter_builder::{FilterBuilder, FilterBuilderImpl},

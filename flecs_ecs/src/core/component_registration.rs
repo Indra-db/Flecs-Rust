@@ -1,10 +1,6 @@
 //! Registering and working with components.
 
 use super::{
-    c_binding::bindings::{
-        ecs_cpp_component_register_explicit, ecs_cpp_enum_constant_register, ecs_cpp_enum_init,
-        ecs_exists, ecs_get_symbol, ecs_set_scope, ecs_set_with,
-    },
     c_types::{EntityT, IdT, WorldT},
     enum_type::CachedEnumData,
     is_empty_type,
@@ -13,6 +9,10 @@ use super::{
 use crate::{
     core::{get_full_type_name, FlecsErrorCode},
     ecs_assert,
+    sys::{
+        ecs_cpp_component_register_explicit, ecs_cpp_enum_constant_register, ecs_cpp_enum_init,
+        ecs_exists, ecs_get_symbol, ecs_set_scope, ecs_set_with,
+    },
 };
 use std::{ffi::CStr, os::raw::c_char, sync::OnceLock};
 /// Component data that is cached by the `CachedComponentData` trait.

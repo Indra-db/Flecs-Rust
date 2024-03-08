@@ -9,33 +9,27 @@ use crate::addons::system::{System, SystemBuilder};
 #[cfg(feature = "flecs_pipeline")]
 use crate::addons::pipeline::PipelineBuilder;
 
-use crate::core::c_binding::bindings::{ecs_stage_t_magic, ecs_world_t_magic};
+use crate::sys::{
+    self, ecs_async_stage_free, ecs_async_stage_new, ecs_atfini, ecs_count_id, ecs_ctx_free_t,
+    ecs_defer_begin, ecs_defer_end, ecs_defer_resume, ecs_defer_suspend, ecs_delete_with, ecs_dim,
+    ecs_enable_range_check, ecs_ensure, ecs_exists, ecs_fini, ecs_fini_action_t, ecs_frame_begin,
+    ecs_frame_end, ecs_get_alive, ecs_get_ctx, ecs_get_id, ecs_get_mut_id, ecs_get_name,
+    ecs_get_scope, ecs_get_stage, ecs_get_stage_count, ecs_get_stage_id, ecs_get_target,
+    ecs_get_world, ecs_get_world_info, ecs_init, ecs_is_alive, ecs_is_deferred, ecs_is_valid,
+    ecs_lookup_path_w_sep, ecs_merge, ecs_poly_is_, ecs_quit, ecs_readonly_begin, ecs_readonly_end,
+    ecs_remove_all, ecs_run_post_frame, ecs_set_alias, ecs_set_automerge, ecs_set_ctx,
+    ecs_set_entity_range, ecs_set_lookup_path, ecs_set_scope, ecs_set_stage_count, ecs_set_with,
+    ecs_should_quit, ecs_stage_is_async, ecs_stage_is_readonly, ecs_stage_t_magic,
+    ecs_system_desc_t, ecs_world_info_t, ecs_world_t_magic,
+};
 
-use crate::core::c_binding::ecs_get_mut_id;
 use crate::{
-    core::{c_binding::ecs_poly_is_, ecs_is_pair, FlecsErrorCode},
+    core::{ecs_is_pair, FlecsErrorCode},
     ecs_assert,
 };
 
-use super::c_binding::ecs_get_id;
 use super::ECS_PREFAB;
 use super::{
-    c_binding::{
-        bindings::{
-            ecs_async_stage_free, ecs_async_stage_new, ecs_atfini, ecs_count_id, ecs_defer_begin,
-            ecs_defer_end, ecs_defer_resume, ecs_defer_suspend, ecs_delete_with, ecs_dim,
-            ecs_enable_range_check, ecs_ensure, ecs_exists, ecs_fini, ecs_fini_action_t,
-            ecs_frame_begin, ecs_frame_end, ecs_get_alive, ecs_get_name, ecs_get_scope,
-            ecs_get_stage, ecs_get_stage_count, ecs_get_stage_id, ecs_get_world,
-            ecs_get_world_info, ecs_init, ecs_is_alive, ecs_is_deferred, ecs_is_valid,
-            ecs_lookup_path_w_sep, ecs_merge, ecs_quit, ecs_readonly_begin, ecs_readonly_end,
-            ecs_remove_all, ecs_run_post_frame, ecs_set_alias, ecs_set_automerge,
-            ecs_set_entity_range, ecs_set_lookup_path, ecs_set_scope, ecs_set_stage_count,
-            ecs_set_with, ecs_should_quit, ecs_stage_is_async, ecs_stage_is_readonly,
-            ecs_system_desc_t,
-        },
-        ecs_ctx_free_t, ecs_get_ctx, ecs_get_target, ecs_set_ctx, ecs_world_info_t,
-    },
     c_types::{EntityT, IdT, WorldT, SEPARATOR},
     component::{Component, UntypedComponent},
     component_ref::Ref,
@@ -3602,7 +3596,7 @@ impl World {
     #[inline(always)]
     pub fn set_pipeline(&self, pipeline: Entity) {
         unsafe {
-            super::c_binding::ecs_set_pipeline(self.raw_world, pipeline.raw_id);
+            sys::ecs_set_pipeline(self.raw_world, pipeline.raw_id);
         }
     }
 
@@ -3622,7 +3616,7 @@ impl World {
         Pipeline: ComponentType<Struct> + CachedComponentData,
     {
         unsafe {
-            super::c_binding::ecs_set_pipeline(self.raw_world, Pipeline::get_id(self.raw_world));
+            sys::ecs_set_pipeline(self.raw_world, Pipeline::get_id(self.raw_world));
         }
     }
 
@@ -3639,7 +3633,7 @@ impl World {
     #[inline(always)]
     pub fn get_pipeline(&self) -> Entity {
         Entity::new_from_existing_raw(self.raw_world, unsafe {
-            super::c_binding::ecs_get_pipeline(self.raw_world)
+            sys::ecs_get_pipeline(self.raw_world)
         })
     }
 
@@ -3686,7 +3680,7 @@ impl World {
     #[doc(alias = "world::progress")]
     #[inline(always)]
     pub fn progress_time(&self, delta_time: f32) -> bool {
-        unsafe { super::c_binding::ecs_progress(self.raw_world, delta_time) }
+        unsafe { sys::ecs_progress(self.raw_world, delta_time) }
     }
 
     /// Run pipeline.
@@ -3740,7 +3734,7 @@ impl World {
     #[inline(always)]
     pub fn run_pipeline_id_time(&self, pipeline: Entity, delta_time: super::FTime) {
         unsafe {
-            super::c_binding::ecs_run_pipeline(self.raw_world, pipeline.raw_id, delta_time);
+            sys::ecs_run_pipeline(self.raw_world, pipeline.raw_id, delta_time);
         }
     }
 
@@ -3774,7 +3768,7 @@ impl World {
         Component: ComponentType<Struct> + CachedComponentData,
     {
         unsafe {
-            super::c_binding::ecs_run_pipeline(
+            sys::ecs_run_pipeline(
                 self.raw_world,
                 Component::get_id(self.raw_world),
                 delta_time,
@@ -3823,7 +3817,7 @@ impl World {
     #[inline(always)]
     pub fn set_time_scale(&self, mul: super::FTime) {
         unsafe {
-            super::c_binding::ecs_set_time_scale(self.raw_world, mul);
+            sys::ecs_set_time_scale(self.raw_world, mul);
         }
     }
 
@@ -3893,7 +3887,7 @@ impl World {
     #[inline(always)]
     pub fn set_target_fps(&self, target_fps: super::FTime) {
         unsafe {
-            super::c_binding::ecs_set_target_fps(self.raw_world, target_fps);
+            sys::ecs_set_target_fps(self.raw_world, target_fps);
         }
     }
 
@@ -3906,7 +3900,7 @@ impl World {
     #[inline(always)]
     pub fn reset_clock(&self) {
         unsafe {
-            super::c_binding::ecs_reset_clock(self.raw_world);
+            sys::ecs_reset_clock(self.raw_world);
         }
     }
 
@@ -3929,7 +3923,7 @@ impl World {
     #[inline(always)]
     pub fn set_threads(&self, threads: i32) {
         unsafe {
-            super::c_binding::ecs_set_threads(self.raw_world, threads);
+            sys::ecs_set_threads(self.raw_world, threads);
         }
     }
 
@@ -3945,7 +3939,7 @@ impl World {
     #[doc(alias = "world::get_threads")]
     #[inline(always)]
     pub fn get_threads(&self) -> i32 {
-        unsafe { super::c_binding::ecs_get_stage_count(self.raw_world) }
+        unsafe { sys::ecs_get_stage_count(self.raw_world) }
     }
 
     /// Set number of worker task threads.
@@ -3974,7 +3968,7 @@ impl World {
     #[inline(always)]
     pub fn set_task_threads(&self, task_threads: i32) {
         unsafe {
-            super::c_binding::ecs_set_task_threads(self.raw_world, task_threads);
+            sys::ecs_set_task_threads(self.raw_world, task_threads);
         }
     }
 
@@ -3990,7 +3984,7 @@ impl World {
     #[doc(alias = "world::using_task_threads")]
     #[inline(always)]
     pub fn using_task_threads(&self) -> bool {
-        unsafe { super::c_binding::ecs_using_task_threads(self.raw_world) }
+        unsafe { sys::ecs_using_task_threads(self.raw_world) }
     }
 }
 

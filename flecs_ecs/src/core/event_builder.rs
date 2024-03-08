@@ -3,13 +3,9 @@ use std::{
     os::raw::c_void,
 };
 
-use crate::core::c_binding::bindings::{ecs_emit, ecs_get_world};
+use crate::sys::{ecs_emit, ecs_enqueue, ecs_event_desc_t, ecs_get_world, FLECS_EVENT_DESC_MAX};
 
 use super::{
-    c_binding::{
-        bindings::{ecs_event_desc_t, FLECS_EVENT_DESC_MAX},
-        ecs_enqueue,
-    },
     c_types::{EntityT, IdT, TableT, TypeT},
     component_registration::CachedComponentData,
     ecs_pair,

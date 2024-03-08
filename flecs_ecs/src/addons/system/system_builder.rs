@@ -6,23 +6,25 @@ use std::{
     ptr,
 };
 
-use crate::core::{
-    c_binding::bindings::{
+use crate::{
+    core::{
+        c_types::{EntityT, FTimeT, IterT, TermIdT, TermT, WorldT, ECS_DEPENDS_ON, SEPARATOR},
+        component_registration::CachedComponentData,
+        ecs_dependson,
+        entity::Entity,
+        filter_builder::FilterBuilderImpl,
+        iter::Iter,
+        iterable::{Filterable, Iterable},
+        query_builder::{QueryBuilder, QueryBuilderImpl},
+        term::{Term, TermBuilder},
+        world::World,
+        ObserverSystemBindingCtx, ECS_ON_UPDATE,
+    },
+    sys::{
         ecs_add_id, ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_get_target,
         ecs_iter_action_t, ecs_iter_next, ecs_query_desc_t, ecs_remove_id, ecs_system_desc_t,
         ecs_table_lock, ecs_table_unlock,
     },
-    c_types::{EntityT, FTimeT, IterT, TermIdT, TermT, WorldT, ECS_DEPENDS_ON, SEPARATOR},
-    component_registration::CachedComponentData,
-    ecs_dependson,
-    entity::Entity,
-    filter_builder::FilterBuilderImpl,
-    iter::Iter,
-    iterable::{Filterable, Iterable},
-    query_builder::{QueryBuilder, QueryBuilderImpl},
-    term::{Term, TermBuilder},
-    world::World,
-    ObserverSystemBindingCtx, ECS_ON_UPDATE,
 };
 
 use super::System;

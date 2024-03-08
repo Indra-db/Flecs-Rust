@@ -2,20 +2,16 @@
 use std::{ffi::CStr, os::raw::c_void, ptr};
 
 use crate::{
-    core::{
-        c_binding::bindings::{
-            ecs_inout_kind_t, ecs_os_api, ecs_term_is_initialized, ecs_term_t, FLECS_TERM_DESC_MAX,
-        },
-        FlecsErrorCode,
-    },
+    core::FlecsErrorCode,
     ecs_assert,
+    sys::{
+        ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_flags32_t, ecs_inout_kind_t,
+        ecs_os_api, ecs_term_is_initialized, ecs_term_t, EcsWildcard, FLECS_TERM_DESC_MAX,
+    },
 };
 
 use super::{
     builder::Builder,
-    c_binding::bindings::{
-        ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_flags32_t, EcsWildcard,
-    },
     c_types::{IdT, TermT, WorldT, SEPARATOR},
     component_registration::{CachedComponentData, ComponentType, Enum},
     enum_type::CachedEnumData,

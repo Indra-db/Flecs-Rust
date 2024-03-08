@@ -1,8 +1,6 @@
+use crate::sys::{self, ecs_filter_desc_t, ecs_inout_kind_t, ecs_oper_kind_t};
+
 use super::{
-    c_binding::{
-        bindings::{ecs_filter_desc_t, ecs_oper_kind_t},
-        ecs_inout_kind_t,
-    },
     c_types::{IterT, OperKind, TermT, WorldT},
     component_registration::CachedComponentData,
     ecs_field, InOutKind,
@@ -33,7 +31,7 @@ pub trait IterableTypeOperation {
     type SliceType;
     type OnlyType: CachedComponentData;
 
-    fn populate_term(world: *mut WorldT, term: &mut super::c_binding::ecs_term_t);
+    fn populate_term(world: *mut WorldT, term: &mut sys::ecs_term_t);
     fn get_tuple_data(array_components_data: *mut u8, index: usize) -> Self::ActualType;
     fn get_tuple_with_ref_data(
         array_components_data: *mut u8,
@@ -57,7 +55,7 @@ where
     type SliceType = &'a [T];
     type OnlyType = T;
 
-    fn populate_term(world: *mut WorldT, term: &mut super::c_binding::ecs_term_t) {
+    fn populate_term(world: *mut WorldT, term: &mut sys::ecs_term_t) {
         term.id = T::get_id(world);
         term.inout = InOutKind::In as ecs_inout_kind_t;
     }
@@ -114,7 +112,7 @@ where
     type SliceType = &'a mut [T];
     type OnlyType = T;
 
-    fn populate_term(world: *mut WorldT, term: &mut super::c_binding::ecs_term_t) {
+    fn populate_term(world: *mut WorldT, term: &mut sys::ecs_term_t) {
         term.id = T::get_id(world);
         term.inout = InOutKind::InOut as ecs_inout_kind_t;
     }
@@ -169,7 +167,7 @@ where
     type SliceType = Option<&'a [T]>;
     type OnlyType = T;
 
-    fn populate_term(world: *mut WorldT, term: &mut super::c_binding::ecs_term_t) {
+    fn populate_term(world: *mut WorldT, term: &mut sys::ecs_term_t) {
         term.id = T::get_id(world);
         term.inout = InOutKind::In as ecs_inout_kind_t;
         term.oper = OperKind::Optional as ecs_oper_kind_t;
@@ -233,7 +231,7 @@ where
     type SliceType = Option<&'a mut [T]>;
     type OnlyType = T;
 
-    fn populate_term(world: *mut WorldT, term: &mut super::c_binding::ecs_term_t) {
+    fn populate_term(world: *mut WorldT, term: &mut sys::ecs_term_t) {
         term.id = T::get_id(world);
         term.inout = InOutKind::InOut as ecs_inout_kind_t;
         term.oper = OperKind::Optional as ecs_oper_kind_t;

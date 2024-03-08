@@ -7,14 +7,14 @@ use std::{
 };
 
 use crate::ecs_assert;
+use crate::sys::{
+    ecs_abort_, ecs_filter_str, ecs_filter_t, ecs_get_entity, ecs_os_api, ecs_query_changed,
+    ecs_query_desc_t, ecs_query_fini, ecs_query_get_filter, ecs_query_get_group_info,
+    ecs_query_init, ecs_query_iter, ecs_query_next, ecs_query_orphaned, ecs_table_lock,
+    ecs_table_unlock,
+};
 
 use super::{
-    c_binding::bindings::{
-        ecs_abort_, ecs_filter_str, ecs_filter_t, ecs_get_entity, ecs_os_api, ecs_query_changed,
-        ecs_query_desc_t, ecs_query_fini, ecs_query_get_filter, ecs_query_get_group_info,
-        ecs_query_init, ecs_query_iter, ecs_query_next, ecs_query_orphaned, ecs_table_lock,
-        ecs_table_unlock,
-    },
     c_types::*,
     entity::Entity,
     filter::FilterView,

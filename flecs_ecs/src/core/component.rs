@@ -2,18 +2,12 @@
 
 use crate::{
     addons::meta::Opaque,
-    core::{c_binding::bindings::ecs_set_hooks_id, get_full_type_name, FlecsErrorCode},
+    core::{get_full_type_name, FlecsErrorCode},
     ecs_assert,
+    sys::{ecs_get_hooks_id, ecs_opaque_init, ecs_set_hooks_id},
 };
 
-use super::{
-    c_binding::bindings::{ecs_get_hooks_id, ecs_opaque_init},
-    c_types::*,
-    component_registration::*,
-    ecs_field,
-    entity::Entity,
-    World,
-};
+use super::{c_types::*, component_registration::*, ecs_field, entity::Entity, World};
 
 use std::{ffi::CStr, os::raw::c_void, ptr};
 

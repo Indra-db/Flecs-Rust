@@ -1,10 +1,11 @@
 use std::{default, ffi::CStr, ops::Deref, os::raw::c_void, ptr};
 
+use crate::sys::{
+    ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_iter_action_t, ecs_observer_desc_t,
+    ecs_table_lock, ecs_table_unlock,
+};
+
 use super::{
-    c_binding::bindings::{
-        ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_iter_action_t,
-        ecs_observer_desc_t, ecs_table_lock, ecs_table_unlock,
-    },
     c_types::{EntityT, IterT, TermT, WorldT, SEPARATOR},
     component_registration::CachedComponentData,
     entity::Entity,

@@ -3,10 +3,12 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use crate::core::{
-    c_binding::{ecs_entity_desc_t, ecs_entity_init, ecs_pipeline_desc_t},
-    Builder, EntityT, FilterBuilderImpl, Filterable, Iterable, QueryBuilder, QueryBuilderImpl,
-    Term, TermBuilder, TermIdT, TermT, World, WorldT, SEPARATOR,
+use crate::{
+    core::{
+        Builder, EntityT, FilterBuilderImpl, Filterable, Iterable, QueryBuilder, QueryBuilderImpl,
+        Term, TermBuilder, TermIdT, TermT, World, WorldT, SEPARATOR,
+    },
+    sys::{ecs_entity_desc_t, ecs_entity_init, ecs_pipeline_desc_t},
 };
 
 use super::Pipeline;

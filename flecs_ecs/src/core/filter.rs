@@ -1,14 +1,12 @@
 //! Filters are cheaper to create, but slower to iterate than queries.
 
+use crate::sys::{
+    ecs_abort_, ecs_filter_copy, ecs_filter_desc_t, ecs_filter_fini, ecs_filter_init,
+    ecs_filter_iter, ecs_filter_move, ecs_filter_next, ecs_filter_str, ecs_get_entity, ecs_os_api,
+    ecs_table_lock, ecs_table_unlock,
+};
+
 use super::{
-    c_binding::{
-        bindings::{
-            ecs_filter_copy, ecs_filter_desc_t, ecs_filter_fini, ecs_filter_init, ecs_filter_iter,
-            ecs_filter_move, ecs_filter_next, ecs_filter_str, ecs_get_entity, ecs_os_api,
-            ecs_table_lock, ecs_table_unlock,
-        },
-        ecs_abort_,
-    },
     c_types::FilterT,
     entity::Entity,
     iter::Iter,

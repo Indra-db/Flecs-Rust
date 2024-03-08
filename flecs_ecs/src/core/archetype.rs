@@ -4,10 +4,9 @@ use std::{
     ops::Index,
 };
 
-use crate::{core::FlecsErrorCode, ecs_assert};
+use crate::{core::FlecsErrorCode, ecs_assert, sys::ecs_type_str};
 
 use super::{
-    c_binding::bindings::ecs_type_str,
     c_types::{IdT, TypeT, WorldT},
     id::Id,
 };

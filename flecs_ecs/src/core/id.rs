@@ -1,11 +1,10 @@
 //! Class for working with entity, component, tag and pair ids.
 
-use super::{
-    c_binding::bindings::*, c_types::*, ecs_pair, ecs_pair_first, entity::*, world::World,
-};
+use super::{c_types::*, ecs_pair, ecs_pair_first, entity::*, world::World};
 use crate::{
     core::{ecs_pair_second, FlecsErrorCode},
     ecs_assert,
+    sys::*,
 };
 
 /// Class for working with entity, component, tag and pair ids.

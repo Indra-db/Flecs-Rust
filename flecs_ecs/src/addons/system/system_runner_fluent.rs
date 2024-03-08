@@ -1,10 +1,8 @@
 use std::os::raw::c_void;
 
-use crate::core::{
-    c_binding::bindings::{ecs_run_w_filter, ecs_run_worker},
-    c_types::EntityT,
-    world::World,
-    FTime,
+use crate::{
+    core::{c_types::EntityT, world::World, FTime},
+    sys::{ecs_run_w_filter, ecs_run_worker},
 };
 
 pub struct SystemRunnerFluent {

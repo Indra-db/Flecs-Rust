@@ -1,10 +1,10 @@
 use std::{ops::Deref, os::raw::c_void};
 
+use crate::sys::{
+    ecs_observer_desc_t, ecs_observer_get_ctx, ecs_observer_init, ecs_observer_t, ecs_os_api,
+};
+
 use super::{
-    c_binding::{
-        bindings::{ecs_observer_desc_t, ecs_observer_init, ecs_observer_t, ecs_os_api},
-        ecs_observer_get_ctx,
-    },
     c_types::{Poly, ECS_OBSERVER},
     entity::Entity,
     filter::Filter,

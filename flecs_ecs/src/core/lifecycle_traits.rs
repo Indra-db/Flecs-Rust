@@ -46,8 +46,9 @@
 //! Note2: zerobit pattern
 
 use crate::{
-    core::{c_binding::bindings::*, c_types::*, FlecsErrorCode},
+    core::{c_types::*, FlecsErrorCode},
     ecs_assert,
+    sys::*,
 };
 use std::{ffi::c_void, ptr};
 

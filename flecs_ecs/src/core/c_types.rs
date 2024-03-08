@@ -1,10 +1,11 @@
 #![allow(non_upper_case_globals)]
 
-use super::c_binding::bindings::*;
-
-use crate::core::component_registration::{
-    try_register_struct_component, try_register_struct_component_named, CachedComponentData,
-    ComponentData, ComponentType, Struct,
+use crate::{
+    core::component_registration::{
+        try_register_struct_component, try_register_struct_component_named, CachedComponentData,
+        ComponentData, ComponentType, Struct,
+    },
+    sys::*,
 };
 
 use std::{ffi::CStr, sync::OnceLock};
