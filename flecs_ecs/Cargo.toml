@@ -41,7 +41,7 @@ flecs_meta = []
 flecs_metrics = []
 flecs_ecs_asserts = []
 flecs_enable_all_asserts = ["flecs_ecs_asserts"]
-flecs_regenerate_bindings = ["flecs_ecs_sys/flecs_regenerate_binding"]
+flecs_regenerate_binding = ["flecs_ecs_sys/flecs_regenerate_binding"]
 
 # Enabling this will not build a copy of flecs into this library.
 # Instead, the executable that this is linked with will need to
