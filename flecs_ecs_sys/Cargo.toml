@@ -15,6 +15,7 @@ regex = "1.9.5"
 
 [features]
 flecs_regenerate_binding = []
+flecs_disable_build_c_library = []
 default = [
     "flecs_regenerate_binding",
 ]

@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 pub use flecs_ecs::core::*;
-pub use flecs_ecs_derive::Component;
+pub use flecs_ecs::macros::Component;
 
 #[allow(unused_imports)]
 pub use std::ffi::CStr;

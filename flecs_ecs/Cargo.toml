@@ -10,13 +10,9 @@ keywords = ["ecs", "flecs", "entity", "component", "system"]
 categories = ["game-development", "api-bindings"]
 
 [dependencies]
-#debug-here = "0.2.2" #temp for development
 flecs_ecs_derive = { path = "../flecs_ecs_derive" }
 flecs_ecs_sys = { path = "../flecs_ecs_sys" }
-seq-macro = "0.3.5" #temp for testing / development
-rand = "0.8.5"  #temp for testing / development
-libc = "0.2.153"
-#cargo-show-asm = "0.2.21"  #temp for testing / development
+
 
 [dev-dependencies]
 criterion = "0.5.1"
@@ -33,11 +29,6 @@ bindgen = "0.69.4"
 cc = "1.0.83"
 regex = "1.9.5"
 
-# ---> Bindgen <--- with bindgen macos generates u32 for the underlying enum of some bindings, 
-#which is a bug. It should be generating i32. If you generate from macos, you'll need to revert the
-# u32 to i32 in the generated bindings for the enums. More info on the issue here:
-#https://github.com/rust-lang/rust-bindgen/issues/1966
-
 [features]
 flecs_app = []
 flecs_pipeline = []
@@ -50,15 +41,17 @@ flecs_meta = []
 flecs_metrics = []
 flecs_ecs_asserts = []
 flecs_enable_all_asserts = ["flecs_ecs_asserts"]
+flecs_regenerate_bindings = ["flecs_ecs_sys/flecs_regenerate_binding"]
 
 # Enabling this will not build a copy of flecs into this library.
 # Instead, the executable that this is linked with will need to
 # provide the symbols required. This is useful when using both
 # Rust and C++ code in an application and a copy of flecs is
 # already being linked into the executable via other means.
-flecs_disable_build_c_library = []
+flecs_disable_build_c_library = ["flecs_ecs_sys/flecs_disable_build_c_library"]
 
 default = [
+    
     "flecs_enable_all_asserts",
     "flecs_system",
     "flecs_timer",
