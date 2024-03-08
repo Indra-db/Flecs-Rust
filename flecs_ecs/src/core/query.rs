@@ -150,7 +150,7 @@ where
     ///
     /// * C++ API: `query_base::get_group_info`
     #[doc(alias = "query_base::get_group_info")]
-    pub fn get_group_info(&mut self, group_id: u64) -> *const QueryGroupInfoT {
+    pub fn get_group_info(&self, group_id: u64) -> *const QueryGroupInfoT {
         unsafe { ecs_query_get_group_info(self.query, group_id) }
     }
 
@@ -168,7 +168,7 @@ where
     ///
     /// * C++ API: `query_base::group_ctx`
     #[doc(alias = "query_base::group_ctx")]
-    pub fn get_group_context(&mut self, group_id: u64) -> *mut c_void {
+    pub fn get_group_context(&self, group_id: u64) -> *mut c_void {
         let group_info = self.get_group_info(group_id);
 
         if !group_info.is_null() {
@@ -176,20 +176,6 @@ where
         } else {
             std::ptr::null_mut()
         }
-    }
-
-    /// Free the query
-    /// Destroy a query. This operation destroys a query and its resources.
-    /// If the query is used as the parent of subqueries, those subqueries will be
-    /// orphaned and must be deinitialized as well.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_base::destruct`
-    #[doc(alias = "query_base::destruct")]
-    pub fn destruct(mut self) {
-        unsafe { ecs_query_fini(self.query) }
-        self.query = std::ptr::null_mut();
     }
 
     fn each_term(&self, func: impl FnMut(&mut Term)) {
@@ -371,6 +357,19 @@ where
         }
     }
 
+    /// Free the query
+    /// Destroy a query. This operation destroys a query and its resources.
+    /// If the query is used as the parent of subqueries, those subqueries will be
+    /// orphaned and must be deinitialized as well.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query_base::destruct`
+    #[doc(alias = "query_base::destruct")]
+    pub fn destruct(self) {
+        //calls drop
+    }
+
     /// Get the iterator for the query
     ///
     /// # Arguments
@@ -489,7 +488,7 @@ where
     ///
     /// * C++ API: `iterable::iter`
     #[doc(alias = "iterable::iter")]
-    pub fn iter(&mut self, mut func: impl FnMut(&mut Iter, T::TupleSliceType)) {
+    pub fn iter(&self, mut func: impl FnMut(&mut Iter, T::TupleSliceType)) {
         unsafe {
             let mut iter = ecs_query_iter(self.world.raw_world, self.query);
 

@@ -59,6 +59,18 @@ pub struct ImpulseSpeed {
 #[derive(Default, Clone, Component)]
 pub struct HasFlt;
 
+#[derive(Default, Clone, Component)]
+pub struct First;
+
+#[derive(Default, Clone, Component)]
+pub struct Second;
+
+#[derive(Default, Clone, Component)]
+pub struct Third;
+
+#[derive(Default, Clone, Component)]
+pub struct Group;
+
 #[allow(dead_code)]
 fn main() {
     //this file is for common structs and functions used in the examples

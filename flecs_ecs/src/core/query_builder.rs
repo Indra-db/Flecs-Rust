@@ -291,6 +291,25 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
 
     /// Group and sort matched tables.
     ///
+    /// This function is similar to `group_by<T>`, but uses a default `group_by` action.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: The component used to determine the group rank.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query_builder_i::group_by`
+    #[doc(alias = "query_builder_i::group_by")]
+    fn group_by<T>(&mut self) -> &mut Self
+    where
+        T: CachedComponentData,
+    {
+        self.group_by_id(T::get_id(self.get_world()), None)
+    }
+
+    /// Group and sort matched tables.
+    ///
     /// This function is similar to `order_by`, but instead of sorting individual entities,
     /// it only sorts matched tables. This can be useful if a query needs to enforce a
     /// certain iteration order upon the tables it is iterating, for example by giving
@@ -316,12 +335,11 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// * C++ API: `query_builder_i::group_by`
     #[doc(alias = "query_builder_i::group_by")]
-    fn group_by<T>(&mut self, group_by_action: GroupByFn) -> &mut Self
+    fn group_by_fn<T>(&mut self, group_by_action: ecs_group_by_action_t) -> &mut Self
     where
         T: CachedComponentData,
     {
-        let action: ecs_group_by_action_t = Some(unsafe { std::mem::transmute(group_by_action) });
-        self.group_by_id(T::get_id(self.get_world()), action);
+        self.group_by_id(T::get_id(self.get_world()), group_by_action);
         self
     }
 
@@ -343,25 +361,6 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
         desc.group_by = group_by_action;
         desc.group_by_id = component;
         self
-    }
-
-    /// Group and sort matched tables.
-    ///
-    /// This function is similar to `group_by<T>`, but uses a default `group_by` action.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: The component used to determine the group rank.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::group_by`
-    #[doc(alias = "query_builder_i::group_by")]
-    fn group_by_default<T>(&mut self) -> &mut Self
-    where
-        T: CachedComponentData,
-    {
-        self.group_by_id(T::get_id(self.get_world()), None)
     }
 
     /// Group and sort matched tables.
