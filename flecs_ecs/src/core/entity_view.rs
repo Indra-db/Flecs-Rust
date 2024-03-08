@@ -23,7 +23,7 @@ use crate::{
 // Super module imports
 use super::{
     archetype::Archetype,
-    c_types::*,
+    c_types::{EntityT, IdT, TypeT, WorldT, SEPARATOR},
     component_registration::{CachedComponentData, ComponentType, Enum, Struct},
     ecs_has_pair, ecs_pair, ecs_pair_first, ecs_pair_second, ecs_record_to_row,
     entity::Entity,

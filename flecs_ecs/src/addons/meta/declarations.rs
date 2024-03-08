@@ -4,7 +4,12 @@ use crate::{
         ECS_F64_T, ECS_I16_T, ECS_I32_T, ECS_I64_T, ECS_I8_T, ECS_IPTR_T, ECS_QUANTITY,
         ECS_STRING_T, ECS_U32_T, ECS_U64_T, ECS_UPTR_T,
     },
-    sys::*,
+    sys::{
+        ecs_bitmask_constant_t, ecs_bool_t, ecs_char_t, ecs_enum_constant_t, ecs_f32_t, ecs_f64_t,
+        ecs_i16_t, ecs_i32_t, ecs_i64_t, ecs_i8_t, ecs_iptr_t, ecs_member_t, ecs_u16_t, ecs_u32_t,
+        ecs_u64_t, ecs_u8_t, ecs_uptr_t, EcsArray, EcsEnum, EcsMember, EcsMetaTypeSerialized,
+        EcsPrimitive, EcsStruct, EcsUnit, EcsVector,
+    },
 };
 
 // Primitive type aliases

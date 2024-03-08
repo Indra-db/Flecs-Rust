@@ -46,9 +46,12 @@
 //! Note2: zerobit pattern
 
 use crate::{
-    core::{c_types::*, FlecsErrorCode},
+    core::{
+        c_types::{IdT, TypeHooksT},
+        FlecsErrorCode,
+    },
     ecs_assert,
-    sys::*,
+    sys::{ecs_set_hooks_id, ecs_type_info_t, ecs_world_t},
 };
 use std::{ffi::c_void, ptr};
 

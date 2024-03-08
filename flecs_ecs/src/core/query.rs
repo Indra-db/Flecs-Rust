@@ -15,7 +15,7 @@ use crate::sys::{
 };
 
 use super::{
-    c_types::*,
+    c_types::{FilterT, IterT, QueryGroupInfoT, QueryT},
     entity::Entity,
     filter::FilterView,
     iter::Iter,

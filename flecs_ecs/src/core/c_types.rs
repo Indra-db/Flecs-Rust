@@ -5,7 +5,20 @@ use crate::{
         try_register_struct_component, try_register_struct_component_named, CachedComponentData,
         ComponentData, ComponentType, Struct,
     },
-    sys::*,
+    sys::{
+        ecs_app_desc_t, ecs_entity_desc_t, ecs_entity_t, ecs_event_desc_t, ecs_filter_desc_t,
+        ecs_filter_t, ecs_filter_t_magic, ecs_flags32_t, ecs_header_t, ecs_id_t, ecs_inout_kind_t,
+        ecs_inout_kind_t_EcsIn, ecs_inout_kind_t_EcsInOut, ecs_inout_kind_t_EcsInOutDefault,
+        ecs_inout_kind_t_EcsInOutNone, ecs_inout_kind_t_EcsOut, ecs_iter_t, ecs_iterable_t,
+        ecs_observer_desc_t, ecs_observer_t, ecs_oper_kind_t, ecs_oper_kind_t_EcsAnd,
+        ecs_oper_kind_t_EcsAndFrom, ecs_oper_kind_t_EcsNot, ecs_oper_kind_t_EcsNotFrom,
+        ecs_oper_kind_t_EcsOptional, ecs_oper_kind_t_EcsOr, ecs_oper_kind_t_EcsOrFrom,
+        ecs_pipeline_desc_t, ecs_primitive_kind_t, ecs_query_desc_t, ecs_query_group_info_t,
+        ecs_query_t, ecs_ref_t, ecs_rule_t, ecs_system_desc_t, ecs_table_t, ecs_term_id_t,
+        ecs_term_t, ecs_type_hooks_t, ecs_type_info_t, ecs_type_kind_t, ecs_type_t,
+        ecs_world_info_t, ecs_world_t, EcsComponent, EcsIdentifier, EcsOpaque, EcsPoly, EcsTarget,
+        EcsTickSource, FLECS_IDEcsComponentID_, ECS_FILTER_INIT,
+    },
 };
 
 use std::{ffi::CStr, sync::OnceLock};

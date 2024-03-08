@@ -7,7 +7,13 @@ use crate::{
     sys::{ecs_get_hooks_id, ecs_opaque_init, ecs_set_hooks_id},
 };
 
-use super::{c_types::*, component_registration::*, ecs_field, entity::Entity, World};
+use super::{
+    c_types::{EntityT, IdT, IterT, TypeHooksT},
+    component_registration::CachedComponentData,
+    ecs_field,
+    entity::Entity,
+    World,
+};
 
 use std::{ffi::CStr, os::raw::c_void, ptr};
 
