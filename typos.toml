@@ -3,9 +3,7 @@ inout = "inout"
 
 [files]
 extend-exclude = [
-  "flecs_ecs_sys/src/bindings.rs",
-  "flecs_ecs_sys/src/mbindings.rs",
-  "flecs_ecs_sys/src/flecs.c",
-  "flecs_ecs_sys/src/flecs.h",
-  "flecs_ecs_sys/src/extensions.rs"
+  "flecs_ecs_sys/**/*",
+  "target/**/*",
 ]
+

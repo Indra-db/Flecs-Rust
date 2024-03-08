@@ -1601,9 +1601,8 @@ impl Entity {
     }
 
     /// Gets mut component.
-    /// Use `.unwrap()` or `.unwrap_unchecked()` or `.get_unchecked_mut` if you're sure the entity has the component
     ///
-    /// This operation returns a mutable optional reference to the component. If the entity
+    /// This operation returns a mutable reference to the component. If the entity
     /// did not yet have the component, it will be added. If a base entity had
     /// the component, it will be overridden, and the value of the base component
     /// will be copied to the entity before this function returns.
@@ -1614,15 +1613,15 @@ impl Entity {
     ///
     /// # Returns
     ///
-    /// A mutable option ref to the component value.
+    /// A mutable ref to the component value.
     ///
     /// # See also
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
     pub fn get_mut<T: CachedComponentData + ComponentType<Struct>>(
-        &self,
-    ) -> Option<&mut T::UnderlyingType> {
+        &mut self,
+    ) -> &mut T::UnderlyingType {
         let component_id = T::get_id(self.world);
         ecs_assert!(
             T::get_size(self.world) != 0,
@@ -1631,8 +1630,7 @@ impl Entity {
             T::get_symbol_name()
         );
         unsafe {
-            (ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T::UnderlyingType)
-                .as_mut()
+            &mut *(ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T::UnderlyingType)
         }
     }
 
@@ -1658,8 +1656,9 @@ impl Entity {
     /// # See also
     ///
     /// * C++ API: `entity::get_mut`
-    #[doc(alias = "entity::get_mut")]
-    pub unsafe fn get_unchecked_mut<T: CachedComponentData + ComponentType<Struct>>(
+    #[doc(hidden)] // flecs 3.2.12 yet to be released
+    #[doc(alias = "entity::ensure")]
+    pub unsafe fn get_mut_ensure_unchecked<T: CachedComponentData + ComponentType<Struct>>(
         &mut self,
     ) -> &mut T::UnderlyingType {
         let component_id = T::get_id(self.world);
@@ -1696,16 +1695,16 @@ impl Entity {
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
     pub fn get_enum_mut<T: CachedComponentData + ComponentType<Enum>>(
-        &self,
-    ) -> Option<&mut T::UnderlyingType> {
+        &mut self,
+    ) -> &mut T::UnderlyingType {
         let component_id: IdT = T::get_id(self.world);
         let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
 
         if target == 0 {
             // if there is no matching pair for (r,*), try just r
             unsafe {
-                (ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T::UnderlyingType)
-                    .as_mut()
+                &mut *(ecs_get_mut_id(self.world, self.raw_id, component_id)
+                    as *mut T::UnderlyingType)
             }
         } else {
             // get constant value from constant entity
@@ -1720,7 +1719,7 @@ impl Entity {
                 T::get_symbol_name()
             );
 
-            unsafe { constant_value.as_mut() }
+            unsafe { &mut *constant_value }
         }
     }
 
