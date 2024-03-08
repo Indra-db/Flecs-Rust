@@ -1,0 +1,22 @@
+[package]
+name = "flecs_ecs_sys"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+libc = "0.2.153"
+
+[build-dependencies]
+bindgen = "0.69.4"
+cc = "1.0.83"
+regex = "1.9.5"
+
+[features]
+flecs_regenerate_binding = []
+default = [
+    "flecs_regenerate_binding",
+]
+
+

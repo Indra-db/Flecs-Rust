@@ -1,5 +1,5 @@
 [workspace]
-members = ["flecs_ecs", "flecs_ecs_derive"]
+members = ["flecs_ecs", "flecs_ecs_derive", "flecs_ecs_sys"]
 resolver = "2"
 
 [profile.release]
