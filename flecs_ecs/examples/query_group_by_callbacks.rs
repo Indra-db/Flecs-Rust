@@ -7,12 +7,12 @@ use std::sync::Mutex;
 
 static GROUP_COUNTER: Mutex<i32> = Mutex::new(0);
 
-#[repr(C)]
 struct GroupCtx {
     counter: i32,
 }
 
-unsafe extern "C" fn callback_group_create(
+// callbacks need to be extern "C" to be callable from C
+extern "C" fn callback_group_create(
     world: *mut WorldT,
     group_id: u64,
     _group_by_ctx: *mut c_void,
@@ -34,7 +34,8 @@ unsafe extern "C" fn callback_group_create(
     Box::into_raw(ctx) as *mut std::ffi::c_void // Cast to make sure function type matches
 }
 
-unsafe extern "C" fn callback_group_delete(
+// callbacks need to be extern "C" to be callable from C
+extern "C" fn callback_group_delete(
     world: *mut WorldT,
     group_id: u64,
     ctx: *mut c_void,
@@ -47,7 +48,7 @@ unsafe extern "C" fn callback_group_delete(
     );
 
     //Free data associated with group
-    drop(Box::from_raw(ctx as *mut GroupCtx));
+    unsafe { drop(Box::from_raw(ctx as *mut GroupCtx)) };
 }
 
 fn main() {
