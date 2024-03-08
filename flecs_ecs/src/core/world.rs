@@ -2,7 +2,9 @@
 
 use std::{ffi::CStr, ops::Deref, os::raw::c_void};
 
+#[cfg(feature = "flecs_app")]
 use crate::addons::app::App;
+
 #[cfg(feature = "flecs_system")]
 use crate::addons::system::{System, SystemBuilder};
 

@@ -5,6 +5,29 @@
 fn generate_bindings() {
     use std::{env, path::PathBuf};
 
+    #[derive(Debug)]
+    struct CommentsCallbacks;
+
+    impl bindgen::callbacks::ParseCallbacks for CommentsCallbacks {
+        fn process_comment(&self, comment: &str) -> Option<String> {
+            // 1: trimming the comments
+            let comment = comment.trim();
+            // 2: brackets do not entail intra-links
+            let comment = comment.replace("[", "\\[");
+            let comment = comment.replace("]", "\\]");
+
+            // ensure all links are padded with < and >
+            let url_re = regex::Regex::new(r"(?P<url>https?://[^\s]+)").unwrap();
+            let comment = url_re
+                .replace_all(comment.as_str(), |caps: &regex::Captures| {
+                    format!("<{}>", &caps["url"])
+                })
+                .into_owned();
+
+            Some(comment)
+        }
+    }
+
     let mut bindings = bindgen::Builder::default()
         .header("src/sys/flecs.h")
         // Only keep things that we've allowlisted rather than
@@ -55,6 +78,7 @@ fn main() {
     #[cfg(feature = "flecs_generate_bindings")]
     generate_bindings();
 
+    #[cfg(not(feature = "flecs_disable_build_c_library"))]
     // Compile flecs
     cc::Build::new()
         //.compiler("clang")
@@ -65,29 +89,4 @@ fn main() {
         //.define("NDEBUG", None)
         .file("src/sys/flecs.c")
         .compile("flecs");
-}
-
-#[cfg(feature = "flecs_generate_bindings")]
-#[derive(Debug)]
-struct CommentsCallbacks;
-
-#[cfg(feature = "flecs_generate_bindings")]
-impl bindgen::callbacks::ParseCallbacks for CommentsCallbacks {
-    fn process_comment(&self, comment: &str) -> Option<String> {
-        // 1: trimming the comments
-        let comment = comment.trim();
-        // 2: brackets do not entail intra-links
-        let comment = comment.replace("[", "\\[");
-        let comment = comment.replace("]", "\\]");
-
-        // ensure all links are padded with < and >
-        let url_re = regex::Regex::new(r"(?P<url>https?://[^\s]+)").unwrap();
-        let comment = url_re
-            .replace_all(comment.as_str(), |caps: &regex::Captures| {
-                format!("<{}>", &caps["url"])
-            })
-            .into_owned();
-
-        Some(comment)
-    }
 }

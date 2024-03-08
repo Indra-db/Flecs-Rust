@@ -1,11 +1,13 @@
 //! Registering and working with components
 
 use crate::{
-    addons::meta::Opaque,
     core::{get_full_type_name, FlecsErrorCode},
     ecs_assert,
     sys::{ecs_get_hooks_id, ecs_opaque_init, ecs_set_hooks_id},
 };
+
+#[cfg(feature = "flecs_meta")]
+use crate::addons::meta::Opaque;
 
 use super::{
     c_types::{EntityT, IdT, IterT, TypeHooksT},
