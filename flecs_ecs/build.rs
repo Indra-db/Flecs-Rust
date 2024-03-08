@@ -78,6 +78,7 @@ fn main() {
     #[cfg(feature = "flecs_generate_bindings")]
     generate_bindings();
 
+    #[cfg(not(feature = "flecs_disable_build_c_library"))]
     // Compile flecs
     cc::Build::new()
         //.compiler("clang")
