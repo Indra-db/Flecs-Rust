@@ -2,15 +2,13 @@
 
 use std::{ffi::CStr, os::raw::c_void};
 
+use crate::sys::{
+    ecs_table_count, ecs_table_get_column, ecs_table_get_column_index, ecs_table_get_column_size,
+    ecs_table_get_depth, ecs_table_get_type, ecs_table_get_type_index, ecs_table_str,
+};
+
 use super::{
     archetype::Archetype,
-    c_binding::{
-        bindings::{
-            ecs_table_count, ecs_table_get_column, ecs_table_get_column_size, ecs_table_get_depth,
-            ecs_table_get_type, ecs_table_str,
-        },
-        ecs_table_get_column_index, ecs_table_get_type_index,
-    },
     c_types::{EntityT, IdT, TableT, WorldT},
     component_registration::CachedComponentData,
     ecs_pair, World,

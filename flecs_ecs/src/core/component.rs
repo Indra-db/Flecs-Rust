@@ -2,14 +2,14 @@
 
 use crate::{
     addons::meta::Opaque,
-    core::{c_binding::bindings::ecs_set_hooks_id, get_full_type_name, FlecsErrorCode},
+    core::{get_full_type_name, FlecsErrorCode},
     ecs_assert,
+    sys::{ecs_get_hooks_id, ecs_opaque_init, ecs_set_hooks_id},
 };
 
 use super::{
-    c_binding::bindings::{ecs_get_hooks_id, ecs_opaque_init},
-    c_types::*,
-    component_registration::*,
+    c_types::{EntityT, IdT, IterT, TypeHooksT},
+    component_registration::CachedComponentData,
     ecs_field,
     entity::Entity,
     World,

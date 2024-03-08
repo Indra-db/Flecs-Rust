@@ -2,19 +2,16 @@ use std::{ffi::CStr, os::raw::c_char};
 
 use crate::{
     core::{
-        c_binding::{
-            bindings::{
-                ecs_field_w_size, ecs_get_mut_id, ecs_has_id, ecs_modified_id, ecs_os_api,
-                ecs_strip_generation, ECS_GENERATION_MASK, ECS_ROW_MASK,
-            },
-            ecs_get_mut_modified_id, ecs_is_deferred,
-        },
         c_types::{EntityT, IdT, InOutKind, IterT, OperKind, WorldT, ECS_DEPENDS_ON, ECS_PAIR},
         component_registration::CachedComponentData,
         utility::errors::FlecsErrorCode,
         RUST_ECS_ID_FLAGS_MASK,
     },
     ecs_assert,
+    sys::{
+        ecs_field_w_size, ecs_get_mut_id, ecs_get_mut_modified_id, ecs_has_id, ecs_is_deferred,
+        ecs_modified_id, ecs_os_api, ecs_strip_generation, ECS_GENERATION_MASK, ECS_ROW_MASK,
+    },
 };
 
 use super::{

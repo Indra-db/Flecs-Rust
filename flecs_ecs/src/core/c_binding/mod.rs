@@ -1,4 +1,5 @@
-pub mod bindings;
+mod bindings;
+mod mbindings;
+
 pub use bindings::*;
-pub mod mbindings;
 pub use mbindings::*;

@@ -1,8 +1,6 @@
-use crate::core::c_binding::{
-    bindings::{
-        ecs_log_enable_colors, ecs_log_enable_timestamp, ecs_log_get_level, ecs_log_set_level,
-    },
-    ecs_log_enable_timedelta,
+use crate::sys::{
+    ecs_log_enable_colors, ecs_log_enable_timedelta, ecs_log_enable_timestamp, ecs_log_get_level,
+    ecs_log_set_level,
 };
 
 /// Sets the logging level to the specified value.

@@ -7,11 +7,9 @@ pub use pipeline_builder::*;
 use std::ops::{Deref, DerefMut};
 
 use crate::{
-    core::{
-        c_binding::{ecs_os_api, ecs_pipeline_desc_t, ecs_pipeline_init},
-        Entity, FlecsErrorCode, Iterable, World,
-    },
+    core::{Entity, FlecsErrorCode, Iterable, World},
     ecs_abort,
+    sys::{ecs_os_api, ecs_pipeline_desc_t, ecs_pipeline_init},
 };
 
 /// Pipelines order and schedule systems for execution.

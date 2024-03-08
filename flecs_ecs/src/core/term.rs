@@ -1,18 +1,15 @@
 use std::ffi::CStr;
 
 use crate::{
-    core::{
-        c_binding::ecs_get_alive, ecs_is_pair, ecs_pair_first, strip_prefix_cstr_raw,
-        FlecsErrorCode,
-    },
+    core::{ecs_is_pair, ecs_pair_first, strip_prefix_cstr_raw, FlecsErrorCode},
     ecs_assert,
+    sys::{
+        ecs_get_alive, ecs_inout_kind_t, ecs_oper_kind_t, ecs_term_copy, ecs_term_finalize,
+        ecs_term_fini, ecs_term_is_initialized, ecs_term_move,
+    },
 };
 
 use super::{
-    c_binding::bindings::{
-        ecs_inout_kind_t, ecs_oper_kind_t, ecs_term_copy, ecs_term_finalize, ecs_term_fini,
-        ecs_term_is_initialized, ecs_term_move,
-    },
     c_types::{
         EntityT, Flags32T, IdT, InOutKind, OperKind, TermIdT, TermT, WorldT, ECS_CASCADE,
         ECS_FILTER, ECS_IS_ENTITY, ECS_IS_NAME, ECS_IS_VARIABLE, ECS_PARENT, ECS_SELF, ECS_UP,

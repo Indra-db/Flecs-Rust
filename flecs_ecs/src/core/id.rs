@@ -1,11 +1,18 @@
 //! Class for working with entity, component, tag and pair ids.
 
 use super::{
-    c_binding::bindings::*, c_types::*, ecs_pair, ecs_pair_first, entity::*, world::World,
+    c_types::{IdT, WorldT, RUST_ECS_COMPONENT_MASK, RUST_ECS_ID_FLAGS_MASK},
+    ecs_pair, ecs_pair_first,
+    entity::Entity,
+    world::World,
 };
 use crate::{
     core::{ecs_pair_second, FlecsErrorCode},
     ecs_assert,
+    sys::{
+        ecs_get_alive, ecs_get_typeid, ecs_id_flag_str, ecs_id_is_pair, ecs_id_is_wildcard,
+        ecs_id_str,
+    },
 };
 
 /// Class for working with entity, component, tag and pair ids.

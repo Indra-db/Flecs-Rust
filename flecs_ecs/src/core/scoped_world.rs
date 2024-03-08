@@ -1,6 +1,7 @@
 use std::ops::Deref;
 
-use super::{c_binding::bindings::ecs_set_scope, c_types::EntityT, world::World};
+use super::{c_types::EntityT, world::World};
+use crate::sys::ecs_set_scope;
 
 /// Utility class used by the `world::scope` method to create entities in a scope
 pub struct ScopedWorld {

@@ -2,14 +2,12 @@
 
 use std::ffi::c_void;
 
-use crate::core::{
-    c_binding::bindings::{
+use crate::{
+    core::{c_types::WorldT, world::World, FTime},
+    sys::{
         ecs_app_desc_t, ecs_app_init_action_t, ecs_app_run, ecs_fini, ecs_get_world_info,
         ecs_should_quit,
     },
-    c_types::WorldT,
-    world::World,
-    FTime,
 };
 
 /// Application interface.

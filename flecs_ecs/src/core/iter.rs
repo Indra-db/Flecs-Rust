@@ -1,19 +1,16 @@
 use std::{ffi::CStr, os::raw::c_void};
 
 use crate::{
-    core::{
-        c_binding::bindings::{ecs_field_is_set, ecs_field_w_size, ecs_iter_str},
-        FlecsErrorCode,
-    },
+    core::FlecsErrorCode,
     ecs_assert,
+    sys::{
+        ecs_field_column_index, ecs_field_id, ecs_field_is_readonly, ecs_field_is_self,
+        ecs_field_is_set, ecs_field_size, ecs_field_src, ecs_field_w_size, ecs_id_is_pair,
+        ecs_iter_str, ecs_query_changed, ecs_query_skip, ecs_table_get_type,
+    },
 };
 
 use super::{
-    c_binding::bindings::{
-        ecs_field_column_index, ecs_field_id, ecs_field_is_readonly, ecs_field_is_self,
-        ecs_field_size, ecs_field_src, ecs_id_is_pair, ecs_query_changed, ecs_query_skip,
-        ecs_table_get_type,
-    },
     c_types::{IdT, IterT},
     column::{Column, UntypedColumn},
     component_registration::CachedComponentData,

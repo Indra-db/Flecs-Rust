@@ -5,23 +5,18 @@ use std::{
 };
 
 use crate::{
-    core::{
-        c_binding::{
-            bindings::{ecs_get_target, ecs_set_id, ecs_set_name},
-            FLECS_IDEcsComponentID_,
-        },
-        FlecsErrorCode,
-    },
+    core::FlecsErrorCode,
     ecs_assert,
+    sys::{
+        ecs_add_id, ecs_clear, ecs_delete, ecs_enable, ecs_enable_id, ecs_entity_desc_t,
+        ecs_entity_init, ecs_flatten, ecs_flatten_desc_t, ecs_get_id, ecs_get_mut_id,
+        ecs_get_target, ecs_has_id, ecs_modified_id, ecs_new_id, ecs_remove_id, ecs_set_alias,
+        ecs_set_id, ecs_set_name, ecs_set_scope, ecs_set_with, EcsChildOf, EcsComponent,
+        EcsDependsOn, EcsExclusive, EcsIsA, EcsSlotOf, EcsWildcard, FLECS_IDEcsComponentID_,
+    },
 };
 
 use super::{
-    c_binding::bindings::{
-        ecs_add_id, ecs_clear, ecs_delete, ecs_enable, ecs_enable_id, ecs_entity_desc_t,
-        ecs_entity_init, ecs_flatten, ecs_flatten_desc_t, ecs_get_id, ecs_get_mut_id, ecs_has_id,
-        ecs_modified_id, ecs_new_id, ecs_remove_id, ecs_set_alias, ecs_set_scope, ecs_set_with,
-        EcsChildOf, EcsComponent, EcsDependsOn, EcsExclusive, EcsIsA, EcsSlotOf, EcsWildcard,
-    },
     c_types::{EntityT, IdT, WorldT, SEPARATOR},
     component_ref::Ref,
     component_registration::{CachedComponentData, ComponentType, Enum, Struct},

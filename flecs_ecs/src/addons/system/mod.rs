@@ -12,11 +12,11 @@ use std::{ffi::CStr, ops::Deref, os::raw::c_void};
 pub use system_builder::*;
 pub use system_runner_fluent::*;
 
-use crate::core::{
-    c_binding::{
+use crate::{
+    core::{Entity, FTime, Query, TickSource, World},
+    sys::{
         ecs_os_api, ecs_system_desc_t, ecs_system_get_ctx, ecs_system_get_query, ecs_system_init,
     },
-    Entity, FTime, Query, TickSource, World,
 };
 
 #[derive(Clone)]
