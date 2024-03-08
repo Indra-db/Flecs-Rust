@@ -26,7 +26,7 @@ pub fn main() {
     let mut query_read = world.query::<(&Position,)>();
 
     // Create a query that writes the component based on a Dirty state.
-    let mut query_write = world
+    let query_write = world
         .query_builder::<(&Dirty, &mut Position)>()
         .term_at(1)
         .up()
