@@ -199,11 +199,11 @@ fn impl_cached_component_data_struct(
             Self::UnderlyingType::get_symbol_name()
         }
 
-        fn __initialize<F: FnOnce() -> ComponentData>(f: F) -> &'static ComponentData {
+        fn __initialize<F: FnOnce() -> flecs_ecs::core::ComponentData>(f: F) -> &'static flecs_ecs::core::ComponentData {
             Self::UnderlyingType::__get_once_lock_data().get_or_init(f)
         }
 
-        unsafe fn get_data_unchecked() -> &'static ComponentData {
+        unsafe fn get_data_unchecked() -> &'static flecs_ecs::core::ComponentData {
             Self::UnderlyingType::__get_once_lock_data().get().unwrap_unchecked()
         }
 
