@@ -6,10 +6,10 @@ fn generate_bindings() {
     use std::{env, path::PathBuf};
 
     let mut bindings = bindgen::Builder::default()
-        .header("src/core/c_binding/flecs.h")
+        .header("src/sys/flecs.h")
         // Only keep things that we've allowlisted rather than
         // recursively keeping nested uses around.
-        .allowlist_file("src/core/c_binding/flecs.h")
+        .allowlist_file("src/sys/flecs.h")
         .allowlist_recursively(false)
         // Keep comments and keep all of them, not just doc comments.
         .generate_comments(true)
@@ -42,14 +42,14 @@ fn generate_bindings() {
 
     let crate_root: PathBuf = env::var("CARGO_MANIFEST_DIR").unwrap().into();
     bindings
-        .write_to_file(crate_root.join("src/core/c_binding/bindings.rs"))
+        .write_to_file(crate_root.join("src/sys/bindings.rs"))
         .unwrap();
 }
 
 fn main() {
     // Tell cargo to invalidate the built crate whenever the sources change
-    println!("cargo:rerun-if-changed=src/core/c_binding/flecs.h");
-    println!("cargo:rerun-if-changed=src/core/c_binding/flecs.c");
+    println!("cargo:rerun-if-changed=src/sys/flecs.h");
+    println!("cargo:rerun-if-changed=src/sys/flecs.c");
     println!("cargo:rerun-if-changed=build.rs");
 
     #[cfg(feature = "flecs_generate_bindings")]
@@ -63,7 +63,7 @@ fn main() {
         .warnings(true)
         .extra_warnings(true)
         //.define("NDEBUG", None)
-        .file("src/core/c_binding/flecs.c")
+        .file("src/sys/flecs.c")
         .compile("flecs");
 }
 

@@ -1,6 +1,5 @@
 pub mod archetype;
 pub mod builder;
-pub(crate) mod c_binding;
 pub mod c_types;
 pub mod column;
 pub mod component;
