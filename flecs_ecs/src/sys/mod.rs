@@ -1,5 +1,1 @@
-mod bindings;
-mod mbindings;
-
-pub use bindings::*;
-pub use mbindings::*;
+pub use flecs_ecs_sys::*;

@@ -1,7 +1,7 @@
 /target
 /Cargo.lock
-flecs_ecs/src/main.rs
 flecs_ecs/rustfmt.toml
 rustfmt.toml
 .DS_Store
 flecs_ecs/src/main.rs
+flecs_ecs_test
