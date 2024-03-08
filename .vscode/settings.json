@@ -1,7 +1,7 @@
 {
     "rust-analyzer.linkedProjects": [
         "./flecs_ecs/Cargo.toml",
-        "./flecs_ecs/Cargo.toml"
+        "./flecs_ecs_test/Cargo.toml"
     ],
     "rust-analyzer.showUnlinkedFileNotification": false
 }
