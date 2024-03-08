@@ -1,5 +1,4 @@
-use flecs_ecs::core::component_registration::*;
-use flecs_ecs::macros::Component;
+use flecs_ecs::{core::component_registration::*, macros::Component};
 
 #[cfg(test)]
 #[ctor::ctor]

@@ -30,7 +30,6 @@ use crate::{
     ecs_assert,
 };
 
-use super::ECS_PREFAB;
 use super::{
     c_types::{EntityT, IdT, WorldT, SEPARATOR},
     component::{Component, UntypedComponent},
@@ -38,6 +37,7 @@ use super::{
     component_registration::{
         register_entity_w_component_explicit, CachedComponentData, ComponentType, Enum, Struct,
     },
+    ECS_PREFAB,
 };
 
 use super::{
