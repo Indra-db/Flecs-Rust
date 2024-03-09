@@ -2,15 +2,15 @@
 members = ["flecs_ecs", "flecs_ecs_derive", "flecs_ecs_sys"]
 resolver = "2"
 
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-panic = "abort"
-overflow-checks = false
+#[profile.release]
+#opt-level = 3
+#lto = true
+#codegen-units = 1
+#panic = "abort"
+#overflow-checks = false
 
-[profile.bench]
-opt-level = 3
-lto = true
-codegen-units = 1
-overflow-checks = false
+#[profile.bench]
+#opt-level = 3
+#lto = true
+#codegen-units = 1
+#overflow-checks = false

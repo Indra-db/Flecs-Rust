@@ -80,13 +80,18 @@ fn main() {
 
     #[cfg(not(feature = "flecs_disable_build_c_library"))]
     // Compile flecs
-    cc::Build::new()
-        //.compiler("clang")
-        //.opt_level(3)
+    let mut build = cc::Build::new();
+    build
+        .compiler("clang")
+        .opt_level(3)
         //.shared_flag(true)
         .warnings(true)
         .extra_warnings(true)
-        //.define("NDEBUG", None)
-        .file("src/flecs.c")
-        .compile("flecs");
+        .define("NDEBUG", None)
+        .file("src/flecs.c");
+    println!(
+        "cargo:warning=Using compiler: {:?}",
+        build.get_compiler().path(),
+    );
+    build.compile("flecs");
 }

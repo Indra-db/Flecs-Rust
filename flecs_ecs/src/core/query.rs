@@ -530,7 +530,7 @@ where
     ///
     /// * C++ API: `iterable::iter`
     #[doc(alias = "iterable::iter")]
-    pub fn iter_only(&mut self, mut func: impl FnMut(&mut Iter)) {
+    pub fn iter_only(&self, mut func: impl FnMut(&mut Iter)) {
         unsafe {
             let mut iter = ecs_query_iter(self.world.raw_world, self.query);
             while ecs_query_next(&mut iter) {
