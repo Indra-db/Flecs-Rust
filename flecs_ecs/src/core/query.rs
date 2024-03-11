@@ -314,7 +314,7 @@ where
     #[doc(alias = "query::query")]
     pub fn new(world: &World) -> Self {
         let mut desc = ecs_query_desc_t::default();
-        T::register_ids_descriptor(world.raw_world, &mut desc.filter);
+        T::register_ids_descriptor(&mut desc.filter);
         let mut filter: FilterT = Default::default();
         desc.filter.storage = &mut filter;
         let query = unsafe { ecs_query_init(world.raw_world, &desc) };

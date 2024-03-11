@@ -3,6 +3,8 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
+use flecs_ecs_sys::{ecs_filter_desc_t, ecs_query_desc_t};
+
 use crate::{
     core::{
         Builder, EntityT, FilterBuilderImpl, Filterable, Iterable, QueryBuilder, QueryBuilderImpl,
@@ -123,10 +125,6 @@ impl<'a, T> Filterable for PipelineBuilder<'a, T>
 where
     T: Iterable<'a>,
 {
-    fn get_world(&self) -> *mut WorldT {
-        self.filter_builder.world.raw_world
-    }
-
     fn current_term(&mut self) -> &mut TermT {
         self.filter_builder.current_term()
     }
@@ -171,7 +169,6 @@ where
         Pipeline::<T>::new(&self.world, self.desc)
     }
 }
-/*
 
 impl<'a, T> FilterBuilderImpl for PipelineBuilder<'a, T>
 where
@@ -202,4 +199,3 @@ where
         &mut self.desc.query
     }
 }
-*/

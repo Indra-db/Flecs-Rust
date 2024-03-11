@@ -11,7 +11,7 @@ pub struct Position {
     pub y: f32,
 }
 
-#[derive(Default, Clone, Component)]
+#[derive(Default, Debug, Clone, Component)]
 pub struct Velocity {
     pub x: f32,
     pub y: f32,

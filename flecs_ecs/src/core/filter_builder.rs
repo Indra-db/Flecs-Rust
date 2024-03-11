@@ -32,7 +32,7 @@ where
     expr_count: i32,
     term: Term,
     pub world: World,
-    next_term_index: i32,
+    pub next_term_index: i32,
     _phantom: std::marker::PhantomData<&'a T>,
 }
 
@@ -119,11 +119,6 @@ where
         }
     }
 
-    /// Get the current term
-    pub fn current_term(&mut self) -> &mut TermT {
-        &mut self.desc.terms[self.next_term_index as usize]
-    }
-
     /// Increment the term index
     pub fn next_term(&mut self) {
         self.next_term_index += 1;
@@ -134,12 +129,9 @@ impl<'a, T> Filterable for FilterBuilder<'a, T>
 where
     T: Iterable<'a>,
 {
-    fn get_world(&self) -> *mut WorldT {
-        self.world.raw_world
-    }
-
     fn current_term(&mut self) -> &mut TermT {
-        self.current_term()
+        let next_term_index = self.next_term_index;
+        &mut self.get_desc_filter().terms[next_term_index as usize]
     }
 
     fn next_term(&mut self) {
@@ -498,7 +490,6 @@ pub trait FilterBuilderImpl: TermBuilder {
         let prev_index = term_index;
 
         *self.get_term_index() = index - 1;
-
         self.term();
 
         *self.get_term_index() = prev_index;
@@ -524,6 +515,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     #[doc(alias = "filter_builder_i::term")]
     fn term_with<T: InOutType>(&mut self) -> &mut Self {
         self.term();
+
         unsafe {
             *self.get_raw_term() =
                 Term::new(None, TermType::Id(T::Type::get_id(self.get_world()))).move_raw_term();
@@ -540,6 +532,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     #[doc(alias = "filter_builder_i::term")]
     fn term_with_id(&mut self, id: IdT) -> &mut Self {
         self.term();
+        *self.get_term_index() -= 1;
         let new_term: ecs_term_t = Term::new(None, TermType::Id(id)).move_raw_term();
         let term: &mut Term = self.get_term();
         let term_ptr: *mut TermT = term.term_ptr;

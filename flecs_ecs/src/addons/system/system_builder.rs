@@ -585,10 +585,6 @@ impl<'a, T> Filterable for SystemBuilder<'a, T>
 where
     T: Iterable<'a>,
 {
-    fn get_world(&self) -> *mut WorldT {
-        self.filter_builder.world.raw_world
-    }
-
     fn current_term(&mut self) -> &mut TermT {
         self.filter_builder.current_term()
     }

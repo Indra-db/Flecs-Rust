@@ -39,6 +39,7 @@ use super::{
     },
     ECS_PREFAB,
 };
+use super::{EmptyComponent, NotEmptyComponent};
 
 use super::{
     ecs_pair,
@@ -918,7 +919,7 @@ impl World {
     #[doc(alias = "world::set")]
     pub fn set_pair_first<First, Second>(&self, first: First)
     where
-        First: CachedComponentData + ComponentType<Struct>,
+        First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
         Second: CachedComponentData + ComponentType<Struct>,
     {
         let entity = Entity::new_from_existing_raw(self.raw_world, First::get_id(self.raw_world));
@@ -966,7 +967,7 @@ impl World {
     #[doc(alias = "world::set")]
     pub fn set_pair_second<First, Second>(&self, second: Second)
     where
-        First: CachedComponentData + ComponentType<Struct>,
+        First: CachedComponentData + ComponentType<Struct> + EmptyComponent,
         Second: CachedComponentData + ComponentType<Struct>,
     {
         let entity = Entity::new_from_existing_raw(self.raw_world, First::get_id(self.raw_world));

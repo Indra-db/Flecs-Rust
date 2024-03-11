@@ -63,7 +63,7 @@ where
             desc,
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
         };
-        obj.desc.filter = *obj.filter_builder.get_desc_filter();
+
         T::populate(&mut obj);
         obj
     }
@@ -90,7 +90,6 @@ where
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
-        obj.desc.filter = *obj.filter_builder.get_desc_filter();
         obj.desc.filter.entity = unsafe { ecs_entity_init(world.raw_world, &entity_desc) };
         T::populate(&mut obj);
         obj
@@ -112,7 +111,6 @@ where
             desc: *desc,
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
         };
-        obj.desc.filter = *obj.filter_builder.get_desc_filter();
         T::populate(&mut obj);
         obj
     }
@@ -147,12 +145,9 @@ impl<'a, T> Filterable for QueryBuilder<'a, T>
 where
     T: Iterable<'a>,
 {
-    fn get_world(&self) -> *mut WorldT {
-        self.filter_builder.world.raw_world
-    }
-
     fn current_term(&mut self) -> &mut TermT {
-        self.filter_builder.current_term()
+        let next_term_index = self.next_term_index;
+        &mut self.get_desc_filter().terms[next_term_index as usize]
     }
 
     fn next_term(&mut self) {
@@ -166,7 +161,7 @@ where
 {
     #[inline]
     fn get_desc_filter(&mut self) -> &mut ecs_filter_desc_t {
-        self.filter_builder.get_desc_filter()
+        &mut self.desc.filter
     }
 
     #[inline]
@@ -218,8 +213,8 @@ where
     /// * C++ API: `node_builder::build`
     #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
-        let desc_filter = self.filter_builder.desc;
-        self.desc.filter = desc_filter;
+        //let desc_filter = self.filter_builder.desc;
+        //self.desc.filter = desc_filter;
         let world = &self.filter_builder.world;
         Query::<'a, T>::new_from_desc(world, &mut self.desc)
     }

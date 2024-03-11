@@ -534,6 +534,19 @@ pub trait TermBuilder: Sized {
     /// The cascade flag is like up, but returns results in breadth-first order.
     /// Only supported for `flecs::query`
     ///
+    /// # See also
+    ///
+    /// * C++ API: `term_builder_i::cascade`
+    #[doc(alias = "term_builder_i::cascade")]
+    fn cascade(&mut self) -> &mut Self {
+        self.assert_term_id();
+        unsafe { (*self.get_term_id()).flags |= ECS_CASCADE };
+        self
+    }
+
+    /// The cascade flag is like up, but returns results in breadth-first order.
+    /// Only supported for `flecs::query`
+    ///
     /// # Arguments
     ///
     /// * `traverse_relationship` - The optional relationship to traverse.
@@ -542,12 +555,15 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::cascade`
     #[doc(alias = "term_builder_i::cascade")]
-    fn cascade_id(&mut self, traverse_relationship: Option<EntityT>) -> &mut Self {
+    fn cascade_id(&mut self, traverse_relationship: EntityT) -> &mut Self {
         self.assert_term_id();
+        //ecs_assert!(
+        //    traverse_relationship != 0,
+        //    FlecsErrorCode::InvalidOperation,
+        //    "Opt the usage of `cascade` if you are passing 0"
+        //);
         unsafe { (*self.get_term_id()).flags |= ECS_CASCADE };
-        if let Some(trav_rel) = traverse_relationship {
-            unsafe { (*self.get_term_id()).trav = trav_rel };
-        }
+        unsafe { (*self.get_term_id()).trav = traverse_relationship };
         self
     }
 
@@ -562,7 +578,7 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::cascade`
     #[doc(alias = "term_builder_i::cascade")]
-    fn cascade<TravRel: CachedComponentData>(&mut self) -> &mut Self {
+    fn cascade_type<TravRel: CachedComponentData>(&mut self) -> &mut Self {
         self.assert_term_id();
         unsafe {
             (*self.get_term_id()).flags |= ECS_CASCADE;
@@ -622,7 +638,8 @@ pub trait TermBuilder: Sized {
     #[doc(alias = "term_builder_i::set_term_id")]
     fn set_term_id(&mut self, id: IdT) -> &mut Self {
         self.assert_term_id();
-        unsafe { (*self.get_term_id()).id = id };
+        let term_id = self.get_term_id();
+        unsafe { (*term_id).id = id };
         self
     }
 
@@ -713,7 +730,9 @@ pub trait TermBuilder: Sized {
     #[doc(alias = "term_builder_i::src")]
     fn setup_src(&mut self) -> &mut Self {
         self.assert_term();
-        unsafe { *self.get_term_id() = (*self.get_raw_term()).src };
+        let term = self.get_term();
+        let raw_term = term.term_ptr;
+        term.term_id = unsafe { &mut (*raw_term).src };
         self
     }
 
@@ -727,7 +746,9 @@ pub trait TermBuilder: Sized {
     #[doc(alias = "term_builder_i::first")]
     fn setup_first(&mut self) -> &mut Self {
         self.assert_term();
-        unsafe { *self.get_term_id() = (*self.get_raw_term()).first };
+        let term = self.get_term();
+        let raw_term = term.term_ptr;
+        term.term_id = unsafe { &mut (*raw_term).first };
         self
     }
 
@@ -740,7 +761,9 @@ pub trait TermBuilder: Sized {
     #[doc(alias = "term_builder_i::second")]
     fn setup_second(&mut self) -> &mut Self {
         self.assert_term();
-        unsafe { *self.get_term_id() = (*self.get_raw_term()).second };
+        let term = self.get_term();
+        let raw_term = term.term_ptr;
+        term.term_id = unsafe { &mut (*raw_term).second };
         self
     }
 

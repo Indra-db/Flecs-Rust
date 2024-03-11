@@ -1,15 +1,14 @@
 use crate::sys::{self, ecs_filter_desc_t, ecs_inout_kind_t, ecs_oper_kind_t};
 
 use super::{
-    c_types::{IterT, OperKind, TermT, WorldT},
+    c_types::{IterT, OperKind, TermT},
     component_registration::CachedComponentData,
-    ecs_field, InOutKind,
+    ecs_field, FilterBuilderImpl, InOutKind,
 };
 
-pub trait Filterable: Sized {
+pub trait Filterable: Sized + FilterBuilderImpl {
     fn current_term(&mut self) -> &mut TermT;
     fn next_term(&mut self);
-    fn get_world(&self) -> *mut WorldT;
 }
 
 pub struct ArrayElement {
@@ -31,7 +30,7 @@ pub trait IterableTypeOperation {
     type SliceType;
     type OnlyType: CachedComponentData;
 
-    fn populate_term(world: *mut WorldT, term: &mut sys::ecs_term_t);
+    fn populate_term(term: &mut sys::ecs_term_t);
     fn get_tuple_data(array_components_data: *mut u8, index: usize) -> Self::ActualType;
     fn get_tuple_with_ref_data(
         array_components_data: *mut u8,
@@ -55,8 +54,7 @@ where
     type SliceType = &'a [T];
     type OnlyType = T;
 
-    fn populate_term(world: *mut WorldT, term: &mut sys::ecs_term_t) {
-        term.id = T::get_id(world);
+    fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::In as ecs_inout_kind_t;
     }
 
@@ -112,8 +110,7 @@ where
     type SliceType = &'a mut [T];
     type OnlyType = T;
 
-    fn populate_term(world: *mut WorldT, term: &mut sys::ecs_term_t) {
-        term.id = T::get_id(world);
+    fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::InOut as ecs_inout_kind_t;
     }
 
@@ -167,8 +164,7 @@ where
     type SliceType = Option<&'a [T]>;
     type OnlyType = T;
 
-    fn populate_term(world: *mut WorldT, term: &mut sys::ecs_term_t) {
-        term.id = T::get_id(world);
+    fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::In as ecs_inout_kind_t;
         term.oper = OperKind::Optional as ecs_oper_kind_t;
     }
@@ -231,8 +227,7 @@ where
     type SliceType = Option<&'a mut [T]>;
     type OnlyType = T;
 
-    fn populate_term(world: *mut WorldT, term: &mut sys::ecs_term_t) {
-        term.id = T::get_id(world);
+    fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::InOut as ecs_inout_kind_t;
         term.oper = OperKind::Optional as ecs_oper_kind_t;
     }
@@ -293,7 +288,7 @@ pub trait Iterable<'a>: Sized {
     type TupleSliceType: 'a;
 
     fn populate(filter: &mut impl Filterable);
-    fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t);
+    fn register_ids_descriptor(desc: &mut ecs_filter_desc_t);
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self>;
 
     fn get_tuple(array_components: &Self::ComponentsArray, index: usize) -> Self::TupleType;
@@ -331,7 +326,7 @@ impl<'a> Iterable<'a> for ()
 
     fn populate(_filter : &mut impl Filterable){}
 
-    fn register_ids_descriptor(_world: *mut WorldT, _desc: &mut ecs_filter_desc_t){}
+    fn register_ids_descriptor(_desc: &mut ecs_filter_desc_t){}
 
     fn get_array_ptrs_of_components(_it: &IterT) -> ComponentsData<'a, Self> {
         ComponentsData {
@@ -373,14 +368,16 @@ where
     type TupleSliceType = (A::SliceType,);
 
     fn populate(filter: &mut impl Filterable) {
+
         let world = filter.get_world();
+        filter.term_with_id(A::OnlyType::get_id(world));
         let term = filter.current_term();
-        A::populate_term(world, term);
+        A::populate_term(term);
         filter.next_term();
     }
 
-    fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
-        A::populate_term(world, &mut desc.terms[0]);
+    fn register_ids_descriptor( desc: &mut ecs_filter_desc_t) {
+        A::populate_term(&mut desc.terms[0]);
     }
 
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
@@ -445,18 +442,20 @@ where
     fn populate(filter : &mut impl Filterable)
     {
         let world = filter.get_world();
+         filter.term_with_id(A::OnlyType::get_id(world));
         let term = filter.current_term();
-        A::populate_term(world, term);
+        A::populate_term(term);
         filter.next_term();
-        let term = filter.current_term();
-        B::populate_term(world, term);
+         filter.term_with_id(B::OnlyType::get_id(world));
+        let term = filter.current_term(); 
+        B::populate_term(term);
         filter.next_term();
     }
 
-    fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t)
+    fn register_ids_descriptor(desc: &mut ecs_filter_desc_t)
     {
-        A::populate_term(world, &mut desc.terms[0]);
-        B::populate_term(world, &mut desc.terms[1]);
+        A::populate_term(&mut desc.terms[0]);
+        B::populate_term(&mut desc.terms[1]);
     }
 
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self> {
@@ -523,22 +522,25 @@ where
     fn populate(filter : &mut impl Filterable)
     {
         let world = filter.get_world();
+        filter.term_with_id(A::OnlyType::get_id(world));
         let term = filter.current_term();
-        A::populate_term(world, term);
+        A::populate_term(term);
         filter.next_term();
+        unsafe { filter.term_with_id(B::OnlyType::get_id_unchecked()) } ;
         let term = filter.current_term();
-        B::populate_term(world, term);
+        B::populate_term(term);
         filter.next_term();
+        unsafe { filter.term_with_id(C::OnlyType::get_id_unchecked()) } ;
         let term = filter.current_term();
-        C::populate_term(world, term);
+        C::populate_term(term);
         filter.next_term();
     }
 
-    fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t)
+    fn register_ids_descriptor(desc: &mut ecs_filter_desc_t)
     {
-        A::populate_term(world, &mut desc.terms[0]);
-        B::populate_term(world, &mut desc.terms[1]);
-        C::populate_term(world, &mut desc.terms[2]);
+        A::populate_term(&mut desc.terms[0]);
+        B::populate_term(&mut desc.terms[1]);
+        C::populate_term(&mut desc.terms[2]);
     }
 
     fn get_array_ptrs_of_components(it: &IterT) -> ComponentsData<'a, Self>{
@@ -747,17 +749,18 @@ macro_rules! impl_iterable {
             fn populate(filter: &mut impl Filterable) {
                 let world = filter.get_world();
                 $(
+                    filter.term_with_id($t::OnlyType::get_id(world));
                     let term = filter.current_term();
-                    $t::populate_term(world, term);
+                    $t::populate_term(term);
                     filter.next_term();
                 )*
             }
 
             #[allow(unused)]
-            fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
+            fn register_ids_descriptor(desc: &mut ecs_filter_desc_t) {
                 let mut term_index = 0;
                 $(
-                    $t::populate_term(world, &mut desc.terms[term_index]);
+                    $t::populate_term(&mut desc.terms[term_index]);
                     term_index += 1;
                 )*
             }

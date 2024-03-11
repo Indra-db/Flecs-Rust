@@ -82,12 +82,12 @@ fn main() {
     // Compile flecs
     let mut build = cc::Build::new();
     build
-        .compiler("clang")
-        .opt_level(3)
-        //.shared_flag(true)
+        //.compiler("clang")
+        //.opt_level(3)
+        ////.shared_flag(true)
         .warnings(true)
         .extra_warnings(true)
-        .define("NDEBUG", None)
+        //.define("NDEBUG", None)
         .file("src/flecs.c");
     println!(
         "cargo:warning=Using compiler: {:?}",
