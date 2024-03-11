@@ -477,7 +477,7 @@ where
     #[doc(alias = "filter::filter")]
     pub fn new(world: &World) -> Self {
         let mut desc = ecs_filter_desc_t::default();
-        T::register_ids_descriptor(&mut desc);
+        T::register_ids_descriptor(world.raw_world, &mut desc);
         let mut filter: FilterT = Default::default();
         desc.storage = &mut filter;
         unsafe { ecs_filter_init(world.raw_world, &desc) };
