@@ -24,7 +24,7 @@ use super::{
     enum_type::CachedEnumData,
     set_helper,
     world::World,
-    EntityView, ScopedWorld, ECS_OVERRIDE,
+    EmptyComponent, EntityView, NotEmptyComponent, ScopedWorld, ECS_OVERRIDE,
 };
 
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -1060,7 +1060,7 @@ impl Entity {
     #[doc(alias = "entity_builder::set")]
     pub fn set_pair_first<First, Second>(self, first: First) -> Self
     where
-        First: CachedComponentData + ComponentType<Struct>,
+        First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
         Second: CachedComponentData + ComponentType<Struct>,
     {
         set_helper(
@@ -1120,7 +1120,7 @@ impl Entity {
     #[doc(alias = "entity_builder::set_second")]
     pub fn set_pair_second<First, Second>(self, second: Second) -> Self
     where
-        First: CachedComponentData + ComponentType<Struct>,
+        First: CachedComponentData + ComponentType<Struct> + EmptyComponent,
         Second: CachedComponentData + ComponentType<Struct>,
     {
         set_helper(
