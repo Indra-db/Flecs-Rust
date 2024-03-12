@@ -2,7 +2,7 @@
 name = "flecs_ecs"
 version = "0.0.2"
 edition.workspace = true
-license-file.workspace = true
+license.workspace = true
 repository.workspace = true
 authors = ["Indra de Backere <debackere.indra@gmail.com>"]
 description = "Rust API for the C/CPP flecs ECS library <https://github.com/SanderMertens/flecs>"

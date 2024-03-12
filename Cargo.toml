@@ -4,7 +4,7 @@ resolver = "2"
 
 [workspace.package]
 edition = "2021"
-license-file = "LICENSE"
+license = "MIT"
 repository = "https://github.com/Indra-db/flecs_ecs_rs"
 
 #[profile.release]
