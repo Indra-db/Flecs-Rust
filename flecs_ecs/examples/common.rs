@@ -24,8 +24,12 @@ pub struct Mass {
 
 #[derive(Default, Clone, Component)]
 pub struct Eats;
+
 #[derive(Default, Clone, Component)]
 pub struct Apples;
+
+#[derive(Default, Clone, Component)]
+pub struct Pears;
 
 #[derive(Default, Clone, Component)]
 pub struct Walking;
