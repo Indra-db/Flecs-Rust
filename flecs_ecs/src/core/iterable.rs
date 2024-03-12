@@ -99,8 +99,6 @@ where
     }
 }
 
-struct Const<T>(T);
-
 impl<'a, T> IterableTypeOperation for &'a mut T
 where
     T: CachedComponentData,
