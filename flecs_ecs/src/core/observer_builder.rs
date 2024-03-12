@@ -25,8 +25,6 @@ where
     filter_builder: FilterBuilder<'a, T>,
     desc: ecs_observer_desc_t,
     event_count: i32,
-    /// non-owning world reference
-    world: World,
     is_instanced: bool,
 }
 
@@ -62,12 +60,10 @@ where
         let mut obj = Self {
             desc,
             filter_builder: FilterBuilder::<T>::new_from_desc(world, &mut desc.filter, 0),
-            world: world.clone(),
             event_count: 0,
             is_instanced: false,
         };
         T::populate(&mut obj);
-        obj.desc.filter = *obj.filter_builder.get_desc_filter();
         let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
             name: std::ptr::null(),
             sep: SEPARATOR.as_ptr(),
@@ -94,12 +90,10 @@ where
         let mut obj = Self {
             desc: Default::default(),
             filter_builder: FilterBuilder::new(world),
-            world: world.clone(),
             event_count: 0,
             is_instanced: false,
         };
         T::populate(&mut obj);
-        obj.desc.filter = *obj.filter_builder.get_desc_filter();
         let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
             name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
@@ -126,11 +120,9 @@ where
         let mut obj = Self {
             desc,
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
-            world: world.clone(),
             event_count: 0,
             is_instanced: false,
         };
-        obj.desc.filter = *obj.filter_builder.get_desc_filter();
         T::populate(&mut obj);
         obj
     }
@@ -478,7 +470,8 @@ where
     T: Iterable<'a>,
 {
     fn current_term(&mut self) -> &mut TermT {
-        self.filter_builder.current_term()
+        let next_term_index = self.next_term_index;
+        &mut self.get_desc_filter().terms[next_term_index as usize]
     }
 
     fn next_term(&mut self) {
@@ -492,7 +485,7 @@ where
 {
     #[inline]
     fn get_desc_filter(&mut self) -> &mut ecs_filter_desc_t {
-        self.filter_builder.get_desc_filter()
+        &mut self.desc.filter
     }
 
     #[inline]
