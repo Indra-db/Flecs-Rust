@@ -107,11 +107,10 @@ where
     /// * C++ API: `query_builder_i::query_builder_i`
     #[doc(alias = "query_builder_i::query_builder_i")]
     pub fn new_from_desc(world: &World, desc: &mut ecs_query_desc_t) -> Self {
-        let mut obj = Self {
+        let obj = Self {
             desc: *desc,
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
         };
-        T::populate(&mut obj);
         obj
     }
 
@@ -213,8 +212,6 @@ where
     /// * C++ API: `node_builder::build`
     #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
-        //let desc_filter = self.filter_builder.desc;
-        //self.desc.filter = desc_filter;
         let world = &self.filter_builder.world;
         Query::<'a, T>::new_from_desc(world, &mut self.desc)
     }
