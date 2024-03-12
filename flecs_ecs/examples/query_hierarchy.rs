@@ -62,8 +62,8 @@ fn main() {
         // we have tests in place to ensure that the `Option` API is working as expected.
         .build();
 
-    query.iter(|iter, (local, parent_world, world)| {
-        for i in iter {
+    query.iter(|it, (local, parent_world, world)| {
+        for i in it.iter() {
             world[i].x = local[i].x;
             world[i].y = local[i].y;
             if parent_world.is_some() {

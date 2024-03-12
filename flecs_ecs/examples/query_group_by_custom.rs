@@ -90,7 +90,7 @@ fn main() {
             it.get_archetype(),
         );
 
-        for i in it {
+        for i in it.iter() {
             println!(" [{:?}]", pos[i]);
         }
 

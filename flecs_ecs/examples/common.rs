@@ -18,7 +18,7 @@ pub struct Velocity {
 }
 
 #[derive(Default, Clone, Component)]
-struct Mass {
+pub struct Mass {
     pub value: f32,
 }
 

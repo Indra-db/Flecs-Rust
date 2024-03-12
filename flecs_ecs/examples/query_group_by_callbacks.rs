@@ -125,7 +125,7 @@ fn main() {
             ctx.counter
         );
 
-        for i in it {
+        for i in it.iter() {
             println!(" [{:?}]", pos[i]);
         }
 

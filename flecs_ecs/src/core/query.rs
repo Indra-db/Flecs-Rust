@@ -402,7 +402,7 @@ where
     ///
     /// * C++ API: `iterable::each`
     #[doc(alias = "iterable::each")]
-    pub fn each(&mut self, mut func: impl FnMut(T::TupleType)) {
+    pub fn each(&self, mut func: impl FnMut(T::TupleType)) {
         unsafe {
             let mut iter = ecs_query_iter(self.world.raw_world, self.query);
 
@@ -439,7 +439,7 @@ where
     ///
     /// * C++ API: `iterable::each`
     #[doc(alias = "iterable::each")]
-    pub fn each_entity(&mut self, mut func: impl FnMut(&mut Entity, T::TupleType)) {
+    pub fn each_entity(&self, mut func: impl FnMut(&mut Entity, T::TupleType)) {
         unsafe {
             let mut iter = ecs_query_iter(self.world.raw_world, self.query);
 

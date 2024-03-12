@@ -6,7 +6,7 @@ fn main() {
 
     // Create a query for Position, Velocity. Queries are the fastest way to
     // iterate entities as they cache results.
-    let mut query = world.query::<(&mut Position, &Velocity)>();
+    let query = world.query::<(&mut Position, &Velocity)>();
 
     // Create a few test entities for a Position, Velocity query
     world
@@ -44,8 +44,8 @@ fn main() {
     // Iter is a bit more verbose, but allows for more control over how entities
     // are iterated as it provides multiple entities in the same callback.
     // There's also an `iter_only` function that only provides the iterator.
-    query.iter(|iter, (pos, vel)| {
-        for i in iter {
+    query.iter(|it, (pos, vel)| {
+        for i in it.iter() {
             pos[i].x += vel[i].x;
             pos[i].y += vel[i].y;
             println!("[{:?}]", pos[i])

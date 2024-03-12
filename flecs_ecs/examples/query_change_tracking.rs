@@ -93,21 +93,21 @@ pub fn main() {
 
     // Iterate the write query. Because the Position term is InOut (default)
     // iterating the query will write to the dirty state of iterated tables.
-    query_write.iter(|iter, (dirty, pos)| {
-        println!("iterate table [{}]", iter.get_archetype());
+    query_write.iter(|it, (dirty, pos)| {
+        println!("iterate table [{}]", it.get_archetype());
 
         // Because we enforced that Dirty is a shared component, we can check
         // a single value for the entire table.
         if !dirty[0].value {
             // If the dirty flag is false, skip the table. This way the table's
             // dirty state is not updated by the query.
-            iter.skip();
-            println!("iter.skip() for table [{}]", iter.get_archetype());
+            it.skip();
+            println!("iter.skip() for table [{}]", it.get_archetype());
             return;
         }
 
         // For all other tables the dirty state will be set.
-        for i in iter {
+        for i in it.iter() {
             pos[i].x += 1.0;
             pos[i].y += 1.0;
         }

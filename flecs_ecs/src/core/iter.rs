@@ -23,9 +23,6 @@ use super::{
 
 pub struct Iter<'a> {
     iter: &'a mut IterT,
-    begin: usize,
-    end: usize,
-    current: usize,
 }
 
 impl<'a> Iter<'a> {
@@ -45,12 +42,13 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::iter`
     #[doc(alias = "iter::iter")]
     pub unsafe fn new(iter: &'a mut IterT) -> Self {
-        let end = iter.count as usize;
-        Self {
-            iter,
-            begin: 0,
-            end,
-            current: 0,
+        Self { iter }
+    }
+
+    pub fn iter(&self) -> IterIterator {
+        IterIterator {
+            iter: self,
+            index: 0,
         }
     }
 
@@ -549,17 +547,20 @@ impl<'a> Iter<'a> {
     }
 }
 
-impl<'a> Iterator for Iter<'a> {
+pub struct IterIterator<'a> {
+    iter: &'a Iter<'a>,
+    index: usize,
+}
+
+impl<'a> Iterator for IterIterator<'a> {
     type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.current < self.end {
-            let result = self.current;
-            self.current += 1;
+        if self.index < self.iter.count() {
+            let result = self.index;
+            self.index += 1;
             Some(result)
         } else {
-            // Reset current to begin for reiteration
-            self.current = self.begin;
             None
         }
     }
