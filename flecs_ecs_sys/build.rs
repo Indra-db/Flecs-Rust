@@ -89,9 +89,5 @@ fn main() {
         .extra_warnings(true)
         //.define("NDEBUG", None)
         .file("src/flecs.c");
-    println!(
-        "cargo:warning=Using compiler: {:?}",
-        build.get_compiler().path(),
-    );
     build.compile("flecs");
 }
