@@ -1,8 +1,9 @@
 [package]
 name = "flecs_ecs_derive"
 version = "0.1.0"
-edition = "2021"
-license-file = "LICENSE"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [lib]
 proc-macro = true

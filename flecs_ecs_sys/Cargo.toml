@@ -1,11 +1,11 @@
 [package]
 name = "flecs_ecs_sys"
 version = "0.1.0"
-edition = "2021"
-license-file = "LICENSE"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 authors = ["Indra de Backere <debackere.indra@gmail.com>"]
 description = "sys binding for C/CPP flecs ECS library <https://github.com/SanderMertens/flecs>"
-repository = "https://github.com/Indra-db/flecs_ecs_rs"
 keywords = ["flecs", "ecs", "sys"]
 categories = ["External FFI bindings",]
 

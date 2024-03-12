@@ -2,6 +2,11 @@
 members = ["flecs_ecs", "flecs_ecs_derive", "flecs_ecs_sys"]
 resolver = "2"
 
+[workspace.package]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/Indra-db/flecs_ecs_rs"
+
 #[profile.release]
 #opt-level = 3
 #lto = true
