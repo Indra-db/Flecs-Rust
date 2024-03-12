@@ -24,11 +24,6 @@ ctor = "0.2.7"
 name = "query"
 harness = false
 
-[build-dependencies]
-bindgen = "0.69.4"
-cc = "1.0.83"
-regex = "1.9.5"
-
 [features]
 flecs_app = []
 flecs_pipeline = []
