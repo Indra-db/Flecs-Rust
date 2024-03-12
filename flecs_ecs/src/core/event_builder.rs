@@ -11,6 +11,7 @@ use super::{
     ecs_pair,
     event::{EventBuilderImpl, EventData},
     world::World,
+    Entity,
 };
 
 pub struct EventBuilder {
@@ -54,7 +55,7 @@ impl EventBuilder {
     ///
     /// * C++ API: `event_builder_base::id`
     #[doc(alias = "event_builder_base::id")]
-    pub fn add_to_emit<C>(&mut self) -> &mut Self
+    pub fn add_type_to_emit<C>(&mut self) -> &mut Self
     where
         C: CachedComponentData,
     {
@@ -153,8 +154,8 @@ impl EventBuilder {
     ///
     /// * C++ API: `event_builder_base::entity`
     #[doc(alias = "event_builder_base::entity")]
-    pub fn set_entity_to_emit(&mut self, entity: EntityT) -> &mut Self {
-        self.desc.entity = entity;
+    pub fn set_entity_to_emit(&mut self, entity: &Entity) -> &mut Self {
+        self.desc.entity = entity.raw_id;
         self
     }
 

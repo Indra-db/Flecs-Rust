@@ -559,7 +559,7 @@ pub trait ObserverBuilderImpl: FilterBuilderImpl {
     ///
     /// * C++ API: `observer_builder_i::event`
     #[doc(alias = "observer_builder_i::event")]
-    fn add_event_of_type<T>(&mut self) -> &mut Self
+    fn add_event_type<T>(&mut self) -> &mut Self
     where
         T: CachedComponentData,
     {
