@@ -32,6 +32,19 @@ pub struct Entity {
     pub entity_view: EntityView,
 }
 
+impl PartialEq<u64> for Entity {
+    fn eq(&self, other: &u64) -> bool {
+        self.raw_id == *other
+    }
+}
+
+// Additionally, to allow comparison in the other direction (i32 with MyStruct)
+impl PartialEq<Entity> for u64 {
+    fn eq(&self, other: &Entity) -> bool {
+        *self == other.raw_id
+    }
+}
+
 impl Deref for Entity {
     type Target = EntityView;
 
