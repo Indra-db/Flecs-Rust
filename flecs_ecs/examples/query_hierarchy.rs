@@ -66,7 +66,7 @@ fn main() {
         for i in iter {
             world[i].x = local[i].x;
             world[i].y = local[i].y;
-            if !parent_world.is_none() {
+            if parent_world.is_some() {
                 let parent_world = parent_world.unwrap();
                 world[i].x += parent_world[i].x;
                 world[i].y += parent_world[i].y;
