@@ -27,7 +27,7 @@ use super::{
     EmptyComponent, EntityView, NotEmptyComponent, ScopedWorld, ECS_OVERRIDE,
 };
 
-#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Entity {
     pub entity_view: EntityView,
 }
@@ -64,6 +64,29 @@ impl DerefMut for Entity {
 impl From<Entity> for IdT {
     fn from(entity: Entity) -> Self {
         entity.entity_view.id.raw_id
+    }
+}
+impl std::fmt::Display for Entity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let name = self.get_name();
+        write!(f, "{}", name)
+    }
+}
+
+impl std::fmt::Debug for Entity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let name = self.get_name();
+        let id = self.raw_id;
+        let archetype_str = if let Some(s) = self.get_archetype().to_string() {
+            s
+        } else {
+            "empty".to_string()
+        };
+        write!(
+            f,
+            "Entity name: {} -- id: {} -- archetype: {}",
+            name, id, archetype_str
+        )
     }
 }
 
