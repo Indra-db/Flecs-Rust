@@ -508,6 +508,52 @@ where
         }
     }
 
+    /// find iterator.
+    /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
+    /// if it is, it returns that entity.
+    /// The following function signatures is valid:
+    ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///
+    /// Each iterators are automatically instanced.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iterable::find`
+    #[doc(alias = "iterable::find")]
+    pub fn find_entity(&self, mut func: impl FnMut(T::TupleType) -> bool) -> Option<Entity> {
+        unsafe {
+            let mut iter = ecs_query_iter(self.world.raw_world, self.query);
+            let mut entity: Option<Entity> = None;
+
+            while ecs_query_next(&mut iter) {
+                let components_data = T::get_array_ptrs_of_components(&iter);
+                let iter_count = iter.count as usize;
+                let array_components = &components_data.array_components;
+
+                ecs_table_lock(self.world.raw_world, iter.table);
+
+                for i in 0..iter_count {
+                    let tuple = if components_data.is_any_array_a_ref {
+                        let is_ref_array_components = &components_data.is_ref_array_components;
+                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+                    } else {
+                        T::get_tuple(array_components, i)
+                    };
+                    if func(tuple) {
+                        entity = Some(Entity::new_from_existing_raw(
+                            iter.world,
+                            *iter.entities.add(i),
+                        ));
+                        break;
+                    }
+                }
+
+                ecs_table_unlock(self.world.raw_world, iter.table);
+            }
+            entity
+        }
+    }
+
     /// iter iterator.
     /// The "iter" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:

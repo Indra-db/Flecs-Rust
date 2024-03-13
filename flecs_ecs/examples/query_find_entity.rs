@@ -12,18 +12,19 @@ fn main() {
 
     world
         .new_entity_named(CStr::from_bytes_with_nul(b"e2\0").unwrap())
-        .set(Position { x: 10.0, y: 20.0 });
+        .set(Position { x: 20.0, y: 30.0 });
 
     // Create a simple query for component Position
-    let mut _query = world.query::<(&mut Position,)>();
+    let query = world.query::<(&mut Position,)>();
 
-    let _entity: Option<Entity> = None;
-    todo!("^ find function not implemented on query, placeholder None");
+    let entity: Option<Entity> = query.find_entity(|(pos,)| pos.x == 20.0);
 
-    #[allow(unreachable_code)]
-    if let Some(entity) = _entity {
-        println!("Entity found: {:?}", entity.get_hierarchy_path());
+    if let Some(entity) = entity {
+        println!("Entity found: {:?}", entity.get_hierarchy_path().unwrap());
     } else {
         println!("Entity not found");
     }
+
+    // Output:
+    //  Entity found: "::e2"
 }
