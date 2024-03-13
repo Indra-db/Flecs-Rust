@@ -474,6 +474,40 @@ where
         }
     }
 
+    pub fn each_iter(&self, mut func: impl FnMut(&mut Iter, usize, T::TupleType)) {
+        unsafe {
+            let mut iter = ecs_query_iter(self.world.raw_world, self.query);
+
+            while ecs_query_next(&mut iter) {
+                let components_data = T::get_array_ptrs_of_components(&iter);
+                let iter_count = {
+                    if iter.count == 0 {
+                        1_usize
+                    } else {
+                        iter.count as usize
+                    }
+                };
+                let array_components = &components_data.array_components;
+
+                ecs_table_lock(self.world.raw_world, iter.table);
+
+                let mut iter_t = Iter::new(&mut iter);
+
+                for i in 0..iter_count {
+                    let tuple = if components_data.is_any_array_a_ref {
+                        let is_ref_array_components = &components_data.is_ref_array_components;
+                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+                    } else {
+                        T::get_tuple(array_components, i)
+                    };
+                    func(&mut iter_t, i, tuple);
+                }
+
+                ecs_table_unlock(self.world.raw_world, iter.table);
+            }
+        }
+    }
+
     /// iter iterator.
     /// The "iter" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:

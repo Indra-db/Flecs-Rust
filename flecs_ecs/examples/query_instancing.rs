@@ -55,7 +55,7 @@ fn main() {
                 position[i].y += velocity[i].y;
                 println!(
                     "entity {} has {:?}",
-                    it.get_entity_handle(i).get_name(),
+                    it.get_entity(i).get_name(),
                     position[i]
                 );
             }
@@ -67,7 +67,7 @@ fn main() {
                 position[i].y += velocity[0].y;
                 println!(
                     "entity {} has {:?}",
-                    it.get_entity_handle(i).get_name(),
+                    it.get_entity(i).get_name(),
                     position[i]
                 );
             }

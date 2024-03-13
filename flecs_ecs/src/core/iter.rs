@@ -102,7 +102,7 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::entity`
     #[doc(alias = "iter::entity")]
-    pub fn get_entity_handle(&self, row: usize) -> Entity {
+    pub fn get_entity(&self, row: usize) -> Entity {
         unsafe { Entity::new_from_existing_raw(self.iter.world, *self.iter.entities.add(row)) }
     }
 
@@ -331,7 +331,7 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::pair`
     #[doc(alias = "iter::pair")]
-    pub fn get_field_pair_id(&self, index: i32) -> Option<Id> {
+    pub fn get_pair_id(&self, index: i32) -> Option<Id> {
         unsafe {
             let id = ecs_field_id(self.iter, index);
             if ecs_id_is_pair(id) {
