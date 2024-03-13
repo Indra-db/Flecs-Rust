@@ -17,7 +17,7 @@ fn main() {
     // Create a simple query for component Position
     let query = world.query::<(&mut Position,)>();
 
-    let entity: Option<Entity> = query.find_entity(|(pos,)| pos.x == 20.0);
+    let entity: Option<Entity> = query.find(|(pos,)| pos.x == 20.0);
 
     if let Some(entity) = entity {
         println!("Entity found: {:?}", entity.get_hierarchy_path().unwrap());

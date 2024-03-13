@@ -172,8 +172,8 @@ where
     ///
     /// # See also
     ///
-    /// * C++ API: `iterable::find`
-    pub fn find_entity_impl(
+    /// * C++ API: `find_delegate::invoke_callback`
+    pub fn find_impl(
         &self,
         filter: *mut FilterT,
         mut func: impl FnMut(T::TupleType) -> bool,
@@ -208,6 +208,89 @@ where
                 ecs_table_unlock(self.world.raw_world, iter.table);
             }
             entity
+        }
+    }
+
+    fn find_entity_impl(
+        &self,
+        filter: *mut FilterT,
+        mut func: impl FnMut(&mut Entity, T::TupleType) -> bool,
+    ) -> Option<Entity> {
+        unsafe {
+            let mut iter = ecs_filter_iter(self.world.raw_world, filter);
+            let mut entity_result: Option<Entity> = None;
+
+            while ecs_filter_next(&mut iter) {
+                let components_data = T::get_array_ptrs_of_components(&iter);
+                let iter_count = iter.count as usize;
+                let array_components = &components_data.array_components;
+
+                ecs_table_lock(self.world.raw_world, iter.table);
+
+                for i in 0..iter_count {
+                    let mut entity =
+                        Entity::new_from_existing_raw(iter.world, *iter.entities.add(i));
+
+                    let tuple = if components_data.is_any_array_a_ref {
+                        let is_ref_array_components = &components_data.is_ref_array_components;
+                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+                    } else {
+                        T::get_tuple(array_components, i)
+                    };
+                    if func(&mut entity, tuple) {
+                        entity_result = Some(entity);
+                        break;
+                    }
+                }
+
+                ecs_table_unlock(self.world.raw_world, iter.table);
+            }
+            entity_result
+        }
+    }
+
+    fn find_iter_impl(
+        &self,
+        filter: *mut FilterT,
+        mut func: impl FnMut(&mut Iter, usize, T::TupleType) -> bool,
+    ) -> Option<Entity> {
+        unsafe {
+            let mut iter = ecs_filter_iter(self.world.raw_world, filter);
+            let mut entity_result: Option<Entity> = None;
+
+            while ecs_filter_next(&mut iter) {
+                let components_data = T::get_array_ptrs_of_components(&iter);
+                let array_components = &components_data.array_components;
+                let iter_count = {
+                    if iter.count == 0 {
+                        1_usize
+                    } else {
+                        iter.count as usize
+                    }
+                };
+
+                ecs_table_lock(self.world.raw_world, iter.table);
+                let mut iter_t = Iter::new(&mut iter);
+
+                for i in 0..iter_count {
+                    let tuple = if components_data.is_any_array_a_ref {
+                        let is_ref_array_components = &components_data.is_ref_array_components;
+                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+                    } else {
+                        T::get_tuple(array_components, i)
+                    };
+                    if func(&mut iter_t, i, tuple) {
+                        entity_result = Some(Entity::new_from_existing_raw(
+                            iter.world,
+                            *iter.entities.add(i),
+                        ));
+                        break;
+                    }
+                }
+
+                ecs_table_unlock(self.world.raw_world, iter.table);
+            }
+            entity_result
         }
     }
 
@@ -486,7 +569,7 @@ where
         self.base.each_iter_impl(self.filter_ptr, func);
     }
 
-    /// find iterator.
+    /// find iterator to find an entity
     /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
     /// if it is, it returns that entity.
     /// The following function signatures is valid:
@@ -494,12 +577,62 @@ where
     ///
     /// Each iterators are automatically instanced.
     ///
+    /// # Returns
+    ///
+    /// * Some(Entity) if the entity was found, None if no entity was found
+    ///
     /// # See also
     ///
-    /// * C++ API: `iterable::find`
-    #[doc(alias = "iterable::find")]
-    pub fn find_entity(&self, func: impl FnMut(T::TupleType) -> bool) -> Option<Entity> {
+    /// * C++ API: `find_delegate::invoke_callback`
+    #[doc(alias = "find_delegate::invoke_callback")]
+    pub fn find(&self, func: impl FnMut(T::TupleType) -> bool) -> Option<Entity> {
+        self.base.find_impl(self.filter_ptr, func)
+    }
+
+    /// find iterator to find an entity
+    /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
+    /// if it is, it returns that entity.
+    /// The following function signatures is valid:
+    ///  - func(entity : Entity, comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///
+    /// Each iterators are automatically instanced.
+    ///
+    /// # Returns
+    ///
+    /// * Some(Entity) if the entity was found, None if no entity was found
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `find_delegate::invoke_callback`
+    #[doc(alias = "find_delegate::invoke_callback")]
+    pub fn find_entity(
+        &self,
+        func: impl FnMut(&mut Entity, T::TupleType) -> bool,
+    ) -> Option<Entity> {
         self.base.find_entity_impl(self.filter_ptr, func)
+    }
+
+    /// find iterator to find an entity.
+    /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
+    /// if it is, it returns that entity.
+    /// The following function signatures is valid:
+    ///  - func(iter : Iter, index : usize, comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///
+    /// Each iterators are automatically instanced.
+    ///
+    /// # Returns
+    ///
+    /// * Some(Entity) if the entity was found, None if no entity was found
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `find_delegate::invoke_callback`
+    #[doc(alias = "find_delegate::invoke_callback")]
+    pub fn find_iter(
+        &self,
+        func: impl FnMut(&mut Iter, usize, T::TupleType) -> bool,
+    ) -> Option<Entity> {
+        self.base.find_iter_impl(self.filter_ptr, func)
     }
 
     /// Get the entity of the current filter
