@@ -386,9 +386,28 @@ where
         let each_entity_static_ref = Box::leak(each_entity_func);
 
         binding_ctx.each_entity = Some(each_entity_static_ref as *mut _ as *mut c_void);
-        binding_ctx.free_each_entity = Some(Self::on_free_each);
+        binding_ctx.free_each_entity = Some(Self::on_free_each_entity);
 
         self.desc.callback = Some(Self::run_each_entity::<Func> as unsafe extern "C" fn(_));
+
+        self.is_instanced = true;
+
+        self.build()
+    }
+
+    pub fn on_each_iter<Func>(&mut self, func: Func) -> System
+    where
+        Func: FnMut(&mut Iter, usize, T::TupleType) + 'static,
+    {
+        let binding_ctx = self.get_binding_ctx();
+
+        let each_iter_func = Box::new(func);
+        let each_iter_static_ref = Box::leak(each_iter_func);
+
+        binding_ctx.each_iter = Some(each_iter_static_ref as *mut _ as *mut c_void);
+        binding_ctx.free_each_iter = Some(Self::on_free_each_iter);
+
+        self.desc.callback = Some(Self::run_each_iter::<Func> as unsafe extern "C" fn(_));
 
         self.is_instanced = true;
 
@@ -437,6 +456,14 @@ where
     extern "C" fn on_free_each_entity(ptr: *mut c_void) {
         let ptr_func: *mut fn(&mut Entity, T::TupleType) =
             ptr as *mut fn(&mut Entity, T::TupleType);
+        unsafe {
+            ptr::drop_in_place(ptr_func);
+        }
+    }
+
+    extern "C" fn on_free_each_iter(ptr: *mut c_void) {
+        let ptr_func: *mut fn(&mut Iter, usize, T::TupleType) =
+            ptr as *mut fn(&mut Iter, usize, T::TupleType);
         unsafe {
             ptr::drop_in_place(ptr_func);
         }
@@ -491,7 +518,6 @@ where
         let each_entity = (*ctx).each_entity.unwrap();
         let each_entity = &mut *(each_entity as *mut Func);
 
-        //while ecs_iter_next(iter) {
         let components_data = T::get_array_ptrs_of_components(&*iter);
         let array_components = &components_data.array_components;
         let iter_count = (*iter).count as usize;
@@ -510,7 +536,40 @@ where
             each_entity(&mut entity, tuple);
         }
         ecs_table_unlock((*iter).world, (*iter).table);
-        //}
+    }
+
+    unsafe extern "C" fn run_each_iter<Func>(iter: *mut IterT)
+    where
+        Func: FnMut(&mut Iter, usize, T::TupleType),
+    {
+        let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
+        let each_iter = (*ctx).each_iter.unwrap();
+        let each_iter = &mut *(each_iter as *mut Func);
+
+        let components_data = T::get_array_ptrs_of_components(&*iter);
+        let array_components = &components_data.array_components;
+        let iter_count = {
+            if (*iter).count == 0 {
+                1_usize
+            } else {
+                (*iter).count as usize
+            }
+        };
+
+        ecs_table_lock((*iter).world, (*iter).table);
+        let mut iter_t = Iter::new(&mut (*iter));
+
+        for i in 0..iter_count {
+            let tuple = if components_data.is_any_array_a_ref {
+                let is_ref_array_components = &components_data.is_ref_array_components;
+                T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+            } else {
+                T::get_tuple(array_components, i)
+            };
+
+            each_iter(&mut iter_t, i, tuple);
+        }
+        ecs_table_unlock((*iter).world, (*iter).table);
     }
 
     unsafe extern "C" fn run_iter_only<Func>(iter: *mut IterT)
