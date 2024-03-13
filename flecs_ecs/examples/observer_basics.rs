@@ -1,7 +1,6 @@
 mod common;
 use common::*;
 
-//TODO: `.each` signature with it, index and EcsId not yet supported in flecs_ecs, this example needs to be updated when it is supported.
 fn main() {
     let world = World::new();
 
@@ -11,13 +10,24 @@ fn main() {
         .add_event(ECS_ON_ADD)
         .add_event(ECS_ON_REMOVE)
         .add_event(ECS_ON_SET)
-        .on_iter(|it, (_pos,)| {
-            if it.get_event_as_entity() == ECS_ON_ADD {
-                println!("OnAdd");
-            } else if it.get_event_as_entity() == ECS_ON_REMOVE {
-                println!("OnRemove");
-            } else if it.get_event_as_entity() == ECS_ON_SET {
-                println!("OnSet");
+        .on_each_iter(|it, index, (pos,)| {
+            if it.get_event() == ECS_ON_ADD {
+                // No assumptions about the component value should be made here. If
+                // a ctor for the component was registered it will be called before
+                // the EcsOnAdd event, but a value assigned by set won't be visible.
+                println!(
+                    " - OnAdd: {}: {}",
+                    it.get_event_id().to_str(),
+                    it.get_entity(index)
+                );
+            } else {
+                println!(
+                    " - {}: {}: {}: with {:?}",
+                    it.get_event().get_name(),
+                    it.get_event_id().to_str(),
+                    it.get_entity(index),
+                    pos
+                );
             }
         });
 
@@ -33,7 +43,7 @@ fn main() {
     entity.remove::<Position>();
 
     // Output:
-    //  OnAdd
-    //  OnSet
-    //  OnRemove
+    //  - OnAdd: Position: e1
+    //  - OnSet: Position: e1: with Position { x: 10.0, y: 20.0 }
+    //  - OnRemove: Position: e1: with Position { x: 10.0, y: 20.0 }
 }

@@ -7,7 +7,6 @@ struct MyEvent;
 
 impl EventData for MyEvent {}
 
-//TODO: `.each` signature with it, index and EcsId not yet supported in flecs_ecs, this example needs to be updated when it is supported.
 fn main() {
     let world = World::new();
 
@@ -15,8 +14,13 @@ fn main() {
     world
         .observer_builder::<(&Position,)>()
         .add_event_type::<MyEvent>()
-        .on_iter(|_it, (_pos,)| {
-            println!("OnEvent");
+        .on_each_iter(|it, index, (_pos,)| {
+            println!(
+                " - {}: {}: {}",
+                it.get_event().get_name(),
+                it.get_event_id().to_str(),
+                it.get_entity(index)
+            );
         });
 
     // The observer filter can be matched against the entity, so make sure it
@@ -34,5 +38,5 @@ fn main() {
         .emit();
 
     // Output:
-    //  OnEvent
+    //  - MyEvent: Position: e1
 }

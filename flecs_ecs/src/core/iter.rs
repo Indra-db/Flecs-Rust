@@ -68,7 +68,7 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::event`
     #[doc(alias = "iter::event")]
-    pub fn get_event_as_entity(&self) -> Entity {
+    pub fn get_event(&self) -> Entity {
         Entity::new_from_existing_raw(self.iter.world, self.iter.event)
     }
 
