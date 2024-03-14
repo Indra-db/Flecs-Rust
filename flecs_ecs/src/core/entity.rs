@@ -66,6 +66,13 @@ impl From<Entity> for IdT {
         entity.entity_view.id.raw_id
     }
 }
+
+impl From<IdT> for Entity {
+    fn from(value: IdT) -> Self {
+        Entity::new_id_only(value)
+    }
+}
+
 impl std::fmt::Display for Entity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let name = self.get_name();
