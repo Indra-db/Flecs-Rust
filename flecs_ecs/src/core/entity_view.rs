@@ -31,6 +31,7 @@ use super::{
     id::Id,
     table::{Table, TableRange},
     world::World,
+    EmptyComponent, EventBuilderImpl, EventData, NotEmptyComponent,
 };
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -1543,5 +1544,106 @@ impl EntityView {
     #[doc(hidden)]
     fn set_stage(&self, stage: *mut WorldT) -> Entity {
         Entity::new_from_existing_raw(stage, self.raw_id)
+    }
+}
+
+// Event mixin
+impl EntityView {
+    /// Emit event for entity
+    ///
+    /// # Arguments
+    ///
+    /// * event - the event to emit
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::emit`
+    #[doc(alias = "entity_view::emit")]
+    pub fn emit_id(&self, event: &Entity) {
+        self.get_world()
+            .event_id(event)
+            .set_entity_to_emit(&self.entity())
+            .emit();
+    }
+
+    /// Emit event for entity
+    ///
+    /// # Type Parameters
+    ///
+    /// * T - the event type to emit. Type must be empty.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::emit`
+    #[doc(alias = "entity_view::emit")]
+    pub fn emit<T: EventData + EmptyComponent>(&self) {
+        self.emit_id(&T::UnderlyingType::get_id(self.world).into());
+    }
+
+    /// Emit event with payload for entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * T - the event type to emit. Type must contain data (not empty struct).
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::emit`
+    #[doc(alias = "entity_view::emit")]
+    pub fn emit_payload<T: EventData + NotEmptyComponent>(&self, payload: &mut T) {
+        self.get_world()
+            .event::<T>()
+            .set_entity_to_emit(&self.entity())
+            .set_event_data(payload)
+            .emit();
+    }
+
+    /// Enqueue event for entity.
+    ///
+    /// # Arguments
+    ///
+    /// * event - the event to enqueue
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::enqueue`
+    #[doc(alias = "entity_view::enqueue")]
+    pub fn enqueue_id(&self, event: &Entity) {
+        self.get_world()
+            .event_id(event)
+            .set_entity_to_emit(&self.entity())
+            .enqueue();
+    }
+
+    /// Enqueue event for entity
+    ///
+    /// # Type Parameters
+    ///
+    /// * T - the event type to enqueue. Type must be empty.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::enqueue`
+    #[doc(alias = "entity_view::enqueue")]
+    pub fn enqueue<T: EventData + EmptyComponent>(&self) {
+        self.enqueue_id(&T::UnderlyingType::get_id(self.world).into());
+    }
+
+    /// enqueue event with payload for entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * T - the event type to enqueue. Type must contain data (not empty struct).
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::enqueue`
+    #[doc(alias = "entity_view::enqueue")]
+    pub fn enqueue_payload<T: EventData + NotEmptyComponent>(&self, payload: &mut T) {
+        self.get_world()
+            .event::<T>()
+            .set_entity_to_emit(&self.entity())
+            .set_event_data(payload)
+            .enqueue();
     }
 }
