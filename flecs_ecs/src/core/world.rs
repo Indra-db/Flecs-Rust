@@ -3146,7 +3146,7 @@ impl World {
 
 // Event mixin implementation
 impl World {
-    /// Create a new event.
+    /// Create a new event builder (untyped) from entity id which represents an event
     ///
     /// # Arguments
     ///
@@ -3160,8 +3160,8 @@ impl World {
     ///
     /// * C++ API: `world::event`
     #[doc(alias = "world::event")]
-    pub fn event_untyped(&self, event: EntityT) -> EventBuilder {
-        EventBuilder::new(self, event)
+    pub fn event_id(&self, event: &Entity) -> EventBuilder {
+        EventBuilder::new(self, event.raw_id)
     }
 
     /// Create a new event.
@@ -3179,7 +3179,7 @@ impl World {
     /// * C++ API: `world::event`
     #[doc(alias = "world::event")]
     pub fn event<T: EventData + CachedComponentData>(&self) -> EventBuilderTyped<T> {
-        EventBuilderTyped::<T>::new(self, T::get_id(self.raw_world))
+        EventBuilderTyped::<T>::new(self, T::UnderlyingType::get_id(self.raw_world))
     }
 }
 
