@@ -79,15 +79,12 @@ fn main() {
     generate_bindings();
 
     #[cfg(not(feature = "flecs_disable_build_c_library"))]
-    // Compile flecs
-    let mut build = cc::Build::new();
-    build
-        //.compiler("clang")
-        //.opt_level(3)
-        ////.shared_flag(true)
-        .warnings(true)
-        .extra_warnings(true)
-        //.define("NDEBUG", None)
-        .file("src/flecs.c");
-    build.compile("flecs");
+    {
+        // Compile flecs
+        cc::Build::new()
+            .warnings(true)
+            .extra_warnings(true)
+            .file("src/flecs.c")
+            .compile("flecs");
+    }
 }
