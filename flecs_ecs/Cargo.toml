@@ -36,14 +36,15 @@ flecs_meta = []
 flecs_metrics = []
 flecs_ecs_asserts = []
 flecs_enable_all_asserts = ["flecs_ecs_asserts"]
-flecs_regenerate_binding = ["flecs_ecs_sys/flecs_regenerate_binding"]
+sys_regenerate_binding = ["flecs_ecs_sys/regenerate_binding"]
+sys_build_debug = ["flecs_ecs_sys/build_debug"]
 
 # Enabling this will not build a copy of flecs into this library.
 # Instead, the executable that this is linked with will need to
 # provide the symbols required. This is useful when using both
 # Rust and C++ code in an application and a copy of flecs is
 # already being linked into the executable via other means.
-flecs_disable_build_c_library = ["flecs_ecs_sys/flecs_disable_build_c_library"]
+sys_disable_build_c_library = ["flecs_ecs_sys/disable_build_c_library"]
 
 default = [
     

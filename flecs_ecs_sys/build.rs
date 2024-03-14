@@ -1,7 +1,7 @@
 #![allow(clippy::all)]
 #![allow(warnings)]
 
-#[cfg(feature = "flecs_regenerate_binding")]
+#[cfg(feature = "regenerate_binding")]
 fn generate_bindings() {
     use std::{env, path::PathBuf};
 
@@ -75,16 +75,32 @@ fn main() {
     println!("cargo:rerun-if-changed=src/flecs.c");
     println!("cargo:rerun-if-changed=build.rs");
 
-    #[cfg(feature = "flecs_regenerate_binding")]
+    #[cfg(feature = "regenerate_binding")]
     generate_bindings();
 
-    #[cfg(not(feature = "flecs_disable_build_c_library"))]
+    #[cfg(not(feature = "disable_build_c_library"))]
     {
-        // Compile flecs
-        cc::Build::new()
-            .warnings(true)
-            .extra_warnings(true)
-            .file("src/flecs.c")
-            .compile("flecs");
+        #[cfg(not(feature = "build_debug"))]
+        {
+            cc::Build::new()
+                .compiler("clang")
+                .opt_level(3)
+                .shared_flag(true)
+                .warnings(true)
+                .extra_warnings(true)
+                .define("NDEBUG", None)
+                .file("src/flecs.c");
+        }
+        #[cfg(feature = "build_debug")]
+        {
+            // Compile flecs
+            cc::Build::new()
+                .compiler("clang")
+                .shared_flag(true)
+                .warnings(true)
+                .extra_warnings(true)
+                .file("src/flecs.c")
+                .compile("flecs");
+        }
     }
 }
