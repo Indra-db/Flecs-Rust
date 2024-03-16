@@ -1,4 +1,9 @@
-use std::{default, ffi::CStr, ops::Deref, os::raw::c_void, ptr};
+use std::{
+    default,
+    ffi::{c_void, CStr},
+    ops::Deref,
+    ptr,
+};
 
 use crate::sys::{
     ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_iter_action_t, ecs_observer_desc_t,
@@ -141,13 +146,13 @@ where
             let static_ref = Box::leak(new_binding_ctx);
             binding_ctx = static_ref;
             self.desc.binding_ctx = binding_ctx as *mut c_void;
-            self.desc.binding_ctx_free = Some(Self::binding_ctx_drop);
+            self.desc.binding_ctx_free = Some(Self::binding_system_ctx_drop);
         }
         unsafe { &mut *binding_ctx }
     }
 
-    /// Executes the drop for the binding context, meant to be used as a callback
-    extern "C" fn binding_ctx_drop(ptr: *mut c_void) {
+    /// Executes the drop for the system binding context, meant to be used as a callback
+    extern "C" fn binding_system_ctx_drop(ptr: *mut c_void) {
         let ptr_struct: *mut ObserverSystemBindingCtx = ptr as *mut ObserverSystemBindingCtx;
         unsafe {
             ptr::drop_in_place(ptr_struct);

@@ -3,6 +3,12 @@ use std::{
     ffi::{c_void, CStr},
     mem::MaybeUninit,
     ops::{Deref, DerefMut},
+    ptr,
+};
+
+use flecs_ecs_sys::{
+    ecs_field_src, ecs_iter_action_t, ecs_observer_desc_t, ecs_observer_init, ecs_table_lock,
+    ecs_table_unlock,
 };
 
 // Module imports from within the current crate
@@ -25,13 +31,14 @@ use super::{
     archetype::Archetype,
     c_types::{EntityT, IdT, TypeT, WorldT, SEPARATOR},
     component_registration::{CachedComponentData, ComponentType, Enum, Struct},
-    ecs_has_pair, ecs_pair, ecs_pair_first, ecs_pair_second, ecs_record_to_row,
+    ecs_add_pair, ecs_has_pair, ecs_pair, ecs_pair_first, ecs_pair_second, ecs_record_to_row,
     entity::Entity,
     enum_type::CachedEnumData,
     id::Id,
     table::{Table, TableRange},
     world::World,
-    EmptyComponent, EventBuilderImpl, EventData, NotEmptyComponent,
+    EmptyComponent, EventBuilderImpl, EventData, IterT, NotEmptyComponent,
+    ObserverEntityBindingCtx, ECS_ANY, ECS_CHILD_OF,
 };
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -1645,5 +1652,372 @@ impl EntityView {
             .set_entity_to_emit(&self.entity())
             .set_event_data(payload)
             .enqueue();
+    }
+}
+
+// Event/Observe mixin
+impl EntityView {
+    /// Register the callback for the entity observer for empty events.
+    ///
+    /// The "empty" iterator accepts a function that is invoked for each matching event.
+    /// The following function signature is valid:
+    ///  - func()
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The callback function
+    ///
+    /// See also
+    ///
+    /// * C++ API: `entity_builder::observe`
+    #[doc(alias = "entity_builder::observe")]
+    pub fn observe<C>(&self, func: impl FnMut()) -> &Self
+    where
+        C: EventData + CachedComponentData + EmptyComponent,
+    {
+        self.observe_impl::<C, _>(func)
+    }
+
+    fn observe_impl<C, Func>(&self, func: Func) -> &Self
+    where
+        Func: FnMut(),
+        C: EventData + CachedComponentData,
+    {
+        let new_binding_ctx = Box::<super::ObserverEntityBindingCtx>::default();
+        let binding_ctx = Box::leak(new_binding_ctx);
+
+        let empty_func = Box::new(func);
+        let empty_static_ref = Box::leak(empty_func);
+
+        binding_ctx.empty = Some(empty_static_ref as *mut _ as *mut c_void);
+        binding_ctx.free_empty = Some(Self::on_free_empty);
+
+        Self::entity_observer_create(
+            self.world,
+            C::UnderlyingType::get_id(self.world),
+            self.raw_id,
+            binding_ctx,
+            Some(Self::run_empty::<Func> as unsafe extern "C" fn(_)),
+        );
+        self
+    }
+
+    /// Register the callback for the entity observer for empty events with entity parameter.
+    ///
+    /// The "empty_entity" iterator accepts a function that is invoked for each matching event.
+    /// The following function signature is valid:
+    ///  - func(&mut Entity)
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The callback function
+    ///
+    /// See also
+    ///
+    /// * C++ API: `entity_builder::observe`
+    #[doc(alias = "entity_builder::observe")]
+    pub fn observe_entity<C>(&self, func: impl FnMut(&mut Entity)) -> &Self
+    where
+        C: EventData + CachedComponentData + EmptyComponent,
+    {
+        self.observe_entity_impl::<C, _>(func)
+    }
+
+    fn observe_entity_impl<C, Func>(&self, func: Func) -> &Self
+    where
+        Func: FnMut(&mut Entity),
+        C: EventData + CachedComponentData,
+    {
+        let new_binding_ctx = Box::<super::ObserverEntityBindingCtx>::default();
+        let binding_ctx = Box::leak(new_binding_ctx);
+
+        let empty_func = Box::new(func);
+        let empty_static_ref = Box::leak(empty_func);
+
+        binding_ctx.empty_entity = Some(empty_static_ref as *mut _ as *mut c_void);
+        binding_ctx.free_empty_entity = Some(Self::on_free_empty_entity);
+
+        Self::entity_observer_create(
+            self.world,
+            C::UnderlyingType::get_id(self.world),
+            self.raw_id,
+            binding_ctx,
+            Some(Self::run_empty_entity::<Func> as unsafe extern "C" fn(_)),
+        );
+        self
+    }
+
+    /// Register the callback for the entity observer for `empty`
+    ///
+    /// The "payload" iterator accepts a function that is invoked for each matching event.
+    /// The following function signature is valid:
+    ///  - func(&mut EventData)
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The callback function
+    ///
+    /// See also
+    ///
+    /// * C++ API: `entity_builder::observe`
+    #[doc(alias = "entity_builder::observe")]
+    pub fn observe_payload<C>(&self, func: impl FnMut(&mut C)) -> &Self
+    where
+        C: EventData + CachedComponentData + NotEmptyComponent,
+    {
+        self.observe_payload_impl::<C, _>(func)
+    }
+
+    fn observe_payload_impl<C, Func>(&self, func: Func) -> &Self
+    where
+        Func: FnMut(&mut C),
+        C: EventData + CachedComponentData,
+    {
+        let new_binding_ctx = Box::<super::ObserverEntityBindingCtx>::default();
+        let binding_ctx = Box::leak(new_binding_ctx);
+
+        let empty_func = Box::new(func);
+        let empty_static_ref = Box::leak(empty_func);
+
+        binding_ctx.payload = Some(empty_static_ref as *mut _ as *mut c_void);
+        binding_ctx.free_payload = Some(Self::on_free_payload::<C>);
+
+        Self::entity_observer_create(
+            self.world,
+            C::UnderlyingType::get_id(self.world),
+            self.raw_id,
+            binding_ctx,
+            Some(Self::run_payload::<C, Func> as unsafe extern "C" fn(_)),
+        );
+        self
+    }
+
+    /// Register the callback for the entity observer for `empty`
+    ///
+    /// The "payload" iterator accepts a function that is invoked for each matching event.
+    /// The following function signature is valid:
+    ///  - func(&mut EventData)
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The callback function
+    ///
+    /// See also
+    ///
+    /// * C++ API: `entity_builder::observe`
+    #[doc(alias = "entity_builder::observe")]
+    pub fn observe_payload_entity<C>(&self, func: impl FnMut(&mut Entity, &mut C)) -> &Self
+    where
+        C: EventData + CachedComponentData + NotEmptyComponent,
+    {
+        self.observe_payload_entity_impl::<C, _>(func)
+    }
+
+    fn observe_payload_entity_impl<C, Func>(&self, func: Func) -> &Self
+    where
+        Func: FnMut(&mut Entity, &mut C),
+        C: EventData + CachedComponentData,
+    {
+        let new_binding_ctx = Box::<super::ObserverEntityBindingCtx>::default();
+        let binding_ctx = Box::leak(new_binding_ctx);
+
+        let empty_func = Box::new(func);
+        let empty_static_ref = Box::leak(empty_func);
+
+        binding_ctx.payload_entity = Some(empty_static_ref as *mut _ as *mut c_void);
+        binding_ctx.free_payload_entity = Some(Self::on_free_payload_entity::<C>);
+
+        Self::entity_observer_create(
+            self.world,
+            C::UnderlyingType::get_id(self.world),
+            self.raw_id,
+            binding_ctx,
+            Some(Self::run_payload_entity::<C, Func> as unsafe extern "C" fn(_)),
+        );
+        self
+    }
+}
+
+// entity observer creation
+impl EntityView {
+    pub(crate) fn entity_observer_create(
+        world: *mut WorldT,
+        event: EntityT,
+        entity: EntityT,
+        binding_ctx: *mut ObserverEntityBindingCtx,
+        callback: ecs_iter_action_t,
+    ) {
+        let mut desc = ecs_observer_desc_t::default();
+        desc.events[0] = event;
+        desc.filter.terms[0].id = ECS_ANY;
+        desc.filter.terms[0].src.id = entity.into();
+        desc.callback = callback;
+        desc.binding_ctx = binding_ctx as *mut c_void;
+        desc.binding_ctx_free = Some(Self::binding_entity_ctx_drop);
+
+        let observer = unsafe { ecs_observer_init(world, &desc) };
+        ecs_add_pair(world, observer, ECS_CHILD_OF, entity.into());
+    }
+
+    /// Callback of the observe functionality
+    ///
+    /// # Arguments
+    ///
+    /// * `iter` - The iterator which gets passed in from `C`
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_observer_delegate::invoke`
+    #[doc(alias = "entity_observer_delegate::invoke")]
+    pub(crate) unsafe extern "C" fn run_empty<Func>(iter: *mut IterT)
+    where
+        Func: FnMut(),
+    {
+        let ctx: *mut ObserverEntityBindingCtx = (*iter).binding_ctx as *mut _;
+        let empty = (*ctx).empty.unwrap();
+        let empty = &mut *(empty as *mut Func);
+        let iter_count = (*iter).count as usize;
+
+        ecs_table_lock((*iter).world, (*iter).table);
+
+        for _i in 0..iter_count {
+            empty();
+        }
+
+        ecs_table_unlock((*iter).world, (*iter).table);
+    }
+
+    /// Callback of the observe functionality
+    ///
+    /// # Arguments
+    ///
+    /// * `iter` - The iterator which gets passed in from `C`
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_observer_delegate::invoke`
+    #[doc(alias = "entity_observer_delegate::invoke")]
+    pub(crate) unsafe extern "C" fn run_empty_entity<Func>(iter: *mut IterT)
+    where
+        Func: FnMut(&mut Entity),
+    {
+        let ctx: *mut ObserverEntityBindingCtx = (*iter).binding_ctx as *mut _;
+        let empty = (*ctx).empty_entity.unwrap();
+        let empty = &mut *(empty as *mut Func);
+        let iter_count = (*iter).count as usize;
+
+        ecs_table_lock((*iter).world, (*iter).table);
+
+        for _i in 0..iter_count {
+            empty(&mut Entity::new_from_existing_raw(
+                (*iter).world,
+                ecs_field_src(iter, 1),
+            ));
+        }
+
+        ecs_table_unlock((*iter).world, (*iter).table);
+    }
+
+    /// Callback of the observe functionality
+    ///
+    /// # Arguments
+    ///
+    /// * `iter` - The iterator which gets passed in from `C`
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_payload_observer_delegate::invoke`
+    #[doc(alias = "entity_payload_observer_delegate::invoke")]
+    pub(crate) unsafe extern "C" fn run_payload<C, Func>(iter: *mut IterT)
+    where
+        Func: FnMut(&mut C),
+    {
+        let ctx: *mut ObserverEntityBindingCtx = (*iter).binding_ctx as *mut _;
+        let empty = (*ctx).payload.unwrap();
+        let empty = &mut *(empty as *mut Func);
+        let iter_count = (*iter).count as usize;
+
+        ecs_table_lock((*iter).world, (*iter).table);
+
+        for _i in 0..iter_count {
+            let data = (*iter).param as *mut C;
+            let data_ref = &mut *data;
+            empty(data_ref);
+        }
+
+        ecs_table_unlock((*iter).world, (*iter).table);
+    }
+
+    /// Callback of the observe functionality
+    ///
+    /// # Arguments
+    ///
+    /// * `iter` - The iterator which gets passed in from `C`
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_payload_observer_delegate::invoke`
+    #[doc(alias = "entity_payload_observer_delegate::invoke")]
+    pub(crate) unsafe extern "C" fn run_payload_entity<C, Func>(iter: *mut IterT)
+    where
+        Func: FnMut(&mut Entity, &mut C),
+    {
+        let ctx: *mut ObserverEntityBindingCtx = (*iter).binding_ctx as *mut _;
+        let empty = (*ctx).payload_entity.unwrap();
+        let empty = &mut *(empty as *mut Func);
+        let iter_count = (*iter).count as usize;
+
+        ecs_table_lock((*iter).world, (*iter).table);
+
+        for _i in 0..iter_count {
+            let data = (*iter).param as *mut C;
+            let data_ref = &mut *data;
+            empty(
+                &mut Entity::new_from_existing_raw((*iter).world, ecs_field_src(iter, 1)),
+                data_ref,
+            );
+        }
+
+        ecs_table_unlock((*iter).world, (*iter).table);
+    }
+
+    /// Callback to free the memory of the `empty` callback
+    pub(crate) extern "C" fn on_free_empty(ptr: *mut c_void) {
+        let ptr_func: *mut fn() = ptr as *mut fn();
+        unsafe {
+            ptr::drop_in_place(ptr_func);
+        }
+    }
+
+    /// Callback to free the memory of the `empty_entity` callback
+    pub(crate) extern "C" fn on_free_empty_entity(ptr: *mut c_void) {
+        let ptr_func: *mut fn(&mut Entity) = ptr as *mut fn(&mut Entity);
+        unsafe {
+            ptr::drop_in_place(ptr_func);
+        }
+    }
+
+    /// Callback to free the memory of the `payload` callback
+    pub(crate) extern "C" fn on_free_payload<C>(ptr: *mut c_void) {
+        let ptr_func: *mut fn(&mut C) = ptr as *mut fn(&mut C);
+        unsafe {
+            ptr::drop_in_place(ptr_func);
+        }
+    }
+
+    /// Callback to free the memory of the `payload_entity` callback
+    pub(crate) extern "C" fn on_free_payload_entity<C>(ptr: *mut c_void) {
+        let ptr_func: *mut fn(&mut Entity, &mut C) = ptr as *mut fn(&mut Entity, &mut C);
+        unsafe {
+            ptr::drop_in_place(ptr_func);
+        }
+    }
+
+    /// Executes the drop for the system binding context, meant to be used as a callback
+    pub(crate) extern "C" fn binding_entity_ctx_drop(ptr: *mut c_void) {
+        let ptr_struct: *mut ObserverEntityBindingCtx = ptr as *mut ObserverEntityBindingCtx;
+        unsafe {
+            ptr::drop_in_place(ptr_struct);
+        }
     }
 }

@@ -1,5 +1,7 @@
 use std::{ffi::CStr, os::raw::c_char};
 
+use flecs_ecs_sys::ecs_add_id;
+
 use crate::{
     core::{
         c_types::{EntityT, IdT, InOutKind, IterT, OperKind, WorldT, ECS_DEPENDS_ON, ECS_PAIR},
@@ -84,6 +86,12 @@ pub fn ecs_dependson(entity: EntityT) -> EntityT {
 #[inline(always)]
 pub fn ecs_has_pair(world: *const WorldT, entity: u64, first: u64, second: u64) -> bool {
     unsafe { ecs_has_id(world, entity, ecs_pair(first, second)) }
+}
+
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
+#[inline(always)]
+pub fn ecs_add_pair(world: *mut WorldT, entity: u64, first: u64, second: u64) {
+    unsafe { ecs_add_id(world, entity, ecs_pair(first, second)) };
 }
 
 /// Get the first entity from a pair.
