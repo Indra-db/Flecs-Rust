@@ -1,5 +1,4 @@
 mod common;
-use std::ffi::c_void;
 
 use common::*;
 

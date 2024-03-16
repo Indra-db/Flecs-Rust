@@ -1704,7 +1704,7 @@ impl EntityView {
 
     /// Register the callback for the entity observer for empty events with entity parameter.
     ///
-    /// The "empty_entity" iterator accepts a function that is invoked for each matching event.
+    /// The `empty_entity` iterator accepts a function that is invoked for each matching event.
     /// The following function signature is valid:
     ///  - func(&mut Entity)
     ///
@@ -1747,11 +1747,11 @@ impl EntityView {
         self
     }
 
-    /// Register the callback for the entity observer for `empty`
+    /// Register the callback for the entity observer for `payload` events.
     ///
     /// The "payload" iterator accepts a function that is invoked for each matching event.
     /// The following function signature is valid:
-    ///  - func(&mut EventData)
+    ///  - func(&mut `EventData`)
     ///
     /// # Arguments
     ///
@@ -1792,11 +1792,11 @@ impl EntityView {
         self
     }
 
-    /// Register the callback for the entity observer for `empty`
+    /// Register the callback for the entity observer for an event with payload and entity parameter.
     ///
     /// The "payload" iterator accepts a function that is invoked for each matching event.
     /// The following function signature is valid:
-    ///  - func(&mut EventData)
+    ///  - func(&mut Entity, &mut `EventData`)
     ///
     /// # Arguments
     ///
@@ -1850,13 +1850,13 @@ impl EntityView {
         let mut desc = ecs_observer_desc_t::default();
         desc.events[0] = event;
         desc.filter.terms[0].id = ECS_ANY;
-        desc.filter.terms[0].src.id = entity.into();
+        desc.filter.terms[0].src.id = entity;
         desc.callback = callback;
         desc.binding_ctx = binding_ctx as *mut c_void;
         desc.binding_ctx_free = Some(Self::binding_entity_ctx_drop);
 
         let observer = unsafe { ecs_observer_init(world, &desc) };
-        ecs_add_pair(world, observer, ECS_CHILD_OF, entity.into());
+        ecs_add_pair(world, observer, ECS_CHILD_OF, entity);
     }
 
     /// Callback of the observe functionality
