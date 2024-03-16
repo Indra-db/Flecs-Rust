@@ -89,7 +89,8 @@ fn main() {
                 .warnings(true)
                 .extra_warnings(true)
                 .define("NDEBUG", None)
-                .file("src/flecs.c");
+                .file("src/flecs.c")
+                .compile("flecs");
         }
         #[cfg(feature = "build_debug")]
         {
