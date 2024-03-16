@@ -1661,7 +1661,7 @@ impl EntityView {
     ///
     /// The "empty" iterator accepts a function that is invoked for each matching event.
     /// The following function signature is valid:
-    ///  - func()
+    ///  - `func()`
     ///
     /// # Arguments
     ///
@@ -1706,7 +1706,7 @@ impl EntityView {
     ///
     /// The `empty_entity` iterator accepts a function that is invoked for each matching event.
     /// The following function signature is valid:
-    ///  - func(&mut Entity)
+    ///  - `func(&mut Entity)`
     ///
     /// # Arguments
     ///
@@ -1751,7 +1751,7 @@ impl EntityView {
     ///
     /// The "payload" iterator accepts a function that is invoked for each matching event.
     /// The following function signature is valid:
-    ///  - func(&mut `EventData`)
+    ///  - `func(&mut EventData)`
     ///
     /// # Arguments
     ///
@@ -1796,7 +1796,7 @@ impl EntityView {
     ///
     /// The "payload" iterator accepts a function that is invoked for each matching event.
     /// The following function signature is valid:
-    ///  - func(&mut Entity, &mut `EventData`)
+    ///  - `func(&mut Entity, &mut EventData)`
     ///
     /// # Arguments
     ///
