@@ -67,6 +67,18 @@ impl From<Entity> for IdT {
     }
 }
 
+impl From<&Entity> for IdT {
+    fn from(entity: &Entity) -> Self {
+        entity.entity_view.id.raw_id
+    }
+}
+
+impl From<&mut Entity> for IdT {
+    fn from(entity: &mut Entity) -> Self {
+        entity.entity_view.id.raw_id
+    }
+}
+
 impl From<IdT> for Entity {
     fn from(value: IdT) -> Self {
         Entity::new_id_only(value)
