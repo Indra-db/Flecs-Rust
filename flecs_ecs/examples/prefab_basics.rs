@@ -1,0 +1,60 @@
+mod common;
+use common::*;
+
+// Prefabs are entities that can be used as templates for other entities. They
+// are created with a builtin Prefab tag, which by default excludes them from
+// queries and systems.
+//
+// Prefab instances are entities that have an IsA relationship to the prefab.
+// The IsA relationship causes instances to inherit the components from the
+// prefab. By default all instances for a prefab share its components.
+//
+// Inherited components save memory as they only need to be stored once for all
+// prefab instances. They also speed up the creation of prefabs, as inherited
+// components don't need to be copied to the instances.
+//
+// To get a private copy of a component, an instance can add it which is called
+// an override. Overrides can be manual (by using add) or automatic (see the
+// auto_override example).
+//
+// If a prefab has children, adding the IsA relationship instantiates the prefab
+// children for the instance (see hierarchy example).
+
+#[derive(Default, Debug, Clone, Component)]
+struct Defence {
+    value: f32,
+}
+
+fn main() {
+    let world = World::new();
+
+    // Create a prefab with Position and Velocity components
+    let spaceship = world
+        .prefab_named(CStr::from_bytes_with_nul(b"Prefab\0").unwrap())
+        .set(Defence { value: 50.0 });
+
+    // Create a prefab instance
+    let inst = world
+        .new_entity_named(CStr::from_bytes_with_nul(b"my_spaceship\0").unwrap())
+        .is_a(&spaceship);
+
+    // Because of the IsA relationship, the instance now shares the Defense
+    // component with the prefab, and can be retrieved as a regular component:
+    let d_inst = inst.get::<Defence>().unwrap();
+    println!("{:?}", d_inst);
+
+    // Because the component is shared, changing the value on the prefab will
+    // also change the value for the instance:
+    spaceship.set(Defence { value: 100.0 });
+    println!("after set: {:?}", d_inst);
+
+    // Prefab components can be iterated like regular components:
+    world.each_entity::<(&Defence,)>(|entity, (d,)| {
+        println!("{}: {}", entity.get_hierarchy_path().unwrap(), d.value);
+    });
+
+    // Output:
+    //  Defence { value: 50.0 }
+    //  after set: Defence { value: 100.0 }
+    //  ::my_spaceship: 100
+}
