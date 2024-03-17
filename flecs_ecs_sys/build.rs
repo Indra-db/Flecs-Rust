@@ -80,28 +80,19 @@ fn main() {
 
     #[cfg(not(feature = "disable_build_c_library"))]
     {
+        let mut build = cc::Build::new();
+
+        build
+            .compiler("clang")
+            .file("src/flecs.c")
+            .warnings(true)
+            .extra_warnings(true);
+
         #[cfg(not(feature = "build_debug"))]
         {
-            cc::Build::new()
-                .compiler("clang")
-                .opt_level(3)
-                .shared_flag(true)
-                .warnings(true)
-                .extra_warnings(true)
-                .define("NDEBUG", None)
-                .file("src/flecs.c")
-                .compile("flecs");
+            build.opt_level(3).define("NDEBUG", None).compile("flecs");
         }
-        #[cfg(feature = "build_debug")]
-        {
-            // Compile flecs
-            cc::Build::new()
-                .compiler("clang")
-                .shared_flag(true)
-                .warnings(true)
-                .extra_warnings(true)
-                .file("src/flecs.c")
-                .compile("flecs");
-        }
+
+        build.compile("flecs");
     }
 }
