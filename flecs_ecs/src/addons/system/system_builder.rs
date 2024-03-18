@@ -595,24 +595,23 @@ where
         let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
         let iter_func = (*ctx).iter.unwrap();
         let iter_func = &mut *(iter_func as *mut Func);
-        while ecs_iter_next(iter) {
-            let components_data = T::get_array_ptrs_of_components(&*iter);
-            let array_components = &components_data.array_components;
-            let iter_count = (*iter).count as usize;
 
-            ecs_table_lock((*iter).world, (*iter).table);
+        let components_data = T::get_array_ptrs_of_components(&*iter);
+        let array_components = &components_data.array_components;
+        let iter_count = (*iter).count as usize;
 
-            let tuple = if components_data.is_any_array_a_ref {
-                let is_ref_array_components = &components_data.is_ref_array_components;
-                T::get_tuple_slices_with_ref(array_components, is_ref_array_components, iter_count)
-            } else {
-                T::get_tuple_slices(array_components, iter_count)
-            };
-            let mut iter_t = Iter::new(&mut *iter);
-            iter_func(&mut iter_t, tuple);
+        ecs_table_lock((*iter).world, (*iter).table);
 
-            ecs_table_unlock((*iter).world, (*iter).table);
-        }
+        let tuple = if components_data.is_any_array_a_ref {
+            let is_ref_array_components = &components_data.is_ref_array_components;
+            T::get_tuple_slices_with_ref(array_components, is_ref_array_components, iter_count)
+        } else {
+            T::get_tuple_slices(array_components, iter_count)
+        };
+        let mut iter_t = Iter::new(&mut *iter);
+        iter_func(&mut iter_t, tuple);
+
+        ecs_table_unlock((*iter).world, (*iter).table);
     }
 
     /// Set system callback `binding_ctx`
