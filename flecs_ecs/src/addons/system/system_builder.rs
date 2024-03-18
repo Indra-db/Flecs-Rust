@@ -602,16 +602,14 @@ where
 
             ecs_table_lock((*iter).world, (*iter).table);
 
-            for i in 0..iter_count {
-                let tuple = if components_data.is_any_array_a_ref {
-                    let is_ref_array_components = &components_data.is_ref_array_components;
-                    T::get_tuple_slices_with_ref(array_components, is_ref_array_components, i)
-                } else {
-                    T::get_tuple_slices(array_components, i)
-                };
-                let mut iter_t = Iter::new(&mut *iter);
-                iter_func(&mut iter_t, tuple);
-            }
+            let tuple = if components_data.is_any_array_a_ref {
+                let is_ref_array_components = &components_data.is_ref_array_components;
+                T::get_tuple_slices_with_ref(array_components, is_ref_array_components, iter_count)
+            } else {
+                T::get_tuple_slices(array_components, iter_count)
+            };
+            let mut iter_t = Iter::new(&mut *iter);
+            iter_func(&mut iter_t, tuple);
 
             ecs_table_unlock((*iter).world, (*iter).table);
         }
