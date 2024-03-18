@@ -9,6 +9,9 @@ description = "Rust API for the C/CPP flecs ECS library <https://github.com/Sand
 keywords = ["ecs", "flecs", "entity-component-system", "game-development", "gamedev", "simulation", "performance", "game-engine"]
 categories = ["game-development", "api-bindings", "simulation", "development-tools::game-engines", "data-structures"]
 
+[lints]
+workspace = true
+
 [dependencies]
 flecs_ecs_derive = { path = "../flecs_ecs_derive" }
 flecs_ecs_sys = { path = "../flecs_ecs_sys" }
