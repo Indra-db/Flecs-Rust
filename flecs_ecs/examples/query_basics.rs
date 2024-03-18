@@ -31,14 +31,14 @@ fn main() {
     query.each_entity(|e, (pos, vel)| {
         pos.x += vel.x;
         pos.y += vel.y;
-        println!("{}: [{:?}]", e.get_name(), pos)
+        println!("{}: [{:?}]", e.get_name(), pos);
     });
 
     // There's an equivalent function that does not include the entity argument
     query.each(|(pos, vel)| {
         pos.x += vel.x;
         pos.y += vel.y;
-        println!("[{:?}]", pos)
+        println!("[{:?}]", pos);
     });
 
     // Iter is a bit more verbose, but allows for more control over how entities
@@ -48,7 +48,7 @@ fn main() {
         for i in it.iter() {
             pos[i].x += vel[i].x;
             pos[i].y += vel[i].y;
-            println!("[{:?}]", pos[i])
+            println!("[{:?}]", pos[i]);
         }
     });
 
