@@ -83,7 +83,7 @@ pub fn main() {
             "iiter.is_changed() for table [{}]: {}",
             iter.get_archetype(),
             iter.is_changed()
-        )
+        );
     });
 
     // Now that we have iterated all tables, the dirty state is reset.
@@ -124,7 +124,7 @@ pub fn main() {
             "iter.is_changed() for table [{}]: {}",
             iter.get_archetype(),
             iter.is_changed()
-        )
+        );
     });
     println!();
 
