@@ -16,7 +16,7 @@ use syn::{Data, DeriveInput, Fields};
 /// ## Requirements:
 ///
 /// - Types deriving `CachedComponentData` should also implement `Clone` and `Default`.
-///   For enums, you'll need to provide an explicit implementation of `Default`. Structs can often use `#[derive(Default)]` for a derived implementation.
+///   The `Default` implementation can usually be derived via `#[derive(Default)]`. For enums, you'll need to flag the default variant within the enumeration.
 ///
 /// # Note:
 ///
@@ -32,17 +32,12 @@ use syn::{Data, DeriveInput, Fields};
 ///     y: f32,
 /// }
 ///
-/// #[derive(Clone, Component)]
+/// #[derive(Clone, Component, Default)]
 /// enum State {
+///     #[default]
 ///     Idle,
 ///     Running,
 ///     Jumping,
-/// }
-///
-/// impl Default for State {
-///     fn default() -> Self {
-///         State::Idle
-///     }
 /// }
 /// ```
 #[proc_macro_derive(Component)]
