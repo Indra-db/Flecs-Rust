@@ -985,8 +985,8 @@ impl World {
     /// * C++ API: `world::modified`
     #[doc(alias = "world::modified")]
     #[inline(always)]
-    pub fn mark_modified_component_with_id(&self, id: EntityT) {
-        Entity::new_from_existing_raw(self.raw_world, id).mark_modified_component_id(id);
+    pub fn modified_id(&self, id: EntityT) {
+        Entity::new_from_existing_raw(self.raw_world, id).modified_id(id);
     }
 
     /// Signal that singleton component was modified.
@@ -1000,11 +1000,11 @@ impl World {
     /// * C++ API: `world::modified`
     #[doc(alias = "world::modified")]
     #[inline(always)]
-    pub fn mark_modified_component_with<T>(&self)
+    pub fn modified<T>(&self)
     where
         T: CachedComponentData,
     {
-        self.mark_modified_component_with_id(T::get_id(self.raw_world));
+        self.modified_id(T::get_id(self.raw_world));
     }
 
     /// Get singleton component as const.

@@ -15,7 +15,7 @@ fn main() {
         // By default components in an inheritance hierarchy are shared between
         // entities. The override function ensures that instances have a private
         // copy of the component.
-        .mark_override_component::<Position>();
+        .override_type::<Position>();
 
     let freighter = world
         .prefab_named(CStr::from_bytes_with_nul(b"Freighter\0").unwrap())

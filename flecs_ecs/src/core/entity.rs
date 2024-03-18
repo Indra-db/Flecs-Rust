@@ -875,7 +875,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn mark_override_component_id(self, id: IdT) -> Self {
+    pub fn override_id(self, id: IdT) -> Self {
         self.add_id(ECS_OVERRIDE | id)
     }
 
@@ -889,9 +889,9 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn mark_override_component<T: CachedComponentData>(self) -> Self {
+    pub fn override_type<T: CachedComponentData>(self) -> Self {
         let world = self.world;
-        self.mark_override_component_id(T::get_id(world))
+        self.override_id(T::get_id(world))
     }
 
     /// Mark pair for auto-overriding.
@@ -905,8 +905,8 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn mark_override_pair_ids(self, first: EntityT, second: EntityT) -> Self {
-        self.mark_override_component_id(ecs_pair(first, second))
+    pub fn override_pair_ids(self, first: EntityT, second: EntityT) -> Self {
+        self.override_id(ecs_pair(first, second))
     }
 
     /// Mark pair for auto-overriding.
@@ -920,13 +920,13 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn mark_override_pair<First, Second>(self) -> Self
+    pub fn override_pair<First, Second>(self) -> Self
     where
         First: CachedComponentData,
         Second: CachedComponentData,
     {
         let world = self.world;
-        self.mark_override_pair_ids(First::get_id(world), Second::get_id(world))
+        self.override_pair_ids(First::get_id(world), Second::get_id(world))
     }
 
     /// Mark pair for auto-overriding with a given first ID.
@@ -943,9 +943,9 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn mark_override_pair_first<Second: CachedComponentData>(self, first: EntityT) -> Self {
+    pub fn override_pair_first<Second: CachedComponentData>(self, first: EntityT) -> Self {
         let world = self.world;
-        self.mark_override_pair_ids(first, Second::get_id(world))
+        self.override_pair_ids(first, Second::get_id(world))
     }
 
     /// Mark pair for auto-overriding with a given second ID.
@@ -962,9 +962,9 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn mark_override_pair_second_id<First: CachedComponentData>(self, second: EntityT) -> Self {
+    pub fn override_pair_second_id<First: CachedComponentData>(self, second: EntityT) -> Self {
         let world = self.world;
-        self.mark_override_pair_ids(First::get_id(world), second)
+        self.override_pair_ids(First::get_id(world), second)
     }
 
     /// Sets a component for an entity and marks it as overridden.
@@ -981,7 +981,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
-    pub fn set_mark_override_component_id(self, component_id: IdT) -> Self {
+    pub fn set_override_id(self, component_id: IdT) -> Self {
         unsafe { ecs_add_id(self.world, self.raw_id, ECS_OVERRIDE | component_id) }
         self
     }
@@ -1000,8 +1000,8 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
-    pub fn set_mark_override_component<T: CachedComponentData>(self, component: T) -> Self {
-        self.mark_override_component::<T>().set(component)
+    pub fn set_override<T: CachedComponentData>(self, component: T) -> Self {
+        self.override_type::<T>().set(component)
     }
 
     /// Sets a pair, mark component for auto-overriding.
@@ -1019,12 +1019,12 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
-    pub fn set_mark_override_pair_first<First: CachedComponentData + ComponentType<Struct>>(
+    pub fn set_override_pair_first<First: CachedComponentData + ComponentType<Struct>>(
         self,
         second: EntityT,
         first: First,
     ) -> Self {
-        self.mark_override_pair_second_id::<First>(second)
+        self.override_pair_second_id::<First>(second)
             .set_pair_first_id(second, first)
     }
 
@@ -1043,12 +1043,12 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
-    pub fn set_mark_override_pair_second<Second: CachedComponentData + ComponentType<Struct>>(
+    pub fn set_override_pair_second<Second: CachedComponentData + ComponentType<Struct>>(
         self,
         second: Second,
         first: EntityT,
     ) -> Self {
-        self.mark_override_pair_first::<Second>(first)
+        self.override_pair_first::<Second>(first)
             .set_pair_first_id(first, second)
     }
 
@@ -1991,7 +1991,7 @@ impl Entity {
     ///
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
-    pub fn mark_modified_component_id(&self, component_id: IdT) {
+    pub fn modified_id(&self, component_id: IdT) {
         unsafe { ecs_modified_id(self.world, self.raw_id, component_id) }
     }
 
@@ -2005,14 +2005,14 @@ impl Entity {
     ///
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
-    pub fn mark_modified_component<T: CachedComponentData>(&self) {
+    pub fn modified<T: CachedComponentData>(&self) {
         ecs_assert!(
             T::get_size(self.world) != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid type: {}",
             T::get_symbol_name(),
         );
-        self.mark_modified_component_id(T::get_id(self.world));
+        self.modified_id(T::get_id(self.world));
     }
 
     /// Signal that a pair has been modified (untyped).
@@ -2028,8 +2028,8 @@ impl Entity {
     ///
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
-    pub fn mark_modified_pair_ids(&self, first: EntityT, second: EntityT) {
-        self.mark_modified_component_id(ecs_pair(first, second));
+    pub fn modified_pair_ids(&self, first: EntityT, second: EntityT) {
+        self.modified_id(ecs_pair(first, second));
     }
 
     /// Signal that the first element of a pair was modified.
@@ -2043,12 +2043,12 @@ impl Entity {
     ///
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
-    pub fn mark_modified_pair<First, Second>(&self)
+    pub fn modified_pair<First, Second>(&self)
     where
         First: CachedComponentData,
         Second: CachedComponentData,
     {
-        self.mark_modified_pair_ids(First::get_id(self.world), Second::get_id(self.world));
+        self.modified_pair_ids(First::get_id(self.world), Second::get_id(self.world));
     }
 
     /// Signal that the first part of a pair was modified.
@@ -2065,14 +2065,14 @@ impl Entity {
     ///
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
-    pub fn mark_modified_pair_first<First: CachedComponentData>(&self, second: EntityT) {
+    pub fn modified_pair_first<First: CachedComponentData>(&self, second: EntityT) {
         ecs_assert!(
             First::get_size(self.world) != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid type: {}",
             First::get_symbol_name(),
         );
-        self.mark_modified_pair_ids(First::get_id(self.world), second);
+        self.modified_pair_ids(First::get_id(self.world), second);
     }
 
     /// Get a reference to a component.
