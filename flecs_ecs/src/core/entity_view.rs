@@ -1060,13 +1060,13 @@ impl EntityView {
     /// * C++ API: `entity_view::lookup`
     #[doc(alias = "entity_view::lookup")]
     #[inline(always)]
-    pub fn lookup_entity_by_name(&self, path: &CStr, search_path: bool) -> Entity {
+    pub fn lookup_entity_by_name(&self, path: &CStr, search_path: bool) -> Option<Entity> {
         ecs_assert!(
             self.raw_id != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid lookup from null handle"
         );
-        Entity::new_from_existing_raw(self.world, unsafe {
+        let id = unsafe {
             ecs_lookup_path_w_sep(
                 self.world,
                 self.raw_id,
@@ -1075,7 +1075,13 @@ impl EntityView {
                 SEPARATOR.as_ptr(),
                 search_path,
             )
-        })
+        };
+
+        if id == 0 {
+            None
+        } else {
+            Some(Entity::new_from_existing_raw(self.world, id))
+        }
     }
 
     /// Check if entity has the provided entity.
