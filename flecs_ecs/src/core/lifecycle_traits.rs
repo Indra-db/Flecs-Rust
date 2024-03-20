@@ -324,7 +324,7 @@ mod tests {
         };
         let mut copied_to: MyType = Default::default();
 
-        let orig_ptr_before_copy = original.vec.as_ptr();
+        let original_vec_ptr = original.vec.as_ptr();
 
         generic_copy::<MyType>(
             &mut copied_to as *mut _ as *mut c_void,
@@ -342,7 +342,8 @@ mod tests {
 
         // The pointers should be different
         assert_ne!(original.vec.as_ptr(), copied_to.vec.as_ptr());
-        assert_eq!(original.vec.as_ptr(), orig_ptr_before_copy);
+        assert_eq!(original.vec.as_ptr(), original_vec_ptr);
+        assert_ne!(original.text.as_ptr(), copied_to.text.as_ptr());
     }
 
     #[test]
