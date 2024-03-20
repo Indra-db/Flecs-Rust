@@ -66,7 +66,7 @@ fn main() {
 
         // Get the TirePressure component & print its value
         if let Some(p) = inst.get::<TirePressure>() {
-            println!("pressure: {}", p.value)
+            println!("pressure: {}", p.value);
         };
     } else {
         println!("entity lookup failed");
