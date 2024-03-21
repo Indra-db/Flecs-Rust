@@ -10,26 +10,26 @@ fn main() {
 
     // Create a base prefab for SpaceShips.
     let spaceship = world
-        .prefab_named(CStr::from_bytes_with_nul(b"SpaceShip\0").unwrap())
+        .prefab_named(c"SpaceShip")
         .set(ImpulseSpeed { value: 50.0 })
         .set(Defence { value: 25.0 });
 
     // Create a Freighter variant which inherits from SpaceShip
     let freighter = world
-        .prefab_named(CStr::from_bytes_with_nul(b"Freighter\0").unwrap())
+        .prefab_named(c"Freighter")
         .is_a(&spaceship)
         .set(FreightCapacity { value: 100.0 })
         .set(Defence { value: 50.0 });
 
     // Create a MammotFreighter variant which inherits from Freighter
     let mammoth_freighter = world
-        .prefab_named(CStr::from_bytes_with_nul(b"MammothFreighter\0").unwrap())
+        .prefab_named(c"MammothFreighter")
         .is_a(&freighter)
         .set(FreightCapacity { value: 500.0 });
 
     // Create a Frigate variant which inherits from SpaceShip
     world
-        .prefab_named(CStr::from_bytes_with_nul(b"Frigate\0").unwrap())
+        .prefab_named(c"Frigate")
         .is_a(&spaceship)
         .set(Attack { value: 100.0 })
         .set(Defence { value: 75.0 })
@@ -39,7 +39,7 @@ fn main() {
     // ImpulseSpeed from SpaceShip, Defence from Freighter and FreightCapacity
     // from MammothFreighter.
     let inst = world
-        .new_entity_named(CStr::from_bytes_with_nul(b"my_freighter\0").unwrap())
+        .new_entity_named(c"my_freighter")
         .is_a(&mammoth_freighter);
 
     // Add a private Position component.

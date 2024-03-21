@@ -1,5 +1,4 @@
 mod common;
-use std::ffi::CStr;
 
 use common::{Apples, Pears};
 pub use flecs_ecs::{core::*, macros::Component};
@@ -21,12 +20,12 @@ fn main() {
 
     // Create a few entities that match the query
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"Bob\0").unwrap())
+        .new_entity_named(c"Bob")
         .set_pair_first::<Eats, Apples>(Eats { amount: 10 })
         .set_pair_first::<Eats, Pears>(Eats { amount: 5 });
 
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"Alice\0").unwrap())
+        .new_entity_named(c"Alice")
         .set_pair_first::<Eats, Apples>(Eats { amount: 4 });
 
     // Iterate the query with a flecs::iter. This makes it possible to inspect

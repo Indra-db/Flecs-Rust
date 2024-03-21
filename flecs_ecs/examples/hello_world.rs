@@ -16,7 +16,7 @@ fn main() {
 
     // Create an entity with name Bob, add Position and food preference
     let bob = world
-        .new_entity_named(CStr::from_bytes_with_nul(b"Bob\0").unwrap())
+        .new_entity_named(c"Bob")
         .set(Position { x: 0.0, y: 0.0 })
         .set(Velocity { x: 1.0, y: 2.0 })
         .add_pair::<Eats, Apples>();

@@ -27,7 +27,7 @@ fn entity_new() {
 #[test]
 fn entity_new_named() {
     let world = World::new();
-    let entity = world.new_entity_named(CStr::from_bytes_with_nul(b"test\0").unwrap());
+    let entity = world.new_entity_named(c"test");
     assert!(entity.is_valid());
     assert_eq!(entity.get_name(), "test");
 }
@@ -35,11 +35,11 @@ fn entity_new_named() {
 #[test]
 fn entity_new_named_from_scope() {
     let world = World::new();
-    let entity = world.new_entity_named(CStr::from_bytes_with_nul(b"Foo\0").unwrap());
+    let entity = world.new_entity_named(c"Foo");
     assert!(entity.is_valid());
 
     let prev = world.set_scope_with_id(entity.raw_id);
-    let child = world.new_entity_named(CStr::from_bytes_with_nul(b"Bar\0").unwrap());
+    let child = world.new_entity_named(c"Bar");
     assert!(child.is_valid());
 
     world.set_scope_with_id(prev.raw_id);
@@ -634,7 +634,7 @@ fn entity_set_name() {
 
     let entity = world.new_entity();
 
-    entity.set_name(CStr::from_bytes_with_nul(b"Foo\0").unwrap());
+    entity.set_name(c"Foo");
 
     assert_eq!(entity.get_name(), "Foo");
 }
@@ -645,7 +645,7 @@ fn entity_set_name_optional() {
 
     let entity = world.new_entity();
 
-    entity.set_name(CStr::from_bytes_with_nul(b"Foo\0").unwrap());
+    entity.set_name(c"Foo");
 
     assert_eq!(entity.get_name_optional(), Some("Foo"));
 }
@@ -654,13 +654,13 @@ fn entity_set_name_optional() {
 fn entity_change_name() {
     let world = World::new();
 
-    let entity = world.new_entity_named(CStr::from_bytes_with_nul(b"Bar\0").unwrap());
+    let entity = world.new_entity_named(c"Bar");
     assert_eq!(entity.get_name(), "Bar");
 
-    entity.set_name(CStr::from_bytes_with_nul(b"Foo\0").unwrap());
+    entity.set_name(c"Foo");
     assert_eq!(entity.get_name(), "Foo");
 
-    entity.set_name(CStr::from_bytes_with_nul(b"Bar\0").unwrap());
+    entity.set_name(c"Bar");
     assert_eq!(entity.get_name(), "Bar");
 }
 

@@ -22,16 +22,16 @@ fn main() {
 
     // Create a few test entities for the Position query
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"e1\0").unwrap())
+        .new_entity_named(c"e1")
         .set(Position { x: 10.0, y: 20.0 });
 
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"e2\0").unwrap())
+        .new_entity_named(c"e2")
         .set(Position { x: 10.0, y: 20.0 });
 
     // This entity will not match as it has Npc
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"e3\0").unwrap())
+        .new_entity_named(c"e3")
         .set(Position { x: 10.0, y: 20.0 })
         .add::<Npc>();
 

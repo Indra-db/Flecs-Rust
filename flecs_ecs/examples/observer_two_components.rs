@@ -27,7 +27,7 @@ fn main() {
 
     // Create entity, set Position (emits EcsOnSet, does not yet match observer)
     let entity = world
-        .new_entity_named(CStr::from_bytes_with_nul(b"e\0").unwrap())
+        .new_entity_named(c"e")
         .set(Position { x: 10.0, y: 20.0 });
 
     // Set Velocity (emits EcsOnSet, matches observer)

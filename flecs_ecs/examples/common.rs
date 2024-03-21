@@ -2,9 +2,6 @@
 
 pub use flecs_ecs::{core::*, macros::Component};
 
-#[allow(unused_imports)]
-pub use std::ffi::CStr;
-
 #[derive(Debug, Default, Clone, Component)]
 pub struct Position {
     pub x: f32,

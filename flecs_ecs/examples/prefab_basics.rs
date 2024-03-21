@@ -29,14 +29,10 @@ fn main() {
     let world = World::new();
 
     // Create a prefab with Position and Velocity components
-    let spaceship = world
-        .prefab_named(CStr::from_bytes_with_nul(b"Prefab\0").unwrap())
-        .set(Defence { value: 50.0 });
+    let spaceship = world.prefab_named(c"Prefab").set(Defence { value: 50.0 });
 
     // Create a prefab instance
-    let inst = world
-        .new_entity_named(CStr::from_bytes_with_nul(b"my_spaceship\0").unwrap())
-        .is_a(&spaceship);
+    let inst = world.new_entity_named(c"my_spaceship").is_a(&spaceship);
 
     // Because of the IsA relationship, the instance now shares the Defense
     // component with the prefab, and can be retrieved as a regular component:

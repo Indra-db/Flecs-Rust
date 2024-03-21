@@ -35,10 +35,8 @@ fn main() {
         });
 
     // Create entity and parent
-    let parent = world.new_entity_named(CStr::from_bytes_with_nul(b"p\0").unwrap());
-    let entity = world
-        .new_entity_named(CStr::from_bytes_with_nul(b"e\0").unwrap())
-        .child_of(&parent);
+    let parent = world.new_entity_named(c"p");
+    let entity = world.new_entity_named(c"e").child_of(&parent);
 
     // Set Position on entity. This doesn't trigger the observer yet, since the
     // parent doesn't have Position yet.

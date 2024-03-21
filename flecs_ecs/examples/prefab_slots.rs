@@ -29,14 +29,14 @@ fn main() {
 
     // Create the same prefab hierarchy as from the hierarchy example, but now
     // with the SlotOf relationship.
-    let spaceship = world.prefab_named(CStr::from_bytes_with_nul(b"SpaceShip\0").unwrap());
+    let spaceship = world.prefab_named(c"SpaceShip");
     let engine = world
-        .prefab_named(CStr::from_bytes_with_nul(b"Engine\0").unwrap())
+        .prefab_named(c"Engine")
         .child_of(&spaceship)
         .slot_of_entity(&spaceship);
 
     let cockpit = world
-        .prefab_named(CStr::from_bytes_with_nul(b"Cockpit\0").unwrap())
+        .prefab_named(c"Cockpit")
         .child_of(&spaceship)
         .slot_of_entity(&spaceship);
 
@@ -46,14 +46,12 @@ fn main() {
     // level SpaceShip prefab.
 
     let pilot_seat = world
-        .prefab_named(CStr::from_bytes_with_nul(b"PilotSeat\0").unwrap())
+        .prefab_named(c"PilotSeat")
         .child_of(&cockpit)
         .slot_of_entity(&spaceship);
 
     // Create a prefab instance.
-    let inst: Entity = world
-        .new_entity_named(CStr::from_bytes_with_nul(b"my_spaceship\0").unwrap())
-        .is_a(&spaceship);
+    let inst: Entity = world.new_entity_named(c"my_spaceship").is_a(&spaceship);
 
     // Get the instantiated entities for the prefab slots
     let inst_engine = inst.get_target_from_entity(&engine, 0);

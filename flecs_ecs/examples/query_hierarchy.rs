@@ -17,30 +17,30 @@ fn main() {
     let world = flecs_ecs::core::World::new();
 
     let sun = world
-        .new_entity_named(CStr::from_bytes_with_nul(b"Sun\0").unwrap())
+        .new_entity_named(c"Sun")
         .add_pair::<Position, World>()
         .set_pair_first::<Position, Local>(Position { x: 1.0, y: 1.0 });
 
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"Mercury\0").unwrap())
+        .new_entity_named(c"Mercury")
         .child_of(&sun)
         .add_pair::<Position, World>()
         .set_pair_first::<Position, Local>(Position { x: 1.0, y: 1.0 });
 
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"Venus\0").unwrap())
+        .new_entity_named(c"Venus")
         .child_of(&sun)
         .add_pair::<Position, World>()
         .set_pair_first::<Position, Local>(Position { x: 2.0, y: 2.0 });
 
     let earth = world
-        .new_entity_named(CStr::from_bytes_with_nul(b"Earth\0").unwrap())
+        .new_entity_named(c"Earth")
         .child_of(&sun)
         .add_pair::<Position, World>()
         .set_pair_first::<Position, Local>(Position { x: 3.0, y: 3.0 });
 
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"Moon\0").unwrap())
+        .new_entity_named(c"Moon")
         .child_of(&earth)
         .add_pair::<Position, World>()
         .set_pair_first::<Position, Local>(Position { x: 0.1, y: 0.1 });

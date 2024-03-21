@@ -15,28 +15,28 @@ fn main() {
 
     // Create a prefab with Velocity. Prefabs are not matched with queries.
     let prefab = world
-        .prefab_named(CStr::from_bytes_with_nul(b"Prefab\0").unwrap())
+        .prefab_named(c"Prefab")
         .set(Velocity { x: 1.0, y: 2.0 });
 
     // Create a few entities that own Position & share Velocity from the prefab.
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"e1\0").unwrap())
+        .new_entity_named(c"e1")
         .is_a(&prefab)
         .set(Position { x: 10.0, y: 20.0 });
 
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"e2\0").unwrap())
+        .new_entity_named(c"e2")
         .is_a(&prefab)
         .set(Position { x: 10.0, y: 20.0 });
 
     // Create a few entities that own all components
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"e3\0").unwrap())
+        .new_entity_named(c"e3")
         .set(Position { x: 10.0, y: 20.0 })
         .set(Velocity { x: 3.0, y: 4.0 });
 
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"e4\0").unwrap())
+        .new_entity_named(c"e4")
         .set(Position { x: 10.0, y: 20.0 })
         .set(Velocity { x: 4.0, y: 5.0 });
 

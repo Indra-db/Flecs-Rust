@@ -27,7 +27,7 @@ fn main() {
     // has the Position component before emitting the event. This does not
     // trigger the observer yet.
     let entity = world
-        .new_entity_named(CStr::from_bytes_with_nul(b"e1\0").unwrap())
+        .new_entity_named(c"e1")
         .set(Position { x: 10.0, y: 20.0 });
 
     // Emit the custom event. This triggers the observer.

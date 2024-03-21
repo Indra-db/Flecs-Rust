@@ -33,7 +33,7 @@ fn main() {
 
     // Create entity, set Position (emits EcsOnAdd and EcsOnSet)
     let entity = world
-        .new_entity_named(CStr::from_bytes_with_nul(b"e1\0").unwrap())
+        .new_entity_named(c"e1")
         .set(Position { x: 10.0, y: 20.0 });
 
     // Remove Position (emits EcsOnRemove)

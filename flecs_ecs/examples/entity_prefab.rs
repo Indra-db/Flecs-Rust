@@ -8,7 +8,7 @@ fn main() {
 
     // Create a prefab hierarchy.
     let spaceship = world
-        .prefab_named(CStr::from_bytes_with_nul(b"Spaceship\0").unwrap())
+        .prefab_named(c"Spaceship")
         // Add components to prefab entity as usual
         .set(ImpulseSpeed { value: 50.0 })
         .set(Defence { value: 50.0 })
@@ -18,20 +18,20 @@ fn main() {
         .override_type::<Position>();
 
     let freighter = world
-        .prefab_named(CStr::from_bytes_with_nul(b"Freighter\0").unwrap())
+        .prefab_named(c"Freighter")
         .is_a(&spaceship)
         .set(FreightCapacity { value: 100.0 })
         .set(Defence { value: 100.0 })
         .add::<HasFlt>();
 
     let mammoth_freighter = world
-        .prefab_named(CStr::from_bytes_with_nul(b"MammothFreighter\0").unwrap())
+        .prefab_named(c"MammothFreighter")
         .is_a(&freighter)
         .set(FreightCapacity { value: 500.0 })
         .set(Defence { value: 300.0 });
 
     world
-        .prefab_named(CStr::from_bytes_with_nul(b"Frigate\0").unwrap())
+        .prefab_named(c"Frigate")
         .is_a(&spaceship)
         .add::<HasFlt>()
         .set(Attack { value: 100.0 })
@@ -42,7 +42,7 @@ fn main() {
     // The instance will have a private copy of the Position component, because
     // of the override in the spaceship entity. All other components are shared.
     let inst = world
-        .new_entity_named(CStr::from_bytes_with_nul(b"my_mammoth_freighter\0").unwrap())
+        .new_entity_named(c"my_mammoth_freighter")
         .is_a(&mammoth_freighter);
 
     // Inspect the type of the entity. This outputs:

@@ -28,7 +28,7 @@ impl EventData for Resize {}
 fn main() {
     let world = World::new();
 
-    let widget = world.new_entity_named(CStr::from_bytes_with_nul(b"MyWidget\0").unwrap());
+    let widget = world.new_entity_named(c"MyWidget");
     println!("widget: {:?}", widget);
 
     // Observe the Click event on the widget entity.

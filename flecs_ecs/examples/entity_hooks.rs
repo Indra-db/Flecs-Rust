@@ -16,7 +16,7 @@ fn main() {
             println!("set {:?} for {:?}", pos, entity.get_name());
         });
 
-    let entity = world.new_entity_named(CStr::from_bytes_with_nul(b"Bob\0").unwrap());
+    let entity = world.new_entity_named(c"Bob");
 
     entity.add::<Position>();
 

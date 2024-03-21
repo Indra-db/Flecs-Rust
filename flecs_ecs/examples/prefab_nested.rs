@@ -28,38 +28,28 @@ fn main() {
 
     // Create a Wheel prefab, make sure each instantiated wheel has a private
     // copy of the TirePressure component.
-    let wheel = world.prefab_named(CStr::from_bytes_with_nul(b"Wheel\0").unwrap());
+    let wheel = world.prefab_named(c"Wheel");
     wheel.set_override(TirePressure { value: 32.0 });
 
     // Create a Car prefab with four wheels. Note how we're using the scope
     // method, which has the same effect as adding the (ChildOf, Car) pair.
-    let car = world.prefab_named(CStr::from_bytes_with_nul(b"Car\0").unwrap());
+    let car = world.prefab_named(c"Car");
     car.run_in_scope(|| {
-        world
-            .prefab_named(CStr::from_bytes_with_nul(b"FrontLeft\0").unwrap())
-            .is_a(&wheel);
+        world.prefab_named(c"FrontLeft").is_a(&wheel);
 
-        world
-            .prefab_named(CStr::from_bytes_with_nul(b"FrontRight\0").unwrap())
-            .is_a(&wheel);
+        world.prefab_named(c"FrontRight").is_a(&wheel);
 
-        world
-            .prefab_named(CStr::from_bytes_with_nul(b"BackLeft\0").unwrap())
-            .is_a(&wheel);
+        world.prefab_named(c"BackLeft").is_a(&wheel);
 
-        world
-            .prefab_named(CStr::from_bytes_with_nul(b"BackRight\0").unwrap())
-            .is_a(&wheel);
+        world.prefab_named(c"BackRight").is_a(&wheel);
     });
 
     // Create a prefab instance.
-    let inst_car = world.new_entity_named(CStr::from_bytes_with_nul(b"my_car\0").unwrap());
+    let inst_car = world.new_entity_named(c"my_car");
     inst_car.is_a(&car);
 
     // Lookup one of the wheels
-    if let Some(inst) =
-        inst_car.lookup_entity_by_name(CStr::from_bytes_with_nul(b"FrontLeft\0").unwrap(), true)
-    {
+    if let Some(inst) = inst_car.lookup_entity_by_name(c"FrontLeft", true) {
         // The type shows that the child has a private copy of the TirePressure
         // component, and an IsA relationship to the Wheel prefab.
         println!("{:?}", inst.get_archetype());

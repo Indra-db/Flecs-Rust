@@ -8,17 +8,17 @@ fn main() {
 
     // Create a few test entities for a Position, Velocity query
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"e1\0").unwrap())
+        .new_entity_named(c"e1")
         .set(Position { x: 10.0, y: 20.0 })
         .set(Velocity { x: 1.0, y: 2.0 });
 
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"e2\0").unwrap())
+        .new_entity_named(c"e2")
         .set(Position { x: 10.0, y: 20.0 })
         .set(Velocity { x: 3.0, y: 4.0 });
 
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"e3\0").unwrap())
+        .new_entity_named(c"e3")
         .set(Position { x: 10.0, y: 20.0 })
         .set(Velocity { x: 4.0, y: 5.0 })
         .set(Mass { value: 50.0 });

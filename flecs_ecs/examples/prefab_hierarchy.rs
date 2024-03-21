@@ -8,29 +8,19 @@ fn main() {
     let world = World::new();
 
     // Create a prefab hierarchy.
-    let spaceship = world.prefab_named(CStr::from_bytes_with_nul(b"SpaceShip\0").unwrap());
-    world
-        .prefab_named(CStr::from_bytes_with_nul(b"Engine\0").unwrap())
-        .child_of(&spaceship);
-    world
-        .prefab_named(CStr::from_bytes_with_nul(b"Cockpit\0").unwrap())
-        .child_of(&spaceship);
+    let spaceship = world.prefab_named(c"SpaceShip");
+    world.prefab_named(c"Engine").child_of(&spaceship);
+    world.prefab_named(c"Cockpit").child_of(&spaceship);
 
     // Instantiate the prefab. This also creates an Engine and Cockpit child
     // for the instance.
-    let inst = world
-        .new_entity_named(CStr::from_bytes_with_nul(b"my_spaceship\0").unwrap())
-        .is_a(&spaceship);
+    let inst = world.new_entity_named(c"my_spaceship").is_a(&spaceship);
 
     // Because of the IsA relationship, the instance now has the Engine and Cockpit
     // children of the prefab. This means that the instance can look up the Engine
     // and Cockpit entities.
-    if let Some(inst_engine) =
-        inst.lookup_entity_by_name(CStr::from_bytes_with_nul(b"Engine\0").unwrap(), true)
-    {
-        if let Some(inst_cockpit) =
-            inst.lookup_entity_by_name(CStr::from_bytes_with_nul(b"Cockpit\0").unwrap(), true)
-        {
+    if let Some(inst_engine) = inst.lookup_entity_by_name(c"Engine", true) {
+        if let Some(inst_cockpit) = inst.lookup_entity_by_name(c"Cockpit", true) {
             println!(
                 "instance engine:  {:?}",
                 inst_engine.get_hierarchy_path().unwrap()

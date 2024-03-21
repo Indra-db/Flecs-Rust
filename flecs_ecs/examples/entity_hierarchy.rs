@@ -42,29 +42,29 @@ fn main() {
     // create entities as children of other entities.
 
     let sun = world
-        .new_entity_named(CStr::from_bytes_with_nul(b"Sun\0").unwrap())
+        .new_entity_named(c"Sun")
         .set(Position { x: 1.0, y: 1.0 });
 
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"Mercury\0").unwrap())
+        .new_entity_named(c"Mercury")
         .set(Position { x: 1.0, y: 1.0 })
         .add::<Planet>()
         .child_of(&sun); // Shortcut for add(flecs::ChildOf, sun)
 
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"Venus\0").unwrap())
+        .new_entity_named(c"Venus")
         .set(Position { x: 2.0, y: 2.0 })
         .add::<Planet>()
         .child_of(&sun);
 
     let earth = world
-        .new_entity_named(CStr::from_bytes_with_nul(b"Earth\0").unwrap())
+        .new_entity_named(c"Earth")
         .set(Position { x: 3.0, y: 3.0 })
         .add::<Planet>()
         .child_of(&sun);
 
     let moon = world
-        .new_entity_named(CStr::from_bytes_with_nul(b"Moon\0").unwrap())
+        .new_entity_named(c"Moon")
         .set(Position { x: 0.1, y: 0.1 })
         .add::<Moon>()
         .child_of(&earth);

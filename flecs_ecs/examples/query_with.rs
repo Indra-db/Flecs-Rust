@@ -19,18 +19,18 @@ fn main() {
 
     // Create a few test entities for the Position, Npc query
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"e1\0").unwrap())
+        .new_entity_named(c"e1")
         .set(Position { x: 10.0, y: 20.0 })
         .add::<Npc>();
 
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"e2\0").unwrap())
+        .new_entity_named(c"e2")
         .set(Position { x: 10.0, y: 20.0 })
         .add::<Npc>();
 
     // This entity will not match as it does not have Position, Npc
     world
-        .new_entity_named(CStr::from_bytes_with_nul(b"e3\0").unwrap())
+        .new_entity_named(c"e3")
         .set(Position { x: 10.0, y: 20.0 });
 
     // Note how the Npc tag is not part of the each signature
