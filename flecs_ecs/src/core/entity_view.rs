@@ -7,8 +7,8 @@ use std::{
 };
 
 use flecs_ecs_sys::{
-    ecs_field_src, ecs_iter_action_t, ecs_observer_desc_t, ecs_observer_init, ecs_table_lock,
-    ecs_table_unlock,
+    ecs_field_src, ecs_get_target_for_id, ecs_iter_action_t, ecs_observer_desc_t,
+    ecs_observer_init, ecs_table_lock, ecs_table_unlock,
 };
 
 // Module imports from within the current crate
@@ -824,8 +824,8 @@ impl EntityView {
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
+    /// * C++ API: `entity_view::target`
+    #[doc(alias = "entity_view::target")]
     pub fn get_target_from_component<First: CachedComponentData>(&self, index: i32) -> Entity {
         Entity::new_from_existing_raw(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, First::get_id(self.world), index)
@@ -845,11 +845,11 @@ impl EntityView {
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
-    pub fn get_target_from_entity(&self, first: EntityT, index: i32) -> Entity {
+    /// * C++ API: `entity_view::target`
+    #[doc(alias = "entity_view::target")]
+    pub fn get_target_from_entity(&self, first: &Entity, index: i32) -> Entity {
         Entity::new_from_existing_raw(self.world, unsafe {
-            ecs_get_target(self.world, self.raw_id, first, index)
+            ecs_get_target(self.world, self.raw_id, first.raw_id, index)
         })
     }
 
@@ -880,11 +880,11 @@ impl EntityView {
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
-    pub fn get_target_by_component_id(&self, relationship: EntityT, component_id: IdT) -> Entity {
+    /// * C++ API: `entity_view::target_for`
+    #[doc(alias = "entity_view::target_for")]
+    pub fn get_target_for_id(&self, relationship: &Entity, component_id: IdT) -> Entity {
         Entity::new_from_existing_raw(self.world, unsafe {
-            ecs_get_target(self.world, self.raw_id, relationship, component_id as i32)
+            ecs_get_target_for_id(self.world, self.raw_id, relationship.raw_id, component_id)
         })
     }
 
@@ -907,14 +907,11 @@ impl EntityView {
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
+    /// * C++ API: `entity_view::target`
+    #[doc(alias = "entity_view::target")]
     #[inline(always)]
-    pub fn get_target_for_component<T: CachedComponentData>(
-        &self,
-        relationship: EntityT,
-    ) -> Entity {
-        self.get_target_by_component_id(relationship, T::get_id(self.world))
+    pub fn get_target_for<T: CachedComponentData>(&self, relationship: &Entity) -> Entity {
+        self.get_target_for_id(relationship, T::get_id(self.world))
     }
 
     /// Get the target for a given pair of components and a relationship.
@@ -937,14 +934,14 @@ impl EntityView {
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
+    /// * C++ API: `entity_view::target`
+    #[doc(alias = "entity_view::target")]
     #[inline(always)]
     pub fn get_target_for_pair<First: CachedComponentData, Second: CachedComponentData>(
         &self,
-        relationship: EntityT,
+        relationship: &Entity,
     ) -> Entity {
-        self.get_target_by_component_id(
+        self.get_target_for_id(
             relationship,
             ecs_pair(First::get_id(self.world), Second::get_id(self.world)),
         )
@@ -967,9 +964,9 @@ impl EntityView {
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
-    pub fn get_target_for_pair_as_first<First: CachedComponentData>(
+    /// * C++ API: `entity_view::target`
+    #[doc(alias = "entity_view::target")]
+    pub fn get_target_for_pair_first<First: CachedComponentData>(
         &self,
         second: EntityT,
     ) -> *const First {
@@ -1038,7 +1035,7 @@ impl EntityView {
     #[doc(alias = "entity_view::parent")]
     #[inline(always)]
     pub fn get_parent(&self) -> Entity {
-        self.get_target_from_entity(unsafe { EcsChildOf }, 0)
+        self.get_target_from_entity(&ECS_CHILD_OF.into(), 0)
     }
 
     /// Lookup an entity by name.

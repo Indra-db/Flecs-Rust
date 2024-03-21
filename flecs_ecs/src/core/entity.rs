@@ -5,7 +5,7 @@ use std::{
 };
 
 use crate::{
-    core::FlecsErrorCode,
+    core::{FlecsErrorCode, ECS_CHILD_OF},
     ecs_assert,
     sys::{
         ecs_add_id, ecs_clear, ecs_delete, ecs_enable, ecs_enable_id, ecs_entity_desc_t,
@@ -826,6 +826,20 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::slot_of`
     #[doc(alias = "entity_builder::slot_of")]
+    pub fn slot_of_entity(self, second: &Entity) -> Self {
+        self.add_pair_ids(unsafe { EcsSlotOf }, second.raw_id)
+    }
+
+    /// Shortcut for add(SlotOf, entity).
+    ///
+    /// # Arguments
+    ///
+    /// * `second`: The second element of the pair.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_builder::slot_of`
+    #[doc(alias = "entity_builder::slot_of")]
     pub fn slot_of_id(self, second: EntityT) -> Self {
         self.add_pair_ids(unsafe { EcsSlotOf }, second)
     }
@@ -857,7 +871,7 @@ impl Entity {
             FlecsErrorCode::InvalidParameter,
             "add ChildOf pair before using slot()"
         );
-        let id: u64 = self.get_target_from_entity(unsafe { EcsChildOf }, 0).raw_id;
+        let id: u64 = self.get_target_from_entity(&ECS_CHILD_OF.into(), 0).raw_id;
         self.slot_of_id(id)
     }
 

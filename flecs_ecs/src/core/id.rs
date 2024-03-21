@@ -62,6 +62,15 @@ impl Ord for Id {
     }
 }
 
+impl std::ops::Deref for Id {
+    type Target = u64;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.raw_id
+    }
+}
+
 pub enum IdType {
     Id(IdT),
     Pair(IdT, IdT),

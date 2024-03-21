@@ -736,19 +736,19 @@ fn entity_get_target() {
         .add_pair_ids(rel.raw_id, obj2.raw_id)
         .add_pair_ids(rel.raw_id, obj3.raw_id);
 
-    let mut target = child.get_target_from_entity(rel.raw_id, 0);
+    let mut target = child.get_target_from_entity(&rel, 0);
     assert!(target.is_valid());
     assert_eq!(target, obj1);
 
-    target = child.get_target_from_entity(rel.raw_id, 1);
+    target = child.get_target_from_entity(&rel, 1);
     assert!(target.is_valid());
     assert_eq!(target, obj2);
 
-    target = child.get_target_from_entity(rel.raw_id, 2);
+    target = child.get_target_from_entity(&rel, 2);
     assert!(target.is_valid());
     assert_eq!(target, obj3);
 
-    target = child.get_target_from_entity(rel.raw_id, 3);
+    target = child.get_target_from_entity(&rel, 3);
     assert!(!target.is_valid());
 }
 
@@ -759,7 +759,10 @@ fn entity_get_parent() {
     let parent = world.new_entity();
     let child = world.new_entity().child_of_id(parent.raw_id);
 
-    assert_eq!(child.get_target_from_entity(ECS_CHILD_OF, 0), parent);
+    assert_eq!(
+        child.get_target_from_entity(&ECS_CHILD_OF.into(), 0),
+        parent
+    );
     assert_eq!(child.get_parent(), parent);
 }
 
