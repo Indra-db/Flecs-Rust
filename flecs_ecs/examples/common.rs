@@ -51,6 +51,11 @@ pub struct Defence {
 }
 
 #[derive(Default, Clone, Component)]
+pub struct Damage {
+    pub value: f32,
+}
+
+#[derive(Default, Clone, Component)]
 pub struct FreightCapacity {
     pub value: f32,
 }
