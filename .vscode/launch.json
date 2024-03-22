@@ -1,15 +1,14 @@
 {
     "version": "0.2.0",
     "configurations": [
+
         {
             "name": "(Windows) Launch",
             "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/target/debug/flecs_ecs",
             "args": [],
-            "stopAtEntry": false,
             "cwd": "${fileDirname}",
-            "environment": [],
             "console": "externalTerminal"
         },
         // {
