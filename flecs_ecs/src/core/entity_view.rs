@@ -38,7 +38,7 @@ use super::{
     table::{Table, TableRange},
     world::World,
     EmptyComponent, EventBuilderImpl, EventData, IterT, NotEmptyComponent,
-    ObserverEntityBindingCtx, ECS_ANY, ECS_CHILD_OF,
+    ObserverEntityBindingCtx, ECS_ANY, ECS_CHILD_OF, ECS_WILDCARD,
 };
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -477,9 +477,11 @@ impl EntityView {
 
         let mut cur: i32 = 0;
         let ids: *mut IdT = unsafe { (*table_type).array };
-        let id_out: *mut IdT = &mut 0;
 
-        while -1 != unsafe { ecs_search_offset(real_world, table, cur, pattern, id_out) } {
+        while {
+            cur = unsafe { ecs_search_offset(real_world, table, cur, pattern, &mut 0) };
+            cur != -1
+        } {
             let ent = Id::new_from_existing(self.world, unsafe { *(ids.add(cur as usize)) });
             func(ent);
             cur += 1;
@@ -504,7 +506,7 @@ impl EntityView {
     ) where
         F: FnMut(Entity),
     {
-        self.for_each_matching_pair(relationship.raw_id, unsafe { EcsWildcard }, |id| {
+        self.for_each_matching_pair(relationship.raw_id, ECS_WILDCARD, |id| {
             let obj = id.second();
             func(obj);
         });
@@ -524,10 +526,9 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    pub fn for_each_target_in_relationship<T, F>(&self, func: F)
+    pub fn for_each_target_in_relationship<T>(&self, func: impl FnMut(Entity))
     where
         T: CachedComponentData,
-        F: FnMut(Entity),
     {
         self.for_each_target_in_relationship_by_entity(
             EntityView::new_id_only(T::get_id(self.world)),
@@ -1194,6 +1195,28 @@ impl EntityView {
             T::get_id(self.world),
             U::get_id(self.world),
         )
+    }
+
+    /// Check if entity has the provided pair.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First` - The first element of the pair.
+    ///
+    /// # Arguments
+    ///
+    /// * `second` - The second element of the pair.
+    ///
+    /// # Returns
+    ///
+    /// True if the entity has the provided component, false otherwise.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::has`
+    #[doc(alias = "entity_view::has")]
+    pub fn has_pair_first<First: CachedComponentData>(&self, second: EntityT) -> bool {
+        ecs_has_pair(self.world, self.raw_id, First::get_id(self.world), second)
     }
 
     /// Check if entity has the provided pair.
