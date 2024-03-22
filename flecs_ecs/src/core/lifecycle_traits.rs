@@ -110,7 +110,8 @@ extern "C" fn generic_ctor<T: Default>(
     let arr = ptr as *mut T;
     for i in 0..count as isize {
         unsafe {
-            std::ptr::write(arr.offset(i), T::default());
+            let arr_value = &mut *arr.offset(i);
+            *arr_value = T::default();
         }
     }
 }
@@ -159,8 +160,8 @@ extern "C" fn generic_copy<T: Default + Clone>(
         //this is safe because C manages the memory and we're cloning the internal data
         unsafe {
             let src_value = &*(src_arr.offset(i));
-            let cloned_value = src_value.clone();
-            ptr::write(dst_arr.offset(i), cloned_value);
+            let dst_value = &mut *dst_arr.offset(i); // Obtain a mutable reference to the destination.
+            *dst_value = src_value.clone(); // Assign the cloned value, which automatically drops the previous value.
         }
     }
 }
@@ -190,8 +191,9 @@ extern "C" fn generic_move<T: Default>(
             // Leave the source in a default (empty) state, not dropping the previous
             // allocated memory it might hold
             let moved_value = std::ptr::replace(src_arr.offset(i), T::default());
-            // Write moved src to dst without dropping src since src is being moved to dst
-            ptr::write(dst_arr.offset(i), moved_value);
+            let dst_value = &mut *dst_arr.offset(i); // Obtain a mutable reference to the destination.
+                                                     // Write moved src to dst without dropping src since src is being moved to dst
+            *dst_value = moved_value; // Assign the moved value, which automatically drops the previous value.
         }
     }
 }
@@ -219,8 +221,10 @@ extern "C" fn generic_ctor_move_dtor<T: Default + Clone>(
         //this is safe because C manages the memory and we are just moving the internal data around
         unsafe {
             let moved_value = std::ptr::replace(src_arr.offset(i), T::default());
-            // Write moved src to dst without dropping src since src is being moved to dst
-            ptr::write(dst_arr.offset(i), moved_value);
+            let dst_value = &mut *dst_arr.offset(i); // Obtain a mutable reference to the destination.
+                                                     // Write moved src to dst without dropping src since src is being moved to dst
+            *dst_value = moved_value; // Assign the moved value, which automatically drops the previous value.
+
             ptr::drop_in_place(src_arr.offset(i));
 
             //TODO evaluate if this could under here could potentially improve performance
