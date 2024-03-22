@@ -773,6 +773,124 @@ impl EntityView {
         }
     }
 
+    /// Get an option immutable reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first part of the pair.
+    ///
+    /// # Arguments
+    ///
+    /// * `second`: The second element of the pair.
+    ///
+    /// # Returns
+    ///
+    /// An option containing the reference to the first element of the pair if it exists, otherwise None.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
+    pub fn get_pair_first_id<First>(&self, second: EntityT) -> Option<&First>
+    where
+        First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
+    {
+        let component_id = First::get_id(self.world);
+        ecs_assert!(
+            First::get_size(self.world) != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid type: {}",
+            First::get_symbol_name()
+        );
+
+        unsafe {
+            (ecs_get_id(self.world, self.raw_id, ecs_pair(component_id, second)) as *const First)
+                .as_ref()
+        }
+    }
+
+    /// Get an immutable reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first part of the pair.
+    /// * `Second`: The second part of the pair.
+    ///
+    /// # Returns
+    ///
+    /// An option containing the reference to the first element of the pair if it exists, otherwise None.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
+    pub fn get_pair_first<First, Second>(&self) -> Option<&First>
+    where
+        First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
+        Second: CachedComponentData + ComponentType<Struct> + EmptyComponent,
+    {
+        self.get_pair_first_id(Second::get_id(self.world))
+    }
+
+    /// Get an immutable reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Second`: The second element of the pair.
+    ///
+    /// # Arguments
+    ///
+    /// * `first`: The first element of the pair.
+    ///
+    /// # Returns
+    ///
+    /// An option containing the reference to the second element of the pair if it exists, otherwise None.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
+    pub fn get_pair_second_id<Second>(&self, first: EntityT) -> Option<&Second>
+    where
+        Second: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
+    {
+        let component_id = Second::get_id(self.world);
+        ecs_assert!(
+            Second::get_size(self.world) != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid type: {}",
+            Second::get_symbol_name()
+        );
+
+        unsafe {
+            (ecs_get_id(self.world, self.raw_id, ecs_pair(first, component_id)) as *const Second)
+                .as_ref()
+        }
+    }
+
+    /// Get an immutable reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first element of the pair.
+    /// * `Second`: The second element of the pair.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
+    pub fn get_pair_second<First, Second>(&self) -> Option<&Second>
+    where
+        First: CachedComponentData + ComponentType<Struct> + EmptyComponent,
+        Second: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.get_pair_second_id(First::get_id(self.world))
+    }
+
     /// Get component value as untyped pointer
     ///
     /// # Arguments

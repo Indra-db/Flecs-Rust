@@ -868,7 +868,7 @@ impl World {
     /// # Arguments
     ///
     /// * `component` - The singleton component to set on the world.
-    ///  
+    ///
     /// # See also
     ///
     /// * C++ API: `world::set`
@@ -888,14 +888,14 @@ impl World {
     ///
     /// * `first`: The ID of the first element of the pair.
     /// * `second`: The second element of the pair to be set.
-    ///  
+    ///
     /// # See also
     ///
     /// * C++ API: `world::set`
     #[doc(alias = "world::set")]
     pub fn set_pair_first_id<First>(&self, second: EntityT, first: First)
     where
-        First: CachedComponentData + ComponentType<Struct>,
+        First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
     {
         let entity = Entity::new_from_existing_raw(self.raw_world, First::get_id(self.raw_world));
         entity.set_pair_first_id::<First>(second, first);
@@ -912,7 +912,7 @@ impl World {
     /// # Arguments
     ///
     /// * `first`: The value to set for first component.
-    ///  
+    ///
     /// # See also
     ///
     /// * C++ API: `world::set`
@@ -920,7 +920,7 @@ impl World {
     pub fn set_pair_first<First, Second>(&self, first: First)
     where
         First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
-        Second: CachedComponentData + ComponentType<Struct>,
+        Second: CachedComponentData + ComponentType<Struct> + EmptyComponent,
     {
         let entity = Entity::new_from_existing_raw(self.raw_world, First::get_id(self.raw_world));
         entity.set_pair_first::<First, Second>(first);
@@ -936,14 +936,14 @@ impl World {
     ///
     /// * `first`: The ID of the first element of the pair.
     /// * `second`: The second element of the pair to be set.
-    ///  
+    ///
     /// # See also
     ///
     /// * C++ API: `world::set`
     #[doc(alias = "world::set")]
     pub fn set_pair_second_id<Second>(&self, first: EntityT, second: Second)
     where
-        Second: CachedComponentData + ComponentType<Struct>,
+        Second: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
     {
         let entity = Entity::new_from_existing_raw(self.raw_world, Second::get_id(self.raw_world));
         entity.set_pair_second_id::<Second>(first, second);
@@ -968,7 +968,7 @@ impl World {
     pub fn set_pair_second<First, Second>(&self, second: Second)
     where
         First: CachedComponentData + ComponentType<Struct> + EmptyComponent,
-        Second: CachedComponentData + ComponentType<Struct>,
+        Second: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
     {
         let entity = Entity::new_from_existing_raw(self.raw_world, First::get_id(self.raw_world));
         entity.set_pair_second::<First, Second>(second);
@@ -1029,7 +1029,7 @@ impl World {
         let component_id = T::get_id(self.raw_world);
         let singleton_entity = Entity::new_from_existing_raw(self.raw_world, component_id);
         unsafe {
-            (ecs_get_id(self.raw_world, singleton_entity.raw_id, component_id) as *mut T).as_ref()
+            (ecs_get_id(self.raw_world, singleton_entity.raw_id, component_id) as *const T).as_ref()
         }
     }
 
@@ -1048,7 +1048,7 @@ impl World {
     /// * C++ API: `world::get_mut`
     #[doc(alias = "world::get_mut")]
     #[inline(always)]
-    pub fn get_mut<T>(&self) -> Option<&mut T>
+    pub fn get_mut<T>(&mut self) -> &mut T
     where
         T: CachedComponentData + ComponentType<Struct>,
     {
@@ -1061,9 +1061,10 @@ impl World {
             "invalid type: {}",
             T::get_symbol_name()
         );
+        // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
+        // it is guaranteed to be valid
         unsafe {
-            (ecs_get_mut_id(self.raw_world, singleton_entity.raw_id, component_id) as *mut T)
-                .as_mut()
+            &mut *(ecs_get_mut_id(self.raw_world, singleton_entity.raw_id, component_id) as *mut T)
         }
     }
 
@@ -1075,7 +1076,7 @@ impl World {
     /// - `T`: Component for which to get a reference.
     ///
     /// Returns: The reference singleton component.
-    ///   
+    ///
     /// # See also
     ///
     /// * C++ API: `world::get_ref`
@@ -1162,7 +1163,7 @@ impl World {
         })
     }
 
-    /// Get const pointer for the first element of a singleton pair
+    /// Get immutable reference for the first element of a singleton pair
     ///
     /// # Type Parameters
     ///
@@ -1171,21 +1172,39 @@ impl World {
     /// # Arguments
     ///
     /// * `second`: The second element of the pair.
-    ///   
+    ///
+    /// # Returns
+    ///
+    /// An option containing the reference to the first element of the pair if it exists, otherwise None.
+    ///
     /// # See also
     ///
     /// * C++ API: `world::get`
     #[doc(alias = "world::get")]
     #[inline(always)]
-    pub fn get_pair_first<First>(&self, second: EntityT) -> *const First
+    pub fn get_pair_first_id<First>(&self, second: EntityT) -> Option<&First>
     where
-        First: CachedComponentData,
+        First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
     {
-        Entity::new_from_existing_raw(self.raw_world, First::get_id(self.raw_world))
-            .get_pair_first::<First>(second)
+        let component_id = First::get_id(self.raw_world);
+        ecs_assert!(
+            First::get_size(self.raw_world) != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid type: {}",
+            First::get_symbol_name()
+        );
+
+        // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
+        // it is guaranteed to be valid
+        unsafe {
+            (ecs_get_id(self.raw_world, component_id, ecs_pair(component_id, second))
+                as *const First)
+                .as_ref()
+        }
     }
 
-    /// Get mutable pointer for the first element of a singleton pair
+    /// Get mutable reference for the first element of a singleton pair
+    /// If the pair does not exist, it will be created.
     ///
     /// # Type Parameters
     ///
@@ -1194,21 +1213,76 @@ impl World {
     /// # Arguments
     ///
     /// * `second`: The second element of the pair.
-    ///   
+    ///
     /// # See also
     ///
     /// * C++ API: `world::get_mut`
     #[doc(alias = "world::get_mut")]
     #[inline(always)]
-    pub fn get_pair_first_mut<First>(&self, second: EntityT) -> *mut First
+    pub fn get_pair_first_id_mut<First>(&mut self, second: EntityT) -> &mut First
     where
-        First: CachedComponentData,
+        First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
     {
-        Entity::new_from_existing_raw(self.raw_world, First::get_id(self.raw_world))
-            .get_pair_first_mut::<First>(second)
+        let component_id = First::get_id(self.raw_world);
+        ecs_assert!(
+            First::get_size(self.raw_world) != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid type: {}",
+            First::get_symbol_name()
+        );
+        // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
+        // it is guaranteed to be valid
+        unsafe {
+            &mut *(ecs_get_mut_id(self.raw_world, component_id, ecs_pair(component_id, second))
+                as *mut First)
+        }
     }
 
-    /// Get mutable pointer for the second element of a singleton pair
+    /// Get an immutable reference for the first element of a singleton pair
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first part of the pair.
+    /// * `Second`: The second part of the pair.
+    ///
+    /// # Returns
+    ///
+    /// An option containing the reference to the first element of the pair if it exists, otherwise None.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub fn get_pair_first<First, Second>(&self) -> Option<&First>
+    where
+        First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
+        Second: CachedComponentData + ComponentType<Struct>,
+    {
+        self.get_pair_first_id(Second::get_id(self.raw_world))
+    }
+
+    /// Get a mutable reference for the first element of a singleton pair
+    /// If the pair does not exist, it will be created.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first part of the pair.
+    /// * `Second`: The second part of the pair.
+    ///
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub fn get_pair_first_mut<First, Second>(&mut self) -> &mut First
+    where
+        First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
+        Second: CachedComponentData + ComponentType<Struct>,
+    {
+        self.get_pair_first_id_mut(Second::get_id(self.raw_world))
+    }
+
+    /// Get immutable reference for the second element of a singleton pair
     ///
     /// # Type Parameters
     ///
@@ -1217,21 +1291,37 @@ impl World {
     /// # Arguments
     ///
     /// * `first`: The first element of the pair.
-    ///   
+    ///
+    /// # Returns
+    ///
+    /// An option containing the reference to the second element of the pair if it exists, otherwise None.
+    ///
     /// # See also
     ///
     /// * C++ API: `world::get`
     #[doc(alias = "world::get")]
     #[inline(always)]
-    pub fn get_pair_second<Second>(&self, first: EntityT) -> *const Second
+    pub fn get_pair_second_id<Second>(&self, first: EntityT) -> Option<&Second>
     where
-        Second: CachedComponentData,
+        Second: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
     {
-        Entity::new_from_existing_raw(self.raw_world, Second::get_id(self.raw_world))
-            .get_pair_second::<Second>(first)
+        let component_id = Second::get_id(self.raw_world);
+        ecs_assert!(
+            Second::get_size(self.raw_world) != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid type: {}",
+            Second::get_symbol_name()
+        );
+
+        unsafe {
+            (ecs_get_id(self.raw_world, component_id, ecs_pair(first, component_id))
+                as *const Second)
+                .as_ref()
+        }
     }
 
-    /// Get mutable pointer for the second element of a singleton pair
+    /// Get mutable reference for the second element of a singleton pair
+    /// If the pair does not exist, it will be created.
     ///
     /// # Type Parameters
     ///
@@ -1240,18 +1330,73 @@ impl World {
     /// # Arguments
     ///
     /// * `first`: The first element of the pair.
-    ///  
+    ///
     /// # See also
     ///
     /// * C++ API: `world::get_mut`
     #[doc(alias = "world::get_mut")]
     #[inline(always)]
-    pub fn get_pair_second_mut<Second>(&self, first: EntityT) -> *mut Second
+    pub fn get_pair_second_id_mut<Second>(&mut self, first: EntityT) -> &mut Second
     where
-        Second: CachedComponentData,
+        Second: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
     {
-        Entity::new_from_existing_raw(self.raw_world, Second::get_id(self.raw_world))
-            .get_pair_second_mut::<Second>(first)
+        let component_id = Second::get_id(self.raw_world);
+        ecs_assert!(
+            Second::get_size(self.raw_world) != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid type: {}",
+            Second::get_symbol_name()
+        );
+
+        // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
+        // it is guaranteed to be valid
+        unsafe {
+            &mut *(ecs_get_mut_id(self.raw_world, component_id, ecs_pair(first, component_id))
+                as *mut Second)
+        }
+    }
+
+    /// Get an immutable reference for the second element of a singleton pair.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first element of the pair.
+    /// * `Second`: The second element of the pair.
+    ///
+    /// # Returns
+    ///
+    /// An option containing the reference to the second element of the pair if it exists, otherwise None.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub fn get_pair_second<First, Second>(&self) -> Option<&Second>
+    where
+        First: CachedComponentData + ComponentType<Struct>,
+        Second: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.get_pair_second_id(First::get_id(self.raw_world))
+    }
+
+    /// Get a mutable reference for the second element of a singleton pair.
+    /// If the pair does not exist, it will be created.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first element of the pair.
+    /// * `Second`: The second element of the pair.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub fn get_pair_second_mut<First, Second>(&mut self) -> &mut Second
+    where
+        First: CachedComponentData + ComponentType<Struct>,
+        Second: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.get_pair_second_id_mut(First::get_id(self.raw_world))
     }
 
     /// Check if world has the provided struct component.
@@ -1263,7 +1408,7 @@ impl World {
     /// # Returns
     ///
     /// True if the world has the provided component, false otherwise.
-    ///  
+    ///
     /// # See also
     ///
     /// * C++ API: `world::has`
@@ -1285,7 +1430,7 @@ impl World {
     /// # Returns
     ///
     /// True if the world has the enum provided component, false otherwise.
-    ///  
+    ///
     /// # See also
     ///
     /// * C++ API: `world::has`
@@ -1311,7 +1456,7 @@ impl World {
     /// # Returns
     ///
     /// True if the world has the provided constant, false otherwise.
-    ///  
+    ///
     /// # See also
     ///
     /// * C++ API: `world::has`

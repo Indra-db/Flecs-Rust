@@ -1033,11 +1033,10 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
-    pub fn set_override_pair_first<First: CachedComponentData + ComponentType<Struct>>(
-        self,
-        second: EntityT,
-        first: First,
-    ) -> Self {
+    pub fn set_override_pair_first<First>(self, second: EntityT, first: First) -> Self
+    where
+        First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
+    {
         self.override_pair_second_id::<First>(second)
             .set_pair_first_id(second, first)
     }
@@ -1057,11 +1056,10 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
-    pub fn set_override_pair_second<Second: CachedComponentData + ComponentType<Struct>>(
-        self,
-        second: Second,
-        first: EntityT,
-    ) -> Self {
+    pub fn set_override_pair_second<Second>(self, second: Second, first: EntityT) -> Self
+    where
+        Second: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
+    {
         self.override_pair_first::<Second>(first)
             .set_pair_first_id(first, second)
     }
@@ -1096,11 +1094,10 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::set`
     #[doc(alias = "entity_builder::set")]
-    pub fn set_pair_first_id<First: CachedComponentData>(
-        self,
-        second: EntityT,
-        first: First,
-    ) -> Self {
+    pub fn set_pair_first_id<First>(self, second: EntityT, first: First) -> Self
+    where
+        First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
+    {
         set_helper(
             self.world,
             self.raw_id,
@@ -1130,7 +1127,7 @@ impl Entity {
     pub fn set_pair_first<First, Second>(self, first: First) -> Self
     where
         First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
-        Second: CachedComponentData + ComponentType<Struct>,
+        Second: CachedComponentData + ComponentType<Struct> + EmptyComponent,
     {
         set_helper(
             self.world,
@@ -1156,11 +1153,10 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::set_second`
     #[doc(alias = "entity_builder::set_second")]
-    pub fn set_pair_second_id<Second: CachedComponentData>(
-        self,
-        first: EntityT,
-        second: Second,
-    ) -> Self {
+    pub fn set_pair_second_id<Second>(self, first: EntityT, second: Second) -> Self
+    where
+        Second: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
+    {
         set_helper(
             self.world,
             self.raw_id,
@@ -1190,7 +1186,7 @@ impl Entity {
     pub fn set_pair_second<First, Second>(self, second: Second) -> Self
     where
         First: CachedComponentData + ComponentType<Struct> + EmptyComponent,
-        Second: CachedComponentData + ComponentType<Struct>,
+        Second: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
     {
         set_helper(
             self.world,
@@ -1883,7 +1879,7 @@ impl Entity {
         unsafe { ecs_get_mut_id(self.world, self.raw_id, ecs_pair(first, second)) as *mut c_void }
     }
 
-    /// Get const pointer for the first element of a pair
+    /// Get a mutable reference for the first element of a pair
     /// This operation gets the value for a pair from the entity.
     ///
     /// # Type Parameters
@@ -1898,7 +1894,10 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_first<First: CachedComponentData>(&self, second: EntityT) -> *const First {
+    pub fn get_pair_first_id_mut<First>(&mut self, second: EntityT) -> &mut First
+    where
+        First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
+    {
         let component_id = First::get_id(self.world);
         ecs_assert!(
             First::get_size(self.world) != 0,
@@ -1906,40 +1905,35 @@ impl Entity {
             "invalid type: {}",
             First::get_symbol_name()
         );
+        // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
+        // it is guaranteed to be valid
         unsafe {
-            ecs_get_mut_id(self.world, self.raw_id, ecs_pair(component_id, second)) as *const First
+            &mut *(ecs_get_mut_id(self.world, self.raw_id, ecs_pair(component_id, second))
+                as *mut First)
         }
     }
 
-    /// Get mutable pointer for the first element of a pair
+    /// Get a mutable reference for the first element of a pair
     /// This operation gets the value for a pair from the entity.
     ///
     /// # Type Parameters
     ///
     /// * `First`: The first part of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second`: The second element of the pair.
+    /// * `Second`: The second part of the pair.
     ///
     /// # See also
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_first_mut<First: CachedComponentData>(&self, second: EntityT) -> *mut First {
-        let component_id = First::get_id(self.world);
-        ecs_assert!(
-            First::get_size(self.world) != 0,
-            FlecsErrorCode::InvalidParameter,
-            "invalid type: {}",
-            First::get_symbol_name()
-        );
-        unsafe {
-            ecs_get_mut_id(self.world, self.raw_id, ecs_pair(component_id, second)) as *mut First
-        }
+    pub fn get_pair_first_mut<First, Second>(&mut self) -> &mut First
+    where
+        First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
+        Second: CachedComponentData + ComponentType<Struct> + EmptyComponent,
+    {
+        self.get_pair_first_id_mut(Second::get_id(self.world))
     }
 
-    /// Get const pointer for the second element of a pair.
+    /// Get a mutable reference for the second element of a pair.
     /// This operation gets the value for a pair from the entity.
     ///
     /// # Type Parameters
@@ -1954,7 +1948,10 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_second<Second: CachedComponentData>(&self, first: EntityT) -> *const Second {
+    pub fn get_pair_second_id_mut<Second>(&mut self, first: EntityT) -> &mut Second
+    where
+        Second: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
+    {
         let component_id = Second::get_id(self.world);
         ecs_assert!(
             Second::get_size(self.world) != 0,
@@ -1962,37 +1959,33 @@ impl Entity {
             "invalid type: {}",
             Second::get_symbol_name()
         );
+
+        // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
+        // it is guaranteed to be valid
         unsafe {
-            ecs_get_mut_id(self.world, self.raw_id, ecs_pair(first, component_id)) as *const Second
+            &mut *(ecs_get_mut_id(self.world, self.raw_id, ecs_pair(first, component_id))
+                as *mut Second)
         }
     }
 
-    /// Get mutable pointer for the second element of a pair.
+    /// Get a mutable reference for the second element of a pair.
     /// This operation gets the value for a pair from the entity.
     ///
     /// # Type Parameters
     ///
+    /// * `First`: The first element of the pair.
     /// * `Second`: The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
     ///
     /// # See also
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_second_mut<Second: CachedComponentData>(&self, first: EntityT) -> *mut Second {
-        let component_id = Second::get_id(self.world);
-        ecs_assert!(
-            Second::get_size(self.world) != 0,
-            FlecsErrorCode::InvalidParameter,
-            "invalid type: {}",
-            Second::get_symbol_name()
-        );
-        unsafe {
-            ecs_get_mut_id(self.world, self.raw_id, ecs_pair(first, component_id)) as *mut Second
-        }
+    pub fn get_pair_second_mut<First, Second>(&mut self) -> &mut Second
+    where
+        First: CachedComponentData + ComponentType<Struct> + EmptyComponent,
+        Second: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.get_pair_second_id_mut(First::get_id(self.world))
     }
 
     /// Signal that component was modified.
