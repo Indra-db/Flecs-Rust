@@ -80,9 +80,9 @@ where
     /// * C++ API: `iterable::each`
     #[doc(alias = "iterable::each")]
     fn each_entity_impl(
-        &mut self,
+        &self,
         mut func: impl FnMut(&mut Entity, T::TupleType),
-        filter: *mut FilterT,
+        filter: *const FilterT,
     ) {
         unsafe {
             let mut iter = ecs_filter_iter(self.world.raw_world, filter);
@@ -126,7 +126,7 @@ where
     #[doc(alias = "iterable::each")]
     pub fn each_iter_impl(
         &self,
-        filter: *mut FilterT,
+        filter: *const FilterT,
         mut func: impl FnMut(&mut Iter, usize, T::TupleType),
     ) {
         unsafe {
@@ -854,8 +854,23 @@ where
     /// * C++ API: `iterable::each`
     #[doc(alias = "iterable::each")]
     #[inline]
-    pub fn each_entity(&mut self, func: impl FnMut(&mut Entity, T::TupleType)) {
-        self.base.each_entity_impl(func, &mut self.filter);
+    pub fn each_entity(&self, func: impl FnMut(&mut Entity, T::TupleType)) {
+        self.base.each_entity_impl(func, &self.filter);
+    }
+
+    /// Each iterator.
+    /// The "each" iterator accepts a function that is invoked for each matching entity.
+    /// The following function signatures is valid:
+    ///  - func(iter: &mut Iter, index : usize,  comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///
+    /// Each iterators are automatically instanced.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iterable::each`
+    #[doc(alias = "iterable::each")]
+    pub fn each_iter(&self, func: impl FnMut(&mut Iter, usize, T::TupleType)) {
+        self.base.each_iter_impl(&self.filter, func);
     }
 
     /// Each iterator.
