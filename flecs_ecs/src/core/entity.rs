@@ -1127,7 +1127,7 @@ impl Entity {
     pub fn set_pair_first<First, Second>(self, first: First) -> Self
     where
         First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
-        Second: CachedComponentData + ComponentType<Struct> + EmptyComponent,
+        Second: CachedComponentData + ComponentType<Struct>,
     {
         set_helper(
             self.world,
@@ -1928,7 +1928,7 @@ impl Entity {
     pub fn get_pair_first_mut<First, Second>(&mut self) -> &mut First
     where
         First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
-        Second: CachedComponentData + ComponentType<Struct> + EmptyComponent,
+        Second: CachedComponentData + ComponentType<Struct>,
     {
         self.get_pair_first_id_mut(Second::get_id(self.world))
     }

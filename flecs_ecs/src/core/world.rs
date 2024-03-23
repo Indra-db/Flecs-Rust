@@ -920,7 +920,7 @@ impl World {
     pub fn set_pair_first<First, Second>(&self, first: First)
     where
         First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
-        Second: CachedComponentData + ComponentType<Struct> + EmptyComponent,
+        Second: CachedComponentData + ComponentType<Struct>,
     {
         let entity = Entity::new_from_existing_raw(self.raw_world, First::get_id(self.raw_world));
         entity.set_pair_first::<First, Second>(first);

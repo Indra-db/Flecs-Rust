@@ -56,15 +56,22 @@ fn main() {
     // Note that <Requires, Gigawatts> and <Gigawatts, Requires> are two
     // different pairs, and can be added to an entity at the same time.
 
-    // Currently there's no support in Rust flecs for both parts of a pair to be components with data, One must be empty.
-    // in Flecs C++ it is supported, but one can only be set at a time.
+    // If both parts of a pair are components, the pair assumes the type of
+    // the first element:
+    let e3 = world
+        .new_entity()
+        .set_pair_first::<Expires, Position>(Expires { timeout: 0.5 });
 
-    /* missing example here since a decision was made to not support this due to the unsafe nature of it
-    of users possibly transmuting wrong data and crashing their code base. It's open for discussion to add this in.
-    Currently it's a not common use case.
+    let expires = e3.get_pair_first::<Expires, Position>();
+    println!("expires: {}", expires.unwrap().timeout);
 
-    due to this, the tag property isn't supported either. We're missing an essential
-    rust feature to essentially safely support this feature */
+    // You can prevent a pair from assuming the type of a component by adding
+    // the Tag property to a relationship:
+    world.component::<MustHave>().add_id(ECS_TAG);
+
+    // Even though Position is a component, <MustHave, Position> contains no
+    // data because MustHave has the Tag property.
+    world.new_entity().add_pair::<MustHave, Position>();
 
     // The id::type_id method can be used to find the component type for a pair:
     println!(
@@ -83,6 +90,22 @@ fn main() {
             .get_hierarchy_path()
             .unwrap()
     );
+    println!(
+        "{}",
+        world
+            .get_id_pair::<Expires, Position>()
+            .type_id()
+            .get_hierarchy_path()
+            .unwrap()
+    );
+    println!(
+        "{}",
+        world
+            .get_id_pair::<MustHave, Position>()
+            .type_id()
+            .get_hierarchy_path()
+            .unwrap()
+    );
 
     // When querying for a relationship component, add the pair type as template
     // argument to the builder:
@@ -97,9 +120,12 @@ fn main() {
     });
 
     // Output:
-    //  e1: requires: 1.21
-    //  e1: requires: 1.5
-    //  ::Requires
-    //  ::Requires
-    //  requires: 1.21 gigawatts
+    // e1: requires: 1.21
+    // e1: requires: 1.5
+    // expires: 0.5
+    // ::Requires
+    // ::Requires
+    // ::Expires
+    // 0
+    // requires: 1.21 gigawatts
 }

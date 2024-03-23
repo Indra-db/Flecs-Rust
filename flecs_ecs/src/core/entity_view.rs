@@ -829,7 +829,7 @@ impl EntityView {
     pub fn get_pair_first<First, Second>(&self) -> Option<&First>
     where
         First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
-        Second: CachedComponentData + ComponentType<Struct> + EmptyComponent,
+        Second: CachedComponentData + ComponentType<Struct>,
     {
         self.get_pair_first_id(Second::get_id(self.world))
     }
