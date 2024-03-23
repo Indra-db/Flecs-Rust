@@ -58,8 +58,16 @@ where
             query_builder: QueryBuilder::<T>::new_from_desc(world, &mut desc.query),
             is_instanced: false,
         };
-        obj.desc.query = *obj.query_builder.get_desc_query();
-        obj.desc.query.filter = *obj.filter_builder.get_desc_filter();
+        //obj.desc.query = *obj.query_builder.get_desc_query();
+        //obj.desc.query.filter = *obj.filter_builder.get_desc_filter();
+        let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
+            name: std::ptr::null(),
+            sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
+            ..Default::default()
+        };
+        obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
+
         T::populate(&mut obj);
         obj
     }
@@ -78,6 +86,15 @@ where
         };
         obj.desc.query = *obj.query_builder.get_desc_query();
         obj.desc.query.filter = *obj.filter_builder.get_desc_filter();
+
+        let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
+            name: std::ptr::null(),
+            sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
+            ..Default::default()
+        };
+        obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
+
         T::populate(&mut obj);
         obj
     }
@@ -126,7 +143,8 @@ where
     T: Iterable<'a>,
 {
     fn current_term(&mut self) -> &mut TermT {
-        self.filter_builder.current_term()
+        let next_term_index = self.next_term_index;
+        &mut self.get_desc_filter().terms[next_term_index as usize]
     }
 
     fn next_term(&mut self) {
@@ -176,7 +194,7 @@ where
 {
     #[inline]
     fn get_desc_filter(&mut self) -> &mut ecs_filter_desc_t {
-        &mut self.filter_builder.desc
+        &mut self.desc.query.filter
     }
 
     #[inline]

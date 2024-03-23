@@ -348,7 +348,7 @@ where
     ///
     /// * C++ API: `system_builder_i::run`
     #[doc(alias = "system_builder_i::run")]
-    fn set_run_callback(&mut self, callback: ecs_iter_action_t) -> &mut Self {
+    pub fn set_run_callback(&mut self, callback: ecs_iter_action_t) -> &mut Self {
         self.desc.run = callback;
         self
     }
