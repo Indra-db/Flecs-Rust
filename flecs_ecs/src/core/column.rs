@@ -1,6 +1,6 @@
 use crate::{core::FlecsErrorCode, ecs_assert};
 
-use super::{component_registration::CachedComponentData, iter::Iter};
+use super::{component_registration::CachedComponentData, iter::Iter, IsEnum};
 use std::{
     ops::{Deref, Index, IndexMut},
     os::raw::c_void,
@@ -21,7 +21,7 @@ where
 
 impl<'a, T> Column<'a, T>
 where
-    T: CachedComponentData,
+    T: CachedComponentData + IsEnum,
 {
     /// Create a new column from component array.
     ///
@@ -49,7 +49,7 @@ where
     /// * `iter`: the iterator to create the column from.
     /// * `index_column`: the index of the signature of the query being iterated over.
     pub fn new_from_iter(iter: &'a mut Iter, index_column: i32) -> Self {
-        iter.get_field_data::<T>(index_column)
+        unsafe { iter.get_field_data::<T>(index_column) }
     }
 
     /// whether the column / component is shared.

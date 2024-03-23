@@ -18,7 +18,7 @@ use super::{
     id::Id,
     table::{Table, TableRange},
     world::World,
-    Archetype, FTime,
+    Archetype, FTime, IsEnum,
 };
 
 pub struct Iter<'a> {
@@ -372,6 +372,11 @@ impl<'a> Iter<'a> {
     /// If the matched id for the specified field does not match with the provided
     /// type or if the field is readonly, the function will assert.
     ///
+    /// # Safety
+    ///
+    /// This function is unsafe because it casts `c_void` data to a type T expecting
+    /// The user to pass the correct index + the index being within bounds
+    ///
     /// # Type parameters
     ///
     /// * `T` - The type of component to get the field data for
@@ -390,9 +395,13 @@ impl<'a> Iter<'a> {
     #[doc(alias = "iter::field")]
     // TODO? in C++ API there is a mutable and immutable version of this function
     // Maybe we should create a ColumnView struct that is immutable and use the Column struct for mutable access?
-    pub fn get_field_data<T: CachedComponentData>(&self, index: i32) -> Column<T> {
+    pub unsafe fn get_field_data<T: CachedComponentData + IsEnum>(&self, index: i32) -> Column<T> {
         self.get_field_internal::<T>(index)
     }
+
+    // pub unsafe fn get_field_data_as_(&self, index: i32) -> Column<IdT> {
+    //     self.get_field_internal::<T>(index)
+    // }
 
     /// Get unchecked access to field data.
     /// Unchecked access is required when a system does not know the type of a field at compile time.
@@ -497,7 +506,7 @@ impl<'a> Iter<'a> {
         self.iter.group_id
     }
 
-    fn get_field_internal<T: CachedComponentData>(&self, index: i32) -> Column<T> {
+    fn get_field_internal<T: CachedComponentData + IsEnum>(&self, index: i32) -> Column<T> {
         ecs_assert!(
             {
                 unsafe {
@@ -517,11 +526,28 @@ impl<'a> Iter<'a> {
         // out of bounds.
         let count = if is_shared { 1 } else { self.count() };
 
-        Column::<T>::new_from_array(
-            unsafe { ecs_field_w_size(self.iter, T::get_size(self.iter.world), index) as *mut T },
-            count,
-            is_shared,
-        )
+        if !T::IS_ENUM {
+            Column::<T>::new_from_array(
+                unsafe {
+                    ecs_field_w_size(self.iter, T::get_size(self.iter.world), index) as *mut T
+                },
+                count,
+                is_shared,
+            )
+        } else {
+            Column::<T>::new_from_array(
+                unsafe {
+                    World::new_wrap_raw_world(self.iter.world)
+                        .get_alive(
+                            *(ecs_field_w_size(self.iter, T::get_size(self.iter.world), index)
+                                as *mut IdT),
+                        )
+                        .get_enum_mut_internal::<T>()
+                },
+                count,
+                is_shared,
+            )
+        }
     }
 
     fn get_field_untyped_internal(&self, index: i32) -> UntypedColumn {

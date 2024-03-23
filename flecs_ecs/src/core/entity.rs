@@ -1788,6 +1788,31 @@ impl Entity {
         }
     }
 
+    /// workaround for Column Type enum support
+    /// is a copy of `get_enum_mut` but without the safety of ensuring the component is an enum
+    pub(crate) fn get_enum_mut_internal<T: CachedComponentData>(&mut self) -> &mut T {
+        let component_id: IdT = T::get_id(self.world);
+        let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
+
+        if target == 0 {
+            // if there is no matching pair for (r,*), try just r
+            unsafe { &mut *(ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T) }
+        } else {
+            // get constant value from constant entity
+            let constant_value =
+                unsafe { ecs_get_mut_id(self.world, target, component_id) as *mut T };
+
+            ecs_assert!(
+                !constant_value.is_null(),
+                FlecsErrorCode::InternalError,
+                "missing enum constant value {}",
+                T::get_symbol_name()
+            );
+
+            unsafe { &mut *constant_value }
+        }
+    }
+
     /// Get mut enum constant unchecked
     ///
     /// # Safety
