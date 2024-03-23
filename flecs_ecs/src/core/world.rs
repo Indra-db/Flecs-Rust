@@ -3500,7 +3500,7 @@ impl World {
     where
         Components: Iterable<'a>,
     {
-        let mut filter = Filter::<'a, Components>::new(self);
+        let filter = Filter::<'a, Components>::new(self);
         filter.each(func);
         filter
     }
