@@ -31,6 +31,9 @@ pub struct Struct;
 
 pub trait EmptyComponent: CachedComponentData {}
 pub trait NotEmptyComponent: CachedComponentData {}
+pub trait IsEnum: CachedComponentData {
+    const IS_ENUM: bool;
+}
 pub trait ECSComponentType {}
 
 impl ECSComponentType for Enum {}

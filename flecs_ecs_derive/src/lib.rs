@@ -211,6 +211,10 @@ fn impl_cached_component_data_struct(
     let common_traits = quote! {
         impl flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for #name {}
 
+        impl flecs_ecs::core::IsEnum for #name {
+            const IS_ENUM: bool = false;
+        }
+
         impl flecs_ecs::core::CachedComponentData for #name {
             type UnderlyingType = #name;
             #cached_component_data_impl
@@ -450,6 +454,10 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
 
     quote! {
         impl flecs_ecs::core::ComponentType<flecs_ecs::core::Enum> for #name {}
+
+        impl flecs_ecs::core::IsEnum for #name {
+            const IS_ENUM: bool = true;
+        }
 
         impl flecs_ecs::core::CachedComponentData for #name {
             type UnderlyingType = #name;
