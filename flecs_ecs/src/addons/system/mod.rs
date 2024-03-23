@@ -152,14 +152,41 @@ impl System {
     /// # Arguments
     ///
     /// * `delta_time` - The time delta.
-    /// * `param` - An optional parameter to pass to the system.
+    /// * `param` - A user-defined parameter to pass to the system
     ///
     /// # See also
     ///
     /// * C++ API: `system::run`
     #[doc(alias = "system::run")]
-    pub fn run(&self, delta_time: FTime, param: *mut c_void) -> SystemRunnerFluent {
+    #[inline]
+    pub fn run_dt_param(&self, delta_time: FTime, param: *mut c_void) -> SystemRunnerFluent {
         SystemRunnerFluent::new(&self.world, self.raw_id, 0, 0, delta_time, param)
+    }
+
+    /// Run the system
+    ///
+    /// # Arguments
+    ///
+    /// * `delta_time` - The time delta.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `system::run`
+    #[doc(alias = "system::run")]
+    #[inline]
+    pub fn run_dt(&self, delta_time: FTime) -> SystemRunnerFluent {
+        self.run_dt_param(delta_time, std::ptr::null_mut())
+    }
+
+    /// Run the system
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `system::run`
+    #[doc(alias = "system::run")]
+    #[inline]
+    pub fn run(&self) -> SystemRunnerFluent {
+        self.run_dt_param(0.0, std::ptr::null_mut())
     }
 
     /// Run the system worker

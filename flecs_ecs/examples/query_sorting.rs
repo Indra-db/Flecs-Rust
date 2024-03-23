@@ -59,7 +59,7 @@ fn main() {
     // Run system, printed values are ordered
     println!();
     println!("--- System iteration ---");
-    sys.run(0.0, std::ptr::null_mut());
+    sys.run();
 
     // Output:
     //
