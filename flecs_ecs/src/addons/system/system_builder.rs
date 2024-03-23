@@ -22,8 +22,8 @@ use crate::{
     },
     sys::{
         ecs_add_id, ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_get_target,
-        ecs_iter_action_t, ecs_iter_next, ecs_query_desc_t, ecs_remove_id, ecs_system_desc_t,
-        ecs_table_lock, ecs_table_unlock,
+        ecs_iter_action_t, ecs_query_desc_t, ecs_remove_id, ecs_system_desc_t, ecs_table_lock,
+        ecs_table_unlock,
     },
 };
 
@@ -581,10 +581,12 @@ where
             let iter_only = (*ctx).iter_only.unwrap();
             let iter_only = &mut *(iter_only as *mut Func);
 
-            while ecs_iter_next(iter) {
-                let mut iter_t = Iter::new(&mut *iter);
-                iter_only(&mut iter_t);
-            }
+            ecs_table_lock((*iter).world, (*iter).table);
+
+            let mut iter_t = Iter::new(&mut *iter);
+            iter_only(&mut iter_t);
+
+            ecs_table_unlock((*iter).world, (*iter).table);
         }
     }
 
