@@ -160,30 +160,30 @@
 #ifndef FLECS_CUSTOM_BUILD
 // #define FLECS_C          /**< C API convenience macros, always enabled */
 //#define FLECS_CPP           /**< C++ API */
-#define FLECS_MODULE        /**< Module support */
-#define FLECS_PARSER        /**< String parser for queries */
-#define FLECS_PLECS         /**< ECS data definition format */
-#define FLECS_RULES         /**< Constraint solver for advanced queries */
-#define FLECS_SNAPSHOT      /**< Snapshot & restore ECS data */
-#define FLECS_STATS         /**< Access runtime statistics */
-#define FLECS_MONITOR       /**< Track runtime statistics periodically */
-#define FLECS_METRICS       /**< Expose component data as statistics */
-#define FLECS_ALERTS        /**< Monitor conditions for errors */
-#define FLECS_SYSTEM        /**< System support */
-#define FLECS_PIPELINE      /**< Pipeline support */
-#define FLECS_TIMER         /**< Timer support */
-#define FLECS_META          /**< Reflection support */
-#define FLECS_META_C        /**< Utilities for populating reflection data */
-#define FLECS_UNITS         /**< Builtin standard units */
-#define FLECS_EXPR          /**< Parsing strings to/from component values */
-#define FLECS_JSON          /**< Parsing JSON to/from component values */
-#define FLECS_DOC           /**< Document entities & components */
-#define FLECS_COREDOC       /**< Documentation for core entities & components */
-#define FLECS_LOG           /**< When enabled ECS provides more detailed logs */
-#define FLECS_APP           /**< Application addon */
-#define FLECS_OS_API_IMPL   /**< Default implementation for OS API */
-#define FLECS_HTTP          /**< Tiny HTTP server for connecting to remote UI */
-#define FLECS_REST          /**< REST API for querying application data */
+//#define FLECS_MODULE        /**< Module support */
+//#define FLECS_PARSER        /**< String parser for queries */
+//#define FLECS_PLECS         /**< ECS data definition format */
+//#define FLECS_RULES         /**< Constraint solver for advanced queries */
+//#define FLECS_SNAPSHOT      /**< Snapshot & restore ECS data */
+//#define FLECS_STATS         /**< Access runtime statistics */
+//#define FLECS_MONITOR       /**< Track runtime statistics periodically */
+//#define FLECS_METRICS       /**< Expose component data as statistics */
+//#define FLECS_ALERTS        /**< Monitor conditions for errors */
+//#define FLECS_SYSTEM        /**< System support */
+//#define FLECS_PIPELINE      /**< Pipeline support */
+//#define FLECS_TIMER         /**< Timer support */
+//#define FLECS_META          /**< Reflection support */
+//#define FLECS_META_C        /**< Utilities for populating reflection data */
+//#define FLECS_UNITS         /**< Builtin standard units */
+//#define FLECS_EXPR          /**< Parsing strings to/from component values */
+//#define FLECS_JSON          /**< Parsing JSON to/from component values */
+//#define FLECS_DOC           /**< Document entities & components */
+//#define FLECS_COREDOC       /**< Documentation for core entities & components */
+//#define FLECS_LOG           /**< When enabled ECS provides more detailed logs */
+//#define FLECS_APP           /**< Application addon */
+//#define FLECS_OS_API_IMPL   /**< Default implementation for OS API */
+//#define FLECS_HTTP          /**< Tiny HTTP server for connecting to remote UI */
+//#define FLECS_REST          /**< REST API for querying application data */
 //#define FLECS_JOURNAL    /**< Journaling addon (disabled by default) */
 #endif // ifndef FLECS_CUSTOM_BUILD
 
@@ -10207,25 +10207,25 @@ int ecs_log_last_error(void);
 
 
 /* Handle addon dependencies that need declarations to be visible in header */
-#ifdef FLECS_MONITOR
-#ifndef FLECS_STATS
-#define FLECS_STATS
-#endif
-#ifndef FLECS_SYSTEM
-#define FLECS_SYSTEM
-#endif
-#ifndef FLECS_TIMER
-#define FLECS_TIMER
-#endif
-#endif
+//#ifdef FLECS_MONITOR
+//#ifndef FLECS_STATS
+//#define FLECS_STATS
+//#endif
+//#ifndef FLECS_SYSTEM
+//#define FLECS_SYSTEM
+//#endif
+//#ifndef FLECS_TIMER
+//#define FLECS_TIMER
+//#endif
+//#endif
 
-#ifdef FLECS_REST
-#define FLECS_HTTP
-#endif
-
-#ifdef FLECS_PLECS
-#define FLECS_EXPR
-#endif
+//#ifdef FLECS_REST
+//#define FLECS_HTTP
+//#endif
+//
+//#ifdef FLECS_PLECS
+//#define FLECS_EXPR
+//#endif
 
 #ifdef FLECS_APP
 #ifdef FLECS_NO_APP
@@ -10243,9 +10243,9 @@ int ecs_log_last_error(void);
 
 #ifdef FLECS_APP
 
-#ifndef FLECS_PIPELINE
-#define FLECS_PIPELINE
-#endif
+//#ifndef FLECS_PIPELINE
+//#define FLECS_PIPELINE
+//#endif
 
 #ifndef FLECS_APP_H
 #define FLECS_APP_H

@@ -26,7 +26,59 @@ regex = "1.9.5"
 regenerate_binding = []
 disable_build_c_library = []
 build_debug = []
+
+
+# Flecs C defines / features
+flecs_module = [] # Module support
+flecs_parser = [] # String parser for queries
+flecs_plecs = ["flecs_expr"] # ECS data definition format
+flecs_rules = [] # Constraint solver for advanced queries
+flecs_snapshot = [] # Snapshot & restore ECS data
+flecs_stats = [] # Access runtime statistics
+flecs_monitor = ["flecs_stats", "flecs_system", "flecs_timer"] # Track runtime statistics periodically
+flecs_metrics = [] # Expose component data as statistics
+flecs_alerts = [] # Monitor conditions for errors
+flecs_system = [] # System support
+flecs_pipeline = [] # Pipeline support
+flecs_timer = [] # Timer support
+flecs_meta = [] # Reflection support
+flecs_meta_c = [] # Utilities for populating reflection data
+flecs_units = [] # Builtin standard units
+flecs_expr = [] # Parsing strings to/from component values
+flecs_json = [] # Parsing JSON to/from component values
+flecs_doc = [] # Document entities & components
+flecs_coredoc = [] # Documentation for core entities & components
+flecs_log = [] # When enabled ECS provides more detailed logs
+flecs_app = ["flecs_pipeline"] # Application addon
+flecs_os_api_impl = [] # Default implementation for OS API
+flecs_http = [] # Tiny HTTP server for connecting to remote UI
+flecs_rest = ["flecs_http"] # REST API for querying application data
+flecs_journal = [] # Journaling addon (disabled by default)
 default = [
+    "flecs_module",
+    "flecs_parser",
+    "flecs_plecs",
+    "flecs_rules",
+    "flecs_snapshot",
+    "flecs_stats",
+    "flecs_monitor",
+    "flecs_metrics",
+    "flecs_alerts",
+    "flecs_system",
+    "flecs_pipeline",
+    "flecs_timer",
+    "flecs_meta",
+    "flecs_meta_c",
+    "flecs_units",
+    "flecs_expr",
+    "flecs_json",
+    "flecs_doc",
+    "flecs_coredoc",
+    "flecs_log",
+    "flecs_app",
+    "flecs_os_api_impl",
+    "flecs_http",
+    "flecs_rest",
 ]
 
 

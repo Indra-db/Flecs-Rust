@@ -88,6 +88,81 @@ fn main() {
             .warnings(true)
             .extra_warnings(true);
 
+        #[cfg(feature = "flecs_module")]
+        build.define("FLECS_MODULE", None);
+
+        #[cfg(feature = "flecs_parser")]
+        build.define("FLECS_PARSER", None);
+
+        #[cfg(feature = "flecs_plecs")]
+        build.define("FLECS_PLECS", None);
+
+        #[cfg(feature = "flecs_rules")]
+        build.define("FLECS_RULES", None);
+
+        #[cfg(feature = "flecs_snapshot")]
+        build.define("FLECS_SNAPSHOT", None);
+
+        #[cfg(feature = "flecs_stats")]
+        build.define("FLECS_STATS", None);
+
+        #[cfg(feature = "flecs_monitor")]
+        build.define("FLECS_MONITOR", None);
+
+        #[cfg(feature = "flecs_metrics")]
+        build.define("FLECS_METRICS", None);
+
+        #[cfg(feature = "flecs_alerts")]
+        build.define("FLECS_ALERTS", None);
+
+        #[cfg(feature = "flecs_system")]
+        build.define("FLECS_SYSTEM", None);
+
+        #[cfg(feature = "flecs_pipeline")]
+        build.define("FLECS_PIPELINE", None);
+
+        #[cfg(feature = "flecs_timer")]
+        build.define("FLECS_TIMER", None);
+
+        #[cfg(feature = "flecs_meta")]
+        build.define("FLECS_META", None);
+
+        #[cfg(feature = "flecs_meta_c")]
+        build.define("FLECS_META_C", None);
+
+        #[cfg(feature = "flecs_units")]
+        build.define("FLECS_UNITS", None);
+
+        #[cfg(feature = "flecs_expr")]
+        build.define("FLECS_EXPR", None);
+
+        #[cfg(feature = "flecs_json")]
+        build.define("FLECS_JSON", None);
+
+        #[cfg(feature = "flecs_doc")]
+        build.define("FLECS_DOC", None);
+
+        #[cfg(feature = "flecs_coredoc")]
+        build.define("FLECS_COREDOC", None);
+
+        #[cfg(feature = "flecs_log")]
+        build.define("FLECS_LOG", None);
+
+        #[cfg(feature = "flecs_app")]
+        build.define("FLECS_APP", None);
+
+        #[cfg(feature = "flecs_os_api_impl")]
+        build.define("FLECS_OS_API_IMPL", None);
+
+        #[cfg(feature = "flecs_http")]
+        build.define("FLECS_HTTP", None);
+
+        #[cfg(feature = "flecs_rest")]
+        build.define("FLECS_REST", None);
+
+        #[cfg(feature = "flecs_journal")]
+        build.define("FLECS_JOURNAL", None);
+
         #[cfg(not(feature = "build_debug"))]
         {
             build.opt_level(3).define("NDEBUG", None).compile("flecs");
