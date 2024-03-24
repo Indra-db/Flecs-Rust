@@ -329,7 +329,7 @@ where
     ///
     /// * C++ API: `system_builder_i::ctx`
     #[doc(alias = "system_builder_i::ctx")]
-    fn set_context(&mut self, context: *mut c_void) -> &mut Self {
+    pub fn set_context(&mut self, context: *mut c_void) -> &mut Self {
         self.desc.ctx = context;
         self
     }

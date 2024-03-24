@@ -539,6 +539,11 @@ pub trait FilterBuilderImpl: TermBuilder {
         FilterBuilderImpl::write(self)
     }
 
+    fn write_id(&mut self, id: IdT) -> &mut Self {
+        self.term_with_id(id);
+        FilterBuilderImpl::write(self)
+    }
+
     /// set term with Id
     ///
     /// # See also

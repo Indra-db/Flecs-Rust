@@ -183,7 +183,7 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::ctx`
     #[doc(alias = "iter::ctx")]
-    pub fn get_context_ptr<T: CachedComponentData>(&mut self) -> &mut T {
+    pub fn get_context_ptr<T>(&mut self) -> &mut T {
         unsafe { &mut *(self.iter.ctx as *mut T) }
     }
 

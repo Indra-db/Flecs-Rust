@@ -27,7 +27,7 @@ use super::{
     EmptyComponent, EntityView, NotEmptyComponent, ScopedWorld, ECS_OVERRIDE,
 };
 
-#[derive(Default, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Copy, Clone)]
 pub struct Entity {
     pub entity_view: EntityView,
 }
@@ -35,6 +35,26 @@ pub struct Entity {
 impl PartialEq<u64> for Entity {
     fn eq(&self, other: &u64) -> bool {
         self.raw_id == *other
+    }
+}
+
+impl PartialEq<Entity> for Entity {
+    fn eq(&self, other: &Entity) -> bool {
+        self.raw_id == other.raw_id
+    }
+}
+
+impl Eq for Entity {}
+
+impl PartialOrd for Entity {
+    fn partial_cmp(&self, other: &Entity) -> Option<std::cmp::Ordering> {
+        Some(self.raw_id.cmp(&other.raw_id))
+    }
+}
+
+impl Ord for Entity {
+    fn cmp(&self, other: &Entity) -> std::cmp::Ordering {
+        self.raw_id.cmp(&other.raw_id)
     }
 }
 
