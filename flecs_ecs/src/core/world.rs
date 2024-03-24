@@ -6,13 +6,16 @@ use std::{ffi::CStr, ops::Deref, os::raw::c_void};
 use crate::addons::app::App;
 
 #[cfg(feature = "flecs_system")]
-use crate::addons::system::{System, SystemBuilder};
+use crate::{
+    addons::system::{System, SystemBuilder},
+    sys::ecs_system_desc_t,
+};
 
 #[cfg(feature = "flecs_pipeline")]
-use crate::addons::pipeline::PipelineBuilder;
+use crate::{addons::pipeline::PipelineBuilder, sys};
 
 use crate::sys::{
-    self, ecs_async_stage_free, ecs_async_stage_new, ecs_atfini, ecs_count_id, ecs_ctx_free_t,
+    ecs_async_stage_free, ecs_async_stage_new, ecs_atfini, ecs_count_id, ecs_ctx_free_t,
     ecs_defer_begin, ecs_defer_end, ecs_defer_resume, ecs_defer_suspend, ecs_delete_with, ecs_dim,
     ecs_enable_range_check, ecs_ensure, ecs_exists, ecs_fini, ecs_fini_action_t, ecs_frame_begin,
     ecs_frame_end, ecs_get_alive, ecs_get_ctx, ecs_get_id, ecs_get_mut_id, ecs_get_name,
@@ -22,7 +25,7 @@ use crate::sys::{
     ecs_remove_all, ecs_run_post_frame, ecs_set_alias, ecs_set_automerge, ecs_set_ctx,
     ecs_set_entity_range, ecs_set_lookup_path, ecs_set_scope, ecs_set_stage_count, ecs_set_with,
     ecs_should_quit, ecs_stage_is_async, ecs_stage_is_readonly, ecs_stage_t_magic,
-    ecs_system_desc_t, ecs_world_info_t, ecs_world_t_magic,
+    ecs_world_info_t, ecs_world_t_magic,
 };
 
 use crate::{

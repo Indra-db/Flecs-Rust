@@ -3,14 +3,14 @@
 use crate::{
     core::{get_full_type_name, FlecsErrorCode},
     ecs_assert,
-    sys::{ecs_get_hooks_id, ecs_opaque_init, ecs_set_hooks_id},
+    sys::{ecs_get_hooks_id, ecs_set_hooks_id},
 };
 
 #[cfg(feature = "flecs_meta")]
-use crate::addons::meta::Opaque;
+use crate::{addons::meta::Opaque, core::c_types::EntityT, sys::ecs_opaque_init};
 
 use super::{
-    c_types::{EntityT, IdT, IterT, TypeHooksT},
+    c_types::{IdT, IterT, TypeHooksT},
     component_registration::CachedComponentData,
     ecs_field,
     entity::Entity,
