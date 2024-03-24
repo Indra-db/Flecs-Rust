@@ -1,7 +1,7 @@
 mod common;
 use common::*;
 
-#[derive(Debug, Copy, Clone, Component, Default)]
+#[derive(Clone, Component, Default)]
 struct Timeout {
     pub value: f32,
 }
