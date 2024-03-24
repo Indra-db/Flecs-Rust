@@ -4678,6 +4678,183 @@ error:
     return 0;
 }
 
+
+// Names returned from the name_helper class do not start with ::
+// but are relative to the root. If the namespace of the type
+// overlaps with the namespace of the current module, strip it from
+// the implicit identifier.
+// This allows for registration of component types that are not in the
+// module namespace to still be registered under the module scope.
+const char* ecs_cpp_trim_module(
+    ecs_world_t *world,
+    const char *type_name)
+{
+    ecs_entity_t scope = ecs_get_scope(world);
+    if (!scope) {
+        return type_name;
+    }
+
+    char *path = ecs_get_path_w_sep(world, 0, scope, "::", NULL);
+    if (path) {
+        ecs_size_t len = ecs_os_strlen(path);
+        if (!ecs_os_strncmp(path, type_name, len)) {
+            // Type is a child of current parent, trim name of parent
+            type_name += len;
+            ecs_assert(type_name[0], ECS_INVALID_PARAMETER, NULL);
+            ecs_assert(type_name[0] == ':', ECS_INVALID_PARAMETER, NULL);
+            ecs_assert(type_name[1] == ':', ECS_INVALID_PARAMETER, NULL);
+            type_name += 2;
+        } else {
+            // Type is not a child of current parent, trim entire path
+            char *ptr = strrchr(type_name, ':');
+            if (ptr) {
+                type_name = ptr + 1;
+            }
+
+        }
+    }
+    ecs_os_free(path);
+
+    return type_name;
+}
+
+ecs_entity_t ecs_cpp_component_register_explicit(
+    ecs_world_t *world,
+    ecs_entity_t s_id,
+    ecs_entity_t id,
+    const char *name,
+    const char *type_name,
+    const char *symbol,
+    size_t size,
+    size_t alignment,
+    bool is_component,
+    bool *existing_out)
+{
+    char *existing_name = NULL;
+    if (existing_out) *existing_out = false;
+
+    // If an explicit id is provided, it is possible that the symbol and
+    // name differ from the actual type, as the application may alias
+    // one type to another.
+    if (!id) {
+        if (!name) {
+            // If no name was provided first check if a type with the provided
+            // symbol was already registered.
+            id = ecs_lookup_symbol(world, symbol, false, false);
+            if (id) {
+                existing_name = ecs_get_path_w_sep(world, 0, id, "::", "::");
+                name = existing_name;
+                if (existing_out) *existing_out = true;
+            } else {
+                // If type is not yet known, derive from type name
+                name = ecs_cpp_trim_module(world, type_name);
+            }
+        }
+    } else {
+        // If an explicit id is provided but it has no name, inherit
+        // the name from the type.
+        if (!ecs_is_valid(world, id) || !ecs_get_name(world, id)) {
+            name = ecs_cpp_trim_module(world, type_name);
+        }
+    }
+
+    ecs_entity_t entity;
+    if (is_component || size != 0) {
+        entity = ecs_entity(world, {
+            .id = s_id,
+            .name = name,
+            .sep = "::",
+            .root_sep = "::",
+            .symbol = symbol,
+            .use_low_id = true
+        });
+        ecs_assert(entity != 0, ECS_INVALID_OPERATION, NULL);
+
+        entity = ecs_component_init(world, &(ecs_component_desc_t){
+            .entity = entity,
+            .type.size = flecs_uto(int32_t, size),
+            .type.alignment = flecs_uto(int32_t, alignment)
+        });
+        ecs_assert(entity != 0, ECS_INVALID_OPERATION, NULL);
+    } else {
+        entity = ecs_entity(world, {
+            .id = s_id,
+            .name = name,
+            .sep = "::",
+            .root_sep = "::",
+            .symbol = symbol,
+            .use_low_id = true
+        });
+    }
+
+    ecs_assert(entity != 0, ECS_INTERNAL_ERROR, NULL);
+    ecs_assert(!s_id || s_id == entity, ECS_INTERNAL_ERROR, NULL);
+    ecs_os_free(existing_name);
+
+    return entity;
+}
+
+void ecs_cpp_enum_init(
+    ecs_world_t *world,
+    ecs_entity_t id)
+{
+    (void)world;
+    (void)id;
+#ifdef FLECS_META
+    ecs_suspend_readonly_state_t readonly_state;
+    world = flecs_suspend_readonly(world, &readonly_state);
+    ecs_set(world, id, EcsEnum, {0});
+    flecs_resume_readonly(world, &readonly_state);
+#endif
+}
+
+ecs_entity_t ecs_cpp_enum_constant_register(
+    ecs_world_t *world,
+    ecs_entity_t parent,
+    ecs_entity_t id,
+    const char *name,
+    int value)
+{
+    ecs_suspend_readonly_state_t readonly_state;
+    world = flecs_suspend_readonly(world, &readonly_state);
+
+    const char *parent_name = ecs_get_name(world, parent);
+    ecs_size_t parent_name_len = ecs_os_strlen(parent_name);
+    if (!ecs_os_strncmp(name, parent_name, parent_name_len)) {
+        name += parent_name_len;
+        if (name[0] == '_') {
+            name ++;
+        }
+    }
+
+    ecs_entity_t prev = ecs_set_scope(world, parent);
+    id = ecs_entity(world, {
+        .id = id,
+        .name = name
+    });
+    ecs_assert(id != 0, ECS_INVALID_OPERATION, name);
+    ecs_set_scope(world, prev);
+
+    #ifdef FLECS_DEBUG
+    const EcsComponent *cptr = ecs_get(world, parent, EcsComponent);
+    ecs_assert(cptr != NULL, ECS_INVALID_PARAMETER, "enum is not a component");
+    ecs_assert(cptr->size == ECS_SIZEOF(int32_t), ECS_UNSUPPORTED,
+        "enum component must have 32bit size");
+    #endif
+
+#ifdef FLECS_META
+    ecs_set_id(world, id, ecs_pair(EcsConstant, ecs_id(ecs_i32_t)),
+        sizeof(ecs_i32_t), &value);
+#endif
+
+    flecs_resume_readonly(world, &readonly_state);
+
+    ecs_trace("#[green]constant#[reset] %s.%s created with value %d",
+        ecs_get_name(world, parent), name, value);
+
+    return id;
+}
+
 ecs_entity_t ecs_new_w_id(
     ecs_world_t *world,
     ecs_id_t id)
@@ -25561,45 +25738,6 @@ char* ecs_cpp_get_constant_name(
     return constant_name;
 }
 
-// Names returned from the name_helper class do not start with ::
-// but are relative to the root. If the namespace of the type
-// overlaps with the namespace of the current module, strip it from
-// the implicit identifier.
-// This allows for registration of component types that are not in the 
-// module namespace to still be registered under the module scope.
-const char* ecs_cpp_trim_module(
-    ecs_world_t *world,
-    const char *type_name)
-{
-    ecs_entity_t scope = ecs_get_scope(world);
-    if (!scope) {
-        return type_name;
-    }
-
-    char *path = ecs_get_path_w_sep(world, 0, scope, "::", NULL);
-    if (path) {
-        ecs_size_t len = ecs_os_strlen(path);
-        if (!ecs_os_strncmp(path, type_name, len)) {
-            // Type is a child of current parent, trim name of parent
-            type_name += len;
-            ecs_assert(type_name[0], ECS_INVALID_PARAMETER, NULL);
-            ecs_assert(type_name[0] == ':', ECS_INVALID_PARAMETER, NULL);
-            ecs_assert(type_name[1] == ':', ECS_INVALID_PARAMETER, NULL);
-            type_name += 2;
-        } else {
-            // Type is not a child of current parent, trim entire path
-            char *ptr = strrchr(type_name, ':');
-            if (ptr) {
-                type_name = ptr + 1;
-            }
-
-        }
-    }
-    ecs_os_free(path);
-
-    return type_name;
-}
-
 // Validate registered component
 void ecs_cpp_component_validate(
     ecs_world_t *world,
@@ -25743,143 +25881,6 @@ ecs_entity_t ecs_cpp_component_register(
     }
 
     return ent;
-}
-
-ecs_entity_t ecs_cpp_component_register_explicit(
-    ecs_world_t *world,
-    ecs_entity_t s_id,
-    ecs_entity_t id,
-    const char *name,
-    const char *type_name,
-    const char *symbol,
-    size_t size,
-    size_t alignment,
-    bool is_component,
-    bool *existing_out)
-{
-    char *existing_name = NULL;
-    if (existing_out) *existing_out = false;
-
-    // If an explicit id is provided, it is possible that the symbol and
-    // name differ from the actual type, as the application may alias
-    // one type to another.
-    if (!id) {
-        if (!name) {
-            // If no name was provided first check if a type with the provided
-            // symbol was already registered.
-            id = ecs_lookup_symbol(world, symbol, false, false);
-            if (id) {
-                existing_name = ecs_get_path_w_sep(world, 0, id, "::", "::");
-                name = existing_name;
-                if (existing_out) *existing_out = true;
-            } else {
-                // If type is not yet known, derive from type name
-                name = ecs_cpp_trim_module(world, type_name);
-            }
-        }
-    } else {
-        // If an explicit id is provided but it has no name, inherit
-        // the name from the type.
-        if (!ecs_is_valid(world, id) || !ecs_get_name(world, id)) {
-            name = ecs_cpp_trim_module(world, type_name);
-        }
-    }
-
-    ecs_entity_t entity;
-    if (is_component || size != 0) {
-        entity = ecs_entity(world, {
-            .id = s_id,
-            .name = name,
-            .sep = "::",
-            .root_sep = "::",
-            .symbol = symbol,
-            .use_low_id = true
-        });
-        ecs_assert(entity != 0, ECS_INVALID_OPERATION, NULL);
-
-        entity = ecs_component_init(world, &(ecs_component_desc_t){
-            .entity = entity,
-            .type.size = flecs_uto(int32_t, size),
-            .type.alignment = flecs_uto(int32_t, alignment)
-        });
-        ecs_assert(entity != 0, ECS_INVALID_OPERATION, NULL);
-    } else {
-        entity = ecs_entity(world, {
-            .id = s_id,
-            .name = name,
-            .sep = "::",
-            .root_sep = "::",
-            .symbol = symbol,
-            .use_low_id = true
-        });
-    }
-
-    ecs_assert(entity != 0, ECS_INTERNAL_ERROR, NULL);
-    ecs_assert(!s_id || s_id == entity, ECS_INTERNAL_ERROR, NULL);
-    ecs_os_free(existing_name);
-
-    return entity;
-}
-
-void ecs_cpp_enum_init(
-    ecs_world_t *world,
-    ecs_entity_t id)
-{
-    (void)world;
-    (void)id;
-#ifdef FLECS_META
-    ecs_suspend_readonly_state_t readonly_state;
-    world = flecs_suspend_readonly(world, &readonly_state);
-    ecs_set(world, id, EcsEnum, {0});
-    flecs_resume_readonly(world, &readonly_state);
-#endif
-}
-
-ecs_entity_t ecs_cpp_enum_constant_register(
-    ecs_world_t *world,
-    ecs_entity_t parent,
-    ecs_entity_t id,
-    const char *name,
-    int value)
-{
-    ecs_suspend_readonly_state_t readonly_state;
-    world = flecs_suspend_readonly(world, &readonly_state);
-
-    const char *parent_name = ecs_get_name(world, parent);
-    ecs_size_t parent_name_len = ecs_os_strlen(parent_name);
-    if (!ecs_os_strncmp(name, parent_name, parent_name_len)) {
-        name += parent_name_len;
-        if (name[0] == '_') {
-            name ++;
-        }
-    }
-
-    ecs_entity_t prev = ecs_set_scope(world, parent);
-    id = ecs_entity(world, {
-        .id = id,
-        .name = name
-    });
-    ecs_assert(id != 0, ECS_INVALID_OPERATION, name);
-    ecs_set_scope(world, prev);
-
-    #ifdef FLECS_DEBUG
-    const EcsComponent *cptr = ecs_get(world, parent, EcsComponent);
-    ecs_assert(cptr != NULL, ECS_INVALID_PARAMETER, "enum is not a component");
-    ecs_assert(cptr->size == ECS_SIZEOF(int32_t), ECS_UNSUPPORTED,
-        "enum component must have 32bit size");
-    #endif
-
-#ifdef FLECS_META
-    ecs_set_id(world, id, ecs_pair(EcsConstant, ecs_id(ecs_i32_t)), 
-        sizeof(ecs_i32_t), &value);
-#endif
-
-    flecs_resume_readonly(world, &readonly_state);
-
-    ecs_trace("#[green]constant#[reset] %s.%s created with value %d", 
-        ecs_get_name(world, parent), name, value);
-
-    return id;
 }
 
 static int32_t flecs_reset_count = 0;

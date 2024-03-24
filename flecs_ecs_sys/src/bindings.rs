@@ -2837,6 +2837,38 @@ extern "C" {
     pub fn ecs_new_low_id(world: *mut ecs_world_t) -> ecs_entity_t;
 }
 extern "C" {
+    pub fn ecs_cpp_trim_module(
+        world: *mut ecs_world_t,
+        type_name: *const ::std::os::raw::c_char,
+    ) -> *const ::std::os::raw::c_char;
+}
+extern "C" {
+    pub fn ecs_cpp_component_register_explicit(
+        world: *mut ecs_world_t,
+        s_id: ecs_entity_t,
+        id: ecs_entity_t,
+        name: *const ::std::os::raw::c_char,
+        type_name: *const ::std::os::raw::c_char,
+        symbol: *const ::std::os::raw::c_char,
+        size: usize,
+        alignment: usize,
+        is_component: bool,
+        existing_out: *mut bool,
+    ) -> ecs_entity_t;
+}
+extern "C" {
+    pub fn ecs_cpp_enum_init(world: *mut ecs_world_t, id: ecs_entity_t);
+}
+extern "C" {
+    pub fn ecs_cpp_enum_constant_register(
+        world: *mut ecs_world_t,
+        parent: ecs_entity_t,
+        id: ecs_entity_t,
+        name: *const ::std::os::raw::c_char,
+        value: ::std::os::raw::c_int,
+    ) -> ecs_entity_t;
+}
+extern "C" {
     #[doc = "Create new entity with (component) id.\n This operation creates a new entity with an optional (component) id. When 0\n is passed to the id parameter, no component is added to the new entity.\n\n @param world The world.\n @param id The component id to initialize the new entity with.\n @return The new entity."]
     pub fn ecs_new_w_id(world: *mut ecs_world_t, id: ecs_id_t) -> ecs_entity_t;
 }
@@ -7461,96 +7493,6 @@ extern "C" {
         c_name: *const ::std::os::raw::c_char,
         desc: *const ecs_component_desc_t,
     ) -> ecs_entity_t;
-}
-extern "C" {
-    pub fn ecs_cpp_get_type_name(
-        type_name: *mut ::std::os::raw::c_char,
-        func_name: *const ::std::os::raw::c_char,
-        len: usize,
-        front_len: usize,
-    ) -> *mut ::std::os::raw::c_char;
-}
-extern "C" {
-    pub fn ecs_cpp_get_symbol_name(
-        symbol_name: *mut ::std::os::raw::c_char,
-        type_name: *const ::std::os::raw::c_char,
-        len: usize,
-    ) -> *mut ::std::os::raw::c_char;
-}
-extern "C" {
-    pub fn ecs_cpp_get_constant_name(
-        constant_name: *mut ::std::os::raw::c_char,
-        func_name: *const ::std::os::raw::c_char,
-        len: usize,
-        back_len: usize,
-    ) -> *mut ::std::os::raw::c_char;
-}
-extern "C" {
-    pub fn ecs_cpp_trim_module(
-        world: *mut ecs_world_t,
-        type_name: *const ::std::os::raw::c_char,
-    ) -> *const ::std::os::raw::c_char;
-}
-extern "C" {
-    pub fn ecs_cpp_component_validate(
-        world: *mut ecs_world_t,
-        id: ecs_entity_t,
-        name: *const ::std::os::raw::c_char,
-        symbol: *const ::std::os::raw::c_char,
-        size: usize,
-        alignment: usize,
-        implicit_name: bool,
-    );
-}
-extern "C" {
-    pub fn ecs_cpp_component_register(
-        world: *mut ecs_world_t,
-        id: ecs_entity_t,
-        name: *const ::std::os::raw::c_char,
-        symbol: *const ::std::os::raw::c_char,
-        size: ecs_size_t,
-        alignment: ecs_size_t,
-        implicit_name: bool,
-        existing_out: *mut bool,
-    ) -> ecs_entity_t;
-}
-extern "C" {
-    pub fn ecs_cpp_component_register_explicit(
-        world: *mut ecs_world_t,
-        s_id: ecs_entity_t,
-        id: ecs_entity_t,
-        name: *const ::std::os::raw::c_char,
-        type_name: *const ::std::os::raw::c_char,
-        symbol: *const ::std::os::raw::c_char,
-        size: usize,
-        alignment: usize,
-        is_component: bool,
-        existing_out: *mut bool,
-    ) -> ecs_entity_t;
-}
-extern "C" {
-    pub fn ecs_cpp_enum_init(world: *mut ecs_world_t, id: ecs_entity_t);
-}
-extern "C" {
-    pub fn ecs_cpp_enum_constant_register(
-        world: *mut ecs_world_t,
-        parent: ecs_entity_t,
-        id: ecs_entity_t,
-        name: *const ::std::os::raw::c_char,
-        value: ::std::os::raw::c_int,
-    ) -> ecs_entity_t;
-}
-extern "C" {
-    pub fn ecs_cpp_reset_count_get() -> i32;
-}
-extern "C" {
-    pub fn ecs_cpp_reset_count_inc() -> i32;
-}
-extern "C" {
-    pub fn ecs_cpp_last_member(
-        world: *const ecs_world_t,
-        type_: ecs_entity_t,
-    ) -> *const ecs_member_t;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]

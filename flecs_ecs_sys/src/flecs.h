@@ -159,7 +159,7 @@
 
 #ifndef FLECS_CUSTOM_BUILD
 // #define FLECS_C          /**< C API convenience macros, always enabled */
-#define FLECS_CPP           /**< C++ API */
+//#define FLECS_CPP           /**< C++ API */
 #define FLECS_MODULE        /**< Module support */
 #define FLECS_PARSER        /**< String parser for queries */
 #define FLECS_PLECS         /**< ECS data definition format */
@@ -5130,6 +5130,37 @@ ecs_entity_t ecs_new_id(
 FLECS_API
 ecs_entity_t ecs_new_low_id(
     ecs_world_t *world);
+
+FLECS_API
+const char* ecs_cpp_trim_module(
+    ecs_world_t *world,
+    const char *type_name);
+
+FLECS_API
+ecs_entity_t ecs_cpp_component_register_explicit(
+    ecs_world_t *world,
+    ecs_entity_t s_id,
+    ecs_entity_t id,
+    const char *name,
+    const char *type_name,
+    const char *symbol,
+    size_t size,
+    size_t alignment,
+    bool is_component,
+    bool *existing_out);
+
+FLECS_API
+void ecs_cpp_enum_init(
+    ecs_world_t *world,
+    ecs_entity_t id);
+
+FLECS_API
+ecs_entity_t ecs_cpp_enum_constant_register(
+    ecs_world_t *world,
+    ecs_entity_t parent,
+    ecs_entity_t id,
+    const char *name,
+    int value);
 
 /** Create new entity with (component) id.
  * This operation creates a new entity with an optional (component) id. When 0
@@ -15825,11 +15856,6 @@ char* ecs_cpp_get_constant_name(
     size_t back_len);
 
 FLECS_API
-const char* ecs_cpp_trim_module(
-    ecs_world_t *world,
-    const char *type_name);
-
-FLECS_API
 void ecs_cpp_component_validate(
     ecs_world_t *world,
     ecs_entity_t id,
@@ -15849,32 +15875,6 @@ ecs_entity_t ecs_cpp_component_register(
     ecs_size_t alignment,
     bool implicit_name,
     bool *existing_out);
-
-FLECS_API
-ecs_entity_t ecs_cpp_component_register_explicit(
-    ecs_world_t *world,
-    ecs_entity_t s_id,
-    ecs_entity_t id,
-    const char *name,
-    const char *type_name,
-    const char *symbol,
-    size_t size,
-    size_t alignment,
-    bool is_component,
-    bool *existing_out);
-
-FLECS_API
-void ecs_cpp_enum_init(
-    ecs_world_t *world,
-    ecs_entity_t id);
-
-FLECS_API
-ecs_entity_t ecs_cpp_enum_constant_register(
-    ecs_world_t *world,
-    ecs_entity_t parent,
-    ecs_entity_t id,
-    const char *name,
-    int value);
 
 FLECS_API 
 int32_t ecs_cpp_reset_count_get(void);
