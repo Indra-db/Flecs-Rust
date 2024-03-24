@@ -1940,7 +1940,7 @@ impl World {
     ///
     /// * C++ API: `world::count`
     #[doc(alias = "world::count")]
-    pub fn count_component<T: CachedComponentData + ComponentType<Struct>>(&self) -> i32 {
+    pub fn count<T: CachedComponentData + ComponentType<Struct>>(&self) -> i32 {
         self.count_id(T::get_id(self.raw_world))
     }
 
