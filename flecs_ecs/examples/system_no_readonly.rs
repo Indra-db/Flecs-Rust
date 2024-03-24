@@ -48,15 +48,15 @@ fn main() {
                     // The defer_suspend function temporarily suspends deferring
                     // operations, which ensures that our plate is assigned
                     // immediately. Even though this is a no_readonly system,
-                    // defering is still enabled by default, as adding/removing
-                    // components to the entities being iterated would intefere
+                    // deferring is still enabled by default, as adding/removing
+                    // components to the entities being iterated would interfere
                     // with the system iterator.
                     it.get_world().defer_suspend();
                     waiter.add_pair_second_id::<&Plate>(plate.into());
                     it.get_world().defer_resume();
 
-                    // Now that defering is resumed, we can safely also add the
-                    // waiter to the plate. We can't do this while defering is
+                    // Now that deferring is resumed, we can safely also add the
+                    // waiter to the plate. We can't do this while deferring is
                     // suspended, because the plate is the entity we're
                     // currently iterating, and we don't want to move it to a
                     // different table while we're iterating it.
