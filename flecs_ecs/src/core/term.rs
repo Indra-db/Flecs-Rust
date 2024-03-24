@@ -1004,7 +1004,7 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::write`
     #[doc(alias = "term_builder_i::write")]
-    fn write(&mut self) -> &mut Self {
+    fn write_(&mut self) -> &mut Self {
         self.inout_stage(InOutKind::Out)
     }
 

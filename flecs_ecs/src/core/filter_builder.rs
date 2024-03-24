@@ -524,6 +524,21 @@ pub trait FilterBuilderImpl: TermBuilder {
         self
     }
 
+    fn write(&mut self) -> &mut Self {
+        self.get_term().write_();
+        self
+    }
+
+    fn write_type<T: InOutType>(&mut self) -> &mut Self {
+        self.term_with::<T>();
+        FilterBuilderImpl::write(self)
+    }
+
+    fn write_pair<Rel: InOutType, Target: InOutType>(&mut self) -> &mut Self {
+        self.term_with_pair::<Rel::Type, Target::Type>();
+        FilterBuilderImpl::write(self)
+    }
+
     /// set term with Id
     ///
     /// # See also
