@@ -6,6 +6,8 @@ use std::{
     os::raw::{c_char, c_void},
 };
 
+use flecs_ecs_sys::ecs_iter_fini;
+
 use crate::{
     ecs_assert,
     sys::{
@@ -28,6 +30,7 @@ use super::{
 };
 
 /// Cached query implementation. Fast to iterate, but slower to create than `Filters`
+#[derive(Clone)]
 pub struct QueryBase<'a, T>
 where
     T: Iterable<'a>,
@@ -269,6 +272,7 @@ where
 }
 
 /// Cached query implementation. Fast to iterate, but slower to create than `Filters`
+#[derive(Clone)]
 pub struct Query<'a, T>
 where
     T: Iterable<'a>,
@@ -737,6 +741,17 @@ where
                 ecs_table_unlock(self.world.raw_world, iter.table);
             }
         }
+    }
+
+    pub fn first(&self) -> Entity {
+        let mut entity = Entity::default();
+        let mut it = unsafe { ecs_query_iter(self.world.raw_world, self.query) };
+        if unsafe { ecs_query_next(&mut it) } && it.count > 0 {
+            entity =
+                Entity::new_from_existing_raw(self.world.raw_world, unsafe { *it.entities.add(0) });
+            unsafe { ecs_iter_fini(&mut it) };
+        }
+        entity
     }
 }
 

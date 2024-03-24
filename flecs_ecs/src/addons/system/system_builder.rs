@@ -72,8 +72,7 @@ where
             query_builder: QueryBuilder::<T>::new_from_desc(world, &mut desc.query),
             is_instanced: false,
         };
-        //obj.query_builder = QueryBuilder::<T>::new_from_desc(world, &mut obj.desc.query);
-        //obj.desc.query.filter = *obj.filter_builder.get_desc_filter();
+
         let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
             name: std::ptr::null(),
             sep: SEPARATOR.as_ptr(),
@@ -103,8 +102,6 @@ where
             query_builder: QueryBuilder::<T>::new_from_desc(world, &mut desc.query),
             is_instanced: false,
         };
-        obj.desc.query = *obj.query_builder.get_desc_query();
-        obj.desc.query.filter = *obj.filter_builder.get_desc_filter();
         let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
             name: std::ptr::null(),
             sep: SEPARATOR.as_ptr(),
@@ -129,13 +126,12 @@ where
     }
 
     pub fn new_named(world: &World, name: &CStr) -> Self {
+        let mut desc = Default::default();
         let mut obj = Self {
-            desc: Default::default(),
-            query_builder: QueryBuilder::new_named(world, name),
+            desc,
+            query_builder: QueryBuilder::<T>::new_from_desc(world, &mut desc.query),
             is_instanced: false,
         };
-        obj.desc.query = *obj.query_builder.get_desc_query();
-        obj.desc.query.filter = *obj.filter_builder.get_desc_filter();
         let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
             name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
