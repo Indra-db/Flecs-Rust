@@ -61,6 +61,131 @@ fn generate_bindings() {
         .raw_line("use super::*;")
         .raw_line("use libc::FILE;");
 
+    #[cfg(feature = "flecs_module")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_MODULE");
+    }
+
+    #[cfg(feature = "flecs_parser")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_PARSER");
+    }
+
+    #[cfg(feature = "flecs_plecs")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_PLECS");
+    }
+
+    #[cfg(feature = "flecs_rules")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_RULES");
+    }
+
+    #[cfg(feature = "flecs_snapshot")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_SNAPSHOT");
+    }
+
+    #[cfg(feature = "flecs_stats")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_STATS");
+    }
+
+    #[cfg(feature = "flecs_monitor")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_MONITOR");
+    }
+
+    #[cfg(feature = "flecs_metrics")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_METRICS");
+    }
+
+    #[cfg(feature = "flecs_alerts")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_ALERTS");
+    }
+
+    #[cfg(feature = "flecs_system")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_SYSTEM");
+    }
+
+    #[cfg(feature = "flecs_pipeline")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_PIPELINE");
+    }
+
+    #[cfg(feature = "flecs_timer")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_TIMER");
+    }
+
+    #[cfg(feature = "flecs_meta")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_META");
+    }
+
+    #[cfg(feature = "flecs_meta_c")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_META_C");
+    }
+
+    #[cfg(feature = "flecs_units")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_UNITS");
+    }
+
+    #[cfg(feature = "flecs_expr")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_EXPR");
+    }
+
+    #[cfg(feature = "flecs_json")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_JSON");
+    }
+
+    #[cfg(feature = "flecs_doc")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_DOC");
+    }
+
+    #[cfg(feature = "flecs_coredoc")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_COREDOC");
+    }
+
+    #[cfg(feature = "flecs_log")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_LOG");
+    }
+
+    #[cfg(feature = "flecs_app")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_APP");
+    }
+
+    #[cfg(feature = "flecs_os_api_impl")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_OS_API_IMPL");
+    }
+
+    #[cfg(feature = "flecs_http")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_HTTP");
+    }
+
+    #[cfg(feature = "flecs_rest")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_REST");
+    }
+
+    #[cfg(feature = "flecs_journal")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_JOURNAL");
+    }
+
     let bindings = bindings.generate().expect("Unable to generate bindings");
 
     let crate_root: PathBuf = env::var("CARGO_MANIFEST_DIR").unwrap().into();
@@ -75,9 +200,6 @@ fn main() {
     println!("cargo:rerun-if-changed=src/flecs.c");
     println!("cargo:rerun-if-changed=build.rs");
 
-    #[cfg(feature = "regenerate_binding")]
-    generate_bindings();
-
     #[cfg(not(feature = "disable_build_c_library"))]
     {
         let mut build = cc::Build::new();
@@ -88,7 +210,6 @@ fn main() {
             .warnings(true)
             .extra_warnings(true);
 
-        /*
         #[cfg(feature = "flecs_module")]
         build.define("FLECS_MODULE", None);
 
@@ -163,12 +284,16 @@ fn main() {
 
         #[cfg(feature = "flecs_journal")]
         build.define("FLECS_JOURNAL", None);
-        */
 
         #[cfg(not(feature = "build_debug"))]
         {
             build.opt_level(3).define("NDEBUG", None).compile("flecs");
         }
+
+        //TODO C might complain about unused functions when disabling certain features, turn the warning off?
+
+        #[cfg(feature = "regenerate_binding")]
+        generate_bindings();
 
         build.compile("flecs");
     }
