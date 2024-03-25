@@ -88,6 +88,7 @@ fn main() {
             .warnings(true)
             .extra_warnings(true);
 
+        /*
         #[cfg(feature = "flecs_module")]
         build.define("FLECS_MODULE", None);
 
@@ -162,6 +163,7 @@ fn main() {
 
         #[cfg(feature = "flecs_journal")]
         build.define("FLECS_JOURNAL", None);
+        */
 
         #[cfg(not(feature = "build_debug"))]
         {
