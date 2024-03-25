@@ -144,5 +144,6 @@ pub trait EventBuilderImpl<'a> {
         };
     }
 
-    fn set_event_data(&mut self, data: Self::BuiltType) -> &mut Self;
+    fn set_event_data_mut(&mut self, data: Self::BuiltType) -> &mut Self;
+    fn set_event_data(&mut self, data: Self::ConstBuiltType) -> &mut Self;
 }

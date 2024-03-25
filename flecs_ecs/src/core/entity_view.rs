@@ -1766,11 +1766,29 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
-    pub fn emit_payload<T: NotEmptyComponent + ComponentId>(self, payload: &mut T) {
+    pub fn emit_payload<T: NotEmptyComponent + ComponentId>(self, payload: &T) {
         self.world()
             .event::<T>()
             .set_entity_to_emit(self.to_entity())
             .set_event_data(payload)
+            .emit();
+    }
+
+    /// Emit event with mutable payload for entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * T - the event type to emit. Type must contain data (not empty struct).
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::emit`
+    #[doc(alias = "entity_view::emit")]
+    pub fn emit_payload_mut<T: NotEmptyComponent + ComponentId>(self, payload: &mut T) {
+        self.get_world()
+            .event::<T>()
+            .set_entity_to_emit(&self.entity())
+            .set_event_data_mut(payload)
             .emit();
     }
 
@@ -1841,11 +1859,28 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
-    pub fn enqueue_payload<T: NotEmptyComponent + ComponentId>(self, payload: &mut T) {
+    pub fn enqueue_payload<T: NotEmptyComponent + ComponentId>(self, payload: &T) {
         self.world()
             .event::<T>()
             .set_entity_to_emit(self.to_entity())
             .set_event_data(payload)
+            .enqueue();
+    }
+    /// enqueue event with mutable payload for entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * T - the event type to enqueue. Type must contain data (not empty struct).
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::enqueue`
+    #[doc(alias = "entity_view::enqueue")]
+    pub fn enqueue_payload_mut<T: NotEmptyComponent + ComponentId>(self, payload: &mut T) {
+        self.get_world()
+            .event::<T>()
+            .set_entity_to_emit(&self.entity())
+            .set_event_data_mut(payload)
             .enqueue();
     }
 }

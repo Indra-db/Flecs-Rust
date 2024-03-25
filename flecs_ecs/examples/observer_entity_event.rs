@@ -75,7 +75,7 @@ fn main() {
     });
 
     widget.emit::<Click>();
-    widget.emit_payload(&mut Resize {
+    widget.emit_payload(&Resize {
         width: 100.0,
         height: 200.0,
     });

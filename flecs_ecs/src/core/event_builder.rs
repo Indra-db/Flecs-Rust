@@ -55,7 +55,7 @@ impl<'a> EventBuilderImpl<'a> for EventBuilder<'a> {
         self
     }
 
-    /// Set the event data for the event
+    /// Set the mutable event data for the event
     ///
     /// # Arguments
     ///
@@ -65,8 +65,23 @@ impl<'a> EventBuilderImpl<'a> for EventBuilder<'a> {
     ///
     /// * C++ API: `event_builder_base::ctx`
     #[doc(alias = "event_builder_base::ctx")]
-    fn set_event_data(&mut self, data: Self::BuiltType) -> &mut Self {
+    fn set_event_data_mut(&mut self, data: Self::BuiltType) -> &mut Self {
         self.desc.param = data as *mut c_void;
+        self
+    }
+
+    /// Set the const event data for the event
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The data to set for the event which is type-erased of type `*const c_void`
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `event_builder_base::ctx`
+    #[doc(alias = "event_builder_base::ctx")]
+    fn set_event_data(&mut self, data: Self::ConstBuiltType) -> &mut Self {
+        self.desc.const_param = data as *const c_void;
         self
     }
 }
@@ -132,7 +147,7 @@ where
     fn get_data(&mut self) -> &mut EventBuilder<'a> {
         &mut self.builder
     }
-    /// Set the event data for the event
+    /// Set the mutable event data for the event
     ///
     /// # Arguments
     ///
@@ -142,8 +157,18 @@ where
     ///
     /// * C++ API: `event_builder_typed::ctx`
     #[doc(alias = "event_builder_typed::ctx")]
+<<<<<<< HEAD
     fn set_event_data(&mut self, data: Self::BuiltType) -> &mut Self {
         self.desc.param = data as *const T as *mut c_void;
+=======
+    fn set_event_data_mut(&mut self, data: Self::BuiltType) -> &mut Self {
+        self.desc.param = data as *mut T as *mut c_void;
+        self
+    }
+
+    fn set_event_data(&mut self, data: Self::ConstBuiltType) -> &mut Self {
+        self.desc.const_param = data as *const T as *const c_void;
+>>>>>>> b9e10d4 (emit event as const by default, add `_mut` variants.)
         self
     }
 }
