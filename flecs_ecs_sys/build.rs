@@ -59,7 +59,9 @@ fn generate_bindings() {
         .raw_line("#![allow(clippy::all)]")
         .raw_line("#![allow(warnings)]")
         .raw_line("use super::*;")
-        .raw_line("use libc::FILE;");
+        .raw_line("use libc::FILE;")
+        .clang_arg("-DFLECS_CUSTOM_BUILD")
+        .clang_arg("-DFLECS_CPP");
 
     #[cfg(feature = "flecs_module")]
     {
@@ -208,7 +210,9 @@ fn main() {
             .compiler("clang")
             .file("src/flecs.c")
             .warnings(true)
-            .extra_warnings(true);
+            .extra_warnings(true)
+            .define("FLECS_CUSTOM_BUILD", None)
+            .define("FLECS_CPP", None);
 
         #[cfg(feature = "flecs_module")]
         build.define("FLECS_MODULE", None);
