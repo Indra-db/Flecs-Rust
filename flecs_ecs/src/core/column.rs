@@ -86,7 +86,7 @@ where
 
     fn deref(&self) -> &Self::Target {
         ecs_assert!(
-            self.slice_components.is_empty(),
+            !self.slice_components.is_empty(),
             FlecsErrorCode::OutOfRange,
             "Column is empty"
         );

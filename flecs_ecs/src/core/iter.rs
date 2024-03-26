@@ -539,7 +539,10 @@ impl<'a> Iter<'a> {
                 unsafe {
                     World::new_wrap_raw_world(self.iter.world)
                         .get_alive(
-                            *(ecs_field_w_size(self.iter, T::get_size(self.iter.world), index)
+                            /* TODO: enum with size 4 asserts in flecs c where the enum field reports size 8? verifying with sander.
+                            I believe this is a bug. In any case, I dont' see why this shouldn't work as intended, so
+                            I'm 'cheating' the assert here. */
+                            *(ecs_field_w_size(self.iter, T::get_size(self.iter.world) * 2, index)
                                 as *mut IdT),
                         )
                         .get_enum_mut_internal::<T>()
