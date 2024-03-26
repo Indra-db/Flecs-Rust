@@ -11,11 +11,11 @@ use syn::{Data, DeriveInput, Fields};
 ///
 /// - Depending on whether the type is a struct or an enum, the relevant `ComponentType<Struct>` or `ComponentType<Enum>` trait is implemented.
 /// - Based on the presence of fields or variants, the type will implement either `EmptyComponent` or `NotEmptyComponent`.
-/// - The `CachedComponentData` trait is implemented, providing storage mechanisms for the component.
+/// - The `ComponentInfo` trait is implemented, providing storage mechanisms for the component.
 ///
 /// ## Requirements:
 ///
-/// - Types deriving `CachedComponentData` should also implement `Clone` and `Default`.
+/// - Types deriving `ComponentInfo` should also implement `Clone` and `Default`.
 ///   The `Default` implementation can usually be derived via `#[derive(Default)]`. For enums, you'll need to flag the default variant within the enumeration.
 ///
 /// # Note:
@@ -207,7 +207,7 @@ fn impl_cached_component_data_struct(
         }
     };
 
-    // Common trait implementation for ComponentType and CachedComponentData
+    // Common trait implementation for ComponentType and ComponentInfo
     let common_traits = quote! {
         impl flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for #name {}
 
@@ -215,17 +215,17 @@ fn impl_cached_component_data_struct(
             const IS_ENUM: bool = false;
         }
 
-        impl flecs_ecs::core::CachedComponentData for #name {
+        impl flecs_ecs::core::ComponentInfo for #name {
             type UnderlyingType = #name;
             #cached_component_data_impl
         }
 
-        impl flecs_ecs::core::CachedComponentData for &#name {
+        impl flecs_ecs::core::ComponentInfo for &#name {
             type UnderlyingType = #name;
             #cached_component_data_impl_ref
         }
 
-        impl flecs_ecs::core::CachedComponentData for &mut #name {
+        impl flecs_ecs::core::ComponentInfo for &mut #name {
             type UnderlyingType = #name;
             #cached_component_data_impl_ref
         }
@@ -459,7 +459,7 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
             const IS_ENUM: bool = true;
         }
 
-        impl flecs_ecs::core::CachedComponentData for #name {
+        impl flecs_ecs::core::ComponentInfo for #name {
             type UnderlyingType = #name;
             #cached_component_data_impl
         }

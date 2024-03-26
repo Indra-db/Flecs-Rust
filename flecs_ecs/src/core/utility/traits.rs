@@ -1,6 +1,6 @@
 use crate::core::{
     c_types::{InOutKind, OperKind},
-    component_registration::CachedComponentData,
+    component_registration::ComponentInfo,
 };
 
 /// Represents the input/output type of a component in an ECS system.
@@ -16,10 +16,10 @@ use crate::core::{
 ///
 /// # Associated Types
 ///
-/// * `Type`: The type of the component data. Must implement `CachedComponentData`.
+/// * `Type`: The type of the component data. Must implement `ComponentInfo`.
 pub trait InOutType {
     const IN_OUT: InOutKind;
-    type Type: CachedComponentData;
+    type Type: ComponentInfo;
 }
 
 /// Represents the operation type of a system in an ECS framework.
@@ -35,8 +35,8 @@ pub trait InOutType {
 ///
 /// # Associated Types
 ///
-/// * `Type`: The type of the component data. Must implement `CachedComponentData`.
+/// * `Type`: The type of the component data. Must implement `ComponentInfo`.
 pub trait OperType {
     const OPER: OperKind;
-    type Type: CachedComponentData;
+    type Type: ComponentInfo;
 }

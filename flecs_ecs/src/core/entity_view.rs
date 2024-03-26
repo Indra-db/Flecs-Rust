@@ -30,7 +30,7 @@ use crate::{
 use super::{
     archetype::Archetype,
     c_types::{EntityT, IdT, TypeT, WorldT, SEPARATOR},
-    component_registration::{CachedComponentData, ComponentType, Enum, Struct},
+    component_registration::{ComponentInfo, ComponentType, Enum, Struct},
     ecs_add_pair, ecs_has_pair, ecs_pair, ecs_pair_first, ecs_pair_second, ecs_record_to_row,
     entity::Entity,
     enum_type::CachedEnumData,
@@ -196,7 +196,7 @@ impl EntityView {
         Some(unsafe { CStr::from_ptr(name_ptr).to_str().unwrap_or("") })
     }
 
-    //TODO check if we need this -> can we use get_symbol from CachedComponentData?
+    //TODO check if we need this -> can we use get_symbol from ComponentInfo?
     /// Returns the entity symbol.
     ///
     /// # See also
@@ -315,7 +315,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    pub fn get_hierarchy_path_from_parent_type_w_sep<T: CachedComponentData>(
+    pub fn get_hierarchy_path_from_parent_type_w_sep<T: ComponentInfo>(
         &self,
         sep: &CStr,
         init_sep: &CStr,
@@ -329,7 +329,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    pub fn get_hierarchy_path_from_parent_type<T: CachedComponentData>(&self) -> Option<String> {
+    pub fn get_hierarchy_path_from_parent_type<T: ComponentInfo>(&self) -> Option<String> {
         self.get_hierarchy_path_from_parent_id(T::get_id(self.world))
     }
 
@@ -528,7 +528,7 @@ impl EntityView {
     #[doc(alias = "entity_view::each")]
     pub fn for_each_target_in_relationship<T>(&self, func: impl FnMut(Entity))
     where
-        T: CachedComponentData,
+        T: ComponentInfo,
     {
         self.for_each_target_in_relationship_by_entity(
             EntityView::new_id_only(T::get_id(self.world)),
@@ -603,7 +603,7 @@ impl EntityView {
     #[doc(alias = "entity_view::children")]
     pub fn for_each_children_by_relationship<T, F>(&self, func: F)
     where
-        T: CachedComponentData,
+        T: ComponentInfo,
         F: FnMut(Entity),
     {
         self.for_each_children_by_relationship_id(T::get_id(self.world), func);
@@ -641,9 +641,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get<T: CachedComponentData + ComponentType<Struct>>(
-        &self,
-    ) -> Option<&T::UnderlyingType> {
+    pub fn get<T: ComponentInfo + ComponentType<Struct>>(&self) -> Option<&T::UnderlyingType> {
         let component_id = T::get_id(self.world);
         unsafe {
             (ecs_get_id(self.world, self.raw_id, component_id) as *const T::UnderlyingType).as_ref()
@@ -668,7 +666,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub unsafe fn get_unchecked<T: CachedComponentData + ComponentType<Struct>>(
+    pub unsafe fn get_unchecked<T: ComponentInfo + ComponentType<Struct>>(
         &self,
     ) -> &T::UnderlyingType {
         let component_id = T::get_id(self.world);
@@ -697,9 +695,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get_enum<T: CachedComponentData + ComponentType<Enum>>(
-        &self,
-    ) -> Option<&T::UnderlyingType> {
+    pub fn get_enum<T: ComponentInfo + ComponentType<Enum>>(&self) -> Option<&T::UnderlyingType> {
         let component_id: IdT = T::get_id(self.world);
         let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
 
@@ -743,7 +739,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub unsafe fn get_enum_unchecked<T: CachedComponentData + ComponentType<Enum>>(
+    pub unsafe fn get_enum_unchecked<T: ComponentInfo + ComponentType<Enum>>(
         &self,
     ) -> &T::UnderlyingType {
         let component_id: IdT = T::get_id(self.world);
@@ -794,7 +790,7 @@ impl EntityView {
     #[doc(alias = "entity_view::get")]
     pub fn get_pair_first_id<First>(&self, second: EntityT) -> Option<&First>
     where
-        First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
+        First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {
         let component_id = First::get_id(self.world);
         ecs_assert!(
@@ -828,8 +824,8 @@ impl EntityView {
     #[doc(alias = "entity_view::get")]
     pub fn get_pair_first<First, Second>(&self) -> Option<&First>
     where
-        First: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
-        Second: CachedComponentData + ComponentType<Struct>,
+        First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentInfo + ComponentType<Struct>,
     {
         self.get_pair_first_id(Second::get_id(self.world))
     }
@@ -855,7 +851,7 @@ impl EntityView {
     #[doc(alias = "entity_view::get")]
     pub fn get_pair_second_id<Second>(&self, first: EntityT) -> Option<&Second>
     where
-        Second: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {
         let component_id = Second::get_id(self.world);
         ecs_assert!(
@@ -885,8 +881,8 @@ impl EntityView {
     #[doc(alias = "entity_view::get")]
     pub fn get_pair_second<First, Second>(&self) -> Option<&Second>
     where
-        First: CachedComponentData + ComponentType<Struct> + EmptyComponent,
-        Second: CachedComponentData + ComponentType<Struct> + NotEmptyComponent,
+        First: ComponentInfo + ComponentType<Struct> + EmptyComponent,
+        Second: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {
         self.get_pair_second_id(First::get_id(self.world))
     }
@@ -945,7 +941,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target")]
-    pub fn get_target_from_component<First: CachedComponentData>(&self, index: i32) -> Entity {
+    pub fn get_target_from_component<First: ComponentInfo>(&self, index: i32) -> Entity {
         Entity::new_from_existing_raw(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, First::get_id(self.world), index)
         })
@@ -1029,7 +1025,7 @@ impl EntityView {
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target")]
     #[inline(always)]
-    pub fn get_target_for<T: CachedComponentData>(&self, relationship: &Entity) -> Entity {
+    pub fn get_target_for<T: ComponentInfo>(&self, relationship: &Entity) -> Entity {
         self.get_target_for_id(relationship, T::get_id(self.world))
     }
 
@@ -1056,7 +1052,7 @@ impl EntityView {
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target")]
     #[inline(always)]
-    pub fn get_target_for_pair<First: CachedComponentData, Second: CachedComponentData>(
+    pub fn get_target_for_pair<First: ComponentInfo, Second: ComponentInfo>(
         &self,
         relationship: &Entity,
     ) -> Entity {
@@ -1085,10 +1081,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target")]
-    pub fn get_target_for_pair_first<First: CachedComponentData>(
-        &self,
-        second: EntityT,
-    ) -> *const First {
+    pub fn get_target_for_pair_first<First: ComponentInfo>(&self, second: EntityT) -> *const First {
         let comp_id = First::get_id(self.world);
         ecs_assert!(
             //this is safe because the previous line guarantees registration
@@ -1136,7 +1129,7 @@ impl EntityView {
     /// * C++ API: `entity_view::depth`
     #[doc(alias = "entity_view::depth")]
     #[inline(always)]
-    pub fn get_depth<T: CachedComponentData>(&self) -> i32 {
+    pub fn get_depth<T: ComponentInfo>(&self) -> i32 {
         self.get_depth_by_id(T::get_id(self.world))
     }
 
@@ -1233,7 +1226,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    pub fn has<T: CachedComponentData + ComponentType<Struct>>(&self) -> bool {
+    pub fn has<T: ComponentInfo + ComponentType<Struct>>(&self) -> bool {
         unsafe { ecs_has_id(self.world, self.raw_id, T::get_id(self.world)) }
     }
 
@@ -1251,7 +1244,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    pub fn has_enum<T: CachedComponentData + ComponentType<Enum>>(&self) -> bool {
+    pub fn has_enum<T: ComponentInfo + ComponentType<Enum>>(&self) -> bool {
         let component_id: IdT = T::get_id(self.world);
         ecs_has_pair(self.world, self.raw_id, component_id, unsafe {
             EcsWildcard
@@ -1278,7 +1271,7 @@ impl EntityView {
     #[doc(alias = "entity_view::has")]
     pub fn has_enum_constant<T>(&self, constant: T) -> bool
     where
-        T: CachedComponentData + ComponentType<Enum> + CachedEnumData,
+        T: ComponentInfo + ComponentType<Enum> + CachedEnumData,
     {
         let component_id: IdT = T::get_id(self.world);
         // Safety: we know the enum fields are registered because of the previous T::get_id call
@@ -1306,7 +1299,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    pub fn has_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
+    pub fn has_pair<T: ComponentInfo, U: ComponentInfo>(&self) -> bool {
         ecs_has_pair(
             self.world,
             self.raw_id,
@@ -1333,7 +1326,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    pub fn has_pair_first<First: CachedComponentData>(&self, second: EntityT) -> bool {
+    pub fn has_pair_first<First: ComponentInfo>(&self, second: EntityT) -> bool {
         ecs_has_pair(self.world, self.raw_id, First::get_id(self.world), second)
     }
 
@@ -1375,10 +1368,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    pub fn has_pair_with_enum_constant<
-        T: CachedComponentData,
-        U: CachedComponentData + CachedEnumData,
-    >(
+    pub fn has_pair_with_enum_constant<T: ComponentInfo, U: ComponentInfo + CachedEnumData>(
         &self,
         constant: U,
     ) -> bool {
@@ -1439,7 +1429,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::owns`
     #[doc(alias = "entity_view::owns")]
-    pub fn is_owner_of<T: CachedComponentData>(&self) -> bool {
+    pub fn is_owner_of<T: ComponentInfo>(&self) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, T::get_id(self.world)) }
     }
 
@@ -1473,7 +1463,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::owns`
     #[doc(alias = "entity_view::owns")]
-    pub fn is_owner_of_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
+    pub fn is_owner_of_pair<T: ComponentInfo, U: ComponentInfo>(&self) -> bool {
         unsafe {
             ecs_owns_id(
                 self.world,
@@ -1511,7 +1501,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    pub fn is_enabled_component<T: CachedComponentData>(&self) -> bool {
+    pub fn is_enabled_component<T: ComponentInfo>(&self) -> bool {
         unsafe { ecs_is_enabled_id(self.world, self.raw_id, T::get_id(self.world)) }
     }
 
@@ -1545,7 +1535,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    pub fn is_enabled_pair<T: CachedComponentData, U: CachedComponentData>(&self) -> bool {
+    pub fn is_enabled_pair<T: ComponentInfo, U: ComponentInfo>(&self) -> bool {
         self.is_enabled_pair_ids(T::get_id(self.world), U::get_id(self.world))
     }
 
@@ -1564,7 +1554,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    pub fn is_enabled_pair_first<T: CachedComponentData>(&self, second: IdT) -> bool {
+    pub fn is_enabled_pair_first<T: ComponentInfo>(&self, second: IdT) -> bool {
         self.is_enabled_pair_ids(T::get_id(self.world), second)
     }
 
@@ -1583,7 +1573,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    pub fn is_enabled_pair_second<U: CachedComponentData>(&self, first: IdT) -> bool {
+    pub fn is_enabled_pair_second<U: ComponentInfo>(&self, first: IdT) -> bool {
         self.is_enabled_pair_ids(first, U::get_id(self.world))
     }
 
@@ -1716,7 +1706,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::to_constant`
     #[doc(alias = "entity_view::to_constant")]
-    pub fn to_constant<T: CachedComponentData + ComponentType<Enum>>(
+    pub fn to_constant<T: ComponentInfo + ComponentType<Enum>>(
         &self,
     ) -> Option<&T::UnderlyingType> {
         let ptr = self.get_enum::<T>();
@@ -1742,7 +1732,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::to_constant`
     #[doc(alias = "entity_view::to_constant")]
-    pub unsafe fn to_constant_unchecked<T: CachedComponentData + ComponentType<Enum>>(
+    pub unsafe fn to_constant_unchecked<T: ComponentInfo + ComponentType<Enum>>(
         &self,
     ) -> &T::UnderlyingType {
         self.get_enum_unchecked::<T>()
@@ -1868,7 +1858,7 @@ impl EntityView {
     #[doc(alias = "entity_builder::observe")]
     pub fn observe<C>(&self, func: impl FnMut()) -> &Self
     where
-        C: EventData + CachedComponentData + EmptyComponent,
+        C: EventData + ComponentInfo + EmptyComponent,
     {
         self.observe_impl::<C, _>(func)
     }
@@ -1876,7 +1866,7 @@ impl EntityView {
     fn observe_impl<C, Func>(&self, func: Func) -> &Self
     where
         Func: FnMut(),
-        C: EventData + CachedComponentData,
+        C: EventData + ComponentInfo,
     {
         let new_binding_ctx = Box::<super::ObserverEntityBindingCtx>::default();
         let binding_ctx = Box::leak(new_binding_ctx);
@@ -1913,7 +1903,7 @@ impl EntityView {
     #[doc(alias = "entity_builder::observe")]
     pub fn observe_entity<C>(&self, func: impl FnMut(&mut Entity)) -> &Self
     where
-        C: EventData + CachedComponentData + EmptyComponent,
+        C: EventData + ComponentInfo + EmptyComponent,
     {
         self.observe_entity_impl::<C, _>(func)
     }
@@ -1921,7 +1911,7 @@ impl EntityView {
     fn observe_entity_impl<C, Func>(&self, func: Func) -> &Self
     where
         Func: FnMut(&mut Entity),
-        C: EventData + CachedComponentData,
+        C: EventData + ComponentInfo,
     {
         let new_binding_ctx = Box::<super::ObserverEntityBindingCtx>::default();
         let binding_ctx = Box::leak(new_binding_ctx);
@@ -1958,7 +1948,7 @@ impl EntityView {
     #[doc(alias = "entity_builder::observe")]
     pub fn observe_payload<C>(&self, func: impl FnMut(&mut C)) -> &Self
     where
-        C: EventData + CachedComponentData + NotEmptyComponent,
+        C: EventData + ComponentInfo + NotEmptyComponent,
     {
         self.observe_payload_impl::<C, _>(func)
     }
@@ -1966,7 +1956,7 @@ impl EntityView {
     fn observe_payload_impl<C, Func>(&self, func: Func) -> &Self
     where
         Func: FnMut(&mut C),
-        C: EventData + CachedComponentData,
+        C: EventData + ComponentInfo,
     {
         let new_binding_ctx = Box::<super::ObserverEntityBindingCtx>::default();
         let binding_ctx = Box::leak(new_binding_ctx);
@@ -2003,7 +1993,7 @@ impl EntityView {
     #[doc(alias = "entity_builder::observe")]
     pub fn observe_payload_entity<C>(&self, func: impl FnMut(&mut Entity, &mut C)) -> &Self
     where
-        C: EventData + CachedComponentData + NotEmptyComponent,
+        C: EventData + ComponentInfo + NotEmptyComponent,
     {
         self.observe_payload_entity_impl::<C, _>(func)
     }
@@ -2011,7 +2001,7 @@ impl EntityView {
     fn observe_payload_entity_impl<C, Func>(&self, func: Func) -> &Self
     where
         Func: FnMut(&mut Entity, &mut C),
-        C: EventData + CachedComponentData,
+        C: EventData + ComponentInfo,
     {
         let new_binding_ctx = Box::<super::ObserverEntityBindingCtx>::default();
         let binding_ctx = Box::leak(new_binding_ctx);

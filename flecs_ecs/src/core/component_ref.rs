@@ -10,19 +10,19 @@ use crate::{
 
 use super::{
     c_types::{EntityT, IdT, RefT, WorldT},
-    component_registration::CachedComponentData,
+    component_registration::ComponentInfo,
     entity::Entity,
 };
 
 /// A reference to a component from a specific entity.
 /// Refs are a fast mechanism for referring to a specific entity/component
-pub struct Ref<T: CachedComponentData> {
+pub struct Ref<T: ComponentInfo> {
     world: *mut WorldT,
     component_ref: RefT,
     _marker: PhantomData<T>,
 }
 
-impl<T: CachedComponentData> Ref<T> {
+impl<T: ComponentInfo> Ref<T> {
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
 
     /// Create a new ref to a component.

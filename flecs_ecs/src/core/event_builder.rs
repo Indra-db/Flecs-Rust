@@ -7,7 +7,7 @@ use crate::sys::{ecs_event_desc_t, FLECS_EVENT_DESC_MAX};
 
 use super::{
     c_types::{EntityT, IdT, TypeT},
-    component_registration::CachedComponentData,
+    component_registration::ComponentInfo,
     event::{EventBuilderImpl, EventData},
     world::World,
 };
@@ -87,17 +87,17 @@ impl EventBuilderImpl for EventBuilder {
 ///
 /// # Type parameters
 ///
-/// * `T` - The type of the event data to set for the event, which must implement `EventData` and `CachedComponentData`.
+/// * `T` - The type of the event data to set for the event, which must implement `EventData` and `ComponentInfo`.
 /// `EventData` is a trait used to mark components compatible with events to be used as event data.
 /// Ensures the use of appropriate data types for events, enhancing type safety and data integrity.
 /// This design aims to prevent the utilization of incompatible components as event data,
 /// thereby ensuring greater explicitness and correctness in event handling.
-pub struct EventBuilderTyped<'a, T: EventData + CachedComponentData> {
+pub struct EventBuilderTyped<'a, T: EventData + ComponentInfo> {
     pub(crate) builder: EventBuilder,
     _phantom: std::marker::PhantomData<&'a T>,
 }
 
-impl<'a, T: EventData + CachedComponentData> EventBuilderTyped<'a, T> {
+impl<'a, T: EventData + ComponentInfo> EventBuilderTyped<'a, T> {
     /// Create a new typed `EventBuilder`
     ///
     /// # Arguments
@@ -120,7 +120,7 @@ impl<'a, T: EventData + CachedComponentData> EventBuilderTyped<'a, T> {
 /// The `Deref` trait is implemented to allow `EventBuilderTyped` instances to be treated as
 /// references to `EventBuilder`. This enables the use of `EventBuilder` methods directly on
 /// `EventBuilderTyped` instances.
-impl<'a, T: EventData + CachedComponentData> Deref for EventBuilderTyped<'a, T> {
+impl<'a, T: EventData + ComponentInfo> Deref for EventBuilderTyped<'a, T> {
     type Target = EventBuilder;
 
     fn deref(&self) -> &Self::Target {
@@ -129,15 +129,15 @@ impl<'a, T: EventData + CachedComponentData> Deref for EventBuilderTyped<'a, T> 
 }
 
 /// See `Deref` trait for more information.
-impl<'a, T: EventData + CachedComponentData> DerefMut for EventBuilderTyped<'a, T> {
+impl<'a, T: EventData + ComponentInfo> DerefMut for EventBuilderTyped<'a, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.builder
     }
 }
 
-impl<'a, T: EventData + CachedComponentData> EventBuilderImpl for EventBuilderTyped<'a, T>
+impl<'a, T: EventData + ComponentInfo> EventBuilderImpl for EventBuilderTyped<'a, T>
 where
-    T: EventData + CachedComponentData,
+    T: EventData + ComponentInfo,
 {
     type BuiltType = &'a mut T;
     type ConstBuiltType = &'a T;

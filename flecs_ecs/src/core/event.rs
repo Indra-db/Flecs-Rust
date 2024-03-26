@@ -2,7 +2,7 @@ use std::ffi::c_void;
 
 use flecs_ecs_sys::{ecs_emit, ecs_enqueue, ecs_event_desc_t, ecs_get_world};
 
-use super::{ecs_pair, CachedComponentData, Entity, EventBuilder, IdT, TableT};
+use super::{ecs_pair, ComponentInfo, Entity, EventBuilder, IdT, TableT};
 
 /// Trait to mark component structs as `EventData` to be used in `EventBuilderTyped`.
 /// This is used to set the event data for the event to be emitted
@@ -27,7 +27,7 @@ pub trait EventBuilderImpl {
     #[doc(alias = "event_builder_base::id")]
     fn add_type_to_emit<C>(&mut self) -> &mut Self
     where
-        C: CachedComponentData,
+        C: ComponentInfo,
     {
         let data = self.get_data();
         let ids = &mut data.ids;
@@ -75,8 +75,8 @@ pub trait EventBuilderImpl {
     #[doc(alias = "event_builder_base::id")]
     fn add_pair_to_emit<C1, C2>(&mut self) -> &mut Self
     where
-        C1: CachedComponentData,
-        C2: CachedComponentData,
+        C1: ComponentInfo,
+        C2: ComponentInfo,
     {
         let world = self.get_data().world.raw_world;
         self.add_id_to_emit(ecs_pair(C1::get_id(world), C2::get_id(world)))
@@ -113,7 +113,7 @@ pub trait EventBuilderImpl {
     #[doc(alias = "event_builder_base::id")]
     fn add_pair_second_id_to_emit<First>(&mut self, second: IdT) -> &mut Self
     where
-        First: CachedComponentData,
+        First: ComponentInfo,
     {
         let world = self.get_data().world.raw_world;
         self.add_id_to_emit(ecs_pair(First::get_id(world), second))

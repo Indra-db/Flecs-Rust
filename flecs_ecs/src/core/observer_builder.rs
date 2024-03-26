@@ -12,7 +12,7 @@ use crate::sys::{
 
 use super::{
     c_types::{EntityT, IterT, TermT, WorldT, SEPARATOR},
-    component_registration::CachedComponentData,
+    component_registration::ComponentInfo,
     entity::Entity,
     filter_builder::{FilterBuilder, FilterBuilderImpl},
     iter::Iter,
@@ -652,7 +652,7 @@ pub trait ObserverBuilderImpl: FilterBuilderImpl {
     #[doc(alias = "observer_builder_i::event")]
     fn add_event_type<T>(&mut self) -> &mut Self
     where
-        T: CachedComponentData,
+        T: ComponentInfo,
     {
         let event_count = self.get_event_count() as usize;
         self.increment_event_count();

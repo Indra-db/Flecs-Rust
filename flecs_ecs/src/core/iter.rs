@@ -13,7 +13,7 @@ use crate::{
 use super::{
     c_types::{IdT, IterT},
     column::{Column, UntypedColumn},
-    component_registration::CachedComponentData,
+    component_registration::ComponentInfo,
     entity::Entity,
     id::Id,
     table::{Table, TableRange},
@@ -216,7 +216,7 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::param`
     #[doc(alias = "iter::param")]
-    pub fn param<T: CachedComponentData>(&mut self) -> &mut T {
+    pub fn param<T: ComponentInfo>(&mut self) -> &mut T {
         unsafe { &mut *(self.iter.param as *mut T) }
     }
 
@@ -395,7 +395,7 @@ impl<'a> Iter<'a> {
     #[doc(alias = "iter::field")]
     // TODO? in C++ API there is a mutable and immutable version of this function
     // Maybe we should create a ColumnView struct that is immutable and use the Column struct for mutable access?
-    pub unsafe fn get_field_data<T: CachedComponentData>(&self, index: i32) -> Column<T> {
+    pub unsafe fn get_field_data<T: ComponentInfo>(&self, index: i32) -> Column<T> {
         self.get_field_internal::<T>(index)
     }
 
@@ -506,7 +506,7 @@ impl<'a> Iter<'a> {
         self.iter.group_id
     }
 
-    fn get_field_internal<T: CachedComponentData>(&self, index: i32) -> Column<T> {
+    fn get_field_internal<T: ComponentInfo>(&self, index: i32) -> Column<T> {
         ecs_assert!(
             {
                 unsafe {

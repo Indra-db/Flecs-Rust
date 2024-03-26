@@ -15,7 +15,7 @@ use crate::{
     },
 };
 use std::{ffi::CStr, os::raw::c_char, sync::OnceLock};
-/// Component data that is cached by the `CachedComponentData` trait.
+/// Component data that is cached by the `ComponentInfo` trait.
 /// This data is used to register components with the world.
 /// It is also used to ensure that components are registered consistently across different worlds.
 #[derive(Clone, Debug, Default)]
@@ -29,9 +29,9 @@ pub struct ComponentData {
 pub struct Enum;
 pub struct Struct;
 
-pub trait EmptyComponent: CachedComponentData {}
-pub trait NotEmptyComponent: CachedComponentData {}
-pub trait IsEnum: CachedComponentData {
+pub trait EmptyComponent: ComponentInfo {}
+pub trait NotEmptyComponent: ComponentInfo {}
+pub trait IsEnum: ComponentInfo {
     const IS_ENUM: bool;
 }
 pub trait ECSComponentType {}
@@ -39,7 +39,7 @@ pub trait ECSComponentType {}
 impl ECSComponentType for Enum {}
 impl ECSComponentType for Struct {}
 
-pub trait ComponentType<T: ECSComponentType>: CachedComponentData {}
+pub trait ComponentType<T: ECSComponentType>: ComponentInfo {}
 
 /// Trait that manages component IDs across multiple worlds & binaries.
 ///
@@ -53,7 +53,7 @@ pub trait ComponentType<T: ECSComponentType>: CachedComponentData {}
 ///      }
 /// ```
 ///
-/// The `CachedComponentData` trait is designed to maintain component IDs for a Rust type
+/// The `ComponentInfo` trait is designed to maintain component IDs for a Rust type
 /// in a manner that is consistent across different worlds (or instances).
 /// When a component is utilized, this trait will determine whether it has already been registered.
 /// If it hasn't, it registers the component with the current world.
@@ -62,8 +62,8 @@ pub trait ComponentType<T: ECSComponentType>: CachedComponentData {}
 /// If the world doesn't, this implies the component was registered by a different world.
 /// In such a case, the component is registered with the present world using the pre-existing ID.
 /// If the ID is already known, the trait takes care of the component registration and checks for consistency in the input.
-pub trait CachedComponentData: Sized {
-    type UnderlyingType: CachedComponentData + Default + Clone;
+pub trait ComponentInfo: Sized {
+    type UnderlyingType: ComponentInfo + Default + Clone;
 
     /// attempts to register the component with the world. If it's already registered, it does nothing.
     fn register_explicit(world: *mut WorldT);
@@ -178,7 +178,7 @@ pub trait CachedComponentData: Sized {
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub(crate) fn try_register_struct_component_impl<T>(world: *mut WorldT, name: *const c_char)
 where
-    T: CachedComponentData,
+    T: ComponentInfo,
 {
     let is_registered = T::is_registered();
     let is_registered_with_world = if is_registered {
@@ -195,14 +195,14 @@ where
 /// attempts to register the component with the world. If it's already registered, it does nothing.
 pub fn try_register_struct_component<T>(world: *mut WorldT)
 where
-    T: CachedComponentData,
+    T: ComponentInfo,
 {
     try_register_struct_component_impl::<T>(world, std::ptr::null());
 }
 
 pub fn try_register_struct_component_named<T>(world: *mut WorldT, name: &CStr)
 where
-    T: CachedComponentData,
+    T: ComponentInfo,
 {
     try_register_struct_component_impl::<T>(world, name.as_ptr());
 }
@@ -210,7 +210,7 @@ where
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn try_register_enum_component_impl<T>(world: *mut WorldT, name: *const c_char)
 where
-    T: CachedComponentData + CachedEnumData,
+    T: ComponentInfo + CachedEnumData,
 {
     let is_registered = T::is_registered();
     let is_registered_with_world = if is_registered {
@@ -253,14 +253,14 @@ where
 
 pub fn try_register_enum_component<T>(world: *mut WorldT)
 where
-    T: CachedComponentData + CachedEnumData,
+    T: ComponentInfo + CachedEnumData,
 {
     try_register_enum_component_impl::<T>(world, std::ptr::null());
 }
 
 pub fn try_register_enum_component_named<T>(world: *mut WorldT, name: &CStr)
 where
-    T: CachedComponentData + CachedEnumData,
+    T: ComponentInfo + CachedEnumData,
 {
     try_register_enum_component_impl::<T>(world, name.as_ptr());
 }
@@ -268,7 +268,7 @@ where
 /// returns the pre-registered component data for the component or an initial component data if it's not pre-registered.
 fn init<T>(entity: EntityT, allow_tag: bool, is_comp_pre_registered: bool) -> ComponentData
 where
-    T: CachedComponentData,
+    T: ComponentInfo,
 {
     if is_comp_pre_registered {
         ecs_assert!(
@@ -319,7 +319,7 @@ fn register_componment_data_explicit<T>(
     is_comp_pre_registered: bool,
 ) -> bool
 where
-    T: CachedComponentData,
+    T: ComponentInfo,
 {
     let mut component_data: ComponentData = Default::default();
     if is_comp_pre_registered {
@@ -425,7 +425,7 @@ pub(crate) fn register_entity_w_component_explicit<T>(
     id: EntityT,
 ) -> EntityT
 where
-    T: CachedComponentData,
+    T: ComponentInfo,
 {
     let is_comp_pre_registered = T::is_registered();
     let mut component_data: ComponentData = Default::default();
@@ -516,7 +516,7 @@ where
 /// this function is unsafe because it assumes that the component is registered with a world, not necessarily the world passed in.
 pub(crate) unsafe fn is_component_registered_with_world<T>(world: *const WorldT) -> bool
 where
-    T: CachedComponentData,
+    T: ComponentInfo,
 {
     // we know this is safe because we checked if world is not null & if the component is registered
     if !world.is_null() && unsafe { !ecs_exists(world, T::get_id_unchecked()) } {
@@ -535,7 +535,7 @@ pub(crate) fn register_component_data<T>(
     is_comp_pre_registered_with_world: bool,
 ) -> bool
 where
-    T: CachedComponentData,
+    T: ComponentInfo,
 {
     let mut has_registered = false;
     //this is safe because we checked if the component is pre-registered

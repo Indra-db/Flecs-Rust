@@ -2,7 +2,7 @@ use std::{ops::Deref, os::raw::c_void};
 
 use crate::core::{
     c_types::{InOutKind, OperKind},
-    component_registration::CachedComponentData,
+    component_registration::ComponentInfo,
     Entity, IdT, World,
 };
 
@@ -231,7 +231,7 @@ impl ObserverEntityBindingCtx {
 
 impl<T> InOutType for &mut T
 where
-    T: CachedComponentData,
+    T: ComponentInfo,
 {
     const IN_OUT: InOutKind = InOutKind::InOutDefault;
     type Type = T;
@@ -239,7 +239,7 @@ where
 
 impl<T> InOutType for &T
 where
-    T: CachedComponentData,
+    T: ComponentInfo,
 {
     type Type = T;
     const IN_OUT: InOutKind = InOutKind::In;
@@ -247,7 +247,7 @@ where
 
 impl<T> OperType for &mut T
 where
-    T: CachedComponentData,
+    T: ComponentInfo,
 {
     type Type = T;
     const OPER: OperKind = OperKind::And;
@@ -255,7 +255,7 @@ where
 
 impl<T> OperType for &T
 where
-    T: CachedComponentData,
+    T: ComponentInfo,
 {
     type Type = T;
     const OPER: OperKind = OperKind::And;
@@ -263,7 +263,7 @@ where
 
 impl<T> OperType for Option<&T>
 where
-    T: CachedComponentData,
+    T: ComponentInfo,
 {
     type Type = T;
     const OPER: OperKind = OperKind::Optional;
@@ -271,7 +271,7 @@ where
 
 impl<T> OperType for Option<&mut T>
 where
-    T: CachedComponentData,
+    T: ComponentInfo,
 {
     type Type = T;
     const OPER: OperKind = OperKind::Optional;

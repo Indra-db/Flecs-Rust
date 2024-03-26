@@ -5,7 +5,7 @@ use flecs_ecs_sys::ecs_add_id;
 use crate::{
     core::{
         c_types::{EntityT, IdT, InOutKind, IterT, OperKind, WorldT, ECS_DEPENDS_ON, ECS_PAIR},
-        component_registration::CachedComponentData,
+        component_registration::ComponentInfo,
         utility::errors::FlecsErrorCode,
         RUST_ECS_ID_FLAGS_MASK,
     },
@@ -240,19 +240,14 @@ pub fn ecs_record_to_row(row: u32) -> i32 {
 ///
 /// # Type Parameters
 ///
-/// * `T`: The type of the component data. Must implement `CachedComponentData`.
+/// * `T`: The type of the component data. Must implement `ComponentInfo`.
 ///
 /// # Arguments
 ///
 /// * `entity`: The ID of the entity.
 /// * `value`: The value to set for the component.
 /// * `id`: The ID of the component type.
-pub(crate) fn set_helper<T: CachedComponentData>(
-    world: *mut WorldT,
-    entity: EntityT,
-    value: T,
-    id: IdT,
-) {
+pub(crate) fn set_helper<T: ComponentInfo>(world: *mut WorldT, entity: EntityT, value: T, id: IdT) {
     ecs_assert!(
         T::get_size(world) != 0,
         FlecsErrorCode::InvalidParameter,
@@ -340,7 +335,7 @@ pub fn get_generation(entity: EntityT) -> u32 {
 /// let velocity_ptr: *mut Velocity = ecs_field(it, 2);
 /// ```
 #[inline(always)]
-pub unsafe fn ecs_field<T: CachedComponentData>(it: *const IterT, index: i32) -> *mut T {
+pub unsafe fn ecs_field<T: ComponentInfo>(it: *const IterT, index: i32) -> *mut T {
     let size = std::mem::size_of::<T>();
     ecs_field_w_size(it, size, index) as *mut T
 }

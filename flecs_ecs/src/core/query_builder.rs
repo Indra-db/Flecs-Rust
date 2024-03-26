@@ -14,7 +14,7 @@ use crate::sys::{
 use super::{
     builder::Builder,
     c_types::{EntityT, IdT, TableT, TermT, WorldT, SEPARATOR},
-    component_registration::CachedComponentData,
+    component_registration::ComponentInfo,
     filter_builder::{FilterBuilder, FilterBuilderImpl},
     iterable::{Filterable, Iterable},
     query::{Query, QueryBase},
@@ -255,7 +255,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     #[doc(alias = "query_builder_i::order_by")]
     fn order_by<T>(&mut self, compare: OrderByFn<T>) -> &mut Self
     where
-        T: CachedComponentData,
+        T: ComponentInfo,
     {
         let cmp: ecs_order_by_action_t = Some(unsafe { std::mem::transmute(compare) });
         self.order_by_id(T::get_id(self.get_world()), cmp);
@@ -295,7 +295,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     #[doc(alias = "query_builder_i::group_by")]
     fn group_by<T>(&mut self) -> &mut Self
     where
-        T: CachedComponentData,
+        T: ComponentInfo,
     {
         self.group_by_id(T::get_id(self.get_world()), None)
     }
@@ -329,7 +329,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     #[doc(alias = "query_builder_i::group_by")]
     fn group_by_fn<T>(&mut self, group_by_action: ecs_group_by_action_t) -> &mut Self
     where
-        T: CachedComponentData,
+        T: ComponentInfo,
     {
         self.group_by_id(T::get_id(self.get_world()), group_by_action);
         self

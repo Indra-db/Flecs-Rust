@@ -1,6 +1,6 @@
 use crate::{core::FlecsErrorCode, ecs_assert};
 
-use super::{component_registration::CachedComponentData, iter::Iter};
+use super::{component_registration::ComponentInfo, iter::Iter};
 use std::{
     ops::{Deref, Index, IndexMut},
     os::raw::c_void,
@@ -13,7 +13,7 @@ use std::{
 /// * `T`: The type of the column.
 pub struct Column<'a, T>
 where
-    T: CachedComponentData,
+    T: ComponentInfo,
 {
     slice_components: &'a mut [T],
     is_shared: bool,
@@ -21,7 +21,7 @@ where
 
 impl<'a, T> Column<'a, T>
 where
-    T: CachedComponentData,
+    T: ComponentInfo,
 {
     /// Create a new column from component array.
     ///
@@ -60,7 +60,7 @@ where
 
 impl<'a, T> Index<usize> for Column<'a, T>
 where
-    T: CachedComponentData,
+    T: ComponentInfo,
 {
     type Output = T;
 
@@ -71,7 +71,7 @@ where
 
 impl<'a, T> IndexMut<usize> for Column<'a, T>
 where
-    T: CachedComponentData,
+    T: ComponentInfo,
 {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.slice_components[index]
@@ -80,7 +80,7 @@ where
 
 impl<'a, T> Deref for Column<'a, T>
 where
-    T: CachedComponentData,
+    T: ComponentInfo,
 {
     type Target = T;
 

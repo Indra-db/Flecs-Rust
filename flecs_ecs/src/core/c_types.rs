@@ -1,7 +1,7 @@
 #![allow(non_upper_case_globals)]
 
 use crate::{
-    core::component_registration::{CachedComponentData, ComponentData, ComponentType, Struct},
+    core::component_registration::{ComponentData, ComponentInfo, ComponentType, Struct},
     sys::{
         ecs_entity_t, ecs_filter_t, ecs_flags32_t, ecs_id_t, ecs_inout_kind_t,
         ecs_inout_kind_t_EcsIn, ecs_inout_kind_t_EcsInOut, ecs_inout_kind_t_EcsInOutDefault,
@@ -379,7 +379,7 @@ fn get_ecs_poly_data() -> ComponentData {
 
 impl ComponentType<Struct> for EcsComponent {}
 
-impl CachedComponentData for EcsComponent {
+impl ComponentInfo for EcsComponent {
     type UnderlyingType = EcsComponent;
     fn register_explicit(_world: *mut WorldT) {
         //this is already registered as FLECS_IDEcsComponentID_
@@ -451,7 +451,7 @@ impl CachedComponentData for EcsComponent {
 
 impl ComponentType<Struct> for Poly {}
 
-impl CachedComponentData for Poly {
+impl ComponentInfo for Poly {
     type UnderlyingType = Poly;
     fn register_explicit(_world: *mut WorldT) {
         //this is already registered as FLECS_IDEcsComponentID_
@@ -522,7 +522,7 @@ impl CachedComponentData for Poly {
 }
 
 #[cfg(feature = "flecs_system")]
-impl CachedComponentData for TickSource {
+impl ComponentInfo for TickSource {
     type UnderlyingType = TickSource;
     fn register_explicit(world: *mut WorldT) {
         try_register_struct_component::<Self>(world);
@@ -585,7 +585,7 @@ impl CachedComponentData for TickSource {
 }
 
 #[cfg(feature = "flecs_system")]
-impl CachedComponentData for EntityId {
+impl ComponentInfo for EntityId {
     type UnderlyingType = EntityId;
 
     fn register_explicit(_world: *mut WorldT) {

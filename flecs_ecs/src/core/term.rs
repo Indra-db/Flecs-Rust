@@ -14,7 +14,7 @@ use super::{
         EntityT, Flags32T, IdT, InOutKind, OperKind, TermIdT, TermT, WorldT, ECS_CASCADE,
         ECS_FILTER, ECS_IS_ENTITY, ECS_IS_NAME, ECS_IS_VARIABLE, ECS_PARENT, ECS_SELF, ECS_UP,
     },
-    component_registration::CachedComponentData,
+    component_registration::ComponentInfo,
     ecs_pair,
     entity::Entity,
     id::Id,
@@ -139,7 +139,7 @@ impl Term {
     ///
     /// * C++ API: `term::term`
     #[doc(alias = "term::term")]
-    pub fn new_component<T: CachedComponentData>(world: Option<&World>) -> Self {
+    pub fn new_component<T: ComponentInfo>(world: Option<&World>) -> Self {
         if let Some(world) = world {
             Self::new_id(world.raw_world, T::get_id(world.raw_world))
         } else {
@@ -157,7 +157,7 @@ impl Term {
         }
     }
 
-    pub fn new_pair<T: CachedComponentData, U: CachedComponentData>(world: Option<&World>) -> Self {
+    pub fn new_pair<T: ComponentInfo, U: ComponentInfo>(world: Option<&World>) -> Self {
         if let Some(world) = world {
             Self::new_rel_target(
                 world.raw_world,
@@ -522,7 +522,7 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::up`
     #[doc(alias = "term_builder_i::up")]
-    fn up_type<TravRel: CachedComponentData>(&mut self) -> &mut Self {
+    fn up_type<TravRel: ComponentInfo>(&mut self) -> &mut Self {
         self.assert_term_id();
         unsafe {
             (*self.get_term_id()).flags |= ECS_UP;
@@ -578,7 +578,7 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::cascade`
     #[doc(alias = "term_builder_i::cascade")]
-    fn cascade_type<TravRel: CachedComponentData>(&mut self) -> &mut Self {
+    fn cascade_type<TravRel: ComponentInfo>(&mut self) -> &mut Self {
         self.assert_term_id();
         unsafe {
             (*self.get_term_id()).flags |= ECS_CASCADE;
@@ -791,7 +791,7 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
-    fn select_src<T: CachedComponentData>(&mut self) -> &mut Self {
+    fn select_src<T: ComponentInfo>(&mut self) -> &mut Self {
         let world = self.get_world();
         self.select_src_id(T::get_id(world))
     }
@@ -848,7 +848,7 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
-    fn select_first<T: CachedComponentData>(&mut self) -> &mut Self {
+    fn select_first<T: ComponentInfo>(&mut self) -> &mut Self {
         let world = self.get_world();
         self.select_first_id(T::get_id(world))
     }
@@ -905,7 +905,7 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
-    fn select_second<T: CachedComponentData>(&mut self) -> &mut Self {
+    fn select_second<T: ComponentInfo>(&mut self) -> &mut Self {
         let world = self.get_world();
         self.select_second_id(T::get_id(world))
     }
