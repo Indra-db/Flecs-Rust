@@ -552,7 +552,6 @@ pub trait FilterBuilderImpl: TermBuilder {
     #[doc(alias = "filter_builder_i::term")]
     fn term_with_id(&mut self, id: IdT) -> &mut Self {
         self.term();
-        *self.get_term_index() -= 1;
         let new_term: ecs_term_t = Term::new(None, TermType::Id(id)).move_raw_term();
         let term: &mut Term = self.get_term();
         let term_ptr: *mut TermT = term.term_ptr;

@@ -32,8 +32,13 @@ fn main() {
         .system_builder::<()>()
         .kind::<Physics>()
         .on_iter_only(|_| {
-            println!("System ran!");
+            println!("System with Physics ran!");
         });
+
+    // Create system without Physics tag
+    world.system_builder::<()>().on_iter_only(|_| {
+        println!("System without Physics ran!");
+    });
 
     // Runs the pipeline & system
     world.progress();

@@ -371,7 +371,7 @@ where
         filter.term_with_id(A::OnlyType::get_id(world));
         let term = filter.current_term();
         A::populate_term(term);
-        filter.next_term();
+
     }
 
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
@@ -424,7 +424,7 @@ where
         count: usize,
     ) -> Self::TupleSliceType {
         (A::get_tuple_slices_with_ref_data(array_components[0], is_ref_array_components[0], count),)
-    
+
     }
 }
 
@@ -445,11 +445,11 @@ where
          filter.term_with_id(A::OnlyType::get_id(world));
         let term = filter.current_term();
         A::populate_term(term);
-        filter.next_term();
-         filter.term_with_id(B::OnlyType::get_id(world));
-        let term = filter.current_term(); 
+
+        filter.term_with_id(B::OnlyType::get_id(world));
+        let term = filter.current_term();
         B::populate_term(term);
-        filter.next_term();
+
     }
 
     fn register_ids_descriptor(world: *mut WorldT,desc: &mut ecs_filter_desc_t)
@@ -529,15 +529,15 @@ where
         filter.term_with_id(A::OnlyType::get_id(world));
         let term = filter.current_term();
         A::populate_term(term);
-        filter.next_term();
+
         unsafe { filter.term_with_id(B::OnlyType::get_id_unchecked()) } ;
         let term = filter.current_term();
         B::populate_term(term);
-        filter.next_term();
+
         unsafe { filter.term_with_id(C::OnlyType::get_id_unchecked()) } ;
         let term = filter.current_term();
         C::populate_term(term);
-        filter.next_term();
+
     }
 
     fn register_ids_descriptor(world: *mut WorldT,desc: &mut ecs_filter_desc_t)
@@ -762,7 +762,7 @@ macro_rules! impl_iterable {
                     filter.term_with_id($t::OnlyType::get_id(world));
                     let term = filter.current_term();
                     $t::populate_term(term);
-                    filter.next_term();
+
                 )*
             }
 
