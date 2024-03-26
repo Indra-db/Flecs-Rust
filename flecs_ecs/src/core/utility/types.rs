@@ -1,13 +1,70 @@
-use std::os::raw::c_void;
+use std::{ops::Deref, os::raw::c_void};
 
 use crate::core::{
     c_types::{InOutKind, OperKind},
     component_registration::CachedComponentData,
+    Entity, IdT, World,
 };
 
 use super::traits::{InOutType, OperType};
 
 pub type FTime = f32;
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+pub struct EntityId(IdT);
+
+impl EntityId {
+    #[inline]
+    pub fn new(id: IdT) -> Self {
+        Self(id)
+    }
+
+    /// Convert the entity id to an entity without a world.
+    /// This entity is not safe to do operations on.
+    ///
+    /// # Safety
+    ///
+    /// This entity is not safe to do operations on as it has no valig world reference
+    pub fn to_entity_no_world(&self) -> Entity {
+        Entity::from(self.0)
+    }
+
+    /// Convert the entity id to an entity with the given world.
+    ///
+    /// # Safety
+    ///
+    /// This entity is safe to do operations on if the entity belongs to the world
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world the entity belongs to
+    pub fn to_entity(&self, world: &World) -> Entity {
+        Entity::new_from_existing_raw(world.raw_world, self.0)
+    }
+}
+
+impl From<EntityId> for IdT {
+    #[inline]
+    fn from(id: EntityId) -> Self {
+        id.0
+    }
+}
+
+impl From<IdT> for EntityId {
+    #[inline]
+    fn from(id: IdT) -> Self {
+        Self(id)
+    }
+}
+
+impl Deref for EntityId {
+    type Target = IdT;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 pub(crate) type EcsCtxFreeT = extern "C" fn(*mut c_void);
 

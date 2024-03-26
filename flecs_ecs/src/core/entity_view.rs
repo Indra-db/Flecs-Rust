@@ -1696,6 +1696,57 @@ impl EntityView {
     fn set_stage(&self, stage: *mut WorldT) -> Entity {
         Entity::new_from_existing_raw(stage, self.raw_id)
     }
+
+    /// Turn entity into an enum constant.
+    ///
+    /// # Safety
+    ///
+    /// This function returns an Option because the entity might not be a constant.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The enum type.
+    ///
+    /// # Returns
+    ///
+    /// * `Some(&T)` - The enum constant if the entity is a constant.
+    /// * `None` - If the entity is not a constant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::to_constant`
+    #[doc(alias = "entity_view::to_constant")]
+    pub fn to_constant<T: CachedComponentData + ComponentType<Enum>>(
+        &self,
+    ) -> Option<&T::UnderlyingType> {
+        let ptr = self.get_enum::<T>();
+        ecs_assert!(
+            ptr.is_some(),
+            FlecsErrorCode::InvalidParameter,
+            "entity is not a constant"
+        );
+        ptr
+    }
+
+    /// Turn entity into an enum constant.
+    ///
+    /// # Safety
+    ///
+    /// ensure that the entity is a constant before calling this function.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The enum type.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::to_constant`
+    #[doc(alias = "entity_view::to_constant")]
+    pub unsafe fn to_constant_unchecked<T: CachedComponentData + ComponentType<Enum>>(
+        &self,
+    ) -> &T::UnderlyingType {
+        self.get_enum_unchecked::<T>()
+    }
 }
 
 // Event mixin

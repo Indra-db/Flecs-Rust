@@ -40,7 +40,7 @@ use super::{
     component_registration::{
         register_entity_w_component_explicit, CachedComponentData, ComponentType, Enum, Struct,
     },
-    ECS_PREFAB,
+    ComponentData, EntityId, ECS_PREFAB,
 };
 use super::{EmptyComponent, NotEmptyComponent};
 
@@ -81,7 +81,14 @@ impl Default for World {
             raw_world: unsafe { ecs_init() },
             is_owned: true,
         };
+
         world.init_builtin_components();
+        EntityId::__initialize(|| ComponentData {
+            id: unsafe { sys::FLECS_IDecs_u64_tID_ },
+            size: std::mem::size_of::<IdT>(),
+            alignment: std::mem::align_of::<IdT>(),
+            allow_tag: false,
+        });
         world
     }
 }
@@ -106,12 +113,7 @@ impl Drop for World {
 
 impl World {
     pub fn new() -> Self {
-        let world = Self {
-            raw_world: unsafe { ecs_init() },
-            is_owned: true,
-        };
-        world.init_builtin_components();
-        world
+        Self::default()
     }
 
     /// Wrapper around raw world, takes no ownership.
@@ -3245,6 +3247,30 @@ impl World {
     #[doc(alias = "world::component")]
     pub fn component_untyped_id(&self, id: IdT) -> UntypedComponent {
         UntypedComponent::new(self, id)
+    }
+
+    /// Convert enum constant to entity
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The enum type.
+    ///
+    /// # Arguments
+    ///
+    /// * `enum_value` - The enum value to convert.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::to_entity`
+    #[doc(alias = "world::to_entity")]
+    pub fn to_entity<T: CachedComponentData + ComponentType<Enum> + CachedEnumData>(
+        &self,
+        enum_value: T,
+    ) -> Entity {
+        Entity::new_from_existing_raw(
+            self.raw_world,
+            enum_value.get_entity_id_from_enum_field(self.raw_world),
+        )
     }
 }
 
