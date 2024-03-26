@@ -1,6 +1,6 @@
 use crate::{core::FlecsErrorCode, ecs_assert};
 
-use super::{component_registration::CachedComponentData, iter::Iter, IsEnum};
+use super::{component_registration::CachedComponentData, iter::Iter};
 use std::{
     ops::{Deref, Index, IndexMut},
     os::raw::c_void,
@@ -21,7 +21,7 @@ where
 
 impl<'a, T> Column<'a, T>
 where
-    T: CachedComponentData + IsEnum,
+    T: CachedComponentData,
 {
     /// Create a new column from component array.
     ///

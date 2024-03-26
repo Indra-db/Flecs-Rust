@@ -76,15 +76,22 @@ fn main() {
     q.iter_only(|it| {
         // Get the column with direction states. This is stored as an array
         // with identifiers to the individual states
-        let movement = unsafe { it.get_field_data::<Movement>(1) };
-        let direction = unsafe { it.get_field_data::<Direction>(2) };
+        //since it's an union, we need to get the entity id for safety
+        let movement = unsafe { it.get_field_data::<EntityId>(1) };
+        let direction = unsafe { it.get_field_data::<EntityId>(2) };
 
         for i in 0..it.count() {
             println!(
                 "{}: Movement: {:?}, Direction: {:?}",
                 it.get_entity(i).get_name(),
-                movement[i],
+                movement[i]
+                    .to_entity(&it.get_world())
+                    .to_constant::<Movement>()
+                    .unwrap(),
                 direction[i]
+                    .to_entity(&it.get_world())
+                    .to_constant::<Direction>()
+                    .unwrap()
             );
         }
     });

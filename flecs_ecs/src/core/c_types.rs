@@ -26,6 +26,8 @@ use crate::{
 
 use std::{ffi::CStr, sync::OnceLock};
 
+use super::EntityId;
+
 pub const RUST_ECS_ID_FLAGS_MASK: u64 = 0xFF << 60;
 pub const RUST_ECS_COMPONENT_MASK: u64 = !RUST_ECS_ID_FLAGS_MASK;
 
@@ -573,6 +575,65 @@ impl CachedComponentData for TickSource {
     fn get_symbol_name_c() -> &'static str {
         static SYMBOL_NAME_C: OnceLock<String> = OnceLock::new();
         SYMBOL_NAME_C.get_or_init(|| "EcsTickSource\0".to_string())
+    }
+
+    // Function to return a &str slice without the null termination for Rust.
+    fn get_symbol_name() -> &'static str {
+        let name = Self::get_symbol_name_c();
+        &name[..name.len() - 1]
+    }
+}
+
+#[cfg(feature = "flecs_system")]
+impl CachedComponentData for EntityId {
+    type UnderlyingType = EntityId;
+
+    fn register_explicit(_world: *mut WorldT) {
+        // already registered by flecs_c
+    }
+
+    fn register_explicit_named(_world: *mut WorldT, _name: &CStr) {
+        // already registered by flecs_c
+    }
+
+    fn is_registered() -> bool {
+        true
+    }
+
+    fn get_data(_world: *mut WorldT) -> &'static ComponentData {
+        //this is safe because it's already registered in flecs_c/ world
+        unsafe { Self::get_data_unchecked() }
+    }
+
+    fn get_id(_world: *mut WorldT) -> IdT {
+        //this is safe because it's already registered in flecs_c / world
+        unsafe { Self::get_id_unchecked() }
+    }
+
+    fn get_size(_world: *mut WorldT) -> usize {
+        //this is safe because it's already registered in flecs_c / world
+        unsafe { Self::get_size_unchecked() }
+    }
+
+    fn get_alignment(_world: *mut WorldT) -> usize {
+        //this is safe because it's already registered in flecs_c / world
+        unsafe { Self::get_alignment_unchecked() }
+    }
+
+    fn get_allow_tag(_world: *mut WorldT) -> bool {
+        //this is safe because it's already registered in flecs_c
+        unsafe { Self::get_allow_tag_unchecked() }
+    }
+
+    fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
+        static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
+        &ONCE_LOCK
+    }
+
+    // Function for C compatibility, returns null-terminated string.
+    fn get_symbol_name_c() -> &'static str {
+        static SYMBOL_NAME_C: OnceLock<String> = OnceLock::new();
+        SYMBOL_NAME_C.get_or_init(|| "u64\0".to_string())
     }
 
     // Function to return a &str slice without the null termination for Rust.
