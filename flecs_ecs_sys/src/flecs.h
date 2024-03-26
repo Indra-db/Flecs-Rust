@@ -184,7 +184,7 @@
 #define FLECS_OS_API_IMPL   /**< Default implementation for OS API */
 #define FLECS_HTTP          /**< Tiny HTTP server for connecting to remote UI */
 #define FLECS_REST          /**< REST API for querying application data */
-//#define FLECS_JOURNAL    /**< Journaling addon (disabled by default) */
+#define FLECS_JOURNAL    /**< Journaling addon (disabled by default) */
 #endif // ifndef FLECS_CUSTOM_BUILD
 
 /** @def FLECS_LOW_FOOTPRINT
@@ -10189,11 +10189,15 @@ int ecs_log_last_error(void);
 #endif
 
 #ifdef FLECS_REST
+#ifndef FLECS_HTTP
 #define FLECS_HTTP
+#endif
 #endif
 
 #ifdef FLECS_PLECS
+#ifndef FLECS_EXPR
 #define FLECS_EXPR
+#endif
 #endif
 
 #ifdef FLECS_APP

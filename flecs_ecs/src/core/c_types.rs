@@ -1,10 +1,7 @@
 #![allow(non_upper_case_globals)]
 
 use crate::{
-    core::component_registration::{
-        try_register_struct_component, try_register_struct_component_named, CachedComponentData,
-        ComponentData, ComponentType, Struct,
-    },
+    core::component_registration::{CachedComponentData, ComponentData, ComponentType, Struct},
     sys::{
         ecs_entity_t, ecs_filter_t, ecs_flags32_t, ecs_id_t, ecs_inout_kind_t,
         ecs_inout_kind_t_EcsIn, ecs_inout_kind_t_EcsInOut, ecs_inout_kind_t_EcsInOutDefault,
@@ -15,8 +12,16 @@ use crate::{
         ecs_query_group_info_t, ecs_query_t, ecs_ref_t, ecs_rule_t, ecs_table_t, ecs_term_id_t,
         ecs_term_t, ecs_type_hooks_t, ecs_type_info_t, ecs_type_kind_t, ecs_type_t,
         ecs_world_info_t, ecs_world_t, EcsComponent, EcsIdentifier, EcsPoly, EcsTarget,
-        EcsTickSource, FLECS_IDEcsComponentID_,
+        FLECS_IDEcsComponentID_,
     },
+};
+
+#[cfg(feature = "flecs_system")]
+use crate::{
+    core::component_registration::{
+        try_register_struct_component, try_register_struct_component_named,
+    },
+    sys::EcsTickSource,
 };
 
 use std::{ffi::CStr, sync::OnceLock};
@@ -45,6 +50,7 @@ pub type TermIdT = ecs_term_id_t;
 pub type TermT = ecs_term_t;
 pub type PrimitiveKindT = ecs_primitive_kind_t;
 pub type FTimeT = f32;
+#[cfg(feature = "flecs_system")]
 pub type TickSource = EcsTickSource;
 
 pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\0") };
@@ -513,6 +519,7 @@ impl CachedComponentData for Poly {
     }
 }
 
+#[cfg(feature = "flecs_system")]
 impl CachedComponentData for TickSource {
     type UnderlyingType = TickSource;
     fn register_explicit(world: *mut WorldT) {

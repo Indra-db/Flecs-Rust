@@ -7,6 +7,7 @@ use super::*;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+#[cfg(feature = "flecs_alerts")]
 pub struct ecs_alert_desc_t {
     pub _canary: i32,
     #[doc = "Entity associated with alert"]
@@ -87,6 +88,7 @@ extern "C" {
     /// # Returns
     ///
     /// The reply.
+    #[cfg(feature = "flecs_http")]
     pub fn ecs_http_server_http_request(
         srv: *mut ecs_http_server_t,
         req: *const ::std::os::raw::c_char,
