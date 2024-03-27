@@ -1,7 +1,12 @@
+use std::borrow::Borrow;
+
 use crate::core::{
     c_types::{InOutKind, OperKind},
     component_registration::ComponentInfo,
+    Entity, EntityView, Id, IdT, World, WorldT,
 };
+
+use super::{ecs_pair, EntityId};
 
 /// Represents the input/output type of a component in an ECS system.
 ///
@@ -39,4 +44,156 @@ pub trait InOutType {
 pub trait OperType {
     const OPER: OperKind;
     type Type: ComponentInfo;
+}
+
+/// Extracts the entity id from a type.
+pub trait IntoEntityId {
+    fn get_id(&self) -> u64;
+}
+
+impl IntoEntityId for IdT {
+    #[inline]
+    fn get_id(&self) -> IdT {
+        *self
+    }
+}
+
+impl IntoEntityId for EntityId {
+    #[inline]
+    fn get_id(&self) -> u64 {
+        self.0
+    }
+}
+
+impl IntoEntityId for Id {
+    #[inline]
+    fn get_id(&self) -> u64 {
+        self.raw_id
+    }
+}
+
+impl IntoEntityId for EntityView {
+    #[inline]
+    fn get_id(&self) -> u64 {
+        self.raw_id
+    }
+}
+
+impl IntoEntityId for Entity {
+    #[inline]
+    fn get_id(&self) -> u64 {
+        self.raw_id
+    }
+}
+
+/// Extension trait for tuples that implement `IntoEntityId`.
+/// This extension is useful for when some function only expect one entity id, but not pairs of them.
+/// so you only accept `IntoEntityId`. Where both pairs and a single id are accepted, you can use `IntoEntityIdExt`.
+pub trait IntoEntityIdExt {
+    fn get_id_ext(&self) -> u64;
+}
+
+impl<T, U> IntoEntityIdExt for (T, U)
+where
+    T: IntoEntityId,
+    U: IntoEntityId,
+{
+    #[inline]
+    fn get_id_ext(&self) -> u64 {
+        ecs_pair(IntoEntityId::get_id(&self.0), IntoEntityId::get_id(&self.1))
+    }
+}
+
+// We can not implement for T where T : IntoEntityId, because it would essentially extend the trait, which we don't want
+// so we have to implement for each type that implements IntoEntityId separately.
+
+impl IntoEntityIdExt for Entity {
+    #[inline]
+    fn get_id_ext(&self) -> u64 {
+        IntoEntityId::get_id(self)
+    }
+}
+
+impl IntoEntityIdExt for EntityView {
+    #[inline]
+    fn get_id_ext(&self) -> u64 {
+        IntoEntityId::get_id(self)
+    }
+}
+
+impl IntoEntityIdExt for Id {
+    #[inline]
+    fn get_id_ext(&self) -> u64 {
+        IntoEntityId::get_id(self)
+    }
+}
+
+impl IntoEntityIdExt for IdT {
+    #[inline]
+    fn get_id_ext(&self) -> u64 {
+        IntoEntityId::get_id(self)
+    }
+}
+
+impl IntoEntityIdExt for EntityId {
+    #[inline]
+    fn get_id_ext(&self) -> u64 {
+        IntoEntityId::get_id(self)
+    }
+}
+
+pub trait IntoWorld {
+    fn get_world_mut(&self) -> *mut WorldT;
+    #[inline]
+    fn get_world(&self) -> *const WorldT {
+        self.get_world_mut() as *const WorldT
+    }
+}
+
+impl IntoWorld for *mut WorldT {
+    #[inline]
+    fn get_world_mut(&self) -> *mut WorldT {
+        *self
+    }
+}
+
+impl IntoWorld for *const WorldT {
+    #[inline]
+    fn get_world_mut(&self) -> *mut WorldT {
+        *self as *mut WorldT
+    }
+}
+
+impl IntoWorld for World {
+    #[inline]
+    fn get_world_mut(&self) -> *mut WorldT {
+        self.raw_world
+    }
+}
+
+impl IntoWorld for &World {
+    #[inline]
+    fn get_world_mut(&self) -> *mut WorldT {
+        self.raw_world
+    }
+}
+
+impl IntoWorld for &mut World {
+    #[inline]
+    fn get_world_mut(&self) -> *mut WorldT {
+        self.raw_world
+    }
+}
+
+impl<T> IntoWorld for Option<T>
+where
+    T: IntoWorld,
+{
+    #[inline]
+    fn get_world_mut(&self) -> *mut WorldT {
+        match self {
+            Some(t) => t.get_world_mut(),
+            None => std::ptr::null_mut(),
+        }
+    }
 }
