@@ -29,7 +29,7 @@ pub trait EventBuilderImpl {
     ///
     /// * C++ API: `event_builder_base::id`
     #[doc(alias = "event_builder_base::id")]
-    fn add_id_to_emit(&mut self, id: impl IntoEntityIdExt) -> &mut Self {
+    fn add_id(&mut self, id: impl IntoEntityIdExt) -> &mut Self {
         let id = id.get_id();
         let data = self.get_data();
         let ids = &mut data.ids;
@@ -52,12 +52,12 @@ pub trait EventBuilderImpl {
     ///
     /// * C++ API: `event_builder_base::id`
     #[doc(alias = "event_builder_base::id")]
-    fn add_type_to_emit<T>(&mut self) -> &mut Self
+    fn add<T>(&mut self) -> &mut Self
     where
         T: IntoComponentId,
     {
         let world = self.get_data().world.raw_world;
-        self.add_id_to_emit(T::get_id(world))
+        self.add_id(T::get_id(world))
     }
 
     /// Add a pair of components to emit for the event
@@ -79,7 +79,7 @@ pub trait EventBuilderImpl {
         First: ComponentInfo,
     {
         let world = self.get_data().world.raw_world;
-        self.add_id_to_emit(ecs_pair(First::get_id(world), second))
+        self.add_id(ecs_pair(First::get_id(world), second))
     }
 
     /// Set the entity to emit for the event
