@@ -128,22 +128,22 @@ where
 pub trait IntoEntityIdExt {
     const IS_PAIR: bool;
 
-    fn get_id_ext(&self) -> u64;
+    fn get_id(&self) -> u64;
 
     /// This will return the id of the first part of a pair.
-    /// If this is called on a non_pair, it will return the same as get_id_ext.
+    /// If this is called on a non_pair, it will return the same as get_id.
     #[doc(hidden)] // not meant to be used by the user
     #[inline]
     fn get_id_first(&self) -> u64 {
-        self.get_id_ext()
+        self.get_id()
     }
 
     /// This will return the id of the second part of a pair.
-    /// If this is called on a non_pair, it will return the same as get_id_ext.
+    /// If this is called on a non_pair, it will return the same as get_id.
     #[doc(hidden)]
     #[inline]
     fn get_id_second(&self) -> u64 {
-        self.get_id_ext()
+        self.get_id()
     }
 }
 
@@ -155,7 +155,7 @@ where
     const IS_PAIR: bool = true;
 
     #[inline]
-    fn get_id_ext(&self) -> u64 {
+    fn get_id(&self) -> u64 {
         ecs_pair(self.0.get_id(), self.1.get_id())
     }
 
@@ -179,7 +179,7 @@ impl IntoEntityIdExt for IdT {
     const IS_PAIR: bool = false;
 
     #[inline]
-    fn get_id_ext(&self) -> u64 {
+    fn get_id(&self) -> u64 {
         IntoEntityId::get_id(self)
     }
 }
@@ -188,7 +188,7 @@ impl IntoEntityIdExt for EntityId {
     const IS_PAIR: bool = false;
 
     #[inline]
-    fn get_id_ext(&self) -> u64 {
+    fn get_id(&self) -> u64 {
         IntoEntityId::get_id(self)
     }
 }
@@ -197,7 +197,7 @@ impl IntoEntityIdExt for Id {
     const IS_PAIR: bool = false;
 
     #[inline]
-    fn get_id_ext(&self) -> u64 {
+    fn get_id(&self) -> u64 {
         IntoEntityId::get_id(self)
     }
 }
@@ -206,7 +206,7 @@ impl IntoEntityIdExt for EntityView {
     const IS_PAIR: bool = false;
 
     #[inline]
-    fn get_id_ext(&self) -> u64 {
+    fn get_id(&self) -> u64 {
         IntoEntityId::get_id(self)
     }
 }
@@ -215,7 +215,7 @@ impl IntoEntityIdExt for Entity {
     const IS_PAIR: bool = false;
 
     #[inline]
-    fn get_id_ext(&self) -> u64 {
+    fn get_id(&self) -> u64 {
         IntoEntityId::get_id(self)
     }
 }
@@ -227,7 +227,7 @@ where
     const IS_PAIR: bool = false;
 
     #[inline]
-    fn get_id_ext(&self) -> u64 {
+    fn get_id(&self) -> u64 {
         self.base.entity.raw_id
     }
 }
@@ -236,7 +236,7 @@ impl IntoEntityIdExt for UntypedComponent {
     const IS_PAIR: bool = false;
 
     #[inline]
-    fn get_id_ext(&self) -> u64 {
+    fn get_id(&self) -> u64 {
         self.entity.raw_id
     }
 }
@@ -248,8 +248,8 @@ where
     const IS_PAIR: bool = T::IS_PAIR;
 
     #[inline]
-    fn get_id_ext(&self) -> u64 {
-        T::get_id_ext(*self)
+    fn get_id(&self) -> u64 {
+        T::get_id(*self)
     }
 }
 
@@ -260,8 +260,8 @@ where
     const IS_PAIR: bool = T::IS_PAIR;
 
     #[inline]
-    fn get_id_ext(&self) -> u64 {
-        T::get_id_ext(*self)
+    fn get_id(&self) -> u64 {
+        T::get_id(*self)
     }
 }
 

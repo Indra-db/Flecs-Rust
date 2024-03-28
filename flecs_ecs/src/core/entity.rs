@@ -39,7 +39,7 @@ where
     T: IntoEntityIdExt,
 {
     fn eq(&self, other: &T) -> bool {
-        self.raw_id == other.get_id_ext()
+        self.raw_id == other.get_id()
     }
 }
 
@@ -50,7 +50,7 @@ where
     T: IntoEntityIdExt,
 {
     fn partial_cmp(&self, other: &T) -> Option<std::cmp::Ordering> {
-        Some(self.raw_id.cmp(&other.get_id_ext()))
+        Some(self.raw_id.cmp(&other.get_id()))
     }
 }
 
@@ -112,8 +112,7 @@ impl std::fmt::Display for Entity {
         if let Some(name) = self.get_name_optional() {
             write!(f, "{}", name)
         } else {
-            let id = self.raw_id.to_string();
-            write!(f, "{}", id)
+            write!(f, "{}", self.raw_id)
         }
     }
 }
@@ -278,7 +277,7 @@ impl Entity {
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
     pub fn add_id(self, id: impl IntoEntityIdExt) -> Self {
-        unsafe { ecs_add_id(self.world, self.raw_id, id.get_id_ext()) }
+        unsafe { ecs_add_id(self.world, self.raw_id, id.get_id()) }
         self
     }
 
@@ -420,8 +419,8 @@ impl Entity {
                 // second which will remove all instances of the relationship.
                 // Replacing 0 with Wildcard will make it possible to use the second
                 // as the condition.
-                let first = ecs_pair_first(id.get_id_ext());
-                let mut second = ecs_pair_second(id.get_id_ext());
+                let first = ecs_pair_first(id.get_id());
+                let mut second = ecs_pair_second(id.get_id());
                 if second == 0 || unsafe { ecs_has_id(self.world, first, ECS_EXCLUSIVE) } {
                     second = ECS_WILDCARD;
                 }
@@ -543,7 +542,7 @@ impl Entity {
     /// * C++ API: `entity_builder::remove`
     #[doc(alias = "entity_builder::remove")]
     pub fn remove_id(self, id: impl IntoEntityIdExt) -> Self {
-        unsafe { ecs_remove_id(self.world, self.raw_id, id.get_id_ext()) }
+        unsafe { ecs_remove_id(self.world, self.raw_id, id.get_id()) }
         self
     }
 
@@ -783,7 +782,7 @@ impl Entity {
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
     pub fn override_id(self, id: impl IntoEntityIdExt) -> Self {
-        self.add_id(ECS_OVERRIDE | id.get_id_ext())
+        self.add_id(ECS_OVERRIDE | id.get_id())
     }
 
     /// Mark component for auto-overriding.
@@ -854,7 +853,7 @@ impl Entity {
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
     pub fn set_override_id(self, id: impl IntoEntityIdExt) -> Self {
-        unsafe { ecs_add_id(self.world, self.raw_id, ECS_OVERRIDE | id.get_id_ext()) }
+        unsafe { ecs_add_id(self.world, self.raw_id, ECS_OVERRIDE | id.get_id()) }
         self
     }
 
@@ -1199,7 +1198,7 @@ impl Entity {
     /// * C++ API: `entity_builder::enable`
     #[doc(alias = "entity_builder::enable")]
     pub fn enable_id(self, id: impl IntoEntityIdExt) -> Self {
-        unsafe { ecs_enable_id(self.world, self.raw_id, id.get_id_ext(), true) }
+        unsafe { ecs_enable_id(self.world, self.raw_id, id.get_id(), true) }
         self
     }
 
@@ -1265,7 +1264,7 @@ impl Entity {
     /// * C++ API: `entity_builder::disable`
     #[doc(alias = "entity_builder::disable")]
     pub fn disable_id(self, id: impl IntoEntityIdExt) -> Self {
-        unsafe { ecs_enable_id(self.world, self.raw_id, id.get_id_ext(), false) }
+        unsafe { ecs_enable_id(self.world, self.raw_id, id.get_id(), false) }
         self
     }
 
@@ -1579,7 +1578,7 @@ impl Entity {
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
     pub fn get_untyped_mut(&self, id: impl IntoEntityIdExt) -> *mut c_void {
-        unsafe { ecs_get_mut_id(self.world, self.raw_id, id.get_id_ext()) as *mut c_void }
+        unsafe { ecs_get_mut_id(self.world, self.raw_id, id.get_id()) as *mut c_void }
     }
 
     /// Get a mutable reference for the first element of a pair
@@ -1708,7 +1707,7 @@ impl Entity {
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
     pub fn modified_id(&self, id: impl IntoEntityIdExt) {
-        unsafe { ecs_modified_id(self.world, self.raw_id, id.get_id_ext()) }
+        unsafe { ecs_modified_id(self.world, self.raw_id, id.get_id()) }
     }
 
     /// Signal that component was modified.

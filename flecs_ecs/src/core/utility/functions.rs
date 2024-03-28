@@ -283,7 +283,7 @@ pub(crate) fn set_helper<T: ComponentInfo>(
         T::get_symbol_name()
     );
     let entity = entity.get_id();
-    let id = id.get_id_ext();
+    let id = id.get_id();
     unsafe {
         if !ecs_is_deferred(world) {
             let comp = ecs_get_mut_id(world, entity, id) as *mut T;

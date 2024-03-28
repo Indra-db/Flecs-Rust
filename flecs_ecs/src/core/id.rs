@@ -110,7 +110,7 @@ impl Id {
     pub fn new_from_existing(world: impl IntoWorld, id: impl IntoEntityIdExt) -> Self {
         Self {
             world: world.get_world_raw_mut(),
-            raw_id: id.get_id_ext(),
+            raw_id: id.get_id(),
         }
     }
 
@@ -129,7 +129,7 @@ impl Id {
     pub(crate) fn new_id_only(id: impl IntoEntityIdExt) -> Self {
         Self {
             world: std::ptr::null_mut(),
-            raw_id: id.get_id_ext(),
+            raw_id: id.get_id(),
         }
     }
 

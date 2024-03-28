@@ -30,7 +30,7 @@ pub trait EventBuilderImpl {
     /// * C++ API: `event_builder_base::id`
     #[doc(alias = "event_builder_base::id")]
     fn add_id_to_emit(&mut self, id: impl IntoEntityIdExt) -> &mut Self {
-        let id = id.get_id_ext();
+        let id = id.get_id();
         let data = self.get_data();
         let ids = &mut data.ids;
         let ids_array = &mut data.ids_array;

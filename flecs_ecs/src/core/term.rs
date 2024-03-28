@@ -189,7 +189,7 @@ impl Term {
         T: IntoEntityIdExt,
     {
         let world = world.map(|w| w.raw_world).unwrap_or(std::ptr::null_mut());
-        let id = id.get_id_ext();
+        let id = id.get_id();
 
         let mut obj = Self {
             world,

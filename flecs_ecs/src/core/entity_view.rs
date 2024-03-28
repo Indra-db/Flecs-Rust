@@ -927,7 +927,7 @@ impl EntityView {
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
     pub fn get_untyped(&self, component_id: impl IntoEntityIdExt) -> *const c_void {
-        unsafe { ecs_get_id(self.world, self.raw_id, component_id.get_id_ext()) }
+        unsafe { ecs_get_id(self.world, self.raw_id, component_id.get_id()) }
     }
 
     /// Get target for a given pair.
@@ -1198,7 +1198,7 @@ impl EntityView {
     #[doc(alias = "entity_view::has")]
     #[inline(always)]
     pub fn has_id(&self, entity: impl IntoEntityIdExt) -> bool {
-        unsafe { ecs_has_id(self.world, self.raw_id, entity.get_id_ext()) }
+        unsafe { ecs_has_id(self.world, self.raw_id, entity.get_id()) }
     }
 
     /// Check if entity has the provided struct component.
@@ -1317,7 +1317,7 @@ impl EntityView {
     /// * C++ API: `entity_view::owns`
     #[doc(alias = "entity_view::owns")]
     pub fn is_owner_of_id(&self, entity_id: impl IntoEntityIdExt) -> bool {
-        unsafe { ecs_owns_id(self.world, self.raw_id, entity_id.get_id_ext()) }
+        unsafe { ecs_owns_id(self.world, self.raw_id, entity_id.get_id()) }
     }
 
     /// Check if the entity owns the provided component.
@@ -1350,7 +1350,7 @@ impl EntityView {
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
     pub fn is_enabled_id(&self, id: impl IntoEntityIdExt) -> bool {
-        unsafe { ecs_is_enabled_id(self.world, self.raw_id, id.get_id_ext()) }
+        unsafe { ecs_is_enabled_id(self.world, self.raw_id, id.get_id()) }
     }
 
     /// Test if component is enabled.

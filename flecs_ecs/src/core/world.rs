@@ -1426,7 +1426,7 @@ impl World {
     #[doc(alias = "world::has")]
     #[inline(always)]
     pub fn has_id(&self, id: impl IntoEntityIdExt) -> bool {
-        let id = id.get_id_ext();
+        let id = id.get_id();
         Entity::new_from_existing_raw(self.raw_world, id).has_id(id)
     }
 
@@ -1499,7 +1499,7 @@ impl World {
     where
         T: IntoEntityIdExt,
     {
-        let id = id.get_id_ext();
+        let id = id.get_id();
         // this branch will compile out in release mode
         if T::IS_PAIR {
             let first_id = id.get_id_first();
@@ -1644,7 +1644,7 @@ impl World {
     where
         T: IntoEntityIdExt,
     {
-        let id = id.get_id_ext();
+        let id = id.get_id();
         if T::IS_PAIR {
             let first_id = id.get_id_first();
             Entity::new_from_existing_raw(self.raw_world, first_id).remove_id(id)
@@ -1855,7 +1855,7 @@ impl World {
     /// * C++ API: `world::count`
     #[doc(alias = "world::count")]
     pub fn count_id(&self, id: impl IntoEntityIdExt) -> i32 {
-        unsafe { ecs_count_id(self.raw_world, id.get_id_ext()) }
+        unsafe { ecs_count_id(self.raw_world, id.get_id()) }
     }
 
     /// Count entities with the provided component.
@@ -2093,7 +2093,7 @@ impl World {
     /// * C++ API: `world::with`
     #[doc(alias = "world::with")]
     pub fn with_id<F: FnMut()>(&self, id: impl IntoEntityIdExt, mut func: F) {
-        let prev: IdT = unsafe { ecs_set_with(self.raw_world, id.get_id_ext()) };
+        let prev: IdT = unsafe { ecs_set_with(self.raw_world, id.get_id()) };
         func();
         unsafe {
             ecs_set_with(self.raw_world, prev);
@@ -2239,7 +2239,7 @@ impl World {
     #[doc(alias = "world::delete_with")]
     pub fn delete_with_id(&self, id: impl IntoEntityIdExt) {
         unsafe {
-            ecs_delete_with(self.raw_world, id.get_id_ext());
+            ecs_delete_with(self.raw_world, id.get_id());
         }
     }
 
@@ -2354,7 +2354,7 @@ impl World {
     #[doc(alias = "world::remove_all")]
     pub fn remove_all_id(&self, id: impl IntoEntityIdExt) {
         unsafe {
-            ecs_remove_all(self.raw_world, id.get_id_ext());
+            ecs_remove_all(self.raw_world, id.get_id());
         }
     }
 
