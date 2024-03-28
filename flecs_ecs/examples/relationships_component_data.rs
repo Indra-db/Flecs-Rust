@@ -71,13 +71,13 @@ fn main() {
 
     // Even though Position is a component, <MustHave, Position> contains no
     // data because MustHave has the Tag property.
-    world.new_entity().add_pair::<MustHave, Position>();
+    world.new_entity().add::<(MustHave, Position)>();
 
     // The id::type_id method can be used to find the component type for a pair:
     println!(
         "{}",
         world
-            .get_id_pair::<Requires, Gigawatts>()
+            .get_id::<(Requires, Gigawatts)>()
             .type_id()
             .get_hierarchy_path()
             .unwrap()
@@ -85,7 +85,7 @@ fn main() {
     println!(
         "{}",
         world
-            .get_id_pair::<Gigawatts, Requires>()
+            .get_id::<(Gigawatts, Requires)>()
             .type_id()
             .get_hierarchy_path()
             .unwrap()
@@ -93,7 +93,7 @@ fn main() {
     println!(
         "{}",
         world
-            .get_id_pair::<Expires, Position>()
+            .get_id::<(Expires, Position)>()
             .type_id()
             .get_hierarchy_path()
             .unwrap()
@@ -101,7 +101,7 @@ fn main() {
     println!(
         "{}",
         world
-            .get_id_pair::<MustHave, Position>()
+            .get_id::<(MustHave, Position)>()
             .type_id()
             .get_hierarchy_path()
             .unwrap()

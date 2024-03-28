@@ -13,10 +13,10 @@ extern "C" fn callback_group_by_relationship(
 ) -> u64 {
     // Use ecs_search to find the target for the relationship in the table
     let mut match_id: IdT = Default::default();
-    let id = Id::new(None, IdType::Pair(id, ECS_WILDCARD)).raw_id;
+    let id = Id::new(None::<World>, (id, ECS_WILDCARD)).raw_id;
     if unsafe { ecs_search(world, table, id, &mut match_id) } != -1 {
         let world = World::new_wrap_raw_world(world);
-        Id::new(Some(&world), IdType::Id(match_id)).second().raw_id // First, Second or Third
+        Id::new(Some(&world), match_id).second().raw_id // First, Second or Third
     } else {
         0
     }
@@ -39,30 +39,30 @@ fn main() {
     // Create entities in 6 different tables with 3 group ids
     world
         .new_entity()
-        .add_pair::<Group, Third>()
+        .add::<(Group, Third)>()
         .set(Position { x: 1.0, y: 1.0 });
     world
         .new_entity()
-        .add_pair::<Group, Second>()
+        .add::<(Group, Second)>()
         .set(Position { x: 2.0, y: 2.0 });
     world
         .new_entity()
-        .add_pair::<Group, First>()
+        .add::<(Group, First)>()
         .set(Position { x: 3.0, y: 3.0 });
 
     world
         .new_entity()
-        .add_pair::<Group, Third>()
+        .add::<(Group, Third)>()
         .set(Position { x: 4.0, y: 4.0 })
         .add::<Tag>();
     world
         .new_entity()
-        .add_pair::<Group, Second>()
+        .add::<(Group, Second)>()
         .set(Position { x: 5.0, y: 5.0 })
         .add::<Tag>();
     world
         .new_entity()
-        .add_pair::<Group, First>()
+        .add::<(Group, First)>()
         .set(Position { x: 6.0, y: 6.0 })
         .add::<Tag>();
 
@@ -83,7 +83,7 @@ fn main() {
     //
 
     query.iter(|it, (pos,)| {
-        let group = world.new_entity_w_id(it.get_group_id());
+        let group = world.new_entity_from_id(it.get_group_id());
         println!(
             "Group: {:?} - Table: [{:?}]",
             group.get_hierarchy_path().unwrap(),

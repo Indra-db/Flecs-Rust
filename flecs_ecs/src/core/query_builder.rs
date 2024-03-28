@@ -13,13 +13,14 @@ use crate::sys::{
 
 use super::{
     builder::Builder,
-    c_types::{EntityT, IdT, TableT, TermT, WorldT, SEPARATOR},
+    c_types::{TermT, SEPARATOR},
     component_registration::ComponentInfo,
     filter_builder::{FilterBuilder, FilterBuilderImpl},
     iterable::{Filterable, Iterable},
     query::{Query, QueryBase},
     term::TermBuilder,
     world::World,
+    EntityT, IdT, IntoEntityId, TableT, WorldT,
 };
 
 /// Fast to iterate, but slower to create than Filter
@@ -274,10 +275,14 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// * C++ API: `query_builder_i::order_by`
     #[doc(alias = "query_builder_i::order_by")]
-    fn order_by_id(&mut self, component: IdT, compare: ecs_order_by_action_t) -> &mut Self {
+    fn order_by_id(
+        &mut self,
+        component: impl IntoEntityId,
+        compare: ecs_order_by_action_t,
+    ) -> &mut Self {
         let desc = self.get_desc_query();
         desc.order_by = compare;
-        desc.order_by_component = component;
+        desc.order_by_component = component.get_id();
         self
     }
 
@@ -297,7 +302,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     where
         T: ComponentInfo,
     {
-        self.group_by_id(T::get_id(self.get_world()), None)
+        self.group_by_id_fn(T::get_id(self.get_world()), None)
     }
 
     /// Group and sort matched tables.
@@ -331,7 +336,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     where
         T: ComponentInfo,
     {
-        self.group_by_id(T::get_id(self.get_world()), group_by_action);
+        self.group_by_id_fn(T::get_id(self.get_world()), group_by_action);
         self
     }
 
@@ -348,10 +353,14 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// * C++ API: `query_builder_i::group_by`
     #[doc(alias = "query_builder_i::group_by")]
-    fn group_by_id(&mut self, component: IdT, group_by_action: ecs_group_by_action_t) -> &mut Self {
+    fn group_by_id_fn(
+        &mut self,
+        component: impl IntoEntityId,
+        group_by_action: ecs_group_by_action_t,
+    ) -> &mut Self {
         let desc = self.get_desc_query();
         desc.group_by = group_by_action;
-        desc.group_by_id = component;
+        desc.group_by_id = component.get_id();
         self
     }
 
@@ -367,8 +376,8 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// * C++ API: `query_builder_i::group_by`
     #[doc(alias = "query_builder_i::group_by")]
-    fn group_by_with_component(&mut self, component: IdT) -> &mut Self {
-        self.group_by_id(component, None)
+    fn group_by_id(&mut self, component: impl IntoEntityId) -> &mut Self {
+        self.group_by_id_fn(component, None)
     }
 
     /// Specify context to be passed to the `group_by` function.

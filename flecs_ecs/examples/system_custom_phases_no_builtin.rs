@@ -19,30 +19,24 @@ fn main() {
 
     let update = world.new_entity().add_id(ECS_PHASE);
 
-    let physics = world
-        .new_entity()
-        .add_id(ECS_PHASE)
-        .depends_on_id(update.into());
+    let physics = world.new_entity().add_id(ECS_PHASE).depends_on_id(update);
 
-    let collisions = world
-        .new_entity()
-        .add_id(ECS_PHASE)
-        .depends_on_id(physics.into());
+    let collisions = world.new_entity().add_id(ECS_PHASE).depends_on_id(physics);
 
     // Create 3 dummy systems.
     world
         .system_builder_named::<()>(c"CollisionSystem")
-        .kind_id(collisions.into())
+        .kind_id(collisions)
         .on_iter_only(sys);
 
     world
         .system_builder_named::<()>(c"PhysicsSystem")
-        .kind_id(physics.into())
+        .kind_id(physics)
         .on_iter_only(sys);
 
     world
         .system_builder_named::<()>(c"GameSystem")
-        .kind_id(update.into())
+        .kind_id(update)
         .on_iter_only(sys);
 
     // Run pipeline

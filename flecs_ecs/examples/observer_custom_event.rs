@@ -33,8 +33,8 @@ fn main() {
     // Emit the custom event. This triggers the observer.
     world
         .event::<MyEvent>()
-        .add_type_to_emit::<Position>()
-        .set_entity_to_emit(&entity)
+        .add::<Position>()
+        .set_entity_to_emit(entity)
         .emit();
 
     // Output:

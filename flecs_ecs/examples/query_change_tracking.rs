@@ -47,22 +47,22 @@ pub fn main() {
     // prefabs, they end up in different tables.
     world
         .new_entity_named(c"e1_dirty_false")
-        .is_a(&prefab_dirty_false)
+        .is_a_id(prefab_dirty_false)
         .set(Position { x: 10.0, y: 20.0 });
 
     world
         .new_entity_named(c"e2_dirty_false")
-        .is_a(&prefab_dirty_false)
+        .is_a_id(prefab_dirty_false)
         .set(Position { x: 30.0, y: 40.0 });
 
     world
         .new_entity_named(c"e3_dirty_true")
-        .is_a(&prefab_dirty_true)
+        .is_a_id(prefab_dirty_true)
         .set(Position { x: 40.0, y: 50.0 });
 
     world
         .new_entity_named(c"e4_dirty_true")
-        .is_a(&prefab_dirty_true)
+        .is_a_id(prefab_dirty_true)
         .set(Position { x: 50.0, y: 60.0 });
 
     // We can use the changed() function on the query to check if any of the

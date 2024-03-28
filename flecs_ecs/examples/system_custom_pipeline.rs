@@ -25,7 +25,7 @@ fn main() {
         .build();
 
     // Configure the world to use the custom pipeline
-    world.set_pipeline(pipeline.entity());
+    world.set_pipeline(pipeline.to_entity());
 
     // Create system with Physics tag
     world

@@ -36,22 +36,22 @@ fn main() {
 
     world
         .prefab_type::<Base>()
-        .child_of_type::<Turret>()
+        .child_of::<Turret>()
         .slot_of::<Turret>();
 
     world
         .prefab_type::<Head>()
-        .child_of_type::<Turret>()
+        .child_of::<Turret>()
         .slot_of::<Turret>();
 
-    world.prefab_type::<Railgun>().is_a_type::<Turret>();
+    world.prefab_type::<Railgun>().is_a::<Turret>();
     world
         .prefab_type::<Beam>()
         .slot_of::<Railgun>()
-        .child_of_type::<Railgun>();
+        .child_of::<Railgun>();
 
     // Create prefab instance.
-    let inst = world.new_entity_named(c"my_railgun").is_a_type::<Railgun>();
+    let inst = world.new_entity_named(c"my_railgun").is_a::<Railgun>();
 
     // Get entities for slots
     let inst_base = inst.get_target_from_component::<Base>(0);

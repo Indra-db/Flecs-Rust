@@ -7,8 +7,8 @@ use crate::{
     sys::{
         ecs_bitmask_constant_t, ecs_bool_t, ecs_char_t, ecs_enum_constant_t, ecs_f32_t, ecs_f64_t,
         ecs_i16_t, ecs_i32_t, ecs_i64_t, ecs_i8_t, ecs_iptr_t, ecs_member_t, ecs_u16_t, ecs_u32_t,
-        ecs_u64_t, ecs_u8_t, ecs_uptr_t, EcsArray, EcsEnum, EcsMember, EcsMetaTypeSerialized,
-        EcsPrimitive, EcsStruct, EcsUnit, EcsVector,
+        ecs_u64_t, ecs_u8_t, ecs_uptr_t, EcsArray, EcsMember, EcsMetaTypeSerialized, EcsPrimitive,
+        EcsUnit, EcsVector,
     },
 };
 
@@ -37,10 +37,10 @@ pub type BitmaskConstantT = ecs_bitmask_constant_t;
 pub type MetaType = EcsMetaType;
 pub type MetaTypeSerialized = EcsMetaTypeSerialized;
 pub type Primitive = EcsPrimitive;
-pub type Enum = EcsEnum;
+//pub type Enum = EcsEnum;
 pub type Bitmask = EcsBitmask;
 pub type Member = EcsMember;
-pub type Struct = EcsStruct;
+//pub type Struct = EcsStruct;
 pub type Array = EcsArray;
 pub type Vector = EcsVector;
 pub type Unit = EcsUnit;

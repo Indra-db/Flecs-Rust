@@ -49,45 +49,45 @@ fn main() {
         .new_entity_named(c"Mercury")
         .set(Position { x: 1.0, y: 1.0 })
         .add::<Planet>()
-        .child_of(&sun); // Shortcut for add(flecs::ChildOf, sun)
+        .child_of_id(sun); // Shortcut for add(flecs::ChildOf, sun)
 
     world
         .new_entity_named(c"Venus")
         .set(Position { x: 2.0, y: 2.0 })
         .add::<Planet>()
-        .child_of(&sun);
+        .child_of_id(sun);
 
     let earth = world
         .new_entity_named(c"Earth")
         .set(Position { x: 3.0, y: 3.0 })
         .add::<Planet>()
-        .child_of(&sun);
+        .child_of_id(sun);
 
     let moon = world
         .new_entity_named(c"Moon")
         .set(Position { x: 0.1, y: 0.1 })
         .add::<Moon>()
-        .child_of(&earth);
+        .child_of_id(earth);
 
     // Is the Moon a child of the Earth?
     println!(
         "Is the Moon a child of the Earth? {}",
-        moon.has_pair_ids(ECS_CHILD_OF, earth.raw_id)
+        moon.has_id((ECS_CHILD_OF, earth))
     );
 
     // Do a depth-first traversal of the tree
     iterate_tree(sun, &Position { x: 0.0, y: 0.0 });
 
     // Output
-    //     Is the Moon a child of the Earth? true
-    // ::Sun [Position, (Identifier,Name)]
-    // Position { x: 1.0, y: 1.0 }
-    // ::Sun::Mercury [Position, Planet, (Identifier,Name), (ChildOf,Sun)]
-    // Position { x: 2.0, y: 2.0 }
-    // ::Sun::Venus [Position, Planet, (Identifier,Name), (ChildOf,Sun)]
-    // Position { x: 3.0, y: 3.0 }
-    // ::Sun::Earth [Position, Planet, (Identifier,Name), (ChildOf,Sun)]
-    // Position { x: 4.0, y: 4.0 }
-    // ::Sun::Earth::Moon [Component, Position, Sun.Earth.Moon, (Identifier,Name), (Identifier,Symbol), (ChildOf,Sun.Earth), (OnDelete,Panic)]
-    // Position { x: 4.1, y: 4.1 }
+    //  Is the Moon a child of the Earth? true
+    //  ::Sun [Position, (Identifier,Name)]
+    //  Position { x: 1.0, y: 1.0 }
+    //  ::Sun::Mercury [Position, Planet, (Identifier,Name), (ChildOf,Sun)]
+    //  Position { x: 2.0, y: 2.0 }
+    //  ::Sun::Venus [Position, Planet, (Identifier,Name), (ChildOf,Sun)]
+    //  Position { x: 3.0, y: 3.0 }
+    //  ::Sun::Earth [Position, Planet, (Identifier,Name), (ChildOf,Sun)]
+    //  Position { x: 4.0, y: 4.0 }
+    //  ::Sun::Earth::Moon [Component, Position, Sun.Earth.Moon, (Identifier,Name), (Identifier,Symbol), (ChildOf,Sun.Earth), (OnDelete,Panic)]
+    //  Position { x: 4.1, y: 4.1 }
 }

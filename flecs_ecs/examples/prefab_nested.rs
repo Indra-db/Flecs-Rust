@@ -35,18 +35,18 @@ fn main() {
     // method, which has the same effect as adding the (ChildOf, Car) pair.
     let car = world.prefab_named(c"Car");
     car.run_in_scope(|| {
-        world.prefab_named(c"FrontLeft").is_a(&wheel);
+        world.prefab_named(c"FrontLeft").is_a_id(wheel);
 
-        world.prefab_named(c"FrontRight").is_a(&wheel);
+        world.prefab_named(c"FrontRight").is_a_id(wheel);
 
-        world.prefab_named(c"BackLeft").is_a(&wheel);
+        world.prefab_named(c"BackLeft").is_a_id(wheel);
 
-        world.prefab_named(c"BackRight").is_a(&wheel);
+        world.prefab_named(c"BackRight").is_a_id(wheel);
     });
 
     // Create a prefab instance.
     let inst_car = world.new_entity_named(c"my_car");
-    inst_car.is_a(&car);
+    inst_car.is_a_id(car);
 
     // Lookup one of the wheels
     if let Some(inst) = inst_car.lookup_entity_by_name(c"FrontLeft", true) {

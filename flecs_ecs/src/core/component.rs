@@ -7,14 +7,14 @@ use crate::{
 };
 
 #[cfg(feature = "flecs_meta")]
-use crate::{addons::meta::Opaque, core::c_types::EntityT, sys::ecs_opaque_init};
+use crate::{addons::meta::Opaque, sys::ecs_opaque_init};
 
 use super::{
-    c_types::{IdT, IterT, TypeHooksT},
+    c_types::{IterT, TypeHooksT},
     component_registration::ComponentInfo,
     ecs_field,
     entity::Entity,
-    World,
+    IntoEntityId, IntoWorld,
 };
 
 use std::{ffi::CStr, os::raw::c_void, ptr};
@@ -110,9 +110,9 @@ impl UntypedComponent {
     ///
     /// * C++ API: `untyped_component::untyped_component`
     #[doc(alias = "untyped_component::untyped_component")]
-    pub fn new(world: &World, id: IdT) -> Self {
+    pub fn new(world: impl IntoWorld, id: impl IntoEntityId) -> Self {
         UntypedComponent {
-            entity: Entity::new_from_existing_raw(world.raw_world, id),
+            entity: Entity::new_from_existing_raw(world, id.get_id()),
         }
     }
 }
@@ -149,9 +149,10 @@ impl<T: ComponentInfo> Component<T> {
     ///
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
-    pub fn new(world: &World) -> Self {
-        if !T::is_registered_with_world(world.raw_world) {
-            T::register_explicit(world.raw_world);
+    pub fn new(world: impl IntoWorld) -> Self {
+        let world = world.get_world_raw_mut();
+        if !T::is_registered_with_world(world) {
+            T::register_explicit(world);
         }
 
         Self {
@@ -171,9 +172,10 @@ impl<T: ComponentInfo> Component<T> {
     ///
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
-    pub fn new_named(world: &World, name: &CStr) -> Self {
-        if !T::is_registered_with_world(world.raw_world) {
-            T::register_explicit_named(world.raw_world, name);
+    pub fn new_named(world: impl IntoWorld, name: &CStr) -> Self {
+        let world = world.get_world_raw_mut();
+        if !T::is_registered_with_world(world) {
+            T::register_explicit_named(world, name);
         }
 
         Self {
@@ -417,26 +419,10 @@ impl<T: ComponentInfo> Component<T> {
     ///
     /// * C++ API: `component::opaque`
     #[doc(alias = "component::opaque")]
-    pub fn opaque_entity_id_type(&mut self, as_type: EntityT) -> Opaque<T> {
+    pub fn opaque_id(&mut self, as_type: impl IntoEntityId) -> Opaque<T> {
         let mut opaque = Opaque::<T>::new(self.world);
-        opaque.as_type(as_type);
+        opaque.as_type(as_type.get_id());
         opaque
-    }
-
-    /// # See also
-    ///
-    /// * C++ API: `component::opaque`
-    #[doc(alias = "component::opaque")]
-    pub fn opaque_entity_type(&mut self, as_type: Entity) -> Opaque<T> {
-        self.opaque_entity_id_type(as_type.raw_id)
-    }
-
-    /// # See also
-    ///
-    /// * C++ API: `component::opaque`
-    #[doc(alias = "component::opaque")]
-    pub fn opaque_untyped_component(&mut self, as_type: UntypedComponent) -> Opaque<T> {
-        self.opaque_entity_id_type(as_type.raw_id)
     }
 
     //todo!("untyped component constant function")

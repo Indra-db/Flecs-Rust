@@ -18,7 +18,7 @@ use crate::{
         query_builder::{QueryBuilder, QueryBuilderImpl},
         term::{Term, TermBuilder},
         world::World,
-        ObserverSystemBindingCtx, ECS_ON_UPDATE,
+        IntoEntityId, ObserverSystemBindingCtx, ECS_ON_UPDATE,
     },
     sys::{
         ecs_add_id, ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_get_target,
@@ -163,7 +163,8 @@ where
     ///
     /// * C++ API: `system_builder_i::kind`
     #[doc(alias = "system_builder_i::kind")]
-    pub fn kind_id(&mut self, phase: EntityT) -> &mut Self {
+    pub fn kind_id(&mut self, phase: impl IntoEntityId) -> &mut Self {
+        let phase = phase.get_id();
         let current_phase: EntityT =
             unsafe { ecs_get_target(self.world.raw_world, self.desc.entity, ECS_DEPENDS_ON, 0) };
         unsafe {
@@ -260,9 +261,9 @@ where
     ///
     /// * C++ API: `system_builder_i::rate`
     #[doc(alias = "system_builder_i::rate")]
-    pub fn rate_w_tick_source(&mut self, tick_source: EntityT, rate: i32) -> &mut Self {
+    pub fn rate_w_tick_source(&mut self, tick_source: impl IntoEntityId, rate: i32) -> &mut Self {
         self.desc.rate = rate;
-        self.desc.tick_source = tick_source;
+        self.desc.tick_source = tick_source.get_id();
         self
     }
 
@@ -295,8 +296,8 @@ where
     ///
     /// * C++ API: `system_builder_i::tick_source`
     #[doc(alias = "system_builder_i::tick_source")]
-    pub fn tick_source_id(&mut self, tick_source: EntityT) -> &mut Self {
-        self.desc.tick_source = tick_source;
+    pub fn tick_source_id(&mut self, tick_source: impl IntoEntityId) -> &mut Self {
+        self.desc.tick_source = tick_source.get_id();
         self
     }
 

@@ -6,10 +6,11 @@ use std::{
 use crate::sys::{ecs_event_desc_t, FLECS_EVENT_DESC_MAX};
 
 use super::{
-    c_types::{EntityT, IdT, TypeT},
+    c_types::{IdT, TypeT},
     component_registration::ComponentInfo,
     event::{EventBuilderImpl, EventData},
     world::World,
+    IntoEntityId,
 };
 
 pub struct EventBuilder {
@@ -32,14 +33,14 @@ impl EventBuilder {
     ///
     /// * C++ API: `event_builder_base::event_builder_base`
     #[doc(alias = "event_builder_base::event_builder_base")]
-    pub fn new(world: &World, event: EntityT) -> Self {
+    pub fn new(world: &World, event: impl IntoEntityId) -> Self {
         let mut obj = Self {
             world: world.clone(),
             desc: Default::default(),
             ids: Default::default(),
             ids_array: Default::default(),
         };
-        obj.desc.event = event;
+        obj.desc.event = event.get_id();
         obj
     }
 }
@@ -109,7 +110,7 @@ impl<'a, T: EventData + ComponentInfo> EventBuilderTyped<'a, T> {
     ///
     /// * C++ API: `event_builder_typed::event_builder_typed`
     #[doc(alias = "event_builder_typed::event_builder_typed")]
-    pub fn new(world: &World, event: EntityT) -> Self {
+    pub fn new(world: &World, event: impl IntoEntityId) -> Self {
         Self {
             builder: EventBuilder::new(world, event),
             _phantom: std::marker::PhantomData,

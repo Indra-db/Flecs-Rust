@@ -11,7 +11,7 @@ use super::{
     archetype::Archetype,
     c_types::{EntityT, IdT, TableT, WorldT},
     component_registration::ComponentInfo,
-    ecs_pair, World,
+    ecs_pair, IntoWorld, World,
 };
 
 /// A wrapper class that gives direct access to the component arrays of a table, the table data
@@ -42,9 +42,9 @@ impl Table {
     ///
     /// * C++ API: `table::table`
     #[doc(alias = "table::table")]
-    pub fn new(world: &World, table: *mut TableT) -> Self {
+    pub fn new(world: impl IntoWorld, table: *mut TableT) -> Self {
         Self {
-            world: world.raw_world,
+            world: world.get_world_raw_mut(),
             table,
         }
     }
@@ -572,6 +572,11 @@ impl Table {
     #[doc(alias = "table::depth")]
     pub fn get_depth_for_relationship_id(&self, rel: EntityT) -> i32 {
         unsafe { ecs_table_get_depth(self.world, self.table, rel) }
+    }
+
+    /// Get raw table ptr
+    pub fn get_raw_table(&self) -> *mut TableT {
+        self.table
     }
 }
 

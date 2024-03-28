@@ -28,7 +28,7 @@ fn iterate_components(entity: Entity) {
             print!("rel: {}, target: {}", rel.get_name(), target.get_name());
         } else {
             // Id contains a regular entity. Strip role before printing.
-            let comp = id.entity();
+            let comp = id.to_entity();
             print!("entity: {}", comp.get_name());
         }
 
@@ -44,14 +44,14 @@ fn main() {
         .set(Position { x: 10.0, y: 20.0 })
         .set(Velocity { x: 1.0, y: 1.0 })
         .add::<Human>()
-        .add_pair::<Eats, Apples>();
+        .add::<(Eats, Apples)>();
 
     println!("Bob's components:");
     iterate_components(bob);
 
     // We can use the same function to iterate the components of a component
     println!("Position's components:");
-    iterate_components(world.component::<Position>().entity());
+    iterate_components(world.component::<Position>().to_entity());
 
     // Output
     //  Bob's components:
