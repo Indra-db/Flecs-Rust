@@ -1,10 +1,7 @@
-use std::borrow::Borrow;
-
 use crate::core::{
     c_types::{InOutKind, OperKind},
     component_registration::ComponentInfo,
-    Component, ComponentType, ECSComponentType, Entity, EntityView, Id, IdT, Struct,
-    UntypedComponent, World, WorldT,
+    Component, ComponentType, Entity, EntityView, Id, IdT, Struct, UntypedComponent, World, WorldT,
 };
 
 use super::{ecs_pair, EntityId};

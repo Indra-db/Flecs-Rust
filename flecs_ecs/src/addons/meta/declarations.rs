@@ -7,8 +7,8 @@ use crate::{
     sys::{
         ecs_bitmask_constant_t, ecs_bool_t, ecs_char_t, ecs_enum_constant_t, ecs_f32_t, ecs_f64_t,
         ecs_i16_t, ecs_i32_t, ecs_i64_t, ecs_i8_t, ecs_iptr_t, ecs_member_t, ecs_u16_t, ecs_u32_t,
-        ecs_u64_t, ecs_u8_t, ecs_uptr_t, EcsArray, EcsEnum, EcsMember, EcsMetaTypeSerialized,
-        EcsPrimitive, EcsStruct, EcsUnit, EcsVector,
+        ecs_u64_t, ecs_u8_t, ecs_uptr_t, EcsArray, EcsMember, EcsMetaTypeSerialized, EcsPrimitive,
+        EcsUnit, EcsVector,
     },
 };
 

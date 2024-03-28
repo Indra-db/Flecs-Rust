@@ -31,7 +31,7 @@ use super::{
     archetype::Archetype,
     c_types::{EntityT, IdT, TypeT, WorldT, SEPARATOR},
     component_registration::{ComponentInfo, ComponentType, Enum, Struct},
-    ecs_add_pair, ecs_has_pair, ecs_pair, ecs_pair_first, ecs_pair_second, ecs_record_to_row,
+    ecs_add_pair, ecs_pair, ecs_pair_first, ecs_pair_second, ecs_record_to_row,
     entity::Entity,
     enum_type::CachedEnumData,
     id::Id,
@@ -129,7 +129,7 @@ impl EntityView {
         }
     }
 
-    /// Construct an EntityView from an existing entity id.
+    /// Construct an `EntityView` from an existing entity id.
     ///
     /// # See also
     ///
@@ -969,7 +969,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target")]
-    pub fn get_target_from_entity(&self, first: impl IntoEntityId, index: i32) -> Entity {
+    pub fn get_target_from_entity(self, first: impl IntoEntityId, index: i32) -> Entity {
         Entity::new_from_existing_raw(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, first.get_id(), index)
         })

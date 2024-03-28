@@ -49,25 +49,25 @@ fn main() {
         .new_entity_named(c"Mercury")
         .set(Position { x: 1.0, y: 1.0 })
         .add::<Planet>()
-        .child_of_id(&sun); // Shortcut for add(flecs::ChildOf, sun)
+        .child_of_id(sun); // Shortcut for add(flecs::ChildOf, sun)
 
     world
         .new_entity_named(c"Venus")
         .set(Position { x: 2.0, y: 2.0 })
         .add::<Planet>()
-        .child_of_id(&sun);
+        .child_of_id(sun);
 
     let earth = world
         .new_entity_named(c"Earth")
         .set(Position { x: 3.0, y: 3.0 })
         .add::<Planet>()
-        .child_of_id(&sun);
+        .child_of_id(sun);
 
     let moon = world
         .new_entity_named(c"Moon")
         .set(Position { x: 0.1, y: 0.1 })
         .add::<Moon>()
-        .child_of_id(&earth);
+        .child_of_id(earth);
 
     // Is the Moon a child of the Earth?
     println!(

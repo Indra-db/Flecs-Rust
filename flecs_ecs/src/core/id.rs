@@ -2,7 +2,7 @@
 
 use super::{
     c_types::{IdT, WorldT, RUST_ECS_COMPONENT_MASK, RUST_ECS_ID_FLAGS_MASK},
-    ecs_pair, ecs_pair_first,
+    ecs_pair_first,
     entity::Entity,
     world::World,
     IntoEntityId, IntoEntityIdExt, IntoWorld,

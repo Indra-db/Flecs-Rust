@@ -7,14 +7,14 @@ use crate::{
 };
 
 #[cfg(feature = "flecs_meta")]
-use crate::{addons::meta::Opaque, core::c_types::EntityT, sys::ecs_opaque_init};
+use crate::{addons::meta::Opaque, sys::ecs_opaque_init};
 
 use super::{
-    c_types::{IdT, IterT, TypeHooksT},
+    c_types::{IterT, TypeHooksT},
     component_registration::ComponentInfo,
     ecs_field,
     entity::Entity,
-    world, IntoEntityId, IntoWorld, World,
+    IntoEntityId, IntoWorld,
 };
 
 use std::{ffi::CStr, os::raw::c_void, ptr};

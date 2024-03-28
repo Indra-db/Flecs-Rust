@@ -19,20 +19,20 @@ fn main() {
 
     let freighter = world
         .prefab_named(c"Freighter")
-        .is_a_id(&spaceship)
+        .is_a_id(spaceship)
         .set(FreightCapacity { value: 100.0 })
         .set(Defence { value: 100.0 })
         .add::<HasFlt>();
 
     let mammoth_freighter = world
         .prefab_named(c"MammothFreighter")
-        .is_a_id(&freighter)
+        .is_a_id(freighter)
         .set(FreightCapacity { value: 500.0 })
         .set(Defence { value: 300.0 });
 
     world
         .prefab_named(c"Frigate")
-        .is_a_id(&spaceship)
+        .is_a_id(spaceship)
         .add::<HasFlt>()
         .set(Attack { value: 100.0 })
         .set(Defence { value: 75.0 })
@@ -43,7 +43,7 @@ fn main() {
     // of the override in the spaceship entity. All other components are shared.
     let inst = world
         .new_entity_named(c"my_mammoth_freighter")
-        .is_a_id(&mammoth_freighter);
+        .is_a_id(mammoth_freighter);
 
     // Inspect the type of the entity. This outputs:
     //    Position,(Identifier,Name),(IsA,MammothFreighter)

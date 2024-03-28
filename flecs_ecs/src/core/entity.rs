@@ -17,7 +17,7 @@ use crate::{
 };
 
 use super::{
-    c_types::{IdT, WorldT, SEPARATOR},
+    c_types::{IdT, SEPARATOR},
     component_ref::Ref,
     component_registration::{ComponentInfo, ComponentType, Enum, Struct},
     ecs_pair, ecs_pair_first, ecs_pair_second,
@@ -408,7 +408,7 @@ impl Entity {
         T: IntoEntityIdExt,
     {
         if condition {
-            return self.add_id(id);
+            self.add_id(id)
         } else {
             // the compiler will optimize this branch away since it's known at compile time
             if T::IS_PAIR {
@@ -419,11 +419,11 @@ impl Entity {
                 let first = ecs_pair_first(id.get_id_ext());
                 let mut second = ecs_pair_second(id.get_id_ext());
                 if second == 0 || unsafe { ecs_has_id(self.world, first, ECS_EXCLUSIVE) } {
-                    second = ECS_WILDCARD
+                    second = ECS_WILDCARD;
                 }
-                return self.remove_id((first, second));
+                self.remove_id((first, second))
             } else {
-                return self.remove_id(id);
+                self.remove_id(id)
             }
         }
     }
@@ -1870,7 +1870,7 @@ impl Entity {
                 self.world,
                 ecs_pair(relationship.get_id(), self.raw_id),
                 desc,
-            )
+            );
         }
     }
 
