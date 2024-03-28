@@ -10,6 +10,7 @@ use super::{
     component_registration::ComponentInfo,
     event::{EventBuilderImpl, EventData},
     world::World,
+    IntoEntityId,
 };
 
 pub struct EventBuilder {
@@ -32,14 +33,14 @@ impl EventBuilder {
     ///
     /// * C++ API: `event_builder_base::event_builder_base`
     #[doc(alias = "event_builder_base::event_builder_base")]
-    pub fn new(world: &World, event: EntityT) -> Self {
+    pub fn new(world: &World, event: impl IntoEntityId) -> Self {
         let mut obj = Self {
             world: world.clone(),
             desc: Default::default(),
             ids: Default::default(),
             ids_array: Default::default(),
         };
-        obj.desc.event = event;
+        obj.desc.event = event.get_id();
         obj
     }
 }

@@ -14,6 +14,9 @@ struct Physics;
 
 fn main() {
     let world = World::new();
+    let mut e1 = world.new_entity();
+    let id = Id::new_from_existing(&world, e1);
+    println!("{:?}", world.raw_world);
 
     // Create a pipeline that matches systems with Physics. Note that this
     // pipeline does not require the use of phases (see custom_phases) or of the
@@ -25,7 +28,7 @@ fn main() {
         .build();
 
     // Configure the world to use the custom pipeline
-    world.set_pipeline(pipeline.entity());
+    world.set_pipeline(pipeline.to_entity());
 
     // Create system with Physics tag
     world

@@ -5,6 +5,7 @@ use super::{
     ecs_pair, ecs_pair_first,
     entity::Entity,
     world::World,
+    IntoEntityId, IntoEntityIdExt, IntoWorld,
 };
 use crate::{
     core::{ecs_pair_second, FlecsErrorCode},
@@ -71,10 +72,6 @@ impl std::ops::Deref for Id {
     }
 }
 
-pub enum IdType {
-    Id(IdT),
-    Pair(IdT, IdT),
-}
 impl Id {
     /// Wraps an id or pair
     ///
@@ -89,17 +86,11 @@ impl Id {
     #[doc(alias = "Id::Id")]
     /// * C API: `ecs_id_t`
     #[doc(alias = "ecs_id_t")]
-    pub fn new(world: Option<&World>, with: IdType) -> Self {
+    pub fn new(world: Option<impl IntoWorld>, id: impl IntoEntityIdExt) -> Self {
         if let Some(world) = world {
-            match with {
-                IdType::Id(id) => Self::new_from_existing(world.raw_world, id),
-                IdType::Pair(id1, id2) => Self::new_world_pair(world.raw_world, id1, id2),
-            }
+            Self::new_from_existing(world, id)
         } else {
-            match with {
-                IdType::Id(id) => Self::new_id_only(id),
-                IdType::Pair(id1, id2) => Self::new_pair_only(id1, id2),
-            }
+            Self::new_id_only(id)
         }
     }
 
@@ -116,8 +107,11 @@ impl Id {
     #[doc(alias = "Id::Id")]
     /// * C API: `ecs_id_t`
     #[doc(alias = "ecs_id_t")]
-    pub(crate) const fn new_from_existing(world: *mut WorldT, id: IdT) -> Self {
-        Self { world, raw_id: id }
+    pub fn new_from_existing(world: impl IntoWorld, id: impl IntoEntityIdExt) -> Self {
+        Self {
+            world: world.get_world_raw_mut(),
+            raw_id: id.get_id_ext(),
+        }
     }
 
     /// wraps a raw id without a world
@@ -132,71 +126,10 @@ impl Id {
     #[doc(alias = "Id::Id")]
     /// * C API: `ecs_id_t`
     #[doc(alias = "ecs_id_t")]
-    pub(crate) const fn new_id_only(id: IdT) -> Self {
+    pub(crate) fn new_id_only(id: impl IntoEntityIdExt) -> Self {
         Self {
             world: std::ptr::null_mut(),
-            raw_id: id,
-        }
-    }
-
-    /// wraps a pair of raw ids without an optional world
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - The optional world to the id belongs to
-    /// * `first` - The first id to wrap
-    /// * `second` - The second id to wrap
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `Id::Id`
-    #[doc(alias = "Id::Id")]
-    /// * C API: `ecs_id_t`
-    #[doc(alias = "ecs_id_t")]
-    pub(crate) fn new_world_pair(world: *mut WorldT, first: IdT, second: IdT) -> Self {
-        Self {
-            world,
-            raw_id: ecs_pair(first, second),
-        }
-    }
-
-    /// wraps a pair of raw ids without a world
-    ///
-    /// # Arguments
-    ///
-    /// * `first` - The first id to wrap
-    /// * `second` - The second id to wrap
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `Id::Id`
-    #[doc(alias = "Id::Id")]
-    /// * C API: `ecs_id_t`
-    #[doc(alias = "ecs_id_t")]
-    pub(crate) fn new_pair_only(first: IdT, second: IdT) -> Self {
-        Self {
-            world: std::ptr::null_mut(),
-            raw_id: ecs_pair(first, second),
-        }
-    }
-
-    /// wraps a pair of Ids
-    ///
-    /// # Arguments
-    ///
-    /// * `id` - The first id to wrap
-    /// * `id2` - The second id to wrap
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `Id::Id`
-    #[doc(alias = "Id::Id")]
-    /// * C API: `ecs_id_t`
-    #[doc(alias = "ecs_id_t")]
-    pub(crate) fn new_from_ids(id: Id, id2: Id) -> Self {
-        Self {
-            world: id.world,
-            raw_id: ecs_pair(id.raw_id, id2.raw_id),
+            raw_id: id.get_id_ext(),
         }
     }
 
@@ -241,7 +174,7 @@ impl Id {
     /// * C++ API: `id::entity`
     #[doc(alias = "id::entity")]
     #[inline(always)]
-    pub fn entity(&self) -> Entity {
+    pub fn to_entity(&self) -> Entity {
         {
             ecs_assert!(!self.is_pair(), FlecsErrorCode::InvalidOperation);
             ecs_assert!(
@@ -382,12 +315,12 @@ impl Id {
     /// * C++ API: `id::has_relationship`
     #[doc(alias = "id::has_relationship")]
     #[inline(always)]
-    pub fn has_relationship(&self, first: IdT) -> bool {
+    pub fn has_relationship(&self, first: impl IntoEntityId) -> bool {
         if !self.is_pair() {
             return false;
         }
 
-        ecs_pair_first(self.raw_id) == first
+        ecs_pair_first(self.raw_id) == first.get_id()
     }
 
     /// Get first element from a pair.

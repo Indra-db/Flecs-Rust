@@ -20,11 +20,12 @@ use super::{
     c_types::{EntityT, IdT, WorldT, SEPARATOR},
     component_ref::Ref,
     component_registration::{ComponentInfo, ComponentType, Enum, Struct},
-    ecs_pair,
+    ecs_pair, ecs_pair_first, ecs_pair_second,
     enum_type::CachedEnumData,
     set_helper,
     world::World,
-    EmptyComponent, EntityView, NotEmptyComponent, ScopedWorld, ECS_OVERRIDE,
+    EmptyComponent, EntityView, IntoEntityId, IntoEntityIdExt, IntoWorld, NotEmptyComponent,
+    ScopedWorld, ECS_DEPENDS_ON, ECS_OVERRIDE, ECS_SLOT_OF,
 };
 
 #[derive(Default, Copy, Clone)]
@@ -32,23 +33,23 @@ pub struct Entity {
     pub entity_view: EntityView,
 }
 
-impl PartialEq<u64> for Entity {
-    fn eq(&self, other: &u64) -> bool {
-        self.raw_id == *other
-    }
-}
-
-impl PartialEq<Entity> for Entity {
-    fn eq(&self, other: &Entity) -> bool {
-        self.raw_id == other.raw_id
+impl<T> PartialEq<T> for Entity
+where
+    T: IntoEntityIdExt,
+{
+    fn eq(&self, other: &T) -> bool {
+        self.raw_id == other.get_id_ext()
     }
 }
 
 impl Eq for Entity {}
 
-impl PartialOrd for Entity {
-    fn partial_cmp(&self, other: &Entity) -> Option<std::cmp::Ordering> {
-        Some(self.raw_id.cmp(&other.raw_id))
+impl<T> PartialOrd<T> for Entity
+where
+    T: IntoEntityIdExt,
+{
+    fn partial_cmp(&self, other: &T) -> Option<std::cmp::Ordering> {
+        Some(self.raw_id.cmp(&other.get_id_ext()))
     }
 }
 
@@ -138,10 +139,10 @@ impl Entity {
     /// * C++ API: `entity::entity`
     #[doc(alias = "entity::entity")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new(world: &World) -> Self {
+    pub fn new(world: impl IntoWorld) -> Self {
         Self {
-            entity_view: EntityView::new_from_existing(world.raw_world, unsafe {
-                ecs_new_id(world.raw_world)
+            entity_view: EntityView::new_from_existing(world.get_world_raw(), unsafe {
+                ecs_new_id(world.get_world_raw_mut())
             }),
         }
     }
@@ -161,10 +162,10 @@ impl Entity {
     ///
     /// * C++ API: `entity::entity`
     #[doc(alias = "entity::entity")]
-    pub fn new_from_existing(world: Option<&World>, id: IdT) -> Self {
+    pub fn new_from_existing(world: Option<impl IntoWorld>, id: impl IntoEntityIdExt) -> Self {
         if let Some(world) = world {
             Self {
-                entity_view: EntityView::new_from_existing(world.raw_world, id),
+                entity_view: EntityView::new_from_existing(world, id),
             }
         } else {
             Self {
@@ -190,7 +191,7 @@ impl Entity {
     /// * C++ API: `entity::entity`
     #[doc(alias = "entity::entity")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new_named(world: &World, name: &CStr) -> Self {
+    pub fn new_named(world: impl IntoWorld, name: &CStr) -> Self {
         let desc = ecs_entity_desc_t {
             name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
@@ -202,9 +203,9 @@ impl Entity {
             add: [0; 32],
             add_expr: std::ptr::null(),
         };
-        let id = unsafe { ecs_entity_init(world.raw_world, &desc) };
+        let id = unsafe { ecs_entity_init(world.get_world_raw_mut(), &desc) };
         Self {
-            entity_view: EntityView::new_from_existing(world.raw_world, id),
+            entity_view: EntityView::new_from_existing(world, id),
         }
     }
 
@@ -217,7 +218,7 @@ impl Entity {
     ///
     /// * C++ API: `entity::entity`
     #[doc(alias = "entity::entity")]
-    pub(crate) fn new_from_existing_raw(world: *mut WorldT, id: IdT) -> Self {
+    pub(crate) fn new_from_existing_raw(world: impl IntoWorld, id: impl IntoEntityIdExt) -> Self {
         Self {
             entity_view: EntityView::new_from_existing(world, id),
         }
@@ -229,13 +230,14 @@ impl Entity {
     ///
     /// * C++ API: `entity::entity`
     #[doc(alias = "entity::entity")]
-    pub(crate) const fn new_id_only(id: EntityT) -> Self {
+    pub(crate) fn new_id_only(id: impl IntoEntityIdExt) -> Self {
         Self {
             entity_view: EntityView::new_id_only(id),
         }
     }
 
-    /// Add an entity to an entity.
+    /// Add an id to an entity.
+    /// This Id can be a component, a pair, a tag or another entity.
     ///
     /// Add an entity to the entity. This is typically used for tagging.
     ///
@@ -247,8 +249,8 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    pub fn add_id(self, component_id: IdT) -> Self {
-        unsafe { ecs_add_id(self.world, self.raw_id, component_id) }
+    pub fn add_id(self, id: impl IntoEntityIdExt) -> Self {
+        unsafe { ecs_add_id(self.world, self.raw_id, id.get_id_ext()) }
         self
     }
 
@@ -269,23 +271,6 @@ impl Entity {
         self.add_id(T::get_id(world))
     }
 
-    /// Add a pair to an entity.
-    ///
-    /// This operation adds a pair to the entity.
-    ///
-    /// # Arguments
-    ///
-    /// - `first`: The first element of the pair.
-    /// - `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add`
-    #[doc(alias = "entity_builder::add")]
-    pub fn add_pair_ids(self, first: EntityT, second: EntityT) -> Self {
-        self.add_id(ecs_pair(first, second))
-    }
-
     /// Add a pair.
     /// This operation adds a pair to the entity.
     ///
@@ -304,7 +289,7 @@ impl Entity {
         Second: ComponentInfo + ComponentType<Struct>,
     {
         let world = self.world;
-        self.add_pair_ids(First::get_id(world), Second::get_id(world))
+        self.add_id((First::get_id(world), Second::get_id(world)))
     }
 
     /// Adds a pair to the entity
@@ -321,9 +306,9 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    pub fn add_pair_first_id<Second: ComponentInfo>(self, first: EntityT) -> Self {
+    pub fn add_pair_first_id<Second: ComponentInfo>(self, first: impl IntoEntityId) -> Self {
         let world = self.world;
-        self.add_pair_ids(first, Second::get_id(world))
+        self.add_id((first, Second::get_id(world)))
     }
 
     /// Adds a pair to the entity
@@ -340,9 +325,9 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    pub fn add_pair_second_id<First: ComponentInfo>(self, second: EntityT) -> Self {
+    pub fn add_pair_second_id<First: ComponentInfo>(self, second: impl IntoEntityId) -> Self {
         let world = self.world;
-        self.add_pair_ids(First::get_id(world), second)
+        self.add_id((First::get_id(world), second))
     }
 
     /// Adds a pair to the entity composed of a tag and an enum constant.
@@ -366,10 +351,10 @@ impl Entity {
         Second: ComponentInfo + ComponentType<Enum> + CachedEnumData,
     {
         let world = self.world;
-        self.add_pair_ids(
+        self.add_id((
             First::get_id(world),
             enum_value.get_entity_id_from_enum_field(world),
-        )
+        ))
     }
 
     /// Adds a pair to the entity where the first element is the enumeration type,
@@ -394,10 +379,10 @@ impl Entity {
         enum_value: T,
     ) -> Self {
         let world = self.world;
-        self.add_pair_ids(
+        self.add_id((
             T::get_id(world),
             enum_value.get_entity_id_from_enum_field(world),
-        )
+        ))
     }
 
     /// Conditional add.
@@ -412,12 +397,29 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::add_if`
     #[doc(alias = "entity_builder::add_if")]
-    pub fn add_id_if(self, component_id: IdT, condition: bool) -> Self {
+    pub fn add_id_if<T>(self, id: T, condition: bool) -> Self
+    where
+        T: IntoEntityIdExt,
+    {
         if condition {
-            return self.add_id(component_id);
+            return self.add_id(id);
+        } else {
+            // the compiler will optimize this branch away since it's known at compile time
+            if T::IS_PAIR {
+                // If second is 0 or if relationship is exclusive, use wildcard for
+                // second which will remove all instances of the relationship.
+                // Replacing 0 with Wildcard will make it possible to use the second
+                // as the condition.
+                let first = ecs_pair_first(id.get_id_ext());
+                let mut second = ecs_pair_second(id.get_id_ext());
+                if second == 0 || unsafe { ecs_has_id(self.world, first, EcsExclusive) } {
+                    second = unsafe { EcsWildcard }
+                }
+                return self.remove_id((first, second));
+            } else {
+                return self.remove_id(id);
+            }
         }
-
-        self
     }
 
     /// Conditional add.
@@ -443,34 +445,6 @@ impl Entity {
     /// Conditional add.
     /// This operation adds if condition is true, removes if condition is false.
     ///
-    /// # Arguments
-    ///
-    /// * `condition`: The condition to evaluate.
-    /// * `first`: The first element of the pair.
-    /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add_if`
-    #[doc(alias = "entity_builder::add_if")]
-    pub fn add_pair_ids_if(self, first: EntityT, mut second: EntityT, condition: bool) -> Self {
-        if condition {
-            self.add_pair_ids(first, second)
-        } else {
-            // If second is 0 or if relationship is exclusive, use wildcard for
-            // second which will remove all instances of the relationship.
-            // Replacing 0 with Wildcard will make it possible to use the second
-            // as the condition.
-            if second == 0 || unsafe { ecs_has_id(self.world, first, EcsExclusive) } {
-                second = unsafe { EcsWildcard }
-            }
-            self.remove_pair_ids(first, second)
-        }
-    }
-
-    /// Conditional add.
-    /// This operation adds if condition is true, removes if condition is false.
-    ///
     /// # Type Parameters
     ///
     /// * `First`: The first element of the pair
@@ -490,32 +464,7 @@ impl Entity {
         Second: ComponentInfo + ComponentType<Struct>,
     {
         let world = self.world;
-        self.add_pair_ids_if(First::get_id(world), Second::get_id(world), condition)
-    }
-
-    /// Conditional add.
-    /// This operation adds if condition is true, removes if condition is false.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second`: The second element of the pair
-    ///
-    /// # Arguments
-    ///
-    /// * `condition`: The condition to evaluate.
-    /// * `first`: The first element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add_if`
-    #[doc(alias = "entity_builder::add_if")]
-    pub fn add_pair_first_id_if<Second: ComponentInfo>(
-        self,
-        first: EntityT,
-        condition: bool,
-    ) -> Self {
-        let world = self.world;
-        self.add_pair_ids_if(first, Second::get_id(world), condition)
+        self.add_id_if((First::get_id(world), Second::get_id(world)), condition)
     }
 
     /// Conditional add.
@@ -534,13 +483,38 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::add_if`
     #[doc(alias = "entity_builder::add_if")]
-    pub fn add_pair_second_id_if<First: ComponentInfo>(
+    pub fn add_pair_first_if<First: ComponentInfo>(
         self,
-        second: EntityT,
+        second: impl IntoEntityId,
         condition: bool,
     ) -> Self {
         let world = self.world;
-        self.add_pair_ids_if(First::get_id(world), second, condition)
+        self.add_id_if((First::get_id(world), second), condition)
+    }
+
+    /// Conditional add.
+    /// This operation adds if condition is true, removes if condition is false.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Second`: The second element of the pair
+    ///
+    /// # Arguments
+    ///
+    /// * `condition`: The condition to evaluate.
+    /// * `first`: The first element of the pair.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_builder::add_if`
+    #[doc(alias = "entity_builder::add_if")]
+    pub fn add_pair_second_if<Second: ComponentInfo>(
+        self,
+        first: impl IntoEntityId,
+        condition: bool,
+    ) -> Self {
+        let world = self.world;
+        self.add_id_if((first, Second::get_id(world)), condition)
     }
 
     /// Conditional add.
@@ -564,9 +538,11 @@ impl Entity {
         T: ComponentInfo + ComponentType<Enum> + CachedEnumData,
     {
         let world = self.world;
-        self.add_pair_ids_if(
-            T::get_id(world),
-            enum_value.get_entity_id_from_enum_field(world),
+        self.add_id_if(
+            (
+                T::get_id(world),
+                enum_value.get_entity_id_from_enum_field(world),
+            ),
             condition,
         )
     }
@@ -581,8 +557,8 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::remove`
     #[doc(alias = "entity_builder::remove")]
-    pub fn remove_id(self, component_id: IdT) -> Self {
-        unsafe { ecs_remove_id(self.world, self.raw_id, component_id) }
+    pub fn remove_id(self, id: impl IntoEntityIdExt) -> Self {
+        unsafe { ecs_remove_id(self.world, self.raw_id, id.get_id_ext()) }
         self
     }
 
@@ -613,23 +589,7 @@ impl Entity {
     #[doc(alias = "entity_builder::remove")]
     pub fn remove_enum<T: ComponentInfo + ComponentType<Enum>>(self) -> Self {
         let world = self.world;
-        self.remove_pair_ids(T::get_id(world), unsafe { EcsWildcard })
-    }
-
-    /// Remove a pair.
-    /// This operation removes a pair from the entity.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::remove`
-    #[doc(alias = "entity_builder::remove")]
-    pub fn remove_pair_ids(self, first: EntityT, second: EntityT) -> Self {
-        self.remove_id(ecs_pair(first, second))
+        self.remove_id((T::get_id(world), unsafe { EcsWildcard }))
     }
 
     /// Removes a pair.
@@ -650,7 +610,7 @@ impl Entity {
         Second: ComponentInfo + ComponentType<Struct>,
     {
         let world = self.world;
-        self.remove_pair_ids(First::get_id(world), Second::get_id(world))
+        self.remove_id((First::get_id(world), Second::get_id(world)))
     }
 
     /// Remove a pair.
@@ -675,30 +635,10 @@ impl Entity {
         Second: ComponentInfo + ComponentType<Enum> + CachedEnumData,
     {
         let world = self.world;
-        self.remove_pair_ids(
+        self.remove_id((
             First::get_id(world),
             enum_value.get_entity_id_from_enum_field(world),
-        )
-    }
-
-    /// Removes a pair.
-    /// This operation removes a pair from the entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::remove_second`
-    #[doc(alias = "entity_builder::remove_second")]
-    pub fn remove_pair_first_id<Second: ComponentInfo>(self, first: EntityT) -> Self {
-        let world = self.world;
-        self.remove_pair_ids(first, Second::get_id(world))
+        ))
     }
 
     /// Removes a pair.
@@ -716,9 +656,29 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::remove_second`
     #[doc(alias = "entity_builder::remove_second")]
-    pub fn remove_pair_second_id<First: ComponentInfo>(self, second: EntityT) -> Self {
+    pub fn remove_pair_w_first<First: ComponentInfo>(self, second: EntityT) -> Self {
         let world = self.world;
-        self.remove_pair_ids(First::get_id(world), second)
+        self.remove_id((First::get_id(world), second))
+    }
+
+    /// Removes a pair.
+    /// This operation removes a pair from the entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Second`: The second element of the pair.
+    ///
+    /// # Arguments
+    ///
+    /// * `first`: The first element of the pair.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_builder::remove_second`
+    #[doc(alias = "entity_builder::remove_second")]
+    pub fn remove_pair_w_second<Second: ComponentInfo>(self, first: impl IntoEntityId) -> Self {
+        let world = self.world;
+        self.remove_id((first, Second::get_id(world)))
     }
 
     /// Shortcut for add(IsA, id).
@@ -760,8 +720,8 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::is_a`
     #[doc(alias = "entity_builder::is_a")]
-    pub fn is_a(self, parent: &Entity) -> Self {
-        self.is_a_id(parent.raw_id)
+    pub fn is_a(self, parent: impl IntoEntityId) -> Self {
+        self.is_a_id(parent)
     }
 
     /// Shortcut for add(ChildOf, entity).
@@ -774,8 +734,8 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::child_of`
     #[doc(alias = "entity_builder::child_of")]
-    pub fn child_of_id(self, second: EntityT) -> Self {
-        self.add_pair_ids(unsafe { EcsChildOf }, second)
+    pub fn child_of_id(self, parent: impl IntoEntityId) -> Self {
+        self.add_id((ECS_CHILD_OF, parent))
     }
 
     /// Shortcut for add(ChildOf, entity).
@@ -788,23 +748,9 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::child_of`
     #[doc(alias = "entity_builder::child_of")]
-    pub fn child_of_type<T: ComponentInfo>(self) -> Self {
+    pub fn child_of<T: ComponentInfo>(self) -> Self {
         let world = self.world;
         self.child_of_id(T::get_id(world))
-    }
-
-    /// Shortcut for add(ChildOf, entity).
-    ///
-    /// # Arguments
-    ///
-    /// * `parent`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::child_of`
-    #[doc(alias = "entity_builder::child_of")]
-    pub fn child_of(self, parent: &Entity) -> Self {
-        self.child_of_id(parent.raw_id)
     }
 
     /// Shortcut for add(DependsOn, entity).
@@ -817,8 +763,8 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::depends_on`
     #[doc(alias = "entity_builder::depends_on")]
-    pub fn depends_on_id(self, second: EntityT) -> Self {
-        self.add_pair_ids(unsafe { EcsDependsOn }, second)
+    pub fn depends_on_id(self, second: impl IntoEntityId) -> Self {
+        self.add_id((ECS_DEPENDS_ON, second))
     }
 
     /// Shortcut for add(DependsOn, entity).
@@ -846,22 +792,8 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::slot_of`
     #[doc(alias = "entity_builder::slot_of")]
-    pub fn slot_of_entity(self, second: &Entity) -> Self {
-        self.add_pair_ids(unsafe { EcsSlotOf }, second.raw_id)
-    }
-
-    /// Shortcut for add(SlotOf, entity).
-    ///
-    /// # Arguments
-    ///
-    /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::slot_of`
-    #[doc(alias = "entity_builder::slot_of")]
-    pub fn slot_of_id(self, second: EntityT) -> Self {
-        self.add_pair_ids(unsafe { EcsSlotOf }, second)
+    pub fn slot_of_id(self, second: impl IntoEntityId) -> Self {
+        self.add_id((ECS_SLOT_OF, second))
     }
 
     /// Shortcut for add(SlotOf, entity).
@@ -891,7 +823,7 @@ impl Entity {
             FlecsErrorCode::InvalidParameter,
             "add ChildOf pair before using slot()"
         );
-        let id: u64 = self.get_target_from_entity(&ECS_CHILD_OF.into(), 0).raw_id;
+        let id = self.get_target_from_entity(ECS_CHILD_OF, 0);
         self.slot_of_id(id)
     }
 
@@ -909,8 +841,8 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn override_id(self, id: IdT) -> Self {
-        self.add_id(ECS_OVERRIDE | id)
+    pub fn override_id(self, id: impl IntoEntityIdExt) -> Self {
+        self.add_id(ECS_OVERRIDE | id.get_id_ext())
     }
 
     /// Mark component for auto-overriding.
@@ -930,21 +862,6 @@ impl Entity {
 
     /// Mark pair for auto-overriding.
     ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::override`
-    #[doc(alias = "entity_builder::override")]
-    pub fn override_pair_ids(self, first: EntityT, second: EntityT) -> Self {
-        self.override_id(ecs_pair(first, second))
-    }
-
-    /// Mark pair for auto-overriding.
-    ///
     /// # Type Parameters
     ///
     /// * `First`: The first element of the pair.
@@ -960,26 +877,7 @@ impl Entity {
         Second: ComponentInfo,
     {
         let world = self.world;
-        self.override_pair_ids(First::get_id(world), Second::get_id(world))
-    }
-
-    /// Mark pair for auto-overriding with a given first ID.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::override`
-    #[doc(alias = "entity_builder::override")]
-    pub fn override_pair_first<Second: ComponentInfo>(self, first: EntityT) -> Self {
-        let world = self.world;
-        self.override_pair_ids(first, Second::get_id(world))
+        self.override_id((First::get_id(world), Second::get_id(world)))
     }
 
     /// Mark pair for auto-overriding with a given second ID.
@@ -996,9 +894,28 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn override_pair_second_id<First: ComponentInfo>(self, second: EntityT) -> Self {
+    pub fn override_pair_first<First: ComponentInfo>(self, second: impl IntoEntityId) -> Self {
         let world = self.world;
-        self.override_pair_ids(First::get_id(world), second)
+        self.override_id((First::get_id(world), second))
+    }
+
+    /// Mark pair for auto-overriding with a given first ID.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Second`: The second element of the pair.
+    ///
+    /// # Arguments
+    ///
+    /// * `first`: The first element of the pair.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_builder::override`
+    #[doc(alias = "entity_builder::override")]
+    pub fn override_pair_second<Second: ComponentInfo>(self, first: impl IntoEntityId) -> Self {
+        let world = self.world;
+        self.override_id((first, Second::get_id(world)))
     }
 
     /// Sets a component for an entity and marks it as overridden.
@@ -1015,8 +932,8 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
-    pub fn set_override_id(self, component_id: IdT) -> Self {
-        unsafe { ecs_add_id(self.world, self.raw_id, ECS_OVERRIDE | component_id) }
+    pub fn set_override_id(self, id: impl IntoEntityIdExt) -> Self {
+        unsafe { ecs_add_id(self.world, self.raw_id, ECS_OVERRIDE | id.get_id_ext()) }
         self
     }
 
@@ -1053,12 +970,13 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
-    pub fn set_override_pair_first<First>(self, second: EntityT, first: First) -> Self
+    pub fn set_override_pair_first<First>(self, first: First, second: impl IntoEntityId) -> Self
     where
         First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {
-        self.override_pair_second_id::<First>(second)
-            .set_pair_first_id(second, first)
+        let secondref = &second;
+        self.override_pair_first::<First>(secondref)
+            .set_pair_first_id(first, second)
     }
 
     /// Sets a pair, mark component for auto-overriding.
@@ -1114,7 +1032,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::set`
     #[doc(alias = "entity_builder::set")]
-    pub fn set_pair_first_id<First>(self, second: EntityT, first: First) -> Self
+    pub fn set_pair_first_id<First>(self, first: First, second: impl IntoEntityId) -> Self
     where
         First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {

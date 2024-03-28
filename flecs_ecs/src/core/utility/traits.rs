@@ -86,10 +86,32 @@ impl IntoEntityId for Entity {
     }
 }
 
+impl<T> IntoEntityId for &T
+where
+    T: IntoEntityId,
+{
+    #[inline]
+    fn get_id(&self) -> u64 {
+        T::get_id(*self)
+    }
+}
+
+impl<T> IntoEntityId for &mut T
+where
+    T: IntoEntityId,
+{
+    #[inline]
+    fn get_id(&self) -> u64 {
+        T::get_id(*self)
+    }
+}
+
 /// Extension trait for tuples that implement `IntoEntityId`.
 /// This extension is useful for when some function only expect one entity id, but not pairs of them.
 /// so you only accept `IntoEntityId`. Where both pairs and a single id are accepted, you can use `IntoEntityIdExt`.
 pub trait IntoEntityIdExt {
+    const IS_PAIR: bool;
+
     fn get_id_ext(&self) -> u64;
 }
 
@@ -98,37 +120,20 @@ where
     T: IntoEntityId,
     U: IntoEntityId,
 {
+    const IS_PAIR: bool = true;
+
     #[inline]
     fn get_id_ext(&self) -> u64 {
-        ecs_pair(IntoEntityId::get_id(&self.0), IntoEntityId::get_id(&self.1))
+        ecs_pair(self.0.get_id(), self.1.get_id())
     }
 }
 
 // We can not implement for T where T : IntoEntityId, because it would essentially extend the trait, which we don't want
 // so we have to implement for each type that implements IntoEntityId separately.
 
-impl IntoEntityIdExt for Entity {
-    #[inline]
-    fn get_id_ext(&self) -> u64 {
-        IntoEntityId::get_id(self)
-    }
-}
-
-impl IntoEntityIdExt for EntityView {
-    #[inline]
-    fn get_id_ext(&self) -> u64 {
-        IntoEntityId::get_id(self)
-    }
-}
-
-impl IntoEntityIdExt for Id {
-    #[inline]
-    fn get_id_ext(&self) -> u64 {
-        IntoEntityId::get_id(self)
-    }
-}
-
 impl IntoEntityIdExt for IdT {
+    const IS_PAIR: bool = false;
+
     #[inline]
     fn get_id_ext(&self) -> u64 {
         IntoEntityId::get_id(self)
@@ -136,52 +141,132 @@ impl IntoEntityIdExt for IdT {
 }
 
 impl IntoEntityIdExt for EntityId {
+    const IS_PAIR: bool = false;
+
     #[inline]
     fn get_id_ext(&self) -> u64 {
         IntoEntityId::get_id(self)
     }
 }
 
-pub trait IntoWorld {
-    fn get_world_mut(&self) -> *mut WorldT;
+impl IntoEntityIdExt for Id {
+    const IS_PAIR: bool = false;
+
     #[inline]
-    fn get_world(&self) -> *const WorldT {
-        self.get_world_mut() as *const WorldT
+    fn get_id_ext(&self) -> u64 {
+        IntoEntityId::get_id(self)
+    }
+}
+
+impl IntoEntityIdExt for EntityView {
+    const IS_PAIR: bool = false;
+
+    #[inline]
+    fn get_id_ext(&self) -> u64 {
+        IntoEntityId::get_id(self)
+    }
+}
+
+impl IntoEntityIdExt for Entity {
+    const IS_PAIR: bool = false;
+
+    #[inline]
+    fn get_id_ext(&self) -> u64 {
+        IntoEntityId::get_id(self)
+    }
+}
+
+impl<T> IntoEntityIdExt for &T
+where
+    T: IntoEntityIdExt,
+{
+    const IS_PAIR: bool = T::IS_PAIR;
+
+    #[inline]
+    fn get_id_ext(&self) -> u64 {
+        T::get_id_ext(*self)
+    }
+}
+
+impl<T> IntoEntityIdExt for &mut T
+where
+    T: IntoEntityIdExt,
+{
+    const IS_PAIR: bool = T::IS_PAIR;
+
+    #[inline]
+    fn get_id_ext(&self) -> u64 {
+        T::get_id_ext(*self)
+    }
+}
+
+pub trait IntoWorld {
+    fn get_world_raw_mut(&self) -> *mut WorldT;
+    #[inline]
+    fn get_world_raw(&self) -> *const WorldT {
+        self.get_world_raw_mut() as *const WorldT
     }
 }
 
 impl IntoWorld for *mut WorldT {
     #[inline]
-    fn get_world_mut(&self) -> *mut WorldT {
+    fn get_world_raw_mut(&self) -> *mut WorldT {
         *self
     }
 }
 
 impl IntoWorld for *const WorldT {
     #[inline]
-    fn get_world_mut(&self) -> *mut WorldT {
+    fn get_world_raw_mut(&self) -> *mut WorldT {
         *self as *mut WorldT
     }
 }
 
 impl IntoWorld for World {
     #[inline]
-    fn get_world_mut(&self) -> *mut WorldT {
+    fn get_world_raw_mut(&self) -> *mut WorldT {
         self.raw_world
     }
 }
 
-impl IntoWorld for &World {
+impl IntoWorld for Id {
     #[inline]
-    fn get_world_mut(&self) -> *mut WorldT {
-        self.raw_world
+    fn get_world_raw_mut(&self) -> *mut WorldT {
+        self.world
     }
 }
 
-impl IntoWorld for &mut World {
+impl IntoWorld for Entity {
     #[inline]
-    fn get_world_mut(&self) -> *mut WorldT {
-        self.raw_world
+    fn get_world_raw_mut(&self) -> *mut WorldT {
+        self.world
+    }
+}
+
+impl IntoWorld for EntityView {
+    #[inline]
+    fn get_world_raw_mut(&self) -> *mut WorldT {
+        self.world
+    }
+}
+
+impl<T> IntoWorld for &T
+where
+    T: IntoWorld,
+{
+    #[inline]
+    fn get_world_raw_mut(&self) -> *mut WorldT {
+        T::get_world_raw_mut(*self)
+    }
+}
+
+impl<T> IntoWorld for &mut T
+where
+    T: IntoWorld,
+{
+    #[inline]
+    fn get_world_raw_mut(&self) -> *mut WorldT {
+        T::get_world_raw_mut(*self)
     }
 }
 
@@ -190,10 +275,12 @@ where
     T: IntoWorld,
 {
     #[inline]
-    fn get_world_mut(&self) -> *mut WorldT {
+    fn get_world_raw_mut(&self) -> *mut WorldT {
         match self {
-            Some(t) => t.get_world_mut(),
+            Some(t) => t.get_world_raw_mut(),
             None => std::ptr::null_mut(),
         }
     }
 }
+
+// set_override_pair_second

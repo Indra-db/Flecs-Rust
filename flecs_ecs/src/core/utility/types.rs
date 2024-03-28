@@ -11,7 +11,7 @@ use super::traits::{InOutType, OperType};
 pub type FTime = f32;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
-pub struct EntityId(IdT);
+pub struct EntityId(pub IdT);
 
 impl EntityId {
     #[inline]

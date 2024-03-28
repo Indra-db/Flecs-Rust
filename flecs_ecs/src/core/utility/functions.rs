@@ -19,6 +19,7 @@ use crate::{
 use super::{
     super::c_types::RUST_ECS_COMPONENT_MASK,
     traits::{InOutType, OperType},
+    IntoEntityId,
 };
 
 /// Combines two 32 bit integers into a 64 bit integer.
@@ -84,8 +85,19 @@ pub fn ecs_dependson(entity: EntityT) -> EntityT {
 /// True if the entity has the given pair, false otherwise.
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 #[inline(always)]
-pub fn ecs_has_pair(world: *const WorldT, entity: u64, first: u64, second: u64) -> bool {
-    unsafe { ecs_has_id(world, entity, ecs_pair(first, second)) }
+pub fn ecs_has_pair(
+    world: *const WorldT,
+    entity: impl IntoEntityId,
+    first: impl IntoEntityId,
+    second: impl IntoEntityId,
+) -> bool {
+    unsafe {
+        ecs_has_id(
+            world,
+            entity.get_id(),
+            ecs_pair(first.get_id(), second.get_id()),
+        )
+    }
 }
 
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
@@ -258,7 +270,7 @@ pub(crate) fn set_helper<T: ComponentInfo>(world: *mut WorldT, entity: EntityT, 
         if !ecs_is_deferred(world) {
             let comp = ecs_get_mut_id(world, entity, id) as *mut T;
 
-            std::ptr::write(comp, value);
+            std::ptr::write(comp, value); // TODO: this does not drop the value that was there before
             ecs_modified_id(world, entity, id);
         } else {
             let comp = ecs_get_mut_modified_id(world, entity, id) as *mut T;

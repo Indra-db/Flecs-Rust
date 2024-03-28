@@ -40,7 +40,7 @@ use super::{
     component_registration::{
         register_entity_w_component_explicit, ComponentInfo, ComponentType, Enum, Struct,
     },
-    ComponentData, EntityId, ECS_PREFAB,
+    ComponentData, EntityId, IntoEntityId, ECS_PREFAB,
 };
 use super::{EmptyComponent, NotEmptyComponent};
 
@@ -50,7 +50,7 @@ use super::{
     enum_type::CachedEnumData,
     event::EventData,
     event_builder::{EventBuilder, EventBuilderTyped},
-    id::{Id, IdType},
+    id::Id,
     iterable::Iterable,
     observer::Observer,
     observer_builder::ObserverBuilder,
@@ -2892,7 +2892,7 @@ impl World {
     {
         Id::new(
             Some(self),
-            IdType::Id(enum_value.get_entity_id_from_enum_field(self.raw_world)),
+            enum_value.get_entity_id_from_enum_field(self.raw_world),
         )
     }
 
@@ -3031,7 +3031,7 @@ impl World {
     /// * C++ API: `world::prefab`
     #[doc(alias = "world::prefab")]
     pub fn prefab_type<T: ComponentInfo>(&self) -> Entity {
-        let result = Component::<T>::new(self).entity();
+        let result = Component::<T>::new(self).to_entity();
         result.add_id(ECS_PREFAB);
         result.add::<T>();
         result
@@ -3056,7 +3056,7 @@ impl World {
     /// * C++ API: `world::prefab`
     #[doc(alias = "world::prefab")]
     pub fn prefab_type_named<T: ComponentInfo>(&self, name: &CStr) -> Entity {
-        let result = Component::<T>::new_named(self, name).entity();
+        let result = Component::<T>::new_named(self, name).to_entity();
         result.add_id(ECS_PREFAB);
         result.add::<T>();
         result
@@ -3079,7 +3079,7 @@ impl World {
     /// * C++ API: `world::id`
     #[doc(alias = "world::id")]
     pub fn get_id_component<T: ComponentInfo + ComponentType<Struct>>(&self) -> Id {
-        Id::new(Some(self), IdType::Id(T::get_id(self.raw_world)))
+        Id::new(Some(self), T::get_id(self.raw_world))
     }
 
     /// get pair id from relationship, object.
@@ -3103,7 +3103,7 @@ impl World {
             FlecsErrorCode::InvalidParameter,
             "cannot create nested pairs"
         );
-        Id::new(Some(self), IdType::Pair(first, second))
+        Id::new(Some(self), (first, second))
     }
 
     /// get pair id from relationship, object.
@@ -3128,7 +3128,7 @@ impl World {
     {
         Id::new(
             Some(self),
-            IdType::Pair(
+            (
                 First::get_id(self.raw_world),
                 Second::get_id(self.raw_world),
             ),
@@ -3159,10 +3159,7 @@ impl World {
             FlecsErrorCode::InvalidParameter,
             "cannot create nested pairs"
         );
-        Id::new(
-            Some(self),
-            IdType::Pair(First::get_id(self.raw_world), second),
-        )
+        Id::new(Some(self), (First::get_id(self.raw_world), second))
     }
 }
 
@@ -3329,8 +3326,8 @@ impl World {
     ///
     /// * C++ API: `world::event`
     #[doc(alias = "world::event")]
-    pub fn event_id(&self, event: &Entity) -> EventBuilder {
-        EventBuilder::new(self, event.raw_id)
+    pub fn event_id(&self, event: impl IntoEntityId) -> EventBuilder {
+        EventBuilder::new(self, event)
     }
 
     /// Create a new event.
