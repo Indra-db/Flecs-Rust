@@ -117,7 +117,7 @@ fn main() {
 
     query.iter(|it, (pos,)| {
         let group = world.new_entity_from_id(it.get_group_id());
-        let ctx = unsafe { &*(query.get_group_context(group.raw_id) as *mut GroupCtx) };
+        let ctx = unsafe { &*(query.get_group_context(group) as *mut GroupCtx) };
         println!(
             "Group: {:?} - Table: [{:?}] - Counter: {}",
             group.get_hierarchy_path().unwrap(),

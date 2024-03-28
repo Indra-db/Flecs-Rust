@@ -72,43 +72,43 @@ fn impl_cached_component_data_struct(
     };
 
     let cached_component_data_impl = quote! {
-        fn register_explicit(world: *mut flecs_ecs::core::WorldT)
+        fn register_explicit(world: impl flecs_ecs::core::IntoWorld)
         {
             flecs_ecs::core::try_register_struct_component::<Self>(world);
         }
 
-        fn register_explicit_named(world: *mut flecs_ecs::core::WorldT, name: &std::ffi::CStr)
+        fn register_explicit_named(world: impl flecs_ecs::core::IntoWorld, name: &std::ffi::CStr)
         {
             use std::ffi::CStr;
             flecs_ecs::core::try_register_struct_component_named::<Self>(world, name);
         }
 
-        fn get_data(world: *mut flecs_ecs::core::WorldT) -> &'static flecs_ecs::core::ComponentData
+        fn get_data(world: impl flecs_ecs::core::IntoWorld) -> &'static flecs_ecs::core::ComponentData
         {
             flecs_ecs::core::try_register_struct_component::<Self>(world);
             //this is safe because we checked if the component is registered / registered it
             unsafe { Self::get_data_unchecked() }
         }
 
-        fn get_id(world: *mut flecs_ecs::core::WorldT) ->  flecs_ecs::core::IdT {
+        fn get_id(world: impl flecs_ecs::core::IntoWorld) ->  flecs_ecs::core::IdT {
             flecs_ecs::core::try_register_struct_component::<Self>(world);
             //this is safe because we checked if the component is registered / registered it
             unsafe { Self::get_id_unchecked() }
         }
 
-        fn get_size(world: *mut flecs_ecs::core::WorldT) -> usize {
+        fn get_size(world: impl flecs_ecs::core::IntoWorld) -> usize {
             flecs_ecs::core::try_register_struct_component::<Self>(world);
             //this is safe because we checked if the component is registered / registered it
             unsafe { Self::get_size_unchecked() }
         }
 
-        fn get_alignment(world: *mut flecs_ecs::core::WorldT) -> usize {
+        fn get_alignment(world: impl flecs_ecs::core::IntoWorld) -> usize {
             flecs_ecs::core::try_register_struct_component::<Self>(world);
             //this is safe because we checked if the component is registered / registered it
             unsafe { Self::get_alignment_unchecked() }
         }
 
-        fn get_allow_tag(world: *mut flecs_ecs::core::WorldT) -> bool {
+        fn get_allow_tag(world: impl flecs_ecs::core::IntoWorld) -> bool {
             flecs_ecs::core::try_register_struct_component::<Self>(world);
             //this is safe because we checked if the component is registered / registered it
             unsafe { Self::get_allow_tag_unchecked() }
@@ -138,43 +138,43 @@ fn impl_cached_component_data_struct(
     };
 
     let cached_component_data_impl_ref = quote! {
-        fn register_explicit(world: *mut flecs_ecs::core::WorldT)
+        fn register_explicit(world: impl flecs_ecs::core::IntoWorld)
         {
             flecs_ecs::core::try_register_struct_component::<Self::UnderlyingType>(world);
         }
 
-        fn register_explicit_named(world: *mut flecs_ecs::core::WorldT, name: &std::ffi::CStr)
+        fn register_explicit_named(world: impl flecs_ecs::core::IntoWorld, name: &std::ffi::CStr)
         {
             use std::ffi::CStr;
             flecs_ecs::core::try_register_struct_component_named::<Self::UnderlyingType>(world, name);
         }
 
-        fn get_data(world: *mut flecs_ecs::core::WorldT) -> &'static flecs_ecs::core::ComponentData
+        fn get_data(world: impl flecs_ecs::core::IntoWorld) -> &'static flecs_ecs::core::ComponentData
         {
             flecs_ecs::core::try_register_struct_component::<Self::UnderlyingType>(world);
             //this is safe because we checked if the component is registered / registered it
             unsafe { Self::get_data_unchecked() }
         }
 
-        fn get_id(world: *mut flecs_ecs::core::WorldT) ->  flecs_ecs::core::IdT {
+        fn get_id(world: impl flecs_ecs::core::IntoWorld) ->  flecs_ecs::core::IdT {
             flecs_ecs::core::try_register_struct_component::<Self::UnderlyingType>(world);
             //this is safe because we checked if the component is registered / registered it
             unsafe { Self::get_id_unchecked() }
         }
 
-        fn get_size(world: *mut flecs_ecs::core::WorldT) -> usize {
+        fn get_size(world: impl flecs_ecs::core::IntoWorld) -> usize {
             flecs_ecs::core::try_register_struct_component::<Self::UnderlyingType>(world);
             //this is safe because we checked if the component is registered / registered it
             unsafe { Self::get_size_unchecked() }
         }
 
-        fn get_alignment(world: *mut flecs_ecs::core::WorldT) -> usize {
+        fn get_alignment(world: impl flecs_ecs::core::IntoWorld) -> usize {
             flecs_ecs::core::try_register_struct_component::<Self::UnderlyingType>(world);
             //this is safe because we checked if the component is registered / registered it
             unsafe { Self::get_alignment_unchecked() }
         }
 
-        fn get_allow_tag(world: *mut flecs_ecs::core::WorldT) -> bool {
+        fn get_allow_tag(world: impl flecs_ecs::core::IntoWorld) -> bool {
             flecs_ecs::core::try_register_struct_component::<Self::UnderlyingType>(world);
             //this is safe because we checked if the component is registered / registered it
             unsafe { Self::get_allow_tag_unchecked() }
@@ -390,43 +390,43 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
 
     };
     let cached_component_data_impl = quote! {
-        fn register_explicit(world: *mut flecs_ecs::core::WorldT)
+        fn register_explicit(world: impl flecs_ecs::core::IntoWorld)
             {
                 flecs_ecs::core::try_register_enum_component::<Self>(world);
             }
 
-            fn register_explicit_named(world: *mut flecs_ecs::core::WorldT, name: &std::ffi::CStr)
+            fn register_explicit_named(world: impl flecs_ecs::core::IntoWorld, name: &std::ffi::CStr)
             {
                 use std::ffi::CStr;
                 flecs_ecs::core::try_register_enum_component_named::<Self>(world, name);
             }
 
-            fn get_data(world: *mut flecs_ecs::core::WorldT) -> &'static flecs_ecs::core::ComponentData
+            fn get_data(world: impl flecs_ecs::core::IntoWorld) -> &'static flecs_ecs::core::ComponentData
             {
                 flecs_ecs::core::try_register_enum_component::<Self>(world);
                 //this is safe because we checked if the component is registered / registered it
                 unsafe { Self::get_data_unchecked() }
             }
 
-            fn get_id(world: *mut flecs_ecs::core::WorldT) ->  flecs_ecs::core::IdT {
+            fn get_id(world: impl flecs_ecs::core::IntoWorld) ->  flecs_ecs::core::IdT {
                 flecs_ecs::core::try_register_enum_component::<Self>(world);
                 //this is safe because we checked if the component is registered / registered it
                 unsafe { Self::get_id_unchecked() }
             }
 
-            fn get_size(world: *mut flecs_ecs::core::WorldT) -> usize {
+            fn get_size(world: impl flecs_ecs::core::IntoWorld) -> usize {
                 flecs_ecs::core::try_register_enum_component::<Self>(world);
                 //this is safe because we checked if the component is registered / registered it
                 unsafe { Self::get_size_unchecked() }
             }
 
-            fn get_alignment(world: *mut flecs_ecs::core::WorldT) -> usize {
+            fn get_alignment(world: impl flecs_ecs::core::IntoWorld) -> usize {
                 flecs_ecs::core::try_register_enum_component::<Self>(world);
                 //this is safe because we checked if the component is registered / registered it
                 unsafe { Self::get_alignment_unchecked() }
             }
 
-            fn get_allow_tag(world: *mut flecs_ecs::core::WorldT) -> bool {
+            fn get_allow_tag(world: impl flecs_ecs::core::IntoWorld) -> bool {
                 flecs_ecs::core::try_register_enum_component::<Self>(world);
                 //this is safe because we checked if the component is registered / registered it
                 unsafe { Self::get_allow_tag_unchecked() }

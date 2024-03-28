@@ -15,11 +15,10 @@ use super::{
         ECS_FILTER, ECS_IS_ENTITY, ECS_IS_NAME, ECS_IS_VARIABLE, ECS_PARENT, ECS_SELF, ECS_UP,
     },
     component_registration::ComponentInfo,
-    ecs_pair,
     entity::Entity,
     id::Id,
     world::World,
-    ECS_DESC, RUST_ECS_ID_FLAGS_MASK,
+    IntoComponentId, IntoEntityId, IntoEntityIdExt, ECS_DESC, RUST_ECS_ID_FLAGS_MASK,
 };
 
 /// Struct that describes a term identifier.
@@ -75,7 +74,7 @@ impl Term {
     /// # Arguments
     ///
     /// * `world` - The world to use.
-    /// * `with` - The type of term to create.
+    /// * `term` - The term to use.
     ///
     /// # Returns
     ///
@@ -85,23 +84,18 @@ impl Term {
     ///
     /// * C++ API: `term::term`
     #[doc(alias = "term::term")]
-    pub fn new(world: Option<&World>, with: TermType) -> Self {
-        if let Some(world) = world {
-            match with {
-                TermType::Term(term) => Self::new_term(world.raw_world, term),
-                TermType::Id(id) => Self::new_id(world.raw_world, id),
-                TermType::Pair(rel, target) => Self::new_rel_target(world.raw_world, rel, target),
-            }
-        } else {
-            match with {
-                TermType::Term(term) => {
-                    ecs_assert!(false, FlecsErrorCode::InvalidParameter, "world is None");
-                    Self::new_term(std::ptr::null_mut(), term)
-                }
-                TermType::Id(id) => Self::new_id_only(id),
-                TermType::Pair(rel, target) => Self::new_rel_target_only(rel, target),
-            }
-        }
+    pub fn new_from_term(world: Option<&World>, term: TermT) -> Self {
+        let world = world.map(|w| w.raw_world).unwrap_or(std::ptr::null_mut());
+        let mut obj = Self {
+            world,
+            term_id: std::ptr::null_mut(),
+            term,
+            term_ptr: std::ptr::null_mut(),
+        };
+        obj.term.move_ = false;
+        let obj_term = &mut obj.term as *mut TermT;
+        obj.set_term(obj_term);
+        obj
     }
 
     /// Create a new term with a world only
@@ -125,7 +119,7 @@ impl Term {
         obj
     }
 
-    /// Create a new term from a component
+    /// Create a new term from a component or pair
     ///
     /// # Arguments
     ///
@@ -139,12 +133,10 @@ impl Term {
     ///
     /// * C++ API: `term::term`
     #[doc(alias = "term::term")]
-    pub fn new_component<T: ComponentInfo>(world: Option<&World>) -> Self {
-        if let Some(world) = world {
-            Self::new_id(world.raw_world, T::get_id(world.raw_world))
-        } else {
-            let id: IdT = if T::is_registered() {
-                unsafe { T::get_id_unchecked() }
+    pub fn new_type<T: IntoComponentId>(world: Option<&World>) -> Self {
+        if !T::IS_PAIR {
+            let id: IdT = if T::First::is_registered() {
+                unsafe { T::First::get_id_unchecked() }
             } else {
                 ecs_assert!(
                     false,
@@ -153,114 +145,78 @@ impl Term {
                 );
                 0
             };
-            Self::new_id_only(id)
+            Self::new_id(world, id)
+        } else {
+            let id_rel = if T::First::is_registered() {
+                unsafe { T::First::get_id_unchecked() }
+            } else {
+                ecs_assert!(
+                    false,
+                    FlecsErrorCode::InvalidOperation,
+                    "component not registered"
+                );
+                0
+            };
+
+            let id_target = if T::Second::is_registered() {
+                unsafe { T::Second::get_id_unchecked() }
+            } else {
+                ecs_assert!(
+                    false,
+                    FlecsErrorCode::InvalidOperation,
+                    "component not registered"
+                );
+                0
+            };
+
+            Self::new_id(world, (id_rel, id_target))
         }
     }
 
-    pub fn new_pair<T: ComponentInfo, U: ComponentInfo>(world: Option<&World>) -> Self {
-        if let Some(world) = world {
-            Self::new_rel_target(
-                world.raw_world,
-                T::get_id(world.raw_world),
-                U::get_id(world.raw_world),
-            )
-        } else {
-            let id_rel = if T::is_registered() {
-                unsafe { T::get_id_unchecked() }
-            } else {
-                ecs_assert!(
-                    false,
-                    FlecsErrorCode::InvalidOperation,
-                    "component not registered"
-                );
-                0
-            };
+    /// Create a new term from a id of a component or pair
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world to use.
+    /// * `id` - The id to use of pair or component
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `term::term`
+    #[doc(alias = "term::term")]
+    pub fn new_id<T>(world: Option<&World>, id: T) -> Self
+    where
+        T: IntoEntityIdExt,
+    {
+        let world = world.map(|w| w.raw_world).unwrap_or(std::ptr::null_mut());
+        let id = id.get_id_ext();
 
-            let id_target = if U::is_registered() {
-                unsafe { U::get_id_unchecked() }
-            } else {
-                ecs_assert!(
-                    false,
-                    FlecsErrorCode::InvalidOperation,
-                    "component not registered"
-                );
-                0
-            };
-
-            Self::new_rel_target_only(id_rel, id_target)
-        }
-    }
-
-    fn new_term(world: *mut WorldT, term: TermT) -> Self {
-        let mut obj = Self {
-            world,
-            term_id: std::ptr::null_mut(),
-            term,
-            term_ptr: std::ptr::null_mut(),
-        };
-        obj.term.move_ = false;
-        let obj_term = &mut obj.term as *mut TermT;
-        obj.set_term(obj_term);
-        obj
-    }
-
-    fn new_id(world: *mut WorldT, id: IdT) -> Self {
         let mut obj = Self {
             world,
             term_id: std::ptr::null_mut(),
             term_ptr: std::ptr::null_mut(),
             term: Default::default(),
         };
-        if id & RUST_ECS_ID_FLAGS_MASK != 0 {
+
+        #[allow(clippy::collapsible_else_if)]
+        if T::IS_PAIR {
             obj.term.id = id;
         } else {
-            obj.term.first.id = id;
+            if id & RUST_ECS_ID_FLAGS_MASK != 0 {
+                obj.term.id = id;
+            } else {
+                obj.term.first.id = id;
+            }
         }
-        obj.term.move_ = false;
-        let obj_term = &mut obj.term as *mut TermT;
-        obj.set_term(obj_term);
-        obj
-    }
 
-    fn new_id_only(id: IdT) -> Self {
-        let mut obj = Self {
-            world: std::ptr::null_mut(),
-            term_id: std::ptr::null_mut(),
-            term_ptr: std::ptr::null_mut(),
-            term: Default::default(),
-        };
-        if id & RUST_ECS_ID_FLAGS_MASK != 0 {
-            obj.term.id = id;
+        if !world.is_null() {
+            obj.term.move_ = false;
+            let obj_term = &mut obj.term as *mut TermT;
+            obj.set_term(obj_term);
         } else {
-            obj.term.first.id = id;
+            obj.term.move_ = true;
         }
-        obj.term.move_ = true;
-        obj
-    }
 
-    fn new_rel_target(world: *mut WorldT, rel: EntityT, target: EntityT) -> Self {
-        let mut obj = Self {
-            world,
-            term_id: std::ptr::null_mut(),
-            term_ptr: std::ptr::null_mut(),
-            term: Default::default(),
-        };
-        obj.term.id = ecs_pair(rel, target);
-        obj.term.move_ = false;
-        let obj_term = &mut obj.term as *mut TermT;
-        obj.set_term(obj_term);
-        obj
-    }
-
-    fn new_rel_target_only(rel: EntityT, target: EntityT) -> Self {
-        let mut obj = Self {
-            world: std::ptr::null_mut(),
-            term_id: std::ptr::null_mut(),
-            term_ptr: std::ptr::null_mut(),
-            term: Default::default(),
-        };
-        obj.term.id = ecs_pair(rel, target);
-        obj.term.move_ = true;
         obj
     }
 
@@ -503,10 +459,10 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::up`
     #[doc(alias = "term_builder_i::up")]
-    fn up_id(&mut self, traverse_relationship: EntityT) -> &mut Self {
+    fn up_id(&mut self, traverse_relationship: impl IntoEntityId) -> &mut Self {
         self.assert_term_id();
         unsafe { (*self.get_term_id()).flags |= ECS_UP };
-        unsafe { (*self.get_term_id()).trav = traverse_relationship };
+        unsafe { (*self.get_term_id()).trav = traverse_relationship.get_id() };
         self
     }
 
@@ -555,7 +511,7 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::cascade`
     #[doc(alias = "term_builder_i::cascade")]
-    fn cascade_id(&mut self, traverse_relationship: EntityT) -> &mut Self {
+    fn cascade_id(&mut self, traverse_relationship: impl IntoEntityId) -> &mut Self {
         self.assert_term_id();
         //ecs_assert!(
         //    traverse_relationship != 0,
@@ -563,7 +519,7 @@ pub trait TermBuilder: Sized {
         //    "Opt the usage of `cascade` if you are passing 0"
         //);
         unsafe { (*self.get_term_id()).flags |= ECS_CASCADE };
-        unsafe { (*self.get_term_id()).trav = traverse_relationship };
+        unsafe { (*self.get_term_id()).trav = traverse_relationship.get_id() };
         self
     }
 
@@ -617,10 +573,10 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::trav`
     #[doc(alias = "term_builder_i::trav")]
-    fn trav(&mut self, traverse_relationship: EntityT, flags: Flags32T) -> &mut Self {
+    fn trav(&mut self, traverse_relationship: impl IntoEntityId, flags: Flags32T) -> &mut Self {
         self.assert_term_id();
         unsafe {
-            (*self.get_term_id()).trav = traverse_relationship;
+            (*self.get_term_id()).trav = traverse_relationship.get_id();
             (*self.get_term_id()).flags |= flags;
         };
         self
@@ -636,10 +592,10 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::set_term_id`
     #[doc(alias = "term_builder_i::set_term_id")]
-    fn set_term_id(&mut self, id: IdT) -> &mut Self {
+    fn set_term_id(&mut self, id: impl IntoEntityId) -> &mut Self {
         self.assert_term_id();
         let term_id = self.get_term_id();
-        unsafe { (*term_id).id = id };
+        unsafe { (*term_id).id = id.get_id() };
         self
     }
 
@@ -659,11 +615,11 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::entity`
     #[doc(alias = "term_builder_i::entity")]
-    fn entity(&mut self, id: EntityT) -> &mut Self {
+    fn entity(&mut self, id: impl IntoEntityId) -> &mut Self {
         self.assert_term_id();
         unsafe {
             (*self.get_term_id()).flags |= ECS_IS_ENTITY;
-            (*self.get_term_id()).id = id;
+            (*self.get_term_id()).id = id.get_id();
         };
         self
     }
@@ -834,7 +790,7 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
-    fn select_first_id(&mut self, id: EntityT) -> &mut Self {
+    fn select_first_id(&mut self, id: impl IntoEntityId) -> &mut Self {
         self.setup_first().set_term_id(id)
     }
 
@@ -891,7 +847,7 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
-    fn select_second_id(&mut self, id: EntityT) -> &mut Self {
+    fn select_second_id(&mut self, id: impl IntoEntityId) -> &mut Self {
         self.setup_second().set_term_id(id)
     }
 
@@ -948,9 +904,9 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::role`
     #[doc(alias = "term_builder_i::role")]
-    fn role(&mut self, role: IdT) -> &mut Self {
+    fn role(&mut self, role: impl IntoEntityId) -> &mut Self {
         self.assert_term();
-        unsafe { (*self.get_raw_term()).id_flags = role };
+        unsafe { (*self.get_raw_term()).id_flags = role.get_id() };
         self
     }
 

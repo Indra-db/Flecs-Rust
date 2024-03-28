@@ -72,7 +72,7 @@ fn main() {
     // Is the Moon a child of the Earth?
     println!(
         "Is the Moon a child of the Earth? {}",
-        moon.has_id((ECS_CHILD_OF, earth.raw_id))
+        moon.has_id((ECS_CHILD_OF, earth))
     );
 
     // Do a depth-first traversal of the tree

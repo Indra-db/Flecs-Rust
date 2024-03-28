@@ -5,6 +5,7 @@ use super::{
     enum_type::CachedEnumData,
     is_empty_type,
     lifecycle_traits::register_lifecycle_actions,
+    IntoWorld,
 };
 use crate::{
     core::{get_full_type_name, FlecsErrorCode},
@@ -67,10 +68,10 @@ pub trait ComponentInfo: Sized {
     const IS_ENUM: bool;
 
     /// attempts to register the component with the world. If it's already registered, it does nothing.
-    fn register_explicit(world: *mut WorldT);
+    fn register_explicit(world: impl IntoWorld);
 
     /// attempts to register the component with name with the world. If it's already registered, it does nothing.
-    fn register_explicit_named(world: *mut WorldT, name: &CStr);
+    fn register_explicit_named(world: impl IntoWorld, name: &CStr);
 
     /// checks if the component is registered with a world.
     fn is_registered() -> bool {
@@ -83,28 +84,30 @@ pub trait ComponentInfo: Sized {
     /// this is highly unlikely a world would be nullptr, hence this function is not marked as unsafe.
     /// this will be changed in the future where we get rid of the pointers.
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    fn is_registered_with_world(world: *mut WorldT) -> bool {
+    fn is_registered_with_world(world: impl IntoWorld) -> bool {
         if Self::is_registered() {
-            unsafe { is_component_registered_with_world::<Self::UnderlyingType>(world) }
+            unsafe {
+                is_component_registered_with_world::<Self::UnderlyingType>(world.get_world_raw())
+            }
         } else {
             false
         }
     }
 
     /// returns the component data of the component. If the component is not registered, it will register it.
-    fn get_data(world: *mut WorldT) -> &'static ComponentData;
+    fn get_data(world: impl IntoWorld) -> &'static ComponentData;
 
     /// returns the component id of the component. If the component is not registered, it will register it.
-    fn get_id(world: *mut WorldT) -> IdT;
+    fn get_id(world: impl IntoWorld) -> IdT;
 
     /// returns the component size of the component. If the component is not registered, it will register it.
-    fn get_size(world: *mut WorldT) -> usize;
+    fn get_size(world: impl IntoWorld) -> usize;
 
     /// returns the component alignment of the component. If the component is not registered, it will register it.
-    fn get_alignment(world: *mut WorldT) -> usize;
+    fn get_alignment(world: impl IntoWorld) -> usize;
 
     /// returns the component `allow_tag` of the component. If the component is not registered, it will register it.
-    fn get_allow_tag(world: *mut WorldT) -> bool;
+    fn get_allow_tag(world: impl IntoWorld) -> bool;
 
     // this could live on ComponentData, but it would create more heap allocations when creating default Component
     /// gets the symbol name of the component in the format of `[module].[type]`
@@ -177,13 +180,13 @@ pub trait ComponentInfo: Sized {
 //TODO need to support getting the id of a component if it's a pair type
 /// attempts to register the component with the world. If it's already registered, it does nothing.
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub(crate) fn try_register_struct_component_impl<T>(world: *mut WorldT, name: *const c_char)
+pub(crate) fn try_register_struct_component_impl<T>(world: impl IntoWorld, name: *const c_char)
 where
     T: ComponentInfo,
 {
     let is_registered = T::is_registered();
     let is_registered_with_world = if is_registered {
-        unsafe { is_component_registered_with_world::<T>(world) }
+        unsafe { is_component_registered_with_world::<T>(world.get_world_raw()) }
     } else {
         false
     };
@@ -194,14 +197,14 @@ where
 }
 
 /// attempts to register the component with the world. If it's already registered, it does nothing.
-pub fn try_register_struct_component<T>(world: *mut WorldT)
+pub fn try_register_struct_component<T>(world: impl IntoWorld)
 where
     T: ComponentInfo,
 {
     try_register_struct_component_impl::<T>(world, std::ptr::null());
 }
 
-pub fn try_register_struct_component_named<T>(world: *mut WorldT, name: &CStr)
+pub fn try_register_struct_component_named<T>(world: impl IntoWorld, name: &CStr)
 where
     T: ComponentInfo,
 {
@@ -209,10 +212,11 @@ where
 }
 
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub fn try_register_enum_component_impl<T>(world: *mut WorldT, name: *const c_char)
+pub fn try_register_enum_component_impl<T>(world: impl IntoWorld, name: *const c_char)
 where
     T: ComponentInfo + CachedEnumData,
 {
+    let world = world.get_world_raw_mut();
     let is_registered = T::is_registered();
     let is_registered_with_world = if is_registered {
         unsafe { is_component_registered_with_world::<T>(world) }
@@ -252,14 +256,14 @@ where
     }
 }
 
-pub fn try_register_enum_component<T>(world: *mut WorldT)
+pub fn try_register_enum_component<T>(world: impl IntoWorld)
 where
     T: ComponentInfo + CachedEnumData,
 {
     try_register_enum_component_impl::<T>(world, std::ptr::null());
 }
 
-pub fn try_register_enum_component_named<T>(world: *mut WorldT, name: &CStr)
+pub fn try_register_enum_component_named<T>(world: impl IntoWorld, name: &CStr)
 where
     T: ComponentInfo + CachedEnumData,
 {
@@ -311,7 +315,7 @@ where
 //TODO merge explicit and non explicit functions -> not necessary to have a similar impl as c++.
 //need to cleanup this function.
 fn register_componment_data_explicit<T>(
-    world: *mut WorldT,
+    world: impl IntoWorld,
     name: *const c_char,
     allow_tag: bool,
     id: EntityT,
@@ -322,6 +326,7 @@ fn register_componment_data_explicit<T>(
 where
     T: ComponentInfo,
 {
+    let world = world.get_world_raw_mut();
     let mut component_data: ComponentData = Default::default();
     if is_comp_pre_registered {
         // we know this is safe because we checked if the component is pre-registered
@@ -420,7 +425,7 @@ where
 }
 
 pub(crate) fn register_entity_w_component_explicit<T>(
-    world: *mut WorldT,
+    world: impl IntoWorld,
     name: *const c_char,
     allow_tag: bool,
     id: EntityT,
@@ -428,6 +433,7 @@ pub(crate) fn register_entity_w_component_explicit<T>(
 where
     T: ComponentInfo,
 {
+    let world = world.get_world_raw_mut();
     let is_comp_pre_registered = T::is_registered();
     let mut component_data: ComponentData = Default::default();
     if is_comp_pre_registered {
@@ -529,7 +535,7 @@ where
 
 /// registers the component with the world.
 pub(crate) fn register_component_data<T>(
-    world: *mut WorldT,
+    world: impl IntoWorld,
     name: *const c_char,
     allow_tag: bool,
     is_comp_pre_registered: bool,
@@ -538,6 +544,7 @@ pub(crate) fn register_component_data<T>(
 where
     T: ComponentInfo,
 {
+    let world = world.get_world_raw_mut();
     let mut has_registered = false;
     //this is safe because we checked if the component is pre-registered
     if !is_comp_pre_registered || !is_comp_pre_registered_with_world {

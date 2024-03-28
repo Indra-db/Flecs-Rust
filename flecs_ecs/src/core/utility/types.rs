@@ -3,7 +3,7 @@ use std::{ops::Deref, os::raw::c_void};
 use crate::core::{
     c_types::{InOutKind, OperKind},
     component_registration::ComponentInfo,
-    Entity, IdT, World,
+    ComponentType, Entity, IdT, Struct, World,
 };
 
 use super::traits::{InOutType, OperType};
@@ -243,6 +243,15 @@ where
 {
     type Type = T;
     const IN_OUT: InOutKind = InOutKind::In;
+}
+
+impl<T, U> InOutType for (T, U)
+where
+    T: ComponentInfo,
+    U: ComponentInfo + ComponentType<Struct>,
+{
+    type Type = (T, U);
+    const IN_OUT: InOutKind = InOutKind::InOutDefault;
 }
 
 impl<T> OperType for &mut T

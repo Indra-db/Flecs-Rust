@@ -573,6 +573,11 @@ impl Table {
     pub fn get_depth_for_relationship_id(&self, rel: EntityT) -> i32 {
         unsafe { ecs_table_get_depth(self.world, self.table, rel) }
     }
+
+    /// Get raw table ptr
+    pub fn get_raw_table(&self) -> *mut TableT {
+        self.table
+    }
 }
 
 #[derive(Debug, Default)]

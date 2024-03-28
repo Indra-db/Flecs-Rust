@@ -1,7 +1,8 @@
 use crate::core::{
     c_types::{InOutKind, OperKind},
     component_registration::ComponentInfo,
-    Component, ComponentType, Entity, EntityView, Id, IdT, Struct, UntypedComponent, World, WorldT,
+    Component, ComponentType, Entity, EntityView, Id, IdT, Struct, Table, TableRange, TableT,
+    UntypedComponent, World, WorldT,
 };
 
 use super::{ecs_pair, EntityId};
@@ -22,7 +23,7 @@ use super::{ecs_pair, EntityId};
 /// * `Type`: The type of the component data. Must implement `ComponentInfo`.
 pub trait InOutType {
     const IN_OUT: InOutKind;
-    type Type: ComponentInfo;
+    type Type: IntoComponentId;
 }
 
 /// Represents the operation type of a system in an ECS framework.
@@ -354,8 +355,8 @@ pub trait IntoComponentId {
     const IS_PAIR: bool;
     // These types are useful for merging functions in World class such ass add_pair<T,U> into add<T>.
     // When IntoComponentId is not a pair, First and Second will be same
-    type First: IntoComponentId;
-    type Second: IntoComponentId;
+    type First: ComponentInfo;
+    type Second: ComponentInfo;
 
     fn get_id(world: impl IntoWorld) -> IdT;
 
@@ -409,5 +410,37 @@ where
     #[inline]
     fn get_name() -> &'static str {
         std::any::type_name::<(T, U)>()
+    }
+}
+
+pub trait IntoTable {
+    fn get_table(&self) -> *mut TableT;
+}
+
+impl IntoTable for *mut TableT {
+    #[inline]
+    fn get_table(&self) -> *mut TableT {
+        *self
+    }
+}
+
+impl IntoTable for *const TableT {
+    #[inline]
+    fn get_table(&self) -> *mut TableT {
+        *self as *mut TableT
+    }
+}
+
+impl IntoTable for Table {
+    #[inline]
+    fn get_table(&self) -> *mut TableT {
+        self.get_raw_table()
+    }
+}
+
+impl IntoTable for TableRange {
+    #[inline]
+    fn get_table(&self) -> *mut TableT {
+        self.table.get_raw_table()
     }
 }

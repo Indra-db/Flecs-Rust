@@ -1,8 +1,9 @@
 use std::ffi::CStr;
 
 use super::{
-    c_types::{EntityT, WorldT},
+    c_types::EntityT,
     component_registration::{try_register_enum_component, ComponentType, Enum},
+    IntoWorld,
 };
 
 pub trait CachedEnumData: ComponentType<Enum> {
@@ -42,8 +43,8 @@ pub trait CachedEnumData: ComponentType<Enum> {
         unsafe { *Self::__get_enum_data_ptr_mut().add(index) != 0 }
     }
 
-    fn get_entity_id_from_enum_field(&self, world: *mut WorldT) -> EntityT {
-        try_register_enum_component::<Self>(world);
+    fn get_entity_id_from_enum_field(&self, world: impl IntoWorld) -> EntityT {
+        try_register_enum_component::<Self>(world.get_world_raw_mut());
         let index = self.get_enum_index();
         unsafe { *Self::__get_enum_data_ptr_mut().add(index) }
     }

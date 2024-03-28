@@ -34,7 +34,7 @@ fn main() {
     world
         .event::<MyEvent>()
         .add_type_to_emit::<Position>()
-        .set_entity_to_emit(&entity)
+        .set_entity_to_emit(entity)
         .emit();
 
     // Output:

@@ -7,12 +7,7 @@ use crate::sys::{
 };
 
 use super::{
-    c_types::FilterT,
-    entity::Entity,
-    iter::Iter,
-    iterable::Iterable,
-    term::{Term, TermType},
-    world::World,
+    c_types::FilterT, entity::Entity, iter::Iter, iterable::Iterable, term::Term, world::World,
     FlecsErrorCode,
 };
 
@@ -396,10 +391,8 @@ where
     fn each_term_impl(&self, mut func: impl FnMut(&mut Term), filter: *const FilterT) {
         unsafe {
             for i in 0..(*filter).term_count {
-                let mut term = Term::new(
-                    Some(&self.world),
-                    TermType::Term(*(*filter).terms.add(i as usize)),
-                );
+                let mut term =
+                    Term::new_from_term(Some(&self.world), *(*filter).terms.add(i as usize));
                 func(&mut term);
                 term.reset(); // prevent freeing resources
             }
@@ -422,10 +415,7 @@ where
     /// * C++ API: `filter_base::term`
     #[doc(alias = "filter_base::term")]
     fn get_term_impl(&self, index: usize, filter: *const FilterT) -> Term {
-        Term::new(
-            Some(&self.world),
-            TermType::Term(unsafe { *(*filter).terms.add(index) }),
-        )
+        Term::new_from_term(Some(&self.world), unsafe { *(*filter).terms.add(index) })
     }
 
     /// Get the field count of the current filter

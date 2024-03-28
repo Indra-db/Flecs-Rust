@@ -9,9 +9,10 @@ use crate::{
 };
 
 use super::{
-    c_types::{EntityT, IdT, RefT, WorldT},
+    c_types::{IdT, RefT, WorldT},
     component_registration::ComponentInfo,
     entity::Entity,
+    IntoEntityId, IntoWorld,
 };
 
 /// A reference to a component from a specific entity.
@@ -37,7 +38,10 @@ impl<T: ComponentInfo> Ref<T> {
     ///
     /// * C++ API: `ref::ref`
     #[doc(alias = "ref::ref")]
-    pub fn new(mut world: *mut WorldT, entity: EntityT, mut id: IdT) -> Self {
+    pub fn new(world: Option<impl IntoWorld>, entity: impl IntoEntityId, mut id: IdT) -> Self {
+        let mut world = world
+            .map(|w| w.get_world_raw_mut())
+            .unwrap_or(std::ptr::null_mut());
         // the world we were called with may be a stage; convert it to a world
         // here if that is the case
         world = if !world.is_null() {
@@ -52,7 +56,7 @@ impl<T: ComponentInfo> Ref<T> {
 
         ecs_assert!(T::get_size(world) != 0, FlecsErrorCode::InvalidParameter);
 
-        let component_ref = unsafe { ecs_ref_init_id(world, entity, id) };
+        let component_ref = unsafe { ecs_ref_init_id(world, entity.get_id(), id) };
 
         Ref {
             world,

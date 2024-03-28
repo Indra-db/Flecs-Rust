@@ -11,7 +11,7 @@ use crate::sys::{
 };
 
 use super::{
-    c_types::{EntityT, IterT, TermT, WorldT, SEPARATOR},
+    c_types::{IterT, TermT, SEPARATOR},
     component_registration::ComponentInfo,
     entity::Entity,
     filter_builder::{FilterBuilder, FilterBuilderImpl},
@@ -20,7 +20,7 @@ use super::{
     observer::Observer,
     term::TermBuilder,
     world::World,
-    ObserverSystemBindingCtx,
+    IntoEntityId, ObserverSystemBindingCtx, WorldT,
 };
 
 pub struct ObserverBuilder<'a, T>
@@ -632,7 +632,8 @@ pub trait ObserverBuilderImpl: FilterBuilderImpl {
     ///
     /// * C++ API: `observer_builder_i::event`
     #[doc(alias = "observer_builder_i::event")]
-    fn add_event(&mut self, event: EntityT) -> &mut Self {
+    fn add_event(&mut self, event: impl IntoEntityId) -> &mut Self {
+        let event = event.get_id();
         let event_count = self.get_event_count() as usize;
         self.increment_event_count();
         let desc = self.get_desc_observer();

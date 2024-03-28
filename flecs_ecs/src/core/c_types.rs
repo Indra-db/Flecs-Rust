@@ -26,7 +26,7 @@ use crate::{
 
 use std::{ffi::CStr, sync::OnceLock};
 
-use super::EntityId;
+use super::{EntityId, IntoWorld};
 
 pub const RUST_ECS_ID_FLAGS_MASK: u64 = 0xFF << 60;
 pub const RUST_ECS_COMPONENT_MASK: u64 = !RUST_ECS_ID_FLAGS_MASK;
@@ -382,12 +382,12 @@ impl ComponentType<Struct> for EcsComponent {}
 impl ComponentInfo for EcsComponent {
     type UnderlyingType = EcsComponent;
     const IS_ENUM: bool = false;
-    fn register_explicit(_world: *mut WorldT) {
+    fn register_explicit(_world: impl IntoWorld) {
         //this is already registered as FLECS_IDEcsComponentID_
         Self::__get_once_lock_data().get_or_init(get_ecs_component_data);
     }
 
-    fn register_explicit_named(_world: *mut WorldT, _name: &CStr) {
+    fn register_explicit_named(_world: impl IntoWorld, _name: &CStr) {
         //this is already registered as FLECS_IDEcsComponentID_
         Self::__get_once_lock_data().get_or_init(get_ecs_component_data);
     }
@@ -396,7 +396,7 @@ impl ComponentInfo for EcsComponent {
         Self::__get_once_lock_data().get().is_some()
     }
 
-    fn is_registered_with_world(world: *mut WorldT) -> bool {
+    fn is_registered_with_world(world: impl IntoWorld) -> bool {
         if Self::is_registered() {
             //because this is always registered in the c world
             true
@@ -406,29 +406,29 @@ impl ComponentInfo for EcsComponent {
         }
     }
 
-    fn get_data(_world: *mut WorldT) -> &'static ComponentData {
+    fn get_data(_world: impl IntoWorld) -> &'static ComponentData {
         Self::__get_once_lock_data().get_or_init(get_ecs_component_data)
     }
 
-    fn get_id(_world: *mut WorldT) -> IdT {
+    fn get_id(_world: impl IntoWorld) -> IdT {
         Self::__get_once_lock_data()
             .get_or_init(get_ecs_component_data)
             .id
     }
 
-    fn get_size(_world: *mut WorldT) -> usize {
+    fn get_size(_world: impl IntoWorld) -> usize {
         Self::__get_once_lock_data()
             .get_or_init(get_ecs_component_data)
             .size
     }
 
-    fn get_alignment(_world: *mut WorldT) -> usize {
+    fn get_alignment(_world: impl IntoWorld) -> usize {
         Self::__get_once_lock_data()
             .get_or_init(get_ecs_component_data)
             .alignment
     }
 
-    fn get_allow_tag(_world: *mut WorldT) -> bool {
+    fn get_allow_tag(_world: impl IntoWorld) -> bool {
         Self::__get_once_lock_data()
             .get_or_init(get_ecs_component_data)
             .allow_tag
@@ -455,12 +455,12 @@ impl ComponentType<Struct> for Poly {}
 impl ComponentInfo for Poly {
     type UnderlyingType = Poly;
     const IS_ENUM: bool = false;
-    fn register_explicit(_world: *mut WorldT) {
+    fn register_explicit(_world: impl IntoWorld) {
         //this is already registered as FLECS_IDEcsComponentID_
         Self::__get_once_lock_data().get_or_init(get_ecs_poly_data);
     }
 
-    fn register_explicit_named(_world: *mut WorldT, _name: &CStr) {
+    fn register_explicit_named(_world: impl IntoWorld, _name: &CStr) {
         //this is already registered as FLECS_IDEcsComponentID_
         Self::__get_once_lock_data().get_or_init(get_ecs_poly_data);
     }
@@ -469,7 +469,7 @@ impl ComponentInfo for Poly {
         Self::__get_once_lock_data().get().is_some()
     }
 
-    fn is_registered_with_world(world: *mut WorldT) -> bool {
+    fn is_registered_with_world(world: impl IntoWorld) -> bool {
         if Self::is_registered() {
             //because this is always registered in the c world
             true
@@ -479,29 +479,29 @@ impl ComponentInfo for Poly {
         }
     }
 
-    fn get_data(_world: *mut WorldT) -> &'static ComponentData {
+    fn get_data(_world: impl IntoWorld) -> &'static ComponentData {
         Self::__get_once_lock_data().get_or_init(get_ecs_poly_data)
     }
 
-    fn get_id(_world: *mut WorldT) -> IdT {
+    fn get_id(_world: impl IntoWorld) -> IdT {
         Self::__get_once_lock_data()
             .get_or_init(get_ecs_poly_data)
             .id
     }
 
-    fn get_size(_world: *mut WorldT) -> usize {
+    fn get_size(_world: impl IntoWorld) -> usize {
         Self::__get_once_lock_data()
             .get_or_init(get_ecs_poly_data)
             .size
     }
 
-    fn get_alignment(_world: *mut WorldT) -> usize {
+    fn get_alignment(_world: impl IntoWorld) -> usize {
         Self::__get_once_lock_data()
             .get_or_init(get_ecs_poly_data)
             .alignment
     }
 
-    fn get_allow_tag(_world: *mut WorldT) -> bool {
+    fn get_allow_tag(_world: impl IntoWorld) -> bool {
         Self::__get_once_lock_data()
             .get_or_init(get_ecs_poly_data)
             .allow_tag
@@ -527,11 +527,11 @@ impl ComponentInfo for Poly {
 impl ComponentInfo for TickSource {
     type UnderlyingType = TickSource;
     const IS_ENUM: bool = false;
-    fn register_explicit(world: *mut WorldT) {
+    fn register_explicit(world: impl IntoWorld) {
         try_register_struct_component::<Self>(world);
     }
 
-    fn register_explicit_named(world: *mut WorldT, name: &CStr) {
+    fn register_explicit_named(world: impl IntoWorld, name: &CStr) {
         try_register_struct_component_named::<Self>(world, name);
     }
 
@@ -539,31 +539,31 @@ impl ComponentInfo for TickSource {
         Self::__get_once_lock_data().get().is_some()
     }
 
-    fn get_data(world: *mut WorldT) -> &'static ComponentData {
+    fn get_data(world: impl IntoWorld) -> &'static ComponentData {
         try_register_struct_component::<Self>(world);
         //this is safe because we checked if the component is registered / registered it
         unsafe { Self::get_data_unchecked() }
     }
 
-    fn get_id(world: *mut WorldT) -> IdT {
+    fn get_id(world: impl IntoWorld) -> IdT {
         try_register_struct_component::<Self>(world);
         //this is safe because we checked if the component is registered / registered it
         unsafe { Self::get_id_unchecked() }
     }
 
-    fn get_size(world: *mut WorldT) -> usize {
+    fn get_size(world: impl IntoWorld) -> usize {
         try_register_struct_component::<Self>(world);
         //this is safe because we checked if the component is registered / registered it
         unsafe { Self::get_size_unchecked() }
     }
 
-    fn get_alignment(world: *mut WorldT) -> usize {
+    fn get_alignment(world: impl IntoWorld) -> usize {
         try_register_struct_component::<Self>(world);
         //this is safe because we checked if the component is registered / registered it
         unsafe { Self::get_alignment_unchecked() }
     }
 
-    fn get_allow_tag(world: *mut WorldT) -> bool {
+    fn get_allow_tag(world: impl IntoWorld) -> bool {
         try_register_struct_component::<Self>(world);
         //this is safe because we checked if the component is registered / registered it
         unsafe { Self::get_allow_tag_unchecked() }
@@ -592,11 +592,11 @@ impl ComponentInfo for EntityId {
     type UnderlyingType = EntityId;
     const IS_ENUM: bool = false;
 
-    fn register_explicit(_world: *mut WorldT) {
+    fn register_explicit(_world: impl IntoWorld) {
         // already registered by flecs_c
     }
 
-    fn register_explicit_named(_world: *mut WorldT, _name: &CStr) {
+    fn register_explicit_named(_world: impl IntoWorld, _name: &CStr) {
         // already registered by flecs_c
     }
 
@@ -604,27 +604,27 @@ impl ComponentInfo for EntityId {
         true
     }
 
-    fn get_data(_world: *mut WorldT) -> &'static ComponentData {
+    fn get_data(_world: impl IntoWorld) -> &'static ComponentData {
         //this is safe because it's already registered in flecs_c/ world
         unsafe { Self::get_data_unchecked() }
     }
 
-    fn get_id(_world: *mut WorldT) -> IdT {
+    fn get_id(_world: impl IntoWorld) -> IdT {
         //this is safe because it's already registered in flecs_c / world
         unsafe { Self::get_id_unchecked() }
     }
 
-    fn get_size(_world: *mut WorldT) -> usize {
+    fn get_size(_world: impl IntoWorld) -> usize {
         //this is safe because it's already registered in flecs_c / world
         unsafe { Self::get_size_unchecked() }
     }
 
-    fn get_alignment(_world: *mut WorldT) -> usize {
+    fn get_alignment(_world: impl IntoWorld) -> usize {
         //this is safe because it's already registered in flecs_c / world
         unsafe { Self::get_alignment_unchecked() }
     }
 
-    fn get_allow_tag(_world: *mut WorldT) -> bool {
+    fn get_allow_tag(_world: impl IntoWorld) -> bool {
         //this is safe because it's already registered in flecs_c
         unsafe { Self::get_allow_tag_unchecked() }
     }

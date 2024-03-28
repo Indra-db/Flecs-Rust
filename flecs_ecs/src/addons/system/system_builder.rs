@@ -261,9 +261,9 @@ where
     ///
     /// * C++ API: `system_builder_i::rate`
     #[doc(alias = "system_builder_i::rate")]
-    pub fn rate_w_tick_source(&mut self, tick_source: EntityT, rate: i32) -> &mut Self {
+    pub fn rate_w_tick_source(&mut self, tick_source: impl IntoEntityId, rate: i32) -> &mut Self {
         self.desc.rate = rate;
-        self.desc.tick_source = tick_source;
+        self.desc.tick_source = tick_source.get_id();
         self
     }
 
@@ -296,8 +296,8 @@ where
     ///
     /// * C++ API: `system_builder_i::tick_source`
     #[doc(alias = "system_builder_i::tick_source")]
-    pub fn tick_source_id(&mut self, tick_source: EntityT) -> &mut Self {
-        self.desc.tick_source = tick_source;
+    pub fn tick_source_id(&mut self, tick_source: impl IntoEntityId) -> &mut Self {
+        self.desc.tick_source = tick_source.get_id();
         self
     }
 

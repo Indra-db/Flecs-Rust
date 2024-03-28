@@ -6,7 +6,7 @@ use std::{
 use crate::sys::{ecs_event_desc_t, FLECS_EVENT_DESC_MAX};
 
 use super::{
-    c_types::{EntityT, IdT, TypeT},
+    c_types::{IdT, TypeT},
     component_registration::ComponentInfo,
     event::{EventBuilderImpl, EventData},
     world::World,
@@ -110,7 +110,7 @@ impl<'a, T: EventData + ComponentInfo> EventBuilderTyped<'a, T> {
     ///
     /// * C++ API: `event_builder_typed::event_builder_typed`
     #[doc(alias = "event_builder_typed::event_builder_typed")]
-    pub fn new(world: &World, event: EntityT) -> Self {
+    pub fn new(world: &World, event: impl IntoEntityId) -> Self {
         Self {
             builder: EventBuilder::new(world, event),
             _phantom: std::marker::PhantomData,

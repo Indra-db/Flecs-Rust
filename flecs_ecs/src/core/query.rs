@@ -24,9 +24,9 @@ use super::{
     filter::FilterView,
     iter::Iter,
     iterable::Iterable,
-    term::{Term, TermType},
+    term::Term,
     world::World,
-    FlecsErrorCode,
+    FlecsErrorCode, IntoEntityId,
 };
 
 /// Cached query implementation. Fast to iterate, but slower to create than `Filters`
@@ -153,8 +153,8 @@ where
     ///
     /// * C++ API: `query_base::get_group_info`
     #[doc(alias = "query_base::get_group_info")]
-    pub fn get_group_info(&self, group_id: u64) -> *const QueryGroupInfoT {
-        unsafe { ecs_query_get_group_info(self.query, group_id) }
+    pub fn get_group_info(&self, group_id: impl IntoEntityId) -> *const QueryGroupInfoT {
+        unsafe { ecs_query_get_group_info(self.query, group_id.get_id()) }
     }
 
     /// Get context for group
@@ -171,7 +171,7 @@ where
     ///
     /// * C++ API: `query_base::group_ctx`
     #[doc(alias = "query_base::group_ctx")]
-    pub fn get_group_context(&self, group_id: u64) -> *mut c_void {
+    pub fn get_group_context(&self, group_id: impl IntoEntityId) -> *mut c_void {
         let group_info = self.get_group_info(group_id);
 
         if !group_info.is_null() {
@@ -212,10 +212,9 @@ where
             FlecsErrorCode::InvalidParameter,
             "query filter is null"
         );
-        Term::new(
-            Some(&self.world),
-            TermType::Term(unsafe { *(*filter).terms.add(index as usize) }),
-        )
+        Term::new_from_term(Some(&self.world), unsafe {
+            *(*filter).terms.add(index as usize)
+        })
     }
 
     /// Get the number of terms in the filter of the query

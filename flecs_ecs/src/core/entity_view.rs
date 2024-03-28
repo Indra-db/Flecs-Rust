@@ -1588,7 +1588,7 @@ impl EntityView {
     pub fn emit_id(&self, event: impl IntoEntityId) {
         self.get_world()
             .event_id(event)
-            .set_entity_to_emit(&self.to_entity())
+            .set_entity_to_emit(self.to_entity())
             .emit();
     }
 
@@ -1619,7 +1619,7 @@ impl EntityView {
     pub fn emit_payload<T: EventData + NotEmptyComponent>(&self, payload: &mut T) {
         self.get_world()
             .event::<T>()
-            .set_entity_to_emit(&self.to_entity())
+            .set_entity_to_emit(self.to_entity())
             .set_event_data(payload)
             .emit();
     }
@@ -1637,7 +1637,7 @@ impl EntityView {
     pub fn enqueue_id(&self, event: impl IntoEntityId) {
         self.get_world()
             .event_id(event)
-            .set_entity_to_emit(&self.to_entity())
+            .set_entity_to_emit(self.to_entity())
             .enqueue();
     }
 
@@ -1668,7 +1668,7 @@ impl EntityView {
     pub fn enqueue_payload<T: EventData + NotEmptyComponent>(&self, payload: &mut T) {
         self.get_world()
             .event::<T>()
-            .set_entity_to_emit(&self.to_entity())
+            .set_entity_to_emit(self.to_entity())
             .set_event_data(payload)
             .enqueue();
     }

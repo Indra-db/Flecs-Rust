@@ -1526,7 +1526,7 @@ impl World {
     #[inline(always)]
     pub fn add<T: IntoComponentId>(&self) -> Entity {
         if T::IS_PAIR {
-            let first_id = T::First::get_id(self.raw_world);
+            let first_id = <T::First as ComponentInfo>::get_id(self.raw_world);
             Entity::new_from_existing_raw(self.raw_world, first_id).add::<T>()
         } else {
             let id = T::get_id(self.raw_world);
@@ -1666,7 +1666,7 @@ impl World {
     #[inline(always)]
     pub fn remove<T: IntoComponentId>(&self) {
         if T::IS_PAIR {
-            let first_id = T::First::get_id(self.raw_world);
+            let first_id = <T::First as ComponentInfo>::get_id(self.raw_world);
             Entity::new_from_existing_raw(self.raw_world, first_id).remove::<T>();
         } else {
             Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world)).remove::<T>();
@@ -2972,31 +2972,8 @@ impl World {
     ///
     /// * C++ API: `world::term`
     #[doc(alias = "world::term")]
-    pub fn term_component<T: ComponentInfo>(&self) -> Term {
-        Term::new_component::<T>(Some(self))
-    }
-
-    /// Creates a term for a pair of (component) types.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First` - The first component type.
-    /// * `Second` - The second component type.
-    ///
-    /// # Returns
-    ///
-    /// The term for the pair of component types.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::term`
-    #[doc(alias = "world::term")]
-    pub fn term_pair<First, Second>(&self) -> Term
-    where
-        First: ComponentInfo,
-        Second: ComponentInfo,
-    {
-        Term::new_pair::<First, Second>(Some(self))
+    pub fn term<T: IntoComponentId>(&self) -> Term {
+        Term::new_type::<T>(Some(self))
     }
 }
 

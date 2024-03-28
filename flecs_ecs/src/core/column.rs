@@ -35,7 +35,7 @@ where
     ///
     /// * C++ API: `column::column`
     #[doc(alias = "column::column")]
-    pub fn new_from_array(array: *const T, count: usize, is_shared: bool) -> Self {
+    pub(crate) fn new_from_array(array: *const T, count: usize, is_shared: bool) -> Self {
         Self {
             slice_components: unsafe { std::slice::from_raw_parts_mut(array as *mut T, count) },
             is_shared,
@@ -116,7 +116,7 @@ pub struct UntypedColumn {
 ///
 /// * C++ API: `untyped_column::untyped_column`
 impl UntypedColumn {
-    pub fn new(array: *mut c_void, size: usize, count: usize, is_shared: bool) -> Self {
+    pub(crate) fn new(array: *mut c_void, size: usize, count: usize, is_shared: bool) -> Self {
         Self {
             array,
             size,

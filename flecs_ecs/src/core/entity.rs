@@ -109,8 +109,12 @@ impl From<IdT> for Entity {
 
 impl std::fmt::Display for Entity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let name = self.get_name();
-        write!(f, "{}", name)
+        if let Some(name) = self.get_name_optional() {
+            write!(f, "{}", name)
+        } else {
+            let id = self.raw_id.to_string();
+            write!(f, "{}", id)
+        }
     }
 }
 
@@ -1765,7 +1769,7 @@ impl Entity {
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
     pub fn get_ref_component<T: ComponentInfo>(&self) -> Ref<T::UnderlyingType> {
-        Ref::<T::UnderlyingType>::new(self.world, self.raw_id, T::get_id(self.world))
+        Ref::<T::UnderlyingType>::new(Some(self.world), self.raw_id, T::get_id(self.world))
     }
 
     /// Get a reference to the first component of pair
@@ -1794,7 +1798,7 @@ impl Entity {
         second: impl IntoEntityId,
     ) -> Ref<First> {
         Ref::<First>::new(
-            self.world,
+            Some(self.world),
             self.raw_id,
             ecs_pair(First::get_id(self.world), second.get_id()),
         )
@@ -1826,7 +1830,7 @@ impl Entity {
         first: impl IntoEntityId,
     ) -> Ref<Second> {
         Ref::<Second>::new(
-            self.world,
+            Some(self.world),
             self.raw_id,
             ecs_pair(first.get_id(), Second::get_id(self.world)),
         )
