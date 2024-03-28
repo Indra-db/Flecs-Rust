@@ -217,16 +217,19 @@ fn impl_cached_component_data_struct(
 
         impl flecs_ecs::core::ComponentInfo for #name {
             type UnderlyingType = #name;
+            const IS_ENUM: bool = false;
             #cached_component_data_impl
         }
 
         impl flecs_ecs::core::ComponentInfo for &#name {
             type UnderlyingType = #name;
+            const IS_ENUM: bool = false;
             #cached_component_data_impl_ref
         }
 
         impl flecs_ecs::core::ComponentInfo for &mut #name {
             type UnderlyingType = #name;
+            const IS_ENUM: bool = false;
             #cached_component_data_impl_ref
         }
     };
@@ -461,6 +464,7 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
 
         impl flecs_ecs::core::ComponentInfo for #name {
             type UnderlyingType = #name;
+            const IS_ENUM: bool = true;
             #cached_component_data_impl
         }
 

@@ -56,43 +56,43 @@ fn main() {
     // Create npc's in world cell 0_0
     world
         .new_entity()
-        .add_pair::<WorldCell, Cell_0_0>()
+        .add::<(WorldCell, Cell_0_0)>()
         .add::<Merchant>()
         .add::<Npc>();
     world
         .new_entity()
-        .add_pair::<WorldCell, Cell_0_0>()
+        .add::<(WorldCell, Cell_0_0)>()
         .add::<Merchant>()
         .add::<Npc>();
 
     // Create npc's in world cell 0_1
     world
         .new_entity()
-        .add_pair::<WorldCell, Cell_0_1>()
+        .add::<(WorldCell, Cell_0_1)>()
         .add::<Beggar>()
         .add::<Npc>();
     world
         .new_entity()
-        .add_pair::<WorldCell, Cell_0_1>()
+        .add::<(WorldCell, Cell_0_1)>()
         .add::<Soldier>()
         .add::<Npc>();
 
     // Create npc's in world cell 1_0
     world
         .new_entity()
-        .add_pair::<WorldCell, Cell_1_0>()
+        .add::<(WorldCell, Cell_1_0)>()
         .add::<Mage>()
         .add::<Npc>();
     world
         .new_entity()
-        .add_pair::<WorldCell, Cell_1_0>()
+        .add::<(WorldCell, Cell_1_0)>()
         .add::<Beggar>()
         .add::<Npc>();
 
     // Create npc's in world cell 1_1
     world
         .new_entity()
-        .add_pair::<WorldCell, Cell_1_1>()
+        .add::<(WorldCell, Cell_1_1)>()
         .add::<Soldier>()
         .add::<Npc>();
 
@@ -105,7 +105,7 @@ fn main() {
     println!("All tables");
 
     query.iter_only(|iter| {
-        let group: Entity = world.new_entity_w_id(iter.get_group_id());
+        let group: Entity = world.new_entity_from_id(iter.get_group_id());
         println!(
             "group: {:?} - Table [{}]",
             group.get_hierarchy_path().unwrap(),

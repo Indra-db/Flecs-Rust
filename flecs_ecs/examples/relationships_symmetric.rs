@@ -17,16 +17,16 @@ fn main() {
 
     // Add (TradesWith, player_2) to player_1. This also adds
     // (TradesWith, player_1) to player_2.
-    player_1.add_pair_second_id::<TradesWith>(player_2.into());
+    player_1.add_pair_first::<TradesWith>(player_2);
 
     // Log platoon of unit
     println!(
         "Player 1 trades with Player 2: {}",
-        player_1.has_pair_first::<TradesWith>(player_2.into())
+        player_1.has_pair_first::<TradesWith>(player_2)
     ); // true
     println!(
         "Player 2 trades with Player 1: {}",
-        player_2.has_pair_first::<TradesWith>(player_1.into())
+        player_2.has_pair_first::<TradesWith>(player_1)
     ); // true
 
     // Output:

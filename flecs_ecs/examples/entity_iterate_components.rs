@@ -44,7 +44,7 @@ fn main() {
         .set(Position { x: 10.0, y: 20.0 })
         .set(Velocity { x: 1.0, y: 1.0 })
         .add::<Human>()
-        .add_pair::<Eats, Apples>();
+        .add::<(Eats, Apples)>();
 
     println!("Bob's components:");
     iterate_components(bob);

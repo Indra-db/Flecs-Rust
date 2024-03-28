@@ -19,7 +19,7 @@ use crate::{
 use super::{
     super::c_types::RUST_ECS_COMPONENT_MASK,
     traits::{InOutType, OperType},
-    IntoEntityId,
+    IntoEntityId, IntoEntityIdExt,
 };
 
 /// Combines two 32 bit integers into a 64 bit integer.
@@ -48,13 +48,13 @@ pub fn ecs_entity_t_comb(lo: u64, hi: u64) -> u64 {
 ///
 /// The combined 64 bit integer with the `ECS_PAIR` flag set.
 #[inline(always)]
-pub fn ecs_pair(pred: u64, obj: u64) -> u64 {
-    ECS_PAIR | ecs_entity_t_comb(obj, pred)
+pub fn ecs_pair(pred: impl IntoEntityId, obj: impl IntoEntityId) -> u64 {
+    ECS_PAIR | ecs_entity_t_comb(obj.get_id(), pred.get_id())
 }
 
 /// Checks if given entity is a pair
-pub fn ecs_is_pair(entity: EntityT) -> bool {
-    entity & RUST_ECS_ID_FLAGS_MASK == ECS_PAIR
+pub fn ecs_is_pair(entity: impl IntoEntityId) -> bool {
+    entity.get_id() & RUST_ECS_ID_FLAGS_MASK == ECS_PAIR
 }
 
 /// Set the `ECS_DEPENDS_ON` flag for the given entity.
@@ -67,8 +67,8 @@ pub fn ecs_is_pair(entity: EntityT) -> bool {
 ///
 /// The entity with the `ECS_DEPENDS_ON` flag set.
 #[inline(always)]
-pub fn ecs_dependson(entity: EntityT) -> EntityT {
-    ecs_pair(ECS_DEPENDS_ON, entity)
+pub fn ecs_dependson(entity: impl IntoEntityId) -> EntityT {
+    ecs_pair(ECS_DEPENDS_ON, entity.get_id())
 }
 
 /// Returns true if the entity has the given pair.
@@ -259,13 +259,20 @@ pub fn ecs_record_to_row(row: u32) -> i32 {
 /// * `entity`: The ID of the entity.
 /// * `value`: The value to set for the component.
 /// * `id`: The ID of the component type.
-pub(crate) fn set_helper<T: ComponentInfo>(world: *mut WorldT, entity: EntityT, value: T, id: IdT) {
+pub(crate) fn set_helper<T: ComponentInfo>(
+    world: *mut WorldT,
+    entity: impl IntoEntityId,
+    value: T,
+    id: impl IntoEntityIdExt,
+) {
     ecs_assert!(
         T::get_size(world) != 0,
         FlecsErrorCode::InvalidParameter,
         "invalid type: {}",
         T::get_symbol_name()
     );
+    let entity = entity.get_id();
+    let id = id.get_id_ext();
     unsafe {
         if !ecs_is_deferred(world) {
             let comp = ecs_get_mut_id(world, entity, id) as *mut T;

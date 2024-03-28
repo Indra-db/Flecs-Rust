@@ -57,7 +57,7 @@ fn main() {
     println!();
 
     // Check if the entity has the Tile relationship and the Tile::Stone pair
-    println!("has tile enum: {}", tile.has_enum::<Tile>()); // true
+    println!("has tile enum: {}", tile.has::<Tile>()); // true
     println!(
         "is the enum from tile stone?: {}",
         tile.has_enum_constant(Tile::Stone)
@@ -117,7 +117,7 @@ fn main() {
     println!();
 
     // Remove any instance of the TileStatus relationship
-    tile.remove_enum::<TileStatus>();
+    tile.remove::<TileStatus>();
 
     // (Tile, Tile.Stone)
     println!("{:?}", tile.get_archetype());

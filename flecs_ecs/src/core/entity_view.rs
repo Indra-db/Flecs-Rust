@@ -37,8 +37,9 @@ use super::{
     id::Id,
     table::{Table, TableRange},
     world::World,
-    EmptyComponent, EventBuilderImpl, EventData, IntoEntityId, IntoEntityIdExt, IntoWorld, IterT,
-    NotEmptyComponent, ObserverEntityBindingCtx, ECS_ANY, ECS_CHILD_OF, ECS_WILDCARD,
+    EmptyComponent, EventBuilderImpl, EventData, IntoComponentId, IntoEntityId, IntoEntityIdExt,
+    IntoWorld, IterT, NotEmptyComponent, ObserverEntityBindingCtx, ECS_ANY, ECS_CHILD_OF,
+    ECS_WILDCARD,
 };
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -128,7 +129,7 @@ impl EntityView {
         }
     }
 
-    /// Explicit conversion from `EntityT` to `EntityView`.
+    /// Construct an EntityView from an existing entity id.
     ///
     /// # See also
     ///
@@ -349,7 +350,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    pub fn is_enabled(&self) -> bool {
+    pub fn is_enabled_self(&self) -> bool {
         unsafe { !ecs_has_id(self.world, self.raw_id, EcsDisabled) }
     }
 
@@ -911,7 +912,7 @@ impl EntityView {
         self.get_pair_second_id(First::get_id(self.world))
     }
 
-    /// Get component value as untyped pointer
+    /// Get component value or pair as untyped pointer
     ///
     /// # Arguments
     ///
@@ -925,36 +926,8 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get_untyped(&self, component_id: impl IntoEntityId) -> *const c_void {
-        unsafe { ecs_get_id(self.world, self.raw_id, component_id.get_id()) }
-    }
-
-    /// get a pair as untyped pointer
-    /// This operation gets the value for a pair from the entity. If neither the
-    /// first nor the second part of the pair are components, the operation
-    /// will fail.
-    ///
-    /// # Arguments
-    ///
-    /// * `first` - The first element of the pair
-    /// * `second` - The second element of the pair
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
-    pub fn get_untyped_pair(
-        &self,
-        first: impl IntoEntityId,
-        second: impl IntoEntityId,
-    ) -> *const c_void {
-        unsafe {
-            ecs_get_id(
-                self.world,
-                self.raw_id,
-                ecs_pair(first.get_id(), second.get_id()),
-            )
-        }
+    pub fn get_untyped(&self, component_id: impl IntoEntityIdExt) -> *const c_void {
+        unsafe { ecs_get_id(self.world, self.raw_id, component_id.get_id_ext()) }
     }
 
     /// Get target for a given pair.
@@ -1068,42 +1041,10 @@ impl EntityView {
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target")]
     #[inline(always)]
-    pub fn get_target_for<T: ComponentInfo>(&self, relationship: impl IntoEntityId) -> Entity {
+    pub fn get_target_for<T: IntoComponentId>(&self, relationship: impl IntoEntityId) -> Entity {
         self.get_target_for_id(relationship, T::get_id(self.world))
     }
 
-    /// Get the target for a given pair of components and a relationship.
-    ///
-    /// This function extends `get_target`, allowing callers to provide two component types.
-    /// It retrieves the target entity for the combined pair of those component ids.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First` - The first component type to use for deriving the id.
-    /// * `Second` - The second component type to use for deriving the id.
-    ///
-    /// # Arguments
-    ///
-    /// * `relationship` - The relationship to follow.
-    ///
-    /// # Returns
-    ///
-    /// * The entity for which the target `get_has` been found.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::target`
-    #[doc(alias = "entity_view::target")]
-    #[inline(always)]
-    pub fn get_target_for_pair<First: ComponentInfo, Second: ComponentInfo>(
-        &self,
-        relationship: impl IntoEntityId,
-    ) -> Entity {
-        self.get_target_for_id(
-            relationship,
-            ecs_pair(First::get_id(self.world), Second::get_id(self.world)),
-        )
-    }
     // TODO this needs a better name and documentation, the rest of the cpp functions still have to be done as well
     // TODO, I removed the second template parameter and changed the fn parameter second to entityT, check validity
     /// Get the target for a given pair of components and a relationship.
@@ -1195,8 +1136,7 @@ impl EntityView {
     #[doc(alias = "entity_view::parent")]
     #[inline(always)]
     pub fn get_parent(&self) -> Entity {
-        let entity: Entity = ECS_CHILD_OF.into();
-        self.get_target_from_entity(entity, 0)
+        self.get_target_from_entity(ECS_CHILD_OF, 0)
     }
 
     /// Lookup an entity by name.
@@ -1275,29 +1215,13 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    pub fn has<T: ComponentInfo + ComponentType<Struct>>(&self) -> bool {
-        unsafe { ecs_has_id(self.world, self.raw_id, T::get_id(self.world)) }
-    }
-
-    /// Check if entity has the provided enum component.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The component to check.
-    ///
-    /// # Returns
-    ///
-    /// True if the entity has the provided component, false otherwise.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::has`
-    #[doc(alias = "entity_view::has")]
-    pub fn has_enum<T: ComponentInfo + ComponentType<Enum>>(&self) -> bool {
-        let component_id: IdT = T::get_id(self.world);
-        ecs_has_pair(self.world, self.raw_id, component_id, unsafe {
-            EcsWildcard
-        })
+    pub fn has<T: IntoComponentId>(&self) -> bool {
+        if !T::IS_ENUM {
+            unsafe { ecs_has_id(self.world, self.raw_id, T::get_id(self.world)) }
+        } else {
+            let component_id = T::get_id(self.world);
+            self.has_id((component_id, ECS_WILDCARD))
+        }
     }
 
     /// Check if entity has the provided enum constant.
@@ -1325,36 +1249,7 @@ impl EntityView {
         let component_id: IdT = T::get_id(self.world);
         // Safety: we know the enum fields are registered because of the previous T::get_id call
         let enum_constant_entity_id: IdT = constant.get_entity_id_from_enum_field(self.world);
-        ecs_has_pair(
-            self.world,
-            self.raw_id,
-            component_id,
-            enum_constant_entity_id,
-        )
-    }
-
-    /// Check if entity has the provided pair.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The first element of the pair.
-    /// * `U` - The second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// True if the entity has the provided component, false otherwise.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::has`
-    #[doc(alias = "entity_view::has")]
-    pub fn has_pair<T: ComponentInfo, U: ComponentInfo>(&self) -> bool {
-        ecs_has_pair(
-            self.world,
-            self.raw_id,
-            T::get_id(self.world),
-            U::get_id(self.world),
-        )
+        self.has_id((component_id, enum_constant_entity_id))
     }
 
     /// Check if entity has the provided pair.
@@ -1376,31 +1271,7 @@ impl EntityView {
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
     pub fn has_pair_first<First: ComponentInfo>(&self, second: impl IntoEntityId) -> bool {
-        ecs_has_pair(
-            self.world,
-            self.raw_id,
-            First::get_id(self.world),
-            second.get_id(),
-        )
-    }
-
-    /// Check if entity has the provided pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first` - The first element of the pair.
-    /// * `second` - The second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// True if the entity has the provided component, false otherwise.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::has`
-    #[doc(alias = "entity_view::has")]
-    pub fn has_pair_ids(&self, first: impl IntoEntityId, second: impl IntoEntityId) -> bool {
-        ecs_has_pair(self.world, self.raw_id, first.get_id(), second.get_id())
+        self.has_id((First::get_id(self.world), second.get_id()))
     }
 
     /// Check if entity has the provided pair with an enum constant.
@@ -1429,15 +1300,10 @@ impl EntityView {
         let component_id: IdT = T::get_id(self.world);
         let enum_constant_entity_id: IdT = constant.get_entity_id_from_enum_field(self.world);
 
-        ecs_has_pair(
-            self.world,
-            self.raw_id,
-            component_id,
-            enum_constant_entity_id,
-        )
+        self.has_id((component_id, enum_constant_entity_id))
     }
 
-    /// Check if the entity owns the provided entity.
+    /// Check if the entity owns the provided entity (pair, component, entity).
     /// An entity is owned if it is not shared from a base entity.
     ///
     /// # Arguments
@@ -1467,31 +1333,8 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::owns`
     #[doc(alias = "entity_view::owns")]
-    pub fn is_owner_of<T: ComponentInfo>(&self) -> bool {
+    pub fn is_owner_of<T: IntoComponentId>(&self) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, T::get_id(self.world)) }
-    }
-
-    /// Check if the entity owns the provided pair.
-    ///
-    /// # Type Parameters
-    /// - `T`: The first element of the pair.
-    /// - `U`: The second element of the pair.
-    ///
-    /// # Returns
-    /// - `true` if the entity owns the provided pair, `false` otherwise.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::owns`
-    #[doc(alias = "entity_view::owns")]
-    pub fn is_owner_of_pair<T: ComponentInfo, U: ComponentInfo>(&self) -> bool {
-        unsafe {
-            ecs_owns_id(
-                self.world,
-                self.raw_id,
-                ecs_pair(T::get_id(self.world), U::get_id(self.world)),
-            )
-        }
     }
 
     /// Test if id is enabled.
@@ -1522,25 +1365,8 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    pub fn is_enabled_component<T: ComponentInfo>(&self) -> bool {
+    pub fn is_enabled<T: IntoComponentId>(&self) -> bool {
         unsafe { ecs_is_enabled_id(self.world, self.raw_id, T::get_id(self.world)) }
-    }
-
-    /// Test if pair is enabled.
-    ///
-    /// # Type Parameters
-    /// - `T`: The first element of the pair.
-    /// - `U`: The second element of the pair.
-    ///
-    /// # Returns
-    /// - `true` if enabled, `false` if not.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::enabled`
-    #[doc(alias = "entity_view::enabled")]
-    pub fn is_enabled_pair<T: ComponentInfo, U: ComponentInfo>(&self) -> bool {
-        self.is_enabled_id((T::get_id(self.world), U::get_id(self.world)))
     }
 
     /// Test if pair is enabled.
@@ -1777,7 +1603,7 @@ impl EntityView {
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
     pub fn emit<T: EventData + EmptyComponent>(&self) {
-        self.emit_id(T::UnderlyingType::get_id(self.world));
+        self.emit_id(T::get_id(self.world));
     }
 
     /// Emit event with payload for entity.
@@ -1826,7 +1652,7 @@ impl EntityView {
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
     pub fn enqueue<T: EventData + EmptyComponent>(&self) {
-        self.enqueue_id(T::UnderlyingType::get_id(self.world));
+        self.enqueue_id(T::get_id(self.world));
     }
 
     /// enqueue event with payload for entity.
@@ -1887,7 +1713,7 @@ impl EntityView {
 
         Self::entity_observer_create(
             self.world,
-            C::UnderlyingType::get_id(self.world),
+            C::get_id(self.world),
             self.raw_id,
             binding_ctx,
             Some(Self::run_empty::<Func> as unsafe extern "C" fn(_)),
@@ -1932,7 +1758,7 @@ impl EntityView {
 
         Self::entity_observer_create(
             self.world,
-            C::UnderlyingType::get_id(self.world),
+            C::get_id(self.world),
             self.raw_id,
             binding_ctx,
             Some(Self::run_empty_entity::<Func> as unsafe extern "C" fn(_)),
@@ -1977,7 +1803,7 @@ impl EntityView {
 
         Self::entity_observer_create(
             self.world,
-            C::UnderlyingType::get_id(self.world),
+            C::get_id(self.world),
             self.raw_id,
             binding_ctx,
             Some(Self::run_payload::<C, Func> as unsafe extern "C" fn(_)),
@@ -2022,7 +1848,7 @@ impl EntityView {
 
         Self::entity_observer_create(
             self.world,
-            C::UnderlyingType::get_id(self.world),
+            C::get_id(self.world),
             self.raw_id,
             binding_ctx,
             Some(Self::run_payload_entity::<C, Func> as unsafe extern "C" fn(_)),

@@ -18,31 +18,31 @@ fn main() {
 
     let sun = world
         .new_entity_named(c"Sun")
-        .add_pair::<Position, World>()
+        .add::<(Position, World)>()
         .set_pair_first::<Position, Local>(Position { x: 1.0, y: 1.0 });
 
     world
         .new_entity_named(c"Mercury")
-        .child_of(&sun)
-        .add_pair::<Position, World>()
+        .child_of_id(&sun)
+        .add::<(Position, World)>()
         .set_pair_first::<Position, Local>(Position { x: 1.0, y: 1.0 });
 
     world
         .new_entity_named(c"Venus")
-        .child_of(&sun)
-        .add_pair::<Position, World>()
+        .child_of_id(&sun)
+        .add::<(Position, World)>()
         .set_pair_first::<Position, Local>(Position { x: 2.0, y: 2.0 });
 
     let earth = world
         .new_entity_named(c"Earth")
-        .child_of(&sun)
-        .add_pair::<Position, World>()
+        .child_of_id(&sun)
+        .add::<(Position, World)>()
         .set_pair_first::<Position, Local>(Position { x: 3.0, y: 3.0 });
 
     world
         .new_entity_named(c"Moon")
-        .child_of(&earth)
-        .add_pair::<Position, World>()
+        .child_of_id(&earth)
+        .add::<(Position, World)>()
         .set_pair_first::<Position, Local>(Position { x: 0.1, y: 0.1 });
 
     let query = world

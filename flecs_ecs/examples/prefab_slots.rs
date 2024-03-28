@@ -32,13 +32,13 @@ fn main() {
     let spaceship = world.prefab_named(c"SpaceShip");
     let engine = world
         .prefab_named(c"Engine")
-        .child_of(&spaceship)
-        .slot_of_entity(&spaceship);
+        .child_of_id(&spaceship)
+        .slot_of_id(&spaceship);
 
     let cockpit = world
         .prefab_named(c"Cockpit")
-        .child_of(&spaceship)
-        .slot_of_entity(&spaceship);
+        .child_of_id(&spaceship)
+        .slot_of_id(&spaceship);
 
     // Add an additional child to the Cockpit prefab to demonstrate how
     // slots can be different from the parent. This slot could have been
@@ -47,11 +47,11 @@ fn main() {
 
     let pilot_seat = world
         .prefab_named(c"PilotSeat")
-        .child_of(&cockpit)
-        .slot_of_entity(&spaceship);
+        .child_of_id(&cockpit)
+        .slot_of_id(&spaceship);
 
     // Create a prefab instance.
-    let inst: Entity = world.new_entity_named(c"my_spaceship").is_a(&spaceship);
+    let inst: Entity = world.new_entity_named(c"my_spaceship").is_a_id(&spaceship);
 
     // Get the instantiated entities for the prefab slots
     let inst_engine = inst.get_target_from_entity(&engine, 0);

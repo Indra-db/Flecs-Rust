@@ -18,7 +18,7 @@ use crate::{
         query_builder::{QueryBuilder, QueryBuilderImpl},
         term::{Term, TermBuilder},
         world::World,
-        ObserverSystemBindingCtx, ECS_ON_UPDATE,
+        IntoEntityId, ObserverSystemBindingCtx, ECS_ON_UPDATE,
     },
     sys::{
         ecs_add_id, ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_get_target,
@@ -163,7 +163,8 @@ where
     ///
     /// * C++ API: `system_builder_i::kind`
     #[doc(alias = "system_builder_i::kind")]
-    pub fn kind_id(&mut self, phase: EntityT) -> &mut Self {
+    pub fn kind_id(&mut self, phase: impl IntoEntityId) -> &mut Self {
+        let phase = phase.get_id();
         let current_phase: EntityT =
             unsafe { ecs_get_target(self.world.raw_world, self.desc.entity, ECS_DEPENDS_ON, 0) };
         unsafe {

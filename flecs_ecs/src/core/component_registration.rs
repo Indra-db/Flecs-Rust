@@ -64,6 +64,7 @@ pub trait ComponentType<T: ECSComponentType>: ComponentInfo {}
 /// If the ID is already known, the trait takes care of the component registration and checks for consistency in the input.
 pub trait ComponentInfo: Sized {
     type UnderlyingType: ComponentInfo + Default + Clone;
+    const IS_ENUM: bool;
 
     /// attempts to register the component with the world. If it's already registered, it does nothing.
     fn register_explicit(world: *mut WorldT);

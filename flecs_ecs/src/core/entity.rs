@@ -11,21 +11,22 @@ use crate::{
         ecs_add_id, ecs_clear, ecs_delete, ecs_enable, ecs_enable_id, ecs_entity_desc_t,
         ecs_entity_init, ecs_flatten, ecs_flatten_desc_t, ecs_get_id, ecs_get_mut_id,
         ecs_get_target, ecs_has_id, ecs_modified_id, ecs_new_id, ecs_remove_id, ecs_set_alias,
-        ecs_set_id, ecs_set_name, ecs_set_scope, ecs_set_with, EcsChildOf, EcsComponent,
-        EcsDependsOn, EcsExclusive, EcsIsA, EcsSlotOf, EcsWildcard, FLECS_IDEcsComponentID_,
+        ecs_set_id, ecs_set_name, ecs_set_scope, ecs_set_with, EcsComponent,
+        FLECS_IDEcsComponentID_,
     },
 };
 
 use super::{
-    c_types::{EntityT, IdT, WorldT, SEPARATOR},
+    c_types::{IdT, WorldT, SEPARATOR},
     component_ref::Ref,
     component_registration::{ComponentInfo, ComponentType, Enum, Struct},
     ecs_pair, ecs_pair_first, ecs_pair_second,
     enum_type::CachedEnumData,
     set_helper,
     world::World,
-    EmptyComponent, EntityView, IntoEntityId, IntoEntityIdExt, IntoWorld, NotEmptyComponent,
-    ScopedWorld, ECS_DEPENDS_ON, ECS_OVERRIDE, ECS_SLOT_OF,
+    EmptyComponent, EntityView, IntoComponentId, IntoEntityId, IntoEntityIdExt, IntoWorld,
+    NotEmptyComponent, ScopedWorld, ECS_DEPENDS_ON, ECS_EXCLUSIVE, ECS_IS_A, ECS_OVERRIDE,
+    ECS_SLOT_OF, ECS_WILDCARD,
 };
 
 #[derive(Default, Copy, Clone)]
@@ -236,6 +237,29 @@ impl Entity {
         }
     }
 
+    /// Entity id 0.
+    /// This function is useful when the API must provide an entity that
+    /// belongs to a world, but the entity id is 0.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity::null`
+    #[doc(alias = "entity::null")]
+    pub fn new_null_w_world(world: impl IntoWorld) -> Entity {
+        Entity::new_from_existing_raw(world, 0)
+    }
+
+    /// Entity id 0.
+    /// returns the default entity, which is 0 id and nullptr world
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity::null`
+    #[doc(alias = "entity::null")]
+    pub fn new_null() -> Entity {
+        Entity::default()
+    }
+
     /// Add an id to an entity.
     /// This Id can be a component, a pair, a tag or another entity.
     ///
@@ -266,30 +290,12 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    pub fn add<T: ComponentInfo>(self) -> Self {
-        let world = self.world;
-        self.add_id(T::get_id(world))
-    }
-
-    /// Add a pair.
-    /// This operation adds a pair to the entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first element of the pair
-    /// * `Second`: The second element of the pair
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add`
-    #[doc(alias = "entity_builder::add")]
-    pub fn add_pair<First, Second>(self) -> Self
+    pub fn add<T>(self) -> Self
     where
-        First: ComponentInfo,
-        Second: ComponentInfo + ComponentType<Struct>,
+        T: IntoComponentId,
     {
         let world = self.world;
-        self.add_id((First::get_id(world), Second::get_id(world)))
+        self.add_id(T::get_id(world))
     }
 
     /// Adds a pair to the entity
@@ -306,7 +312,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    pub fn add_pair_first_id<Second: ComponentInfo>(self, first: impl IntoEntityId) -> Self {
+    pub fn add_pair_second<Second: ComponentInfo>(self, first: impl IntoEntityId) -> Self {
         let world = self.world;
         self.add_id((first, Second::get_id(world)))
     }
@@ -325,7 +331,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    pub fn add_pair_second_id<First: ComponentInfo>(self, second: impl IntoEntityId) -> Self {
+    pub fn add_pair_first<First: ComponentInfo>(self, second: impl IntoEntityId) -> Self {
         let world = self.world;
         self.add_id((First::get_id(world), second))
     }
@@ -412,8 +418,8 @@ impl Entity {
                 // as the condition.
                 let first = ecs_pair_first(id.get_id_ext());
                 let mut second = ecs_pair_second(id.get_id_ext());
-                if second == 0 || unsafe { ecs_has_id(self.world, first, EcsExclusive) } {
-                    second = unsafe { EcsWildcard }
+                if second == 0 || unsafe { ecs_has_id(self.world, first, ECS_EXCLUSIVE) } {
+                    second = ECS_WILDCARD
                 }
                 return self.remove_id((first, second));
             } else {
@@ -437,34 +443,9 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::add_if`
     #[doc(alias = "entity_builder::add_if")]
-    pub fn add_if<T: ComponentInfo>(self, condition: bool) -> Self {
+    pub fn add_if<T: IntoComponentId>(self, condition: bool) -> Self {
         let world = self.world;
         self.add_id_if(T::get_id(world), condition)
-    }
-
-    /// Conditional add.
-    /// This operation adds if condition is true, removes if condition is false.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first element of the pair
-    /// * `Second`: The second element of the pair
-    ///
-    /// # Arguments
-    ///
-    /// * `condition`: The condition to evaluate.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add_if`
-    #[doc(alias = "entity_builder::add_if")]
-    pub fn add_pair_if<First, Second>(self, condition: bool) -> Self
-    where
-        First: ComponentInfo,
-        Second: ComponentInfo + ComponentType<Struct>,
-    {
-        let world = self.world;
-        self.add_id_if((First::get_id(world), Second::get_id(world)), condition)
     }
 
     /// Conditional add.
@@ -572,45 +553,15 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::remove`
     #[doc(alias = "entity_builder::remove")]
-    pub fn remove<T: ComponentInfo + ComponentType<Struct>>(self) -> Self {
+    pub fn remove<T: IntoComponentId>(self) -> Self {
         let world = self.world;
-        self.remove_id(T::get_id(world))
-    }
 
-    /// Remove pair for enum
-    /// This operation will remove any (Enum, *) pair from the entity.
-    ///
-    /// # Type Parameters
-    /// * `T` - The enum type.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::remove`
-    #[doc(alias = "entity_builder::remove")]
-    pub fn remove_enum<T: ComponentInfo + ComponentType<Enum>>(self) -> Self {
-        let world = self.world;
-        self.remove_id((T::get_id(world), unsafe { EcsWildcard }))
-    }
-
-    /// Removes a pair.
-    /// This operation removes a pair from the entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The type of the first element of the pair.
-    /// * `Second`: The type of the second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::remove`
-    #[doc(alias = "entity_builder::remove")]
-    pub fn remove_pair<First, Second>(self) -> Self
-    where
-        First: ComponentInfo,
-        Second: ComponentInfo + ComponentType<Struct>,
-    {
-        let world = self.world;
-        self.remove_id((First::get_id(world), Second::get_id(world)))
+        //this branch will be compiled away in release mode
+        if T::IS_ENUM {
+            self.remove_id((T::get_id(world), ECS_WILDCARD))
+        } else {
+            self.remove_id(T::get_id(world))
+        }
     }
 
     /// Remove a pair.
@@ -656,7 +607,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::remove_second`
     #[doc(alias = "entity_builder::remove_second")]
-    pub fn remove_pair_w_first<First: ComponentInfo>(self, second: EntityT) -> Self {
+    pub fn remove_pair_first<First: ComponentInfo>(self, second: impl IntoEntityId) -> Self {
         let world = self.world;
         self.remove_id((First::get_id(world), second))
     }
@@ -676,7 +627,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::remove_second`
     #[doc(alias = "entity_builder::remove_second")]
-    pub fn remove_pair_w_second<Second: ComponentInfo>(self, first: impl IntoEntityId) -> Self {
+    pub fn remove_pair_second<Second: ComponentInfo>(self, first: impl IntoEntityId) -> Self {
         let world = self.world;
         self.remove_id((first, Second::get_id(world)))
     }
@@ -691,8 +642,8 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::is_a`
     #[doc(alias = "entity_builder::is_a")]
-    pub fn is_a_id(self, second: EntityT) -> Self {
-        self.add_pair_ids(unsafe { EcsIsA }, second)
+    pub fn is_a_id(self, second: impl IntoEntityId) -> Self {
+        self.add_id((ECS_IS_A, second))
     }
 
     /// Shortcut for add(IsA, entity).
@@ -705,23 +656,9 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::is_a`
     #[doc(alias = "entity_builder::is_a")]
-    pub fn is_a_type<T: ComponentInfo>(self) -> Self {
+    pub fn is_a<T: ComponentInfo>(self) -> Self {
         let world = self.world;
         self.is_a_id(T::get_id(world))
-    }
-
-    /// Shortcut for add(IsA, entity).
-    ///
-    /// # Arguments
-    ///
-    /// * `parent`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::is_a`
-    #[doc(alias = "entity_builder::is_a")]
-    pub fn is_a(self, parent: impl IntoEntityId) -> Self {
-        self.is_a_id(parent)
     }
 
     /// Shortcut for add(ChildOf, entity).
@@ -819,7 +756,7 @@ impl Entity {
     #[doc(alias = "entity_builder::slot")]
     pub fn slot_child(self) -> Self {
         ecs_assert!(
-            unsafe { ecs_get_target(self.world, self.raw_id, EcsChildOf, 0) } != 0,
+            unsafe { ecs_get_target(self.world, self.raw_id, ECS_CHILD_OF, 0) } != 0,
             FlecsErrorCode::InvalidParameter,
             "add ChildOf pair before using slot()"
         );
@@ -855,29 +792,9 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn override_type<T: ComponentInfo>(self) -> Self {
+    pub fn override_type<T: IntoComponentId>(self) -> Self {
         let world = self.world;
         self.override_id(T::get_id(world))
-    }
-
-    /// Mark pair for auto-overriding.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first element of the pair.
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::override`
-    #[doc(alias = "entity_builder::override")]
-    pub fn override_pair<First, Second>(self) -> Self
-    where
-        First: ComponentInfo,
-        Second: ComponentInfo,
-    {
-        let world = self.world;
-        self.override_id((First::get_id(world), Second::get_id(world)))
     }
 
     /// Mark pair for auto-overriding with a given second ID.
@@ -974,8 +891,7 @@ impl Entity {
     where
         First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {
-        let secondref = &second;
-        self.override_pair_first::<First>(secondref)
+        self.override_pair_first::<First>(&second)
             .set_pair_first_id(first, second)
     }
 
@@ -994,12 +910,13 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
-    pub fn set_override_pair_second<Second>(self, second: Second, first: EntityT) -> Self
+    pub fn set_override_pair_second<Second>(self, second: Second, first: impl IntoEntityId) -> Self
     where
         Second: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {
-        self.override_pair_first::<Second>(first)
-            .set_pair_first_id(first, second)
+        let first = first.get_id();
+        self.override_pair_second::<Second>(first)
+            .set_pair_second_id(second, first)
     }
 
     /// Sets a component of type `T` on the entity.
@@ -1040,7 +957,7 @@ impl Entity {
             self.world,
             self.raw_id,
             first,
-            ecs_pair(First::get_id(self.world), second),
+            (First::get_id(self.world), second),
         );
         self
     }
@@ -1071,7 +988,7 @@ impl Entity {
             self.world,
             self.raw_id,
             first,
-            ecs_pair(First::get_id(self.world), Second::get_id(self.world)),
+            (First::get_id(self.world), Second::get_id(self.world)),
         );
         self
     }
@@ -1091,7 +1008,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::set_second`
     #[doc(alias = "entity_builder::set_second")]
-    pub fn set_pair_second_id<Second>(self, first: EntityT, second: Second) -> Self
+    pub fn set_pair_second_id<Second>(self, second: Second, first: impl IntoEntityId) -> Self
     where
         Second: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1099,7 +1016,7 @@ impl Entity {
             self.world,
             self.raw_id,
             second,
-            ecs_pair(first, Second::get_id(self.world)),
+            (first, Second::get_id(self.world)),
         );
         self
     }
@@ -1185,8 +1102,8 @@ impl Entity {
     /// * C++ API: `entity_builder::set_ptr`
     #[doc(alias = "entity_builder::set_ptr")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn set_ptr_w_size(self, component_id: EntityT, size: usize, ptr: *const c_void) -> Self {
-        unsafe { ecs_set_id(self.world, self.raw_id, component_id, size, ptr) };
+    pub fn set_ptr_w_size(self, id: impl IntoEntityId, size: usize, ptr: *const c_void) -> Self {
+        unsafe { ecs_set_id(self.world, self.raw_id, id.get_id(), size, ptr) };
         self
     }
 
@@ -1202,19 +1119,19 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::set_ptr`
     #[doc(alias = "entity_builder::set_ptr")]
-    pub fn set_ptr(self, component_id: EntityT, ptr: *const c_void) -> Self {
+    pub fn set_ptr(self, id: impl IntoEntityId, ptr: *const c_void) -> Self {
+        let id = id.get_id();
         let cptr: *const EcsComponent =
-            unsafe { ecs_get_id(self.world, component_id, FLECS_IDEcsComponentID_) }
-                as *const EcsComponent;
+            unsafe { ecs_get_id(self.world, id, FLECS_IDEcsComponentID_) } as *const EcsComponent;
 
         ecs_assert!(
             !cptr.is_null(),
             FlecsErrorCode::InvalidParameter,
             "invalid component id: {:?}",
-            component_id
+            id
         );
 
-        self.set_ptr_w_size(component_id, unsafe { (*cptr).size } as usize, ptr)
+        self.set_ptr_w_size(id, unsafe { (*cptr).size } as usize, ptr)
     }
 
     /// Sets the name of the entity.
@@ -1251,7 +1168,7 @@ impl Entity {
         self
     }
 
-    /// Enables an entity.
+    /// Enables itself (the entity).
     ///
     /// Enabled entities are matched with systems and can be searched with queries.
     ///
@@ -1259,11 +1176,11 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::enable`
     #[doc(alias = "entity_builder::enable")]
-    pub fn enable(self) -> Self {
+    pub fn enable_self(self) -> Self {
         unsafe { ecs_enable(self.world, self.raw_id, true) }
         self
     }
-    /// Enables an ID.
+    /// Enables an ID which represents a component or pair.
     ///
     /// This sets the enabled bit for this component. If this is the first time the component is
     /// enabled or disabled, the bitset is added.
@@ -1277,12 +1194,12 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::enable`
     #[doc(alias = "entity_builder::enable")]
-    pub fn enable_component_id(self, component_id: IdT) -> Self {
-        unsafe { ecs_enable_id(self.world, self.raw_id, component_id, true) }
+    pub fn enable_id(self, id: impl IntoEntityIdExt) -> Self {
+        unsafe { ecs_enable_id(self.world, self.raw_id, id.get_id_ext(), true) }
         self
     }
 
-    /// Enables a component.
+    /// Enables a component or pair.
     ///
     /// # Type Parameters
     ///
@@ -1292,44 +1209,9 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::enable`
     #[doc(alias = "entity_builder::enable")]
-    pub fn enable_component<T: ComponentInfo>(self) -> Self {
+    pub fn enable<T: IntoComponentId>(self) -> Self {
         let world = self.world;
-        self.enable_component_id(T::get_id(world))
-    }
-
-    /// Enables a pair using IDs.
-    ///
-    /// # Arguments
-    ///
-    /// - `first`: The first element of the pair.
-    /// - `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::enable`
-    #[doc(alias = "entity_builder::enable")]
-    pub fn enable_pair_ids(self, first: EntityT, second: EntityT) -> Self {
-        self.enable_component_id(ecs_pair(first, second))
-    }
-
-    /// Enables a pair.
-    ///
-    /// # Type Parameters
-    ///
-    /// - `T`: The first element of the pair.
-    /// - `U`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::enable`
-    #[doc(alias = "entity_builder::enable")]
-    pub fn enable_pair<First, Second>(self) -> Self
-    where
-        First: ComponentInfo,
-        Second: ComponentInfo,
-    {
-        let world = self.world;
-        self.enable_pair_ids(First::get_id(world), Second::get_id(world))
+        self.enable_id(T::get_id(world))
     }
 
     /// Enables a pair with a specific ID for the second element.
@@ -1346,12 +1228,12 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::enable`
     #[doc(alias = "entity_builder::enable")]
-    pub fn enable_pair_second<First: ComponentInfo>(self, second: EntityT) -> Self {
+    pub fn enable_pair_second<First: ComponentInfo>(self, second: impl IntoEntityId) -> Self {
         let world = self.world;
-        self.enable_pair_ids(First::get_id(world), second)
+        self.enable_id((First::get_id(world), second))
     }
 
-    /// Disables an entity.
+    /// Disables self (entity).
     ///
     /// Disabled entities are not matched with systems and cannot be searched with queries,
     /// unless explicitly specified in the query expression.
@@ -1360,12 +1242,12 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::disable`
     #[doc(alias = "entity_builder::disable")]
-    pub fn disable(self) -> Self {
+    pub fn disable_self(self) -> Self {
         unsafe { ecs_enable(self.world, self.raw_id, false) }
         self
     }
 
-    /// Disables an ID.
+    /// Disables an ID which represents a component or pair.
     ///
     /// This sets the enabled bit for this ID. If this is the first time the ID is
     /// enabled or disabled, the bitset is added.
@@ -1378,12 +1260,12 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::disable`
     #[doc(alias = "entity_builder::disable")]
-    pub fn disable_component_id(self, component_id: IdT) -> Self {
-        unsafe { ecs_enable_id(self.world, self.raw_id, component_id, false) }
+    pub fn disable_id(self, id: impl IntoEntityIdExt) -> Self {
+        unsafe { ecs_enable_id(self.world, self.raw_id, id.get_id_ext(), false) }
         self
     }
 
-    /// Disables a component.
+    /// Disables a component or pair.
     ///
     /// # Type Parameters
     ///
@@ -1393,44 +1275,9 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::disable`
     #[doc(alias = "entity_builder::disable")]
-    pub fn disable_component<T: ComponentInfo>(self) -> Self {
+    pub fn disable<T: IntoComponentId>(self) -> Self {
         let world = self.world;
-        self.disable_component_id(T::get_id(world))
-    }
-
-    /// Disables a pair using IDs.
-    ///
-    /// # Arguments
-    ///
-    /// - `first`: The first element of the pair.
-    /// - `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::disable`
-    #[doc(alias = "entity_builder::disable")]
-    pub fn disable_pair_ids(self, first: EntityT, second: EntityT) -> Self {
-        self.disable_component_id(ecs_pair(first, second))
-    }
-
-    /// Disables a pair.
-    ///
-    /// # Type Parameters
-    ///
-    /// - `T`: The first element of the pair.
-    /// - `U`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::disable`
-    #[doc(alias = "entity_builder::disable")]
-    pub fn disable_pair<First, Second>(self) -> Self
-    where
-        First: ComponentInfo,
-        Second: ComponentInfo,
-    {
-        let world = self.world;
-        self.disable_pair_ids(First::get_id(world), Second::get_id(world))
+        self.disable_id(T::get_id(world))
     }
 
     /// Disables a pair with a specific ID for the second element.
@@ -1447,9 +1294,9 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::disable`
     #[doc(alias = "entity_builder::disable")]
-    pub fn disable_pair_second<First: ComponentInfo>(self, second: EntityT) -> Self {
+    pub fn disable_pair_first<First: ComponentInfo>(self, second: impl IntoEntityId) -> Self {
         let world = self.world;
-        self.disable_pair_ids(First::get_id(world), second)
+        self.disable_id((First::get_id(world), second))
     }
     /// Entities created in the function will have the current entity.
     /// This operation is thread safe.
@@ -1485,12 +1332,12 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::with`
     #[doc(alias = "entity_builder::with")]
-    pub fn with_pair_first_id<F>(&self, first: EntityT, func: F) -> &Self
+    pub fn with_pair_first_id<F>(&self, first: impl IntoEntityId, func: F) -> &Self
     where
         F: FnOnce(),
     {
         unsafe {
-            let prev = ecs_set_with(self.world, ecs_pair(first, self.raw_id));
+            let prev = ecs_set_with(self.world, ecs_pair(first.get_id(), self.raw_id));
             func();
             ecs_set_with(self.world, prev);
         }
@@ -1509,12 +1356,12 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::with`
     #[doc(alias = "entity_builder::with")]
-    pub fn with_pair_second_id<F>(&self, second: EntityT, func: F) -> &Self
+    pub fn with_pair_second_id<F>(&self, second: impl IntoEntityId, func: F) -> &Self
     where
         F: FnOnce(),
     {
         unsafe {
-            let prev = ecs_set_with(self.world, ecs_pair(self.raw_id, second));
+            let prev = ecs_set_with(self.world, ecs_pair(self.raw_id, second.get_id()));
             func();
             ecs_set_with(self.world, prev);
         }
@@ -1622,16 +1469,45 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_mut<T: ComponentInfo + ComponentType<Struct>>(&mut self) -> &mut T::UnderlyingType {
-        let component_id = T::get_id(self.world);
-        ecs_assert!(
-            T::get_size(self.world) != 0,
-            FlecsErrorCode::InvalidParameter,
-            "invalid type: {}",
-            T::get_symbol_name()
-        );
-        unsafe {
-            &mut *(ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T::UnderlyingType)
+    pub fn get_mut<T: ComponentInfo>(&mut self) -> &mut T::UnderlyingType {
+        // This branch will be removed in release mode since this can be determined at compile time.
+        if !T::IS_ENUM {
+            let component_id = T::get_id(self.world);
+            ecs_assert!(
+                T::get_size(self.world) != 0,
+                FlecsErrorCode::InvalidParameter,
+                "invalid type: {}",
+                T::get_symbol_name()
+            );
+            unsafe {
+                &mut *(ecs_get_mut_id(self.world, self.raw_id, component_id)
+                    as *mut T::UnderlyingType)
+            }
+        } else {
+            let component_id: IdT = T::get_id(self.world);
+            let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
+
+            if target == 0 {
+                // if there is no matching pair for (r,*), try just r
+                unsafe {
+                    &mut *(ecs_get_mut_id(self.world, self.raw_id, component_id)
+                        as *mut T::UnderlyingType)
+                }
+            } else {
+                // get constant value from constant entity
+                let constant_value = unsafe {
+                    ecs_get_mut_id(self.world, target, component_id) as *mut T::UnderlyingType
+                };
+
+                ecs_assert!(
+                    !constant_value.is_null(),
+                    FlecsErrorCode::InternalError,
+                    "missing enum constant value {}",
+                    T::get_symbol_name()
+                );
+
+                unsafe { &mut *constant_value }
+            }
         }
     }
 
@@ -1680,127 +1556,7 @@ impl Entity {
         &mut *ptr
     }
 
-    /// Get mut enum constant.
-    /// Use `.unwrap()` or `.unwrap_unchecked()` or `.get_enum_unchecked_mut` if you're sure the entity has the component
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The enum component type which to get the constant
-    ///
-    /// # Returns
-    ///
-    /// * `*mut T` - The enum component, nullptr if the entity does not have the component
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::get_mut`
-    #[doc(alias = "entity::get_mut")]
-    pub fn get_enum_mut<T: ComponentInfo + ComponentType<Enum>>(
-        &mut self,
-    ) -> &mut T::UnderlyingType {
-        let component_id: IdT = T::get_id(self.world);
-        let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
-
-        if target == 0 {
-            // if there is no matching pair for (r,*), try just r
-            unsafe {
-                &mut *(ecs_get_mut_id(self.world, self.raw_id, component_id)
-                    as *mut T::UnderlyingType)
-            }
-        } else {
-            // get constant value from constant entity
-            let constant_value = unsafe {
-                ecs_get_mut_id(self.world, target, component_id) as *mut T::UnderlyingType
-            };
-
-            ecs_assert!(
-                !constant_value.is_null(),
-                FlecsErrorCode::InternalError,
-                "missing enum constant value {}",
-                T::get_symbol_name()
-            );
-
-            unsafe { &mut *constant_value }
-        }
-    }
-
-    /// workaround for Column Type enum support
-    /// is a copy of `get_enum_mut` but without the safety of ensuring the component is an enum
-    pub(crate) fn get_enum_mut_internal<T: ComponentInfo>(&mut self) -> &mut T {
-        let component_id: IdT = T::get_id(self.world);
-        let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
-
-        if target == 0 {
-            // if there is no matching pair for (r,*), try just r
-            unsafe { &mut *(ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T) }
-        } else {
-            // get constant value from constant entity
-            let constant_value =
-                unsafe { ecs_get_mut_id(self.world, target, component_id) as *mut T };
-
-            ecs_assert!(
-                !constant_value.is_null(),
-                FlecsErrorCode::InternalError,
-                "missing enum constant value {}",
-                T::get_symbol_name()
-            );
-
-            unsafe { &mut *constant_value }
-        }
-    }
-
-    /// Get mut enum constant unchecked
-    ///
-    /// # Safety
-    ///
-    /// If the entity does not have the component, this will cause a panic
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The enum component type which to get the constant
-    ///
-    /// # Returns
-    ///
-    /// * `*mut T` - The enum component, nullptr if the entity does not have the component
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::get_mut`
-    #[doc(alias = "entity::get_mut")]
-    pub unsafe fn get_enum_unchecked_mut<T: ComponentInfo + ComponentType<Enum>>(
-        &mut self,
-    ) -> &mut T::UnderlyingType {
-        let component_id: IdT = T::get_id(self.world);
-        let target: IdT = ecs_get_target(self.world, self.raw_id, component_id, 0);
-
-        if target == 0 {
-            // if there is no matching pair for (r,*), try just r
-            let ptr =
-                ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T::UnderlyingType;
-            ecs_assert!(
-                !ptr.is_null(),
-                FlecsErrorCode::InternalError,
-                "missing enum constant value {}",
-                T::get_symbol_name()
-            );
-
-            &mut *ptr
-        } else {
-            // get constant value from constant entity
-            let constant_value =
-                ecs_get_mut_id(self.world, target, component_id) as *mut T::UnderlyingType;
-            ecs_assert!(
-                !constant_value.is_null(),
-                FlecsErrorCode::InternalError,
-                "missing enum constant value {}",
-                T::get_symbol_name()
-            );
-
-            &mut *constant_value
-        }
-    }
-
-    /// Get mutable component value (untyped).
+    /// Get mutable component value or pair (untyped).
     /// This operation returns a mutable pointer to the component. If the entity
     /// did not yet have the component, it will be added. If a base entity had
     /// the component, it will be overridden, and the value of the base component
@@ -1818,26 +1574,8 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_untyped_mut(&self, component_id: EntityT) -> *mut c_void {
-        unsafe { ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut c_void }
-    }
-
-    /// Get mutable pointer for a pair (untyped).
-    /// This operation gets the value for a pair from the entity. If neither the
-    /// first nor second element of the pair is a component, the operation will
-    /// fail.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::get_mut`
-    #[doc(alias = "entity::get_mut")]
-    pub fn get_untyped_pair_mut(&self, first: EntityT, second: EntityT) -> *mut c_void {
-        unsafe { ecs_get_mut_id(self.world, self.raw_id, ecs_pair(first, second)) as *mut c_void }
+    pub fn get_untyped_mut(&self, id: impl IntoEntityIdExt) -> *mut c_void {
+        unsafe { ecs_get_mut_id(self.world, self.raw_id, id.get_id_ext()) as *mut c_void }
     }
 
     /// Get a mutable reference for the first element of a pair
@@ -1855,7 +1593,7 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_first_id_mut<First>(&mut self, second: EntityT) -> &mut First
+    pub fn get_pair_first_id_mut<First>(&mut self, second: impl IntoEntityId) -> &mut First
     where
         First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1869,8 +1607,11 @@ impl Entity {
         // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
         // it is guaranteed to be valid
         unsafe {
-            &mut *(ecs_get_mut_id(self.world, self.raw_id, ecs_pair(component_id, second))
-                as *mut First)
+            &mut *(ecs_get_mut_id(
+                self.world,
+                self.raw_id,
+                ecs_pair(component_id, second.get_id()),
+            ) as *mut First)
         }
     }
 
@@ -1891,7 +1632,7 @@ impl Entity {
         First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentInfo + ComponentType<Struct>,
     {
-        self.get_pair_first_id_mut(Second::get_id(self.world))
+        self.get_pair_first_id_mut::<First>(Second::get_id(self.world))
     }
 
     /// Get a mutable reference for the second element of a pair.
@@ -1909,7 +1650,7 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_second_id_mut<Second>(&mut self, first: EntityT) -> &mut Second
+    pub fn get_pair_second_id_mut<Second>(&mut self, first: impl IntoEntityId) -> &mut Second
     where
         Second: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1924,8 +1665,11 @@ impl Entity {
         // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
         // it is guaranteed to be valid
         unsafe {
-            &mut *(ecs_get_mut_id(self.world, self.raw_id, ecs_pair(first, component_id))
-                as *mut Second)
+            &mut *(ecs_get_mut_id(
+                self.world,
+                self.raw_id,
+                ecs_pair(first.get_id(), component_id),
+            ) as *mut Second)
         }
     }
 
@@ -1946,10 +1690,10 @@ impl Entity {
         First: ComponentInfo + ComponentType<Struct> + EmptyComponent,
         Second: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {
-        self.get_pair_second_id_mut(First::get_id(self.world))
+        self.get_pair_second_id_mut::<Second>(First::get_id(self.world))
     }
 
-    /// Signal that component was modified.
+    /// Signal that component or pair was modified.
     ///
     /// # Arguments
     ///
@@ -1959,8 +1703,8 @@ impl Entity {
     ///
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
-    pub fn modified_id(&self, component_id: IdT) {
-        unsafe { ecs_modified_id(self.world, self.raw_id, component_id) }
+    pub fn modified_id(&self, id: impl IntoEntityIdExt) {
+        unsafe { ecs_modified_id(self.world, self.raw_id, id.get_id_ext()) }
     }
 
     /// Signal that component was modified.
@@ -1973,50 +1717,14 @@ impl Entity {
     ///
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
-    pub fn modified<T: ComponentInfo>(&self) {
+    pub fn modified<T: IntoComponentId>(&self) {
         ecs_assert!(
-            T::get_size(self.world) != 0,
+            std::mem::size_of::<T>() != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid type: {}",
-            T::get_symbol_name(),
+            T::get_name(),
         );
         self.modified_id(T::get_id(self.world));
-    }
-
-    /// Signal that a pair has been modified (untyped).
-    /// If neither the first nor the second element of the pair are a component, the
-    /// operation will fail.
-    ///
-    /// # Arguments
-    ///
-    /// * `first` - The first element of the pair.
-    /// * `second` - The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::modified`
-    #[doc(alias = "entity::modified")]
-    pub fn modified_pair_ids(&self, first: EntityT, second: EntityT) {
-        self.modified_id(ecs_pair(first, second));
-    }
-
-    /// Signal that the first element of a pair was modified.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First` - The first part of the pair.
-    /// * `Second` - The second part of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::modified`
-    #[doc(alias = "entity::modified")]
-    pub fn modified_pair<First, Second>(&self)
-    where
-        First: ComponentInfo,
-        Second: ComponentInfo,
-    {
-        self.modified_pair_ids(First::get_id(self.world), Second::get_id(self.world));
     }
 
     /// Signal that the first part of a pair was modified.
@@ -2033,17 +1741,17 @@ impl Entity {
     ///
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
-    pub fn modified_pair_first<First: ComponentInfo>(&self, second: EntityT) {
+    pub fn modified_pair_first<First: ComponentInfo>(&self, second: impl IntoEntityId) {
         ecs_assert!(
             First::get_size(self.world) != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid type: {}",
             First::get_symbol_name(),
         );
-        self.modified_pair_ids(First::get_id(self.world), second);
+        self.modified_id((First::get_id(self.world), second));
     }
 
-    /// Get a reference to a component.
+    /// Get a reference to a component or pair.
     ///
     /// A reference allows for quick and safe access to a component value, and is
     /// a faster alternative to repeatedly calling `get` for the same component.
@@ -2081,11 +1789,14 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
-    pub fn get_ref_pair_first<First: ComponentInfo>(&self, second: EntityT) -> Ref<First> {
+    pub fn get_ref_pair_first<First: ComponentInfo>(
+        &self,
+        second: impl IntoEntityId,
+    ) -> Ref<First> {
         Ref::<First>::new(
             self.world,
             self.raw_id,
-            ecs_pair(First::get_id(self.world), second),
+            ecs_pair(First::get_id(self.world), second.get_id()),
         )
     }
 
@@ -2110,15 +1821,18 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
-    pub fn get_ref_pair_second<Second: ComponentInfo>(&self, first: EntityT) -> Ref<Second> {
+    pub fn get_ref_pair_second<Second: ComponentInfo>(
+        &self,
+        first: impl IntoEntityId,
+    ) -> Ref<Second> {
         Ref::<Second>::new(
             self.world,
             self.raw_id,
-            ecs_pair(first, Second::get_id(self.world)),
+            ecs_pair(first.get_id(), Second::get_id(self.world)),
         )
     }
 
-    /// Recursively flatten relationship.
+    /// Recursively flatten relationship (relationship, self)
     ///
     /// # Arguments
     ///
@@ -2128,17 +1842,17 @@ impl Entity {
     ///
     /// * C++ API: `entity::flatten`
     #[doc(alias = "entity::flatten")]
-    pub fn flatten(&self, relationship: EntityT) {
+    pub fn flatten(&self, relationship: impl IntoEntityId) {
         unsafe {
             ecs_flatten(
                 self.world,
-                ecs_pair(relationship, self.raw_id),
+                ecs_pair(relationship.get_id(), self.raw_id),
                 std::ptr::null_mut(),
             );
         }
     }
 
-    /// Recursively flatten relationship with desc.
+    /// Recursively flatten relationship (relationship, self) with desc
     ///
     /// # Arguments
     ///
@@ -2150,8 +1864,14 @@ impl Entity {
     /// * C++ API: `entity::flatten`
     #[doc(alias = "entity::flatten")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn flatten_w_desc(&self, relationship: EntityT, desc: *const ecs_flatten_desc_t) {
-        unsafe { ecs_flatten(self.world, ecs_pair(relationship, self.raw_id), desc) }
+    pub fn flatten_w_desc(&self, relationship: impl IntoEntityId, desc: *const ecs_flatten_desc_t) {
+        unsafe {
+            ecs_flatten(
+                self.world,
+                ecs_pair(relationship.get_id(), self.raw_id),
+                desc,
+            )
+        }
     }
 
     /// Clear an entity.
@@ -2191,28 +1911,5 @@ impl Entity {
     #[doc(alias = "entity::view")]
     pub fn get_view(&self) -> EntityView {
         self.entity_view
-    }
-
-    /// Entity id 0.
-    /// This function is useful when the API must provide an entity that
-    /// belongs to a world, but the entity id is 0.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::null`
-    #[doc(alias = "entity::null")]
-    pub fn null_w_world(world: *const WorldT) -> Entity {
-        Entity::new_from_existing_raw(world as *mut _, 0)
-    }
-
-    /// Entity id 0.
-    /// returns the default entity, which is 0 id and nullptr world
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::null`
-    #[doc(alias = "entity::null")]
-    pub fn null() -> Entity {
-        Entity::default()
     }
 }

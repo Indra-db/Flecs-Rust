@@ -16,22 +16,16 @@ fn main() {
     let bob = world
         .new_entity_named(c"Bob")
         // Pairs can be constructed from a type and entity
-        .add_pair_second_id::<Eats>(apples.into())
-        .add_pair_second_id::<Eats>(pears.into())
+        .add_pair_first::<Eats>(apples)
+        .add_pair_first::<Eats>(pears)
         // Pairs can also be constructed from two entity ids
-        .add_pair_ids(grows.into(), pears.into());
+        .add_id((grows, pears));
 
     // Has can be used with relationships as well
-    println!(
-        "Bob eats apples? {}",
-        bob.has_pair_first::<Eats>(apples.into())
-    );
+    println!("Bob eats apples? {}", bob.has_pair_first::<Eats>(apples));
 
     // Wildcards can be used to match relationships
-    println!(
-        "Bob grows food? {}",
-        bob.has_pair_ids(grows.into(), ECS_WILDCARD)
-    );
+    println!("Bob grows food? {}", bob.has_id((grows, ECS_WILDCARD)));
 
     println!();
 
@@ -49,7 +43,7 @@ fn main() {
     println!();
 
     // Iterate by explicitly providing the pair. This iterates (*, Pears):
-    bob.for_each_matching_pair(ECS_WILDCARD, pears.into(), |id| {
+    bob.for_each_matching_pair(ECS_WILDCARD, pears, |id| {
         println!("Bob {} pears", id.first().get_name());
     });
 

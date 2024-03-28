@@ -3,7 +3,8 @@ use std::borrow::Borrow;
 use crate::core::{
     c_types::{InOutKind, OperKind},
     component_registration::ComponentInfo,
-    Entity, EntityView, Id, IdT, World, WorldT,
+    Component, ComponentType, ECSComponentType, Entity, EntityView, Id, IdT, Struct,
+    UntypedComponent, World, WorldT,
 };
 
 use super::{ecs_pair, EntityId};
@@ -86,6 +87,23 @@ impl IntoEntityId for Entity {
     }
 }
 
+impl<T> IntoEntityId for Component<T>
+where
+    T: ComponentInfo,
+{
+    #[inline]
+    fn get_id(&self) -> u64 {
+        self.base.entity.raw_id
+    }
+}
+
+impl IntoEntityId for UntypedComponent {
+    #[inline]
+    fn get_id(&self) -> u64 {
+        self.entity.raw_id
+    }
+}
+
 impl<T> IntoEntityId for &T
 where
     T: IntoEntityId,
@@ -113,6 +131,22 @@ pub trait IntoEntityIdExt {
     const IS_PAIR: bool;
 
     fn get_id_ext(&self) -> u64;
+
+    /// This will return the id of the first part of a pair.
+    /// If this is called on a non_pair, it will return the same as get_id_ext.
+    #[doc(hidden)] // not meant to be used by the user
+    #[inline]
+    fn get_id_first(&self) -> u64 {
+        self.get_id_ext()
+    }
+
+    /// This will return the id of the second part of a pair.
+    /// If this is called on a non_pair, it will return the same as get_id_ext.
+    #[doc(hidden)]
+    #[inline]
+    fn get_id_second(&self) -> u64 {
+        self.get_id_ext()
+    }
 }
 
 impl<T, U> IntoEntityIdExt for (T, U)
@@ -125,6 +159,18 @@ where
     #[inline]
     fn get_id_ext(&self) -> u64 {
         ecs_pair(self.0.get_id(), self.1.get_id())
+    }
+
+    #[doc(hidden)] // not meant to be used by the user
+    #[inline]
+    fn get_id_first(&self) -> u64 {
+        self.0.get_id()
+    }
+
+    #[doc(hidden)] // not meant to be used by the user
+    #[inline]
+    fn get_id_second(&self) -> u64 {
+        self.1.get_id()
     }
 }
 
@@ -173,6 +219,27 @@ impl IntoEntityIdExt for Entity {
     #[inline]
     fn get_id_ext(&self) -> u64 {
         IntoEntityId::get_id(self)
+    }
+}
+
+impl<T> IntoEntityIdExt for Component<T>
+where
+    T: ComponentInfo,
+{
+    const IS_PAIR: bool = false;
+
+    #[inline]
+    fn get_id_ext(&self) -> u64 {
+        self.base.entity.raw_id
+    }
+}
+
+impl IntoEntityIdExt for UntypedComponent {
+    const IS_PAIR: bool = false;
+
+    #[inline]
+    fn get_id_ext(&self) -> u64 {
+        self.entity.raw_id
     }
 }
 
@@ -284,3 +351,66 @@ where
 }
 
 // set_override_pair_second
+
+pub trait IntoComponentId {
+    const IS_ENUM: bool;
+    const IS_PAIR: bool;
+    // These types are useful for merging functions in World class such ass add_pair<T,U> into add<T>.
+    // When IntoComponentId is not a pair, First and Second will be same
+    type First: IntoComponentId;
+    type Second: IntoComponentId;
+
+    fn get_id(world: impl IntoWorld) -> IdT;
+
+    /// Get the symbol name of the component.
+    ///
+    /// # Safety
+    ///
+    /// Notice that this function for pairs (T, U) will return the type name of the tuple, not the individual components.
+    /// This isn't a name stored in the ECS unlike a singular component.
+    fn get_name() -> &'static str;
+}
+
+impl<T> IntoComponentId for T
+where
+    T: ComponentInfo,
+{
+    const IS_ENUM: bool = T::IS_ENUM;
+    const IS_PAIR: bool = false;
+    type First = T;
+    type Second = T;
+
+    #[inline]
+    fn get_id(world: impl IntoWorld) -> IdT {
+        T::get_id(world.get_world_raw_mut())
+    }
+
+    #[inline]
+    fn get_name() -> &'static str {
+        T::get_symbol_name()
+    }
+}
+
+impl<T, U> IntoComponentId for (T, U)
+where
+    T: ComponentInfo,
+    U: ComponentInfo + ComponentType<Struct>,
+{
+    const IS_ENUM: bool = false;
+    const IS_PAIR: bool = true;
+    type First = T;
+    type Second = U;
+
+    #[inline]
+    fn get_id(world: impl IntoWorld) -> IdT {
+        ecs_pair(
+            T::get_id(world.get_world_raw_mut()),
+            U::get_id(world.get_world_raw_mut()),
+        )
+    }
+
+    #[inline]
+    fn get_name() -> &'static str {
+        std::any::type_name::<(T, U)>()
+    }
+}
