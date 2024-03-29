@@ -7,7 +7,7 @@ fn iterate_components(entity: Entity) {
     println!();
     // 2. To get individual component ids, use for_each
     let mut count_components = 0;
-    entity.each_component(|id| {
+    entity.for_each_component(|id| {
         println!("{}: {}", count_components, id.to_str());
         count_components += 1;
     });
@@ -18,7 +18,7 @@ fn iterate_components(entity: Entity) {
     // encoded in an id, but provides the most flexibility.
     count_components = 0;
 
-    entity.each_component(|id| {
+    entity.for_each_component(|id| {
         print!("{}: ", count_components);
         count_components += 1;
         if id.is_pair() {

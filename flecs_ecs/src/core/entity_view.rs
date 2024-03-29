@@ -410,7 +410,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    pub fn each_component<F>(&self, mut func: F)
+    pub fn for_each_component<F>(&self, mut func: F)
     where
         F: FnMut(Id),
     {
@@ -458,7 +458,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    pub fn each_matching_pair<F>(
+    pub fn for_each_matching_pair<F>(
         &self,
         pred: impl IntoEntityId,
         obj: impl IntoEntityId,
@@ -509,11 +509,11 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    pub fn each_target_id<F>(&self, relationship: impl IntoEntityId, mut func: F)
+    pub fn for_each_target_id<F>(&self, relationship: impl IntoEntityId, mut func: F)
     where
         F: FnMut(Entity),
     {
-        self.each_matching_pair(relationship.get_id(), ECS_WILDCARD, |id| {
+        self.for_each_matching_pair(relationship.get_id(), ECS_WILDCARD, |id| {
             let obj = id.second();
             func(obj);
         });
@@ -533,11 +533,11 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    pub fn each_target<T>(&self, func: impl FnMut(Entity))
+    pub fn for_each_target<T>(&self, func: impl FnMut(Entity))
     where
         T: ComponentInfo,
     {
-        self.each_target_id(EntityView::new_id_only(T::get_id(self.world)), func);
+        self.for_each_target_id(EntityView::new_id_only(T::get_id(self.world)), func);
     }
 
     /// Iterate children for entity
@@ -551,7 +551,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::children`
     #[doc(alias = "entity_view::children")]
-    pub fn each_children_id<F>(&self, relationship: impl IntoEntityId, mut func: F)
+    pub fn for_each_children_id<F>(&self, relationship: impl IntoEntityId, mut func: F)
     where
         F: FnMut(Entity),
     {
@@ -605,12 +605,12 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::children`
     #[doc(alias = "entity_view::children")]
-    pub fn each_children<T, F>(&self, func: F)
+    pub fn for_each_children<T, F>(&self, func: F)
     where
         T: ComponentInfo,
         F: FnMut(Entity),
     {
-        self.each_children_id(T::get_id(self.world), func);
+        self.for_each_children_id(T::get_id(self.world), func);
     }
 
     /// Iterate children for entity
@@ -623,11 +623,11 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::children`
     #[doc(alias = "entity_view::children")]
-    pub fn each_child_of<F>(&self, func: F)
+    pub fn for_each_child_of<F>(&self, func: F)
     where
         F: FnMut(Entity),
     {
-        self.each_children_id(unsafe { EcsChildOf }, func);
+        self.for_each_children_id(unsafe { EcsChildOf }, func);
     }
 
     /// Get (struct) Component from entity

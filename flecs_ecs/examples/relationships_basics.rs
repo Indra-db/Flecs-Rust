@@ -36,14 +36,14 @@ fn main() {
     println!();
 
     // Relationships can be iterated for an entity. This iterates (Eats, *):
-    bob.each_target::<Eats>(|second| {
+    bob.for_each_target::<Eats>(|second| {
         println!("Bob eats {}", second.get_name());
     });
 
     println!();
 
     // Iterate by explicitly providing the pair. This iterates (*, Pears):
-    bob.each_matching_pair(ECS_WILDCARD, pears, |id| {
+    bob.for_each_matching_pair(ECS_WILDCARD, pears, |id| {
         println!("Bob {} pears", id.first().get_name());
     });
 

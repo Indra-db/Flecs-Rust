@@ -1750,7 +1750,7 @@ impl World {
     #[doc(alias = "world::children")]
     #[inline(always)]
     pub fn for_each_children<F: FnMut(Entity)>(&self, callback: F) {
-        Entity::new(self).each_child_of(callback);
+        Entity::new(self).for_each_child_of(callback);
     }
 
     /// create alias for component

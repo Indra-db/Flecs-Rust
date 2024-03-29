@@ -18961,7 +18961,7 @@ bool flecs_query_has_refs(
 }
 
 static
-void flecs_query_for_each_component_monitor(
+void flecs_query_for_for_each_component_monitor(
     ecs_world_t *world,
     ecs_query_t *query,
     void(*callback)(
@@ -19058,7 +19058,7 @@ int flecs_query_process_signature(
     query->flags |= (ecs_flags32_t)(flecs_query_has_refs(query) * EcsQueryHasRefs);
 
     if (!(query->flags & EcsQueryIsSubquery)) {
-        flecs_query_for_each_component_monitor(world, query, flecs_monitor_register);
+        flecs_query_for_for_each_component_monitor(world, query, flecs_monitor_register);
     }
 
     return 0;
@@ -19586,7 +19586,7 @@ void flecs_query_fini(
         .kind = EcsQueryOrphan
     });
 
-    flecs_query_for_each_component_monitor(world, query, 
+    flecs_query_for_for_each_component_monitor(world, query, 
         flecs_monitor_unregister);
     flecs_query_table_cache_free(query);
 
