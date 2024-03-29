@@ -40,7 +40,7 @@ use super::{
     component_registration::{
         register_entity_w_component_explicit, ComponentInfo, ComponentType, Enum, Struct,
     },
-    ComponentData, EntityId, IntoComponentId, IntoEntityId, IntoEntityIdExt, ECS_PREFAB,
+    ComponentData, EntityId, IntoComponentId, IntoEntityId, IntoEntityIdExt, IterAPI, ECS_PREFAB,
 };
 use super::{EmptyComponent, NotEmptyComponent};
 

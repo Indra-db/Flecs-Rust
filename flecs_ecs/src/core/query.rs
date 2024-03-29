@@ -2,19 +2,16 @@
 //! Queries are better for persistence than filters, but are slower to create.
 
 use std::{
-    ops::{Deref, DerefMut},
-    os::raw::{c_char, c_void},
+    os::raw::{c_void},
 };
 
-use flecs_ecs_sys::ecs_iter_fini;
+
 
 use crate::{
-    ecs_assert,
     sys::{
-        ecs_abort_, ecs_filter_str, ecs_filter_t, ecs_get_entity, ecs_os_api, ecs_query_changed,
+        ecs_abort_, ecs_get_entity, ecs_os_api, ecs_query_changed,
         ecs_query_desc_t, ecs_query_fini, ecs_query_get_filter, ecs_query_get_group_info,
-        ecs_query_init, ecs_query_iter, ecs_query_next, ecs_query_orphaned, ecs_table_lock,
-        ecs_table_unlock,
+        ecs_query_init, ecs_query_iter, ecs_query_next, ecs_query_orphaned,
     },
 };
 
@@ -22,16 +19,14 @@ use super::{
     c_types::{FilterT, IterT, QueryGroupInfoT, QueryT},
     entity::Entity,
     filter::FilterView,
-    iter::Iter,
     iterable::Iterable,
-    term::Term,
     world::World,
-    FlecsErrorCode, IntoEntityId,
+    FlecsErrorCode, IntoEntityId, IterAPI, IterOperations,
 };
 
 /// Cached query implementation. Fast to iterate, but slower to create than `Filters`
 #[derive(Clone)]
-pub struct QueryBase<'a, T>
+pub struct Query<'a, T>
 where
     T: Iterable<'a>,
 {
@@ -40,22 +35,56 @@ where
     _phantom: std::marker::PhantomData<&'a T>,
 }
 
-impl<'a, T> QueryBase<'a, T>
+impl<'a, T> IterOperations for Query<'a, T>
 where
     T: Iterable<'a>,
 {
-    /// Create a query base, not public API
+    #[inline(always)]
+    fn retrieve_iter(&self) -> IterT {
+        unsafe { ecs_query_iter(self.world.raw_world, self.query) }
+    }
+
+    #[inline(always)]
+    fn iter_next(iter: &mut IterT) -> bool {
+        unsafe { ecs_query_next(iter) }
+    }
+
+    fn get_filter_ptr(&self) -> *const FilterT {
+        unsafe { ecs_query_get_filter(self.query) }
+    }
+}
+
+impl<'a, T> IterAPI<'a, T> for Query<'a, T>
+where
+    T: Iterable<'a>,
+{
+    fn as_entity(&self) -> Entity {
+        Entity::new_from_existing_raw(self.world.raw_world, unsafe {
+            ecs_get_entity(self.query as *const c_void)
+        })
+    }
+}
+
+impl<'a, T> Query<'a, T>
+where
+    T: Iterable<'a>,
+{
+    /// Create a new query
     ///
     /// # Arguments
     ///
     /// * `world` - The world to create the query in
-    /// * `query` - The query to create
     ///
     /// # See also
     ///
-    /// * C++ API: `query_base::query_base`
-    #[doc(alias = "query_base::query_base")]
-    fn new(world: &World, query: *mut QueryT) -> Self {
+    /// * C++ API: `query::query`
+    #[doc(alias = "query::query")]
+    pub fn new(world: &World) -> Self {
+        let mut desc = ecs_query_desc_t::default();
+        T::register_ids_descriptor(world.raw_world, &mut desc.filter);
+        let mut filter: FilterT = Default::default();
+        desc.filter.storage = &mut filter;
+        let query = unsafe { ecs_query_init(world.raw_world, &desc) };
         Self {
             world: world.clone(),
             query,
@@ -63,7 +92,7 @@ where
         }
     }
 
-    /// Create a query base from a query descriptor, not public API
+    /// Create a new query from a query descriptor
     ///
     /// # Arguments
     ///
@@ -72,9 +101,28 @@ where
     ///
     /// # See also
     ///
-    /// * C++ API: `query_base::query_base`
-    #[doc(alias = "query_base::query_base")]
-    fn new_from_desc(world: &World, desc: *mut ecs_query_desc_t) -> Self {
+    /// * C++ API: `query::query`
+    #[doc(alias = "query::query")]
+    pub fn new_ownership(world: &World, query: *mut QueryT) -> Self {
+        Self {
+            world: world.clone(),
+            query,
+            _phantom: std::marker::PhantomData,
+        }
+    }
+
+    /// Create a new query from a query descriptor
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world to create the query in
+    /// * `desc` - The query descriptor to create the query from
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query::query`
+    #[doc(alias = "query::query")]
+    pub fn new_from_desc(world: &World, desc: *mut ecs_query_desc_t) -> Self {
         let obj = Self {
             world: world.clone(),
             query: unsafe { ecs_query_init(world.raw_world, desc) },
@@ -101,6 +149,36 @@ where
             }
         };
         obj
+    }
+
+    /// Free the query
+    /// Destroy a query. This operation destroys a query and its resources.
+    /// If the query is used as the parent of subqueries, those subqueries will be
+    /// orphaned and must be deinitialized as well.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query_base::destruct`
+    #[doc(alias = "query_base::destruct")]
+    pub fn destruct(self) {
+        //calls drop
+    }
+
+    /// Get the iterator for the query
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world to get the iterator for
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query::get_iter`
+    #[doc(alias = "query::get_iter")]
+    fn get_iter_raw(&mut self, world: &World) -> IterT {
+        if !world.is_null() {
+            self.world = world.clone();
+        }
+        unsafe { ecs_query_iter(self.world.raw_world, self.query) }
     }
 
     ///  Returns whether the query data changed since the last iteration.
@@ -181,10 +259,6 @@ where
         }
     }
 
-    fn each_term(&self, func: impl FnMut(&mut Term)) {
-        self.filter().each_term(func);
-    }
-
     /// Get the filter of the query as read only
     ///
     /// # See also
@@ -193,564 +267,6 @@ where
     #[doc(alias = "query_base::filter")]
     pub fn filter(&self) -> FilterView<'a, T> {
         FilterView::<T>::new(&self.world, unsafe { ecs_query_get_filter(self.query) })
-    }
-
-    /// Get the Term at index stored on the filter of the query
-    ///
-    /// # Arguments
-    ///
-    /// * `index` - The index of the term to get
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_base::term`
-    #[doc(alias = "query_base::term")]
-    fn term(&self, index: i32) -> Term {
-        let filter: *const ecs_filter_t = unsafe { ecs_query_get_filter(self.query) };
-        ecs_assert!(
-            !filter.is_null(),
-            FlecsErrorCode::InvalidParameter,
-            "query filter is null"
-        );
-        Term::new_from_term(Some(&self.world), unsafe {
-            *(*filter).terms.add(index as usize)
-        })
-    }
-
-    /// Get the number of terms in the filter of the query
-    ///
-    /// # Returns
-    ///
-    /// The number of terms in the filter of the query
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_base::term_count`
-    #[doc(alias = "query_base::term_count")]
-    fn field_count(&self) -> i8 {
-        unsafe { (*ecs_query_get_filter(self.query)).term_count }
-    }
-
-    /// Convert filter to string expression. Convert filter terms to a string expression.
-    /// The resulting expression can be parsed to create the same filter.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_base::str`
-    #[doc(alias = "query_base::str")]
-    #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
-    fn to_string(&self) -> String {
-        let filter = unsafe { ecs_query_get_filter(self.query) };
-        let result: *mut c_char =
-            unsafe { ecs_filter_str(self.world.raw_world, filter as *const _) };
-        let rust_string =
-            String::from(unsafe { std::ffi::CStr::from_ptr(result).to_str().unwrap() });
-        unsafe {
-            if let Some(free_func) = ecs_os_api.free_ {
-                free_func(result as *mut _);
-            }
-        }
-        rust_string
-    }
-
-    /// Get the query as an `Entity`
-    ///
-    /// # Returns
-    ///
-    /// The query as an `Entity`
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_base::entity`
-    #[doc(alias = "query_base::entity")]
-    pub fn entity(&self) -> Entity {
-        Entity::new_from_existing_raw(self.world.raw_world, unsafe {
-            ecs_get_entity(self.query as *const c_void)
-        })
-    }
-}
-
-/// Cached query implementation. Fast to iterate, but slower to create than `Filters`
-#[derive(Clone)]
-pub struct Query<'a, T>
-where
-    T: Iterable<'a>,
-{
-    pub base: QueryBase<'a, T>,
-}
-
-impl<'a, T> Deref for Query<'a, T>
-where
-    T: Iterable<'a>,
-{
-    type Target = QueryBase<'a, T>;
-
-    #[inline(always)]
-    fn deref(&self) -> &Self::Target {
-        &self.base
-    }
-}
-
-impl<'a, T> DerefMut for Query<'a, T>
-where
-    T: Iterable<'a>,
-{
-    #[inline(always)]
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.base
-    }
-}
-
-impl<'a, T> Query<'a, T>
-where
-    T: Iterable<'a>,
-{
-    /// Create a new query
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - The world to create the query in
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query::query`
-    #[doc(alias = "query::query")]
-    pub fn new(world: &World) -> Self {
-        let mut desc = ecs_query_desc_t::default();
-        T::register_ids_descriptor(world.raw_world, &mut desc.filter);
-        let mut filter: FilterT = Default::default();
-        desc.filter.storage = &mut filter;
-        let query = unsafe { ecs_query_init(world.raw_world, &desc) };
-        Self {
-            base: QueryBase::new(world, query),
-        }
-    }
-
-    /// Create a new query from a query descriptor
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - The world to create the query in
-    /// * `desc` - The query descriptor to create the query from
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query::query`
-    #[doc(alias = "query::query")]
-    pub fn new_ownership(world: &World, query: *mut QueryT) -> Self {
-        Self {
-            base: QueryBase::new(world, query),
-        }
-    }
-
-    /// Create a new query from a query descriptor
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - The world to create the query in
-    /// * `desc` - The query descriptor to create the query from
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query::query`
-    #[doc(alias = "query::query")]
-    pub fn new_from_desc(world: &World, desc: *mut ecs_query_desc_t) -> Self {
-        Self {
-            base: QueryBase::new_from_desc(world, desc),
-        }
-    }
-
-    /// Free the query
-    /// Destroy a query. This operation destroys a query and its resources.
-    /// If the query is used as the parent of subqueries, those subqueries will be
-    /// orphaned and must be deinitialized as well.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_base::destruct`
-    #[doc(alias = "query_base::destruct")]
-    pub fn destruct(self) {
-        //calls drop
-    }
-
-    /// Get the iterator for the query
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - The world to get the iterator for
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query::get_iter`
-    #[doc(alias = "query::get_iter")]
-    fn get_iter_raw(&mut self, world: &World) -> IterT {
-        if !world.is_null() {
-            self.world = world.clone();
-        }
-        unsafe { ecs_query_iter(self.world.raw_world, self.query) }
-    }
-
-    // TODO once we have tests in place, I will split this functionality up into multiple functions, which should give a small performance boost
-    // by caching if the query has used a "is_ref" operation.
-    // is_ref is true for any query that contains fields that are not matched on the entity itself
-    // so parents, prefabs but also singletons, or fields that are matched on a fixed entity (.with<Foo>().src(my_entity))
-    /// Each iterator.
-    /// The "each" iterator accepts a function that is invoked for each matching entity.
-    /// The following function signatures is valid:
-    ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::each`
-    #[doc(alias = "iterable::each")]
-    pub fn each(&self, mut func: impl FnMut(T::TupleType)) {
-        unsafe {
-            let mut iter = ecs_query_iter(self.world.raw_world, self.query);
-
-            while ecs_query_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
-                let iter_count = iter.count as usize;
-                let array_components = &components_data.array_components;
-
-                ecs_table_lock(self.world.raw_world, iter.table);
-
-                for i in 0..iter_count {
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::get_tuple(array_components, i)
-                    };
-                    func(tuple);
-                }
-
-                ecs_table_unlock(self.world.raw_world, iter.table);
-            }
-        }
-    }
-
-    /// Each iterator.
-    /// The "each" iterator accepts a function that is invoked for each matching entity.
-    /// The following function signatures is valid:
-    ///  - func(e : Entity , comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::each`
-    #[doc(alias = "iterable::each")]
-    pub fn each_entity(&self, mut func: impl FnMut(&mut Entity, T::TupleType)) {
-        unsafe {
-            let mut iter = ecs_query_iter(self.world.raw_world, self.query);
-
-            while ecs_query_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
-                let iter_count = iter.count as usize;
-                let array_components = &components_data.array_components;
-
-                ecs_table_lock(self.world.raw_world, iter.table);
-
-                // TODO random thought, I think I can determine the elements is a ref or not before the for loop and then pass two arrays with the indices of the ref and non ref elements
-                // I will come back to this in the future, my thoughts are somewhere else right now. If my assumption is correct, this will get rid of the branch in the for loop
-                // and potentially allow for more conditions for vectorization to happen. This could potentially offer a (small) performance boost since the branch predictor avoids probably
-                // most of the cost since the branch is almost always the same.
-                // update: I believe it's not possible due to not knowing the order of the components in the tuple. I will leave this here for now, maybe I will come back to it in the future.
-                for i in 0..iter_count {
-                    let mut entity =
-                        Entity::new_from_existing_raw(self.world.raw_world, *iter.entities.add(i));
-
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::get_tuple(array_components, i)
-                    };
-
-                    func(&mut entity, tuple);
-                }
-
-                ecs_table_unlock(self.world.raw_world, iter.table);
-            }
-        }
-    }
-
-    pub fn each_iter(&self, mut func: impl FnMut(&mut Iter, usize, T::TupleType)) {
-        unsafe {
-            let mut iter = ecs_query_iter(self.world.raw_world, self.query);
-
-            while ecs_query_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
-                let iter_count = {
-                    if iter.count == 0 {
-                        1_usize
-                    } else {
-                        iter.count as usize
-                    }
-                };
-                let array_components = &components_data.array_components;
-
-                ecs_table_lock(self.world.raw_world, iter.table);
-
-                let mut iter_t = Iter::new(&mut iter);
-
-                for i in 0..iter_count {
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::get_tuple(array_components, i)
-                    };
-                    func(&mut iter_t, i, tuple);
-                }
-
-                ecs_table_unlock(self.world.raw_world, iter.table);
-            }
-        }
-    }
-
-    /// find iterator to find an entity
-    /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
-    /// if it is, it returns that entity.
-    /// The following function signatures is valid:
-    ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # Returns
-    ///
-    /// * Some(Entity) if the entity was found, None if no entity was found
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `find_delegate::invoke_callback`
-    #[doc(alias = "find_delegate::invoke_callback")]
-    pub fn find(&self, mut func: impl FnMut(T::TupleType) -> bool) -> Option<Entity> {
-        unsafe {
-            let mut iter = ecs_query_iter(self.world.raw_world, self.query);
-            let mut entity: Option<Entity> = None;
-
-            while ecs_query_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
-                let iter_count = iter.count as usize;
-                let array_components = &components_data.array_components;
-
-                ecs_table_lock(self.world.raw_world, iter.table);
-
-                for i in 0..iter_count {
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::get_tuple(array_components, i)
-                    };
-                    if func(tuple) {
-                        entity = Some(Entity::new_from_existing_raw(
-                            iter.world,
-                            *iter.entities.add(i),
-                        ));
-                        break;
-                    }
-                }
-
-                ecs_table_unlock(self.world.raw_world, iter.table);
-            }
-            entity
-        }
-    }
-
-    /// find iterator to find an entity
-    /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
-    /// if it is, it returns that entity.
-    /// The following function signatures is valid:
-    ///  - func(entity : Entity, comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # Returns
-    ///
-    /// * Some(Entity) if the entity was found, None if no entity was found
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `find_delegate::invoke_callback`
-    #[doc(alias = "find_delegate::invoke_callback")]
-    pub fn find_entity(
-        &self,
-        mut func: impl FnMut(&mut Entity, T::TupleType) -> bool,
-    ) -> Option<Entity> {
-        unsafe {
-            let mut iter = ecs_query_iter(self.world.raw_world, self.query);
-            let mut entity_result: Option<Entity> = None;
-
-            while ecs_query_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
-                let iter_count = iter.count as usize;
-                let array_components = &components_data.array_components;
-
-                ecs_table_lock(self.world.raw_world, iter.table);
-
-                for i in 0..iter_count {
-                    let mut entity =
-                        Entity::new_from_existing_raw(iter.world, *iter.entities.add(i));
-
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::get_tuple(array_components, i)
-                    };
-                    if func(&mut entity, tuple) {
-                        entity_result = Some(entity);
-                        break;
-                    }
-                }
-
-                ecs_table_unlock(self.world.raw_world, iter.table);
-            }
-            entity_result
-        }
-    }
-
-    /// find iterator to find an entity.
-    /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
-    /// if it is, it returns that entity.
-    /// The following function signatures is valid:
-    ///  - func(iter : Iter, index : usize, comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # Returns
-    ///
-    /// * Some(Entity) if the entity was found, None if no entity was found
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `find_delegate::invoke_callback`
-    #[doc(alias = "find_delegate::invoke_callback")]
-    pub fn find_iter(
-        &self,
-        mut func: impl FnMut(&mut Iter, usize, T::TupleType) -> bool,
-    ) -> Option<Entity> {
-        unsafe {
-            let mut iter = ecs_query_iter(self.world.raw_world, self.query);
-            let mut entity_result: Option<Entity> = None;
-
-            while ecs_query_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
-                let array_components = &components_data.array_components;
-                let iter_count = {
-                    if iter.count == 0 {
-                        1_usize
-                    } else {
-                        iter.count as usize
-                    }
-                };
-
-                ecs_table_lock(self.world.raw_world, iter.table);
-                let mut iter_t = Iter::new(&mut iter);
-
-                for i in 0..iter_count {
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::get_tuple(array_components, i)
-                    };
-                    if func(&mut iter_t, i, tuple) {
-                        entity_result = Some(Entity::new_from_existing_raw(
-                            iter.world,
-                            *iter.entities.add(i),
-                        ));
-                        break;
-                    }
-                }
-
-                ecs_table_unlock(self.world.raw_world, iter.table);
-            }
-            entity_result
-        }
-    }
-
-    /// iter iterator.
-    /// The "iter" iterator accepts a function that is invoked for each matching
-    /// table. The following function signature is valid:
-    ///  - func(it: &mut Iter, comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Iter iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::iter`
-    #[doc(alias = "iterable::iter")]
-    pub fn iter(&self, mut func: impl FnMut(&mut Iter, T::TupleSliceType)) {
-        unsafe {
-            let mut iter = ecs_query_iter(self.world.raw_world, self.query);
-
-            while ecs_query_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
-                let iter_count = iter.count as usize;
-                let array_components = &components_data.array_components;
-
-                ecs_table_lock(self.world.raw_world, iter.table);
-
-                let tuple = if components_data.is_any_array_a_ref {
-                    let is_ref_array_components = &components_data.is_ref_array_components;
-                    T::get_tuple_slices_with_ref(
-                        array_components,
-                        is_ref_array_components,
-                        iter_count,
-                    )
-                } else {
-                    T::get_tuple_slices(array_components, iter_count)
-                };
-                let mut iter_t = Iter::new(&mut iter);
-                func(&mut iter_t, tuple);
-                ecs_table_unlock(self.world.raw_world, iter.table);
-            }
-        }
-    }
-
-    /// iter iterator.
-    /// The "iter" iterator accepts a function that is invoked for each matching
-    /// table. The following function signature is valid:
-    ///  - func(it: &mut Iter)
-    ///
-    /// Iter iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::iter`
-    #[doc(alias = "iterable::iter")]
-    pub fn iter_only(&self, mut func: impl FnMut(&mut Iter)) {
-        unsafe {
-            let mut iter = ecs_query_iter(self.world.raw_world, self.query);
-            while ecs_query_next(&mut iter) {
-                ecs_table_lock(self.world.raw_world, iter.table);
-                let mut iter_t = Iter::new(&mut iter);
-                func(&mut iter_t);
-                ecs_table_unlock(self.world.raw_world, iter.table);
-            }
-        }
-    }
-
-    pub fn first(&self) -> Entity {
-        let mut entity = Entity::default();
-        let mut it = unsafe { ecs_query_iter(self.world.raw_world, self.query) };
-        if unsafe { ecs_query_next(&mut it) } && it.count > 0 {
-            entity =
-                Entity::new_from_existing_raw(self.world.raw_world, unsafe { *it.entities.add(0) });
-            unsafe { ecs_iter_fini(&mut it) };
-        }
-        entity
     }
 }
 

@@ -17,7 +17,7 @@ use super::{
     component_registration::ComponentInfo,
     filter_builder::{FilterBuilder, FilterBuilderImpl},
     iterable::{Filterable, Iterable},
-    query::{Query, QueryBase},
+    query::Query,
     term::TermBuilder,
     world::World,
     EntityT, IdT, IntoEntityId, TableT, WorldT,
@@ -436,7 +436,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     ///
     /// * C++ API: `query_builder_i::observable`
     #[doc(alias = "query_builder_i::observable")]
-    fn observable<'a, T: Iterable<'a>>(&mut self, parent: &QueryBase<'a, T>) -> &mut Self {
+    fn observable<'a, T: Iterable<'a>>(&mut self, parent: &Query<'a, T>) -> &mut Self {
         let desc = self.get_desc_query();
         desc.parent = parent.query;
         self
