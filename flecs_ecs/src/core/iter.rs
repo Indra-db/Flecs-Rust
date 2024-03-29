@@ -1,5 +1,7 @@
 use std::{ffi::CStr, os::raw::c_void};
 
+use flecs_ecs_sys::ecs_iter_get_var;
+
 use crate::{
     core::FlecsErrorCode,
     ecs_assert,
@@ -175,6 +177,32 @@ impl<'a> Iter<'a> {
         let iter: &mut IterT = self.iter;
         TableRange::new_raw(iter.real_world, iter.table, iter.offset, iter.count)
     }
+
+    /// Get the variable of the iterator
+    ///
+    /// # Arguments
+    ///
+    /// * `var_id` - The variable id
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter::get_var`
+    #[doc(alias = "iter::get_var")]
+    #[cfg(feature = "flecs_rules")]
+    pub fn get_var(&mut self, var_id: i32) -> Entity {
+        let world = self.iter.world;
+        let iter: &mut IterT = self.iter;
+        unsafe {
+            ecs_assert!(var_id != -1, FlecsErrorCode::InvalidParameter, 0);
+            Entity::new_from_existing_raw(world, ecs_iter_get_var(iter, var_id))
+        }
+    }
+    /*
+        inline flecs::entity iter::get_var(int var_id) const {
+        ecs_assert(var_id != -1, ECS_INVALID_PARAMETER, 0);
+        return flecs::entity(m_iter->world, ecs_iter_get_var(m_iter, var_id));
+    }
+         */
 
     /// Access ctx.
     /// ctx contains the context pointer assigned to a system

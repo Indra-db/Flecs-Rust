@@ -3858,3 +3858,87 @@ impl World {
         App::new(self)
     }
 }
+
+/// Rules mixin implementation
+#[cfg(feature = "flecs_rules")]
+impl World {
+    /// Create a new rule.
+    ///
+    /// # Returns
+    ///
+    /// A new rule.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::rule`
+    #[doc(alias = "world::rule")]
+    #[inline(always)]
+    pub fn rule<'a, T>(&self) -> crate::addons::rules::Rule<'a, T>
+    where
+        T: Iterable<'a>,
+    {
+        crate::addons::rules::RuleBuilder::<'a, T>::new(self).build()
+    }
+
+    /// Create a new named rule.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the rule.
+    ///
+    /// # Returns
+    ///
+    /// A new rule.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::rule`
+    #[doc(alias = "world::rule")]
+    #[inline(always)]
+    pub fn rule_named<'a, T>(&self, name: &CStr) -> crate::addons::rules::Rule<'a, T>
+    where
+        T: Iterable<'a>,
+    {
+        crate::addons::rules::RuleBuilder::<'a, T>::new_named(self, name).build()
+    }
+
+    /// Create a new rule builder.
+    ///
+    /// # Returns
+    ///
+    /// A new rule builder.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::rule_builder`
+    #[doc(alias = "world::rule_builder")]
+    #[inline(always)]
+    pub fn rule_builder<'a, T>(&self) -> crate::addons::rules::RuleBuilder<'a, T>
+    where
+        T: Iterable<'a>,
+    {
+        crate::addons::rules::RuleBuilder::<'a, T>::new(self)
+    }
+
+    /// Create a new named rule builder.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the rule.
+    ///
+    /// # Returns
+    ///
+    /// A new rule builder.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::rule_builder`
+    #[doc(alias = "world::rule_builder")]
+    #[inline(always)]
+    pub fn rule_builder_named<'a, T>(&self, name: &CStr) -> crate::addons::rules::RuleBuilder<'a, T>
+    where
+        T: Iterable<'a>,
+    {
+        crate::addons::rules::RuleBuilder::<'a, T>::new_named(self, name)
+    }
+}

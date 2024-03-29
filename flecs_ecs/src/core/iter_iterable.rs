@@ -1,6 +1,8 @@
-use std::ffi::c_void;
+use std::ffi::{c_void, CStr};
 
-use flecs_ecs_sys::{ecs_get_entity, ecs_iter_set_var, ecs_query_set_group};
+use flecs_ecs_sys::{
+    ecs_get_entity, ecs_iter_set_var, ecs_query_set_group, ecs_rule_find_var, ecs_rule_iter_t,
+};
 
 use crate::{core::FlecsErrorCode, ecs_assert};
 
@@ -73,6 +75,30 @@ where
     #[doc(alias = "iter_iterable::set_var")]
     pub fn set_var(&mut self, var_id: i32, value: impl IntoEntityId) -> &Self {
         ecs_assert!(var_id != -1, FlecsErrorCode::InvalidParameter, 0);
+        unsafe { ecs_iter_set_var(&mut self.iter, var_id, value.get_id()) };
+        self
+    }
+
+    /// set variable for rule iter
+    ///
+    /// # Arguments
+    ///
+    /// * `name`: the name of the variable to set
+    /// * `value`: the value to set
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter_iterable::set_var`
+    #[doc(alias = "iter_iterable::set_var_rule")]
+    #[cfg(feature = "flecs_rules")]
+    pub fn set_var_rule(&mut self, name: &CStr, value: impl IntoEntityId) -> &Self {
+        let rit: *mut ecs_rule_iter_t = unsafe { &mut self.iter.priv_.iter.rule };
+        let var_id = unsafe { ecs_rule_find_var((*rit).rule, name.as_ptr()) };
+        ecs_assert!(
+            var_id != -1,
+            FlecsErrorCode::InvalidParameter,
+            name.to_str().unwrap()
+        );
         unsafe { ecs_iter_set_var(&mut self.iter, var_id, value.get_id()) };
         self
     }
