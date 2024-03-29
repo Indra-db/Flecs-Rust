@@ -1,18 +1,12 @@
 //! Query API. Queries are used to iterate over entities that match a filter.
 //! Queries are better for persistence than filters, but are slower to create.
 
-use std::{
-    os::raw::{c_void},
-};
+use std::os::raw::c_void;
 
-
-
-use crate::{
-    sys::{
-        ecs_abort_, ecs_get_entity, ecs_os_api, ecs_query_changed,
-        ecs_query_desc_t, ecs_query_fini, ecs_query_get_filter, ecs_query_get_group_info,
-        ecs_query_init, ecs_query_iter, ecs_query_next, ecs_query_orphaned,
-    },
+use crate::sys::{
+    ecs_abort_, ecs_get_entity, ecs_os_api, ecs_query_changed, ecs_query_desc_t, ecs_query_fini,
+    ecs_query_get_filter, ecs_query_get_group_info, ecs_query_init, ecs_query_iter, ecs_query_next,
+    ecs_query_orphaned,
 };
 
 use super::{
@@ -122,7 +116,7 @@ where
     ///
     /// * C++ API: `query::query`
     #[doc(alias = "query::query")]
-    pub fn new_from_desc(world: &World, desc: *mut ecs_query_desc_t) -> Self {
+    pub fn new_from_desc(world: &World, desc: &mut ecs_query_desc_t) -> Self {
         let obj = Self {
             world: world.clone(),
             query: unsafe { ecs_query_init(world.raw_world, desc) },
@@ -142,9 +136,9 @@ where
                 };
             }
 
-            if !(*desc).filter.terms_buffer.is_null() {
+            if !desc.filter.terms_buffer.is_null() {
                 if let Some(free_func) = ecs_os_api.free_ {
-                    free_func((*desc).filter.terms_buffer as *mut _);
+                    free_func(desc.filter.terms_buffer as *mut _);
                 }
             }
         };

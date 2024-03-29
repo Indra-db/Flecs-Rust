@@ -17,9 +17,8 @@ use crate::{
 };
 
 use super::{
-    super::c_types::RUST_ECS_COMPONENT_MASK,
-    traits::{InOutType, OperType},
-    IntoEntityId, IntoEntityIdExt, IntoWorld,
+    super::c_types::RUST_ECS_COMPONENT_MASK, InOutType, IntoEntityId, IntoEntityIdExt, IntoWorld,
+    OperType,
 };
 
 /// Combines two 32 bit integers into a 64 bit integer.
