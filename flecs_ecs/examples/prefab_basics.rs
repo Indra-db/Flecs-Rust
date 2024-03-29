@@ -46,7 +46,7 @@ fn main() {
 
     // Prefab components can be iterated like regular components:
     world.each_entity::<(&Defence,)>(|entity, (d,)| {
-        println!("{}: {}", entity.get_hierarchy_path().unwrap(), d.value);
+        println!("{}: {}", entity.get_path().unwrap(), d.value);
     });
 
     // Output:

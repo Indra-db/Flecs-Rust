@@ -14,7 +14,7 @@ fn iterate_tree(entity: Entity, position_parent: &Position) {
     // Print hierarchical name of entity & the entity type
     println!(
         "{} [{}]",
-        entity.get_hierarchy_path().unwrap(),
+        entity.get_path().unwrap(),
         entity.get_archetype()
     );
 
@@ -30,7 +30,7 @@ fn iterate_tree(entity: Entity, position_parent: &Position) {
     // Print the position
     println!("{:?}", pos_actual);
 
-    entity.for_each_child_of(|child| {
+    entity.each_child_of(|child| {
         iterate_tree(child, &pos_actual);
     });
 }

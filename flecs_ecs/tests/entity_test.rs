@@ -41,7 +41,7 @@ fn entity_new_named_from_scope() {
     world.set_scope_with_id(prev);
 
     assert_eq!(child.get_name(), "Bar");
-    assert_eq!(child.get_hierarchy_path().unwrap(), "::Foo::Bar");
+    assert_eq!(child.get_path().unwrap(), "::Foo::Bar");
 }
 
 #[test]
@@ -55,7 +55,7 @@ fn entity_new_nested_named_from_nested_scope() {
     // Verify that the entity exists and its name and path are correct
     assert!(entity.is_valid());
     assert_eq!(entity.get_name(), "Bar");
-    assert_eq!(entity.get_hierarchy_path().unwrap(), "::Foo::Bar");
+    assert_eq!(entity.get_path().unwrap(), "::Foo::Bar");
 
     // Set the current scope to `entity`
     let prev = world.set_scope_with_id(entity);
@@ -71,10 +71,7 @@ fn entity_new_nested_named_from_nested_scope() {
 
     // Verify the name and hierarchical path of the child entity
     assert_eq!(child.get_name(), "World");
-    assert_eq!(
-        child.get_hierarchy_path().unwrap(),
-        "::Foo::Bar::Hello::World"
-    );
+    assert_eq!(child.get_path().unwrap(), "::Foo::Bar::Hello::World");
 }
 
 #[test]
@@ -730,19 +727,19 @@ fn entity_get_target() {
         .add_id((rel, obj2))
         .add_id((rel, obj3));
 
-    let mut target = child.get_target_from_entity(rel, 0);
+    let mut target = child.get_target_id(rel, 0);
     assert!(target.is_valid());
     assert_eq!(target, obj1);
 
-    target = child.get_target_from_entity(rel, 1);
+    target = child.get_target_id(rel, 1);
     assert!(target.is_valid());
     assert_eq!(target, obj2);
 
-    target = child.get_target_from_entity(rel, 2);
+    target = child.get_target_id(rel, 2);
     assert!(target.is_valid());
     assert_eq!(target, obj3);
 
-    target = child.get_target_from_entity(rel, 3);
+    target = child.get_target_id(rel, 3);
     assert!(!target.is_valid());
 }
 
@@ -753,7 +750,7 @@ fn entity_get_parent() {
     let parent = world.new_entity();
     let child = world.new_entity().child_of_id(parent);
 
-    assert_eq!(child.get_target_from_entity(ECS_CHILD_OF, 0), parent);
+    assert_eq!(child.get_target_id(ECS_CHILD_OF, 0), parent);
     assert_eq!(child.get_parent(), parent);
 }
 

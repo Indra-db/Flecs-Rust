@@ -217,8 +217,8 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path`
     #[doc(alias = "entity_view::path")]
-    pub fn get_hierarchy_path_w_sep(&self, sep: &CStr, init_sep: &CStr) -> Option<String> {
-        self.get_hierarchy_path_from_parent_id_w_sep(0, sep, init_sep)
+    pub fn get_path_w_sep(&self, sep: &CStr, init_sep: &CStr) -> Option<String> {
+        self.get_path_from_id_w_sep(0, sep, init_sep)
     }
 
     /// Return the hierarchical entity path using the default separator "::".
@@ -227,8 +227,8 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path`
     #[doc(alias = "entity_view::path")]
-    pub fn get_hierarchy_path(&self) -> Option<String> {
-        self.get_hierarchy_path_from_parent_id(0)
+    pub fn get_path(&self) -> Option<String> {
+        self.get_path_from_id(0)
     }
 
     /// Return the hierarchical entity path relative to a parent.
@@ -240,7 +240,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    pub fn get_hierarchy_path_from_parent_id_w_sep(
+    pub fn get_path_from_id_w_sep(
         &self,
         parent: impl IntoEntityId,
         sep: &CStr,
@@ -287,7 +287,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    pub fn get_hierarchy_path_from_parent_id(&self, parent: impl IntoEntityId) -> Option<String> {
+    pub fn get_path_from_id(&self, parent: impl IntoEntityId) -> Option<String> {
         unsafe {
             let raw_ptr = ecs_get_path_w_sep(
                 self.world,
@@ -322,12 +322,8 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    pub fn get_hierarchy_path_from_parent_type_w_sep<T: ComponentInfo>(
-        &self,
-        sep: &CStr,
-        init_sep: &CStr,
-    ) -> Option<String> {
-        self.get_hierarchy_path_from_parent_id_w_sep(T::get_id(self.world), sep, init_sep)
+    pub fn get_path_from<T: ComponentInfo>(&self, sep: &CStr, init_sep: &CStr) -> Option<String> {
+        self.get_path_from_id_w_sep(T::get_id(self.world), sep, init_sep)
     }
 
     /// Return the hierarchical entity path relative to a parent type using the default separator "::".
@@ -337,7 +333,7 @@ impl EntityView {
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
     pub fn get_hierarchy_path_from_parent_type<T: ComponentInfo>(&self) -> Option<String> {
-        self.get_hierarchy_path_from_parent_id(T::get_id(self.world))
+        self.get_path_from_id(T::get_id(self.world))
     }
 
     /// Checks if the entity is enabled.
@@ -414,7 +410,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    pub fn for_each_component<F>(&self, mut func: F)
+    pub fn each_component<F>(&self, mut func: F)
     where
         F: FnMut(Id),
     {
@@ -462,7 +458,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    pub fn for_each_matching_pair<F>(
+    pub fn each_matching_pair<F>(
         &self,
         pred: impl IntoEntityId,
         obj: impl IntoEntityId,
@@ -513,14 +509,11 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    pub fn for_each_target_in_relationship_by_entity<F>(
-        &self,
-        relationship: impl IntoEntityId,
-        mut func: F,
-    ) where
+    pub fn each_target_id<F>(&self, relationship: impl IntoEntityId, mut func: F)
+    where
         F: FnMut(Entity),
     {
-        self.for_each_matching_pair(relationship.get_id(), ECS_WILDCARD, |id| {
+        self.each_matching_pair(relationship.get_id(), ECS_WILDCARD, |id| {
             let obj = id.second();
             func(obj);
         });
@@ -540,14 +533,11 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    pub fn for_each_target_in_relationship<T>(&self, func: impl FnMut(Entity))
+    pub fn each_target<T>(&self, func: impl FnMut(Entity))
     where
         T: ComponentInfo,
     {
-        self.for_each_target_in_relationship_by_entity(
-            EntityView::new_id_only(T::get_id(self.world)),
-            func,
-        );
+        self.each_target_id(EntityView::new_id_only(T::get_id(self.world)), func);
     }
 
     /// Iterate children for entity
@@ -561,11 +551,8 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::children`
     #[doc(alias = "entity_view::children")]
-    pub fn for_each_children_by_relationship_id<F>(
-        &self,
-        relationship: impl IntoEntityId,
-        mut func: F,
-    ) where
+    pub fn each_children_id<F>(&self, relationship: impl IntoEntityId, mut func: F)
+    where
         F: FnMut(Entity),
     {
         // When the entity is a wildcard, this would attempt to query for all
@@ -618,12 +605,12 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::children`
     #[doc(alias = "entity_view::children")]
-    pub fn for_each_children_by_relationship<T, F>(&self, func: F)
+    pub fn each_children<T, F>(&self, func: F)
     where
         T: ComponentInfo,
         F: FnMut(Entity),
     {
-        self.for_each_children_by_relationship_id(T::get_id(self.world), func);
+        self.each_children_id(T::get_id(self.world), func);
     }
 
     /// Iterate children for entity
@@ -636,11 +623,11 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::children`
     #[doc(alias = "entity_view::children")]
-    pub fn for_each_child_of<F>(&self, func: F)
+    pub fn each_child_of<F>(&self, func: F)
     where
         F: FnMut(Entity),
     {
-        self.for_each_children_by_relationship_id(unsafe { EcsChildOf }, func);
+        self.each_children_id(unsafe { EcsChildOf }, func);
     }
 
     /// Get (struct) Component from entity
@@ -948,7 +935,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target")]
-    pub fn get_target_from_component<First: ComponentInfo>(&self, index: i32) -> Entity {
+    pub fn get_target<First: ComponentInfo>(&self, index: i32) -> Entity {
         Entity::new_from_existing_raw(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, First::get_id(self.world), index)
         })
@@ -969,7 +956,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target")]
-    pub fn get_target_from_entity(self, first: impl IntoEntityId, index: i32) -> Entity {
+    pub fn get_target_id(self, first: impl IntoEntityId, index: i32) -> Entity {
         Entity::new_from_existing_raw(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, first.get_id(), index)
         })
@@ -1039,7 +1026,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::target`
-    #[doc(alias = "entity_view::target")]
+    #[doc(alias = "entity_view::target_for")]
     #[inline(always)]
     pub fn get_target_for<T: IntoComponentId>(&self, relationship: impl IntoEntityId) -> Entity {
         self.get_target_for_id(relationship, T::get_id(self.world))
@@ -1064,7 +1051,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::target`
-    #[doc(alias = "entity_view::target")]
+    #[doc(alias = "entity_view::target_for")]
     pub fn get_target_for_pair_first<First: ComponentInfo>(
         &self,
         second: impl IntoEntityId,
@@ -1136,7 +1123,7 @@ impl EntityView {
     #[doc(alias = "entity_view::parent")]
     #[inline(always)]
     pub fn get_parent(&self) -> Entity {
-        self.get_target_from_entity(ECS_CHILD_OF, 0)
+        self.get_target_id(ECS_CHILD_OF, 0)
     }
 
     /// Lookup an entity by name.

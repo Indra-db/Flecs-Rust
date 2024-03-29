@@ -108,7 +108,7 @@ fn main() {
         let group: Entity = world.new_entity_from_id(iter.get_group_id());
         println!(
             "group: {:?} - Table [{}]",
-            group.get_hierarchy_path().unwrap(),
+            group.get_path().unwrap(),
             iter.get_table().to_string().unwrap()
         );
     });

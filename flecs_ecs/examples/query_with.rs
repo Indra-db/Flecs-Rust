@@ -6,7 +6,8 @@ struct Npc;
 
 fn main() {
     let world = World::new();
-
+    let name_pos = Position::get_symbol_name();
+    println!("Position symbol name: {:?}", name_pos);
     // Create a query for Position, Npc. By adding the Npc component using the
     // "with" method, the component is not a part of the query type, and as a
     // result does not become part of the function signatures of each and iter.

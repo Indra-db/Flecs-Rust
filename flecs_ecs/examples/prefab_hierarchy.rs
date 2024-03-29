@@ -21,14 +21,8 @@ fn main() {
     // and Cockpit entities.
     if let Some(inst_engine) = inst.lookup_entity_by_name(c"Engine", true) {
         if let Some(inst_cockpit) = inst.lookup_entity_by_name(c"Cockpit", true) {
-            println!(
-                "instance engine:  {:?}",
-                inst_engine.get_hierarchy_path().unwrap()
-            );
-            println!(
-                "instance cockpit: {:?}",
-                inst_cockpit.get_hierarchy_path().unwrap()
-            );
+            println!("instance engine:  {:?}", inst_engine.get_path().unwrap());
+            println!("instance cockpit: {:?}", inst_cockpit.get_path().unwrap());
         } else {
             println!("entity lookup failed");
         }

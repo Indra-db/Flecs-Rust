@@ -79,7 +79,7 @@ fn main() {
         world
             .get_id::<(Requires, Gigawatts)>()
             .type_id()
-            .get_hierarchy_path()
+            .get_path()
             .unwrap()
     );
     println!(
@@ -87,7 +87,7 @@ fn main() {
         world
             .get_id::<(Gigawatts, Requires)>()
             .type_id()
-            .get_hierarchy_path()
+            .get_path()
             .unwrap()
     );
     println!(
@@ -95,7 +95,7 @@ fn main() {
         world
             .get_id::<(Expires, Position)>()
             .type_id()
-            .get_hierarchy_path()
+            .get_path()
             .unwrap()
     );
     println!(
@@ -103,7 +103,7 @@ fn main() {
         world
             .get_id::<(MustHave, Position)>()
             .type_id()
-            .get_hierarchy_path()
+            .get_path()
             .unwrap()
     );
 

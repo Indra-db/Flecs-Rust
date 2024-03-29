@@ -89,7 +89,7 @@ fn main() {
         .build()
         .each_iter(|it, _, _| {
             let tile_constant = it.get_pair_id(1).unwrap().second();
-            println!("{}", tile_constant.get_hierarchy_path().unwrap());
+            println!("{}", tile_constant.get_path().unwrap());
         });
 
     // Outputs:
@@ -107,7 +107,7 @@ fn main() {
         .build()
         .each_iter(|it, _, _| {
             let tile_constant = it.get_pair_id(1).unwrap().second();
-            println!("{}", tile_constant.get_hierarchy_path().unwrap());
+            println!("{}", tile_constant.get_path().unwrap());
         });
 
     // Outputs:

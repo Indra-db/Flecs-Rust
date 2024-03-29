@@ -1,8 +1,10 @@
 use crate::core::{Entity, EntityView, Id, Iterable, Query, World, WorldT};
 
 pub trait IntoWorld {
+    #[doc(hidden)]
     fn get_world_raw_mut(&self) -> *mut WorldT;
     #[inline]
+    #[doc(hidden)]
     fn get_world_raw(&self) -> *const WorldT {
         self.get_world_raw_mut() as *const WorldT
     }
@@ -14,6 +16,7 @@ pub trait IntoWorld {
 
 impl IntoWorld for *mut WorldT {
     #[inline]
+    #[doc(hidden)]
     fn get_world_raw_mut(&self) -> *mut WorldT {
         *self
     }
@@ -21,6 +24,7 @@ impl IntoWorld for *mut WorldT {
 
 impl IntoWorld for *const WorldT {
     #[inline]
+    #[doc(hidden)]
     fn get_world_raw_mut(&self) -> *mut WorldT {
         *self as *mut WorldT
     }
@@ -28,6 +32,7 @@ impl IntoWorld for *const WorldT {
 
 impl IntoWorld for World {
     #[inline]
+    #[doc(hidden)]
     fn get_world_raw_mut(&self) -> *mut WorldT {
         self.raw_world
     }
@@ -35,6 +40,7 @@ impl IntoWorld for World {
 
 impl IntoWorld for Id {
     #[inline]
+    #[doc(hidden)]
     fn get_world_raw_mut(&self) -> *mut WorldT {
         self.world
     }
@@ -42,6 +48,7 @@ impl IntoWorld for Id {
 
 impl IntoWorld for Entity {
     #[inline]
+    #[doc(hidden)]
     fn get_world_raw_mut(&self) -> *mut WorldT {
         self.world
     }
@@ -49,6 +56,7 @@ impl IntoWorld for Entity {
 
 impl IntoWorld for EntityView {
     #[inline]
+    #[doc(hidden)]
     fn get_world_raw_mut(&self) -> *mut WorldT {
         self.world
     }
@@ -59,6 +67,7 @@ where
     T: IntoWorld,
 {
     #[inline]
+    #[doc(hidden)]
     fn get_world_raw_mut(&self) -> *mut WorldT {
         T::get_world_raw_mut(*self)
     }
@@ -69,6 +78,7 @@ where
     T: IntoWorld,
 {
     #[inline]
+    #[doc(hidden)]
     fn get_world_raw_mut(&self) -> *mut WorldT {
         T::get_world_raw_mut(*self)
     }
@@ -79,6 +89,7 @@ where
     T: IntoWorld,
 {
     #[inline]
+    #[doc(hidden)]
     fn get_world_raw_mut(&self) -> *mut WorldT {
         match self {
             Some(t) => t.get_world_raw_mut(),
@@ -92,6 +103,7 @@ where
     T: Iterable<'a>,
 {
     #[inline]
+    #[doc(hidden)]
     fn get_world_raw_mut(&self) -> *mut WorldT {
         self.world.raw_world
     }

@@ -35,11 +35,7 @@ fn main() {
 
     query.each_entity(|entity, (velocity, gravity)| {
         velocity.y += gravity.value;
-        println!(
-            "Entity {} has {:?}",
-            entity.get_hierarchy_path().unwrap(),
-            velocity
-        );
+        println!("Entity {} has {:?}", entity.get_path().unwrap(), velocity);
     });
 
     // Output

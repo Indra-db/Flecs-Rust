@@ -120,7 +120,7 @@ fn main() {
         let ctx = unsafe { &*(query.get_group_context(group) as *mut GroupCtx) };
         println!(
             "Group: {:?} - Table: [{:?}] - Counter: {}",
-            group.get_hierarchy_path().unwrap(),
+            group.get_path().unwrap(),
             it.get_archetype(),
             ctx.counter
         );

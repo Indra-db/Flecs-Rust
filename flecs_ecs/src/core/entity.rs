@@ -763,7 +763,7 @@ impl Entity {
             FlecsErrorCode::InvalidParameter,
             "add ChildOf pair before using slot()"
         );
-        let id = self.get_target_from_entity(ECS_CHILD_OF, 0);
+        let id = self.get_target_id(ECS_CHILD_OF, 0);
         self.slot_of_id(id)
     }
 

@@ -54,21 +54,15 @@ fn main() {
     let inst: Entity = world.new_entity_named(c"my_spaceship").is_a_id(spaceship);
 
     // Get the instantiated entities for the prefab slots
-    let inst_engine = inst.get_target_from_entity(engine, 0);
-    let inst_cockpit = inst.get_target_from_entity(cockpit, 0);
-    let inst_seat = inst.get_target_from_entity(pilot_seat, 0);
+    let inst_engine = inst.get_target_id(engine, 0);
+    let inst_cockpit = inst.get_target_id(cockpit, 0);
+    let inst_seat = inst.get_target_id(pilot_seat, 0);
 
-    println!(
-        "instance engine: {}",
-        inst_engine.get_hierarchy_path().unwrap()
-    );
+    println!("instance engine: {}", inst_engine.get_path().unwrap());
 
-    println!(
-        "instance cockpit: {}",
-        inst_cockpit.get_hierarchy_path().unwrap()
-    );
+    println!("instance cockpit: {}", inst_cockpit.get_path().unwrap());
 
-    println!("instance seat: {}", inst_seat.get_hierarchy_path().unwrap());
+    println!("instance seat: {}", inst_seat.get_path().unwrap());
 
     // Output:
     //  instance engine: ::my_spaceship::Engine

@@ -48,7 +48,7 @@ fn main() {
         let group = world.new_entity_from_id(it.get_group_id());
         println!(
             "Group: {:?} - Table: [{:?}]",
-            group.get_hierarchy_path().unwrap(),
+            group.get_path().unwrap(),
             it.get_archetype()
         );
 
