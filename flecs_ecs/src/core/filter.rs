@@ -6,8 +6,8 @@ use crate::sys::{
 };
 
 use super::{
-    c_types::FilterT, entity::Entity, iterable::Iterable, world::World,
-    FlecsErrorCode, IntoWorld, IterAPI, IterOperations,
+    c_types::FilterT, entity::Entity, iterable::Iterable, world::World, FlecsErrorCode, IntoWorld,
+    IterAPI, IterOperations,
 };
 
 pub struct FilterView<'a, T>
