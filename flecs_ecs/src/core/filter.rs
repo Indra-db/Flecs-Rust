@@ -214,12 +214,16 @@ where
         unsafe { ecs_filter_iter(self.world.raw_world, &self.filter) }
     }
 
-    fn iter_next(iter: &mut super::IterT) -> bool {
+    fn iter_next(&self, iter: &mut super::IterT) -> bool {
         unsafe { ecs_filter_next(iter) }
     }
 
     fn get_filter_ptr(&self) -> *const FilterT {
         &self.filter
+    }
+
+    fn iter_next_func(&self) -> unsafe extern "C" fn(*mut super::IterT) -> bool {
+        ecs_filter_next
     }
 }
 
@@ -251,12 +255,16 @@ where
         unsafe { ecs_filter_iter(self.world.raw_world, self.filter_ptr) }
     }
 
-    fn iter_next(iter: &mut super::IterT) -> bool {
+    fn iter_next(&self, iter: &mut super::IterT) -> bool {
         unsafe { ecs_filter_next(iter) }
     }
 
     fn get_filter_ptr(&self) -> *const FilterT {
         self.filter_ptr
+    }
+
+    fn iter_next_func(&self) -> unsafe extern "C" fn(*mut super::IterT) -> bool {
+        ecs_filter_next
     }
 }
 

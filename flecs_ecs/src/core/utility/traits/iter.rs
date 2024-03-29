@@ -3,17 +3,23 @@ use std::ffi::c_char;
 use flecs_ecs_sys::{ecs_filter_str, ecs_iter_fini, ecs_os_api, ecs_table_lock, ecs_table_unlock};
 
 use crate::{
-    core::{Entity, FilterT, FlecsErrorCode, Iter, IterT, Iterable, Term},
+    core::{Entity, FilterT, FlecsErrorCode, Iter, IterIterable, IterT, Iterable, Term},
     ecs_assert,
 };
 
 use super::IntoWorld;
 
 pub trait IterOperations {
+    #[doc(hidden)]
     fn retrieve_iter(&self) -> IterT;
 
-    fn iter_next(iter: &mut IterT) -> bool;
+    #[doc(hidden)]
+    fn iter_next(&self, iter: &mut IterT) -> bool;
 
+    #[doc(hidden)]
+    fn iter_next_func(&self) -> unsafe extern "C" fn(*mut IterT) -> bool;
+
+    #[doc(hidden)]
     fn get_filter_ptr(&self) -> *const FilterT;
 }
 
@@ -40,7 +46,7 @@ where
         unsafe {
             let mut iter = self.retrieve_iter();
 
-            while Self::iter_next(&mut iter) {
+            while self.iter_next(&mut iter) {
                 let components_data = T::get_array_ptrs_of_components(&iter);
                 let iter_count = iter.count as usize;
                 let array_components = &components_data.array_components;
@@ -77,7 +83,7 @@ where
         unsafe {
             let mut iter = self.retrieve_iter();
             let world = self.get_world_raw_mut();
-            while Self::iter_next(&mut iter) {
+            while self.iter_next(&mut iter) {
                 let components_data = T::get_array_ptrs_of_components(&iter);
                 let iter_count = iter.count as usize;
                 let array_components = &components_data.array_components;
@@ -112,7 +118,7 @@ where
             let mut iter = self.retrieve_iter();
             let world = self.get_world_raw_mut();
 
-            while Self::iter_next(&mut iter) {
+            while self.iter_next(&mut iter) {
                 let components_data = T::get_array_ptrs_of_components(&iter);
                 let iter_count = {
                     if iter.count == 0 {
@@ -164,7 +170,7 @@ where
             let mut entity: Option<Entity> = None;
             let world = self.get_world_raw_mut();
 
-            while Self::iter_next(&mut iter) {
+            while self.iter_next(&mut iter) {
                 let components_data = T::get_array_ptrs_of_components(&iter);
                 let iter_count = iter.count as usize;
                 let array_components = &components_data.array_components;
@@ -218,7 +224,7 @@ where
             let mut entity_result: Option<Entity> = None;
             let world = self.get_world_raw_mut();
 
-            while Self::iter_next(&mut iter) {
+            while self.iter_next(&mut iter) {
                 let components_data = T::get_array_ptrs_of_components(&iter);
                 let iter_count = iter.count as usize;
                 let array_components = &components_data.array_components;
@@ -272,7 +278,7 @@ where
             let mut entity_result: Option<Entity> = None;
             let world = self.get_world_raw_mut();
 
-            while Self::iter_next(&mut iter) {
+            while self.iter_next(&mut iter) {
                 let components_data = T::get_array_ptrs_of_components(&iter);
                 let array_components = &components_data.array_components;
                 let iter_count = {
@@ -327,7 +333,7 @@ where
             let mut iter = self.retrieve_iter();
             let world = self.get_world_raw_mut();
 
-            while Self::iter_next(&mut iter) {
+            while self.iter_next(&mut iter) {
                 let components_data = T::get_array_ptrs_of_components(&iter);
                 let iter_count = iter.count as usize;
                 let array_components = &components_data.array_components;
@@ -369,7 +375,7 @@ where
         unsafe {
             let mut iter = self.retrieve_iter();
             let world = self.get_world_raw_mut();
-            while Self::iter_next(&mut iter) {
+            while self.iter_next(&mut iter) {
                 ecs_table_lock(world, iter.table);
                 let mut iter_t = Iter::new(&mut iter);
                 func(&mut iter_t);
@@ -490,14 +496,58 @@ where
         rust_string
     }
 
-    fn first(&self) -> Entity {
+    fn iterable(&self) -> IterIterable<'a, T> {
+        IterIterable::new(self.retrieve_iter(), self.iter_next_func())
+    }
+
+    /// Return first matching entity.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iterable::first`
+    /// * C++ API: `iter_iterable::first`
+    #[doc(alias = "iterable::first")]
+    #[doc(alias = "iter_iterable::first")]
+    fn first(&mut self) -> Entity {
         let mut entity = Entity::default();
-        let mut it = self.retrieve_iter();
+
         let world = self.get_world_raw_mut();
-        if Self::iter_next(&mut it) && it.count > 0 {
+        let it = &mut self.retrieve_iter();
+
+        if self.iter_next(it) && it.count > 0 {
             entity = Entity::new_from_existing_raw(world, unsafe { *it.entities.add(0) });
-            unsafe { ecs_iter_fini(&mut it) };
+            unsafe { ecs_iter_fini(it) };
         }
         entity
+    }
+
+    /// Returns true if iterator yields at least once result.
+    fn is_true(&mut self) -> bool {
+        let mut it = self.retrieve_iter();
+
+        let result = self.iter_next(&mut it);
+        if result {
+            unsafe { ecs_iter_fini(&mut it) };
+        }
+        result
+    }
+
+    /// Return total number of entities in result.
+    ///
+    /// # Returns
+    ///
+    /// The total number of entities in the result
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter_iterable::count`
+    #[doc(alias = "iter_iterable::count")]
+    fn count(&mut self) -> i32 {
+        let mut it = self.retrieve_iter();
+        let mut result = 0;
+        while self.iter_next(&mut it) {
+            result += it.count;
+        }
+        result
     }
 }

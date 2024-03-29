@@ -117,6 +117,15 @@ fn main() {
 
     println!("Tables for cell 1_0:");
 
+    query.iterable().set_group::<Cell_1_0>().iter_only(|iter| {
+        let group: Entity = world.new_entity_from_id(iter.get_group_id());
+        println!(
+            "group: {:?} - Table [{}]",
+            group.get_path().unwrap(),
+            iter.get_table().to_string().unwrap()
+        );
+    });
+
     // Output:
     //  All tables
     //  group: "::Cell_0_0" - Table [Merchant, Npc, (WorldCell,Cell_0_0)]
@@ -126,5 +135,7 @@ fn main() {
     //  group: "::Cell_1_0" - Table [Npc, Beggar, (WorldCell,Cell_1_0)]
     //  group: "::Cell_1_1" - Table [Npc, Soldier, (WorldCell,Cell_1_1)]
 
-    //todo!("iter_iterable class not implemented yet.")
+    //  Tables for cell 1_0:
+    //  group: "::Cell_1_0" - Table [Npc, Mage, (WorldCell,Cell_1_0)]
+    //  group: "::Cell_1_0" - Table [Npc, Beggar, (WorldCell,Cell_1_0)]
 }

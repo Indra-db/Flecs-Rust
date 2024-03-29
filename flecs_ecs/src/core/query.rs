@@ -39,12 +39,16 @@ where
     }
 
     #[inline(always)]
-    fn iter_next(iter: &mut IterT) -> bool {
+    fn iter_next(&self, iter: &mut IterT) -> bool {
         unsafe { ecs_query_next(iter) }
     }
 
     fn get_filter_ptr(&self) -> *const FilterT {
         unsafe { ecs_query_get_filter(self.query) }
+    }
+
+    fn iter_next_func(&self) -> unsafe extern "C" fn(*mut IterT) -> bool {
+        ecs_query_next
     }
 }
 
