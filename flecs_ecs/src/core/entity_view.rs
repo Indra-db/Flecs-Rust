@@ -1145,7 +1145,7 @@ impl EntityView {
     /// * C++ API: `entity_view::lookup`
     #[doc(alias = "entity_view::lookup")]
     #[inline(always)]
-    pub fn lookup_entity_by_name(&self, path: &CStr, search_path: bool) -> Option<Entity> {
+    pub fn lookup_name_optional(&self, path: &CStr, search_path: bool) -> Option<Entity> {
         ecs_assert!(
             self.raw_id != 0,
             FlecsErrorCode::InvalidParameter,

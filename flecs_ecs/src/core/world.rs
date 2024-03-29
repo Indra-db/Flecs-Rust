@@ -850,7 +850,37 @@ impl World {
     ///
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
-    pub fn lookup_entity_by_name(&self, name: &CStr, search_path: bool) -> Option<Entity> {
+    pub fn lookup_name(&self, name: &CStr, search_path: bool) -> Entity {
+        let entity_id = unsafe {
+            ecs_lookup_path_w_sep(
+                self.raw_world,
+                0,
+                name.as_ptr(),
+                SEPARATOR.as_ptr(),
+                SEPARATOR.as_ptr(),
+                search_path,
+            )
+        };
+
+        Entity::new_from_existing_raw(self.raw_world, entity_id)
+    }
+
+    /// Lookup entity by name
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the entity to lookup.
+    /// * `search_path` - When false, only the current scope is searched.
+    ///
+    /// # Returns
+    ///
+    /// The entity if found, otherwise None.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::lookup`
+    #[doc(alias = "world::lookup")]
+    pub fn lookup_name_optional_optional(&self, name: &CStr, search_path: bool) -> Option<Entity> {
         let entity_id = unsafe {
             ecs_lookup_path_w_sep(
                 self.raw_world,

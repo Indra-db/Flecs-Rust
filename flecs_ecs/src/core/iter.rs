@@ -197,12 +197,33 @@ impl<'a> Iter<'a> {
             Entity::new_from_existing_raw(world, ecs_iter_get_var(iter, var_id))
         }
     }
-    /*
-        inline flecs::entity iter::get_var(int var_id) const {
-        ecs_assert(var_id != -1, ECS_INVALID_PARAMETER, 0);
-        return flecs::entity(m_iter->world, ecs_iter_get_var(m_iter, var_id));
+
+    /// Get the variable of the iterator by name
+    ///
+    /// # Arguments
+    ///
+    /// * `var_id` - The variable id
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter::get_var`
+    #[doc(alias = "iter::get_var")]
+    #[cfg(feature = "flecs_rules")]
+    pub fn get_var_by_name(&mut self, name: &CStr) -> Entity {
+        use flecs_ecs_sys::ecs_rule_find_var;
+
+        let world = self.iter.world;
+        let iter: &mut IterT = self.iter;
+        let rit = unsafe { &mut iter.priv_.iter.rule };
+        let rule = rit.rule;
+        let var_id = unsafe { ecs_rule_find_var(rule, name.as_ptr()) };
+        ecs_assert!(
+            var_id != -1,
+            FlecsErrorCode::InvalidParameter,
+            name.to_str().unwrap()
+        );
+        Entity::new_from_existing_raw(world, unsafe { ecs_iter_get_var(iter, var_id) })
     }
-         */
 
     /// Access ctx.
     /// ctx contains the context pointer assigned to a system

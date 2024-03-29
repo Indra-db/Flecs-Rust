@@ -73,7 +73,7 @@ where
     ///
     /// * C++ API: `iter_iterable::set_var`
     #[doc(alias = "iter_iterable::set_var")]
-    pub fn set_var(&mut self, var_id: i32, value: impl IntoEntityId) -> &Self {
+    pub fn set_var(&mut self, var_id: i32, value: impl IntoEntityId) -> &mut Self {
         ecs_assert!(var_id != -1, FlecsErrorCode::InvalidParameter, 0);
         unsafe { ecs_iter_set_var(&mut self.iter, var_id, value.get_id()) };
         self
@@ -91,7 +91,7 @@ where
     /// * C++ API: `iter_iterable::set_var`
     #[doc(alias = "iter_iterable::set_var_rule")]
     #[cfg(feature = "flecs_rules")]
-    pub fn set_var_rule(&mut self, name: &CStr, value: impl IntoEntityId) -> &Self {
+    pub fn set_var_rule(&mut self, name: &CStr, value: impl IntoEntityId) -> &mut Self {
         let rit: *mut ecs_rule_iter_t = unsafe { &mut self.iter.priv_.iter.rule };
         let var_id = unsafe { ecs_rule_find_var((*rit).rule, name.as_ptr()) };
         ecs_assert!(
