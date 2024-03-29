@@ -30,7 +30,7 @@ where
 {
     pub desc: ecs_filter_desc_t,
     expr_count: i32,
-    term: Term,
+    pub(crate) term: Term,
     pub world: World,
     pub next_term_index: i32,
     _phantom: std::marker::PhantomData<&'a T>,
@@ -130,8 +130,7 @@ where
     T: Iterable<'a>,
 {
     fn current_term(&mut self) -> &mut TermT {
-        let next_term_index = self.next_term_index;
-        &mut self.get_desc_filter().terms[next_term_index as usize]
+        unsafe { &mut *self.term.term_ptr }
     }
 
     fn next_term(&mut self) {

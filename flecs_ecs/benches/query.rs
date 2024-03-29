@@ -9,7 +9,7 @@ use flecs_ecs::{
         c_types::{EntityT, IdT, WorldT},
         component_registration::*,
         query::Query,
-        World,
+        IterAPI, World,
     },
     macros::Component,
 };

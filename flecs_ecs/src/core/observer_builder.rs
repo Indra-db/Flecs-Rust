@@ -2,25 +2,23 @@ use std::{
     default,
     ffi::{c_void, CStr},
     ops::Deref,
-    ptr,
 };
 
 use crate::sys::{
     ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_iter_action_t, ecs_observer_desc_t,
-    ecs_table_lock, ecs_table_unlock,
 };
 
 use super::{
-    c_types::{IterT, TermT, SEPARATOR},
+    c_types::{TermT, SEPARATOR},
     component_registration::ComponentInfo,
-    entity::Entity,
     filter_builder::{FilterBuilder, FilterBuilderImpl},
-    iter::Iter,
+    implement_reactor_api,
     iterable::{Filterable, Iterable},
     observer::Observer,
+    private::internal_ReactorAPI,
     term::TermBuilder,
     world::World,
-    IntoEntityId, ObserverSystemBindingCtx, WorldT,
+    Builder, IntoEntityId, ReactorAPI, WorldT,
 };
 
 pub struct ObserverBuilder<'a, T>
@@ -132,427 +130,62 @@ where
         obj
     }
 
-    /// Returns or creates the binding context for the observer
-    ///
-    /// See also
-    ///
-    /// * C++ API: `node_builder::build`
-    #[doc(alias = "node_builder::build")]
-    fn get_binding_ctx(&mut self) -> &mut ObserverSystemBindingCtx {
-        let mut binding_ctx: *mut ObserverSystemBindingCtx = self.desc.binding_ctx as *mut _;
-
-        if binding_ctx.is_null() {
-            let new_binding_ctx = Box::<ObserverSystemBindingCtx>::default();
-            let static_ref = Box::leak(new_binding_ctx);
-            binding_ctx = static_ref;
-            self.desc.binding_ctx = binding_ctx as *mut c_void;
-            self.desc.binding_ctx_free = Some(Self::binding_system_ctx_drop);
-        }
-        unsafe { &mut *binding_ctx }
+    pub fn get_event_count(&self) -> i32 {
+        self.event_count
     }
 
-    /// Executes the drop for the system binding context, meant to be used as a callback
-    extern "C" fn binding_system_ctx_drop(ptr: *mut c_void) {
-        let ptr_struct: *mut ObserverSystemBindingCtx = ptr as *mut ObserverSystemBindingCtx;
-        unsafe {
-            ptr::drop_in_place(ptr_struct);
-        }
-    }
-
-    /// Build the `observer_builder` into an observer
-    ///
-    /// See also
-    ///
-    /// * C++ API: `node_builder::build`
-    #[doc(alias = "node_builder::build")]
-    pub fn build(&mut self) -> Observer {
-        Observer::new(&self.world, self.desc, self.is_instanced)
-    }
-
-    /// Register the callback for the observer for `each`
-    ///
-    /// The "each" iterator accepts a function that is invoked for each matching entity.
-    /// The following function signatures is valid:
-    ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
+    /// Specify the event(s) for when the observer should run.
     ///
     /// # Arguments
     ///
-    /// * `func` - The callback function
-    ///
-    /// See also
-    ///
-    /// * C++ API: `node_builder::each`
-    #[doc(alias = "node_builder::each")]
-    pub fn on_each<Func>(&mut self, func: Func) -> Observer
-    where
-        Func: FnMut(T::TupleType) + 'static,
-    {
-        let binding_ctx = self.get_binding_ctx();
-
-        let each_func = Box::new(func);
-        let each_static_ref = Box::leak(each_func);
-
-        binding_ctx.each = Some(each_static_ref as *mut _ as *mut c_void);
-        binding_ctx.free_each = Some(Self::on_free_each);
-
-        self.desc.callback = Some(Self::run_each::<Func> as unsafe extern "C" fn(_));
-
-        self.is_instanced = true;
-
-        self.build()
-    }
-
-    /// Register the callback for the observer for `each_entity`
-    ///
-    /// The "`each_entity`" iterator accepts a function that is invoked for each matching entity.
-    /// The following function signatures is valid:
-    ///  - func(entity: &mut Entity, comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// # Arguments
-    ///
-    /// * `func` - The callback function
-    ///
-    /// See also
-    ///
-    /// * C++ API: `node_builder::each`
-    #[doc(alias = "node_builder::each")]
-    pub fn on_each_entity<Func>(&mut self, func: Func) -> Observer
-    where
-        Func: FnMut(&mut Entity, T::TupleType) + 'static,
-    {
-        let binding_ctx = self.get_binding_ctx();
-
-        let each_entity_func = Box::new(func);
-        let each_entity_static_ref = Box::leak(each_entity_func);
-
-        binding_ctx.each_entity = Some(each_entity_static_ref as *mut _ as *mut c_void);
-        binding_ctx.free_each_entity = Some(Self::on_free_each_entity);
-
-        self.desc.callback = Some(Self::run_each_entity::<Func> as unsafe extern "C" fn(_));
-
-        self.is_instanced = true;
-
-        self.build()
-    }
-
-    /// Register the callback for the observer for `each_iter`
-    ///
-    /// The "`each_iter`" iterator accepts a function that is invoked for each event.
-    /// The following function signatures is valid:
-    ///  - func(iter: &mut Iter, index : usize, comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// # Arguments
-    ///
-    /// * `func` - The callback function
-    ///
-    /// See also
-    ///
-    /// * C++ API: `node_builder::each`
-    #[doc(alias = "node_builder::each")]
-    pub fn on_each_iter<Func>(&mut self, func: Func) -> Observer
-    where
-        Func: FnMut(&mut Iter, usize, T::TupleType) + 'static,
-    {
-        let binding_ctx = self.get_binding_ctx();
-
-        let each_iter_func = Box::new(func);
-        let each_iter_static_ref = Box::leak(each_iter_func);
-
-        binding_ctx.each_iter = Some(each_iter_static_ref as *mut _ as *mut c_void);
-        binding_ctx.free_each_iter = Some(Self::on_free_each_iter);
-
-        self.desc.callback = Some(Self::run_each_iter::<Func> as unsafe extern "C" fn(_));
-
-        self.is_instanced = true;
-
-        self.build()
-    }
-
-    /// Register the callback for the observer for `iter_only`
-    ///
-    /// The "iter" iterator accepts a function that is invoked for each matching
-    /// table. The following function signature is valid:
-    ///  - func(it: &mut Iter)
-    ///
-    /// # Arguments
-    ///
-    /// * `func` - The callback function
-    ///
-    /// See also
-    ///
-    /// * C++ API: `node_builder::iter`
-    #[doc(alias = "node_builder::iter")]
-    pub fn on_iter_only<Func>(&mut self, func: Func) -> Observer
-    where
-        Func: FnMut(&mut Iter) + 'static,
-    {
-        let binding_ctx = self.get_binding_ctx();
-        let iter_func = Box::new(func);
-        let iter_static_ref = Box::leak(iter_func);
-        binding_ctx.iter_only = Some(iter_static_ref as *mut _ as *mut c_void);
-        binding_ctx.free_iter_only = Some(Self::on_free_iter_only);
-
-        self.desc.callback = Some(Self::run_iter_only::<Func> as unsafe extern "C" fn(_));
-
-        self.build()
-    }
-
-    /// Register the callback for the observer for `iter`
-    ///
-    /// The "each" iterator accepts a function that is invoked for each matching entity.
-    /// The following function signatures is valid:
-    ///  - func(e : Entity , comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// # Arguments
-    ///
-    /// * `func` - The callback function
-    ///
-    /// See also
-    ///
-    /// * C++ API: `node_builder::iter`
-    #[doc(alias = "node_builder::iter")]
-    pub fn on_iter<Func>(&mut self, func: Func) -> Observer
-    where
-        Func: FnMut(&mut Iter, T::TupleSliceType) + 'static,
-    {
-        let binding_ctx = self.get_binding_ctx();
-
-        let iter_func = Box::new(func);
-        let iter_static_ref = Box::leak(iter_func);
-
-        binding_ctx.iter = Some(iter_static_ref as *mut _ as *mut c_void);
-        binding_ctx.free_iter = Some(Self::on_free_iter);
-
-        self.desc.callback = Some(Self::run_iter::<Func> as unsafe extern "C" fn(_));
-
-        self.build()
-    }
-
-    /// Callback to free the memory of the `each` callback
-    extern "C" fn on_free_each(ptr: *mut c_void) {
-        let ptr_func: *mut fn(T::TupleType) = ptr as *mut fn(T::TupleType);
-        unsafe {
-            ptr::drop_in_place(ptr_func);
-        }
-    }
-
-    /// Callback to free the memory of the `each_entity` callback
-    extern "C" fn on_free_each_entity(ptr: *mut c_void) {
-        let ptr_func: *mut fn(&mut Entity, T::TupleType) =
-            ptr as *mut fn(&mut Entity, T::TupleType);
-        unsafe {
-            ptr::drop_in_place(ptr_func);
-        }
-    }
-
-    /// Callback to free the memory of the `each_iter` callback
-    extern "C" fn on_free_each_iter(ptr: *mut c_void) {
-        let ptr_func: *mut fn(&mut Iter, usize, T::TupleType) =
-            ptr as *mut fn(&mut Iter, usize, T::TupleType);
-        unsafe {
-            ptr::drop_in_place(ptr_func);
-        }
-    }
-
-    /// Callback to free the memory of the `iter_only` callback
-    extern "C" fn on_free_iter_only(ptr: *mut c_void) {
-        let ptr_func: *mut fn(&Iter) = ptr as *mut fn(&Iter);
-        unsafe {
-            ptr::drop_in_place(ptr_func);
-        }
-    }
-
-    /// Callback to free the memory of the `iter` callback
-    extern "C" fn on_free_iter(ptr: *mut c_void) {
-        let ptr_func: *mut fn(&Iter, T::TupleSliceType) = ptr as *mut fn(&Iter, T::TupleSliceType);
-        unsafe {
-            ptr::drop_in_place(ptr_func);
-        }
-    }
-
-    /// Callback of the each functionality
-    ///
-    /// # Arguments
-    ///
-    /// * `iter` - The iterator which gets passed in from `C`
+    /// * `event` - The event to add
     ///
     /// # See also
     ///
-    /// * C++ API: `iter_invoker::invoke_callback`
-    #[doc(alias = "iter_invoker::invoke_callback")]
-    unsafe extern "C" fn run_each<Func>(iter: *mut IterT)
-    where
-        Func: FnMut(T::TupleType),
-    {
-        let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
-        let each = (*ctx).each.unwrap();
-        let each = &mut *(each as *mut Func);
-
-        let components_data = T::get_array_ptrs_of_components(&*iter);
-        let iter_count = (*iter).count as usize;
-        let array_components = &components_data.array_components;
-
-        ecs_table_lock((*iter).world, (*iter).table);
-
-        for i in 0..iter_count {
-            let tuple = if components_data.is_any_array_a_ref {
-                let is_ref_array_components = &components_data.is_ref_array_components;
-                T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-            } else {
-                T::get_tuple(array_components, i)
-            };
-            each(tuple);
-        }
-
-        ecs_table_unlock((*iter).world, (*iter).table);
+    /// * C++ API: `observer_builder_i::event`
+    #[doc(alias = "observer_builder_i::event")]
+    pub fn add_event(&mut self, event: impl IntoEntityId) -> &mut Self {
+        let event = event.get_id();
+        let event_count = self.event_count as usize;
+        self.event_count += 1;
+        self.desc.events[event_count] = event;
+        self
     }
 
-    /// Callback of the `each_entity` functionality
+    /// Specify the event(s) for when the observer should run.
     ///
-    /// # Arguments
+    /// # Type parameters
     ///
-    /// * `iter` - The iterator which gets passed in from `C`
+    /// * `T` - The type of the event
     ///
     /// # See also
     ///
-    /// * C++ API: `iter_invoker::invoke_callback`
-    #[doc(alias = "iter_invoker::invoke_callback")]
-    unsafe extern "C" fn run_each_entity<Func>(iter: *mut IterT)
+    /// * C++ API: `observer_builder_i::event`
+    #[doc(alias = "observer_builder_i::event")]
+    pub fn add_event_type<E>(&mut self) -> &mut Self
     where
-        Func: FnMut(&mut Entity, T::TupleType),
+        E: ComponentInfo,
     {
-        let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
-        let each_entity = (*ctx).each_entity.unwrap();
-        let each_entity = &mut *(each_entity as *mut Func);
-
-        let components_data = T::get_array_ptrs_of_components(&*iter);
-        let array_components = &components_data.array_components;
-        let iter_count = (*iter).count as usize;
-
-        ecs_table_lock((*iter).world, (*iter).table);
-
-        for i in 0..iter_count {
-            let mut entity = Entity::new_from_existing_raw((*iter).world, *(*iter).entities.add(i));
-            let tuple = if components_data.is_any_array_a_ref {
-                let is_ref_array_components = &components_data.is_ref_array_components;
-                T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-            } else {
-                T::get_tuple(array_components, i)
-            };
-
-            each_entity(&mut entity, tuple);
-        }
-        ecs_table_unlock((*iter).world, (*iter).table);
+        let event_count = self.event_count as usize;
+        self.event_count += 1;
+        let id = E::get_id(self.get_world());
+        self.desc.events[event_count] = id;
+        self
     }
 
-    /// Callback of the `each_iter` functionality
+    /// Invoke observer for anything that matches its filter on creation
     ///
     /// # Arguments
     ///
-    /// * `iter` - The iterator which gets passed in from `C`
+    /// * `should_yield` - If true, the observer will be invoked for all existing entities that match its filter
     ///
     /// # See also
     ///
-    /// * C++ API: `iter_invoker::invoke_callback`
-    #[doc(alias = "iter_invoker::invoke_callback")]
-    unsafe extern "C" fn run_each_iter<Func>(iter: *mut IterT)
-    where
-        Func: FnMut(&mut Iter, usize, T::TupleType),
-    {
-        let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
-        let each_iter = (*ctx).each_iter.unwrap();
-        let each_iter = &mut *(each_iter as *mut Func);
-
-        let components_data = T::get_array_ptrs_of_components(&*iter);
-        let array_components = &components_data.array_components;
-        let iter_count = {
-            if (*iter).count == 0 {
-                1_usize
-            } else {
-                (*iter).count as usize
-            }
-        };
-
-        ecs_table_lock((*iter).world, (*iter).table);
-        let mut iter_t = Iter::new(&mut (*iter));
-
-        for i in 0..iter_count {
-            let tuple = if components_data.is_any_array_a_ref {
-                let is_ref_array_components = &components_data.is_ref_array_components;
-                T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-            } else {
-                T::get_tuple(array_components, i)
-            };
-
-            each_iter(&mut iter_t, i, tuple);
-        }
-        ecs_table_unlock((*iter).world, (*iter).table);
-    }
-
-    /// Callback of the `iter_only` functionality
-    ///
-    /// # Arguments
-    ///
-    /// * `iter` - The iterator which gets passed in from `C`
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter_invoker::invoke_callback`
-    #[doc(alias = "iter_invoker::invoke_callback")]
-    unsafe extern "C" fn run_iter_only<Func>(iter: *mut IterT)
-    where
-        Func: FnMut(&mut Iter),
-    {
-        unsafe {
-            let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
-            let iter_only = (*ctx).iter_only.unwrap();
-            let iter_only = &mut *(iter_only as *mut Func);
-
-            let iter_count = (*iter).count as usize;
-
-            for _ in 0..iter_count {
-                let mut iter_t = Iter::new(&mut *iter);
-                iter_only(&mut iter_t);
-            }
-        }
-    }
-
-    /// Callback of the iter functionality
-    ///
-    /// # Arguments
-    ///
-    /// * `iter` - The iterator which gets passed in from `C`
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter_invoker::invoke_callback`
-    #[doc(alias = "iter_invoker::invoke_callback")]
-    unsafe extern "C" fn run_iter<Func>(iter: *mut IterT)
-    where
-        Func: FnMut(&mut Iter, T::TupleSliceType),
-    {
-        let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
-        let iter_func = (*ctx).iter.unwrap();
-        let iter_func = &mut *(iter_func as *mut Func);
-
-        let components_data = T::get_array_ptrs_of_components(&*iter);
-        let array_components = &components_data.array_components;
-        let iter_count = (*iter).count as usize;
-
-        ecs_table_lock((*iter).world, (*iter).table);
-
-        for i in 0..iter_count {
-            let tuple = if components_data.is_any_array_a_ref {
-                let is_ref_array_components = &components_data.is_ref_array_components;
-                T::get_tuple_slices_with_ref(array_components, is_ref_array_components, i)
-            } else {
-                T::get_tuple_slices(array_components, i)
-            };
-            let mut iter_t = Iter::new(&mut *iter);
-            iter_func(&mut iter_t, tuple);
-        }
-
-        ecs_table_unlock((*iter).world, (*iter).table);
+    /// * C++ API: `observer_builder_i::yield_existing`
+    #[doc(alias = "observer_builder_i::yield_existing")]
+    pub fn yield_existing(&mut self, should_yield: bool) -> &mut Self {
+        self.desc.yield_existing = should_yield;
+        self
     }
 }
 
@@ -561,8 +194,7 @@ where
     T: Iterable<'a>,
 {
     fn current_term(&mut self) -> &mut TermT {
-        let next_term_index = self.next_term_index;
-        &mut self.get_desc_filter().terms[next_term_index as usize]
+        unsafe { &mut *self.filter_builder.term.term_ptr }
     }
 
     fn next_term(&mut self) {
@@ -615,105 +247,21 @@ where
     }
 }
 
-pub trait ObserverBuilderImpl: FilterBuilderImpl {
-    fn get_desc_observer(&mut self) -> &mut ecs_observer_desc_t;
-
-    fn get_event_count(&self) -> i32;
-
-    fn increment_event_count(&mut self);
-
-    /// Specify the event(s) for when the observer should run.
-    ///
-    /// # Arguments
-    ///
-    /// * `event` - The event to add
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `observer_builder_i::event`
-    #[doc(alias = "observer_builder_i::event")]
-    fn add_event(&mut self, event: impl IntoEntityId) -> &mut Self {
-        let event = event.get_id();
-        let event_count = self.get_event_count() as usize;
-        self.increment_event_count();
-        let desc = self.get_desc_observer();
-        desc.events[event_count] = event;
-        self
-    }
-
-    /// Specify the event(s) for when the observer should run.
-    ///
-    /// # Type parameters
-    ///
-    /// * `T` - The type of the event
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `observer_builder_i::event`
-    #[doc(alias = "observer_builder_i::event")]
-    fn add_event_type<T>(&mut self) -> &mut Self
-    where
-        T: ComponentInfo,
-    {
-        let event_count = self.get_event_count() as usize;
-        self.increment_event_count();
-        let id = T::get_id(self.get_world());
-        let desc = self.get_desc_observer();
-        desc.events[event_count] = id;
-        self
-    }
-
-    /// Invoke observer for anything that matches its filter on creation
-    ///
-    /// # Arguments
-    ///
-    /// * `should_yield` - If true, the observer will be invoked for all existing entities that match its filter
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `observer_builder_i::yield_existing`
-    #[doc(alias = "observer_builder_i::yield_existing")]
-    fn yield_existing(&mut self, should_yield: bool) -> &mut Self {
-        self.get_desc_observer().yield_existing = should_yield;
-        self
-    }
-
-    /// Set observer context
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `observer_builder_i::ctx`
-    #[doc(alias = "observer_builder_i::ctx")]
-    fn set_context(&mut self, context: *mut c_void) -> &mut Self {
-        self.get_desc_observer().ctx = context;
-        self
-    }
-
-    /// Set observer run callback
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `observer_builder_i::run`
-    #[doc(alias = "observer_builder_i::run")]
-    fn set_run_callback(&mut self, callback: ecs_iter_action_t) -> &mut Self {
-        self.get_desc_observer().run = callback;
-        self
-    }
-}
-
-impl<'a, T> ObserverBuilderImpl for ObserverBuilder<'a, T>
+impl<'a, T> Builder for ObserverBuilder<'a, T>
 where
     T: Iterable<'a>,
 {
-    fn get_desc_observer(&mut self) -> &mut ecs_observer_desc_t {
-        &mut self.desc
-    }
+    type BuiltType = Observer;
 
-    fn get_event_count(&self) -> i32 {
-        self.event_count
-    }
-
-    fn increment_event_count(&mut self) {
-        self.event_count += 1;
+    /// Build the `observer_builder` into an `observer`
+    ///
+    /// See also
+    ///
+    /// * C++ API: `node_builder::build`
+    #[doc(alias = "node_builder::build")]
+    fn build(&mut self) -> Self::BuiltType {
+        Observer::new(&self.world, self.desc, self.is_instanced)
     }
 }
+
+implement_reactor_api!(ObserverBuilder<'a, T>);

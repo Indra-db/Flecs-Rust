@@ -2,476 +2,21 @@
 
 use crate::sys::{
     ecs_abort_, ecs_filter_copy, ecs_filter_desc_t, ecs_filter_fini, ecs_filter_init,
-    ecs_filter_iter, ecs_filter_move, ecs_filter_next, ecs_filter_str, ecs_get_entity, ecs_os_api,
-    ecs_table_lock, ecs_table_unlock,
+    ecs_filter_iter, ecs_filter_move, ecs_filter_next, ecs_get_entity, ecs_os_api,
 };
 
 use super::{
-    c_types::FilterT, entity::Entity, iter::Iter, iterable::Iterable, term::Term, world::World,
-    FlecsErrorCode,
+    c_types::FilterT, entity::Entity, iterable::Iterable, world::World, FlecsErrorCode, IntoWorld,
+    IterAPI, IterOperations,
 };
-
-use std::ffi::c_char;
-
-struct FilterBase<'a, T>
-where
-    T: Iterable<'a>,
-{
-    pub world: World,
-    _phantom: std::marker::PhantomData<&'a T>,
-}
-
-impl<'a, T> FilterBase<'a, T>
-where
-    T: Iterable<'a>,
-{
-    /// Each iterator.
-    /// The "each" iterator accepts a function that is invoked for each matching entity.
-    /// The following function signatures is valid:
-    ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::each`
-    #[doc(alias = "iterable::each")]
-    fn each_impl(&self, mut func: impl FnMut(T::TupleType), filter: *const FilterT) {
-        unsafe {
-            let mut iter = ecs_filter_iter(self.world.raw_world, filter);
-
-            while ecs_filter_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
-                let iter_count = iter.count as usize;
-                let array_components = &components_data.array_components;
-
-                ecs_table_lock(self.world.raw_world, iter.table);
-
-                for i in 0..iter_count {
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::get_tuple(array_components, i)
-                    };
-
-                    func(tuple);
-                }
-
-                ecs_table_unlock(self.world.raw_world, iter.table);
-            }
-        }
-    }
-
-    /// Each iterator.
-    /// The "each" iterator accepts a function that is invoked for each matching entity.
-    /// The following function signatures is valid:
-    ///  - func(e : Entity , comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::each`
-    #[doc(alias = "iterable::each")]
-    fn each_entity_impl(
-        &self,
-        mut func: impl FnMut(&mut Entity, T::TupleType),
-        filter: *const FilterT,
-    ) {
-        unsafe {
-            let mut iter = ecs_filter_iter(self.world.raw_world, filter);
-
-            while ecs_filter_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
-                let iter_count = iter.count as usize;
-                let array_components = &components_data.array_components;
-
-                ecs_table_lock(self.world.raw_world, iter.table);
-
-                for i in 0..iter_count {
-                    let mut entity =
-                        Entity::new_from_existing_raw(self.world.raw_world, *iter.entities.add(i));
-
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::get_tuple(array_components, i)
-                    };
-
-                    func(&mut entity, tuple);
-                }
-
-                ecs_table_unlock(self.world.raw_world, iter.table);
-            }
-        }
-    }
-
-    /// Each iterator.
-    /// The "each" iterator accepts a function that is invoked for each matching entity.
-    /// The following function signature is valid:
-    ///  - func(iter : Iter, index : usize , comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::each`
-    #[doc(alias = "iterable::each")]
-    pub fn each_iter_impl(
-        &self,
-        filter: *const FilterT,
-        mut func: impl FnMut(&mut Iter, usize, T::TupleType),
-    ) {
-        unsafe {
-            let mut iter = ecs_filter_iter(self.world.raw_world, filter);
-
-            while ecs_filter_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
-                let iter_count = {
-                    if iter.count == 0 {
-                        1_usize
-                    } else {
-                        iter.count as usize
-                    }
-                };
-                let array_components = &components_data.array_components;
-
-                ecs_table_lock(self.world.raw_world, iter.table);
-
-                let mut iter_t = Iter::new(&mut iter);
-
-                for i in 0..iter_count {
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::get_tuple(array_components, i)
-                    };
-                    func(&mut iter_t, i, tuple);
-                }
-
-                ecs_table_unlock(self.world.raw_world, iter.table);
-            }
-        }
-    }
-
-    /// find iterator.
-    /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
-    /// if it is, it returns that entity.
-    /// The following function signatures is valid:
-    ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `find_delegate::invoke_callback`
-    pub fn find_impl(
-        &self,
-        filter: *const FilterT,
-        mut func: impl FnMut(T::TupleType) -> bool,
-    ) -> Option<Entity> {
-        unsafe {
-            let mut iter = ecs_filter_iter(self.world.raw_world, filter);
-            let mut entity: Option<Entity> = None;
-
-            while ecs_filter_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
-                let iter_count = iter.count as usize;
-                let array_components = &components_data.array_components;
-
-                ecs_table_lock(self.world.raw_world, iter.table);
-
-                for i in 0..iter_count {
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::get_tuple(array_components, i)
-                    };
-                    if func(tuple) {
-                        entity = Some(Entity::new_from_existing_raw(
-                            iter.world,
-                            *iter.entities.add(i),
-                        ));
-                        break;
-                    }
-                }
-
-                ecs_table_unlock(self.world.raw_world, iter.table);
-            }
-            entity
-        }
-    }
-
-    fn find_entity_impl(
-        &self,
-        filter: *const FilterT,
-        mut func: impl FnMut(&mut Entity, T::TupleType) -> bool,
-    ) -> Option<Entity> {
-        unsafe {
-            let mut iter = ecs_filter_iter(self.world.raw_world, filter);
-            let mut entity_result: Option<Entity> = None;
-
-            while ecs_filter_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
-                let iter_count = iter.count as usize;
-                let array_components = &components_data.array_components;
-
-                ecs_table_lock(self.world.raw_world, iter.table);
-
-                for i in 0..iter_count {
-                    let mut entity =
-                        Entity::new_from_existing_raw(iter.world, *iter.entities.add(i));
-
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::get_tuple(array_components, i)
-                    };
-                    if func(&mut entity, tuple) {
-                        entity_result = Some(entity);
-                        break;
-                    }
-                }
-
-                ecs_table_unlock(self.world.raw_world, iter.table);
-            }
-            entity_result
-        }
-    }
-
-    fn find_iter_impl(
-        &self,
-        filter: *const FilterT,
-        mut func: impl FnMut(&mut Iter, usize, T::TupleType) -> bool,
-    ) -> Option<Entity> {
-        unsafe {
-            let mut iter = ecs_filter_iter(self.world.raw_world, filter);
-            let mut entity_result: Option<Entity> = None;
-
-            while ecs_filter_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
-                let array_components = &components_data.array_components;
-                let iter_count = {
-                    if iter.count == 0 {
-                        1_usize
-                    } else {
-                        iter.count as usize
-                    }
-                };
-
-                ecs_table_lock(self.world.raw_world, iter.table);
-                let mut iter_t = Iter::new(&mut iter);
-
-                for i in 0..iter_count {
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::get_tuple(array_components, i)
-                    };
-                    if func(&mut iter_t, i, tuple) {
-                        entity_result = Some(Entity::new_from_existing_raw(
-                            iter.world,
-                            *iter.entities.add(i),
-                        ));
-                        break;
-                    }
-                }
-
-                ecs_table_unlock(self.world.raw_world, iter.table);
-            }
-            entity_result
-        }
-    }
-
-    /// iter iterator.
-    /// The "iter" iterator accepts a function that is invoked for each matching
-    /// table. The following function signature is valid:
-    ///  - func(it: &mut Iter, comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Iter iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::iter`
-    #[doc(alias = "iterable::iter")]
-    fn iter_impl(
-        &self,
-        mut func: impl FnMut(&mut Iter, T::TupleSliceType),
-        filter: *const FilterT,
-    ) {
-        unsafe {
-            let mut iter = ecs_filter_iter(self.world.raw_world, filter);
-
-            while ecs_filter_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
-                let iter_count = iter.count as usize;
-                let array_components = &components_data.array_components;
-
-                ecs_table_lock(self.world.raw_world, iter.table);
-
-                let tuple = if components_data.is_any_array_a_ref {
-                    let is_ref_array_components = &components_data.is_ref_array_components;
-                    T::get_tuple_slices_with_ref(
-                        array_components,
-                        is_ref_array_components,
-                        iter_count,
-                    )
-                } else {
-                    T::get_tuple_slices(array_components, iter_count)
-                };
-                let mut iter_t = Iter::new(&mut iter);
-                func(&mut iter_t, tuple);
-                ecs_table_unlock(self.world.raw_world, iter.table);
-            }
-        }
-    }
-
-    /// iter iterator.
-    /// The "iter" iterator accepts a function that is invoked for each matching
-    /// table. The following function signature is valid:
-    ///  - func(it: &mut Iter)
-    ///
-    /// Iter iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::iter`
-    #[doc(alias = "iterable::iter")]
-    pub fn iter_only_impl(&self, mut func: impl FnMut(&mut Iter), filter: *const FilterT) {
-        unsafe {
-            let mut iter = ecs_filter_iter(self.world.raw_world, filter);
-            while ecs_filter_next(&mut iter) {
-                let mut iter_t = Iter::new(&mut iter);
-                func(&mut iter_t);
-            }
-        }
-    }
-
-    /// Get the entity of the current filter
-    ///
-    /// # Arguments
-    ///
-    /// * `filter`: the filter to get the entity from
-    ///
-    /// # Returns
-    ///
-    /// The entity of the current filter
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `filter_base::entity`
-    #[doc(alias = "filter_base::entity")]
-    fn entity_impl(&self, filter: *const FilterT) -> Entity {
-        Entity::new_from_existing_raw(self.world.raw_world, unsafe {
-            ecs_get_entity(filter as *const _)
-        })
-    }
-
-    /// Each term iterator.
-    /// The "`each_term`" iterator accepts a function that is invoked for each term
-    /// in the filter. The following function signature is valid:
-    ///  - func(term: &mut Term)
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `filter_base::term`
-    #[doc(alias = "filter_base::term")]
-    fn each_term_impl(&self, mut func: impl FnMut(&mut Term), filter: *const FilterT) {
-        unsafe {
-            for i in 0..(*filter).term_count {
-                let mut term =
-                    Term::new_from_term(Some(&self.world), *(*filter).terms.add(i as usize));
-                func(&mut term);
-                term.reset(); // prevent freeing resources
-            }
-        }
-    }
-
-    /// Get the term of the current filter at the given index
-    ///
-    /// # Arguments
-    ///
-    /// * `index`: the index of the term to get
-    /// * `filter`: the filter to get the term from
-    ///
-    /// # Returns
-    ///
-    /// The term requested
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `filter_base::term`
-    #[doc(alias = "filter_base::term")]
-    fn get_term_impl(&self, index: usize, filter: *const FilterT) -> Term {
-        Term::new_from_term(Some(&self.world), unsafe { *(*filter).terms.add(index) })
-    }
-
-    /// Get the field count of the current filter
-    ///
-    /// # Arguments
-    ///
-    /// * `filter`: the filter to get the field count from
-    ///
-    /// # Returns
-    ///
-    /// The field count of the current filter
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `filter_base::field_count`
-    #[doc(alias = "filter_base::field_count")]
-    fn field_count_impl(&self, filter: *const FilterT) -> i8 {
-        unsafe { (*filter).field_count }
-    }
-
-    /// Convert filter to string expression. Convert filter terms to a string expression.
-    /// The resulting expression can be parsed to create the same filter.
-    ///
-    /// # Arguments
-    ///
-    /// * `filter`: the filter to convert to a string
-    ///
-    /// # Returns
-    ///
-    /// The string representation of the filter
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `filter_base::str`
-    #[doc(alias = "filter_base::str")]
-    #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
-    fn to_string_impl(&self, filter: *const FilterT) -> String {
-        let result: *mut c_char =
-            unsafe { ecs_filter_str(self.world.raw_world, filter as *const _) };
-        let rust_string =
-            String::from(unsafe { std::ffi::CStr::from_ptr(result).to_str().unwrap() });
-        unsafe {
-            if let Some(free_func) = ecs_os_api.free_ {
-                free_func(result as *mut _);
-            }
-        }
-        rust_string
-    }
-}
 
 pub struct FilterView<'a, T>
 where
     T: Iterable<'a>,
 {
-    base: FilterBase<'a, T>,
+    world: World,
     filter_ptr: *const FilterT,
+    _phantom: std::marker::PhantomData<&'a T>,
 }
 
 impl<'a, T> Clone for FilterView<'a, T>
@@ -480,11 +25,9 @@ where
 {
     fn clone(&self) -> Self {
         Self {
-            base: FilterBase {
-                world: self.base.world.clone(),
-                _phantom: std::marker::PhantomData,
-            },
+            world: self.world.clone(),
             filter_ptr: self.filter_ptr,
+            _phantom: std::marker::PhantomData,
         }
     }
 }
@@ -506,198 +49,10 @@ where
     #[doc(alias = "filter_view::filter_view")]
     pub fn new(world: &World, filter: *const FilterT) -> Self {
         Self {
-            base: FilterBase {
-                world: world.clone(),
-                _phantom: std::marker::PhantomData,
-            },
+            world: world.clone(),
+            _phantom: std::marker::PhantomData,
             filter_ptr: filter as *const FilterT,
         }
-    }
-
-    /// Each iterator.
-    /// The "each" iterator accepts a function that is invoked for each matching entity.
-    /// The following function signatures is valid:
-    ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::each`
-    #[doc(alias = "iterable::each")]
-    pub fn each(&mut self, func: impl FnMut(T::TupleType)) {
-        self.base.each_impl(func, self.filter_ptr);
-    }
-
-    /// Each iterator.
-    /// The "each" iterator accepts a function that is invoked for each matching entity.
-    /// The following function signatures is valid:
-    ///  - func(entity: &mut Entity, comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::each`
-    #[doc(alias = "iterable::each")]
-    pub fn each_entity(&mut self, func: impl FnMut(&mut Entity, T::TupleType)) {
-        self.base.each_entity_impl(func, self.filter_ptr);
-    }
-
-    /// Each iterator.
-    /// The "each" iterator accepts a function that is invoked for each matching entity.
-    /// The following function signatures is valid:
-    ///  - func(iter: &mut Iter, index : usize,  comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::each`
-    #[doc(alias = "iterable::each")]
-    pub fn each_iter(&mut self, func: impl FnMut(&mut Iter, usize, T::TupleType)) {
-        self.base.each_iter_impl(self.filter_ptr, func);
-    }
-
-    /// find iterator to find an entity
-    /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
-    /// if it is, it returns that entity.
-    /// The following function signatures is valid:
-    ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # Returns
-    ///
-    /// * Some(Entity) if the entity was found, None if no entity was found
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `find_delegate::invoke_callback`
-    #[doc(alias = "find_delegate::invoke_callback")]
-    pub fn find(&self, func: impl FnMut(T::TupleType) -> bool) -> Option<Entity> {
-        self.base.find_impl(self.filter_ptr, func)
-    }
-
-    /// find iterator to find an entity
-    /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
-    /// if it is, it returns that entity.
-    /// The following function signatures is valid:
-    ///  - func(entity : Entity, comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # Returns
-    ///
-    /// * Some(Entity) if the entity was found, None if no entity was found
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `find_delegate::invoke_callback`
-    #[doc(alias = "find_delegate::invoke_callback")]
-    pub fn find_entity(
-        &self,
-        func: impl FnMut(&mut Entity, T::TupleType) -> bool,
-    ) -> Option<Entity> {
-        self.base.find_entity_impl(self.filter_ptr, func)
-    }
-
-    /// find iterator to find an entity.
-    /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
-    /// if it is, it returns that entity.
-    /// The following function signatures is valid:
-    ///  - func(iter : Iter, index : usize, comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # Returns
-    ///
-    /// * Some(Entity) if the entity was found, None if no entity was found
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `find_delegate::invoke_callback`
-    #[doc(alias = "find_delegate::invoke_callback")]
-    pub fn find_iter(
-        &self,
-        func: impl FnMut(&mut Iter, usize, T::TupleType) -> bool,
-    ) -> Option<Entity> {
-        self.base.find_iter_impl(self.filter_ptr, func)
-    }
-
-    /// Get the entity of the current filter
-    ///
-    /// # Returns
-    ///
-    /// The entity of the current filter
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `filter_base::entity`
-    #[doc(alias = "filter_base::entity")]
-    pub fn entity(&self) -> Entity {
-        self.base.entity_impl(self.filter_ptr)
-    }
-
-    /// Each term iterator.
-    /// The "`each_term`" iterator accepts a function that is invoked for each term
-    /// in the filter. The following function signature is valid:
-    ///  - func(term: &mut Term)
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `filter_base::term`
-    #[doc(alias = "filter_base::term")]
-    pub fn each_term(&self, func: impl FnMut(&mut Term)) {
-        self.base.each_term_impl(func, self.filter_ptr);
-    }
-
-    /// Get the term of the current filter at the given index
-    ///
-    /// # Arguments
-    ///
-    /// * `index`: the index of the term to get
-    ///
-    /// # Returns
-    ///
-    /// The term requested
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `filter_base::term`
-    #[doc(alias = "filter_base::term")]
-    pub fn get_term(&self, index: usize) -> Term {
-        self.base.get_term_impl(index, self.filter_ptr)
-    }
-
-    /// Get the field count of the current filter
-    ///
-    /// # Returns
-    ///
-    /// The field count of the current filter
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `filter_base::field_count`
-    #[doc(alias = "filter_base::field_count")]
-    pub fn field_count(&self) -> i8 {
-        self.base.field_count_impl(self.filter_ptr)
-    }
-
-    /// Convert filter to string expression. Convert filter terms to a string expression.
-    /// The resulting expression can be parsed to create the same filter.
-    ///
-    /// # Returns
-    ///
-    /// The string representation of the filter
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `filter_base::str`
-    #[doc(alias = "filter_base::str")]
-    #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
-    pub fn to_string(&self) -> String {
-        self.base.to_string_impl(self.filter_ptr)
     }
 }
 
@@ -706,7 +61,8 @@ pub struct Filter<'a, T>
 where
     T: Iterable<'a>,
 {
-    base: FilterBase<'a, T>,
+    world: World,
+    _phantom: std::marker::PhantomData<&'a T>,
     filter: FilterT,
 }
 
@@ -731,10 +87,8 @@ where
         desc.storage = &mut filter;
         unsafe { ecs_filter_init(world.raw_world, &desc) };
         Filter {
-            base: FilterBase {
-                world: world.clone(),
-                _phantom: std::marker::PhantomData,
-            },
+            world: world.clone(),
+            _phantom: std::marker::PhantomData,
             filter,
         }
     }
@@ -753,10 +107,8 @@ where
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new_ownership(world: &World, filter: *mut FilterT) -> Self {
         let mut filter_obj = Filter {
-            base: FilterBase {
-                world: world.clone(),
-                _phantom: std::marker::PhantomData,
-            },
+            world: world.clone(),
+            _phantom: std::marker::PhantomData,
             filter: Default::default(),
         };
 
@@ -781,10 +133,8 @@ where
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new_from_desc(world: &World, desc: *mut ecs_filter_desc_t) -> Self {
         let mut filter_obj = Filter {
-            base: FilterBase {
-                world: world.clone(),
-                _phantom: std::marker::PhantomData,
-            },
+            world: world.clone(),
+            _phantom: std::marker::PhantomData,
             filter: Default::default(),
         };
 
@@ -793,7 +143,7 @@ where
         }
 
         unsafe {
-            if ecs_filter_init(filter_obj.base.world.raw_world, desc).is_null() {
+            if ecs_filter_init(filter_obj.world.raw_world, desc).is_null() {
                 ecs_abort_(
                     FlecsErrorCode::InvalidParameter.to_int(),
                     file!().as_ptr() as *const i8,
@@ -814,163 +164,6 @@ where
         }
 
         filter_obj
-    }
-
-    /// Each iterator.
-    /// The "each" iterator accepts a function that is invoked for each matching entity.
-    /// The following function signatures is valid:
-    ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::each`
-    #[doc(alias = "iterable::each")]
-    #[inline]
-    pub fn each(&self, func: impl FnMut(T::TupleType)) {
-        self.base.each_impl(func, &self.filter);
-    }
-
-    /// Each iterator.
-    /// The "each" iterator accepts a function that is invoked for each matching entity.
-    /// The following function signatures is valid:
-    ///  - func(e : Entity , comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::each`
-    #[doc(alias = "iterable::each")]
-    #[inline]
-    pub fn each_entity(&self, func: impl FnMut(&mut Entity, T::TupleType)) {
-        self.base.each_entity_impl(func, &self.filter);
-    }
-
-    /// Each iterator.
-    /// The "each" iterator accepts a function that is invoked for each matching entity.
-    /// The following function signatures is valid:
-    ///  - func(iter: &mut Iter, index : usize,  comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::each`
-    #[doc(alias = "iterable::each")]
-    pub fn each_iter(&self, func: impl FnMut(&mut Iter, usize, T::TupleType)) {
-        self.base.each_iter_impl(&self.filter, func);
-    }
-
-    /// Each iterator.
-    /// The "each" iterator accepts a function that is invoked for each matching entity.
-    /// The following function signatures is valid:
-    ///  - func(e : Entity , comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::iter`
-    #[doc(alias = "iterable::iter")]
-    #[inline]
-    pub fn iter(&self, func: impl FnMut(&mut Iter, T::TupleSliceType)) {
-        self.base.iter_impl(func, &self.filter);
-    }
-
-    /// iter iterator.
-    /// The "iter" iterator accepts a function that is invoked for each matching
-    /// table. The following function signature is valid:
-    ///  - func(it: &mut Iter)
-    ///
-    /// Iter iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::iter`
-    #[doc(alias = "iterable::iter")]
-    #[inline]
-    pub fn iter_only(&self, func: impl FnMut(&mut Iter)) {
-        self.base.iter_only_impl(func, &self.filter);
-    }
-
-    /// Get the entity of the current filter
-    ///
-    /// # Returns
-    ///
-    /// The entity of the current filter
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `filter_base::entity`
-    #[doc(alias = "filter_base::entity")]
-    pub fn entity(&self) -> Entity {
-        self.base.entity_impl(&self.filter)
-    }
-
-    /// Each term iterator.
-    /// The "`each_term`" iterator accepts a function that is invoked for each term
-    /// in the filter. The following function signature is valid:
-    ///  - func(term: &mut Term)
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `filter_base::each_term`
-    #[doc(alias = "filter_base::each_term")]
-    pub fn each_term(&self, func: impl FnMut(&mut Term)) {
-        self.base.each_term_impl(func, &self.filter);
-    }
-
-    /// Get the term of the current filter at the given index
-    ///
-    /// # Arguments
-    ///
-    /// * `index`: the index of the term to get
-    ///
-    /// # Returns
-    ///
-    /// The term requested
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `filter_base::term`
-    #[doc(alias = "filter_base::term")]
-    pub fn get_term(&self, index: usize) -> Term {
-        self.base.get_term_impl(index, &self.filter)
-    }
-
-    /// Get the field count of the current filter
-    ///
-    /// # Returns
-    ///
-    /// The field count of the current filter
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `filter_base::field_count`
-    #[doc(alias = "filter_base::field_count")]
-    pub fn field_count(&self) -> i8 {
-        self.base.field_count_impl(&self.filter)
-    }
-
-    /// Convert filter to string expression. Convert filter terms to a string expression.
-    /// The resulting expression can be parsed to create the same filter.
-    ///
-    /// # Returns
-    ///
-    /// The string representation of the filter
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `filter_base::str`
-    #[doc(alias = "filter_base::str")]
-    #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
-    pub fn to_string(&self) -> String {
-        self.base.to_string_impl(&self.filter)
     }
 }
 
@@ -994,14 +187,86 @@ where
 {
     fn clone(&self) -> Self {
         let mut new_filter = Filter::<'a, T> {
-            base: FilterBase {
-                world: self.base.world.clone(),
-                _phantom: std::marker::PhantomData,
-            },
+            world: self.world.clone(),
+            _phantom: std::marker::PhantomData,
             filter: Default::default(),
         };
 
         unsafe { ecs_filter_copy(&mut new_filter.filter, &self.filter) };
         new_filter
+    }
+}
+
+impl<'a, T> IntoWorld for Filter<'a, T>
+where
+    T: Iterable<'a>,
+{
+    fn get_world_raw_mut(&self) -> *mut super::WorldT {
+        self.world.raw_world
+    }
+}
+
+impl<'a, T> IterOperations for Filter<'a, T>
+where
+    T: Iterable<'a>,
+{
+    fn retrieve_iter(&self) -> super::IterT {
+        unsafe { ecs_filter_iter(self.world.raw_world, &self.filter) }
+    }
+
+    fn iter_next(iter: &mut super::IterT) -> bool {
+        unsafe { ecs_filter_next(iter) }
+    }
+
+    fn get_filter_ptr(&self) -> *const FilterT {
+        &self.filter
+    }
+}
+
+impl<'a, T> IntoWorld for FilterView<'a, T>
+where
+    T: Iterable<'a>,
+{
+    fn get_world_raw_mut(&self) -> *mut super::WorldT {
+        self.world.raw_world
+    }
+}
+
+impl<'a, T> IterAPI<'a, T> for FilterView<'a, T>
+where
+    T: Iterable<'a>,
+{
+    fn as_entity(&self) -> Entity {
+        Entity::new_from_existing_raw(&self.world, unsafe {
+            ecs_get_entity(self.filter_ptr as *const _)
+        })
+    }
+}
+
+impl<'a, T> IterOperations for FilterView<'a, T>
+where
+    T: Iterable<'a>,
+{
+    fn retrieve_iter(&self) -> super::IterT {
+        unsafe { ecs_filter_iter(self.world.raw_world, self.filter_ptr) }
+    }
+
+    fn iter_next(iter: &mut super::IterT) -> bool {
+        unsafe { ecs_filter_next(iter) }
+    }
+
+    fn get_filter_ptr(&self) -> *const FilterT {
+        self.filter_ptr
+    }
+}
+
+impl<'a, T> IterAPI<'a, T> for Filter<'a, T>
+where
+    T: Iterable<'a>,
+{
+    fn as_entity(&self) -> Entity {
+        Entity::new_from_existing_raw(&self.world, unsafe {
+            ecs_get_entity(&self.filter as *const _ as *const _)
+        })
     }
 }

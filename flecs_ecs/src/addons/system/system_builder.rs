@@ -3,27 +3,25 @@ use std::{
     ffi::CStr,
     ops::{Deref, DerefMut},
     os::raw::c_void,
-    ptr,
 };
 
 use crate::{
     core::{
-        c_types::{EntityT, FTimeT, IterT, TermIdT, TermT, WorldT, ECS_DEPENDS_ON, SEPARATOR},
+        c_types::{EntityT, FTimeT, TermIdT, TermT, WorldT, ECS_DEPENDS_ON, SEPARATOR},
         component_registration::ComponentInfo,
         ecs_dependson,
-        entity::Entity,
         filter_builder::FilterBuilderImpl,
-        iter::Iter,
+        implement_reactor_api,
         iterable::{Filterable, Iterable},
+        private::internal_ReactorAPI,
         query_builder::{QueryBuilder, QueryBuilderImpl},
         term::{Term, TermBuilder},
         world::World,
-        IntoEntityId, ObserverSystemBindingCtx, ECS_ON_UPDATE,
+        Builder, IntoEntityId, ReactorAPI, ECS_ON_UPDATE,
     },
     sys::{
         ecs_add_id, ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_get_target,
-        ecs_iter_action_t, ecs_query_desc_t, ecs_remove_id, ecs_system_desc_t, ecs_table_lock,
-        ecs_table_unlock,
+        ecs_iter_action_t, ecs_query_desc_t, ecs_remove_id, ecs_system_desc_t,
     },
 };
 
@@ -319,321 +317,6 @@ where
         self.desc.tick_source = Component::get_id(self.world.raw_world);
         self
     }
-
-    /// Set system context
-    ///
-    /// # Arguments
-    ///
-    /// * `context` - the context to set
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system_builder_i::ctx`
-    #[doc(alias = "system_builder_i::ctx")]
-    pub fn set_context(&mut self, context: *mut c_void) -> &mut Self {
-        self.desc.ctx = context;
-        self
-    }
-
-    /// Set system action
-    ///
-    /// # Arguments
-    ///
-    /// * `callback` - the callback to set
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system_builder_i::run`
-    #[doc(alias = "system_builder_i::run")]
-    pub fn set_run_callback(&mut self, callback: ecs_iter_action_t) -> &mut Self {
-        self.desc.run = callback;
-        self
-    }
-
-    pub fn build(&mut self) -> System {
-        System::new(&self.world, self.desc, self.is_instanced)
-    }
-
-    pub fn on_each<Func>(&mut self, func: Func) -> System
-    where
-        Func: FnMut(T::TupleType) + 'static,
-    {
-        let binding_ctx = self.get_binding_ctx();
-
-        let each_func = Box::new(func);
-        let each_static_ref = Box::leak(each_func);
-
-        binding_ctx.each = Some(each_static_ref as *mut _ as *mut c_void);
-        binding_ctx.free_each = Some(Self::on_free_each);
-
-        self.desc.callback = Some(Self::run_each::<Func> as unsafe extern "C" fn(_));
-
-        self.is_instanced = true;
-
-        self.build()
-    }
-
-    pub fn on_each_entity<Func>(&mut self, func: Func) -> System
-    where
-        Func: FnMut(&mut Entity, T::TupleType) + 'static,
-    {
-        let binding_ctx = self.get_binding_ctx();
-
-        let each_entity_func = Box::new(func);
-        let each_entity_static_ref = Box::leak(each_entity_func);
-
-        binding_ctx.each_entity = Some(each_entity_static_ref as *mut _ as *mut c_void);
-        binding_ctx.free_each_entity = Some(Self::on_free_each_entity);
-
-        self.desc.callback = Some(Self::run_each_entity::<Func> as unsafe extern "C" fn(_));
-
-        self.is_instanced = true;
-
-        self.build()
-    }
-
-    pub fn on_each_iter<Func>(&mut self, func: Func) -> System
-    where
-        Func: FnMut(&mut Iter, usize, T::TupleType) + 'static,
-    {
-        let binding_ctx = self.get_binding_ctx();
-
-        let each_iter_func = Box::new(func);
-        let each_iter_static_ref = Box::leak(each_iter_func);
-
-        binding_ctx.each_iter = Some(each_iter_static_ref as *mut _ as *mut c_void);
-        binding_ctx.free_each_iter = Some(Self::on_free_each_iter);
-
-        self.desc.callback = Some(Self::run_each_iter::<Func> as unsafe extern "C" fn(_));
-
-        self.is_instanced = true;
-
-        self.build()
-    }
-
-    pub fn on_iter_only<Func>(&mut self, func: Func) -> System
-    where
-        Func: FnMut(&mut Iter) + 'static,
-    {
-        let binding_ctx = self.get_binding_ctx();
-        let iter_func = Box::new(func);
-        let iter_static_ref = Box::leak(iter_func);
-        binding_ctx.iter_only = Some(iter_static_ref as *mut _ as *mut c_void);
-        binding_ctx.free_iter_only = Some(Self::on_free_iter_only);
-
-        self.desc.callback = Some(Self::run_iter_only::<Func> as unsafe extern "C" fn(_));
-
-        self.build()
-    }
-
-    pub fn on_iter<Func>(&mut self, func: Func) -> System
-    where
-        Func: FnMut(&mut Iter, T::TupleSliceType) + 'static,
-    {
-        let binding_ctx = self.get_binding_ctx();
-
-        let iter_func = Box::new(func);
-        let iter_static_ref = Box::leak(iter_func);
-
-        binding_ctx.iter = Some(iter_static_ref as *mut _ as *mut c_void);
-        binding_ctx.free_iter = Some(Self::on_free_iter);
-
-        self.desc.callback = Some(Self::run_iter::<Func> as unsafe extern "C" fn(_));
-
-        self.build()
-    }
-
-    extern "C" fn on_free_each(ptr: *mut c_void) {
-        let ptr_func: *mut fn(T::TupleType) = ptr as *mut fn(T::TupleType);
-        unsafe {
-            ptr::drop_in_place(ptr_func);
-        }
-    }
-
-    extern "C" fn on_free_each_entity(ptr: *mut c_void) {
-        let ptr_func: *mut fn(&mut Entity, T::TupleType) =
-            ptr as *mut fn(&mut Entity, T::TupleType);
-        unsafe {
-            ptr::drop_in_place(ptr_func);
-        }
-    }
-
-    extern "C" fn on_free_each_iter(ptr: *mut c_void) {
-        let ptr_func: *mut fn(&mut Iter, usize, T::TupleType) =
-            ptr as *mut fn(&mut Iter, usize, T::TupleType);
-        unsafe {
-            ptr::drop_in_place(ptr_func);
-        }
-    }
-
-    extern "C" fn on_free_iter_only(ptr: *mut c_void) {
-        let ptr_func: *mut fn(&Iter) = ptr as *mut fn(&Iter);
-        unsafe {
-            ptr::drop_in_place(ptr_func);
-        }
-    }
-
-    extern "C" fn on_free_iter(ptr: *mut c_void) {
-        let ptr_func: *mut fn(&Iter, T::TupleSliceType) = ptr as *mut fn(&Iter, T::TupleSliceType);
-        unsafe {
-            ptr::drop_in_place(ptr_func);
-        }
-    }
-
-    unsafe extern "C" fn run_each<Func>(iter: *mut IterT)
-    where
-        Func: FnMut(T::TupleType),
-    {
-        let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
-        let each = (*ctx).each.unwrap();
-        let each = &mut *(each as *mut Func);
-
-        let components_data = T::get_array_ptrs_of_components(&*iter);
-        let iter_count = (*iter).count as usize;
-        let array_components = &components_data.array_components;
-
-        ecs_table_lock((*iter).world, (*iter).table);
-
-        for i in 0..iter_count {
-            let tuple = if components_data.is_any_array_a_ref {
-                let is_ref_array_components = &components_data.is_ref_array_components;
-                T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-            } else {
-                T::get_tuple(array_components, i)
-            };
-            each(tuple);
-        }
-
-        ecs_table_unlock((*iter).world, (*iter).table);
-    }
-
-    unsafe extern "C" fn run_each_entity<Func>(iter: *mut IterT)
-    where
-        Func: FnMut(&mut Entity, T::TupleType),
-    {
-        let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
-        let each_entity = (*ctx).each_entity.unwrap();
-        let each_entity = &mut *(each_entity as *mut Func);
-
-        let components_data = T::get_array_ptrs_of_components(&*iter);
-        let array_components = &components_data.array_components;
-        let iter_count = (*iter).count as usize;
-
-        ecs_table_lock((*iter).world, (*iter).table);
-
-        for i in 0..iter_count {
-            let mut entity = Entity::new_from_existing_raw((*iter).world, *(*iter).entities.add(i));
-            let tuple = if components_data.is_any_array_a_ref {
-                let is_ref_array_components = &components_data.is_ref_array_components;
-                T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-            } else {
-                T::get_tuple(array_components, i)
-            };
-
-            each_entity(&mut entity, tuple);
-        }
-        ecs_table_unlock((*iter).world, (*iter).table);
-    }
-
-    unsafe extern "C" fn run_each_iter<Func>(iter: *mut IterT)
-    where
-        Func: FnMut(&mut Iter, usize, T::TupleType),
-    {
-        let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
-        let each_iter = (*ctx).each_iter.unwrap();
-        let each_iter = &mut *(each_iter as *mut Func);
-
-        let components_data = T::get_array_ptrs_of_components(&*iter);
-        let array_components = &components_data.array_components;
-        let iter_count = {
-            if (*iter).count == 0 {
-                1_usize
-            } else {
-                (*iter).count as usize
-            }
-        };
-
-        ecs_table_lock((*iter).world, (*iter).table);
-        let mut iter_t = Iter::new(&mut (*iter));
-
-        for i in 0..iter_count {
-            let tuple = if components_data.is_any_array_a_ref {
-                let is_ref_array_components = &components_data.is_ref_array_components;
-                T::get_tuple_with_ref(array_components, is_ref_array_components, i)
-            } else {
-                T::get_tuple(array_components, i)
-            };
-
-            each_iter(&mut iter_t, i, tuple);
-        }
-        ecs_table_unlock((*iter).world, (*iter).table);
-    }
-
-    unsafe extern "C" fn run_iter_only<Func>(iter: *mut IterT)
-    where
-        Func: FnMut(&mut Iter),
-    {
-        unsafe {
-            let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
-            let iter_only = (*ctx).iter_only.unwrap();
-            let iter_only = &mut *(iter_only as *mut Func);
-
-            ecs_table_lock((*iter).world, (*iter).table);
-
-            let mut iter_t = Iter::new(&mut *iter);
-            iter_only(&mut iter_t);
-
-            ecs_table_unlock((*iter).world, (*iter).table);
-        }
-    }
-
-    unsafe extern "C" fn run_iter<Func>(iter: *mut IterT)
-    where
-        Func: FnMut(&mut Iter, T::TupleSliceType),
-    {
-        let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
-        let iter_func = (*ctx).iter.unwrap();
-        let iter_func = &mut *(iter_func as *mut Func);
-
-        let components_data = T::get_array_ptrs_of_components(&*iter);
-        let array_components = &components_data.array_components;
-        let iter_count = (*iter).count as usize;
-
-        ecs_table_lock((*iter).world, (*iter).table);
-
-        let tuple = if components_data.is_any_array_a_ref {
-            let is_ref_array_components = &components_data.is_ref_array_components;
-            T::get_tuple_slices_with_ref(array_components, is_ref_array_components, iter_count)
-        } else {
-            T::get_tuple_slices(array_components, iter_count)
-        };
-        let mut iter_t = Iter::new(&mut *iter);
-        iter_func(&mut iter_t, tuple);
-
-        ecs_table_unlock((*iter).world, (*iter).table);
-    }
-
-    /// Set system callback `binding_ctx`
-    fn get_binding_ctx(&mut self) -> &mut ObserverSystemBindingCtx {
-        let mut binding_ctx: *mut ObserverSystemBindingCtx = self.desc.binding_ctx as *mut _;
-
-        if binding_ctx.is_null() {
-            let new_binding_ctx = Box::<ObserverSystemBindingCtx>::default();
-            let static_ref = Box::leak(new_binding_ctx);
-            binding_ctx = static_ref;
-            self.desc.binding_ctx = binding_ctx as *mut c_void;
-            self.desc.binding_ctx_free = Some(Self::binding_ctx_drop);
-        }
-        unsafe { &mut *binding_ctx }
-    }
-
-    /// drop callback `binding_ctx`
-    extern "C" fn binding_ctx_drop(ptr: *mut c_void) {
-        let ptr_struct: *mut ObserverSystemBindingCtx = ptr as *mut ObserverSystemBindingCtx;
-        unsafe {
-            ptr::drop_in_place(ptr_struct);
-        }
-    }
 }
 
 impl<'a, T> Filterable for SystemBuilder<'a, T>
@@ -641,8 +324,7 @@ where
     T: Iterable<'a>,
 {
     fn current_term(&mut self) -> &mut TermT {
-        let next_term_index = self.next_term_index;
-        &mut self.get_desc_filter().terms[next_term_index as usize]
+        unsafe { &mut *self.filter_builder.term.term_ptr }
     }
 
     fn next_term(&mut self) {
@@ -704,3 +386,22 @@ where
         &mut self.desc.query
     }
 }
+
+impl<'a, T> Builder for SystemBuilder<'a, T>
+where
+    T: Iterable<'a>,
+{
+    type BuiltType = System;
+
+    /// Build the `system_builder` into an system
+    ///
+    /// See also
+    ///
+    /// * C++ API: `node_builder::build`
+    #[doc(alias = "node_builder::build")]
+    fn build(&mut self) -> Self::BuiltType {
+        System::new(&self.world, self.desc, self.is_instanced)
+    }
+}
+
+implement_reactor_api!(SystemBuilder<'a, T>);

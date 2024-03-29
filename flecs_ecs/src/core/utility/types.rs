@@ -1,12 +1,6 @@
 use std::{ops::Deref, os::raw::c_void};
 
-use crate::core::{
-    c_types::{InOutKind, OperKind},
-    component_registration::ComponentInfo,
-    ComponentType, Entity, IdT, Struct, World,
-};
-
-use super::traits::{InOutType, OperType};
+use crate::core::{Entity, IdT, World};
 
 pub type FTime = f32;
 
@@ -68,7 +62,8 @@ impl Deref for EntityId {
 
 pub(crate) type EcsCtxFreeT = extern "C" fn(*mut c_void);
 
-pub(crate) struct ObserverSystemBindingCtx {
+#[doc(hidden)]
+pub struct ObserverSystemBindingCtx {
     pub(crate) each: Option<*mut c_void>,
     pub(crate) each_entity: Option<*mut c_void>,
     pub(crate) each_iter: Option<*mut c_void>,
@@ -227,61 +222,4 @@ impl ObserverEntityBindingCtx {
             free_payload_entity,
         }
     }
-}
-
-impl<T> InOutType for &mut T
-where
-    T: ComponentInfo,
-{
-    const IN_OUT: InOutKind = InOutKind::InOutDefault;
-    type Type = T;
-}
-
-impl<T> InOutType for &T
-where
-    T: ComponentInfo,
-{
-    type Type = T;
-    const IN_OUT: InOutKind = InOutKind::In;
-}
-
-impl<T, U> InOutType for (T, U)
-where
-    T: ComponentInfo,
-    U: ComponentInfo + ComponentType<Struct>,
-{
-    type Type = (T, U);
-    const IN_OUT: InOutKind = InOutKind::InOutDefault;
-}
-
-impl<T> OperType for &mut T
-where
-    T: ComponentInfo,
-{
-    type Type = T;
-    const OPER: OperKind = OperKind::And;
-}
-
-impl<T> OperType for &T
-where
-    T: ComponentInfo,
-{
-    type Type = T;
-    const OPER: OperKind = OperKind::And;
-}
-
-impl<T> OperType for Option<&T>
-where
-    T: ComponentInfo,
-{
-    type Type = T;
-    const OPER: OperKind = OperKind::Optional;
-}
-
-impl<T> OperType for Option<&mut T>
-where
-    T: ComponentInfo,
-{
-    type Type = T;
-    const OPER: OperKind = OperKind::Optional;
 }

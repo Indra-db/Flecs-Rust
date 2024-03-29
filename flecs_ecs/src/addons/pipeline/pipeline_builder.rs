@@ -143,8 +143,7 @@ where
     T: Iterable<'a>,
 {
     fn current_term(&mut self) -> &mut TermT {
-        let next_term_index = self.next_term_index;
-        &mut self.get_desc_filter().terms[next_term_index as usize]
+        unsafe { &mut *self.filter_builder.term.term_ptr }
     }
 
     fn next_term(&mut self) {
