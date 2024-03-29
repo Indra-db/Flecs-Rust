@@ -12,10 +12,9 @@ pub use into_entity::*;
 pub use into_table::*;
 pub use into_world::*;
 pub use iter::*;
-
 pub use reactor::*;
 
-//#[doc(hidden)]
+#[doc(hidden)]
 pub mod private {
     use std::{ffi::c_void, ptr};
 

@@ -66,7 +66,7 @@ where
             event_count: 0,
             is_instanced: false,
         };
-        T::populate(&mut obj);
+
         let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
             name: std::ptr::null(),
             sep: SEPARATOR.as_ptr(),
@@ -75,6 +75,7 @@ where
         };
 
         obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
+        T::populate(&mut obj);
         obj
     }
 
@@ -90,13 +91,13 @@ where
     /// * C++ API: `node_builder::node_builder`
     #[doc(alias = "node_builder::node_builder")]
     pub fn new_named(world: &World, name: &CStr) -> Self {
+        let mut desc = Default::default();
         let mut obj = Self {
-            desc: Default::default(),
-            filter_builder: FilterBuilder::new(world),
+            desc,
+            filter_builder: FilterBuilder::<T>::new_from_desc(world, &mut desc.filter, 0),
             event_count: 0,
             is_instanced: false,
         };
-        T::populate(&mut obj);
         let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
             name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
@@ -105,6 +106,7 @@ where
         };
 
         obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
+        T::populate(&mut obj);
         obj
     }
 
@@ -126,6 +128,15 @@ where
             event_count: 0,
             is_instanced: false,
         };
+
+        let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
+            name: std::ptr::null(),
+            sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
+            ..default::Default::default()
+        };
+
+        obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
         T::populate(&mut obj);
         obj
     }

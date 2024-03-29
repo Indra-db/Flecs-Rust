@@ -3401,6 +3401,21 @@ impl World {
         PipelineBuilder::<()>::new(self)
     }
 
+    /// Create a new named pipeline.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the pipeline.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::pipeline`
+    #[doc(alias = "world::pipeline")]
+    #[inline(always)]
+    pub fn pipeline_named(&self, name: &CStr) -> PipelineBuilder<()> {
+        PipelineBuilder::<()>::new_named(self, name)
+    }
+
     /// Create a new pipeline with the provided associated type
     ///
     /// # Type Parameters

@@ -60,11 +60,20 @@ where
     #[doc(alias = "builder::builder")]
     pub fn new(world: &World) -> Self {
         let mut desc = Default::default();
+
         let mut obj = Self {
             desc,
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
         };
 
+        let entity_desc = ecs_entity_desc_t {
+            name: std::ptr::null(),
+            sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
+            ..Default::default()
+        };
+
+        obj.desc.filter.entity = unsafe { ecs_entity_init(world.raw_world, &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -81,16 +90,20 @@ where
     /// * C++ API: `query_builder::query_builder`
     #[doc(alias = "query_builder::query_builder")]
     pub fn new_named(world: &World, name: &CStr) -> Self {
+        let mut desc = Default::default();
+
         let mut obj = Self {
-            desc: Default::default(),
-            filter_builder: FilterBuilder::new(world),
+            desc,
+            filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
         };
+
         let entity_desc = ecs_entity_desc_t {
             name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
+
         obj.desc.filter.entity = unsafe { ecs_entity_init(world.raw_world, &entity_desc) };
         T::populate(&mut obj);
         obj
@@ -136,6 +149,15 @@ where
             desc: *desc,
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, term_index),
         };
+
+        let entity_desc = ecs_entity_desc_t {
+            name: std::ptr::null(),
+            sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
+            ..Default::default()
+        };
+
+        obj.desc.filter.entity = unsafe { ecs_entity_init(world.raw_world, &entity_desc) };
         T::populate(&mut obj);
         obj
     }
