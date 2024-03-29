@@ -22,10 +22,10 @@ For detailed feature progress, please visit the [issues](https://github.com/Indr
 
 
 - [x] Core library ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600)
-- [ ] Addons ![](https://geps.dev/progress/40?dangerColor=800000&warningColor=ff9900&successColor=006600) (most important ones are done!)
+- [ ] Addons ![](https://geps.dev/progress/45?dangerColor=800000&warningColor=ff9900&successColor=006600) (most important ones are done!) + Rules
 - [ ] Documentation ![](https://geps.dev/progress/70?dangerColor=800000&warningColor=ff9900&successColor=006600) codebase documented with C++ alias. missing 30% is adding Rust syntax to Flecs docs site.
 - [ ] Test suite ![](https://geps.dev/progress/15?dangerColor=800000&warningColor=ff9900&successColor=006600)
-- [ ] Examples ![](https://geps.dev/progress/60?dangerColor=800000&warningColor=ff9900&successColor=006600)[Click me for more info](https://github.com/Indra-db/flecs-ecs-rs/issues/12) - of the current supported features, all examples are done
+- [ ] Examples ![](https://geps.dev/progress/70?dangerColor=800000&warningColor=ff9900&successColor=006600)[Click me for more info](https://github.com/Indra-db/flecs-ecs-rs/issues/12) - of the current supported features, all examples are done ✔️
 
 ## The Aim
 
