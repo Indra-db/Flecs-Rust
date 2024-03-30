@@ -86,4 +86,11 @@ fn main() {
                 );
             });
     });
+
+    // Output:
+    // Creature 525 at location 0,0 is enchanted with mystical energy, ability power: 0
+    // Creature 527 at location 20,10 is enchanted with mystical energy, ability power: 3
+    // Creature 529 at location 40,20 is enchanted with mystical energy, ability power: 6
+    // Creature 531 at location 60,30 is enchanted with mystical energy, ability power: 9
+    // Creature 533 at location 80,40 is enchanted with mystical energy, ability power: 12
 }
