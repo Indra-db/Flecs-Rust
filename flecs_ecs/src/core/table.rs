@@ -21,6 +21,15 @@ pub struct Table {
     table: *mut TableT,
 }
 
+impl Clone for Table {
+    fn clone(&self) -> Self {
+        Self {
+            world: self.world,
+            table: self.table,
+        }
+    }
+}
+
 impl Default for Table {
     fn default() -> Self {
         Self {
@@ -587,6 +596,15 @@ pub struct TableRange {
     count: i32,
 }
 
+impl Clone for TableRange {
+    fn clone(&self) -> Self {
+        Self {
+            table: self.table.clone(),
+            offset: self.offset,
+            count: self.count,
+        }
+    }
+}
 impl TableRange {
     /// Creates a new table range
     ///
@@ -604,9 +622,9 @@ impl TableRange {
     ///
     /// * C++ API: `table_range::table_range`
     #[doc(alias = "table_range::table_range")]
-    pub fn new(table: Table, offset: i32, count: i32) -> Self {
+    pub fn new(table: &Table, offset: i32, count: i32) -> Self {
         Self {
-            table,
+            table: table.clone(),
             offset,
             count,
         }

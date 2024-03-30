@@ -1,14 +1,15 @@
 use std::ffi::{c_void, CStr};
 
 use flecs_ecs_sys::{
-    ecs_get_entity, ecs_iter_set_var, ecs_query_set_group, ecs_rule_find_var, ecs_rule_iter_t,
+    ecs_get_entity, ecs_iter_set_var, ecs_iter_set_var_as_range, ecs_query_set_group,
+    ecs_rule_find_var, ecs_rule_iter_t,
 };
 
 use crate::{core::FlecsErrorCode, ecs_assert};
 
 use super::{
-    ComponentInfo, Entity, FilterT, IntoEntityId, IntoWorld, IterAPI, IterOperations, IterT,
-    Iterable, WorldT,
+    ComponentInfo, Entity, FilterT, IntoEntityId, IntoTableRange, IntoWorld, IterAPI,
+    IterOperations, IterT, Iterable, WorldT,
 };
 
 pub struct IterIterable<'a, T>
@@ -76,6 +77,24 @@ where
     pub fn set_var(&mut self, var_id: i32, value: impl IntoEntityId) -> &mut Self {
         ecs_assert!(var_id != -1, FlecsErrorCode::InvalidParameter, 0);
         unsafe { ecs_iter_set_var(&mut self.iter, var_id, value.get_id()) };
+        self
+    }
+
+    /// set variable of iter as range
+    ///
+    /// # Arguments
+    ///
+    /// * `var_id`: the variable id to set
+    ///
+    /// * `range`: the range to set
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter_iterable::set_var_as_range`
+    #[doc(alias = "iter_iterable::set_var_as_range")]
+    pub fn set_var_as_range(&mut self, var_id: i32, range: impl IntoTableRange) -> &mut Self {
+        ecs_assert!(var_id != -1, FlecsErrorCode::InvalidParameter, 0);
+        unsafe { ecs_iter_set_var_as_range(&mut self.iter, var_id, &range.get_table_range_raw()) };
         self
     }
 
