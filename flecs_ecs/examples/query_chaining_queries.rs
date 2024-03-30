@@ -32,8 +32,8 @@ fn main() {
         let creature = forest
             .new_entity()
             .set(Location {
-                x: i as f32 * 10.0,
-                y: i as f32 * 5.0,
+                x: i as f32,
+                y: i as f32,
             })
             .set(Ability {
                 power: i as f32 * 1.5,
@@ -62,20 +62,20 @@ fn main() {
     // Query for creatures based on their Location and Ability
     let query_creatures = forest.query::<(&Location, &Ability)>();
 
-    // Query specifically for enchanted things in the world
+    // Filter specifically for enchanted things in the world
     let query_enchanted = forest
-        .rule_builder::<()>()
+        .filter_builder::<()>() // query is bugged with chaining, reported on 30/03/2024. Will be fixed for v4 flecs.
         .with_type::<&Enchanted>()
         .build();
 
     // Iterate over creatures to find the enchanted ones
-    query_creatures.iter(|it, (loc, ability)| {
+    query_creatures.iter(|iter, (loc, ability)| {
 
         // Filter for enchanted creatures within the current iteration
         query_enchanted
             .iterable()
-            .set_var_as_range(0, it.get_table_range())
-            .each_iter( |it, index ,()| {
+            .set_var_as_range(0, iter.get_table_range())
+            .each_iter( |it, index ,_| {
                let pos = &loc[index];
                let abil_power = ability[index].power;
                let entity = it.get_entity(index);
@@ -88,9 +88,9 @@ fn main() {
     });
 
     // Output:
-    // Creature 525 at location 0,0 is enchanted with mystical energy, ability power: 0
-    // Creature 527 at location 20,10 is enchanted with mystical energy, ability power: 3
-    // Creature 529 at location 40,20 is enchanted with mystical energy, ability power: 6
-    // Creature 531 at location 60,30 is enchanted with mystical energy, ability power: 9
-    // Creature 533 at location 80,40 is enchanted with mystical energy, ability power: 12
+    //  Creature 525 at location 0,0 is enchanted with mystical energy, ability power: 0
+    //  Creature 527 at location 2,2 is enchanted with mystical energy, ability power: 3
+    //  Creature 529 at location 4,4 is enchanted with mystical energy, ability power: 6
+    //  Creature 531 at location 6,6 is enchanted with mystical energy, ability power: 9
+    //  Creature 533 at location 8,8 is enchanted with mystical energy, ability power: 12
 }
