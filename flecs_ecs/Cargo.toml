@@ -236,3 +236,33 @@ required-features = ["flecs_system"]
 name = "query_sorting"
 path = "examples/query_sorting.rs"
 required-features = ["flecs_system"]
+
+[[example]]
+name = "rules_basics"
+path = "examples/rules_basics.rs"
+required-features = ["flecs_rules"]
+
+[[example]]
+name = "rules_component_inheritance"
+path = "examples/rules_component_inheritance.rs"
+required-features = ["flecs_rules"]
+
+[[example]]
+name = "rules_cyclic_variables"
+path = "examples/rules_cyclic_variables.rs"
+required-features = ["flecs_rules"]
+
+[[example]]
+name = "rules_facts"
+path = "examples/rules_facts.rs"
+required-features = ["flecs_rules"]
+
+[[example]]
+name = "rules_setting_variables"
+path = "examples/rules_setting_variables.rs"
+required-features = ["flecs_rules"]
+
+[[example]]
+name = "rules_transitive_queries"
+path = "examples/rules_transitive_queries.rs"
+required-features = ["flecs_rules"]
