@@ -207,7 +207,6 @@ fn main() {
         let mut build = cc::Build::new();
 
         build
-            .compiler("clang")
             .file("src/flecs.c")
             .warnings(true)
             .extra_warnings(true)
