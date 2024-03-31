@@ -23,51 +23,100 @@ seq-macro = "0.3.5"
 rand = "0.8.5"
 ctor = "0.2.7"
 
-[[bench]]
-name = "query"
-harness = false
-
 [features]
-flecs_ecs_asserts = []
-flecs_enable_all_asserts = ["flecs_ecs_asserts"] # TODO: add C assert feature and make it a disable? feature instead
-sys_regenerate_binding = ["flecs_ecs_sys/regenerate_binding"]
-sys_build_debug = ["flecs_ecs_sys/build_debug"]
+# Regenerate the C binding for flecs C
+flecs_regenerate_binding_c = ["flecs_ecs_sys/regenerate_binding"]
 
-# Flecs C defines / features
-flecs_module = ["flecs_ecs_sys/flecs_module"] # Module support
-flecs_parser = ["flecs_ecs_sys/flecs_parser"] # String parser for queries
-flecs_plecs = ["flecs_ecs_sys/flecs_plecs", "flecs_module", "flecs_parser", "flecs_expr"] # ECS data definition format
-flecs_rules = ["flecs_ecs_sys/flecs_rules"] # Constraint solver for advanced queries
-flecs_snapshot = ["flecs_ecs_sys/flecs_snapshot"] # Snapshot & restore ECS data
-flecs_stats = ["flecs_ecs_sys/flecs_stats"] # Access runtime statistics
-flecs_monitor = ["flecs_ecs_sys/flecs_monitor","flecs_stats", "flecs_system", "flecs_timer"] # Track runtime statistics periodically
-flecs_metrics = ["flecs_ecs_sys/flecs_metrics", "flecs_meta", "flecs_units", "flecs_pipeline"] # Expose component data as statistics
-flecs_alerts = ["flecs_ecs_sys/flecs_alerts", "flecs_rules", "flecs_pipeline"] # Monitor conditions for errors
-flecs_system = ["flecs_ecs_sys/flecs_system", "flecs_module"] # System support
-flecs_pipeline = ["flecs_ecs_sys/flecs_pipeline", "flecs_module", "flecs_system"] # Pipeline support
-flecs_timer = ["flecs_ecs_sys/flecs_timer", "flecs_module", "flecs_pipeline"] # Timer support
-flecs_meta = ["flecs_ecs_sys/flecs_meta", "flecs_module"] # Reflection support
-flecs_units = ["flecs_ecs_sys/flecs_units", "flecs_module", "flecs_meta"] # Builtin standard units
-flecs_expr = ["flecs_ecs_sys/flecs_expr", "flecs_meta", "flecs_parser"] # Parsing strings to/from component values
-flecs_json = ["flecs_ecs_sys/flecs_json", "flecs_expr"] # Parsing JSON to/from component values
-flecs_doc = ["flecs_ecs_sys/flecs_doc", "flecs_module"] # Document entities & components
-flecs_coredoc = ["flecs_ecs_sys/flecs_coredoc","flecs_doc", "flecs_meta"] # Documentation for core entities & components
-flecs_log = ["flecs_ecs_sys/flecs_log"] # When enabled ECS provides more detailed logs
-flecs_app = ["flecs_ecs_sys/flecs_app", "flecs_pipeline"] # Application addon
-flecs_os_api_impl = ["flecs_ecs_sys/flecs_os_api_impl"] # Default implementation for OS API
-flecs_http = ["flecs_ecs_sys/flecs_http"] # Tiny HTTP server for connecting to remote UI
-flecs_rest = ["flecs_ecs_sys/flecs_rest", "flecs_http", "flecs_json", "flecs_rules", "flecs_pipeline"] # REST API for querying application data
-flecs_journal = ["flecs_ecs_sys/flecs_journal","flecs_log"] # Journaling addon (disabled by default)
+# force enables both rust and c ecs asserts, useful when running release mode, but wanting the asserts for safety
+flecs_force_enable_ecs_asserts = ["flecs_ecs_sys/flecs_force_enable_ecs_asserts"]
+
+# force build debug for flecs C, even in release mode
+flecs_force_build_debug_c = ["flecs_ecs_sys/force_build_debug"]
+
+# force build release for C flecs, even in debug mode
+flecs_force_build_release_c = ["flecs_ecs_sys/force_build_release"]
+
+# Module support
+flecs_module = ["flecs_ecs_sys/flecs_module"]
+
+# String parser for queries
+flecs_parser = ["flecs_ecs_sys/flecs_parser"]
+
+# ECS data definition format
+flecs_plecs = ["flecs_ecs_sys/flecs_plecs", "flecs_module", "flecs_parser", "flecs_expr"]
+
+# Constraint solver for advanced queries
+flecs_rules = ["flecs_ecs_sys/flecs_rules"]
+
+# Snapshot & restore ECS data
+flecs_snapshot = ["flecs_ecs_sys/flecs_snapshot"]
+
+# Access runtime statistics
+flecs_stats = ["flecs_ecs_sys/flecs_stats"]
+
+# Track runtime statistics periodically
+flecs_monitor = ["flecs_ecs_sys/flecs_monitor","flecs_stats", "flecs_system", "flecs_timer"]
+
+# Expose component data as statistics
+flecs_metrics = ["flecs_ecs_sys/flecs_metrics", "flecs_meta", "flecs_units", "flecs_pipeline"]
+
+# Monitor conditions for errors
+flecs_alerts = ["flecs_ecs_sys/flecs_alerts", "flecs_rules", "flecs_pipeline"]
+
+# System support
+flecs_system = ["flecs_ecs_sys/flecs_system", "flecs_module"]
+
+# Pipeline support
+flecs_pipeline = ["flecs_ecs_sys/flecs_pipeline", "flecs_module", "flecs_system"]
+
+# Timer support
+flecs_timer = ["flecs_ecs_sys/flecs_timer", "flecs_module", "flecs_pipeline"]
+
+# Reflection support
+flecs_meta = ["flecs_ecs_sys/flecs_meta", "flecs_module"]
+
+# Builtin standard units
+flecs_units = ["flecs_ecs_sys/flecs_units", "flecs_module", "flecs_meta"]
+
+# Parsing strings to/from component values
+flecs_expr = ["flecs_ecs_sys/flecs_expr", "flecs_meta", "flecs_parser"]
+
+# Parsing JSON to/from component values
+flecs_json = ["flecs_ecs_sys/flecs_json", "flecs_expr"]
+
+# Document entities & components
+flecs_doc = ["flecs_ecs_sys/flecs_doc", "flecs_module"]
+
+# Documentation for core entities & components
+flecs_coredoc = ["flecs_ecs_sys/flecs_coredoc","flecs_doc", "flecs_meta"]
+
+# When enabled ECS provides more detailed logs
+flecs_log = ["flecs_ecs_sys/flecs_log"]
+
+# Application addon
+flecs_app = ["flecs_ecs_sys/flecs_app", "flecs_pipeline"]
+
+# Default implementation for OS API
+flecs_os_api_impl = ["flecs_ecs_sys/flecs_os_api_impl"]
+
+# Tiny HTTP server for connecting to remote UI
+flecs_http = ["flecs_ecs_sys/flecs_http"]
+
+# REST API for querying application data
+flecs_rest = ["flecs_ecs_sys/flecs_rest", "flecs_http", "flecs_json", "flecs_rules", "flecs_pipeline"]
+
+# Journaling addon (disabled by default)
+flecs_journal = ["flecs_ecs_sys/flecs_journal","flecs_log"]
 
 # Enabling this will not build a copy of flecs into this library.
 # Instead, the executable that this is linked with will need to
 # provide the symbols required. This is useful when using both
 # Rust and C++ code in an application and a copy of flecs is
 # already being linked into the executable via other means.
-sys_disable_build_c_library = ["flecs_ecs_sys/disable_build_c_library"]
+flecs_disable_build_c = ["flecs_ecs_sys/disable_build_c"]
+
 
 default = [
-    "flecs_enable_all_asserts",
     "flecs_module",
     "flecs_parser",
     "flecs_plecs",
@@ -96,7 +145,6 @@ default = [
 [target.'cfg(any())'.dependencies]
 flecs_ecs_derive = { version = "=0.1.0", path = "../flecs_ecs_derive" }
 flecs_ecs_sys = { version = "=0.1.0", path = "../flecs_ecs_sys" }
-
 
 # These examples are only the examples that rely on a certain feature to compile successfully.
 [[example]]

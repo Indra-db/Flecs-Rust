@@ -7,7 +7,7 @@ use super::{
     lifecycle_traits::register_lifecycle_actions,
     IntoWorld,
 };
-#[cfg(feature = "flecs_ecs_asserts")]
+#[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
 use crate::{
     core::get_full_type_name,

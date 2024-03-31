@@ -1,4 +1,4 @@
-#[cfg(feature = "flecs_ecs_asserts")]
+#[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
 use crate::{
     core::{ecs_is_pair, ecs_pair_first, strip_prefix_cstr_raw},

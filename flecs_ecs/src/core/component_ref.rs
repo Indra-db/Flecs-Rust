@@ -8,7 +8,7 @@ use super::{
     entity::Entity,
     IntoEntityId, IntoWorld,
 };
-#[cfg(feature = "flecs_ecs_asserts")]
+#[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
 use crate::{
     ecs_assert,

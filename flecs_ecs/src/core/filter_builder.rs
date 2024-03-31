@@ -13,7 +13,7 @@ use super::{
     world::World,
     IdT, InOutType, IntoComponentId, IntoEntityId, IntoEntityIdExt, WorldT, ECS_WILDCARD,
 };
-#[cfg(feature = "flecs_ecs_asserts")]
+#[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::{core::FlecsErrorCode, sys::ecs_term_is_initialized};
 
 use crate::{

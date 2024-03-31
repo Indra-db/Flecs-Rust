@@ -202,7 +202,7 @@ fn main() {
     println!("cargo:rerun-if-changed=src/flecs.c");
     println!("cargo:rerun-if-changed=build.rs");
 
-    #[cfg(not(feature = "disable_build_c_library"))]
+    #[cfg(not(feature = "disable_build_c"))]
     {
         let mut build = cc::Build::new();
 
@@ -289,14 +289,23 @@ fn main() {
         #[cfg(feature = "flecs_journal")]
         build.define("FLECS_JOURNAL", None);
 
-        #[cfg(not(feature = "build_debug"))]
+        #[cfg(any(
+            all(not(debug_assertions), not(feature = "force_build_debug"),),
+            feature = "force_build_release"
+        ))]
         {
             build
                 .opt_level(3)
                 .define("NDEBUG", None)
-                .define("flto", None)
-                .compile("flecs");
+                .define("flto", None);
         }
+
+        #[cfg(feature = "flecs_force_enable_ecs_asserts")]
+        {
+            build.define("FLECS_KEEP_ASSERTS", None);
+        }
+
+        build.compile("flecs");
 
         //TODO C might complain about unused functions when disabling certain features, turn the warning off?
 

@@ -44,7 +44,7 @@
 //!
 //! Note: C does the same, where the user needs to opt in for non trivial types. We can do the same.
 //! Note2: zerobit pattern
-#[cfg(feature = "flecs_ecs_asserts")]
+#[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
 use crate::{
     core::c_types::{IdT, TypeHooksT},

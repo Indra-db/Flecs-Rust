@@ -1,6 +1,6 @@
 use std::{ffi::CStr, os::raw::c_char};
 
-#[cfg(feature = "flecs_ecs_asserts")]
+#[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
 use crate::{
     core::{

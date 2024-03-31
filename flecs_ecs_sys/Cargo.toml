@@ -23,37 +23,105 @@ cc = "1.0.83"
 regex = "1.9.5"
 
 [features]
+# Regenerate the C binding for flecs C
 regenerate_binding = []
-disable_build_c_library = []
-build_debug = []
 
+# force enables both rust and c ecs asserts, useful when running release mode, but wanting the asserts for safety
+flecs_force_enable_ecs_asserts = []
 
+# force build debug for flecs C, even in release mode
+force_build_debug = []
+
+# force build release for C flecs, even in debug mode
+force_build_release = []
+
+# Enabling this will not build a copy of flecs into this library.
+# Instead, the executable that this is linked with will need to
+# provide the symbols required. This is useful when using both
+# Rust and C++ code in an application and a copy of flecs is
+# already being linked into the executable via other means.
+disable_build_c = []
+
+###############################
 # Flecs C defines / features
-flecs_module = [] # Module support
-flecs_parser = [] # String parser for queries
-flecs_plecs = ["flecs_module", "flecs_parser", "flecs_expr"] # ECS data definition format
-flecs_rules = [] # Constraint solver for advanced queries
-flecs_snapshot = [] # Snapshot & restore ECS data
-flecs_stats = [] # Access runtime statistics
-flecs_monitor = ["flecs_stats", "flecs_system", "flecs_timer"] # Track runtime statistics periodically
-flecs_metrics = ["flecs_meta", "flecs_units", "flecs_pipeline"] # Expose component data as statistics
-flecs_alerts = ["flecs_rules", "flecs_pipeline"] # Monitor conditions for errors
-flecs_system = ["flecs_module"] # System support
-flecs_pipeline = ["flecs_module", "flecs_system"] # Pipeline support
-flecs_timer = ["flecs_module", "flecs_pipeline"] # Timer support
-flecs_meta = ["flecs_meta_c", "flecs_module"] # Reflection support
-flecs_meta_c = [] # Utilities for populating reflection data
-flecs_units = ["flecs_module", "flecs_meta"] # Builtin standard units
-flecs_expr = ["flecs_meta", "flecs_parser"] # Parsing strings to/from component values
-flecs_json = ["flecs_expr"] # Parsing JSON to/from component values
-flecs_doc = ["flecs_module"] # Document entities & components
-flecs_coredoc = ["flecs_doc", "flecs_meta"] # Documentation for core entities & components
-flecs_log = [] # When enabled ECS provides more detailed logs
-flecs_app = ["flecs_pipeline"] # Application addon
-flecs_os_api_impl = [] # Default implementation for OS API
-flecs_http = [] # Tiny HTTP server for connecting to remote UI
-flecs_rest = ["flecs_http", "flecs_json", "flecs_rules", "flecs_pipeline"] # REST API for querying application data
-flecs_journal = ["flecs_log"] # Journaling addon (disabled by default)
+###############################
+
+# Module support
+flecs_module = []
+
+# String parser for queries
+flecs_parser = []
+
+# ECS data definition format
+flecs_plecs = ["flecs_module", "flecs_parser", "flecs_expr"]
+
+# Constraint solver for advanced queries
+flecs_rules = []
+
+# Snapshot & restore ECS data
+flecs_snapshot = []
+
+# Access runtime statistics
+flecs_stats = []
+
+# Track runtime statistics periodically
+flecs_monitor = ["flecs_stats", "flecs_system", "flecs_timer"]
+
+# Expose component data as statistics
+flecs_metrics = ["flecs_meta", "flecs_units", "flecs_pipeline"]
+
+# Monitor conditions for errors
+flecs_alerts = ["flecs_rules", "flecs_pipeline"]
+
+# System support
+flecs_system = ["flecs_module"]
+
+# Pipeline support
+flecs_pipeline = ["flecs_module", "flecs_system"]
+
+# Timer support
+flecs_timer = ["flecs_module", "flecs_pipeline"]
+
+# Reflection support
+flecs_meta = ["flecs_meta_c", "flecs_module"]
+
+# Utilities for populating reflection data
+flecs_meta_c = []
+
+# Builtin standard units
+flecs_units = ["flecs_module", "flecs_meta"]
+
+# Parsing strings to/from component values
+flecs_expr = ["flecs_meta", "flecs_parser"]
+
+# Parsing JSON to/from component values
+flecs_json = ["flecs_expr"]
+
+# Document entities & components
+flecs_doc = ["flecs_module"]
+
+# Documentation for core entities & components
+flecs_coredoc = ["flecs_doc", "flecs_meta"]
+
+# When enabled ECS provides more detailed logs
+flecs_log = []
+
+# Application addon
+flecs_app = ["flecs_pipeline"]
+
+# Default implementation for OS API
+flecs_os_api_impl = []
+
+# Tiny HTTP server for connecting to remote UI
+flecs_http = []
+
+# REST API for querying application data
+flecs_rest = ["flecs_http", "flecs_json", "flecs_rules", "flecs_pipeline"]
+
+# Journaling addon (disabled by default)
+flecs_journal = ["flecs_log"]
+
+# Default features
 default = [
     "flecs_meta_c",
 ]

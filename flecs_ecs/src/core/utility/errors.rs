@@ -137,7 +137,7 @@ impl FlecsErrorCode {
 /// Macro to assert a condition.
 /// In release mode, the condition is not checked.
 /// Can be turned off by disabling the `flecs_ecs_asserts` feature
-#[cfg(feature = "flecs_ecs_asserts")]
+#[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 #[macro_export]
 macro_rules! ecs_assert {
     ($condition:expr $(,)?, $error_code:expr $(,)?) => {
@@ -160,7 +160,7 @@ macro_rules! ecs_assert {
     };
 }
 
-#[cfg(not(feature = "flecs_ecs_asserts"))]
+#[cfg(all(not(debug_assertions), not(feature = "flecs_force_enable_ecs_asserts")))]
 #[macro_export]
 macro_rules! ecs_assert {
     ($($args:tt)*) => {};

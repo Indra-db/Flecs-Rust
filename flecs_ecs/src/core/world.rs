@@ -28,7 +28,7 @@ use crate::sys::{
     ecs_should_quit, ecs_stage_is_async, ecs_stage_is_readonly, ecs_stage_t_magic,
     ecs_world_info_t,
 };
-#[cfg(feature = "flecs_ecs_asserts")]
+#[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::{
     core::{ecs_is_pair, FlecsErrorCode},
     sys::ecs_world_t_magic,
