@@ -1,11 +1,12 @@
 use std::ffi::c_char;
 
-use flecs_ecs_sys::{ecs_filter_str, ecs_iter_fini, ecs_os_api, ecs_table_lock, ecs_table_unlock};
-
+#[cfg(feature = "flecs_ecs_asserts")]
+use crate::core::FlecsErrorCode;
 use crate::{
-    core::{Entity, FilterT, FlecsErrorCode, Iter, IterIterable, IterT, Iterable, Term},
+    core::{Entity, FilterT, Iter, IterIterable, IterT, Iterable, Term},
     ecs_assert,
 };
+use flecs_ecs_sys::{ecs_filter_str, ecs_iter_fini, ecs_os_api, ecs_table_lock, ecs_table_unlock};
 
 use super::IntoWorld;
 

@@ -382,6 +382,7 @@ impl ComponentType<Struct> for EcsComponent {}
 impl ComponentInfo for EcsComponent {
     type UnderlyingType = EcsComponent;
     const IS_ENUM: bool = false;
+    const IS_TAG: bool = false;
     fn register_explicit(_world: impl IntoWorld) {
         //this is already registered as FLECS_IDEcsComponentID_
         Self::__get_once_lock_data().get_or_init(get_ecs_component_data);
@@ -454,6 +455,7 @@ impl ComponentType<Struct> for Poly {}
 
 impl ComponentInfo for Poly {
     type UnderlyingType = Poly;
+    const IS_TAG: bool = false;
     const IS_ENUM: bool = false;
     fn register_explicit(_world: impl IntoWorld) {
         //this is already registered as FLECS_IDEcsComponentID_
@@ -526,6 +528,7 @@ impl ComponentInfo for Poly {
 #[cfg(feature = "flecs_system")]
 impl ComponentInfo for TickSource {
     type UnderlyingType = TickSource;
+    const IS_TAG: bool = false;
     const IS_ENUM: bool = false;
     fn register_explicit(world: impl IntoWorld) {
         try_register_struct_component::<Self>(world);
@@ -591,6 +594,7 @@ impl ComponentInfo for TickSource {
 impl ComponentInfo for EntityId {
     type UnderlyingType = EntityId;
     const IS_ENUM: bool = false;
+    const IS_TAG: bool = false;
 
     fn register_explicit(_world: impl IntoWorld) {
         // already registered by flecs_c

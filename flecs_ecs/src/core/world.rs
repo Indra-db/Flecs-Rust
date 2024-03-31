@@ -14,6 +14,7 @@ use crate::{
 #[cfg(feature = "flecs_pipeline")]
 use crate::{addons::pipeline::PipelineBuilder, sys};
 
+use crate::ecs_assert;
 use crate::sys::{
     ecs_async_stage_free, ecs_async_stage_new, ecs_atfini, ecs_count_id, ecs_ctx_free_t,
     ecs_defer_begin, ecs_defer_end, ecs_defer_resume, ecs_defer_suspend, ecs_delete_with, ecs_dim,
@@ -25,12 +26,12 @@ use crate::sys::{
     ecs_remove_all, ecs_run_post_frame, ecs_set_alias, ecs_set_automerge, ecs_set_ctx,
     ecs_set_entity_range, ecs_set_lookup_path, ecs_set_scope, ecs_set_stage_count, ecs_set_with,
     ecs_should_quit, ecs_stage_is_async, ecs_stage_is_readonly, ecs_stage_t_magic,
-    ecs_world_info_t, ecs_world_t_magic,
+    ecs_world_info_t,
 };
-
+#[cfg(feature = "flecs_ecs_asserts")]
 use crate::{
     core::{ecs_is_pair, FlecsErrorCode},
-    ecs_assert,
+    sys::ecs_world_t_magic,
 };
 
 use super::{

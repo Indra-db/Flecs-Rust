@@ -5,12 +5,13 @@ use flecs_ecs_sys::{
     ecs_rule_find_var, ecs_rule_iter_t,
 };
 
-use crate::{core::FlecsErrorCode, ecs_assert};
-
 use super::{
     ComponentInfo, Entity, FilterT, IntoEntityId, IntoTableRange, IntoWorld, IterAPI,
     IterOperations, IterT, Iterable, WorldT,
 };
+#[cfg(feature = "flecs_ecs_asserts")]
+use crate::core::FlecsErrorCode;
+use crate::ecs_assert;
 
 pub struct IterIterable<'a, T>
 where

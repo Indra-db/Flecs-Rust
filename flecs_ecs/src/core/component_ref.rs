@@ -2,17 +2,17 @@
 
 use std::{marker::PhantomData, os::raw::c_void};
 
-use crate::{
-    core::FlecsErrorCode,
-    ecs_assert,
-    sys::{ecs_get_world, ecs_ref_get_id, ecs_ref_init_id},
-};
-
 use super::{
     c_types::{IdT, RefT, WorldT},
     component_registration::ComponentInfo,
     entity::Entity,
     IntoEntityId, IntoWorld,
+};
+#[cfg(feature = "flecs_ecs_asserts")]
+use crate::core::FlecsErrorCode;
+use crate::{
+    ecs_assert,
+    sys::{ecs_get_world, ecs_ref_get_id, ecs_ref_init_id},
 };
 
 /// A reference to a component from a specific entity.

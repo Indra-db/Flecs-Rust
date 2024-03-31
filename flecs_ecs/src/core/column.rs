@@ -1,6 +1,8 @@
-use crate::{core::FlecsErrorCode, ecs_assert};
+use crate::ecs_assert;
 
 use super::{component_registration::ComponentInfo, iter::Iter};
+#[cfg(feature = "flecs_ecs_asserts")]
+use crate::core::FlecsErrorCode;
 use std::{
     ops::{Deref, Index, IndexMut},
     os::raw::c_void,

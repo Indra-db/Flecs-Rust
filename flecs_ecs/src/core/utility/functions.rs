@@ -1,12 +1,11 @@
 use std::{ffi::CStr, os::raw::c_char};
 
-use flecs_ecs_sys::ecs_add_id;
-
+#[cfg(feature = "flecs_ecs_asserts")]
+use crate::core::FlecsErrorCode;
 use crate::{
     core::{
         c_types::{EntityT, IdT, InOutKind, IterT, OperKind, WorldT, ECS_DEPENDS_ON, ECS_PAIR},
         component_registration::ComponentInfo,
-        utility::errors::FlecsErrorCode,
         RUST_ECS_ID_FLAGS_MASK,
     },
     ecs_assert,
@@ -15,6 +14,7 @@ use crate::{
         ecs_modified_id, ecs_os_api, ecs_strip_generation, ECS_GENERATION_MASK, ECS_ROW_MASK,
     },
 };
+use flecs_ecs_sys::ecs_add_id;
 
 use super::{
     super::c_types::RUST_ECS_COMPONENT_MASK, InOutType, IntoEntityId, IntoEntityIdExt, IntoWorld,
@@ -213,7 +213,8 @@ pub fn get_only_type_name<T>() -> &'static str {
 ///
 /// # Example
 ///
-/// ```rust,ignore
+#[cfg_attr(doctest, doc = " ````no_test")]
+/// ```
 ///
 /// pub mod Bar {
 ///     pub struct Foo;
@@ -358,7 +359,8 @@ pub fn get_generation(entity: impl IntoEntityId) -> u32 {
 ///
 /// # Example
 ///
-/// ```rust,ignore
+#[cfg_attr(doctest, doc = " ````no_test")]
+/// ```
 /// // Assuming `it` is a valid iterator pointer obtained from a query.
 /// let position_ptr: *mut Position = ecs_field(it, 1);
 /// let velocity_ptr: *mut Velocity = ecs_field(it, 2);

@@ -71,7 +71,14 @@ fn impl_cached_component_data_struct(
         Fields::Unit => false,
     };
 
+    let is_tag = if has_fields {
+        quote! { const IS_TAG: bool = false; }
+    } else {
+        quote! { const IS_TAG: bool = true; }
+    };
+
     let cached_component_data_impl = quote! {
+
         fn register_explicit(world: impl flecs_ecs::core::IntoWorld)
         {
             flecs_ecs::core::try_register_struct_component::<Self>(world);
@@ -119,6 +126,7 @@ fn impl_cached_component_data_struct(
             &ONCE_LOCK
         }
 
+
         // Function for C compatibility, returns null-terminated string.
         fn get_symbol_name_c() -> &'static str {
             use std::any::type_name;
@@ -131,6 +139,7 @@ fn impl_cached_component_data_struct(
         }
 
         // Function to return a &str slice without the null termination for Rust.
+
         fn get_symbol_name() -> &'static str {
             let name = Self::get_symbol_name_c();
             &name[..name.len() - 1]
@@ -138,6 +147,7 @@ fn impl_cached_component_data_struct(
     };
 
     let cached_component_data_impl_ref = quote! {
+
         fn register_explicit(world: impl flecs_ecs::core::IntoWorld)
         {
             flecs_ecs::core::try_register_struct_component::<Self::UnderlyingType>(world);
@@ -185,11 +195,13 @@ fn impl_cached_component_data_struct(
         }
 
         // Function for C compatibility, returns null-terminated string.
+
         fn get_symbol_name_c() -> &'static str {
             Self::UnderlyingType::get_symbol_name_c()
         }
 
         // Function to return a &str slice without the null termination for Rust.
+
         fn get_symbol_name() -> &'static str {
             Self::UnderlyingType::get_symbol_name()
         }
@@ -197,6 +209,7 @@ fn impl_cached_component_data_struct(
         fn __initialize<F: FnOnce() -> flecs_ecs::core::ComponentData>(f: F) -> &'static flecs_ecs::core::ComponentData {
             Self::UnderlyingType::__get_once_lock_data().get_or_init(f)
         }
+
 
         unsafe fn get_data_unchecked() -> &'static flecs_ecs::core::ComponentData {
             Self::UnderlyingType::__get_once_lock_data().get().unwrap_unchecked()
@@ -218,24 +231,27 @@ fn impl_cached_component_data_struct(
         impl flecs_ecs::core::ComponentInfo for #name {
             type UnderlyingType = #name;
             const IS_ENUM: bool = false;
+            #is_tag
             #cached_component_data_impl
         }
 
         impl flecs_ecs::core::ComponentInfo for &#name {
             type UnderlyingType = #name;
             const IS_ENUM: bool = false;
+            #is_tag
             #cached_component_data_impl_ref
         }
 
         impl flecs_ecs::core::ComponentInfo for &mut #name {
             type UnderlyingType = #name;
             const IS_ENUM: bool = false;
+            #is_tag
             #cached_component_data_impl_ref
         }
     };
 
     // Specific trait implementation based on the presence of fields
-    let specific_trait = if has_fields {
+    let is_empty_component_trait = if has_fields {
         quote! { impl flecs_ecs::core::NotEmptyComponent for #name {} }
     } else {
         quote! { impl flecs_ecs::core::EmptyComponent for #name {} }
@@ -243,7 +259,7 @@ fn impl_cached_component_data_struct(
 
     // Combine common and specific trait implementations
     quote! {
-        #specific_trait
+        #is_empty_component_trait
         #common_traits
     }
 }
@@ -465,6 +481,7 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
         impl flecs_ecs::core::ComponentInfo for #name {
             type UnderlyingType = #name;
             const IS_ENUM: bool = true;
+            const IS_TAG: bool = false;
             #cached_component_data_impl
         }
 

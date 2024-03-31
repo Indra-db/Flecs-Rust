@@ -1,15 +1,6 @@
 //! Filters are cheaper to create, but slower to iterate than queries.
 use std::{ffi::CStr, os::raw::c_void, ptr};
 
-use crate::{
-    core::FlecsErrorCode,
-    ecs_assert,
-    sys::{
-        ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_flags32_t, ecs_inout_kind_t,
-        ecs_os_api, ecs_term_is_initialized, ecs_term_t, FLECS_TERM_DESC_MAX,
-    },
-};
-
 use super::{
     builder::Builder,
     c_types::{TermT, SEPARATOR},
@@ -21,6 +12,16 @@ use super::{
     type_to_inout,
     world::World,
     IdT, InOutType, IntoComponentId, IntoEntityId, IntoEntityIdExt, WorldT, ECS_WILDCARD,
+};
+#[cfg(feature = "flecs_ecs_asserts")]
+use crate::{core::FlecsErrorCode, sys::ecs_term_is_initialized};
+
+use crate::{
+    ecs_assert,
+    sys::{
+        ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_flags32_t, ecs_inout_kind_t,
+        ecs_os_api, ecs_term_t, FLECS_TERM_DESC_MAX,
+    },
 };
 
 /// Filters are cheaper to create, but slower to iterate than queries.

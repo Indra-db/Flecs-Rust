@@ -291,7 +291,11 @@ fn main() {
 
         #[cfg(not(feature = "build_debug"))]
         {
-            build.opt_level(3).define("NDEBUG", None).compile("flecs");
+            build
+                .opt_level(3)
+                .define("NDEBUG", None)
+                .define("flto", None)
+                .compile("flecs");
         }
 
         //TODO C might complain about unused functions when disabling certain features, turn the warning off?

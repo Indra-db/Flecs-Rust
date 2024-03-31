@@ -7,8 +7,10 @@ use super::{
     world::World,
     IntoEntityId, IntoEntityIdExt, IntoWorld,
 };
+#[cfg(feature = "flecs_ecs_asserts")]
+use crate::core::FlecsErrorCode;
 use crate::{
-    core::{ecs_pair_second, FlecsErrorCode},
+    core::ecs_pair_second,
     ecs_assert,
     sys::{
         ecs_get_alive, ecs_get_typeid, ecs_id_flag_str, ecs_id_is_pair, ecs_id_is_wildcard,
@@ -382,13 +384,14 @@ impl Id {
         // ecs_id_ptr never returns null, so we don't need to check for that.
         unsafe { std::ffi::CStr::from_ptr(ecs_id_str(self.world, self.raw_id)) }
             .to_str()
-            .unwrap_or_else(|_| {
+            .unwrap_or({
                 ecs_assert!(
                     false,
                     FlecsErrorCode::UnwrapFailed,
                     "Failed to convert id to string (id: {})",
                     self.raw_id
                 );
+
                 "invalid_str_from_id"
             })
     }
@@ -431,7 +434,7 @@ impl Id {
         // ecs_role_str never returns null, so we don't need to check for that.
         unsafe { std::ffi::CStr::from_ptr(ecs_id_flag_str(self.raw_id & RUST_ECS_ID_FLAGS_MASK)) }
             .to_str()
-            .unwrap_or_else(|_| {
+            .unwrap_or({
                 ecs_assert!(
                     false,
                     FlecsErrorCode::UnwrapFailed,

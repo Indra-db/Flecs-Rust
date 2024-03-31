@@ -12,8 +12,9 @@ use flecs_ecs_sys::{
 };
 
 // Module imports from within the current crate
+#[cfg(feature = "flecs_ecs_asserts")]
+use crate::core::FlecsErrorCode;
 use crate::{
-    core::FlecsErrorCode,
     ecs_assert,
     sys::{
         ecs_clone, ecs_filter_desc_t, ecs_filter_init, ecs_filter_iter, ecs_filter_next,
@@ -645,10 +646,23 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
+    #[inline(always)]
     pub fn get<T: ComponentInfo + ComponentType<Struct>>(&self) -> Option<&T::UnderlyingType> {
-        let component_id = T::get_id(self.world);
-        unsafe {
-            (ecs_get_id(self.world, self.raw_id, component_id) as *const T::UnderlyingType).as_ref()
+        if T::IS_TAG {
+            ecs_assert!(
+                false,
+                FlecsErrorCode::InvalidParameter,
+                "component {} has no size",
+                T::get_symbol_name()
+            );
+            None
+        } else {
+            let component_id = T::get_id(self.world);
+
+            unsafe {
+                (ecs_get_id(self.world, self.raw_id, component_id) as *const T::UnderlyingType)
+                    .as_ref()
+            }
         }
     }
 
@@ -673,7 +687,13 @@ impl EntityView {
     pub unsafe fn get_unchecked<T: ComponentInfo + ComponentType<Struct>>(
         &self,
     ) -> &T::UnderlyingType {
-        let component_id = T::get_id(self.world);
+        let component_id = T::get_id_unchecked();
+        ecs_assert!(
+            T::get_size(self.world) != 0,
+            FlecsErrorCode::InvalidParameter,
+            "component {} has no size",
+            T::get_symbol_name()
+        );
         let ptr = ecs_get_id(self.world, self.raw_id, component_id) as *const T::UnderlyingType;
         ecs_assert!(
             !ptr.is_null(),

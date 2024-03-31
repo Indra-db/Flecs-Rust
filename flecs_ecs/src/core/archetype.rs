@@ -4,12 +4,14 @@ use std::{
     ops::Index,
 };
 
-use crate::{core::FlecsErrorCode, ecs_assert, sys::ecs_type_str};
-
 use super::{
     c_types::{IdT, TypeT, WorldT},
     id::Id,
 };
+#[cfg(feature = "flecs_ecs_asserts")]
+use crate::core::FlecsErrorCode;
+
+use crate::{ecs_assert, sys::ecs_type_str};
 
 /// Archetype type.
 /// A type is a vector of component ids which can be requested from entities or tables.

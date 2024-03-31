@@ -4,18 +4,6 @@ use std::{
     os::raw::c_void,
 };
 
-use crate::{
-    core::{FlecsErrorCode, ECS_CHILD_OF},
-    ecs_assert,
-    sys::{
-        ecs_add_id, ecs_clear, ecs_delete, ecs_enable, ecs_enable_id, ecs_entity_desc_t,
-        ecs_entity_init, ecs_flatten, ecs_flatten_desc_t, ecs_get_id, ecs_get_mut_id,
-        ecs_get_target, ecs_has_id, ecs_modified_id, ecs_new_id, ecs_remove_id, ecs_set_alias,
-        ecs_set_id, ecs_set_name, ecs_set_scope, ecs_set_with, EcsComponent,
-        FLECS_IDEcsComponentID_,
-    },
-};
-
 use super::{
     c_types::{IdT, SEPARATOR},
     component_ref::Ref,
@@ -27,6 +15,19 @@ use super::{
     EmptyComponent, EntityView, IntoComponentId, IntoEntityId, IntoEntityIdExt, IntoWorld,
     NotEmptyComponent, ScopedWorld, ECS_DEPENDS_ON, ECS_EXCLUSIVE, ECS_IS_A, ECS_OVERRIDE,
     ECS_SLOT_OF, ECS_WILDCARD,
+};
+#[cfg(feature = "flecs_ecs_asserts")]
+use crate::core::FlecsErrorCode;
+use crate::{
+    core::ECS_CHILD_OF,
+    ecs_assert,
+    sys::{
+        ecs_add_id, ecs_clear, ecs_delete, ecs_enable, ecs_enable_id, ecs_entity_desc_t,
+        ecs_entity_init, ecs_flatten, ecs_flatten_desc_t, ecs_get_id, ecs_get_mut_id,
+        ecs_get_target, ecs_has_id, ecs_modified_id, ecs_new_id, ecs_remove_id, ecs_set_alias,
+        ecs_set_id, ecs_set_name, ecs_set_scope, ecs_set_with, EcsComponent,
+        FLECS_IDEcsComponentID_,
+    },
 };
 
 #[derive(Default, Copy, Clone)]

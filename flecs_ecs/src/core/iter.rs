@@ -1,9 +1,8 @@
 use std::{ffi::CStr, os::raw::c_void};
 
-use flecs_ecs_sys::ecs_iter_get_var;
-
+#[cfg(feature = "flecs_ecs_asserts")]
+use crate::core::FlecsErrorCode;
 use crate::{
-    core::FlecsErrorCode,
     ecs_assert,
     sys::{
         ecs_field_column_index, ecs_field_id, ecs_field_is_readonly, ecs_field_is_self,
@@ -11,6 +10,7 @@ use crate::{
         ecs_iter_str, ecs_query_changed, ecs_query_skip, ecs_table_get_type,
     },
 };
+use flecs_ecs_sys::ecs_iter_get_var;
 
 use super::{
     c_types::{IdT, IterT},

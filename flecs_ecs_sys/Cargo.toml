@@ -57,5 +57,3 @@ flecs_journal = ["flecs_log"] # Journaling addon (disabled by default)
 default = [
     "flecs_meta_c",
 ]
-
-

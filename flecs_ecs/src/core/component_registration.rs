@@ -7,8 +7,10 @@ use super::{
     lifecycle_traits::register_lifecycle_actions,
     IntoWorld,
 };
+#[cfg(feature = "flecs_ecs_asserts")]
+use crate::core::FlecsErrorCode;
 use crate::{
-    core::{get_full_type_name, FlecsErrorCode},
+    core::get_full_type_name,
     ecs_assert,
     sys::{
         ecs_cpp_component_register_explicit, ecs_cpp_enum_constant_register, ecs_cpp_enum_init,
@@ -66,6 +68,7 @@ pub trait ComponentType<T: ECSComponentType>: ComponentInfo {}
 pub trait ComponentInfo: Sized {
     type UnderlyingType: ComponentInfo + Default + Clone;
     const IS_ENUM: bool;
+    const IS_TAG: bool;
 
     /// attempts to register the component with the world. If it's already registered, it does nothing.
     fn register_explicit(world: impl IntoWorld);
@@ -74,6 +77,7 @@ pub trait ComponentInfo: Sized {
     fn register_explicit_named(world: impl IntoWorld, name: &CStr);
 
     /// checks if the component is registered with a world.
+    #[inline(always)]
     fn is_registered() -> bool {
         Self::__get_once_lock_data().get().is_some()
     }
@@ -84,6 +88,7 @@ pub trait ComponentInfo: Sized {
     /// this is highly unlikely a world would be nullptr, hence this function is not marked as unsafe.
     /// this will be changed in the future where we get rid of the pointers.
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
+    #[inline(always)]
     fn is_registered_with_world(world: impl IntoWorld) -> bool {
         if Self::is_registered() {
             unsafe {
@@ -123,7 +128,7 @@ pub trait ComponentInfo: Sized {
     /// safe version is `get_data`
     /// this function is unsafe because it assumes that the component is registered,
     /// the lock data being initialized is not checked and will panic if it's not.
-
+    #[inline(always)]
     unsafe fn get_data_unchecked() -> &'static ComponentData {
         Self::__get_once_lock_data().get().unwrap_unchecked()
     }
@@ -135,6 +140,7 @@ pub trait ComponentInfo: Sized {
     /// the lock data being initialized is not checked and will panic if it's not.
     /// does not check if the component is registered in the world, if not, it might cause problems depending on usage.
     /// only use this if you know what you are doing and you are sure the component is registered in the world
+    #[inline(always)]
     unsafe fn get_id_unchecked() -> IdT {
         Self::get_data_unchecked().id
     }
@@ -144,6 +150,7 @@ pub trait ComponentInfo: Sized {
     /// safe version is `get_size`
     /// this function is unsafe because it assumes that the component is registered,
     /// the lock data being initialized is not checked and will panic if it's not.
+    #[inline(always)]
     unsafe fn get_size_unchecked() -> usize {
         Self::get_data_unchecked().size
     }
@@ -153,6 +160,7 @@ pub trait ComponentInfo: Sized {
     /// safe version is `get_alignment`
     /// this function is unsafe because it assumes that the component is registered,
     /// the lock data being initialized is not checked and will panic if it's not.
+    #[inline(always)]
     unsafe fn get_alignment_unchecked() -> usize {
         Self::get_data_unchecked().alignment
     }
@@ -162,6 +170,7 @@ pub trait ComponentInfo: Sized {
     /// safe version is `get_allow_tag`
     /// this function is unsafe because it assumes that the component is registered,
     /// the lock data being initialized is not checked and will panic if it's not.
+    #[inline(always)]
     unsafe fn get_allow_tag_unchecked() -> bool {
         Self::get_data_unchecked().allow_tag
     }
@@ -172,6 +181,7 @@ pub trait ComponentInfo: Sized {
 
     // Not public API.
     #[doc(hidden)]
+    #[inline(always)]
     fn __initialize<F: FnOnce() -> ComponentData>(f: F) -> &'static ComponentData {
         Self::__get_once_lock_data().get_or_init(f)
     }

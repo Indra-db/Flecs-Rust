@@ -1,13 +1,14 @@
-use std::ffi::CStr;
-
+#[cfg(feature = "flecs_ecs_asserts")]
+use crate::core::FlecsErrorCode;
 use crate::{
-    core::{ecs_is_pair, ecs_pair_first, strip_prefix_cstr_raw, FlecsErrorCode},
+    core::{ecs_is_pair, ecs_pair_first, strip_prefix_cstr_raw},
     ecs_assert,
     sys::{
         ecs_get_alive, ecs_inout_kind_t, ecs_oper_kind_t, ecs_term_copy, ecs_term_finalize,
         ecs_term_fini, ecs_term_is_initialized, ecs_term_move,
     },
 };
+use std::ffi::CStr;
 
 use super::{
     c_types::{

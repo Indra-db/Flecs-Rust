@@ -1,7 +1,8 @@
 //! Registering and working with components
 
+#[cfg(feature = "flecs_ecs_asserts")]
+use crate::core::{get_full_type_name, FlecsErrorCode};
 use crate::{
-    core::{get_full_type_name, FlecsErrorCode},
     ecs_assert,
     sys::{ecs_get_hooks_id, ecs_set_hooks_id},
 };
