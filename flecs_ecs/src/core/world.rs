@@ -1502,12 +1502,13 @@ impl World {
     /// * C++ API: `world::has`
     #[doc(alias = "world::has")]
     #[inline(always)]
-    pub fn has_enum_constant<T>(&self, constant: T) -> bool
+    pub fn has_enum<T>(&self, constant: T) -> bool
     where
         T: ComponentInfo + ComponentType<Enum> + CachedEnumData,
     {
+        //TODO we could improve performance here by either passing the id or let it call _unchecked version
         Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
-            .has_enum_constant::<T>(constant)
+            .has_enum::<T>(constant)
     }
 
     /// Add a singleton component by id.
@@ -1580,12 +1581,12 @@ impl World {
     /// * C++ API: `world::add`
     #[doc(alias = "world::add")]
     #[inline(always)]
-    pub fn add_enum_constant<T: ComponentInfo + ComponentType<Enum> + CachedEnumData>(
+    pub fn add_enum<T: ComponentInfo + ComponentType<Enum> + CachedEnumData>(
         &self,
         enum_value: T,
     ) -> Entity {
         Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
-            .add_enum_constant::<T>(enum_value)
+            .add_enum::<T>(enum_value)
     }
 
     /// Add a singleton pair by first id.
@@ -1969,7 +1970,7 @@ impl World {
     ///
     /// * C++ API: `world::count`
     #[doc(alias = "world::count")]
-    pub fn count_enum_constant<T: ComponentInfo + ComponentType<Enum> + CachedEnumData>(
+    pub fn count_enum<T: ComponentInfo + ComponentType<Enum> + CachedEnumData>(
         &self,
         enum_value: T,
     ) -> i32 {
@@ -2216,7 +2217,7 @@ impl World {
     ///
     /// * C++ API: `world::with`
     #[doc(alias = "world::with")]
-    pub fn with_enum_constant<T, F>(&self, enum_value: T, func: F)
+    pub fn with_enum<T, F>(&self, enum_value: T, func: F)
     where
         T: ComponentInfo + ComponentType<Enum> + CachedEnumData,
         F: FnMut(),
@@ -2659,7 +2660,7 @@ impl World {
     /// * C++ API: `world::entity`
     #[doc(alias = "world::entity")]
     #[doc(alias = "world::id")] //enum mixin implementation
-    pub fn get_id_from_enum_constant<T>(&self, enum_value: T) -> Entity
+    pub fn get_id_from_enum<T>(&self, enum_value: T) -> Entity
     where
         T: ComponentInfo + ComponentType<Enum> + CachedEnumData,
     {

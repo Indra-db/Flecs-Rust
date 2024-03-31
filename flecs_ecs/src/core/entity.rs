@@ -384,7 +384,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    pub fn add_enum_constant<T: ComponentInfo + ComponentType<Enum> + CachedEnumData>(
+    pub fn add_enum<T: ComponentInfo + ComponentType<Enum> + CachedEnumData>(
         self,
         enum_value: T,
     ) -> Self {

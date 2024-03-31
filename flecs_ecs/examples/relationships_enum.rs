@@ -42,14 +42,14 @@ fn main() {
     // Create an entity with (Tile, Red) and (TileStatus, Free) relationships
     let tile = world
         .new_entity()
-        .add_enum_constant(Tile::Stone)
-        .add_enum_constant(TileStatus::Free);
+        .add_enum(Tile::Stone)
+        .add_enum(TileStatus::Free);
 
     // (Tile, Tile.Stone), (TileStatus, TileStatus.Free)
     println!("{:?}", tile.get_archetype());
 
     // Replace (TileStatus, Free) with (TileStatus, Occupied)
-    tile.add_enum_constant(TileStatus::Occupied);
+    tile.add_enum(TileStatus::Occupied);
 
     // (Tile, Tile.Stone), (TileStatus, TileStatus.Occupied)
     println!("{:?}", tile.get_archetype());
@@ -60,11 +60,11 @@ fn main() {
     println!("has tile enum: {}", tile.has::<Tile>()); // true
     println!(
         "is the enum from tile stone?: {}",
-        tile.has_enum_constant(Tile::Stone)
+        tile.has_enum(Tile::Stone)
     ); // true
 
     // Get the current value of the enum
-    let v = tile.get_enum::<Tile>();
+    let v = tile.get::<Tile>();
     if let Some(tile_value) = v {
         println!("is tile stone: {}", *tile_value == Tile::Stone); // true
     }
@@ -72,13 +72,13 @@ fn main() {
     // Create a few more entities that we can query
     world
         .new_entity()
-        .add_enum_constant(Tile::Grass)
-        .add_enum_constant(TileStatus::Free);
+        .add_enum(Tile::Grass)
+        .add_enum(TileStatus::Free);
 
     world
         .new_entity()
-        .add_enum_constant(Tile::Sand)
-        .add_enum_constant(TileStatus::Occupied);
+        .add_enum(Tile::Sand)
+        .add_enum(TileStatus::Occupied);
 
     println!();
 

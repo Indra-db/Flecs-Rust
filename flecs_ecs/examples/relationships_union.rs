@@ -56,21 +56,21 @@ fn main() {
     // Create a few entities with various state combinations
     world
         .new_entity_named(c"e1")
-        .add_enum_constant(Movement::Walking)
-        .add_enum_constant(Direction::Front);
+        .add_enum(Movement::Walking)
+        .add_enum(Direction::Front);
 
     world
         .new_entity_named(c"e2")
-        .add_enum_constant(Movement::Running)
-        .add_enum_constant(Direction::Left);
+        .add_enum(Movement::Running)
+        .add_enum(Direction::Left);
 
     let e3 = world
         .new_entity_named(c"e3")
-        .add_enum_constant(Movement::Running)
-        .add_enum_constant(Direction::Back);
+        .add_enum(Movement::Running)
+        .add_enum(Direction::Back);
 
     // Add Walking to e3. This will remove the Running case
-    e3.add_enum_constant(Movement::Walking);
+    e3.add_enum(Movement::Walking);
 
     // Iterate the query
     q.iter_only(|it| {

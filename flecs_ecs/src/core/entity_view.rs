@@ -647,21 +647,48 @@ impl EntityView {
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
     #[inline(always)]
-    pub fn get<T: ComponentInfo + ComponentType<Struct>>(&self) -> Option<&T::UnderlyingType> {
-        if T::IS_TAG {
-            ecs_assert!(
-                false,
-                FlecsErrorCode::InvalidParameter,
-                "component {} has no size",
-                T::get_symbol_name()
-            );
-            None
-        } else {
-            let component_id = T::get_id(self.world);
+    pub fn get<T: ComponentInfo>(&self) -> Option<&T::UnderlyingType> {
+        if !T::IS_ENUM {
+            if T::IS_TAG {
+                ecs_assert!(
+                    false,
+                    FlecsErrorCode::InvalidParameter,
+                    "component {} has no size",
+                    T::get_symbol_name()
+                );
+                None
+            } else {
+                let component_id = T::get_id(self.world);
 
-            unsafe {
-                (ecs_get_id(self.world, self.raw_id, component_id) as *const T::UnderlyingType)
-                    .as_ref()
+                unsafe {
+                    (ecs_get_id(self.world, self.raw_id, component_id) as *const T::UnderlyingType)
+                        .as_ref()
+                }
+            }
+        } else {
+            let component_id: IdT = T::get_id(self.world);
+            let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
+
+            if target == 0 {
+                // if there is no matching pair for (r,*), try just r
+                unsafe {
+                    (ecs_get_id(self.world, self.raw_id, component_id) as *const T::UnderlyingType)
+                        .as_ref()
+                }
+            } else {
+                // get constant value from constant entity
+                let constant_value = unsafe {
+                    ecs_get_id(self.world, target, component_id) as *const T::UnderlyingType
+                };
+
+                ecs_assert!(
+                    !constant_value.is_null(),
+                    FlecsErrorCode::InternalError,
+                    "missing enum constant value {}",
+                    T::get_symbol_name()
+                );
+
+                unsafe { constant_value.as_ref() }
             }
         }
     }
@@ -687,61 +714,53 @@ impl EntityView {
     pub unsafe fn get_unchecked<T: ComponentInfo + ComponentType<Struct>>(
         &self,
     ) -> &T::UnderlyingType {
-        let component_id = T::get_id_unchecked();
-        ecs_assert!(
-            T::get_size(self.world) != 0,
-            FlecsErrorCode::InvalidParameter,
-            "component {} has no size",
-            T::get_symbol_name()
-        );
-        let ptr = ecs_get_id(self.world, self.raw_id, component_id) as *const T::UnderlyingType;
-        ecs_assert!(
-            !ptr.is_null(),
-            FlecsErrorCode::InternalError,
-            "missing component {}",
-            T::get_symbol_name()
-        );
-        &*ptr
-    }
+        if !T::IS_ENUM {
+            if T::IS_TAG {
+                ecs_assert!(
+                    false,
+                    FlecsErrorCode::InvalidParameter,
+                    "component {} has no size",
+                    T::get_symbol_name()
+                );
+                panic!("cannot get a tag component, it has no size");
+            } else {
+                let component_id = T::get_id_unchecked();
 
-    /// Get enum constant.
-    /// Use `.unwrap()` or `.unwrap_unchecked()` or `.get_enum_unchecked` if you're sure the entity has the component
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The enum component type which to get the constant
-    ///
-    /// # Returns
-    ///
-    /// * Option<&T> - The enum component, None if the entity does not have the component
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
-    pub fn get_enum<T: ComponentInfo + ComponentType<Enum>>(&self) -> Option<&T::UnderlyingType> {
-        let component_id: IdT = T::get_id(self.world);
-        let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
-
-        if target == 0 {
-            // if there is no matching pair for (r,*), try just r
-            unsafe {
-                (ecs_get_id(self.world, self.raw_id, component_id) as *const T::UnderlyingType)
-                    .as_ref()
+                let ptr =
+                    ecs_get_id(self.world, self.raw_id, component_id) as *const T::UnderlyingType;
+                ecs_assert!(
+                    !ptr.is_null(),
+                    FlecsErrorCode::InternalError,
+                    "missing component {}",
+                    T::get_symbol_name()
+                );
+                &*ptr
             }
         } else {
-            // get constant value from constant entity
-            let constant_value =
-                unsafe { ecs_get_id(self.world, target, component_id) as *const T::UnderlyingType };
+            let component_id: IdT = T::get_id(self.world);
+            let target: IdT = unsafe { ecs_get_target(self.world, self.raw_id, component_id, 0) };
 
-            ecs_assert!(
-                !constant_value.is_null(),
-                FlecsErrorCode::InternalError,
-                "missing enum constant value {}",
-                T::get_symbol_name()
-            );
+            if target == 0 {
+                // if there is no matching pair for (r,*), try just r
+                unsafe {
+                    &*(ecs_get_id(self.world, self.raw_id, component_id)
+                        as *const T::UnderlyingType)
+                }
+            } else {
+                // get constant value from constant entity
+                let constant_value = unsafe {
+                    ecs_get_id(self.world, target, component_id) as *const T::UnderlyingType
+                };
 
-            unsafe { constant_value.as_ref() }
+                ecs_assert!(
+                    !constant_value.is_null(),
+                    FlecsErrorCode::InternalError,
+                    "missing enum constant value {}",
+                    T::get_symbol_name()
+                );
+
+                unsafe { &*constant_value }
+            }
         }
     }
 
@@ -1249,7 +1268,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    pub fn has_enum_constant<T>(&self, constant: T) -> bool
+    pub fn has_enum<T>(&self, constant: T) -> bool
     where
         T: ComponentInfo + ComponentType<Enum> + CachedEnumData,
     {
@@ -1300,7 +1319,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    pub fn has_pair_with_enum_constant<T: ComponentInfo, U: ComponentInfo + CachedEnumData>(
+    pub fn has_pair_enum<T: ComponentInfo, U: ComponentInfo + CachedEnumData>(
         &self,
         constant: U,
     ) -> bool {
@@ -1547,10 +1566,8 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::to_constant`
     #[doc(alias = "entity_view::to_constant")]
-    pub fn to_constant<T: ComponentInfo + ComponentType<Enum>>(
-        &self,
-    ) -> Option<&T::UnderlyingType> {
-        let ptr = self.get_enum::<T>();
+    pub fn to_constant<T: ComponentInfo>(&self) -> Option<&T::UnderlyingType> {
+        let ptr = self.get::<T>();
         ecs_assert!(
             ptr.is_some(),
             FlecsErrorCode::InvalidParameter,
