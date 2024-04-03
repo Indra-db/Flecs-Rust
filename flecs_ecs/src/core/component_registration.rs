@@ -494,7 +494,7 @@ where
             T::get_symbol_name_c()
         };
 
-        let type_name = get_full_type_name::<T>();
+        let type_name = crate::core::get_full_type_name_cstring::<T>();
 
         let entity: EntityT = unsafe {
             ecs_cpp_component_register_explicit(
@@ -502,7 +502,7 @@ where
                 component_data.id,
                 id,
                 name,
-                type_name.as_ptr() as *const i8,
+                type_name.as_ptr(),
                 symbol.as_ptr() as *const i8,
                 component_data.size,
                 component_data.alignment,

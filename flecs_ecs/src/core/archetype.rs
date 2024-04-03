@@ -138,7 +138,7 @@ impl Archetype {
     ///
     /// * C++ API: `type::get`
     #[doc(alias = "type::get")]
-    pub fn id_at_index(&self, index: i32) -> Option<Id> {
+    pub fn get(&self, index: i32) -> Option<Id> {
         ecs_assert!(!self.type_vec.is_null(), FlecsErrorCode::InvalidParameter);
         ecs_assert!(
             // this is safe because we know type_vec is not null since we would have asserted already if it was

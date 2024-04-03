@@ -2071,7 +2071,7 @@ impl World {
     ///
     /// * C++ API: `world::scope`
     #[doc(alias = "world::scope")]
-    pub fn get_scoped_world_with_id(&self, parent_id: impl IntoEntityId) -> ScopedWorld {
+    pub fn scope_id(&self, parent_id: impl IntoEntityId) -> ScopedWorld {
         ScopedWorld::new(self, parent_id.get_id())
     }
 
@@ -2091,7 +2091,7 @@ impl World {
     /// * C++ API: `world::scope`
     #[doc(alias = "world::scope")]
     pub fn scope<T: ComponentInfo>(&self) -> ScopedWorld {
-        self.get_scoped_world_with_id(T::get_id(self.raw_world))
+        self.scope_id(T::get_id(self.raw_world))
     }
 
     /// Use provided scope of name for operations ran on returned world.
@@ -2110,7 +2110,7 @@ impl World {
     /// * C++ API: `world::scope`
     #[doc(alias = "world::scope")]
     pub fn scope_name(&self, name: &CStr) -> ScopedWorld {
-        self.get_scoped_world_with_id(Entity::new_named(self, name).raw_id)
+        self.scope_id(Entity::new_named(self, name).raw_id)
     }
 
     /// all entities created in function are created with id
@@ -2688,6 +2688,13 @@ impl World {
         Entity::new_from_existing_raw(
             self.raw_world,
             register_entity_w_component_explicit::<T>(self.raw_world, name.as_ptr(), true, 0),
+        )
+    }
+
+    pub fn new_entity_type<T: ComponentInfo>(&self) -> Entity {
+        Entity::new_from_existing_raw(
+            self.raw_world,
+            register_entity_w_component_explicit::<T>(self.raw_world, std::ptr::null(), true, 0),
         )
     }
 

@@ -1,4 +1,7 @@
-use std::{ffi::CStr, os::raw::c_char};
+use std::{
+    ffi::{CStr, CString},
+    os::raw::c_char,
+};
 
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
@@ -227,6 +230,10 @@ pub fn get_only_type_name<T>() -> &'static str {
 pub fn get_full_type_name<T>() -> &'static str {
     use std::any::type_name;
     type_name::<T>()
+}
+
+pub fn get_full_type_name_cstring<T>() -> CString {
+    CString::new(get_full_type_name::<T>()).unwrap()
 }
 
 /// Returns true if the given type is an empty type.

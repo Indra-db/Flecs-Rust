@@ -881,6 +881,54 @@ impl Entity {
     /// # Type Parameters
     ///
     /// * `First`: The type of the first element of the pair.
+    /// * `Second`: The type of the second element of the pair.
+    ///
+    /// # Arguments
+    ///
+    /// * `first`: The first element of the pair.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_builder::set_override`
+    pub fn set_override_pair_first<First, Second>(self, first: First) -> Self
+    where
+        First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentInfo + ComponentType<Struct>,
+    {
+        let second_id = Second::get_id(self.world);
+        self.override_pair_first::<First>(second_id)
+            .set_pair_first_id(first, second_id)
+    }
+
+    /// Sets a pair, mark component for auto-overriding.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The type of the first element of the pair.
+    /// * `Second`: The type of the second element of the pair.
+    ///
+    /// # Arguments
+    ///
+    /// * `second`: The first element of the pair.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_builder::set_override`
+    pub fn set_override_pair_second<First, Second>(self, second: Second) -> Self
+    where
+        First: ComponentInfo + ComponentType<Struct>,
+        Second: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
+    {
+        let first_id = First::get_id(self.world);
+        self.override_pair_second::<Second>(first_id)
+            .set_pair_second_id(second, first_id)
+    }
+
+    /// Sets a pair, mark component for auto-overriding.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The type of the first element of the pair.
     ///
     /// # Arguments
     ///
@@ -891,7 +939,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
-    pub fn set_override_pair_first<First>(self, first: First, second: impl IntoEntityId) -> Self
+    pub fn set_override_pair_first_id<First>(self, first: First, second: impl IntoEntityId) -> Self
     where
         First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -914,7 +962,11 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
-    pub fn set_override_pair_second<Second>(self, second: Second, first: impl IntoEntityId) -> Self
+    pub fn set_override_pair_second_id<Second>(
+        self,
+        second: Second,
+        first: impl IntoEntityId,
+    ) -> Self
     where
         Second: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1913,7 +1965,7 @@ impl Entity {
     ///
     /// * C++ API: `entity::view`
     #[doc(alias = "entity::view")]
-    pub fn get_view(&self) -> EntityView {
+    pub fn as_view(&self) -> EntityView {
         self.entity_view
     }
 }

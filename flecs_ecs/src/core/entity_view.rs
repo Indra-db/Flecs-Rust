@@ -198,6 +198,41 @@ impl EntityView {
         Some(unsafe { CStr::from_ptr(name_ptr).to_str().unwrap_or("") })
     }
 
+    /// Returns the entity name as a `CStr`.
+    ///
+    /// if the entity has no name, this will return an empty string
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::name`
+    pub fn get_name_cstr(&self) -> &CStr {
+        unsafe {
+            let name_ptr = ecs_get_name(self.world, self.raw_id);
+            if name_ptr.is_null() {
+                c""
+            } else {
+                CStr::from_ptr(name_ptr)
+            }
+        }
+    }
+
+    /// Returns the entity name as a `CStr`.
+    ///
+    /// if the entity has no name, this will return None
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::name`
+    pub fn get_name_cstr_optional(&self) -> Option<&CStr> {
+        let name_ptr = unsafe { ecs_get_name(self.world, self.raw_id) };
+
+        if name_ptr.is_null() {
+            return None;
+        }
+
+        Some(unsafe { CStr::from_ptr(name_ptr) })
+    }
+
     //TODO check if we need this -> can we use get_symbol from ComponentInfo?
     /// Returns the entity symbol.
     ///
@@ -247,26 +282,14 @@ impl EntityView {
         sep: &CStr,
         init_sep: &CStr,
     ) -> Option<String> {
-        let raw_ptr = if sep == init_sep {
-            unsafe {
-                ecs_get_path_w_sep(
-                    self.world,
-                    parent.get_id(),
-                    self.raw_id,
-                    sep.as_ptr(),
-                    sep.as_ptr(),
-                )
-            }
-        } else {
-            unsafe {
-                ecs_get_path_w_sep(
-                    self.world,
-                    parent.get_id(),
-                    self.raw_id,
-                    sep.as_ptr(),
-                    init_sep.as_ptr(),
-                )
-            }
+        let raw_ptr = unsafe {
+            ecs_get_path_w_sep(
+                self.world,
+                parent.get_id(),
+                self.raw_id,
+                sep.as_ptr(),
+                init_sep.as_ptr(),
+            )
         };
 
         if raw_ptr.is_null() {
@@ -323,7 +346,15 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    pub fn get_path_from<T: ComponentInfo>(&self, sep: &CStr, init_sep: &CStr) -> Option<String> {
+    pub fn get_path_from<T: ComponentInfo>(&self) -> Option<String> {
+        self.get_path_from_id_w_sep(T::get_id(self.world), SEPARATOR, SEPARATOR)
+    }
+
+    pub fn get_path_from_w_sep<T: ComponentInfo>(
+        &self,
+        sep: &CStr,
+        init_sep: &CStr,
+    ) -> Option<String> {
         self.get_path_from_id_w_sep(T::get_id(self.world), sep, init_sep)
     }
 
@@ -872,7 +903,7 @@ impl EntityView {
     pub fn get_pair_first<First, Second>(&self) -> Option<&First>
     where
         First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
-        Second: ComponentInfo + ComponentType<Struct>,
+        Second: ComponentInfo,
     {
         self.get_pair_first_id(Second::get_id(self.world))
     }
@@ -1342,7 +1373,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::owns`
     #[doc(alias = "entity_view::owns")]
-    pub fn is_owner_of_id(&self, entity_id: impl IntoEntityIdExt) -> bool {
+    pub fn owns_id(&self, entity_id: impl IntoEntityIdExt) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, entity_id.get_id()) }
     }
 
@@ -1350,17 +1381,75 @@ impl EntityView {
     /// A component is owned if it is not shared from a base entity.
     ///
     /// # Type Parameters
+    ///
     /// - `T`: The component to check.
     ///
     /// # Returns
+    ///
     /// - `true` if the entity owns the provided component, `false` otherwise.
     ///
     /// # See also
     ///
     /// * C++ API: `entity_view::owns`
     #[doc(alias = "entity_view::owns")]
-    pub fn is_owner_of<T: IntoComponentId>(&self) -> bool {
+    pub fn owns<T: IntoComponentId>(&self) -> bool {
         unsafe { ecs_owns_id(self.world, self.raw_id, T::get_id(self.world)) }
+    }
+
+    /// Check if the entity owns the provided pair.
+    /// A pair is owned if it is not shared from a base entity.
+    ///
+    /// # Type Parameters
+    /// - `First`: The first element of the pair.
+    ///
+    /// # Arguments
+    ///
+    /// - `second`: The second element of the pair.
+    ///
+    /// # Returns
+    ///
+    /// - `true` if the entity owns the provided pair, `false` otherwise.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::owns`
+    #[doc(alias = "entity_view::owns")]
+    pub fn owns_pair_first<First: ComponentInfo>(&self, second: impl IntoEntityId) -> bool {
+        unsafe {
+            ecs_owns_id(
+                self.world,
+                self.raw_id,
+                ecs_pair(First::get_id(self.world), second.get_id()),
+            )
+        }
+    }
+
+    /// Check if the entity owns the provided pair.
+    /// A pair is owned if it is not shared from a base entity.
+    ///
+    /// # Type Parameters
+    /// - `Second`: The first element of the pair.
+    ///
+    /// # Arguments
+    ///
+    /// - `first`: The second element of the pair.
+    ///
+    /// # Returns
+    ///
+    /// - `true` if the entity owns the provided pair, `false` otherwise.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::owns`
+    #[doc(alias = "entity_view::owns")]
+    pub fn owns_pair_second<Second: ComponentInfo>(&self, first: impl IntoEntityId) -> bool {
+        unsafe {
+            ecs_owns_id(
+                self.world,
+                self.raw_id,
+                ecs_pair(first.get_id(), Second::get_id(self.world)),
+            )
+        }
     }
 
     /// Test if id is enabled.
@@ -1459,7 +1548,39 @@ impl EntityView {
     /// * C++ API: `entity_view::clone`
     #[doc(alias = "entity_view::clone")]
     #[inline(always)]
-    pub fn clone(&self, copy_value: bool, dest_id: impl IntoEntityId) -> Entity {
+    pub fn duplicate(&self, copy_value: bool) -> Entity {
+        let dest_entity = Entity::new(self.world);
+        unsafe { ecs_clone(self.world, dest_entity.raw_id, self.raw_id, copy_value) };
+        dest_entity
+    }
+
+    /// Clones the current entity to a new or specified entity.
+    ///
+    /// This function creates a clone of the current entity. If `dest_id` is provided
+    /// (i.e., not zero), it will clone the current entity to the entity with `dest_id`.
+    /// If `dest_id` is zero, it will create a new entity and clone the current entity
+    /// to the newly created entity.
+    ///
+    /// If `copy_value` is set to `true`, the value of the current entity is also copied to
+    /// the destination entity. Otherwise, only the entity's structure is cloned without copying the value.
+    ///
+    /// # Arguments
+    /// - `copy_value`: A boolean indicating whether to copy the entity's value to the destination entity.
+    /// - `dest_id`: The identifier of the destination entity. If zero, a new entity is created.
+    ///
+    /// # Returns
+    /// - An `Entity` object representing the destination entity.
+    ///
+    /// ## Safety
+    /// This function makes use of `unsafe` operations to interact with the underlying ECS.
+    /// Ensure that the provided `dest_id` is valid or zero
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::clone`
+    #[doc(alias = "entity_view::clone")]
+    #[inline(always)]
+    pub fn duplicate_into(&self, copy_value: bool, dest_id: impl IntoEntityId) -> Entity {
         let mut dest_id = dest_id.get_id();
         if dest_id == 0 {
             dest_id = unsafe { ecs_new_id(self.world) };
@@ -1497,7 +1618,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::mut`
     #[doc(alias = "entity_view::mut")]
-    pub fn get_mutable_handle_for_stage(&self, stage: impl IntoWorld) -> Entity {
+    pub fn get_mut(&self, stage: impl IntoWorld) -> Entity {
         ecs_assert!(
             !World::new_wrap_raw_world(stage.get_world_raw_mut()).is_readonly(),
             FlecsErrorCode::InvalidParameter,
