@@ -14,7 +14,7 @@ use crate::sys::{
 use super::{
     builder::Builder,
     c_types::{TermT, SEPARATOR},
-    component_registration::ComponentInfo,
+    component_registration::ComponentId,
     filter_builder::{FilterBuilder, FilterBuilderImpl},
     iterable::{Filterable, Iterable},
     query::Query,
@@ -277,7 +277,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     #[doc(alias = "query_builder_i::order_by")]
     fn order_by<T>(&mut self, compare: OrderByFn<T>) -> &mut Self
     where
-        T: ComponentInfo,
+        T: ComponentId,
     {
         let cmp: ecs_order_by_action_t = Some(unsafe { std::mem::transmute(compare) });
         self.order_by_id(T::get_id(self.get_world()), cmp);
@@ -321,7 +321,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     #[doc(alias = "query_builder_i::group_by")]
     fn group_by<T>(&mut self) -> &mut Self
     where
-        T: ComponentInfo,
+        T: ComponentId,
     {
         self.group_by_id_fn(T::get_id(self.get_world()), None)
     }
@@ -355,7 +355,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     #[doc(alias = "query_builder_i::group_by")]
     fn group_by_fn<T>(&mut self, group_by_action: ecs_group_by_action_t) -> &mut Self
     where
-        T: ComponentInfo,
+        T: ComponentId,
     {
         self.group_by_id_fn(T::get_id(self.get_world()), group_by_action);
         self

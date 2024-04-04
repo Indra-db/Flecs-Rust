@@ -14,8 +14,6 @@ pub use into_world::*;
 pub use iter::*;
 pub use reactor::*;
 
-use crate::core::ComponentInfo;
-
 #[doc(hidden)]
 pub mod private {
     use std::{ffi::c_void, ptr};
@@ -313,32 +311,4 @@ pub mod private {
             }
         }
     }
-}
-
-impl<T: ComponentInfo> ComponentInfo for &T {
-    fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::ComponentId> {
-        Self::UnderlyingType::__get_once_lock_data()
-    }
-
-    type UnderlyingType = T::UnderlyingType;
-
-    type UnderlyingEnumType = T::UnderlyingEnumType;
-
-    const IS_ENUM: bool = T::IS_ENUM;
-
-    const IS_TAG: bool = T::IS_TAG;
-}
-
-impl<T: ComponentInfo> ComponentInfo for &mut T {
-    fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::ComponentId> {
-        Self::UnderlyingType::__get_once_lock_data()
-    }
-
-    type UnderlyingType = T::UnderlyingType;
-
-    type UnderlyingEnumType = T::UnderlyingEnumType;
-
-    const IS_ENUM: bool = T::IS_ENUM;
-
-    const IS_TAG: bool = T::IS_TAG;
 }

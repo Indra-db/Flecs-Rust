@@ -3,7 +3,7 @@ use std::ffi::{c_char, c_void};
 use crate::{
     core::{
         c_types::{EntityT, IdT, WorldT},
-        component_registration::ComponentInfo,
+        component_registration::ComponentId,
     },
     sys::{ecs_meta_serialize_t, ecs_opaque_desc_t, ecs_opaque_init, ecs_serializer_t},
 };
@@ -33,7 +33,7 @@ type SerializeFn<T> = extern "C" fn(*const Serializer, *const T) -> i32;
 
 pub struct Opaque<T>
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     world: *const WorldT,
     pub desc: ecs_opaque_desc_t,
@@ -42,7 +42,7 @@ where
 
 impl<T> Opaque<T>
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     pub fn new(world: *mut WorldT) -> Self {
         Self {
@@ -128,7 +128,7 @@ where
 
 impl<T> Drop for Opaque<T>
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     fn drop(&mut self) {
         if self.world.is_null() {

@@ -2,7 +2,7 @@ use crate::sys::{self, ecs_filter_desc_t, ecs_inout_kind_t, ecs_oper_kind_t};
 
 use super::{
     c_types::{IterT, OperKind, TermT},
-    component_registration::ComponentInfo,
+    component_registration::ComponentId,
     ecs_field, FilterBuilderImpl, InOutKind, WorldT,
 };
 
@@ -28,7 +28,7 @@ pub trait IterableTypeOperation {
     type CastType;
     type ActualType;
     type SliceType;
-    type OnlyType: ComponentInfo;
+    type OnlyType: ComponentId;
 
     fn populate_term(term: &mut sys::ecs_term_t);
     fn get_tuple_data(array_components_data: *mut u8, index: usize) -> Self::ActualType;
@@ -47,7 +47,7 @@ pub trait IterableTypeOperation {
 
 impl<'a, T> IterableTypeOperation for &'a T
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     type CastType = *const T;
     type ActualType = &'a T;
@@ -101,7 +101,7 @@ where
 
 impl<'a, T> IterableTypeOperation for &'a mut T
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     type CastType = *mut T;
     type ActualType = &'a mut T;
@@ -155,7 +155,7 @@ where
 
 impl<'a, T> IterableTypeOperation for Option<&'a T>
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     type CastType = *const T;
     type ActualType = Option<&'a T>;
@@ -218,7 +218,7 @@ where
 
 impl<'a, T> IterableTypeOperation for Option<&'a mut T>
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     type CastType = *mut T;
     type ActualType = Option<&'a mut T>;

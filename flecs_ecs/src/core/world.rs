@@ -38,7 +38,7 @@ use super::{
     c_types::{EntityT, IdT, WorldT, SEPARATOR},
     component::{Component, UntypedComponent},
     component_ref::Ref,
-    component_registration::{ComponentInfo, ComponentType, Enum, Struct},
+    component_registration::{ComponentId, ComponentType, Enum, Struct},
     IntoComponentId, IntoEntityId, IntoEntityIdExt, IterAPI, ECS_PREFAB,
 };
 use super::{EmptyComponent, NotEmptyComponent};
@@ -730,7 +730,7 @@ impl World {
     /// * C++ API: `world::get_scope`
     #[doc(alias = "world::get_scope")]
     #[inline(always)]
-    pub fn get_scope<T: ComponentInfo>(&self) -> Entity {
+    pub fn get_scope<T: ComponentId>(&self) -> Entity {
         Entity::new_from_existing_raw(self.raw_world, unsafe { ecs_get_scope(self.raw_world) })
     }
 
@@ -764,7 +764,7 @@ impl World {
     ///
     /// # Type Parameters
     ///
-    /// * `T` - The type that implements `ComponentInfo`.
+    /// * `T` - The type that implements `ComponentId`.
     ///
     /// # Returns
     ///
@@ -775,7 +775,7 @@ impl World {
     /// * C++ API: `world::set_scope`
     #[doc(alias = "world::set_scope")]
     #[inline(always)]
-    pub fn set_scope_with<T: ComponentInfo>(&self) -> Entity {
+    pub fn set_scope_with<T: ComponentId>(&self) -> Entity {
         self.set_scope_with_id(T::get_id(self.raw_world))
     }
 
@@ -900,7 +900,7 @@ impl World {
     ///
     /// * C++ API: `world::set`
     #[doc(alias = "world::set")]
-    pub fn set<T: ComponentInfo>(&self, component: T) {
+    pub fn set<T: ComponentId>(&self, component: T) {
         let id = T::get_id(self.raw_world);
         set_helper(self.raw_world, id, component, id);
     }
@@ -922,7 +922,7 @@ impl World {
     #[doc(alias = "world::set")]
     pub fn set_pair_first_id<First>(&self, second: impl IntoEntityId, first: First)
     where
-        First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let entity = Entity::new_from_existing_raw(self.raw_world, First::get_id(self.raw_world));
         entity.set_pair_first_id::<First>(first, second);
@@ -946,8 +946,8 @@ impl World {
     #[doc(alias = "world::set")]
     pub fn set_pair_first<First, Second>(&self, first: First)
     where
-        First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
-        Second: ComponentInfo + ComponentType<Struct>,
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId + ComponentType<Struct>,
     {
         let entity = Entity::new_from_existing_raw(self.raw_world, First::get_id(self.raw_world));
         entity.set_pair_first::<First, Second>(first);
@@ -970,7 +970,7 @@ impl World {
     #[doc(alias = "world::set")]
     pub fn set_pair_second_id<Second>(&self, first: impl IntoEntityId, second: Second)
     where
-        Second: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let entity = Entity::new_from_existing_raw(self.raw_world, Second::get_id(self.raw_world));
         entity.set_pair_second_id::<Second>(second, first);
@@ -994,8 +994,8 @@ impl World {
     #[doc(alias = "world::set")]
     pub fn set_pair_second<First, Second>(&self, second: Second)
     where
-        First: ComponentInfo + ComponentType<Struct> + EmptyComponent,
-        Second: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
+        First: ComponentId + ComponentType<Struct> + EmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let entity = Entity::new_from_existing_raw(self.raw_world, First::get_id(self.raw_world));
         entity.set_pair_second::<First, Second>(second);
@@ -1030,7 +1030,7 @@ impl World {
     #[inline(always)]
     pub fn modified<T>(&self)
     where
-        T: ComponentInfo,
+        T: ComponentId,
     {
         self.modified_id(T::get_id(self.raw_world));
     }
@@ -1052,7 +1052,7 @@ impl World {
     #[inline(always)]
     pub fn get<T>(&self) -> Option<&T>
     where
-        T: ComponentInfo + ComponentType<Struct>,
+        T: ComponentId + ComponentType<Struct>,
     {
         let component_id = T::get_id(self.raw_world);
         let singleton_entity = Entity::new_from_existing_raw(self.raw_world, component_id);
@@ -1078,7 +1078,7 @@ impl World {
     #[inline(always)]
     pub fn get_mut<T>(&mut self) -> &mut T
     where
-        T: ComponentInfo + ComponentType<Struct>,
+        T: ComponentId + ComponentType<Struct>,
     {
         let component_id = T::get_id(self.raw_world);
         let singleton_entity = Entity::new_from_existing_raw(self.raw_world, component_id);
@@ -1112,7 +1112,7 @@ impl World {
     #[inline(always)]
     pub fn get_ref_component<T>(&self) -> Ref<T::UnderlyingType>
     where
-        T: ComponentInfo,
+        T: ComponentId,
     {
         Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
             .get_ref_component::<T>()
@@ -1133,7 +1133,7 @@ impl World {
     /// * C++ API: `world::singleton`
     #[doc(alias = "world::singleton")]
     #[inline(always)]
-    pub fn get_singleton<T: ComponentInfo>(&self) -> Entity {
+    pub fn get_singleton<T: ComponentId>(&self) -> Entity {
         Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
     }
 
@@ -1157,7 +1157,7 @@ impl World {
     #[doc(alias = "world::target")]
     pub fn get_target_rel<First>(&self, index: Option<i32>) -> Entity
     where
-        First: ComponentInfo,
+        First: ComponentId,
     {
         let id = First::get_id(self.raw_world);
         Entity::new_from_existing_raw(self.raw_world, unsafe {
@@ -1217,7 +1217,7 @@ impl World {
     #[inline(always)]
     pub fn get_pair_first_id<First>(&self, second: impl IntoEntityId) -> Option<&First>
     where
-        First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let component_id = First::get_id(self.raw_world);
 
@@ -1255,7 +1255,7 @@ impl World {
     #[inline(always)]
     pub fn get_pair_first_id_mut<First>(&mut self, second: impl IntoEntityId) -> &mut First
     where
-        First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let component_id = First::get_id(self.raw_world);
 
@@ -1291,8 +1291,8 @@ impl World {
     #[doc(alias = "world::get")]
     pub fn get_pair_first<First, Second>(&self) -> Option<&First>
     where
-        First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
-        Second: ComponentInfo + ComponentType<Struct>,
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId + ComponentType<Struct>,
     {
         self.get_pair_first_id(Second::get_id(self.raw_world))
     }
@@ -1312,8 +1312,8 @@ impl World {
     #[doc(alias = "world::get_mut")]
     pub fn get_pair_first_mut<First, Second>(&mut self) -> &mut First
     where
-        First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
-        Second: ComponentInfo + ComponentType<Struct>,
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId + ComponentType<Struct>,
     {
         self.get_pair_first_id_mut(Second::get_id(self.raw_world))
     }
@@ -1339,7 +1339,7 @@ impl World {
     #[inline(always)]
     pub fn get_pair_second_id<Second>(&self, first: impl IntoEntityId) -> Option<&Second>
     where
-        Second: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let component_id = Second::get_id(self.raw_world);
 
@@ -1375,7 +1375,7 @@ impl World {
     #[inline(always)]
     pub fn get_pair_second_id_mut<Second>(&mut self, first: impl IntoEntityId) -> &mut Second
     where
-        Second: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let component_id = Second::get_id(self.raw_world);
 
@@ -1411,8 +1411,8 @@ impl World {
     #[doc(alias = "world::get")]
     pub fn get_pair_second<First, Second>(&self) -> Option<&Second>
     where
-        First: ComponentInfo + ComponentType<Struct>,
-        Second: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
+        First: ComponentId + ComponentType<Struct>,
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         self.get_pair_second_id(First::get_id(self.raw_world))
     }
@@ -1431,8 +1431,8 @@ impl World {
     #[doc(alias = "world::get_mut")]
     pub fn get_pair_second_mut<First, Second>(&mut self) -> &mut Second
     where
-        First: ComponentInfo + ComponentType<Struct>,
-        Second: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
+        First: ComponentId + ComponentType<Struct>,
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         self.get_pair_second_id_mut(First::get_id(self.raw_world))
     }
@@ -1500,7 +1500,7 @@ impl World {
     #[inline(always)]
     pub fn has_enum<T>(&self, constant: T) -> bool
     where
-        T: ComponentInfo + ComponentType<Enum> + CachedEnumData,
+        T: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         let id = T::get_id(self.raw_world);
         Entity::new_from_existing_raw(self.raw_world, id).has_enum_id::<T>(id, constant)
@@ -1553,7 +1553,7 @@ impl World {
     #[inline(always)]
     pub fn add<T: IntoComponentId>(&self) -> Entity {
         if T::IS_PAIR {
-            let first_id = <T::First as ComponentInfo>::get_id(self.raw_world);
+            let first_id = <T::First as ComponentId>::get_id(self.raw_world);
             Entity::new_from_existing_raw(self.raw_world, first_id).add::<T>()
         } else {
             let id = T::get_id(self.raw_world);
@@ -1576,7 +1576,7 @@ impl World {
     /// * C++ API: `world::add`
     #[doc(alias = "world::add")]
     #[inline(always)]
-    pub fn add_enum<T: ComponentInfo + ComponentType<Enum> + CachedEnumData>(
+    pub fn add_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
         &self,
         enum_value: T,
     ) -> Entity {
@@ -1598,7 +1598,7 @@ impl World {
     ///
     /// Entity handle to the singleton pair.
     #[inline(always)]
-    pub fn add_pair_second<Second: ComponentInfo>(&self, first: impl IntoEntityId) -> Entity {
+    pub fn add_pair_second<Second: ComponentId>(&self, first: impl IntoEntityId) -> Entity {
         Entity::new_from_existing_raw(self.raw_world, Second::get_id(self.raw_world))
             .add_pair_second::<Second>(first)
     }
@@ -1622,7 +1622,7 @@ impl World {
     /// * C++ API: `world::add`
     #[doc(alias = "world::add")]
     #[inline(always)]
-    pub fn add_pair_first<First: ComponentInfo>(&self, second: impl IntoEntityId) -> Entity {
+    pub fn add_pair_first<First: ComponentId>(&self, second: impl IntoEntityId) -> Entity {
         Entity::new_from_existing_raw(self.raw_world, First::get_id(self.raw_world))
             .add_pair_first::<First>(second)
     }
@@ -1649,8 +1649,8 @@ impl World {
     #[inline(always)]
     pub fn add_enum_tag<First, Second>(&self, enum_value: Second) -> Entity
     where
-        First: ComponentInfo,
-        Second: ComponentInfo + ComponentType<Enum> + CachedEnumData,
+        First: ComponentId,
+        Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         Entity::new_from_existing_raw(self.raw_world, First::get_id(self.raw_world))
             .add_enum_tag::<First, Second>(enum_value)
@@ -1693,7 +1693,7 @@ impl World {
     #[inline(always)]
     pub fn remove<T: IntoComponentId>(&self) {
         if T::IS_PAIR {
-            let first_id = <T::First as ComponentInfo>::get_id(self.raw_world);
+            let first_id = <T::First as ComponentId>::get_id(self.raw_world);
             Entity::new_from_existing_raw(self.raw_world, first_id).remove::<T>();
         } else {
             Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world)).remove::<T>();
@@ -1718,8 +1718,8 @@ impl World {
     #[inline(always)]
     pub fn remove_enum_tag<First, Second>(&self, enum_value: Second)
     where
-        First: ComponentInfo,
-        Second: ComponentInfo + ComponentType<Enum> + CachedEnumData,
+        First: ComponentId,
+        Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         Entity::new_from_existing_raw(self.raw_world, First::get_id(self.raw_world))
             .remove_enum_tag::<First, Second>(enum_value);
@@ -1740,7 +1740,7 @@ impl World {
     /// * C++ API: `world::remove`
     #[doc(alias = "world::remove")]
     #[inline(always)]
-    pub fn remove_pair_second<Second: ComponentInfo>(&self, first: impl IntoEntityId) {
+    pub fn remove_pair_second<Second: ComponentId>(&self, first: impl IntoEntityId) {
         Entity::new_from_existing_raw(self.raw_world, Second::get_id(self.raw_world))
             .remove_pair_second::<Second>(first);
     }
@@ -1760,7 +1760,7 @@ impl World {
     /// * C++ API: `world::remove`
     #[doc(alias = "world::remove")]
     #[inline(always)]
-    pub fn remove_pair_first<First: ComponentInfo>(&self, second: impl IntoEntityId) {
+    pub fn remove_pair_first<First: ComponentId>(&self, second: impl IntoEntityId) {
         Entity::new_from_existing_raw(self.raw_world, First::get_id(self.raw_world))
             .remove_pair_first::<First>(second);
     }
@@ -1799,7 +1799,7 @@ impl World {
     /// * C++ API: `world::use`
     #[doc(alias = "world::use")]
     #[inline(always)]
-    pub fn set_alias_component<T: ComponentInfo>(&self, alias: &CStr) -> Entity {
+    pub fn set_alias_component<T: ComponentId>(&self, alias: &CStr) -> Entity {
         let id = T::get_id(self.raw_world);
         if alias.is_empty() {
             unsafe { ecs_set_alias(self.raw_world, id, ecs_get_name(self.raw_world, id)) };
@@ -1921,7 +1921,7 @@ impl World {
     ///
     /// * C++ API: `world::count`
     #[doc(alias = "world::count")]
-    pub fn count_pair_second<Second: ComponentInfo>(&self, first: impl IntoEntityId) -> i32 {
+    pub fn count_pair_second<Second: ComponentId>(&self, first: impl IntoEntityId) -> i32 {
         self.count_id((first, Second::get_id(self.raw_world)))
     }
 
@@ -1943,7 +1943,7 @@ impl World {
     ///
     /// * C++ API: `world::count`
     #[doc(alias = "world::count")]
-    pub fn count_pair_first<First: ComponentInfo>(&self, second: impl IntoEntityId) -> i32 {
+    pub fn count_pair_first<First: ComponentId>(&self, second: impl IntoEntityId) -> i32 {
         self.count_id((First::get_id(self.raw_world), second))
     }
 
@@ -1965,7 +1965,7 @@ impl World {
     ///
     /// * C++ API: `world::count`
     #[doc(alias = "world::count")]
-    pub fn count_enum<T: ComponentInfo + ComponentType<Enum> + CachedEnumData>(
+    pub fn count_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
         &self,
         enum_value: T,
     ) -> i32 {
@@ -2000,8 +2000,8 @@ impl World {
     #[doc(alias = "world::count")]
     pub fn count_enum_tag_pair<First, Second>(&self, enum_value: Second) -> i32
     where
-        First: ComponentInfo,
-        Second: ComponentInfo + ComponentType<Enum> + CachedEnumData,
+        First: ComponentId,
+        Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         unsafe {
             ecs_count_id(
@@ -2049,7 +2049,7 @@ impl World {
     ///
     /// * C++ API: `world::scope`
     #[doc(alias = "world::scope")]
-    pub fn run_in_scope_with<T: ComponentInfo, F: FnMut()>(&self, func: F) {
+    pub fn run_in_scope_with<T: ComponentId, F: FnMut()>(&self, func: F) {
         self.run_in_scope_with_id(T::get_id(self.raw_world), func);
     }
 
@@ -2087,7 +2087,7 @@ impl World {
     ///
     /// * C++ API: `world::scope`
     #[doc(alias = "world::scope")]
-    pub fn scope<T: ComponentInfo>(&self) -> ScopedWorld {
+    pub fn scope<T: ComponentId>(&self) -> ScopedWorld {
         self.scope_id(T::get_id(self.raw_world))
     }
 
@@ -2162,7 +2162,7 @@ impl World {
     ///
     /// * C++ API: `world::with`
     #[doc(alias = "world::with")]
-    pub fn with_pair_second<Second: ComponentInfo, F: FnMut()>(
+    pub fn with_pair_second<Second: ComponentId, F: FnMut()>(
         &self,
         first: impl IntoEntityId,
         func: F,
@@ -2188,7 +2188,7 @@ impl World {
     ///
     /// * C++ API: `world::with`
     #[doc(alias = "world::with")]
-    pub fn with_pair_first<First: ComponentInfo, F: FnMut()>(
+    pub fn with_pair_first<First: ComponentId, F: FnMut()>(
         &self,
         second: impl IntoEntityId,
         func: F,
@@ -2216,7 +2216,7 @@ impl World {
     #[doc(alias = "world::with")]
     pub fn with_enum<T, F>(&self, enum_value: T, func: F)
     where
-        T: ComponentInfo + ComponentType<Enum> + CachedEnumData,
+        T: ComponentId + ComponentType<Enum> + CachedEnumData,
         F: FnMut(),
     {
         self.with_id(
@@ -2243,8 +2243,8 @@ impl World {
     #[doc(alias = "world::with")]
     pub fn with_enum_pair<First, Second, F>(&self, enum_value: Second, func: F)
     where
-        First: ComponentInfo,
-        Second: ComponentInfo + ComponentType<Enum> + CachedEnumData,
+        First: ComponentId,
+        Second: ComponentId + ComponentType<Enum> + CachedEnumData,
         F: FnMut(),
     {
         self.with_id(
@@ -2300,7 +2300,7 @@ impl World {
     ///
     /// * C++ API: `world::delete_with`
     #[doc(alias = "world::delete_with")]
-    pub fn delete_with_pair_second<Second: ComponentInfo>(&self, first: impl IntoEntityId) {
+    pub fn delete_with_pair_second<Second: ComponentId>(&self, first: impl IntoEntityId) {
         self.delete_with_id(ecs_pair(first.get_id(), Second::get_id(self.raw_world)));
     }
 
@@ -2318,7 +2318,7 @@ impl World {
     ///
     /// * C++ API: `world::delete_with`
     #[doc(alias = "world::delete_with")]
-    pub fn delete_entities_with_pair_second_id<First: ComponentInfo>(
+    pub fn delete_entities_with_pair_second_id<First: ComponentId>(
         &self,
         second: impl IntoEntityId,
     ) {
@@ -2339,7 +2339,7 @@ impl World {
     ///
     /// * C++ API: `world::delete_with`
     #[doc(alias = "world::delete_with")]
-    pub fn delete_with_enum<T: ComponentInfo + ComponentType<Enum> + CachedEnumData>(
+    pub fn delete_with_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
         &self,
         enum_value: T,
     ) {
@@ -2362,8 +2362,8 @@ impl World {
     /// * `world::delete_with`
     pub fn delete_with_enum_pair<First, Second>(&self, enum_value: Second)
     where
-        First: ComponentInfo,
-        Second: ComponentInfo + ComponentType<Enum> + CachedEnumData,
+        First: ComponentId,
+        Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         self.delete_with_id(ecs_pair(
             First::get_id(self.raw_world),
@@ -2415,7 +2415,7 @@ impl World {
     ///
     /// * C++ API: `world::remove_all`
     #[doc(alias = "world::remove_all")]
-    pub fn remove_all_pair_second<Second: ComponentInfo>(&self, first: impl IntoEntityId) {
+    pub fn remove_all_pair_second<Second: ComponentId>(&self, first: impl IntoEntityId) {
         self.remove_all_id((first, Second::get_id(self.raw_world)));
     }
 
@@ -2433,7 +2433,7 @@ impl World {
     ///
     /// * C++ API: `world::remove_all`
     #[doc(alias = "world::remove_all")]
-    pub fn remove_all_pair_first<First: ComponentInfo>(&self, second: impl IntoEntityId) {
+    pub fn remove_all_pair_first<First: ComponentId>(&self, second: impl IntoEntityId) {
         self.remove_all_id((First::get_id(self.raw_world), second));
     }
 
@@ -2451,7 +2451,7 @@ impl World {
     ///
     /// * C++ API: `world::remove_all`
     #[doc(alias = "world::remove_all")]
-    pub fn remove_all_enum<T: ComponentInfo + ComponentType<Enum> + CachedEnumData>(
+    pub fn remove_all_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
         &self,
         enum_value: T,
     ) {
@@ -2475,8 +2475,8 @@ impl World {
     #[doc(alias = "world::remove_all")]
     pub fn remove_all_enum_pair<First, Second>(&self, enum_value: Second)
     where
-        First: ComponentInfo,
-        Second: ComponentInfo + ComponentType<Enum> + CachedEnumData,
+        First: ComponentId,
+        Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         self.remove_all_id((
             First::get_id(self.raw_world),
@@ -2659,7 +2659,7 @@ impl World {
     #[doc(alias = "world::id")] //enum mixin implementation
     pub fn get_id_from_enum<T>(&self, enum_value: T) -> Entity
     where
-        T: ComponentInfo + ComponentType<Enum> + CachedEnumData,
+        T: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         Entity::new_from_existing_raw(
             self.raw_world,
@@ -2681,14 +2681,14 @@ impl World {
     ///
     /// * C++ API: `world::entity`
     #[doc(alias = "world::entity")]
-    pub fn new_entity_named_type<T: ComponentInfo>(&self, name: &CStr) -> Entity {
+    pub fn new_entity_named_type<T: ComponentId>(&self, name: &CStr) -> Entity {
         Entity::new_from_existing_raw(
             self.raw_world,
             T::register_explicit_named(self.raw_world, name),
         )
     }
 
-    pub fn new_entity_type<T: ComponentInfo>(&self) -> Entity {
+    pub fn new_entity_type<T: ComponentId>(&self) -> Entity {
         Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
     }
 
@@ -2780,7 +2780,7 @@ impl World {
     ///
     /// * C++ API: `world::prefab`
     #[doc(alias = "world::prefab")]
-    pub fn prefab_type<T: ComponentInfo>(&self) -> Entity {
+    pub fn prefab_type<T: ComponentId>(&self) -> Entity {
         let result = Component::<T>::new(self).to_entity();
         result.add_id(ECS_PREFAB);
         result.add::<T>();
@@ -2805,7 +2805,7 @@ impl World {
     ///
     /// * C++ API: `world::prefab`
     #[doc(alias = "world::prefab")]
-    pub fn prefab_type_named<T: ComponentInfo>(&self, name: &CStr) -> Entity {
+    pub fn prefab_type_named<T: ComponentId>(&self, name: &CStr) -> Entity {
         let result = Component::<T>::new_named(self, name).to_entity();
         result.add_id(ECS_PREFAB);
         result.add::<T>();
@@ -2876,7 +2876,7 @@ impl World {
     ///
     /// * C++ API: `world::pair`
     #[doc(alias = "world::pair")]
-    pub fn get_id_pair_first<First: ComponentInfo>(&self, second: impl IntoEntityId) -> Id {
+    pub fn get_id_pair_first<First: ComponentId>(&self, second: impl IntoEntityId) -> Id {
         ecs_assert!(
             !ecs_is_pair(second.get_id()),
             FlecsErrorCode::InvalidParameter,
@@ -2902,7 +2902,7 @@ impl World {
     ///
     /// * C++ API: `world::component`
     #[doc(alias = "world::component")]
-    pub fn component<T: ComponentInfo>(&self) -> Component<T::UnderlyingType> {
+    pub fn component<T: ComponentId>(&self) -> Component<T::UnderlyingType> {
         Component::<T::UnderlyingType>::new(self)
     }
 
@@ -2924,7 +2924,7 @@ impl World {
     ///
     /// * C++ API: `world::component`
     #[doc(alias = "world::component")]
-    pub fn component_named<T: ComponentInfo>(&self, name: &CStr) -> Component<T::UnderlyingType> {
+    pub fn component_named<T: ComponentId>(&self, name: &CStr) -> Component<T::UnderlyingType> {
         Component::<T::UnderlyingType>::new_named(self, name)
     }
 
@@ -2942,7 +2942,7 @@ impl World {
     ///
     /// * C++ API: `world::component`
     #[doc(alias = "world::component")]
-    pub fn component_untyped<T: ComponentInfo>(&self) -> UntypedComponent {
+    pub fn component_untyped<T: ComponentId>(&self) -> UntypedComponent {
         UntypedComponent::new(self, T::get_id(self.raw_world))
     }
 
@@ -2978,7 +2978,7 @@ impl World {
     ///
     /// * C++ API: `world::to_entity`
     #[doc(alias = "world::to_entity")]
-    pub fn to_entity<T: ComponentInfo + ComponentType<Enum> + CachedEnumData>(
+    pub fn to_entity<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
         &self,
         enum_value: T,
     ) -> Entity {
@@ -3044,7 +3044,7 @@ impl World {
     ///
     /// * C++ API: `world::event`
     #[doc(alias = "world::event")]
-    pub fn event<T: EventData + ComponentInfo>(&self) -> EventBuilderTyped<T> {
+    pub fn event<T: EventData + ComponentId>(&self) -> EventBuilderTyped<T> {
         EventBuilderTyped::<T>::new(self, T::get_id(self.raw_world))
     }
 }
@@ -3462,7 +3462,7 @@ impl World {
     #[inline(always)]
     pub fn pipeline_type<Pipeline>(&self) -> PipelineBuilder<()>
     where
-        Pipeline: ComponentType<Struct> + ComponentInfo,
+        Pipeline: ComponentType<Struct> + ComponentId,
     {
         PipelineBuilder::<()>::new_entity(self, Pipeline::get_id(self.raw_world))
     }
@@ -3497,7 +3497,7 @@ impl World {
     #[inline(always)]
     pub fn set_pipeline_type<Pipeline>(&self)
     where
-        Pipeline: ComponentType<Struct> + ComponentInfo,
+        Pipeline: ComponentType<Struct> + ComponentId,
     {
         unsafe {
             sys::ecs_set_pipeline(self.raw_world, Pipeline::get_id(self.raw_world));
@@ -3649,7 +3649,7 @@ impl World {
     #[doc(alias = "world::run_pipeline")]
     pub fn run_pipeline_time<Component>(&self, delta_time: super::FTime)
     where
-        Component: ComponentType<Struct> + ComponentInfo,
+        Component: ComponentType<Struct> + ComponentId,
     {
         unsafe {
             sys::ecs_run_pipeline(
@@ -3683,7 +3683,7 @@ impl World {
     #[doc(alias = "world::run_pipeline")]
     pub fn run_pipeline<Component>(&self)
     where
-        Component: ComponentType<Struct> + ComponentInfo,
+        Component: ComponentType<Struct> + ComponentId,
     {
         Self::run_pipeline_time::<Component>(self, 0.0);
     }

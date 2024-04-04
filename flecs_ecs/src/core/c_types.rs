@@ -1,7 +1,7 @@
 #![allow(non_upper_case_globals)]
 
 use crate::{
-    core::component_registration::{ComponentId, ComponentInfo, ComponentType, Struct},
+    core::component_registration::{ComponentId, ComponentType, IdComponent, Struct},
     sys::{
         ecs_entity_t, ecs_filter_t, ecs_flags32_t, ecs_id_t, ecs_inout_kind_t,
         ecs_inout_kind_t_EcsIn, ecs_inout_kind_t_EcsInOut, ecs_inout_kind_t_EcsInOutDefault,
@@ -21,7 +21,7 @@ use crate::sys::EcsTickSource;
 
 use std::{ffi::CStr, sync::OnceLock};
 
-use super::{EntityId, IntoWorld, NoneEnum};
+use super::{ComponentInfo, EntityId, IntoWorld, NoneEnum};
 
 pub const RUST_ECS_ID_FLAGS_MASK: u64 = 0xFF << 60;
 pub const RUST_ECS_COMPONENT_MASK: u64 = !RUST_ECS_ID_FLAGS_MASK;
@@ -354,23 +354,27 @@ pub type Identifier = EcsIdentifier;
 pub type Poly = EcsPoly;
 pub type Target = EcsTarget;
 
-fn get_ecs_component_data() -> ComponentId {
-    ComponentId {
+fn get_ecs_component_data() -> IdComponent {
+    IdComponent {
         id: unsafe { FLECS_IDEcsComponentID_ },
     }
 }
 
-fn get_ecs_poly_data() -> ComponentId {
-    ComponentId { id: ECS_POLY }
+fn get_ecs_poly_data() -> IdComponent {
+    IdComponent { id: ECS_POLY }
+}
+
+impl ComponentInfo for EcsComponent {
+    const IS_ENUM: bool = false;
+    const IS_TAG: bool = false;
 }
 
 impl ComponentType<Struct> for EcsComponent {}
 
-impl ComponentInfo for EcsComponent {
+impl ComponentId for EcsComponent {
     type UnderlyingType = EcsComponent;
     type UnderlyingEnumType = NoneEnum;
-    const IS_ENUM: bool = false;
-    const IS_TAG: bool = false;
+
     fn register_explicit(_world: impl IntoWorld) {
         //this is already registered in the world inside C
     }
@@ -398,19 +402,23 @@ impl ComponentInfo for EcsComponent {
         FLECS_IDEcsComponentID_
     }
 
-    fn __get_once_lock_data() -> &'static OnceLock<ComponentId> {
-        static ONCE_LOCK: OnceLock<ComponentId> = OnceLock::new();
+    fn __get_once_lock_data() -> &'static OnceLock<IdComponent> {
+        static ONCE_LOCK: OnceLock<IdComponent> = OnceLock::new();
         &ONCE_LOCK
     }
 }
 
+impl ComponentInfo for Poly {
+    const IS_ENUM: bool = false;
+    const IS_TAG: bool = false;
+}
+
 impl ComponentType<Struct> for Poly {}
 
-impl ComponentInfo for Poly {
+impl ComponentId for Poly {
     type UnderlyingType = Poly;
     type UnderlyingEnumType = NoneEnum;
-    const IS_TAG: bool = false;
-    const IS_ENUM: bool = false;
+
     fn register_explicit(_world: impl IntoWorld) {
         //this is already registered in the world inside C
     }
@@ -438,18 +446,22 @@ impl ComponentInfo for Poly {
         ECS_POLY
     }
 
-    fn __get_once_lock_data() -> &'static OnceLock<ComponentId> {
-        static ONCE_LOCK: OnceLock<ComponentId> = OnceLock::new();
+    fn __get_once_lock_data() -> &'static OnceLock<IdComponent> {
+        static ONCE_LOCK: OnceLock<IdComponent> = OnceLock::new();
         &ONCE_LOCK
     }
 }
 
 #[cfg(feature = "flecs_system")]
 impl ComponentInfo for TickSource {
-    type UnderlyingType = TickSource;
-    type UnderlyingEnumType = NoneEnum;
     const IS_TAG: bool = false;
     const IS_ENUM: bool = false;
+}
+
+#[cfg(feature = "flecs_system")]
+impl ComponentId for TickSource {
+    type UnderlyingType = TickSource;
+    type UnderlyingEnumType = NoneEnum;
 
     fn register_explicit(_world: impl IntoWorld) {
         //this is already registered in the world inside C
@@ -478,18 +490,20 @@ impl ComponentInfo for TickSource {
         ECS_TICK_SOURCE
     }
 
-    fn __get_once_lock_data() -> &'static OnceLock<ComponentId> {
-        static ONCE_LOCK: OnceLock<ComponentId> = OnceLock::new();
+    fn __get_once_lock_data() -> &'static OnceLock<IdComponent> {
+        static ONCE_LOCK: OnceLock<IdComponent> = OnceLock::new();
         &ONCE_LOCK
     }
 }
 
-#[cfg(feature = "flecs_system")]
 impl ComponentInfo for EntityId {
-    type UnderlyingType = EntityId;
-    type UnderlyingEnumType = NoneEnum;
     const IS_ENUM: bool = false;
     const IS_TAG: bool = false;
+}
+
+impl ComponentId for EntityId {
+    type UnderlyingType = EntityId;
+    type UnderlyingEnumType = NoneEnum;
 
     fn register_explicit(_world: impl IntoWorld) {
         // already registered by flecs in World
@@ -519,8 +533,8 @@ impl ComponentInfo for EntityId {
         unsafe { flecs_ecs_sys::FLECS_IDecs_u64_tID_ }
     }
 
-    fn __get_once_lock_data() -> &'static OnceLock<ComponentId> {
-        static ONCE_LOCK: OnceLock<ComponentId> = OnceLock::new();
+    fn __get_once_lock_data() -> &'static OnceLock<IdComponent> {
+        static ONCE_LOCK: OnceLock<IdComponent> = OnceLock::new();
         &ONCE_LOCK
     }
 }

@@ -6,8 +6,8 @@ use flecs_ecs_sys::{
 };
 
 use super::{
-    ComponentInfo, Entity, FilterT, IntoEntityId, IntoTableRange, IntoWorld, IterAPI,
-    IterOperations, IterT, Iterable, WorldT,
+    ComponentId, Entity, FilterT, IntoEntityId, IntoTableRange, IntoWorld, IterAPI, IterOperations,
+    IterT, Iterable, WorldT,
 };
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
@@ -58,7 +58,7 @@ where
     ///
     /// * C++ API: `iter_iterable::set_group`
     #[doc(alias = "iter_iterable::set_group")]
-    pub fn set_group<Group: ComponentInfo>(&mut self) -> &Self {
+    pub fn set_group<Group: ComponentId>(&mut self) -> &Self {
         unsafe { ecs_query_set_group(&mut self.iter, Group::get_id(self.iter.real_world)) }
         self
     }

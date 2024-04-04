@@ -10,7 +10,7 @@ use crate::sys::{
 use super::{
     archetype::Archetype,
     c_types::{EntityT, IdT, TableT, WorldT},
-    component_registration::ComponentInfo,
+    component_registration::ComponentId,
     ecs_pair, IntoWorld, World,
 };
 
@@ -139,7 +139,7 @@ impl Table {
     ///
     /// * C++ API: `table::type_index`
     #[doc(alias = "table::type_index")]
-    pub fn find_type_index<T: ComponentInfo>(&self) -> Option<i32> {
+    pub fn find_type_index<T: ComponentId>(&self) -> Option<i32> {
         self.find_type_index_id(T::get_id(self.world))
     }
 
@@ -177,7 +177,7 @@ impl Table {
     ///
     /// * C++ API: `table::type_index`
     #[doc(alias = "table::type_index")]
-    pub fn find_type_index_pair<First: ComponentInfo, Second: ComponentInfo>(&self) -> Option<i32> {
+    pub fn find_type_index_pair<First: ComponentId, Second: ComponentId>(&self) -> Option<i32> {
         self.find_type_index_pair_ids(First::get_id(self.world), Second::get_id(self.world))
     }
 
@@ -199,7 +199,7 @@ impl Table {
     ///
     /// * C++ API: `table::type_index`
     #[doc(alias = "table::type_index")]
-    pub fn find_type_index_pair_second_id<First: ComponentInfo>(
+    pub fn find_type_index_pair_second_id<First: ComponentId>(
         &self,
         second: EntityT,
     ) -> Option<i32> {
@@ -252,7 +252,7 @@ impl Table {
     ///
     /// * C++ API: `table::column_index`
     #[doc(alias = "table::column_index")]
-    pub fn find_column_index<T: ComponentInfo>(&self) -> Option<i32> {
+    pub fn find_column_index<T: ComponentId>(&self) -> Option<i32> {
         self.find_column_index_id(T::get_id(self.world))
     }
 
@@ -275,9 +275,7 @@ impl Table {
     ///
     /// * C++ API: `table::column_index`
     #[doc(alias = "table::column_index")]
-    pub fn find_column_index_pair<First: ComponentInfo, Second: ComponentInfo>(
-        &self,
-    ) -> Option<i32> {
+    pub fn find_column_index_pair<First: ComponentId, Second: ComponentId>(&self) -> Option<i32> {
         self.find_column_index_id(ecs_pair(
             First::get_id(self.world),
             Second::get_id(self.world),
@@ -325,7 +323,7 @@ impl Table {
     ///
     /// * C++ API: `table::column_index`
     #[doc(alias = "table::column_index")]
-    pub fn find_column_index_pair_second_id<First: ComponentInfo>(
+    pub fn find_column_index_pair_second_id<First: ComponentId>(
         &self,
         second: EntityT,
     ) -> Option<i32> {
@@ -348,7 +346,7 @@ impl Table {
     ///
     /// * C++ API: `table::has`
     #[doc(alias = "table::has")]
-    pub fn has_type<T: ComponentInfo>(&self) -> bool {
+    pub fn has_type<T: ComponentId>(&self) -> bool {
         self.find_type_index::<T>().is_some()
     }
 
@@ -389,7 +387,7 @@ impl Table {
     ///
     /// * C++ API: `table::has`
     #[doc(alias = "table::has")]
-    pub fn has_pair<First: ComponentInfo, Second: ComponentInfo>(&self) -> bool {
+    pub fn has_pair<First: ComponentId, Second: ComponentId>(&self) -> bool {
         self.find_type_index_pair::<First, Second>().is_some()
     }
 
@@ -451,7 +449,7 @@ impl Table {
     ///
     /// * C++ API: `table::get`
     #[doc(alias = "table::get")]
-    pub fn get_component_array_slice<T: ComponentInfo>(&self) -> Option<&mut [T]> {
+    pub fn get_component_array_slice<T: ComponentId>(&self) -> Option<&mut [T]> {
         self.get_component_array_ptr_id(T::get_id(self.world))
             .map(|ptr| unsafe {
                 std::slice::from_raw_parts_mut(ptr as *mut T, self.get_count() as usize)
@@ -517,7 +515,7 @@ impl Table {
     ///
     /// * C++ API: `table::get`
     #[doc(alias = "table::get")]
-    pub fn get_component_array_ptr_pair<First: ComponentInfo, Second: ComponentInfo>(
+    pub fn get_component_array_ptr_pair<First: ComponentId, Second: ComponentId>(
         &self,
     ) -> Option<*mut c_void> {
         self.get_component_array_ptr_pair_ids(First::get_id(self.world), Second::get_id(self.world))
@@ -559,7 +557,7 @@ impl Table {
     ///
     /// * C++ API: `table::depth`
     #[doc(alias = "table::depth")]
-    pub fn get_depth_for_relationship<Rel: ComponentInfo>(&self) -> i32 {
+    pub fn get_depth_for_relationship<Rel: ComponentId>(&self) -> i32 {
         self.get_depth_for_relationship_id(Rel::get_id(self.world))
     }
 

@@ -3,7 +3,7 @@ use std::ffi::c_void;
 use flecs_ecs_sys::{ecs_emit, ecs_enqueue, ecs_event_desc_t, ecs_get_world};
 
 use super::{
-    ecs_pair, ComponentInfo, EventBuilder, IntoComponentId, IntoEntityId, IntoEntityIdExt,
+    ecs_pair, ComponentId, EventBuilder, IntoComponentId, IntoEntityId, IntoEntityIdExt,
     IntoTable,
 };
 
@@ -76,7 +76,7 @@ pub trait EventBuilderImpl {
     #[doc(alias = "event_builder_base::id")]
     fn add_pair_first_to_emit<First>(&mut self, second: impl IntoEntityId) -> &mut Self
     where
-        First: ComponentInfo,
+        First: ComponentId,
     {
         let world = self.get_data().world.raw_world;
         self.add_id(ecs_pair(First::get_id(world), second))

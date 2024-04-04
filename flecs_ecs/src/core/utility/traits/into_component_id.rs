@@ -1,4 +1,4 @@
-use crate::core::{ecs_pair, ComponentInfo, ComponentType, IdT, Struct};
+use crate::core::{ecs_pair, ComponentId, ComponentType, IdT, Struct};
 
 use super::IntoWorld;
 
@@ -7,8 +7,8 @@ pub trait IntoComponentId {
     const IS_PAIR: bool;
     // These types are useful for merging functions in World class such ass add_pair<T,U> into add<T>.
     // When IntoComponentId is not a pair, First and Second will be same
-    type First: ComponentInfo;
-    type Second: ComponentInfo;
+    type First: ComponentId;
+    type Second: ComponentId;
 
     fn get_id(world: impl IntoWorld) -> IdT;
 
@@ -23,7 +23,7 @@ pub trait IntoComponentId {
 
 impl<T> IntoComponentId for T
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     const IS_ENUM: bool = T::IS_ENUM;
     const IS_PAIR: bool = false;
@@ -43,8 +43,8 @@ where
 
 impl<T, U> IntoComponentId for (T, U)
 where
-    T: ComponentInfo,
-    U: ComponentInfo + ComponentType<Struct>,
+    T: ComponentId,
+    U: ComponentId + ComponentType<Struct>,
 {
     const IS_ENUM: bool = false;
     const IS_PAIR: bool = true;

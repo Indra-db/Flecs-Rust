@@ -2,19 +2,19 @@
 // not used anywhere. Keeping the code just in case.
 use crate::core::{
     c_types::{IdT, WorldT},
-    component_registration::ComponentInfo,
+    component_registration::ComponentId,
     utility::functions::ecs_pair,
 };
 
 #[derive(Default)]
-struct PairT<T: ComponentInfo, U: ComponentInfo> {
+struct PairT<T: ComponentId, U: ComponentId> {
     first: T,
     second: U,
 }
 
 trait PairTT {
-    type First: ComponentInfo;
-    type Second: ComponentInfo;
+    type First: ComponentId;
+    type Second: ComponentId;
     fn get_first_component_id(world: *mut WorldT) -> IdT;
     fn get_first_component(&self) -> &Self::First;
     fn get_first_component_mut(&mut self) -> &mut Self::First;
@@ -26,7 +26,7 @@ trait PairTT {
     }
 }
 
-impl<T: ComponentInfo, U: ComponentInfo> PairTT for PairT<T, U> {
+impl<T: ComponentId, U: ComponentId> PairTT for PairT<T, U> {
     type First = T;
     type Second = U;
     fn get_first_component_id(world: *mut WorldT) -> IdT {

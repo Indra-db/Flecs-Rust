@@ -15,7 +15,7 @@ use super::{
         EntityT, Flags32T, IdT, InOutKind, OperKind, TermIdT, TermT, WorldT, ECS_CASCADE,
         ECS_FILTER, ECS_IS_ENTITY, ECS_IS_NAME, ECS_IS_VARIABLE, ECS_PARENT, ECS_SELF, ECS_UP,
     },
-    component_registration::ComponentInfo,
+    component_registration::ComponentId,
     entity::Entity,
     id::Id,
     world::World,
@@ -479,7 +479,7 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::up`
     #[doc(alias = "term_builder_i::up")]
-    fn up_type<TravRel: ComponentInfo>(&mut self) -> &mut Self {
+    fn up_type<TravRel: ComponentId>(&mut self) -> &mut Self {
         self.assert_term_id();
         unsafe {
             (*self.get_term_id()).flags |= ECS_UP;
@@ -535,7 +535,7 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::cascade`
     #[doc(alias = "term_builder_i::cascade")]
-    fn cascade_type<TravRel: ComponentInfo>(&mut self) -> &mut Self {
+    fn cascade_type<TravRel: ComponentId>(&mut self) -> &mut Self {
         self.assert_term_id();
         unsafe {
             (*self.get_term_id()).flags |= ECS_CASCADE;
@@ -748,7 +748,7 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
-    fn select_src<T: ComponentInfo>(&mut self) -> &mut Self {
+    fn select_src<T: ComponentId>(&mut self) -> &mut Self {
         let world = self.get_world();
         self.select_src_id(T::get_id(world))
     }
@@ -805,7 +805,7 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
-    fn select_first<T: ComponentInfo>(&mut self) -> &mut Self {
+    fn select_first<T: ComponentId>(&mut self) -> &mut Self {
         let world = self.get_world();
         self.select_first_id(T::get_id(world))
     }
@@ -862,7 +862,7 @@ pub trait TermBuilder: Sized {
     ///
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
-    fn select_second<T: ComponentInfo>(&mut self) -> &mut Self {
+    fn select_second<T: ComponentId>(&mut self) -> &mut Self {
         let world = self.get_world();
         self.select_second_id(T::get_id(world))
     }

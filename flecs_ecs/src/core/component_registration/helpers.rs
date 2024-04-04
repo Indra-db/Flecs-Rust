@@ -4,7 +4,7 @@ use flecs_ecs_sys::{ecs_exists, ecs_get_symbol, ecs_world_t};
 
 use crate::core::{create_lifecycle_actions, EntityT, IdT, WorldT, SEPARATOR};
 
-use super::ComponentInfo;
+use super::ComponentId;
 
 pub(crate) fn get_new_component_desc(
     entity: EntityT,
@@ -19,7 +19,7 @@ pub(crate) fn get_new_component_desc(
 
 pub(crate) fn get_new_type_info<T>() -> flecs_ecs_sys::ecs_type_info_t
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     let size = std::mem::size_of::<T>();
     let alignment = if size != 0 {
@@ -92,7 +92,7 @@ pub(crate) fn get_symbol_name(
 /// this function is unsafe because it assumes that the component is registered with a world, not necessarily the world passed in.
 pub(crate) unsafe fn is_component_registered_with_world<T>(world: *const WorldT) -> bool
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     // we know this is safe because we checked if world is not null & if the component is registered
     if !world.is_null() && unsafe { !ecs_exists(world, T::get_id_unchecked()) } {

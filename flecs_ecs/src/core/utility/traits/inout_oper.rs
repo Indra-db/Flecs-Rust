@@ -1,4 +1,4 @@
-use crate::core::{ComponentInfo, ComponentType, InOutKind, OperKind, Struct};
+use crate::core::{ComponentId, ComponentType, InOutKind, OperKind, Struct};
 
 use super::IntoComponentId;
 
@@ -15,7 +15,7 @@ use super::IntoComponentId;
 ///
 /// # Associated Types
 ///
-/// * `Type`: The type of the component data. Must implement `ComponentInfo`.
+/// * `Type`: The type of the component data. Must implement `ComponentId`.
 pub trait InOutType {
     const IN_OUT: InOutKind;
     type Type: IntoComponentId;
@@ -34,15 +34,15 @@ pub trait InOutType {
 ///
 /// # Associated Types
 ///
-/// * `Type`: The type of the component data. Must implement `ComponentInfo`.
+/// * `Type`: The type of the component data. Must implement `ComponentId`.
 pub trait OperType {
     const OPER: OperKind;
-    type Type: ComponentInfo;
+    type Type: ComponentId;
 }
 
 impl<T> InOutType for &mut T
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     const IN_OUT: InOutKind = InOutKind::InOutDefault;
     type Type = T;
@@ -50,7 +50,7 @@ where
 
 impl<T> InOutType for &T
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     type Type = T;
     const IN_OUT: InOutKind = InOutKind::In;
@@ -58,8 +58,8 @@ where
 
 impl<T, U> InOutType for (T, U)
 where
-    T: ComponentInfo,
-    U: ComponentInfo + ComponentType<Struct>,
+    T: ComponentId,
+    U: ComponentId + ComponentType<Struct>,
 {
     type Type = (T, U);
     const IN_OUT: InOutKind = InOutKind::InOutDefault;
@@ -67,7 +67,7 @@ where
 
 impl<T> OperType for &mut T
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     type Type = T;
     const OPER: OperKind = OperKind::And;
@@ -75,7 +75,7 @@ where
 
 impl<T> OperType for &T
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     type Type = T;
     const OPER: OperKind = OperKind::And;
@@ -83,7 +83,7 @@ where
 
 impl<T> OperType for Option<&T>
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     type Type = T;
     const OPER: OperKind = OperKind::Optional;
@@ -91,7 +91,7 @@ where
 
 impl<T> OperType for Option<&mut T>
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     type Type = T;
     const OPER: OperKind = OperKind::Optional;

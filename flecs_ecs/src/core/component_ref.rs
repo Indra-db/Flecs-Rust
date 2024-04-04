@@ -4,7 +4,7 @@ use std::{marker::PhantomData, os::raw::c_void};
 
 use super::{
     c_types::{IdT, RefT, WorldT},
-    component_registration::ComponentInfo,
+    component_registration::ComponentId,
     entity::Entity,
     IntoEntityId, IntoWorld,
 };
@@ -17,13 +17,13 @@ use crate::{
 
 /// A reference to a component from a specific entity.
 /// Refs are a fast mechanism for referring to a specific entity/component
-pub struct Ref<T: ComponentInfo> {
+pub struct Ref<T: ComponentId> {
     world: *mut WorldT,
     component_ref: RefT,
     _marker: PhantomData<T>,
 }
 
-impl<T: ComponentInfo> Ref<T> {
+impl<T: ComponentId> Ref<T> {
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
 
     /// Create a new ref to a component.

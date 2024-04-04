@@ -8,7 +8,7 @@ use crate::core::FlecsErrorCode;
 use crate::{
     core::{
         c_types::{EntityT, IdT, InOutKind, IterT, OperKind, WorldT, ECS_DEPENDS_ON, ECS_PAIR},
-        component_registration::ComponentInfo,
+        component_registration::ComponentId,
         RUST_ECS_ID_FLAGS_MASK,
     },
     ecs_assert,
@@ -213,14 +213,14 @@ pub fn ecs_record_to_row(row: u32) -> i32 {
 ///
 /// # Type Parameters
 ///
-/// * `T`: The type of the component data. Must implement `ComponentInfo`.
+/// * `T`: The type of the component data. Must implement `ComponentId`.
 ///
 /// # Arguments
 ///
 /// * `entity`: The ID of the entity.
 /// * `value`: The value to set for the component.
 /// * `id`: The ID of the component type.
-pub(crate) fn set_helper<T: ComponentInfo>(
+pub(crate) fn set_helper<T: ComponentId>(
     world: *mut WorldT,
     entity: impl IntoEntityId,
     value: T,
@@ -316,7 +316,7 @@ pub fn get_generation(entity: impl IntoEntityId) -> u32 {
 /// let velocity_ptr: *mut Velocity = ecs_field(it, 2);
 /// ```
 #[inline(always)]
-pub unsafe fn ecs_field<T: ComponentInfo>(it: *const IterT, index: i32) -> *mut T {
+pub unsafe fn ecs_field<T: ComponentId>(it: *const IterT, index: i32) -> *mut T {
     let size = std::mem::size_of::<T>();
     ecs_field_w_size(it, size, index) as *mut T
 }

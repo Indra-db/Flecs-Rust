@@ -1,14 +1,14 @@
 use std::{ffi::CStr, sync::OnceLock};
 
-use crate::core::{ComponentId, Entity, EntityT, Enum, IdT, IntoWorld, Struct};
+use crate::core::{Entity, EntityT, Enum, IdComponent, IdT, IntoWorld, Struct};
 
 use super::{
     is_component_registered_with_world, try_register_component, try_register_component_named,
 };
 
-pub trait EmptyComponent: ComponentInfo {}
-pub trait NotEmptyComponent: ComponentInfo {}
-pub trait IsEnum: ComponentInfo {
+pub trait EmptyComponent: ComponentId {}
+pub trait NotEmptyComponent: ComponentId {}
+pub trait IsEnum: ComponentId {
     const IS_ENUM: bool;
 }
 pub trait ECSComponentType {}
@@ -16,7 +16,7 @@ pub trait ECSComponentType {}
 impl ECSComponentType for Enum {}
 impl ECSComponentType for Struct {}
 
-pub trait ComponentType<T: ECSComponentType>: ComponentInfo {}
+pub trait ComponentType<T: ECSComponentType>: ComponentId {}
 
 /// Trait that manages component IDs across multiple worlds & binaries.
 ///
@@ -30,7 +30,7 @@ pub trait ComponentType<T: ECSComponentType>: ComponentInfo {}
 ///      }
 /// ```
 ///
-/// The `ComponentInfo` trait is designed to maintain component IDs for a Rust type
+/// The `ComponentId` trait is designed to maintain component IDs for a Rust type
 /// in a manner that is consistent across different worlds (or instances).
 /// When a component is utilized, this trait will determine whether it has already been registered.
 /// If it hasn't, it registers the component with the current world.
@@ -39,11 +39,9 @@ pub trait ComponentType<T: ECSComponentType>: ComponentInfo {}
 /// If the world doesn't, this implies the component was registered by a different world.
 /// In such a case, the component is registered with the present world using the pre-existing ID.
 /// If the ID is already known, the trait takes care of the component registration and checks for consistency in the input.
-pub trait ComponentInfo: Sized {
-    type UnderlyingType: ComponentInfo + Default + Clone;
-    type UnderlyingEnumType: ComponentInfo + CachedEnumData + Default + Clone;
-    const IS_ENUM: bool;
-    const IS_TAG: bool;
+pub trait ComponentId: Sized + ComponentInfo {
+    type UnderlyingType: ComponentId + Default + Clone;
+    type UnderlyingEnumType: ComponentId + CachedEnumData + Default + Clone;
 
     /// attempts to register the component with the world. If it's already registered, it does nothing.
     fn register_explicit(world: impl IntoWorld) {
@@ -98,14 +96,19 @@ pub trait ComponentInfo: Sized {
 
     // Not public API.
     #[doc(hidden)]
-    fn __get_once_lock_data() -> &'static OnceLock<ComponentId>;
+    fn __get_once_lock_data() -> &'static OnceLock<IdComponent>;
 
     // Not public API.
     #[doc(hidden)]
     #[inline(always)]
-    fn __initialize<F: FnOnce() -> ComponentId>(f: F) -> &'static ComponentId {
+    fn __initialize<F: FnOnce() -> IdComponent>(f: F) -> &'static IdComponent {
         Self::__get_once_lock_data().get_or_init(f)
     }
+}
+
+pub trait ComponentInfo: Sized {
+    const IS_ENUM: bool;
+    const IS_TAG: bool;
 }
 
 pub trait CachedEnumData: ComponentType<Enum> {
@@ -177,4 +180,34 @@ pub trait CachedEnumData: ComponentType<Enum> {
 
     #[doc(hidden)]
     fn __get_enum_data_ptr_mut() -> *mut u64;
+}
+
+impl<T: ComponentInfo> ComponentInfo for &T {
+    const IS_ENUM: bool = T::IS_ENUM;
+    const IS_TAG: bool = T::IS_TAG;
+}
+
+impl<T: ComponentInfo> ComponentInfo for &mut T {
+    const IS_ENUM: bool = T::IS_ENUM;
+    const IS_TAG: bool = T::IS_TAG;
+}
+
+impl<T: ComponentId> ComponentId for &T {
+    fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::IdComponent> {
+        Self::UnderlyingType::__get_once_lock_data()
+    }
+
+    type UnderlyingType = T::UnderlyingType;
+
+    type UnderlyingEnumType = T::UnderlyingEnumType;
+}
+
+impl<T: ComponentId> ComponentId for &mut T {
+    fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::IdComponent> {
+        Self::UnderlyingType::__get_once_lock_data()
+    }
+
+    type UnderlyingType = T::UnderlyingType;
+
+    type UnderlyingEnumType = T::UnderlyingEnumType;
 }

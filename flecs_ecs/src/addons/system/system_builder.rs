@@ -8,7 +8,7 @@ use std::{
 use crate::{
     core::{
         c_types::{EntityT, FTimeT, TermIdT, TermT, WorldT, ECS_DEPENDS_ON, SEPARATOR},
-        component_registration::ComponentInfo,
+        component_registration::ComponentId,
         ecs_dependson,
         filter_builder::FilterBuilderImpl,
         implement_reactor_api,
@@ -194,7 +194,7 @@ where
     #[doc(alias = "system_builder_i::kind")]
     pub fn kind<Phase>(&mut self) -> &mut Self
     where
-        Phase: ComponentInfo,
+        Phase: ComponentId,
     {
         self.kind_id(Phase::get_id(self.world.raw_world))
     }
@@ -312,7 +312,7 @@ where
     #[doc(alias = "system_builder_i::tick_source")]
     pub fn tick_source<Component>(&mut self) -> &mut Self
     where
-        Component: ComponentInfo,
+        Component: ComponentId,
     {
         self.desc.tick_source = Component::get_id(self.world.raw_world);
         self

@@ -31,7 +31,7 @@ use crate::{
 use super::{
     archetype::Archetype,
     c_types::{EntityT, IdT, TypeT, WorldT, SEPARATOR},
-    component_registration::{ComponentInfo, ComponentType, Enum, Struct},
+    component_registration::{ComponentId, ComponentType, Enum, Struct},
     ecs_add_pair, ecs_pair, ecs_pair_first, ecs_pair_second, ecs_record_to_row,
     entity::Entity,
     id::Id,
@@ -350,11 +350,11 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    pub fn get_path_from<T: ComponentInfo>(&self) -> Option<String> {
+    pub fn get_path_from<T: ComponentId>(&self) -> Option<String> {
         self.get_path_from_id_w_sep(T::get_id(self.world), SEPARATOR, SEPARATOR)
     }
 
-    pub fn get_path_from_w_sep<T: ComponentInfo>(
+    pub fn get_path_from_w_sep<T: ComponentId>(
         &self,
         sep: &CStr,
         init_sep: &CStr,
@@ -368,7 +368,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    pub fn get_hierarchy_path_from_parent_type<T: ComponentInfo>(&self) -> Option<String> {
+    pub fn get_hierarchy_path_from_parent_type<T: ComponentId>(&self) -> Option<String> {
         self.get_path_from_id(T::get_id(self.world))
     }
 
@@ -571,7 +571,7 @@ impl EntityView {
     #[doc(alias = "entity_view::each")]
     pub fn for_each_target<T>(&self, func: impl FnMut(Entity))
     where
-        T: ComponentInfo,
+        T: ComponentId,
     {
         self.for_each_target_id(EntityView::new_id_only(T::get_id(self.world)), func);
     }
@@ -643,7 +643,7 @@ impl EntityView {
     #[doc(alias = "entity_view::children")]
     pub fn for_each_children<T, F>(&self, func: F)
     where
-        T: ComponentInfo,
+        T: ComponentId,
         F: FnMut(Entity),
     {
         self.for_each_children_id(T::get_id(self.world), func);
@@ -682,7 +682,7 @@ impl EntityView {
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
     #[inline(always)]
-    pub fn get<T: ComponentInfo>(&self) -> Option<&T::UnderlyingType> {
+    pub fn get<T: ComponentId>(&self) -> Option<&T::UnderlyingType> {
         if !T::IS_ENUM {
             if T::IS_TAG {
                 ecs_assert!(
@@ -728,7 +728,7 @@ impl EntityView {
         }
     }
 
-    pub fn get_callback<T: ComponentInfo>(&self, callback: impl FnOnce(&T::UnderlyingType)) {
+    pub fn get_callback<T: ComponentId>(&self, callback: impl FnOnce(&T::UnderlyingType)) {
         if let Some(component) = self.get::<T>() {
             callback(component);
         }
@@ -752,7 +752,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub unsafe fn get_unchecked<T: ComponentInfo + ComponentType<Struct>>(
+    pub unsafe fn get_unchecked<T: ComponentId + ComponentType<Struct>>(
         &self,
     ) -> &T::UnderlyingType {
         if !T::IS_ENUM {
@@ -823,7 +823,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub unsafe fn get_enum_unchecked<T: ComponentInfo + ComponentType<Enum>>(
+    pub unsafe fn get_enum_unchecked<T: ComponentId + ComponentType<Enum>>(
         &self,
     ) -> &T::UnderlyingType {
         let component_id: IdT = T::get_id(self.world);
@@ -874,7 +874,7 @@ impl EntityView {
     #[doc(alias = "entity_view::get")]
     pub fn get_pair_first_id<First>(&self, second: impl IntoEntityId) -> Option<&First>
     where
-        First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let component_id = First::get_id(self.world);
 
@@ -913,8 +913,8 @@ impl EntityView {
     #[doc(alias = "entity_view::get")]
     pub fn get_pair_first<First, Second>(&self) -> Option<&First>
     where
-        First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
-        Second: ComponentInfo,
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId,
     {
         self.get_pair_first_id(Second::get_id(self.world))
     }
@@ -940,7 +940,7 @@ impl EntityView {
     #[doc(alias = "entity_view::get")]
     pub fn get_pair_second_id<Second>(&self, first: impl IntoEntityId) -> Option<&Second>
     where
-        Second: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let component_id = Second::get_id(self.world);
         ecs_assert!(
@@ -974,8 +974,8 @@ impl EntityView {
     #[doc(alias = "entity_view::get")]
     pub fn get_pair_second<First, Second>(&self) -> Option<&Second>
     where
-        First: ComponentInfo + ComponentType<Struct> + EmptyComponent,
-        Second: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
+        First: ComponentId + ComponentType<Struct> + EmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         self.get_pair_second_id(First::get_id(self.world))
     }
@@ -1016,7 +1016,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target")]
-    pub fn get_target<First: ComponentInfo>(&self, index: i32) -> Entity {
+    pub fn get_target<First: ComponentId>(&self, index: i32) -> Entity {
         Entity::new_from_existing_raw(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, First::get_id(self.world), index)
         })
@@ -1133,7 +1133,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target_for")]
-    pub fn get_target_for_pair_first<First: ComponentInfo>(
+    pub fn get_target_for_pair_first<First: ComponentId>(
         &self,
         second: impl IntoEntityId,
     ) -> *const First {
@@ -1185,7 +1185,7 @@ impl EntityView {
     /// * C++ API: `entity_view::depth`
     #[doc(alias = "entity_view::depth")]
     #[inline(always)]
-    pub fn get_depth<T: ComponentInfo>(&self) -> i32 {
+    pub fn get_depth<T: ComponentId>(&self) -> i32 {
         self.get_depth_by_id(T::get_id(self.world))
     }
 
@@ -1311,7 +1311,7 @@ impl EntityView {
     #[doc(alias = "entity_view::has")]
     pub fn has_enum<T>(&self, constant: T) -> bool
     where
-        T: ComponentInfo + ComponentType<Enum> + CachedEnumData,
+        T: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         let component_id: IdT = T::get_id(self.world);
         // Safety: we know the enum fields are registered because of the previous T::get_id call
@@ -1322,7 +1322,7 @@ impl EntityView {
     // this is pub(crate) because it's used for development purposes only
     pub(crate) fn has_enum_id<T>(&self, enum_id: impl IntoEntityId, constant: T) -> bool
     where
-        T: ComponentInfo + ComponentType<Enum> + CachedEnumData,
+        T: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         let enum_constant_entity_id = constant.get_entity_id_from_enum_field(self.world);
         self.has_id((enum_id, enum_constant_entity_id))
@@ -1346,7 +1346,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    pub fn has_pair_first<First: ComponentInfo>(&self, second: impl IntoEntityId) -> bool {
+    pub fn has_pair_first<First: ComponentId>(&self, second: impl IntoEntityId) -> bool {
         self.has_id((First::get_id(self.world), second.get_id()))
     }
 
@@ -1369,7 +1369,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    pub fn has_pair_enum<T: ComponentInfo, U: ComponentInfo + CachedEnumData>(
+    pub fn has_pair_enum<T: ComponentId, U: ComponentId + CachedEnumData>(
         &self,
         constant: U,
     ) -> bool {
@@ -1433,7 +1433,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::owns`
     #[doc(alias = "entity_view::owns")]
-    pub fn owns_pair_first<First: ComponentInfo>(&self, second: impl IntoEntityId) -> bool {
+    pub fn owns_pair_first<First: ComponentId>(&self, second: impl IntoEntityId) -> bool {
         unsafe {
             ecs_owns_id(
                 self.world,
@@ -1461,7 +1461,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::owns`
     #[doc(alias = "entity_view::owns")]
-    pub fn owns_pair_second<Second: ComponentInfo>(&self, first: impl IntoEntityId) -> bool {
+    pub fn owns_pair_second<Second: ComponentId>(&self, first: impl IntoEntityId) -> bool {
         unsafe {
             ecs_owns_id(
                 self.world,
@@ -1518,7 +1518,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    pub fn is_enabled_pair_first<T: ComponentInfo>(&self, second: impl IntoEntityId) -> bool {
+    pub fn is_enabled_pair_first<T: ComponentId>(&self, second: impl IntoEntityId) -> bool {
         self.is_enabled_id((T::get_id(self.world), second))
     }
 
@@ -1537,7 +1537,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    pub fn is_enabled_pair_second<U: ComponentInfo>(&self, first: impl IntoEntityId) -> bool {
+    pub fn is_enabled_pair_second<U: ComponentId>(&self, first: impl IntoEntityId) -> bool {
         self.is_enabled_id((first, U::get_id(self.world)))
     }
 
@@ -1706,7 +1706,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::to_constant`
     #[doc(alias = "entity_view::to_constant")]
-    pub fn to_constant<T: ComponentInfo>(&self) -> Option<&T::UnderlyingType> {
+    pub fn to_constant<T: ComponentId>(&self) -> Option<&T::UnderlyingType> {
         let ptr = self.get::<T>();
         ecs_assert!(
             ptr.is_some(),
@@ -1730,7 +1730,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::to_constant`
     #[doc(alias = "entity_view::to_constant")]
-    pub unsafe fn to_constant_unchecked<T: ComponentInfo + ComponentType<Enum>>(
+    pub unsafe fn to_constant_unchecked<T: ComponentId + ComponentType<Enum>>(
         &self,
     ) -> &T::UnderlyingType {
         self.get_enum_unchecked::<T>()
@@ -1856,7 +1856,7 @@ impl EntityView {
     #[doc(alias = "entity_builder::observe")]
     pub fn observe<C>(&self, func: impl FnMut()) -> &Self
     where
-        C: EventData + ComponentInfo + EmptyComponent,
+        C: EventData + ComponentId + EmptyComponent,
     {
         self.observe_impl::<C, _>(func)
     }
@@ -1864,7 +1864,7 @@ impl EntityView {
     fn observe_impl<C, Func>(&self, func: Func) -> &Self
     where
         Func: FnMut(),
-        C: EventData + ComponentInfo,
+        C: EventData + ComponentId,
     {
         let new_binding_ctx = Box::<super::ObserverEntityBindingCtx>::default();
         let binding_ctx = Box::leak(new_binding_ctx);
@@ -1901,7 +1901,7 @@ impl EntityView {
     #[doc(alias = "entity_builder::observe")]
     pub fn observe_entity<C>(&self, func: impl FnMut(&mut Entity)) -> &Self
     where
-        C: EventData + ComponentInfo + EmptyComponent,
+        C: EventData + ComponentId + EmptyComponent,
     {
         self.observe_entity_impl::<C, _>(func)
     }
@@ -1909,7 +1909,7 @@ impl EntityView {
     fn observe_entity_impl<C, Func>(&self, func: Func) -> &Self
     where
         Func: FnMut(&mut Entity),
-        C: EventData + ComponentInfo,
+        C: EventData + ComponentId,
     {
         let new_binding_ctx = Box::<super::ObserverEntityBindingCtx>::default();
         let binding_ctx = Box::leak(new_binding_ctx);
@@ -1946,7 +1946,7 @@ impl EntityView {
     #[doc(alias = "entity_builder::observe")]
     pub fn observe_payload<C>(&self, func: impl FnMut(&mut C)) -> &Self
     where
-        C: EventData + ComponentInfo + NotEmptyComponent,
+        C: EventData + ComponentId + NotEmptyComponent,
     {
         self.observe_payload_impl::<C, _>(func)
     }
@@ -1954,7 +1954,7 @@ impl EntityView {
     fn observe_payload_impl<C, Func>(&self, func: Func) -> &Self
     where
         Func: FnMut(&mut C),
-        C: EventData + ComponentInfo,
+        C: EventData + ComponentId,
     {
         let new_binding_ctx = Box::<super::ObserverEntityBindingCtx>::default();
         let binding_ctx = Box::leak(new_binding_ctx);
@@ -1991,7 +1991,7 @@ impl EntityView {
     #[doc(alias = "entity_builder::observe")]
     pub fn observe_payload_entity<C>(&self, func: impl FnMut(&mut Entity, &mut C)) -> &Self
     where
-        C: EventData + ComponentInfo + NotEmptyComponent,
+        C: EventData + ComponentId + NotEmptyComponent,
     {
         self.observe_payload_entity_impl::<C, _>(func)
     }
@@ -1999,7 +1999,7 @@ impl EntityView {
     fn observe_payload_entity_impl<C, Func>(&self, func: Func) -> &Self
     where
         Func: FnMut(&mut Entity, &mut C),
-        C: EventData + ComponentInfo,
+        C: EventData + ComponentId,
     {
         let new_binding_ctx = Box::<super::ObserverEntityBindingCtx>::default();
         let binding_ctx = Box::leak(new_binding_ctx);

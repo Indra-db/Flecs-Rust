@@ -4,7 +4,7 @@ use std::{ffi::CStr, os::raw::c_void, ptr};
 use super::{
     builder::Builder,
     c_types::{TermT, SEPARATOR},
-    component_registration::{ComponentInfo, ComponentType, Enum},
+    component_registration::{ComponentId, ComponentType, Enum},
     filter::Filter,
     iterable::{Filterable, Iterable},
     term::{Term, TermBuilder},
@@ -287,7 +287,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     ///
     /// * C++ API: `filter_builder_i::with`
     #[doc(alias = "filter_builder_i::with")]
-    fn with_pair_first<First: ComponentInfo>(&mut self, second: impl IntoEntityId) -> &mut Self {
+    fn with_pair_first<First: ComponentId>(&mut self, second: impl IntoEntityId) -> &mut Self {
         self.term_with_pair_first::<First>(second)
     }
 
@@ -297,7 +297,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     ///
     /// * C++ API: `filter_builder_i::with`
     #[doc(alias = "filter_builder_i::with")]
-    fn with_pair_name<First: ComponentInfo>(&mut self, second: &'static CStr) -> &mut Self {
+    fn with_pair_name<First: ComponentId>(&mut self, second: &'static CStr) -> &mut Self {
         self.term_with_pair_name::<First>(second)
     }
 
@@ -307,7 +307,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     ///
     /// * C++ API: `filter_builder_i::with`
     #[doc(alias = "filter_builder_i::with")]
-    fn with_enum<T: ComponentInfo + ComponentType<Enum> + CachedEnumData>(
+    fn with_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
         &mut self,
         value: T,
     ) -> &mut Self {
@@ -320,7 +320,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     ///
     /// * C++ API: `filter_builder_i::with`
     #[doc(alias = "filter_builder_i::with")]
-    fn with_enum_wildcard<T: ComponentInfo + ComponentType<Enum> + CachedEnumData>(
+    fn with_enum_wildcard<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
         &mut self,
     ) -> &mut Self {
         self.term_with_pair_first::<T>(ECS_WILDCARD)
@@ -361,7 +361,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     ///
     /// * C++ API: `filter_builder_i::without`
     #[doc(alias = "filter_builder_i::without")]
-    fn without_pair_id<First: ComponentInfo>(&mut self, second: impl IntoEntityId) -> &mut Self {
+    fn without_pair_id<First: ComponentId>(&mut self, second: impl IntoEntityId) -> &mut Self {
         self.term_with_pair_first::<First>(second).not()
     }
 
@@ -371,7 +371,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     ///
     /// * C++ API: `filter_builder_i::without`
     #[doc(alias = "filter_builder_i::without")]
-    fn without_pair_name<First: ComponentInfo>(&mut self, second: &'static CStr) -> &mut Self {
+    fn without_pair_name<First: ComponentId>(&mut self, second: &'static CStr) -> &mut Self {
         self.term_with_pair_name::<First>(second).not()
     }
 
@@ -381,7 +381,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     ///
     /// * C++ API: `filter_builder_i::without`
     #[doc(alias = "filter_builder_i::without")]
-    fn without_enum<T: ComponentInfo + ComponentType<Enum> + CachedEnumData>(
+    fn without_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
         &mut self,
         value: T,
     ) -> &mut Self {
@@ -394,7 +394,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     ///
     /// * C++ API: `filter_builder_i::without`
     #[doc(alias = "filter_builder_i::without")]
-    fn without_pair<First: ComponentInfo, Second: ComponentInfo>(&mut self) -> &mut Self {
+    fn without_pair<First: ComponentId, Second: ComponentId>(&mut self) -> &mut Self {
         let world = self.get_world();
         self.term_with_id((First::get_id(world), Second::get_id(world)))
             .not()
@@ -617,10 +617,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     ///
     /// * C++ API: `filter_builder_i::term`
     #[doc(alias = "filter_builder_i::term")]
-    fn term_with_pair_first<First: ComponentInfo>(
-        &mut self,
-        second: impl IntoEntityId,
-    ) -> &mut Self {
+    fn term_with_pair_first<First: ComponentId>(&mut self, second: impl IntoEntityId) -> &mut Self {
         let world = self.get_world();
         self.term_with_id((First::get_id(world), second))
     }
@@ -631,7 +628,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     ///
     /// * C++ API: `filter_builder_i::term`
     #[doc(alias = "filter_builder_i::term")]
-    fn term_with_pair_name<First: ComponentInfo>(&mut self, second: &'static CStr) -> &mut Self {
+    fn term_with_pair_name<First: ComponentId>(&mut self, second: &'static CStr) -> &mut Self {
         let world = self.get_world();
         self.term_with_id(First::get_id(world))
             .select_second_name(second)
@@ -643,7 +640,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     ///
     /// * C++ API: `filter_builder_i::term`
     #[doc(alias = "filter_builder_i::term")]
-    fn term_with_enum<T: ComponentInfo + ComponentType<Enum> + CachedEnumData>(
+    fn term_with_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
         &mut self,
         value: T,
     ) -> &mut Self {

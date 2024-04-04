@@ -1,5 +1,5 @@
 use crate::core::{
-    ecs_pair, Component, ComponentInfo, Entity, EntityId, EntityView, Id, IdT, UntypedComponent,
+    ecs_pair, Component, ComponentId, Entity, EntityId, EntityView, Id, IdT, UntypedComponent,
 };
 
 /// Extracts the entity id from a type.
@@ -44,7 +44,7 @@ impl IntoEntityId for Entity {
 
 impl<T> IntoEntityId for Component<T>
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     #[inline]
     fn get_id(&self) -> u64 {
@@ -179,7 +179,7 @@ impl IntoEntityIdExt for Entity {
 
 impl<T> IntoEntityIdExt for Component<T>
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     const IS_PAIR: bool = false;
 

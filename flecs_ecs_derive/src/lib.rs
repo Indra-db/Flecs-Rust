@@ -11,11 +11,11 @@ use syn::{Data, DeriveInput, Fields};
 ///
 /// - Depending on whether the type is a struct or an enum, the relevant `ComponentType<Struct>` or `ComponentType<Enum>` trait is implemented.
 /// - Based on the presence of fields or variants, the type will implement either `EmptyComponent` or `NotEmptyComponent`.
-/// - The `ComponentInfo` trait is implemented, providing storage mechanisms for the component.
+/// - The `ComponentId` trait is implemented, providing storage mechanisms for the component.
 ///
 /// ## Requirements:
 ///
-/// - Types deriving `ComponentInfo` should also implement `Clone` and `Default`.
+/// - Types deriving `ComponentId` should also implement `Clone` and `Default`.
 ///   The `Default` implementation can usually be derived via `#[derive(Default)]`. For enums, you'll need to flag the default variant within the enumeration.
 ///
 /// # Note:
@@ -78,13 +78,13 @@ fn impl_cached_component_data_struct(
     };
 
     let component_info_impl = quote! {
-        fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::ComponentId> {
-            static ONCE_LOCK: std::sync::OnceLock<flecs_ecs::core::ComponentId> = std::sync::OnceLock::new();
+        fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::IdComponent> {
+            static ONCE_LOCK: std::sync::OnceLock<flecs_ecs::core::IdComponent> = std::sync::OnceLock::new();
             &ONCE_LOCK
         }
     };
 
-    // Common trait implementation for ComponentType and ComponentInfo
+    // Common trait implementation for ComponentType and ComponentId
     let common_traits = quote! {
         impl flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for #name {}
 
@@ -93,10 +93,14 @@ fn impl_cached_component_data_struct(
         }
 
         impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name {
-            type UnderlyingType = #name;
-            type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
             const IS_ENUM: bool = false;
             #is_tag
+        }
+
+        impl flecs_ecs::core::component_registration::registration_traits::ComponentId for #name {
+            type UnderlyingType = #name;
+            type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
+
             #component_info_impl
         }
     };
@@ -258,8 +262,8 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
     };
 
     let component_info_impl = quote! {
-            fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::ComponentId> {
-                static ONCE_LOCK: std::sync::OnceLock<flecs_ecs::core::ComponentId> = std::sync::OnceLock::new();
+            fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::IdComponent> {
+                static ONCE_LOCK: std::sync::OnceLock<flecs_ecs::core::IdComponent> = std::sync::OnceLock::new();
                 &ONCE_LOCK
             }
     };
@@ -272,10 +276,14 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
         }
 
         impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name {
-            type UnderlyingType = #name;
-            type UnderlyingEnumType = #name;
             const IS_ENUM: bool = true;
             const IS_TAG: bool = false;
+        }
+
+        impl flecs_ecs::core::component_registration::registration_traits::ComponentId for #name {
+            type UnderlyingType = #name;
+            type UnderlyingEnumType = #name;
+
             #component_info_impl
         }
 

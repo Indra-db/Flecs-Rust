@@ -10,7 +10,7 @@ use crate::sys::{
 
 use super::{
     c_types::{TermT, SEPARATOR},
-    component_registration::ComponentInfo,
+    component_registration::ComponentId,
     filter_builder::{FilterBuilder, FilterBuilderImpl},
     implement_reactor_api,
     iterable::{Filterable, Iterable},
@@ -175,7 +175,7 @@ where
     #[doc(alias = "observer_builder_i::event")]
     pub fn add_event_type<E>(&mut self) -> &mut Self
     where
-        E: ComponentInfo,
+        E: ComponentId,
     {
         let event_count = self.event_count as usize;
         self.event_count += 1;

@@ -7,8 +7,8 @@ use flecs_ecs_sys::{
 use crate::core::component_registration::registration_traits::CachedEnumData;
 use crate::{
     core::{
-        get_new_component_desc, get_new_entity_desc, get_new_type_info, get_symbol_name,
-        ComponentId, EntityT, IntoWorld,
+        get_new_component_desc, get_new_entity_desc, get_new_type_info, get_symbol_name, EntityT,
+        IdComponent, IntoWorld,
     },
     ecs_assert,
 };
@@ -16,13 +16,13 @@ use crate::{
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
 
-use super::{is_component_registered_with_world, ComponentInfo};
+use super::{is_component_registered_with_world, ComponentId};
 
 /// attempts to register the component with the world. If it's already registered, it does nothing.
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub(crate) fn try_register_component_impl<T>(world: impl IntoWorld, name: *const c_char) -> EntityT
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     let world = world.get_world_raw_mut();
     let is_registered = T::is_registered();
@@ -67,14 +67,14 @@ where
 /// attempts to register the component with the world. If it's already registered, it does nothing.
 pub fn try_register_component<T>(world: impl IntoWorld)
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     try_register_component_impl::<T>(world, std::ptr::null());
 }
 
 pub fn try_register_component_named<T>(world: impl IntoWorld, name: &CStr) -> EntityT
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     try_register_component_impl::<T>(world, name.as_ptr())
 }
@@ -87,7 +87,7 @@ pub(crate) fn register_component_data<T>(
     is_comp_pre_registered_with_world: bool,
 ) -> bool
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     let world = world.get_world_raw_mut();
 
@@ -141,7 +141,7 @@ fn register_componment_data_explicit<T>(
     is_comp_pre_registered_with_world: bool,
 ) -> EntityT
 where
-    T: ComponentInfo,
+    T: ComponentId,
 {
     let world = world.get_world_raw_mut();
 
@@ -182,7 +182,7 @@ where
     );
 
     if !is_comp_pre_registered {
-        T::__initialize(|| ComponentId { id: entity });
+        T::__initialize(|| IdComponent { id: entity });
     }
 
     entity

@@ -12,7 +12,7 @@ use crate::{addons::meta::Opaque, sys::ecs_opaque_init};
 
 use super::{
     c_types::{IterT, TypeHooksT},
-    component_registration::ComponentInfo,
+    component_registration::ComponentId,
     ecs_field,
     entity::Entity,
     IntoEntityId, IntoWorld,
@@ -136,12 +136,12 @@ impl UntypedComponent {}
 
 /// Component class.
 /// Class used to register components and component metadata.
-pub struct Component<T: ComponentInfo> {
+pub struct Component<T: ComponentId> {
     pub base: UntypedComponent,
     _marker: PhantomData<T>,
 }
 
-impl<T: ComponentInfo> Deref for Component<T> {
+impl<T: ComponentId> Deref for Component<T> {
     type Target = UntypedComponent;
 
     fn deref(&self) -> &Self::Target {
@@ -149,7 +149,7 @@ impl<T: ComponentInfo> Deref for Component<T> {
     }
 }
 
-impl<T: ComponentInfo> Component<T> {
+impl<T: ComponentId> Component<T> {
     /// Create a new component.
     ///
     /// # Arguments
@@ -410,7 +410,7 @@ impl<T: ComponentInfo> Component<T> {
 }
 
 #[cfg(feature = "flecs_meta")]
-impl<T: ComponentInfo> Component<T> {
+impl<T: ComponentId> Component<T> {
     // todo!("Check if this is correctly ported")
     /// # See also
     ///
@@ -418,7 +418,7 @@ impl<T: ComponentInfo> Component<T> {
     #[doc(alias = "component::opque")]
     pub fn opaque<OpaqueType>(&mut self) -> &mut Self
     where
-        OpaqueType: ComponentInfo,
+        OpaqueType: ComponentId,
     {
         let mut ts = Opaque::<OpaqueType>::new(self.world);
         ts.desc.entity = T::get_id(self.world);
