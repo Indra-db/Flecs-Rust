@@ -112,6 +112,7 @@ impl App {
     ///
     /// * C++ API: `app_builder::enable_rest`
     #[doc(alias = "app_builder::enable_rest")]
+    #[cfg(feature = "flecs_rest")]
     pub fn enable_rest(&mut self, port: u16) -> &mut Self {
         self.desc.enable_rest = true;
         self.desc.port = port;
@@ -128,6 +129,7 @@ impl App {
     ///
     /// * C++ API: `app_builder::enable_monitor`
     #[doc(alias = "app_builder::enable_monitor")]
+    #[cfg(feature = "flecs_monitor")]
     pub fn enable_monitor(&mut self, enable: bool) -> &mut Self {
         self.desc.enable_monitor = enable;
         self
