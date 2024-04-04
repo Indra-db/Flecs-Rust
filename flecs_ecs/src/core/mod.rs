@@ -7,7 +7,6 @@ pub mod component_ref;
 pub mod component_registration;
 pub mod entity;
 pub mod entity_view;
-pub mod enum_type;
 pub mod event;
 pub mod event_builder;
 pub mod filter;

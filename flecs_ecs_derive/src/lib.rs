@@ -92,7 +92,7 @@ fn impl_cached_component_data_struct(
             const IS_ENUM: bool = false;
         }
 
-        impl flecs_ecs::core::ComponentInfo for #name {
+        impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name {
             type UnderlyingType = #name;
             type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
             const IS_ENUM: bool = false;
@@ -251,7 +251,7 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
     };
 
     let cached_enum_data = quote! {
-        impl flecs_ecs::core::enum_type::CachedEnumData for #name {
+        impl flecs_ecs::core::CachedEnumData for #name {
             #cached_enum_data_impl
         }
 
@@ -271,7 +271,7 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
             const IS_ENUM: bool = true;
         }
 
-        impl flecs_ecs::core::ComponentInfo for #name {
+        impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name {
             type UnderlyingType = #name;
             type UnderlyingEnumType = #name;
             const IS_ENUM: bool = true;

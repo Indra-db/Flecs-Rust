@@ -5,13 +5,13 @@ use super::{
     builder::Builder,
     c_types::{TermT, SEPARATOR},
     component_registration::{ComponentInfo, ComponentType, Enum},
-    enum_type::CachedEnumData,
     filter::Filter,
     iterable::{Filterable, Iterable},
     term::{Term, TermBuilder},
     type_to_inout,
     world::World,
-    IdT, InOutType, IntoComponentId, IntoEntityId, IntoEntityIdExt, WorldT, ECS_WILDCARD,
+    CachedEnumData, IdT, InOutType, IntoComponentId, IntoEntityId, IntoEntityIdExt, WorldT,
+    ECS_WILDCARD,
 };
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::{core::FlecsErrorCode, sys::ecs_term_is_initialized};

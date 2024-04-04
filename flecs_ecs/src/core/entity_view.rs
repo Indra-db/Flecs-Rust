@@ -34,13 +34,12 @@ use super::{
     component_registration::{ComponentInfo, ComponentType, Enum, Struct},
     ecs_add_pair, ecs_pair, ecs_pair_first, ecs_pair_second, ecs_record_to_row,
     entity::Entity,
-    enum_type::CachedEnumData,
     id::Id,
     table::{Table, TableRange},
     world::World,
-    EmptyComponent, EventBuilderImpl, EventData, IntoComponentId, IntoEntityId, IntoEntityIdExt,
-    IntoWorld, IterT, NotEmptyComponent, ObserverEntityBindingCtx, ECS_ANY, ECS_CHILD_OF,
-    ECS_WILDCARD,
+    CachedEnumData, EmptyComponent, EventBuilderImpl, EventData, IntoComponentId, IntoEntityId,
+    IntoEntityIdExt, IntoWorld, IterT, NotEmptyComponent, ObserverEntityBindingCtx, ECS_ANY,
+    ECS_CHILD_OF, ECS_WILDCARD,
 };
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -239,7 +238,6 @@ impl EntityView {
         Some(unsafe { CStr::from_ptr(name_ptr) })
     }
 
-    //TODO check if we need this -> can we use get_symbol from ComponentInfo?
     /// Returns the entity symbol.
     ///
     /// # See also
@@ -1319,6 +1317,15 @@ impl EntityView {
         // Safety: we know the enum fields are registered because of the previous T::get_id call
         let enum_constant_entity_id = constant.get_entity_id_from_enum_field(self.world);
         self.has_id((component_id, enum_constant_entity_id))
+    }
+
+    // this is pub(crate) because it's used for development purposes only
+    pub(crate) fn has_enum_id<T>(&self, enum_id: impl IntoEntityId, constant: T) -> bool
+    where
+        T: ComponentInfo + ComponentType<Enum> + CachedEnumData,
+    {
+        let enum_constant_entity_id = constant.get_entity_id_from_enum_field(self.world);
+        self.has_id((enum_id, enum_constant_entity_id))
     }
 
     /// Check if entity has the provided pair.

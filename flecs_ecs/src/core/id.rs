@@ -357,7 +357,6 @@ impl Id {
     /// * C++ API: `id::second`
     #[doc(alias = "id::second")]
     pub fn second(&self) -> Entity {
-        //TODO add the assert to cpp flecs
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
 
         let entity = ecs_pair_second(self.raw_id);

@@ -8,13 +8,11 @@ use super::{
     c_types::{IdT, SEPARATOR},
     component_ref::Ref,
     component_registration::{ComponentInfo, ComponentType, Enum, Struct},
-    ecs_pair, ecs_pair_first, ecs_pair_second,
-    enum_type::CachedEnumData,
-    set_helper,
+    ecs_pair, ecs_pair_first, ecs_pair_second, set_helper,
     world::World,
-    EmptyComponent, EntityView, IntoComponentId, IntoEntityId, IntoEntityIdExt, IntoWorld,
-    NotEmptyComponent, ScopedWorld, ECS_DEPENDS_ON, ECS_EXCLUSIVE, ECS_IS_A, ECS_OVERRIDE,
-    ECS_SLOT_OF, ECS_WILDCARD,
+    CachedEnumData, EmptyComponent, EntityView, IntoComponentId, IntoEntityId, IntoEntityIdExt,
+    IntoWorld, NotEmptyComponent, ScopedWorld, ECS_DEPENDS_ON, ECS_EXCLUSIVE, ECS_IS_A,
+    ECS_OVERRIDE, ECS_SLOT_OF, ECS_WILDCARD,
 };
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;

@@ -38,14 +38,14 @@ use super::{
     c_types::{EntityT, IdT, WorldT, SEPARATOR},
     component::{Component, UntypedComponent},
     component_ref::Ref,
-    component_registration::{ComponentInfo, ComponentType, Enum, Struct}, IntoComponentId, IntoEntityId, IntoEntityIdExt, IterAPI, ECS_PREFAB,
+    component_registration::{ComponentInfo, ComponentType, Enum, Struct},
+    IntoComponentId, IntoEntityId, IntoEntityIdExt, IterAPI, ECS_PREFAB,
 };
 use super::{EmptyComponent, NotEmptyComponent};
 
 use super::{
     ecs_pair,
     entity::Entity,
-    enum_type::CachedEnumData,
     event::EventData,
     event_builder::{EventBuilder, EventBuilderTyped},
     id::Id,
@@ -55,7 +55,7 @@ use super::{
     scoped_world::ScopedWorld,
     set_helper,
     term::Term,
-    Builder, Filter, FilterBuilder, Query, QueryBuilder,
+    Builder, CachedEnumData, Filter, FilterBuilder, Query, QueryBuilder,
 };
 
 pub struct World {
@@ -1502,9 +1502,8 @@ impl World {
     where
         T: ComponentInfo + ComponentType<Enum> + CachedEnumData,
     {
-        //TODO we could improve performance here by either passing the id or let it call _unchecked version
-        Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
-            .has_enum::<T>(constant)
+        let id = T::get_id(self.raw_world);
+        Entity::new_from_existing_raw(self.raw_world, id).has_enum_id::<T>(id, constant)
     }
 
     /// Add a singleton component by id.
