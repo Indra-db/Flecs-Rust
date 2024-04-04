@@ -39,7 +39,7 @@ use super::{
     component::{Component, UntypedComponent},
     component_ref::Ref,
     component_registration::{ComponentId, ComponentType, Enum, Struct},
-    IntoComponentId, IntoEntityId, IntoEntityIdExt, IterAPI, ECS_PREFAB,
+    try_register_component, IntoComponentId, IntoEntityId, IntoEntityIdExt, IterAPI, ECS_PREFAB,
 };
 use super::{EmptyComponent, NotEmptyComponent};
 
@@ -2219,8 +2219,10 @@ impl World {
         T: ComponentId + ComponentType<Enum> + CachedEnumData,
         F: FnMut(),
     {
+        try_register_component::<T>(self);
+        // SAFETY: we know that the enum_value is a valid because of the registration call
         self.with_id(
-            enum_value.get_entity_id_from_enum_field(self.raw_world),
+            unsafe { enum_value.get_entity_id_from_enum_field(self.raw_world) },
             func,
         );
     }
@@ -2247,11 +2249,12 @@ impl World {
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
         F: FnMut(),
     {
+        try_register_component::<Second>(self);
+        // SAFETY: we know that the enum_value is a valid because of the registration call
         self.with_id(
-            ecs_pair(
-                First::get_id(self.raw_world),
-                enum_value.get_entity_id_from_enum_field(self.raw_world),
-            ),
+            ecs_pair(First::get_id(self.raw_world), unsafe {
+                enum_value.get_entity_id_from_enum_field(self.raw_world)
+            }),
             func,
         );
     }
@@ -2343,7 +2346,9 @@ impl World {
         &self,
         enum_value: T,
     ) {
-        self.delete_with_id(enum_value.get_entity_id_from_enum_field(self.raw_world));
+        try_register_component::<T>(self);
+        // SAFETY: we know that the enum_value is a valid because of the registration call
+        self.delete_with_id(unsafe { enum_value.get_entity_id_from_enum_field(self.raw_world) });
     }
 
     /// Delete all entities with the given enum tag pair / relationship
@@ -2365,10 +2370,11 @@ impl World {
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
-        self.delete_with_id(ecs_pair(
-            First::get_id(self.raw_world),
-            enum_value.get_entity_id_from_enum_field(self.raw_world),
-        ));
+        try_register_component::<Second>(self);
+        // SAFETY: we know that the enum_value is a valid because of the registration call
+        self.delete_with_id(ecs_pair(First::get_id(self.raw_world), unsafe {
+            enum_value.get_entity_id_from_enum_field(self.raw_world)
+        }));
     }
 
     /// Remove all instances of the given id from entities
@@ -2455,7 +2461,9 @@ impl World {
         &self,
         enum_value: T,
     ) {
-        self.remove_all_id(enum_value.get_entity_id_from_enum_field(self.raw_world));
+        try_register_component::<T>(self);
+        // SAFETY: we know that the enum_value is a valid because of the registration call
+        self.remove_all_id(unsafe { enum_value.get_entity_id_from_enum_field(self.raw_world) });
     }
 
     /// Remove all instances with the given enum tag pair / relationship from entities
@@ -2478,10 +2486,11 @@ impl World {
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
-        self.remove_all_id((
-            First::get_id(self.raw_world),
-            enum_value.get_entity_id_from_enum_field(self.raw_world),
-        ));
+        try_register_component::<Second>(self);
+        // SAFETY: we know that the enum_value is a valid because of the registration call
+        self.remove_all_id((First::get_id(self.raw_world), unsafe {
+            enum_value.get_entity_id_from_enum_field(self.raw_world)
+        }));
     }
 
     /// Defers all operations executed in the passed-in closure. If the world
@@ -2661,10 +2670,11 @@ impl World {
     where
         T: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
-        Entity::new_from_existing_raw(
-            self.raw_world,
-            enum_value.get_entity_id_from_enum_field(self.raw_world),
-        )
+        try_register_component::<T>(self);
+        // SAFETY: we know that the enum_value is a valid because of the registration call
+        Entity::new_from_existing_raw(self.raw_world, unsafe {
+            enum_value.get_entity_id_from_enum_field(self.raw_world)
+        })
     }
 
     /// Create an entity that's associated with a type and name
@@ -2982,10 +2992,11 @@ impl World {
         &self,
         enum_value: T,
     ) -> Entity {
-        Entity::new_from_existing_raw(
-            self.raw_world,
-            enum_value.get_entity_id_from_enum_field(self.raw_world),
-        )
+        try_register_component::<T>(self);
+        // SAFETY: we know that the enum_value is a valid because of the registration call
+        Entity::new_from_existing_raw(self.raw_world, unsafe {
+            enum_value.get_entity_id_from_enum_field(self.raw_world)
+        })
     }
 }
 

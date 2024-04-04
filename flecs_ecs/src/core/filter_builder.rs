@@ -645,7 +645,8 @@ pub trait FilterBuilderImpl: TermBuilder {
         value: T,
     ) -> &mut Self {
         let enum_id = T::get_id(self.get_world());
-        let enum_field_id = value.get_entity_id_from_enum_field(self.get_world());
+        // SAFETY: we know that the enum_value is a valid because of the T::get_id call
+        let enum_field_id = unsafe { value.get_entity_id_from_enum_field(self.get_world()) };
         self.term_with_id((enum_id, enum_field_id))
     }
 

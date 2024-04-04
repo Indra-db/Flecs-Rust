@@ -8,7 +8,7 @@ use super::{
     c_types::{IdT, SEPARATOR},
     component_ref::Ref,
     component_registration::{ComponentId, ComponentType, Enum, Struct},
-    ecs_pair, ecs_pair_first, ecs_pair_second, set_helper,
+    ecs_pair, ecs_pair_first, ecs_pair_second, set_helper, try_register_component,
     world::World,
     CachedEnumData, EmptyComponent, EntityView, IntoComponentId, IntoEntityId, IntoEntityIdExt,
     IntoWorld, NotEmptyComponent, ScopedWorld, ECS_DEPENDS_ON, ECS_EXCLUSIVE, ECS_IS_A,
@@ -359,10 +359,11 @@ impl Entity {
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         let world = self.world;
-        self.add_id((
-            First::get_id(world),
-            enum_value.get_entity_id_from_enum_field(world),
-        ))
+        try_register_component::<Second>(self.world);
+        // SAFETY: we know that the enum_value is a valid because of the T::get_id call
+        self.add_id((First::get_id(world), unsafe {
+            enum_value.get_entity_id_from_enum_field(world)
+        }))
     }
 
     /// Adds a pair to the entity where the first element is the enumeration type,
@@ -387,10 +388,11 @@ impl Entity {
         enum_value: T,
     ) -> Self {
         let world = self.world;
-        self.add_id((
-            T::get_id(world),
-            enum_value.get_entity_id_from_enum_field(world),
-        ))
+        let id = T::get_id(world);
+        // SAFETY: we know that the enum_value is a valid because of the T::get_id call
+        self.add_id((id, unsafe {
+            enum_value.get_entity_id_from_enum_field(world)
+        }))
     }
 
     /// Conditional add.
@@ -521,11 +523,11 @@ impl Entity {
         T: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         let world = self.world;
+        // SAFETY: we know that the enum_value is a valid because of the T::get_id call
         self.add_id_if(
-            (
-                T::get_id(world),
-                enum_value.get_entity_id_from_enum_field(world),
-            ),
+            (T::get_id(world), unsafe {
+                enum_value.get_entity_id_from_enum_field(world)
+            }),
             condition,
         )
     }
@@ -588,10 +590,11 @@ impl Entity {
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         let world = self.world;
-        self.remove_id((
-            First::get_id(world),
-            enum_value.get_entity_id_from_enum_field(world),
-        ))
+        try_register_component::<Second>(self.world);
+        // SAFETY: we know that the enum_value is a valid because of the attempt to register
+        self.remove_id((First::get_id(world), unsafe {
+            enum_value.get_entity_id_from_enum_field(world)
+        }))
     }
 
     /// Removes a pair.
@@ -1129,15 +1132,15 @@ impl Entity {
         First: ComponentId + ComponentType<Struct>,
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
-        //not sure if this is correct
+        try_register_component::<Second>(self.world);
+        // SAFETY: we know that the enum_value is a valid because of attempt to register
         set_helper(
             self.world,
             self.raw_id,
             first,
-            ecs_pair(
-                First::get_id(self.world),
-                constant.get_entity_id_from_enum_field(self.world),
-            ),
+            ecs_pair(First::get_id(self.world), unsafe {
+                constant.get_entity_id_from_enum_field(self.world)
+            }),
         );
         self
     }

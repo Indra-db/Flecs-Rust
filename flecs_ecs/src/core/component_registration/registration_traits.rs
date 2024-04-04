@@ -6,17 +6,15 @@ use super::{
     is_component_registered_with_world, try_register_component, try_register_component_named,
 };
 
-pub trait EmptyComponent: ComponentId {}
-pub trait NotEmptyComponent: ComponentId {}
-pub trait IsEnum: ComponentId {
-    const IS_ENUM: bool;
-}
+pub trait EmptyComponent {}
+pub trait NotEmptyComponent {}
+
 pub trait ECSComponentType {}
 
 impl ECSComponentType for Enum {}
 impl ECSComponentType for Struct {}
 
-pub trait ComponentType<T: ECSComponentType>: ComponentId {}
+pub trait ComponentType<T: ECSComponentType> {}
 
 /// Trait that manages component IDs across multiple worlds & binaries.
 ///
@@ -148,8 +146,7 @@ pub trait CachedEnumData: ComponentType<Enum> {
         unsafe { *Self::__get_enum_data_ptr_mut().add(index) != 0 }
     }
 
-    fn get_entity_id_from_enum_field(&self, world: impl IntoWorld) -> Entity {
-        try_register_component::<Self>(world.get_world_raw_mut());
+    unsafe fn get_entity_id_from_enum_field(&self, world: impl IntoWorld) -> Entity {
         let index = self.get_enum_index();
         Entity::new_from_existing_raw(world, unsafe {
             *Self::__get_enum_data_ptr_mut().add(index)

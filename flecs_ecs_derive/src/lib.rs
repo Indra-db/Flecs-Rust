@@ -5,6 +5,59 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Data, DeriveInput, Fields};
 
+#[proc_macro_derive(InspectGenerics)]
+pub fn inspect_generics(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
+    let mut ast = syn::parse_macro_input!(input as DeriveInput);
+
+    ast.generics.make_where_clause();
+
+    let struct_name = &ast.ident;
+    let (impl_generics, type_generics, where_clause) = &ast.generics.split_for_impl();
+
+    ProcMacroTokenStream::from(quote! {
+        impl #impl_generics myF for #struct_name #type_generics #where_clause {
+
+        }
+    })
+}
+
+// #[proc_macro_derive(InspectGenerics)]
+// pub fn inspect_generics(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
+//     let ast = syn::parse_macro_input!(input as DeriveInput);
+
+//     let struct_name = &ast.ident;
+//     let generics = &ast.generics;
+//     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
+
+//     // Check if there are any generic type parameters or lifetimes
+//     let is_generic = !generics.params.is_empty();
+
+//     // You can use `is_generic` to conditionally generate code based on whether the type is generic.
+//     // For this example, let's generate a simple implementation that does something different
+//     // based on whether the type is generic.
+//     let impl_block = if is_generic {
+//         // Implementation for generic types
+//         quote! {
+//             impl #impl_generics myF for #struct_name #type_generics #where_clause {
+//                 fn my_function() {
+//                     println!("This is a generic type.");
+//                 }
+//             }
+//         }
+//     } else {
+//         // Implementation for non-generic types
+//         quote! {
+//             impl myF for #struct_name {
+//                 fn my_function() {
+//                     println!("This is a non-generic type.");
+//                 }
+//             }
+//         }
+//     };
+
+//     ProcMacroTokenStream::from(impl_block)
+// }
+
 /// `Component` macro for defining ECS components.
 ///
 /// When a type is decorated with `#[derive(Component)]`, several trait implementations are automatically added based on its structure:
@@ -43,15 +96,19 @@ use syn::{Data, DeriveInput, Fields};
 #[proc_macro_derive(Component)]
 pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     // Parse the input tokens into a syntax tree
-    let input = syn::parse_macro_input!(input as DeriveInput);
+    let mut input = syn::parse_macro_input!(input as DeriveInput);
 
     // Build the output
-    let expanded: TokenStream = match &input.data {
-        Data::Struct(data_struct) => impl_cached_component_data_struct(data_struct, &input.ident),
-        Data::Enum(_) => impl_cached_component_data_enum(&input),
-        _ => quote! {
-            compile_error!("The type is neither a struct nor an enum!");
-        },
+    let expanded: TokenStream = {
+        match input.data.clone() {
+            Data::Struct(data_struct) => {
+                impl_cached_component_data_struct(&data_struct, &mut input)
+            }
+            Data::Enum(_) => impl_cached_component_data_enum(&mut input),
+            _ => quote! {
+                compile_error!("The type is neither a struct nor an enum!");
+            },
+        }
     };
 
     // Convert the generated code into a TokenStream and return it
@@ -62,8 +119,16 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 // The implementations depend on the presence or absence of fields in the struct.
 fn impl_cached_component_data_struct(
     data_struct: &syn::DataStruct, // Parsed data structure from the input token stream
-    name: &syn::Ident,             // Name of the structure
+    ast: &mut syn::DeriveInput,    // Name of the structure
 ) -> proc_macro2::TokenStream {
+    let is_generic = !ast.generics.params.is_empty();
+
+    ast.generics.make_where_clause();
+
+    let name = &ast.ident;
+
+    let (impl_generics, type_generics, where_clause) = &ast.generics.split_for_impl();
+
     // Determine if the struct has fields
     let has_fields = match &data_struct.fields {
         Fields::Named(fields) => !fields.named.is_empty(),
@@ -86,36 +151,39 @@ fn impl_cached_component_data_struct(
 
     // Common trait implementation for ComponentType and ComponentId
     let common_traits = quote! {
-        impl flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for #name {}
+        impl #impl_generics  flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for #name #type_generics #where_clause{}
 
-        impl flecs_ecs::core::IsEnum for #name {
-            const IS_ENUM: bool = false;
-        }
-
-        impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name {
+        impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name #type_generics #where_clause{
             const IS_ENUM: bool = false;
             #is_tag
         }
+    };
 
-        impl flecs_ecs::core::component_registration::registration_traits::ComponentId for #name {
-            type UnderlyingType = #name;
-            type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
+    let component_id = if !is_generic {
+        quote! {
+            impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentId for #name #type_generics #where_clause{
+                type UnderlyingType = #name;
+                type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
 
-            #component_info_impl
+                #component_info_impl
+            }
         }
+    } else {
+        quote! {}
     };
 
     // Specific trait implementation based on the presence of fields
     let is_empty_component_trait = if has_fields {
-        quote! { impl flecs_ecs::core::NotEmptyComponent for #name {} }
+        quote! { impl #impl_generics flecs_ecs::core::NotEmptyComponent for #name #type_generics #where_clause{} }
     } else {
-        quote! { impl flecs_ecs::core::EmptyComponent for #name {} }
+        quote! { impl #impl_generics flecs_ecs::core::EmptyComponent for #name #type_generics #where_clause {} }
     };
 
     // Combine common and specific trait implementations
     quote! {
         #is_empty_component_trait
         #common_traits
+        #component_id
     }
 }
 
@@ -195,8 +263,14 @@ fn generate_variant_match_arm(
     }
 }
 
-fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
+fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> TokenStream {
+    let is_generic = !ast.generics.params.is_empty();
+
+    ast.generics.make_where_clause();
+
     let name = &ast.ident;
+
+    let (impl_generics, type_generics, where_clause) = &ast.generics.split_for_impl();
 
     // Ensure it's an enum and get the variants
     let variants = match &ast.data {
@@ -223,14 +297,14 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
     let has_variants = !variants.is_empty();
     let size_variants = variants.len() as u32;
     let not_empty_trait_or_error = if has_variants {
-        quote! { impl flecs_ecs::core::NotEmptyComponent for #name {} }
+        quote! { impl #impl_generics flecs_ecs::core::NotEmptyComponent for #name #type_generics #where_clause {} }
     } else {
         quote! { compile_error!("Enum components should have at least one variant!"); }
     };
 
     let cached_enum_data_impl = quote! {
         const SIZE_ENUM_FIELDS: u32 = #size_variants;
-        type VariantIterator = std::vec::IntoIter<#name>;
+        type VariantIterator = std::vec::IntoIter<#name #impl_generics>;
 
         fn get_cstr_name(&self) -> &std::ffi::CStr {
             match self {
@@ -255,7 +329,7 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
     };
 
     let cached_enum_data = quote! {
-        impl flecs_ecs::core::CachedEnumData for #name {
+        impl #impl_generics flecs_ecs::core::CachedEnumData for #name #type_generics #where_clause{
             #cached_enum_data_impl
         }
 
@@ -268,24 +342,28 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
             }
     };
 
-    quote! {
-        impl flecs_ecs::core::ComponentType<flecs_ecs::core::Enum> for #name {}
+    let component_id = if !is_generic {
+        quote! {
+            impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentId for #name #type_generics #where_clause{
+                type UnderlyingType = #name;
+                type UnderlyingEnumType = #name;
 
-        impl flecs_ecs::core::IsEnum for #name {
-            const IS_ENUM: bool = true;
+                #component_info_impl
+            }
         }
+    } else {
+        quote! {}
+    };
 
-        impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name {
+    quote! {
+        impl #impl_generics flecs_ecs::core::ComponentType<flecs_ecs::core::Enum> for #name #type_generics #where_clause {}
+
+        impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name #type_generics #where_clause{
             const IS_ENUM: bool = true;
             const IS_TAG: bool = false;
         }
 
-        impl flecs_ecs::core::component_registration::registration_traits::ComponentId for #name {
-            type UnderlyingType = #name;
-            type UnderlyingEnumType = #name;
-
-            #component_info_impl
-        }
+        #component_id
 
         #not_empty_trait_or_error
 

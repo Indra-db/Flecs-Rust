@@ -36,6 +36,7 @@ use super::{
     entity::Entity,
     id::Id,
     table::{Table, TableRange},
+    try_register_component,
     world::World,
     CachedEnumData, EmptyComponent, EventBuilderImpl, EventData, IntoComponentId, IntoEntityId,
     IntoEntityIdExt, IntoWorld, IterT, NotEmptyComponent, ObserverEntityBindingCtx, ECS_ANY,
@@ -1315,7 +1316,7 @@ impl EntityView {
     {
         let component_id: IdT = T::get_id(self.world);
         // Safety: we know the enum fields are registered because of the previous T::get_id call
-        let enum_constant_entity_id = constant.get_entity_id_from_enum_field(self.world);
+        let enum_constant_entity_id = unsafe { constant.get_entity_id_from_enum_field(self.world) };
         self.has_id((component_id, enum_constant_entity_id))
     }
 
@@ -1324,7 +1325,7 @@ impl EntityView {
     where
         T: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
-        let enum_constant_entity_id = constant.get_entity_id_from_enum_field(self.world);
+        let enum_constant_entity_id = unsafe { constant.get_entity_id_from_enum_field(self.world) };
         self.has_id((enum_id, enum_constant_entity_id))
     }
 
@@ -1373,8 +1374,10 @@ impl EntityView {
         &self,
         constant: U,
     ) -> bool {
+        try_register_component::<U>(self.world);
         let component_id: IdT = T::get_id(self.world);
-        let enum_constant_entity_id = constant.get_entity_id_from_enum_field(self.world);
+        //this is safe because we attempted to register it beforehand
+        let enum_constant_entity_id = unsafe { constant.get_entity_id_from_enum_field(self.world) };
 
         self.has_id((component_id, enum_constant_entity_id))
     }
@@ -1766,7 +1769,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
-    pub fn emit<T: EventData + EmptyComponent>(&self) {
+    pub fn emit<T: EventData + EmptyComponent + ComponentId>(&self) {
         self.emit_id(T::get_id(self.world));
     }
 
@@ -1780,7 +1783,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
-    pub fn emit_payload<T: EventData + NotEmptyComponent>(&self, payload: &mut T) {
+    pub fn emit_payload<T: EventData + NotEmptyComponent + ComponentId>(&self, payload: &mut T) {
         self.get_world()
             .event::<T>()
             .set_entity_to_emit(self.to_entity())
@@ -1815,7 +1818,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
-    pub fn enqueue<T: EventData + EmptyComponent>(&self) {
+    pub fn enqueue<T: EventData + EmptyComponent + ComponentId>(&self) {
         self.enqueue_id(T::get_id(self.world));
     }
 
@@ -1829,7 +1832,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
-    pub fn enqueue_payload<T: EventData + NotEmptyComponent>(&self, payload: &mut T) {
+    pub fn enqueue_payload<T: EventData + NotEmptyComponent + ComponentId>(&self, payload: &mut T) {
         self.get_world()
             .event::<T>()
             .set_entity_to_emit(self.to_entity())
