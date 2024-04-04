@@ -46,16 +46,12 @@
 //! Note2: zerobit pattern
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
-use crate::{
-    core::c_types::{IdT, TypeHooksT},
-    ecs_assert,
-    sys::{ecs_set_hooks_id, ecs_type_info_t, ecs_world_t},
-};
-use std::{ffi::c_void, ptr};
+use crate::{core::c_types::TypeHooksT, ecs_assert, sys::ecs_type_info_t};
+use std::{ffi::c_void, mem::MaybeUninit, ptr};
 
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub fn register_lifecycle_actions<T: Clone + Default>(world: *mut ecs_world_t, id: IdT) {
-    let cl = TypeHooksT {
+pub fn create_lifecycle_actions<T: Clone + Default>() -> TypeHooksT {
+    TypeHooksT {
         ctor: Some(generic_ctor::<T>),
         dtor: Some(generic_dtor::<T>),
         copy: Some(generic_copy::<T>),
@@ -71,10 +67,6 @@ pub fn register_lifecycle_actions<T: Clone + Default>(world: *mut ecs_world_t, i
         binding_ctx: std::ptr::null_mut(),
         ctx_free: None,
         binding_ctx_free: None,
-    };
-
-    unsafe {
-        ecs_set_hooks_id(world, id, &cl);
     }
 }
 
@@ -105,11 +97,10 @@ extern "C" fn generic_ctor<T: Default>(
         FlecsErrorCode::InternalError
     );
 
-    let arr = ptr as *mut T;
-    for i in 0..count as isize {
+    let arr = ptr as *mut MaybeUninit<T>;
+    for i in 0..count as usize {
         unsafe {
-            let arr_value = &mut *arr.offset(i);
-            *arr_value = T::default();
+            MaybeUninit::write(&mut *arr.add(i), T::default());
         }
     }
 }
@@ -164,7 +155,7 @@ extern "C" fn generic_copy<T: Default + Clone>(
     }
 }
 
-/// This is the generic move for trivial types
+/// This is the generic move for non-trivial types
 /// It will move the memory
 ///
 /// # See also

@@ -38,10 +38,7 @@ use super::{
     c_types::{EntityT, IdT, WorldT, SEPARATOR},
     component::{Component, UntypedComponent},
     component_ref::Ref,
-    component_registration::{
-        register_entity_w_component_explicit, ComponentInfo, ComponentType, Enum, Struct,
-    },
-    ComponentData, EntityId, IntoComponentId, IntoEntityId, IntoEntityIdExt, IterAPI, ECS_PREFAB,
+    component_registration::{ComponentInfo, ComponentType, Enum, Struct}, IntoComponentId, IntoEntityId, IntoEntityIdExt, IterAPI, ECS_PREFAB,
 };
 use super::{EmptyComponent, NotEmptyComponent};
 
@@ -84,12 +81,6 @@ impl Default for World {
         };
 
         world.init_builtin_components();
-        EntityId::__initialize(|| ComponentData {
-            id: unsafe { sys::FLECS_IDecs_u64_tID_ },
-            size: std::mem::size_of::<IdT>(),
-            alignment: std::mem::align_of::<IdT>(),
-            allow_tag: false,
-        });
         world
     }
 }
@@ -1093,10 +1084,10 @@ impl World {
         let singleton_entity = Entity::new_from_existing_raw(self.raw_world, component_id);
 
         ecs_assert!(
-            T::get_size(self.raw_world) != 0,
+            std::mem::size_of::<T>() != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid type: {}",
-            T::get_symbol_name()
+            std::any::type_name::<T>()
         );
         // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
         // it is guaranteed to be valid
@@ -1229,11 +1220,12 @@ impl World {
         First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {
         let component_id = First::get_id(self.raw_world);
+
         ecs_assert!(
-            First::get_size(self.raw_world) != 0,
+            std::mem::size_of::<First>() != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid type: {}",
-            First::get_symbol_name()
+            std::any::type_name::<First>()
         );
 
         // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
@@ -1266,12 +1258,14 @@ impl World {
         First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {
         let component_id = First::get_id(self.raw_world);
+
         ecs_assert!(
-            First::get_size(self.raw_world) != 0,
+            std::mem::size_of::<First>() != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid type: {}",
-            First::get_symbol_name()
+            std::any::type_name::<First>()
         );
+
         // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
         // it is guaranteed to be valid
         unsafe {
@@ -1348,11 +1342,12 @@ impl World {
         Second: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {
         let component_id = Second::get_id(self.raw_world);
+
         ecs_assert!(
-            Second::get_size(self.raw_world) != 0,
+            std::mem::size_of::<Second>() != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid type: {}",
-            Second::get_symbol_name()
+            std::any::type_name::<Second>()
         );
 
         unsafe {
@@ -1383,11 +1378,12 @@ impl World {
         Second: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {
         let component_id = Second::get_id(self.raw_world);
+
         ecs_assert!(
-            Second::get_size(self.raw_world) != 0,
+            std::mem::size_of::<Second>() != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid type: {}",
-            Second::get_symbol_name()
+            std::any::type_name::<Second>()
         );
 
         // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
@@ -1977,7 +1973,9 @@ impl World {
         unsafe {
             ecs_count_id(
                 self.raw_world,
-                enum_value.get_entity_id_from_enum_field(self.raw_world),
+                enum_value
+                    .get_entity_id_from_enum_field(self.raw_world)
+                    .raw_id,
             )
         }
     }
@@ -2687,15 +2685,12 @@ impl World {
     pub fn new_entity_named_type<T: ComponentInfo>(&self, name: &CStr) -> Entity {
         Entity::new_from_existing_raw(
             self.raw_world,
-            register_entity_w_component_explicit::<T>(self.raw_world, name.as_ptr(), true, 0),
+            T::register_explicit_named(self.raw_world, name),
         )
     }
 
     pub fn new_entity_type<T: ComponentInfo>(&self) -> Entity {
-        Entity::new_from_existing_raw(
-            self.raw_world,
-            register_entity_w_component_explicit::<T>(self.raw_world, std::ptr::null(), true, 0),
-        )
+        Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
     }
 
     /// Create an entity that's associated with a name

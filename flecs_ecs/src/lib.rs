@@ -12,3 +12,6 @@ pub use flecs_ecs_sys as sys;
 pub mod core;
 
 pub mod addons;
+
+/// this is to allow using the proc macro's inside lib itself that implements its own traits.
+extern crate self as flecs_ecs;

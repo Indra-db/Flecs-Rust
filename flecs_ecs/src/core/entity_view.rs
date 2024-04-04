@@ -64,6 +64,12 @@ impl DerefMut for EntityView {
     }
 }
 
+impl From<Entity> for EntityView {
+    fn from(entity: Entity) -> Self {
+        Self { id: entity.id }
+    }
+}
+
 impl EntityView {
     /// Wrap an existing entity id.
     /// # Arguments
@@ -685,7 +691,7 @@ impl EntityView {
                     false,
                     FlecsErrorCode::InvalidParameter,
                     "component {} has no size",
-                    T::get_symbol_name()
+                    std::any::type_name::<T>()
                 );
                 None
             } else {
@@ -716,11 +722,17 @@ impl EntityView {
                     !constant_value.is_null(),
                     FlecsErrorCode::InternalError,
                     "missing enum constant value {}",
-                    T::get_symbol_name()
+                    std::any::type_name::<T>()
                 );
 
                 unsafe { constant_value.as_ref() }
             }
+        }
+    }
+
+    pub fn get_callback<T: ComponentInfo>(&self, callback: impl FnOnce(&T::UnderlyingType)) {
+        if let Some(component) = self.get::<T>() {
+            callback(component);
         }
     }
 
@@ -751,7 +763,7 @@ impl EntityView {
                     false,
                     FlecsErrorCode::InvalidParameter,
                     "component {} has no size",
-                    T::get_symbol_name()
+                    std::any::type_name::<T>()
                 );
                 panic!("cannot get a tag component, it has no size");
             } else {
@@ -763,7 +775,7 @@ impl EntityView {
                     !ptr.is_null(),
                     FlecsErrorCode::InternalError,
                     "missing component {}",
-                    T::get_symbol_name()
+                    std::any::type_name::<T>()
                 );
                 &*ptr
             }
@@ -787,7 +799,7 @@ impl EntityView {
                     !constant_value.is_null(),
                     FlecsErrorCode::InternalError,
                     "missing enum constant value {}",
-                    T::get_symbol_name()
+                    std::any::type_name::<T>()
                 );
 
                 unsafe { &*constant_value }
@@ -826,7 +838,7 @@ impl EntityView {
                 !ptr.is_null(),
                 FlecsErrorCode::InternalError,
                 "missing enum constant value {}",
-                T::get_symbol_name()
+                std::any::type_name::<T>()
             );
             &*ptr
         } else {
@@ -837,7 +849,7 @@ impl EntityView {
                 !constant_value.is_null(),
                 FlecsErrorCode::InternalError,
                 "missing enum constant value {}",
-                T::get_symbol_name()
+                std::any::type_name::<T>()
             );
             &*constant_value
         }
@@ -867,11 +879,12 @@ impl EntityView {
         First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {
         let component_id = First::get_id(self.world);
+
         ecs_assert!(
-            First::get_size(self.world) != 0,
+            std::mem::size_of::<First>() != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid type: {}",
-            First::get_symbol_name()
+            std::any::type_name::<First>()
         );
 
         unsafe {
@@ -933,10 +946,10 @@ impl EntityView {
     {
         let component_id = Second::get_id(self.world);
         ecs_assert!(
-            Second::get_size(self.world) != 0,
+            std::mem::size_of::<Second>() != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid type: {}",
-            Second::get_symbol_name()
+            std::any::type_name::<Second>()
         );
 
         unsafe {
@@ -1128,8 +1141,7 @@ impl EntityView {
     ) -> *const First {
         let comp_id = First::get_id(self.world);
         ecs_assert!(
-            //this is safe because the previous line guarantees registration
-            unsafe { First::get_size_unchecked() != 0 },
+            std::mem::size_of::<First>() != 0,
             FlecsErrorCode::InvalidParameter,
             "First element is size 0"
         );
@@ -1305,7 +1317,7 @@ impl EntityView {
     {
         let component_id: IdT = T::get_id(self.world);
         // Safety: we know the enum fields are registered because of the previous T::get_id call
-        let enum_constant_entity_id: IdT = constant.get_entity_id_from_enum_field(self.world);
+        let enum_constant_entity_id = constant.get_entity_id_from_enum_field(self.world);
         self.has_id((component_id, enum_constant_entity_id))
     }
 
@@ -1355,7 +1367,7 @@ impl EntityView {
         constant: U,
     ) -> bool {
         let component_id: IdT = T::get_id(self.world);
-        let enum_constant_entity_id: IdT = constant.get_entity_id_from_enum_field(self.world);
+        let enum_constant_entity_id = constant.get_entity_id_from_enum_field(self.world);
 
         self.has_id((component_id, enum_constant_entity_id))
     }

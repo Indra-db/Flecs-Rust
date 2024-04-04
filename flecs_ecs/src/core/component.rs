@@ -1,7 +1,7 @@
 //! Registering and working with components
 
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-use crate::core::{get_full_type_name, FlecsErrorCode};
+use crate::core::FlecsErrorCode;
 use crate::{
     ecs_assert,
     sys::{ecs_get_hooks_id, ecs_set_hooks_id},
@@ -115,6 +115,16 @@ impl UntypedComponent {
         UntypedComponent {
             entity: Entity::new_from_existing_raw(world, id.get_id()),
         }
+    }
+
+    /// Get the id of the component.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `untyped_component::entity`
+    #[doc(alias = "untyped_component::entity")]
+    pub fn as_entity(&self) -> Entity {
+        self.entity
     }
 }
 
@@ -252,7 +262,7 @@ impl<T: ComponentInfo> Component<T> {
             type_hooks.on_add.is_none(),
             FlecsErrorCode::InvalidOperation,
             "on_add hook already set for component {}",
-            get_full_type_name::<T>()
+            std::any::type_name::<T>()
         );
 
         let binding_ctx = self.get_binding_ctx(&mut type_hooks);
@@ -281,7 +291,7 @@ impl<T: ComponentInfo> Component<T> {
             type_hooks.on_remove.is_none(),
             FlecsErrorCode::InvalidOperation,
             "on_remove hook already set for component {}",
-            get_full_type_name::<T>()
+            std::any::type_name::<T>()
         );
 
         let binding_ctx = self.get_binding_ctx(&mut type_hooks);
@@ -310,7 +320,7 @@ impl<T: ComponentInfo> Component<T> {
             type_hooks.on_set.is_none(),
             FlecsErrorCode::InvalidOperation,
             "on_set hook already set for component {}",
-            get_full_type_name::<T>()
+            std::any::type_name::<T>()
         );
 
         let binding_ctx = self.get_binding_ctx(&mut type_hooks);

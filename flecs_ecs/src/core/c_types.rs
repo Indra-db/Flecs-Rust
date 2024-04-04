@@ -1,7 +1,7 @@
 #![allow(non_upper_case_globals)]
 
 use crate::{
-    core::component_registration::{ComponentData, ComponentInfo, ComponentType, Struct},
+    core::component_registration::{ComponentId, ComponentInfo, ComponentType, Struct},
     sys::{
         ecs_entity_t, ecs_filter_t, ecs_flags32_t, ecs_id_t, ecs_inout_kind_t,
         ecs_inout_kind_t_EcsIn, ecs_inout_kind_t_EcsInOut, ecs_inout_kind_t_EcsInOutDefault,
@@ -17,16 +17,11 @@ use crate::{
 };
 
 #[cfg(feature = "flecs_system")]
-use crate::{
-    core::component_registration::{
-        try_register_struct_component, try_register_struct_component_named,
-    },
-    sys::EcsTickSource,
-};
+use crate::sys::EcsTickSource;
 
 use std::{ffi::CStr, sync::OnceLock};
 
-use super::{EntityId, IntoWorld};
+use super::{EntityId, IntoWorld, NoneEnum};
 
 pub const RUST_ECS_ID_FLAGS_MASK: u64 = 0xFF << 60;
 pub const RUST_ECS_COMPONENT_MASK: u64 = !RUST_ECS_ID_FLAGS_MASK;
@@ -359,95 +354,53 @@ pub type Identifier = EcsIdentifier;
 pub type Poly = EcsPoly;
 pub type Target = EcsTarget;
 
-fn get_ecs_component_data() -> ComponentData {
-    ComponentData {
+fn get_ecs_component_data() -> ComponentId {
+    ComponentId {
         id: unsafe { FLECS_IDEcsComponentID_ },
-        size: std::mem::size_of::<EcsComponent>(),
-        alignment: std::mem::align_of::<EcsComponent>(),
-        allow_tag: true,
     }
 }
 
-fn get_ecs_poly_data() -> ComponentData {
-    ComponentData {
-        id: ECS_POLY,
-        size: std::mem::size_of::<Poly>(),
-        alignment: std::mem::align_of::<Poly>(),
-        allow_tag: true,
-    }
+fn get_ecs_poly_data() -> ComponentId {
+    ComponentId { id: ECS_POLY }
 }
 
 impl ComponentType<Struct> for EcsComponent {}
 
 impl ComponentInfo for EcsComponent {
     type UnderlyingType = EcsComponent;
+    type UnderlyingEnumType = NoneEnum;
     const IS_ENUM: bool = false;
     const IS_TAG: bool = false;
     fn register_explicit(_world: impl IntoWorld) {
-        //this is already registered as FLECS_IDEcsComponentID_
-        Self::__get_once_lock_data().get_or_init(get_ecs_component_data);
+        //this is already registered in the world inside C
     }
 
-    fn register_explicit_named(_world: impl IntoWorld, _name: &CStr) {
-        //this is already registered as FLECS_IDEcsComponentID_
-        Self::__get_once_lock_data().get_or_init(get_ecs_component_data);
+    fn register_explicit_named(_world: impl IntoWorld, _name: &CStr) -> EntityT {
+        //this is already registered in the world inside C
+        unsafe { FLECS_IDEcsComponentID_ }
     }
 
     fn is_registered() -> bool {
-        Self::__get_once_lock_data().get().is_some()
+        //this is already registered in the world inside C
+        true
     }
 
-    fn is_registered_with_world(world: impl IntoWorld) -> bool {
-        if Self::is_registered() {
-            //because this is always registered in the c world
-            true
-        } else {
-            Self::register_explicit(world);
-            true
-        }
-    }
-
-    fn get_data(_world: impl IntoWorld) -> &'static ComponentData {
-        Self::__get_once_lock_data().get_or_init(get_ecs_component_data)
+    fn is_registered_with_world(_: impl IntoWorld) -> bool {
+        //this is already registered in the world inside C
+        true
     }
 
     fn get_id(_world: impl IntoWorld) -> IdT {
-        Self::__get_once_lock_data()
-            .get_or_init(get_ecs_component_data)
-            .id
+        unsafe { FLECS_IDEcsComponentID_ }
     }
 
-    fn get_size(_world: impl IntoWorld) -> usize {
-        Self::__get_once_lock_data()
-            .get_or_init(get_ecs_component_data)
-            .size
+    unsafe fn get_id_unchecked() -> IdT {
+        FLECS_IDEcsComponentID_
     }
 
-    fn get_alignment(_world: impl IntoWorld) -> usize {
-        Self::__get_once_lock_data()
-            .get_or_init(get_ecs_component_data)
-            .alignment
-    }
-
-    fn get_allow_tag(_world: impl IntoWorld) -> bool {
-        Self::__get_once_lock_data()
-            .get_or_init(get_ecs_component_data)
-            .allow_tag
-    }
-
-    fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
-        static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
+    fn __get_once_lock_data() -> &'static OnceLock<ComponentId> {
+        static ONCE_LOCK: OnceLock<ComponentId> = OnceLock::new();
         &ONCE_LOCK
-    }
-
-    fn get_symbol_name_c() -> &'static str {
-        static SYMBOL_NAME_C: OnceLock<String> = OnceLock::new();
-        SYMBOL_NAME_C.get_or_init(|| String::from("EcsComponent\0"))
-    }
-
-    fn get_symbol_name() -> &'static str {
-        let name = Self::get_symbol_name_c();
-        &name[..name.len() - 1]
     }
 }
 
@@ -455,198 +408,119 @@ impl ComponentType<Struct> for Poly {}
 
 impl ComponentInfo for Poly {
     type UnderlyingType = Poly;
+    type UnderlyingEnumType = NoneEnum;
     const IS_TAG: bool = false;
     const IS_ENUM: bool = false;
     fn register_explicit(_world: impl IntoWorld) {
-        //this is already registered as FLECS_IDEcsComponentID_
-        Self::__get_once_lock_data().get_or_init(get_ecs_poly_data);
+        //this is already registered in the world inside C
     }
 
-    fn register_explicit_named(_world: impl IntoWorld, _name: &CStr) {
-        //this is already registered as FLECS_IDEcsComponentID_
-        Self::__get_once_lock_data().get_or_init(get_ecs_poly_data);
+    fn register_explicit_named(_world: impl IntoWorld, _name: &CStr) -> EntityT {
+        //this is already registered in the world inside C
+        ECS_POLY
     }
 
     fn is_registered() -> bool {
-        Self::__get_once_lock_data().get().is_some()
+        //this is already registered in the world inside C
+        true
     }
 
-    fn is_registered_with_world(world: impl IntoWorld) -> bool {
-        if Self::is_registered() {
-            //because this is always registered in the c world
-            true
-        } else {
-            Self::register_explicit(world);
-            true
-        }
-    }
-
-    fn get_data(_world: impl IntoWorld) -> &'static ComponentData {
-        Self::__get_once_lock_data().get_or_init(get_ecs_poly_data)
+    fn is_registered_with_world(_: impl IntoWorld) -> bool {
+        //this is already registered in the world inside C
+        true
     }
 
     fn get_id(_world: impl IntoWorld) -> IdT {
-        Self::__get_once_lock_data()
-            .get_or_init(get_ecs_poly_data)
-            .id
+        ECS_POLY
     }
 
-    fn get_size(_world: impl IntoWorld) -> usize {
-        Self::__get_once_lock_data()
-            .get_or_init(get_ecs_poly_data)
-            .size
+    unsafe fn get_id_unchecked() -> IdT {
+        ECS_POLY
     }
 
-    fn get_alignment(_world: impl IntoWorld) -> usize {
-        Self::__get_once_lock_data()
-            .get_or_init(get_ecs_poly_data)
-            .alignment
-    }
-
-    fn get_allow_tag(_world: impl IntoWorld) -> bool {
-        Self::__get_once_lock_data()
-            .get_or_init(get_ecs_poly_data)
-            .allow_tag
-    }
-
-    fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
-        static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
+    fn __get_once_lock_data() -> &'static OnceLock<ComponentId> {
+        static ONCE_LOCK: OnceLock<ComponentId> = OnceLock::new();
         &ONCE_LOCK
-    }
-
-    fn get_symbol_name_c() -> &'static str {
-        static SYMBOL_NAME_C: OnceLock<String> = OnceLock::new();
-        SYMBOL_NAME_C.get_or_init(|| String::from("Poly\0"))
-    }
-
-    fn get_symbol_name() -> &'static str {
-        let name = Self::get_symbol_name_c();
-        &name[..name.len() - 1]
     }
 }
 
 #[cfg(feature = "flecs_system")]
 impl ComponentInfo for TickSource {
     type UnderlyingType = TickSource;
+    type UnderlyingEnumType = NoneEnum;
     const IS_TAG: bool = false;
     const IS_ENUM: bool = false;
-    fn register_explicit(world: impl IntoWorld) {
-        try_register_struct_component::<Self>(world);
+
+    fn register_explicit(_world: impl IntoWorld) {
+        //this is already registered in the world inside C
     }
 
-    fn register_explicit_named(world: impl IntoWorld, name: &CStr) {
-        try_register_struct_component_named::<Self>(world, name);
+    fn register_explicit_named(_world: impl IntoWorld, _name: &CStr) -> EntityT {
+        //this is already registered in the world inside C
+        ECS_TICK_SOURCE
     }
 
     fn is_registered() -> bool {
-        Self::__get_once_lock_data().get().is_some()
+        //this is already registered in the world inside C
+        true
     }
 
-    fn get_data(world: impl IntoWorld) -> &'static ComponentData {
-        try_register_struct_component::<Self>(world);
-        //this is safe because we checked if the component is registered / registered it
-        unsafe { Self::get_data_unchecked() }
+    fn is_registered_with_world(_: impl IntoWorld) -> bool {
+        //this is already registered in the world inside C
+        true
     }
 
-    fn get_id(world: impl IntoWorld) -> IdT {
-        try_register_struct_component::<Self>(world);
-        //this is safe because we checked if the component is registered / registered it
-        unsafe { Self::get_id_unchecked() }
+    unsafe fn get_id_unchecked() -> IdT {
+        ECS_TICK_SOURCE
     }
 
-    fn get_size(world: impl IntoWorld) -> usize {
-        try_register_struct_component::<Self>(world);
-        //this is safe because we checked if the component is registered / registered it
-        unsafe { Self::get_size_unchecked() }
+    fn get_id(_: impl IntoWorld) -> IdT {
+        ECS_TICK_SOURCE
     }
 
-    fn get_alignment(world: impl IntoWorld) -> usize {
-        try_register_struct_component::<Self>(world);
-        //this is safe because we checked if the component is registered / registered it
-        unsafe { Self::get_alignment_unchecked() }
-    }
-
-    fn get_allow_tag(world: impl IntoWorld) -> bool {
-        try_register_struct_component::<Self>(world);
-        //this is safe because we checked if the component is registered / registered it
-        unsafe { Self::get_allow_tag_unchecked() }
-    }
-
-    fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
-        static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
+    fn __get_once_lock_data() -> &'static OnceLock<ComponentId> {
+        static ONCE_LOCK: OnceLock<ComponentId> = OnceLock::new();
         &ONCE_LOCK
-    }
-
-    // Function for C compatibility, returns null-terminated string.
-    fn get_symbol_name_c() -> &'static str {
-        static SYMBOL_NAME_C: OnceLock<String> = OnceLock::new();
-        SYMBOL_NAME_C.get_or_init(|| "EcsTickSource\0".to_string())
-    }
-
-    // Function to return a &str slice without the null termination for Rust.
-    fn get_symbol_name() -> &'static str {
-        let name = Self::get_symbol_name_c();
-        &name[..name.len() - 1]
     }
 }
 
 #[cfg(feature = "flecs_system")]
 impl ComponentInfo for EntityId {
     type UnderlyingType = EntityId;
+    type UnderlyingEnumType = NoneEnum;
     const IS_ENUM: bool = false;
     const IS_TAG: bool = false;
 
     fn register_explicit(_world: impl IntoWorld) {
-        // already registered by flecs_c
+        // already registered by flecs in World
     }
 
-    fn register_explicit_named(_world: impl IntoWorld, _name: &CStr) {
-        // already registered by flecs_c
+    fn register_explicit_named(_world: impl IntoWorld, _name: &CStr) -> EntityT {
+        // already registered by flecs in World
+        unsafe { flecs_ecs_sys::FLECS_IDecs_entity_tID_ }
     }
 
     fn is_registered() -> bool {
         true
     }
 
-    fn get_data(_world: impl IntoWorld) -> &'static ComponentData {
-        //this is safe because it's already registered in flecs_c/ world
-        unsafe { Self::get_data_unchecked() }
+    fn is_registered_with_world(_: impl IntoWorld) -> bool {
+        //because this is always registered in the c world
+        true
+    }
+
+    unsafe fn get_id_unchecked() -> IdT {
+        //this is safe because it's already registered in flecs_c / world
+        flecs_ecs_sys::FLECS_IDecs_entity_tID_
     }
 
     fn get_id(_world: impl IntoWorld) -> IdT {
         //this is safe because it's already registered in flecs_c / world
-        unsafe { Self::get_id_unchecked() }
+        unsafe { flecs_ecs_sys::FLECS_IDecs_u64_tID_ }
     }
 
-    fn get_size(_world: impl IntoWorld) -> usize {
-        //this is safe because it's already registered in flecs_c / world
-        unsafe { Self::get_size_unchecked() }
-    }
-
-    fn get_alignment(_world: impl IntoWorld) -> usize {
-        //this is safe because it's already registered in flecs_c / world
-        unsafe { Self::get_alignment_unchecked() }
-    }
-
-    fn get_allow_tag(_world: impl IntoWorld) -> bool {
-        //this is safe because it's already registered in flecs_c
-        unsafe { Self::get_allow_tag_unchecked() }
-    }
-
-    fn __get_once_lock_data() -> &'static OnceLock<ComponentData> {
-        static ONCE_LOCK: OnceLock<ComponentData> = OnceLock::new();
+    fn __get_once_lock_data() -> &'static OnceLock<ComponentId> {
+        static ONCE_LOCK: OnceLock<ComponentId> = OnceLock::new();
         &ONCE_LOCK
-    }
-
-    // Function for C compatibility, returns null-terminated string.
-    fn get_symbol_name_c() -> &'static str {
-        static SYMBOL_NAME_C: OnceLock<String> = OnceLock::new();
-        SYMBOL_NAME_C.get_or_init(|| "u64\0".to_string())
-    }
-
-    // Function to return a &str slice without the null termination for Rust.
-    fn get_symbol_name() -> &'static str {
-        let name = Self::get_symbol_name_c();
-        &name[..name.len() - 1]
     }
 }

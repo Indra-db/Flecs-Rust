@@ -77,146 +77,10 @@ fn impl_cached_component_data_struct(
         quote! { const IS_TAG: bool = true; }
     };
 
-    let cached_component_data_impl = quote! {
-
-        fn register_explicit(world: impl flecs_ecs::core::IntoWorld)
-        {
-            flecs_ecs::core::try_register_struct_component::<Self>(world);
-        }
-
-        fn register_explicit_named(world: impl flecs_ecs::core::IntoWorld, name: &std::ffi::CStr)
-        {
-            use std::ffi::CStr;
-            flecs_ecs::core::try_register_struct_component_named::<Self>(world, name);
-        }
-
-        fn get_data(world: impl flecs_ecs::core::IntoWorld) -> &'static flecs_ecs::core::ComponentData
-        {
-            flecs_ecs::core::try_register_struct_component::<Self>(world);
-            //this is safe because we checked if the component is registered / registered it
-            unsafe { Self::get_data_unchecked() }
-        }
-
-        fn get_id(world: impl flecs_ecs::core::IntoWorld) ->  flecs_ecs::core::IdT {
-            flecs_ecs::core::try_register_struct_component::<Self>(world);
-            //this is safe because we checked if the component is registered / registered it
-            unsafe { Self::get_id_unchecked() }
-        }
-
-        fn get_size(world: impl flecs_ecs::core::IntoWorld) -> usize {
-            flecs_ecs::core::try_register_struct_component::<Self>(world);
-            //this is safe because we checked if the component is registered / registered it
-            unsafe { Self::get_size_unchecked() }
-        }
-
-        fn get_alignment(world: impl flecs_ecs::core::IntoWorld) -> usize {
-            flecs_ecs::core::try_register_struct_component::<Self>(world);
-            //this is safe because we checked if the component is registered / registered it
-            unsafe { Self::get_alignment_unchecked() }
-        }
-
-        fn get_allow_tag(world: impl flecs_ecs::core::IntoWorld) -> bool {
-            flecs_ecs::core::try_register_struct_component::<Self>(world);
-            //this is safe because we checked if the component is registered / registered it
-            unsafe { Self::get_allow_tag_unchecked() }
-        }
-
-        fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::ComponentData> {
-            static ONCE_LOCK: std::sync::OnceLock<flecs_ecs::core::ComponentData> = std::sync::OnceLock::new();
+    let component_info_impl = quote! {
+        fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::ComponentId> {
+            static ONCE_LOCK: std::sync::OnceLock<flecs_ecs::core::ComponentId> = std::sync::OnceLock::new();
             &ONCE_LOCK
-        }
-
-
-        // Function for C compatibility, returns null-terminated string.
-        fn get_symbol_name_c() -> &'static str {
-            use std::any::type_name;
-            static SYMBOL_NAME_C: std::sync::OnceLock<String> = std::sync::OnceLock::new();
-            SYMBOL_NAME_C.get_or_init(|| {
-                let mut name = type_name::<Self>().replace("::", ".");
-                name.push('\0');  // Add null terminator to make it C compatible.
-                name
-            })
-        }
-
-        // Function to return a &str slice without the null termination for Rust.
-
-        fn get_symbol_name() -> &'static str {
-            let name = Self::get_symbol_name_c();
-            &name[..name.len() - 1]
-        }
-    };
-
-    let cached_component_data_impl_ref = quote! {
-
-        fn register_explicit(world: impl flecs_ecs::core::IntoWorld)
-        {
-            flecs_ecs::core::try_register_struct_component::<Self::UnderlyingType>(world);
-        }
-
-        fn register_explicit_named(world: impl flecs_ecs::core::IntoWorld, name: &std::ffi::CStr)
-        {
-            use std::ffi::CStr;
-            flecs_ecs::core::try_register_struct_component_named::<Self::UnderlyingType>(world, name);
-        }
-
-        fn get_data(world: impl flecs_ecs::core::IntoWorld) -> &'static flecs_ecs::core::ComponentData
-        {
-            flecs_ecs::core::try_register_struct_component::<Self::UnderlyingType>(world);
-            //this is safe because we checked if the component is registered / registered it
-            unsafe { Self::get_data_unchecked() }
-        }
-
-        fn get_id(world: impl flecs_ecs::core::IntoWorld) ->  flecs_ecs::core::IdT {
-            flecs_ecs::core::try_register_struct_component::<Self::UnderlyingType>(world);
-            //this is safe because we checked if the component is registered / registered it
-            unsafe { Self::get_id_unchecked() }
-        }
-
-        fn get_size(world: impl flecs_ecs::core::IntoWorld) -> usize {
-            flecs_ecs::core::try_register_struct_component::<Self::UnderlyingType>(world);
-            //this is safe because we checked if the component is registered / registered it
-            unsafe { Self::get_size_unchecked() }
-        }
-
-        fn get_alignment(world: impl flecs_ecs::core::IntoWorld) -> usize {
-            flecs_ecs::core::try_register_struct_component::<Self::UnderlyingType>(world);
-            //this is safe because we checked if the component is registered / registered it
-            unsafe { Self::get_alignment_unchecked() }
-        }
-
-        fn get_allow_tag(world: impl flecs_ecs::core::IntoWorld) -> bool {
-            flecs_ecs::core::try_register_struct_component::<Self::UnderlyingType>(world);
-            //this is safe because we checked if the component is registered / registered it
-            unsafe { Self::get_allow_tag_unchecked() }
-        }
-
-        fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::ComponentData> {
-            Self::UnderlyingType::__get_once_lock_data()
-        }
-
-        // Function for C compatibility, returns null-terminated string.
-
-        fn get_symbol_name_c() -> &'static str {
-            Self::UnderlyingType::get_symbol_name_c()
-        }
-
-        // Function to return a &str slice without the null termination for Rust.
-
-        fn get_symbol_name() -> &'static str {
-            Self::UnderlyingType::get_symbol_name()
-        }
-
-        fn __initialize<F: FnOnce() -> flecs_ecs::core::ComponentData>(f: F) -> &'static flecs_ecs::core::ComponentData {
-            Self::UnderlyingType::__get_once_lock_data().get_or_init(f)
-        }
-
-
-        unsafe fn get_data_unchecked() -> &'static flecs_ecs::core::ComponentData {
-            Self::UnderlyingType::__get_once_lock_data().get().unwrap_unchecked()
-        }
-
-        fn is_registered() -> bool {
-            Self::UnderlyingType::__get_once_lock_data().get().is_some()
         }
     };
 
@@ -230,23 +94,10 @@ fn impl_cached_component_data_struct(
 
         impl flecs_ecs::core::ComponentInfo for #name {
             type UnderlyingType = #name;
+            type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
             const IS_ENUM: bool = false;
             #is_tag
-            #cached_component_data_impl
-        }
-
-        impl flecs_ecs::core::ComponentInfo for &#name {
-            type UnderlyingType = #name;
-            const IS_ENUM: bool = false;
-            #is_tag
-            #cached_component_data_impl_ref
-        }
-
-        impl flecs_ecs::core::ComponentInfo for &mut #name {
-            type UnderlyingType = #name;
-            const IS_ENUM: bool = false;
-            #is_tag
-            #cached_component_data_impl_ref
+            #component_info_impl
         }
     };
 
@@ -405,69 +256,11 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
         }
 
     };
-    let cached_component_data_impl = quote! {
-        fn register_explicit(world: impl flecs_ecs::core::IntoWorld)
-            {
-                flecs_ecs::core::try_register_enum_component::<Self>(world);
-            }
 
-            fn register_explicit_named(world: impl flecs_ecs::core::IntoWorld, name: &std::ffi::CStr)
-            {
-                use std::ffi::CStr;
-                flecs_ecs::core::try_register_enum_component_named::<Self>(world, name);
-            }
-
-            fn get_data(world: impl flecs_ecs::core::IntoWorld) -> &'static flecs_ecs::core::ComponentData
-            {
-                flecs_ecs::core::try_register_enum_component::<Self>(world);
-                //this is safe because we checked if the component is registered / registered it
-                unsafe { Self::get_data_unchecked() }
-            }
-
-            fn get_id(world: impl flecs_ecs::core::IntoWorld) ->  flecs_ecs::core::IdT {
-                flecs_ecs::core::try_register_enum_component::<Self>(world);
-                //this is safe because we checked if the component is registered / registered it
-                unsafe { Self::get_id_unchecked() }
-            }
-
-            fn get_size(world: impl flecs_ecs::core::IntoWorld) -> usize {
-                flecs_ecs::core::try_register_enum_component::<Self>(world);
-                //this is safe because we checked if the component is registered / registered it
-                unsafe { Self::get_size_unchecked() }
-            }
-
-            fn get_alignment(world: impl flecs_ecs::core::IntoWorld) -> usize {
-                flecs_ecs::core::try_register_enum_component::<Self>(world);
-                //this is safe because we checked if the component is registered / registered it
-                unsafe { Self::get_alignment_unchecked() }
-            }
-
-            fn get_allow_tag(world: impl flecs_ecs::core::IntoWorld) -> bool {
-                flecs_ecs::core::try_register_enum_component::<Self>(world);
-                //this is safe because we checked if the component is registered / registered it
-                unsafe { Self::get_allow_tag_unchecked() }
-            }
-
-            fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::ComponentData> {
-                static ONCE_LOCK: std::sync::OnceLock<flecs_ecs::core::ComponentData> = std::sync::OnceLock::new();
+    let component_info_impl = quote! {
+            fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::ComponentId> {
+                static ONCE_LOCK: std::sync::OnceLock<flecs_ecs::core::ComponentId> = std::sync::OnceLock::new();
                 &ONCE_LOCK
-            }
-
-            // Function for C compatibility, returns null-terminated string.
-            fn get_symbol_name_c() -> &'static str {
-                use std::any::type_name;
-                static SYMBOL_NAME_C: std::sync::OnceLock<String> = std::sync::OnceLock::new();
-                SYMBOL_NAME_C.get_or_init(|| {
-                    let mut name = type_name::<Self>().replace("::", ".");
-                    name.push('\0');  // Add null terminator to make it C compatible.
-                    name
-                })
-            }
-
-            // Function to return a &str slice without the null termination for Rust.
-            fn get_symbol_name() -> &'static str {
-                let name = Self::get_symbol_name_c();
-                &name[..name.len() - 1]
             }
     };
 
@@ -480,9 +273,10 @@ fn impl_cached_component_data_enum(ast: &syn::DeriveInput) -> TokenStream {
 
         impl flecs_ecs::core::ComponentInfo for #name {
             type UnderlyingType = #name;
+            type UnderlyingEnumType = #name;
             const IS_ENUM: bool = true;
             const IS_TAG: bool = false;
-            #cached_component_data_impl
+            #component_info_impl
         }
 
         #not_empty_trait_or_error

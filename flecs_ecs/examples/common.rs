@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![allow(unused_imports)]
 
 pub use flecs_ecs::{core::*, macros::Component};
 

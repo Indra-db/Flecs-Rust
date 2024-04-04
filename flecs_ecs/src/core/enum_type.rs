@@ -1,9 +1,8 @@
 use std::ffi::CStr;
 
 use super::{
-    c_types::EntityT,
-    component_registration::{try_register_enum_component, ComponentType, Enum},
-    IntoWorld,
+    component_registration::{ComponentType, Enum},
+    try_register_component, Entity, IntoWorld,
 };
 
 pub trait CachedEnumData: ComponentType<Enum> {
@@ -43,18 +42,26 @@ pub trait CachedEnumData: ComponentType<Enum> {
         unsafe { *Self::__get_enum_data_ptr_mut().add(index) != 0 }
     }
 
-    fn get_entity_id_from_enum_field(&self, world: impl IntoWorld) -> EntityT {
-        try_register_enum_component::<Self>(world.get_world_raw_mut());
+    fn get_entity_id_from_enum_field(&self, world: impl IntoWorld) -> Entity {
+        try_register_component::<Self>(world.get_world_raw_mut());
         let index = self.get_enum_index();
-        unsafe { *Self::__get_enum_data_ptr_mut().add(index) }
+        Entity::new_from_existing_raw(world, unsafe {
+            *Self::__get_enum_data_ptr_mut().add(index)
+        })
     }
 
     /// ## Safety
     /// this function assumes you're sure that the enum fields are registered previously
     /// if uncertain use `get_entity_id_from_enum_field`
-    unsafe fn get_entity_id_from_enum_field_unchecked(&self) -> EntityT {
+    ///
+    /// # Returns
+    ///
+    /// The Entity without the world attached to it. Use `Entity::new_from_existing_raw` to attach a world to it.
+    /// use with caution if no world is attached to the entity, it will cause a panic when you try to operate on it.
+    unsafe fn get_entity_id_from_enum_field_unchecked(&self) -> Entity {
         let index = self.get_enum_index();
-        unsafe { *Self::__get_enum_data_ptr_mut().add(index) }
+
+        Entity::new_id_only(unsafe { *Self::__get_enum_data_ptr_mut().add(index) })
     }
 
     /// ## Safety

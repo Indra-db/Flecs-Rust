@@ -54,7 +54,10 @@ impl<T: ComponentInfo> Ref<T> {
             id = T::get_id(world);
         }
 
-        ecs_assert!(T::get_size(world) != 0, FlecsErrorCode::InvalidParameter);
+        ecs_assert!(
+            std::mem::size_of::<T>() != 0,
+            FlecsErrorCode::InvalidParameter
+        );
 
         let component_ref = unsafe { ecs_ref_init_id(world, entity.get_id(), id) };
 

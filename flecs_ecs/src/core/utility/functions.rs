@@ -175,65 +175,8 @@ pub fn ecs_entity_id_high(value: impl IntoEntityId) -> u64 {
     value.get_id() >> 32
 }
 
-/// Get the type name of the given type.
-///
-/// # Type Parameters
-///
-/// * `T`: The type to get the name of.
-///
-/// # Returns
-///
-/// `[Type]` string slice.
-///
-/// # Example
-///
-/// ```
-/// use flecs_ecs::core::get_only_type_name;
-///
-/// pub mod Bar {
-///     pub struct Foo;
-/// }
-///
-/// let name = get_only_type_name::<Bar::Foo>();
-/// assert_eq!(name, "Foo");
-/// ```
-#[inline(always)]
-pub fn get_only_type_name<T>() -> &'static str {
-    use std::any::type_name;
-    let name = type_name::<T>();
-    name.split("::").last().unwrap_or(name)
-}
-
-/// Get the full type name of the given type.
-///
-/// # Type Parameters
-///
-/// * `T`: The type to get the name of.
-///
-/// # Returns
-///
-/// `[module]::[type]` string slice.
-///
-/// # Example
-///
-#[cfg_attr(doctest, doc = " ````no_test")]
-/// ```
-///
-/// pub mod Bar {
-///     pub struct Foo;
-/// }
-///
-/// let name = get_full_type_name::<Bar::Foo>();
-/// assert_eq!(name, "Bar::Foo");
-/// ```
-#[inline(always)]
-pub fn get_full_type_name<T>() -> &'static str {
-    use std::any::type_name;
-    type_name::<T>()
-}
-
-pub fn get_full_type_name_cstring<T>() -> CString {
-    CString::new(get_full_type_name::<T>()).unwrap()
+pub fn get_type_name_cstring<T>() -> CString {
+    CString::new(std::any::type_name::<T>()).unwrap()
 }
 
 /// Returns true if the given type is an empty type.
@@ -284,10 +227,10 @@ pub(crate) fn set_helper<T: ComponentInfo>(
     id: impl IntoEntityIdExt,
 ) {
     ecs_assert!(
-        T::get_size(world) != 0,
+        std::mem::size_of::<T>() != 0,
         FlecsErrorCode::InvalidParameter,
         "invalid type: {}",
-        T::get_symbol_name()
+        std::any::type_name::<T>()
     );
     let entity = entity.get_id();
     let id = id.get_id();

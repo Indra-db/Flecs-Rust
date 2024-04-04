@@ -37,7 +37,7 @@ where
 
     #[inline]
     fn get_name() -> &'static str {
-        T::get_symbol_name()
+        std::any::type_name::<T>()
     }
 }
 

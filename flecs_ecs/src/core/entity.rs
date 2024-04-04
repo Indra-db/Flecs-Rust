@@ -1529,12 +1529,14 @@ impl Entity {
         // This branch will be removed in release mode since this can be determined at compile time.
         if !T::IS_ENUM {
             let component_id = T::get_id(self.world);
+
             ecs_assert!(
-                T::get_size(self.world) != 0,
+                std::mem::size_of::<T>() != 0,
                 FlecsErrorCode::InvalidParameter,
                 "invalid type: {}",
-                T::get_symbol_name()
+                std::any::type_name::<T>()
             );
+
             unsafe {
                 &mut *(ecs_get_mut_id(self.world, self.raw_id, component_id)
                     as *mut T::UnderlyingType)
@@ -1559,7 +1561,7 @@ impl Entity {
                     !constant_value.is_null(),
                     FlecsErrorCode::InternalError,
                     "missing enum constant value {}",
-                    T::get_symbol_name()
+                    std::any::type_name::<T>()
                 );
 
                 unsafe { &mut *constant_value }
@@ -1595,18 +1597,20 @@ impl Entity {
         &mut self,
     ) -> &mut T::UnderlyingType {
         let component_id = T::get_id(self.world);
+
         ecs_assert!(
-            T::get_size(self.world) != 0,
+            std::mem::size_of::<T>() != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid type: {}",
-            T::get_symbol_name()
+            std::any::type_name::<T>()
         );
+
         let ptr = ecs_get_mut_id(self.world, self.raw_id, component_id) as *mut T::UnderlyingType;
         ecs_assert!(
             !ptr.is_null(),
             FlecsErrorCode::InternalError,
             "missing component {}",
-            T::get_symbol_name()
+            std::any::type_name::<T>()
         );
 
         &mut *ptr
@@ -1654,12 +1658,14 @@ impl Entity {
         First: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {
         let component_id = First::get_id(self.world);
+
         ecs_assert!(
-            First::get_size(self.world) != 0,
+            std::mem::size_of::<First>() != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid type: {}",
-            First::get_symbol_name()
+            std::any::type_name::<First>()
         );
+
         // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
         // it is guaranteed to be valid
         unsafe {
@@ -1711,11 +1717,12 @@ impl Entity {
         Second: ComponentInfo + ComponentType<Struct> + NotEmptyComponent,
     {
         let component_id = Second::get_id(self.world);
+
         ecs_assert!(
-            Second::get_size(self.world) != 0,
+            std::mem::size_of::<Second>() != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid type: {}",
-            Second::get_symbol_name()
+            std::any::type_name::<Second>()
         );
 
         // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
@@ -1799,11 +1806,12 @@ impl Entity {
     #[doc(alias = "entity::modified")]
     pub fn modified_pair_first<First: ComponentInfo>(&self, second: impl IntoEntityId) {
         ecs_assert!(
-            First::get_size(self.world) != 0,
+            std::mem::size_of::<First>() != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid type: {}",
-            First::get_symbol_name(),
+            std::any::type_name::<First>()
         );
+
         self.modified_id((First::get_id(self.world), second));
     }
 
