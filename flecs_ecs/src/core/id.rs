@@ -143,7 +143,7 @@ impl Id {
     #[doc(alias = "id::is_pair")]
     /// * C API: `ecs_id_is_pair`
     #[doc(alias = "ecs_id_is_pair")]
-    pub fn is_pair(&self) -> bool {
+    pub fn is_pair(self) -> bool {
         unsafe { ecs_id_is_pair(self.raw_id) }
     }
 
@@ -155,7 +155,7 @@ impl Id {
     #[doc(alias = "id::is_wildcard")]
     /// * C API: `ecs_id_is_wildcard`
     #[doc(alias = "ecs_id_is_wildcard")]
-    pub fn is_wildcard(&self) -> bool {
+    pub fn is_wildcard(self) -> bool {
         unsafe { ecs_id_is_wildcard(self.raw_id) }
     }
 
@@ -165,7 +165,7 @@ impl Id {
     ///
     /// * C++ API: `id::is_entity`
     #[doc(alias = "id::is_entity")]
-    pub fn is_entity(&self) -> bool {
+    pub fn is_entity(self) -> bool {
         self.raw_id & RUST_ECS_ID_FLAGS_MASK == 0
     }
 
@@ -176,7 +176,7 @@ impl Id {
     /// * C++ API: `id::entity`
     #[doc(alias = "id::entity")]
     #[inline(always)]
-    pub fn to_entity(&self) -> Entity {
+    pub fn to_entity(self) -> Entity {
         {
             ecs_assert!(!self.is_pair(), FlecsErrorCode::InvalidOperation);
             ecs_assert!(
@@ -222,7 +222,7 @@ impl Id {
     /// * C++ API: `id::remove_flags`
     #[doc(alias = "id::remove_flags")]
     #[inline(always)]
-    pub fn remove_flags(&self) -> Entity {
+    pub fn remove_flags(self) -> Entity {
         Entity::new_from_existing_raw(self.world, self.raw_id & RUST_ECS_COMPONENT_MASK)
     }
 
@@ -237,7 +237,7 @@ impl Id {
     /// * C++ API: `id::flags`
     #[doc(alias = "id::flags")]
     #[inline(always)]
-    pub fn flags(&self) -> Entity {
+    pub fn flags(self) -> Entity {
         Entity::new_from_existing_raw(self.world, self.raw_id & RUST_ECS_ID_FLAGS_MASK)
     }
 
@@ -259,7 +259,7 @@ impl Id {
     /// * C++ API: `id::has_flags`
     #[doc(alias = "id::has_flags")]
     #[inline(always)]
-    pub fn has_any_flags(&self) -> bool {
+    pub fn has_any_flags(self) -> bool {
         self.raw_id & RUST_ECS_ID_FLAGS_MASK != 0
     }
 
@@ -270,7 +270,7 @@ impl Id {
     /// * C++ API: `id::remove_flags`
     #[doc(alias = "id::remove_flags")]
     #[inline(always)]
-    pub fn remove_generation(&self) -> Entity {
+    pub fn remove_generation(self) -> Entity {
         Entity::new_from_existing_raw(self.world, self.raw_id as u32 as u64)
     }
 
@@ -300,7 +300,7 @@ impl Id {
     /// * C API: `ecs_get_typeid`
     #[doc(alias = "ecs_get_typeid")]
     #[inline(always)]
-    pub fn type_id(&self) -> Entity {
+    pub fn type_id(self) -> Entity {
         Entity::new_from_existing_raw(self.world, unsafe {
             ecs_get_typeid(self.world, self.raw_id)
         })
@@ -335,7 +335,7 @@ impl Id {
     /// * C++ API: `id::first`
     #[doc(alias = "id::first")]
     #[inline(always)]
-    pub fn first(&self) -> Entity {
+    pub fn first(self) -> Entity {
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
 
         let entity = ecs_pair_first(self.raw_id);
@@ -356,7 +356,7 @@ impl Id {
     ///
     /// * C++ API: `id::second`
     #[doc(alias = "id::second")]
-    pub fn second(&self) -> Entity {
+    pub fn second(self) -> Entity {
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
 
         let entity = ecs_pair_second(self.raw_id);
@@ -377,7 +377,7 @@ impl Id {
     /// * C API: `ecs_id_str`
     #[doc(alias = "ecs_id_str")]
     #[inline(always)]
-    pub fn to_str(&self) -> &'static str {
+    pub fn to_str(self) -> &'static str {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
         // C string with a static lifetime. The caller must ensure this invariant.
         // ecs_id_ptr never returns null, so we don't need to check for that.
@@ -408,7 +408,7 @@ impl Id {
     /// * C API: `ecs_id_str`
     #[doc(alias = "ecs_id_str")]
     #[inline(always)]
-    pub unsafe fn to_str_unchecked(&self) -> &'static str {
+    pub unsafe fn to_str_unchecked(self) -> &'static str {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
         // C string with a static lifetime. The caller must ensure this invariant.
         // ecs_id_ptr never returns null, so we don't need to check for that.
@@ -427,7 +427,7 @@ impl Id {
     /// * C API: `ecs_id_flag_str`
     #[doc(alias = "ecs_id_flag_str")]
     #[inline(always)]
-    pub fn flags_str(&self) -> &'static str {
+    pub fn flags_str(self) -> &'static str {
         // SAFETY: We assume that `ecs_role_str` returns a pointer to a null-terminated
         // C string with a static lifetime. The caller must ensure this invariant.
         // ecs_role_str never returns null, so we don't need to check for that.
@@ -456,7 +456,7 @@ impl Id {
     /// * C API: `ecs_id_flag_str`
     #[doc(alias = "ecs_id_flag_str")]
     #[inline(always)]
-    pub unsafe fn to_flags_str_unchecked(&self) -> &'static str {
+    pub unsafe fn to_flags_str_unchecked(self) -> &'static str {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
         // C string with a static lifetime. The caller must ensure this invariant.
         // ecs_id_ptr never returns null, so we don't need to check for that.
@@ -466,14 +466,14 @@ impl Id {
         unsafe { std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(c_str_ptr).to_bytes()) }
     }
 
-    pub fn get_world(&self) -> World {
+    pub fn get_world(self) -> World {
         World {
             raw_world: self.world,
             is_owned: false,
         }
     }
 
-    pub(crate) fn get_world_raw(&self) -> *mut WorldT {
+    pub(crate) fn get_world_raw(self) -> *mut WorldT {
         self.world
     }
 }

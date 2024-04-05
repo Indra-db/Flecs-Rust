@@ -1379,7 +1379,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::with`
     #[doc(alias = "entity_builder::with")]
-    pub fn with<F>(&self, func: F) -> &Self
+    pub fn with<F>(self, func: F) -> Self
     where
         F: FnOnce(),
     {
@@ -1402,7 +1402,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::with`
     #[doc(alias = "entity_builder::with")]
-    pub fn with_pair_first_id<F>(&self, first: impl IntoEntityId, func: F) -> &Self
+    pub fn with_pair_first_id<F>(self, first: impl IntoEntityId, func: F) -> Self
     where
         F: FnOnce(),
     {
@@ -1426,7 +1426,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::with`
     #[doc(alias = "entity_builder::with")]
-    pub fn with_pair_second_id<F>(&self, second: impl IntoEntityId, func: F) -> &Self
+    pub fn with_pair_second_id<F>(self, second: impl IntoEntityId, func: F) -> Self
     where
         F: FnOnce(),
     {
@@ -1453,7 +1453,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::with`
     #[doc(alias = "entity_builder::with")]
-    pub fn with_pair_first<First: ComponentId, F>(&self, func: F) -> &Self
+    pub fn with_pair_first<First: ComponentId, F>(self, func: F) -> Self
     where
         F: FnOnce(),
     {
@@ -1476,7 +1476,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::with`
     #[doc(alias = "entity_builder::with")]
-    pub fn with_pair_second<Second: ComponentId, F>(&self, func: F) -> &Self
+    pub fn with_pair_second<Second: ComponentId, F>(self, func: F) -> Self
     where
         F: FnOnce(),
     {
@@ -1494,7 +1494,7 @@ impl Entity {
     ///
     /// * C++ API: `entity_builder::scope`
     #[doc(alias = "entity_builder::scope")]
-    pub fn run_in_scope<F>(&self, func: F) -> &Self
+    pub fn run_in_scope<F>(self, func: F) -> Self
     where
         F: FnOnce(),
     {
@@ -1649,7 +1649,7 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_untyped_mut(&self, id: impl IntoEntityIdExt) -> *mut c_void {
+    pub fn get_untyped_mut(self, id: impl IntoEntityIdExt) -> *mut c_void {
         unsafe { ecs_get_mut_id(self.world, self.raw_id, id.get_id()) as *mut c_void }
     }
 
@@ -1668,7 +1668,7 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_first_id_mut<First>(&mut self, second: impl IntoEntityId) -> &mut First
+    pub fn get_pair_first_id_mut<First>(self, second: impl IntoEntityId) -> &'static mut First
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1704,7 +1704,7 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_first_mut<First, Second>(&mut self) -> &mut First
+    pub fn get_pair_first_mut<First, Second>(&mut self) -> &'static mut First
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId + ComponentType<Struct>,
@@ -1727,7 +1727,7 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_second_id_mut<Second>(&mut self, first: impl IntoEntityId) -> &mut Second
+    pub fn get_pair_second_id_mut<Second>(self, first: impl IntoEntityId) -> &'static mut Second
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1763,7 +1763,7 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_second_mut<First, Second>(&mut self) -> &mut Second
+    pub fn get_pair_second_mut<First, Second>(&mut self) -> &'static mut Second
     where
         First: ComponentId + ComponentType<Struct> + EmptyComponent,
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
@@ -1781,7 +1781,7 @@ impl Entity {
     ///
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
-    pub fn modified_id(&self, id: impl IntoEntityIdExt) {
+    pub fn modified_id(self, id: impl IntoEntityIdExt) {
         unsafe { ecs_modified_id(self.world, self.raw_id, id.get_id()) }
     }
 
@@ -1819,7 +1819,7 @@ impl Entity {
     ///
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
-    pub fn modified_pair_first<First: ComponentId>(&self, second: impl IntoEntityId) {
+    pub fn modified_pair_first<First: ComponentId>(self, second: impl IntoEntityId) {
         ecs_assert!(
             std::mem::size_of::<First>() != 0,
             FlecsErrorCode::InvalidParameter,
@@ -1868,7 +1868,7 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
-    pub fn get_ref_pair_first<First: ComponentId>(&self, second: impl IntoEntityId) -> Ref<First> {
+    pub fn get_ref_pair_first<First: ComponentId>(self, second: impl IntoEntityId) -> Ref<First> {
         Ref::<First>::new(
             Some(self.world),
             self.raw_id,
@@ -1918,7 +1918,7 @@ impl Entity {
     ///
     /// * C++ API: `entity::flatten`
     #[doc(alias = "entity::flatten")]
-    pub fn flatten(&self, relationship: impl IntoEntityId) {
+    pub fn flatten(self, relationship: impl IntoEntityId) {
         unsafe {
             ecs_flatten(
                 self.world,
@@ -1940,7 +1940,7 @@ impl Entity {
     /// * C++ API: `entity::flatten`
     #[doc(alias = "entity::flatten")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn flatten_w_desc(&self, relationship: impl IntoEntityId, desc: *const ecs_flatten_desc_t) {
+    pub fn flatten_w_desc(self, relationship: impl IntoEntityId, desc: *const ecs_flatten_desc_t) {
         unsafe {
             ecs_flatten(
                 self.world,
