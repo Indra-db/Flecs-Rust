@@ -46,7 +46,6 @@ use super::{EmptyComponent, NotEmptyComponent};
 use super::{
     ecs_pair,
     entity::Entity,
-    event::EventData,
     event_builder::{EventBuilder, EventBuilderTyped},
     id::Id,
     iterable::Iterable,
@@ -3055,7 +3054,7 @@ impl World {
     ///
     /// * C++ API: `world::event`
     #[doc(alias = "world::event")]
-    pub fn event<T: EventData + ComponentId>(&self) -> EventBuilderTyped<T> {
+    pub fn event<T: ComponentId>(&self) -> EventBuilderTyped<T> {
         EventBuilderTyped::<T>::new(self, T::get_id(self.raw_world))
     }
 }

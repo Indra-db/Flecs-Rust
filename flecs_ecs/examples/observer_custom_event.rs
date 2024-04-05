@@ -5,8 +5,6 @@ use common::*;
 #[derive(Default, Clone, Component)]
 struct MyEvent;
 
-impl EventData for MyEvent {}
-
 fn main() {
     let world = World::new();
 

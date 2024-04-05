@@ -22,9 +22,6 @@ struct Resize {
     height: f32,
 }
 
-impl EventData for Click {}
-impl EventData for Resize {}
-
 fn main() {
     let world = World::new();
 

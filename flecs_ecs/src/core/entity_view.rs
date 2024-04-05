@@ -38,7 +38,7 @@ use super::{
     table::{Table, TableRange},
     try_register_component,
     world::World,
-    CachedEnumData, EmptyComponent, EventBuilderImpl, EventData, IntoComponentId, IntoEntityId,
+    CachedEnumData, EmptyComponent, EventBuilderImpl, IntoComponentId, IntoEntityId,
     IntoEntityIdExt, IntoWorld, IterT, NotEmptyComponent, ObserverEntityBindingCtx, ECS_ANY,
     ECS_CHILD_OF, ECS_WILDCARD,
 };
@@ -1769,7 +1769,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
-    pub fn emit<T: EventData + EmptyComponent + ComponentId>(&self) {
+    pub fn emit<T: EmptyComponent + ComponentId>(&self) {
         self.emit_id(T::get_id(self.world));
     }
 
@@ -1783,7 +1783,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
-    pub fn emit_payload<T: EventData + NotEmptyComponent + ComponentId>(&self, payload: &mut T) {
+    pub fn emit_payload<T: NotEmptyComponent + ComponentId>(&self, payload: &mut T) {
         self.get_world()
             .event::<T>()
             .set_entity_to_emit(self.to_entity())
@@ -1818,7 +1818,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
-    pub fn enqueue<T: EventData + EmptyComponent + ComponentId>(&self) {
+    pub fn enqueue<T: EmptyComponent + ComponentId>(&self) {
         self.enqueue_id(T::get_id(self.world));
     }
 
@@ -1832,7 +1832,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
-    pub fn enqueue_payload<T: EventData + NotEmptyComponent + ComponentId>(&self, payload: &mut T) {
+    pub fn enqueue_payload<T: NotEmptyComponent + ComponentId>(&self, payload: &mut T) {
         self.get_world()
             .event::<T>()
             .set_entity_to_emit(self.to_entity())
@@ -1859,7 +1859,7 @@ impl EntityView {
     #[doc(alias = "entity_builder::observe")]
     pub fn observe<C>(&self, func: impl FnMut()) -> &Self
     where
-        C: EventData + ComponentId + EmptyComponent,
+        C: ComponentId + EmptyComponent,
     {
         self.observe_impl::<C, _>(func)
     }
@@ -1867,7 +1867,7 @@ impl EntityView {
     fn observe_impl<C, Func>(&self, func: Func) -> &Self
     where
         Func: FnMut(),
-        C: EventData + ComponentId,
+        C: ComponentId,
     {
         let new_binding_ctx = Box::<super::ObserverEntityBindingCtx>::default();
         let binding_ctx = Box::leak(new_binding_ctx);
@@ -1904,7 +1904,7 @@ impl EntityView {
     #[doc(alias = "entity_builder::observe")]
     pub fn observe_entity<C>(&self, func: impl FnMut(&mut Entity)) -> &Self
     where
-        C: EventData + ComponentId + EmptyComponent,
+        C: ComponentId + EmptyComponent,
     {
         self.observe_entity_impl::<C, _>(func)
     }
@@ -1912,7 +1912,7 @@ impl EntityView {
     fn observe_entity_impl<C, Func>(&self, func: Func) -> &Self
     where
         Func: FnMut(&mut Entity),
-        C: EventData + ComponentId,
+        C: ComponentId,
     {
         let new_binding_ctx = Box::<super::ObserverEntityBindingCtx>::default();
         let binding_ctx = Box::leak(new_binding_ctx);
@@ -1949,7 +1949,7 @@ impl EntityView {
     #[doc(alias = "entity_builder::observe")]
     pub fn observe_payload<C>(&self, func: impl FnMut(&mut C)) -> &Self
     where
-        C: EventData + ComponentId + NotEmptyComponent,
+        C: ComponentId + NotEmptyComponent,
     {
         self.observe_payload_impl::<C, _>(func)
     }
@@ -1957,7 +1957,7 @@ impl EntityView {
     fn observe_payload_impl<C, Func>(&self, func: Func) -> &Self
     where
         Func: FnMut(&mut C),
-        C: EventData + ComponentId,
+        C: ComponentId,
     {
         let new_binding_ctx = Box::<super::ObserverEntityBindingCtx>::default();
         let binding_ctx = Box::leak(new_binding_ctx);
@@ -1994,7 +1994,7 @@ impl EntityView {
     #[doc(alias = "entity_builder::observe")]
     pub fn observe_payload_entity<C>(&self, func: impl FnMut(&mut Entity, &mut C)) -> &Self
     where
-        C: EventData + ComponentId + NotEmptyComponent,
+        C: ComponentId + NotEmptyComponent,
     {
         self.observe_payload_entity_impl::<C, _>(func)
     }
@@ -2002,7 +2002,7 @@ impl EntityView {
     fn observe_payload_entity_impl<C, Func>(&self, func: Func) -> &Self
     where
         Func: FnMut(&mut Entity, &mut C),
-        C: EventData + ComponentId,
+        C: ComponentId,
     {
         let new_binding_ctx = Box::<super::ObserverEntityBindingCtx>::default();
         let binding_ctx = Box::leak(new_binding_ctx);

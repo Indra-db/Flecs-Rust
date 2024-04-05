@@ -8,7 +8,7 @@ use crate::sys::{ecs_event_desc_t, FLECS_EVENT_DESC_MAX};
 use super::{
     c_types::{IdT, TypeT},
     component_registration::ComponentId,
-    event::{EventBuilderImpl, EventData},
+    event::EventBuilderImpl,
     world::World,
     IntoEntityId,
 };
@@ -93,12 +93,12 @@ impl EventBuilderImpl for EventBuilder {
 /// Ensures the use of appropriate data types for events, enhancing type safety and data integrity.
 /// This design aims to prevent the utilization of incompatible components as event data,
 /// thereby ensuring greater explicitness and correctness in event handling.
-pub struct EventBuilderTyped<'a, T: EventData + ComponentId> {
+pub struct EventBuilderTyped<'a, T: ComponentId> {
     pub(crate) builder: EventBuilder,
     _phantom: std::marker::PhantomData<&'a T>,
 }
 
-impl<'a, T: EventData + ComponentId> EventBuilderTyped<'a, T> {
+impl<'a, T: ComponentId> EventBuilderTyped<'a, T> {
     /// Create a new typed `EventBuilder`
     ///
     /// # Arguments
@@ -121,7 +121,7 @@ impl<'a, T: EventData + ComponentId> EventBuilderTyped<'a, T> {
 /// The `Deref` trait is implemented to allow `EventBuilderTyped` instances to be treated as
 /// references to `EventBuilder`. This enables the use of `EventBuilder` methods directly on
 /// `EventBuilderTyped` instances.
-impl<'a, T: EventData + ComponentId> Deref for EventBuilderTyped<'a, T> {
+impl<'a, T: ComponentId> Deref for EventBuilderTyped<'a, T> {
     type Target = EventBuilder;
 
     fn deref(&self) -> &Self::Target {
@@ -130,15 +130,15 @@ impl<'a, T: EventData + ComponentId> Deref for EventBuilderTyped<'a, T> {
 }
 
 /// See `Deref` trait for more information.
-impl<'a, T: EventData + ComponentId> DerefMut for EventBuilderTyped<'a, T> {
+impl<'a, T: ComponentId> DerefMut for EventBuilderTyped<'a, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.builder
     }
 }
 
-impl<'a, T: EventData + ComponentId> EventBuilderImpl for EventBuilderTyped<'a, T>
+impl<'a, T: ComponentId> EventBuilderImpl for EventBuilderTyped<'a, T>
 where
-    T: EventData + ComponentId,
+    T: ComponentId,
 {
     type BuiltType = &'a mut T;
     type ConstBuiltType = &'a T;

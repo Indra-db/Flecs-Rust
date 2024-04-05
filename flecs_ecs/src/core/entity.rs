@@ -258,8 +258,15 @@ impl Entity {
     ///
     /// * C++ API: `entity::null`
     #[doc(alias = "entity::null")]
-    pub fn new_null() -> Entity {
-        Entity::default()
+    pub const fn new_null() -> Entity {
+        Entity {
+            entity_view: EntityView {
+                id: super::Id {
+                    raw_id: 0,
+                    world: std::ptr::null_mut(),
+                },
+            },
+        }
     }
 
     /// Add an id to an entity.
@@ -1526,7 +1533,8 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_mut<T: ComponentId>(&mut self) -> &mut T::UnderlyingType {
+    #[allow(clippy::mut_from_ref)]
+    pub fn get_mut<T: ComponentId>(&self) -> &mut T::UnderlyingType {
         // This branch will be removed in release mode since this can be determined at compile time.
         if !T::IS_ENUM {
             let component_id = T::get_id(self.world);
