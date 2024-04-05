@@ -28,7 +28,7 @@ where
         0
     };
 
-    let hooks = if size != 0 {
+    let hooks = if size != 0 && T::NEEDS_DROP {
         // Register lifecycle callbacks, but only if the component has a
         // size. Components that don't have a size are tags, and tags don't
         // require construction/destruction/copy/move's.

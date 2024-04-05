@@ -107,6 +107,7 @@ pub trait ComponentId: Sized + ComponentInfo {
 pub trait ComponentInfo: Sized {
     const IS_ENUM: bool;
     const IS_TAG: bool;
+    const NEEDS_DROP: bool = std::mem::needs_drop::<Self>();
 }
 
 pub trait CachedEnumData: ComponentType<Enum> {

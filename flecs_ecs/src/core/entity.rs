@@ -295,6 +295,12 @@ impl Entity {
     ///
     /// - `T`: The component type to add.
     ///
+    /// # SAFETY
+    ///
+    /// This function is unsafe, but not marked unsafe. This is because the function does not initialize the component
+    /// When it's Trivial. This usually means anything that does not store any heap data, will be uninitialized.
+    /// Prefer Set for no risk of Undefined behavior.
+    ///
     /// # See also
     ///
     /// * C++ API: `entity_builder::add`
