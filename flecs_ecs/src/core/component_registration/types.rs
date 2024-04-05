@@ -11,8 +11,14 @@ pub struct IdComponent {
 pub struct Enum;
 pub struct Struct;
 
-#[derive(Clone, Debug, Default, Component)]
+#[derive(Component)]
 pub enum NoneEnum {
-    #[default]
     None,
+}
+
+#[derive(Default, Clone)]
+pub struct DefaultCloneDummy;
+
+pub struct ConditionalTypeSelector<const B: bool, T> {
+    phantom: std::marker::PhantomData<T>,
 }

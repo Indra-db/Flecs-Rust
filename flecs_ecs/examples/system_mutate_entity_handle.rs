@@ -4,13 +4,13 @@ use common::*;
 // This example is the same as the mutate_entity example, but instead stores the
 // handle of the to be deleted entity in a component.
 
-#[derive(Clone, Component, Default)]
+#[derive(Component)]
 struct Timeout {
     pub to_delete: Entity,
     pub value: f32,
 }
 
-#[derive(Clone, Component, Default)]
+#[derive(Component)]
 struct Tag;
 
 fn main() {

@@ -9,7 +9,7 @@ use common::*;
 // techniques, like using prefabs to store a single dirty state for multiple
 // entities and instanced queries.
 
-#[derive(Debug, Default, Clone, Component)]
+#[derive(Debug, Component)]
 struct Dirty {
     value: bool,
 }

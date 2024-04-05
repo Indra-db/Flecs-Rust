@@ -9,31 +9,31 @@ use common::*;
 // to a player.
 
 // unit datamodel
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Unit;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct CombatUnit;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct MeleeUnit;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct RangedUnit;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Warrior;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Wizard;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Marksman;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Player;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Platoon;
 
 const PLAYER_COUNT: usize = 100;

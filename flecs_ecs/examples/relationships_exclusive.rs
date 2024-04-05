@@ -2,7 +2,7 @@ mod common;
 use common::*;
 
 // Type for Platoon relationship
-#[derive(Clone, Component, Debug, Default)]
+#[derive(Component)]
 struct Platoon;
 
 fn main() {

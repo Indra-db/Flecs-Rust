@@ -12,11 +12,11 @@ use common::*;
 // - The event to emit
 
 // An event without payload
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Click;
 
 // An event with payload
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Resize {
     width: f32,
     height: f32,

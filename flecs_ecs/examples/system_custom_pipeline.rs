@@ -9,7 +9,7 @@ use common::*;
 // phases see the custom_phases and custom_phases_no_builtin examples, as this
 // does not require using a custom pipeline.
 
-#[derive(Debug, Copy, Clone, Component, Default)]
+#[derive(Debug, Component, Default)]
 struct Physics;
 
 fn main() {

@@ -1,7 +1,7 @@
 mod common;
 use common::*;
 
-#[derive(Clone, Component, Debug, Default)]
+#[derive(Component)]
 struct TradesWith;
 
 fn main() {

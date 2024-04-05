@@ -3,28 +3,28 @@ use common::*;
 
 // This example shows how rules can be used to match simple inheritance trees.
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Unit;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct CombatUnit;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct MeleeUnit;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct RangedUnit;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Warrior;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Wizard;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Marksman;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Builder;
 
 fn main() {

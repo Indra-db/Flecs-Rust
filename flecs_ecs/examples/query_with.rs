@@ -1,7 +1,7 @@
 mod common;
 use common::*;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Npc;
 
 fn main() {

@@ -4,7 +4,7 @@ use crate::core::{Entity, IdT, World};
 
 pub type FTime = f32;
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct EntityId(pub IdT);
 
 impl EntityId {

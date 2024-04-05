@@ -6,7 +6,7 @@ use std::{
 
 use common::*;
 
-#[derive(Clone, Component, Default)]
+#[derive(Component)]
 struct Radius {
     value: f32,
 }

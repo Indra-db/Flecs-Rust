@@ -3,7 +3,7 @@ mod common;
 use common::{Apples, Pears};
 pub use flecs_ecs::{core::*, macros::Component};
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 pub struct Eats {
     pub amount: i32,
 }

@@ -16,18 +16,16 @@ use common::*;
 // This code uses enumeration relationships. See the enum_relations example for
 // more details.
 
-#[derive(Clone, Component, Debug, Default, PartialEq)]
+#[derive(Component, Debug, PartialEq)]
 #[repr(C)]
 enum Movement {
-    #[default]
     Walking,
     Running,
 }
 
-#[derive(Clone, Component, Debug, Default, PartialEq)]
+#[derive(Component, Debug, PartialEq)]
 #[repr(C)]
 enum Direction {
-    #[default]
     Front,
     Back,
     Left,
@@ -43,7 +41,7 @@ fn main() {
 
     // Create a query that subscribes for all entities that have a Direction
     // and that are walking.
-    // with<T>() requests no data by default, so we must specify what we want.
+    // with<T>() requests no data by  so we must specify what we want.
     // in() requests Read-Only
     let q = world
         .query_builder::<()>()

@@ -19,7 +19,7 @@ use common::*;
 // used to give instantiated children from a nested prefab a private copy of an
 // inherited component.
 
-#[derive(Default, Debug, Clone, Component)]
+#[derive(Debug, Component)]
 struct TirePressure {
     value: f32,
 }

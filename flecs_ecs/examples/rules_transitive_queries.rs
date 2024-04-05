@@ -14,25 +14,25 @@ use common::*;
 // This example uses the builtin IsA relationship, which is transitive. This
 // example shows how to achieve similar behavior with a user-defined relationship.
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct LocatedIn;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Planet;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Continent;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Country;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct State;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct City;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Person;
 
 fn main() {

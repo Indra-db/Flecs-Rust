@@ -19,19 +19,17 @@ use common::*;
 //   rust style enum variants are not supported *yet* due to limitations in C flecs lib
 //   where it expects each enum field to be 4 bytes.
 //   I plan on adding support for rust style enums in the future.
-#[derive(Clone, Component, Debug, Default, PartialEq)]
+#[derive(Component, Debug, PartialEq)]
 #[repr(C)]
 enum Tile {
-    #[default]
     Grass,
     Sand,
     Stone,
 }
 
-#[derive(Clone, Component, Debug, Default)]
+#[derive(Component)]
 #[repr(C)]
 enum TileStatus {
-    #[default]
     Free,
     Occupied,
 }

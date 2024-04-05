@@ -1,16 +1,16 @@
 mod common;
 use common::*;
 
-#[derive(Debug, Default, Clone, Component)]
+#[derive(Debug, Component)]
 struct Position {
     x: f32,
     y: f32,
 }
 
-#[derive(Debug, Default, Clone, Component)]
+#[derive(Debug, Component)]
 struct Local;
 
-#[derive(Debug, Default, Clone, Component)]
+#[derive(Debug, Component)]
 struct World;
 
 fn main() {

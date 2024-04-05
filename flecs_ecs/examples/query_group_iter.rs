@@ -19,35 +19,35 @@ use common::*;
 
 // A world cell relationship with four cells
 
-#[derive(Debug, Default, Clone, Component)]
+#[derive(Debug, Component)]
 struct WorldCell;
 
-#[derive(Debug, Default, Clone, Component)]
+#[derive(Debug, Component)]
 struct Cell_0_0;
 
-#[derive(Debug, Default, Clone, Component)]
+#[derive(Debug, Component)]
 struct Cell_0_1;
 
-#[derive(Debug, Default, Clone, Component)]
+#[derive(Debug, Component)]
 struct Cell_1_0;
 
-#[derive(Debug, Default, Clone, Component)]
+#[derive(Debug, Component)]
 struct Cell_1_1;
 
 // Npc tags
-#[derive(Debug, Default, Clone, Component)]
+#[derive(Debug, Component)]
 struct Npc;
 
-#[derive(Debug, Default, Clone, Component)]
+#[derive(Debug, Component)]
 struct Merchant;
 
-#[derive(Debug, Default, Clone, Component)]
+#[derive(Debug, Component)]
 struct Soldier;
 
-#[derive(Debug, Default, Clone, Component)]
+#[derive(Debug, Component)]
 struct Beggar;
 
-#[derive(Debug, Default, Clone, Component)]
+#[derive(Debug, Component)]
 struct Mage;
 
 fn main() {

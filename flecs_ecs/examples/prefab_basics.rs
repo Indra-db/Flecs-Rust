@@ -20,7 +20,7 @@ use common::*;
 // If a prefab has children, adding the IsA relationship instantiates the prefab
 // children for the instance (see hierarchy example).
 
-#[derive(Default, Debug, Clone, Component)]
+#[derive(Debug, Component)]
 struct Defence {
     value: f32,
 }

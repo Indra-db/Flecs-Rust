@@ -2,7 +2,7 @@ use std::ffi::c_char;
 
 use flecs_ecs_sys::{ecs_exists, ecs_get_symbol, ecs_world_t};
 
-use crate::core::{create_lifecycle_actions, EntityT, IdT, WorldT, SEPARATOR};
+use crate::core::{EntityT, IdT, WorldT, SEPARATOR};
 
 use super::ComponentId;
 
@@ -30,9 +30,10 @@ where
 
     let hooks = if size != 0 && T::NEEDS_DROP {
         // Register lifecycle callbacks, but only if the component has a
-        // size. Components that don't have a size are tags, and tags don't
+        // size and requires initialization of heap memory / needs drop.
+        // Components that don't have a size are tags, and tags don't
         // require construction/destruction/copy/move's.
-        create_lifecycle_actions::<T::UnderlyingType>()
+        T::__register_lifecycle_hooks()
     } else {
         Default::default()
     };

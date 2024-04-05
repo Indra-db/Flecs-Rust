@@ -16,13 +16,13 @@ use flecs_ecs::{
 use seq_macro::seq;
 use std::{ffi::CStr, sync::OnceLock};
 
-#[derive(Debug, Default, Component, Clone)]
+#[derive(Debug, Component, Clone)]
 pub struct Pos {
     pub x: f32,
     pub y: f32,
 }
 
-#[derive(Debug, Default, Component, Clone)]
+#[derive(Debug, Component, Clone)]
 pub struct Vel {
     pub x: f32,
     pub y: f32,
@@ -30,7 +30,7 @@ pub struct Vel {
 
 seq!(P in 0..=20 {
     // expands to structs named x0, x1, x2, ..., 20
-    #[derive(Debug, Default, Clone, Component)]
+    #[derive(Debug,   Component)]
     struct X~P
     {
         x: f32,

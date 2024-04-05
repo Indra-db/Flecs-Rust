@@ -2,7 +2,7 @@ mod common;
 use common::*;
 
 // Systems can be created with a custom run function that takes control over the
-// entire iteration. By default, a system is invoked once per matched table,
+// entire iteration. By  a system is invoked once per matched table,
 // which means the function can be called multiple times per frame. In some
 // cases that's inconvenient, like when a system has things it needs to do only
 // once per frame. For these use cases, the run callback can be used which is

@@ -15,17 +15,17 @@ use common::*;
 // when combined with prefab slots (see slots example and code below).
 
 // Create types that mirror the prefab hierarchy.
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Base;
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Head;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Turret;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Beam;
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Railgun;
 
 fn main() {

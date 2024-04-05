@@ -5,21 +5,21 @@ use common::*;
 // this example is to showcase how you can chain queries together where the second query
 // uses the results of the first query to filter the results
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Enchanted;
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Location {
     x: f32,
     y: f32,
 }
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Ability {
     power: f32,
 }
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct ArtifactPower {
     _magic_level: f32,
 }

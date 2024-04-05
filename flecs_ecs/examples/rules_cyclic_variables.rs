@@ -4,7 +4,7 @@ use common::*;
 // This example shows how a rule may have terms with cyclic dependencies on
 // variables.
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Likes;
 
 fn main() {

@@ -14,10 +14,10 @@ use common::*;
 // Because they mutate the world directly, no_readonly systems are never ran on
 // more than one thread, and no other systems are ran at the same time.
 
-#[derive(Clone, Component, Default)]
+#[derive(Component)]
 struct Waiter;
 
-#[derive(Clone, Component, Default)]
+#[derive(Component)]
 struct Plate;
 
 fn main() {
@@ -48,7 +48,7 @@ fn main() {
                     // The defer_suspend function temporarily suspends deferring
                     // operations, which ensures that our plate is assigned
                     // immediately. Even though this is a no_readonly system,
-                    // deferring is still enabled by default, as adding/removing
+                    // deferring is still enabled by default as adding/removing
                     // components to the entities being iterated would interfere
                     // with the system iterator.
                     it.get_world().defer_suspend();

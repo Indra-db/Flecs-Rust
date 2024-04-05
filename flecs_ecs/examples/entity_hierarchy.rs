@@ -1,13 +1,13 @@
 mod common;
 use common::*;
 
-#[derive(Debug, Default, Clone, Component)]
+#[derive(Debug, Component)]
 struct Star;
 
-#[derive(Debug, Default, Clone, Component)]
+#[derive(Debug, Component)]
 struct Planet;
 
-#[derive(Debug, Default, Clone, Component)]
+#[derive(Debug, Component)]
 struct Moon;
 
 fn iterate_tree(entity: Entity, position_parent: &Position) {

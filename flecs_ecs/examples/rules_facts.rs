@@ -19,7 +19,7 @@ use common::*;
 // the query. A rule that checks a fact does not return entities, but will
 // instead return the reasons why a fact is true (if it is true).
 
-#[derive(Default, Clone, Component)]
+#[derive(Component)]
 struct Likes;
 
 fn main() {

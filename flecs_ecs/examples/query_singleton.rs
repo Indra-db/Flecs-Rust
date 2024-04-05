@@ -1,7 +1,7 @@
 mod common;
 use common::*;
 
-#[derive(Debug, Default, Clone, Component)]
+#[derive(Debug, Component)]
 struct Gravity {
     value: f32,
 }

@@ -1,6 +1,9 @@
 use std::{ffi::CStr, sync::OnceLock};
 
-use crate::core::{Entity, EntityT, Enum, IdComponent, IdT, IntoWorld, Struct};
+use crate::core::{
+    ConditionalTypeSelector, DefaultCloneDummy, Entity, EntityT, Enum, IdComponent, IdT, IntoWorld,
+    Struct, TypeHooksT,
+};
 
 use super::{
     is_component_registered_with_world, try_register_component, try_register_component_named,
@@ -38,8 +41,8 @@ pub trait ComponentType<T: ECSComponentType> {}
 /// In such a case, the component is registered with the present world using the pre-existing ID.
 /// If the ID is already known, the trait takes care of the component registration and checks for consistency in the input.
 pub trait ComponentId: Sized + ComponentInfo {
-    type UnderlyingType: ComponentId + Default + Clone;
-    type UnderlyingEnumType: ComponentId + CachedEnumData + Default + Clone;
+    type UnderlyingType: ComponentId;
+    type UnderlyingEnumType: ComponentId + CachedEnumData;
 
     /// attempts to register the component with the world. If it's already registered, it does nothing.
     fn register_explicit(world: impl IntoWorld) {
@@ -101,6 +104,12 @@ pub trait ComponentId: Sized + ComponentInfo {
     #[inline(always)]
     fn __initialize<F: FnOnce() -> IdComponent>(f: F) -> &'static IdComponent {
         Self::__get_once_lock_data().get_or_init(f)
+    }
+
+    // Not public API.
+    #[doc(hidden)]
+    fn __register_lifecycle_hooks() -> TypeHooksT {
+        Default::default()
     }
 }
 
@@ -212,4 +221,19 @@ impl<T: ComponentId> ComponentId for &mut T {
     type UnderlyingType = T::UnderlyingType;
 
     type UnderlyingEnumType = T::UnderlyingEnumType;
+}
+
+pub trait DefaultCloneType {
+    type Type: Default + Clone;
+}
+
+impl<T> DefaultCloneType for ConditionalTypeSelector<false, T> {
+    type Type = DefaultCloneDummy;
+}
+
+impl<T> DefaultCloneType for ConditionalTypeSelector<true, T>
+where
+    T: Default + Clone,
+{
+    type Type = T;
 }

@@ -7,20 +7,20 @@ use common::*;
 
 // Some demo components:
 
-#[derive(Clone, Component, Debug, Default)]
+#[derive(Component)]
 struct Requires {
     amount: f32,
 }
 
-#[derive(Clone, Component, Debug, Default)]
+#[derive(Component)]
 struct Gigawatts;
 
-#[derive(Clone, Component, Debug, Default)]
+#[derive(Component)]
 struct Expires {
     timeout: f32,
 }
 
-#[derive(Clone, Component, Debug, Default)]
+#[derive(Component)]
 struct MustHave;
 
 fn main() {
