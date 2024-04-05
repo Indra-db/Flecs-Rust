@@ -86,8 +86,14 @@ where
             let world = self.get_world_raw_mut();
             while self.iter_next(&mut iter) {
                 let components_data = T::get_array_ptrs_of_components(&iter);
-                let iter_count = iter.count as usize;
                 let array_components = &components_data.array_components;
+                let iter_count = {
+                    if iter.count == 0 {
+                        1_usize
+                    } else {
+                        iter.count as usize
+                    }
+                };
 
                 ecs_table_lock(world, iter.table);
 

@@ -194,7 +194,7 @@ impl Id {
     /// * C++ API: `id::add_flags`
     #[doc(alias = "id::add_flags")]
     #[inline(always)]
-    pub fn add_flags(&self, flags: IdT) -> Entity {
+    pub fn add_flags(self, flags: IdT) -> Entity {
         Entity::new_from_existing_raw(self.world, self.raw_id | flags)
     }
 
@@ -206,7 +206,7 @@ impl Id {
     /// * C++ API: `id::remove_flags`
     #[doc(alias = "id::remove_flags")]
     #[inline(always)]
-    pub fn remove_flags_checked(&self, _flags: IdT) -> Entity {
+    pub fn remove_flags_checked(self, _flags: IdT) -> Entity {
         ecs_assert!(
             self.raw_id & RUST_ECS_ID_FLAGS_MASK == _flags,
             FlecsErrorCode::InvalidParameter
@@ -248,7 +248,7 @@ impl Id {
     /// * C++ API: `id::has_flags`
     #[doc(alias = "id::has_flags")]
     #[inline(always)]
-    pub fn has_flags_for(&self, flags: IdT) -> bool {
+    pub fn has_flags_for(self, flags: IdT) -> bool {
         self.raw_id & flags == flags
     }
 
@@ -317,7 +317,7 @@ impl Id {
     /// * C++ API: `id::has_relationship`
     #[doc(alias = "id::has_relationship")]
     #[inline(always)]
-    pub fn has_relationship(&self, first: impl IntoEntityId) -> bool {
+    pub fn has_relationship(self, first: impl IntoEntityId) -> bool {
         if !self.is_pair() {
             return false;
         }

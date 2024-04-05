@@ -444,13 +444,16 @@ impl<'a> Iter<'a> {
     #[doc(alias = "iter::field")]
     // TODO? in C++ API there is a mutable and immutable version of this function
     // Maybe we should create a ColumnView struct that is immutable and use the Column struct for mutable access?
-    pub unsafe fn get_field_data<T: ComponentId>(&self, index: i32) -> Column<T> {
+    pub unsafe fn get_field_data_unchecked<T: ComponentId>(&self, index: i32) -> Column<T> {
         self.get_field_internal::<T>(index)
     }
 
-    // pub unsafe fn get_field_data_as_(&self, index: i32) -> Column<IdT> {
-    //     self.get_field_internal::<T>(index)
-    // }
+    pub fn get_field_data<T: ComponentId>(&self, index: i32) -> Option<Column<T>> {
+        if !unsafe { ecs_field_is_set(self.iter, index) } {
+            return None;
+        }
+        Some(self.get_field_internal::<T>(index))
+    }
 
     /// Get unchecked access to field data.
     /// Unchecked access is required when a system does not know the type of a field at compile time.
