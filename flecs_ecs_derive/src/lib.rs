@@ -92,7 +92,7 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
     let is_attribute_supported = if has_attributes && is_not_generic || has_more_than_one_generic {
         quote! { compile_error!("the register attribute can only be used when the type is generic over a single T.
-        For more complex cases please register the type manually over generic T"); }
+        For more complex cases please implement `ComponentId` trait manually over the specialized T"); }
     } else {
         quote! {}
     };
