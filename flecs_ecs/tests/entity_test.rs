@@ -1,17 +1,12 @@
 use std::ffi::{c_void, CStr};
 
 use flecs_ecs::{
-    core::{c_types::*, id::Id, world::World, ReactorAPI},
+    core::{c_types::*, id::Id, world::World, EntityView, ReactorAPI},
     sys::EcsComponent,
 };
 
 mod common;
 use common::*;
-//struct Parent {
-//    entity_type: EntityType,
-//}
-//
-//struct EntityType;
 
 #[test]
 fn entity_new() {
@@ -76,34 +71,22 @@ fn entity_new_nested_named_from_nested_scope() {
 
 #[test]
 fn entity_new_add() {
-    // Create a world
     let world = World::new();
 
-    // Create an entity and add the Position component to it
     let entity = world.new_entity().add::<Position>();
 
-    // Verify that the entity exists
     assert!(entity.is_valid());
-
-    // Verify that the entity has the Position component
     assert!(entity.has::<Position>());
 }
 
 #[test]
 fn entity_new_add_2() {
-    // Create a world
     let world = World::new();
 
-    // Create an entity and add the Position and Velocity components to it
     let entity = world.new_entity().add::<Position>().add::<Velocity>();
 
-    // Verify that the entity exists
     assert!(entity.is_valid());
-
-    // Verify that the entity has the Position component
     assert!(entity.has::<Position>());
-
-    // Verify that the entity has the Velocity component
     assert!(entity.has::<Velocity>());
 }
 
@@ -1341,13 +1324,13 @@ fn entity_path_from() {
 fn entity_path_from_type() {
     let world = World::new();
 
-    let parent = world.new_entity_type::<Parent>();
+    let parent = world.new_entity_named_type::<Parent>(c"parent");
     let child = world.scope_id(parent).new_entity_named(c"child");
     let grandchild = world.scope_id(child).new_entity_named(c"grandchild");
 
     assert_eq!(
         &grandchild.get_path().unwrap(),
-        "::entity_test::common::Parent::child::grandchild"
+        "::parent::child::grandchild"
     );
     assert_eq!(
         &grandchild.get_path_from_id(parent).unwrap(),
@@ -1442,4 +1425,128 @@ fn entity_entity_to_entity_view() {
     let p = entity_view.get::<Position>().unwrap();
     assert_eq!(p.x, 10);
     assert_eq!(p.y, 20);
+}
+
+const DEFAULTENTITY: flecs_ecs::core::Entity = flecs_ecs::core::Entity::new_null();
+
+#[derive(Debug, flecs_ecs_derive::Component)]
+struct ParentRef<'a> {
+    _parent: &'a flecs_ecs::core::Entity,
+}
+
+impl Default for ParentRef<'_> {
+    fn default() -> Self {
+        ParentRef {
+            _parent: &DEFAULTENTITY,
+        }
+    }
+}
+
+impl<'a> flecs_ecs::core::component_registration::registration_traits::ComponentId
+    for ParentRef<'a>
+{
+    type UnderlyingType = Self;
+    type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
+    fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::IdComponent> {
+        static ONCE_LOCK: std::sync::OnceLock<flecs_ecs::core::IdComponent> =
+            std::sync::OnceLock::new();
+        &ONCE_LOCK
+    }
+}
+
+#[test]
+fn entity_entity_view_to_entity_world() {
+    let world = World::new();
+    let entity = world.new_entity().set(Position { x: 10, y: 20 });
+    assert!(entity.is_valid());
+
+    let entity_view = entity.as_view();
+    assert!(entity_view.is_valid());
+    assert_eq!(entity, entity_view);
+
+    let entity_mut = entity_view.get_mut(&world);
+    entity_mut.set(Position { x: 10, y: 20 });
+
+    assert!(entity_view.has::<Position>());
+    let p = entity_view.get::<Position>().unwrap();
+    assert_eq!(p.x, 10);
+    assert_eq!(p.y, 20);
+}
+
+#[test]
+fn entity_entity_view_to_entity_stage() {
+    let world = World::new();
+
+    let entity_view: EntityView = world.new_entity().into();
+    let stage = world.get_stage(0);
+
+    world.readonly_begin();
+
+    let entity_mut = entity_view.get_mut(&stage);
+    entity_mut.set(Position { x: 10, y: 20 });
+    assert!(!entity_mut.has::<Position>());
+
+    world.readonly_end();
+
+    assert!(entity_mut.has::<Position>());
+    assert!(entity_view.has::<Position>());
+
+    let p = entity_view.get::<Position>().unwrap();
+    assert_eq!(p.x, 10);
+    assert_eq!(p.y, 20);
+}
+
+#[test]
+fn entity_create_entity_view_from_stage() {
+    let world = World::new();
+    let stage = world.get_stage(0);
+
+    world.readonly_begin();
+    let entity_view: EntityView = stage.new_entity().into();
+
+    world.readonly_end();
+
+    let entity_mut = entity_view.get_mut(&world);
+    entity_mut.set(Position { x: 10, y: 20 });
+    assert!(entity_view.has::<Position>());
+
+    let p = entity_view.get::<Position>().unwrap();
+    assert_eq!(p.x, 10);
+    assert_eq!(p.y, 20);
+}
+
+#[test]
+fn entity_set_template() {
+    let world = World::new();
+    let entity = world.new_entity().set(Template::<Position> {
+        value: Position { x: 10, y: 20 },
+    });
+
+    let pos = entity.get::<Template<Position>>().unwrap();
+    assert_eq!(pos.value.x, 10);
+    assert_eq!(pos.value.y, 20);
+}
+
+#[test]
+fn entity_get_1_component_w_callback() {
+    let world = World::new();
+    let e_1 = world
+        .new_entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+    let e_2 = world.new_entity().set(Position { x: 11, y: 22 });
+    let e_3 = world.new_entity().set(Velocity { x: 1, y: 2 });
+
+    e_1.get_callback::<Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+    });
+
+    e_2.get_callback::<Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+
+    #[allow(clippy::assertions_on_constants)]
+    e_3.get_callback::<Position>(|_| assert!(false));
 }

@@ -1,4 +1,6 @@
 #![allow(dead_code)]
+#![allow(unused_imports)]
+
 use flecs_ecs::macros::Component;
 
 #[cfg(test)]
@@ -9,41 +11,47 @@ fn init() {
     }
 }
 
-#[derive(Clone, Debug, Component, Default)]
+#[derive(Component)]
 pub struct Position {
     pub x: i32,
     pub y: i32,
 }
 
-#[derive(Clone, Debug, Component, Default)]
+#[derive(Component)]
+pub struct MyStruct {
+    pub x: i32,
+    pub y: i32,
+}
+
+#[derive(Component)]
 pub struct Velocity {
     pub x: i32,
     pub y: i32,
 }
 
-#[derive(Clone, Debug, Component, Default)]
+#[derive(Component)]
 pub struct Mass {
     pub value: i32,
 }
 
-#[derive(Clone, Debug, Component, Default)]
+#[derive(Component)]
 pub struct TypeA {
     pub value: i32,
 }
 
-#[derive(Clone, Debug, Component, Default)]
+#[derive(Component)]
 pub struct TagA {}
 
-#[derive(Clone, Debug, Component, Default)]
+#[derive(Component)]
 pub struct TagB {}
 
-#[derive(Clone, Debug, Component, Default)]
+#[derive(Component)]
 pub struct TagC {}
 
-#[derive(Clone, Debug, Component, Default)]
+#[derive(Component)]
 pub struct Parent;
 
-#[derive(Clone, Debug, Component, Default)]
+#[derive(Component)]
 pub struct EntityType;
 
 #[derive(Component)]
@@ -91,4 +99,10 @@ impl Drop for Pod {
     fn drop(&mut self) {
         self.drop_count += 1;
     }
+}
+
+#[derive(Component)]
+#[register(Position, Velocity)]
+pub struct Template<T> {
+    pub value: T,
 }
