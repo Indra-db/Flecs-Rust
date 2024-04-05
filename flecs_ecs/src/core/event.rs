@@ -3,8 +3,7 @@ use std::ffi::c_void;
 use flecs_ecs_sys::{ecs_emit, ecs_enqueue, ecs_event_desc_t, ecs_get_world};
 
 use super::{
-    ecs_pair, ComponentId, EventBuilder, IntoComponentId, IntoEntityId, IntoEntityIdExt,
-    IntoTable,
+    ecs_pair, ComponentId, EventBuilder, IntoComponentId, IntoEntityId, IntoEntityIdExt, IntoTable,
 };
 
 /// Trait to mark component structs as `EventData` to be used in `EventBuilderTyped`.

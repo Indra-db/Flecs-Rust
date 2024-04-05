@@ -146,6 +146,10 @@ pub trait CachedEnumData: ComponentType<Enum> {
         unsafe { *Self::__get_enum_data_ptr_mut().add(index) != 0 }
     }
 
+    /// # Safety
+    ///
+    /// This function is unsafe because it assumes the enum has been registered as a component with the world.
+    /// if uncertain, use `try_register_component::<T>` to try and register it
     unsafe fn get_entity_id_from_enum_field(&self, world: impl IntoWorld) -> Entity {
         let index = self.get_enum_index();
         Entity::new_from_existing_raw(world, unsafe {

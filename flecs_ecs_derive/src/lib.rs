@@ -3,68 +3,21 @@ extern crate proc_macro;
 use proc_macro::TokenStream as ProcMacroTokenStream;
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{Data, DeriveInput, Fields};
+use syn::{
+    parse::{Parse, ParseStream},
+    parse_macro_input, Data, DeriveInput, Fields, Ident,
+};
 
-#[proc_macro_derive(InspectGenerics)]
-pub fn inspect_generics(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
-    let mut ast = syn::parse_macro_input!(input as DeriveInput);
-
-    ast.generics.make_where_clause();
-
-    let struct_name = &ast.ident;
-    let (impl_generics, type_generics, where_clause) = &ast.generics.split_for_impl();
-
-    ProcMacroTokenStream::from(quote! {
-        impl #impl_generics myF for #struct_name #type_generics #where_clause {
-
-        }
-    })
-}
-
-// #[proc_macro_derive(InspectGenerics)]
-// pub fn inspect_generics(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
-//     let ast = syn::parse_macro_input!(input as DeriveInput);
-
-//     let struct_name = &ast.ident;
-//     let generics = &ast.generics;
-//     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
-
-//     // Check if there are any generic type parameters or lifetimes
-//     let is_generic = !generics.params.is_empty();
-
-//     // You can use `is_generic` to conditionally generate code based on whether the type is generic.
-//     // For this example, let's generate a simple implementation that does something different
-//     // based on whether the type is generic.
-//     let impl_block = if is_generic {
-//         // Implementation for generic types
-//         quote! {
-//             impl #impl_generics myF for #struct_name #type_generics #where_clause {
-//                 fn my_function() {
-//                     println!("This is a generic type.");
-//                 }
-//             }
-//         }
-//     } else {
-//         // Implementation for non-generic types
-//         quote! {
-//             impl myF for #struct_name {
-//                 fn my_function() {
-//                     println!("This is a non-generic type.");
-//                 }
-//             }
-//         }
-//     };
-
-//     ProcMacroTokenStream::from(impl_block)
-// }
-
-/// `Component` macro for defining ECS components.
+/// `Component` macro for defining ECS components with optional register attribute when the type is generic over a single T.
 ///
 /// When a type is decorated with `#[derive(Component)]`, several trait implementations are automatically added based on its structure:
 ///
 /// - Depending on whether the type is a struct or an enum, the relevant `ComponentType<Struct>` or `ComponentType<Enum>` trait is implemented.
 /// - Based on the presence of fields or variants, the type will implement either `EmptyComponent` or `NotEmptyComponent`.
 /// - The `ComponentId` trait is implemented, providing storage mechanisms for the component.
+///
+/// The `register` attribute can be used to handle `ComponentId` implementation trait over a specific T in a generic component with the world.
+/// This attribute is only supported when the type is generic over a single T.
 ///
 /// ## Requirements:
 ///
@@ -85,6 +38,14 @@ pub fn inspect_generics(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 ///     y: f32,
 /// }
 ///
+/// #[derive(Clone, Default, Component)]
+/// #[register(Position)] //this will generate the ComponentId trait for the type Generic<Position>
+/// struct Generic<T>
+///     where T: Default + Clone
+/// {
+///     value: T,
+/// }
+///
 /// #[derive(Clone, Component, Default)]
 /// enum State {
 ///     #[default]
@@ -93,13 +54,50 @@ pub fn inspect_generics(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 ///     Jumping,
 /// }
 /// ```
-#[proc_macro_derive(Component)]
+#[proc_macro_derive(Component, attributes(register))]
 pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
-    // Parse the input tokens into a syntax tree
-    let mut input = syn::parse_macro_input!(input as DeriveInput);
+    let mut input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
 
-    // Build the output
-    let expanded: TokenStream = {
+    let is_not_generic = input.generics.params.is_empty();
+    let has_more_than_one_generic = input.generics.params.len() > 1;
+
+    let is_struct = matches!(input.data, Data::Struct(_));
+
+    let attrs = input
+        .attrs
+        .clone()
+        .into_iter()
+        .find(|attr| attr.path().is_ident("register"));
+
+    let type_attrs = attrs.map(|attr| {
+        attr.parse_args::<TypeAttributes>()
+            .unwrap_or_else(|_| TypeAttributes(Vec::new()))
+    });
+
+    let mut has_attributes = false;
+
+    let component_id_trait = if let Some(type_attrs) = type_attrs {
+        type_attrs
+            .0
+            .into_iter()
+            .map(|ty| {
+                has_attributes = true;
+                generate_component_id_impl(name, &ty, is_struct)
+            })
+            .collect()
+    } else {
+        quote! {}
+    };
+
+    let is_attribute_supported = if has_attributes && is_not_generic || has_more_than_one_generic {
+        quote! { compile_error!("the register attribute can only be used when the type is generic over a single T.
+        For more complex cases please register the type manually over generic T"); }
+    } else {
+        quote! {}
+    };
+
+    let common_traits: TokenStream = {
         match input.data.clone() {
             Data::Struct(data_struct) => {
                 impl_cached_component_data_struct(&data_struct, &mut input)
@@ -111,8 +109,16 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
         }
     };
 
-    // Convert the generated code into a TokenStream and return it
-    ProcMacroTokenStream::from(expanded)
+    // Combine the generated code with the original struct definition
+    let output = quote! {
+        #is_attribute_supported
+
+        #component_id_trait
+
+        #common_traits
+    };
+
+    output.into()
 }
 
 // This function generates a series of trait implementations for structs.
@@ -153,7 +159,7 @@ fn impl_cached_component_data_struct(
     let common_traits = quote! {
         impl #impl_generics  flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for #name #type_generics #where_clause{}
 
-        impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name #type_generics #where_clause{
+        impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name #type_generics #where_clause {
             const IS_ENUM: bool = false;
             #is_tag
         }
@@ -368,5 +374,46 @@ fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> TokenStream {
         #not_empty_trait_or_error
 
         #cached_enum_data
+    }
+}
+
+struct TypeAttributes(Vec<Ident>);
+
+impl Parse for TypeAttributes {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let mut types = Vec::new();
+        while !input.is_empty() {
+            types.push(input.parse()?);
+            if !input.is_empty() {
+                input.parse::<syn::Token![,]>()?;
+            }
+        }
+        Ok(TypeAttributes(types))
+    }
+}
+
+fn generate_component_id_impl(name: &Ident, ty: &Ident, is_struct: bool) -> TokenStream {
+    if is_struct {
+        quote! {
+            impl flecs_ecs::core::component_registration::registration_traits::ComponentId for #name<#ty> {
+                type UnderlyingType = #name<#ty>;
+                type UnderlyingEnumType = flecs_ecs::core::component_registration::types::NoneEnum;
+                fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::IdComponent> {
+                    static ONCE_LOCK: std::sync::OnceLock<flecs_ecs::core::IdComponent> = std::sync::OnceLock::new();
+                    &ONCE_LOCK
+                }
+            }
+        }
+    } else {
+        quote! {
+            impl flecs_ecs::core::component_registration::registration_traits::ComponentId for #name<#ty> {
+                type UnderlyingType = #name<#ty>;
+                type UnderlyingEnumType = #name<#ty>;
+                fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::IdComponent> {
+                    static ONCE_LOCK: std::sync::OnceLock<flecs_ecs::core::IdComponent> = std::sync::OnceLock::new();
+                    &ONCE_LOCK
+                }
+            }
+        }
     }
 }
