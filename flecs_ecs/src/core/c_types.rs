@@ -21,7 +21,7 @@ use crate::sys::EcsTickSource;
 
 use std::{ffi::CStr, sync::OnceLock};
 
-use super::{ComponentInfo, EntityId, IntoWorld, NoneEnum};
+use super::{ComponentInfo, EntityId, IntoWorld, NoneEnum, NotEmptyComponent};
 
 pub const RUST_ecs_id_FLAGS_MASK: u64 = 0xFF << 60;
 pub const RUST_ECS_COMPONENT_MASK: u64 = !RUST_ecs_id_FLAGS_MASK;
@@ -364,6 +364,8 @@ fn ecs_poly_data() -> IdComponent {
     IdComponent { id: ECS_POLY }
 }
 
+impl NotEmptyComponent for EcsComponent {}
+
 impl ComponentInfo for EcsComponent {
     const IS_ENUM: bool = false;
     const IS_TAG: bool = false;
@@ -412,6 +414,8 @@ impl ComponentInfo for Poly {
     const IS_ENUM: bool = false;
     const IS_TAG: bool = false;
 }
+
+impl NotEmptyComponent for Poly {}
 
 impl ComponentType<Struct> for Poly {}
 
