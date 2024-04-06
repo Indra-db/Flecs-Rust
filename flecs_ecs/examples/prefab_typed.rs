@@ -54,13 +54,13 @@ fn main() {
     let inst = world.new_entity_named(c"my_railgun").is_a::<Railgun>();
 
     // Get entities for slots
-    let inst_base = inst.get_target::<Base>(0);
-    let inst_head = inst.get_target::<Head>(0);
-    let inst_beam = inst.get_target::<Beam>(0);
+    let inst_base = inst.target::<Base>(0);
+    let inst_head = inst.target::<Head>(0);
+    let inst_beam = inst.target::<Beam>(0);
 
-    println!("instance base: {}", inst_base.get_path().unwrap());
-    println!("instance head: {}", inst_head.get_path().unwrap());
-    println!("instance beam: {}", inst_beam.get_path().unwrap());
+    println!("instance base: {}", inst_base.path().unwrap());
+    println!("instance head: {}", inst_head.path().unwrap());
+    println!("instance beam: {}", inst_beam.path().unwrap());
 
     // Output:
     //  instance base: ::my_railgun::Base

@@ -31,14 +31,14 @@ fn main() {
 
     // Print all of the components the entity has. This will output:
     //    Position, Walking, (Identifier,Name)
-    println!("[{}]", alice.get_archetype());
+    println!("[{}]", alice.archetype());
 
     // Remove tag
     alice.remove::<Walking>();
 
     // Iterate all entities with position
     world.each_entity::<(&Position,)>(|entity, pos| {
-        println!("{} has {:?}", entity.get_name(), pos);
+        println!("{} has {:?}", entity.name(), pos);
     });
 
     // Output

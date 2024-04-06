@@ -24,9 +24,9 @@ fn main() {
         .on_each_iter(|it, index, (pos_self, pos_parent)| {
             println!(
                 " - {}: {}: {}: self: {{ {}, {} }}, parent: {{ {}, {} }}",
-                it.get_event().get_name(),
-                it.get_event_id().to_str(),
-                it.get_entity(index).get_name(),
+                it.event().name(),
+                it.event_id().to_str(),
+                it.entity(index).name(),
                 pos_self.x,
                 pos_self.y,
                 pos_parent.x,

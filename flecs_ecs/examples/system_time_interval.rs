@@ -4,7 +4,7 @@ use common::*;
 // This example shows how to run a system at a specified time interval.
 
 fn tick(it: &mut Iter) {
-    println!("{}", it.system().get_name());
+    println!("{}", it.system().name());
 }
 
 fn main() {

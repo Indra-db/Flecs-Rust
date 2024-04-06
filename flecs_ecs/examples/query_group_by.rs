@@ -45,11 +45,11 @@ fn main() {
     println!();
 
     query.iter(|it, (pos,)| {
-        let group = world.new_entity_from_id(it.get_group_id());
+        let group = world.new_entity_from_id(it.group_id());
         println!(
             "Group: {:?} - Table: [{:?}]",
-            group.get_path().unwrap(),
-            it.get_archetype()
+            group.path().unwrap(),
+            it.archetype()
         );
 
         for i in it.iter() {

@@ -11,21 +11,17 @@ fn main() {
         .add_event(ECS_ON_REMOVE)
         .add_event(ECS_ON_SET)
         .on_each_iter(|it, index, (pos,)| {
-            if it.get_event() == ECS_ON_ADD {
+            if it.event() == ECS_ON_ADD {
                 // No assumptions about the component value should be made here. If
                 // a ctor for the component was registered it will be called before
                 // the EcsOnAdd event, but a value assigned by set won't be visible.
-                println!(
-                    " - OnAdd: {}: {}",
-                    it.get_event_id().to_str(),
-                    it.get_entity(index)
-                );
+                println!(" - OnAdd: {}: {}", it.event_id().to_str(), it.entity(index));
             } else {
                 println!(
                     " - {}: {}: {}: with {:?}",
-                    it.get_event().get_name(),
-                    it.get_event_id().to_str(),
-                    it.get_entity(index),
+                    it.event().name(),
+                    it.event_id().to_str(),
+                    it.entity(index),
                     pos
                 );
             }

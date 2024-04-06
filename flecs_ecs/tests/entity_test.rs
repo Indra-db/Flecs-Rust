@@ -20,7 +20,7 @@ fn entity_new_named() {
     let world = World::new();
     let entity = world.new_entity_named(c"test");
     assert!(entity.is_valid());
-    assert_eq!(entity.get_name(), "test");
+    assert_eq!(entity.name(), "test");
 }
 
 #[test]
@@ -35,8 +35,8 @@ fn entity_new_named_from_scope() {
 
     world.set_scope_with_id(prev);
 
-    assert_eq!(child.get_name(), "Bar");
-    assert_eq!(child.get_path().unwrap(), "::Foo::Bar");
+    assert_eq!(child.name(), "Bar");
+    assert_eq!(child.path().unwrap(), "::Foo::Bar");
 }
 
 #[test]
@@ -49,8 +49,8 @@ fn entity_new_nested_named_from_nested_scope() {
 
     // Verify that the entity exists and its name and path are correct
     assert!(entity.is_valid());
-    assert_eq!(entity.get_name(), "Bar");
-    assert_eq!(entity.get_path().unwrap(), "::Foo::Bar");
+    assert_eq!(entity.name(), "Bar");
+    assert_eq!(entity.path().unwrap(), "::Foo::Bar");
 
     // Set the current scope to `entity`
     let prev = world.set_scope_with_id(entity);
@@ -65,8 +65,8 @@ fn entity_new_nested_named_from_nested_scope() {
     world.set_scope_with_id(prev);
 
     // Verify the name and hierarchical path of the child entity
-    assert_eq!(child.get_name(), "World");
-    assert_eq!(child.get_path().unwrap(), "::Foo::Bar::Hello::World");
+    assert_eq!(child.name(), "World");
+    assert_eq!(child.path().unwrap(), "::Foo::Bar::Hello::World");
 }
 
 #[test]
@@ -627,7 +627,7 @@ fn entity_null_string() {
 
     let entity = world.new_entity();
 
-    assert_eq!(entity.get_name(), "");
+    assert_eq!(entity.name(), "");
 }
 
 #[test]
@@ -636,7 +636,7 @@ fn entity_none_string() {
 
     let entity = world.new_entity();
 
-    assert_eq!(entity.get_name_optional(), None);
+    assert_eq!(entity.name_optional(), None);
 }
 
 #[test]
@@ -647,7 +647,7 @@ fn entity_set_name() {
 
     entity.set_name(c"Foo");
 
-    assert_eq!(entity.get_name(), "Foo");
+    assert_eq!(entity.name(), "Foo");
 }
 
 #[test]
@@ -658,7 +658,7 @@ fn entity_set_name_optional() {
 
     entity.set_name(c"Foo");
 
-    assert_eq!(entity.get_name_optional(), Some("Foo"));
+    assert_eq!(entity.name_optional(), Some("Foo"));
 }
 
 #[test]
@@ -666,13 +666,13 @@ fn entity_change_name() {
     let world = World::new();
 
     let entity = world.new_entity_named(c"Bar");
-    assert_eq!(entity.get_name(), "Bar");
+    assert_eq!(entity.name(), "Bar");
 
     entity.set_name(c"Foo");
-    assert_eq!(entity.get_name(), "Foo");
+    assert_eq!(entity.name(), "Foo");
 
     entity.set_name(c"Bar");
-    assert_eq!(entity.get_name(), "Bar");
+    assert_eq!(entity.name(), "Bar");
 }
 
 #[test]
@@ -776,7 +776,7 @@ fn entity_get_null_name() {
     let world = World::new();
 
     let entity = world.new_entity();
-    let name = entity.get_name_optional();
+    let name = entity.name_optional();
     assert_eq!(name, None);
 }
 
@@ -795,19 +795,19 @@ fn entity_get_target() {
         .add_id((rel, obj2))
         .add_id((rel, obj3));
 
-    let mut target = child.get_target_id(rel, 0);
+    let mut target = child.target_id(rel, 0);
     assert!(target.is_valid());
     assert_eq!(target, obj1);
 
-    target = child.get_target_id(rel, 1);
+    target = child.target_id(rel, 1);
     assert!(target.is_valid());
     assert_eq!(target, obj2);
 
-    target = child.get_target_id(rel, 2);
+    target = child.target_id(rel, 2);
     assert!(target.is_valid());
     assert_eq!(target, obj3);
 
-    target = child.get_target_id(rel, 3);
+    target = child.target_id(rel, 3);
     assert!(!target.is_valid());
 }
 
@@ -818,8 +818,8 @@ fn entity_get_parent() {
     let parent = world.new_entity();
     let child = world.new_entity().child_of_id(parent);
 
-    assert_eq!(child.get_target_id(ECS_CHILD_OF, 0), parent);
-    assert_eq!(child.get_parent(), parent);
+    assert_eq!(child.target_id(ECS_CHILD_OF, 0), parent);
+    assert_eq!(child.parent(), parent);
 }
 
 /// # See also
@@ -956,17 +956,17 @@ fn entity_get_type() {
     let entity = world.new_entity();
     assert!(entity.is_valid());
 
-    let type_1 = entity.get_archetype();
+    let type_1 = entity.archetype();
     assert_eq!(type_1.count(), 0);
 
     entity.add::<Position>();
 
-    let type_2 = entity.get_archetype();
+    let type_2 = entity.archetype();
     assert_eq!(type_2.count(), 1);
     assert_eq!(type_2.get(0).unwrap(), world.get_id::<Position>());
 
     entity.add::<Velocity>();
-    let type_3 = entity.get_archetype();
+    let type_3 = entity.archetype();
     assert_eq!(type_3.count(), 2);
     assert_eq!(type_3.get(1).unwrap(), world.get_id::<Velocity>());
 }
@@ -978,11 +978,11 @@ fn entity_get_nonempty_type() {
     let entity = world.new_entity().add::<Position>();
     assert!(entity.is_valid());
 
-    let type_1 = entity.get_archetype();
+    let type_1 = entity.archetype();
     assert_eq!(type_1.count(), 1);
     assert_eq!(type_1.get(0).unwrap(), world.get_id::<Position>());
 
-    let type_2 = entity.get_archetype();
+    let type_2 = entity.archetype();
     assert_eq!(type_2.count(), 1);
     assert_eq!(type_2.get(0).unwrap(), world.get_id::<Position>());
 }
@@ -1275,10 +1275,10 @@ fn entity_name() {
 
     let entity = world.new_entity_named(c"Foo");
 
-    assert_eq!(entity.get_name(), "Foo");
-    assert_eq!(entity.get_name_optional(), Some("Foo"));
-    assert_eq!(entity.get_name_cstr(), c"Foo");
-    assert_eq!(entity.get_name_cstr_optional(), Some(c"Foo"));
+    assert_eq!(entity.name(), "Foo");
+    assert_eq!(entity.name_optional(), Some("Foo"));
+    assert_eq!(entity.name_cstr(), c"Foo");
+    assert_eq!(entity.name_cstr_optional(), Some(c"Foo"));
 }
 
 #[test]
@@ -1287,10 +1287,10 @@ fn entity_name_empty() {
 
     let entity = world.new_entity();
 
-    assert_eq!(entity.get_name(), "");
-    assert_eq!(entity.get_name_optional(), None);
-    assert_eq!(entity.get_name_cstr(), c"");
-    assert_eq!(entity.get_name_cstr_optional(), None);
+    assert_eq!(entity.name(), "");
+    assert_eq!(entity.name_optional(), None);
+    assert_eq!(entity.name_cstr(), c"");
+    assert_eq!(entity.name_cstr_optional(), None);
 }
 
 #[test]
@@ -1299,7 +1299,7 @@ fn entity_path() {
 
     let parent = world.new_entity_named(c"parent");
     let child = world.scope_id(parent).new_entity_named(c"child");
-    assert_eq!(&child.get_path().unwrap(), "::parent::child");
+    assert_eq!(&child.path().unwrap(), "::parent::child");
 }
 
 #[test]
@@ -1310,12 +1310,9 @@ fn entity_path_from() {
     let child = world.scope_id(parent).new_entity_named(c"child");
     let grandchild = world.scope_id(child).new_entity_named(c"grandchild");
 
+    assert_eq!(&grandchild.path().unwrap(), "::parent::child::grandchild");
     assert_eq!(
-        &grandchild.get_path().unwrap(),
-        "::parent::child::grandchild"
-    );
-    assert_eq!(
-        &grandchild.get_path_from_id(parent).unwrap(),
+        &grandchild.path_from_id(parent).unwrap(),
         "child::grandchild"
     );
 }
@@ -1328,12 +1325,9 @@ fn entity_path_from_type() {
     let child = world.scope_id(parent).new_entity_named(c"child");
     let grandchild = world.scope_id(child).new_entity_named(c"grandchild");
 
+    assert_eq!(&grandchild.path().unwrap(), "::parent::child::grandchild");
     assert_eq!(
-        &grandchild.get_path().unwrap(),
-        "::parent::child::grandchild"
-    );
-    assert_eq!(
-        &grandchild.get_path_from_id(parent).unwrap(),
+        &grandchild.path_from_id(parent).unwrap(),
         "child::grandchild"
     );
 }
@@ -1345,7 +1339,7 @@ fn entity_path_custom_sep() {
     let parent = world.new_entity_named(c"parent");
     let child = world.scope_id(parent).new_entity_named(c"child");
 
-    assert_eq!(&child.get_path_w_sep(c"_", c"?").unwrap(), "?parent_child");
+    assert_eq!(&child.path_w_sep(c"_", c"?").unwrap(), "?parent_child");
 }
 
 #[test]
@@ -1357,13 +1351,11 @@ fn entity_path_from_custom_sep() {
     let grandchild = world.scope_id(child).new_entity_named(c"grandchild");
 
     assert_eq!(
-        &grandchild.get_path_w_sep(c"_", c"?").unwrap(),
+        &grandchild.path_w_sep(c"_", c"?").unwrap(),
         "?parent_child_grandchild"
     );
     assert_eq!(
-        &grandchild
-            .get_path_from_id_w_sep(parent, c"_", c"::")
-            .unwrap(),
+        &grandchild.path_from_id_w_sep(parent, c"_", c"::").unwrap(),
         "child_grandchild"
     );
 }
@@ -1377,13 +1369,11 @@ fn entity_path_from_type_custom_sep() {
     let grandchild = world.scope_id(child).new_entity_named(c"grandchild");
 
     assert_eq!(
-        &grandchild.get_path_w_sep(c"_", c"?").unwrap(),
+        &grandchild.path_w_sep(c"_", c"?").unwrap(),
         "?entity_test_common_Parent_child_grandchild"
     );
     assert_eq!(
-        &grandchild
-            .get_path_from_id_w_sep(parent, c"_", c"::")
-            .unwrap(),
+        &grandchild.path_from_id_w_sep(parent, c"_", c"::").unwrap(),
         "child_grandchild"
     );
 }
@@ -1394,8 +1384,8 @@ fn entity_implicit_path_to_char() {
 
     let entity = world.new_entity_named(c"Foo::Bar");
     assert!(entity.is_valid());
-    assert_eq!(entity.get_name(), "Bar");
-    assert_eq!(entity.get_path().unwrap(), "::Foo::Bar");
+    assert_eq!(entity.name(), "Bar");
+    assert_eq!(entity.path().unwrap(), "::Foo::Bar");
 }
 
 #[test]
@@ -1405,10 +1395,7 @@ fn entity_implicit_type_str_to_char() {
     let entity = world.new_entity_named(c"Foo");
     assert!(entity.is_valid());
 
-    assert_eq!(
-        entity.get_archetype().to_string().unwrap(),
-        "(Identifier,Name)"
-    );
+    assert_eq!(entity.archetype().to_string().unwrap(), "(Identifier,Name)");
 }
 
 #[test]
@@ -1464,7 +1451,7 @@ fn entity_entity_view_to_entity_world() {
     assert!(entity_view.is_valid());
     assert_eq!(entity, entity_view);
 
-    let entity_mut = entity_view.get_mut(&world);
+    let entity_mut = entity_view.mut_current_stage(&world);
     entity_mut.set(Position { x: 10, y: 20 });
 
     assert!(entity_view.has::<Position>());
@@ -1478,11 +1465,11 @@ fn entity_entity_view_to_entity_stage() {
     let world = World::new();
 
     let entity_view: EntityView = world.new_entity().into();
-    let stage = world.get_stage(0);
+    let stage = world.stage(0);
 
     world.readonly_begin();
 
-    let entity_mut = entity_view.get_mut(&stage);
+    let entity_mut = entity_view.mut_current_stage(&stage);
     entity_mut.set(Position { x: 10, y: 20 });
     assert!(!entity_mut.has::<Position>());
 
@@ -1499,14 +1486,14 @@ fn entity_entity_view_to_entity_stage() {
 #[test]
 fn entity_create_entity_view_from_stage() {
     let world = World::new();
-    let stage = world.get_stage(0);
+    let stage = world.stage(0);
 
     world.readonly_begin();
     let entity_view: EntityView = stage.new_entity().into();
 
     world.readonly_end();
 
-    let entity_mut = entity_view.get_mut(&world);
+    let entity_mut = entity_view.mut_current_stage(&world);
     entity_mut.set(Position { x: 10, y: 20 });
     assert!(entity_view.has::<Position>());
 
@@ -1537,16 +1524,260 @@ fn entity_get_1_component_w_callback() {
     let e_2 = world.new_entity().set(Position { x: 11, y: 22 });
     let e_3 = world.new_entity().set(Velocity { x: 1, y: 2 });
 
-    e_1.get_callback::<Position>(|p| {
+    assert!(e_1.get_callback::<Position>(|p| {
         assert_eq!(p.x, 10);
         assert_eq!(p.y, 20);
-    });
+    }));
 
-    e_2.get_callback::<Position>(|p| {
+    assert!(e_2.get_callback::<Position>(|p| {
         assert_eq!(p.x, 11);
         assert_eq!(p.y, 22);
-    });
+    }));
 
-    #[allow(clippy::assertions_on_constants)]
-    e_3.get_callback::<Position>(|_| assert!(false));
+    assert!(!e_3.get_callback::<Position>(|_| {}));
 }
+
+#[ignore]
+#[test]
+fn entity_get_2_components_w_callback() {
+    // let world = World::new();
+    // let e_1 = world
+    //     .new_entity()
+    //     .set(Position { x: 10, y: 20 })
+    //     .set(Velocity { x: 1, y: 2 });
+    // let e_2 = world.new_entity().set(Position { x: 11, y: 22 });
+    // let e_3 = world.new_entity().set(Velocity { x: 1, y: 2 });
+
+    // TODO get_callback does not support multiple components
+}
+
+#[test]
+fn entity_get_mut_1_component_w_callback() {
+    let world = World::new();
+    let e_1 = world
+        .new_entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+    let e_2 = world.new_entity().set(Position { x: 11, y: 22 });
+    let e_3 = world.new_entity().set(Velocity { x: 1, y: 2 });
+
+    assert!(e_1.get_callback_mut::<Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+        p.x += 1;
+        p.y += 2;
+    }));
+
+    assert!(e_2.get_callback_mut::<Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+        p.x += 1;
+        p.y += 2;
+    }));
+
+    assert!(!e_3.get_callback_mut::<Position>(|_| {}));
+
+    let p = e_1.get::<Position>().unwrap();
+    assert_eq!(p.x, 11);
+    assert_eq!(p.y, 22);
+
+    let p = e_2.get::<Position>().unwrap();
+    assert_eq!(p.x, 12);
+    assert_eq!(p.y, 24);
+}
+
+#[ignore]
+#[test]
+fn entity_get_mut_2_components_w_callback() {
+    // multiple components not supported in get_callback (for now)
+}
+
+#[test]
+fn entity_get_component_w_callback_nested() {
+    let world = World::new();
+
+    let e = world
+        .new_entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+
+    assert!(e.get_callback::<Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+
+        assert!(e.get_callback::<Velocity>(|v| {
+            assert_eq!(v.x, 1);
+            assert_eq!(v.y, 2);
+        }));
+    }));
+}
+
+#[test]
+fn entity_get_mut_component_w_callback_nested() {
+    let world = World::new();
+
+    let e = world
+        .new_entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+
+    assert!(e.get_callback_mut::<Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+
+        assert!(e.get_callback_mut::<Velocity>(|v| {
+            assert_eq!(v.x, 1);
+            assert_eq!(v.y, 2);
+        }));
+    }));
+}
+
+// TODO set callbacks
+
+#[test]
+fn entity_defer_set_1_component() {
+    let world = World::new();
+
+    world.defer_begin();
+
+    let e = world.new_entity().set(Position { x: 10, y: 20 });
+
+    assert!(!e.has::<Position>());
+
+    world.defer_end();
+
+    assert!(e.has::<Position>());
+
+    let p = e.get::<Position>().unwrap();
+    assert_eq!(p.x, 10);
+    assert_eq!(p.y, 20);
+}
+
+/*
+
+
+void Entity_defer_set_1_component(void) {
+    flecs::world ecs;
+
+    ecs.defer_begin();
+
+    auto e = ecs.entity()
+        .set([](Position& p){
+            p.x = 10;
+            p.y = 20;
+        });
+
+    test_assert(!e.has<Position>());
+
+    ecs.defer_end();
+
+    test_assert(e.has<Position>());
+
+    e.get([](const Position& p) {
+        test_int(p.x, 10);
+        test_int(p.y, 20);
+    });
+}
+
+void Entity_defer_set_2_components(void) {
+    flecs::world ecs;
+
+    ecs.defer_begin();
+
+    auto e = ecs.entity()
+        .set([](Position& p, Velocity& v){
+            p = {10, 20};
+            v = {1, 2};
+        });
+
+    test_assert(!e.has<Position>());
+    test_assert(!e.has<Velocity>());
+
+    ecs.defer_end();
+
+    test_assert(e.has<Position>());
+    test_assert(e.has<Velocity>());
+
+    e.get([](const Position& p, const Velocity& v) {
+        test_int(p.x, 10);
+        test_int(p.y, 20);
+
+        test_int(v.x, 1);
+        test_int(v.y, 2);
+    });
+}
+
+void Entity_defer_set_3_components(void) {
+    flecs::world ecs;
+
+    ecs.defer_begin();
+
+    auto e = ecs.entity()
+        .set([](Position& p, Velocity& v, Mass& m){
+            p = {10, 20};
+            v = {1, 2};
+            m = {50};
+        });
+
+    test_assert(!e.has<Position>());
+    test_assert(!e.has<Velocity>());
+    test_assert(!e.has<Mass>());
+
+    ecs.defer_end();
+
+    test_assert(e.has<Position>());
+    test_assert(e.has<Velocity>());
+    test_assert(e.has<Mass>());
+
+    e.get([](const Position& p, const Velocity& v, const Mass& m) {
+        test_int(p.x, 10);
+        test_int(p.y, 20);
+
+        test_int(v.x, 1);
+        test_int(v.y, 2);
+
+        test_int(m.value, 50);
+    });
+}
+
+void Entity_set_2_w_on_set(void) {
+    flecs::world ecs;
+
+    int32_t position_set = 0;
+    int32_t velocity_set = 0;
+
+    ecs.observer<Position>()
+        .event(flecs::OnSet)
+        .each([&](flecs::entity e, Position& p) {
+            position_set ++;
+            test_int(p.x, 10);
+            test_int(p.y, 20);
+        });
+
+    ecs.observer<Velocity>()
+        .event(flecs::OnSet)
+        .each([&](flecs::entity e, Velocity& v) {
+            velocity_set ++;
+            test_int(v.x, 1);
+            test_int(v.y, 2);
+        });
+
+    auto e = ecs.entity()
+        .set([](Position& p, Velocity& v){
+            p = {10, 20};
+            v = {1, 2};
+        });
+
+    test_int(position_set, 1);
+    test_int(velocity_set, 1);
+
+    test_bool(e.get([](const Position& p, const Velocity& v) {
+        test_int(p.x, 10);
+        test_int(p.y, 20);
+
+        test_int(v.x, 1);
+        test_int(v.y, 2);
+    }), true);
+}
+
+*/

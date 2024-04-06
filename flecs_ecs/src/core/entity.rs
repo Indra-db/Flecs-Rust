@@ -8,7 +8,7 @@ use super::{
     c_types::{IdT, SEPARATOR},
     component_ref::Ref,
     component_registration::{ComponentId, ComponentType, Enum, Struct},
-    ecs_pair, ecs_pair_first, ecs_pair_second, set_helper, try_register_component,
+    ecs_pair, ecs_pair_first, ecs_pair_second, set_helper,
     world::World,
     CachedEnumData, EmptyComponent, EntityView, IntoComponentId, IntoEntityId, IntoEntityIdExt,
     IntoWorld, NotEmptyComponent, ScopedWorld, ECS_DEPENDS_ON, ECS_EXCLUSIVE, ECS_IS_A,
@@ -108,7 +108,7 @@ impl From<IdT> for Entity {
 
 impl std::fmt::Display for Entity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Some(name) = self.get_name_optional() {
+        if let Some(name) = self.name_optional() {
             write!(f, "{}", name)
         } else {
             write!(f, "{}", self.raw_id)
@@ -118,9 +118,9 @@ impl std::fmt::Display for Entity {
 
 impl std::fmt::Debug for Entity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let name = self.get_name();
+        let name = self.name();
         let id = self.raw_id;
-        let archetype_str = if let Some(s) = self.get_archetype().to_string() {
+        let archetype_str = if let Some(s) = self.archetype().to_string() {
             s
         } else {
             "empty".to_string()
@@ -145,7 +145,7 @@ impl Entity {
     pub fn new(world: impl IntoWorld) -> Self {
         Self {
             entity_view: EntityView::new_from_existing(world.get_world_raw(), unsafe {
-                ecs_new_id(world.get_world_raw_mut())
+                ecs_new_id(world.world_ptr_mut())
             }),
         }
     }
@@ -206,7 +206,7 @@ impl Entity {
             add: [0; 32],
             add_expr: std::ptr::null(),
         };
-        let id = unsafe { ecs_entity_init(world.get_world_raw_mut(), &desc) };
+        let id = unsafe { ecs_entity_init(world.world_ptr_mut(), &desc) };
         Self {
             entity_view: EntityView::new_from_existing(world, id),
         }
@@ -372,11 +372,7 @@ impl Entity {
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         let world = self.world;
-        try_register_component::<Second>(self.world);
-        // SAFETY: we know that the enum_value is a valid because of the T::get_id call
-        self.add_id((First::get_id(world), unsafe {
-            enum_value.get_entity_id_from_enum_field(world)
-        }))
+        self.add_id((First::get_id(world), enum_value.get_id_variant(world)))
     }
 
     /// Adds a pair to the entity where the first element is the enumeration type,
@@ -403,9 +399,7 @@ impl Entity {
         let world = self.world;
         let id = T::get_id(world);
         // SAFETY: we know that the enum_value is a valid because of the T::get_id call
-        self.add_id((id, unsafe {
-            enum_value.get_entity_id_from_enum_field(world)
-        }))
+        self.add_id((id, unsafe { enum_value.get_id_variant_unchecked(world) }))
     }
 
     /// Conditional add.
@@ -539,7 +533,7 @@ impl Entity {
         // SAFETY: we know that the enum_value is a valid because of the T::get_id call
         self.add_id_if(
             (T::get_id(world), unsafe {
-                enum_value.get_entity_id_from_enum_field(world)
+                enum_value.get_id_variant_unchecked(world)
             }),
             condition,
         )
@@ -603,11 +597,7 @@ impl Entity {
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         let world = self.world;
-        try_register_component::<Second>(self.world);
-        // SAFETY: we know that the enum_value is a valid because of the attempt to register
-        self.remove_id((First::get_id(world), unsafe {
-            enum_value.get_entity_id_from_enum_field(world)
-        }))
+        self.remove_id((First::get_id(world), enum_value.get_id_variant(world)))
     }
 
     /// Removes a pair.
@@ -778,7 +768,7 @@ impl Entity {
             FlecsErrorCode::InvalidParameter,
             "add ChildOf pair before using slot()"
         );
-        let id = self.get_target_id(ECS_CHILD_OF, 0);
+        let id = self.target_id(ECS_CHILD_OF, 0);
         self.slot_of_id(id)
     }
 
@@ -1145,15 +1135,14 @@ impl Entity {
         First: ComponentId + ComponentType<Struct>,
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
-        try_register_component::<Second>(self.world);
-        // SAFETY: we know that the enum_value is a valid because of attempt to register
         set_helper(
             self.world,
             self.raw_id,
             first,
-            ecs_pair(First::get_id(self.world), unsafe {
-                constant.get_entity_id_from_enum_field(self.world)
-            }),
+            ecs_pair(
+                First::get_id(self.world),
+                constant.get_id_variant(self.world),
+            ),
         );
         self
     }
@@ -1540,7 +1529,7 @@ impl Entity {
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
     #[allow(clippy::mut_from_ref)]
-    pub fn get_mut<T: ComponentId>(&self) -> &mut T::UnderlyingType {
+    pub fn get_mut<T: ComponentId>(self) -> &'static mut T::UnderlyingType {
         // This branch will be removed in release mode since this can be determined at compile time.
         if !T::IS_ENUM {
             let component_id = T::get_id(self.world);
@@ -1584,6 +1573,19 @@ impl Entity {
         }
     }
 
+    pub fn get_callback_mut<T: ComponentId + 'static>(
+        self,
+        callback: impl FnOnce(&'static mut T::UnderlyingType),
+    ) -> bool {
+        if self.has::<T>() {
+            let comp = self.get_mut::<T>();
+            callback(comp);
+            true
+        } else {
+            false
+        }
+    }
+
     /// Gets mut component unchecked
     ///
     /// This operation returns a mutable reference to the component. If the entity
@@ -1608,7 +1610,7 @@ impl Entity {
     /// * C++ API: `entity::get_mut`
     #[doc(hidden)] // flecs 3.2.12 yet to be released
     #[doc(alias = "entity::ensure")]
-    pub unsafe fn get_mut_ensure_unchecked<T: ComponentId + ComponentType<Struct>>(
+    pub unsafe fn ensure_mut_unchecked<T: ComponentId + ComponentType<Struct>>(
         &mut self,
     ) -> &mut T::UnderlyingType {
         let component_id = T::get_id(self.world);
@@ -1800,7 +1802,7 @@ impl Entity {
             std::mem::size_of::<T>() != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid type: {}",
-            T::get_name(),
+            T::name(),
         );
         self.modified_id(T::get_id(self.world));
     }
@@ -1843,7 +1845,7 @@ impl Entity {
     ///
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
-    pub fn get_ref_component<T: ComponentId>(&self) -> Ref<T::UnderlyingType> {
+    pub fn get_ref<T: ComponentId>(&self) -> Ref<T::UnderlyingType> {
         Ref::<T::UnderlyingType>::new(Some(self.world), self.raw_id, T::get_id(self.world))
     }
 

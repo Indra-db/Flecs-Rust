@@ -31,8 +31,8 @@ fn main() {
     // Iterate the query with a flecs::iter. This makes it possible to inspect
     // the pair that we are currently matched with.
     query.each_iter(|it, index, (eats,)| {
-        let entity = it.get_entity(index);
-        let food = it.get_pair_id(1).unwrap().second();
+        let entity = it.entity(index);
+        let food = it.pair(1).unwrap().second();
 
         println!("{} eats {} {}", entity, eats.amount, food);
     });

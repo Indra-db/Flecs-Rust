@@ -13,7 +13,7 @@ fn main() {
     world
         .system_builder::<(&mut Timeout,)>()
         .on_each_iter(|it, index, (timeout,)| {
-            timeout.value -= it.get_delta_time();
+            timeout.value -= it.delta_time();
             if timeout.value <= 0.0 {
                 // Delete the entity
 
@@ -25,9 +25,9 @@ fn main() {
                 // When the entity to be mutated is not the same as the entity
                 // provided by the system, an additional mut() call is required.
                 // See the mutate_entity_handle example.
-                let e = it.get_entity(index);
+                let e = it.entity(index);
                 e.destruct();
-                println!("Expire: {} deleted!", e.get_name());
+                println!("Expire: {} deleted!", e.name());
             }
         });
 
@@ -37,7 +37,7 @@ fn main() {
         .on_each_entity(|e, (timeout,)| {
             println!(
                 "PrintExpire: {} has {:.2} seconds left",
-                e.get_name(),
+                e.name(),
                 timeout.value
             );
         });
@@ -47,7 +47,7 @@ fn main() {
         .observer_builder::<(&Timeout,)>()
         .add_event(ECS_ON_REMOVE)
         .on_each_entity(|e, (_timeout,)| {
-            println!("Expired: {} actually deleted", e.get_name());
+            println!("Expired: {} actually deleted", e.name());
         });
 
     let e = world

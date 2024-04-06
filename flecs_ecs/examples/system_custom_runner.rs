@@ -31,7 +31,7 @@ fn main() {
         .on_each_entity(|e, (pos, vel)| {
             pos.x += vel.x;
             pos.y += vel.y;
-            println!("{}: {{ {}, {} }}", e.get_name(), pos.x, pos.y);
+            println!("{}: {{ {}, {} }}", e.name(), pos.x, pos.y);
         });
 
     // Create a few test entities for a Position, Velocity query

@@ -12,7 +12,7 @@ fn main() {
         .on_each_entity(|e, (p, v)| {
             p.x += v.x;
             p.y += v.y;
-            println!("{}: {{ {}, {} }}", e.get_name(), p.x, p.y);
+            println!("{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 
     // Create a few test entities for a Position, Velocity query

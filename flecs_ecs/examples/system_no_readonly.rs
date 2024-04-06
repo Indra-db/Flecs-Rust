@@ -38,7 +38,7 @@ fn main() {
         .no_readonly(true)
         .on_iter_only(move |it| {
             for i in it.iter() {
-                let plate = it.get_entity(i);
+                let plate = it.entity(i);
 
                 // Find an available waiter
                 let waiter = q_waiter.clone().first();
@@ -51,9 +51,9 @@ fn main() {
                     // deferring is still enabled by default as adding/removing
                     // components to the entities being iterated would interfere
                     // with the system iterator.
-                    it.get_world().defer_suspend();
+                    it.world().defer_suspend();
                     waiter.add_pair_first::<&Plate>(plate);
-                    it.get_world().defer_resume();
+                    it.world().defer_resume();
 
                     // Now that deferring is resumed, we can safely also add the
                     // waiter to the plate. We can't do this while deferring is
@@ -63,7 +63,7 @@ fn main() {
 
                     plate.add_pair_first::<&Waiter>(waiter);
 
-                    println!("Assigned {} to {}!", waiter.get_name(), plate.get_name());
+                    println!("Assigned {} to {}!", waiter.name(), plate.name());
                 } else {
                     // No available waiters, can't assign the plate
                 }

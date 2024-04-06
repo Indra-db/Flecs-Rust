@@ -36,7 +36,6 @@ use super::{
     entity::Entity,
     id::Id,
     table::{Table, TableRange},
-    try_register_component,
     world::World,
     CachedEnumData, EmptyComponent, EventBuilderImpl, IntoComponentId, IntoEntityId,
     IntoEntityIdExt, IntoWorld, IterT, NotEmptyComponent, ObserverEntityBindingCtx, ECS_ANY,
@@ -176,7 +175,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::name`
     #[doc(alias = "entity_view::name")]
-    pub fn get_name(self) -> &'static str {
+    pub fn name(self) -> &'static str {
         let name_ptr = unsafe { ecs_get_name(self.world, self.raw_id) };
 
         if name_ptr.is_null() {
@@ -194,7 +193,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::name`
     #[doc(alias = "entity_view::name")]
-    pub fn get_name_optional(self) -> Option<&'static str> {
+    pub fn name_optional(self) -> Option<&'static str> {
         let name_ptr = unsafe { ecs_get_name(self.world, self.raw_id) };
 
         if name_ptr.is_null() {
@@ -211,7 +210,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::name`
-    pub fn get_name_cstr(self) -> &'static CStr {
+    pub fn name_cstr(self) -> &'static CStr {
         unsafe {
             let name_ptr = ecs_get_name(self.world, self.raw_id);
             if name_ptr.is_null() {
@@ -229,7 +228,7 @@ impl EntityView {
     /// # See also
     ///
     /// * C++ API: `entity_view::name`
-    pub fn get_name_cstr_optional(self) -> Option<&'static CStr> {
+    pub fn name_cstr_optional(self) -> Option<&'static CStr> {
         let name_ptr = unsafe { ecs_get_name(self.world, self.raw_id) };
 
         if name_ptr.is_null() {
@@ -245,7 +244,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::symbol`
     #[doc(alias = "entity_view::symbol")]
-    pub fn get_symbol(self) -> &'static CStr {
+    pub fn symbol(self) -> &'static CStr {
         unsafe { CStr::from_ptr(ecs_get_symbol(self.world, self.raw_id)) }
     }
 
@@ -258,8 +257,8 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path`
     #[doc(alias = "entity_view::path")]
-    pub fn get_path_w_sep(self, sep: &CStr, init_sep: &CStr) -> Option<String> {
-        self.get_path_from_id_w_sep(0, sep, init_sep)
+    pub fn path_w_sep(self, sep: &CStr, init_sep: &CStr) -> Option<String> {
+        self.path_from_id_w_sep(0, sep, init_sep)
     }
 
     /// Return the hierarchical entity path using the default separator "::".
@@ -268,8 +267,8 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path`
     #[doc(alias = "entity_view::path")]
-    pub fn get_path(self) -> Option<String> {
-        self.get_path_from_id(0)
+    pub fn path(self) -> Option<String> {
+        self.path_from_id(0)
     }
 
     /// Return the hierarchical entity path relative to a parent.
@@ -281,7 +280,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    pub fn get_path_from_id_w_sep(
+    pub fn path_from_id_w_sep(
         &self,
         parent: impl IntoEntityId,
         sep: &CStr,
@@ -316,7 +315,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    pub fn get_path_from_id(self, parent: impl IntoEntityId) -> Option<String> {
+    pub fn path_from_id(self, parent: impl IntoEntityId) -> Option<String> {
         unsafe {
             let raw_ptr = ecs_get_path_w_sep(
                 self.world,
@@ -351,16 +350,12 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    pub fn get_path_from<T: ComponentId>(self) -> Option<String> {
-        self.get_path_from_id_w_sep(T::get_id(self.world), SEPARATOR, SEPARATOR)
+    pub fn path_from<T: ComponentId>(self) -> Option<String> {
+        self.path_from_id_w_sep(T::get_id(self.world), SEPARATOR, SEPARATOR)
     }
 
-    pub fn get_path_from_w_sep<T: ComponentId>(
-        &self,
-        sep: &CStr,
-        init_sep: &CStr,
-    ) -> Option<String> {
-        self.get_path_from_id_w_sep(T::get_id(self.world), sep, init_sep)
+    pub fn path_from_w_sep<T: ComponentId>(&self, sep: &CStr, init_sep: &CStr) -> Option<String> {
+        self.path_from_id_w_sep(T::get_id(self.world), sep, init_sep)
     }
 
     /// Return the hierarchical entity path relative to a parent type using the default separator "::".
@@ -369,8 +364,8 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    pub fn get_hierarchy_path_from_parent_type<T: ComponentId>(self) -> Option<String> {
-        self.get_path_from_id(T::get_id(self.world))
+    pub fn hierarchy_path_from_parent_type<T: ComponentId>(self) -> Option<String> {
+        self.path_from_id(T::get_id(self.world))
     }
 
     /// Checks if the entity is enabled.
@@ -394,7 +389,7 @@ impl EntityView {
     /// * C++ API: `entity_view::type`
     #[doc(alias = "entity_view::type")]
     #[inline(always)]
-    pub fn get_archetype(self) -> Archetype {
+    pub fn archetype(self) -> Archetype {
         Archetype::new(self.world, unsafe { ecs_get_type(self.world, self.raw_id) })
     }
 
@@ -405,7 +400,7 @@ impl EntityView {
     /// * C++ API: `entity_view::table`
     #[doc(alias = "entity_view::table")]
     #[inline(always)]
-    pub fn get_table(self) -> Table {
+    pub fn table(self) -> Table {
         Table::new(self.get_world(), unsafe {
             ecs_get_table(self.world, self.raw_id)
         })
@@ -422,7 +417,7 @@ impl EntityView {
     /// * C++ API: `entity_view::range`
     #[doc(alias = "entity_view::range")]
     #[inline]
-    pub fn get_table_range(self) -> TableRange {
+    pub fn table_range(self) -> TableRange {
         let ecs_record: *mut ecs_record_t = unsafe { ecs_record_find(self.world, self.raw_id) };
         if !ecs_record.is_null() {
             unsafe {
@@ -732,10 +727,12 @@ impl EntityView {
     pub fn get_callback<T: ComponentId + 'static>(
         self,
         callback: impl FnOnce(&'static T::UnderlyingType),
-    ) {
+    ) -> bool {
         if let Some(component) = self.get::<T>() {
             callback(component);
+            return true;
         }
+        false
     }
 
     /// Get (struct) Component from entity unchecked
@@ -1020,7 +1017,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target")]
-    pub fn get_target<First: ComponentId>(self, index: i32) -> Entity {
+    pub fn target<First: ComponentId>(self, index: i32) -> Entity {
         Entity::new_from_existing_raw(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, First::get_id(self.world), index)
         })
@@ -1041,7 +1038,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target")]
-    pub fn get_target_id(self, first: impl IntoEntityId, index: i32) -> Entity {
+    pub fn target_id(self, first: impl IntoEntityId, index: i32) -> Entity {
         Entity::new_from_existing_raw(self.world, unsafe {
             ecs_get_target(self.world, self.raw_id, first.get_id(), index)
         })
@@ -1076,7 +1073,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::target_for`
     #[doc(alias = "entity_view::target_for")]
-    pub fn get_target_for_id(
+    pub fn target_for_id(
         &self,
         relationship: impl IntoEntityId,
         component_id: impl IntoEntityId,
@@ -1113,8 +1110,8 @@ impl EntityView {
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target_for")]
     #[inline(always)]
-    pub fn get_target_for<T: IntoComponentId>(self, relationship: impl IntoEntityId) -> Entity {
-        self.get_target_for_id(relationship, T::get_id(self.world))
+    pub fn target_for<T: IntoComponentId>(self, relationship: impl IntoEntityId) -> Entity {
+        self.target_for_id(relationship, T::get_id(self.world))
     }
 
     // TODO this needs a better name and documentation, the rest of the cpp functions still have to be done as well
@@ -1137,7 +1134,7 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target_for")]
-    pub fn get_target_for_pair_first<First: ComponentId>(
+    pub fn target_for_pair_first<First: ComponentId>(
         &self,
         second: impl IntoEntityId,
     ) -> *const First {
@@ -1167,13 +1164,13 @@ impl EntityView {
     /// * C++ API: `entity_view::depth`
     #[doc(alias = "entity_view::depth")]
     #[inline(always)]
-    pub fn get_depth_by_id(self, relationship: impl IntoEntityId) -> i32 {
+    pub fn depth_id(self, relationship: impl IntoEntityId) -> i32 {
         unsafe { ecs_get_depth(self.world, self.raw_id, relationship.get_id()) }
     }
 
     /// Retrieves the depth for a specified relationship.
     ///
-    /// This function is a convenient wrapper around `get_depth_by_id`, allowing callers
+    /// This function is a convenient wrapper around `get_depth_id`, allowing callers
     /// to provide a type and automatically deriving the relationship id.
     ///
     /// # Type Parameters
@@ -1189,8 +1186,8 @@ impl EntityView {
     /// * C++ API: `entity_view::depth`
     #[doc(alias = "entity_view::depth")]
     #[inline(always)]
-    pub fn get_depth<T: ComponentId>(self) -> i32 {
-        self.get_depth_by_id(T::get_id(self.world))
+    pub fn depth<T: ComponentId>(self) -> i32 {
+        self.depth_id(T::get_id(self.world))
     }
 
     /// Retrieves the parent of the entity.
@@ -1206,8 +1203,8 @@ impl EntityView {
     /// * C++ API: `entity_view::parent`
     #[doc(alias = "entity_view::parent")]
     #[inline(always)]
-    pub fn get_parent(self) -> Entity {
-        self.get_target_id(ECS_CHILD_OF, 0)
+    pub fn parent(self) -> Entity {
+        self.target_id(ECS_CHILD_OF, 0)
     }
 
     /// Lookup an entity by name.
@@ -1319,7 +1316,7 @@ impl EntityView {
     {
         let component_id: IdT = T::get_id(self.world);
         // Safety: we know the enum fields are registered because of the previous T::get_id call
-        let enum_constant_entity_id = unsafe { constant.get_entity_id_from_enum_field(self.world) };
+        let enum_constant_entity_id = unsafe { constant.get_id_variant_unchecked(self.world) };
         self.has_id((component_id, enum_constant_entity_id))
     }
 
@@ -1328,7 +1325,7 @@ impl EntityView {
     where
         T: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
-        let enum_constant_entity_id = unsafe { constant.get_entity_id_from_enum_field(self.world) };
+        let enum_constant_entity_id = constant.get_id_variant(self.world);
         self.has_id((enum_id, enum_constant_entity_id))
     }
 
@@ -1377,10 +1374,8 @@ impl EntityView {
         &self,
         constant: U,
     ) -> bool {
-        try_register_component::<U>(self.world);
         let component_id: IdT = T::get_id(self.world);
-        //this is safe because we attempted to register it beforehand
-        let enum_constant_entity_id = unsafe { constant.get_entity_id_from_enum_field(self.world) };
+        let enum_constant_entity_id = constant.get_id_variant(self.world);
 
         self.has_id((component_id, enum_constant_entity_id))
     }
@@ -1643,9 +1638,9 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::mut`
     #[doc(alias = "entity_view::mut")]
-    pub fn get_mut(self, stage: impl IntoWorld) -> Entity {
+    pub fn mut_current_stage(self, stage: impl IntoWorld) -> Entity {
         ecs_assert!(
-            !World::new_wrap_raw_world(stage.get_world_raw_mut()).is_readonly(),
+            !World::new_wrap_raw_world(stage.world_ptr_mut()).is_readonly(),
             FlecsErrorCode::InvalidParameter,
             "cannot use readonly world/stage to create mutable handle"
         );
@@ -1669,17 +1664,17 @@ impl EntityView {
     ///
     /// * C++ API: `entity_view::mut`
     #[doc(alias = "entity_view::mut")]
-    pub fn get_mutable_handle_from_entity<T>(self, entity: T) -> Entity
+    pub fn mut_stage_of<T>(self, entity: T) -> Entity
     where
         T: IntoEntityId + IntoWorld,
     {
         ecs_assert!(
-            !World::new_wrap_raw_world(entity.get_world_raw_mut()).is_readonly(),
+            !World::new_wrap_raw_world(entity.world_ptr_mut()).is_readonly(),
             FlecsErrorCode::InvalidParameter,
             "cannot use entity created for readonly world/stage to create mutable handle"
         );
 
-        Entity::new_id_only(self.raw_id).set_stage(entity.get_world_raw_mut())
+        Entity::new_id_only(self.raw_id).set_stage(entity.world_ptr_mut())
     }
 
     //might not be needed, in the original c++ impl it was used in the get_mut functions.
@@ -1817,6 +1812,15 @@ impl EntityView {
     ///
     /// * T - the event type to enqueue. Type must be empty.
     ///
+    /// # Usage:
+    ///
+    #[cfg_attr(doctest, doc = " ````no_test")]
+    /// ```rust
+    /// world.defer_begin();
+    /// entity.enqueue<MyEvent>();
+    /// world.defer_end();
+    /// ```
+    ///
     /// # See also
     ///
     /// * C++ API: `entity_view::enqueue`
@@ -1830,6 +1834,20 @@ impl EntityView {
     /// # Type Parameters
     ///
     /// * T - the event type to enqueue. Type must contain data (not empty struct).
+    ///
+    /// # Usage:
+    ///
+    #[cfg_attr(doctest, doc = " ````no_test")]
+    /// ```rust
+    /// struct Resize {
+    ///    width: i32,
+    ///   height: i32,
+    /// }
+    ///
+    /// world.defer_begin();
+    /// entity.enqueue_payload(Resize{width: 10, height: 20});
+    /// world.defer_end();
+    /// ```
     ///
     /// # See also
     ///

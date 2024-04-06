@@ -30,15 +30,15 @@ fn main() {
     query.iter(|it, (position, velocity)| {
         println!();
         // Print the table & number of entities matched in current callback
-        println!("Table: {}", it.get_archetype());
+        println!("Table: {}", it.archetype());
         println!(" - number of entities: {}", it.count());
         println!();
 
         // Print information about the components being matched
-        for i in 1..=it.get_field_count() {
+        for i in 1..=it.field_count() {
             println!(" - term {} : ", i);
-            println!("   - component: {}", it.get_field_id(i).to_str());
-            println!("   - type size: {}", it.get_field_size(i));
+            println!("   - component: {}", it.id(i).to_str());
+            println!("   - type size: {}", it.size(i));
         }
 
         println!();
@@ -46,11 +46,7 @@ fn main() {
         for i in it.iter() {
             position[i].x += velocity[i].x;
             position[i].y += velocity[i].y;
-            println!(
-                " - entity {}: has {:?}",
-                it.get_entity(i).get_name(),
-                position[i]
-            );
+            println!(" - entity {}: has {:?}", it.entity(i).name(), position[i]);
         }
 
         println!();

@@ -40,7 +40,7 @@ impl<T: ComponentId> Ref<T> {
     #[doc(alias = "ref::ref")]
     pub fn new(world: Option<impl IntoWorld>, entity: impl IntoEntityId, mut id: IdT) -> Self {
         let mut world = world
-            .map(|w| w.get_world_raw_mut())
+            .map(|w| w.world_ptr_mut())
             .unwrap_or(std::ptr::null_mut());
         // the world we were called with may be a stage; convert it to a world
         // here if that is the case

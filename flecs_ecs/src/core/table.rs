@@ -53,7 +53,7 @@ impl Table {
     #[doc(alias = "table::table")]
     pub fn new(world: impl IntoWorld, table: *mut TableT) -> Self {
         Self {
-            world: world.get_world_raw_mut(),
+            world: world.world_ptr_mut(),
             table,
         }
     }
@@ -88,7 +88,7 @@ impl Table {
     ///
     /// * C++ API: `table::type`
     #[doc(alias = "table::type")]
-    pub fn get_type(&self) -> Archetype {
+    pub fn archetype(&self) -> Archetype {
         Archetype::new(self.world, unsafe { ecs_table_get_type(self.table) })
     }
 
@@ -98,7 +98,7 @@ impl Table {
     ///
     /// * C++ API: `table::count`
     #[doc(alias = "table::count")]
-    pub fn get_count(&self) -> i32 {
+    pub fn count(&self) -> i32 {
         unsafe { ecs_table_count(self.table) }
     }
 
@@ -426,7 +426,7 @@ impl Table {
     ///
     /// * C++ API: `table::get_column`
     #[doc(alias = "table::get_column")]
-    pub fn get_column(&self, index: i32) -> Option<*mut c_void> {
+    pub fn column_untyped(&self, index: i32) -> Option<*mut c_void> {
         let ptr = unsafe { ecs_table_get_column(self.table, index, 0) };
         if ptr.is_null() {
             None
@@ -449,10 +449,10 @@ impl Table {
     ///
     /// * C++ API: `table::get`
     #[doc(alias = "table::get")]
-    pub fn get_component_array_slice<T: ComponentId>(&self) -> Option<&mut [T]> {
-        self.get_component_array_ptr_id(T::get_id(self.world))
+    pub fn get_mut<T: ComponentId>(&self) -> Option<&mut [T]> {
+        self.get_mut_untyped(T::get_id(self.world))
             .map(|ptr| unsafe {
-                std::slice::from_raw_parts_mut(ptr as *mut T, self.get_count() as usize)
+                std::slice::from_raw_parts_mut(ptr as *mut T, self.count() as usize)
             })
     }
 
@@ -469,9 +469,9 @@ impl Table {
     /// # See also
     ///
     /// * C++ API: `table::get`
-    pub fn get_component_array_ptr_id(&self, id: IdT) -> Option<*mut c_void> {
+    pub fn get_mut_untyped(&self, id: IdT) -> Option<*mut c_void> {
         if let Some(index) = self.find_column_index_id(id) {
-            self.get_column(index)
+            self.column_untyped(index)
         } else {
             None
         }
@@ -492,12 +492,8 @@ impl Table {
     ///
     /// * C++ API: `table::get`
     #[doc(alias = "table::get")]
-    pub fn get_component_array_ptr_pair_ids(
-        &self,
-        first: EntityT,
-        second: EntityT,
-    ) -> Option<*mut c_void> {
-        self.get_component_array_ptr_id(ecs_pair(first, second))
+    pub fn get_pair_ids_mut_untyped(&self, first: EntityT, second: EntityT) -> Option<*mut c_void> {
+        self.get_mut_untyped(ecs_pair(first, second))
     }
 
     /// Get column, components array ptr from table by pair of component types.
@@ -515,10 +511,10 @@ impl Table {
     ///
     /// * C++ API: `table::get`
     #[doc(alias = "table::get")]
-    pub fn get_component_array_ptr_pair<First: ComponentId, Second: ComponentId>(
+    pub fn get_pair_mut_untyped<First: ComponentId, Second: ComponentId>(
         &self,
     ) -> Option<*mut c_void> {
-        self.get_component_array_ptr_pair_ids(First::get_id(self.world), Second::get_id(self.world))
+        self.get_pair_ids_mut_untyped(First::get_id(self.world), Second::get_id(self.world))
     }
 
     //TODO pair generic
@@ -537,7 +533,7 @@ impl Table {
     ///
     /// * C++ API: `table::column_size`
     #[doc(alias = "table::column_size")]
-    pub fn get_column_size(&self, index: i32) -> usize {
+    pub fn column_size(&self, index: i32) -> usize {
         unsafe { ecs_table_get_column_size(self.table, index) }
     }
 
@@ -557,8 +553,8 @@ impl Table {
     ///
     /// * C++ API: `table::depth`
     #[doc(alias = "table::depth")]
-    pub fn get_depth_for_relationship<Rel: ComponentId>(&self) -> i32 {
-        self.get_depth_for_relationship_id(Rel::get_id(self.world))
+    pub fn depth<Rel: ComponentId>(&self) -> i32 {
+        self.depth_id(Rel::get_id(self.world))
     }
 
     /// Return depth for table in tree for relationship type.
@@ -577,12 +573,12 @@ impl Table {
     ///
     /// * C++ API: `table::depth`
     #[doc(alias = "table::depth")]
-    pub fn get_depth_for_relationship_id(&self, rel: EntityT) -> i32 {
+    pub fn depth_id(&self, rel: EntityT) -> i32 {
         unsafe { ecs_table_get_depth(self.world, self.table, rel) }
     }
 
     /// Get raw table ptr
-    pub fn get_raw_table(&self) -> *mut TableT {
+    pub fn table_ptr_mut(&self) -> *mut TableT {
         self.table
     }
 }
@@ -658,7 +654,7 @@ impl TableRange {
     ///
     /// * C++ API: `table_range::offset`
     #[doc(alias = "table_range::offset")]
-    pub fn get_offset(&self) -> i32 {
+    pub fn offset(&self) -> i32 {
         self.offset
     }
 
@@ -668,7 +664,7 @@ impl TableRange {
     ///
     /// * C++ API: `table_range::count`
     #[doc(alias = "table_range::count")]
-    pub fn get_count(&self) -> i32 {
+    pub fn count(&self) -> i32 {
         self.count
     }
 
@@ -686,7 +682,7 @@ impl TableRange {
     ///
     /// * C++ API: `table::get_column`
     #[doc(alias = "table::get_column")]
-    pub fn get_column(&self, index: i32) -> Option<*mut c_void> {
+    pub fn column_untyped(&self, index: i32) -> Option<*mut c_void> {
         let ptr = unsafe { ecs_table_get_column(self.table.table, index, self.offset) };
         if ptr.is_null() {
             None

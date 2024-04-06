@@ -9,7 +9,7 @@ use crate::{
     core::{
         c_types::{EntityT, IdT, InOutKind, IterT, OperKind, WorldT, ECS_DEPENDS_ON, ECS_PAIR},
         component_registration::ComponentId,
-        RUST_ECS_ID_FLAGS_MASK,
+        RUST_ecs_id_FLAGS_MASK,
     },
     ecs_assert,
     sys::{
@@ -56,7 +56,7 @@ pub fn ecs_pair(pred: impl IntoEntityId, obj: impl IntoEntityId) -> u64 {
 
 /// Checks if given entity is a pair
 pub fn ecs_is_pair(entity: impl IntoEntityId) -> bool {
-    entity.get_id() & RUST_ECS_ID_FLAGS_MASK == ECS_PAIR
+    entity.get_id() & RUST_ecs_id_FLAGS_MASK == ECS_PAIR
 }
 
 /// Set the `ECS_DEPENDS_ON` flag for the given entity.
@@ -112,7 +112,7 @@ pub fn ecs_add_pair(
 ) {
     unsafe {
         ecs_add_id(
-            world.get_world_raw_mut(),
+            world.world_ptr_mut(),
             entity.get_id(),
             ecs_pair(first.get_id(), second.get_id()),
         );
@@ -175,7 +175,7 @@ pub fn ecs_entity_id_high(value: impl IntoEntityId) -> u64 {
     value.get_id() >> 32
 }
 
-pub fn get_type_name_cstring<T>() -> CString {
+pub fn type_name_cstring<T>() -> CString {
     CString::new(std::any::type_name::<T>()).unwrap()
 }
 

@@ -20,7 +20,7 @@ extern "C" fn callback_group_create(
     let world = World::new_wrap_raw_world(world);
     println!(
         "Group created: {:?}",
-        world.new_entity_from_id(group_id).get_name()
+        world.new_entity_from_id(group_id).name()
     );
 
     println!();
@@ -44,7 +44,7 @@ extern "C" fn callback_group_delete(
     let world = World::new_wrap_raw_world(world);
     println!(
         "Group deleted: {:?}",
-        world.new_entity_from_id(group_id).get_name()
+        world.new_entity_from_id(group_id).name()
     );
 
     //Free data associated with group
@@ -116,12 +116,12 @@ fn main() {
     //
 
     query.iter(|it, (pos,)| {
-        let group = world.new_entity_from_id(it.get_group_id());
-        let ctx = unsafe { &*(query.get_group_context(group) as *mut GroupCtx) };
+        let group = world.new_entity_from_id(it.group_id());
+        let ctx = unsafe { &*(query.group_context(group) as *mut GroupCtx) };
         println!(
             "Group: {:?} - Table: [{:?}] - Counter: {}",
-            group.get_path().unwrap(),
-            it.get_archetype(),
+            group.path().unwrap(),
+            it.archetype(),
             ctx.counter
         );
 

@@ -8,7 +8,7 @@ fn main() {
     // components which means it won't match any entities, but will still be ran
     // once for each call to ecs_progress.
     world.system_builder::<()>().on_iter_only(|it| {
-        println!("Delta time: {}", it.get_delta_time());
+        println!("Delta time: {}", it.delta_time());
     });
 
     // Set target FPS to 1 frame per second

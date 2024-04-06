@@ -153,17 +153,17 @@ where
     T: Iterable<'a>,
 {
     #[inline]
-    fn get_desc_filter(&mut self) -> &mut ecs_filter_desc_t {
+    fn desc_filter_mut(&mut self) -> &mut ecs_filter_desc_t {
         &mut self.desc
     }
 
     #[inline]
-    fn get_expr_count(&mut self) -> &mut i32 {
+    fn expr_count_mut(&mut self) -> &mut i32 {
         &mut self.expr_count
     }
 
     #[inline]
-    fn get_term_index(&mut self) -> &mut i32 {
+    fn term_index_mut(&mut self) -> &mut i32 {
         &mut self.next_term_index
     }
 }
@@ -173,23 +173,23 @@ where
     T: Iterable<'a>,
 {
     #[inline]
-    fn get_world(&self) -> *mut WorldT {
+    fn world_ptr_mut(&self) -> *mut WorldT {
         self.world.raw_world
     }
 
     #[inline]
-    fn get_term(&mut self) -> &mut Term {
+    fn term_mut(&mut self) -> &mut Term {
         &mut self.term
     }
 
     #[inline]
-    fn get_raw_term(&mut self) -> *mut super::c_types::TermT {
+    fn term_ptr_mut(&mut self) -> *mut super::c_types::TermT {
         self.term.term_ptr
     }
 
     #[inline]
-    fn get_term_id(&mut self) -> *mut super::c_types::TermIdT {
-        self.term.term_id
+    fn term_id_ptr_mut(&mut self) -> *mut super::c_types::TermIdT {
+        self.term.term_id_ptr
     }
 }
 
@@ -206,11 +206,11 @@ where
 }
 
 pub trait FilterBuilderImpl: TermBuilder {
-    fn get_desc_filter(&mut self) -> &mut ecs_filter_desc_t;
+    fn desc_filter_mut(&mut self) -> &mut ecs_filter_desc_t;
 
-    fn get_expr_count(&mut self) -> &mut i32;
+    fn expr_count_mut(&mut self) -> &mut i32;
 
-    fn get_term_index(&mut self) -> &mut i32;
+    fn term_index_mut(&mut self) -> &mut i32;
 
     /// set itself to be instanced
     ///
@@ -219,7 +219,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// * C++ API: `filter_builder_i::instanced`
     #[doc(alias = "filter_builder_i::instanced")]
     fn instanced(&mut self) -> &mut Self {
-        self.get_desc_filter().instanced = true;
+        self.desc_filter_mut().instanced = true;
         self
     }
 
@@ -234,7 +234,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// * C++ API: `filter_builder_i::filter_flags`
     #[doc(alias = "filter_builder_i::filter_flags")]
     fn filter_flags(&mut self, flags: ecs_flags32_t) -> &mut Self {
-        self.get_desc_filter().flags |= flags;
+        self.desc_filter_mut().flags |= flags;
         self
     }
 
@@ -250,13 +250,13 @@ pub trait FilterBuilderImpl: TermBuilder {
     #[doc(alias = "filter_builder_i::expr")]
     fn expr(&mut self, expr: &CStr) -> &mut Self {
         ecs_assert!(
-            *self.get_expr_count() == 0,
+            *self.expr_count_mut() == 0,
             FlecsErrorCode::InvalidOperation,
             "filter_builder::expr() called more than once"
         );
 
-        self.get_desc_filter().expr = expr.as_ptr();
-        *self.get_expr_count() += 1;
+        self.desc_filter_mut().expr = expr.as_ptr();
+        *self.expr_count_mut() += 1;
         self
     }
 
@@ -395,7 +395,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// * C++ API: `filter_builder_i::without`
     #[doc(alias = "filter_builder_i::without")]
     fn without_pair<First: ComponentId, Second: ComponentId>(&mut self) -> &mut Self {
-        let world = self.get_world();
+        let world = self.world_ptr_mut();
         self.term_with_id((First::get_id(world), Second::get_id(world)))
             .not()
     }
@@ -418,8 +418,8 @@ pub trait FilterBuilderImpl: TermBuilder {
     #[doc(alias = "filter_builder_i::term")]
     fn term(&mut self) {
         ecs_assert!(
-            if !self.get_raw_term().is_null() {
-                unsafe { ecs_term_is_initialized(self.get_raw_term()) }
+            if !self.term_ptr_mut().is_null() {
+                unsafe { ecs_term_is_initialized(self.term_ptr_mut()) }
             } else {
                 true
             },
@@ -427,9 +427,9 @@ pub trait FilterBuilderImpl: TermBuilder {
             "FilterBuilder::term() called without initializing term"
         );
 
-        let term_index = *self.get_term_index();
+        let term_index = *self.term_index_mut();
         if term_index >= FLECS_TERM_DESC_MAX as i32 {
-            let desc = self.get_desc_filter();
+            let desc = self.desc_filter_mut();
             let size_term = std::mem::size_of::<ecs_term_t>();
             if term_index == FLECS_TERM_DESC_MAX as i32 {
                 unsafe {
@@ -464,14 +464,14 @@ pub trait FilterBuilderImpl: TermBuilder {
             self.set_term(term_to_set);
         } else {
             let term_to_set = unsafe {
-                self.get_desc_filter()
+                self.desc_filter_mut()
                     .terms
                     .as_mut_ptr()
                     .add(term_index as usize)
             };
             self.set_term(term_to_set);
         }
-        *self.get_term_index() += 1;
+        *self.term_index_mut() += 1;
     }
 
     /// Term notation for more complex query features
@@ -487,16 +487,16 @@ pub trait FilterBuilderImpl: TermBuilder {
             "term_at() called with invalid index"
         );
 
-        let term_index = *self.get_term_index();
+        let term_index = *self.term_index_mut();
         let prev_index = term_index;
 
-        *self.get_term_index() = index - 1;
+        *self.term_index_mut() = index - 1;
         self.term();
 
-        *self.get_term_index() = prev_index;
+        *self.term_index_mut() = prev_index;
 
         ecs_assert!(
-            unsafe { ecs_term_is_initialized(self.get_raw_term()) },
+            unsafe { ecs_term_is_initialized(self.term_ptr_mut()) },
             FlecsErrorCode::InvalidOperation,
             "term_at() called without initializing term"
         );
@@ -509,7 +509,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     }
 
     fn write(&mut self) -> &mut Self {
-        self.get_term().write_();
+        self.term_mut().write_();
         self
     }
 
@@ -532,7 +532,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     fn term_with_id(&mut self, id: impl IntoEntityIdExt) -> &mut Self {
         self.term();
         unsafe {
-            *self.get_raw_term() = Term::new_id(None, id).move_raw_term();
+            *self.term_ptr_mut() = Term::new_id(None, id).move_raw_term();
         }
         self
     }
@@ -545,16 +545,18 @@ pub trait FilterBuilderImpl: TermBuilder {
     #[doc(alias = "filter_builder_i::term")]
     fn term_with<T: InOutType>(&mut self) -> &mut Self {
         if <T::Type as IntoComponentId>::IS_PAIR {
-            let world = self.get_world();
+            let world = self.world_ptr_mut();
             self.term_with_id(<T::Type as IntoComponentId>::get_id(world));
         } else {
             self.term();
 
             unsafe {
-                *self.get_raw_term() =
-                    Term::new_id(None, <T::Type as IntoComponentId>::get_id(self.get_world()))
-                        .move_raw_term();
-                (*self.get_raw_term()).inout = type_to_inout::<T>() as ecs_inout_kind_t;
+                *self.term_ptr_mut() = Term::new_id(
+                    None,
+                    <T::Type as IntoComponentId>::get_id(self.world_ptr_mut()),
+                )
+                .move_raw_term();
+                (*self.term_ptr_mut()).inout = type_to_inout::<T>() as ecs_inout_kind_t;
             }
         }
         self
@@ -569,7 +571,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     fn term_with_name(&mut self, name: &'static CStr) -> &mut Self {
         self.term();
         unsafe {
-            *self.get_raw_term() = Term::default().select_first_name(name).move_raw_term();
+            *self.term_ptr_mut() = Term::default().select_first_name(name).move_raw_term();
         }
         self
     }
@@ -583,7 +585,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     fn term_with_pair_names(&mut self, first: &'static CStr, second: &'static CStr) -> &mut Self {
         self.term();
         unsafe {
-            *self.get_raw_term() = Term::default()
+            *self.term_ptr_mut() = Term::default()
                 .select_first_name(first)
                 .select_second_name(second)
                 .move_raw_term();
@@ -604,7 +606,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     ) -> &mut Self {
         self.term();
         unsafe {
-            *self.get_raw_term() = Term::new_id(None, first.get_id())
+            *self.term_ptr_mut() = Term::new_id(None, first.get_id())
                 .select_second_name(second)
                 .move_raw_term();
         }
@@ -618,7 +620,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// * C++ API: `filter_builder_i::term`
     #[doc(alias = "filter_builder_i::term")]
     fn term_with_pair_first<First: ComponentId>(&mut self, second: impl IntoEntityId) -> &mut Self {
-        let world = self.get_world();
+        let world = self.world_ptr_mut();
         self.term_with_id((First::get_id(world), second))
     }
 
@@ -629,7 +631,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     /// * C++ API: `filter_builder_i::term`
     #[doc(alias = "filter_builder_i::term")]
     fn term_with_pair_name<First: ComponentId>(&mut self, second: &'static CStr) -> &mut Self {
-        let world = self.get_world();
+        let world = self.world_ptr_mut();
         self.term_with_id(First::get_id(world))
             .select_second_name(second)
     }
@@ -644,9 +646,9 @@ pub trait FilterBuilderImpl: TermBuilder {
         &mut self,
         value: T,
     ) -> &mut Self {
-        let enum_id = T::get_id(self.get_world());
+        let enum_id = T::get_id(self.world_ptr_mut());
         // SAFETY: we know that the enum_value is a valid because of the T::get_id call
-        let enum_field_id = unsafe { value.get_entity_id_from_enum_field(self.get_world()) };
+        let enum_field_id = value.get_id_variant(self.world_ptr_mut());
         self.term_with_id((enum_id, enum_field_id))
     }
 
@@ -659,7 +661,7 @@ pub trait FilterBuilderImpl: TermBuilder {
     fn term_with_term(&mut self, mut term: Term) -> &mut Self {
         self.term();
         unsafe {
-            *self.get_raw_term() = term.move_raw_term();
+            *self.term_ptr_mut() = term.move_raw_term();
         }
         self
     }

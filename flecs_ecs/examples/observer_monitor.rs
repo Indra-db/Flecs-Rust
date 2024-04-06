@@ -18,17 +18,17 @@ fn main() {
         .observer_builder::<(&Position, &Velocity)>()
         .add_event(ECS_MONITOR)
         .on_each_iter(|it, index, (_pos, _vel)| {
-            if it.get_event() == ECS_ON_ADD {
+            if it.event() == ECS_ON_ADD {
                 println!(
                     " - Enter: {}: {}",
-                    it.get_event_id().to_str(),
-                    it.get_entity(index).get_name()
+                    it.event_id().to_str(),
+                    it.entity(index).name()
                 );
-            } else if it.get_event() == ECS_ON_REMOVE {
+            } else if it.event() == ECS_ON_REMOVE {
                 println!(
                     " - Leave: {}: {}",
-                    it.get_event_id().to_str(),
-                    it.get_entity(index).get_name()
+                    it.event_id().to_str(),
+                    it.entity(index).name()
                 );
             }
         });

@@ -47,7 +47,7 @@ fn main() {
 
     // Inspect the type of the entity. This outputs:
     //    Position,(Identifier,Name),(IsA,MammothFreighter)
-    println!("Instance type: [{}]", inst.get_archetype());
+    println!("Instance type: [{}]", inst.archetype());
 
     // Even though the instance doesn't have a private copy of ImpulseSpeed, we
     // can still get it using the regular API (outputs 50)
@@ -57,7 +57,7 @@ fn main() {
     // Prefab components can be iterated just like regular components:
     world.each_entity::<(&ImpulseSpeed, &mut Position)>(|entity, (impulse_speed, position)| {
         position.x += impulse_speed.value;
-        println!("Entity {}: {:?}", entity.get_name(), position);
+        println!("Entity {}: {:?}", entity.name(), position);
     });
 
     // Output:

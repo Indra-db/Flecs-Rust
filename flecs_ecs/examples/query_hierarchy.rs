@@ -83,7 +83,7 @@ fn main() {
         .each_entity(|entity, (position,)| {
             println!(
                 "Entity {} is at ({}, {})",
-                entity.get_name(),
+                entity.name(),
                 position.x,
                 position.y
             );

@@ -28,7 +28,7 @@ fn main() {
     world.each_entity::<(&mut Position, &Velocity)>(|entity, (pos, vel)| {
         pos.x += vel.x;
         pos.y += vel.y;
-        println!("Entity {}: {:?}", entity.get_name(), pos);
+        println!("Entity {}: {:?}", entity.name(), pos);
     });
 
     // Output:

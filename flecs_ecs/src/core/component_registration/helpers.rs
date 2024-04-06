@@ -6,7 +6,7 @@ use crate::core::{EntityT, IdT, WorldT, SEPARATOR};
 
 use super::ComponentId;
 
-pub(crate) fn get_new_component_desc(
+pub(crate) fn create_component_desc(
     entity: EntityT,
     type_info: flecs_ecs_sys::ecs_type_info_t,
 ) -> flecs_ecs_sys::ecs_component_desc_t {
@@ -17,7 +17,7 @@ pub(crate) fn get_new_component_desc(
     }
 }
 
-pub(crate) fn get_new_type_info<T>() -> flecs_ecs_sys::ecs_type_info_t
+pub(crate) fn create_type_info<T>() -> flecs_ecs_sys::ecs_type_info_t
 where
     T: ComponentId,
 {
@@ -48,7 +48,7 @@ where
     type_info
 }
 
-pub(crate) fn get_new_entity_desc(
+pub(crate) fn create_entity_desc(
     name: *const c_char,
     symbol: *const c_char,
     id: EntityT,

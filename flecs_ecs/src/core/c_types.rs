@@ -23,8 +23,8 @@ use std::{ffi::CStr, sync::OnceLock};
 
 use super::{ComponentInfo, EntityId, IntoWorld, NoneEnum};
 
-pub const RUST_ECS_ID_FLAGS_MASK: u64 = 0xFF << 60;
-pub const RUST_ECS_COMPONENT_MASK: u64 = !RUST_ECS_ID_FLAGS_MASK;
+pub const RUST_ecs_id_FLAGS_MASK: u64 = 0xFF << 60;
+pub const RUST_ECS_COMPONENT_MASK: u64 = !RUST_ecs_id_FLAGS_MASK;
 
 pub type WorldT = ecs_world_t;
 pub type WorldInfoT = ecs_world_info_t;
@@ -158,7 +158,7 @@ pub const ECS_AND: u64 = 1 << 60;
 
 // Builtin component ids
 pub const ECS_COMPONENT: u64 = 1;
-pub const ECS_IDENTIFIER: u64 = 2;
+pub const ecs_field_idENTIFIER: u64 = 2;
 pub const ECS_ITERABLE: u64 = 3;
 pub const ECS_POLY: u64 = 4;
 
@@ -354,13 +354,13 @@ pub type Identifier = EcsIdentifier;
 pub type Poly = EcsPoly;
 pub type Target = EcsTarget;
 
-fn get_ecs_component_data() -> IdComponent {
+fn ecs_component_data() -> IdComponent {
     IdComponent {
         id: unsafe { FLECS_IDEcsComponentID_ },
     }
 }
 
-fn get_ecs_poly_data() -> IdComponent {
+fn ecs_poly_data() -> IdComponent {
     IdComponent { id: ECS_POLY }
 }
 
@@ -530,7 +530,7 @@ impl ComponentId for EntityId {
 
     fn get_id(_world: impl IntoWorld) -> IdT {
         //this is safe because it's already registered in flecs_c / world
-        unsafe { flecs_ecs_sys::FLECS_IDecs_u64_tID_ }
+        unsafe { flecs_ecs_sys::FLECS_IDecs_entity_tID_ }
     }
 
     fn __get_once_lock_data() -> &'static OnceLock<IdComponent> {

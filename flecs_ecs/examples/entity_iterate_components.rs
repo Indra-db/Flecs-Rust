@@ -2,8 +2,8 @@ mod common;
 use common::*;
 
 fn iterate_components(entity: Entity) {
-    // 1. The easiest way to print the components is to use get_archetype
-    println!("[{}]", entity.get_archetype());
+    // 1. The easiest way to print the components is to use archetype
+    println!("[{}]", entity.archetype());
     println!();
     // 2. To get individual component ids, use for_each
     let mut count_components = 0;
@@ -25,11 +25,11 @@ fn iterate_components(entity: Entity) {
             // If id is a pair, extract & print both parts of the pair
             let rel = id.first();
             let target = id.second();
-            print!("rel: {}, target: {}", rel.get_name(), target.get_name());
+            print!("rel: {}, target: {}", rel.name(), target.name());
         } else {
             // Id contains a regular entity. Strip role before printing.
             let comp = id.to_entity();
-            print!("entity: {}", comp.get_name());
+            print!("entity: {}", comp.name());
         }
 
         println!();

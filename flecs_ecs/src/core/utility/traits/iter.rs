@@ -21,7 +21,7 @@ pub trait IterOperations {
     fn iter_next_func(&self) -> unsafe extern "C" fn(*mut IterT) -> bool;
 
     #[doc(hidden)]
-    fn get_filter_ptr(&self) -> *const FilterT;
+    fn filter_ptr(&self) -> *const FilterT;
 }
 
 pub trait IterAPI<'a, T>: IterOperations + IntoWorld
@@ -48,23 +48,23 @@ where
             let mut iter = self.retrieve_iter();
 
             while self.iter_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
+                let components_data = T::create_array_ptrs_of_components(&iter);
                 let iter_count = iter.count as usize;
                 let array_components = &components_data.array_components;
 
-                ecs_table_lock(self.get_world_raw_mut(), iter.table);
+                ecs_table_lock(self.world_ptr_mut(), iter.table);
 
                 for i in 0..iter_count {
                     let tuple = if components_data.is_any_array_a_ref {
                         let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+                        T::create_tuple_with_ref(array_components, is_ref_array_components, i)
                     } else {
-                        T::get_tuple(array_components, i)
+                        T::create_tuple(array_components, i)
                     };
                     func(tuple);
                 }
 
-                ecs_table_unlock(self.get_world_raw_mut(), iter.table);
+                ecs_table_unlock(self.world_ptr_mut(), iter.table);
             }
         }
     }
@@ -83,9 +83,9 @@ where
     fn each_entity(&self, mut func: impl FnMut(&mut Entity, T::TupleType)) {
         unsafe {
             let mut iter = self.retrieve_iter();
-            let world = self.get_world_raw_mut();
+            let world = self.world_ptr_mut();
             while self.iter_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
+                let components_data = T::create_array_ptrs_of_components(&iter);
                 let array_components = &components_data.array_components;
                 let iter_count = {
                     if iter.count == 0 {
@@ -107,9 +107,9 @@ where
 
                     let tuple = if components_data.is_any_array_a_ref {
                         let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+                        T::create_tuple_with_ref(array_components, is_ref_array_components, i)
                     } else {
-                        T::get_tuple(array_components, i)
+                        T::create_tuple(array_components, i)
                     };
 
                     func(&mut entity, tuple);
@@ -123,10 +123,10 @@ where
     fn each_iter(&self, mut func: impl FnMut(&mut Iter, usize, T::TupleType)) {
         unsafe {
             let mut iter = self.retrieve_iter();
-            let world = self.get_world_raw_mut();
+            let world = self.world_ptr_mut();
 
             while self.iter_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
+                let components_data = T::create_array_ptrs_of_components(&iter);
                 let iter_count = {
                     if iter.count == 0 {
                         1_usize
@@ -143,9 +143,9 @@ where
                 for i in 0..iter_count {
                     let tuple = if components_data.is_any_array_a_ref {
                         let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+                        T::create_tuple_with_ref(array_components, is_ref_array_components, i)
                     } else {
-                        T::get_tuple(array_components, i)
+                        T::create_tuple(array_components, i)
                     };
                     func(&mut iter_t, i, tuple);
                 }
@@ -175,10 +175,10 @@ where
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity: Option<Entity> = None;
-            let world = self.get_world_raw_mut();
+            let world = self.world_ptr_mut();
 
             while self.iter_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
+                let components_data = T::create_array_ptrs_of_components(&iter);
                 let iter_count = iter.count as usize;
                 let array_components = &components_data.array_components;
 
@@ -187,9 +187,9 @@ where
                 for i in 0..iter_count {
                     let tuple = if components_data.is_any_array_a_ref {
                         let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+                        T::create_tuple_with_ref(array_components, is_ref_array_components, i)
                     } else {
-                        T::get_tuple(array_components, i)
+                        T::create_tuple(array_components, i)
                     };
                     if func(tuple) {
                         entity = Some(Entity::new_from_existing_raw(
@@ -229,10 +229,10 @@ where
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity_result: Option<Entity> = None;
-            let world = self.get_world_raw_mut();
+            let world = self.world_ptr_mut();
 
             while self.iter_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
+                let components_data = T::create_array_ptrs_of_components(&iter);
                 let iter_count = iter.count as usize;
                 let array_components = &components_data.array_components;
 
@@ -244,9 +244,9 @@ where
 
                     let tuple = if components_data.is_any_array_a_ref {
                         let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+                        T::create_tuple_with_ref(array_components, is_ref_array_components, i)
                     } else {
-                        T::get_tuple(array_components, i)
+                        T::create_tuple(array_components, i)
                     };
                     if func(&mut entity, tuple) {
                         entity_result = Some(entity);
@@ -283,10 +283,10 @@ where
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity_result: Option<Entity> = None;
-            let world = self.get_world_raw_mut();
+            let world = self.world_ptr_mut();
 
             while self.iter_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
+                let components_data = T::create_array_ptrs_of_components(&iter);
                 let array_components = &components_data.array_components;
                 let iter_count = {
                     if iter.count == 0 {
@@ -302,9 +302,9 @@ where
                 for i in 0..iter_count {
                     let tuple = if components_data.is_any_array_a_ref {
                         let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+                        T::create_tuple_with_ref(array_components, is_ref_array_components, i)
                     } else {
-                        T::get_tuple(array_components, i)
+                        T::create_tuple(array_components, i)
                     };
                     if func(&mut iter_t, i, tuple) {
                         entity_result = Some(Entity::new_from_existing_raw(
@@ -338,10 +338,10 @@ where
     fn iter(&self, mut func: impl FnMut(&mut Iter, T::TupleSliceType)) {
         unsafe {
             let mut iter = self.retrieve_iter();
-            let world = self.get_world_raw_mut();
+            let world = self.world_ptr_mut();
 
             while self.iter_next(&mut iter) {
-                let components_data = T::get_array_ptrs_of_components(&iter);
+                let components_data = T::create_array_ptrs_of_components(&iter);
                 let iter_count = iter.count as usize;
                 let array_components = &components_data.array_components;
 
@@ -349,13 +349,13 @@ where
 
                 let tuple = if components_data.is_any_array_a_ref {
                     let is_ref_array_components = &components_data.is_ref_array_components;
-                    T::get_tuple_slices_with_ref(
+                    T::create_tuple_slices_with_ref(
                         array_components,
                         is_ref_array_components,
                         iter_count,
                     )
                 } else {
-                    T::get_tuple_slices(array_components, iter_count)
+                    T::create_tuple_slices(array_components, iter_count)
                 };
                 let mut iter_t = Iter::new(&mut iter);
                 func(&mut iter_t, tuple);
@@ -381,7 +381,7 @@ where
     fn iter_only(&self, mut func: impl FnMut(&mut Iter)) {
         unsafe {
             let mut iter = self.retrieve_iter();
-            let world = self.get_world_raw_mut();
+            let world = self.world_ptr_mut();
             while self.iter_next(&mut iter) {
                 ecs_table_lock(world, iter.table);
                 let mut iter_t = Iter::new(&mut iter);
@@ -417,7 +417,7 @@ where
     /// * C++ API: `filter_base::term`
     #[doc(alias = "filter_base::each_term")]
     fn each_term(&self, mut func: impl FnMut(&mut Term)) {
-        let filter = self.get_filter_ptr();
+        let filter = self.filter_ptr();
         let world = self.get_world();
         unsafe {
             for i in 0..(*filter).term_count {
@@ -444,7 +444,7 @@ where
     /// * C++ API: `filter_base::term`
     #[doc(alias = "filter_base::term")]
     fn get_term(&self, index: usize) -> Term {
-        let filter = self.get_filter_ptr();
+        let filter = self.filter_ptr();
         let world = self.get_world();
         ecs_assert!(
             !filter.is_null(),
@@ -469,7 +469,7 @@ where
     /// * C++ API: `filter_base::field_count`
     #[doc(alias = "filter_base::field_count")]
     fn field_count(&self) -> i8 {
-        let filter = self.get_filter_ptr();
+        let filter = self.filter_ptr();
         unsafe { (*filter).field_count }
     }
 
@@ -490,8 +490,8 @@ where
     #[doc(alias = "filter_base::str")]
     #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
     fn to_string(&self) -> String {
-        let filter = self.get_filter_ptr();
-        let world = self.get_world_raw_mut();
+        let filter = self.filter_ptr();
+        let world = self.world_ptr_mut();
         let result: *mut c_char = unsafe { ecs_filter_str(world, filter as *const _) };
         let rust_string =
             String::from(unsafe { std::ffi::CStr::from_ptr(result).to_str().unwrap() });
@@ -518,7 +518,7 @@ where
     fn first(&mut self) -> Entity {
         let mut entity = Entity::default();
 
-        let world = self.get_world_raw_mut();
+        let world = self.world_ptr_mut();
         let it = &mut self.retrieve_iter();
 
         if self.iter_next(it) && it.count > 0 {

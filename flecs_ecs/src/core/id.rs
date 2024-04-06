@@ -1,7 +1,7 @@
 //! Class for working with entity, component, tag and pair ids.
 
 use super::{
-    c_types::{IdT, WorldT, RUST_ECS_COMPONENT_MASK, RUST_ECS_ID_FLAGS_MASK},
+    c_types::{IdT, RUST_ecs_id_FLAGS_MASK, WorldT, RUST_ECS_COMPONENT_MASK},
     ecs_pair_first,
     entity::Entity,
     world::World,
@@ -111,7 +111,7 @@ impl Id {
     #[doc(alias = "ecs_id_t")]
     pub fn new_from_existing(world: impl IntoWorld, id: impl IntoEntityIdExt) -> Self {
         Self {
-            world: world.get_world_raw_mut(),
+            world: world.world_ptr_mut(),
             raw_id: id.get_id(),
         }
     }
@@ -166,7 +166,7 @@ impl Id {
     /// * C++ API: `id::is_entity`
     #[doc(alias = "id::is_entity")]
     pub fn is_entity(self) -> bool {
-        self.raw_id & RUST_ECS_ID_FLAGS_MASK == 0
+        self.raw_id & RUST_ecs_id_FLAGS_MASK == 0
     }
 
     /// Return id as entity (only allowed when id is valid entity)
@@ -208,7 +208,7 @@ impl Id {
     #[inline(always)]
     pub fn remove_flags_checked(self, _flags: IdT) -> Entity {
         ecs_assert!(
-            self.raw_id & RUST_ECS_ID_FLAGS_MASK == _flags,
+            self.raw_id & RUST_ecs_id_FLAGS_MASK == _flags,
             FlecsErrorCode::InvalidParameter
         );
 
@@ -238,7 +238,7 @@ impl Id {
     #[doc(alias = "id::flags")]
     #[inline(always)]
     pub fn flags(self) -> Entity {
-        Entity::new_from_existing_raw(self.world, self.raw_id & RUST_ECS_ID_FLAGS_MASK)
+        Entity::new_from_existing_raw(self.world, self.raw_id & RUST_ecs_id_FLAGS_MASK)
     }
 
     /// Test if id has specified role
@@ -260,7 +260,7 @@ impl Id {
     #[doc(alias = "id::has_flags")]
     #[inline(always)]
     pub fn has_any_flags(self) -> bool {
-        self.raw_id & RUST_ECS_ID_FLAGS_MASK != 0
+        self.raw_id & RUST_ecs_id_FLAGS_MASK != 0
     }
 
     /// Return id without role
@@ -431,7 +431,7 @@ impl Id {
         // SAFETY: We assume that `ecs_role_str` returns a pointer to a null-terminated
         // C string with a static lifetime. The caller must ensure this invariant.
         // ecs_role_str never returns null, so we don't need to check for that.
-        unsafe { std::ffi::CStr::from_ptr(ecs_id_flag_str(self.raw_id & RUST_ECS_ID_FLAGS_MASK)) }
+        unsafe { std::ffi::CStr::from_ptr(ecs_id_flag_str(self.raw_id & RUST_ecs_id_FLAGS_MASK)) }
             .to_str()
             .unwrap_or({
                 ecs_assert!(
@@ -460,20 +460,20 @@ impl Id {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
         // C string with a static lifetime. The caller must ensure this invariant.
         // ecs_id_ptr never returns null, so we don't need to check for that.
-        let c_str_ptr = unsafe { ecs_id_flag_str(self.raw_id & RUST_ECS_ID_FLAGS_MASK) };
+        let c_str_ptr = unsafe { ecs_id_flag_str(self.raw_id & RUST_ecs_id_FLAGS_MASK) };
 
         // SAFETY: We assume the C string is valid UTF-8. This is risky if not certain.
         unsafe { std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(c_str_ptr).to_bytes()) }
     }
 
-    pub fn get_world(self) -> World {
+    pub fn world(self) -> World {
         World {
             raw_world: self.world,
             is_owned: false,
         }
     }
 
-    pub(crate) fn get_world_raw(self) -> *mut WorldT {
+    pub(crate) fn world_ptr(self) -> *mut WorldT {
         self.world
     }
 }

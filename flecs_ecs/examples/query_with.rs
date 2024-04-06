@@ -35,7 +35,7 @@ fn main() {
 
     // Note how the Npc tag is not part of the each signature
     query.each_entity(|entity, (pos,)| {
-        println!("Entity {}: {:?}", entity.get_name(), pos);
+        println!("Entity {}: {:?}", entity.name(), pos);
     });
 
     // Output:

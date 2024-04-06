@@ -52,7 +52,7 @@ fn main() {
     // Queries can match components from multiple levels of inheritance
     world.each_entity::<(&Position, &ImpulseSpeed, &Defence, &FreightCapacity)>(
         |e, (p, s, d, c)| {
-            println!("{}:", e.get_name());
+            println!("{}:", e.name());
             println!(" - position: {}, {}", p.x, p.y);
             println!(" - impulse speed: {}", s.value);
             println!(" - defense: {}", d.value);

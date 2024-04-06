@@ -201,7 +201,7 @@ impl<'a, T> IntoWorld for Filter<'a, T>
 where
     T: Iterable<'a>,
 {
-    fn get_world_raw_mut(&self) -> *mut super::WorldT {
+    fn world_ptr_mut(&self) -> *mut super::WorldT {
         self.world.raw_world
     }
 }
@@ -218,7 +218,7 @@ where
         unsafe { ecs_filter_next(iter) }
     }
 
-    fn get_filter_ptr(&self) -> *const FilterT {
+    fn filter_ptr(&self) -> *const FilterT {
         &self.filter
     }
 
@@ -231,7 +231,7 @@ impl<'a, T> IntoWorld for FilterView<'a, T>
 where
     T: Iterable<'a>,
 {
-    fn get_world_raw_mut(&self) -> *mut super::WorldT {
+    fn world_ptr_mut(&self) -> *mut super::WorldT {
         self.world.raw_world
     }
 }
@@ -259,7 +259,7 @@ where
         unsafe { ecs_filter_next(iter) }
     }
 
-    fn get_filter_ptr(&self) -> *const FilterT {
+    fn filter_ptr(&self) -> *const FilterT {
         self.filter_ptr
     }
 

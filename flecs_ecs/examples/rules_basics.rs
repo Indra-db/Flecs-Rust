@@ -56,8 +56,8 @@ fn main() {
     rule.each_iter(|it, index, ()| {
         println!(
             "{} eats {}",
-            it.get_entity(index).get_name(),
-            it.get_var(food_var).get_name()
+            it.entity(index).name(),
+            it.get_var(food_var).name()
         );
     });
 

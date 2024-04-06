@@ -5,11 +5,9 @@ use flecs_ecs_sys::{
 };
 
 use crate::core::component_registration::registration_traits::CachedEnumData;
+use crate::core::{create_component_desc, create_entity_desc, create_type_info};
 use crate::{
-    core::{
-        get_new_component_desc, get_new_entity_desc, get_new_type_info, get_symbol_name, EntityT,
-        IdComponent, IntoWorld,
-    },
+    core::{get_symbol_name, EntityT, IdComponent, IntoWorld},
     ecs_assert,
 };
 
@@ -24,7 +22,7 @@ pub(crate) fn try_register_component_impl<T>(world: impl IntoWorld, name: *const
 where
     T: ComponentId,
 {
-    let world = world.get_world_raw_mut();
+    let world = world.world_ptr_mut();
     let is_registered = T::is_registered();
     let is_registered_with_world = if is_registered {
         unsafe { is_component_registered_with_world::<T>(world) }
@@ -39,16 +37,16 @@ where
         if T::IS_ENUM && has_newly_registered && !is_registered_with_world {
             //TODO we should convert this ecs_cpp functions to rust so if it ever changes, our solution won't break
             unsafe { ecs_cpp_enum_init(world, T::get_id_unchecked()) };
-            let enum_array_ptr = T::UnderlyingEnumType::__get_enum_data_ptr_mut();
+            let enum_array_ptr = T::UnderlyingEnumType::__enum_data_mut();
 
             for (index, enum_item) in T::UnderlyingEnumType::iter().enumerate() {
-                let name = enum_item.get_cstr_name();
+                let name = enum_item.name_cstr();
                 let entity_id: EntityT = unsafe {
                     ecs_cpp_enum_constant_register(
                         world,
                         T::get_id_unchecked(),
-                        T::UnderlyingEnumType::get_entity_id_from_enum_field_index(
-                            enum_item.get_enum_index(),
+                        T::UnderlyingEnumType::get_id_variant_of_index_unchecked(
+                            enum_item.enum_index(),
                         ),
                         name.as_ptr(),
                         index as i32,
@@ -89,7 +87,7 @@ pub(crate) fn register_component_data<T>(
 where
     T: ComponentId,
 {
-    let world = world.get_world_raw_mut();
+    let world = world.world_ptr_mut();
 
     // If the component is not registered with the world (indicating the
     // component has not yet been registered, or the component is used
@@ -143,7 +141,7 @@ fn register_componment_data_explicit<T>(
 where
     T: ComponentId,
 {
-    let world = world.get_world_raw_mut();
+    let world = world.world_ptr_mut();
 
     ecs_assert!(
         if id == 0 {
@@ -155,20 +153,20 @@ where
         name: *const c_char
     );
 
-    let type_name = crate::core::get_type_name_cstring::<T>();
+    let type_name = crate::core::type_name_cstring::<T>();
     let type_name_ptr = type_name.as_ptr();
 
     let symbol = get_symbol_name(id, world, type_name_ptr, is_comp_pre_registered_with_world);
 
     let name = if name.is_null() { type_name_ptr } else { name };
 
-    let entity_desc = get_new_entity_desc(name, symbol, id);
+    let entity_desc = create_entity_desc(name, symbol, id);
 
     let entity = unsafe { flecs_ecs_sys::ecs_entity_init(world, &entity_desc) };
 
-    let type_info = get_new_type_info::<T>();
+    let type_info = create_type_info::<T>();
 
-    let component_desc = get_new_component_desc(entity, type_info);
+    let component_desc = create_component_desc(entity, type_info);
 
     let entity = unsafe { flecs_ecs_sys::ecs_component_init(world, &component_desc) };
 

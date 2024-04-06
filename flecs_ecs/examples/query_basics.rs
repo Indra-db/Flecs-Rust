@@ -31,7 +31,7 @@ fn main() {
     query.each_entity(|e, (pos, vel)| {
         pos.x += vel.x;
         pos.y += vel.y;
-        println!("{}: [{:?}]", e.get_name(), pos);
+        println!("{}: [{:?}]", e.name(), pos);
     });
 
     // There's an equivalent function that does not include the entity argument

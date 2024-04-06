@@ -131,7 +131,7 @@ impl System {
     ///
     /// * C++ API: `system::ctx`
     #[doc(alias = "system::ctx")]
-    pub fn get_context(&self) -> *mut c_void {
+    pub fn context(&self) -> *mut c_void {
         unsafe { ecs_system_get_ctx(self.world.raw_world, self.raw_id) }
     }
 

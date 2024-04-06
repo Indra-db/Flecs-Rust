@@ -44,13 +44,13 @@ fn main() {
         .add_enum(TileStatus::Free);
 
     // (Tile, Tile.Stone), (TileStatus, TileStatus.Free)
-    println!("{:?}", tile.get_archetype());
+    println!("{:?}", tile.archetype());
 
     // Replace (TileStatus, Free) with (TileStatus, Occupied)
     tile.add_enum(TileStatus::Occupied);
 
     // (Tile, Tile.Stone), (TileStatus, TileStatus.Occupied)
-    println!("{:?}", tile.get_archetype());
+    println!("{:?}", tile.archetype());
 
     println!();
 
@@ -86,8 +86,8 @@ fn main() {
         .with_enum_wildcard::<Tile>()
         .build()
         .each_iter(|it, _, _| {
-            let tile_constant = it.get_pair_id(1).unwrap().second();
-            println!("{}", tile_constant.get_path().unwrap());
+            let tile_constant = it.pair(1).unwrap().second();
+            println!("{}", tile_constant.path().unwrap());
         });
 
     // Outputs:
@@ -104,8 +104,8 @@ fn main() {
         .with_enum(TileStatus::Occupied)
         .build()
         .each_iter(|it, _, _| {
-            let tile_constant = it.get_pair_id(1).unwrap().second();
-            println!("{}", tile_constant.get_path().unwrap());
+            let tile_constant = it.pair(1).unwrap().second();
+            println!("{}", tile_constant.path().unwrap());
         });
 
     // Outputs:
@@ -118,5 +118,5 @@ fn main() {
     tile.remove::<TileStatus>();
 
     // (Tile, Tile.Stone)
-    println!("{:?}", tile.get_archetype());
+    println!("{:?}", tile.archetype());
 }

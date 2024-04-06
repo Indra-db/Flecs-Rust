@@ -20,7 +20,7 @@ fn main() {
     let entity: Option<Entity> = query.find(|(pos,)| pos.x == 20.0);
 
     if let Some(entity) = entity {
-        println!("Entity found: {:?}", entity.get_path().unwrap());
+        println!("Entity found: {:?}", entity.path().unwrap());
     } else {
         println!("Entity not found");
     }

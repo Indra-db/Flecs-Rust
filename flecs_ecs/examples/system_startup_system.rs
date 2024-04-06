@@ -18,14 +18,14 @@ fn main() {
         .system_builder_named::<()>(c"Startup")
         .kind_id(ECS_ON_START)
         .on_iter_only(|it| {
-            println!("{}", it.system().get_name());
+            println!("{}", it.system().name());
         });
 
     // Regular system
     world
         .system_builder_named::<()>(c"Update")
         .on_iter_only(|it| {
-            println!("{}", it.system().get_name());
+            println!("{}", it.system().name());
         });
 
     // First frame. This runs both the Startup and Update systems

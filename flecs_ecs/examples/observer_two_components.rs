@@ -15,9 +15,9 @@ fn main() {
         .on_each_iter(|it, index, (pos, vel)| {
             println!(
                 " - {}: {}: {}: p: {{ {}, {} }}, v: {{ {}, {} }}",
-                it.get_event().get_name(),
-                it.get_event_id().to_str(),
-                it.get_entity(index).get_name(),
+                it.event().name(),
+                it.event_id().to_str(),
+                it.entity(index).name(),
                 pos.x,
                 pos.y,
                 vel.x,

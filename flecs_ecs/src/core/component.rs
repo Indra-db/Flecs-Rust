@@ -161,7 +161,7 @@ impl<T: ComponentId> Component<T> {
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
     pub fn new(world: impl IntoWorld) -> Self {
-        let world = world.get_world_raw_mut();
+        let world = world.world_ptr_mut();
         if !T::is_registered_with_world(world) {
             T::register_explicit(world);
         }
@@ -184,7 +184,7 @@ impl<T: ComponentId> Component<T> {
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
     pub fn new_named(world: impl IntoWorld, name: &CStr) -> Self {
-        let world = world.get_world_raw_mut();
+        let world = world.world_ptr_mut();
         if !T::is_registered_with_world(world) {
             T::register_explicit_named(world, name);
         }
@@ -203,9 +203,9 @@ impl<T: ComponentId> Component<T> {
     ///
     /// # See also
     ///
-    /// * C++ API: `component::get_binding_ctx`
-    #[doc(alias = "component::get_binding_ctx")]
-    fn get_binding_ctx(&mut self, type_hooks: &mut TypeHooksT) -> &mut ComponentBindingCtx {
+    /// * C++ API: `component::get_binding_context`
+    #[doc(alias = "component::get_binding_context")]
+    fn get_binding_context(&mut self, type_hooks: &mut TypeHooksT) -> &mut ComponentBindingCtx {
         let mut binding_ctx: *mut ComponentBindingCtx = type_hooks.binding_ctx as *mut _;
 
         if binding_ctx.is_null() {
@@ -265,7 +265,7 @@ impl<T: ComponentId> Component<T> {
             std::any::type_name::<T>()
         );
 
-        let binding_ctx = self.get_binding_ctx(&mut type_hooks);
+        let binding_ctx = self.get_binding_context(&mut type_hooks);
         let boxed_func = Box::new(func);
         let static_ref = Box::leak(boxed_func);
         binding_ctx.on_add = Some(static_ref as *mut _ as *mut c_void);
@@ -294,7 +294,7 @@ impl<T: ComponentId> Component<T> {
             std::any::type_name::<T>()
         );
 
-        let binding_ctx = self.get_binding_ctx(&mut type_hooks);
+        let binding_ctx = self.get_binding_context(&mut type_hooks);
         let boxed_func = Box::new(func);
         let static_ref = Box::leak(boxed_func);
         binding_ctx.on_remove = Some(static_ref as *mut _ as *mut c_void);
@@ -323,7 +323,7 @@ impl<T: ComponentId> Component<T> {
             std::any::type_name::<T>()
         );
 
-        let binding_ctx = self.get_binding_ctx(&mut type_hooks);
+        let binding_ctx = self.get_binding_context(&mut type_hooks);
         let boxed_func = Box::new(func);
         let static_ref = Box::leak(boxed_func);
         binding_ctx.on_set = Some(static_ref as *mut _ as *mut c_void);

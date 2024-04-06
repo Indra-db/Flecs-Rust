@@ -43,7 +43,7 @@ where
         unsafe { ecs_query_next(iter) }
     }
 
-    fn get_filter_ptr(&self) -> *const FilterT {
+    fn filter_ptr(&self) -> *const FilterT {
         unsafe { ecs_query_get_filter(self.query) }
     }
 
@@ -229,7 +229,7 @@ where
     ///
     /// * C++ API: `query_base::get_group_info`
     #[doc(alias = "query_base::get_group_info")]
-    pub fn get_group_info(&self, group_id: impl IntoEntityId) -> *const QueryGroupInfoT {
+    pub fn group_info(&self, group_id: impl IntoEntityId) -> *const QueryGroupInfoT {
         unsafe { ecs_query_get_group_info(self.query, group_id.get_id()) }
     }
 
@@ -247,8 +247,8 @@ where
     ///
     /// * C++ API: `query_base::group_ctx`
     #[doc(alias = "query_base::group_ctx")]
-    pub fn get_group_context(&self, group_id: impl IntoEntityId) -> *mut c_void {
-        let group_info = self.get_group_info(group_id);
+    pub fn group_context(&self, group_id: impl IntoEntityId) -> *mut c_void {
+        let group_info = self.group_info(group_id);
 
         if !group_info.is_null() {
             unsafe { (*group_info).ctx }

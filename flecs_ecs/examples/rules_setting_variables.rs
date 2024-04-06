@@ -114,11 +114,11 @@ fn main() {
     rule.iterable()
         .set_var(player_var, world.lookup_name(c"MyPlayer", true))
         .each_iter(|it, index, (_,)| {
-            let unit = it.get_entity(index);
+            let unit = it.entity(index);
             println!(
                 "Unit {} of class {} in platoon {} for player {}",
                 unit,
-                it.get_field_id(1).to_str(),
+                it.id(1).to_str(),
                 it.get_var(platoon_var),
                 it.get_var(player_var)
             );

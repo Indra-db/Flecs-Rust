@@ -106,18 +106,18 @@ where
     T: Iterable<'a>,
 {
     #[inline]
-    fn get_desc_filter(&mut self) -> &mut ecs_filter_desc_t {
+    fn desc_filter_mut(&mut self) -> &mut ecs_filter_desc_t {
         &mut self.filter_builder.desc
     }
 
     #[inline]
-    fn get_expr_count(&mut self) -> &mut i32 {
-        self.filter_builder.get_expr_count()
+    fn expr_count_mut(&mut self) -> &mut i32 {
+        self.filter_builder.expr_count_mut()
     }
 
     #[inline]
-    fn get_term_index(&mut self) -> &mut i32 {
-        self.filter_builder.get_term_index()
+    fn term_index_mut(&mut self) -> &mut i32 {
+        self.filter_builder.term_index_mut()
     }
 }
 
@@ -126,23 +126,23 @@ where
     T: Iterable<'a>,
 {
     #[inline]
-    fn get_world(&self) -> *mut WorldT {
+    fn world_ptr_mut(&self) -> *mut WorldT {
         self.filter_builder.world.raw_world
     }
 
     #[inline]
-    fn get_term(&mut self) -> &mut Term {
-        self.filter_builder.get_term()
+    fn term_mut(&mut self) -> &mut Term {
+        self.filter_builder.term_mut()
     }
 
     #[inline]
-    fn get_raw_term(&mut self) -> *mut TermT {
-        self.filter_builder.get_raw_term()
+    fn term_ptr_mut(&mut self) -> *mut TermT {
+        self.filter_builder.term_ptr_mut()
     }
 
     #[inline]
-    fn get_term_id(&mut self) -> *mut TermIdT {
-        self.filter_builder.get_term_id()
+    fn term_id_ptr_mut(&mut self) -> *mut TermIdT {
+        self.filter_builder.term_id_ptr_mut()
     }
 }
 

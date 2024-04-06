@@ -52,7 +52,7 @@ where
     /// * `iter`: the iterator to create the column from.
     /// * `index_column`: the index of the signature of the query being iterated over.
     pub fn new_from_iter(iter: &'a mut Iter, index_column: i32) -> Self {
-        iter.get_field_data::<T>(index_column).unwrap()
+        iter.field::<T>(index_column).unwrap()
     }
 
     /// whether the column / component is shared.

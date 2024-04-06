@@ -136,11 +136,7 @@ fn main() {
 
     // Iterate the rule
     rule.iterable().each_iter(|it, index, _| {
-        println!(
-            "{} lives in {}",
-            it.get_entity(index),
-            it.get_var(location_var)
-        );
+        println!("{} lives in {}", it.entity(index), it.get_var(location_var));
     });
 
     // Output:

@@ -159,7 +159,7 @@ impl<'a, T> IntoWorld for Rule<'a, T>
 where
     T: Iterable<'a>,
 {
-    fn get_world_raw_mut(&self) -> *mut crate::core::WorldT {
+    fn world_ptr_mut(&self) -> *mut crate::core::WorldT {
         self.world.raw_world
     }
 }
@@ -180,7 +180,7 @@ where
         ecs_rule_next
     }
 
-    fn get_filter_ptr(&self) -> *const crate::core::FilterT {
+    fn filter_ptr(&self) -> *const crate::core::FilterT {
         unsafe { ecs_rule_get_filter(self.rule) }
     }
 }

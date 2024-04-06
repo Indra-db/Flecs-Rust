@@ -18,7 +18,7 @@ pub trait IntoComponentId {
     ///
     /// Notice that this function for pairs (T, U) will return the type name of the tuple, not the individual components.
     /// This isn't a name stored in the ECS unlike a singular component.
-    fn get_name() -> &'static str;
+    fn name() -> &'static str;
 }
 
 impl<T> IntoComponentId for T
@@ -32,11 +32,11 @@ where
 
     #[inline]
     fn get_id(world: impl IntoWorld) -> IdT {
-        T::get_id(world.get_world_raw_mut())
+        T::get_id(world.world_ptr_mut())
     }
 
     #[inline]
-    fn get_name() -> &'static str {
+    fn name() -> &'static str {
         std::any::type_name::<T>()
     }
 }
@@ -54,13 +54,13 @@ where
     #[inline]
     fn get_id(world: impl IntoWorld) -> IdT {
         ecs_pair(
-            T::get_id(world.get_world_raw_mut()),
-            U::get_id(world.get_world_raw_mut()),
+            T::get_id(world.world_ptr_mut()),
+            U::get_id(world.world_ptr_mut()),
         )
     }
 
     #[inline]
-    fn get_name() -> &'static str {
+    fn name() -> &'static str {
         std::any::type_name::<(T, U)>()
     }
 }

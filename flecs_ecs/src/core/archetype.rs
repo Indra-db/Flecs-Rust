@@ -205,7 +205,7 @@ impl Archetype {
     ///
     /// * C++ API: `type::operator`
     #[doc(alias = "type::operator")]
-    pub unsafe fn get_raw_type_ptr(&self) -> *const TypeT {
+    pub unsafe fn type_ptr(&self) -> *const TypeT {
         self.type_vec
     }
 }

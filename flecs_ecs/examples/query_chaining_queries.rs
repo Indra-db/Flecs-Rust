@@ -74,11 +74,11 @@ fn main() {
         // Filter for enchanted creatures within the current iteration
         query_enchanted
             .iterable()
-            .set_var_as_range(0, iter.get_table_range())
+            .set_var_as_range(0, iter.table_range())
             .each_iter( |it, index ,_| {
                let pos = &loc[index];
                let abil_power = ability[index].power;
-               let entity = it.get_entity(index);
+               let entity = it.entity(index);
                 println!(
                     "Creature {entity} at location {},{} is enchanted with mystical energy, ability power: {} "
                     , pos.x, pos.y, abil_power

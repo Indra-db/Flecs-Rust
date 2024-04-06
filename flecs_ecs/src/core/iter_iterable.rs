@@ -95,7 +95,7 @@ where
     #[doc(alias = "iter_iterable::set_var_as_range")]
     pub fn set_var_as_range(&mut self, var_id: i32, range: impl IntoTableRange) -> &mut Self {
         ecs_assert!(var_id != -1, FlecsErrorCode::InvalidParameter, 0);
-        unsafe { ecs_iter_set_var_as_range(&mut self.iter, var_id, &range.get_table_range_raw()) };
+        unsafe { ecs_iter_set_var_as_range(&mut self.iter, var_id, &range.table_range_raw()) };
         self
     }
 
@@ -136,7 +136,7 @@ where
         unsafe { (self.iter_next)(iter) }
     }
 
-    fn get_filter_ptr(&self) -> *const FilterT {
+    fn filter_ptr(&self) -> *const FilterT {
         self.iter.query
     }
 
@@ -160,7 +160,7 @@ impl<'a, T> IntoWorld for IterIterable<'a, T>
 where
     T: Iterable<'a>,
 {
-    fn get_world_raw_mut(&self) -> *mut WorldT {
+    fn world_ptr_mut(&self) -> *mut WorldT {
         self.iter.real_world
     }
 }

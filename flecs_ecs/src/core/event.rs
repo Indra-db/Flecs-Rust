@@ -106,7 +106,7 @@ pub trait EventBuilderImpl {
     #[doc(alias = "event_builder_base::table")]
     fn set_table_to_emit(&mut self, table: impl IntoTable, offset: i32, count: i32) -> &mut Self {
         let desc = &mut self.get_data().desc;
-        desc.table = table.get_table();
+        desc.table = table.table_ptr_mut();
         desc.offset = offset;
         desc.count = count;
         self

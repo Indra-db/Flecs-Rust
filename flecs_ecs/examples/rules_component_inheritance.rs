@@ -59,7 +59,7 @@ fn main() {
 
     // Iterate the rule
     r.each_entity(|e, (_,)| {
-        println!("Unit {} found", e.get_name());
+        println!("Unit {} found", e.name());
     });
 
     // Output:

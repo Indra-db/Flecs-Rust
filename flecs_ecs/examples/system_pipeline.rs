@@ -18,7 +18,7 @@ fn main() {
         .system_builder::<(&Position,)>()
         .kind_id(ECS_POST_UPDATE)
         .on_each_entity(|e, (p,)| {
-            println!("{}: {{ {}, {} }}", e.get_name(), p.x, p.y);
+            println!("{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 
     // Create a few test entities for a Position, Velocity query

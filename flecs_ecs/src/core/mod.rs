@@ -11,6 +11,7 @@ pub mod event;
 pub mod event_builder;
 pub mod filter;
 pub mod filter_builder;
+pub mod flecs;
 pub mod id;
 pub mod iter;
 pub mod iter_iterable;
@@ -38,6 +39,7 @@ pub use event::*;
 pub use event_builder::*;
 pub use filter::*;
 pub use filter_builder::*;
+
 pub use id::*;
 pub use iter::*;
 pub use iter_iterable::*;

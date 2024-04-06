@@ -39,7 +39,7 @@ where
     where
         Func: FnMut(T::TupleType),
     {
-        let binding_ctx = self.get_binding_ctx();
+        let binding_ctx = self.get_binding_context();
 
         let each_func = Box::new(func);
         let each_static_ref = Box::leak(each_func);
@@ -58,7 +58,7 @@ where
     where
         Func: FnMut(&mut Entity, T::TupleType),
     {
-        let binding_ctx = self.get_binding_ctx();
+        let binding_ctx = self.get_binding_context();
 
         let each_entity_func = Box::new(func);
         let each_entity_static_ref = Box::leak(each_entity_func);
@@ -79,7 +79,7 @@ where
     where
         Func: FnMut(&mut Iter, usize, T::TupleType),
     {
-        let binding_ctx = self.get_binding_ctx();
+        let binding_ctx = self.get_binding_context();
 
         let each_iter_func = Box::new(func);
         let each_iter_static_ref = Box::leak(each_iter_func);
@@ -98,7 +98,7 @@ where
     where
         Func: FnMut(&mut Iter),
     {
-        let binding_ctx = self.get_binding_ctx();
+        let binding_ctx = self.get_binding_context();
         let iter_func = Box::new(func);
         let iter_static_ref = Box::leak(iter_func);
         binding_ctx.iter_only = Some(iter_static_ref as *mut _ as *mut c_void);
@@ -115,7 +115,7 @@ where
     where
         Func: FnMut(&mut Iter, T::TupleSliceType),
     {
-        let binding_ctx = self.get_binding_ctx();
+        let binding_ctx = self.get_binding_context();
 
         let iter_func = Box::new(func);
         let iter_static_ref = Box::leak(iter_func);
@@ -137,12 +137,12 @@ macro_rules! implement_reactor_api {
         where
             T: Iterable<'a>,
         {
-            fn set_binding_ctx(&mut self, binding_ctx: *mut c_void) -> &mut Self {
+            fn set_binding_context(&mut self, binding_ctx: *mut c_void) -> &mut Self {
                 self.desc.binding_ctx = binding_ctx;
                 self
             }
 
-            fn set_binding_ctx_free(
+            fn set_binding_context_free(
                 &mut self,
                 binding_ctx_free: flecs_ecs_sys::ecs_ctx_free_t,
             ) -> &mut Self {
@@ -150,7 +150,7 @@ macro_rules! implement_reactor_api {
                 self
             }
 
-            fn get_desc_binding_ctx(&self) -> *mut c_void {
+            fn desc_binding_context(&self) -> *mut c_void {
                 self.desc.binding_ctx
             }
 

@@ -53,11 +53,7 @@ fn main() {
             for i in it.iter() {
                 position[i].x += velocity[i].x;
                 position[i].y += velocity[i].y;
-                println!(
-                    "entity {} has {:?}",
-                    it.get_entity(i).get_name(),
-                    position[i]
-                );
+                println!("entity {} has {:?}", it.entity(i).name(), position[i]);
             }
         } else {
             println!("Velocity is shared");
@@ -65,11 +61,7 @@ fn main() {
             for i in it.iter() {
                 position[i].x += velocity[0].x;
                 position[i].y += velocity[0].y;
-                println!(
-                    "entity {} has {:?}",
-                    it.get_entity(i).get_name(),
-                    position[i]
-                );
+                println!("entity {} has {:?}", it.entity(i).name(), position[i]);
             }
         }
     });

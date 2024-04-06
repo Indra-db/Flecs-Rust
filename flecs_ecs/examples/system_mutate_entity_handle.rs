@@ -20,7 +20,7 @@ fn main() {
     world
         .system_builder::<(&mut Timeout,)>()
         .on_each_iter(|it, _index, (timeout,)| {
-            timeout.value -= it.get_delta_time();
+            timeout.value -= it.delta_time();
             if timeout.value <= 0.0 {
                 // Delete the entity
 
@@ -45,7 +45,7 @@ fn main() {
                 //
                 // A shortcut is to use the iterator directly:
                 timeout.to_delete.destruct();
-                println!("Expire: {} deleted!", timeout.to_delete.get_name());
+                println!("Expire: {} deleted!", timeout.to_delete.name());
             }
         });
 
@@ -53,7 +53,7 @@ fn main() {
     world.system_builder::<(&Timeout,)>().on_each(|(timeout,)| {
         println!(
             "PrintExpire: {} has {:.2} seconds left",
-            timeout.to_delete.get_name(),
+            timeout.to_delete.name(),
             timeout.value
         );
     });
@@ -63,7 +63,7 @@ fn main() {
         .observer_builder::<(&Tag,)>()
         .add_event(ECS_ON_REMOVE)
         .on_each_entity(|e, (_tag,)| {
-            println!("Expired: {} actually deleted", e.get_name());
+            println!("Expired: {} actually deleted", e.name());
         });
 
     let to_delete = world.new_entity_named(c"ToDelete").add::<Tag>();

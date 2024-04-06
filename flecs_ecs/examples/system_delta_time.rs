@@ -8,7 +8,7 @@ fn main() {
     // components which means it won't match any entities, but will still be ran
     // once for each call to ecs_progress.
     world.system_builder::<()>().on_iter_only(|it| {
-        println!("delta_time: {}", it.get_delta_time());
+        println!("delta_time: {}", it.delta_time());
     });
 
     // Call progress with 0.0f for the delta_time parameter. This will cause

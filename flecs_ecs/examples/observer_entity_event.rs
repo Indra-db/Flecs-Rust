@@ -34,7 +34,7 @@ fn main() {
     });
 
     widget.observe_entity::<Click>(|entity| {
-        println!("clicked on {:?}", entity.get_name());
+        println!("clicked on {:?}", entity.name());
     });
 
     // Observe the Resize event on the widget entity.
@@ -48,7 +48,7 @@ fn main() {
     widget.observe_payload_entity(|entity, payload: &mut Resize| {
         println!(
             "{} resized to {{ {}, {} }}!",
-            entity.get_name(),
+            entity.name(),
             payload.width,
             payload.height
         );

@@ -65,7 +65,7 @@ impl Display for FlecsErrorCode {
                 FlecsErrorCode::MissingOsApi => "ECS_MISSING_OS_API",
                 FlecsErrorCode::OperationFailed => "ECS_OPERATION_FAILED",
                 FlecsErrorCode::InvalidConversion => "ECS_INVALID_CONVERSION",
-                FlecsErrorCode::IdInUse => "ECS_ID_IN_USE",
+                FlecsErrorCode::IdInUse => "ecs_id_IN_USE",
                 FlecsErrorCode::CycleDetected => "ECS_CYCLE_DETECTED",
                 FlecsErrorCode::LeakDetected => "ECS_LEAK_DETECTED",
                 FlecsErrorCode::InconsistentName => "ECS_INCONSISTENT_NAME",

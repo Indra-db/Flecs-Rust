@@ -39,7 +39,7 @@ use super::{
     component::{Component, UntypedComponent},
     component_ref::Ref,
     component_registration::{ComponentId, ComponentType, Enum, Struct},
-    try_register_component, IntoComponentId, IntoEntityId, IntoEntityIdExt, IterAPI, ECS_PREFAB,
+    IntoComponentId, IntoEntityId, IntoEntityIdExt, IterAPI, ECS_PREFAB,
 };
 use super::{EmptyComponent, NotEmptyComponent};
 
@@ -155,7 +155,7 @@ impl World {
     ///
     /// * C++ API: `world::c_ptr`
     #[doc(alias = "world::c_ptr")]
-    pub fn get_as_ptr(&self) -> *mut WorldT {
+    pub fn ptr_mut(&self) -> *mut WorldT {
         self.raw_world
     }
 
@@ -165,7 +165,7 @@ impl World {
     ///
     /// * C++ API: `world::get_info`
     #[doc(alias = "world::get_info")]
-    fn get_world_info(&self) -> &ecs_world_info_t {
+    fn get_info(&self) -> &ecs_world_info_t {
         // SAFETY: The pointer is valid for the lifetime of the world.
         unsafe { &*ecs_get_world_info(self.raw_world) }
     }
@@ -178,8 +178,8 @@ impl World {
     ///
     /// * C++ API: `world::delta_time`
     #[doc(alias = "world::delta_time")]
-    pub fn get_delta_time(&self) -> f32 {
-        self.get_world_info().delta_time
+    pub fn delta_time(&self) -> f32 {
+        self.get_info().delta_time
     }
 
     /// Signals the application to quit.
@@ -524,7 +524,7 @@ impl World {
     ///
     /// * C++ API: `world::get_stage`
     #[doc(alias = "world::get_stage")]
-    pub fn get_stage(&self, stage_id: i32) -> Self {
+    pub fn stage(&self, stage_id: i32) -> Self {
         Self {
             raw_world: unsafe { ecs_get_stage(self.raw_world, stage_id) },
             is_owned: false,
@@ -555,7 +555,7 @@ impl World {
     ///
     /// * C++ API: `world::async_stage`
     #[doc(alias = "world::async_stage")]
-    pub fn get_async_stage(&self) -> Self {
+    pub fn create_async_stage(&self) -> Self {
         Self {
             raw_world: unsafe { ecs_async_stage_new(self.raw_world) },
             is_owned: true,
@@ -632,7 +632,7 @@ impl World {
     ///
     /// * C++ API: `world::get_ctx`
     #[doc(alias = "world::get_ctx")]
-    pub fn get_context(&self) -> *mut c_void {
+    pub fn context(&self) -> *mut c_void {
         unsafe { ecs_get_ctx(self.raw_world) }
     }
 
@@ -646,8 +646,8 @@ impl World {
     ///
     /// # See also
     ///
-    /// * C++ API: `world::set_binding_ctx`
-    #[doc(alias = "world::set_binding_ctx")]
+    /// * C++ API: `world::set_binding_context`
+    #[doc(alias = "world::set_binding_context")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn set_binding_context(&self, ctx: *mut c_void, ctx_free: ecs_ctx_free_t) {
         unsafe { ecs_set_ctx(self.raw_world, ctx, ctx_free) }
@@ -661,8 +661,8 @@ impl World {
     ///
     /// # See also
     ///
-    /// * C++ API: `world::get_binding_ctx`
-    #[doc(alias = "world::get_binding_ctx")]
+    /// * C++ API: `world::get_binding_context`
+    #[doc(alias = "world::get_binding_context")]
     pub fn get_binding_context(&self) -> *mut c_void {
         unsafe { ecs_get_ctx(self.raw_world) }
     }
@@ -1109,12 +1109,11 @@ impl World {
     /// * C++ API: `world::get_ref`
     #[doc(alias = "world::get_ref")]
     #[inline(always)]
-    pub fn get_ref_component<T>(&self) -> Ref<T::UnderlyingType>
+    pub fn get_ref<T>(&self) -> Ref<T::UnderlyingType>
     where
         T: ComponentId,
     {
-        Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
-            .get_ref_component::<T>()
+        Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world)).get_ref::<T>()
     }
 
     /// Get singleton entity for type.
@@ -1132,7 +1131,7 @@ impl World {
     /// * C++ API: `world::singleton`
     #[doc(alias = "world::singleton")]
     #[inline(always)]
-    pub fn get_singleton<T: ComponentId>(&self) -> Entity {
+    pub fn singleton<T: ComponentId>(&self) -> Entity {
         Entity::new_from_existing_raw(self.raw_world, T::get_id(self.raw_world))
     }
 
@@ -1154,7 +1153,7 @@ impl World {
     ///
     /// * C++ API: `world::target`
     #[doc(alias = "world::target")]
-    pub fn get_target_rel<First>(&self, index: Option<i32>) -> Entity
+    pub fn target<First>(&self, index: Option<i32>) -> Entity
     where
         First: ComponentId,
     {
@@ -1179,11 +1178,7 @@ impl World {
     ///
     /// * C++ API: `world::target`
     #[doc(alias = "world::target")]
-    pub fn get_target_rel_id(
-        &self,
-        relationship: impl IntoEntityId,
-        index: Option<usize>,
-    ) -> Entity {
+    pub fn target_id(&self, relationship: impl IntoEntityId, index: Option<usize>) -> Entity {
         let relationship = relationship.get_id();
         Entity::new_from_existing_raw(self.raw_world, unsafe {
             ecs_get_target(
@@ -1971,9 +1966,7 @@ impl World {
         unsafe {
             ecs_count_id(
                 self.raw_world,
-                enum_value
-                    .get_entity_id_from_enum_field(self.raw_world)
-                    .raw_id,
+                enum_value.get_id_variant(self.raw_world).raw_id,
             )
         }
     }
@@ -2007,7 +2000,7 @@ impl World {
                 self.raw_world,
                 ecs_pair(
                     First::get_id(self.raw_world),
-                    enum_value.get_entity_id_from_enum_field(self.raw_world),
+                    enum_value.get_id_variant(self.raw_world),
                 ),
             )
         }
@@ -2218,12 +2211,7 @@ impl World {
         T: ComponentId + ComponentType<Enum> + CachedEnumData,
         F: FnMut(),
     {
-        try_register_component::<T>(self);
-        // SAFETY: we know that the enum_value is a valid because of the registration call
-        self.with_id(
-            unsafe { enum_value.get_entity_id_from_enum_field(self.raw_world) },
-            func,
-        );
+        self.with_id(enum_value.get_id_variant(self.raw_world), func);
     }
 
     /// Entities created in function are created with enum tag pair
@@ -2248,12 +2236,11 @@ impl World {
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
         F: FnMut(),
     {
-        try_register_component::<Second>(self);
-        // SAFETY: we know that the enum_value is a valid because of the registration call
         self.with_id(
-            ecs_pair(First::get_id(self.raw_world), unsafe {
-                enum_value.get_entity_id_from_enum_field(self.raw_world)
-            }),
+            ecs_pair(
+                First::get_id(self.raw_world),
+                enum_value.get_id_variant(self.raw_world),
+            ),
             func,
         );
     }
@@ -2345,9 +2332,7 @@ impl World {
         &self,
         enum_value: T,
     ) {
-        try_register_component::<T>(self);
-        // SAFETY: we know that the enum_value is a valid because of the registration call
-        self.delete_with_id(unsafe { enum_value.get_entity_id_from_enum_field(self.raw_world) });
+        self.delete_with_id(enum_value.get_id_variant(self.raw_world));
     }
 
     /// Delete all entities with the given enum tag pair / relationship
@@ -2369,11 +2354,10 @@ impl World {
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
-        try_register_component::<Second>(self);
-        // SAFETY: we know that the enum_value is a valid because of the registration call
-        self.delete_with_id(ecs_pair(First::get_id(self.raw_world), unsafe {
-            enum_value.get_entity_id_from_enum_field(self.raw_world)
-        }));
+        self.delete_with_id(ecs_pair(
+            First::get_id(self.raw_world),
+            enum_value.get_id_variant(self.raw_world),
+        ));
     }
 
     /// Remove all instances of the given id from entities
@@ -2460,9 +2444,7 @@ impl World {
         &self,
         enum_value: T,
     ) {
-        try_register_component::<T>(self);
-        // SAFETY: we know that the enum_value is a valid because of the registration call
-        self.remove_all_id(unsafe { enum_value.get_entity_id_from_enum_field(self.raw_world) });
+        self.remove_all_id(enum_value.get_id_variant(self.raw_world));
     }
 
     /// Remove all instances with the given enum tag pair / relationship from entities
@@ -2485,11 +2467,10 @@ impl World {
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
-        try_register_component::<Second>(self);
-        // SAFETY: we know that the enum_value is a valid because of the registration call
-        self.remove_all_id((First::get_id(self.raw_world), unsafe {
-            enum_value.get_entity_id_from_enum_field(self.raw_world)
-        }));
+        self.remove_all_id((
+            First::get_id(self.raw_world),
+            enum_value.get_id_variant(self.raw_world),
+        ));
     }
 
     /// Defers all operations executed in the passed-in closure. If the world
@@ -2665,15 +2646,11 @@ impl World {
     /// * C++ API: `world::entity`
     #[doc(alias = "world::entity")]
     #[doc(alias = "world::id")] //enum mixin implementation
-    pub fn get_id_from_enum<T>(&self, enum_value: T) -> Entity
+    pub fn entity_from_enum<T>(&self, enum_value: T) -> Entity
     where
         T: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
-        try_register_component::<T>(self);
-        // SAFETY: we know that the enum_value is a valid because of the registration call
-        Entity::new_from_existing_raw(self.raw_world, unsafe {
-            enum_value.get_entity_id_from_enum_field(self.raw_world)
-        })
+        Entity::new_from_existing_raw(self.raw_world, enum_value.get_id_variant(self.raw_world))
     }
 
     /// Create an entity that's associated with a type and name
@@ -2858,7 +2835,7 @@ impl World {
     ///
     /// * C++ API: `world::pair`
     #[doc(alias = "world::pair")]
-    pub fn get_id_pair(&self, first: impl IntoEntityId, second: impl IntoEntityId) -> Id {
+    pub fn get_id_pair_ids(&self, first: impl IntoEntityId, second: impl IntoEntityId) -> Id {
         ecs_assert!(
             !ecs_is_pair(first.get_id()) && !ecs_is_pair(second.get_id()),
             FlecsErrorCode::InvalidParameter,
@@ -2991,11 +2968,7 @@ impl World {
         &self,
         enum_value: T,
     ) -> Entity {
-        try_register_component::<T>(self);
-        // SAFETY: we know that the enum_value is a valid because of the registration call
-        Entity::new_from_existing_raw(self.raw_world, unsafe {
-            enum_value.get_entity_id_from_enum_field(self.raw_world)
-        })
+        Entity::new_from_existing_raw(self.raw_world, enum_value.get_id_variant(self.raw_world))
     }
 }
 
@@ -3732,7 +3705,7 @@ impl World {
     #[doc(alias = "world::get_time_scale")]
     #[inline(always)]
     pub fn get_time_scale(&self) -> super::FTime {
-        self.get_world_info().time_scale
+        self.get_info().time_scale
     }
 
     /// Get target frames per second (FPS).
@@ -3752,7 +3725,7 @@ impl World {
     #[doc(alias = "world::get_target_fps")]
     #[inline(always)]
     pub fn get_target_fps(&self) -> super::FTime {
-        self.get_world_info().target_fps
+        self.get_info().target_fps
     }
 
     /// Set target frames per second (FPS).

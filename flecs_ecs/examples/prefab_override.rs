@@ -23,14 +23,14 @@ fn main() {
     // The entity will now have a private copy of the Damage component, but not
     // of the Attack and Defense components. We can see this when we look at the
     // type of the instance:
-    println!("{}", inst.get_archetype());
+    println!("{}", inst.archetype());
 
     // Even though Attack was not automatically overridden, we can always
     // override it manually afterwards by adding it:
     inst.add::<Attack>();
 
     // The Attack component now shows up in the entity type:
-    println!("{}", inst.get_archetype());
+    println!("{}", inst.archetype());
 
     // We can get all components on the instance, regardless of whether they
     // are overridden or not. Note that the overridden components (Attack and

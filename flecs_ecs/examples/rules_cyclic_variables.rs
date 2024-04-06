@@ -53,7 +53,7 @@ fn main() {
     rule.iter_only(|it| {
         let x = it.get_var(x_var);
         let y = it.get_var(y_var);
-        println!("{} likes {}", x.get_name(), y.get_name());
+        println!("{} likes {}", x.name(), y.name());
     });
 
     // Output:

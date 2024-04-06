@@ -31,29 +31,29 @@ fn main() {
 
     // Print the type of the entity. Should output:
     //   (Identifier,Name),(Eats,Apples),(Eats,Pears),(Grows,Pears)
-    println!("Bob's type: [{}]", bob.get_archetype());
+    println!("Bob's type: [{}]", bob.archetype());
 
     println!();
 
     // Relationships can be iterated for an entity. This iterates (Eats, *):
     bob.for_each_target::<Eats>(|second| {
-        println!("Bob eats {}", second.get_name());
+        println!("Bob eats {}", second.name());
     });
 
     println!();
 
     // Iterate by explicitly providing the pair. This iterates (*, Pears):
     bob.for_each_matching_pair(ECS_WILDCARD, pears, |id| {
-        println!("Bob {} pears", id.first().get_name());
+        println!("Bob {} pears", id.first().name());
     });
 
     println!();
 
     // Get first target of relationship
-    println!("Bob eats {}", bob.get_target::<Eats>(0).get_name());
+    println!("Bob eats {}", bob.target::<Eats>(0).name());
 
     // Get second target of relationship
-    println!("Bob also eats {}", bob.get_target::<Eats>(1).get_name());
+    println!("Bob also eats {}", bob.target::<Eats>(1).name());
 
     // Output:
     //  Bob eats apples? true

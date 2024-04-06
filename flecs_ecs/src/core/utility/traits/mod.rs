@@ -28,11 +28,11 @@ pub mod private {
     where
         T: Iterable<'a>,
     {
-        fn set_binding_ctx(&mut self, binding_ctx: *mut c_void) -> &mut Self;
+        fn set_binding_context(&mut self, binding_ctx: *mut c_void) -> &mut Self;
 
-        fn set_binding_ctx_free(&mut self, binding_ctx_free: ecs_ctx_free_t) -> &mut Self;
+        fn set_binding_context_free(&mut self, binding_ctx_free: ecs_ctx_free_t) -> &mut Self;
 
-        fn get_desc_binding_ctx(&self) -> *mut c_void;
+        fn desc_binding_context(&self) -> *mut c_void;
 
         fn set_desc_callback(&mut self, callback: Option<unsafe extern "C" fn(*mut ecs_iter_t)>);
 
@@ -53,7 +53,7 @@ pub mod private {
             let each = (*ctx).each.unwrap();
             let each = &mut *(each as *mut Func);
 
-            let components_data = T::get_array_ptrs_of_components(&*iter);
+            let components_data = T::create_array_ptrs_of_components(&*iter);
             let array_components = &components_data.array_components;
             let iter_count = {
                 if (*iter).count == 0 {
@@ -68,9 +68,9 @@ pub mod private {
             for i in 0..iter_count {
                 let tuple = if components_data.is_any_array_a_ref {
                     let is_ref_array_components = &components_data.is_ref_array_components;
-                    T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+                    T::create_tuple_with_ref(array_components, is_ref_array_components, i)
                 } else {
-                    T::get_tuple(array_components, i)
+                    T::create_tuple(array_components, i)
                 };
                 each(tuple);
             }
@@ -96,7 +96,7 @@ pub mod private {
             let each_entity = (*ctx).each_entity.unwrap();
             let each_entity = &mut *(each_entity as *mut Func);
 
-            let components_data = T::get_array_ptrs_of_components(&*iter);
+            let components_data = T::create_array_ptrs_of_components(&*iter);
             let array_components = &components_data.array_components;
             let iter_count = {
                 if (*iter).count == 0 {
@@ -113,9 +113,9 @@ pub mod private {
                     Entity::new_from_existing_raw((*iter).world, *(*iter).entities.add(i));
                 let tuple = if components_data.is_any_array_a_ref {
                     let is_ref_array_components = &components_data.is_ref_array_components;
-                    T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+                    T::create_tuple_with_ref(array_components, is_ref_array_components, i)
                 } else {
-                    T::get_tuple(array_components, i)
+                    T::create_tuple(array_components, i)
                 };
 
                 each_entity(&mut entity, tuple);
@@ -141,7 +141,7 @@ pub mod private {
             let each_iter = (*ctx).each_iter.unwrap();
             let each_iter = &mut *(each_iter as *mut Func);
 
-            let components_data = T::get_array_ptrs_of_components(&*iter);
+            let components_data = T::create_array_ptrs_of_components(&*iter);
             let array_components = &components_data.array_components;
             let iter_count = {
                 if (*iter).count == 0 {
@@ -157,9 +157,9 @@ pub mod private {
             for i in 0..iter_count {
                 let tuple = if components_data.is_any_array_a_ref {
                     let is_ref_array_components = &components_data.is_ref_array_components;
-                    T::get_tuple_with_ref(array_components, is_ref_array_components, i)
+                    T::create_tuple_with_ref(array_components, is_ref_array_components, i)
                 } else {
-                    T::get_tuple(array_components, i)
+                    T::create_tuple(array_components, i)
                 };
 
                 each_iter(&mut iter_t, i, tuple);
@@ -222,7 +222,7 @@ pub mod private {
             let iter_func = (*ctx).iter.unwrap();
             let iter_func = &mut *(iter_func as *mut Func);
 
-            let components_data = T::get_array_ptrs_of_components(&*iter);
+            let components_data = T::create_array_ptrs_of_components(&*iter);
             let array_components = &components_data.array_components;
             let iter_count = {
                 if (*iter).count == 0 {
@@ -236,9 +236,13 @@ pub mod private {
 
             let tuple = if components_data.is_any_array_a_ref {
                 let is_ref_array_components = &components_data.is_ref_array_components;
-                T::get_tuple_slices_with_ref(array_components, is_ref_array_components, iter_count)
+                T::create_tuple_slices_with_ref(
+                    array_components,
+                    is_ref_array_components,
+                    iter_count,
+                )
             } else {
-                T::get_tuple_slices(array_components, iter_count)
+                T::create_tuple_slices(array_components, iter_count)
             };
             let mut iter_t = Iter::new(&mut *iter);
             iter_func(&mut iter_t, tuple);
@@ -286,16 +290,16 @@ pub mod private {
         }
 
         /// Get the binding context
-        fn get_binding_ctx(&mut self) -> &mut ObserverSystemBindingCtx {
+        fn get_binding_context(&mut self) -> &mut ObserverSystemBindingCtx {
             let mut binding_ctx: *mut ObserverSystemBindingCtx =
-                self.get_desc_binding_ctx() as *mut _;
+                self.desc_binding_context() as *mut _;
 
             if binding_ctx.is_null() {
                 let new_binding_ctx = Box::<ObserverSystemBindingCtx>::default();
                 let static_ref = Box::leak(new_binding_ctx);
                 binding_ctx = static_ref;
-                self.set_binding_ctx(binding_ctx as *mut c_void);
-                self.set_binding_ctx_free(Some(Self::binding_ctx_drop));
+                self.set_binding_context(binding_ctx as *mut c_void);
+                self.set_binding_context_free(Some(Self::binding_ctx_drop));
             }
             unsafe { &mut *binding_ctx }
         }

@@ -7,13 +7,13 @@ fn main() {
     world
         .component::<Position>()
         .on_add(|entity, pos| {
-            println!("added {:?} to {:?}", pos, entity.get_name());
+            println!("added {:?} to {:?}", pos, entity.name());
         })
         .on_remove(|entity, pos| {
-            println!("removed {:?} from {:?}", pos, entity.get_name());
+            println!("removed {:?} from {:?}", pos, entity.name());
         })
         .on_set(|entity, pos| {
-            println!("set {:?} for {:?}", pos, entity.get_name());
+            println!("set {:?} for {:?}", pos, entity.name());
         });
 
     let entity = world.new_entity_named(c"Bob");

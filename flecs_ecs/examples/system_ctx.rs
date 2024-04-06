@@ -47,8 +47,8 @@ fn main() {
         .system_builder::<(&Position, &Radius)>()
         .set_context(&mut query_collide as *mut Query<(&Position, &Radius)> as *mut c_void)
         .on_each_iter(|it, index, (p1, r1)| {
-            let e1 = it.get_entity(index);
-            let query = it.get_context_ptr::<Query<(&Position, &Radius)>>();
+            let e1 = it.entity(index);
+            let query = it.context::<Query<(&Position, &Radius)>>();
 
             query.each_entity(|e2, (p2, r2)| {
                 if e1 == *e2 {

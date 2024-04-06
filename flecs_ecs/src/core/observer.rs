@@ -88,7 +88,7 @@ impl Observer {
     ///
     /// * C++ API: `observer::ctx`
     #[doc(alias = "observer::ctx")]
-    pub fn get_context(&self) -> *mut c_void {
+    pub fn context(&self) -> *mut c_void {
         unsafe { ecs_observer_get_ctx(self.world.raw_world, self.raw_id) }
     }
 
@@ -99,7 +99,7 @@ impl Observer {
     /// * C++ API: `observer::query`
     #[doc(alias = "observer::query")]
     pub fn query(&mut self) -> Filter<()> {
-        let poly: *const Poly = self.get_target_for_pair_first::<Poly>(ECS_OBSERVER);
+        let poly: *const Poly = self.target_for_pair_first::<Poly>(ECS_OBSERVER);
         let obj: *mut ecs_observer_t = unsafe { (*poly).poly as *mut ecs_observer_t };
         Filter::<()>::new_ownership(&self.world, unsafe { &mut (*obj).filter })
     }

@@ -7,7 +7,7 @@ use common::*;
 
 // Dummy system
 fn sys(it: &mut Iter) {
-    println!("system {}", it.system().get_name());
+    println!("system {}", it.system().name());
 }
 
 fn main() {

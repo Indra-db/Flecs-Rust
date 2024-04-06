@@ -319,19 +319,19 @@ fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> TokenStream {
         const SIZE_ENUM_FIELDS: u32 = #size_variants;
         type VariantIterator = std::vec::IntoIter<#name #impl_generics>;
 
-        fn get_cstr_name(&self) -> &std::ffi::CStr {
+        fn name_cstr(&self) -> &std::ffi::CStr {
             match self {
                 #(#variant_name_arms),*
             }
         }
 
-        fn get_enum_index(&self) -> usize {
+        fn enum_index(&self) -> usize {
             match self {
                 #(#variant_index_arms),*
             }
         }
 
-        fn __get_enum_data_ptr_mut() -> *mut u64 {
+        fn __enum_data_mut() -> *mut u64 {
             static mut ENUM_FIELD_ENTITY_ID: [u64; #size_variants as usize] = [0; #size_variants as usize];
             unsafe { ENUM_FIELD_ENTITY_ID.as_mut_ptr() }
         }

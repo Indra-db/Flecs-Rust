@@ -33,7 +33,7 @@ fn main() {
         .write_id(ECS_WILDCARD)
         .on_each_entity(|e, (p,)| {
             if p.x >= 3.0 {
-                println!("Delete entity {}", e.get_name());
+                println!("Delete entity {}", e.name());
                 e.destruct();
             }
         });
@@ -43,7 +43,7 @@ fn main() {
     world
         .system_builder_named::<(&Position,)>(c"PrintPosition")
         .on_each_entity(|e, (p,)| {
-            println!("{}: {{ {}, {} }}", e.get_name(), p.x, p.y);
+            println!("{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 
     // Create a few test entities for a Position, Velocity query
