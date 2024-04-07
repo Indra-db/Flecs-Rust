@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
-use flecs_ecs::macros::Component;
+use flecs_ecs::{core::ComponentInfo, macros::Component};
 
 #[cfg(test)]
 #[ctor::ctor]
@@ -105,4 +105,9 @@ impl Drop for Pod {
 #[register(Position, Velocity)]
 pub struct Template<T> {
     pub value: T,
+}
+
+#[derive(Component, Default)]
+pub struct Templatex {
+    pub value: String,
 }

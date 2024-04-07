@@ -17,6 +17,8 @@ macro_rules! create_pre_registered_component {
         impl ComponentInfo for $struct_name {
             const IS_ENUM: bool = false;
             const IS_TAG: bool = true;
+            const IMPLS_CLONE: bool = false;
+            const IMPLS_DEFAULT: bool = false;
         }
 
         impl EmptyComponent for $struct_name {}

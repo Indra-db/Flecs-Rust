@@ -13,11 +13,14 @@ pub struct Struct;
 
 #[derive(Component)]
 pub enum NoneEnum {
-    None,
+    None = 1,
 }
 
 #[derive(Default, Clone)]
-pub struct DefaultCloneDummy;
+pub struct FlecsNoneDefaultDummy;
+
+#[derive(Clone)]
+pub struct FlecsNoneCloneDummy;
 
 pub struct ConditionalTypeSelector<const B: bool, T> {
     phantom: std::marker::PhantomData<T>,

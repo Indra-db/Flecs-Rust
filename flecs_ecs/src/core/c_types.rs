@@ -369,6 +369,8 @@ impl NotEmptyComponent for EcsComponent {}
 impl ComponentInfo for EcsComponent {
     const IS_ENUM: bool = false;
     const IS_TAG: bool = false;
+    const IMPLS_CLONE: bool = true;
+    const IMPLS_DEFAULT: bool = true;
 }
 
 impl ComponentType<Struct> for EcsComponent {}
@@ -413,6 +415,8 @@ impl ComponentId for EcsComponent {
 impl ComponentInfo for Poly {
     const IS_ENUM: bool = false;
     const IS_TAG: bool = false;
+    const IMPLS_CLONE: bool = true;
+    const IMPLS_DEFAULT: bool = true;
 }
 
 impl NotEmptyComponent for Poly {}
@@ -460,6 +464,8 @@ impl ComponentId for Poly {
 impl ComponentInfo for TickSource {
     const IS_TAG: bool = false;
     const IS_ENUM: bool = false;
+    const IMPLS_CLONE: bool = true;
+    const IMPLS_DEFAULT: bool = true;
 }
 
 #[cfg(feature = "flecs_system")]
@@ -503,6 +509,8 @@ impl ComponentId for TickSource {
 impl ComponentInfo for EntityId {
     const IS_ENUM: bool = false;
     const IS_TAG: bool = false;
+    const IMPLS_CLONE: bool = true;
+    const IMPLS_DEFAULT: bool = false;
 }
 
 impl ComponentId for EntityId {

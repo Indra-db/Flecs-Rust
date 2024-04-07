@@ -14,6 +14,8 @@ pub use into_world::*;
 pub use iter::*;
 pub use reactor::*;
 
+use super::{ImplementsClone, ImplementsDefault};
+
 #[doc(hidden)]
 pub mod private {
     use std::{ffi::c_void, ptr};
@@ -312,4 +314,18 @@ pub mod private {
             }
         }
     }
+}
+
+pub trait DoesNotImpl {
+    const IMPLS: bool = false;
+}
+
+impl<T> DoesNotImpl for T {}
+
+impl<T: Clone> ImplementsClone<T> {
+    pub const IMPLS: bool = true;
+}
+
+impl<T: Default> ImplementsDefault<T> {
+    pub const IMPLS: bool = true;
 }

@@ -50,24 +50,23 @@ use crate::{core::c_types::TypeHooksT, ecs_assert, sys::ecs_type_info_t};
 use std::{ffi::c_void, mem::MaybeUninit, ptr};
 
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub fn create_lifecycle_actions<T: Clone + Default>() -> TypeHooksT {
-    TypeHooksT {
-        ctor: Some(generic_ctor::<T>),
-        dtor: Some(generic_dtor::<T>),
-        copy: Some(generic_copy::<T>),
-        move_: Some(generic_move::<T>),
-        copy_ctor: Some(generic_copy::<T>), //same implementation as copy
-        move_ctor: Some(generic_move::<T>), //same implementation as move
-        ctor_move_dtor: Some(generic_ctor_move_dtor::<T>),
-        move_dtor: Some(generic_ctor_move_dtor::<T>), //same implementation as ctor_move_dtor
-        on_add: None,
-        on_set: None,
-        on_remove: None,
-        ctx: std::ptr::null_mut(),
-        binding_ctx: std::ptr::null_mut(),
-        ctx_free: None,
-        binding_ctx_free: None,
-    }
+pub fn register_lifecycle_actions<T: Default>(type_hooks: &mut TypeHooksT) {
+    type_hooks.ctor = Some(generic_ctor::<T>);
+    type_hooks.dtor = Some(generic_dtor::<T>);
+    type_hooks.move_ = Some(generic_move::<T>);
+    type_hooks.move_ctor = Some(generic_move::<T>); //same implementation as move
+    type_hooks.ctor_move_dtor = Some(generic_ctor_move_dtor::<T>);
+    type_hooks.move_dtor = Some(generic_ctor_move_dtor::<T>); //same implementation as ctor_move_dtor
+}
+
+pub fn register_copy_lifecycle_action<T: Clone>(type_hooks: &mut TypeHooksT) {
+    type_hooks.copy = Some(generic_copy::<T>);
+    type_hooks.copy_ctor = Some(generic_copy::<T>); //same implementation as copy
+}
+
+pub fn register_copy_lifecycle_panic_action<T>(type_hooks: &mut TypeHooksT) {
+    type_hooks.copy = Some(generic_copy_panic::<T>);
+    type_hooks.copy_ctor = Some(generic_copy_panic::<T>); //same implementation as copy
 }
 
 /// This is the generic constructor for trivial types
@@ -133,7 +132,7 @@ extern "C" fn generic_dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const e
 ///
 /// * C++ API: `copy_impl`
 #[doc(alias = "copy_impl")]
-extern "C" fn generic_copy<T: Default + Clone>(
+extern "C" fn generic_copy<T: Clone>(
     dst_ptr: *mut c_void,
     src_ptr: *const c_void,
     count: i32,
@@ -153,6 +152,22 @@ extern "C" fn generic_copy<T: Default + Clone>(
             *dst_value = src_value.clone(); // Assign the cloned value, which automatically drops the previous value.
         }
     }
+}
+
+/// This is the generic copy for trivial types
+/// It will copy the memory
+///
+/// # See also
+///
+/// * C++ API: `copy_impl`
+#[doc(alias = "copy_impl")]
+extern "C" fn generic_copy_panic<T>(
+    _dst_ptr: *mut c_void,
+    _src_ptr: *const c_void,
+    _count: i32,
+    _type_info: *const ecs_type_info_t,
+) {
+    panic!("Clone is not implemented for type {} and it's being used in a copy / duplicate operation such as component overriding or duplicating entities / components", std::any::type_name::<T>());
 }
 
 /// This is the generic move for non-trivial types
@@ -194,7 +209,7 @@ extern "C" fn generic_move<T: Default>(
 ///
 /// * C++ API: `move_ctor_impl`
 #[doc(alias = "move_ctor_impl")]
-extern "C" fn generic_ctor_move_dtor<T: Default + Clone>(
+extern "C" fn generic_ctor_move_dtor<T: Default>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,
     count: i32,

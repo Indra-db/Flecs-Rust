@@ -2,7 +2,7 @@ mod errors;
 mod functions;
 mod log;
 pub mod traits;
-mod types;
+pub mod types;
 
 pub use errors::*;
 pub use functions::*;

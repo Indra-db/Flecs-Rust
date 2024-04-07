@@ -1,8 +1,8 @@
 use std::{ffi::CStr, sync::OnceLock};
 
 use crate::core::{
-    ConditionalTypeSelector, DefaultCloneDummy, Entity, EntityT, Enum, IdComponent, IdT, IntoWorld,
-    Struct, TypeHooksT,
+    ConditionalTypeSelector, Entity, EntityT, Enum, FlecsNoneCloneDummy, FlecsNoneDefaultDummy,
+    IdComponent, IdT, IntoWorld, Struct, TypeHooksT,
 };
 
 use super::{
@@ -108,15 +108,15 @@ pub trait ComponentId: Sized + ComponentInfo {
 
     // Not public API.
     #[doc(hidden)]
-    fn __register_lifecycle_hooks() -> TypeHooksT {
-        Default::default()
-    }
+    fn __register_lifecycle_hooks(mut _type_hooks: &mut TypeHooksT) {}
 }
 
 pub trait ComponentInfo: Sized {
     const IS_ENUM: bool;
     const IS_TAG: bool;
     const NEEDS_DROP: bool = std::mem::needs_drop::<Self>();
+    const IMPLS_CLONE: bool;
+    const IMPLS_DEFAULT: bool;
 }
 
 pub trait CachedEnumData: ComponentType<Enum> + ComponentId {
@@ -195,11 +195,15 @@ pub trait CachedEnumData: ComponentType<Enum> + ComponentId {
 impl<T: ComponentInfo> ComponentInfo for &T {
     const IS_ENUM: bool = T::IS_ENUM;
     const IS_TAG: bool = T::IS_TAG;
+    const IMPLS_CLONE: bool = T::IMPLS_CLONE;
+    const IMPLS_DEFAULT: bool = T::IMPLS_DEFAULT;
 }
 
 impl<T: ComponentInfo> ComponentInfo for &mut T {
     const IS_ENUM: bool = T::IS_ENUM;
     const IS_TAG: bool = T::IS_TAG;
+    const IMPLS_CLONE: bool = T::IMPLS_CLONE;
+    const IMPLS_DEFAULT: bool = T::IMPLS_DEFAULT;
 }
 
 impl<T: ComponentId> ComponentId for &T {
@@ -222,17 +226,32 @@ impl<T: ComponentId> ComponentId for &mut T {
     type UnderlyingEnumType = T::UnderlyingEnumType;
 }
 
-pub trait DefaultCloneType {
-    type Type: Default + Clone;
+pub trait FlecsDefaultType {
+    type Type: Default;
 }
 
-impl<T> DefaultCloneType for ConditionalTypeSelector<false, T> {
-    type Type = DefaultCloneDummy;
+pub trait FlecsCloneType {
+    type Type: Clone;
 }
 
-impl<T> DefaultCloneType for ConditionalTypeSelector<true, T>
+impl<T> FlecsDefaultType for ConditionalTypeSelector<false, T> {
+    type Type = FlecsNoneDefaultDummy;
+}
+
+impl<T> FlecsDefaultType for ConditionalTypeSelector<true, T>
 where
-    T: Default + Clone,
+    T: Default,
+{
+    type Type = T;
+}
+
+impl<T> FlecsCloneType for ConditionalTypeSelector<false, T> {
+    type Type = FlecsNoneCloneDummy;
+}
+
+impl<T> FlecsCloneType for ConditionalTypeSelector<true, T>
+where
+    T: Clone,
 {
     type Type = T;
 }

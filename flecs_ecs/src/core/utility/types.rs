@@ -4,7 +4,7 @@ use crate::core::{Entity, IdT, World};
 
 pub type FTime = f32;
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct EntityId(pub IdT);
 
 impl EntityId {
@@ -223,3 +223,6 @@ impl ObserverEntityBindingCtx {
         }
     }
 }
+
+pub struct ImplementsClone<T>(std::marker::PhantomData<T>);
+pub struct ImplementsDefault<T>(std::marker::PhantomData<T>);

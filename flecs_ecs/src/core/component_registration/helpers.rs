@@ -27,16 +27,14 @@ where
     } else {
         0
     };
-
-    let hooks = if size != 0 && T::NEEDS_DROP {
+    let mut hooks = Default::default();
+    if size != 0 && T::NEEDS_DROP {
         // Register lifecycle callbacks, but only if the component has a
         // size and requires initialization of heap memory / needs drop.
         // Components that don't have a size are tags, and tags don't
         // require construction/destruction/copy/move's.
-        T::__register_lifecycle_hooks()
-    } else {
-        Default::default()
-    };
+        T::__register_lifecycle_hooks(&mut hooks);
+    }
 
     let type_info: flecs_ecs_sys::ecs_type_info_t = flecs_ecs_sys::ecs_type_info_t {
         size: size as i32,
