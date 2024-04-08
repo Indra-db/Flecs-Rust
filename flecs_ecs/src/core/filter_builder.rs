@@ -25,21 +25,21 @@ use crate::{
 };
 
 /// Filters are cheaper to create, but slower to iterate than queries.
-pub struct FilterBuilder<'a, T>
+pub struct FilterBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     pub desc: ecs_filter_desc_t,
     expr_count: i32,
     pub(crate) term: Term,
     pub world: World,
     pub next_term_index: i32,
-    _phantom: std::marker::PhantomData<&'a T>,
+    _phantom: std::marker::PhantomData<T>,
 }
 
-impl<'a, T> FilterBuilder<'a, T>
+impl<T> FilterBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     /// Create a new filter builder.
     ///
@@ -135,9 +135,9 @@ where
     }
 }
 
-impl<'a, T> Filterable for FilterBuilder<'a, T>
+impl<T> Filterable for FilterBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn current_term(&mut self) -> &mut TermT {
         unsafe { &mut *self.term.term_ptr }
@@ -148,9 +148,9 @@ where
     }
 }
 
-impl<'a, T> FilterBuilderImpl for FilterBuilder<'a, T>
+impl<T> FilterBuilderImpl for FilterBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     fn desc_filter_mut(&mut self) -> &mut ecs_filter_desc_t {
@@ -168,9 +168,9 @@ where
     }
 }
 
-impl<'a, T> TermBuilder for FilterBuilder<'a, T>
+impl<T> TermBuilder for FilterBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     fn world_ptr_mut(&self) -> *mut WorldT {
@@ -193,15 +193,15 @@ where
     }
 }
 
-impl<'a, T> Builder for FilterBuilder<'a, T>
+impl<T> Builder for FilterBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
-    type BuiltType = Filter<'a, T>;
+    type BuiltType = Filter<T>;
 
     #[inline]
     fn build(&mut self) -> Self::BuiltType {
-        Filter::<'a, T>::new_from_desc(&self.world, &mut self.desc as *mut _)
+        Filter::<T>::new_from_desc(&self.world, &mut self.desc as *mut _)
     }
 }
 

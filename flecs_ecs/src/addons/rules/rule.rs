@@ -7,18 +7,18 @@ use flecs_ecs_sys::{
 
 use crate::core::{Entity, FilterView, IntoWorld, IterAPI, IterOperations, Iterable, World};
 
-pub struct Rule<'a, T>
+pub struct Rule<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     rule: *mut ecs_rule_t,
     pub world: World,
-    _phantom: std::marker::PhantomData<&'a T>,
+    _phantom: std::marker::PhantomData<T>,
 }
 
-impl<'a, T> Deref for Rule<'a, T>
+impl<T> Deref for Rule<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     type Target = *mut ecs_rule_t;
 
@@ -28,9 +28,9 @@ where
     }
 }
 
-impl<'a, T> Drop for Rule<'a, T>
+impl<T> Drop for Rule<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn drop(&mut self) {
         if !self.rule.is_null() {
@@ -41,9 +41,9 @@ where
     }
 }
 
-impl<'a, T> Rule<'a, T>
+impl<T> Rule<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     /// Create a new rule
     ///
@@ -117,7 +117,7 @@ where
     ///
     /// * C++ API: `rule_base::filter`
     #[doc(alias = "rule_base::filter")]
-    pub fn filter(&self) -> FilterView<'a, T> {
+    pub fn filter(&self) -> FilterView<T> {
         FilterView::new(&self.world, unsafe { ecs_rule_get_filter(self.rule) })
     }
 
@@ -144,9 +144,9 @@ where
     }
 }
 
-impl<'a, T> IterAPI<'a, T> for Rule<'a, T>
+impl<T> IterAPI<T> for Rule<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn as_entity(&self) -> Entity {
         Entity::new_from_existing_raw(&self.world, unsafe {
@@ -155,18 +155,18 @@ where
     }
 }
 
-impl<'a, T> IntoWorld for Rule<'a, T>
+impl<T> IntoWorld for Rule<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn world_ptr_mut(&self) -> *mut crate::core::WorldT {
         self.world.raw_world
     }
 }
 
-impl<'a, T> IterOperations for Rule<'a, T>
+impl<T> IterOperations for Rule<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn retrieve_iter(&self) -> crate::core::IterT {
         unsafe { ecs_rule_iter(self.world.raw_world, self.rule) }

@@ -40,7 +40,7 @@ pub trait ComponentType<T: ECSComponentType> {}
 /// If the world doesn't, this implies the component was registered by a different world.
 /// In such a case, the component is registered with the present world using the pre-existing ID.
 /// If the ID is already known, the trait takes care of the component registration and checks for consistency in the input.
-pub trait ComponentId: Sized + ComponentInfo {
+pub trait ComponentId: Sized + ComponentInfo + 'static {
     type UnderlyingType: ComponentId;
     type UnderlyingEnumType: ComponentId + CachedEnumData;
 
@@ -206,7 +206,7 @@ impl<T: ComponentInfo> ComponentInfo for &mut T {
     const IMPLS_DEFAULT: bool = T::IMPLS_DEFAULT;
 }
 
-impl<T: ComponentId> ComponentId for &T {
+impl<T: ComponentId> ComponentId for &'static T {
     fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::IdComponent> {
         Self::UnderlyingType::__get_once_lock_data()
     }
@@ -216,7 +216,7 @@ impl<T: ComponentId> ComponentId for &T {
     type UnderlyingEnumType = T::UnderlyingEnumType;
 }
 
-impl<T: ComponentId> ComponentId for &mut T {
+impl<T: ComponentId> ComponentId for &'static mut T {
     fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::IdComponent> {
         Self::UnderlyingType::__get_once_lock_data()
     }

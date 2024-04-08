@@ -28,7 +28,7 @@ pub mod private {
     #[doc(hidden)]
     pub trait internal_ReactorAPI<'a, T>
     where
-        T: Iterable<'a>,
+        T: Iterable,
     {
         fn set_binding_context(&mut self, binding_ctx: *mut c_void) -> &mut Self;
 
@@ -49,7 +49,7 @@ pub mod private {
         /// * C++ API: `iter_invoker::invoke_callback`
         unsafe extern "C" fn run_each<Func>(iter: *mut IterT)
         where
-            Func: FnMut(T::TupleType),
+            Func: FnMut(T::TupleType<'_>),
         {
             let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
             let each = (*ctx).each.unwrap();
@@ -86,7 +86,7 @@ pub mod private {
         #[doc(alias = "iter_invoker::invoke_callback")]
         unsafe extern "C" fn run_each_entity<Func>(iter: *mut IterT)
         where
-            Func: FnMut(&mut Entity, T::TupleType),
+            Func: FnMut(&mut Entity, T::TupleType<'_>),
         {
             let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
             let each_entity = (*ctx).each_entity.unwrap();
@@ -125,7 +125,7 @@ pub mod private {
         #[doc(alias = "iter_invoker::invoke_callback")]
         unsafe extern "C" fn run_each_iter<Func>(iter: *mut IterT)
         where
-            Func: FnMut(&mut Iter, usize, T::TupleType),
+            Func: FnMut(&mut Iter, usize, T::TupleType<'_>),
         {
             let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
             let each_iter = (*ctx).each_iter.unwrap();
@@ -200,7 +200,7 @@ pub mod private {
         #[doc(alias = "iter_invoker::invoke_callback")]
         unsafe extern "C" fn run_iter<Func>(iter: *mut IterT)
         where
-            Func: FnMut(&mut Iter, T::TupleSliceType),
+            Func: FnMut(&mut Iter, T::TupleSliceType<'_>),
         {
             let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
             let iter_func = (*ctx).iter.unwrap();
@@ -226,23 +226,23 @@ pub mod private {
         // free functions
 
         extern "C" fn on_free_each(ptr: *mut c_void) {
-            let ptr_func: *mut fn(T::TupleType) = ptr as *mut fn(T::TupleType);
+            let ptr_func: *mut fn(T::TupleType<'_>) = ptr as *mut fn(T::TupleType<'_>);
             unsafe {
                 ptr::drop_in_place(ptr_func);
             }
         }
 
         extern "C" fn on_free_each_entity(ptr: *mut c_void) {
-            let ptr_func: *mut fn(&mut Entity, T::TupleType) =
-                ptr as *mut fn(&mut Entity, T::TupleType);
+            let ptr_func: *mut fn(&mut Entity, T::TupleType<'_>) =
+                ptr as *mut fn(&mut Entity, T::TupleType<'_>);
             unsafe {
                 ptr::drop_in_place(ptr_func);
             }
         }
 
         extern "C" fn on_free_each_iter(ptr: *mut c_void) {
-            let ptr_func: *mut fn(&mut Iter, usize, T::TupleType) =
-                ptr as *mut fn(&mut Iter, usize, T::TupleType);
+            let ptr_func: *mut fn(&mut Iter, usize, T::TupleType<'_>) =
+                ptr as *mut fn(&mut Iter, usize, T::TupleType<'_>);
             unsafe {
                 ptr::drop_in_place(ptr_func);
             }
@@ -256,8 +256,8 @@ pub mod private {
         }
 
         extern "C" fn on_free_iter(ptr: *mut c_void) {
-            let ptr_func: *mut fn(&Iter, T::TupleSliceType) =
-                ptr as *mut fn(&Iter, T::TupleSliceType);
+            let ptr_func: *mut fn(&Iter, T::TupleSliceType<'_>) =
+                ptr as *mut fn(&Iter, T::TupleSliceType<'_>);
             unsafe {
                 ptr::drop_in_place(ptr_func);
             }

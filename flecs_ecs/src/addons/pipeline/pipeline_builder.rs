@@ -15,21 +15,21 @@ use crate::{
 
 use super::Pipeline;
 
-pub struct PipelineBuilder<'a, T>
+pub struct PipelineBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
-    query_builder: QueryBuilder<'a, T>,
+    query_builder: QueryBuilder<T>,
     desc: ecs_pipeline_desc_t,
     is_instanced: bool,
 }
 
 /// Deref to `QueryBuilder` to allow access to `QueryBuilder` methods without having to access `QueryBuilder` through `PipelineBuilder`
-impl<'a, T> Deref for PipelineBuilder<'a, T>
+impl<T> Deref for PipelineBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
-    type Target = QueryBuilder<'a, T>;
+    type Target = QueryBuilder<T>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -37,9 +37,9 @@ where
     }
 }
 
-impl<'a, T> DerefMut for PipelineBuilder<'a, T>
+impl<T> DerefMut for PipelineBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
@@ -47,9 +47,9 @@ where
     }
 }
 
-impl<'a, T> PipelineBuilder<'a, T>
+impl<T> PipelineBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     pub fn new(world: &World) -> Self {
         let mut desc = Default::default();
@@ -134,9 +134,9 @@ where
         obj
     }
 }
-impl<'a, T> Filterable for PipelineBuilder<'a, T>
+impl<T> Filterable for PipelineBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn current_term(&mut self) -> &mut TermT {
         unsafe { &mut *self.filter_builder.term.term_ptr }
@@ -147,9 +147,9 @@ where
     }
 }
 
-impl<'a, T> TermBuilder for PipelineBuilder<'a, T>
+impl<T> TermBuilder for PipelineBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     fn world_ptr_mut(&self) -> *mut WorldT {
@@ -172,20 +172,20 @@ where
     }
 }
 
-impl<'a, T> Builder for PipelineBuilder<'a, T>
+impl<T> Builder for PipelineBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
-    type BuiltType = Pipeline<'a, T>;
+    type BuiltType = Pipeline<T>;
 
     fn build(&mut self) -> Self::BuiltType {
         Pipeline::<T>::new(&self.world, self.desc)
     }
 }
 
-impl<'a, T> FilterBuilderImpl for PipelineBuilder<'a, T>
+impl<T> FilterBuilderImpl for PipelineBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     fn desc_filter_mut(&mut self) -> &mut ecs_filter_desc_t {
@@ -203,9 +203,9 @@ where
     }
 }
 
-impl<'a, T> QueryBuilderImpl for PipelineBuilder<'a, T>
+impl<T> QueryBuilderImpl for PipelineBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     fn desc_query_mut(&mut self) -> &mut ecs_query_desc_t {

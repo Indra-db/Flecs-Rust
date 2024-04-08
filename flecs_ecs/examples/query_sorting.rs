@@ -13,7 +13,7 @@ extern "C" fn compare_position(
     (p1.x > p2.x) as i32 - (p1.x < p2.x) as i32
 }
 
-fn print_query(query: &Query<'_, &Position>) {
+fn print_query(query: &Query<&Position>) {
     query.each(|pos| println!("{:?}", pos));
 }
 

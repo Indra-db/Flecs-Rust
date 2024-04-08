@@ -3067,11 +3067,11 @@ impl World {
     ///
     /// * C++ API: `world::observer`
     #[doc(alias = "world::observer")]
-    pub fn observer_builder<'a, Components>(&self) -> ObserverBuilder<'a, Components>
+    pub fn observer_builder<Components>(&self) -> ObserverBuilder<Components>
     where
-        Components: Iterable<'a>,
+        Components: Iterable,
     {
-        ObserverBuilder::<'a, Components>::new(self)
+        ObserverBuilder::<Components>::new(self)
     }
 
     /// Create a new named observer.
@@ -3092,14 +3092,11 @@ impl World {
     ///
     /// * C++ API: `world::observer`
     #[doc(alias = "world::observer")]
-    pub fn observer_builder_named<'a, Components>(
-        &self,
-        name: &CStr,
-    ) -> ObserverBuilder<'a, Components>
+    pub fn observer_builder_named<Components>(&self, name: &CStr) -> ObserverBuilder<Components>
     where
-        Components: Iterable<'a>,
+        Components: Iterable,
     {
-        ObserverBuilder::<'a, Components>::new_named(self, name)
+        ObserverBuilder::<Components>::new_named(self, name)
     }
 }
 
@@ -3119,11 +3116,11 @@ impl World {
     ///
     /// * C++ API: `world::filter`
     #[doc(alias = "world::filter")]
-    pub fn filter<'a, Components>(&self) -> Filter<'a, Components>
+    pub fn filter<Components>(&self) -> Filter<Components>
     where
-        Components: Iterable<'a>,
+        Components: Iterable,
     {
-        Filter::<'a, Components>::new(self)
+        Filter::<Components>::new(self)
     }
 
     /// Create a new named filter.
@@ -3144,11 +3141,11 @@ impl World {
     ///
     /// * C++ API: `world::filter`
     #[doc(alias = "world::filter")]
-    pub fn filter_named<'a, Components>(&self, name: &CStr) -> Filter<'a, Components>
+    pub fn filter_named<Components>(&self, name: &CStr) -> Filter<Components>
     where
-        Components: Iterable<'a>,
+        Components: Iterable,
     {
-        FilterBuilder::<'a, Components>::new_named(self, name).build()
+        FilterBuilder::<Components>::new_named(self, name).build()
     }
 
     /// Create a `filter_builder`
@@ -3165,11 +3162,11 @@ impl World {
     ///
     /// * C++ API: `world::filter_builder`
     #[doc(alias = "world::filter_builder")]
-    pub fn filter_builder<'a, Components>(&self) -> FilterBuilder<'a, Components>
+    pub fn filter_builder<Components>(&self) -> FilterBuilder<Components>
     where
-        Components: Iterable<'a>,
+        Components: Iterable,
     {
-        FilterBuilder::<'a, Components>::new(self)
+        FilterBuilder::<Components>::new(self)
     }
 
     /// Create a new named `filter_builder`.
@@ -3190,33 +3187,33 @@ impl World {
     ///
     /// * C++ API: `world::filter_builder`
     #[doc(alias = "world::filter_builder")]
-    pub fn filter_builder_named<'a, Components>(&self, name: &CStr) -> FilterBuilder<'a, Components>
+    pub fn filter_builder_named<Components>(&self, name: &CStr) -> FilterBuilder<Components>
     where
-        Components: Iterable<'a>,
+        Components: Iterable,
     {
-        FilterBuilder::<'a, Components>::new_named(self, name)
+        FilterBuilder::<Components>::new_named(self, name)
     }
 
-    pub fn each<'a, Components>(
+    pub fn each<Components>(
         &self,
-        func: impl FnMut(Components::TupleType),
-    ) -> Filter<'a, Components>
+        func: impl FnMut(Components::TupleType<'_>),
+    ) -> Filter<Components>
     where
-        Components: Iterable<'a>,
+        Components: Iterable,
     {
-        let filter = Filter::<'a, Components>::new(self);
+        let filter = Filter::<Components>::new(self);
         filter.each(func);
         filter
     }
 
-    pub fn each_entity<'a, Components>(
+    pub fn each_entity<Components>(
         &self,
-        func: impl FnMut(&mut Entity, Components::TupleType),
-    ) -> Filter<'a, Components>
+        func: impl FnMut(&mut Entity, Components::TupleType<'_>),
+    ) -> Filter<Components>
     where
-        Components: Iterable<'a>,
+        Components: Iterable,
     {
-        let filter = Filter::<'a, Components>::new(self);
+        let filter = Filter::<Components>::new(self);
         filter.each_entity(func);
         filter
     }
@@ -3238,11 +3235,11 @@ impl World {
     ///
     /// * C++ API: `world::query`
     #[doc(alias = "world::query")]
-    pub fn query<'a, Components>(&self) -> Query<'a, Components>
+    pub fn query<Components>(&self) -> Query<Components>
     where
-        Components: Iterable<'a>,
+        Components: Iterable,
     {
-        Query::<'a, Components>::new(self)
+        Query::<Components>::new(self)
     }
 
     /// Create a new named query.
@@ -3263,11 +3260,11 @@ impl World {
     ///
     /// * C++ API: `world::query`
     #[doc(alias = "world::query")]
-    pub fn query_named<'a, Components>(&self, name: &CStr) -> Query<'a, Components>
+    pub fn query_named<Components>(&self, name: &CStr) -> Query<Components>
     where
-        Components: Iterable<'a>,
+        Components: Iterable,
     {
-        QueryBuilder::<'a, Components>::new_named(self, name).build()
+        QueryBuilder::<Components>::new_named(self, name).build()
     }
 
     /// Create a new query builder.
@@ -3284,11 +3281,11 @@ impl World {
     ///
     /// * C++ API: `world::query_builder`
     #[doc(alias = "world::query_builder")]
-    pub fn query_builder<'a, Components>(&self) -> QueryBuilder<'a, Components>
+    pub fn query_builder<Components>(&self) -> QueryBuilder<Components>
     where
-        Components: Iterable<'a>,
+        Components: Iterable,
     {
-        QueryBuilder::<'a, Components>::new(self)
+        QueryBuilder::<Components>::new(self)
     }
 
     /// Create a new named query builder.
@@ -3309,11 +3306,11 @@ impl World {
     ///
     /// * C++ API: `world::query_builder`
     #[doc(alias = "world::query_builder")]
-    pub fn query_builder_named<'a, Components>(&self, name: &CStr) -> QueryBuilder<'a, Components>
+    pub fn query_builder_named<Components>(&self, name: &CStr) -> QueryBuilder<Components>
     where
-        Components: Iterable<'a>,
+        Components: Iterable,
     {
-        QueryBuilder::<'a, Components>::new_named(self, name)
+        QueryBuilder::<Components>::new_named(self, name)
     }
 }
 
@@ -3348,11 +3345,11 @@ impl World {
     ///
     /// * C++ API: `world::system_builder`
     #[doc(alias = "world::system_builder")]
-    pub fn system_builder<'a, Components>(&self) -> SystemBuilder<'a, Components>
+    pub fn system_builder<Components>(&self) -> SystemBuilder<Components>
     where
-        Components: Iterable<'a>,
+        Components: Iterable,
     {
-        SystemBuilder::<'a, Components>::new(self)
+        SystemBuilder::<Components>::new(self)
     }
 
     /// Creates a new named `SystemBuilder` instance.
@@ -3370,11 +3367,11 @@ impl World {
     ///
     /// * C++ API: `world::system_builder`
     #[doc(alias = "world::system_builder")]
-    pub fn system_builder_named<'a, Components>(&self, name: &CStr) -> SystemBuilder<'a, Components>
+    pub fn system_builder_named<Components>(&self, name: &CStr) -> SystemBuilder<Components>
     where
-        Components: Iterable<'a>,
+        Components: Iterable,
     {
-        SystemBuilder::<'a, Components>::new_named(self, name)
+        SystemBuilder::<Components>::new_named(self, name)
     }
 
     /// Creates a `SystemBuilder` from a system description.
@@ -3392,14 +3389,14 @@ impl World {
     ///
     /// * C++ API: `world::system_builder`
     #[doc(alias = "world::system_builder")]
-    pub fn system_builder_from_desc<'a, Components>(
+    pub fn system_builder_from_desc<Components>(
         &self,
         desc: ecs_system_desc_t,
-    ) -> SystemBuilder<'a, Components>
+    ) -> SystemBuilder<Components>
     where
-        Components: Iterable<'a>,
+        Components: Iterable,
     {
-        SystemBuilder::<'a, Components>::new_from_desc(self, desc)
+        SystemBuilder::<Components>::new_from_desc(self, desc)
     }
 }
 
@@ -3889,11 +3886,11 @@ impl World {
     /// * C++ API: `world::rule`
     #[doc(alias = "world::rule")]
     #[inline(always)]
-    pub fn rule<'a, T>(&self) -> crate::addons::rules::Rule<'a, T>
+    pub fn rule<T>(&self) -> crate::addons::rules::Rule<T>
     where
-        T: Iterable<'a>,
+        T: Iterable,
     {
-        crate::addons::rules::RuleBuilder::<'a, T>::new(self).build()
+        crate::addons::rules::RuleBuilder::<T>::new(self).build()
     }
 
     /// Create a new named rule.
@@ -3911,11 +3908,11 @@ impl World {
     /// * C++ API: `world::rule`
     #[doc(alias = "world::rule")]
     #[inline(always)]
-    pub fn rule_named<'a, T>(&self, name: &CStr) -> crate::addons::rules::Rule<'a, T>
+    pub fn rule_named<T>(&self, name: &CStr) -> crate::addons::rules::Rule<T>
     where
-        T: Iterable<'a>,
+        T: Iterable,
     {
-        crate::addons::rules::RuleBuilder::<'a, T>::new_named(self, name).build()
+        crate::addons::rules::RuleBuilder::<T>::new_named(self, name).build()
     }
 
     /// Create a new rule builder.
@@ -3929,11 +3926,11 @@ impl World {
     /// * C++ API: `world::rule_builder`
     #[doc(alias = "world::rule_builder")]
     #[inline(always)]
-    pub fn rule_builder<'a, T>(&self) -> crate::addons::rules::RuleBuilder<'a, T>
+    pub fn rule_builder<T>(&self) -> crate::addons::rules::RuleBuilder<T>
     where
-        T: Iterable<'a>,
+        T: Iterable,
     {
-        crate::addons::rules::RuleBuilder::<'a, T>::new(self)
+        crate::addons::rules::RuleBuilder::<T>::new(self)
     }
 
     /// Create a new named rule builder.
@@ -3951,10 +3948,10 @@ impl World {
     /// * C++ API: `world::rule_builder`
     #[doc(alias = "world::rule_builder")]
     #[inline(always)]
-    pub fn rule_builder_named<'a, T>(&self, name: &CStr) -> crate::addons::rules::RuleBuilder<'a, T>
+    pub fn rule_builder_named<T>(&self, name: &CStr) -> crate::addons::rules::RuleBuilder<T>
     where
-        T: Iterable<'a>,
+        T: Iterable,
     {
-        crate::addons::rules::RuleBuilder::<'a, T>::new_named(self, name)
+        crate::addons::rules::RuleBuilder::<T>::new_named(self, name)
     }
 }

@@ -13,18 +13,18 @@ use super::{
 use crate::core::FlecsErrorCode;
 use crate::ecs_assert;
 
-pub struct IterIterable<'a, T>
+pub struct IterIterable<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     iter: IterT,
     iter_next: unsafe extern "C" fn(*mut IterT) -> bool,
-    _phantom: std::marker::PhantomData<&'a T>,
+    _phantom: std::marker::PhantomData<T>,
 }
 
-impl<'a, T> IterIterable<'a, T>
+impl<T> IterIterable<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     pub fn new(iter: IterT, iter_next: unsafe extern "C" fn(*mut IterT) -> bool) -> Self {
         Self {
@@ -124,9 +124,9 @@ where
     }
 }
 
-impl<'a, T> IterOperations for IterIterable<'a, T>
+impl<T> IterOperations for IterIterable<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn retrieve_iter(&self) -> IterT {
         self.iter
@@ -145,9 +145,9 @@ where
     }
 }
 
-impl<'a, T> IterAPI<'a, T> for IterIterable<'a, T>
+impl<T> IterAPI<T> for IterIterable<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn as_entity(&self) -> Entity {
         Entity::new_from_existing_raw(self.iter.real_world, unsafe {
@@ -156,9 +156,9 @@ where
     }
 }
 
-impl<'a, T> IntoWorld for IterIterable<'a, T>
+impl<T> IntoWorld for IterIterable<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn world_ptr_mut(&self) -> *mut WorldT {
         self.iter.real_world

@@ -24,9 +24,9 @@ pub trait IterOperations {
     fn filter_ptr(&self) -> *const FilterT;
 }
 
-pub trait IterAPI<'a, T>: IterOperations + IntoWorld
+pub trait IterAPI<T>: IterOperations + IntoWorld
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     // TODO once we have tests in place, I will split this functionality up into multiple functions, which should give a small performance boost
     // by caching if the query has used a "is_ref" operation.
@@ -43,7 +43,7 @@ where
     ///
     /// * C++ API: `iterable::each`
     #[doc(alias = "iterable::each")]
-    fn each(&self, mut func: impl FnMut(T::TupleType)) {
+    fn each(&self, mut func: impl FnMut(T::TupleType<'_>)) {
         unsafe {
             let mut iter = self.retrieve_iter();
 
@@ -74,7 +74,7 @@ where
     ///
     /// * C++ API: `iterable::each`
     #[doc(alias = "iterable::each")]
-    fn each_entity(&self, mut func: impl FnMut(&mut Entity, T::TupleType)) {
+    fn each_entity(&self, mut func: impl FnMut(&mut Entity, T::TupleType<'_>)) {
         unsafe {
             let mut iter = self.retrieve_iter();
             let world = self.world_ptr_mut();
@@ -107,7 +107,7 @@ where
         }
     }
 
-    fn each_iter(&self, mut func: impl FnMut(&mut Iter, usize, T::TupleType)) {
+    fn each_iter(&self, mut func: impl FnMut(&mut Iter, usize, T::TupleType<'_>)) {
         unsafe {
             let mut iter = self.retrieve_iter();
             let world = self.world_ptr_mut();
@@ -153,7 +153,7 @@ where
     ///
     /// * C++ API: `find_delegate::invoke_callback`
     #[doc(alias = "find_delegate::invoke_callback")]
-    fn find(&self, mut func: impl FnMut(T::TupleType) -> bool) -> Option<Entity> {
+    fn find(&self, mut func: impl FnMut(T::TupleType<'_>) -> bool) -> Option<Entity> {
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity: Option<Entity> = None;
@@ -200,7 +200,7 @@ where
     #[doc(alias = "find_delegate::invoke_callback")]
     fn find_entity(
         &self,
-        mut func: impl FnMut(&mut Entity, T::TupleType) -> bool,
+        mut func: impl FnMut(&mut Entity, T::TupleType<'_>) -> bool,
     ) -> Option<Entity> {
         unsafe {
             let mut iter = self.retrieve_iter();
@@ -248,7 +248,7 @@ where
     #[doc(alias = "find_delegate::invoke_callback")]
     fn find_iter(
         &self,
-        mut func: impl FnMut(&mut Iter, usize, T::TupleType) -> bool,
+        mut func: impl FnMut(&mut Iter, usize, T::TupleType<'_>) -> bool,
     ) -> Option<Entity> {
         unsafe {
             let mut iter = self.retrieve_iter();
@@ -299,7 +299,7 @@ where
     ///
     /// * C++ API: `iterable::iter`
     #[doc(alias = "iterable::iter")]
-    fn iter(&self, mut func: impl FnMut(&mut Iter, T::TupleSliceType)) {
+    fn iter(&self, mut func: impl FnMut(&mut Iter, T::TupleSliceType<'_>)) {
         unsafe {
             let mut iter = self.retrieve_iter();
             let world = self.world_ptr_mut();
@@ -457,7 +457,7 @@ where
         rust_string
     }
 
-    fn iterable(&self) -> IterIterable<'a, T> {
+    fn iterable(&self) -> IterIterable<T> {
         IterIterable::new(self.retrieve_iter(), self.iter_next_func())
     }
 

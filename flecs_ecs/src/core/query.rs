@@ -20,18 +20,18 @@ use super::{
 
 /// Cached query implementation. Fast to iterate, but slower to create than `Filters`
 #[derive(Clone)]
-pub struct Query<'a, T>
+pub struct Query<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     pub world: World,
     pub query: *mut QueryT,
-    _phantom: std::marker::PhantomData<&'a T>,
+    _phantom: std::marker::PhantomData<T>,
 }
 
-impl<'a, T> IterOperations for Query<'a, T>
+impl<T> IterOperations for Query<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline(always)]
     fn retrieve_iter(&self) -> IterT {
@@ -52,9 +52,9 @@ where
     }
 }
 
-impl<'a, T> IterAPI<'a, T> for Query<'a, T>
+impl<T> IterAPI<T> for Query<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn as_entity(&self) -> Entity {
         Entity::new_from_existing_raw(self.world.raw_world, unsafe {
@@ -63,9 +63,9 @@ where
     }
 }
 
-impl<'a, T> Query<'a, T>
+impl<T> Query<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     /// Create a new query
     ///
@@ -263,14 +263,14 @@ where
     ///
     /// * C++ API: `query_base::filter`
     #[doc(alias = "query_base::filter")]
-    pub fn filter(&self) -> FilterView<'a, T> {
+    pub fn filter(&self) -> FilterView<T> {
         FilterView::<T>::new(&self.world, unsafe { ecs_query_get_filter(self.query) })
     }
 }
 
-impl<'a, T> Drop for Query<'a, T>
+impl<T> Drop for Query<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     /// Destroy a query. This operation destroys a query and its resources.
     /// If the query is used as the parent of subqueries, those subqueries will be orphaned

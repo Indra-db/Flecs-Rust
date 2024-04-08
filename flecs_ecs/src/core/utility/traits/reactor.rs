@@ -8,7 +8,7 @@ use super::private;
 
 pub trait ReactorAPI<'a, T>: Builder + private::internal_ReactorAPI<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     /// Set action / ctx
     ///
@@ -37,7 +37,7 @@ where
 
     fn on_each<Func>(&mut self, func: Func) -> <Self as builder::Builder>::BuiltType
     where
-        Func: FnMut(T::TupleType),
+        Func: FnMut(T::TupleType<'_>),
     {
         let binding_ctx = self.get_binding_context();
 
@@ -56,7 +56,7 @@ where
 
     fn on_each_entity<Func>(&mut self, func: Func) -> <Self as builder::Builder>::BuiltType
     where
-        Func: FnMut(&mut Entity, T::TupleType),
+        Func: FnMut(&mut Entity, T::TupleType<'_>),
     {
         let binding_ctx = self.get_binding_context();
 
@@ -77,7 +77,7 @@ where
 
     fn on_each_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder>::BuiltType
     where
-        Func: FnMut(&mut Iter, usize, T::TupleType),
+        Func: FnMut(&mut Iter, usize, T::TupleType<'_>),
     {
         let binding_ctx = self.get_binding_context();
 
@@ -113,7 +113,7 @@ where
 
     fn on_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder>::BuiltType
     where
-        Func: FnMut(&mut Iter, T::TupleSliceType),
+        Func: FnMut(&mut Iter, T::TupleSliceType<'_>),
     {
         let binding_ctx = self.get_binding_context();
 
@@ -135,7 +135,7 @@ macro_rules! implement_reactor_api {
     ($type:ty) => {
         impl<'a, T> internal_ReactorAPI<'a, T> for $type
         where
-            T: Iterable<'a>,
+            T: Iterable,
         {
             fn set_binding_context(&mut self, binding_ctx: *mut c_void) -> &mut Self {
                 self.desc.binding_ctx = binding_ctx;
@@ -164,7 +164,7 @@ macro_rules! implement_reactor_api {
 
         impl<'a, T> ReactorAPI<'a, T> for $type
         where
-            T: Iterable<'a>,
+            T: Iterable,
         {
             fn set_run_callback(&mut self, callback: ecs_iter_action_t) -> &mut Self {
                 self.desc.run = callback;
