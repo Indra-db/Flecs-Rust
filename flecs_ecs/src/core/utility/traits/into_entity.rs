@@ -21,28 +21,28 @@ impl IntoEntityId for EntityId {
     }
 }
 
-impl IntoEntityId for Id {
+impl IntoEntityId for Id<'_> {
     #[inline]
     fn get_id(&self) -> u64 {
         self.raw_id
     }
 }
 
-impl IntoEntityId for EntityView {
+impl IntoEntityId for EntityView<'_> {
     #[inline]
     fn get_id(&self) -> u64 {
         self.raw_id
     }
 }
 
-impl IntoEntityId for Entity {
+impl IntoEntityId for Entity<'_> {
     #[inline]
     fn get_id(&self) -> u64 {
         self.raw_id
     }
 }
 
-impl<T> IntoEntityId for Component<T>
+impl<'a, T> IntoEntityId for Component<'a, T>
 where
     T: ComponentId,
 {
@@ -52,7 +52,7 @@ where
     }
 }
 
-impl IntoEntityId for UntypedComponent {
+impl<'a> IntoEntityId for UntypedComponent<'a> {
     #[inline]
     fn get_id(&self) -> u64 {
         self.entity.raw_id
@@ -150,7 +150,7 @@ impl IntoEntityIdExt for EntityId {
     }
 }
 
-impl IntoEntityIdExt for Id {
+impl IntoEntityIdExt for Id<'_> {
     const IS_PAIR: bool = false;
 
     #[inline]
@@ -159,7 +159,7 @@ impl IntoEntityIdExt for Id {
     }
 }
 
-impl IntoEntityIdExt for EntityView {
+impl IntoEntityIdExt for EntityView<'_> {
     const IS_PAIR: bool = false;
 
     #[inline]
@@ -168,7 +168,7 @@ impl IntoEntityIdExt for EntityView {
     }
 }
 
-impl IntoEntityIdExt for Entity {
+impl IntoEntityIdExt for Entity<'_> {
     const IS_PAIR: bool = false;
 
     #[inline]
@@ -177,7 +177,7 @@ impl IntoEntityIdExt for Entity {
     }
 }
 
-impl<T> IntoEntityIdExt for Component<T>
+impl<'a, T> IntoEntityIdExt for Component<'a, T>
 where
     T: ComponentId,
 {
@@ -189,7 +189,7 @@ where
     }
 }
 
-impl IntoEntityIdExt for UntypedComponent {
+impl<'a> IntoEntityIdExt for UntypedComponent<'a> {
     const IS_PAIR: bool = false;
 
     #[inline]

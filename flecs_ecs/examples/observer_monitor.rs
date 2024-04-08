@@ -17,7 +17,7 @@ fn main() {
     world
         .observer_builder::<(&Position, &Velocity)>()
         .add_event(ECS_MONITOR)
-        .on_each_iter(|it, index, (_pos, _vel)| {
+        .each_iter(|it, index, _pos, _vel| {
             if it.event() == ECS_ON_ADD {
                 println!(
                     " - Enter: {}: {}",

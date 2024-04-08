@@ -7,24 +7,24 @@ use flecs_ecs_sys::{
 
 use super::{
     ComponentId, Entity, FilterT, IntoEntityId, IntoTableRange, IntoWorld, IterAPI, IterOperations,
-    IterT, Iterable, WorldT,
+    IterT, Iterable, WorldRef, WorldT,
 };
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
 use crate::ecs_assert;
 
-pub struct IterIterable<'a, T>
+pub struct IterIterable<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     iter: IterT,
     iter_next: unsafe extern "C" fn(*mut IterT) -> bool,
-    _phantom: std::marker::PhantomData<&'a T>,
+    _phantom: std::marker::PhantomData<T>,
 }
 
-impl<'a, T> IterIterable<'a, T>
+impl<T> IterIterable<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     pub fn new(iter: IterT, iter_next: unsafe extern "C" fn(*mut IterT) -> bool) -> Self {
         Self {
@@ -59,7 +59,7 @@ where
     /// * C++ API: `iter_iterable::set_group`
     #[doc(alias = "iter_iterable::set_group")]
     pub fn set_group<Group: ComponentId>(&mut self) -> &Self {
-        unsafe { ecs_query_set_group(&mut self.iter, Group::get_id(self.iter.real_world)) }
+        unsafe { ecs_query_set_group(&mut self.iter, Group::get_id(self.world_ref())) }
         self
     }
 
@@ -124,9 +124,9 @@ where
     }
 }
 
-impl<'a, T> IterOperations for IterIterable<'a, T>
+impl<T> IterOperations for IterIterable<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn retrieve_iter(&self) -> IterT {
         self.iter
@@ -145,20 +145,23 @@ where
     }
 }
 
-impl<'a, T> IterAPI<'a, T> for IterIterable<'a, T>
+impl<'a, T> IterAPI<'a, T> for IterIterable<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
-    fn as_entity(&self) -> Entity {
-        Entity::new_from_existing_raw(self.iter.real_world, unsafe {
-            ecs_get_entity(self.iter.query as *const c_void)
-        })
+    fn as_entity(&self) -> Entity<'a> {
+        unsafe {
+            Entity::new_from_existing_raw(
+                WorldRef::<'a>::from_ptr(self.iter.real_world),
+                ecs_get_entity(self.iter.query as *const c_void),
+            )
+        }
     }
 }
 
-impl<'a, T> IntoWorld for IterIterable<'a, T>
+impl<'a, T> IntoWorld<'a> for IterIterable<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn world_ptr_mut(&self) -> *mut WorldT {
         self.iter.real_world

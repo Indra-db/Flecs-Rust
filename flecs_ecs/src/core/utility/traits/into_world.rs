@@ -1,36 +1,107 @@
-use crate::core::{Entity, EntityView, Id, Iterable, Query, World, WorldT};
+use std::marker::PhantomData;
 
-pub trait IntoWorld {
+use crate::core::{Entity, EntityView, Id, Iter, Iterable, Query, TermBuilder, World, WorldT};
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub struct WorldRef<'a> {
+    pub(crate) world: *mut WorldT,
+    pub(crate) _marker: PhantomData<&'a World>,
+}
+
+impl<'a> WorldRef<'a> {
+    pub unsafe fn from_ptr(ptr: *mut WorldT) -> Self {
+        Self {
+            world: ptr,
+            _marker: PhantomData,
+        }
+    }
+
+    pub fn borrow(&self) -> &'a World {
+        unsafe { std::mem::transmute(self.world) }
+    }
+}
+
+pub trait IntoWorld<'a>: Sized {
     #[doc(hidden)]
     fn world_ptr_mut(&self) -> *mut WorldT;
+
     #[inline]
     #[doc(hidden)]
     fn get_world_raw(&self) -> *const WorldT {
         self.world_ptr_mut() as *const WorldT
     }
     #[inline]
-    fn get_world(&self) -> World {
-        World::new_wrap_raw_world(self.world_ptr_mut())
+    fn world_ref(&self) -> WorldRef<'a> {
+        WorldRef {
+            world: self.world_ptr_mut(),
+            _marker: PhantomData,
+        }
     }
 }
 
-impl IntoWorld for *mut WorldT {
+impl<'a> IntoWorld<'a> for WorldRef<'a> {
+    fn world_ptr_mut(&self) -> *mut WorldT {
+        self.world
+    }
+}
+
+// impl IntoWorld<'static> for *mut WorldT {
+//     #[inline]
+//     #[doc(hidden)]
+//     fn world_ptr_mut(&self) -> *mut WorldT {
+//         *self
+//     }
+// }
+
+// impl IntoWorld<'static> for *const WorldT {
+//     #[inline]
+//     #[doc(hidden)]
+//     fn world_ptr_mut(&self) -> *mut WorldT {
+//         *self as *mut WorldT
+//     }
+// }
+
+// impl IntoWorld<'static> for World {
+//     #[inline]
+//     #[doc(hidden)]
+//     fn world_ptr_mut(&self) -> *mut WorldT {
+//         self.raw_world
+//     }
+// }
+
+impl<'a> IntoWorld<'a> for Id<'a> {
     #[inline]
     #[doc(hidden)]
     fn world_ptr_mut(&self) -> *mut WorldT {
-        *self
+        self.world_ptr()
     }
 }
 
-impl IntoWorld for *const WorldT {
+impl<'a> IntoWorld<'a> for Entity<'a> {
     #[inline]
     #[doc(hidden)]
     fn world_ptr_mut(&self) -> *mut WorldT {
-        *self as *mut WorldT
+        self.world_ptr()
     }
 }
 
-impl IntoWorld for World {
+impl<'a> IntoWorld<'a> for EntityView<'a> {
+    #[inline]
+    #[doc(hidden)]
+    fn world_ptr_mut(&self) -> *mut WorldT {
+        self.world_ptr()
+    }
+}
+
+impl<'a, T: TermBuilder<'a>> IntoWorld<'a> for T {
+    #[inline]
+    #[doc(hidden)]
+    fn world_ptr_mut(&self) -> *mut WorldT {
+        self.world_ptr_mut()
+    }
+}
+
+impl<'a> IntoWorld<'a> for &'a World {
     #[inline]
     #[doc(hidden)]
     fn world_ptr_mut(&self) -> *mut WorldT {
@@ -38,55 +109,47 @@ impl IntoWorld for World {
     }
 }
 
-impl IntoWorld for Id {
+impl<'a> IntoWorld<'a> for &'a mut World {
     #[inline]
     #[doc(hidden)]
     fn world_ptr_mut(&self) -> *mut WorldT {
-        self.world
+        self.raw_world
     }
 }
 
-impl IntoWorld for Entity {
+impl<'a> IntoWorld<'a> for Iter<'a> {
     #[inline]
     #[doc(hidden)]
     fn world_ptr_mut(&self) -> *mut WorldT {
-        self.world
+        self.iter.world
     }
 }
 
-impl IntoWorld for EntityView {
-    #[inline]
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
-        self.world
-    }
-}
+// impl<'a, T> IntoWorld<'a> for &'a T
+// where
+//     T: IntoWorld<'a>,
+// {
+//     #[inline]
+//     #[doc(hidden)]
+//     fn world_ptr_mut(&self) -> *mut WorldT {
+//         T::world_ptr_mut(*self)
+//     }
+// }
 
-impl<T> IntoWorld for &T
+// impl<'a, T> IntoWorld<'a> for &'a mut T
+// where
+//     T: IntoWorld<'a>,
+// {
+//     #[inline]
+//     #[doc(hidden)]
+//     fn world_ptr_mut(&self) -> *mut WorldT {
+//         T::world_ptr_mut(*self)
+//     }
+// }
+
+impl<'a, T> IntoWorld<'a> for Option<T>
 where
-    T: IntoWorld,
-{
-    #[inline]
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
-        T::world_ptr_mut(*self)
-    }
-}
-
-impl<T> IntoWorld for &mut T
-where
-    T: IntoWorld,
-{
-    #[inline]
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
-        T::world_ptr_mut(*self)
-    }
-}
-
-impl<T> IntoWorld for Option<T>
-where
-    T: IntoWorld,
+    T: IntoWorld<'a>,
 {
     #[inline]
     #[doc(hidden)]
@@ -98,13 +161,13 @@ where
     }
 }
 
-impl<'a, T> IntoWorld for Query<'a, T>
+impl<'a, T> IntoWorld<'a> for Query<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     #[doc(hidden)]
     fn world_ptr_mut(&self) -> *mut WorldT {
-        self.world.raw_world
+        self.world.world_ptr_mut()
     }
 }

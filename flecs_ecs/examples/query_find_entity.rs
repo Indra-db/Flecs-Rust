@@ -15,7 +15,7 @@ fn main() {
         .set(Position { x: 20.0, y: 30.0 });
 
     // Create a simple query for component Position
-    let query = world.query::<(&mut Position,)>();
+    let query = world.query::<&mut Position>();
 
     let entity: Option<Entity> = query.find(|(pos,)| pos.x == 20.0);
 

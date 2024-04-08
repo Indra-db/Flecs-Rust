@@ -12,7 +12,7 @@ fn main() {
     world
         .observer_builder::<(&Position, &Velocity)>()
         .add_event(ECS_ON_SET)
-        .on_each_iter(|it, index, (pos, vel)| {
+        .each_iter(|it, index, pos, vel| {
             println!(
                 " - {}: {}: {}: p: {{ {}, {} }}, v: {{ {}, {} }}",
                 it.event().name(),

@@ -6,7 +6,7 @@ use common::*;
 // they have the flecs::Phase tag.
 
 // Dummy system
-fn sys(it: &mut Iter) {
+fn sys(it: Iter<'_>) {
     println!("system {}", it.system().name());
 }
 
@@ -27,17 +27,17 @@ fn main() {
     world
         .system_builder_named::<()>(c"CollisionSystem")
         .kind_id(collisions)
-        .on_iter_only(sys);
+        .iter(sys);
 
     world
         .system_builder_named::<()>(c"PhysicsSystem")
         .kind_id(physics)
-        .on_iter_only(sys);
+        .iter(sys);
 
     world
         .system_builder_named::<()>(c"GameSystem")
         .kind_id(update)
-        .on_iter_only(sys);
+        .iter(sys);
 
     // Run pipeline
     world.progress();

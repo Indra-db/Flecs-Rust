@@ -5,8 +5,9 @@ use std::{
 };
 
 use super::{
-    c_types::{IdT, TypeT, WorldT},
+    c_types::{IdT, TypeT},
     id::Id,
+    IntoWorld, WorldRef,
 };
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
@@ -20,12 +21,12 @@ use crate::{ecs_assert, sys::ecs_type_str};
 ///
 /// * C++ API: `type`
 #[doc(alias = "type")]
-pub struct Archetype {
-    world: *mut WorldT,
+pub struct Archetype<'a> {
+    world: WorldRef<'a>,
     type_vec: *const TypeT,
 }
 
-impl Display for Archetype {
+impl<'a> Display for Archetype<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(s) = self.to_string() {
             write!(f, "{}", s)
@@ -35,7 +36,7 @@ impl Display for Archetype {
     }
 }
 
-impl Debug for Archetype {
+impl<'a> Debug for Archetype<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(s) = self.to_string() {
             write!(f, "{}", s)
@@ -45,9 +46,12 @@ impl Debug for Archetype {
     }
 }
 
-impl Archetype {
-    pub(crate) fn new(world: *mut WorldT, type_vec: *const TypeT) -> Self {
-        Archetype { world, type_vec }
+impl<'a> Archetype<'a> {
+    pub(crate) fn new(world: impl IntoWorld<'a>, type_vec: *const TypeT) -> Self {
+        Archetype {
+            world: world.world_ref(),
+            type_vec,
+        }
     }
 
     /// Convert type to comma-separated string
@@ -62,7 +66,7 @@ impl Archetype {
     #[doc(alias = "Type::str()")]
     pub fn to_string(&self) -> Option<String> {
         unsafe {
-            let raw_ptr = ecs_type_str(self.world, self.type_vec);
+            let raw_ptr = ecs_type_str(self.world.world_ptr_mut(), self.type_vec);
 
             if raw_ptr.is_null() {
                 return None;
@@ -230,7 +234,7 @@ impl<'a> Iterator for ArchetypeIter<'a> {
     }
 }
 
-impl<'a> IntoIterator for &'a Archetype {
+impl<'a, 'w> IntoIterator for &'a Archetype<'w> {
     type Item = &'a IdT;
     type IntoIter = ArchetypeIter<'a>;
 
@@ -248,7 +252,7 @@ impl<'a> IntoIterator for &'a Archetype {
     }
 }
 
-impl Index<i32> for Archetype {
+impl<'a> Index<i32> for Archetype<'a> {
     type Output = IdT;
 
     fn index(&self, index: i32) -> &Self::Output {

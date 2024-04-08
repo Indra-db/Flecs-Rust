@@ -85,7 +85,7 @@ fn main() {
         .filter_builder::<()>()
         .with_enum_wildcard::<Tile>()
         .build()
-        .each_iter(|it, _, _| {
+        .each(|it, _, _| {
             let tile_constant = it.pair(1).unwrap().second();
             println!("{}", tile_constant.path().unwrap());
         });
@@ -103,7 +103,7 @@ fn main() {
         .with_enum_wildcard::<Tile>()
         .with_enum(TileStatus::Occupied)
         .build()
-        .each_iter(|it, _, _| {
+        .each(|it, _, _| {
             let tile_constant = it.pair(1).unwrap().second();
             println!("{}", tile_constant.path().unwrap());
         });

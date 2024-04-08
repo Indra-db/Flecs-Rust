@@ -27,9 +27,9 @@ macro_rules! create_pre_registered_component {
             type UnderlyingType = $struct_name;
             type UnderlyingEnumType = NoneEnum;
 
-            fn register_explicit(_world: impl IntoWorld) {}
+            fn register_explicit<'a>(_world: impl IntoWorld<'a>) {}
 
-            fn register_explicit_named(_world: impl IntoWorld, _name: &CStr) -> EntityT {
+            fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &CStr) -> EntityT {
                 $const_name
             }
 
@@ -37,11 +37,11 @@ macro_rules! create_pre_registered_component {
                 true
             }
 
-            fn is_registered_with_world(_: impl IntoWorld) -> bool {
+            fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
                 true
             }
 
-            fn get_id(_world: impl IntoWorld) -> IdT {
+            fn get_id<'a>(_world: impl IntoWorld<'a>) -> IdT {
                 $const_name
             }
 

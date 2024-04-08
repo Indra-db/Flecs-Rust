@@ -62,7 +62,7 @@ fn main() {
         // we have tests in place to ensure that the `Option` API is working as expected.
         .build();
 
-    query.iter(|it, (local, parent_world, world)| {
+    query.iter(|it, local, parent_world, world| {
         for i in it.iter() {
             world[i].x = local[i].x;
             world[i].y = local[i].y;
@@ -76,11 +76,11 @@ fn main() {
 
     //TODO: pair wrapper class to clean up, beautify this API
     world
-        .filter_builder::<(&Position,)>()
+        .filter_builder::<&Position>()
         .term_at(1)
         .select_second::<World>()
         .build()
-        .each_entity(|entity, (position,)| {
+        .each(|entity, position| {
             println!(
                 "Entity {} is at ({}, {})",
                 entity.name(),

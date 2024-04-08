@@ -28,14 +28,14 @@ fn main() {
 
     // `The each_entity()` function iterates each entity individually and accepts an
     // entity argument plus arguments for each query component:
-    query.each_entity(|e, (pos, vel)| {
+    query.each_entity(|entity, pos, vel| {
         pos.x += vel.x;
         pos.y += vel.y;
-        println!("{}: [{:?}]", e.name(), pos);
+        println!("{}: [{:?}]", entity.name(), pos);
     });
 
     // There's an equivalent function that does not include the entity argument
-    query.each(|(pos, vel)| {
+    query.each(|pos, vel| {
         pos.x += vel.x;
         pos.y += vel.y;
         println!("[{:?}]", pos);
@@ -44,7 +44,7 @@ fn main() {
     // Iter is a bit more verbose, but allows for more control over how entities
     // are iterated as it provides multiple entities in the same callback.
     // There's also an `iter_only` function that only provides the iterator.
-    query.iter(|it, (pos, vel)| {
+    query.iter(|it, pos, vel| {
         for i in it.iter() {
             pos[i].x += vel[i].x;
             pos[i].y += vel[i].y;

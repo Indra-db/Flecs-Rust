@@ -15,7 +15,7 @@ fn main() {
 
     // Create a system for printing the entity position
     world
-        .system_builder::<(&Position,)>()
+        .system_builder::<&Position>()
         .kind_id(ECS_POST_UPDATE)
         .on_each_entity(|e, (p,)| {
             println!("{}: {{ {}, {} }}", e.name(), p.x, p.y);

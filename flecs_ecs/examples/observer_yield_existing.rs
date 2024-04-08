@@ -21,10 +21,10 @@ fn main() {
 
     // Create an observer for three events
     world
-        .observer_builder::<(&Position,)>()
+        .observer_builder::<&Position>()
         .add_event(ECS_ON_SET)
         .yield_existing(true)
-        .on_each_iter(|it, index, (pos,)| {
+        .each_iter(|it, index, pos| {
             println!(
                 " - {}: {}: {}: {{ {}, {} }}",
                 it.event().name(),

@@ -28,7 +28,7 @@ fn main() {
         // forwarding the iterator to it->callback, the each function of the
         // system is invoked.
         .set_run_callback(Some(run_callback)) // this will be rustified in the future to take a closure
-        .on_each_entity(|e, (pos, vel)| {
+        .each(|e: Entity, pos, vel| {
             pos.x += vel.x;
             pos.y += vel.y;
             println!("{}: {{ {}, {} }}", e.name(), pos.x, pos.y);

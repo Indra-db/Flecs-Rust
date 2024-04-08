@@ -10,7 +10,7 @@ pub trait IntoComponentId {
     type First: ComponentId;
     type Second: ComponentId;
 
-    fn get_id(world: impl IntoWorld) -> IdT;
+    fn get_id<'a>(world: impl IntoWorld<'a>) -> IdT;
 
     /// Get the symbol name of the component.
     ///
@@ -31,8 +31,8 @@ where
     type Second = T;
 
     #[inline]
-    fn get_id(world: impl IntoWorld) -> IdT {
-        T::get_id(world.world_ptr_mut())
+    fn get_id<'a>(world: impl IntoWorld<'a>) -> IdT {
+        T::get_id(world)
     }
 
     #[inline]
@@ -52,11 +52,8 @@ where
     type Second = U;
 
     #[inline]
-    fn get_id(world: impl IntoWorld) -> IdT {
-        ecs_pair(
-            T::get_id(world.world_ptr_mut()),
-            U::get_id(world.world_ptr_mut()),
-        )
+    fn get_id<'a>(world: impl IntoWorld<'a>) -> IdT {
+        ecs_pair(T::get_id(world.world_ref()), U::get_id(world.world_ref()))
     }
 
     #[inline]

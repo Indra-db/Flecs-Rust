@@ -15,18 +15,16 @@ fn main() {
 
     // Startup system
     world
-        .system_builder_named::<()>(c"Startup")
+        .system_builder_named(c"Startup")
         .kind_id(ECS_ON_START)
-        .on_iter_only(|it| {
+        .iter(|it: Iter| {
             println!("{}", it.system().name());
         });
 
     // Regular system
-    world
-        .system_builder_named::<()>(c"Update")
-        .on_iter_only(|it| {
-            println!("{}", it.system().name());
-        });
+    world.system_builder_named::<()>(c"Update").iter(|it| {
+        println!("{}", it.system().name());
+    });
 
     // First frame. This runs both the Startup and Update systems
     world.progress();

@@ -33,7 +33,7 @@ fn main() {
     // In a query string expression you can use the $ shortcut for singletons:
     //   Velocity, Gravity($)
 
-    query.each_entity(|entity, (velocity, gravity)| {
+    query.each(|entity, velocity, gravity| {
         velocity.y += gravity.value;
         println!("Entity {} has {:?}", entity.path().unwrap(), velocity);
     });

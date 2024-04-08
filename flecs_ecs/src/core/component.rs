@@ -15,7 +15,7 @@ use super::{
     component_registration::ComponentId,
     ecs_field,
     entity::Entity,
-    IntoEntityId, IntoWorld,
+    IntoEntityId, IntoWorld, WorldRef,
 };
 
 use std::{ffi::CStr, os::raw::c_void, ptr};
@@ -87,19 +87,19 @@ impl ComponentBindingCtx {
 }
 
 /// Untyped component class.
-pub struct UntypedComponent {
-    pub entity: Entity,
+pub struct UntypedComponent<'a> {
+    pub entity: Entity<'a>,
 }
 
-impl Deref for UntypedComponent {
-    type Target = Entity;
+impl<'a> Deref for UntypedComponent<'a> {
+    type Target = Entity<'a>;
 
     fn deref(&self) -> &Self::Target {
         &self.entity
     }
 }
 
-impl UntypedComponent {
+impl<'a> UntypedComponent<'a> {
     /// Create a new untyped component.
     ///
     /// # Arguments
@@ -111,7 +111,7 @@ impl UntypedComponent {
     ///
     /// * C++ API: `untyped_component::untyped_component`
     #[doc(alias = "untyped_component::untyped_component")]
-    pub fn new(world: impl IntoWorld, id: impl IntoEntityId) -> Self {
+    pub fn new(world: impl IntoWorld<'a>, id: impl IntoEntityId) -> Self {
         UntypedComponent {
             entity: Entity::new_from_existing_raw(world, id.get_id()),
         }
@@ -129,27 +129,27 @@ impl UntypedComponent {
 }
 
 #[cfg(feature = "flecs_meta")]
-impl UntypedComponent {}
+impl<'a> UntypedComponent<'a> {}
 
 #[cfg(feature = "flecs_metrics")]
-impl UntypedComponent {}
+impl<'a> UntypedComponent<'a> {}
 
 /// Component class.
 /// Class used to register components and component metadata.
-pub struct Component<T: ComponentId> {
-    pub base: UntypedComponent,
+pub struct Component<'a, T: ComponentId> {
+    pub base: UntypedComponent<'a>,
     _marker: PhantomData<T>,
 }
 
-impl<T: ComponentId> Deref for Component<T> {
-    type Target = UntypedComponent;
+impl<'a, T: ComponentId> Deref for Component<'a, T> {
+    type Target = UntypedComponent<'a>;
 
     fn deref(&self) -> &Self::Target {
         &self.base
     }
 }
 
-impl<T: ComponentId> Component<T> {
+impl<'a, T: ComponentId> Component<'a, T> {
     /// Create a new component.
     ///
     /// # Arguments
@@ -160,14 +160,13 @@ impl<T: ComponentId> Component<T> {
     ///
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
-    pub fn new(world: impl IntoWorld) -> Self {
-        let world = world.world_ptr_mut();
-        if !T::is_registered_with_world(world) {
-            T::register_explicit(world);
+    pub fn new(world: impl IntoWorld<'a>) -> Self {
+        if !T::is_registered_with_world(world.world_ref()) {
+            T::register_explicit(world.world_ref());
         }
 
         Self {
-            base: UntypedComponent::new(world, unsafe { T::get_id_unchecked() }),
+            base: UntypedComponent::new(world.world_ref(), unsafe { T::get_id_unchecked() }),
             _marker: PhantomData,
         }
     }
@@ -183,14 +182,13 @@ impl<T: ComponentId> Component<T> {
     ///
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
-    pub fn new_named(world: impl IntoWorld, name: &CStr) -> Self {
-        let world = world.world_ptr_mut();
-        if !T::is_registered_with_world(world) {
-            T::register_explicit_named(world, name);
+    pub fn new_named(world: impl IntoWorld<'a>, name: &CStr) -> Self {
+        if !T::is_registered_with_world(world.world_ref()) {
+            T::register_explicit_named(world.world_ref(), name);
         }
 
         Self {
-            base: UntypedComponent::new(world, unsafe { T::get_id_unchecked() }),
+            base: UntypedComponent::new(world.world_ref(), unsafe { T::get_id_unchecked() }),
             _marker: PhantomData,
         }
     }
@@ -225,7 +223,8 @@ impl<T: ComponentId> Component<T> {
     /// * C++ API: `component::get_hooks`
     #[doc(alias = "component::get_hooks")]
     fn get_hooks(&self) -> TypeHooksT {
-        let type_hooks: *const TypeHooksT = unsafe { ecs_get_hooks_id(self.world, self.raw_id) };
+        let type_hooks: *const TypeHooksT =
+            unsafe { ecs_get_hooks_id(self.world.world_ptr_mut(), self.raw_id) };
         if type_hooks.is_null() {
             TypeHooksT::default()
         } else {
@@ -271,7 +270,7 @@ impl<T: ComponentId> Component<T> {
         binding_ctx.on_add = Some(static_ref as *mut _ as *mut c_void);
         binding_ctx.free_on_add = Some(Self::on_add_drop::<Func>);
         type_hooks.on_add = Some(Self::run_add::<Func>);
-        unsafe { ecs_set_hooks_id(self.world, self.raw_id, &type_hooks) };
+        unsafe { ecs_set_hooks_id(self.world.world_ptr_mut(), self.raw_id, &type_hooks) };
         self
     }
 
@@ -300,7 +299,7 @@ impl<T: ComponentId> Component<T> {
         binding_ctx.on_remove = Some(static_ref as *mut _ as *mut c_void);
         binding_ctx.free_on_remove = Some(Self::on_remove_drop::<Func>);
         type_hooks.on_remove = Some(Self::run_remove::<Func>);
-        unsafe { ecs_set_hooks_id(self.world, self.raw_id, &type_hooks) };
+        unsafe { ecs_set_hooks_id(self.world.world_ptr_mut(), self.raw_id, &type_hooks) };
         self
     }
 
@@ -329,7 +328,7 @@ impl<T: ComponentId> Component<T> {
         binding_ctx.on_set = Some(static_ref as *mut _ as *mut c_void);
         binding_ctx.free_on_set = Some(Self::on_set_drop::<Func>);
         type_hooks.on_set = Some(Self::run_set::<Func>);
-        unsafe { ecs_set_hooks_id(self.world, self.raw_id, &type_hooks) };
+        unsafe { ecs_set_hooks_id(self.world.world_ptr_mut(), self.raw_id, &type_hooks) };
         self
     }
 
@@ -375,7 +374,9 @@ impl<T: ComponentId> Component<T> {
         let on_add = unsafe { (*ctx).on_add.unwrap() };
         let on_add = on_add as *mut Func;
         let on_add = unsafe { &mut *on_add };
-        let entity = unsafe { Entity::new_from_existing_raw((*iter).world, *(*iter).entities) };
+        let entity = unsafe {
+            Entity::new_from_existing_raw(WorldRef::from_ptr((*iter).world), *(*iter).entities)
+        };
         let component: *mut T = unsafe { ecs_field::<T>(iter, 1) };
         on_add(entity, unsafe { &mut *component });
     }
@@ -389,7 +390,9 @@ impl<T: ComponentId> Component<T> {
         let on_set = unsafe { (*ctx).on_set.unwrap() };
         let on_set = on_set as *mut Func;
         let on_set = unsafe { &mut *on_set };
-        let entity = unsafe { Entity::new_from_existing_raw((*iter).world, *(*iter).entities) };
+        let entity = unsafe {
+            Entity::new_from_existing_raw(WorldRef::from_ptr((*iter).world), *(*iter).entities)
+        };
         let component: *mut T = unsafe { ecs_field::<T>(iter, 1) };
         on_set(entity, unsafe { &mut *component });
     }
@@ -403,14 +406,16 @@ impl<T: ComponentId> Component<T> {
         let on_remove = unsafe { (*ctx).on_remove.unwrap() };
         let on_remove = on_remove as *mut Func;
         let on_remove = unsafe { &mut *on_remove };
-        let entity = unsafe { Entity::new_from_existing_raw((*iter).world, *(*iter).entities) };
+        let entity = unsafe {
+            Entity::new_from_existing_raw(WorldRef::from_ptr((*iter).world), *(*iter).entities)
+        };
         let component: *mut T = unsafe { ecs_field::<T>(iter, 1) };
         on_remove(entity, unsafe { &mut *component });
     }
 }
 
 #[cfg(feature = "flecs_meta")]
-impl<T: ComponentId> Component<T> {
+impl<'a, T: ComponentId> Component<'a, T> {
     // todo!("Check if this is correctly ported")
     /// # See also
     ///
@@ -422,7 +427,7 @@ impl<T: ComponentId> Component<T> {
     {
         let mut ts = Opaque::<OpaqueType>::new(self.world);
         ts.desc.entity = T::get_id(self.world);
-        unsafe { ecs_opaque_init(self.world, &ts.desc) };
+        unsafe { ecs_opaque_init(self.world.world_ptr_mut(), &ts.desc) };
         self
     }
 

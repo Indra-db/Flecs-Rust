@@ -6,11 +6,11 @@ fn main() {
 
     // Create an observer for three events
     world
-        .observer_builder::<(&Position,)>()
+        .observer_builder::<&Position>()
         .add_event(ECS_ON_ADD)
         .add_event(ECS_ON_REMOVE)
         .add_event(ECS_ON_SET)
-        .on_each_iter(|it, index, (pos,)| {
+        .each_iter(|it, index, pos| {
             if it.event() == ECS_ON_ADD {
                 // No assumptions about the component value should be made here. If
                 // a ctor for the component was registered it will be called before

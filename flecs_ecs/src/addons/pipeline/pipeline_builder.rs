@@ -7,8 +7,8 @@ use flecs_ecs_sys::{ecs_filter_desc_t, ecs_query_desc_t};
 
 use crate::{
     core::{
-        Builder, EntityT, FilterBuilderImpl, Filterable, Iterable, QueryBuilder, QueryBuilderImpl,
-        Term, TermBuilder, TermIdT, TermT, World, WorldT, SEPARATOR,
+        Builder, EntityT, FilterBuilderImpl, Filterable, IntoWorld, Iterable, QueryBuilder,
+        QueryBuilderImpl, Term, TermBuilder, TermIdT, TermT, World, WorldT, SEPARATOR,
     },
     sys::{ecs_entity_desc_t, ecs_entity_init, ecs_pipeline_desc_t},
 };
@@ -17,7 +17,7 @@ use super::Pipeline;
 
 pub struct PipelineBuilder<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     query_builder: QueryBuilder<'a, T>,
     desc: ecs_pipeline_desc_t,
@@ -27,7 +27,7 @@ where
 /// Deref to `QueryBuilder` to allow access to `QueryBuilder` methods without having to access `QueryBuilder` through `PipelineBuilder`
 impl<'a, T> Deref for PipelineBuilder<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     type Target = QueryBuilder<'a, T>;
 
@@ -39,7 +39,7 @@ where
 
 impl<'a, T> DerefMut for PipelineBuilder<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
@@ -49,9 +49,9 @@ where
 
 impl<'a, T> PipelineBuilder<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
-    pub fn new(world: &World) -> Self {
+    pub fn new(world: &'a World) -> Self {
         let mut desc = Default::default();
         let mut obj = Self {
             desc,
@@ -65,19 +65,19 @@ where
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
-        obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
+        obj.desc.entity = unsafe { ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
 
         T::populate(&mut obj);
         obj
     }
 
-    pub fn new_entity(world: &World, entity: EntityT) -> Self {
+    pub fn new_entity(world: &'a World, entity: EntityT) -> Self {
         let mut obj = Self::new(world);
         obj.desc.entity = entity;
         obj
     }
 
-    pub fn new_from_desc(world: &World, mut desc: ecs_pipeline_desc_t) -> Self {
+    pub fn new_from_desc(world: &'a World, mut desc: ecs_pipeline_desc_t) -> Self {
         let mut obj = Self {
             desc,
             query_builder: QueryBuilder::<T>::new_from_desc(world, &mut desc.query),
@@ -90,14 +90,14 @@ where
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
-        obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
+        obj.desc.entity = unsafe { ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
 
         T::populate(&mut obj);
         obj
     }
 
     pub fn new_from_desc_term_index(
-        world: &World,
+        world: &'a World,
         mut desc: ecs_pipeline_desc_t,
         term_index: i32,
     ) -> Self {
@@ -115,7 +115,7 @@ where
     }
 
     //TODO fix this - not working as intended most likely
-    pub fn new_named(world: &World, name: &CStr) -> Self {
+    pub fn new_named(world: &'a World, name: &CStr) -> Self {
         let mut desc = Default::default();
         let mut obj = Self {
             desc,
@@ -129,14 +129,14 @@ where
             ..Default::default()
         };
 
-        obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
+        obj.desc.entity = unsafe { ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
 }
-impl<'a, T> Filterable for PipelineBuilder<'a, T>
+impl<'a, T> Filterable<'a> for PipelineBuilder<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn current_term(&mut self) -> &mut TermT {
         unsafe { &mut *self.filter_builder.term.term_ptr }
@@ -147,17 +147,17 @@ where
     }
 }
 
-impl<'a, T> TermBuilder for PipelineBuilder<'a, T>
+impl<'a, T> TermBuilder<'a> for PipelineBuilder<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     fn world_ptr_mut(&self) -> *mut WorldT {
-        self.filter_builder.world.raw_world
+        self.filter_builder.world.world_ptr_mut()
     }
 
     #[inline]
-    fn term_mut(&mut self) -> &mut Term {
+    fn term_mut(&mut self) -> &mut Term<'a> {
         self.filter_builder.term_mut()
     }
 
@@ -172,20 +172,20 @@ where
     }
 }
 
-impl<'a, T> Builder for PipelineBuilder<'a, T>
+impl<'a, T> Builder<'a> for PipelineBuilder<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable + 'static,
 {
     type BuiltType = Pipeline<'a, T>;
 
     fn build(&mut self) -> Self::BuiltType {
-        Pipeline::<T>::new(&self.world, self.desc)
+        Pipeline::<T>::new(self.world.world_ref(), self.desc)
     }
 }
 
-impl<'a, T> FilterBuilderImpl for PipelineBuilder<'a, T>
+impl<'a, T> FilterBuilderImpl<'a> for PipelineBuilder<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     fn desc_filter_mut(&mut self) -> &mut ecs_filter_desc_t {
@@ -203,9 +203,9 @@ where
     }
 }
 
-impl<'a, T> QueryBuilderImpl for PipelineBuilder<'a, T>
+impl<'a, T> QueryBuilderImpl<'a> for PipelineBuilder<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     fn desc_query_mut(&mut self) -> &mut ecs_query_desc_t {

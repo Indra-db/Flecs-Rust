@@ -44,27 +44,29 @@ fn main() {
     // to check whether a field is owned or not in order to know how to access
     // it. In the case of an owned field it is iterated as an array, whereas
     // in the case of a shared field, it is accessed as a pointer.
-    query.iter(|it, (position, velocity)| {
-        // Check if Velocity is owned, in which case it's accessed as array.
-        // Position will always be owned, since we set the term to Self.
-        if it.is_self(2) {
-            println!("Velocity is owned");
+    query.iter(
+        |it: Iter, position: &mut [Position], velocity: &[Velocity]| {
+            // Check if Velocity is owned, in which case it's accessed as array.
+            // Position will always be owned, since we set the term to Self.
+            if it.is_self(2) {
+                println!("Velocity is owned");
 
-            for i in it.iter() {
-                position[i].x += velocity[i].x;
-                position[i].y += velocity[i].y;
-                println!("entity {} has {:?}", it.entity(i).name(), position[i]);
-            }
-        } else {
-            println!("Velocity is shared");
+                for i in it.iter() {
+                    position[i].x += velocity[i].x;
+                    position[i].y += velocity[i].y;
+                    println!("entity {} has {:?}", it.entity(i).name(), position[i]);
+                }
+            } else {
+                println!("Velocity is shared");
 
-            for i in it.iter() {
-                position[i].x += velocity[0].x;
-                position[i].y += velocity[0].y;
-                println!("entity {} has {:?}", it.entity(i).name(), position[i]);
+                for i in it.iter() {
+                    position[i].x += velocity[0].x;
+                    position[i].y += velocity[0].y;
+                    println!("entity {} has {:?}", it.entity(i).name(), position[i]);
+                }
             }
-        }
-    });
+        },
+    );
 
     // Output
     //  Velocity is shared

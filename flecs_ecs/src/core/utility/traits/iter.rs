@@ -6,9 +6,9 @@ use crate::{
     core::{Entity, FilterT, Iter, IterIterable, IterT, Iterable, Term},
     ecs_assert,
 };
-use flecs_ecs_sys::{ecs_filter_str, ecs_iter_fini, ecs_os_api, ecs_table_lock, ecs_table_unlock};
+use flecs_ecs_sys::{ecs_filter_str, ecs_iter_fini, ecs_os_api};
 
-use super::IntoWorld;
+use super::{EachInput, EachReactorFunction, IntoWorld, IterInput, IterReactorFunction};
 
 pub trait IterOperations {
     #[doc(hidden)]
@@ -24,9 +24,9 @@ pub trait IterOperations {
     fn filter_ptr(&self) -> *const FilterT;
 }
 
-pub trait IterAPI<'a, T>: IterOperations + IntoWorld
+pub trait IterAPI<'a, T>: IterOperations + IntoWorld<'a>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     // TODO once we have tests in place, I will split this functionality up into multiple functions, which should give a small performance boost
     // by caching if the query has used a "is_ref" operation.
@@ -43,283 +43,193 @@ where
     ///
     /// * C++ API: `iterable::each`
     #[doc(alias = "iterable::each")]
-    fn each(&self, mut func: impl FnMut(T::TupleType)) {
+    fn each<F: EachReactorFunction<(), T>>(&'a self, func: F) {
+        self.each_inner(func);
+    }
+
+    fn each_entity<F: EachReactorFunction<(Entity<'static>,), T>>(&'a self, func: F) {
+        self.each_inner(func);
+    }
+
+    fn each_iter<F: EachReactorFunction<(Iter<'static>, usize), T>>(&'a self, func: F) {
+        self.each_inner(func);
+    }
+
+    fn each_inner<F: EachReactorFunction<I, T>, I: EachInput>(&'a self, mut func: F) {
         unsafe {
             let mut iter = self.retrieve_iter();
 
             while self.iter_next(&mut iter) {
-                let components_data = T::create_array_ptrs_of_components(&iter);
-                let iter_count = iter.count as usize;
-                let array_components = &components_data.array_components;
-
-                ecs_table_lock(self.world_ptr_mut(), iter.table);
-
-                for i in 0..iter_count {
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::create_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::create_tuple(array_components, i)
-                    };
-                    func(tuple);
-                }
-
-                ecs_table_unlock(self.world_ptr_mut(), iter.table);
+                func.run_self(&mut iter);
             }
         }
     }
 
-    /// Each iterator.
-    /// The "each" iterator accepts a function that is invoked for each matching entity.
-    /// The following function signatures is valid:
-    ///  - func(e : Entity , comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::each`
-    #[doc(alias = "iterable::each")]
-    fn each_entity(&self, mut func: impl FnMut(&mut Entity, T::TupleType)) {
-        unsafe {
-            let mut iter = self.retrieve_iter();
-            let world = self.world_ptr_mut();
-            while self.iter_next(&mut iter) {
-                let components_data = T::create_array_ptrs_of_components(&iter);
-                let array_components = &components_data.array_components;
-                let iter_count = {
-                    if iter.count == 0 {
-                        1_usize
-                    } else {
-                        iter.count as usize
-                    }
-                };
+    // /// find iterator to find an entity
+    // /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
+    // /// if it is, it returns that entity.
+    // /// The following function signatures is valid:
+    // ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
+    // ///
+    // /// Each iterators are automatically instanced.
+    // ///
+    // /// # Returns
+    // ///
+    // /// * Some(Entity) if the entity was found, None if no entity was found
+    // ///
+    // /// # See also
+    // ///
+    // /// * C++ API: `find_delegate::invoke_callback`
+    // #[doc(alias = "find_delegate::invoke_callback")]
+    // fn find(&self, mut func: impl FnMut(T::TupleType) -> bool) -> Option<Entity> {
+    //     unsafe {
+    //         let mut iter = self.retrieve_iter();
+    //         let mut entity: Option<Entity> = None;
+    //         let world = self.world_ptr_mut();
 
-                ecs_table_lock(world, iter.table);
+    //         while self.iter_next(&mut iter) {
+    //             let components_data = T::create_array_ptrs_of_components(&iter);
+    //             let iter_count = iter.count as usize;
+    //             let array_components = &components_data.array_components;
 
-                // TODO random thought, I think I can determine the elements is a ref or not before the for loop and then pass two arrays with the indices of the ref and non ref elements
-                // I will come back to this in the future, my thoughts are somewhere else right now. If my assumption is correct, this will get rid of the branch in the for loop
-                // and potentially allow for more conditions for vectorization to happen. This could potentially offer a (small) performance boost since the branch predictor avoids probably
-                // most of the cost since the branch is almost always the same.
-                // update: I believe it's not possible due to not knowing the order of the components in the tuple. I will leave this here for now, maybe I will come back to it in the future.
-                for i in 0..iter_count {
-                    let mut entity = Entity::new_from_existing_raw(world, *iter.entities.add(i));
+    //             ecs_table_lock(world, iter.table);
 
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::create_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::create_tuple(array_components, i)
-                    };
+    //             for i in 0..iter_count {
+    //                 let tuple = if components_data.is_any_array_a_ref {
+    //                     let is_ref_array_components = &components_data.is_ref_array_components;
+    //                     T::create_tuple_with_ref(array_components, is_ref_array_components, i)
+    //                 } else {
+    //                     T::create_tuple(array_components, i)
+    //                 };
+    //                 if func(tuple) {
+    //                     entity = Some(Entity::new_from_existing_raw(
+    //                         iter.world,
+    //                         *iter.entities.add(i),
+    //                     ));
+    //                     break;
+    //                 }
+    //             }
 
-                    func(&mut entity, tuple);
-                }
+    //             ecs_table_unlock(world, iter.table);
+    //         }
+    //         entity
+    //     }
+    // }
 
-                ecs_table_unlock(world, iter.table);
-            }
-        }
-    }
+    // /// find iterator to find an entity
+    // /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
+    // /// if it is, it returns that entity.
+    // /// The following function signatures is valid:
+    // ///  - func(entity : Entity, comp1 : &mut T1, comp2 : &mut T2, ...)
+    // ///
+    // /// Each iterators are automatically instanced.
+    // ///
+    // /// # Returns
+    // ///
+    // /// * Some(Entity) if the entity was found, None if no entity was found
+    // ///
+    // /// # See also
+    // ///
+    // /// * C++ API: `find_delegate::invoke_callback`
+    // #[doc(alias = "find_delegate::invoke_callback")]
+    // fn find_entity(
+    //     &self,
+    //     mut func: impl FnMut(&mut Entity, T::TupleType) -> bool,
+    // ) -> Option<Entity> {
+    //     unsafe {
+    //         let mut iter = self.retrieve_iter();
+    //         let mut entity_result: Option<Entity> = None;
+    //         let world = self.world_ptr_mut();
 
-    fn each_iter(&self, mut func: impl FnMut(&mut Iter, usize, T::TupleType)) {
-        unsafe {
-            let mut iter = self.retrieve_iter();
-            let world = self.world_ptr_mut();
+    //         while self.iter_next(&mut iter) {
+    //             let components_data = T::create_array_ptrs_of_components(&iter);
+    //             let iter_count = iter.count as usize;
+    //             let array_components = &components_data.array_components;
 
-            while self.iter_next(&mut iter) {
-                let components_data = T::create_array_ptrs_of_components(&iter);
-                let iter_count = {
-                    if iter.count == 0 {
-                        1_usize
-                    } else {
-                        iter.count as usize
-                    }
-                };
-                let array_components = &components_data.array_components;
+    //             ecs_table_lock(world, iter.table);
 
-                ecs_table_lock(world, iter.table);
+    //             for i in 0..iter_count {
+    //                 let mut entity =
+    //                     Entity::new_from_existing_raw(iter.world, *iter.entities.add(i));
 
-                let mut iter_t = Iter::new(&mut iter);
+    //                 let tuple = if components_data.is_any_array_a_ref {
+    //                     let is_ref_array_components = &components_data.is_ref_array_components;
+    //                     T::create_tuple_with_ref(array_components, is_ref_array_components, i)
+    //                 } else {
+    //                     T::create_tuple(array_components, i)
+    //                 };
+    //                 if func(&mut entity, tuple) {
+    //                     entity_result = Some(entity);
+    //                     break;
+    //                 }
+    //             }
 
-                for i in 0..iter_count {
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::create_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::create_tuple(array_components, i)
-                    };
-                    func(&mut iter_t, i, tuple);
-                }
+    //             ecs_table_unlock(world, iter.table);
+    //         }
+    //         entity_result
+    //     }
+    // }
 
-                ecs_table_unlock(world, iter.table);
-            }
-        }
-    }
+    // /// find iterator to find an entity.
+    // /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
+    // /// if it is, it returns that entity.
+    // /// The following function signatures is valid:
+    // ///  - func(iter : Iter, index : usize, comp1 : &mut T1, comp2 : &mut T2, ...)
+    // ///
+    // /// Each iterators are automatically instanced.
+    // ///
+    // /// # Returns
+    // ///
+    // /// * Some(Entity) if the entity was found, None if no entity was found
+    // ///
+    // /// # See also
+    // ///
+    // /// * C++ API: `find_delegate::invoke_callback`
+    // #[doc(alias = "find_delegate::invoke_callback")]
+    // fn find_iter(
+    //     &self,
+    //     mut func: impl FnMut(&mut Iter, usize, T::TupleType) -> bool,
+    // ) -> Option<Entity> {
+    //     unsafe {
+    //         let mut iter = self.retrieve_iter();
+    //         let mut entity_result: Option<Entity> = None;
+    //         let world = self.world_ptr_mut();
 
-    /// find iterator to find an entity
-    /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
-    /// if it is, it returns that entity.
-    /// The following function signatures is valid:
-    ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # Returns
-    ///
-    /// * Some(Entity) if the entity was found, None if no entity was found
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `find_delegate::invoke_callback`
-    #[doc(alias = "find_delegate::invoke_callback")]
-    fn find(&self, mut func: impl FnMut(T::TupleType) -> bool) -> Option<Entity> {
-        unsafe {
-            let mut iter = self.retrieve_iter();
-            let mut entity: Option<Entity> = None;
-            let world = self.world_ptr_mut();
+    //         while self.iter_next(&mut iter) {
+    //             let components_data = T::create_array_ptrs_of_components(&iter);
+    //             let array_components = &components_data.array_components;
+    //             let iter_count = {
+    //                 if iter.count == 0 {
+    //                     1_usize
+    //                 } else {
+    //                     iter.count as usize
+    //                 }
+    //             };
 
-            while self.iter_next(&mut iter) {
-                let components_data = T::create_array_ptrs_of_components(&iter);
-                let iter_count = iter.count as usize;
-                let array_components = &components_data.array_components;
+    //             ecs_table_lock(world, iter.table);
+    //             let mut iter_t = Iter::new(&mut iter);
 
-                ecs_table_lock(world, iter.table);
+    //             for i in 0..iter_count {
+    //                 let tuple = if components_data.is_any_array_a_ref {
+    //                     let is_ref_array_components = &components_data.is_ref_array_components;
+    //                     T::create_tuple_with_ref(array_components, is_ref_array_components, i)
+    //                 } else {
+    //                     T::create_tuple(array_components, i)
+    //                 };
+    //                 if func(&mut iter_t, i, tuple) {
+    //                     entity_result = Some(Entity::new_from_existing_raw(
+    //                         iter.world,
+    //                         *iter.entities.add(i),
+    //                     ));
+    //                     break;
+    //                 }
+    //             }
 
-                for i in 0..iter_count {
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::create_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::create_tuple(array_components, i)
-                    };
-                    if func(tuple) {
-                        entity = Some(Entity::new_from_existing_raw(
-                            iter.world,
-                            *iter.entities.add(i),
-                        ));
-                        break;
-                    }
-                }
-
-                ecs_table_unlock(world, iter.table);
-            }
-            entity
-        }
-    }
-
-    /// find iterator to find an entity
-    /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
-    /// if it is, it returns that entity.
-    /// The following function signatures is valid:
-    ///  - func(entity : Entity, comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # Returns
-    ///
-    /// * Some(Entity) if the entity was found, None if no entity was found
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `find_delegate::invoke_callback`
-    #[doc(alias = "find_delegate::invoke_callback")]
-    fn find_entity(
-        &self,
-        mut func: impl FnMut(&mut Entity, T::TupleType) -> bool,
-    ) -> Option<Entity> {
-        unsafe {
-            let mut iter = self.retrieve_iter();
-            let mut entity_result: Option<Entity> = None;
-            let world = self.world_ptr_mut();
-
-            while self.iter_next(&mut iter) {
-                let components_data = T::create_array_ptrs_of_components(&iter);
-                let iter_count = iter.count as usize;
-                let array_components = &components_data.array_components;
-
-                ecs_table_lock(world, iter.table);
-
-                for i in 0..iter_count {
-                    let mut entity =
-                        Entity::new_from_existing_raw(iter.world, *iter.entities.add(i));
-
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::create_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::create_tuple(array_components, i)
-                    };
-                    if func(&mut entity, tuple) {
-                        entity_result = Some(entity);
-                        break;
-                    }
-                }
-
-                ecs_table_unlock(world, iter.table);
-            }
-            entity_result
-        }
-    }
-
-    /// find iterator to find an entity.
-    /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
-    /// if it is, it returns that entity.
-    /// The following function signatures is valid:
-    ///  - func(iter : Iter, index : usize, comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
-    ///
-    /// # Returns
-    ///
-    /// * Some(Entity) if the entity was found, None if no entity was found
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `find_delegate::invoke_callback`
-    #[doc(alias = "find_delegate::invoke_callback")]
-    fn find_iter(
-        &self,
-        mut func: impl FnMut(&mut Iter, usize, T::TupleType) -> bool,
-    ) -> Option<Entity> {
-        unsafe {
-            let mut iter = self.retrieve_iter();
-            let mut entity_result: Option<Entity> = None;
-            let world = self.world_ptr_mut();
-
-            while self.iter_next(&mut iter) {
-                let components_data = T::create_array_ptrs_of_components(&iter);
-                let array_components = &components_data.array_components;
-                let iter_count = {
-                    if iter.count == 0 {
-                        1_usize
-                    } else {
-                        iter.count as usize
-                    }
-                };
-
-                ecs_table_lock(world, iter.table);
-                let mut iter_t = Iter::new(&mut iter);
-
-                for i in 0..iter_count {
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::create_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::create_tuple(array_components, i)
-                    };
-                    if func(&mut iter_t, i, tuple) {
-                        entity_result = Some(Entity::new_from_existing_raw(
-                            iter.world,
-                            *iter.entities.add(i),
-                        ));
-                        break;
-                    }
-                }
-
-                ecs_table_unlock(world, iter.table);
-            }
-            entity_result
-        }
-    }
+    //             ecs_table_unlock(world, iter.table);
+    //         }
+    //         entity_result
+    //     }
+    // }
 
     /// iter iterator.
     /// The "iter" iterator accepts a function that is invoked for each matching
@@ -335,58 +245,12 @@ where
     ///
     /// * C++ API: `iterable::iter`
     #[doc(alias = "iterable::iter")]
-    fn iter(&self, mut func: impl FnMut(&mut Iter, T::TupleSliceType)) {
+    fn iter<F: IterReactorFunction<I, T>, I: IterInput>(&'a self, mut func: F) {
         unsafe {
             let mut iter = self.retrieve_iter();
-            let world = self.world_ptr_mut();
 
             while self.iter_next(&mut iter) {
-                let components_data = T::create_array_ptrs_of_components(&iter);
-                let iter_count = iter.count as usize;
-                let array_components = &components_data.array_components;
-
-                ecs_table_lock(world, iter.table);
-
-                let tuple = if components_data.is_any_array_a_ref {
-                    let is_ref_array_components = &components_data.is_ref_array_components;
-                    T::create_tuple_slices_with_ref(
-                        array_components,
-                        is_ref_array_components,
-                        iter_count,
-                    )
-                } else {
-                    T::create_tuple_slices(array_components, iter_count)
-                };
-                let mut iter_t = Iter::new(&mut iter);
-                func(&mut iter_t, tuple);
-                ecs_table_unlock(world, iter.table);
-            }
-        }
-    }
-
-    /// iter iterator.
-    /// The "iter" iterator accepts a function that is invoked for each matching
-    /// table. The following function signature is valid:
-    ///  - func(it: &mut Iter)
-    ///
-    /// Iter iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::iter`
-    #[doc(alias = "iterable::iter")]
-    fn iter_only(&self, mut func: impl FnMut(&mut Iter)) {
-        unsafe {
-            let mut iter = self.retrieve_iter();
-            let world = self.world_ptr_mut();
-            while self.iter_next(&mut iter) {
-                ecs_table_lock(world, iter.table);
-                let mut iter_t = Iter::new(&mut iter);
-                func(&mut iter_t);
-                ecs_table_unlock(world, iter.table);
+                func.run_self(&mut iter);
             }
         }
     }
@@ -405,7 +269,7 @@ where
     ///
     /// * C++ API: `filter_base::entity`
     #[doc(alias = "filter_base::entity")]
-    fn as_entity(&self) -> Entity;
+    fn as_entity(&self) -> Entity<'a>;
 
     /// Each term iterator.
     /// The "`each_term`" iterator accepts a function that is invoked for each term
@@ -418,10 +282,10 @@ where
     #[doc(alias = "filter_base::each_term")]
     fn each_term(&self, mut func: impl FnMut(&mut Term)) {
         let filter = self.filter_ptr();
-        let world = self.get_world();
         unsafe {
             for i in 0..(*filter).term_count {
-                let mut term = Term::new_from_term(Some(&world), *(*filter).terms.add(i as usize));
+                let mut term =
+                    Term::new_from_term(Some(self.world_ref()), *(*filter).terms.add(i as usize));
                 func(&mut term);
                 term.reset(); // prevent freeing resources
             }
@@ -443,15 +307,14 @@ where
     ///
     /// * C++ API: `filter_base::term`
     #[doc(alias = "filter_base::term")]
-    fn get_term(&self, index: usize) -> Term {
+    fn get_term(&self, index: usize) -> Term<'a> {
         let filter = self.filter_ptr();
-        let world = self.get_world();
         ecs_assert!(
             !filter.is_null(),
             FlecsErrorCode::InvalidParameter,
             "query filter is null"
         );
-        Term::new_from_term(Some(&world), unsafe { *(*filter).terms.add(index) })
+        Term::new_from_term(self.world_ref(), unsafe { *(*filter).terms.add(index) })
     }
 
     /// Get the field count of the current filter
@@ -503,7 +366,7 @@ where
         rust_string
     }
 
-    fn iterable(&self) -> IterIterable<'a, T> {
+    fn iterable(&self) -> IterIterable<T> {
         IterIterable::new(self.retrieve_iter(), self.iter_next_func())
     }
 
@@ -515,10 +378,10 @@ where
     /// * C++ API: `iter_iterable::first`
     #[doc(alias = "iterable::first")]
     #[doc(alias = "iter_iterable::first")]
-    fn first(&mut self) -> Entity {
+    fn first(&'a mut self) -> Entity<'a> {
         let mut entity = Entity::default();
 
-        let world = self.world_ptr_mut();
+        let world = self.world_ref();
         let it = &mut self.retrieve_iter();
 
         if self.iter_next(it) && it.count > 0 {

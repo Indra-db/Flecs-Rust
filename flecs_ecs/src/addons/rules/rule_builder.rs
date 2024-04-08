@@ -3,22 +3,19 @@ use std::{ffi::CStr, ops::Deref};
 use flecs_ecs_sys::{ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t};
 
 use crate::core::{
-    Builder, FilterBuilder, FilterBuilderImpl, Filterable, Iterable, Term, TermBuilder, TermIdT,
-    TermT, World, WorldT, SEPARATOR,
+    Builder, FilterBuilder, FilterBuilderImpl, Filterable, IntoWorld, Iterable, Term, TermBuilder,
+    TermIdT, TermT, WorldT, SEPARATOR,
 };
 
 use super::Rule;
 
-pub struct RuleBuilder<'a, T>
-where
-    T: Iterable<'a>,
-{
+pub struct RuleBuilder<'a, T: Iterable = ()> {
     pub filter_builder: FilterBuilder<'a, T>,
 }
 
 impl<'a, T> Deref for RuleBuilder<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     type Target = FilterBuilder<'a, T>;
 
@@ -30,7 +27,7 @@ where
 
 impl<'a, T> RuleBuilder<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     /// Create a new query builder
     ///
@@ -42,9 +39,9 @@ where
     ///
     /// * C++ API: `builder::builder`
     #[doc(alias = "builder::builder")]
-    pub fn new(world: &World) -> Self {
+    pub fn new(world: impl IntoWorld<'a>) -> Self {
         let mut obj = Self {
-            filter_builder: FilterBuilder::new(world),
+            filter_builder: FilterBuilder::new(world.world_ref()),
         };
 
         let entity_desc = ecs_entity_desc_t {
@@ -54,7 +51,8 @@ where
             ..Default::default()
         };
 
-        obj.filter_builder.desc.entity = unsafe { ecs_entity_init(world.raw_world, &entity_desc) };
+        obj.filter_builder.desc.entity =
+            unsafe { ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -70,9 +68,9 @@ where
     ///
     /// * C++ API: `query_builder::query_builder`
     #[doc(alias = "query_builder::query_builder")]
-    pub fn new_named(world: &World, name: &CStr) -> Self {
+    pub fn new_named(world: impl IntoWorld<'a>, name: &CStr) -> Self {
         let mut obj = Self {
-            filter_builder: FilterBuilder::new_named(world, name),
+            filter_builder: FilterBuilder::new_named(world.world_ref(), name),
         };
 
         let entity_desc = ecs_entity_desc_t {
@@ -82,15 +80,16 @@ where
             ..Default::default()
         };
 
-        obj.filter_builder.desc.entity = unsafe { ecs_entity_init(world.raw_world, &entity_desc) };
+        obj.filter_builder.desc.entity =
+            unsafe { ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
 }
 
-impl<'a, T> Filterable for RuleBuilder<'a, T>
+impl<'a, T> Filterable<'a> for RuleBuilder<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn current_term(&mut self) -> &mut TermT {
         unsafe { &mut *self.filter_builder.term.term_ptr }
@@ -101,9 +100,9 @@ where
     }
 }
 
-impl<'a, T> FilterBuilderImpl for RuleBuilder<'a, T>
+impl<'a, T> FilterBuilderImpl<'a> for RuleBuilder<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     fn desc_filter_mut(&mut self) -> &mut ecs_filter_desc_t {
@@ -121,17 +120,17 @@ where
     }
 }
 
-impl<'a, T> TermBuilder for RuleBuilder<'a, T>
+impl<'a, T> TermBuilder<'a> for RuleBuilder<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     fn world_ptr_mut(&self) -> *mut WorldT {
-        self.filter_builder.world.raw_world
+        self.filter_builder.world.world_ptr_mut()
     }
 
     #[inline]
-    fn term_mut(&mut self) -> &mut Term {
+    fn term_mut(&mut self) -> &mut Term<'a> {
         self.filter_builder.term_mut()
     }
 
@@ -146,9 +145,9 @@ where
     }
 }
 
-impl<'a, T> Builder for RuleBuilder<'a, T>
+impl<'a, T> Builder<'a> for RuleBuilder<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable + 'static,
 {
     type BuiltType = Rule<'a, T>;
 
@@ -160,6 +159,6 @@ where
     #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
         let world = &self.filter_builder.world;
-        Rule::<T>::new_from_desc(world, &mut self.filter_builder.desc)
+        Rule::<T>::new_from_desc(world.world_ref(), &mut self.filter_builder.desc)
     }
 }

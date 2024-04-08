@@ -104,8 +104,8 @@ pub fn ecs_has_pair(
 
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 #[inline(always)]
-pub fn ecs_add_pair(
-    world: impl IntoWorld,
+pub fn ecs_add_pair<'a>(
+    world: impl IntoWorld<'a>,
     entity: impl IntoEntityId,
     first: impl IntoEntityId,
     second: impl IntoEntityId,

@@ -23,7 +23,7 @@ pub fn main() {
     // Each query has its own private dirty state which is reset only when the
     // query is iterated.
 
-    let query_read = world.query::<(&Position,)>();
+    let query_read = world.query::<&Position>();
 
     // Create a query that writes the component based on a Dirty state.
     let query_write = world
@@ -74,7 +74,7 @@ pub fn main() {
     println!();
 
     // The changed state will remain true until we have iterated each table.
-    query_read.iter_only(|iter| {
+    query_read.iter(|iter: Iter, _: &[Position]| {
         // With the it.changed() function we can check if the table we're
         // currently iterating has changed since last iteration.
         // Because this is the first time the query is iterated, all tables
@@ -93,7 +93,7 @@ pub fn main() {
 
     // Iterate the write query. Because the Position term is InOut (default)
     // iterating the query will write to the dirty state of iterated tables.
-    query_write.iter(|it, (dirty, pos)| {
+    query_write.iter_with(|mut it, dirty, pos| {
         println!("iterate table [{}]", it.archetype());
 
         // Because we enforced that Dirty is a shared component, we can check
@@ -119,7 +119,7 @@ pub fn main() {
     println!();
 
     // When we iterate the read query, we'll see that one table has changed.
-    query_read.iter_only(|iter| {
+    query_read.iter(|iter, _| {
         println!(
             "iter.is_changed() for table [{}]: {}",
             iter.archetype(),

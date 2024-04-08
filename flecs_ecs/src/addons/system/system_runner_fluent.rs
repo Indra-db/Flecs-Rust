@@ -1,12 +1,12 @@
 use std::os::raw::c_void;
 
 use crate::{
-    core::{c_types::EntityT, world::World, FTime},
+    core::{c_types::EntityT, FTime, IntoWorld, WorldRef},
     sys::{ecs_run_w_filter, ecs_run_worker},
 };
 
-pub struct SystemRunnerFluent {
-    stage: World,
+pub struct SystemRunnerFluent<'a> {
+    stage: WorldRef<'a>,
     id: EntityT,
     stage_current: i32,
     stage_count: i32,
@@ -16,9 +16,9 @@ pub struct SystemRunnerFluent {
     param: *mut c_void,
 }
 
-impl SystemRunnerFluent {
+impl<'a> SystemRunnerFluent<'a> {
     pub fn new(
-        world: &World,
+        world: impl IntoWorld<'a>,
         id: EntityT,
         stage_current: i32,
         stage_count: i32,
@@ -26,7 +26,7 @@ impl SystemRunnerFluent {
         param: *mut c_void,
     ) -> Self {
         Self {
-            stage: world.clone(),
+            stage: world.world_ref(),
             id,
             stage_current,
             stage_count,
@@ -47,18 +47,18 @@ impl SystemRunnerFluent {
         self
     }
 
-    pub fn stage(&mut self, stage: &mut World) -> &mut Self {
-        self.stage = stage.clone();
+    pub fn stage(&mut self, stage: impl IntoWorld<'a>) -> &mut Self {
+        self.stage = stage.world_ref();
         self
     }
 }
 
-impl Drop for SystemRunnerFluent {
+impl<'a> Drop for SystemRunnerFluent<'a> {
     fn drop(&mut self) {
         if self.stage_count != 0 {
             unsafe {
                 ecs_run_worker(
-                    self.stage.raw_world,
+                    self.stage.world_ptr_mut(),
                     self.id,
                     self.stage_current,
                     self.stage_count,
@@ -69,7 +69,7 @@ impl Drop for SystemRunnerFluent {
         } else {
             unsafe {
                 ecs_run_w_filter(
-                    self.stage.raw_world,
+                    self.stage.world_ptr_mut(),
                     self.id,
                     self.delta_time,
                     self.offset,

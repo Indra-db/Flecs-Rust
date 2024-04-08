@@ -32,7 +32,7 @@ fn main() {
 
     // Grouped query
     let query = world
-        .query_builder::<(&Position,)>()
+        .query_builder::<&Position>()
         .group_by_fn::<Group>(Some(callback_group_by_relationship))
         .build();
 
@@ -82,7 +82,7 @@ fn main() {
     //     - table [Position, Tag, (Group, Third)]
     //
 
-    query.iter(|it, (pos,)| {
+    query.iter_with(|it, pos| {
         let group = world.new_entity_from_id(it.group_id());
         println!(
             "Group: {:?} - Table: [{:?}]",

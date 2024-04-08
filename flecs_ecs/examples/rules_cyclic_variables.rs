@@ -36,7 +36,7 @@ fn main() {
     // be populated, and it.count() will always be 0.
 
     let rule = world
-        .rule_builder::<()>()
+        .rule_builder()
         .with_pair_name::<Likes>(c"$Y")
         .select_src_name(c"$X")
         .with_pair_name::<Likes>(c"$X")
@@ -50,7 +50,7 @@ fn main() {
 
     // Because the query doesn't use the This variable we cannot use "each"
     // which iterates the entities array. Instead we can use iter like this:
-    rule.iter_only(|it| {
+    rule.iter(|it| {
         let x = it.get_var(x_var);
         let y = it.get_var(y_var);
         println!("{} likes {}", x.name(), y.name());

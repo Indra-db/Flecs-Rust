@@ -20,14 +20,14 @@ impl IntoTable for *const TableT {
     }
 }
 
-impl IntoTable for Table {
+impl<'a> IntoTable for Table<'a> {
     #[inline]
     fn table_ptr_mut(&self) -> *mut TableT {
         self.table_ptr_mut()
     }
 }
 
-impl IntoTable for TableRange {
+impl<'a> IntoTable for TableRange<'a> {
     #[inline]
     fn table_ptr_mut(&self) -> *mut TableT {
         self.table.table_ptr_mut()
@@ -39,7 +39,7 @@ pub trait IntoTableRange {
     fn table_range_raw(&self) -> ecs_table_range_t;
 }
 
-impl IntoTableRange for TableRange {
+impl<'a> IntoTableRange for TableRange<'a> {
     #[inline]
     fn table_range(&self) -> TableRange {
         self.clone()
@@ -55,7 +55,7 @@ impl IntoTableRange for TableRange {
     }
 }
 
-impl IntoTableRange for Table {
+impl<'a> IntoTableRange for Table<'a> {
     #[inline]
     fn table_range(&self) -> TableRange {
         TableRange::new(self, 0, self.count())

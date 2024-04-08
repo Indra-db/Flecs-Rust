@@ -1,7 +1,9 @@
 //! Query API. Queries are used to iterate over entities that match a filter.
 //! Queries are better for persistence than filters, but are slower to create.
 
-use std::os::raw::c_void;
+use std::{ffi::CStr, marker::PhantomData, os::raw::c_void};
+
+use flecs_ecs_sys::{ecs_entity_desc_t, ecs_entity_init};
 
 use crate::sys::{
     ecs_abort_, ecs_get_entity, ecs_os_api, ecs_query_changed, ecs_query_desc_t, ecs_query_fini,
@@ -15,27 +17,27 @@ use super::{
     filter::FilterView,
     iterable::Iterable,
     world::World,
-    FlecsErrorCode, IntoEntityId, IterAPI, IterOperations,
+    FlecsErrorCode, IntoEntityId, IntoWorld, IterAPI, IterOperations, WorldRef, SEPARATOR,
 };
 
 /// Cached query implementation. Fast to iterate, but slower to create than `Filters`
 #[derive(Clone)]
 pub struct Query<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
-    pub world: World,
+    pub world: WorldRef<'a>,
     pub query: *mut QueryT,
-    _phantom: std::marker::PhantomData<&'a T>,
+    _marker: PhantomData<&'a T>,
 }
 
 impl<'a, T> IterOperations for Query<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline(always)]
     fn retrieve_iter(&self) -> IterT {
-        unsafe { ecs_query_iter(self.world.raw_world, self.query) }
+        unsafe { ecs_query_iter(self.world.world_ptr_mut(), self.query) }
     }
 
     #[inline(always)]
@@ -54,10 +56,10 @@ where
 
 impl<'a, T> IterAPI<'a, T> for Query<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
-    fn as_entity(&self) -> Entity {
-        Entity::new_from_existing_raw(self.world.raw_world, unsafe {
+    fn as_entity(&self) -> Entity<'a> {
+        Entity::new_from_existing_raw(self.world.world_ref(), unsafe {
             ecs_get_entity(self.query as *const c_void)
         })
     }
@@ -65,7 +67,7 @@ where
 
 impl<'a, T> Query<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     /// Create a new query
     ///
@@ -77,35 +79,36 @@ where
     ///
     /// * C++ API: `query::query`
     #[doc(alias = "query::query")]
-    pub fn new(world: &World) -> Self {
+    pub fn new(world: &'a World) -> Self {
         let mut desc = ecs_query_desc_t::default();
         T::register_ids_descriptor(world.raw_world, &mut desc.filter);
         let mut filter: FilterT = Default::default();
         desc.filter.storage = &mut filter;
         let query = unsafe { ecs_query_init(world.raw_world, &desc) };
         Self {
-            world: world.clone(),
+            world: world.world_ref(),
             query,
-            _phantom: std::marker::PhantomData,
+            _marker: PhantomData,
         }
     }
 
-    /// Create a new query from a query descriptor
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - The world to create the query in
-    /// * `desc` - The query descriptor to create the query from
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query::query`
-    #[doc(alias = "query::query")]
-    pub fn new_ownership(world: &World, query: *mut QueryT) -> Self {
+    pub fn new_named(world: &'a World, name: &CStr) -> Self {
+        let mut desc = ecs_query_desc_t::default();
+        let entity_desc = ecs_entity_desc_t {
+            name: name.as_ptr(),
+            sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
+            ..Default::default()
+        };
+        desc.filter.entity = unsafe { ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
+        T::register_ids_descriptor(world.raw_world, &mut desc.filter);
+        let mut filter: FilterT = Default::default();
+        desc.filter.storage = &mut filter;
+        let query = unsafe { ecs_query_init(world.raw_world, &desc) };
         Self {
-            world: world.clone(),
+            world: world.world_ref(),
             query,
-            _phantom: std::marker::PhantomData,
+            _marker: PhantomData,
         }
     }
 
@@ -120,11 +123,30 @@ where
     ///
     /// * C++ API: `query::query`
     #[doc(alias = "query::query")]
-    pub fn new_from_desc(world: &World, desc: &mut ecs_query_desc_t) -> Self {
+    pub fn new_ownership(world: impl IntoWorld<'a>, query: *mut QueryT) -> Self {
+        Self {
+            world: world.world_ref(),
+            query,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Create a new query from a query descriptor
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world to create the query in
+    /// * `desc` - The query descriptor to create the query from
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query::query`
+    #[doc(alias = "query::query")]
+    pub fn new_from_desc(world: impl IntoWorld<'a>, desc: &mut ecs_query_desc_t) -> Self {
         let obj = Self {
-            world: world.clone(),
-            query: unsafe { ecs_query_init(world.raw_world, desc) },
-            _phantom: std::marker::PhantomData,
+            world: world.world_ref(),
+            query: unsafe { ecs_query_init(world.world_ptr_mut(), desc) },
+            _marker: PhantomData,
         };
         unsafe {
             if obj.query.is_null() {
@@ -172,11 +194,11 @@ where
     ///
     /// * C++ API: `query::get_iter`
     #[doc(alias = "query::get_iter")]
-    fn get_iter_raw(&mut self, world: &World) -> IterT {
+    fn get_iter_raw(&mut self, world: &'a World) -> IterT {
         if !world.is_null() {
-            self.world = world.clone();
+            self.world = world.world_ref();
         }
-        unsafe { ecs_query_iter(self.world.raw_world, self.query) }
+        unsafe { ecs_query_iter(self.world.world_ptr_mut(), self.query) }
     }
 
     ///  Returns whether the query data changed since the last iteration.
@@ -263,14 +285,16 @@ where
     ///
     /// * C++ API: `query_base::filter`
     #[doc(alias = "query_base::filter")]
-    pub fn filter(&self) -> FilterView<'a, T> {
-        FilterView::<T>::new(&self.world, unsafe { ecs_query_get_filter(self.query) })
+    pub fn filter(&self) -> FilterView<T> {
+        FilterView::<T>::new(self.world.world_ref(), unsafe {
+            ecs_query_get_filter(self.query)
+        })
     }
 }
 
 impl<'a, T> Drop for Query<'a, T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     /// Destroy a query. This operation destroys a query and its resources.
     /// If the query is used as the parent of subqueries, those subqueries will be orphaned

@@ -27,30 +27,32 @@ fn main() {
     // of information on the entities currently being iterated.
     // The function passed to iter is by default called for each table the query
     // is matched with.
-    query.iter(|it, (position, velocity)| {
-        println!();
-        // Print the table & number of entities matched in current callback
-        println!("Table: {}", it.archetype());
-        println!(" - number of entities: {}", it.count());
-        println!();
+    query.iter(
+        |it: Iter, position: &mut [Position], velocity: &[Velocity]| {
+            println!();
+            // Print the table & number of entities matched in current callback
+            println!("Table: {}", it.archetype());
+            println!(" - number of entities: {}", it.count());
+            println!();
 
-        // Print information about the components being matched
-        for i in 1..=it.field_count() {
-            println!(" - term {} : ", i);
-            println!("   - component: {}", it.id(i).to_str());
-            println!("   - type size: {}", it.size(i));
-        }
+            // Print information about the components being matched
+            for i in 1..=it.field_count() {
+                println!(" - term {} : ", i);
+                println!("   - component: {}", it.id(i).to_str());
+                println!("   - type size: {}", it.size(i));
+            }
 
-        println!();
+            println!();
 
-        for i in it.iter() {
-            position[i].x += velocity[i].x;
-            position[i].y += velocity[i].y;
-            println!(" - entity {}: has {:?}", it.entity(i).name(), position[i]);
-        }
+            for i in it.iter() {
+                position[i].x += velocity[i].x;
+                position[i].y += velocity[i].y;
+                println!(" - entity {}: has {:?}", it.entity(i).name(), position[i]);
+            }
 
-        println!();
-    });
+            println!();
+        },
+    );
 
     // Output:
     //  Table: Position, Velocity, (Identifier,Name)

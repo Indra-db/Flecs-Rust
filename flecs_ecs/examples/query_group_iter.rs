@@ -97,14 +97,14 @@ fn main() {
         .add::<Npc>();
 
     let query = world
-        .query_builder::<(&Npc,)>()
+        .query_builder::<&Npc>()
         .group_by::<WorldCell>()
         .build();
 
     // Iterate all tables
     println!("All tables");
 
-    query.iter_only(|iter| {
+    query.iter(|iter, _| {
         let group: Entity = world.new_entity_from_id(iter.group_id());
         println!(
             "group: {:?} - Table [{}]",
@@ -117,7 +117,7 @@ fn main() {
 
     println!("Tables for cell 1_0:");
 
-    query.iterable().set_group::<Cell_1_0>().iter_only(|iter| {
+    query.iterable().set_group::<Cell_1_0>().iter(|iter, _| {
         let group: Entity = world.new_entity_from_id(iter.group_id());
         println!(
             "group: {:?} - Table [{}]",

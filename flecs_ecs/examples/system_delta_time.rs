@@ -7,7 +7,7 @@ fn main() {
     // Create system that prints delta_time. This system doesn't query for any
     // components which means it won't match any entities, but will still be ran
     // once for each call to ecs_progress.
-    world.system_builder::<()>().on_iter_only(|it| {
+    world.system_builder().iter(|it| {
         println!("delta_time: {}", it.delta_time());
     });
 

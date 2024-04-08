@@ -32,7 +32,7 @@ fn main() {
     // example shows how the basics of how to use rules & variables.
 
     let rule = world
-        .rule_builder::<()>()
+        .rule_builder()
         // Identifiers that start with _ are query variables. Query variables
         // are like wildcards, but enforce that the entity substituted by the
         // wildcard is the same across terms.
@@ -53,7 +53,7 @@ fn main() {
     let food_var = rule.find_var(c"Food");
 
     // Iterate the rule
-    rule.each_iter(|it, index, ()| {
+    rule.each_iter(|mut it: Iter, index| {
         println!(
             "{} eats {}",
             it.entity(index).name(),

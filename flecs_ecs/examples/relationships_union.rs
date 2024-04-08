@@ -71,7 +71,7 @@ fn main() {
     e3.add_enum(Movement::Walking);
 
     // Iterate the query
-    q.iter_only(|it| {
+    q.iter(|it: Iter| {
         // Get the column with direction states. This is stored as an array
         // with identifiers to the individual states
         //since it's an union, we need to get the entity id for safety

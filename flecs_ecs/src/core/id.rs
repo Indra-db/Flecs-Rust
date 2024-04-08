@@ -4,8 +4,7 @@ use super::{
     c_types::{IdT, RUST_ecs_id_FLAGS_MASK, WorldT, RUST_ECS_COMPONENT_MASK},
     ecs_pair_first,
     entity::Entity,
-    world::World,
-    IntoEntityId, IntoEntityIdExt, IntoWorld,
+    IntoEntityId, IntoEntityIdExt, IntoWorld, WorldRef,
 };
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
@@ -32,40 +31,40 @@ use crate::{
 /// * [flecs C++ documentation](https://www.flecs.dev/flecs/structflecs_1_1id.html#details)
 /// * [flecs C documentation](https://www.flecs.dev/flecs/group__ids.html)
 #[derive(Debug, Clone, Copy, Eq)]
-pub struct Id {
+pub struct Id<'a> {
     /// World is optional, but guarantees that entity identifiers extracted from the id are valid
-    pub(crate) world: *mut WorldT,
+    pub(crate) world: Option<WorldRef<'a>>,
     pub raw_id: IdT,
 }
 
-impl Default for Id {
+impl Default for Id<'static> {
     fn default() -> Self {
         Self {
-            world: std::ptr::null_mut(),
+            world: None,
             raw_id: 0,
         }
     }
 }
 
-impl PartialEq for Id {
+impl<'a> PartialEq for Id<'a> {
     fn eq(&self, other: &Self) -> bool {
         self.raw_id == other.raw_id
     }
 }
 
-impl PartialOrd for Id {
+impl<'a> PartialOrd for Id<'a> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.raw_id.cmp(&other.raw_id))
     }
 }
 
-impl Ord for Id {
+impl<'a> Ord for Id<'a> {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.raw_id.cmp(&other.raw_id)
     }
 }
 
-impl std::ops::Deref for Id {
+impl<'a> std::ops::Deref for Id<'a> {
     type Target = u64;
 
     #[inline]
@@ -74,7 +73,7 @@ impl std::ops::Deref for Id {
     }
 }
 
-impl Id {
+impl<'a> Id<'a> {
     /// Wraps an id or pair
     ///
     /// # Arguments
@@ -88,7 +87,7 @@ impl Id {
     #[doc(alias = "Id::Id")]
     /// * C API: `ecs_id_t`
     #[doc(alias = "ecs_id_t")]
-    pub fn new(world: Option<impl IntoWorld>, id: impl IntoEntityIdExt) -> Self {
+    pub fn new(world: Option<impl IntoWorld<'a>>, id: impl IntoEntityIdExt) -> Self {
         if let Some(world) = world {
             Self::new_from_existing(world, id)
         } else {
@@ -109,9 +108,9 @@ impl Id {
     #[doc(alias = "Id::Id")]
     /// * C API: `ecs_id_t`
     #[doc(alias = "ecs_id_t")]
-    pub fn new_from_existing(world: impl IntoWorld, id: impl IntoEntityIdExt) -> Self {
+    pub fn new_from_existing(world: impl IntoWorld<'a>, id: impl IntoEntityIdExt) -> Self {
         Self {
-            world: world.world_ptr_mut(),
+            world: Some(world.world_ref()),
             raw_id: id.get_id(),
         }
     }
@@ -130,7 +129,7 @@ impl Id {
     #[doc(alias = "ecs_id_t")]
     pub(crate) fn new_id_only(id: impl IntoEntityIdExt) -> Self {
         Self {
-            world: std::ptr::null_mut(),
+            world: None,
             raw_id: id.get_id(),
         }
     }
@@ -176,7 +175,7 @@ impl Id {
     /// * C++ API: `id::entity`
     #[doc(alias = "id::entity")]
     #[inline(always)]
-    pub fn to_entity(self) -> Entity {
+    pub fn to_entity(&self) -> Entity<'a> {
         {
             ecs_assert!(!self.is_pair(), FlecsErrorCode::InvalidOperation);
             ecs_assert!(
@@ -194,7 +193,7 @@ impl Id {
     /// * C++ API: `id::add_flags`
     #[doc(alias = "id::add_flags")]
     #[inline(always)]
-    pub fn add_flags(self, flags: IdT) -> Entity {
+    pub fn add_flags(&self, flags: IdT) -> Entity<'a> {
         Entity::new_from_existing_raw(self.world, self.raw_id | flags)
     }
 
@@ -206,7 +205,7 @@ impl Id {
     /// * C++ API: `id::remove_flags`
     #[doc(alias = "id::remove_flags")]
     #[inline(always)]
-    pub fn remove_flags_checked(self, _flags: IdT) -> Entity {
+    pub fn remove_flags_checked(&self, _flags: IdT) -> Entity<'a> {
         ecs_assert!(
             self.raw_id & RUST_ecs_id_FLAGS_MASK == _flags,
             FlecsErrorCode::InvalidParameter
@@ -222,7 +221,7 @@ impl Id {
     /// * C++ API: `id::remove_flags`
     #[doc(alias = "id::remove_flags")]
     #[inline(always)]
-    pub fn remove_flags(self) -> Entity {
+    pub fn remove_flags(&self) -> Entity<'a> {
         Entity::new_from_existing_raw(self.world, self.raw_id & RUST_ECS_COMPONENT_MASK)
     }
 
@@ -237,7 +236,7 @@ impl Id {
     /// * C++ API: `id::flags`
     #[doc(alias = "id::flags")]
     #[inline(always)]
-    pub fn flags(self) -> Entity {
+    pub fn flags(&self) -> Entity<'a> {
         Entity::new_from_existing_raw(self.world, self.raw_id & RUST_ecs_id_FLAGS_MASK)
     }
 
@@ -270,7 +269,7 @@ impl Id {
     /// * C++ API: `id::remove_flags`
     #[doc(alias = "id::remove_flags")]
     #[inline(always)]
-    pub fn remove_generation(self) -> Entity {
+    pub fn remove_generation(&self) -> Entity<'a> {
         Entity::new_from_existing_raw(self.world, self.raw_id as u32 as u64)
     }
 
@@ -300,9 +299,9 @@ impl Id {
     /// * C API: `ecs_get_typeid`
     #[doc(alias = "ecs_get_typeid")]
     #[inline(always)]
-    pub fn type_id(self) -> Entity {
+    pub fn type_id(&self) -> Entity<'a> {
         Entity::new_from_existing_raw(self.world, unsafe {
-            ecs_get_typeid(self.world, self.raw_id)
+            ecs_get_typeid(self.world_ptr(), self.raw_id)
         })
     }
 
@@ -335,15 +334,16 @@ impl Id {
     /// * C++ API: `id::first`
     #[doc(alias = "id::first")]
     #[inline(always)]
-    pub fn first(self) -> Entity {
+    pub fn first(&self) -> Entity<'a> {
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
 
         let entity = ecs_pair_first(self.raw_id);
 
-        if self.world.is_null() {
-            Entity::new_id_only(entity)
-        } else {
-            Entity::new_from_existing_raw(self.world, unsafe { ecs_get_alive(self.world, entity) })
+        match self.world {
+            Some(world) => Entity::new_from_existing_raw(world, unsafe {
+                ecs_get_alive(world.world_ptr_mut(), entity)
+            }),
+            None => Entity::new_id_only(entity),
         }
     }
 
@@ -356,15 +356,16 @@ impl Id {
     ///
     /// * C++ API: `id::second`
     #[doc(alias = "id::second")]
-    pub fn second(self) -> Entity {
+    pub fn second(&self) -> Entity<'a> {
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
 
         let entity = ecs_pair_second(self.raw_id);
 
-        if self.world.is_null() {
-            Entity::new_id_only(entity)
-        } else {
-            Entity::new_from_existing_raw(self.world, unsafe { ecs_get_alive(self.world, entity) })
+        match self.world {
+            Some(world) => Entity::new_from_existing_raw(world, unsafe {
+                ecs_get_alive(world.world_ptr_mut(), entity)
+            }),
+            None => Entity::new_id_only(entity),
         }
     }
 
@@ -381,7 +382,7 @@ impl Id {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
         // C string with a static lifetime. The caller must ensure this invariant.
         // ecs_id_ptr never returns null, so we don't need to check for that.
-        unsafe { std::ffi::CStr::from_ptr(ecs_id_str(self.world, self.raw_id)) }
+        unsafe { std::ffi::CStr::from_ptr(ecs_id_str(self.world_ptr(), self.raw_id)) }
             .to_str()
             .unwrap_or({
                 ecs_assert!(
@@ -412,7 +413,7 @@ impl Id {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
         // C string with a static lifetime. The caller must ensure this invariant.
         // ecs_id_ptr never returns null, so we don't need to check for that.
-        let c_str_ptr = unsafe { ecs_id_str(self.world, self.raw_id) };
+        let c_str_ptr = unsafe { ecs_id_str(self.world_ptr(), self.raw_id) };
 
         // SAFETY: We assume the C string is valid UTF-8. This is risky if not certain.
         unsafe { std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(c_str_ptr).to_bytes()) }
@@ -466,14 +467,10 @@ impl Id {
         unsafe { std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(c_str_ptr).to_bytes()) }
     }
 
-    pub fn world(self) -> World {
-        World {
-            raw_world: self.world,
-            is_owned: false,
-        }
-    }
-
     pub(crate) fn world_ptr(self) -> *mut WorldT {
-        self.world
+        match self.world {
+            Some(world) => world.world_ptr_mut(),
+            None => std::ptr::null_mut(),
+        }
     }
 }

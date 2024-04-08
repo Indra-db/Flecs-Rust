@@ -9,7 +9,7 @@ fn main() {
     world.component::<Third>();
 
     let query = world
-        .query_builder::<(&Position,)>()
+        .query_builder::<&Position>()
         .group_by::<Group>()
         .build();
 
@@ -44,7 +44,7 @@ fn main() {
 
     println!();
 
-    query.iter(|it, (pos,)| {
+    query.iter(|it: Iter, pos: &[Position]| {
         let group = world.new_entity_from_id(it.group_id());
         println!(
             "Group: {:?} - Table: [{:?}]",

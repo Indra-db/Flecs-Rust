@@ -1,6 +1,6 @@
 use std::{ops::Deref, os::raw::c_void};
 
-use crate::core::{Entity, IdT, World};
+use crate::core::{Entity, IdT, IntoWorld};
 
 pub type FTime = f32;
 
@@ -32,8 +32,8 @@ impl EntityId {
     /// # Arguments
     ///
     /// * `world` - The world the entity belongs to
-    pub fn to_entity(&self, world: &World) -> Entity {
-        Entity::new_from_existing_raw(world.raw_world, self.0)
+    pub fn to_entity<'a>(&self, world: impl IntoWorld<'a>) -> Entity<'a> {
+        Entity::new_from_existing_raw(world.world_ref(), self.0)
     }
 }
 
@@ -64,38 +64,15 @@ pub(crate) type EcsCtxFreeT = extern "C" fn(*mut c_void);
 
 #[doc(hidden)]
 pub struct ObserverSystemBindingCtx {
-    pub(crate) each: Option<*mut c_void>,
-    pub(crate) each_entity: Option<*mut c_void>,
-    pub(crate) each_iter: Option<*mut c_void>,
-    pub(crate) iter: Option<*mut c_void>,
-    pub(crate) iter_only: Option<*mut c_void>,
-    pub(crate) free_each: Option<EcsCtxFreeT>,
-    pub(crate) free_each_entity: Option<EcsCtxFreeT>,
-    pub(crate) free_each_iter: Option<EcsCtxFreeT>,
-    pub(crate) free_iter: Option<EcsCtxFreeT>,
-    pub(crate) free_iter_only: Option<EcsCtxFreeT>,
+    pub(crate) func: Option<*mut c_void>,
+    pub(crate) free_func: Option<EcsCtxFreeT>,
 }
 
 impl Drop for ObserverSystemBindingCtx {
     fn drop(&mut self) {
-        if let Some(each) = self.each {
-            if let Some(free_each) = self.free_each {
-                free_each(each);
-            }
-        }
-        if let Some(each_entity) = self.each_entity {
-            if let Some(free_each_entity) = self.free_each_entity {
-                free_each_entity(each_entity);
-            }
-        }
-        if let Some(iter) = self.iter {
-            if let Some(free_iter) = self.free_iter {
-                free_iter(iter);
-            }
-        }
-        if let Some(iter_only) = self.iter_only {
-            if let Some(free_iter_only) = self.free_iter_only {
-                free_iter_only(iter_only);
+        if let Some(func) = self.func {
+            if let Some(free_func) = self.free_func {
+                free_func(func);
             }
         }
     }
@@ -105,45 +82,15 @@ impl Drop for ObserverSystemBindingCtx {
 impl Default for ObserverSystemBindingCtx {
     fn default() -> Self {
         Self {
-            each: None,
-            each_entity: None,
-            each_iter: None,
-            iter: None,
-            iter_only: None,
-            free_each: None,
-            free_each_entity: None,
-            free_each_iter: None,
-            free_iter: None,
-            free_iter_only: None,
+            func: None,
+            free_func: None,
         }
     }
 }
 impl ObserverSystemBindingCtx {
     #[allow(clippy::too_many_arguments)]
-    pub(crate) fn new(
-        each: Option<*mut c_void>,
-        each_entity: Option<*mut c_void>,
-        each_iter: Option<*mut c_void>,
-        iter: Option<*mut c_void>,
-        iter_only: Option<*mut c_void>,
-        free_each: Option<EcsCtxFreeT>,
-        free_each_entity: Option<EcsCtxFreeT>,
-        free_each_iter: Option<EcsCtxFreeT>,
-        free_iter: Option<EcsCtxFreeT>,
-        free_iter_only: Option<EcsCtxFreeT>,
-    ) -> Self {
-        Self {
-            each,
-            each_entity,
-            each_iter,
-            iter,
-            iter_only,
-            free_each,
-            free_each_entity,
-            free_each_iter,
-            free_iter,
-            free_iter_only,
-        }
+    pub(crate) fn new(func: Option<*mut c_void>, free_func: Option<EcsCtxFreeT>) -> Self {
+        Self { func, free_func }
     }
 }
 

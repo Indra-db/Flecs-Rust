@@ -9,19 +9,19 @@ use crate::sys::{
 
 use super::{
     archetype::Archetype,
-    c_types::{EntityT, IdT, TableT, WorldT},
+    c_types::{EntityT, IdT, TableT},
     component_registration::ComponentId,
-    ecs_pair, IntoWorld, World,
+    ecs_pair, IntoWorld, WorldRef,
 };
 
 /// A wrapper class that gives direct access to the component arrays of a table, the table data
 #[derive(Debug)]
-pub struct Table {
-    world: *mut WorldT,
+pub struct Table<'a> {
+    world: WorldRef<'a>,
     table: *mut TableT,
 }
 
-impl Clone for Table {
+impl<'a> Clone for Table<'a> {
     fn clone(&self) -> Self {
         Self {
             world: self.world,
@@ -30,16 +30,7 @@ impl Clone for Table {
     }
 }
 
-impl Default for Table {
-    fn default() -> Self {
-        Self {
-            world: std::ptr::null_mut(),
-            table: std::ptr::null_mut(),
-        }
-    }
-}
-
-impl Table {
+impl<'a> Table<'a> {
     /// Creates a wrapper around a table
     ///
     /// # Arguments
@@ -51,9 +42,9 @@ impl Table {
     ///
     /// * C++ API: `table::table`
     #[doc(alias = "table::table")]
-    pub fn new(world: impl IntoWorld, table: *mut TableT) -> Self {
+    pub fn new(world: impl IntoWorld<'a>, table: *mut TableT) -> Self {
         Self {
-            world: world.world_ptr_mut(),
+            world: world.world_ref(),
             table,
         }
     }
@@ -66,7 +57,7 @@ impl Table {
     #[doc(alias = "table::str")]
     pub fn to_string(&self) -> Option<String> {
         unsafe {
-            let raw_ptr = ecs_table_str(self.world, self.table);
+            let raw_ptr = ecs_table_str(self.world.world_ptr_mut(), self.table);
 
             if raw_ptr.is_null() {
                 return None;
@@ -117,7 +108,7 @@ impl Table {
     /// * C++ API: `table::type_index`
     #[doc(alias = "table::type_index")]
     pub fn find_type_index_id(&self, id: IdT) -> Option<i32> {
-        let index = unsafe { ecs_table_get_type_index(self.world, self.table, id) };
+        let index = unsafe { ecs_table_get_type_index(self.world.world_ptr_mut(), self.table, id) };
         if index == -1 {
             None
         } else {
@@ -226,7 +217,8 @@ impl Table {
     /// * C++ API: `table::column_index`
     #[doc(alias = "table::column_index")]
     pub fn find_column_index_id(&self, id: IdT) -> Option<i32> {
-        let index = unsafe { ecs_table_get_column_index(self.world, self.table, id) };
+        let index =
+            unsafe { ecs_table_get_column_index(self.world.world_ptr_mut(), self.table, id) };
         if index == -1 {
             None
         } else {
@@ -574,7 +566,7 @@ impl Table {
     /// * C++ API: `table::depth`
     #[doc(alias = "table::depth")]
     pub fn depth_id(&self, rel: EntityT) -> i32 {
-        unsafe { ecs_table_get_depth(self.world, self.table, rel) }
+        unsafe { ecs_table_get_depth(self.world.world_ptr_mut(), self.table, rel) }
     }
 
     /// Get raw table ptr
@@ -583,14 +575,14 @@ impl Table {
     }
 }
 
-#[derive(Debug, Default)]
-pub struct TableRange {
-    pub table: Table,
+#[derive(Debug)]
+pub struct TableRange<'a> {
+    pub table: Table<'a>,
     offset: i32,
     count: i32,
 }
 
-impl Clone for TableRange {
+impl<'a> Clone for TableRange<'a> {
     fn clone(&self) -> Self {
         Self {
             table: self.table.clone(),
@@ -599,7 +591,7 @@ impl Clone for TableRange {
         }
     }
 }
-impl TableRange {
+impl<'a> TableRange<'a> {
     /// Creates a new table range
     ///
     /// # Arguments
@@ -616,7 +608,7 @@ impl TableRange {
     ///
     /// * C++ API: `table_range::table_range`
     #[doc(alias = "table_range::table_range")]
-    pub fn new(table: &Table, offset: i32, count: i32) -> Self {
+    pub fn new(table: &'a Table, offset: i32, count: i32) -> Self {
         Self {
             table: table.clone(),
             offset,
@@ -640,9 +632,14 @@ impl TableRange {
     /// # Safety
     ///
     /// The world and table pointers must be valid
-    pub(crate) fn new_raw(world: *mut WorldT, table: *mut TableT, offset: i32, count: i32) -> Self {
+    pub(crate) unsafe fn new_raw(
+        world: impl IntoWorld<'a>,
+        table: *mut TableT,
+        offset: i32,
+        count: i32,
+    ) -> Self {
         Self {
-            table: Table::new(&World::new_wrap_raw_world(world), table),
+            table: Table::new(world, table),
             offset,
             count,
         }

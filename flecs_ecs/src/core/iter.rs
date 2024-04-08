@@ -19,12 +19,11 @@ use super::{
     entity::Entity,
     id::Id,
     table::{Table, TableRange},
-    world::World,
-    Archetype, FTime,
+    Archetype, FTime, IntoWorld,
 };
 
 pub struct Iter<'a> {
-    iter: &'a mut IterT,
+    pub(crate) iter: &'a mut IterT,
 }
 
 impl<'a> Iter<'a> {
@@ -60,8 +59,8 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::system`
     #[doc(alias = "iter::system")]
-    pub fn system(&self) -> Entity {
-        Entity::new_from_existing_raw(self.iter.world, self.iter.system)
+    pub fn system(&self) -> Entity<'a> {
+        Entity::new_from_existing_raw(self.world_ref(), self.iter.system)
     }
 
     /// Wrap the event id in the iterator in an `Entity` object
@@ -70,8 +69,8 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::event`
     #[doc(alias = "iter::event")]
-    pub fn event(&self) -> Entity {
-        Entity::new_from_existing_raw(self.iter.world, self.iter.event)
+    pub fn event(&self) -> Entity<'a> {
+        Entity::new_from_existing_raw(self.world_ref(), self.iter.event)
     }
 
     /// Wrap the event id in the iterator in an `Id` object
@@ -80,18 +79,8 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::event_id`
     #[doc(alias = "iter::event_id")]
-    pub fn event_id(&self) -> Id {
-        Id::new_from_existing(self.iter.world, self.iter.event_id)
-    }
-
-    /// wrap the world in the iterator in a `World` object
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::world`
-    #[doc(alias = "iter::world")]
-    pub fn world(&self) -> World {
-        World::new_wrap_raw_world(self.iter.world)
+    pub fn event_id(&self) -> Id<'a> {
+        Id::new_from_existing(self.world_ref(), self.iter.event_id)
     }
 
     /// Obtain mutable handle to entity being iterated over.
@@ -104,8 +93,8 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::entity`
     #[doc(alias = "iter::entity")]
-    pub fn entity(&self, row: usize) -> Entity {
-        unsafe { Entity::new_from_existing_raw(self.iter.world, *self.iter.entities.add(row)) }
+    pub fn entity(&self, row: usize) -> Entity<'a> {
+        unsafe { Entity::new_from_existing_raw(self.world_ref(), *self.iter.entities.add(row)) }
     }
 
     /// Return a mut reference to the raw iterator object
@@ -155,7 +144,7 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::type`
     #[doc(alias = "iter::type")]
     pub fn archetype(&self) -> Archetype {
-        unsafe { Archetype::new(self.iter.world, ecs_table_get_type(self.iter.table)) }
+        unsafe { Archetype::new(self.world_ref(), ecs_table_get_type(self.iter.table)) }
     }
 
     /// # See also
@@ -163,10 +152,7 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::table`
     #[doc(alias = "iter::table")]
     pub fn table(&self) -> Table {
-        Table::new(
-            &World::new_wrap_raw_world(self.iter.real_world),
-            self.iter.table,
-        )
+        Table::new(self.world_ref(), self.iter.table)
     }
 
     /// # See also
@@ -174,8 +160,9 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::range`
     #[doc(alias = "iter::range")]
     pub fn table_range(&mut self) -> TableRange {
+        let world = self.world_ref();
         let iter: &mut IterT = self.iter;
-        TableRange::new_raw(iter.real_world, iter.table, iter.offset, iter.count)
+        unsafe { TableRange::new_raw(world, iter.table, iter.offset, iter.count) }
     }
 
     /// Get the variable of the iterator
@@ -190,7 +177,7 @@ impl<'a> Iter<'a> {
     #[doc(alias = "iter::get_var")]
     #[cfg(feature = "flecs_rules")]
     pub fn get_var(&mut self, var_id: i32) -> Entity {
-        let world = self.iter.world;
+        let world = self.world_ref();
         let iter: &mut IterT = self.iter;
         unsafe {
             ecs_assert!(var_id != -1, FlecsErrorCode::InvalidParameter, 0);
@@ -212,7 +199,7 @@ impl<'a> Iter<'a> {
     pub fn get_var_by_name(&mut self, name: &CStr) -> Entity {
         use flecs_ecs_sys::ecs_rule_find_var;
 
-        let world = self.iter.world;
+        let world = self.world_ref();
         let iter: &mut IterT = self.iter;
         let rit = unsafe { &mut iter.priv_.iter.rule };
         let rule = rit.rule;
@@ -352,7 +339,7 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::src`
     #[doc(alias = "iter::src")]
     pub fn src(&self, index: i32) -> Entity {
-        unsafe { Entity::new_from_existing_raw(self.iter.world, ecs_field_src(self.iter, index)) }
+        unsafe { Entity::new_from_existing_raw(self.world_ref(), ecs_field_src(self.iter, index)) }
     }
 
     /// Obtain id matched for field.
@@ -366,7 +353,7 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::id`
     #[doc(alias = "iter::id")]
     pub fn id(&self, index: i32) -> Id {
-        unsafe { Id::new_from_existing(self.iter.world, ecs_field_id(self.iter, index)) }
+        unsafe { Id::new_from_existing(self.world_ref(), ecs_field_id(self.iter, index)) }
     }
 
     /// Obtain pair id matched for field.
@@ -384,7 +371,7 @@ impl<'a> Iter<'a> {
         unsafe {
             let id = ecs_field_id(self.iter, index);
             if ecs_id_is_pair(id) {
-                Some(Id::new_from_existing(self.iter.world, id))
+                Some(Id::new_from_existing(self.world_ref(), id))
             } else {
                 None
             }
@@ -584,7 +571,7 @@ impl<'a> Iter<'a> {
                 unsafe {
                     let term_id_ptr = ecs_field_id(self.iter, index);
                     let is_pair = ecs_id_is_pair(term_id_ptr);
-                    let is_id_correct = T::get_id(self.iter.world) == term_id_ptr;
+                    let is_id_correct = T::get_id(self.world_ref()) == term_id_ptr;
                     is_pair || is_id_correct
                 }
             },

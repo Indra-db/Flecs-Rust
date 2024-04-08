@@ -9,7 +9,7 @@ fn main() {
     let _sys = world
         .system_builder::<(&mut Position, &Velocity)>()
         // .on_each_entity if you want the entity to be added in the parameter list
-        .on_each(|(pos, vel)| {
+        .each(|_, pos: &mut Position, vel: &Velocity| {
             pos.x += vel.x;
             pos.y += vel.y;
         });

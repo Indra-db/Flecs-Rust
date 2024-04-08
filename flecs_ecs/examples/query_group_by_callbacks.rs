@@ -61,7 +61,7 @@ fn main() {
 
     // Grouped query
     let query = world
-        .query_builder::<(&Position,)>()
+        .query_builder::<&Position>()
         .group_by::<Group>()
         // Callback invoked when a new group is created
         .on_group_create(Some(callback_group_create))
@@ -115,7 +115,7 @@ fn main() {
     //     - table [Position, Tag, (Group, Third)]
     //
 
-    query.iter(|it, (pos,)| {
+    query.iter(|it: Iter, pos: &[Position]| {
         let group = world.new_entity_from_id(it.group_id());
         let ctx = unsafe { &*(query.group_context(group) as *mut GroupCtx) };
         println!(

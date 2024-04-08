@@ -50,8 +50,8 @@ fn main() {
     inst.set(Defence { value: 100.0 });
 
     // Queries can match components from multiple levels of inheritance
-    world.each_entity::<(&Position, &ImpulseSpeed, &Defence, &FreightCapacity)>(
-        |e, (p, s, d, c)| {
+    world.each(
+        |e: Entity, p: &Position, s: &ImpulseSpeed, d: &Defence, c: &FreightCapacity| {
             println!("{}:", e.name());
             println!(" - position: {}, {}", p.x, p.y);
             println!(" - impulse speed: {}", s.value);

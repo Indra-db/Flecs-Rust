@@ -40,17 +40,17 @@ pub trait ComponentType<T: ECSComponentType> {}
 /// If the world doesn't, this implies the component was registered by a different world.
 /// In such a case, the component is registered with the present world using the pre-existing ID.
 /// If the ID is already known, the trait takes care of the component registration and checks for consistency in the input.
-pub trait ComponentId: Sized + ComponentInfo {
+pub trait ComponentId: Sized + ComponentInfo + 'static {
     type UnderlyingType: ComponentId;
     type UnderlyingEnumType: ComponentId + CachedEnumData;
 
     /// attempts to register the component with the world. If it's already registered, it does nothing.
-    fn register_explicit(world: impl IntoWorld) {
+    fn register_explicit<'a>(world: impl IntoWorld<'a>) {
         try_register_component::<Self::UnderlyingType>(world);
     }
 
     /// attempts to register the component with name with the world. If it's already registered, it does nothing.
-    fn register_explicit_named(world: impl IntoWorld, name: &CStr) -> EntityT {
+    fn register_explicit_named<'a>(world: impl IntoWorld<'a>, name: &CStr) -> EntityT {
         try_register_component_named::<Self::UnderlyingType>(world, name)
     }
 
@@ -67,7 +67,7 @@ pub trait ComponentId: Sized + ComponentInfo {
     /// this will be changed in the future where we get rid of the pointers.
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
-    fn is_registered_with_world(world: impl IntoWorld) -> bool {
+    fn is_registered_with_world<'a>(world: impl IntoWorld<'a>) -> bool {
         if Self::is_registered() {
             unsafe {
                 is_component_registered_with_world::<Self::UnderlyingType>(world.get_world_raw())
@@ -78,7 +78,7 @@ pub trait ComponentId: Sized + ComponentInfo {
     }
 
     /// returns the component id of the component. If the component is not registered, it will register it.
-    fn get_id(world: impl IntoWorld) -> IdT {
+    fn get_id<'a>(world: impl IntoWorld<'a>) -> IdT {
         try_register_component::<Self::UnderlyingType>(world);
         unsafe { Self::get_id_unchecked() }
     }
@@ -157,8 +157,8 @@ pub trait CachedEnumData: ComponentType<Enum> + ComponentId {
     }
 
     /// get the entity id of the variant of the enum. This function will register the enum with the world if it's not registered.
-    fn get_id_variant(&self, world: impl IntoWorld) -> Entity {
-        try_register_component::<Self>(&world);
+    fn get_id_variant<'a>(&self, world: impl IntoWorld<'a>) -> Entity<'a> {
+        try_register_component::<Self>(world.world_ref());
         let index = self.enum_index();
         Entity::new_from_existing_raw(world, unsafe { *Self::__enum_data_mut().add(index) })
     }
@@ -167,7 +167,7 @@ pub trait CachedEnumData: ComponentType<Enum> + ComponentId {
     ///
     /// This function is unsafe because it assumes the enum has been registered as a component with the world.
     /// if uncertain, use `try_register_component::<T>` to try and register it
-    unsafe fn get_id_variant_unchecked(&self, world: impl IntoWorld) -> Entity {
+    unsafe fn get_id_variant_unchecked<'a>(&self, world: impl IntoWorld<'a>) -> Entity<'a> {
         let index = self.enum_index();
         Entity::new_from_existing_raw(world, unsafe { *Self::__enum_data_mut().add(index) })
     }
@@ -202,7 +202,7 @@ impl<T: ComponentInfo> ComponentInfo for &mut T {
     const IS_TAG: bool = T::IS_TAG;
 }
 
-impl<T: ComponentId> ComponentId for &T {
+impl<T: ComponentId> ComponentId for &'static T {
     fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::IdComponent> {
         Self::UnderlyingType::__get_once_lock_data()
     }
@@ -212,7 +212,7 @@ impl<T: ComponentId> ComponentId for &T {
     type UnderlyingEnumType = T::UnderlyingEnumType;
 }
 
-impl<T: ComponentId> ComponentId for &mut T {
+impl<T: ComponentId> ComponentId for &'static mut T {
     fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::IdComponent> {
         Self::UnderlyingType::__get_once_lock_data()
     }

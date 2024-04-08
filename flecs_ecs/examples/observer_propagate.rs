@@ -21,7 +21,7 @@ fn main() {
         .term_at(2)
         .parent()
         .add_event(ECS_ON_SET)
-        .on_each_iter(|it, index, (pos_self, pos_parent)| {
+        .each_iter(|it, index, pos_self, pos_parent| {
             println!(
                 " - {}: {}: {}: self: {{ {}, {} }}, parent: {{ {}, {} }}",
                 it.event().name(),
