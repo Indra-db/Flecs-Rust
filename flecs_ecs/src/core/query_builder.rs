@@ -73,7 +73,7 @@ where
             ..Default::default()
         };
 
-        obj.desc.filter.entity = unsafe { ecs_entity_init(world.raw_world, &entity_desc) };
+        obj.desc.filter.entity = unsafe { ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -104,7 +104,7 @@ where
             ..Default::default()
         };
 
-        obj.desc.filter.entity = unsafe { ecs_entity_init(world.raw_world, &entity_desc) };
+        obj.desc.filter.entity = unsafe { ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -156,7 +156,7 @@ where
             ..Default::default()
         };
 
-        obj.desc.filter.entity = unsafe { ecs_entity_init(world.raw_world, &entity_desc) };
+        obj.desc.filter.entity = unsafe { ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }

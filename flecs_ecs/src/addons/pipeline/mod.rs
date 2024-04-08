@@ -7,7 +7,7 @@ pub use pipeline_builder::*;
 use std::ops::{Deref, DerefMut};
 
 use crate::{
-    core::{Entity, FlecsErrorCode, Iterable, World},
+    core::{Entity, FlecsErrorCode, IntoWorld, Iterable, World},
     ecs_abort,
     sys::{ecs_os_api, ecs_pipeline_desc_t, ecs_pipeline_init},
 };
@@ -64,7 +64,7 @@ where
             entity,
             phantom: Default::default(),
         };
-        pipeline.raw_id = unsafe { ecs_pipeline_init(world.raw_world, &desc) };
+        pipeline.raw_id = unsafe { ecs_pipeline_init(world.world_ptr_mut(), &desc) };
 
         if pipeline.raw_id == 0 {
             ecs_abort!(FlecsErrorCode::InvalidParameter);

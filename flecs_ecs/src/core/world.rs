@@ -1,6 +1,6 @@
 //! World operations.
 
-use std::{ffi::CStr, ops::Deref, os::raw::c_void};
+use std::{ffi::CStr, os::raw::c_void, ptr::NonNull};
 
 #[cfg(feature = "flecs_app")]
 use crate::addons::app::App;
@@ -59,13 +59,13 @@ use super::{
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct World {
-    pub raw_world: *mut WorldT,
+    pub raw_world: NonNull<WorldT>,
 }
 
 impl Default for World {
     fn default() -> Self {
         let world = Self {
-            raw_world: unsafe { ecs_init() },
+            raw_world: unsafe { NonNull::new_unchecked(ecs_init()) },
         };
 
         world.init_builtin_components();
@@ -73,20 +73,12 @@ impl Default for World {
     }
 }
 
-impl Deref for World {
-    type Target = *mut WorldT;
-
-    fn deref(&self) -> &Self::Target {
-        &self.raw_world
-    }
-}
-
 impl Drop for World {
     fn drop(&mut self) {
-        if unsafe { ecs_stage_is_async(self.raw_world) } {
-            unsafe { ecs_async_stage_free(self.raw_world) }
+        if unsafe { ecs_stage_is_async(self.raw_world.as_ptr()) } {
+            unsafe { ecs_async_stage_free(self.raw_world.as_ptr()) }
         } else {
-            unsafe { ecs_fini(self.raw_world) };
+            unsafe { ecs_fini(self.raw_world.as_ptr()) };
         }
     }
 }
@@ -98,7 +90,9 @@ impl World {
 
     /// Wrapper around raw world, takes no ownership.
     pub fn new_wrap_raw_world(world: *mut WorldT) -> Self {
-        Self { raw_world: world }
+        Self {
+            raw_world: unsafe { NonNull::new_unchecked(world) },
+        }
     }
 
     fn init_builtin_components(&self) {
@@ -121,8 +115,8 @@ impl World {
     /// * C++ API: `world::reset`
     #[doc(alias = "world::reset")]
     pub fn reset(&mut self) {
-        unsafe { ecs_fini(self.raw_world) };
-        self.raw_world = unsafe { ecs_init() };
+        unsafe { ecs_fini(self.raw_world.as_ptr()) };
+        self.raw_world = unsafe { NonNull::new_unchecked(ecs_init()) };
     }
 
     /// obtain pointer to C world object
@@ -136,7 +130,7 @@ impl World {
     /// * C++ API: `world::c_ptr`
     #[doc(alias = "world::c_ptr")]
     pub fn ptr_mut(&self) -> *mut WorldT {
-        self.raw_world
+        self.raw_world.as_ptr()
     }
 
     /// Get the world's info.
@@ -147,7 +141,7 @@ impl World {
     #[doc(alias = "world::get_info")]
     fn get_info(&self) -> &ecs_world_info_t {
         // SAFETY: The pointer is valid for the lifetime of the world.
-        unsafe { &*ecs_get_world_info(self.raw_world) }
+        unsafe { &*ecs_get_world_info(self.raw_world.as_ptr()) }
     }
 
     /// Gets the last `delta_time`.
@@ -172,7 +166,7 @@ impl World {
     #[doc(alias = "world::quit")]
     pub fn quit(&self) {
         unsafe {
-            ecs_quit(self.raw_world);
+            ecs_quit(self.raw_world.as_ptr());
         }
     }
 
@@ -185,7 +179,7 @@ impl World {
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     pub fn on_destroyed(&self, action: ecs_fini_action_t, ctx: *mut c_void) {
         unsafe {
-            ecs_atfini(self.raw_world, action, ctx);
+            ecs_atfini(self.raw_world.as_ptr(), action, ctx);
         }
     }
 
@@ -200,7 +194,7 @@ impl World {
     /// * C++ API: `world::should_quit`
     #[doc(alias = "world::should_quit")]
     pub fn should_quit(&self) -> bool {
-        unsafe { ecs_should_quit(self.raw_world) }
+        unsafe { ecs_should_quit(self.raw_world.as_ptr()) }
     }
 
     /// Begins a frame.
@@ -230,7 +224,7 @@ impl World {
     /// * C++ API: `world::frame_begin`
     #[doc(alias = "world::frame_begin")]
     pub fn frame_begin(&self, delta_time: f32) -> f32 {
-        unsafe { ecs_frame_begin(self.raw_world, delta_time) }
+        unsafe { ecs_frame_begin(self.raw_world.as_ptr(), delta_time) }
     }
 
     /// Ends a frame.
@@ -246,7 +240,7 @@ impl World {
     #[doc(alias = "world::frame_end")]
     pub fn frame_end(&self) {
         unsafe {
-            ecs_frame_end(self.raw_world);
+            ecs_frame_end(self.raw_world.as_ptr());
         }
     }
 
@@ -276,7 +270,7 @@ impl World {
     /// * C++ API: `world::readonly_begin`
     #[doc(alias = "world::readonly_begin")]
     pub fn readonly_begin(&self) -> bool {
-        unsafe { ecs_readonly_begin(self.raw_world) }
+        unsafe { ecs_readonly_begin(self.raw_world.as_ptr()) }
     }
 
     /// End staging.
@@ -298,7 +292,7 @@ impl World {
     #[doc(alias = "world::readonly_end")]
     pub fn readonly_end(&self) {
         unsafe {
-            ecs_readonly_end(self.raw_world);
+            ecs_readonly_end(self.raw_world.as_ptr());
         }
     }
 
@@ -318,7 +312,7 @@ impl World {
     /// * C++ API: `world::defer_begin`
     #[doc(alias = "world::defer_begin")]
     pub fn defer_begin(&self) -> bool {
-        unsafe { ecs_defer_begin(self.raw_world) }
+        unsafe { ecs_defer_begin(self.raw_world.as_ptr()) }
     }
 
     /// Ends a block of operations to defer.
@@ -336,7 +330,7 @@ impl World {
     /// * C++ API: `world::defer_end`
     #[doc(alias = "world::defer_end")]
     pub fn defer_end(&self) -> bool {
-        unsafe { ecs_defer_end(self.raw_world) }
+        unsafe { ecs_defer_end(self.raw_world.as_ptr()) }
     }
 
     /// Test whether deferring is enabled.
@@ -350,7 +344,7 @@ impl World {
     /// * C++ API: `world::is_deferred`
     #[doc(alias = "world::is_deferred")]
     pub fn is_deferred(&self) -> bool {
-        unsafe { ecs_is_deferred(self.raw_world) }
+        unsafe { ecs_is_deferred(self.raw_world.as_ptr()) }
     }
 
     /// Configure world to have N stages.
@@ -374,7 +368,7 @@ impl World {
     #[doc(alias = "world::set_stage_count")]
     pub fn set_stage_count(&self, stages: i32) {
         unsafe {
-            ecs_set_stage_count(self.raw_world, stages);
+            ecs_set_stage_count(self.raw_world.as_ptr(), stages);
         }
     }
 
@@ -391,7 +385,7 @@ impl World {
     /// * C++ API: `world::get_stage_count`
     #[doc(alias = "world::get_stage_count")]
     pub fn get_stage_count(&self) -> i32 {
-        unsafe { ecs_get_stage_count(self.raw_world) }
+        unsafe { ecs_get_stage_count(self.raw_world.as_ptr()) }
     }
 
     /// Get current stage id.
@@ -408,7 +402,7 @@ impl World {
     /// * C++ API: `world::get_stage_id`
     #[doc(alias = "world::get_stage_id")]
     pub fn get_stage_id(&self) -> i32 {
-        unsafe { ecs_get_stage_id(self.raw_world) }
+        unsafe { ecs_get_stage_id(self.raw_world.as_ptr()) }
     }
 
     /// Test if is a stage.
@@ -427,12 +421,20 @@ impl World {
     pub fn is_stage(&self) -> bool {
         unsafe {
             ecs_assert!(
-                ecs_poly_is_(self.raw_world as *const c_void, ecs_world_t_magic as i32)
-                    || ecs_poly_is_(self.raw_world as *const c_void, ecs_stage_t_magic as i32),
+                ecs_poly_is_(
+                    self.raw_world.as_ptr() as *const c_void,
+                    ecs_world_t_magic as i32
+                ) || ecs_poly_is_(
+                    self.raw_world.as_ptr() as *const c_void,
+                    ecs_stage_t_magic as i32
+                ),
                 FlecsErrorCode::InvalidParameter,
                 "Parameter is not a world or stage"
             );
-            ecs_poly_is_(self.raw_world as *const c_void, ecs_stage_t_magic as i32)
+            ecs_poly_is_(
+                self.raw_world.as_ptr() as *const c_void,
+                ecs_stage_t_magic as i32,
+            )
         }
     }
 
@@ -460,7 +462,7 @@ impl World {
     /// * C++ API: `world::set_automerge`
     #[doc(alias = "world::set_automerge")]
     pub fn set_automerge(&self, automerge: bool) {
-        unsafe { ecs_set_automerge(self.raw_world, automerge) };
+        unsafe { ecs_set_automerge(self.raw_world.as_ptr(), automerge) };
     }
 
     /// Merge world or stage.
@@ -477,7 +479,7 @@ impl World {
     /// * C++ API: `world::merge`
     #[doc(alias = "world::merge")]
     pub fn merge(&self) {
-        unsafe { ecs_merge(self.raw_world) };
+        unsafe { ecs_merge(self.raw_world.as_ptr()) };
     }
 
     /// Get stage-specific world pointer.
@@ -505,9 +507,7 @@ impl World {
     /// * C++ API: `world::get_stage`
     #[doc(alias = "world::get_stage")]
     pub fn stage(&self, stage_id: i32) -> Self {
-        Self {
-            raw_world: unsafe { ecs_get_stage(self.raw_world, stage_id) },
-        }
+        Self::new_wrap_raw_world(unsafe { ecs_get_stage(self.raw_world.as_ptr(), stage_id) })
     }
 
     /// Create asynchronous stage.
@@ -535,9 +535,7 @@ impl World {
     /// * C++ API: `world::async_stage`
     #[doc(alias = "world::async_stage")]
     pub fn create_async_stage(&self) -> Self {
-        Self {
-            raw_world: unsafe { ecs_async_stage_new(self.raw_world) },
-        }
+        Self::new_wrap_raw_world(unsafe { ecs_async_stage_new(self.raw_world.as_ptr()) })
     }
 
     /// Get actual world.
@@ -554,9 +552,9 @@ impl World {
     /// * C++ API: `world::get_world`
     #[doc(alias = "world::get_world")]
     pub fn get_world(&self) -> Self {
-        Self {
-            raw_world: unsafe { ecs_get_world(self.raw_world as *const c_void) as *mut WorldT },
-        }
+        Self::new_wrap_raw_world(unsafe {
+            ecs_get_world(self.raw_world.as_ptr() as *const c_void) as *mut WorldT
+        })
     }
 
     /// Test whether the current world object is readonly.
@@ -573,7 +571,7 @@ impl World {
     /// * C++ API: `world::is_readonly`
     #[doc(alias = "world::is_readonly")]
     pub fn is_readonly(&self) -> bool {
-        unsafe { ecs_stage_is_readonly(self.raw_world) }
+        unsafe { ecs_stage_is_readonly(self.raw_world.as_ptr()) }
     }
 
     /// Set world context.
@@ -592,7 +590,7 @@ impl World {
     #[doc(alias = "world::set_ctx")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     pub fn set_context(&self, ctx: *mut c_void, ctx_free: ecs_ctx_free_t) {
-        unsafe { ecs_set_ctx(self.raw_world, ctx, ctx_free) }
+        unsafe { ecs_set_ctx(self.raw_world.as_ptr(), ctx, ctx_free) }
     }
 
     /// Get world context.
@@ -606,7 +604,7 @@ impl World {
     /// * C++ API: `world::get_ctx`
     #[doc(alias = "world::get_ctx")]
     pub fn context(&self) -> *mut c_void {
-        unsafe { ecs_get_ctx(self.raw_world) }
+        unsafe { ecs_get_ctx(self.raw_world.as_ptr()) }
     }
 
     /// Set world binding context
@@ -623,7 +621,7 @@ impl World {
     #[doc(alias = "world::set_binding_context")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn set_binding_context(&self, ctx: *mut c_void, ctx_free: ecs_ctx_free_t) {
-        unsafe { ecs_set_ctx(self.raw_world, ctx, ctx_free) }
+        unsafe { ecs_set_ctx(self.raw_world.as_ptr(), ctx, ctx_free) }
     }
 
     /// Get world binding context.
@@ -637,7 +635,7 @@ impl World {
     /// * C++ API: `world::get_binding_context`
     #[doc(alias = "world::get_binding_context")]
     pub fn get_binding_context(&self) -> *mut c_void {
-        unsafe { ecs_get_ctx(self.raw_world) }
+        unsafe { ecs_get_ctx(self.raw_world.as_ptr()) }
     }
 
     /// Preallocate memory for a number of entities.
@@ -653,7 +651,7 @@ impl World {
     /// * C++ API: `world::dim`
     #[doc(alias = "world::dim")]
     pub fn preallocate_entity_count(&self, entity_count: i32) {
-        unsafe { ecs_dim(self.raw_world, entity_count) };
+        unsafe { ecs_dim(self.raw_world.as_ptr(), entity_count) };
     }
 
     /// Set the entity range.
@@ -670,7 +668,7 @@ impl World {
     /// * C++ API: `world::set_entity_range`
     #[doc(alias = "world::set_entity_range")]
     pub fn set_entity_range(&self, min: impl IntoEntityId, max: impl IntoEntityId) {
-        unsafe { ecs_set_entity_range(self.raw_world, min.get_id(), max.get_id()) };
+        unsafe { ecs_set_entity_range(self.raw_world.as_ptr(), min.get_id(), max.get_id()) };
     }
 
     /// Enforce that operations cannot modify entities outside of the specified range.
@@ -688,7 +686,7 @@ impl World {
     /// * C++ API: `world::enable_range_check`
     #[doc(alias = "world::enable_range_check")]
     pub fn enable_range_check(&self, enabled: bool) {
-        unsafe { ecs_enable_range_check(self.raw_world, enabled) };
+        unsafe { ecs_enable_range_check(self.raw_world.as_ptr(), enabled) };
     }
 
     /// Get the current scope. Get the scope set by `ecs_set_scope`. If no scope is set, this operation will return 0.
@@ -703,7 +701,7 @@ impl World {
     #[doc(alias = "world::get_scope")]
     #[inline(always)]
     pub fn get_scope<T: ComponentId>(&self) -> Entity {
-        Entity::new_from_existing(self, unsafe { ecs_get_scope(self.raw_world) })
+        Entity::new_from_existing(self, unsafe { ecs_get_scope(self.raw_world.as_ptr()) })
     }
 
     /// Set the current scope. This operation sets the scope of the current stage to the provided entity.
@@ -726,7 +724,7 @@ impl World {
     #[doc(alias = "world::set_scope")]
     #[inline(always)]
     pub fn set_scope_with_id(&self, id: impl IntoEntityId) -> Entity {
-        Entity::new_id_only(unsafe { ecs_set_scope(self.raw_world, id.get_id()) })
+        Entity::new_id_only(unsafe { ecs_set_scope(self.raw_world.as_ptr(), id.get_id()) })
     }
 
     /// Sets the current scope, but allows the scope type to be inferred from the type parameter.
@@ -796,7 +794,7 @@ impl World {
     #[doc(alias = "wecs_set_lookup_path")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     pub fn set_lookup_path(&self, search_path: *const EntityT) -> *mut EntityT {
-        unsafe { ecs_set_lookup_path(self.raw_world, search_path) }
+        unsafe { ecs_set_lookup_path(self.raw_world.as_ptr(), search_path) }
     }
 
     /// Lookup entity by name
@@ -817,7 +815,7 @@ impl World {
     pub fn lookup_name(&self, name: &CStr, search_path: bool) -> Entity {
         let entity_id = unsafe {
             ecs_lookup_path_w_sep(
-                self.raw_world,
+                self.raw_world.as_ptr(),
                 0,
                 name.as_ptr(),
                 SEPARATOR.as_ptr(),
@@ -847,7 +845,7 @@ impl World {
     pub fn lookup_name_optional_optional(&self, name: &CStr, search_path: bool) -> Option<Entity> {
         let entity_id = unsafe {
             ecs_lookup_path_w_sep(
-                self.raw_world,
+                self.raw_world.as_ptr(),
                 0,
                 name.as_ptr(),
                 SEPARATOR.as_ptr(),
@@ -874,7 +872,7 @@ impl World {
     #[doc(alias = "world::set")]
     pub fn set<T: ComponentId>(&self, component: T) {
         let id = T::get_id(self);
-        set_helper(self.raw_world, id, component, id);
+        set_helper(self.raw_world.as_ptr(), id, component, id);
     }
 
     /// Set a singleton pair using the second element type and a first id.
@@ -1029,7 +1027,12 @@ impl World {
         let component_id = T::get_id(self);
         let singleton_entity = Entity::new_from_existing(self, component_id);
         unsafe {
-            (ecs_get_id(self.raw_world, singleton_entity.raw_id, component_id) as *const T).as_ref()
+            (ecs_get_id(
+                self.raw_world.as_ptr(),
+                singleton_entity.raw_id,
+                component_id,
+            ) as *const T)
+                .as_ref()
         }
     }
 
@@ -1064,7 +1067,11 @@ impl World {
         // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
         // it is guaranteed to be valid
         unsafe {
-            &mut *(ecs_get_mut_id(self.raw_world, singleton_entity.raw_id, component_id) as *mut T)
+            &mut *(ecs_get_mut_id(
+                self.raw_world.as_ptr(),
+                singleton_entity.raw_id,
+                component_id,
+            ) as *mut T)
         }
     }
 
@@ -1132,7 +1139,7 @@ impl World {
     {
         let id = First::get_id(self);
         Entity::new_from_existing(self, unsafe {
-            ecs_get_target(self.raw_world, id, id, index.unwrap_or(0))
+            ecs_get_target(self.raw_world.as_ptr(), id, id, index.unwrap_or(0))
         })
     }
 
@@ -1155,7 +1162,7 @@ impl World {
         let relationship = relationship.get_id();
         Entity::new_from_existing(self, unsafe {
             ecs_get_target(
-                self.raw_world,
+                self.raw_world.as_ptr(),
                 relationship,
                 relationship,
                 index.unwrap_or(0) as i32,
@@ -1198,8 +1205,11 @@ impl World {
         // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
         // it is guaranteed to be valid
         unsafe {
-            (ecs_get_id(self.raw_world, component_id, ecs_pair(component_id, second))
-                as *const First)
+            (ecs_get_id(
+                self.raw_world.as_ptr(),
+                component_id,
+                ecs_pair(component_id, second),
+            ) as *const First)
                 .as_ref()
         }
     }
@@ -1236,8 +1246,11 @@ impl World {
         // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
         // it is guaranteed to be valid
         unsafe {
-            &mut *(ecs_get_mut_id(self.raw_world, component_id, ecs_pair(component_id, second))
-                as *mut First)
+            &mut *(ecs_get_mut_id(
+                self.raw_world.as_ptr(),
+                component_id,
+                ecs_pair(component_id, second),
+            ) as *mut First)
         }
     }
 
@@ -1318,8 +1331,11 @@ impl World {
         );
 
         unsafe {
-            (ecs_get_id(self.raw_world, component_id, ecs_pair(first, component_id))
-                as *const Second)
+            (ecs_get_id(
+                self.raw_world.as_ptr(),
+                component_id,
+                ecs_pair(first, component_id),
+            ) as *const Second)
                 .as_ref()
         }
     }
@@ -1356,8 +1372,11 @@ impl World {
         // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
         // it is guaranteed to be valid
         unsafe {
-            &mut *(ecs_get_mut_id(self.raw_world, component_id, ecs_pair(first, component_id))
-                as *mut Second)
+            &mut *(ecs_get_mut_id(
+                self.raw_world.as_ptr(),
+                component_id,
+                ecs_pair(first, component_id),
+            ) as *mut Second)
         }
     }
 
@@ -1764,9 +1783,15 @@ impl World {
     pub fn set_alias_component<T: ComponentId>(&self, alias: &CStr) -> Entity {
         let id = T::get_id(self);
         if alias.is_empty() {
-            unsafe { ecs_set_alias(self.raw_world, id, ecs_get_name(self.raw_world, id)) };
+            unsafe {
+                ecs_set_alias(
+                    self.raw_world.as_ptr(),
+                    id,
+                    ecs_get_name(self.raw_world.as_ptr(), id),
+                )
+            };
         } else {
-            unsafe { ecs_set_alias(self.raw_world, id, alias.as_ptr()) };
+            unsafe { ecs_set_alias(self.raw_world.as_ptr(), id, alias.as_ptr()) };
         }
         Entity::new_from_existing(self, id)
     }
@@ -1790,7 +1815,7 @@ impl World {
     pub fn set_alias_entity_by_name(&self, name: &CStr, alias: &CStr) -> Entity {
         let id = unsafe {
             ecs_lookup_path_w_sep(
-                self.raw_world,
+                self.raw_world.as_ptr(),
                 0,
                 name.as_ptr(),
                 SEPARATOR.as_ptr(),
@@ -1799,7 +1824,7 @@ impl World {
             )
         };
         ecs_assert!(id != 0, FlecsErrorCode::InvalidParameter);
-        unsafe { ecs_set_alias(self.raw_world, id, alias.as_ptr()) };
+        unsafe { ecs_set_alias(self.raw_world.as_ptr(), id, alias.as_ptr()) };
         Entity::new_from_existing(self, id)
     }
 
@@ -1819,13 +1844,13 @@ impl World {
         if alias.is_empty() {
             unsafe {
                 ecs_set_alias(
-                    self.raw_world,
+                    self.raw_world.as_ptr(),
                     entity.get_id(),
-                    ecs_get_name(self.raw_world, entity.get_id()),
+                    ecs_get_name(self.raw_world.as_ptr(), entity.get_id()),
                 );
             };
         } else {
-            unsafe { ecs_set_alias(self.raw_world, entity.get_id(), alias.as_ptr()) };
+            unsafe { ecs_set_alias(self.raw_world.as_ptr(), entity.get_id(), alias.as_ptr()) };
         }
     }
 
@@ -1844,7 +1869,7 @@ impl World {
     /// * C++ API: `world::count`
     #[doc(alias = "world::count")]
     pub fn count_id(&self, id: impl IntoEntityIdExt) -> i32 {
-        unsafe { ecs_count_id(self.raw_world, id.get_id()) }
+        unsafe { ecs_count_id(self.raw_world.as_ptr(), id.get_id()) }
     }
 
     /// Count entities with the provided component.
@@ -1931,7 +1956,12 @@ impl World {
         &self,
         enum_value: T,
     ) -> i32 {
-        unsafe { ecs_count_id(self.raw_world, enum_value.get_id_variant(self).raw_id) }
+        unsafe {
+            ecs_count_id(
+                self.raw_world.as_ptr(),
+                enum_value.get_id_variant(self).raw_id,
+            )
+        }
     }
 
     /// Count entities with the provided pair enum tag.
@@ -1960,7 +1990,7 @@ impl World {
     {
         unsafe {
             ecs_count_id(
-                self.raw_world,
+                self.raw_world.as_ptr(),
                 ecs_pair(First::get_id(self), enum_value.get_id_variant(self)),
             )
         }
@@ -1979,10 +2009,10 @@ impl World {
     /// * C++ API: `world::scope`
     #[doc(alias = "world::scope")]
     pub fn run_in_scope_with_id<F: FnMut()>(&self, parent_id: impl IntoEntityId, mut func: F) {
-        let prev: IdT = unsafe { ecs_set_scope(self.raw_world, parent_id.get_id()) };
+        let prev: IdT = unsafe { ecs_set_scope(self.raw_world.as_ptr(), parent_id.get_id()) };
         func();
         unsafe {
-            ecs_set_scope(self.raw_world, prev);
+            ecs_set_scope(self.raw_world.as_ptr(), prev);
         }
     }
 
@@ -2074,10 +2104,10 @@ impl World {
     /// * C++ API: `world::with`
     #[doc(alias = "world::with")]
     pub fn with_id<F: FnMut()>(&self, id: impl IntoEntityIdExt, mut func: F) {
-        let prev: IdT = unsafe { ecs_set_with(self.raw_world, id.get_id()) };
+        let prev: IdT = unsafe { ecs_set_with(self.raw_world.as_ptr(), id.get_id()) };
         func();
         unsafe {
-            ecs_set_with(self.raw_world, prev);
+            ecs_set_with(self.raw_world.as_ptr(), prev);
         }
     }
 
@@ -2208,7 +2238,7 @@ impl World {
     #[doc(alias = "world::delete_with")]
     pub fn delete_with_id(&self, id: impl IntoEntityIdExt) {
         unsafe {
-            ecs_delete_with(self.raw_world, id.get_id());
+            ecs_delete_with(self.raw_world.as_ptr(), id.get_id());
         }
     }
 
@@ -2323,7 +2353,7 @@ impl World {
     #[doc(alias = "world::remove_all")]
     pub fn remove_all_id(&self, id: impl IntoEntityIdExt) {
         unsafe {
-            ecs_remove_all(self.raw_world, id.get_id());
+            ecs_remove_all(self.raw_world.as_ptr(), id.get_id());
         }
     }
 
@@ -2442,11 +2472,11 @@ impl World {
     #[doc(alias = "world::defer")]
     pub fn defer<F: FnOnce()>(&self, func: F) {
         unsafe {
-            ecs_defer_begin(self.raw_world);
+            ecs_defer_begin(self.raw_world.as_ptr());
         }
         func();
         unsafe {
-            ecs_defer_end(self.raw_world);
+            ecs_defer_end(self.raw_world.as_ptr());
         }
     }
 
@@ -2458,7 +2488,7 @@ impl World {
     #[doc(alias = "world::defer_suspend")]
     pub fn defer_suspend(&self) {
         unsafe {
-            ecs_defer_suspend(self.raw_world);
+            ecs_defer_suspend(self.raw_world.as_ptr());
         }
     }
 
@@ -2470,7 +2500,7 @@ impl World {
     #[doc(alias = "world::defer_resume")]
     pub fn defer_resume(&self) {
         unsafe {
-            ecs_defer_resume(self.raw_world);
+            ecs_defer_resume(self.raw_world.as_ptr());
         }
     }
 
@@ -2489,7 +2519,7 @@ impl World {
     /// * C++ API: `world::exists`
     #[doc(alias = "world::exists")]
     pub fn exists(&self, entity: impl IntoEntityId) -> bool {
-        unsafe { ecs_exists(self.raw_world, entity.get_id()) }
+        unsafe { ecs_exists(self.raw_world.as_ptr(), entity.get_id()) }
     }
 
     /// Checks if the given entity ID is alive in the world.
@@ -2499,7 +2529,7 @@ impl World {
     /// * C++ API: `world::is_alive`
     #[doc(alias = "world::is_alive")]
     pub fn is_alive(&self, entity: impl IntoEntityId) -> bool {
-        unsafe { ecs_is_alive(self.raw_world, entity.get_id()) }
+        unsafe { ecs_is_alive(self.raw_world.as_ptr(), entity.get_id()) }
     }
 
     /// Checks if the given entity ID is valid.
@@ -2510,7 +2540,7 @@ impl World {
     /// * C++ API: `world::is_valid`
     #[doc(alias = "world::is_valid")]
     pub fn is_valid(&self, entity: impl IntoEntityId) -> bool {
-        unsafe { ecs_is_valid(self.raw_world, entity.get_id()) }
+        unsafe { ecs_is_valid(self.raw_world.as_ptr(), entity.get_id()) }
     }
 
     /// Get alive entity for id.
@@ -2528,7 +2558,7 @@ impl World {
     /// * C++ API: `world::get_alive`
     #[doc(alias = "world::get_alive")]
     pub fn get_alive(&self, entity: impl IntoEntityId) -> Entity {
-        let entity = unsafe { ecs_get_alive(self.raw_world, entity.get_id()) };
+        let entity = unsafe { ecs_get_alive(self.raw_world.as_ptr(), entity.get_id()) };
         Entity::new_from_existing(self, entity)
     }
 
@@ -2550,7 +2580,7 @@ impl World {
     #[doc(alias = "world::ensure")]
     pub fn ensure(&self, entity: impl IntoEntityId) -> Entity {
         let entity = entity.get_id();
-        unsafe { ecs_ensure(self.raw_world, entity) };
+        unsafe { ecs_ensure(self.raw_world.as_ptr(), entity) };
         Entity::new_from_existing(self, entity)
     }
 
@@ -2568,7 +2598,7 @@ impl World {
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     pub fn run_post_frame(&self, action: ecs_fini_action_t, ctx: *mut c_void) {
         unsafe {
-            ecs_run_post_frame(self.raw_world, action, ctx);
+            ecs_run_post_frame(self.raw_world.as_ptr(), action, ctx);
         }
     }
 }
@@ -3405,7 +3435,7 @@ impl World {
     #[inline(always)]
     pub fn set_pipeline(&self, pipeline: impl IntoEntityId) {
         unsafe {
-            sys::ecs_set_pipeline(self.raw_world, pipeline.get_id());
+            sys::ecs_set_pipeline(self.raw_world.as_ptr(), pipeline.get_id());
         }
     }
 
@@ -3425,7 +3455,7 @@ impl World {
         Pipeline: ComponentType<Struct> + ComponentId,
     {
         unsafe {
-            sys::ecs_set_pipeline(self.raw_world, Pipeline::get_id(self));
+            sys::ecs_set_pipeline(self.raw_world.as_ptr(), Pipeline::get_id(self));
         }
     }
 
@@ -3441,7 +3471,9 @@ impl World {
     #[doc(alias = "world::get_pipeline")]
     #[inline(always)]
     pub fn get_pipeline(&self) -> Entity {
-        Entity::new_from_existing(self, unsafe { sys::ecs_get_pipeline(self.raw_world) })
+        Entity::new_from_existing(self, unsafe {
+            sys::ecs_get_pipeline(self.raw_world.as_ptr())
+        })
     }
 
     /// Progress world one tick.
@@ -3487,7 +3519,7 @@ impl World {
     #[doc(alias = "world::progress")]
     #[inline(always)]
     pub fn progress_time(&self, delta_time: f32) -> bool {
-        unsafe { sys::ecs_progress(self.raw_world, delta_time) }
+        unsafe { sys::ecs_progress(self.raw_world.as_ptr(), delta_time) }
     }
 
     /// Run pipeline.
@@ -3541,7 +3573,7 @@ impl World {
     #[inline(always)]
     pub fn run_pipeline_id_time(&self, pipeline: impl IntoEntityId, delta_time: super::FTime) {
         unsafe {
-            sys::ecs_run_pipeline(self.raw_world, pipeline.get_id(), delta_time);
+            sys::ecs_run_pipeline(self.raw_world.as_ptr(), pipeline.get_id(), delta_time);
         }
     }
 
@@ -3575,7 +3607,7 @@ impl World {
         Component: ComponentType<Struct> + ComponentId,
     {
         unsafe {
-            sys::ecs_run_pipeline(self.raw_world, Component::get_id(self), delta_time);
+            sys::ecs_run_pipeline(self.raw_world.as_ptr(), Component::get_id(self), delta_time);
         }
     }
 
@@ -3620,7 +3652,7 @@ impl World {
     #[inline(always)]
     pub fn set_time_scale(&self, mul: super::FTime) {
         unsafe {
-            sys::ecs_set_time_scale(self.raw_world, mul);
+            sys::ecs_set_time_scale(self.raw_world.as_ptr(), mul);
         }
     }
 
@@ -3690,7 +3722,7 @@ impl World {
     #[inline(always)]
     pub fn set_target_fps(&self, target_fps: super::FTime) {
         unsafe {
-            sys::ecs_set_target_fps(self.raw_world, target_fps);
+            sys::ecs_set_target_fps(self.raw_world.as_ptr(), target_fps);
         }
     }
 
@@ -3703,7 +3735,7 @@ impl World {
     #[inline(always)]
     pub fn reset_clock(&self) {
         unsafe {
-            sys::ecs_reset_clock(self.raw_world);
+            sys::ecs_reset_clock(self.raw_world.as_ptr());
         }
     }
 
@@ -3726,7 +3758,7 @@ impl World {
     #[inline(always)]
     pub fn set_threads(&self, threads: i32) {
         unsafe {
-            sys::ecs_set_threads(self.raw_world, threads);
+            sys::ecs_set_threads(self.raw_world.as_ptr(), threads);
         }
     }
 
@@ -3742,7 +3774,7 @@ impl World {
     #[doc(alias = "world::get_threads")]
     #[inline(always)]
     pub fn get_threads(&self) -> i32 {
-        unsafe { sys::ecs_get_stage_count(self.raw_world) }
+        unsafe { sys::ecs_get_stage_count(self.raw_world.as_ptr()) }
     }
 
     /// Set number of worker task threads.
@@ -3771,7 +3803,7 @@ impl World {
     #[inline(always)]
     pub fn set_task_threads(&self, task_threads: i32) {
         unsafe {
-            sys::ecs_set_task_threads(self.raw_world, task_threads);
+            sys::ecs_set_task_threads(self.raw_world.as_ptr(), task_threads);
         }
     }
 
@@ -3787,7 +3819,7 @@ impl World {
     #[doc(alias = "world::using_task_threads")]
     #[inline(always)]
     pub fn using_task_threads(&self) -> bool {
-        unsafe { sys::ecs_using_task_threads(self.raw_world) }
+        unsafe { sys::ecs_using_task_threads(self.raw_world.as_ptr()) }
     }
 }
 

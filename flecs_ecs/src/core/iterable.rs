@@ -7,7 +7,7 @@ use crate::sys::{self, ecs_filter_desc_t, ecs_inout_kind_t, ecs_oper_kind_t};
 use super::{
     c_types::{IterT, OperKind, TermT},
     component_registration::ComponentId,
-    ecs_field, FilterBuilderImpl, FromWorldPtr, InOutKind, World, WorldT,
+    ecs_field, FilterBuilderImpl, FromWorldPtr, InOutKind, WorldRef, WorldT,
 };
 
 pub trait Filterable<'a>: Sized + FilterBuilderImpl<'a> {
@@ -427,7 +427,7 @@ where
         terms: &mut [sys::ecs_term_t],
         index: &mut usize,
     ) {
-        let world = unsafe { Option::<&World>::from_ptr(world) };
+        let world = unsafe { Option::<WorldRef>::from_ptr(world) };
         terms[*index].id = A::OnlyType::get_id(world);
         A::populate_term(&mut terms[*index]);
         *index += 1;

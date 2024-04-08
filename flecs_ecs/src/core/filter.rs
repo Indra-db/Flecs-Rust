@@ -82,10 +82,10 @@ where
     #[doc(alias = "filter::filter")]
     pub fn new(world: &'a World) -> Self {
         let mut desc = ecs_filter_desc_t::default();
-        T::register_ids_descriptor(world.raw_world, &mut desc);
+        T::register_ids_descriptor(world.world_ptr_mut(), &mut desc);
         let mut filter: FilterT = Default::default();
         desc.storage = &mut filter;
-        unsafe { ecs_filter_init(world.raw_world, &desc) };
+        unsafe { ecs_filter_init(world.world_ptr_mut(), &desc) };
         Filter {
             world: world,
             _phantom: std::marker::PhantomData,
@@ -143,7 +143,7 @@ where
         }
 
         unsafe {
-            if ecs_filter_init(filter_obj.world.raw_world, desc).is_null() {
+            if ecs_filter_init(filter_obj.world.world_ptr_mut(), desc).is_null() {
                 ecs_abort_(
                     FlecsErrorCode::InvalidParameter.to_int(),
                     file!().as_ptr() as *const i8,
@@ -211,7 +211,7 @@ where
     T: Iterable,
 {
     fn retrieve_iter(&self) -> super::IterT {
-        unsafe { ecs_filter_iter(self.world.raw_world, &self.filter) }
+        unsafe { ecs_filter_iter(self.world.world_ptr_mut(), &self.filter) }
     }
 
     fn iter_next(&self, iter: &mut super::IterT) -> bool {
@@ -252,7 +252,7 @@ where
     T: Iterable,
 {
     fn retrieve_iter(&self) -> super::IterT {
-        unsafe { ecs_filter_iter(self.world.raw_world, self.filter_ptr) }
+        unsafe { ecs_filter_iter(self.world.world_ptr_mut(), self.filter_ptr) }
     }
 
     fn iter_next(&self, iter: &mut super::IterT) -> bool {

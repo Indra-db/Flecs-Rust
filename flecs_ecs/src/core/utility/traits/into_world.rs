@@ -1,14 +1,22 @@
+use std::{marker::PhantomData, ptr::NonNull};
+
 use crate::core::{Entity, EntityView, Id, Iterable, Query, World, WorldT};
 
 pub trait IntoWorld<'a> {
     #[doc(hidden)]
     fn world_ptr_mut(&self) -> *mut WorldT {
-        unsafe { std::mem::transmute(self.get_world()) }
+        match self.get_world() {
+            Some(world) => world.raw_world.as_ptr(),
+            None => std::ptr::null_mut(),
+        }
     }
     #[inline]
     #[doc(hidden)]
     fn world_ptr(&self) -> *const WorldT {
-        unsafe { std::mem::transmute(self.get_world()) }
+        match self.get_world() {
+            Some(world) => world.world_ptr(),
+            None => std::ptr::null(),
+        }
     }
     #[inline]
     fn world(&self) -> &'a World {
@@ -89,11 +97,16 @@ impl<'a> IntoWorld<'a> for &'a World {
     }
 }
 
+pub struct WorldRef<'a> {
+    raw_world: NonNull<WorldT>,
+    _marker: PhantomData<&'a ()>,
+}
+
 pub trait FromWorldPtr<'a> {
     unsafe fn from_ptr(raw_world: *mut WorldT) -> Self;
 }
 
-impl<'a> FromWorldPtr<'a> for Option<&'a World> {
+impl<'a> FromWorldPtr<'a> for Option<WorldRef<'a>> {
     unsafe fn from_ptr(raw_world: *mut WorldT) -> Self {
         if raw_world.is_null() {
             None
@@ -103,8 +116,14 @@ impl<'a> FromWorldPtr<'a> for Option<&'a World> {
     }
 }
 
-impl<'a> FromWorldPtr<'a> for &'a World {
+impl<'a> FromWorldPtr<'a> for WorldRef<'a> {
     unsafe fn from_ptr(raw_world: *mut WorldT) -> Self {
         std::mem::transmute(raw_world)
+    }
+}
+
+impl<'a> IntoWorld<'a> for WorldRef<'a> {
+    fn get_world(&self) -> Option<&'a World> {
+        Some(unsafe { std::mem::transmute(self) })
     }
 }

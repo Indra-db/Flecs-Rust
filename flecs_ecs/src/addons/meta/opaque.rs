@@ -132,9 +132,6 @@ where
     T: ComponentId,
 {
     fn drop(&mut self) {
-        if self.world.is_null() {
-            return;
-        }
         unsafe {
             ecs_opaque_init(self.world.world_ptr_mut(), &self.desc);
         }

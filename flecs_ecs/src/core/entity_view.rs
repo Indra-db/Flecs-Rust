@@ -38,8 +38,8 @@ use super::{
     table::{Table, TableRange},
     world::World,
     CachedEnumData, EmptyComponent, EventBuilderImpl, FromWorldPtr, IntoComponentId, IntoEntityId,
-    IntoEntityIdExt, IntoWorld, IterT, NotEmptyComponent, ObserverEntityBindingCtx, ECS_ANY,
-    ECS_CHILD_OF, ECS_WILDCARD,
+    IntoEntityIdExt, IntoWorld, IterT, NotEmptyComponent, ObserverEntityBindingCtx, WorldRef,
+    ECS_ANY, ECS_CHILD_OF, ECS_WILDCARD,
 };
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -105,7 +105,7 @@ impl<'a> EntityView<'a> {
     ) -> Self {
         unsafe {
             Self {
-                id: Id::new(Option::<&World>::from_ptr(world as *mut WorldT), id),
+                id: Id::new(Option::<WorldRef>::from_ptr(world as *mut WorldT), id),
             }
         }
     }
@@ -2182,7 +2182,7 @@ impl<'a> EntityView<'a> {
         ecs_table_lock((*iter).world, (*iter).table);
 
         for _i in 0..iter_count {
-            let world = Option::<&'a World>::from_ptr((*iter).world);
+            let world = Option::<WorldRef>::from_ptr((*iter).world);
             empty(&mut Entity::new_from_existing(
                 world,
                 ecs_field_src(iter, 1),
@@ -2246,7 +2246,7 @@ impl<'a> EntityView<'a> {
         for _i in 0..iter_count {
             let data = (*iter).param as *mut C;
             let data_ref = &mut *data;
-            let world = Option::<&'a World>::from_ptr((*iter).world);
+            let world = Option::<WorldRef>::from_ptr((*iter).world);
             empty(
                 &mut Entity::new_from_existing(world, ecs_field_src(iter, 1)),
                 data_ref,

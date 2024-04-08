@@ -11,7 +11,7 @@ use super::{
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
 use crate::{
-    core::FromWorldPtr,
+    core::{FromWorldPtr, WorldRef},
     ecs_assert,
     sys::{ecs_get_world, ecs_ref_get_id, ecs_ref_init_id},
 };
@@ -63,7 +63,7 @@ impl<'a, T: ComponentId> Ref<'a, T> {
         let component_ref = unsafe { ecs_ref_init_id(world_ptr, entity.get_id(), id) };
 
         Ref {
-            world: unsafe { Option::<&World>::from_ptr(world_ptr) },
+            world: unsafe { Option::<WorldRef>::from_ptr(world_ptr) }.get_world(),
             component_ref,
             _marker: PhantomData,
         }

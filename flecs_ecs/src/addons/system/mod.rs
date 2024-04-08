@@ -13,7 +13,7 @@ pub use system_builder::*;
 pub use system_runner_fluent::*;
 
 use crate::{
-    core::{Entity, FTime, Query, TickSource, World},
+    core::{Entity, FTime, IntoWorld, Query, TickSource, World},
     sys::{
         ecs_os_api, ecs_system_desc_t, ecs_system_get_ctx, ecs_system_get_query, ecs_system_init,
     },
@@ -52,7 +52,7 @@ impl<'a> System<'a> {
             desc.query.filter.instanced = is_instanced;
         }
 
-        let id = unsafe { ecs_system_init(world.raw_world, &desc) };
+        let id = unsafe { ecs_system_init(world.world_ptr_mut(), &desc) };
         let entity = Entity::new_from_existing(world, id);
 
         unsafe {
@@ -118,7 +118,7 @@ impl<'a> System<'a> {
         };
 
         unsafe {
-            ecs_system_init(self.world.raw_world, &desc);
+            ecs_system_init(self.world.world_ptr_mut(), &desc);
         }
     }
 
@@ -129,7 +129,7 @@ impl<'a> System<'a> {
     /// * C++ API: `system::ctx`
     #[doc(alias = "system::ctx")]
     pub fn context(&self) -> *mut c_void {
-        unsafe { ecs_system_get_ctx(self.world.raw_world, self.raw_id) }
+        unsafe { ecs_system_get_ctx(self.world.world_ptr_mut(), self.raw_id) }
     }
 
     /// Get the underlying query for the system
@@ -140,7 +140,7 @@ impl<'a> System<'a> {
     #[doc(alias = "system::query")]
     pub fn query(&mut self) -> Query<()> {
         Query::<()>::new_ownership(&self.world, unsafe {
-            ecs_system_get_query(self.world.raw_world, self.raw_id)
+            ecs_system_get_query(self.world.world_ptr_mut(), self.raw_id)
         })
     }
 

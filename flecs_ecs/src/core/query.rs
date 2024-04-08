@@ -15,7 +15,7 @@ use super::{
     filter::FilterView,
     iterable::Iterable,
     world::World,
-    FlecsErrorCode, IntoEntityId, IterAPI, IterOperations,
+    FlecsErrorCode, IntoEntityId, IntoWorld, IterAPI, IterOperations,
 };
 
 /// Cached query implementation. Fast to iterate, but slower to create than `Filters`
@@ -35,7 +35,7 @@ where
 {
     #[inline(always)]
     fn retrieve_iter(&self) -> IterT {
-        unsafe { ecs_query_iter(self.world.raw_world, self.query) }
+        unsafe { ecs_query_iter(self.world.world_ptr_mut(), self.query) }
     }
 
     #[inline(always)]
@@ -79,10 +79,10 @@ where
     #[doc(alias = "query::query")]
     pub fn new(world: &'a World) -> Self {
         let mut desc = ecs_query_desc_t::default();
-        T::register_ids_descriptor(world.raw_world, &mut desc.filter);
+        T::register_ids_descriptor(world.world_ptr_mut(), &mut desc.filter);
         let mut filter: FilterT = Default::default();
         desc.filter.storage = &mut filter;
-        let query = unsafe { ecs_query_init(world.raw_world, &desc) };
+        let query = unsafe { ecs_query_init(world.world_ptr_mut(), &desc) };
         Self {
             world,
             query,
@@ -123,7 +123,7 @@ where
     pub fn new_from_desc(world: &'a World, desc: &mut ecs_query_desc_t) -> Self {
         let obj = Self {
             world,
-            query: unsafe { ecs_query_init(world.raw_world, desc) },
+            query: unsafe { ecs_query_init(world.world_ptr_mut(), desc) },
             _phantom: std::marker::PhantomData,
         };
         unsafe {
@@ -174,7 +174,7 @@ where
     #[doc(alias = "query::get_iter")]
     fn get_iter_raw(&mut self, world: &'a World) -> IterT {
         self.world = world;
-        unsafe { ecs_query_iter(self.world.raw_world, self.query) }
+        unsafe { ecs_query_iter(self.world.world_ptr_mut(), self.query) }
     }
 
     ///  Returns whether the query data changed since the last iteration.

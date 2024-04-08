@@ -126,8 +126,8 @@ pub trait EventBuilderImpl<'a> {
         let world = data.world.raw_world;
         ids.array = ids_array.as_mut_ptr();
         desc.ids = ids;
-        desc.observable = unsafe { ecs_get_world(world as *const c_void) } as *mut c_void;
-        unsafe { ecs_emit(world, desc) };
+        desc.observable = unsafe { ecs_get_world(world.as_ptr() as *const c_void) } as *mut c_void;
+        unsafe { ecs_emit(world.as_ptr(), desc) };
     }
 
     fn enqueue(&mut self) {
@@ -138,9 +138,9 @@ pub trait EventBuilderImpl<'a> {
         let world = data.world.raw_world;
         ids.array = ids_array.as_mut_ptr();
         desc.ids = ids;
-        desc.observable = unsafe { ecs_get_world(world as *const c_void) } as *mut c_void;
+        desc.observable = unsafe { ecs_get_world(world.as_ptr() as *const c_void) } as *mut c_void;
         unsafe {
-            ecs_enqueue(world, desc as *mut ecs_event_desc_t);
+            ecs_enqueue(world.as_ptr(), desc as *mut ecs_event_desc_t);
         };
     }
 

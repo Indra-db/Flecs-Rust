@@ -9,6 +9,7 @@ use super::{
     entity::Entity,
     filter::Filter,
     world::World,
+    IntoWorld,
 };
 
 #[derive(Clone)]
@@ -39,7 +40,7 @@ impl<'a> Observer<'a> {
             desc.filter.instanced = is_instanced;
         }
 
-        let id = unsafe { ecs_observer_init(world.raw_world, &desc) };
+        let id = unsafe { ecs_observer_init(world.world_ptr_mut(), &desc) };
         let entity = Entity::new_from_existing(world, id);
 
         unsafe {
@@ -75,7 +76,7 @@ impl<'a> Observer<'a> {
         };
 
         unsafe {
-            ecs_observer_init(self.world.raw_world, &desc);
+            ecs_observer_init(self.world.world_ptr_mut(), &desc);
         }
     }
 
@@ -86,7 +87,7 @@ impl<'a> Observer<'a> {
     /// * C++ API: `observer::ctx`
     #[doc(alias = "observer::ctx")]
     pub fn context(&self) -> *mut c_void {
-        unsafe { ecs_observer_get_ctx(self.world.raw_world, self.raw_id) }
+        unsafe { ecs_observer_get_ctx(self.world.world_ptr_mut(), self.raw_id) }
     }
 
     /// Get the filter for the observer

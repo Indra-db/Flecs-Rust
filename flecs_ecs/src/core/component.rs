@@ -15,7 +15,7 @@ use super::{
     component_registration::ComponentId,
     ecs_field,
     entity::Entity,
-    FromWorldPtr, IntoEntityId, IntoWorld, World,
+    FromWorldPtr, IntoEntityId, IntoWorld, World, WorldRef,
 };
 
 use std::{ffi::CStr, os::raw::c_void, ptr};
@@ -374,7 +374,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
         let on_add = unsafe { (*ctx).on_add.unwrap() };
         let on_add = on_add as *mut Func;
         let on_add = unsafe { &mut *on_add };
-        let world = unsafe { Option::<&'a World>::from_ptr((*iter).world) };
+        let world = unsafe { Option::<WorldRef>::from_ptr((*iter).world) };
         let entity = unsafe { Entity::new_from_existing(world, *(*iter).entities) };
         let component: *mut T = unsafe { ecs_field::<T>(iter, 1) };
         on_add(entity, unsafe { &mut *component });
@@ -389,7 +389,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
         let on_set = unsafe { (*ctx).on_set.unwrap() };
         let on_set = on_set as *mut Func;
         let on_set = unsafe { &mut *on_set };
-        let world = unsafe { Option::<&'a World>::from_ptr((*iter).world) };
+        let world = unsafe { Option::<WorldRef>::from_ptr((*iter).world) };
         let entity = unsafe { Entity::new_from_existing(world, *(*iter).entities) };
         let component: *mut T = unsafe { ecs_field::<T>(iter, 1) };
         on_set(entity, unsafe { &mut *component });
@@ -404,7 +404,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
         let on_remove = unsafe { (*ctx).on_remove.unwrap() };
         let on_remove = on_remove as *mut Func;
         let on_remove = unsafe { &mut *on_remove };
-        let world = unsafe { Option::<&'a World>::from_ptr((*iter).world) };
+        let world = unsafe { Option::<WorldRef>::from_ptr((*iter).world) };
         let entity = unsafe { Entity::new_from_existing(world, *(*iter).entities) };
         let component: *mut T = unsafe { ecs_field::<T>(iter, 1) };
         on_remove(entity, unsafe { &mut *component });

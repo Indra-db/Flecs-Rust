@@ -78,7 +78,7 @@ where
     pub fn new_from_desc(world: &'a World, desc: &mut ecs_filter_desc_t) -> Self {
         let obj = Self {
             world,
-            rule: unsafe { ecs_rule_init(world.raw_world, desc) },
+            rule: unsafe { ecs_rule_init(world.world_ptr_mut(), desc) },
             _phantom: std::marker::PhantomData,
         };
         if !desc.terms_buffer.is_null() {
@@ -166,7 +166,7 @@ where
     T: Iterable,
 {
     fn retrieve_iter(&self) -> crate::core::IterT {
-        unsafe { ecs_rule_iter(self.world.raw_world, self.rule) }
+        unsafe { ecs_rule_iter(self.world.world_ptr_mut(), self.rule) }
     }
 
     fn iter_next(&self, iter: &mut crate::core::IterT) -> bool {

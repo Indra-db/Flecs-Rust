@@ -3,7 +3,7 @@
 use std::ffi::c_void;
 
 use crate::{
-    core::{c_types::WorldT, world::World, FTime},
+    core::{c_types::WorldT, world::World, FTime, IntoWorld},
     sys::{
         ecs_app_desc_t, ecs_app_init_action_t, ecs_app_run, ecs_fini, ecs_get_world_info,
         ecs_should_quit,
@@ -11,6 +11,7 @@ use crate::{
 };
 
 /// Application interface.
+// TODO: Lifetimes
 pub struct App {
     world: *mut WorldT,
     desc: ecs_app_desc_t,
@@ -29,11 +30,11 @@ impl App {
     #[doc(alias = "app_builder::app_builder")]
     pub fn new(world: &World) -> Self {
         let mut obj = Self {
-            world: world.raw_world,
+            world: world.world_ptr_mut(),
             desc: ecs_app_desc_t::default(),
         };
 
-        let stats = unsafe { ecs_get_world_info(world.raw_world) };
+        let stats = unsafe { ecs_get_world_info(world.world_ptr_mut()) };
         obj.desc.target_fps = unsafe { (*stats).target_fps };
         let zero: FTime = 0.0;
         if obj.desc.target_fps.to_bits() == zero.to_bits() {

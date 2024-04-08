@@ -1,7 +1,7 @@
 use std::os::raw::c_void;
 
 use crate::{
-    core::{c_types::EntityT, world::World, FTime},
+    core::{c_types::EntityT, world::World, FTime, IntoWorld},
     sys::{ecs_run_w_filter, ecs_run_worker},
 };
 
@@ -58,7 +58,7 @@ impl<'a> Drop for SystemRunnerFluent<'a> {
         if self.stage_count != 0 {
             unsafe {
                 ecs_run_worker(
-                    self.stage.raw_world,
+                    self.stage.world_ptr_mut(),
                     self.id,
                     self.stage_current,
                     self.stage_count,
@@ -69,7 +69,7 @@ impl<'a> Drop for SystemRunnerFluent<'a> {
         } else {
             unsafe {
                 ecs_run_w_filter(
-                    self.stage.raw_world,
+                    self.stage.world_ptr_mut(),
                     self.id,
                     self.delta_time,
                     self.offset,

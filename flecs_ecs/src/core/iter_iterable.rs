@@ -7,7 +7,7 @@ use flecs_ecs_sys::{
 
 use super::{
     ComponentId, Entity, FilterT, FromWorldPtr, IntoEntityId, IntoTableRange, IntoWorld, IterAPI,
-    IterOperations, IterT, Iterable, World,
+    IterOperations, IterT, Iterable, World, WorldRef,
 };
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
@@ -59,7 +59,7 @@ where
     /// * C++ API: `iter_iterable::set_group`
     #[doc(alias = "iter_iterable::set_group")]
     pub fn set_group<Group: ComponentId>(&mut self) -> &Self {
-        let world = unsafe { Option::<&World>::from_ptr(self.iter.real_world) };
+        let world = unsafe { Option::<WorldRef>::from_ptr(self.iter.real_world) };
         unsafe { ecs_query_set_group(&mut self.iter, Group::get_id(world)) }
         self
     }
@@ -151,7 +151,7 @@ where
     T: Iterable,
 {
     fn as_entity(&self) -> Entity {
-        let world = unsafe { Option::<&World>::from_ptr(self.iter.real_world) };
+        let world = unsafe { Option::<WorldRef>::from_ptr(self.iter.real_world) };
         Entity::new_from_existing(world, unsafe {
             ecs_get_entity(self.iter.query as *const c_void)
         })
@@ -163,7 +163,7 @@ where
     T: Iterable,
 {
     fn get_world(&self) -> Option<&'a World> {
-        unsafe { Option::<&World>::from_ptr(self.iter.real_world) }
+        unsafe { Option::<WorldRef>::from_ptr(self.iter.real_world) }.get_world()
     }
 }
 

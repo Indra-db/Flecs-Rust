@@ -21,7 +21,7 @@ use super::{
     table::{Table, TableRange},
     traits::FromWorldPtr,
     world::World,
-    Archetype, FTime,
+    Archetype, FTime, IntoWorld, WorldRef,
 };
 
 pub struct Iter<'a> {
@@ -30,11 +30,11 @@ pub struct Iter<'a> {
 
 impl<'a> Iter<'a> {
     pub fn world(&self) -> &'a World {
-        unsafe { <&World>::from_ptr(self.iter.world) }
+        unsafe { <WorldRef>::from_ptr(self.iter.world) }.world()
     }
 
     pub fn real_world(&self) -> &'a World {
-        unsafe { <&World>::from_ptr(self.iter.real_world) }
+        unsafe { <WorldRef>::from_ptr(self.iter.real_world) }.world()
     }
 
     /// Constructs iterator from C iterator object
