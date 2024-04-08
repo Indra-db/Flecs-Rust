@@ -89,7 +89,7 @@ impl World {
     }
 
     /// Wrapper around raw world, takes no ownership.
-    pub fn new_wrap_raw_world(world: *mut WorldT) -> Self {
+    pub unsafe fn new_wrap_raw_world(world: *mut WorldT) -> Self {
         Self {
             raw_world: unsafe { NonNull::new_unchecked(world) },
         }
@@ -1051,6 +1051,7 @@ impl World {
     /// * C++ API: `world::get_mut`
     #[doc(alias = "world::get_mut")]
     #[inline(always)]
+    #[allow(clippy::mut_from_ref)]
     pub fn get_mut<T>(&self) -> &mut T
     where
         T: ComponentId + ComponentType<Struct>,
@@ -1356,6 +1357,7 @@ impl World {
     /// * C++ API: `world::get_mut`
     #[doc(alias = "world::get_mut")]
     #[inline(always)]
+    #[allow(clippy::mut_from_ref)]
     pub fn get_pair_second_id_mut<Second>(&self, first: impl IntoEntityId) -> &mut Second
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
@@ -1788,7 +1790,7 @@ impl World {
                     self.raw_world.as_ptr(),
                     id,
                     ecs_get_name(self.raw_world.as_ptr(), id),
-                )
+                );
             };
         } else {
             unsafe { ecs_set_alias(self.raw_world.as_ptr(), id, alias.as_ptr()) };

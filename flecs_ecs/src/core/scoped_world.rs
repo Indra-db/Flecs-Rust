@@ -13,7 +13,7 @@ impl<'a> Deref for ScopedWorld<'a> {
     type Target = World;
 
     fn deref(&self) -> &Self::Target {
-        &self.world
+        self.world
     }
 }
 
@@ -47,7 +47,7 @@ impl<'a> ScopedWorld<'a> {
     #[doc(alias = "scoped_world::scoped_world")]
     pub fn new_from_scoped_world(scoped_world: &'a ScopedWorld) -> Self {
         let prev_scope = scoped_world.prev_scope;
-        Self::new(&scoped_world.world, prev_scope)
+        Self::new(scoped_world.world, prev_scope)
     }
 }
 

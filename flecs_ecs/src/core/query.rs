@@ -262,7 +262,7 @@ where
     /// * C++ API: `query_base::filter`
     #[doc(alias = "query_base::filter")]
     pub fn filter(&self) -> FilterView<T> {
-        FilterView::<T>::new(&self.world, unsafe { ecs_query_get_filter(self.query) })
+        FilterView::<T>::new(self.world, unsafe { ecs_query_get_filter(self.query) })
     }
 }
 

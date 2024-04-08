@@ -405,7 +405,7 @@ where
     /// * C++ API: `node_builder::build`
     #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
-        System::new(&self.world, self.desc, self.is_instanced)
+        System::new(self.world, self.desc, self.is_instanced)
     }
 }
 

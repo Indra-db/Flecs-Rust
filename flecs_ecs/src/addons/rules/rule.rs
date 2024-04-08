@@ -118,7 +118,7 @@ where
     /// * C++ API: `rule_base::filter`
     #[doc(alias = "rule_base::filter")]
     pub fn filter(&self) -> FilterView<T> {
-        FilterView::new(&self.world, unsafe { ecs_rule_get_filter(self.rule) })
+        FilterView::new(self.world, unsafe { ecs_rule_get_filter(self.rule) })
     }
 
     /// Converts this rule to a string that can be used to aid debugging
