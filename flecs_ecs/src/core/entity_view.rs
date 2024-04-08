@@ -129,7 +129,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::is_valid`
     #[doc(alias = "entity_view::is_valid")]
     pub fn is_valid(self) -> bool {
-        !self.world.is_some() && unsafe { ecs_is_valid(self.world.world_ptr_mut(), self.raw_id) }
+        self.world.is_some() && unsafe { ecs_is_valid(self.world.world_ptr_mut(), self.raw_id) }
     }
 
     /// Checks if entity is alive.
@@ -139,7 +139,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::is_alive`
     #[doc(alias = "entity_view::is_alive")]
     pub fn is_alive(self) -> bool {
-        !self.world.is_some() && unsafe { ecs_is_alive(self.world.world_ptr_mut(), self.raw_id) }
+        self.world.is_some() && unsafe { ecs_is_alive(self.world.world_ptr_mut(), self.raw_id) }
     }
 
     /// Returns the entity name.

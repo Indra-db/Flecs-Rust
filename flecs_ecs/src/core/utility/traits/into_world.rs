@@ -108,22 +108,24 @@ pub trait FromWorldPtr<'a> {
 
 impl<'a> FromWorldPtr<'a> for Option<WorldRef<'a>> {
     unsafe fn from_ptr(raw_world: *mut WorldT) -> Self {
-        if raw_world.is_null() {
-            None
-        } else {
-            Some(std::mem::transmute(raw_world))
-        }
+        NonNull::new(raw_world).map(|raw_world| WorldRef {
+            raw_world,
+            _marker: PhantomData,
+        })
     }
 }
 
 impl<'a> FromWorldPtr<'a> for WorldRef<'a> {
     unsafe fn from_ptr(raw_world: *mut WorldT) -> Self {
-        std::mem::transmute(raw_world)
+        WorldRef {
+            raw_world: NonNull::new_unchecked(raw_world),
+            _marker: PhantomData,
+        }
     }
 }
 
 impl<'a> IntoWorld<'a> for WorldRef<'a> {
     fn get_world(&self) -> Option<&'a World> {
-        Some(unsafe { std::mem::transmute(self) })
+        Some(unsafe { std::mem::transmute::<&WorldRef, &World>(self) })
     }
 }

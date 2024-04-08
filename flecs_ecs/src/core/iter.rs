@@ -26,15 +26,17 @@ use super::{
 
 pub struct Iter<'a> {
     iter: &'a mut IterT,
+    world: WorldRef<'a>,
+    real_world: WorldRef<'a>,
 }
 
 impl<'a> Iter<'a> {
     pub fn world(&self) -> &'a World {
-        unsafe { <WorldRef>::from_ptr(self.iter.world) }.world()
+        self.world.world()
     }
 
     pub fn real_world(&self) -> &'a World {
-        unsafe { <WorldRef>::from_ptr(self.iter.real_world) }.world()
+        self.real_world.world()
     }
 
     /// Constructs iterator from C iterator object
@@ -53,7 +55,13 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::iter`
     #[doc(alias = "iter::iter")]
     pub unsafe fn new(iter: &'a mut IterT) -> Self {
-        Self { iter }
+        let world = <WorldRef<'a>>::from_ptr(iter.world);
+        let real_world = <WorldRef<'a>>::from_ptr(iter.real_world);
+        Self {
+            iter,
+            world,
+            real_world,
+        }
     }
 
     pub fn iter(&self) -> IterIterator {

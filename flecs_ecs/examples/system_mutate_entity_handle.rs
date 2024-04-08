@@ -21,6 +21,7 @@ fn main() {
         .system_builder::<&mut Timeout>()
         .on_each_iter(|it, _index, timeout| {
             timeout.value -= it.delta_time();
+            println!("{}", timeout.value);
             if timeout.value <= 0.0 {
                 // Delete the entity
 
