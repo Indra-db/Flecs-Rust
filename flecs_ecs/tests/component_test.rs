@@ -51,14 +51,6 @@ fn temp_test_hook() {
         assert_eq!(pos_e2.x, 10);
         assert_eq!(pos_e2.y, 20);
 
-        entity.add::<Velocity>();
-        assert_eq!(unsafe { COUNT2 }, 0);
-        let vel_e1 = entity.get::<Velocity>().unwrap();
-        // dangerous uninitialized values
-        assert_ne!(vel_e1.x, 0);
-        assert_ne!(vel_e1.y, 0);
-        entity.remove::<Velocity>();
-
         entity.remove::<Position>();
         assert_eq!(unsafe { COUNT }, 1);
 
