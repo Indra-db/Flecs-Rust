@@ -10,18 +10,18 @@ use super::{
     IterAPI, IterOperations,
 };
 
-pub struct FilterView<'a, T>
+pub struct FilterView<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     world: World,
     filter_ptr: *const FilterT,
-    _phantom: std::marker::PhantomData<&'a T>,
+    _phantom: std::marker::PhantomData<T>,
 }
 
-impl<'a, T> Clone for FilterView<'a, T>
+impl<T> Clone for FilterView<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn clone(&self) -> Self {
         Self {
@@ -32,9 +32,9 @@ where
     }
 }
 
-impl<'a, T> FilterView<'a, T>
+impl<T> FilterView<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     /// Create a new filter view
     ///
@@ -57,18 +57,18 @@ where
 }
 
 /// Filters are cheaper to create, but slower to iterate than queries.
-pub struct Filter<'a, T>
+pub struct Filter<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     world: World,
-    _phantom: std::marker::PhantomData<&'a T>,
+    _phantom: std::marker::PhantomData<T>,
     filter: FilterT,
 }
 
-impl<'a, T> Filter<'a, T>
+impl<T> Filter<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     /// Create a new filter
     ///
@@ -167,9 +167,9 @@ where
     }
 }
 
-impl<'a, T> Drop for Filter<'a, T>
+impl<T> Drop for Filter<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn drop(&mut self) {
         // this is a hack to prevent ecs_filter_fini from freeing the memory of our stack allocated filter
@@ -181,12 +181,12 @@ where
     }
 }
 
-impl<'a, T> Clone for Filter<'a, T>
+impl<T> Clone for Filter<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn clone(&self) -> Self {
-        let mut new_filter = Filter::<'a, T> {
+        let mut new_filter = Filter::<T> {
             world: self.world.clone(),
             _phantom: std::marker::PhantomData,
             filter: Default::default(),
@@ -197,18 +197,18 @@ where
     }
 }
 
-impl<'a, T> IntoWorld for Filter<'a, T>
+impl<T> IntoWorld for Filter<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn world_ptr_mut(&self) -> *mut super::WorldT {
         self.world.raw_world
     }
 }
 
-impl<'a, T> IterOperations for Filter<'a, T>
+impl<T> IterOperations for Filter<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn retrieve_iter(&self) -> super::IterT {
         unsafe { ecs_filter_iter(self.world.raw_world, &self.filter) }
@@ -227,18 +227,18 @@ where
     }
 }
 
-impl<'a, T> IntoWorld for FilterView<'a, T>
+impl<T> IntoWorld for FilterView<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn world_ptr_mut(&self) -> *mut super::WorldT {
         self.world.raw_world
     }
 }
 
-impl<'a, T> IterAPI<'a, T> for FilterView<'a, T>
+impl<T> IterAPI<T> for FilterView<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn as_entity(&self) -> Entity {
         Entity::new_from_existing_raw(&self.world, unsafe {
@@ -247,9 +247,9 @@ where
     }
 }
 
-impl<'a, T> IterOperations for FilterView<'a, T>
+impl<T> IterOperations for FilterView<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn retrieve_iter(&self) -> super::IterT {
         unsafe { ecs_filter_iter(self.world.raw_world, self.filter_ptr) }
@@ -268,9 +268,9 @@ where
     }
 }
 
-impl<'a, T> IterAPI<'a, T> for Filter<'a, T>
+impl<T> IterAPI<T> for Filter<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn as_entity(&self) -> Entity {
         Entity::new_from_existing_raw(&self.world, unsafe {

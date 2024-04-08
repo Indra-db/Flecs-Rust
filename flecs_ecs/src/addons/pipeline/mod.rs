@@ -13,17 +13,17 @@ use crate::{
 };
 
 /// Pipelines order and schedule systems for execution.
-pub struct Pipeline<'a, T>
+pub struct Pipeline<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     pub entity: Entity,
-    phantom: std::marker::PhantomData<&'a T>,
+    phantom: std::marker::PhantomData<T>,
 }
 
-impl<'a, T> Deref for Pipeline<'a, T>
+impl<T> Deref for Pipeline<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     type Target = Entity;
 
@@ -33,9 +33,9 @@ where
     }
 }
 
-impl<'a, T> DerefMut for Pipeline<'a, T>
+impl<T> DerefMut for Pipeline<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
@@ -43,9 +43,9 @@ where
     }
 }
 
-impl<'a, T> Pipeline<'a, T>
+impl<T> Pipeline<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     /// Create a new pipeline.
     ///
