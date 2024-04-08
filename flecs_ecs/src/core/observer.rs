@@ -12,13 +12,13 @@ use super::{
 };
 
 #[derive(Clone)]
-pub struct Observer {
-    pub entity: Entity,
-    world: World,
+pub struct Observer<'a> {
+    pub entity: Entity<'a>,
+    world: &'a World,
 }
 
-impl Deref for Observer {
-    type Target = Entity;
+impl<'a> Deref for Observer<'a> {
+    type Target = Entity<'a>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -26,7 +26,7 @@ impl Deref for Observer {
     }
 }
 
-impl Observer {
+impl<'a> Observer<'a> {
     //TODO in query etc desc is a pointer, does it need to be?
     /// Create a new observer
     ///
@@ -34,13 +34,13 @@ impl Observer {
     ///
     /// * C++ API: `observer::observer`
     #[doc(alias = "observer::observer")]
-    pub fn new(world: &World, mut desc: ecs_observer_desc_t, is_instanced: bool) -> Self {
+    pub fn new(world: &'a World, mut desc: ecs_observer_desc_t, is_instanced: bool) -> Self {
         if !desc.filter.instanced {
             desc.filter.instanced = is_instanced;
         }
 
         let id = unsafe { ecs_observer_init(world.raw_world, &desc) };
-        let entity = Entity::new_from_existing_raw(world.raw_world, id);
+        let entity = Entity::new_from_existing(world, id);
 
         unsafe {
             if !desc.filter.terms_buffer.is_null() {
@@ -50,16 +50,13 @@ impl Observer {
             }
         }
 
-        Self {
-            entity,
-            world: world.clone(),
-        }
+        Self { entity, world }
     }
 
     /// Wrap an existing observer entity in an observer object
-    pub fn new_from_existing(world: &World, observer_entity: Entity) -> Self {
+    pub fn new_from_existing(world: &'a World, observer_entity: Entity<'a>) -> Self {
         Self {
-            world: world.clone(),
+            world,
             entity: observer_entity,
         }
     }

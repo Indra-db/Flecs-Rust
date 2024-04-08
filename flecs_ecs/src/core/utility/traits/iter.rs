@@ -24,7 +24,7 @@ pub trait IterOperations {
     fn filter_ptr(&self) -> *const FilterT;
 }
 
-pub trait IterAPI<T>: IterOperations + IntoWorld
+pub trait IterAPI<'a, T>: IterOperations + IntoWorld<'a>
 where
     T: Iterable,
 {
@@ -96,7 +96,8 @@ where
                 // most of the cost since the branch is almost always the same.
                 // update: I believe it's not possible due to not knowing the order of the components in the tuple. I will leave this here for now, maybe I will come back to it in the future.
                 for i in 0..iter_count {
-                    let mut entity = Entity::new_from_existing_raw(world, *iter.entities.add(i));
+                    let world = self.get_world();
+                    let mut entity = Entity::new_from_existing(world, *iter.entities.add(i));
                     let tuple = components_data.get_tuple(i);
 
                     func(&mut entity, tuple);
@@ -153,7 +154,7 @@ where
     ///
     /// * C++ API: `find_delegate::invoke_callback`
     #[doc(alias = "find_delegate::invoke_callback")]
-    fn find(&self, mut func: impl FnMut(T::TupleType<'_>) -> bool) -> Option<Entity> {
+    fn find(&self, mut func: impl FnMut(T::TupleType<'_>) -> bool) -> Option<Entity<'a>> {
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity: Option<Entity> = None;
@@ -166,12 +167,10 @@ where
                 ecs_table_lock(world, iter.table);
 
                 for i in 0..iter_count {
+                    let world = self.get_world();
                     let tuple = components_data.get_tuple(i);
                     if func(tuple) {
-                        entity = Some(Entity::new_from_existing_raw(
-                            iter.world,
-                            *iter.entities.add(i),
-                        ));
+                        entity = Some(Entity::new_from_existing(world, *iter.entities.add(i)));
                         break;
                     }
                 }
@@ -201,7 +200,7 @@ where
     fn find_entity(
         &self,
         mut func: impl FnMut(&mut Entity, T::TupleType<'_>) -> bool,
-    ) -> Option<Entity> {
+    ) -> Option<Entity<'a>> {
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity_result: Option<Entity> = None;
@@ -214,8 +213,8 @@ where
                 ecs_table_lock(world, iter.table);
 
                 for i in 0..iter_count {
-                    let mut entity =
-                        Entity::new_from_existing_raw(iter.world, *iter.entities.add(i));
+                    let world = self.get_world();
+                    let mut entity = Entity::new_from_existing(world, *iter.entities.add(i));
 
                     let tuple = components_data.get_tuple(i);
                     if func(&mut entity, tuple) {
@@ -249,7 +248,7 @@ where
     fn find_iter(
         &self,
         mut func: impl FnMut(&mut Iter, usize, T::TupleType<'_>) -> bool,
-    ) -> Option<Entity> {
+    ) -> Option<Entity<'a>> {
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity_result: Option<Entity> = None;
@@ -269,12 +268,11 @@ where
                 let mut iter_t = Iter::new(&mut iter);
 
                 for i in 0..iter_count {
+                    let world = self.get_world();
                     let tuple = components_data.get_tuple(i);
                     if func(&mut iter_t, i, tuple) {
-                        entity_result = Some(Entity::new_from_existing_raw(
-                            iter.world,
-                            *iter.entities.add(i),
-                        ));
+                        entity_result =
+                            Some(Entity::new_from_existing(world, *iter.entities.add(i)));
                         break;
                     }
                 }
@@ -375,7 +373,7 @@ where
         let world = self.get_world();
         unsafe {
             for i in 0..(*filter).term_count {
-                let mut term = Term::new_from_term(Some(&world), *(*filter).terms.add(i as usize));
+                let mut term = Term::new_from_term(world, *(*filter).terms.add(i as usize));
                 func(&mut term);
                 term.reset(); // prevent freeing resources
             }
@@ -397,7 +395,7 @@ where
     ///
     /// * C++ API: `filter_base::term`
     #[doc(alias = "filter_base::term")]
-    fn get_term(&self, index: usize) -> Term {
+    fn get_term(&self, index: usize) -> Term<'a> {
         let filter = self.filter_ptr();
         let world = self.get_world();
         ecs_assert!(
@@ -405,7 +403,7 @@ where
             FlecsErrorCode::InvalidParameter,
             "query filter is null"
         );
-        Term::new_from_term(Some(&world), unsafe { *(*filter).terms.add(index) })
+        Term::new_from_term(world, unsafe { *(*filter).terms.add(index) })
     }
 
     /// Get the field count of the current filter
@@ -469,14 +467,13 @@ where
     /// * C++ API: `iter_iterable::first`
     #[doc(alias = "iterable::first")]
     #[doc(alias = "iter_iterable::first")]
-    fn first(&mut self) -> Entity {
+    fn first(&mut self) -> Entity<'a> {
         let mut entity = Entity::default();
 
-        let world = self.world_ptr_mut();
         let it = &mut self.retrieve_iter();
 
         if self.iter_next(it) && it.count > 0 {
-            entity = Entity::new_from_existing_raw(world, unsafe { *it.entities.add(0) });
+            entity = Entity::new_from_existing(self.get_world(), unsafe { *it.entities.add(0) });
             unsafe { ecs_iter_fini(it) };
         }
         entity

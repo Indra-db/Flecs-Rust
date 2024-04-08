@@ -4,12 +4,12 @@ use super::{c_types::EntityT, world::World, IntoEntityId};
 use crate::sys::ecs_set_scope;
 
 /// Utility class used by the `world::scope` method to create entities in a scope
-pub struct ScopedWorld {
-    pub world: World,
+pub struct ScopedWorld<'a> {
+    pub world: &'a World,
     pub prev_scope: EntityT,
 }
 
-impl Deref for ScopedWorld {
+impl<'a> Deref for ScopedWorld<'a> {
     type Target = World;
 
     fn deref(&self) -> &Self::Target {
@@ -17,7 +17,7 @@ impl Deref for ScopedWorld {
     }
 }
 
-impl ScopedWorld {
+impl<'a> ScopedWorld<'a> {
     /// Creates a new scoped world
     ///
     /// # Arguments
@@ -30,12 +30,9 @@ impl ScopedWorld {
     /// * C++ API: `scoped_world::scoped_world`
     #[doc(alias = "scoped_world::scoped_world")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new(world: &World, scope: impl IntoEntityId) -> Self {
+    pub fn new(world: &'a World, scope: impl IntoEntityId) -> Self {
         let prev_scope = unsafe { ecs_set_scope(world.raw_world, scope.get_id()) };
-        Self {
-            world: world.clone(),
-            prev_scope,
-        }
+        Self { world, prev_scope }
     }
 
     /// Creates a new scoped world
@@ -48,13 +45,13 @@ impl ScopedWorld {
     ///
     /// * C++ API: `scoped_world::scoped_world`
     #[doc(alias = "scoped_world::scoped_world")]
-    pub fn new_from_scoped_world(scoped_world: &ScopedWorld) -> Self {
+    pub fn new_from_scoped_world(scoped_world: &'a ScopedWorld) -> Self {
         let prev_scope = scoped_world.prev_scope;
         Self::new(&scoped_world.world, prev_scope)
     }
 }
 
-impl Drop for ScopedWorld {
+impl<'a> Drop for ScopedWorld<'a> {
     /// Restores the previous scope
     ///
     /// # See also

@@ -4,7 +4,7 @@ use crate::core::{Entity, IdT, World};
 
 pub type FTime = f32;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Default)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Default, Clone, Copy)]
 pub struct EntityId(pub IdT);
 
 impl EntityId {
@@ -32,8 +32,8 @@ impl EntityId {
     /// # Arguments
     ///
     /// * `world` - The world the entity belongs to
-    pub fn to_entity(&self, world: &World) -> Entity {
-        Entity::new_from_existing_raw(world.raw_world, self.0)
+    pub fn to_entity<'a>(&self, world: &'a World) -> Entity<'a> {
+        Entity::new_from_existing(world, self.0)
     }
 }
 

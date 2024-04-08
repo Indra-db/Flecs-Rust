@@ -20,13 +20,13 @@ use crate::{
 };
 
 #[derive(Clone)]
-pub struct System {
-    pub entity: Entity,
-    world: World,
+pub struct System<'a> {
+    pub entity: Entity<'a>,
+    world: &'a World,
 }
 
-impl Deref for System {
-    type Target = Entity;
+impl<'a> Deref for System<'a> {
+    type Target = Entity<'a>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -34,7 +34,7 @@ impl Deref for System {
     }
 }
 
-impl System {
+impl<'a> System<'a> {
     //todo!() in query etc desc is a pointer, does it need to be?
     /// Create a new system
     ///
@@ -47,13 +47,13 @@ impl System {
     ///
     /// * C++ API: `system::system`
     #[doc(alias = "system::system")]
-    pub fn new(world: &World, mut desc: ecs_system_desc_t, is_instanced: bool) -> Self {
+    pub fn new(world: &'a World, mut desc: ecs_system_desc_t, is_instanced: bool) -> Self {
         if !desc.query.filter.instanced {
             desc.query.filter.instanced = is_instanced;
         }
 
         let id = unsafe { ecs_system_init(world.raw_world, &desc) };
-        let entity = Entity::new_from_existing_raw(world.raw_world, id);
+        let entity = Entity::new_from_existing(world, id);
 
         unsafe {
             if !desc.query.filter.terms_buffer.is_null() {
@@ -63,10 +63,7 @@ impl System {
             }
         }
 
-        Self {
-            entity,
-            world: world.clone(),
-        }
+        Self { entity, world }
     }
 
     /// Wrap an existing system entity in a system object
@@ -80,9 +77,9 @@ impl System {
     ///
     /// * C++ API: `system::system`
     #[doc(alias = "system::system")]
-    pub fn new_from_existing(world: &World, system_entity: Entity) -> Self {
+    pub fn new_from_existing(world: &'a World, system_entity: Entity<'a>) -> Self {
         Self {
-            world: world.clone(),
+            world,
             entity: system_entity,
         }
     }

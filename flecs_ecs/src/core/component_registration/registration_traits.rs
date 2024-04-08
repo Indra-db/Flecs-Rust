@@ -45,12 +45,12 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     type UnderlyingEnumType: ComponentId + CachedEnumData;
 
     /// attempts to register the component with the world. If it's already registered, it does nothing.
-    fn register_explicit(world: impl IntoWorld) {
+    fn register_explicit<'a>(world: impl IntoWorld<'a>) {
         try_register_component::<Self::UnderlyingType>(world);
     }
 
     /// attempts to register the component with name with the world. If it's already registered, it does nothing.
-    fn register_explicit_named(world: impl IntoWorld, name: &CStr) -> EntityT {
+    fn register_explicit_named<'a>(world: impl IntoWorld<'a>, name: &CStr) -> EntityT {
         try_register_component_named::<Self::UnderlyingType>(world, name)
     }
 
@@ -67,18 +67,16 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     /// this will be changed in the future where we get rid of the pointers.
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
-    fn is_registered_with_world(world: impl IntoWorld) -> bool {
+    fn is_registered_with_world<'a>(world: impl IntoWorld<'a>) -> bool {
         if Self::is_registered() {
-            unsafe {
-                is_component_registered_with_world::<Self::UnderlyingType>(world.get_world_raw())
-            }
+            unsafe { is_component_registered_with_world::<Self::UnderlyingType>(world.world_ptr()) }
         } else {
             false
         }
     }
 
     /// returns the component id of the component. If the component is not registered, it will register it.
-    fn get_id(world: impl IntoWorld) -> IdT {
+    fn get_id<'a>(world: impl IntoWorld<'a>) -> IdT {
         try_register_component::<Self::UnderlyingType>(world);
         unsafe { Self::get_id_unchecked() }
     }
@@ -157,19 +155,19 @@ pub trait CachedEnumData: ComponentType<Enum> + ComponentId {
     }
 
     /// get the entity id of the variant of the enum. This function will register the enum with the world if it's not registered.
-    fn get_id_variant(&self, world: impl IntoWorld) -> Entity {
+    fn get_id_variant<'a>(&self, world: impl IntoWorld<'a>) -> Entity<'a> {
         try_register_component::<Self>(&world);
         let index = self.enum_index();
-        Entity::new_from_existing_raw(world, unsafe { *Self::__enum_data_mut().add(index) })
+        Entity::new_from_existing(world, unsafe { *Self::__enum_data_mut().add(index) })
     }
 
     /// # Safety
     ///
     /// This function is unsafe because it assumes the enum has been registered as a component with the world.
     /// if uncertain, use `try_register_component::<T>` to try and register it
-    unsafe fn get_id_variant_unchecked(&self, world: impl IntoWorld) -> Entity {
+    unsafe fn get_id_variant_unchecked<'a>(&self, world: impl IntoWorld<'a>) -> Entity<'a> {
         let index = self.enum_index();
-        Entity::new_from_existing_raw(world, unsafe { *Self::__enum_data_mut().add(index) })
+        Entity::new_from_existing(world, unsafe { *Self::__enum_data_mut().add(index) })
     }
 
     fn get_id_variant_of_index(index: usize) -> Option<u64> {

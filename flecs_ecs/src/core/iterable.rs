@@ -7,10 +7,10 @@ use crate::sys::{self, ecs_filter_desc_t, ecs_inout_kind_t, ecs_oper_kind_t};
 use super::{
     c_types::{IterT, OperKind, TermT},
     component_registration::ComponentId,
-    ecs_field, FilterBuilderImpl, InOutKind, WorldT,
+    ecs_field, FilterBuilderImpl, FromWorldPtr, InOutKind, World, WorldT,
 };
 
-pub trait Filterable: Sized + FilterBuilderImpl {
+pub trait Filterable<'a>: Sized + FilterBuilderImpl<'a> {
     fn current_term(&mut self) -> &mut TermT;
     fn next_term(&mut self);
 }
@@ -363,7 +363,7 @@ pub trait Iterable: Sized {
         Self::Pointers::new(iter)
     }
 
-    fn populate(filter: &mut impl Filterable);
+    fn populate<'a>(filter: &mut impl Filterable<'a>);
 
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
         Self::register_ids_descriptor_at(world, &mut desc.terms[..], &mut 0);
@@ -415,9 +415,8 @@ where
     type TupleType<'w> = A::ActualType<'w>;
     type TupleSliceType<'w> = A::SliceType<'w>;
 
-    fn populate(filter: &mut impl Filterable) {
-        let world = filter.world_ptr_mut();
-        filter.term_with_id(A::OnlyType::get_id(world));
+    fn populate<'a>(filter: &mut impl Filterable<'a>) {
+        filter.term_with_id(A::OnlyType::get_id(filter.get_world()));
         let term = filter.current_term();
         A::populate_term(term);
 
@@ -428,6 +427,7 @@ where
         terms: &mut [sys::ecs_term_t],
         index: &mut usize,
     ) {
+        let world = unsafe { Option::<&World>::from_ptr(world) };
         terms[*index].id = A::OnlyType::get_id(world);
         A::populate_term(&mut terms[*index]);
         *index += 1;
@@ -641,8 +641,8 @@ macro_rules! impl_iterable {
             type Pointers = ComponentsData<Self, { tuple_count!($($t),*) }>;
 
 
-            fn populate(filter: &mut impl Filterable) {
-                let _world = filter.world_ptr_mut();
+            fn populate<'a>(filter: &mut impl Filterable<'a>) {
+                let _world = filter.get_world();
                 $(
                     filter.term_with_id($t::OnlyType::get_id(_world));
                     let term = filter.current_term();

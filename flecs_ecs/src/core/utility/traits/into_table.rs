@@ -2,6 +2,7 @@ use flecs_ecs_sys::ecs_table_range_t;
 
 use crate::core::{Table, TableRange, TableT};
 
+// TODO: Replace with implementation that preserves lifetimes
 pub trait IntoTable {
     fn table_ptr_mut(&self) -> *mut TableT;
 }
@@ -20,14 +21,14 @@ impl IntoTable for *const TableT {
     }
 }
 
-impl IntoTable for Table {
+impl IntoTable for Table<'_> {
     #[inline]
     fn table_ptr_mut(&self) -> *mut TableT {
         self.table_ptr_mut()
     }
 }
 
-impl IntoTable for TableRange {
+impl IntoTable for TableRange<'_> {
     #[inline]
     fn table_ptr_mut(&self) -> *mut TableT {
         self.table.table_ptr_mut()
@@ -39,7 +40,7 @@ pub trait IntoTableRange {
     fn table_range_raw(&self) -> ecs_table_range_t;
 }
 
-impl IntoTableRange for TableRange {
+impl IntoTableRange for TableRange<'_> {
     #[inline]
     fn table_range(&self) -> TableRange {
         self.clone()
@@ -55,7 +56,7 @@ impl IntoTableRange for TableRange {
     }
 }
 
-impl IntoTableRange for Table {
+impl IntoTableRange for Table<'_> {
     #[inline]
     fn table_range(&self) -> TableRange {
         TableRange::new(self, 0, self.count())

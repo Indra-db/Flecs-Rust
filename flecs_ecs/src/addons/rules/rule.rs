@@ -7,16 +7,16 @@ use flecs_ecs_sys::{
 
 use crate::core::{Entity, FilterView, IntoWorld, IterAPI, IterOperations, Iterable, World};
 
-pub struct Rule<T>
+pub struct Rule<'a, T>
 where
     T: Iterable,
 {
     rule: *mut ecs_rule_t,
-    pub world: World,
+    pub world: &'a World,
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<T> Deref for Rule<T>
+impl<'a, T> Deref for Rule<'a, T>
 where
     T: Iterable,
 {
@@ -28,7 +28,7 @@ where
     }
 }
 
-impl<T> Drop for Rule<T>
+impl<'a, T> Drop for Rule<'a, T>
 where
     T: Iterable,
 {
@@ -41,7 +41,7 @@ where
     }
 }
 
-impl<T> Rule<T>
+impl<'a, T> Rule<'a, T>
 where
     T: Iterable,
 {
@@ -56,9 +56,9 @@ where
     ///
     /// * C++ API: `rule_base::rule`
     #[doc(alias = "rule_base::rule")]
-    pub fn new(world: &World, rule: *mut ecs_rule_t) -> Self {
+    pub fn new(world: &'a World, rule: *mut ecs_rule_t) -> Self {
         Self {
-            world: world.clone(),
+            world,
             rule,
             _phantom: std::marker::PhantomData,
         }
@@ -75,9 +75,9 @@ where
     ///
     /// * C++ API: `rule_base::rule`
     #[doc(alias = "rule_base::rule")]
-    pub fn new_from_desc(world: &World, desc: &mut ecs_filter_desc_t) -> Self {
+    pub fn new_from_desc(world: &'a World, desc: &mut ecs_filter_desc_t) -> Self {
         let obj = Self {
-            world: world.clone(),
+            world,
             rule: unsafe { ecs_rule_init(world.raw_world, desc) },
             _phantom: std::marker::PhantomData,
         };
@@ -144,27 +144,24 @@ where
     }
 }
 
-impl<T> IterAPI<T> for Rule<T>
+impl<'a, T> IterAPI<'a, T> for Rule<'a, T>
 where
     T: Iterable,
 {
-    fn as_entity(&self) -> Entity {
-        Entity::new_from_existing_raw(&self.world, unsafe {
+    fn as_entity(&self) -> Entity<'a> {
+        Entity::new_from_existing(self.world, unsafe {
             ecs_get_entity(self.rule as *const c_void)
         })
     }
 }
 
-impl<T> IntoWorld for Rule<T>
-where
-    T: Iterable,
-{
-    fn world_ptr_mut(&self) -> *mut crate::core::WorldT {
-        self.world.raw_world
+impl<'a, T: Iterable> IntoWorld<'a> for Rule<'a, T> {
+    fn get_world(&self) -> Option<&'a World> {
+        Some(self.world)
     }
 }
 
-impl<T> IterOperations for Rule<T>
+impl<'a, T> IterOperations for Rule<'a, T>
 where
     T: Iterable,
 {

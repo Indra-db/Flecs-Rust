@@ -7,11 +7,11 @@ use super::{
 };
 
 /// Event builder trait to implement '`set_event_data`' for untyped and typed `EventBuilder`
-pub trait EventBuilderImpl {
+pub trait EventBuilderImpl<'a> {
     type BuiltType;
     type ConstBuiltType;
 
-    fn get_data(&mut self) -> &mut EventBuilder;
+    fn get_data(&mut self) -> &mut EventBuilder<'a>;
 
     /// Add component id or pair to emit for the event
     ///
@@ -50,7 +50,7 @@ pub trait EventBuilderImpl {
     where
         T: IntoComponentId,
     {
-        let world = self.get_data().world.raw_world;
+        let world = self.get_data().world;
         self.add_id(T::get_id(world))
     }
 
@@ -72,7 +72,7 @@ pub trait EventBuilderImpl {
     where
         First: ComponentId,
     {
-        let world = self.get_data().world.raw_world;
+        let world = self.get_data().world;
         self.add_id(ecs_pair(First::get_id(world), second))
     }
 

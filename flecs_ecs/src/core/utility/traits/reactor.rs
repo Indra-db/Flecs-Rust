@@ -6,7 +6,7 @@ use crate::core::{builder, Builder, Entity, Iter, Iterable};
 
 use super::private;
 
-pub trait ReactorAPI<'a, T>: Builder + private::internal_ReactorAPI<'a, T>
+pub trait ReactorAPI<'a, T>: Builder<'a> + private::internal_ReactorAPI<'a, T>
 where
     T: Iterable,
 {
@@ -35,7 +35,7 @@ where
     #[doc(alias = "system_builder_i::ctx")]
     fn set_context(&mut self, context: *mut c_void) -> &mut Self;
 
-    fn on_each<Func>(&mut self, func: Func) -> <Self as builder::Builder>::BuiltType
+    fn on_each<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: FnMut(T::TupleType<'_>),
     {
@@ -54,7 +54,7 @@ where
         self.build()
     }
 
-    fn on_each_entity<Func>(&mut self, func: Func) -> <Self as builder::Builder>::BuiltType
+    fn on_each_entity<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: FnMut(&mut Entity, T::TupleType<'_>),
     {
@@ -75,7 +75,7 @@ where
         self.build()
     }
 
-    fn on_each_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder>::BuiltType
+    fn on_each_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: FnMut(&mut Iter, usize, T::TupleType<'_>),
     {
@@ -94,7 +94,7 @@ where
         self.build()
     }
 
-    fn on_iter_only<Func>(&mut self, func: Func) -> <Self as builder::Builder>::BuiltType
+    fn on_iter_only<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: FnMut(&mut Iter),
     {
@@ -111,7 +111,7 @@ where
         self.build()
     }
 
-    fn on_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder>::BuiltType
+    fn on_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: FnMut(&mut Iter, T::TupleSliceType<'_>),
     {

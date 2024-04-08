@@ -10,29 +10,29 @@ use super::{
     IterAPI, IterOperations,
 };
 
-pub struct FilterView<T>
+pub struct FilterView<'a, T>
 where
     T: Iterable,
 {
-    world: World,
+    world: &'a World,
     filter_ptr: *const FilterT,
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<T> Clone for FilterView<T>
+impl<'a, T> Clone for FilterView<'a, T>
 where
     T: Iterable,
 {
     fn clone(&self) -> Self {
         Self {
-            world: self.world.clone(),
+            world: self.world,
             filter_ptr: self.filter_ptr,
             _phantom: std::marker::PhantomData,
         }
     }
 }
 
-impl<T> FilterView<T>
+impl<'a, T> FilterView<'a, T>
 where
     T: Iterable,
 {
@@ -47,9 +47,9 @@ where
     ///
     /// * C++ API: `filter_view::filter_view`
     #[doc(alias = "filter_view::filter_view")]
-    pub fn new(world: &World, filter: *const FilterT) -> Self {
+    pub fn new(world: &'a World, filter: *const FilterT) -> Self {
         Self {
-            world: world.clone(),
+            world,
             _phantom: std::marker::PhantomData,
             filter_ptr: filter as *const FilterT,
         }
@@ -57,16 +57,16 @@ where
 }
 
 /// Filters are cheaper to create, but slower to iterate than queries.
-pub struct Filter<T>
+pub struct Filter<'a, T>
 where
     T: Iterable,
 {
-    world: World,
+    world: &'a World,
     _phantom: std::marker::PhantomData<T>,
     filter: FilterT,
 }
 
-impl<T> Filter<T>
+impl<'a, T> Filter<'a, T>
 where
     T: Iterable,
 {
@@ -80,14 +80,14 @@ where
     ///
     /// * C++ API: `filter::filter`
     #[doc(alias = "filter::filter")]
-    pub fn new(world: &World) -> Self {
+    pub fn new(world: &'a World) -> Self {
         let mut desc = ecs_filter_desc_t::default();
         T::register_ids_descriptor(world.raw_world, &mut desc);
         let mut filter: FilterT = Default::default();
         desc.storage = &mut filter;
         unsafe { ecs_filter_init(world.raw_world, &desc) };
         Filter {
-            world: world.clone(),
+            world: world,
             _phantom: std::marker::PhantomData,
             filter,
         }
@@ -105,9 +105,9 @@ where
     /// * C++ API: `filter::filter`
     #[doc(alias = "filter::filter")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new_ownership(world: &World, filter: *mut FilterT) -> Self {
+    pub fn new_ownership(world: &'a World, filter: *mut FilterT) -> Self {
         let mut filter_obj = Filter {
-            world: world.clone(),
+            world,
             _phantom: std::marker::PhantomData,
             filter: Default::default(),
         };
@@ -131,9 +131,9 @@ where
     /// * C++ API: `filter::filter`
     #[doc(alias = "filter::filter")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new_from_desc(world: &World, desc: *mut ecs_filter_desc_t) -> Self {
+    pub fn new_from_desc(world: &'a World, desc: *mut ecs_filter_desc_t) -> Self {
         let mut filter_obj = Filter {
-            world: world.clone(),
+            world: world,
             _phantom: std::marker::PhantomData,
             filter: Default::default(),
         };
@@ -167,7 +167,7 @@ where
     }
 }
 
-impl<T> Drop for Filter<T>
+impl<'a, T> Drop for Filter<'a, T>
 where
     T: Iterable,
 {
@@ -181,13 +181,13 @@ where
     }
 }
 
-impl<T> Clone for Filter<T>
+impl<'a, T> Clone for Filter<'a, T>
 where
     T: Iterable,
 {
     fn clone(&self) -> Self {
         let mut new_filter = Filter::<T> {
-            world: self.world.clone(),
+            world: self.world,
             _phantom: std::marker::PhantomData,
             filter: Default::default(),
         };
@@ -197,16 +197,16 @@ where
     }
 }
 
-impl<T> IntoWorld for Filter<T>
+impl<'a, T> IntoWorld<'a> for Filter<'a, T>
 where
     T: Iterable,
 {
-    fn world_ptr_mut(&self) -> *mut super::WorldT {
-        self.world.raw_world
+    fn get_world(&self) -> Option<&'a World> {
+        Some(self.world)
     }
 }
 
-impl<T> IterOperations for Filter<T>
+impl<'a, T> IterOperations for Filter<'a, T>
 where
     T: Iterable,
 {
@@ -227,27 +227,27 @@ where
     }
 }
 
-impl<T> IntoWorld for FilterView<T>
+impl<'a, T> IntoWorld<'a> for FilterView<'a, T>
 where
     T: Iterable,
 {
-    fn world_ptr_mut(&self) -> *mut super::WorldT {
-        self.world.raw_world
+    fn get_world(&self) -> Option<&'a World> {
+        Some(self.world)
     }
 }
 
-impl<T> IterAPI<T> for FilterView<T>
+impl<'a, T> IterAPI<'a, T> for FilterView<'a, T>
 where
     T: Iterable,
 {
     fn as_entity(&self) -> Entity {
-        Entity::new_from_existing_raw(&self.world, unsafe {
+        Entity::new_from_existing(self.world, unsafe {
             ecs_get_entity(self.filter_ptr as *const _)
         })
     }
 }
 
-impl<T> IterOperations for FilterView<T>
+impl<'a, T> IterOperations for FilterView<'a, T>
 where
     T: Iterable,
 {
@@ -268,12 +268,12 @@ where
     }
 }
 
-impl<T> IterAPI<T> for Filter<T>
+impl<'a, T> IterAPI<'a, T> for Filter<'a, T>
 where
     T: Iterable,
 {
     fn as_entity(&self) -> Entity {
-        Entity::new_from_existing_raw(&self.world, unsafe {
+        Entity::new_from_existing(self.world, unsafe {
             ecs_get_entity(&self.filter as *const _ as *const _)
         })
     }

@@ -4,6 +4,7 @@ use crate::{
     core::{
         c_types::{EntityT, IdT, WorldT},
         component_registration::ComponentId,
+        IntoWorld, World,
     },
     sys::{ecs_meta_serialize_t, ecs_opaque_desc_t, ecs_opaque_init, ecs_serializer_t},
 };
@@ -31,22 +32,22 @@ type SerializeT = ecs_meta_serialize_t;
 /// Type safe variant of serializer function
 type SerializeFn<T> = extern "C" fn(*const Serializer, *const T) -> i32;
 
-pub struct Opaque<T>
+pub struct Opaque<'a, T>
 where
     T: ComponentId,
 {
-    world: *const WorldT,
+    world: &'a World,
     pub desc: ecs_opaque_desc_t,
     phantom: std::marker::PhantomData<T>,
 }
 
-impl<T> Opaque<T>
+impl<'a, T> Opaque<'a, T>
 where
     T: ComponentId,
 {
-    pub fn new(world: *mut WorldT) -> Self {
+    pub fn new(world: impl IntoWorld<'a>) -> Self {
         Self {
-            world,
+            world: world.world(),
             desc: ecs_opaque_desc_t {
                 entity: T::get_id(world),
                 type_: Default::default(),
@@ -126,7 +127,7 @@ where
     }
 }
 
-impl<T> Drop for Opaque<T>
+impl<'a, T> Drop for Opaque<'a, T>
 where
     T: ComponentId,
 {
@@ -135,7 +136,7 @@ where
             return;
         }
         unsafe {
-            ecs_opaque_init(self.world as *mut _, &self.desc);
+            ecs_opaque_init(self.world.world_ptr_mut(), &self.desc);
         }
     }
 }

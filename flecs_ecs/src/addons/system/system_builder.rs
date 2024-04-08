@@ -7,7 +7,7 @@ use std::{
 
 use crate::{
     core::{
-        c_types::{EntityT, FTimeT, TermIdT, TermT, WorldT, ECS_DEPENDS_ON, SEPARATOR},
+        c_types::{EntityT, FTimeT, TermIdT, TermT, ECS_DEPENDS_ON, SEPARATOR},
         component_registration::ComponentId,
         ecs_dependson,
         filter_builder::FilterBuilderImpl,
@@ -17,7 +17,7 @@ use crate::{
         query_builder::{QueryBuilder, QueryBuilderImpl},
         term::{Term, TermBuilder},
         world::World,
-        Builder, IntoEntityId, ReactorAPI, ECS_ON_UPDATE,
+        Builder, IntoEntityId, IntoWorld, ReactorAPI, ECS_ON_UPDATE,
     },
     sys::{
         ecs_add_id, ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_get_target,
@@ -27,21 +27,21 @@ use crate::{
 
 use super::System;
 
-pub struct SystemBuilder<T>
+pub struct SystemBuilder<'a, T>
 where
     T: Iterable,
 {
-    query_builder: QueryBuilder<T>,
+    query_builder: QueryBuilder<'a, T>,
     desc: ecs_system_desc_t,
     is_instanced: bool,
 }
 
 /// Deref to `QueryBuilder` to allow access to `QueryBuilder` methods without having to access `QueryBuilder` through `SystemBuilder`
-impl<T> Deref for SystemBuilder<T>
+impl<'a, T> Deref for SystemBuilder<'a, T>
 where
     T: Iterable,
 {
-    type Target = QueryBuilder<T>;
+    type Target = QueryBuilder<'a, T>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -49,7 +49,7 @@ where
     }
 }
 
-impl<T> DerefMut for SystemBuilder<T>
+impl<'a, T> DerefMut for SystemBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -59,11 +59,11 @@ where
     }
 }
 
-impl<T> SystemBuilder<T>
+impl<'a, T> SystemBuilder<'a, T>
 where
     T: Iterable,
 {
-    pub fn new(world: &World) -> Self {
+    pub fn new(world: &'a World) -> Self {
         let mut desc = Default::default();
         let mut obj = Self {
             desc,
@@ -94,7 +94,7 @@ where
         obj
     }
 
-    pub fn new_from_desc(world: &World, mut desc: ecs_system_desc_t) -> Self {
+    pub fn new_from_desc(world: &'a World, mut desc: ecs_system_desc_t) -> Self {
         let mut obj = Self {
             desc,
             query_builder: QueryBuilder::<T>::new_from_desc(world, &mut desc.query),
@@ -123,7 +123,7 @@ where
         obj
     }
 
-    pub fn new_named(world: &World, name: &CStr) -> Self {
+    pub fn new_named(world: &'a World, name: &CStr) -> Self {
         let mut desc = Default::default();
         let mut obj = Self {
             desc,
@@ -196,7 +196,7 @@ where
     where
         Phase: ComponentId,
     {
-        self.kind_id(Phase::get_id(self.world.raw_world))
+        self.kind_id(Phase::get_id(self.world))
     }
 
     /// Specify whether system can run on multiple threads.
@@ -314,12 +314,12 @@ where
     where
         Component: ComponentId,
     {
-        self.desc.tick_source = Component::get_id(self.world.raw_world);
+        self.desc.tick_source = Component::get_id(self.world);
         self
     }
 }
 
-impl<T> Filterable for SystemBuilder<T>
+impl<'a, T> Filterable<'a> for SystemBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -332,7 +332,7 @@ where
     }
 }
 
-impl<T> FilterBuilderImpl for SystemBuilder<T>
+impl<'a, T> FilterBuilderImpl<'a> for SystemBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -352,17 +352,12 @@ where
     }
 }
 
-impl<T> TermBuilder for SystemBuilder<T>
+impl<'a, T> TermBuilder<'a> for SystemBuilder<'a, T>
 where
     T: Iterable,
 {
     #[inline]
-    fn world_ptr_mut(&self) -> *mut WorldT {
-        self.filter_builder.world.raw_world
-    }
-
-    #[inline]
-    fn term_mut(&mut self) -> &mut Term {
+    fn term_mut(&mut self) -> &mut Term<'a> {
         self.filter_builder.term_mut()
     }
 
@@ -377,7 +372,7 @@ where
     }
 }
 
-impl<T> QueryBuilderImpl for SystemBuilder<T>
+impl<'a, T> QueryBuilderImpl<'a> for SystemBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -387,11 +382,11 @@ where
     }
 }
 
-impl<T> Builder for SystemBuilder<T>
+impl<'a, T> Builder<'a> for SystemBuilder<'a, T>
 where
     T: Iterable,
 {
-    type BuiltType = System;
+    type BuiltType = System<'a>;
 
     /// Build the `system_builder` into an system
     ///
@@ -404,4 +399,10 @@ where
     }
 }
 
-implement_reactor_api!(SystemBuilder<T>);
+impl<'a, T: Iterable> IntoWorld<'a> for SystemBuilder<'a, T> {
+    fn get_world(&self) -> Option<&'a World> {
+        self.query_builder.get_world()
+    }
+}
+
+implement_reactor_api!(SystemBuilder<'a, T>);

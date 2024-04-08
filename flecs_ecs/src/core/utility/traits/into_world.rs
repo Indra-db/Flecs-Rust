@@ -1,110 +1,110 @@
 use crate::core::{Entity, EntityView, Id, Iterable, Query, World, WorldT};
 
-pub trait IntoWorld {
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT;
-    #[inline]
-    #[doc(hidden)]
-    fn get_world_raw(&self) -> *const WorldT {
-        self.world_ptr_mut() as *const WorldT
-    }
-    #[inline]
-    fn get_world(&self) -> World {
-        World::new_wrap_raw_world(self.world_ptr_mut())
-    }
-}
-
-impl IntoWorld for *mut WorldT {
-    #[inline]
+pub trait IntoWorld<'a> {
     #[doc(hidden)]
     fn world_ptr_mut(&self) -> *mut WorldT {
-        *self
+        unsafe { std::mem::transmute(self.get_world()) }
     }
-}
-
-impl IntoWorld for *const WorldT {
     #[inline]
     #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
-        *self as *mut WorldT
+    fn world_ptr(&self) -> *const WorldT {
+        unsafe { std::mem::transmute(self.get_world()) }
     }
+    #[inline]
+    fn world(&self) -> &'a World {
+        self.get_world()
+            .expect("Tried to access world when it was None")
+    }
+    fn get_world(&self) -> Option<&'a World>;
 }
 
-impl IntoWorld for World {
+impl<'a> IntoWorld<'a> for Id<'a> {
     #[inline]
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
-        self.raw_world
-    }
-}
-
-impl IntoWorld for Id {
-    #[inline]
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
+    fn get_world(&self) -> Option<&'a World> {
         self.world
     }
 }
 
-impl IntoWorld for Entity {
+impl<'a> IntoWorld<'a> for Entity<'a> {
     #[inline]
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
+    fn get_world(&self) -> Option<&'a World> {
         self.world
     }
 }
 
-impl IntoWorld for EntityView {
+impl<'a> IntoWorld<'a> for EntityView<'a> {
     #[inline]
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
+    fn get_world(&self) -> Option<&'a World> {
         self.world
     }
 }
 
-impl<T> IntoWorld for &T
+impl<'a, T> IntoWorld<'a> for &T
 where
-    T: IntoWorld,
+    T: IntoWorld<'a>,
 {
     #[inline]
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
-        T::world_ptr_mut(*self)
+    fn get_world(&self) -> Option<&'a World> {
+        T::get_world(*self)
     }
 }
 
-impl<T> IntoWorld for &mut T
+impl<'a, T> IntoWorld<'a> for &mut T
 where
-    T: IntoWorld,
+    T: IntoWorld<'a>,
 {
     #[inline]
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
-        T::world_ptr_mut(*self)
+    fn get_world(&self) -> Option<&'a World> {
+        T::get_world(*self)
     }
 }
 
-impl<T> IntoWorld for Option<T>
+impl<'a, T> IntoWorld<'a> for Option<T>
 where
-    T: IntoWorld,
+    T: IntoWorld<'a>,
 {
     #[inline]
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
+    fn get_world(&self) -> Option<&'a World> {
         match self {
-            Some(t) => t.world_ptr_mut(),
-            None => std::ptr::null_mut(),
+            Some(s) => s.get_world(),
+            None => None,
         }
     }
 }
 
-impl<T> IntoWorld for Query<T>
+impl<'a, T> IntoWorld<'a> for Query<'a, T>
 where
     T: Iterable,
 {
     #[inline]
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
-        self.world.raw_world
+    fn get_world(&self) -> Option<&'a World> {
+        Some(self.world)
+    }
+}
+
+impl<'a> IntoWorld<'a> for &'a World {
+    #[inline]
+    fn get_world(&self) -> Option<&'a World> {
+        Some(self)
+    }
+}
+
+pub trait FromWorldPtr<'a> {
+    unsafe fn from_ptr(raw_world: *mut WorldT) -> Self;
+}
+
+impl<'a> FromWorldPtr<'a> for Option<&'a World> {
+    unsafe fn from_ptr(raw_world: *mut WorldT) -> Self {
+        if raw_world.is_null() {
+            None
+        } else {
+            Some(std::mem::transmute(raw_world))
+        }
+    }
+}
+
+impl<'a> FromWorldPtr<'a> for &'a World {
+    unsafe fn from_ptr(raw_world: *mut WorldT) -> Self {
+        std::mem::transmute(raw_world)
     }
 }

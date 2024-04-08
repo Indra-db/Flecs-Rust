@@ -5,8 +5,8 @@ use crate::{
     sys::{ecs_run_w_filter, ecs_run_worker},
 };
 
-pub struct SystemRunnerFluent {
-    stage: World,
+pub struct SystemRunnerFluent<'a> {
+    stage: &'a World,
     id: EntityT,
     stage_current: i32,
     stage_count: i32,
@@ -16,9 +16,9 @@ pub struct SystemRunnerFluent {
     param: *mut c_void,
 }
 
-impl SystemRunnerFluent {
+impl<'a> SystemRunnerFluent<'a> {
     pub fn new(
-        world: &World,
+        world: &'a World,
         id: EntityT,
         stage_current: i32,
         stage_count: i32,
@@ -26,7 +26,7 @@ impl SystemRunnerFluent {
         param: *mut c_void,
     ) -> Self {
         Self {
-            stage: world.clone(),
+            stage: world,
             id,
             stage_current,
             stage_count,
@@ -47,13 +47,13 @@ impl SystemRunnerFluent {
         self
     }
 
-    pub fn stage(&mut self, stage: &mut World) -> &mut Self {
-        self.stage = stage.clone();
+    pub fn stage(&mut self, stage: &'a World) -> &mut Self {
+        self.stage = stage;
         self
     }
 }
 
-impl Drop for SystemRunnerFluent {
+impl<'a> Drop for SystemRunnerFluent<'a> {
     fn drop(&mut self) {
         if self.stage_count != 0 {
             unsafe {

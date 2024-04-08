@@ -12,14 +12,14 @@ use std::ffi::CStr;
 
 use super::{
     c_types::{
-        EntityT, Flags32T, IdT, InOutKind, OperKind, TermIdT, TermT, WorldT, ECS_CASCADE,
-        ECS_FILTER, ECS_IS_ENTITY, ECS_IS_NAME, ECS_IS_VARIABLE, ECS_PARENT, ECS_SELF, ECS_UP,
+        EntityT, Flags32T, IdT, InOutKind, OperKind, TermIdT, TermT, ECS_CASCADE, ECS_FILTER,
+        ECS_IS_ENTITY, ECS_IS_NAME, ECS_IS_VARIABLE, ECS_PARENT, ECS_SELF, ECS_UP,
     },
     component_registration::ComponentId,
     entity::Entity,
     id::Id,
     world::World,
-    IntoComponentId, IntoEntityId, IntoEntityIdExt, RUST_ecs_id_FLAGS_MASK, ECS_DESC,
+    IntoComponentId, IntoEntityId, IntoEntityIdExt, IntoWorld, RUST_ecs_id_FLAGS_MASK, ECS_DESC,
 };
 
 /// Struct that describes a term identifier.
@@ -29,26 +29,26 @@ use super::{
 /// A term identifier describes a single identifier in a term. Identifier
 /// descriptions can reference entities by id, name or by variable, which means
 /// the entity will be resolved when the term is evaluated.
-pub struct Term {
+pub struct Term<'a> {
     pub term_id_ptr: *mut TermIdT,
     pub term_ptr: *mut TermT,
     pub term: TermT,
-    world: *mut WorldT,
+    world: Option<&'a World>,
 }
 
-impl Default for Term {
+impl<'a> Default for Term<'a> {
     fn default() -> Self {
         Self {
             term_id_ptr: std::ptr::null_mut(),
             term_ptr: std::ptr::null_mut(),
             term: Default::default(),
-            world: std::ptr::null_mut(),
+            world: None,
         }
     }
 }
 
 /// this is for copying the term
-impl Clone for Term {
+impl<'a> Clone for Term<'a> {
     fn clone(&self) -> Self {
         let mut obj = Self {
             term_id_ptr: std::ptr::null_mut(),
@@ -69,7 +69,7 @@ pub enum TermType {
     Pair(EntityT, EntityT),
 }
 
-impl Term {
+impl<'a> Term<'a> {
     /// Create a new term
     ///
     /// # Arguments
@@ -85,10 +85,9 @@ impl Term {
     ///
     /// * C++ API: `term::term`
     #[doc(alias = "term::term")]
-    pub fn new_from_term(world: Option<&World>, term: TermT) -> Self {
-        let world = world.map(|w| w.raw_world).unwrap_or(std::ptr::null_mut());
+    pub fn new_from_term(world: impl IntoWorld<'a>, term: TermT) -> Self {
         let mut obj = Self {
-            world,
+            world: world.get_world(),
             term_id_ptr: std::ptr::null_mut(),
             term,
             term_ptr: std::ptr::null_mut(),
@@ -109,9 +108,9 @@ impl Term {
     ///
     /// * C++ API: `term::term`
     #[doc(alias = "term::term")]
-    pub fn new_world_only(world: &World) -> Self {
+    pub fn new_world_only(world: &'a World) -> Self {
         let mut obj = Self {
-            world: world.raw_world,
+            world: Some(world),
             term_id_ptr: std::ptr::null_mut(),
             term: Default::default(),
             term_ptr: std::ptr::null_mut(),
@@ -134,7 +133,7 @@ impl Term {
     ///
     /// * C++ API: `term::term`
     #[doc(alias = "term::term")]
-    pub fn new_type<T: IntoComponentId>(world: Option<&World>) -> Self {
+    pub fn new_type<T: IntoComponentId>(world: impl IntoWorld<'a>) -> Self {
         if !T::IS_PAIR {
             let id: IdT = if T::First::is_registered() {
                 unsafe { T::First::get_id_unchecked() }
@@ -185,15 +184,14 @@ impl Term {
     ///
     /// * C++ API: `term::term`
     #[doc(alias = "term::term")]
-    pub fn new_id<T>(world: Option<&World>, id: T) -> Self
+    pub fn new_id<T>(world: impl IntoWorld<'a>, id: T) -> Self
     where
         T: IntoEntityIdExt,
     {
-        let world = world.map(|w| w.raw_world).unwrap_or(std::ptr::null_mut());
         let id = id.get_id();
 
         let mut obj = Self {
-            world,
+            world: world.get_world(),
             term_id_ptr: std::ptr::null_mut(),
             term_ptr: std::ptr::null_mut(),
             term: Default::default(),
@@ -210,7 +208,7 @@ impl Term {
             }
         }
 
-        if !world.is_null() {
+        if obj.world.is_some() {
             obj.term.move_ = false;
             let obj_term = &mut obj.term as *mut TermT;
             obj.set_term(obj_term);
@@ -269,7 +267,7 @@ impl Term {
     /// * C++ API: `term::finalize`
     #[doc(alias = "term::finalize")]
     pub fn finalize(&mut self) -> i32 {
-        unsafe { ecs_term_finalize(self.world, &mut self.term) }
+        unsafe { ecs_term_finalize(self.world.world_ptr_mut(), &mut self.term) }
     }
 
     /// Check if term is initialized
@@ -299,7 +297,7 @@ impl Term {
     /// * C++ API: `term::id`
     #[doc(alias = "term::id")]
     pub fn id(&self) -> Id {
-        Id::new_from_existing(self.world, self.term.id)
+        Id::new(self.world, self.term.id)
     }
 
     /// Get the inout type of term
@@ -329,7 +327,7 @@ impl Term {
     /// * C++ API: `term::src`
     #[doc(alias = "term::src")]
     pub fn src(&self) -> Entity {
-        Entity::new_from_existing_raw(self.world, self.term.src.id)
+        Entity::new_from_existing(self.world, self.term.src.id)
     }
 
     /// Get the first of term
@@ -339,7 +337,7 @@ impl Term {
     /// * C++ API: `term::first`
     #[doc(alias = "term::first")]
     pub fn first(&self) -> Entity {
-        Entity::new_from_existing_raw(self.world, self.term.first.id)
+        Entity::new_from_existing(self.world, self.term.first.id)
     }
 
     /// Get the second of term
@@ -349,7 +347,7 @@ impl Term {
     /// * C++ API: `term::second`
     #[doc(alias = "term::second")]
     pub fn second(&self) -> Entity {
-        Entity::new_from_existing_raw(self.world, self.term.second.id)
+        Entity::new_from_existing(self.world, self.term.second.id)
     }
 
     /// Move resources of a term to another term. Same as copy, but moves resources from src,
@@ -366,9 +364,9 @@ impl Term {
 }
 
 /// Builder pattern functions
-impl Term {}
+impl<'a> Term<'a> {}
 
-impl Drop for Term {
+impl<'a> Drop for Term<'a> {
     fn drop(&mut self) {
         unsafe { ecs_term_fini(&mut self.term) };
     }
@@ -376,10 +374,8 @@ impl Drop for Term {
 
 /// Term builder interface.
 /// A term is a single element of a query expression.
-pub trait TermBuilder: Sized {
-    fn world_ptr_mut(&self) -> *mut WorldT;
-
-    fn term_mut(&mut self) -> &mut Term;
+pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
+    fn term_mut(&mut self) -> &mut Term<'a>;
 
     fn term_ptr_mut(&mut self) -> *mut TermT;
 
@@ -483,7 +479,7 @@ pub trait TermBuilder: Sized {
         self.assert_term_id_ptr_mut();
         unsafe {
             (*self.term_id_ptr_mut()).flags |= ECS_UP;
-            (*self.term_id_ptr_mut()).trav = TravRel::get_id(self.world_ptr_mut());
+            (*self.term_id_ptr_mut()).trav = TravRel::get_id(self.get_world());
         };
         self
     }
@@ -539,7 +535,7 @@ pub trait TermBuilder: Sized {
         self.assert_term_id_ptr_mut();
         unsafe {
             (*self.term_id_ptr_mut()).flags |= ECS_CASCADE;
-            (*self.term_id_ptr_mut()).trav = TravRel::get_id(self.world_ptr_mut());
+            (*self.term_id_ptr_mut()).trav = TravRel::get_id(self.get_world());
         };
         self
     }
@@ -749,8 +745,7 @@ pub trait TermBuilder: Sized {
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
     fn select_src<T: ComponentId>(&mut self) -> &mut Self {
-        let world = self.world_ptr_mut();
-        self.select_src_id(T::get_id(world))
+        self.select_src_id(T::get_id(self.get_world()))
     }
 
     /// Select src identifier, initialize it with name. If name starts with a $
@@ -806,8 +801,7 @@ pub trait TermBuilder: Sized {
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
     fn select_first<T: ComponentId>(&mut self) -> &mut Self {
-        let world = self.world_ptr_mut();
-        self.select_first_id(T::get_id(world))
+        self.select_first_id(T::get_id(self.get_world()))
     }
 
     /// Select first identifier, initialize it with name. If name starts with a $
@@ -863,8 +857,7 @@ pub trait TermBuilder: Sized {
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
     fn select_second<T: ComponentId>(&mut self) -> &mut Self {
-        let world = self.world_ptr_mut();
-        self.select_second_id(T::get_id(world))
+        self.select_second_id(T::get_id(self.get_world()))
     }
 
     /// Select second identifier, initialize it with name. If name starts with a $
@@ -1160,12 +1153,8 @@ pub trait TermBuilder: Sized {
     }
 }
 
-impl TermBuilder for Term {
-    fn world_ptr_mut(&self) -> *mut WorldT {
-        self.world
-    }
-
-    fn term_mut(&mut self) -> &mut Term {
+impl<'a> TermBuilder<'a> for Term<'a> {
+    fn term_mut(&mut self) -> &mut Term<'a> {
         self
     }
 
@@ -1175,5 +1164,12 @@ impl TermBuilder for Term {
 
     fn term_id_ptr_mut(&mut self) -> *mut TermIdT {
         self.term_id_ptr
+    }
+}
+
+impl<'a> IntoWorld<'a> for Term<'a> {
+    #[inline]
+    fn get_world(&self) -> Option<&'a World> {
+        self.world
     }
 }

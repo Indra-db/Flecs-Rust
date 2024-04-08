@@ -6,24 +6,25 @@ use super::{
     c_types::{IdT, RefT, WorldT},
     component_registration::ComponentId,
     entity::Entity,
-    IntoEntityId, IntoWorld,
+    IntoEntityId, IntoWorld, World,
 };
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
 use crate::{
+    core::FromWorldPtr,
     ecs_assert,
     sys::{ecs_get_world, ecs_ref_get_id, ecs_ref_init_id},
 };
 
 /// A reference to a component from a specific entity.
 /// Refs are a fast mechanism for referring to a specific entity/component
-pub struct Ref<T: ComponentId> {
-    world: *mut WorldT,
+pub struct Ref<'a, T: ComponentId> {
+    world: Option<&'a World>,
     component_ref: RefT,
     _marker: PhantomData<T>,
 }
 
-impl<T: ComponentId> Ref<T> {
+impl<'a, T: ComponentId> Ref<'a, T> {
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
 
     /// Create a new ref to a component.
@@ -37,15 +38,15 @@ impl<T: ComponentId> Ref<T> {
     /// # See also
     ///
     /// * C++ API: `ref::ref`
+    ///
+    // TODO: Suspicious lifetime sharing betwen the stage and the original world
     #[doc(alias = "ref::ref")]
-    pub fn new(world: Option<impl IntoWorld>, entity: impl IntoEntityId, mut id: IdT) -> Self {
-        let mut world = world
-            .map(|w| w.world_ptr_mut())
-            .unwrap_or(std::ptr::null_mut());
+    pub fn new(world: impl IntoWorld<'a>, entity: impl IntoEntityId, mut id: IdT) -> Self {
+        let mut world_ptr = world.world_ptr_mut();
         // the world we were called with may be a stage; convert it to a world
         // here if that is the case
-        world = if !world.is_null() {
-            unsafe { ecs_get_world(world as *const c_void) as *mut WorldT }
+        world_ptr = if !world_ptr.is_null() {
+            unsafe { ecs_get_world(world_ptr as *const c_void) as *mut WorldT }
         } else {
             std::ptr::null_mut()
         };
@@ -59,10 +60,10 @@ impl<T: ComponentId> Ref<T> {
             FlecsErrorCode::InvalidParameter
         );
 
-        let component_ref = unsafe { ecs_ref_init_id(world, entity.get_id(), id) };
+        let component_ref = unsafe { ecs_ref_init_id(world_ptr, entity.get_id(), id) };
 
         Ref {
-            world,
+            world: unsafe { Option::<&World>::from_ptr(world_ptr) },
             component_ref,
             _marker: PhantomData,
         }
@@ -79,10 +80,13 @@ impl<T: ComponentId> Ref<T> {
     ///
     /// * C++ API: `ref::get`
     #[doc(alias = "ref::get")]
-    pub fn get_unchecked(&mut self) -> &mut T {
+    pub unsafe fn get_unchecked(&mut self) -> &mut T {
         unsafe {
-            &mut *(ecs_ref_get_id(self.world, &mut self.component_ref, self.component_ref.id)
-                as *mut T)
+            &mut *(ecs_ref_get_id(
+                self.world.world_ptr_mut(),
+                &mut self.component_ref,
+                self.component_ref.id,
+            ) as *mut T)
         }
     }
 
@@ -92,14 +96,19 @@ impl<T: ComponentId> Ref<T> {
     ///
     /// * C++ API: `ref::try_get`
     #[doc(alias = "ref::try_get")]
-    pub fn get(&mut self) -> Option<&mut T> {
-        if self.world.is_null() || self.component_ref.entity == 0 {
+    pub fn try_get(&mut self) -> Option<&mut T> {
+        if self.world.is_some() || self.component_ref.entity == 0 {
             return None;
         }
-        Some(self.get_unchecked())
+        Some(unsafe { self.get_unchecked() })
     }
 
-    pub fn entity(&self) -> Entity {
-        Entity::new_from_existing_raw(self.world, self.component_ref.entity)
+    pub fn get(&mut self) -> &mut T {
+        self.try_get()
+            .expect("Called Ref::get but the Ref was invalid")
+    }
+
+    pub fn entity(&self) -> Entity<'a> {
+        Entity::new_from_existing(self.world, self.component_ref.entity)
     }
 }
