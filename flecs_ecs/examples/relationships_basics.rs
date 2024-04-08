@@ -25,7 +25,12 @@ fn main() {
     println!("Bob eats apples? {}", bob.has_pair_first::<Eats>(apples));
 
     // Wildcards can be used to match relationships
-    println!("Bob grows food? {}", bob.has_id((grows, ECS_WILDCARD)));
+    println!(
+        "Bob grows food? {}, {}",
+        bob.has_id((grows, flecs::Wildcard::ID)),
+        //or you can do
+        bob.has_pair_second::<flecs::Wildcard>(grows)
+    );
 
     println!();
 
@@ -43,7 +48,7 @@ fn main() {
     println!();
 
     // Iterate by explicitly providing the pair. This iterates (*, Pears):
-    bob.for_each_matching_pair(ECS_WILDCARD, pears, |id| {
+    bob.for_each_matching_pair(flecs::Wildcard::ID, pears, |id| {
         println!("Bob {} pears", id.first().name());
     });
 
@@ -57,7 +62,7 @@ fn main() {
 
     // Output:
     //  Bob eats apples? true
-    //  Bob grows food? true
+    //  Bob grows food? true, true
 
     //  Bob's type: [(Identifier,Name), (Eats,Apples), (Eats,Pears), (Grows,Pears)]
 

@@ -30,6 +30,7 @@ fn iterate_tree(entity: Entity, position_parent: &Position) {
         iterate_tree(child, &pos_actual);
     });
 }
+
 fn main() {
     let world = World::new();
 
@@ -67,15 +68,18 @@ fn main() {
 
     // Is the Moon a child of the Earth?
     println!(
-        "Is the Moon a child of the Earth? {}",
-        moon.has_id((ECS_CHILD_OF, earth))
+        "Is the Moon a child of the Earth? {} / {}",
+        moon.has_id((flecs::ChildOf::ID, earth)), //or you can do
+        moon.has_pair_first::<flecs::ChildOf>(earth)
     );
+
+    println!();
 
     // Do a depth-first traversal of the tree
     iterate_tree(sun, &Position { x: 0.0, y: 0.0 });
 
     // Output
-    //  Is the Moon a child of the Earth? true
+    //  Is the Moon a child of the Earth? true / true
     //  ::Sun [Position, (Identifier,Name)]
     //  Position { x: 1.0, y: 1.0 }
     //  ::Sun::Mercury [Position, Planet, (Identifier,Name), (ChildOf,Sun)]

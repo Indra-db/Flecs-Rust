@@ -16,7 +16,7 @@ fn main() {
     // Startup system
     world
         .system_builder_named::<()>(c"Startup")
-        .kind_id(ECS_ON_START)
+        .kind::<flecs::pipeline::OnStart>()
         .on_iter_only(|it| {
             println!("{}", it.system().name());
         });

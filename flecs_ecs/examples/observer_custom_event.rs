@@ -11,7 +11,7 @@ fn main() {
     // Create an observer for three events
     world
         .observer_builder::<(&Position,)>()
-        .add_event_type::<MyEvent>()
+        .add_event::<MyEvent>()
         .on_each_iter(|it, index, (_pos,)| {
             println!(
                 " - {}: {}: {}",

@@ -9,7 +9,7 @@ fn main() {
 
     // Register TradesWith as symmetric relationship. Symmetric relationships
     // go both ways, adding (R, B) to A will also add (R, A) to B.
-    world.component::<TradesWith>().add_id(ECS_SYMMETRIC);
+    world.component::<TradesWith>().add::<flecs::Symmetric>();
 
     // Create two players
     let player_1 = world.new_entity();

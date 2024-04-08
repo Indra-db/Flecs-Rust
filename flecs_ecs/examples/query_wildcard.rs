@@ -15,7 +15,9 @@ fn main() {
     let query = world
         .query_builder::<(&Eats,)>()
         .term_at(1)
-        .select_second_id(ECS_WILDCARD) // Change first argument to (Eats, *)
+        // Change first argument to (Eats, *)
+        // alternative you can do  `.select_second_id(flecs::Wildcard::ID)``
+        .select_second::<flecs::Wildcard>()
         .build();
 
     // Create a few entities that match the query

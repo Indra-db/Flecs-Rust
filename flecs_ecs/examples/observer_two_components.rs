@@ -11,7 +11,7 @@ fn main() {
     // Create observer for custom event
     world
         .observer_builder::<(&Position, &Velocity)>()
-        .add_event(ECS_ON_SET)
+        .add_event::<flecs::OnSet>()
         .on_each_iter(|it, index, (pos, vel)| {
             println!(
                 " - {}: {}: {}: p: {{ {}, {} }}, v: {{ {}, {} }}",

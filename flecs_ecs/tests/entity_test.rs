@@ -1,7 +1,7 @@
 use std::ffi::{c_void, CStr};
 
 use flecs_ecs::{
-    core::{c_types::*, id::Id, world::World, EntityView, ReactorAPI},
+    core::{flecs, id::Id, world::World, EntityView, FlecsConstantId, ReactorAPI},
     sys::EcsComponent,
 };
 
@@ -211,8 +211,8 @@ fn entity_add_childof() {
     let entity = world.new_entity();
     assert!(entity.is_valid());
 
-    entity.add_id((ECS_CHILD_OF, parent));
-    assert!(entity.has_id((ECS_CHILD_OF, parent)));
+    entity.add_id((flecs::ChildOf::ID, parent));
+    assert!(entity.has_id((flecs::ChildOf::ID, parent)));
 }
 
 #[test]
@@ -225,8 +225,8 @@ fn entity_add_instanceof() {
     let entity = world.new_entity();
     assert!(entity.is_valid());
 
-    entity.add_id((ECS_IS_A, base));
-    assert!(entity.has_id((ECS_IS_A, base)));
+    entity.add_id((flecs::IsA::ID, base));
+    assert!(entity.has_id((flecs::IsA::ID, base)));
 }
 
 #[test]
@@ -292,11 +292,11 @@ fn entity_remove_childof() {
     let entity = world.new_entity();
     assert!(entity.is_valid());
 
-    entity.add_id((ECS_CHILD_OF, parent));
-    assert!(entity.has_id((ECS_CHILD_OF, parent)));
+    entity.add_id((flecs::ChildOf::ID, parent));
+    assert!(entity.has_id((flecs::ChildOf::ID, parent)));
 
-    entity.remove_id((ECS_CHILD_OF, parent));
-    assert!(!entity.has_id((ECS_CHILD_OF, parent)));
+    entity.remove_id((flecs::ChildOf::ID, parent));
+    assert!(!entity.has_id((flecs::ChildOf::ID, parent)));
 }
 
 #[test]
@@ -309,11 +309,11 @@ fn entity_remove_instanceof() {
     let entity = world.new_entity();
     assert!(entity.is_valid());
 
-    entity.add_id((ECS_IS_A, base));
-    assert!(entity.has_id((ECS_IS_A, base)));
+    entity.add_id((flecs::IsA::ID, base));
+    assert!(entity.has_id((flecs::IsA::ID, base)));
 
-    entity.remove_id((ECS_IS_A, base));
-    assert!(!entity.has_id((ECS_IS_A, base)));
+    entity.remove_id((flecs::IsA::ID, base));
+    assert!(!entity.has_id((flecs::IsA::ID, base)));
 }
 
 #[test]
@@ -348,7 +348,7 @@ fn entity_get_generic_mut() {
     let mut invoked = false;
     world
         .observer_builder::<(&Position,)>()
-        .add_event(ECS_ON_SET)
+        .add_event::<flecs::OnSet>()
         .on_each(|_| {
             invoked = true;
         });
@@ -428,9 +428,9 @@ fn entity_add_role() {
     let world = World::new();
     let entity = world.new_entity();
 
-    let entity = entity.add_flags(ECS_PAIR);
+    let entity = entity.add_flags(flecs::Pair::ID);
 
-    assert_eq!(entity.raw_id & ECS_PAIR, ECS_PAIR);
+    assert_eq!(entity.raw_id & flecs::Pair::ID, flecs::Pair::ID);
 }
 
 #[test]
@@ -439,8 +439,8 @@ fn entity_remove_role() {
     let entity = world.new_entity();
     let id = entity;
 
-    let entity = entity.add_flags(ECS_PAIR);
-    assert_eq!(entity.raw_id & ECS_PAIR, ECS_PAIR);
+    let entity = entity.add_flags(flecs::Pair::ID);
+    assert_eq!(entity.raw_id & flecs::Pair::ID, flecs::Pair::ID);
 
     let entity = entity.remove_flags();
     assert_eq!(entity, id);
@@ -451,11 +451,11 @@ fn entity_has_role() {
     let world = World::new();
     let entity = world.new_entity();
 
-    let entity = entity.add_flags(ECS_PAIR);
-    assert!(entity.has_flags_for(ECS_PAIR));
+    let entity = entity.add_flags(flecs::Pair::ID);
+    assert!(entity.has_flags_for(flecs::Pair::ID));
 
     let entity = entity.remove_flags();
-    assert!(!entity.has_flags_for(ECS_PAIR));
+    assert!(!entity.has_flags_for(flecs::Pair::ID));
 }
 
 #[test]
@@ -465,9 +465,9 @@ fn entity_pair_role() {
     let entity2 = world.new_entity();
 
     let pair: Id = Id::new(None::<World>, (entity, entity2));
-    let pair = pair.add_flags(ECS_PAIR);
+    let pair = pair.add_flags(flecs::Pair::ID);
 
-    assert!(pair.has_flags_for(ECS_PAIR));
+    assert!(pair.has_flags_for(flecs::Pair::ID));
 
     let rel = pair.first();
     let obj = pair.second();
@@ -593,9 +593,9 @@ fn entity_has_childof() {
 
     let parent = world.new_entity();
 
-    let child = world.new_entity().add_id((ECS_CHILD_OF, parent));
+    let child = world.new_entity().add_id((flecs::ChildOf::ID, parent));
 
-    assert!(child.has_id((ECS_CHILD_OF, parent)));
+    assert!(child.has_id((flecs::ChildOf::ID, parent)));
 }
 
 #[test]
@@ -604,9 +604,9 @@ fn entity_has_instanceof() {
 
     let base = world.new_entity();
 
-    let instance = world.new_entity().add_id((ECS_IS_A, base));
+    let instance = world.new_entity().add_id((flecs::IsA::ID, base));
 
-    assert!(instance.has_id((ECS_IS_A, base)));
+    assert!(instance.has_id((flecs::IsA::ID, base)));
 }
 
 #[test]
@@ -614,11 +614,11 @@ fn entity_has_instanceof_indirect() {
     let world = World::new();
 
     let base_of_base = world.new_entity();
-    let base = world.new_entity().add_id((ECS_IS_A, base_of_base));
+    let base = world.new_entity().add_id((flecs::IsA::ID, base_of_base));
 
-    let instance = world.new_entity().add_id((ECS_IS_A, base));
+    let instance = world.new_entity().add_id((flecs::IsA::ID, base));
 
-    assert!(instance.has_id((ECS_IS_A, base_of_base)));
+    assert!(instance.has_id((flecs::IsA::ID, base_of_base)));
 }
 
 #[test]
@@ -713,7 +713,7 @@ fn entity_force_owned() {
         .add::<Velocity>()
         .override_type::<Position>();
 
-    let entity = world.new_entity().add_id((ECS_IS_A, prefab));
+    let entity = world.new_entity().add_id((flecs::IsA::ID, prefab));
 
     assert!(entity.has::<Position>());
     assert!(entity.owns::<Position>());
@@ -732,7 +732,7 @@ fn entity_force_owned_2() {
         .override_type::<Position>()
         .override_type::<Velocity>();
 
-    let entity = world.new_entity().add_id((ECS_IS_A, prefab));
+    let entity = world.new_entity().add_id((flecs::IsA::ID, prefab));
 
     assert!(entity.has::<Position>());
     assert!(entity.owns::<Position>());
@@ -750,9 +750,9 @@ fn entity_force_owned_nested() {
         .add::<Velocity>()
         .override_type::<Position>();
 
-    let prefab_2 = world.new_entity().add_id((ECS_IS_A, prefab));
+    let prefab_2 = world.new_entity().add_id((flecs::IsA::ID, prefab));
 
-    let entity = world.new_entity().add_id((ECS_IS_A, prefab_2));
+    let entity = world.new_entity().add_id((flecs::IsA::ID, prefab_2));
 
     assert!(entity.has::<Position>());
     assert!(entity.owns::<Position>());
@@ -818,7 +818,7 @@ fn entity_get_parent() {
     let parent = world.new_entity();
     let child = world.new_entity().child_of_id(parent);
 
-    assert_eq!(child.target_id(ECS_CHILD_OF, 0), parent);
+    assert_eq!(child.target_id(flecs::ChildOf::ID, 0), parent);
     assert_eq!(child.parent(), parent);
 }
 
@@ -1054,7 +1054,7 @@ fn entity_override() {
 
     let base = world.new_entity().override_type::<Position>();
 
-    let entity = world.new_entity().add_id((ECS_IS_A, base));
+    let entity = world.new_entity().add_id((flecs::IsA::ID, base));
 
     assert!(entity.has::<Position>());
     assert!(entity.owns::<Position>());
@@ -1069,7 +1069,7 @@ fn entity_override_id() {
 
     let base = world.new_entity().override_id(tag_a).add_id(tag_b);
 
-    let entity = world.new_entity().add_id((ECS_IS_A, base));
+    let entity = world.new_entity().add_id((flecs::IsA::ID, base));
 
     assert!(entity.has_id(tag_a));
     assert!(entity.owns_id(tag_a));
@@ -1090,7 +1090,7 @@ fn entity_override_pair_w_tgt_id() {
         .override_pair_first::<Position>(tgt_a)
         .add_pair_first::<Position>(tgt_b);
 
-    let entity = world.new_entity().add_id((ECS_IS_A, base));
+    let entity = world.new_entity().add_id((flecs::IsA::ID, base));
 
     assert!(entity.has_pair_first::<Position>(tgt_a));
     assert!(entity.owns_pair_first::<Position>(tgt_a));
@@ -1112,7 +1112,7 @@ fn entity_override_pair_w_ids() {
         .override_id((rel, tgt_a))
         .add_id((rel, tgt_b));
 
-    let entity = world.new_entity().add_id((ECS_IS_A, base));
+    let entity = world.new_entity().add_id((flecs::IsA::ID, base));
 
     assert!(entity.has_id((rel, tgt_a)));
     assert!(entity.owns_id((rel, tgt_a)));
@@ -1130,7 +1130,7 @@ fn entity_override_pair() {
         .override_type::<(Position, TagA)>()
         .add::<(Position, TagB)>();
 
-    let entity = world.new_entity().add_id((ECS_IS_A, base));
+    let entity = world.new_entity().add_id((flecs::IsA::ID, base));
 
     assert!(entity.has::<(Position, TagA)>());
     assert!(entity.owns::<(Position, TagA)>());
@@ -1145,7 +1145,7 @@ fn entity_set_override() {
 
     let base = world.new_entity().set_override(Position { x: 10, y: 20 });
 
-    let entity = world.new_entity().add_id((ECS_IS_A, base));
+    let entity = world.new_entity().add_id((flecs::IsA::ID, base));
 
     assert!(entity.has::<Position>());
     assert!(entity.owns::<Position>());
@@ -1171,7 +1171,7 @@ fn entity_set_override_lvalue() {
 
     let base = world.new_entity().set_override(plvalue);
 
-    let entity = world.new_entity().add_id((ECS_IS_A, base));
+    let entity = world.new_entity().add_id((flecs::IsA::ID, base));
 
     assert!(entity.has::<Position>());
     assert!(entity.owns::<Position>());
@@ -1197,7 +1197,7 @@ fn entity_set_override_pair() {
         .new_entity()
         .set_override_pair_first::<Position, TagA>(Position { x: 10, y: 20 });
 
-    let entity = world.new_entity().add_id((ECS_IS_A, base));
+    let entity = world.new_entity().add_id((flecs::IsA::ID, base));
 
     assert!(entity.has::<(Position, TagA)>());
     assert!(entity.owns::<(Position, TagA)>());
@@ -1225,7 +1225,7 @@ fn entity_set_override_pair_w_tgt_id() {
         .new_entity()
         .set_override_pair_first_id::<Position>(Position { x: 10, y: 20 }, tgt);
 
-    let entity = world.new_entity().add_id((ECS_IS_A, base));
+    let entity = world.new_entity().add_id((flecs::IsA::ID, base));
 
     assert!(entity.has_pair_first::<Position>(tgt));
     assert!(entity.owns_pair_first::<Position>(tgt));
@@ -1251,7 +1251,7 @@ fn entity_set_override_pair_w_rel_tag() {
         .new_entity()
         .set_override_pair_second::<TagA, Position>(Position { x: 10, y: 20 });
 
-    let entity = world.new_entity().add_id((ECS_IS_A, base));
+    let entity = world.new_entity().add_id((flecs::IsA::ID, base));
 
     assert!(entity.has::<(TagA, Position)>());
     assert!(entity.owns::<(TagA, Position)>());

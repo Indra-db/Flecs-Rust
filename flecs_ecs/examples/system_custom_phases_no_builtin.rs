@@ -17,11 +17,17 @@ fn main() {
     // which is necessary for the builtin pipeline to discover which systems it
     // should run.
 
-    let update = world.new_entity().add_id(ECS_PHASE);
+    let update = world.new_entity().add::<flecs::pipeline::Phase>();
 
-    let physics = world.new_entity().add_id(ECS_PHASE).depends_on_id(update);
+    let physics = world
+        .new_entity()
+        .add::<flecs::pipeline::Phase>()
+        .depends_on_id(update);
 
-    let collisions = world.new_entity().add_id(ECS_PHASE).depends_on_id(physics);
+    let collisions = world
+        .new_entity()
+        .add::<flecs::pipeline::Phase>()
+        .depends_on_id(physics);
 
     // Create 3 dummy systems.
     world

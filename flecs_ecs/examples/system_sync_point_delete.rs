@@ -30,7 +30,7 @@ fn main() {
     // const, since inside the system we're only reading it.
     world
         .system_builder_named::<(&Position,)>(c"DeleteEntity")
-        .write_id(ECS_WILDCARD)
+        .write_type::<&flecs::Wildcard>()
         .on_each_entity(|e, (p,)| {
             if p.x >= 3.0 {
                 println!("Delete entity {}", e.name());

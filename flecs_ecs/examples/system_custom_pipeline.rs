@@ -20,7 +20,7 @@ fn main() {
     // DependsOn relationship.
     let pipeline = world
         .pipeline()
-        .with(FilterType::Id(ECS_SYSTEM))
+        .with(FilterType::Id(flecs::system::System::ID))
         .with_type::<&Physics>()
         .build();
 

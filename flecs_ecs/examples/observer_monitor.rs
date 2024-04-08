@@ -16,15 +16,15 @@ fn main() {
     // Create observer for custom event
     world
         .observer_builder::<(&Position, &Velocity)>()
-        .add_event(ECS_MONITOR)
+        .add_event::<flecs::Monitor>()
         .on_each_iter(|it, index, (_pos, _vel)| {
-            if it.event() == ECS_ON_ADD {
+            if it.event() == flecs::OnAdd::ID {
                 println!(
                     " - Enter: {}: {}",
                     it.event_id().to_str(),
                     it.entity(index).name()
                 );
-            } else if it.event() == ECS_ON_REMOVE {
+            } else if it.event() == flecs::OnRemove::ID {
                 println!(
                     " - Leave: {}: {}",
                     it.event_id().to_str(),

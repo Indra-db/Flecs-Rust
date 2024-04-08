@@ -1351,6 +1351,28 @@ impl EntityView {
         self.has_id((First::get_id(self.world), second.get_id()))
     }
 
+    /// Check if entity has the provided pair.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Second` - The second element of the pair.
+    ///
+    /// # Arguments
+    ///
+    /// * `first` - The first element of the pair.
+    ///
+    /// # Returns
+    ///
+    /// True if the entity has the provided component, false otherwise.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::has`
+    #[doc(alias = "entity_view::has")]
+    pub fn has_pair_second<Second: ComponentId>(self, first: impl IntoEntityId) -> bool {
+        self.has_id((first.get_id(), Second::get_id(self.world)))
+    }
+
     /// Check if entity has the provided pair with an enum constant.
     ///
     /// # Type Parameters

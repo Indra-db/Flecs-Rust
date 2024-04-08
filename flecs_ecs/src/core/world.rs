@@ -39,7 +39,7 @@ use super::{
     component::{Component, UntypedComponent},
     component_ref::Ref,
     component_registration::{ComponentId, ComponentType, Enum, Struct},
-    IntoComponentId, IntoEntityId, IntoEntityIdExt, IterAPI, ECS_PREFAB,
+    flecs, FlecsConstantId, IntoComponentId, IntoEntityId, IntoEntityIdExt, IterAPI, ECS_PREFAB,
 };
 use super::{EmptyComponent, NotEmptyComponent};
 
@@ -2728,7 +2728,7 @@ impl World {
     #[doc(alias = "world::prefab")]
     pub fn prefab(&self) -> Entity {
         let result = Entity::new(self);
-        result.add_id(ECS_PREFAB);
+        result.add_id(flecs::Prefab::ID);
         result
     }
 

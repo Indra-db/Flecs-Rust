@@ -329,3 +329,7 @@ impl<T: Clone> ImplementsClone<T> {
 impl<T: Default> ImplementsDefault<T> {
     pub const IMPLS: bool = true;
 }
+
+pub trait FlecsConstantId {
+    const ID: u64;
+}

@@ -155,7 +155,7 @@ where
     ///
     /// * C++ API: `observer_builder_i::event`
     #[doc(alias = "observer_builder_i::event")]
-    pub fn add_event(&mut self, event: impl IntoEntityId) -> &mut Self {
+    pub fn add_event_id(&mut self, event: impl IntoEntityId) -> &mut Self {
         let event = event.get_id();
         let event_count = self.event_count as usize;
         self.event_count += 1;
@@ -173,7 +173,7 @@ where
     ///
     /// * C++ API: `observer_builder_i::event`
     #[doc(alias = "observer_builder_i::event")]
-    pub fn add_event_type<E>(&mut self) -> &mut Self
+    pub fn add_event<E>(&mut self) -> &mut Self
     where
         E: ComponentId,
     {

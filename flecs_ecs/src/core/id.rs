@@ -381,18 +381,20 @@ impl Id {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
         // C string with a static lifetime. The caller must ensure this invariant.
         // ecs_id_ptr never returns null, so we don't need to check for that.
-        unsafe { std::ffi::CStr::from_ptr(ecs_id_str(self.world, self.raw_id)) }
-            .to_str()
-            .unwrap_or({
-                ecs_assert!(
-                    false,
-                    FlecsErrorCode::UnwrapFailed,
-                    "Failed to convert id to string (id: {})",
-                    self.raw_id
-                );
+        if let Ok(str) =
+            unsafe { std::ffi::CStr::from_ptr(ecs_id_str(self.world, self.raw_id)) }.to_str()
+        {
+            str
+        } else {
+            ecs_assert!(
+                false,
+                FlecsErrorCode::UnwrapFailed,
+                "Failed to convert id to string (id: {})",
+                self.raw_id
+            );
 
-                "invalid_str_from_id"
-            })
+            "invalid_str_from_id"
+        }
     }
 
     /// Convert id to string

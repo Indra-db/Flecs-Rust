@@ -3,8 +3,8 @@
 use std::{ffi::CStr, sync::OnceLock};
 
 use super::{
-    ComponentId, ComponentInfo, ComponentType, EmptyComponent, IdComponent, IntoWorld, NoneEnum,
-    Struct,
+    ComponentId, ComponentInfo, ComponentType, EmptyComponent, FlecsConstantId, IdComponent,
+    IntoWorld, NoneEnum, Struct,
 };
 
 use super::c_types::*;
@@ -13,6 +13,10 @@ use super::c_types::*;
 macro_rules! create_pre_registered_component {
     ($struct_name:ident, $const_name:ident) => {
         pub struct $struct_name;
+
+        impl FlecsConstantId for $struct_name {
+            const ID: u64 = $const_name;
+        }
 
         impl ComponentInfo for $struct_name {
             const IS_ENUM: bool = false;
@@ -77,7 +81,6 @@ create_pre_registered_component!(Poly, ECS_POLY);
 // Poly target components
 create_pre_registered_component!(Query, ECS_QUERY);
 create_pre_registered_component!(Observer, ECS_OBSERVER);
-create_pre_registered_component!(System, ECS_SYSTEM);
 
 // Core scopes & entities
 create_pre_registered_component!(World, ECS_WORLD);
@@ -90,6 +93,8 @@ create_pre_registered_component!(Prefab, ECS_PREFAB);
 create_pre_registered_component!(Disabled, ECS_DISABLED);
 create_pre_registered_component!(SlotOf, ECS_SLOT_OF);
 create_pre_registered_component!(Flag, ECS_FLAG);
+create_pre_registered_component!(Monitor, ECS_MONITOR);
+create_pre_registered_component!(Empty, ECS_EMPTY);
 
 // Relationship properties
 create_pre_registered_component!(Wildcard, ECS_WILDCARD);
@@ -121,6 +126,7 @@ create_pre_registered_component!(Symbol, ECS_SYMBOL);
 create_pre_registered_component!(Alias, ECS_ALIAS);
 
 // Events
+
 create_pre_registered_component!(OnAdd, ECS_ON_ADD);
 create_pre_registered_component!(OnRemove, ECS_ON_REMOVE);
 create_pre_registered_component!(OnSet, ECS_ON_SET);
@@ -136,10 +142,18 @@ create_pre_registered_component!(OnDeleteObservable, ECS_ON_DELETE_OBSERVABLE);
 create_pre_registered_component!(OnComponentHooks, ECS_ON_COMPONENT_HOOKS);
 create_pre_registered_component!(OnDeleteTarget, ECS_ON_DELETE_TARGET);
 
-// Timers
-create_pre_registered_component!(TickSource, ECS_TICK_SOURCE);
-create_pre_registered_component!(Timer, ECS_TIMER);
-create_pre_registered_component!(RateFilter, ECS_RATE_FILTER);
+// System
+pub mod system {
+    use super::*;
+    create_pre_registered_component!(System, ECS_SYSTEM);
+    create_pre_registered_component!(TickSource, ECS_TICK_SOURCE);
+}
+
+pub mod timers {
+    use super::*;
+    create_pre_registered_component!(Timer, ECS_TIMER);
+    create_pre_registered_component!(RateFilter, ECS_RATE_FILTER);
+}
 
 // Actions
 create_pre_registered_component!(Remove, ECS_REMOVE);
@@ -159,18 +173,73 @@ create_pre_registered_component!(ScopeOpen, ECS_SCOPE_OPEN);
 create_pre_registered_component!(ScopeClose, ECS_SCOPE_CLOSE);
 
 // Systems
-create_pre_registered_component!(Monitor, ECS_MONITOR);
-create_pre_registered_component!(Empty, ECS_EMPTY);
-create_pre_registered_component!(Pipeline, ECS_PIPELINE);
-create_pre_registered_component!(OnStart, ECS_ON_START);
-create_pre_registered_component!(PreFrame, ECS_PRE_FRAME);
-create_pre_registered_component!(OnLoad, ECS_ON_LOAD);
-create_pre_registered_component!(PostLoad, ECS_POST_LOAD);
-create_pre_registered_component!(PreUpdate, ECS_PRE_UPDATE);
-create_pre_registered_component!(OnUpdate, ECS_ON_UPDATE);
-create_pre_registered_component!(OnValidate, ECS_ON_VALIDATE);
-create_pre_registered_component!(PostUpdate, ECS_POST_UPDATE);
-create_pre_registered_component!(PreStore, ECS_PRE_STORE);
-create_pre_registered_component!(OnStore, ECS_ON_STORE);
-create_pre_registered_component!(PostFrame, ECS_POST_FRAME);
-create_pre_registered_component!(Phase, ECS_PHASE);
+pub mod pipeline {
+    use super::*;
+    create_pre_registered_component!(Pipeline, ECS_PIPELINE);
+    create_pre_registered_component!(OnStart, ECS_ON_START);
+    create_pre_registered_component!(PreFrame, ECS_PRE_FRAME);
+    create_pre_registered_component!(OnLoad, ECS_ON_LOAD);
+    create_pre_registered_component!(PostLoad, ECS_POST_LOAD);
+    create_pre_registered_component!(PreUpdate, ECS_PRE_UPDATE);
+    create_pre_registered_component!(OnUpdate, ECS_ON_UPDATE);
+    create_pre_registered_component!(OnValidate, ECS_ON_VALIDATE);
+    create_pre_registered_component!(PostUpdate, ECS_POST_UPDATE);
+    create_pre_registered_component!(PreStore, ECS_PRE_STORE);
+    create_pre_registered_component!(OnStore, ECS_ON_STORE);
+    create_pre_registered_component!(PostFrame, ECS_POST_FRAME);
+    create_pre_registered_component!(Phase, ECS_PHASE);
+}
+
+pub mod testggg {
+    use super::*;
+    // Meta primitive components (don't use low ids to save id space)
+    create_pre_registered_component!(Bool, ECS_BOOL_T);
+    create_pre_registered_component!(Char, ECS_CHAR_T);
+    create_pre_registered_component!(Byte, ECS_BYTE_T);
+    create_pre_registered_component!(U8, ECS_U8_T);
+    create_pre_registered_component!(U16, ECS_U16_T);
+    create_pre_registered_component!(U32, ECS_U32_T);
+    create_pre_registered_component!(U64, ECS_U64_T);
+    create_pre_registered_component!(UPtr, ECS_UPTR_T);
+    create_pre_registered_component!(I8, ECS_I8_T);
+    create_pre_registered_component!(I16, ECS_I16_T);
+    create_pre_registered_component!(I32, ECS_I32_T);
+    create_pre_registered_component!(I64, ECS_I64_T);
+    create_pre_registered_component!(IPtr, ECS_IPTR_T);
+    create_pre_registered_component!(F32, ECS_F32_T);
+    create_pre_registered_component!(F64, ECS_F64_T);
+    create_pre_registered_component!(String, ECS_STRING_T);
+    create_pre_registered_component!(Entity, ECS_ENTITY_T);
+
+    // Meta type components
+    create_pre_registered_component!(Type, ECS_META_TYPE);
+    create_pre_registered_component!(TypeSerialized, ECS_META_TYPE_SERIALIZED);
+    create_pre_registered_component!(Primitive, ECS_PRIMITIVE);
+    create_pre_registered_component!(Enum, ECS_ENUM);
+    create_pre_registered_component!(Bitmask, ECS_BITMASK);
+    create_pre_registered_component!(Member, ECS_MEMBER);
+    create_pre_registered_component!(StructT, ECS_STRUCT);
+    create_pre_registered_component!(Array, ECS_ARRAY);
+    create_pre_registered_component!(Vector, ECS_VECTOR);
+    create_pre_registered_component!(Opaque, ECS_OPAQUE);
+    create_pre_registered_component!(Unit, ECS_UNIT);
+    create_pre_registered_component!(UnitPrefix, ECS_UNIT_PREFIX);
+    create_pre_registered_component!(Constant, ECS_CONSTANT);
+    create_pre_registered_component!(Quantity, ECS_QUANTITY);
+}
+
+// Doc module components
+pub mod doc {
+    use super::*;
+    create_pre_registered_component!(Description, ECS_DOC_DESCRIPTION);
+    create_pre_registered_component!(Brief, ECS_DOC_BRIEF);
+    create_pre_registered_component!(Detail, ECS_DOC_DETAIL);
+    create_pre_registered_component!(Link, ECS_DOC_LINK);
+    create_pre_registered_component!(Color, ECS_DOC_COLOR);
+}
+
+pub mod rest {
+    use super::*;
+    // REST module components
+    create_pre_registered_component!(Rest, ECS_REST);
+}

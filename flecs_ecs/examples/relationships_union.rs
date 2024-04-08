@@ -36,8 +36,8 @@ fn main() {
 
     // Register Movement and Direction as union relationships. This ensures that
     // an entity can only have one Movement and one Direction.
-    world.component::<Movement>().add_id(ECS_UNION);
-    world.component::<Direction>().add_id(ECS_UNION);
+    world.component::<Movement>().add::<flecs::Union>();
+    world.component::<Direction>().add::<flecs::Union>();
 
     // Create a query that subscribes for all entities that have a Direction
     // and that are walking.

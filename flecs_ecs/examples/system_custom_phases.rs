@@ -18,10 +18,13 @@ fn main() {
     // to discover which systems it should run.
     let physics = world
         .new_entity()
-        .add_id(ECS_PHASE)
-        .depends_on_id(ECS_ON_UPDATE);
+        .add::<flecs::pipeline::Phase>()
+        .depends_on::<flecs::pipeline::OnUpdate>();
 
-    let collisions = world.new_entity().add_id(ECS_PHASE).depends_on_id(physics);
+    let collisions = world
+        .new_entity()
+        .add::<flecs::pipeline::Phase>()
+        .depends_on_id(physics);
 
     // Create 3 dummy systems.
     world
@@ -36,7 +39,7 @@ fn main() {
 
     world
         .system_builder_named::<()>(c"GameSystem")
-        .kind_id(ECS_ON_UPDATE)
+        .kind::<flecs::pipeline::OnUpdate>()
         .on_iter_only(sys);
 
     // Run pipeline

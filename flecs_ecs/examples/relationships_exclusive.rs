@@ -10,7 +10,7 @@ fn main() {
 
     // Register Platoon as exclusive relationship. This ensures that an entity
     // can only belong to a single Platoon.
-    world.component::<Platoon>().add_id(ECS_EXCLUSIVE);
+    world.component::<Platoon>().add::<flecs::Exclusive>();
 
     // Create two platoons
     let platoon_1 = world.new_entity();

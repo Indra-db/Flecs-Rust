@@ -39,7 +39,7 @@ fn main() {
     let world = World::new();
 
     // Register the LocatedIn relationship as transitive
-    world.component::<LocatedIn>().add_id(ECS_TRANSITIVE);
+    world.component::<LocatedIn>().add::<flecs::Transitive>();
 
     // Populate the store with locations
     let earth = world.new_entity_named(c"Earth").add::<Planet>();
