@@ -17,7 +17,7 @@ fn main() {
     // Create a simple query for component Position
     let query = world.query::<(&Position,)>();
 
-    let entity: Option<Entity> = query.find(|(pos,)| pos.x == 20.0);
+    let entity: Option<Entity> = query.find(|(pos,)| (pos.x - 20.0).abs() < f32::EPSILON);
 
     if let Some(entity) = entity {
         println!("Entity found: {:?}", entity.path().unwrap());
