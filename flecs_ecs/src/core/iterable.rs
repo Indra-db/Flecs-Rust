@@ -650,17 +650,17 @@ macro_rules! impl_iterable {
                 $( $t::populate_array_ptrs(_it, _components, _is_ref, _index); )*
             }
 
-            #[allow(unused)]
+            #[allow(unused, clippy::unused_unit)]
             fn create_tuple(array_components: &mut &[*mut u8], index: usize) -> Self::TupleType {
                 ($( $t::create_tuple(array_components, index), )*)
             }
 
-            #[allow(unused)]
+            #[allow(unused, clippy::unused_unit)]
             fn create_tuple_with_ref(array_components: &mut &[*mut u8], is_ref_array_components: &mut &[bool], index: usize) -> Self::TupleType {
                 ($( $t::create_tuple_with_ref(array_components, is_ref_array_components, index), )*)
             }
 
-            #[allow(unused)]
+            #[allow(unused, clippy::unused_unit)]
             fn create_tuple_slices(
                 array_components: &mut &[*mut u8],
                 count: usize,
@@ -668,7 +668,7 @@ macro_rules! impl_iterable {
                 ($( $t::create_tuple_slices(array_components, count), )*)
             }
 
-            #[allow(unused)]
+            #[allow(unused, clippy::unused_unit)]
             fn create_tuple_slices_with_ref(
                 array_components: &mut &[*mut u8],
                 is_ref_array_components: &mut &[bool],
