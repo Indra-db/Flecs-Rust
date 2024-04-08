@@ -13,7 +13,7 @@ fn main() {
 
     // Create a query that matches edible components
     let query = world
-        .query_builder::<(&Eats,)>()
+        .query_builder::<&Eats>()
         .term_at(1)
         // Change first argument to (Eats, *)
         // alternative you can do  `.select_second_id(flecs::Wildcard::ID)``
@@ -32,7 +32,7 @@ fn main() {
 
     // Iterate the query with a flecs::iter. This makes it possible to inspect
     // the pair that we are currently matched with.
-    query.each_iter(|it, index, (eats,)| {
+    query.each_iter(|it, index, eats| {
         let entity = it.entity(index);
         let food = it.pair(1).unwrap().second();
 

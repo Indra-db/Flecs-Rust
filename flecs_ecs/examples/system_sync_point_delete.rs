@@ -29,9 +29,9 @@ fn main() {
     // component could be written by the system. Position itself is added as
     // const, since inside the system we're only reading it.
     world
-        .system_builder_named::<(&Position,)>(c"DeleteEntity")
+        .system_builder_named::<&Position>(c"DeleteEntity")
         .write_type::<&flecs::Wildcard>()
-        .on_each_entity(|e, (p,)| {
+        .on_each_entity(|e, p| {
             if p.x >= 3.0 {
                 println!("Delete entity {}", e.name());
                 e.destruct();
@@ -41,8 +41,8 @@ fn main() {
     // Print resulting Position. Note that this system will never print entities
     // that have been deleted by the previous system.
     world
-        .system_builder_named::<(&Position,)>(c"PrintPosition")
-        .on_each_entity(|e, (p,)| {
+        .system_builder_named::<&Position>(c"PrintPosition")
+        .on_each_entity(|e, p| {
             println!("{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 

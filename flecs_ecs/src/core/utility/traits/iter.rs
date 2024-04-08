@@ -3,7 +3,7 @@ use std::ffi::c_char;
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
 use crate::{
-    core::{Entity, FilterT, Iter, IterIterable, IterT, Iterable, Term},
+    core::{ComponentPointers, Entity, FilterT, Iter, IterIterable, IterT, Iterable, Term},
     ecs_assert,
 };
 use flecs_ecs_sys::{ecs_filter_str, ecs_iter_fini, ecs_os_api, ecs_table_lock, ecs_table_unlock};
@@ -48,19 +48,13 @@ where
             let mut iter = self.retrieve_iter();
 
             while self.iter_next(&mut iter) {
-                let components_data = T::create_array_ptrs_of_components(&iter);
+                let mut components_data = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
-                let array_components = &components_data.array_components;
 
                 ecs_table_lock(self.world_ptr_mut(), iter.table);
 
                 for i in 0..iter_count {
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::create_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::create_tuple(array_components, i)
-                    };
+                    let tuple = components_data.get_tuple(i);
                     func(tuple);
                 }
 
@@ -85,8 +79,7 @@ where
             let mut iter = self.retrieve_iter();
             let world = self.world_ptr_mut();
             while self.iter_next(&mut iter) {
-                let components_data = T::create_array_ptrs_of_components(&iter);
-                let array_components = &components_data.array_components;
+                let mut components_data = T::create_ptrs(&iter);
                 let iter_count = {
                     if iter.count == 0 {
                         1_usize
@@ -104,13 +97,7 @@ where
                 // update: I believe it's not possible due to not knowing the order of the components in the tuple. I will leave this here for now, maybe I will come back to it in the future.
                 for i in 0..iter_count {
                     let mut entity = Entity::new_from_existing_raw(world, *iter.entities.add(i));
-
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::create_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::create_tuple(array_components, i)
-                    };
+                    let tuple = components_data.get_tuple(i);
 
                     func(&mut entity, tuple);
                 }
@@ -126,7 +113,7 @@ where
             let world = self.world_ptr_mut();
 
             while self.iter_next(&mut iter) {
-                let components_data = T::create_array_ptrs_of_components(&iter);
+                let mut components_data = T::create_ptrs(&iter);
                 let iter_count = {
                     if iter.count == 0 {
                         1_usize
@@ -134,19 +121,14 @@ where
                         iter.count as usize
                     }
                 };
-                let array_components = &components_data.array_components;
 
                 ecs_table_lock(world, iter.table);
 
                 let mut iter_t = Iter::new(&mut iter);
 
                 for i in 0..iter_count {
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::create_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::create_tuple(array_components, i)
-                    };
+                    let tuple = components_data.get_tuple(i);
+
                     func(&mut iter_t, i, tuple);
                 }
 
@@ -178,19 +160,13 @@ where
             let world = self.world_ptr_mut();
 
             while self.iter_next(&mut iter) {
-                let components_data = T::create_array_ptrs_of_components(&iter);
+                let mut components_data = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
-                let array_components = &components_data.array_components;
 
                 ecs_table_lock(world, iter.table);
 
                 for i in 0..iter_count {
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::create_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::create_tuple(array_components, i)
-                    };
+                    let tuple = components_data.get_tuple(i);
                     if func(tuple) {
                         entity = Some(Entity::new_from_existing_raw(
                             iter.world,
@@ -232,9 +208,8 @@ where
             let world = self.world_ptr_mut();
 
             while self.iter_next(&mut iter) {
-                let components_data = T::create_array_ptrs_of_components(&iter);
+                let mut components_data = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
-                let array_components = &components_data.array_components;
 
                 ecs_table_lock(world, iter.table);
 
@@ -242,12 +217,7 @@ where
                     let mut entity =
                         Entity::new_from_existing_raw(iter.world, *iter.entities.add(i));
 
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::create_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::create_tuple(array_components, i)
-                    };
+                    let tuple = components_data.get_tuple(i);
                     if func(&mut entity, tuple) {
                         entity_result = Some(entity);
                         break;
@@ -286,8 +256,7 @@ where
             let world = self.world_ptr_mut();
 
             while self.iter_next(&mut iter) {
-                let components_data = T::create_array_ptrs_of_components(&iter);
-                let array_components = &components_data.array_components;
+                let mut components_data = T::create_ptrs(&iter);
                 let iter_count = {
                     if iter.count == 0 {
                         1_usize
@@ -300,12 +269,7 @@ where
                 let mut iter_t = Iter::new(&mut iter);
 
                 for i in 0..iter_count {
-                    let tuple = if components_data.is_any_array_a_ref {
-                        let is_ref_array_components = &components_data.is_ref_array_components;
-                        T::create_tuple_with_ref(array_components, is_ref_array_components, i)
-                    } else {
-                        T::create_tuple(array_components, i)
-                    };
+                    let tuple = components_data.get_tuple(i);
                     if func(&mut iter_t, i, tuple) {
                         entity_result = Some(Entity::new_from_existing_raw(
                             iter.world,
@@ -341,22 +305,12 @@ where
             let world = self.world_ptr_mut();
 
             while self.iter_next(&mut iter) {
-                let components_data = T::create_array_ptrs_of_components(&iter);
+                let mut components_data = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
-                let array_components = &components_data.array_components;
 
                 ecs_table_lock(world, iter.table);
 
-                let tuple = if components_data.is_any_array_a_ref {
-                    let is_ref_array_components = &components_data.is_ref_array_components;
-                    T::create_tuple_slices_with_ref(
-                        array_components,
-                        is_ref_array_components,
-                        iter_count,
-                    )
-                } else {
-                    T::create_tuple_slices(array_components, iter_count)
-                };
+                let tuple = components_data.get_slice(iter_count);
                 let mut iter_t = Iter::new(&mut iter);
                 func(&mut iter_t, tuple);
                 ecs_table_unlock(world, iter.table);

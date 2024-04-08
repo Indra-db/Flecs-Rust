@@ -10,9 +10,9 @@ fn main() {
 
     // Create an observer for three events
     world
-        .observer_builder::<(&Position,)>()
+        .observer_builder::<&Position>()
         .add_event::<MyEvent>()
-        .on_each_iter(|it, index, (_pos,)| {
+        .on_each_iter(|it, index, _pos| {
             println!(
                 " - {}: {}: {}",
                 it.event().name(),

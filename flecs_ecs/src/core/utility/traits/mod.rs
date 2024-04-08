@@ -22,7 +22,7 @@ pub mod private {
 
     use flecs_ecs_sys::{ecs_ctx_free_t, ecs_iter_t, ecs_table_lock, ecs_table_unlock};
 
-    use crate::core::{Entity, Iter, IterT, Iterable, ObserverSystemBindingCtx};
+    use crate::core::{ComponentPointers, Entity, Iter, IterT, Iterable, ObserverSystemBindingCtx};
 
     #[allow(non_camel_case_types)]
     #[doc(hidden)]
@@ -55,8 +55,7 @@ pub mod private {
             let each = (*ctx).each.unwrap();
             let each = &mut *(each as *mut Func);
 
-            let components_data = T::create_array_ptrs_of_components(&*iter);
-            let array_components = &components_data.array_components;
+            let mut components_data = T::create_ptrs(&*iter);
             let iter_count = {
                 if (*iter).count == 0 {
                     1_usize
@@ -68,12 +67,7 @@ pub mod private {
             ecs_table_lock((*iter).world, (*iter).table);
 
             for i in 0..iter_count {
-                let tuple = if components_data.is_any_array_a_ref {
-                    let is_ref_array_components = &components_data.is_ref_array_components;
-                    T::create_tuple_with_ref(array_components, is_ref_array_components, i)
-                } else {
-                    T::create_tuple(array_components, i)
-                };
+                let tuple = components_data.get_tuple(i);
                 each(tuple);
             }
 
@@ -98,8 +92,7 @@ pub mod private {
             let each_entity = (*ctx).each_entity.unwrap();
             let each_entity = &mut *(each_entity as *mut Func);
 
-            let components_data = T::create_array_ptrs_of_components(&*iter);
-            let array_components = &components_data.array_components;
+            let mut components_data = T::create_ptrs(&*iter);
             let iter_count = {
                 if (*iter).count == 0 {
                     1_usize
@@ -113,12 +106,7 @@ pub mod private {
             for i in 0..iter_count {
                 let mut entity =
                     Entity::new_from_existing_raw((*iter).world, *(*iter).entities.add(i));
-                let tuple = if components_data.is_any_array_a_ref {
-                    let is_ref_array_components = &components_data.is_ref_array_components;
-                    T::create_tuple_with_ref(array_components, is_ref_array_components, i)
-                } else {
-                    T::create_tuple(array_components, i)
-                };
+                let tuple = components_data.get_tuple(i);
 
                 each_entity(&mut entity, tuple);
             }
@@ -143,8 +131,7 @@ pub mod private {
             let each_iter = (*ctx).each_iter.unwrap();
             let each_iter = &mut *(each_iter as *mut Func);
 
-            let components_data = T::create_array_ptrs_of_components(&*iter);
-            let array_components = &components_data.array_components;
+            let mut components_data = T::create_ptrs(&*iter);
             let iter_count = {
                 if (*iter).count == 0 {
                     1_usize
@@ -157,12 +144,7 @@ pub mod private {
             let mut iter_t = Iter::new(&mut (*iter));
 
             for i in 0..iter_count {
-                let tuple = if components_data.is_any_array_a_ref {
-                    let is_ref_array_components = &components_data.is_ref_array_components;
-                    T::create_tuple_with_ref(array_components, is_ref_array_components, i)
-                } else {
-                    T::create_tuple(array_components, i)
-                };
+                let tuple = components_data.get_tuple(i);
 
                 each_iter(&mut iter_t, i, tuple);
             }
@@ -224,8 +206,7 @@ pub mod private {
             let iter_func = (*ctx).iter.unwrap();
             let iter_func = &mut *(iter_func as *mut Func);
 
-            let components_data = T::create_array_ptrs_of_components(&*iter);
-            let array_components = &components_data.array_components;
+            let mut components_data = T::create_ptrs(&*iter);
             let iter_count = {
                 if (*iter).count == 0 {
                     1_usize
@@ -236,16 +217,7 @@ pub mod private {
 
             ecs_table_lock((*iter).world, (*iter).table);
 
-            let tuple = if components_data.is_any_array_a_ref {
-                let is_ref_array_components = &components_data.is_ref_array_components;
-                T::create_tuple_slices_with_ref(
-                    array_components,
-                    is_ref_array_components,
-                    iter_count,
-                )
-            } else {
-                T::create_tuple_slices(array_components, iter_count)
-            };
+            let tuple = components_data.get_slice(iter_count);
             let mut iter_t = Iter::new(&mut *iter);
             iter_func(&mut iter_t, tuple);
             ecs_table_unlock((*iter).world, (*iter).table);

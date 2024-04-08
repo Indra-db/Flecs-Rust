@@ -37,8 +37,8 @@ fn main() {
 
     // Print resulting Position
     world
-        .system_builder_named::<(&Position,)>(c"PrintPosition")
-        .on_each_entity(|e, (p,)| {
+        .system_builder_named::<&Position>(c"PrintPosition")
+        .on_each_entity(|e, p| {
             println!("{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 
