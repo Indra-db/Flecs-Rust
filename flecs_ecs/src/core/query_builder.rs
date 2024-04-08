@@ -121,11 +121,10 @@ where
     /// * C++ API: `query_builder_i::query_builder_i`
     #[doc(alias = "query_builder_i::query_builder_i")]
     pub fn new_from_desc(world: &World, desc: &mut ecs_query_desc_t) -> Self {
-        let obj = Self {
+        Self {
             desc: *desc,
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
-        };
-        obj
+        }
     }
 
     /// Create a new query builder from an existing descriptor with a term index
