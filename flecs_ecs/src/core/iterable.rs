@@ -40,14 +40,11 @@ impl<T: Iterable, const LEN: usize> ComponentPointers<T> for ComponentsData<T, L
         let mut array_components = [std::ptr::null::<u8>() as *mut u8; LEN];
         let mut is_ref_array_components = [false; LEN];
 
-        T::populate_array_ptrs(
+        let is_any_array_a_ref = T::populate_array_ptrs(
             iter,
             &mut array_components[..],
             &mut is_ref_array_components[..],
-            &mut 0,
         );
-
-        let is_any_array_a_ref = is_ref_array_components[0];
 
         Self {
             array_components,
@@ -60,24 +57,24 @@ impl<T: Iterable, const LEN: usize> ComponentPointers<T> for ComponentsData<T, L
     fn get_tuple(&mut self, index: usize) -> T::TupleType<'_> {
         if self.is_any_array_a_ref {
             T::create_tuple_with_ref(
-                &mut &self.array_components[..],
-                &mut &self.is_ref_array_components[..],
+                &self.array_components[..],
+                &self.is_ref_array_components[..],
                 index,
             )
         } else {
-            T::create_tuple(&mut &self.array_components[..], index)
+            T::create_tuple(&self.array_components[..], index)
         }
     }
 
     fn get_slice(&mut self, count: usize) -> T::TupleSliceType<'_> {
         if self.is_any_array_a_ref {
             T::create_tuple_slices_with_ref(
-                &mut &self.array_components[..],
-                &mut &self.is_ref_array_components[..],
+                &self.array_components[..],
+                &self.is_ref_array_components[..],
                 count,
             )
         } else {
-            T::create_tuple_slices(&mut &self.array_components[..], count)
+            T::create_tuple_slices(&self.array_components[..], count)
         }
     }
 }
@@ -375,29 +372,21 @@ pub trait Iterable: Sized {
         index: &mut usize,
     );
 
-    fn populate_array_ptrs(
-        it: &IterT,
-        components: &mut [*mut u8],
-        is_ref: &mut [bool],
-        index: &mut usize,
-    );
+    fn populate_array_ptrs(it: &IterT, components: &mut [*mut u8], is_ref: &mut [bool]) -> bool;
 
-    fn create_tuple<'a>(array_components: &mut &'a [*mut u8], index: usize) -> Self::TupleType<'a>;
+    fn create_tuple(array_components: &[*mut u8], index: usize) -> Self::TupleType<'_>;
 
     fn create_tuple_with_ref<'a>(
-        array_components: &mut &'a [*mut u8],
-        is_ref_array_components: &mut &'a [bool],
+        array_components: &'a [*mut u8],
+        is_ref_array_components: &[bool],
         index: usize,
     ) -> Self::TupleType<'a>;
 
-    fn create_tuple_slices<'a>(
-        array_components: &mut &'a [*mut u8],
-        count: usize,
-    ) -> Self::TupleSliceType<'a>;
+    fn create_tuple_slices(array_components: &[*mut u8], count: usize) -> Self::TupleSliceType<'_>;
 
     fn create_tuple_slices_with_ref<'a>(
-        array_components: &mut &'a [*mut u8],
-        is_ref_array_components: &mut &'a [bool],
+        array_components: &'a [*mut u8],
+        is_ref_array_components: &[bool],
         count: usize,
     ) -> Self::TupleSliceType<'a>;
 }
@@ -437,60 +426,49 @@ where
         it: &IterT,
         components: &mut [*mut u8],
         is_ref: &mut [bool],
-        index: &mut usize,
-    ) {
-        components[*index] =
-            unsafe { ecs_field::<A::OnlyType>(it, (*index + 1) as i32) as *mut u8 };
-        is_ref[*index] = if !it.sources.is_null() {
+    ) -> bool {
+        components[0] =
+            unsafe { ecs_field::<A::OnlyType>(it, 1) as *mut u8 };
+        is_ref[0] = if !it.sources.is_null() {
             unsafe { *it.sources.add(0) != 0 }
         } else {
             false
         };
-        *index += 1;
+        is_ref[0]
     }
 
-    fn create_tuple<'a>(array_components: &mut &'a [*mut u8], index: usize) -> Self::TupleType<'a> {
-        let data = A::create_tuple_data(array_components[0], index);
-        *array_components = &array_components[1..];
-        data
+    fn create_tuple(array_components: &[*mut u8], index: usize) -> Self::TupleType<'_> {
+        A::create_tuple_data(array_components[0], index)
+
     }
 
     // TODO since it's only one component, we don't need to check if it's a ref array or not, we can just return the first element of the array
     // I think this is the case for all tuples of size 1
     fn create_tuple_with_ref<'a>(
-        array_components: &mut &'a [*mut u8],
-        is_ref_array_components: &mut &[bool],
-        index: usize,
+        array_components: &'a [*mut u8],
+        is_ref_array_components: &[bool],
+        index: usize
     ) -> Self::TupleType<'a> {
-        let data =
-            A::create_tuple_with_ref_data(array_components[0], is_ref_array_components[0], index);
-        *array_components = &array_components[1..];
-        *is_ref_array_components = &is_ref_array_components[1..];
-        data
+        A::create_tuple_with_ref_data(array_components[0], is_ref_array_components[0], index)
     }
 
-    fn create_tuple_slices<'a>(
-        array_components: &mut &'a [*mut u8],
+    fn create_tuple_slices(
+        array_components: &[*mut u8],
         count: usize,
-    ) -> Self::TupleSliceType<'a> {
-        let data = A::create_tuple_slice_data(array_components[0], count);
-        *array_components = &array_components[1..];
-        data
+    ) -> Self::TupleSliceType<'_> {
+        A::create_tuple_slice_data(array_components[0], count)
     }
 
     fn create_tuple_slices_with_ref<'a>(
-        array_components: &mut &'a [*mut u8],
-        is_ref_array_components: &mut &[bool],
+        array_components: &'a [*mut u8],
+        is_ref_array_components: &[bool],
         count: usize,
     ) -> Self::TupleSliceType<'a> {
-        let data = A::create_tuple_slices_with_ref_data(
+        A::create_tuple_slices_with_ref_data(
             array_components[0],
             is_ref_array_components[0],
             count,
-        );
-        *array_components = &array_components[1..];
-        *is_ref_array_components = &is_ref_array_components[1..];
-        data
+        )
     }
 }
 
@@ -656,40 +634,69 @@ macro_rules! impl_iterable {
                 $( $t::register_ids_descriptor_at(world, terms, index); )*
             }
 
+            #[allow(unused)]
             fn populate_array_ptrs(
-                _it: &IterT,
-                _components: &mut [*mut u8],
-                _is_ref: &mut [bool],
-                _index: &mut usize,
-            ) {
-                $( $t::populate_array_ptrs(_it, _components, _is_ref, _index); )*
+                it: &IterT,
+                components: &mut [*mut u8],
+                is_ref: &mut [bool],
+            ) -> bool {
+                let mut index = 0;
+                let mut any_ref = false;
+                $(
+                    components[index as usize] =
+                    unsafe { ecs_field::<$t::OnlyType>(it, index + 1) as *mut u8 };
+                    is_ref[index as usize] = if !it.sources.is_null() {
+                        unsafe { *it.sources.add(index as usize) != 0 }
+                    } else {
+                        false
+                    };
+                    any_ref |= is_ref[index as usize];
+                    index += 1;
+                )*
+                any_ref
             }
 
             #[allow(unused, clippy::unused_unit)]
-            fn create_tuple<'a>(array_components: &mut &'a [*mut u8], index: usize) -> Self::TupleType<'a> {
-                ($( $t::create_tuple(array_components, index), )*)
+            fn create_tuple(array_components: &[*mut u8], index: usize) -> Self::TupleType<'_> {
+                let mut column: isize = -1;
+                ($({
+                    column += 1;
+                    $t::create_tuple_data(array_components[column as usize], index)
+                },)*)
             }
 
             #[allow(unused, clippy::unused_unit)]
-            fn create_tuple_with_ref<'a>(array_components: &mut &'a [*mut u8], is_ref_array_components: &mut &'a [bool], index: usize) -> Self::TupleType<'a> {
-                ($( $t::create_tuple_with_ref(array_components, is_ref_array_components, index), )*)
+            fn create_tuple_with_ref<'a>(array_components: &'a [*mut u8], is_ref_array_components: &[bool], index: usize) -> Self::TupleType<'a> {
+                let mut column: isize = -1;
+                ($({
+                    column += 1;
+                    $t::create_tuple_with_ref_data(array_components[column as usize], is_ref_array_components[column as usize], index)
+                },)*)
             }
 
             #[allow(unused, clippy::unused_unit)]
-            fn create_tuple_slices<'a>(
-                array_components: &mut &'a [*mut u8],
+            fn create_tuple_slices(
+                array_components: &[*mut u8],
                 count: usize,
-            ) -> Self::TupleSliceType<'a> {
-                ($( $t::create_tuple_slices(array_components, count), )*)
+            ) -> Self::TupleSliceType<'_> {
+                let mut column: isize = -1;
+                ($({
+                    column += 1;
+                    $t::create_tuple_slice_data(array_components[column as usize], count)
+                },)*)
             }
 
             #[allow(unused, clippy::unused_unit)]
             fn create_tuple_slices_with_ref<'a>(
-                array_components: &mut &'a [*mut u8],
-                is_ref_array_components: &mut &'a [bool],
+                array_components: &'a [*mut u8],
+                is_ref_array_components: &[bool],
                 count: usize,
             ) -> Self::TupleSliceType<'a> {
-                ($( $t::create_tuple_slices_with_ref(array_components, is_ref_array_components, count), )*)
+                let mut column: isize = -1;
+                ($({
+                    column += 1;
+                    $t::create_tuple_slices_with_ref_data(array_components[column as usize], is_ref_array_components[column as usize], count)
+                },)*)
             }
         }
     }

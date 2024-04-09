@@ -150,7 +150,7 @@ impl<'a, T> IterAPI<'a, T> for IterIterable<'a, T>
 where
     T: Iterable,
 {
-    fn as_entity(&self) -> Entity {
+    fn as_entity(&self) -> Entity<'a> {
         let world = unsafe { Option::<WorldRef>::from_ptr(self.iter.real_world) };
         Entity::new_from_existing(world, unsafe {
             ecs_get_entity(self.iter.query as *const c_void)

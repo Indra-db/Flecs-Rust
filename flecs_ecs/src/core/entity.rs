@@ -4,6 +4,8 @@ use std::{
     os::raw::c_void,
 };
 
+use flecs_ecs_sys::ecs_emplace_id;
+
 use super::{
     c_types::{IdT, SEPARATOR},
     component_ref::Ref,
@@ -518,6 +520,41 @@ impl<'a> Entity<'a> {
             }),
             condition,
         )
+    }
+
+    /// Emplace a component.
+    ///
+    /// Emplace is similar to `set()` except that the component constructor is not
+    /// invoked, allowing the component to be "constructed" directly in the storage.
+    ///
+    /// # SAFETY
+    ///
+    /// `emplace` can only be used if the entity does not yet have the component. If
+    /// the entity has the component, the operation will fail and panic.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: The type of the component to emplace.
+    ///
+    /// # Arguments
+    ///
+    /// * `value`: The value to emplace.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_builder::emplace`
+    #[doc(alias = "entity_builder::emplace")]
+    pub fn emplace<T>(self, value: T) -> Self
+    where
+        T: IntoComponentId,
+    {
+        let id = T::get_id(self.world);
+        unsafe {
+            let ptr = ecs_emplace_id(self.world_ptr_mut(), self.raw_id, id) as *mut T;
+            std::ptr::write(ptr, value);
+            ecs_modified_id(self.world_ptr_mut(), self.raw_id, id);
+        }
+        self
     }
 
     /// Remove an entity from an entity.

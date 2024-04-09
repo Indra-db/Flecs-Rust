@@ -14,7 +14,7 @@ pub trait IntoWorld<'a> {
     #[doc(hidden)]
     fn world_ptr(&self) -> *const WorldT {
         match self.get_world() {
-            Some(world) => world.world_ptr(),
+            Some(world) => world.raw_world.as_ptr(),
             None => std::ptr::null(),
         }
     }
