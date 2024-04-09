@@ -14,6 +14,9 @@ use crate::{
 #[cfg(feature = "flecs_pipeline")]
 use crate::{addons::pipeline::PipelineBuilder, sys};
 
+#[cfg(feature = "flecs_rules")]
+use crate::addons::rules::{Rule, RuleBuilder};
+
 use crate::ecs_assert;
 use crate::sys::{
     ecs_async_stage_free, ecs_async_stage_new, ecs_atfini, ecs_count_id, ecs_ctx_free_t,
@@ -2651,7 +2654,7 @@ impl World {
     ///
     /// * C++ API: `world::entity`
     #[doc(alias = "world::entity")]
-    pub fn new_entity_named_type<T: ComponentId>(&self, name: &CStr) -> Entity {
+    pub fn new_entity_named_type<'a, T: ComponentId>(&'a self, name: &CStr) -> Entity<'a> {
         Entity::new_from_existing(self, T::register_explicit_named(self, name))
     }
 
@@ -2727,7 +2730,7 @@ impl World {
     ///
     /// * C++ API: `world::prefab`
     #[doc(alias = "world::prefab")]
-    pub fn prefab_named(&self, name: &CStr) -> Entity {
+    pub fn prefab_named<'a>(&'a self, name: &CStr) -> Entity<'a> {
         let result = Entity::new_named(self, name);
         result.add_id(ECS_PREFAB);
         result
@@ -2772,7 +2775,7 @@ impl World {
     ///
     /// * C++ API: `world::prefab`
     #[doc(alias = "world::prefab")]
-    pub fn prefab_type_named<T: ComponentId>(&self, name: &CStr) -> Entity {
+    pub fn prefab_type_named<'a, T: ComponentId>(&'a self, name: &CStr) -> Entity<'a> {
         let result = Component::<T>::new_named(self, name).to_entity();
         result.add_id(ECS_PREFAB);
         result.add::<T>();
@@ -2891,7 +2894,10 @@ impl World {
     ///
     /// * C++ API: `world::component`
     #[doc(alias = "world::component")]
-    pub fn component_named<T: ComponentId>(&self, name: &CStr) -> Component<T::UnderlyingType> {
+    pub fn component_named<'a, T: ComponentId>(
+        &'a self,
+        name: &CStr,
+    ) -> Component<'a, T::UnderlyingType> {
         Component::<T::UnderlyingType>::new_named(self, name)
     }
 
@@ -3073,7 +3079,10 @@ impl World {
     ///
     /// * C++ API: `world::observer`
     #[doc(alias = "world::observer")]
-    pub fn observer_builder_named<Components>(&self, name: &CStr) -> ObserverBuilder<Components>
+    pub fn observer_builder_named<'a, Components>(
+        &'a self,
+        name: &CStr,
+    ) -> ObserverBuilder<'a, Components>
     where
         Components: Iterable,
     {
@@ -3122,7 +3131,7 @@ impl World {
     ///
     /// * C++ API: `world::filter`
     #[doc(alias = "world::filter")]
-    pub fn filter_named<Components>(&self, name: &CStr) -> Filter<Components>
+    pub fn filter_named<'a, Components>(&'a self, name: &CStr) -> Filter<'a, Components>
     where
         Components: Iterable,
     {
@@ -3168,7 +3177,10 @@ impl World {
     ///
     /// * C++ API: `world::filter_builder`
     #[doc(alias = "world::filter_builder")]
-    pub fn filter_builder_named<Components>(&self, name: &CStr) -> FilterBuilder<Components>
+    pub fn filter_builder_named<'a, Components>(
+        &'a self,
+        name: &CStr,
+    ) -> FilterBuilder<'a, Components>
     where
         Components: Iterable,
     {
@@ -3241,7 +3253,7 @@ impl World {
     ///
     /// * C++ API: `world::query`
     #[doc(alias = "world::query")]
-    pub fn query_named<Components>(&self, name: &CStr) -> Query<Components>
+    pub fn query_named<'a, Components>(&'a self, name: &CStr) -> Query<'a, Components>
     where
         Components: Iterable,
     {
@@ -3287,7 +3299,10 @@ impl World {
     ///
     /// * C++ API: `world::query_builder`
     #[doc(alias = "world::query_builder")]
-    pub fn query_builder_named<Components>(&self, name: &CStr) -> QueryBuilder<Components>
+    pub fn query_builder_named<'a, Components>(
+        &'a self,
+        name: &CStr,
+    ) -> QueryBuilder<'a, Components>
     where
         Components: Iterable,
     {
@@ -3348,7 +3363,10 @@ impl World {
     ///
     /// * C++ API: `world::system_builder`
     #[doc(alias = "world::system_builder")]
-    pub fn system_builder_named<Components>(&self, name: &CStr) -> SystemBuilder<Components>
+    pub fn system_builder_named<'a, Components>(
+        &'a self,
+        name: &CStr,
+    ) -> SystemBuilder<'a, Components>
     where
         Components: Iterable,
     {
@@ -3406,7 +3424,7 @@ impl World {
     /// * C++ API: `world::pipeline`
     #[doc(alias = "world::pipeline")]
     #[inline(always)]
-    pub fn pipeline_named(&self, name: &CStr) -> PipelineBuilder<()> {
+    pub fn pipeline_named<'a>(&'a self, name: &CStr) -> PipelineBuilder<'a, ()> {
         PipelineBuilder::<()>::new_named(self, name)
     }
 
@@ -3862,11 +3880,11 @@ impl World {
     /// * C++ API: `world::rule`
     #[doc(alias = "world::rule")]
     #[inline(always)]
-    pub fn rule<T>(&self) -> crate::addons::rules::Rule<T>
+    pub fn rule<T>(&self) -> Rule<T>
     where
         T: Iterable,
     {
-        crate::addons::rules::RuleBuilder::<T>::new(self).build()
+        RuleBuilder::<T>::new(self).build()
     }
 
     /// Create a new named rule.
@@ -3884,11 +3902,11 @@ impl World {
     /// * C++ API: `world::rule`
     #[doc(alias = "world::rule")]
     #[inline(always)]
-    pub fn rule_named<T>(&self, name: &CStr) -> crate::addons::rules::Rule<T>
+    pub fn rule_named<'a, T>(&'a self, name: &CStr) -> Rule<'a, T>
     where
         T: Iterable,
     {
-        crate::addons::rules::RuleBuilder::<T>::new_named(self, name).build()
+        RuleBuilder::<T>::new_named(self, name).build()
     }
 
     /// Create a new rule builder.
@@ -3902,11 +3920,11 @@ impl World {
     /// * C++ API: `world::rule_builder`
     #[doc(alias = "world::rule_builder")]
     #[inline(always)]
-    pub fn rule_builder<T>(&self) -> crate::addons::rules::RuleBuilder<T>
+    pub fn rule_builder<T>(&self) -> RuleBuilder<T>
     where
         T: Iterable,
     {
-        crate::addons::rules::RuleBuilder::<T>::new(self)
+        RuleBuilder::<T>::new(self)
     }
 
     /// Create a new named rule builder.
@@ -3924,10 +3942,10 @@ impl World {
     /// * C++ API: `world::rule_builder`
     #[doc(alias = "world::rule_builder")]
     #[inline(always)]
-    pub fn rule_builder_named<T>(&self, name: &CStr) -> crate::addons::rules::RuleBuilder<T>
+    pub fn rule_builder_named<'a, T>(&'a self, name: &CStr) -> RuleBuilder<'a, T>
     where
         T: Iterable,
     {
-        crate::addons::rules::RuleBuilder::<T>::new_named(self, name)
+        RuleBuilder::<T>::new_named(self, name)
     }
 }
