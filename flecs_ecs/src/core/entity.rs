@@ -4,7 +4,7 @@ use std::{
     os::raw::c_void,
 };
 
-use flecs_ecs_sys::ecs_emplace_id;
+use flecs_ecs_sys::{ecs_emplace_id, ecs_new_w_id};
 
 use super::{
     c_types::{IdT, SEPARATOR},
@@ -24,9 +24,8 @@ use crate::{
     sys::{
         ecs_add_id, ecs_clear, ecs_delete, ecs_enable, ecs_enable_id, ecs_entity_desc_t,
         ecs_entity_init, ecs_flatten, ecs_flatten_desc_t, ecs_get_id, ecs_get_mut_id,
-        ecs_get_target, ecs_has_id, ecs_modified_id, ecs_new_id, ecs_remove_id, ecs_set_alias,
-        ecs_set_id, ecs_set_name, ecs_set_scope, ecs_set_with, EcsComponent,
-        FLECS_IDEcsComponentID_,
+        ecs_get_target, ecs_has_id, ecs_modified_id, ecs_remove_id, ecs_set_alias, ecs_set_id,
+        ecs_set_name, ecs_set_scope, ecs_set_with, EcsComponent, FLECS_IDEcsComponentID_,
     },
 };
 
@@ -147,7 +146,7 @@ impl Entity {
     pub fn new(world: impl IntoWorld) -> Self {
         Self {
             entity_view: EntityView::new_from_existing(world.get_world_raw(), unsafe {
-                ecs_new_id(world.world_ptr_mut())
+                ecs_new_w_id(world.world_ptr_mut(), 0)
             }),
         }
     }
