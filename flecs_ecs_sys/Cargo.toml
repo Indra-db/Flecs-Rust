@@ -35,6 +35,9 @@ force_build_debug = []
 # force build release for C flecs, even in debug mode
 force_build_release = []
 
+# tell C flecs to use the OS allocator instead of its own
+use_os_alloc = []
+
 # Enabling this will not build a copy of flecs into this library.
 # Instead, the executable that this is linked with will need to
 # provide the symbols required. This is useful when using both

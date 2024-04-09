@@ -299,6 +299,11 @@ fn main() {
                 .define("flto", None);
         }
 
+        #[cfg(feature = "use_os_alloc")]
+        {
+            build.define("FLECS_USE_OS_ALLOC", None);
+        }
+
         #[cfg(feature = "flecs_force_enable_ecs_asserts")]
         {
             build.define("FLECS_KEEP_ASSERTS", None);

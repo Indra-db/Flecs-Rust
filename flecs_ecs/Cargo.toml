@@ -36,6 +36,9 @@ flecs_force_build_debug_c = ["flecs_ecs_sys/force_build_debug"]
 # force build release for C flecs, even in debug mode
 flecs_force_build_release_c = ["flecs_ecs_sys/force_build_release"]
 
+# tell C flecs to use the OS allocator instead of its own
+flecs_use_os_alloc = ["flecs_ecs_sys/use_os_alloc"]
+
 # Module support
 flecs_module = ["flecs_ecs_sys/flecs_module"]
 
