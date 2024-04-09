@@ -39,7 +39,8 @@ use super::{
     component::{Component, UntypedComponent},
     component_ref::Ref,
     component_registration::{ComponentId, ComponentType, Enum, Struct},
-    flecs, FlecsConstantId, IntoComponentId, IntoEntityId, IntoEntityIdExt, IterAPI, ECS_PREFAB,
+    flecs, FlecsConstantId, FromWorldPtr, IntoComponentId, IntoEntityId, IntoEntityIdExt, IterAPI,
+    WorldRef, ECS_PREFAB,
 };
 use super::{EmptyComponent, NotEmptyComponent};
 
@@ -506,8 +507,8 @@ impl World {
     ///
     /// * C++ API: `world::get_stage`
     #[doc(alias = "world::get_stage")]
-    pub fn stage(&self, stage_id: i32) -> Self {
-        unsafe { Self::new_wrap_raw_world(ecs_get_stage(self.raw_world.as_ptr(), stage_id)) }
+    pub fn stage(&self, stage_id: i32) -> WorldRef {
+        unsafe { <WorldRef>::from_ptr(ecs_get_stage(self.raw_world.as_ptr(), stage_id)) }
     }
 
     /// Create asynchronous stage.
