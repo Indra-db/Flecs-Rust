@@ -22,8 +22,23 @@ struct Resize {
     height: f32,
 }
 
+#[derive(Component)]
+struct CloseRequested {
+    text: String,
+}
+
 fn main() {
     let world = World::new();
+
+    // Create an observer for the CloseRequested event to listen to any entity.
+    world
+        .observer_builder::<()>()
+        .add_event::<CloseRequested>()
+        .with_type::<&flecs::Any>()
+        .on_each_iter(|it, _index, _| {
+            let close_requested = it.param::<CloseRequested>();
+            println!("close request with text: {}!", close_requested.text);
+        });
 
     let widget = world.new_entity_named(c"MyWidget");
     println!("widget: {:?}", widget);
@@ -55,9 +70,11 @@ fn main() {
     });
 
     widget.emit::<Click>();
-    widget.emit_payload(&mut Resize {
-        width: 100.0,
-        height: 200.0,
+    widget.emit_payload(&mut CloseRequested {
+        text: "hey it's me again".to_string(),
+    });
+    widget.emit_payload(&mut CloseRequested {
+        text: "hello from the other sidee".to_string(),
     });
 
     // Output:
@@ -65,4 +82,5 @@ fn main() {
     //  clicked on "MyWidget"
     //  widget resized to { 100, 200 }!
     //  MyWidget resized to { 100, 200 }!
+    //  close request with text: hello from the other sidee
 }
