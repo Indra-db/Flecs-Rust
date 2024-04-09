@@ -20,7 +20,7 @@ use super::{
 
 /// Cached query implementation. Fast to iterate, but slower to create than `Filters`
 #[derive(Clone)]
-pub struct Query<'a, T>
+pub struct Query<T>
 where
     T: Iterable,
 {
@@ -29,7 +29,7 @@ where
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<'a, T> IterOperations for Query<'a, T>
+impl<T> IterOperations for Query<T>
 where
     T: Iterable,
 {
@@ -52,7 +52,7 @@ where
     }
 }
 
-impl<'a, T> IterAPI<'a, T> for Query<'a, T>
+impl<T> IterAPI<T> for Query<T>
 where
     T: Iterable,
 {
@@ -63,7 +63,7 @@ where
     }
 }
 
-impl<'a, T> Query<'a, T>
+impl<T> Query<T>
 where
     T: Iterable,
 {
@@ -266,7 +266,7 @@ where
     }
 }
 
-impl<'a, T> Drop for Query<'a, T>
+impl<T> Drop for Query<T>
 where
     T: Iterable,
 {

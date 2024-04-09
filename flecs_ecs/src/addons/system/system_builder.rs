@@ -27,21 +27,21 @@ use crate::{
 
 use super::System;
 
-pub struct SystemBuilder<'a, T>
+pub struct SystemBuilder<T>
 where
     T: Iterable,
 {
-    query_builder: QueryBuilder<'a, T>,
+    query_builder: QueryBuilder<T>,
     desc: ecs_system_desc_t,
     is_instanced: bool,
 }
 
 /// Deref to `QueryBuilder` to allow access to `QueryBuilder` methods without having to access `QueryBuilder` through `SystemBuilder`
-impl<'a, T> Deref for SystemBuilder<'a, T>
+impl<T> Deref for SystemBuilder<T>
 where
     T: Iterable,
 {
-    type Target = QueryBuilder<'a, T>;
+    type Target = QueryBuilder<T>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -49,7 +49,7 @@ where
     }
 }
 
-impl<'a, T> DerefMut for SystemBuilder<'a, T>
+impl<T> DerefMut for SystemBuilder<T>
 where
     T: Iterable,
 {
@@ -59,7 +59,7 @@ where
     }
 }
 
-impl<'a, T> SystemBuilder<'a, T>
+impl<T> SystemBuilder<T>
 where
     T: Iterable,
 {
@@ -415,4 +415,4 @@ impl<'a, T: Iterable> IntoWorld<'a> for SystemBuilder<'a, T> {
     }
 }
 
-implement_reactor_api!(SystemBuilder<'a, T>);
+implement_reactor_api!(SystemBuilder<T>);

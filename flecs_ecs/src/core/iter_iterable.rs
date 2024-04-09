@@ -13,16 +13,16 @@ use super::{
 use crate::core::FlecsErrorCode;
 use crate::ecs_assert;
 
-pub struct IterIterable<'a, T>
+pub struct IterIterable<T>
 where
     T: Iterable,
 {
     iter: IterT,
     iter_next: unsafe extern "C" fn(*mut IterT) -> bool,
-    _phantom: std::marker::PhantomData<&'a T>,
+    _phantom: std::marker::PhantomData<T>,
 }
 
-impl<'a, T> IterIterable<'a, T>
+impl<T> IterIterable<T>
 where
     T: Iterable,
 {
@@ -125,7 +125,7 @@ where
     }
 }
 
-impl<'a, T> IterOperations for IterIterable<'a, T>
+impl<T> IterOperations for IterIterable<T>
 where
     T: Iterable,
 {
@@ -146,7 +146,7 @@ where
     }
 }
 
-impl<'a, T> IterAPI<'a, T> for IterIterable<'a, T>
+impl<T> IterAPI<T> for IterIterable<T>
 where
     T: Iterable,
 {

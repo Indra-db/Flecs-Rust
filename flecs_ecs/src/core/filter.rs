@@ -10,7 +10,7 @@ use super::{
     IterAPI, IterOperations,
 };
 
-pub struct FilterView<'a, T>
+pub struct FilterView<T>
 where
     T: Iterable,
 {
@@ -19,7 +19,7 @@ where
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<'a, T> Clone for FilterView<'a, T>
+impl<T> Clone for FilterView<T>
 where
     T: Iterable,
 {
@@ -32,7 +32,7 @@ where
     }
 }
 
-impl<'a, T> FilterView<'a, T>
+impl<T> FilterView<T>
 where
     T: Iterable,
 {
@@ -57,7 +57,7 @@ where
 }
 
 /// Filters are cheaper to create, but slower to iterate than queries.
-pub struct Filter<'a, T>
+pub struct Filter<T>
 where
     T: Iterable,
 {
@@ -66,7 +66,7 @@ where
     filter: FilterT,
 }
 
-impl<'a, T> Filter<'a, T>
+impl<T> Filter<T>
 where
     T: Iterable,
 {
@@ -167,7 +167,7 @@ where
     }
 }
 
-impl<'a, T> Drop for Filter<'a, T>
+impl<T> Drop for Filter<T>
 where
     T: Iterable,
 {
@@ -181,7 +181,7 @@ where
     }
 }
 
-impl<'a, T> Clone for Filter<'a, T>
+impl<T> Clone for Filter<T>
 where
     T: Iterable,
 {
@@ -206,7 +206,7 @@ where
     }
 }
 
-impl<'a, T> IterOperations for Filter<'a, T>
+impl<T> IterOperations for Filter<T>
 where
     T: Iterable,
 {
@@ -236,7 +236,7 @@ where
     }
 }
 
-impl<'a, T> IterAPI<'a, T> for FilterView<'a, T>
+impl<T> IterAPI<T> for FilterView<T>
 where
     T: Iterable,
 {
@@ -247,7 +247,7 @@ where
     }
 }
 
-impl<'a, T> IterOperations for FilterView<'a, T>
+impl<T> IterOperations for FilterView<T>
 where
     T: Iterable,
 {
@@ -268,7 +268,7 @@ where
     }
 }
 
-impl<'a, T> IterAPI<'a, T> for Filter<'a, T>
+impl<T> IterAPI<T> for Filter<T>
 where
     T: Iterable,
 {

@@ -9,8 +9,6 @@ on:
       - master
   workflow_dispatch:
 
-
-
 jobs:
   rustfmt:
     runs-on: ubuntu-latest
@@ -39,7 +37,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-13, macos-14, ubuntu-22.04, windows-2022]
-    name: cargo clippy + test
+    name: cargo clippy + test + build and run examples
     steps:
       - uses: actions/checkout@v4
 
@@ -54,6 +52,16 @@ jobs:
 
       - name: cargo test
         run: cargo test --workspace
+
+      - name: Set execute permission on script
+        run: chmod +x ./.github/workflows/scripts/run_examples.sh
+
+      - name: Build all examples
+        run: cargo build --examples
+
+      - name: Run examples
+        run: ./.github/workflows/scripts/run_examples.sh
+        shell: bash
 
   build-doc:
     name: cargo docs-rs
