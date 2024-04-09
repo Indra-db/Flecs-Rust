@@ -236,7 +236,8 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::ctx`
     #[doc(alias = "iter::ctx")]
-    pub fn context<T>(&mut self) -> &mut T {
+    #[allow(clippy::mut_from_ref)]
+    pub unsafe fn context<T>(&self) -> &mut T {
         unsafe { &mut *(self.iter.ctx as *mut T) }
     }
 
