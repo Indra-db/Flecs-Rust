@@ -15,8 +15,8 @@ extern "C" fn callback_group_by_relationship(
     let mut match_id: IdT = Default::default();
     let id = Id::new(None::<&World>, (id, flecs::Wildcard::ID)).raw_id;
     if unsafe { ecs_search(world, table, id, &mut match_id) } != -1 {
-        let world = World::new_wrap_raw_world(world);
-        Id::new(Some(&world), match_id).second().raw_id // First, Second or Third
+        let world = unsafe { <WorldRef>::from_ptr(world) };
+        Id::new(world, match_id).second().raw_id // First, Second or Third
     } else {
         0
     }

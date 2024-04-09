@@ -17,10 +17,10 @@ extern "C" fn callback_group_create(
     group_id: u64,
     _group_by_ctx: *mut c_void,
 ) -> *mut c_void {
-    let world = World::new_wrap_raw_world(world);
+    let world_ref = unsafe { <WorldRef>::from_ptr(world) };
     println!(
         "Group created: {:?}",
-        world.new_entity_from_id(group_id).name()
+        world_ref.world().new_entity_from_id(group_id).name()
     );
 
     println!();
@@ -41,10 +41,10 @@ extern "C" fn callback_group_delete(
     ctx: *mut c_void,
     _group_by_arg: *mut c_void,
 ) {
-    let world = World::new_wrap_raw_world(world);
+    let world_ref = unsafe { <WorldRef>::from_ptr(world) };
     println!(
         "Group deleted: {:?}",
-        world.new_entity_from_id(group_id).name()
+        world_ref.world().new_entity_from_id(group_id).name()
     );
 
     //Free data associated with group

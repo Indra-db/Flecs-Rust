@@ -89,7 +89,7 @@ impl World {
     }
 
     /// Wrapper around raw world, takes no ownership.
-    pub unsafe fn new_wrap_raw_world(world: *mut WorldT) -> Self {
+    pub(crate) unsafe fn new_wrap_raw_world(world: *mut WorldT) -> Self {
         Self {
             raw_world: unsafe { NonNull::new_unchecked(world) },
         }
@@ -507,7 +507,7 @@ impl World {
     /// * C++ API: `world::get_stage`
     #[doc(alias = "world::get_stage")]
     pub fn stage(&self, stage_id: i32) -> Self {
-        Self::new_wrap_raw_world(unsafe { ecs_get_stage(self.raw_world.as_ptr(), stage_id) })
+        unsafe { Self::new_wrap_raw_world(ecs_get_stage(self.raw_world.as_ptr(), stage_id)) }
     }
 
     /// Create asynchronous stage.
@@ -535,7 +535,7 @@ impl World {
     /// * C++ API: `world::async_stage`
     #[doc(alias = "world::async_stage")]
     pub fn create_async_stage(&self) -> Self {
-        Self::new_wrap_raw_world(unsafe { ecs_async_stage_new(self.raw_world.as_ptr()) })
+        unsafe { Self::new_wrap_raw_world(ecs_async_stage_new(self.raw_world.as_ptr())) }
     }
 
     /// Get actual world.
@@ -552,9 +552,11 @@ impl World {
     /// * C++ API: `world::get_world`
     #[doc(alias = "world::get_world")]
     pub fn get_world(&self) -> Self {
-        Self::new_wrap_raw_world(unsafe {
-            ecs_get_world(self.raw_world.as_ptr() as *const c_void) as *mut WorldT
-        })
+        unsafe {
+            Self::new_wrap_raw_world(
+                ecs_get_world(self.raw_world.as_ptr() as *const c_void) as *mut WorldT
+            )
+        }
     }
 
     /// Test whether the current world object is readonly.

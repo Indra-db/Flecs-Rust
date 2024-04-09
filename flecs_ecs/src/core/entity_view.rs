@@ -1706,7 +1706,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::mut")]
     pub fn mut_current_stage<'s>(self, stage: &'s World) -> Entity<'s> {
         ecs_assert!(
-            !World::new_wrap_raw_world(stage.world_ptr_mut()).is_readonly(),
+            !stage.is_readonly(),
             FlecsErrorCode::InvalidParameter,
             "cannot use readonly world/stage to create mutable handle"
         );
@@ -1735,7 +1735,7 @@ impl<'a> EntityView<'a> {
         T: IntoEntityId + IntoWorld<'a>,
     {
         ecs_assert!(
-            !World::new_wrap_raw_world(entity.world_ptr_mut()).is_readonly(),
+            !entity.get_world().is_some_and(|w| w.is_readonly()),
             FlecsErrorCode::InvalidParameter,
             "cannot use entity created for readonly world/stage to create mutable handle"
         );
