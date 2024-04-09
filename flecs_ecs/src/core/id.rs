@@ -30,20 +30,11 @@ use crate::{
 ///
 /// * [flecs C++ documentation](https://www.flecs.dev/flecs/structflecs_1_1id.html#details)
 /// * [flecs C documentation](https://www.flecs.dev/flecs/group__ids.html)
-#[derive(Debug, Clone, Copy, Eq)]
+#[derive(Default, Debug, Clone, Copy, Eq)]
 pub struct Id<'a> {
     /// World is optional, but guarantees that entity identifiers extracted from the id are valid
     pub(crate) world: Option<WorldRef<'a>>,
     pub raw_id: IdT,
-}
-
-impl<'a> Default for Id<'a> {
-    fn default() -> Self {
-        Self {
-            world: None,
-            raw_id: 0,
-        }
-    }
 }
 
 impl<'a> PartialEq for Id<'a> {

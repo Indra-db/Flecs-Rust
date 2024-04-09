@@ -1232,6 +1232,7 @@ impl World {
     ///
     /// * C++ API: `world::get_mut`
     #[doc(alias = "world::get_mut")]
+    #[allow(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn get_pair_first_id_mut<First>(&self, second: impl IntoEntityId) -> &mut First
     where

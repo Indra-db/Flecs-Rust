@@ -411,6 +411,7 @@ where
 
     }
 
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     fn register_ids_descriptor_at(
         world: *mut WorldT,
         terms: &mut [sys::ecs_term_t],

@@ -882,7 +882,7 @@ impl<'a> Entity<'a> {
                 self.world.world_ptr_mut(),
                 self.raw_id,
                 ECS_OVERRIDE | id.get_id(),
-            )
+            );
         }
         self
     }

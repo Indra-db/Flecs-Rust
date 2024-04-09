@@ -97,6 +97,9 @@ impl<'a> EntityView<'a> {
     /// # See also
     ///
     /// * C++ API: `entity_view::entity_view`
+    ///
+    /// # Safety
+    /// - world must be a valid World
     #[doc(alias = "entity_view::entity_view")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub unsafe fn new_from_existing_with_poly_world(
@@ -1704,7 +1707,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::mut`
     #[doc(alias = "entity_view::mut")]
-    pub fn mut_current_stage<'s>(self, stage: &'s World) -> Entity<'s> {
+    pub fn mut_current_stage(self, stage: &World) -> Entity {
         ecs_assert!(
             !stage.is_readonly(),
             FlecsErrorCode::InvalidParameter,

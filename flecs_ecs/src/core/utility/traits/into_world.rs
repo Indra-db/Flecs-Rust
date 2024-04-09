@@ -83,10 +83,10 @@ pub struct WorldRef<'a> {
     _marker: PhantomData<&'a ()>,
 }
 
-impl<'a> Into<WorldRef<'a>> for &'a World {
-    fn into(self) -> WorldRef<'a> {
+impl<'a> From<&'a World> for WorldRef<'a> {
+    fn from(world: &'a World) -> Self {
         WorldRef {
-            raw_world: self.raw_world,
+            raw_world: world.raw_world,
             _marker: PhantomData,
         }
     }
@@ -109,6 +109,8 @@ impl<'a> Deref for WorldRef<'a> {
 }
 
 pub trait FromWorldPtr<'a> {
+    /// # Safety
+    /// - `raw_world` must be point to a valid world or be null
     unsafe fn from_ptr(raw_world: *mut WorldT) -> Self;
 }
 

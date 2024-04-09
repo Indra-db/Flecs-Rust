@@ -39,7 +39,7 @@ impl<'a, T: ComponentId> Ref<'a, T> {
     ///
     /// * C++ API: `ref::ref`
     ///
-    // TODO: Suspicious lifetime sharing betwen the stage and the original world
+    // TODO: Suspicious lifetime sharing between the stage and the original world
     #[doc(alias = "ref::ref")]
     pub fn new(world: impl IntoWorld<'a>, entity: impl IntoEntityId, mut id: IdT) -> Self {
         let mut world_ptr = world.world_ptr_mut();

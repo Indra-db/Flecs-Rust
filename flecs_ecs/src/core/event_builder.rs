@@ -35,7 +35,7 @@ impl<'a> EventBuilder<'a> {
     #[doc(alias = "event_builder_base::event_builder_base")]
     pub fn new(world: &'a World, event: impl IntoEntityId) -> Self {
         let mut obj = Self {
-            world: world,
+            world,
             desc: Default::default(),
             ids: Default::default(),
             ids_array: Default::default(),
