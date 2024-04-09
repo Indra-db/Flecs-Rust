@@ -24,19 +24,19 @@ use super::{
 };
 
 /// Fast to iterate, but slower to create than Filter
-pub struct QueryBuilder<T>
+pub struct QueryBuilder<'a, T>
 where
     T: Iterable,
 {
-    pub filter_builder: FilterBuilder<T>,
+    pub filter_builder: FilterBuilder<'a, T>,
     pub desc: ecs_query_desc_t,
 }
 
-impl<T> Deref for QueryBuilder<T>
+impl<'a, T> Deref for QueryBuilder<'a, T>
 where
     T: Iterable,
 {
-    type Target = FilterBuilder<T>;
+    type Target = FilterBuilder<'a, T>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -44,7 +44,7 @@ where
     }
 }
 
-impl<T> QueryBuilder<T>
+impl<'a, T> QueryBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -219,7 +219,7 @@ impl<'a, T> Builder<'a> for QueryBuilder<'a, T>
 where
     T: Iterable,
 {
-    type BuiltType = Query<T>;
+    type BuiltType = Query<'a, T>;
 
     /// Build the `observer_builder` into an query
     ///

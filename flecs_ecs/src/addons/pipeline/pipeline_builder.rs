@@ -15,21 +15,21 @@ use crate::{
 
 use super::Pipeline;
 
-pub struct PipelineBuilder<T>
+pub struct PipelineBuilder<'a, T>
 where
     T: Iterable,
 {
-    query_builder: QueryBuilder<T>,
+    query_builder: QueryBuilder<'a, T>,
     desc: ecs_pipeline_desc_t,
     is_instanced: bool,
 }
 
 /// Deref to `QueryBuilder` to allow access to `QueryBuilder` methods without having to access `QueryBuilder` through `PipelineBuilder`
-impl<T> Deref for PipelineBuilder<T>
+impl<'a, T> Deref for PipelineBuilder<'a, T>
 where
     T: Iterable,
 {
-    type Target = QueryBuilder<T>;
+    type Target = QueryBuilder<'a, T>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -37,7 +37,7 @@ where
     }
 }
 
-impl<T> DerefMut for PipelineBuilder<T>
+impl<'a, T> DerefMut for PipelineBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -47,7 +47,7 @@ where
     }
 }
 
-impl<T> PipelineBuilder<T>
+impl<'a, T> PipelineBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -171,7 +171,7 @@ impl<'a, T> Builder<'a> for PipelineBuilder<'a, T>
 where
     T: Iterable,
 {
-    type BuiltType = Pipeline<T>;
+    type BuiltType = Pipeline<'a, T>;
 
     fn build(&mut self) -> Self::BuiltType {
         Pipeline::<T>::new(&self.world, self.desc)

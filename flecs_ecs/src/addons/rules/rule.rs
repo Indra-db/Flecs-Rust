@@ -7,7 +7,7 @@ use flecs_ecs_sys::{
 
 use crate::core::{Entity, FilterView, IntoWorld, IterAPI, IterOperations, Iterable, World};
 
-pub struct Rule<T>
+pub struct Rule<'a, T>
 where
     T: Iterable,
 {
@@ -16,7 +16,7 @@ where
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<T> Deref for Rule<T>
+impl<'a, T> Deref for Rule<'a, T>
 where
     T: Iterable,
 {
@@ -28,7 +28,7 @@ where
     }
 }
 
-impl<T> Drop for Rule<T>
+impl<'a, T> Drop for Rule<'a, T>
 where
     T: Iterable,
 {
@@ -41,7 +41,7 @@ where
     }
 }
 
-impl<T> Rule<T>
+impl<'a, T> Rule<'a, T>
 where
     T: Iterable,
 {
@@ -144,7 +144,7 @@ where
     }
 }
 
-impl<T> IterAPI<T> for Rule<T>
+impl<'a, T> IterAPI<'a, T> for Rule<'a, T>
 where
     T: Iterable,
 {
@@ -161,7 +161,7 @@ impl<'a, T: Iterable> IntoWorld<'a> for Rule<'a, T> {
     }
 }
 
-impl<T> IterOperations for Rule<T>
+impl<'a, T> IterOperations for Rule<'a, T>
 where
     T: Iterable,
 {

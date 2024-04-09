@@ -21,22 +21,22 @@ use super::{
     Builder, IntoEntityId, IntoWorld, ReactorAPI, Term,
 };
 
-pub struct ObserverBuilder<T>
+pub struct ObserverBuilder<'a, T>
 where
     T: Iterable,
 {
-    filter_builder: FilterBuilder<T>,
+    filter_builder: FilterBuilder<'a, T>,
     desc: ecs_observer_desc_t,
     event_count: i32,
     is_instanced: bool,
 }
 
 /// Deref to `FilterBuilder` to allow access to `FilterBuilder` methods without having to access `FilterBuilder` through `ObserverBuilder`
-impl<T> Deref for ObserverBuilder<T>
+impl<'a, T> Deref for ObserverBuilder<'a, T>
 where
     T: Iterable,
 {
-    type Target = FilterBuilder<T>;
+    type Target = FilterBuilder<'a, T>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -44,7 +44,7 @@ where
     }
 }
 
-impl<T> ObserverBuilder<T>
+impl<'a, T> ObserverBuilder<'a, T>
 where
     T: Iterable,
 {

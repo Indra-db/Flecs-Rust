@@ -10,7 +10,7 @@ use super::{
     IterAPI, IterOperations,
 };
 
-pub struct FilterView<T>
+pub struct FilterView<'a, T>
 where
     T: Iterable,
 {
@@ -19,7 +19,7 @@ where
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<T> Clone for FilterView<T>
+impl<'a, T> Clone for FilterView<'a, T>
 where
     T: Iterable,
 {
@@ -32,7 +32,7 @@ where
     }
 }
 
-impl<T> FilterView<T>
+impl<'a, T> FilterView<'a, T>
 where
     T: Iterable,
 {
@@ -57,7 +57,7 @@ where
 }
 
 /// Filters are cheaper to create, but slower to iterate than queries.
-pub struct Filter<T>
+pub struct Filter<'a, T>
 where
     T: Iterable,
 {
@@ -66,7 +66,7 @@ where
     filter: FilterT,
 }
 
-impl<T> Filter<T>
+impl<'a, T> Filter<'a, T>
 where
     T: Iterable,
 {
@@ -167,7 +167,7 @@ where
     }
 }
 
-impl<T> Drop for Filter<T>
+impl<'a, T> Drop for Filter<'a, T>
 where
     T: Iterable,
 {
@@ -181,7 +181,7 @@ where
     }
 }
 
-impl<T> Clone for Filter<T>
+impl<'a, T> Clone for Filter<'a, T>
 where
     T: Iterable,
 {
@@ -206,7 +206,7 @@ where
     }
 }
 
-impl<T> IterOperations for Filter<T>
+impl<'a, T> IterOperations for Filter<'a, T>
 where
     T: Iterable,
 {
@@ -236,7 +236,7 @@ where
     }
 }
 
-impl<T> IterAPI<T> for FilterView<T>
+impl<'a, T> IterAPI<'a, T> for FilterView<'a, T>
 where
     T: Iterable,
 {
@@ -247,7 +247,7 @@ where
     }
 }
 
-impl<T> IterOperations for FilterView<T>
+impl<'a, T> IterOperations for FilterView<'a, T>
 where
     T: Iterable,
 {
@@ -268,11 +268,11 @@ where
     }
 }
 
-impl<T> IterAPI<T> for Filter<T>
+impl<'a, T> IterAPI<'a, T> for Filter<'a, T>
 where
     T: Iterable,
 {
-    fn as_entity(&self) -> Entity {
+    fn as_entity(&self) -> Entity<'a> {
         Entity::new_from_existing(self.world, unsafe {
             ecs_get_entity(&self.filter as *const _ as *const _)
         })

@@ -25,7 +25,7 @@ use crate::{
 };
 
 /// Filters are cheaper to create, but slower to iterate than queries.
-pub struct FilterBuilder<T>
+pub struct FilterBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -37,7 +37,7 @@ where
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<T> FilterBuilder<T>
+impl<'a, T> FilterBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -192,7 +192,7 @@ impl<'a, T> Builder<'a> for FilterBuilder<'a, T>
 where
     T: Iterable,
 {
-    type BuiltType = Filter<T>;
+    type BuiltType = Filter<'a, T>;
 
     #[inline]
     fn build(&mut self) -> Self::BuiltType {

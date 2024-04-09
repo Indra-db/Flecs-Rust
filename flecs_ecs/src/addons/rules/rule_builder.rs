@@ -9,18 +9,18 @@ use crate::core::{
 
 use super::Rule;
 
-pub struct RuleBuilder<T>
+pub struct RuleBuilder<'a, T>
 where
     T: Iterable,
 {
-    pub filter_builder: FilterBuilder<T>,
+    pub filter_builder: FilterBuilder<'a, T>,
 }
 
-impl<T> Deref for RuleBuilder<T>
+impl<'a, T> Deref for RuleBuilder<'a, T>
 where
     T: Iterable,
 {
-    type Target = FilterBuilder<T>;
+    type Target = FilterBuilder<'a, T>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -28,7 +28,7 @@ where
     }
 }
 
-impl<T> RuleBuilder<T>
+impl<'a, T> RuleBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -147,7 +147,7 @@ impl<'a, T> Builder<'a> for RuleBuilder<'a, T>
 where
     T: Iterable,
 {
-    type BuiltType = Rule<T>;
+    type BuiltType = Rule<'a, T>;
 
     /// Build the `observer_builder` into an query
     ///

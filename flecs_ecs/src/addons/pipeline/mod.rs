@@ -13,7 +13,7 @@ use crate::{
 };
 
 /// Pipelines order and schedule systems for execution.
-pub struct Pipeline<T>
+pub struct Pipeline<'a, T>
 where
     T: Iterable,
 {
@@ -21,7 +21,7 @@ where
     phantom: std::marker::PhantomData<T>,
 }
 
-impl<T> Deref for Pipeline<T>
+impl<'a, T> Deref for Pipeline<'a, T>
 where
     T: Iterable,
 {
@@ -33,7 +33,7 @@ where
     }
 }
 
-impl<T> DerefMut for Pipeline<T>
+impl<'a, T> DerefMut for Pipeline<'a, T>
 where
     T: Iterable,
 {
@@ -43,7 +43,7 @@ where
     }
 }
 
-impl<T> Pipeline<T>
+impl<'a, T> Pipeline<'a, T>
 where
     T: Iterable,
 {
