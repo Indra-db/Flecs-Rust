@@ -237,7 +237,7 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::ctx`
     ///
     /// # Safety
-    /// - caller must ensure the ctx variable was set to a type accesible as T and is not aliased
+    /// - caller must ensure the ctx variable was set to a type accessible as T and is not aliased
     #[doc(alias = "iter::ctx")]
     #[allow(clippy::mut_from_ref)]
     pub unsafe fn context<T>(&self) -> &mut T {
