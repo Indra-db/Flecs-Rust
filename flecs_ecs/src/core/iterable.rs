@@ -633,7 +633,7 @@ macro_rules! impl_iterable {
                     components[index as usize] =
                     unsafe { ecs_field::<$t::OnlyType>(it, index + 1) as *mut u8 };
                     is_ref[index as usize] = if !it.sources.is_null() {
-                        unsafe { *it.sources.add(0) != 0 }
+                        unsafe { *it.sources.add(index as usize) != 0 }
                     } else {
                         false
                     };
