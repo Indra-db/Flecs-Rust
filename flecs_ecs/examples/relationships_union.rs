@@ -83,11 +83,11 @@ fn main() {
                 "{}: Movement: {:?}, Direction: {:?}",
                 it.entity(i).name(),
                 movement[i]
-                    .to_entity(&it.world())
+                    .to_entity(it.world())
                     .to_constant::<Movement>()
                     .unwrap(),
                 direction[i]
-                    .to_entity(&it.world())
+                    .to_entity(it.world())
                     .to_constant::<Direction>()
                     .unwrap()
             );
