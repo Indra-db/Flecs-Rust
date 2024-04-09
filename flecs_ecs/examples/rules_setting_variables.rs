@@ -95,7 +95,7 @@ fn main() {
     // - find all entities with (Platoon, *), store * in _Platoon
     // - check if _Platoon has (Player, *), store * in _Player
     let rule = world
-        .rule_builder::<(&RangedUnit,)>()
+        .rule_builder::<&RangedUnit>()
         .with_type::<&Platoon>()
         .select_second_name(c"$Platoon")
         .with_pair_name::<&Player>(c"$Player")
@@ -113,7 +113,7 @@ fn main() {
     // Iterate rule, limit the results to units of MyPlayer
     rule.iterable()
         .set_var(player_var, world.lookup_name(c"MyPlayer", true))
-        .each_iter(|it, index, (_,)| {
+        .each_iter(|it, index, _| {
             let unit = it.entity(index);
             println!(
                 "Unit {} of class {} in platoon {} for player {}",

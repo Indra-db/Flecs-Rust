@@ -15,9 +15,9 @@ fn main() {
 
     // Create a system for printing the entity position
     world
-        .system_builder::<(&Position,)>()
+        .system_builder::<&Position>()
         .kind::<flecs::pipeline::PostUpdate>()
-        .on_each_entity(|e, (p,)| {
+        .on_each_entity(|e, p| {
             println!("{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 

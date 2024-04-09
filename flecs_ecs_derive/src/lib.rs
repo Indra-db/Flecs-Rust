@@ -2,10 +2,12 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream as ProcMacroTokenStream;
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 use syn::{
     parse::{Parse, ParseStream},
-    parse_macro_input, Data, DeriveInput, Fields, Ident,
+    parse_macro_input,
+    token::Comma,
+    Data, DeriveInput, Fields, Ident, LitInt, Result,
 };
 
 /// `Component` macro for defining ECS components with optional register attribute when the type is generic over a single T.
@@ -493,4 +495,59 @@ fn generate_component_id_impl(name: &Ident, ty: &Ident, is_struct: bool) -> Toke
             }
         }
     }
+}
+
+struct Tuples {
+    macro_ident: Ident,
+    start: usize,
+    end: usize,
+    idents: Vec<Ident>,
+}
+
+impl Parse for Tuples {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let macro_ident = input.parse::<Ident>()?;
+        input.parse::<Comma>()?;
+        let start = input.parse::<LitInt>()?.base10_parse()?;
+        input.parse::<Comma>()?;
+        let end = input.parse::<LitInt>()?.base10_parse()?;
+        let mut idents = vec![];
+        while input.parse::<Comma>().is_ok() {
+            let ident = input.parse::<Ident>()?;
+            idents.push(ident);
+        }
+
+        Ok(Tuples {
+            macro_ident,
+            start,
+            end,
+            idents,
+        })
+    }
+}
+
+#[proc_macro]
+pub fn tuples(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
+    let input = parse_macro_input!(input as Tuples);
+    let len = 1 + input.end - input.start;
+    let mut tuples = Vec::with_capacity(len);
+    for i in 0..=len {
+        tuples.push(format_ident!("P{}", i));
+    }
+
+    let macro_ident = &input.macro_ident;
+    let invocations = (input.start..=input.end).map(|i| {
+        let tuples = &tuples[..i];
+        let idents = &input.idents;
+
+        quote! {
+            #macro_ident!(#(#idents,)* #(#tuples),*);
+        }
+    });
+
+    ProcMacroTokenStream::from(quote! {
+        #(
+            #invocations
+        )*
+    })
 }

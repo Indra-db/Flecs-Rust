@@ -97,7 +97,7 @@ fn main() {
         .add::<Npc>();
 
     let query = world
-        .query_builder::<(&Npc,)>()
+        .query_builder::<&Npc>()
         .group_by::<WorldCell>()
         .build();
 
