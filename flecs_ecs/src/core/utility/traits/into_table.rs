@@ -2,7 +2,6 @@ use flecs_ecs_sys::ecs_table_range_t;
 
 use crate::core::{Table, TableRange, TableT};
 
-// TODO: Replace with implementation that preserves lifetimes
 pub trait IntoTable {
     fn table_ptr_mut(&self) -> *mut TableT;
 }

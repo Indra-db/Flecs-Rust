@@ -13,16 +13,6 @@ impl EntityId {
         Self(id)
     }
 
-    /// Convert the entity id to an entity without a world.
-    /// This entity is not safe to do operations on.
-    ///
-    /// # Safety
-    ///
-    /// This entity is not safe to do operations on as it has no valig world reference
-    pub fn to_entity_no_world(&self) -> Entity {
-        Entity::from(self.0)
-    }
-
     /// Convert the entity id to an entity with the given world.
     ///
     /// # Safety
