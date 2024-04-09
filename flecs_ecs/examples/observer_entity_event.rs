@@ -1,5 +1,4 @@
 mod common;
-
 use common::*;
 
 // Entity events are events that are emitted and observed for a specific entity.
@@ -22,9 +21,15 @@ struct Resize {
     height: f32,
 }
 
+#[derive(Debug)]
+enum CloseReason {
+    User,
+    _System,
+}
+
 #[derive(Component)]
 struct CloseRequested {
-    text: String,
+    reason: CloseReason,
 }
 
 fn main() {
@@ -36,8 +41,8 @@ fn main() {
         .add_event::<CloseRequested>()
         .with_type::<&flecs::Any>()
         .on_each_iter(|it, _index, _| {
-            let close_requested = it.param::<CloseRequested>();
-            println!("close request with text: {}!", close_requested.text);
+            let close_requested = unsafe { it.param::<CloseRequested>() };
+            println!("Close request with reason: {:?}", close_requested.reason);
         });
 
     let widget = world.new_entity_named(c"MyWidget");
@@ -70,11 +75,12 @@ fn main() {
     });
 
     widget.emit::<Click>();
-    widget.emit_payload(&mut CloseRequested {
-        text: "hey it's me again".to_string(),
+    widget.emit_payload(&mut Resize {
+        width: 100.0,
+        height: 200.0,
     });
     widget.emit_payload(&mut CloseRequested {
-        text: "hello from the other sidee".to_string(),
+        reason: CloseReason::User,
     });
 
     // Output:
@@ -82,5 +88,5 @@ fn main() {
     //  clicked on "MyWidget"
     //  widget resized to { 100, 200 }!
     //  MyWidget resized to { 100, 200 }!
-    //  close request with text: hello from the other sidee
+    //  Close request with reason: User
 }
