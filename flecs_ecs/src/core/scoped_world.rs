@@ -1,19 +1,19 @@
 use std::ops::Deref;
 
-use super::{c_types::EntityT, world::World, IntoEntityId, IntoWorld};
+use super::{c_types::EntityT, IntoEntityId, IntoWorld, WorldRef};
 use crate::sys::ecs_set_scope;
 
 /// Utility class used by the `world::scope` method to create entities in a scope
 pub struct ScopedWorld<'a> {
-    pub world: &'a World,
+    pub world: WorldRef<'a>,
     pub prev_scope: EntityT,
 }
 
 impl<'a> Deref for ScopedWorld<'a> {
-    type Target = World;
+    type Target = WorldRef<'a>;
 
     fn deref(&self) -> &Self::Target {
-        self.world
+        &self.world
     }
 }
 
@@ -30,9 +30,12 @@ impl<'a> ScopedWorld<'a> {
     /// * C++ API: `scoped_world::scoped_world`
     #[doc(alias = "scoped_world::scoped_world")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new(world: &'a World, scope: impl IntoEntityId) -> Self {
+    pub fn new(world: impl IntoWorld<'a>, scope: impl IntoEntityId) -> Self {
         let prev_scope = unsafe { ecs_set_scope(world.world_ptr_mut(), scope.get_id()) };
-        Self { world, prev_scope }
+        Self {
+            world: world.world_ref(),
+            prev_scope,
+        }
     }
 
     /// Creates a new scoped world

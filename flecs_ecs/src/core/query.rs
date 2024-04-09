@@ -15,7 +15,7 @@ use super::{
     filter::FilterView,
     iterable::Iterable,
     world::World,
-    FlecsErrorCode, IntoEntityId, IntoWorld, IterAPI, IterOperations,
+    FlecsErrorCode, IntoEntityId, IntoWorld, IterAPI, IterOperations, WorldRef,
 };
 
 /// Cached query implementation. Fast to iterate, but slower to create than `Filters`
@@ -24,7 +24,7 @@ pub struct Query<'a, T>
 where
     T: Iterable,
 {
-    pub world: &'a World,
+    pub world: WorldRef<'a>,
     pub query: *mut QueryT,
     _phantom: std::marker::PhantomData<T>,
 }
@@ -77,14 +77,14 @@ where
     ///
     /// * C++ API: `query::query`
     #[doc(alias = "query::query")]
-    pub fn new(world: &'a World) -> Self {
+    pub fn new(world: impl IntoWorld<'a>) -> Self {
         let mut desc = ecs_query_desc_t::default();
         T::register_ids_descriptor(world.world_ptr_mut(), &mut desc.filter);
         let mut filter: FilterT = Default::default();
         desc.filter.storage = &mut filter;
         let query = unsafe { ecs_query_init(world.world_ptr_mut(), &desc) };
         Self {
-            world,
+            world: world.world_ref(),
             query,
             _phantom: std::marker::PhantomData,
         }
@@ -103,7 +103,7 @@ where
     #[doc(alias = "query::query")]
     pub fn new_ownership(world: &'a World, query: *mut QueryT) -> Self {
         Self {
-            world,
+            world: world.world_ref(),
             query,
             _phantom: std::marker::PhantomData,
         }
@@ -120,9 +120,9 @@ where
     ///
     /// * C++ API: `query::query`
     #[doc(alias = "query::query")]
-    pub fn new_from_desc(world: &'a World, desc: &mut ecs_query_desc_t) -> Self {
+    pub fn new_from_desc(world: impl IntoWorld<'a>, desc: &mut ecs_query_desc_t) -> Self {
         let obj = Self {
-            world,
+            world: world.world_ref(),
             query: unsafe { ecs_query_init(world.world_ptr_mut(), desc) },
             _phantom: std::marker::PhantomData,
         };
@@ -173,7 +173,7 @@ where
     /// * C++ API: `query::get_iter`
     #[doc(alias = "query::get_iter")]
     fn get_iter_raw(&mut self, world: &'a World) -> IterT {
-        self.world = world;
+        self.world = world.world_ref();
         unsafe { ecs_query_iter(self.world.world_ptr_mut(), self.query) }
     }
 

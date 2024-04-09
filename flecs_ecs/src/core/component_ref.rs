@@ -6,7 +6,7 @@ use super::{
     c_types::{IdT, RefT, WorldT},
     component_registration::ComponentId,
     entity::Entity,
-    IntoEntityId, IntoWorld, World,
+    IntoEntityId, IntoWorld,
 };
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
@@ -19,7 +19,7 @@ use crate::{
 /// A reference to a component from a specific entity.
 /// Refs are a fast mechanism for referring to a specific entity/component
 pub struct Ref<'a, T: ComponentId> {
-    world: Option<&'a World>,
+    world: Option<WorldRef<'a>>,
     component_ref: RefT,
     _marker: PhantomData<T>,
 }

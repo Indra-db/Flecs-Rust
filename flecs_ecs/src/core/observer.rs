@@ -9,13 +9,13 @@ use super::{
     entity::Entity,
     filter::Filter,
     world::World,
-    IntoWorld,
+    IntoWorld, WorldRef,
 };
 
 #[derive(Clone)]
 pub struct Observer<'a> {
     pub entity: Entity<'a>,
-    world: &'a World,
+    world: WorldRef<'a>,
 }
 
 impl<'a> Deref for Observer<'a> {
@@ -35,13 +35,17 @@ impl<'a> Observer<'a> {
     ///
     /// * C++ API: `observer::observer`
     #[doc(alias = "observer::observer")]
-    pub fn new(world: &'a World, mut desc: ecs_observer_desc_t, is_instanced: bool) -> Self {
+    pub fn new(
+        world: impl IntoWorld<'a>,
+        mut desc: ecs_observer_desc_t,
+        is_instanced: bool,
+    ) -> Self {
         if !desc.filter.instanced {
             desc.filter.instanced = is_instanced;
         }
 
         let id = unsafe { ecs_observer_init(world.world_ptr_mut(), &desc) };
-        let entity = Entity::new_from_existing(world, id);
+        let entity = Entity::new_from_existing(world.world_ref(), id);
 
         unsafe {
             if !desc.filter.terms_buffer.is_null() {
@@ -51,13 +55,16 @@ impl<'a> Observer<'a> {
             }
         }
 
-        Self { entity, world }
+        Self {
+            entity,
+            world: world.world_ref(),
+        }
     }
 
     /// Wrap an existing observer entity in an observer object
     pub fn new_from_existing(world: &'a World, observer_entity: Entity<'a>) -> Self {
         Self {
-            world,
+            world: world.world_ref(),
             entity: observer_entity,
         }
     }
@@ -99,6 +106,6 @@ impl<'a> Observer<'a> {
     pub fn query(&mut self) -> Filter<()> {
         let poly: *const Poly = self.target_for_pair_first::<Poly>(ECS_OBSERVER);
         let obj: *mut ecs_observer_t = unsafe { (*poly).poly as *mut ecs_observer_t };
-        Filter::<()>::new_ownership(&self.world, unsafe { &mut (*obj).filter })
+        Filter::<()>::new_ownership(self.world, unsafe { &mut (*obj).filter })
     }
 }

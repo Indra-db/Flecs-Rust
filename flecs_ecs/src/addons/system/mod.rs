@@ -13,7 +13,7 @@ pub use system_builder::*;
 pub use system_runner_fluent::*;
 
 use crate::{
-    core::{Entity, FTime, IntoWorld, Query, TickSource, World},
+    core::{Entity, FTime, IntoWorld, Query, TickSource, World, WorldRef},
     sys::{
         ecs_os_api, ecs_system_desc_t, ecs_system_get_ctx, ecs_system_get_query, ecs_system_init,
     },
@@ -22,7 +22,7 @@ use crate::{
 #[derive(Clone)]
 pub struct System<'a> {
     pub entity: Entity<'a>,
-    world: &'a World,
+    world: WorldRef<'a>,
 }
 
 impl<'a> Deref for System<'a> {
@@ -47,13 +47,13 @@ impl<'a> System<'a> {
     ///
     /// * C++ API: `system::system`
     #[doc(alias = "system::system")]
-    pub fn new(world: &'a World, mut desc: ecs_system_desc_t, is_instanced: bool) -> Self {
+    pub fn new(world: impl IntoWorld<'a>, mut desc: ecs_system_desc_t, is_instanced: bool) -> Self {
         if !desc.query.filter.instanced {
             desc.query.filter.instanced = is_instanced;
         }
 
         let id = unsafe { ecs_system_init(world.world_ptr_mut(), &desc) };
-        let entity = Entity::new_from_existing(world, id);
+        let entity = Entity::new_from_existing(world.world_ref(), id);
 
         unsafe {
             if !desc.query.filter.terms_buffer.is_null() {
@@ -63,7 +63,10 @@ impl<'a> System<'a> {
             }
         }
 
-        Self { entity, world }
+        Self {
+            entity,
+            world: world.world_ref(),
+        }
     }
 
     /// Wrap an existing system entity in a system object
@@ -79,7 +82,7 @@ impl<'a> System<'a> {
     #[doc(alias = "system::system")]
     pub fn new_from_existing(world: &'a World, system_entity: Entity<'a>) -> Self {
         Self {
-            world,
+            world: world.world_ref(),
             entity: system_entity,
         }
     }

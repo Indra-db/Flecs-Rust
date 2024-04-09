@@ -4,7 +4,7 @@ use flecs_ecs_sys::{ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t};
 
 use crate::core::{
     Builder, FilterBuilder, FilterBuilderImpl, Filterable, IntoWorld, Iterable, Term, TermBuilder,
-    TermIdT, TermT, World, SEPARATOR,
+    TermIdT, TermT, World, WorldRef, SEPARATOR,
 };
 
 use super::Rule;
@@ -156,13 +156,13 @@ where
     /// * C++ API: `node_builder::build`
     #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
-        let world = &self.filter_builder.world;
+        let world = self.filter_builder.world;
         Rule::<T>::new_from_desc(world, &mut self.filter_builder.desc)
     }
 }
 
 impl<'a, T: Iterable> IntoWorld<'a> for RuleBuilder<'a, T> {
-    fn get_world(&self) -> Option<&'a World> {
+    fn get_world(&self) -> Option<WorldRef<'a>> {
         self.filter_builder.get_world()
     }
 }

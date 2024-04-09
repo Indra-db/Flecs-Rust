@@ -7,7 +7,7 @@ pub use pipeline_builder::*;
 use std::ops::{Deref, DerefMut};
 
 use crate::{
-    core::{Entity, FlecsErrorCode, IntoWorld, Iterable, World},
+    core::{Entity, FlecsErrorCode, IntoWorld, Iterable},
     ecs_abort,
     sys::{ecs_os_api, ecs_pipeline_desc_t, ecs_pipeline_init},
 };
@@ -58,8 +58,8 @@ where
     ///
     /// * C++ API: `pipeline::pipeline`
     #[doc(alias = "pipeline::pipeline")]
-    pub fn new(world: &'a World, desc: ecs_pipeline_desc_t) -> Self {
-        let entity = Entity::new(world);
+    pub fn new(world: impl IntoWorld<'a>, desc: ecs_pipeline_desc_t) -> Self {
+        let entity = Entity::new(world.world_ref());
         let mut pipeline = Self {
             entity,
             phantom: Default::default(),

@@ -7,7 +7,7 @@ use std::{
 use super::{
     c_types::{IdT, TypeT},
     id::Id,
-    IntoWorld, World,
+    IntoWorld, WorldRef,
 };
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
@@ -22,7 +22,7 @@ use crate::{ecs_assert, sys::ecs_type_str};
 /// * C++ API: `type`
 #[doc(alias = "type")]
 pub struct Archetype<'a> {
-    world: Option<&'a World>,
+    world: Option<WorldRef<'a>>,
     type_vec: *const TypeT,
 }
 

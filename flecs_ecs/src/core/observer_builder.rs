@@ -18,7 +18,7 @@ use super::{
     private::internal_ReactorAPI,
     term::TermBuilder,
     world::World,
-    Builder, IntoEntityId, IntoWorld, ReactorAPI, Term,
+    Builder, IntoEntityId, IntoWorld, ReactorAPI, Term, WorldRef,
 };
 
 pub struct ObserverBuilder<'a, T>
@@ -266,12 +266,12 @@ where
     /// * C++ API: `node_builder::build`
     #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
-        Observer::new(&self.world, self.desc, self.is_instanced)
+        Observer::new(self.world, self.desc, self.is_instanced)
     }
 }
 
 impl<'a, T: Iterable> IntoWorld<'a> for ObserverBuilder<'a, T> {
-    fn get_world(&self) -> Option<&'a World> {
+    fn get_world(&self) -> Option<WorldRef<'a>> {
         self.filter_builder.get_world()
     }
 }

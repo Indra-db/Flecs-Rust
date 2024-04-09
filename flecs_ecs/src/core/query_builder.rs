@@ -20,7 +20,7 @@ use super::{
     query::Query,
     term::TermBuilder,
     world::World,
-    EntityT, IdT, IntoEntityId, IntoWorld, TableT, Term, WorldT,
+    EntityT, IdT, IntoEntityId, IntoWorld, TableT, Term, WorldRef, WorldT,
 };
 
 /// Fast to iterate, but slower to create than Filter
@@ -228,7 +228,7 @@ where
     /// * C++ API: `node_builder::build`
     #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
-        let world = &self.filter_builder.world;
+        let world = self.filter_builder.world;
         Query::<T>::new_from_desc(world, &mut self.desc)
     }
 }
@@ -469,7 +469,7 @@ where
 }
 
 impl<'a, T: Iterable> IntoWorld<'a> for QueryBuilder<'a, T> {
-    fn get_world(&self) -> Option<&'a World> {
+    fn get_world(&self) -> Option<WorldRef<'a>> {
         self.filter_builder.get_world()
     }
 }

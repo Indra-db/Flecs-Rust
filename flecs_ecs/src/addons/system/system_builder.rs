@@ -17,7 +17,7 @@ use crate::{
         query_builder::{QueryBuilder, QueryBuilderImpl},
         term::{Term, TermBuilder},
         world::World,
-        Builder, IntoEntityId, IntoWorld, ReactorAPI, ECS_ON_UPDATE,
+        Builder, IntoEntityId, IntoWorld, ReactorAPI, WorldRef, ECS_ON_UPDATE,
     },
     sys::{
         ecs_add_id, ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_get_target,
@@ -410,7 +410,7 @@ where
 }
 
 impl<'a, T: Iterable> IntoWorld<'a> for SystemBuilder<'a, T> {
-    fn get_world(&self) -> Option<&'a World> {
+    fn get_world(&self) -> Option<WorldRef<'a>> {
         self.query_builder.get_world()
     }
 }

@@ -8,7 +8,7 @@ use flecs_ecs_sys::{ecs_filter_desc_t, ecs_query_desc_t};
 use crate::{
     core::{
         Builder, EntityT, FilterBuilderImpl, Filterable, IntoWorld, Iterable, QueryBuilder,
-        QueryBuilderImpl, Term, TermBuilder, TermIdT, TermT, World, SEPARATOR,
+        QueryBuilderImpl, Term, TermBuilder, TermIdT, TermT, World, WorldRef, SEPARATOR,
     },
     sys::{ecs_entity_desc_t, ecs_entity_init, ecs_pipeline_desc_t},
 };
@@ -174,7 +174,7 @@ where
     type BuiltType = Pipeline<'a, T>;
 
     fn build(&mut self) -> Self::BuiltType {
-        Pipeline::<T>::new(&self.world, self.desc)
+        Pipeline::<T>::new(self.world, self.desc)
     }
 }
 
@@ -209,7 +209,7 @@ where
 }
 
 impl<'a, T: Iterable> IntoWorld<'a> for PipelineBuilder<'a, T> {
-    fn get_world(&self) -> Option<&'a World> {
+    fn get_world(&self) -> Option<WorldRef<'a>> {
         self.filter_builder.get_world()
     }
 }

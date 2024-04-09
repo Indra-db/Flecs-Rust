@@ -18,8 +18,8 @@ use super::{
     component_registration::ComponentId,
     entity::Entity,
     id::Id,
-    world::World,
-    IntoComponentId, IntoEntityId, IntoEntityIdExt, IntoWorld, RUST_ecs_id_FLAGS_MASK, ECS_DESC,
+    IntoComponentId, IntoEntityId, IntoEntityIdExt, IntoWorld, RUST_ecs_id_FLAGS_MASK, WorldRef,
+    ECS_DESC,
 };
 
 /// Struct that describes a term identifier.
@@ -33,7 +33,7 @@ pub struct Term<'a> {
     pub term_id_ptr: *mut TermIdT,
     pub term_ptr: *mut TermT,
     pub term: TermT,
-    world: Option<&'a World>,
+    world: Option<WorldRef<'a>>,
 }
 
 impl<'a> Default for Term<'a> {
@@ -108,9 +108,9 @@ impl<'a> Term<'a> {
     ///
     /// * C++ API: `term::term`
     #[doc(alias = "term::term")]
-    pub fn new_world_only(world: &'a World) -> Self {
+    pub fn new_world_only(world: impl IntoWorld<'a>) -> Self {
         let mut obj = Self {
-            world: Some(world),
+            world: Some(world.world_ref()),
             term_id_ptr: std::ptr::null_mut(),
             term: Default::default(),
             term_ptr: std::ptr::null_mut(),
@@ -1169,7 +1169,7 @@ impl<'a> TermBuilder<'a> for Term<'a> {
 
 impl<'a> IntoWorld<'a> for Term<'a> {
     #[inline]
-    fn get_world(&self) -> Option<&'a World> {
+    fn get_world(&self) -> Option<WorldRef<'a>> {
         self.world
     }
 }

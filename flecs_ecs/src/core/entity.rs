@@ -145,7 +145,7 @@ impl<'a> Entity<'a> {
     /// * C++ API: `entity::entity`
     #[doc(alias = "entity::entity")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new(world: &'a World) -> Self {
+    pub fn new(world: impl IntoWorld<'a>) -> Self {
         let id = unsafe { ecs_new_id(world.world_ptr_mut()) };
         Self {
             entity_view: EntityView::new(Some(world), id),
@@ -1551,7 +1551,7 @@ impl<'a> Entity<'a> {
     /// * C++ API: `entity_builder::get_world`
     #[doc(alias = "entity_builder::get_world")]
     pub fn scope(&self) -> ScopedWorld {
-        ScopedWorld::new(self.world(), self.raw_id)
+        ScopedWorld::new(self.world, self.raw_id)
     }
 
     /// Gets mut component.

@@ -6,15 +6,15 @@ use crate::sys::{
 };
 
 use super::{
-    c_types::FilterT, entity::Entity, iterable::Iterable, world::World, FlecsErrorCode, IntoWorld,
-    IterAPI, IterOperations,
+    c_types::FilterT, entity::Entity, iterable::Iterable, FlecsErrorCode, IntoWorld, IterAPI,
+    IterOperations, WorldRef,
 };
 
 pub struct FilterView<'a, T>
 where
     T: Iterable,
 {
-    world: &'a World,
+    world: WorldRef<'a>,
     filter_ptr: *const FilterT,
     _phantom: std::marker::PhantomData<T>,
 }
@@ -47,9 +47,9 @@ where
     ///
     /// * C++ API: `filter_view::filter_view`
     #[doc(alias = "filter_view::filter_view")]
-    pub fn new(world: &'a World, filter: *const FilterT) -> Self {
+    pub fn new(world: impl IntoWorld<'a>, filter: *const FilterT) -> Self {
         Self {
-            world,
+            world: world.world_ref(),
             _phantom: std::marker::PhantomData,
             filter_ptr: filter as *const FilterT,
         }
@@ -61,7 +61,7 @@ pub struct Filter<'a, T>
 where
     T: Iterable,
 {
-    world: &'a World,
+    world: WorldRef<'a>,
     _phantom: std::marker::PhantomData<T>,
     filter: FilterT,
 }
@@ -80,14 +80,14 @@ where
     ///
     /// * C++ API: `filter::filter`
     #[doc(alias = "filter::filter")]
-    pub fn new(world: &'a World) -> Self {
+    pub fn new(world: impl IntoWorld<'a>) -> Self {
         let mut desc = ecs_filter_desc_t::default();
         T::register_ids_descriptor(world.world_ptr_mut(), &mut desc);
         let mut filter: FilterT = Default::default();
         desc.storage = &mut filter;
         unsafe { ecs_filter_init(world.world_ptr_mut(), &desc) };
         Filter {
-            world: world,
+            world: world.world_ref(),
             _phantom: std::marker::PhantomData,
             filter,
         }
@@ -105,9 +105,9 @@ where
     /// * C++ API: `filter::filter`
     #[doc(alias = "filter::filter")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new_ownership(world: &'a World, filter: *mut FilterT) -> Self {
+    pub fn new_ownership(world: impl IntoWorld<'a>, filter: *mut FilterT) -> Self {
         let mut filter_obj = Filter {
-            world,
+            world: world.world_ref(),
             _phantom: std::marker::PhantomData,
             filter: Default::default(),
         };
@@ -131,9 +131,9 @@ where
     /// * C++ API: `filter::filter`
     #[doc(alias = "filter::filter")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new_from_desc(world: &'a World, desc: *mut ecs_filter_desc_t) -> Self {
+    pub fn new_from_desc(world: impl IntoWorld<'a>, desc: *mut ecs_filter_desc_t) -> Self {
         let mut filter_obj = Filter {
-            world: world,
+            world: world.world_ref(),
             _phantom: std::marker::PhantomData,
             filter: Default::default(),
         };
@@ -201,7 +201,7 @@ impl<'a, T> IntoWorld<'a> for Filter<'a, T>
 where
     T: Iterable,
 {
-    fn get_world(&self) -> Option<&'a World> {
+    fn get_world(&self) -> Option<WorldRef<'a>> {
         Some(self.world)
     }
 }
@@ -231,7 +231,7 @@ impl<'a, T> IntoWorld<'a> for FilterView<'a, T>
 where
     T: Iterable,
 {
-    fn get_world(&self) -> Option<&'a World> {
+    fn get_world(&self) -> Option<WorldRef<'a>> {
         Some(self.world)
     }
 }

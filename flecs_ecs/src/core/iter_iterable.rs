@@ -7,7 +7,7 @@ use flecs_ecs_sys::{
 
 use super::{
     ComponentId, Entity, FilterT, FromWorldPtr, IntoEntityId, IntoTableRange, IntoWorld, IterAPI,
-    IterOperations, IterT, Iterable, World, WorldRef,
+    IterOperations, IterT, Iterable, WorldRef,
 };
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
@@ -162,7 +162,7 @@ impl<'a, T> IntoWorld<'a> for IterIterable<'a, T>
 where
     T: Iterable,
 {
-    fn get_world(&self) -> Option<&'a World> {
+    fn get_world(&self) -> Option<WorldRef<'a>> {
         unsafe { Option::<WorldRef>::from_ptr(self.iter.real_world) }.get_world()
     }
 }

@@ -4,7 +4,7 @@ use crate::{
     core::{
         c_types::{EntityT, IdT, WorldT},
         component_registration::ComponentId,
-        IntoWorld, World,
+        IntoWorld, WorldRef,
     },
     sys::{ecs_meta_serialize_t, ecs_opaque_desc_t, ecs_opaque_init, ecs_serializer_t},
 };
@@ -36,7 +36,7 @@ pub struct Opaque<'a, T>
 where
     T: ComponentId,
 {
-    world: &'a World,
+    world: WorldRef<'a>,
     pub desc: ecs_opaque_desc_t,
     phantom: std::marker::PhantomData<T>,
 }
@@ -47,7 +47,7 @@ where
 {
     pub fn new(world: impl IntoWorld<'a>) -> Self {
         Self {
-            world: world.world(),
+            world: world.world_ref(),
             desc: ecs_opaque_desc_t {
                 entity: T::get_id(world),
                 type_: Default::default(),

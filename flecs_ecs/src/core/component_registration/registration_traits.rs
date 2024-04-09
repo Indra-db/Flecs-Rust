@@ -156,7 +156,7 @@ pub trait CachedEnumData: ComponentType<Enum> + ComponentId {
 
     /// get the entity id of the variant of the enum. This function will register the enum with the world if it's not registered.
     fn get_id_variant<'a>(&self, world: impl IntoWorld<'a>) -> Entity<'a> {
-        try_register_component::<Self>(&world);
+        try_register_component::<Self>(world.get_world());
         let index = self.enum_index();
         Entity::new_from_existing(world, unsafe { *Self::__enum_data_mut().add(index) })
     }

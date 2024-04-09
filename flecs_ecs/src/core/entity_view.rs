@@ -1628,7 +1628,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::clone")]
     #[inline(always)]
     pub fn duplicate(self, copy_value: bool) -> Entity<'a> {
-        let dest_entity = Entity::new(self.world());
+        let dest_entity = Entity::new(self.world_ref());
         unsafe {
             ecs_clone(
                 self.world.world_ptr_mut(),
@@ -1740,7 +1740,7 @@ impl<'a> EntityView<'a> {
             "cannot use entity created for readonly world/stage to create mutable handle"
         );
 
-        Entity::new_id_only(self.raw_id).set_stage(entity.world())
+        Entity::new_id_only(self.raw_id).set_stage(entity.world_ref())
     }
 
     //might not be needed, in the original c++ impl it was used in the get_mut functions.
@@ -1750,8 +1750,8 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::set_stage`
     #[doc(alias = "entity_view::set_stage")]
     #[doc(hidden)]
-    fn set_stage<'s>(self, stage: &'s World) -> Entity<'s> {
-        Entity::new_from_existing(Some(stage), self.raw_id)
+    fn set_stage(self, stage: impl IntoWorld<'a>) -> Entity<'a> {
+        Entity::new_from_existing(stage, self.raw_id)
     }
 
     /// Turn entity into an enum constant.
@@ -1817,7 +1817,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
     pub fn emit_id(self, event: impl IntoEntityId) {
-        self.world()
+        self.world_ref()
             .event_id(event)
             .set_entity_to_emit(self.to_entity())
             .emit();
@@ -1848,7 +1848,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
     pub fn emit_payload<T: NotEmptyComponent + ComponentId>(self, payload: &mut T) {
-        self.world()
+        self.world_ref()
             .event::<T>()
             .set_entity_to_emit(self.to_entity())
             .set_event_data(payload)
@@ -1866,7 +1866,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
     pub fn enqueue_id(self, event: impl IntoEntityId) {
-        self.world()
+        self.world_ref()
             .event_id(event)
             .set_entity_to_emit(self.to_entity())
             .enqueue();
@@ -1920,7 +1920,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
     pub fn enqueue_payload<T: NotEmptyComponent + ComponentId>(self, payload: &mut T) {
-        self.world()
+        self.world_ref()
             .event::<T>()
             .set_entity_to_emit(self.to_entity())
             .set_event_data(payload)

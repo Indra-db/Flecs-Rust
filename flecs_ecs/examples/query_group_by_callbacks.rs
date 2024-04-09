@@ -20,7 +20,7 @@ extern "C" fn callback_group_create(
     let world_ref = unsafe { <WorldRef>::from_ptr(world) };
     println!(
         "Group created: {:?}",
-        world_ref.world().new_entity_from_id(group_id).name()
+        world_ref.world_ref().new_entity_from_id(group_id).name()
     );
 
     println!();
@@ -44,7 +44,7 @@ extern "C" fn callback_group_delete(
     let world_ref = unsafe { <WorldRef>::from_ptr(world) };
     println!(
         "Group deleted: {:?}",
-        world_ref.world().new_entity_from_id(group_id).name()
+        world_ref.world_ref().new_entity_from_id(group_id).name()
     );
 
     //Free data associated with group

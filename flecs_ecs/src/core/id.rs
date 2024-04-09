@@ -4,8 +4,7 @@ use super::{
     c_types::{IdT, RUST_ecs_id_FLAGS_MASK, WorldT, RUST_ECS_COMPONENT_MASK},
     ecs_pair_first,
     entity::Entity,
-    world::World,
-    IntoEntityId, IntoEntityIdExt, IntoWorld,
+    IntoEntityId, IntoEntityIdExt, IntoWorld, WorldRef,
 };
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
@@ -34,7 +33,7 @@ use crate::{
 #[derive(Debug, Clone, Copy, Eq)]
 pub struct Id<'a> {
     /// World is optional, but guarantees that entity identifiers extracted from the id are valid
-    pub(crate) world: Option<&'a World>,
+    pub(crate) world: Option<WorldRef<'a>>,
     pub raw_id: IdT,
 }
 
@@ -469,8 +468,9 @@ impl<'a> Id<'a> {
         unsafe { std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(c_str_ptr).to_bytes()) }
     }
 
-    pub fn world(self) -> &'a World {
+    pub fn world(&self) -> &WorldRef<'a> {
         self.world
+            .as_ref()
             .expect("Called Id::world() on an Id with world: None")
     }
 

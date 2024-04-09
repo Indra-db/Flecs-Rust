@@ -11,13 +11,13 @@ use super::{
     archetype::Archetype,
     c_types::{EntityT, IdT, TableT},
     component_registration::ComponentId,
-    ecs_pair, IntoWorld, World,
+    ecs_pair, IntoWorld, WorldRef,
 };
 
 /// A wrapper class that gives direct access to the component arrays of a table, the table data
 #[derive(Debug)]
 pub struct Table<'a> {
-    world: Option<&'a World>,
+    world: Option<WorldRef<'a>>,
     table: *mut TableT,
 }
 

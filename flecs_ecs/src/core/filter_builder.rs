@@ -11,7 +11,7 @@ use super::{
     type_to_inout,
     world::World,
     CachedEnumData, IdT, InOutType, IntoComponentId, IntoEntityId, IntoEntityIdExt, IntoWorld,
-    ECS_WILDCARD,
+    WorldRef, ECS_WILDCARD,
 };
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::{core::FlecsErrorCode, sys::ecs_term_is_initialized};
@@ -32,7 +32,7 @@ where
     pub desc: ecs_filter_desc_t,
     expr_count: i32,
     pub(crate) term: Term<'a>,
-    pub world: &'a World,
+    pub world: WorldRef<'a>,
     pub next_term_index: i32,
     _phantom: std::marker::PhantomData<T>,
 }
@@ -51,12 +51,12 @@ where
     ///
     /// * C++ API: `filter_builder::filter_builder`
     #[doc(alias = "filter_builder::filter_builder")]
-    pub fn new(world: &'a World) -> Self {
+    pub fn new(world: impl IntoWorld<'a>) -> Self {
         let mut obj = Self {
             desc: Default::default(),
             expr_count: 0,
-            term: Term::new_world_only(world),
-            world,
+            term: Term::new_world_only(world.world_ref()),
+            world: world.world_ref(),
             next_term_index: 0,
             _phantom: std::marker::PhantomData,
         };
@@ -89,7 +89,7 @@ where
             desc: Default::default(),
             expr_count: 0,
             term: Term::default(),
-            world,
+            world: world.world_ref(),
             next_term_index: 0,
             _phantom: std::marker::PhantomData,
         };
@@ -123,7 +123,7 @@ where
             desc: *desc,
             expr_count: 0,
             term: Term::default(),
-            world,
+            world: world.world_ref(),
             next_term_index: term_index,
             _phantom: std::marker::PhantomData,
         }
@@ -196,7 +196,7 @@ where
 
     #[inline]
     fn build(&mut self) -> Self::BuiltType {
-        Filter::<T>::new_from_desc(&self.world, &mut self.desc as *mut _)
+        Filter::<T>::new_from_desc(self.world, &mut self.desc as *mut _)
     }
 }
 
@@ -669,7 +669,7 @@ pub enum FilterType<'a> {
 }
 
 impl<'a, T: Iterable> IntoWorld<'a> for FilterBuilder<'a, T> {
-    fn get_world(&self) -> Option<&'a World> {
+    fn get_world(&self) -> Option<WorldRef<'a>> {
         Some(self.world)
     }
 }

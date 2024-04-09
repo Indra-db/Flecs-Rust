@@ -20,8 +20,7 @@ use super::{
     id::Id,
     table::{Table, TableRange},
     traits::FromWorldPtr,
-    world::World,
-    Archetype, FTime, IntoWorld, WorldRef,
+    Archetype, FTime, WorldRef,
 };
 
 pub struct Iter<'a> {
@@ -31,12 +30,12 @@ pub struct Iter<'a> {
 }
 
 impl<'a> Iter<'a> {
-    pub fn world(&self) -> &'a World {
-        self.world.world()
+    pub fn world(&self) -> &WorldRef<'a> {
+        &self.world
     }
 
-    pub fn real_world(&self) -> &'a World {
-        self.real_world.world()
+    pub fn real_world(&self) -> &WorldRef<'a> {
+        &self.real_world
     }
 
     /// Constructs iterator from C iterator object
@@ -217,7 +216,6 @@ impl<'a> Iter<'a> {
     pub fn get_var_by_name(&mut self, name: &CStr) -> Entity {
         use flecs_ecs_sys::ecs_rule_find_var;
 
-        let world = self.world();
         let iter: &mut IterT = self.iter;
         let rit = unsafe { &mut iter.priv_.iter.rule };
         let rule = rit.rule;
@@ -227,6 +225,7 @@ impl<'a> Iter<'a> {
             FlecsErrorCode::InvalidParameter,
             name.to_str().unwrap()
         );
+        let world = self.world;
         Entity::new_from_existing(world, unsafe { ecs_iter_get_var(iter, var_id) })
     }
 
