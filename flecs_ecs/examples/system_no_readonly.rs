@@ -25,7 +25,7 @@ fn main() {
 
     // Create query to find all waiters without a plate
     let q_waiter = world
-        .query_builder::<(&Waiter,)>()
+        .query_builder::<&Waiter>()
         .without_pair::<&Plate, flecs::Wildcard>()
         .build();
 
@@ -33,7 +33,7 @@ fn main() {
     // plate assignments are assigned directly (not deferred) to waiters, which
     // ensures that we won't assign plates to the same waiter more than once.
     world
-        .system_builder_named::<(&Plate,)>(c"AssignPlate")
+        .system_builder_named::<&Plate>(c"AssignPlate")
         .without_pair::<&Waiter, flecs::Wildcard>()
         .no_readonly(true)
         .on_iter_only(move |it| {

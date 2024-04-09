@@ -76,11 +76,11 @@ fn main() {
 
     //TODO: pair wrapper class to clean up, beautify this API
     world
-        .filter_builder::<(&Position,)>()
+        .filter_builder::<&Position>()
         .term_at(1)
         .select_second::<World>()
         .build()
-        .each_entity(|entity, (position,)| {
+        .each_entity(|entity, position| {
             println!(
                 "Entity {} is at ({}, {})",
                 entity.name(),

@@ -13,8 +13,8 @@ extern "C" fn compare_position(
     (p1.x > p2.x) as i32 - (p1.x < p2.x) as i32
 }
 
-fn print_query(query: &Query<'_, (&Position,)>) {
-    query.each(|(pos,)| println!("{:?}", pos));
+fn print_query(query: &Query<'_, &Position>) {
+    query.each(|pos| println!("{:?}", pos));
 }
 
 fn main() {
@@ -29,15 +29,15 @@ fn main() {
 
     // Create a sorted system
     let sys = world
-        .system_builder::<(&Position,)>()
+        .system_builder::<&Position>()
         .order_by(compare_position)
-        .on_each(|(pos,)| {
+        .on_each(|pos| {
             println!("{:?}", pos);
         });
 
     // Create a sorted query
     let query = world
-        .query_builder::<(&Position,)>()
+        .query_builder::<&Position>()
         .order_by(compare_position)
         .build();
 

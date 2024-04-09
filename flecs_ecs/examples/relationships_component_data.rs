@@ -110,12 +110,12 @@ fn main() {
     // When querying for a relationship component, add the pair type as template
     // argument to the builder:
     let query = world
-        .query_builder::<(&Requires,)>()
+        .query_builder::<&Requires>()
         .term_at(1)
         .select_second::<Gigawatts>()
         .build();
 
-    query.each(|(requires,)| {
+    query.each(|requires| {
         println!("requires: {} gigawatts", requires.amount);
     });
 

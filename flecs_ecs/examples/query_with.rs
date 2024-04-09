@@ -13,7 +13,7 @@ fn main() {
     // This is useful for things like tags, which because they don't have a
     // value are less useful to pass to the each/iter functions as argument.
     let query = world
-        .query_builder::<(&Position,)>()
+        .query_builder::<&Position>()
         .with_type::<&Npc>()
         .build();
 
@@ -34,7 +34,7 @@ fn main() {
         .set(Position { x: 10.0, y: 20.0 });
 
     // Note how the Npc tag is not part of the each signature
-    query.each_entity(|entity, (pos,)| {
+    query.each_entity(|entity, pos| {
         println!("Entity {}: {:?}", entity.name(), pos);
     });
 

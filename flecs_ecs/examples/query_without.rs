@@ -16,7 +16,7 @@ fn main() {
     // The without method is short for:
     //   .term<Npc>().not_()
     let query = world
-        .query_builder::<(&Position,)>()
+        .query_builder::<&Position>()
         .without_type::<&Npc>()
         .build();
 
@@ -36,7 +36,7 @@ fn main() {
         .add::<Npc>();
 
     // Note how the Npc tag is not part of the each signature
-    query.each_entity(|entity, (pos,)| {
+    query.each_entity(|entity, pos| {
         println!("Entity {}: {:?}", entity.name(), pos);
     });
 

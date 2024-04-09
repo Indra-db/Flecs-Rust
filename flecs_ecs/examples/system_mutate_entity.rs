@@ -11,8 +11,8 @@ fn main() {
 
     // System that deletes an entity after a timeout expires
     world
-        .system_builder::<(&mut Timeout,)>()
-        .on_each_iter(|it, index, (timeout,)| {
+        .system_builder::<&mut Timeout>()
+        .on_each_iter(|it, index, timeout| {
             timeout.value -= it.delta_time();
             if timeout.value <= 0.0 {
                 // Delete the entity
@@ -33,8 +33,8 @@ fn main() {
 
     // System that prints remaining expiry time
     world
-        .system_builder::<(&Timeout,)>()
-        .on_each_entity(|e, (timeout,)| {
+        .system_builder::<&Timeout>()
+        .on_each_entity(|e, timeout| {
             println!(
                 "PrintExpire: {} has {:.2} seconds left",
                 e.name(),
@@ -44,9 +44,9 @@ fn main() {
 
     // Observer that triggers when entity is actually deleted
     world
-        .observer_builder::<(&Timeout,)>()
+        .observer_builder::<&Timeout>()
         .add_event::<flecs::OnRemove>()
-        .on_each_entity(|e, (_timeout,)| {
+        .on_each_entity(|e, _timeout| {
             println!("Expired: {} actually deleted", e.name());
         });
 
