@@ -242,7 +242,6 @@ pub(crate) fn set_helper<T: ComponentId>(
         } else {
             let comp = ecs_get_mut_modified_id(world, entity, id) as *mut T;
             std::ptr::write(comp, value);
-            ecs_modified_id(world, entity, id);
         }
     }
 }

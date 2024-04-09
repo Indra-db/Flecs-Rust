@@ -4,7 +4,7 @@ use std::{
     os::raw::c_void,
 };
 
-use flecs_ecs_sys::ecs_emplace_id;
+use flecs_ecs_sys::{ecs_emplace_id, ecs_new_id};
 
 use super::{
     c_types::{IdT, SEPARATOR},
@@ -24,9 +24,8 @@ use crate::{
     sys::{
         ecs_add_id, ecs_clear, ecs_delete, ecs_enable, ecs_enable_id, ecs_entity_desc_t,
         ecs_entity_init, ecs_flatten, ecs_flatten_desc_t, ecs_get_id, ecs_get_mut_id,
-        ecs_get_target, ecs_has_id, ecs_modified_id, ecs_new_id, ecs_remove_id, ecs_set_alias,
-        ecs_set_id, ecs_set_name, ecs_set_scope, ecs_set_with, EcsComponent,
-        FLECS_IDEcsComponentID_,
+        ecs_get_target, ecs_has_id, ecs_modified_id, ecs_remove_id, ecs_set_alias, ecs_set_id,
+        ecs_set_name, ecs_set_scope, ecs_set_with, EcsComponent, FLECS_IDEcsComponentID_,
     },
 };
 
@@ -99,13 +98,6 @@ impl<'a> From<&Entity<'a>> for IdT {
 impl<'a> From<&mut Entity<'a>> for IdT {
     fn from(entity: &mut Entity) -> Self {
         entity.entity_view.id.raw_id
-    }
-}
-
-// TODO: Unsafe static lifetime injected here
-impl<'a> From<IdT> for Entity<'a> {
-    fn from(value: IdT) -> Self {
-        Entity::new_id_only(value)
     }
 }
 
@@ -189,7 +181,6 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity::entity`
     #[doc(alias = "entity::entity")]
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new_named(world: impl IntoWorld<'a>, name: &CStr) -> Self {
         let desc = ecs_entity_desc_t {
             name: name.as_ptr(),

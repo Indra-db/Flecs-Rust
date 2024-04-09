@@ -1886,7 +1886,7 @@ impl<'a> EntityView<'a> {
     #[cfg_attr(doctest, doc = " ````no_test")]
     /// ```rust
     /// world.defer_begin();
-    /// entity.enqueue<MyEvent>();
+    /// entity.enqueue::<MyEvent>();
     /// world.defer_end();
     /// ```
     ///

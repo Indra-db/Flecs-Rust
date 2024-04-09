@@ -1,5 +1,4 @@
 mod common;
-
 use common::*;
 
 // Entity events are events that are emitted and observed for a specific entity.
@@ -22,8 +21,29 @@ struct Resize {
     height: f32,
 }
 
+#[derive(Debug)]
+enum CloseReason {
+    User,
+    _System,
+}
+
+#[derive(Component)]
+struct CloseRequested {
+    reason: CloseReason,
+}
+
 fn main() {
     let world = World::new();
+
+    // Create an observer for the CloseRequested event to listen to any entity.
+    world
+        .observer_builder::<()>()
+        .add_event::<CloseRequested>()
+        .with_type::<&flecs::Any>()
+        .on_each_iter(|it, _index, _| {
+            let close_requested = unsafe { it.param::<CloseRequested>() };
+            println!("Close request with reason: {:?}", close_requested.reason);
+        });
 
     let widget = world.new_entity_named(c"MyWidget");
     println!("widget: {:?}", widget);
@@ -59,10 +79,14 @@ fn main() {
         width: 100.0,
         height: 200.0,
     });
+    widget.emit_payload(&mut CloseRequested {
+        reason: CloseReason::User,
+    });
 
     // Output:
     //  clicked!
     //  clicked on "MyWidget"
     //  widget resized to { 100, 200 }!
     //  MyWidget resized to { 100, 200 }!
+    //  Close request with reason: User
 }

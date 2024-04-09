@@ -269,11 +269,16 @@ impl<'a> Iter<'a> {
     /// Access param.
     /// param contains the pointer passed to the param argument of `system::run`
     ///
+    /// # Safety
+    ///
+    /// This function is unsafe because you need to guarantee is has a param, and you're requesting for the correct type.
+    /// it's essentially casting a `c_void` to a type T
+    ///
     /// # See also
     ///
     /// * C++ API: `iter::param`
     #[doc(alias = "iter::param")]
-    pub fn param<T: ComponentId>(&mut self) -> &mut T {
+    pub unsafe fn param<T: ComponentId>(&mut self) -> &mut T {
         unsafe { &mut *(self.iter.param as *mut T) }
     }
 
