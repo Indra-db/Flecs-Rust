@@ -21,22 +21,22 @@ use super::{
     Builder, IntoEntityId, ReactorAPI, Term, WorldT,
 };
 
-pub struct ObserverBuilder<'a, T>
+pub struct ObserverBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
-    filter_builder: FilterBuilder<'a, T>,
+    filter_builder: FilterBuilder<T>,
     desc: ecs_observer_desc_t,
     event_count: i32,
     is_instanced: bool,
 }
 
 /// Deref to `FilterBuilder` to allow access to `FilterBuilder` methods without having to access `FilterBuilder` through `ObserverBuilder`
-impl<'a, T> Deref for ObserverBuilder<'a, T>
+impl<T> Deref for ObserverBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
-    type Target = FilterBuilder<'a, T>;
+    type Target = FilterBuilder<T>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -44,9 +44,9 @@ where
     }
 }
 
-impl<'a, T> ObserverBuilder<'a, T>
+impl<T> ObserverBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     /// Create a new observer builder
     ///
@@ -200,9 +200,9 @@ where
     }
 }
 
-impl<'a, T> Filterable for ObserverBuilder<'a, T>
+impl<T> Filterable for ObserverBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn current_term(&mut self) -> &mut TermT {
         unsafe { &mut *self.filter_builder.term.term_ptr }
@@ -213,9 +213,9 @@ where
     }
 }
 
-impl<'a, T> FilterBuilderImpl for ObserverBuilder<'a, T>
+impl<T> FilterBuilderImpl for ObserverBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     fn desc_filter_mut(&mut self) -> &mut ecs_filter_desc_t {
@@ -233,9 +233,9 @@ where
     }
 }
 
-impl<'a, T> TermBuilder for ObserverBuilder<'a, T>
+impl<T> TermBuilder for ObserverBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     fn world_ptr_mut(&self) -> *mut WorldT {
@@ -258,9 +258,9 @@ where
     }
 }
 
-impl<'a, T> Builder for ObserverBuilder<'a, T>
+impl<T> Builder for ObserverBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     type BuiltType = Observer;
 
@@ -275,4 +275,4 @@ where
     }
 }
 
-implement_reactor_api!(ObserverBuilder<'a, T>);
+implement_reactor_api!(ObserverBuilder<T>);

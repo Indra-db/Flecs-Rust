@@ -27,21 +27,21 @@ use crate::{
 
 use super::System;
 
-pub struct SystemBuilder<'a, T>
+pub struct SystemBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
-    query_builder: QueryBuilder<'a, T>,
+    query_builder: QueryBuilder<T>,
     desc: ecs_system_desc_t,
     is_instanced: bool,
 }
 
 /// Deref to `QueryBuilder` to allow access to `QueryBuilder` methods without having to access `QueryBuilder` through `SystemBuilder`
-impl<'a, T> Deref for SystemBuilder<'a, T>
+impl<T> Deref for SystemBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
-    type Target = QueryBuilder<'a, T>;
+    type Target = QueryBuilder<T>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -49,9 +49,9 @@ where
     }
 }
 
-impl<'a, T> DerefMut for SystemBuilder<'a, T>
+impl<T> DerefMut for SystemBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
@@ -59,9 +59,9 @@ where
     }
 }
 
-impl<'a, T> SystemBuilder<'a, T>
+impl<T> SystemBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     pub fn new(world: &World) -> Self {
         let mut desc = Default::default();
@@ -319,9 +319,9 @@ where
     }
 }
 
-impl<'a, T> Filterable for SystemBuilder<'a, T>
+impl<T> Filterable for SystemBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     fn current_term(&mut self) -> &mut TermT {
         unsafe { &mut *self.filter_builder.term.term_ptr }
@@ -332,9 +332,9 @@ where
     }
 }
 
-impl<'a, T> FilterBuilderImpl for SystemBuilder<'a, T>
+impl<T> FilterBuilderImpl for SystemBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     fn desc_filter_mut(&mut self) -> &mut ecs_filter_desc_t {
@@ -352,9 +352,9 @@ where
     }
 }
 
-impl<'a, T> TermBuilder for SystemBuilder<'a, T>
+impl<T> TermBuilder for SystemBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     fn world_ptr_mut(&self) -> *mut WorldT {
@@ -377,9 +377,9 @@ where
     }
 }
 
-impl<'a, T> QueryBuilderImpl for SystemBuilder<'a, T>
+impl<T> QueryBuilderImpl for SystemBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     fn desc_query_mut(&mut self) -> &mut ecs_query_desc_t {
@@ -387,9 +387,9 @@ where
     }
 }
 
-impl<'a, T> Builder for SystemBuilder<'a, T>
+impl<T> Builder for SystemBuilder<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     type BuiltType = System;
 
@@ -404,4 +404,4 @@ where
     }
 }
 
-implement_reactor_api!(SystemBuilder<'a, T>);
+implement_reactor_api!(SystemBuilder<T>);

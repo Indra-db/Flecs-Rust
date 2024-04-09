@@ -1414,33 +1414,6 @@ fn entity_entity_to_entity_view() {
     assert_eq!(p.y, 20);
 }
 
-const DEFAULTENTITY: flecs_ecs::core::Entity = flecs_ecs::core::Entity::new_null();
-
-#[derive(Debug, flecs_ecs_derive::Component)]
-struct ParentRef<'a> {
-    _parent: &'a flecs_ecs::core::Entity,
-}
-
-impl Default for ParentRef<'_> {
-    fn default() -> Self {
-        ParentRef {
-            _parent: &DEFAULTENTITY,
-        }
-    }
-}
-
-impl<'a> flecs_ecs::core::component_registration::registration_traits::ComponentId
-    for ParentRef<'a>
-{
-    type UnderlyingType = Self;
-    type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
-    fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::IdComponent> {
-        static ONCE_LOCK: std::sync::OnceLock<flecs_ecs::core::IdComponent> =
-            std::sync::OnceLock::new();
-        &ONCE_LOCK
-    }
-}
-
 #[test]
 fn entity_entity_view_to_entity_world() {
     let world = World::new();

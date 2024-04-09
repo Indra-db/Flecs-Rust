@@ -98,9 +98,9 @@ where
     }
 }
 
-impl<'a, T> IntoWorld for Query<'a, T>
+impl<T> IntoWorld for Query<T>
 where
-    T: Iterable<'a>,
+    T: Iterable,
 {
     #[inline]
     #[doc(hidden)]
