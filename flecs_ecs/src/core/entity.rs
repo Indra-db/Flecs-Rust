@@ -1,6 +1,5 @@
 use std::{
     ffi::CStr,
-    mem::MaybeUninit,
     ops::{Deref, DerefMut},
     os::raw::c_void,
 };
@@ -544,12 +543,12 @@ impl Entity {
 
     /// Emplace a component.
     ///
-    /// Emplace is similar to `set()`` except that the component constructor is not
+    /// Emplace is similar to `set()` except that the component constructor is not
     /// invoked, allowing the component to be "constructed" directly in the storage.
     ///
     /// # SAFETY
     ///
-    /// `emplace`` can only be used if the entity does not yet have the component. If
+    /// `emplace` can only be used if the entity does not yet have the component. If
     /// the entity has the component, the operation will fail and panic.
     ///
     /// # Type Parameters
