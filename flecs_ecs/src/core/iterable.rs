@@ -42,13 +42,11 @@ impl<'a, T: Iterable<'a>, const LEN: usize> ComponentPointers<'a, T>
         let mut array_components = [std::ptr::null::<u8>() as *mut u8; LEN];
         let mut is_ref_array_components = [false; LEN];
 
-        T::populate_array_ptrs(
+        let is_any_array_a_ref = T::populate_array_ptrs(
             iter,
             &mut array_components[..],
             &mut is_ref_array_components[..],
         );
-
-        let is_any_array_a_ref = is_ref_array_components[0];
 
         Self {
             array_components,
@@ -361,7 +359,7 @@ pub trait Iterable<'a>: Sized {
         index: &mut usize,
     );
 
-    fn populate_array_ptrs(it: &IterT, components: &mut [*mut u8], is_ref: &mut [bool]);
+    fn populate_array_ptrs(it: &IterT, components: &mut [*mut u8], is_ref: &mut [bool]) -> bool;
 
     fn create_tuple(array_components: &[*mut u8], index: usize) -> Self::TupleType;
 
@@ -415,7 +413,7 @@ where
         it: &IterT,
         components: &mut [*mut u8],
         is_ref: &mut [bool],
-    ) {
+    ) -> bool {
         components[0] =
             unsafe { ecs_field::<A::OnlyType>(it, 1) as *mut u8 };
         is_ref[0] = if !it.sources.is_null() {
@@ -423,6 +421,7 @@ where
         } else {
             false
         };
+        is_ref[0]
     }
 
     fn create_tuple(array_components: &[*mut u8], index: usize) -> Self::TupleType {
@@ -627,8 +626,9 @@ macro_rules! impl_iterable {
                 it: &IterT,
                 components: &mut [*mut u8],
                 is_ref: &mut [bool],
-            ) {
+            ) -> bool {
                 let mut index = 0;
+                let mut any_ref = false;
                 $(
                     components[index as usize] =
                     unsafe { ecs_field::<$t::OnlyType>(it, index + 1) as *mut u8 };
@@ -637,8 +637,10 @@ macro_rules! impl_iterable {
                     } else {
                         false
                     };
+                    any_ref |= is_ref[index as usize];
                     index += 1;
                 )*
+                any_ref
             }
 
             #[allow(unused, clippy::unused_unit)]
