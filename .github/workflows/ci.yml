@@ -53,6 +53,9 @@ jobs:
       - name: cargo test
         run: cargo test --workspace
 
+      - name: Set execute permission on script
+        run: chmod +x ./.github/workflows/scripts/run_examples.sh
+
       - name: Build all examples
         run: cargo build --examples
 
