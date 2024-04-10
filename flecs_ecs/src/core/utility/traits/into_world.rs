@@ -90,15 +90,7 @@ impl<'a> From<&'a World> for WorldRef<'a> {
 
 impl<'a> From<&'a *mut WorldT> for &WorldRef<'a> {
     fn from(value: &'a *mut WorldT) -> Self {
-        debug_assert_eq!(
-            std::mem::size_of::<&*mut WorldT>(),
-            std::mem::size_of::<&WorldRef>()
-        );
-        let before = *value;
-        let result = unsafe { std::mem::transmute::<&'a *mut WorldT, &WorldRef>(value) };
-        let after = result.raw_world.as_ptr();
-        debug_assert_eq!(before, after);
-        result
+        unsafe { std::mem::transmute::<&'a *mut WorldT, &WorldRef>(value) }
     }
 }
 
@@ -106,15 +98,7 @@ impl<'a> Deref for WorldRef<'a> {
     type Target = World;
 
     fn deref(&self) -> &Self::Target {
-        debug_assert_eq!(
-            std::mem::size_of::<WorldRef>(),
-            std::mem::size_of::<World>()
-        );
-        let before = self.raw_world.as_ptr();
-        let result = unsafe { std::mem::transmute::<&WorldRef, &World>(self) };
-        let after = result.raw_world.as_ptr();
-        debug_assert_eq!(before, after);
-        result
+        unsafe { std::mem::transmute::<&WorldRef, &World>(self) }
     }
 }
 
