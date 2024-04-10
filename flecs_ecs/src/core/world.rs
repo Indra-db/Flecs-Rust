@@ -24,7 +24,7 @@ use crate::sys::{
     ecs_enable_range_check, ecs_ensure, ecs_exists, ecs_fini, ecs_fini_action_t, ecs_frame_begin,
     ecs_frame_end, ecs_get_alive, ecs_get_ctx, ecs_get_id, ecs_get_mut_id, ecs_get_name,
     ecs_get_scope, ecs_get_stage, ecs_get_stage_count, ecs_get_stage_id, ecs_get_target,
-    ecs_get_world, ecs_get_world_info, ecs_init, ecs_is_alive, ecs_is_deferred, ecs_is_valid,
+    ecs_get_world_info, ecs_init, ecs_is_alive, ecs_is_deferred, ecs_is_valid,
     ecs_lookup_path_w_sep, ecs_merge, ecs_poly_is_, ecs_quit, ecs_readonly_begin, ecs_readonly_end,
     ecs_remove_all, ecs_run_post_frame, ecs_set_alias, ecs_set_automerge, ecs_set_ctx,
     ecs_set_entity_range, ecs_set_lookup_path, ecs_set_scope, ecs_set_stage_count, ecs_set_with,
@@ -42,7 +42,7 @@ use super::{
     component::{Component, UntypedComponent},
     component_ref::Ref,
     component_registration::{ComponentId, ComponentType, Enum, Struct},
-    flecs, FlecsConstantId, FromWorldPtr, IntoComponentId, IntoEntityId, IntoEntityIdExt, IterAPI,
+    flecs, FlecsConstantId, IntoComponentId, IntoEntityId, IntoEntityIdExt, IntoWorld, IterAPI,
     WorldRef, ECS_PREFAB,
 };
 use super::{EmptyComponent, NotEmptyComponent};
@@ -55,7 +55,6 @@ use super::{
     iterable::Iterable,
     observer::Observer,
     observer_builder::ObserverBuilder,
-    scoped_world::ScopedWorld,
     set_helper,
     term::Term,
     Builder, CachedEnumData, Filter, FilterBuilder, Query, QueryBuilder,
@@ -92,13 +91,6 @@ impl World {
         Self::default()
     }
 
-    /// Wrapper around raw world, takes no ownership.
-    pub(crate) unsafe fn new_wrap_raw_world(world: *mut WorldT) -> Self {
-        Self {
-            raw_world: unsafe { NonNull::new_unchecked(world) },
-        }
-    }
-
     fn init_builtin_components(&self) {
         #[cfg(feature = "flecs_system")]
         System::system_init(self);
@@ -119,6 +111,10 @@ impl World {
     /// * C++ API: `world::reset`
     #[doc(alias = "world::reset")]
     pub fn reset(&mut self) {
+        assert!(
+            unsafe { !ecs_stage_is_async(self.raw_world.as_ptr()) },
+            "Tried to reset async stage."
+        );
         unsafe { ecs_fini(self.raw_world.as_ptr()) };
         self.raw_world = unsafe { NonNull::new_unchecked(ecs_init()) };
     }
@@ -511,7 +507,7 @@ impl World {
     /// * C++ API: `world::get_stage`
     #[doc(alias = "world::get_stage")]
     pub fn stage(&self, stage_id: i32) -> WorldRef {
-        unsafe { <WorldRef>::from_ptr(ecs_get_stage(self.raw_world.as_ptr(), stage_id)) }
+        unsafe { WorldRef::from_ptr(ecs_get_stage(self.raw_world.as_ptr(), stage_id)) }
     }
 
     /// Create asynchronous stage.
@@ -538,8 +534,8 @@ impl World {
     ///
     /// * C++ API: `world::async_stage`
     #[doc(alias = "world::async_stage")]
-    pub fn create_async_stage(&self) -> Self {
-        unsafe { Self::new_wrap_raw_world(ecs_async_stage_new(self.raw_world.as_ptr())) }
+    pub fn create_async_stage(&self) -> WorldRef {
+        unsafe { WorldRef::from_ptr(ecs_async_stage_new(self.raw_world.as_ptr())) }
     }
 
     /// Get actual world.
@@ -555,12 +551,8 @@ impl World {
     ///
     /// * C++ API: `world::get_world`
     #[doc(alias = "world::get_world")]
-    pub fn get_world(&self) -> Self {
-        unsafe {
-            Self::new_wrap_raw_world(
-                ecs_get_world(self.raw_world.as_ptr() as *const c_void) as *mut WorldT
-            )
-        }
+    pub fn get_world(&self) -> WorldRef {
+        self.world().real_world()
     }
 
     /// Test whether the current world object is readonly.
@@ -730,7 +722,9 @@ impl World {
     #[doc(alias = "world::set_scope")]
     #[inline(always)]
     pub fn set_scope_with_id(&self, id: impl IntoEntityId) -> Entity {
-        Entity::new_id_only(unsafe { ecs_set_scope(self.raw_world.as_ptr(), id.get_id()) })
+        Entity::new_from_existing(self, unsafe {
+            ecs_set_scope(self.raw_world.as_ptr(), id.get_id())
+        })
     }
 
     /// Sets the current scope, but allows the scope type to be inferred from the type parameter.
@@ -2059,8 +2053,10 @@ impl World {
     ///
     /// * C++ API: `world::scope`
     #[doc(alias = "world::scope")]
-    pub fn scope_id(&self, parent_id: impl IntoEntityId) -> ScopedWorld {
-        ScopedWorld::new(self, parent_id.get_id())
+    pub fn scope_id(&self, parent_id: impl IntoEntityId, mut f: impl FnMut(&World)) {
+        let previous_scope = self.set_scope_with_id(parent_id);
+        f(self);
+        self.set_scope_with_id(previous_scope);
     }
 
     /// Use provided scope for operations ran on returned world.
@@ -2078,8 +2074,10 @@ impl World {
     ///
     /// * C++ API: `world::scope`
     #[doc(alias = "world::scope")]
-    pub fn scope<T: ComponentId>(&self) -> ScopedWorld {
-        self.scope_id(T::get_id(self))
+    pub fn scope<T: ComponentId>(&self, mut f: impl FnMut(&World)) {
+        let previous_scope = self.set_scope_with_id(T::get_id(self));
+        f(self);
+        self.set_scope_with_id(previous_scope);
     }
 
     /// Use provided scope of name for operations ran on returned world.
@@ -2097,8 +2095,8 @@ impl World {
     ///
     /// * C++ API: `world::scope`
     #[doc(alias = "world::scope")]
-    pub fn scope_name(&self, name: &CStr) -> ScopedWorld {
-        self.scope_id(Entity::new_named(self, name).raw_id)
+    pub fn scope_name(&self, name: &CStr, f: impl FnMut(&World)) {
+        self.scope_id(Entity::new_named(self, name).raw_id, f);
     }
 
     /// all entities created in function are created with id
@@ -2801,7 +2799,7 @@ impl World {
     #[doc(alias = "world::id")]
     #[doc(alias = "world::pair")]
     pub fn get_id<T: IntoComponentId>(&self) -> Id {
-        Id::new(Some(self), T::get_id(self))
+        Id::new(self, T::get_id(self))
     }
 
     /// get pair id from relationship, object.
@@ -2825,7 +2823,7 @@ impl World {
             FlecsErrorCode::InvalidParameter,
             "cannot create nested pairs"
         );
-        Id::new(Some(self), (first, second))
+        Id::new(self, (first, second))
     }
 
     /// get pair id from relationship, object.
@@ -2852,7 +2850,7 @@ impl World {
             FlecsErrorCode::InvalidParameter,
             "cannot create nested pairs"
         );
-        Id::new(Some(self), (First::get_id(self), second))
+        Id::new(self, (First::get_id(self), second))
     }
 }
 
@@ -2976,13 +2974,16 @@ impl World {
     /// * C++ API: `world::term`
     #[doc(alias = "world::term")]
     pub fn term<T: IntoComponentId>(&self) -> Term {
-        Term::new_type::<T>(Some(self))
+        Term::new_type::<T>(self)
     }
 }
 
 // Event mixin implementation
 impl World {
     /// Create a new event builder (untyped) from entity id which represents an event
+    ///
+    /// # Safety
+    /// Caller must ensure that `event` is a ZST or that a pointer to the associated type is set on the builder
     ///
     /// # Arguments
     ///
@@ -2996,7 +2997,7 @@ impl World {
     ///
     /// * C++ API: `world::event`
     #[doc(alias = "world::event")]
-    pub fn event_id(&self, event: impl IntoEntityId) -> EventBuilder {
+    pub unsafe fn event_id(&self, event: impl IntoEntityId) -> EventBuilder {
         EventBuilder::new(self, event)
     }
 
@@ -3015,7 +3016,7 @@ impl World {
     /// * C++ API: `world::event`
     #[doc(alias = "world::event")]
     pub fn event<T: ComponentId>(&self) -> EventBuilderTyped<T> {
-        EventBuilderTyped::<T>::new(self, T::get_id(self))
+        EventBuilderTyped::<T>::new(self)
     }
 }
 

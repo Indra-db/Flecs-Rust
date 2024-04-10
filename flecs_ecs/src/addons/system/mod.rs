@@ -7,7 +7,7 @@
 mod system_builder;
 mod system_runner_fluent;
 
-use std::{ffi::CStr, ops::Deref, os::raw::c_void};
+use std::{ffi::CStr, ops::Deref, os::raw::c_void, ptr::NonNull};
 
 pub use system_builder::*;
 pub use system_runner_fluent::*;
@@ -53,7 +53,7 @@ impl<'a> System<'a> {
         }
 
         let id = unsafe { ecs_system_init(world.world_ptr_mut(), &desc) };
-        let entity = Entity::new_from_existing(world.world_ref(), id);
+        let entity = Entity::new_from_existing(world.world(), id);
 
         unsafe {
             if !desc.query.filter.terms_buffer.is_null() {
@@ -65,7 +65,7 @@ impl<'a> System<'a> {
 
         Self {
             entity,
-            world: world.world_ref(),
+            world: world.world(),
         }
     }
 
@@ -80,9 +80,9 @@ impl<'a> System<'a> {
     ///
     /// * C++ API: `system::system`
     #[doc(alias = "system::system")]
-    pub fn new_from_existing(world: &'a World, system_entity: Entity<'a>) -> Self {
+    pub fn new_from_existing(world: impl IntoWorld<'a>, system_entity: Entity<'a>) -> Self {
         Self {
-            world: world.world_ref(),
+            world: world.world(),
             entity: system_entity,
         }
     }
@@ -141,10 +141,14 @@ impl<'a> System<'a> {
     ///
     /// * C++ API: `system::query`
     #[doc(alias = "system::query")]
-    pub fn query(&mut self) -> Query<()> {
-        Query::<()>::new_ownership(&self.world, unsafe {
-            ecs_system_get_query(self.world.world_ptr_mut(), self.raw_id)
-        })
+    pub fn query(&self) -> Query<'a, ()> {
+        let query = unsafe {
+            NonNull::new_unchecked(ecs_system_get_query(
+                self.world.world_ptr_mut(),
+                self.raw_id,
+            ))
+        };
+        Query::<()>::new_ownership(self.world, query)
     }
 
     /// Run the system

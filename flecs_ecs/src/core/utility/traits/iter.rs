@@ -96,7 +96,7 @@ where
                 // most of the cost since the branch is almost always the same.
                 // update: I believe it's not possible due to not knowing the order of the components in the tuple. I will leave this here for now, maybe I will come back to it in the future.
                 for i in 0..iter_count {
-                    let world = self.get_world();
+                    let world = self.world();
                     let mut entity = Entity::new_from_existing(world, *iter.entities.add(i));
                     let tuple = components_data.get_tuple(i);
 
@@ -167,7 +167,7 @@ where
                 ecs_table_lock(world, iter.table);
 
                 for i in 0..iter_count {
-                    let world = self.get_world();
+                    let world = self.world();
                     let tuple = components_data.get_tuple(i);
                     if func(tuple) {
                         entity = Some(Entity::new_from_existing(world, *iter.entities.add(i)));
@@ -213,7 +213,7 @@ where
                 ecs_table_lock(world, iter.table);
 
                 for i in 0..iter_count {
-                    let world = self.get_world();
+                    let world = self.world();
                     let mut entity = Entity::new_from_existing(world, *iter.entities.add(i));
 
                     let tuple = components_data.get_tuple(i);
@@ -268,7 +268,7 @@ where
                 let mut iter_t = Iter::new(&mut iter);
 
                 for i in 0..iter_count {
-                    let world = self.get_world();
+                    let world = self.world();
                     let tuple = components_data.get_tuple(i);
                     if func(&mut iter_t, i, tuple) {
                         entity_result =
@@ -370,7 +370,7 @@ where
     #[doc(alias = "filter_base::each_term")]
     fn each_term(&self, mut func: impl FnMut(&mut Term)) {
         let filter = self.filter_ptr();
-        let world = self.get_world();
+        let world = self.world();
         unsafe {
             for i in 0..(*filter).term_count {
                 let mut term = Term::new_from_term(world, *(*filter).terms.add(i as usize));
@@ -397,7 +397,7 @@ where
     #[doc(alias = "filter_base::term")]
     fn get_term(&self, index: usize) -> Term<'a> {
         let filter = self.filter_ptr();
-        let world = self.get_world();
+        let world = self.world();
         ecs_assert!(
             !filter.is_null(),
             FlecsErrorCode::InvalidParameter,
@@ -467,13 +467,15 @@ where
     /// * C++ API: `iter_iterable::first`
     #[doc(alias = "iterable::first")]
     #[doc(alias = "iter_iterable::first")]
-    fn first(&mut self) -> Entity<'a> {
-        let mut entity = Entity::default();
+    fn first(&mut self) -> Option<Entity<'a>> {
+        let mut entity = None;
 
         let it = &mut self.retrieve_iter();
 
         if self.iter_next(it) && it.count > 0 {
-            entity = Entity::new_from_existing(self.get_world(), unsafe { *it.entities.add(0) });
+            entity = Some(Entity::new_from_existing(self.world(), unsafe {
+                *it.entities.add(0)
+            }));
             unsafe { ecs_iter_fini(it) };
         }
         entity

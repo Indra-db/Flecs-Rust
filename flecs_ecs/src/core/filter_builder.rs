@@ -1,5 +1,9 @@
 //! Filters are cheaper to create, but slower to iterate than queries.
-use std::{ffi::CStr, os::raw::c_void, ptr};
+use std::{
+    ffi::CStr,
+    os::raw::c_void,
+    ptr::{self},
+};
 
 use super::{
     builder::Builder,
@@ -8,10 +12,8 @@ use super::{
     filter::Filter,
     iterable::{Filterable, Iterable},
     term::{Term, TermBuilder},
-    type_to_inout,
-    world::World,
-    CachedEnumData, IdT, InOutType, IntoComponentId, IntoEntityId, IntoEntityIdExt, IntoWorld,
-    WorldRef, ECS_WILDCARD,
+    type_to_inout, CachedEnumData, IdT, InOutType, IntoComponentId, IntoEntityId, IntoEntityIdExt,
+    IntoWorld, WorldRef, ECS_WILDCARD,
 };
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::{core::FlecsErrorCode, sys::ecs_term_is_initialized};
@@ -55,8 +57,8 @@ where
         let mut obj = Self {
             desc: Default::default(),
             expr_count: 0,
-            term: Term::new_world_only(world.world_ref()),
-            world: world.world_ref(),
+            term: Term::new_world_only(world.world()),
+            world: world.world(),
             next_term_index: 0,
             _phantom: std::marker::PhantomData,
         };
@@ -84,12 +86,12 @@ where
     ///
     /// * C++ API: `filter_builder::filter_builder`
     #[doc(alias = "filter_builder::filter_builder")]
-    pub fn new_named(world: &'a World, name: &CStr) -> Self {
+    pub fn new_named(world: impl IntoWorld<'a>, name: &CStr) -> Self {
         let mut obj = Self {
             desc: Default::default(),
             expr_count: 0,
-            term: Term::default(),
-            world: world.world_ref(),
+            term: Term::new_world_only(world.world()),
+            world: world.world(),
             next_term_index: 0,
             _phantom: std::marker::PhantomData,
         };
@@ -118,12 +120,16 @@ where
     ///
     /// * C++ API: `filter_builder::filter_builder`
     #[doc(alias = "filter_builder::filter_builder")]
-    pub fn new_from_desc(world: &'a World, desc: &mut ecs_filter_desc_t, term_index: i32) -> Self {
+    pub fn new_from_desc(
+        world: impl IntoWorld<'a>,
+        desc: &mut ecs_filter_desc_t,
+        term_index: i32,
+    ) -> Self {
         Self {
             desc: *desc,
             expr_count: 0,
-            term: Term::default(),
-            world: world.world_ref(),
+            term: Term::new_world_only(world.world()),
+            world: world.world(),
             next_term_index: term_index,
             _phantom: std::marker::PhantomData,
         }
@@ -196,7 +202,7 @@ where
 
     #[inline]
     fn build(&mut self) -> Self::BuiltType {
-        Filter::<T>::new_from_desc(self.world, &mut self.desc as *mut _)
+        Filter::<T>::new_from_desc(self.world, &mut self.desc)
     }
 }
 
@@ -390,7 +396,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     /// * C++ API: `filter_builder_i::without`
     #[doc(alias = "filter_builder_i::without")]
     fn without_pair<First: ComponentId, Second: ComponentId>(&mut self) -> &mut Self {
-        let world = self.get_world();
+        let world = self.world();
         self.term_with_id((First::get_id(world), Second::get_id(world)))
             .not()
     }
@@ -527,7 +533,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     fn term_with_id(&mut self, id: impl IntoEntityIdExt) -> &mut Self {
         self.term();
         unsafe {
-            *self.term_ptr_mut() = Term::new_id(None::<&World>, id).move_raw_term();
+            *self.term_ptr_mut() = Term::new_id(self.world(), id).move_raw_term();
         }
         self
     }
@@ -540,14 +546,14 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     #[doc(alias = "filter_builder_i::term")]
     fn term_with<T: InOutType>(&mut self) -> &mut Self {
         if <T::Type as IntoComponentId>::IS_PAIR {
-            self.term_with_id(<T::Type as IntoComponentId>::get_id(self.get_world()));
+            self.term_with_id(<T::Type as IntoComponentId>::get_id(self.world()));
         } else {
             self.term();
 
             unsafe {
                 *self.term_ptr_mut() = Term::new_id(
-                    None::<&World>,
-                    <T::Type as IntoComponentId>::get_id(self.get_world()),
+                    self.world(),
+                    <T::Type as IntoComponentId>::get_id(self.world()),
                 )
                 .move_raw_term();
                 (*self.term_ptr_mut()).inout = type_to_inout::<T>() as ecs_inout_kind_t;
@@ -565,7 +571,9 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     fn term_with_name(&mut self, name: &'static CStr) -> &mut Self {
         self.term();
         unsafe {
-            *self.term_ptr_mut() = Term::default().select_first_name(name).move_raw_term();
+            *self.term_ptr_mut() = Term::new_world_only(self.world())
+                .select_first_name(name)
+                .move_raw_term();
         }
         self
     }
@@ -579,7 +587,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     fn term_with_pair_names(&mut self, first: &'static CStr, second: &'static CStr) -> &mut Self {
         self.term();
         unsafe {
-            *self.term_ptr_mut() = Term::default()
+            *self.term_ptr_mut() = Term::new_world_only(self.world())
                 .select_first_name(first)
                 .select_second_name(second)
                 .move_raw_term();
@@ -600,7 +608,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     ) -> &mut Self {
         self.term();
         unsafe {
-            *self.term_ptr_mut() = Term::new_id(None::<&World>, first.get_id())
+            *self.term_ptr_mut() = Term::new_id(self.world(), first.get_id())
                 .select_second_name(second)
                 .move_raw_term();
         }
@@ -614,7 +622,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     /// * C++ API: `filter_builder_i::term`
     #[doc(alias = "filter_builder_i::term")]
     fn term_with_pair_first<First: ComponentId>(&mut self, second: impl IntoEntityId) -> &mut Self {
-        self.term_with_id((First::get_id(self.get_world()), second))
+        self.term_with_id((First::get_id(self.world()), second))
     }
 
     /// set term with Pair
@@ -624,7 +632,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     /// * C++ API: `filter_builder_i::term`
     #[doc(alias = "filter_builder_i::term")]
     fn term_with_pair_name<First: ComponentId>(&mut self, second: &'static CStr) -> &mut Self {
-        self.term_with_id(First::get_id(self.get_world()))
+        self.term_with_id(First::get_id(self.world()))
             .select_second_name(second)
     }
 
@@ -638,9 +646,9 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
         &mut self,
         value: T,
     ) -> &mut Self {
-        let enum_id = T::get_id(self.get_world());
+        let enum_id = T::get_id(self.world());
         // SAFETY: we know that the enum_value is a valid because of the T::get_id call
-        let enum_field_id = value.get_id_variant(self.get_world());
+        let enum_field_id = value.get_id_variant(self.world());
         self.term_with_id((enum_id, enum_field_id))
     }
 
@@ -669,7 +677,7 @@ pub enum FilterType<'a> {
 }
 
 impl<'a, T: Iterable> IntoWorld<'a> for FilterBuilder<'a, T> {
-    fn get_world(&self) -> Option<WorldRef<'a>> {
-        Some(self.world)
+    fn world(&self) -> WorldRef<'a> {
+        self.world
     }
 }

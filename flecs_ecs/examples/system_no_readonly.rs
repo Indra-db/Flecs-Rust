@@ -41,8 +41,7 @@ fn main() {
                 let plate = it.entity(i);
 
                 // Find an available waiter
-                let waiter = q_waiter.clone().first();
-                if waiter.is_valid() {
+                if let Some(waiter) = q_waiter.clone().first() {
                     // An available waiter was found, assign a plate to it so
                     // that the next plate will no longer find it.
                     // The defer_suspend function temporarily suspends deferring
@@ -64,8 +63,6 @@ fn main() {
                     plate.add_pair_first::<&Waiter>(waiter);
 
                     println!("Assigned {} to {}!", waiter.name(), plate.name());
-                } else {
-                    // No available waiters, can't assign the plate
                 }
             }
         });

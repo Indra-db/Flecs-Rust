@@ -5,9 +5,7 @@ use flecs_ecs_sys::{
     ecs_rule_get_filter, ecs_rule_init, ecs_rule_iter, ecs_rule_next, ecs_rule_str, ecs_rule_t,
 };
 
-use crate::core::{
-    Entity, FilterView, IntoWorld, IterAPI, IterOperations, Iterable, World, WorldRef,
-};
+use crate::core::{Entity, FilterView, IntoWorld, IterAPI, IterOperations, Iterable, WorldRef};
 
 pub struct Rule<'a, T>
 where
@@ -58,9 +56,9 @@ where
     ///
     /// * C++ API: `rule_base::rule`
     #[doc(alias = "rule_base::rule")]
-    pub fn new(world: &'a World, rule: *mut ecs_rule_t) -> Self {
+    pub fn new(world: impl IntoWorld<'a>, rule: *mut ecs_rule_t) -> Self {
         Self {
-            world: world.world_ref(),
+            world: world.world(),
             rule,
             _phantom: std::marker::PhantomData,
         }
@@ -79,7 +77,7 @@ where
     #[doc(alias = "rule_base::rule")]
     pub fn new_from_desc(world: impl IntoWorld<'a>, desc: &mut ecs_filter_desc_t) -> Self {
         let obj = Self {
-            world: world.world_ref(),
+            world: world.world(),
             rule: unsafe { ecs_rule_init(world.world_ptr_mut(), desc) },
             _phantom: std::marker::PhantomData,
         };
@@ -158,8 +156,8 @@ where
 }
 
 impl<'a, T: Iterable> IntoWorld<'a> for Rule<'a, T> {
-    fn get_world(&self) -> Option<WorldRef<'a>> {
-        Some(self.world)
+    fn world(&self) -> WorldRef<'a> {
+        self.world
     }
 }
 

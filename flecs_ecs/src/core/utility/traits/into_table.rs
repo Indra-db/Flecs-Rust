@@ -58,7 +58,7 @@ impl IntoTableRange for TableRange<'_> {
 impl IntoTableRange for Table<'_> {
     #[inline]
     fn table_range(&self) -> TableRange {
-        TableRange::new(self, 0, self.count())
+        TableRange::new(self.clone(), 0, self.count())
     }
 
     #[inline]

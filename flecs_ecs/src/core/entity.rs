@@ -13,13 +13,13 @@ use super::{
     ecs_pair, ecs_pair_first, ecs_pair_second, set_helper,
     world::World,
     CachedEnumData, EmptyComponent, EntityView, IntoComponentId, IntoEntityId, IntoEntityIdExt,
-    IntoWorld, NotEmptyComponent, ScopedWorld, ECS_DEPENDS_ON, ECS_EXCLUSIVE, ECS_IS_A,
-    ECS_OVERRIDE, ECS_SLOT_OF, ECS_WILDCARD,
+    IntoWorld, NotEmptyComponent, ECS_DEPENDS_ON, ECS_EXCLUSIVE, ECS_IS_A, ECS_OVERRIDE,
+    ECS_SLOT_OF, ECS_WILDCARD,
 };
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
 use crate::{
-    core::ECS_CHILD_OF,
+    core::{flecs, ECS_CHILD_OF},
     ecs_assert,
     sys::{
         ecs_add_id, ecs_clear, ecs_delete, ecs_enable, ecs_enable_id, ecs_entity_desc_t,
@@ -29,7 +29,7 @@ use crate::{
     },
 };
 
-#[derive(Default, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct Entity<'a> {
     pub entity_view: EntityView<'a>,
 }
@@ -103,7 +103,7 @@ impl<'a> From<&mut Entity<'a>> for IdT {
 
 impl<'a> std::fmt::Display for Entity<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Some(name) = self.name_optional() {
+        if let Some(name) = self.get_name() {
             write!(f, "{}", name)
         } else {
             write!(f, "{}", self.raw_id)
@@ -115,11 +115,10 @@ impl<'a> std::fmt::Debug for Entity<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let name = self.name();
         let id = self.raw_id;
-        let archetype_str = if let Some(s) = self.archetype().to_string() {
-            s
-        } else {
-            "empty".to_string()
-        };
+        let archetype_str = self
+            .archetype()
+            .to_string()
+            .unwrap_or_else(|| "empty".to_string());
         write!(
             f,
             "Entity name: {} -- id: {} -- archetype: {}",
@@ -140,7 +139,7 @@ impl<'a> Entity<'a> {
     pub fn new(world: impl IntoWorld<'a>) -> Self {
         let id = unsafe { ecs_new_id(world.world_ptr_mut()) };
         Self {
-            entity_view: EntityView::new(Some(world), id),
+            entity_view: EntityView::new(world, id),
         }
     }
 
@@ -199,18 +198,6 @@ impl<'a> Entity<'a> {
         }
     }
 
-    // Explicit conversion from flecs::entity_t to Entity
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::entity`
-    #[doc(alias = "entity::entity")]
-    pub(crate) fn new_id_only(id: impl IntoEntityIdExt) -> Self {
-        Self {
-            entity_view: EntityView::new_id_only(id),
-        }
-    }
-
     /// Entity id 0.
     /// This function is useful when the API must provide an entity that
     /// belongs to a world, but the entity id is 0.
@@ -219,26 +206,8 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity::null`
     #[doc(alias = "entity::null")]
-    pub fn new_null_w_world(world: &'a World) -> Entity<'a> {
-        Entity::new_from_existing(Some(world), 0)
-    }
-
-    /// Entity id 0.
-    /// returns the default entity, which is 0 id and nullptr world
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::null`
-    #[doc(alias = "entity::null")]
-    pub const fn new_null() -> Entity<'static> {
-        Entity {
-            entity_view: EntityView {
-                id: super::Id {
-                    raw_id: 0,
-                    world: None,
-                },
-            },
-        }
+    pub fn new_null(world: &'a World) -> Entity<'a> {
+        Entity::new_from_existing(world, 0)
     }
 
     /// Add an id to an entity.
@@ -773,8 +742,7 @@ impl<'a> Entity<'a> {
     #[doc(alias = "entity_builder::slot")]
     pub fn slot_child(self) -> Self {
         ecs_assert!(
-            unsafe { ecs_get_target(self.world.world_ptr_mut(), self.raw_id, ECS_CHILD_OF, 0) }
-                != 0,
+            self.target::<flecs::ChildOf>(0) != 0,
             FlecsErrorCode::InvalidParameter,
             "add ChildOf pair before using slot()"
         );
@@ -1170,6 +1138,9 @@ impl<'a> Entity<'a> {
 
     /// Sets a pointer to a component of an entity with a given component ID and size.
     ///
+    /// # Safety
+    /// Caller must ensure that `ptr` points to data that can be accessed as the type associated with `id`
+    ///
     /// # Arguments
     ///
     /// * `self` - A mutable reference to the entity.
@@ -1181,21 +1152,27 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::set_ptr`
     #[doc(alias = "entity_builder::set_ptr")]
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn set_ptr_w_size(self, id: impl IntoEntityId, size: usize, ptr: *const c_void) -> Self {
-        unsafe {
-            ecs_set_id(
-                self.world.world_ptr_mut(),
-                self.raw_id,
-                id.get_id(),
-                size,
-                ptr,
-            )
-        };
+    pub unsafe fn set_ptr_w_size(
+        self,
+        id: impl IntoEntityId,
+        size: usize,
+        ptr: *const c_void,
+    ) -> Self {
+        ecs_set_id(
+            self.world.world_ptr_mut(),
+            self.raw_id,
+            id.get_id(),
+            size,
+            ptr,
+        );
+
         self
     }
 
     /// Sets a pointer to a component of an entity with a given component ID.
+    ///
+    /// # Safety
+    /// Caller must ensure that `ptr` points to data that can be accessed as the type associated with `id`
     ///
     /// # Arguments
     ///
@@ -1207,7 +1184,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::set_ptr`
     #[doc(alias = "entity_builder::set_ptr")]
-    pub fn set_ptr(self, id: impl IntoEntityId, ptr: *const c_void) -> Self {
+    pub unsafe fn set_ptr(self, id: impl IntoEntityId, ptr: *const c_void) -> Self {
         let id = id.get_id();
         let cptr: *const EcsComponent =
             unsafe { ecs_get_id(self.world.world_ptr_mut(), id, FLECS_IDEcsComponentID_) }
@@ -1531,18 +1508,14 @@ impl<'a> Entity<'a> {
         self
     }
 
-    /// Return world scoped to entity
-    ///
-    /// # Returns
-    ///
-    /// A world scoped to the entity.
+    /// Calls the provided function with a world scoped to entity
     ///
     /// # See also
     ///
     /// * C++ API: `entity_builder::get_world`
     #[doc(alias = "entity_builder::get_world")]
-    pub fn scope(&self) -> ScopedWorld {
-        ScopedWorld::new(self.world, self.raw_id)
+    pub fn scope(&self, f: &mut impl FnMut(&World)) {
+        self.world.scope_id(self.id, f);
     }
 
     /// Gets mut component.
@@ -1565,7 +1538,7 @@ impl<'a> Entity<'a> {
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
     #[allow(clippy::mut_from_ref)]
-    pub fn get_mut<T: ComponentId>(self) -> &'static mut T::UnderlyingType {
+    pub fn get_mut<T: ComponentId>(self) -> &'a mut T::UnderlyingType {
         // This branch will be removed in release mode since this can be determined at compile time.
         if !T::IS_ENUM {
             let component_id = T::get_id(self.world);
@@ -1611,9 +1584,9 @@ impl<'a> Entity<'a> {
         }
     }
 
-    pub fn get_callback_mut<T: ComponentId + 'static>(
+    pub fn get_callback_mut<T: ComponentId>(
         self,
-        callback: impl FnOnce(&'static mut T::UnderlyingType),
+        callback: impl FnOnce(&mut T::UnderlyingType),
     ) -> bool {
         if self.has::<T>() {
             let comp = self.get_mut::<T>();
@@ -1711,7 +1684,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_first_id_mut<First>(self, second: impl IntoEntityId) -> &'static mut First
+    pub fn get_pair_first_id_mut<First>(self, second: impl IntoEntityId) -> &'a mut First
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1747,7 +1720,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_first_mut<First, Second>(&mut self) -> &'static mut First
+    pub fn get_pair_first_mut<First, Second>(&mut self) -> &'a mut First
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId + ComponentType<Struct>,
@@ -1770,7 +1743,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_second_id_mut<Second>(self, first: impl IntoEntityId) -> &'static mut Second
+    pub fn get_pair_second_id_mut<Second>(self, first: impl IntoEntityId) -> &'a mut Second
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1806,7 +1779,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_second_mut<First, Second>(&mut self) -> &'static mut Second
+    pub fn get_pair_second_mut<First, Second>(&mut self) -> &'a mut Second
     where
         First: ComponentId + ComponentType<Struct> + EmptyComponent,
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
@@ -1887,7 +1860,7 @@ impl<'a> Entity<'a> {
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
     pub fn get_ref<T: ComponentId>(&self) -> Ref<'a, T::UnderlyingType> {
-        Ref::<T::UnderlyingType>::new(Some(self.world), self.raw_id, T::get_id(self.world))
+        Ref::<T::UnderlyingType>::new(self.world, self.raw_id, T::get_id(self.world))
     }
 
     /// Get a reference to the first component of pair
@@ -1916,7 +1889,7 @@ impl<'a> Entity<'a> {
         second: impl IntoEntityId,
     ) -> Ref<'a, First> {
         Ref::<First>::new(
-            Some(self.world),
+            self.world,
             self.raw_id,
             ecs_pair(First::get_id(self.world), second.get_id()),
         )
@@ -1948,7 +1921,7 @@ impl<'a> Entity<'a> {
         first: impl IntoEntityId,
     ) -> Ref<Second> {
         Ref::<Second>::new(
-            Some(self.world),
+            self.world,
             self.raw_id,
             ecs_pair(first.get_id(), Second::get_id(self.world)),
         )
@@ -2031,7 +2004,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity::view`
     #[doc(alias = "entity::view")]
-    pub fn as_view(&self) -> EntityView {
+    pub fn as_view(&self) -> EntityView<'a> {
         self.entity_view
     }
 }

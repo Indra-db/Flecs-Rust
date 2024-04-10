@@ -7,7 +7,7 @@ use crate::sys::{self, ecs_filter_desc_t, ecs_inout_kind_t, ecs_oper_kind_t};
 use super::{
     c_types::{IterT, OperKind, TermT},
     component_registration::ComponentId,
-    ecs_field, FilterBuilderImpl, FromWorldPtr, InOutKind, WorldRef, WorldT,
+    ecs_field, FilterBuilderImpl, InOutKind, WorldRef, WorldT,
 };
 
 pub trait Filterable<'a>: Sized + FilterBuilderImpl<'a> {
@@ -405,7 +405,7 @@ where
     type TupleSliceType<'w> = A::SliceType<'w>;
 
     fn populate<'a>(filter: &mut impl Filterable<'a>) {
-        filter.term_with_id(A::OnlyType::get_id(filter.get_world()));
+        filter.term_with_id(A::OnlyType::get_id(filter.world()));
         let term = filter.current_term();
         A::populate_term(term);
 
@@ -417,7 +417,7 @@ where
         terms: &mut [sys::ecs_term_t],
         index: &mut usize,
     ) {
-        let world = unsafe { Option::<WorldRef>::from_ptr(world) };
+        let world = unsafe { WorldRef::from_ptr(world) };
         terms[*index].id = A::OnlyType::get_id(world);
         A::populate_term(&mut terms[*index]);
         *index += 1;
@@ -621,7 +621,7 @@ macro_rules! impl_iterable {
 
 
             fn populate<'a>(filter: &mut impl Filterable<'a>) {
-                let _world = filter.get_world();
+                let _world = filter.world();
                 $(
                     filter.term_with_id($t::OnlyType::get_id(_world));
                     let term = filter.current_term();

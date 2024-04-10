@@ -59,7 +59,7 @@ where
     /// * C++ API: `pipeline::pipeline`
     #[doc(alias = "pipeline::pipeline")]
     pub fn new(world: impl IntoWorld<'a>, desc: ecs_pipeline_desc_t) -> Self {
-        let entity = Entity::new(world.world_ref());
+        let entity = Entity::new(world.world());
         let mut pipeline = Self {
             entity,
             phantom: Default::default(),

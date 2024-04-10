@@ -1,7 +1,7 @@
 //! Class for working with entity, component, tag and pair ids.
 
 use super::{
-    c_types::{IdT, RUST_ecs_id_FLAGS_MASK, WorldT, RUST_ECS_COMPONENT_MASK},
+    c_types::{IdT, RUST_ecs_id_FLAGS_MASK, RUST_ECS_COMPONENT_MASK},
     ecs_pair_first,
     entity::Entity,
     IntoEntityId, IntoEntityIdExt, IntoWorld, WorldRef,
@@ -11,10 +11,7 @@ use crate::core::FlecsErrorCode;
 use crate::{
     core::ecs_pair_second,
     ecs_assert,
-    sys::{
-        ecs_get_alive, ecs_get_typeid, ecs_id_flag_str, ecs_id_is_pair, ecs_id_is_wildcard,
-        ecs_id_str,
-    },
+    sys::{ecs_get_typeid, ecs_id_flag_str, ecs_id_is_pair, ecs_id_is_wildcard, ecs_id_str},
 };
 
 /// Class for working with entity, component, tag and pair ids.
@@ -30,10 +27,9 @@ use crate::{
 ///
 /// * [flecs C++ documentation](https://www.flecs.dev/flecs/structflecs_1_1id.html#details)
 /// * [flecs C documentation](https://www.flecs.dev/flecs/group__ids.html)
-#[derive(Default, Debug, Clone, Copy, Eq)]
+#[derive(Debug, Clone, Copy, Eq)]
 pub struct Id<'a> {
-    /// World is optional, but guarantees that entity identifiers extracted from the id are valid
-    pub(crate) world: Option<WorldRef<'a>>,
+    pub(crate) world: WorldRef<'a>,
     pub raw_id: IdT,
 }
 
@@ -79,48 +75,8 @@ impl<'a> Id<'a> {
     /// * C API: `ecs_id_t`
     #[doc(alias = "ecs_id_t")]
     pub fn new(world: impl IntoWorld<'a>, id: impl IntoEntityIdExt) -> Self {
-        if let Some(world) = world.get_world() {
-            Self::new_from_existing(world, id)
-        } else {
-            Self::new_id_only(id)
-        }
-    }
-
-    /// wraps a raw id
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - The optional raw world to the id belongs to
-    /// * `id` - The id to wrap
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `Id::Id`
-    #[doc(alias = "Id::Id")]
-    /// * C API: `ecs_id_t`
-    #[doc(alias = "ecs_id_t")]
-    pub fn new_from_existing(world: impl IntoWorld<'a>, id: impl IntoEntityIdExt) -> Self {
         Self {
-            world: world.get_world(),
-            raw_id: id.get_id(),
-        }
-    }
-
-    /// wraps a raw id without a world
-    ///
-    /// # Arguments
-    ///
-    /// * `id` - The id to wrap
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `Id::Id`
-    #[doc(alias = "Id::Id")]
-    /// * C API: `ecs_id_t`
-    #[doc(alias = "ecs_id_t")]
-    pub(crate) fn new_id_only(id: impl IntoEntityIdExt) -> Self {
-        Self {
-            world: None,
+            world: world.world(),
             raw_id: id.get_id(),
         }
     }
@@ -325,16 +281,11 @@ impl<'a> Id<'a> {
     /// * C++ API: `id::first`
     #[doc(alias = "id::first")]
     #[inline(always)]
-    pub fn first(self) -> Entity<'a> {
+    pub fn first(&self) -> Entity {
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
 
         let entity = ecs_pair_first(self.raw_id);
-        match self.world {
-            Some(world) => Entity::new_from_existing(world, unsafe {
-                ecs_get_alive(self.world.world_ptr_mut(), entity)
-            }),
-            None => Entity::new_id_only(entity),
-        }
+        self.world.get_alive(entity)
     }
 
     /// Get second element from a pair.
@@ -346,16 +297,11 @@ impl<'a> Id<'a> {
     ///
     /// * C++ API: `id::second`
     #[doc(alias = "id::second")]
-    pub fn second(&self) -> Entity<'a> {
+    pub fn second(&self) -> Entity {
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
 
         let entity = ecs_pair_second(self.raw_id);
-        match self.world {
-            Some(world) => Entity::new_from_existing(world, unsafe {
-                ecs_get_alive(self.world.world_ptr_mut(), entity)
-            }),
-            None => Entity::new_id_only(entity),
-        }
+        self.world.get_alive(entity)
     }
 
     /// Convert id to string
@@ -457,15 +403,5 @@ impl<'a> Id<'a> {
 
         // SAFETY: We assume the C string is valid UTF-8. This is risky if not certain.
         unsafe { std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(c_str_ptr).to_bytes()) }
-    }
-
-    pub fn world(&self) -> &WorldRef<'a> {
-        self.world
-            .as_ref()
-            .expect("Called Id::world() on an Id with world: None")
-    }
-
-    pub(crate) fn world_ptr(self) -> *mut WorldT {
-        self.world.world_ptr_mut()
     }
 }

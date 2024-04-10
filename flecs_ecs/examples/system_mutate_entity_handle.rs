@@ -45,7 +45,8 @@ fn main() {
                 //   t.to_delete.mut(it.entity(index)).destruct();
                 //
                 // A shortcut is to use the iterator directly:
-                let to_delete = it.world().get_alive(timeout.to_delete);
+                let world = it.world();
+                let to_delete = world.get_alive(timeout.to_delete);
                 println!("Expire: {} deleted!", to_delete.name());
                 to_delete.destruct();
             }
@@ -55,7 +56,8 @@ fn main() {
     world
         .system_builder::<&Timeout>()
         .on_each_entity(|e, timeout| {
-            let to_delete = e.world().get_alive(timeout.to_delete);
+            let world = e.world();
+            let to_delete = world.get_alive(timeout.to_delete);
             println!(
                 "PrintExpire: {} has {:.2} seconds left",
                 to_delete.name(),

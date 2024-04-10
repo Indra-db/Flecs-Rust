@@ -47,7 +47,7 @@ where
 {
     pub fn new(world: impl IntoWorld<'a>) -> Self {
         Self {
-            world: world.world_ref(),
+            world: world.world(),
             desc: ecs_opaque_desc_t {
                 entity: T::get_id(world),
                 type_: Default::default(),

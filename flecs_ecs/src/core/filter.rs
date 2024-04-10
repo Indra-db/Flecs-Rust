@@ -1,5 +1,7 @@
 //! Filters are cheaper to create, but slower to iterate than queries.
 
+use std::ptr::NonNull;
+
 use crate::sys::{
     ecs_abort_, ecs_filter_copy, ecs_filter_desc_t, ecs_filter_fini, ecs_filter_init,
     ecs_filter_iter, ecs_filter_move, ecs_filter_next, ecs_get_entity, ecs_os_api,
@@ -49,7 +51,7 @@ where
     #[doc(alias = "filter_view::filter_view")]
     pub fn new(world: impl IntoWorld<'a>, filter: *const FilterT) -> Self {
         Self {
-            world: world.world_ref(),
+            world: world.world(),
             _phantom: std::marker::PhantomData,
             filter_ptr: filter as *const FilterT,
         }
@@ -87,13 +89,16 @@ where
         desc.storage = &mut filter;
         unsafe { ecs_filter_init(world.world_ptr_mut(), &desc) };
         Filter {
-            world: world.world_ref(),
+            world: world.world(),
             _phantom: std::marker::PhantomData,
             filter,
         }
     }
 
     /// Wrap an existing raw filter
+    ///
+    /// # Safety
+    /// Caller must ensure the validity of `filter`
     ///
     /// # Arguments
     ///
@@ -104,15 +109,14 @@ where
     ///
     /// * C++ API: `filter::filter`
     #[doc(alias = "filter::filter")]
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new_ownership(world: impl IntoWorld<'a>, filter: *mut FilterT) -> Self {
+    pub unsafe fn new_ownership(world: impl IntoWorld<'a>, filter: NonNull<FilterT>) -> Self {
         let mut filter_obj = Filter {
-            world: world.world_ref(),
+            world: world.world(),
             _phantom: std::marker::PhantomData,
             filter: Default::default(),
         };
 
-        unsafe { ecs_filter_move(&mut filter_obj.filter, filter) };
+        unsafe { ecs_filter_move(&mut filter_obj.filter, filter.as_ptr()) };
 
         filter_obj
     }
@@ -130,17 +134,14 @@ where
     ///
     /// * C++ API: `filter::filter`
     #[doc(alias = "filter::filter")]
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new_from_desc(world: impl IntoWorld<'a>, desc: *mut ecs_filter_desc_t) -> Self {
+    pub fn new_from_desc(world: impl IntoWorld<'a>, desc: &mut ecs_filter_desc_t) -> Self {
         let mut filter_obj = Filter {
-            world: world.world_ref(),
+            world: world.world(),
             _phantom: std::marker::PhantomData,
             filter: Default::default(),
         };
 
-        unsafe {
-            (*desc).storage = &mut filter_obj.filter;
-        }
+        desc.storage = &mut filter_obj.filter;
 
         unsafe {
             if ecs_filter_init(filter_obj.world.world_ptr_mut(), desc).is_null() {
@@ -156,9 +157,9 @@ where
                 }
             }
 
-            if !(*desc).terms_buffer.is_null() {
+            if !desc.terms_buffer.is_null() {
                 if let Some(free_func) = ecs_os_api.free_ {
-                    free_func((*desc).terms_buffer as *mut _);
+                    free_func(desc.terms_buffer as *mut _);
                 }
             }
         }
@@ -201,8 +202,8 @@ impl<'a, T> IntoWorld<'a> for Filter<'a, T>
 where
     T: Iterable,
 {
-    fn get_world(&self) -> Option<WorldRef<'a>> {
-        Some(self.world)
+    fn world(&self) -> WorldRef<'a> {
+        self.world
     }
 }
 
@@ -231,8 +232,8 @@ impl<'a, T> IntoWorld<'a> for FilterView<'a, T>
 where
     T: Iterable,
 {
-    fn get_world(&self) -> Option<WorldRef<'a>> {
-        Some(self.world)
+    fn world(&self) -> WorldRef<'a> {
+        self.world
     }
 }
 

@@ -17,7 +17,6 @@ use super::{
     observer::Observer,
     private::internal_ReactorAPI,
     term::TermBuilder,
-    world::World,
     Builder, IntoEntityId, IntoWorld, ReactorAPI, Term, WorldRef,
 };
 
@@ -58,7 +57,7 @@ where
     ///
     /// * C++ API: `observer_builder::observer_builder`
     #[doc(alias = "observer_builder::observer_builder")]
-    pub fn new(world: &'a World) -> Self {
+    pub fn new(world: impl IntoWorld<'a>) -> Self {
         let mut desc = Default::default();
         let mut obj = Self {
             desc,
@@ -90,7 +89,7 @@ where
     ///
     /// * C++ API: `node_builder::node_builder`
     #[doc(alias = "node_builder::node_builder")]
-    pub fn new_named(world: &'a World, name: &CStr) -> Self {
+    pub fn new_named(world: impl IntoWorld<'a>, name: &CStr) -> Self {
         let mut desc = Default::default();
         let mut obj = Self {
             desc,
@@ -121,7 +120,7 @@ where
     ///
     /// * C++ API: `observer_builder::observer_builder`
     #[doc(alias = "observer_builder::observer_builder")]
-    pub fn new_from_desc(world: &'a World, mut desc: ecs_observer_desc_t) -> Self {
+    pub fn new_from_desc(world: impl IntoWorld<'a>, mut desc: ecs_observer_desc_t) -> Self {
         let mut obj = Self {
             desc,
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
@@ -271,8 +270,8 @@ where
 }
 
 impl<'a, T: Iterable> IntoWorld<'a> for ObserverBuilder<'a, T> {
-    fn get_world(&self) -> Option<WorldRef<'a>> {
-        self.filter_builder.get_world()
+    fn world(&self) -> WorldRef<'a> {
+        self.filter_builder.world()
     }
 }
 

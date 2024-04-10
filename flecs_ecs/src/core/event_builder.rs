@@ -9,13 +9,12 @@ use super::{
     c_types::{IdT, TypeT},
     component_registration::ComponentId,
     event::EventBuilderImpl,
-    world::World,
-    IntoEntityId,
+    IntoEntityId, IntoWorld, WorldRef,
 };
 
 pub struct EventBuilder<'a> {
     /// non-owning world reference
-    pub world: &'a World,
+    pub world: WorldRef<'a>,
     pub(crate) desc: ecs_event_desc_t,
     pub(crate) ids: TypeT,
     pub(crate) ids_array: [IdT; FLECS_EVENT_DESC_MAX as usize],
@@ -23,6 +22,10 @@ pub struct EventBuilder<'a> {
 
 impl<'a> EventBuilder<'a> {
     /// Create a new (untyped) `EventBuilder`
+    ///
+    /// # Safety
+    /// Caller must ensure either that `event` represents a ZST
+    /// or the event data is set to point to the appropriate type
     ///
     /// # Arguments
     ///
@@ -33,9 +36,9 @@ impl<'a> EventBuilder<'a> {
     ///
     /// * C++ API: `event_builder_base::event_builder_base`
     #[doc(alias = "event_builder_base::event_builder_base")]
-    pub fn new(world: &'a World, event: impl IntoEntityId) -> Self {
+    pub unsafe fn new(world: impl IntoWorld<'a>, event: impl IntoEntityId) -> Self {
         let mut obj = Self {
-            world,
+            world: world.world(),
             desc: Default::default(),
             ids: Default::default(),
             ids_array: Default::default(),
@@ -47,7 +50,6 @@ impl<'a> EventBuilder<'a> {
 
 impl<'a> EventBuilderImpl<'a> for EventBuilder<'a> {
     type BuiltType = *mut c_void;
-    type ConstBuiltType = *const c_void;
 
     fn get_data(&mut self) -> &mut EventBuilder<'a> {
         self
@@ -65,21 +67,6 @@ impl<'a> EventBuilderImpl<'a> for EventBuilder<'a> {
     #[doc(alias = "event_builder_base::ctx")]
     fn set_event_data(&mut self, data: Self::BuiltType) -> &mut Self {
         self.desc.param = data as *mut c_void;
-        self
-    }
-
-    /// Set the const event data for the event
-    ///
-    /// # Arguments
-    ///
-    /// * `data` - The data to set for the event which is type-erased of type `*const c_void`
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `event_builder_base::ctx`
-    #[doc(alias = "event_builder_base::ctx")]
-    fn set_event_data_const(&mut self, data: Self::ConstBuiltType) -> &mut Self {
-        self.desc.const_param = data as *const c_void;
         self
     }
 }
@@ -110,9 +97,9 @@ impl<'a, T: ComponentId> EventBuilderTyped<'a, T> {
     ///
     /// * C++ API: `event_builder_typed::event_builder_typed`
     #[doc(alias = "event_builder_typed::event_builder_typed")]
-    pub fn new(world: &'a World, event: impl IntoEntityId) -> Self {
+    pub fn new(world: impl IntoWorld<'a>) -> Self {
         Self {
-            builder: EventBuilder::new(world, event),
+            builder: unsafe { EventBuilder::new(world.world(), T::get_id(world)) },
             _phantom: std::marker::PhantomData,
         }
     }
@@ -140,8 +127,7 @@ impl<'a, T: ComponentId> EventBuilderImpl<'a> for EventBuilderTyped<'a, T>
 where
     T: ComponentId,
 {
-    type BuiltType = &'a mut T;
-    type ConstBuiltType = &'a T;
+    type BuiltType = &'a T;
 
     fn get_data(&mut self) -> &mut EventBuilder<'a> {
         &mut self.builder
@@ -157,12 +143,7 @@ where
     /// * C++ API: `event_builder_typed::ctx`
     #[doc(alias = "event_builder_typed::ctx")]
     fn set_event_data(&mut self, data: Self::BuiltType) -> &mut Self {
-        self.desc.param = data as *mut T as *mut c_void;
-        self
-    }
-
-    fn set_event_data_const(&mut self, data: Self::ConstBuiltType) -> &mut Self {
-        self.desc.const_param = data as *const T as *const c_void;
+        self.desc.param = data as *const T as *mut c_void;
         self
     }
 }

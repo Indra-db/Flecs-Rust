@@ -209,7 +209,7 @@ where
 }
 
 impl<'a, T: Iterable> IntoWorld<'a> for PipelineBuilder<'a, T> {
-    fn get_world(&self) -> Option<WorldRef<'a>> {
-        self.filter_builder.get_world()
+    fn world(&self) -> WorldRef<'a> {
+        self.filter_builder.world()
     }
 }

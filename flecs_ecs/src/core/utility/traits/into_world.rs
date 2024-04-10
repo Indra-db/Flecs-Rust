@@ -1,62 +1,41 @@
-use std::{marker::PhantomData, ops::Deref, ptr::NonNull};
+use std::{ffi::c_void, marker::PhantomData, ops::Deref, ptr::NonNull};
+
+use flecs_ecs_sys::ecs_get_world;
 
 use crate::core::{Entity, EntityView, Id, Iterable, Query, World, WorldT};
 
 pub trait IntoWorld<'a> {
     #[doc(hidden)]
     fn world_ptr_mut(&self) -> *mut WorldT {
-        match self.get_world() {
-            Some(world) => world.raw_world.as_ptr(),
-            None => std::ptr::null_mut(),
-        }
+        self.world().raw_world.as_ptr()
     }
     #[inline]
     #[doc(hidden)]
     fn world_ptr(&self) -> *const WorldT {
-        match self.get_world() {
-            Some(world) => world.raw_world.as_ptr(),
-            None => std::ptr::null(),
-        }
+        self.world().raw_world.as_ptr()
     }
-    #[inline]
-    fn world_ref(&self) -> WorldRef<'a> {
-        self.get_world()
-            .expect("Tried to access world when it was None")
-    }
-    fn get_world(&self) -> Option<WorldRef<'a>>;
+
+    fn world(&self) -> WorldRef<'a>;
 }
 
 impl<'a> IntoWorld<'a> for Id<'a> {
     #[inline]
-    fn get_world(&self) -> Option<WorldRef<'a>> {
+    fn world(&self) -> WorldRef<'a> {
         self.world
     }
 }
 
 impl<'a> IntoWorld<'a> for Entity<'a> {
     #[inline]
-    fn get_world(&self) -> Option<WorldRef<'a>> {
+    fn world(&self) -> WorldRef<'a> {
         self.world
     }
 }
 
 impl<'a> IntoWorld<'a> for EntityView<'a> {
     #[inline]
-    fn get_world(&self) -> Option<WorldRef<'a>> {
+    fn world(&self) -> WorldRef<'a> {
         self.world
-    }
-}
-
-impl<'a, T> IntoWorld<'a> for Option<T>
-where
-    T: IntoWorld<'a>,
-{
-    #[inline]
-    fn get_world(&self) -> Option<WorldRef<'a>> {
-        match self {
-            Some(s) => s.get_world(),
-            None => None,
-        }
     }
 }
 
@@ -65,15 +44,15 @@ where
     T: Iterable,
 {
     #[inline]
-    fn get_world(&self) -> Option<WorldRef<'a>> {
-        Some(self.world)
+    fn world(&self) -> WorldRef<'a> {
+        self.world
     }
 }
 
 impl<'a> IntoWorld<'a> for &'a World {
     #[inline]
-    fn get_world(&self) -> Option<WorldRef<'a>> {
-        Some((*self).into())
+    fn world(&self) -> WorldRef<'a> {
+        (*self).into()
     }
 }
 
@@ -83,12 +62,43 @@ pub struct WorldRef<'a> {
     _marker: PhantomData<&'a ()>,
 }
 
+impl<'a> WorldRef<'a> {
+    pub fn real_world(&self) -> WorldRef<'a> {
+        unsafe {
+            WorldRef::from_ptr(ecs_get_world(self.world_ptr_mut() as *const c_void) as *mut WorldT)
+        }
+    }
+
+    /// # Safety
+    /// Caller must ensure `raw_world` points to a valid `WorldT`
+    pub unsafe fn from_ptr(raw_world: *mut WorldT) -> Self {
+        WorldRef {
+            raw_world: NonNull::new_unchecked(raw_world),
+            _marker: PhantomData,
+        }
+    }
+}
+
 impl<'a> From<&'a World> for WorldRef<'a> {
     fn from(world: &'a World) -> Self {
         WorldRef {
             raw_world: world.raw_world,
             _marker: PhantomData,
         }
+    }
+}
+
+impl<'a> From<&'a *mut WorldT> for &WorldRef<'a> {
+    fn from(value: &'a *mut WorldT) -> Self {
+        debug_assert_eq!(
+            std::mem::size_of::<&*mut WorldT>(),
+            std::mem::size_of::<&WorldRef>()
+        );
+        let before = *value;
+        let result = unsafe { std::mem::transmute::<&'a *mut WorldT, &WorldRef>(value) };
+        let after = result.raw_world.as_ptr();
+        debug_assert_eq!(before, after);
+        result
     }
 }
 
@@ -108,38 +118,14 @@ impl<'a> Deref for WorldRef<'a> {
     }
 }
 
-pub trait FromWorldPtr<'a> {
-    /// # Safety
-    /// - `raw_world` must be point to a valid world or be null
-    unsafe fn from_ptr(raw_world: *mut WorldT) -> Self;
-}
-
-impl<'a> FromWorldPtr<'a> for Option<WorldRef<'a>> {
-    unsafe fn from_ptr(raw_world: *mut WorldT) -> Self {
-        NonNull::new(raw_world).map(|raw_world| WorldRef {
-            raw_world,
-            _marker: PhantomData,
-        })
-    }
-}
-
-impl<'a> FromWorldPtr<'a> for WorldRef<'a> {
-    unsafe fn from_ptr(raw_world: *mut WorldT) -> Self {
-        WorldRef {
-            raw_world: NonNull::new_unchecked(raw_world),
-            _marker: PhantomData,
-        }
-    }
-}
-
 impl<'a> IntoWorld<'a> for WorldRef<'a> {
-    fn get_world(&self) -> Option<WorldRef<'a>> {
-        Some(*self)
+    fn world(&self) -> WorldRef<'a> {
+        *self
     }
 }
 
 impl<'a> IntoWorld<'a> for &WorldRef<'a> {
-    fn get_world(&self) -> Option<WorldRef<'a>> {
-        Some(**self)
+    fn world(&self) -> WorldRef<'a> {
+        **self
     }
 }

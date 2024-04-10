@@ -390,11 +390,13 @@ fn entity_set_generic() {
 
     let pos = Position { x: 10, y: 20 };
 
-    let entity = world.new_entity().set_ptr_w_size(
-        &position,
-        std::mem::size_of::<Position>(),
-        &pos as *const _ as *const c_void,
-    );
+    let entity = unsafe {
+        world.new_entity().set_ptr_w_size(
+            &position,
+            std::mem::size_of::<Position>(),
+            &pos as *const _ as *const c_void,
+        )
+    };
 
     assert!(entity.has::<Position>());
     assert!(entity.has_id(position));
@@ -411,9 +413,11 @@ fn entity_set_generic_no_size() {
 
     let pos = Position { x: 10, y: 20 };
 
-    let entity = world
-        .new_entity()
-        .set_ptr(&position, &pos as *const _ as *const c_void);
+    let entity = unsafe {
+        world
+            .new_entity()
+            .set_ptr(&position, &pos as *const _ as *const c_void)
+    };
 
     assert!(entity.has::<Position>());
     assert!(entity.has_id(position));
@@ -464,7 +468,7 @@ fn entity_pair_role() {
     let entity = world.new_entity();
     let entity2 = world.new_entity();
 
-    let pair: Id = Id::new(None::<&World>, (entity, entity2));
+    let pair: Id = Id::new(&world, (entity, entity2));
     let pair = pair.add_flags(flecs::Pair::ID);
 
     assert!(pair.has_flags_for(flecs::Pair::ID));
@@ -636,7 +640,7 @@ fn entity_none_string() {
 
     let entity = world.new_entity();
 
-    assert_eq!(entity.name_optional(), None);
+    assert_eq!(entity.get_name(), None);
 }
 
 #[test]
@@ -658,7 +662,7 @@ fn entity_set_name_optional() {
 
     entity.set_name(c"Foo");
 
-    assert_eq!(entity.name_optional(), Some("Foo"));
+    assert_eq!(entity.get_name(), Some("Foo"));
 }
 
 #[test]
@@ -776,7 +780,7 @@ fn entity_get_null_name() {
     let world = World::new();
 
     let entity = world.new_entity();
-    let name = entity.name_optional();
+    let name = entity.get_name();
     assert_eq!(name, None);
 }
 
@@ -956,19 +960,23 @@ fn entity_get_type() {
     let entity = world.new_entity();
     assert!(entity.is_valid());
 
-    let type_1 = entity.archetype();
-    assert_eq!(type_1.count(), 0);
+    {
+        let type_1 = entity.archetype();
+        assert_eq!(type_1.count(), 0);
+    }
 
     entity.add::<Position>();
 
-    let type_2 = entity.archetype();
-    assert_eq!(type_2.count(), 1);
-    assert_eq!(type_2.get(0).unwrap(), world.get_id::<Position>());
+    {
+        let type_2 = entity.archetype();
+        assert_eq!(type_2.count(), 1);
+        assert_eq!(type_2[0], world.get_id::<Position>().raw_id);
+    }
 
     entity.add::<Velocity>();
     let type_3 = entity.archetype();
     assert_eq!(type_3.count(), 2);
-    assert_eq!(type_3.get(1).unwrap(), world.get_id::<Velocity>());
+    assert_eq!(type_3[1], world.get_id::<Velocity>().raw_id);
 }
 
 #[test]
@@ -1276,9 +1284,9 @@ fn entity_name() {
     let entity = world.new_entity_named(c"Foo");
 
     assert_eq!(entity.name(), "Foo");
-    assert_eq!(entity.name_optional(), Some("Foo"));
+    assert_eq!(entity.get_name(), Some("Foo"));
     assert_eq!(entity.name_cstr(), c"Foo");
-    assert_eq!(entity.name_cstr_optional(), Some(c"Foo"));
+    assert_eq!(entity.get_name_cstr(), Some(c"Foo"));
 }
 
 #[test]
@@ -1288,9 +1296,9 @@ fn entity_name_empty() {
     let entity = world.new_entity();
 
     assert_eq!(entity.name(), "");
-    assert_eq!(entity.name_optional(), None);
+    assert_eq!(entity.get_name(), None);
     assert_eq!(entity.name_cstr(), c"");
-    assert_eq!(entity.name_cstr_optional(), None);
+    assert_eq!(entity.get_name_cstr(), None);
 }
 
 #[test]
@@ -1298,8 +1306,9 @@ fn entity_path() {
     let world = World::new();
 
     let parent = world.new_entity_named(c"parent");
-    let scoped = world.scope_id(parent);
-    let child = scoped.new_entity_named(c"child");
+    world.set_scope_with_id(parent.id);
+    let child = world.new_entity_named(c"child");
+
     assert_eq!(&child.path().unwrap(), "::parent::child");
 }
 
@@ -1308,10 +1317,10 @@ fn entity_path_from() {
     let world = World::new();
 
     let parent = world.new_entity_named(c"parent");
-    let scoped = world.scope_id(parent);
-    let child = scoped.new_entity_named(c"child");
-    let scoped = world.scope_id(child);
-    let grandchild = scoped.new_entity_named(c"grandchild");
+    world.set_scope_with_id(parent.id);
+    let child = world.new_entity_named(c"child");
+    world.set_scope_with_id(child.id);
+    let grandchild = world.new_entity_named(c"grandchild");
 
     assert_eq!(&grandchild.path().unwrap(), "::parent::child::grandchild");
     assert_eq!(
@@ -1324,11 +1333,11 @@ fn entity_path_from() {
 fn entity_path_from_type() {
     let world = World::new();
 
-    let parent = world.new_entity_named_type::<Parent>(c"parent");
-    let scoped = world.scope_id(parent);
-    let child = scoped.new_entity_named(c"child");
-    let scoped = world.scope_id(child);
-    let grandchild = scoped.new_entity_named(c"grandchild");
+    let parent = world.new_entity_named(c"parent");
+    world.set_scope_with_id(parent.id);
+    let child = world.new_entity_named(c"child");
+    world.set_scope_with_id(child.id);
+    let grandchild = world.new_entity_named(c"grandchild");
 
     assert_eq!(&grandchild.path().unwrap(), "::parent::child::grandchild");
     assert_eq!(
@@ -1342,8 +1351,8 @@ fn entity_path_custom_sep() {
     let world = World::new();
 
     let parent = world.new_entity_named(c"parent");
-    let scoped = world.scope_id(parent);
-    let child = scoped.new_entity_named(c"child");
+    world.set_scope_with_id(parent.id);
+    let child = world.new_entity_named(c"child");
 
     assert_eq!(&child.path_w_sep(c"_", c"?").unwrap(), "?parent_child");
 }
@@ -1353,10 +1362,10 @@ fn entity_path_from_custom_sep() {
     let world = World::new();
 
     let parent = world.new_entity_named(c"parent");
-    let scoped = world.scope_id(parent);
-    let child = scoped.new_entity_named(c"child");
-    let scoped = world.scope_id(child);
-    let grandchild = scoped.new_entity_named(c"grandchild");
+    world.set_scope_with_id(parent.id);
+    let child = world.new_entity_named(c"child");
+    world.set_scope_with_id(child.id);
+    let grandchild = world.new_entity_named(c"grandchild");
 
     assert_eq!(
         &grandchild.path_w_sep(c"_", c"?").unwrap(),
@@ -1373,10 +1382,10 @@ fn entity_path_from_type_custom_sep() {
     let world = World::new();
 
     let parent = world.new_entity_type::<Parent>();
-    let scoped = world.scope_id(parent);
-    let child = scoped.new_entity_named(c"child");
-    let scoped = world.scope_id(child);
-    let grandchild = scoped.new_entity_named(c"grandchild");
+    world.set_scope_with_id(parent.id);
+    let child = world.new_entity_named(c"child");
+    world.set_scope_with_id(child.id);
+    let grandchild = world.new_entity_named(c"grandchild");
 
     assert_eq!(
         &grandchild.path_w_sep(c"_", c"?").unwrap(),

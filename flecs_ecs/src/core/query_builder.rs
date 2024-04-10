@@ -274,7 +274,7 @@ pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
         T: ComponentId,
     {
         let cmp: ecs_order_by_action_t = Some(unsafe { std::mem::transmute(compare) });
-        self.order_by_id(T::get_id(self.get_world()), cmp);
+        self.order_by_id(T::get_id(self.world()), cmp);
         self
     }
 
@@ -317,7 +317,7 @@ pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
     where
         T: ComponentId,
     {
-        self.group_by_id_fn(T::get_id(self.get_world()), None)
+        self.group_by_id_fn(T::get_id(self.world()), None)
     }
 
     /// Group and sort matched tables.
@@ -351,7 +351,7 @@ pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
     where
         T: ComponentId,
     {
-        self.group_by_id_fn(T::get_id(self.get_world()), group_by_action);
+        self.group_by_id_fn(T::get_id(self.world()), group_by_action);
         self
     }
 
@@ -453,7 +453,7 @@ pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
     #[doc(alias = "query_builder_i::observable")]
     fn observable<T: Iterable>(&mut self, parent: &Query<T>) -> &mut Self {
         let desc = self.desc_query_mut();
-        desc.parent = parent.query;
+        desc.parent = parent.query.as_ptr();
         self
     }
 }
@@ -469,7 +469,7 @@ where
 }
 
 impl<'a, T: Iterable> IntoWorld<'a> for QueryBuilder<'a, T> {
-    fn get_world(&self) -> Option<WorldRef<'a>> {
-        self.filter_builder.get_world()
+    fn world(&self) -> WorldRef<'a> {
+        self.filter_builder.world()
     }
 }

@@ -109,7 +109,7 @@ fn main() {
         println!(
             "group: {:?} - Table [{}]",
             group.path().unwrap(),
-            iter.table().to_string().unwrap()
+            iter.table().unwrap().to_string().unwrap()
         );
     });
 
@@ -122,7 +122,7 @@ fn main() {
         println!(
             "group: {:?} - Table [{}]",
             group.path().unwrap(),
-            iter.table().to_string().unwrap()
+            iter.table().unwrap().to_string().unwrap()
         );
     });
 

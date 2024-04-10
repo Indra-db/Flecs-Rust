@@ -3,7 +3,7 @@ use common::*;
 
 fn iterate_components(entity: Entity) {
     // 1. The easiest way to print the components is to use archetype
-    println!("[{}]", entity.archetype());
+    println!("[{:?}]", entity.archetype());
     println!();
     // 2. To get individual component ids, use for_each
     let mut count_components = 0;

@@ -1,4 +1,4 @@
-use std::{ops::Deref, os::raw::c_void};
+use std::{ops::Deref, os::raw::c_void, ptr::NonNull};
 
 use crate::sys::{
     ecs_observer_desc_t, ecs_observer_get_ctx, ecs_observer_init, ecs_observer_t, ecs_os_api,
@@ -8,7 +8,6 @@ use super::{
     c_types::{Poly, ECS_OBSERVER},
     entity::Entity,
     filter::Filter,
-    world::World,
     IntoWorld, WorldRef,
 };
 
@@ -45,7 +44,7 @@ impl<'a> Observer<'a> {
         }
 
         let id = unsafe { ecs_observer_init(world.world_ptr_mut(), &desc) };
-        let entity = Entity::new_from_existing(world.world_ref(), id);
+        let entity = Entity::new_from_existing(world.world(), id);
 
         unsafe {
             if !desc.filter.terms_buffer.is_null() {
@@ -57,14 +56,14 @@ impl<'a> Observer<'a> {
 
         Self {
             entity,
-            world: world.world_ref(),
+            world: world.world(),
         }
     }
 
     /// Wrap an existing observer entity in an observer object
-    pub fn new_from_existing(world: &'a World, observer_entity: Entity<'a>) -> Self {
+    pub fn new_from_existing(world: impl IntoWorld<'a>, observer_entity: Entity<'a>) -> Self {
         Self {
-            world: world.world_ref(),
+            world: world.world(),
             entity: observer_entity,
         }
     }
@@ -106,6 +105,8 @@ impl<'a> Observer<'a> {
     pub fn query(&mut self) -> Filter<()> {
         let poly: *const Poly = self.target_for_pair_first::<Poly>(ECS_OBSERVER);
         let obj: *mut ecs_observer_t = unsafe { (*poly).poly as *mut ecs_observer_t };
-        Filter::<()>::new_ownership(self.world, unsafe { &mut (*obj).filter })
+        unsafe {
+            Filter::<()>::new_ownership(self.world, NonNull::new_unchecked(&mut (*obj).filter))
+        }
     }
 }

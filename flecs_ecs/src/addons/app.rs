@@ -29,7 +29,7 @@ impl App {
     #[doc(alias = "app_builder::app_builder")]
     pub fn new(world: World) -> Self {
         let mut obj = Self {
-            world: world,
+            world,
             desc: ecs_app_desc_t::default(),
         };
 

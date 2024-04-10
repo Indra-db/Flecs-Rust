@@ -410,8 +410,8 @@ where
 }
 
 impl<'a, T: Iterable> IntoWorld<'a> for SystemBuilder<'a, T> {
-    fn get_world(&self) -> Option<WorldRef<'a>> {
-        self.query_builder.get_world()
+    fn world(&self) -> WorldRef<'a> {
+        self.query_builder.world()
     }
 }
 

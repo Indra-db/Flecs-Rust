@@ -33,20 +33,8 @@ pub struct Term<'a> {
     pub term_id_ptr: *mut TermIdT,
     pub term_ptr: *mut TermT,
     pub term: TermT,
-    world: Option<WorldRef<'a>>,
+    world: WorldRef<'a>,
 }
-
-impl<'a> Default for Term<'a> {
-    fn default() -> Self {
-        Self {
-            term_id_ptr: std::ptr::null_mut(),
-            term_ptr: std::ptr::null_mut(),
-            term: Default::default(),
-            world: None,
-        }
-    }
-}
-
 /// this is for copying the term
 impl<'a> Clone for Term<'a> {
     fn clone(&self) -> Self {
@@ -87,7 +75,7 @@ impl<'a> Term<'a> {
     #[doc(alias = "term::term")]
     pub fn new_from_term(world: impl IntoWorld<'a>, term: TermT) -> Self {
         let mut obj = Self {
-            world: world.get_world(),
+            world: world.world(),
             term_id_ptr: std::ptr::null_mut(),
             term,
             term_ptr: std::ptr::null_mut(),
@@ -110,7 +98,7 @@ impl<'a> Term<'a> {
     #[doc(alias = "term::term")]
     pub fn new_world_only(world: impl IntoWorld<'a>) -> Self {
         let mut obj = Self {
-            world: Some(world.world_ref()),
+            world: world.world(),
             term_id_ptr: std::ptr::null_mut(),
             term: Default::default(),
             term_ptr: std::ptr::null_mut(),
@@ -191,7 +179,7 @@ impl<'a> Term<'a> {
         let id = id.get_id();
 
         let mut obj = Self {
-            world: world.get_world(),
+            world: world.world(),
             term_id_ptr: std::ptr::null_mut(),
             term_ptr: std::ptr::null_mut(),
             term: Default::default(),
@@ -208,13 +196,9 @@ impl<'a> Term<'a> {
             }
         }
 
-        if obj.world.is_some() {
-            obj.term.move_ = false;
-            let obj_term = &mut obj.term as *mut TermT;
-            obj.set_term(obj_term);
-        } else {
-            obj.term.move_ = true;
-        }
+        obj.term.move_ = false;
+        let obj_term = &mut obj.term as *mut TermT;
+        obj.set_term(obj_term);
 
         obj
     }
@@ -479,7 +463,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
         self.assert_term_id_ptr_mut();
         unsafe {
             (*self.term_id_ptr_mut()).flags |= ECS_UP;
-            (*self.term_id_ptr_mut()).trav = TravRel::get_id(self.get_world());
+            (*self.term_id_ptr_mut()).trav = TravRel::get_id(self.world());
         };
         self
     }
@@ -535,7 +519,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
         self.assert_term_id_ptr_mut();
         unsafe {
             (*self.term_id_ptr_mut()).flags |= ECS_CASCADE;
-            (*self.term_id_ptr_mut()).trav = TravRel::get_id(self.get_world());
+            (*self.term_id_ptr_mut()).trav = TravRel::get_id(self.world());
         };
         self
     }
@@ -745,7 +729,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
     fn select_src<T: ComponentId>(&mut self) -> &mut Self {
-        self.select_src_id(T::get_id(self.get_world()))
+        self.select_src_id(T::get_id(self.world()))
     }
 
     /// Select src identifier, initialize it with name. If name starts with a $
@@ -801,7 +785,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
     fn select_first<T: ComponentId>(&mut self) -> &mut Self {
-        self.select_first_id(T::get_id(self.get_world()))
+        self.select_first_id(T::get_id(self.world()))
     }
 
     /// Select first identifier, initialize it with name. If name starts with a $
@@ -857,7 +841,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
     fn select_second<T: ComponentId>(&mut self) -> &mut Self {
-        self.select_second_id(T::get_id(self.get_world()))
+        self.select_second_id(T::get_id(self.world()))
     }
 
     /// Select second identifier, initialize it with name. If name starts with a $
@@ -1169,7 +1153,7 @@ impl<'a> TermBuilder<'a> for Term<'a> {
 
 impl<'a> IntoWorld<'a> for Term<'a> {
     #[inline]
-    fn get_world(&self) -> Option<WorldRef<'a>> {
+    fn world(&self) -> WorldRef<'a> {
         self.world
     }
 }
