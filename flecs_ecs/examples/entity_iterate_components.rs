@@ -1,7 +1,7 @@
 mod common;
 use common::*;
 
-fn iterate_components(entity: Entity) {
+fn iterate_components(entity: EntityView) {
     // 1. The easiest way to print the components is to use archetype
     println!("[{:?}]", entity.archetype());
     println!();

@@ -14,17 +14,13 @@ pub use into_world::*;
 pub use iter::*;
 pub use reactor::*;
 
-use super::{ImplementsClone, ImplementsDefault};
+use crate::core::{ImplementsClone, ImplementsDefault};
 
 #[doc(hidden)]
 pub mod private {
+    use crate::core::*;
+    use crate::sys;
     use std::{ffi::c_void, ptr};
-
-    use flecs_ecs_sys::{ecs_ctx_free_t, ecs_iter_t, ecs_table_lock, ecs_table_unlock};
-
-    use crate::core::{ComponentPointers, Entity, Iter, IterT, Iterable, ObserverSystemBindingCtx};
-
-    use super::WorldRef;
 
     #[allow(non_camel_case_types)]
     #[doc(hidden)]
@@ -34,11 +30,14 @@ pub mod private {
     {
         fn set_binding_context(&mut self, binding_ctx: *mut c_void) -> &mut Self;
 
-        fn set_binding_context_free(&mut self, binding_ctx_free: ecs_ctx_free_t) -> &mut Self;
+        fn set_binding_context_free(&mut self, binding_ctx_free: sys::ecs_ctx_free_t) -> &mut Self;
 
         fn desc_binding_context(&self) -> *mut c_void;
 
-        fn set_desc_callback(&mut self, callback: Option<unsafe extern "C" fn(*mut ecs_iter_t)>);
+        fn set_desc_callback(
+            &mut self,
+            callback: Option<unsafe extern "C" fn(*mut sys::ecs_iter_t)>,
+        );
 
         /// Callback of the each functionality
         ///
@@ -66,14 +65,14 @@ pub mod private {
                 }
             };
 
-            ecs_table_lock((*iter).world, (*iter).table);
+            sys::ecs_table_lock((*iter).world, (*iter).table);
 
             for i in 0..iter_count {
                 let tuple = components_data.get_tuple(i);
                 each(tuple);
             }
 
-            ecs_table_unlock((*iter).world, (*iter).table);
+            sys::ecs_table_unlock((*iter).world, (*iter).table);
         }
 
         /// Callback of the `each_entity` functionality
@@ -88,7 +87,7 @@ pub mod private {
         #[doc(alias = "iter_invoker::invoke_callback")]
         unsafe extern "C" fn run_each_entity<Func>(iter: *mut IterT)
         where
-            Func: FnMut(&mut Entity, T::TupleType<'_>),
+            Func: FnMut(&mut EntityView, T::TupleType<'_>),
         {
             let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
             let each_entity = (*ctx).each_entity.unwrap();
@@ -103,16 +102,16 @@ pub mod private {
                 }
             };
 
-            ecs_table_lock((*iter).world, (*iter).table);
+            sys::ecs_table_lock((*iter).world, (*iter).table);
 
             for i in 0..iter_count {
                 let world = WorldRef::from_ptr((*iter).world);
-                let mut entity = Entity::new_from_existing(world, *(*iter).entities.add(i));
+                let mut entity = EntityView::new_from(world, *(*iter).entities.add(i));
                 let tuple = components_data.get_tuple(i);
 
                 each_entity(&mut entity, tuple);
             }
-            ecs_table_unlock((*iter).world, (*iter).table);
+            sys::ecs_table_unlock((*iter).world, (*iter).table);
         }
 
         /// Callback of the `each_iter` functionality
@@ -142,7 +141,7 @@ pub mod private {
                 }
             };
 
-            ecs_table_lock((*iter).world, (*iter).table);
+            sys::ecs_table_lock((*iter).world, (*iter).table);
             let mut iter_t = Iter::new(&mut (*iter));
 
             for i in 0..iter_count {
@@ -150,7 +149,7 @@ pub mod private {
 
                 each_iter(&mut iter_t, i, tuple);
             }
-            ecs_table_unlock((*iter).world, (*iter).table);
+            sys::ecs_table_unlock((*iter).world, (*iter).table);
         }
 
         /// Callback of the `iter_only` functionality
@@ -179,14 +178,14 @@ pub mod private {
                     }
                 };
 
-                ecs_table_lock((*iter).world, (*iter).table);
+                sys::ecs_table_lock((*iter).world, (*iter).table);
 
                 for _ in 0..iter_count {
                     let mut iter_t = Iter::new(&mut *iter);
                     iter_only(&mut iter_t);
                 }
 
-                ecs_table_unlock((*iter).world, (*iter).table);
+                sys::ecs_table_unlock((*iter).world, (*iter).table);
             }
         }
 
@@ -217,12 +216,12 @@ pub mod private {
                 }
             };
 
-            ecs_table_lock((*iter).world, (*iter).table);
+            sys::ecs_table_lock((*iter).world, (*iter).table);
 
             let tuple = components_data.get_slice(iter_count);
             let mut iter_t = Iter::new(&mut *iter);
             iter_func(&mut iter_t, tuple);
-            ecs_table_unlock((*iter).world, (*iter).table);
+            sys::ecs_table_unlock((*iter).world, (*iter).table);
         }
 
         // free functions
@@ -235,8 +234,8 @@ pub mod private {
         }
 
         extern "C" fn on_free_each_entity(ptr: *mut c_void) {
-            let ptr_func: *mut fn(&mut Entity, T::TupleType<'_>) =
-                ptr as *mut fn(&mut Entity, T::TupleType<'_>);
+            let ptr_func: *mut fn(&mut EntityView, T::TupleType<'_>) =
+                ptr as *mut fn(&mut EntityView, T::TupleType<'_>);
             unsafe {
                 ptr::drop_in_place(ptr_func);
             }

@@ -40,10 +40,7 @@ fn main() {
         .observer_builder::<()>()
         .add_event::<CloseRequested>()
         .with_type::<&flecs::Any>()
-        .on_each_iter(|it, _index, _| {
-            let close_requested = unsafe { it.param::<CloseRequested>() };
-            println!("Close request with reason: {:?}", close_requested.reason);
-        });
+        .on_each_entity(|e, _| {});
 
     let widget = world.new_entity_named(c"MyWidget");
     println!("widget: {:?}", widget);

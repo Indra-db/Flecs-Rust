@@ -12,8 +12,8 @@ use super::{
     filter::Filter,
     iterable::{Filterable, Iterable},
     term::{Term, TermBuilder},
-    type_to_inout, CachedEnumData, IdT, InOutType, IntoComponentId, IntoEntityId, IntoEntityIdExt,
-    IntoWorld, WorldRef, ECS_WILDCARD,
+    type_to_inout, CachedEnumData, IdT, InOutType, IntoComponentId, IntoEntity, IntoId, IntoWorld,
+    WorldRef, ECS_WILDCARD,
 };
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::{core::FlecsErrorCode, sys::ecs_term_is_initialized};
@@ -288,7 +288,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     ///
     /// * C++ API: `filter_builder_i::with`
     #[doc(alias = "filter_builder_i::with")]
-    fn with_pair_first<First: ComponentId>(&mut self, second: impl IntoEntityId) -> &mut Self {
+    fn with_pair_first<First: ComponentId>(&mut self, second: impl IntoEntity) -> &mut Self {
         self.term_with_pair_first::<First>(second)
     }
 
@@ -362,7 +362,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     ///
     /// * C++ API: `filter_builder_i::without`
     #[doc(alias = "filter_builder_i::without")]
-    fn without_pair_id<First: ComponentId>(&mut self, second: impl IntoEntityId) -> &mut Self {
+    fn without_pair_id<First: ComponentId>(&mut self, second: impl IntoEntity) -> &mut Self {
         self.term_with_pair_first::<First>(second).not()
     }
 
@@ -519,7 +519,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
         FilterBuilderImpl::write(self)
     }
 
-    fn write_id(&mut self, id: impl IntoEntityIdExt) -> &mut Self {
+    fn write_id(&mut self, id: impl IntoId) -> &mut Self {
         self.term_with_id(id);
         FilterBuilderImpl::write(self)
     }
@@ -530,7 +530,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     ///
     /// * C++ API: `filter_builder_i::term`
     #[doc(alias = "filter_builder_i::term")]
-    fn term_with_id(&mut self, id: impl IntoEntityIdExt) -> &mut Self {
+    fn term_with_id(&mut self, id: impl IntoId) -> &mut Self {
         self.term();
         unsafe {
             *self.term_ptr_mut() = Term::new_id(self.world(), id).move_raw_term();
@@ -603,7 +603,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     #[doc(alias = "filter_builder_i::term")]
     fn term_with_pair_id_name(
         &mut self,
-        first: impl IntoEntityId,
+        first: impl IntoEntity,
         second: &'static CStr,
     ) -> &mut Self {
         self.term();
@@ -621,7 +621,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     ///
     /// * C++ API: `filter_builder_i::term`
     #[doc(alias = "filter_builder_i::term")]
-    fn term_with_pair_first<First: ComponentId>(&mut self, second: impl IntoEntityId) -> &mut Self {
+    fn term_with_pair_first<First: ComponentId>(&mut self, second: impl IntoEntity) -> &mut Self {
         self.term_with_id((First::get_id(self.world()), second))
     }
 

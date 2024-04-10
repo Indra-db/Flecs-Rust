@@ -1,8 +1,6 @@
+use crate::core::*;
+use crate::sys;
 use std::{ffi::c_void, marker::PhantomData, ops::Deref, ptr::NonNull};
-
-use flecs_ecs_sys::ecs_get_world;
-
-use crate::core::{Entity, EntityView, Id, Iterable, Query, World, WorldT};
 
 pub trait IntoWorld<'a> {
     #[doc(hidden)]
@@ -19,13 +17,6 @@ pub trait IntoWorld<'a> {
 }
 
 impl<'a> IntoWorld<'a> for Id<'a> {
-    #[inline]
-    fn world(&self) -> WorldRef<'a> {
-        self.world
-    }
-}
-
-impl<'a> IntoWorld<'a> for Entity<'a> {
     #[inline]
     fn world(&self) -> WorldRef<'a> {
         self.world
@@ -65,7 +56,9 @@ pub struct WorldRef<'a> {
 impl<'a> WorldRef<'a> {
     pub fn real_world(&self) -> WorldRef<'a> {
         unsafe {
-            WorldRef::from_ptr(ecs_get_world(self.world_ptr_mut() as *const c_void) as *mut WorldT)
+            WorldRef::from_ptr(
+                sys::ecs_get_world(self.world_ptr_mut() as *const c_void) as *mut WorldT
+            )
         }
     }
 

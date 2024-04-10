@@ -1,6 +1,4 @@
-use crate::core::{ecs_pair, ComponentId, ComponentType, IdT, Struct};
-
-use super::IntoWorld;
+use crate::core::*;
 
 pub trait IntoComponentId {
     const IS_ENUM: bool;

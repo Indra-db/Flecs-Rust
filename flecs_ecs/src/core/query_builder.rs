@@ -20,7 +20,7 @@ use super::{
     query::Query,
     term::TermBuilder,
     world::World,
-    EntityT, IdT, IntoEntityId, IntoWorld, TableT, Term, WorldRef, WorldT,
+    EntityT, IdT, IntoEntity, IntoWorld, TableT, Term, WorldRef, WorldT,
 };
 
 /// Fast to iterate, but slower to create than Filter
@@ -292,7 +292,7 @@ pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
     #[doc(alias = "query_builder_i::order_by")]
     fn order_by_id(
         &mut self,
-        component: impl IntoEntityId,
+        component: impl IntoEntity,
         compare: ecs_order_by_action_t,
     ) -> &mut Self {
         let desc = self.desc_query_mut();
@@ -370,7 +370,7 @@ pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
     #[doc(alias = "query_builder_i::group_by")]
     fn group_by_id_fn(
         &mut self,
-        component: impl IntoEntityId,
+        component: impl IntoEntity,
         group_by_action: ecs_group_by_action_t,
     ) -> &mut Self {
         let desc = self.desc_query_mut();
@@ -391,7 +391,7 @@ pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::group_by`
     #[doc(alias = "query_builder_i::group_by")]
-    fn group_by_id(&mut self, component: impl IntoEntityId) -> &mut Self {
+    fn group_by_id(&mut self, component: impl IntoEntity) -> &mut Self {
         self.group_by_id_fn(component, None)
     }
 

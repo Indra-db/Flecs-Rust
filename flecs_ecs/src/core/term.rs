@@ -1,26 +1,7 @@
-#[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-use crate::core::FlecsErrorCode;
-use crate::{
-    core::{ecs_is_pair, ecs_pair_first, strip_prefix_cstr_raw},
-    ecs_assert,
-    sys::{
-        ecs_get_alive, ecs_inout_kind_t, ecs_oper_kind_t, ecs_term_copy, ecs_term_finalize,
-        ecs_term_fini, ecs_term_is_initialized, ecs_term_move,
-    },
-};
 use std::ffi::CStr;
 
-use super::{
-    c_types::{
-        EntityT, Flags32T, IdT, InOutKind, OperKind, TermIdT, TermT, ECS_CASCADE, ECS_FILTER,
-        ECS_IS_ENTITY, ECS_IS_NAME, ECS_IS_VARIABLE, ECS_PARENT, ECS_SELF, ECS_UP,
-    },
-    component_registration::ComponentId,
-    entity::Entity,
-    id::Id,
-    IntoComponentId, IntoEntityId, IntoEntityIdExt, IntoWorld, RUST_ecs_id_FLAGS_MASK, WorldRef,
-    ECS_DESC,
-};
+use crate::core::*;
+use crate::sys;
 
 /// Struct that describes a term identifier.
 ///
@@ -44,7 +25,7 @@ impl<'a> Clone for Term<'a> {
             term: Default::default(),
             world: self.world,
         };
-        obj.term = unsafe { ecs_term_copy(&self.term) };
+        obj.term = unsafe { sys::ecs_term_copy(&self.term) };
         let obj_term = &mut obj.term as *mut TermT;
         obj.set_term(obj_term);
         obj
@@ -174,7 +155,7 @@ impl<'a> Term<'a> {
     #[doc(alias = "term::term")]
     pub fn new_id<T>(world: impl IntoWorld<'a>, id: T) -> Self
     where
-        T: IntoEntityIdExt,
+        T: IntoId,
     {
         let id = id.get_id();
 
@@ -217,7 +198,7 @@ impl<'a> Term<'a> {
             term_ptr: std::ptr::null_mut(),
             term: Default::default(),
         };
-        obj.term = unsafe { ecs_term_move(&mut self.term) };
+        obj.term = unsafe { sys::ecs_term_move(&mut self.term) };
         self.reset();
         let obj_term = &mut obj.term as *mut TermT;
         obj.set_term(obj_term);
@@ -251,7 +232,7 @@ impl<'a> Term<'a> {
     /// * C++ API: `term::finalize`
     #[doc(alias = "term::finalize")]
     pub fn finalize(&mut self) -> i32 {
-        unsafe { ecs_term_finalize(self.world.world_ptr_mut(), &mut self.term) }
+        unsafe { sys::ecs_term_finalize(self.world.world_ptr_mut(), &mut self.term) }
     }
 
     /// Check if term is initialized
@@ -259,7 +240,7 @@ impl<'a> Term<'a> {
     /// Test whether a term is set. This operation can be used to test whether a term has been initialized with values or whether it is empty.
     ///
     /// An application generally does not need to invoke this operation.
-    /// It is useful when initializing a 0-initialized array of terms (like in `ecs_term_desc_t`)
+    /// It is useful when initializing a 0-initialized array of terms (like in `sys::ecs_term_desc_t`)
     /// as this operation can be used to find the last initialized element.
     ///
     /// # See also
@@ -267,7 +248,7 @@ impl<'a> Term<'a> {
     /// * C++ API: `term::is_set`
     #[doc(alias = "term::is_set")]
     pub fn is_set(&mut self) -> bool {
-        unsafe { ecs_term_is_initialized(&self.term) }
+        unsafe { sys::ecs_term_is_initialized(&self.term) }
     }
 
     /// Get the term id
@@ -310,8 +291,8 @@ impl<'a> Term<'a> {
     ///
     /// * C++ API: `term::src`
     #[doc(alias = "term::src")]
-    pub fn src(&self) -> Entity {
-        Entity::new_from_existing(self.world, self.term.src.id)
+    pub fn src(&self) -> EntityView {
+        EntityView::new_from(self.world, self.term.src.id)
     }
 
     /// Get the first of term
@@ -320,8 +301,8 @@ impl<'a> Term<'a> {
     ///
     /// * C++ API: `term::first`
     #[doc(alias = "term::first")]
-    pub fn first(&self) -> Entity {
-        Entity::new_from_existing(self.world, self.term.first.id)
+    pub fn first(&self) -> EntityView {
+        EntityView::new_from(self.world, self.term.first.id)
     }
 
     /// Get the second of term
@@ -330,8 +311,8 @@ impl<'a> Term<'a> {
     ///
     /// * C++ API: `term::second`
     #[doc(alias = "term::second")]
-    pub fn second(&self) -> Entity {
-        Entity::new_from_existing(self.world, self.term.second.id)
+    pub fn second(&self) -> EntityView {
+        EntityView::new_from(self.world, self.term.second.id)
     }
 
     /// Move resources of a term to another term. Same as copy, but moves resources from src,
@@ -343,7 +324,7 @@ impl<'a> Term<'a> {
     /// * C++ API: `term::move`
     #[doc(alias = "term::move")]
     pub fn move_raw_term(&mut self) -> TermT {
-        unsafe { ecs_term_move(&mut self.term) }
+        unsafe { sys::ecs_term_move(&mut self.term) }
     }
 }
 
@@ -352,7 +333,7 @@ impl<'a> Term<'a> {}
 
 impl<'a> Drop for Term<'a> {
     fn drop(&mut self) {
-        unsafe { ecs_term_fini(&mut self.term) };
+        unsafe { sys::ecs_term_fini(&mut self.term) };
     }
 }
 
@@ -440,7 +421,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::up`
     #[doc(alias = "term_builder_i::up")]
-    fn up_id(&mut self, traverse_relationship: impl IntoEntityId) -> &mut Self {
+    fn up_id(&mut self, traverse_relationship: impl IntoEntity) -> &mut Self {
         self.assert_term_id_ptr_mut();
         unsafe { (*self.term_id_ptr_mut()).flags |= ECS_UP };
         unsafe { (*self.term_id_ptr_mut()).trav = traverse_relationship.get_id() };
@@ -492,7 +473,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::cascade`
     #[doc(alias = "term_builder_i::cascade")]
-    fn cascade_id(&mut self, traverse_relationship: impl IntoEntityId) -> &mut Self {
+    fn cascade_id(&mut self, traverse_relationship: impl IntoEntity) -> &mut Self {
         self.assert_term_id_ptr_mut();
         //ecs_assert!(
         //    traverse_relationship != 0,
@@ -554,7 +535,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::trav`
     #[doc(alias = "term_builder_i::trav")]
-    fn trav(&mut self, traverse_relationship: impl IntoEntityId, flags: Flags32T) -> &mut Self {
+    fn trav(&mut self, traverse_relationship: impl IntoEntity, flags: Flags32T) -> &mut Self {
         self.assert_term_id_ptr_mut();
         unsafe {
             (*self.term_id_ptr_mut()).trav = traverse_relationship.get_id();
@@ -573,7 +554,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::set_term_id_ptr`
     #[doc(alias = "term_builder_i::set_term_id_ptr")]
-    fn set_term_id_ptr_mut(&mut self, id: impl IntoEntityId) -> &mut Self {
+    fn set_term_id_ptr_mut(&mut self, id: impl IntoEntity) -> &mut Self {
         self.assert_term_id_ptr_mut();
         let term_id_ptr = self.term_id_ptr_mut();
         unsafe { (*term_id_ptr).id = id.get_id() };
@@ -596,7 +577,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::entity`
     #[doc(alias = "term_builder_i::entity")]
-    fn entity(&mut self, id: impl IntoEntityId) -> &mut Self {
+    fn entity(&mut self, id: impl IntoEntity) -> &mut Self {
         self.assert_term_id_ptr_mut();
         unsafe {
             (*self.term_id_ptr_mut()).flags |= ECS_IS_ENTITY;
@@ -770,7 +751,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
-    fn select_first_id(&mut self, id: impl IntoEntityId) -> &mut Self {
+    fn select_first_id(&mut self, id: impl IntoEntity) -> &mut Self {
         self.setup_first().set_term_id_ptr_mut(id)
     }
 
@@ -826,7 +807,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
-    fn select_second_id(&mut self, id: impl IntoEntityId) -> &mut Self {
+    fn select_second_id(&mut self, id: impl IntoEntity) -> &mut Self {
         self.setup_second().set_term_id_ptr_mut(id)
     }
 
@@ -882,7 +863,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::role`
     #[doc(alias = "term_builder_i::role")]
-    fn role(&mut self, role: impl IntoEntityId) -> &mut Self {
+    fn role(&mut self, role: impl IntoEntity) -> &mut Self {
         self.assert_term();
         unsafe { (*self.term_ptr_mut()).id_flags = role.get_id() };
         self
@@ -900,7 +881,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     #[doc(alias = "term_builder_i::inout")]
     fn set_inout(&mut self, inout: InOutKind) -> &mut Self {
         self.assert_term();
-        unsafe { (*self.term_ptr_mut()).inout = inout as ecs_inout_kind_t };
+        unsafe { (*self.term_ptr_mut()).inout = inout as sys::ecs_inout_kind_t };
         self
     }
 
@@ -924,7 +905,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
         self.assert_term();
         self.set_inout(inout);
         unsafe {
-            if (*self.term_ptr_mut()).oper != OperKind::Not as ecs_oper_kind_t {
+            if (*self.term_ptr_mut()).oper != OperKind::Not as sys::ecs_oper_kind_t {
                 self.setup_src().entity(0);
             }
         }
@@ -1016,7 +997,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     #[doc(alias = "term_builder_i::oper")]
     fn oper(&mut self, oper: OperKind) -> &mut Self {
         self.assert_term_id_ptr_mut();
-        unsafe { (*self.term_ptr_mut()).oper = oper as ecs_oper_kind_t };
+        unsafe { (*self.term_ptr_mut()).oper = oper as sys::ecs_oper_kind_t };
         self
     }
 
@@ -1119,7 +1100,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
                 (*self.term_ptr_mut()).src.id = sid;
             } else {
                 (*self.term_ptr_mut()).src.id =
-                    ecs_get_alive(self.world_ptr_mut(), ecs_pair_first(sid));
+                    sys::ecs_get_alive(self.world_ptr_mut(), ecs_pair_first(sid));
             }
         }
         self

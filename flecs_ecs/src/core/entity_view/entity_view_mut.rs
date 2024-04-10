@@ -1,215 +1,11 @@
-use std::{
-    ffi::CStr,
-    ops::{Deref, DerefMut},
-    os::raw::c_void,
-};
+use std::{ffi::CStr, os::raw::c_void};
 
-use flecs_ecs_sys::{ecs_emplace_id, ecs_new_id};
+use flecs_ecs::core::*;
 
-use super::{
-    c_types::{IdT, SEPARATOR},
-    component_ref::Ref,
-    component_registration::{ComponentId, ComponentType, Enum, Struct},
-    ecs_pair, ecs_pair_first, ecs_pair_second, set_helper,
-    world::World,
-    CachedEnumData, EmptyComponent, EntityView, IntoComponentId, IntoEntityId, IntoEntityIdExt,
-    IntoWorld, NotEmptyComponent, ECS_DEPENDS_ON, ECS_EXCLUSIVE, ECS_IS_A, ECS_OVERRIDE,
-    ECS_SLOT_OF, ECS_WILDCARD,
-};
-#[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-use crate::core::FlecsErrorCode;
-use crate::{
-    core::{flecs, ECS_CHILD_OF},
-    ecs_assert,
-    sys::{
-        ecs_add_id, ecs_clear, ecs_delete, ecs_enable, ecs_enable_id, ecs_entity_desc_t,
-        ecs_entity_init, ecs_flatten, ecs_flatten_desc_t, ecs_get_id, ecs_get_mut_id,
-        ecs_get_target, ecs_has_id, ecs_modified_id, ecs_remove_id, ecs_set_alias, ecs_set_id,
-        ecs_set_name, ecs_set_scope, ecs_set_with, EcsComponent, FLECS_IDEcsComponentID_,
-    },
-};
-
-#[derive(Copy, Clone)]
-pub struct Entity<'a> {
-    pub entity_view: EntityView<'a>,
-}
-
-impl<'a, T> PartialEq<T> for Entity<'a>
-where
-    T: IntoEntityIdExt,
-{
-    fn eq(&self, other: &T) -> bool {
-        self.raw_id == other.get_id()
-    }
-}
-
-impl<'a> Eq for Entity<'a> {}
-
-impl<'a, T> PartialOrd<T> for Entity<'a>
-where
-    T: IntoEntityIdExt,
-{
-    fn partial_cmp(&self, other: &T) -> Option<std::cmp::Ordering> {
-        Some(self.raw_id.cmp(&other.get_id()))
-    }
-}
-
-impl<'a> Ord for Entity<'a> {
-    fn cmp(&self, other: &Entity) -> std::cmp::Ordering {
-        self.raw_id.cmp(&other.raw_id)
-    }
-}
-
-// Additionally, to allow comparison in the other direction (i32 with MyStruct)
-impl<'a> PartialEq<Entity<'a>> for u64 {
-    fn eq(&self, other: &Entity) -> bool {
-        *self == other.raw_id
-    }
-}
-
-impl<'a> Deref for Entity<'a> {
-    type Target = EntityView<'a>;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.entity_view
-    }
-}
-
-impl<'a> DerefMut for Entity<'a> {
-    #[inline]
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.entity_view
-    }
-}
-
-impl<'a> From<Entity<'a>> for IdT {
-    fn from(entity: Entity) -> Self {
-        entity.entity_view.id.raw_id
-    }
-}
-
-impl<'a> From<&Entity<'a>> for IdT {
-    fn from(entity: &Entity) -> Self {
-        entity.entity_view.id.raw_id
-    }
-}
-
-impl<'a> From<&mut Entity<'a>> for IdT {
-    fn from(entity: &mut Entity) -> Self {
-        entity.entity_view.id.raw_id
-    }
-}
-
-impl<'a> std::fmt::Display for Entity<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Some(name) = self.get_name() {
-            write!(f, "{}", name)
-        } else {
-            write!(f, "{}", self.raw_id)
-        }
-    }
-}
-
-impl<'a> std::fmt::Debug for Entity<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let name = self.name();
-        let id = self.raw_id;
-        let archetype_str = self
-            .archetype()
-            .to_string()
-            .unwrap_or_else(|| "empty".to_string());
-        write!(
-            f,
-            "Entity name: {} -- id: {} -- archetype: {}",
-            name, id, archetype_str
-        )
-    }
-}
+use crate::{ecs_assert, sys};
 
 // functions in here match most of the functions in the c++ entity and entity_builder class
-impl<'a> Entity<'a> {
-    /// Create new entity.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::entity`
-    #[doc(alias = "entity::entity")]
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new(world: impl IntoWorld<'a>) -> Self {
-        let id = unsafe { ecs_new_id(world.world_ptr_mut()) };
-        Self {
-            entity_view: EntityView::new(world, id),
-        }
-    }
-
-    /// Creates a wrapper around an existing entity / id.
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - The world the entity belongs to. If strictly only a storage is needed, this can be None.
-    /// * `id` - The entity id.
-    ///
-    /// # Safety
-    ///
-    /// The world must be not be None if you want to do operations on the entity.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::entity`
-    #[doc(alias = "entity::entity")]
-    pub fn new_from_existing(world: impl IntoWorld<'a>, id: impl IntoEntityIdExt) -> Self {
-        Self {
-            entity_view: EntityView::new(world, id),
-        }
-    }
-
-    /// Create a named entity.
-    ///
-    /// Named entities can be looked up with the lookup functions. Entity names
-    /// may be scoped, where each element in the name is separated by "::".
-    /// For example: "`Foo::Bar`". If parts of the hierarchy in the scoped name do
-    /// not yet exist, they will be automatically created.
-    ///
-    /// # Arguments
-    ///
-    /// - `world`: The world in which to create the entity.
-    /// - `name`: The entity name.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::entity`
-    #[doc(alias = "entity::entity")]
-    pub fn new_named(world: impl IntoWorld<'a>, name: &CStr) -> Self {
-        let desc = ecs_entity_desc_t {
-            name: name.as_ptr(),
-            sep: SEPARATOR.as_ptr(),
-            root_sep: SEPARATOR.as_ptr(),
-            _canary: 0,
-            id: 0,
-            symbol: std::ptr::null(),
-            use_low_id: false,
-            add: [0; 32],
-            add_expr: std::ptr::null(),
-        };
-        let id = unsafe { ecs_entity_init(world.world_ptr_mut(), &desc) };
-        Self {
-            entity_view: EntityView::new(world, id),
-        }
-    }
-
-    /// Entity id 0.
-    /// This function is useful when the API must provide an entity that
-    /// belongs to a world, but the entity id is 0.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::null`
-    #[doc(alias = "entity::null")]
-    pub fn new_null(world: &'a World) -> Entity<'a> {
-        Entity::new_from_existing(world, 0)
-    }
-
+impl<'a> EntityView<'a> {
     /// Add an id to an entity.
     /// This Id can be a component, a pair, a tag or another entity.
     ///
@@ -223,8 +19,8 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    pub fn add_id(self, id: impl IntoEntityIdExt) -> Self {
-        unsafe { ecs_add_id(self.world.world_ptr_mut(), self.raw_id, id.get_id()) }
+    pub fn add_id(self, id: impl IntoId) -> Self {
+        unsafe { sys::ecs_add_id(self.world.world_ptr_mut(), self.raw_id, id.get_id()) }
         self
     }
 
@@ -268,7 +64,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    pub fn add_pair_second<Second: ComponentId>(self, first: impl IntoEntityId) -> Self {
+    pub fn add_pair_second<Second: ComponentId>(self, first: impl IntoEntity) -> Self {
         let world = self.world;
         self.add_id((first, Second::get_id(world)))
     }
@@ -287,7 +83,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    pub fn add_pair_first<First: ComponentId>(self, second: impl IntoEntityId) -> Self {
+    pub fn add_pair_first<First: ComponentId>(self, second: impl IntoEntity) -> Self {
         let world = self.world;
         self.add_id((First::get_id(world), second))
     }
@@ -357,7 +153,7 @@ impl<'a> Entity<'a> {
     #[doc(alias = "entity_builder::add_if")]
     pub fn add_id_if<T>(self, id: T, condition: bool) -> Self
     where
-        T: IntoEntityIdExt,
+        T: IntoId,
     {
         if condition {
             self.add_id(id)
@@ -371,7 +167,7 @@ impl<'a> Entity<'a> {
                 let first = ecs_pair_first(id.get_id());
                 let mut second = ecs_pair_second(id.get_id());
                 if second == 0
-                    || unsafe { ecs_has_id(self.world.world_ptr_mut(), first, ECS_EXCLUSIVE) }
+                    || unsafe { sys::ecs_has_id(self.world.world_ptr_mut(), first, ECS_EXCLUSIVE) }
                 {
                     second = ECS_WILDCARD;
                 }
@@ -420,7 +216,7 @@ impl<'a> Entity<'a> {
     #[doc(alias = "entity_builder::add_if")]
     pub fn add_pair_first_if<First: ComponentId>(
         self,
-        second: impl IntoEntityId,
+        second: impl IntoEntity,
         condition: bool,
     ) -> Self {
         let world = self.world;
@@ -445,7 +241,7 @@ impl<'a> Entity<'a> {
     #[doc(alias = "entity_builder::add_if")]
     pub fn add_pair_second_if<Second: ComponentId>(
         self,
-        first: impl IntoEntityId,
+        first: impl IntoEntity,
         condition: bool,
     ) -> Self {
         let world = self.world;
@@ -510,9 +306,9 @@ impl<'a> Entity<'a> {
     {
         let id = T::get_id(self.world);
         unsafe {
-            let ptr = ecs_emplace_id(self.world_ptr_mut(), self.raw_id, id) as *mut T;
+            let ptr = sys::ecs_emplace_id(self.world_ptr_mut(), self.raw_id, id) as *mut T;
             std::ptr::write(ptr, value);
-            ecs_modified_id(self.world_ptr_mut(), self.raw_id, id);
+            sys::ecs_modified_id(self.world_ptr_mut(), self.raw_id, id);
         }
         self
     }
@@ -527,8 +323,8 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::remove`
     #[doc(alias = "entity_builder::remove")]
-    pub fn remove_id(self, id: impl IntoEntityIdExt) -> Self {
-        unsafe { ecs_remove_id(self.world.world_ptr_mut(), self.raw_id, id.get_id()) }
+    pub fn remove_id(self, id: impl IntoId) -> Self {
+        unsafe { sys::ecs_remove_id(self.world.world_ptr_mut(), self.raw_id, id.get_id()) }
         self
     }
 
@@ -593,7 +389,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::remove_second`
     #[doc(alias = "entity_builder::remove_second")]
-    pub fn remove_pair_first<First: ComponentId>(self, second: impl IntoEntityId) -> Self {
+    pub fn remove_pair_first<First: ComponentId>(self, second: impl IntoEntity) -> Self {
         let world = self.world;
         self.remove_id((First::get_id(world), second))
     }
@@ -613,7 +409,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::remove_second`
     #[doc(alias = "entity_builder::remove_second")]
-    pub fn remove_pair_second<Second: ComponentId>(self, first: impl IntoEntityId) -> Self {
+    pub fn remove_pair_second<Second: ComponentId>(self, first: impl IntoEntity) -> Self {
         let world = self.world;
         self.remove_id((first, Second::get_id(world)))
     }
@@ -628,7 +424,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::is_a`
     #[doc(alias = "entity_builder::is_a")]
-    pub fn is_a_id(self, second: impl IntoEntityId) -> Self {
+    pub fn is_a_id(self, second: impl IntoEntity) -> Self {
         self.add_id((ECS_IS_A, second))
     }
 
@@ -657,7 +453,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::child_of`
     #[doc(alias = "entity_builder::child_of")]
-    pub fn child_of_id(self, parent: impl IntoEntityId) -> Self {
+    pub fn child_of_id(self, parent: impl IntoEntity) -> Self {
         self.add_id((ECS_CHILD_OF, parent))
     }
 
@@ -686,7 +482,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::depends_on`
     #[doc(alias = "entity_builder::depends_on")]
-    pub fn depends_on_id(self, second: impl IntoEntityId) -> Self {
+    pub fn depends_on_id(self, second: impl IntoEntity) -> Self {
         self.add_id((ECS_DEPENDS_ON, second))
     }
 
@@ -715,7 +511,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::slot_of`
     #[doc(alias = "entity_builder::slot_of")]
-    pub fn slot_of_id(self, second: impl IntoEntityId) -> Self {
+    pub fn slot_of_id(self, second: impl IntoEntity) -> Self {
         self.add_id((ECS_SLOT_OF, second))
     }
 
@@ -764,7 +560,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn override_id(self, id: impl IntoEntityIdExt) -> Self {
+    pub fn override_id(self, id: impl IntoId) -> Self {
         self.add_id(ECS_OVERRIDE | id.get_id())
     }
 
@@ -797,7 +593,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn override_pair_first<First: ComponentId>(self, second: impl IntoEntityId) -> Self {
+    pub fn override_pair_first<First: ComponentId>(self, second: impl IntoEntity) -> Self {
         let world = self.world;
         self.override_id((First::get_id(world), second))
     }
@@ -816,7 +612,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn override_pair_second<Second: ComponentId>(self, first: impl IntoEntityId) -> Self {
+    pub fn override_pair_second<Second: ComponentId>(self, first: impl IntoEntity) -> Self {
         let world = self.world;
         self.override_id((first, Second::get_id(world)))
     }
@@ -835,9 +631,9 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
-    pub fn set_override_id(self, id: impl IntoEntityIdExt) -> Self {
+    pub fn set_override_id(self, id: impl IntoId) -> Self {
         unsafe {
-            ecs_add_id(
+            sys::ecs_add_id(
                 self.world.world_ptr_mut(),
                 self.raw_id,
                 ECS_OVERRIDE | id.get_id(),
@@ -927,7 +723,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
-    pub fn set_override_pair_first_id<First>(self, first: First, second: impl IntoEntityId) -> Self
+    pub fn set_override_pair_first_id<First>(self, first: First, second: impl IntoEntity) -> Self
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -950,11 +746,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
-    pub fn set_override_pair_second_id<Second>(
-        self,
-        second: Second,
-        first: impl IntoEntityId,
-    ) -> Self
+    pub fn set_override_pair_second_id<Second>(self, second: Second, first: impl IntoEntity) -> Self
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -998,7 +790,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::set`
     #[doc(alias = "entity_builder::set")]
-    pub fn set_pair_first_id<First>(self, first: First, second: impl IntoEntityId) -> Self
+    pub fn set_pair_first_id<First>(self, first: First, second: impl IntoEntity) -> Self
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1057,7 +849,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::set_second`
     #[doc(alias = "entity_builder::set_second")]
-    pub fn set_pair_second_id<Second>(self, second: Second, first: impl IntoEntityId) -> Self
+    pub fn set_pair_second_id<Second>(self, second: Second, first: impl IntoEntity) -> Self
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1154,11 +946,11 @@ impl<'a> Entity<'a> {
     #[doc(alias = "entity_builder::set_ptr")]
     pub unsafe fn set_ptr_w_size(
         self,
-        id: impl IntoEntityId,
+        id: impl IntoEntity,
         size: usize,
         ptr: *const c_void,
     ) -> Self {
-        ecs_set_id(
+        sys::ecs_set_id(
             self.world.world_ptr_mut(),
             self.raw_id,
             id.get_id(),
@@ -1184,11 +976,11 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::set_ptr`
     #[doc(alias = "entity_builder::set_ptr")]
-    pub unsafe fn set_ptr(self, id: impl IntoEntityId, ptr: *const c_void) -> Self {
+    pub unsafe fn set_ptr(self, id: impl IntoEntity, ptr: *const c_void) -> Self {
         let id = id.get_id();
-        let cptr: *const EcsComponent =
-            unsafe { ecs_get_id(self.world.world_ptr_mut(), id, FLECS_IDEcsComponentID_) }
-                as *const EcsComponent;
+        let cptr: *const sys::EcsComponent = unsafe {
+            sys::ecs_get_id(self.world.world_ptr_mut(), id, sys::FLECS_IDEcsComponentID_)
+        } as *const sys::EcsComponent;
 
         ecs_assert!(
             !cptr.is_null(),
@@ -1212,7 +1004,7 @@ impl<'a> Entity<'a> {
     #[doc(alias = "entity_builder::set_name")]
     pub fn set_name(self, name: &CStr) -> Self {
         unsafe {
-            ecs_set_name(self.world.world_ptr_mut(), self.raw_id, name.as_ptr());
+            sys::ecs_set_name(self.world.world_ptr_mut(), self.raw_id, name.as_ptr());
         }
         self
     }
@@ -1229,7 +1021,7 @@ impl<'a> Entity<'a> {
     #[doc(alias = "entity_builder::set_alias")]
     pub fn set_alias_name(self, name: &CStr) -> Self {
         unsafe {
-            ecs_set_alias(self.world.world_ptr_mut(), self.raw_id, name.as_ptr());
+            sys::ecs_set_alias(self.world.world_ptr_mut(), self.raw_id, name.as_ptr());
         }
         self
     }
@@ -1243,7 +1035,7 @@ impl<'a> Entity<'a> {
     /// * C++ API: `entity_builder::enable`
     #[doc(alias = "entity_builder::enable")]
     pub fn enable_self(self) -> Self {
-        unsafe { ecs_enable(self.world.world_ptr_mut(), self.raw_id, true) }
+        unsafe { sys::ecs_enable(self.world.world_ptr_mut(), self.raw_id, true) }
         self
     }
     /// Enables an ID which represents a component or pair.
@@ -1260,8 +1052,8 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::enable`
     #[doc(alias = "entity_builder::enable")]
-    pub fn enable_id(self, id: impl IntoEntityIdExt) -> Self {
-        unsafe { ecs_enable_id(self.world.world_ptr_mut(), self.raw_id, id.get_id(), true) }
+    pub fn enable_id(self, id: impl IntoId) -> Self {
+        unsafe { sys::ecs_enable_id(self.world.world_ptr_mut(), self.raw_id, id.get_id(), true) }
         self
     }
 
@@ -1294,7 +1086,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::enable`
     #[doc(alias = "entity_builder::enable")]
-    pub fn enable_pair_second<First: ComponentId>(self, second: impl IntoEntityId) -> Self {
+    pub fn enable_pair_second<First: ComponentId>(self, second: impl IntoEntity) -> Self {
         let world = self.world;
         self.enable_id((First::get_id(world), second))
     }
@@ -1309,7 +1101,7 @@ impl<'a> Entity<'a> {
     /// * C++ API: `entity_builder::disable`
     #[doc(alias = "entity_builder::disable")]
     pub fn disable_self(self) -> Self {
-        unsafe { ecs_enable(self.world.world_ptr_mut(), self.raw_id, false) }
+        unsafe { sys::ecs_enable(self.world.world_ptr_mut(), self.raw_id, false) }
         self
     }
 
@@ -1326,8 +1118,8 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::disable`
     #[doc(alias = "entity_builder::disable")]
-    pub fn disable_id(self, id: impl IntoEntityIdExt) -> Self {
-        unsafe { ecs_enable_id(self.world.world_ptr_mut(), self.raw_id, id.get_id(), false) }
+    pub fn disable_id(self, id: impl IntoId) -> Self {
+        unsafe { sys::ecs_enable_id(self.world.world_ptr_mut(), self.raw_id, id.get_id(), false) }
         self
     }
 
@@ -1360,7 +1152,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::disable`
     #[doc(alias = "entity_builder::disable")]
-    pub fn disable_pair_first<First: ComponentId>(self, second: impl IntoEntityId) -> Self {
+    pub fn disable_pair_first<First: ComponentId>(self, second: impl IntoEntity) -> Self {
         let world = self.world;
         self.disable_id((First::get_id(world), second))
     }
@@ -1380,9 +1172,9 @@ impl<'a> Entity<'a> {
         F: FnOnce(),
     {
         unsafe {
-            let prev = ecs_set_with(self.world.world_ptr_mut(), self.raw_id);
+            let prev = sys::ecs_set_with(self.world.world_ptr_mut(), self.raw_id);
             func();
-            ecs_set_with(self.world.world_ptr_mut(), prev);
+            sys::ecs_set_with(self.world.world_ptr_mut(), prev);
         }
         self
     }
@@ -1398,17 +1190,17 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::with`
     #[doc(alias = "entity_builder::with")]
-    pub fn with_pair_first_id<F>(self, first: impl IntoEntityId, func: F) -> Self
+    pub fn with_pair_first_id<F>(self, first: impl IntoEntity, func: F) -> Self
     where
         F: FnOnce(),
     {
         unsafe {
-            let prev = ecs_set_with(
+            let prev = sys::ecs_set_with(
                 self.world.world_ptr_mut(),
                 ecs_pair(first.get_id(), self.raw_id),
             );
             func();
-            ecs_set_with(self.world.world_ptr_mut(), prev);
+            sys::ecs_set_with(self.world.world_ptr_mut(), prev);
         }
         self
     }
@@ -1425,17 +1217,17 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity_builder::with`
     #[doc(alias = "entity_builder::with")]
-    pub fn with_pair_second_id<F>(self, second: impl IntoEntityId, func: F) -> Self
+    pub fn with_pair_second_id<F>(self, second: impl IntoEntity, func: F) -> Self
     where
         F: FnOnce(),
     {
         unsafe {
-            let prev = ecs_set_with(
+            let prev = sys::ecs_set_with(
                 self.world.world_ptr_mut(),
                 ecs_pair(self.raw_id, second.get_id()),
             );
             func();
-            ecs_set_with(self.world.world_ptr_mut(), prev);
+            sys::ecs_set_with(self.world.world_ptr_mut(), prev);
         }
         self
     }
@@ -1501,9 +1293,9 @@ impl<'a> Entity<'a> {
         F: FnOnce(),
     {
         unsafe {
-            let prev = ecs_set_scope(self.world.world_ptr_mut(), self.raw_id);
+            let prev = sys::ecs_set_scope(self.world.world_ptr_mut(), self.raw_id);
             func();
-            ecs_set_scope(self.world.world_ptr_mut(), prev);
+            sys::ecs_set_scope(self.world.world_ptr_mut(), prev);
         }
         self
     }
@@ -1512,8 +1304,8 @@ impl<'a> Entity<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_builder::get_world`
-    #[doc(alias = "entity_builder::get_world")]
+    /// * C++ API: `entity_builder::scope`
+    #[doc(alias = "entity_builder::scope")]
     pub fn scope(&self, f: &mut impl FnMut(&World)) {
         self.world.scope_id(self.id, f);
     }
@@ -1551,24 +1343,28 @@ impl<'a> Entity<'a> {
             );
 
             unsafe {
-                &mut *(ecs_get_mut_id(self.world.world_ptr_mut(), self.raw_id, component_id)
+                &mut *(sys::ecs_get_mut_id(self.world.world_ptr_mut(), self.raw_id, component_id)
                     as *mut T::UnderlyingType)
             }
         } else {
             let component_id: IdT = T::get_id(self.world);
-            let target: IdT =
-                unsafe { ecs_get_target(self.world.world_ptr_mut(), self.raw_id, component_id, 0) };
+            let target: IdT = unsafe {
+                sys::ecs_get_target(self.world.world_ptr_mut(), self.raw_id, component_id, 0)
+            };
 
             if target == 0 {
                 // if there is no matching pair for (r,*), try just r
                 unsafe {
-                    &mut *(ecs_get_mut_id(self.world.world_ptr_mut(), self.raw_id, component_id)
-                        as *mut T::UnderlyingType)
+                    &mut *(sys::ecs_get_mut_id(
+                        self.world.world_ptr_mut(),
+                        self.raw_id,
+                        component_id,
+                    ) as *mut T::UnderlyingType)
                 }
             } else {
                 // get constant value from constant entity
                 let constant_value = unsafe {
-                    ecs_get_mut_id(self.world.world_ptr_mut(), target, component_id)
+                    sys::ecs_get_mut_id(self.world.world_ptr_mut(), target, component_id)
                         as *mut T::UnderlyingType
                 };
 
@@ -1633,7 +1429,7 @@ impl<'a> Entity<'a> {
             std::any::type_name::<T>()
         );
 
-        let ptr = ecs_get_mut_id(self.world.world_ptr_mut(), self.raw_id, component_id)
+        let ptr = sys::ecs_get_mut_id(self.world.world_ptr_mut(), self.raw_id, component_id)
             as *mut T::UnderlyingType;
         ecs_assert!(
             !ptr.is_null(),
@@ -1663,9 +1459,9 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_untyped_mut(self, id: impl IntoEntityIdExt) -> *mut c_void {
+    pub fn get_untyped_mut(self, id: impl IntoId) -> *mut c_void {
         unsafe {
-            ecs_get_mut_id(self.world.world_ptr_mut(), self.raw_id, id.get_id()) as *mut c_void
+            sys::ecs_get_mut_id(self.world.world_ptr_mut(), self.raw_id, id.get_id()) as *mut c_void
         }
     }
 
@@ -1684,7 +1480,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_first_id_mut<First>(self, second: impl IntoEntityId) -> &'a mut First
+    pub fn get_pair_first_id_mut<First>(self, second: impl IntoEntity) -> &'a mut First
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1697,10 +1493,10 @@ impl<'a> Entity<'a> {
             std::any::type_name::<First>()
         );
 
-        // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
+        // SAFETY: The pointer is valid because sys::ecs_get_mut_id adds the component if not present, so
         // it is guaranteed to be valid
         unsafe {
-            &mut *(ecs_get_mut_id(
+            &mut *(sys::ecs_get_mut_id(
                 self.world.world_ptr_mut(),
                 self.raw_id,
                 ecs_pair(component_id, second.get_id()),
@@ -1743,7 +1539,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity::get_mut`
     #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_second_id_mut<Second>(self, first: impl IntoEntityId) -> &'a mut Second
+    pub fn get_pair_second_id_mut<Second>(self, first: impl IntoEntity) -> &'a mut Second
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1756,10 +1552,10 @@ impl<'a> Entity<'a> {
             std::any::type_name::<Second>()
         );
 
-        // SAFETY: The pointer is valid because ecs_get_mut_id adds the component if not present, so
+        // SAFETY: The pointer is valid because sys::ecs_get_mut_id adds the component if not present, so
         // it is guaranteed to be valid
         unsafe {
-            &mut *(ecs_get_mut_id(
+            &mut *(sys::ecs_get_mut_id(
                 self.world.world_ptr_mut(),
                 self.raw_id,
                 ecs_pair(first.get_id(), component_id),
@@ -1797,8 +1593,8 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
-    pub fn modified_id(self, id: impl IntoEntityIdExt) {
-        unsafe { ecs_modified_id(self.world.world_ptr_mut(), self.raw_id, id.get_id()) }
+    pub fn modified_id(self, id: impl IntoId) {
+        unsafe { sys::ecs_modified_id(self.world.world_ptr_mut(), self.raw_id, id.get_id()) }
     }
 
     /// Signal that component was modified.
@@ -1835,7 +1631,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
-    pub fn modified_pair_first<First: ComponentId>(self, second: impl IntoEntityId) {
+    pub fn modified_pair_first<First: ComponentId>(self, second: impl IntoEntity) {
         ecs_assert!(
             std::mem::size_of::<First>() != 0,
             FlecsErrorCode::InvalidParameter,
@@ -1884,10 +1680,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
-    pub fn get_ref_pair_first<First: ComponentId>(
-        self,
-        second: impl IntoEntityId,
-    ) -> Ref<'a, First> {
+    pub fn get_ref_pair_first<First: ComponentId>(self, second: impl IntoEntity) -> Ref<'a, First> {
         Ref::<First>::new(
             self.world,
             self.raw_id,
@@ -1916,10 +1709,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
-    pub fn get_ref_pair_second<Second: ComponentId>(
-        &self,
-        first: impl IntoEntityId,
-    ) -> Ref<Second> {
+    pub fn get_ref_pair_second<Second: ComponentId>(&self, first: impl IntoEntity) -> Ref<Second> {
         Ref::<Second>::new(
             self.world,
             self.raw_id,
@@ -1937,9 +1727,9 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity::flatten`
     #[doc(alias = "entity::flatten")]
-    pub fn flatten(self, relationship: impl IntoEntityId) {
+    pub fn flatten(self, relationship: impl IntoEntity) {
         unsafe {
-            ecs_flatten(
+            sys::ecs_flatten(
                 self.world.world_ptr_mut(),
                 ecs_pair(relationship.get_id(), self.raw_id),
                 std::ptr::null_mut(),
@@ -1959,9 +1749,13 @@ impl<'a> Entity<'a> {
     /// * C++ API: `entity::flatten`
     #[doc(alias = "entity::flatten")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn flatten_w_desc(self, relationship: impl IntoEntityId, desc: *const ecs_flatten_desc_t) {
+    pub fn flatten_w_desc(
+        self,
+        relationship: impl IntoEntity,
+        desc: *const sys::ecs_flatten_desc_t,
+    ) {
         unsafe {
-            ecs_flatten(
+            sys::ecs_flatten(
                 self.world.world_ptr_mut(),
                 ecs_pair(relationship.get_id(), self.raw_id),
                 desc,
@@ -1980,7 +1774,7 @@ impl<'a> Entity<'a> {
     #[doc(alias = "entity::clear")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn clear(&self) {
-        unsafe { ecs_clear(self.world.world_ptr_mut(), self.raw_id) }
+        unsafe { sys::ecs_clear(self.world.world_ptr_mut(), self.raw_id) }
     }
 
     /// Delete an entity.
@@ -1993,7 +1787,7 @@ impl<'a> Entity<'a> {
     /// * C++ API: `entity::destruct`
     #[doc(alias = "entity::destruct")]
     pub fn destruct(self) {
-        unsafe { ecs_delete(self.world.world_ptr_mut(), self.raw_id) }
+        unsafe { sys::ecs_delete(self.world.world_ptr_mut(), self.raw_id) }
     }
 
     /// Return entity as `entity_view`.
@@ -2004,7 +1798,7 @@ impl<'a> Entity<'a> {
     ///
     /// * C++ API: `entity::view`
     #[doc(alias = "entity::view")]
-    pub fn as_view(&self) -> EntityView<'a> {
-        self.entity_view
+    pub fn as_id_view(&self) -> Id<'a> {
+        self.id
     }
 }

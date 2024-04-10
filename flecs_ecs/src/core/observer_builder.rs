@@ -17,7 +17,7 @@ use super::{
     observer::Observer,
     private::internal_ReactorAPI,
     term::TermBuilder,
-    Builder, IntoEntityId, IntoWorld, ReactorAPI, Term, WorldRef,
+    Builder, IntoEntity, IntoWorld, ReactorAPI, Term, WorldRef,
 };
 
 pub struct ObserverBuilder<'a, T>
@@ -154,7 +154,7 @@ where
     ///
     /// * C++ API: `observer_builder_i::event`
     #[doc(alias = "observer_builder_i::event")]
-    pub fn add_event_id(&mut self, event: impl IntoEntityId) -> &mut Self {
+    pub fn add_event_id(&mut self, event: impl IntoEntity) -> &mut Self {
         let event = event.get_id();
         let event_count = self.event_count as usize;
         self.event_count += 1;

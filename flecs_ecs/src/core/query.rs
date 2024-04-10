@@ -3,20 +3,8 @@
 
 use std::{marker::PhantomData, os::raw::c_void, ptr::NonNull};
 
-use crate::sys::{
-    ecs_get_entity, ecs_os_api, ecs_query_changed, ecs_query_desc_t, ecs_query_fini,
-    ecs_query_get_filter, ecs_query_get_group_info, ecs_query_init, ecs_query_iter, ecs_query_next,
-    ecs_query_orphaned,
-};
-
-use super::{
-    c_types::{FilterT, IterT, QueryGroupInfoT, QueryT},
-    entity::Entity,
-    filter::FilterView,
-    iterable::Iterable,
-    world::World,
-    IntoEntityId, IntoWorld, IterAPI, IterOperations, WorldRef,
-};
+use crate::core::*;
+use crate::sys;
 
 /// Cached query implementation. Fast to iterate, but slower to create than `Filters`
 #[derive(Clone)]
@@ -35,20 +23,20 @@ where
 {
     #[inline(always)]
     fn retrieve_iter(&self) -> IterT {
-        unsafe { ecs_query_iter(self.world.world_ptr_mut(), self.query.as_ptr()) }
+        unsafe { sys::ecs_query_iter(self.world.world_ptr_mut(), self.query.as_ptr()) }
     }
 
     #[inline(always)]
     fn iter_next(&self, iter: &mut IterT) -> bool {
-        unsafe { ecs_query_next(iter) }
+        unsafe { sys::ecs_query_next(iter) }
     }
 
     fn filter_ptr(&self) -> *const FilterT {
-        unsafe { ecs_query_get_filter(self.query.as_ptr()) }
+        unsafe { sys::ecs_query_get_filter(self.query.as_ptr()) }
     }
 
     fn iter_next_func(&self) -> unsafe extern "C" fn(*mut IterT) -> bool {
-        ecs_query_next
+        sys::ecs_query_next
     }
 }
 
@@ -56,9 +44,9 @@ impl<'a, T> IterAPI<'a, T> for Query<'a, T>
 where
     T: Iterable,
 {
-    fn as_entity(&self) -> Entity<'a> {
-        Entity::new_from_existing(self.world, unsafe {
-            ecs_get_entity(self.query.as_ptr() as *const c_void)
+    fn as_entity(&self) -> EntityView<'a> {
+        EntityView::new_from(self.world, unsafe {
+            sys::ecs_get_entity(self.query.as_ptr() as *const c_void)
         })
     }
 }
@@ -78,11 +66,12 @@ where
     /// * C++ API: `query::query`
     #[doc(alias = "query::query")]
     pub fn new(world: impl IntoWorld<'a>) -> Self {
-        let mut desc = ecs_query_desc_t::default();
+        let mut desc = sys::ecs_query_desc_t::default();
         T::register_ids_descriptor(world.world_ptr_mut(), &mut desc.filter);
         let mut filter: FilterT = Default::default();
         desc.filter.storage = &mut filter;
-        let query = unsafe { NonNull::new_unchecked(ecs_query_init(world.world_ptr_mut(), &desc)) };
+        let query =
+            unsafe { NonNull::new_unchecked(sys::ecs_query_init(world.world_ptr_mut(), &desc)) };
         Self {
             world: world.world(),
             query,
@@ -120,8 +109,8 @@ where
     ///
     /// * C++ API: `query::query`
     #[doc(alias = "query::query")]
-    pub fn new_from_desc(world: impl IntoWorld<'a>, desc: &mut ecs_query_desc_t) -> Self {
-        NonNull::new(unsafe { ecs_query_init(world.world_ptr_mut(), desc) })
+    pub fn new_from_desc(world: impl IntoWorld<'a>, desc: &mut sys::ecs_query_desc_t) -> Self {
+        NonNull::new(unsafe { sys::ecs_query_init(world.world_ptr_mut(), desc) })
             .map(|query| {
                 let obj = Self {
                     world: world.world(),
@@ -131,7 +120,7 @@ where
 
                 if !desc.filter.terms_buffer.is_null() {
                     unsafe {
-                        if let Some(free_func) = ecs_os_api.free_ {
+                        if let Some(free_func) = sys::ecs_os_api.free_ {
                             free_func(desc.filter.terms_buffer as *mut _);
                         }
                     }
@@ -166,7 +155,7 @@ where
     #[doc(alias = "query::get_iter")]
     fn get_iter_raw(&mut self, world: &'a World) -> IterT {
         self.world = world.world();
-        unsafe { ecs_query_iter(self.world.world_ptr_mut(), self.query.as_ptr()) }
+        unsafe { sys::ecs_query_iter(self.world.world_ptr_mut(), self.query.as_ptr()) }
     }
 
     ///  Returns whether the query data changed since the last iteration.
@@ -185,7 +174,7 @@ where
     /// * C++ API: `query_base::changed`
     #[doc(alias = "query_base::changed")]
     pub fn is_changed(&self) -> bool {
-        unsafe { ecs_query_changed(self.query.as_ptr(), std::ptr::null()) }
+        unsafe { sys::ecs_query_changed(self.query.as_ptr(), std::ptr::null()) }
     }
 
     /// Returns whether query is orphaned.
@@ -202,7 +191,7 @@ where
     /// * C++ API: `query_base::orphaned`
     #[doc(alias = "query_base::orphaned")]
     pub fn is_orphaned(&self) -> bool {
-        unsafe { ecs_query_orphaned(self.query.as_ptr()) }
+        unsafe { sys::ecs_query_orphaned(self.query.as_ptr()) }
     }
 
     /// Get info for group
@@ -219,8 +208,8 @@ where
     ///
     /// * C++ API: `query_base::get_group_info`
     #[doc(alias = "query_base::get_group_info")]
-    pub fn group_info(&self, group_id: impl IntoEntityId) -> *const QueryGroupInfoT {
-        unsafe { ecs_query_get_group_info(self.query.as_ptr(), group_id.get_id()) }
+    pub fn group_info(&self, group_id: impl IntoEntity) -> *const QueryGroupInfoT {
+        unsafe { sys::ecs_query_get_group_info(self.query.as_ptr(), group_id.get_id()) }
     }
 
     /// Get context for group
@@ -237,7 +226,7 @@ where
     ///
     /// * C++ API: `query_base::group_ctx`
     #[doc(alias = "query_base::group_ctx")]
-    pub fn group_context(&self, group_id: impl IntoEntityId) -> *mut c_void {
+    pub fn group_context(&self, group_id: impl IntoEntity) -> *mut c_void {
         let group_info = self.group_info(group_id);
 
         if !group_info.is_null() {
@@ -255,7 +244,7 @@ where
     #[doc(alias = "query_base::filter")]
     pub fn filter(&self) -> FilterView<'a, T> {
         FilterView::<T>::new(self.world, unsafe {
-            ecs_query_get_filter(self.query.as_ptr())
+            sys::ecs_query_get_filter(self.query.as_ptr())
         })
     }
 }
@@ -273,6 +262,6 @@ where
     /// * C++ API: `query_base::~query_base`
     #[doc(alias = "query_base::~query_base")]
     fn drop(&mut self) {
-        unsafe { ecs_query_fini(self.query.as_ptr()) }
+        unsafe { sys::ecs_query_fini(self.query.as_ptr()) }
     }
 }

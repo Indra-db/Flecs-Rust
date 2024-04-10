@@ -3,8 +3,7 @@ use std::ffi::c_void;
 use flecs_ecs_sys::{ecs_emit, ecs_enqueue, ecs_event_desc_t};
 
 use super::{
-    ecs_pair, ComponentId, EventBuilder, IntoComponentId, IntoEntityId, IntoEntityIdExt, IntoTable,
-    IntoWorld,
+    ecs_pair, ComponentId, EventBuilder, IntoComponentId, IntoEntity, IntoId, IntoTable, IntoWorld,
 };
 
 /// Event builder trait to implement '`set_event_data`' for untyped and typed `EventBuilder`
@@ -23,7 +22,7 @@ pub trait EventBuilderImpl<'a> {
     ///
     /// * C++ API: `event_builder_base::id`
     #[doc(alias = "event_builder_base::id")]
-    fn add_id(&mut self, id: impl IntoEntityIdExt) -> &mut Self {
+    fn add_id(&mut self, id: impl IntoId) -> &mut Self {
         let id = id.get_id();
         let data = self.get_data();
         let ids = &mut data.ids;
@@ -68,7 +67,7 @@ pub trait EventBuilderImpl<'a> {
     ///
     /// * C++ API: `event_builder_base::id`
     #[doc(alias = "event_builder_base::id")]
-    fn add_pair_first_to_emit<First>(&mut self, second: impl IntoEntityId) -> &mut Self
+    fn add_pair_first_to_emit<First>(&mut self, second: impl IntoEntity) -> &mut Self
     where
         First: ComponentId,
     {
@@ -86,7 +85,7 @@ pub trait EventBuilderImpl<'a> {
     ///
     /// * C++ API: `event_builder_base::entity`
     #[doc(alias = "event_builder_base::entity")]
-    fn set_entity_to_emit(&mut self, entity: impl IntoEntityId) -> &mut Self {
+    fn set_entity_to_emit(&mut self, entity: impl IntoEntity) -> &mut Self {
         let desc = &mut self.get_data().desc;
         desc.entity = entity.get_id();
         self

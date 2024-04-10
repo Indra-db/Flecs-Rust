@@ -1,10 +1,5 @@
+use crate::core::*;
 use std::ffi::c_void;
-
-use flecs_ecs_sys::ecs_iter_action_t;
-
-use crate::core::{builder, Builder, Entity, Iter, Iterable};
-
-use super::private;
 
 pub trait ReactorAPI<'a, T>: Builder<'a> + private::internal_ReactorAPI<'a, T>
 where
@@ -56,7 +51,7 @@ where
 
     fn on_each_entity<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
-        Func: FnMut(&mut Entity, T::TupleType<'_>),
+        Func: FnMut(&mut EntityView, T::TupleType<'_>),
     {
         let binding_ctx = self.get_binding_context();
 
@@ -183,4 +178,5 @@ macro_rules! implement_reactor_api {
     };
 }
 
+use flecs_ecs_sys::ecs_iter_action_t;
 pub(crate) use implement_reactor_api;

@@ -10,7 +10,7 @@ struct Planet;
 #[derive(Debug, Component)]
 struct Moon;
 
-fn iterate_tree(entity: Entity, position_parent: &Position) {
+fn iterate_tree(entity: EntityView, position_parent: &Position) {
     // Print hierarchical name of entity & the entity type
     println!("{} [{:?}]", entity.path().unwrap(), entity.archetype());
 

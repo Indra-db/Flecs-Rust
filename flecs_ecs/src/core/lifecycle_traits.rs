@@ -74,7 +74,7 @@ pub fn register_copy_lifecycle_panic_action<T>(type_hooks: &mut TypeHooksT) {
 ///
 /// # Safety
 ///
-/// Can't coexist with T(Entity) or T(World, Entity)
+/// Can't coexist with T(EntityView<'a>) or T(World, Entity)
 ///
 /// # Arguments
 ///

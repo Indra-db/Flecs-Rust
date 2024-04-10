@@ -6,27 +6,22 @@
 
 mod system_builder;
 mod system_runner_fluent;
-
-use std::{ffi::CStr, ops::Deref, os::raw::c_void, ptr::NonNull};
-
 pub use system_builder::*;
 pub use system_runner_fluent::*;
 
-use crate::{
-    core::{Entity, FTime, IntoWorld, Query, TickSource, World, WorldRef},
-    sys::{
-        ecs_os_api, ecs_system_desc_t, ecs_system_get_ctx, ecs_system_get_query, ecs_system_init,
-    },
-};
+use std::{ffi::CStr, ops::Deref, os::raw::c_void, ptr::NonNull};
+
+use crate::core::*;
+use crate::sys;
 
 #[derive(Clone)]
 pub struct System<'a> {
-    pub entity: Entity<'a>,
+    pub entity: EntityView<'a>,
     world: WorldRef<'a>,
 }
 
 impl<'a> Deref for System<'a> {
-    type Target = Entity<'a>;
+    type Target = EntityView<'a>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -47,17 +42,21 @@ impl<'a> System<'a> {
     ///
     /// * C++ API: `system::system`
     #[doc(alias = "system::system")]
-    pub fn new(world: impl IntoWorld<'a>, mut desc: ecs_system_desc_t, is_instanced: bool) -> Self {
+    pub fn new(
+        world: impl IntoWorld<'a>,
+        mut desc: sys::ecs_system_desc_t,
+        is_instanced: bool,
+    ) -> Self {
         if !desc.query.filter.instanced {
             desc.query.filter.instanced = is_instanced;
         }
 
-        let id = unsafe { ecs_system_init(world.world_ptr_mut(), &desc) };
-        let entity = Entity::new_from_existing(world.world(), id);
+        let id = unsafe { sys::ecs_system_init(world.world_ptr_mut(), &desc) };
+        let entity = EntityView::new_from(world.world(), id);
 
         unsafe {
             if !desc.query.filter.terms_buffer.is_null() {
-                if let Some(free_func) = ecs_os_api.free_ {
+                if let Some(free_func) = sys::ecs_os_api.free_ {
                     free_func(desc.query.filter.terms_buffer as *mut _);
                 }
             }
@@ -80,7 +79,7 @@ impl<'a> System<'a> {
     ///
     /// * C++ API: `system::system`
     #[doc(alias = "system::system")]
-    pub fn new_from_existing(world: impl IntoWorld<'a>, system_entity: Entity<'a>) -> Self {
+    pub fn new_from_existing(world: impl IntoWorld<'a>, system_entity: EntityView<'a>) -> Self {
         Self {
             world: world.world(),
             entity: system_entity,
@@ -114,14 +113,14 @@ impl<'a> System<'a> {
     /// * C++ API: `system::ctx`
     #[doc(alias = "system::ctx")]
     pub fn set_context(&mut self, context: *mut c_void) {
-        let desc: ecs_system_desc_t = ecs_system_desc_t {
+        let desc: sys::ecs_system_desc_t = sys::ecs_system_desc_t {
             entity: self.raw_id,
             ctx: context,
             ..Default::default()
         };
 
         unsafe {
-            ecs_system_init(self.world.world_ptr_mut(), &desc);
+            sys::ecs_system_init(self.world.world_ptr_mut(), &desc);
         }
     }
 
@@ -132,7 +131,7 @@ impl<'a> System<'a> {
     /// * C++ API: `system::ctx`
     #[doc(alias = "system::ctx")]
     pub fn context(&self) -> *mut c_void {
-        unsafe { ecs_system_get_ctx(self.world.world_ptr_mut(), self.raw_id) }
+        unsafe { sys::ecs_system_get_ctx(self.world.world_ptr_mut(), self.raw_id) }
     }
 
     /// Get the underlying query for the system
@@ -143,7 +142,7 @@ impl<'a> System<'a> {
     #[doc(alias = "system::query")]
     pub fn query(&self) -> Query<'a, ()> {
         let query = unsafe {
-            NonNull::new_unchecked(ecs_system_get_query(
+            NonNull::new_unchecked(sys::ecs_system_get_query(
                 self.world.world_ptr_mut(),
                 self.raw_id,
             ))

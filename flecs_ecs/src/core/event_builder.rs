@@ -9,7 +9,7 @@ use super::{
     c_types::{IdT, TypeT},
     component_registration::ComponentId,
     event::EventBuilderImpl,
-    IntoEntityId, IntoWorld, WorldRef,
+    IntoEntity, IntoWorld, WorldRef,
 };
 
 pub struct EventBuilder<'a> {
@@ -36,7 +36,7 @@ impl<'a> EventBuilder<'a> {
     ///
     /// * C++ API: `event_builder_base::event_builder_base`
     #[doc(alias = "event_builder_base::event_builder_base")]
-    pub unsafe fn new(world: impl IntoWorld<'a>, event: impl IntoEntityId) -> Self {
+    pub unsafe fn new(world: impl IntoWorld<'a>, event: impl IntoEntity) -> Self {
         let mut obj = Self {
             world: world.world(),
             desc: Default::default(),

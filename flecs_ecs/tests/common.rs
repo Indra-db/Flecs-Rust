@@ -1,7 +1,9 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
-use flecs_ecs::{core::ComponentInfo, macros::Component};
+use flecs_ecs::core::*;
+use flecs_ecs::core::*;
+use flecs_ecs_derive::Component;
 
 #[cfg(test)]
 #[ctor::ctor]

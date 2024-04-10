@@ -1,6 +1,6 @@
 use std::{ops::Deref, os::raw::c_void};
 
-use crate::core::{Entity, IdT, IntoWorld};
+use crate::core::*;
 
 pub type FTime = f32;
 
@@ -22,8 +22,8 @@ impl EntityId {
     /// # Arguments
     ///
     /// * `world` - The world the entity belongs to
-    pub fn to_entity<'a>(&self, world: impl IntoWorld<'a>) -> Entity<'a> {
-        Entity::new_from_existing(world, self.0)
+    pub fn to_entity<'a>(&self, world: impl IntoWorld<'a>) -> EntityView<'a> {
+        EntityView::new_from(world, self.0)
     }
 }
 

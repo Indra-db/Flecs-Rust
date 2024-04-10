@@ -1,8 +1,4 @@
-use crate::ecs_assert;
-
-use super::component_registration::ComponentId;
-#[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-use crate::core::FlecsErrorCode;
+use crate::core::*;
 use std::{
     ops::{Deref, DerefMut, Index, IndexMut},
     os::raw::c_void,
@@ -14,18 +10,12 @@ use std::{
 ///
 /// * `T`: The type of the column.
 
-pub struct Column<'a, T>
-where
-    T: ComponentId,
-{
+pub struct Column<'a, T> {
     slice_components: &'a mut [T],
     is_shared: bool,
 }
 
-impl<'a, T> Column<'a, T>
-where
-    T: ComponentId,
-{
+impl<'a, T> Column<'a, T> {
     /// Create a new column from component array.
     ///
     /// # Arguments
