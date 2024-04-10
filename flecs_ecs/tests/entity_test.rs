@@ -1,7 +1,7 @@
 use std::ffi::{c_void, CStr};
 
 use flecs_ecs::{
-    core::{flecs, id::Id, world::World, EntityView, FlecsConstantId, ReactorAPI},
+    core::{flecs, id::IdView, world::World, EntityView, FlecsConstantId, ReactorAPI},
     sys::EcsComponent,
 };
 
@@ -468,7 +468,7 @@ fn entity_pair_role() {
     let entity = world.new_entity();
     let entity2 = world.new_entity();
 
-    let pair: Id = Id::new(&world, (entity, entity2));
+    let pair: IdView = IdView::new(&world, (entity, entity2));
     let pair = pair.add_flags(flecs::Pair::ID);
 
     assert!(pair.has_flags_for(flecs::Pair::ID));

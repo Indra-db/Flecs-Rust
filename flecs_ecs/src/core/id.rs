@@ -17,30 +17,30 @@ use crate::sys;
 /// * [flecs C++ documentation](https://www.flecs.dev/flecs/structflecs_1_1id.html#details)
 /// * [flecs C documentation](https://www.flecs.dev/flecs/group__ids.html)
 #[derive(Debug, Clone, Copy, Eq)]
-pub struct Id<'a> {
+pub struct IdView<'a> {
     pub(crate) world: WorldRef<'a>,
     pub raw_id: IdT,
 }
 
-impl<'a> PartialEq for Id<'a> {
+impl<'a> PartialEq for IdView<'a> {
     fn eq(&self, other: &Self) -> bool {
         self.raw_id == other.raw_id
     }
 }
 
-impl<'a> PartialOrd for Id<'a> {
+impl<'a> PartialOrd for IdView<'a> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.raw_id.cmp(&other.raw_id))
     }
 }
 
-impl<'a> Ord for Id<'a> {
+impl<'a> Ord for IdView<'a> {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.raw_id.cmp(&other.raw_id)
     }
 }
 
-impl<'a> std::ops::Deref for Id<'a> {
+impl<'a> std::ops::Deref for IdView<'a> {
     type Target = u64;
 
     #[inline]
@@ -49,7 +49,7 @@ impl<'a> std::ops::Deref for Id<'a> {
     }
 }
 
-impl<'a> Id<'a> {
+impl<'a> IdView<'a> {
     /// Wraps an id or pair
     ///
     /// # Arguments

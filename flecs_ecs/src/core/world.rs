@@ -2755,8 +2755,8 @@ impl World {
     /// * C++ API: `world::pair`
     #[doc(alias = "world::id")]
     #[doc(alias = "world::pair")]
-    pub fn get_id<T: IntoComponentId>(&self) -> Id {
-        Id::new(self, T::get_id(self))
+    pub fn get_id<T: IntoComponentId>(&self) -> IdView {
+        IdView::new(self, T::get_id(self))
     }
 
     /// get pair id from relationship, object.
@@ -2774,13 +2774,13 @@ impl World {
     ///
     /// * C++ API: `world::pair`
     #[doc(alias = "world::pair")]
-    pub fn get_id_pair_ids(&self, first: impl IntoEntity, second: impl IntoEntity) -> Id {
+    pub fn get_id_pair_ids(&self, first: impl IntoEntity, second: impl IntoEntity) -> IdView {
         ecs_assert!(
             !ecs_is_pair(first.get_id()) && !ecs_is_pair(second.get_id()),
             FlecsErrorCode::InvalidParameter,
             "cannot create nested pairs"
         );
-        Id::new(self, (first, second))
+        IdView::new(self, (first, second))
     }
 
     /// get pair id from relationship, object.
@@ -2801,13 +2801,13 @@ impl World {
     ///
     /// * C++ API: `world::pair`
     #[doc(alias = "world::pair")]
-    pub fn get_id_pair_first<First: ComponentId>(&self, second: impl IntoEntity) -> Id {
+    pub fn get_id_pair_first<First: ComponentId>(&self, second: impl IntoEntity) -> IdView {
         ecs_assert!(
             !ecs_is_pair(second.get_id()),
             FlecsErrorCode::InvalidParameter,
             "cannot create nested pairs"
         );
-        Id::new(self, (First::get_id(self), second))
+        IdView::new(self, (First::get_id(self), second))
     }
 }
 

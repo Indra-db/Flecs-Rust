@@ -124,7 +124,7 @@ impl IntoId for IdT {
     }
 }
 
-impl<'a> IntoId for Id<'a> {
+impl<'a> IntoId for IdView<'a> {
     const IS_PAIR: bool = false;
 
     #[inline]

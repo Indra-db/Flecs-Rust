@@ -130,9 +130,9 @@ impl<'a> Archetype<'a> {
     ///
     /// * C++ API: `type::get`
     #[doc(alias = "type::get")]
-    pub fn get(&self, index: usize) -> Option<Id> {
+    pub fn get(&self, index: usize) -> Option<IdView> {
         if index < self.count() {
-            Some(Id::new(self.world, self.type_vec[index]))
+            Some(IdView::new(self.world, self.type_vec[index]))
         } else {
             None
         }

@@ -17,7 +17,7 @@ pub trait IntoWorld<'a> {
     fn world(&self) -> WorldRef<'a>;
 }
 
-impl<'a> IntoWorld<'a> for Id<'a> {
+impl<'a> IntoWorld<'a> for IdView<'a> {
     #[inline]
     fn world(&self) -> WorldRef<'a> {
         self.world

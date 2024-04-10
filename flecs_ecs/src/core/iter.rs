@@ -68,8 +68,8 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::event_id`
     #[doc(alias = "iter::event_id")]
-    pub fn event_id(&self) -> Id<'a> {
-        Id::new(self.world(), self.iter.event_id)
+    pub fn event_id(&self) -> IdView<'a> {
+        IdView::new(self.world(), self.iter.event_id)
     }
 
     /// Obtain mutable handle to entity being iterated over.
@@ -345,8 +345,8 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::id`
     #[doc(alias = "iter::id")]
-    pub fn id(&self, index: i32) -> Id<'a> {
-        unsafe { Id::new(self.world(), sys::ecs_field_id(self.iter, index)) }
+    pub fn id(&self, index: i32) -> IdView<'a> {
+        unsafe { IdView::new(self.world(), sys::ecs_field_id(self.iter, index)) }
     }
 
     /// Obtain pair id matched for field.
@@ -360,11 +360,11 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::pair`
     #[doc(alias = "iter::pair")]
-    pub fn pair(&self, index: i32) -> Option<Id<'a>> {
+    pub fn pair(&self, index: i32) -> Option<IdView<'a>> {
         unsafe {
             let id = sys::ecs_field_id(self.iter, index);
             if sys::ecs_id_is_pair(id) {
-                Some(Id::new(self.world(), id))
+                Some(IdView::new(self.world(), id))
             } else {
                 None
             }

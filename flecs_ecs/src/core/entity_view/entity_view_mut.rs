@@ -1798,7 +1798,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::view`
     #[doc(alias = "entity::view")]
-    pub fn as_id_view(&self) -> Id<'a> {
+    pub fn as_id_view(&self) -> IdView<'a> {
         self.id
     }
 }

@@ -10,7 +10,7 @@ use flecs_ecs::core::*;
 
 #[derive(Clone, Copy)]
 pub struct EntityView<'a> {
-    pub id: Id<'a>,
+    pub id: IdView<'a>,
 }
 
 impl<'a, T> PartialEq<T> for EntityView<'a>
@@ -43,7 +43,7 @@ impl<'a> Ord for EntityView<'a> {
 }
 
 impl<'a> Deref for EntityView<'a> {
-    type Target = Id<'a>;
+    type Target = IdView<'a>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -95,7 +95,7 @@ impl<'a> EntityView<'a> {
     pub fn new(world: impl IntoWorld<'a>) -> Self {
         let id = unsafe { sys::ecs_new_id(world.world_ptr_mut()) };
         Self {
-            id: Id::new(world, id),
+            id: IdView::new(world, id),
         }
     }
 
@@ -116,7 +116,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity::entity")]
     pub fn new_from(world: impl IntoWorld<'a>, id: impl IntoId) -> Self {
         Self {
-            id: Id::new(world, id),
+            id: IdView::new(world, id),
         }
     }
 
@@ -150,7 +150,7 @@ impl<'a> EntityView<'a> {
         };
         let id = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &desc) };
         Self {
-            id: Id::new(world, id),
+            id: IdView::new(world, id),
         }
     }
 
@@ -426,14 +426,14 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::each")]
     pub fn for_each_component<F>(self, mut func: F)
     where
-        F: FnMut(Id),
+        F: FnMut(IdView),
     {
         let archetype = self.archetype();
 
         for &id in archetype.as_slice() {
             // Union object is not stored in type, so handle separately
             if ecs_pair_first(id) == flecs::Union::ID {
-                let ent = Id::new(
+                let ent = IdView::new(
                     self.world,
                     (ecs_pair_second(id), unsafe {
                         sys::ecs_get_target(
@@ -447,7 +447,7 @@ impl<'a> EntityView<'a> {
 
                 func(ent);
             } else {
-                let ent = Id {
+                let ent = IdView {
                     world: self.world,
                     raw_id: id,
                 };
@@ -474,7 +474,7 @@ impl<'a> EntityView<'a> {
         obj: impl IntoEntity,
         mut func: F,
     ) where
-        F: FnMut(Id),
+        F: FnMut(IdView),
     {
         // this is safe because we are only reading the world
         let real_world = self.world.real_world();
@@ -508,7 +508,7 @@ impl<'a> EntityView<'a> {
             };
             cur != -1
         } {
-            let ent = Id::new(self.world, ids[cur as usize]);
+            let ent = IdView::new(self.world, ids[cur as usize]);
             func(ent);
             cur += 1;
         }

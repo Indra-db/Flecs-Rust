@@ -261,8 +261,8 @@ impl<'a> Term<'a> {
     ///
     /// * C++ API: `term::id`
     #[doc(alias = "term::id")]
-    pub fn id(&self) -> Id {
-        Id::new(self.world, self.term.id)
+    pub fn id(&self) -> IdView {
+        IdView::new(self.world, self.term.id)
     }
 
     /// Get the inout type of term
