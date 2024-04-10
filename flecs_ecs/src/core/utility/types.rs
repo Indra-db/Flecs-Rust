@@ -1,54 +1,6 @@
-use std::{ops::Deref, os::raw::c_void};
-
-use crate::core::{Entity, IdT, IntoWorld};
+use std::os::raw::c_void;
 
 pub type FTime = f32;
-
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Default, Clone, Copy)]
-pub struct EntityId(pub IdT);
-
-impl EntityId {
-    #[inline]
-    pub fn new(id: IdT) -> Self {
-        Self(id)
-    }
-
-    /// Convert the entity id to an entity with the given world.
-    ///
-    /// # Safety
-    ///
-    /// This entity is safe to do operations on if the entity belongs to the world
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - The world the entity belongs to
-    pub fn to_entity<'a>(&self, world: impl IntoWorld<'a>) -> Entity<'a> {
-        Entity::new_from_existing(world, self.0)
-    }
-}
-
-impl From<EntityId> for IdT {
-    #[inline]
-    fn from(id: EntityId) -> Self {
-        id.0
-    }
-}
-
-impl From<IdT> for EntityId {
-    #[inline]
-    fn from(id: IdT) -> Self {
-        Self(id)
-    }
-}
-
-impl Deref for EntityId {
-    type Target = IdT;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
 
 pub(crate) type EcsCtxFreeT = extern "C" fn(*mut c_void);
 

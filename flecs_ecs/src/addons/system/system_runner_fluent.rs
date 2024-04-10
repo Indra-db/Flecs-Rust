@@ -1,9 +1,7 @@
 use std::os::raw::c_void;
 
-use crate::{
-    core::{c_types::EntityT, world::World, FTime, IntoWorld},
-    sys::{ecs_run_w_filter, ecs_run_worker},
-};
+use crate::core::*;
+use crate::sys;
 
 pub struct SystemRunnerFluent<'a> {
     stage: &'a World,
@@ -57,7 +55,7 @@ impl<'a> Drop for SystemRunnerFluent<'a> {
     fn drop(&mut self) {
         if self.stage_count != 0 {
             unsafe {
-                ecs_run_worker(
+                sys::ecs_run_worker(
                     self.stage.world_ptr_mut(),
                     self.id,
                     self.stage_current,
@@ -68,7 +66,7 @@ impl<'a> Drop for SystemRunnerFluent<'a> {
             }
         } else {
             unsafe {
-                ecs_run_w_filter(
+                sys::ecs_run_w_filter(
                     self.stage.world_ptr_mut(),
                     self.id,
                     self.delta_time,

@@ -1,6 +1,5 @@
-use flecs_ecs_sys::ecs_table_range_t;
-
-use crate::core::{Table, TableRange, TableT};
+use crate::core::*;
+use crate::sys;
 
 pub trait IntoTable {
     fn table_ptr_mut(&self) -> *mut TableT;
@@ -36,7 +35,7 @@ impl IntoTable for TableRange<'_> {
 
 pub trait IntoTableRange {
     fn table_range(&self) -> TableRange;
-    fn table_range_raw(&self) -> ecs_table_range_t;
+    fn table_range_raw(&self) -> sys::ecs_table_range_t;
 }
 
 impl IntoTableRange for TableRange<'_> {
@@ -46,8 +45,8 @@ impl IntoTableRange for TableRange<'_> {
     }
 
     #[inline]
-    fn table_range_raw(&self) -> ecs_table_range_t {
-        ecs_table_range_t {
+    fn table_range_raw(&self) -> sys::ecs_table_range_t {
+        sys::ecs_table_range_t {
             table: self.table.table_ptr_mut(),
             offset: self.offset(),
             count: self.count(),
@@ -62,8 +61,8 @@ impl IntoTableRange for Table<'_> {
     }
 
     #[inline]
-    fn table_range_raw(&self) -> ecs_table_range_t {
-        ecs_table_range_t {
+    fn table_range_raw(&self) -> sys::ecs_table_range_t {
+        sys::ecs_table_range_t {
             table: self.table_ptr_mut(),
             offset: 0,
             count: self.count(),

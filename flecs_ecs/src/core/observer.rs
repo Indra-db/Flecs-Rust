@@ -1,24 +1,16 @@
 use std::{ops::Deref, os::raw::c_void, ptr::NonNull};
 
-use crate::sys::{
-    ecs_observer_desc_t, ecs_observer_get_ctx, ecs_observer_init, ecs_observer_t, ecs_os_api,
-};
-
-use super::{
-    c_types::{Poly, ECS_OBSERVER},
-    entity::Entity,
-    filter::Filter,
-    IntoWorld, WorldRef,
-};
+use crate::core::*;
+use crate::sys;
 
 #[derive(Clone)]
 pub struct Observer<'a> {
-    pub entity: Entity<'a>,
+    pub entity: EntityView<'a>,
     world: WorldRef<'a>,
 }
 
 impl<'a> Deref for Observer<'a> {
-    type Target = Entity<'a>;
+    type Target = EntityView<'a>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -36,19 +28,19 @@ impl<'a> Observer<'a> {
     #[doc(alias = "observer::observer")]
     pub fn new(
         world: impl IntoWorld<'a>,
-        mut desc: ecs_observer_desc_t,
+        mut desc: sys::ecs_observer_desc_t,
         is_instanced: bool,
     ) -> Self {
         if !desc.filter.instanced {
             desc.filter.instanced = is_instanced;
         }
 
-        let id = unsafe { ecs_observer_init(world.world_ptr_mut(), &desc) };
-        let entity = Entity::new_from_existing(world.world(), id);
+        let id = unsafe { sys::ecs_observer_init(world.world_ptr_mut(), &desc) };
+        let entity = EntityView::new_from(world.world(), id);
 
         unsafe {
             if !desc.filter.terms_buffer.is_null() {
-                if let Some(free_func) = ecs_os_api.free_ {
+                if let Some(free_func) = sys::ecs_os_api.free_ {
                     free_func(desc.filter.terms_buffer as *mut _);
                 }
             }
@@ -61,7 +53,7 @@ impl<'a> Observer<'a> {
     }
 
     /// Wrap an existing observer entity in an observer object
-    pub fn new_from_existing(world: impl IntoWorld<'a>, observer_entity: Entity<'a>) -> Self {
+    pub fn new_from_existing(world: impl IntoWorld<'a>, observer_entity: EntityView<'a>) -> Self {
         Self {
             world: world.world(),
             entity: observer_entity,
@@ -75,14 +67,14 @@ impl<'a> Observer<'a> {
     /// * C++ API: `observer::ctx`
     #[doc(alias = "observer::ctx")]
     pub fn set_context(&mut self, context: *mut c_void) {
-        let desc: ecs_observer_desc_t = ecs_observer_desc_t {
+        let desc: sys::ecs_observer_desc_t = sys::ecs_observer_desc_t {
             entity: self.raw_id,
             ctx: context,
             ..Default::default()
         };
 
         unsafe {
-            ecs_observer_init(self.world.world_ptr_mut(), &desc);
+            sys::ecs_observer_init(self.world.world_ptr_mut(), &desc);
         }
     }
 
@@ -93,7 +85,7 @@ impl<'a> Observer<'a> {
     /// * C++ API: `observer::ctx`
     #[doc(alias = "observer::ctx")]
     pub fn context(&self) -> *mut c_void {
-        unsafe { ecs_observer_get_ctx(self.world.world_ptr_mut(), self.raw_id) }
+        unsafe { sys::ecs_observer_get_ctx(self.world.world_ptr_mut(), self.raw_id) }
     }
 
     /// Get the filter for the observer
@@ -104,7 +96,7 @@ impl<'a> Observer<'a> {
     #[doc(alias = "observer::query")]
     pub fn query(&mut self) -> Filter<()> {
         let poly: *const Poly = self.target_for_pair_first::<Poly>(ECS_OBSERVER);
-        let obj: *mut ecs_observer_t = unsafe { (*poly).poly as *mut ecs_observer_t };
+        let obj: *mut sys::ecs_observer_t = unsafe { (*poly).poly as *mut sys::ecs_observer_t };
         unsafe {
             Filter::<()>::new_ownership(self.world, NonNull::new_unchecked(&mut (*obj).filter))
         }

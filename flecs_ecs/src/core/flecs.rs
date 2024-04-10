@@ -1,13 +1,6 @@
-//pub const ECS_MODULE: u64 = FLECS_HI_COMPONENT_ID + 4;
-
 use std::{ffi::CStr, sync::OnceLock};
 
-use super::{
-    ComponentId, ComponentInfo, ComponentType, EmptyComponent, FlecsConstantId, IdComponent,
-    IntoWorld, NoneEnum, Struct,
-};
-
-use super::c_types::*;
+use crate::core::*;
 
 #[macro_export]
 macro_rules! create_pre_registered_component {
@@ -190,7 +183,7 @@ pub mod pipeline {
     create_pre_registered_component!(Phase, ECS_PHASE);
 }
 
-pub mod testggg {
+pub mod meta {
     use super::*;
     // Meta primitive components (don't use low ids to save id space)
     create_pre_registered_component!(Bool, ECS_BOOL_T);

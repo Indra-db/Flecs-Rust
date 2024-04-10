@@ -1,14 +1,8 @@
 use std::marker::PhantomData;
 
+use crate::core::*;
+use crate::sys;
 use flecs_ecs_derive::tuples;
-
-use crate::sys::{self, ecs_filter_desc_t, ecs_inout_kind_t, ecs_oper_kind_t};
-
-use super::{
-    c_types::{IterT, OperKind, TermT},
-    component_registration::ComponentId,
-    ecs_field, FilterBuilderImpl, InOutKind, WorldRef, WorldT,
-};
 
 pub trait Filterable<'a>: Sized + FilterBuilderImpl<'a> {
     fn current_term(&mut self) -> &mut TermT;
@@ -115,7 +109,7 @@ where
     type OnlyType = T;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::In as ecs_inout_kind_t;
+        term.inout = InOutKind::In as sys::ecs_inout_kind_t;
     }
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
@@ -172,7 +166,7 @@ where
     type OnlyType = T;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::InOut as ecs_inout_kind_t;
+        term.inout = InOutKind::InOut as sys::ecs_inout_kind_t;
     }
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
@@ -229,8 +223,8 @@ where
     type OnlyType = T;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::In as ecs_inout_kind_t;
-        term.oper = OperKind::Optional as ecs_oper_kind_t;
+        term.inout = InOutKind::In as sys::ecs_inout_kind_t;
+        term.oper = OperKind::Optional as sys::ecs_oper_kind_t;
     }
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
@@ -295,8 +289,8 @@ where
     type OnlyType = T;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::InOut as ecs_inout_kind_t;
-        term.oper = OperKind::Optional as ecs_oper_kind_t;
+        term.inout = InOutKind::InOut as sys::ecs_inout_kind_t;
+        term.oper = OperKind::Optional as sys::ecs_oper_kind_t;
     }
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
@@ -362,7 +356,7 @@ pub trait Iterable: Sized {
 
     fn populate<'a>(filter: &mut impl Filterable<'a>);
 
-    fn register_ids_descriptor(world: *mut WorldT, desc: &mut ecs_filter_desc_t) {
+    fn register_ids_descriptor(world: *mut WorldT, desc: &mut sys::ecs_filter_desc_t) {
         Self::register_ids_descriptor_at(world, &mut desc.terms[..], &mut 0);
     }
 
@@ -405,7 +399,7 @@ where
     type TupleSliceType<'w> = A::SliceType<'w>;
 
     fn populate<'a>(filter: &mut impl Filterable<'a>) {
-        filter.term_with_id(A::OnlyType::get_id(filter.world()));
+        filter.term_with_id(<A::OnlyType as ComponentId>::get_id(filter.world()));
         let term = filter.current_term();
         A::populate_term(term);
 
@@ -418,7 +412,7 @@ where
         index: &mut usize,
     ) {
         let world = unsafe { WorldRef::from_ptr(world) };
-        terms[*index].id = A::OnlyType::get_id(world);
+        terms[*index].id = <A::OnlyType as ComponentId>::get_id(world);
         A::populate_term(&mut terms[*index]);
         *index += 1;
     }
@@ -623,7 +617,7 @@ macro_rules! impl_iterable {
             fn populate<'a>(filter: &mut impl Filterable<'a>) {
                 let _world = filter.world();
                 $(
-                    filter.term_with_id($t::OnlyType::get_id(_world));
+                    filter.term_with_id(<$t::OnlyType as ComponentId>::get_id(_world));
                     let term = filter.current_term();
                     $t::populate_term(term);
 

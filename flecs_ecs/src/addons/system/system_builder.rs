@@ -1,38 +1,17 @@
 //! Systems are a query + function that can be ran manually or by a pipeline.
-use std::{
-    ffi::CStr,
-    ops::{Deref, DerefMut},
-    os::raw::c_void,
-};
 
-use crate::{
-    core::{
-        c_types::{EntityT, FTimeT, TermIdT, TermT, ECS_DEPENDS_ON, SEPARATOR},
-        component_registration::ComponentId,
-        ecs_dependson,
-        filter_builder::FilterBuilderImpl,
-        implement_reactor_api,
-        iterable::{Filterable, Iterable},
-        private::internal_ReactorAPI,
-        query_builder::{QueryBuilder, QueryBuilderImpl},
-        term::{Term, TermBuilder},
-        world::World,
-        Builder, IntoEntityId, IntoWorld, ReactorAPI, WorldRef, ECS_ON_UPDATE,
-    },
-    sys::{
-        ecs_add_id, ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_get_target,
-        ecs_iter_action_t, ecs_query_desc_t, ecs_remove_id, ecs_system_desc_t,
-    },
-};
+use std::ops::DerefMut;
 
-use super::System;
+use crate::addons::system::*;
+use crate::core::private::internal_ReactorAPI;
+use crate::core::*;
 
 pub struct SystemBuilder<'a, T>
 where
     T: Iterable,
 {
     query_builder: QueryBuilder<'a, T>,
-    desc: ecs_system_desc_t,
+    desc: sys::ecs_system_desc_t,
     is_instanced: bool,
 }
 
@@ -71,53 +50,53 @@ where
             is_instanced: false,
         };
 
-        let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
+        let entity_desc: sys::ecs_entity_desc_t = sys::ecs_entity_desc_t {
             name: std::ptr::null(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
-        obj.desc.entity = unsafe { ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
 
         T::populate(&mut obj);
 
         #[cfg(feature = "flecs_pipeline")]
         unsafe {
-            ecs_add_id(
+            sys::ecs_add_id(
                 world.world_ptr_mut(),
                 obj.desc.entity,
                 ecs_dependson(ECS_ON_UPDATE),
             );
-            ecs_add_id(world.world_ptr_mut(), obj.desc.entity, ECS_ON_UPDATE);
+            sys::ecs_add_id(world.world_ptr_mut(), obj.desc.entity, ECS_ON_UPDATE);
         }
 
         obj
     }
 
-    pub fn new_from_desc(world: &'a World, mut desc: ecs_system_desc_t) -> Self {
+    pub fn new_from_desc(world: &'a World, mut desc: sys::ecs_system_desc_t) -> Self {
         let mut obj = Self {
             desc,
             query_builder: QueryBuilder::<T>::new_from_desc(world, &mut desc.query),
             is_instanced: false,
         };
-        let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
+        let entity_desc: sys::ecs_entity_desc_t = sys::ecs_entity_desc_t {
             name: std::ptr::null(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
-        obj.desc.entity = unsafe { ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
 
         T::populate(&mut obj);
 
         #[cfg(feature = "flecs_pipeline")]
         unsafe {
-            ecs_add_id(
+            sys::ecs_add_id(
                 world.world_ptr_mut(),
                 obj.desc.entity,
                 ecs_dependson(ECS_ON_UPDATE),
             );
-            ecs_add_id(world.world_ptr_mut(), obj.desc.entity, ECS_ON_UPDATE);
+            sys::ecs_add_id(world.world_ptr_mut(), obj.desc.entity, ECS_ON_UPDATE);
         }
 
         obj
@@ -130,23 +109,23 @@ where
             query_builder: QueryBuilder::<T>::new_from_desc(world, &mut desc.query),
             is_instanced: false,
         };
-        let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
+        let entity_desc: sys::ecs_entity_desc_t = sys::ecs_entity_desc_t {
             name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
-        obj.desc.entity = unsafe { ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
 
         #[cfg(feature = "flecs_pipeline")]
         unsafe {
-            ecs_add_id(
+            sys::ecs_add_id(
                 world.world_ptr_mut(),
                 obj.desc.entity,
                 ecs_dependson(ECS_ON_UPDATE),
             );
-            ecs_add_id(world.world_ptr_mut(), obj.desc.entity, ECS_ON_UPDATE);
+            sys::ecs_add_id(world.world_ptr_mut(), obj.desc.entity, ECS_ON_UPDATE);
         }
         obj
     }
@@ -161,10 +140,10 @@ where
     ///
     /// * C++ API: `system_builder_i::kind`
     #[doc(alias = "system_builder_i::kind")]
-    pub fn kind_id(&mut self, phase: impl IntoEntityId) -> &mut Self {
+    pub fn kind_id(&mut self, phase: impl IntoEntity) -> &mut Self {
         let phase = phase.get_id();
         let current_phase: EntityT = unsafe {
-            ecs_get_target(
+            sys::ecs_get_target(
                 self.world.world_ptr_mut(),
                 self.desc.entity,
                 ECS_DEPENDS_ON,
@@ -173,20 +152,20 @@ where
         };
         unsafe {
             if current_phase != 0 {
-                ecs_remove_id(
+                sys::ecs_remove_id(
                     self.world.world_ptr_mut(),
                     self.desc.entity,
                     ecs_dependson(current_phase),
                 );
-                ecs_remove_id(self.world.world_ptr_mut(), self.desc.entity, current_phase);
+                sys::ecs_remove_id(self.world.world_ptr_mut(), self.desc.entity, current_phase);
             }
             if phase != 0 {
-                ecs_add_id(
+                sys::ecs_add_id(
                     self.world.world_ptr_mut(),
                     self.desc.entity,
                     ecs_dependson(phase),
                 );
-                ecs_add_id(self.world.world_ptr_mut(), self.desc.entity, phase);
+                sys::ecs_add_id(self.world.world_ptr_mut(), self.desc.entity, phase);
             }
         };
         self
@@ -269,7 +248,7 @@ where
     ///
     /// * C++ API: `system_builder_i::rate`
     #[doc(alias = "system_builder_i::rate")]
-    pub fn rate_w_tick_source(&mut self, tick_source: impl IntoEntityId, rate: i32) -> &mut Self {
+    pub fn rate_w_tick_source(&mut self, tick_source: impl IntoEntity, rate: i32) -> &mut Self {
         self.desc.rate = rate;
         self.desc.tick_source = tick_source.get_id();
         self
@@ -304,7 +283,7 @@ where
     ///
     /// * C++ API: `system_builder_i::tick_source`
     #[doc(alias = "system_builder_i::tick_source")]
-    pub fn tick_source_id(&mut self, tick_source: impl IntoEntityId) -> &mut Self {
+    pub fn tick_source_id(&mut self, tick_source: impl IntoEntity) -> &mut Self {
         self.desc.tick_source = tick_source.get_id();
         self
     }
@@ -347,7 +326,7 @@ where
     T: Iterable,
 {
     #[inline]
-    fn desc_filter_mut(&mut self) -> &mut ecs_filter_desc_t {
+    fn desc_filter_mut(&mut self) -> &mut sys::ecs_filter_desc_t {
         &mut self.desc.query.filter
     }
 
@@ -387,7 +366,7 @@ where
     T: Iterable,
 {
     #[inline]
-    fn desc_query_mut(&mut self) -> &mut ecs_query_desc_t {
+    fn desc_query_mut(&mut self) -> &mut sys::ecs_query_desc_t {
         &mut self.desc.query
     }
 }

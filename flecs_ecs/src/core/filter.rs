@@ -1,16 +1,7 @@
-//! Filters are cheaper to create, but slower to iterate than queries.
-
 use std::ptr::NonNull;
 
-use crate::sys::{
-    ecs_abort_, ecs_filter_copy, ecs_filter_desc_t, ecs_filter_fini, ecs_filter_init,
-    ecs_filter_iter, ecs_filter_move, ecs_filter_next, ecs_get_entity, ecs_os_api,
-};
-
-use super::{
-    c_types::FilterT, entity::Entity, iterable::Iterable, FlecsErrorCode, IntoWorld, IterAPI,
-    IterOperations, WorldRef,
-};
+use crate::core::*;
+use crate::sys;
 
 pub struct FilterView<'a, T>
 where
@@ -83,11 +74,11 @@ where
     /// * C++ API: `filter::filter`
     #[doc(alias = "filter::filter")]
     pub fn new(world: impl IntoWorld<'a>) -> Self {
-        let mut desc = ecs_filter_desc_t::default();
+        let mut desc = sys::ecs_filter_desc_t::default();
         T::register_ids_descriptor(world.world_ptr_mut(), &mut desc);
         let mut filter: FilterT = Default::default();
         desc.storage = &mut filter;
-        unsafe { ecs_filter_init(world.world_ptr_mut(), &desc) };
+        unsafe { sys::ecs_filter_init(world.world_ptr_mut(), &desc) };
         Filter {
             world: world.world(),
             _phantom: std::marker::PhantomData,
@@ -116,7 +107,7 @@ where
             filter: Default::default(),
         };
 
-        unsafe { ecs_filter_move(&mut filter_obj.filter, filter.as_ptr()) };
+        unsafe { sys::ecs_filter_move(&mut filter_obj.filter, filter.as_ptr()) };
 
         filter_obj
     }
@@ -134,7 +125,7 @@ where
     ///
     /// * C++ API: `filter::filter`
     #[doc(alias = "filter::filter")]
-    pub fn new_from_desc(world: impl IntoWorld<'a>, desc: &mut ecs_filter_desc_t) -> Self {
+    pub fn new_from_desc(world: impl IntoWorld<'a>, desc: &mut sys::ecs_filter_desc_t) -> Self {
         let mut filter_obj = Filter {
             world: world.world(),
             _phantom: std::marker::PhantomData,
@@ -144,21 +135,21 @@ where
         desc.storage = &mut filter_obj.filter;
 
         unsafe {
-            if ecs_filter_init(filter_obj.world.world_ptr_mut(), desc).is_null() {
-                ecs_abort_(
+            if sys::ecs_filter_init(filter_obj.world.world_ptr_mut(), desc).is_null() {
+                sys::ecs_abort_(
                     FlecsErrorCode::InvalidParameter.to_int(),
                     file!().as_ptr() as *const i8,
                     line!() as i32,
                     std::ptr::null(),
                 );
 
-                if let Some(abort_func) = ecs_os_api.abort_ {
+                if let Some(abort_func) = sys::ecs_os_api.abort_ {
                     abort_func();
                 }
             }
 
             if !desc.terms_buffer.is_null() {
-                if let Some(free_func) = ecs_os_api.free_ {
+                if let Some(free_func) = sys::ecs_os_api.free_ {
                     free_func(desc.terms_buffer as *mut _);
                 }
             }
@@ -178,7 +169,7 @@ where
         //self.filter.owned = false;
         //TODO the above code, `.owned` got removed in upgrading flecs from 3.2.4 to 3.2.11,
         // so we need to find a new? way to prevent the memory from being freed if it's stack allocated
-        unsafe { ecs_filter_fini(&mut self.filter) }
+        unsafe { sys::ecs_filter_fini(&mut self.filter) }
     }
 }
 
@@ -193,7 +184,7 @@ where
             filter: Default::default(),
         };
 
-        unsafe { ecs_filter_copy(&mut new_filter.filter, &self.filter) };
+        unsafe { sys::ecs_filter_copy(&mut new_filter.filter, &self.filter) };
         new_filter
     }
 }
@@ -212,11 +203,11 @@ where
     T: Iterable,
 {
     fn retrieve_iter(&self) -> super::IterT {
-        unsafe { ecs_filter_iter(self.world.world_ptr_mut(), &self.filter) }
+        unsafe { sys::ecs_filter_iter(self.world.world_ptr_mut(), &self.filter) }
     }
 
     fn iter_next(&self, iter: &mut super::IterT) -> bool {
-        unsafe { ecs_filter_next(iter) }
+        unsafe { sys::ecs_filter_next(iter) }
     }
 
     fn filter_ptr(&self) -> *const FilterT {
@@ -224,7 +215,7 @@ where
     }
 
     fn iter_next_func(&self) -> unsafe extern "C" fn(*mut super::IterT) -> bool {
-        ecs_filter_next
+        sys::ecs_filter_next
     }
 }
 
@@ -241,9 +232,9 @@ impl<'a, T> IterAPI<'a, T> for FilterView<'a, T>
 where
     T: Iterable,
 {
-    fn as_entity(&self) -> Entity {
-        Entity::new_from_existing(self.world, unsafe {
-            ecs_get_entity(self.filter_ptr as *const _)
+    fn as_entity(&self) -> EntityView {
+        EntityView::new_from(self.world, unsafe {
+            sys::ecs_get_entity(self.filter_ptr as *const _)
         })
     }
 }
@@ -253,11 +244,11 @@ where
     T: Iterable,
 {
     fn retrieve_iter(&self) -> super::IterT {
-        unsafe { ecs_filter_iter(self.world.world_ptr_mut(), self.filter_ptr) }
+        unsafe { sys::ecs_filter_iter(self.world.world_ptr_mut(), self.filter_ptr) }
     }
 
     fn iter_next(&self, iter: &mut super::IterT) -> bool {
-        unsafe { ecs_filter_next(iter) }
+        unsafe { sys::ecs_filter_next(iter) }
     }
 
     fn filter_ptr(&self) -> *const FilterT {
@@ -265,7 +256,7 @@ where
     }
 
     fn iter_next_func(&self) -> unsafe extern "C" fn(*mut super::IterT) -> bool {
-        ecs_filter_next
+        sys::ecs_filter_next
     }
 }
 
@@ -273,9 +264,9 @@ impl<'a, T> IterAPI<'a, T> for Filter<'a, T>
 where
     T: Iterable,
 {
-    fn as_entity(&self) -> Entity<'a> {
-        Entity::new_from_existing(self.world, unsafe {
-            ecs_get_entity(&self.filter as *const _ as *const _)
+    fn as_entity(&self) -> EntityView<'a> {
+        EntityView::new_from(self.world, unsafe {
+            sys::ecs_get_entity(&self.filter as *const _ as *const _)
         })
     }
 }

@@ -2,19 +2,8 @@
 
 use std::{ffi::CStr, os::raw::c_void, ptr::NonNull};
 
-use flecs_ecs_sys::{ecs_table_lock, ecs_table_unlock};
-
-use crate::sys::{
-    ecs_table_count, ecs_table_get_column, ecs_table_get_column_index, ecs_table_get_column_size,
-    ecs_table_get_depth, ecs_table_get_type, ecs_table_get_type_index, ecs_table_str,
-};
-
-use super::{
-    archetype::Archetype,
-    c_types::{EntityT, IdT, TableT},
-    component_registration::ComponentId,
-    ecs_pair, IntoTable, IntoWorld, WorldRef,
-};
+use crate::core::*;
+use crate::sys;
 
 /// A wrapper class that gives direct access to the component arrays of a table, the table data
 #[derive(Debug)]
@@ -59,7 +48,7 @@ impl<'a> Table<'a> {
     #[doc(alias = "table::str")]
     pub fn to_string(&self) -> Option<String> {
         unsafe {
-            let raw_ptr = ecs_table_str(self.world.world_ptr(), self.table.as_ptr());
+            let raw_ptr = sys::ecs_table_str(self.world.world_ptr(), self.table.as_ptr());
 
             if raw_ptr.is_null() {
                 return None;
@@ -82,7 +71,7 @@ impl<'a> Table<'a> {
     /// * C++ API: `table::type`
     #[doc(alias = "table::type")]
     pub fn archetype(&self) -> Archetype<'a> {
-        let type_vec = unsafe { ecs_table_get_type(self.table.as_ptr()) };
+        let type_vec = unsafe { sys::ecs_table_get_type(self.table.as_ptr()) };
         let slice =
             unsafe { std::slice::from_raw_parts((*type_vec).array, (*type_vec).count as usize) };
         Archetype::new_locked(self.world, slice, TableLock::new(self.world, self.table))
@@ -95,7 +84,7 @@ impl<'a> Table<'a> {
     /// * C++ API: `table::count`
     #[doc(alias = "table::count")]
     pub fn count(&self) -> i32 {
-        unsafe { ecs_table_count(self.table.as_ptr()) }
+        unsafe { sys::ecs_table_count(self.table.as_ptr()) }
     }
 
     /// Find type index for (component) id
@@ -113,8 +102,9 @@ impl<'a> Table<'a> {
     /// * C++ API: `table::type_index`
     #[doc(alias = "table::type_index")]
     pub fn find_type_index_id(&self, id: IdT) -> Option<i32> {
-        let index =
-            unsafe { ecs_table_get_type_index(self.world.world_ptr(), self.table.as_ptr(), id) };
+        let index = unsafe {
+            sys::ecs_table_get_type_index(self.world.world_ptr(), self.table.as_ptr(), id)
+        };
         if index == -1 {
             None
         } else {
@@ -223,8 +213,9 @@ impl<'a> Table<'a> {
     /// * C++ API: `table::column_index`
     #[doc(alias = "table::column_index")]
     pub fn find_column_index_id(&self, id: IdT) -> Option<i32> {
-        let index =
-            unsafe { ecs_table_get_column_index(self.world.world_ptr(), self.table.as_ptr(), id) };
+        let index = unsafe {
+            sys::ecs_table_get_column_index(self.world.world_ptr(), self.table.as_ptr(), id)
+        };
         if index == -1 {
             None
         } else {
@@ -425,7 +416,7 @@ impl<'a> Table<'a> {
     /// * C++ API: `table::get_column`
     #[doc(alias = "table::get_column")]
     pub fn column_untyped(&self, index: i32) -> Option<*mut c_void> {
-        let ptr = unsafe { ecs_table_get_column(self.table.as_ptr(), index, 0) };
+        let ptr = unsafe { sys::ecs_table_get_column(self.table.as_ptr(), index, 0) };
         if ptr.is_null() {
             None
         } else {
@@ -532,7 +523,7 @@ impl<'a> Table<'a> {
     /// * C++ API: `table::column_size`
     #[doc(alias = "table::column_size")]
     pub fn column_size(&self, index: i32) -> usize {
-        unsafe { ecs_table_get_column_size(self.table.as_ptr(), index) }
+        unsafe { sys::ecs_table_get_column_size(self.table.as_ptr(), index) }
     }
 
     /// Return depth for table in tree for relationship type.
@@ -572,7 +563,7 @@ impl<'a> Table<'a> {
     /// * C++ API: `table::depth`
     #[doc(alias = "table::depth")]
     pub fn depth_id(&self, rel: EntityT) -> i32 {
-        unsafe { ecs_table_get_depth(self.world.world_ptr_mut(), self.table.as_ptr(), rel) }
+        unsafe { sys::ecs_table_get_depth(self.world.world_ptr_mut(), self.table.as_ptr(), rel) }
     }
 
     /// Get raw table ptr
@@ -686,7 +677,7 @@ impl<'a> TableRange<'a> {
     /// * C++ API: `table::get_column`
     #[doc(alias = "table::get_column")]
     pub fn column_untyped(&self, index: i32) -> Option<NonNull<c_void>> {
-        NonNull::new(unsafe { ecs_table_get_column(self.table_ptr_mut(), index, self.offset) })
+        NonNull::new(unsafe { sys::ecs_table_get_column(self.table_ptr_mut(), index, self.offset) })
     }
 }
 
@@ -697,7 +688,7 @@ pub struct TableLock<'a> {
 
 impl<'a> TableLock<'a> {
     pub fn new(world: impl IntoWorld<'a>, table: NonNull<TableT>) -> Self {
-        unsafe { ecs_table_lock(world.world_ptr_mut(), table.as_ptr()) };
+        unsafe { sys::ecs_table_lock(world.world_ptr_mut(), table.as_ptr()) };
         Self {
             world: world.world(),
             table,
@@ -708,7 +699,7 @@ impl<'a> TableLock<'a> {
 impl<'a> Drop for TableLock<'a> {
     fn drop(&mut self) {
         unsafe {
-            ecs_table_unlock(self.world.world_ptr_mut(), self.table.as_ptr());
+            sys::ecs_table_unlock(self.world.world_ptr_mut(), self.table.as_ptr());
         }
     }
 }

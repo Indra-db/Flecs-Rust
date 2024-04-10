@@ -1,14 +1,7 @@
 use std::ffi::c_char;
 
-#[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-use crate::core::FlecsErrorCode;
-use crate::{
-    core::{ComponentPointers, Entity, FilterT, Iter, IterIterable, IterT, Iterable, Term},
-    ecs_assert,
-};
-use flecs_ecs_sys::{ecs_filter_str, ecs_iter_fini, ecs_os_api, ecs_table_lock, ecs_table_unlock};
-
-use super::IntoWorld;
+use flecs_ecs::core::*;
+use flecs_ecs::sys;
 
 pub trait IterOperations {
     #[doc(hidden)]
@@ -51,14 +44,14 @@ where
                 let mut components_data = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
 
-                ecs_table_lock(self.world_ptr_mut(), iter.table);
+                sys::ecs_table_lock(self.world_ptr_mut(), iter.table);
 
                 for i in 0..iter_count {
                     let tuple = components_data.get_tuple(i);
                     func(tuple);
                 }
 
-                ecs_table_unlock(self.world_ptr_mut(), iter.table);
+                sys::ecs_table_unlock(self.world_ptr_mut(), iter.table);
             }
         }
     }
@@ -74,7 +67,7 @@ where
     ///
     /// * C++ API: `iterable::each`
     #[doc(alias = "iterable::each")]
-    fn each_entity(&self, mut func: impl FnMut(&mut Entity, T::TupleType<'_>)) {
+    fn each_entity(&self, mut func: impl FnMut(&mut EntityView, T::TupleType<'_>)) {
         unsafe {
             let mut iter = self.retrieve_iter();
             let world = self.world_ptr_mut();
@@ -88,7 +81,7 @@ where
                     }
                 };
 
-                ecs_table_lock(world, iter.table);
+                sys::ecs_table_lock(world, iter.table);
 
                 // TODO random thought, I think I can determine the elements is a ref or not before the for loop and then pass two arrays with the indices of the ref and non ref elements
                 // I will come back to this in the future, my thoughts are somewhere else right now. If my assumption is correct, this will get rid of the branch in the for loop
@@ -97,13 +90,13 @@ where
                 // update: I believe it's not possible due to not knowing the order of the components in the tuple. I will leave this here for now, maybe I will come back to it in the future.
                 for i in 0..iter_count {
                     let world = self.world();
-                    let mut entity = Entity::new_from_existing(world, *iter.entities.add(i));
+                    let mut entity = EntityView::new_from(world, *iter.entities.add(i));
                     let tuple = components_data.get_tuple(i);
 
                     func(&mut entity, tuple);
                 }
 
-                ecs_table_unlock(world, iter.table);
+                sys::ecs_table_unlock(world, iter.table);
             }
         }
     }
@@ -123,7 +116,7 @@ where
                     }
                 };
 
-                ecs_table_lock(world, iter.table);
+                sys::ecs_table_lock(world, iter.table);
 
                 let mut iter_t = Iter::new(&mut iter);
 
@@ -133,7 +126,7 @@ where
                     func(&mut iter_t, i, tuple);
                 }
 
-                ecs_table_unlock(world, iter.table);
+                sys::ecs_table_unlock(world, iter.table);
             }
         }
     }
@@ -148,34 +141,34 @@ where
     ///
     /// # Returns
     ///
-    /// * Some(Entity) if the entity was found, None if no entity was found
+    /// * Some(EntityView<'a>) if the entity was found, None if no entity was found
     ///
     /// # See also
     ///
     /// * C++ API: `find_delegate::invoke_callback`
     #[doc(alias = "find_delegate::invoke_callback")]
-    fn find(&self, mut func: impl FnMut(T::TupleType<'_>) -> bool) -> Option<Entity<'a>> {
+    fn find(&self, mut func: impl FnMut(T::TupleType<'_>) -> bool) -> Option<EntityView<'a>> {
         unsafe {
             let mut iter = self.retrieve_iter();
-            let mut entity: Option<Entity> = None;
+            let mut entity: Option<EntityView> = None;
             let world = self.world_ptr_mut();
 
             while self.iter_next(&mut iter) {
                 let mut components_data = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
 
-                ecs_table_lock(world, iter.table);
+                sys::ecs_table_lock(world, iter.table);
 
                 for i in 0..iter_count {
                     let world = self.world();
                     let tuple = components_data.get_tuple(i);
                     if func(tuple) {
-                        entity = Some(Entity::new_from_existing(world, *iter.entities.add(i)));
+                        entity = Some(EntityView::new_from(world, *iter.entities.add(i)));
                         break;
                     }
                 }
 
-                ecs_table_unlock(world, iter.table);
+                sys::ecs_table_unlock(world, iter.table);
             }
             entity
         }
@@ -191,7 +184,7 @@ where
     ///
     /// # Returns
     ///
-    /// * Some(Entity) if the entity was found, None if no entity was found
+    /// * Some(EntityView<'a>) if the entity was found, None if no entity was found
     ///
     /// # See also
     ///
@@ -199,22 +192,22 @@ where
     #[doc(alias = "find_delegate::invoke_callback")]
     fn find_entity(
         &self,
-        mut func: impl FnMut(&mut Entity, T::TupleType<'_>) -> bool,
-    ) -> Option<Entity<'a>> {
+        mut func: impl FnMut(&mut EntityView, T::TupleType<'_>) -> bool,
+    ) -> Option<EntityView<'a>> {
         unsafe {
             let mut iter = self.retrieve_iter();
-            let mut entity_result: Option<Entity> = None;
+            let mut entity_result: Option<EntityView> = None;
             let world = self.world_ptr_mut();
 
             while self.iter_next(&mut iter) {
                 let mut components_data = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
 
-                ecs_table_lock(world, iter.table);
+                sys::ecs_table_lock(world, iter.table);
 
                 for i in 0..iter_count {
                     let world = self.world();
-                    let mut entity = Entity::new_from_existing(world, *iter.entities.add(i));
+                    let mut entity = EntityView::new_from(world, *iter.entities.add(i));
 
                     let tuple = components_data.get_tuple(i);
                     if func(&mut entity, tuple) {
@@ -223,7 +216,7 @@ where
                     }
                 }
 
-                ecs_table_unlock(world, iter.table);
+                sys::ecs_table_unlock(world, iter.table);
             }
             entity_result
         }
@@ -239,7 +232,7 @@ where
     ///
     /// # Returns
     ///
-    /// * Some(Entity) if the entity was found, None if no entity was found
+    /// * Some(EntityView<'a>) if the entity was found, None if no entity was found
     ///
     /// # See also
     ///
@@ -248,10 +241,10 @@ where
     fn find_iter(
         &self,
         mut func: impl FnMut(&mut Iter, usize, T::TupleType<'_>) -> bool,
-    ) -> Option<Entity<'a>> {
+    ) -> Option<EntityView<'a>> {
         unsafe {
             let mut iter = self.retrieve_iter();
-            let mut entity_result: Option<Entity> = None;
+            let mut entity_result: Option<EntityView> = None;
             let world = self.world_ptr_mut();
 
             while self.iter_next(&mut iter) {
@@ -264,20 +257,19 @@ where
                     }
                 };
 
-                ecs_table_lock(world, iter.table);
+                sys::ecs_table_lock(world, iter.table);
                 let mut iter_t = Iter::new(&mut iter);
 
                 for i in 0..iter_count {
                     let world = self.world();
                     let tuple = components_data.get_tuple(i);
                     if func(&mut iter_t, i, tuple) {
-                        entity_result =
-                            Some(Entity::new_from_existing(world, *iter.entities.add(i)));
+                        entity_result = Some(EntityView::new_from(world, *iter.entities.add(i)));
                         break;
                     }
                 }
 
-                ecs_table_unlock(world, iter.table);
+                sys::ecs_table_unlock(world, iter.table);
             }
             entity_result
         }
@@ -306,12 +298,12 @@ where
                 let mut components_data = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
 
-                ecs_table_lock(world, iter.table);
+                sys::ecs_table_lock(world, iter.table);
 
                 let tuple = components_data.get_slice(iter_count);
                 let mut iter_t = Iter::new(&mut iter);
                 func(&mut iter_t, tuple);
-                ecs_table_unlock(world, iter.table);
+                sys::ecs_table_unlock(world, iter.table);
             }
         }
     }
@@ -335,10 +327,10 @@ where
             let mut iter = self.retrieve_iter();
             let world = self.world_ptr_mut();
             while self.iter_next(&mut iter) {
-                ecs_table_lock(world, iter.table);
+                sys::ecs_table_lock(world, iter.table);
                 let mut iter_t = Iter::new(&mut iter);
                 func(&mut iter_t);
-                ecs_table_unlock(world, iter.table);
+                sys::ecs_table_unlock(world, iter.table);
             }
         }
     }
@@ -357,7 +349,7 @@ where
     ///
     /// * C++ API: `filter_base::entity`
     #[doc(alias = "filter_base::entity")]
-    fn as_entity(&self) -> Entity;
+    fn as_entity(&self) -> EntityView;
 
     /// Each term iterator.
     /// The "`each_term`" iterator accepts a function that is invoked for each term
@@ -444,11 +436,11 @@ where
     fn to_string(&self) -> String {
         let filter = self.filter_ptr();
         let world = self.world_ptr_mut();
-        let result: *mut c_char = unsafe { ecs_filter_str(world, filter as *const _) };
+        let result: *mut c_char = unsafe { sys::ecs_filter_str(world, filter as *const _) };
         let rust_string =
             String::from(unsafe { std::ffi::CStr::from_ptr(result).to_str().unwrap() });
         unsafe {
-            if let Some(free_func) = ecs_os_api.free_ {
+            if let Some(free_func) = sys::ecs_os_api.free_ {
                 free_func(result as *mut _);
             }
         }
@@ -467,16 +459,16 @@ where
     /// * C++ API: `iter_iterable::first`
     #[doc(alias = "iterable::first")]
     #[doc(alias = "iter_iterable::first")]
-    fn first(&mut self) -> Option<Entity<'a>> {
+    fn first(&mut self) -> Option<EntityView<'a>> {
         let mut entity = None;
 
         let it = &mut self.retrieve_iter();
 
         if self.iter_next(it) && it.count > 0 {
-            entity = Some(Entity::new_from_existing(self.world(), unsafe {
+            entity = Some(EntityView::new_from(self.world(), unsafe {
                 *it.entities.add(0)
             }));
-            unsafe { ecs_iter_fini(it) };
+            unsafe { sys::ecs_iter_fini(it) };
         }
         entity
     }
@@ -487,7 +479,7 @@ where
 
         let result = self.iter_next(&mut it);
         if result {
-            unsafe { ecs_iter_fini(&mut it) };
+            unsafe { sys::ecs_iter_fini(&mut it) };
         }
         result
     }

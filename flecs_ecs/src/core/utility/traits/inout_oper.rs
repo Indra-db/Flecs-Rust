@@ -1,6 +1,4 @@
-use crate::core::{ComponentId, ComponentType, InOutKind, OperKind, Struct};
-
-use super::IntoComponentId;
+use crate::core::*;
 
 /// Represents the input/output type of a component in an ECS system.
 ///

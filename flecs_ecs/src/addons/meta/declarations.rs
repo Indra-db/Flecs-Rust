@@ -1,49 +1,38 @@
-use crate::{
-    core::c_types::{
-        EntityT, ECS_BOOL_T, ECS_BYTE_T, ECS_CHAR_T, ECS_CONSTANT, ECS_ENTITY_T, ECS_F32_T,
-        ECS_F64_T, ECS_I16_T, ECS_I32_T, ECS_I64_T, ECS_I8_T, ECS_IPTR_T, ECS_QUANTITY,
-        ECS_STRING_T, ECS_U32_T, ECS_U64_T, ECS_UPTR_T,
-    },
-    sys::{
-        ecs_bitmask_constant_t, ecs_bool_t, ecs_char_t, ecs_enum_constant_t, ecs_f32_t, ecs_f64_t,
-        ecs_i16_t, ecs_i32_t, ecs_i64_t, ecs_i8_t, ecs_iptr_t, ecs_member_t, ecs_u16_t, ecs_u32_t,
-        ecs_u64_t, ecs_u8_t, ecs_uptr_t, EcsArray, EcsMember, EcsMetaTypeSerialized, EcsPrimitive,
-        EcsUnit, EcsVector,
-    },
-};
+use crate::core::*;
+use crate::sys;
 
 // Primitive type aliases
-pub type BoolT = ecs_bool_t;
-pub type CharT = ecs_char_t;
-pub type U8T = ecs_u8_t;
-pub type U16T = ecs_u16_t;
-pub type U32T = ecs_u32_t;
-pub type U64T = ecs_u64_t;
-pub type UptrT = ecs_uptr_t;
-pub type I8T = ecs_i8_t;
-pub type I16T = ecs_i16_t;
-pub type I32T = ecs_i32_t;
-pub type I64T = ecs_i64_t;
-pub type IptrT = ecs_iptr_t;
-pub type F32T = ecs_f32_t;
-pub type F64T = ecs_f64_t;
+pub type BoolT = sys::ecs_bool_t;
+pub type CharT = sys::ecs_char_t;
+pub type U8T = sys::ecs_u8_t;
+pub type U16T = sys::ecs_u16_t;
+pub type U32T = sys::ecs_u32_t;
+pub type U64T = sys::ecs_u64_t;
+pub type UptrT = sys::ecs_uptr_t;
+pub type I8T = sys::ecs_i8_t;
+pub type I16T = sys::ecs_i16_t;
+pub type I32T = sys::ecs_i32_t;
+pub type I64T = sys::ecs_i64_t;
+pub type IptrT = sys::ecs_iptr_t;
+pub type F32T = sys::ecs_f32_t;
+pub type F64T = sys::ecs_f64_t;
 
 // Embedded type aliases
-pub type MemberT = ecs_member_t;
-pub type EnumConstantT = ecs_enum_constant_t;
-pub type BitmaskConstantT = ecs_bitmask_constant_t;
+pub type MemberT = sys::ecs_member_t;
+pub type EnumConstantT = sys::ecs_enum_constant_t;
+pub type BitmaskConstantT = sys::ecs_bitmask_constant_t;
 
 // Components
 pub type MetaType = EcsMetaType;
-pub type MetaTypeSerialized = EcsMetaTypeSerialized;
-pub type Primitive = EcsPrimitive;
+pub type MetaTypeSerialized = sys::EcsMetaTypeSerialized;
+pub type Primitive = sys::EcsPrimitive;
 //pub type Enum = EcsEnum;
 pub type Bitmask = EcsBitmask;
-pub type Member = EcsMember;
+pub type Member = sys::EcsMember;
 //pub type Struct = EcsStruct;
-pub type Array = EcsArray;
-pub type Vector = EcsVector;
-pub type Unit = EcsUnit;
+pub type Array = sys::EcsArray;
+pub type Vector = sys::EcsVector;
+pub type Unit = sys::EcsUnit;
 
 // Base type for bitmasks
 pub struct EcsBitmask {

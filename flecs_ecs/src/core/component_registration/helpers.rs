@@ -1,10 +1,7 @@
 use std::ffi::c_char;
 
-use flecs_ecs_sys::{ecs_exists, ecs_get_symbol, ecs_world_t};
-
-use crate::core::{EntityT, IdT, WorldT, SEPARATOR};
-
-use super::ComponentId;
+use crate::core::*;
+use crate::sys;
 
 pub(crate) fn create_component_desc(
     entity: EntityT,
@@ -67,13 +64,13 @@ pub(crate) fn create_entity_desc(
 
 pub(crate) fn get_symbol_name(
     id: IdT,
-    world: *mut ecs_world_t,
+    world: *mut sys::ecs_world_t,
     type_name_ptr: *const c_char,
     is_comp_pre_registered_with_world: bool,
 ) -> *const i8 {
     if id != 0 {
         let symbol_ptr = if is_comp_pre_registered_with_world {
-            unsafe { ecs_get_symbol(world, id) }
+            unsafe { sys::ecs_get_symbol(world, id) }
         } else {
             std::ptr::null()
         };
@@ -94,7 +91,7 @@ where
     T: ComponentId,
 {
     // we know this is safe because we checked if world is not null & if the component is registered
-    if !world.is_null() && unsafe { !ecs_exists(world, T::get_id_unchecked()) } {
+    if !world.is_null() && unsafe { !sys::ecs_exists(world, T::get_id_unchecked()) } {
         return false;
     }
 

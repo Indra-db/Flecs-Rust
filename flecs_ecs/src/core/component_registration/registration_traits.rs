@@ -1,13 +1,5 @@
+use crate::core::*;
 use std::{ffi::CStr, sync::OnceLock};
-
-use crate::core::{
-    ConditionalTypeSelector, Entity, EntityT, Enum, FlecsNoneCloneDummy, FlecsNoneDefaultDummy,
-    IdComponent, IdT, IntoWorld, Struct, TypeHooksT,
-};
-
-use super::{
-    is_component_registered_with_world, try_register_component, try_register_component_named,
-};
 
 pub trait EmptyComponent {}
 pub trait NotEmptyComponent {}
@@ -155,19 +147,19 @@ pub trait CachedEnumData: ComponentType<Enum> + ComponentId {
     }
 
     /// get the entity id of the variant of the enum. This function will register the enum with the world if it's not registered.
-    fn get_id_variant<'a>(&self, world: impl IntoWorld<'a>) -> Entity<'a> {
+    fn get_id_variant<'a>(&self, world: impl IntoWorld<'a>) -> EntityView<'a> {
         try_register_component::<Self>(world.world());
         let index = self.enum_index();
-        Entity::new_from_existing(world, unsafe { *Self::__enum_data_mut().add(index) })
+        EntityView::new_from(world, unsafe { *Self::__enum_data_mut().add(index) })
     }
 
     /// # Safety
     ///
     /// This function is unsafe because it assumes the enum has been registered as a component with the world.
     /// if uncertain, use `try_register_component::<T>` to try and register it
-    unsafe fn get_id_variant_unchecked<'a>(&self, world: impl IntoWorld<'a>) -> Entity<'a> {
+    unsafe fn get_id_variant_unchecked<'a>(&self, world: impl IntoWorld<'a>) -> EntityView<'a> {
         let index = self.enum_index();
-        Entity::new_from_existing(world, unsafe { *Self::__enum_data_mut().add(index) })
+        EntityView::new_from(world, unsafe { *Self::__enum_data_mut().add(index) })
     }
 
     fn get_id_variant_of_index(index: usize) -> Option<u64> {

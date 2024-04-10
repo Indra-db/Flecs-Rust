@@ -51,7 +51,7 @@ fn main() {
         .slot_of_id(spaceship);
 
     // Create a prefab instance.
-    let inst: Entity = world.new_entity_named(c"my_spaceship").is_a_id(spaceship);
+    let inst = world.new_entity_named(c"my_spaceship").is_a_id(spaceship);
 
     // Get the instantiated entities for the prefab slots
     let inst_engine = inst.target_id(engine, 0);

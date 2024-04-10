@@ -31,14 +31,13 @@ pub use builder::*;
 pub use c_types::*;
 pub use column::*;
 pub use component::*;
+pub use component_ref::*;
 pub use component_registration::*;
-pub use entity::*;
 pub use entity_view::*;
 pub use event::*;
 pub use event_builder::*;
 pub use filter::*;
 pub use filter_builder::*;
-
 pub use id::*;
 pub use iter::*;
 pub use iter_iterable::*;

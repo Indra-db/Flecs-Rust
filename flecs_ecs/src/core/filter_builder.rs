@@ -5,33 +5,15 @@ use std::{
     ptr::{self},
 };
 
-use super::{
-    builder::Builder,
-    c_types::{TermT, SEPARATOR},
-    component_registration::{ComponentId, ComponentType, Enum},
-    filter::Filter,
-    iterable::{Filterable, Iterable},
-    term::{Term, TermBuilder},
-    type_to_inout, CachedEnumData, IdT, InOutType, IntoComponentId, IntoEntityId, IntoEntityIdExt,
-    IntoWorld, WorldRef, ECS_WILDCARD,
-};
-#[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-use crate::{core::FlecsErrorCode, sys::ecs_term_is_initialized};
-
-use crate::{
-    ecs_assert,
-    sys::{
-        ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_flags32_t, ecs_inout_kind_t,
-        ecs_os_api, ecs_term_t, FLECS_TERM_DESC_MAX,
-    },
-};
+use crate::core::*;
+use crate::sys;
 
 /// Filters are cheaper to create, but slower to iterate than queries.
 pub struct FilterBuilder<'a, T>
 where
     T: Iterable,
 {
-    pub desc: ecs_filter_desc_t,
+    pub desc: sys::ecs_filter_desc_t,
     expr_count: i32,
     pub(crate) term: Term<'a>,
     pub world: WorldRef<'a>,
@@ -63,14 +45,14 @@ where
             _phantom: std::marker::PhantomData,
         };
 
-        let entity_desc = ecs_entity_desc_t {
+        let entity_desc = sys::ecs_entity_desc_t {
             name: std::ptr::null(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
 
-        obj.desc.entity = unsafe { ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -96,14 +78,14 @@ where
             _phantom: std::marker::PhantomData,
         };
 
-        let entity_desc = ecs_entity_desc_t {
+        let entity_desc = sys::ecs_entity_desc_t {
             name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
 
-        obj.desc.entity = unsafe { ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -122,7 +104,7 @@ where
     #[doc(alias = "filter_builder::filter_builder")]
     pub fn new_from_desc(
         world: impl IntoWorld<'a>,
-        desc: &mut ecs_filter_desc_t,
+        desc: &mut sys::ecs_filter_desc_t,
         term_index: i32,
     ) -> Self {
         Self {
@@ -159,7 +141,7 @@ where
     T: Iterable,
 {
     #[inline]
-    fn desc_filter_mut(&mut self) -> &mut ecs_filter_desc_t {
+    fn desc_filter_mut(&mut self) -> &mut sys::ecs_filter_desc_t {
         &mut self.desc
     }
 
@@ -207,7 +189,7 @@ where
 }
 
 pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
-    fn desc_filter_mut(&mut self) -> &mut ecs_filter_desc_t;
+    fn desc_filter_mut(&mut self) -> &mut sys::ecs_filter_desc_t;
 
     fn expr_count_mut(&mut self) -> &mut i32;
 
@@ -234,7 +216,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     ///
     /// * C++ API: `filter_builder_i::filter_flags`
     #[doc(alias = "filter_builder_i::filter_flags")]
-    fn filter_flags(&mut self, flags: ecs_flags32_t) -> &mut Self {
+    fn filter_flags(&mut self, flags: sys::ecs_flags32_t) -> &mut Self {
         self.desc_filter_mut().flags |= flags;
         self
     }
@@ -288,7 +270,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     ///
     /// * C++ API: `filter_builder_i::with`
     #[doc(alias = "filter_builder_i::with")]
-    fn with_pair_first<First: ComponentId>(&mut self, second: impl IntoEntityId) -> &mut Self {
+    fn with_pair_first<First: ComponentId>(&mut self, second: impl IntoEntity) -> &mut Self {
         self.term_with_pair_first::<First>(second)
     }
 
@@ -362,7 +344,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     ///
     /// * C++ API: `filter_builder_i::without`
     #[doc(alias = "filter_builder_i::without")]
-    fn without_pair_id<First: ComponentId>(&mut self, second: impl IntoEntityId) -> &mut Self {
+    fn without_pair_id<First: ComponentId>(&mut self, second: impl IntoEntity) -> &mut Self {
         self.term_with_pair_first::<First>(second).not()
     }
 
@@ -420,7 +402,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     fn term(&mut self) {
         ecs_assert!(
             if !self.term_ptr_mut().is_null() {
-                unsafe { ecs_term_is_initialized(self.term_ptr_mut()) }
+                unsafe { sys::ecs_term_is_initialized(self.term_ptr_mut()) }
             } else {
                 true
             },
@@ -429,14 +411,14 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
         );
 
         let term_index = *self.term_index_mut();
-        if term_index >= FLECS_TERM_DESC_MAX as i32 {
+        if term_index >= sys::FLECS_TERM_DESC_MAX as i32 {
             let desc = self.desc_filter_mut();
-            let size_term = std::mem::size_of::<ecs_term_t>();
-            if term_index == FLECS_TERM_DESC_MAX as i32 {
+            let size_term = std::mem::size_of::<sys::ecs_term_t>();
+            if term_index == sys::FLECS_TERM_DESC_MAX as i32 {
                 unsafe {
                     desc.terms_buffer =
-                        ecs_os_api.calloc_.unwrap()(size_term as i32 * term_index + 1)
-                            as *mut ecs_term_t;
+                        sys::ecs_os_api.calloc_.unwrap()(size_term as i32 * term_index + 1)
+                            as *mut sys::ecs_term_t;
                     // SAFETY: The following conditions must hold:
                     // - `src` and `dst` must not overlap.
                     // - `src` and `dst` must be valid for reads and writes of `src.len()` elements.
@@ -449,15 +431,15 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
                     ptr::write_bytes(
                         desc.terms.as_mut_ptr() as *mut _,
                         0,
-                        size_term * FLECS_TERM_DESC_MAX as usize,
+                        size_term * sys::FLECS_TERM_DESC_MAX as usize,
                     );
                 }
             } else {
                 desc.terms_buffer = unsafe {
-                    ecs_os_api.realloc_.unwrap()(
+                    sys::ecs_os_api.realloc_.unwrap()(
                         desc.terms_buffer as *mut _,
                         size_term as i32 * term_index,
-                    ) as *mut ecs_term_t
+                    ) as *mut sys::ecs_term_t
                 };
             }
             desc.terms_buffer_count = term_index + 1;
@@ -497,7 +479,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
         *self.term_index_mut() = prev_index;
 
         ecs_assert!(
-            unsafe { ecs_term_is_initialized(self.term_ptr_mut()) },
+            unsafe { sys::ecs_term_is_initialized(self.term_ptr_mut()) },
             FlecsErrorCode::InvalidOperation,
             "term_at() called without initializing term"
         );
@@ -519,7 +501,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
         FilterBuilderImpl::write(self)
     }
 
-    fn write_id(&mut self, id: impl IntoEntityIdExt) -> &mut Self {
+    fn write_id(&mut self, id: impl IntoId) -> &mut Self {
         self.term_with_id(id);
         FilterBuilderImpl::write(self)
     }
@@ -530,7 +512,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     ///
     /// * C++ API: `filter_builder_i::term`
     #[doc(alias = "filter_builder_i::term")]
-    fn term_with_id(&mut self, id: impl IntoEntityIdExt) -> &mut Self {
+    fn term_with_id(&mut self, id: impl IntoId) -> &mut Self {
         self.term();
         unsafe {
             *self.term_ptr_mut() = Term::new_id(self.world(), id).move_raw_term();
@@ -556,7 +538,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
                     <T::Type as IntoComponentId>::get_id(self.world()),
                 )
                 .move_raw_term();
-                (*self.term_ptr_mut()).inout = type_to_inout::<T>() as ecs_inout_kind_t;
+                (*self.term_ptr_mut()).inout = type_to_inout::<T>() as sys::ecs_inout_kind_t;
             }
         }
         self
@@ -603,7 +585,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     #[doc(alias = "filter_builder_i::term")]
     fn term_with_pair_id_name(
         &mut self,
-        first: impl IntoEntityId,
+        first: impl IntoEntity,
         second: &'static CStr,
     ) -> &mut Self {
         self.term();
@@ -621,7 +603,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     ///
     /// * C++ API: `filter_builder_i::term`
     #[doc(alias = "filter_builder_i::term")]
-    fn term_with_pair_first<First: ComponentId>(&mut self, second: impl IntoEntityId) -> &mut Self {
+    fn term_with_pair_first<First: ComponentId>(&mut self, second: impl IntoEntity) -> &mut Self {
         self.term_with_id((First::get_id(self.world()), second))
     }
 

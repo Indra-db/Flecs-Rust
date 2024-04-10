@@ -1,11 +1,7 @@
 use std::ffi::c_void;
 
-use flecs_ecs_sys::{ecs_emit, ecs_enqueue, ecs_event_desc_t};
-
-use super::{
-    ecs_pair, ComponentId, EventBuilder, IntoComponentId, IntoEntityId, IntoEntityIdExt, IntoTable,
-    IntoWorld,
-};
+use crate::core::*;
+use crate::sys;
 
 /// Event builder trait to implement '`set_event_data`' for untyped and typed `EventBuilder`
 pub trait EventBuilderImpl<'a> {
@@ -23,7 +19,7 @@ pub trait EventBuilderImpl<'a> {
     ///
     /// * C++ API: `event_builder_base::id`
     #[doc(alias = "event_builder_base::id")]
-    fn add_id(&mut self, id: impl IntoEntityIdExt) -> &mut Self {
+    fn add_id(&mut self, id: impl IntoId) -> &mut Self {
         let id = id.get_id();
         let data = self.get_data();
         let ids = &mut data.ids;
@@ -68,7 +64,7 @@ pub trait EventBuilderImpl<'a> {
     ///
     /// * C++ API: `event_builder_base::id`
     #[doc(alias = "event_builder_base::id")]
-    fn add_pair_first_to_emit<First>(&mut self, second: impl IntoEntityId) -> &mut Self
+    fn add_pair_first_to_emit<First>(&mut self, second: impl IntoEntity) -> &mut Self
     where
         First: ComponentId,
     {
@@ -86,7 +82,7 @@ pub trait EventBuilderImpl<'a> {
     ///
     /// * C++ API: `event_builder_base::entity`
     #[doc(alias = "event_builder_base::entity")]
-    fn set_entity_to_emit(&mut self, entity: impl IntoEntityId) -> &mut Self {
+    fn set_entity_to_emit(&mut self, entity: impl IntoEntity) -> &mut Self {
         let desc = &mut self.get_data().desc;
         desc.entity = entity.get_id();
         self
@@ -127,7 +123,7 @@ pub trait EventBuilderImpl<'a> {
         ids.array = ids_array.as_mut_ptr();
         desc.ids = ids;
         desc.observable = world.real_world().world_ptr_mut() as *mut c_void;
-        unsafe { ecs_emit(world.world_ptr_mut(), desc) };
+        unsafe { sys::ecs_emit(world.world_ptr_mut(), desc) };
     }
 
     fn enqueue(&mut self) {
@@ -140,7 +136,7 @@ pub trait EventBuilderImpl<'a> {
         desc.ids = ids;
         desc.observable = world.real_world().world_ptr_mut() as *mut c_void;
         unsafe {
-            ecs_enqueue(world.world_ptr_mut(), desc as *mut ecs_event_desc_t);
+            sys::ecs_enqueue(world.world_ptr_mut(), desc as *mut sys::ecs_event_desc_t);
         };
     }
 

@@ -105,7 +105,7 @@ fn main() {
     println!("All tables");
 
     query.iter_only(|iter| {
-        let group: Entity = world.new_entity_from_id(iter.group_id());
+        let group = world.new_entity_from_id(iter.group_id());
         println!(
             "group: {:?} - Table [{}]",
             group.path().unwrap(),
@@ -118,7 +118,7 @@ fn main() {
     println!("Tables for cell 1_0:");
 
     query.iterable().set_group::<Cell_1_0>().iter_only(|iter| {
-        let group: Entity = world.new_entity_from_id(iter.group_id());
+        let group = world.new_entity_from_id(iter.group_id());
         println!(
             "group: {:?} - Table [{}]",
             group.path().unwrap(),

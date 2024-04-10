@@ -1,53 +1,38 @@
 #![allow(non_upper_case_globals)]
 
-use crate::{
-    core::component_registration::{ComponentId, ComponentType, IdComponent, Struct},
-    sys::{
-        ecs_entity_t, ecs_filter_t, ecs_flags32_t, ecs_id_t, ecs_inout_kind_t,
-        ecs_inout_kind_t_EcsIn, ecs_inout_kind_t_EcsInOut, ecs_inout_kind_t_EcsInOutDefault,
-        ecs_inout_kind_t_EcsInOutNone, ecs_inout_kind_t_EcsOut, ecs_iter_t, ecs_observer_t,
-        ecs_oper_kind_t, ecs_oper_kind_t_EcsAnd, ecs_oper_kind_t_EcsAndFrom,
-        ecs_oper_kind_t_EcsNot, ecs_oper_kind_t_EcsNotFrom, ecs_oper_kind_t_EcsOptional,
-        ecs_oper_kind_t_EcsOr, ecs_oper_kind_t_EcsOrFrom, ecs_primitive_kind_t,
-        ecs_query_group_info_t, ecs_query_t, ecs_ref_t, ecs_rule_t, ecs_table_t, ecs_term_id_t,
-        ecs_term_t, ecs_type_hooks_t, ecs_type_info_t, ecs_type_kind_t, ecs_type_t,
-        ecs_world_info_t, ecs_world_t, EcsComponent, EcsIdentifier, EcsPoly, EcsTarget,
-        FLECS_IDEcsComponentID_,
-    },
-};
-
-#[cfg(feature = "flecs_system")]
-use crate::sys::EcsTickSource;
-
 use std::{ffi::CStr, sync::OnceLock};
 
-use super::{ComponentInfo, EntityId, IntoWorld, NoneEnum, NotEmptyComponent};
+use crate::core::*;
+use crate::sys;
+
+#[cfg(feature = "flsys::ecs_system")]
+use crate::sys::EcsTickSource;
 
 pub const RUST_ecs_id_FLAGS_MASK: u64 = 0xFF << 60;
 pub const RUST_ECS_COMPONENT_MASK: u64 = !RUST_ecs_id_FLAGS_MASK;
 
-pub type WorldT = ecs_world_t;
-pub type WorldInfoT = ecs_world_info_t;
-pub type QueryGroupInfoT = ecs_query_group_info_t;
-pub type IdT = ecs_id_t;
-pub type EntityT = ecs_entity_t;
-pub type TypeT = ecs_type_t;
-pub type TableT = ecs_table_t;
-pub type FilterT = ecs_filter_t;
-pub type ObserverT = ecs_observer_t;
-pub type QueryT = ecs_query_t;
-pub type RuleT = ecs_rule_t;
-pub type RefT = ecs_ref_t;
-pub type IterT = ecs_iter_t;
-pub type TypeInfoT = ecs_type_info_t;
-pub type TypeHooksT = ecs_type_hooks_t;
-pub type TypeKindT = ecs_type_kind_t;
-pub type Flags32T = ecs_flags32_t;
-pub type TermIdT = ecs_term_id_t;
-pub type TermT = ecs_term_t;
-pub type PrimitiveKindT = ecs_primitive_kind_t;
+pub type WorldT = sys::ecs_world_t;
+pub type WorldInfoT = sys::ecs_world_info_t;
+pub type QueryGroupInfoT = sys::ecs_query_group_info_t;
+pub type IdT = sys::ecs_id_t;
+pub type EntityT = sys::ecs_entity_t;
+pub type TypeT = sys::ecs_type_t;
+pub type TableT = sys::ecs_table_t;
+pub type FilterT = sys::ecs_filter_t;
+pub type ObserverT = sys::ecs_observer_t;
+pub type QueryT = sys::ecs_query_t;
+pub type RuleT = sys::ecs_rule_t;
+pub type RefT = sys::ecs_ref_t;
+pub type IterT = sys::ecs_iter_t;
+pub type TypeInfoT = sys::ecs_type_info_t;
+pub type TypeHooksT = sys::ecs_type_hooks_t;
+pub type TypeKindT = sys::ecs_type_kind_t;
+pub type Flags32T = sys::ecs_flags32_t;
+pub type TermIdT = sys::ecs_term_id_t;
+pub type TermT = sys::ecs_term_t;
+pub type PrimitiveKindT = sys::ecs_primitive_kind_t;
 pub type FTimeT = f32;
-#[cfg(feature = "flecs_system")]
+#[cfg(feature = "flsys::ecs_system")]
 pub type TickSource = EcsTickSource;
 
 pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\0") };
@@ -68,11 +53,11 @@ pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\
 #[allow(clippy::unnecessary_cast)]
 #[repr(u32)]
 pub enum InOutKind {
-    InOutDefault = ecs_inout_kind_t_EcsInOutDefault as u32,
-    InOutNone = ecs_inout_kind_t_EcsInOutNone as u32,
-    InOut = ecs_inout_kind_t_EcsInOut as u32,
-    In = ecs_inout_kind_t_EcsIn as u32,
-    Out = ecs_inout_kind_t_EcsOut as u32,
+    InOutDefault = sys::ecs_inout_kind_t_EcsInOutDefault as u32,
+    InOutNone = sys::ecs_inout_kind_t_EcsInOutNone as u32,
+    InOut = sys::ecs_inout_kind_t_EcsInOut as u32,
+    In = sys::ecs_inout_kind_t_EcsIn as u32,
+    Out = sys::ecs_inout_kind_t_EcsOut as u32,
 }
 
 impl InOutKind {
@@ -81,14 +66,14 @@ impl InOutKind {
     }
 }
 
-impl From<ecs_inout_kind_t> for InOutKind {
-    fn from(value: ecs_inout_kind_t) -> Self {
+impl From<sys::ecs_inout_kind_t> for InOutKind {
+    fn from(value: sys::ecs_inout_kind_t) -> Self {
         match value {
-            ecs_inout_kind_t_EcsInOutDefault => InOutKind::InOutDefault,
-            ecs_inout_kind_t_EcsInOutNone => InOutKind::InOutNone,
-            ecs_inout_kind_t_EcsInOut => InOutKind::InOut,
-            ecs_inout_kind_t_EcsIn => InOutKind::In,
-            ecs_inout_kind_t_EcsOut => InOutKind::Out,
+            sys::ecs_inout_kind_t_EcsInOutDefault => InOutKind::InOutDefault,
+            sys::ecs_inout_kind_t_EcsInOutNone => InOutKind::InOutNone,
+            sys::ecs_inout_kind_t_EcsInOut => InOutKind::InOut,
+            sys::ecs_inout_kind_t_EcsIn => InOutKind::In,
+            sys::ecs_inout_kind_t_EcsOut => InOutKind::Out,
             _ => InOutKind::InOutDefault,
         }
     }
@@ -115,13 +100,13 @@ impl From<ecs_inout_kind_t> for InOutKind {
 #[allow(clippy::unnecessary_cast)]
 #[repr(u32)]
 pub enum OperKind {
-    And = ecs_oper_kind_t_EcsAnd as u32,
-    Or = ecs_oper_kind_t_EcsOr as u32,
-    Not = ecs_oper_kind_t_EcsNot as u32,
-    Optional = ecs_oper_kind_t_EcsOptional as u32,
-    AndFrom = ecs_oper_kind_t_EcsAndFrom as u32,
-    OrFrom = ecs_oper_kind_t_EcsOrFrom as u32,
-    NotFrom = ecs_oper_kind_t_EcsNotFrom as u32,
+    And = sys::ecs_oper_kind_t_EcsAnd as u32,
+    Or = sys::ecs_oper_kind_t_EcsOr as u32,
+    Not = sys::ecs_oper_kind_t_EcsNot as u32,
+    Optional = sys::ecs_oper_kind_t_EcsOptional as u32,
+    AndFrom = sys::ecs_oper_kind_t_EcsAndFrom as u32,
+    OrFrom = sys::ecs_oper_kind_t_EcsOrFrom as u32,
+    NotFrom = sys::ecs_oper_kind_t_EcsNotFrom as u32,
 }
 
 impl OperKind {
@@ -130,16 +115,16 @@ impl OperKind {
     }
 }
 
-impl From<ecs_oper_kind_t> for OperKind {
-    fn from(value: ecs_oper_kind_t) -> Self {
+impl From<sys::ecs_oper_kind_t> for OperKind {
+    fn from(value: sys::ecs_oper_kind_t) -> Self {
         match value {
-            ecs_oper_kind_t_EcsAnd => OperKind::And,
-            ecs_oper_kind_t_EcsOr => OperKind::Or,
-            ecs_oper_kind_t_EcsNot => OperKind::Not,
-            ecs_oper_kind_t_EcsOptional => OperKind::Optional,
-            ecs_oper_kind_t_EcsAndFrom => OperKind::AndFrom,
-            ecs_oper_kind_t_EcsOrFrom => OperKind::OrFrom,
-            ecs_oper_kind_t_EcsNotFrom => OperKind::NotFrom,
+            sys::ecs_oper_kind_t_EcsAnd => OperKind::And,
+            sys::ecs_oper_kind_t_EcsOr => OperKind::Or,
+            sys::ecs_oper_kind_t_EcsNot => OperKind::Not,
+            sys::ecs_oper_kind_t_EcsOptional => OperKind::Optional,
+            sys::ecs_oper_kind_t_EcsAndFrom => OperKind::AndFrom,
+            sys::ecs_oper_kind_t_EcsOrFrom => OperKind::OrFrom,
+            sys::ecs_oper_kind_t_EcsNotFrom => OperKind::NotFrom,
             _ => OperKind::And,
         }
     }
@@ -350,13 +335,13 @@ pub(crate) const ECS_DOC_COLOR: u64 = FLECS_HI_COMPONENT_ID + 115;
 // REST module components
 pub(crate) const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 116;
 
-pub type Identifier = EcsIdentifier;
-pub type Poly = EcsPoly;
-pub type Target = EcsTarget;
+pub type Identifier = sys::EcsIdentifier;
+pub type Poly = sys::EcsPoly;
+pub type Target = sys::EcsTarget;
 
 fn ecs_component_data() -> IdComponent {
     IdComponent {
-        id: unsafe { FLECS_IDEcsComponentID_ },
+        id: unsafe { sys::FLECS_IDEcsComponentID_ },
     }
 }
 
@@ -364,19 +349,19 @@ fn ecs_poly_data() -> IdComponent {
     IdComponent { id: ECS_POLY }
 }
 
-impl NotEmptyComponent for EcsComponent {}
+impl NotEmptyComponent for sys::EcsComponent {}
 
-impl ComponentInfo for EcsComponent {
+impl ComponentInfo for sys::EcsComponent {
     const IS_ENUM: bool = false;
     const IS_TAG: bool = false;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = true;
 }
 
-impl ComponentType<Struct> for EcsComponent {}
+impl ComponentType<Struct> for sys::EcsComponent {}
 
-impl ComponentId for EcsComponent {
-    type UnderlyingType = EcsComponent;
+impl ComponentId for sys::EcsComponent {
+    type UnderlyingType = sys::EcsComponent;
     type UnderlyingEnumType = NoneEnum;
 
     fn register_explicit<'a>(_world: impl IntoWorld<'a>) {
@@ -385,7 +370,7 @@ impl ComponentId for EcsComponent {
 
     fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &CStr) -> EntityT {
         //this is already registered in the world inside C
-        unsafe { FLECS_IDEcsComponentID_ }
+        unsafe { sys::FLECS_IDEcsComponentID_ }
     }
 
     fn is_registered() -> bool {
@@ -399,11 +384,11 @@ impl ComponentId for EcsComponent {
     }
 
     fn get_id<'a>(_world: impl IntoWorld<'a>) -> IdT {
-        unsafe { FLECS_IDEcsComponentID_ }
+        unsafe { sys::FLECS_IDEcsComponentID_ }
     }
 
     unsafe fn get_id_unchecked() -> IdT {
-        FLECS_IDEcsComponentID_
+        sys::FLECS_IDEcsComponentID_
     }
 
     fn __get_once_lock_data() -> &'static OnceLock<IdComponent> {
@@ -460,7 +445,7 @@ impl ComponentId for Poly {
     }
 }
 
-#[cfg(feature = "flecs_system")]
+#[cfg(feature = "flsys::ecs_system")]
 impl ComponentInfo for TickSource {
     const IS_TAG: bool = false;
     const IS_ENUM: bool = false;
@@ -468,7 +453,7 @@ impl ComponentInfo for TickSource {
     const IMPLS_DEFAULT: bool = true;
 }
 
-#[cfg(feature = "flecs_system")]
+#[cfg(feature = "flsys::ecs_system")]
 impl ComponentId for TickSource {
     type UnderlyingType = TickSource;
     type UnderlyingEnumType = NoneEnum;
@@ -498,51 +483,6 @@ impl ComponentId for TickSource {
 
     fn get_id<'a>(_: impl IntoWorld<'a>) -> IdT {
         ECS_TICK_SOURCE
-    }
-
-    fn __get_once_lock_data() -> &'static OnceLock<IdComponent> {
-        static ONCE_LOCK: OnceLock<IdComponent> = OnceLock::new();
-        &ONCE_LOCK
-    }
-}
-
-impl ComponentInfo for EntityId {
-    const IS_ENUM: bool = false;
-    const IS_TAG: bool = false;
-    const IMPLS_CLONE: bool = true;
-    const IMPLS_DEFAULT: bool = false;
-}
-
-impl ComponentId for EntityId {
-    type UnderlyingType = EntityId;
-    type UnderlyingEnumType = NoneEnum;
-
-    fn register_explicit<'a>(_world: impl IntoWorld<'a>) {
-        // already registered by flecs in World
-    }
-
-    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &CStr) -> EntityT {
-        // already registered by flecs in World
-        unsafe { flecs_ecs_sys::FLECS_IDecs_entity_tID_ }
-    }
-
-    fn is_registered() -> bool {
-        true
-    }
-
-    fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
-        //because this is always registered in the c world
-        true
-    }
-
-    unsafe fn get_id_unchecked() -> IdT {
-        //this is safe because it's already registered in flecs_c / world
-        flecs_ecs_sys::FLECS_IDecs_entity_tID_
-    }
-
-    fn get_id<'a>(_world: impl IntoWorld<'a>) -> IdT {
-        //this is safe because it's already registered in flecs_c / world
-        unsafe { flecs_ecs_sys::FLECS_IDecs_entity_tID_ }
     }
 
     fn __get_once_lock_data() -> &'static OnceLock<IdComponent> {

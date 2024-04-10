@@ -1,4 +1,4 @@
-use flecs_ecs::core::{entity::Entity, world::World};
+use flecs_ecs::core::*;
 
 mod common;
 use common::*;
@@ -11,18 +11,18 @@ fn temp_test_hook() {
         let world = World::new();
         world
             .component::<Position>()
-            .on_add(|_e: Entity, p: &mut Position| {
+            .on_add(|_e: EntityView, p: &mut Position| {
                 unsafe { COUNT += 1 };
                 p.x = 10;
                 p.y = 20;
             })
-            .on_remove(|_e: Entity, _p: &mut Position| {
+            .on_remove(|_e: EntityView, _p: &mut Position| {
                 unsafe { COUNT -= 1 };
             });
 
         world
             .component::<Velocity>()
-            .on_set(|_e: Entity, v: &mut Velocity| {
+            .on_set(|_e: EntityView, v: &mut Velocity| {
                 unsafe { COUNT2 += 1 };
                 v.x *= 10;
                 v.y *= 10;

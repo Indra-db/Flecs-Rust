@@ -1,26 +1,7 @@
 use std::{ffi::CStr, os::raw::c_void, ptr::NonNull};
 
-#[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-use crate::core::FlecsErrorCode;
-use crate::{
-    ecs_assert,
-    sys::{
-        ecs_field_column_index, ecs_field_is_readonly, ecs_field_is_self, ecs_field_is_set,
-        ecs_field_size, ecs_field_src, ecs_field_w_size, ecs_id_is_pair, ecs_iter_str,
-        ecs_query_changed, ecs_query_skip,
-    },
-};
-use flecs_ecs_sys::{ecs_field_id, ecs_iter_get_var};
-
-use super::{
-    c_types::{IdT, IterT},
-    column::{Column, UntypedColumn},
-    component_registration::ComponentId,
-    entity::Entity,
-    id::Id,
-    table::{Table, TableRange},
-    Archetype, FTime, WorldRef,
-};
+use crate::core::*;
+use crate::sys;
 
 pub struct Iter<'a> {
     iter: &'a mut IterT,
@@ -67,8 +48,8 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::system`
     #[doc(alias = "iter::system")]
-    pub fn system(&self) -> Entity<'a> {
-        Entity::new_from_existing(self.world(), self.iter.system)
+    pub fn system(&self) -> EntityView<'a> {
+        EntityView::new_from(self.world(), self.iter.system)
     }
 
     /// Wrap the event id in the iterator in an `Entity` object
@@ -77,8 +58,8 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::event`
     #[doc(alias = "iter::event")]
-    pub fn event(&self) -> Entity<'a> {
-        Entity::new_from_existing(self.world(), self.iter.event)
+    pub fn event(&self) -> EntityView<'a> {
+        EntityView::new_from(self.world(), self.iter.event)
     }
 
     /// Wrap the event id in the iterator in an `Id` object
@@ -87,8 +68,8 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::event_id`
     #[doc(alias = "iter::event_id")]
-    pub fn event_id(&self) -> Id<'a> {
-        Id::new(self.world(), self.iter.event_id)
+    pub fn event_id(&self) -> IdView<'a> {
+        IdView::new(self.world(), self.iter.event_id)
     }
 
     /// Obtain mutable handle to entity being iterated over.
@@ -101,8 +82,8 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::entity`
     #[doc(alias = "iter::entity")]
-    pub fn entity(&self, row: usize) -> Entity<'a> {
-        unsafe { Entity::new_from_existing(self.world(), *self.iter.entities.add(row)) }
+    pub fn entity(&self, row: usize) -> EntityView<'a> {
+        unsafe { EntityView::new_from(self.world(), *self.iter.entities.add(row)) }
     }
 
     /// Return a mut reference to the raw iterator object
@@ -183,11 +164,11 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::get_var`
     #[doc(alias = "iter::get_var")]
     #[cfg(feature = "flecs_rules")]
-    pub fn get_var(&self, var_id: i32) -> Entity<'a> {
+    pub fn get_var(&self, var_id: i32) -> EntityView<'a> {
         ecs_assert!(var_id != -1, FlecsErrorCode::InvalidParameter, 0);
-        let var = unsafe { ecs_iter_get_var(self.iter as *const _ as *mut IterT, var_id) };
+        let var = unsafe { sys::ecs_iter_get_var(self.iter as *const _ as *mut IterT, var_id) };
         let world = self.world();
-        Entity::new_from_existing(world, var)
+        EntityView::new_from(world, var)
     }
 
     /// Get the variable of the iterator by name
@@ -201,20 +182,18 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::get_var`
     #[doc(alias = "iter::get_var")]
     #[cfg(feature = "flecs_rules")]
-    pub fn get_var_by_name(&mut self, name: &CStr) -> Entity<'a> {
-        use flecs_ecs_sys::ecs_rule_find_var;
-
+    pub fn get_var_by_name(&mut self, name: &CStr) -> EntityView<'a> {
         let world = self.world();
         let iter: &mut IterT = self.iter;
         let rit = unsafe { &mut iter.priv_.iter.rule };
         let rule = rit.rule;
-        let var_id = unsafe { ecs_rule_find_var(rule, name.as_ptr()) };
+        let var_id = unsafe { sys::ecs_rule_find_var(rule, name.as_ptr()) };
         ecs_assert!(
             var_id != -1,
             FlecsErrorCode::InvalidParameter,
             name.to_str().unwrap()
         );
-        Entity::new_from_existing(world, unsafe { ecs_iter_get_var(iter, var_id) })
+        EntityView::new_from(world, unsafe { sys::ecs_iter_get_var(iter, var_id) })
     }
 
     /// Access ctx.
@@ -283,7 +262,7 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::is_self`
     #[doc(alias = "iter::is_self")]
     pub fn is_self(&self, index: i32) -> bool {
-        unsafe { ecs_field_is_self(self.iter, index) }
+        unsafe { sys::ecs_field_is_self(self.iter, index) }
     }
 
     /// # Arguments
@@ -299,7 +278,7 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::is_set`
     #[doc(alias = "iter::is_set")]
     pub fn is_set(&self, index: i32) -> bool {
-        unsafe { ecs_field_is_set(self.iter, index) }
+        unsafe { sys::ecs_field_is_set(self.iter, index) }
     }
 
     /// # Arguments
@@ -315,7 +294,7 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::is_readonly`
     #[doc(alias = "iter::is_readonly")]
     pub fn is_readonly(&self, index: i32) -> bool {
-        unsafe { ecs_field_is_readonly(self.iter, index) }
+        unsafe { sys::ecs_field_is_readonly(self.iter, index) }
     }
 
     /// Number of fields in iterator.
@@ -339,7 +318,7 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::size`
     #[doc(alias = "iter::size")]
     pub fn size(&self, index: i32) -> usize {
-        unsafe { ecs_field_size(self.iter, index) }
+        unsafe { sys::ecs_field_size(self.iter, index) }
     }
 
     /// Obtain field source (0 if This).
@@ -352,8 +331,8 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::src`
     #[doc(alias = "iter::src")]
-    pub fn src(&self, index: i32) -> Entity<'a> {
-        unsafe { Entity::new_from_existing(self.world(), ecs_field_src(self.iter, index)) }
+    pub fn src(&self, index: i32) -> EntityView<'a> {
+        unsafe { EntityView::new_from(self.world(), sys::ecs_field_src(self.iter, index)) }
     }
 
     /// Obtain id matched for field.
@@ -366,8 +345,8 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::id`
     #[doc(alias = "iter::id")]
-    pub fn id(&self, index: i32) -> Id<'a> {
-        unsafe { Id::new(self.world(), ecs_field_id(self.iter, index)) }
+    pub fn id(&self, index: i32) -> IdView<'a> {
+        unsafe { IdView::new(self.world(), sys::ecs_field_id(self.iter, index)) }
     }
 
     /// Obtain pair id matched for field.
@@ -381,11 +360,11 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::pair`
     #[doc(alias = "iter::pair")]
-    pub fn pair(&self, index: i32) -> Option<Id<'a>> {
+    pub fn pair(&self, index: i32) -> Option<IdView<'a>> {
         unsafe {
-            let id = ecs_field_id(self.iter, index);
-            if ecs_id_is_pair(id) {
-                Some(Id::new(self.world(), id))
+            let id = sys::ecs_field_id(self.iter, index);
+            if sys::ecs_id_is_pair(id) {
+                Some(IdView::new(self.world(), id))
             } else {
                 None
             }
@@ -403,7 +382,7 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::column_index`
     #[doc(alias = "iter::column_index")]
     pub fn column_index(&self, index: i32) -> i32 {
-        unsafe { ecs_field_column_index(self.iter, index) }
+        unsafe { sys::ecs_field_column_index(self.iter, index) }
     }
 
     /// Convert current iterator result to string
@@ -413,7 +392,7 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::str`
     #[doc(alias = "iter::str")]
     pub fn to_str(&self) -> &'a CStr {
-        let c_str = unsafe { ecs_iter_str(self.iter) };
+        let c_str = unsafe { sys::ecs_iter_str(self.iter) };
         ecs_assert!(!c_str.is_null(), FlecsErrorCode::InvalidParameter);
         unsafe { CStr::from_ptr(c_str) }
     }
@@ -446,7 +425,7 @@ impl<'a> Iter<'a> {
     #[doc(alias = "iter::field")]
     // TODO? in C++ API there is a mutable and immutable version of this function
     // Maybe we should create a ColumnView struct that is immutable and use the Column struct for mutable access?
-    pub unsafe fn field_unchecked<T: ComponentId>(&self, index: i32) -> Column<T> {
+    pub unsafe fn field_unchecked<T>(&self, index: i32) -> Column<T> {
         self.field_internal::<T>(index)
     }
 
@@ -473,11 +452,19 @@ impl<'a> Iter<'a> {
     /// # See also
     ///
     /// * C++ API: `iter::field`
-    pub unsafe fn field<T: ComponentId>(&self, index: i32) -> Option<Column<T>> {
-        if !unsafe { ecs_field_is_set(self.iter, index) } {
+    //TODO separate const and non const, see C++ API
+    pub fn field<T: ComponentId>(&self, index: i32) -> Option<Column<T>> {
+        let id = T::get_id(self.world());
+        if unsafe {
+            index >= self.iter.field_count
+                || !sys::ecs_field_is_set(self.iter, index)
+                || sys::ecs_field_id(self.iter, index) != id
+                || !sys::ecs_id_is_pair(id)
+        } {
             return None;
         }
-        Some(self.field_internal::<T>(index))
+
+        Some(unsafe { self.field_internal::<T>(index) })
     }
 
     /// Get unchecked access to field data.
@@ -509,10 +496,10 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::entities`
     #[doc(alias = "iter::entities")]
-    pub fn entities(&self) -> &[Entity] {
+    pub fn entities(&self) -> &[EntityView] {
         unsafe {
             std::slice::from_raw_parts(
-                self.iter.entities as *const Entity,
+                self.iter.entities as *const EntityView,
                 self.iter.count as usize,
             )
         }
@@ -548,7 +535,7 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::changed`
     #[doc(alias = "iter::changed")]
     pub fn is_changed(&self) -> bool {
-        unsafe { ecs_query_changed(std::ptr::null_mut(), self.iter) }
+        unsafe { sys::ecs_query_changed(std::ptr::null_mut(), self.iter) }
     }
 
     /// Skip current table.
@@ -564,7 +551,7 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::skip`
     #[doc(alias = "iter::skip")]
     pub fn skip(&mut self) {
-        unsafe { ecs_query_skip(self.iter) };
+        unsafe { sys::ecs_query_skip(self.iter) };
     }
 
     /// # Returns
@@ -583,19 +570,7 @@ impl<'a> Iter<'a> {
         self.iter.group_id
     }
 
-    unsafe fn field_internal<T: ComponentId>(&self, index: i32) -> Column<T> {
-        ecs_assert!(
-            {
-                unsafe {
-                    let term_id_ptr = ecs_field_id(self.iter, index);
-                    let is_pair = ecs_id_is_pair(term_id_ptr);
-                    let is_id_correct = T::get_id(self.world()) == term_id_ptr;
-                    is_pair || is_id_correct
-                }
-            },
-            FlecsErrorCode::ColumnTypeMismatch
-        );
-
+    unsafe fn field_internal<T>(&self, index: i32) -> Column<T> {
         let is_shared = !self.is_self(index);
 
         // If a shared column is retrieved with 'column', there will only be a
@@ -603,14 +578,14 @@ impl<'a> Iter<'a> {
         // out of bounds.
         let count = if is_shared { 1 } else { self.count() };
         let array =
-            unsafe { ecs_field_w_size(self.iter, std::mem::size_of::<T>(), index) as *mut T };
+            unsafe { sys::ecs_field_w_size(self.iter, std::mem::size_of::<T>(), index) as *mut T };
         let slice = unsafe { std::slice::from_raw_parts_mut(array, count) };
 
         Column::<T>::new(slice, is_shared)
     }
 
     fn field_untyped_internal(&self, index: i32) -> UntypedColumn {
-        let size = unsafe { ecs_field_size(self.iter, index) };
+        let size = unsafe { sys::ecs_field_size(self.iter, index) };
         let is_shared = !self.is_self(index);
 
         // If a shared column is retrieved with 'column', there will only be a
@@ -624,7 +599,7 @@ impl<'a> Iter<'a> {
         };
 
         UntypedColumn::new(
-            unsafe { ecs_field_w_size(self.iter, 0, index) as *mut c_void },
+            unsafe { sys::ecs_field_w_size(self.iter, 0, index) as *mut c_void },
             size,
             count,
             is_shared,

@@ -6,22 +6,8 @@ use std::{
     os::raw::{c_int, c_void},
 };
 
-use crate::sys::{
-    ecs_ctx_free_t, ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_group_by_action_t,
-    ecs_group_create_action_t, ecs_group_delete_action_t, ecs_order_by_action_t, ecs_query_desc_t,
-};
-
-use super::{
-    builder::Builder,
-    c_types::{TermT, SEPARATOR},
-    component_registration::ComponentId,
-    filter_builder::{FilterBuilder, FilterBuilderImpl},
-    iterable::{Filterable, Iterable},
-    query::Query,
-    term::TermBuilder,
-    world::World,
-    EntityT, IdT, IntoEntityId, IntoWorld, TableT, Term, WorldRef, WorldT,
-};
+use crate::core::*;
+use crate::sys;
 
 /// Fast to iterate, but slower to create than Filter
 pub struct QueryBuilder<'a, T>
@@ -29,7 +15,7 @@ where
     T: Iterable,
 {
     pub filter_builder: FilterBuilder<'a, T>,
-    pub desc: ecs_query_desc_t,
+    pub desc: sys::ecs_query_desc_t,
 }
 
 impl<'a, T> Deref for QueryBuilder<'a, T>
@@ -66,14 +52,15 @@ where
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
         };
 
-        let entity_desc = ecs_entity_desc_t {
+        let entity_desc = sys::ecs_entity_desc_t {
             name: std::ptr::null(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
 
-        obj.desc.filter.entity = unsafe { ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
+        obj.desc.filter.entity =
+            unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -97,14 +84,15 @@ where
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
         };
 
-        let entity_desc = ecs_entity_desc_t {
+        let entity_desc = sys::ecs_entity_desc_t {
             name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
 
-        obj.desc.filter.entity = unsafe { ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
+        obj.desc.filter.entity =
+            unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -120,7 +108,7 @@ where
     ///
     /// * C++ API: `query_builder_i::query_builder_i`
     #[doc(alias = "query_builder_i::query_builder_i")]
-    pub fn new_from_desc(world: &'a World, desc: &mut ecs_query_desc_t) -> Self {
+    pub fn new_from_desc(world: &'a World, desc: &mut sys::ecs_query_desc_t) -> Self {
         Self {
             desc: *desc,
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
@@ -141,7 +129,7 @@ where
     #[doc(alias = "query_builder_i::query_builder_i")]
     pub fn new_from_desc_term_index(
         world: &'a World,
-        desc: &mut ecs_query_desc_t,
+        desc: &mut sys::ecs_query_desc_t,
         term_index: i32,
     ) -> Self {
         let mut obj = Self {
@@ -149,14 +137,15 @@ where
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, term_index),
         };
 
-        let entity_desc = ecs_entity_desc_t {
+        let entity_desc = sys::ecs_entity_desc_t {
             name: std::ptr::null(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
 
-        obj.desc.filter.entity = unsafe { ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
+        obj.desc.filter.entity =
+            unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -180,7 +169,7 @@ where
     T: Iterable,
 {
     #[inline]
-    fn desc_filter_mut(&mut self) -> &mut ecs_filter_desc_t {
+    fn desc_filter_mut(&mut self) -> &mut sys::ecs_filter_desc_t {
         &mut self.desc.filter
     }
 
@@ -239,7 +228,7 @@ type OrderByFn<T> = extern "C" fn(EntityT, *const T, EntityT, *const T) -> c_int
 type GroupByFn = extern "C" fn(*mut WorldT, *mut TableT, IdT, *mut c_void) -> u64;
 
 pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
-    fn desc_query_mut(&mut self) -> &mut ecs_query_desc_t;
+    fn desc_query_mut(&mut self) -> &mut sys::ecs_query_desc_t;
 
     /// Sorts the output of a query.
     ///
@@ -273,7 +262,7 @@ pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
     where
         T: ComponentId,
     {
-        let cmp: ecs_order_by_action_t = Some(unsafe { std::mem::transmute(compare) });
+        let cmp: sys::ecs_order_by_action_t = Some(unsafe { std::mem::transmute(compare) });
         self.order_by_id(T::get_id(self.world()), cmp);
         self
     }
@@ -292,8 +281,8 @@ pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
     #[doc(alias = "query_builder_i::order_by")]
     fn order_by_id(
         &mut self,
-        component: impl IntoEntityId,
-        compare: ecs_order_by_action_t,
+        component: impl IntoEntity,
+        compare: sys::ecs_order_by_action_t,
     ) -> &mut Self {
         let desc = self.desc_query_mut();
         desc.order_by = compare;
@@ -347,7 +336,7 @@ pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::group_by`
     #[doc(alias = "query_builder_i::group_by")]
-    fn group_by_fn<T>(&mut self, group_by_action: ecs_group_by_action_t) -> &mut Self
+    fn group_by_fn<T>(&mut self, group_by_action: sys::ecs_group_by_action_t) -> &mut Self
     where
         T: ComponentId,
     {
@@ -370,8 +359,8 @@ pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
     #[doc(alias = "query_builder_i::group_by")]
     fn group_by_id_fn(
         &mut self,
-        component: impl IntoEntityId,
-        group_by_action: ecs_group_by_action_t,
+        component: impl IntoEntity,
+        group_by_action: sys::ecs_group_by_action_t,
     ) -> &mut Self {
         let desc = self.desc_query_mut();
         desc.group_by = group_by_action;
@@ -391,7 +380,7 @@ pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::group_by`
     #[doc(alias = "query_builder_i::group_by")]
-    fn group_by_id(&mut self, component: impl IntoEntityId) -> &mut Self {
+    fn group_by_id(&mut self, component: impl IntoEntity) -> &mut Self {
         self.group_by_id_fn(component, None)
     }
 
@@ -406,7 +395,7 @@ pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::group_by_ctx`
     #[doc(alias = "query_builder_i::group_by_ctx")]
-    fn group_by_ctx(&mut self, ctx: *mut c_void, ctx_free: ecs_ctx_free_t) -> &mut Self {
+    fn group_by_ctx(&mut self, ctx: *mut c_void, ctx_free: sys::ecs_ctx_free_t) -> &mut Self {
         let desc = self.desc_query_mut();
         desc.group_by_ctx = ctx;
         desc.group_by_ctx_free = ctx_free;
@@ -423,7 +412,7 @@ pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::on_group_create`
     #[doc(alias = "query_builder_i::on_group_create")]
-    fn on_group_create(&mut self, action: ecs_group_create_action_t) -> &mut Self {
+    fn on_group_create(&mut self, action: sys::ecs_group_create_action_t) -> &mut Self {
         let desc = self.desc_query_mut();
         desc.on_group_create = action;
         self
@@ -439,7 +428,7 @@ pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::on_group_delete`
     #[doc(alias = "query_builder_i::on_group_delete")]
-    fn on_group_delete(&mut self, action: ecs_group_delete_action_t) -> &mut Self {
+    fn on_group_delete(&mut self, action: sys::ecs_group_delete_action_t) -> &mut Self {
         let desc = self.desc_query_mut();
         desc.on_group_delete = action;
         self
@@ -463,7 +452,7 @@ where
     T: Iterable,
 {
     #[inline]
-    fn desc_query_mut(&mut self) -> &mut ecs_query_desc_t {
+    fn desc_query_mut(&mut self) -> &mut sys::ecs_query_desc_t {
         &mut self.desc
     }
 }

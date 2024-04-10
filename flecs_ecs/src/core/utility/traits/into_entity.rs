@@ -1,48 +1,31 @@
-use crate::core::{
-    ecs_pair, Component, ComponentId, Entity, EntityId, EntityView, Id, IdT, UntypedComponent,
-};
+use crate::core::*;
 
-/// Extracts the entity id from a type.
-pub trait IntoEntityId {
+/// Extracts the Ecs ID from a type.
+/// `IntoEntity` encapsultes the logic of extracting the entity id from a type.
+/// These types can be `EntityView`, `Entity`, `Component`, `UntypedComponent`.
+/// `IdView` is not part of that list, because it can represent a pair as well.
+/// This is to allow a more safe API, where you can't accidentally pass a pair where a single id is expected.
+///
+/// See also: [`IntoId`]
+pub trait IntoEntity {
     fn get_id(&self) -> u64;
 }
 
-impl IntoEntityId for IdT {
+impl IntoEntity for IdT {
     #[inline]
     fn get_id(&self) -> IdT {
         *self
     }
 }
 
-impl IntoEntityId for EntityId {
-    #[inline]
-    fn get_id(&self) -> u64 {
-        self.0
-    }
-}
-
-impl<'a> IntoEntityId for Id<'a> {
+impl<'a> IntoEntity for EntityView<'a> {
     #[inline]
     fn get_id(&self) -> u64 {
         self.raw_id
     }
 }
 
-impl<'a> IntoEntityId for EntityView<'a> {
-    #[inline]
-    fn get_id(&self) -> u64 {
-        self.raw_id
-    }
-}
-
-impl<'a> IntoEntityId for Entity<'a> {
-    #[inline]
-    fn get_id(&self) -> u64 {
-        self.raw_id
-    }
-}
-
-impl<'a, T> IntoEntityId for Component<'a, T>
+impl<'a, T> IntoEntity for Component<'a, T>
 where
     T: ComponentId,
 {
@@ -52,16 +35,16 @@ where
     }
 }
 
-impl<'a> IntoEntityId for UntypedComponent<'a> {
+impl<'a> IntoEntity for UntypedComponent<'a> {
     #[inline]
     fn get_id(&self) -> u64 {
         self.entity.raw_id
     }
 }
 
-impl<T> IntoEntityId for &T
+impl<T> IntoEntity for &T
 where
-    T: IntoEntityId,
+    T: IntoEntity,
 {
     #[inline]
     fn get_id(&self) -> u64 {
@@ -69,9 +52,9 @@ where
     }
 }
 
-impl<T> IntoEntityId for &mut T
+impl<T> IntoEntity for &mut T
 where
-    T: IntoEntityId,
+    T: IntoEntity,
 {
     #[inline]
     fn get_id(&self) -> u64 {
@@ -79,10 +62,10 @@ where
     }
 }
 
-/// Extension trait for tuples that implement `IntoEntityId`.
-/// This extension is useful for when some function only expect one entity id, but not pairs of them.
-/// so you only accept `IntoEntityId`. Where both pairs and a single id are accepted, you can use `IntoEntityIdExt`.
-pub trait IntoEntityIdExt {
+/// Extracts the Ecs ID from a type.
+/// Extension trait from [`IntoEntity`] for tuples that implement `IntoEntity`.
+/// These types can be `IdView`, `EntityView`, `Entity`, `Component`, `UntypedComponent`.
+pub trait IntoId {
     const IS_PAIR: bool;
 
     fn get_id(&self) -> u64;
@@ -104,10 +87,10 @@ pub trait IntoEntityIdExt {
     }
 }
 
-impl<T, U> IntoEntityIdExt for (T, U)
+impl<T, U> IntoId for (T, U)
 where
-    T: IntoEntityId,
-    U: IntoEntityId,
+    T: IntoEntity,
+    U: IntoEntity,
 {
     const IS_PAIR: bool = true;
 
@@ -129,55 +112,37 @@ where
     }
 }
 
-// We can not implement for T where T : IntoEntityId, because it would essentially extend the trait, which we don't want
-// so we have to implement for each type that implements IntoEntityId separately.
+// We can not implement for T where T : `IntoEntity`, because it would essentially extend the trait, which we don't want
+// so we have to implement for each type that implements `IntoEntity` separately.
 
-impl IntoEntityIdExt for IdT {
+impl IntoId for IdT {
     const IS_PAIR: bool = false;
 
     #[inline]
     fn get_id(&self) -> u64 {
-        IntoEntityId::get_id(self)
+        *self
     }
 }
 
-impl IntoEntityIdExt for EntityId {
+impl<'a> IntoId for IdView<'a> {
     const IS_PAIR: bool = false;
 
     #[inline]
     fn get_id(&self) -> u64 {
-        IntoEntityId::get_id(self)
+        self.raw_id
     }
 }
 
-impl<'a> IntoEntityIdExt for Id<'a> {
+impl<'a> IntoId for EntityView<'a> {
     const IS_PAIR: bool = false;
 
     #[inline]
     fn get_id(&self) -> u64 {
-        IntoEntityId::get_id(self)
+        self.raw_id
     }
 }
 
-impl<'a> IntoEntityIdExt for EntityView<'a> {
-    const IS_PAIR: bool = false;
-
-    #[inline]
-    fn get_id(&self) -> u64 {
-        IntoEntityId::get_id(self)
-    }
-}
-
-impl<'a> IntoEntityIdExt for Entity<'a> {
-    const IS_PAIR: bool = false;
-
-    #[inline]
-    fn get_id(&self) -> u64 {
-        IntoEntityId::get_id(self)
-    }
-}
-
-impl<'a, T> IntoEntityIdExt for Component<'a, T>
+impl<'a, T> IntoId for Component<'a, T>
 where
     T: ComponentId,
 {
@@ -189,7 +154,7 @@ where
     }
 }
 
-impl<'a> IntoEntityIdExt for UntypedComponent<'a> {
+impl<'a> IntoId for UntypedComponent<'a> {
     const IS_PAIR: bool = false;
 
     #[inline]
@@ -198,9 +163,9 @@ impl<'a> IntoEntityIdExt for UntypedComponent<'a> {
     }
 }
 
-impl<T> IntoEntityIdExt for &T
+impl<T> IntoId for &T
 where
-    T: IntoEntityIdExt,
+    T: IntoId,
 {
     const IS_PAIR: bool = T::IS_PAIR;
 
@@ -210,9 +175,9 @@ where
     }
 }
 
-impl<T> IntoEntityIdExt for &mut T
+impl<T> IntoId for &mut T
 where
-    T: IntoEntityIdExt,
+    T: IntoId,
 {
     const IS_PAIR: bool = T::IS_PAIR;
 

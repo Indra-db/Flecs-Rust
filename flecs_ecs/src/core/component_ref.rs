@@ -2,19 +2,8 @@
 
 use std::{marker::PhantomData, os::raw::c_void, ptr::NonNull};
 
-use super::{
-    c_types::{IdT, RefT, WorldT},
-    component_registration::ComponentId,
-    entity::Entity,
-    IntoEntityId, IntoWorld,
-};
-#[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-use crate::core::FlecsErrorCode;
-use crate::{
-    core::WorldRef,
-    ecs_assert,
-    sys::{ecs_get_world, ecs_ref_get_id, ecs_ref_init_id},
-};
+use crate::core::*;
+use crate::sys;
 
 /// A reference to a component from a specific entity.
 /// Refs are a fast mechanism for referring to a specific entity/component
@@ -38,11 +27,11 @@ impl<'a, T: ComponentId> Ref<'a, T> {
     /// * C++ API: `ref::ref`
     ///
     #[doc(alias = "ref::ref")]
-    pub fn new(world: impl IntoWorld<'a>, entity: impl IntoEntityId, mut id: IdT) -> Self {
+    pub fn new(world: impl IntoWorld<'a>, entity: impl IntoEntity, mut id: IdT) -> Self {
         // the world we were called with may be a stage; convert it to a world
         // here if that is the case
         let world_ptr =
-            unsafe { ecs_get_world(world.world_ptr_mut() as *const c_void) as *mut WorldT };
+            unsafe { sys::ecs_get_world(world.world_ptr_mut() as *const c_void) as *mut WorldT };
 
         if id == 0 {
             id = T::get_id(world);
@@ -53,7 +42,7 @@ impl<'a, T: ComponentId> Ref<'a, T> {
             FlecsErrorCode::InvalidParameter
         );
 
-        let component_ref = unsafe { ecs_ref_init_id(world_ptr, entity.get_id(), id) };
+        let component_ref = unsafe { sys::ecs_ref_init_id(world_ptr, entity.get_id(), id) };
         assert_ne!(
             component_ref.entity, 0,
             "Tried to create invalid `Ref` type."
@@ -73,7 +62,7 @@ impl<'a, T: ComponentId> Ref<'a, T> {
     #[doc(alias = "ref::try_get")]
     pub fn try_get(&mut self) -> Option<&mut T> {
         NonNull::new(unsafe {
-            ecs_ref_get_id(
+            sys::ecs_ref_get_id(
                 self.world.world_ptr_mut(),
                 &mut self.component_ref,
                 self.component_ref.id,
@@ -87,7 +76,7 @@ impl<'a, T: ComponentId> Ref<'a, T> {
             .expect("Called Ref::get but the Ref was invalid")
     }
 
-    pub fn entity(&self) -> Entity<'a> {
-        Entity::new_from_existing(self.world, self.component_ref.entity)
+    pub fn entity(&self) -> EntityView<'a> {
+        EntityView::new_from(self.world, self.component_ref.entity)
     }
 }

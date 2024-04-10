@@ -1,20 +1,7 @@
 use std::ffi::{c_char, CStr};
 
-use flecs_ecs_sys::{
-    ecs_cpp_enum_constant_register, ecs_cpp_enum_init, ecs_exists, ecs_set_scope, ecs_set_with,
-};
-
-use crate::core::component_registration::registration_traits::CachedEnumData;
-use crate::core::{create_component_desc, create_entity_desc, create_type_info};
-use crate::{
-    core::{get_symbol_name, EntityT, IdComponent, IntoWorld},
-    ecs_assert,
-};
-
-#[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-use crate::core::FlecsErrorCode;
-
-use super::{is_component_registered_with_world, ComponentId};
+use crate::core::*;
+use crate::sys;
 
 /// attempts to register the component with the world. If it's already registered, it does nothing.
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
@@ -39,13 +26,13 @@ where
 
         if T::IS_ENUM && has_newly_registered && !is_registered_with_world {
             //TODO we should convert this ecs_cpp functions to rust so if it ever changes, our solution won't break
-            unsafe { ecs_cpp_enum_init(world_ptr, T::get_id_unchecked()) };
+            unsafe { sys::ecs_cpp_enum_init(world_ptr, T::get_id_unchecked()) };
             let enum_array_ptr = T::UnderlyingEnumType::__enum_data_mut();
 
             for (index, enum_item) in T::UnderlyingEnumType::iter().enumerate() {
                 let name = enum_item.name_cstr();
                 let entity_id: EntityT = unsafe {
-                    ecs_cpp_enum_constant_register(
+                    sys::ecs_cpp_enum_constant_register(
                         world_ptr,
                         T::get_id_unchecked(),
                         T::UnderlyingEnumType::get_id_variant_of_index_unchecked(
@@ -101,8 +88,8 @@ where
         let mut prev_with: EntityT = 0;
 
         if !world_ptr.is_null() {
-            prev_scope = unsafe { ecs_set_scope(world_ptr, 0) };
-            prev_with = unsafe { ecs_set_with(world_ptr, 0) };
+            prev_scope = unsafe { sys::ecs_set_scope(world_ptr, 0) };
+            prev_with = unsafe { sys::ecs_set_with(world_ptr, 0) };
         }
 
         let id = if is_comp_pre_registered {
@@ -121,10 +108,10 @@ where
         );
 
         if prev_with != 0 {
-            unsafe { ecs_set_with(world_ptr, prev_with) };
+            unsafe { sys::ecs_set_with(world_ptr, prev_with) };
         }
         if prev_scope != 0 {
-            unsafe { ecs_set_scope(world_ptr, prev_scope) };
+            unsafe { sys::ecs_set_scope(world_ptr, prev_scope) };
         }
 
         return true;
@@ -175,7 +162,7 @@ where
 
     ecs_assert!(
         if !is_comp_pre_registered {
-            entity != 0 && unsafe { ecs_exists(world, entity) }
+            entity != 0 && unsafe { sys::ecs_exists(world, entity) }
         } else {
             true
         },

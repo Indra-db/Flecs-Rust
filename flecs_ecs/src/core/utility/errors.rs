@@ -218,3 +218,6 @@ macro_rules! ecs_abort {
         std::process::abort();
     };
 }
+
+pub use ecs_abort;
+pub use ecs_assert;
