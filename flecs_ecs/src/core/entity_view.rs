@@ -1035,7 +1035,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target_for")]
     #[inline(always)]
-    pub fn target_for<T: IntoComponentId>(&self, relationship: impl IntoEntityId) -> Entity<'a> {
+    pub fn target_for<T: IntoComponentId>(self, relationship: impl IntoEntityId) -> Entity<'a> {
         self.target_for_id(relationship, T::get_id(self.world))
     }
 
