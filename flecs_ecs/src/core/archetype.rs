@@ -5,11 +5,8 @@ use std::{
     ptr::NonNull,
 };
 
-use flecs_ecs_sys::ecs_type_t;
-
-use super::{c_types::IdT, id::Id, IntoWorld, TableLock, WorldRef};
-
-use crate::sys::ecs_type_str;
+use crate::core::*;
+use crate::sys;
 
 /// Archetype type.
 /// A type is a vector of component ids which can be requested from entities or tables.
@@ -73,9 +70,9 @@ impl<'a> Archetype<'a> {
     #[doc(alias = "Type::str()")]
     pub fn to_string(&self) -> Option<String> {
         NonNull::new(unsafe {
-            ecs_type_str(
+            sys::ecs_type_str(
                 self.world.world_ptr_mut(),
-                &ecs_type_t {
+                &sys::ecs_type_t {
                     array: self.type_vec.as_ptr() as *mut _,
                     count: self.type_vec.len() as i32,
                 },

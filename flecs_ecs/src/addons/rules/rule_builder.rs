@@ -1,13 +1,8 @@
 use std::{ffi::CStr, ops::Deref};
 
-use flecs_ecs_sys::{ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t};
-
-use crate::core::{
-    Builder, FilterBuilder, FilterBuilderImpl, Filterable, IntoWorld, Iterable, Term, TermBuilder,
-    TermIdT, TermT, World, WorldRef, SEPARATOR,
-};
-
 use super::Rule;
+use crate::core::*;
+use crate::sys;
 
 pub struct RuleBuilder<'a, T>
 where
@@ -47,7 +42,7 @@ where
             filter_builder: FilterBuilder::new(world),
         };
 
-        let entity_desc = ecs_entity_desc_t {
+        let entity_desc = sys::ecs_entity_desc_t {
             name: std::ptr::null(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
@@ -55,7 +50,7 @@ where
         };
 
         obj.filter_builder.desc.entity =
-            unsafe { ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
+            unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -76,7 +71,7 @@ where
             filter_builder: FilterBuilder::new_named(world, name),
         };
 
-        let entity_desc = ecs_entity_desc_t {
+        let entity_desc = sys::ecs_entity_desc_t {
             name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
@@ -84,7 +79,7 @@ where
         };
 
         obj.filter_builder.desc.entity =
-            unsafe { ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
+            unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -108,7 +103,7 @@ where
     T: Iterable,
 {
     #[inline]
-    fn desc_filter_mut(&mut self) -> &mut ecs_filter_desc_t {
+    fn desc_filter_mut(&mut self) -> &mut sys::ecs_filter_desc_t {
         &mut self.filter_builder.desc
     }
 

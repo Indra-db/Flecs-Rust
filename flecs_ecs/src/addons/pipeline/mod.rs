@@ -1,7 +1,6 @@
 //! Pipelines order and schedule systems for execution.
 
 mod pipeline_builder;
-
 pub use pipeline_builder::*;
 
 use std::ops::{Deref, DerefMut};

@@ -1,13 +1,6 @@
-//pub const ECS_MODULE: u64 = FLECS_HI_COMPONENT_ID + 4;
-
 use std::{ffi::CStr, sync::OnceLock};
 
-use super::{
-    ComponentId, ComponentInfo, ComponentType, EmptyComponent, FlecsConstantId, IdComponent,
-    IntoWorld, NoneEnum, Struct,
-};
-
-use super::c_types::*;
+use crate::core::*;
 
 #[macro_export]
 macro_rules! create_pre_registered_component {

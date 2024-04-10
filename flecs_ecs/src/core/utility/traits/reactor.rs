@@ -1,5 +1,6 @@
-use crate::core::*;
 use std::ffi::c_void;
+
+use crate::core::*;
 
 pub trait ReactorAPI<'a, T>: Builder<'a> + private::internal_ReactorAPI<'a, T>
 where
@@ -161,7 +162,10 @@ macro_rules! implement_reactor_api {
         where
             T: Iterable,
         {
-            fn set_run_callback(&mut self, callback: ecs_iter_action_t) -> &mut Self {
+            fn set_run_callback(
+                &mut self,
+                callback: flecs_ecs::sys::ecs_iter_action_t,
+            ) -> &mut Self {
                 self.desc.run = callback;
                 self
             }

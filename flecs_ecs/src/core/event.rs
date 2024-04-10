@@ -1,10 +1,7 @@
 use std::ffi::c_void;
 
-use flecs_ecs_sys::{ecs_emit, ecs_enqueue, ecs_event_desc_t};
-
-use super::{
-    ecs_pair, ComponentId, EventBuilder, IntoComponentId, IntoEntity, IntoId, IntoTable, IntoWorld,
-};
+use crate::core::*;
+use crate::sys;
 
 /// Event builder trait to implement '`set_event_data`' for untyped and typed `EventBuilder`
 pub trait EventBuilderImpl<'a> {
@@ -126,7 +123,7 @@ pub trait EventBuilderImpl<'a> {
         ids.array = ids_array.as_mut_ptr();
         desc.ids = ids;
         desc.observable = world.real_world().world_ptr_mut() as *mut c_void;
-        unsafe { ecs_emit(world.world_ptr_mut(), desc) };
+        unsafe { sys::ecs_emit(world.world_ptr_mut(), desc) };
     }
 
     fn enqueue(&mut self) {
@@ -139,7 +136,7 @@ pub trait EventBuilderImpl<'a> {
         desc.ids = ids;
         desc.observable = world.real_world().world_ptr_mut() as *mut c_void;
         unsafe {
-            ecs_enqueue(world.world_ptr_mut(), desc as *mut ecs_event_desc_t);
+            sys::ecs_enqueue(world.world_ptr_mut(), desc as *mut sys::ecs_event_desc_t);
         };
     }
 

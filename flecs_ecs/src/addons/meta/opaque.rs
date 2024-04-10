@@ -1,13 +1,7 @@
 use std::ffi::{c_char, c_void};
 
-use crate::{
-    core::{
-        c_types::{EntityT, IdT, WorldT},
-        component_registration::ComponentId,
-        IntoWorld, WorldRef,
-    },
-    sys::{ecs_meta_serialize_t, ecs_opaque_desc_t, ecs_opaque_init, ecs_serializer_t},
-};
+use crate::core::*;
+use crate::sys::*;
 
 type AssignBoolFn<T> = extern "C" fn(*mut T, bool);
 type AssignCharFn<T> = extern "C" fn(*mut T, i8);

@@ -44,10 +44,11 @@
 //!
 //! Note: C does the same, where the user needs to opt in for non trivial types. We can do the same.
 //! Note2: zerobit pattern
-#[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-use crate::core::FlecsErrorCode;
-use crate::{core::c_types::TypeHooksT, ecs_assert, sys::ecs_type_info_t};
+
 use std::{ffi::c_void, mem::MaybeUninit, ptr};
+
+use crate::core::*;
+use crate::sys;
 
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn register_lifecycle_actions<T: Default>(type_hooks: &mut TypeHooksT) {
@@ -89,7 +90,7 @@ pub fn register_copy_lifecycle_panic_action<T>(type_hooks: &mut TypeHooksT) {
 unsafe extern "C" fn generic_ctor<T: Default>(
     ptr: *mut c_void,
     count: i32,
-    _type_info: *const ecs_type_info_t,
+    _type_info: *const sys::ecs_type_info_t,
 ) {
     ecs_assert!(
         check_type_info::<T>(_type_info),
@@ -114,7 +115,7 @@ unsafe extern "C" fn generic_ctor<T: Default>(
 unsafe extern "C" fn generic_dtor<T>(
     ptr: *mut c_void,
     count: i32,
-    _type_info: *const ecs_type_info_t,
+    _type_info: *const sys::ecs_type_info_t,
 ) {
     ecs_assert!(
         check_type_info::<T>(_type_info),
@@ -140,7 +141,7 @@ unsafe extern "C" fn generic_copy<T: Clone>(
     dst_ptr: *mut c_void,
     src_ptr: *const c_void,
     count: i32,
-    _type_info: *const ecs_type_info_t,
+    _type_info: *const sys::ecs_type_info_t,
 ) {
     ecs_assert!(
         check_type_info::<T>(_type_info),
@@ -169,7 +170,7 @@ extern "C" fn generic_copy_panic<T>(
     _dst_ptr: *mut c_void,
     _src_ptr: *const c_void,
     _count: i32,
-    _type_info: *const ecs_type_info_t,
+    _type_info: *const sys::ecs_type_info_t,
 ) {
     panic!("Clone is not implemented for type {} and it's being used in a copy / duplicate operation such as component overriding or duplicating entities / components", std::any::type_name::<T>());
 }
@@ -185,7 +186,7 @@ unsafe extern "C" fn generic_move<T: Default>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,
     count: i32,
-    _type_info: *const ecs_type_info_t,
+    _type_info: *const sys::ecs_type_info_t,
 ) {
     ecs_assert!(
         check_type_info::<T>(_type_info),
@@ -217,7 +218,7 @@ unsafe extern "C" fn generic_ctor_move_dtor<T: Default>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,
     count: i32,
-    _type_info: *const ecs_type_info_t,
+    _type_info: *const sys::ecs_type_info_t,
 ) {
     ecs_assert!(
         check_type_info::<T>(_type_info),
@@ -248,7 +249,7 @@ unsafe extern "C" fn generic_ctor_move_dtor<T: Default>(
     }
 }
 
-unsafe fn check_type_info<T>(_type_info: *const ecs_type_info_t) -> bool {
+unsafe fn check_type_info<T>(_type_info: *const sys::ecs_type_info_t) -> bool {
     if !_type_info.is_null() {
         unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 }
     } else {

@@ -1,10 +1,12 @@
 //! Registering and working with components
 
-#[cfg(feature = "flecs_meta")]
-use crate::addons::meta::Opaque;
+use std::{ffi::CStr, marker::PhantomData, ops::Deref, os::raw::c_void, ptr};
+
 use crate::core::*;
 use crate::sys;
-use std::{ffi::CStr, marker::PhantomData, ops::Deref, os::raw::c_void, ptr};
+
+#[cfg(feature = "flecs_meta")]
+use crate::addons::meta::Opaque;
 
 type EcsCtxFreeT = unsafe extern "C" fn(*mut c_void);
 

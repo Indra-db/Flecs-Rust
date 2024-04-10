@@ -1,6 +1,7 @@
+use std::{ffi::c_void, marker::PhantomData, ops::Deref, ptr::NonNull};
+
 use crate::core::*;
 use crate::sys;
-use std::{ffi::c_void, marker::PhantomData, ops::Deref, ptr::NonNull};
 
 pub trait IntoWorld<'a> {
     #[doc(hidden)]

@@ -11,6 +11,7 @@ pub use system_runner_fluent::*;
 
 use std::{ffi::CStr, ops::Deref, os::raw::c_void, ptr::NonNull};
 
+use self::flecs::system::TickSource;
 use crate::core::*;
 use crate::sys;
 

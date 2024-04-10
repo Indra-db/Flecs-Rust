@@ -2,7 +2,7 @@ use std::{ffi::CStr, os::raw::c_void};
 
 use flecs_ecs::core::*;
 
-use crate::{ecs_assert, sys};
+use crate::sys;
 
 // functions in here match most of the functions in the c++ entity and entity_builder class
 impl<'a> EntityView<'a> {

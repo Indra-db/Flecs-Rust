@@ -1,6 +1,7 @@
+use std::ptr::NonNull;
+
 use crate::core::*;
 use crate::sys;
-use std::ptr::NonNull;
 
 pub struct FilterView<'a, T>
 where

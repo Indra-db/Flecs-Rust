@@ -3,21 +3,15 @@ use std::{
     os::raw::c_void,
 };
 
-use crate::sys::{ecs_event_desc_t, FLECS_EVENT_DESC_MAX};
-
-use super::{
-    c_types::{IdT, TypeT},
-    component_registration::ComponentId,
-    event::EventBuilderImpl,
-    IntoEntity, IntoWorld, WorldRef,
-};
+use crate::core::*;
+use crate::sys;
 
 pub struct EventBuilder<'a> {
     /// non-owning world reference
     pub world: WorldRef<'a>,
-    pub(crate) desc: ecs_event_desc_t,
+    pub(crate) desc: sys::ecs_event_desc_t,
     pub(crate) ids: TypeT,
-    pub(crate) ids_array: [IdT; FLECS_EVENT_DESC_MAX as usize],
+    pub(crate) ids_array: [IdT; sys::FLECS_EVENT_DESC_MAX as usize],
 }
 
 impl<'a> EventBuilder<'a> {

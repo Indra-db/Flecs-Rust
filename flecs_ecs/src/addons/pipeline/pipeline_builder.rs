@@ -3,15 +3,8 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use flecs_ecs_sys::{ecs_filter_desc_t, ecs_query_desc_t};
-
-use crate::{
-    core::{
-        Builder, EntityT, FilterBuilderImpl, Filterable, IntoWorld, Iterable, QueryBuilder,
-        QueryBuilderImpl, Term, TermBuilder, TermIdT, TermT, World, WorldRef, SEPARATOR,
-    },
-    sys::{ecs_entity_desc_t, ecs_entity_init, ecs_pipeline_desc_t},
-};
+use crate::core::*;
+use crate::sys;
 
 use super::Pipeline;
 
@@ -20,7 +13,7 @@ where
     T: Iterable,
 {
     query_builder: QueryBuilder<'a, T>,
-    desc: ecs_pipeline_desc_t,
+    desc: sys::ecs_pipeline_desc_t,
     is_instanced: bool,
 }
 
@@ -59,13 +52,13 @@ where
             is_instanced: false,
         };
 
-        let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
+        let entity_desc: sys::ecs_entity_desc_t = sys::ecs_entity_desc_t {
             name: std::ptr::null(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
-        obj.desc.entity = unsafe { ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
 
         T::populate(&mut obj);
         obj
@@ -77,20 +70,20 @@ where
         obj
     }
 
-    pub fn new_from_desc(world: &'a World, mut desc: ecs_pipeline_desc_t) -> Self {
+    pub fn new_from_desc(world: &'a World, mut desc: sys::ecs_pipeline_desc_t) -> Self {
         let mut obj = Self {
             desc,
             query_builder: QueryBuilder::<T>::new_from_desc(world, &mut desc.query),
             is_instanced: false,
         };
 
-        let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
+        let entity_desc: sys::ecs_entity_desc_t = sys::ecs_entity_desc_t {
             name: std::ptr::null(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
-        obj.desc.entity = unsafe { ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
 
         T::populate(&mut obj);
         obj
@@ -98,7 +91,7 @@ where
 
     pub fn new_from_desc_term_index(
         world: &'a World,
-        mut desc: ecs_pipeline_desc_t,
+        mut desc: sys::ecs_pipeline_desc_t,
         term_index: i32,
     ) -> Self {
         let mut obj = Self {
@@ -123,13 +116,13 @@ where
             is_instanced: false,
         };
 
-        let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
+        let entity_desc: sys::ecs_entity_desc_t = sys::ecs_entity_desc_t {
             name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
 
-        obj.desc.entity = unsafe { ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -183,7 +176,7 @@ where
     T: Iterable,
 {
     #[inline]
-    fn desc_filter_mut(&mut self) -> &mut ecs_filter_desc_t {
+    fn desc_filter_mut(&mut self) -> &mut sys::ecs_filter_desc_t {
         &mut self.desc.query.filter
     }
 
@@ -203,7 +196,7 @@ where
     T: Iterable,
 {
     #[inline]
-    fn desc_query_mut(&mut self) -> &mut ecs_query_desc_t {
+    fn desc_query_mut(&mut self) -> &mut sys::ecs_query_desc_t {
         &mut self.desc.query
     }
 }

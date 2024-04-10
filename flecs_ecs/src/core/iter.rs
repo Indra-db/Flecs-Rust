@@ -183,8 +183,6 @@ impl<'a> Iter<'a> {
     #[doc(alias = "iter::get_var")]
     #[cfg(feature = "flecs_rules")]
     pub fn get_var_by_name(&mut self, name: &CStr) -> EntityView<'a> {
-        use flecs_ecs_sys::ecs_rule_find_var;
-
         let world = self.world();
         let iter: &mut IterT = self.iter;
         let rit = unsafe { &mut iter.priv_.iter.rule };

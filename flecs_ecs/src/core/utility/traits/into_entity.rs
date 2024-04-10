@@ -1,9 +1,9 @@
 use crate::core::*;
 
 /// Extracts the Ecs ID from a type.
-/// IntoEntity encapsultes the logic of extracting the entity id from a type.
-/// These types can be EntityView, Entity, Component, UntypedComponent.
-/// IdView is not part of that list, because it can represent a pair as well.
+/// `IntoEntity` encapsultes the logic of extracting the entity id from a type.
+/// These types can be `EntityView`, `Entity`, `Component`, `UntypedComponent`.
+/// `IdView` is not part of that list, because it can represent a pair as well.
 /// This is to allow a more safe API, where you can't accidentally pass a pair where a single id is expected.
 ///
 /// See also: [`IntoId`]
@@ -64,7 +64,7 @@ where
 
 /// Extracts the Ecs ID from a type.
 /// Extension trait from [`IntoEntity`] for tuples that implement `IntoEntity`.
-/// These types can be IdView, EntityView, Entity, Component, UntypedComponent.
+/// These types can be `IdView`, `EntityView`, `Entity`, `Component`, `UntypedComponent`.
 pub trait IntoId {
     const IS_PAIR: bool;
 
@@ -112,8 +112,8 @@ where
     }
 }
 
-// We can not implement for T where T : IntoEntity, because it would essentially extend the trait, which we don't want
-// so we have to implement for each type that implements IntoEntity separately.
+// We can not implement for T where T : `IntoEntity`, because it would essentially extend the trait, which we don't want
+// so we have to implement for each type that implements `IntoEntity` separately.
 
 impl IntoId for IdT {
     const IS_PAIR: bool = false;

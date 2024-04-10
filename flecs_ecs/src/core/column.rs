@@ -1,8 +1,9 @@
-use crate::core::*;
 use std::{
     ops::{Deref, DerefMut, Index, IndexMut},
     os::raw::c_void,
 };
+
+use crate::core::*;
 
 /// Wrapper class around a column.
 ///

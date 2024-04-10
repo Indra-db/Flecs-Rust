@@ -1465,7 +1465,7 @@ impl World {
     ///
     /// # Returns
     ///
-    /// EntityView handle to the singleton component.
+    /// `EntityView` handle to the singleton component.
     ///
     /// # See also
     ///
@@ -1494,7 +1494,7 @@ impl World {
     ///
     /// # Returns
     ///
-    /// EntityView handle to the singleton component.
+    /// `EntityView` handle to the singleton component.
     ///
     /// # See also
     ///
@@ -1519,7 +1519,7 @@ impl World {
     ///
     /// # Returns
     ///
-    /// EntityView handle to the singleton enum component.
+    /// `EntityView` handle to the singleton enum component.
     ///
     /// # See also
     ///
@@ -1545,7 +1545,7 @@ impl World {
     ///
     /// # Returns
     ///
-    /// EntityView handle to the singleton pair.
+    /// `EntityView` handle to the singleton pair.
     #[inline(always)]
     pub fn add_pair_second<Second: ComponentId>(&self, first: impl IntoEntity) -> EntityView {
         EntityView::new_from(self, Second::get_id(self)).add_pair_second::<Second>(first)
@@ -1563,7 +1563,7 @@ impl World {
     ///
     /// # Returns
     ///
-    /// EntityView handle to the singleton pair.
+    /// `EntityView` handle to the singleton pair.
     ///
     /// # See also
     ///
@@ -1587,7 +1587,7 @@ impl World {
     ///
     /// # Returns
     ///
-    /// EntityView handle to the singleton pair.
+    /// `EntityView` handle to the singleton pair.
     ///
     /// # See also
     ///
@@ -2567,7 +2567,7 @@ impl World {
     }
 }
 
-/// EntityView mixin implementation
+/// `EntityView` mixin implementation
 impl World {
     /// Convert enum constant to entity
     ///
@@ -2581,7 +2581,7 @@ impl World {
     ///
     /// # Returns
     ///
-    /// EntityView wrapping the id of the enum constant.
+    /// `EntityView` wrapping the id of the enum constant.
     ///
     /// # See also
     ///

@@ -1,6 +1,7 @@
+use std::ffi::c_char;
+
 use flecs_ecs::core::*;
 use flecs_ecs::sys;
-use std::ffi::c_char;
 
 pub trait IterOperations {
     #[doc(hidden)]

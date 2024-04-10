@@ -2,15 +2,13 @@
 
 use std::ffi::c_void;
 
-use crate::{
-    core::{FTime, IntoWorld, WorldRef},
-    sys::{ecs_app_desc_t, ecs_app_init_action_t, ecs_app_run, ecs_get_world_info},
-};
+use crate::core::*;
+use crate::sys;
 
 /// Application interface.
 pub struct App<'a> {
     world: WorldRef<'a>,
-    desc: ecs_app_desc_t,
+    desc: sys::ecs_app_desc_t,
 }
 
 impl<'a> App<'a> {
@@ -27,10 +25,10 @@ impl<'a> App<'a> {
     pub fn new(world: impl IntoWorld<'a>) -> Self {
         let mut obj = Self {
             world: world.world(),
-            desc: ecs_app_desc_t::default(),
+            desc: sys::ecs_app_desc_t::default(),
         };
 
-        let stats = unsafe { ecs_get_world_info(obj.world.ptr_mut()) };
+        let stats = unsafe { sys::ecs_get_world_info(obj.world.ptr_mut()) };
         obj.desc.target_fps = unsafe { (*stats).target_fps };
         let zero: FTime = 0.0;
         if obj.desc.target_fps.to_bits() == zero.to_bits() {
@@ -143,7 +141,7 @@ impl<'a> App<'a> {
     ///
     /// * C++ API: `app_builder::init`
     #[doc(alias = "app_builder::init")]
-    pub fn init(&mut self, value: ecs_app_init_action_t) -> &mut Self {
+    pub fn init(&mut self, value: sys::ecs_app_init_action_t) -> &mut Self {
         self.desc.init = value;
         self
     }
@@ -177,6 +175,6 @@ impl<'a> App<'a> {
     /// * C++ API: `app_builder::run`
     #[doc(alias = "app_builder::run")]
     pub fn run(&mut self) -> i32 {
-        unsafe { ecs_app_run(self.world.ptr_mut(), &mut self.desc) }
+        unsafe { sys::ecs_app_run(self.world.ptr_mut(), &mut self.desc) }
     }
 }

@@ -4,28 +4,16 @@ use std::{
     ops::Deref,
 };
 
-use crate::sys::{
-    ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_iter_action_t, ecs_observer_desc_t,
-};
-
-use super::{
-    c_types::{TermT, SEPARATOR},
-    component_registration::ComponentId,
-    filter_builder::{FilterBuilder, FilterBuilderImpl},
-    implement_reactor_api,
-    iterable::{Filterable, Iterable},
-    observer::Observer,
-    private::internal_ReactorAPI,
-    term::TermBuilder,
-    Builder, IntoEntity, IntoWorld, ReactorAPI, Term, WorldRef,
-};
+use crate::core::private::internal_ReactorAPI;
+use crate::core::*;
+use crate::sys;
 
 pub struct ObserverBuilder<'a, T>
 where
     T: Iterable,
 {
     filter_builder: FilterBuilder<'a, T>,
-    desc: ecs_observer_desc_t,
+    desc: sys::ecs_observer_desc_t,
     event_count: i32,
     is_instanced: bool,
 }
@@ -66,14 +54,14 @@ where
             is_instanced: false,
         };
 
-        let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
+        let entity_desc: sys::ecs_entity_desc_t = sys::ecs_entity_desc_t {
             name: std::ptr::null(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..default::Default::default()
         };
 
-        obj.desc.entity = unsafe { ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -97,14 +85,14 @@ where
             event_count: 0,
             is_instanced: false,
         };
-        let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
+        let entity_desc: sys::ecs_entity_desc_t = sys::ecs_entity_desc_t {
             name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..default::Default::default()
         };
 
-        obj.desc.entity = unsafe { ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -120,7 +108,7 @@ where
     ///
     /// * C++ API: `observer_builder::observer_builder`
     #[doc(alias = "observer_builder::observer_builder")]
-    pub fn new_from_desc(world: impl IntoWorld<'a>, mut desc: ecs_observer_desc_t) -> Self {
+    pub fn new_from_desc(world: impl IntoWorld<'a>, mut desc: sys::ecs_observer_desc_t) -> Self {
         let mut obj = Self {
             desc,
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
@@ -128,14 +116,14 @@ where
             is_instanced: false,
         };
 
-        let entity_desc: ecs_entity_desc_t = ecs_entity_desc_t {
+        let entity_desc: sys::ecs_entity_desc_t = sys::ecs_entity_desc_t {
             name: std::ptr::null(),
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..default::Default::default()
         };
 
-        obj.desc.entity = unsafe { ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -217,7 +205,7 @@ where
     T: Iterable,
 {
     #[inline]
-    fn desc_filter_mut(&mut self) -> &mut ecs_filter_desc_t {
+    fn desc_filter_mut(&mut self) -> &mut sys::ecs_filter_desc_t {
         &mut self.desc.filter
     }
 
