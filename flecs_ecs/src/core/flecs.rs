@@ -183,7 +183,7 @@ pub mod pipeline {
     create_pre_registered_component!(Phase, ECS_PHASE);
 }
 
-pub mod testggg {
+pub mod meta {
     use super::*;
     // Meta primitive components (don't use low ids to save id space)
     create_pre_registered_component!(Bool, ECS_BOOL_T);

@@ -5,6 +5,7 @@ pub mod column;
 pub mod component;
 pub mod component_ref;
 pub mod component_registration;
+pub mod entity;
 pub mod entity_view;
 pub mod event;
 pub mod event_builder;
@@ -37,7 +38,6 @@ pub use event::*;
 pub use event_builder::*;
 pub use filter::*;
 pub use filter_builder::*;
-
 pub use id::*;
 pub use iter::*;
 pub use iter_iterable::*;
