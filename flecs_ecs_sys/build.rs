@@ -315,7 +315,5 @@ fn main() {
 
         #[cfg(feature = "regenerate_binding")]
         generate_bindings();
-
-        build.compile("flecs");
     }
 }
