@@ -3,20 +3,17 @@
 use std::ffi::c_void;
 
 use crate::{
-    core::{world::World, FTime},
-    sys::{
-        ecs_app_desc_t, ecs_app_init_action_t, ecs_app_run, ecs_fini, ecs_get_world_info,
-        ecs_should_quit,
-    },
+    core::{FTime, IntoWorld, WorldRef},
+    sys::{ecs_app_desc_t, ecs_app_init_action_t, ecs_app_run, ecs_get_world_info},
 };
 
 /// Application interface.
-pub struct App {
-    world: World,
+pub struct App<'a> {
+    world: WorldRef<'a>,
     desc: ecs_app_desc_t,
 }
 
-impl App {
+impl<'a> App<'a> {
     /// Create a new application.
     ///
     /// # Arguments
@@ -27,9 +24,9 @@ impl App {
     ///
     /// * C++ API: `app_builder::app_builder`
     #[doc(alias = "app_builder::app_builder")]
-    pub fn new(world: World) -> Self {
+    pub fn new(world: impl IntoWorld<'a>) -> Self {
         let mut obj = Self {
-            world,
+            world: world.world(),
             desc: ecs_app_desc_t::default(),
         };
 
@@ -167,7 +164,7 @@ impl App {
     }
 
     /// Run application. This will run the application with the parameters specified in desc.
-    /// After the application quits (`ecs_quit`() is called) the world will be cleaned up.
+    /// After the application quits (`ecs_quit`() is called) this will return.
     /// If a custom run action is set, it will be invoked by this operation.
     /// The default run action calls the frame action in a loop until it returns a non-zero value.
     ///
@@ -180,15 +177,6 @@ impl App {
     /// * C++ API: `app_builder::run`
     #[doc(alias = "app_builder::run")]
     pub fn run(&mut self) -> i32 {
-        unsafe {
-            let result = ecs_app_run(self.world.ptr_mut(), &mut self.desc);
-            if ecs_should_quit(self.world.ptr_mut()) {
-                // Only free world if quit flag is set. This ensures that we won't
-                // try to cleanup the world if the app is used in an environment
-                // that takes over the main loop, like with emscripten.
-                ecs_fini(self.world.ptr_mut());
-            }
-            result
-        }
+        unsafe { ecs_app_run(self.world.ptr_mut(), &mut self.desc) }
     }
 }

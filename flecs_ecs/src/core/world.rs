@@ -3862,7 +3862,7 @@ impl World {
     /// * C++ API: `world::app`
     #[doc(alias = "world::app")]
     #[inline(always)]
-    pub fn app(self) -> App {
+    pub fn app(&self) -> App {
         App::new(self)
     }
 }
