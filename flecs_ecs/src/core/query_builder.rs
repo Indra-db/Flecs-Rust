@@ -20,23 +20,23 @@ use super::{
     query::Query,
     term::TermBuilder,
     world::World,
-    EntityT, IdT, IntoEntityId, TableT, Term, WorldT,
+    EntityT, IdT, IntoEntityId, IntoWorld, TableT, Term, WorldRef, WorldT,
 };
 
 /// Fast to iterate, but slower to create than Filter
-pub struct QueryBuilder<T>
+pub struct QueryBuilder<'a, T>
 where
     T: Iterable,
 {
-    pub filter_builder: FilterBuilder<T>,
+    pub filter_builder: FilterBuilder<'a, T>,
     pub desc: ecs_query_desc_t,
 }
 
-impl<T> Deref for QueryBuilder<T>
+impl<'a, T> Deref for QueryBuilder<'a, T>
 where
     T: Iterable,
 {
-    type Target = FilterBuilder<T>;
+    type Target = FilterBuilder<'a, T>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -44,7 +44,7 @@ where
     }
 }
 
-impl<T> QueryBuilder<T>
+impl<'a, T> QueryBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -58,7 +58,7 @@ where
     ///
     /// * C++ API: `builder::builder`
     #[doc(alias = "builder::builder")]
-    pub fn new(world: &World) -> Self {
+    pub fn new(world: &'a World) -> Self {
         let mut desc = Default::default();
 
         let mut obj = Self {
@@ -73,7 +73,7 @@ where
             ..Default::default()
         };
 
-        obj.desc.filter.entity = unsafe { ecs_entity_init(world.raw_world, &entity_desc) };
+        obj.desc.filter.entity = unsafe { ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -89,7 +89,7 @@ where
     ///
     /// * C++ API: `query_builder::query_builder`
     #[doc(alias = "query_builder::query_builder")]
-    pub fn new_named(world: &World, name: &CStr) -> Self {
+    pub fn new_named(world: &'a World, name: &CStr) -> Self {
         let mut desc = Default::default();
 
         let mut obj = Self {
@@ -104,7 +104,7 @@ where
             ..Default::default()
         };
 
-        obj.desc.filter.entity = unsafe { ecs_entity_init(world.raw_world, &entity_desc) };
+        obj.desc.filter.entity = unsafe { ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -120,7 +120,7 @@ where
     ///
     /// * C++ API: `query_builder_i::query_builder_i`
     #[doc(alias = "query_builder_i::query_builder_i")]
-    pub fn new_from_desc(world: &World, desc: &mut ecs_query_desc_t) -> Self {
+    pub fn new_from_desc(world: &'a World, desc: &mut ecs_query_desc_t) -> Self {
         Self {
             desc: *desc,
             filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
@@ -140,7 +140,7 @@ where
     /// * C++ API: `query_builder_i::query_builder_i`
     #[doc(alias = "query_builder_i::query_builder_i")]
     pub fn new_from_desc_term_index(
-        world: &World,
+        world: &'a World,
         desc: &mut ecs_query_desc_t,
         term_index: i32,
     ) -> Self {
@@ -156,13 +156,13 @@ where
             ..Default::default()
         };
 
-        obj.desc.filter.entity = unsafe { ecs_entity_init(world.raw_world, &entity_desc) };
+        obj.desc.filter.entity = unsafe { ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
 }
 
-impl<T> Filterable for QueryBuilder<T>
+impl<'a, T> Filterable<'a> for QueryBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -175,7 +175,7 @@ where
     }
 }
 
-impl<T> FilterBuilderImpl for QueryBuilder<T>
+impl<'a, T> FilterBuilderImpl<'a> for QueryBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -195,17 +195,12 @@ where
     }
 }
 
-impl<T> TermBuilder for QueryBuilder<T>
+impl<'a, T> TermBuilder<'a> for QueryBuilder<'a, T>
 where
     T: Iterable,
 {
     #[inline]
-    fn world_ptr_mut(&self) -> *mut WorldT {
-        self.filter_builder.world.raw_world
-    }
-
-    #[inline]
-    fn term_mut(&mut self) -> &mut Term {
+    fn term_mut(&mut self) -> &mut Term<'a> {
         self.filter_builder.term_mut()
     }
 
@@ -220,11 +215,11 @@ where
     }
 }
 
-impl<T> Builder for QueryBuilder<T>
+impl<'a, T> Builder<'a> for QueryBuilder<'a, T>
 where
     T: Iterable,
 {
-    type BuiltType = Query<T>;
+    type BuiltType = Query<'a, T>;
 
     /// Build the `observer_builder` into an query
     ///
@@ -233,7 +228,7 @@ where
     /// * C++ API: `node_builder::build`
     #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
-        let world = &self.filter_builder.world;
+        let world = self.filter_builder.world;
         Query::<T>::new_from_desc(world, &mut self.desc)
     }
 }
@@ -243,7 +238,7 @@ type OrderByFn<T> = extern "C" fn(EntityT, *const T, EntityT, *const T) -> c_int
 // Assuming some imports and definitions from your previous example, and adding the required ones for this example.
 type GroupByFn = extern "C" fn(*mut WorldT, *mut TableT, IdT, *mut c_void) -> u64;
 
-pub trait QueryBuilderImpl: FilterBuilderImpl {
+pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
     fn desc_query_mut(&mut self) -> &mut ecs_query_desc_t;
 
     /// Sorts the output of a query.
@@ -279,7 +274,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
         T: ComponentId,
     {
         let cmp: ecs_order_by_action_t = Some(unsafe { std::mem::transmute(compare) });
-        self.order_by_id(T::get_id(self.world_ptr_mut()), cmp);
+        self.order_by_id(T::get_id(self.world()), cmp);
         self
     }
 
@@ -322,7 +317,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     where
         T: ComponentId,
     {
-        self.group_by_id_fn(T::get_id(self.world_ptr_mut()), None)
+        self.group_by_id_fn(T::get_id(self.world()), None)
     }
 
     /// Group and sort matched tables.
@@ -356,7 +351,7 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     where
         T: ComponentId,
     {
-        self.group_by_id_fn(T::get_id(self.world_ptr_mut()), group_by_action);
+        self.group_by_id_fn(T::get_id(self.world()), group_by_action);
         self
     }
 
@@ -458,17 +453,23 @@ pub trait QueryBuilderImpl: FilterBuilderImpl {
     #[doc(alias = "query_builder_i::observable")]
     fn observable<T: Iterable>(&mut self, parent: &Query<T>) -> &mut Self {
         let desc = self.desc_query_mut();
-        desc.parent = parent.query;
+        desc.parent = parent.query.as_ptr();
         self
     }
 }
 
-impl<T> QueryBuilderImpl for QueryBuilder<T>
+impl<'a, T> QueryBuilderImpl<'a> for QueryBuilder<'a, T>
 where
     T: Iterable,
 {
     #[inline]
     fn desc_query_mut(&mut self) -> &mut ecs_query_desc_t {
         &mut self.desc
+    }
+}
+
+impl<'a, T: Iterable> IntoWorld<'a> for QueryBuilder<'a, T> {
+    fn world(&self) -> WorldRef<'a> {
+        self.filter_builder.world()
     }
 }

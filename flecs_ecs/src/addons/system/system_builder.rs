@@ -7,7 +7,7 @@ use std::{
 
 use crate::{
     core::{
-        c_types::{EntityT, FTimeT, TermIdT, TermT, WorldT, ECS_DEPENDS_ON, SEPARATOR},
+        c_types::{EntityT, FTimeT, TermIdT, TermT, ECS_DEPENDS_ON, SEPARATOR},
         component_registration::ComponentId,
         ecs_dependson,
         filter_builder::FilterBuilderImpl,
@@ -17,7 +17,7 @@ use crate::{
         query_builder::{QueryBuilder, QueryBuilderImpl},
         term::{Term, TermBuilder},
         world::World,
-        Builder, IntoEntityId, ReactorAPI, ECS_ON_UPDATE,
+        Builder, IntoEntityId, IntoWorld, ReactorAPI, WorldRef, ECS_ON_UPDATE,
     },
     sys::{
         ecs_add_id, ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t, ecs_get_target,
@@ -27,21 +27,21 @@ use crate::{
 
 use super::System;
 
-pub struct SystemBuilder<T>
+pub struct SystemBuilder<'a, T>
 where
     T: Iterable,
 {
-    query_builder: QueryBuilder<T>,
+    query_builder: QueryBuilder<'a, T>,
     desc: ecs_system_desc_t,
     is_instanced: bool,
 }
 
 /// Deref to `QueryBuilder` to allow access to `QueryBuilder` methods without having to access `QueryBuilder` through `SystemBuilder`
-impl<T> Deref for SystemBuilder<T>
+impl<'a, T> Deref for SystemBuilder<'a, T>
 where
     T: Iterable,
 {
-    type Target = QueryBuilder<T>;
+    type Target = QueryBuilder<'a, T>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -49,7 +49,7 @@ where
     }
 }
 
-impl<T> DerefMut for SystemBuilder<T>
+impl<'a, T> DerefMut for SystemBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -59,11 +59,11 @@ where
     }
 }
 
-impl<T> SystemBuilder<T>
+impl<'a, T> SystemBuilder<'a, T>
 where
     T: Iterable,
 {
-    pub fn new(world: &World) -> Self {
+    pub fn new(world: &'a World) -> Self {
         let mut desc = Default::default();
         let mut obj = Self {
             desc,
@@ -77,24 +77,24 @@ where
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
-        obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
+        obj.desc.entity = unsafe { ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
 
         T::populate(&mut obj);
 
         #[cfg(feature = "flecs_pipeline")]
         unsafe {
             ecs_add_id(
-                world.raw_world,
+                world.world_ptr_mut(),
                 obj.desc.entity,
                 ecs_dependson(ECS_ON_UPDATE),
             );
-            ecs_add_id(world.raw_world, obj.desc.entity, ECS_ON_UPDATE);
+            ecs_add_id(world.world_ptr_mut(), obj.desc.entity, ECS_ON_UPDATE);
         }
 
         obj
     }
 
-    pub fn new_from_desc(world: &World, mut desc: ecs_system_desc_t) -> Self {
+    pub fn new_from_desc(world: &'a World, mut desc: ecs_system_desc_t) -> Self {
         let mut obj = Self {
             desc,
             query_builder: QueryBuilder::<T>::new_from_desc(world, &mut desc.query),
@@ -106,24 +106,24 @@ where
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
-        obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
+        obj.desc.entity = unsafe { ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
 
         T::populate(&mut obj);
 
         #[cfg(feature = "flecs_pipeline")]
         unsafe {
             ecs_add_id(
-                world.raw_world,
+                world.world_ptr_mut(),
                 obj.desc.entity,
                 ecs_dependson(ECS_ON_UPDATE),
             );
-            ecs_add_id(world.raw_world, obj.desc.entity, ECS_ON_UPDATE);
+            ecs_add_id(world.world_ptr_mut(), obj.desc.entity, ECS_ON_UPDATE);
         }
 
         obj
     }
 
-    pub fn new_named(world: &World, name: &CStr) -> Self {
+    pub fn new_named(world: &'a World, name: &CStr) -> Self {
         let mut desc = Default::default();
         let mut obj = Self {
             desc,
@@ -136,17 +136,17 @@ where
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
-        obj.desc.entity = unsafe { ecs_entity_init(obj.world.raw_world, &entity_desc) };
+        obj.desc.entity = unsafe { ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
 
         #[cfg(feature = "flecs_pipeline")]
         unsafe {
             ecs_add_id(
-                world.raw_world,
+                world.world_ptr_mut(),
                 obj.desc.entity,
                 ecs_dependson(ECS_ON_UPDATE),
             );
-            ecs_add_id(world.raw_world, obj.desc.entity, ECS_ON_UPDATE);
+            ecs_add_id(world.world_ptr_mut(), obj.desc.entity, ECS_ON_UPDATE);
         }
         obj
     }
@@ -163,20 +163,30 @@ where
     #[doc(alias = "system_builder_i::kind")]
     pub fn kind_id(&mut self, phase: impl IntoEntityId) -> &mut Self {
         let phase = phase.get_id();
-        let current_phase: EntityT =
-            unsafe { ecs_get_target(self.world.raw_world, self.desc.entity, ECS_DEPENDS_ON, 0) };
+        let current_phase: EntityT = unsafe {
+            ecs_get_target(
+                self.world.world_ptr_mut(),
+                self.desc.entity,
+                ECS_DEPENDS_ON,
+                0,
+            )
+        };
         unsafe {
             if current_phase != 0 {
                 ecs_remove_id(
-                    self.world.raw_world,
+                    self.world.world_ptr_mut(),
                     self.desc.entity,
                     ecs_dependson(current_phase),
                 );
-                ecs_remove_id(self.world.raw_world, self.desc.entity, current_phase);
+                ecs_remove_id(self.world.world_ptr_mut(), self.desc.entity, current_phase);
             }
             if phase != 0 {
-                ecs_add_id(self.world.raw_world, self.desc.entity, ecs_dependson(phase));
-                ecs_add_id(self.world.raw_world, self.desc.entity, phase);
+                ecs_add_id(
+                    self.world.world_ptr_mut(),
+                    self.desc.entity,
+                    ecs_dependson(phase),
+                );
+                ecs_add_id(self.world.world_ptr_mut(), self.desc.entity, phase);
             }
         };
         self
@@ -196,7 +206,7 @@ where
     where
         Phase: ComponentId,
     {
-        self.kind_id(Phase::get_id(self.world.raw_world))
+        self.kind_id(Phase::get_id(self.world))
     }
 
     /// Specify whether system can run on multiple threads.
@@ -314,12 +324,12 @@ where
     where
         Component: ComponentId,
     {
-        self.desc.tick_source = Component::get_id(self.world.raw_world);
+        self.desc.tick_source = Component::get_id(self.world);
         self
     }
 }
 
-impl<T> Filterable for SystemBuilder<T>
+impl<'a, T> Filterable<'a> for SystemBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -332,7 +342,7 @@ where
     }
 }
 
-impl<T> FilterBuilderImpl for SystemBuilder<T>
+impl<'a, T> FilterBuilderImpl<'a> for SystemBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -352,17 +362,12 @@ where
     }
 }
 
-impl<T> TermBuilder for SystemBuilder<T>
+impl<'a, T> TermBuilder<'a> for SystemBuilder<'a, T>
 where
     T: Iterable,
 {
     #[inline]
-    fn world_ptr_mut(&self) -> *mut WorldT {
-        self.filter_builder.world.raw_world
-    }
-
-    #[inline]
-    fn term_mut(&mut self) -> &mut Term {
+    fn term_mut(&mut self) -> &mut Term<'a> {
         self.filter_builder.term_mut()
     }
 
@@ -377,7 +382,7 @@ where
     }
 }
 
-impl<T> QueryBuilderImpl for SystemBuilder<T>
+impl<'a, T> QueryBuilderImpl<'a> for SystemBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -387,11 +392,11 @@ where
     }
 }
 
-impl<T> Builder for SystemBuilder<T>
+impl<'a, T> Builder<'a> for SystemBuilder<'a, T>
 where
     T: Iterable,
 {
-    type BuiltType = System;
+    type BuiltType = System<'a>;
 
     /// Build the `system_builder` into an system
     ///
@@ -400,8 +405,14 @@ where
     /// * C++ API: `node_builder::build`
     #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
-        System::new(&self.world, self.desc, self.is_instanced)
+        System::new(self.world, self.desc, self.is_instanced)
     }
 }
 
-implement_reactor_api!(SystemBuilder<T>);
+impl<'a, T: Iterable> IntoWorld<'a> for SystemBuilder<'a, T> {
+    fn world(&self) -> WorldRef<'a> {
+        self.query_builder.world()
+    }
+}
+
+implement_reactor_api!(SystemBuilder<'a, T>);

@@ -86,7 +86,7 @@ pub fn register_copy_lifecycle_panic_action<T>(type_hooks: &mut TypeHooksT) {
 ///
 /// * C++ API: `ctor_impl`
 #[doc(alias = "ctor_impl")]
-extern "C" fn generic_ctor<T: Default>(
+unsafe extern "C" fn generic_ctor<T: Default>(
     ptr: *mut c_void,
     count: i32,
     _type_info: *const ecs_type_info_t,
@@ -111,7 +111,11 @@ extern "C" fn generic_ctor<T: Default>(
 ///
 /// * C++ API: `dtor_impl`
 #[doc(alias = "dtor_impl")]
-extern "C" fn generic_dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const ecs_type_info_t) {
+unsafe extern "C" fn generic_dtor<T>(
+    ptr: *mut c_void,
+    count: i32,
+    _type_info: *const ecs_type_info_t,
+) {
     ecs_assert!(
         check_type_info::<T>(_type_info),
         FlecsErrorCode::InternalError
@@ -132,7 +136,7 @@ extern "C" fn generic_dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const e
 ///
 /// * C++ API: `copy_impl`
 #[doc(alias = "copy_impl")]
-extern "C" fn generic_copy<T: Clone>(
+unsafe extern "C" fn generic_copy<T: Clone>(
     dst_ptr: *mut c_void,
     src_ptr: *const c_void,
     count: i32,
@@ -177,7 +181,7 @@ extern "C" fn generic_copy_panic<T>(
 ///
 /// * C++ API: `move_impl`
 #[doc(alias = "move_impl")]
-extern "C" fn generic_move<T: Default>(
+unsafe extern "C" fn generic_move<T: Default>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,
     count: i32,
@@ -209,7 +213,7 @@ extern "C" fn generic_move<T: Default>(
 ///
 /// * C++ API: `move_ctor_impl`
 #[doc(alias = "move_ctor_impl")]
-extern "C" fn generic_ctor_move_dtor<T: Default>(
+unsafe extern "C" fn generic_ctor_move_dtor<T: Default>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,
     count: i32,
@@ -244,7 +248,7 @@ extern "C" fn generic_ctor_move_dtor<T: Default>(
     }
 }
 
-fn check_type_info<T>(_type_info: *const ecs_type_info_t) -> bool {
+unsafe fn check_type_info<T>(_type_info: *const ecs_type_info_t) -> bool {
     if !_type_info.is_null() {
         unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 }
     } else {
@@ -276,12 +280,14 @@ mod tests {
         let orig_ptr_before_move = original.vec.as_ptr();
         let moved_to_ptr_before_move = moved_to.vec.as_ptr();
 
-        generic_move::<MyType>(
-            &mut moved_to as *mut _ as *mut c_void,
-            &mut original as *mut _ as *mut c_void,
-            1,
-            std::ptr::null(),
-        );
+        unsafe {
+            generic_move::<MyType>(
+                &mut moved_to as *mut _ as *mut c_void,
+                &mut original as *mut _ as *mut c_void,
+                1,
+                std::ptr::null(),
+            );
+        }
 
         assert_eq!(original.vec, Vec::<i32>::new()); // Original should be default after move
         assert_eq!(moved_to.vec, vec![0, 1, 2, 3]); // Moved_to should have original's values
@@ -304,12 +310,14 @@ mod tests {
         };
         let mut moved_to: MyType = Default::default();
 
-        generic_move::<MyType>(
-            &mut moved_to as *mut _ as *mut c_void,
-            &mut original as *mut _ as *mut c_void,
-            1,
-            std::ptr::null(),
-        );
+        unsafe {
+            generic_move::<MyType>(
+                &mut moved_to as *mut _ as *mut c_void,
+                &mut original as *mut _ as *mut c_void,
+                1,
+                std::ptr::null(),
+            );
+        }
 
         moved_to.vec.push(4);
         moved_to.text.push_str("_modified");
@@ -334,12 +342,14 @@ mod tests {
 
         let original_vec_ptr = original.vec.as_ptr();
 
-        generic_copy::<MyType>(
-            &mut copied_to as *mut _ as *mut c_void,
-            &original as *const _ as *const c_void,
-            1,
-            std::ptr::null(),
-        );
+        unsafe {
+            generic_copy::<MyType>(
+                &mut copied_to as *mut _ as *mut c_void,
+                &original as *const _ as *const c_void,
+                1,
+                std::ptr::null(),
+            );
+        }
 
         assert_eq!(original.vec, vec![0, 1, 2, 3]); // Original should remain unchanged
         assert_eq!(copied_to.vec, vec![0, 1, 2, 3]); // copied_to should have original's values
@@ -363,12 +373,14 @@ mod tests {
         };
         let mut copied_to: MyType = Default::default();
 
-        generic_copy::<MyType>(
-            &mut copied_to as *mut _ as *mut c_void,
-            &original as *const _ as *const c_void,
-            1,
-            std::ptr::null(),
-        );
+        unsafe {
+            generic_copy::<MyType>(
+                &mut copied_to as *mut _ as *mut c_void,
+                &original as *const _ as *const c_void,
+                1,
+                std::ptr::null(),
+            );
+        }
 
         copied_to.vec.push(4);
         copied_to.text.push_str("_modified");

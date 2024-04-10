@@ -1,21 +1,17 @@
 //! Class for working with entity, component, tag and pair ids.
 
 use super::{
-    c_types::{IdT, RUST_ecs_id_FLAGS_MASK, WorldT, RUST_ECS_COMPONENT_MASK},
+    c_types::{IdT, RUST_ecs_id_FLAGS_MASK, RUST_ECS_COMPONENT_MASK},
     ecs_pair_first,
     entity::Entity,
-    world::World,
-    IntoEntityId, IntoEntityIdExt, IntoWorld,
+    IntoEntityId, IntoEntityIdExt, IntoWorld, WorldRef,
 };
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
 use crate::{
     core::ecs_pair_second,
     ecs_assert,
-    sys::{
-        ecs_get_alive, ecs_get_typeid, ecs_id_flag_str, ecs_id_is_pair, ecs_id_is_wildcard,
-        ecs_id_str,
-    },
+    sys::{ecs_get_typeid, ecs_id_flag_str, ecs_id_is_pair, ecs_id_is_wildcard, ecs_id_str},
 };
 
 /// Class for working with entity, component, tag and pair ids.
@@ -32,40 +28,30 @@ use crate::{
 /// * [flecs C++ documentation](https://www.flecs.dev/flecs/structflecs_1_1id.html#details)
 /// * [flecs C documentation](https://www.flecs.dev/flecs/group__ids.html)
 #[derive(Debug, Clone, Copy, Eq)]
-pub struct Id {
-    /// World is optional, but guarantees that entity identifiers extracted from the id are valid
-    pub(crate) world: *mut WorldT,
+pub struct Id<'a> {
+    pub(crate) world: WorldRef<'a>,
     pub raw_id: IdT,
 }
 
-impl Default for Id {
-    fn default() -> Self {
-        Self {
-            world: std::ptr::null_mut(),
-            raw_id: 0,
-        }
-    }
-}
-
-impl PartialEq for Id {
+impl<'a> PartialEq for Id<'a> {
     fn eq(&self, other: &Self) -> bool {
         self.raw_id == other.raw_id
     }
 }
 
-impl PartialOrd for Id {
+impl<'a> PartialOrd for Id<'a> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.raw_id.cmp(&other.raw_id))
     }
 }
 
-impl Ord for Id {
+impl<'a> Ord for Id<'a> {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.raw_id.cmp(&other.raw_id)
     }
 }
 
-impl std::ops::Deref for Id {
+impl<'a> std::ops::Deref for Id<'a> {
     type Target = u64;
 
     #[inline]
@@ -74,7 +60,7 @@ impl std::ops::Deref for Id {
     }
 }
 
-impl Id {
+impl<'a> Id<'a> {
     /// Wraps an id or pair
     ///
     /// # Arguments
@@ -88,49 +74,9 @@ impl Id {
     #[doc(alias = "Id::Id")]
     /// * C API: `ecs_id_t`
     #[doc(alias = "ecs_id_t")]
-    pub fn new(world: Option<impl IntoWorld>, id: impl IntoEntityIdExt) -> Self {
-        if let Some(world) = world {
-            Self::new_from_existing(world, id)
-        } else {
-            Self::new_id_only(id)
-        }
-    }
-
-    /// wraps a raw id
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - The optional raw world to the id belongs to
-    /// * `id` - The id to wrap
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `Id::Id`
-    #[doc(alias = "Id::Id")]
-    /// * C API: `ecs_id_t`
-    #[doc(alias = "ecs_id_t")]
-    pub fn new_from_existing(world: impl IntoWorld, id: impl IntoEntityIdExt) -> Self {
+    pub fn new(world: impl IntoWorld<'a>, id: impl IntoEntityIdExt) -> Self {
         Self {
-            world: world.world_ptr_mut(),
-            raw_id: id.get_id(),
-        }
-    }
-
-    /// wraps a raw id without a world
-    ///
-    /// # Arguments
-    ///
-    /// * `id` - The id to wrap
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `Id::Id`
-    #[doc(alias = "Id::Id")]
-    /// * C API: `ecs_id_t`
-    #[doc(alias = "ecs_id_t")]
-    pub(crate) fn new_id_only(id: impl IntoEntityIdExt) -> Self {
-        Self {
-            world: std::ptr::null_mut(),
+            world: world.world(),
             raw_id: id.get_id(),
         }
     }
@@ -176,7 +122,7 @@ impl Id {
     /// * C++ API: `id::entity`
     #[doc(alias = "id::entity")]
     #[inline(always)]
-    pub fn to_entity(self) -> Entity {
+    pub fn to_entity(self) -> Entity<'a> {
         {
             ecs_assert!(!self.is_pair(), FlecsErrorCode::InvalidOperation);
             ecs_assert!(
@@ -184,7 +130,7 @@ impl Id {
                 FlecsErrorCode::InvalidOperation
             );
         }
-        Entity::new_from_existing_raw(self.world, self.raw_id)
+        Entity::new_from_existing(self.world, self.raw_id)
     }
 
     /// Return id with role added
@@ -194,8 +140,8 @@ impl Id {
     /// * C++ API: `id::add_flags`
     #[doc(alias = "id::add_flags")]
     #[inline(always)]
-    pub fn add_flags(self, flags: IdT) -> Entity {
-        Entity::new_from_existing_raw(self.world, self.raw_id | flags)
+    pub fn add_flags(self, flags: IdT) -> Entity<'a> {
+        Entity::new_from_existing(self.world, self.raw_id | flags)
     }
 
     /// Return id with role removed.
@@ -206,13 +152,13 @@ impl Id {
     /// * C++ API: `id::remove_flags`
     #[doc(alias = "id::remove_flags")]
     #[inline(always)]
-    pub fn remove_flags_checked(self, _flags: IdT) -> Entity {
+    pub fn remove_flags_checked(self, _flags: IdT) -> Entity<'a> {
         ecs_assert!(
             self.raw_id & RUST_ecs_id_FLAGS_MASK == _flags,
             FlecsErrorCode::InvalidParameter
         );
 
-        Entity::new_from_existing_raw(self.world, self.raw_id & RUST_ECS_COMPONENT_MASK)
+        Entity::new_from_existing(self.world, self.raw_id & RUST_ECS_COMPONENT_MASK)
     }
 
     /// Return id with role removed
@@ -222,8 +168,8 @@ impl Id {
     /// * C++ API: `id::remove_flags`
     #[doc(alias = "id::remove_flags")]
     #[inline(always)]
-    pub fn remove_flags(self) -> Entity {
-        Entity::new_from_existing_raw(self.world, self.raw_id & RUST_ECS_COMPONENT_MASK)
+    pub fn remove_flags(self) -> Entity<'a> {
+        Entity::new_from_existing(self.world, self.raw_id & RUST_ECS_COMPONENT_MASK)
     }
 
     /// Get flags associated with id
@@ -237,8 +183,8 @@ impl Id {
     /// * C++ API: `id::flags`
     #[doc(alias = "id::flags")]
     #[inline(always)]
-    pub fn flags(self) -> Entity {
-        Entity::new_from_existing_raw(self.world, self.raw_id & RUST_ecs_id_FLAGS_MASK)
+    pub fn flags(self) -> Entity<'a> {
+        Entity::new_from_existing(self.world, self.raw_id & RUST_ecs_id_FLAGS_MASK)
     }
 
     /// Test if id has specified role
@@ -270,8 +216,8 @@ impl Id {
     /// * C++ API: `id::remove_flags`
     #[doc(alias = "id::remove_flags")]
     #[inline(always)]
-    pub fn remove_generation(self) -> Entity {
-        Entity::new_from_existing_raw(self.world, self.raw_id as u32 as u64)
+    pub fn remove_generation(self) -> Entity<'a> {
+        Entity::new_from_existing(self.world, self.raw_id as u32 as u64)
     }
 
     /// Get the component type for the id.
@@ -300,9 +246,9 @@ impl Id {
     /// * C API: `ecs_get_typeid`
     #[doc(alias = "ecs_get_typeid")]
     #[inline(always)]
-    pub fn type_id(self) -> Entity {
-        Entity::new_from_existing_raw(self.world, unsafe {
-            ecs_get_typeid(self.world, self.raw_id)
+    pub fn type_id(self) -> Entity<'a> {
+        Entity::new_from_existing(self.world, unsafe {
+            ecs_get_typeid(self.world.world_ptr_mut(), self.raw_id)
         })
     }
 
@@ -335,16 +281,11 @@ impl Id {
     /// * C++ API: `id::first`
     #[doc(alias = "id::first")]
     #[inline(always)]
-    pub fn first(self) -> Entity {
+    pub fn first(&self) -> Entity {
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
 
         let entity = ecs_pair_first(self.raw_id);
-
-        if self.world.is_null() {
-            Entity::new_id_only(entity)
-        } else {
-            Entity::new_from_existing_raw(self.world, unsafe { ecs_get_alive(self.world, entity) })
-        }
+        self.world.get_alive(entity)
     }
 
     /// Get second element from a pair.
@@ -356,16 +297,11 @@ impl Id {
     ///
     /// * C++ API: `id::second`
     #[doc(alias = "id::second")]
-    pub fn second(self) -> Entity {
+    pub fn second(&self) -> Entity {
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
 
         let entity = ecs_pair_second(self.raw_id);
-
-        if self.world.is_null() {
-            Entity::new_id_only(entity)
-        } else {
-            Entity::new_from_existing_raw(self.world, unsafe { ecs_get_alive(self.world, entity) })
-        }
+        self.world.get_alive(entity)
     }
 
     /// Convert id to string
@@ -377,12 +313,13 @@ impl Id {
     /// * C API: `ecs_id_str`
     #[doc(alias = "ecs_id_str")]
     #[inline(always)]
-    pub fn to_str(self) -> &'static str {
+    pub fn to_str(self) -> &'a str {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
         // C string with a static lifetime. The caller must ensure this invariant.
         // ecs_id_ptr never returns null, so we don't need to check for that.
         if let Ok(str) =
-            unsafe { std::ffi::CStr::from_ptr(ecs_id_str(self.world, self.raw_id)) }.to_str()
+            unsafe { std::ffi::CStr::from_ptr(ecs_id_str(self.world.world_ptr_mut(), self.raw_id)) }
+                .to_str()
         {
             str
         } else {
@@ -410,11 +347,11 @@ impl Id {
     /// * C API: `ecs_id_str`
     #[doc(alias = "ecs_id_str")]
     #[inline(always)]
-    pub unsafe fn to_str_unchecked(self) -> &'static str {
+    pub unsafe fn to_str_unchecked(self) -> &'a str {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
         // C string with a static lifetime. The caller must ensure this invariant.
         // ecs_id_ptr never returns null, so we don't need to check for that.
-        let c_str_ptr = unsafe { ecs_id_str(self.world, self.raw_id) };
+        let c_str_ptr = unsafe { ecs_id_str(self.world.world_ptr_mut(), self.raw_id) };
 
         // SAFETY: We assume the C string is valid UTF-8. This is risky if not certain.
         unsafe { std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(c_str_ptr).to_bytes()) }
@@ -429,7 +366,7 @@ impl Id {
     /// * C API: `ecs_id_flag_str`
     #[doc(alias = "ecs_id_flag_str")]
     #[inline(always)]
-    pub fn flags_str(self) -> &'static str {
+    pub fn flags_str(self) -> &'a str {
         // SAFETY: We assume that `ecs_role_str` returns a pointer to a null-terminated
         // C string with a static lifetime. The caller must ensure this invariant.
         // ecs_role_str never returns null, so we don't need to check for that.
@@ -458,7 +395,7 @@ impl Id {
     /// * C API: `ecs_id_flag_str`
     #[doc(alias = "ecs_id_flag_str")]
     #[inline(always)]
-    pub unsafe fn to_flags_str_unchecked(self) -> &'static str {
+    pub unsafe fn to_flags_str_unchecked(self) -> &'a str {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
         // C string with a static lifetime. The caller must ensure this invariant.
         // ecs_id_ptr never returns null, so we don't need to check for that.
@@ -466,16 +403,5 @@ impl Id {
 
         // SAFETY: We assume the C string is valid UTF-8. This is risky if not certain.
         unsafe { std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(c_str_ptr).to_bytes()) }
-    }
-
-    pub fn world(self) -> World {
-        World {
-            raw_world: self.world,
-            is_owned: false,
-        }
-    }
-
-    pub(crate) fn world_ptr(self) -> *mut WorldT {
-        self.world
     }
 }

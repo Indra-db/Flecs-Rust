@@ -24,6 +24,8 @@ pub mod private {
 
     use crate::core::{ComponentPointers, Entity, Iter, IterT, Iterable, ObserverSystemBindingCtx};
 
+    use super::WorldRef;
+
     #[allow(non_camel_case_types)]
     #[doc(hidden)]
     pub trait internal_ReactorAPI<'a, T>
@@ -104,8 +106,8 @@ pub mod private {
             ecs_table_lock((*iter).world, (*iter).table);
 
             for i in 0..iter_count {
-                let mut entity =
-                    Entity::new_from_existing_raw((*iter).world, *(*iter).entities.add(i));
+                let world = WorldRef::from_ptr((*iter).world);
+                let mut entity = Entity::new_from_existing(world, *(*iter).entities.add(i));
                 let tuple = components_data.get_tuple(i);
 
                 each_entity(&mut entity, tuple);

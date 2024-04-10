@@ -18,14 +18,17 @@ use super::{is_component_registered_with_world, ComponentId};
 
 /// attempts to register the component with the world. If it's already registered, it does nothing.
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub(crate) fn try_register_component_impl<T>(world: impl IntoWorld, name: *const c_char) -> EntityT
+pub(crate) fn try_register_component_impl<'a, T>(
+    world: impl IntoWorld<'a>,
+    name: *const c_char,
+) -> EntityT
 where
     T: ComponentId,
 {
-    let world = world.world_ptr_mut();
+    let world_ptr = world.world_ptr_mut();
     let is_registered = T::is_registered();
     let is_registered_with_world = if is_registered {
-        unsafe { is_component_registered_with_world::<T>(world) }
+        unsafe { is_component_registered_with_world::<T>(world_ptr) }
     } else {
         false
     };
@@ -36,14 +39,14 @@ where
 
         if T::IS_ENUM && has_newly_registered && !is_registered_with_world {
             //TODO we should convert this ecs_cpp functions to rust so if it ever changes, our solution won't break
-            unsafe { ecs_cpp_enum_init(world, T::get_id_unchecked()) };
+            unsafe { ecs_cpp_enum_init(world_ptr, T::get_id_unchecked()) };
             let enum_array_ptr = T::UnderlyingEnumType::__enum_data_mut();
 
             for (index, enum_item) in T::UnderlyingEnumType::iter().enumerate() {
                 let name = enum_item.name_cstr();
                 let entity_id: EntityT = unsafe {
                     ecs_cpp_enum_constant_register(
-                        world,
+                        world_ptr,
                         T::get_id_unchecked(),
                         T::UnderlyingEnumType::get_id_variant_of_index_unchecked(
                             enum_item.enum_index(),
@@ -63,14 +66,14 @@ where
 }
 
 /// attempts to register the component with the world. If it's already registered, it does nothing.
-pub fn try_register_component<T>(world: impl IntoWorld)
+pub fn try_register_component<'a, T>(world: impl IntoWorld<'a>)
 where
     T: ComponentId,
 {
     try_register_component_impl::<T>(world, std::ptr::null());
 }
 
-pub fn try_register_component_named<T>(world: impl IntoWorld, name: &CStr) -> EntityT
+pub fn try_register_component_named<'a, T>(world: impl IntoWorld<'a>, name: &CStr) -> EntityT
 where
     T: ComponentId,
 {
@@ -78,8 +81,8 @@ where
 }
 
 /// registers the component with the world.
-pub(crate) fn register_component_data<T>(
-    world: impl IntoWorld,
+pub(crate) fn register_component_data<'a, T>(
+    world: impl IntoWorld<'a>,
     name: *const c_char,
     is_comp_pre_registered: bool,
     is_comp_pre_registered_with_world: bool,
@@ -87,7 +90,7 @@ pub(crate) fn register_component_data<T>(
 where
     T: ComponentId,
 {
-    let world = world.world_ptr_mut();
+    let world_ptr = world.world_ptr_mut();
 
     // If the component is not registered with the world (indicating the
     // component has not yet been registered, or the component is used
@@ -97,9 +100,9 @@ where
         let mut prev_scope: EntityT = 0;
         let mut prev_with: EntityT = 0;
 
-        if !world.is_null() {
-            prev_scope = unsafe { ecs_set_scope(world, 0) };
-            prev_with = unsafe { ecs_set_with(world, 0) };
+        if !world_ptr.is_null() {
+            prev_scope = unsafe { ecs_set_scope(world_ptr, 0) };
+            prev_with = unsafe { ecs_set_with(world_ptr, 0) };
         }
 
         let id = if is_comp_pre_registered {
@@ -118,10 +121,10 @@ where
         );
 
         if prev_with != 0 {
-            unsafe { ecs_set_with(world, prev_with) };
+            unsafe { ecs_set_with(world_ptr, prev_with) };
         }
         if prev_scope != 0 {
-            unsafe { ecs_set_scope(world, prev_scope) };
+            unsafe { ecs_set_scope(world_ptr, prev_scope) };
         }
 
         return true;
@@ -131,8 +134,8 @@ where
 }
 
 /// registers the component with the world.
-fn register_componment_data_explicit<T>(
-    world: impl IntoWorld,
+fn register_componment_data_explicit<'a, T>(
+    world: impl IntoWorld<'a>,
     name: *const c_char,
     id: EntityT,
     is_comp_pre_registered: bool,

@@ -5,18 +5,18 @@ use flecs_ecs_sys::{
     ecs_rule_get_filter, ecs_rule_init, ecs_rule_iter, ecs_rule_next, ecs_rule_str, ecs_rule_t,
 };
 
-use crate::core::{Entity, FilterView, IntoWorld, IterAPI, IterOperations, Iterable, World};
+use crate::core::{Entity, FilterView, IntoWorld, IterAPI, IterOperations, Iterable, WorldRef};
 
-pub struct Rule<T>
+pub struct Rule<'a, T>
 where
     T: Iterable,
 {
     rule: *mut ecs_rule_t,
-    pub world: World,
+    pub world: WorldRef<'a>,
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<T> Deref for Rule<T>
+impl<'a, T> Deref for Rule<'a, T>
 where
     T: Iterable,
 {
@@ -28,7 +28,7 @@ where
     }
 }
 
-impl<T> Drop for Rule<T>
+impl<'a, T> Drop for Rule<'a, T>
 where
     T: Iterable,
 {
@@ -41,7 +41,7 @@ where
     }
 }
 
-impl<T> Rule<T>
+impl<'a, T> Rule<'a, T>
 where
     T: Iterable,
 {
@@ -56,9 +56,9 @@ where
     ///
     /// * C++ API: `rule_base::rule`
     #[doc(alias = "rule_base::rule")]
-    pub fn new(world: &World, rule: *mut ecs_rule_t) -> Self {
+    pub fn new(world: impl IntoWorld<'a>, rule: *mut ecs_rule_t) -> Self {
         Self {
-            world: world.clone(),
+            world: world.world(),
             rule,
             _phantom: std::marker::PhantomData,
         }
@@ -75,10 +75,10 @@ where
     ///
     /// * C++ API: `rule_base::rule`
     #[doc(alias = "rule_base::rule")]
-    pub fn new_from_desc(world: &World, desc: &mut ecs_filter_desc_t) -> Self {
+    pub fn new_from_desc(world: impl IntoWorld<'a>, desc: &mut ecs_filter_desc_t) -> Self {
         let obj = Self {
-            world: world.clone(),
-            rule: unsafe { ecs_rule_init(world.raw_world, desc) },
+            world: world.world(),
+            rule: unsafe { ecs_rule_init(world.world_ptr_mut(), desc) },
             _phantom: std::marker::PhantomData,
         };
         if !desc.terms_buffer.is_null() {
@@ -118,7 +118,7 @@ where
     /// * C++ API: `rule_base::filter`
     #[doc(alias = "rule_base::filter")]
     pub fn filter(&self) -> FilterView<T> {
-        FilterView::new(&self.world, unsafe { ecs_rule_get_filter(self.rule) })
+        FilterView::new(self.world, unsafe { ecs_rule_get_filter(self.rule) })
     }
 
     /// Converts this rule to a string that can be used to aid debugging
@@ -144,32 +144,29 @@ where
     }
 }
 
-impl<T> IterAPI<T> for Rule<T>
+impl<'a, T> IterAPI<'a, T> for Rule<'a, T>
 where
     T: Iterable,
 {
-    fn as_entity(&self) -> Entity {
-        Entity::new_from_existing_raw(&self.world, unsafe {
+    fn as_entity(&self) -> Entity<'a> {
+        Entity::new_from_existing(self.world, unsafe {
             ecs_get_entity(self.rule as *const c_void)
         })
     }
 }
 
-impl<T> IntoWorld for Rule<T>
-where
-    T: Iterable,
-{
-    fn world_ptr_mut(&self) -> *mut crate::core::WorldT {
-        self.world.raw_world
+impl<'a, T: Iterable> IntoWorld<'a> for Rule<'a, T> {
+    fn world(&self) -> WorldRef<'a> {
+        self.world
     }
 }
 
-impl<T> IterOperations for Rule<T>
+impl<'a, T> IterOperations for Rule<'a, T>
 where
     T: Iterable,
 {
     fn retrieve_iter(&self) -> crate::core::IterT {
-        unsafe { ecs_rule_iter(self.world.raw_world, self.rule) }
+        unsafe { ecs_rule_iter(self.world.world_ptr_mut(), self.rule) }
     }
 
     fn iter_next(&self, iter: &mut crate::core::IterT) -> bool {

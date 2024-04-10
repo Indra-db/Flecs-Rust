@@ -1,38 +1,40 @@
 //! Filters are cheaper to create, but slower to iterate than queries.
 
+use std::ptr::NonNull;
+
 use crate::sys::{
     ecs_abort_, ecs_filter_copy, ecs_filter_desc_t, ecs_filter_fini, ecs_filter_init,
     ecs_filter_iter, ecs_filter_move, ecs_filter_next, ecs_get_entity, ecs_os_api,
 };
 
 use super::{
-    c_types::FilterT, entity::Entity, iterable::Iterable, world::World, FlecsErrorCode, IntoWorld,
-    IterAPI, IterOperations,
+    c_types::FilterT, entity::Entity, iterable::Iterable, FlecsErrorCode, IntoWorld, IterAPI,
+    IterOperations, WorldRef,
 };
 
-pub struct FilterView<T>
+pub struct FilterView<'a, T>
 where
     T: Iterable,
 {
-    world: World,
+    world: WorldRef<'a>,
     filter_ptr: *const FilterT,
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<T> Clone for FilterView<T>
+impl<'a, T> Clone for FilterView<'a, T>
 where
     T: Iterable,
 {
     fn clone(&self) -> Self {
         Self {
-            world: self.world.clone(),
+            world: self.world,
             filter_ptr: self.filter_ptr,
             _phantom: std::marker::PhantomData,
         }
     }
 }
 
-impl<T> FilterView<T>
+impl<'a, T> FilterView<'a, T>
 where
     T: Iterable,
 {
@@ -47,9 +49,9 @@ where
     ///
     /// * C++ API: `filter_view::filter_view`
     #[doc(alias = "filter_view::filter_view")]
-    pub fn new(world: &World, filter: *const FilterT) -> Self {
+    pub fn new(world: impl IntoWorld<'a>, filter: *const FilterT) -> Self {
         Self {
-            world: world.clone(),
+            world: world.world(),
             _phantom: std::marker::PhantomData,
             filter_ptr: filter as *const FilterT,
         }
@@ -57,16 +59,16 @@ where
 }
 
 /// Filters are cheaper to create, but slower to iterate than queries.
-pub struct Filter<T>
+pub struct Filter<'a, T>
 where
     T: Iterable,
 {
-    world: World,
+    world: WorldRef<'a>,
     _phantom: std::marker::PhantomData<T>,
     filter: FilterT,
 }
 
-impl<T> Filter<T>
+impl<'a, T> Filter<'a, T>
 where
     T: Iterable,
 {
@@ -80,20 +82,23 @@ where
     ///
     /// * C++ API: `filter::filter`
     #[doc(alias = "filter::filter")]
-    pub fn new(world: &World) -> Self {
+    pub fn new(world: impl IntoWorld<'a>) -> Self {
         let mut desc = ecs_filter_desc_t::default();
-        T::register_ids_descriptor(world.raw_world, &mut desc);
+        T::register_ids_descriptor(world.world_ptr_mut(), &mut desc);
         let mut filter: FilterT = Default::default();
         desc.storage = &mut filter;
-        unsafe { ecs_filter_init(world.raw_world, &desc) };
+        unsafe { ecs_filter_init(world.world_ptr_mut(), &desc) };
         Filter {
-            world: world.clone(),
+            world: world.world(),
             _phantom: std::marker::PhantomData,
             filter,
         }
     }
 
     /// Wrap an existing raw filter
+    ///
+    /// # Safety
+    /// Caller must ensure the validity of `filter`
     ///
     /// # Arguments
     ///
@@ -104,15 +109,14 @@ where
     ///
     /// * C++ API: `filter::filter`
     #[doc(alias = "filter::filter")]
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new_ownership(world: &World, filter: *mut FilterT) -> Self {
+    pub unsafe fn new_ownership(world: impl IntoWorld<'a>, filter: NonNull<FilterT>) -> Self {
         let mut filter_obj = Filter {
-            world: world.clone(),
+            world: world.world(),
             _phantom: std::marker::PhantomData,
             filter: Default::default(),
         };
 
-        unsafe { ecs_filter_move(&mut filter_obj.filter, filter) };
+        unsafe { ecs_filter_move(&mut filter_obj.filter, filter.as_ptr()) };
 
         filter_obj
     }
@@ -130,20 +134,17 @@ where
     ///
     /// * C++ API: `filter::filter`
     #[doc(alias = "filter::filter")]
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new_from_desc(world: &World, desc: *mut ecs_filter_desc_t) -> Self {
+    pub fn new_from_desc(world: impl IntoWorld<'a>, desc: &mut ecs_filter_desc_t) -> Self {
         let mut filter_obj = Filter {
-            world: world.clone(),
+            world: world.world(),
             _phantom: std::marker::PhantomData,
             filter: Default::default(),
         };
 
-        unsafe {
-            (*desc).storage = &mut filter_obj.filter;
-        }
+        desc.storage = &mut filter_obj.filter;
 
         unsafe {
-            if ecs_filter_init(filter_obj.world.raw_world, desc).is_null() {
+            if ecs_filter_init(filter_obj.world.world_ptr_mut(), desc).is_null() {
                 ecs_abort_(
                     FlecsErrorCode::InvalidParameter.to_int(),
                     file!().as_ptr() as *const i8,
@@ -156,9 +157,9 @@ where
                 }
             }
 
-            if !(*desc).terms_buffer.is_null() {
+            if !desc.terms_buffer.is_null() {
                 if let Some(free_func) = ecs_os_api.free_ {
-                    free_func((*desc).terms_buffer as *mut _);
+                    free_func(desc.terms_buffer as *mut _);
                 }
             }
         }
@@ -167,7 +168,7 @@ where
     }
 }
 
-impl<T> Drop for Filter<T>
+impl<'a, T> Drop for Filter<'a, T>
 where
     T: Iterable,
 {
@@ -181,13 +182,13 @@ where
     }
 }
 
-impl<T> Clone for Filter<T>
+impl<'a, T> Clone for Filter<'a, T>
 where
     T: Iterable,
 {
     fn clone(&self) -> Self {
         let mut new_filter = Filter::<T> {
-            world: self.world.clone(),
+            world: self.world,
             _phantom: std::marker::PhantomData,
             filter: Default::default(),
         };
@@ -197,21 +198,21 @@ where
     }
 }
 
-impl<T> IntoWorld for Filter<T>
+impl<'a, T> IntoWorld<'a> for Filter<'a, T>
 where
     T: Iterable,
 {
-    fn world_ptr_mut(&self) -> *mut super::WorldT {
-        self.world.raw_world
+    fn world(&self) -> WorldRef<'a> {
+        self.world
     }
 }
 
-impl<T> IterOperations for Filter<T>
+impl<'a, T> IterOperations for Filter<'a, T>
 where
     T: Iterable,
 {
     fn retrieve_iter(&self) -> super::IterT {
-        unsafe { ecs_filter_iter(self.world.raw_world, &self.filter) }
+        unsafe { ecs_filter_iter(self.world.world_ptr_mut(), &self.filter) }
     }
 
     fn iter_next(&self, iter: &mut super::IterT) -> bool {
@@ -227,32 +228,32 @@ where
     }
 }
 
-impl<T> IntoWorld for FilterView<T>
+impl<'a, T> IntoWorld<'a> for FilterView<'a, T>
 where
     T: Iterable,
 {
-    fn world_ptr_mut(&self) -> *mut super::WorldT {
-        self.world.raw_world
+    fn world(&self) -> WorldRef<'a> {
+        self.world
     }
 }
 
-impl<T> IterAPI<T> for FilterView<T>
+impl<'a, T> IterAPI<'a, T> for FilterView<'a, T>
 where
     T: Iterable,
 {
     fn as_entity(&self) -> Entity {
-        Entity::new_from_existing_raw(&self.world, unsafe {
+        Entity::new_from_existing(self.world, unsafe {
             ecs_get_entity(self.filter_ptr as *const _)
         })
     }
 }
 
-impl<T> IterOperations for FilterView<T>
+impl<'a, T> IterOperations for FilterView<'a, T>
 where
     T: Iterable,
 {
     fn retrieve_iter(&self) -> super::IterT {
-        unsafe { ecs_filter_iter(self.world.raw_world, self.filter_ptr) }
+        unsafe { ecs_filter_iter(self.world.world_ptr_mut(), self.filter_ptr) }
     }
 
     fn iter_next(&self, iter: &mut super::IterT) -> bool {
@@ -268,12 +269,12 @@ where
     }
 }
 
-impl<T> IterAPI<T> for Filter<T>
+impl<'a, T> IterAPI<'a, T> for Filter<'a, T>
 where
     T: Iterable,
 {
-    fn as_entity(&self) -> Entity {
-        Entity::new_from_existing_raw(&self.world, unsafe {
+    fn as_entity(&self) -> Entity<'a> {
+        Entity::new_from_existing(self.world, unsafe {
             ecs_get_entity(&self.filter as *const _ as *const _)
         })
     }

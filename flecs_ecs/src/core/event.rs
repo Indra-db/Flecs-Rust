@@ -1,17 +1,17 @@
 use std::ffi::c_void;
 
-use flecs_ecs_sys::{ecs_emit, ecs_enqueue, ecs_event_desc_t, ecs_get_world};
+use flecs_ecs_sys::{ecs_emit, ecs_enqueue, ecs_event_desc_t};
 
 use super::{
     ecs_pair, ComponentId, EventBuilder, IntoComponentId, IntoEntityId, IntoEntityIdExt, IntoTable,
+    IntoWorld,
 };
 
 /// Event builder trait to implement '`set_event_data`' for untyped and typed `EventBuilder`
-pub trait EventBuilderImpl {
+pub trait EventBuilderImpl<'a> {
     type BuiltType;
-    type ConstBuiltType;
 
-    fn get_data(&mut self) -> &mut EventBuilder;
+    fn get_data(&mut self) -> &mut EventBuilder<'a>;
 
     /// Add component id or pair to emit for the event
     ///
@@ -50,7 +50,7 @@ pub trait EventBuilderImpl {
     where
         T: IntoComponentId,
     {
-        let world = self.get_data().world.raw_world;
+        let world = self.get_data().world;
         self.add_id(T::get_id(world))
     }
 
@@ -72,7 +72,7 @@ pub trait EventBuilderImpl {
     where
         First: ComponentId,
     {
-        let world = self.get_data().world.raw_world;
+        let world = self.get_data().world;
         self.add_id(ecs_pair(First::get_id(world), second))
     }
 
@@ -123,11 +123,11 @@ pub trait EventBuilderImpl {
         let ids = &mut data.ids;
         let ids_array = &mut data.ids_array;
         let desc = &mut data.desc;
-        let world = data.world.raw_world;
+        let world = data.world;
         ids.array = ids_array.as_mut_ptr();
         desc.ids = ids;
-        desc.observable = unsafe { ecs_get_world(world as *const c_void) } as *mut c_void;
-        unsafe { ecs_emit(world, desc) };
+        desc.observable = world.real_world().world_ptr_mut() as *mut c_void;
+        unsafe { ecs_emit(world.world_ptr_mut(), desc) };
     }
 
     fn enqueue(&mut self) {
@@ -135,15 +135,14 @@ pub trait EventBuilderImpl {
         let ids = &mut data.ids;
         let ids_array = &mut data.ids_array;
         let desc = &mut data.desc;
-        let world = data.world.raw_world;
+        let world = data.world;
         ids.array = ids_array.as_mut_ptr();
         desc.ids = ids;
-        desc.observable = unsafe { ecs_get_world(world as *const c_void) } as *mut c_void;
+        desc.observable = world.real_world().world_ptr_mut() as *mut c_void;
         unsafe {
-            ecs_enqueue(world, desc as *mut ecs_event_desc_t);
+            ecs_enqueue(world.world_ptr_mut(), desc as *mut ecs_event_desc_t);
         };
     }
 
     fn set_event_data(&mut self, data: Self::BuiltType) -> &mut Self;
-    fn set_event_data_const(&mut self, data: Self::ConstBuiltType) -> &mut Self;
 }

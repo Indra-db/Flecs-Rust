@@ -20,8 +20,7 @@ use crate::{
 use flecs_ecs_sys::ecs_add_id;
 
 use super::{
-    super::c_types::RUST_ECS_COMPONENT_MASK, InOutType, IntoEntityId, IntoEntityIdExt, IntoWorld,
-    OperType,
+    super::c_types::RUST_ECS_COMPONENT_MASK, InOutType, IntoEntityId, IntoEntityIdExt, OperType,
 };
 
 /// Combines two 32 bit integers into a 64 bit integer.
@@ -105,14 +104,14 @@ pub fn ecs_has_pair(
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 #[inline(always)]
 pub fn ecs_add_pair(
-    world: impl IntoWorld,
+    world: *mut WorldT,
     entity: impl IntoEntityId,
     first: impl IntoEntityId,
     second: impl IntoEntityId,
 ) {
     unsafe {
         ecs_add_id(
-            world.world_ptr_mut(),
+            world,
             entity.get_id(),
             ecs_pair(first.get_id(), second.get_id()),
         );

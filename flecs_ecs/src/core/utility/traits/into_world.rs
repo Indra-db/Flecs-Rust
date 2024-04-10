@@ -1,110 +1,115 @@
+use std::{ffi::c_void, marker::PhantomData, ops::Deref, ptr::NonNull};
+
+use flecs_ecs_sys::ecs_get_world;
+
 use crate::core::{Entity, EntityView, Id, Iterable, Query, World, WorldT};
 
-pub trait IntoWorld {
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT;
-    #[inline]
-    #[doc(hidden)]
-    fn get_world_raw(&self) -> *const WorldT {
-        self.world_ptr_mut() as *const WorldT
-    }
-    #[inline]
-    fn get_world(&self) -> World {
-        World::new_wrap_raw_world(self.world_ptr_mut())
-    }
-}
-
-impl IntoWorld for *mut WorldT {
-    #[inline]
+pub trait IntoWorld<'a> {
     #[doc(hidden)]
     fn world_ptr_mut(&self) -> *mut WorldT {
-        *self
+        self.world().raw_world.as_ptr()
     }
-}
-
-impl IntoWorld for *const WorldT {
     #[inline]
     #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
-        *self as *mut WorldT
+    fn world_ptr(&self) -> *const WorldT {
+        self.world().raw_world.as_ptr()
     }
+
+    fn world(&self) -> WorldRef<'a>;
 }
 
-impl IntoWorld for World {
+impl<'a> IntoWorld<'a> for Id<'a> {
     #[inline]
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
-        self.raw_world
-    }
-}
-
-impl IntoWorld for Id {
-    #[inline]
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
+    fn world(&self) -> WorldRef<'a> {
         self.world
     }
 }
 
-impl IntoWorld for Entity {
+impl<'a> IntoWorld<'a> for Entity<'a> {
     #[inline]
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
+    fn world(&self) -> WorldRef<'a> {
         self.world
     }
 }
 
-impl IntoWorld for EntityView {
+impl<'a> IntoWorld<'a> for EntityView<'a> {
     #[inline]
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
+    fn world(&self) -> WorldRef<'a> {
         self.world
     }
 }
 
-impl<T> IntoWorld for &T
-where
-    T: IntoWorld,
-{
-    #[inline]
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
-        T::world_ptr_mut(*self)
-    }
-}
-
-impl<T> IntoWorld for &mut T
-where
-    T: IntoWorld,
-{
-    #[inline]
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
-        T::world_ptr_mut(*self)
-    }
-}
-
-impl<T> IntoWorld for Option<T>
-where
-    T: IntoWorld,
-{
-    #[inline]
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
-        match self {
-            Some(t) => t.world_ptr_mut(),
-            None => std::ptr::null_mut(),
-        }
-    }
-}
-
-impl<T> IntoWorld for Query<T>
+impl<'a, T> IntoWorld<'a> for Query<'a, T>
 where
     T: Iterable,
 {
     #[inline]
-    #[doc(hidden)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
-        self.world.raw_world
+    fn world(&self) -> WorldRef<'a> {
+        self.world
+    }
+}
+
+impl<'a> IntoWorld<'a> for &'a World {
+    #[inline]
+    fn world(&self) -> WorldRef<'a> {
+        (*self).into()
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+pub struct WorldRef<'a> {
+    raw_world: NonNull<WorldT>,
+    _marker: PhantomData<&'a ()>,
+}
+
+impl<'a> WorldRef<'a> {
+    pub fn real_world(&self) -> WorldRef<'a> {
+        unsafe {
+            WorldRef::from_ptr(ecs_get_world(self.world_ptr_mut() as *const c_void) as *mut WorldT)
+        }
+    }
+
+    /// # Safety
+    /// Caller must ensure `raw_world` points to a valid `WorldT`
+    pub unsafe fn from_ptr(raw_world: *mut WorldT) -> Self {
+        WorldRef {
+            raw_world: NonNull::new_unchecked(raw_world),
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<'a> From<&'a World> for WorldRef<'a> {
+    fn from(world: &'a World) -> Self {
+        WorldRef {
+            raw_world: world.raw_world,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<'a> From<&'a *mut WorldT> for &WorldRef<'a> {
+    fn from(value: &'a *mut WorldT) -> Self {
+        unsafe { std::mem::transmute::<&'a *mut WorldT, &WorldRef>(value) }
+    }
+}
+
+impl<'a> Deref for WorldRef<'a> {
+    type Target = World;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { std::mem::transmute::<&WorldRef, &World>(self) }
+    }
+}
+
+impl<'a> IntoWorld<'a> for WorldRef<'a> {
+    fn world(&self) -> WorldRef<'a> {
+        *self
+    }
+}
+
+impl<'a> IntoWorld<'a> for &WorldRef<'a> {
+    fn world(&self) -> WorldRef<'a> {
+        **self
     }
 }

@@ -12,7 +12,7 @@ struct Moon;
 
 fn iterate_tree(entity: Entity, position_parent: &Position) {
     // Print hierarchical name of entity & the entity type
-    println!("{} [{}]", entity.path().unwrap(), entity.archetype());
+    println!("{} [{:?}]", entity.path().unwrap(), entity.archetype());
 
     // Get the position of the entity
     let pos = entity.get::<Position>().unwrap();

@@ -1,10 +1,10 @@
 use crate::ecs_assert;
 
-use super::{component_registration::ComponentId, iter::Iter};
+use super::component_registration::ComponentId;
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::FlecsErrorCode;
 use std::{
-    ops::{Deref, Index, IndexMut},
+    ops::{Deref, DerefMut, Index, IndexMut},
     os::raw::c_void,
 };
 
@@ -30,29 +30,18 @@ where
     ///
     /// # Arguments
     ///
-    /// * `array`: pointer to the component array.
-    /// * `count`: number of elements in the array.
+    /// * `slice_components`: pointer to the component array.
     /// * `is_shared`: whether the component is shared.
     ///
     /// # See also
     ///
     /// * C++ API: `column::column`
     #[doc(alias = "column::column")]
-    pub(crate) fn new_from_array(array: *const T, count: usize, is_shared: bool) -> Self {
+    pub fn new(slice_components: &'a mut [T], is_shared: bool) -> Self {
         Self {
-            slice_components: unsafe { std::slice::from_raw_parts_mut(array as *mut T, count) },
+            slice_components,
             is_shared,
         }
-    }
-
-    /// Create a new column from an iterator.
-    ///
-    /// # Arguments
-    ///
-    /// * `iter`: the iterator to create the column from.
-    /// * `index_column`: the index of the signature of the query being iterated over.
-    pub fn new_from_iter(iter: &'a mut Iter, index_column: i32) -> Self {
-        iter.field::<T>(index_column).unwrap()
     }
 
     /// whether the column / component is shared.
@@ -61,39 +50,17 @@ where
     }
 }
 
-impl<'a, T> Index<usize> for Column<'a, T>
-where
-    T: ComponentId,
-{
-    type Output = T;
-
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.slice_components[index]
-    }
-}
-
-impl<'a, T> IndexMut<usize> for Column<'a, T>
-where
-    T: ComponentId,
-{
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.slice_components[index]
-    }
-}
-
-impl<'a, T> Deref for Column<'a, T>
-where
-    T: ComponentId,
-{
-    type Target = T;
+impl<'a, T: ComponentId> Deref for Column<'a, T> {
+    type Target = [T];
 
     fn deref(&self) -> &Self::Target {
-        ecs_assert!(
-            !self.slice_components.is_empty(),
-            FlecsErrorCode::OutOfRange,
-            "Column is empty"
-        );
-        &self.slice_components[0]
+        self.slice_components
+    }
+}
+
+impl<'a, T: ComponentId> DerefMut for Column<'a, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.slice_components
     }
 }
 

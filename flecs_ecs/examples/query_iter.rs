@@ -30,7 +30,7 @@ fn main() {
     query.iter(|it, (position, velocity)| {
         println!();
         // Print the table & number of entities matched in current callback
-        println!("Table: {}", it.archetype());
+        println!("Table: {:?}", it.archetype());
         println!(" - number of entities: {}", it.count());
         println!();
 

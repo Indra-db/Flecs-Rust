@@ -379,11 +379,11 @@ impl ComponentId for EcsComponent {
     type UnderlyingType = EcsComponent;
     type UnderlyingEnumType = NoneEnum;
 
-    fn register_explicit(_world: impl IntoWorld) {
+    fn register_explicit<'a>(_world: impl IntoWorld<'a>) {
         //this is already registered in the world inside C
     }
 
-    fn register_explicit_named(_world: impl IntoWorld, _name: &CStr) -> EntityT {
+    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &CStr) -> EntityT {
         //this is already registered in the world inside C
         unsafe { FLECS_IDEcsComponentID_ }
     }
@@ -393,12 +393,12 @@ impl ComponentId for EcsComponent {
         true
     }
 
-    fn is_registered_with_world(_: impl IntoWorld) -> bool {
+    fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
         //this is already registered in the world inside C
         true
     }
 
-    fn get_id(_world: impl IntoWorld) -> IdT {
+    fn get_id<'a>(_world: impl IntoWorld<'a>) -> IdT {
         unsafe { FLECS_IDEcsComponentID_ }
     }
 
@@ -427,11 +427,11 @@ impl ComponentId for Poly {
     type UnderlyingType = Poly;
     type UnderlyingEnumType = NoneEnum;
 
-    fn register_explicit(_world: impl IntoWorld) {
+    fn register_explicit<'a>(_world: impl IntoWorld<'a>) {
         //this is already registered in the world inside C
     }
 
-    fn register_explicit_named(_world: impl IntoWorld, _name: &CStr) -> EntityT {
+    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &CStr) -> EntityT {
         //this is already registered in the world inside C
         ECS_POLY
     }
@@ -441,12 +441,12 @@ impl ComponentId for Poly {
         true
     }
 
-    fn is_registered_with_world(_: impl IntoWorld) -> bool {
+    fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
         //this is already registered in the world inside C
         true
     }
 
-    fn get_id(_world: impl IntoWorld) -> IdT {
+    fn get_id<'a>(_world: impl IntoWorld<'a>) -> IdT {
         ECS_POLY
     }
 
@@ -473,11 +473,11 @@ impl ComponentId for TickSource {
     type UnderlyingType = TickSource;
     type UnderlyingEnumType = NoneEnum;
 
-    fn register_explicit(_world: impl IntoWorld) {
+    fn register_explicit<'a>(_world: impl IntoWorld<'a>) {
         //this is already registered in the world inside C
     }
 
-    fn register_explicit_named(_world: impl IntoWorld, _name: &CStr) -> EntityT {
+    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &CStr) -> EntityT {
         //this is already registered in the world inside C
         ECS_TICK_SOURCE
     }
@@ -487,7 +487,7 @@ impl ComponentId for TickSource {
         true
     }
 
-    fn is_registered_with_world(_: impl IntoWorld) -> bool {
+    fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
         //this is already registered in the world inside C
         true
     }
@@ -496,7 +496,7 @@ impl ComponentId for TickSource {
         ECS_TICK_SOURCE
     }
 
-    fn get_id(_: impl IntoWorld) -> IdT {
+    fn get_id<'a>(_: impl IntoWorld<'a>) -> IdT {
         ECS_TICK_SOURCE
     }
 
@@ -517,11 +517,11 @@ impl ComponentId for EntityId {
     type UnderlyingType = EntityId;
     type UnderlyingEnumType = NoneEnum;
 
-    fn register_explicit(_world: impl IntoWorld) {
+    fn register_explicit<'a>(_world: impl IntoWorld<'a>) {
         // already registered by flecs in World
     }
 
-    fn register_explicit_named(_world: impl IntoWorld, _name: &CStr) -> EntityT {
+    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &CStr) -> EntityT {
         // already registered by flecs in World
         unsafe { flecs_ecs_sys::FLECS_IDecs_entity_tID_ }
     }
@@ -530,7 +530,7 @@ impl ComponentId for EntityId {
         true
     }
 
-    fn is_registered_with_world(_: impl IntoWorld) -> bool {
+    fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
         //because this is always registered in the c world
         true
     }
@@ -540,7 +540,7 @@ impl ComponentId for EntityId {
         flecs_ecs_sys::FLECS_IDecs_entity_tID_
     }
 
-    fn get_id(_world: impl IntoWorld) -> IdT {
+    fn get_id<'a>(_world: impl IntoWorld<'a>) -> IdT {
         //this is safe because it's already registered in flecs_c / world
         unsafe { flecs_ecs_sys::FLECS_IDecs_entity_tID_ }
     }

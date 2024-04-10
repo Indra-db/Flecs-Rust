@@ -74,7 +74,7 @@ fn main() {
         // Filter for enchanted creatures within the current iteration
         query_enchanted
             .iterable()
-            .set_var_as_range(0, iter.table_range())
+            .set_var_as_range(0, iter.table_range().unwrap())
             .each_iter( |it, index ,_| {
                let pos = &loc[index];
                let abil_power = ability[index].power;

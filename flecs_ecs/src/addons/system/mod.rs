@@ -7,26 +7,26 @@
 mod system_builder;
 mod system_runner_fluent;
 
-use std::{ffi::CStr, ops::Deref, os::raw::c_void};
+use std::{ffi::CStr, ops::Deref, os::raw::c_void, ptr::NonNull};
 
 pub use system_builder::*;
 pub use system_runner_fluent::*;
 
 use crate::{
-    core::{Entity, FTime, Query, TickSource, World},
+    core::{Entity, FTime, IntoWorld, Query, TickSource, World, WorldRef},
     sys::{
         ecs_os_api, ecs_system_desc_t, ecs_system_get_ctx, ecs_system_get_query, ecs_system_init,
     },
 };
 
 #[derive(Clone)]
-pub struct System {
-    pub entity: Entity,
-    world: World,
+pub struct System<'a> {
+    pub entity: Entity<'a>,
+    world: WorldRef<'a>,
 }
 
-impl Deref for System {
-    type Target = Entity;
+impl<'a> Deref for System<'a> {
+    type Target = Entity<'a>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -34,7 +34,7 @@ impl Deref for System {
     }
 }
 
-impl System {
+impl<'a> System<'a> {
     //todo!() in query etc desc is a pointer, does it need to be?
     /// Create a new system
     ///
@@ -47,13 +47,13 @@ impl System {
     ///
     /// * C++ API: `system::system`
     #[doc(alias = "system::system")]
-    pub fn new(world: &World, mut desc: ecs_system_desc_t, is_instanced: bool) -> Self {
+    pub fn new(world: impl IntoWorld<'a>, mut desc: ecs_system_desc_t, is_instanced: bool) -> Self {
         if !desc.query.filter.instanced {
             desc.query.filter.instanced = is_instanced;
         }
 
-        let id = unsafe { ecs_system_init(world.raw_world, &desc) };
-        let entity = Entity::new_from_existing_raw(world.raw_world, id);
+        let id = unsafe { ecs_system_init(world.world_ptr_mut(), &desc) };
+        let entity = Entity::new_from_existing(world.world(), id);
 
         unsafe {
             if !desc.query.filter.terms_buffer.is_null() {
@@ -65,7 +65,7 @@ impl System {
 
         Self {
             entity,
-            world: world.clone(),
+            world: world.world(),
         }
     }
 
@@ -80,9 +80,9 @@ impl System {
     ///
     /// * C++ API: `system::system`
     #[doc(alias = "system::system")]
-    pub fn new_from_existing(world: &World, system_entity: Entity) -> Self {
+    pub fn new_from_existing(world: impl IntoWorld<'a>, system_entity: Entity<'a>) -> Self {
         Self {
-            world: world.clone(),
+            world: world.world(),
             entity: system_entity,
         }
     }
@@ -121,7 +121,7 @@ impl System {
         };
 
         unsafe {
-            ecs_system_init(self.world.raw_world, &desc);
+            ecs_system_init(self.world.world_ptr_mut(), &desc);
         }
     }
 
@@ -132,7 +132,7 @@ impl System {
     /// * C++ API: `system::ctx`
     #[doc(alias = "system::ctx")]
     pub fn context(&self) -> *mut c_void {
-        unsafe { ecs_system_get_ctx(self.world.raw_world, self.raw_id) }
+        unsafe { ecs_system_get_ctx(self.world.world_ptr_mut(), self.raw_id) }
     }
 
     /// Get the underlying query for the system
@@ -141,10 +141,14 @@ impl System {
     ///
     /// * C++ API: `system::query`
     #[doc(alias = "system::query")]
-    pub fn query(&mut self) -> Query<()> {
-        Query::<()>::new_ownership(&self.world, unsafe {
-            ecs_system_get_query(self.world.raw_world, self.raw_id)
-        })
+    pub fn query(&self) -> Query<'a, ()> {
+        let query = unsafe {
+            NonNull::new_unchecked(ecs_system_get_query(
+                self.world.world_ptr_mut(),
+                self.raw_id,
+            ))
+        };
+        Query::<()>::new_ownership(self.world, query)
     }
 
     /// Run the system

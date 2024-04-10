@@ -1,26 +1,16 @@
 use std::{ops::Deref, os::raw::c_void};
 
-use crate::core::{Entity, IdT, World};
+use crate::core::{Entity, IdT, IntoWorld};
 
 pub type FTime = f32;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Default)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Default, Clone, Copy)]
 pub struct EntityId(pub IdT);
 
 impl EntityId {
     #[inline]
     pub fn new(id: IdT) -> Self {
         Self(id)
-    }
-
-    /// Convert the entity id to an entity without a world.
-    /// This entity is not safe to do operations on.
-    ///
-    /// # Safety
-    ///
-    /// This entity is not safe to do operations on as it has no valig world reference
-    pub fn to_entity_no_world(&self) -> Entity {
-        Entity::from(self.0)
     }
 
     /// Convert the entity id to an entity with the given world.
@@ -32,8 +22,8 @@ impl EntityId {
     /// # Arguments
     ///
     /// * `world` - The world the entity belongs to
-    pub fn to_entity(&self, world: &World) -> Entity {
-        Entity::new_from_existing_raw(world.raw_world, self.0)
+    pub fn to_entity<'a>(&self, world: impl IntoWorld<'a>) -> Entity<'a> {
+        Entity::new_from_existing(world, self.0)
     }
 }
 

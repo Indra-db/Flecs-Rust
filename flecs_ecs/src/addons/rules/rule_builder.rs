@@ -3,24 +3,24 @@ use std::{ffi::CStr, ops::Deref};
 use flecs_ecs_sys::{ecs_entity_desc_t, ecs_entity_init, ecs_filter_desc_t};
 
 use crate::core::{
-    Builder, FilterBuilder, FilterBuilderImpl, Filterable, Iterable, Term, TermBuilder, TermIdT,
-    TermT, World, WorldT, SEPARATOR,
+    Builder, FilterBuilder, FilterBuilderImpl, Filterable, IntoWorld, Iterable, Term, TermBuilder,
+    TermIdT, TermT, World, WorldRef, SEPARATOR,
 };
 
 use super::Rule;
 
-pub struct RuleBuilder<T>
+pub struct RuleBuilder<'a, T>
 where
     T: Iterable,
 {
-    pub filter_builder: FilterBuilder<T>,
+    pub filter_builder: FilterBuilder<'a, T>,
 }
 
-impl<T> Deref for RuleBuilder<T>
+impl<'a, T> Deref for RuleBuilder<'a, T>
 where
     T: Iterable,
 {
-    type Target = FilterBuilder<T>;
+    type Target = FilterBuilder<'a, T>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -28,7 +28,7 @@ where
     }
 }
 
-impl<T> RuleBuilder<T>
+impl<'a, T> RuleBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -42,7 +42,7 @@ where
     ///
     /// * C++ API: `builder::builder`
     #[doc(alias = "builder::builder")]
-    pub fn new(world: &World) -> Self {
+    pub fn new(world: &'a World) -> Self {
         let mut obj = Self {
             filter_builder: FilterBuilder::new(world),
         };
@@ -54,7 +54,8 @@ where
             ..Default::default()
         };
 
-        obj.filter_builder.desc.entity = unsafe { ecs_entity_init(world.raw_world, &entity_desc) };
+        obj.filter_builder.desc.entity =
+            unsafe { ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -70,7 +71,7 @@ where
     ///
     /// * C++ API: `query_builder::query_builder`
     #[doc(alias = "query_builder::query_builder")]
-    pub fn new_named(world: &World, name: &CStr) -> Self {
+    pub fn new_named(world: &'a World, name: &CStr) -> Self {
         let mut obj = Self {
             filter_builder: FilterBuilder::new_named(world, name),
         };
@@ -82,13 +83,14 @@ where
             ..Default::default()
         };
 
-        obj.filter_builder.desc.entity = unsafe { ecs_entity_init(world.raw_world, &entity_desc) };
+        obj.filter_builder.desc.entity =
+            unsafe { ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
 }
 
-impl<T> Filterable for RuleBuilder<T>
+impl<'a, T> Filterable<'a> for RuleBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -101,7 +103,7 @@ where
     }
 }
 
-impl<T> FilterBuilderImpl for RuleBuilder<T>
+impl<'a, T> FilterBuilderImpl<'a> for RuleBuilder<'a, T>
 where
     T: Iterable,
 {
@@ -121,17 +123,12 @@ where
     }
 }
 
-impl<T> TermBuilder for RuleBuilder<T>
+impl<'a, T> TermBuilder<'a> for RuleBuilder<'a, T>
 where
     T: Iterable,
 {
     #[inline]
-    fn world_ptr_mut(&self) -> *mut WorldT {
-        self.filter_builder.world.raw_world
-    }
-
-    #[inline]
-    fn term_mut(&mut self) -> &mut Term {
+    fn term_mut(&mut self) -> &mut Term<'a> {
         self.filter_builder.term_mut()
     }
 
@@ -146,11 +143,11 @@ where
     }
 }
 
-impl<T> Builder for RuleBuilder<T>
+impl<'a, T> Builder<'a> for RuleBuilder<'a, T>
 where
     T: Iterable,
 {
-    type BuiltType = Rule<T>;
+    type BuiltType = Rule<'a, T>;
 
     /// Build the `observer_builder` into an query
     ///
@@ -159,7 +156,13 @@ where
     /// * C++ API: `node_builder::build`
     #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
-        let world = &self.filter_builder.world;
+        let world = self.filter_builder.world;
         Rule::<T>::new_from_desc(world, &mut self.filter_builder.desc)
+    }
+}
+
+impl<'a, T: Iterable> IntoWorld<'a> for RuleBuilder<'a, T> {
+    fn world(&self) -> WorldRef<'a> {
+        self.filter_builder.world()
     }
 }

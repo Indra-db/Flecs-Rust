@@ -22,7 +22,7 @@ fn main() {
         .add::<(Eats, Apples)>();
 
     // Show us what you got
-    println!("{}'s got [{}]", bob.name(), bob.archetype());
+    println!("{}'s got [{:?}]", bob.name(), bob.archetype());
 
     // Run systems twice. Usually this function is called once per frame
     world.progress();
