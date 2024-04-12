@@ -455,16 +455,20 @@ impl<'a> Iter<'a> {
     //TODO separate const and non const, see C++ API
     pub fn field<T: ComponentId>(&self, index: i32) -> Option<Column<T>> {
         let id = T::get_id(self.world());
-        if unsafe {
-            index >= self.iter.field_count
-                || !sys::ecs_field_is_set(self.iter, index)
-                || sys::ecs_field_id(self.iter, index) != id
-                || !sys::ecs_id_is_pair(id)
-        } {
+
+        if index > self.iter.field_count {
             return None;
         }
 
-        Some(unsafe { self.field_internal::<T>(index) })
+        let term_id = unsafe { sys::ecs_field_id(self.iter, index) };
+        let is_pair = unsafe { sys::ecs_id_is_pair(term_id) };
+        let is_id_correct = id == term_id;
+
+        if is_id_correct || is_pair {
+            return Some(unsafe { self.field_internal::<T>(index) });
+        }
+
+        None
     }
 
     /// Get unchecked access to field data.
