@@ -27,7 +27,7 @@ impl<'a, T: ComponentId> Ref<'a, T> {
     /// * C++ API: `ref::ref`
     ///
     #[doc(alias = "ref::ref")]
-    pub fn new(world: impl IntoWorld<'a>, entity: impl IntoEntity, mut id: IdT) -> Self {
+    pub fn new(world: impl IntoWorld<'a>, entity: impl Into<Entity>, mut id: IdT) -> Self {
         // the world we were called with may be a stage; convert it to a world
         // here if that is the case
         let world_ptr =
@@ -42,7 +42,7 @@ impl<'a, T: ComponentId> Ref<'a, T> {
             FlecsErrorCode::InvalidParameter
         );
 
-        let component_ref = unsafe { sys::ecs_ref_init_id(world_ptr, entity.get_id(), id) };
+        let component_ref = unsafe { sys::ecs_ref_init_id(world_ptr, *entity.into(), id) };
         assert_ne!(
             component_ref.entity, 0,
             "Tried to create invalid `Ref` type."

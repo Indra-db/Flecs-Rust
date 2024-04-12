@@ -46,7 +46,7 @@ fn main() {
         .set_pair_first::<Position, Local>(Position { x: 0.1, y: 0.1 });
 
     let query = world
-        .query_builder::<(&Position, Option<&Position>, &mut Position)>()
+        .query::<(&Position, Option<&Position>, &mut Position)>()
         .term_at(1)
         .select_second::<Local>()
         .term_at(2)
@@ -76,7 +76,7 @@ fn main() {
 
     //TODO: pair wrapper class to clean up, beautify this API
     world
-        .filter_builder::<&Position>()
+        .filter::<&Position>()
         .term_at(1)
         .select_second::<World>()
         .build()

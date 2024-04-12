@@ -15,7 +15,7 @@ fn main() {
         .set(Position { x: 20.0, y: 30.0 });
 
     // Create a simple query for component Position
-    let query = world.query::<&Position>();
+    let query = world.new_query::<&Position>();
 
     let entity: Option<EntityView> = query.find(|pos| (pos.x - 20.0).abs() < f32::EPSILON);
 

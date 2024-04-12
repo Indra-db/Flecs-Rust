@@ -8,10 +8,7 @@ fn main() {
     world.component::<Second>();
     world.component::<Third>();
 
-    let query = world
-        .query_builder::<&Position>()
-        .group_by::<Group>()
-        .build();
+    let query = world.query::<&Position>().group_by::<Group>().build();
 
     world
         .new_entity()

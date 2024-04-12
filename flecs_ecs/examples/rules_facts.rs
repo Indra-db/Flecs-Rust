@@ -48,7 +48,7 @@ fn main() {
     // fact, vs reusing a single rule for multiple facts.
 
     let friends = world
-        .rule_builder::<()>()
+        .rule::<()>()
         .with_pair_name::<Likes>(c"$Y")
         .select_src_name(c"$X")
         .with_pair_name::<Likes>(c"$X")

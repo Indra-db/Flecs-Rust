@@ -142,8 +142,8 @@ where
     ///
     /// * C++ API: `observer_builder_i::event`
     #[doc(alias = "observer_builder_i::event")]
-    pub fn add_event_id(&mut self, event: impl IntoEntity) -> &mut Self {
-        let event = event.get_id();
+    pub fn add_event_id(&mut self, event: impl Into<Entity>) -> &mut Self {
+        let event = *event.into();
         let event_count = self.event_count as usize;
         self.event_count += 1;
         self.desc.events[event_count] = event;

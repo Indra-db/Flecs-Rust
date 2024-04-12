@@ -8,118 +8,6 @@ use crate::sys;
 #[cfg(feature = "flecs_meta")]
 use crate::addons::meta::Opaque;
 
-type EcsCtxFreeT = unsafe extern "C" fn(*mut c_void);
-
-struct ComponentBindingCtx {
-    on_add: Option<*mut c_void>,
-    on_remove: Option<*mut c_void>,
-    on_set: Option<*mut c_void>,
-    free_on_add: Option<EcsCtxFreeT>,
-    free_on_remove: Option<EcsCtxFreeT>,
-    free_on_set: Option<EcsCtxFreeT>,
-}
-
-impl Drop for ComponentBindingCtx {
-    fn drop(&mut self) {
-        if let Some(on_add) = self.on_add {
-            if let Some(free_on_add) = self.free_on_add {
-                unsafe { free_on_add(on_add) };
-            }
-        }
-        if let Some(on_remove) = self.on_remove {
-            if let Some(free_on_remove) = self.free_on_remove {
-                unsafe { free_on_remove(on_remove) };
-            }
-        }
-        if let Some(on_set) = self.on_set {
-            if let Some(free_on_set) = self.free_on_set {
-                unsafe { free_on_set(on_set) };
-            }
-        }
-    }
-}
-
-#[allow(clippy::derivable_impls)]
-impl Default for ComponentBindingCtx {
-    fn default() -> Self {
-        Self {
-            on_add: None,
-            on_remove: None,
-            on_set: None,
-            free_on_add: None,
-            free_on_remove: None,
-            free_on_set: None,
-        }
-    }
-}
-impl ComponentBindingCtx {
-    pub fn new(
-        on_add: Option<*mut c_void>,
-        on_remove: Option<*mut c_void>,
-        on_set: Option<*mut c_void>,
-        free_on_add: Option<EcsCtxFreeT>,
-        free_on_remove: Option<EcsCtxFreeT>,
-        free_on_set: Option<EcsCtxFreeT>,
-    ) -> Self {
-        Self {
-            on_add,
-            on_remove,
-            on_set,
-            free_on_add,
-            free_on_remove,
-            free_on_set,
-        }
-    }
-}
-
-/// Untyped component class.
-pub struct UntypedComponent<'a> {
-    pub entity: EntityView<'a>,
-}
-
-impl<'a> Deref for UntypedComponent<'a> {
-    type Target = EntityView<'a>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.entity
-    }
-}
-
-impl<'a> UntypedComponent<'a> {
-    /// Create a new untyped component.
-    ///
-    /// # Arguments
-    ///
-    /// * `world`: the world.
-    /// * `id`: the id of the component to reference.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `untyped_component::untyped_component`
-    #[doc(alias = "untyped_component::untyped_component")]
-    pub fn new(world: impl IntoWorld<'a>, id: impl IntoEntity) -> Self {
-        UntypedComponent {
-            entity: EntityView::new_from(world, id.get_id()),
-        }
-    }
-
-    /// Get the id of the component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `untyped_component::entity`
-    #[doc(alias = "untyped_component::entity")]
-    pub fn as_entity(&self) -> EntityView<'a> {
-        self.entity
-    }
-}
-
-#[cfg(feature = "flecs_meta")]
-impl<'a> UntypedComponent<'a> {}
-
-#[cfg(feature = "flecs_metrics")]
-impl<'a> UntypedComponent<'a> {}
-
 /// Component class.
 /// Class used to register components and component metadata.
 pub struct Component<'a, T: ComponentId> {
@@ -132,6 +20,110 @@ impl<'a, T: ComponentId> Deref for Component<'a, T> {
 
     fn deref(&self) -> &Self::Target {
         &self.base
+    }
+}
+
+impl<'a, T: ComponentId> PartialEq<Component<'a, T>> for u64 {
+    fn eq(&self, other: &Component<'a, T>) -> bool {
+        *self == other.base.entity.id
+    }
+}
+
+impl<'a, T: ComponentId> PartialEq<u64> for Component<'a, T> {
+    fn eq(&self, other: &u64) -> bool {
+        self.base.entity.id == *other
+    }
+}
+
+impl<'a, T: ComponentId> PartialEq<Entity> for Component<'a, T> {
+    fn eq(&self, other: &Entity) -> bool {
+        self.base.entity.id == *other
+    }
+}
+
+impl<'a, T: ComponentId> PartialEq<Id> for Component<'a, T> {
+    fn eq(&self, other: &Id) -> bool {
+        self.base.entity.id == *other
+    }
+}
+
+impl<'a, T: ComponentId> PartialEq<EntityView<'a>> for Component<'a, T> {
+    fn eq(&self, other: &EntityView<'a>) -> bool {
+        self.base.entity == *other
+    }
+}
+
+impl<'a, T: ComponentId> PartialEq<IdView<'a>> for Component<'a, T> {
+    fn eq(&self, other: &IdView<'a>) -> bool {
+        self.base.entity == other.id
+    }
+}
+
+impl<'a, T: ComponentId> PartialEq<UntypedComponent<'a>> for Component<'a, T> {
+    fn eq(&self, other: &UntypedComponent<'a>) -> bool {
+        self.base.entity == other.entity
+    }
+}
+
+impl<'a, T: ComponentId> PartialEq for Component<'a, T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.base.entity == other.base.entity
+    }
+}
+
+impl<'a, T: ComponentId> Eq for Component<'a, T> {}
+
+impl<'a, T: ComponentId> PartialOrd<Component<'a, T>> for u64 {
+    fn partial_cmp(&self, other: &Component<'a, T>) -> Option<std::cmp::Ordering> {
+        self.partial_cmp(&other.base.entity.id)
+    }
+}
+
+impl<'a, T: ComponentId> PartialOrd<u64> for Component<'a, T> {
+    fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
+        self.base.entity.id.partial_cmp(other)
+    }
+}
+
+impl<'a, T: ComponentId> PartialOrd<Entity> for Component<'a, T> {
+    fn partial_cmp(&self, other: &Entity) -> Option<std::cmp::Ordering> {
+        self.base.entity.id.partial_cmp(other)
+    }
+}
+
+impl<'a, T: ComponentId> PartialOrd<Id> for Component<'a, T> {
+    fn partial_cmp(&self, other: &Id) -> Option<std::cmp::Ordering> {
+        self.base.entity.id.partial_cmp(other)
+    }
+}
+
+impl<'a, T: ComponentId> PartialOrd<EntityView<'a>> for Component<'a, T> {
+    fn partial_cmp(&self, other: &EntityView<'a>) -> Option<std::cmp::Ordering> {
+        self.base.entity.partial_cmp(other)
+    }
+}
+
+impl<'a, T: ComponentId> PartialOrd<IdView<'a>> for Component<'a, T> {
+    fn partial_cmp(&self, other: &IdView<'a>) -> Option<std::cmp::Ordering> {
+        self.base.entity.partial_cmp(&other.id)
+    }
+}
+
+impl<'a, T: ComponentId> PartialOrd<UntypedComponent<'a>> for Component<'a, T> {
+    fn partial_cmp(&self, other: &UntypedComponent<'a>) -> Option<std::cmp::Ordering> {
+        self.base.entity.partial_cmp(&other.entity)
+    }
+}
+
+impl<'a, T: ComponentId> PartialOrd for Component<'a, T> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<'a, T: ComponentId> Ord for Component<'a, T> {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.base.entity.cmp(&other.base.entity)
     }
 }
 
@@ -179,6 +171,17 @@ impl<'a, T: ComponentId> Component<'a, T> {
         }
     }
 
+    /// Return the component as an entity
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `id::entity`
+    #[doc(alias = "id::entity")]
+    #[inline(always)]
+    pub fn entity(self) -> EntityView<'a> {
+        self.base.entity
+    }
+
     /// Get the binding context for the component.
     ///
     /// # Arguments
@@ -211,7 +214,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     #[doc(alias = "component::get_hooks")]
     pub fn get_hooks(&self) -> TypeHooksT {
         let type_hooks: *const TypeHooksT =
-            unsafe { sys::ecs_get_hooks_id(self.world.world_ptr_mut(), self.raw_id) };
+            unsafe { sys::ecs_get_hooks_id(self.world.world_ptr_mut(), *self.id) };
         if type_hooks.is_null() {
             TypeHooksT::default()
         } else {
@@ -257,7 +260,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
         binding_ctx.on_add = Some(static_ref as *mut _ as *mut c_void);
         binding_ctx.free_on_add = Some(Self::on_add_drop::<Func>);
         type_hooks.on_add = Some(Self::run_add::<Func>);
-        unsafe { sys::ecs_set_hooks_id(self.world.world_ptr_mut(), self.raw_id, &type_hooks) };
+        unsafe { sys::ecs_set_hooks_id(self.world.world_ptr_mut(), *self.id, &type_hooks) };
         self
     }
 
@@ -286,7 +289,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
         binding_ctx.on_remove = Some(static_ref as *mut _ as *mut c_void);
         binding_ctx.free_on_remove = Some(Self::on_remove_drop::<Func>);
         type_hooks.on_remove = Some(Self::run_remove::<Func>);
-        unsafe { sys::ecs_set_hooks_id(self.world.world_ptr_mut(), self.raw_id, &type_hooks) };
+        unsafe { sys::ecs_set_hooks_id(self.world.world_ptr_mut(), *self.id, &type_hooks) };
         self
     }
 
@@ -315,7 +318,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
         binding_ctx.on_set = Some(static_ref as *mut _ as *mut c_void);
         binding_ctx.free_on_set = Some(Self::on_set_drop::<Func>);
         type_hooks.on_set = Some(Self::run_set::<Func>);
-        unsafe { sys::ecs_set_hooks_id(self.world.world_ptr_mut(), self.raw_id, &type_hooks) };
+        unsafe { sys::ecs_set_hooks_id(self.world.world_ptr_mut(), *self.id, &type_hooks) };
         self
     }
 
@@ -419,9 +422,9 @@ impl<'a, T: ComponentId> Component<'a, T> {
     ///
     /// * C++ API: `component::opaque`
     #[doc(alias = "component::opaque")]
-    pub fn opaque_id(&mut self, as_type: impl IntoEntity) -> Opaque<'a, T> {
+    pub fn opaque_id(&mut self, as_type: impl Into<Entity>) -> Opaque<'a, T> {
         let mut opaque = Opaque::<T>::new(self.world);
-        opaque.as_type(as_type.get_id());
+        opaque.as_type(as_type.into());
         opaque
     }
 

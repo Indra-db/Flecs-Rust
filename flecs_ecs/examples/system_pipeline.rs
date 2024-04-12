@@ -6,7 +6,7 @@ fn main() {
 
     // Create a system for moving an entity
     world
-        .system_builder::<(&mut Position, &Velocity)>()
+        .system::<(&mut Position, &Velocity)>()
         .kind::<flecs::pipeline::OnUpdate>()
         .on_each(|(p, v)| {
             p.x += v.x;
@@ -15,7 +15,7 @@ fn main() {
 
     // Create a system for printing the entity position
     world
-        .system_builder::<&Position>()
+        .system::<&Position>()
         .kind::<flecs::pipeline::PostUpdate>()
         .on_each_entity(|e, p| {
             println!("{}: {{ {}, {} }}", e.name(), p.x, p.y);

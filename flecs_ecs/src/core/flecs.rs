@@ -66,7 +66,7 @@ create_pre_registered_component!(Toggle, ECS_TOGGLE);
 create_pre_registered_component!(And, ECS_AND);
 
 // Builtin component ids
-create_pre_registered_component!(Component, ECS_COMPONENT);
+create_pre_registered_component!(EcsComponent, ECS_COMPONENT);
 create_pre_registered_component!(FieldIdentifier, ecs_field_idENTIFIER);
 create_pre_registered_component!(Iterable, ECS_ITERABLE);
 create_pre_registered_component!(Poly, ECS_POLY);

@@ -6,7 +6,7 @@ use common::*;
 
 #[derive(Component)]
 struct Timeout {
-    pub to_delete: u64,
+    pub to_delete: Entity,
     pub value: f32,
 }
 
@@ -18,7 +18,7 @@ fn main() {
 
     // System that deletes an entity after a timeout expires
     world
-        .system_builder::<&mut Timeout>()
+        .system::<&mut Timeout>()
         .on_each_iter(|it, _index, timeout| {
             timeout.value -= it.delta_time();
             println!("{}", timeout.value);
@@ -53,17 +53,15 @@ fn main() {
         });
 
     // System that prints remaining expiry time
-    world
-        .system_builder::<&Timeout>()
-        .on_each_entity(|e, timeout| {
-            let world = e.world();
-            let to_delete = world.get_alive(timeout.to_delete);
-            println!(
-                "PrintExpire: {} has {:.2} seconds left",
-                to_delete.name(),
-                timeout.value
-            );
-        });
+    world.system::<&Timeout>().on_each_entity(|e, timeout| {
+        let world = e.world();
+        let to_delete = world.get_alive(timeout.to_delete);
+        println!(
+            "PrintExpire: {} has {:.2} seconds left",
+            to_delete.name(),
+            timeout.value
+        );
+    });
 
     // Observer that triggers when entity is actually deleted
     world
@@ -76,7 +74,7 @@ fn main() {
     let to_delete = world.new_entity_named(c"ToDelete").add::<Tag>();
 
     world.new_entity_named(c"MyEntity").set(Timeout {
-        to_delete: to_delete.raw_id,
+        to_delete: to_delete.id(),
         value: 3.0,
     });
 

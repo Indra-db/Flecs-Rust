@@ -115,7 +115,7 @@ impl<'a> System<'a> {
     #[doc(alias = "system::ctx")]
     pub fn set_context(&mut self, context: *mut c_void) {
         let desc: sys::ecs_system_desc_t = sys::ecs_system_desc_t {
-            entity: self.raw_id,
+            entity: *self.id(),
             ctx: context,
             ..Default::default()
         };
@@ -132,7 +132,7 @@ impl<'a> System<'a> {
     /// * C++ API: `system::ctx`
     #[doc(alias = "system::ctx")]
     pub fn context(&self) -> *mut c_void {
-        unsafe { sys::ecs_system_get_ctx(self.world.world_ptr_mut(), self.raw_id) }
+        unsafe { sys::ecs_system_get_ctx(self.world.world_ptr_mut(), *self.id()) }
     }
 
     /// Get the underlying query for the system
@@ -145,7 +145,7 @@ impl<'a> System<'a> {
         let query = unsafe {
             NonNull::new_unchecked(sys::ecs_system_get_query(
                 self.world.world_ptr_mut(),
-                self.raw_id,
+                *self.id(),
             ))
         };
         Query::<()>::new_ownership(self.world, query)
@@ -164,7 +164,7 @@ impl<'a> System<'a> {
     #[doc(alias = "system::run")]
     #[inline]
     pub fn run_dt_param(&self, delta_time: FTime, param: *mut c_void) -> SystemRunnerFluent {
-        SystemRunnerFluent::new(&self.world, self.raw_id, 0, 0, delta_time, param)
+        SystemRunnerFluent::new(&self.world, *self.id(), 0, 0, delta_time, param)
     }
 
     /// Run the system
@@ -215,7 +215,7 @@ impl<'a> System<'a> {
     ) -> SystemRunnerFluent {
         SystemRunnerFluent::new(
             &self.world,
-            self.raw_id,
+            *self.id(),
             stage_current,
             stage_count,
             delta_time,

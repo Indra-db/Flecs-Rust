@@ -140,8 +140,8 @@ where
     ///
     /// * C++ API: `system_builder_i::kind`
     #[doc(alias = "system_builder_i::kind")]
-    pub fn kind_id(&mut self, phase: impl IntoEntity) -> &mut Self {
-        let phase = phase.get_id();
+    pub fn kind_id(&mut self, phase: impl Into<Entity>) -> &mut Self {
+        let phase = *phase.into();
         let current_phase: EntityT = unsafe {
             sys::ecs_get_target(
                 self.world.world_ptr_mut(),
@@ -248,9 +248,9 @@ where
     ///
     /// * C++ API: `system_builder_i::rate`
     #[doc(alias = "system_builder_i::rate")]
-    pub fn rate_w_tick_source(&mut self, tick_source: impl IntoEntity, rate: i32) -> &mut Self {
+    pub fn rate_w_tick_source(&mut self, tick_source: impl Into<Entity>, rate: i32) -> &mut Self {
         self.desc.rate = rate;
-        self.desc.tick_source = tick_source.get_id();
+        self.desc.tick_source = *tick_source.into();
         self
     }
 
@@ -283,8 +283,8 @@ where
     ///
     /// * C++ API: `system_builder_i::tick_source`
     #[doc(alias = "system_builder_i::tick_source")]
-    pub fn tick_source_id(&mut self, tick_source: impl IntoEntity) -> &mut Self {
-        self.desc.tick_source = tick_source.get_id();
+    pub fn tick_source_id(&mut self, tick_source: impl Into<Entity>) -> &mut Self {
+        self.desc.tick_source = *tick_source.into();
         self
     }
 

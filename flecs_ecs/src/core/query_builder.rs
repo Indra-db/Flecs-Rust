@@ -281,12 +281,12 @@ pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
     #[doc(alias = "query_builder_i::order_by")]
     fn order_by_id(
         &mut self,
-        component: impl IntoEntity,
+        component: impl Into<Entity>,
         compare: sys::ecs_order_by_action_t,
     ) -> &mut Self {
         let desc = self.desc_query_mut();
         desc.order_by = compare;
-        desc.order_by_component = component.get_id();
+        desc.order_by_component = *component.into();
         self
     }
 
@@ -359,12 +359,12 @@ pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
     #[doc(alias = "query_builder_i::group_by")]
     fn group_by_id_fn(
         &mut self,
-        component: impl IntoEntity,
+        component: impl Into<Entity>,
         group_by_action: sys::ecs_group_by_action_t,
     ) -> &mut Self {
         let desc = self.desc_query_mut();
         desc.group_by = group_by_action;
-        desc.group_by_id = component.get_id();
+        desc.group_by_id = *component.into();
         self
     }
 
@@ -380,7 +380,7 @@ pub trait QueryBuilderImpl<'a>: FilterBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::group_by`
     #[doc(alias = "query_builder_i::group_by")]
-    fn group_by_id(&mut self, component: impl IntoEntity) -> &mut Self {
+    fn group_by_id(&mut self, component: impl Into<Entity>) -> &mut Self {
         self.group_by_id_fn(component, None)
     }
 

@@ -39,6 +39,15 @@ where
     }
 }
 
+impl<'a, T> From<Pipeline<'a, T>> for EntityView<'a>
+where
+    T: Iterable,
+{
+    fn from(pipeline: Pipeline<'a, T>) -> Self {
+        pipeline.entity
+    }
+}
+
 impl<'a, T> Pipeline<'a, T>
 where
     T: Iterable,
@@ -60,9 +69,9 @@ where
             entity,
             phantom: Default::default(),
         };
-        pipeline.raw_id = unsafe { sys::ecs_pipeline_init(world.world_ptr_mut(), &desc) };
+        pipeline.id = Entity(unsafe { sys::ecs_pipeline_init(world.world_ptr_mut(), &desc) });
 
-        if pipeline.raw_id == 0 {
+        if pipeline.id == 0 {
             ecs_abort!(FlecsErrorCode::InvalidParameter);
         }
 

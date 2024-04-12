@@ -50,8 +50,8 @@ where
         }
     }
 
-    pub fn as_type(&mut self, func: IdT) -> &mut Self {
-        self.desc.type_.as_type = func;
+    pub fn as_type(&mut self, func: impl IntoId) -> &mut Self {
+        self.desc.type_.as_type = *func.into();
         self
     }
 

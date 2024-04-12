@@ -7,7 +7,7 @@ fn main() {
     // Create a query for Position, Velocity. We'll create a few entities that
     // have Velocity as owned and shared component.
     let query = world
-        .query_builder::<(&mut Position, &Velocity)>()
+        .query::<(&mut Position, &Velocity)>()
         .term_at(1)
         .self_term()
         .instanced()

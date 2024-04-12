@@ -69,7 +69,7 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::event_id`
     #[doc(alias = "iter::event_id")]
     pub fn event_id(&self) -> IdView<'a> {
-        IdView::new(self.world(), self.iter.event_id)
+        IdView::new_from(self.world(), self.iter.event_id)
     }
 
     /// Obtain mutable handle to entity being iterated over.
@@ -346,7 +346,7 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::id`
     #[doc(alias = "iter::id")]
     pub fn id(&self, index: i32) -> IdView<'a> {
-        unsafe { IdView::new(self.world(), sys::ecs_field_id(self.iter, index)) }
+        unsafe { IdView::new_from(self.world(), sys::ecs_field_id(self.iter, index)) }
     }
 
     /// Obtain pair id matched for field.
@@ -364,7 +364,7 @@ impl<'a> Iter<'a> {
         unsafe {
             let id = sys::ecs_field_id(self.iter, index);
             if sys::ecs_id_is_pair(id) {
-                Some(IdView::new(self.world(), id))
+                Some(IdView::new_from(self.world(), id))
             } else {
                 None
             }
@@ -455,16 +455,20 @@ impl<'a> Iter<'a> {
     //TODO separate const and non const, see C++ API
     pub fn field<T: ComponentId>(&self, index: i32) -> Option<Column<T>> {
         let id = T::get_id(self.world());
-        if unsafe {
-            index >= self.iter.field_count
-                || !sys::ecs_field_is_set(self.iter, index)
-                || sys::ecs_field_id(self.iter, index) != id
-                || !sys::ecs_id_is_pair(id)
-        } {
+
+        if index > self.iter.field_count {
             return None;
         }
 
-        Some(unsafe { self.field_internal::<T>(index) })
+        let term_id = unsafe { sys::ecs_field_id(self.iter, index) };
+        let is_pair = unsafe { sys::ecs_id_is_pair(term_id) };
+        let is_id_correct = id == term_id;
+
+        if is_id_correct || is_pair {
+            return Some(unsafe { self.field_internal::<T>(index) });
+        }
+
+        None
     }
 
     /// Get unchecked access to field data.

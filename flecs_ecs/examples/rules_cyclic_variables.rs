@@ -36,7 +36,7 @@ fn main() {
     // be populated, and it.count() will always be 0.
 
     let rule = world
-        .rule_builder::<()>()
+        .rule::<()>()
         .with_pair_name::<Likes>(c"$Y")
         .select_src_name(c"$X")
         .with_pair_name::<Likes>(c"$X")

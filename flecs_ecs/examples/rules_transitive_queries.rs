@@ -123,7 +123,7 @@ fn main() {
     //   Person, (LocatedIn, $Location), Country($Location)
 
     let rule = world
-        .rule_builder::<()>()
+        .rule::<()>()
         .with_type::<&Person>()
         .with_pair_name::<LocatedIn>(c"$Location")
         .with_type::<&Country>()

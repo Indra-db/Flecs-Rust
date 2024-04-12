@@ -23,7 +23,7 @@ fn main() {
     let world = World::new();
 
     let system = world
-        .system_builder::<(&mut Position, &Velocity)>()
+        .system::<(&mut Position, &Velocity)>()
         // The run function has a signature that accepts a C iterator. By
         // forwarding the iterator to it->callback, the each function of the
         // system is invoked.

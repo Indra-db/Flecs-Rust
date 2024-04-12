@@ -68,7 +68,7 @@ impl<'a> Observer<'a> {
     #[doc(alias = "observer::ctx")]
     pub fn set_context(&mut self, context: *mut c_void) {
         let desc: sys::ecs_observer_desc_t = sys::ecs_observer_desc_t {
-            entity: self.raw_id,
+            entity: *self.id,
             ctx: context,
             ..Default::default()
         };
@@ -85,7 +85,7 @@ impl<'a> Observer<'a> {
     /// * C++ API: `observer::ctx`
     #[doc(alias = "observer::ctx")]
     pub fn context(&self) -> *mut c_void {
-        unsafe { sys::ecs_observer_get_ctx(self.world.world_ptr_mut(), self.raw_id) }
+        unsafe { sys::ecs_observer_get_ctx(self.world.world_ptr_mut(), *self.id) }
     }
 
     /// Get the filter for the observer

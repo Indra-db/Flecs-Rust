@@ -5,7 +5,7 @@ use std::{ffi::CStr, sync::OnceLock};
 use crate::core::*;
 use crate::sys;
 
-#[cfg(feature = "flsys::ecs_system")]
+#[cfg(feature = "flecs_system")]
 use crate::sys::EcsTickSource;
 
 pub const RUST_ecs_id_FLAGS_MASK: u64 = 0xFF << 60;
@@ -32,7 +32,7 @@ pub type TermIdT = sys::ecs_term_id_t;
 pub type TermT = sys::ecs_term_t;
 pub type PrimitiveKindT = sys::ecs_primitive_kind_t;
 pub type FTimeT = f32;
-#[cfg(feature = "flsys::ecs_system")]
+#[cfg(feature = "flecs_system")]
 pub type TickSource = EcsTickSource;
 
 pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\0") };
@@ -445,7 +445,7 @@ impl ComponentId for Poly {
     }
 }
 
-#[cfg(feature = "flsys::ecs_system")]
+#[cfg(feature = "flecs_system")]
 impl ComponentInfo for TickSource {
     const IS_TAG: bool = false;
     const IS_ENUM: bool = false;
@@ -453,7 +453,7 @@ impl ComponentInfo for TickSource {
     const IMPLS_DEFAULT: bool = true;
 }
 
-#[cfg(feature = "flsys::ecs_system")]
+#[cfg(feature = "flecs_system")]
 impl ComponentId for TickSource {
     type UnderlyingType = TickSource;
     type UnderlyingEnumType = NoneEnum;

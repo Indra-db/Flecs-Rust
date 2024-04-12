@@ -60,11 +60,11 @@ fn main() {
     }
 
     // Query for creatures based on their Location and Ability
-    let query_creatures = forest.query::<(&Location, &Ability)>();
+    let query_creatures = forest.new_query::<(&Location, &Ability)>();
 
     // Filter specifically for enchanted things in the world
     let query_enchanted = forest
-        .filter_builder::<()>() // query is bugged with chaining, reported on 30/03/2024. Will be fixed for v4 flecs.
+        .filter::<()>() // query is bugged with chaining, reported on 30/03/2024. Will be fixed for v4 flecs.
         .with_type::<&Enchanted>()
         .build();
 

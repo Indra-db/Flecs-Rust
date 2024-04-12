@@ -77,7 +77,7 @@ fn main() {
     println!(
         "{}",
         world
-            .get_id::<(Requires, Gigawatts)>()
+            .id_pair::<Requires, Gigawatts>()
             .type_id()
             .path()
             .unwrap()
@@ -85,7 +85,7 @@ fn main() {
     println!(
         "{}",
         world
-            .get_id::<(Gigawatts, Requires)>()
+            .id_pair::<Gigawatts, Requires>()
             .type_id()
             .path()
             .unwrap()
@@ -93,7 +93,7 @@ fn main() {
     println!(
         "{}",
         world
-            .get_id::<(Expires, Position)>()
+            .id_pair::<Expires, Position>()
             .type_id()
             .path()
             .unwrap()
@@ -101,7 +101,7 @@ fn main() {
     println!(
         "{}",
         world
-            .get_id::<(MustHave, Position)>()
+            .id_pair::<MustHave, Position>()
             .type_id()
             .path()
             .unwrap()
@@ -110,7 +110,7 @@ fn main() {
     // When querying for a relationship component, add the pair type as template
     // argument to the builder:
     let query = world
-        .query_builder::<&Requires>()
+        .query::<&Requires>()
         .term_at(1)
         .select_second::<Gigawatts>()
         .build();

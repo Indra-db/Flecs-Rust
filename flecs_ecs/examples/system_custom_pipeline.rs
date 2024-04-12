@@ -25,18 +25,15 @@ fn main() {
         .build();
 
     // Configure the world to use the custom pipeline
-    world.set_pipeline(pipeline.to_entity());
+    world.set_pipeline(pipeline.entity);
 
     // Create system with Physics tag
-    world
-        .system_builder::<()>()
-        .kind::<Physics>()
-        .on_iter_only(|_| {
-            println!("System with Physics ran!");
-        });
+    world.system::<()>().kind::<Physics>().on_iter_only(|_| {
+        println!("System with Physics ran!");
+    });
 
     // Create system without Physics tag
-    world.system_builder::<()>().on_iter_only(|_| {
+    world.system::<()>().on_iter_only(|_| {
         println!("System without Physics ran!");
     });
 

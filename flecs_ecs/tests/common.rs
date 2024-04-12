@@ -13,7 +13,7 @@ fn init() {
     }
 }
 
-#[derive(Component)]
+#[derive(Debug, Component)]
 pub struct Position {
     pub x: i32,
     pub y: i32,
@@ -25,7 +25,7 @@ pub struct MyStruct {
     pub y: i32,
 }
 
-#[derive(Component)]
+#[derive(Debug, Component)]
 pub struct Velocity {
     pub x: i32,
     pub y: i32,
