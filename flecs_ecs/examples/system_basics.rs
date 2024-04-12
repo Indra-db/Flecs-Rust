@@ -8,7 +8,7 @@ fn main() {
     // queries) with a function that can be ran or scheduled (see pipeline).
 
     let s = world
-        .system_builder::<(&mut Position, &Velocity)>()
+        .system::<(&mut Position, &Velocity)>()
         .on_each_entity(|e, (p, v)| {
             p.x += v.x;
             p.y += v.y;

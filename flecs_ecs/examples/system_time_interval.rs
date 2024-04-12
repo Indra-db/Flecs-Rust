@@ -19,18 +19,18 @@ fn main() {
     let time_out = world.get::<Timeout>().unwrap();
 
     world
-        .system_builder::<&mut Timeout>()
+        .system::<&mut Timeout>()
         .on_each_iter(|it, _index, timeout| {
             timeout.value -= it.delta_time();
         });
 
     world
-        .system_builder_named::<()>(c"Tick")
+        .system_named::<()>(c"Tick")
         .interval(1.0)
         .on_iter_only(tick);
 
     world
-        .system_builder_named::<()>(c"FastTick")
+        .system_named::<()>(c"FastTick")
         .interval(0.5)
         .on_iter_only(tick);
 

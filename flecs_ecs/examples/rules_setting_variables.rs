@@ -95,7 +95,7 @@ fn main() {
     // - find all entities with (Platoon, *), store * in _Platoon
     // - check if _Platoon has (Player, *), store * in _Player
     let rule = world
-        .rule_builder::<&RangedUnit>()
+        .rule::<&RangedUnit>()
         .with_type::<&Platoon>()
         .select_second_name(c"$Platoon")
         .with_pair_name::<&Player>(c"$Player")

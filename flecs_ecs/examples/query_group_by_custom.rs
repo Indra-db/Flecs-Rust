@@ -32,7 +32,7 @@ fn main() {
 
     // Grouped query
     let query = world
-        .query_builder::<&Position>()
+        .query::<&Position>()
         .group_by_fn::<Group>(Some(callback_group_by_relationship))
         .build();
 

@@ -29,7 +29,7 @@ fn main() {
 
     // Create a sorted system
     let sys = world
-        .system_builder::<&Position>()
+        .system::<&Position>()
         .order_by(compare_position)
         .on_each(|pos| {
             println!("{:?}", pos);
@@ -37,7 +37,7 @@ fn main() {
 
     // Create a sorted query
     let query = world
-        .query_builder::<&Position>()
+        .query::<&Position>()
         .order_by(compare_position)
         .build();
 

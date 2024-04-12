@@ -61,7 +61,7 @@ fn main() {
 
     // Grouped query
     let query = world
-        .query_builder::<(&Position,)>()
+        .query::<(&Position,)>()
         .group_by::<Group>()
         // Callback invoked when a new group is created
         .on_group_create(Some(callback_group_create))

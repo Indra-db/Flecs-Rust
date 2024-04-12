@@ -41,10 +41,10 @@ fn main() {
 
     let world = World::new();
 
-    let mut query_collide = world.query::<(&Position, &Radius)>();
+    let mut query_collide = world.new_query::<(&Position, &Radius)>();
 
     let sys = world
-        .system_builder::<(&Position, &Radius)>()
+        .system::<(&Position, &Radius)>()
         .set_context(&mut query_collide as *mut Query<(&Position, &Radius)> as *mut c_void)
         .on_each_iter(|it, index, (p1, r1)| {
             let query = unsafe { it.context::<Query<(&Position, &Radius)>>() };

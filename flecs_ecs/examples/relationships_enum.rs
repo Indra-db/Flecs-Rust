@@ -82,7 +82,7 @@ fn main() {
 
     // Iterate all entities with a Tile relationship
     world
-        .filter_builder::<()>()
+        .filter::<()>()
         .with_enum_wildcard::<Tile>()
         .build()
         .each_iter(|it, _, _| {
@@ -100,7 +100,7 @@ fn main() {
 
     // Iterate only occupied tiles
     world
-        .filter_builder::<()>()
+        .filter::<()>()
         .with_enum_wildcard::<Tile>()
         .with_enum(TileStatus::Occupied)
         .build()
