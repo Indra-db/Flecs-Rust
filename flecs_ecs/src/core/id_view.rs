@@ -81,7 +81,7 @@ impl<'a> PartialOrd<IdView<'a>> for u64 {
 
 impl<'a> PartialOrd<u64> for IdView<'a> {
     fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
-        Some(self.id.0.cmp(&other))
+        Some(self.id.0.cmp(other))
     }
 }
 

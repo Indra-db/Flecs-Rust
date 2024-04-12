@@ -1460,7 +1460,7 @@ fn entity_entity_view_to_entity_world() {
 fn entity_entity_view_to_entity_stage() {
     let world = World::new();
 
-    let entity_view: EntityView = world.new_entity().into();
+    let entity_view: EntityView = world.new_entity();
     let stage = world.stage(0);
 
     world.readonly_begin();
@@ -1485,7 +1485,7 @@ fn entity_create_entity_view_from_stage() {
     let stage = world.stage(0);
 
     world.readonly_begin();
-    let entity_view: EntityView = stage.new_entity().into();
+    let entity_view: EntityView = stage.new_entity();
 
     world.readonly_end();
 
