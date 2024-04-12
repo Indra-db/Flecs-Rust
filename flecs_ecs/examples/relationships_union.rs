@@ -1,6 +1,5 @@
 mod common;
 use common::*;
-use flecs_ecs::core::entity::Entity;
 
 // This example shows how to use union relationships. Union relationships behave
 // much like exclusive relationships in that entities can have only one instance
@@ -84,11 +83,11 @@ fn main() {
                 "{}: Movement: {:?}, Direction: {:?}",
                 it.entity(i).name(),
                 movement[i]
-                    .to_entity(it.world())
+                    .entity_view(it.world())
                     .to_constant::<Movement>()
                     .unwrap(),
                 direction[i]
-                    .to_entity(it.world())
+                    .entity_view(it.world())
                     .to_constant::<Direction>()
                     .unwrap()
             );

@@ -6,7 +6,7 @@ use common::*;
 
 #[derive(Component)]
 struct Timeout {
-    pub to_delete: u64,
+    pub to_delete: Entity,
     pub value: f32,
 }
 
@@ -76,7 +76,7 @@ fn main() {
     let to_delete = world.new_entity_named(c"ToDelete").add::<Tag>();
 
     world.new_entity_named(c"MyEntity").set(Timeout {
-        to_delete: to_delete.raw_id,
+        to_delete: to_delete.id(),
         value: 3.0,
     });
 

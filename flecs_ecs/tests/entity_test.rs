@@ -351,7 +351,7 @@ fn entity_get_generic_mut() {
             invoked = true;
         });
 
-    let pos = entity.get_untyped_mut(&position);
+    let pos = entity.get_untyped_mut(position.id());
     assert!(!pos.is_null());
 
     let pos = unsafe { &mut *(pos as *mut Position) };
@@ -390,7 +390,7 @@ fn entity_set_generic() {
 
     let entity = unsafe {
         world.new_entity().set_ptr_w_size(
-            &position,
+            position.id(),
             std::mem::size_of::<Position>(),
             &pos as *const _ as *const c_void,
         )
@@ -414,7 +414,7 @@ fn entity_set_generic_no_size() {
     let entity = unsafe {
         world
             .new_entity()
-            .set_ptr(&position, &pos as *const _ as *const c_void)
+            .set_ptr(position.id(), &pos as *const _ as *const c_void)
     };
 
     assert!(entity.has::<Position>());
@@ -432,7 +432,7 @@ fn entity_add_role() {
 
     let entity = entity.add_flags(flecs::Pair::ID);
 
-    assert_eq!(entity.raw_id & flecs::Pair::ID, flecs::Pair::ID);
+    assert_eq!(entity.id() & flecs::Pair::ID, flecs::Pair::ID);
 }
 
 #[test]
@@ -442,7 +442,7 @@ fn entity_remove_role() {
     let id = entity;
 
     let entity = entity.add_flags(flecs::Pair::ID);
-    assert_eq!(entity.raw_id & flecs::Pair::ID, flecs::Pair::ID);
+    assert_eq!(entity.id() & flecs::Pair::ID, flecs::Pair::ID);
 
     let entity = entity.remove_flags();
     assert_eq!(entity, id);
@@ -466,7 +466,7 @@ fn entity_pair_role() {
     let entity = world.new_entity();
     let entity2 = world.new_entity();
 
-    let pair: IdView = IdView::new(&world, (entity, entity2));
+    let pair: IdView = IdView::new_from(&world, (entity, entity2));
     let pair = pair.add_flags(flecs::Pair::ID);
 
     assert!(pair.has_flags_for(flecs::Pair::ID));
@@ -687,7 +687,8 @@ fn entity_delete() {
     assert!(!entity.is_alive());
 
     let entity2 = world.new_entity();
-    assert_eq!(entity2.raw_id as u32, entity.raw_id as u32);
+
+    assert_eq!(*entity2.id() as u32, *entity.id() as u32);
     assert_ne!(entity2, entity);
 }
 
@@ -968,13 +969,13 @@ fn entity_get_type() {
     {
         let type_2 = entity.archetype();
         assert_eq!(type_2.count(), 1);
-        assert_eq!(type_2[0], world.get_id::<Position>().raw_id);
+        assert_eq!(type_2[0], world.id::<Position>().id());
     }
 
     entity.add::<Velocity>();
     let type_3 = entity.archetype();
     assert_eq!(type_3.count(), 2);
-    assert_eq!(type_3[1], world.get_id::<Velocity>().raw_id);
+    assert_eq!(type_3[1], world.id::<Velocity>().id());
 }
 
 #[test]
@@ -986,11 +987,11 @@ fn entity_get_nonempty_type() {
 
     let type_1 = entity.archetype();
     assert_eq!(type_1.count(), 1);
-    assert_eq!(type_1.get(0).unwrap(), world.get_id::<Position>());
+    assert_eq!(type_1.get(0).unwrap(), world.id::<Position>());
 
     let type_2 = entity.archetype();
     assert_eq!(type_2.count(), 1);
-    assert_eq!(type_2.get(0).unwrap(), world.get_id::<Position>());
+    assert_eq!(type_2.get(0).unwrap(), world.id::<Position>());
 }
 
 #[test]
@@ -1304,7 +1305,7 @@ fn entity_path() {
     let world = World::new();
 
     let parent = world.new_entity_named(c"parent");
-    world.set_scope_with_id(parent.id);
+    world.set_scope_with_id(parent.id());
     let child = world.new_entity_named(c"child");
 
     assert_eq!(&child.path().unwrap(), "::parent::child");
@@ -1315,9 +1316,9 @@ fn entity_path_from() {
     let world = World::new();
 
     let parent = world.new_entity_named(c"parent");
-    world.set_scope_with_id(parent.id);
+    world.set_scope_with_id(parent.id());
     let child = world.new_entity_named(c"child");
-    world.set_scope_with_id(child.id);
+    world.set_scope_with_id(child.id());
     let grandchild = world.new_entity_named(c"grandchild");
 
     assert_eq!(&grandchild.path().unwrap(), "::parent::child::grandchild");
@@ -1332,9 +1333,9 @@ fn entity_path_from_type() {
     let world = World::new();
 
     let parent = world.new_entity_named(c"parent");
-    world.set_scope_with_id(parent.id);
+    world.set_scope_with_id(parent.id());
     let child = world.new_entity_named(c"child");
-    world.set_scope_with_id(child.id);
+    world.set_scope_with_id(child.id());
     let grandchild = world.new_entity_named(c"grandchild");
 
     assert_eq!(&grandchild.path().unwrap(), "::parent::child::grandchild");
@@ -1349,7 +1350,7 @@ fn entity_path_custom_sep() {
     let world = World::new();
 
     let parent = world.new_entity_named(c"parent");
-    world.set_scope_with_id(parent.id);
+    world.set_scope_with_id(parent.id());
     let child = world.new_entity_named(c"child");
 
     assert_eq!(&child.path_w_sep(c"_", c"?").unwrap(), "?parent_child");
@@ -1360,9 +1361,9 @@ fn entity_path_from_custom_sep() {
     let world = World::new();
 
     let parent = world.new_entity_named(c"parent");
-    world.set_scope_with_id(parent.id);
+    world.set_scope_with_id(parent.id());
     let child = world.new_entity_named(c"child");
-    world.set_scope_with_id(child.id);
+    world.set_scope_with_id(child.id());
     let grandchild = world.new_entity_named(c"grandchild");
 
     assert_eq!(
@@ -1380,9 +1381,9 @@ fn entity_path_from_type_custom_sep() {
     let world = World::new();
 
     let parent = world.new_entity_type::<Parent>();
-    world.set_scope_with_id(parent.id);
+    world.set_scope_with_id(parent.id());
     let child = world.new_entity_named(c"child");
-    world.set_scope_with_id(child.id);
+    world.set_scope_with_id(child.id());
     let grandchild = world.new_entity_named(c"grandchild");
 
     assert_eq!(
@@ -1418,82 +1419,83 @@ fn entity_implicit_type_str_to_char() {
 // TODO these two tests need reviewing with the EntityView refactor
 
 #[test]
-fn entity_entity_to_entity_view() {
-    // let world = World::new();
+fn entityview_to_entity_to_entity_view() {
+    let world = World::new();
 
-    // let entity = world.new_entity().set(Position { x: 10, y: 20 });
-    // assert!(entity.is_valid());
+    let entity = world.new_entity().set(Position { x: 10, y: 20 });
+    assert!(entity.is_valid());
 
-    // let entity_view = entity.as_id_view();
-    // assert!(entity_view.is_valid());
-    // assert_eq!(entity, entity_view);
+    let entity_id = entity.id();
 
-    // let p = entity_view.get::<Position>().unwrap();
-    // assert_eq!(p.x, 10);
-    // assert_eq!(p.y, 20);
+    let entity_view = entity_id.entity_view(&world);
+    assert!(entity_view.is_valid());
+    assert_eq!(entity, entity_view);
+
+    let p = entity_view.get::<Position>().unwrap();
+    assert_eq!(p.x, 10);
+    assert_eq!(p.y, 20);
 }
 
 #[test]
 fn entity_entity_view_to_entity_world() {
-    // let world = World::new();
-    // let entity = world.new_entity().set(Position { x: 10, y: 20 });
-    // assert!(entity.is_valid());
+    let world = World::new();
+    let entity = world.new_entity().set(Position { x: 10, y: 20 });
+    assert!(entity.is_valid());
+    let entity_id = entity.id();
 
-    // let entity_view = entity.as_view();
-    // assert!(entity_view.is_valid());
-    // assert_eq!(entity, entity_view);
+    let entity_view = entity_id.entity_view(&world);
+    assert!(entity_view.is_valid());
+    assert_eq!(entity, entity_view);
 
-    // let entity_mut = entity_view.mut_current_stage(&world);
-    // entity_mut.set(Position { x: 10, y: 20 });
+    let entity_mut = entity_view.mut_current_stage(&world);
+    entity_mut.set(Position { x: 10, y: 20 });
 
-    // assert!(entity_view.has::<Position>());
-    // let p = entity_view.get::<Position>().unwrap();
-    // assert_eq!(p.x, 10);
-    // assert_eq!(p.y, 20);
+    assert!(entity_view.has::<Position>());
+    let p = entity_view.get::<Position>().unwrap();
+    assert_eq!(p.x, 10);
+    assert_eq!(p.y, 20);
 }
 
-// TODO EntityView refactor
 #[test]
 fn entity_entity_view_to_entity_stage() {
-    // let world = World::new();
+    let world = World::new();
 
-    // let entity_view: EntityView = world.new_entity().into();
-    // let stage = world.stage(0);
+    let entity_view: EntityView = world.new_entity().into();
+    let stage = world.stage(0);
 
-    // world.readonly_begin();
+    world.readonly_begin();
 
-    // let entity_mut = entity_view.mut_current_stage(&stage);
-    // entity_mut.set(Position { x: 10, y: 20 });
-    // assert!(!entity_mut.has::<Position>());
+    let entity_mut = entity_view.mut_current_stage(&stage);
+    entity_mut.set(Position { x: 10, y: 20 });
+    assert!(!entity_mut.has::<Position>());
 
-    // world.readonly_end();
+    world.readonly_end();
 
-    // assert!(entity_mut.has::<Position>());
-    // assert!(entity_view.has::<Position>());
+    assert!(entity_mut.has::<Position>());
+    assert!(entity_view.has::<Position>());
 
-    // let p = entity_view.get::<Position>().unwrap();
-    // assert_eq!(p.x, 10);
-    // assert_eq!(p.y, 20);
+    let p = entity_view.get::<Position>().unwrap();
+    assert_eq!(p.x, 10);
+    assert_eq!(p.y, 20);
 }
 
-// TODO EntityView refactor
 #[test]
 fn entity_create_entity_view_from_stage() {
-    // let world = World::new();
-    // let stage = world.stage(0);
+    let world = World::new();
+    let stage = world.stage(0);
 
-    // world.readonly_begin();
-    // let entity_view: EntityView = stage.new_entity().into();
+    world.readonly_begin();
+    let entity_view: EntityView = stage.new_entity().into();
 
-    // world.readonly_end();
+    world.readonly_end();
 
-    // let entity_mut = entity_view.mut_current_stage(&world);
-    // entity_mut.set(Position { x: 10, y: 20 });
-    // assert!(entity_view.has::<Position>());
+    let entity_mut = entity_view.mut_current_stage(&world);
+    entity_mut.set(Position { x: 10, y: 20 });
+    assert!(entity_view.has::<Position>());
 
-    // let p = entity_view.get::<Position>().unwrap();
-    // assert_eq!(p.x, 10);
-    // assert_eq!(p.y, 20);
+    let p = entity_view.get::<Position>().unwrap();
+    assert_eq!(p.x, 10);
+    assert_eq!(p.y, 20);
 }
 
 #[test]

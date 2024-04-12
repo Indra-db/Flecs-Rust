@@ -28,7 +28,7 @@ fn iterate_components(entity: EntityView) {
             print!("rel: {}, target: {}", rel.name(), target.name());
         } else {
             // Id contains a regular entity. Strip role before printing.
-            let comp = id.to_entity();
+            let comp = id.entity_view();
             print!("entity: {}", comp.name());
         }
 
@@ -51,7 +51,7 @@ fn main() {
 
     // We can use the same function to iterate the components of a component
     println!("Position's components:");
-    iterate_components(world.component::<Position>().to_entity());
+    iterate_components(world.component::<Position>().entity());
 
     // Output
     //  Bob's components:

@@ -208,8 +208,8 @@ where
     ///
     /// * C++ API: `query_base::get_group_info`
     #[doc(alias = "query_base::get_group_info")]
-    pub fn group_info(&self, group_id: impl IntoEntity) -> *const QueryGroupInfoT {
-        unsafe { sys::ecs_query_get_group_info(self.query.as_ptr(), group_id.get_id()) }
+    pub fn group_info(&self, group_id: impl Into<Entity>) -> *const QueryGroupInfoT {
+        unsafe { sys::ecs_query_get_group_info(self.query.as_ptr(), *group_id.into()) }
     }
 
     /// Get context for group
@@ -226,7 +226,7 @@ where
     ///
     /// * C++ API: `query_base::group_ctx`
     #[doc(alias = "query_base::group_ctx")]
-    pub fn group_context(&self, group_id: impl IntoEntity) -> *mut c_void {
+    pub fn group_context(&self, group_id: impl Into<Entity>) -> *mut c_void {
         let group_info = self.group_info(group_id);
 
         if !group_info.is_null() {

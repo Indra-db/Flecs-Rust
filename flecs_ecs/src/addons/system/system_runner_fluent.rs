@@ -17,7 +17,7 @@ pub struct SystemRunnerFluent<'a> {
 impl<'a> SystemRunnerFluent<'a> {
     pub fn new(
         world: &'a World,
-        id: EntityT,
+        id: impl Into<Entity>,
         stage_current: i32,
         stage_count: i32,
         delta_time: FTime,
@@ -25,7 +25,7 @@ impl<'a> SystemRunnerFluent<'a> {
     ) -> Self {
         Self {
             stage: world,
-            id,
+            id: *id.into(),
             stage_current,
             stage_count,
             offset: 0,

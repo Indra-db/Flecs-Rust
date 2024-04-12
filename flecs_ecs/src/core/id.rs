@@ -1,399 +1,237 @@
-//! Class for working with entity, component, tag and pair ids.
+use std::{
+    fmt::Display,
+    ops::{BitAnd, BitOr, Deref},
+};
 
 use crate::core::*;
-use crate::sys;
 
-/// Class for working with entity, component, tag and pair ids.
-/// Class that wraps around a `flecs::id_t`
-///
-/// A flecs id is an identifier that can be added to entities. Ids can be:
-///
-/// * entities (including components, tags)
-/// * pair ids
-/// * entities with id flags set (like `flecs::Override`, `flecs::Toggle`)
-///
-/// # See also
-///
-/// * [flecs C++ documentation](https://www.flecs.dev/flecs/structflecs_1_1id.html#details)
-/// * [flecs C documentation](https://www.flecs.dev/flecs/group__ids.html)
-#[derive(Debug, Clone, Copy, Eq)]
-pub struct IdView<'a> {
-    pub(crate) world: WorldRef<'a>,
-    pub raw_id: IdT,
-}
+/// An Identifier for what could represent either an entity, a component or a pair.
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(transparent)]
+pub struct Id(pub(crate) u64);
 
-impl<'a> PartialEq for IdView<'a> {
-    fn eq(&self, other: &Self) -> bool {
-        self.raw_id == other.raw_id
+impl Id {
+    #[inline]
+    pub fn new(id: u64) -> Self {
+        Self(id)
+    }
+
+    /// Convert the entity id to an entity with the given world.
+    ///
+    /// # Safety
+    ///
+    /// This entity is safe to do operations on if the entity belongs to the world
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world the entity belongs to
+    pub fn to_entity<'a>(&self, world: impl IntoWorld<'a>) -> EntityView<'a> {
+        EntityView::new_from(world, self.0)
     }
 }
 
-impl<'a> PartialOrd for IdView<'a> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.raw_id.cmp(&other.raw_id))
-    }
-}
-
-impl<'a> Ord for IdView<'a> {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.raw_id.cmp(&other.raw_id)
-    }
-}
-
-impl<'a> std::ops::Deref for IdView<'a> {
+impl Deref for Id {
     type Target = u64;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
-        &self.raw_id
+        &self.0
     }
 }
 
-impl<'a> IdView<'a> {
-    /// Wraps an id or pair
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - The optional world to the id belongs to
-    /// * `with` - The id or pair to wrap
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `Id::Id`
-    #[doc(alias = "Id::Id")]
-    /// * C API: `ecs_id_t`
-    #[doc(alias = "ecs_id_t")]
-    pub fn new(world: impl IntoWorld<'a>, id: impl IntoId) -> Self {
-        Self {
-            world: world.world(),
-            raw_id: id.get_id(),
-        }
+impl BitOr for Id {
+    type Output = Id;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        Id(self.0 | rhs.0)
     }
+}
 
-    /// checks if the id is a pair
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::is_pair`
-    #[doc(alias = "id::is_pair")]
-    /// * C API: `ecs_id_is_pair`
-    #[doc(alias = "ecs_id_is_pair")]
-    pub fn is_pair(self) -> bool {
-        unsafe { sys::ecs_id_is_pair(self.raw_id) }
+impl BitOr<u64> for Id {
+    type Output = Id;
+
+    fn bitor(self, rhs: u64) -> Self::Output {
+        Id(self.0 | rhs)
     }
+}
 
-    /// checks if the id is a wildcard
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::is_wildcard`
-    #[doc(alias = "id::is_wildcard")]
-    /// * C API: `ecs_id_is_wildcard`
-    #[doc(alias = "ecs_id_is_wildcard")]
-    pub fn is_wildcard(self) -> bool {
-        unsafe { sys::ecs_id_is_wildcard(self.raw_id) }
+impl BitOr<Entity> for Id {
+    type Output = Id;
+
+    fn bitor(self, rhs: Entity) -> Self::Output {
+        Id(self.0 | *rhs)
     }
+}
 
-    /// checks if the id is a entity
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::is_entity`
-    #[doc(alias = "id::is_entity")]
-    pub fn is_entity(self) -> bool {
-        self.raw_id & RUST_ecs_id_FLAGS_MASK == 0
+impl BitOr<Id> for u64 {
+    type Output = Id;
+
+    fn bitor(self, rhs: Id) -> Self::Output {
+        Id(self | rhs.0)
     }
+}
 
-    /// Return id as entity (only allowed when id is valid entity)
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::entity`
-    #[doc(alias = "id::entity")]
-    #[inline(always)]
-    pub fn to_entity(self) -> EntityView<'a> {
-        {
-            ecs_assert!(!self.is_pair(), FlecsErrorCode::InvalidOperation);
-            ecs_assert!(
-                self.flags().id.raw_id == 0,
-                FlecsErrorCode::InvalidOperation
-            );
-        }
-        EntityView::new_from(self.world, self.raw_id)
+impl BitAnd for Id {
+    type Output = Id;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        Id(self.0 & rhs.0)
     }
+}
 
-    /// Return id with role added
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::add_flags`
-    #[doc(alias = "id::add_flags")]
-    #[inline(always)]
-    pub fn add_flags(self, flags: IdT) -> EntityView<'a> {
-        EntityView::new_from(self.world, self.raw_id | flags)
+impl BitAnd<u64> for Id {
+    type Output = Id;
+
+    fn bitand(self, rhs: u64) -> Self::Output {
+        Id(self.0 & rhs)
     }
+}
 
-    /// Return id with role removed.
-    /// This function checks if the id has the specified role, and if it does not, the function will assert.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::remove_flags`
-    #[doc(alias = "id::remove_flags")]
-    #[inline(always)]
-    pub fn remove_flags_checked(self, _flags: IdT) -> EntityView<'a> {
-        ecs_assert!(
-            self.raw_id & RUST_ecs_id_FLAGS_MASK == _flags,
-            FlecsErrorCode::InvalidParameter
-        );
+impl BitAnd<Entity> for Id {
+    type Output = Id;
 
-        EntityView::new_from(self.world, self.raw_id & RUST_ECS_COMPONENT_MASK)
+    fn bitand(self, rhs: Entity) -> Self::Output {
+        Id(self.0 & *rhs)
     }
+}
 
-    /// Return id with role removed
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::remove_flags`
-    #[doc(alias = "id::remove_flags")]
-    #[inline(always)]
-    pub fn remove_flags(self) -> EntityView<'a> {
-        EntityView::new_from(self.world, self.raw_id & RUST_ECS_COMPONENT_MASK)
+impl From<u64> for Id {
+    #[inline]
+    fn from(id: u64) -> Self {
+        Id::new(id)
     }
+}
 
-    /// Get flags associated with id
-    ///
-    /// # Returns
-    ///
-    /// The flags associated with the id or 0 Entity if the id is not in use
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::flags`
-    #[doc(alias = "id::flags")]
-    #[inline(always)]
-    pub fn flags(self) -> EntityView<'a> {
-        EntityView::new_from(self.world, self.raw_id & RUST_ecs_id_FLAGS_MASK)
+impl From<Entity> for Id {
+    fn from(id: Entity) -> Self {
+        Id(*id)
     }
+}
 
-    /// Test if id has specified role
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::has_flags`
-    #[doc(alias = "id::has_flags")]
-    #[inline(always)]
-    pub fn has_flags_for(self, flags: IdT) -> bool {
-        self.raw_id & flags == flags
+impl<'a> From<EntityView<'a>> for Id {
+    #[inline]
+    fn from(view: EntityView<'a>) -> Self {
+        view.id.into()
     }
+}
 
-    /// Test if id has any role
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::has_flags`
-    #[doc(alias = "id::has_flags")]
-    #[inline(always)]
-    pub fn has_any_flags(self) -> bool {
-        self.raw_id & RUST_ecs_id_FLAGS_MASK != 0
+impl<'a> From<IdView<'a>> for Id {
+    #[inline]
+    fn from(view: IdView<'a>) -> Self {
+        view.id
     }
+}
 
-    /// Return id without role
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::remove_flags`
-    #[doc(alias = "id::remove_flags")]
-    #[inline(always)]
-    pub fn remove_generation(self) -> EntityView<'a> {
-        EntityView::new_from(self.world, self.raw_id as u32 as u64)
+impl<'a, T> From<Component<'a, T>> for Id
+where
+    T: ComponentId,
+{
+    #[inline]
+    fn from(component: Component<'a, T>) -> Self {
+        component.base.entity.id.into()
     }
+}
 
-    /// Get the component type for the id.
-    ///
-    /// This operation returns the component id for an id,
-    /// if the id is associated with a type. For a regular component with a non-zero size
-    /// (an entity with the `EcsComponent` component) the operation will return the entity itself.
-    /// For an entity that does not have the `EcsComponent` component, or with an `EcsComponent`
-    /// value with size 0, the operation will return an Entity wrapping 0
-    ///
-    /// For a pair id the operation will return the type associated with the pair, by applying the following rules in order:
-    ///
-    /// * The first pair element is returned if it is a component
-    /// * Entity wrapping 0 is returned if the relationship entity has the Tag property
-    /// * The second pair element is returned if it is a component
-    /// * Entity wrapping 0 is returned
-    ///
-    /// # Returns
-    ///
-    /// The type id of the id
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::type_id`
-    #[doc(alias = "id::type_id")]
-    /// * C API: `ecs_get_typeid`
-    #[doc(alias = "ecs_get_typeid")]
-    #[inline(always)]
-    pub fn type_id(self) -> EntityView<'a> {
-        EntityView::new_from(self.world, unsafe {
-            sys::ecs_get_typeid(self.world.world_ptr_mut(), self.raw_id)
-        })
+impl<'a> From<UntypedComponent<'a>> for Id {
+    #[inline]
+    fn from(component: UntypedComponent<'a>) -> Self {
+        component.entity.id.into()
     }
+}
 
-    /// Test if id has specified first
-    ///
-    /// # Arguments
-    ///
-    /// * `first` - The first id to test
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::has_relationship`
-    #[doc(alias = "id::has_relationship")]
-    #[inline(always)]
-    pub fn has_relationship(self, first: impl IntoEntity) -> bool {
-        if !self.is_pair() {
-            return false;
-        }
-
-        ecs_pair_first(self.raw_id) == first.get_id()
+impl PartialEq<Id> for u64 {
+    fn eq(&self, other: &Id) -> bool {
+        self == &other.0
     }
+}
 
-    /// Get first element from a pair.
-    ///
-    /// If the id is not a pair, this operation will fail. When the id has a
-    /// world, the operation will ensure that the returned id has the correct generation count.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::first`
-    #[doc(alias = "id::first")]
-    #[inline(always)]
-    pub fn first(&self) -> EntityView {
-        ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
-
-        let entity = ecs_pair_first(self.raw_id);
-        self.world.get_alive(entity)
+impl PartialEq<u64> for Id {
+    fn eq(&self, other: &u64) -> bool {
+        &self.0 == other
     }
+}
 
-    /// Get second element from a pair.
-    ///
-    /// If the id is not a pair, this operation will fail. When the id has a
-    /// world, the operation will ensure that the returned id has the correct generation count.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::second`
-    #[doc(alias = "id::second")]
-    pub fn second(&self) -> EntityView {
-        ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
-
-        let entity = ecs_pair_second(self.raw_id);
-        self.world.get_alive(entity)
+impl PartialEq<Entity> for Id {
+    fn eq(&self, other: &Entity) -> bool {
+        self.0 == other.0
     }
+}
 
-    /// Convert id to string
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::str`
-    #[doc(alias = "id::str")]
-    /// * C API: `ecs_id_str`
-    #[doc(alias = "ecs_id_str")]
-    #[inline(always)]
-    pub fn to_str(self) -> &'a str {
-        // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
-        // C string with a static lifetime. The caller must ensure this invariant.
-        // ecs_id_ptr never returns null, so we don't need to check for that.
-        if let Ok(str) = unsafe {
-            std::ffi::CStr::from_ptr(sys::ecs_id_str(self.world.world_ptr_mut(), self.raw_id))
-        }
-        .to_str()
-        {
-            str
-        } else {
-            ecs_assert!(
-                false,
-                FlecsErrorCode::UnwrapFailed,
-                "Failed to convert id to string (id: {})",
-                self.raw_id
-            );
-
-            "invalid_str_from_id"
-        }
+impl<'a> PartialEq<EntityView<'a>> for Id {
+    fn eq(&self, other: &EntityView<'a>) -> bool {
+        self.0 == other.id.0
     }
+}
 
-    /// Convert id to string
-    ///
-    /// # Safety
-    /// safe version : '`to_str`'
-    /// This function is unsafe because it assumes that the id is valid.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::str`
-    #[doc(alias = "id::str")]
-    /// * C API: `ecs_id_str`
-    #[doc(alias = "ecs_id_str")]
-    #[inline(always)]
-    pub unsafe fn to_str_unchecked(self) -> &'a str {
-        // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
-        // C string with a static lifetime. The caller must ensure this invariant.
-        // ecs_id_ptr never returns null, so we don't need to check for that.
-        let c_str_ptr = unsafe { sys::ecs_id_str(self.world.world_ptr_mut(), self.raw_id) };
-
-        // SAFETY: We assume the C string is valid UTF-8. This is risky if not certain.
-        unsafe { std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(c_str_ptr).to_bytes()) }
+impl<'a> PartialEq<IdView<'a>> for Id {
+    fn eq(&self, other: &IdView<'a>) -> bool {
+        self.0 == other.id.0
     }
+}
 
-    /// Convert role of id to string.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::flag_str`
-    #[doc(alias = "id::flag_str")]
-    /// * C API: `ecs_id_flag_str`
-    #[doc(alias = "ecs_id_flag_str")]
-    #[inline(always)]
-    pub fn flags_str(self) -> &'a str {
-        // SAFETY: We assume that `ecs_role_str` returns a pointer to a null-terminated
-        // C string with a static lifetime. The caller must ensure this invariant.
-        // ecs_role_str never returns null, so we don't need to check for that.
-        unsafe {
-            std::ffi::CStr::from_ptr(sys::ecs_id_flag_str(self.raw_id & RUST_ecs_id_FLAGS_MASK))
-        }
-        .to_str()
-        .unwrap_or({
-            ecs_assert!(
-                false,
-                FlecsErrorCode::UnwrapFailed,
-                "Failed to convert id to string (id: {})",
-                self.raw_id
-            );
-            "invalid_str_from_id"
-        })
+impl<'a, T> PartialEq<Component<'a, T>> for Id
+where
+    T: ComponentId,
+{
+    fn eq(&self, other: &Component<'a, T>) -> bool {
+        self.0 == other.base.entity.id.0
     }
+}
 
-    /// Convert role of id to string.
-    /// # Safety
-    /// safe version : '`to_flags_str`'
-    /// This function is unsafe because it assumes that the id is valid.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::flag_str`
-    #[doc(alias = "id::flag_str")]
-    /// * C API: `ecs_id_flag_str`
-    #[doc(alias = "ecs_id_flag_str")]
-    #[inline(always)]
-    pub unsafe fn to_flags_str_unchecked(self) -> &'a str {
-        // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
-        // C string with a static lifetime. The caller must ensure this invariant.
-        // ecs_id_ptr never returns null, so we don't need to check for that.
-        let c_str_ptr = unsafe { sys::ecs_id_flag_str(self.raw_id & RUST_ecs_id_FLAGS_MASK) };
+impl<'a> PartialEq<UntypedComponent<'a>> for Id {
+    fn eq(&self, other: &UntypedComponent<'a>) -> bool {
+        self.0 == other.entity.id.0
+    }
+}
 
-        // SAFETY: We assume the C string is valid UTF-8. This is risky if not certain.
-        unsafe { std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(c_str_ptr).to_bytes()) }
+impl PartialOrd<Id> for u64 {
+    fn partial_cmp(&self, other: &Id) -> Option<std::cmp::Ordering> {
+        self.partial_cmp(&other.0)
+    }
+}
+
+impl PartialOrd<u64> for Id {
+    fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
+        self.0.partial_cmp(other)
+    }
+}
+
+impl PartialOrd<Entity> for Id {
+    fn partial_cmp(&self, other: &Entity) -> Option<std::cmp::Ordering> {
+        self.0.partial_cmp(&other.0)
+    }
+}
+
+impl<'a> PartialOrd<EntityView<'a>> for Id {
+    fn partial_cmp(&self, other: &EntityView<'a>) -> Option<std::cmp::Ordering> {
+        self.0.partial_cmp(&other.id.0)
+    }
+}
+
+impl<'a> PartialOrd<IdView<'a>> for Id {
+    fn partial_cmp(&self, other: &IdView<'a>) -> Option<std::cmp::Ordering> {
+        self.0.partial_cmp(&other.id.0)
+    }
+}
+
+impl<'a, T> PartialOrd<Component<'a, T>> for Id
+where
+    T: ComponentId,
+{
+    fn partial_cmp(&self, other: &Component<'a, T>) -> Option<std::cmp::Ordering> {
+        self.0.partial_cmp(&other.base.entity.id.0)
+    }
+}
+
+impl<'a> PartialOrd<UntypedComponent<'a>> for Id {
+    fn partial_cmp(&self, other: &UntypedComponent<'a>) -> Option<std::cmp::Ordering> {
+        self.0.partial_cmp(&other.entity.id.0)
+    }
+}
+
+impl Display for Id {
+    #[inline]
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }

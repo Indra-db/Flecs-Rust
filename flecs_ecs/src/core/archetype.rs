@@ -17,7 +17,7 @@ use crate::sys;
 #[doc(alias = "type")]
 pub struct Archetype<'a> {
     world: WorldRef<'a>,
-    type_vec: &'a [IdT],
+    type_vec: &'a [Id],
     lock: Option<TableLock<'a>>,
 }
 
@@ -42,7 +42,7 @@ impl<'a> Debug for Archetype<'a> {
 }
 
 impl<'a> Archetype<'a> {
-    pub fn new(world: impl IntoWorld<'a>, type_vec: &'a [IdT]) -> Self {
+    pub fn new(world: impl IntoWorld<'a>, type_vec: &'a [Id]) -> Self {
         Archetype {
             world: world.world(),
             type_vec,
@@ -50,7 +50,7 @@ impl<'a> Archetype<'a> {
         }
     }
 
-    pub fn new_locked(world: impl IntoWorld<'a>, type_vec: &'a [IdT], lock: TableLock<'a>) -> Self {
+    pub fn new_locked(world: impl IntoWorld<'a>, type_vec: &'a [Id], lock: TableLock<'a>) -> Self {
         Archetype {
             world: world.world(),
             type_vec,
@@ -114,7 +114,7 @@ impl<'a> Archetype<'a> {
     ///
     /// * C++ API: `type::array()`
     #[doc(alias = "type::array()")]
-    pub fn as_slice(&self) -> &[IdT] {
+    pub fn as_slice(&self) -> &[Id] {
         self.type_vec
     }
 
@@ -132,7 +132,7 @@ impl<'a> Archetype<'a> {
     #[doc(alias = "type::get")]
     pub fn get(&self, index: usize) -> Option<IdView> {
         if index < self.count() {
-            Some(IdView::new(self.world, self.type_vec[index]))
+            Some(IdView::new_from(self.world, self.type_vec[index]))
         } else {
             None
         }
@@ -140,7 +140,7 @@ impl<'a> Archetype<'a> {
 }
 
 impl<'a> Deref for Archetype<'a> {
-    type Target = [IdT];
+    type Target = [Id];
 
     fn deref(&self) -> &Self::Target {
         self.type_vec

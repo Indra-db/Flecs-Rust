@@ -17,28 +17,28 @@ use crate::sys;
 ///
 /// The combined 64 bit integer.
 #[inline(always)]
-pub fn ecs_entity_id_combine(lo: impl IntoEntity, hi: impl IntoEntity) -> u64 {
-    (hi.get_id() << 32) + lo.get_id()
+pub fn ecs_entity_id_combine(lo: u64, hi: u64) -> u64 {
+    (hi << 32) + lo
 }
 
 /// Combines two 32 bit integers into a 64 bit integer and adds the `ECS_PAIR` flag.
 ///
 /// # Arguments
 ///
-/// * `pred`: The first 32 bit integer.
-/// * `obj`: The second 32 bit integer.
+/// * `rel`: The first 32 bit integer.
+/// * `target`: The second 32 bit integer.
 ///
 /// # Returns
 ///
 /// The combined 64 bit integer with the `ECS_PAIR` flag set.
 #[inline(always)]
-pub fn ecs_pair(pred: impl IntoEntity, obj: impl IntoEntity) -> u64 {
-    ECS_PAIR | ecs_entity_id_combine(obj.get_id(), pred.get_id())
+pub fn ecs_pair(rel: u64, target: u64) -> u64 {
+    ECS_PAIR | ecs_entity_id_combine(target, rel)
 }
 
 /// Checks if given entity is a pair
-pub fn ecs_is_pair(entity: impl IntoEntity) -> bool {
-    entity.get_id() & RUST_ecs_id_FLAGS_MASK == ECS_PAIR
+pub fn ecs_is_pair(entity: impl Into<Id>) -> bool {
+    entity.into() & RUST_ecs_id_FLAGS_MASK == ECS_PAIR
 }
 
 /// Set the `ECS_DEPENDS_ON` flag for the given entity.
@@ -51,8 +51,8 @@ pub fn ecs_is_pair(entity: impl IntoEntity) -> bool {
 ///
 /// The entity with the `ECS_DEPENDS_ON` flag set.
 #[inline(always)]
-pub fn ecs_dependson(entity: impl IntoEntity) -> EntityT {
-    ecs_pair(ECS_DEPENDS_ON, entity.get_id())
+pub fn ecs_dependson(entity: u64) -> u64 {
+    ecs_pair(ECS_DEPENDS_ON, entity)
 }
 
 /// Returns true if the entity has the given pair.
@@ -71,15 +71,15 @@ pub fn ecs_dependson(entity: impl IntoEntity) -> EntityT {
 #[inline(always)]
 pub fn ecs_has_pair(
     world: *const WorldT,
-    entity: impl IntoEntity,
-    first: impl IntoEntity,
-    second: impl IntoEntity,
+    entity: impl Into<Entity>,
+    first: impl Into<Entity>,
+    second: impl Into<Entity>,
 ) -> bool {
     unsafe {
         sys::ecs_has_id(
             world,
-            entity.get_id(),
-            ecs_pair(first.get_id(), second.get_id()),
+            *entity.into(),
+            ecs_pair(*first.into(), *second.into()),
         )
     }
 }
@@ -88,15 +88,15 @@ pub fn ecs_has_pair(
 #[inline(always)]
 pub fn ecs_add_pair(
     world: *mut WorldT,
-    entity: impl IntoEntity,
-    first: impl IntoEntity,
-    second: impl IntoEntity,
+    entity: impl Into<Entity>,
+    first: impl Into<Entity>,
+    second: impl Into<Entity>,
 ) {
     unsafe {
         sys::ecs_add_id(
             world,
-            entity.get_id(),
-            ecs_pair(first.get_id(), second.get_id()),
+            *entity.into(),
+            ecs_pair(*first.into(), *second.into()),
         );
     };
 }
@@ -111,8 +111,8 @@ pub fn ecs_add_pair(
 ///
 /// The first entity from the pair.
 #[inline(always)]
-pub fn ecs_pair_first(e: impl IntoEntity) -> u64 {
-    ecs_entity_id_high(e.get_id() & RUST_ECS_COMPONENT_MASK)
+pub fn ecs_pair_first(e: impl IntoId) -> Entity {
+    Entity(ecs_entity_id_high(e.into() & RUST_ECS_COMPONENT_MASK))
 }
 
 /// Get the second entity from a pair.
@@ -125,8 +125,8 @@ pub fn ecs_pair_first(e: impl IntoEntity) -> u64 {
 ///
 /// The second entity from the pair.
 #[inline(always)]
-pub fn ecs_pair_second(e: impl IntoEntity) -> u64 {
-    ecs_entity_id_low(e.get_id())
+pub fn ecs_pair_second(e: impl IntoId) -> Entity {
+    Entity(ecs_entity_id_low(e.into()))
 }
 
 /// Get the lower 32 bits of an entity id.
@@ -139,8 +139,8 @@ pub fn ecs_pair_second(e: impl IntoEntity) -> u64 {
 ///
 /// The lower 32 bits of the entity id.
 #[inline(always)]
-pub fn ecs_entity_id_low(value: impl IntoEntity) -> u64 {
-    value.get_id() as u32 as u64
+pub fn ecs_entity_id_low(value: impl IntoId) -> u64 {
+    *value.into() as u32 as u64
 }
 
 /// Get the higher 32 bits of an entity id.
@@ -153,8 +153,8 @@ pub fn ecs_entity_id_low(value: impl IntoEntity) -> u64 {
 ///
 /// The higher 32 bits of the entity id.
 #[inline(always)]
-pub fn ecs_entity_id_high(value: impl IntoEntity) -> u64 {
-    value.get_id() >> 32
+pub fn ecs_entity_id_high(value: impl IntoId) -> u64 {
+    (*value.into()) >> 32
 }
 
 pub fn type_name_cstring<T>() -> CString {
@@ -204,7 +204,7 @@ pub fn ecs_record_to_row(row: u32) -> i32 {
 /// * `id`: The ID of the component type.
 pub(crate) fn set_helper<T: ComponentId>(
     world: *mut WorldT,
-    entity: impl IntoEntity,
+    entity: impl Into<Entity>,
     value: T,
     id: impl IntoId,
 ) {
@@ -214,8 +214,8 @@ pub(crate) fn set_helper<T: ComponentId>(
         "invalid type: {}",
         std::any::type_name::<T>()
     );
-    let entity = entity.get_id();
-    let id = id.get_id();
+    let entity = *entity.into();
+    let id = *id.into();
     unsafe {
         if !sys::ecs_is_deferred(world) {
             let comp = sys::ecs_get_mut_id(world, entity, id) as *mut T;
@@ -239,8 +239,8 @@ pub(crate) fn set_helper<T: ComponentId>(
 ///
 /// * `IdT`: The entity id with the generation removed.
 #[inline(always)]
-pub fn strip_generation(entity: impl IntoEntity) -> IdT {
-    unsafe { sys::ecs_strip_generation(entity.get_id()) }
+pub fn strip_generation(entity: impl Into<Entity>) -> u64 {
+    unsafe { sys::ecs_strip_generation(*entity.into()) }
 }
 
 /// Get the generation from an entity id.
@@ -253,8 +253,8 @@ pub fn strip_generation(entity: impl IntoEntity) -> IdT {
 ///
 /// * `u32`: The generation of the entity id.
 #[inline(always)]
-pub fn get_generation(entity: impl IntoEntity) -> u32 {
-    ((entity.get_id() & sys::ECS_GENERATION_MASK) >> 32) as u32
+pub fn get_generation(entity: impl Into<Entity>) -> u32 {
+    (*(entity.into() & sys::ECS_GENERATION_MASK) >> 32) as u32
 }
 
 /// Gets the component data from the iterator.

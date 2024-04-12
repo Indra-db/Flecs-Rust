@@ -72,8 +72,9 @@ impl<'a> Table<'a> {
     #[doc(alias = "table::type")]
     pub fn archetype(&self) -> Archetype<'a> {
         let type_vec = unsafe { sys::ecs_table_get_type(self.table.as_ptr()) };
-        let slice =
-            unsafe { std::slice::from_raw_parts((*type_vec).array, (*type_vec).count as usize) };
+        let slice = unsafe {
+            std::slice::from_raw_parts((*type_vec).array as _, (*type_vec).count as usize)
+        };
         Archetype::new_locked(self.world, slice, TableLock::new(self.world, self.table))
     }
 

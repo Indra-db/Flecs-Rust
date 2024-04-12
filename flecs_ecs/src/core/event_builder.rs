@@ -30,14 +30,14 @@ impl<'a> EventBuilder<'a> {
     ///
     /// * C++ API: `event_builder_base::event_builder_base`
     #[doc(alias = "event_builder_base::event_builder_base")]
-    pub unsafe fn new(world: impl IntoWorld<'a>, event: impl IntoEntity) -> Self {
+    pub unsafe fn new(world: impl IntoWorld<'a>, event: impl Into<Entity>) -> Self {
         let mut obj = Self {
             world: world.world(),
             desc: Default::default(),
             ids: Default::default(),
             ids_array: Default::default(),
         };
-        obj.desc.event = event.get_id();
+        obj.desc.event = *event.into();
         obj
     }
 }

@@ -10,40 +10,139 @@ use flecs_ecs::core::*;
 
 #[derive(Clone, Copy)]
 pub struct EntityView<'a> {
-    pub id: IdView<'a>,
+    pub(crate) world: WorldRef<'a>,
+    pub(crate) id: Entity,
 }
 
-impl<'a, T> PartialEq<T> for EntityView<'a>
+impl PartialEq<EntityView<'_>> for u64 {
+    #[inline]
+    fn eq(&self, other: &EntityView<'_>) -> bool {
+        *self == *other.id
+    }
+}
+
+impl PartialEq<u64> for EntityView<'_> {
+    #[inline]
+    fn eq(&self, other: &u64) -> bool {
+        self.id == *other
+    }
+}
+
+impl PartialEq<Entity> for EntityView<'_> {
+    #[inline]
+    fn eq(&self, other: &Entity) -> bool {
+        self.id == *other
+    }
+}
+
+impl PartialEq<Id> for EntityView<'_> {
+    #[inline]
+    fn eq(&self, other: &Id) -> bool {
+        self.id == *other
+    }
+}
+
+impl<'a> PartialEq<EntityView<'a>> for EntityView<'a> {
+    #[inline]
+    fn eq(&self, other: &EntityView<'a>) -> bool {
+        self.id == other.id
+    }
+}
+
+impl<'a> PartialEq<IdView<'a>> for EntityView<'a> {
+    #[inline]
+    fn eq(&self, other: &IdView<'a>) -> bool {
+        self.id == other.id
+    }
+}
+
+impl<'a, T> PartialEq<Component<'a, T>> for EntityView<'a>
 where
-    T: IntoId,
+    T: ComponentId,
 {
     #[inline]
-    fn eq(&self, other: &T) -> bool {
-        self.raw_id == other.get_id()
+    fn eq(&self, other: &Component<'a, T>) -> bool {
+        self.id == other.base.entity.id
+    }
+}
+
+impl<'a> PartialEq<UntypedComponent<'a>> for EntityView<'a> {
+    #[inline]
+    fn eq(&self, other: &UntypedComponent<'a>) -> bool {
+        self.id == other.entity.id
     }
 }
 
 impl<'a> Eq for EntityView<'a> {}
 
-impl<'a, T> PartialOrd<T> for EntityView<'a>
+impl<'a> PartialOrd<EntityView<'a>> for u64 {
+    #[inline]
+    fn partial_cmp(&self, other: &EntityView<'a>) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(&other.id))
+    }
+}
+
+impl<'a> PartialOrd<u64> for EntityView<'a> {
+    #[inline]
+    fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
+        Some(self.id.0.cmp(other))
+    }
+}
+
+impl<'a> PartialOrd<Entity> for EntityView<'a> {
+    #[inline]
+    fn partial_cmp(&self, other: &Entity) -> Option<std::cmp::Ordering> {
+        Some(self.id.cmp(other))
+    }
+}
+
+impl<'a> PartialOrd<Id> for EntityView<'a> {
+    #[inline]
+    fn partial_cmp(&self, other: &Id) -> Option<std::cmp::Ordering> {
+        Some(self.id.0.cmp(&other.0))
+    }
+}
+
+impl<'a> PartialOrd<IdView<'a>> for EntityView<'a> {
+    #[inline]
+    fn partial_cmp(&self, other: &IdView<'a>) -> Option<std::cmp::Ordering> {
+        Some(self.id.0.cmp(&other.id.0))
+    }
+}
+
+impl<'a> PartialOrd<EntityView<'a>> for EntityView<'a> {
+    #[inline]
+    fn partial_cmp(&self, other: &EntityView<'a>) -> Option<std::cmp::Ordering> {
+        Some(self.id.cmp(&other.id))
+    }
+}
+
+impl<'a, T> PartialOrd<Component<'a, T>> for EntityView<'a>
 where
-    T: IntoId,
+    T: ComponentId,
 {
     #[inline]
-    fn partial_cmp(&self, other: &T) -> Option<std::cmp::Ordering> {
-        Some(self.raw_id.cmp(&other.get_id()))
+    fn partial_cmp(&self, other: &Component<'a, T>) -> Option<std::cmp::Ordering> {
+        Some(self.id.cmp(&other.base.entity.id))
+    }
+}
+
+impl<'a> PartialOrd<UntypedComponent<'a>> for EntityView<'a> {
+    #[inline]
+    fn partial_cmp(&self, other: &UntypedComponent<'a>) -> Option<std::cmp::Ordering> {
+        Some(self.id.cmp(&other.entity.id))
     }
 }
 
 impl<'a> Ord for EntityView<'a> {
     #[inline]
     fn cmp(&self, other: &EntityView) -> std::cmp::Ordering {
-        self.raw_id.cmp(&other.raw_id)
+        self.id.cmp(&other.id)
     }
 }
 
 impl<'a> Deref for EntityView<'a> {
-    type Target = IdView<'a>;
+    type Target = Entity;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -63,7 +162,7 @@ impl<'a> std::fmt::Display for EntityView<'a> {
         if let Some(name) = self.get_name() {
             write!(f, "{}", name)
         } else {
-            write!(f, "{}", self.raw_id)
+            write!(f, "{}", *self.id)
         }
     }
 }
@@ -71,7 +170,7 @@ impl<'a> std::fmt::Display for EntityView<'a> {
 impl<'a> std::fmt::Debug for EntityView<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let name = self.name();
-        let id = self.raw_id;
+        let id = self.id;
         let archetype_str = self
             .archetype()
             .to_string()
@@ -95,7 +194,8 @@ impl<'a> EntityView<'a> {
     pub fn new(world: impl IntoWorld<'a>) -> Self {
         let id = unsafe { sys::ecs_new_id(world.world_ptr_mut()) };
         Self {
-            id: IdView::new(world, id),
+            world: world.world(),
+            id: id.into(),
         }
     }
 
@@ -114,9 +214,10 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::entity`
     #[doc(alias = "entity::entity")]
-    pub fn new_from(world: impl IntoWorld<'a>, id: impl IntoId) -> Self {
+    pub fn new_from(world: impl IntoWorld<'a>, id: impl Into<Entity>) -> Self {
         Self {
-            id: IdView::new(world, id),
+            world: world.world(),
+            id: id.into(),
         }
     }
 
@@ -150,7 +251,8 @@ impl<'a> EntityView<'a> {
         };
         let id = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &desc) };
         Self {
-            id: IdView::new(world, id),
+            world: world.world(),
+            id: id.into(),
         }
     }
 
@@ -166,6 +268,11 @@ impl<'a> EntityView<'a> {
         Self::new_from(world, 0)
     }
 
+    /// Get the [`IdView`] representation of the `entity_view`.
+    pub fn id_view(&self) -> IdView {
+        IdView::new_from(self.world, *self.id)
+    }
+
     /// checks if entity is valid
     ///
     /// # See also
@@ -173,7 +280,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::is_valid`
     #[doc(alias = "entity_view::is_valid")]
     pub fn is_valid(self) -> bool {
-        unsafe { sys::ecs_is_valid(self.world.world_ptr_mut(), self.raw_id) }
+        unsafe { sys::ecs_is_valid(self.world.world_ptr_mut(), *self.id) }
     }
 
     /// Checks if entity is alive.
@@ -183,7 +290,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::is_alive`
     #[doc(alias = "entity_view::is_alive")]
     pub fn is_alive(self) -> bool {
-        unsafe { sys::ecs_is_alive(self.world.world_ptr_mut(), self.raw_id) }
+        unsafe { sys::ecs_is_alive(self.world.world_ptr_mut(), *self.id) }
     }
 
     /// Returns the entity name.
@@ -229,10 +336,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::name`
     pub fn get_name_cstr(self) -> Option<&'a CStr> {
-        NonNull::new(
-            unsafe { sys::ecs_get_name(self.world.world_ptr_mut(), self.raw_id) } as *mut _,
-        )
-        .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) })
+        NonNull::new(unsafe { sys::ecs_get_name(self.world.world_ptr_mut(), *self.id) } as *mut _)
+            .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) })
     }
 
     /// Returns the entity symbol.
@@ -242,7 +347,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::symbol`
     #[doc(alias = "entity_view::symbol")]
     pub fn symbol(self) -> &'a CStr {
-        unsafe { CStr::from_ptr(sys::ecs_get_symbol(self.world.world_ptr_mut(), self.raw_id)) }
+        unsafe { CStr::from_ptr(sys::ecs_get_symbol(self.world.world_ptr_mut(), *self.id)) }
     }
 
     /// Return the hierarchical entity path.
@@ -279,15 +384,15 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::path_from")]
     pub fn path_from_id_w_sep(
         &self,
-        parent: impl IntoEntity,
+        parent: impl Into<Entity>,
         sep: &CStr,
         init_sep: &CStr,
     ) -> Option<String> {
         NonNull::new(unsafe {
             sys::ecs_get_path_w_sep(
                 self.world.world_ptr_mut(),
-                parent.get_id(),
-                self.raw_id,
+                *parent.into(),
+                *self.id,
                 sep.as_ptr(),
                 init_sep.as_ptr(),
             )
@@ -306,12 +411,12 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    pub fn path_from_id(self, parent: impl IntoEntity) -> Option<String> {
+    pub fn path_from_id(self, parent: impl Into<Entity>) -> Option<String> {
         NonNull::new(unsafe {
             sys::ecs_get_path_w_sep(
                 self.world.world_ptr_mut(),
-                parent.get_id(),
-                self.raw_id,
+                *parent.into(),
+                *self.id,
                 SEPARATOR.as_ptr(),
                 SEPARATOR.as_ptr(),
             )
@@ -363,7 +468,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
     pub fn is_enabled_self(self) -> bool {
-        unsafe { !sys::ecs_has_id(self.world.world_ptr_mut(), self.raw_id, flecs::Disabled::ID) }
+        unsafe { !sys::ecs_has_id(self.world.world_ptr_mut(), *self.id, flecs::Disabled::ID) }
     }
 
     /// get the entity's archetype
@@ -387,7 +492,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::table")]
     #[inline(always)]
     pub fn table(self) -> Option<Table<'a>> {
-        NonNull::new(unsafe { sys::ecs_get_table(self.world.world_ptr_mut(), self.raw_id) })
+        NonNull::new(unsafe { sys::ecs_get_table(self.world.world_ptr_mut(), *self.id) })
             .map(|t| Table::new(self.world, t))
     }
 
@@ -403,7 +508,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::range")]
     #[inline]
     pub fn table_range(self) -> Option<TableRange<'a>> {
-        NonNull::new(unsafe { sys::ecs_record_find(self.world.world_ptr_mut(), self.raw_id) }).map(
+        NonNull::new(unsafe { sys::ecs_record_find(self.world.world_ptr_mut(), *self.id) }).map(
             |record| unsafe {
                 TableRange::new_raw(
                     self.world,
@@ -433,13 +538,13 @@ impl<'a> EntityView<'a> {
         for &id in archetype.as_slice() {
             // Union object is not stored in type, so handle separately
             if ecs_pair_first(id) == flecs::Union::ID {
-                let ent = IdView::new(
+                let ent = IdView::new_from(
                     self.world,
                     (ecs_pair_second(id), unsafe {
                         sys::ecs_get_target(
                             self.world.world_ptr_mut(),
-                            self.raw_id,
-                            ecs_pair_second(self.raw_id),
+                            *self.id,
+                            *ecs_pair_second(*self.id),
                             0,
                         )
                     }),
@@ -447,10 +552,7 @@ impl<'a> EntityView<'a> {
 
                 func(ent);
             } else {
-                let ent = IdView {
-                    world: self.world,
-                    raw_id: id,
-                };
+                let ent = IdView::new_from(self.world, id);
                 func(ent);
             }
         }
@@ -470,8 +572,8 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::each")]
     pub fn for_each_matching_pair<F>(
         &self,
-        pred: impl IntoEntity,
-        obj: impl IntoEntity,
+        pred: impl Into<Entity>,
+        obj: impl Into<Entity>,
         mut func: F,
     ) where
         F: FnMut(IdView),
@@ -480,16 +582,17 @@ impl<'a> EntityView<'a> {
         let real_world = self.world.real_world();
 
         let Some(table) =
-            NonNull::new(unsafe { sys::ecs_get_table(real_world.world_ptr_mut(), self.raw_id) })
+            NonNull::new(unsafe { sys::ecs_get_table(real_world.world_ptr_mut(), *self.id) })
         else {
             return;
         };
 
         let table = Table::new(real_world, table);
 
-        let mut pattern: IdT = pred.get_id();
-        if obj.get_id() != 0 {
-            pattern = ecs_pair(pred.get_id(), obj.get_id());
+        let mut pattern: IdT = *pred.into();
+        let obj_id = *obj.into();
+        if obj_id != 0 {
+            pattern = ecs_pair(pattern, obj_id);
         }
 
         let mut cur: i32 = 0;
@@ -508,7 +611,7 @@ impl<'a> EntityView<'a> {
             };
             cur != -1
         } {
-            let ent = IdView::new(self.world, ids[cur as usize]);
+            let ent = IdView::new_from(self.world, ids[cur as usize]);
             func(ent);
             cur += 1;
         }
@@ -525,11 +628,11 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    pub fn for_each_target_id<F>(self, relationship: impl IntoEntity, mut func: F)
+    pub fn for_each_target_id<F>(self, relationship: impl Into<Entity>, mut func: F)
     where
         F: FnMut(EntityView),
     {
-        self.for_each_matching_pair(relationship.get_id(), ECS_WILDCARD, |id| {
+        self.for_each_matching_pair(relationship.into(), ECS_WILDCARD, |id| {
             let obj = id.second();
             func(obj);
         });
@@ -570,14 +673,14 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::children`
     #[doc(alias = "entity_view::children")]
-    pub fn for_each_children_id<F>(self, relationship: impl IntoEntity, mut func: F)
+    pub fn for_each_children_id<F>(self, relationship: impl Into<Entity>, mut func: F)
     where
         F: FnMut(EntityView),
     {
         // When the entity is a wildcard, this would attempt to query for all
         //entities with (ChildOf, *) or (ChildOf, _) instead of querying for
         //the children of the wildcard entity.
-        if self.raw_id == flecs::Wildcard::ID || self.raw_id == flecs::Any::ID {
+        if self.id == flecs::Wildcard::ID || self.id == flecs::Any::ID {
             // this is correct, wildcard entities don't have children
             return;
         }
@@ -589,8 +692,8 @@ impl<'a> EntityView<'a> {
         filter.term_count = 2;
 
         let mut desc: sys::ecs_filter_desc_t = unsafe { MaybeUninit::zeroed().assume_init() };
-        desc.terms[0].first.id = relationship.get_id();
-        desc.terms[0].second.id = self.raw_id;
+        desc.terms[0].first.id = *relationship.into();
+        desc.terms[0].second.id = *self.id;
         desc.terms[0].second.flags = sys::EcsIsEntity;
         desc.terms[1].id = flecs::Prefab::ID;
         desc.terms[1].oper = sys::ecs_oper_kind_t_EcsOptional;
@@ -679,7 +782,7 @@ impl<'a> EntityView<'a> {
                 let component_id = T::get_id(self.world);
 
                 unsafe {
-                    (sys::ecs_get_id(self.world.world_ptr_mut(), self.raw_id, component_id)
+                    (sys::ecs_get_id(self.world.world_ptr_mut(), *self.id, component_id)
                         as *const T::UnderlyingType)
                         .as_ref()
                 }
@@ -687,13 +790,13 @@ impl<'a> EntityView<'a> {
         } else {
             let component_id: IdT = T::get_id(self.world);
             let target: IdT = unsafe {
-                sys::ecs_get_target(self.world.world_ptr_mut(), self.raw_id, component_id, 0)
+                sys::ecs_get_target(self.world.world_ptr_mut(), *self.id, component_id, 0)
             };
 
             if target == 0 {
                 // if there is no matching pair for (r,*), try just r
                 unsafe {
-                    (sys::ecs_get_id(self.world.world_ptr_mut(), self.raw_id, component_id)
+                    (sys::ecs_get_id(self.world.world_ptr_mut(), *self.id, component_id)
                         as *const T::UnderlyingType)
                         .as_ref()
                 }
@@ -757,7 +860,7 @@ impl<'a> EntityView<'a> {
             } else {
                 let component_id = T::get_id_unchecked();
 
-                let ptr = sys::ecs_get_id(self.world.world_ptr_mut(), self.raw_id, component_id)
+                let ptr = sys::ecs_get_id(self.world.world_ptr_mut(), *self.id, component_id)
                     as *const T::UnderlyingType;
                 ecs_assert!(
                     !ptr.is_null(),
@@ -770,13 +873,13 @@ impl<'a> EntityView<'a> {
         } else {
             let component_id: IdT = T::get_id(self.world);
             let target: IdT = unsafe {
-                sys::ecs_get_target(self.world.world_ptr_mut(), self.raw_id, component_id, 0)
+                sys::ecs_get_target(self.world.world_ptr_mut(), *self.id, component_id, 0)
             };
 
             if target == 0 {
                 // if there is no matching pair for (r,*), try just r
                 unsafe {
-                    &*(sys::ecs_get_id(self.world.world_ptr_mut(), self.raw_id, component_id)
+                    &*(sys::ecs_get_id(self.world.world_ptr_mut(), *self.id, component_id)
                         as *const T::UnderlyingType)
                 }
             } else {
@@ -821,11 +924,11 @@ impl<'a> EntityView<'a> {
     ) -> &T::UnderlyingType {
         let component_id: IdT = T::get_id(self.world);
         let target: IdT =
-            sys::ecs_get_target(self.world.world_ptr_mut(), self.raw_id, component_id, 0);
+            sys::ecs_get_target(self.world.world_ptr_mut(), *self.id, component_id, 0);
 
         if target == 0 {
             // if there is no matching pair for (r,*), try just r
-            let ptr = sys::ecs_get_id(self.world.world_ptr_mut(), self.raw_id, component_id)
+            let ptr = sys::ecs_get_id(self.world.world_ptr_mut(), *self.id, component_id)
                 as *const T::UnderlyingType;
             ecs_assert!(
                 !ptr.is_null(),
@@ -867,7 +970,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get_pair_first_id<First>(self, second: impl IntoEntity) -> Option<&'static First>
+    pub fn get_pair_first_id<First>(self, second: impl Into<Entity>) -> Option<&'static First>
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -883,8 +986,8 @@ impl<'a> EntityView<'a> {
         unsafe {
             (sys::ecs_get_id(
                 self.world.world_ptr_mut(),
-                self.raw_id,
-                ecs_pair(component_id, second.get_id()),
+                *self.id,
+                ecs_pair(component_id, *second.into()),
             ) as *const First)
                 .as_ref()
         }
@@ -933,7 +1036,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get_pair_second_id<Second>(self, first: impl IntoEntity) -> Option<&'static Second>
+    pub fn get_pair_second_id<Second>(self, first: impl Into<Entity>) -> Option<&'static Second>
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -948,8 +1051,8 @@ impl<'a> EntityView<'a> {
         unsafe {
             (sys::ecs_get_id(
                 self.world.world_ptr_mut(),
-                self.raw_id,
-                ecs_pair(first.get_id(), component_id),
+                *self.id,
+                ecs_pair(*first.into(), component_id),
             ) as *const Second)
                 .as_ref()
         }
@@ -990,13 +1093,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
     pub fn get_untyped(self, component_id: impl IntoId) -> *const c_void {
-        unsafe {
-            sys::ecs_get_id(
-                self.world.world_ptr_mut(),
-                self.raw_id,
-                component_id.get_id(),
-            )
-        }
+        unsafe { sys::ecs_get_id(self.world.world_ptr_mut(), *self.id, *component_id.into()) }
     }
 
     /// Get target for a given pair.
@@ -1021,7 +1118,7 @@ impl<'a> EntityView<'a> {
         EntityView::new_from(self.world, unsafe {
             sys::ecs_get_target(
                 self.world.world_ptr_mut(),
-                self.raw_id,
+                *self.id,
                 First::get_id(self.world),
                 index,
             )
@@ -1043,14 +1140,9 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target")]
-    pub fn target_id(self, first: impl IntoEntity, index: i32) -> EntityView<'a> {
+    pub fn target_id(self, first: impl Into<Entity>, index: i32) -> EntityView<'a> {
         EntityView::new_from(self.world, unsafe {
-            sys::ecs_get_target(
-                self.world.world_ptr_mut(),
-                self.raw_id,
-                first.get_id(),
-                index,
-            )
+            sys::ecs_get_target(self.world.world_ptr_mut(), *self.id, *first.into(), index)
         })
     }
 
@@ -1085,15 +1177,15 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::target_for")]
     pub fn target_for_id(
         &self,
-        relationship: impl IntoEntity,
-        component_id: impl IntoEntity,
+        relationship: impl Into<Entity>,
+        component_id: impl IntoId,
     ) -> EntityView<'a> {
         EntityView::new_from(self.world, unsafe {
             sys::ecs_get_target_for_id(
                 self.world.world_ptr_mut(),
-                self.raw_id,
-                relationship.get_id(),
-                component_id.get_id(),
+                *self.id,
+                *relationship.into(),
+                *component_id.into(),
             )
         })
     }
@@ -1120,7 +1212,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target_for")]
     #[inline(always)]
-    pub fn target_for<T: IntoComponentId>(self, relationship: impl IntoEntity) -> EntityView<'a> {
+    pub fn target_for<T: IntoComponentId>(self, relationship: impl Into<Entity>) -> EntityView<'a> {
         self.target_for_id(relationship, T::get_id(self.world))
     }
 
@@ -1146,7 +1238,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::target_for")]
     pub fn target_for_pair_first<First: ComponentId>(
         &self,
-        second: impl IntoEntity,
+        second: impl Into<Entity>,
     ) -> *const First {
         let comp_id = First::get_id(self.world);
         ecs_assert!(
@@ -1158,7 +1250,7 @@ impl<'a> EntityView<'a> {
             sys::ecs_get_id(
                 self.world.world_ptr_mut(),
                 comp_id,
-                ecs_pair(comp_id, second.get_id()),
+                ecs_pair(comp_id, *second.into()),
             ) as *const First
         }
     }
@@ -1178,14 +1270,8 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::depth`
     #[doc(alias = "entity_view::depth")]
     #[inline(always)]
-    pub fn depth_id(self, relationship: impl IntoEntity) -> i32 {
-        unsafe {
-            sys::ecs_get_depth(
-                self.world.world_ptr_mut(),
-                self.raw_id,
-                relationship.get_id(),
-            )
-        }
+    pub fn depth_id(self, relationship: impl Into<Entity>) -> i32 {
+        unsafe { sys::ecs_get_depth(self.world.world_ptr_mut(), *self.id, *relationship.into()) }
     }
 
     /// Retrieves the depth for a specified relationship.
@@ -1248,14 +1334,14 @@ impl<'a> EntityView<'a> {
     #[inline(always)]
     pub fn lookup_name_optional(self, path: &CStr, search_path: bool) -> Option<EntityView<'a>> {
         ecs_assert!(
-            self.raw_id != 0,
+            self.id != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid lookup from null handle"
         );
         let id = unsafe {
             sys::ecs_lookup_path_w_sep(
                 self.world.world_ptr_mut(),
-                self.raw_id,
+                *self.id,
                 path.as_ptr(),
                 SEPARATOR.as_ptr(),
                 SEPARATOR.as_ptr(),
@@ -1286,7 +1372,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::has")]
     #[inline(always)]
     pub fn has_id(self, entity: impl IntoId) -> bool {
-        unsafe { sys::ecs_has_id(self.world.world_ptr_mut(), self.raw_id, entity.get_id()) }
+        unsafe { sys::ecs_has_id(self.world.world_ptr_mut(), *self.id, *entity.into()) }
     }
 
     /// Check if entity has the provided struct component.
@@ -1305,13 +1391,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::has")]
     pub fn has<T: IntoComponentId>(self) -> bool {
         if !T::IS_ENUM {
-            unsafe {
-                sys::ecs_has_id(
-                    self.world.world_ptr_mut(),
-                    self.raw_id,
-                    T::get_id(self.world),
-                )
-            }
+            unsafe { sys::ecs_has_id(self.world.world_ptr_mut(), *self.id, T::get_id(self.world)) }
         } else {
             let component_id = T::get_id(self.world);
             self.has_id((component_id, ECS_WILDCARD))
@@ -1347,12 +1427,12 @@ impl<'a> EntityView<'a> {
     }
 
     // this is pub(crate) because it's used for development purposes only
-    pub(crate) fn has_enum_id<T>(self, enum_id: impl IntoEntity, constant: T) -> bool
+    pub(crate) fn has_enum_id<T>(self, enum_id: impl Into<Entity>, constant: T) -> bool
     where
         T: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         let enum_constant_entity_id = constant.get_id_variant(self.world);
-        self.has_id((enum_id, enum_constant_entity_id))
+        self.has_id((enum_id.into(), enum_constant_entity_id))
     }
 
     /// Check if entity has the provided pair.
@@ -1373,8 +1453,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    pub fn has_pair_first<First: ComponentId>(self, second: impl IntoEntity) -> bool {
-        self.has_id((First::get_id(self.world), second.get_id()))
+    pub fn has_pair_first<First: ComponentId>(self, second: impl Into<Entity>) -> bool {
+        self.has_id((First::get_id(self.world), second.into()))
     }
 
     /// Check if entity has the provided pair.
@@ -1395,8 +1475,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    pub fn has_pair_second<Second: ComponentId>(self, first: impl IntoEntity) -> bool {
-        self.has_id((first.get_id(), Second::get_id(self.world)))
+    pub fn has_pair_second<Second: ComponentId>(self, first: impl Into<Entity>) -> bool {
+        self.has_id((first.into(), Second::get_id(self.world)))
     }
 
     /// Check if entity has the provided pair with an enum constant.
@@ -1442,7 +1522,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::owns`
     #[doc(alias = "entity_view::owns")]
     pub fn owns_id(self, entity_id: impl IntoId) -> bool {
-        unsafe { sys::ecs_owns_id(self.world.world_ptr_mut(), self.raw_id, entity_id.get_id()) }
+        unsafe { sys::ecs_owns_id(self.world.world_ptr_mut(), *self.id, *entity_id.into()) }
     }
 
     /// Check if the entity owns the provided component.
@@ -1461,13 +1541,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::owns`
     #[doc(alias = "entity_view::owns")]
     pub fn owns<T: IntoComponentId>(self) -> bool {
-        unsafe {
-            sys::ecs_owns_id(
-                self.world.world_ptr_mut(),
-                self.raw_id,
-                T::get_id(self.world),
-            )
-        }
+        unsafe { sys::ecs_owns_id(self.world.world_ptr_mut(), *self.id, T::get_id(self.world)) }
     }
 
     /// Check if the entity owns the provided pair.
@@ -1488,12 +1562,12 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::owns`
     #[doc(alias = "entity_view::owns")]
-    pub fn owns_pair_first<First: ComponentId>(self, second: impl IntoEntity) -> bool {
+    pub fn owns_pair_first<First: ComponentId>(self, second: impl Into<Entity>) -> bool {
         unsafe {
             sys::ecs_owns_id(
                 self.world.world_ptr_mut(),
-                self.raw_id,
-                ecs_pair(First::get_id(self.world), second.get_id()),
+                *self.id,
+                ecs_pair(First::get_id(self.world), *second.into()),
             )
         }
     }
@@ -1516,12 +1590,12 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::owns`
     #[doc(alias = "entity_view::owns")]
-    pub fn owns_pair_second<Second: ComponentId>(self, first: impl IntoEntity) -> bool {
+    pub fn owns_pair_second<Second: ComponentId>(self, first: impl Into<Entity>) -> bool {
         unsafe {
             sys::ecs_owns_id(
                 self.world.world_ptr_mut(),
-                self.raw_id,
-                ecs_pair(first.get_id(), Second::get_id(self.world)),
+                *self.id,
+                ecs_pair(*first.into(), Second::get_id(self.world)),
             )
         }
     }
@@ -1539,7 +1613,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
     pub fn is_enabled_id(self, id: impl IntoId) -> bool {
-        unsafe { sys::ecs_is_enabled_id(self.world.world_ptr_mut(), self.raw_id, id.get_id()) }
+        unsafe { sys::ecs_is_enabled_id(self.world.world_ptr_mut(), *self.id, *id.into()) }
     }
 
     /// Test if component is enabled.
@@ -1556,11 +1630,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::enabled")]
     pub fn is_enabled<T: IntoComponentId>(self) -> bool {
         unsafe {
-            sys::ecs_is_enabled_id(
-                self.world.world_ptr_mut(),
-                self.raw_id,
-                T::get_id(self.world),
-            )
+            sys::ecs_is_enabled_id(self.world.world_ptr_mut(), *self.id, T::get_id(self.world))
         }
     }
 
@@ -1579,8 +1649,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    pub fn is_enabled_pair_first<T: ComponentId>(self, second: impl IntoEntity) -> bool {
-        self.is_enabled_id((T::get_id(self.world), second))
+    pub fn is_enabled_pair_first<T: ComponentId>(self, second: impl Into<Entity>) -> bool {
+        self.is_enabled_id((T::get_id(self.world), second.into()))
     }
 
     /// Test if pair is enabled.
@@ -1598,8 +1668,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    pub fn is_enabled_pair_second<U: ComponentId>(self, first: impl IntoEntity) -> bool {
-        self.is_enabled_id((first, U::get_id(self.world)))
+    pub fn is_enabled_pair_second<U: ComponentId>(self, first: impl Into<Entity>) -> bool {
+        self.is_enabled_id((first.into(), U::get_id(self.world)))
     }
 
     /// Clones the current entity to a new or specified entity.
@@ -1633,8 +1703,8 @@ impl<'a> EntityView<'a> {
         unsafe {
             sys::ecs_clone(
                 self.world.world_ptr_mut(),
-                dest_entity.raw_id,
-                self.raw_id,
+                *dest_entity.id,
+                *self.id,
                 copy_value,
             )
         };
@@ -1667,14 +1737,14 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::clone`
     #[doc(alias = "entity_view::clone")]
     #[inline(always)]
-    pub fn duplicate_into(self, copy_value: bool, dest_id: impl IntoEntity) -> EntityView<'a> {
-        let mut dest_id = dest_id.get_id();
+    pub fn duplicate_into(self, copy_value: bool, dest_id: impl Into<Entity>) -> EntityView<'a> {
+        let mut dest_id = *dest_id.into();
         if dest_id == 0 {
             dest_id = unsafe { sys::ecs_new_id(self.world.world_ptr_mut()) };
         }
 
         let dest_entity = EntityView::new_from(self.world, dest_id);
-        unsafe { sys::ecs_clone(self.world.world_ptr_mut(), dest_id, self.raw_id, copy_value) };
+        unsafe { sys::ecs_clone(self.world.world_ptr_mut(), dest_id, *self.id, copy_value) };
         dest_entity
     }
 
@@ -1712,7 +1782,7 @@ impl<'a> EntityView<'a> {
             "cannot use readonly world/stage to create mutable handle"
         );
 
-        EntityView::new_from(stage, self.raw_id)
+        EntityView::new_from(stage, *self.id)
     }
 
     /// Returns a mutable entity handle for the current stage from another entity.
@@ -1733,7 +1803,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::mut")]
     pub fn mut_stage_of<T>(self, entity: T) -> EntityView<'a>
     where
-        T: IntoEntity + IntoWorld<'a>,
+        T: Into<Entity> + IntoWorld<'a>,
     {
         ecs_assert!(
             !entity.world().is_readonly(),
@@ -1741,7 +1811,7 @@ impl<'a> EntityView<'a> {
             "cannot use entity created for readonly world/stage to create mutable handle"
         );
 
-        EntityView::new_from(entity.world(), self.raw_id)
+        EntityView::new_from(entity.world(), *self.id)
     }
 
     //might not be needed, in the original c++ impl it was used in the get_mut functions.
@@ -1752,7 +1822,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::set_stage")]
     #[doc(hidden)]
     fn set_stage(self, stage: impl IntoWorld<'a>) -> EntityView<'a> {
-        EntityView::new_from(stage, self.raw_id)
+        EntityView::new_from(stage, *self.id)
     }
 
     /// Turn entity into an enum constant.
@@ -1820,11 +1890,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
-    pub unsafe fn emit_id(self, event: impl IntoEntity) {
-        self.world()
-            .event_id(event)
-            .set_entity_to_emit(self.to_entity())
-            .emit();
+    pub unsafe fn emit_id(self, event: impl Into<Entity>) {
+        self.world().event_id(event).set_entity_to_emit(self).emit();
     }
 
     /// Emit event for entity
@@ -1854,7 +1921,7 @@ impl<'a> EntityView<'a> {
     pub fn emit_payload<T: NotEmptyComponent + ComponentId>(self, payload: &mut T) {
         self.world()
             .event::<T>()
-            .set_entity_to_emit(self.to_entity())
+            .set_entity_to_emit(self)
             .set_event_data(payload)
             .emit();
     }
@@ -1872,10 +1939,10 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
-    pub unsafe fn enqueue_id(self, event: impl IntoEntity) {
+    pub unsafe fn enqueue_id(self, event: impl Into<Entity>) {
         self.world()
             .event_id(event)
-            .set_entity_to_emit(self.to_entity())
+            .set_entity_to_emit(self)
             .enqueue();
     }
 
@@ -1929,7 +1996,7 @@ impl<'a> EntityView<'a> {
     pub fn enqueue_payload<T: NotEmptyComponent + ComponentId>(self, payload: &mut T) {
         self.world()
             .event::<T>()
-            .set_entity_to_emit(self.to_entity())
+            .set_entity_to_emit(self)
             .set_event_data(payload)
             .enqueue();
     }
@@ -1975,7 +2042,7 @@ impl<'a> EntityView<'a> {
         Self::entity_observer_create(
             self.world.world_ptr_mut(),
             C::get_id(self.world),
-            self.raw_id,
+            *self.id,
             binding_ctx,
             Some(Self::run_empty::<Func> as unsafe extern "C" fn(_)),
         );
@@ -2020,7 +2087,7 @@ impl<'a> EntityView<'a> {
         Self::entity_observer_create(
             self.world.world_ptr_mut(),
             C::get_id(self.world),
-            self.raw_id,
+            *self.id,
             binding_ctx,
             Some(Self::run_empty_entity::<Func> as unsafe extern "C" fn(_)),
         );
@@ -2065,7 +2132,7 @@ impl<'a> EntityView<'a> {
         Self::entity_observer_create(
             self.world.world_ptr_mut(),
             C::get_id(self.world),
-            self.raw_id,
+            *self.id,
             binding_ctx,
             Some(Self::run_payload::<C, Func> as unsafe extern "C" fn(_)),
         );
@@ -2110,7 +2177,7 @@ impl<'a> EntityView<'a> {
         Self::entity_observer_create(
             self.world.world_ptr_mut(),
             C::get_id(self.world),
-            self.raw_id,
+            *self.id,
             binding_ctx,
             Some(Self::run_payload_entity::<C, Func> as unsafe extern "C" fn(_)),
         );

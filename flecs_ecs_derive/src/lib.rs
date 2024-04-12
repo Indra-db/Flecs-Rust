@@ -178,6 +178,7 @@ fn impl_cached_component_data_struct(
 
         impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name #type_generics #where_clause {
             const IS_ENUM: bool = false;
+
             #is_tag
             const IMPLS_CLONE: bool = {
                 use flecs_ecs::core::utility::traits::DoesNotImpl;

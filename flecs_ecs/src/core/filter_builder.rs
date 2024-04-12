@@ -270,7 +270,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     ///
     /// * C++ API: `filter_builder_i::with`
     #[doc(alias = "filter_builder_i::with")]
-    fn with_pair_first<First: ComponentId>(&mut self, second: impl IntoEntity) -> &mut Self {
+    fn with_pair_first<First: ComponentId>(&mut self, second: impl Into<Entity>) -> &mut Self {
         self.term_with_pair_first::<First>(second)
     }
 
@@ -344,7 +344,7 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     ///
     /// * C++ API: `filter_builder_i::without`
     #[doc(alias = "filter_builder_i::without")]
-    fn without_pair_id<First: ComponentId>(&mut self, second: impl IntoEntity) -> &mut Self {
+    fn without_pair_id<First: ComponentId>(&mut self, second: impl Into<Entity>) -> &mut Self {
         self.term_with_pair_first::<First>(second).not()
     }
 
@@ -585,12 +585,12 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     #[doc(alias = "filter_builder_i::term")]
     fn term_with_pair_id_name(
         &mut self,
-        first: impl IntoEntity,
+        first: impl Into<Entity>,
         second: &'static CStr,
     ) -> &mut Self {
         self.term();
         unsafe {
-            *self.term_ptr_mut() = Term::new_id(self.world(), first.get_id())
+            *self.term_ptr_mut() = Term::new_id(self.world(), first.into())
                 .select_second_name(second)
                 .move_raw_term();
         }
@@ -603,8 +603,8 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
     ///
     /// * C++ API: `filter_builder_i::term`
     #[doc(alias = "filter_builder_i::term")]
-    fn term_with_pair_first<First: ComponentId>(&mut self, second: impl IntoEntity) -> &mut Self {
-        self.term_with_id((First::get_id(self.world()), second))
+    fn term_with_pair_first<First: ComponentId>(&mut self, second: impl Into<Entity>) -> &mut Self {
+        self.term_with_id((First::get_id(self.world()), second.into()))
     }
 
     /// set term with Pair

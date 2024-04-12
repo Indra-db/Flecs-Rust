@@ -1,21 +1,25 @@
+use std::fmt::Display;
+use std::ops::{BitAnd, BitOr};
 use std::sync::OnceLock;
 use std::{ffi::CStr, ops::Deref};
 
 use crate::core::*;
 use crate::sys;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Default, Clone, Copy, Hash)]
-pub struct Entity {
-    id: u64,
-}
+/// An Identifier for what represents an entity.
+/// An `Entity` is an id that represents an entity, component, query, observer or system in the world.
+/// an `Entity` does not represent a pair. See [`Id`] for that.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(transparent)]
+pub struct Entity(pub u64);
 
 impl Entity {
     #[inline]
     pub fn new(id: u64) -> Self {
-        Self { id }
+        Self(id)
     }
 
-    /// Convert the entity id to an entity with the given world.
+    /// Convert the entity id to an [`EntityView`] with the given world.
     ///
     /// # Safety
     ///
@@ -24,17 +28,21 @@ impl Entity {
     /// # Arguments
     ///
     /// * `world` - The world the entity belongs to
-    pub fn to_entity<'a>(&self, world: impl IntoWorld<'a>) -> EntityView<'a> {
-        EntityView::new_from(world, self.id)
+    pub fn entity_view<'a>(&self, world: impl IntoWorld<'a>) -> EntityView<'a> {
+        EntityView::new_from(world, *self)
     }
-}
 
-impl Deref for Entity {
-    type Target = IdT;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.id
+    /// Convert the entity id to an [`IdView`] with the given world.
+    ///
+    /// # Safety
+    ///
+    /// This entity is safe to do operations on if the entity belongs to the world
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world the entity belongs to
+    pub fn id_view<'a>(&self, world: impl IntoWorld<'a>) -> IdView<'a> {
+        IdView::new_from(world, *self)
     }
 }
 
@@ -83,35 +91,201 @@ impl ComponentId for Entity {
     }
 }
 
-pub struct Id {
-    id: u64,
-}
-
-impl Id {
-    #[inline]
-    pub fn new(id: u64) -> Self {
-        Self { id }
-    }
-
-    /// Convert the entity id to an entity with the given world.
-    ///
-    /// # Safety
-    ///
-    /// This entity is safe to do operations on if the entity belongs to the world
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - The world the entity belongs to
-    pub fn to_entity<'a>(&self, world: impl IntoWorld<'a>) -> EntityView<'a> {
-        EntityView::new_from(world, self.id)
-    }
-}
-
-impl Deref for Id {
-    type Target = IdT;
+impl Deref for Entity {
+    type Target = u64;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
-        &self.id
+        &self.0
+    }
+}
+
+impl BitOr for Entity {
+    type Output = Entity;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        Entity(self.0 | rhs.0)
+    }
+}
+
+impl BitOr<u64> for Entity {
+    type Output = Entity;
+
+    fn bitor(self, rhs: u64) -> Self::Output {
+        Entity(self.0 | rhs)
+    }
+}
+
+impl BitOr<Id> for Entity {
+    type Output = Entity;
+
+    fn bitor(self, rhs: Id) -> Self::Output {
+        Entity(self.0 | *rhs)
+    }
+}
+
+impl BitOr<Entity> for u64 {
+    type Output = Entity;
+
+    fn bitor(self, rhs: Entity) -> Self::Output {
+        Entity(self | rhs.0)
+    }
+}
+
+impl BitAnd for Entity {
+    type Output = Entity;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        Entity(self.0 & rhs.0)
+    }
+}
+
+impl BitAnd<u64> for Entity {
+    type Output = Entity;
+
+    fn bitand(self, rhs: u64) -> Self::Output {
+        Entity(self.0 & rhs)
+    }
+}
+
+impl BitAnd<Id> for Entity {
+    type Output = Entity;
+
+    fn bitand(self, rhs: Id) -> Self::Output {
+        Entity(self.0 & *rhs)
+    }
+}
+
+impl From<u64> for Entity {
+    #[inline]
+    fn from(id: u64) -> Self {
+        Entity::new(id)
+    }
+}
+
+impl<'a> From<EntityView<'a>> for Entity {
+    #[inline]
+    fn from(view: EntityView<'a>) -> Self {
+        view.id
+    }
+}
+
+impl<'a, T> From<Component<'a, T>> for Entity
+where
+    T: ComponentId,
+{
+    #[inline]
+    fn from(component: Component<'a, T>) -> Self {
+        component.base.entity.id
+    }
+}
+
+impl<'a> From<UntypedComponent<'a>> for Entity {
+    #[inline]
+    fn from(component: UntypedComponent<'a>) -> Self {
+        component.entity.id
+    }
+}
+
+impl From<Entity> for u64 {
+    fn from(id: Entity) -> Self {
+        id.0
+    }
+}
+
+impl PartialEq<Entity> for u64 {
+    fn eq(&self, other: &Entity) -> bool {
+        self == &other.0
+    }
+}
+
+impl PartialEq<u64> for Entity {
+    fn eq(&self, other: &u64) -> bool {
+        &self.0 == other
+    }
+}
+
+impl PartialEq<Id> for Entity {
+    fn eq(&self, other: &Id) -> bool {
+        self.0 == other.0
+    }
+}
+
+impl<'a> PartialEq<EntityView<'a>> for Entity {
+    fn eq(&self, other: &EntityView<'a>) -> bool {
+        self.0 == other.id.0
+    }
+}
+
+impl<'a> PartialEq<IdView<'a>> for Entity {
+    fn eq(&self, other: &IdView<'a>) -> bool {
+        self.0 == other.id.0
+    }
+}
+
+impl<'a, T> PartialEq<Component<'a, T>> for Entity
+where
+    T: ComponentId,
+{
+    fn eq(&self, other: &Component<'a, T>) -> bool {
+        self.0 == other.base.entity.id.0
+    }
+}
+
+impl<'a> PartialEq<UntypedComponent<'a>> for Entity {
+    fn eq(&self, other: &UntypedComponent<'a>) -> bool {
+        self.0 == other.entity.id.0
+    }
+}
+
+impl PartialOrd<Entity> for u64 {
+    fn partial_cmp(&self, other: &Entity) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(&other.0))
+    }
+}
+
+impl PartialOrd<u64> for Entity {
+    fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
+        Some(self.0.cmp(other))
+    }
+}
+
+impl PartialOrd<Id> for Entity {
+    fn partial_cmp(&self, other: &Id) -> Option<std::cmp::Ordering> {
+        Some(self.0.cmp(&other.0))
+    }
+}
+
+impl<'a> PartialOrd<EntityView<'a>> for Entity {
+    fn partial_cmp(&self, other: &EntityView<'a>) -> Option<std::cmp::Ordering> {
+        Some(self.0.cmp(&other.id.0))
+    }
+}
+
+impl<'a> PartialOrd<IdView<'a>> for Entity {
+    fn partial_cmp(&self, other: &IdView<'a>) -> Option<std::cmp::Ordering> {
+        Some(self.0.cmp(&other.id.0))
+    }
+}
+
+impl<'a, T> PartialOrd<Component<'a, T>> for Entity
+where
+    T: ComponentId,
+{
+    fn partial_cmp(&self, other: &Component<'a, T>) -> Option<std::cmp::Ordering> {
+        Some(self.0.cmp(&other.base.entity.id.0))
+    }
+}
+
+impl<'a> PartialOrd<UntypedComponent<'a>> for Entity {
+    fn partial_cmp(&self, other: &UntypedComponent<'a>) -> Option<std::cmp::Ordering> {
+        Some(self.0.cmp(&other.entity.id.0))
+    }
+}
+
+impl Display for Entity {
+    #[inline]
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }

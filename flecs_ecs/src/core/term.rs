@@ -157,7 +157,7 @@ impl<'a> Term<'a> {
     where
         T: IntoId,
     {
-        let id = id.get_id();
+        let id = id.into();
 
         let mut obj = Self {
             world: world.world(),
@@ -168,12 +168,12 @@ impl<'a> Term<'a> {
 
         #[allow(clippy::collapsible_else_if)]
         if T::IS_PAIR {
-            obj.term.id = id;
+            obj.term.id = *id;
         } else {
             if id & RUST_ecs_id_FLAGS_MASK != 0 {
-                obj.term.id = id;
+                obj.term.id = *id;
             } else {
-                obj.term.first.id = id;
+                obj.term.first.id = *id;
             }
         }
 
@@ -262,7 +262,7 @@ impl<'a> Term<'a> {
     /// * C++ API: `term::id`
     #[doc(alias = "term::id")]
     pub fn id(&self) -> IdView {
-        IdView::new(self.world, self.term.id)
+        IdView::new_from(self.world, self.term.id)
     }
 
     /// Get the inout type of term
@@ -421,10 +421,10 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::up`
     #[doc(alias = "term_builder_i::up")]
-    fn up_id(&mut self, traverse_relationship: impl IntoEntity) -> &mut Self {
+    fn up_id(&mut self, traverse_relationship: impl Into<Entity>) -> &mut Self {
         self.assert_term_id_ptr_mut();
         unsafe { (*self.term_id_ptr_mut()).flags |= ECS_UP };
-        unsafe { (*self.term_id_ptr_mut()).trav = traverse_relationship.get_id() };
+        unsafe { (*self.term_id_ptr_mut()).trav = *traverse_relationship.into() };
         self
     }
 
@@ -473,7 +473,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::cascade`
     #[doc(alias = "term_builder_i::cascade")]
-    fn cascade_id(&mut self, traverse_relationship: impl IntoEntity) -> &mut Self {
+    fn cascade_id(&mut self, traverse_relationship: impl Into<Entity>) -> &mut Self {
         self.assert_term_id_ptr_mut();
         //ecs_assert!(
         //    traverse_relationship != 0,
@@ -481,7 +481,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
         //    "Opt the usage of `cascade` if you are passing 0"
         //);
         unsafe { (*self.term_id_ptr_mut()).flags |= ECS_CASCADE };
-        unsafe { (*self.term_id_ptr_mut()).trav = traverse_relationship.get_id() };
+        unsafe { (*self.term_id_ptr_mut()).trav = *traverse_relationship.into() };
         self
     }
 
@@ -535,10 +535,10 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::trav`
     #[doc(alias = "term_builder_i::trav")]
-    fn trav(&mut self, traverse_relationship: impl IntoEntity, flags: Flags32T) -> &mut Self {
+    fn trav(&mut self, traverse_relationship: impl Into<Entity>, flags: Flags32T) -> &mut Self {
         self.assert_term_id_ptr_mut();
         unsafe {
-            (*self.term_id_ptr_mut()).trav = traverse_relationship.get_id();
+            (*self.term_id_ptr_mut()).trav = *traverse_relationship.into();
             (*self.term_id_ptr_mut()).flags |= flags;
         };
         self
@@ -554,10 +554,10 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::set_term_id_ptr`
     #[doc(alias = "term_builder_i::set_term_id_ptr")]
-    fn set_term_id_ptr_mut(&mut self, id: impl IntoEntity) -> &mut Self {
+    fn set_term_id_ptr_mut(&mut self, id: impl Into<Entity>) -> &mut Self {
         self.assert_term_id_ptr_mut();
         let term_id_ptr = self.term_id_ptr_mut();
-        unsafe { (*term_id_ptr).id = id.get_id() };
+        unsafe { (*term_id_ptr).id = *id.into() };
         self
     }
 
@@ -577,11 +577,11 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::entity`
     #[doc(alias = "term_builder_i::entity")]
-    fn entity(&mut self, id: impl IntoEntity) -> &mut Self {
+    fn entity(&mut self, id: impl Into<Entity>) -> &mut Self {
         self.assert_term_id_ptr_mut();
         unsafe {
             (*self.term_id_ptr_mut()).flags |= ECS_IS_ENTITY;
-            (*self.term_id_ptr_mut()).id = id.get_id();
+            (*self.term_id_ptr_mut()).id = *id.into();
         };
         self
     }
@@ -751,7 +751,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
-    fn select_first_id(&mut self, id: impl IntoEntity) -> &mut Self {
+    fn select_first_id(&mut self, id: impl Into<Entity>) -> &mut Self {
         self.setup_first().set_term_id_ptr_mut(id)
     }
 
@@ -807,7 +807,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
-    fn select_second_id(&mut self, id: impl IntoEntity) -> &mut Self {
+    fn select_second_id(&mut self, id: impl Into<Entity>) -> &mut Self {
         self.setup_second().set_term_id_ptr_mut(id)
     }
 
@@ -863,9 +863,9 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::role`
     #[doc(alias = "term_builder_i::role")]
-    fn role(&mut self, role: impl IntoEntity) -> &mut Self {
+    fn role(&mut self, role: impl Into<Entity>) -> &mut Self {
         self.assert_term();
-        unsafe { (*self.term_ptr_mut()).id_flags = role.get_id() };
+        unsafe { (*self.term_ptr_mut()).id_flags = *role.into() };
         self
     }
 
@@ -1100,7 +1100,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
                 (*self.term_ptr_mut()).src.id = sid;
             } else {
                 (*self.term_ptr_mut()).src.id =
-                    sys::ecs_get_alive(self.world_ptr_mut(), ecs_pair_first(sid));
+                    sys::ecs_get_alive(self.world_ptr_mut(), *ecs_pair_first(sid));
             }
         }
         self
