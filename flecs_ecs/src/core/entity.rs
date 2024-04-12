@@ -32,6 +32,7 @@ impl Entity {
     /// # Arguments
     ///
     /// * `world` - The world the entity belongs to
+    #[inline]
     pub fn entity_view<'a>(&self, world: impl IntoWorld<'a>) -> EntityView<'a> {
         EntityView::new_from(world, *self)
     }
@@ -45,6 +46,7 @@ impl Entity {
     /// # Arguments
     ///
     /// * `world` - The world the entity belongs to
+    #[inline]
     pub fn id_view<'a>(&self, world: impl IntoWorld<'a>) -> IdView<'a> {
         IdView::new_from(world, *self)
     }
@@ -65,30 +67,36 @@ impl ComponentId for Entity {
         // already registered by flecs in World
     }
 
+    #[inline]
     fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &CStr) -> EntityT {
         // already registered by flecs in World
         unsafe { sys::FLECS_IDecs_entity_tID_ }
     }
 
+    #[inline]
     fn is_registered() -> bool {
         true
     }
 
+    #[inline]
     fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
         //because this is always registered in the c world
         true
     }
 
+    #[inline]
     unsafe fn get_id_unchecked() -> IdT {
         //this is safe because it's already registered in flecs_c / world
         sys::FLECS_IDecs_entity_tID_
     }
 
+    #[inline]
     fn get_id<'a>(_world: impl IntoWorld<'a>) -> IdT {
         //this is safe because it's already registered in flecs_c / world
         unsafe { sys::FLECS_IDecs_entity_tID_ }
     }
 
+    #[inline]
     fn __get_once_lock_data() -> &'static OnceLock<IdComponent> {
         static ONCE_LOCK: OnceLock<IdComponent> = OnceLock::new();
         &ONCE_LOCK
@@ -104,192 +112,229 @@ impl Deref for Entity {
     }
 }
 
-impl BitOr for Entity {
-    type Output = Entity;
-
-    fn bitor(self, rhs: Self) -> Self::Output {
-        Entity(self.0 | rhs.0)
-    }
-}
-
-impl BitOr<u64> for Entity {
-    type Output = Entity;
-
-    fn bitor(self, rhs: u64) -> Self::Output {
-        Entity(self.0 | rhs)
-    }
-}
-
-impl BitOr<Id> for Entity {
-    type Output = Entity;
-
-    fn bitor(self, rhs: Id) -> Self::Output {
-        Entity(self.0 | *rhs)
-    }
-}
-
-impl BitOr<Entity> for u64 {
-    type Output = Entity;
-
-    fn bitor(self, rhs: Entity) -> Self::Output {
-        Entity(self | rhs.0)
-    }
-}
-
-impl BitAnd for Entity {
-    type Output = Entity;
-
-    fn bitand(self, rhs: Self) -> Self::Output {
-        Entity(self.0 & rhs.0)
-    }
-}
-
-impl BitAnd<u64> for Entity {
-    type Output = Entity;
-
-    fn bitand(self, rhs: u64) -> Self::Output {
-        Entity(self.0 & rhs)
-    }
-}
-
-impl BitAnd<Id> for Entity {
-    type Output = Entity;
-
-    fn bitand(self, rhs: Id) -> Self::Output {
-        Entity(self.0 & *rhs)
-    }
-}
-
-impl From<u64> for Entity {
-    #[inline]
-    fn from(id: u64) -> Self {
-        Entity::new(id)
-    }
-}
-
-impl<'a> From<EntityView<'a>> for Entity {
-    #[inline]
-    fn from(view: EntityView<'a>) -> Self {
-        view.id
-    }
-}
-
-impl<'a, T> From<Component<'a, T>> for Entity
-where
-    T: ComponentId,
-{
-    #[inline]
-    fn from(component: Component<'a, T>) -> Self {
-        component.base.entity.id
-    }
-}
-
-impl<'a> From<UntypedComponent<'a>> for Entity {
-    #[inline]
-    fn from(component: UntypedComponent<'a>) -> Self {
-        component.entity.id
-    }
-}
-
-impl From<Entity> for u64 {
-    fn from(id: Entity) -> Self {
-        id.0
-    }
-}
-
-impl PartialEq<Entity> for u64 {
-    fn eq(&self, other: &Entity) -> bool {
-        self == &other.0
-    }
-}
-
-impl PartialEq<u64> for Entity {
-    fn eq(&self, other: &u64) -> bool {
-        &self.0 == other
-    }
-}
-
-impl PartialEq<Id> for Entity {
-    fn eq(&self, other: &Id) -> bool {
-        self.0 == other.0
-    }
-}
-
-impl<'a> PartialEq<EntityView<'a>> for Entity {
-    fn eq(&self, other: &EntityView<'a>) -> bool {
-        self.0 == other.id.0
-    }
-}
-
-impl<'a> PartialEq<IdView<'a>> for Entity {
-    fn eq(&self, other: &IdView<'a>) -> bool {
-        self.0 == other.id.0
-    }
-}
-
-impl<'a, T> PartialEq<Component<'a, T>> for Entity
-where
-    T: ComponentId,
-{
-    fn eq(&self, other: &Component<'a, T>) -> bool {
-        self.0 == other.base.entity.id.0
-    }
-}
-
-impl<'a> PartialEq<UntypedComponent<'a>> for Entity {
-    fn eq(&self, other: &UntypedComponent<'a>) -> bool {
-        self.0 == other.entity.id.0
-    }
-}
-
-impl PartialOrd<Entity> for u64 {
-    fn partial_cmp(&self, other: &Entity) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(&other.0))
-    }
-}
-
-impl PartialOrd<u64> for Entity {
-    fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
-        Some(self.0.cmp(other))
-    }
-}
-
-impl PartialOrd<Id> for Entity {
-    fn partial_cmp(&self, other: &Id) -> Option<std::cmp::Ordering> {
-        Some(self.0.cmp(&other.0))
-    }
-}
-
-impl<'a> PartialOrd<EntityView<'a>> for Entity {
-    fn partial_cmp(&self, other: &EntityView<'a>) -> Option<std::cmp::Ordering> {
-        Some(self.0.cmp(&other.id.0))
-    }
-}
-
-impl<'a> PartialOrd<IdView<'a>> for Entity {
-    fn partial_cmp(&self, other: &IdView<'a>) -> Option<std::cmp::Ordering> {
-        Some(self.0.cmp(&other.id.0))
-    }
-}
-
-impl<'a, T> PartialOrd<Component<'a, T>> for Entity
-where
-    T: ComponentId,
-{
-    fn partial_cmp(&self, other: &Component<'a, T>) -> Option<std::cmp::Ordering> {
-        Some(self.0.cmp(&other.base.entity.id.0))
-    }
-}
-
-impl<'a> PartialOrd<UntypedComponent<'a>> for Entity {
-    fn partial_cmp(&self, other: &UntypedComponent<'a>) -> Option<std::cmp::Ordering> {
-        Some(self.0.cmp(&other.entity.id.0))
-    }
-}
-
 impl Display for Entity {
     #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+mod bit_operations {
+    use super::*;
+
+    impl BitOr for Entity {
+        type Output = Entity;
+
+        #[inline]
+        fn bitor(self, rhs: Self) -> Self::Output {
+            Entity(self.0 | rhs.0)
+        }
+    }
+
+    impl BitOr<u64> for Entity {
+        type Output = Entity;
+
+        #[inline]
+        fn bitor(self, rhs: u64) -> Self::Output {
+            Entity(self.0 | rhs)
+        }
+    }
+
+    impl BitOr<Id> for Entity {
+        type Output = Entity;
+
+        #[inline]
+        fn bitor(self, rhs: Id) -> Self::Output {
+            Entity(self.0 | *rhs)
+        }
+    }
+
+    impl BitOr<Entity> for u64 {
+        type Output = Entity;
+
+        #[inline]
+        fn bitor(self, rhs: Entity) -> Self::Output {
+            Entity(self | rhs.0)
+        }
+    }
+
+    impl BitAnd for Entity {
+        type Output = Entity;
+
+        #[inline]
+        fn bitand(self, rhs: Self) -> Self::Output {
+            Entity(self.0 & rhs.0)
+        }
+    }
+
+    impl BitAnd<u64> for Entity {
+        type Output = Entity;
+
+        #[inline]
+        fn bitand(self, rhs: u64) -> Self::Output {
+            Entity(self.0 & rhs)
+        }
+    }
+
+    impl BitAnd<Id> for Entity {
+        type Output = Entity;
+
+        #[inline]
+        fn bitand(self, rhs: Id) -> Self::Output {
+            Entity(self.0 & *rhs)
+        }
+    }
+}
+
+mod from_operations {
+    use super::*;
+    impl From<u64> for Entity {
+        #[inline]
+        fn from(id: u64) -> Self {
+            Entity::new(id)
+        }
+    }
+
+    impl<'a> From<EntityView<'a>> for Entity {
+        #[inline]
+        fn from(view: EntityView<'a>) -> Self {
+            view.id
+        }
+    }
+
+    impl<'a, T> From<Component<'a, T>> for Entity
+    where
+        T: ComponentId,
+    {
+        #[inline]
+        fn from(component: Component<'a, T>) -> Self {
+            component.base.entity.id
+        }
+    }
+
+    impl<'a> From<UntypedComponent<'a>> for Entity {
+        #[inline]
+        fn from(component: UntypedComponent<'a>) -> Self {
+            component.entity.id
+        }
+    }
+
+    impl From<Entity> for u64 {
+        #[inline]
+        fn from(id: Entity) -> Self {
+            id.0
+        }
+    }
+}
+
+mod eq_operations {
+    use super::*;
+
+    impl PartialEq<Entity> for u64 {
+        #[inline]
+        fn eq(&self, other: &Entity) -> bool {
+            self == &other.0
+        }
+    }
+
+    impl PartialEq<u64> for Entity {
+        #[inline]
+        fn eq(&self, other: &u64) -> bool {
+            &self.0 == other
+        }
+    }
+
+    impl PartialEq<Id> for Entity {
+        #[inline]
+        fn eq(&self, other: &Id) -> bool {
+            self.0 == other.0
+        }
+    }
+
+    impl<'a> PartialEq<EntityView<'a>> for Entity {
+        #[inline]
+        fn eq(&self, other: &EntityView<'a>) -> bool {
+            self.0 == other.id.0
+        }
+    }
+
+    impl<'a> PartialEq<IdView<'a>> for Entity {
+        #[inline]
+        fn eq(&self, other: &IdView<'a>) -> bool {
+            self.0 == other.id.0
+        }
+    }
+
+    impl<'a, T> PartialEq<Component<'a, T>> for Entity
+    where
+        T: ComponentId,
+    {
+        #[inline]
+        fn eq(&self, other: &Component<'a, T>) -> bool {
+            self.0 == other.base.entity.id.0
+        }
+    }
+
+    impl<'a> PartialEq<UntypedComponent<'a>> for Entity {
+        #[inline]
+        fn eq(&self, other: &UntypedComponent<'a>) -> bool {
+            self.0 == other.entity.id.0
+        }
+    }
+}
+
+mod ord_operations {
+    use super::*;
+
+    impl PartialOrd<Entity> for u64 {
+        #[inline]
+        fn partial_cmp(&self, other: &Entity) -> Option<std::cmp::Ordering> {
+            Some(self.cmp(&other.0))
+        }
+    }
+
+    impl PartialOrd<u64> for Entity {
+        #[inline]
+        fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
+            Some(self.0.cmp(other))
+        }
+    }
+
+    impl PartialOrd<Id> for Entity {
+        #[inline]
+        fn partial_cmp(&self, other: &Id) -> Option<std::cmp::Ordering> {
+            Some(self.0.cmp(&other.0))
+        }
+    }
+
+    impl<'a> PartialOrd<EntityView<'a>> for Entity {
+        #[inline]
+        fn partial_cmp(&self, other: &EntityView<'a>) -> Option<std::cmp::Ordering> {
+            Some(self.0.cmp(&other.id.0))
+        }
+    }
+
+    impl<'a> PartialOrd<IdView<'a>> for Entity {
+        #[inline]
+        fn partial_cmp(&self, other: &IdView<'a>) -> Option<std::cmp::Ordering> {
+            Some(self.0.cmp(&other.id.0))
+        }
+    }
+
+    impl<'a, T> PartialOrd<Component<'a, T>> for Entity
+    where
+        T: ComponentId,
+    {
+        #[inline]
+        fn partial_cmp(&self, other: &Component<'a, T>) -> Option<std::cmp::Ordering> {
+            Some(self.0.cmp(&other.base.entity.id.0))
+        }
+    }
+
+    impl<'a> PartialOrd<UntypedComponent<'a>> for Entity {
+        #[inline]
+        fn partial_cmp(&self, other: &UntypedComponent<'a>) -> Option<std::cmp::Ordering> {
+            Some(self.0.cmp(&other.entity.id.0))
+        }
     }
 }

@@ -23,110 +23,6 @@ impl<'a, T: ComponentId> Deref for Component<'a, T> {
     }
 }
 
-impl<'a, T: ComponentId> PartialEq<Component<'a, T>> for u64 {
-    fn eq(&self, other: &Component<'a, T>) -> bool {
-        *self == other.base.entity.id
-    }
-}
-
-impl<'a, T: ComponentId> PartialEq<u64> for Component<'a, T> {
-    fn eq(&self, other: &u64) -> bool {
-        self.base.entity.id == *other
-    }
-}
-
-impl<'a, T: ComponentId> PartialEq<Entity> for Component<'a, T> {
-    fn eq(&self, other: &Entity) -> bool {
-        self.base.entity.id == *other
-    }
-}
-
-impl<'a, T: ComponentId> PartialEq<Id> for Component<'a, T> {
-    fn eq(&self, other: &Id) -> bool {
-        self.base.entity.id == *other
-    }
-}
-
-impl<'a, T: ComponentId> PartialEq<EntityView<'a>> for Component<'a, T> {
-    fn eq(&self, other: &EntityView<'a>) -> bool {
-        self.base.entity == *other
-    }
-}
-
-impl<'a, T: ComponentId> PartialEq<IdView<'a>> for Component<'a, T> {
-    fn eq(&self, other: &IdView<'a>) -> bool {
-        self.base.entity == other.id
-    }
-}
-
-impl<'a, T: ComponentId> PartialEq<UntypedComponent<'a>> for Component<'a, T> {
-    fn eq(&self, other: &UntypedComponent<'a>) -> bool {
-        self.base.entity == other.entity
-    }
-}
-
-impl<'a, T: ComponentId> PartialEq for Component<'a, T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.base.entity == other.base.entity
-    }
-}
-
-impl<'a, T: ComponentId> Eq for Component<'a, T> {}
-
-impl<'a, T: ComponentId> PartialOrd<Component<'a, T>> for u64 {
-    fn partial_cmp(&self, other: &Component<'a, T>) -> Option<std::cmp::Ordering> {
-        self.partial_cmp(&other.base.entity.id)
-    }
-}
-
-impl<'a, T: ComponentId> PartialOrd<u64> for Component<'a, T> {
-    fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
-        self.base.entity.id.partial_cmp(other)
-    }
-}
-
-impl<'a, T: ComponentId> PartialOrd<Entity> for Component<'a, T> {
-    fn partial_cmp(&self, other: &Entity) -> Option<std::cmp::Ordering> {
-        self.base.entity.id.partial_cmp(other)
-    }
-}
-
-impl<'a, T: ComponentId> PartialOrd<Id> for Component<'a, T> {
-    fn partial_cmp(&self, other: &Id) -> Option<std::cmp::Ordering> {
-        self.base.entity.id.partial_cmp(other)
-    }
-}
-
-impl<'a, T: ComponentId> PartialOrd<EntityView<'a>> for Component<'a, T> {
-    fn partial_cmp(&self, other: &EntityView<'a>) -> Option<std::cmp::Ordering> {
-        self.base.entity.partial_cmp(other)
-    }
-}
-
-impl<'a, T: ComponentId> PartialOrd<IdView<'a>> for Component<'a, T> {
-    fn partial_cmp(&self, other: &IdView<'a>) -> Option<std::cmp::Ordering> {
-        self.base.entity.partial_cmp(&other.id)
-    }
-}
-
-impl<'a, T: ComponentId> PartialOrd<UntypedComponent<'a>> for Component<'a, T> {
-    fn partial_cmp(&self, other: &UntypedComponent<'a>) -> Option<std::cmp::Ordering> {
-        self.base.entity.partial_cmp(&other.entity)
-    }
-}
-
-impl<'a, T: ComponentId> PartialOrd for Component<'a, T> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl<'a, T: ComponentId> Ord for Component<'a, T> {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.base.entity.cmp(&other.base.entity)
-    }
-}
-
 impl<'a, T: ComponentId> Component<'a, T> {
     /// Create a new component.
     ///
@@ -429,4 +325,132 @@ impl<'a, T: ComponentId> Component<'a, T> {
     }
 
     //todo!("untyped component constant function")
+}
+
+mod eq_operations {
+    use super::*;
+
+    impl<'a, T: ComponentId> PartialEq<Component<'a, T>> for u64 {
+        #[inline]
+        fn eq(&self, other: &Component<'a, T>) -> bool {
+            *self == other.base.entity.id
+        }
+    }
+
+    impl<'a, T: ComponentId> PartialEq<u64> for Component<'a, T> {
+        #[inline]
+        fn eq(&self, other: &u64) -> bool {
+            self.base.entity.id == *other
+        }
+    }
+
+    impl<'a, T: ComponentId> PartialEq<Entity> for Component<'a, T> {
+        #[inline]
+        fn eq(&self, other: &Entity) -> bool {
+            self.base.entity.id == *other
+        }
+    }
+
+    impl<'a, T: ComponentId> PartialEq<Id> for Component<'a, T> {
+        #[inline]
+        fn eq(&self, other: &Id) -> bool {
+            self.base.entity.id == *other
+        }
+    }
+
+    impl<'a, T: ComponentId> PartialEq<EntityView<'a>> for Component<'a, T> {
+        #[inline]
+        fn eq(&self, other: &EntityView<'a>) -> bool {
+            self.base.entity == *other
+        }
+    }
+
+    impl<'a, T: ComponentId> PartialEq<IdView<'a>> for Component<'a, T> {
+        #[inline]
+        fn eq(&self, other: &IdView<'a>) -> bool {
+            self.base.entity == other.id
+        }
+    }
+
+    impl<'a, T: ComponentId> PartialEq<UntypedComponent<'a>> for Component<'a, T> {
+        #[inline]
+        fn eq(&self, other: &UntypedComponent<'a>) -> bool {
+            self.base.entity == other.entity
+        }
+    }
+
+    impl<'a, T: ComponentId> PartialEq for Component<'a, T> {
+        #[inline]
+        fn eq(&self, other: &Self) -> bool {
+            self.base.entity == other.base.entity
+        }
+    }
+
+    impl<'a, T: ComponentId> Eq for Component<'a, T> {}
+
+    impl<'a, T: ComponentId> PartialOrd<Component<'a, T>> for u64 {
+        #[inline]
+        fn partial_cmp(&self, other: &Component<'a, T>) -> Option<std::cmp::Ordering> {
+            self.partial_cmp(&other.base.entity.id)
+        }
+    }
+}
+
+mod ord_operations {
+    use super::*;
+    impl<'a, T: ComponentId> PartialOrd<u64> for Component<'a, T> {
+        #[inline]
+        fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
+            self.base.entity.id.partial_cmp(other)
+        }
+    }
+
+    impl<'a, T: ComponentId> PartialOrd<Entity> for Component<'a, T> {
+        #[inline]
+        fn partial_cmp(&self, other: &Entity) -> Option<std::cmp::Ordering> {
+            self.base.entity.id.partial_cmp(other)
+        }
+    }
+
+    impl<'a, T: ComponentId> PartialOrd<Id> for Component<'a, T> {
+        #[inline]
+        fn partial_cmp(&self, other: &Id) -> Option<std::cmp::Ordering> {
+            self.base.entity.id.partial_cmp(other)
+        }
+    }
+
+    impl<'a, T: ComponentId> PartialOrd<EntityView<'a>> for Component<'a, T> {
+        #[inline]
+        fn partial_cmp(&self, other: &EntityView<'a>) -> Option<std::cmp::Ordering> {
+            self.base.entity.partial_cmp(other)
+        }
+    }
+
+    impl<'a, T: ComponentId> PartialOrd<IdView<'a>> for Component<'a, T> {
+        #[inline]
+        fn partial_cmp(&self, other: &IdView<'a>) -> Option<std::cmp::Ordering> {
+            self.base.entity.partial_cmp(&other.id)
+        }
+    }
+
+    impl<'a, T: ComponentId> PartialOrd<UntypedComponent<'a>> for Component<'a, T> {
+        #[inline]
+        fn partial_cmp(&self, other: &UntypedComponent<'a>) -> Option<std::cmp::Ordering> {
+            self.base.entity.partial_cmp(&other.entity)
+        }
+    }
+
+    impl<'a, T: ComponentId> PartialOrd for Component<'a, T> {
+        #[inline]
+        fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+            Some(self.cmp(other))
+        }
+    }
+
+    impl<'a, T: ComponentId> Ord for Component<'a, T> {
+        #[inline]
+        fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+            self.base.entity.cmp(&other.base.entity)
+        }
+    }
 }
