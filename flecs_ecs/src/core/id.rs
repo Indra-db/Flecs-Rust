@@ -5,7 +5,9 @@ use std::{
 
 use crate::core::*;
 
-/// An Identifier for what could represent either an entity, a component or a pair.
+/// An Identifier for what could represent either what [`Entity`]
+/// as well as a Pair and can have optional id flags
+/// Ids are the things that can be added to an entity.
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(transparent)]
 pub struct Id(pub(crate) u64);
