@@ -3002,8 +3002,8 @@ impl World {
     ///
     /// * C++ API: `world::event`
     #[doc(alias = "world::event")]
-    pub unsafe fn event_id(&self, event: impl Into<Entity>) -> EventBuilder {
-        EventBuilder::new(self, event)
+    pub unsafe fn event_id(&self, event: impl Into<Entity>) -> EventBuilderUntyped {
+        EventBuilderUntyped::new(self, event)
     }
 
     /// Create a new event.
@@ -3020,8 +3020,8 @@ impl World {
     ///
     /// * C++ API: `world::event`
     #[doc(alias = "world::event")]
-    pub fn event<T: ComponentId>(&self) -> EventBuilderTyped<T> {
-        EventBuilderTyped::<T>::new(self)
+    pub fn event<T: ComponentId>(&self) -> EventBuilder<T> {
+        EventBuilder::<T>::new(self)
     }
 }
 

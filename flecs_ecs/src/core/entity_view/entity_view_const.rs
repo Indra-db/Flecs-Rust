@@ -1908,7 +1908,7 @@ impl<'a> EntityView<'a> {
         unsafe { self.emit_id(T::get_id(self)) }
     }
 
-    /// Emit event with payload for entity.
+    /// Emit event with an immutable payload for entity.
     ///
     /// # Type Parameters
     ///
@@ -1918,11 +1918,29 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
-    pub fn emit_payload<T: NotEmptyComponent + ComponentId>(self, payload: &mut T) {
+    pub fn emit_payload<T: NotEmptyComponent + ComponentId>(self, payload: &T) {
         self.world()
             .event::<T>()
             .set_entity_to_emit(self)
             .set_event_data(payload)
+            .emit();
+    }
+
+    /// Emit event with a mutable payload for entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * T - the event type to emit. Type must contain data (not empty struct).
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::emit`
+    #[doc(alias = "entity_view::emit")]
+    pub fn emit_payload_mut<T: NotEmptyComponent + ComponentId>(self, payload: &mut T) {
+        self.world()
+            .event::<T>()
+            .set_entity_to_emit(self)
+            .set_event_data_mut(payload)
             .emit();
     }
 
@@ -1998,6 +2016,38 @@ impl<'a> EntityView<'a> {
             .event::<T>()
             .set_entity_to_emit(self)
             .set_event_data(payload)
+            .enqueue();
+    }
+
+    /// enqueue event with payload for entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * T - the event type to enqueue. Type must contain data (not empty struct).
+    ///
+    /// # Usage:
+    ///
+    #[cfg_attr(doctest, doc = " ````no_test")]
+    /// ```rust
+    /// struct Resize {
+    ///    width: i32,
+    ///   height: i32,
+    /// }
+    ///
+    /// world.defer_begin();
+    /// entity.enqueue_payload(Resize{width: 10, height: 20});
+    /// world.defer_end();
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::enqueue`
+    #[doc(alias = "entity_view::enqueue")]
+    pub fn enqueue_payload_mut<T: NotEmptyComponent + ComponentId>(self, payload: &mut T) {
+        self.world()
+            .event::<T>()
+            .set_entity_to_emit(self)
+            .set_event_data_mut(payload)
             .enqueue();
     }
 }

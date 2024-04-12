@@ -75,11 +75,13 @@ fn main() {
     });
 
     widget.emit::<Click>();
-    widget.emit_payload(&mut Resize {
+
+    widget.emit_payload_mut(&mut Resize {
         width: 100.0,
         height: 200.0,
     });
-    widget.emit_payload(&mut CloseRequested {
+
+    widget.emit_payload(&CloseRequested {
         reason: CloseReason::User,
     });
 
