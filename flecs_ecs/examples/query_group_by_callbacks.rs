@@ -53,8 +53,7 @@ extern "C" fn callback_group_delete(
         world_ref.world().new_entity_from_id(group_id).name()
     );
 
-    //Free data associated with group
-    unsafe { drop(Box::from_raw(ctx as *mut GroupCtx)) };
+    // if you have any data associated with the group, you need to free it
 }
 
 fn main() {
