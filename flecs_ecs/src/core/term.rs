@@ -695,7 +695,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
-    fn select_src_id(&mut self, id: EntityT) -> &mut Self {
+    fn select_src_id(&mut self, id: impl Into<Entity>) -> &mut Self {
         self.setup_src().set_term_id_ptr_mut(id)
     }
 
