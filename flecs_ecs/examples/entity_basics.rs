@@ -22,12 +22,12 @@ fn main() {
     fprintln!(snap, "Bob's position: {:?}", pos);
 
     // Overwrite the value of the Position component
-    bob.set(Position { x: 20.0, y: 30.0 });
+    bob.set(Position { x: 60.0, y: 30.0 });
 
     // Create another named entity
     let alice = world
         .new_entity_named(c"Alice")
-        .set(Position { x: 10.0, y: 20.0 });
+        .set(Position { x: 40.0, y: 20.0 });
 
     // Add a tag after entity is created
     alice.add::<Walking>();
