@@ -2,7 +2,6 @@ use std::ffi::c_char;
 
 use flecs_ecs::core::*;
 use flecs_ecs::sys;
-use sys::EcsIterCppEach;
 
 pub trait IterOperations {
     #[doc(hidden)]
@@ -43,7 +42,7 @@ where
 
             ecs_assert!(
                 {
-                    iter.flags |= EcsIterCppEach;
+                    iter.flags |= sys::EcsIterCppEach;
                     true
                 },
                 "used to assert if using .field() in each functions."
@@ -82,7 +81,7 @@ where
 
             ecs_assert!(
                 {
-                    iter.flags |= EcsIterCppEach;
+                    iter.flags |= sys::EcsIterCppEach;
                     true
                 },
                 "used to assert if using .field() in each functions."
@@ -125,7 +124,7 @@ where
 
             ecs_assert!(
                 {
-                    iter.flags |= EcsIterCppEach;
+                    iter.flags |= sys::EcsIterCppEach;
                     true
                 },
                 "used to assert if using .field() in each functions."

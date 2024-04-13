@@ -1,4 +1,3 @@
-use std::ops::{Index, IndexMut};
 use std::{ffi::CStr, os::raw::c_void, ptr::NonNull};
 
 use crate::core::*;
@@ -433,7 +432,7 @@ impl<'a> Iter<'a> {
             index
         );
         ecs_assert!(
-            !(self.iter.flags & sys::EcsIterCppEach == 0),
+            (self.iter.flags & sys::EcsIterCppEach == 0),
             FlecsErrorCode::InvalidOperation,
             "cannot .field from .each, use .field_at instead",
         );
@@ -466,7 +465,7 @@ impl<'a> Iter<'a> {
     //TODO separate const and non const, see C++ API
     pub fn field<T: ComponentId>(&self, index: i32) -> Option<Field<T>> {
         ecs_assert!(
-            !(self.iter.flags & sys::EcsIterCppEach == 0),
+            (self.iter.flags & sys::EcsIterCppEach == 0),
             FlecsErrorCode::InvalidOperation,
             "cannot .field from .each, use .field_at instead",
         );
@@ -505,7 +504,7 @@ impl<'a> Iter<'a> {
     #[doc(alias = "iter::field")]
     pub fn field_untyped(&self, index: i32) -> FieldUntyped {
         ecs_assert!(
-            !(self.iter.flags & sys::EcsIterCppEach == 0),
+            (self.iter.flags & sys::EcsIterCppEach == 0),
             FlecsErrorCode::InvalidOperation,
             "cannot .field from .each, use .field_at instead",
         );
