@@ -183,9 +183,27 @@ where
     #[doc(alias = "system_builder_i::kind")]
     pub fn kind<Phase>(&mut self) -> &mut Self
     where
-        Phase: ComponentId,
+        Phase: ComponentId + ComponentType<Struct>,
     {
         self.kind_id(Phase::get_id(self.world))
+    }
+
+    /// Specify in which enum phase the system should run
+    ///
+    /// # Arguments
+    ///
+    /// * `phase` - the phase
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `system_builder_i::kind`
+    #[doc(alias = "system_builder_i::kind")]
+    pub fn kind_enum<Phase>(&mut self, phase: Phase) -> &mut Self
+    where
+        Phase: ComponentId + ComponentType<Enum> + CachedEnumData,
+    {
+        let enum_id = phase.get_id_variant(self.world);
+        self.kind_id(enum_id)
     }
 
     /// Specify whether system can run on multiple threads.

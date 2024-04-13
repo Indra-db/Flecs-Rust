@@ -969,6 +969,228 @@ impl<'a> EntityView<'a> {
         unsafe { sys::ecs_get_id(self.world.world_ptr_mut(), *self.id, *component_id.into()) }
     }
 
+    /// Gets mut component.
+    ///
+    /// This operation returns a mutable reference to the component. If a base entity had
+    /// the component, it will be overridden, and the value of the base component
+    /// will be copied to the entity before this function returns.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: The component to get.
+    ///
+    /// # Returns
+    ///
+    /// A mutable ref to the component value.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get_mut`
+    #[doc(alias = "entity_view::get_mut")]
+    #[allow(clippy::mut_from_ref)]
+    pub fn get_mut<T: ComponentId>(self) -> Option<&'a mut T::UnderlyingType> {
+        // This branch will be removed in release mode since this can be determined at compile time.
+        if !T::IS_ENUM {
+            let component_id = T::get_id(self.world);
+
+            ecs_assert!(
+                std::mem::size_of::<T>() != 0,
+                FlecsErrorCode::InvalidParameter,
+                "invalid type: {}",
+                std::any::type_name::<T>()
+            );
+
+            unsafe {
+                (sys::ecs_get_mut_id(self.world.world_ptr_mut(), *self.id(), component_id)
+                    as *mut T::UnderlyingType)
+                    .as_mut()
+            }
+        } else {
+            let component_id: IdT = T::get_id(self.world);
+            let target: IdT = unsafe {
+                sys::ecs_get_target(self.world.world_ptr_mut(), *self.id(), component_id, 0)
+            };
+
+            if target == 0 {
+                // if there is no matching pair for (r,*), try just r
+                unsafe {
+                    (sys::ecs_get_mut_id(self.world.world_ptr_mut(), *self.id(), component_id)
+                        as *mut T::UnderlyingType)
+                        .as_mut()
+                }
+            } else {
+                // get constant value from constant entity
+                let constant_value = unsafe {
+                    (sys::ecs_get_mut_id(self.world.world_ptr_mut(), target, component_id)
+                        as *mut T::UnderlyingType)
+                        .as_mut()
+                };
+
+                ecs_assert!(
+                    constant_value.is_some(),
+                    FlecsErrorCode::InternalError,
+                    "missing enum constant value {}",
+                    std::any::type_name::<T>()
+                );
+
+                constant_value
+            }
+        }
+    }
+
+    pub fn get_callback_mut<T: ComponentId>(
+        self,
+        callback: impl FnOnce(&mut T::UnderlyingType),
+    ) -> bool {
+        if let Some(comp) = self.get_mut::<T>() {
+            callback(comp);
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Get mutable component value or pair (untyped).
+    /// This operation returns a mutable ref to the component. If a base entity had
+    /// the component, it will be overridden, and the value of the base component
+    /// will be copied to the entity before this function returns.
+    ///
+    /// # Arguments
+    ///
+    /// * `comp`: The component to get.
+    ///
+    /// # Returns
+    ///
+    /// Pointer to the component value.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get_mut`
+    #[doc(alias = "entity_view::get_mut")]
+    pub fn get_untyped_mut(self, id: impl IntoId) -> *mut c_void {
+        unsafe { sys::ecs_get_mut_id(self.world.world_ptr_mut(), *self.id(), *id.into()) }
+    }
+
+    /// Get a mutable reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first part of the pair.
+    ///
+    /// # Arguments
+    ///
+    /// * `second`: The second element of the pair.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get_mut`
+    #[doc(alias = "entity_view::get_mut")]
+    pub fn get_pair_first_id_mut<First>(self, second: impl Into<Entity>) -> Option<&'a mut First>
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        let component_id = First::get_id(self.world);
+
+        ecs_assert!(
+            std::mem::size_of::<First>() != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid type: {}",
+            std::any::type_name::<First>()
+        );
+
+        // SAFETY: The pointer is valid because sys::ecs_get_mut_id adds the component if not present, so
+        // it is guaranteed to be valid
+        unsafe {
+            (sys::ecs_get_mut_id(
+                self.world.world_ptr_mut(),
+                *self.id(),
+                ecs_pair(component_id, *second.into()),
+            ) as *mut First)
+                .as_mut()
+        }
+    }
+
+    /// Get a mutable reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first part of the pair.
+    /// * `Second`: The second part of the pair.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get_mut`
+    #[doc(alias = "entity_view::get_mut")]
+    pub fn get_pair_first_mut<First, Second>(&mut self) -> Option<&'a mut First>
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId + ComponentType<Struct>,
+    {
+        self.get_pair_first_id_mut::<First>(Second::get_id(self.world))
+    }
+
+    /// Get a mutable reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Second`: The second element of the pair.
+    ///
+    /// # Arguments
+    ///
+    /// * `first`: The first element of the pair.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get_mut`
+    #[doc(alias = "entity_view::get_mut")]
+    pub fn get_pair_second_id_mut<Second>(self, first: impl Into<Entity>) -> Option<&'a mut Second>
+    where
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        let component_id = Second::get_id(self.world);
+
+        ecs_assert!(
+            std::mem::size_of::<Second>() != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid type: {}",
+            std::any::type_name::<Second>()
+        );
+
+        // SAFETY: The pointer is valid because sys::ecs_get_mut_id adds the component if not present, so
+        // it is guaranteed to be valid
+        unsafe {
+            (sys::ecs_get_mut_id(
+                self.world.world_ptr_mut(),
+                *self.id(),
+                ecs_pair(*first.into(), component_id),
+            ) as *mut Second)
+                .as_mut()
+        }
+    }
+
+    /// Get a mutable reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first element of the pair.
+    /// * `Second`: The second element of the pair.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get_mut`
+    #[doc(alias = "entity_view::get_mut")]
+    pub fn get_pair_second_mut<First, Second>(&mut self) -> Option<&'a mut Second>
+    where
+        First: ComponentId + ComponentType<Struct> + EmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.get_pair_second_id_mut::<Second>(First::get_id(self.world))
+    }
+
     /// Get target for a given pair.
     ///
     /// This operation returns the target for a given pair. The optional
@@ -1296,6 +1518,13 @@ impl<'a> EntityView<'a> {
         let component_id: IdT = T::get_id(self.world);
         // Safety: we know the enum fields are registered because of the previous T::get_id call
         let enum_constant_entity_id = unsafe { constant.get_id_variant_unchecked(self.world) };
+
+        ecs_assert!(
+            *enum_constant_entity_id.id != 0,
+            FlecsErrorCode::InvalidParameter,
+            "Constant was not found in Enum reflection data. Did you mean to use has<E>() instead of has(E)?"
+        );
+
         self.has_id((component_id, enum_constant_entity_id))
     }
 

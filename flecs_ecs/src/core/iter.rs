@@ -425,7 +425,17 @@ impl<'a> Iter<'a> {
     #[doc(alias = "iter::field")]
     // TODO? in C++ API there is a mutable and immutable version of this function
     // Maybe we should create a ColumnView struct that is immutable and use the Column struct for mutable access?
-    pub unsafe fn field_unchecked<T>(&self, index: i32) -> Column<T> {
+    pub unsafe fn field_unchecked<T>(&self, index: i32) -> Field<T> {
+        ecs_assert!(
+            index < self.iter.field_count,
+            FlecsErrorCode::InvalidParameter,
+            index
+        );
+        ecs_assert!(
+            (self.iter.flags & sys::EcsIterCppEach == 0),
+            FlecsErrorCode::InvalidOperation,
+            "cannot .field from .each, use .field_at instead",
+        );
         self.field_internal::<T>(index)
     }
 
@@ -453,7 +463,13 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::field`
     //TODO separate const and non const, see C++ API
-    pub fn field<T: ComponentId>(&self, index: i32) -> Option<Column<T>> {
+    pub fn field<T: ComponentId>(&self, index: i32) -> Option<Field<T>> {
+        ecs_assert!(
+            (self.iter.flags & sys::EcsIterCppEach == 0),
+            FlecsErrorCode::InvalidOperation,
+            "cannot .field from .each, use .field_at instead",
+        );
+
         let id = T::get_id(self.world());
 
         if index > self.iter.field_count {
@@ -480,14 +496,65 @@ impl<'a> Iter<'a> {
     ///
     /// # Returns
     ///
-    /// Returns an `UntypedColumn` object that can be used to access the field data.
+    /// Returns an `FieldUntyped` object that can be used to access the field data.
     ///
     /// # See also
     ///
     /// * C++ API: `iter::field`
     #[doc(alias = "iter::field")]
-    pub fn field_untyped(&self, index: i32) -> UntypedColumn {
+    pub fn field_untyped(&self, index: i32) -> FieldUntyped {
+        ecs_assert!(
+            (self.iter.flags & sys::EcsIterCppEach == 0),
+            FlecsErrorCode::InvalidOperation,
+            "cannot .field from .each, use .field_at instead",
+        );
+        ecs_assert!(
+            index < self.iter.field_count,
+            FlecsErrorCode::InvalidParameter,
+            index
+        );
         self.field_untyped_internal(index)
+    }
+
+    pub fn field_at_untyped(&self, index: i32, row: usize) -> *mut c_void {
+        ecs_assert!(
+            index < self.iter.field_count,
+            FlecsErrorCode::InvalidParameter,
+            index
+        );
+        let field = self.field_untyped_internal(index);
+        unsafe { &mut *(field.array.add(row * field.size)) }
+    }
+
+    pub fn field_at_mut<T>(&self, index: i32, row: usize) -> Option<&mut T>
+    where
+        T: ComponentId,
+    {
+        ecs_assert!(
+            index < self.iter.field_count,
+            FlecsErrorCode::InvalidParameter,
+            index
+        );
+        ecs_assert!(
+            !unsafe { sys::ecs_field_is_readonly(self.iter, index) },
+            FlecsErrorCode::AccessViolation,
+        );
+        if let Some(field) = self.field::<T>(index) {
+            Some(&mut field.slice_components[row])
+        } else {
+            None
+        }
+    }
+
+    pub fn field_at<T>(&self, index: i32, row: usize) -> Option<&T>
+    where
+        T: ComponentId,
+    {
+        if let Some(field) = self.field::<T>(index) {
+            Some(&field.slice_components[row])
+        } else {
+            None
+        }
     }
 
     /// Get readonly access to entity ids.
@@ -574,7 +641,7 @@ impl<'a> Iter<'a> {
         self.iter.group_id
     }
 
-    unsafe fn field_internal<T>(&self, index: i32) -> Column<T> {
+    unsafe fn field_internal<T>(&self, index: i32) -> Field<T> {
         let is_shared = !self.is_self(index);
 
         // If a shared column is retrieved with 'column', there will only be a
@@ -585,10 +652,10 @@ impl<'a> Iter<'a> {
             unsafe { sys::ecs_field_w_size(self.iter, std::mem::size_of::<T>(), index) as *mut T };
         let slice = unsafe { std::slice::from_raw_parts_mut(array, count) };
 
-        Column::<T>::new(slice, is_shared)
+        Field::<T>::new(slice, is_shared)
     }
 
-    fn field_untyped_internal(&self, index: i32) -> UntypedColumn {
+    fn field_untyped_internal(&self, index: i32) -> FieldUntyped {
         let size = unsafe { sys::ecs_field_size(self.iter, index) };
         let is_shared = !self.is_self(index);
 
@@ -602,7 +669,7 @@ impl<'a> Iter<'a> {
             self.count()
         };
 
-        UntypedColumn::new(
+        FieldUntyped::new(
             unsafe { sys::ecs_field_w_size(self.iter, 0, index) as *mut c_void },
             size,
             count,

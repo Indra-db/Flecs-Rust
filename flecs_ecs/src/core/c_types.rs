@@ -308,32 +308,34 @@ pub(crate) const ECS_F32_T: u64 = FLECS_HI_COMPONENT_ID + 93;
 pub(crate) const ECS_F64_T: u64 = FLECS_HI_COMPONENT_ID + 94;
 pub(crate) const ECS_STRING_T: u64 = FLECS_HI_COMPONENT_ID + 95;
 pub(crate) const ECS_ENTITY_T: u64 = FLECS_HI_COMPONENT_ID + 96;
+pub(crate) const ECS_ID_T: u64 = FLECS_HI_COMPONENT_ID + 97;
 
 // Meta module component ids
-pub(crate) const ECS_META_TYPE: u64 = FLECS_HI_COMPONENT_ID + 97;
-pub(crate) const ECS_META_TYPE_SERIALIZED: u64 = FLECS_HI_COMPONENT_ID + 98;
-pub(crate) const ECS_PRIMITIVE: u64 = FLECS_HI_COMPONENT_ID + 99;
-pub(crate) const ECS_ENUM: u64 = FLECS_HI_COMPONENT_ID + 100;
-pub(crate) const ECS_BITMASK: u64 = FLECS_HI_COMPONENT_ID + 101;
-pub(crate) const ECS_MEMBER: u64 = FLECS_HI_COMPONENT_ID + 102;
-pub(crate) const ECS_STRUCT: u64 = FLECS_HI_COMPONENT_ID + 103;
-pub(crate) const ECS_ARRAY: u64 = FLECS_HI_COMPONENT_ID + 104;
-pub(crate) const ECS_VECTOR: u64 = FLECS_HI_COMPONENT_ID + 105;
-pub(crate) const ECS_OPAQUE: u64 = FLECS_HI_COMPONENT_ID + 106;
-pub(crate) const ECS_UNIT: u64 = FLECS_HI_COMPONENT_ID + 107;
-pub(crate) const ECS_UNIT_PREFIX: u64 = FLECS_HI_COMPONENT_ID + 108;
-pub(crate) const ECS_CONSTANT: u64 = FLECS_HI_COMPONENT_ID + 109;
-pub(crate) const ECS_QUANTITY: u64 = FLECS_HI_COMPONENT_ID + 110;
+pub(crate) const ECS_META_TYPE: u64 = FLECS_HI_COMPONENT_ID + 98;
+pub(crate) const ECS_META_TYPE_SERIALIZED: u64 = FLECS_HI_COMPONENT_ID + 99;
+pub(crate) const ECS_PRIMITIVE: u64 = FLECS_HI_COMPONENT_ID + 100;
+pub(crate) const ECS_ENUM: u64 = FLECS_HI_COMPONENT_ID + 101;
+pub(crate) const ECS_BITMASK: u64 = FLECS_HI_COMPONENT_ID + 102;
+pub(crate) const ECS_MEMBER: u64 = FLECS_HI_COMPONENT_ID + 103;
+pub(crate) const ECS_MEMBER_RANGES: u64 = FLECS_HI_COMPONENT_ID + 104;
+pub(crate) const ECS_STRUCT: u64 = FLECS_HI_COMPONENT_ID + 105;
+pub(crate) const ECS_ARRAY: u64 = FLECS_HI_COMPONENT_ID + 106;
+pub(crate) const ECS_VECTOR: u64 = FLECS_HI_COMPONENT_ID + 107;
+pub(crate) const ECS_OPAQUE: u64 = FLECS_HI_COMPONENT_ID + 108;
+pub(crate) const ECS_UNIT: u64 = FLECS_HI_COMPONENT_ID + 109;
+pub(crate) const ECS_UNIT_PREFIX: u64 = FLECS_HI_COMPONENT_ID + 110;
+pub(crate) const ECS_CONSTANT: u64 = FLECS_HI_COMPONENT_ID + 111;
+pub(crate) const ECS_QUANTITY: u64 = FLECS_HI_COMPONENT_ID + 112;
 
 // Doc module components
-pub(crate) const ECS_DOC_DESCRIPTION: u64 = FLECS_HI_COMPONENT_ID + 111;
-pub(crate) const ECS_DOC_BRIEF: u64 = FLECS_HI_COMPONENT_ID + 112;
-pub(crate) const ECS_DOC_DETAIL: u64 = FLECS_HI_COMPONENT_ID + 113;
-pub(crate) const ECS_DOC_LINK: u64 = FLECS_HI_COMPONENT_ID + 114;
-pub(crate) const ECS_DOC_COLOR: u64 = FLECS_HI_COMPONENT_ID + 115;
+pub(crate) const ECS_DOC_DESCRIPTION: u64 = FLECS_HI_COMPONENT_ID + 113;
+pub(crate) const ECS_DOC_BRIEF: u64 = FLECS_HI_COMPONENT_ID + 114;
+pub(crate) const ECS_DOC_DETAIL: u64 = FLECS_HI_COMPONENT_ID + 115;
+pub(crate) const ECS_DOC_LINK: u64 = FLECS_HI_COMPONENT_ID + 116;
+pub(crate) const ECS_DOC_COLOR: u64 = FLECS_HI_COMPONENT_ID + 117;
 
 // REST module components
-pub(crate) const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 116;
+pub(crate) const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 118;
 
 pub type Identifier = sys::EcsIdentifier;
 pub type Poly = sys::EcsPoly;

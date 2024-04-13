@@ -54,6 +54,16 @@ pub mod private {
         where
             Func: FnMut(T::TupleType<'_>),
         {
+            ecs_assert!(
+                {
+                    unsafe {
+                        (*iter).flags |= sys::EcsIterCppEach;
+                    }
+                    true
+                },
+                "used to assert if using .field() in each functions."
+            );
+
             let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
             let each = (*ctx).each.unwrap();
             let each = &mut *(each as *mut Func);
@@ -91,6 +101,16 @@ pub mod private {
         where
             Func: FnMut(&mut EntityView, T::TupleType<'_>),
         {
+            ecs_assert!(
+                {
+                    unsafe {
+                        (*iter).flags |= sys::EcsIterCppEach;
+                    }
+                    true
+                },
+                "used to assert if using .field() in each functions."
+            );
+
             let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
             let each_entity = (*ctx).each_entity.unwrap();
             let each_entity = &mut *(each_entity as *mut Func);
@@ -130,6 +150,16 @@ pub mod private {
         where
             Func: FnMut(&mut Iter, usize, T::TupleType<'_>),
         {
+            ecs_assert!(
+                {
+                    unsafe {
+                        (*iter).flags |= sys::EcsIterCppEach;
+                    }
+                    true
+                },
+                "used to assert if using .field() in each functions."
+            );
+
             let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
             let each_iter = (*ctx).each_iter.unwrap();
             let each_iter = &mut *(each_iter as *mut Func);

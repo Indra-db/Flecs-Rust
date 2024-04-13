@@ -134,9 +134,15 @@ impl<'a> EntityView<'a> {
         enum_value: T,
     ) -> Self {
         let world = self.world;
-        let id = T::get_id(world);
+        let first = T::get_id(world);
         // SAFETY: we know that the enum_value is a valid because of the T::get_id call
-        self.add_id((id, unsafe { enum_value.get_id_variant_unchecked(world) }))
+        let second = unsafe { enum_value.get_id_variant_unchecked(world) };
+        ecs_assert!(
+            second != 0,
+            FlecsErrorCode::InvalidParameter,
+            "Component was not found in reflection data."
+        );
+        self.add_id((first, second))
     }
 
     /// Conditional add.
@@ -496,9 +502,31 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::depends_on`
     #[doc(alias = "entity_builder::depends_on")]
-    pub fn depends_on<T: ComponentId>(self) -> Self {
+    pub fn depends_on<T: ComponentId + ComponentType<Struct>>(self) -> Self {
         let world = self.world;
         self.depends_on_id(T::get_id(world))
+    }
+
+    /// Shortcut for add(Dependency, entity) for Enums.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: The enum type.
+    ///
+    /// # Arguments
+    ///
+    /// * `enum_value`: The enum constant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_builder::depends_on`
+    #[doc(alias = "entity_builder::depends_on")]
+    pub fn depends_on_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
+        self,
+        enum_value: T,
+    ) -> Self {
+        let world = self.world;
+        self.depends_on_id(enum_value.get_id_variant(world))
     }
 
     /// Shortcut for add(SlotOf, entity).
@@ -1336,96 +1364,10 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `entity::get_mut`
-    #[doc(alias = "entity::get_mut")]
-    #[allow(clippy::mut_from_ref)]
-    pub fn get_mut<T: ComponentId>(self) -> &'a mut T::UnderlyingType {
-        // This branch will be removed in release mode since this can be determined at compile time.
-        if !T::IS_ENUM {
-            let component_id = T::get_id(self.world);
-
-            ecs_assert!(
-                std::mem::size_of::<T>() != 0,
-                FlecsErrorCode::InvalidParameter,
-                "invalid type: {}",
-                std::any::type_name::<T>()
-            );
-
-            unsafe {
-                &mut *(sys::ecs_get_mut_id(self.world.world_ptr_mut(), *self.id(), component_id)
-                    as *mut T::UnderlyingType)
-            }
-        } else {
-            let component_id: IdT = T::get_id(self.world);
-            let target: IdT = unsafe {
-                sys::ecs_get_target(self.world.world_ptr_mut(), *self.id(), component_id, 0)
-            };
-
-            if target == 0 {
-                // if there is no matching pair for (r,*), try just r
-                unsafe {
-                    &mut *(sys::ecs_get_mut_id(self.world.world_ptr_mut(), *self.id(), component_id)
-                        as *mut T::UnderlyingType)
-                }
-            } else {
-                // get constant value from constant entity
-                let constant_value = unsafe {
-                    sys::ecs_get_mut_id(self.world.world_ptr_mut(), target, component_id)
-                        as *mut T::UnderlyingType
-                };
-
-                ecs_assert!(
-                    !constant_value.is_null(),
-                    FlecsErrorCode::InternalError,
-                    "missing enum constant value {}",
-                    std::any::type_name::<T>()
-                );
-
-                unsafe { &mut *constant_value }
-            }
-        }
-    }
-
-    pub fn get_callback_mut<T: ComponentId>(
-        self,
-        callback: impl FnOnce(&mut T::UnderlyingType),
-    ) -> bool {
-        if self.has::<T>() {
-            let comp = self.get_mut::<T>();
-            callback(comp);
-            true
-        } else {
-            false
-        }
-    }
-
-    /// Gets mut component unchecked
-    ///
-    /// This operation returns a mutable reference to the component. If the entity
-    /// did not yet have the component, it will be added. If a base entity had
-    /// the component, it will be overridden, and the value of the base component
-    /// will be copied to the entity before this function returns.
-    ///
-    /// # Safety
-    ///
-    /// If the entity does not have the component, this will cause a panic
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: The component to get.
-    ///
-    /// # Returns
-    ///
-    /// A mutable ref to the component value.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::get_mut`
-    #[doc(hidden)] // flecs 3.2.12 yet to be released
+    /// * C++ API: `entity::ensure`
     #[doc(alias = "entity::ensure")]
-    pub unsafe fn ensure_mut_unchecked<T: ComponentId + ComponentType<Struct>>(
-        &mut self,
-    ) -> &mut T::UnderlyingType {
+    #[allow(clippy::mut_from_ref)]
+    pub fn ensure_mut<T: ComponentId>(self) -> &'a mut T::UnderlyingType {
         let component_id = T::get_id(self.world);
 
         ecs_assert!(
@@ -1435,16 +1377,18 @@ impl<'a> EntityView<'a> {
             std::any::type_name::<T>()
         );
 
-        let ptr = sys::ecs_get_mut_id(self.world.world_ptr_mut(), *self.id(), component_id)
-            as *mut T::UnderlyingType;
-        ecs_assert!(
-            !ptr.is_null(),
-            FlecsErrorCode::InternalError,
-            "missing component {}",
-            std::any::type_name::<T>()
-        );
+        unsafe {
+            &mut *(sys::ecs_ensure_id(self.world.world_ptr_mut(), *self.id(), component_id)
+                as *mut T::UnderlyingType)
+        }
+    }
 
-        &mut *ptr
+    pub fn ensure_callback_mut<T: ComponentId>(
+        self,
+        callback: impl FnOnce(&mut T::UnderlyingType),
+    ) {
+        let comp = self.ensure_mut::<T>();
+        callback(comp);
     }
 
     /// Get mutable component value or pair (untyped).
@@ -1463,11 +1407,11 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `entity::get_mut`
-    #[doc(alias = "entity::get_mut")]
-    pub fn get_untyped_mut(self, id: impl IntoId) -> *mut c_void {
+    /// * C++ API: `entity::ensure`
+    #[doc(alias = "entity::ensure")]
+    pub fn ensure_untyped_mut(self, id: impl IntoId) -> *mut c_void {
         unsafe {
-            sys::ecs_get_mut_id(self.world.world_ptr_mut(), *self.id(), *id.into()) as *mut c_void
+            sys::ecs_ensure_id(self.world.world_ptr_mut(), *self.id(), *id.into()) as *mut c_void
         }
     }
 
@@ -1484,9 +1428,9 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `entity::get_mut`
-    #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_first_id_mut<First>(self, second: impl Into<Entity>) -> &'a mut First
+    /// * C++ API: `entity::ensure`
+    #[doc(alias = "entity::ensure")]
+    pub fn ensure_pair_first_id_mut<First>(self, second: impl Into<Entity>) -> &'a mut First
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1499,10 +1443,10 @@ impl<'a> EntityView<'a> {
             std::any::type_name::<First>()
         );
 
-        // SAFETY: The pointer is valid because sys::ecs_get_mut_id adds the component if not present, so
+        // SAFETY: The pointer is valid because sys::ecs_ensure_id adds the component if not present, so
         // it is guaranteed to be valid
         unsafe {
-            &mut *(sys::ecs_get_mut_id(
+            &mut *(sys::ecs_ensure_id(
                 self.world.world_ptr_mut(),
                 *self.id(),
                 ecs_pair(component_id, *second.into()),
@@ -1520,14 +1464,14 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `entity::get_mut`
-    #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_first_mut<First, Second>(&mut self) -> &'a mut First
+    /// * C++ API: `entity::ensure`
+    #[doc(alias = "entity::ensure")]
+    pub fn ensure_pair_first_mut<First, Second>(&mut self) -> &'a mut First
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId + ComponentType<Struct>,
     {
-        self.get_pair_first_id_mut::<First>(Second::get_id(self.world))
+        self.ensure_pair_first_id_mut::<First>(Second::get_id(self.world))
     }
 
     /// Get a mutable reference for the second element of a pair.
@@ -1543,9 +1487,9 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `entity::get_mut`
-    #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_second_id_mut<Second>(self, first: impl Into<Entity>) -> &'a mut Second
+    /// * C++ API: `entity::ensure`
+    #[doc(alias = "entity::ensure")]
+    pub fn ensure_pair_second_id_mut<Second>(self, first: impl Into<Entity>) -> &'a mut Second
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1558,10 +1502,10 @@ impl<'a> EntityView<'a> {
             std::any::type_name::<Second>()
         );
 
-        // SAFETY: The pointer is valid because sys::ecs_get_mut_id adds the component if not present, so
+        // SAFETY: The pointer is valid because sys::ecs_ensure_id adds the component if not present, so
         // it is guaranteed to be valid
         unsafe {
-            &mut *(sys::ecs_get_mut_id(
+            &mut *(sys::ecs_ensure_id(
                 self.world.world_ptr_mut(),
                 *self.id(),
                 ecs_pair(*first.into(), component_id),
@@ -1579,14 +1523,14 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `entity::get_mut`
-    #[doc(alias = "entity::get_mut")]
-    pub fn get_pair_second_mut<First, Second>(&mut self) -> &'a mut Second
+    /// * C++ API: `entity::ensure`
+    #[doc(alias = "entity::ensure")]
+    pub fn ensure_pair_second_mut<First, Second>(&mut self) -> &'a mut Second
     where
         First: ComponentId + ComponentType<Struct> + EmptyComponent,
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
-        self.get_pair_second_id_mut::<Second>(First::get_id(self.world))
+        self.ensure_pair_second_id_mut::<Second>(First::get_id(self.world))
     }
 
     /// Signal that component or pair was modified.

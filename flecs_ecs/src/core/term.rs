@@ -929,7 +929,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     }
 
     /// Short for `inout_stage(flecs::InOut`.
-    /// Use when system uses `get_mut`
+    /// Use when system uses `ensure`
     ///
     /// # See also
     ///
