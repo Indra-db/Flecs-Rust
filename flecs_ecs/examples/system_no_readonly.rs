@@ -27,7 +27,7 @@ fn main() {
     let world = World::new();
 
     // Create query to find all waiters without a plate
-    let q_waiter = world
+    let mut q_waiter = world
         .query::<&Waiter>()
         .without_pair::<&Plate, flecs::Wildcard>()
         .build();
@@ -44,7 +44,7 @@ fn main() {
                 let plate = it.entity(i);
 
                 // Find an available waiter
-                if let Some(waiter) = q_waiter.clone().first() {
+                if let Some(waiter) = q_waiter.first() {
                     // An available waiter was found, assign a plate to it so
                     // that the next plate will no longer find it.
                     // The defer_suspend function temporarily suspends deferring
