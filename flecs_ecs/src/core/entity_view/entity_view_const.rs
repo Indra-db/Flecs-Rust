@@ -1876,7 +1876,7 @@ impl<'a> EntityView<'a> {
     /// }
     ///
     /// world.defer_begin();
-    /// entity.enqueue_payload(Resize{width: 10, height: 20});
+    /// entity.enqueue_payload(&Resize{width: 10, height: 20});
     /// world.defer_end();
     /// ```
     ///
@@ -1884,7 +1884,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
-    pub fn enqueue_payload<T: NotEmptyComponent + ComponentId>(self, payload: &mut T) {
+    pub fn enqueue_payload<T: NotEmptyComponent + ComponentId>(self, payload: &T) {
         self.world()
             .event::<T>()
             .set_entity_to_emit(self)
@@ -1908,7 +1908,7 @@ impl<'a> EntityView<'a> {
     /// }
     ///
     /// world.defer_begin();
-    /// entity.enqueue_payload(Resize{width: 10, height: 20});
+    /// entity.enqueue_payload(&mut Resize{width: 10, height: 20});
     /// world.defer_end();
     /// ```
     ///
