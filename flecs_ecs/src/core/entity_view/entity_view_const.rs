@@ -1067,8 +1067,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get_mut`
     #[doc(alias = "entity_view::get_mut")]
-    pub fn get_untyped_mut(self, id: impl IntoId) -> Option<&'a mut c_void> {
-        unsafe { sys::ecs_get_mut_id(self.world.world_ptr_mut(), *self.id(), *id.into()).as_mut() }
+    pub fn get_untyped_mut(self, id: impl IntoId) -> *mut c_void {
+        unsafe { sys::ecs_get_mut_id(self.world.world_ptr_mut(), *self.id(), *id.into()) }
     }
 
     /// Get a mutable reference for the first element of a pair

@@ -1387,7 +1387,7 @@ impl<'a> EntityView<'a> {
         self,
         callback: impl FnOnce(&mut T::UnderlyingType),
     ) {
-        let comp = self.get_mut::<T>();
+        let comp = self.ensure_mut::<T>();
         callback(comp);
     }
 
