@@ -41,10 +41,10 @@ extern "C" fn callback_group_create(
 extern "C" fn callback_group_delete(
     world: *mut WorldT,
     group_id: u64,
-    ctx: *mut c_void,
-    _group_by_arg: *mut c_void,
+    _ctx: *mut c_void,
+    group_by_ctx: *mut c_void,
 ) {
-    let snap = unsafe { &mut *(ctx as *mut Snap) };
+    let snap = unsafe { &mut *(group_by_ctx as *mut Snap) };
 
     let world_ref = unsafe { WorldRef::from_ptr(world) };
     fprintln!(
@@ -54,6 +54,7 @@ extern "C" fn callback_group_delete(
     );
 
     // if you have any data associated with the group, you need to free it
+    // or use the callback group_by_ctx where you pass a context to the callback
 }
 
 fn main() {
