@@ -11,12 +11,12 @@ use crate::core::*;
 ///
 /// * `T`: The type of the column.
 
-pub struct Column<'a, T> {
-    slice_components: &'a mut [T],
-    is_shared: bool,
+pub struct Field<'a, T> {
+    pub(crate) slice_components: &'a mut [T],
+    pub(crate) is_shared: bool,
 }
 
-impl<'a, T> Column<'a, T> {
+impl<'a, T> Field<'a, T> {
     /// Create a new column from component array.
     ///
     /// # Arguments
@@ -26,8 +26,8 @@ impl<'a, T> Column<'a, T> {
     ///
     /// # See also
     ///
-    /// * C++ API: `column::column`
-    #[doc(alias = "column::column")]
+    /// * C++ API: `field::field`
+    #[doc(alias = "field::field")]
     pub fn new(slice_components: &'a mut [T], is_shared: bool) -> Self {
         Self {
             slice_components,
@@ -41,7 +41,7 @@ impl<'a, T> Column<'a, T> {
     }
 }
 
-impl<'a, T: ComponentId> Deref for Column<'a, T> {
+impl<'a, T: ComponentId> Deref for Field<'a, T> {
     type Target = [T];
 
     fn deref(&self) -> &Self::Target {
@@ -49,17 +49,17 @@ impl<'a, T: ComponentId> Deref for Column<'a, T> {
     }
 }
 
-impl<'a, T: ComponentId> DerefMut for Column<'a, T> {
+impl<'a, T: ComponentId> DerefMut for Field<'a, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.slice_components
     }
 }
 
-pub struct UntypedColumn {
-    array: *mut c_void,
-    size: usize,
-    count: usize,
-    is_shared: bool,
+pub struct FieldUntyped {
+    pub(crate) array: *mut c_void,
+    pub(crate) size: usize,
+    pub(crate) count: usize,
+    pub(crate) is_shared: bool,
 }
 
 /// Unsafe wrapper class around a column.
@@ -75,8 +75,8 @@ pub struct UntypedColumn {
 ///
 /// # See also
 ///
-/// * C++ API: `untyped_column::untyped_column`
-impl UntypedColumn {
+/// * C++ API: `untyped_field::untyped_column`
+impl FieldUntyped {
     pub(crate) fn new(array: *mut c_void, size: usize, count: usize, is_shared: bool) -> Self {
         Self {
             array,
@@ -87,7 +87,7 @@ impl UntypedColumn {
     }
 }
 
-impl Index<usize> for UntypedColumn {
+impl Index<usize> for FieldUntyped {
     type Output = c_void;
 
     /// # Returns
@@ -116,7 +116,7 @@ impl Index<usize> for UntypedColumn {
     }
 }
 
-impl IndexMut<usize> for UntypedColumn {
+impl IndexMut<usize> for FieldUntyped {
     /// # Returns
     ///
     /// Returns element in component array

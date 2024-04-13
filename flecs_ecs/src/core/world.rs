@@ -201,10 +201,10 @@ impl World {
         }
     }
 
-    /// Begin staging.
+    /// Begin readonly mode.
     ///
-    /// When an application does not use `sys::ecs_progress` to control the main loop, it
-    /// can still use Flecs features such as the defer queue. To stage changes, this function
+    /// When an application does not use `sys::ecs_progress` to control the main loop,
+    /// it can still use Flecs features such as the defer queue. To stage changes, this function
     /// must be called after `sys::ecs_frame_begin`.
     ///
     /// A call to `sys::ecs_readonly_begin` must be followed by a call to `sys::ecs_readonly_end`.
@@ -216,21 +216,54 @@ impl World {
     /// While the world is in staging mode, no structural changes (add/remove/...) can
     /// be made to the world itself. Operations must be executed on a stage instead (see `sys::ecs_get_stage`).
     ///
-    /// ## safety
-    /// This function should only be ran from the main thread.
+    /// Readonly mode is a stronger version of deferred mode. In deferred mode,
+    /// ECS operations such as add/remove/set/delete etc. are added to a command
+    /// queue to be executed later. In readonly mode, operations that could break
+    /// scheduler logic (such as creating systems, queries) are also disallowed.
+    ///
+    /// Readonly mode itself has a single-threaded and a multi-threaded mode. In
+    /// single-threaded mode certain mutations on the world are still allowed, for example:
+    /// - Entity liveliness operations (such as new, make_alive), so that systems are
+    ///   able to create new entities.
+    /// - Implicit component registration, so that this works from systems.
+    /// - Mutations to supporting data structures for the evaluation of uncached
+    ///   queries (filters), so that these can be created on the fly.
+    ///
+    /// These mutations are safe in single-threaded applications, but for
+    /// multi-threaded applications, the world needs to be entirely immutable. For this
+    /// purpose, multi-threaded readonly mode exists, which disallows all mutations on
+    /// the world.
+    ///
+    /// While in readonly mode, applications can still enqueue ECS operations on a
+    /// stage. Stages are managed automatically when using the pipeline addon and
+    /// `sys::ecs_progress()`, but they can also be configured manually.
+    ///
+    /// Number of stages typically corresponds with number of threads
+    ///
+    /// When an attempt is made to perform an operation on a world in readonly mode,
+    /// the code will throw an assert saying that the world is in readonly mode.
+    ///
+    /// A call to `readonly_begin` must be followed up with `readonly_end()`.
+    /// When `readonly_end()` is called, all enqueued commands from configured
+    /// stages are merged back into the world. Calls to `readonly_begin()` and
+    /// `readonly_end()` should always happen from a context where the code has
+    /// exclusive access to the world. The functions themselves are not thread safe.
+    ///
+    /// ## Safety
+    /// This function should only be run from the main thread.
     ///
     /// # Returns
-    /// Whether the world is currently staged.
+    /// Whether the world is currently staged and whether it is in readonly mode.
     ///
     /// # See also
     ///
     /// * C++ API: `world::readonly_begin`
     #[doc(alias = "world::readonly_begin")]
-    pub fn readonly_begin(&self) -> bool {
-        unsafe { sys::ecs_readonly_begin(self.raw_world.as_ptr()) }
+    pub fn readonly_begin(&self, multi_threaded: bool) -> bool {
+        unsafe { sys::ecs_readonly_begin(self.raw_world.as_ptr(), multi_threaded) }
     }
 
-    /// End staging.
+    /// End readonly mode.
     ///
     /// Leaves staging mode. After this operation, the world may be directly mutated again.
     /// By default, this operation also merges data back into the world, unless auto-merging
@@ -1006,29 +1039,17 @@ impl World {
     ///
     /// # See also
     ///
-    /// * C++ API: `world::get_mut`
-    #[doc(alias = "world::get_mut")]
+    /// * C++ API: `world::ensure`
+    #[doc(alias = "world::ensure")]
     #[inline(always)]
     #[allow(clippy::mut_from_ref)]
-    pub fn get_mut<T>(&self) -> &mut T
+    pub fn ensure_mut<T>(&self) -> &mut T::UnderlyingType
     where
-        T: ComponentId + ComponentType<Struct>,
+        T: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let component_id = T::get_id(self);
         let singleton_entity = EntityView::new_from(self, component_id);
-
-        ecs_assert!(
-            std::mem::size_of::<T>() != 0,
-            FlecsErrorCode::InvalidParameter,
-            "invalid type: {}",
-            std::any::type_name::<T>()
-        );
-        // SAFETY: The pointer is valid because sys::ecs_get_mut_id adds the component if not present, so
-        // it is guaranteed to be valid
-        unsafe {
-            &mut *(sys::ecs_get_mut_id(self.raw_world.as_ptr(), *singleton_entity.id, component_id)
-                as *mut T)
-        }
+        singleton_entity.ensure_mut::<T>()
     }
 
     /// Get a reference to a singleton component.
@@ -1158,8 +1179,6 @@ impl World {
             std::any::type_name::<First>()
         );
 
-        // SAFETY: The pointer is valid because sys::ecs_get_mut_id adds the component if not present, so
-        // it is guaranteed to be valid
         unsafe {
             (sys::ecs_get_id(
                 self.raw_world.as_ptr(),
@@ -1187,7 +1206,7 @@ impl World {
     #[doc(alias = "world::get_mut")]
     #[allow(clippy::mut_from_ref)]
     #[inline(always)]
-    pub fn get_pair_first_id_mut<First>(&self, second: impl Into<Entity>) -> &mut First
+    pub fn get_pair_first_id_mut<First>(&self, second: impl Into<Entity>) -> Option<&mut First>
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1200,14 +1219,13 @@ impl World {
             std::any::type_name::<First>()
         );
 
-        // SAFETY: The pointer is valid because sys::ecs_get_mut_id adds the component if not present, so
-        // it is guaranteed to be valid
         unsafe {
-            &mut *(sys::ecs_get_mut_id(
+            (sys::ecs_get_mut_id(
                 self.raw_world.as_ptr(),
                 component_id,
                 ecs_pair(component_id, *second.into()),
             ) as *mut First)
+                .as_mut()
         }
     }
 
@@ -1247,7 +1265,7 @@ impl World {
     ///
     /// * C++ API: `world::get_mut`
     #[doc(alias = "world::get_mut")]
-    pub fn get_pair_first_mut<First, Second>(&self) -> &mut First
+    pub fn get_pair_first_mut<First, Second>(&self) -> Option<&mut First>
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId + ComponentType<Struct>,
@@ -1314,7 +1332,7 @@ impl World {
     #[doc(alias = "world::get_mut")]
     #[inline(always)]
     #[allow(clippy::mut_from_ref)]
-    pub fn get_pair_second_id_mut<Second>(&self, first: impl Into<Entity>) -> &mut Second
+    pub fn get_pair_second_id_mut<Second>(&self, first: impl Into<Entity>) -> Option<&mut Second>
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1327,14 +1345,13 @@ impl World {
             std::any::type_name::<Second>()
         );
 
-        // SAFETY: The pointer is valid because sys::ecs_get_mut_id adds the component if not present, so
-        // it is guaranteed to be valid
         unsafe {
-            &mut *(sys::ecs_get_mut_id(
+            (sys::ecs_get_mut_id(
                 self.raw_world.as_ptr(),
                 component_id,
                 ecs_pair(*first.into(), component_id),
             ) as *mut Second)
+                .as_mut()
         }
     }
 
@@ -1373,7 +1390,7 @@ impl World {
     ///
     /// * C++ API: `world::get_mut`
     #[doc(alias = "world::get_mut")]
-    pub fn get_pair_second_mut<First, Second>(&self) -> &mut Second
+    pub fn get_pair_second_mut<First, Second>(&self) -> Option<&mut Second>
     where
         First: ComponentId + ComponentType<Struct>,
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
@@ -2538,11 +2555,11 @@ impl World {
     ///
     /// # See also
     ///
-    /// * C++ API: `world::ensure`
-    #[doc(alias = "world::ensure")]
+    /// * C++ API: `world::make_alive`
+    #[doc(alias = "world::make_alive")]
     pub fn ensure(&self, entity: impl Into<Entity>) -> EntityView {
         let entity = *entity.into();
-        unsafe { sys::ecs_ensure(self.raw_world.as_ptr(), entity) };
+        unsafe { sys::ecs_make_alive(self.raw_world.as_ptr(), entity) };
         EntityView::new_from(self, entity)
     }
 

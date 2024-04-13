@@ -121,6 +121,7 @@ flecs_disable_build_c = ["flecs_ecs_sys/disable_build_c"]
 
 
 default = [
+    "flecs_regenerate_binding_c",
     "flecs_module",
     "flecs_parser",
     "flecs_plecs",

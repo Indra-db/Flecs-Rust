@@ -2,6 +2,7 @@ use std::ffi::c_char;
 
 use flecs_ecs::core::*;
 use flecs_ecs::sys;
+use sys::EcsIterCppEach;
 
 pub trait IterOperations {
     #[doc(hidden)]
@@ -40,6 +41,14 @@ where
         unsafe {
             let mut iter = self.retrieve_iter();
 
+            ecs_assert!(
+                {
+                    iter.flags |= EcsIterCppEach;
+                    true
+                },
+                "used to assert if using .field() in each functions."
+            );
+
             while self.iter_next(&mut iter) {
                 let mut components_data = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
@@ -70,6 +79,15 @@ where
     fn each_entity(&self, mut func: impl FnMut(&mut EntityView, T::TupleType<'_>)) {
         unsafe {
             let mut iter = self.retrieve_iter();
+
+            ecs_assert!(
+                {
+                    iter.flags |= EcsIterCppEach;
+                    true
+                },
+                "used to assert if using .field() in each functions."
+            );
+
             let world = self.world_ptr_mut();
             while self.iter_next(&mut iter) {
                 let mut components_data = T::create_ptrs(&iter);
@@ -104,6 +122,15 @@ where
     fn each_iter(&self, mut func: impl FnMut(&mut Iter, usize, T::TupleType<'_>)) {
         unsafe {
             let mut iter = self.retrieve_iter();
+
+            ecs_assert!(
+                {
+                    iter.flags |= EcsIterCppEach;
+                    true
+                },
+                "used to assert if using .field() in each functions."
+            );
+
             let world = self.world_ptr_mut();
 
             while self.iter_next(&mut iter) {
