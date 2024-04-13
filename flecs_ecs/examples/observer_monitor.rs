@@ -18,7 +18,7 @@ fn main() {
 
     // Create observer for custom event
     world
-        .observer_builder::<(&Position, &Velocity)>()
+        .observer::<(&Position, &Velocity)>()
         .add_event::<flecs::Monitor>()
         .on_each_iter(|it, index, (_pos, _vel)| {
             if it.event() == flecs::OnAdd::ID {

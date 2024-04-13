@@ -345,7 +345,7 @@ fn entity_get_generic_mut() {
 
     let mut invoked = false;
     world
-        .observer_builder::<&Position>()
+        .observer::<&Position>()
         .add_event::<flecs::OnSet>()
         .on_each(|_| {
             invoked = true;

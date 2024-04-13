@@ -3042,7 +3042,7 @@ impl World {
     ///
     /// * C++ API: `world::observer`
     #[doc(alias = "world::observer")]
-    pub fn observer<'a>(&'a self, e: EntityView<'a>) -> Observer<'a> {
+    pub fn new_observer<'a>(&'a self, e: EntityView<'a>) -> Observer<'a> {
         Observer::new_from_existing(self, e)
     }
 
@@ -3060,7 +3060,7 @@ impl World {
     ///
     /// * C++ API: `world::observer`
     #[doc(alias = "world::observer")]
-    pub fn observer_builder<Components>(&self) -> ObserverBuilder<Components>
+    pub fn observer<Components>(&self) -> ObserverBuilder<Components>
     where
         Components: Iterable,
     {
@@ -3085,10 +3085,7 @@ impl World {
     ///
     /// * C++ API: `world::observer`
     #[doc(alias = "world::observer")]
-    pub fn observer_builder_named<'a, Components>(
-        &'a self,
-        name: &CStr,
-    ) -> ObserverBuilder<'a, Components>
+    pub fn observer_named<'a, Components>(&'a self, name: &CStr) -> ObserverBuilder<'a, Components>
     where
         Components: Iterable,
     {

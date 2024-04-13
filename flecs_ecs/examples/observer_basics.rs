@@ -9,7 +9,7 @@ fn main() {
 
     // Create an observer for three events
     world
-        .observer_builder::<&Position>()
+        .observer::<&Position>()
         .add_event::<flecs::OnAdd>() //or .add_event_id(OnAdd::ID)
         .add_event::<flecs::OnRemove>()
         .add_event::<flecs::OnSet>()

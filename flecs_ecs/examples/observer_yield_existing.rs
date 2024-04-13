@@ -24,7 +24,7 @@ fn main() {
 
     // Create an observer for three events
     world
-        .observer_builder::<&Position>()
+        .observer::<&Position>()
         .add_event::<flecs::OnSet>()
         .yield_existing(true)
         .on_each_iter(|it, index, pos| {

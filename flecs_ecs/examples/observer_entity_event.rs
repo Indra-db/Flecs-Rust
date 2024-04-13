@@ -40,7 +40,7 @@ fn main() {
 
     // Create an observer for the CloseRequested event to listen to any entity.
     world
-        .observer_builder::<()>()
+        .observer::<()>()
         .add_event::<CloseRequested>()
         .with_type::<&flecs::Any>()
         .on_each_iter(|it, _index, _| {

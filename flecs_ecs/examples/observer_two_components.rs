@@ -13,7 +13,7 @@ fn main() {
 
     // Create observer for custom event
     world
-        .observer_builder::<(&Position, &Velocity)>()
+        .observer::<(&Position, &Velocity)>()
         .add_event::<flecs::OnSet>()
         .on_each_iter(|it, index, (pos, vel)| {
             fprintln!(

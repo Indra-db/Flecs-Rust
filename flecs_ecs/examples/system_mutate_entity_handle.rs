@@ -67,7 +67,7 @@ fn main() {
 
     // Observer that triggers when entity is actually deleted
     world
-        .observer_builder::<&Tag>()
+        .observer::<&Tag>()
         .add_event::<flecs::OnRemove>()
         .on_each_entity(|e, _tag| {
             fprintln!(snap, "Expired: {} actually deleted", e.name());

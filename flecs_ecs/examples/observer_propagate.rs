@@ -20,7 +20,7 @@ fn main() {
 
     // Create observer that listens for events from both self and parent
     world
-        .observer_builder::<(&Position, &Position)>()
+        .observer::<(&Position, &Position)>()
         .term_at(2)
         .parent()
         .add_event::<flecs::OnSet>()
