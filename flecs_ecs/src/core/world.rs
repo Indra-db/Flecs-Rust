@@ -223,7 +223,7 @@ impl World {
     ///
     /// Readonly mode itself has a single-threaded and a multi-threaded mode. In
     /// single-threaded mode certain mutations on the world are still allowed, for example:
-    /// - Entity liveliness operations (such as new, make_alive), so that systems are
+    /// - Entity liveliness operations (such as new, `make_alive`), so that systems are
     ///   able to create new entities.
     /// - Implicit component registration, so that this works from systems.
     /// - Mutations to supporting data structures for the evaluation of uncached

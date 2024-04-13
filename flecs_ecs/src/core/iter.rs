@@ -523,7 +523,7 @@ impl<'a> Iter<'a> {
             index
         );
         let field = self.field_untyped_internal(index);
-        unsafe { &mut *(field.array.add(row as usize * field.size)) }
+        unsafe { &mut *(field.array.add(row * field.size)) }
     }
 
     pub fn field_at_mut<T>(&self, index: i32, row: usize) -> Option<&mut T>
