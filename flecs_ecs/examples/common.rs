@@ -3,7 +3,7 @@
 
 use std::ffi::c_void;
 
-pub use flecs_ecs::{core::*, macros::Component};
+pub use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
 pub struct Position {

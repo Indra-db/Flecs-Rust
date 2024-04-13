@@ -4,15 +4,7 @@
 #![allow(warnings)]
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use flecs_ecs::{
-    core::{
-        c_types::{EntityT, IdT, WorldT},
-        component_registration::*,
-        query::Query,
-        IterAPI, World,
-    },
-    macros::Component,
-};
+use flecs_ecs::prelude::*;
 use seq_macro::seq;
 use std::{ffi::CStr, sync::OnceLock};
 

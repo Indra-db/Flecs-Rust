@@ -32,12 +32,6 @@ impl<'a> Clone for Term<'a> {
     }
 }
 
-pub enum TermType {
-    Term(TermT),
-    Id(IdT),
-    Pair(EntityT, EntityT),
-}
-
 impl<'a> Term<'a> {
     /// Create a new term
     ///
@@ -567,7 +561,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// convert ids for builtin variables such as `flecs::This` to a variable.
     ///
     /// This function can also be used to disambiguate id(0), which would match
-    /// both id(EntityT) and id(&str).
+    /// both id(Entity) and id(&str).
     ///
     /// # Arguments
     ///
