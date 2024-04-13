@@ -3,6 +3,9 @@ mod common;
 use common::*;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create a few test entities for a Position query
@@ -20,10 +23,12 @@ fn main() {
     let entity: Option<EntityView> = query.find(|pos| (pos.x - 20.0).abs() < f32::EPSILON);
 
     if let Some(entity) = entity {
-        println!("Entity found: {:?}", entity.path().unwrap());
+        fprintln!(snap, "Entity found: {:?}", entity.path().unwrap());
     } else {
-        println!("Entity not found");
+        fprintln!(snap, "Entity not found");
     }
+
+    snap.test();
 
     // Output:
     //  Entity found: "::e2"

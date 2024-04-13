@@ -40,6 +40,9 @@ const PLAYER_COUNT: usize = 100;
 const PLATOONS_PER_PLAYER: usize = 3;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Make the ECS aware of the inheritance relationships. Note that IsA
@@ -115,7 +118,8 @@ fn main() {
         .set_var(player_var, world.lookup_name(c"MyPlayer", true))
         .each_iter(|it, index, _| {
             let unit = it.entity(index);
-            println!(
+            fprintln!(
+                snap,
                 "Unit {} of class {} in platoon {} for player {}",
                 unit,
                 it.id(1).to_str(),
@@ -123,6 +127,8 @@ fn main() {
                 it.get_var(player_var)
             );
         });
+
+    snap.test();
 
     // Output:
     //  Unit 529 of class Wizard in platoon 526 for player MyPlayer

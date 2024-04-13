@@ -1,6 +1,6 @@
 mod common;
+use common::*;
 
-use common::{Apples, Pears};
 pub use flecs_ecs::{core::*, macros::Component};
 
 #[derive(Component)]
@@ -9,6 +9,9 @@ pub struct Eats {
 }
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create a query that matches edible components
@@ -37,8 +40,10 @@ fn main() {
         let pair = it.pair(1).unwrap();
         let food = pair.second();
 
-        println!("{} eats {} {}", entity, eats.amount, food);
+        fprintln!(snap, "{} eats {} {}", entity, eats.amount, food);
     });
+
+    snap.test();
 
     // Output:
     //  Alice eats 4 Apples

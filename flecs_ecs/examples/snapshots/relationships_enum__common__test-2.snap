@@ -1,0 +1,17 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- "(relationships_enum.Tile,relationships_enum.Tile.Stone), (relationships_enum.TileStatus,relationships_enum.TileStatus.Free)"
+- "(relationships_enum.Tile,relationships_enum.Tile.Stone), (relationships_enum.TileStatus,relationships_enum.TileStatus.Occupied)"
+- "\n"
+- "has tile enum: true"
+- "is the enum from tile stone?: true"
+- "is tile stone: true"
+- "\n"
+- "::relationships_enum::Tile::Stone"
+- "::relationships_enum::Tile::Grass"
+- "::relationships_enum::Tile::Sand"
+- "\n"
+- "::relationships_enum::Tile::Stone"
+- "::relationships_enum::Tile::Sand"

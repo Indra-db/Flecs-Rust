@@ -1,0 +1,7 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- "Entity ::e1 has Velocity { x: 0.0, y: 9.81 }"
+- "Entity ::e2 has Velocity { x: 0.0, y: 10.81 }"
+- "Entity ::e3 has Velocity { x: 0.0, y: 11.81 }"

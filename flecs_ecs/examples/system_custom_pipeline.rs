@@ -13,6 +13,9 @@ use common::*;
 struct Physics;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create a pipeline that matches systems with Physics. Note that this
@@ -29,16 +32,18 @@ fn main() {
 
     // Create system with Physics tag
     world.system::<()>().kind::<Physics>().on_iter_only(|_| {
-        println!("System with Physics ran!");
+        fprintln!(snap, "System with Physics ran!");
     });
 
     // Create system without Physics tag
     world.system::<()>().on_iter_only(|_| {
-        println!("System without Physics ran!");
+        fprintln!(snap, "System without Physics ran!");
     });
 
     // Runs the pipeline & system
     world.progress();
+
+    snap.test();
 
     // Output:
     //   System ran!

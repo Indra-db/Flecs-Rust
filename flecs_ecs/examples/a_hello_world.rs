@@ -2,6 +2,9 @@ mod common;
 use common::*;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     // Create a new world
     let world = World::new();
 
@@ -22,7 +25,7 @@ fn main() {
         .add::<(Eats, Apples)>();
 
     // Show us what you got
-    println!("{}'s got [{:?}]", bob.name(), bob.archetype());
+    fprintln!(snap, "{}'s got [{:?}]", bob.name(), bob.archetype());
 
     // Run systems twice. Usually this function is called once per frame
     world.progress();
@@ -31,9 +34,12 @@ fn main() {
     //you can use `.unwrap_unchecked()` if you are sure the component exists or `get_unchecked()`
     let pos = bob.get::<Position>().unwrap();
     // See if Bob has moved (he has)
-    println!("Bob's position: {:?}", pos);
+    //fprintln!(snap,"Bob's position: {:?}", pos);
+    fprintln!(snap, "{}'s position: {:?}", bob.name(), pos);
 
-    // Output
+    snap.test();
+
+    // Output:
     //  Bob's got [Position, Velocity, (Identifier,Name), (Eats,Apples)]
     //  Bob's position: Position { x: 2.0, y: 4.0 }
 }

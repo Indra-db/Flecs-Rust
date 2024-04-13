@@ -2,6 +2,9 @@ mod common;
 pub use common::*;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Entity used for Grows relationship
@@ -22,43 +25,50 @@ fn main() {
         .add_id((grows, pears));
 
     // Has can be used with relationships as well
-    println!("Bob eats apples? {}", bob.has_pair_first::<Eats>(apples));
+    fprintln!(
+        snap,
+        "Bob eats apples? {}",
+        bob.has_pair_first::<Eats>(apples)
+    );
 
     // Wildcards can be used to match relationships
-    println!(
+    fprintln!(
+        snap,
         "Bob grows food? {}, {}",
         bob.has_id((grows, flecs::Wildcard::ID)),
         //or you can do
         bob.has_pair_second::<flecs::Wildcard>(grows)
     );
 
-    println!();
+    fprintln!(snap);
 
     // Print the type of the entity. Should output:
     //   (Identifier,Name),(Eats,Apples),(Eats,Pears),(Grows,Pears)
-    println!("Bob's type: [{}]", bob.archetype());
+    fprintln!(snap, "Bob's type: [{}]", bob.archetype());
 
-    println!();
+    fprintln!(snap);
 
     // Relationships can be iterated for an entity. This iterates (Eats, *):
     bob.for_each_target::<Eats>(|second| {
-        println!("Bob eats {}", second.name());
+        fprintln!(snap, "Bob eats {}", second.name());
     });
 
-    println!();
+    fprintln!(snap);
 
     // Iterate by explicitly providing the pair. This iterates (*, Pears):
     bob.for_each_matching_pair(flecs::Wildcard::ID, pears, |id| {
-        println!("Bob {} pears", id.first().name());
+        fprintln!(snap, "Bob {} pears", id.first().name());
     });
 
-    println!();
+    fprintln!(snap);
 
     // Get first target of relationship
-    println!("Bob eats {}", bob.target::<Eats>(0).name());
+    fprintln!(snap, "Bob eats {}", bob.target::<Eats>(0).name());
 
     // Get second target of relationship
-    println!("Bob also eats {}", bob.target::<Eats>(1).name());
+    fprintln!(snap, "Bob also eats {}", bob.target::<Eats>(1).name());
+
+    snap.test();
 
     // Output:
     //  Bob eats apples? true

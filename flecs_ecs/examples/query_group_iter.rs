@@ -51,6 +51,9 @@ struct Beggar;
 struct Mage;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create npc's in world cell 0_0
@@ -99,29 +102,33 @@ fn main() {
     let query = world.query::<&Npc>().group_by::<WorldCell>().build();
 
     // Iterate all tables
-    println!("All tables");
+    fprintln!(snap, "All tables");
 
     query.iter_only(|iter| {
         let group = world.new_entity_from_id(iter.group_id());
-        println!(
+        fprintln!(
+            snap,
             "group: {:?} - Table [{}]",
             group.path().unwrap(),
             iter.table().unwrap().to_string().unwrap()
         );
     });
 
-    println!();
+    fprintln!(snap);
 
-    println!("Tables for cell 1_0:");
+    fprintln!(snap, "Tables for cell 1_0:");
 
     query.iterable().set_group::<Cell_1_0>().iter_only(|iter| {
         let group = world.new_entity_from_id(iter.group_id());
-        println!(
+        fprintln!(
+            snap,
             "group: {:?} - Table [{}]",
             group.path().unwrap(),
             iter.table().unwrap().to_string().unwrap()
         );
     });
+
+    snap.test();
 
     // Output:
     //  All tables

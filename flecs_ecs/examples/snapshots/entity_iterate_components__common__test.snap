@@ -1,0 +1,22 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- "Bob's components:"
+- "[entity_iterate_components.common.Position, entity_iterate_components.common.Velocity, entity_iterate_components.common.Human, (Identifier,Name), (entity_iterate_components.common.Eats,entity_iterate_components.common.Apples)]"
+- "\n"
+- "0: entity_iterate_components.common.Position"
+- "1: entity_iterate_components.common.Velocity"
+- "2: entity_iterate_components.common.Human"
+- "3: (Identifier,Name)"
+- "4: (entity_iterate_components.common.Eats,entity_iterate_components.common.Apples)"
+- "\n0: entity: Position1: entity: Velocity2: entity: Human3: rel: Identifier, target: Name4: rel: Eats, target: Apples"
+- "Position's components:"
+- "[Component, (Identifier,Name), (Identifier,Symbol), (ChildOf,entity_iterate_components.common), (OnDelete,Panic)]"
+- "\n"
+- "0: Component"
+- "1: (Identifier,Name)"
+- "2: (Identifier,Symbol)"
+- "3: (ChildOf,entity_iterate_components.common)"
+- "4: (OnDelete,Panic)"
+- "\n0: entity: Component1: rel: Identifier, target: Name2: rel: Identifier, target: Symbol3: rel: ChildOf, target: common4: rel: OnDelete, target: Panic"

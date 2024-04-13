@@ -2,6 +2,9 @@ mod common;
 use common::*;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     let query = world.new_query::<(&mut Position, &Velocity)>();
@@ -28,29 +31,36 @@ fn main() {
     // The function passed to iter is by default called for each table the query
     // is matched with.
     query.iter(|it, (position, velocity)| {
-        println!();
+        fprintln!(snap);
         // Print the table & number of entities matched in current callback
-        println!("Table: {:?}", it.archetype());
-        println!(" - number of entities: {}", it.count());
-        println!();
+        fprintln!(snap, "Table: {:?}", it.archetype());
+        fprintln!(snap, " - number of entities: {}", it.count());
+        fprintln!(snap);
 
         // Print information about the components being matched
         for i in 1..=it.field_count() {
-            println!(" - term {} : ", i);
-            println!("   - component: {}", it.id(i).to_str());
-            println!("   - type size: {}", it.size(i));
+            fprintln!(snap, " - term {} : ", i);
+            fprintln!(snap, "   - component: {}", it.id(i).to_str());
+            fprintln!(snap, "   - type size: {}", it.size(i));
         }
 
-        println!();
+        fprintln!(snap);
 
         for i in it.iter() {
             position[i].x += velocity[i].x;
             position[i].y += velocity[i].y;
-            println!(" - entity {}: has {:?}", it.entity(i).name(), position[i]);
+            fprintln!(
+                snap,
+                " - entity {}: has {:?}",
+                it.entity(i).name(),
+                position[i]
+            );
         }
 
-        println!();
+        fprintln!(snap);
     });
+
+    snap.test();
 
     // Output:
     //  Table: Position, Velocity, (Identifier,Name)

@@ -14,6 +14,9 @@ struct Timeout {
 struct Tag;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // System that deletes an entity after a timeout expires
@@ -21,7 +24,6 @@ fn main() {
         .system::<&mut Timeout>()
         .on_each_iter(|it, _index, timeout| {
             timeout.value -= it.delta_time();
-            println!("{}", timeout.value);
             if timeout.value <= 0.0 {
                 // Delete the entity
 
@@ -47,7 +49,7 @@ fn main() {
                 // A shortcut is to use the iterator directly:
                 let world = it.world();
                 let to_delete = world.get_alive(timeout.to_delete);
-                println!("Expire: {} deleted!", to_delete.name());
+                fprintln!(snap, "Expire: {} deleted!", to_delete.name());
                 to_delete.destruct();
             }
         });
@@ -68,7 +70,7 @@ fn main() {
         .observer_builder::<&Tag>()
         .add_event::<flecs::OnRemove>()
         .on_each_entity(|e, _tag| {
-            println!("Expired: {} actually deleted", e.name());
+            fprintln!(snap, "Expired: {} actually deleted", e.name());
         });
 
     let to_delete = world.new_entity_named(c"ToDelete").add::<Tag>();
@@ -89,7 +91,9 @@ fn main() {
         println!("Tick...");
     }
 
-    // Output
+    snap.test();
+
+    // Output:
     //  PrintExpire: ToDelete has 2.00 seconds left
     //  Tick...
     //  PrintExpire: ToDelete has 0.98 seconds left

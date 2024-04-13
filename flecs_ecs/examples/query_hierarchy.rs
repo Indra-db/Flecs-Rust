@@ -14,6 +14,8 @@ struct Local;
 struct World;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
     let world = flecs_ecs::core::World::new();
 
     let sun = world
@@ -81,13 +83,16 @@ fn main() {
         .select_second::<World>()
         .build()
         .each_entity(|entity, position| {
-            println!(
+            fprintln!(
+                snap,
                 "Entity {} is at ({}, {})",
                 entity.name(),
                 position.x,
                 position.y
             );
         });
+
+    snap.test();
 
     // Output:
     //  Entity Sun is at (1, 1)

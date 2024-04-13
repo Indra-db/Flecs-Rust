@@ -2,6 +2,9 @@ mod common;
 use common::*;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create a system for moving an entity
@@ -18,7 +21,7 @@ fn main() {
         .system::<&Position>()
         .kind::<flecs::pipeline::PostUpdate>()
         .on_each_entity(|e, p| {
-            println!("{}: {{ {}, {} }}", e.name(), p.x, p.y);
+            fprintln!(snap, "{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 
     // Create a few test entities for a Position, Velocity query
@@ -36,6 +39,8 @@ fn main() {
     // phase. Systems within the same phase are ran in declaration order. This
     // function is usually called in a loop.
     world.progress();
+
+    snap.test();
 
     // Output:
     //  e1: { 11, 22 }

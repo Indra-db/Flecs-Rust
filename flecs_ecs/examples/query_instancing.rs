@@ -2,6 +2,9 @@ mod common;
 use common::*;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create a query for Position, Velocity. We'll create a few entities that
@@ -48,25 +51,27 @@ fn main() {
         // Check if Velocity is owned, in which case it's accessed as array.
         // Position will always be owned, since we set the term to Self.
         if it.is_self(2) {
-            println!("Velocity is owned");
+            fprintln!(snap, "Velocity is owned");
 
             for i in it.iter() {
                 position[i].x += velocity[i].x;
                 position[i].y += velocity[i].y;
-                println!("entity {} has {:?}", it.entity(i).name(), position[i]);
+                fprintln!(snap, "entity {} has {:?}", it.entity(i).name(), position[i]);
             }
         } else {
-            println!("Velocity is shared");
+            fprintln!(snap, "Velocity is shared");
 
             for i in it.iter() {
                 position[i].x += velocity[0].x;
                 position[i].y += velocity[0].y;
-                println!("entity {} has {:?}", it.entity(i).name(), position[i]);
+                fprintln!(snap, "entity {} has {:?}", it.entity(i).name(), position[i]);
             }
         }
     });
 
-    // Output
+    snap.test();
+
+    // Output:
     //  Velocity is shared
     //  entity e1 has Position { x: 11.0, y: 22.0 }
     //  entity e2 has Position { x: 11.0, y: 22.0 }

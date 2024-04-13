@@ -1,0 +1,15 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- FastTick
+- Tick
+- FastTick
+- FastTick
+- Tick
+- FastTick
+- FastTick
+- Tick
+- FastTick
+- FastTick
+- Timed out!

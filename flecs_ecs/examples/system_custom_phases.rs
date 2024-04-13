@@ -7,10 +7,14 @@ use common::*;
 
 // Dummy system
 fn sys(it: &mut Iter) {
-    println!("system {}", it.system().name());
+    let snap = Snap::from(it);
+    fprintln!(snap, "system {}", it.system().name());
 }
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create two custom phases that branch off of EcsOnUpdate. Note that the
@@ -30,22 +34,27 @@ fn main() {
     world
         .system_named::<()>(c"CollisionSystem")
         .kind_id(collisions)
+        .set_context(snap.cvoid())
         .on_iter_only(sys);
 
     world
         .system_named::<()>(c"PhysicsSystem")
         .kind_id(physics)
+        .set_context(snap.cvoid())
         .on_iter_only(sys);
 
     world
         .system_named::<()>(c"GameSystem")
         .kind::<flecs::pipeline::OnUpdate>()
+        .set_context(snap.cvoid())
         .on_iter_only(sys);
 
     // Run pipeline
     world.progress();
 
-    // Output
+    snap.test();
+
+    // Output:
     //   system GameSystem
     //   system PhysicsSystem
     //   system CollisionSystem

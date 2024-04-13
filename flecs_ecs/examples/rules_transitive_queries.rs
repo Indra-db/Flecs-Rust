@@ -36,6 +36,9 @@ struct City;
 struct Person;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Register the LocatedIn relationship as transitive
@@ -136,8 +139,15 @@ fn main() {
 
     // Iterate the rule
     rule.iterable().each_iter(|it, index, _| {
-        println!("{} lives in {}", it.entity(index), it.get_var(location_var));
+        fprintln!(
+            snap,
+            "{} lives in {}",
+            it.entity(index),
+            it.get_var(location_var)
+        );
     });
+
+    snap.test();
 
     // Output:
     //  Bob lives in UnitedStates

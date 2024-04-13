@@ -25,6 +25,9 @@ use common::*;
 // hierarchy example does.
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create the same prefab hierarchy as from the hierarchy example, but now
@@ -58,11 +61,13 @@ fn main() {
     let inst_cockpit = inst.target_id(cockpit, 0);
     let inst_seat = inst.target_id(pilot_seat, 0);
 
-    println!("instance engine: {}", inst_engine.path().unwrap());
+    fprintln!(snap, "instance engine: {}", inst_engine.path().unwrap());
 
-    println!("instance cockpit: {}", inst_cockpit.path().unwrap());
+    fprintln!(snap, "instance cockpit: {}", inst_cockpit.path().unwrap());
 
-    println!("instance seat: {}", inst_seat.path().unwrap());
+    fprintln!(snap, "instance seat: {}", inst_seat.path().unwrap());
+
+    snap.test();
 
     // Output:
     //  instance engine: ::my_spaceship::Engine

@@ -1,0 +1,7 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- "added Position to \"Bob\""
+- "set Position { x: 10.0, y: 20.0 } for \"Bob\""
+- "removed Position { x: 10.0, y: 20.0 } from \"Bob\""

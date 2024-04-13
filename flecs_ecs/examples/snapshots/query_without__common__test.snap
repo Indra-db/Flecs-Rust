@@ -1,0 +1,6 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- "Entity e1: Position { x: 10.0, y: 20.0 }"
+- "Entity e2: Position { x: 10.0, y: 20.0 }"

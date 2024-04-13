@@ -2,6 +2,9 @@ mod common;
 use common::*;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // System that sets velocity using ecs_set for entities with Position.
@@ -39,7 +42,7 @@ fn main() {
     world
         .system_named::<&Position>(c"PrintPosition")
         .on_each_entity(|e, p| {
-            println!("{}: {{ {}, {} }}", e.name(), p.x, p.y);
+            fprintln!(snap, "{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 
     // Create a few test entities for a Position, Velocity query
@@ -59,6 +62,8 @@ fn main() {
     set_log_level(1);
     world.progress();
     set_log_level(-1);
+
+    snap.test();
 
     // Output:
     // info: pipeline rebuild

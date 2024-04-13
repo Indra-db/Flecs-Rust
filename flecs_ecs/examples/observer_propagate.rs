@@ -13,6 +13,9 @@ use common::*;
 // Events are only propagated along traversable relationship edges.
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create observer that listens for events from both self and parent
@@ -22,7 +25,8 @@ fn main() {
         .parent()
         .add_event::<flecs::OnSet>()
         .on_each_iter(|it, index, (pos_self, pos_parent)| {
-            println!(
+            fprintln!(
+                snap,
                 " - {}: {}: {}: self: {{ {}, {} }}, parent: {{ {}, {} }}",
                 it.event().name(),
                 it.event_id().to_str(),
@@ -46,6 +50,8 @@ fn main() {
     // observer, as the observer query now matches.
     parent.set(Position { x: 1.0, y: 2.0 });
 
-    // Output
+    snap.test();
+
+    // Output:
     //  - OnSet: Position: e: self: { 10, 20 }, parent: { 1, 2 }
 }

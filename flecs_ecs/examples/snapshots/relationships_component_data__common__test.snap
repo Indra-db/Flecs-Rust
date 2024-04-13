@@ -1,0 +1,12 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- "e1: requires: 1.21"
+- "e1: requires: 1.5"
+- "expires: 0.5"
+- "::relationships_component_data::Requires"
+- "::relationships_component_data::Requires"
+- "::relationships_component_data::Expires"
+- "::relationships_component_data::common::Position"
+- "requires: 1.21 gigawatts"

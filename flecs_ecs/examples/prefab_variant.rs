@@ -6,6 +6,9 @@ use common::*;
 // by adding or overriding components on the variant.
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create a base prefab for SpaceShips.
@@ -52,13 +55,15 @@ fn main() {
     // Queries can match components from multiple levels of inheritance
     world.each_entity::<(&Position, &ImpulseSpeed, &Defence, &FreightCapacity)>(
         |e, (p, s, d, c)| {
-            println!("{}:", e.name());
-            println!(" - position: {}, {}", p.x, p.y);
-            println!(" - impulse speed: {}", s.value);
-            println!(" - defense: {}", d.value);
-            println!(" - capacity: {}", c.value);
+            fprintln!(snap, "{}:", e.name());
+            fprintln!(snap, " - position: {}, {}", p.x, p.y);
+            fprintln!(snap, " - impulse speed: {}", s.value);
+            fprintln!(snap, " - defense: {}", d.value);
+            fprintln!(snap, " - capacity: {}", c.value);
         },
     );
+
+    snap.test();
 
     // Output:
     //   my_freighter:

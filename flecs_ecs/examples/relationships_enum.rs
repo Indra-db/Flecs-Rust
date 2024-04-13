@@ -35,6 +35,9 @@ enum TileStatus {
 }
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create an entity with (Tile, Red) and (TileStatus, Free) relationships
@@ -44,19 +47,20 @@ fn main() {
         .add_enum(TileStatus::Free);
 
     // (Tile, Tile.Stone), (TileStatus, TileStatus.Free)
-    println!("{:?}", tile.archetype());
+    fprintln!(snap, "{:?}", tile.archetype());
 
     // Replace (TileStatus, Free) with (TileStatus, Occupied)
     tile.add_enum(TileStatus::Occupied);
 
     // (Tile, Tile.Stone), (TileStatus, TileStatus.Occupied)
-    println!("{:?}", tile.archetype());
+    fprintln!(snap, "{:?}", tile.archetype());
 
-    println!();
+    fprintln!(snap);
 
     // Check if the entity has the Tile relationship and the Tile::Stone pair
-    println!("has tile enum: {}", tile.has::<Tile>()); // true
-    println!(
+    fprintln!(snap, "has tile enum: {}", tile.has::<Tile>()); // true
+    fprintln!(
+        snap,
         "is the enum from tile stone?: {}",
         tile.has_enum(Tile::Stone)
     ); // true
@@ -64,7 +68,7 @@ fn main() {
     // Get the current value of the enum
     let v = tile.get::<Tile>();
     if let Some(tile_value) = v {
-        println!("is tile stone: {}", *tile_value == Tile::Stone); // true
+        fprintln!(snap, "is tile stone: {}", *tile_value == Tile::Stone); // true
     }
 
     // Create a few more entities that we can query
@@ -78,7 +82,7 @@ fn main() {
         .add_enum(Tile::Sand)
         .add_enum(TileStatus::Occupied);
 
-    println!();
+    fprintln!(snap);
 
     // Iterate all entities with a Tile relationship
     world
@@ -88,15 +92,17 @@ fn main() {
         .each_iter(|it, _, _| {
             let pair = it.pair(1).unwrap();
             let tile_constant = pair.second();
-            println!("{}", tile_constant.path().unwrap());
+            fprintln!(snap, "{}", tile_constant.path().unwrap());
         });
 
-    // Outputs:
+    snap.test();
+
+    // Output:s:
     //  ::Tile::Stone
     //  ::Tile::Grass
     //  ::Tile::Sand
 
-    println!();
+    fprintln!(snap);
 
     // Iterate only occupied tiles
     world
@@ -107,18 +113,20 @@ fn main() {
         .each_iter(|it, _, _| {
             let pair = it.pair(1).unwrap();
             let tile_constant = pair.second();
-            println!("{}", tile_constant.path().unwrap());
+            fprintln!(snap, "{}", tile_constant.path().unwrap());
         });
 
-    // Outputs:
+    snap.test();
+
+    // Output:s:
     //  ::Tile::Stone
     //  ::Tile::Sand
 
-    println!();
+    fprintln!(snap);
 
     // Remove any instance of the TileStatus relationship
     tile.remove::<TileStatus>();
 
     // (Tile, Tile.Stone)
-    println!("{:?}", tile.archetype());
+    fprintln!(snap, "{:?}", tile.archetype());
 }

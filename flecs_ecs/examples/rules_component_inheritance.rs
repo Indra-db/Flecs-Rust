@@ -28,6 +28,9 @@ struct Marksman;
 struct Builder;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Make the ECS aware of the inheritance relationships. Note that IsA
@@ -59,8 +62,10 @@ fn main() {
 
     // Iterate the rule
     r.each_entity(|e, _| {
-        println!("Unit {} found", e.name());
+        fprintln!(snap, "Unit {} found", e.name());
     });
+
+    snap.test();
 
     // Output:
     //  Unit wizard_1 found

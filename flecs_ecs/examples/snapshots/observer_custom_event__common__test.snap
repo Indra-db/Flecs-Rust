@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- " - MyEvent: observer_custom_event.common.Position: e1"

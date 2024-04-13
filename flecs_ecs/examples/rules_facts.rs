@@ -23,6 +23,9 @@ use common::*;
 struct Likes;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     let bob = world.new_entity_named(c"Bob");
@@ -60,7 +63,8 @@ fn main() {
 
     // Check a few facts
 
-    println!(
+    fprintln!(
+        snap,
         "Are Bob and Alice friends? {}",
         if friends
             .iterable()
@@ -74,7 +78,8 @@ fn main() {
         }
     );
 
-    println!(
+    fprintln!(
+        snap,
         "Are Bob and John friends? {}",
         if friends
             .iterable()
@@ -88,7 +93,8 @@ fn main() {
         }
     );
 
-    println!(
+    fprintln!(
+        snap,
         "Are Jane and John friends? {}",
         if friends
             .iterable()
@@ -105,7 +111,8 @@ fn main() {
     // It doesn't matter who we assign to X or Y. After the variables are
     // substituted, either yields a fact that is true.
 
-    println!(
+    fprintln!(
+        snap,
         "Are John and Jane friends? {}",
         if friends
             .iterable()
@@ -118,6 +125,8 @@ fn main() {
             "No"
         }
     );
+
+    snap.test();
 
     // Output:
     //  Are Bob and Alice friends? Yes

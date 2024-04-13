@@ -5,6 +5,9 @@ use common::*;
 struct TradesWith;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Register TradesWith as symmetric relationship. Symmetric relationships
@@ -20,14 +23,18 @@ fn main() {
     player_1.add_pair_first::<TradesWith>(player_2);
 
     // Log platoon of unit
-    println!(
+    fprintln!(
+        snap,
         "Player 1 trades with Player 2: {}",
         player_1.has_pair_first::<TradesWith>(player_2)
     ); // true
-    println!(
+    fprintln!(
+        snap,
         "Player 2 trades with Player 1: {}",
         player_2.has_pair_first::<TradesWith>(player_1)
     ); // true
+
+    snap.test();
 
     // Output:
     //  Player 1 trades with Player 2: true

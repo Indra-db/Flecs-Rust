@@ -1,0 +1,10 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- Unit 530 of class rules_setting_variables.Wizard in platoon 527 for player MyPlayer
+- Unit 534 of class rules_setting_variables.Wizard in platoon 531 for player MyPlayer
+- Unit 538 of class rules_setting_variables.Wizard in platoon 535 for player MyPlayer
+- Unit 529 of class rules_setting_variables.Marksman in platoon 527 for player MyPlayer
+- Unit 533 of class rules_setting_variables.Marksman in platoon 531 for player MyPlayer
+- Unit 537 of class rules_setting_variables.Marksman in platoon 535 for player MyPlayer

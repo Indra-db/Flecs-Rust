@@ -9,21 +9,26 @@ use common::*;
 // called once per frame per system.
 
 extern "C" fn run_callback(it: *mut IterT) {
-    println!("Move begin");
+    let snap = unsafe { &mut *((*it).ctx as *mut Snap) };
+    fprintln!(snap, "Move begin");
 
     // Walk over the iterator, forward to the system callback
     while unsafe { flecs_ecs_sys::ecs_iter_next(it) } {
         unsafe { ((*it).callback).unwrap()(it) };
     }
 
-    println!("Move end");
+    fprintln!(snap, "Move end");
 }
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     let system = world
         .system::<(&mut Position, &Velocity)>()
+        .set_context(snap.cvoid())
         // The run function has a signature that accepts a C iterator. By
         // forwarding the iterator to it->callback, the each function of the
         // system is invoked.
@@ -31,7 +36,7 @@ fn main() {
         .on_each_entity(|e, (pos, vel)| {
             pos.x += vel.x;
             pos.y += vel.y;
-            println!("{}: {{ {}, {} }}", e.name(), pos.x, pos.y);
+            fprintln!(snap, "{}: {{ {}, {} }}", e.name(), pos.x, pos.y);
         });
 
     // Create a few test entities for a Position, Velocity query
@@ -53,7 +58,9 @@ fn main() {
     // Run the system
     system.run();
 
-    // Output
+    snap.test();
+
+    // Output:
     //  Move begin
     //  e1: {11, 22}
     //  e2: {13, 24}

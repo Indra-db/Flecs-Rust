@@ -1,17 +1,17 @@
 mod common;
 use common::*;
 
-fn iterate_components(entity: EntityView) {
+fn iterate_components(entity: EntityView, snap: &mut Snap) {
     // 1. The easiest way to print the components is to use archetype
-    println!("[{:?}]", entity.archetype());
-    println!();
+    fprintln!(snap, "[{:?}]", entity.archetype());
+    fprintln!(snap);
     // 2. To get individual component ids, use for_each
     let mut count_components = 0;
     entity.for_each_component(|id| {
-        println!("{}: {}", count_components, id.to_str());
+        fprintln!(snap, "{}: {}", count_components, id.to_str());
         count_components += 1;
     });
-    println!();
+    fprintln!(snap);
 
     // 3. we can also inspect and print the ids in our own way. This is a
     // bit more complicated as we need to handle the edge cases of what can be
@@ -19,24 +19,34 @@ fn iterate_components(entity: EntityView) {
     count_components = 0;
 
     entity.for_each_component(|id| {
-        print!("{}: ", count_components);
+        snap.str
+            .last_mut()
+            .unwrap()
+            .push_str(format!("{}: ", count_components).as_str());
+
         count_components += 1;
         if id.is_pair() {
             // If id is a pair, extract & print both parts of the pair
             let rel = id.first();
             let target = id.second();
-            print!("rel: {}, target: {}", rel.name(), target.name());
+            snap.str
+                .last_mut()
+                .unwrap()
+                .push_str(format!("rel: {}, target: {}", rel.name(), target.name()).as_str());
         } else {
             // Id contains a regular entity. Strip role before printing.
             let comp = id.entity_view();
-            print!("entity: {}", comp.name());
+            snap.str
+                .last_mut()
+                .unwrap()
+                .push_str(format!("entity: {}", comp.name()).as_str());
         }
-
-        println!();
-        println!();
     });
 }
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     let bob = world
@@ -46,14 +56,16 @@ fn main() {
         .add::<Human>()
         .add::<(Eats, Apples)>();
 
-    println!("Bob's components:");
-    iterate_components(bob);
+    fprintln!(snap, "Bob's components:");
+    iterate_components(bob, &mut snap);
 
     // We can use the same function to iterate the components of a component
-    println!("Position's components:");
-    iterate_components(world.component::<Position>().entity());
+    fprintln!(snap, "Position's components:");
+    iterate_components(world.component::<Position>().entity(), &mut snap);
 
-    // Output
+    snap.test();
+
+    // Output:
     //  Bob's components:
     //  [Position, Velocity, Human, (Identifier,Name), (Eats,Apples)]
     //

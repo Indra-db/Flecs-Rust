@@ -5,6 +5,9 @@ use common::*;
 // IsA relationship to the prefab is added.
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create a prefab hierarchy.
@@ -21,12 +24,15 @@ fn main() {
     // and Cockpit entities.
     if let Some(inst_engine) = inst.lookup_name_optional(c"Engine", true) {
         if let Some(inst_cockpit) = inst.lookup_name_optional(c"Cockpit", true) {
-            println!("instance engine:  {:?}", inst_engine.path().unwrap());
-            println!("instance cockpit: {:?}", inst_cockpit.path().unwrap());
+            fprintln!(snap, "instance engine:  {:?}", inst_engine.path().unwrap());
+            fprintln!(snap, "instance cockpit: {:?}", inst_cockpit.path().unwrap());
         } else {
-            println!("entity lookup failed");
+            fprintln!(snap, "entity lookup failed");
         }
     }
+
+    snap.test();
+
     // Output:
     //  instance engine:  "::my_spaceship::Engine"
     //  instance cockpit: "::my_spaceship::Cockpit"

@@ -2,6 +2,9 @@ mod common;
 use common::*;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create a system for Position, Velocity. Systems are like queries (see
@@ -12,7 +15,7 @@ fn main() {
         .on_each_entity(|e, (p, v)| {
             p.x += v.x;
             p.y += v.y;
-            println!("{}: {{ {}, {} }}", e.name(), p.x, p.y);
+            fprintln!(snap, "{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 
     // Create a few test entities for a Position, Velocity query
@@ -33,6 +36,8 @@ fn main() {
 
     // Run the system
     s.run();
+
+    snap.test();
 
     // Output:
     //  e1: { 11, 22 }

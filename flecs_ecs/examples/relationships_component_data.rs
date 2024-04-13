@@ -24,6 +24,9 @@ struct Expires {
 struct MustHave;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // When one element of a pair is a component and the other element is a tag,
@@ -35,9 +38,12 @@ fn main() {
     let require = e1.get_pair_first::<Requires, Gigawatts>();
 
     if let Some(r) = require {
-        println!("e1: requires: {}", r.amount);
+        fprintln!(snap, "e1: requires: {}", r.amount);
     } else {
-        println!("e1: does not have a relationship with Requires, Gigawatts");
+        fprintln!(
+            snap,
+            "e1: does not have a relationship with Requires, Gigawatts"
+        );
     }
 
     // The component can be either the first or second part of a pair:
@@ -48,9 +54,12 @@ fn main() {
     let require = e2.get_pair_second::<Gigawatts, Requires>();
 
     if let Some(r) = require {
-        println!("e1: requires: {}", r.amount);
+        fprintln!(snap, "e1: requires: {}", r.amount);
     } else {
-        println!("e1: does not have a relationship with Gigawatts, Requires");
+        fprintln!(
+            snap,
+            "e1: does not have a relationship with Gigawatts, Requires"
+        );
     }
 
     // Note that <Requires, Gigawatts> and <Gigawatts, Requires> are two
@@ -63,7 +72,7 @@ fn main() {
         .set_pair_first::<Expires, Position>(Expires { timeout: 0.5 });
 
     let expires = e3.get_pair_first::<Expires, Position>();
-    println!("expires: {}", expires.unwrap().timeout);
+    fprintln!(snap, "expires: {}", expires.unwrap().timeout);
 
     // You can prevent a pair from assuming the type of a component by adding
     // the Tag property to a relationship:
@@ -74,7 +83,8 @@ fn main() {
     world.new_entity().add::<(MustHave, Position)>();
 
     // The id::type_id method can be used to find the component type for a pair:
-    println!(
+    fprintln!(
+        snap,
         "{}",
         world
             .id_pair::<Requires, Gigawatts>()
@@ -82,7 +92,8 @@ fn main() {
             .path()
             .unwrap()
     );
-    println!(
+    fprintln!(
+        snap,
         "{}",
         world
             .id_pair::<Gigawatts, Requires>()
@@ -90,7 +101,8 @@ fn main() {
             .path()
             .unwrap()
     );
-    println!(
+    fprintln!(
+        snap,
         "{}",
         world
             .id_pair::<Expires, Position>()
@@ -98,7 +110,8 @@ fn main() {
             .path()
             .unwrap()
     );
-    println!(
+    fprintln!(
+        snap,
         "{}",
         world
             .id_pair::<MustHave, Position>()
@@ -116,8 +129,10 @@ fn main() {
         .build();
 
     query.each(|requires| {
-        println!("requires: {} gigawatts", requires.amount);
+        fprintln!(snap, "requires: {} gigawatts", requires.amount);
     });
+
+    snap.test();
 
     // Output:
     // e1: requires: 1.21

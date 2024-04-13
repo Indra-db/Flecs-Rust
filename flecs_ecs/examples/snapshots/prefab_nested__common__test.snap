@@ -1,0 +1,6 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- "prefab_nested.TirePressure, (Identifier,Name), (ChildOf,my_car), (IsA,Wheel)"
+- "pressure: 32"

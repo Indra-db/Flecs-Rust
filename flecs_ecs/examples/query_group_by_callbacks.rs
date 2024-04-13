@@ -17,13 +17,16 @@ extern "C" fn callback_group_create(
     group_id: u64,
     _group_by_ctx: *mut c_void,
 ) -> *mut c_void {
+    let snap = unsafe { &mut *(_group_by_ctx as *mut Snap) };
+
     let world_ref = unsafe { WorldRef::from_ptr(world) };
-    println!(
+    fprintln!(
+        snap,
         "Group created: {:?}",
         world_ref.world().new_entity_from_id(group_id).name()
     );
 
-    println!();
+    fprintln!(snap);
 
     let mut counter = GROUP_COUNTER.lock().unwrap();
     *counter += 1;
@@ -41,8 +44,11 @@ extern "C" fn callback_group_delete(
     ctx: *mut c_void,
     _group_by_arg: *mut c_void,
 ) {
+    let snap = unsafe { &mut *(ctx as *mut Snap) };
+
     let world_ref = unsafe { WorldRef::from_ptr(world) };
-    println!(
+    fprintln!(
+        snap,
         "Group deleted: {:?}",
         world_ref.world().new_entity_from_id(group_id).name()
     );
@@ -52,6 +58,9 @@ extern "C" fn callback_group_delete(
 }
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Register components in order so that id for First is lower than Third
@@ -63,6 +72,7 @@ fn main() {
     let query = world
         .query::<(&Position,)>()
         .group_by::<Group>()
+        .group_by_ctx(snap.cvoid(), None)
         // Callback invoked when a new group is created
         .on_group_create(Some(callback_group_create))
         // Callback invoked when a group is deleted
@@ -99,7 +109,7 @@ fn main() {
         .set(Position { x: 6.0, y: 6.0 })
         .add::<Tag>();
 
-    println!();
+    fprintln!(snap);
 
     // The query cache now looks like this:
     //  - group First:
@@ -118,7 +128,8 @@ fn main() {
     query.iter(|it, (pos,)| {
         let group = world.new_entity_from_id(it.group_id());
         let ctx = unsafe { &*(query.group_context(group) as *mut GroupCtx) };
-        println!(
+        fprintln!(
+            snap,
             "Group: {:?} - Table: [{:?}] - Counter: {}",
             group.path().unwrap(),
             it.archetype(),
@@ -126,15 +137,17 @@ fn main() {
         );
 
         for i in it.iter() {
-            println!(" [{:?}]", pos[i]);
+            fprintln!(snap, " [{:?}]", pos[i]);
         }
 
-        println!();
+        fprintln!(snap);
     });
 
     // Deleting the query will call the on_group_deleted callback
 
     query.destruct();
+
+    snap.test();
 
     // Output:
     //  Group created: "Third"

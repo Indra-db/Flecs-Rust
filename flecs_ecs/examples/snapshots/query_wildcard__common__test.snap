@@ -1,0 +1,7 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- Alice eats 4 Apples
+- Bob eats 10 Apples
+- Bob eats 5 Pears

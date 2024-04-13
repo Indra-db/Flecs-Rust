@@ -11,6 +11,9 @@ use common::*;
 // observer.
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create observer for custom event
@@ -19,13 +22,15 @@ fn main() {
         .add_event::<flecs::Monitor>()
         .on_each_iter(|it, index, (_pos, _vel)| {
             if it.event() == flecs::OnAdd::ID {
-                println!(
+                fprintln!(
+                    snap,
                     " - Enter: {}: {}",
                     it.event_id().to_str(),
                     it.entity(index).name()
                 );
             } else if it.event() == flecs::OnRemove::ID {
-                println!(
+                fprintln!(
+                    snap,
                     " - Leave: {}: {}",
                     it.event_id().to_str(),
                     it.entity(index).name()
@@ -45,7 +50,9 @@ fn main() {
     // This triggers the monitor with EcsOnRemove, as the entity no longer matches.
     entity.remove::<Position>();
 
-    // Output
+    snap.test();
+
+    // Output:
     //  - Enter: Velocity: e
     //  - Leave: Position: e
 }

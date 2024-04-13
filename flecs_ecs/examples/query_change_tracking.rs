@@ -15,6 +15,9 @@ struct Dirty {
 }
 
 pub fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create a query that just reads a component. We'll use this query for
@@ -69,9 +72,9 @@ pub fn main() {
     // tables it is matched with has changed. Since this is the first time that
     // we check this and the query is matched with the tables we just created,
     // the function will return true.
-    println!();
-    println!("query_read.is_changed(): {}", query_read.is_changed());
-    println!();
+    fprintln!(snap);
+    fprintln!(snap, "query_read.is_changed(): {}", query_read.is_changed());
+    fprintln!(snap);
 
     // The changed state will remain true until we have iterated each table.
     query_read.iter_only(|iter| {
@@ -79,7 +82,8 @@ pub fn main() {
         // currently iterating has changed since last iteration.
         // Because this is the first time the query is iterated, all tables
         // will show up as changed.
-        println!(
+        fprintln!(
+            snap,
             "iiter.is_changed() for table [{}]: {}",
             iter.archetype().unwrap(),
             iter.is_changed()
@@ -87,14 +91,18 @@ pub fn main() {
     });
 
     // Now that we have iterated all tables, the dirty state is reset.
-    println!();
-    println!("query_read.is_changed(): {:?}", query_read.is_changed());
-    println!();
+    fprintln!(snap);
+    fprintln!(
+        snap,
+        "query_read.is_changed(): {:?}",
+        query_read.is_changed()
+    );
+    fprintln!(snap);
 
     // Iterate the write query. Because the Position term is InOut (default)
     // iterating the query will write to the dirty state of iterated tables.
     query_write.iter(|it, (dirty, pos)| {
-        println!("iterate table [{}]", it.archetype().unwrap());
+        fprintln!(snap, "iterate table [{}]", it.archetype().unwrap());
 
         // Because we enforced that Dirty is a shared component, we can check
         // a single value for the entire table.
@@ -102,7 +110,7 @@ pub fn main() {
             // If the dirty flag is false, skip the table. This way the table's
             // dirty state is not updated by the query.
             it.skip();
-            println!("iter.skip() for table [{}]", it.archetype().unwrap());
+            fprintln!(snap, "iter.skip() for table [{}]", it.archetype().unwrap());
             return;
         }
 
@@ -114,19 +122,22 @@ pub fn main() {
     });
 
     // One of the tables has changed, so q_read.changed() will return true
-    println!();
-    println!("query_read.is_changed(): {}", query_read.is_changed());
-    println!();
+    fprintln!(snap);
+    fprintln!(snap, "query_read.is_changed(): {}", query_read.is_changed());
+    fprintln!(snap);
 
     // When we iterate the read query, we'll see that one table has changed.
     query_read.iter_only(|iter| {
-        println!(
+        fprintln!(
+            snap,
             "iter.is_changed() for table [{}]: {}",
             iter.archetype().unwrap(),
             iter.is_changed()
         );
     });
-    println!();
+    fprintln!(snap);
+
+    snap.test();
 
     // Output:
     //  query_read.is_changed(): true

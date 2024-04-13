@@ -1,0 +1,8 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- Move begin
+- "e1: { 11, 22 }"
+- "e2: { 13, 24 }"
+- Move end

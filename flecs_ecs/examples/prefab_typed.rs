@@ -29,6 +29,9 @@ struct Beam;
 struct Railgun;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Associate types with prefabs
@@ -58,9 +61,11 @@ fn main() {
     let inst_head = inst.target::<Head>(0);
     let inst_beam = inst.target::<Beam>(0);
 
-    println!("instance base: {}", inst_base.path().unwrap());
-    println!("instance head: {}", inst_head.path().unwrap());
-    println!("instance beam: {}", inst_beam.path().unwrap());
+    fprintln!(snap, "instance base: {}", inst_base.path().unwrap());
+    fprintln!(snap, "instance head: {}", inst_head.path().unwrap());
+    fprintln!(snap, "instance beam: {}", inst_beam.path().unwrap());
+
+    snap.test();
 
     // Output:
     //  instance base: ::my_railgun::Base

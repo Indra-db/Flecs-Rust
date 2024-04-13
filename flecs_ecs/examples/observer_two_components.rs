@@ -6,6 +6,9 @@ use common::*;
 // observer for Position,Velocity won't match an entity that only has Position.
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create observer for custom event
@@ -13,7 +16,8 @@ fn main() {
         .observer_builder::<(&Position, &Velocity)>()
         .add_event::<flecs::OnSet>()
         .on_each_iter(|it, index, (pos, vel)| {
-            println!(
+            fprintln!(
+                snap,
                 " - {}: {}: {}: p: {{ {}, {} }}, v: {{ {}, {} }}",
                 it.event().name(),
                 it.event_id().to_str(),
@@ -33,6 +37,8 @@ fn main() {
     // Set Velocity (emits EcsOnSet, matches observer)
     entity.set(Velocity { x: 1.0, y: 2.0 });
 
-    // Output
+    snap.test();
+
+    // Output:
     //  - OnSet: Velocity: e: p: { 10, 20 }, v: { 1, 2 }
 }

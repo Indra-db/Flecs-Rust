@@ -2,6 +2,9 @@ mod common;
 use common::*;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create a query for Position, Velocity. Queries are the fastest way to
@@ -31,14 +34,14 @@ fn main() {
     query.each_entity(|e, (pos, vel)| {
         pos.x += vel.x;
         pos.y += vel.y;
-        println!("{}: [{:?}]", e.name(), pos);
+        fprintln!(snap, "{}: [{:?}]", e.name(), pos);
     });
 
     // There's an equivalent function that does not include the entity argument
     query.each(|(pos, vel)| {
         pos.x += vel.x;
         pos.y += vel.y;
-        println!("[{:?}]", pos);
+        fprintln!(snap, "[{:?}]", pos);
     });
 
     // Iter is a bit more verbose, but allows for more control over how entities
@@ -48,9 +51,11 @@ fn main() {
         for i in it.iter() {
             pos[i].x += vel[i].x;
             pos[i].y += vel[i].y;
-            println!("[{:?}]", pos[i]);
+            fprintln!(snap, "[{:?}]", pos[i]);
         }
     });
+
+    snap.test();
 
     // Output:
     //  e1: [Position { x: 11.0, y: 22.0 }]

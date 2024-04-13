@@ -33,6 +33,9 @@ struct CloseRequested {
 }
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create an observer for the CloseRequested event to listen to any entity.
@@ -42,31 +45,38 @@ fn main() {
         .with_type::<&flecs::Any>()
         .on_each_iter(|it, _index, _| {
             let close_requested = unsafe { it.param::<CloseRequested>() };
-            println!("Close request with reason: {:?}", close_requested.reason);
+            fprintln!(
+                snap,
+                "Close request with reason: {:?}",
+                close_requested.reason
+            );
         });
 
     let widget = world.new_entity_named(c"MyWidget");
-    println!("widget: {:?}", widget);
+    fprintln!(snap, "widget: {:?}", widget);
 
     // Observe the Click event on the widget entity.
     widget.observe::<Click>(|| {
-        println!("clicked!");
+        fprintln!(snap, "clicked!");
     });
 
     widget.observe_entity::<Click>(|entity| {
-        println!("clicked on {:?}", entity.name());
+        fprintln!(snap, "clicked on {:?}", entity.name());
     });
 
     // Observe the Resize event on the widget entity.
     widget.observe_payload(|payload: &mut Resize| {
-        println!(
+        fprintln!(
+            snap,
             "widget resized to {{ {}, {} }}!",
-            payload.width, payload.height
+            payload.width,
+            payload.height
         );
     });
 
     widget.observe_payload_entity(|entity, payload: &mut Resize| {
-        println!(
+        fprintln!(
+            snap,
             "{} resized to {{ {}, {} }}!",
             entity.name(),
             payload.width,
@@ -84,6 +94,8 @@ fn main() {
     widget.emit_payload(&CloseRequested {
         reason: CloseReason::User,
     });
+
+    snap.test();
 
     // Output:
     //  clicked!

@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- System with Physics ran!

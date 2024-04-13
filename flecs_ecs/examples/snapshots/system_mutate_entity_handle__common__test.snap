@@ -1,0 +1,6 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- "Expire: ToDelete deleted!"
+- "Expired: ToDelete actually deleted"

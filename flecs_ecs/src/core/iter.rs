@@ -207,7 +207,7 @@ impl<'a> Iter<'a> {
     /// - caller must ensure the ctx variable was set to a type accessible as T and is not aliased
     #[doc(alias = "iter::ctx")]
     #[allow(clippy::mut_from_ref)]
-    pub unsafe fn context<T>(&self) -> &mut T {
+    pub unsafe fn context<T>(&self) -> &'a mut T {
         unsafe { &mut *(self.iter.ctx as *mut T) }
     }
 

@@ -139,7 +139,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     #[doc(alias = "component::on_add")]
     pub fn on_add<Func>(&mut self, func: Func) -> &mut Self
     where
-        Func: FnMut(EntityView, &mut T) + 'static,
+        Func: FnMut(EntityView, &mut T) + 'a,
     {
         let mut type_hooks: TypeHooksT = self.get_hooks();
 
@@ -168,7 +168,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     #[doc(alias = "component::on_remove")]
     pub fn on_remove<Func>(&mut self, func: Func) -> &mut Self
     where
-        Func: FnMut(EntityView, &mut T) + 'static,
+        Func: FnMut(EntityView, &mut T) + 'a,
     {
         let mut type_hooks: TypeHooksT = self.get_hooks();
 
@@ -197,7 +197,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     #[doc(alias = "component::on_set")]
     pub fn on_set<Func>(&mut self, func: Func) -> &mut Self
     where
-        Func: FnMut(EntityView, &mut T) + 'static,
+        Func: FnMut(EntityView, &mut T) + 'a,
     {
         let mut type_hooks: TypeHooksT = self.get_hooks();
 
@@ -221,7 +221,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     /// Function to free the on add hook.
     unsafe extern "C" fn on_add_drop<Func>(func: *mut c_void)
     where
-        Func: FnMut(EntityView, &mut T) + 'static,
+        Func: FnMut(EntityView, &mut T) + 'a,
     {
         let ptr_func: *mut Func = func as *mut Func;
         unsafe {
@@ -232,7 +232,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     /// Function to free the on remove hook.
     unsafe extern "C" fn on_remove_drop<Func>(func: *mut c_void)
     where
-        Func: FnMut(EntityView, &mut T) + 'static,
+        Func: FnMut(EntityView, &mut T) + 'a,
     {
         let ptr_func: *mut Func = func as *mut Func;
         unsafe {
@@ -243,7 +243,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     /// Function to free the on set hook.
     unsafe extern "C" fn on_set_drop<Func>(func: *mut c_void)
     where
-        Func: FnMut(EntityView, &mut T) + 'static,
+        Func: FnMut(EntityView, &mut T) + 'a,
     {
         let ptr_func: *mut Func = func as *mut Func;
         unsafe {
@@ -254,7 +254,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     /// Function to run the on add hook.
     unsafe extern "C" fn run_add<Func>(iter: *mut IterT)
     where
-        Func: FnMut(EntityView, &mut T) + 'static,
+        Func: FnMut(EntityView, &mut T) + 'a,
     {
         let ctx: *mut ComponentBindingCtx = unsafe { (*iter).binding_ctx as *mut _ };
         let on_add = unsafe { (*ctx).on_add.unwrap() };
@@ -269,7 +269,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     /// Function to run the on set hook.
     unsafe extern "C" fn run_set<Func>(iter: *mut IterT)
     where
-        Func: FnMut(EntityView, &mut T) + 'static,
+        Func: FnMut(EntityView, &mut T) + 'a,
     {
         let ctx: *mut ComponentBindingCtx = unsafe { (*iter).binding_ctx as *mut _ };
         let on_set = unsafe { (*ctx).on_set.unwrap() };
@@ -284,7 +284,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     /// Function to run the on remove hook.
     unsafe extern "C" fn run_remove<Func>(iter: *mut IterT)
     where
-        Func: FnMut(EntityView, &mut T) + 'static,
+        Func: FnMut(EntityView, &mut T) + 'a,
     {
         let ctx: *mut ComponentBindingCtx = unsafe { (*iter).binding_ctx as *mut _ };
         let on_remove = unsafe { (*ctx).on_remove.unwrap() };

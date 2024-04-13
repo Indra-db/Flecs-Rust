@@ -8,6 +8,9 @@ use common::*;
 struct Likes;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     let bob = world.new_entity_named(c"Bob");
@@ -53,8 +56,10 @@ fn main() {
     rule.iter_only(|it| {
         let x = it.get_var(x_var);
         let y = it.get_var(y_var);
-        println!("{} likes {}", x.name(), y.name());
+        fprintln!(snap, "{} likes {}", x.name(), y.name());
     });
+
+    snap.test();
 
     // Output:
     //  Alice likes Bob

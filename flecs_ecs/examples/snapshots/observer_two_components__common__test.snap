@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- " - OnSet: observer_two_components.common.Velocity: e: p: { 10, 20 }, v: { 1, 2 }"

@@ -1,0 +1,8 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- "Bob's position: Position { x: 10.0, y: 20.0 }"
+- "[entity_basics.common.Position, entity_basics.common.Walking, (Identifier,Name)]"
+- "Alice has Position { x: 10.0, y: 20.0 }"
+- "Bob has Position { x: 20.0, y: 30.0 }"

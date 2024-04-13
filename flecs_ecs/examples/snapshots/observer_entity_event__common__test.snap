@@ -1,0 +1,10 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- "widget: Entity name: MyWidget -- id: 527 -- archetype: (Identifier,Name)"
+- clicked!
+- "clicked on \"MyWidget\""
+- "MyWidget resized to { 100, 200 }!"
+- "widget resized to { 100, 200 }!"
+- "Close request with reason: User"

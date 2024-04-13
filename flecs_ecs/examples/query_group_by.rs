@@ -2,6 +2,9 @@ mod common;
 use common::*;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     world.component::<First>();
@@ -39,22 +42,25 @@ fn main() {
         .set(Position { x: 6.0, y: 6.0 })
         .add::<Tag>();
 
-    println!();
+    fprintln!(snap);
 
     query.iter(|it, pos| {
         let group = world.new_entity_from_id(it.group_id());
-        println!(
+        fprintln!(
+            snap,
             "Group: {:?} - Table: [{:?}]",
             group.path().unwrap(),
             it.archetype()
         );
 
         for i in it.iter() {
-            println!(" [{:?}]", pos[i]);
+            fprintln!(snap, " [{:?}]", pos[i]);
         }
 
-        println!();
+        fprintln!(snap);
     });
+
+    snap.test();
 
     // Output:
     //  Group: "::First" - Table: [Position, (Group,First)]

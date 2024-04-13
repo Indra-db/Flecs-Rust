@@ -9,6 +9,9 @@ use common::*;
 // Iterable component to the event (see EcsIterable for more details).
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create existing entities with Position component
@@ -25,7 +28,8 @@ fn main() {
         .add_event::<flecs::OnSet>()
         .yield_existing(true)
         .on_each_iter(|it, index, pos| {
-            println!(
+            fprintln!(
+                snap,
                 " - {}: {}: {}: {{ {}, {} }}",
                 it.event().name(),
                 it.event_id().to_str(),
@@ -35,7 +39,9 @@ fn main() {
             );
         });
 
-    // Output
+    snap.test();
+
+    // Output:
     //  - OnSet: Position: e1: { 10, 20 }
     //  - OnSet: Position: e2: { 20, 30 }
 }

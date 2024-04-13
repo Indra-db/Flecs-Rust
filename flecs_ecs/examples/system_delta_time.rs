@@ -2,6 +2,8 @@ mod common;
 use common::*;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+
     let world = World::new();
 
     // Create system that prints delta_time. This system doesn't query for any

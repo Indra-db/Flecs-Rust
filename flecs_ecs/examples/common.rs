@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
+use std::ffi::c_void;
+
 pub use flecs_ecs::{core::*, macros::Component};
 
 #[derive(Debug, Component)]
@@ -81,4 +83,53 @@ pub struct Group;
 #[allow(dead_code)]
 fn main() {
     //this file is for common structs and functions used in the examples
+}
+
+#[macro_export]
+macro_rules! fprintln {
+    ($str_vec:expr) => {
+        {
+            $str_vec.push(format!("\n"));
+            println!();
+        }
+    };
+    ($str_vec:expr, $format_string:expr) => {
+        {
+            $str_vec.push(format!($format_string));
+            println!($format_string);
+        }
+    };
+    ($str_vec:expr, $format_string:expr, $($arg:expr),*) => {
+        {
+            $str_vec.push(format!($format_string, $($arg),*));
+            println!($format_string, $($arg),*);
+        }
+    };
+}
+
+pub struct Snap {
+    pub str: Vec<String>,
+}
+
+impl Snap {
+    pub fn setup_snapshot_test() -> Snap {
+        Snap { str: Vec::new() }
+    }
+
+    pub fn cvoid(&self) -> *mut c_void {
+        self as *const Snap as *mut c_void
+    }
+
+    pub fn push(&mut self, str: String) {
+        self.str.push(str);
+    }
+
+    #[allow(clippy::mut_from_ref)]
+    pub fn from<'a>(it: &'a flecs_ecs::core::Iter) -> &'a mut Snap {
+        unsafe { it.context::<Snap>() }
+    }
+
+    pub fn test(&self) {
+        insta::assert_yaml_snapshot!(self.str);
+    }
 }

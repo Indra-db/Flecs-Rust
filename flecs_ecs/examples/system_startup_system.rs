@@ -11,6 +11,9 @@ use common::*;
 // they are guaranteed to always run on the main thread.
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Startup system
@@ -18,12 +21,12 @@ fn main() {
         .system_named::<()>(c"Startup")
         .kind::<flecs::pipeline::OnStart>()
         .on_iter_only(|it| {
-            println!("{}", it.system().name());
+            fprintln!(snap, "{}", it.system().name());
         });
 
     // Regular system
     world.system_named::<()>(c"Update").on_iter_only(|it| {
-        println!("{}", it.system().name());
+        fprintln!(snap, "{}", it.system().name());
     });
 
     // First frame. This runs both the Startup and Update systems
@@ -31,6 +34,8 @@ fn main() {
 
     // Second frame. This runs only the Update system
     world.progress();
+
+    snap.test();
 
     // Output:
     //  Startup

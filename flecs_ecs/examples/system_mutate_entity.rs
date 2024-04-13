@@ -7,6 +7,9 @@ struct Timeout {
 }
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // System that deletes an entity after a timeout expires
@@ -27,7 +30,7 @@ fn main() {
                 // See the mutate_entity_handle example.
                 let e = it.entity(index);
                 e.destruct();
-                println!("Expire: {} deleted!", e.name());
+                fprintln!(snap, "Expire: {} deleted!", e.name());
             }
         });
 
@@ -45,7 +48,7 @@ fn main() {
         .observer_builder::<&Timeout>()
         .add_event::<flecs::OnRemove>()
         .on_each_entity(|e, _timeout| {
-            println!("Expired: {} actually deleted", e.name());
+            fprintln!(snap, "Expired: {} actually deleted", e.name());
         });
 
     let e = world
@@ -63,7 +66,9 @@ fn main() {
         println!("Tick...");
     }
 
-    // Output
+    snap.test();
+
+    // Output:
     //  PrintExpire: MyEntity has 2.00 seconds left
     //  Tick...
     //  PrintExpire: MyEntity has 0.99 seconds left

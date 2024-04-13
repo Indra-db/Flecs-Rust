@@ -2,6 +2,9 @@ mod common;
 use common::*;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create an observer for three events
@@ -15,9 +18,15 @@ fn main() {
                 // No assumptions about the component value should be made here. If
                 // a ctor for the component was registered it will be called before
                 // the EcsOnAdd event, but a value assigned by set won't be visible.
-                println!(" - OnAdd: {}: {}", it.event_id().to_str(), it.entity(index));
+                fprintln!(
+                    snap,
+                    " - OnAdd: {}: {}",
+                    it.event_id().to_str(),
+                    it.entity(index)
+                );
             } else {
-                println!(
+                fprintln!(
+                    snap,
                     " - {}: {}: {}: with {:?}",
                     it.event().name(),
                     it.event_id().to_str(),
@@ -37,6 +46,8 @@ fn main() {
 
     // Remove Position again (no event emitted)
     entity.remove::<Position>();
+
+    snap.test();
 
     // Output:
     //  - OnAdd: Position: e1

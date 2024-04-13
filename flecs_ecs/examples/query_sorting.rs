@@ -13,11 +13,14 @@ extern "C" fn compare_position(
     (p1.x > p2.x) as i32 - (p1.x < p2.x) as i32
 }
 
-fn print_query(query: &Query<&Position>) {
-    query.each(|pos| println!("{:?}", pos));
+fn print_query(query: &Query<&Position>, snap: &mut Snap) {
+    query.each(|pos| fprintln!(snap, "{:?}", pos));
 }
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create entities, set position in random order
@@ -32,7 +35,7 @@ fn main() {
         .system::<&Position>()
         .order_by(compare_position)
         .on_each(|pos| {
-            println!("{:?}", pos);
+            fprintln!(snap, "{:?}", pos);
         });
 
     // Create a sorted query
@@ -41,25 +44,27 @@ fn main() {
         .order_by(compare_position)
         .build();
 
-    println!();
-    println!("--- First iteration ---");
-    print_query(&query);
+    fprintln!(snap);
+    fprintln!(snap, "--- First iteration ---");
+    print_query(&query, &mut snap);
 
     // Change the value of one entity, invalidating the order
     entity.set(Position { x: 7.0, y: 0.0 });
 
     // Iterate query again, printed values are still ordered
-    println!();
-    println!("--- Second iteration ---");
-    print_query(&query);
+    fprintln!(snap);
+    fprintln!(snap, "--- Second iteration ---");
+    print_query(&query, &mut snap);
 
     // Create new entity to show that data is also sorted for new entities
     world.new_entity().set(Position { x: 3.0, y: 0.0 });
 
     // Run system, printed values are ordered
-    println!();
-    println!("--- System iteration ---");
+    fprintln!(snap);
+    fprintln!(snap, "--- System iteration ---");
     sys.run();
+
+    snap.test();
 
     // Output:
     //

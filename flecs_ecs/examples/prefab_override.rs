@@ -2,6 +2,9 @@ mod common;
 use common::*;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Attack and Damage are properties that can be shared across many
@@ -23,14 +26,14 @@ fn main() {
     // The entity will now have a private copy of the Damage component, but not
     // of the Attack and Defense components. We can see this when we look at the
     // type of the instance:
-    println!("{}", inst.archetype());
+    fprintln!(snap, "{}", inst.archetype());
 
     // Even though Attack was not automatically overridden, we can always
     // override it manually afterwards by adding it:
     inst.add::<Attack>();
 
     // The Attack component now shows up in the entity type:
-    println!("{}", inst.archetype());
+    fprintln!(snap, "{}", inst.archetype());
 
     // We can get all components on the instance, regardless of whether they
     // are overridden or not. Note that the overridden components (Attack and
@@ -39,9 +42,11 @@ fn main() {
     let defence = inst.get::<Defence>().unwrap();
     let damage = inst.get::<Damage>().unwrap();
 
-    println!("attack: {}", attack.value);
-    println!("defence: {}", defence.value);
-    println!("damage: {}", damage.value);
+    fprintln!(snap, "attack: {}", attack.value);
+    fprintln!(snap, "defence: {}", defence.value);
+    fprintln!(snap, "damage: {}", damage.value);
+
+    snap.test();
 
     // Output:
     //  Damage, (Identifier,Name), (IsA,SpaceShip)

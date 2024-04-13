@@ -26,6 +26,9 @@ struct Defence {
 }
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create a prefab with Position and Velocity components
@@ -37,17 +40,19 @@ fn main() {
     // Because of the IsA relationship, the instance now shares the Defense
     // component with the prefab, and can be retrieved as a regular component:
     let d_inst = inst.get::<Defence>().unwrap();
-    println!("{:?}", d_inst);
+    fprintln!(snap, "{:?}", d_inst);
 
     // Because the component is shared, changing the value on the prefab will
     // also change the value for the instance:
     spaceship.set(Defence { value: 100.0 });
-    println!("after set: {:?}", d_inst);
+    fprintln!(snap, "after set: {:?}", d_inst);
 
     // Prefab components can be iterated like regular components:
     world.each_entity::<&Defence>(|entity, d| {
-        println!("{}: {}", entity.path().unwrap(), d.value);
+        fprintln!(snap, "{}: {}", entity.path().unwrap(), d.value);
     });
+
+    snap.test();
 
     // Output:
     //  Defence { value: 50.0 }

@@ -1,0 +1,6 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- "Bob's got [a_hello_world.common.Position, a_hello_world.common.Velocity, (Identifier,Name), (a_hello_world.common.Eats,a_hello_world.common.Apples)]"
+- "Bob's position: Position { x: 2.0, y: 4.0 }"

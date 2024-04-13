@@ -5,6 +5,9 @@ use common::*;
 struct Healthy;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     let apples = world.new_entity_named(c"Apples").add::<Healthy>();
@@ -54,7 +57,8 @@ fn main() {
 
     // Iterate the rule
     rule.each_iter(|it, index, ()| {
-        println!(
+        fprintln!(
+            snap,
             "{} eats {}",
             it.entity(index).name(),
             it.get_var(food_var).name()
@@ -65,6 +69,8 @@ fn main() {
     // with `rule.destruct()` however in Rust it is automatically dropped when out of scope
     // but you can still drop it manually if you want to
     rule.destruct();
+
+    snap.test();
 
     // Output:
     // Bob eats Apples

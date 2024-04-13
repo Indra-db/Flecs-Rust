@@ -6,6 +6,9 @@ use common::*;
 struct MyEvent;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create an observer for three events
@@ -13,7 +16,8 @@ fn main() {
         .observer_builder::<&Position>()
         .add_event::<MyEvent>()
         .on_each_iter(|it, index, _pos| {
-            println!(
+            fprintln!(
+                snap,
                 " - {}: {}: {}",
                 it.event().name(),
                 it.event_id().to_str(),
@@ -34,6 +38,8 @@ fn main() {
         .add::<Position>()
         .set_entity_to_emit(entity)
         .emit();
+
+    snap.test();
 
     // Output:
     //  - MyEvent: Position: e1

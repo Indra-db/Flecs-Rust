@@ -23,6 +23,9 @@ extern "C" fn callback_group_by_relationship(
 }
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Register components in order so that id for First is lower than Third
@@ -66,7 +69,7 @@ fn main() {
         .set(Position { x: 6.0, y: 6.0 })
         .add::<Tag>();
 
-    println!();
+    fprintln!(snap);
 
     // The query cache now looks like this:
     //  - group First:
@@ -84,18 +87,21 @@ fn main() {
 
     query.iter(|it, pos| {
         let group = world.new_entity_from_id(it.group_id());
-        println!(
+        fprintln!(
+            snap,
             "Group: {:?} - Table: [{:?}]",
             group.path().unwrap(),
-            it.archetype(),
+            it.archetype()
         );
 
         for i in it.iter() {
-            println!(" [{:?}]", pos[i]);
+            fprintln!(snap, " [{:?}]", pos[i]);
         }
 
-        println!();
+        fprintln!(snap);
     });
+
+    snap.test();
 
     // Output:
     //  Group: "::First" - Table: [Position, (Group,First)]

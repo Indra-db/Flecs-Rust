@@ -1,0 +1,6 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- " - OnSet: observer_yield_existing.common.Position: e1: { 10, 20 }"
+- " - OnSet: observer_yield_existing.common.Position: e2: { 20, 30 }"

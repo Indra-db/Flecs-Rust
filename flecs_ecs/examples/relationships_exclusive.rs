@@ -6,6 +6,9 @@ use common::*;
 struct Platoon;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Register Platoon as exclusive relationship. This ensures that an entity
@@ -23,16 +26,18 @@ fn main() {
     unit.add_pair_first::<Platoon>(platoon_1);
 
     // Log platoon of unit
-    println!(
+    fprintln!(
+        snap,
         "Unit in platoon 1: {}",
         unit.has_pair_first::<Platoon>(platoon_1)
     ); // true
-    println!(
+    fprintln!(
+        snap,
         "Unit in platoon 2: {}",
         unit.has_pair_first::<Platoon>(platoon_2)
     ); // false
 
-    println!();
+    fprintln!(snap);
 
     // Add unit to platoon 2. Because Platoon is an exclusive relationship, this
     // both removes (Platoon, platoon_1) and adds (Platoon, platoon_2) in a
@@ -40,14 +45,18 @@ fn main() {
     unit.add_pair_first::<Platoon>(platoon_2);
 
     // Log platoon of unit
-    println!(
+    fprintln!(
+        snap,
         "Unit in platoon 1: {}",
         unit.has_pair_first::<Platoon>(platoon_1)
     ); // false
-    println!(
+    fprintln!(
+        snap,
         "Unit in platoon 2: {}",
         unit.has_pair_first::<Platoon>(platoon_2)
     ); // true
+
+    snap.test();
 
     // Output:
     //  Unit in platoon 1: true

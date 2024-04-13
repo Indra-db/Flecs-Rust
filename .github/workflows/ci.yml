@@ -15,13 +15,11 @@ jobs:
     name: cargo fmt
     steps:
       - uses: actions/checkout@v4
-
       - name: install stable toolchain
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
           components: rustfmt
-
       - name: cargo fmt
         run: cargo fmt --all --check
 
@@ -40,26 +38,24 @@ jobs:
     name: cargo clippy + test + build and run examples
     steps:
       - uses: actions/checkout@v4
-
       - name: install stable toolchain
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
           components: clippy
-
       - name: cargo clippy
         run: cargo clippy --all-targets --workspace -- -D warnings
-
       - name: cargo test
         run: cargo test --workspace
-
       - name: Set execute permission on script
         run: chmod +x ./scripts/run_examples.sh
-
       - name: Build all examples
         run: cargo build --examples
 
+      # CI env variable for insta snapshot testing library
       - name: Run examples
+        env:
+          CI: true
         run: ./scripts/run_examples.sh
         shell: bash
 

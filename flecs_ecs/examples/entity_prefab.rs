@@ -4,6 +4,9 @@ mod common;
 use common::*;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create a prefab hierarchy.
@@ -12,6 +15,7 @@ fn main() {
         // Add components to prefab entity as usual
         .set(ImpulseSpeed { value: 50.0 })
         .set(Defence { value: 50.0 })
+        .set(Position { x: 0.0, y: 0.0 })
         // By default components in an inheritance hierarchy are shared between
         // entities. The override function ensures that instances have a private
         // copy of the component.
@@ -47,18 +51,20 @@ fn main() {
 
     // Inspect the type of the entity. This outputs:
     //    Position,(Identifier,Name),(IsA,MammothFreighter)
-    println!("Instance type: [{}]", inst.archetype());
+    fprintln!(snap, "Instance type: [{}]", inst.archetype());
 
     // Even though the instance doesn't have a private copy of ImpulseSpeed, we
     // can still get it using the regular API (outputs 50)
     let impulse_speed = inst.get::<ImpulseSpeed>();
-    println!("ImpulseSpeed: {}", impulse_speed.unwrap().value);
+    fprintln!(snap, "ImpulseSpeed: {}", impulse_speed.unwrap().value);
 
     // Prefab components can be iterated just like regular components:
     world.each_entity::<(&ImpulseSpeed, &mut Position)>(|entity, (impulse_speed, position)| {
         position.x += impulse_speed.value;
-        println!("Entity {}: {:?}", entity.name(), position);
+        fprintln!(snap, "Entity {}: {:?}", entity.name(), position);
     });
+
+    snap.test();
 
     // Output:
     //  Instance type: [Position, (Identifier,Name), (IsA,MammothFreighter)]

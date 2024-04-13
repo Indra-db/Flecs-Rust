@@ -21,6 +21,9 @@ struct Waiter;
 struct Plate;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create query to find all waiters without a plate
@@ -36,7 +39,7 @@ fn main() {
         .system_named::<&Plate>(c"AssignPlate")
         .without_pair::<&Waiter, flecs::Wildcard>()
         .no_readonly(true)
-        .on_iter_only(move |it| {
+        .on_iter_only(|it| {
             for i in it.iter() {
                 let plate = it.entity(i);
 
@@ -62,7 +65,7 @@ fn main() {
 
                     plate.add_pair_first::<&Waiter>(waiter);
 
-                    println!("Assigned {} to {}!", waiter.name(), plate.name());
+                    fprintln!(snap, "Assigned {} to {}!", waiter.name(), plate.name());
                 }
             }
         });
@@ -80,6 +83,8 @@ fn main() {
 
     // run systems
     world.progress();
+
+    snap.test();
 
     // Output:
     //  Assigned waiter_3 to plate_1!

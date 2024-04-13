@@ -32,6 +32,9 @@ enum Direction {
     Right,
 }
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Register Movement and Direction as union relationships. This ensures that
@@ -79,7 +82,8 @@ fn main() {
         let direction = it.field::<Entity>(2).unwrap();
 
         for i in 0..it.count() {
-            println!(
+            fprintln!(
+                snap,
                 "{}: Movement: {:?}, Direction: {:?}",
                 it.entity(i).name(),
                 movement[i]
@@ -93,6 +97,8 @@ fn main() {
             );
         }
     });
+
+    snap.test();
 
     // Output:
     //   e3: Movement: Walking, Direction: Back

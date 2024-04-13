@@ -5,6 +5,9 @@ use common::*;
 struct Npc;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create a query for Position, Npc. By adding the Npc component using the
@@ -32,8 +35,10 @@ fn main() {
 
     // Note how the Npc tag is not part of the each signature
     query.each_entity(|entity, pos| {
-        println!("Entity {}: {:?}", entity.name(), pos);
+        fprintln!(snap, "Entity {}: {:?}", entity.name(), pos);
     });
+
+    snap.test();
 
     // Output:
     //  Entity e1: Position { x: 10.0, y: 20.0 }

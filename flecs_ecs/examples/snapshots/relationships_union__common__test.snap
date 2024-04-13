@@ -1,0 +1,6 @@
+---
+source: flecs_ecs/examples/common.rs
+expression: self.str
+---
+- "e3: Movement: Walking, Direction: Back"
+- "e1: Movement: Walking, Direction: Front"
