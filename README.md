@@ -1,6 +1,6 @@
 # Flecs ECS Rust API
 
-[![Generic badge](https://img.shields.io/badge/Flecs_Version-3.2.11-E56717.svg)](https://github.com/SanderMertens/flecs/releases)
+[![Generic badge](https://img.shields.io/badge/Flecs_Version-3.2.12-E56717.svg)](https://github.com/SanderMertens/flecs/releases)
 [![License](https://badgen.net/pypi/license/pip/)](https://github.com/Indra-db/flecs-ecs-rs/blob/master/LICENSE)
 [![CI](https://github.com/indra-db/flecs_ecs_rs/actions/workflows/ci.yml/badge.svg)](https://github.com/indra-db/flecs_ecs_rs/actions/workflows/ci.yml)
 [![Flecs C/C++ Docs](https://img.shields.io/badge/Flecs%20C%2FC%2B%2B%20Docs-View-161b22)](https://www.flecs.dev/flecs/md_docs_2Docs.html)
