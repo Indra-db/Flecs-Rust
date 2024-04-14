@@ -189,7 +189,7 @@ where
 }
 
 pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
-    fn desc_filter_mut(&mut self) -> &mut sys::ecs_filter_desc_t;
+    fn desc_filter_mut(&mut self) -> &mut sys::ecs_query_desc_t;
 
     fn expr_count_mut(&mut self) -> &mut i32;
 
@@ -632,20 +632,6 @@ pub trait FilterBuilderImpl<'a>: TermBuilder<'a> {
         // SAFETY: we know that the enum_value is a valid because of the T::get_id call
         let enum_field_id = value.get_id_variant(self.world());
         self.term_with_id((enum_id, enum_field_id))
-    }
-
-    /// set term with term
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `filter_builder_i::term`
-    #[doc(alias = "filter_builder_i::term")]
-    fn term_with_term(&mut self, mut term: Term) -> &mut Self {
-        self.term();
-        unsafe {
-            *self.term_ptr_mut() = term.move_raw_term();
-        }
-        self
     }
 }
 

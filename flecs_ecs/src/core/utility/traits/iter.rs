@@ -14,7 +14,7 @@ pub trait IterOperations {
     fn iter_next_func(&self) -> unsafe extern "C" fn(*mut IterT) -> bool;
 
     #[doc(hidden)]
-    fn filter_ptr(&self) -> *const FilterT;
+    fn query_ptr(&self) -> *const QueryT;
 }
 
 pub trait IterAPI<'a, T>: IterOperations + IntoWorld<'a>
@@ -387,14 +387,18 @@ where
     /// * C++ API: `filter_base::term`
     #[doc(alias = "filter_base::each_term")]
     fn each_term(&self, mut func: impl FnMut(&mut Term)) {
-        let filter = self.filter_ptr();
+        let query = self.query_ptr();
         let world = self.world();
-        unsafe {
-            for i in 0..(*filter).term_count {
-                let mut term = Term::new_from_term(world, *(*filter).terms.add(i as usize));
-                func(&mut term);
-                term.reset(); // prevent freeing resources
-            }
+        ecs_assert!(
+            !query.is_null(),
+            FlecsErrorCode::InvalidParameter,
+            "query filter is null"
+        );
+        let query = unsafe { &*query };
+        for i in 0..query.term_count {
+            let mut term = Term::new_from_term(world, query.terms[i as usize]);
+            func(&mut term);
+            term.reset(); // prevent freeing resources
         }
     }
 
@@ -414,14 +418,15 @@ where
     /// * C++ API: `filter_base::term`
     #[doc(alias = "filter_base::term")]
     fn get_term(&self, index: usize) -> Term<'a> {
-        let filter = self.filter_ptr();
+        let query = self.query_ptr();
         let world = self.world();
         ecs_assert!(
-            !filter.is_null(),
+            !query.is_null(),
             FlecsErrorCode::InvalidParameter,
             "query filter is null"
         );
-        Term::new_from_term(world, unsafe { *(*filter).terms.add(index) })
+        let query = unsafe { &*query };
+        Term::new_from_term(world, query.terms[index])
     }
 
     /// Get the field count of the current filter
@@ -439,7 +444,7 @@ where
     /// * C++ API: `filter_base::field_count`
     #[doc(alias = "filter_base::field_count")]
     fn field_count(&self) -> i8 {
-        let filter = self.filter_ptr();
+        let filter = self.query_ptr();
         unsafe { (*filter).field_count }
     }
 
@@ -460,9 +465,8 @@ where
     #[doc(alias = "filter_base::str")]
     #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
     fn to_string(&self) -> String {
-        let filter = self.filter_ptr();
-        let world = self.world_ptr_mut();
-        let result: *mut c_char = unsafe { sys::ecs_filter_str(world, filter as *const _) };
+        let query = self.query_ptr();
+        let result: *mut c_char = unsafe { sys::ecs_query_str(query as *const _) };
         let rust_string =
             String::from(unsafe { std::ffi::CStr::from_ptr(result).to_str().unwrap() });
         unsafe {

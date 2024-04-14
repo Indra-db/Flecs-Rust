@@ -109,7 +109,7 @@ where
     type OnlyType = T;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::In as sys::ecs_inout_kind_t;
+        term.inout = InOutKind::In as i16;
     }
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
@@ -166,7 +166,7 @@ where
     type OnlyType = T;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::InOut as sys::ecs_inout_kind_t;
+        term.inout = InOutKind::InOut as i16;
     }
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
@@ -223,8 +223,8 @@ where
     type OnlyType = T;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::In as sys::ecs_inout_kind_t;
-        term.oper = OperKind::Optional as sys::ecs_oper_kind_t;
+        term.inout = InOutKind::In as i16;
+        term.oper = OperKind::Optional as i16;
     }
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
@@ -289,8 +289,8 @@ where
     type OnlyType = T;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::InOut as sys::ecs_inout_kind_t;
-        term.oper = OperKind::Optional as sys::ecs_oper_kind_t;
+        term.inout = InOutKind::InOut as i16;
+        term.oper = OperKind::Optional as i16;
     }
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
@@ -356,7 +356,7 @@ pub trait Iterable: Sized {
 
     fn populate<'a>(filter: &mut impl Filterable<'a>);
 
-    fn register_ids_descriptor(world: *mut WorldT, desc: &mut sys::ecs_filter_desc_t) {
+    fn register_ids_descriptor(world: *mut WorldT, desc: &mut sys::ecs_query_desc_t) {
         Self::register_ids_descriptor_at(world, &mut desc.terms[..], &mut 0);
     }
 

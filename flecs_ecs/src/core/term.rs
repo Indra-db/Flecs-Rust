@@ -11,25 +11,10 @@ use crate::sys;
 /// descriptions can reference entities by id, name or by variable, which means
 /// the entity will be resolved when the term is evaluated.
 pub struct Term<'a> {
-    pub term_id_ptr: *mut TermIdT,
+    pub term_id_ptr: *mut TermRefT,
     pub term_ptr: *mut TermT,
     pub term: TermT,
     world: WorldRef<'a>,
-}
-/// this is for copying the term
-impl<'a> Clone for Term<'a> {
-    fn clone(&self) -> Self {
-        let mut obj = Self {
-            term_id_ptr: std::ptr::null_mut(),
-            term_ptr: std::ptr::null_mut(),
-            term: Default::default(),
-            world: self.world,
-        };
-        obj.term = unsafe { sys::ecs_term_copy(&self.term) };
-        let obj_term = &mut obj.term as *mut TermT;
-        obj.set_term(obj_term);
-        obj
-    }
 }
 
 impl<'a> Term<'a> {
@@ -55,7 +40,6 @@ impl<'a> Term<'a> {
             term,
             term_ptr: std::ptr::null_mut(),
         };
-        obj.term.move_ = false;
         let obj_term = &mut obj.term as *mut TermT;
         obj.set_term(obj_term);
         obj
@@ -72,14 +56,12 @@ impl<'a> Term<'a> {
     /// * C++ API: `term::term`
     #[doc(alias = "term::term")]
     pub fn new_world_only(world: impl IntoWorld<'a>) -> Self {
-        let mut obj = Self {
+        Self {
             world: world.world(),
             term_id_ptr: std::ptr::null_mut(),
             term: Default::default(),
             term_ptr: std::ptr::null_mut(),
-        };
-        obj.term.move_ = true;
-        obj
+        }
     }
 
     /// Create a new term from a component or pair
@@ -171,31 +153,9 @@ impl<'a> Term<'a> {
             }
         }
 
-        obj.term.move_ = false;
         let obj_term = &mut obj.term as *mut TermT;
         obj.set_term(obj_term);
 
-        obj
-    }
-
-    /// This is how you should move a term, not the default rust way
-    /// Move term resources to another term. This operation moves resources to a new term.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `term::move`
-    #[doc(alias = "term::move")]
-    pub fn move_term(mut self) -> Self {
-        let mut obj = Self {
-            world: self.world,
-            term_id_ptr: std::ptr::null_mut(),
-            term_ptr: std::ptr::null_mut(),
-            term: Default::default(),
-        };
-        obj.term = unsafe { sys::ecs_term_move(&mut self.term) };
-        self.reset();
-        let obj_term = &mut obj.term as *mut TermT;
-        obj.set_term(obj_term);
         obj
     }
 
@@ -210,23 +170,6 @@ impl<'a> Term<'a> {
         // if it does we can use Option.
         self.term = Default::default();
         self.set_term(std::ptr::null_mut());
-    }
-
-    /// Finalize term. Ensure that all fields of a term are consistent and filled out.
-    ///
-    /// This operation should be invoked before using and after assigning members to, or parsing a term.
-    /// When a term contains unresolved identifiers, this operation will resolve and assign the identifiers.
-    /// If the term contains any identifiers that cannot be resolved, the operation will fail.
-    ///
-    /// An application generally does not need to invoke this operation as the APIs that use terms (such as filters, queries and triggers)
-    /// will finalize terms when they are created.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `term::finalize`
-    #[doc(alias = "term::finalize")]
-    pub fn finalize(&mut self) -> i32 {
-        unsafe { sys::ecs_term_finalize(self.world.world_ptr_mut(), &mut self.term) }
     }
 
     /// Check if term is initialized
@@ -283,10 +226,12 @@ impl<'a> Term<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `term::src`
-    #[doc(alias = "term::src")]
+    /// * C++ API: `term::get_src`
+    #[doc(alias = "term::get_src")]
     pub fn src(&self) -> EntityView {
-        EntityView::new_from(self.world, self.term.src.id)
+        //id & ~EcsTermRefFlags
+        let id = self.term.src.id & !flecs::TermRefFlags::ID;
+        EntityView::new_from(self.world, id)
     }
 
     /// Get the first of term
@@ -294,9 +239,10 @@ impl<'a> Term<'a> {
     /// # See also
     ///
     /// * C++ API: `term::first`
-    #[doc(alias = "term::first")]
+    #[doc(alias = "term::get_first")]
     pub fn first(&self) -> EntityView {
-        EntityView::new_from(self.world, self.term.first.id)
+        let id = self.term.first.id & !flecs::TermRefFlags::ID;
+        EntityView::new_from(self.world, id)
     }
 
     /// Get the second of term
@@ -304,30 +250,10 @@ impl<'a> Term<'a> {
     /// # See also
     ///
     /// * C++ API: `term::second`
-    #[doc(alias = "term::second")]
+    #[doc(alias = "term::get_second")]
     pub fn second(&self) -> EntityView {
-        EntityView::new_from(self.world, self.term.second.id)
-    }
-
-    /// Move resources of a term to another term. Same as copy, but moves resources from src,
-    /// if src->move is set to true. If src->move is not set to true, this operation will do a copy.
-    /// The conditional move reduces redundant allocations in scenarios where a list of terms is partially created with allocated resources.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `term::move`
-    #[doc(alias = "term::move")]
-    pub fn move_raw_term(&mut self) -> TermT {
-        unsafe { sys::ecs_term_move(&mut self.term) }
-    }
-}
-
-/// Builder pattern functions
-impl<'a> Term<'a> {}
-
-impl<'a> Drop for Term<'a> {
-    fn drop(&mut self) {
-        unsafe { sys::ecs_term_fini(&mut self.term) };
+        let id = self.term.second.id & !flecs::TermRefFlags::ID;
+        EntityView::new_from(self.world, id)
     }
 }
 
@@ -338,7 +264,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
 
     fn term_ptr_mut(&mut self) -> *mut TermT;
 
-    fn term_id_ptr_mut(&mut self) -> *mut TermIdT;
+    fn term_id_ptr_mut(&mut self) -> *mut TermRefT;
 
     /// Set term to a specific term
     ///
@@ -379,162 +305,13 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     }
 
     /// The self flag indicates the term identifier itself is used
+    /// # See also
+    ///
+    /// * C++ API: `term_builder_i::self`
+    #[doc(alias = "term_builder_i::self")]
     fn self_term(&mut self) -> &mut Self {
         self.assert_term_id_ptr_mut();
-        unsafe { (*self.term_id_ptr_mut()).flags |= ECS_SELF };
-        self
-    }
-
-    /// default up where trav is set to 0.
-    /// The up flag indicates that the term identifier may be substituted by
-    /// traversing a relationship upwards. For example: substitute the identifier
-    /// with its parent by traversing the `ChildOf` relationship.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `term_builder_i::up`
-    #[doc(alias = "term_builder_i::up")]
-    fn up(&mut self) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe {
-            (*self.term_id_ptr_mut()).flags |= ECS_UP;
-            (*self.term_id_ptr_mut()).trav = 0;
-        };
-        self
-    }
-
-    /// The up flag indicates that the term identifier may be substituted by
-    /// traversing a relationship upwards. For example: substitute the identifier
-    /// with its parent by traversing the `ChildOf` relationship.
-    ///
-    /// # Arguments
-    ///
-    /// * `traverse_relationship` - The relationship to traverse.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `term_builder_i::up`
-    #[doc(alias = "term_builder_i::up")]
-    fn up_id(&mut self, traverse_relationship: impl Into<Entity>) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe { (*self.term_id_ptr_mut()).flags |= ECS_UP };
-        unsafe { (*self.term_id_ptr_mut()).trav = *traverse_relationship.into() };
-        self
-    }
-
-    /// The up flag indicates that the term identifier may be substituted by
-    /// traversing a relationship upwards. For example: substitute the identifier
-    /// with its parent by traversing the `ChildOf` relationship.
-    ///
-    /// # Type Arguments
-    ///
-    /// * `TravRel` - The relationship to traverse.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `term_builder_i::up`
-    #[doc(alias = "term_builder_i::up")]
-    fn up_type<TravRel: ComponentId>(&mut self) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe {
-            (*self.term_id_ptr_mut()).flags |= ECS_UP;
-            (*self.term_id_ptr_mut()).trav = TravRel::get_id(self.world());
-        };
-        self
-    }
-
-    /// The cascade flag is like up, but returns results in breadth-first order.
-    /// Only supported for `flecs::query`
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `term_builder_i::cascade`
-    #[doc(alias = "term_builder_i::cascade")]
-    fn cascade(&mut self) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe { (*self.term_id_ptr_mut()).flags |= ECS_CASCADE };
-        self
-    }
-
-    /// The cascade flag is like up, but returns results in breadth-first order.
-    /// Only supported for `flecs::query`
-    ///
-    /// # Arguments
-    ///
-    /// * `traverse_relationship` - The optional relationship to traverse.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `term_builder_i::cascade`
-    #[doc(alias = "term_builder_i::cascade")]
-    fn cascade_id(&mut self, traverse_relationship: impl Into<Entity>) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        //ecs_assert!(
-        //    traverse_relationship != 0,
-        //    FlecsErrorCode::InvalidOperation,
-        //    "Opt the usage of `cascade` if you are passing 0"
-        //);
-        unsafe { (*self.term_id_ptr_mut()).flags |= ECS_CASCADE };
-        unsafe { (*self.term_id_ptr_mut()).trav = *traverse_relationship.into() };
-        self
-    }
-
-    /// The cascade flag is like up, but returns results in breadth-first order.
-    /// Only supported for `flecs::query`
-    ///
-    /// # Type Arguments
-    ///
-    /// * `TravRel` - The relationship to traverse.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `term_builder_i::cascade`
-    #[doc(alias = "term_builder_i::cascade")]
-    fn cascade_type<TravRel: ComponentId>(&mut self) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe {
-            (*self.term_id_ptr_mut()).flags |= ECS_CASCADE;
-            (*self.term_id_ptr_mut()).trav = TravRel::get_id(self.world());
-        };
-        self
-    }
-
-    /// Use with cascade to iterate results in descending (bottom + top) order.
-    fn desc(&mut self) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe { (*self.term_id_ptr_mut()).flags |= ECS_DESC };
-        self
-    }
-
-    /// the parent flag is short for up (`flecs::ChildOf`)
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `term_builder_i::parent`
-    #[doc(alias = "term_builder_i::parent")]
-    fn parent(&mut self) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe { (*self.term_id_ptr_mut()).flags |= ECS_PARENT };
-        self
-    }
-
-    /// Specify relationship to traverse, and flags to indicate direction
-    ///
-    /// # Arguments
-    ///
-    /// * `traverse_relationship` - The relationship to traverse.
-    /// * `flags` - The direction to traverse.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `term_builder_i::trav`
-    #[doc(alias = "term_builder_i::trav")]
-    fn trav(&mut self, traverse_relationship: impl Into<Entity>, flags: Flags32T) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe {
-            (*self.term_id_ptr_mut()).trav = *traverse_relationship.into();
-            (*self.term_id_ptr_mut()).flags |= flags;
-        };
+        unsafe { (*self.term_id_ptr_mut()).id |= ECS_SELF };
         self
     }
 
@@ -546,8 +323,8 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `term_builder_i::set_term_id_ptr`
-    #[doc(alias = "term_builder_i::set_term_id_ptr")]
+    /// * C++ API: `term_builder_i::id`
+    #[doc(alias = "term_builder_i::id")]
     fn set_term_id_ptr_mut(&mut self, id: impl Into<Entity>) -> &mut Self {
         self.assert_term_id_ptr_mut();
         let term_id_ptr = self.term_id_ptr_mut();
@@ -571,11 +348,10 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::entity`
     #[doc(alias = "term_builder_i::entity")]
-    fn entity(&mut self, id: impl Into<Entity>) -> &mut Self {
+    fn entity(&mut self, entity: impl Into<Entity>) -> &mut Self {
         self.assert_term_id_ptr_mut();
         unsafe {
-            (*self.term_id_ptr_mut()).flags |= ECS_IS_ENTITY;
-            (*self.term_id_ptr_mut()).id = *id.into();
+            (*self.term_id_ptr_mut()).id = *entity.into() | ECS_IS_ENTITY;
         };
         self
     }
@@ -594,7 +370,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
         self.assert_term_id_ptr_mut();
         unsafe {
             (*self.term_id_ptr_mut()).name = name.as_ptr() as *mut i8;
-            (*self.term_id_ptr_mut()).flags |= ECS_IS_NAME;
+            (*self.term_id_ptr_mut()).id |= flecs::IsEntity::ID;
         };
         self
     }
@@ -612,7 +388,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     fn var(&mut self, var_name: &CStr) -> &mut Self {
         self.assert_term_id_ptr_mut();
         unsafe {
-            (*self.term_id_ptr_mut()).flags |= ECS_IS_VARIABLE;
+            (*self.term_id_ptr_mut()).id |= flecs::IsVariable::ID;
             (*self.term_id_ptr_mut()).name = var_name.as_ptr() as *mut i8;
         };
         self
@@ -628,9 +404,9 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::flags`
     #[doc(alias = "term_builder_i::flags")]
-    fn flags(&mut self, flags: Flags32T) -> &mut Self {
+    fn flags(&mut self, flags: u64) -> &mut Self {
         self.assert_term_id_ptr_mut();
-        unsafe { (*self.term_id_ptr_mut()).flags = flags };
+        unsafe { (*self.term_id_ptr_mut()).id = flags };
         self
     }
 
@@ -847,19 +623,162 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
         }
     }
 
-    /// Set role of term
-    ///
-    /// # Arguments
-    ///
-    /// * `role` - The role to set.
+    /// default up where trav is set to 0.
+    /// The up flag indicates that the term identifier may be substituted by
+    /// traversing a relationship upwards. For example: substitute the identifier
+    /// with its parent by traversing the `ChildOf` relationship.
     ///
     /// # See also
     ///
-    /// * C++ API: `term_builder_i::role`
-    #[doc(alias = "term_builder_i::role")]
-    fn role(&mut self, role: impl Into<Entity>) -> &mut Self {
-        self.assert_term();
-        unsafe { (*self.term_ptr_mut()).id_flags = *role.into() };
+    /// * C++ API: `term_builder_i::up`
+    #[doc(alias = "term_builder_i::up")]
+    fn up(&mut self) -> &mut Self {
+        self.assert_term_id_ptr_mut();
+        unsafe {
+            (*self.term_id_ptr_mut()).id |= ECS_UP;
+            (*self.term_ptr_mut()).trav = 0;
+        };
+        self
+    }
+
+    /// The up flag indicates that the term identifier may be substituted by
+    /// traversing a relationship upwards. For example: substitute the identifier
+    /// with its parent by traversing the `ChildOf` relationship.
+    ///
+    /// # Arguments
+    ///
+    /// * `traverse_relationship` - The relationship to traverse.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `term_builder_i::up`
+    #[doc(alias = "term_builder_i::up")]
+    fn up_id(&mut self, traverse_relationship: impl Into<Entity>) -> &mut Self {
+        self.assert_term_id_ptr_mut();
+        unsafe { (*self.term_id_ptr_mut()).id |= ECS_UP };
+        unsafe { (*self.term_ptr_mut()).trav = *traverse_relationship.into() };
+        self
+    }
+
+    /// The up flag indicates that the term identifier may be substituted by
+    /// traversing a relationship upwards. For example: substitute the identifier
+    /// with its parent by traversing the `ChildOf` relationship.
+    ///
+    /// # Type Arguments
+    ///
+    /// * `TravRel` - The relationship to traverse.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `term_builder_i::up`
+    #[doc(alias = "term_builder_i::up")]
+    fn up_type<TravRel: ComponentId>(&mut self) -> &mut Self {
+        self.assert_term_id_ptr_mut();
+        unsafe {
+            (*self.term_id_ptr_mut()).id |= ECS_UP;
+            (*self.term_ptr_mut()).trav = TravRel::get_id(self.world());
+        };
+        self
+    }
+
+    /// The cascade flag is like up, but returns results in breadth-first order.
+    /// Only supported for `flecs::query`
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `term_builder_i::cascade`
+    #[doc(alias = "term_builder_i::cascade")]
+    fn cascade(&mut self) -> &mut Self {
+        self.assert_term_id_ptr_mut();
+        unsafe { (*self.term_id_ptr_mut()).id |= ECS_CASCADE };
+        self
+    }
+
+    /// The cascade flag is like up, but returns results in breadth-first order.
+    /// Only supported for `flecs::query`
+    ///
+    /// # Arguments
+    ///
+    /// * `traverse_relationship` - The optional relationship to traverse.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `term_builder_i::cascade`
+    #[doc(alias = "term_builder_i::cascade")]
+    fn cascade_id(&mut self, traverse_relationship: impl Into<Entity>) -> &mut Self {
+        self.assert_term_id_ptr_mut();
+        //ecs_assert!(
+        //    traverse_relationship != 0,
+        //    FlecsErrorCode::InvalidOperation,
+        //    "Opt the usage of `cascade` if you are passing 0"
+        //);
+        unsafe { (*self.term_id_ptr_mut()).id |= ECS_CASCADE };
+        unsafe { (*self.term_ptr_mut()).trav = *traverse_relationship.into() };
+        self
+    }
+
+    /// The cascade flag is like up, but returns results in breadth-first order.
+    /// Only supported for `flecs::query`
+    ///
+    /// # Type Arguments
+    ///
+    /// * `TravRel` - The relationship to traverse.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `term_builder_i::cascade`
+    #[doc(alias = "term_builder_i::cascade")]
+    fn cascade_type<TravRel: ComponentId>(&mut self) -> &mut Self {
+        self.assert_term_id_ptr_mut();
+        unsafe {
+            (*self.term_id_ptr_mut()).id |= ECS_CASCADE;
+            (*self.term_ptr_mut()).trav = TravRel::get_id(self.world());
+        };
+        self
+    }
+
+    /// Use with cascade to iterate results in descending (bottom + top) order.
+    fn desc(&mut self) -> &mut Self {
+        self.assert_term_id_ptr_mut();
+        unsafe { (*self.term_id_ptr_mut()).id |= ECS_DESC };
+        self
+    }
+
+    /// Specify relationship to traverse, and flags to indicate direction
+    ///
+    /// # Arguments
+    ///
+    /// * `traverse_relationship` - The relationship to traverse.
+    /// * `flags` - The direction to traverse.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `term_builder_i::trav`
+    #[doc(alias = "term_builder_i::trav")]
+    fn trav(&mut self, traverse_relationship: impl Into<Entity>, flags: u64) -> &mut Self {
+        self.assert_term_id_ptr_mut();
+        unsafe {
+            (*self.term_ptr_mut()).trav = *traverse_relationship.into();
+            (*self.term_id_ptr_mut()).id |= flags;
+        };
+        self
+    }
+
+    /// Set id flags for term.
+    ///
+    /// # Arguments
+    ///
+    /// * `flags` - The direction to traverse.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `term_builder_i::id_flags`
+    #[doc(alias = "term_builder_i::id_flags")]
+    fn id_flags(&mut self, flags: impl IntoId) -> &mut Self {
+        self.assert_term_id_ptr_mut();
+        unsafe {
+            (*self.term_id_ptr_mut()).id |= *flags.into();
+        };
         self
     }
 
@@ -875,7 +794,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     #[doc(alias = "term_builder_i::inout")]
     fn set_inout(&mut self, inout: InOutKind) -> &mut Self {
         self.assert_term();
-        unsafe { (*self.term_ptr_mut()).inout = inout as sys::ecs_inout_kind_t };
+        unsafe { (*self.term_ptr_mut()).inout = inout.into() };
         self
     }
 
@@ -899,7 +818,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
         self.assert_term();
         self.set_inout(inout);
         unsafe {
-            if (*self.term_ptr_mut()).oper != OperKind::Not as sys::ecs_oper_kind_t {
+            if (*self.term_ptr_mut()).oper != OperKind::Not as i16 {
                 self.setup_src().entity(0);
             }
         }
@@ -991,7 +910,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     #[doc(alias = "term_builder_i::oper")]
     fn oper(&mut self, oper: OperKind) -> &mut Self {
         self.assert_term_id_ptr_mut();
-        unsafe { (*self.term_ptr_mut()).oper = oper as sys::ecs_oper_kind_t };
+        unsafe { (*self.term_ptr_mut()).oper = oper as i16 };
         self
     }
 
@@ -1100,14 +1019,14 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
         self
     }
 
-    /// Filter terms are not triggered on by observers
+    /// Query terms are not triggered on by observers
     ///
     /// # See also
     ///
     /// * C++ API: `term_builder_i::filter`
     #[doc(alias = "term_builder_i::filter")]
     fn filter(&mut self) -> &mut Self {
-        unsafe { (*self.term_ptr_mut()).src.flags |= ECS_FILTER };
+        unsafe { (*self.term_ptr_mut()).src.id |= InOutKind::InOutFilter as u64 };
         self
     }
 }
@@ -1121,7 +1040,7 @@ impl<'a> TermBuilder<'a> for Term<'a> {
         self.term_ptr
     }
 
-    fn term_id_ptr_mut(&mut self) -> *mut TermIdT {
+    fn term_id_ptr_mut(&mut self) -> *mut TermRefT {
         self.term_id_ptr
     }
 }

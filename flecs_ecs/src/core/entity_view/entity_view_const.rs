@@ -1,12 +1,12 @@
 use std::{
     ffi::{c_void, CStr},
-    mem::MaybeUninit,
     ops::{Deref, DerefMut},
     ptr::{self, NonNull},
 };
 
 use crate::sys;
 use flecs_ecs::core::*;
+use sys::ecs_get_with;
 
 #[derive(Clone, Copy)]
 pub struct EntityView<'a> {
@@ -65,12 +65,29 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity::entity")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new(world: impl IntoWorld<'a>) -> Self {
-        let id = unsafe { sys::ecs_new_id(world.world_ptr_mut()) };
+        let world_ptr = world.world_ptr_mut();
+        let id = if unsafe { sys::ecs_get_scope(world_ptr) == 0 && ecs_get_with(world_ptr) == 0 } {
+            unsafe { sys::ecs_new(world_ptr) }
+        } else {
+            let desc = sys::ecs_entity_desc_t::default();
+            unsafe { sys::ecs_entity_init(world_ptr, &desc) }
+        };
         Self {
             world: world.world(),
             id: id.into(),
         }
     }
+
+    /*
+            world_ = world;
+        if (!ecs_get_scope(world_) && !ecs_get_with(world_)) {
+            id_ = ecs_new(world);
+        } else {
+            ecs_entity_desc_t desc = {};
+            id_ = ecs_entity_init(world_, &desc);
+        }
+    }
+     */
 
     /// Creates a wrapper around an existing entity / id.
     ///
@@ -119,8 +136,9 @@ impl<'a> EntityView<'a> {
             id: 0,
             symbol: std::ptr::null(),
             use_low_id: false,
-            add: [0; 32],
+            add: std::ptr::null(),
             add_expr: std::ptr::null(),
+            set: std::ptr::null(),
         };
         let id = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &desc) };
         Self {
@@ -402,32 +420,15 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    pub fn for_each_component<F>(self, mut func: F)
+    pub fn each_component<F>(self, mut func: F)
     where
         F: FnMut(IdView),
     {
         let archetype = self.archetype();
 
         for &id in archetype.as_slice() {
-            // Union object is not stored in type, so handle separately
-            if ecs_pair_first(id) == flecs::Union::ID {
-                let ent = IdView::new_from(
-                    self.world,
-                    (ecs_pair_second(id), unsafe {
-                        sys::ecs_get_target(
-                            self.world.world_ptr_mut(),
-                            *self.id,
-                            *ecs_pair_second(*self.id),
-                            0,
-                        )
-                    }),
-                );
-
-                func(ent);
-            } else {
-                let ent = IdView::new_from(self.world, id);
-                func(ent);
-            }
+            let ent = IdView::new_from(self.world, id);
+            func(ent);
         }
     }
 
@@ -558,32 +559,15 @@ impl<'a> EntityView<'a> {
             return;
         }
 
-        let mut terms: [sys::ecs_term_t; 2] = unsafe { MaybeUninit::zeroed().assume_init() };
-
-        let mut filter: sys::ecs_filter_t = unsafe { sys::ECS_FILTER_INIT };
-        filter.terms = terms.as_mut_ptr();
-        filter.term_count = 2;
-
-        let mut desc: sys::ecs_filter_desc_t = unsafe { MaybeUninit::zeroed().assume_init() };
-        desc.terms[0].first.id = *relationship.into();
-        desc.terms[0].second.id = *self.id;
-        desc.terms[0].second.flags = sys::EcsIsEntity;
-        desc.terms[1].id = flecs::Prefab::ID;
-        desc.terms[1].oper = sys::ecs_oper_kind_t_EcsOptional;
-
-        desc.storage = &mut filter;
-
-        if !unsafe { sys::ecs_filter_init(self.world.world_ptr_mut(), &desc) }.is_null() {
-            let mut it: sys::ecs_iter_t =
-                unsafe { sys::ecs_filter_iter(self.world.world_ptr_mut(), &filter) };
-            while unsafe { sys::ecs_filter_next(&mut it) } {
-                for i in 0..it.count as usize {
-                    unsafe {
-                        //TODO should investigate if this is correct
-                        let id = it.entities.add(i);
-                        let ent = EntityView::new_from(self.world, *id);
-                        func(ent);
-                    }
+        let mut it: sys::ecs_iter_t =
+            unsafe { sys::ecs_each_id(self.world_ptr(), ecs_pair(*relationship.into(), *self.id)) };
+        while unsafe { sys::ecs_each_next(&mut it) } {
+            for i in 0..it.count as usize {
+                unsafe {
+                    //TODO should investigate if this is correct
+                    let id = it.entities.add(i);
+                    let ent = EntityView::new_from(self.world, *id);
+                    func(ent);
                 }
             }
         }
@@ -1842,7 +1826,7 @@ impl<'a> EntityView<'a> {
     pub fn duplicate_into(self, copy_value: bool, dest_id: impl Into<Entity>) -> EntityView<'a> {
         let mut dest_id = *dest_id.into();
         if dest_id == 0 {
-            dest_id = unsafe { sys::ecs_new_id(self.world.world_ptr_mut()) };
+            dest_id = unsafe { sys::ecs_new(self.world.world_ptr_mut()) };
         }
 
         let dest_entity = EntityView::new_from(self.world, dest_id);
@@ -2348,8 +2332,8 @@ impl<'a> EntityView<'a> {
     ) {
         let mut desc = sys::ecs_observer_desc_t::default();
         desc.events[0] = event;
-        desc.filter.terms[0].id = ECS_ANY;
-        desc.filter.terms[0].src.id = entity;
+        desc.query.terms[0].id = ECS_ANY;
+        desc.query.terms[0].src.id = entity;
         desc.callback = callback;
         desc.binding_ctx = binding_ctx as *mut c_void;
         desc.binding_ctx_free = Some(Self::binding_entity_ctx_drop);
@@ -2411,7 +2395,7 @@ impl<'a> EntityView<'a> {
             let world = WorldRef::from_ptr((*iter).world);
             empty(&mut EntityView::new_from(
                 world,
-                sys::ecs_field_src(iter, 1),
+                sys::ecs_field_src(iter, 0),
             ));
         }
 
@@ -2474,7 +2458,7 @@ impl<'a> EntityView<'a> {
             let data_ref = &mut *data;
             let world = WorldRef::from_ptr((*iter).world);
             empty(
-                &mut EntityView::new_from(world, sys::ecs_field_src(iter, 1)),
+                &mut EntityView::new_from(world, sys::ecs_field_src(iter, 0)),
                 data_ref,
             );
         }

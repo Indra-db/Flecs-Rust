@@ -56,8 +56,9 @@ pub(crate) fn create_entity_desc(
         root_sep: std::ptr::null(),
         symbol,
         use_low_id: true,
-        add: [0; 32],
+        add: std::ptr::null(),
         add_expr: std::ptr::null(),
+        set: std::ptr::null(),
     };
     entity_desc
 }

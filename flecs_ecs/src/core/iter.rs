@@ -185,9 +185,9 @@ impl<'a> Iter<'a> {
     pub fn get_var_by_name(&mut self, name: &CStr) -> EntityView<'a> {
         let world = self.world();
         let iter: &mut IterT = self.iter;
-        let rit = unsafe { &mut iter.priv_.iter.rule };
-        let rule = rit.rule;
-        let var_id = unsafe { sys::ecs_rule_find_var(rule, name.as_ptr()) };
+        let rit = unsafe { &mut iter.priv_.iter.query };
+        let rule_query = rit.query;
+        let var_id = unsafe { sys::ecs_query_find_var(rule_query, name.as_ptr()) };
         ecs_assert!(
             var_id != -1,
             FlecsErrorCode::InvalidParameter,
@@ -382,7 +382,7 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::column_index`
     #[doc(alias = "iter::column_index")]
     pub fn column_index(&self, index: i32) -> i32 {
-        unsafe { sys::ecs_field_column_index(self.iter, index) }
+        unsafe { sys::ecs_field_column(self.iter, index) }
     }
 
     /// Convert current iterator result to string
@@ -577,20 +577,6 @@ impl<'a> Iter<'a> {
         //TODO this should return our Column struct. check cpp.
     }
 
-    /// Obtain the total number of tables the iterator will iterate over.
-    ///
-    /// # Returns
-    ///
-    /// The total number of tables that will be iterated over.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::table_count`
-    #[doc(alias = "iter::table_count")]
-    pub fn table_count(&self) -> i32 {
-        self.iter.table_count
-    }
-
     /// Check if the current table has changed since the last iteration.
     ///
     /// # Returns
@@ -605,8 +591,8 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::changed`
     #[doc(alias = "iter::changed")]
-    pub fn is_changed(&self) -> bool {
-        unsafe { sys::ecs_query_changed(std::ptr::null_mut(), self.iter) }
+    pub fn is_changed(&mut self) -> bool {
+        unsafe { sys::ecs_iter_changed(self.iter) }
     }
 
     /// Skip current table.
@@ -622,7 +608,7 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::skip`
     #[doc(alias = "iter::skip")]
     pub fn skip(&mut self) {
-        unsafe { sys::ecs_query_skip(self.iter) };
+        unsafe { sys::ecs_iter_skip(self.iter) };
     }
 
     /// # Returns

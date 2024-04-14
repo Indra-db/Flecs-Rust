@@ -210,7 +210,7 @@ where
         unsafe { sys::ecs_filter_next(iter) }
     }
 
-    fn filter_ptr(&self) -> *const FilterT {
+    fn query_ptr(&self) -> *const QueryT {
         &self.filter
     }
 
@@ -251,7 +251,7 @@ where
         unsafe { sys::ecs_filter_next(iter) }
     }
 
-    fn filter_ptr(&self) -> *const FilterT {
+    fn query_ptr(&self) -> *const QueryT {
         self.filter_ptr
     }
 

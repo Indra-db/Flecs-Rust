@@ -31,7 +31,7 @@ where
         unsafe { sys::ecs_query_next(iter) }
     }
 
-    fn filter_ptr(&self) -> *const FilterT {
+    fn query_ptr(&self) -> *const QueryT {
         unsafe { sys::ecs_query_get_filter(self.query.as_ptr()) }
     }
 

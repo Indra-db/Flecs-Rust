@@ -14,19 +14,23 @@ pub struct QueryBuilder<'a, T>
 where
     T: Iterable,
 {
-    pub filter_builder: FilterBuilder<'a, T>,
     pub desc: sys::ecs_query_desc_t,
+    pub(crate) term: Term<'a>,
+    pub world: WorldRef<'a>,
+    expr_count: i32,
+    pub next_term_index: i32,
+    phantom: std::marker::PhantomData<T>,
 }
 
 impl<'a, T> Deref for QueryBuilder<'a, T>
 where
     T: Iterable,
 {
-    type Target = FilterBuilder<'a, T>;
+    type Target = Term<'a>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
-        &self.filter_builder
+        &self.term
     }
 }
 
@@ -59,8 +63,7 @@ where
             ..Default::default()
         };
 
-        obj.desc.filter.entity =
-            unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -91,8 +94,7 @@ where
             ..Default::default()
         };
 
-        obj.desc.filter.entity =
-            unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -144,8 +146,7 @@ where
             ..Default::default()
         };
 
-        obj.desc.filter.entity =
-            unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -156,11 +157,11 @@ where
     T: Iterable,
 {
     fn current_term(&mut self) -> &mut TermT {
-        unsafe { &mut *self.filter_builder.term.term_ptr }
+        unsafe { &mut *self.term.term_ptr }
     }
 
     fn next_term(&mut self) {
-        self.filter_builder.next_term();
+        self.next_term();
     }
 }
 
@@ -169,18 +170,18 @@ where
     T: Iterable,
 {
     #[inline]
-    fn desc_filter_mut(&mut self) -> &mut sys::ecs_filter_desc_t {
-        &mut self.desc.filter
+    fn desc_filter_mut(&mut self) -> &mut sys::ecs_query_desc_t {
+        &mut self.desc
     }
 
     #[inline]
     fn expr_count_mut(&mut self) -> &mut i32 {
-        self.filter_builder.expr_count_mut()
+        self.expr_count_mut()
     }
 
     #[inline]
     fn term_index_mut(&mut self) -> &mut i32 {
-        self.filter_builder.term_index_mut()
+        self.term_index_mut()
     }
 }
 

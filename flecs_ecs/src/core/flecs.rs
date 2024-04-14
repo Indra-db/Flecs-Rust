@@ -56,6 +56,87 @@ macro_rules! create_pre_registered_component {
     };
 }
 
+/*
+
+/// Match on self
+/// Can be combined with other term flags on the ecs_term_t::flags field
+pub(crate) const ECS_SELF: u64 = 1 << 63;
+
+/// Match by traversing upwards
+/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+pub(crate) const ECS_UP: u64 = 1 << 62;
+
+/// Match by traversing downwards (derived, cannot be set)
+/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+pub(crate) const ECS_TRAV: u64 = 1 << 61;
+
+/// Sort results breadth first
+/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+pub(crate) const ECS_CASCADE: u64 = 1 << 60;
+
+/// Iterate groups in descending order (used for ordering)
+/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+pub(crate) const ECS_DESC: u64 = 1 << 59;
+
+/// Term id is a variable
+/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+pub(crate) const ECS_IS_VARIABLE: u64 = 1 << 58;
+
+/// Term id is an entity
+/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+pub(crate) const ECS_IS_ENTITY: u64 = 1 << 57;
+
+/// Term id is a name (don't attempt to lookup as entity)
+/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+pub(crate) const ECS_IS_NAME: u64 = 1 << 56;
+
+/// all term traversal flags
+pub(crate) const ECS_TRAVERSE_FLAGS: u64 = ECS_SELF | ECS_UP | ECS_TRAV | ECS_CASCADE | ECS_DESC;
+
+/// all term reference kind flags
+pub(crate) const ECS_TERM_REF_FLAGS: u64 =
+    ECS_TRAVERSE_FLAGS | ECS_IS_VARIABLE | ECS_IS_ENTITY | ECS_IS_NAME;
+
+*/
+
+// Term id flags
+create_pre_registered_component!(Self_, ECS_SELF);
+create_pre_registered_component!(Up, ECS_UP);
+create_pre_registered_component!(Trav, ECS_TRAV);
+create_pre_registered_component!(Cascade, ECS_CASCADE);
+create_pre_registered_component!(Desc, ECS_DESC);
+create_pre_registered_component!(IsVariable, ECS_IS_VARIABLE);
+create_pre_registered_component!(IsEntity, ECS_IS_ENTITY);
+create_pre_registered_component!(IsName, ECS_IS_NAME);
+create_pre_registered_component!(TraverseFlags, ECS_TRAVERSE_FLAGS);
+create_pre_registered_component!(TermRefFlags, ECS_TERM_REF_FLAGS);
+
+pub mod term_flags {
+    use super::*;
+    create_pre_registered_component!(MatchAny, MATCH_ANY);
+    create_pre_registered_component!(MatchAnySrc, MATCH_ANY_SRC);
+    create_pre_registered_component!(Transitive, TRANSITIVE);
+    create_pre_registered_component!(Reflexive, REFLEXIVE);
+    create_pre_registered_component!(IdInherited, ID_INHERITED);
+    create_pre_registered_component!(IsTrivial, IS_TRIVIAL);
+    create_pre_registered_component!(NoData, NO_DATA);
+    create_pre_registered_component!(IsCacheable, IS_CACHEABLE);
+    create_pre_registered_component!(IsScope, IS_SCOPE);
+    create_pre_registered_component!(IsMember, IS_MEMBER);
+    create_pre_registered_component!(IsToggle, IS_TOGGLE);
+}
+
+pub mod query_flags {
+    use super::*;
+    create_pre_registered_component!(MatchPrefab, ECS_QUERY_MATCH_PREFAB);
+    create_pre_registered_component!(MatchDisabled, ECS_QUERY_MATCH_DISABLED);
+    create_pre_registered_component!(MatchEmptyTables, ECS_QUERY_MATCH_EMPTY_TABLES);
+    create_pre_registered_component!(NoData, ECS_QUERY_NO_DATA);
+    create_pre_registered_component!(IsInstanced, ECS_QUERY_IS_INSTANCED);
+    create_pre_registered_component!(AllowUnresolvedByName, ECS_QUERY_ALLOW_UNRESOLVED_BY_NAME);
+    create_pre_registered_component!(TableOnly, ECS_QUERY_TABLE_ONLY);
+}
+
 // Indicates that the id is a pair.
 create_pre_registered_component!(Pair, ECS_PAIR);
 // Automatically override component when it is inherited
@@ -68,7 +149,6 @@ create_pre_registered_component!(And, ECS_AND);
 // Builtin component ids
 create_pre_registered_component!(EcsComponent, ECS_COMPONENT);
 create_pre_registered_component!(FieldIdentifier, ecs_field_idENTIFIER);
-create_pre_registered_component!(Iterable, ECS_ITERABLE);
 create_pre_registered_component!(Poly, ECS_POLY);
 
 // Poly target components
@@ -84,6 +164,7 @@ create_pre_registered_component!(Module, ECS_MODULE);
 create_pre_registered_component!(Private, ECS_PRIVATE);
 create_pre_registered_component!(Prefab, ECS_PREFAB);
 create_pre_registered_component!(Disabled, ECS_DISABLED);
+create_pre_registered_component!(NotQueryable, ECS_NOT_QUERYABLE);
 create_pre_registered_component!(SlotOf, ECS_SLOT_OF);
 create_pre_registered_component!(Flag, ECS_FLAG);
 create_pre_registered_component!(Monitor, ECS_MONITOR);
@@ -100,13 +181,13 @@ create_pre_registered_component!(Symmetric, ECS_SYMMETRIC);
 create_pre_registered_component!(Final, ECS_FINAL);
 create_pre_registered_component!(DontInherit, ECS_DONT_INHERIT);
 create_pre_registered_component!(AlwaysOverride, ECS_ALWAYS_OVERRIDE);
-create_pre_registered_component!(Tag, ECS_TAG);
-create_pre_registered_component!(Union, ECS_UNION);
+create_pre_registered_component!(PairIsTag, ECS_PAIR_IS_TAG);
 create_pre_registered_component!(Exclusive, ECS_EXCLUSIVE);
 create_pre_registered_component!(Acyclic, ECS_ACYCLIC);
 create_pre_registered_component!(Traversable, ECS_TRAVERSABLE);
 create_pre_registered_component!(With, ECS_WITH);
 create_pre_registered_component!(OneOf, ECS_ONE_OF);
+create_pre_registered_component!(CanToggle, ECS_CAN_TOGGLE);
 
 // Builtin relationships
 create_pre_registered_component!(ChildOf, ECS_CHILD_OF);
@@ -125,15 +206,11 @@ create_pre_registered_component!(OnRemove, ECS_ON_REMOVE);
 create_pre_registered_component!(OnSet, ECS_ON_SET);
 create_pre_registered_component!(Unset, ECS_UNSET);
 create_pre_registered_component!(OnDelete, ECS_ON_DELETE);
+create_pre_registered_component!(OnDeleteTarget, ECS_ON_DELETE_TARGET);
 create_pre_registered_component!(OnTableCreate, ECS_ON_TABLE_CREATE);
 create_pre_registered_component!(OnTableDelete, ECS_ON_TABLE_DELETE);
 create_pre_registered_component!(OnTableEmpty, ECS_ON_TABLE_EMPTY);
 create_pre_registered_component!(OnTableFill, ECS_ON_TABLE_FILL);
-create_pre_registered_component!(OnCreateTrigger, ECS_ON_CREATE_TRIGGER);
-create_pre_registered_component!(OnDeleteTrigger, ECS_ON_DELETE_TRIGGER);
-create_pre_registered_component!(OnDeleteObservable, ECS_ON_DELETE_OBSERVABLE);
-create_pre_registered_component!(OnComponentHooks, ECS_ON_COMPONENT_HOOKS);
-create_pre_registered_component!(OnDeleteTarget, ECS_ON_DELETE_TARGET);
 
 // System
 pub mod system {
@@ -154,8 +231,6 @@ create_pre_registered_component!(Delete, ECS_DELETE);
 create_pre_registered_component!(Panic, ECS_PANIC);
 
 // Misc
-create_pre_registered_component!(Target, ECS_TARGET);
-create_pre_registered_component!(Flatten, ECS_FLATTEN);
 create_pre_registered_component!(DefaultChildComponent, ECS_DEFAULT_CHILD_COMPONENT);
 
 // Builtin predicate ids (used by rule engine)
@@ -190,7 +265,6 @@ pub mod meta {
     create_pre_registered_component!(Char, ECS_CHAR_T);
     create_pre_registered_component!(Byte, ECS_BYTE_T);
     create_pre_registered_component!(U8, ECS_U8_T);
-    create_pre_registered_component!(U16, ECS_U16_T);
     create_pre_registered_component!(U32, ECS_U32_T);
     create_pre_registered_component!(U64, ECS_U64_T);
     create_pre_registered_component!(UPtr, ECS_UPTR_T);

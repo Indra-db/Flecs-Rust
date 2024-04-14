@@ -374,7 +374,7 @@ where
     }
 
     #[inline]
-    fn term_id_ptr_mut(&mut self) -> *mut TermIdT {
+    fn term_id_ptr_mut(&mut self) -> *mut TermRefT {
         self.filter_builder.term_id_ptr_mut()
     }
 }

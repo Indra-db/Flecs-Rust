@@ -23,8 +23,9 @@ pub type EnumConstantT = sys::ecs_enum_constant_t;
 pub type BitmaskConstantT = sys::ecs_bitmask_constant_t;
 
 // Components
-pub type MetaType = EcsMetaType;
-pub type MetaTypeSerialized = sys::EcsMetaTypeSerialized;
+//todo this needs a pass, changed with v4, not doing it now as meta is still early stages
+// pub type MetaType = EcsMetaType;
+// pub type MetaTypeSerialized = sys::EcsMetaTypeSerialized;
 pub type Primitive = sys::EcsPrimitive;
 //pub type Enum = EcsEnum;
 pub type Bitmask = EcsBitmask;

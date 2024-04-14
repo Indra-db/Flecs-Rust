@@ -35,7 +35,7 @@ where
     /// * C++ API: `iter_iterable::set_group`
     #[doc(alias = "iter_iterable::set_group")]
     pub fn set_group_id(&mut self, group_id: impl Into<Entity>) {
-        unsafe { sys::ecs_query_set_group(&mut self.iter, *group_id.into()) }
+        unsafe { sys::ecs_iter_set_group(&mut self.iter, *group_id.into()) }
     }
 
     /// Limit results to tables with specified group id (grouped queries only)
@@ -50,7 +50,7 @@ where
     #[doc(alias = "iter_iterable::set_group")]
     pub fn set_group<Group: ComponentId>(&mut self) -> &Self {
         let world = unsafe { WorldRef::from_ptr(self.iter.real_world) };
-        unsafe { sys::ecs_query_set_group(&mut self.iter, Group::get_id(world)) }
+        unsafe { sys::ecs_iter_set_group(&mut self.iter, Group::get_id(world)) }
         self
     }
 
@@ -100,11 +100,10 @@ where
     /// # See also
     ///
     /// * C++ API: `iter_iterable::set_var`
-    #[doc(alias = "iter_iterable::set_var_rule")]
-    #[cfg(feature = "flecs_rules")]
+    #[doc(alias = "iter_iterable::set_var")]
     pub fn set_var_rule(&mut self, name: &CStr, value: impl Into<Entity>) -> &mut Self {
-        let rit: *mut sys::ecs_rule_iter_t = unsafe { &mut self.iter.priv_.iter.rule };
-        let var_id = unsafe { sys::ecs_rule_find_var((*rit).rule, name.as_ptr()) };
+        let qit = unsafe { &mut self.iter.priv_.iter.query };
+        let var_id = unsafe { sys::ecs_query_find_var((*qit).query, name.as_ptr()) };
         ecs_assert!(
             var_id != -1,
             FlecsErrorCode::InvalidParameter,
@@ -127,7 +126,7 @@ where
         unsafe { (self.iter_next)(iter) }
     }
 
-    fn filter_ptr(&self) -> *const FilterT {
+    fn query_ptr(&self) -> *const QueryT {
         self.iter.query
     }
 

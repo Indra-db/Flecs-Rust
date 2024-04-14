@@ -13,22 +13,20 @@ pub const RUST_ECS_COMPONENT_MASK: u64 = !RUST_ecs_id_FLAGS_MASK;
 
 pub type WorldT = sys::ecs_world_t;
 pub type WorldInfoT = sys::ecs_world_info_t;
-pub type QueryGroupInfoT = sys::ecs_query_group_info_t;
 pub type IdT = sys::ecs_id_t;
 pub type EntityT = sys::ecs_entity_t;
 pub type TypeT = sys::ecs_type_t;
 pub type TableT = sys::ecs_table_t;
-pub type FilterT = sys::ecs_filter_t;
 pub type ObserverT = sys::ecs_observer_t;
 pub type QueryT = sys::ecs_query_t;
-pub type RuleT = sys::ecs_rule_t;
+pub type QueryGroupInfoT = sys::ecs_query_group_info_t;
 pub type RefT = sys::ecs_ref_t;
 pub type IterT = sys::ecs_iter_t;
 pub type TypeInfoT = sys::ecs_type_info_t;
 pub type TypeHooksT = sys::ecs_type_hooks_t;
 pub type TypeKindT = sys::ecs_type_kind_t;
 pub type Flags32T = sys::ecs_flags32_t;
-pub type TermIdT = sys::ecs_term_id_t;
+pub type TermRefT = sys::ecs_term_ref_t;
 pub type TermT = sys::ecs_term_t;
 pub type PrimitiveKindT = sys::ecs_primitive_kind_t;
 pub type FTimeT = f32;
@@ -47,6 +45,7 @@ pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\
 ///
 /// - `InOutDefault`: Default behavior, which is `InOut` for regular terms and `In` for shared terms.
 /// - `InOutNone`: Indicates the term is neither read nor written by the system.
+/// - `InOutFilter`: Same as InOutNOne + prevents term from triggering observers
 /// - `InOut`: The term is both read and written, implying a mutable access to the component data.
 /// - `In`: The term is only read, implying an immutable access to the component data.
 /// - `Out`: The term is only written, providing exclusive access to modify the component data.
@@ -55,6 +54,7 @@ pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\
 pub enum InOutKind {
     InOutDefault = sys::ecs_inout_kind_t_EcsInOutDefault as u32,
     InOutNone = sys::ecs_inout_kind_t_EcsInOutNone as u32,
+    InOutFilter = sys::ecs_inout_kind_t_EcsInOutFilter as u32,
     InOut = sys::ecs_inout_kind_t_EcsInOut as u32,
     In = sys::ecs_inout_kind_t_EcsIn as u32,
     Out = sys::ecs_inout_kind_t_EcsOut as u32,
@@ -74,7 +74,42 @@ impl From<sys::ecs_inout_kind_t> for InOutKind {
             sys::ecs_inout_kind_t_EcsInOut => InOutKind::InOut,
             sys::ecs_inout_kind_t_EcsIn => InOutKind::In,
             sys::ecs_inout_kind_t_EcsOut => InOutKind::Out,
+            sys::ecs_inout_kind_t_EcsInOutFilter => InOutKind::InOutFilter,
             _ => InOutKind::InOutDefault,
+        }
+    }
+}
+
+const EcsInOutDefault: i16 = sys::ecs_inout_kind_t_EcsInOutDefault as i16;
+const EcsInOutNone: i16 = sys::ecs_inout_kind_t_EcsInOutNone as i16;
+const EcsInOut: i16 = sys::ecs_inout_kind_t_EcsInOut as i16;
+const EcsIn: i16 = sys::ecs_inout_kind_t_EcsIn as i16;
+const EcsOut: i16 = sys::ecs_inout_kind_t_EcsOut as i16;
+const EcsInOutFilter: i16 = sys::ecs_inout_kind_t_EcsInOutFilter as i16;
+
+impl From<i16> for InOutKind {
+    fn from(value: i16) -> Self {
+        match value {
+            EcsInOutDefault => InOutKind::InOutDefault,
+            EcsInOutNone => InOutKind::InOutNone,
+            EcsInOut => InOutKind::InOut,
+            EcsIn => InOutKind::In,
+            EcsOut => InOutKind::Out,
+            EcsInOutFilter => InOutKind::InOutFilter,
+            _ => InOutKind::InOutDefault,
+        }
+    }
+}
+
+impl From<InOutKind> for i16 {
+    fn from(value: InOutKind) -> Self {
+        match value {
+            InOutKind::InOutDefault => sys::ecs_inout_kind_t_EcsInOutDefault as i16,
+            InOutKind::InOutNone => sys::ecs_inout_kind_t_EcsInOutNone as i16,
+            InOutKind::InOut => sys::ecs_inout_kind_t_EcsInOut as i16,
+            InOutKind::In => sys::ecs_inout_kind_t_EcsIn as i16,
+            InOutKind::Out => sys::ecs_inout_kind_t_EcsOut as i16,
+            InOutKind::InOutFilter => sys::ecs_inout_kind_t_EcsInOutFilter as i16,
         }
     }
 }
@@ -130,6 +165,92 @@ impl From<sys::ecs_oper_kind_t> for OperKind {
     }
 }
 
+const EcsAnd: i16 = sys::ecs_oper_kind_t_EcsAnd as i16;
+const EcsOr: i16 = sys::ecs_oper_kind_t_EcsOr as i16;
+const EcsNot: i16 = sys::ecs_oper_kind_t_EcsNot as i16;
+const EcsOptional: i16 = sys::ecs_oper_kind_t_EcsOptional as i16;
+const EcsAndFrom: i16 = sys::ecs_oper_kind_t_EcsAndFrom as i16;
+const EcsOrFrom: i16 = sys::ecs_oper_kind_t_EcsOrFrom as i16;
+const EcsNotFrom: i16 = sys::ecs_oper_kind_t_EcsNotFrom as i16;
+
+impl From<i16> for OperKind {
+    fn from(value: i16) -> Self {
+        match value {
+            EcsAnd => OperKind::And,
+            EcsOr => OperKind::Or,
+            EcsNot => OperKind::Not,
+            EcsOptional => OperKind::Optional,
+            EcsAndFrom => OperKind::AndFrom,
+            EcsOrFrom => OperKind::OrFrom,
+            EcsNotFrom => OperKind::NotFrom,
+            _ => OperKind::And,
+        }
+    }
+}
+
+impl From<OperKind> for i16 {
+    fn from(value: OperKind) -> Self {
+        match value {
+            OperKind::And => sys::ecs_oper_kind_t_EcsAnd as i16,
+            OperKind::Or => sys::ecs_oper_kind_t_EcsOr as i16,
+            OperKind::Not => sys::ecs_oper_kind_t_EcsNot as i16,
+            OperKind::Optional => sys::ecs_oper_kind_t_EcsOptional as i16,
+            OperKind::AndFrom => sys::ecs_oper_kind_t_EcsAndFrom as i16,
+            OperKind::OrFrom => sys::ecs_oper_kind_t_EcsOrFrom as i16,
+            OperKind::NotFrom => sys::ecs_oper_kind_t_EcsNotFrom as i16,
+        }
+    }
+}
+
+/// Specify cache policy for query
+///
+/// This enum specifies the caching policy for a query, which determines how the query results are stored
+///
+/// Variants:
+///
+/// - `Default`: Behavior determined by query creation context
+/// - `Auto`: Cache query terms that are cacheable
+/// - `All`: Require that all query terms can be cached
+/// - `None`: No caching
+#[allow(clippy::unnecessary_cast)]
+#[repr(u32)]
+pub enum QueryCacheKind {
+    Default = sys::ecs_query_cache_kind_t_EcsQueryCacheDefault as u32,
+    Auto = sys::ecs_query_cache_kind_t_EcsQueryCacheAuto as u32,
+    All = sys::ecs_query_cache_kind_t_EcsQueryCacheAll as u32,
+    None = sys::ecs_query_cache_kind_t_EcsQueryCacheNone as u32,
+}
+
+impl QueryCacheKind {
+    pub fn is_auto(&self) -> bool {
+        matches!(self, Self::Auto)
+    }
+
+    pub fn is_none(&self) -> bool {
+        matches!(self, Self::None)
+    }
+
+    pub fn is_all(&self) -> bool {
+        matches!(self, Self::All)
+    }
+
+    pub fn is_default(&self) -> bool {
+        matches!(self, Self::Default)
+    }
+}
+
+impl From<sys::ecs_query_cache_kind_t> for QueryCacheKind {
+    fn from(value: sys::ecs_query_cache_kind_t) -> Self {
+        match value {
+            sys::ecs_query_cache_kind_t_EcsQueryCacheDefault => QueryCacheKind::Default,
+            sys::ecs_query_cache_kind_t_EcsQueryCacheAuto => QueryCacheKind::Auto,
+            sys::ecs_query_cache_kind_t_EcsQueryCacheAll => QueryCacheKind::All,
+            sys::ecs_query_cache_kind_t_EcsQueryCacheNone => QueryCacheKind::None,
+            _ => QueryCacheKind::Default,
+        }
+    }
+}
+
 // Id flags
 
 /// Indicates that the id is a pair.
@@ -144,55 +265,102 @@ pub(crate) const ECS_AND: u64 = 1 << 60;
 // Builtin component ids
 pub(crate) const ECS_COMPONENT: u64 = 1;
 pub(crate) const ecs_field_idENTIFIER: u64 = 2;
-pub(crate) const ECS_ITERABLE: u64 = 3;
-pub(crate) const ECS_POLY: u64 = 4;
+pub(crate) const ECS_POLY: u64 = 3;
 
 // Poly target components
 pub(crate) const ECS_QUERY: u64 = 5;
 pub(crate) const ECS_OBSERVER: u64 = 6;
 pub(crate) const ECS_SYSTEM: u64 = 7;
 
-///Term flags
+///Term id flags
 
 ///  The base ID, equivalent to the C #define
 pub(crate) const FLECS_HI_COMPONENT_ID: u64 = 256;
 
 /// Match on self
-pub(crate) const ECS_SELF: u32 = 1 << 1;
+/// Can be combined with other term flags on the ecs_term_t::flags field
+pub(crate) const ECS_SELF: u64 = 1 << 63;
 
 /// Match by traversing upwards
-pub(crate) const ECS_UP: u32 = 1 << 2;
+/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+pub(crate) const ECS_UP: u64 = 1 << 62;
 
 /// Match by traversing downwards (derived, cannot be set)
-pub(crate) const ECS_DOWN: u32 = 1 << 3;
-
-/// Match all entities encountered through traversal
-pub(crate) const ECS_TRAVERSE_ALL: u32 = 1 << 4;
+/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+pub(crate) const ECS_TRAV: u64 = 1 << 61;
 
 /// Sort results breadth first
-pub(crate) const ECS_CASCADE: u32 = 1 << 5;
+/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+pub(crate) const ECS_CASCADE: u64 = 1 << 60;
 
 /// Iterate groups in descending order (used for ordering)
-pub(crate) const ECS_DESC: u32 = 1 << 6;
-
-/// Short for up(ChildOf)
-pub(crate) const ECS_PARENT: u32 = 1 << 7;
+/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+pub(crate) const ECS_DESC: u64 = 1 << 59;
 
 /// Term id is a variable
-pub(crate) const ECS_IS_VARIABLE: u32 = 1 << 8;
+/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+pub(crate) const ECS_IS_VARIABLE: u64 = 1 << 58;
 
 /// Term id is an entity
-pub(crate) const ECS_IS_ENTITY: u32 = 1 << 9;
+/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+pub(crate) const ECS_IS_ENTITY: u64 = 1 << 57;
 
 /// Term id is a name (don't attempt to lookup as entity)
-pub(crate) const ECS_IS_NAME: u32 = 1 << 10;
+/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+pub(crate) const ECS_IS_NAME: u64 = 1 << 56;
 
-/// Prevent observer from triggering on term
-pub(crate) const ECS_FILTER: u32 = 1 << 11;
+/// all term traversal flags
+pub(crate) const ECS_TRAVERSE_FLAGS: u64 = ECS_SELF | ECS_UP | ECS_TRAV | ECS_CASCADE | ECS_DESC;
 
-/// Union of flags used for traversing (EcsUp|EcsDown|EcsTraverseAll|EcsSelf|EcsCascade|EcsParent)
-pub(crate) const ECS_TRAVERSE_FLAGS: u32 =
-    ECS_UP | ECS_DOWN | ECS_TRAVERSE_ALL | ECS_SELF | ECS_CASCADE | ECS_DESC | ECS_PARENT;
+/// all term reference kind flags
+pub(crate) const ECS_TERM_REF_FLAGS: u64 =
+    ECS_TRAVERSE_FLAGS | ECS_IS_VARIABLE | ECS_IS_ENTITY | ECS_IS_NAME;
+
+/// Term flags
+/// Term flags discovered & set during query creation.
+/// Mostly used internally to store information relevant to queries.
+pub(crate) const MATCH_ANY: u64 = 1 << 0;
+pub(crate) const MATCH_ANY_SRC: u64 = 1 << 1;
+pub(crate) const TRANSITIVE: u64 = 1 << 2;
+pub(crate) const REFLEXIVE: u64 = 1 << 3;
+pub(crate) const ID_INHERITED: u64 = 1 << 4;
+pub(crate) const IS_TRIVIAL: u64 = 1 << 5;
+pub(crate) const NO_DATA: u64 = 1 << 6;
+pub(crate) const IS_CACHEABLE: u64 = 1 << 7;
+pub(crate) const IS_SCOPE: u64 = 1 << 8;
+pub(crate) const IS_MEMBER: u64 = 1 << 9;
+pub(crate) const IS_TOGGLE: u64 = 1 << 10;
+
+/// Query flags
+/// Query flags discovered & set during query creation.
+
+/// Query must match prefabs.
+/// Can be combined with other query flags on the ecs_query_desc_t::flags field.
+pub(crate) const ECS_QUERY_MATCH_PREFAB: u64 = 1 << 1;
+
+/// Query must match disabled entities.
+/// Can be combined with other query flags on the ecs_query_desc_t::flags field.
+pub(crate) const ECS_QUERY_MATCH_DISABLED: u64 = 1 << 2;
+
+/// Query must match empty tables.
+/// Can be combined with other query flags on the ecs_query_desc_t::flags field.
+pub(crate) const ECS_QUERY_MATCH_EMPTY_TABLES: u64 = 1 << 3;
+
+/// Query won't provide component data.
+/// Can be combined with other query flags on the ecs_query_desc_t::flags field.
+pub(crate) const ECS_QUERY_NO_DATA: u64 = 1 << 4;
+
+/// Query iteration is always instanced.
+/// Can be combined with other query flags on the ecs_query_desc_t::flags field.
+pub(crate) const ECS_QUERY_IS_INSTANCED: u64 = 1 << 5;
+
+/// Query may have unresolved entity identifiers.
+/// Can be combined with other query flags on the ecs_query_desc_t::flags field.
+pub(crate) const ECS_QUERY_ALLOW_UNRESOLVED_BY_NAME: u64 = 1 << 6;
+
+/// Query only returns whole tables (ignores toggle/member fields).
+/// Can be combined with other query flags on the ecs_query_desc_t::flags field.
+pub(crate) const ECS_QUERY_TABLE_ONLY: u64 = 1 << 7;
 
 // Core scopes & entities
 pub(crate) const ECS_WORLD: u64 = FLECS_HI_COMPONENT_ID;
@@ -203,53 +371,53 @@ pub(crate) const ECS_MODULE: u64 = FLECS_HI_COMPONENT_ID + 4;
 pub(crate) const ECS_PRIVATE: u64 = FLECS_HI_COMPONENT_ID + 5;
 pub(crate) const ECS_PREFAB: u64 = FLECS_HI_COMPONENT_ID + 6;
 pub(crate) const ECS_DISABLED: u64 = FLECS_HI_COMPONENT_ID + 7;
-pub(crate) const ECS_SLOT_OF: u64 = FLECS_HI_COMPONENT_ID + 8;
-pub(crate) const ECS_FLAG: u64 = FLECS_HI_COMPONENT_ID + 9;
+pub(crate) const ECS_NOT_QUERYABLE: u64 = FLECS_HI_COMPONENT_ID + 8;
+pub(crate) const ECS_SLOT_OF: u64 = FLECS_HI_COMPONENT_ID + 9;
+pub(crate) const ECS_FLAG: u64 = FLECS_HI_COMPONENT_ID + 10;
 
-// Relationship properties
-pub(crate) const ECS_WILDCARD: u64 = FLECS_HI_COMPONENT_ID + 10;
-pub(crate) const ECS_ANY: u64 = FLECS_HI_COMPONENT_ID + 11;
-pub(crate) const ECS_THIS: u64 = FLECS_HI_COMPONENT_ID + 12;
-pub(crate) const ECS_VARIABLE: u64 = FLECS_HI_COMPONENT_ID + 13;
-pub(crate) const ECS_TRANSITIVE: u64 = FLECS_HI_COMPONENT_ID + 14;
-pub(crate) const ECS_REFLEXIVE: u64 = FLECS_HI_COMPONENT_ID + 15;
-pub(crate) const ECS_SYMMETRIC: u64 = FLECS_HI_COMPONENT_ID + 16;
-pub(crate) const ECS_FINAL: u64 = FLECS_HI_COMPONENT_ID + 17;
-pub(crate) const ECS_DONT_INHERIT: u64 = FLECS_HI_COMPONENT_ID + 18;
-pub(crate) const ECS_ALWAYS_OVERRIDE: u64 = FLECS_HI_COMPONENT_ID + 19;
-pub(crate) const ECS_TAG: u64 = FLECS_HI_COMPONENT_ID + 20;
-pub(crate) const ECS_UNION: u64 = FLECS_HI_COMPONENT_ID + 21;
+// Marker entities for query encoding
+
+pub(crate) const ECS_WILDCARD: u64 = FLECS_HI_COMPONENT_ID + 11;
+pub(crate) const ECS_ANY: u64 = FLECS_HI_COMPONENT_ID + 12;
+pub(crate) const ECS_THIS: u64 = FLECS_HI_COMPONENT_ID + 13;
+pub(crate) const ECS_VARIABLE: u64 = FLECS_HI_COMPONENT_ID + 14;
+
+// query traits
+pub(crate) const ECS_TRANSITIVE: u64 = FLECS_HI_COMPONENT_ID + 15;
+pub(crate) const ECS_REFLEXIVE: u64 = FLECS_HI_COMPONENT_ID + 16;
+pub(crate) const ECS_SYMMETRIC: u64 = FLECS_HI_COMPONENT_ID + 17;
+pub(crate) const ECS_FINAL: u64 = FLECS_HI_COMPONENT_ID + 18;
+pub(crate) const ECS_DONT_INHERIT: u64 = FLECS_HI_COMPONENT_ID + 19;
+pub(crate) const ECS_ALWAYS_OVERRIDE: u64 = FLECS_HI_COMPONENT_ID + 20;
+pub(crate) const ECS_PAIR_IS_TAG: u64 = FLECS_HI_COMPONENT_ID + 21;
 pub(crate) const ECS_EXCLUSIVE: u64 = FLECS_HI_COMPONENT_ID + 22;
 pub(crate) const ECS_ACYCLIC: u64 = FLECS_HI_COMPONENT_ID + 23;
 pub(crate) const ECS_TRAVERSABLE: u64 = FLECS_HI_COMPONENT_ID + 24;
 pub(crate) const ECS_WITH: u64 = FLECS_HI_COMPONENT_ID + 25;
 pub(crate) const ECS_ONE_OF: u64 = FLECS_HI_COMPONENT_ID + 26;
+pub(crate) const ECS_CAN_TOGGLE: u64 = FLECS_HI_COMPONENT_ID + 27;
 
 // Builtin relationships
-pub(crate) const ECS_CHILD_OF: u64 = FLECS_HI_COMPONENT_ID + 27;
-pub(crate) const ECS_IS_A: u64 = FLECS_HI_COMPONENT_ID + 28;
-pub(crate) const ECS_DEPENDS_ON: u64 = FLECS_HI_COMPONENT_ID + 29;
+pub(crate) const ECS_CHILD_OF: u64 = FLECS_HI_COMPONENT_ID + 28;
+pub(crate) const ECS_IS_A: u64 = FLECS_HI_COMPONENT_ID + 29;
+pub(crate) const ECS_DEPENDS_ON: u64 = FLECS_HI_COMPONENT_ID + 30;
 
 // Identifier tags
-pub(crate) const ECS_NAME: u64 = FLECS_HI_COMPONENT_ID + 30;
-pub(crate) const ECS_SYMBOL: u64 = FLECS_HI_COMPONENT_ID + 31;
-pub(crate) const ECS_ALIAS: u64 = FLECS_HI_COMPONENT_ID + 32;
+pub(crate) const ECS_NAME: u64 = FLECS_HI_COMPONENT_ID + 31;
+pub(crate) const ECS_SYMBOL: u64 = FLECS_HI_COMPONENT_ID + 32;
+pub(crate) const ECS_ALIAS: u64 = FLECS_HI_COMPONENT_ID + 33;
 
 // Events
-pub(crate) const ECS_ON_ADD: u64 = FLECS_HI_COMPONENT_ID + 33;
-pub(crate) const ECS_ON_REMOVE: u64 = FLECS_HI_COMPONENT_ID + 34;
-pub(crate) const ECS_ON_SET: u64 = FLECS_HI_COMPONENT_ID + 35;
-pub(crate) const ECS_UNSET: u64 = FLECS_HI_COMPONENT_ID + 36;
-pub(crate) const ECS_ON_DELETE: u64 = FLECS_HI_COMPONENT_ID + 37;
-pub(crate) const ECS_ON_TABLE_CREATE: u64 = FLECS_HI_COMPONENT_ID + 38;
-pub(crate) const ECS_ON_TABLE_DELETE: u64 = FLECS_HI_COMPONENT_ID + 39;
-pub(crate) const ECS_ON_TABLE_EMPTY: u64 = FLECS_HI_COMPONENT_ID + 40;
-pub(crate) const ECS_ON_TABLE_FILL: u64 = FLECS_HI_COMPONENT_ID + 41;
-pub(crate) const ECS_ON_CREATE_TRIGGER: u64 = FLECS_HI_COMPONENT_ID + 42;
-pub(crate) const ECS_ON_DELETE_TRIGGER: u64 = FLECS_HI_COMPONENT_ID + 43;
-pub(crate) const ECS_ON_DELETE_OBSERVABLE: u64 = FLECS_HI_COMPONENT_ID + 44;
-pub(crate) const ECS_ON_COMPONENT_HOOKS: u64 = FLECS_HI_COMPONENT_ID + 45;
-pub(crate) const ECS_ON_DELETE_TARGET: u64 = FLECS_HI_COMPONENT_ID + 46;
+pub(crate) const ECS_ON_ADD: u64 = FLECS_HI_COMPONENT_ID + 34;
+pub(crate) const ECS_ON_REMOVE: u64 = FLECS_HI_COMPONENT_ID + 35;
+pub(crate) const ECS_ON_SET: u64 = FLECS_HI_COMPONENT_ID + 36;
+pub(crate) const ECS_UNSET: u64 = FLECS_HI_COMPONENT_ID + 37;
+pub(crate) const ECS_ON_DELETE: u64 = FLECS_HI_COMPONENT_ID + 38;
+pub(crate) const ECS_ON_DELETE_TARGET: u64 = FLECS_HI_COMPONENT_ID + 39;
+pub(crate) const ECS_ON_TABLE_CREATE: u64 = FLECS_HI_COMPONENT_ID + 40;
+pub(crate) const ECS_ON_TABLE_DELETE: u64 = FLECS_HI_COMPONENT_ID + 41;
+pub(crate) const ECS_ON_TABLE_EMPTY: u64 = FLECS_HI_COMPONENT_ID + 42;
+pub(crate) const ECS_ON_TABLE_FILL: u64 = FLECS_HI_COMPONENT_ID + 43;
 
 // Timers
 pub(crate) const ECS_TICK_SOURCE: u64 = FLECS_HI_COMPONENT_ID + 47;
@@ -262,8 +430,7 @@ pub(crate) const ECS_DELETE: u64 = FLECS_HI_COMPONENT_ID + 51;
 pub(crate) const ECS_PANIC: u64 = FLECS_HI_COMPONENT_ID + 52;
 
 // Misc
-pub(crate) const ECS_TARGET: u64 = FLECS_HI_COMPONENT_ID + 53;
-pub(crate) const ECS_FLATTEN: u64 = FLECS_HI_COMPONENT_ID + 54;
+// todo v4 this needs changing
 pub(crate) const ECS_DEFAULT_CHILD_COMPONENT: u64 = FLECS_HI_COMPONENT_ID + 55;
 
 // Builtin predicate ids (used by rule engine)
@@ -295,7 +462,7 @@ pub(crate) const ECS_BOOL_T: u64 = FLECS_HI_COMPONENT_ID + 80;
 pub(crate) const ECS_CHAR_T: u64 = FLECS_HI_COMPONENT_ID + 81;
 pub(crate) const ECS_BYTE_T: u64 = FLECS_HI_COMPONENT_ID + 82;
 pub(crate) const ECS_U8_T: u64 = FLECS_HI_COMPONENT_ID + 83;
-pub(crate) const ECS_U16_T: u64 = FLECS_HI_COMPONENT_ID + 84;
+pub(crate) const ECS_i16_T: u64 = FLECS_HI_COMPONENT_ID + 84;
 pub(crate) const ECS_U32_T: u64 = FLECS_HI_COMPONENT_ID + 85;
 pub(crate) const ECS_U64_T: u64 = FLECS_HI_COMPONENT_ID + 86;
 pub(crate) const ECS_UPTR_T: u64 = FLECS_HI_COMPONENT_ID + 87;
@@ -339,7 +506,6 @@ pub(crate) const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 118;
 
 pub type Identifier = sys::EcsIdentifier;
 pub type Poly = sys::EcsPoly;
-pub type Target = sys::EcsTarget;
 
 fn ecs_component_data() -> IdComponent {
     IdComponent {

@@ -1,9 +1,8 @@
 #[cfg(feature = "flecs_app")]
 use crate::ecs_app_desc_t;
 use crate::{
-    ecs_entity_desc_t, ecs_event_desc_t, ecs_filter_desc_t, ecs_filter_t, ecs_filter_t_magic,
-    ecs_header_t, ecs_iterable_t, ecs_observer_desc_t, ecs_query_desc_t, ecs_term_id_t, ecs_term_t,
-    ecs_type_hooks_t, ecs_type_t, EcsComponent, EcsOpaque, EcsPoly, ECS_FILTER_INIT,
+    ecs_entity_desc_t, ecs_event_desc_t, ecs_header_t, ecs_observer_desc_t, ecs_query_desc_t,
+    ecs_term_ref_t, ecs_term_t, ecs_type_hooks_t, ecs_type_t, EcsComponent, EcsOpaque, EcsPoly,
 };
 
 #[cfg(feature = "flecs_system")]
@@ -21,13 +20,11 @@ impl Default for ecs_type_t {
     }
 }
 
-impl Default for ecs_term_id_t {
+impl Default for ecs_term_ref_t {
     fn default() -> Self {
         Self {
             id: Default::default(),
             name: std::ptr::null_mut(),
-            trav: Default::default(),
-            flags: Default::default(),
         }
     }
 }
@@ -41,28 +38,9 @@ impl Default for ecs_term_t {
             second: Default::default(),
             inout: Default::default(),
             oper: Default::default(),
-            id_flags: Default::default(),
-            name: std::ptr::null_mut(),
             field_index: Default::default(),
-            idr: std::ptr::null_mut(),
-            flags: Default::default(),
-            move_: Default::default(),
-        }
-    }
-}
-
-impl Default for ecs_filter_desc_t {
-    fn default() -> Self {
-        Self {
-            _canary: Default::default(),
-            terms: Default::default(),
-            terms_buffer: std::ptr::null_mut(),
-            terms_buffer_count: Default::default(),
-            storage: std::ptr::null_mut(),
-            instanced: Default::default(),
-            flags: Default::default(),
-            expr: std::ptr::null(),
-            entity: Default::default(),
+            trav: Default::default(),
+            flags_: Default::default(),
         }
     }
 }
@@ -71,21 +49,24 @@ impl Default for ecs_query_desc_t {
     fn default() -> Self {
         Self {
             _canary: Default::default(),
-            filter: Default::default(),
-            order_by_component: Default::default(),
             order_by: Default::default(),
-            sort_table: Default::default(),
-            group_by_id: Default::default(),
             group_by: Default::default(),
             on_group_create: Default::default(),
             on_group_delete: Default::default(),
             group_by_ctx: std::ptr::null_mut(),
             group_by_ctx_free: Default::default(),
-            parent: std::ptr::null_mut(),
             ctx: std::ptr::null_mut(),
             binding_ctx: std::ptr::null_mut(),
             ctx_free: Default::default(),
             binding_ctx_free: Default::default(),
+            terms: Default::default(),
+            expr: std::ptr::null(),
+            cache_kind: Default::default(),
+            flags: Default::default(),
+            order_by_callback: Default::default(),
+            order_by_table_callback: Default::default(),
+            group_by_callback: Default::default(),
+            entity: Default::default(),
         }
     }
 }
@@ -95,7 +76,6 @@ impl Default for ecs_observer_desc_t {
         Self {
             _canary: Default::default(),
             entity: Default::default(),
-            filter: Default::default(),
             events: Default::default(),
             yield_existing: Default::default(),
             callback: Default::default(),
@@ -107,6 +87,7 @@ impl Default for ecs_observer_desc_t {
             observable: std::ptr::null_mut(),
             last_event_id: std::ptr::null_mut(),
             term_index: Default::default(),
+            query: Default::default(),
         }
     }
 }
@@ -114,25 +95,11 @@ impl Default for ecs_observer_desc_t {
 impl Default for ecs_header_t {
     fn default() -> Self {
         Self {
-            magic: ecs_filter_t_magic as ::std::os::raw::c_int,
+            magic: Default::default(),
             type_: Default::default(),
             mixins: std::ptr::null_mut(),
+            refcount: Default::default(),
         }
-    }
-}
-
-#[allow(clippy::derivable_impls)]
-impl Default for ecs_iterable_t {
-    fn default() -> Self {
-        Self {
-            init: Default::default(),
-        }
-    }
-}
-
-impl Default for ecs_filter_t {
-    fn default() -> Self {
-        unsafe { ECS_FILTER_INIT }
     }
 }
 
@@ -146,8 +113,9 @@ impl Default for ecs_entity_desc_t {
             root_sep: std::ptr::null(),
             symbol: std::ptr::null(),
             use_low_id: Default::default(),
-            add: Default::default(),
+            add: std::ptr::null(),
             add_expr: std::ptr::null(),
+            set: std::ptr::null(),
         }
     }
 }
@@ -187,7 +155,7 @@ impl Default for ecs_system_desc_t {
             rate: Default::default(),
             tick_source: Default::default(),
             multi_threaded: Default::default(),
-            no_readonly: Default::default(),
+            immediate: Default::default(),
         }
     }
 }

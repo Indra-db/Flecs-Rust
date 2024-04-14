@@ -13,7 +13,7 @@ pub struct ecs_alert_desc_t {
     #[doc = "Entity associated with alert"]
     pub entity: ecs_entity_t,
     #[doc = "Alert query. An alert will be created for each entity that matches the\n specified query. The query must have at least one term that uses the\n $this variable (default)."]
-    pub filter: ecs_filter_desc_t,
+    pub filter: ecs_query_desc_t,
     /// Template for alert message. This string is used to generate the alert
     /// message and may refer to variables in the query result. The format for
     /// the template expressions is as specified by ecs_interpolate_string().

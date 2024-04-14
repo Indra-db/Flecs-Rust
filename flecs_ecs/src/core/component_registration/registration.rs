@@ -137,7 +137,12 @@ where
         if id == 0 {
             !world.is_null()
         } else {
-            true
+            if is_comp_pre_registered {
+                 ecs_assert!(unsafe { T::get_id_unchecked() == id }, FlecsErrorCode::InconsistentComponentId);
+                 true
+            } else {
+                true
+            }
         },
         FlecsErrorCode::ComponentNotRegistered,
         name: *const c_char

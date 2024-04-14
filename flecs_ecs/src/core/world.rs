@@ -35,10 +35,13 @@ impl Default for World {
 
 impl Drop for World {
     fn drop(&mut self) {
-        if unsafe { sys::ecs_stage_is_async(self.raw_world.as_ptr()) } {
-            unsafe { sys::ecs_async_stage_free(self.raw_world.as_ptr()) }
-        } else {
-            unsafe { sys::ecs_fini(self.raw_world.as_ptr()) };
+        let world_ptr = self.raw_world.as_ptr();
+        if unsafe { sys::ecs_poly_release_(world_ptr as *mut c_void) } == 0 {
+            if unsafe { sys::ecs_stage_get_id(world_ptr) } == -1 {
+                unsafe { sys::ecs_stage_free(world_ptr) };
+            } else {
+                unsafe { sys::ecs_fini(self.raw_world.as_ptr()) };
+            }
         }
     }
 }
@@ -69,8 +72,8 @@ impl World {
     #[doc(alias = "world::reset")]
     pub fn reset(&mut self) {
         assert!(
-            unsafe { !sys::ecs_stage_is_async(self.raw_world.as_ptr()) },
-            "Tried to reset async stage."
+            unsafe { sys::ecs_poly_refcount(self.raw_world.as_ptr() as *mut c_void) == 1 },
+            "Reset would invalidate other handles"
         );
         unsafe { sys::ecs_fini(self.raw_world.as_ptr()) };
         self.raw_world = unsafe { NonNull::new_unchecked(sys::ecs_init()) };
@@ -392,7 +395,7 @@ impl World {
     /// * C++ API: `world::get_stage_id`
     #[doc(alias = "world::get_stage_id")]
     pub fn get_stage_id(&self) -> i32 {
-        unsafe { sys::ecs_get_stage_id(self.raw_world.as_ptr()) }
+        unsafe { sys::ecs_stage_get_id(self.raw_world.as_ptr()) }
     }
 
     /// Test if is a stage.
@@ -426,33 +429,6 @@ impl World {
                 sys::ecs_stage_t_magic as i32,
             )
         }
-    }
-
-    /// Enable/disable auto-merging for world or stage.
-    ///
-    /// When auto-merging is enabled, staged data will automatically be merged
-    /// with the world when staging ends. This happens at the end of `progress()`,
-    /// at a sync point or when `readonly_end()` is called.
-    ///
-    /// Applications can exercise more control over when data from a stage is
-    /// merged by disabling auto-merging. This requires an application to
-    /// explicitly call `merge()` on the stage.
-    ///
-    /// When this function is invoked on the world, it sets all current stages to
-    /// the provided value and sets the default for new stages. When this
-    /// function is invoked on a stage, auto-merging is only set for that specific
-    /// stage.
-    ///
-    /// # Arguments
-    ///
-    /// * `automerge` - Whether to enable or disable auto-merging.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::set_automerge`
-    #[doc(alias = "world::set_automerge")]
-    pub fn set_automerge(&self, automerge: bool) {
-        unsafe { sys::ecs_set_automerge(self.raw_world.as_ptr(), automerge) };
     }
 
     /// Merge world or stage.
@@ -525,7 +501,7 @@ impl World {
     /// * C++ API: `world::async_stage`
     #[doc(alias = "world::async_stage")]
     pub fn create_async_stage(&self) -> WorldRef {
-        unsafe { WorldRef::from_ptr(sys::ecs_async_stage_new(self.raw_world.as_ptr())) }
+        unsafe { WorldRef::from_ptr(sys::ecs_stage_new(self.raw_world.as_ptr())) }
     }
 
     /// Get actual world.
@@ -3110,125 +3086,6 @@ impl World {
     }
 }
 
-// Filter mixin implementation
-impl World {
-    /// Create a new filter.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Components` - The components to match on.
-    ///
-    /// # Returns
-    ///
-    /// A new filter.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::filter`
-    #[doc(alias = "world::filter")]
-    pub fn new_filter<Components>(&self) -> Filter<Components>
-    where
-        Components: Iterable,
-    {
-        Filter::<Components>::new(self)
-    }
-
-    /// Create a new named filter.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Components` - The components to match on.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the observer.
-    ///
-    /// # Returns
-    ///
-    /// A new filter.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::filter`
-    #[doc(alias = "world::filter")]
-    pub fn new_filter_named<'a, Components>(&'a self, name: &CStr) -> Filter<'a, Components>
-    where
-        Components: Iterable,
-    {
-        FilterBuilder::<Components>::new_named(self, name).build()
-    }
-
-    /// Create a `filter_builder`
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Components` - The components to match on.
-    ///
-    /// # Returns
-    ///
-    /// Filter builder.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::filter_builder`
-    #[doc(alias = "world::filter_builder")]
-    pub fn filter<Components>(&self) -> FilterBuilder<Components>
-    where
-        Components: Iterable,
-    {
-        FilterBuilder::<Components>::new(self)
-    }
-
-    /// Create a new named `filter_builder`.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Components` - The components to match on.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the observer.
-    ///
-    /// # Returns
-    ///
-    /// Filter builder.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::filter_builder`
-    #[doc(alias = "world::filter_builder")]
-    pub fn filter_named<'a, Components>(&'a self, name: &CStr) -> FilterBuilder<'a, Components>
-    where
-        Components: Iterable,
-    {
-        FilterBuilder::<Components>::new_named(self, name)
-    }
-
-    pub fn each<Components>(
-        &self,
-        func: impl FnMut(Components::TupleType<'_>),
-    ) -> Filter<Components>
-    where
-        Components: Iterable,
-    {
-        let filter = Filter::<Components>::new(self);
-        filter.each(func);
-        filter
-    }
-
-    pub fn each_entity<Components>(
-        &self,
-        func: impl FnMut(&mut EntityView, Components::TupleType<'_>),
-    ) -> Filter<Components>
-    where
-        Components: Iterable,
-    {
-        let filter = Filter::<Components>::new(self);
-        filter.each_entity(func);
-        filter
-    }
-}
-
 /// Query mixin implementation
 impl World {
     /// Create a new query.
@@ -3877,86 +3734,9 @@ impl World {
     }
 }
 
-/// Rules mixin implementation
-#[cfg(feature = "flecs_rules")]
-impl World {
-    /// Create a new rule.
-    ///
-    /// # Returns
-    ///
-    /// A new rule.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::rule`
-    #[doc(alias = "world::rule")]
-    #[inline(always)]
-    pub fn new_rule<T>(&self) -> Rule<T>
-    where
-        T: Iterable,
-    {
-        RuleBuilder::<T>::new(self).build()
-    }
-
-    /// Create a new named rule.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the rule.
-    ///
-    /// # Returns
-    ///
-    /// A new rule.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::rule`
-    #[doc(alias = "world::rule")]
-    #[inline(always)]
-    pub fn new_rule_named<'a, T>(&'a self, name: &CStr) -> Rule<'a, T>
-    where
-        T: Iterable,
-    {
-        RuleBuilder::<T>::new_named(self, name).build()
-    }
-
-    /// Create a new rule builder.
-    ///
-    /// # Returns
-    ///
-    /// A new rule builder.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::rule_builder`
-    #[doc(alias = "world::rule_builder")]
-    #[inline(always)]
-    pub fn rule<T>(&self) -> RuleBuilder<T>
-    where
-        T: Iterable,
-    {
-        RuleBuilder::<T>::new(self)
-    }
-
-    /// Create a new named rule builder.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the rule.
-    ///
-    /// # Returns
-    ///
-    /// A new rule builder.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::rule_builder`
-    #[doc(alias = "world::rule_builder")]
-    #[inline(always)]
-    pub fn rule_named<'a, T>(&'a self, name: &CStr) -> RuleBuilder<'a, T>
-    where
-        T: Iterable,
-    {
-        RuleBuilder::<T>::new_named(self, name)
-    }
-}
+// Removal of `ScopedWorld`:
+// `ScopedWorld` was removed because it did not effectively isolate the original world or prevent
+// multiple scopes from being created on the same world. Although it implemented `Drop` to end scoping,
+// this did not occur until the end of the scope, making it easy to reach unintended states.
+// Using a closure instead clearly delineates the start and end of the scope and eliminates the need
+// for an extra type, thereby simplifying the code and reducing potential errors.
