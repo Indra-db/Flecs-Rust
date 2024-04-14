@@ -56,7 +56,7 @@ where
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
-        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world_ptr_mut(), &entity_desc) };
 
         T::populate(&mut obj);
 
@@ -85,7 +85,7 @@ where
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
-        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world_ptr_mut(), &entity_desc) };
 
         T::populate(&mut obj);
 
@@ -115,7 +115,7 @@ where
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
-        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
 
         #[cfg(feature = "flecs_pipeline")]
@@ -143,29 +143,20 @@ where
     pub fn kind_id(&mut self, phase: impl Into<Entity>) -> &mut Self {
         let phase = *phase.into();
         let current_phase: EntityT = unsafe {
-            sys::ecs_get_target(
-                self.world.world_ptr_mut(),
-                self.desc.entity,
-                ECS_DEPENDS_ON,
-                0,
-            )
+            sys::ecs_get_target(self.world_ptr_mut(), self.desc.entity, ECS_DEPENDS_ON, 0)
         };
         unsafe {
             if current_phase != 0 {
                 sys::ecs_remove_id(
-                    self.world.world_ptr_mut(),
+                    self.world_ptr_mut(),
                     self.desc.entity,
                     ecs_dependson(current_phase),
                 );
-                sys::ecs_remove_id(self.world.world_ptr_mut(), self.desc.entity, current_phase);
+                sys::ecs_remove_id(self.world_ptr_mut(), self.desc.entity, current_phase);
             }
             if phase != 0 {
-                sys::ecs_add_id(
-                    self.world.world_ptr_mut(),
-                    self.desc.entity,
-                    ecs_dependson(phase),
-                );
-                sys::ecs_add_id(self.world.world_ptr_mut(), self.desc.entity, phase);
+                sys::ecs_add_id(self.world_ptr_mut(), self.desc.entity, ecs_dependson(phase));
+                sys::ecs_add_id(self.world_ptr_mut(), self.desc.entity, phase);
             }
         };
         self
@@ -185,7 +176,7 @@ where
     where
         Phase: ComponentId + ComponentType<Struct>,
     {
-        self.kind_id(Phase::get_id(self.world))
+        self.kind_id(Phase::get_id(self.world()))
     }
 
     /// Specify in which enum phase the system should run
@@ -202,7 +193,7 @@ where
     where
         Phase: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
-        let enum_id = phase.get_id_variant(self.world);
+        let enum_id = phase.get_id_variant(self.world());
         self.kind_id(enum_id)
     }
 
@@ -229,10 +220,10 @@ where
     ///
     /// # See also
     ///
-    /// * C++ API: `system_builder_i::no_readonly`
-    #[doc(alias = "system_builder_i::no_readonly")]
-    pub fn no_readonly(&mut self, value: bool) -> &mut Self {
-        self.desc.no_readonly = value;
+    /// * C++ API: `system_builder_i::immediate`
+    #[doc(alias = "system_builder_i::immediate")]
+    pub fn immediate(&mut self, value: bool) -> &mut Self {
+        self.desc.immediate = value;
         self
     }
 
@@ -321,7 +312,7 @@ where
     where
         Component: ComponentId,
     {
-        self.desc.tick_source = Component::get_id(self.world);
+        self.desc.tick_source = Component::get_id(self.world());
         self
     }
 }
@@ -331,31 +322,11 @@ where
     T: Iterable,
 {
     fn current_term(&mut self) -> &mut TermT {
-        unsafe { &mut *self.filter_builder.term.term_ptr }
+        unsafe { &mut *self.query_builder.term.term_ptr }
     }
 
     fn next_term(&mut self) {
-        self.filter_builder.next_term();
-    }
-}
-
-impl<'a, T> FilterBuilderImpl<'a> for SystemBuilder<'a, T>
-where
-    T: Iterable,
-{
-    #[inline]
-    fn desc_filter_mut(&mut self) -> &mut sys::ecs_filter_desc_t {
-        &mut self.desc.query.filter
-    }
-
-    #[inline]
-    fn expr_count_mut(&mut self) -> &mut i32 {
-        self.filter_builder.expr_count_mut()
-    }
-
-    #[inline]
-    fn term_index_mut(&mut self) -> &mut i32 {
-        self.filter_builder.term_index_mut()
+        self.query_builder.next_term();
     }
 }
 
@@ -365,17 +336,17 @@ where
 {
     #[inline]
     fn term_mut(&mut self) -> &mut Term<'a> {
-        self.filter_builder.term_mut()
+        self.query_builder.term_mut()
     }
 
     #[inline]
     fn term_ptr_mut(&mut self) -> *mut TermT {
-        self.filter_builder.term_ptr_mut()
+        self.query_builder.term_ptr_mut()
     }
 
     #[inline]
     fn term_id_ptr_mut(&mut self) -> *mut TermRefT {
-        self.filter_builder.term_id_ptr_mut()
+        self.query_builder.term_id_ptr_mut()
     }
 }
 
@@ -384,8 +355,18 @@ where
     T: Iterable,
 {
     #[inline]
-    fn desc_query_mut(&mut self) -> &mut sys::ecs_query_desc_t {
+    fn desc_mut(&mut self) -> &mut sys::ecs_query_desc_t {
         &mut self.desc.query
+    }
+
+    #[inline]
+    fn expr_count_mut(&mut self) -> &mut i32 {
+        &mut self.query_builder.expr_count
+    }
+
+    #[inline]
+    fn term_index_mut(&mut self) -> &mut i32 {
+        &mut self.query_builder.next_term_index
     }
 }
 
@@ -402,7 +383,7 @@ where
     /// * C++ API: `node_builder::build`
     #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
-        System::new(self.world, self.desc, self.is_instanced)
+        System::new(self.world(), self.desc, self.is_instanced)
     }
 }
 

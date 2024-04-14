@@ -11,9 +11,6 @@ use crate::addons::system::{System, SystemBuilder};
 #[cfg(feature = "flecs_pipeline")]
 use crate::addons::pipeline::PipelineBuilder;
 
-#[cfg(feature = "flecs_rules")]
-use crate::addons::rules::{Rule, RuleBuilder};
-
 use crate::core::*;
 use crate::sys;
 
@@ -3106,7 +3103,7 @@ impl World {
     where
         Components: Iterable,
     {
-        Query::<Components>::new(self)
+        QueryBuilder::<Components>::new(self).build()
     }
 
     /// Create a new named query.
@@ -3179,6 +3176,8 @@ impl World {
     {
         QueryBuilder::<Components>::new_named(self, name)
     }
+
+    // TODO struct query_delegate, world::each in query/impl.hpp from cpp
 }
 
 /// Systems mixin implementation

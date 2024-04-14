@@ -4,7 +4,7 @@ use crate::core::*;
 use crate::sys;
 use flecs_ecs_derive::tuples;
 
-pub trait Filterable<'a>: Sized + FilterBuilderImpl<'a> {
+pub trait Filterable<'a>: Sized + QueryBuilderImpl<'a> {
     fn current_term(&mut self) -> &mut TermT;
     fn next_term(&mut self);
 }
@@ -399,7 +399,7 @@ where
     type TupleSliceType<'w> = A::SliceType<'w>;
 
     fn populate<'a>(filter: &mut impl Filterable<'a>) {
-        filter.term_with_id(<A::OnlyType as ComponentId>::get_id(filter.world()));
+        filter.with_id(<A::OnlyType as ComponentId>::get_id(filter.world()));
         let term = filter.current_term();
         A::populate_term(term);
 
@@ -617,7 +617,7 @@ macro_rules! impl_iterable {
             fn populate<'a>(filter: &mut impl Filterable<'a>) {
                 let _world = filter.world();
                 $(
-                    filter.term_with_id(<$t::OnlyType as ComponentId>::get_id(_world));
+                    filter.with_id(<$t::OnlyType as ComponentId>::get_id(_world));
                     let term = filter.current_term();
                     $t::populate_term(term);
 

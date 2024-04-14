@@ -75,13 +75,6 @@ where
             ecs_abort!(FlecsErrorCode::InvalidParameter);
         }
 
-        if !desc.query.filter.terms_buffer.is_null() {
-            unsafe {
-                if let Some(free_func) = sys::ecs_os_api.free_ {
-                    free_func(desc.query.filter.terms_buffer as *mut _);
-                }
-            };
-        }
         pipeline
     }
 }

@@ -1,4 +1,5 @@
-use std::{ops::Deref, os::raw::c_void, ptr::NonNull};
+use std::ptr::NonNull;
+use std::{ops::Deref, os::raw::c_void};
 
 use crate::core::*;
 use crate::sys;
@@ -31,20 +32,16 @@ impl<'a> Observer<'a> {
         mut desc: sys::ecs_observer_desc_t,
         is_instanced: bool,
     ) -> Self {
-        if !desc.filter.instanced {
-            desc.filter.instanced = is_instanced;
+        if desc.query.flags & sys::EcsQueryIsInstanced == 0 {
+            ecs_bit_cond(
+                &mut desc.query.flags,
+                sys::EcsQueryIsInstanced,
+                is_instanced,
+            )
         }
 
         let id = unsafe { sys::ecs_observer_init(world.world_ptr_mut(), &desc) };
         let entity = EntityView::new_from(world.world(), id);
-
-        unsafe {
-            if !desc.filter.terms_buffer.is_null() {
-                if let Some(free_func) = sys::ecs_os_api.free_ {
-                    free_func(desc.filter.terms_buffer as *mut _);
-                }
-            }
-        }
 
         Self {
             entity,
@@ -94,11 +91,15 @@ impl<'a> Observer<'a> {
     ///
     /// * C++ API: `observer::query`
     #[doc(alias = "observer::query")]
-    pub fn query(&mut self) -> Filter<()> {
-        let poly: *const Poly = self.target_for_pair_first::<Poly>(ECS_OBSERVER);
-        let obj: *mut sys::ecs_observer_t = unsafe { (*poly).poly as *mut sys::ecs_observer_t };
+    pub fn query(&mut self) -> Query<()> {
         unsafe {
-            Filter::<()>::new_ownership(self.world, NonNull::new_unchecked(&mut (*obj).filter))
+            Query::<()>::new_ownership(
+                self.world,
+                NonNull::new_unchecked(sys::ecs_observer_get_query(
+                    self.world_ptr(),
+                    *self.entity.id(),
+                ) as *mut sys::ecs_query_t),
+            )
         }
     }
 }

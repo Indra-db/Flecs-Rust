@@ -328,6 +328,25 @@ pub(crate) fn type_to_oper<T: OperType>() -> OperKind {
     T::OPER
 }
 
+/// Sets the specified bit in the flags.
+pub fn ecs_bit_set(flags: &mut u32, bit: u32) {
+    *flags |= bit;
+}
+
+/// Clears the specified bit in the flags.
+pub fn ecs_bit_clear(flags: &mut u32, bit: u32) {
+    *flags &= !bit;
+}
+
+/// Conditionally sets or clears a bit in the flags based on a condition.
+pub fn ecs_bit_cond(flags: &mut u32, bit: u32, cond: bool) {
+    if cond {
+        ecs_bit_set(flags, bit);
+    } else {
+        ecs_bit_clear(flags, bit);
+    }
+}
+
 /// Copies the given Rust &str to a C string and returns a pointer to the C string.
 /// this is intended to be used when the C code needs to take ownership of the string.
 ///

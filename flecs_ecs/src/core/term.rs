@@ -33,7 +33,7 @@ impl<'a> Term<'a> {
     ///
     /// * C++ API: `term::term`
     #[doc(alias = "term::term")]
-    pub fn new_from_term(world: impl IntoWorld<'a>, term: TermT) -> Self {
+    pub fn new_from(world: impl IntoWorld<'a>, term: TermT) -> Self {
         let mut obj = Self {
             world: world.world(),
             term_id_ptr: std::ptr::null_mut(),
@@ -56,12 +56,56 @@ impl<'a> Term<'a> {
     /// * C++ API: `term::term`
     #[doc(alias = "term::term")]
     pub fn new_world_only(world: impl IntoWorld<'a>) -> Self {
-        Self {
+        let mut obj = Self {
             world: world.world(),
             term_id_ptr: std::ptr::null_mut(),
             term: Default::default(),
             term_ptr: std::ptr::null_mut(),
+        };
+        let obj_term = &mut obj.term as *mut TermT;
+        obj.set_term(obj_term);
+        obj
+    }
+
+    /// Create a new term from a id of a component or pair
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world to use.
+    /// * `id` - The id to use of pair or component
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `term::term`
+    #[doc(alias = "term::term")]
+    pub fn new_id<T>(world: impl IntoWorld<'a>, id: T) -> Self
+    where
+        T: IntoId,
+    {
+        let id = id.into();
+
+        let mut obj = Self {
+            world: world.world(),
+            term_id_ptr: std::ptr::null_mut(),
+            term_ptr: std::ptr::null_mut(),
+            term: Default::default(),
+        };
+
+        #[allow(clippy::collapsible_else_if)]
+        if T::IS_PAIR {
+            obj.term.id = *id;
+        } else {
+            if id & RUST_ecs_id_FLAGS_MASK != 0 {
+                obj.term.id = *id;
+            } else {
+                obj.term.first.id = *id;
+            }
         }
+
+        let obj_term = &mut obj.term as *mut TermT;
+        obj.set_term(obj_term);
+
+        obj
     }
 
     /// Create a new term from a component or pair
@@ -116,47 +160,6 @@ impl<'a> Term<'a> {
 
             Self::new_id(world, (id_rel, id_target))
         }
-    }
-
-    /// Create a new term from a id of a component or pair
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - The world to use.
-    /// * `id` - The id to use of pair or component
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `term::term`
-    #[doc(alias = "term::term")]
-    pub fn new_id<T>(world: impl IntoWorld<'a>, id: T) -> Self
-    where
-        T: IntoId,
-    {
-        let id = id.into();
-
-        let mut obj = Self {
-            world: world.world(),
-            term_id_ptr: std::ptr::null_mut(),
-            term_ptr: std::ptr::null_mut(),
-            term: Default::default(),
-        };
-
-        #[allow(clippy::collapsible_else_if)]
-        if T::IS_PAIR {
-            obj.term.id = *id;
-        } else {
-            if id & RUST_ecs_id_FLAGS_MASK != 0 {
-                obj.term.id = *id;
-            } else {
-                obj.term.first.id = *id;
-            }
-        }
-
-        let obj_term = &mut obj.term as *mut TermT;
-        obj.set_term(obj_term);
-
-        obj
     }
 
     /// Reset the term
@@ -832,6 +835,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::write`
     #[doc(alias = "term_builder_i::write")]
+    #[inline(always)]
     fn write_(&mut self) -> &mut Self {
         self.inout_stage(InOutKind::Out)
     }
@@ -843,6 +847,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::read`
     #[doc(alias = "term_builder_i::read")]
+    #[inline(always)]
     fn read(&mut self) -> &mut Self {
         self.inout_stage(InOutKind::In)
     }
@@ -854,6 +859,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::read_write`
     #[doc(alias = "term_builder_i::read_write")]
+    #[inline(always)]
     fn read_write(&mut self) -> &mut Self {
         self.inout_stage(InOutKind::InOut)
     }
@@ -864,6 +870,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::in`
     #[doc(alias = "term_builder_i::in")]
+    #[inline(always)]
     fn in_(&mut self) -> &mut Self {
         self.set_inout(InOutKind::In)
     }
@@ -874,6 +881,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::out`
     #[doc(alias = "term_builder_i::out")]
+    #[inline(always)]
     fn out(&mut self) -> &mut Self {
         self.set_inout(InOutKind::Out)
     }
@@ -884,6 +892,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::inout`
     #[doc(alias = "term_builder_i::inout")]
+    #[inline(always)]
     fn inout(&mut self) -> &mut Self {
         self.set_inout(InOutKind::InOut)
     }
@@ -894,6 +903,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::inout_none`
     #[doc(alias = "term_builder_i::inout_none")]
+    #[inline(always)]
     fn inout_none(&mut self) -> &mut Self {
         self.set_inout(InOutKind::InOutNone)
     }
@@ -908,6 +918,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::oper`
     #[doc(alias = "term_builder_i::oper")]
+    #[inline(always)]
     fn oper(&mut self, oper: OperKind) -> &mut Self {
         self.assert_term_id_ptr_mut();
         unsafe { (*self.term_ptr_mut()).oper = oper as i16 };
@@ -920,6 +931,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::and`
     #[doc(alias = "term_builder_i::and")]
+    #[inline(always)]
     fn and(&mut self) -> &mut Self {
         self.oper(OperKind::And)
     }
@@ -930,6 +942,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::or`
     #[doc(alias = "term_builder_i::or")]
+    #[inline(always)]
     fn or(&mut self) -> &mut Self {
         self.oper(OperKind::Or)
     }
@@ -941,6 +954,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::not`
     #[doc(alias = "term_builder_i::not")]
     #[allow(clippy::should_implement_trait)]
+    #[inline(always)]
     fn not(&mut self) -> &mut Self {
         self.oper(OperKind::Not)
     }
@@ -951,6 +965,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::optional`
     #[doc(alias = "term_builder_i::optional")]
+    #[inline(always)]
     fn optional(&mut self) -> &mut Self {
         self.oper(OperKind::Optional)
     }
@@ -961,6 +976,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::and_from`
     #[doc(alias = "term_builder_i::and_from")]
+    #[inline(always)]
     fn and_from(&mut self) -> &mut Self {
         self.oper(OperKind::AndFrom)
     }
@@ -971,6 +987,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::or_from`
     #[doc(alias = "term_builder_i::or_from")]
+    #[inline(always)]
     fn or_from(&mut self) -> &mut Self {
         self.oper(OperKind::OrFrom)
     }
@@ -981,6 +998,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::not_from`
     #[doc(alias = "term_builder_i::not_from")]
+    #[inline(always)]
     fn not_from(&mut self) -> &mut Self {
         self.oper(OperKind::NotFrom)
     }
@@ -1025,6 +1043,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::filter`
     #[doc(alias = "term_builder_i::filter")]
+    #[inline(always)]
     fn filter(&mut self) -> &mut Self {
         unsafe { (*self.term_ptr_mut()).src.id |= InOutKind::InOutFilter as u64 };
         self

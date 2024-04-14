@@ -32,7 +32,7 @@ where
     }
 
     fn query_ptr(&self) -> *const QueryT {
-        unsafe { sys::ecs_query_get_filter(self.query.as_ptr()) }
+        self.query.as_ptr()
     }
 
     fn iter_next_func(&self) -> unsafe extern "C" fn(*mut IterT) -> bool {
@@ -55,29 +55,29 @@ impl<'a, T> Query<'a, T>
 where
     T: Iterable,
 {
-    /// Create a new query
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - The world to create the query in
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query::query`
-    #[doc(alias = "query::query")]
-    pub fn new(world: impl IntoWorld<'a>) -> Self {
-        let mut desc = sys::ecs_query_desc_t::default();
-        T::register_ids_descriptor(world.world_ptr_mut(), &mut desc.filter);
-        let mut filter: FilterT = Default::default();
-        desc.filter.storage = &mut filter;
-        let query =
-            unsafe { NonNull::new_unchecked(sys::ecs_query_init(world.world_ptr_mut(), &desc)) };
-        Self {
-            world: world.world(),
-            query,
-            _phantom: std::marker::PhantomData,
-        }
-    }
+    // /// Create a new query
+    // ///
+    // /// # Arguments
+    // ///
+    // /// * `world` - The world to create the query in
+    // ///
+    // /// # See also
+    // ///
+    // /// * C++ API: `query::query`
+    // #[doc(alias = "query::query")]
+    // pub fn new(world: impl IntoWorld<'a>) -> Self {
+    //     let mut desc = sys::ecs_query_desc_t::default();
+    //     T::register_ids_descriptor(world.world_ptr_mut(), &mut desc.filter);
+    //     let mut filter: FilterT = Default::default();
+    //     desc.filter.storage = &mut filter;
+    //     let query =
+    //         unsafe { NonNull::new_unchecked(sys::ecs_query_init(world.world_ptr_mut(), &desc)) };
+    //     Self {
+    //         world: world.world(),
+    //         query,
+    //         _phantom: std::marker::PhantomData,
+    //     }
+    // }
 
     /// Create a new query from a query descriptor
     ///
@@ -110,24 +110,17 @@ where
     /// * C++ API: `query::query`
     #[doc(alias = "query::query")]
     pub fn new_from_desc(world: impl IntoWorld<'a>, desc: &mut sys::ecs_query_desc_t) -> Self {
-        NonNull::new(unsafe { sys::ecs_query_init(world.world_ptr_mut(), desc) })
-            .map(|query| {
-                let obj = Self {
-                    world: world.world(),
-                    query,
-                    _phantom: PhantomData,
-                };
+        let query =
+            unsafe { NonNull::new_unchecked(sys::ecs_query_init(world.world_ptr_mut(), desc)) };
+        Self {
+            world: world.world(),
+            query,
+            _phantom: PhantomData,
+        }
+    }
 
-                if !desc.filter.terms_buffer.is_null() {
-                    unsafe {
-                        if let Some(free_func) = sys::ecs_os_api.free_ {
-                            free_func(desc.filter.terms_buffer as *mut _);
-                        }
-                    }
-                }
-                obj
-            })
-            .expect("Failed to create query.")
+    pub fn entity(&self) -> EntityView<'a> {
+        EntityView::new_from(self.world, unsafe { (*self.query.as_ptr()).entity })
     }
 
     /// Free the query
@@ -174,24 +167,7 @@ where
     /// * C++ API: `query_base::changed`
     #[doc(alias = "query_base::changed")]
     pub fn is_changed(&self) -> bool {
-        unsafe { sys::ecs_query_changed(self.query.as_ptr(), std::ptr::null()) }
-    }
-
-    /// Returns whether query is orphaned.
-    /// When the parent query of a subquery is deleted, it is left in an orphaned
-    /// state. The only valid operation on an orphaned query is deleting it. Only
-    /// subqueries can be orphaned.
-    ///
-    /// # Returns
-    ///
-    /// true if query is orphaned, otherwise false.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_base::orphaned`
-    #[doc(alias = "query_base::orphaned")]
-    pub fn is_orphaned(&self) -> bool {
-        unsafe { sys::ecs_query_orphaned(self.query.as_ptr()) }
+        unsafe { sys::ecs_query_changed(self.query.as_ptr()) }
     }
 
     /// Get info for group
@@ -234,18 +210,6 @@ where
         } else {
             std::ptr::null_mut()
         }
-    }
-
-    /// Get the filter of the query as read only
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_base::filter`
-    #[doc(alias = "query_base::filter")]
-    pub fn filter(&self) -> FilterView<'a, T> {
-        FilterView::<T>::new(self.world, unsafe {
-            sys::ecs_query_get_filter(self.query.as_ptr())
-        })
     }
 }
 

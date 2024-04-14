@@ -19,7 +19,7 @@ where
     #[doc(alias = "observer_builder_i::ctx")]
     fn set_run_callback(&mut self, callback: ecs_iter_action_t) -> &mut Self;
 
-    fn set_instanced(&mut self, instanced: bool);
+    //fn set_instanced(&mut self, instanced: bool);
 
     /// Set context
     ///
@@ -45,7 +45,7 @@ where
 
         self.set_desc_callback(Some(Self::run_each::<Func> as unsafe extern "C" fn(_)));
 
-        self.set_instanced(true);
+        //self.set_instanced(true);
 
         self.build()
     }
@@ -66,7 +66,7 @@ where
             Self::run_each_entity::<Func> as unsafe extern "C" fn(_),
         ));
 
-        self.set_instanced(true);
+        //self.set_instanced(true);
 
         self.build()
     }
@@ -85,7 +85,7 @@ where
 
         self.set_desc_callback(Some(Self::run_each_iter::<Func> as unsafe extern "C" fn(_)));
 
-        self.set_instanced(true);
+        //self.set_instanced(true);
 
         self.build()
     }
@@ -170,9 +170,9 @@ macro_rules! implement_reactor_api {
                 self
             }
 
-            fn set_instanced(&mut self, instanced: bool) {
-                self.is_instanced = instanced;
-            }
+            // fn set_instanced(&mut self, instanced: bool) {
+            //     self.is_instanced = instanced;
+            // }
 
             fn set_context(&mut self, context: *mut c_void) -> &mut Self {
                 self.desc.ctx = context;

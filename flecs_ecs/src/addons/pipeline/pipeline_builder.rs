@@ -58,7 +58,7 @@ where
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
-        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world_ptr_mut(), &entity_desc) };
 
         T::populate(&mut obj);
         obj
@@ -83,7 +83,7 @@ where
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };
-        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world_ptr_mut(), &entity_desc) };
 
         T::populate(&mut obj);
         obj
@@ -122,7 +122,7 @@ where
             ..Default::default()
         };
 
-        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -132,11 +132,11 @@ where
     T: Iterable,
 {
     fn current_term(&mut self) -> &mut TermT {
-        unsafe { &mut *self.filter_builder.term.term_ptr }
+        unsafe { &mut *self.term.term_ptr }
     }
 
     fn next_term(&mut self) {
-        self.filter_builder.next_term();
+        self.query_builder.next_term();
     }
 }
 
@@ -146,17 +146,17 @@ where
 {
     #[inline]
     fn term_mut(&mut self) -> &mut Term<'a> {
-        self.filter_builder.term_mut()
+        self.query_builder.term_mut()
     }
 
     #[inline]
     fn term_ptr_mut(&mut self) -> *mut TermT {
-        self.filter_builder.term_ptr_mut()
+        self.query_builder.term_ptr_mut()
     }
 
     #[inline]
     fn term_id_ptr_mut(&mut self) -> *mut TermRefT {
-        self.filter_builder.term_id_ptr_mut()
+        self.query_builder.term_id_ptr_mut()
     }
 }
 
@@ -167,27 +167,7 @@ where
     type BuiltType = Pipeline<'a, T>;
 
     fn build(&mut self) -> Self::BuiltType {
-        Pipeline::<T>::new(self.world, self.desc)
-    }
-}
-
-impl<'a, T> FilterBuilderImpl<'a> for PipelineBuilder<'a, T>
-where
-    T: Iterable,
-{
-    #[inline]
-    fn desc_filter_mut(&mut self) -> &mut sys::ecs_filter_desc_t {
-        &mut self.desc.query.filter
-    }
-
-    #[inline]
-    fn expr_count_mut(&mut self) -> &mut i32 {
-        self.filter_builder.expr_count_mut()
-    }
-
-    #[inline]
-    fn term_index_mut(&mut self) -> &mut i32 {
-        self.filter_builder.term_index_mut()
+        Pipeline::<T>::new(self.world(), self.desc)
     }
 }
 
@@ -195,14 +175,21 @@ impl<'a, T> QueryBuilderImpl<'a> for PipelineBuilder<'a, T>
 where
     T: Iterable,
 {
-    #[inline]
-    fn desc_query_mut(&mut self) -> &mut sys::ecs_query_desc_t {
+    fn desc_mut(&mut self) -> &mut sys::ecs_query_desc_t {
         &mut self.desc.query
+    }
+
+    fn expr_count_mut(&mut self) -> &mut i32 {
+        &mut self.query_builder.expr_count
+    }
+
+    fn term_index_mut(&mut self) -> &mut i32 {
+        &mut self.query_builder.next_term_index
     }
 }
 
 impl<'a, T: Iterable> IntoWorld<'a> for PipelineBuilder<'a, T> {
     fn world(&self) -> WorldRef<'a> {
-        self.filter_builder.world()
+        self.query_builder.world()
     }
 }

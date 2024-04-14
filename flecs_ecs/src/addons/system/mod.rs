@@ -48,20 +48,21 @@ impl<'a> System<'a> {
         mut desc: sys::ecs_system_desc_t,
         is_instanced: bool,
     ) -> Self {
-        if !desc.query.filter.instanced {
-            desc.query.filter.instanced = is_instanced;
+        if desc.query.flags & sys::EcsQueryIsInstanced == 0 {
+            ecs_bit_cond(
+                &mut desc.query.flags,
+                sys::EcsQueryIsInstanced,
+                is_instanced,
+            )
         }
+
+        /*
+                if (!(desc->query.flags & EcsQueryIsInstanced)) {
+            ECS_BIT_COND(desc->query.flags, EcsQueryIsInstanced, instanced);
+        } */
 
         let id = unsafe { sys::ecs_system_init(world.world_ptr_mut(), &desc) };
         let entity = EntityView::new_from(world.world(), id);
-
-        unsafe {
-            if !desc.query.filter.terms_buffer.is_null() {
-                if let Some(free_func) = sys::ecs_os_api.free_ {
-                    free_func(desc.query.filter.terms_buffer as *mut _);
-                }
-            }
-        }
 
         Self {
             entity,

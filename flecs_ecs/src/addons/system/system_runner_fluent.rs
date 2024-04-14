@@ -66,12 +66,10 @@ impl<'a> Drop for SystemRunnerFluent<'a> {
             }
         } else {
             unsafe {
-                sys::ecs_run_w_filter(
+                sys::ecs_run(
                     self.stage.world_ptr_mut(),
                     self.id,
                     self.delta_time,
-                    self.offset,
-                    self.limit,
                     self.param,
                 );
             }
