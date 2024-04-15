@@ -2954,23 +2954,23 @@ impl World {
 
 /// Term mixin implementation
 impl World {
-    /// Creates a term for a (component) type.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The component type.
-    ///
-    /// # Returns
-    ///
-    /// The term for the component type.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::term`
-    #[doc(alias = "world::term")]
-    pub fn term<T: IntoComponentId>(&self) -> Term {
-        Term::new_type::<T>(self)
-    }
+    // /// Creates a term for a (component) type.
+    // ///
+    // /// # Type Parameters
+    // ///
+    // /// * `T` - The component type.
+    // ///
+    // /// # Returns
+    // ///
+    // /// The term for the component type.
+    // ///
+    // /// # See also
+    // ///
+    // /// * C++ API: `world::term`
+    // #[doc(alias = "world::term")]
+    // pub fn term<T: IntoComponentId>(&self) -> Term {
+    //     Term::new_type::<T>(self)
+    // }
 }
 
 // Event mixin implementation

@@ -379,57 +379,57 @@ where
     #[doc(alias = "query_base::entity")]
     fn as_entity(&self) -> EntityView;
 
-    /// Each term iterator.
-    /// The "`each_term`" iterator accepts a function that is invoked for each term
-    /// in the filter. The following function signature is valid:
-    ///  - func(term: &mut Term)
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_base::term`
-    #[doc(alias = "query_base::each_term")]
-    fn each_term(&self, mut func: impl FnMut(&mut Term)) {
-        let query = self.query_ptr();
-        let world = self.world();
-        ecs_assert!(
-            !query.is_null(),
-            FlecsErrorCode::InvalidParameter,
-            "query filter is null"
-        );
-        let query = unsafe { &*query };
-        for i in 0..query.term_count {
-            let mut term = Term::new_from(world, query.terms[i as usize]);
-            func(&mut term);
-            term.reset(); // prevent freeing resources
-        }
-    }
+    // /// Each term iterator.
+    // /// The "`each_term`" iterator accepts a function that is invoked for each term
+    // /// in the filter. The following function signature is valid:
+    // ///  - func(term: &mut Term)
+    // ///
+    // /// # See also
+    // ///
+    // /// * C++ API: `query_base::term`
+    // #[doc(alias = "query_base::each_term")]
+    // fn each_term(&self, mut func: impl FnMut(&mut Term)) {
+    //     let query = self.query_ptr();
+    //     let world = self.world();
+    //     ecs_assert!(
+    //         !query.is_null(),
+    //         FlecsErrorCode::InvalidParameter,
+    //         "query filter is null"
+    //     );
+    //     let query = unsafe { &*query };
+    //     for i in 0..query.term_count {
+    //         let mut term = Term::new_from(world, query.terms[i as usize]);
+    //         func(&mut term);
+    //         term.reset(); // prevent freeing resources
+    //     }
+    // }
 
-    /// Get the term of the current filter at the given index
-    ///
-    /// # Arguments
-    ///
-    /// * `index`: the index of the term to get
-    /// * `filter`: the filter to get the term from
-    ///
-    /// # Returns
-    ///
-    /// The term requested
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_base::term`
-    #[doc(alias = "query_base::term")]
-    fn term(&self, index: usize) -> Term<'a> {
-        let query = self.query_ptr();
-        let world = self.world();
-        ecs_assert!(
-            !query.is_null(),
-            FlecsErrorCode::InvalidParameter,
-            "query filter is null"
-        );
-        let query = unsafe { &*query };
-        Term::new_from(world, query.terms[index])
-    }
+    // /// Get the term of the current filter at the given index
+    // ///
+    // /// # Arguments
+    // ///
+    // /// * `index`: the index of the term to get
+    // /// * `filter`: the filter to get the term from
+    // ///
+    // /// # Returns
+    // ///
+    // /// The term requested
+    // ///
+    // /// # See also
+    // ///
+    // /// * C++ API: `query_base::term`
+    // #[doc(alias = "query_base::term")]
+    // fn term(&self, index: usize) -> Term<'a> {
+    //     let query = self.query_ptr();
+    //     let world = self.world();
+    //     ecs_assert!(
+    //         !query.is_null(),
+    //         FlecsErrorCode::InvalidParameter,
+    //         "query filter is null"
+    //     );
+    //     let query = unsafe { &*query };
+    //     Term::new_from(world, query.terms[index])
+    // }
 
     /// Get the field count of the current filter
     ///

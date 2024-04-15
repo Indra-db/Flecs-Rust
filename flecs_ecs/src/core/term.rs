@@ -3,116 +3,59 @@ use std::ffi::CStr;
 use crate::core::*;
 use crate::sys;
 
-/// Struct that describes a term identifier.
-///
-/// A term is a single element of a query expression.
-///
-/// A term identifier describes a single identifier in a term. Identifier
-/// descriptions can reference entities by id, name or by variable, which means
-/// the entity will be resolved when the term is evaluated.
-pub struct Term<'a> {
-    pub term_id_ptr: *mut TermRefT,
-    pub term_ptr: *mut TermT,
-    pub term: TermT,
-    world: WorldRef<'a>,
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
+pub enum TermRefMode {
+    #[default]
+    Src,
+    First,
+    Second,
 }
 
-impl<'a> Term<'a> {
-    /// Create a new term
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - The world to use.
-    /// * `term` - The term to use.
-    ///
-    /// # Returns
-    ///
-    /// A new term.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `term::term`
-    #[doc(alias = "term::term")]
-    pub fn new_from(world: impl IntoWorld<'a>, term: TermT) -> Self {
-        let mut obj = Self {
-            world: world.world(),
-            term_id_ptr: std::ptr::null_mut(),
-            term,
-            term_ptr: std::ptr::null_mut(),
-        };
-        let obj_term = &mut obj.term as *mut TermT;
-        obj.set_term(obj_term);
-        obj
-    }
+/// Term builder interface.
+/// A term is a single element of a query expression.
+pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
+    fn current_term_ref_mode(&self) -> TermRefMode;
 
-    /// Create a new term with a world only
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - The world to use.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `term::term`
-    #[doc(alias = "term::term")]
-    pub fn new_world_only(world: impl IntoWorld<'a>) -> Self {
-        let mut obj = Self {
-            world: world.world(),
-            term_id_ptr: std::ptr::null_mut(),
-            term: Default::default(),
-            term_ptr: std::ptr::null_mut(),
-        };
-        //let obj_term = &mut obj.term as *mut TermT;
-        //obj.set_term(obj_term);
-        obj
-    }
+    fn set_term_ref_mode(&mut self, mode: TermRefMode);
 
-    /// Create a new term from a id of a component or pair
+    fn get_term_mut_at(&mut self, index: i32) -> &mut TermT;
+
+    fn get_current_term_mut(&mut self) -> &mut TermT;
+
+    fn get_current_term(&self) -> &TermT;
+
+    fn term_ref_mut(&mut self) -> &mut TermRefT;
+
+    /// initializes a new term from a id of a component or pair
     ///
     /// # Arguments
     ///
-    /// * `world` - The world to use.
     /// * `id` - The id to use of pair or component
     ///
     /// # See also
     ///
     /// * C++ API: `term::term`
     #[doc(alias = "term::term")]
-    pub fn new_id<T>(world: impl IntoWorld<'a>, id: T) -> Self
+    fn init_current_term<T>(&mut self, id: T)
     where
         T: IntoId,
     {
         let id = id.into();
-
-        let mut obj = Self {
-            world: world.world(),
-            term_id_ptr: std::ptr::null_mut(),
-            term_ptr: std::ptr::null_mut(),
-            term: Default::default(),
-        };
+        let term = self.get_current_term_mut();
 
         #[allow(clippy::collapsible_else_if)]
         if T::IS_PAIR {
-            obj.term.id = *id;
+            term.id = *id;
         } else {
             if id & RUST_ecs_id_FLAGS_MASK != 0 {
-                obj.term.id = *id;
+                term.id = *id;
             } else {
-                obj.term.first.id = *id;
+                term.first.id = *id;
             }
         }
-
-        let obj_term = &mut obj.term as *mut TermT;
-        obj.set_term(obj_term);
-
-        obj
     }
 
-    /// Create a new term from a component or pair
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - The world to use.
+    /// initialize a new term from a component or pair
     ///
     /// # Type Arguments
     ///
@@ -122,7 +65,7 @@ impl<'a> Term<'a> {
     ///
     /// * C++ API: `term::term`
     #[doc(alias = "term::term")]
-    pub fn new_type<T: IntoComponentId>(world: impl IntoWorld<'a>) -> Self {
+    fn init_term_from<T: IntoComponentId>(&mut self) {
         if !T::IS_PAIR {
             let id: IdT = if T::First::is_registered() {
                 unsafe { T::First::get_id_unchecked() }
@@ -134,7 +77,7 @@ impl<'a> Term<'a> {
                 );
                 0
             };
-            Self::new_id(world, id)
+            self.init_current_term(id);
         } else {
             let id_rel = if T::First::is_registered() {
                 unsafe { T::First::get_id_unchecked() }
@@ -158,7 +101,7 @@ impl<'a> Term<'a> {
                 0
             };
 
-            Self::new_id(world, (id_rel, id_target))
+            self.init_current_term((id_rel, id_target))
         }
     }
 
@@ -168,11 +111,11 @@ impl<'a> Term<'a> {
     ///
     /// * C++ API: `term::reset`
     #[doc(alias = "term::reset")]
-    pub fn reset(&mut self) {
+    fn reset(&mut self) {
         // we don't for certain if this causes any side effects not using the nullptr and just using the default value.
         // if it does we can use Option.
-        self.term = Default::default();
-        self.set_term(std::ptr::null_mut());
+        let term = self.get_current_term_mut();
+        *term = Default::default();
     }
 
     /// Check if term is initialized
@@ -187,11 +130,12 @@ impl<'a> Term<'a> {
     ///
     /// * C++ API: `term::is_set`
     #[doc(alias = "term::is_set")]
-    pub fn is_set(&mut self) -> bool {
-        unsafe { sys::ecs_term_is_initialized(&self.term) }
+    // todo v4, probably remove this, since we don't store unitialized terms anymore like CPP API.
+    fn is_set(&mut self) -> bool {
+        unsafe { sys::ecs_term_is_initialized(self.get_current_term()) }
     }
 
-    /// Get the term id
+    /// Get the term id of the current term set
     ///
     /// # Returns
     ///
@@ -201,110 +145,62 @@ impl<'a> Term<'a> {
     ///
     /// * C++ API: `term::id`
     #[doc(alias = "term::id")]
-    pub fn id(&self) -> IdView {
-        IdView::new_from(self.world, self.term.id)
+    fn id(&self) -> Id {
+        Id(self.get_current_term().id)
     }
 
-    /// Get the inout type of term
+    /// Get the inout type of term of the current term set
     ///
     /// # See also
     ///
     /// * C++ API: `term::inout`
     #[doc(alias = "term::inout")]
-    pub fn inout(&self) -> InOutKind {
-        self.term.inout.into()
+    fn inout(&self) -> InOutKind {
+        self.get_current_term().inout.into()
     }
 
-    /// Get the operator of term
+    /// Get the operator of term of the current term set
     ///
     /// # See also
     ///
     /// * C++ API: `term::oper`
     #[doc(alias = "term::oper")]
-    pub fn oper(&self) -> OperKind {
-        self.term.oper.into()
+    fn oper(&self) -> OperKind {
+        self.get_current_term().oper.into()
     }
 
-    /// Get the src of term
+    /// Get the src id of term of the current term set
     ///
     /// # See also
     ///
     /// * C++ API: `term::get_src`
     #[doc(alias = "term::get_src")]
-    pub fn src(&self) -> EntityView {
+    fn src(&self) -> Entity {
         //id & ~EcsTermRefFlags
-        let id = self.term.src.id & !flecs::TermRefFlags::ID;
-        EntityView::new_from(self.world, id)
+        let id = self.get_current_term().src.id & !flecs::TermRefFlags::ID;
+        Entity(id)
     }
 
-    /// Get the first of term
+    /// Get the first of term of the current term set
     ///
     /// # See also
     ///
     /// * C++ API: `term::first`
     #[doc(alias = "term::get_first")]
-    pub fn first(&self) -> EntityView {
-        let id = self.term.first.id & !flecs::TermRefFlags::ID;
-        EntityView::new_from(self.world, id)
+    fn first(&self) -> Entity {
+        let id = self.get_current_term().first.id & !flecs::TermRefFlags::ID;
+        Entity(id)
     }
 
-    /// Get the second of term
+    /// Get the second of term of the current term set
     ///
     /// # See also
     ///
     /// * C++ API: `term::second`
     #[doc(alias = "term::get_second")]
-    pub fn second(&self) -> EntityView {
-        let id = self.term.second.id & !flecs::TermRefFlags::ID;
-        EntityView::new_from(self.world, id)
-    }
-}
-
-/// Term builder interface.
-/// A term is a single element of a query expression.
-pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
-    fn term_mut(&mut self) -> &mut Term<'a>;
-
-    fn term_ptr_mut(&mut self) -> *mut TermT;
-
-    fn term_id_ptr_mut(&mut self) -> *mut TermRefT;
-
-    /// Set term to a specific term
-    ///
-    /// # Arguments
-    ///
-    /// * `term` - The term to set.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `term_builder_i::set_term`
-    #[doc(alias = "term_builder_i::set_term")]
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    fn set_term(&mut self, term: *mut TermT) {
-        let self_term = self.term_mut();
-        self_term.term_ptr = term;
-
-        self_term.term_id_ptr = if !term.is_null() {
-            unsafe { &mut (*term).src }
-        } else {
-            std::ptr::null_mut()
-        };
-    }
-
-    fn assert_term_id_ptr_mut(&mut self) {
-        ecs_assert!(
-            !self.term_id_ptr_mut().is_null(),
-            FlecsErrorCode::InvalidParameter,
-            "no active term (call .term() first"
-        );
-    }
-
-    fn assert_term(&mut self) {
-        ecs_assert!(
-            !self.term_ptr_mut().is_null(),
-            FlecsErrorCode::InvalidParameter,
-            "no active term (call .term() first"
-        );
+    fn second(&self) -> Entity {
+        let id = self.get_current_term().second.id & !flecs::TermRefFlags::ID;
+        Entity(id)
     }
 
     /// The self flag indicates the term identifier itself is used
@@ -313,12 +209,11 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::self`
     #[doc(alias = "term_builder_i::self")]
     fn self_term(&mut self) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe { (*self.term_id_ptr_mut()).id |= ECS_SELF };
+        self.term_ref_mut().id |= ECS_SELF;
         self
     }
 
-    /// Specify value of identifier by id, same as `id()`.
+    /// Specify value of identifier by id, same as `id()` of the current term set
     ///
     /// # Arguments
     ///
@@ -328,10 +223,9 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::id`
     #[doc(alias = "term_builder_i::id")]
-    fn set_term_id_ptr_mut(&mut self, id: impl Into<Entity>) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        let term_id_ptr = self.term_id_ptr_mut();
-        unsafe { (*term_id_ptr).id = *id.into() };
+    fn set_term_ref_id(&mut self, id: impl Into<Entity>) -> &mut Self {
+        let term_ref = self.term_ref_mut();
+        term_ref.id = *id.into();
         self
     }
 
@@ -352,10 +246,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::entity`
     #[doc(alias = "term_builder_i::entity")]
     fn entity(&mut self, entity: impl Into<Entity>) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe {
-            (*self.term_id_ptr_mut()).id = *entity.into() | ECS_IS_ENTITY;
-        };
+        self.term_ref_mut().id = *entity.into() | ECS_IS_ENTITY;
         self
     }
 
@@ -370,11 +261,9 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::name`
     #[doc(alias = "term_builder_i::name")]
     fn name(&mut self, name: &CStr) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe {
-            (*self.term_id_ptr_mut()).name = name.as_ptr() as *mut i8;
-            (*self.term_id_ptr_mut()).id |= flecs::IsEntity::ID;
-        };
+        let term_ref = self.term_ref_mut();
+        term_ref.name = name.as_ptr() as *mut i8;
+        term_ref.id |= flecs::IsEntity::ID;
         self
     }
 
@@ -389,11 +278,9 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::var`
     #[doc(alias = "term_builder_i::var")]
     fn var(&mut self, var_name: &CStr) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe {
-            (*self.term_id_ptr_mut()).id |= flecs::IsVariable::ID;
-            (*self.term_id_ptr_mut()).name = var_name.as_ptr() as *mut i8;
-        };
+        let term_ref = self.term_ref_mut();
+        term_ref.id |= flecs::IsVariable::ID;
+        term_ref.name = var_name.as_ptr() as *mut i8;
         self
     }
 
@@ -408,8 +295,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::flags`
     #[doc(alias = "term_builder_i::flags")]
     fn flags(&mut self, flags: u64) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe { (*self.term_id_ptr_mut()).id = flags };
+        self.term_ref_mut().id = flags;
         self
     }
 
@@ -420,10 +306,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
     fn setup_src(&mut self) -> &mut Self {
-        self.assert_term();
-        let term = self.term_mut();
-        let raw_term = term.term_ptr;
-        term.term_id_ptr = unsafe { &mut (*raw_term).src };
+        self.set_term_ref_mode(TermRefMode::Src);
         self
     }
 
@@ -436,10 +319,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
     fn setup_first(&mut self) -> &mut Self {
-        self.assert_term();
-        let term = self.term_mut();
-        let raw_term = term.term_ptr;
-        term.term_id_ptr = unsafe { &mut (*raw_term).first };
+        self.set_term_ref_mode(TermRefMode::First);
         self
     }
 
@@ -451,10 +331,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
     fn setup_second(&mut self) -> &mut Self {
-        self.assert_term();
-        let term = self.term_mut();
-        let raw_term = term.term_ptr;
-        term.term_id_ptr = unsafe { &mut (*raw_term).second };
+        self.set_term_ref_mode(TermRefMode::Second);
         self
     }
 
@@ -469,7 +346,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
     fn select_src_id(&mut self, id: impl Into<Entity>) -> &mut Self {
-        self.setup_src().set_term_id_ptr_mut(id)
+        self.setup_src().set_term_ref_id(id)
     }
 
     /// Select src identifier, initialize it with id associated with type
@@ -507,6 +384,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
         self.setup_src();
         if let Some(stripped_name) =
             strip_prefix_cstr_raw(name, CStr::from_bytes_with_nul(b"$\0").unwrap())
+        //todo v4 fix this
         {
             self.var(stripped_name)
         } else {
@@ -525,7 +403,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
     fn select_first_id(&mut self, id: impl Into<Entity>) -> &mut Self {
-        self.setup_first().set_term_id_ptr_mut(id)
+        self.setup_first().set_term_ref_id(id)
     }
 
     /// Select first identifier, initialize it with id associated with type
@@ -581,7 +459,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
     fn select_second_id(&mut self, id: impl Into<Entity>) -> &mut Self {
-        self.setup_second().set_term_id_ptr_mut(id)
+        self.setup_second().set_term_ref_id(id)
     }
 
     /// Select second identifier, initialize it with id associated with type
@@ -637,10 +515,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     #[doc(alias = "term_builder_i::up")]
     #[inline]
     fn up(&mut self) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe {
-            (*self.term_id_ptr_mut()).id |= ECS_UP;
-        };
+        self.term_ref_mut().id |= ECS_UP;
         self
     }
 
@@ -668,9 +543,9 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::up`
     #[doc(alias = "term_builder_i::up")]
     fn up_id(&mut self, traverse_relationship: impl Into<Entity>) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe { (*self.term_id_ptr_mut()).id |= ECS_UP };
-        unsafe { (*self.term_ptr_mut()).trav = *traverse_relationship.into() };
+        let term_ref = self.term_ref_mut();
+        term_ref.id |= ECS_UP;
+        self.get_current_term_mut().trav = *traverse_relationship.into();
         self
     }
 
@@ -687,11 +562,8 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::up`
     #[doc(alias = "term_builder_i::up")]
     fn up_type<TravRel: ComponentId>(&mut self) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe {
-            (*self.term_id_ptr_mut()).id |= ECS_UP;
-            (*self.term_ptr_mut()).trav = TravRel::get_id(self.world());
-        };
+        self.term_ref_mut().id |= ECS_UP;
+        self.get_current_term_mut().trav = TravRel::get_id(self.world());
         self
     }
 
@@ -703,8 +575,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::cascade`
     #[doc(alias = "term_builder_i::cascade")]
     fn cascade(&mut self) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe { (*self.term_id_ptr_mut()).id |= ECS_CASCADE };
+        self.term_ref_mut().id |= ECS_CASCADE;
         self
     }
 
@@ -720,14 +591,13 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::cascade`
     #[doc(alias = "term_builder_i::cascade")]
     fn cascade_id(&mut self, traverse_relationship: impl Into<Entity>) -> &mut Self {
-        self.assert_term_id_ptr_mut();
         //ecs_assert!(
         //    traverse_relationship != 0,
         //    FlecsErrorCode::InvalidOperation,
         //    "Opt the usage of `cascade` if you are passing 0"
         //);
-        unsafe { (*self.term_id_ptr_mut()).id |= ECS_CASCADE };
-        unsafe { (*self.term_ptr_mut()).trav = *traverse_relationship.into() };
+        self.term_ref_mut().id |= ECS_CASCADE;
+        self.get_current_term_mut().trav = *traverse_relationship.into();
         self
     }
 
@@ -743,18 +613,14 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::cascade`
     #[doc(alias = "term_builder_i::cascade")]
     fn cascade_type<TravRel: ComponentId>(&mut self) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe {
-            (*self.term_id_ptr_mut()).id |= ECS_CASCADE;
-            (*self.term_ptr_mut()).trav = TravRel::get_id(self.world());
-        };
+        self.term_ref_mut().id |= ECS_CASCADE;
+        self.get_current_term_mut().trav = TravRel::get_id(self.world());
         self
     }
 
     /// Use with cascade to iterate results in descending (bottom + top) order.
     fn desc(&mut self) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe { (*self.term_id_ptr_mut()).id |= ECS_DESC };
+        self.term_ref_mut().id |= ECS_DESC;
         self
     }
 
@@ -770,11 +636,8 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::trav`
     #[doc(alias = "term_builder_i::trav")]
     fn trav(&mut self, traverse_relationship: impl Into<Entity>, flags: u64) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe {
-            (*self.term_ptr_mut()).trav = *traverse_relationship.into();
-            (*self.term_id_ptr_mut()).id |= flags;
-        };
+        self.get_current_term_mut().trav = *traverse_relationship.into();
+        self.term_ref_mut().id |= flags;
         self
     }
 
@@ -789,10 +652,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::id_flags`
     #[doc(alias = "term_builder_i::id_flags")]
     fn id_flags(&mut self, flags: impl IntoId) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe {
-            (*self.term_id_ptr_mut()).id |= *flags.into();
-        };
+        self.term_ref_mut().id |= *flags.into();
         self
     }
 
@@ -807,8 +667,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::inout`
     #[doc(alias = "term_builder_i::inout")]
     fn set_inout(&mut self, inout: InOutKind) -> &mut Self {
-        self.assert_term();
-        unsafe { (*self.term_ptr_mut()).inout = inout.into() };
+        self.get_current_term_mut().inout = inout.into();
         self
     }
 
@@ -829,13 +688,11 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::inout_stage`
     #[doc(alias = "term_builder_i::inout_stage")]
     fn inout_stage(&mut self, inout: InOutKind) -> &mut Self {
-        self.assert_term();
         self.set_inout(inout);
-        unsafe {
-            if (*self.term_ptr_mut()).oper != OperKind::Not as i16 {
-                self.setup_src().entity(0);
-            }
+        if self.get_current_term_mut().oper != OperKind::Not as i16 {
+            self.setup_src().entity(0);
         }
+
         self
     }
 
@@ -847,7 +704,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::write`
     #[doc(alias = "term_builder_i::write")]
     #[inline(always)]
-    fn write_(&mut self) -> &mut Self {
+    fn write(&mut self) -> &mut Self {
         self.inout_stage(InOutKind::Out)
     }
 
@@ -882,7 +739,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::in`
     #[doc(alias = "term_builder_i::in")]
     #[inline(always)]
-    fn in_(&mut self) -> &mut Self {
+    fn set_as_in(&mut self) -> &mut Self {
         self.set_inout(InOutKind::In)
     }
 
@@ -893,7 +750,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::out`
     #[doc(alias = "term_builder_i::out")]
     #[inline(always)]
-    fn out(&mut self) -> &mut Self {
+    fn set_as_out(&mut self) -> &mut Self {
         self.set_inout(InOutKind::Out)
     }
 
@@ -904,7 +761,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::inout`
     #[doc(alias = "term_builder_i::inout")]
     #[inline(always)]
-    fn inout(&mut self) -> &mut Self {
+    fn set_as_inout(&mut self) -> &mut Self {
         self.set_inout(InOutKind::InOut)
     }
 
@@ -915,7 +772,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::inout_none`
     #[doc(alias = "term_builder_i::inout_none")]
     #[inline(always)]
-    fn inout_none(&mut self) -> &mut Self {
+    fn set_as_inout_none(&mut self) -> &mut Self {
         self.set_inout(InOutKind::InOutNone)
     }
 
@@ -930,9 +787,8 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::oper`
     #[doc(alias = "term_builder_i::oper")]
     #[inline(always)]
-    fn oper(&mut self, oper: OperKind) -> &mut Self {
-        self.assert_term_id_ptr_mut();
-        unsafe { (*self.term_ptr_mut()).oper = oper as i16 };
+    fn set_oper(&mut self, oper: OperKind) -> &mut Self {
+        self.get_current_term_mut().oper = oper as i16;
         self
     }
 
@@ -944,7 +800,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     #[doc(alias = "term_builder_i::and")]
     #[inline(always)]
     fn and(&mut self) -> &mut Self {
-        self.oper(OperKind::And)
+        self.set_oper(OperKind::And)
     }
 
     /// short for `oper(flecs::Or`
@@ -955,7 +811,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     #[doc(alias = "term_builder_i::or")]
     #[inline(always)]
     fn or(&mut self) -> &mut Self {
-        self.oper(OperKind::Or)
+        self.set_oper(OperKind::Or)
     }
 
     /// short for `oper(flecs::Not`
@@ -967,7 +823,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     #[allow(clippy::should_implement_trait)]
     #[inline(always)]
     fn not(&mut self) -> &mut Self {
-        self.oper(OperKind::Not)
+        self.set_oper(OperKind::Not)
     }
 
     /// short for `oper(flecs::Optional`
@@ -978,7 +834,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     #[doc(alias = "term_builder_i::optional")]
     #[inline(always)]
     fn optional(&mut self) -> &mut Self {
-        self.oper(OperKind::Optional)
+        self.set_oper(OperKind::Optional)
     }
 
     /// short for `oper(flecs::AndFrom`
@@ -989,7 +845,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     #[doc(alias = "term_builder_i::and_from")]
     #[inline(always)]
     fn and_from(&mut self) -> &mut Self {
-        self.oper(OperKind::AndFrom)
+        self.set_oper(OperKind::AndFrom)
     }
 
     /// short for `oper(flecs::OrFrom`
@@ -1000,7 +856,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     #[doc(alias = "term_builder_i::or_from")]
     #[inline(always)]
     fn or_from(&mut self) -> &mut Self {
-        self.oper(OperKind::OrFrom)
+        self.set_oper(OperKind::OrFrom)
     }
 
     /// short for `oper(flecs::NotFrom`
@@ -1011,7 +867,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     #[doc(alias = "term_builder_i::not_from")]
     #[inline(always)]
     fn not_from(&mut self) -> &mut Self {
-        self.oper(OperKind::NotFrom)
+        self.set_oper(OperKind::NotFrom)
     }
 
     /// Match singleton
@@ -1021,27 +877,25 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     /// * C++ API: `term_builder_i::singleton`
     #[doc(alias = "term_builder_i::singleton")]
     fn singleton(&mut self) -> &mut Self {
-        self.assert_term();
-
         ecs_assert!(
-            unsafe { (*self.term_ptr_mut()).id != 0 || (*self.term_ptr_mut()).first.id != 0 },
+            self.get_current_term_mut().id != 0 || self.get_current_term_mut().first.id != 0,
             FlecsErrorCode::InvalidParameter,
             "no component specified for singleton"
         );
 
         unsafe {
-            let sid = if (*self.term_ptr_mut()).id != 0 {
-                (*self.term_ptr_mut()).id
+            let sid = if self.get_current_term_mut().id != 0 {
+                self.get_current_term_mut().id
             } else {
-                (*self.term_ptr_mut()).first.id
+                self.get_current_term_mut().first.id
             };
 
             ecs_assert!(sid != 0, FlecsErrorCode::InvalidParameter, "invalid id");
 
             if !ecs_is_pair(sid) {
-                (*self.term_ptr_mut()).src.id = sid;
+                self.get_current_term_mut().src.id = sid;
             } else {
-                (*self.term_ptr_mut()).src.id =
+                self.get_current_term_mut().src.id =
                     sys::ecs_get_alive(self.world_ptr_mut(), *ecs_pair_first(sid));
             }
         }
@@ -1056,28 +910,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     #[doc(alias = "term_builder_i::filter")]
     #[inline(always)]
     fn filter(&mut self) -> &mut Self {
-        unsafe { (*self.term_ptr_mut()).src.id |= InOutKind::InOutFilter as u64 };
+        self.get_current_term_mut().src.id |= InOutKind::InOutFilter as u64;
         self
-    }
-}
-
-impl<'a> TermBuilder<'a> for Term<'a> {
-    fn term_mut(&mut self) -> &mut Term<'a> {
-        self
-    }
-
-    fn term_ptr_mut(&mut self) -> *mut TermT {
-        self.term_ptr
-    }
-
-    fn term_id_ptr_mut(&mut self) -> *mut TermRefT {
-        self.term_id_ptr
-    }
-}
-
-impl<'a> IntoWorld<'a> for Term<'a> {
-    #[inline]
-    fn world(&self) -> WorldRef<'a> {
-        self.world
     }
 }

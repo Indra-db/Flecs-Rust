@@ -192,28 +192,11 @@ where
     T: Iterable,
 {
     fn current_term(&mut self) -> &mut TermT {
-        unsafe { &mut *self.query_builder.term.term_ptr }
+        self.query_builder.get_current_term_mut()
     }
 
-    fn next_term(&mut self) {
-        self.query_builder.next_term();
-    }
-}
-
-impl<'a, T> QueryBuilderImpl<'a> for ObserverBuilder<'a, T>
-where
-    T: Iterable,
-{
-    fn desc_mut(&mut self) -> &mut sys::ecs_query_desc_t {
-        &mut self.desc.query
-    }
-
-    fn expr_count_mut(&mut self) -> &mut i32 {
-        &mut self.query_builder.expr_count
-    }
-
-    fn term_index_mut(&mut self) -> &mut i32 {
-        &mut self.query_builder.next_term_index
+    fn increment_current_term(&mut self) {
+        self.query_builder.increment_current_term();
     }
 }
 
@@ -221,19 +204,61 @@ impl<'a, T> TermBuilder<'a> for ObserverBuilder<'a, T>
 where
     T: Iterable,
 {
-    #[inline]
-    fn term_mut(&mut self) -> &mut Term<'a> {
-        self.query_builder.term_mut()
+    fn current_term_ref_mode(&self) -> TermRefMode {
+        self.query_builder.current_term_ref_mode()
     }
 
-    #[inline]
-    fn term_ptr_mut(&mut self) -> *mut TermT {
-        self.query_builder.term_ptr_mut()
+    fn set_term_ref_mode(&mut self, mode: TermRefMode) {
+        self.query_builder.set_term_ref_mode(mode);
     }
 
-    #[inline]
-    fn term_id_ptr_mut(&mut self) -> *mut super::c_types::TermRefT {
-        self.query_builder.term_id_ptr_mut()
+    fn get_term_mut_at(&mut self, index: i32) -> &mut TermT {
+        self.query_builder.get_term_mut_at(index)
+    }
+
+    fn get_current_term_mut(&mut self) -> &mut TermT {
+        self.query_builder.get_current_term_mut()
+    }
+
+    fn get_current_term(&self) -> &TermT {
+        self.query_builder.get_current_term()
+    }
+
+    fn term_ref_mut(&mut self) -> &mut TermRefT {
+        self.query_builder.term_ref_mut()
+    }
+}
+
+impl<'a, T> QueryBuilderImpl<'a> for ObserverBuilder<'a, T>
+where
+    T: Iterable,
+{
+    fn query_desc_mut(&mut self) -> &mut sys::ecs_query_desc_t {
+        &mut self.desc.query
+    }
+
+    fn expr_count_mut(&mut self) -> &mut i32 {
+        &mut self.query_builder.expr_count
+    }
+
+    fn current_term_index_mut(&mut self) -> &mut i32 {
+        &mut self.query_builder.next_term_index
+    }
+
+    fn query_desc(&self) -> &sys::ecs_query_desc_t {
+        &self.desc.query
+    }
+
+    fn current_term_index(&self) -> i32 {
+        self.query_builder.current_term_index()
+    }
+
+    fn next_term_index(&self) -> i32 {
+        self.query_builder.next_term_index()
+    }
+
+    fn next_term_index_mut(&mut self) -> &mut i32 {
+        self.query_builder.next_term_index_mut()
     }
 }
 

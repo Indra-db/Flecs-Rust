@@ -2,7 +2,6 @@
 
 use std::{
     ffi::CStr,
-    ops::Deref,
     os::raw::{c_int, c_void},
 };
 
@@ -15,23 +14,12 @@ where
     T: Iterable,
 {
     pub(crate) desc: sys::ecs_query_desc_t,
-    pub(crate) term: Term<'a>,
+    pub(crate) term_ref_mode: TermRefMode,
     world: WorldRef<'a>,
     pub(crate) expr_count: i32,
+    pub(crate) current_term_index: i32,
     pub(crate) next_term_index: i32,
     _phantom: std::marker::PhantomData<T>,
-}
-
-impl<'a, T> Deref for QueryBuilder<'a, T>
-where
-    T: Iterable,
-{
-    type Target = Term<'a>;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.term
-    }
 }
 
 impl<'a, T> QueryBuilder<'a, T>
@@ -54,20 +42,13 @@ where
         let mut obj = Self {
             desc,
             expr_count: 0,
-            term: Term::new_world_only(world.world()),
+            term_ref_mode: Default::default(),
             world: world.world(),
+            current_term_index: 0,
             next_term_index: 0,
             _phantom: std::marker::PhantomData,
         };
 
-        //let entity_desc = sys::ecs_entity_desc_t {
-        //    name: std::ptr::null(),
-        //    sep: SEPARATOR.as_ptr(),
-        //    root_sep: SEPARATOR.as_ptr(),
-        //    ..Default::default()
-        //};
-
-        //obj.desc.entity = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -84,13 +65,14 @@ where
     /// * C++ API: `query_builder::query_builder`
     #[doc(alias = "query_builder::query_builder")]
     pub fn new_named(world: &'a World, name: &CStr) -> Self {
-        let mut desc = Default::default();
+        let desc = Default::default();
 
         let mut obj = Self {
             desc,
             expr_count: 0,
-            term: Term::new_world_only(world.world()),
+            term_ref_mode: Default::default(),
             world: world.world(),
+            current_term_index: 0,
             next_term_index: 0,
             _phantom: std::marker::PhantomData,
         };
@@ -122,8 +104,9 @@ where
         Self {
             desc: *desc,
             expr_count: 0,
-            term: Term::new_world_only(world.world()),
+            term_ref_mode: Default::default(),
             world: world.world(),
+            current_term_index: 0,
             next_term_index: 0,
             _phantom: std::marker::PhantomData,
         }
@@ -149,20 +132,13 @@ where
         let mut obj = Self {
             desc: *desc,
             expr_count: 0,
-            term: Term::new_world_only(world.world()),
+            term_ref_mode: Default::default(),
             world: world.world(),
+            current_term_index: term_index,
             next_term_index: term_index,
             _phantom: std::marker::PhantomData,
         };
 
-        let entity_desc = sys::ecs_entity_desc_t {
-            name: std::ptr::null(),
-            sep: SEPARATOR.as_ptr(),
-            root_sep: SEPARATOR.as_ptr(),
-            ..Default::default()
-        };
-
-        obj.desc.entity = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -173,11 +149,11 @@ where
     T: Iterable,
 {
     fn current_term(&mut self) -> &mut TermT {
-        unsafe { &mut *self.term.term_ptr }
+        self.get_current_term_mut()
     }
 
-    fn next_term(&mut self) {
-        self.next_term_index += 1;
+    fn increment_current_term(&mut self) {
+        self.current_term_index += 1;
     }
 }
 
@@ -185,19 +161,37 @@ impl<'a, T> TermBuilder<'a> for QueryBuilder<'a, T>
 where
     T: Iterable,
 {
-    #[inline]
-    fn term_mut(&mut self) -> &mut Term<'a> {
-        &mut self.term
+    fn current_term_ref_mode(&self) -> TermRefMode {
+        self.term_ref_mode
     }
 
-    #[inline]
-    fn term_ptr_mut(&mut self) -> *mut TermT {
-        self.term.term_ptr
+    fn get_term_mut_at(&mut self, index: i32) -> &mut TermT {
+        &mut self.query_desc_mut().terms[index as usize]
     }
 
-    #[inline]
-    fn term_id_ptr_mut(&mut self) -> *mut super::c_types::TermRefT {
-        self.term.term_id_ptr
+    fn get_current_term_mut(&mut self) -> &mut TermT {
+        let index = self.current_term_index();
+        self.get_term_mut_at(index)
+    }
+
+    fn get_current_term(&self) -> &TermT {
+        let index = self.current_term_index();
+        &self.query_desc().terms[index as usize]
+    }
+
+    fn term_ref_mut(&mut self) -> &mut TermRefT {
+        let term_mode = self.current_term_ref_mode();
+        let term = self.get_current_term_mut();
+
+        match term_mode {
+            TermRefMode::Src => &mut term.src,
+            TermRefMode::First => &mut term.first,
+            TermRefMode::Second => &mut term.second,
+        }
+    }
+
+    fn set_term_ref_mode(&mut self, mode: TermRefMode) {
+        self.term_ref_mode = mode;
     }
 }
 
@@ -225,11 +219,19 @@ type OrderByFn<T> = extern "C" fn(EntityT, *const T, EntityT, *const T) -> c_int
 type GroupByFn = extern "C" fn(*mut WorldT, *mut TableT, IdT, *mut c_void) -> u64;
 
 pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
-    fn desc_mut(&mut self) -> &mut sys::ecs_query_desc_t;
+    fn query_desc(&self) -> &sys::ecs_query_desc_t;
+
+    fn query_desc_mut(&mut self) -> &mut sys::ecs_query_desc_t;
 
     fn expr_count_mut(&mut self) -> &mut i32;
 
-    fn term_index_mut(&mut self) -> &mut i32;
+    fn current_term_index(&self) -> i32;
+
+    fn current_term_index_mut(&mut self) -> &mut i32;
+
+    fn next_term_index(&self) -> i32;
+
+    fn next_term_index_mut(&mut self) -> &mut i32;
 
     /// set itself to be instanced
     ///
@@ -238,7 +240,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     /// * C++ API: `query_builder_i::instanced`
     #[doc(alias = "query_builder_i::instanced")]
     fn instanced(&mut self) -> &mut Self {
-        self.desc_mut().flags |= flecs::query_flags::IsInstanced::ID as u32;
+        self.query_desc_mut().flags |= flecs::query_flags::IsInstanced::ID as u32;
         self
     }
 
@@ -253,7 +255,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     /// * C++ API: `query_builder_i::filter_flags`
     #[doc(alias = "query_builder_i::filter_flags")]
     fn flags(&mut self, flags: sys::ecs_flags32_t) -> &mut Self {
-        self.desc_mut().flags |= flags;
+        self.query_desc_mut().flags |= flags;
         self
     }
 
@@ -268,7 +270,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     /// * C++ API: `query_builder_i::cache_kind`
     #[doc(alias = "query_builder_i::cache_kind")]
     fn set_cache_kind(&mut self, kind: QueryCacheKind) -> &mut Self {
-        self.desc_mut().cache_kind = kind as u32;
+        self.query_desc_mut().cache_kind = kind as u32;
         self
     }
 
@@ -299,7 +301,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
             "query_builder::expr() called more than once"
         );
 
-        self.desc_mut().expr = expr.as_ptr();
+        self.query_desc_mut().expr = expr.as_ptr();
         *self.expr_count_mut() += 1;
         self
     }
@@ -312,14 +314,11 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     #[doc(alias = "query_builder_i::with")]
     fn with_id(&mut self, id: impl IntoId) -> &mut Self {
         self.term();
-        let term_ptr = self.term_ptr_mut();
-        unsafe {
-            *term_ptr = *Term::new_id(self.world(), id).term_ptr;
-            if (*term_ptr).inout == InOutKind::InOutDefault as i16 {
-                self.inout_none();
-            }
+        self.init_current_term(id);
+        let current_term = self.get_current_term_mut();
+        if current_term.inout == InOutKind::InOutDefault as i16 {
+            self.set_as_inout_none();
         }
-
         self
     }
 
@@ -335,13 +334,13 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
         } else {
             self.term();
             let world = self.world();
-            let term_ptr = self.term_ptr_mut();
-            unsafe {
-                *term_ptr = *Term::new_id(world, T::Type::get_id(world)).term_ptr;
-                (*term_ptr).inout = type_to_inout::<T>() as i16;
-                if (*term_ptr).inout == InOutKind::InOutDefault as i16 {
-                    self.inout_none();
-                }
+            let id = T::Type::get_id(world);
+            self.init_current_term(id);
+            let term = self.get_current_term_mut();
+
+            term.inout = type_to_inout::<T>() as i16;
+            if term.inout == InOutKind::InOutDefault as i16 {
+                self.set_as_inout_none();
             }
         }
         self
@@ -423,14 +422,10 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     #[doc(alias = "query_builder_i::with")]
     fn with_name(&mut self, name: &'static CStr) -> &mut Self {
         self.term();
-        let term_ptr = self.term_ptr_mut();
-        unsafe {
-            *term_ptr = *Term::new_world_only(self.world())
-                .select_first_name(name)
-                .term_ptr;
-            if (*term_ptr).inout == InOutKind::InOutDefault as i16 {
-                self.inout_none();
-            }
+        self.select_first_name(name);
+        let term = self.get_current_term();
+        if term.inout == InOutKind::InOutDefault as i16 {
+            self.set_as_inout_none();
         }
         self
     }
@@ -443,15 +438,10 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     #[doc(alias = "query_builder_i::with")]
     fn with_names(&mut self, first: &'static CStr, second: &'static CStr) -> &mut Self {
         self.term();
-        let term_ptr = self.term_ptr_mut();
-        unsafe {
-            *term_ptr = *Term::new_world_only(self.world())
-                .select_first_name(first)
-                .select_second_name(second)
-                .term_ptr;
-            if (*term_ptr).inout == InOutKind::InOutDefault as i16 {
-                self.inout_none();
-            }
+        self.select_first_name(first).select_second_name(second);
+        let term = self.get_current_term();
+        if term.inout == InOutKind::InOutDefault as i16 {
+            self.set_as_inout_none();
         }
         self
     }
@@ -459,41 +449,35 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     /// set term with first id and second name
     fn with_first_id(&mut self, first: impl Into<Entity>, second: &'static CStr) -> &mut Self {
         self.term();
-        let term_ptr = self.term_ptr_mut();
-        unsafe {
-            *term_ptr = *Term::new_id(self.world(), first.into())
-                .select_second_name(second)
-                .term_ptr;
-            if (*term_ptr).inout == InOutKind::InOutDefault as i16 {
-                self.inout_none();
-            }
+        self.init_current_term(first.into());
+        self.select_second_name(second);
+        let term = self.get_current_term();
+        if term.inout == InOutKind::InOutDefault as i16 {
+            self.set_as_inout_none();
         }
         self
     }
 
     fn with_second_id(&mut self, first: &'static CStr, second: impl Into<Entity>) -> &mut Self {
         self.term();
-        let term_ptr = self.term_ptr_mut();
-        unsafe {
-            *term_ptr = *Term::new_world_only(self.world())
-                .select_first_name(first)
-                .select_second_id(second.into())
-                .term_ptr;
-            if (*term_ptr).inout == InOutKind::InOutDefault as i16 {
-                self.inout_none();
-            }
+        self.select_first_name(first)
+            .select_second_id(second.into());
+        let term = self.get_current_term();
+        if term.inout == InOutKind::InOutDefault as i16 {
+            self.set_as_inout_none();
         }
         self
     }
 
-    fn with_term(&mut self, term: Term) -> &mut Self {
-        self.term();
-        let term_ptr = self.term_ptr_mut();
-        unsafe {
-            *term_ptr = *term.term_ptr;
-        }
-        self
-    }
+    /* I decided to remove the Term struct concept in Rust API. I've yet to see if this was the right decision */
+    // fn with_term(&mut self, term: Term) -> &mut Self {
+    //     self.term();
+    //     let term_ptr = self.term_ptr_mut();
+    //     unsafe {
+    //         *term_ptr = *term.term_ptr;
+    //     }
+    //     self
+    // }
 
     /// set term
     ///
@@ -649,9 +633,9 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     /// # See also
     ///
     /// * C++ API: `query_builder_i::without`
-    fn without_term(&mut self, term: Term) -> &mut Self {
-        self.with_term(term).not()
-    }
+    // fn without_term(&mut self, term: Term) -> &mut Self {
+    //     self.with_term(term).not()
+    // }
 
     /// Term notation for more complex query features
     ///
@@ -660,28 +644,27 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     /// * C++ API: `query_builder_i::term`
     #[doc(alias = "query_builder_i::term")]
     fn term(&mut self) -> &mut Self {
-        let index = *self.term_index_mut();
-        // ecs_assert!(
-        //     if !self.term_ptr_mut().is_null() {
-        //         unsafe { sys::ecs_term_is_initialized(self.term_ptr_mut()) }
-        //     } else {
-        //         true
-        //     },
-        //     FlecsErrorCode::InvalidOperation,
-        //     "QueryBuilder::term() called without initializing term"
-        // );
+        //let index = *self.current_term_index();
+
+        let current_index = self.current_term_index();
+        let next_index = self.next_term_index();
+
+        if current_index != next_index {
+            *self.current_term_index_mut() = next_index;
+        }
+        *self.next_term_index_mut() = next_index + 1;
 
         ecs_assert!(
-            index < sys::FLECS_TERM_COUNT_MAX as i32,
+            current_index < sys::FLECS_TERM_COUNT_MAX as i32,
             FlecsErrorCode::InvalidParameter,
             "Maximum number of terms reached in query builder",
         );
 
-        let term = &mut self.desc_mut().terms[index as usize] as *mut sys::ecs_term_t;
+        // let term = &mut self.query_desc_mut().terms[index as usize] as *mut sys::ecs_term_t;
 
-        self.set_term(term);
+        // self.set_term(term);
 
-        *self.term_index_mut() += 1;
+        // *self.current_term_index_mut() += 1;
 
         self
     }
@@ -699,51 +682,42 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
             "term_at() called with invalid index"
         );
 
-        let term_index = *self.term_index_mut();
-        let prev_index = term_index;
+        self.set_term_ref_mode(TermRefMode::Src);
 
-        *self.term_index_mut() = index;
-        self.term();
+        // *self.next_term_index_mut() = self.current_term_index();
+        *self.current_term_index_mut() = index;
 
-        *self.term_index_mut() = prev_index;
+        //*self.current_term_index_mut() = prev_index;
 
-        ecs_assert!(
-            unsafe { sys::ecs_term_is_initialized(self.term_ptr_mut()) },
-            FlecsErrorCode::InvalidOperation,
-            "term_at() called without initializing term"
-        );
+        // ecs_assert!(
+        //     unsafe { sys::ecs_term_is_initialized(self.term_ptr_mut()) },
+        //     FlecsErrorCode::InvalidOperation,
+        //     "term_at() called without initializing term"
+        // );
 
-        self
-    }
+        //compile_error!("have to fix");
 
-    fn write(&mut self) -> &mut Self {
-        self.term_mut().write_();
         self
     }
 
     fn write_type<T: InOutType>(&mut self) -> &mut Self {
         self.with::<T>();
-        QueryBuilderImpl::write(self)
+        TermBuilder::write(self)
     }
 
     fn write_id(&mut self, id: impl IntoId) -> &mut Self {
         self.with_id(id);
-        QueryBuilderImpl::write(self)
-    }
-
-    fn read(&mut self) -> &mut Self {
-        self.term_mut().read();
-        self
+        TermBuilder::write(self)
     }
 
     fn read_type<T: InOutType>(&mut self) -> &mut Self {
         self.with::<T>();
-        QueryBuilderImpl::read(self)
+        TermBuilder::read(self)
     }
 
     fn read_id(&mut self, id: impl IntoId) -> &mut Self {
         self.with_id(id);
-        QueryBuilderImpl::read(self)
+        TermBuilder::read(self)
     }
 
     /* scope_open/scope_close shorthand notation. */
@@ -810,7 +784,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
         component: impl Into<Entity>,
         compare: sys::ecs_order_by_action_t,
     ) -> &mut Self {
-        let desc = self.desc_mut();
+        let desc = self.query_desc_mut();
         desc.order_by_callback = compare;
         desc.order_by = *component.into();
         self
@@ -888,7 +862,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
         component: impl Into<Entity>,
         group_by_action: sys::ecs_group_by_action_t,
     ) -> &mut Self {
-        let desc = self.desc_mut();
+        let desc = self.query_desc_mut();
         desc.group_by_callback = group_by_action;
         desc.group_by = *component.into();
         self
@@ -922,7 +896,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     /// * C++ API: `query_builder_i::group_by_ctx`
     #[doc(alias = "query_builder_i::group_by_ctx")]
     fn group_by_ctx(&mut self, ctx: *mut c_void, ctx_free: sys::ecs_ctx_free_t) -> &mut Self {
-        let desc = self.desc_mut();
+        let desc = self.query_desc_mut();
         desc.group_by_ctx = ctx;
         desc.group_by_ctx_free = ctx_free;
         self
@@ -939,7 +913,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     /// * C++ API: `query_builder_i::on_group_create`
     #[doc(alias = "query_builder_i::on_group_create")]
     fn on_group_create(&mut self, action: sys::ecs_group_create_action_t) -> &mut Self {
-        let desc = self.desc_mut();
+        let desc = self.query_desc_mut();
         desc.on_group_create = action;
         self
     }
@@ -955,7 +929,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     /// * C++ API: `query_builder_i::on_group_delete`
     #[doc(alias = "query_builder_i::on_group_delete")]
     fn on_group_delete(&mut self, action: sys::ecs_group_delete_action_t) -> &mut Self {
-        let desc = self.desc_mut();
+        let desc = self.query_desc_mut();
         desc.on_group_delete = action;
         self
     }
@@ -965,7 +939,12 @@ where
     T: Iterable,
 {
     #[inline]
-    fn desc_mut(&mut self) -> &mut sys::ecs_query_desc_t {
+    fn query_desc(&self) -> &sys::ecs_query_desc_t {
+        &self.desc
+    }
+
+    #[inline]
+    fn query_desc_mut(&mut self) -> &mut sys::ecs_query_desc_t {
         &mut self.desc
     }
 
@@ -973,13 +952,25 @@ where
         &mut self.expr_count
     }
 
-    fn term_index_mut(&mut self) -> &mut i32 {
+    fn current_term_index(&self) -> i32 {
+        self.current_term_index
+    }
+
+    fn current_term_index_mut(&mut self) -> &mut i32 {
+        &mut self.current_term_index
+    }
+
+    fn next_term_index(&self) -> i32 {
+        self.next_term_index
+    }
+
+    fn next_term_index_mut(&mut self) -> &mut i32 {
         &mut self.next_term_index
     }
 }
 
 impl<'a, T: Iterable> IntoWorld<'a> for QueryBuilder<'a, T> {
     fn world(&self) -> WorldRef<'a> {
-        self.term.world()
+        self.world
     }
 }

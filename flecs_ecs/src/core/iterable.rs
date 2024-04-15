@@ -6,7 +6,7 @@ use flecs_ecs_derive::tuples;
 
 pub trait Filterable<'a>: Sized + QueryBuilderImpl<'a> {
     fn current_term(&mut self) -> &mut TermT;
-    fn next_term(&mut self);
+    fn increment_current_term(&mut self);
 }
 
 pub struct ArrayElement {
