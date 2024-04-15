@@ -29,7 +29,7 @@ fn main() {
     // Create query to find all waiters without a plate
     let mut q_waiter = world
         .query::<&Waiter>()
-        .without_pair::<&Plate, flecs::Wildcard>()
+        .without::<(&Plate, flecs::Wildcard)>()
         .build();
 
     // System that assigns plates to waiter. By making this system no_readonly
@@ -37,8 +37,8 @@ fn main() {
     // ensures that we won't assign plates to the same waiter more than once.
     world
         .system_named::<&Plate>(c"AssignPlate")
-        .without_pair::<&Waiter, flecs::Wildcard>()
-        .no_readonly(true)
+        .without::<(&Waiter, flecs::Wildcard)>()
+        .immediate(true)
         .on_iter_only(|it| {
             for i in it.iter() {
                 let plate = it.entity(i);

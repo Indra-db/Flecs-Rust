@@ -23,8 +23,8 @@ fn main() {
     // DependsOn relationship.
     let pipeline = world
         .pipeline()
-        .with(FilterType::Id(flecs::system::System::ID))
-        .with_type::<&Physics>()
+        .with_id(flecs::system::System::ID)
+        .with::<&Physics>()
         .build();
 
     // Configure the world to use the custom pipeline

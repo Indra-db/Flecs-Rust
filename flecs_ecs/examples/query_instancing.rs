@@ -11,7 +11,7 @@ fn main() {
     // have Velocity as owned and shared component.
     let query = world
         .query::<(&mut Position, &Velocity)>()
-        .term_at(1)
+        .term_at(0)
         .self_term()
         .instanced()
         .build();
@@ -50,7 +50,7 @@ fn main() {
     query.iter(|it, (position, velocity)| {
         // Check if Velocity is owned, in which case it's accessed as array.
         // Position will always be owned, since we set the term to Self.
-        if it.is_self(2) {
+        if it.is_self(1) {
             fprintln!(snap, "Velocity is owned");
 
             for i in it.iter() {

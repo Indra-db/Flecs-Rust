@@ -49,7 +49,7 @@ where
     /// * C++ API: `builder::builder`
     #[doc(alias = "builder::builder")]
     pub fn new(world: &'a World) -> Self {
-        let mut desc = Default::default();
+        let desc = Default::default();
 
         let mut obj = Self {
             desc,
@@ -60,14 +60,14 @@ where
             _phantom: std::marker::PhantomData,
         };
 
-        let entity_desc = sys::ecs_entity_desc_t {
-            name: std::ptr::null(),
-            sep: SEPARATOR.as_ptr(),
-            root_sep: SEPARATOR.as_ptr(),
-            ..Default::default()
-        };
+        //let entity_desc = sys::ecs_entity_desc_t {
+        //    name: std::ptr::null(),
+        //    sep: SEPARATOR.as_ptr(),
+        //    root_sep: SEPARATOR.as_ptr(),
+        //    ..Default::default()
+        //};
 
-        obj.desc.entity = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
+        //obj.desc.entity = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -665,7 +665,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
             if !self.term_ptr_mut().is_null() {
                 unsafe { sys::ecs_term_is_initialized(self.term_ptr_mut()) }
             } else {
-                false
+                true
             },
             FlecsErrorCode::InvalidOperation,
             "QueryBuilder::term() called without initializing term"
@@ -677,9 +677,9 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
             "Maximum number of terms reached in query builder",
         );
 
-        let mut term = self.desc_mut().terms[index as usize];
+        let term = &mut self.desc_mut().terms[index as usize] as *mut sys::ecs_term_t;
 
-        self.set_term(&mut term); //todo v4 this is sketchy, we shouldn't copy like that I think
+        self.set_term(term);
 
         *self.term_index_mut() += 1;
 
@@ -694,7 +694,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     #[doc(alias = "query_builder_i::term_at")]
     fn term_at(&mut self, index: i32) -> &mut Self {
         ecs_assert!(
-            index > 0,
+            index >= 0,
             FlecsErrorCode::InvalidParameter,
             "term_at() called with invalid index"
         );
@@ -702,7 +702,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
         let term_index = *self.term_index_mut();
         let prev_index = term_index;
 
-        *self.term_index_mut() = index - 1;
+        *self.term_index_mut() = index;
         self.term();
 
         *self.term_index_mut() = prev_index;

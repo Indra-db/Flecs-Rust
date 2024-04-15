@@ -18,7 +18,7 @@ fn main() {
     //
     // The without method is short for:
     //   .term<Npc>().not_()
-    let query = world.query::<&Position>().without_type::<&Npc>().build();
+    let query = world.query::<&Position>().without::<&Npc>().build();
 
     // Create a few test entities for the Position query
     world

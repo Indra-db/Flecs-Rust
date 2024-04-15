@@ -124,7 +124,7 @@ fn main() {
     // argument to the builder:
     let query = world
         .query::<&Requires>()
-        .term_at(1)
+        .term_at(0)
         .select_second::<Gigawatts>()
         .build();
 

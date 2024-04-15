@@ -23,15 +23,11 @@ impl<'a> Iter<'a> {
     ///
     /// * `iter` - C iterator
     ///
-    /// # Safety
-    ///
-    /// This function is unsafe because it dereferences raw pointer
-    ///
     /// # See also
     ///
     /// * C++ API: `iter::iter`
     #[doc(alias = "iter::iter")]
-    pub unsafe fn new(iter: &'a mut IterT) -> Self {
+    pub fn new(iter: &'a mut IterT) -> Self {
         Self { iter }
     }
 

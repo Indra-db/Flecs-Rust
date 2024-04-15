@@ -262,7 +262,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
         let on_add = unsafe { &mut *on_add };
         let world = unsafe { WorldRef::from_ptr((*iter).world) };
         let entity = EntityView::new_from(world, *(*iter).entities);
-        let component: *mut T = unsafe { ecs_field::<T>(iter, 1) };
+        let component: *mut T = unsafe { ecs_field::<T>(iter, 0) };
         on_add(entity, unsafe { &mut *component });
     }
 
@@ -277,7 +277,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
         let on_set = unsafe { &mut *on_set };
         let world = unsafe { WorldRef::from_ptr((*iter).world) };
         let entity = EntityView::new_from(world, *(*iter).entities);
-        let component: *mut T = unsafe { ecs_field::<T>(iter, 1) };
+        let component: *mut T = unsafe { ecs_field::<T>(iter, 0) };
         on_set(entity, unsafe { &mut *component });
     }
 
@@ -292,7 +292,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
         let on_remove = unsafe { &mut *on_remove };
         let world = unsafe { WorldRef::from_ptr((*iter).world) };
         let entity = EntityView::new_from(world, *(*iter).entities);
-        let component: *mut T = unsafe { ecs_field::<T>(iter, 1) };
+        let component: *mut T = unsafe { ecs_field::<T>(iter, 0) };
         on_remove(entity, unsafe { &mut *component });
     }
 }

@@ -423,7 +423,7 @@ where
         is_ref: &mut [bool],
     ) -> bool {
         components[0] =
-            unsafe { ecs_field::<A::OnlyType>(it, 1) as *mut u8 };
+            unsafe { ecs_field::<A::OnlyType>(it, 0) as *mut u8 };
         is_ref[0] = if !it.sources.is_null() {
             unsafe { *it.sources.add(0) != 0 }
         } else {
@@ -639,7 +639,7 @@ macro_rules! impl_iterable {
                 let mut any_ref = false;
                 $(
                     components[index as usize] =
-                    unsafe { ecs_field::<$t::OnlyType>(it, index + 1) as *mut u8 };
+                    unsafe { ecs_field::<$t::OnlyType>(it, index) as *mut u8 };
                     is_ref[index as usize] = if !it.sources.is_null() {
                         unsafe { *it.sources.add(index as usize) != 0 }
                     } else {

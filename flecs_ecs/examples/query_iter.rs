@@ -38,7 +38,7 @@ fn main() {
         fprintln!(snap);
 
         // Print information about the components being matched
-        for i in 1..=it.field_count() {
+        for i in 0..it.field_count() {
             fprintln!(snap, " - term {} : ", i);
             fprintln!(snap, "   - component: {}", it.id(i).to_str());
             fprintln!(snap, "   - type size: {}", it.size(i));

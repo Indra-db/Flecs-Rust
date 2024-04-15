@@ -1,5 +1,4 @@
 mod common;
-
 use common::*;
 
 // this example is to showcase how you can chain queries together where the second query
@@ -66,8 +65,8 @@ fn main() {
 
     // Filter specifically for enchanted things in the world
     let query_enchanted = forest
-        .filter::<()>() // query is bugged with chaining, reported on 30/03/2024. Will be fixed for v4 flecs.
-        .with_type::<&Enchanted>()
+        .query::<()>() // query is bugged with chaining, reported on 30/03/2024. Will be fixed for v4 flecs.
+        .with::<&Enchanted>()
         .build();
 
     // Iterate over creatures to find the enchanted ones

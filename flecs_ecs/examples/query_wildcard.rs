@@ -17,7 +17,7 @@ fn main() {
     // Create a query that matches edible components
     let query = world
         .query::<&Eats>()
-        .term_at(1)
+        .term_at(0)
         // Change first argument to (Eats, *)
         // alternative you can do  `.select_second_id(flecs::Wildcard::ID)``
         .select_second::<flecs::Wildcard>()
@@ -37,7 +37,7 @@ fn main() {
     // the pair that we are currently matched with.
     query.each_iter(|it, index, eats| {
         let entity = it.entity(index);
-        let pair = it.pair(1).unwrap();
+        let pair = it.pair(0).unwrap();
         let food = pair.second();
 
         fprintln!(snap, "{} eats {} {}", entity, eats.amount, food);

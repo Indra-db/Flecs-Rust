@@ -29,7 +29,7 @@ fn main() {
     // Create query that matches Gravity as singleton
     let query = world
         .query::<(&mut Velocity, &Gravity)>()
-        .term_at(2)
+        .term_at(1)
         .singleton()
         .build();
 

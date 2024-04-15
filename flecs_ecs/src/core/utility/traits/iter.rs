@@ -330,6 +330,7 @@ where
                 let tuple = components_data.get_slice(iter_count);
                 let mut iter_t = Iter::new(&mut iter);
                 func(&mut iter_t, tuple);
+
                 sys::ecs_table_unlock(world, iter.table);
             }
         }

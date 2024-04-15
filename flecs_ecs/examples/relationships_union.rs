@@ -78,8 +78,8 @@ fn main() {
         // Get the column with direction states. This is stored as an array
         // with identifiers to the individual states
         //since it's an union, we need to get the entity id for safety
-        let movement = it.field::<Entity>(1).unwrap();
-        let direction = it.field::<Entity>(2).unwrap();
+        let movement = it.field::<Entity>(0).unwrap();
+        let direction = it.field::<Entity>(1).unwrap();
 
         for i in 0..it.count() {
             fprintln!(

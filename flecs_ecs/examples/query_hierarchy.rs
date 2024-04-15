@@ -49,13 +49,13 @@ fn main() {
 
     let query = world
         .query::<(&Position, Option<&Position>, &mut Position)>()
-        .term_at(1)
+        .term_at(0)
         .select_second::<Local>()
-        .term_at(2)
-        .select_second::<World>()
-        .term_at(3)
+        .term_at(1)
         .select_second::<World>()
         .term_at(2)
+        .select_second::<World>()
+        .term_at(1)
         .parent()
         .cascade()
         //.optional() -- `.optional()` is equivalent to `Option<&Position>` - however be aware that
@@ -78,8 +78,8 @@ fn main() {
 
     //TODO: pair wrapper class to clean up, beautify this API
     world
-        .filter::<&Position>()
-        .term_at(1)
+        .query::<&Position>()
+        .term_at(0)
         .select_second::<World>()
         .build()
         .each_entity(|entity, position| {

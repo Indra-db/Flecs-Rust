@@ -122,7 +122,7 @@ fn main() {
                 snap,
                 "Unit {} of class {} in platoon {} for player {}",
                 unit,
-                it.id(1).to_str(),
+                it.id(0).to_str(),
                 it.get_var(platoon_var),
                 it.get_var(player_var)
             );

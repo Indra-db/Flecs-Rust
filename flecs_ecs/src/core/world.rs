@@ -3177,7 +3177,26 @@ impl World {
         QueryBuilder::<Components>::new_named(self, name)
     }
 
-    // TODO struct query_delegate, world::each in query/impl.hpp from cpp
+    pub fn each<Components>(&self, func: impl FnMut(Components::TupleType<'_>)) -> Query<Components>
+    where
+        Components: Iterable,
+    {
+        let query = QueryBuilder::<Components>::new(self).build();
+        query.each(func);
+        query
+    }
+
+    pub fn each_entity<Components>(
+        &self,
+        func: impl FnMut(&mut EntityView, Components::TupleType<'_>),
+    ) -> Query<Components>
+    where
+        Components: Iterable,
+    {
+        let query = QueryBuilder::<Components>::new(self).build();
+        query.each_entity(func);
+        query
+    }
 }
 
 /// Systems mixin implementation

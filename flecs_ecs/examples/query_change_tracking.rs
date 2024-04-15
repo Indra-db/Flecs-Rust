@@ -26,12 +26,12 @@ pub fn main() {
     // Each query has its own private dirty state which is reset only when the
     // query is iterated.
 
-    let query_read = world.new_query::<&Position>();
+    let query_read = world.query::<&Position>().set_cached().build();
 
     // Create a query that writes the component based on a Dirty state.
     let query_write = world
         .query::<(&Dirty, &mut Position)>()
-        .term_at(1)
+        .term_at(0)
         .up()
         .instanced()
         .build();

@@ -133,6 +133,11 @@ where
     /// * C++ API: `query_base::destruct`
     #[doc(alias = "query_base::destruct")]
     pub fn destruct(self) {
+        ecs_assert!(
+            unsafe { (*self.query.as_ptr()).entity } != 0,
+            "destruct() should only be called on queries associated with entities"
+        );
+
         //calls drop
     }
 
@@ -226,6 +231,14 @@ where
     /// * C++ API: `query_base::~query_base`
     #[doc(alias = "query_base::~query_base")]
     fn drop(&mut self) {
-        unsafe { sys::ecs_query_fini(self.query.as_ptr()) }
+        // Only free if query is not associated with entity, such as system
+        // queries and named queries. Named queries have to be either explicitly
+        // deleted with the .destruct() method, or will be deleted when the
+        // world is deleted.
+        unsafe {
+            if (*self.query.as_ptr()).entity != 0 {
+                sys::ecs_query_fini(self.query.as_ptr());
+            }
+        }
     }
 }

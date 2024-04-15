@@ -62,8 +62,8 @@ impl<'a> Term<'a> {
             term: Default::default(),
             term_ptr: std::ptr::null_mut(),
         };
-        let obj_term = &mut obj.term as *mut TermT;
-        obj.set_term(obj_term);
+        //let obj_term = &mut obj.term as *mut TermT;
+        //obj.set_term(obj_term);
         obj
     }
 
@@ -635,13 +635,24 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::up`
     #[doc(alias = "term_builder_i::up")]
+    #[inline]
     fn up(&mut self) -> &mut Self {
         self.assert_term_id_ptr_mut();
         unsafe {
             (*self.term_id_ptr_mut()).id |= ECS_UP;
-            (*self.term_ptr_mut()).trav = 0;
         };
         self
+    }
+
+    /// same as [`up`](crate::core::term)
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `term_builder_i::parent`
+    #[doc(alias = "term_builder_i::parent")]
+    #[inline]
+    fn parent(&mut self) -> &mut Self {
+        self.up()
     }
 
     /// The up flag indicates that the term identifier may be substituted by
