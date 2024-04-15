@@ -1,6 +1,4 @@
 mod common;
-use std::ffi::CStr;
-
 use common::*;
 
 #[derive(Component)]
@@ -36,9 +34,6 @@ fn main() {
     // Rules are similar to queries, but support more advanced features. This
     // example shows how the basics of how to use rules & variables.
 
-    let food = c"$Food";
-    let foodx = c"Food";
-
     let rule = world
         .query::<()>()
         // Identifiers that start with _ are query variables. Query variables
@@ -51,14 +46,14 @@ fn main() {
         //
         // By replacing * with _Food, both terms are constrained to use the
         // same entity.
-        .with_first_name::<&Eats>(&food)
+        .with_first_name::<&Eats>(c"$food")
         .with::<&Healthy>()
-        .select_src_name(&foodx)
+        .select_src_name(c"$food")
         .build();
 
     // Lookup the index of the variable. This will let us quickly lookup its
     // value while we're iterating.
-    let food_var = rule.find_var(&food);
+    let food_var = rule.find_var(c"food");
 
     // Iterate the rule
     rule.each_iter(|it, index, ()| {
@@ -69,11 +64,6 @@ fn main() {
             it.get_var(food_var.unwrap()).name()
         );
     });
-
-    // In CPP Rules need to be explicitly deleted.
-    // with `rule.destruct()` however in Rust it is automatically dropped when out of scope
-    // but you can still drop it manually if you want to
-    rule.destruct();
 
     snap.test();
 

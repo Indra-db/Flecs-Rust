@@ -24,7 +24,7 @@ fn main() {
     world
         .system_named::<()>(c"SetVelocity")
         .with::<&Position>()
-        .inout_none()
+        .set_as_inout_none()
         .write_type::<&mut Velocity>() // Velocity is written, but shouldn't be matched
         .on_each_entity(|e, ()| {
             e.set(Velocity { x: 1.0, y: 2.0 });

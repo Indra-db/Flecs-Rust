@@ -397,7 +397,7 @@ pub(crate) unsafe fn print_c_string(c_string: *const c_char) {
 
 /// Strips the given prefix from the given C string, returning a new C string with the prefix removed.
 /// If the given C string does not start with the given prefix, returns None.
-pub(crate) fn strip_prefix_cstr_raw(cstr: &'static CStr, prefix: &CStr) -> Option<&'static CStr> {
+pub(crate) fn strip_prefix_cstr_raw<'a>(cstr: &'a CStr, prefix: &CStr) -> Option<&'a CStr> {
     let cstr_bytes = cstr.to_bytes();
     let prefix_bytes = prefix.to_bytes();
 

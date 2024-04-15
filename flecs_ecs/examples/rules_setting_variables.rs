@@ -98,10 +98,10 @@ fn main() {
     // - find all entities with (Platoon, *), store * in _Platoon
     // - check if _Platoon has (Player, *), store * in _Player
     let rule = world
-        .rule::<&RangedUnit>()
-        .with_type::<&Platoon>()
+        .query::<&RangedUnit>()
+        .with::<&Platoon>()
         .select_second_name(c"$Platoon")
-        .with_pair_name::<&Player>(c"$Player")
+        .with_first_name::<&Player>(c"$Player")
         .select_src_name(c"$Platoon")
         .build();
 
@@ -110,8 +110,8 @@ fn main() {
     // platoon or a single player setting a variable beforehand. In this example
     // we'll just find all platoons & ranged units for a single player.
 
-    let player_var = rule.find_var(c"Player");
-    let platoon_var = rule.find_var(c"Platoon");
+    let player_var = rule.find_var(c"Player").unwrap();
+    let platoon_var = rule.find_var(c"Platoon").unwrap();
 
     // Iterate rule, limit the results to units of MyPlayer
     rule.iterable()

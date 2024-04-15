@@ -11,6 +11,8 @@ impl ECSComponentType for Struct {}
 
 pub trait ComponentType<T: ECSComponentType> {}
 
+impl<T> ComponentType<Enum> for &T where T: ComponentType<Enum> {}
+impl<T> ComponentType<Enum> for &mut T where T: ComponentType<Enum> {}
 /// Trait that manages component IDs across multiple worlds & binaries.
 ///
 /// proc macro Component should be used to implement this trait automatically

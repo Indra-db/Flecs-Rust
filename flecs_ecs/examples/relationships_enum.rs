@@ -86,11 +86,11 @@ fn main() {
 
     // Iterate all entities with a Tile relationship
     world
-        .filter::<()>()
-        .with_enum_wildcard::<Tile>()
+        .query::<()>()
+        .with_enum_wildcard::<&Tile>()
         .build()
         .each_iter(|it, _, _| {
-            let pair = it.pair(1).unwrap();
+            let pair = it.pair(0).unwrap();
             let tile_constant = pair.second();
             fprintln!(snap, "{}", tile_constant.path().unwrap());
         });
@@ -106,12 +106,12 @@ fn main() {
 
     // Iterate only occupied tiles
     world
-        .filter::<()>()
-        .with_enum_wildcard::<Tile>()
+        .query::<()>()
+        .with_enum_wildcard::<&Tile>()
         .with_enum(TileStatus::Occupied)
         .build()
         .each_iter(|it, _, _| {
-            let pair = it.pair(1).unwrap();
+            let pair = it.pair(0).unwrap();
             let tile_constant = pair.second();
             fprintln!(snap, "{}", tile_constant.path().unwrap());
         });
@@ -129,4 +129,21 @@ fn main() {
 
     // (Tile, Tile.Stone)
     fprintln!(snap, "{:?}", tile.archetype());
+
+    // Total Output:
+    //  (relationships_enum.Tile,relationships_enum.Tile.Stone), (relationships_enum.TileStatus,relationships_enum.TileStatus.Free)
+    //  (relationships_enum.Tile,relationships_enum.Tile.Stone), (relationships_enum.TileStatus,relationships_enum.TileStatus.Occupied)
+    //
+    //  has tile enum: true
+    //  is the enum from tile stone?: true
+    //  is tile stone: true
+    //
+    //  ::relationships_enum::Tile::Stone
+    //  ::relationships_enum::Tile::Grass
+    //  ::relationships_enum::Tile::Sand
+    //
+    //  ::relationships_enum::Tile::Stone
+    //  ::relationships_enum::Tile::Sand
+    //
+    //  (relationships_enum.Tile,relationships_enum.Tile.Stone)
 }

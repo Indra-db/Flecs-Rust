@@ -46,5 +46,5 @@ fn main() {
     snap.test();
 
     // Output:
-    //   System ran!
+    //   System with Physics ran!
 }

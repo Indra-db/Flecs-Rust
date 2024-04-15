@@ -74,7 +74,7 @@ fn query_each_benchmark(c: &mut Criterion) {
         }
     }
 
-    let mut query = Query::<(&mut Pos, &Vel)>::new(&world);
+    let mut query = world.new_query::<(&mut Pos, &Vel)>();
 
     c.bench_function("query_each", |b| {
         b.iter(|| {

@@ -2,9 +2,9 @@
 source: flecs_ecs/examples/common.rs
 expression: self.str
 ---
-- "widget: Entity name: MyWidget -- id: 543 -- archetype: (Identifier,Name)"
-- clicked!
+- "widget: Entity name: MyWidget -- id: 506 -- archetype: (Identifier,Name)"
 - "clicked on \"MyWidget\""
+- clicked!
 - "MyWidget resized to { 100, 200 }!"
 - "widget resized to { 100, 200 }!"
 - "Close request with reason: User"

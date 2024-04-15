@@ -42,7 +42,7 @@ fn main() {
     world
         .observer::<()>()
         .add_event::<CloseRequested>()
-        .with_type::<&flecs::Any>()
+        .with::<&flecs::Any>()
         .on_each_iter(|it, _index, _| {
             let close_requested = unsafe { it.param::<CloseRequested>() };
             fprintln!(
@@ -98,9 +98,10 @@ fn main() {
     snap.test();
 
     // Output:
-    //  clicked!
+    //  widget: Entity name: MyWidget -- id: 506 -- archetype: (Identifier,Name)
     //  clicked on "MyWidget"
-    //  widget resized to { 100, 200 }!
+    //  clicked!
     //  MyWidget resized to { 100, 200 }!
+    //  widget resized to { 100, 200 }!
     //  Close request with reason: User
 }

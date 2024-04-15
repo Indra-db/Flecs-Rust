@@ -374,7 +374,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
-    fn select_src_name(&mut self, name: &'static CStr) -> &mut Self {
+    fn select_src_name(&mut self, name: &CStr) -> &mut Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
@@ -487,7 +487,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
-    fn select_second_name(&mut self, name: &'static CStr) -> &mut Self {
+    fn select_second_name(&mut self, name: &CStr) -> &mut Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,

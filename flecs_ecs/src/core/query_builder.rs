@@ -14,9 +14,9 @@ where
     T: Iterable,
 {
     pub(crate) desc: sys::ecs_query_desc_t,
-    pub(crate) term_ref_mode: TermRefMode,
     world: WorldRef<'a>,
     pub(crate) expr_count: i32,
+    pub(crate) term_ref_mode: TermRefMode,
     pub(crate) current_term_index: i32,
     pub(crate) next_term_index: i32,
     _phantom: std::marker::PhantomData<T>,
@@ -368,9 +368,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     ///
     /// * C++ API: `query_builder_i::with`
     #[doc(alias = "query_builder_i::with")]
-    fn with_enum_wildcard<T: ComponentType<Enum> + CachedEnumData + InOutType>(
-        &mut self,
-    ) -> &mut Self {
+    fn with_enum_wildcard<T: ComponentType<Enum> + InOutType>(&mut self) -> &mut Self {
         self.with_first::<T>(flecs::Wildcard::ID)
     }
 
@@ -390,7 +388,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     ///
     /// * C++ API: `query_builder_i::with`
     #[doc(alias = "query_builder_i::with")]
-    fn with_first_name<First: InOutType>(&mut self, second: &'static CStr) -> &mut Self {
+    fn with_first_name<First: InOutType>(&mut self, second: &CStr) -> &mut Self {
         self.with_first_id(First::Type::get_id(self.world()), second)
     }
 
@@ -447,7 +445,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     }
 
     /// set term with first id and second name
-    fn with_first_id(&mut self, first: impl Into<Entity>, second: &'static CStr) -> &mut Self {
+    fn with_first_id(&mut self, first: impl Into<Entity>, second: &CStr) -> &mut Self {
         self.term();
         self.init_current_term(first.into());
         self.select_second_name(second);

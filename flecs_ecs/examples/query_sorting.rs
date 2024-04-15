@@ -30,6 +30,12 @@ fn main() {
     world.new_entity().set(Position { x: 5.0, y: 0.0 });
     world.new_entity().set(Position { x: 4.0, y: 0.0 });
 
+    // Create a sorted query
+    let query = world
+        .query::<&Position>()
+        .order_by(compare_position)
+        .build();
+
     // Create a sorted system
     let sys = world
         .system::<&Position>()
@@ -37,12 +43,6 @@ fn main() {
         .on_each(|pos| {
             fprintln!(snap, "{:?}", pos);
         });
-
-    // Create a sorted query
-    let query = world
-        .query::<&Position>()
-        .order_by(compare_position)
-        .build();
 
     fprintln!(snap);
     fprintln!(snap, "--- First iteration ---");

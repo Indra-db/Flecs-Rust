@@ -192,7 +192,7 @@ where
     T: Iterable,
 {
     fn current_term(&mut self) -> &mut TermT {
-        self.query_builder.get_current_term_mut()
+        self.get_current_term_mut()
     }
 
     fn increment_current_term(&mut self) {
@@ -213,19 +213,26 @@ where
     }
 
     fn get_term_mut_at(&mut self, index: i32) -> &mut TermT {
-        self.query_builder.get_term_mut_at(index)
+        &mut self.desc.query.terms[index as usize]
     }
 
     fn get_current_term_mut(&mut self) -> &mut TermT {
-        self.query_builder.get_current_term_mut()
+        self.get_term_mut_at(self.current_term_index())
     }
 
     fn get_current_term(&self) -> &TermT {
-        self.query_builder.get_current_term()
+        &self.desc.query.terms[self.current_term_index() as usize]
     }
 
     fn term_ref_mut(&mut self) -> &mut TermRefT {
-        self.query_builder.term_ref_mut()
+        let term_mode = self.current_term_ref_mode();
+        let term = self.get_current_term_mut();
+
+        match term_mode {
+            TermRefMode::Src => &mut term.src,
+            TermRefMode::First => &mut term.first,
+            TermRefMode::Second => &mut term.second,
+        }
     }
 }
 
@@ -242,7 +249,7 @@ where
     }
 
     fn current_term_index_mut(&mut self) -> &mut i32 {
-        &mut self.query_builder.next_term_index
+        self.query_builder.current_term_index_mut()
     }
 
     fn query_desc(&self) -> &sys::ecs_query_desc_t {
