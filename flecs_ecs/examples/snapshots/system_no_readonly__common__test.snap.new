@@ -1,6 +1,0 @@
----
-source: flecs_ecs/examples/common.rs
-assertion_line: 133
-expression: self.str
----
-[]

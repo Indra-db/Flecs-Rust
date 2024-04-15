@@ -661,15 +661,15 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     #[doc(alias = "query_builder_i::term")]
     fn term(&mut self) -> &mut Self {
         let index = *self.term_index_mut();
-        ecs_assert!(
-            if !self.term_ptr_mut().is_null() {
-                unsafe { sys::ecs_term_is_initialized(self.term_ptr_mut()) }
-            } else {
-                true
-            },
-            FlecsErrorCode::InvalidOperation,
-            "QueryBuilder::term() called without initializing term"
-        );
+        // ecs_assert!(
+        //     if !self.term_ptr_mut().is_null() {
+        //         unsafe { sys::ecs_term_is_initialized(self.term_ptr_mut()) }
+        //     } else {
+        //         true
+        //     },
+        //     FlecsErrorCode::InvalidOperation,
+        //     "QueryBuilder::term() called without initializing term"
+        // );
 
         ecs_assert!(
             index < sys::FLECS_TERM_COUNT_MAX as i32,

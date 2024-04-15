@@ -484,12 +484,12 @@ where
         rust_string
     }
 
-    fn find_var(&self, name: &'static CStr) -> Option<u32> {
+    fn find_var(&self, name: &'static CStr) -> Option<i32> {
         let var_index = unsafe { sys::ecs_query_find_var(self.query_ptr(), name.as_ptr()) };
         if var_index == -1 {
             None
         } else {
-            Some(var_index as u32)
+            Some(var_index)
         }
     }
 
