@@ -38,9 +38,9 @@ fn main() {
     // We can get all components on the instance, regardless of whether they
     // are overridden or not. Note that the overridden components (Attack and
     // Damage) are initialized with the values from the prefab component:
-    let attack = inst.get::<Attack>().unwrap();
-    let defence = inst.get::<Defence>().unwrap();
-    let damage = inst.get::<Damage>().unwrap();
+    let attack = inst.try_get::<Attack>().unwrap();
+    let defence = inst.try_get::<Defence>().unwrap();
+    let damage = inst.try_get::<Damage>().unwrap();
 
     fprintln!(snap, "attack: {}", attack.value);
     fprintln!(snap, "defence: {}", defence.value);

@@ -58,7 +58,7 @@ fn main() {
         fprintln!(snap, "{:?}", inst.archetype());
 
         // Get the TirePressure component & print its value
-        if let Some(p) = inst.get::<TirePressure>() {
+        if let Some(p) = inst.try_get::<TirePressure>() {
             fprintln!(snap, "pressure: {}", p.value);
         };
     } else {

@@ -88,11 +88,11 @@ fn main() {
                 it.entity(i).name(),
                 movement[i]
                     .entity_view(it.world())
-                    .to_constant::<Movement>()
+                    .try_to_constant::<Movement>()
                     .unwrap(),
                 direction[i]
                     .entity_view(it.world())
-                    .to_constant::<Direction>()
+                    .try_to_constant::<Direction>()
                     .unwrap()
             );
         }

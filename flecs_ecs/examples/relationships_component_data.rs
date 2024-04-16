@@ -35,7 +35,7 @@ fn main() {
         .new_entity()
         .set_pair_first::<_, Gigawatts>(Requires { amount: 1.21 });
 
-    let require = e1.get_pair_first::<Requires, Gigawatts>();
+    let require = e1.try_get_pair_first::<Requires, Gigawatts>();
 
     if let Some(r) = require {
         fprintln!(snap, "e1: requires: {}", r.amount);
@@ -51,7 +51,7 @@ fn main() {
         .new_entity()
         .set_pair_second::<Gigawatts, Requires>(Requires { amount: 1.5 });
 
-    let require = e2.get_pair_second::<Gigawatts, Requires>();
+    let require = e2.try_get_pair_second::<Gigawatts, Requires>();
 
     if let Some(r) = require {
         fprintln!(snap, "e1: requires: {}", r.amount);
@@ -71,7 +71,7 @@ fn main() {
         .new_entity()
         .set_pair_first::<Expires, Position>(Expires { timeout: 0.5 });
 
-    let expires = e3.get_pair_first::<Expires, Position>();
+    let expires = e3.try_get_pair_first::<Expires, Position>();
     fprintln!(snap, "expires: {}", expires.unwrap().timeout);
 
     // You can prevent a pair from assuming the type of a component by adding
