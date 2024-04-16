@@ -15,8 +15,8 @@ fn main() {
     world.component::<TradesWith>().add::<flecs::Symmetric>();
 
     // Create two players
-    let player_1 = world.new_entity();
-    let player_2 = world.new_entity();
+    let player_1 = world.entity();
+    let player_2 = world.entity();
 
     // Add (TradesWith, player_2) to player_1. This also adds
     // (TradesWith, player_1) to player_2.

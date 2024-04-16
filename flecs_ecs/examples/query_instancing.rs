@@ -23,23 +23,23 @@ fn main() {
 
     // Create a few entities that own Position & share Velocity from the prefab.
     world
-        .new_entity_named(c"e1")
+        .entity_named(c"e1")
         .is_a_id(prefab)
         .set(Position { x: 10.0, y: 20.0 });
 
     world
-        .new_entity_named(c"e2")
+        .entity_named(c"e2")
         .is_a_id(prefab)
         .set(Position { x: 10.0, y: 20.0 });
 
     // Create a few entities that own all components
     world
-        .new_entity_named(c"e3")
+        .entity_named(c"e3")
         .set(Position { x: 10.0, y: 20.0 })
         .set(Velocity { x: 3.0, y: 4.0 });
 
     world
-        .new_entity_named(c"e4")
+        .entity_named(c"e4")
         .set(Position { x: 10.0, y: 20.0 })
         .set(Velocity { x: 4.0, y: 5.0 });
 

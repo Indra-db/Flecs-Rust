@@ -39,7 +39,7 @@ fn query_each_benchmark(c: &mut Criterion) {
     let world = World::new();
 
     for _ in 0..1000_000 {
-        let mut e = world.new_entity();
+        let mut e = world.entity();
         e.set(Pos { x: 10.0, y: 20.0 });
         e.set(Vel { x: 5.0, y: 5.0 });
         if flip_coin() {

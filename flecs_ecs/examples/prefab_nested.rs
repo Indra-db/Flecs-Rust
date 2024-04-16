@@ -48,7 +48,7 @@ fn main() {
     });
 
     // Create a prefab instance.
-    let inst_car = world.new_entity_named(c"my_car");
+    let inst_car = world.entity_named(c"my_car");
     inst_car.is_a_id(car);
 
     // Lookup one of the wheels

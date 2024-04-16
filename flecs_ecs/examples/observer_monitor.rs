@@ -39,7 +39,7 @@ fn main() {
         });
 
     // Create entity
-    let entity = world.new_entity_named(c"e");
+    let entity = world.entity_named(c"e");
 
     // This does not yet trigger the monitor, as the entity does not yet match.
     entity.set(Position { x: 10.0, y: 20.0 });

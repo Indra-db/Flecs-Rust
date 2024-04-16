@@ -46,7 +46,7 @@ fn main() {
     // The instance will have a private copy of the Position component, because
     // of the override in the spaceship entity. All other components are shared.
     let inst = world
-        .new_entity_named(c"my_mammoth_freighter")
+        .entity_named(c"my_mammoth_freighter")
         .is_a_id(mammoth_freighter);
 
     // Inspect the type of the entity. This outputs:

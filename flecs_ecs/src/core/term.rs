@@ -4,88 +4,107 @@ use crate::core::*;
 use crate::sys;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
-pub enum TermRefMode {
+pub(crate) enum TermRefMode {
     #[default]
     Src,
     First,
     Second,
 }
 
-#[derive(Default)]
-pub struct TermBuilder {
-    pub(crate) expr_count: i32,
-    pub(crate) current_term_index: i32,
-    pub(crate) next_term_index: i32,
-    pub(crate) term_ref_mode: TermRefMode,
-}
+#[doc(hidden)]
+pub mod internals {
+    use crate::core::*;
+    use crate::sys;
 
-pub trait QueryConfig<'a> {
-    fn term_builder(&self) -> &TermBuilder;
-    fn term_builder_mut(&mut self) -> &mut TermBuilder;
-
-    fn query_desc(&self) -> &sys::ecs_query_desc_t;
-    fn query_desc_mut(&mut self) -> &mut sys::ecs_query_desc_t;
-
-    fn current_term_ref_mode(&self) -> TermRefMode {
-        self.term_builder().term_ref_mode
+    #[derive(Default)]
+    pub struct TermBuilder {
+        pub(crate) expr_count: i32,
+        pub(crate) current_term_index: i32,
+        pub(crate) next_term_index: i32,
+        pub(crate) term_ref_mode: TermRefMode,
     }
 
-    fn set_term_ref_mode(&mut self, mode: TermRefMode) {
-        self.term_builder_mut().term_ref_mode = mode;
-    }
+    #[doc(hidden)]
+    pub trait QueryConfig<'a> {
+        fn term_builder(&self) -> &TermBuilder;
+        fn term_builder_mut(&mut self) -> &mut TermBuilder;
 
-    fn get_term_mut_at(&mut self, index: i32) -> &mut TermT {
-        &mut self.query_desc_mut().terms[index as usize]
-    }
+        fn query_desc(&self) -> &sys::ecs_query_desc_t;
+        fn query_desc_mut(&mut self) -> &mut sys::ecs_query_desc_t;
 
-    fn get_current_term_mut(&mut self) -> &mut TermT {
-        let index = self.current_term_index();
-        self.get_term_mut_at(index)
-    }
-
-    fn get_current_term(&self) -> &TermT {
-        &self.query_desc().terms[self.term_builder().current_term_index as usize]
-    }
-
-    fn term_ref_mut(&mut self) -> &mut TermRefT {
-        let term_mode = self.current_term_ref_mode();
-        let term = self.get_current_term_mut();
-
-        match term_mode {
-            TermRefMode::Src => &mut term.src,
-            TermRefMode::First => &mut term.first,
-            TermRefMode::Second => &mut term.second,
+        #[inline(always)]
+        fn current_term_ref_mode(&self) -> TermRefMode {
+            self.term_builder().term_ref_mode
         }
-    }
 
-    fn expr_count_mut(&mut self) -> &mut i32 {
-        &mut self.term_builder_mut().expr_count
-    }
+        #[inline(always)]
+        fn set_term_ref_mode(&mut self, mode: TermRefMode) {
+            self.term_builder_mut().term_ref_mode = mode;
+        }
 
-    fn current_term_index(&self) -> i32 {
-        self.term_builder().current_term_index
-    }
+        #[inline(always)]
+        fn term_mut_at(&mut self, index: i32) -> &mut TermT {
+            &mut self.query_desc_mut().terms[index as usize]
+        }
 
-    fn current_term_index_mut(&mut self) -> &mut i32 {
-        &mut self.term_builder_mut().current_term_index
-    }
+        #[inline(always)]
+        fn current_term_mut(&mut self) -> &mut TermT {
+            let index = self.current_term_index();
+            self.term_mut_at(index)
+        }
 
-    fn next_term_index(&self) -> i32 {
-        self.term_builder().next_term_index
-    }
+        #[inline(always)]
+        fn current_term(&self) -> &TermT {
+            &self.query_desc().terms[self.term_builder().current_term_index as usize]
+        }
 
-    fn next_term_index_mut(&mut self) -> &mut i32 {
-        &mut self.term_builder_mut().next_term_index
-    }
+        #[inline(always)]
+        fn term_ref_mut(&mut self) -> &mut TermRefT {
+            let term_mode = self.current_term_ref_mode();
+            let term = self.current_term_mut();
 
-    fn increment_current_term(&mut self) {
-        *self.current_term_index_mut() += 1;
+            match term_mode {
+                TermRefMode::Src => &mut term.src,
+                TermRefMode::First => &mut term.first,
+                TermRefMode::Second => &mut term.second,
+            }
+        }
+
+        #[inline(always)]
+        fn expr_count_mut(&mut self) -> &mut i32 {
+            &mut self.term_builder_mut().expr_count
+        }
+
+        #[inline(always)]
+        fn current_term_index(&self) -> i32 {
+            self.term_builder().current_term_index
+        }
+
+        #[inline(always)]
+        fn current_term_index_mut(&mut self) -> &mut i32 {
+            &mut self.term_builder_mut().current_term_index
+        }
+
+        #[inline(always)]
+        fn next_term_index(&self) -> i32 {
+            self.term_builder().next_term_index
+        }
+
+        #[inline(always)]
+        fn next_term_index_mut(&mut self) -> &mut i32 {
+            &mut self.term_builder_mut().next_term_index
+        }
+
+        #[inline(always)]
+        fn increment_current_term(&mut self) {
+            *self.current_term_index_mut() += 1;
+        }
     }
 }
 
 /// Term builder interface.
 /// A term is a single element of a query expression.
-pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
+pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a> {
     /// initializes a new term from a id of a component or pair
     ///
     /// # Arguments
@@ -101,7 +120,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
         T: IntoId,
     {
         let id = id.into();
-        let term = self.get_current_term_mut();
+        let term = self.current_term_mut();
 
         #[allow(clippy::collapsible_else_if)]
         if T::IS_PAIR {
@@ -174,7 +193,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
     fn reset(&mut self) {
         // we don't for certain if this causes any side effects not using the nullptr and just using the default value.
         // if it does we can use Option.
-        let term = self.get_current_term_mut();
+        let term = self.current_term_mut();
         *term = Default::default();
     }
 
@@ -190,9 +209,8 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
     ///
     /// * C++ API: `term::is_set`
     #[doc(alias = "term::is_set")]
-    // todo v4, probably remove this, since we don't store unitialized terms anymore like CPP API.
     fn is_set(&mut self) -> bool {
-        unsafe { sys::ecs_term_is_initialized(self.get_current_term()) }
+        unsafe { sys::ecs_term_is_initialized(self.current_term()) }
     }
 
     /// Get the term id of the current term set
@@ -206,7 +224,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
     /// * C++ API: `term::id`
     #[doc(alias = "term::id")]
     fn id(&self) -> Id {
-        Id(self.get_current_term().id)
+        Id(self.current_term().id)
     }
 
     /// Get the inout type of term of the current term set
@@ -216,7 +234,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
     /// * C++ API: `term::inout`
     #[doc(alias = "term::inout")]
     fn inout(&self) -> InOutKind {
-        self.get_current_term().inout.into()
+        self.current_term().inout.into()
     }
 
     /// Get the operator of term of the current term set
@@ -226,7 +244,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
     /// * C++ API: `term::oper`
     #[doc(alias = "term::oper")]
     fn oper(&self) -> OperKind {
-        self.get_current_term().oper.into()
+        self.current_term().oper.into()
     }
 
     /// Get the src id of term of the current term set
@@ -237,7 +255,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
     #[doc(alias = "term::get_src")]
     fn src(&self) -> Entity {
         //id & ~EcsTermRefFlags
-        let id = self.get_current_term().src.id & !flecs::TermRefFlags::ID;
+        let id = self.current_term().src.id & !flecs::TermRefFlags::ID;
         Entity(id)
     }
 
@@ -248,7 +266,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
     /// * C++ API: `term::first`
     #[doc(alias = "term::get_first")]
     fn first(&self) -> Entity {
-        let id = self.get_current_term().first.id & !flecs::TermRefFlags::ID;
+        let id = self.current_term().first.id & !flecs::TermRefFlags::ID;
         Entity(id)
     }
 
@@ -259,7 +277,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
     /// * C++ API: `term::second`
     #[doc(alias = "term::get_second")]
     fn second(&self) -> Entity {
-        let id = self.get_current_term().second.id & !flecs::TermRefFlags::ID;
+        let id = self.current_term().second.id & !flecs::TermRefFlags::ID;
         Entity(id)
     }
 
@@ -490,7 +508,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
     ///
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
-    fn select_first_name(&mut self, name: &'static CStr) -> &mut Self {
+    fn select_first_name(&mut self, name: &'a CStr) -> &mut Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
@@ -604,7 +622,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
     fn up_id(&mut self, traverse_relationship: impl Into<Entity>) -> &mut Self {
         let term_ref = self.term_ref_mut();
         term_ref.id |= ECS_UP;
-        self.get_current_term_mut().trav = *traverse_relationship.into();
+        self.current_term_mut().trav = *traverse_relationship.into();
         self
     }
 
@@ -622,7 +640,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
     #[doc(alias = "term_builder_i::up")]
     fn up_type<TravRel: ComponentId>(&mut self) -> &mut Self {
         self.term_ref_mut().id |= ECS_UP;
-        self.get_current_term_mut().trav = TravRel::get_id(self.world());
+        self.current_term_mut().trav = TravRel::get_id(self.world());
         self
     }
 
@@ -656,7 +674,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
         //    "Opt the usage of `cascade` if you are passing 0"
         //);
         self.term_ref_mut().id |= ECS_CASCADE;
-        self.get_current_term_mut().trav = *traverse_relationship.into();
+        self.current_term_mut().trav = *traverse_relationship.into();
         self
     }
 
@@ -673,7 +691,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
     #[doc(alias = "term_builder_i::cascade")]
     fn cascade_type<TravRel: ComponentId>(&mut self) -> &mut Self {
         self.term_ref_mut().id |= ECS_CASCADE;
-        self.get_current_term_mut().trav = TravRel::get_id(self.world());
+        self.current_term_mut().trav = TravRel::get_id(self.world());
         self
     }
 
@@ -695,7 +713,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
     /// * C++ API: `term_builder_i::trav`
     #[doc(alias = "term_builder_i::trav")]
     fn trav(&mut self, traverse_relationship: impl Into<Entity>, flags: u64) -> &mut Self {
-        self.get_current_term_mut().trav = *traverse_relationship.into();
+        self.current_term_mut().trav = *traverse_relationship.into();
         self.term_ref_mut().id |= flags;
         self
     }
@@ -726,7 +744,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
     /// * C++ API: `term_builder_i::inout`
     #[doc(alias = "term_builder_i::inout")]
     fn set_inout(&mut self, inout: InOutKind) -> &mut Self {
-        self.get_current_term_mut().inout = inout.into();
+        self.current_term_mut().inout = inout.into();
         self
     }
 
@@ -748,7 +766,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
     #[doc(alias = "term_builder_i::inout_stage")]
     fn inout_stage(&mut self, inout: InOutKind) -> &mut Self {
         self.set_inout(inout);
-        if self.get_current_term_mut().oper != OperKind::Not as i16 {
+        if self.current_term_mut().oper != OperKind::Not as i16 {
             self.setup_src().entity(0);
         }
 
@@ -847,7 +865,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
     #[doc(alias = "term_builder_i::oper")]
     #[inline(always)]
     fn set_oper(&mut self, oper: OperKind) -> &mut Self {
-        self.get_current_term_mut().oper = oper as i16;
+        self.current_term_mut().oper = oper as i16;
         self
     }
 
@@ -937,24 +955,24 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
     #[doc(alias = "term_builder_i::singleton")]
     fn singleton(&mut self) -> &mut Self {
         ecs_assert!(
-            self.get_current_term_mut().id != 0 || self.get_current_term_mut().first.id != 0,
+            self.current_term_mut().id != 0 || self.current_term_mut().first.id != 0,
             FlecsErrorCode::InvalidParameter,
             "no component specified for singleton"
         );
 
         unsafe {
-            let sid = if self.get_current_term_mut().id != 0 {
-                self.get_current_term_mut().id
+            let sid = if self.current_term_mut().id != 0 {
+                self.current_term_mut().id
             } else {
-                self.get_current_term_mut().first.id
+                self.current_term_mut().first.id
             };
 
             ecs_assert!(sid != 0, FlecsErrorCode::InvalidParameter, "invalid id");
 
             if !ecs_is_pair(sid) {
-                self.get_current_term_mut().src.id = sid;
+                self.current_term_mut().src.id = sid;
             } else {
-                self.get_current_term_mut().src.id =
+                self.current_term_mut().src.id =
                     sys::ecs_get_alive(self.world_ptr_mut(), *ecs_pair_first(sid));
             }
         }
@@ -969,7 +987,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
     #[doc(alias = "term_builder_i::filter")]
     #[inline(always)]
     fn filter(&mut self) -> &mut Self {
-        self.get_current_term_mut().src.id |= InOutKind::InOutFilter as u64;
+        self.current_term_mut().src.id |= InOutKind::InOutFilter as u64;
         self
     }
 }

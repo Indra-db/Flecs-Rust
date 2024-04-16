@@ -13,10 +13,10 @@ fn main() {
 
     let world = World::new();
 
-    let bob = world.new_entity_named(c"Bob");
-    let alice = world.new_entity_named(c"Alice");
-    let john = world.new_entity_named(c"John");
-    let jane = world.new_entity_named(c"Jane");
+    let bob = world.entity_named(c"Bob");
+    let alice = world.entity_named(c"Alice");
+    let john = world.entity_named(c"John");
+    let jane = world.entity_named(c"Jane");
 
     bob.add_pair_first::<Likes>(alice);
     alice.add_pair_first::<Likes>(bob);

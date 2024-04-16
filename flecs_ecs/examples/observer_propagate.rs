@@ -39,8 +39,8 @@ fn main() {
         });
 
     // Create entity and parent
-    let parent = world.new_entity_named(c"p");
-    let entity = world.new_entity_named(c"e").child_of_id(parent);
+    let parent = world.entity_named(c"p");
+    let entity = world.entity_named(c"e").child_of_id(parent);
 
     // Set Position on entity. This doesn't trigger the observer yet, since the
     // parent doesn't have Position yet.

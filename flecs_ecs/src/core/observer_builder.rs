@@ -1,12 +1,20 @@
+//! ObserverBuilder is used to configure and build Observers.
+//! Observers are systems that react to events.
+//! Observers let applications register callbacks for ECS events.
+
 use std::{
     default,
     ffi::{c_void, CStr},
 };
 
+use crate::core::internals::*;
 use crate::core::private::internal_ReactorAPI;
 use crate::core::*;
 use crate::sys;
 
+/// ObserverBuilder is used to configure and build Observers.
+/// Observers are systems that react to events.
+/// Observers let applications register callbacks for ECS events.
 pub struct ObserverBuilder<'a, T>
 where
     T: Iterable,
@@ -115,6 +123,7 @@ where
         obj
     }
 
+    /// Returns the event count of the builder
     pub fn event_count(&self) -> i32 {
         self.event_count
     }
@@ -174,19 +183,24 @@ where
     }
 }
 
-impl<'a, T: Iterable> QueryConfig<'a> for ObserverBuilder<'a, T> {
+#[doc(hidden)]
+impl<'a, T: Iterable> internals::QueryConfig<'a> for ObserverBuilder<'a, T> {
+    #[inline(always)]
     fn term_builder(&self) -> &TermBuilder {
         &self.term_builder
     }
 
+    #[inline(always)]
     fn term_builder_mut(&mut self) -> &mut TermBuilder {
         &mut self.term_builder
     }
 
+    #[inline(always)]
     fn query_desc(&self) -> &sys::ecs_query_desc_t {
         &self.desc.query
     }
 
+    #[inline(always)]
     fn query_desc_mut(&mut self) -> &mut sys::ecs_query_desc_t {
         &mut self.desc.query
     }

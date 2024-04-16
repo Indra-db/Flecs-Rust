@@ -52,7 +52,7 @@ fn main() {
             );
         });
 
-    let widget = world.new_entity_named(c"MyWidget");
+    let widget = world.entity_named(c"MyWidget");
     fprintln!(snap, "widget: {:?}", widget);
 
     // Observe the Click event on the widget entity.

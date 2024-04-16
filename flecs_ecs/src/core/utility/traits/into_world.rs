@@ -31,16 +31,6 @@ impl<'a> IntoWorld<'a> for EntityView<'a> {
     }
 }
 
-impl<'a, T> IntoWorld<'a> for Query<'a, T>
-where
-    T: Iterable,
-{
-    #[inline]
-    fn world(&self) -> WorldRef<'a> {
-        self.world
-    }
-}
-
 impl<'a> IntoWorld<'a> for &'a World {
     #[inline]
     fn world(&self) -> WorldRef<'a> {

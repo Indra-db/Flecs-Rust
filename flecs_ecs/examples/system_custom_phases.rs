@@ -21,12 +21,12 @@ fn main() {
     // phases have the Phase tag, which is necessary for the builtin pipeline
     // to discover which systems it should run.
     let physics = world
-        .new_entity()
+        .entity()
         .add::<flecs::pipeline::Phase>()
         .depends_on::<flecs::pipeline::OnUpdate>();
 
     let collisions = world
-        .new_entity()
+        .entity()
         .add::<flecs::pipeline::Phase>()
         .depends_on_id(physics);
 

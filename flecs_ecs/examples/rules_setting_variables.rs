@@ -59,9 +59,9 @@ fn main() {
     for p in 0..PLAYER_COUNT {
         let player = if p == 0 {
             // Give first player a name so we can look it up later
-            world.new_entity_named(c"MyPlayer")
+            world.entity_named(c"MyPlayer")
         } else {
-            world.new_entity()
+            world.entity()
         };
 
         // Add player tag so we can query for all players if we want to
@@ -69,22 +69,22 @@ fn main() {
 
         for _ in 0..PLATOONS_PER_PLAYER {
             let platoon = world
-                .new_entity()
+                .entity()
                 .add_pair_first::<Player>(player)
                 // Add platoon tag so we can query for all platoons if we want to
                 .add::<Platoon>();
 
             // Add warriors, wizards and marksmen to the platoon
             world
-                .new_entity()
+                .entity()
                 .add::<Warrior>()
                 .add_pair_first::<Platoon>(platoon);
             world
-                .new_entity()
+                .entity()
                 .add::<Marksman>()
                 .add_pair_first::<Platoon>(platoon);
             world
-                .new_entity()
+                .entity()
                 .add::<Wizard>()
                 .add_pair_first::<Platoon>(platoon);
         }

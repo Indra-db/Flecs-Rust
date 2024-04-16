@@ -5,6 +5,7 @@ use std::{
     os::raw::{c_int, c_void},
 };
 
+use crate::core::internals::*;
 use crate::core::*;
 use crate::sys;
 
@@ -117,7 +118,7 @@ where
     ///
     /// * C++ API: `query_builder_i::query_builder_i`
     #[doc(alias = "query_builder_i::query_builder_i")]
-    pub fn new_from_desc_term_index(
+    pub(crate) fn new_from_desc_term_index(
         world: &'a World,
         desc: &mut sys::ecs_query_desc_t,
         term_index: i32,
@@ -139,19 +140,24 @@ where
     }
 }
 
-impl<'a, T: Iterable> QueryConfig<'a> for QueryBuilder<'a, T> {
+#[doc(hidden)]
+impl<'a, T: Iterable> internals::QueryConfig<'a> for QueryBuilder<'a, T> {
+    #[inline(always)]
     fn term_builder(&self) -> &TermBuilder {
         &self.term_builder
     }
 
+    #[inline(always)]
     fn term_builder_mut(&mut self) -> &mut TermBuilder {
         &mut self.term_builder
     }
 
+    #[inline(always)]
     fn query_desc(&self) -> &sys::ecs_query_desc_t {
         &self.desc
     }
 
+    #[inline(always)]
     fn query_desc_mut(&mut self) -> &mut sys::ecs_query_desc_t {
         &mut self.desc
     }
@@ -190,6 +196,7 @@ type OrderByFn<T> = extern "C" fn(EntityT, *const T, EntityT, *const T) -> c_int
 // Assuming some imports and definitions from your previous example, and adding the required ones for this example.
 type GroupByFn = extern "C" fn(*mut WorldT, *mut TableT, IdT, *mut c_void) -> u64;
 
+/// Functions to build a query using terms.
 pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// set itself to be instanced
     ///
@@ -273,7 +280,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     fn with_id(&mut self, id: impl IntoId) -> &mut Self {
         self.term();
         self.init_current_term(id);
-        let current_term = self.get_current_term_mut();
+        let current_term = self.current_term_mut();
         if current_term.inout == InOutKind::InOutDefault as i16 {
             self.set_as_inout_none();
         }
@@ -294,7 +301,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
             let world = self.world();
             let id = T::Type::get_id(world);
             self.init_current_term(id);
-            let term = self.get_current_term_mut();
+            let term = self.current_term_mut();
 
             term.inout = type_to_inout::<T>() as i16;
             if term.inout == InOutKind::InOutDefault as i16 {
@@ -366,7 +373,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::with`
     #[doc(alias = "query_builder_i::with")]
-    fn with_second_name<Second: InOutType>(&mut self, first: &'static CStr) -> &mut Self {
+    fn with_second_name<Second: InOutType>(&mut self, first: &'a CStr) -> &mut Self {
         self.with_second_id(first, Second::Type::get_id(self.world()))
     }
 
@@ -376,10 +383,10 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::term`
     #[doc(alias = "query_builder_i::with")]
-    fn with_name(&mut self, name: &'static CStr) -> &mut Self {
+    fn with_name(&mut self, name: &'a CStr) -> &mut Self {
         self.term();
         self.select_first_name(name);
-        let term = self.get_current_term();
+        let term = self.current_term();
         if term.inout == InOutKind::InOutDefault as i16 {
             self.set_as_inout_none();
         }
@@ -392,10 +399,10 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::term`
     #[doc(alias = "query_builder_i::with")]
-    fn with_names(&mut self, first: &'static CStr, second: &'static CStr) -> &mut Self {
+    fn with_names(&mut self, first: &'a CStr, second: &'a CStr) -> &mut Self {
         self.term();
         self.select_first_name(first).select_second_name(second);
-        let term = self.get_current_term();
+        let term = self.current_term();
         if term.inout == InOutKind::InOutDefault as i16 {
             self.set_as_inout_none();
         }
@@ -407,18 +414,19 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.term();
         self.init_current_term(first.into());
         self.select_second_name(second);
-        let term = self.get_current_term();
+        let term = self.current_term();
         if term.inout == InOutKind::InOutDefault as i16 {
             self.set_as_inout_none();
         }
         self
     }
 
-    fn with_second_id(&mut self, first: &'static CStr, second: impl Into<Entity>) -> &mut Self {
+    /// set term with second id and first name
+    fn with_second_id(&mut self, first: &'a CStr, second: impl Into<Entity>) -> &mut Self {
         self.term();
         self.select_first_name(first)
             .select_second_id(second.into());
-        let term = self.get_current_term();
+        let term = self.current_term();
         if term.inout == InOutKind::InOutDefault as i16 {
             self.set_as_inout_none();
         }
@@ -488,7 +496,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::without`
     #[doc(alias = "query_builder_i::without")]
-    fn without_first_name<First: InOutType>(&mut self, second: &'static CStr) -> &mut Self {
+    fn without_first_name<First: InOutType>(&mut self, second: &'a CStr) -> &mut Self {
         self.with_first_name::<First>(second).not()
     }
 
@@ -508,7 +516,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::without`
     #[doc(alias = "query_builder_i::without")]
-    fn without_second_name<Second: InOutType>(&mut self, first: &'static CStr) -> &mut Self {
+    fn without_second_name<Second: InOutType>(&mut self, first: &'a CStr) -> &mut Self {
         self.with_second_name::<Second>(first).not()
     }
 
@@ -518,7 +526,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::term`
     #[doc(alias = "query_builder_i::without")]
-    fn without_name(&mut self, name: &'static CStr) -> &mut Self {
+    fn without_name(&mut self, name: &'a CStr) -> &mut Self {
         self.with_name(name).not()
     }
 
@@ -528,7 +536,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::term`
     #[doc(alias = "query_builder_i::without")]
-    fn without_names(&mut self, first: &'static CStr, second: &'static CStr) -> &mut Self {
+    fn without_names(&mut self, first: &'a CStr, second: &'a CStr) -> &mut Self {
         self.with_names(first, second).not()
     }
 
@@ -538,7 +546,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::without`
     #[doc(alias = "query_builder_i::without")]
-    fn without_first_id(&mut self, first: impl Into<Entity>, second: &'static CStr) -> &mut Self {
+    fn without_first_id(&mut self, first: impl Into<Entity>, second: &'a CStr) -> &mut Self {
         self.with_first_id(first, second).not()
     }
 
@@ -548,7 +556,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::without`
     #[doc(alias = "query_builder_i::without")]
-    fn without_second_id(&mut self, first: &'static CStr, second: impl Into<Entity>) -> &mut Self {
+    fn without_second_id(&mut self, first: &'a CStr, second: impl Into<Entity>) -> &mut Self {
         self.with_second_id(first, second).not()
     }
 
@@ -624,21 +632,25 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self
     }
 
+    /// Set the type as current term and in mode inout
     fn write_type<T: InOutType>(&mut self) -> &mut Self {
         self.with::<T>();
         TermBuilderImpl::write(self)
     }
 
+    /// Set the id as current term and in mode inout
     fn write_id(&mut self, id: impl IntoId) -> &mut Self {
         self.with_id(id);
         TermBuilderImpl::write(self)
     }
 
+    /// Set the type as current term and in mode in
     fn read_type<T: InOutType>(&mut self) -> &mut Self {
         self.with::<T>();
         TermBuilderImpl::read(self)
     }
 
+    /// Set the id as current term and in mode in
     fn read_id(&mut self, id: impl IntoId) -> &mut Self {
         self.with_id(id);
         TermBuilderImpl::read(self)
@@ -646,10 +658,12 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
 
     /* scope_open/scope_close shorthand notation. */
 
+    /// Open a scope for the query
     fn scope_open(&mut self) -> &mut Self {
         self.with_id(flecs::ScopeOpen::ID).entity(0)
     }
 
+    /// Close a scope for the query
     fn scope_close(&mut self) -> &mut Self {
         self.with_id(flecs::ScopeClose::ID).entity(0)
     }

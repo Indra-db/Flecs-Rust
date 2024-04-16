@@ -54,7 +54,7 @@ fn main() {
         .child_of::<Railgun>();
 
     // Create prefab instance.
-    let inst = world.new_entity_named(c"my_railgun").is_a::<Railgun>();
+    let inst = world.entity_named(c"my_railgun").is_a::<Railgun>();
 
     // Get entities for slots
     let inst_base = inst.target::<Base>(0);

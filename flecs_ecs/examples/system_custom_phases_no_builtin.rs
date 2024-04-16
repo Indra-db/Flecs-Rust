@@ -21,15 +21,15 @@ fn main() {
     // which is necessary for the builtin pipeline to discover which systems it
     // should run.
 
-    let update = world.new_entity().add::<flecs::pipeline::Phase>();
+    let update = world.entity().add::<flecs::pipeline::Phase>();
 
     let physics = world
-        .new_entity()
+        .entity()
         .add::<flecs::pipeline::Phase>()
         .depends_on_id(update);
 
     let collisions = world
-        .new_entity()
+        .entity()
         .add::<flecs::pipeline::Phase>()
         .depends_on_id(physics);
 

@@ -51,9 +51,7 @@ fn main() {
             fprintln!(snap, "Expired: {} actually deleted", e.name());
         });
 
-    let e = world
-        .new_entity_named(c"MyEntity")
-        .set(Timeout { value: 3.0 });
+    let e = world.entity_named(c"MyEntity").set(Timeout { value: 3.0 });
 
     world.set_target_fps(1.0);
 

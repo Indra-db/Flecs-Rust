@@ -42,7 +42,7 @@ fn compile_time_check_impls_clone_default() {
 #[test]
 fn copy_hook_implemented_for_drop_types() {
     let world = World::new();
-    let e_orig = world.new_entity().set(CloneDefaultDrop {
+    let e_orig = world.entity().set(CloneDefaultDrop {
         data: "data".to_string(),
     });
 
@@ -61,7 +61,7 @@ fn copy_hook_implemented_for_drop_types() {
 the test & thus the test not registering the panic and does not get marked as passed"]
 fn copy_hook_not_implemented_for_drop_types() {
     let world = World::new();
-    let e_orig = world.new_entity().set(DefaultNoCloneDrop {
+    let e_orig = world.entity().set(DefaultNoCloneDrop {
         _data: "data".to_string(),
     });
 

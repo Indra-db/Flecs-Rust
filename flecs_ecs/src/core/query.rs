@@ -7,13 +7,15 @@ use crate::core::*;
 use crate::sys;
 
 /// Cached query implementation. Fast to iterate, but slower to create than `Filters`
+///
+///
 #[derive(Clone)]
 pub struct Query<'a, T>
 where
     T: Iterable,
 {
-    pub world: WorldRef<'a>,
-    pub query: NonNull<QueryT>,
+    world: WorldRef<'a>,
+    query: NonNull<QueryT>,
     _phantom: PhantomData<T>,
 }
 
@@ -48,6 +50,16 @@ where
         EntityView::new_from(self.world, unsafe {
             sys::ecs_get_entity(self.query.as_ptr() as *const c_void)
         })
+    }
+}
+
+impl<'a, T> IntoWorld<'a> for Query<'a, T>
+where
+    T: Iterable,
+{
+    #[inline]
+    fn world(&self) -> WorldRef<'a> {
+        self.world
     }
 }
 
@@ -122,6 +134,7 @@ where
         }
     }
 
+    /// get the query entity
     pub fn entity(&self) -> EntityView<'a> {
         EntityView::new_from(self.world, unsafe { (*self.query.as_ptr()).entity })
     }

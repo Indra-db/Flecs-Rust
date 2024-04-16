@@ -75,7 +75,7 @@ fn main() {
     // Create a few test entities
     for _ in 0..10 {
         world
-            .new_entity()
+            .entity()
             .set(Position {
                 x: rand(100),
                 y: rand(100),

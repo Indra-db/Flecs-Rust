@@ -1,10 +1,14 @@
+//! Pipeline builder used to configure and build Pipelines.
+
 use std::ffi::CStr;
 
+use super::Pipeline;
+use crate::core::internals::*;
 use crate::core::*;
 use crate::sys;
 
-use super::Pipeline;
-
+/// Pipeline builder used to configure and build Pipelines.
+/// Pipelines order and schedule systems for execution.
 pub struct PipelineBuilder<'a, T>
 where
     T: Iterable,
@@ -20,6 +24,7 @@ impl<'a, T> PipelineBuilder<'a, T>
 where
     T: Iterable,
 {
+    /// Create a new pipeline builder
     pub fn new(world: &'a World) -> Self {
         let desc = Default::default();
         let mut obj = Self {
@@ -37,9 +42,10 @@ where
         obj
     }
 
-    pub fn new_entity(world: &'a World, entity: EntityT) -> Self {
+    /// Create a new pipeline builder with an associated entity
+    pub fn new_w_entity(world: &'a World, entity: impl Into<Entity>) -> Self {
         let mut obj = Self::new(world);
-        obj.desc.entity = entity;
+        obj.desc.entity = *entity.into();
         obj
     }
 
@@ -61,7 +67,7 @@ where
         obj
     }
 
-    pub fn new_from_desc_term_index(
+    pub(crate) fn new_from_desc_term_index(
         world: &'a World,
         desc: sys::ecs_pipeline_desc_t,
         term_index: i32,
@@ -88,6 +94,7 @@ where
         obj
     }
 
+    /// Create a new pipeline builder with a name
     pub fn new_named(world: &'a World, name: &CStr) -> Self {
         let mut obj = Self {
             desc: Default::default(),
@@ -110,19 +117,24 @@ where
     }
 }
 
-impl<'a, T: Iterable> QueryConfig<'a> for PipelineBuilder<'a, T> {
+#[doc(hidden)]
+impl<'a, T: Iterable> internals::QueryConfig<'a> for PipelineBuilder<'a, T> {
+    #[inline(always)]
     fn term_builder(&self) -> &TermBuilder {
         &self.term_builder
     }
 
+    #[inline(always)]
     fn term_builder_mut(&mut self) -> &mut TermBuilder {
         &mut self.term_builder
     }
 
+    #[inline(always)]
     fn query_desc(&self) -> &sys::ecs_query_desc_t {
         &self.desc.query
     }
 
+    #[inline(always)]
     fn query_desc_mut(&mut self) -> &mut sys::ecs_query_desc_t {
         &mut self.desc.query
     }

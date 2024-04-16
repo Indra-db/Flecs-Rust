@@ -1,9 +1,11 @@
-//! Systems are a query + function that can be ran manually or by a pipeline.
+//! SystemBuilder is a builder pattern for creating systems.
 
 use crate::addons::system::*;
+use crate::core::internals::*;
 use crate::core::private::internal_ReactorAPI;
 use crate::core::*;
 
+/// SystemBuilder is a builder pattern for creating systems.
 pub struct SystemBuilder<'a, T>
 where
     T: Iterable,
@@ -19,6 +21,7 @@ impl<'a, T> SystemBuilder<'a, T>
 where
     T: Iterable,
 {
+    /// Create a new system builder
     pub fn new(world: &'a World) -> Self {
         let mut obj = Self {
             desc: Default::default(),
@@ -74,6 +77,7 @@ where
         obj
     }
 
+    /// Create a new system builder with a name
     pub fn new_named(world: &'a World, name: &CStr) -> Self {
         let mut obj = Self {
             desc: Default::default(),
@@ -292,19 +296,24 @@ where
     }
 }
 
-impl<'a, T: Iterable> QueryConfig<'a> for SystemBuilder<'a, T> {
+#[doc(hidden)]
+impl<'a, T: Iterable> internals::QueryConfig<'a> for SystemBuilder<'a, T> {
+    #[inline(always)]
     fn term_builder(&self) -> &TermBuilder {
         &self.term_builder
     }
 
+    #[inline(always)]
     fn term_builder_mut(&mut self) -> &mut TermBuilder {
         &mut self.term_builder
     }
 
+    #[inline(always)]
     fn query_desc(&self) -> &sys::ecs_query_desc_t {
         &self.desc.query
     }
 
+    #[inline(always)]
     fn query_desc_mut(&mut self) -> &mut sys::ecs_query_desc_t {
         &mut self.desc.query
     }

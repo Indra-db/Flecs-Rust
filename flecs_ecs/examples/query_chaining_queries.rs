@@ -31,7 +31,7 @@ fn main() {
     // Populate the forest with creatures. Some are enchanted.
     for i in 0..10 {
         let creature = forest
-            .new_entity()
+            .entity()
             .set(Location {
                 x: i as f32,
                 y: i as f32,
@@ -48,7 +48,7 @@ fn main() {
     // Introduce mystical artifacts into the forest, some of which are also enchanted
     for i in 0..10 {
         let artifact = forest
-            .new_entity()
+            .entity()
             .set(Location { x: -1.0, y: -1.0 }) //to showcase we don't match this
             .set(ArtifactPower {
                 _magic_level: i as f32 * 2.5,

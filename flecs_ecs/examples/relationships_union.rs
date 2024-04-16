@@ -58,17 +58,17 @@ fn main() {
 
     // Create a few entities with various state combinations
     world
-    .new_entity_named(c"e1")
+    .entity_named(c"e1")
     .add_enum(Movement::Walking)
     .add_enum(Direction::Front);
 
     world
-    .new_entity_named(c"e2")
+    .entity_named(c"e2")
     .add_enum(Movement::Running)
     .add_enum(Direction::Left);
 
     let e3 = world
-    .new_entity_named(c"e3")
+    .entity_named(c"e3")
     .add_enum(Movement::Running)
     .add_enum(Direction::Back);
 

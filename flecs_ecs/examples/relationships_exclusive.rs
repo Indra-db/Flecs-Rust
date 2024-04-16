@@ -16,11 +16,11 @@ fn main() {
     world.component::<Platoon>().add::<flecs::Exclusive>();
 
     // Create two platoons
-    let platoon_1 = world.new_entity();
-    let platoon_2 = world.new_entity();
+    let platoon_1 = world.entity();
+    let platoon_2 = world.entity();
 
     // Create a unit
-    let unit = world.new_entity();
+    let unit = world.entity();
 
     // Add unit to platoon 1
     unit.add_pair_first::<Platoon>(platoon_1);

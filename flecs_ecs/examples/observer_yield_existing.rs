@@ -15,12 +15,8 @@ fn main() {
     let world = World::new();
 
     // Create existing entities with Position component
-    world
-        .new_entity_named(c"e1")
-        .set(Position { x: 10.0, y: 20.0 });
-    world
-        .new_entity_named(c"e2")
-        .set(Position { x: 20.0, y: 30.0 });
+    world.entity_named(c"e1").set(Position { x: 10.0, y: 20.0 });
+    world.entity_named(c"e2").set(Position { x: 20.0, y: 30.0 });
 
     // Create an observer for three events
     world

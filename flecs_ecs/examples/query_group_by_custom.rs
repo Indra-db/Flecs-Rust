@@ -41,30 +41,30 @@ fn main() {
 
     // Create entities in 6 different tables with 3 group ids
     world
-        .new_entity()
+        .entity()
         .add::<(Group, Third)>()
         .set(Position { x: 1.0, y: 1.0 });
     world
-        .new_entity()
+        .entity()
         .add::<(Group, Second)>()
         .set(Position { x: 2.0, y: 2.0 });
     world
-        .new_entity()
+        .entity()
         .add::<(Group, First)>()
         .set(Position { x: 3.0, y: 3.0 });
 
     world
-        .new_entity()
+        .entity()
         .add::<(Group, Third)>()
         .set(Position { x: 4.0, y: 4.0 })
         .add::<Tag>();
     world
-        .new_entity()
+        .entity()
         .add::<(Group, Second)>()
         .set(Position { x: 5.0, y: 5.0 })
         .add::<Tag>();
     world
-        .new_entity()
+        .entity()
         .add::<(Group, First)>()
         .set(Position { x: 6.0, y: 6.0 })
         .add::<Tag>();
@@ -86,7 +86,7 @@ fn main() {
     //
 
     query.iter(|it, pos| {
-        let group = world.new_entity_from_id(it.group_id());
+        let group = world.entity_from_id(it.group_id());
         fprintln!(
             snap,
             "Group: {:?} - Table: [{:?}]",

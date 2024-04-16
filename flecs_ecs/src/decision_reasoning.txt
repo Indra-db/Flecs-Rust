@@ -1,0 +1,25 @@
+
+/* Removal of `ScopedWorld`: */
+// `ScopedWorld` was removed because it did not effectively isolate the original world or prevent
+// multiple scopes from being created on the same world. Although it implemented `Drop` to end scoping,
+// this did not occur until the end of the scope, making it easy to reach unintended states.
+// Using a closure instead clearly delineates the start and end of the scope and eliminates the need
+// for an extra type, thereby simplifying the code and reducing potential errors.
+
+/* removing of Term struct & diverging from the CPP implementation */
+// reasoning being that in the cpp implementation, it uses pointers to reference to its own fields,
+// which is a painpoint in rust due to invalidation (and rightfully so), hence I saw the need to 
+// find a better solution, which is an indexed based approach on query (& alike) from the desc itself.
+
+/* Why Entity and EntityView were merged in the Rust API compared to the C++ API */
+// The merge of Entity and EntityView into `EntityView` was motivated by the lack of any real distinction 
+// between the two in Rust, meaning most Rust developers wouldn't see a difference.
+// In Rust, the term `View` is not familiar as it doesn't align with typical Rust semantics. 
+// Now, `Entity` is essentially a strongly typed u64 identifier, while `EntityView` acts as a wrapper 
+// around this identifier, providing added functionality and managing lifetimes.
+// The term `EntityView` also indicates that it is not merely an "entity" but rather a reference to the world, wrapped with an ID.
+// In Rust, placing an `EntityView` within a struct feels intuitively incorrect because views are 
+// considered transient and not meant for persistent borrowing; thus, lifetime errors are expected and make sense.
+// Developers might naturally lean towards using `Entity` when they want a more permanent reference, 
+// unaware that `EntityView` can convert into `Entity` via `Into<Entity>`.
+// This restructuring was primarily driven by considerations for improving user experience (UX).

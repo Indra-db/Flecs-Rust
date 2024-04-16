@@ -10,20 +10,20 @@ fn main() {
 
     let world = World::new();
 
-    let apples = world.new_entity_named(c"Apples").add::<Healthy>();
-    let salad = world.new_entity_named(c"Salad").add::<Healthy>();
-    let burgers = world.new_entity_named(c"Burgers");
-    let pizza = world.new_entity_named(c"Pizza");
-    let chocolate = world.new_entity_named(c"Chocolate");
+    let apples = world.entity_named(c"Apples").add::<Healthy>();
+    let salad = world.entity_named(c"Salad").add::<Healthy>();
+    let burgers = world.entity_named(c"Burgers");
+    let pizza = world.entity_named(c"Pizza");
+    let chocolate = world.entity_named(c"Chocolate");
 
     world
-        .new_entity_named(c"Bob")
+        .entity_named(c"Bob")
         .add_pair_first::<Eats>(apples)
         .add_pair_first::<Eats>(burgers)
         .add_pair_first::<Eats>(pizza);
 
     world
-        .new_entity_named(c"Alice")
+        .entity_named(c"Alice")
         .add_pair_first::<Eats>(salad)
         .add_pair_first::<Eats>(chocolate)
         .add_pair_first::<Eats>(apples);

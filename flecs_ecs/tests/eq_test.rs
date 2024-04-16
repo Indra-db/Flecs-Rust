@@ -9,7 +9,7 @@ fn entity_eq_test() {
 
     let a_u64: u64 = 1;
 
-    let e1_entity_view = world.new_entity();
+    let e1_entity_view = world.entity();
     let e1_id_view = e1_entity_view.id_view();
     let e1_entity = e1_entity_view.id();
     let e1_id: Id = e1_entity.into();

@@ -4,9 +4,12 @@ use std::{ops::Deref, os::raw::c_void};
 use crate::core::*;
 use crate::sys;
 
+/// ObserverBuilder is used to configure and build Observers.
+/// Observers are systems that react to events.
+/// Observers let applications register callbacks for ECS events.
 #[derive(Clone)]
 pub struct Observer<'a> {
-    pub entity: EntityView<'a>,
+    entity: EntityView<'a>,
     world: WorldRef<'a>,
 }
 

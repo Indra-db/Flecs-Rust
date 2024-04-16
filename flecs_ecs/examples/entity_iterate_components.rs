@@ -53,7 +53,7 @@ fn main() {
     let world = World::new();
 
     let bob = world
-        .new_entity_named(c"Bob")
+        .entity_named(c"Bob")
         .set(Position { x: 10.0, y: 20.0 })
         .set(Velocity { x: 1.0, y: 1.0 })
         .add::<Human>()

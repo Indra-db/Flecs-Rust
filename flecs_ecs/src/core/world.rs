@@ -16,7 +16,7 @@ use crate::sys;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct World {
-    pub raw_world: NonNull<WorldT>,
+    pub(crate) raw_world: NonNull<WorldT>,
 }
 
 impl Default for World {
@@ -44,6 +44,7 @@ impl Drop for World {
 }
 
 impl World {
+    /// Creates a new world, same as `default()`
     pub fn new() -> Self {
         Self::default()
     }
@@ -2503,15 +2504,42 @@ impl World {
     ///
     /// # Returns
     ///
-    /// She entity with the current generation.
+    /// The entity with the current generation. If the entity is not alive, this
+    /// function will return an Entity of 0. Use `try_get_alive` if you want to
+    /// return an `Option<EntityView>`.
     ///
     /// # See also
     ///
-    /// * C++ API: `world::get_alive`
-    #[doc(alias = "world::get_alive")]
+    /// * C++ API: `world::try_get_alive`
+    #[doc(alias = "world::try_get_alive")]
     pub fn get_alive(&self, entity: impl Into<Entity>) -> EntityView {
         let entity = unsafe { sys::ecs_get_alive(self.raw_world.as_ptr(), *entity.into()) };
+
         EntityView::new_from(self, entity)
+    }
+
+    /// Get alive entity for id.
+    ///
+    /// # Arguments
+    ///
+    /// * `entity` - The entity to check
+    ///
+    /// # Returns
+    ///
+    /// The entity with the current generation.
+    /// If the entity is not alive, this function will return `None`.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::try_get_alive`
+    #[doc(alias = "world::try_get_alive")]
+    pub fn try_get_alive(&self, entity: impl Into<Entity>) -> Option<EntityView> {
+        let entity = unsafe { sys::ecs_get_alive(self.raw_world.as_ptr(), *entity.into()) };
+        if entity == 0 {
+            None
+        } else {
+            Some(EntityView::new_from(self, entity))
+        }
     }
 
     /// Ensures that entity with provided generation is alive.
@@ -2597,11 +2625,20 @@ impl World {
     ///
     /// * C++ API: `world::entity`
     #[doc(alias = "world::entity")]
-    pub fn new_entity_named_type<'a, T: ComponentId>(&'a self, name: &CStr) -> EntityView<'a> {
+    pub fn entity_from_named<'a, T: ComponentId>(&'a self, name: &CStr) -> EntityView<'a> {
         EntityView::new_from(self, T::register_explicit_named(self, name))
     }
 
-    pub fn new_entity_type<T: ComponentId>(&self) -> EntityView {
+    /// Create an entity that's associated with a type
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The component type to associate with the new entity.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::entity`
+    pub fn entity_from<T: ComponentId>(&self) -> EntityView {
         EntityView::new_from(self, T::get_id(self))
     }
 
@@ -2615,7 +2652,7 @@ impl World {
     ///
     /// * C++ API: `world::entity`
     #[doc(alias = "world::entity")]
-    pub fn new_entity_named(&self, name: &CStr) -> EntityView {
+    pub fn entity_named(&self, name: &CStr) -> EntityView {
         EntityView::new_named(self, name)
     }
 
@@ -2625,7 +2662,7 @@ impl World {
     ///
     /// * C++ API: `world::entity`
     #[doc(alias = "world::entity")]
-    pub fn new_entity(&self) -> EntityView {
+    pub fn entity(&self) -> EntityView {
         EntityView::new(self)
     }
 
@@ -2639,7 +2676,7 @@ impl World {
     ///
     /// * C++ API: `world::entity`
     #[doc(alias = "world::entity")]
-    pub fn new_entity_from_id(&self, id: impl Into<Entity>) -> EntityView {
+    pub fn entity_from_id(&self, id: impl Into<Entity>) -> EntityView {
         EntityView::new_from(self, id.into())
     }
 
@@ -2741,8 +2778,8 @@ impl World {
     ///
     /// * C++ API: `world::id`
     #[doc(alias = "world::id")]
-    pub fn id<T: ComponentId>(&self) -> EntityView {
-        EntityView::new_from(self, T::get_id(self))
+    pub fn id<T: ComponentId>(&self) -> Entity {
+        Entity(T::get_id(self))
     }
 
     /// Get id of pair.
@@ -3177,6 +3214,22 @@ impl World {
         QueryBuilder::<Components>::new_named(self, name)
     }
 
+    /// Create and iterate an uncached query.
+    ///
+    /// This function creates a query and immediately iterates it.
+    ///
+    /// # Returns
+    ///
+    /// The query.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Components`: The components to match on.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::each`
+    #[doc(alias = "world::each")]
     pub fn each<Components>(&self, func: impl FnMut(Components::TupleType<'_>)) -> Query<Components>
     where
         Components: Iterable,
@@ -3186,6 +3239,22 @@ impl World {
         query
     }
 
+    /// Create and iterate an uncached query.
+    ///
+    /// This function creates a query and immediately iterates it.
+    ///
+    /// # Returns
+    ///
+    /// The query.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Components`: The components to match on.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::each`
+    #[doc(alias = "world::each")]
     pub fn each_entity<Components>(
         &self,
         func: impl FnMut(&mut EntityView, Components::TupleType<'_>),
@@ -3329,7 +3398,7 @@ impl World {
     where
         Pipeline: ComponentType<Struct> + ComponentId,
     {
-        PipelineBuilder::<()>::new_entity(self, Pipeline::get_id(self))
+        PipelineBuilder::<()>::new_w_entity(self, Pipeline::get_id(self))
     }
 
     /// Set a custom pipeline. This operation sets the pipeline to run when `sys::ecs_progress` is invoked.
@@ -3751,10 +3820,3 @@ impl World {
         App::new(self)
     }
 }
-
-// Removal of `ScopedWorld`:
-// `ScopedWorld` was removed because it did not effectively isolate the original world or prevent
-// multiple scopes from being created on the same world. Although it implemented `Drop` to end scoping,
-// this did not occur until the end of the scope, making it easy to reach unintended states.
-// Using a closure instead clearly delineates the start and end of the scope and eliminates the need
-// for an extra type, thereby simplifying the code and reducing potential errors.

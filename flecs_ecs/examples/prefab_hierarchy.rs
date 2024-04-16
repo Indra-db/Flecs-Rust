@@ -17,7 +17,7 @@ fn main() {
 
     // Instantiate the prefab. This also creates an Engine and Cockpit child
     // for the instance.
-    let inst = world.new_entity_named(c"my_spaceship").is_a_id(spaceship);
+    let inst = world.entity_named(c"my_spaceship").is_a_id(spaceship);
 
     // Because of the IsA relationship, the instance now has the Engine and Cockpit
     // children of the prefab. This means that the instance can look up the Engine

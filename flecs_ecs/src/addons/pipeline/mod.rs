@@ -13,7 +13,7 @@ pub struct Pipeline<'a, T>
 where
     T: Iterable,
 {
-    pub entity: EntityView<'a>,
+    entity: EntityView<'a>,
     phantom: std::marker::PhantomData<T>,
 }
 
@@ -76,5 +76,9 @@ where
         }
 
         pipeline
+    }
+
+    pub fn entity(&self) -> EntityView<'a> {
+        self.entity
     }
 }

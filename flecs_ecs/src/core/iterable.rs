@@ -395,7 +395,7 @@ where
 
     fn populate<'a>(filter: &mut impl QueryBuilderImpl<'a>) {
         filter.with_id(<A::OnlyType as ComponentId>::get_id(filter.world()));
-        let term = filter.get_current_term_mut();
+        let term = filter.current_term_mut();
         A::populate_term(term);
 
     }
@@ -613,7 +613,7 @@ macro_rules! impl_iterable {
                 let _world = filter.world();
                 $(
                     filter.with_id(<$t::OnlyType as ComponentId>::get_id(_world));
-                    let term = filter.get_current_term_mut();
+                    let term = filter.current_term_mut();
                     $t::populate_term(term);
 
                 )*

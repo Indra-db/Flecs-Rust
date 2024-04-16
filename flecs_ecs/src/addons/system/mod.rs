@@ -15,9 +15,10 @@ use self::flecs::system::TickSource;
 use crate::core::*;
 use crate::sys;
 
+/// Systems are a query + function that can be ran manually or by a pipeline.
 #[derive(Clone)]
 pub struct System<'a> {
-    pub entity: EntityView<'a>,
+    entity: EntityView<'a>,
     world: WorldRef<'a>,
 }
 

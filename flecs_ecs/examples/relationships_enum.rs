@@ -42,7 +42,7 @@ fn main() {
 
     // Create an entity with (Tile, Red) and (TileStatus, Free) relationships
     let tile = world
-        .new_entity()
+        .entity()
         .add_enum(Tile::Stone)
         .add_enum(TileStatus::Free);
 
@@ -73,12 +73,12 @@ fn main() {
 
     // Create a few more entities that we can query
     world
-        .new_entity()
+        .entity()
         .add_enum(Tile::Grass)
         .add_enum(TileStatus::Free);
 
     world
-        .new_entity()
+        .entity()
         .add_enum(Tile::Sand)
         .add_enum(TileStatus::Occupied);
 

@@ -32,7 +32,7 @@ fn main() {
     // When one element of a pair is a component and the other element is a tag,
     // the pair assumes the type of the component.
     let e1 = world
-        .new_entity()
+        .entity()
         .set_pair_first::<_, Gigawatts>(Requires { amount: 1.21 });
 
     let require = e1.get_pair_first::<Requires, Gigawatts>();
@@ -48,7 +48,7 @@ fn main() {
 
     // The component can be either the first or second part of a pair:
     let e2 = world
-        .new_entity()
+        .entity()
         .set_pair_second::<Gigawatts, Requires>(Requires { amount: 1.5 });
 
     let require = e2.get_pair_second::<Gigawatts, Requires>();
@@ -68,7 +68,7 @@ fn main() {
     // If both parts of a pair are components, the pair assumes the type of
     // the first element:
     let e3 = world
-        .new_entity()
+        .entity()
         .set_pair_first::<Expires, Position>(Expires { timeout: 0.5 });
 
     let expires = e3.get_pair_first::<Expires, Position>();
@@ -80,7 +80,7 @@ fn main() {
 
     // Even though Position is a component, <MustHave, Position> contains no
     // data because MustHave has the Tag property.
-    world.new_entity().add::<(MustHave, Position)>();
+    world.entity().add::<(MustHave, Position)>();
 
     // The id::type_id method can be used to find the component type for a pair:
     fprintln!(

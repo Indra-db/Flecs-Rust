@@ -47,75 +47,75 @@ fn main() {
     world.component::<LocatedIn>().add::<flecs::Transitive>();
 
     // Populate the store with locations
-    let earth = world.new_entity_named(c"Earth").add::<Planet>();
+    let earth = world.entity_named(c"Earth").add::<Planet>();
 
     // Continents
     let north_america = world
-        .new_entity_named(c"NorthAmerica")
+        .entity_named(c"NorthAmerica")
         .add::<Continent>()
         .add_pair_first::<LocatedIn>(earth);
 
     let europe = world
-        .new_entity_named(c"Europe")
+        .entity_named(c"Europe")
         .add::<Continent>()
         .add_pair_first::<LocatedIn>(earth);
 
     // Countries
     let united_states = world
-        .new_entity_named(c"UnitedStates")
+        .entity_named(c"UnitedStates")
         .add::<Country>()
         .add_pair_first::<LocatedIn>(north_america);
 
     let netherlands = world
-        .new_entity_named(c"Netherlands")
+        .entity_named(c"Netherlands")
         .add::<Country>()
         .add_pair_first::<LocatedIn>(europe);
 
     // States
     let california = world
-        .new_entity_named(c"California")
+        .entity_named(c"California")
         .add::<State>()
         .add_pair_first::<LocatedIn>(united_states);
 
     let washington = world
-        .new_entity_named(c"Washington")
+        .entity_named(c"Washington")
         .add::<State>()
         .add_pair_first::<LocatedIn>(united_states);
 
     let noord_holland = world
-        .new_entity_named(c"NoordHolland")
+        .entity_named(c"NoordHolland")
         .add::<State>()
         .add_pair_first::<LocatedIn>(netherlands);
 
     // Cities
     let san_francisco = world
-        .new_entity_named(c"SanFrancisco")
+        .entity_named(c"SanFrancisco")
         .add::<City>()
         .add_pair_first::<LocatedIn>(california);
 
     let seattle = world
-        .new_entity_named(c"Seattle")
+        .entity_named(c"Seattle")
         .add::<City>()
         .add_pair_first::<LocatedIn>(washington);
 
     let amsterdam = world
-        .new_entity_named(c"Amsterdam")
+        .entity_named(c"Amsterdam")
         .add::<City>()
         .add_pair_first::<LocatedIn>(noord_holland);
 
     // Inhabitants
     world
-        .new_entity_named(c"Bob")
+        .entity_named(c"Bob")
         .add::<Person>()
         .add_pair_first::<LocatedIn>(san_francisco);
 
     world
-        .new_entity_named(c"Alice")
+        .entity_named(c"Alice")
         .add::<Person>()
         .add_pair_first::<LocatedIn>(seattle);
 
     world
-        .new_entity_named(c"Job")
+        .entity_named(c"Job")
         .add::<Person>()
         .add_pair_first::<LocatedIn>(amsterdam);
 
