@@ -4,7 +4,7 @@ use crate::core::*;
 use crate::sys;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
-pub(crate) enum TermRefMode {
+pub enum TermRefMode {
     #[default]
     Src,
     First,

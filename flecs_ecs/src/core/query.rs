@@ -14,8 +14,8 @@ pub struct Query<'a, T>
 where
     T: Iterable,
 {
-    world: WorldRef<'a>,
-    query: NonNull<QueryT>,
+    pub(crate) query: NonNull<QueryT>,
+    _phantom_lifetime: PhantomData<&'a ()>,
     _phantom: PhantomData<T>,
 }
 
@@ -25,7 +25,7 @@ where
 {
     #[inline(always)]
     fn retrieve_iter(&self) -> IterT {
-        unsafe { sys::ecs_query_iter(self.world.world_ptr_mut(), self.query.as_ptr()) }
+        unsafe { sys::ecs_query_iter(self.world_ptr_mut(), self.query.as_ptr()) }
     }
 
     #[inline(always)]
@@ -47,7 +47,7 @@ where
     T: Iterable,
 {
     fn as_entity(&self) -> EntityView<'a> {
-        EntityView::new_from(self.world, unsafe {
+        EntityView::new_from(self.world(), unsafe {
             sys::ecs_get_entity(self.query.as_ptr() as *const c_void)
         })
     }
@@ -59,7 +59,7 @@ where
 {
     #[inline]
     fn world(&self) -> WorldRef<'a> {
-        self.world
+        unsafe { WorldRef::from_ptr(self.query.as_ref().world) }
     }
 }
 
@@ -102,11 +102,11 @@ where
     ///
     /// * C++ API: `query::query`
     #[doc(alias = "query::query")]
-    pub fn new_ownership(world: impl IntoWorld<'a>, query: NonNull<QueryT>) -> Self {
+    pub fn new_ownership(query: NonNull<QueryT>) -> Self {
         Self {
-            world: world.world(),
             query,
             _phantom: std::marker::PhantomData,
+            _phantom_lifetime: PhantomData,
         }
     }
 
@@ -128,15 +128,15 @@ where
         let query =
             unsafe { NonNull::new_unchecked(sys::ecs_query_init(world.world_ptr_mut(), desc)) };
         Self {
-            world: world.world(),
             query,
             _phantom: PhantomData,
+            _phantom_lifetime: PhantomData,
         }
     }
 
     /// get the query entity
     pub fn entity(&self) -> EntityView<'a> {
-        EntityView::new_from(self.world, unsafe { (*self.query.as_ptr()).entity })
+        EntityView::new_from(self.world(), unsafe { (*self.query.as_ptr()).entity })
     }
 
     /// Free the query
@@ -167,9 +167,8 @@ where
     ///
     /// * C++ API: `query::get_iter`
     #[doc(alias = "query::get_iter")]
-    fn get_iter_raw(&mut self, world: &'a World) -> IterT {
-        self.world = world.world();
-        unsafe { sys::ecs_query_iter(self.world.world_ptr_mut(), self.query.as_ptr()) }
+    fn get_iter_raw(&mut self) -> IterT {
+        unsafe { sys::ecs_query_iter(self.world_ptr_mut(), self.query.as_ptr()) }
     }
 
     ///  Returns whether the query data changed since the last iteration.

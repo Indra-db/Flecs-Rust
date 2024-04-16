@@ -19,7 +19,6 @@ use crate::sys;
 #[derive(Clone)]
 pub struct System<'a> {
     entity: EntityView<'a>,
-    world: WorldRef<'a>,
 }
 
 impl<'a> Deref for System<'a> {
@@ -65,10 +64,7 @@ impl<'a> System<'a> {
         let id = unsafe { sys::ecs_system_init(world.world_ptr_mut(), &desc) };
         let entity = EntityView::new_from(world.world(), id);
 
-        Self {
-            entity,
-            world: world.world(),
-        }
+        Self { entity }
     }
 
     /// Wrap an existing system entity in a system object
@@ -82,9 +78,8 @@ impl<'a> System<'a> {
     ///
     /// * C++ API: `system::system`
     #[doc(alias = "system::system")]
-    pub fn new_from_existing(world: impl IntoWorld<'a>, system_entity: EntityView<'a>) -> Self {
+    pub fn new_from_existing(system_entity: EntityView<'a>) -> Self {
         Self {
-            world: world.world(),
             entity: system_entity,
         }
     }
@@ -150,7 +145,7 @@ impl<'a> System<'a> {
                 *self.id(),
             ))
         };
-        Query::<()>::new_ownership(self.world, query)
+        Query::<()>::new_ownership(query)
     }
 
     /// Run the system

@@ -5,11 +5,12 @@ use crate::sys;
 
 pub trait IntoWorld<'a> {
     #[doc(hidden)]
+    #[inline(always)]
     fn world_ptr_mut(&self) -> *mut WorldT {
         self.world().raw_world.as_ptr()
     }
-    #[inline]
     #[doc(hidden)]
+    #[inline(always)]
     fn world_ptr(&self) -> *const WorldT {
         self.world().raw_world.as_ptr()
     }
@@ -18,21 +19,21 @@ pub trait IntoWorld<'a> {
 }
 
 impl<'a> IntoWorld<'a> for IdView<'a> {
-    #[inline]
+    #[inline(always)]
     fn world(&self) -> WorldRef<'a> {
         self.world
     }
 }
 
 impl<'a> IntoWorld<'a> for EntityView<'a> {
-    #[inline]
+    #[inline(always)]
     fn world(&self) -> WorldRef<'a> {
         self.world
     }
 }
 
 impl<'a> IntoWorld<'a> for &'a World {
-    #[inline]
+    #[inline(always)]
     fn world(&self) -> WorldRef<'a> {
         (*self).into()
     }
@@ -45,6 +46,7 @@ pub struct WorldRef<'a> {
 }
 
 impl<'a> WorldRef<'a> {
+    #[inline(always)]
     pub fn real_world(&self) -> WorldRef<'a> {
         unsafe {
             WorldRef::from_ptr(
@@ -55,6 +57,7 @@ impl<'a> WorldRef<'a> {
 
     /// # Safety
     /// Caller must ensure `raw_world` points to a valid `WorldT`
+    #[inline(always)]
     pub unsafe fn from_ptr(raw_world: *mut WorldT) -> Self {
         WorldRef {
             raw_world: NonNull::new_unchecked(raw_world),
@@ -64,6 +67,7 @@ impl<'a> WorldRef<'a> {
 }
 
 impl<'a> From<&'a World> for WorldRef<'a> {
+    #[inline(always)]
     fn from(world: &'a World) -> Self {
         WorldRef {
             raw_world: world.raw_world,
@@ -73,6 +77,7 @@ impl<'a> From<&'a World> for WorldRef<'a> {
 }
 
 impl<'a> From<&'a *mut WorldT> for &WorldRef<'a> {
+    #[inline(always)]
     fn from(value: &'a *mut WorldT) -> Self {
         unsafe { std::mem::transmute::<&'a *mut WorldT, &WorldRef>(value) }
     }
@@ -81,18 +86,21 @@ impl<'a> From<&'a *mut WorldT> for &WorldRef<'a> {
 impl<'a> Deref for WorldRef<'a> {
     type Target = World;
 
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         unsafe { std::mem::transmute::<&WorldRef, &World>(self) }
     }
 }
 
 impl<'a> IntoWorld<'a> for WorldRef<'a> {
+    #[inline(always)]
     fn world(&self) -> WorldRef<'a> {
         *self
     }
 }
 
 impl<'a> IntoWorld<'a> for &WorldRef<'a> {
+    #[inline(always)]
     fn world(&self) -> WorldRef<'a> {
         **self
     }

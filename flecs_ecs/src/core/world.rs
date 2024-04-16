@@ -3070,7 +3070,7 @@ impl World {
     /// * C++ API: `world::observer`
     #[doc(alias = "world::observer")]
     pub fn new_observer<'a>(&'a self, e: EntityView<'a>) -> Observer<'a> {
-        Observer::new_from_existing(self, e)
+        Observer::new_from_existing(e)
     }
 
     /// Create a new observer.
@@ -3284,7 +3284,7 @@ impl World {
     /// * C++ API: `world::system`
     #[doc(alias = "world::system")]
     pub fn system_from<'a>(&'a self, entity: EntityView<'a>) -> System<'a> {
-        System::new_from_existing(self, entity)
+        System::new_from_existing(entity)
     }
 
     /// Creates a new `SystemBuilder` instance for constructing systems.
