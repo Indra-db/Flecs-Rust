@@ -4,11 +4,6 @@ use crate::core::*;
 use crate::sys;
 use flecs_ecs_derive::tuples;
 
-pub trait Filterable<'a>: Sized + QueryBuilderImpl<'a> {
-    fn current_term(&mut self) -> &mut TermT;
-    fn increment_current_term(&mut self);
-}
-
 pub struct ArrayElement {
     pub ptr: *mut u8,
     pub is_ref: bool,
@@ -354,7 +349,7 @@ pub trait Iterable: Sized {
         Self::Pointers::new(iter)
     }
 
-    fn populate<'a>(filter: &mut impl Filterable<'a>);
+    fn populate<'a>(filter: &mut impl QueryBuilderImpl<'a>);
 
     fn register_ids_descriptor(world: *mut WorldT, desc: &mut sys::ecs_query_desc_t) {
         Self::register_ids_descriptor_at(world, &mut desc.terms[..], &mut 0);
@@ -398,9 +393,9 @@ where
     type TupleType<'w> = A::ActualType<'w>;
     type TupleSliceType<'w> = A::SliceType<'w>;
 
-    fn populate<'a>(filter: &mut impl Filterable<'a>) {
+    fn populate<'a>(filter: &mut impl QueryBuilderImpl<'a>) {
         filter.with_id(<A::OnlyType as ComponentId>::get_id(filter.world()));
-        let term = filter.current_term();
+        let term = filter.get_current_term_mut();
         A::populate_term(term);
 
     }
@@ -614,11 +609,11 @@ macro_rules! impl_iterable {
             type Pointers = ComponentsData<Self, { tuple_count!($($t),*) }>;
 
 
-            fn populate<'a>(filter: &mut impl Filterable<'a>) {
+            fn populate<'a>(filter: &mut impl QueryBuilderImpl<'a>) {
                 let _world = filter.world();
                 $(
                     filter.with_id(<$t::OnlyType as ComponentId>::get_id(_world));
-                    let term = filter.current_term();
+                    let term = filter.get_current_term_mut();
                     $t::populate_term(term);
 
                 )*

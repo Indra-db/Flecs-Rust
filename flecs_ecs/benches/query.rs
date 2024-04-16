@@ -74,7 +74,7 @@ fn query_each_benchmark(c: &mut Criterion) {
         }
     }
 
-    let mut query = world.new_query::<(&mut Pos, &Vel)>();
+    let mut query = world.query::<(&mut Pos, &Vel)>().set_cached().build();
 
     c.bench_function("query_each", |b| {
         b.iter(|| {

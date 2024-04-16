@@ -14,11 +14,8 @@ where
     T: Iterable,
 {
     pub(crate) desc: sys::ecs_query_desc_t,
+    pub(crate) term_builder: TermBuilder,
     world: WorldRef<'a>,
-    pub(crate) expr_count: i32,
-    pub(crate) term_ref_mode: TermRefMode,
-    pub(crate) current_term_index: i32,
-    pub(crate) next_term_index: i32,
     _phantom: std::marker::PhantomData<T>,
 }
 
@@ -37,19 +34,15 @@ where
     /// * C++ API: `builder::builder`
     #[doc(alias = "builder::builder")]
     pub fn new(world: &'a World) -> Self {
-        let desc = Default::default();
-
         let mut obj = Self {
-            desc,
-            expr_count: 0,
-            term_ref_mode: Default::default(),
+            desc: Default::default(),
             world: world.world(),
-            current_term_index: 0,
-            next_term_index: 0,
+            term_builder: Default::default(),
             _phantom: std::marker::PhantomData,
         };
 
         T::populate(&mut obj);
+
         obj
     }
 
@@ -69,11 +62,8 @@ where
 
         let mut obj = Self {
             desc,
-            expr_count: 0,
-            term_ref_mode: Default::default(),
+            term_builder: Default::default(),
             world: world.world(),
-            current_term_index: 0,
-            next_term_index: 0,
             _phantom: std::marker::PhantomData,
         };
 
@@ -85,6 +75,7 @@ where
         };
 
         obj.desc.entity = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) };
+
         T::populate(&mut obj);
         obj
     }
@@ -100,16 +91,18 @@ where
     ///
     /// * C++ API: `query_builder_i::query_builder_i`
     #[doc(alias = "query_builder_i::query_builder_i")]
-    pub fn new_from_desc(world: impl IntoWorld<'a>, desc: &mut sys::ecs_query_desc_t) -> Self {
-        Self {
+    pub(crate) fn new_from_desc(
+        world: impl IntoWorld<'a>,
+        desc: &mut sys::ecs_query_desc_t,
+    ) -> Self {
+        let obj = Self {
             desc: *desc,
-            expr_count: 0,
-            term_ref_mode: Default::default(),
+            term_builder: Default::default(),
             world: world.world(),
-            current_term_index: 0,
-            next_term_index: 0,
             _phantom: std::marker::PhantomData,
-        }
+        };
+
+        obj
     }
 
     /// Create a new query builder from an existing descriptor with a term index
@@ -131,11 +124,13 @@ where
     ) -> Self {
         let mut obj = Self {
             desc: *desc,
-            expr_count: 0,
-            term_ref_mode: Default::default(),
+            term_builder: TermBuilder {
+                current_term_index: term_index,
+                next_term_index: term_index,
+                expr_count: 0,
+                term_ref_mode: TermRefMode::Src,
+            },
             world: world.world(),
-            current_term_index: term_index,
-            next_term_index: term_index,
             _phantom: std::marker::PhantomData,
         };
 
@@ -144,54 +139,31 @@ where
     }
 }
 
-impl<'a, T> Filterable<'a> for QueryBuilder<'a, T>
-where
-    T: Iterable,
-{
-    fn current_term(&mut self) -> &mut TermT {
-        self.get_current_term_mut()
+impl<'a, T: Iterable> QueryConfig<'a> for QueryBuilder<'a, T> {
+    fn term_builder(&self) -> &TermBuilder {
+        &self.term_builder
     }
 
-    fn increment_current_term(&mut self) {
-        self.current_term_index += 1;
+    fn term_builder_mut(&mut self) -> &mut TermBuilder {
+        &mut self.term_builder
+    }
+
+    fn query_desc(&self) -> &sys::ecs_query_desc_t {
+        &self.desc
+    }
+
+    fn query_desc_mut(&mut self) -> &mut sys::ecs_query_desc_t {
+        &mut self.desc
     }
 }
 
-impl<'a, T> TermBuilder<'a> for QueryBuilder<'a, T>
-where
-    T: Iterable,
-{
-    fn current_term_ref_mode(&self) -> TermRefMode {
-        self.term_ref_mode
-    }
+impl<'a, T: Iterable> TermBuilderImpl<'a> for QueryBuilder<'a, T> {}
 
-    fn get_term_mut_at(&mut self, index: i32) -> &mut TermT {
-        &mut self.query_desc_mut().terms[index as usize]
-    }
+impl<'a, T: Iterable> QueryBuilderImpl<'a> for QueryBuilder<'a, T> {}
 
-    fn get_current_term_mut(&mut self) -> &mut TermT {
-        let index = self.current_term_index();
-        self.get_term_mut_at(index)
-    }
-
-    fn get_current_term(&self) -> &TermT {
-        let index = self.current_term_index();
-        &self.query_desc().terms[index as usize]
-    }
-
-    fn term_ref_mut(&mut self) -> &mut TermRefT {
-        let term_mode = self.current_term_ref_mode();
-        let term = self.get_current_term_mut();
-
-        match term_mode {
-            TermRefMode::Src => &mut term.src,
-            TermRefMode::First => &mut term.first,
-            TermRefMode::Second => &mut term.second,
-        }
-    }
-
-    fn set_term_ref_mode(&mut self, mode: TermRefMode) {
-        self.term_ref_mode = mode;
+impl<'a, T: Iterable> IntoWorld<'a> for QueryBuilder<'a, T> {
+    fn world(&self) -> WorldRef<'a> {
+        self.world
     }
 }
 
@@ -218,21 +190,7 @@ type OrderByFn<T> = extern "C" fn(EntityT, *const T, EntityT, *const T) -> c_int
 // Assuming some imports and definitions from your previous example, and adding the required ones for this example.
 type GroupByFn = extern "C" fn(*mut WorldT, *mut TableT, IdT, *mut c_void) -> u64;
 
-pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
-    fn query_desc(&self) -> &sys::ecs_query_desc_t;
-
-    fn query_desc_mut(&mut self) -> &mut sys::ecs_query_desc_t;
-
-    fn expr_count_mut(&mut self) -> &mut i32;
-
-    fn current_term_index(&self) -> i32;
-
-    fn current_term_index_mut(&mut self) -> &mut i32;
-
-    fn next_term_index(&self) -> i32;
-
-    fn next_term_index_mut(&mut self) -> &mut i32;
-
+pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// set itself to be instanced
     ///
     /// # See also
@@ -294,7 +252,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     ///
     /// * C++ API: `query_builder_i::expr`
     #[doc(alias = "query_builder_i::expr")]
-    fn expr(&mut self, expr: &CStr) -> &mut Self {
+    fn expr(&mut self, expr: &'a CStr) -> &mut Self {
         ecs_assert!(
             *self.expr_count_mut() == 0,
             FlecsErrorCode::InvalidOperation,
@@ -388,7 +346,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     ///
     /// * C++ API: `query_builder_i::with`
     #[doc(alias = "query_builder_i::with")]
-    fn with_first_name<First: InOutType>(&mut self, second: &CStr) -> &mut Self {
+    fn with_first_name<First: InOutType>(&mut self, second: &'a CStr) -> &mut Self {
         self.with_first_id(First::Type::get_id(self.world()), second)
     }
 
@@ -445,7 +403,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
     }
 
     /// set term with first id and second name
-    fn with_first_id(&mut self, first: impl Into<Entity>, second: &CStr) -> &mut Self {
+    fn with_first_id(&mut self, first: impl Into<Entity>, second: &'a CStr) -> &mut Self {
         self.term();
         self.init_current_term(first.into());
         self.select_second_name(second);
@@ -466,38 +424,6 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
         }
         self
     }
-
-    /* I decided to remove the Term struct concept in Rust API. I've yet to see if this was the right decision */
-    // fn with_term(&mut self, term: Term) -> &mut Self {
-    //     self.term();
-    //     let term_ptr = self.term_ptr_mut();
-    //     unsafe {
-    //         *term_ptr = *term.term_ptr;
-    //     }
-    //     self
-    // }
-
-    /// set term
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::with`
-    // #[doc(alias = "query_builder_i::with")]
-    // fn with(&mut self, with: With) -> &mut Self {
-    //     // match with {
-    //     //     With::Id(id) => {
-    //     //         let term = self.term_with_id(id);
-    //     //         if term.term.inout
-    //     //     },
-    //     //     With::Name(name) => self.term_with_name(name).inout_none(),
-    //     //     With::PairIds(first, second) => self.term_with_id((first, second)).inout_none(),
-    //     //     With::PairNames(first, second) => self.term_with_pair_names(first, second).inout_none(),
-    //     //     With::PairIdName(first, second) => {
-    //     //         self.term_with_pair_id_name(first, second).inout_none()
-    //     //     }
-    //     //     With::Term(term) => self.term_with_term(term).inout_none(),
-    //     // }
-    // }
 
     /* Without methods, shorthand for .with(...).not() */
 
@@ -700,22 +626,22 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
 
     fn write_type<T: InOutType>(&mut self) -> &mut Self {
         self.with::<T>();
-        TermBuilder::write(self)
+        TermBuilderImpl::write(self)
     }
 
     fn write_id(&mut self, id: impl IntoId) -> &mut Self {
         self.with_id(id);
-        TermBuilder::write(self)
+        TermBuilderImpl::write(self)
     }
 
     fn read_type<T: InOutType>(&mut self) -> &mut Self {
         self.with::<T>();
-        TermBuilder::read(self)
+        TermBuilderImpl::read(self)
     }
 
     fn read_id(&mut self, id: impl IntoId) -> &mut Self {
         self.with_id(id);
-        TermBuilder::read(self)
+        TermBuilderImpl::read(self)
     }
 
     /* scope_open/scope_close shorthand notation. */
@@ -930,45 +856,5 @@ pub trait QueryBuilderImpl<'a>: TermBuilder<'a> {
         let desc = self.query_desc_mut();
         desc.on_group_delete = action;
         self
-    }
-}
-impl<'a, T> QueryBuilderImpl<'a> for QueryBuilder<'a, T>
-where
-    T: Iterable,
-{
-    #[inline]
-    fn query_desc(&self) -> &sys::ecs_query_desc_t {
-        &self.desc
-    }
-
-    #[inline]
-    fn query_desc_mut(&mut self) -> &mut sys::ecs_query_desc_t {
-        &mut self.desc
-    }
-
-    fn expr_count_mut(&mut self) -> &mut i32 {
-        &mut self.expr_count
-    }
-
-    fn current_term_index(&self) -> i32 {
-        self.current_term_index
-    }
-
-    fn current_term_index_mut(&mut self) -> &mut i32 {
-        &mut self.current_term_index
-    }
-
-    fn next_term_index(&self) -> i32 {
-        self.next_term_index
-    }
-
-    fn next_term_index_mut(&mut self) -> &mut i32 {
-        &mut self.next_term_index
-    }
-}
-
-impl<'a, T: Iterable> IntoWorld<'a> for QueryBuilder<'a, T> {
-    fn world(&self) -> WorldRef<'a> {
-        self.world
     }
 }

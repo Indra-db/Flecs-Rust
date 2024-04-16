@@ -11,21 +11,81 @@ pub enum TermRefMode {
     Second,
 }
 
+#[derive(Default)]
+pub struct TermBuilder {
+    pub(crate) expr_count: i32,
+    pub(crate) current_term_index: i32,
+    pub(crate) next_term_index: i32,
+    pub(crate) term_ref_mode: TermRefMode,
+}
+
+pub trait QueryConfig<'a> {
+    fn term_builder(&self) -> &TermBuilder;
+    fn term_builder_mut(&mut self) -> &mut TermBuilder;
+
+    fn query_desc(&self) -> &sys::ecs_query_desc_t;
+    fn query_desc_mut(&mut self) -> &mut sys::ecs_query_desc_t;
+
+    fn current_term_ref_mode(&self) -> TermRefMode {
+        self.term_builder().term_ref_mode
+    }
+
+    fn set_term_ref_mode(&mut self, mode: TermRefMode) {
+        self.term_builder_mut().term_ref_mode = mode;
+    }
+
+    fn get_term_mut_at(&mut self, index: i32) -> &mut TermT {
+        &mut self.query_desc_mut().terms[index as usize]
+    }
+
+    fn get_current_term_mut(&mut self) -> &mut TermT {
+        let index = self.current_term_index();
+        self.get_term_mut_at(index)
+    }
+
+    fn get_current_term(&self) -> &TermT {
+        &self.query_desc().terms[self.term_builder().current_term_index as usize]
+    }
+
+    fn term_ref_mut(&mut self) -> &mut TermRefT {
+        let term_mode = self.current_term_ref_mode();
+        let term = self.get_current_term_mut();
+
+        match term_mode {
+            TermRefMode::Src => &mut term.src,
+            TermRefMode::First => &mut term.first,
+            TermRefMode::Second => &mut term.second,
+        }
+    }
+
+    fn expr_count_mut(&mut self) -> &mut i32 {
+        &mut self.term_builder_mut().expr_count
+    }
+
+    fn current_term_index(&self) -> i32 {
+        self.term_builder().current_term_index
+    }
+
+    fn current_term_index_mut(&mut self) -> &mut i32 {
+        &mut self.term_builder_mut().current_term_index
+    }
+
+    fn next_term_index(&self) -> i32 {
+        self.term_builder().next_term_index
+    }
+
+    fn next_term_index_mut(&mut self) -> &mut i32 {
+        &mut self.term_builder_mut().next_term_index
+    }
+
+    fn increment_current_term(&mut self) {
+        *self.current_term_index_mut() += 1;
+    }
+}
+
 /// Term builder interface.
 /// A term is a single element of a query expression.
-pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
-    fn current_term_ref_mode(&self) -> TermRefMode;
-
-    fn set_term_ref_mode(&mut self, mode: TermRefMode);
-
-    fn get_term_mut_at(&mut self, index: i32) -> &mut TermT;
-
-    fn get_current_term_mut(&mut self) -> &mut TermT;
-
-    fn get_current_term(&self) -> &TermT;
-
-    fn term_ref_mut(&mut self) -> &mut TermRefT;
-
+pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + QueryConfig<'a> {
     /// initializes a new term from a id of a component or pair
     ///
     /// # Arguments
@@ -260,7 +320,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::name`
     #[doc(alias = "term_builder_i::name")]
-    fn name(&mut self, name: &CStr) -> &mut Self {
+    fn name(&mut self, name: &'a CStr) -> &mut Self {
         let term_ref = self.term_ref_mut();
         term_ref.name = name.as_ptr() as *mut i8;
         term_ref.id |= flecs::IsEntity::ID;
@@ -277,7 +337,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::var`
     #[doc(alias = "term_builder_i::var")]
-    fn var(&mut self, var_name: &CStr) -> &mut Self {
+    fn var(&mut self, var_name: &'a CStr) -> &mut Self {
         let term_ref = self.term_ref_mut();
         term_ref.id |= flecs::IsVariable::ID;
         term_ref.name = var_name.as_ptr() as *mut i8;
@@ -374,7 +434,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
-    fn select_src_name(&mut self, name: &CStr) -> &mut Self {
+    fn select_src_name(&mut self, name: &'a CStr) -> &mut Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
@@ -384,7 +444,6 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
         self.setup_src();
         if let Some(stripped_name) =
             strip_prefix_cstr_raw(name, CStr::from_bytes_with_nul(b"$\0").unwrap())
-        //todo v4 fix this
         {
             self.var(stripped_name)
         } else {
@@ -487,7 +546,7 @@ pub trait TermBuilder<'a>: Sized + IntoWorld<'a> {
     ///
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
-    fn select_second_name(&mut self, name: &CStr) -> &mut Self {
+    fn select_second_name(&mut self, name: &'a CStr) -> &mut Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,

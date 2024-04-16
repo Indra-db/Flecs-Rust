@@ -109,7 +109,10 @@ where
     ///
     /// * C++ API: `query::query`
     #[doc(alias = "query::query")]
-    pub fn new_from_desc(world: impl IntoWorld<'a>, desc: &mut sys::ecs_query_desc_t) -> Self {
+    pub(crate) fn new_from_desc(
+        world: impl IntoWorld<'a>,
+        desc: &mut sys::ecs_query_desc_t,
+    ) -> Self {
         let query =
             unsafe { NonNull::new_unchecked(sys::ecs_query_init(world.world_ptr_mut(), desc)) };
         Self {
