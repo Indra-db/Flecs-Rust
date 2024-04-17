@@ -22,7 +22,6 @@ impl<'a> Deref for Observer<'a> {
 }
 
 impl<'a> Observer<'a> {
-    //TODO in query etc desc is a pointer, does it need to be?
     /// Create a new observer
     ///
     /// # See also

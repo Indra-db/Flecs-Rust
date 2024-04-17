@@ -458,7 +458,6 @@ impl<'a> Iter<'a> {
     /// # See also
     ///
     /// * C++ API: `iter::field`
-    //TODO separate const and non const, see C++ API
     pub fn field<T: ComponentId>(&self, index: i32) -> Option<Field<T>> {
         ecs_assert!(
             (self.iter.flags & sys::EcsIterCppEach == 0),
@@ -563,14 +562,14 @@ impl<'a> Iter<'a> {
     ///
     /// * C++ API: `iter::entities`
     #[doc(alias = "iter::entities")]
-    pub fn entities(&self) -> &[EntityView] {
-        unsafe {
-            std::slice::from_raw_parts(
-                self.iter.entities as *const EntityView,
+    pub fn entities(&self) -> Field<Entity> {
+        let slice = unsafe {
+            std::slice::from_raw_parts_mut(
+                self.iter.entities as *mut Entity,
                 self.iter.count as usize,
             )
-        }
-        //TODO this should return our Column struct. check cpp.
+        };
+        Field::<Entity>::new(slice, false)
     }
 
     /// Check if the current table has changed since the last iteration.

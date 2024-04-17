@@ -482,8 +482,12 @@ impl<'a> Table<'a> {
     ///
     /// * C++ API: `table::get`
     #[doc(alias = "table::get")]
-    pub fn get_pair_ids_mut_untyped(&self, first: EntityT, second: EntityT) -> Option<*mut c_void> {
-        self.get_mut_untyped(ecs_pair(first, second))
+    pub fn get_pair_ids_mut_untyped(
+        &self,
+        first: impl Into<Entity>,
+        second: impl Into<Entity>,
+    ) -> Option<*mut c_void> {
+        self.get_mut_untyped(ecs_pair(*first.into(), *second.into()))
     }
 
     /// Get column, components array ptr from table by pair of component types.
@@ -506,8 +510,6 @@ impl<'a> Table<'a> {
     ) -> Option<*mut c_void> {
         self.get_pair_ids_mut_untyped(First::get_id(self.world), Second::get_id(self.world))
     }
-
-    //TODO pair generic
 
     /// Get column size from table at the provided column index.
     ///

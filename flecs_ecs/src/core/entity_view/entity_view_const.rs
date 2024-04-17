@@ -553,7 +553,6 @@ impl<'a> EntityView<'a> {
         while unsafe { sys::ecs_each_next(&mut it) } {
             for i in 0..it.count as usize {
                 unsafe {
-                    //TODO should investigate if this is correct
                     let id = it.entities.add(i);
                     let ent = EntityView::new_from(self.world, *id);
                     func(ent);
