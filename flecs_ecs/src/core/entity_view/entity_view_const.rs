@@ -78,17 +78,6 @@ impl<'a> EntityView<'a> {
         }
     }
 
-    /*
-            world_ = world;
-        if (!ecs_get_scope(world_) && !ecs_get_with(world_)) {
-            id_ = ecs_new(world);
-        } else {
-            ecs_entity_desc_t desc = {};
-            id_ = ecs_entity_init(world_, &desc);
-        }
-    }
-     */
-
     /// Creates a wrapper around an existing entity / id.
     ///
     /// # Arguments

@@ -308,5 +308,52 @@ pub mod doc {
 pub mod rest {
     use super::*;
     // REST module components
-    create_pre_registered_component!(Rest, ECS_REST);
+    #[repr(C)]
+    #[derive(Debug, Copy, Clone)]
+    pub struct Rest {
+        #[doc = "< Port of server (optional, default = 27750)"]
+        pub port: u16,
+        #[doc = "< Interface address (optional, default = 0.0.0.0)"]
+        pub ipaddr: *mut ::std::os::raw::c_char,
+        pub impl_: *mut ::std::os::raw::c_void,
+    }
+
+    impl FlecsConstantId for Rest {
+        const ID: u64 = ECS_REST;
+    }
+    impl ComponentInfo for Rest {
+        const IS_ENUM: bool = false;
+        const IS_TAG: bool = true;
+        const IMPLS_CLONE: bool = false;
+        const IMPLS_DEFAULT: bool = false;
+    }
+    impl NotEmptyComponent for Rest {}
+
+    impl ComponentType<Struct> for Rest {}
+
+    impl ComponentId for Rest {
+        type UnderlyingType = Rest;
+        type UnderlyingEnumType = NoneEnum;
+        fn register_explicit<'a>(_world: impl IntoWorld<'a>) {}
+
+        fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &CStr) -> EntityT {
+            ECS_REST
+        }
+        fn is_registered() -> bool {
+            true
+        }
+        fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
+            true
+        }
+        fn get_id<'a>(_world: impl IntoWorld<'a>) -> IdT {
+            ECS_REST
+        }
+        unsafe fn get_id_unchecked() -> IdT {
+            ECS_REST
+        }
+        fn __get_once_lock_data() -> &'static OnceLock<IdComponent> {
+            static ONCE_LOCK: OnceLock<IdComponent> = OnceLock::new();
+            &ONCE_LOCK
+        }
+    }
 }
