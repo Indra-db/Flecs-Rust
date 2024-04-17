@@ -1,4 +1,4 @@
-//! ObserverBuilder is used to configure and build Observers.
+//! `ObserverBuilder` is used to configure and build Observers.
 //! Observers are systems that react to events.
 //! Observers let applications register callbacks for ECS events.
 
@@ -12,7 +12,7 @@ use crate::core::private::internal_ReactorAPI;
 use crate::core::*;
 use crate::sys;
 
-/// ObserverBuilder is used to configure and build Observers.
+/// `ObserverBuilder` is used to configure and build Observers.
 /// Observers are systems that react to events.
 /// Observers let applications register callbacks for ECS events.
 pub struct ObserverBuilder<'a, T>

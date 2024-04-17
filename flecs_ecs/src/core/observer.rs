@@ -4,7 +4,7 @@ use std::{ops::Deref, os::raw::c_void};
 use crate::core::*;
 use crate::sys;
 
-/// ObserverBuilder is used to configure and build Observers.
+/// `ObserverBuilder` is used to configure and build Observers.
 /// Observers are systems that react to events.
 /// Observers let applications register callbacks for ECS events.
 #[derive(Clone)]
@@ -39,7 +39,7 @@ impl<'a> Observer<'a> {
                 &mut desc.query.flags,
                 sys::EcsQueryIsInstanced,
                 is_instanced,
-            )
+            );
         }
 
         let id = unsafe { sys::ecs_observer_init(world.world_ptr_mut(), &desc) };

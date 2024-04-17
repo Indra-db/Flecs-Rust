@@ -45,7 +45,7 @@ pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\
 ///
 /// - `InOutDefault`: Default behavior, which is `InOut` for regular terms and `In` for shared terms.
 /// - `InOutNone`: Indicates the term is neither read nor written by the system.
-/// - `InOutFilter`: Same as InOutNOne + prevents term from triggering observers
+/// - `InOutFilter`: Same as `InOutNOne` + prevents term from triggering observers
 /// - `InOut`: The term is both read and written, implying a mutable access to the component data.
 /// - `In`: The term is only read, implying an immutable access to the component data.
 /// - `Out`: The term is only written, providing exclusive access to modify the component data.
@@ -278,35 +278,35 @@ pub(crate) const ECS_SYSTEM: u64 = 7;
 pub(crate) const FLECS_HI_COMPONENT_ID: u64 = 256;
 
 /// Match on self
-/// Can be combined with other term flags on the ecs_term_t::flags field
+/// Can be combined with other term flags on the `ecs_term_t::flags` field
 pub(crate) const ECS_SELF: u64 = 1 << 63;
 
 /// Match by traversing upwards
-/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+/// Can be combined with other term flags on the `ecs_term_ref_t::id` field.
 pub(crate) const ECS_UP: u64 = 1 << 62;
 
 /// Match by traversing downwards (derived, cannot be set)
-/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+/// Can be combined with other term flags on the `ecs_term_ref_t::id` field.
 pub(crate) const ECS_TRAV: u64 = 1 << 61;
 
 /// Sort results breadth first
-/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+/// Can be combined with other term flags on the `ecs_term_ref_t::id` field.
 pub(crate) const ECS_CASCADE: u64 = 1 << 60;
 
 /// Iterate groups in descending order (used for ordering)
-/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+/// Can be combined with other term flags on the `ecs_term_ref_t::id` field.
 pub(crate) const ECS_DESC: u64 = 1 << 59;
 
 /// Term id is a variable
-/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+/// Can be combined with other term flags on the `ecs_term_ref_t::id` field.
 pub(crate) const ECS_IS_VARIABLE: u64 = 1 << 58;
 
 /// Term id is an entity
-/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+/// Can be combined with other term flags on the `ecs_term_ref_t::id` field.
 pub(crate) const ECS_IS_ENTITY: u64 = 1 << 57;
 
 /// Term id is a name (don't attempt to lookup as entity)
-/// Can be combined with other term flags on the ecs_term_ref_t::id field.
+/// Can be combined with other term flags on the `ecs_term_ref_t::id` field.
 pub(crate) const ECS_IS_NAME: u64 = 1 << 56;
 
 /// all term traversal flags
@@ -335,31 +335,31 @@ pub(crate) const IS_TOGGLE: u64 = 1 << 10;
 /// Query flags discovered & set during query creation.
 
 /// Query must match prefabs.
-/// Can be combined with other query flags on the ecs_query_desc_t::flags field.
+/// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
 pub(crate) const ECS_QUERY_MATCH_PREFAB: u64 = 1 << 1;
 
 /// Query must match disabled entities.
-/// Can be combined with other query flags on the ecs_query_desc_t::flags field.
+/// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
 pub(crate) const ECS_QUERY_MATCH_DISABLED: u64 = 1 << 2;
 
 /// Query must match empty tables.
-/// Can be combined with other query flags on the ecs_query_desc_t::flags field.
+/// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
 pub(crate) const ECS_QUERY_MATCH_EMPTY_TABLES: u64 = 1 << 3;
 
 /// Query won't provide component data.
-/// Can be combined with other query flags on the ecs_query_desc_t::flags field.
+/// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
 pub(crate) const ECS_QUERY_NO_DATA: u64 = 1 << 4;
 
 /// Query iteration is always instanced.
-/// Can be combined with other query flags on the ecs_query_desc_t::flags field.
+/// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
 pub(crate) const ECS_QUERY_IS_INSTANCED: u64 = 1 << 5;
 
 /// Query may have unresolved entity identifiers.
-/// Can be combined with other query flags on the ecs_query_desc_t::flags field.
+/// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
 pub(crate) const ECS_QUERY_ALLOW_UNRESOLVED_BY_NAME: u64 = 1 << 6;
 
 /// Query only returns whole tables (ignores toggle/member fields).
-/// Can be combined with other query flags on the ecs_query_desc_t::flags field.
+/// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
 pub(crate) const ECS_QUERY_TABLE_ONLY: u64 = 1 << 7;
 
 // Core scopes & entities

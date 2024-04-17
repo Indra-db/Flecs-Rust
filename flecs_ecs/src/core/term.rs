@@ -180,7 +180,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
                 0
             };
 
-            self.init_current_term((id_rel, id_target))
+            self.init_current_term((id_rel, id_target));
         }
     }
 

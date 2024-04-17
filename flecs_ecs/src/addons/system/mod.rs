@@ -53,7 +53,7 @@ impl<'a> System<'a> {
                 &mut desc.query.flags,
                 sys::EcsQueryIsInstanced,
                 is_instanced,
-            )
+            );
         }
 
         /*

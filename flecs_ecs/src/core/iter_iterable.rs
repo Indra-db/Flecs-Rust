@@ -103,7 +103,7 @@ where
     #[doc(alias = "iter_iterable::set_var")]
     pub fn set_var_rule(&mut self, name: &CStr, value: impl Into<Entity>) -> &mut Self {
         let qit = unsafe { &mut self.iter.priv_.iter.query };
-        let var_id = unsafe { sys::ecs_query_find_var((*qit).query, name.as_ptr()) };
+        let var_id = unsafe { sys::ecs_query_find_var(qit.query, name.as_ptr()) };
         ecs_assert!(
             var_id != -1,
             FlecsErrorCode::InvalidParameter,
