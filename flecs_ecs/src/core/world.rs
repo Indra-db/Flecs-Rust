@@ -981,24 +981,180 @@ impl World {
     ///
     /// # Returns
     ///
-    /// The singleton component as const.
+    /// The singleton component as const, or None if the component does not exist.
     ///
     /// # See also
     ///
     /// * C++ API: `world::get`
     #[doc(alias = "world::get")]
     #[inline(always)]
-    pub fn get<T>(&self) -> Option<&T>
+    pub fn try_get<T>(&self) -> Option<&T>
     where
-        T: ComponentId + ComponentType<Struct>,
+        T: ComponentId + NotEmptyComponent,
     {
         let component_id = T::get_id(self);
         let singleton_entity = EntityView::new_from(self, component_id);
-        unsafe {
-            (sys::ecs_get_id(self.raw_world.as_ptr(), *singleton_entity.id, component_id)
-                as *const T)
-                .as_ref()
+
+        // This branch will be removed in release mode since this can be determined at compile time.
+        if !T::IS_ENUM {
+            unsafe {
+                (sys::ecs_get_id(self.raw_world.as_ptr(), *singleton_entity.id, component_id)
+                    as *const T)
+                    .as_ref()
+            }
+        } else {
+            let target = unsafe {
+                sys::ecs_get_target(
+                    self.raw_world.as_ptr(),
+                    *singleton_entity.id,
+                    component_id,
+                    0,
+                )
+            };
+
+            if target == 0 {
+                // if there is no matching pair for (r,*), try just r
+                unsafe {
+                    (sys::ecs_get_id(self.raw_world.as_ptr(), *singleton_entity.id, component_id)
+                        as *const T)
+                        .as_ref()
+                }
+            } else {
+                // get constant value from constant entity
+                let constant_value = unsafe {
+                    (sys::ecs_get_mut_id(self.raw_world.as_ptr(), target, component_id) as *const T)
+                        .as_ref()
+                };
+
+                ecs_assert!(
+                    constant_value.is_some(),
+                    FlecsErrorCode::InternalError,
+                    "missing enum constant value {}",
+                    std::any::type_name::<T>()
+                );
+
+                constant_value
+            }
         }
+    }
+    /// Get singleton component as const.
+    ///
+    /// # Safety
+    ///
+    /// This will panic if the component as singleton does not exist.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The type of the component to get.
+    ///
+    /// # Returns
+    ///
+    /// The singleton component as const.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub fn get<T>(&self) -> &T
+    where
+        T: ComponentId + NotEmptyComponent,
+    {
+        self.try_get::<T>()
+            .expect("Component does not exist as a singleton")
+    }
+
+    /// Get singleton component as mutable.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The type of the component to get.
+    ///
+    /// # Returns
+    ///
+    /// The singleton component as mutable, or None if the component does not exist.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    #[inline(always)]
+    pub fn try_get_mut<T>(&self) -> Option<&mut T>
+    where
+        T: ComponentId + NotEmptyComponent,
+    {
+        let component_id = T::get_id(self);
+        let singleton_entity = EntityView::new_from(self, component_id);
+
+        // This branch will be removed in release mode since this can be determined at compile time.
+        if !T::IS_ENUM {
+            unsafe {
+                (sys::ecs_get_mut_id(self.raw_world.as_ptr(), *singleton_entity.id, component_id)
+                    as *mut T)
+                    .as_mut()
+            }
+        } else {
+            let target = unsafe {
+                sys::ecs_get_target(
+                    self.raw_world.as_ptr(),
+                    *singleton_entity.id,
+                    component_id,
+                    0,
+                )
+            };
+
+            if target == 0 {
+                // if there is no matching pair for (r,*), try just r
+                unsafe {
+                    (sys::ecs_get_mut_id(
+                        self.raw_world.as_ptr(),
+                        *singleton_entity.id,
+                        component_id,
+                    ) as *mut T)
+                        .as_mut()
+                }
+            } else {
+                // get mutable value from constant entity
+                let constant_value = unsafe {
+                    (sys::ecs_get_mut_id(self.raw_world.as_ptr(), target, component_id) as *mut T)
+                        .as_mut()
+                };
+
+                ecs_assert!(
+                    constant_value.is_some(),
+                    FlecsErrorCode::InternalError,
+                    "missing enum constant value {}",
+                    std::any::type_name::<T>()
+                );
+
+                constant_value
+            }
+        }
+    }
+
+    /// Get singleton component as mutable.
+    ///
+    /// # Safety
+    ///
+    /// This will panic if the component as singleton does not exist.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The type of the component to get.
+    ///
+    /// # Returns
+    ///
+    /// The singleton component as mutable.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub fn get_mut<T>(&self) -> &mut T
+    where
+        T: ComponentId + NotEmptyComponent,
+    {
+        self.try_get_mut::<T>()
+            .expect("Component does not exist as a singleton")
     }
 
     /// Get singleton component as mutable.
@@ -2558,7 +2714,7 @@ impl World {
     ///
     /// * C++ API: `world::make_alive`
     #[doc(alias = "world::make_alive")]
-    pub fn ensure(&self, entity: impl Into<Entity>) -> EntityView {
+    pub fn make_alive(&self, entity: impl Into<Entity>) -> EntityView {
         let entity = *entity.into();
         unsafe { sys::ecs_make_alive(self.raw_world.as_ptr(), entity) };
         EntityView::new_from(self, entity)

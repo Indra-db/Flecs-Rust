@@ -10023,11 +10023,15 @@ int ecs_log_last_error(void);
 #endif
 
 #ifdef FLECS_REST
+#ifndef FLECS_HTTP
 #define FLECS_HTTP
+#endif
 #endif
 
 #ifdef FLECS_SCRIPT
+#ifndef FLECS_EXPR
 #define FLECS_EXPR
+#endif
 #endif
 
 #ifdef FLECS_APP

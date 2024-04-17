@@ -597,7 +597,6 @@ impl<'a> EntityView<'a> {
     {
         self.for_each_children_id(flecs::ChildOf::ID, func);
     }
-
     /// Get (struct) Component from entity
     /// use `.unwrap()` or `.unwrap_unchecked()` or `get_unchecked()` if you're sure the entity has the component
     ///
@@ -614,7 +613,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
     #[inline(always)]
-    pub fn get<T: ComponentId>(self) -> Option<&'a T::UnderlyingType> {
+    pub fn try_get<T: ComponentId>(self) -> Option<&'a T::UnderlyingType> {
         if !T::IS_ENUM {
             if T::IS_TAG {
                 ecs_assert!(
@@ -665,15 +664,11 @@ impl<'a> EntityView<'a> {
         }
     }
 
-    pub fn get_callback<T: ComponentId>(self, callback: impl FnOnce(&T::UnderlyingType)) -> bool {
-        if let Some(component) = self.get::<T>() {
-            callback(component);
-            return true;
-        }
-        false
-    }
-
-    /// Get (struct) Component from entity unchecked
+    /// Get (struct) Component from entity
+    ///
+    /// # Safety
+    ///
+    /// if the entity does not have the component, this will cause a panic
     ///
     /// # Type Parameters
     ///
@@ -681,7 +676,34 @@ impl<'a> EntityView<'a> {
     ///
     /// # Returns
     ///
-    /// * &T - The component
+    /// A reference to the component
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
+    pub fn get<T: ComponentId>(&self) -> &'a T::UnderlyingType {
+        self.try_get::<T>()
+            .expect("Component does not exist on this entity")
+    }
+
+    pub fn get_callback<T: ComponentId>(self, callback: impl FnOnce(&T::UnderlyingType)) -> bool {
+        if let Some(component) = self.try_get::<T>() {
+            callback(component);
+            return true;
+        }
+        false
+    }
+
+    /// Get Component from entity unchecked
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The component type to get
+    ///
+    /// # Returns
+    ///
+    /// * &T - The component or a reference the enum constant
     ///
     /// # Safety
     ///
@@ -691,9 +713,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub unsafe fn get_unchecked<T: ComponentId + ComponentType<Struct>>(
-        &self,
-    ) -> &T::UnderlyingType {
+    pub unsafe fn get_unchecked<T: ComponentId>(&self) -> &'a T::UnderlyingType {
         if !T::IS_ENUM {
             if T::IS_TAG {
                 ecs_assert!(
@@ -747,56 +767,6 @@ impl<'a> EntityView<'a> {
         }
     }
 
-    /// Get enum constant from entity unchecked
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The component type to get
-    ///
-    /// # Returns
-    ///
-    /// * &T - The component
-    ///
-    /// # Safety
-    ///
-    /// if the entity does not have the component, this will cause a panic
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
-    pub unsafe fn get_enum_unchecked<T: ComponentId + ComponentType<Enum>>(
-        &self,
-    ) -> &T::UnderlyingType {
-        let component_id: IdT = T::get_id(self.world);
-        let target: IdT =
-            sys::ecs_get_target(self.world.world_ptr_mut(), *self.id, component_id, 0);
-
-        if target == 0 {
-            // if there is no matching pair for (r,*), try just r
-            let ptr = sys::ecs_get_id(self.world.world_ptr_mut(), *self.id, component_id)
-                as *const T::UnderlyingType;
-            ecs_assert!(
-                !ptr.is_null(),
-                FlecsErrorCode::InternalError,
-                "missing enum constant value {}",
-                std::any::type_name::<T>()
-            );
-            &*ptr
-        } else {
-            // get constant value from constant entity
-            let constant_value = sys::ecs_get_id(self.world.world_ptr_mut(), target, component_id)
-                as *const T::UnderlyingType;
-            ecs_assert!(
-                !constant_value.is_null(),
-                FlecsErrorCode::InternalError,
-                "missing enum constant value {}",
-                std::any::type_name::<T>()
-            );
-            &*constant_value
-        }
-    }
-
     /// Get an option immutable reference for the first element of a pair
     /// This operation gets the value for a pair from the entity.
     ///
@@ -816,7 +786,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get_pair_first_id<First>(self, second: impl Into<Entity>) -> Option<&'static First>
+    pub fn try_get_pair_first_id<First>(self, second: impl Into<Entity>) -> Option<&'a First>
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -839,6 +809,37 @@ impl<'a> EntityView<'a> {
         }
     }
 
+    /// Get an option immutable reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Safety
+    ///
+    /// This will cause a panic if the entity does not have the component
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first part of the pair.
+    ///
+    /// # Arguments
+    ///
+    /// * `second`: The second element of the pair.
+    ///
+    /// # Returns
+    ///
+    /// The reference to the first element of the pair.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
+    pub fn get_pair_first_id<First>(self, second: impl Into<Entity>) -> &'a First
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_pair_first_id(second)
+            .expect("Component does not exist on this entity")
+    }
+
     /// Get an immutable reference for the first element of a pair
     /// This operation gets the value for a pair from the entity.
     ///
@@ -855,12 +856,41 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get_pair_first<First, Second>(self) -> Option<&'static First>
+    pub fn try_get_pair_first<First, Second>(self) -> Option<&'a First>
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId,
     {
-        self.get_pair_first_id(Second::get_id(self.world))
+        self.try_get_pair_first_id(Second::get_id(self.world))
+    }
+
+    /// Get an immutable reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Safety
+    ///
+    /// This will cause a panic if the entity does not have the component
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first part of the pair.
+    /// * `Second`: The second part of the pair.
+    ///
+    /// # Returns
+    ///
+    /// The reference to the first element of the pair.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
+    pub fn get_pair_first<First, Second>(self) -> &'a First
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId,
+    {
+        self.try_get_pair_first::<First, Second>()
+            .expect("Component does not exist on this entity")
     }
 
     /// Get an immutable reference for the second element of a pair.
@@ -882,7 +912,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get_pair_second_id<Second>(self, first: impl Into<Entity>) -> Option<&'static Second>
+    pub fn try_get_pair_second_id<Second>(self, first: impl Into<Entity>) -> Option<&'a Second>
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -907,21 +937,85 @@ impl<'a> EntityView<'a> {
     /// Get an immutable reference for the second element of a pair.
     /// This operation gets the value for a pair from the entity.
     ///
+    /// # Safety
+    ///
+    /// This will cause a panic if the entity does not have the component
+    ///
     /// # Type Parameters
     ///
-    /// * `First`: The first element of the pair.
     /// * `Second`: The second element of the pair.
+    ///
+    /// # Arguments
+    ///
+    /// * `first`: The first element of the pair.
+    ///
+    /// # Returns
+    ///
+    /// The reference to the second element of the pair.
     ///
     /// # See also
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get_pair_second<First, Second>(self) -> Option<&'static Second>
+    pub fn get_pair_second_id<Second>(self, first: impl Into<Entity>) -> &'a Second
+    where
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_pair_second_id(first)
+            .expect("Component does not exist on this entity")
+    }
+
+    /// Get an immutable reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first element of the pair.
+    /// * `Second`: The second element of the pair.
+    ///
+    /// # Returns
+    ///
+    /// An option containing the reference to the second element of the pair if it exists, otherwise None.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
+    pub fn try_get_pair_second<First, Second>(self) -> Option<&'a Second>
     where
         First: ComponentId + ComponentType<Struct> + EmptyComponent,
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
-        self.get_pair_second_id(First::get_id(self.world))
+        self.try_get_pair_second_id(First::get_id(self.world))
+    }
+
+    /// Get an immutable reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Safety
+    ///
+    /// This will cause a panic if the entity does not have the component
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first element of the pair.
+    /// * `Second`: The second element of the pair.
+    ///
+    /// # Returns
+    ///
+    /// The reference to the second element of the pair.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
+    pub fn get_pair_second<First, Second>(self) -> &'a Second
+    where
+        First: ComponentId + ComponentType<Struct> + EmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_pair_second::<First, Second>()
+            .expect("Component does not exist on this entity")
     }
 
     /// Get component value or pair as untyped pointer
@@ -961,7 +1055,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::get_mut`
     #[doc(alias = "entity_view::get_mut")]
     #[allow(clippy::mut_from_ref)]
-    pub fn get_mut<T: ComponentId>(self) -> Option<&'a mut T::UnderlyingType> {
+    pub fn try_get_mut<T: ComponentId>(self) -> Option<&'a mut T::UnderlyingType> {
         // This branch will be removed in release mode since this can be determined at compile time.
         if !T::IS_ENUM {
             let component_id = T::get_id(self.world);
@@ -1011,11 +1105,38 @@ impl<'a> EntityView<'a> {
         }
     }
 
+    /// Gets a mutable reference to a component, assuming it exists.
+    ///
+    /// This function unwraps the result of `try_get_mut`, which should only be used when you are certain
+    /// that the component exists. Using this function when the component is not present will cause a panic.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: The component to get.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the component value.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the component does not exist.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get_mut`
+    #[doc(alias = "entity_view::get_mut")]
+    #[allow(clippy::mut_from_ref)]
+    pub fn get_mut<T: ComponentId>(self) -> &'a mut T::UnderlyingType {
+        self.try_get_mut::<T>()
+            .expect("Component does not exist on this entity")
+    }
+
     pub fn get_callback_mut<T: ComponentId>(
         self,
         callback: impl FnOnce(&mut T::UnderlyingType),
     ) -> bool {
-        if let Some(comp) = self.get_mut::<T>() {
+        if let Some(comp) = self.try_get_mut::<T>() {
             callback(comp);
             true
         } else {
@@ -1059,7 +1180,10 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get_mut`
     #[doc(alias = "entity_view::get_mut")]
-    pub fn get_pair_first_id_mut<First>(self, second: impl Into<Entity>) -> Option<&'a mut First>
+    pub fn try_get_pair_first_id_mut<First>(
+        self,
+        second: impl Into<Entity>,
+    ) -> Option<&'a mut First>
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1087,6 +1211,40 @@ impl<'a> EntityView<'a> {
     /// Get a mutable reference for the first element of a pair
     /// This operation gets the value for a pair from the entity.
     ///
+    /// This function unwraps the result of `try_get_pair_first_id_mut`, which should only be used when you are certain
+    /// that the component exists. Using this function when the component is not present will cause a panic.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first part of the pair.
+    ///
+    /// # Arguments
+    ///
+    /// * `second`: The second element of the pair.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the first element of the pair.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the component does not exist.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get_mut`
+    #[doc(alias = "entity_view::get_mut")]
+    pub fn get_pair_first_id_mut<First>(self, second: impl Into<Entity>) -> &'a mut First
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_pair_first_id_mut::<First>(second)
+            .expect("Component does not exist on this entity")
+    }
+
+    /// Get a mutable reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
     /// # Type Parameters
     ///
     /// * `First`: The first part of the pair.
@@ -1096,7 +1254,38 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get_mut`
     #[doc(alias = "entity_view::get_mut")]
-    pub fn get_pair_first_mut<First, Second>(&mut self) -> Option<&'a mut First>
+    pub fn try_get_pair_first_mut<First, Second>(&mut self) -> Option<&'a mut First>
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId + ComponentType<Struct>,
+    {
+        self.try_get_pair_first_id_mut::<First>(Second::get_id(self.world))
+    }
+
+    /// Get a mutable reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// This function unwraps the result of `try_get_pair_first_mut`, which should only be used when you are certain
+    /// that the component exists. Using this function when the component is not present will cause a panic.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first part of the pair.
+    /// * `Second`: The second part of the pair.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the first element of the pair.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the component does not exist.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get_mut`
+    #[doc(alias = "entity_view::get_mut")]
+    pub fn get_pair_first_mut<First, Second>(&mut self) -> &'a mut First
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId + ComponentType<Struct>,
@@ -1119,7 +1308,10 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get_mut`
     #[doc(alias = "entity_view::get_mut")]
-    pub fn get_pair_second_id_mut<Second>(self, first: impl Into<Entity>) -> Option<&'a mut Second>
+    pub fn try_get_pair_second_id_mut<Second>(
+        self,
+        first: impl Into<Entity>,
+    ) -> Option<&'a mut Second>
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1147,6 +1339,40 @@ impl<'a> EntityView<'a> {
     /// Get a mutable reference for the second element of a pair.
     /// This operation gets the value for a pair from the entity.
     ///
+    /// This function unwraps the result of `try_get_pair_second_id_mut`, which should only be used when you are certain
+    /// that the component exists. Using this function when the component is not present will cause a panic.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Second`: The second element of the pair.
+    ///
+    /// # Arguments
+    ///
+    /// * `first`: The first element of the pair.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the second element of the pair.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the component does not exist.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get_mut`
+    #[doc(alias = "entity_view::get_mut")]
+    pub fn get_pair_second_id_mut<Second>(self, first: impl Into<Entity>) -> &'a mut Second
+    where
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_pair_second_id_mut::<Second>(first)
+            .expect("Component does not exist on this entity")
+    }
+
+    /// Get a mutable reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
     /// # Type Parameters
     ///
     /// * `First`: The first element of the pair.
@@ -1156,7 +1382,38 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get_mut`
     #[doc(alias = "entity_view::get_mut")]
-    pub fn get_pair_second_mut<First, Second>(&mut self) -> Option<&'a mut Second>
+    pub fn try_get_pair_second_mut<First, Second>(&mut self) -> Option<&'a mut Second>
+    where
+        First: ComponentId + ComponentType<Struct> + EmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_pair_second_id_mut::<Second>(First::get_id(self.world))
+    }
+
+    /// Get a mutable reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// This function unwraps the result of `try_get_pair_second_mut`, which should only be used when you are certain
+    /// that the component exists. Using this function when the component is not present will cause a panic.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The first element of the pair.
+    /// * `Second`: The second element of the pair.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the second element of the pair.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the component does not exist.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get_mut`
+    #[doc(alias = "entity_view::get_mut")]
+    pub fn get_pair_second_mut<First, Second>(&mut self) -> &'a mut Second
     where
         First: ComponentId + ComponentType<Struct> + EmptyComponent,
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
@@ -1919,8 +2176,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::to_constant`
     #[doc(alias = "entity_view::to_constant")]
-    pub fn to_constant<T: ComponentId>(self) -> Option<&'a T::UnderlyingType> {
-        let ptr = self.get::<T>();
+    pub fn try_to_constant<T: ComponentId>(self) -> Option<&'a T::UnderlyingType> {
+        let ptr = self.try_get::<T>();
         ecs_assert!(
             ptr.is_some(),
             FlecsErrorCode::InvalidParameter,
@@ -1933,20 +2190,24 @@ impl<'a> EntityView<'a> {
     ///
     /// # Safety
     ///
-    /// ensure that the entity is a constant before calling this function.
+    /// This function panics if the entity is not a constant.
     ///
     /// # Type Parameters
     ///
     /// * `T` - The enum type.
     ///
+    /// # Returns
+    ///
+    /// * `Some(&T)` - The enum constant if the entity is a constant.
+    /// * `None` - If the entity is not a constant.
+    ///
     /// # See also
     ///
     /// * C++ API: `entity_view::to_constant`
     #[doc(alias = "entity_view::to_constant")]
-    pub unsafe fn to_constant_unchecked<T: ComponentId + ComponentType<Enum>>(
-        &self,
-    ) -> &T::UnderlyingType {
-        self.get_enum_unchecked::<T>()
+    pub fn to_constant<T: ComponentId>(self) -> &'a T::UnderlyingType {
+        self.try_to_constant::<T>()
+            .expect("Entity is not a constant")
     }
 }
 

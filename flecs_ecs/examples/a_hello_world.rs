@@ -32,7 +32,7 @@ fn main() {
     world.progress();
 
     //you can use `.unwrap_unchecked()` if you are sure the component exists or `get_unchecked()`
-    let pos = bob.get::<Position>().unwrap();
+    let pos = bob.try_get::<Position>().unwrap();
     // See if Bob has moved (he has)
     //fprintln!(snap,"Bob's position: {:?}", pos);
     fprintln!(snap, "{}'s position: {:?}", bob.name(), pos);

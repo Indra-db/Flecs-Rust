@@ -112,7 +112,7 @@ fn enum_standard_enum_reflection() {
     // TODO implement .first and .last() on all enums
     assert!(entity.is_valid());
     //let enum_comp = entity.get::<StandardEnum>().unwrap();
-    let enum_comp2 = entity2.get::<StandardEnum>().unwrap();
+    let enum_comp2 = entity2.try_get::<StandardEnum>().unwrap();
     entity2.set(StandardEnum::Red);
     //assert!(*enum_comp == StandardEnum::Red);
     assert!(*enum_comp2 == StandardEnum::Red);

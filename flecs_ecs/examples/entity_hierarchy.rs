@@ -20,7 +20,7 @@ fn iterate_tree(entity: EntityView, position_parent: &Position, snap: &mut Snap)
     );
 
     // Get the position of the entity
-    let pos = entity.get::<Position>().unwrap();
+    let pos = entity.try_get::<Position>().unwrap();
 
     // Calculate actual position
     let pos_actual = Position {

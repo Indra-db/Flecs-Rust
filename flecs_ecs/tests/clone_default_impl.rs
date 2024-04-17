@@ -47,8 +47,8 @@ fn copy_hook_implemented_for_drop_types() {
     });
 
     let entity_cloned = e_orig.duplicate(true);
-    let data_orig = &e_orig.get::<CloneDefaultDrop>().unwrap().data;
-    let data_cloned = &entity_cloned.get::<CloneDefaultDrop>().unwrap().data;
+    let data_orig = &e_orig.get::<CloneDefaultDrop>().data;
+    let data_cloned = &entity_cloned.get::<CloneDefaultDrop>().data;
 
     assert!(*data_orig == *data_cloned);
 }

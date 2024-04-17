@@ -66,7 +66,7 @@ fn main() {
     ); // true
 
     // Get the current value of the enum
-    let v = tile.get::<Tile>();
+    let v = tile.try_get::<Tile>();
     if let Some(tile_value) = v {
         fprintln!(snap, "is tile stone: {}", *tile_value == Tile::Stone); // true
     }

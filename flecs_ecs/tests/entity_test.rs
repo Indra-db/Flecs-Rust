@@ -103,7 +103,7 @@ fn entity_new_set() {
     assert!(entity.has::<Position>());
 
     // Verify the component data
-    let p = entity.get::<Position>().unwrap();
+    let p = entity.try_get::<Position>().unwrap();
     assert_eq!(p.x, 10);
     assert_eq!(p.y, 20);
 }
@@ -121,11 +121,11 @@ fn entity_new_set_2() {
     assert!(entity.has::<Position>());
     assert!(entity.has::<Velocity>());
 
-    let p = entity.get::<Position>().unwrap();
+    let p = entity.try_get::<Position>().unwrap();
     assert_eq!(p.x, 10);
     assert_eq!(p.y, 20);
 
-    let v = entity.get::<Velocity>().unwrap();
+    let v = entity.try_get::<Velocity>().unwrap();
     assert_eq!(v.x, 1);
     assert_eq!(v.y, 2);
 }
@@ -167,7 +167,7 @@ fn entity_set() {
     entity.set(Position { x: 10, y: 20 });
     assert!(entity.has::<Position>());
 
-    let p = entity.get::<Position>().unwrap();
+    let p = entity.try_get::<Position>().unwrap();
     assert_eq!(p.x, 10);
     assert_eq!(p.y, 20);
 }
@@ -254,11 +254,11 @@ fn entity_set_2() {
     assert!(entity.has::<Position>());
     assert!(entity.has::<Velocity>());
 
-    let p = entity.get::<Position>().unwrap();
+    let p = entity.try_get::<Position>().unwrap();
     assert_eq!(p.x, 10);
     assert_eq!(p.y, 20);
 
-    let v = entity.get::<Velocity>().unwrap();
+    let v = entity.try_get::<Velocity>().unwrap();
     assert_eq!(v.x, 1);
     assert_eq!(v.y, 2);
 }
@@ -399,7 +399,7 @@ fn entity_set_generic() {
     assert!(entity.has::<Position>());
     assert!(entity.has_id(position));
 
-    let pos = entity.get::<Position>().unwrap();
+    let pos = entity.try_get::<Position>().unwrap();
     assert_eq!(pos.x, 10);
     assert_eq!(pos.y, 20);
 }
@@ -420,7 +420,7 @@ fn entity_set_generic_no_size() {
     assert!(entity.has::<Position>());
     assert!(entity.has_id(position));
 
-    let pos = entity.get::<Position>().unwrap();
+    let pos = entity.try_get::<Position>().unwrap();
     assert_eq!(pos.x, 10);
     assert_eq!(pos.y, 20);
 }
@@ -768,7 +768,7 @@ fn entity_tag_has_size_zero() {
     let world = World::new();
 
     let comp = world.component::<TagA>();
-    let ptr = comp.get::<sys::EcsComponent>().unwrap();
+    let ptr = comp.try_get::<sys::EcsComponent>().unwrap();
 
     assert_eq!(ptr.size, 0);
     assert_eq!(ptr.alignment, 0);
@@ -1010,13 +1010,13 @@ fn entity_set_no_copy() {
 
     let entity = world.entity().set(Pod::new(10));
 
-    let clone_invoked = entity.get::<Pod>().unwrap().clone_count;
+    let clone_invoked = entity.try_get::<Pod>().unwrap().clone_count;
 
     assert_eq!(clone_invoked, 0);
 
     assert!(entity.has::<Pod>());
 
-    let p = entity.get::<Pod>();
+    let p = entity.try_get::<Pod>();
 
     assert!(p.is_some());
 
@@ -1033,18 +1033,18 @@ fn entity_set_copy() {
 
     let entity_dupl = entity.duplicate(true);
 
-    let clone_invoked = entity_dupl.get::<Pod>().unwrap().clone_count;
+    let clone_invoked = entity_dupl.try_get::<Pod>().unwrap().clone_count;
 
     assert_eq!(clone_invoked, 1);
 
     assert!(entity.has::<Pod>());
-    let p = entity.get::<Pod>();
+    let p = entity.try_get::<Pod>();
     assert!(p.is_some());
     let p = p.unwrap();
     assert_eq!(p.value, 10);
 
     assert!(entity_dupl.has::<Pod>());
-    let p = entity_dupl.get::<Pod>();
+    let p = entity_dupl.try_get::<Pod>();
     assert!(p.is_some());
     let p = p.unwrap();
     assert_eq!(p.value, 10);
@@ -1058,7 +1058,7 @@ fn entity_set_deduced() {
 
     assert!(entity.has::<Position>());
 
-    let p = entity.get::<Position>();
+    let p = entity.try_get::<Position>();
     assert!(p.is_some());
     let p = p.unwrap();
     assert_eq!(p.x, 10);
@@ -1167,13 +1167,13 @@ fn entity_set_override() {
     assert!(entity.has::<Position>());
     assert!(entity.owns::<Position>());
 
-    let p = entity.get::<Position>();
+    let p = entity.try_get::<Position>();
     assert!(p.is_some());
     let p = p.unwrap();
     assert_eq!(p.x, 10);
     assert_eq!(p.y, 20);
 
-    let p_base = base.get::<Position>();
+    let p_base = base.try_get::<Position>();
     assert!(p_base.is_some());
     let p_base = p_base.unwrap();
     assert_eq!(p_base.x, 10);
@@ -1193,13 +1193,13 @@ fn entity_set_override_lvalue() {
     assert!(entity.has::<Position>());
     assert!(entity.owns::<Position>());
 
-    let p = entity.get::<Position>();
+    let p = entity.try_get::<Position>();
     assert!(p.is_some());
     let p = p.unwrap();
     assert_eq!(p.x, 10);
     assert_eq!(p.y, 20);
 
-    let p_base = base.get::<Position>();
+    let p_base = base.try_get::<Position>();
     assert!(p_base.is_some());
     let p_base = p_base.unwrap();
     assert_eq!(p_base.x, 10);
@@ -1219,13 +1219,13 @@ fn entity_set_override_pair() {
     assert!(entity.has::<(Position, TagA)>());
     assert!(entity.owns::<(Position, TagA)>());
 
-    let p = entity.get_pair_first::<Position, TagA>();
+    let p = entity.try_get_pair_first::<Position, TagA>();
     assert!(p.is_some());
     let p = p.unwrap();
     assert_eq!(p.x, 10);
     assert_eq!(p.y, 20);
 
-    let p_base = base.get_pair_first::<Position, TagA>();
+    let p_base = base.try_get_pair_first::<Position, TagA>();
     assert!(p_base.is_some());
     let p_base = p_base.unwrap();
     assert_eq!(p_base.x, 10);
@@ -1247,13 +1247,13 @@ fn entity_set_override_pair_w_tgt_id() {
     assert!(entity.has_pair_first::<Position>(tgt));
     assert!(entity.owns_pair_first::<Position>(tgt));
 
-    let p = entity.get_pair_first_id::<Position>(tgt);
+    let p = entity.try_get_pair_first_id::<Position>(tgt);
     assert!(p.is_some());
     let p = p.unwrap();
     assert_eq!(p.x, 10);
     assert_eq!(p.y, 20);
 
-    let p_base = base.get_pair_first_id::<Position>(tgt);
+    let p_base = base.try_get_pair_first_id::<Position>(tgt);
     assert!(p_base.is_some());
     let p_base = p_base.unwrap();
     assert_eq!(p_base.x, 10);
@@ -1273,13 +1273,13 @@ fn entity_set_override_pair_w_rel_tag() {
     assert!(entity.has::<(TagA, Position)>());
     assert!(entity.owns::<(TagA, Position)>());
 
-    let p = entity.get_pair_second::<TagA, Position>();
+    let p = entity.try_get_pair_second::<TagA, Position>();
     assert!(p.is_some());
     let p = p.unwrap();
     assert_eq!(p.x, 10);
     assert_eq!(p.y, 20);
 
-    let p_base = base.get_pair_second::<TagA, Position>();
+    let p_base = base.try_get_pair_second::<TagA, Position>();
     assert!(p_base.is_some());
     let p_base = p_base.unwrap();
     assert_eq!(p_base.x, 10);
@@ -1441,7 +1441,7 @@ fn entityview_to_entity_to_entity_view() {
     assert!(entity_view.is_valid());
     assert_eq!(entity, entity_view);
 
-    let p = entity_view.get::<Position>().unwrap();
+    let p = entity_view.try_get::<Position>().unwrap();
     assert_eq!(p.x, 10);
     assert_eq!(p.y, 20);
 }
@@ -1461,7 +1461,7 @@ fn entity_entity_view_to_entity_world() {
     entity_mut.set(Position { x: 10, y: 20 });
 
     assert!(entity_view.has::<Position>());
-    let p = entity_view.get::<Position>().unwrap();
+    let p = entity_view.try_get::<Position>().unwrap();
     assert_eq!(p.x, 10);
     assert_eq!(p.y, 20);
 }
@@ -1484,7 +1484,7 @@ fn entity_entity_view_to_entity_stage() {
     assert!(entity_mut.has::<Position>());
     assert!(entity_view.has::<Position>());
 
-    let p = entity_view.get::<Position>().unwrap();
+    let p = entity_view.try_get::<Position>().unwrap();
     assert_eq!(p.x, 10);
     assert_eq!(p.y, 20);
 }
@@ -1503,7 +1503,7 @@ fn entity_create_entity_view_from_stage() {
     entity_mut.set(Position { x: 10, y: 20 });
     assert!(entity_view.has::<Position>());
 
-    let p = entity_view.get::<Position>().unwrap();
+    let p = entity_view.try_get::<Position>().unwrap();
     assert_eq!(p.x, 10);
     assert_eq!(p.y, 20);
 }
@@ -1515,7 +1515,7 @@ fn entity_set_template() {
         value: Position { x: 10, y: 20 },
     });
 
-    let pos = entity.get::<Template<Position>>().unwrap();
+    let pos = entity.try_get::<Template<Position>>().unwrap();
     assert_eq!(pos.value.x, 10);
     assert_eq!(pos.value.y, 20);
 }
@@ -1583,11 +1583,11 @@ fn entity_get_mut_1_component_w_callback() {
 
     assert!(!e_3.get_callback_mut::<Position>(|_| {}));
 
-    let p = e_1.get::<Position>().unwrap();
+    let p = e_1.try_get::<Position>().unwrap();
     assert_eq!(p.x, 11);
     assert_eq!(p.y, 22);
 
-    let p = e_2.get::<Position>().unwrap();
+    let p = e_2.try_get::<Position>().unwrap();
     assert_eq!(p.x, 12);
     assert_eq!(p.y, 24);
 }
@@ -1654,7 +1654,7 @@ fn entity_defer_set_1_component() {
 
     assert!(e.has::<Position>());
 
-    let p = e.get::<Position>().unwrap();
+    let p = e.try_get::<Position>().unwrap();
     assert_eq!(p.x, 10);
     assert_eq!(p.y, 20);
 }

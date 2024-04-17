@@ -55,7 +55,7 @@ fn main() {
 
     // Even though the instance doesn't have a private copy of ImpulseSpeed, we
     // can still get it using the regular API (outputs 50)
-    let impulse_speed = inst.get::<ImpulseSpeed>();
+    let impulse_speed = inst.try_get::<ImpulseSpeed>();
     fprintln!(snap, "ImpulseSpeed: {}", impulse_speed.unwrap().value);
 
     // Prefab components can be iterated just like regular components:

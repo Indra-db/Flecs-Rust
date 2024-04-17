@@ -39,7 +39,7 @@ fn main() {
 
     // Because of the IsA relationship, the instance now shares the Defense
     // component with the prefab, and can be retrieved as a regular component:
-    let d_inst = inst.get::<Defence>().unwrap();
+    let d_inst = inst.try_get::<Defence>().unwrap();
     fprintln!(snap, "{:?}", d_inst);
 
     // Because the component is shared, changing the value on the prefab will

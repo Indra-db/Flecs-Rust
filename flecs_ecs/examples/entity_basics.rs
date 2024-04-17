@@ -18,7 +18,7 @@ fn main() {
         .add::<Walking>();
 
     // Get the value for the Position component
-    let pos = bob.get::<Position>().unwrap();
+    let pos = bob.try_get::<Position>().unwrap();
     fprintln!(snap, "Bob's position: {:?}", pos);
 
     // Overwrite the value of the Position component
