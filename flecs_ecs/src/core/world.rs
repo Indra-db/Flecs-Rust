@@ -11,15 +11,12 @@ use crate::addons::system::{System, SystemBuilder};
 #[cfg(feature = "flecs_pipeline")]
 use crate::addons::pipeline::PipelineBuilder;
 
-#[cfg(feature = "flecs_rules")]
-use crate::addons::rules::{Rule, RuleBuilder};
-
 use crate::core::*;
 use crate::sys;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct World {
-    pub raw_world: NonNull<WorldT>,
+    pub(crate) raw_world: NonNull<WorldT>,
 }
 
 impl Default for World {
@@ -35,15 +32,19 @@ impl Default for World {
 
 impl Drop for World {
     fn drop(&mut self) {
-        if unsafe { sys::ecs_stage_is_async(self.raw_world.as_ptr()) } {
-            unsafe { sys::ecs_async_stage_free(self.raw_world.as_ptr()) }
-        } else {
-            unsafe { sys::ecs_fini(self.raw_world.as_ptr()) };
+        let world_ptr = self.raw_world.as_ptr();
+        if unsafe { sys::ecs_poly_release_(world_ptr as *mut c_void) } == 0 {
+            if unsafe { sys::ecs_stage_get_id(world_ptr) } == -1 {
+                unsafe { sys::ecs_stage_free(world_ptr) };
+            } else {
+                unsafe { sys::ecs_fini(self.raw_world.as_ptr()) };
+            }
         }
     }
 }
 
 impl World {
+    /// Creates a new world, same as `default()`
     pub fn new() -> Self {
         Self::default()
     }
@@ -69,8 +70,8 @@ impl World {
     #[doc(alias = "world::reset")]
     pub fn reset(&mut self) {
         assert!(
-            unsafe { !sys::ecs_stage_is_async(self.raw_world.as_ptr()) },
-            "Tried to reset async stage."
+            unsafe { sys::ecs_poly_refcount(self.raw_world.as_ptr() as *mut c_void) == 1 },
+            "Reset would invalidate other handles"
         );
         unsafe { sys::ecs_fini(self.raw_world.as_ptr()) };
         self.raw_world = unsafe { NonNull::new_unchecked(sys::ecs_init()) };
@@ -392,7 +393,7 @@ impl World {
     /// * C++ API: `world::get_stage_id`
     #[doc(alias = "world::get_stage_id")]
     pub fn get_stage_id(&self) -> i32 {
-        unsafe { sys::ecs_get_stage_id(self.raw_world.as_ptr()) }
+        unsafe { sys::ecs_stage_get_id(self.raw_world.as_ptr()) }
     }
 
     /// Test if is a stage.
@@ -426,33 +427,6 @@ impl World {
                 sys::ecs_stage_t_magic as i32,
             )
         }
-    }
-
-    /// Enable/disable auto-merging for world or stage.
-    ///
-    /// When auto-merging is enabled, staged data will automatically be merged
-    /// with the world when staging ends. This happens at the end of `progress()`,
-    /// at a sync point or when `readonly_end()` is called.
-    ///
-    /// Applications can exercise more control over when data from a stage is
-    /// merged by disabling auto-merging. This requires an application to
-    /// explicitly call `merge()` on the stage.
-    ///
-    /// When this function is invoked on the world, it sets all current stages to
-    /// the provided value and sets the default for new stages. When this
-    /// function is invoked on a stage, auto-merging is only set for that specific
-    /// stage.
-    ///
-    /// # Arguments
-    ///
-    /// * `automerge` - Whether to enable or disable auto-merging.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::set_automerge`
-    #[doc(alias = "world::set_automerge")]
-    pub fn set_automerge(&self, automerge: bool) {
-        unsafe { sys::ecs_set_automerge(self.raw_world.as_ptr(), automerge) };
     }
 
     /// Merge world or stage.
@@ -525,7 +499,7 @@ impl World {
     /// * C++ API: `world::async_stage`
     #[doc(alias = "world::async_stage")]
     pub fn create_async_stage(&self) -> WorldRef {
-        unsafe { WorldRef::from_ptr(sys::ecs_async_stage_new(self.raw_world.as_ptr())) }
+        unsafe { WorldRef::from_ptr(sys::ecs_stage_new(self.raw_world.as_ptr())) }
     }
 
     /// Get actual world.
@@ -1007,24 +981,180 @@ impl World {
     ///
     /// # Returns
     ///
-    /// The singleton component as const.
+    /// The singleton component as const, or None if the component does not exist.
     ///
     /// # See also
     ///
     /// * C++ API: `world::get`
     #[doc(alias = "world::get")]
     #[inline(always)]
-    pub fn get<T>(&self) -> Option<&T>
+    pub fn try_get<T>(&self) -> Option<&T>
     where
-        T: ComponentId + ComponentType<Struct>,
+        T: ComponentId + NotEmptyComponent,
     {
         let component_id = T::get_id(self);
         let singleton_entity = EntityView::new_from(self, component_id);
-        unsafe {
-            (sys::ecs_get_id(self.raw_world.as_ptr(), *singleton_entity.id, component_id)
-                as *const T)
-                .as_ref()
+
+        // This branch will be removed in release mode since this can be determined at compile time.
+        if !T::IS_ENUM {
+            unsafe {
+                (sys::ecs_get_id(self.raw_world.as_ptr(), *singleton_entity.id, component_id)
+                    as *const T)
+                    .as_ref()
+            }
+        } else {
+            let target = unsafe {
+                sys::ecs_get_target(
+                    self.raw_world.as_ptr(),
+                    *singleton_entity.id,
+                    component_id,
+                    0,
+                )
+            };
+
+            if target == 0 {
+                // if there is no matching pair for (r,*), try just r
+                unsafe {
+                    (sys::ecs_get_id(self.raw_world.as_ptr(), *singleton_entity.id, component_id)
+                        as *const T)
+                        .as_ref()
+                }
+            } else {
+                // get constant value from constant entity
+                let constant_value = unsafe {
+                    (sys::ecs_get_mut_id(self.raw_world.as_ptr(), target, component_id) as *const T)
+                        .as_ref()
+                };
+
+                ecs_assert!(
+                    constant_value.is_some(),
+                    FlecsErrorCode::InternalError,
+                    "missing enum constant value {}",
+                    std::any::type_name::<T>()
+                );
+
+                constant_value
+            }
         }
+    }
+    /// Get singleton component as const.
+    ///
+    /// # Safety
+    ///
+    /// This will panic if the component as singleton does not exist.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The type of the component to get.
+    ///
+    /// # Returns
+    ///
+    /// The singleton component as const.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub fn get<T>(&self) -> &T
+    where
+        T: ComponentId + NotEmptyComponent,
+    {
+        self.try_get::<T>()
+            .expect("Component does not exist as a singleton")
+    }
+
+    /// Get singleton component as mutable.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The type of the component to get.
+    ///
+    /// # Returns
+    ///
+    /// The singleton component as mutable, or None if the component does not exist.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    #[inline(always)]
+    pub fn try_get_mut<T>(&self) -> Option<&mut T>
+    where
+        T: ComponentId + NotEmptyComponent,
+    {
+        let component_id = T::get_id(self);
+        let singleton_entity = EntityView::new_from(self, component_id);
+
+        // This branch will be removed in release mode since this can be determined at compile time.
+        if !T::IS_ENUM {
+            unsafe {
+                (sys::ecs_get_mut_id(self.raw_world.as_ptr(), *singleton_entity.id, component_id)
+                    as *mut T)
+                    .as_mut()
+            }
+        } else {
+            let target = unsafe {
+                sys::ecs_get_target(
+                    self.raw_world.as_ptr(),
+                    *singleton_entity.id,
+                    component_id,
+                    0,
+                )
+            };
+
+            if target == 0 {
+                // if there is no matching pair for (r,*), try just r
+                unsafe {
+                    (sys::ecs_get_mut_id(
+                        self.raw_world.as_ptr(),
+                        *singleton_entity.id,
+                        component_id,
+                    ) as *mut T)
+                        .as_mut()
+                }
+            } else {
+                // get mutable value from constant entity
+                let constant_value = unsafe {
+                    (sys::ecs_get_mut_id(self.raw_world.as_ptr(), target, component_id) as *mut T)
+                        .as_mut()
+                };
+
+                ecs_assert!(
+                    constant_value.is_some(),
+                    FlecsErrorCode::InternalError,
+                    "missing enum constant value {}",
+                    std::any::type_name::<T>()
+                );
+
+                constant_value
+            }
+        }
+    }
+
+    /// Get singleton component as mutable.
+    ///
+    /// # Safety
+    ///
+    /// This will panic if the component as singleton does not exist.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The type of the component to get.
+    ///
+    /// # Returns
+    ///
+    /// The singleton component as mutable.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub fn get_mut<T>(&self) -> &mut T
+    where
+        T: ComponentId + NotEmptyComponent,
+    {
+        self.try_get_mut::<T>()
+            .expect("Component does not exist as a singleton")
     }
 
     /// Get singleton component as mutable.
@@ -2530,15 +2660,42 @@ impl World {
     ///
     /// # Returns
     ///
-    /// She entity with the current generation.
+    /// The entity with the current generation. If the entity is not alive, this
+    /// function will return an Entity of 0. Use `try_get_alive` if you want to
+    /// return an `Option<EntityView>`.
     ///
     /// # See also
     ///
-    /// * C++ API: `world::get_alive`
-    #[doc(alias = "world::get_alive")]
+    /// * C++ API: `world::try_get_alive`
+    #[doc(alias = "world::try_get_alive")]
     pub fn get_alive(&self, entity: impl Into<Entity>) -> EntityView {
         let entity = unsafe { sys::ecs_get_alive(self.raw_world.as_ptr(), *entity.into()) };
+
         EntityView::new_from(self, entity)
+    }
+
+    /// Get alive entity for id.
+    ///
+    /// # Arguments
+    ///
+    /// * `entity` - The entity to check
+    ///
+    /// # Returns
+    ///
+    /// The entity with the current generation.
+    /// If the entity is not alive, this function will return `None`.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::try_get_alive`
+    #[doc(alias = "world::try_get_alive")]
+    pub fn try_get_alive(&self, entity: impl Into<Entity>) -> Option<EntityView> {
+        let entity = unsafe { sys::ecs_get_alive(self.raw_world.as_ptr(), *entity.into()) };
+        if entity == 0 {
+            None
+        } else {
+            Some(EntityView::new_from(self, entity))
+        }
     }
 
     /// Ensures that entity with provided generation is alive.
@@ -2557,7 +2714,7 @@ impl World {
     ///
     /// * C++ API: `world::make_alive`
     #[doc(alias = "world::make_alive")]
-    pub fn ensure(&self, entity: impl Into<Entity>) -> EntityView {
+    pub fn make_alive(&self, entity: impl Into<Entity>) -> EntityView {
         let entity = *entity.into();
         unsafe { sys::ecs_make_alive(self.raw_world.as_ptr(), entity) };
         EntityView::new_from(self, entity)
@@ -2624,11 +2781,20 @@ impl World {
     ///
     /// * C++ API: `world::entity`
     #[doc(alias = "world::entity")]
-    pub fn new_entity_named_type<'a, T: ComponentId>(&'a self, name: &CStr) -> EntityView<'a> {
+    pub fn entity_from_named<'a, T: ComponentId>(&'a self, name: &CStr) -> EntityView<'a> {
         EntityView::new_from(self, T::register_explicit_named(self, name))
     }
 
-    pub fn new_entity_type<T: ComponentId>(&self) -> EntityView {
+    /// Create an entity that's associated with a type
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The component type to associate with the new entity.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::entity`
+    pub fn entity_from<T: ComponentId>(&self) -> EntityView {
         EntityView::new_from(self, T::get_id(self))
     }
 
@@ -2642,7 +2808,7 @@ impl World {
     ///
     /// * C++ API: `world::entity`
     #[doc(alias = "world::entity")]
-    pub fn new_entity_named(&self, name: &CStr) -> EntityView {
+    pub fn entity_named(&self, name: &CStr) -> EntityView {
         EntityView::new_named(self, name)
     }
 
@@ -2652,7 +2818,7 @@ impl World {
     ///
     /// * C++ API: `world::entity`
     #[doc(alias = "world::entity")]
-    pub fn new_entity(&self) -> EntityView {
+    pub fn entity(&self) -> EntityView {
         EntityView::new(self)
     }
 
@@ -2666,7 +2832,7 @@ impl World {
     ///
     /// * C++ API: `world::entity`
     #[doc(alias = "world::entity")]
-    pub fn new_entity_from_id(&self, id: impl Into<Entity>) -> EntityView {
+    pub fn entity_from_id(&self, id: impl Into<Entity>) -> EntityView {
         EntityView::new_from(self, id.into())
     }
 
@@ -2768,8 +2934,8 @@ impl World {
     ///
     /// * C++ API: `world::id`
     #[doc(alias = "world::id")]
-    pub fn id<T: ComponentId>(&self) -> EntityView {
-        EntityView::new_from(self, T::get_id(self))
+    pub fn id<T: ComponentId>(&self) -> Entity {
+        Entity(T::get_id(self))
     }
 
     /// Get id of pair.
@@ -2981,23 +3147,23 @@ impl World {
 
 /// Term mixin implementation
 impl World {
-    /// Creates a term for a (component) type.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The component type.
-    ///
-    /// # Returns
-    ///
-    /// The term for the component type.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::term`
-    #[doc(alias = "world::term")]
-    pub fn term<T: IntoComponentId>(&self) -> Term {
-        Term::new_type::<T>(self)
-    }
+    // /// Creates a term for a (component) type.
+    // ///
+    // /// # Type Parameters
+    // ///
+    // /// * `T` - The component type.
+    // ///
+    // /// # Returns
+    // ///
+    // /// The term for the component type.
+    // ///
+    // /// # See also
+    // ///
+    // /// * C++ API: `world::term`
+    // #[doc(alias = "world::term")]
+    // pub fn term<T: IntoComponentId>(&self) -> Term {
+    //     Term::new_type::<T>(self)
+    // }
 }
 
 // Event mixin implementation
@@ -3060,7 +3226,7 @@ impl World {
     /// * C++ API: `world::observer`
     #[doc(alias = "world::observer")]
     pub fn new_observer<'a>(&'a self, e: EntityView<'a>) -> Observer<'a> {
-        Observer::new_from_existing(self, e)
+        Observer::new_from_existing(e)
     }
 
     /// Create a new observer.
@@ -3110,125 +3276,6 @@ impl World {
     }
 }
 
-// Filter mixin implementation
-impl World {
-    /// Create a new filter.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Components` - The components to match on.
-    ///
-    /// # Returns
-    ///
-    /// A new filter.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::filter`
-    #[doc(alias = "world::filter")]
-    pub fn new_filter<Components>(&self) -> Filter<Components>
-    where
-        Components: Iterable,
-    {
-        Filter::<Components>::new(self)
-    }
-
-    /// Create a new named filter.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Components` - The components to match on.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the observer.
-    ///
-    /// # Returns
-    ///
-    /// A new filter.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::filter`
-    #[doc(alias = "world::filter")]
-    pub fn new_filter_named<'a, Components>(&'a self, name: &CStr) -> Filter<'a, Components>
-    where
-        Components: Iterable,
-    {
-        FilterBuilder::<Components>::new_named(self, name).build()
-    }
-
-    /// Create a `filter_builder`
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Components` - The components to match on.
-    ///
-    /// # Returns
-    ///
-    /// Filter builder.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::filter_builder`
-    #[doc(alias = "world::filter_builder")]
-    pub fn filter<Components>(&self) -> FilterBuilder<Components>
-    where
-        Components: Iterable,
-    {
-        FilterBuilder::<Components>::new(self)
-    }
-
-    /// Create a new named `filter_builder`.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Components` - The components to match on.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the observer.
-    ///
-    /// # Returns
-    ///
-    /// Filter builder.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::filter_builder`
-    #[doc(alias = "world::filter_builder")]
-    pub fn filter_named<'a, Components>(&'a self, name: &CStr) -> FilterBuilder<'a, Components>
-    where
-        Components: Iterable,
-    {
-        FilterBuilder::<Components>::new_named(self, name)
-    }
-
-    pub fn each<Components>(
-        &self,
-        func: impl FnMut(Components::TupleType<'_>),
-    ) -> Filter<Components>
-    where
-        Components: Iterable,
-    {
-        let filter = Filter::<Components>::new(self);
-        filter.each(func);
-        filter
-    }
-
-    pub fn each_entity<Components>(
-        &self,
-        func: impl FnMut(&mut EntityView, Components::TupleType<'_>),
-    ) -> Filter<Components>
-    where
-        Components: Iterable,
-    {
-        let filter = Filter::<Components>::new(self);
-        filter.each_entity(func);
-        filter
-    }
-}
-
 /// Query mixin implementation
 impl World {
     /// Create a new query.
@@ -3249,7 +3296,7 @@ impl World {
     where
         Components: Iterable,
     {
-        Query::<Components>::new(self)
+        QueryBuilder::<Components>::new(self).build()
     }
 
     /// Create a new named query.
@@ -3322,6 +3369,59 @@ impl World {
     {
         QueryBuilder::<Components>::new_named(self, name)
     }
+
+    /// Create and iterate an uncached query.
+    ///
+    /// This function creates a query and immediately iterates it.
+    ///
+    /// # Returns
+    ///
+    /// The query.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Components`: The components to match on.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::each`
+    #[doc(alias = "world::each")]
+    pub fn each<Components>(&self, func: impl FnMut(Components::TupleType<'_>)) -> Query<Components>
+    where
+        Components: Iterable,
+    {
+        let query = QueryBuilder::<Components>::new(self).build();
+        query.each(func);
+        query
+    }
+
+    /// Create and iterate an uncached query.
+    ///
+    /// This function creates a query and immediately iterates it.
+    ///
+    /// # Returns
+    ///
+    /// The query.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Components`: The components to match on.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::each`
+    #[doc(alias = "world::each")]
+    pub fn each_entity<Components>(
+        &self,
+        func: impl FnMut(&mut EntityView, Components::TupleType<'_>),
+    ) -> Query<Components>
+    where
+        Components: Iterable,
+    {
+        let query = QueryBuilder::<Components>::new(self).build();
+        query.each_entity(func);
+        query
+    }
 }
 
 /// Systems mixin implementation
@@ -3340,7 +3440,7 @@ impl World {
     /// * C++ API: `world::system`
     #[doc(alias = "world::system")]
     pub fn system_from<'a>(&'a self, entity: EntityView<'a>) -> System<'a> {
-        System::new_from_existing(self, entity)
+        System::new_from_existing(entity)
     }
 
     /// Creates a new `SystemBuilder` instance for constructing systems.
@@ -3454,7 +3554,7 @@ impl World {
     where
         Pipeline: ComponentType<Struct> + ComponentId,
     {
-        PipelineBuilder::<()>::new_entity(self, Pipeline::get_id(self))
+        PipelineBuilder::<()>::new_w_entity(self, Pipeline::get_id(self))
     }
 
     /// Set a custom pipeline. This operation sets the pipeline to run when `sys::ecs_progress` is invoked.
@@ -3874,89 +3974,5 @@ impl World {
     #[inline(always)]
     pub fn app(&self) -> App {
         App::new(self)
-    }
-}
-
-/// Rules mixin implementation
-#[cfg(feature = "flecs_rules")]
-impl World {
-    /// Create a new rule.
-    ///
-    /// # Returns
-    ///
-    /// A new rule.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::rule`
-    #[doc(alias = "world::rule")]
-    #[inline(always)]
-    pub fn new_rule<T>(&self) -> Rule<T>
-    where
-        T: Iterable,
-    {
-        RuleBuilder::<T>::new(self).build()
-    }
-
-    /// Create a new named rule.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the rule.
-    ///
-    /// # Returns
-    ///
-    /// A new rule.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::rule`
-    #[doc(alias = "world::rule")]
-    #[inline(always)]
-    pub fn new_rule_named<'a, T>(&'a self, name: &CStr) -> Rule<'a, T>
-    where
-        T: Iterable,
-    {
-        RuleBuilder::<T>::new_named(self, name).build()
-    }
-
-    /// Create a new rule builder.
-    ///
-    /// # Returns
-    ///
-    /// A new rule builder.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::rule_builder`
-    #[doc(alias = "world::rule_builder")]
-    #[inline(always)]
-    pub fn rule<T>(&self) -> RuleBuilder<T>
-    where
-        T: Iterable,
-    {
-        RuleBuilder::<T>::new(self)
-    }
-
-    /// Create a new named rule builder.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the rule.
-    ///
-    /// # Returns
-    ///
-    /// A new rule builder.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::rule_builder`
-    #[doc(alias = "world::rule_builder")]
-    #[inline(always)]
-    pub fn rule_named<'a, T>(&'a self, name: &CStr) -> RuleBuilder<'a, T>
-    where
-        T: Iterable,
-    {
-        RuleBuilder::<T>::new_named(self, name)
     }
 }

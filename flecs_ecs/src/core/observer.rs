@@ -1,12 +1,15 @@
-use std::{ops::Deref, os::raw::c_void, ptr::NonNull};
+use std::ptr::NonNull;
+use std::{ops::Deref, os::raw::c_void};
 
 use crate::core::*;
 use crate::sys;
 
+/// `ObserverBuilder` is used to configure and build Observers.
+/// Observers are systems that react to events.
+/// Observers let applications register callbacks for ECS events.
 #[derive(Clone)]
 pub struct Observer<'a> {
-    pub entity: EntityView<'a>,
-    world: WorldRef<'a>,
+    entity: EntityView<'a>,
 }
 
 impl<'a> Deref for Observer<'a> {
@@ -31,31 +34,23 @@ impl<'a> Observer<'a> {
         mut desc: sys::ecs_observer_desc_t,
         is_instanced: bool,
     ) -> Self {
-        if !desc.filter.instanced {
-            desc.filter.instanced = is_instanced;
+        if desc.query.flags & sys::EcsQueryIsInstanced == 0 {
+            ecs_bit_cond(
+                &mut desc.query.flags,
+                sys::EcsQueryIsInstanced,
+                is_instanced,
+            );
         }
 
         let id = unsafe { sys::ecs_observer_init(world.world_ptr_mut(), &desc) };
         let entity = EntityView::new_from(world.world(), id);
 
-        unsafe {
-            if !desc.filter.terms_buffer.is_null() {
-                if let Some(free_func) = sys::ecs_os_api.free_ {
-                    free_func(desc.filter.terms_buffer as *mut _);
-                }
-            }
-        }
-
-        Self {
-            entity,
-            world: world.world(),
-        }
+        Self { entity }
     }
 
     /// Wrap an existing observer entity in an observer object
-    pub fn new_from_existing(world: impl IntoWorld<'a>, observer_entity: EntityView<'a>) -> Self {
+    pub fn new_from_existing(observer_entity: EntityView<'a>) -> Self {
         Self {
-            world: world.world(),
             entity: observer_entity,
         }
     }
@@ -88,17 +83,19 @@ impl<'a> Observer<'a> {
         unsafe { sys::ecs_observer_get_ctx(self.world.world_ptr_mut(), *self.id) }
     }
 
-    /// Get the filter for the observer
+    /// Get the query for the observer
     ///
     /// # See also
     ///
     /// * C++ API: `observer::query`
     #[doc(alias = "observer::query")]
-    pub fn query(&mut self) -> Filter<()> {
-        let poly: *const Poly = self.target_for_pair_first::<Poly>(ECS_OBSERVER);
-        let obj: *mut sys::ecs_observer_t = unsafe { (*poly).poly as *mut sys::ecs_observer_t };
+    pub fn query(&mut self) -> Query<()> {
         unsafe {
-            Filter::<()>::new_ownership(self.world, NonNull::new_unchecked(&mut (*obj).filter))
+            Query::<()>::new_ownership(NonNull::new_unchecked(sys::ecs_observer_get_query(
+                self.world_ptr(),
+                *self.entity.id(),
+            )
+                as *mut sys::ecs_query_t))
         }
     }
 }

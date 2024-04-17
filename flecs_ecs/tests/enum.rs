@@ -107,12 +107,12 @@ fn enum_standard_enum_reflection() {
     let entity = world.component::<StandardEnum>().as_entity();
     assert_eq!(entity.path().unwrap(), "::enum::StandardEnum");
 
-    let entity2 = world.new_entity().set(StandardEnum::Blue);
+    let entity2 = world.entity().set(StandardEnum::Blue);
 
     // TODO implement .first and .last() on all enums
     assert!(entity.is_valid());
     //let enum_comp = entity.get::<StandardEnum>().unwrap();
-    let enum_comp2 = entity2.get::<StandardEnum>();
+    let enum_comp2 = entity2.try_get::<StandardEnum>().unwrap();
     entity2.set(StandardEnum::Red);
     //assert!(*enum_comp == StandardEnum::Red);
     assert!(*enum_comp2 == StandardEnum::Red);

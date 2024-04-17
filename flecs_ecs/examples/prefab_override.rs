@@ -21,7 +21,7 @@ fn main() {
     spaceship.set_override(Damage { value: 0.0 });
 
     // Create a prefab instance.
-    let inst = world.new_entity_named(c"my_spaceship").is_a_id(spaceship);
+    let inst = world.entity_named(c"my_spaceship").is_a_id(spaceship);
 
     // The entity will now have a private copy of the Damage component, but not
     // of the Attack and Defense components. We can see this when we look at the

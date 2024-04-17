@@ -19,43 +19,43 @@ fn main() {
     let world = flecs_ecs::core::World::new();
 
     let sun = world
-        .new_entity_named(c"Sun")
+        .entity_named(c"Sun")
         .add::<(Position, World)>()
         .set_pair_first::<Position, Local>(Position { x: 1.0, y: 1.0 });
 
     world
-        .new_entity_named(c"Mercury")
+        .entity_named(c"Mercury")
         .child_of_id(sun)
         .add::<(Position, World)>()
         .set_pair_first::<Position, Local>(Position { x: 1.0, y: 1.0 });
 
     world
-        .new_entity_named(c"Venus")
+        .entity_named(c"Venus")
         .child_of_id(sun)
         .add::<(Position, World)>()
         .set_pair_first::<Position, Local>(Position { x: 2.0, y: 2.0 });
 
     let earth = world
-        .new_entity_named(c"Earth")
+        .entity_named(c"Earth")
         .child_of_id(sun)
         .add::<(Position, World)>()
         .set_pair_first::<Position, Local>(Position { x: 3.0, y: 3.0 });
 
     world
-        .new_entity_named(c"Moon")
+        .entity_named(c"Moon")
         .child_of_id(earth)
         .add::<(Position, World)>()
         .set_pair_first::<Position, Local>(Position { x: 0.1, y: 0.1 });
 
     let query = world
         .query::<(&Position, Option<&Position>, &mut Position)>()
-        .term_at(1)
+        .term_at(0)
         .select_second::<Local>()
-        .term_at(2)
-        .select_second::<World>()
-        .term_at(3)
+        .term_at(1)
         .select_second::<World>()
         .term_at(2)
+        .select_second::<World>()
+        .term_at(1)
         .parent()
         .cascade()
         //.optional() -- `.optional()` is equivalent to `Option<&Position>` - however be aware that
@@ -78,8 +78,8 @@ fn main() {
 
     //TODO: pair wrapper class to clean up, beautify this API
     world
-        .filter::<&Position>()
-        .term_at(1)
+        .query::<&Position>()
+        .term_at(0)
         .select_second::<World>()
         .build()
         .each_entity(|entity, position| {

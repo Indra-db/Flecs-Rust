@@ -9,6 +9,3 @@ pub mod system;
 
 #[cfg(feature = "flecs_pipeline")]
 pub mod pipeline;
-
-#[cfg(feature = "flecs_rules")]
-pub mod rules;

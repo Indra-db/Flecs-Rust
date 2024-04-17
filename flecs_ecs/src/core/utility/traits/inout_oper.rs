@@ -42,7 +42,7 @@ impl<T> InOutType for &mut T
 where
     T: ComponentId,
 {
-    const IN_OUT: InOutKind = InOutKind::InOutDefault;
+    const IN_OUT: InOutKind = InOutKind::InOut;
     type Type = T;
 }
 

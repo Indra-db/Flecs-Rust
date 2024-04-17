@@ -328,6 +328,25 @@ pub(crate) fn type_to_oper<T: OperType>() -> OperKind {
     T::OPER
 }
 
+/// Sets the specified bit in the flags.
+pub fn ecs_bit_set(flags: &mut u32, bit: u32) {
+    *flags |= bit;
+}
+
+/// Clears the specified bit in the flags.
+pub fn ecs_bit_clear(flags: &mut u32, bit: u32) {
+    *flags &= !bit;
+}
+
+/// Conditionally sets or clears a bit in the flags based on a condition.
+pub fn ecs_bit_cond(flags: &mut u32, bit: u32, cond: bool) {
+    if cond {
+        ecs_bit_set(flags, bit);
+    } else {
+        ecs_bit_clear(flags, bit);
+    }
+}
+
 /// Copies the given Rust &str to a C string and returns a pointer to the C string.
 /// this is intended to be used when the C code needs to take ownership of the string.
 ///
@@ -378,7 +397,7 @@ pub(crate) unsafe fn print_c_string(c_string: *const c_char) {
 
 /// Strips the given prefix from the given C string, returning a new C string with the prefix removed.
 /// If the given C string does not start with the given prefix, returns None.
-pub(crate) fn strip_prefix_cstr_raw(cstr: &'static CStr, prefix: &CStr) -> Option<&'static CStr> {
+pub(crate) fn strip_prefix_cstr_raw<'a>(cstr: &'a CStr, prefix: &CStr) -> Option<&'a CStr> {
     let cstr_bytes = cstr.to_bytes();
     let prefix_bytes = prefix.to_bytes();
 

@@ -13,10 +13,10 @@ fn main() {
 
     let world = World::new();
 
-    let bob = world.new_entity_named(c"Bob");
-    let alice = world.new_entity_named(c"Alice");
-    let john = world.new_entity_named(c"John");
-    let jane = world.new_entity_named(c"Jane");
+    let bob = world.entity_named(c"Bob");
+    let alice = world.entity_named(c"Alice");
+    let john = world.entity_named(c"John");
+    let jane = world.entity_named(c"Jane");
 
     bob.add_pair_first::<Likes>(alice);
     alice.add_pair_first::<Likes>(bob);
@@ -39,17 +39,17 @@ fn main() {
     // be populated, and it.count() will always be 0.
 
     let rule = world
-        .rule::<()>()
-        .with_pair_name::<Likes>(c"$Y")
+        .query::<()>()
+        .with_first_name::<&Likes>(c"$Y")
         .select_src_name(c"$X")
-        .with_pair_name::<Likes>(c"$X")
+        .with_first_name::<&Likes>(c"$X")
         .select_src_name(c"$Y")
         .build();
 
     // Lookup the index of the variables. This will let us quickly lookup their
     // values while we're iterating.
-    let x_var = rule.find_var(c"X");
-    let y_var = rule.find_var(c"Y");
+    let x_var = rule.find_var(c"X").unwrap();
+    let y_var = rule.find_var(c"Y").unwrap();
 
     // Because the query doesn't use the This variable we cannot use "each"
     // which iterates the entities array. Instead we can use iter like this:

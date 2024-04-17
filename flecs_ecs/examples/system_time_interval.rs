@@ -22,7 +22,7 @@ fn main() {
     let world = World::new();
 
     world.set(Timeout { value: 3.5 });
-    let time_out = world.get::<Timeout>().unwrap();
+    let time_out = world.get::<Timeout>();
 
     world
         .system::<&mut Timeout>()

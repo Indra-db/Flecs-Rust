@@ -2,9 +2,9 @@
 source: flecs_ecs/examples/common.rs
 expression: self.str
 ---
-- Unit 546 of class rules_setting_variables.Wizard in platoon 543 for player MyPlayer
-- Unit 550 of class rules_setting_variables.Wizard in platoon 547 for player MyPlayer
-- Unit 554 of class rules_setting_variables.Wizard in platoon 551 for player MyPlayer
-- Unit 545 of class rules_setting_variables.Marksman in platoon 543 for player MyPlayer
-- Unit 549 of class rules_setting_variables.Marksman in platoon 547 for player MyPlayer
-- Unit 553 of class rules_setting_variables.Marksman in platoon 551 for player MyPlayer
+- Unit 509 of class rules_setting_variables.Wizard in platoon 506 for player MyPlayer
+- Unit 513 of class rules_setting_variables.Wizard in platoon 510 for player MyPlayer
+- Unit 517 of class rules_setting_variables.Wizard in platoon 514 for player MyPlayer
+- Unit 508 of class rules_setting_variables.Marksman in platoon 506 for player MyPlayer
+- Unit 512 of class rules_setting_variables.Marksman in platoon 510 for player MyPlayer
+- Unit 516 of class rules_setting_variables.Marksman in platoon 514 for player MyPlayer

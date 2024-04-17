@@ -32,21 +32,23 @@ enum Direction {
     Right,
 }
 fn main() {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
+    // disabled v4 not yet supported
+    /*
+        //ignore snap in example, it's for snapshot testing
+        let mut snap = Snap::setup_snapshot_test();
 
-    let world = World::new();
+        let world = World::new();
 
-    // Register Movement and Direction as union relationships. This ensures that
-    // an entity can only have one Movement and one Direction.
-    world.component::<Movement>().add::<flecs::Union>();
-    world.component::<Direction>().add::<flecs::Union>();
+        // Register Movement and Direction as union relationships. This ensures that
+        // an entity can only have one Movement and one Direction.
+        world.component::<Movement>().add::<flecs::Union>();
+        world.component::<Direction>().add::<flecs::Union>();
 
-    // Create a query that subscribes for all entities that have a Direction
-    // and that are walking.
-    // with<T>() requests no data by  so we must specify what we want.
-    // in() requests Read-Only
-    let q = world
+        // Create a query that subscribes for all entities that have a Direction
+        // and that are walking.
+        // with<T>() requests no data by  so we must specify what we want.
+        // in() requests Read-Only
+        let q = world
         .query::<()>()
         .with_enum(Movement::Walking)
         .in_()
@@ -56,19 +58,19 @@ fn main() {
 
     // Create a few entities with various state combinations
     world
-        .new_entity_named(c"e1")
-        .add_enum(Movement::Walking)
-        .add_enum(Direction::Front);
+    .entity_named(c"e1")
+    .add_enum(Movement::Walking)
+    .add_enum(Direction::Front);
 
     world
-        .new_entity_named(c"e2")
-        .add_enum(Movement::Running)
-        .add_enum(Direction::Left);
+    .entity_named(c"e2")
+    .add_enum(Movement::Running)
+    .add_enum(Direction::Left);
 
     let e3 = world
-        .new_entity_named(c"e3")
-        .add_enum(Movement::Running)
-        .add_enum(Direction::Back);
+    .entity_named(c"e3")
+    .add_enum(Movement::Running)
+    .add_enum(Direction::Back);
 
     // Add Walking to e3. This will remove the Running case
     e3.add_enum(Movement::Walking);
@@ -78,8 +80,8 @@ fn main() {
         // Get the column with direction states. This is stored as an array
         // with identifiers to the individual states
         //since it's an union, we need to get the entity id for safety
-        let movement = it.field::<Entity>(1).unwrap();
-        let direction = it.field::<Entity>(2).unwrap();
+        let movement = it.field::<Entity>(0).unwrap();
+        let direction = it.field::<Entity>(1).unwrap();
 
         for i in 0..it.count() {
             fprintln!(
@@ -87,18 +89,19 @@ fn main() {
                 "{}: Movement: {:?}, Direction: {:?}",
                 it.entity(i).name(),
                 movement[i]
-                    .entity_view(it.world())
-                    .try_to_constant::<Movement>()
-                    .unwrap(),
+                .entity_view(it.world())
+                .to_constant::<Movement>()
+                .unwrap(),
                 direction[i]
-                    .entity_view(it.world())
-                    .try_to_constant::<Direction>()
-                    .unwrap()
+                .entity_view(it.world())
+                .to_constant::<Direction>()
+                .unwrap()
             );
         }
     });
 
     snap.test();
+    */
 
     // Output:
     //   e3: Movement: Walking, Direction: Back

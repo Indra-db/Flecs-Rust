@@ -73,9 +73,9 @@ fn main() {
             fprintln!(snap, "Expired: {} actually deleted", e.name());
         });
 
-    let to_delete = world.new_entity_named(c"ToDelete").add::<Tag>();
+    let to_delete = world.entity_named(c"ToDelete").add::<Tag>();
 
-    world.new_entity_named(c"MyEntity").set(Timeout {
+    world.entity_named(c"MyEntity").set(Timeout {
         to_delete: to_delete.id(),
         value: 3.0,
     });

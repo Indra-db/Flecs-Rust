@@ -10,20 +10,20 @@ fn main() {
 
     let world = World::new();
 
-    let apples = world.new_entity_named(c"Apples").add::<Healthy>();
-    let salad = world.new_entity_named(c"Salad").add::<Healthy>();
-    let burgers = world.new_entity_named(c"Burgers");
-    let pizza = world.new_entity_named(c"Pizza");
-    let chocolate = world.new_entity_named(c"Chocolate");
+    let apples = world.entity_named(c"Apples").add::<Healthy>();
+    let salad = world.entity_named(c"Salad").add::<Healthy>();
+    let burgers = world.entity_named(c"Burgers");
+    let pizza = world.entity_named(c"Pizza");
+    let chocolate = world.entity_named(c"Chocolate");
 
     world
-        .new_entity_named(c"Bob")
+        .entity_named(c"Bob")
         .add_pair_first::<Eats>(apples)
         .add_pair_first::<Eats>(burgers)
         .add_pair_first::<Eats>(pizza);
 
     world
-        .new_entity_named(c"Alice")
+        .entity_named(c"Alice")
         .add_pair_first::<Eats>(salad)
         .add_pair_first::<Eats>(chocolate)
         .add_pair_first::<Eats>(apples);
@@ -35,7 +35,7 @@ fn main() {
     // example shows how the basics of how to use rules & variables.
 
     let rule = world
-        .rule::<()>()
+        .query::<()>()
         // Identifiers that start with _ are query variables. Query variables
         // are like wildcards, but enforce that the entity substituted by the
         // wildcard is the same across terms.
@@ -46,14 +46,14 @@ fn main() {
         //
         // By replacing * with _Food, both terms are constrained to use the
         // same entity.
-        .with_pair_name::<Eats>(c"$Food")
-        .with_type::<&Healthy>()
-        .select_src_name(c"$Food")
+        .with_first_name::<&Eats>(c"$food")
+        .with::<&Healthy>()
+        .select_src_name(c"$food")
         .build();
 
     // Lookup the index of the variable. This will let us quickly lookup its
     // value while we're iterating.
-    let food_var = rule.find_var(c"Food");
+    let food_var = rule.find_var(c"food");
 
     // Iterate the rule
     rule.each_iter(|it, index, ()| {
@@ -61,14 +61,9 @@ fn main() {
             snap,
             "{} eats {}",
             it.entity(index).name(),
-            it.get_var(food_var).name()
+            it.get_var(food_var.unwrap()).name()
         );
     });
-
-    // In CPP Rules need to be explicitly deleted.
-    // with `rule.destruct()` however in Rust it is automatically dropped when out of scope
-    // but you can still drop it manually if you want to
-    rule.destruct();
 
     snap.test();
 

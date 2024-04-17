@@ -46,30 +46,28 @@ fn main() {
     // Hierarchies use ECS relationships and the builtin flecs::ChildOf relationship to
     // create entities as children of other entities.
 
-    let sun = world
-        .new_entity_named(c"Sun")
-        .set(Position { x: 1.0, y: 1.0 });
+    let sun = world.entity_named(c"Sun").set(Position { x: 1.0, y: 1.0 });
 
     world
-        .new_entity_named(c"Mercury")
+        .entity_named(c"Mercury")
         .set(Position { x: 1.0, y: 1.0 })
         .add::<Planet>()
         .child_of_id(sun); // Shortcut for add(flecs::ChildOf, sun)
 
     world
-        .new_entity_named(c"Venus")
+        .entity_named(c"Venus")
         .set(Position { x: 2.0, y: 2.0 })
         .add::<Planet>()
         .child_of_id(sun);
 
     let earth = world
-        .new_entity_named(c"Earth")
+        .entity_named(c"Earth")
         .set(Position { x: 3.0, y: 3.0 })
         .add::<Planet>()
         .child_of_id(sun);
 
     let moon = world
-        .new_entity_named(c"Moon")
+        .entity_named(c"Moon")
         .set(Position { x: 0.1, y: 0.1 })
         .add::<Moon>()
         .child_of_id(earth);

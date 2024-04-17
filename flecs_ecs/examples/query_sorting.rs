@@ -24,11 +24,17 @@ fn main() {
     let world = World::new();
 
     // Create entities, set position in random order
-    let entity = world.new_entity().set(Position { x: 1.0, y: 0.0 });
-    world.new_entity().set(Position { x: 6.0, y: 0.0 });
-    world.new_entity().set(Position { x: 2.0, y: 0.0 });
-    world.new_entity().set(Position { x: 5.0, y: 0.0 });
-    world.new_entity().set(Position { x: 4.0, y: 0.0 });
+    let entity = world.entity().set(Position { x: 1.0, y: 0.0 });
+    world.entity().set(Position { x: 6.0, y: 0.0 });
+    world.entity().set(Position { x: 2.0, y: 0.0 });
+    world.entity().set(Position { x: 5.0, y: 0.0 });
+    world.entity().set(Position { x: 4.0, y: 0.0 });
+
+    // Create a sorted query
+    let query = world
+        .query::<&Position>()
+        .order_by(compare_position)
+        .build();
 
     // Create a sorted system
     let sys = world
@@ -37,12 +43,6 @@ fn main() {
         .on_each(|pos| {
             fprintln!(snap, "{:?}", pos);
         });
-
-    // Create a sorted query
-    let query = world
-        .query::<&Position>()
-        .order_by(compare_position)
-        .build();
 
     fprintln!(snap);
     fprintln!(snap, "--- First iteration ---");
@@ -57,7 +57,7 @@ fn main() {
     print_query(&query, &mut snap);
 
     // Create new entity to show that data is also sorted for new entities
-    world.new_entity().set(Position { x: 3.0, y: 0.0 });
+    world.entity().set(Position { x: 3.0, y: 0.0 });
 
     // Run system, printed values are ordered
     fprintln!(snap);

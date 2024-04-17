@@ -1,4 +1,5 @@
 use std::ffi::c_char;
+use std::ffi::CStr;
 
 use flecs_ecs::core::*;
 use flecs_ecs::sys;
@@ -14,7 +15,7 @@ pub trait IterOperations {
     fn iter_next_func(&self) -> unsafe extern "C" fn(*mut IterT) -> bool;
 
     #[doc(hidden)]
-    fn filter_ptr(&self) -> *const FilterT;
+    fn query_ptr(&self) -> *const QueryT;
 }
 
 pub trait IterAPI<'a, T>: IterOperations + IntoWorld<'a>
@@ -329,6 +330,7 @@ where
                 let tuple = components_data.get_slice(iter_count);
                 let mut iter_t = Iter::new(&mut iter);
                 func(&mut iter_t, tuple);
+
                 sys::ecs_table_unlock(world, iter.table);
             }
         }
@@ -373,56 +375,61 @@ where
     ///
     /// # See also
     ///
-    /// * C++ API: `filter_base::entity`
-    #[doc(alias = "filter_base::entity")]
+    /// * C++ API: `query_base::entity`
+    #[doc(alias = "query_base::entity")]
     fn as_entity(&self) -> EntityView;
 
-    /// Each term iterator.
-    /// The "`each_term`" iterator accepts a function that is invoked for each term
-    /// in the filter. The following function signature is valid:
-    ///  - func(term: &mut Term)
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `filter_base::term`
-    #[doc(alias = "filter_base::each_term")]
-    fn each_term(&self, mut func: impl FnMut(&mut Term)) {
-        let filter = self.filter_ptr();
-        let world = self.world();
-        unsafe {
-            for i in 0..(*filter).term_count {
-                let mut term = Term::new_from_term(world, *(*filter).terms.add(i as usize));
-                func(&mut term);
-                term.reset(); // prevent freeing resources
-            }
-        }
-    }
+    // /// Each term iterator.
+    // /// The "`each_term`" iterator accepts a function that is invoked for each term
+    // /// in the filter. The following function signature is valid:
+    // ///  - func(term: &mut Term)
+    // ///
+    // /// # See also
+    // ///
+    // /// * C++ API: `query_base::term`
+    // #[doc(alias = "query_base::each_term")]
+    // fn each_term(&self, mut func: impl FnMut(&mut Term)) {
+    //     let query = self.query_ptr();
+    //     let world = self.world();
+    //     ecs_assert!(
+    //         !query.is_null(),
+    //         FlecsErrorCode::InvalidParameter,
+    //         "query filter is null"
+    //     );
+    //     let query = unsafe { &*query };
+    //     for i in 0..query.term_count {
+    //         let mut term = Term::new_from(world, query.terms[i as usize]);
+    //         func(&mut term);
+    //         term.reset(); // prevent freeing resources
+    //     }
+    // }
 
-    /// Get the term of the current filter at the given index
-    ///
-    /// # Arguments
-    ///
-    /// * `index`: the index of the term to get
-    /// * `filter`: the filter to get the term from
-    ///
-    /// # Returns
-    ///
-    /// The term requested
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `filter_base::term`
-    #[doc(alias = "filter_base::term")]
-    fn get_term(&self, index: usize) -> Term<'a> {
-        let filter = self.filter_ptr();
-        let world = self.world();
-        ecs_assert!(
-            !filter.is_null(),
-            FlecsErrorCode::InvalidParameter,
-            "query filter is null"
-        );
-        Term::new_from_term(world, unsafe { *(*filter).terms.add(index) })
-    }
+    // /// Get the term of the current filter at the given index
+    // ///
+    // /// # Arguments
+    // ///
+    // /// * `index`: the index of the term to get
+    // /// * `filter`: the filter to get the term from
+    // ///
+    // /// # Returns
+    // ///
+    // /// The term requested
+    // ///
+    // /// # See also
+    // ///
+    // /// * C++ API: `query_base::term`
+    // #[doc(alias = "query_base::term")]
+    // fn term(&self, index: usize) -> Term<'a> {
+    //     let query = self.query_ptr();
+    //     let world = self.world();
+    //     ecs_assert!(
+    //         !query.is_null(),
+    //         FlecsErrorCode::InvalidParameter,
+    //         "query filter is null"
+    //     );
+    //     let query = unsafe { &*query };
+    //     Term::new_from(world, query.terms[index])
+    // }
 
     /// Get the field count of the current filter
     ///
@@ -436,11 +443,16 @@ where
     ///
     /// # See also
     ///
-    /// * C++ API: `filter_base::field_count`
-    #[doc(alias = "filter_base::field_count")]
+    /// * C++ API: `query_base::field_count`
+    #[doc(alias = "query_base::field_count")]
     fn field_count(&self) -> i8 {
-        let filter = self.filter_ptr();
-        unsafe { (*filter).field_count }
+        let query = self.query_ptr();
+        unsafe { (*query).field_count }
+    }
+
+    fn term_count(&self) -> u32 {
+        let query = self.query_ptr();
+        unsafe { (*query).term_count as u32 }
     }
 
     /// Convert filter to string expression. Convert filter terms to a string expression.
@@ -456,13 +468,34 @@ where
     ///
     /// # See also
     ///
-    /// * C++ API: `filter_base::str`
-    #[doc(alias = "filter_base::str")]
+    /// * C++ API: `query_base::str`
+    #[doc(alias = "query_base::str")]
     #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
     fn to_string(&self) -> String {
-        let filter = self.filter_ptr();
-        let world = self.world_ptr_mut();
-        let result: *mut c_char = unsafe { sys::ecs_filter_str(world, filter as *const _) };
+        let query = self.query_ptr();
+        let result: *mut c_char = unsafe { sys::ecs_query_str(query as *const _) };
+        let rust_string =
+            String::from(unsafe { std::ffi::CStr::from_ptr(result).to_str().unwrap() });
+        unsafe {
+            if let Some(free_func) = sys::ecs_os_api.free_ {
+                free_func(result as *mut _);
+            }
+        }
+        rust_string
+    }
+
+    fn find_var(&self, name: &CStr) -> Option<i32> {
+        let var_index = unsafe { sys::ecs_query_find_var(self.query_ptr(), name.as_ptr()) };
+        if var_index == -1 {
+            None
+        } else {
+            Some(var_index)
+        }
+    }
+
+    fn plan(&self) -> String {
+        let query = self.query_ptr();
+        let result: *mut c_char = unsafe { sys::ecs_query_plan(query as *const _) };
         let rust_string =
             String::from(unsafe { std::ffi::CStr::from_ptr(result).to_str().unwrap() });
         unsafe {

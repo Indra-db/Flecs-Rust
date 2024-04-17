@@ -1,3 +1,5 @@
+//! System module implementation
+//!
 use std::os::raw::c_void;
 
 use crate::core::*;
@@ -15,6 +17,7 @@ pub struct SystemRunnerFluent<'a> {
 }
 
 impl<'a> SystemRunnerFluent<'a> {
+    /// Create a new system runner fluent interface
     pub fn new(
         world: &'a World,
         id: impl Into<Entity>,
@@ -35,17 +38,20 @@ impl<'a> SystemRunnerFluent<'a> {
         }
     }
 
-    pub fn offset(&mut self, offset: i32) -> &mut Self {
+    /// Set the offset
+    pub fn set_offset(&mut self, offset: i32) -> &mut Self {
         self.offset = offset;
         self
     }
 
-    pub fn limit(&mut self, limit: i32) -> &mut Self {
+    /// Set the limit
+    pub fn set_limit(&mut self, limit: i32) -> &mut Self {
         self.limit = limit;
         self
     }
 
-    pub fn stage(&mut self, stage: &'a World) -> &mut Self {
+    /// Set the stage
+    pub fn set_stage(&mut self, stage: &'a World) -> &mut Self {
         self.stage = stage;
         self
     }
@@ -66,12 +72,10 @@ impl<'a> Drop for SystemRunnerFluent<'a> {
             }
         } else {
             unsafe {
-                sys::ecs_run_w_filter(
+                sys::ecs_run(
                     self.stage.world_ptr_mut(),
                     self.id,
                     self.delta_time,
-                    self.offset,
-                    self.limit,
                     self.param,
                 );
             }

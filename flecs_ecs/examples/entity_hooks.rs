@@ -26,7 +26,7 @@ fn main() {
             fprintln!(snap, "set {:?} for {:?}", pos, entity.name());
         });
 
-    let entity = world.new_entity_named(c"Bob");
+    let entity = world.entity_named(c"Bob");
 
     entity.add::<Position>();
 

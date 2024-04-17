@@ -51,12 +51,12 @@ fn main() {
 
     // Create a few test entities for a Position, Velocity query
     world
-        .new_entity_named(c"e1")
+        .entity_named(c"e1")
         .set(Position { x: 0.0, y: 0.0 })
         .set(Velocity { x: 1.0, y: 2.0 });
 
     world
-        .new_entity_named(c"e2")
+        .entity_named(c"e2")
         .set(Position { x: 1.0, y: 2.0 })
         .set(Velocity { x: 1.0, y: 2.0 });
 

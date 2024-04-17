@@ -1673,52 +1673,6 @@ impl<'a> EntityView<'a> {
         )
     }
 
-    /// Recursively flatten relationship (relationship, self)
-    ///
-    /// # Arguments
-    ///
-    /// * `relationship`: The relationship to flatten.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::flatten`
-    #[doc(alias = "entity::flatten")]
-    pub fn flatten(self, relationship: impl Into<Entity>) {
-        unsafe {
-            sys::ecs_flatten(
-                self.world.world_ptr_mut(),
-                ecs_pair(*relationship.into(), *self.id()),
-                std::ptr::null_mut(),
-            );
-        }
-    }
-
-    /// Recursively flatten relationship (relationship, self) with desc
-    ///
-    /// # Arguments
-    ///
-    /// * `relationship`: The relationship to flatten.
-    /// * `desc`: The flatten desc.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::flatten`
-    #[doc(alias = "entity::flatten")]
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn flatten_w_desc(
-        self,
-        relationship: impl Into<Entity>,
-        desc: *const sys::ecs_flatten_desc_t,
-    ) {
-        unsafe {
-            sys::ecs_flatten(
-                self.world.world_ptr_mut(),
-                ecs_pair(*relationship.into(), *self.id()),
-                desc,
-            );
-        }
-    }
-
     /// Clear an entity.
     ///
     /// This operation removes all components from an entity without recycling

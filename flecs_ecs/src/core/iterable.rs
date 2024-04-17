@@ -4,11 +4,6 @@ use crate::core::*;
 use crate::sys;
 use flecs_ecs_derive::tuples;
 
-pub trait Filterable<'a>: Sized + FilterBuilderImpl<'a> {
-    fn current_term(&mut self) -> &mut TermT;
-    fn next_term(&mut self);
-}
-
 pub struct ArrayElement {
     pub ptr: *mut u8,
     pub is_ref: bool,
@@ -109,7 +104,7 @@ where
     type OnlyType = T;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::In as sys::ecs_inout_kind_t;
+        term.inout = InOutKind::In as i16;
     }
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
@@ -166,7 +161,7 @@ where
     type OnlyType = T;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::InOut as sys::ecs_inout_kind_t;
+        term.inout = InOutKind::InOut as i16;
     }
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
@@ -223,8 +218,8 @@ where
     type OnlyType = T;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::In as sys::ecs_inout_kind_t;
-        term.oper = OperKind::Optional as sys::ecs_oper_kind_t;
+        term.inout = InOutKind::In as i16;
+        term.oper = OperKind::Optional as i16;
     }
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
@@ -289,8 +284,8 @@ where
     type OnlyType = T;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::InOut as sys::ecs_inout_kind_t;
-        term.oper = OperKind::Optional as sys::ecs_oper_kind_t;
+        term.inout = InOutKind::InOut as i16;
+        term.oper = OperKind::Optional as i16;
     }
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
@@ -354,9 +349,9 @@ pub trait Iterable: Sized {
         Self::Pointers::new(iter)
     }
 
-    fn populate<'a>(filter: &mut impl Filterable<'a>);
+    fn populate<'a>(filter: &mut impl QueryBuilderImpl<'a>);
 
-    fn register_ids_descriptor(world: *mut WorldT, desc: &mut sys::ecs_filter_desc_t) {
+    fn register_ids_descriptor(world: *mut WorldT, desc: &mut sys::ecs_query_desc_t) {
         Self::register_ids_descriptor_at(world, &mut desc.terms[..], &mut 0);
     }
 
@@ -398,9 +393,9 @@ where
     type TupleType<'w> = A::ActualType<'w>;
     type TupleSliceType<'w> = A::SliceType<'w>;
 
-    fn populate<'a>(filter: &mut impl Filterable<'a>) {
-        filter.term_with_id(<A::OnlyType as ComponentId>::get_id(filter.world()));
-        let term = filter.current_term();
+    fn populate<'a>(filter: &mut impl QueryBuilderImpl<'a>) {
+        filter.with_id(<A::OnlyType as ComponentId>::get_id(filter.world()));
+        let term = filter.current_term_mut();
         A::populate_term(term);
 
     }
@@ -423,7 +418,7 @@ where
         is_ref: &mut [bool],
     ) -> bool {
         components[0] =
-            unsafe { ecs_field::<A::OnlyType>(it, 1) as *mut u8 };
+            unsafe { ecs_field::<A::OnlyType>(it, 0) as *mut u8 };
         is_ref[0] = if !it.sources.is_null() {
             unsafe { *it.sources.add(0) != 0 }
         } else {
@@ -614,11 +609,11 @@ macro_rules! impl_iterable {
             type Pointers = ComponentsData<Self, { tuple_count!($($t),*) }>;
 
 
-            fn populate<'a>(filter: &mut impl Filterable<'a>) {
+            fn populate<'a>(filter: &mut impl QueryBuilderImpl<'a>) {
                 let _world = filter.world();
                 $(
-                    filter.term_with_id(<$t::OnlyType as ComponentId>::get_id(_world));
-                    let term = filter.current_term();
+                    filter.with_id(<$t::OnlyType as ComponentId>::get_id(_world));
+                    let term = filter.current_term_mut();
                     $t::populate_term(term);
 
                 )*
@@ -639,7 +634,7 @@ macro_rules! impl_iterable {
                 let mut any_ref = false;
                 $(
                     components[index as usize] =
-                    unsafe { ecs_field::<$t::OnlyType>(it, index + 1) as *mut u8 };
+                    unsafe { ecs_field::<$t::OnlyType>(it, index) as *mut u8 };
                     is_ref[index as usize] = if !it.sources.is_null() {
                         unsafe { *it.sources.add(index as usize) != 0 }
                     } else {

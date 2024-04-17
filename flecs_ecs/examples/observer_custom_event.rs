@@ -28,9 +28,7 @@ fn main() {
     // The observer filter can be matched against the entity, so make sure it
     // has the Position component before emitting the event. This does not
     // trigger the observer yet.
-    let entity = world
-        .new_entity_named(c"e1")
-        .set(Position { x: 10.0, y: 20.0 });
+    let entity = world.entity_named(c"e1").set(Position { x: 10.0, y: 20.0 });
 
     // Emit the custom event. This triggers the observer.
     world

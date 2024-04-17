@@ -1,34 +1,30 @@
+//! `ObserverBuilder` is used to configure and build Observers.
+//! Observers are systems that react to events.
+//! Observers let applications register callbacks for ECS events.
+
 use std::{
     default,
     ffi::{c_void, CStr},
-    ops::Deref,
 };
 
+use crate::core::internals::*;
 use crate::core::private::internal_ReactorAPI;
 use crate::core::*;
 use crate::sys;
 
+/// `ObserverBuilder` is used to configure and build Observers.
+/// Observers are systems that react to events.
+/// Observers let applications register callbacks for ECS events.
 pub struct ObserverBuilder<'a, T>
 where
     T: Iterable,
 {
-    filter_builder: FilterBuilder<'a, T>,
     desc: sys::ecs_observer_desc_t,
+    term_builder: TermBuilder,
+    world: WorldRef<'a>,
     event_count: i32,
     is_instanced: bool,
-}
-
-/// Deref to `FilterBuilder` to allow access to `FilterBuilder` methods without having to access `FilterBuilder` through `ObserverBuilder`
-impl<'a, T> Deref for ObserverBuilder<'a, T>
-where
-    T: Iterable,
-{
-    type Target = FilterBuilder<'a, T>;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.filter_builder
-    }
+    _phantom: std::marker::PhantomData<&'a T>,
 }
 
 impl<'a, T> ObserverBuilder<'a, T>
@@ -46,22 +42,19 @@ where
     /// * C++ API: `observer_builder::observer_builder`
     #[doc(alias = "observer_builder::observer_builder")]
     pub fn new(world: impl IntoWorld<'a>) -> Self {
-        let mut desc = Default::default();
+        let desc = Default::default();
         let mut obj = Self {
             desc,
-            filter_builder: FilterBuilder::<T>::new_from_desc(world, &mut desc.filter, 0),
+            term_builder: TermBuilder::default(),
             event_count: 0,
             is_instanced: false,
+            world: world.world(),
+            _phantom: std::marker::PhantomData,
         };
 
-        let entity_desc: sys::ecs_entity_desc_t = sys::ecs_entity_desc_t {
-            name: std::ptr::null(),
-            sep: SEPARATOR.as_ptr(),
-            root_sep: SEPARATOR.as_ptr(),
-            ..default::Default::default()
-        };
+        obj.desc.entity =
+            unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &Default::default()) };
 
-        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
@@ -78,12 +71,14 @@ where
     /// * C++ API: `node_builder::node_builder`
     #[doc(alias = "node_builder::node_builder")]
     pub fn new_named(world: impl IntoWorld<'a>, name: &CStr) -> Self {
-        let mut desc = Default::default();
+        let desc = Default::default();
         let mut obj = Self {
             desc,
-            filter_builder: FilterBuilder::<T>::new_from_desc(world, &mut desc.filter, 0),
+            term_builder: TermBuilder::default(),
             event_count: 0,
             is_instanced: false,
+            world: world.world(),
+            _phantom: std::marker::PhantomData,
         };
         let entity_desc: sys::ecs_entity_desc_t = sys::ecs_entity_desc_t {
             name: name.as_ptr(),
@@ -92,7 +87,8 @@ where
             ..default::Default::default()
         };
 
-        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
+        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world_ptr_mut(), &entity_desc) };
+
         T::populate(&mut obj);
         obj
     }
@@ -108,26 +104,26 @@ where
     ///
     /// * C++ API: `observer_builder::observer_builder`
     #[doc(alias = "observer_builder::observer_builder")]
-    pub fn new_from_desc(world: impl IntoWorld<'a>, mut desc: sys::ecs_observer_desc_t) -> Self {
+    pub(crate) fn new_from_desc(world: impl IntoWorld<'a>, desc: sys::ecs_observer_desc_t) -> Self {
         let mut obj = Self {
             desc,
-            filter_builder: FilterBuilder::new_from_desc(world, &mut desc.filter, 0),
+            term_builder: TermBuilder::default(),
             event_count: 0,
+            world: world.world(),
             is_instanced: false,
+            _phantom: std::marker::PhantomData,
         };
 
-        let entity_desc: sys::ecs_entity_desc_t = sys::ecs_entity_desc_t {
-            name: std::ptr::null(),
-            sep: SEPARATOR.as_ptr(),
-            root_sep: SEPARATOR.as_ptr(),
-            ..default::Default::default()
-        };
+        if obj.desc.entity == 0 {
+            obj.desc.entity =
+                unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &Default::default()) };
+        }
 
-        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world.world_ptr_mut(), &entity_desc) };
         T::populate(&mut obj);
         obj
     }
 
+    /// Returns the event count of the builder
     pub fn event_count(&self) -> i32 {
         self.event_count
     }
@@ -166,7 +162,7 @@ where
     {
         let event_count = self.event_count as usize;
         self.event_count += 1;
-        let id = E::get_id(self.world);
+        let id = E::get_id(self.world());
         self.desc.events[event_count] = id;
         self
     }
@@ -187,58 +183,31 @@ where
     }
 }
 
-impl<'a, T> Filterable<'a> for ObserverBuilder<'a, T>
-where
-    T: Iterable,
-{
-    fn current_term(&mut self) -> &mut TermT {
-        unsafe { &mut *self.filter_builder.term.term_ptr }
+#[doc(hidden)]
+impl<'a, T: Iterable> internals::QueryConfig<'a> for ObserverBuilder<'a, T> {
+    #[inline(always)]
+    fn term_builder(&self) -> &TermBuilder {
+        &self.term_builder
     }
 
-    fn next_term(&mut self) {
-        self.filter_builder.next_term();
+    #[inline(always)]
+    fn term_builder_mut(&mut self) -> &mut TermBuilder {
+        &mut self.term_builder
+    }
+
+    #[inline(always)]
+    fn query_desc(&self) -> &sys::ecs_query_desc_t {
+        &self.desc.query
+    }
+
+    #[inline(always)]
+    fn query_desc_mut(&mut self) -> &mut sys::ecs_query_desc_t {
+        &mut self.desc.query
     }
 }
+impl<'a, T: Iterable> TermBuilderImpl<'a> for ObserverBuilder<'a, T> {}
 
-impl<'a, T> FilterBuilderImpl<'a> for ObserverBuilder<'a, T>
-where
-    T: Iterable,
-{
-    #[inline]
-    fn desc_filter_mut(&mut self) -> &mut sys::ecs_filter_desc_t {
-        &mut self.desc.filter
-    }
-
-    #[inline]
-    fn expr_count_mut(&mut self) -> &mut i32 {
-        self.filter_builder.expr_count_mut()
-    }
-
-    #[inline]
-    fn term_index_mut(&mut self) -> &mut i32 {
-        self.filter_builder.term_index_mut()
-    }
-}
-
-impl<'a, T> TermBuilder<'a> for ObserverBuilder<'a, T>
-where
-    T: Iterable,
-{
-    #[inline]
-    fn term_mut(&mut self) -> &mut Term<'a> {
-        self.filter_builder.term_mut()
-    }
-
-    #[inline]
-    fn term_ptr_mut(&mut self) -> *mut TermT {
-        self.filter_builder.term_ptr_mut()
-    }
-
-    #[inline]
-    fn term_id_ptr_mut(&mut self) -> *mut super::c_types::TermIdT {
-        self.filter_builder.term_id_ptr_mut()
-    }
-}
+impl<'a, T: Iterable> QueryBuilderImpl<'a> for ObserverBuilder<'a, T> {}
 
 impl<'a, T> Builder<'a> for ObserverBuilder<'a, T>
 where
@@ -253,13 +222,13 @@ where
     /// * C++ API: `node_builder::build`
     #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
-        Observer::new(self.world, self.desc, self.is_instanced)
+        Observer::new(self.world(), self.desc, self.is_instanced)
     }
 }
 
 impl<'a, T: Iterable> IntoWorld<'a> for ObserverBuilder<'a, T> {
     fn world(&self) -> WorldRef<'a> {
-        self.filter_builder.world()
+        self.world
     }
 }
 

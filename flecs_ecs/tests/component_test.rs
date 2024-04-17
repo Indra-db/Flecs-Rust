@@ -30,7 +30,7 @@ fn temp_test_hook() {
 
         assert_eq!(unsafe { COUNT }, 0);
 
-        let entity = world.new_entity().add::<Position>();
+        let entity = world.entity().add::<Position>();
 
         assert_eq!(unsafe { COUNT }, 1);
         let pos_e1 = entity.get::<Position>();
@@ -43,7 +43,7 @@ fn temp_test_hook() {
         assert_eq!(pos_e1.x, 10);
         assert_eq!(pos_e1.y, 20);
 
-        let entity2 = world.new_entity().add::<Position>();
+        let entity2 = world.entity().add::<Position>();
         assert_eq!(unsafe { COUNT }, 2);
         let pos_e2 = entity2.get::<Position>();
         assert_eq!(pos_e1.x, 10);

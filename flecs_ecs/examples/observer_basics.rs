@@ -37,9 +37,7 @@ fn main() {
         });
 
     // Create entity, set Position (emits EcsOnAdd and EcsOnSet)
-    let entity = world
-        .new_entity_named(c"e1")
-        .set(Position { x: 10.0, y: 20.0 });
+    let entity = world.entity_named(c"e1").set(Position { x: 10.0, y: 20.0 });
 
     // Remove Position (emits EcsOnRemove)
     entity.remove::<Position>();

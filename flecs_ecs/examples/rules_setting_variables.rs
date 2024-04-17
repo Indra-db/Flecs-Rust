@@ -59,9 +59,9 @@ fn main() {
     for p in 0..PLAYER_COUNT {
         let player = if p == 0 {
             // Give first player a name so we can look it up later
-            world.new_entity_named(c"MyPlayer")
+            world.entity_named(c"MyPlayer")
         } else {
-            world.new_entity()
+            world.entity()
         };
 
         // Add player tag so we can query for all players if we want to
@@ -69,22 +69,22 @@ fn main() {
 
         for _ in 0..PLATOONS_PER_PLAYER {
             let platoon = world
-                .new_entity()
+                .entity()
                 .add_pair_first::<Player>(player)
                 // Add platoon tag so we can query for all platoons if we want to
                 .add::<Platoon>();
 
             // Add warriors, wizards and marksmen to the platoon
             world
-                .new_entity()
+                .entity()
                 .add::<Warrior>()
                 .add_pair_first::<Platoon>(platoon);
             world
-                .new_entity()
+                .entity()
                 .add::<Marksman>()
                 .add_pair_first::<Platoon>(platoon);
             world
-                .new_entity()
+                .entity()
                 .add::<Wizard>()
                 .add_pair_first::<Platoon>(platoon);
         }
@@ -98,10 +98,10 @@ fn main() {
     // - find all entities with (Platoon, *), store * in _Platoon
     // - check if _Platoon has (Player, *), store * in _Player
     let rule = world
-        .rule::<&RangedUnit>()
-        .with_type::<&Platoon>()
+        .query::<&RangedUnit>()
+        .with::<&Platoon>()
         .select_second_name(c"$Platoon")
-        .with_pair_name::<&Player>(c"$Player")
+        .with_first_name::<&Player>(c"$Player")
         .select_src_name(c"$Platoon")
         .build();
 
@@ -110,8 +110,8 @@ fn main() {
     // platoon or a single player setting a variable beforehand. In this example
     // we'll just find all platoons & ranged units for a single player.
 
-    let player_var = rule.find_var(c"Player");
-    let platoon_var = rule.find_var(c"Platoon");
+    let player_var = rule.find_var(c"Player").unwrap();
+    let platoon_var = rule.find_var(c"Platoon").unwrap();
 
     // Iterate rule, limit the results to units of MyPlayer
     rule.iterable()
@@ -122,7 +122,7 @@ fn main() {
                 snap,
                 "Unit {} of class {} in platoon {} for player {}",
                 unit,
-                it.id(1).to_str(),
+                it.id(0).to_str(),
                 it.get_var(platoon_var),
                 it.get_var(player_var)
             );

@@ -29,7 +29,7 @@ fn main() {
     // Create query to find all waiters without a plate
     let mut q_waiter = world
         .query::<&Waiter>()
-        .without_pair::<&Plate, flecs::Wildcard>()
+        .without::<(&Plate, flecs::Wildcard)>()
         .build();
 
     // System that assigns plates to waiter. By making this system no_readonly
@@ -37,8 +37,8 @@ fn main() {
     // ensures that we won't assign plates to the same waiter more than once.
     world
         .system_named::<&Plate>(c"AssignPlate")
-        .without_pair::<&Waiter, flecs::Wildcard>()
-        .no_readonly(true)
+        .without::<(&Waiter, flecs::Wildcard)>()
+        .immediate(true)
         .on_iter_only(|it| {
             for i in it.iter() {
                 let plate = it.entity(i);
@@ -70,13 +70,13 @@ fn main() {
             }
         });
 
-    let waiter_1 = world.new_entity_named(c"waiter_1").add::<Waiter>();
-    world.new_entity_named(c"waiter_2").add::<Waiter>();
-    world.new_entity_named(c"waiter_3").add::<Waiter>();
+    let waiter_1 = world.entity_named(c"waiter_1").add::<Waiter>();
+    world.entity_named(c"waiter_2").add::<Waiter>();
+    world.entity_named(c"waiter_3").add::<Waiter>();
 
-    world.new_entity_named(c"plate_1").add::<Plate>();
-    let plate_2 = world.new_entity_named(c"plate_2").add::<Plate>();
-    world.new_entity_named(c"plate_3").add::<Plate>();
+    world.entity_named(c"plate_1").add::<Plate>();
+    let plate_2 = world.entity_named(c"plate_2").add::<Plate>();
+    world.entity_named(c"plate_3").add::<Plate>();
 
     waiter_1.add_pair_first::<&Plate>(plate_2);
     plate_2.add_pair_first::<&Waiter>(waiter_1);

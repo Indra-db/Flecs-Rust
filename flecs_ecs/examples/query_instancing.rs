@@ -11,7 +11,7 @@ fn main() {
     // have Velocity as owned and shared component.
     let query = world
         .query::<(&mut Position, &Velocity)>()
-        .term_at(1)
+        .term_at(0)
         .self_term()
         .instanced()
         .build();
@@ -23,23 +23,23 @@ fn main() {
 
     // Create a few entities that own Position & share Velocity from the prefab.
     world
-        .new_entity_named(c"e1")
+        .entity_named(c"e1")
         .is_a_id(prefab)
         .set(Position { x: 10.0, y: 20.0 });
 
     world
-        .new_entity_named(c"e2")
+        .entity_named(c"e2")
         .is_a_id(prefab)
         .set(Position { x: 10.0, y: 20.0 });
 
     // Create a few entities that own all components
     world
-        .new_entity_named(c"e3")
+        .entity_named(c"e3")
         .set(Position { x: 10.0, y: 20.0 })
         .set(Velocity { x: 3.0, y: 4.0 });
 
     world
-        .new_entity_named(c"e4")
+        .entity_named(c"e4")
         .set(Position { x: 10.0, y: 20.0 })
         .set(Velocity { x: 4.0, y: 5.0 });
 
@@ -50,7 +50,7 @@ fn main() {
     query.iter(|it, (position, velocity)| {
         // Check if Velocity is owned, in which case it's accessed as array.
         // Position will always be owned, since we set the term to Self.
-        if it.is_self(2) {
+        if it.is_self(1) {
             fprintln!(snap, "Velocity is owned");
 
             for i in it.iter() {

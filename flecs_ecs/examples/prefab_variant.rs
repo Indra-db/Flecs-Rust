@@ -42,7 +42,7 @@ fn main() {
     // ImpulseSpeed from SpaceShip, Defence from Freighter and FreightCapacity
     // from MammothFreighter.
     let inst = world
-        .new_entity_named(c"my_freighter")
+        .entity_named(c"my_freighter")
         .is_a_id(mammoth_freighter);
 
     // Add a private Position component.

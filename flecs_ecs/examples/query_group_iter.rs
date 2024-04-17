@@ -58,43 +58,43 @@ fn main() {
 
     // Create npc's in world cell 0_0
     world
-        .new_entity()
+        .entity()
         .add::<(WorldCell, Cell_0_0)>()
         .add::<Merchant>()
         .add::<Npc>();
     world
-        .new_entity()
+        .entity()
         .add::<(WorldCell, Cell_0_0)>()
         .add::<Merchant>()
         .add::<Npc>();
 
     // Create npc's in world cell 0_1
     world
-        .new_entity()
+        .entity()
         .add::<(WorldCell, Cell_0_1)>()
         .add::<Beggar>()
         .add::<Npc>();
     world
-        .new_entity()
+        .entity()
         .add::<(WorldCell, Cell_0_1)>()
         .add::<Soldier>()
         .add::<Npc>();
 
     // Create npc's in world cell 1_0
     world
-        .new_entity()
+        .entity()
         .add::<(WorldCell, Cell_1_0)>()
         .add::<Mage>()
         .add::<Npc>();
     world
-        .new_entity()
+        .entity()
         .add::<(WorldCell, Cell_1_0)>()
         .add::<Beggar>()
         .add::<Npc>();
 
     // Create npc's in world cell 1_1
     world
-        .new_entity()
+        .entity()
         .add::<(WorldCell, Cell_1_1)>()
         .add::<Soldier>()
         .add::<Npc>();
@@ -105,7 +105,7 @@ fn main() {
     fprintln!(snap, "All tables");
 
     query.iter_only(|iter| {
-        let group = world.new_entity_from_id(iter.group_id());
+        let group = world.entity_from_id(iter.group_id());
         fprintln!(
             snap,
             "group: {:?} - Table [{}]",
@@ -119,7 +119,7 @@ fn main() {
     fprintln!(snap, "Tables for cell 1_0:");
 
     query.iterable().set_group::<Cell_1_0>().iter_only(|iter| {
-        let group = world.new_entity_from_id(iter.group_id());
+        let group = world.entity_from_id(iter.group_id());
         fprintln!(
             snap,
             "group: {:?} - Table [{}]",

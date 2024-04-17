@@ -213,7 +213,7 @@ impl<'a> IdView<'a> {
             None
         } else {
             let entity = ecs_pair_first(self.id);
-            Some(self.world.get_alive(entity))
+            self.world.try_get_alive(entity)
         }
     }
 
@@ -247,7 +247,7 @@ impl<'a> IdView<'a> {
             None
         } else {
             let entity = ecs_pair_second(self.id);
-            Some(self.world.get_alive(entity))
+            self.world.try_get_alive(entity)
         }
     }
 

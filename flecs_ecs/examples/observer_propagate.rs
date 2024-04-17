@@ -21,7 +21,7 @@ fn main() {
     // Create observer that listens for events from both self and parent
     world
         .observer::<(&Position, &Position)>()
-        .term_at(2)
+        .term_at(1)
         .parent()
         .add_event::<flecs::OnSet>()
         .on_each_iter(|it, index, (pos_self, pos_parent)| {
@@ -39,8 +39,8 @@ fn main() {
         });
 
     // Create entity and parent
-    let parent = world.new_entity_named(c"p");
-    let entity = world.new_entity_named(c"e").child_of_id(parent);
+    let parent = world.entity_named(c"p");
+    let entity = world.entity_named(c"e").child_of_id(parent);
 
     // Set Position on entity. This doesn't trigger the observer yet, since the
     // parent doesn't have Position yet.
