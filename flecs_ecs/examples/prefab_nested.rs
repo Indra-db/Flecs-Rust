@@ -52,7 +52,7 @@ fn main() {
     inst_car.is_a_id(car);
 
     // Lookup one of the wheels
-    if let Some(inst) = inst_car.lookup_name_optional(c"FrontLeft", true) {
+    if let Some(inst) = inst_car.try_lookup_name(c"FrontLeft", true) {
         // The type shows that the child has a private copy of the TirePressure
         // component, and an IsA relationship to the Wheel prefab.
         fprintln!(snap, "{:?}", inst.archetype());

@@ -832,11 +832,7 @@ impl World {
     ///
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
-    pub fn lookup_name_optional_optional(
-        &self,
-        name: &CStr,
-        search_path: bool,
-    ) -> Option<EntityView> {
+    pub fn try_lookup_name(&self, name: &CStr, search_path: bool) -> Option<EntityView> {
         let entity_id = unsafe {
             sys::ecs_lookup_path_w_sep(
                 self.raw_world.as_ptr(),
