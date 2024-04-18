@@ -235,7 +235,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// * C++ API: `query_builder_i::cache_kind`
     #[doc(alias = "query_builder_i::cache_kind")]
     fn set_cache_kind(&mut self, kind: QueryCacheKind) -> &mut Self {
-        self.query_desc_mut().cache_kind = kind as u32;
+        self.query_desc_mut().cache_kind = kind as sys::ecs_query_cache_kind_t;
         self
     }
 
