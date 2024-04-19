@@ -24,7 +24,7 @@ fn main() {
         .term_at(1)
         .parent()
         .add_event::<flecs::OnSet>()
-        .on_each_iter(|it, index, (pos_self, pos_parent)| {
+        .each_iter(|it, index, (pos_self, pos_parent)| {
             fprintln!(
                 snap,
                 " - {}: {}: {}: self: {{ {}, {} }}, parent: {{ {}, {} }}",

@@ -39,7 +39,7 @@ fn main() {
         .system_named::<&Plate>(c"AssignPlate")
         .without::<(&Waiter, flecs::Wildcard)>()
         .immediate(true)
-        .on_iter_only(|it| {
+        .iter_only(|it| {
             for i in it.iter() {
                 let plate = it.entity(i);
 

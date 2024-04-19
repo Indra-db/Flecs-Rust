@@ -26,7 +26,7 @@ fn main() {
 
     world
         .system::<&mut Timeout>()
-        .on_each_iter(|it, _index, timeout| {
+        .each_iter(|it, _index, timeout| {
             timeout.value -= it.delta_time();
         });
 
@@ -34,13 +34,13 @@ fn main() {
         .system_named::<()>(c"Tick")
         .interval(1.0)
         .set_context(context) //snapshot testing passing context
-        .on_iter_only(tick);
+        .iter_only(tick);
 
     world
         .system_named::<()>(c"FastTick")
         .interval(0.5)
         .set_context(context) //snapshot testing passing context
-        .on_iter_only(tick);
+        .iter_only(tick);
 
     // Run the main loop at 60 FPS
     world.set_target_fps(60.0);

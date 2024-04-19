@@ -31,7 +31,7 @@ where
     #[doc(alias = "system_builder_i::ctx")]
     fn set_context(&mut self, context: *mut c_void) -> &mut Self;
 
-    fn on_each<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
+    fn each<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: FnMut(T::TupleType<'_>),
     {
@@ -50,7 +50,7 @@ where
         self.build()
     }
 
-    fn on_each_entity<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
+    fn each_entity<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: FnMut(&mut EntityView, T::TupleType<'_>),
     {
@@ -71,7 +71,7 @@ where
         self.build()
     }
 
-    fn on_each_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
+    fn each_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: FnMut(&mut Iter, usize, T::TupleType<'_>),
     {
@@ -90,7 +90,7 @@ where
         self.build()
     }
 
-    fn on_iter_only<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
+    fn iter_only<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: FnMut(&mut Iter),
     {
@@ -107,7 +107,7 @@ where
         self.build()
     }
 
-    fn on_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
+    fn iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: FnMut(&mut Iter, T::TupleSliceType<'_>),
     {

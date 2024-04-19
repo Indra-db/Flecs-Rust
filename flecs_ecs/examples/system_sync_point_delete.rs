@@ -23,7 +23,7 @@ fn main() {
     // Basic move system.
     world
         .system_named::<(&mut Position, &Velocity)>(c"Move")
-        .on_each(|(p, v)| {
+        .each(|(p, v)| {
             p.x += v.x;
             p.y += v.y;
         });
@@ -34,7 +34,7 @@ fn main() {
     world
         .system_named::<&Position>(c"DeleteEntity")
         .write_type::<&flecs::Wildcard>()
-        .on_each_entity(|e, p| {
+        .each_entity(|e, p| {
             if p.x >= 3.0 {
                 fprintln!(snap, "Delete entity {}", e.name());
                 e.destruct();
@@ -45,7 +45,7 @@ fn main() {
     // that have been deleted by the previous system.
     world
         .system_named::<&Position>(c"PrintPosition")
-        .on_each_entity(|e, p| {
+        .each_entity(|e, p| {
             fprintln!(snap, "{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 

@@ -15,7 +15,7 @@ fn main() {
     world
         .observer::<(&Position, &Velocity)>()
         .add_event::<flecs::OnSet>()
-        .on_each_iter(|it, index, (pos, vel)| {
+        .each_iter(|it, index, (pos, vel)| {
             fprintln!(
                 snap,
                 " - {}: {}: {}: p: {{ {}, {} }}, v: {{ {}, {} }}",

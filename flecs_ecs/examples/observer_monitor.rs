@@ -20,7 +20,7 @@ fn main() {
     world
         .observer::<(&Position, &Velocity)>()
         .add_event::<flecs::Monitor>()
-        .on_each_iter(|it, index, (_pos, _vel)| {
+        .each_iter(|it, index, (_pos, _vel)| {
             if it.event() == flecs::OnAdd::ID {
                 fprintln!(
                     snap,

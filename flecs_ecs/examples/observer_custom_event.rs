@@ -15,7 +15,7 @@ fn main() {
     world
         .observer::<&Position>()
         .add_event::<MyEvent>()
-        .on_each_iter(|it, index, _pos| {
+        .each_iter(|it, index, _pos| {
             fprintln!(
                 snap,
                 " - {}: {}: {}",

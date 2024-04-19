@@ -12,7 +12,7 @@ fn main() {
     let query = world
         .query::<(&mut Position, &Velocity)>()
         .term_at(0)
-        .self_term()
+        .self_()
         .instanced()
         .build();
 

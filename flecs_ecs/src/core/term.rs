@@ -286,7 +286,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::self`
     #[doc(alias = "term_builder_i::self")]
-    fn self_term(&mut self) -> &mut Self {
+    fn self_(&mut self) -> &mut Self {
         self.term_ref_mut().id |= ECS_SELF;
         self
     }

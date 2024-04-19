@@ -592,7 +592,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::children")]
     pub fn for_each_child_of<F>(self, func: F)
     where
-        F: FnMut(EntityView),
+        F: FnMut(EntityView) + Sized,
     {
         self.for_each_children_id(flecs::ChildOf::ID, func);
     }

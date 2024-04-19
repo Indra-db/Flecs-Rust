@@ -20,12 +20,12 @@ fn main() {
     world
         .system_named::<()>(c"Startup")
         .kind::<flecs::pipeline::OnStart>()
-        .on_iter_only(|it| {
+        .iter_only(|it| {
             fprintln!(snap, "{}", it.system().name());
         });
 
     // Regular system
-    world.system_named::<()>(c"Update").on_iter_only(|it| {
+    world.system_named::<()>(c"Update").iter_only(|it| {
         fprintln!(snap, "{}", it.system().name());
     });
 

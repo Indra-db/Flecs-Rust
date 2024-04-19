@@ -26,14 +26,14 @@ fn main() {
         .with::<&Position>()
         .set_as_inout_none()
         .write_type::<&mut Velocity>() // Velocity is written, but shouldn't be matched
-        .on_each_entity(|e, ()| {
+        .each_entity(|e, ()| {
             e.set(Velocity { x: 1.0, y: 2.0 });
         });
 
     // This system reads Velocity, which causes the insertion of a sync point.
     world
         .system_named::<(&mut Position, &Velocity)>(c"Move")
-        .on_each(|(p, v)| {
+        .each(|(p, v)| {
             p.x += v.x;
             p.y += v.y;
         });
@@ -41,7 +41,7 @@ fn main() {
     // Print resulting Position
     world
         .system_named::<&Position>(c"PrintPosition")
-        .on_each_entity(|e, p| {
+        .each_entity(|e, p| {
             fprintln!(snap, "{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 

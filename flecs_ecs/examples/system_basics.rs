@@ -12,7 +12,7 @@ fn main() {
 
     let s = world
         .system::<(&mut Position, &Velocity)>()
-        .on_each_entity(|e, (p, v)| {
+        .each_entity(|e, (p, v)| {
             p.x += v.x;
             p.y += v.y;
             fprintln!(snap, "{}: {{ {}, {} }}", e.name(), p.x, p.y);

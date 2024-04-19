@@ -347,7 +347,7 @@ fn entity_get_generic_mut() {
     world
         .observer::<&Position>()
         .add_event::<flecs::OnSet>()
-        .on_each(|_| {
+        .each(|_| {
             invoked = true;
         });
 
@@ -1426,8 +1426,6 @@ fn entity_implicit_type_str_to_char() {
     assert_eq!(entity.archetype().to_string().unwrap(), "(Identifier,Name)");
 }
 
-// TODO these two tests need reviewing with the EntityView refactor
-
 #[test]
 fn entityview_to_entity_to_entity_view() {
     let world = World::new();
@@ -1659,92 +1657,110 @@ fn entity_defer_set_1_component() {
     assert_eq!(p.y, 20);
 }
 
+#[test]
+fn entity_defer_set_2_components() {
+    let world = World::new();
+
+    world.defer_begin();
+
+    let e = world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+
+    assert!(!e.has::<Position>());
+    assert!(!e.has::<Velocity>());
+
+    world.defer_end();
+
+    assert!(e.has::<Position>());
+    assert!(e.has::<Velocity>());
+
+    let pos = e.get::<Position>();
+    let vel = e.get::<Velocity>();
+    assert_eq!(pos.x, 10);
+    assert_eq!(pos.y, 20);
+    assert_eq!(vel.x, 1);
+    assert_eq!(vel.y, 2);
+}
+
+#[test]
+fn entity_defer_set_3_components() {
+    let world = World::new();
+
+    world.defer_begin();
+
+    let e = world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 })
+        .set(Mass { value: 50 });
+
+    assert!(!e.has::<Position>());
+    assert!(!e.has::<Velocity>());
+    assert!(!e.has::<Mass>());
+
+    world.defer_end();
+
+    assert!(e.has::<Position>());
+    assert!(e.has::<Velocity>());
+    assert!(e.has::<Mass>());
+
+    let pos = e.get::<Position>();
+    assert_eq!(pos.x, 10);
+    assert_eq!(pos.y, 20);
+
+    let vel = e.get::<Velocity>();
+    assert_eq!(vel.x, 1);
+    assert_eq!(vel.y, 2);
+
+    let mass = e.get::<Mass>();
+    assert_eq!(mass.value, 50);
+}
+
+#[test]
+fn entity_defer_set_2_component_w_on_set() {
+    let world = World::new();
+
+    let mut position_set = 0;
+    let mut velocity_set = 0;
+
+    world
+        .observer::<&Position>()
+        .add_event_id(*flecs::OnSet)
+        .each_entity(|_e, p| {
+            position_set += 1;
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+        });
+
+    world
+        .observer::<&Velocity>()
+        .add_event_id(*flecs::OnSet)
+        .each_entity(|_e, v| {
+            velocity_set += 1;
+            assert_eq!(v.x, 1);
+            assert_eq!(v.y, 2);
+        });
+
+    let e = world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+
+    assert_eq!(position_set, 1);
+    assert_eq!(velocity_set, 1);
+
+    let pos = e.get::<Position>();
+    assert_eq!(pos.x, 10);
+    assert_eq!(pos.y, 20);
+
+    let vel = e.get::<Velocity>();
+    assert_eq!(vel.x, 1);
+    assert_eq!(vel.y, 2);
+}
+
 /*
-
-
-void Entity_defer_set_1_component(void) {
-    flecs::world ecs;
-
-    ecs.defer_begin();
-
-    auto e = ecs.entity()
-        .set([](Position& p){
-            p.x = 10;
-            p.y = 20;
-        });
-
-    test_assert(!e.has<Position>());
-
-    ecs.defer_end();
-
-    test_assert(e.has<Position>());
-
-    e.get([](const Position& p) {
-        test_int(p.x, 10);
-        test_int(p.y, 20);
-    });
-}
-
-void Entity_defer_set_2_components(void) {
-    flecs::world ecs;
-
-    ecs.defer_begin();
-
-    auto e = ecs.entity()
-        .set([](Position& p, Velocity& v){
-            p = {10, 20};
-            v = {1, 2};
-        });
-
-    test_assert(!e.has<Position>());
-    test_assert(!e.has<Velocity>());
-
-    ecs.defer_end();
-
-    test_assert(e.has<Position>());
-    test_assert(e.has<Velocity>());
-
-    e.get([](const Position& p, const Velocity& v) {
-        test_int(p.x, 10);
-        test_int(p.y, 20);
-
-        test_int(v.x, 1);
-        test_int(v.y, 2);
-    });
-}
-
-void Entity_defer_set_3_components(void) {
-    flecs::world ecs;
-
-    ecs.defer_begin();
-
-    auto e = ecs.entity()
-        .set([](Position& p, Velocity& v, Mass& m){
-            p = {10, 20};
-            v = {1, 2};
-            m = {50};
-        });
-
-    test_assert(!e.has<Position>());
-    test_assert(!e.has<Velocity>());
-    test_assert(!e.has<Mass>());
-
-    ecs.defer_end();
-
-    test_assert(e.has<Position>());
-    test_assert(e.has<Velocity>());
-    test_assert(e.has<Mass>());
-
-    e.get([](const Position& p, const Velocity& v, const Mass& m) {
-        test_int(p.x, 10);
-        test_int(p.y, 20);
-
-        test_int(v.x, 1);
-        test_int(v.y, 2);
-
-        test_int(m.value, 50);
-    });
-}
 
 void Entity_set_2_w_on_set(void) {
     flecs::world ecs;

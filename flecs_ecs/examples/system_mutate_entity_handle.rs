@@ -22,7 +22,7 @@ fn main() {
     // System that deletes an entity after a timeout expires
     world
         .system::<&mut Timeout>()
-        .on_each_iter(|it, _index, timeout| {
+        .each_iter(|it, _index, timeout| {
             timeout.value -= it.delta_time();
             if timeout.value <= 0.0 {
                 // Delete the entity
@@ -55,7 +55,7 @@ fn main() {
         });
 
     // System that prints remaining expiry time
-    world.system::<&Timeout>().on_each_entity(|e, timeout| {
+    world.system::<&Timeout>().each_entity(|e, timeout| {
         let world = e.world();
         let to_delete = world.get_alive(timeout.to_delete);
         println!(
@@ -69,7 +69,7 @@ fn main() {
     world
         .observer::<&Tag>()
         .add_event::<flecs::OnRemove>()
-        .on_each_entity(|e, _tag| {
+        .each_entity(|e, _tag| {
             fprintln!(snap, "Expired: {} actually deleted", e.name());
         });
 

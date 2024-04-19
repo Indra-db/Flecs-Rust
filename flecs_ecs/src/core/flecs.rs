@@ -1,4 +1,4 @@
-use std::{ffi::CStr, sync::OnceLock};
+use std::{ffi::CStr, ops::Deref, sync::OnceLock};
 
 use crate::core::*;
 
@@ -9,6 +9,13 @@ macro_rules! create_pre_registered_component {
 
         impl FlecsConstantId for $struct_name {
             const ID: u64 = $const_name;
+        }
+
+        impl Deref for $struct_name {
+            type Target = u64;
+            fn deref(&self) -> &Self::Target {
+                &Self::ID
+            }
         }
 
         impl ComponentInfo for $struct_name {

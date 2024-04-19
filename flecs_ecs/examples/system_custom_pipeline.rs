@@ -31,12 +31,12 @@ fn main() {
     world.set_pipeline(pipeline.entity());
 
     // Create system with Physics tag
-    world.system::<()>().kind::<Physics>().on_iter_only(|_| {
+    world.system::<()>().kind::<Physics>().iter_only(|_| {
         fprintln!(snap, "System with Physics ran!");
     });
 
     // Create system without Physics tag
-    world.system::<()>().on_iter_only(|_| {
+    world.system::<()>().iter_only(|_| {
         fprintln!(snap, "System without Physics ran!");
     });
 

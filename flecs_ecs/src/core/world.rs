@@ -2968,13 +2968,11 @@ impl World {
     ///
     /// * C++ API: `world::pair`
     #[doc(alias = "world::pair")]
-    pub fn id_pair_ids(
-        &self,
-        first: impl Into<Entity> + Copy,
-        second: impl Into<Entity> + Copy,
-    ) -> IdView {
+    pub fn id_pair_ids(&self, first: impl Into<Entity>, second: impl Into<Entity>) -> IdView {
+        let first = *first.into();
+        let second = *second.into();
         ecs_assert!(
-            !ecs_is_pair(first.into()) && !ecs_is_pair(second.into()),
+            !ecs_is_pair(first) && !ecs_is_pair(second),
             FlecsErrorCode::InvalidParameter,
             "cannot create nested pairs"
         );

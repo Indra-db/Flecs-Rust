@@ -11,7 +11,7 @@ fn main() {
     world
         .system::<(&mut Position, &Velocity)>()
         .kind::<flecs::pipeline::OnUpdate>()
-        .on_each(|(p, v)| {
+        .each(|(p, v)| {
             p.x += v.x;
             p.y += v.y;
         });
@@ -20,7 +20,7 @@ fn main() {
     world
         .system::<&Position>()
         .kind::<flecs::pipeline::PostUpdate>()
-        .on_each_entity(|e, p| {
+        .each_entity(|e, p| {
             fprintln!(snap, "{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 

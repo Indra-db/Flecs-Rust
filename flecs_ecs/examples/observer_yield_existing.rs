@@ -23,7 +23,7 @@ fn main() {
         .observer::<&Position>()
         .add_event::<flecs::OnSet>()
         .yield_existing(true)
-        .on_each_iter(|it, index, pos| {
+        .each_iter(|it, index, pos| {
             fprintln!(
                 snap,
                 " - {}: {}: {}: {{ {}, {} }}",

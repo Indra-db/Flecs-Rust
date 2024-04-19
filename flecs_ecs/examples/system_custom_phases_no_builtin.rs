@@ -38,19 +38,19 @@ fn main() {
         .system_named::<()>(c"CollisionSystem")
         .kind_id(collisions)
         .set_context(snap.cvoid())
-        .on_iter_only(sys);
+        .iter_only(sys);
 
     world
         .system_named::<()>(c"PhysicsSystem")
         .kind_id(physics)
         .set_context(snap.cvoid())
-        .on_iter_only(sys);
+        .iter_only(sys);
 
     world
         .system_named::<()>(c"GameSystem")
         .kind_id(update)
         .set_context(snap.cvoid())
-        .on_iter_only(sys);
+        .iter_only(sys);
 
     // Run pipeline
     world.progress();

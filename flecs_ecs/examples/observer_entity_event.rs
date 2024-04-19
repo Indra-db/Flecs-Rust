@@ -43,7 +43,7 @@ fn main() {
         .observer::<()>()
         .add_event::<CloseRequested>()
         .with::<&flecs::Any>()
-        .on_each_iter(|it, _index, _| {
+        .each_iter(|it, _index, _| {
             let close_requested = unsafe { it.param::<CloseRequested>() };
             fprintln!(
                 snap,

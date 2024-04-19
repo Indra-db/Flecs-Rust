@@ -40,7 +40,7 @@ fn main() {
     let sys = world
         .system::<&Position>()
         .order_by(compare_position)
-        .on_each(|pos| {
+        .each(|pos| {
             fprintln!(snap, "{:?}", pos);
         });
 
