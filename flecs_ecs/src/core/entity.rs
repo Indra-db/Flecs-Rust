@@ -23,6 +23,14 @@ impl Entity {
         Self(id)
     }
 
+    pub fn null() -> Self {
+        Self(0)
+    }
+
+    pub fn is_valid(&self) -> bool {
+        self.0 != 0
+    }
+
     /// Convert the entity id to an [`EntityView`] with the given world.
     ///
     /// # Safety

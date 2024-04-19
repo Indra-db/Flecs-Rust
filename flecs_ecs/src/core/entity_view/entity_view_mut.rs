@@ -1321,8 +1321,10 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::scope`
     #[doc(alias = "entity_builder::scope")]
-    pub fn scope(&self, f: &mut impl FnMut(&World)) {
-        self.world.scope_id(self.id, f);
+    pub fn scope(self, f: impl FnMut(&World)) -> Self {
+        let world = &*self.world;
+        world.scope_id(self.id, f);
+        self
     }
 
     /// Gets mut component.

@@ -264,8 +264,9 @@ pub(crate) const ECS_AND: u64 = 1 << 60;
 
 // Builtin component ids
 pub(crate) const ECS_COMPONENT: u64 = 1;
-pub(crate) const ecs_field_idENTIFIER: u64 = 2;
-pub(crate) const ECS_POLY: u64 = 3;
+pub(crate) const ECS_IDENTIFIER: u64 = 2;
+pub(crate) const ECS_ITERABLE: u64 = 3;
+pub(crate) const ECS_POLY: u64 = 4;
 
 // Poly target components
 pub(crate) const ECS_QUERY: u64 = 5;
@@ -504,9 +505,6 @@ pub(crate) const ECS_DOC_COLOR: u64 = FLECS_HI_COMPONENT_ID + 117;
 // REST module components
 pub(crate) const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 118;
 
-pub type Identifier = sys::EcsIdentifier;
-pub type Poly = sys::EcsPoly;
-
 fn ecs_component_data() -> IdComponent {
     IdComponent {
         id: unsafe { sys::FLECS_IDEcsComponentID_ },
@@ -557,54 +555,6 @@ impl ComponentId for sys::EcsComponent {
 
     unsafe fn get_id_unchecked() -> IdT {
         sys::FLECS_IDEcsComponentID_
-    }
-
-    fn __get_once_lock_data() -> &'static OnceLock<IdComponent> {
-        static ONCE_LOCK: OnceLock<IdComponent> = OnceLock::new();
-        &ONCE_LOCK
-    }
-}
-
-impl ComponentInfo for Poly {
-    const IS_ENUM: bool = false;
-    const IS_TAG: bool = false;
-    const IMPLS_CLONE: bool = true;
-    const IMPLS_DEFAULT: bool = true;
-}
-
-impl NotEmptyComponent for Poly {}
-
-impl ComponentType<Struct> for Poly {}
-
-impl ComponentId for Poly {
-    type UnderlyingType = Poly;
-    type UnderlyingEnumType = NoneEnum;
-
-    fn register_explicit<'a>(_world: impl IntoWorld<'a>) {
-        //this is already registered in the world inside C
-    }
-
-    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &CStr) -> EntityT {
-        //this is already registered in the world inside C
-        ECS_POLY
-    }
-
-    fn is_registered() -> bool {
-        //this is already registered in the world inside C
-        true
-    }
-
-    fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
-        //this is already registered in the world inside C
-        true
-    }
-
-    fn get_id<'a>(_world: impl IntoWorld<'a>) -> IdT {
-        ECS_POLY
-    }
-
-    unsafe fn get_id_unchecked() -> IdT {
-        ECS_POLY
     }
 
     fn __get_once_lock_data() -> &'static OnceLock<IdComponent> {

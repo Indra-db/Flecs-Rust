@@ -1640,7 +1640,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::lookup`
     #[doc(alias = "entity_view::lookup")]
     #[inline(always)]
-    pub fn try_lookup_name(self, path: &CStr, search_path: bool) -> Option<EntityView<'a>> {
+    fn try_lookup_impl(self, name: &CStr, search_path: bool) -> Option<EntityView<'a>> {
         ecs_assert!(
             self.id != 0,
             FlecsErrorCode::InvalidParameter,
@@ -1650,7 +1650,7 @@ impl<'a> EntityView<'a> {
             sys::ecs_lookup_path_w_sep(
                 self.world.world_ptr_mut(),
                 *self.id,
-                path.as_ptr(),
+                name.as_ptr(),
                 SEPARATOR.as_ptr(),
                 SEPARATOR.as_ptr(),
                 search_path,
@@ -1662,6 +1662,106 @@ impl<'a> EntityView<'a> {
         } else {
             Some(EntityView::new_from(self.world, id))
         }
+    }
+
+    /// Lookup an entity by name.
+    ///
+    /// Lookup an entity in the scope of this entity. The provided path may
+    /// contain double colons as scope separators, for example: "`Foo::Bar`".
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the entity to lookup.
+    ///
+    /// # Returns
+    ///
+    /// The entity if found, otherwise None.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::lookup`
+    #[doc(alias = "entity_view::lookup")]
+    #[inline(always)]
+    pub fn try_lookup(&self, name: &CStr) -> Option<EntityView> {
+        self.try_lookup_impl(name, true)
+    }
+
+    /// Lookup an entity by name, only in the current scope of the entity.
+    ///
+    /// Lookup an entity in the scope of this entity. The provided path may
+    /// contain double colons as scope separators, for example: "`Foo::Bar`".
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the entity to lookup.
+    ///
+    /// # Returns
+    ///
+    /// The entity if found, otherwise None.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::lookup`
+    #[doc(alias = "entity_view::lookup")]
+    #[inline(always)]
+    pub fn try_lookup_current_scope(&self, name: &CStr) -> Option<EntityView> {
+        self.try_lookup_impl(name, false)
+    }
+
+    /// Lookup an entity by name.
+    ///
+    /// Lookup an entity in the scope of this entity. The provided path may
+    /// contain double colons as scope separators, for example: "`Foo::Bar`".
+    ///
+    /// # Safety
+    ///
+    /// This function can return an entity with id 0 if the entity is not found.
+    /// Ensure that the entity exists before using it.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the entity to lookup.
+    ///
+    /// # Returns
+    ///
+    /// The entity, entity id will be 0 if not found.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::lookup`
+    #[doc(alias = "entity_view::lookup")]
+    #[inline(always)]
+    pub fn lookup(&self, name: &CStr) -> EntityView {
+        self.try_lookup(name)
+            .expect("Entity not found, when unsure, use try_lookup")
+    }
+
+    /// Lookup an entity by name, only in the current scope of the entity.
+    ///
+    /// Lookup an entity in the scope of this entity. The provided path may
+    /// contain double colons as scope separators, for example: "`Foo::Bar`".
+    ///
+    /// # Safety
+    ///
+    /// This function can return an entity with id 0 if the entity is not found.
+    /// Ensure that the entity exists before using it.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the entity to lookup.
+    ///
+    /// # Returns
+    ///
+    /// The entity, entity id will be 0 if not found.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::lookup`
+    #[doc(alias = "entity_view::lookup")]
+    #[inline(always)]
+    pub fn lookup_current_scope(&self, name: &CStr) -> EntityView {
+        self.try_lookup_current_scope(name)
+            .expect("Entity not found, when unsure, use try_lookup_current_scope")
     }
 
     /// Check if entity has the provided entity.

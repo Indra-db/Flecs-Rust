@@ -757,8 +757,58 @@ impl World {
     #[doc(alias = "world::set_lookup_path")]
     #[doc(alias = "wsys::ecs_set_lookup_path")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
-    pub fn set_lookup_path(&self, search_path: *const EntityT) -> *mut EntityT {
-        unsafe { sys::ecs_set_lookup_path(self.raw_world.as_ptr(), search_path) }
+    pub fn set_lookup_path(&self, search_path: impl Into<Entity>) -> *mut EntityT {
+        unsafe { sys::ecs_set_lookup_path(self.raw_world.as_ptr(), &*search_path.into()) }
+    }
+
+    /// Lookup entity by name
+    ///
+    /// # Safety
+    ///
+    /// This function can return an entity with id 0 if the entity is not found.
+    /// Ensure that the entity exists before using it.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the entity to lookup.
+    ///
+    /// # Returns
+    ///
+    /// The entity, if not found, the entity will have an id of 0.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::lookup`
+    #[doc(alias = "world::lookup")]
+    #[inline(always)]
+    pub fn lookup(&self, name: &CStr) -> EntityView {
+        self.try_lookup(name)
+            .expect("Entity not found, when unsure, use try_lookup")
+    }
+
+    /// Lookup entity by name, only the current scope is searched
+    ///
+    /// # Safety
+    ///
+    /// This function can return an entity with id 0 if the entity is not found.
+    /// Ensure that the entity exists before using it.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the entity to lookup.
+    ///
+    /// # Returns
+    ///
+    /// The entity, if not found, returns an entity with id 0.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::lookup`
+    #[doc(alias = "world::lookup")]
+    #[inline(always)]
+    pub fn lookup_current_scope(&self, name: &CStr) -> EntityView {
+        self.try_lookup_current_scope(name)
+            .expect("Entity not found, when unsure, use try_lookup_current_scope")
     }
 
     /// Lookup entity by name
@@ -776,37 +826,7 @@ impl World {
     ///
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
-    pub fn lookup_name(&self, name: &CStr, search_path: bool) -> EntityView {
-        let entity_id = unsafe {
-            sys::ecs_lookup_path_w_sep(
-                self.raw_world.as_ptr(),
-                0,
-                name.as_ptr(),
-                SEPARATOR.as_ptr(),
-                SEPARATOR.as_ptr(),
-                search_path,
-            )
-        };
-
-        EntityView::new_from(self, entity_id)
-    }
-
-    /// Lookup entity by name
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the entity to lookup.
-    /// * `search_path` - When false, only the current scope is searched.
-    ///
-    /// # Returns
-    ///
-    /// The entity if found, otherwise None.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::lookup`
-    #[doc(alias = "world::lookup")]
-    pub fn try_lookup_name(&self, name: &CStr, search_path: bool) -> Option<EntityView> {
+    fn try_lookup_impl(&self, name: &CStr, search_path: bool) -> Option<EntityView> {
         let entity_id = unsafe {
             sys::ecs_lookup_path_w_sep(
                 self.raw_world.as_ptr(),
@@ -822,6 +842,44 @@ impl World {
         } else {
             Some(EntityView::new_from(self, entity_id))
         }
+    }
+
+    /// Lookup entity by name
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the entity to lookup.
+    ///
+    /// # Returns
+    ///
+    /// The entity if found, otherwise None.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::lookup`
+    #[doc(alias = "world::lookup")]
+    #[inline(always)]
+    pub fn try_lookup(&self, name: &CStr) -> Option<EntityView> {
+        self.try_lookup_impl(name, true)
+    }
+
+    /// Lookup entity by name, only the current scope is searched
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the entity to lookup.
+    ///
+    /// # Returns
+    ///
+    /// The entity if found, otherwise None.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::lookup`
+    #[doc(alias = "world::lookup")]
+    #[inline(always)]
+    pub fn try_lookup_current_scope(&self, name: &CStr) -> Option<EntityView> {
+        self.try_lookup_impl(name, false)
     }
 
     /// Sets a singleton component of type `T` on the world.

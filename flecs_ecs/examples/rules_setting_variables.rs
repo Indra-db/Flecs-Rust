@@ -112,7 +112,7 @@ fn main() {
 
     // Iterate rule, limit the results to units of MyPlayer
     rule.iterable()
-        .set_var(player_var, world.lookup_name(c"MyPlayer", true))
+        .set_var(player_var, world.lookup(c"MyPlayer"))
         .each_iter(|it, index, _| {
             let unit = it.entity(index);
             fprintln!(

@@ -155,7 +155,7 @@ create_pre_registered_component!(And, ECS_AND);
 
 // Builtin component ids
 create_pre_registered_component!(EcsComponent, ECS_COMPONENT);
-create_pre_registered_component!(FieldIdentifier, ecs_field_idENTIFIER);
+create_pre_registered_component!(EcsIdentifier, ECS_IDENTIFIER);
 create_pre_registered_component!(Poly, ECS_POLY);
 
 // Poly target components
