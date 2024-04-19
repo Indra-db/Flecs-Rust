@@ -178,7 +178,7 @@ impl<'a> IdView<'a> {
             return false;
         }
 
-        ecs_pair_first(self.id) == first.into()
+        ecs_first(self.id) == first.into()
     }
 
     /// Get first element from a pair.
@@ -194,7 +194,7 @@ impl<'a> IdView<'a> {
     pub fn first(&self) -> EntityView {
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
 
-        let entity = ecs_pair_first(self.id);
+        let entity = ecs_first(self.id);
         self.world.get_alive(entity)
     }
 
@@ -212,7 +212,7 @@ impl<'a> IdView<'a> {
         if !self.is_pair() {
             None
         } else {
-            let entity = ecs_pair_first(self.id);
+            let entity = ecs_first(self.id);
             self.world.try_get_alive(entity)
         }
     }
@@ -229,7 +229,7 @@ impl<'a> IdView<'a> {
     pub fn second(&self) -> EntityView {
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
 
-        let entity = ecs_pair_second(self.id);
+        let entity = ecs_second(self.id);
         self.world.get_alive(entity)
     }
 
@@ -246,7 +246,7 @@ impl<'a> IdView<'a> {
         if !self.is_pair() {
             None
         } else {
-            let entity = ecs_pair_second(self.id);
+            let entity = ecs_second(self.id);
             self.world.try_get_alive(entity)
         }
     }

@@ -77,7 +77,7 @@ fn main() {
         snap,
         "Is the Moon a child of the Earth? {} / {}",
         moon.has_id((flecs::ChildOf::ID, earth)), //or you can do
-        moon.has_pair_first::<flecs::ChildOf>(earth)
+        moon.has_first::<flecs::ChildOf>(earth)
     );
 
     fprintln!(snap);

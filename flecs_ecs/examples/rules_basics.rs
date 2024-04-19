@@ -18,15 +18,15 @@ fn main() {
 
     world
         .entity_named(c"Bob")
-        .add_pair_first::<Eats>(apples)
-        .add_pair_first::<Eats>(burgers)
-        .add_pair_first::<Eats>(pizza);
+        .add_first::<Eats>(apples)
+        .add_first::<Eats>(burgers)
+        .add_first::<Eats>(pizza);
 
     world
         .entity_named(c"Alice")
-        .add_pair_first::<Eats>(salad)
-        .add_pair_first::<Eats>(chocolate)
-        .add_pair_first::<Eats>(apples);
+        .add_first::<Eats>(salad)
+        .add_first::<Eats>(chocolate)
+        .add_first::<Eats>(apples);
 
     // Here we're creating a rule that in the query DSL would look like this:
     //   Eats($This, $Food), Healthy($Food)

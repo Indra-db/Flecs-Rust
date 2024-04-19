@@ -18,11 +18,11 @@ fn main() {
     let john = world.entity_named(c"John");
     let jane = world.entity_named(c"Jane");
 
-    bob.add_pair_first::<Likes>(alice);
-    alice.add_pair_first::<Likes>(bob);
-    john.add_pair_first::<Likes>(jane);
-    jane.add_pair_first::<Likes>(john);
-    bob.add_pair_first::<Likes>(jane); // inserting a bit of drama
+    bob.add_first::<Likes>(alice);
+    alice.add_first::<Likes>(bob);
+    john.add_first::<Likes>(jane);
+    jane.add_first::<Likes>(john);
+    bob.add_first::<Likes>(jane); // inserting a bit of drama
 
     // The following rule will only return entities that have a cyclic Likes
     // relationship- that is they must both like each other.

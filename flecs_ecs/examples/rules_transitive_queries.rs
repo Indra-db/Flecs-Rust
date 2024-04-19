@@ -53,71 +53,71 @@ fn main() {
     let north_america = world
         .entity_named(c"NorthAmerica")
         .add::<Continent>()
-        .add_pair_first::<LocatedIn>(earth);
+        .add_first::<LocatedIn>(earth);
 
     let europe = world
         .entity_named(c"Europe")
         .add::<Continent>()
-        .add_pair_first::<LocatedIn>(earth);
+        .add_first::<LocatedIn>(earth);
 
     // Countries
     let united_states = world
         .entity_named(c"UnitedStates")
         .add::<Country>()
-        .add_pair_first::<LocatedIn>(north_america);
+        .add_first::<LocatedIn>(north_america);
 
     let netherlands = world
         .entity_named(c"Netherlands")
         .add::<Country>()
-        .add_pair_first::<LocatedIn>(europe);
+        .add_first::<LocatedIn>(europe);
 
     // States
     let california = world
         .entity_named(c"California")
         .add::<State>()
-        .add_pair_first::<LocatedIn>(united_states);
+        .add_first::<LocatedIn>(united_states);
 
     let washington = world
         .entity_named(c"Washington")
         .add::<State>()
-        .add_pair_first::<LocatedIn>(united_states);
+        .add_first::<LocatedIn>(united_states);
 
     let noord_holland = world
         .entity_named(c"NoordHolland")
         .add::<State>()
-        .add_pair_first::<LocatedIn>(netherlands);
+        .add_first::<LocatedIn>(netherlands);
 
     // Cities
     let san_francisco = world
         .entity_named(c"SanFrancisco")
         .add::<City>()
-        .add_pair_first::<LocatedIn>(california);
+        .add_first::<LocatedIn>(california);
 
     let seattle = world
         .entity_named(c"Seattle")
         .add::<City>()
-        .add_pair_first::<LocatedIn>(washington);
+        .add_first::<LocatedIn>(washington);
 
     let amsterdam = world
         .entity_named(c"Amsterdam")
         .add::<City>()
-        .add_pair_first::<LocatedIn>(noord_holland);
+        .add_first::<LocatedIn>(noord_holland);
 
     // Inhabitants
     world
         .entity_named(c"Bob")
         .add::<Person>()
-        .add_pair_first::<LocatedIn>(san_francisco);
+        .add_first::<LocatedIn>(san_francisco);
 
     world
         .entity_named(c"Alice")
         .add::<Person>()
-        .add_pair_first::<LocatedIn>(seattle);
+        .add_first::<LocatedIn>(seattle);
 
     world
         .entity_named(c"Job")
         .add::<Person>()
-        .add_pair_first::<LocatedIn>(amsterdam);
+        .add_first::<LocatedIn>(amsterdam);
 
     // Create a query that finds the countries persons live in. Note that these
     // have not been explicitly added to the Person entities, but because the

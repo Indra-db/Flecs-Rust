@@ -65,7 +65,7 @@ pub trait EventBuilderImpl<'a> {
     ///
     /// * C++ API: `event_builder_base::id`
     #[doc(alias = "event_builder_base::id")]
-    fn add_pair_first_to_emit<First>(&mut self, second: impl Into<Entity>) -> &mut Self
+    fn add_first_to_emit<First>(&mut self, second: impl Into<Entity>) -> &mut Self
     where
         First: ComponentId,
     {

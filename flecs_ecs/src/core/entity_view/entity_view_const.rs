@@ -409,10 +409,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    pub fn each_component<F>(self, mut func: F)
-    where
-        F: FnMut(IdView),
-    {
+    pub fn each_component(self, mut func: impl FnMut(IdView)) {
         let archetype = self.archetype();
 
         for &id in archetype.as_slice() {
@@ -433,14 +430,12 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    pub fn for_each_matching_pair<F>(
+    pub fn for_each_matching_pair(
         &self,
         pred: impl Into<Entity>,
         obj: impl Into<Entity>,
-        mut func: F,
-    ) where
-        F: FnMut(IdView),
-    {
+        mut func: impl FnMut(IdView),
+    ) {
         // this is safe because we are only reading the world
         let real_world = self.world.real_world();
 
@@ -491,10 +486,11 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    pub fn for_each_target_id<F>(self, relationship: impl Into<Entity>, mut func: F)
-    where
-        F: FnMut(EntityView),
-    {
+    pub fn for_each_target_id(
+        self,
+        relationship: impl Into<Entity>,
+        mut func: impl FnMut(EntityView),
+    ) {
         self.for_each_matching_pair(relationship.into(), ECS_WILDCARD, |id| {
             let obj = id.second();
             func(obj);
@@ -536,10 +532,11 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::children`
     #[doc(alias = "entity_view::children")]
-    pub fn for_each_children_id<F>(self, relationship: impl Into<Entity>, mut func: F)
-    where
-        F: FnMut(EntityView),
-    {
+    pub fn for_each_children_id(
+        self,
+        relationship: impl Into<Entity>,
+        mut func: impl FnMut(EntityView),
+    ) {
         // When the entity is a wildcard, this would attempt to query for all
         //entities with (ChildOf, *) or (ChildOf, _) instead of querying for
         //the children of the wildcard entity.
@@ -572,10 +569,9 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::children`
     #[doc(alias = "entity_view::children")]
-    pub fn for_each_children<T, F>(self, func: F)
+    pub fn for_each_children<T>(self, func: impl FnMut(EntityView))
     where
         T: ComponentId,
-        F: FnMut(EntityView),
     {
         self.for_each_children_id(T::get_id(self.world), func);
     }
@@ -590,10 +586,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::children`
     #[doc(alias = "entity_view::children")]
-    pub fn for_each_child_of<F>(self, func: F)
-    where
-        F: FnMut(EntityView) + Sized,
-    {
+    pub fn for_each_child_of(self, func: impl FnMut(EntityView)) {
         self.for_each_children_id(flecs::ChildOf::ID, func);
     }
     /// Get (struct) Component from entity
@@ -785,7 +778,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn try_get_pair_first_id<First>(self, second: impl Into<Entity>) -> Option<&'a First>
+    pub fn try_get_first_id<First>(self, second: impl Into<Entity>) -> Option<&'a First>
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -831,11 +824,11 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get_pair_first_id<First>(self, second: impl Into<Entity>) -> &'a First
+    pub fn get_first_id<First>(self, second: impl Into<Entity>) -> &'a First
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
-        self.try_get_pair_first_id(second)
+        self.try_get_first_id(second)
             .expect("Component does not exist on this entity")
     }
 
@@ -855,12 +848,12 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn try_get_pair_first<First, Second>(self) -> Option<&'a First>
+    pub fn try_get_first<First, Second>(self) -> Option<&'a First>
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId,
     {
-        self.try_get_pair_first_id(Second::get_id(self.world))
+        self.try_get_first_id(Second::get_id(self.world))
     }
 
     /// Get an immutable reference for the first element of a pair
@@ -883,12 +876,12 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get_pair_first<First, Second>(self) -> &'a First
+    pub fn get_first<First, Second>(self) -> &'a First
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId,
     {
-        self.try_get_pair_first::<First, Second>()
+        self.try_get_first::<First, Second>()
             .expect("Component does not exist on this entity")
     }
 
@@ -911,7 +904,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn try_get_pair_second_id<Second>(self, first: impl Into<Entity>) -> Option<&'a Second>
+    pub fn try_get_second_id<Second>(self, first: impl Into<Entity>) -> Option<&'a Second>
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -956,11 +949,11 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get_pair_second_id<Second>(self, first: impl Into<Entity>) -> &'a Second
+    pub fn get_second_id<Second>(self, first: impl Into<Entity>) -> &'a Second
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
-        self.try_get_pair_second_id(first)
+        self.try_get_second_id(first)
             .expect("Component does not exist on this entity")
     }
 
@@ -980,12 +973,12 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn try_get_pair_second<First, Second>(self) -> Option<&'a Second>
+    pub fn try_get_second<First, Second>(self) -> Option<&'a Second>
     where
         First: ComponentId + ComponentType<Struct> + EmptyComponent,
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
-        self.try_get_pair_second_id(First::get_id(self.world))
+        self.try_get_second_id(First::get_id(self.world))
     }
 
     /// Get an immutable reference for the second element of a pair.
@@ -1008,12 +1001,12 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get_pair_second<First, Second>(self) -> &'a Second
+    pub fn get_second<First, Second>(self) -> &'a Second
     where
         First: ComponentId + ComponentType<Struct> + EmptyComponent,
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
-        self.try_get_pair_second::<First, Second>()
+        self.try_get_second::<First, Second>()
             .expect("Component does not exist on this entity")
     }
 
@@ -1179,10 +1172,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get_mut`
     #[doc(alias = "entity_view::get_mut")]
-    pub fn try_get_pair_first_id_mut<First>(
-        self,
-        second: impl Into<Entity>,
-    ) -> Option<&'a mut First>
+    pub fn try_get_first_id_mut<First>(self, second: impl Into<Entity>) -> Option<&'a mut First>
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1210,7 +1200,7 @@ impl<'a> EntityView<'a> {
     /// Get a mutable reference for the first element of a pair
     /// This operation gets the value for a pair from the entity.
     ///
-    /// This function unwraps the result of `try_get_pair_first_id_mut`, which should only be used when you are certain
+    /// This function unwraps the result of `try_get_first_id_mut`, which should only be used when you are certain
     /// that the component exists. Using this function when the component is not present will cause a panic.
     ///
     /// # Type Parameters
@@ -1233,11 +1223,11 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get_mut`
     #[doc(alias = "entity_view::get_mut")]
-    pub fn get_pair_first_id_mut<First>(self, second: impl Into<Entity>) -> &'a mut First
+    pub fn get_first_id_mut<First>(self, second: impl Into<Entity>) -> &'a mut First
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
-        self.try_get_pair_first_id_mut::<First>(second)
+        self.try_get_first_id_mut::<First>(second)
             .expect("Component does not exist on this entity")
     }
 
@@ -1253,18 +1243,18 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get_mut`
     #[doc(alias = "entity_view::get_mut")]
-    pub fn try_get_pair_first_mut<First, Second>(&mut self) -> Option<&'a mut First>
+    pub fn try_get_first_mut<First, Second>(&mut self) -> Option<&'a mut First>
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId + ComponentType<Struct>,
     {
-        self.try_get_pair_first_id_mut::<First>(Second::get_id(self.world))
+        self.try_get_first_id_mut::<First>(Second::get_id(self.world))
     }
 
     /// Get a mutable reference for the first element of a pair
     /// This operation gets the value for a pair from the entity.
     ///
-    /// This function unwraps the result of `try_get_pair_first_mut`, which should only be used when you are certain
+    /// This function unwraps the result of `try_get_first_mut`, which should only be used when you are certain
     /// that the component exists. Using this function when the component is not present will cause a panic.
     ///
     /// # Type Parameters
@@ -1284,12 +1274,12 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get_mut`
     #[doc(alias = "entity_view::get_mut")]
-    pub fn get_pair_first_mut<First, Second>(&mut self) -> &'a mut First
+    pub fn get_first_mut<First, Second>(&mut self) -> &'a mut First
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId + ComponentType<Struct>,
     {
-        self.get_pair_first_id_mut::<First>(Second::get_id(self.world))
+        self.get_first_id_mut::<First>(Second::get_id(self.world))
     }
 
     /// Get a mutable reference for the second element of a pair.
@@ -1307,10 +1297,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get_mut`
     #[doc(alias = "entity_view::get_mut")]
-    pub fn try_get_pair_second_id_mut<Second>(
-        self,
-        first: impl Into<Entity>,
-    ) -> Option<&'a mut Second>
+    pub fn try_get_second_id_mut<Second>(self, first: impl Into<Entity>) -> Option<&'a mut Second>
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1338,7 +1325,7 @@ impl<'a> EntityView<'a> {
     /// Get a mutable reference for the second element of a pair.
     /// This operation gets the value for a pair from the entity.
     ///
-    /// This function unwraps the result of `try_get_pair_second_id_mut`, which should only be used when you are certain
+    /// This function unwraps the result of `try_get_second_id_mut`, which should only be used when you are certain
     /// that the component exists. Using this function when the component is not present will cause a panic.
     ///
     /// # Type Parameters
@@ -1361,11 +1348,11 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get_mut`
     #[doc(alias = "entity_view::get_mut")]
-    pub fn get_pair_second_id_mut<Second>(self, first: impl Into<Entity>) -> &'a mut Second
+    pub fn get_second_id_mut<Second>(self, first: impl Into<Entity>) -> &'a mut Second
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
-        self.try_get_pair_second_id_mut::<Second>(first)
+        self.try_get_second_id_mut::<Second>(first)
             .expect("Component does not exist on this entity")
     }
 
@@ -1381,18 +1368,18 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get_mut`
     #[doc(alias = "entity_view::get_mut")]
-    pub fn try_get_pair_second_mut<First, Second>(&mut self) -> Option<&'a mut Second>
+    pub fn try_get_second_mut<First, Second>(&mut self) -> Option<&'a mut Second>
     where
         First: ComponentId + ComponentType<Struct> + EmptyComponent,
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
-        self.try_get_pair_second_id_mut::<Second>(First::get_id(self.world))
+        self.try_get_second_id_mut::<Second>(First::get_id(self.world))
     }
 
     /// Get a mutable reference for the second element of a pair.
     /// This operation gets the value for a pair from the entity.
     ///
-    /// This function unwraps the result of `try_get_pair_second_mut`, which should only be used when you are certain
+    /// This function unwraps the result of `try_get_second_mut`, which should only be used when you are certain
     /// that the component exists. Using this function when the component is not present will cause a panic.
     ///
     /// # Type Parameters
@@ -1412,12 +1399,12 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get_mut`
     #[doc(alias = "entity_view::get_mut")]
-    pub fn get_pair_second_mut<First, Second>(&mut self) -> &'a mut Second
+    pub fn get_second_mut<First, Second>(&mut self) -> &'a mut Second
     where
         First: ComponentId + ComponentType<Struct> + EmptyComponent,
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
-        self.get_pair_second_id_mut::<Second>(First::get_id(self.world))
+        self.get_second_id_mut::<Second>(First::get_id(self.world))
     }
 
     /// Get target for a given pair.
@@ -1560,10 +1547,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target_for")]
-    pub fn target_for_pair_first<First: ComponentId>(
-        &self,
-        second: impl Into<Entity>,
-    ) -> *const First {
+    pub fn target_for_first<First: ComponentId>(&self, second: impl Into<Entity>) -> *const First {
         let comp_id = First::get_id(self.world);
         ecs_assert!(
             std::mem::size_of::<First>() != 0,
@@ -1784,7 +1768,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    pub fn has_pair_first<First: ComponentId>(self, second: impl Into<Entity>) -> bool {
+    pub fn has_first<First: ComponentId>(self, second: impl Into<Entity>) -> bool {
         self.has_id((First::get_id(self.world), second.into()))
     }
 
@@ -1806,7 +1790,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    pub fn has_pair_second<Second: ComponentId>(self, first: impl Into<Entity>) -> bool {
+    pub fn has_second<Second: ComponentId>(self, first: impl Into<Entity>) -> bool {
         self.has_id((first.into(), Second::get_id(self.world)))
     }
 
@@ -1893,7 +1877,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::owns`
     #[doc(alias = "entity_view::owns")]
-    pub fn owns_pair_first<First: ComponentId>(self, second: impl Into<Entity>) -> bool {
+    pub fn owns_first<First: ComponentId>(self, second: impl Into<Entity>) -> bool {
         unsafe {
             sys::ecs_owns_id(
                 self.world.world_ptr_mut(),
@@ -1921,7 +1905,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::owns`
     #[doc(alias = "entity_view::owns")]
-    pub fn owns_pair_second<Second: ComponentId>(self, first: impl Into<Entity>) -> bool {
+    pub fn owns_second<Second: ComponentId>(self, first: impl Into<Entity>) -> bool {
         unsafe {
             sys::ecs_owns_id(
                 self.world.world_ptr_mut(),
@@ -1980,7 +1964,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    pub fn is_enabled_pair_first<T: ComponentId>(self, second: impl Into<Entity>) -> bool {
+    pub fn is_enabled_first<T: ComponentId>(self, second: impl Into<Entity>) -> bool {
         self.is_enabled_id((T::get_id(self.world), second.into()))
     }
 
@@ -1999,7 +1983,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    pub fn is_enabled_pair_second<U: ComponentId>(self, first: impl Into<Entity>) -> bool {
+    pub fn is_enabled_second<U: ComponentId>(self, first: impl Into<Entity>) -> bool {
         self.is_enabled_id((first.into(), U::get_id(self.world)))
     }
 

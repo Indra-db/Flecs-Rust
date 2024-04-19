@@ -258,6 +258,20 @@ mod eq_operations {
         }
     }
 
+    impl<'a> PartialEq<&EntityView<'a>> for Entity {
+        #[inline]
+        fn eq(&self, other: &&EntityView<'a>) -> bool {
+            self.0 == other.id.0
+        }
+    }
+
+    impl<'a> PartialEq<&mut EntityView<'a>> for Entity {
+        #[inline]
+        fn eq(&self, other: &&mut EntityView<'a>) -> bool {
+            self.0 == other.id.0
+        }
+    }
+
     impl<'a> PartialEq<IdView<'a>> for Entity {
         #[inline]
         fn eq(&self, other: &IdView<'a>) -> bool {

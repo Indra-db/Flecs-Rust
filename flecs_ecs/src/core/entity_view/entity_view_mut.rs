@@ -64,7 +64,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    pub fn add_pair_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
+    pub fn add_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
         let world = self.world;
         self.add_id((first.into(), Second::get_id(world)))
     }
@@ -83,7 +83,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    pub fn add_pair_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
+    pub fn add_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         let world = self.world;
         self.add_id((First::get_id(world), second.into()))
     }
@@ -220,7 +220,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::add_if`
     #[doc(alias = "entity_builder::add_if")]
-    pub fn add_pair_first_if<First: ComponentId>(
+    pub fn add_first_if<First: ComponentId>(
         self,
         second: impl Into<Entity>,
         condition: bool,
@@ -245,7 +245,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::add_if`
     #[doc(alias = "entity_builder::add_if")]
-    pub fn add_pair_second_if<Second: ComponentId>(
+    pub fn add_second_if<Second: ComponentId>(
         self,
         first: impl Into<Entity>,
         condition: bool,
@@ -395,7 +395,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::remove_second`
     #[doc(alias = "entity_builder::remove_second")]
-    pub fn remove_pair_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
+    pub fn remove_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         let world = self.world;
         self.remove_id((First::get_id(world), second.into()))
     }
@@ -415,7 +415,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::remove_second`
     #[doc(alias = "entity_builder::remove_second")]
-    pub fn remove_pair_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
+    pub fn remove_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
         let world = self.world;
         self.remove_id((first.into(), Second::get_id(world)))
     }
@@ -621,7 +621,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn override_pair_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
+    pub fn override_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         let world = self.world;
         self.override_id((First::get_id(world), second.into()))
     }
@@ -640,7 +640,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn override_pair_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
+    pub fn override_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
         let world = self.world;
         self.override_id((first.into(), Second::get_id(world)))
     }
@@ -702,14 +702,14 @@ impl<'a> EntityView<'a> {
     /// # See also
     ///
     /// * C++ API: `entity_builder::set_override`
-    pub fn set_override_pair_first<First, Second>(self, first: First) -> Self
+    pub fn set_override_first<First, Second>(self, first: First) -> Self
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId + ComponentType<Struct>,
     {
         let second_id = Second::get_id(self.world);
-        self.override_pair_first::<First>(second_id)
-            .set_pair_first_id(first, second_id)
+        self.override_first::<First>(second_id)
+            .set_first_id(first, second_id)
     }
 
     /// Sets a pair, mark component for auto-overriding.
@@ -726,14 +726,14 @@ impl<'a> EntityView<'a> {
     /// # See also
     ///
     /// * C++ API: `entity_builder::set_override`
-    pub fn set_override_pair_second<First, Second>(self, second: Second) -> Self
+    pub fn set_override_second<First, Second>(self, second: Second) -> Self
     where
         First: ComponentId + ComponentType<Struct>,
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let first_id = First::get_id(self.world);
-        self.override_pair_second::<Second>(first_id)
-            .set_pair_second_id(second, first_id)
+        self.override_second::<Second>(first_id)
+            .set_second_id(second, first_id)
     }
 
     /// Sets a pair, mark component for auto-overriding.
@@ -751,13 +751,13 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
-    pub fn set_override_pair_first_id<First>(self, first: First, second: impl Into<Entity>) -> Self
+    pub fn set_override_first_id<First>(self, first: First, second: impl Into<Entity>) -> Self
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let second = *second.into();
-        self.override_pair_first::<First>(second)
-            .set_pair_first_id(first, second)
+        self.override_first::<First>(second)
+            .set_first_id(first, second)
     }
 
     /// Sets a pair, mark component for auto-overriding.
@@ -775,17 +775,13 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
-    pub fn set_override_pair_second_id<Second>(
-        self,
-        second: Second,
-        first: impl Into<Entity>,
-    ) -> Self
+    pub fn set_override_second_id<Second>(self, second: Second, first: impl Into<Entity>) -> Self
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let first = first.into();
-        self.override_pair_second::<Second>(first)
-            .set_pair_second_id(second, first)
+        self.override_second::<Second>(first)
+            .set_second_id(second, first)
     }
 
     /// Sets a component of type `T` on the entity.
@@ -823,7 +819,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set`
     #[doc(alias = "entity_builder::set")]
-    pub fn set_pair_first_id<First>(self, first: First, second: impl Into<Entity>) -> Self
+    pub fn set_first_id<First>(self, first: First, second: impl Into<Entity>) -> Self
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -853,7 +849,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set`
     #[doc(alias = "entity_builder::set")]
-    pub fn set_pair_first<First, Second>(self, first: First) -> Self
+    pub fn set_first<First, Second>(self, first: First) -> Self
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId + ComponentType<Struct>,
@@ -882,7 +878,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set_second`
     #[doc(alias = "entity_builder::set_second")]
-    pub fn set_pair_second_id<Second>(self, second: Second, first: impl Into<Entity>) -> Self
+    pub fn set_second_id<Second>(self, second: Second, first: impl Into<Entity>) -> Self
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -912,7 +908,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set_second`
     #[doc(alias = "entity_builder::set_second")]
-    pub fn set_pair_second<First, Second>(self, second: Second) -> Self
+    pub fn set_second<First, Second>(self, second: Second) -> Self
     where
         First: ComponentId + ComponentType<Struct> + EmptyComponent,
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
@@ -944,7 +940,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set`
     #[doc(alias = "entity_builder::set")]
-    pub fn set_enum_pair_first<First, Second>(self, first: First, constant: Second) -> Self
+    pub fn set_enum_first<First, Second>(self, first: First, constant: Second) -> Self
     where
         First: ComponentId + ComponentType<Struct>,
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
@@ -1123,7 +1119,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::enable`
     #[doc(alias = "entity_builder::enable")]
-    pub fn enable_pair_second<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
+    pub fn enable_second<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         let world = self.world;
         self.enable_id((First::get_id(world), second.into()))
     }
@@ -1189,7 +1185,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::disable`
     #[doc(alias = "entity_builder::disable")]
-    pub fn disable_pair_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
+    pub fn disable_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         let world = self.world;
         self.disable_id((First::get_id(world), second.into()))
     }
@@ -1204,10 +1200,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::with`
     #[doc(alias = "entity_builder::with")]
-    pub fn with<F>(self, func: F) -> Self
-    where
-        F: FnOnce(),
-    {
+    pub fn with(self, func: impl FnOnce()) -> Self {
         unsafe {
             let prev = sys::ecs_set_with(self.world.world_ptr_mut(), *self.id());
             func();
@@ -1227,10 +1220,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::with`
     #[doc(alias = "entity_builder::with")]
-    pub fn with_pair_first_id<F>(self, first: impl Into<Entity>, func: F) -> Self
-    where
-        F: FnOnce(),
-    {
+    pub fn with_first_id(self, first: impl Into<Entity>, func: impl FnOnce()) -> Self {
         unsafe {
             let prev = sys::ecs_set_with(
                 self.world.world_ptr_mut(),
@@ -1254,10 +1244,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::with`
     #[doc(alias = "entity_builder::with")]
-    pub fn with_pair_second_id<F>(self, second: impl Into<Entity>, func: F) -> Self
-    where
-        F: FnOnce(),
-    {
+    pub fn with_second_id(self, second: impl Into<Entity>, func: impl FnOnce()) -> Self {
         unsafe {
             let prev = sys::ecs_set_with(
                 self.world.world_ptr_mut(),
@@ -1269,7 +1256,7 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Entities created in the function will have a pair consisting of a specified component and the current entity.
+    /// Entities created in the function will have (First, self).
     /// This operation is thread safe.
     ///
     /// # Type Parameters
@@ -1284,15 +1271,12 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::with`
     #[doc(alias = "entity_builder::with")]
-    pub fn with_pair_first<First: ComponentId, F>(self, func: F) -> Self
-    where
-        F: FnOnce(),
-    {
+    pub fn with_first<First: ComponentId>(self, func: impl FnOnce()) -> Self {
         let world = self.world;
-        self.with_pair_first_id(First::get_id(world), func)
+        self.with_first_id(First::get_id(world), func)
     }
 
-    /// Entities created in the function will have a pair consisting of the current entity and a specified component.
+    /// Entities created in the function will have (self, Second)
     /// This operation is thread safe.
     ///
     /// # Type Parameters
@@ -1307,12 +1291,9 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::with`
     #[doc(alias = "entity_builder::with")]
-    pub fn with_pair_second<Second: ComponentId, F>(self, func: F) -> Self
-    where
-        F: FnOnce(),
-    {
+    pub fn with_second<Second: ComponentId>(self, func: impl FnOnce()) -> Self {
         let world = self.world;
-        self.with_pair_second_id(Second::get_id(world), func)
+        self.with_second_id(Second::get_id(world), func)
     }
 
     /// The function will be ran with the scope set to the current entity.
@@ -1325,10 +1306,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::scope`
     #[doc(alias = "entity_builder::scope")]
-    pub fn run_in_scope<F>(self, func: F) -> Self
-    where
-        F: FnOnce(),
-    {
+    pub fn run_in_scope(self, func: impl FnOnce()) -> Self {
         unsafe {
             let prev = sys::ecs_set_scope(self.world.world_ptr_mut(), *self.id());
             func();
@@ -1430,7 +1408,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::ensure`
     #[doc(alias = "entity::ensure")]
-    pub fn ensure_pair_first_id_mut<First>(self, second: impl Into<Entity>) -> &'a mut First
+    pub fn ensure_first_id_mut<First>(self, second: impl Into<Entity>) -> &'a mut First
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1466,12 +1444,12 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::ensure`
     #[doc(alias = "entity::ensure")]
-    pub fn ensure_pair_first_mut<First, Second>(&mut self) -> &'a mut First
+    pub fn ensure_first_mut<First, Second>(&mut self) -> &'a mut First
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId + ComponentType<Struct>,
     {
-        self.ensure_pair_first_id_mut::<First>(Second::get_id(self.world))
+        self.ensure_first_id_mut::<First>(Second::get_id(self.world))
     }
 
     /// Get a mutable reference for the second element of a pair.
@@ -1489,7 +1467,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::ensure`
     #[doc(alias = "entity::ensure")]
-    pub fn ensure_pair_second_id_mut<Second>(self, first: impl Into<Entity>) -> &'a mut Second
+    pub fn ensure_second_id_mut<Second>(self, first: impl Into<Entity>) -> &'a mut Second
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1525,12 +1503,12 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::ensure`
     #[doc(alias = "entity::ensure")]
-    pub fn ensure_pair_second_mut<First, Second>(&mut self) -> &'a mut Second
+    pub fn ensure_second_mut<First, Second>(&mut self) -> &'a mut Second
     where
         First: ComponentId + ComponentType<Struct> + EmptyComponent,
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
-        self.ensure_pair_second_id_mut::<Second>(First::get_id(self.world))
+        self.ensure_second_id_mut::<Second>(First::get_id(self.world))
     }
 
     /// Signal that component or pair was modified.
@@ -1581,7 +1559,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
-    pub fn modified_pair_first<First: ComponentId>(self, second: impl Into<Entity>) {
+    pub fn modified_first<First: ComponentId>(self, second: impl Into<Entity>) {
         ecs_assert!(
             std::mem::size_of::<First>() != 0,
             FlecsErrorCode::InvalidParameter,
@@ -1630,10 +1608,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
-    pub fn get_ref_pair_first<First: ComponentId>(
-        self,
-        second: impl Into<Entity>,
-    ) -> Ref<'a, First> {
+    pub fn get_ref_first<First: ComponentId>(self, second: impl Into<Entity>) -> Ref<'a, First> {
         Ref::<First>::new(
             self.world,
             *self.id(),
@@ -1662,10 +1637,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
-    pub fn get_ref_pair_second<Second: ComponentId>(
-        &self,
-        first: impl Into<Entity>,
-    ) -> Ref<Second> {
+    pub fn get_ref_second<Second: ComponentId>(&self, first: impl Into<Entity>) -> Ref<Second> {
         Ref::<Second>::new(
             self.world,
             *self.id(),

@@ -33,9 +33,9 @@ fn main() {
     // the pair assumes the type of the component.
     let e1 = world
         .entity()
-        .set_pair_first::<_, Gigawatts>(Requires { amount: 1.21 });
+        .set_first::<_, Gigawatts>(Requires { amount: 1.21 });
 
-    let require = e1.try_get_pair_first::<Requires, Gigawatts>();
+    let require = e1.try_get_first::<Requires, Gigawatts>();
 
     if let Some(r) = require {
         fprintln!(snap, "e1: requires: {}", r.amount);
@@ -49,9 +49,9 @@ fn main() {
     // The component can be either the first or second part of a pair:
     let e2 = world
         .entity()
-        .set_pair_second::<Gigawatts, Requires>(Requires { amount: 1.5 });
+        .set_second::<Gigawatts, Requires>(Requires { amount: 1.5 });
 
-    let require = e2.try_get_pair_second::<Gigawatts, Requires>();
+    let require = e2.try_get_second::<Gigawatts, Requires>();
 
     if let Some(r) = require {
         fprintln!(snap, "e1: requires: {}", r.amount);
@@ -69,9 +69,9 @@ fn main() {
     // the first element:
     let e3 = world
         .entity()
-        .set_pair_first::<Expires, Position>(Expires { timeout: 0.5 });
+        .set_first::<Expires, Position>(Expires { timeout: 0.5 });
 
-    let expires = e3.try_get_pair_first::<Expires, Position>();
+    let expires = e3.try_get_first::<Expires, Position>();
     fprintln!(snap, "expires: {}", expires.unwrap().timeout);
 
     // You can prevent a pair from assuming the type of a component by adding

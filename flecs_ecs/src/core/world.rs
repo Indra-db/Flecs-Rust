@@ -854,12 +854,12 @@ impl World {
     ///
     /// * C++ API: `world::set`
     #[doc(alias = "world::set")]
-    pub fn set_pair_first_id<First>(&self, second: impl Into<Entity>, first: First)
+    pub fn set_first_id<First>(&self, second: impl Into<Entity>, first: First)
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let entity = EntityView::new_from(self, First::get_id(self));
-        entity.set_pair_first_id::<First>(first, second);
+        entity.set_first_id::<First>(first, second);
     }
 
     /// Set singleton pair.
@@ -878,13 +878,13 @@ impl World {
     ///
     /// * C++ API: `world::set`
     #[doc(alias = "world::set")]
-    pub fn set_pair_first<First, Second>(&self, first: First)
+    pub fn set_first<First, Second>(&self, first: First)
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId + ComponentType<Struct>,
     {
         let entity = EntityView::new_from(self, First::get_id(self));
-        entity.set_pair_first::<First, Second>(first);
+        entity.set_first::<First, Second>(first);
     }
 
     /// Set a singleton pair using the second element type and a first id.
@@ -902,12 +902,12 @@ impl World {
     ///
     /// * C++ API: `world::set`
     #[doc(alias = "world::set")]
-    pub fn set_pair_second_id<Second>(&self, first: impl Into<Entity>, second: Second)
+    pub fn set_second_id<Second>(&self, first: impl Into<Entity>, second: Second)
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let entity = EntityView::new_from(self, Second::get_id(self));
-        entity.set_pair_second_id::<Second>(second, first);
+        entity.set_second_id::<Second>(second, first);
     }
 
     /// Set singleton pair.
@@ -926,13 +926,13 @@ impl World {
     ///
     /// * C++ API: `world::set`
     #[doc(alias = "world::set")]
-    pub fn set_pair_second<First, Second>(&self, second: Second)
+    pub fn set_second<First, Second>(&self, second: Second)
     where
         First: ComponentId + ComponentType<Struct> + EmptyComponent,
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let entity = EntityView::new_from(self, First::get_id(self));
-        entity.set_pair_second::<First, Second>(second);
+        entity.set_second::<First, Second>(second);
     }
 
     /// signal that singleton component was modified.
@@ -1292,7 +1292,7 @@ impl World {
     /// * C++ API: `world::get`
     #[doc(alias = "world::get")]
     #[inline(always)]
-    pub fn get_pair_first_id<First>(&self, second: impl Into<Entity>) -> Option<&First>
+    pub fn get_first_id<First>(&self, second: impl Into<Entity>) -> Option<&First>
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1332,7 +1332,7 @@ impl World {
     #[doc(alias = "world::get_mut")]
     #[allow(clippy::mut_from_ref)]
     #[inline(always)]
-    pub fn get_pair_first_id_mut<First>(&self, second: impl Into<Entity>) -> Option<&mut First>
+    pub fn get_first_id_mut<First>(&self, second: impl Into<Entity>) -> Option<&mut First>
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1370,12 +1370,12 @@ impl World {
     ///
     /// * C++ API: `world::get`
     #[doc(alias = "world::get")]
-    pub fn get_pair_first<First, Second>(&self) -> Option<&First>
+    pub fn get_first<First, Second>(&self) -> Option<&First>
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId + ComponentType<Struct>,
     {
-        self.get_pair_first_id(Second::get_id(self))
+        self.get_first_id(Second::get_id(self))
     }
 
     /// Get a mutable reference for the first element of a singleton pair
@@ -1391,12 +1391,12 @@ impl World {
     ///
     /// * C++ API: `world::get_mut`
     #[doc(alias = "world::get_mut")]
-    pub fn get_pair_first_mut<First, Second>(&self) -> Option<&mut First>
+    pub fn get_first_mut<First, Second>(&self) -> Option<&mut First>
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId + ComponentType<Struct>,
     {
-        self.get_pair_first_id_mut(Second::get_id(self))
+        self.get_first_id_mut(Second::get_id(self))
     }
 
     /// Get immutable reference for the second element of a singleton pair
@@ -1418,7 +1418,7 @@ impl World {
     /// * C++ API: `world::get`
     #[doc(alias = "world::get")]
     #[inline(always)]
-    pub fn get_pair_second_id<Second>(&self, first: impl Into<Entity>) -> Option<&Second>
+    pub fn get_second_id<Second>(&self, first: impl Into<Entity>) -> Option<&Second>
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1458,7 +1458,7 @@ impl World {
     #[doc(alias = "world::get_mut")]
     #[inline(always)]
     #[allow(clippy::mut_from_ref)]
-    pub fn get_pair_second_id_mut<Second>(&self, first: impl Into<Entity>) -> Option<&mut Second>
+    pub fn get_second_id_mut<Second>(&self, first: impl Into<Entity>) -> Option<&mut Second>
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -1496,12 +1496,12 @@ impl World {
     ///
     /// * C++ API: `world::get`
     #[doc(alias = "world::get")]
-    pub fn get_pair_second<First, Second>(&self) -> Option<&Second>
+    pub fn get_second<First, Second>(&self) -> Option<&Second>
     where
         First: ComponentId + ComponentType<Struct>,
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
-        self.get_pair_second_id(First::get_id(self))
+        self.get_second_id(First::get_id(self))
     }
 
     /// Get a mutable reference for the second element of a singleton pair.
@@ -1516,12 +1516,12 @@ impl World {
     ///
     /// * C++ API: `world::get_mut`
     #[doc(alias = "world::get_mut")]
-    pub fn get_pair_second_mut<First, Second>(&self) -> Option<&mut Second>
+    pub fn get_second_mut<First, Second>(&self) -> Option<&mut Second>
     where
         First: ComponentId + ComponentType<Struct>,
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
-        self.get_pair_second_id_mut(First::get_id(self))
+        self.get_second_id_mut(First::get_id(self))
     }
 
     /// Check if world has the provided id.
@@ -1684,8 +1684,8 @@ impl World {
     ///
     /// `EntityView` handle to the singleton pair.
     #[inline(always)]
-    pub fn add_pair_second<Second: ComponentId>(&self, first: impl Into<Entity>) -> EntityView {
-        EntityView::new_from(self, Second::get_id(self)).add_pair_second::<Second>(first)
+    pub fn add_second<Second: ComponentId>(&self, first: impl Into<Entity>) -> EntityView {
+        EntityView::new_from(self, Second::get_id(self)).add_second::<Second>(first)
     }
 
     /// Add a singleton pair by second id.
@@ -1707,8 +1707,8 @@ impl World {
     /// * C++ API: `world::add`
     #[doc(alias = "world::add")]
     #[inline(always)]
-    pub fn add_pair_first<First: ComponentId>(&self, second: impl Into<Entity>) -> EntityView {
-        EntityView::new_from(self, First::get_id(self)).add_pair_first::<First>(second)
+    pub fn add_first<First: ComponentId>(&self, second: impl Into<Entity>) -> EntityView {
+        EntityView::new_from(self, First::get_id(self)).add_first::<First>(second)
     }
 
     /// Add a singleton pair with enum tag.
@@ -1823,8 +1823,8 @@ impl World {
     /// * C++ API: `world::remove`
     #[doc(alias = "world::remove")]
     #[inline(always)]
-    pub fn remove_pair_second<Second: ComponentId>(&self, first: impl Into<Entity>) {
-        EntityView::new_from(self, Second::get_id(self)).remove_pair_second::<Second>(first);
+    pub fn remove_second<Second: ComponentId>(&self, first: impl Into<Entity>) {
+        EntityView::new_from(self, Second::get_id(self)).remove_second::<Second>(first);
     }
 
     /// Remove singleton pair by second id.
@@ -1842,8 +1842,8 @@ impl World {
     /// * C++ API: `world::remove`
     #[doc(alias = "world::remove")]
     #[inline(always)]
-    pub fn remove_pair_first<First: ComponentId>(&self, second: impl Into<Entity>) {
-        EntityView::new_from(self, First::get_id(self)).remove_pair_first::<First>(second);
+    pub fn remove_first<First: ComponentId>(&self, second: impl Into<Entity>) {
+        EntityView::new_from(self, First::get_id(self)).remove_first::<First>(second);
     }
 
     /// Iterate entities in root of world
@@ -1857,7 +1857,7 @@ impl World {
     /// * C++ API: `world::children`
     #[doc(alias = "world::children")]
     #[inline(always)]
-    pub fn for_each_children<F: FnMut(EntityView)>(&self, callback: F) {
+    pub fn for_each_children(&self, callback: impl FnMut(EntityView)) {
         EntityView::new(self).for_each_child_of(callback);
     }
 
@@ -2009,7 +2009,7 @@ impl World {
     ///
     /// * C++ API: `world::count`
     #[doc(alias = "world::count")]
-    pub fn count_pair_second<Second: ComponentId>(&self, first: impl Into<Entity>) -> i32 {
+    pub fn count_second<Second: ComponentId>(&self, first: impl Into<Entity>) -> i32 {
         self.count_id((first.into(), Second::get_id(self)))
     }
 
@@ -2031,7 +2031,7 @@ impl World {
     ///
     /// * C++ API: `world::count`
     #[doc(alias = "world::count")]
-    pub fn count_pair_first<First: ComponentId>(&self, second: impl Into<Entity>) -> i32 {
+    pub fn count_first<First: ComponentId>(&self, second: impl Into<Entity>) -> i32 {
         self.count_id((First::get_id(self), second.into()))
     }
 
@@ -2109,7 +2109,7 @@ impl World {
     ///
     /// * C++ API: `world::scope`
     #[doc(alias = "world::scope")]
-    pub fn run_in_scope_with_id<F: FnMut()>(&self, parent_id: impl Into<Entity>, mut func: F) {
+    pub fn run_in_scope_with_id(&self, parent_id: impl Into<Entity>, mut func: impl FnMut()) {
         let prev: IdT = unsafe { sys::ecs_set_scope(self.raw_world.as_ptr(), *parent_id.into()) };
         func();
         unsafe {
@@ -2132,7 +2132,7 @@ impl World {
     ///
     /// * C++ API: `world::scope`
     #[doc(alias = "world::scope")]
-    pub fn run_in_scope_with<T: ComponentId, F: FnMut()>(&self, func: F) {
+    pub fn run_in_scope_with<T: ComponentId>(&self, func: impl FnMut()) {
         self.run_in_scope_with_id(T::get_id(self), func);
     }
 
@@ -2208,7 +2208,7 @@ impl World {
     ///
     /// * C++ API: `world::with`
     #[doc(alias = "world::with")]
-    pub fn with_id<F: FnMut()>(&self, id: impl IntoId, mut func: F) {
+    pub fn with_id(&self, id: impl IntoId, mut func: impl FnMut()) {
         let prev: IdT = unsafe { sys::ecs_set_with(self.raw_world.as_ptr(), *id.into()) };
         func();
         unsafe {
@@ -2230,7 +2230,7 @@ impl World {
     ///
     /// * C++ API: `world::with`
     #[doc(alias = "world::with")]
-    pub fn with<T: IntoComponentId, F: FnMut()>(&self, func: F) {
+    pub fn with<T: IntoComponentId>(&self, func: impl FnMut()) {
         self.with_id(T::get_id(self), func);
     }
 
@@ -2249,11 +2249,7 @@ impl World {
     ///
     /// * C++ API: `world::with`
     #[doc(alias = "world::with")]
-    pub fn with_pair_second<Second: ComponentId, F: FnMut()>(
-        &self,
-        first: impl Into<Entity>,
-        func: F,
-    ) {
+    pub fn with_second<Second: ComponentId>(&self, first: impl Into<Entity>, func: impl FnMut()) {
         self.with_id(ecs_pair(*first.into(), Second::get_id(self)), func);
     }
 
@@ -2272,11 +2268,7 @@ impl World {
     ///
     /// * C++ API: `world::with`
     #[doc(alias = "world::with")]
-    pub fn with_pair_first<First: ComponentId, F: FnMut()>(
-        &self,
-        second: impl Into<Entity>,
-        func: F,
-    ) {
+    pub fn with_first<First: ComponentId>(&self, second: impl Into<Entity>, func: impl FnMut()) {
         self.with_id(ecs_pair(First::get_id(self), *second.into()), func);
     }
 
@@ -2295,10 +2287,9 @@ impl World {
     ///
     /// * C++ API: `world::with`
     #[doc(alias = "world::with")]
-    pub fn with_enum<T, F>(&self, enum_value: T, func: F)
+    pub fn with_enum<T>(&self, enum_value: T, func: impl FnMut())
     where
         T: ComponentId + ComponentType<Enum> + CachedEnumData,
-        F: FnMut(),
     {
         self.with_id(enum_value.get_id_variant(self), func);
     }
@@ -2319,11 +2310,10 @@ impl World {
     ///
     /// * C++ API: `world::with`
     #[doc(alias = "world::with")]
-    pub fn with_enum_pair<First, Second, F>(&self, enum_value: Second, func: F)
+    pub fn with_enum_pair<First, Second>(&self, enum_value: Second, func: impl FnMut())
     where
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
-        F: FnMut(),
     {
         self.with_id(
             ecs_pair(First::get_id(self), **(enum_value.get_id_variant(self))),
@@ -2375,7 +2365,7 @@ impl World {
     ///
     /// * C++ API: `world::delete_with`
     #[doc(alias = "world::delete_with")]
-    pub fn delete_with_pair_second<Second: ComponentId>(&self, first: impl Into<Entity>) {
+    pub fn delete_with_second<Second: ComponentId>(&self, first: impl Into<Entity>) {
         self.delete_with_id(ecs_pair(*first.into(), Second::get_id(self)));
     }
 
@@ -2393,10 +2383,7 @@ impl World {
     ///
     /// * C++ API: `world::delete_with`
     #[doc(alias = "world::delete_with")]
-    pub fn delete_entities_with_pair_second_id<First: ComponentId>(
-        &self,
-        second: impl Into<Entity>,
-    ) {
+    pub fn delete_entities_with_second_id<First: ComponentId>(&self, second: impl Into<Entity>) {
         self.delete_with_id(ecs_pair(First::get_id(self), *second.into()));
     }
 
@@ -2490,7 +2477,7 @@ impl World {
     ///
     /// * C++ API: `world::remove_all`
     #[doc(alias = "world::remove_all")]
-    pub fn remove_all_pair_second<Second: ComponentId>(&self, first: impl Into<Entity>) {
+    pub fn remove_all_second<Second: ComponentId>(&self, first: impl Into<Entity>) {
         self.remove_all_id((first.into(), Second::get_id(self)));
     }
 
@@ -2508,7 +2495,7 @@ impl World {
     ///
     /// * C++ API: `world::remove_all`
     #[doc(alias = "world::remove_all")]
-    pub fn remove_all_pair_first<First: ComponentId>(&self, second: impl Into<Entity>) {
+    pub fn remove_all_first<First: ComponentId>(&self, second: impl Into<Entity>) {
         self.remove_all_id((First::get_id(self), second.into()));
     }
 
@@ -2575,7 +2562,7 @@ impl World {
     ///
     /// * C++ API: `world::defer`
     #[doc(alias = "world::defer")]
-    pub fn defer<F: FnOnce()>(&self, func: F) {
+    pub fn defer(&self, func: impl FnOnce()) {
         unsafe {
             sys::ecs_defer_begin(self.raw_world.as_ptr());
         }
@@ -2997,7 +2984,7 @@ impl World {
     ///
     /// * C++ API: `world::pair`
     #[doc(alias = "world::pair")]
-    pub fn id_pair_first<First: ComponentId>(&self, second: impl Into<Entity>) -> IdView {
+    pub fn id_first<First: ComponentId>(&self, second: impl Into<Entity>) -> IdView {
         let id: Entity = second.into();
         ecs_assert!(
             !ecs_is_pair(id),
@@ -3025,7 +3012,7 @@ impl World {
     ///
     /// * C++ API: `world::pair`
     #[doc(alias = "world::pair")]
-    pub fn id_pair_second<Second: ComponentId>(&self, first: impl Into<Entity>) -> IdView {
+    pub fn id_second<Second: ComponentId>(&self, first: impl Into<Entity>) -> IdView {
         let id = first.into();
         ecs_assert!(
             !ecs_is_pair(id),

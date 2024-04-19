@@ -111,7 +111,7 @@ pub fn ecs_add_pair(
 ///
 /// The first entity from the pair.
 #[inline(always)]
-pub fn ecs_pair_first(e: impl IntoId) -> Entity {
+pub fn ecs_first(e: impl IntoId) -> Entity {
     Entity(ecs_entity_id_high(e.into() & RUST_ECS_COMPONENT_MASK))
 }
 
@@ -125,7 +125,7 @@ pub fn ecs_pair_first(e: impl IntoId) -> Entity {
 ///
 /// The second entity from the pair.
 #[inline(always)]
-pub fn ecs_pair_second(e: impl IntoId) -> Entity {
+pub fn ecs_second(e: impl IntoId) -> Entity {
     Entity(ecs_entity_id_low(e.into()))
 }
 

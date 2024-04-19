@@ -973,7 +973,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
                 self.current_term_mut().src.id = sid;
             } else {
                 self.current_term_mut().src.id =
-                    sys::ecs_get_alive(self.world_ptr_mut(), *ecs_pair_first(sid));
+                    sys::ecs_get_alive(self.world_ptr_mut(), *ecs_first(sid));
             }
         }
         self

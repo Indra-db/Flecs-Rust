@@ -70,7 +70,7 @@ fn main() {
         for _ in 0..PLATOONS_PER_PLAYER {
             let platoon = world
                 .entity()
-                .add_pair_first::<Player>(player)
+                .add_first::<Player>(player)
                 // Add platoon tag so we can query for all platoons if we want to
                 .add::<Platoon>();
 
@@ -78,15 +78,12 @@ fn main() {
             world
                 .entity()
                 .add::<Warrior>()
-                .add_pair_first::<Platoon>(platoon);
+                .add_first::<Platoon>(platoon);
             world
                 .entity()
                 .add::<Marksman>()
-                .add_pair_first::<Platoon>(platoon);
-            world
-                .entity()
-                .add::<Wizard>()
-                .add_pair_first::<Platoon>(platoon);
+                .add_first::<Platoon>(platoon);
+            world.entity().add::<Wizard>().add_first::<Platoon>(platoon);
         }
     }
 

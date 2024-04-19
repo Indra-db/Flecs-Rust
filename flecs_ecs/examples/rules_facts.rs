@@ -33,11 +33,11 @@ fn main() {
     let john = world.entity_named(c"John");
     let jane = world.entity_named(c"Jane");
 
-    bob.add_pair_first::<Likes>(alice);
-    alice.add_pair_first::<Likes>(bob);
-    john.add_pair_first::<Likes>(jane);
-    jane.add_pair_first::<Likes>(john);
-    bob.add_pair_first::<Likes>(jane); // inserting a bit of drama
+    bob.add_first::<Likes>(alice);
+    alice.add_first::<Likes>(bob);
+    john.add_first::<Likes>(jane);
+    jane.add_first::<Likes>(john);
+    bob.add_first::<Likes>(jane); // inserting a bit of drama
 
     // Create a rule that checks if two entities like each other. By itself this
     // rule is not a fact, but we can use it to check facts by populating both

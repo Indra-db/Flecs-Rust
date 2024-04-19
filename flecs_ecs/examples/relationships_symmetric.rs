@@ -20,18 +20,18 @@ fn main() {
 
     // Add (TradesWith, player_2) to player_1. This also adds
     // (TradesWith, player_1) to player_2.
-    player_1.add_pair_first::<TradesWith>(player_2);
+    player_1.add_first::<TradesWith>(player_2);
 
     // Log platoon of unit
     fprintln!(
         snap,
         "Player 1 trades with Player 2: {}",
-        player_1.has_pair_first::<TradesWith>(player_2)
+        player_1.has_first::<TradesWith>(player_2)
     ); // true
     fprintln!(
         snap,
         "Player 2 trades with Player 1: {}",
-        player_2.has_pair_first::<TradesWith>(player_1)
+        player_2.has_first::<TradesWith>(player_1)
     ); // true
 
     snap.test();

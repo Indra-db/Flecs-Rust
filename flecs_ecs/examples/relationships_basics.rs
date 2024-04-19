@@ -19,17 +19,13 @@ fn main() {
     let bob = world
         .entity_named(c"Bob")
         // Pairs can be constructed from a type and entity
-        .add_pair_first::<Eats>(apples)
-        .add_pair_first::<Eats>(pears)
+        .add_first::<Eats>(apples)
+        .add_first::<Eats>(pears)
         // Pairs can also be constructed from two entity ids
         .add_id((grows, pears));
 
     // Has can be used with relationships as well
-    fprintln!(
-        snap,
-        "Bob eats apples? {}",
-        bob.has_pair_first::<Eats>(apples)
-    );
+    fprintln!(snap, "Bob eats apples? {}", bob.has_first::<Eats>(apples));
 
     // Wildcards can be used to match relationships
     fprintln!(
@@ -37,7 +33,7 @@ fn main() {
         "Bob grows food? {}, {}",
         bob.has_id((grows, flecs::Wildcard::ID)),
         //or you can do
-        bob.has_pair_second::<flecs::Wildcard>(grows)
+        bob.has_second::<flecs::Wildcard>(grows)
     );
 
     fprintln!(snap);
