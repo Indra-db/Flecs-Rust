@@ -11,6 +11,14 @@ fn init() {
     }
 }
 
+#[derive(Component)]
+pub struct Likes;
+
+#[derive(Component)]
+pub struct SelfRef {
+    pub value: Entity,
+}
+
 #[derive(Debug, Component)]
 pub struct Position {
     pub x: i32,
