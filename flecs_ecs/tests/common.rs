@@ -48,6 +48,21 @@ pub struct TypeA {
 }
 
 #[derive(Component)]
+pub struct Prefab {}
+
+#[derive(Component)]
+pub struct Obj {}
+
+#[derive(Component)]
+pub struct Obj2 {}
+
+#[derive(Component)]
+pub struct Rel {}
+
+#[derive(Component)]
+pub struct Tag {}
+
+#[derive(Component)]
 pub struct TagA {}
 
 #[derive(Component)]
@@ -61,6 +76,28 @@ pub struct Parent;
 
 #[derive(Component)]
 pub struct EntityType;
+
+#[derive(Component)]
+pub struct Base;
+#[derive(Component)]
+pub struct Head;
+
+#[derive(Component)]
+pub struct Turret;
+
+#[derive(Component)]
+pub struct Beam;
+#[derive(Component)]
+pub struct Railgun;
+
+#[derive(Component)]
+pub struct Foo;
+
+#[derive(Component)]
+pub struct Bar;
+
+#[derive(Component)]
+pub struct First;
 
 #[derive(Component)]
 pub struct Pod {

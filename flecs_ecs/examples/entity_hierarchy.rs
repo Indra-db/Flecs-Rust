@@ -31,7 +31,7 @@ fn iterate_tree(entity: EntityView, position_parent: &Position, snap: &mut Snap)
     // Print the position
     fprintln!(snap, "{:?}", pos_actual);
 
-    entity.for_each_child_of(|child| {
+    entity.each_child(|child| {
         iterate_tree(child, &pos_actual, snap);
     });
 }

@@ -201,7 +201,28 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::add_if")]
     pub fn add_if<T: IntoComponentId>(self, condition: bool) -> Self {
         let world = self.world;
-        self.add_id_if(T::get_id(world), condition)
+        let id = T::get_id(world);
+        if condition {
+            self.add_id(id)
+        } else {
+            // the compiler will optimize this branch away since it's known at compile time
+            if T::IS_PAIR {
+                // If second is 0 or if relationship is exclusive, use wildcard for
+                // second which will remove all instances of the relationship.
+                // Replacing 0 with Wildcard will make it possible to use the second
+                // as the condition.
+                let first = ecs_first(id);
+                let mut second = ecs_second(id);
+                if second == 0
+                    || unsafe { sys::ecs_has_id(self.world.world_ptr_mut(), *first, ECS_EXCLUSIVE) }
+                {
+                    second = ECS_WILDCARD.into();
+                }
+                self.remove_id((first, second))
+            } else {
+                self.remove_id(id)
+            }
+        }
     }
 
     /// Conditional add.
@@ -564,7 +585,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::slot`
     #[doc(alias = "entity_builder::slot")]
-    pub fn slot_child(self) -> Self {
+    pub fn slot(self) -> Self {
         ecs_assert!(
             self.target::<flecs::ChildOf>(0) != 0,
             FlecsErrorCode::InvalidParameter,
@@ -1052,7 +1073,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set_alias`
     #[doc(alias = "entity_builder::set_alias")]
-    pub fn set_alias_name(self, name: &CStr) -> Self {
+    pub fn set_alias(self, name: &CStr) -> Self {
         unsafe {
             sys::ecs_set_alias(self.world.world_ptr_mut(), *self.id(), name.as_ptr());
         }

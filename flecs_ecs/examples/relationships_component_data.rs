@@ -87,7 +87,7 @@ fn main() {
         snap,
         "{}",
         world
-            .id_pair::<Requires, Gigawatts>()
+            .id_from::<(Requires, Gigawatts)>()
             .type_id()
             .path()
             .unwrap()
@@ -96,7 +96,7 @@ fn main() {
         snap,
         "{}",
         world
-            .id_pair::<Gigawatts, Requires>()
+            .id_from::<(Gigawatts, Requires)>()
             .type_id()
             .path()
             .unwrap()
@@ -105,7 +105,7 @@ fn main() {
         snap,
         "{}",
         world
-            .id_pair::<Expires, Position>()
+            .id_from::<(Expires, Position)>()
             .type_id()
             .path()
             .unwrap()
@@ -114,7 +114,7 @@ fn main() {
         snap,
         "{}",
         world
-            .id_pair::<MustHave, Position>()
+            .id_from::<(MustHave, Position)>()
             .type_id()
             .path()
             .unwrap()

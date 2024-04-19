@@ -140,7 +140,7 @@ pub trait IdOperations<'a>: IntoWorld<'a> + IntoId + Sized + Copy {
     /// Convert id to string
     ///
     /// # Safety
-    /// safe version : '`to_str`'
+    /// safe version : '`str`'
     /// This function is unsafe because it assumes that the id is valid.
     ///
     /// # See also

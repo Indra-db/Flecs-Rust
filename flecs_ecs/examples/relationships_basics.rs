@@ -45,14 +45,14 @@ fn main() {
     fprintln!(snap);
 
     // Relationships can be iterated for an entity. This iterates (Eats, *):
-    bob.for_each_target::<Eats>(|second| {
+    bob.each_target::<Eats>(|second| {
         fprintln!(snap, "Bob eats {}", second.name());
     });
 
     fprintln!(snap);
 
     // Iterate by explicitly providing the pair. This iterates (*, Pears):
-    bob.for_each_matching_pair(flecs::Wildcard::ID, pears, |id| {
+    bob.each_pair(flecs::Wildcard::ID, pears, |id| {
         fprintln!(snap, "Bob {} pears", id.first().name());
     });
 

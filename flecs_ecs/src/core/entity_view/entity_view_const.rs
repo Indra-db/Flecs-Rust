@@ -226,8 +226,18 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::symbol`
     #[doc(alias = "entity_view::symbol")]
-    pub fn symbol(self) -> &'a CStr {
+    pub fn symbol_cstr(self) -> &'a CStr {
         unsafe { CStr::from_ptr(sys::ecs_get_symbol(self.world.world_ptr_mut(), *self.id)) }
+    }
+
+    /// Returns the entity symbol.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::symbol`
+    #[doc(alias = "entity_view::symbol")]
+    pub fn symbol(self) -> &'a str {
+        self.symbol_cstr().to_str().unwrap()
     }
 
     /// Return the hierarchical entity path.
@@ -430,7 +440,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    pub fn for_each_matching_pair(
+    pub fn each_pair(
         &self,
         pred: impl Into<Entity>,
         obj: impl Into<Entity>,
@@ -486,12 +496,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    pub fn for_each_target_id(
-        self,
-        relationship: impl Into<Entity>,
-        mut func: impl FnMut(EntityView),
-    ) {
-        self.for_each_matching_pair(relationship.into(), ECS_WILDCARD, |id| {
+    pub fn each_target_id(self, relationship: impl Into<Entity>, mut func: impl FnMut(EntityView)) {
+        self.each_pair(relationship.into(), ECS_WILDCARD, |id| {
             let obj = id.second();
             func(obj);
         });
@@ -511,11 +517,11 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    pub fn for_each_target<T>(self, func: impl FnMut(EntityView))
+    pub fn each_target<T>(self, func: impl FnMut(EntityView))
     where
         T: ComponentId,
     {
-        self.for_each_target_id(
+        self.each_target_id(
             EntityView::new_from(self.world, T::get_id(self.world)),
             func,
         );
@@ -532,7 +538,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::children`
     #[doc(alias = "entity_view::children")]
-    pub fn for_each_children_id(
+    pub fn each_child_of_id(
         self,
         relationship: impl Into<Entity>,
         mut func: impl FnMut(EntityView),
@@ -569,11 +575,11 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::children`
     #[doc(alias = "entity_view::children")]
-    pub fn for_each_children<T>(self, func: impl FnMut(EntityView))
+    pub fn each_child_of<T>(self, func: impl FnMut(EntityView))
     where
         T: ComponentId,
     {
-        self.for_each_children_id(T::get_id(self.world), func);
+        self.each_child_of_id(T::get_id(self.world), func);
     }
 
     /// Iterate children for entity
@@ -586,8 +592,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::children`
     #[doc(alias = "entity_view::children")]
-    pub fn for_each_child_of(self, func: impl FnMut(EntityView)) {
-        self.for_each_children_id(flecs::ChildOf::ID, func);
+    pub fn each_child(self, func: impl FnMut(EntityView)) {
+        self.each_child_of_id(flecs::ChildOf::ID, func);
     }
     /// Get (struct) Component from entity
     /// use `.unwrap()` or `.unwrap_unchecked()` or `get_unchecked()` if you're sure the entity has the component
@@ -2190,9 +2196,9 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::mut`
     #[doc(alias = "entity_view::mut")]
-    pub fn mut_current_stage(self, stage: &World) -> EntityView {
+    pub fn mut_current_stage(self, stage: impl IntoWorld<'a>) -> EntityView<'a> {
         ecs_assert!(
-            !stage.is_readonly(),
+            !stage.world().is_readonly(),
             FlecsErrorCode::InvalidParameter,
             "cannot use readonly world/stage to create mutable handle"
         );

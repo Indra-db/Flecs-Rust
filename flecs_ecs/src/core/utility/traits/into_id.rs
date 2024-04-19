@@ -15,8 +15,7 @@ pub trait IntoId: Into<Id> {
     #[doc(hidden)] // not meant to be used by the user
     #[inline]
     fn get_id_first(&self) -> Entity {
-        // Entity::new(<Self as Into<Id>>::into(*self).0)
-        Entity::new(0)
+        Entity(0)
     }
 
     /// This will return the id of the second part of a pair.
@@ -24,7 +23,6 @@ pub trait IntoId: Into<Id> {
     #[doc(hidden)]
     #[inline]
     fn get_id_second(&self) -> Entity {
-        // Entity::from(Id::from(self).0)
         Entity::new(0)
     }
 }
@@ -41,23 +39,21 @@ where
 
 impl<T, U> IntoId for (T, U)
 where
-    T: Into<Entity>,
-    U: Into<Entity>,
+    T: Into<Entity> + Copy,
+    U: Into<Entity> + Copy,
 {
     const IS_PAIR: bool = true;
 
     #[doc(hidden)] // not meant to be used by the user
     #[inline]
     fn get_id_first(&self) -> Entity {
-        //Entity::from(&self.0)
-        Entity::new(0)
+        self.0.into()
     }
 
     #[doc(hidden)] // not meant to be used by the user
     #[inline]
     fn get_id_second(&self) -> Entity {
-        //Entity::from(&self.1)
-        Entity::new(0)
+        self.1.into()
     }
 }
 

@@ -343,7 +343,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::with`
     #[doc(alias = "query_builder_i::with")]
-    fn with_first<First: InOutType>(&mut self, second: impl Into<Entity>) -> &mut Self {
+    fn with_first<First: InOutType>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
         self.with_id((First::Type::get_id(self.world()), second))
     }
 
@@ -363,7 +363,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::with`
     #[doc(alias = "query_builder_i::with")]
-    fn with_second<Second: InOutType>(&mut self, first: impl Into<Entity>) -> &mut Self {
+    fn with_second<Second: InOutType>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
         self.with_id((first, Second::Type::get_id(self.world())))
     }
 
@@ -486,7 +486,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::without`
     #[doc(alias = "query_builder_i::without")]
-    fn without_first<First: InOutType>(&mut self, second: impl Into<Entity>) -> &mut Self {
+    fn without_first<First: InOutType>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
         self.with_first::<First>(second).not()
     }
 
@@ -506,7 +506,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::without`
     #[doc(alias = "query_builder_i::without")]
-    fn without_second<Second: InOutType>(&mut self, first: impl Into<Entity>) -> &mut Self {
+    fn without_second<Second: InOutType>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
         self.with_second::<Second>(first).not()
     }
 

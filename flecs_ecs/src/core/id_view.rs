@@ -162,6 +162,16 @@ impl<'a> IdView<'a> {
         self.id & RUST_ecs_id_FLAGS_MASK == 0
     }
 
+    /// checks if entity is valid
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::is_valid`
+    #[doc(alias = "entity_view::is_valid")]
+    pub fn is_valid(self) -> bool {
+        unsafe { sys::ecs_is_valid(self.world.world_ptr_mut(), *self.id) }
+    }
+
     /// Test if id has specified first
     ///
     /// # Arguments

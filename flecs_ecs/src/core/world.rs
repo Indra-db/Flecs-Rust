@@ -685,7 +685,7 @@ impl World {
     /// * C++ API: `world::set_scope`
     #[doc(alias = "world::set_scope")]
     #[inline(always)]
-    pub fn set_scope_with_id(&self, id: impl IntoId) -> EntityView {
+    pub fn set_scope_id(&self, id: impl IntoId) -> EntityView {
         EntityView::new_from(self, unsafe {
             sys::ecs_set_scope(self.raw_world.as_ptr(), *id.into())
         })
@@ -709,8 +709,8 @@ impl World {
     /// * C++ API: `world::set_scope`
     #[doc(alias = "world::set_scope")]
     #[inline(always)]
-    pub fn set_scope_with<T: ComponentId>(&self) -> EntityView {
-        self.set_scope_with_id(T::get_id(self))
+    pub fn set_scope<T: ComponentId>(&self) -> EntityView {
+        self.set_scope_id(T::get_id(self))
     }
 
     /// Sets the search path for entity lookup operations.
@@ -1915,8 +1915,8 @@ impl World {
     /// * C++ API: `world::children`
     #[doc(alias = "world::children")]
     #[inline(always)]
-    pub fn for_each_children(&self, callback: impl FnMut(EntityView)) {
-        EntityView::new(self).for_each_child_of(callback);
+    pub fn each_child(&self, callback: impl FnMut(EntityView)) {
+        EntityView::new(self).each_child(callback);
     }
 
     /// create alias for component
@@ -2210,9 +2210,9 @@ impl World {
     /// * C++ API: `world::scope`
     #[doc(alias = "world::scope")]
     pub fn scope_id(&self, parent_id: impl IntoId, mut f: impl FnMut(&World)) {
-        let previous_scope = self.set_scope_with_id(parent_id);
+        let previous_scope = self.set_scope_id(parent_id);
         f(self);
-        self.set_scope_with_id(previous_scope);
+        self.set_scope_id(previous_scope);
     }
 
     /// Use provided scope for operations ran on returned world.
@@ -2231,9 +2231,9 @@ impl World {
     /// * C++ API: `world::scope`
     #[doc(alias = "world::scope")]
     pub fn scope<T: ComponentId>(&self, mut f: impl FnMut(&World)) {
-        let previous_scope = self.set_scope_with_id(T::get_id(self));
+        let previous_scope = self.set_scope_id(T::get_id(self));
         f(self);
-        self.set_scope_with_id(previous_scope);
+        self.set_scope_id(previous_scope);
     }
 
     /// Use provided scope of name for operations ran on returned world.
@@ -2961,7 +2961,7 @@ impl World {
 }
 /// Id mixin implementation
 impl World {
-    /// Get  id of component.
+    /// Get  id of component / pair
     ///
     /// # Type Parameters
     ///
@@ -2974,54 +2974,46 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::id`
-    #[doc(alias = "world::id")]
-    pub fn id<T: ComponentId>(&self) -> Entity {
-        Entity(T::get_id(self))
-    }
-
-    /// Get id of pair.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First` - The first element of the pair.
-    /// * `Second` - The second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// The id of the pair.
-    ///
-    /// # See also
-    ///
     /// * C++ API: `world::pair`
     #[doc(alias = "world::pair")]
-    pub fn id_pair<First: ComponentId, Second: ComponentId>(&self) -> IdView {
-        IdView::new_from(self, (First::get_id(self), Second::get_id(self)))
+    pub fn id_from<T: IntoComponentId>(&self) -> IdView {
+        IdView::new_from(self, T::get_id(self))
     }
 
-    /// get pair id from relationship, object.
+    /// get `IdView` from an id or from a relationship pair
     ///
     /// # Arguments
     ///
-    /// * `first` - The id of the first element of the pair.
-    /// * `second` - The id of the second element of the pair.
+    /// * `id` - The id to convert to an `IdView`.
     ///
     /// # Returns
     ///
-    /// The pair as Id
+    /// The `IdView` from the provided id.
     ///
     /// # See also
     ///
     /// * C++ API: `world::pair`
+    /// * C++ API: `world::id`
     #[doc(alias = "world::pair")]
-    pub fn id_pair_ids(&self, first: impl Into<Entity>, second: impl Into<Entity>) -> IdView {
-        let first = *first.into();
-        let second = *second.into();
-        ecs_assert!(
-            !ecs_is_pair(first) && !ecs_is_pair(second),
-            FlecsErrorCode::InvalidParameter,
-            "cannot create nested pairs"
-        );
-        IdView::new_from(self, (first, second))
+    #[doc(alias = "world::id")]
+    pub fn id_from_id<Id>(&self, id: Id) -> IdView
+    where
+        Id: IntoId,
+    {
+        let id = *id.into();
+        if Id::IS_PAIR {
+            ecs_assert!(
+                {
+                    let first = ecs_first(id);
+                    let second = ecs_second(id);
+                    !ecs_is_pair(first) && !ecs_is_pair(second)
+                },
+                FlecsErrorCode::InvalidParameter,
+                "cannot create nested pairs"
+            );
+        }
+
+        IdView::new_from(self, id)
     }
 
     /// get pair id from relationship, object.
