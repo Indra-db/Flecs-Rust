@@ -256,14 +256,14 @@ impl<'a, T: ComponentId> Component<'a, T> {
     where
         Func: FnMut(EntityView, &mut T) + 'a,
     {
-        let ctx: *mut ComponentBindingCtx = unsafe { (*iter).binding_ctx as *mut _ };
-        let on_add = unsafe { (*ctx).on_add.unwrap() };
+        let ctx: *mut ComponentBindingCtx = (*iter).binding_ctx as *mut _;
+        let on_add = (*ctx).on_add.unwrap();
         let on_add = on_add as *mut Func;
-        let on_add = unsafe { &mut *on_add };
-        let world = unsafe { WorldRef::from_ptr((*iter).world) };
+        let on_add = &mut *on_add;
+        let world = WorldRef::from_ptr((*iter).world);
         let entity = EntityView::new_from(world, *(*iter).entities);
-        let component: *mut T = unsafe { ecs_field::<T>(iter, 0) };
-        on_add(entity, unsafe { &mut *component });
+        let component: *mut T = ecs_field::<T>(iter, 0);
+        on_add(entity, &mut *component);
     }
 
     /// Function to run the on set hook.

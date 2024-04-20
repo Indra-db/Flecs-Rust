@@ -25,6 +25,18 @@ pub struct Position {
     pub y: i32,
 }
 
+#[derive(Debug, Component)]
+pub struct PositionClone {
+    pub x: i32,
+    pub y: i32,
+}
+
+#[derive(Component)]
+pub struct PositionPair {
+    pub x: i32,
+    pub y: i32,
+}
+
 #[derive(Component)]
 pub struct MyStruct {
     pub x: i32,
@@ -70,6 +82,9 @@ pub struct TagB {}
 
 #[derive(Component)]
 pub struct TagC {}
+
+#[derive(Component)]
+pub struct TagClone {}
 
 #[derive(Component)]
 pub struct Parent;
