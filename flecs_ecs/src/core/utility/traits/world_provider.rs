@@ -3,6 +3,9 @@ use std::{ffi::c_void, marker::PhantomData, ops::Deref, ptr::NonNull};
 use crate::core::*;
 use crate::sys;
 
+/// Implementations of this trait can provide a reference to a world to operations
+/// needing a world. This allows for easily extracting the world from things that
+/// already have a reference to one.
 pub trait WorldProvider<'a> {
     #[doc(hidden)]
     #[inline(always)]

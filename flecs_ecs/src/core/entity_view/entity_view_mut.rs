@@ -1401,6 +1401,9 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
+    /// * [`EntityView::modified()`]
+    /// * [`EntityView::modified_first()`]
+    /// * [`World::modified()`]
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
     pub fn modified_id(self, id: impl IntoId) {
@@ -1415,6 +1418,9 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
+    /// * [`EntityView::modified_first()`]
+    /// * [`EntityView::modified_id()`]
+    /// * [`World::modified()`]
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
     pub fn modified<T: ComponentOrPairId>(&self) {
@@ -1440,6 +1446,9 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
+    /// * [`EntityView::modified()`]
+    /// * [`EntityView::modified_id()`]
+    /// * [`World::modified()`]
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
     pub fn modified_first<First: ComponentId>(self, second: impl Into<Entity>) {

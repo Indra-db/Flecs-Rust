@@ -411,7 +411,7 @@ pub trait EnumComponentInfo: ComponentType<Enum> + ComponentId {
         }
     }
 
-    /// ## Safety
+    /// # Safety
     /// This function is unsafe because it dereferences a raw pointer and you must ensure that the
     /// index is within the bounds of the number of variants in the enum.
     /// if uncertain, use `SIZE_ENUM_FIELDS` to check the number of variants.

@@ -352,8 +352,8 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// be interpreted as entity, whereas not setting the flag would implicitly
     /// convert ids for builtin variables such as `flecs::This` to a variable.
     ///
-    /// This function can also be used to disambiguate id(0), which would match
-    /// both id(Entity) and id(&str).
+    /// This function can also be used to disambiguate `id(0)`, which would match
+    /// both `id(Entity)` and `id(&str)`.
     ///
     /// # Arguments
     ///

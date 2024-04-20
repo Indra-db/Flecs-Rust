@@ -22,8 +22,9 @@ where
         unsafe { WorldRef::from_ptr(self.iter.real_world) }
     }
 
-    /// Constructs iterator from C iterator object
-    /// this operation is typically not invoked directly by the user
+    /// Constructs iterator from C iterator object.
+    ///
+    /// This operation is typically not invoked directly by the user.
     ///
     /// # Arguments
     ///
@@ -78,7 +79,7 @@ where
         }
     }
 
-    /// Wrap the system id in the iterator in an `Entity` object
+    /// Wrap the system id in the iterator in an [`EntityView`] object.
     ///
     /// # See also
     ///
@@ -88,7 +89,7 @@ where
         EntityView::new_from(self.world(), self.iter.system)
     }
 
-    /// Wrap the event id in the iterator in an `Entity` object
+    /// Wrap the event id in the iterator in an [`EntityView`] object.
     ///
     /// # See also
     ///
@@ -98,7 +99,7 @@ where
         EntityView::new_from(self.world(), self.iter.event)
     }
 
-    /// Wrap the event id in the iterator in an `Id` object
+    /// Wrap the event id in the iterator in an [`IdView`] object.
     ///
     /// # See also
     ///
@@ -122,7 +123,7 @@ where
         unsafe { EntityView::new_from(self.real_world(), *self.iter.entities.add(row)) }
     }
 
-    /// Return a mut reference to the raw iterator object
+    /// Return a mut reference to the raw iterator object.
     ///
     /// # See also
     ///
@@ -132,7 +133,7 @@ where
         self.iter
     }
 
-    /// Return the count of entities in the iterator
+    /// Return the count of entities in the iterator.
     ///
     /// # See also
     ///
@@ -145,20 +146,26 @@ where
         self.iter.count as usize
     }
 
-    /// Return the delta time stored in the iterator
+    /// Return the delta time stored in the iterator.
+    ///
+    /// This is the time since the last frame.
     ///
     /// # See also
     ///
+    /// * [`TableIter::delta_system_time()`]
     /// * C++ API: `iter::delta_time`
     #[doc(alias = "iter::delta_time")]
     pub fn delta_time(&self) -> FTime {
         self.iter.delta_time
     }
 
-    /// Return the delta system time stored in the iterator
+    /// Return the delta system time stored in the iterator.
+    ///
+    /// This is the time since the last system invocation.
     ///
     /// # See also
     ///
+    /// * [`TableIter::delta_time()`]
     /// * C++ API: `iter::delta_system_time`
     #[doc(alias = "iter::delta_system_time")]
     pub fn delta_system_time(&self) -> FTime {

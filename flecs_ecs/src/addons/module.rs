@@ -3,11 +3,27 @@
 //! * To define a module, see [`Module`].
 //! * To import a module, see [`World::import()`].
 //! * To override the name of a module, see [`World::module()`].
-
 use crate::core::{flecs, ComponentId, EntityView, IdOperations, World, SEPARATOR};
 use crate::sys;
 
 /// Define a module
+///
+/// # Examples:
+///
+/// ```
+/// # use flecs_ecs::prelude::*;
+/// #[derive(Component)]
+/// struct MyModule;
+///
+/// impl Module for MyModule {
+///     fn module(world: &World) {
+///         world.module::<MyModule>("MyModule");
+///
+///         // Define components, systems, triggers, ... as usual. They will be
+///         // automatically created inside the scope of the module.
+///     }
+/// }
+/// ```
 ///
 /// # See also
 ///
@@ -35,6 +51,18 @@ impl World {
     /// prevents modules from accidentally defining conflicting identifiers. This is
     /// enforced by setting the scope before and after loading the module to the
     /// module entity id.
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// # #[derive(Component)]
+    /// # struct MyModule;
+    /// # impl Module for MyModule {
+    /// #     fn module(_world: &World) {
+    /// #     }
+    /// # }
+    /// # let world = World::new();
+    /// world.import::<MyModule>();
+    /// ```
     ///
     /// # See also
     ///
