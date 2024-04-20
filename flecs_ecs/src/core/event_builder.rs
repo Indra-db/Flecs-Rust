@@ -85,8 +85,8 @@ impl<'a> EventBuilderImpl<'a> for EventBuilderUntyped<'a> {
 ///
 /// # Type parameters
 ///
-/// * `T` - The type of the event data to set for the event, which must implement `EventData` and `ComponentId`.
-/// `EventData` is a trait used to mark components compatible with events to be used as event data.
+/// * `T` - The type of the event data to set for the event, which must implement `ComponentId`.
+///
 /// Ensures the use of appropriate data types for events, enhancing type safety and data integrity.
 /// This design aims to prevent the utilization of incompatible components as event data,
 /// thereby ensuring greater explicitness and correctness in event handling.
