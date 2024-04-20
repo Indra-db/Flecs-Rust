@@ -153,11 +153,6 @@ fn generate_bindings() {
         bindings = bindings.clang_arg("-DFLECS_DOC");
     }
 
-    #[cfg(feature = "flecs_coredoc")]
-    {
-        bindings = bindings.clang_arg("-DFLECS_COREDOC");
-    }
-
     #[cfg(feature = "flecs_log")]
     {
         bindings = bindings.clang_arg("-DFLECS_LOG");
@@ -266,9 +261,6 @@ fn main() {
 
         #[cfg(feature = "flecs_doc")]
         build.define("FLECS_DOC", None);
-
-        #[cfg(feature = "flecs_coredoc")]
-        build.define("FLECS_COREDOC", None);
 
         #[cfg(feature = "flecs_log")]
         build.define("FLECS_LOG", None);
