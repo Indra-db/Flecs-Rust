@@ -103,9 +103,6 @@ flecs_json = ["flecs_expr"]
 # Document entities & components
 flecs_doc = ["flecs_module"]
 
-# Documentation for core entities & components
-flecs_coredoc = ["flecs_doc", "flecs_meta"]
-
 # When enabled ECS provides more detailed logs
 flecs_log = []
 
