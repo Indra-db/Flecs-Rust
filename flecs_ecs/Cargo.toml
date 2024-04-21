@@ -91,9 +91,6 @@ flecs_json = ["flecs_ecs_sys/flecs_json", "flecs_expr"]
 # Document entities & components
 flecs_doc = ["flecs_ecs_sys/flecs_doc", "flecs_module"]
 
-# Documentation for core entities & components
-flecs_coredoc = ["flecs_ecs_sys/flecs_coredoc","flecs_doc", "flecs_meta"]
-
 # When enabled ECS provides more detailed logs
 flecs_log = ["flecs_ecs_sys/flecs_log"]
 
@@ -139,7 +136,6 @@ default = [
     "flecs_expr",
     "flecs_json",
     "flecs_doc",
-    "flecs_coredoc",
     "flecs_log",
     "flecs_app",
     "flecs_os_api_impl",
