@@ -819,11 +819,13 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     }
 
     /// Set write mode on current term.
-    /// Short for `inout_stage(flecs::Out`.
-    ///  Use when system uses add, remove or set.
+    /// Short for `inout_stage(InOutKind::Out)`.
+    /// Use when system uses add, remove or set.
     ///
     /// # See also
     ///
+    /// * [`Self::inout_stage`]
+    /// * [`InOutKind`]
     /// * C++ API: `term_builder_i::write`
     #[doc(alias = "term_builder_i::write")]
     #[inline(always)]
@@ -832,11 +834,13 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     }
 
     /// Set read mode on current term.
-    /// Short for `inout_stage(flecs::In`.
+    /// Short for `inout_stage(InOutKind::In)`.
     /// Use when system uses get
     ///
     /// # See also
     ///
+    /// * [`Self::inout_stage`]
+    /// * [`InOutKind`]
     /// * C++ API: `term_builder_i::read`
     #[doc(alias = "term_builder_i::read")]
     #[inline(always)]
@@ -844,11 +848,13 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         self.inout_stage(InOutKind::In)
     }
 
-    /// Short for `inout_stage(flecs::InOut`.
+    /// Short for `inout_stage(InOutKind::InOut)`.
     /// Use when system uses `ensure`
     ///
     /// # See also
     ///
+    /// * [`Self::inout_stage`]
+    /// * [`InOutKind`]
     /// * C++ API: `term_builder_i::read_write`
     #[doc(alias = "term_builder_i::read_write")]
     #[inline(always)]
@@ -856,10 +862,12 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         self.inout_stage(InOutKind::InOut)
     }
 
-    /// short for `inout(flecs::In`
+    /// short for `set_inout(InOutKind::In)`
     ///
     /// # See also
     ///
+    /// * [`Self::inout_stage`]
+    /// * [`InOutKind`]
     /// * C++ API: `term_builder_i::in`
     #[doc(alias = "term_builder_i::in")]
     #[inline(always)]
@@ -867,10 +875,12 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         self.set_inout(InOutKind::In)
     }
 
-    /// short for `inout(flecs::Out`
+    /// short for `set_inout(InOutKind::Out)`
     ///
     /// # See also
     ///
+    /// * [`Self::inout_stage`]
+    /// * [`InOutKind`]
     /// * C++ API: `term_builder_i::out`
     #[doc(alias = "term_builder_i::out")]
     #[inline(always)]
@@ -878,10 +888,12 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         self.set_inout(InOutKind::Out)
     }
 
-    /// short for `inout(flecs::InOut`
+    /// short for `set_inout(InOutKind::InOut)`
     ///
     /// # See also
     ///
+    /// * [`Self::inout_stage`]
+    /// * [`InOutKind`]
     /// * C++ API: `term_builder_i::inout`
     #[doc(alias = "term_builder_i::inout")]
     #[inline(always)]
@@ -889,10 +901,12 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         self.set_inout(InOutKind::InOut)
     }
 
-    /// short for `inout(flecs::InOutNone`
+    /// short for `set_inout(InOutKind::InOutNone)`
     ///
     /// # See also
     ///
+    /// * [`Self::inout_stage`]
+    /// * [`InOutKind`]
     /// * C++ API: `term_builder_i::inout_none`
     #[doc(alias = "term_builder_i::inout_none")]
     #[inline(always)]
@@ -916,10 +930,12 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         self
     }
 
-    /// short for `oper(flecs::And`
+    /// short for `set_oper(OperKind::And)`
     ///
     /// # See also
     ///
+    /// * [`Self::set_oper`]
+    /// * [`OperKind`]
     /// * C++ API: `term_builder_i::and`
     #[doc(alias = "term_builder_i::and")]
     #[inline(always)]
@@ -927,10 +943,12 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         self.set_oper(OperKind::And)
     }
 
-    /// short for `oper(flecs::Or`
+    /// short for `set_oper(OperKind::Or)`
     ///
     /// # See also
     ///
+    /// * [`Self::set_oper`]
+    /// * [`OperKind`]
     /// * C++ API: `term_builder_i::or`
     #[doc(alias = "term_builder_i::or")]
     #[inline(always)]
@@ -938,10 +956,12 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         self.set_oper(OperKind::Or)
     }
 
-    /// short for `oper(flecs::Not`
+    /// short for `set_oper(OperKind::Not)`
     ///
     /// # See also
     ///
+    /// * [`Self::set_oper`]
+    /// * [`OperKind`]
     /// * C++ API: `term_builder_i::not`
     #[doc(alias = "term_builder_i::not")]
     #[allow(clippy::should_implement_trait)]
@@ -950,10 +970,12 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         self.set_oper(OperKind::Not)
     }
 
-    /// short for `oper(flecs::Optional`
+    /// short for `set_oper(OperKind::Optional)`
     ///
     /// # See also
     ///
+    /// * [`Self::set_oper`]
+    /// * [`OperKind`]
     /// * C++ API: `term_builder_i::optional`
     #[doc(alias = "term_builder_i::optional")]
     #[inline(always)]
@@ -961,10 +983,12 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         self.set_oper(OperKind::Optional)
     }
 
-    /// short for `oper(flecs::AndFrom`
+    /// short for `set_oper(OperKind::AndFrom)`
     ///
     /// # See also
     ///
+    /// * [`Self::set_oper`]
+    /// * [`OperKind`]
     /// * C++ API: `term_builder_i::and_from`
     #[doc(alias = "term_builder_i::and_from")]
     #[inline(always)]
@@ -972,10 +996,12 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         self.set_oper(OperKind::AndFrom)
     }
 
-    /// short for `oper(flecs::OrFrom`
+    /// short for `set_oper(OperKind::OrFrom)`
     ///
     /// # See also
     ///
+    /// * [`Self::set_oper`]
+    /// * [`OperKind`]
     /// * C++ API: `term_builder_i::or_from`
     #[doc(alias = "term_builder_i::or_from")]
     #[inline(always)]
@@ -983,10 +1009,12 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         self.set_oper(OperKind::OrFrom)
     }
 
-    /// short for `oper(flecs::NotFrom`
+    /// short for `set_oper(OperKind::NotFrom)`
     ///
     /// # See also
     ///
+    /// * [`Self::set_oper`]
+    /// * [`OperKind`]
     /// * C++ API: `term_builder_i::not_from`
     #[doc(alias = "term_builder_i::not_from")]
     #[inline(always)]
