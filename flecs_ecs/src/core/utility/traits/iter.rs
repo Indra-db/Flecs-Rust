@@ -25,7 +25,7 @@ where
     // TODO once we have tests in place, I will split this functionality up into multiple functions, which should give a small performance boost
     // by caching if the query has used a "is_ref" operation.
     // is_ref is true for any query that contains fields that are not matched on the entity itself
-    // so parents, prefabs but also singletons, or fields that are matched on a fixed entity (.with<Foo>().src(my_entity))
+    // so parents, prefabs but also singletons, or fields that are matched on a fixed entity (.with<Foo>().src_id(my_entity))
     /// Each iterator.
     /// The "each" iterator accepts a function that is invoked for each matching entity.
     /// The following function signatures is valid:
@@ -76,7 +76,7 @@ where
     ///
     /// * C++ API: `iterable::each`
     #[doc(alias = "iterable::each")]
-    fn each_entity(&self, mut func: impl FnMut(&mut EntityView, T::TupleType<'_>)) {
+    fn each_entity(&self, mut func: impl FnMut(EntityView, T::TupleType<'_>)) {
         unsafe {
             let mut iter = self.retrieve_iter();
 
@@ -108,10 +108,9 @@ where
                 // update: I believe it's not possible due to not knowing the order of the components in the tuple. I will leave this here for now, maybe I will come back to it in the future.
                 for i in 0..iter_count {
                     let world = self.world();
-                    let mut entity = EntityView::new_from(world, *iter.entities.add(i));
                     let tuple = components_data.get_tuple(i);
 
-                    func(&mut entity, tuple);
+                    func(EntityView::new_from(world, *iter.entities.add(i)), tuple);
                 }
 
                 sys::ecs_table_unlock(world, iter.table);
@@ -219,7 +218,7 @@ where
     #[doc(alias = "find_delegate::invoke_callback")]
     fn find_entity(
         &self,
-        mut func: impl FnMut(&mut EntityView, T::TupleType<'_>) -> bool,
+        mut func: impl FnMut(EntityView, T::TupleType<'_>) -> bool,
     ) -> Option<EntityView<'a>> {
         unsafe {
             let mut iter = self.retrieve_iter();
@@ -234,10 +233,10 @@ where
 
                 for i in 0..iter_count {
                     let world = self.world();
-                    let mut entity = EntityView::new_from(world, *iter.entities.add(i));
+                    let entity = EntityView::new_from(world, *iter.entities.add(i));
 
                     let tuple = components_data.get_tuple(i);
-                    if func(&mut entity, tuple) {
+                    if func(entity, tuple) {
                         entity_result = Some(entity);
                         break;
                     }
@@ -379,57 +378,55 @@ where
     #[doc(alias = "query_base::entity")]
     fn as_entity(&self) -> EntityView;
 
-    // /// Each term iterator.
-    // /// The "`each_term`" iterator accepts a function that is invoked for each term
-    // /// in the filter. The following function signature is valid:
-    // ///  - func(term: &mut Term)
-    // ///
-    // /// # See also
-    // ///
-    // /// * C++ API: `query_base::term`
-    // #[doc(alias = "query_base::each_term")]
-    // fn each_term(&self, mut func: impl FnMut(&mut Term)) {
-    //     let query = self.query_ptr();
-    //     let world = self.world();
-    //     ecs_assert!(
-    //         !query.is_null(),
-    //         FlecsErrorCode::InvalidParameter,
-    //         "query filter is null"
-    //     );
-    //     let query = unsafe { &*query };
-    //     for i in 0..query.term_count {
-    //         let mut term = Term::new_from(world, query.terms[i as usize]);
-    //         func(&mut term);
-    //         term.reset(); // prevent freeing resources
-    //     }
-    // }
+    /// Each term iterator.
+    /// The `each_term` iterator accepts a function that is invoked for each term
+    /// in the filter. The following function signature is valid:
+    ///  - func(term: &mut Term)
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query_base::term`
+    #[doc(alias = "query_base::each_term")]
+    fn each_term(&self, mut func: impl FnMut(&TermRef)) {
+        let query = self.query_ptr();
+        ecs_assert!(
+            !query.is_null(),
+            FlecsErrorCode::InvalidParameter,
+            "query filter is null"
+        );
+        let query = unsafe { &*query };
+        for i in 0..query.term_count {
+            let term = TermRef::new(&query.terms[i as usize]);
+            func(&term);
+        }
+    }
 
-    // /// Get the term of the current filter at the given index
-    // ///
-    // /// # Arguments
-    // ///
-    // /// * `index`: the index of the term to get
-    // /// * `filter`: the filter to get the term from
-    // ///
-    // /// # Returns
-    // ///
-    // /// The term requested
-    // ///
-    // /// # See also
-    // ///
-    // /// * C++ API: `query_base::term`
-    // #[doc(alias = "query_base::term")]
-    // fn term(&self, index: usize) -> Term<'a> {
-    //     let query = self.query_ptr();
-    //     let world = self.world();
-    //     ecs_assert!(
-    //         !query.is_null(),
-    //         FlecsErrorCode::InvalidParameter,
-    //         "query filter is null"
-    //     );
-    //     let query = unsafe { &*query };
-    //     Term::new_from(world, query.terms[index])
-    // }
+    /// Get a immutable reference of the term of the current query at the given index
+    /// This is mostly used for debugging purposes.
+    ///
+    /// # Arguments
+    ///
+    /// * `index`: the index of the term to get
+    /// * `filter`: the filter to get the term from
+    ///
+    /// # Returns
+    ///
+    /// The term requested
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query_base::term`
+    #[doc(alias = "query_base::term")]
+    fn term(&self, index: usize) -> TermRef<'a> {
+        let query = self.query_ptr();
+        ecs_assert!(
+            !query.is_null(),
+            FlecsErrorCode::InvalidParameter,
+            "query filter is null"
+        );
+        let query = unsafe { &*query };
+        TermRef::new(&query.terms[index])
+    }
 
     /// Get the field count of the current filter
     ///
@@ -450,6 +447,7 @@ where
         unsafe { (*query).field_count }
     }
 
+    /// Get the count of terms set of the current query
     fn term_count(&self) -> u32 {
         let query = self.query_ptr();
         unsafe { (*query).term_count as u32 }
@@ -518,7 +516,7 @@ where
     /// * C++ API: `iter_iterable::first`
     #[doc(alias = "iterable::first")]
     #[doc(alias = "iter_iterable::first")]
-    fn first(&mut self) -> Option<EntityView<'a>> {
+    fn first_entity(&mut self) -> Option<EntityView<'a>> {
         let mut entity = None;
 
         let it = &mut self.retrieve_iter();

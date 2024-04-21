@@ -50,11 +50,11 @@ fn main() {
     let query = world
         .query::<(&Position, Option<&Position>, &mut Position)>()
         .term_at(0)
-        .select_second::<Local>()
+        .set_second::<Local>()
         .term_at(1)
-        .select_second::<World>()
+        .set_second::<World>()
         .term_at(2)
-        .select_second::<World>()
+        .set_second::<World>()
         .term_at(1)
         .parent()
         .cascade()
@@ -80,7 +80,7 @@ fn main() {
     world
         .query::<&Position>()
         .term_at(0)
-        .select_second::<World>()
+        .set_second::<World>()
         .build()
         .each_entity(|entity, position| {
             fprintln!(

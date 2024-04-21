@@ -41,9 +41,9 @@ fn main() {
     let rule = world
         .query::<()>()
         .with_first_name::<&Likes>(c"$Y")
-        .select_src_name(c"$X")
+        .set_src_name(c"$X")
         .with_first_name::<&Likes>(c"$X")
-        .select_src_name(c"$Y")
+        .set_src_name(c"$Y")
         .build();
 
     // Lookup the index of the variables. This will let us quickly lookup their

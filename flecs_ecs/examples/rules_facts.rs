@@ -53,9 +53,9 @@ fn main() {
     let friends = world
         .query::<()>()
         .with_first_name::<&Likes>(c"$Y")
-        .select_src_name(c"$X")
+        .set_src_name(c"$X")
         .with_first_name::<&Likes>(c"$X")
-        .select_src_name(c"$Y")
+        .set_src_name(c"$Y")
         .build();
 
     let x_var = friends.find_var(c"X").unwrap();

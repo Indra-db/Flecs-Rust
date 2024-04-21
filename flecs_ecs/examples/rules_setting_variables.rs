@@ -97,9 +97,9 @@ fn main() {
     let rule = world
         .query::<&RangedUnit>()
         .with::<&Platoon>()
-        .select_second_name(c"$Platoon")
+        .set_second_name(c"$Platoon")
         .with_first_name::<&Player>(c"$Player")
-        .select_src_name(c"$Platoon")
+        .set_src_name(c"$Platoon")
         .build();
 
     // If we would iterate this rule it would return all ranged units for all

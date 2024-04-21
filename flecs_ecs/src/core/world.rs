@@ -3444,7 +3444,7 @@ impl World {
     #[doc(alias = "world::each")]
     pub fn each_entity<Components>(
         &self,
-        func: impl FnMut(&mut EntityView, Components::TupleType<'_>),
+        func: impl FnMut(EntityView, Components::TupleType<'_>),
     ) -> Query<Components>
     where
         Components: Iterable,

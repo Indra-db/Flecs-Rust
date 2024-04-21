@@ -72,7 +72,7 @@ pub enum EnumClassWithLargeConstant {
 }
 
 /*
-    test_int(enum_type.first(), Red);
+    test_int(enum_type.first_id(), Red);
     test_int(enum_type.last(), Blue);
 
     auto e_red = enum_type.entity(Red);

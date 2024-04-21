@@ -498,7 +498,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::each")]
     pub fn each_target_id(self, relationship: impl Into<Entity>, mut func: impl FnMut(EntityView)) {
         self.each_pair(relationship.into(), ECS_WILDCARD, |id| {
-            let obj = id.second();
+            let obj = id.second_id();
             func(obj);
         });
     }

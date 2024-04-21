@@ -112,6 +112,10 @@ where
 
     /// Create a new query from a query descriptor
     ///
+    /// # Panics
+    ///
+    /// Panics if the query desc is faulty, such as a wrong name of a non-existent components being passed with `with_name`.
+    ///
     /// # Arguments
     ///
     /// * `world` - The world to create the query in
@@ -125,8 +129,12 @@ where
         world: impl IntoWorld<'a>,
         desc: &mut sys::ecs_query_desc_t,
     ) -> Self {
-        let query =
-            unsafe { NonNull::new_unchecked(sys::ecs_query_init(world.world_ptr_mut(), desc)) };
+        let query_ptr = unsafe { sys::ecs_query_init(world.world_ptr_mut(), desc) };
+        ecs_assert!(
+            !query_ptr.is_null(),
+            "Failed to create query from query descriptor"
+        );
+        let query = unsafe { NonNull::new_unchecked(query_ptr) };
         Self {
             query,
             _phantom: PhantomData,

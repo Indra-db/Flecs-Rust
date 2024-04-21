@@ -471,8 +471,8 @@ fn entity_pair_role() {
 
     assert!(pair.has_flags_for(flecs::Pair::ID));
 
-    let rel = pair.first();
-    let obj = pair.second();
+    let rel = pair.first_id();
+    let obj = pair.second_id();
 
     assert_eq!(rel, entity);
     assert_eq!(obj, entity2);
@@ -2783,15 +2783,15 @@ fn entity_id_pair_from_world() {
     assert!(obj.is_valid());
 
     let id_1 = world.id_from_id((rel, obj));
-    assert_eq!(id_1.first(), rel);
-    assert_eq!(id_1.second(), obj);
+    assert_eq!(id_1.first_id(), rel);
+    assert_eq!(id_1.second_id(), obj);
     assert_eq!(id_1.world().ptr_mut(), world.ptr_mut());
     assert!(id_1.is_pair());
     assert!(!id_1.is_wildcard());
 
     let id_2 = world.id_from_id((rel, *flecs::Wildcard));
-    assert_eq!(id_2.first(), rel);
-    assert_eq!(id_2.second(), *flecs::Wildcard);
+    assert_eq!(id_2.first_id(), rel);
+    assert_eq!(id_2.second_id(), *flecs::Wildcard);
     assert_eq!(id_2.world().ptr_mut(), world.ptr_mut());
     assert!(id_2.is_pair());
     assert!(id_2.is_wildcard());

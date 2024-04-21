@@ -12,15 +12,40 @@ fn init() {
 }
 
 #[derive(Component)]
+pub struct QueryWrapper {
+    pub query_entity: Entity,
+}
+
+#[derive(Component)]
 pub struct Likes;
+
+#[derive(Component)]
+pub struct Apples;
+
+#[derive(Component)]
+pub struct Pears;
+
+#[derive(Component)]
+pub struct Eats;
 
 #[derive(Component)]
 pub struct SelfRef {
     pub value: Entity,
 }
 
+#[derive(Component)]
+pub struct SelfRef2 {
+    pub value: Entity,
+}
+
 #[derive(Debug, Component)]
 pub struct Position {
+    pub x: i32,
+    pub y: i32,
+}
+
+#[derive(Component)]
+pub struct Position2 {
     pub x: i32,
     pub y: i32,
 }
@@ -50,6 +75,24 @@ pub struct Velocity {
 }
 
 #[derive(Component)]
+#[repr(C)]
+pub enum Color {
+    Red,
+    Green,
+    Blue,
+}
+
+#[derive(Component)]
+pub struct Other {
+    pub value: i32,
+}
+
+#[derive(Component)]
+pub struct Other2 {
+    pub value: i32,
+}
+
+#[derive(Component)]
 pub struct Mass {
     pub value: i32,
 }
@@ -72,6 +115,20 @@ pub struct Obj2 {}
 pub struct Rel {}
 
 #[derive(Component)]
+pub struct Rel2 {}
+
+#[derive(Component)]
+pub struct RelFoo {
+    pub foo: u32,
+}
+
+#[derive(Component)]
+pub struct Alice {}
+
+#[derive(Component)]
+pub struct Bob {}
+
+#[derive(Component)]
 pub struct Tag {}
 
 #[derive(Component)]
@@ -82,6 +139,63 @@ pub struct TagB {}
 
 #[derive(Component)]
 pub struct TagC {}
+
+#[derive(Component)]
+pub struct TagD {}
+
+#[derive(Component)]
+pub struct TagE {}
+
+#[derive(Component)]
+pub struct TagF {}
+
+#[derive(Component)]
+pub struct TagG {}
+
+#[derive(Component)]
+pub struct TagH {}
+
+#[derive(Component)]
+pub struct TagI {}
+
+#[derive(Component)]
+pub struct TagJ {}
+
+#[derive(Component)]
+pub struct TagK {}
+
+#[derive(Component)]
+pub struct TagL {}
+
+#[derive(Component)]
+pub struct TagM {}
+
+#[derive(Component)]
+pub struct TagN {}
+
+#[derive(Component)]
+pub struct TagO {}
+
+#[derive(Component)]
+pub struct TagP {}
+
+#[derive(Component)]
+pub struct TagQ {}
+
+#[derive(Component)]
+pub struct TagR {}
+
+#[derive(Component)]
+pub struct TagS {}
+
+#[derive(Component)]
+pub struct TagT {}
+
+#[derive(Component)]
+pub struct TagV {}
+
+#[derive(Component)]
+pub struct TagX {}
 
 #[derive(Component)]
 pub struct TagClone {}
@@ -162,7 +276,7 @@ impl Drop for Pod {
 }
 
 #[derive(Component)]
-#[register(Position, Velocity)]
+#[register(Position, Velocity, u32)]
 pub struct Template<T> {
     pub value: T,
 }

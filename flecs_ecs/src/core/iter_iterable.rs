@@ -34,8 +34,9 @@ where
     ///
     /// * C++ API: `iter_iterable::set_group`
     #[doc(alias = "iter_iterable::set_group")]
-    pub fn set_group_id(&mut self, group_id: impl Into<Entity>) {
+    pub fn set_group_id(&mut self, group_id: impl Into<Entity>) -> &mut Self {
         unsafe { sys::ecs_iter_set_group(&mut self.iter, *group_id.into()) }
+        self
     }
 
     /// Limit results to tables with specified group id (grouped queries only)
@@ -48,7 +49,7 @@ where
     ///
     /// * C++ API: `iter_iterable::set_group`
     #[doc(alias = "iter_iterable::set_group")]
-    pub fn set_group<Group: ComponentId>(&mut self) -> &Self {
+    pub fn set_group<Group: ComponentId>(&mut self) -> &mut Self {
         let world = unsafe { WorldRef::from_ptr(self.iter.real_world) };
         unsafe { sys::ecs_iter_set_group(&mut self.iter, Group::get_id(world)) }
         self

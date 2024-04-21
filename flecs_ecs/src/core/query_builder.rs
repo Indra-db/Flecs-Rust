@@ -385,7 +385,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     #[doc(alias = "query_builder_i::with")]
     fn with_name(&mut self, name: &'a CStr) -> &mut Self {
         self.term();
-        self.select_first_name(name);
+        self.set_first_name(name);
         let term = self.current_term();
         if term.inout == InOutKind::InOutDefault as i16 {
             self.set_as_inout_none();
@@ -401,7 +401,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     #[doc(alias = "query_builder_i::with")]
     fn with_names(&mut self, first: &'a CStr, second: &'a CStr) -> &mut Self {
         self.term();
-        self.select_first_name(first).select_second_name(second);
+        self.set_first_name(first).set_second_name(second);
         let term = self.current_term();
         if term.inout == InOutKind::InOutDefault as i16 {
             self.set_as_inout_none();
@@ -413,7 +413,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     fn with_first_id(&mut self, first: impl Into<Entity>, second: &'a CStr) -> &mut Self {
         self.term();
         self.init_current_term(first.into());
-        self.select_second_name(second);
+        self.set_second_name(second);
         let term = self.current_term();
         if term.inout == InOutKind::InOutDefault as i16 {
             self.set_as_inout_none();
@@ -424,8 +424,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// set term with second id and first name
     fn with_second_id(&mut self, first: &'a CStr, second: impl Into<Entity>) -> &mut Self {
         self.term();
-        self.select_first_name(first)
-            .select_second_id(second.into());
+        self.set_first_name(first).set_second_id(second.into());
         let term = self.current_term();
         if term.inout == InOutKind::InOutDefault as i16 {
             self.set_as_inout_none();
@@ -633,27 +632,117 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// Set the type as current term and in mode inout
-    fn write_type<T: InOutType>(&mut self) -> &mut Self {
+    fn write<T: InOutType>(&mut self) -> &mut Self {
         self.with::<T>();
-        TermBuilderImpl::write(self)
+        TermBuilderImpl::write_curr(self)
     }
 
     /// Set the id as current term and in mode inout
     fn write_id(&mut self, id: impl IntoId) -> &mut Self {
         self.with_id(id);
-        TermBuilderImpl::write(self)
+        TermBuilderImpl::write_curr(self)
+    }
+
+    /// Set the name as current term and in mode inout
+    fn write_name(&mut self, name: &'a CStr) -> &mut Self {
+        self.with_name(name);
+        TermBuilderImpl::write_curr(self)
+    }
+
+    /// Set the names as current term and in mode inout
+    fn write_names(&mut self, first: &'a CStr, second: &'a CStr) -> &mut Self {
+        self.with_names(first, second);
+        TermBuilderImpl::write_curr(self)
+    }
+
+    /// Set the type as current term and in mode inout
+    fn write_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
+        &mut self,
+        value: T,
+    ) -> &mut Self {
+        self.with_enum(value);
+        TermBuilderImpl::write_curr(self)
+    }
+
+    /// Set the relationship as current term and in mode inout
+    fn write_first<T: InOutType>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
+        self.with_first::<T>(second);
+        TermBuilderImpl::write_curr(self)
+    }
+
+    /// Set the relationship as current term and in mode inout
+    fn write_first_name<T: InOutType>(&mut self, second: &'a CStr) -> &mut Self {
+        self.with_first_name::<T>(second);
+        TermBuilderImpl::write_curr(self)
+    }
+
+    /// Set the relationship as current term and in mode inout
+    fn write_second<T: InOutType>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
+        self.with_second::<T>(first);
+        TermBuilderImpl::write_curr(self)
+    }
+
+    /// Set the relationship as current term and in mode inout
+    fn write_second_name<T: InOutType>(&mut self, first: &'a CStr) -> &mut Self {
+        self.with_second_name::<T>(first);
+        TermBuilderImpl::write_curr(self)
     }
 
     /// Set the type as current term and in mode in
-    fn read_type<T: InOutType>(&mut self) -> &mut Self {
+    fn read<T: InOutType>(&mut self) -> &mut Self {
         self.with::<T>();
-        TermBuilderImpl::read(self)
+        TermBuilderImpl::read_curr(self)
     }
 
     /// Set the id as current term and in mode in
     fn read_id(&mut self, id: impl IntoId) -> &mut Self {
         self.with_id(id);
-        TermBuilderImpl::read(self)
+        TermBuilderImpl::read_curr(self)
+    }
+
+    /// Set the name as current term and in mode in
+    fn read_name(&mut self, name: &'a CStr) -> &mut Self {
+        self.with_name(name);
+        TermBuilderImpl::read_curr(self)
+    }
+
+    /// Set the names as current term and in mode in
+    fn read_names(&mut self, first: &'a CStr, second: &'a CStr) -> &mut Self {
+        self.with_names(first, second);
+        TermBuilderImpl::read_curr(self)
+    }
+
+    /// Set the type as current term and in mode in
+    fn read_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
+        &mut self,
+        value: T,
+    ) -> &mut Self {
+        self.with_enum(value);
+        TermBuilderImpl::read_curr(self)
+    }
+
+    /// Set the relationship as current term and in mode in
+    fn read_first<T: InOutType>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
+        self.with_first::<T>(second);
+        TermBuilderImpl::read_curr(self)
+    }
+
+    /// Set the relationship as current term and in mode in
+    fn read_first_name<T: InOutType>(&mut self, second: &'a CStr) -> &mut Self {
+        self.with_first_name::<T>(second);
+        TermBuilderImpl::read_curr(self)
+    }
+
+    /// Set the relationship as current term and in mode in
+    fn read_second<T: InOutType>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
+        self.with_second::<T>(first);
+        TermBuilderImpl::read_curr(self)
+    }
+
+    /// Set the relationship as current term and in mode in
+    fn read_second_name<T: InOutType>(&mut self, first: &'a CStr) -> &mut Self {
+        self.with_second_name::<T>(first);
+        TermBuilderImpl::read_curr(self)
     }
 
     /* scope_open/scope_close shorthand notation. */

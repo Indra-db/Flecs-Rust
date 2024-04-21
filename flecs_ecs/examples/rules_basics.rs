@@ -48,7 +48,7 @@ fn main() {
         // same entity.
         .with_first_name::<&Eats>(c"$food")
         .with::<&Healthy>()
-        .select_src_name(c"$food")
+        .set_src_name(c"$food")
         .build();
 
     // Lookup the index of the variable. This will let us quickly lookup its

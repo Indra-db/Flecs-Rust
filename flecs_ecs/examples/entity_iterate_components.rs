@@ -27,8 +27,8 @@ fn iterate_components(entity: EntityView, snap: &mut Snap) {
         count_components += 1;
         if id.is_pair() {
             // If id is a pair, extract & print both parts of the pair
-            let rel = id.first();
-            let target = id.second();
+            let rel = id.first_id();
+            let target = id.second_id();
             snap.str
                 .last_mut()
                 .unwrap()

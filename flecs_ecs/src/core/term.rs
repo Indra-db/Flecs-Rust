@@ -11,6 +11,52 @@ pub enum TermRefMode {
     Second,
 }
 
+/// A reference to a term in a query.
+/// This type is used to get information about a term in a query.
+/// It is not possible to modify the term using this type.
+/// To modify a term, use the `TermBuilder` interface.
+/// Useful for debugging purposes.
+pub struct TermRef<'a> {
+    term: &'a sys::ecs_term_t,
+}
+
+impl<'a> TermRef<'a> {
+    pub fn new(term: &'a sys::ecs_term_t) -> Self {
+        Self { term }
+    }
+
+    pub fn is_set(&self) -> bool {
+        unsafe { sys::ecs_term_is_initialized(self.term) }
+    }
+
+    pub fn id(&self) -> Id {
+        Id(self.term.id)
+    }
+
+    pub fn inout(&self) -> InOutKind {
+        self.term.inout.into()
+    }
+
+    pub fn oper(&self) -> OperKind {
+        self.term.oper.into()
+    }
+
+    pub fn src_id(&self) -> Entity {
+        let id = self.term.src.id & !flecs::TermRefFlags::ID;
+        Entity(id)
+    }
+
+    pub fn first_id(&self) -> Entity {
+        let id = self.term.first.id & !flecs::TermRefFlags::ID;
+        Entity(id)
+    }
+
+    pub fn second_id(&self) -> Entity {
+        let id = self.term.second.id & !flecs::TermRefFlags::ID;
+        Entity(id)
+    }
+}
+
 #[doc(hidden)]
 pub mod internals {
     use crate::core::*;
@@ -253,8 +299,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term::get_src`
     #[doc(alias = "term::get_src")]
-    fn src(&self) -> Entity {
-        //id & ~EcsTermRefFlags
+    fn src_id(&self) -> Entity {
         let id = self.current_term().src.id & !flecs::TermRefFlags::ID;
         Entity(id)
     }
@@ -265,7 +310,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term::first`
     #[doc(alias = "term::get_first")]
-    fn first(&self) -> Entity {
+    fn first_id(&self) -> Entity {
         let id = self.current_term().first.id & !flecs::TermRefFlags::ID;
         Entity(id)
     }
@@ -276,7 +321,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term::second`
     #[doc(alias = "term::get_second")]
-    fn second(&self) -> Entity {
+    fn second_id(&self) -> Entity {
         let id = self.current_term().second.id & !flecs::TermRefFlags::ID;
         Entity(id)
     }
@@ -301,7 +346,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::id`
     #[doc(alias = "term_builder_i::id")]
-    fn set_term_ref_id(&mut self, id: impl Into<Entity>) -> &mut Self {
+    fn set_id(&mut self, id: impl Into<Entity>) -> &mut Self {
         let term_ref = self.term_ref_mut();
         term_ref.id = *id.into();
         self
@@ -355,7 +400,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::var`
     #[doc(alias = "term_builder_i::var")]
-    fn var(&mut self, var_name: &'a CStr) -> &mut Self {
+    fn set_var(&mut self, var_name: &'a CStr) -> &mut Self {
         let term_ref = self.term_ref_mut();
         term_ref.id |= flecs::IsVariable::ID;
         term_ref.name = var_name.as_ptr() as *mut i8;
@@ -383,7 +428,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
-    fn setup_src(&mut self) -> &mut Self {
+    fn src(&mut self) -> &mut Self {
         self.set_term_ref_mode(TermRefMode::Src);
         self
     }
@@ -396,7 +441,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
-    fn setup_first(&mut self) -> &mut Self {
+    fn first(&mut self) -> &mut Self {
         self.set_term_ref_mode(TermRefMode::First);
         self
     }
@@ -408,7 +453,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
-    fn setup_second(&mut self) -> &mut Self {
+    fn second(&mut self) -> &mut Self {
         self.set_term_ref_mode(TermRefMode::Second);
         self
     }
@@ -423,8 +468,8 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
-    fn select_src_id(&mut self, id: impl Into<Entity>) -> &mut Self {
-        self.setup_src().set_term_ref_id(id)
+    fn set_src_id(&mut self, id: impl Into<Entity>) -> &mut Self {
+        self.src().set_id(id)
     }
 
     /// Select src identifier, initialize it with id associated with type
@@ -437,8 +482,8 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
-    fn select_src<T: ComponentId>(&mut self) -> &mut Self {
-        self.select_src_id(T::get_id(self.world()))
+    fn set_src<T: ComponentId>(&mut self) -> &mut Self {
+        self.set_src_id(T::get_id(self.world()))
     }
 
     /// Select src identifier, initialize it with name. If name starts with a $
@@ -452,18 +497,18 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
-    fn select_src_name(&mut self, name: &'a CStr) -> &mut Self {
+    fn set_src_name(&mut self, name: &'a CStr) -> &mut Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
             "name is empty"
         );
 
-        self.setup_src();
+        self.src();
         if let Some(stripped_name) =
             strip_prefix_cstr_raw(name, CStr::from_bytes_with_nul(b"$\0").unwrap())
         {
-            self.var(stripped_name)
+            self.set_var(stripped_name)
         } else {
             self.name(name)
         }
@@ -479,8 +524,8 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
-    fn select_first_id(&mut self, id: impl Into<Entity>) -> &mut Self {
-        self.setup_first().set_term_ref_id(id)
+    fn set_first_id(&mut self, id: impl Into<Entity>) -> &mut Self {
+        self.first().set_id(id)
     }
 
     /// Select first identifier, initialize it with id associated with type
@@ -493,8 +538,8 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
-    fn select_first<T: ComponentId>(&mut self) -> &mut Self {
-        self.select_first_id(T::get_id(self.world()))
+    fn set_first<T: ComponentId>(&mut self) -> &mut Self {
+        self.set_first_id(T::get_id(self.world()))
     }
 
     /// Select first identifier, initialize it with name. If name starts with a $
@@ -508,18 +553,18 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
-    fn select_first_name(&mut self, name: &'a CStr) -> &mut Self {
+    fn set_first_name(&mut self, name: &'a CStr) -> &mut Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
             "name is empty"
         );
 
-        self.setup_first();
+        self.first();
         if let Some(stripped_name) =
             strip_prefix_cstr_raw(name, CStr::from_bytes_with_nul(b"$\0").unwrap())
         {
-            self.var(stripped_name)
+            self.set_var(stripped_name)
         } else {
             self.name(name)
         }
@@ -535,8 +580,8 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
-    fn select_second_id(&mut self, id: impl Into<Entity>) -> &mut Self {
-        self.setup_second().set_term_ref_id(id)
+    fn set_second_id(&mut self, id: impl Into<Entity>) -> &mut Self {
+        self.second().set_id(id)
     }
 
     /// Select second identifier, initialize it with id associated with type
@@ -549,8 +594,8 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
-    fn select_second<T: ComponentId>(&mut self) -> &mut Self {
-        self.select_second_id(T::get_id(self.world()))
+    fn set_second<T: ComponentId>(&mut self) -> &mut Self {
+        self.set_second_id(T::get_id(self.world()))
     }
 
     /// Select second identifier, initialize it with name. If name starts with a $
@@ -564,18 +609,18 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
-    fn select_second_name(&mut self, name: &'a CStr) -> &mut Self {
+    fn set_second_name(&mut self, name: &'a CStr) -> &mut Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
             "name is empty"
         );
 
-        self.setup_second();
+        self.second();
         if let Some(stripped_name) =
             strip_prefix_cstr_raw(name, CStr::from_bytes_with_nul(b"$\0").unwrap())
         {
-            self.var(stripped_name)
+            self.set_var(stripped_name)
         } else {
             self.name(name)
         }
@@ -767,12 +812,13 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     fn inout_stage(&mut self, inout: InOutKind) -> &mut Self {
         self.set_inout(inout);
         if self.current_term_mut().oper != OperKind::Not as i16 {
-            self.setup_src().entity(0);
+            self.src().entity(0);
         }
 
         self
     }
 
+    /// Set write mode on current term.
     /// Short for `inout_stage(flecs::Out`.
     ///  Use when system uses add, remove or set.
     ///
@@ -781,10 +827,11 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::write`
     #[doc(alias = "term_builder_i::write")]
     #[inline(always)]
-    fn write(&mut self) -> &mut Self {
+    fn write_curr(&mut self) -> &mut Self {
         self.inout_stage(InOutKind::Out)
     }
 
+    /// Set read mode on current term.
     /// Short for `inout_stage(flecs::In`.
     /// Use when system uses get
     ///
@@ -793,7 +840,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::read`
     #[doc(alias = "term_builder_i::read")]
     #[inline(always)]
-    fn read(&mut self) -> &mut Self {
+    fn read_curr(&mut self) -> &mut Self {
         self.inout_stage(InOutKind::In)
     }
 

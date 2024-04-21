@@ -51,6 +51,7 @@ pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\
 /// - `Out`: The term is only written, providing exclusive access to modify the component data.
 #[allow(clippy::unnecessary_cast)]
 #[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum InOutKind {
     InOutDefault = sys::ecs_inout_kind_t_EcsInOutDefault as u32,
     InOutNone = sys::ecs_inout_kind_t_EcsInOutNone as u32,
@@ -134,6 +135,7 @@ impl From<InOutKind> for i16 {
 /// systems to precisely specify the conditions under which entities are selected for processing.
 #[allow(clippy::unnecessary_cast)]
 #[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum OperKind {
     And = sys::ecs_oper_kind_t_EcsAnd as u32,
     Or = sys::ecs_oper_kind_t_EcsOr as u32,

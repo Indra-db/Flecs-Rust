@@ -25,7 +25,7 @@ fn main() {
         .system_named::<()>(c"SetVelocity")
         .with::<&Position>()
         .set_as_inout_none()
-        .write_type::<&mut Velocity>() // Velocity is written, but shouldn't be matched
+        .write::<&mut Velocity>() // Velocity is written, but shouldn't be matched
         .each_entity(|e, ()| {
             e.set(Velocity { x: 1.0, y: 2.0 });
         });
@@ -79,6 +79,6 @@ fn main() {
 
     // The "merge" lines indicate sync points.
     //
-    // Removing '.write_type::<&mut Velocity>()' from the system will remove the first
+    // Removing '.write::<&mut Velocity>()' from the system will remove the first
     // sync point from the schedule.
 }

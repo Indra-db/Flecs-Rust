@@ -201,7 +201,7 @@ impl<'a> IdView<'a> {
     /// * C++ API: `id::first`
     #[doc(alias = "id::first")]
     #[inline(always)]
-    pub fn first(&self) -> EntityView {
+    pub fn first_id(&self) -> EntityView {
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
 
         let entity = ecs_first(self.id);
@@ -218,7 +218,7 @@ impl<'a> IdView<'a> {
     /// * C++ API: `id::first`
     #[doc(alias = "id::first")]
     #[inline(always)]
-    pub fn get_first(&self) -> Option<EntityView> {
+    pub fn get_first_id(&self) -> Option<EntityView> {
         if !self.is_pair() {
             None
         } else {
@@ -236,7 +236,7 @@ impl<'a> IdView<'a> {
     ///
     /// * C++ API: `id::second`
     #[doc(alias = "id::second")]
-    pub fn second(&self) -> EntityView {
+    pub fn second_id(&self) -> EntityView {
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
 
         let entity = ecs_second(self.id);
@@ -252,7 +252,7 @@ impl<'a> IdView<'a> {
     ///
     /// * C++ API: `id::second`
     #[doc(alias = "id::second")]
-    pub fn get_second(&self) -> Option<EntityView> {
+    pub fn get_second_id(&self) -> Option<EntityView> {
         if !self.is_pair() {
             None
         } else {

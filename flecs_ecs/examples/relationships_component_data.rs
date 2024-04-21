@@ -125,7 +125,7 @@ fn main() {
     let query = world
         .query::<&Requires>()
         .term_at(0)
-        .select_second::<Gigawatts>()
+        .set_second::<Gigawatts>()
         .build();
 
     query.each(|requires| {

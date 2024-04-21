@@ -91,7 +91,7 @@ fn main() {
         .build()
         .each_iter(|it, _, _| {
             let pair = it.pair(0).unwrap();
-            let tile_constant = pair.second();
+            let tile_constant = pair.second_id();
             fprintln!(snap, "{}", tile_constant.path().unwrap());
         });
 
@@ -112,7 +112,7 @@ fn main() {
         .build()
         .each_iter(|it, _, _| {
             let pair = it.pair(0).unwrap();
-            let tile_constant = pair.second();
+            let tile_constant = pair.second_id();
             fprintln!(snap, "{}", tile_constant.path().unwrap());
         });
 

@@ -19,8 +19,8 @@ fn main() {
         .query::<&Eats>()
         .term_at(0)
         // Change first argument to (Eats, *)
-        // alternative you can do  `.select_second_id(flecs::Wildcard::ID)``
-        .select_second::<flecs::Wildcard>()
+        // alternative you can do  `.set_second_id(flecs::Wildcard::ID)``
+        .set_second::<flecs::Wildcard>()
         .build();
 
     // Create a few entities that match the query
@@ -38,7 +38,7 @@ fn main() {
     query.each_iter(|it, index, eats| {
         let entity = it.entity(index);
         let pair = it.pair(0).unwrap();
-        let food = pair.second();
+        let food = pair.second_id();
 
         fprintln!(snap, "{} eats {} {}", entity, eats.amount, food);
     });

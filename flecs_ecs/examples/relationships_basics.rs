@@ -53,7 +53,7 @@ fn main() {
 
     // Iterate by explicitly providing the pair. This iterates (*, Pears):
     bob.each_pair(flecs::Wildcard::ID, pears, |id| {
-        fprintln!(snap, "Bob {} pears", id.first().name());
+        fprintln!(snap, "Bob {} pears", id.first_id().name());
     });
 
     fprintln!(snap);

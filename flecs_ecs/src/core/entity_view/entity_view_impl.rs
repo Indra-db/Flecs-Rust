@@ -66,6 +66,34 @@ mod eq_operations {
         }
     }
 
+    impl<'a> PartialEq<&EntityView<'a>> for EntityView<'a> {
+        #[inline]
+        fn eq(&self, other: &&EntityView<'a>) -> bool {
+            self.id == other.id
+        }
+    }
+
+    impl<'a> PartialEq<&mut EntityView<'a>> for EntityView<'a> {
+        #[inline]
+        fn eq(&self, other: &&mut EntityView<'a>) -> bool {
+            self.id == other.id
+        }
+    }
+
+    impl<'a> PartialEq<EntityView<'a>> for &EntityView<'a> {
+        #[inline]
+        fn eq(&self, other: &EntityView<'a>) -> bool {
+            self.id == other.id
+        }
+    }
+
+    impl<'a> PartialEq<EntityView<'a>> for &mut EntityView<'a> {
+        #[inline]
+        fn eq(&self, other: &EntityView<'a>) -> bool {
+            self.id == other.id
+        }
+    }
+
     impl<'a> PartialEq<IdView<'a>> for EntityView<'a> {
         #[inline]
         fn eq(&self, other: &IdView<'a>) -> bool {
