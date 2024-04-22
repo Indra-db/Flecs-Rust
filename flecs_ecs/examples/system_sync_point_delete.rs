@@ -1,7 +1,7 @@
-mod common;
-use common::*;
+include!("common");
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -71,7 +71,7 @@ fn main() {
     }
     set_log_level(-1);
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  info: pipeline rebuild
@@ -93,5 +93,3 @@ fn main() {
 
     // Note how after both entities are deleted, all three systems will be de-activated and not ran by the scheduler
 }
-
-// TODO verify

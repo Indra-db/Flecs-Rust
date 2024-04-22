@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // This example extends the component_inheritance example, and shows how
 // we can use a single rule to match units from different players and platoons
@@ -39,7 +38,8 @@ struct Platoon;
 const PLAYER_COUNT: usize = 100;
 const PLATOONS_PER_PLAYER: usize = 3;
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -125,7 +125,7 @@ fn main() {
             );
         });
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Unit id: 529 of class Wizard in platoon id: 526 for player MyPlayer

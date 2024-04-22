@@ -1,0 +1,9 @@
+---
+source: flecs_ecs/examples/common
+expression: self.str
+---
+- "my_freighter:"
+- " - position: 10, 20"
+- " - impulse speed: 50"
+- " - defense: 100"
+- " - capacity: 500"

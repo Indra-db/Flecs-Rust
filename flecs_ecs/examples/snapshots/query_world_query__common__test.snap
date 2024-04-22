@@ -1,6 +1,0 @@
----
-source: flecs_ecs/examples/common.rs
-expression: self.str
----
-- "Entity e1: Position { x: 11.0, y: 22.0 }"
-- "Entity e2: Position { x: 13.0, y: 24.0 }"

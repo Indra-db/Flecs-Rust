@@ -1,9 +1,0 @@
----
-source: flecs_ecs/examples/common.rs
-expression: self.str
----
-- "prefab_override.common.Damage, (Identifier,Name), (IsA,SpaceShip)"
-- "prefab_override.common.Attack, prefab_override.common.Damage, (Identifier,Name), (IsA,SpaceShip)"
-- "attack: 75"
-- "defence: 100"
-- "damage: 0"

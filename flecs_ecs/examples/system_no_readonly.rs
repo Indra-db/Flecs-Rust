@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // When an application calls world.progress(), the world is put in readonly mode.
 // This ensures that systems (on multiple threads) can safely iterate
@@ -20,7 +19,8 @@ struct Waiter;
 #[derive(Component)]
 struct Plate;
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -84,7 +84,7 @@ fn main() {
     // run systems
     world.progress();
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Assigned waiter_3 to plate_1!

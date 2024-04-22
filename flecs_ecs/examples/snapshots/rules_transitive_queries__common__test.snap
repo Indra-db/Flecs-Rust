@@ -1,7 +1,0 @@
----
-source: flecs_ecs/examples/common.rs
-expression: self.str
----
-- Bob lives in UnitedStates
-- Alice lives in UnitedStates
-- Job lives in Netherlands

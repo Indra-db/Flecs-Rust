@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // This example shows how to use rules for testing facts. A fact is a query that
 // has no variable elements. Consider a regular ECS query like this:
@@ -22,7 +21,8 @@ use common::*;
 #[derive(Component)]
 struct Likes;
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -126,7 +126,7 @@ fn main() {
         }
     );
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Are Bob and Alice friends? Yes

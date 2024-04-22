@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/common
+expression: self.str
+---
+- " - OnSet: test_examples.observer_propagate.Position: e: self: { 10, 20 }, parent: { 1, 2 }"

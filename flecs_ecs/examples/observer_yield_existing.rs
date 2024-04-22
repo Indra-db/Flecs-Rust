@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // Observers can enable a "yield_existing" feature that upon creation of the
 // observer produces events for all entities that match the observer query. The
@@ -8,7 +7,8 @@ use common::*;
 // Custom events can also implement behavior for yield_existing by adding the
 // Iterable component to the event (see EcsIterable for more details).
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -35,7 +35,7 @@ fn main() {
             );
         });
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  - OnSet: Position: e1: { 10, 20 }

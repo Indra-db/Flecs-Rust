@@ -1,10 +1,8 @@
-mod common;
+include!("common");
 use std::{
     ffi::c_void,
     time::{SystemTime, UNIX_EPOCH},
 };
-
-use common::*;
 
 #[derive(Component)]
 struct Radius {
@@ -33,7 +31,8 @@ fn rand(max: u64) -> f32 {
     (random_number % max) as f32
 }
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -69,7 +68,7 @@ fn main() {
                 let d_sqr = distance_sqr(p1, p2);
                 let r_sqr = sqr(r1.value + r2.value);
                 if r_sqr > d_sqr {
-                    println!("{} and {} collided!", e1, e2);
+                    fprintln!(snap, "{} and {} collided!", e1, e2);
                 }
             });
         });
@@ -90,7 +89,7 @@ fn main() {
     // Run the system
     sys.run();
 
-    assert!(snap.count() > 2);
+    Ok(snap)
 
     // Output:
     //  532 and 539 collided!

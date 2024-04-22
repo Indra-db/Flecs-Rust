@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // Nested prefabs make it possible to reuse an existing prefab inside another
 // prefab. An example of where this could be useful is a car with four wheels:
@@ -23,7 +22,8 @@ use common::*;
 struct TirePressure {
     value: f32,
 }
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -65,7 +65,7 @@ fn main() {
         fprintln!(snap, "entity lookup failed");
     }
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  TirePressure, (Identifier,Name), (ChildOf,my_car), (IsA,Wheel)

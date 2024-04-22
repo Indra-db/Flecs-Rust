@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // When an enumeration constant is added to an entity, it is added as a relationship
 // pair where the relationship is the enum type, and the target is the constant. For
@@ -34,7 +33,8 @@ enum TileStatus {
     Occupied,
 }
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -95,8 +95,6 @@ fn main() {
             fprintln!(snap, "{}", tile_constant.path().unwrap());
         });
 
-    snap.test();
-
     // Output:s:
     //  ::Tile::Stone
     //  ::Tile::Grass
@@ -116,8 +114,6 @@ fn main() {
             fprintln!(snap, "{}", tile_constant.path().unwrap());
         });
 
-    snap.test();
-
     // Output:s:
     //  ::Tile::Stone
     //  ::Tile::Sand
@@ -129,6 +125,8 @@ fn main() {
 
     // (Tile, Tile.Stone)
     fprintln!(snap, "{:?}", tile.archetype());
+
+    Ok(snap)
 
     // Total Output:
     //  (relationships_enum.Tile,relationships_enum.Tile.Stone), (relationships_enum.TileStatus,relationships_enum.TileStatus.Free)

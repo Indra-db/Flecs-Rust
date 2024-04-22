@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 extern "C" fn compare_position(
     _e1: EntityT,
@@ -17,7 +16,8 @@ fn print_query(query: &Query<&Position>, snap: &mut Snap) {
     query.each(|pos| fprintln!(snap, "{:?}", pos));
 }
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -64,7 +64,7 @@ fn main() {
     fprintln!(snap, "--- System iteration ---");
     sys.run();
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //

@@ -1,0 +1,15 @@
+---
+source: flecs_ecs/examples/common
+expression: self.str
+---
+- All tables
+- "group: \"::test_examples::query_group_iter::Cell_0_0\" - Table [test_examples.query_group_iter.Merchant, test_examples.query_group_iter.Npc, (test_examples.query_group_iter.WorldCell,test_examples.query_group_iter.Cell_0_0)]"
+- "group: \"::test_examples::query_group_iter::Cell_0_1\" - Table [test_examples.query_group_iter.Npc, test_examples.query_group_iter.Beggar, (test_examples.query_group_iter.WorldCell,test_examples.query_group_iter.Cell_0_1)]"
+- "group: \"::test_examples::query_group_iter::Cell_0_1\" - Table [test_examples.query_group_iter.Npc, test_examples.query_group_iter.Soldier, (test_examples.query_group_iter.WorldCell,test_examples.query_group_iter.Cell_0_1)]"
+- "group: \"::test_examples::query_group_iter::Cell_1_0\" - Table [test_examples.query_group_iter.Npc, test_examples.query_group_iter.Mage, (test_examples.query_group_iter.WorldCell,test_examples.query_group_iter.Cell_1_0)]"
+- "group: \"::test_examples::query_group_iter::Cell_1_0\" - Table [test_examples.query_group_iter.Npc, test_examples.query_group_iter.Beggar, (test_examples.query_group_iter.WorldCell,test_examples.query_group_iter.Cell_1_0)]"
+- "group: \"::test_examples::query_group_iter::Cell_1_1\" - Table [test_examples.query_group_iter.Npc, test_examples.query_group_iter.Soldier, (test_examples.query_group_iter.WorldCell,test_examples.query_group_iter.Cell_1_1)]"
+- "\n"
+- "Tables for cell 1_0:"
+- "group: \"::test_examples::query_group_iter::Cell_1_0\" - Table [test_examples.query_group_iter.Npc, test_examples.query_group_iter.Mage, (test_examples.query_group_iter.WorldCell,test_examples.query_group_iter.Cell_1_0)]"
+- "group: \"::test_examples::query_group_iter::Cell_1_0\" - Table [test_examples.query_group_iter.Npc, test_examples.query_group_iter.Beggar, (test_examples.query_group_iter.WorldCell,test_examples.query_group_iter.Cell_1_0)]"

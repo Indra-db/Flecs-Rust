@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // This example shows how to use union relationships. Union relationships behave
 // much like exclusive relationships in that entities can have only one instance
@@ -31,11 +30,13 @@ enum Direction {
     Left,
     Right,
 }
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
+    //ignore snap in example, it's for snapshot testing
+    let snap = Snap::setup_snapshot_test();
+
     // disabled v4 not yet supported
     /*
-        //ignore snap in example, it's for snapshot testing
-        let mut snap = Snap::setup_snapshot_test();
 
         let world = World::new();
 
@@ -100,8 +101,10 @@ fn main() {
         }
     });
 
-    snap.test();
+
     */
+
+    Ok(snap)
 
     // Output:
     //   e3: Movement: Walking, Direction: Back

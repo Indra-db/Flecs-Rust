@@ -1,0 +1,7 @@
+---
+source: flecs_ecs/examples/common
+expression: self.str
+---
+- Bob eats Apples
+- Alice eats Apples
+- Alice eats Salad

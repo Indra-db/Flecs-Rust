@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // Startup systems are systems registered with the EcsOnStart phase, and are
 // only ran during the first frame. Just like with regular phases, custom phases
@@ -10,7 +9,8 @@ use common::*;
 // match components, can introduce merge points), with as only exception that
 // they are guaranteed to always run on the main thread.
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -35,7 +35,7 @@ fn main() {
     // Second frame. This runs only the Update system
     world.progress();
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Startup

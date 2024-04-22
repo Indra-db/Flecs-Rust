@@ -1,50 +1,45 @@
-mod common;
-use common::*;
-
-#[derive(Debug, Component)]
-struct Position {
-    x: f32,
-    y: f32,
-}
+include!("common");
 
 #[derive(Debug, Component)]
 struct Local;
 
 #[derive(Debug, Component)]
-struct World;
+struct WorldX;
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
-    let world = flecs_ecs::core::World::new();
+
+    let world = World::new();
 
     let sun = world
         .entity_named(c"Sun")
-        .add::<(Position, World)>()
+        .add::<(Position, WorldX)>()
         .set_first::<Position, Local>(Position { x: 1.0, y: 1.0 });
 
     world
         .entity_named(c"Mercury")
         .child_of_id(sun)
-        .add::<(Position, World)>()
+        .add::<(Position, WorldX)>()
         .set_first::<Position, Local>(Position { x: 1.0, y: 1.0 });
 
     world
         .entity_named(c"Venus")
         .child_of_id(sun)
-        .add::<(Position, World)>()
+        .add::<(Position, WorldX)>()
         .set_first::<Position, Local>(Position { x: 2.0, y: 2.0 });
 
     let earth = world
         .entity_named(c"Earth")
         .child_of_id(sun)
-        .add::<(Position, World)>()
+        .add::<(Position, WorldX)>()
         .set_first::<Position, Local>(Position { x: 3.0, y: 3.0 });
 
     world
         .entity_named(c"Moon")
         .child_of_id(earth)
-        .add::<(Position, World)>()
+        .add::<(Position, WorldX)>()
         .set_first::<Position, Local>(Position { x: 0.1, y: 0.1 });
 
     let query = world
@@ -52,9 +47,9 @@ fn main() {
         .term_at(0)
         .set_second::<Local>()
         .term_at(1)
-        .set_second::<World>()
+        .set_second::<WorldX>()
         .term_at(2)
-        .set_second::<World>()
+        .set_second::<WorldX>()
         .term_at(1)
         .parent()
         .cascade()
@@ -80,7 +75,7 @@ fn main() {
     world
         .query::<&Position>()
         .term_at(0)
-        .set_second::<World>()
+        .set_second::<WorldX>()
         .build()
         .each_entity(|entity, position| {
             fprintln!(
@@ -92,7 +87,7 @@ fn main() {
             );
         });
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Entity Sun is at (1, 1)

@@ -1,10 +1,10 @@
-mod common;
-use common::*;
+include!("common");
 
 #[derive(Component)]
 struct Npc;
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -36,7 +36,7 @@ fn main() {
         fprintln!(snap, "Entity {}: {:?}", entity.name(), pos);
     });
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Entity e1: Position { x: 10.0, y: 20.0 }

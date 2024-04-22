@@ -1,7 +1,7 @@
-mod common;
-use common::*;
+include!("common");
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -53,7 +53,7 @@ fn main() {
         }
     });
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  e1: [Position { x: 11.0, y: 22.0 }]

@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 #[derive(Debug, Component)]
 struct Star;
@@ -36,7 +35,8 @@ fn iterate_tree(entity: EntityView, position_parent: &Position, snap: &mut Snap)
     });
 }
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -85,7 +85,7 @@ fn main() {
     // Do a depth-first traversal of the tree
     iterate_tree(sun, &Position { x: 0.0, y: 0.0 }, &mut snap);
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Is the Moon a child of the Earth? true / true

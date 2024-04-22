@@ -1,7 +1,6 @@
-mod common;
+include!("common");
 use std::ffi::c_void;
 
-use common::*;
 use flecs_ecs_sys::ecs_search;
 
 // callbacks need to be extern "C" to be callable from C
@@ -22,7 +21,8 @@ extern "C" fn callback_group_by_relationship(
     }
 }
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -101,7 +101,7 @@ fn main() {
         fprintln!(snap);
     });
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Group: "::First" - Table: [Position, (Group,First)]

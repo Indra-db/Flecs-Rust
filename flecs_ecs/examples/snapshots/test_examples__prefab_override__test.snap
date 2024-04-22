@@ -1,0 +1,9 @@
+---
+source: flecs_ecs/examples/common
+expression: self.str
+---
+- "test_examples.prefab_override.Damage, (Identifier,Name), (IsA,SpaceShip)"
+- "test_examples.prefab_override.Attack, test_examples.prefab_override.Damage, (Identifier,Name), (IsA,SpaceShip)"
+- "attack: 75"
+- "defence: 100"
+- "damage: 0"

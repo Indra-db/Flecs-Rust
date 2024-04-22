@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // Transitive relationships make it possible to tell the ECS that if an entity
 // has a relationship (R, X) and X has relationship (R, Y), the entity should be
@@ -35,11 +34,14 @@ struct City;
 #[derive(Component)]
 struct Person;
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
+    //ignore snap in example, it's for snapshot testing
+    let snap = Snap::setup_snapshot_test();
+
     //todo v4 broken example bug flecs core
     /*
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
+
 
     let world = World::new();
 
@@ -149,9 +151,10 @@ fn main() {
         );
     });
 
-    snap.test();
+    Ok(snap)
     */
 
+    Ok(snap)
     // Output:
     //  Bob lives in UnitedStates
     //  Alice lives in UnitedStates

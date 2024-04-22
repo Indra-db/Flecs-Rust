@@ -1,6 +1,5 @@
 #![allow(dead_code)]
-mod common;
-use common::*;
+include!("common");
 
 // This example shows how relationships can be combined with components to attach
 // data to a relationship.
@@ -23,7 +22,8 @@ struct Expires {
 #[derive(Component)]
 struct MustHave;
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -132,7 +132,7 @@ fn main() {
         fprintln!(snap, "requires: {} gigawatts", requires.amount);
     });
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     // e1: requires: 1.21

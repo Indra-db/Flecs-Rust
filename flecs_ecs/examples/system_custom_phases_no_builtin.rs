@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // This application demonstrates how to use custom phases for systems. The
 // default pipeline will automatically run systems for custom phases as long as
@@ -11,7 +10,8 @@ fn sys(it: &mut Iter) {
     fprintln!(snap, "system {}", it.system().name());
 }
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let snap = Snap::setup_snapshot_test();
 
@@ -55,7 +55,7 @@ fn main() {
     // Run pipeline
     world.progress();
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //   system GameSystem

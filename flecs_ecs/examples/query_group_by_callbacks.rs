@@ -1,7 +1,5 @@
-mod common;
+include!("common");
 use std::ffi::c_void;
-
-use common::*;
 
 use std::sync::Mutex;
 
@@ -57,7 +55,8 @@ extern "C" fn callback_group_delete(
     // or use the callback group_by_ctx where you pass a context to the callback
 }
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -147,7 +146,7 @@ fn main() {
 
     query.destruct();
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Group created: "Third"

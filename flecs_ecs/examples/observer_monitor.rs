@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // A monitor observer triggers when an entity starts/stop matching the observer
 // filter. The observer communicates whether an entity is "entering/leaving" the
@@ -10,7 +9,8 @@ use common::*;
 // provided as event. No additional event kinds should be provided for a monitor
 // observer.
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -50,7 +50,7 @@ fn main() {
     // This triggers the monitor with EcsOnRemove, as the entity no longer matches.
     entity.remove::<Position>();
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  - Enter: Velocity: e

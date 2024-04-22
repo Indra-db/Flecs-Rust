@@ -1,0 +1,8 @@
+---
+source: flecs_ecs/examples/common
+expression: self.str
+---
+- Unit wizard_1 found
+- Unit wizard_2 found
+- Unit marksman_1 found
+- Unit marksman_2 found

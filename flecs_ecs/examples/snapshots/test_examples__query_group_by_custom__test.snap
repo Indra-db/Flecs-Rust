@@ -1,0 +1,23 @@
+---
+source: flecs_ecs/examples/common
+expression: self.str
+---
+- "\n"
+- "Group: \"::test_examples::query_group_by_custom::First\" - Table: [Some(test_examples.query_group_by_custom.Position, (test_examples.query_group_by_custom.Group,test_examples.query_group_by_custom.First))]"
+- " [Position { x: 3.0, y: 3.0 }]"
+- "\n"
+- "Group: \"::test_examples::query_group_by_custom::First\" - Table: [Some(test_examples.query_group_by_custom.Position, test_examples.query_group_by_custom.Tag, (test_examples.query_group_by_custom.Group,test_examples.query_group_by_custom.First))]"
+- " [Position { x: 6.0, y: 6.0 }]"
+- "\n"
+- "Group: \"::test_examples::query_group_by_custom::Second\" - Table: [Some(test_examples.query_group_by_custom.Position, (test_examples.query_group_by_custom.Group,test_examples.query_group_by_custom.Second))]"
+- " [Position { x: 2.0, y: 2.0 }]"
+- "\n"
+- "Group: \"::test_examples::query_group_by_custom::Second\" - Table: [Some(test_examples.query_group_by_custom.Position, test_examples.query_group_by_custom.Tag, (test_examples.query_group_by_custom.Group,test_examples.query_group_by_custom.Second))]"
+- " [Position { x: 5.0, y: 5.0 }]"
+- "\n"
+- "Group: \"::test_examples::query_group_by_custom::Third\" - Table: [Some(test_examples.query_group_by_custom.Position, (test_examples.query_group_by_custom.Group,test_examples.query_group_by_custom.Third))]"
+- " [Position { x: 1.0, y: 1.0 }]"
+- "\n"
+- "Group: \"::test_examples::query_group_by_custom::Third\" - Table: [Some(test_examples.query_group_by_custom.Position, test_examples.query_group_by_custom.Tag, (test_examples.query_group_by_custom.Group,test_examples.query_group_by_custom.Third))]"
+- " [Position { x: 4.0, y: 4.0 }]"
+- "\n"

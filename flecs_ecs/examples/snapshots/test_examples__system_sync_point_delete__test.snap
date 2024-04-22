@@ -1,0 +1,9 @@
+---
+source: flecs_ecs/examples/common
+expression: self.str
+---
+- "e1: { 1, 2 }"
+- "e2: { 2, 4 }"
+- Delete entity e2
+- "e1: { 2, 4 }"
+- Delete entity e1

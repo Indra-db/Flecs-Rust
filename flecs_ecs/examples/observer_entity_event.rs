@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // Entity events are events that are emitted and observed for a specific entity.
 // They are a thin wrapper around regular observers, which match against queries
@@ -32,7 +31,8 @@ struct CloseRequested {
     reason: CloseReason,
 }
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -95,7 +95,7 @@ fn main() {
         reason: CloseReason::User,
     });
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  widget: Entity name: MyWidget -- id: 506 -- archetype: (Identifier,Name)

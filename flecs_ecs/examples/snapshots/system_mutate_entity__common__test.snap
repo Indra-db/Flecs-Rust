@@ -1,6 +1,0 @@
----
-source: flecs_ecs/examples/common.rs
-expression: self.str
----
-- "Expire: MyEntity deleted!"
-- "Expired: MyEntity actually deleted"

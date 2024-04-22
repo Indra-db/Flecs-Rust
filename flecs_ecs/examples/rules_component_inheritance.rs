@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // This example shows how rules can be used to match simple inheritance trees.
 
@@ -25,9 +24,10 @@ struct Wizard;
 struct Marksman;
 
 #[derive(Component)]
-struct Builder;
+struct BuilderX;
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -42,7 +42,7 @@ fn main() {
     world.component::<Warrior>().is_a::<MeleeUnit>();
     world.component::<Wizard>().is_a::<RangedUnit>();
     world.component::<Marksman>().is_a::<RangedUnit>();
-    world.component::<Builder>().is_a::<Unit>();
+    world.component::<BuilderX>().is_a::<Unit>();
 
     // Create a few units
     world.entity_named(c"warrior_1").add::<Warrior>();
@@ -54,8 +54,8 @@ fn main() {
     world.entity_named(c"wizard_1").add::<Wizard>();
     world.entity_named(c"wizard_2").add::<Wizard>();
 
-    world.entity_named(c"builder_1").add::<Builder>();
-    world.entity_named(c"builder_2").add::<Builder>();
+    world.entity_named(c"builder_1").add::<BuilderX>();
+    world.entity_named(c"builder_2").add::<BuilderX>();
 
     // Create a rule to find all ranged units
     let r = world.new_query::<&RangedUnit>();
@@ -65,7 +65,7 @@ fn main() {
         fprintln!(snap, "Unit {} found", e.name());
     });
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Unit wizard_1 found

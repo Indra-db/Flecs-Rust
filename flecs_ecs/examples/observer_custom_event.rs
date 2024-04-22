@@ -1,11 +1,10 @@
-mod common;
-
-use common::*;
+include!("common");
 
 #[derive(Component)]
 struct MyEvent;
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -37,7 +36,7 @@ fn main() {
         .set_entity_to_emit(entity)
         .emit();
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  - MyEvent: Position: e1

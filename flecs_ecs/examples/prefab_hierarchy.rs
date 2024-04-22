@@ -1,10 +1,10 @@
-mod common;
-use common::*;
+include!("common");
 
 // When a prefab has children, they are instantiated for an instance when the
 // IsA relationship to the prefab is added.
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -31,7 +31,7 @@ fn main() {
         }
     }
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  instance engine:  "::my_spaceship::Engine"

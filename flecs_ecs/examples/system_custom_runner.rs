@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // Systems can be created with a custom run function that takes control over the
 // entire iteration. By  a system is invoked once per matched table,
@@ -20,7 +19,8 @@ extern "C" fn run_callback(it: *mut IterT) {
     fprintln!(snap, "Move end");
 }
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -56,7 +56,7 @@ fn main() {
     // Run the system
     system.run();
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Move begin

@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // Custom pipelines make it possible for applications to override which systems
 // are ran by a pipeline and how they are ordered. Pipelines are queries under
@@ -12,7 +11,8 @@ use common::*;
 #[derive(Debug, Component, Default)]
 struct Physics;
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -43,7 +43,7 @@ fn main() {
     // Runs the pipeline & system
     world.progress();
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //   System with Physics ran!

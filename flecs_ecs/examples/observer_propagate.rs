@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // Events are propagated along relationship edges. This means that observers can
 // listen for events from a parent or prefab, like triggering when a component
@@ -12,7 +11,8 @@ use common::*;
 //
 // Events are only propagated along traversable relationship edges.
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -50,7 +50,7 @@ fn main() {
     // observer, as the observer query now matches.
     parent.set(Position { x: 1.0, y: 2.0 });
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  - OnSet: Position: e: self: { 10, 20 }, parent: { 1, 2 }

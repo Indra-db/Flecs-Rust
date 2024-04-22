@@ -1,10 +1,6 @@
-mod common;
-use common::*;
+include!("common");
 
 fn main() {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
 
     // Create system that prints delta_time. This system doesn't query for any
@@ -29,8 +25,6 @@ fn main() {
     unsafe { os_sleep(0, 100 * 1000 * 1000) };
 
     world.progress();
-
-    assert!(snap.count() == 3);
 
     // Output:
     //  delta_time: 0.016666668

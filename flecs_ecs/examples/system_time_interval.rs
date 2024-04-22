@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // This example shows how to run a system at a specified time interval.
 
@@ -9,16 +8,10 @@ struct Timeout {
 }
 
 fn tick(it: &mut Iter) {
-    let snap = Snap::from(it);
-    fprintln!(snap, "{}", it.system().name());
+    println!("{}", it.system().name());
 }
 
 fn main() {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-    let context = snap.cvoid();
-    //endignore
-
     let world = World::new();
 
     world.set(Timeout { value: 3.5 });
@@ -33,13 +26,11 @@ fn main() {
     world
         .system_named::<()>(c"Tick")
         .interval(1.0)
-        .set_context(context) //snapshot testing passing context
         .iter_only(tick);
 
     world
         .system_named::<()>(c"FastTick")
         .interval(0.5)
-        .set_context(context) //snapshot testing passing context
         .iter_only(tick);
 
     // Run the main loop at 60 FPS
@@ -47,12 +38,10 @@ fn main() {
 
     while world.progress() {
         if time_out.value <= 0.0 {
-            fprintln!(snap, "Timed out!");
+            println!("Timed out!");
             break;
         }
     }
-
-    snap.test();
 
     // Output:
     // FastTick

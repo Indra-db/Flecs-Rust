@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // Slots can be combined with prefab hierarchies to make it easier to access
 // the child entities created for an instance.
@@ -24,7 +23,8 @@ use common::*;
 // entities by name to get access to the instantiated children, like what the
 // hierarchy example does.
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -67,7 +67,7 @@ fn main() {
 
     fprintln!(snap, "instance seat: {}", inst_seat.path().unwrap());
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  instance engine: ::my_spaceship::Engine

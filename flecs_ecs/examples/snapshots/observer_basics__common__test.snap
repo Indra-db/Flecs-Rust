@@ -1,7 +1,0 @@
----
-source: flecs_ecs/examples/common.rs
-expression: self.str
----
-- " - OnAdd: observer_basics.common.Position: e1"
-- " - OnSet: observer_basics.common.Position: e1: with Position { x: 10.0, y: 20.0 }"
-- " - OnRemove: observer_basics.common.Position: e1: with Position { x: 10.0, y: 20.0 }"

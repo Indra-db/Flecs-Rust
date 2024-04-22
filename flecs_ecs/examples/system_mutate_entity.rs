@@ -1,12 +1,12 @@
-mod common;
-use common::*;
+include!("common");
 
 #[derive(Component)]
 struct Timeout {
     pub value: f32,
 }
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -51,7 +51,7 @@ fn main() {
             fprintln!(snap, "Expired: {} actually deleted", e.name());
         });
 
-    let e = world.entity_named(c"MyEntity").set(Timeout { value: 3.0 });
+    let e = world.entity_named(c"MyEntity").set(Timeout { value: 2.5 });
 
     world.set_target_fps(1.0);
 
@@ -64,7 +64,7 @@ fn main() {
         println!("Tick...");
     }
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  PrintExpire: MyEntity has 2.00 seconds left

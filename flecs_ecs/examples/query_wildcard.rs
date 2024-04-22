@@ -1,14 +1,9 @@
-mod common;
-use common::*;
+include!("common");
 
 pub use flecs_ecs::{core::*, macros::Component};
 
-#[derive(Component)]
-pub struct Eats {
-    pub amount: i32,
-}
-
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -16,7 +11,7 @@ fn main() {
 
     // Create a query that matches edible components
     let query = world
-        .query::<&Eats>()
+        .query::<&EatsAmount>()
         .term_at(0)
         // Change first argument to (Eats, *)
         // alternative you can do  `.set_second_id(flecs::Wildcard::ID)``
@@ -26,12 +21,12 @@ fn main() {
     // Create a few entities that match the query
     world
         .entity_named(c"Bob")
-        .set_first::<Eats, Apples>(Eats { amount: 10 })
-        .set_first::<Eats, Pears>(Eats { amount: 5 });
+        .set_first::<EatsAmount, Apples>(EatsAmount { amount: 10 })
+        .set_first::<EatsAmount, Pears>(EatsAmount { amount: 5 });
 
     world
         .entity_named(c"Alice")
-        .set_first::<Eats, Apples>(Eats { amount: 4 });
+        .set_first::<EatsAmount, Apples>(EatsAmount { amount: 4 });
 
     // Iterate the query with a flecs::iter. This makes it possible to inspect
     // the pair that we are currently matched with.
@@ -43,7 +38,7 @@ fn main() {
         fprintln!(snap, "{} eats {} {}", entity, eats.amount, food);
     });
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Alice eats 4 Apples

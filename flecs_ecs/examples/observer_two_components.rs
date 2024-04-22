@@ -1,11 +1,11 @@
-mod common;
-use common::*;
+include!("common");
 
 // An observer can match multiple components/tags. Only entities that match the
 // entire observer filter will be forwarded to the callback. For example, an
 // observer for Position,Velocity won't match an entity that only has Position.
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -35,7 +35,7 @@ fn main() {
     // Set Velocity (emits EcsOnSet, matches observer)
     entity.set(Velocity { x: 1.0, y: 2.0 });
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  - OnSet: Velocity: e: p: { 10, 20 }, v: { 1, 2 }

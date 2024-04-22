@@ -1,7 +1,6 @@
-mod common;
-pub use common::*;
-
-fn main() {
+include!("common");
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -64,7 +63,7 @@ fn main() {
     // Get second target of relationship
     fprintln!(snap, "Bob also eats {}", bob.target::<Eats>(1).name());
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Bob eats apples? true

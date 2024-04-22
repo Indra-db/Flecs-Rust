@@ -1,6 +1,0 @@
----
-source: flecs_ecs/examples/common.rs
-expression: self.str
----
-- Assigned waiter_3 to plate_1!
-- Assigned waiter_2 to plate_3!

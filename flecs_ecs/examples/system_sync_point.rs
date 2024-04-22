@@ -1,13 +1,24 @@
-mod common;
-use common::*;
+include!("common");
 
-fn main() {
+#[derive(Component)]
+pub struct PositionSP {
+    x: f32,
+    y: f32,
+}
+
+#[derive(Component)]
+pub struct VelocitySP {
+    x: f32,
+    y: f32,
+}
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
     let world = World::new();
 
-    // System that sets velocity using ecs_set for entities with Position.
+    // System that sets velocity using ecs_set for entities with PositionSP.
     // While systems are progressing, operations like ecs_set are deferred until
     // it is safe to merge. By default this merge happens at the end of the
     // frame, but we can annotate systems to give the scheduler more information
@@ -17,44 +28,44 @@ fn main() {
     // components provided by their signature, as these writes directly happen
     // in the ECS storage and are never deferred.
     //
-    // .inout_none() for Position tells the scheduler that while we
-    // want to match entities with Position, we're not interested in reading or
+    // .inout_none() for PositionSP tells the scheduler that while we
+    // want to match entities with PositionSP, we're not interested in reading or
     // writing the component value.
 
     world
-        .system_named::<()>(c"SetVelocity")
-        .with::<&Position>()
+        .system_named::<()>(c"SetVelocitySP")
+        .with::<&PositionSP>()
         .set_as_inout_none()
-        .write::<&mut Velocity>() // Velocity is written, but shouldn't be matched
+        .write::<&mut VelocitySP>() // VelocitySP is written, but shouldn't be matched
         .each_entity(|e, ()| {
-            e.set(Velocity { x: 1.0, y: 2.0 });
+            e.set(VelocitySP { x: 1.0, y: 2.0 });
         });
 
-    // This system reads Velocity, which causes the insertion of a sync point.
+    // This system reads VelocitySP, which causes the insertion of a sync point.
     world
-        .system_named::<(&mut Position, &Velocity)>(c"Move")
+        .system_named::<(&mut PositionSP, &VelocitySP)>(c"Move")
         .each(|(p, v)| {
             p.x += v.x;
             p.y += v.y;
         });
 
-    // Print resulting Position
+    // Print resulting PositionSP
     world
-        .system_named::<&Position>(c"PrintPosition")
+        .system_named::<&PositionSP>(c"PrintPositionSP")
         .each_entity(|e, p| {
             fprintln!(snap, "{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 
-    // Create a few test entities for a Position, Velocity query
+    // Create a few test entities for a PositionSP, VelocitySP query
     world
         .entity_named(c"e1")
-        .set(Position { x: 10.0, y: 20.0 })
-        .set(Velocity { x: 1.0, y: 2.0 });
+        .set(PositionSP { x: 10.0, y: 20.0 })
+        .set(VelocitySP { x: 1.0, y: 2.0 });
 
     world
         .entity_named(c"e2")
-        .set(Position { x: 10.0, y: 20.0 })
-        .set(Velocity { x: 3.0, y: 4.0 });
+        .set(PositionSP { x: 10.0, y: 20.0 })
+        .set(VelocitySP { x: 3.0, y: 4.0 });
 
     // Run systems. Debug logging enables us to see the generated schedule.
     // NOTE flecs C / flecs_ecs_sys needs to be build in debug mode to see the logging.
@@ -63,22 +74,22 @@ fn main() {
     world.progress();
     set_log_level(-1);
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     // info: pipeline rebuild
     // info: | schedule: threading: 0, staging: 1:
-    // info: | | system SetVelocity
+    // info: | | system SetVelocitySP
     // info: | | merge
     // info: | schedule: threading: 0, staging: 1:
     // info: | | system Move
-    // info: | | system PrintPosition
+    // info: | | system PrintPositionSP
     // info: | | merge
     // e1: { 11, 22 }
     // e2: { 11, 22 }
 
     // The "merge" lines indicate sync points.
     //
-    // Removing '.write::<&mut Velocity>()' from the system will remove the first
+    // Removing '.write::<&mut VelocitySP>()' from the system will remove the first
     // sync point from the schedule.
 }

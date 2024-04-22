@@ -1,6 +1,5 @@
 #![allow(dead_code)]
-mod common;
-use common::*;
+include!("common");
 
 // Just like how entities can be associated with a type (like components)
 // prefabs can be associated with types as well. Types can be more convenient to
@@ -28,7 +27,8 @@ struct Beam;
 #[derive(Component)]
 struct Railgun;
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -65,7 +65,7 @@ fn main() {
     fprintln!(snap, "instance head: {}", inst_head.path().unwrap());
     fprintln!(snap, "instance beam: {}", inst_beam.path().unwrap());
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  instance base: ::my_railgun::Base

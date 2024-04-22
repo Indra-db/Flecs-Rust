@@ -1,9 +1,9 @@
 //! This code shows how to get & set multiple components in a single command
 
-mod common;
-use common::*;
+include!("common");
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -64,7 +64,7 @@ fn main() {
         fprintln!(snap, "Entity {}: {:?}", entity.name(), position);
     });
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Instance type: [Position, (Identifier,Name), (IsA,MammothFreighter)]

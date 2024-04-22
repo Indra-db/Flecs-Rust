@@ -1,8 +1,7 @@
-#[allow(unused_variables)]
-mod common;
-use common::*;
+include!("common");
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -24,7 +23,7 @@ fn main() {
         fprintln!(snap, "Entity not found");
     }
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Entity found: "::e2"

@@ -1,6 +1,0 @@
----
-source: flecs_ecs/examples/common.rs
-expression: self.str
----
-- "e1: { 11, 22 }"
-- "e2: { 13, 24 }"

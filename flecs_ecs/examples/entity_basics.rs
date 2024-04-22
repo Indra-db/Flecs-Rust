@@ -1,7 +1,7 @@
-mod common;
-use common::*;
+include!("common");
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -44,7 +44,7 @@ fn main() {
         fprintln!(snap, "{} has {:?}", entity.name(), pos);
     });
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Bob's position: Position { x: 10.0, y: 20.0 }

@@ -1,0 +1,7 @@
+---
+source: flecs_ecs/examples/common
+expression: self.str
+---
+- " - OnAdd: test_examples.observer_basics.Position: e1"
+- " - OnSet: test_examples.observer_basics.Position: e1: with Position { x: 10.0, y: 20.0 }"
+- " - OnRemove: test_examples.observer_basics.Position: e1: with Position { x: 10.0, y: 20.0 }"

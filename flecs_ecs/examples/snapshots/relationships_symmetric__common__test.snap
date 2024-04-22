@@ -1,6 +1,0 @@
----
-source: flecs_ecs/examples/common.rs
-expression: self.str
----
-- "Player 1 trades with Player 2: true"
-- "Player 2 trades with Player 1: true"

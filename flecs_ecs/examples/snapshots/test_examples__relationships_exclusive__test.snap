@@ -1,0 +1,9 @@
+---
+source: flecs_ecs/examples/common
+expression: self.str
+---
+- "Unit in platoon 1: true"
+- "Unit in platoon 2: false"
+- "\n"
+- "Unit in platoon 1: false"
+- "Unit in platoon 2: true"

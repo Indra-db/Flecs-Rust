@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // This example shows how a rule may have terms with cyclic dependencies on
 // variables.
@@ -7,7 +6,8 @@ use common::*;
 #[derive(Component)]
 struct Likes;
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -59,7 +59,7 @@ fn main() {
         fprintln!(snap, "{} likes {}", x.name(), y.name());
     });
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Alice likes Bob

@@ -1,0 +1,6 @@
+---
+source: flecs_ecs/examples/common
+expression: self.str
+---
+- "e1: { 11, 22 }"
+- "e2: { 11, 22 }"

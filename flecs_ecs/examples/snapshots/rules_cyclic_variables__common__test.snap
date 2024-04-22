@@ -1,8 +1,0 @@
----
-source: flecs_ecs/examples/common.rs
-expression: self.str
----
-- Alice likes Bob
-- John likes Jane
-- Jane likes John
-- Bob likes Alice

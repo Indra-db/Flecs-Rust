@@ -1,12 +1,12 @@
-mod common;
-use common::*;
+include!("common");
 
 #[derive(Debug, Component)]
 struct Gravity {
     value: f32,
 }
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -35,7 +35,7 @@ fn main() {
         fprintln!(snap, "Entity {} has {:?}", entity.path().unwrap(), velocity);
     });
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     // Entity ::e1 has Velocity { x: 0.0, y: 9.81 }

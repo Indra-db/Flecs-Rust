@@ -267,3 +267,8 @@ required-features = ["flecs_rules"]
 name = "rules_transitive_queries"
 path = "examples/rules_transitive_queries.rs"
 required-features = ["flecs_rules"]
+
+[[example]]
+name = "test_examples"
+path = "examples/_tests.rs"
+test = true

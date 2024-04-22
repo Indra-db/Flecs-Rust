@@ -1,7 +1,6 @@
 #![allow(non_camel_case_types)]
 
-mod common;
-use common::*;
+include!("common");
 
 // A group iterator iterates over a single group of a grouped query (see the
 // group_by example for more details). This can be useful when an application
@@ -50,7 +49,8 @@ struct Beggar;
 #[derive(Debug, Component)]
 struct Mage;
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -128,7 +128,7 @@ fn main() {
         );
     });
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  All tables

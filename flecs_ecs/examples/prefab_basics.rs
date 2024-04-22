@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // Prefabs are entities that can be used as templates for other entities. They
 // are created with a builtin Prefab tag, which by default excludes them from
@@ -20,12 +19,8 @@ use common::*;
 // If a prefab has children, adding the IsA relationship instantiates the prefab
 // children for the instance (see hierarchy example).
 
-#[derive(Debug, Component)]
-struct Defence {
-    value: f32,
-}
-
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -52,7 +47,7 @@ fn main() {
         fprintln!(snap, "{}: defence: {}", entity.path().unwrap(), d.value);
     });
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Defence { value: 50.0 }

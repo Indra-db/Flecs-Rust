@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // This example is the same as the mutate_entity example, but instead stores the
 // handle of the to be deleted entity in a component.
@@ -10,10 +9,8 @@ struct Timeout {
     pub value: f32,
 }
 
-#[derive(Component)]
-struct Tag;
-
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -77,7 +74,7 @@ fn main() {
 
     world.entity_named(c"MyEntity").set(Timeout {
         to_delete: to_delete.id(),
-        value: 3.0,
+        value: 2.5,
     });
 
     world.set_target_fps(1.0);
@@ -91,7 +88,7 @@ fn main() {
         println!("Tick...");
     }
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  PrintExpire: ToDelete has 2.00 seconds left

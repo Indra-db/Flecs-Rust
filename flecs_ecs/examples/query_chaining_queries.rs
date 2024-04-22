@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 // this example is to showcase how you can chain queries together where the second query
 // uses the results of the first query to filter the results
@@ -23,7 +22,8 @@ struct ArtifactPower {
     _magic_level: f32,
 }
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
     let forest = World::new();
@@ -88,7 +88,7 @@ fn main() {
             });
     });
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Creature id: 525 at location 0,0 is enchanted with mystical energy, ability power: 0

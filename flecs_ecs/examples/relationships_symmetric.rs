@@ -1,10 +1,10 @@
-mod common;
-use common::*;
+include!("common");
 
 #[derive(Component)]
 struct TradesWith;
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -34,7 +34,7 @@ fn main() {
         player_2.has_first::<TradesWith>(player_1)
     ); // true
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Player 1 trades with Player 2: true

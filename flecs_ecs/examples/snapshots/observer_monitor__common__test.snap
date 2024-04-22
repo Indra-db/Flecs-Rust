@@ -1,6 +1,0 @@
----
-source: flecs_ecs/examples/common.rs
-expression: self.str
----
-- " - Enter: observer_monitor.common.Velocity: e"
-- " - Leave: observer_monitor.common.Position: e"

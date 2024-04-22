@@ -47,17 +47,20 @@ jobs:
         run: cargo clippy --all-targets --workspace -- -D warnings
       - name: cargo test
         run: cargo test --workspace
-      - name: Set execute permission on script
-        run: chmod +x ./scripts/run_examples.sh
-      - name: Build all examples
-        run: cargo build --examples
+        
+      # Commented out for the time being -> integrated most examples within `cargo test`
 
-      # CI env variable for insta snapshot testing library
-      - name: Run examples
-        env:
-          CI: true
-        run: ./scripts/run_examples.sh
-        shell: bash
+      # - name: Set execute permission on script
+      #   run: chmod +x ./scripts/run_examples.sh
+      # - name: Build all examples
+      #   run: cargo build --examples
+
+      # # CI env variable for insta snapshot testing library
+      # - name: Run examples
+      #   env:
+      #     CI: true
+      #   run: ./scripts/run_examples.sh
+      #   shell: bash
 
   build-doc:
     name: cargo docs-rs

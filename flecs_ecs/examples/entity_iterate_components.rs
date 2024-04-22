@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+include!("common");
 
 fn iterate_components(entity: EntityView, snap: &mut Snap) {
     // 1. The easiest way to print the components is to use archetype
@@ -46,7 +45,8 @@ fn iterate_components(entity: EntityView, snap: &mut Snap) {
         snap.push(String::new());
     });
 }
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -68,7 +68,7 @@ fn main() {
     fprintln!(snap, "Position's components:");
     iterate_components(world.component::<Position>().entity(), &mut snap);
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Bob's components:

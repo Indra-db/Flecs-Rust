@@ -1,11 +1,11 @@
-mod common;
-use common::*;
+include!("common");
 
 // Prefabs can inherit from each other, which creates prefab variants. With
 // variants applications can reuse a common set of components and specialize it
 // by adding or overriding components on the variant.
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -63,7 +63,7 @@ fn main() {
         },
     );
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //   my_freighter:

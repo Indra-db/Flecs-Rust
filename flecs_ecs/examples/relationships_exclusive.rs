@@ -1,11 +1,11 @@
-mod common;
-use common::*;
+include!("common");
 
 // Type for Platoon relationship
 #[derive(Component)]
 struct Platoon;
 
-fn main() {
+#[allow(dead_code)]
+pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     let mut snap = Snap::setup_snapshot_test();
 
@@ -56,7 +56,7 @@ fn main() {
         unit.has_first::<Platoon>(platoon_2)
     ); // true
 
-    snap.test();
+    Ok(snap)
 
     // Output:
     //  Unit in platoon 1: true
