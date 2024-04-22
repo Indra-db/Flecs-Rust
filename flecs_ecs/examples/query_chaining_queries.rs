@@ -81,7 +81,7 @@ fn main() {
                let abil_power = ability[index].power;
                let entity = it.entity(index);
                 fprintln!(snap,
-                    "Creature {entity} at location {},{} is enchanted with mystical energy, ability power: {} "
+                    "Creature id: {entity} at location {},{} is enchanted with mystical energy, ability power: {} "
                     , pos.x, pos.y, abil_power
 
                 );
@@ -91,9 +91,9 @@ fn main() {
     snap.test();
 
     // Output:
-    //  Creature 525 at location 0,0 is enchanted with mystical energy, ability power: 0
-    //  Creature 527 at location 2,2 is enchanted with mystical energy, ability power: 3
-    //  Creature 529 at location 4,4 is enchanted with mystical energy, ability power: 6
-    //  Creature 531 at location 6,6 is enchanted with mystical energy, ability power: 9
-    //  Creature 533 at location 8,8 is enchanted with mystical energy, ability power: 12
+    //  Creature id: 525 at location 0,0 is enchanted with mystical energy, ability power: 0
+    //  Creature id: 527 at location 2,2 is enchanted with mystical energy, ability power: 3
+    //  Creature id: 529 at location 4,4 is enchanted with mystical energy, ability power: 6
+    //  Creature id: 531 at location 6,6 is enchanted with mystical energy, ability power: 9
+    //  Creature id: 533 at location 8,8 is enchanted with mystical energy, ability power: 12
 }

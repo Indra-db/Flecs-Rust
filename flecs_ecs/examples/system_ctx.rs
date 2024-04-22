@@ -35,6 +35,8 @@ fn rand(max: u64) -> f32 {
 
 fn main() {
     //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     // Applications can pass context data to a system. A common use case where this
     // comes in handy is when a system needs to iterate more than one query. The
     // following example shows how to pass a custom query into a system for a simple
@@ -87,6 +89,8 @@ fn main() {
 
     // Run the system
     sys.run();
+
+    assert!(snap.count() > 2);
 
     // Output:
     //  532 and 539 collided!

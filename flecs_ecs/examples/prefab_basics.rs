@@ -49,7 +49,7 @@ fn main() {
 
     // Prefab components can be iterated like regular components:
     world.each_entity::<&Defence>(|entity, d| {
-        fprintln!(snap, "{}: {}", entity.path().unwrap(), d.value);
+        fprintln!(snap, "{}: defence: {}", entity.path().unwrap(), d.value);
     });
 
     snap.test();

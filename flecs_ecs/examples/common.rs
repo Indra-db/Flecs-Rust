@@ -124,12 +124,21 @@ impl Snap {
         self.str.push(str);
     }
 
+    pub fn count(&self) -> usize {
+        self.str.len()
+    }
+
     #[allow(clippy::mut_from_ref)]
     pub fn from<'a>(it: &'a flecs_ecs::core::Iter) -> &'a mut Snap {
         unsafe { it.context::<Snap>() }
     }
 
     pub fn test(&self) {
-        insta::assert_yaml_snapshot!(self.str);
+        insta::with_settings!({filters => vec![
+            (r"id: (\d+)\s", "[ID] ")
+        ]}, {
+            insta::assert_yaml_snapshot!(self.str);
+
+        });
     }
 }

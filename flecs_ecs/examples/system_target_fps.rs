@@ -2,13 +2,16 @@ mod common;
 use common::*;
 
 fn main() {
+    //ignore snap in example, it's for snapshot testing
+    let mut snap = Snap::setup_snapshot_test();
+
     let world = World::new();
 
     // Create system that prints delta_time. This system doesn't query for any
     // components which means it won't match any entities, but will still be ran
     // once for each call to ecs_progress.
     world.system::<()>().iter_only(|it| {
-        println!("Delta time: {}", it.delta_time());
+        fprintln!(snap, "Delta time: {}", it.delta_time());
     });
 
     // Set target FPS to 1 frame per second
@@ -29,6 +32,8 @@ fn main() {
         // the sleep to insert.
         world.progress();
     }
+
+    assert!(snap.count() == 5);
 
     // Output:
     //  Delta time: 1

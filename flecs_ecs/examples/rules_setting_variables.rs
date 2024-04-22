@@ -117,7 +117,7 @@ fn main() {
             let unit = it.entity(index);
             fprintln!(
                 snap,
-                "Unit {} of class {} in platoon {} for player {}",
+                "Unit id: {} of class {} in platoon id: {} for player {}",
                 unit,
                 it.id(0).to_str(),
                 it.get_var(platoon_var),
@@ -128,12 +128,12 @@ fn main() {
     snap.test();
 
     // Output:
-    //  Unit 529 of class Wizard in platoon 526 for player MyPlayer
-    //  Unit 533 of class Wizard in platoon 530 for player MyPlayer
-    //  Unit 537 of class Wizard in platoon 534 for player MyPlayer
-    //  Unit 528 of class Marksman in platoon 526 for player MyPlayer
-    //  Unit 532 of class Marksman in platoon 530 for player MyPlayer
-    //  Unit 536 of class Marksman in platoon 534 for player MyPlayer
+    //  Unit id: 529 of class Wizard in platoon id: 526 for player MyPlayer
+    //  Unit id: 533 of class Wizard in platoon id: 530 for player MyPlayer
+    //  Unit id: 537 of class Wizard in platoon id: 534 for player MyPlayer
+    //  Unit id: 528 of class Marksman in platoon id: 526 for player MyPlayer
+    //  Unit id: 532 of class Marksman in platoon id: 530 for player MyPlayer
+    //  Unit id: 536 of class Marksman in platoon id: 534 for player MyPlayer
 
     // Try removing the set_var call, this will cause the iterator to return
     // all units in all platoons for all players.
