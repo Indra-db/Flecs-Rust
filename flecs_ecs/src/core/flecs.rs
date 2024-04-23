@@ -63,49 +63,6 @@ macro_rules! create_pre_registered_component {
     };
 }
 
-/*
-
-/// Match on self
-/// Can be combined with other term flags on the ecs_term_t::flags field
-pub(crate) const ECS_SELF: u64 = 1 << 63;
-
-/// Match by traversing upwards
-/// Can be combined with other term flags on the ecs_term_ref_t::id field.
-pub(crate) const ECS_UP: u64 = 1 << 62;
-
-/// Match by traversing downwards (derived, cannot be set)
-/// Can be combined with other term flags on the ecs_term_ref_t::id field.
-pub(crate) const ECS_TRAV: u64 = 1 << 61;
-
-/// Sort results breadth first
-/// Can be combined with other term flags on the ecs_term_ref_t::id field.
-pub(crate) const ECS_CASCADE: u64 = 1 << 60;
-
-/// Iterate groups in descending order (used for ordering)
-/// Can be combined with other term flags on the ecs_term_ref_t::id field.
-pub(crate) const ECS_DESC: u64 = 1 << 59;
-
-/// Term id is a variable
-/// Can be combined with other term flags on the ecs_term_ref_t::id field.
-pub(crate) const ECS_IS_VARIABLE: u64 = 1 << 58;
-
-/// Term id is an entity
-/// Can be combined with other term flags on the ecs_term_ref_t::id field.
-pub(crate) const ECS_IS_ENTITY: u64 = 1 << 57;
-
-/// Term id is a name (don't attempt to lookup as entity)
-/// Can be combined with other term flags on the ecs_term_ref_t::id field.
-pub(crate) const ECS_IS_NAME: u64 = 1 << 56;
-
-/// all term traversal flags
-pub(crate) const ECS_TRAVERSE_FLAGS: u64 = ECS_SELF | ECS_UP | ECS_TRAV | ECS_CASCADE | ECS_DESC;
-
-/// all term reference kind flags
-pub(crate) const ECS_TERM_REF_FLAGS: u64 =
-    ECS_TRAVERSE_FLAGS | ECS_IS_VARIABLE | ECS_IS_ENTITY | ECS_IS_NAME;
-
-*/
-
 // Term id flags
 create_pre_registered_component!(Self_, ECS_SELF);
 create_pre_registered_component!(Up, ECS_UP);

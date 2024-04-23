@@ -1,7 +1,6 @@
 use std::ffi::{c_void, CStr};
 
-use flecs_ecs::core::*;
-use flecs_ecs::sys;
+use flecs_ecs::prelude::*;
 
 mod common;
 use common::*;
@@ -768,7 +767,7 @@ fn entity_tag_has_size_zero() {
     let world = World::new();
 
     let comp = world.component::<TagA>();
-    let ptr = comp.try_get::<sys::EcsComponent>().unwrap();
+    let ptr = comp.try_get::<EcsComponent>().unwrap();
 
     assert_eq!(ptr.size, 0);
     assert_eq!(ptr.alignment, 0);

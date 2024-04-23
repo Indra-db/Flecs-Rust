@@ -1,3 +1,0 @@
-mod pair;
-
-use pair::*;

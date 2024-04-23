@@ -16,8 +16,4 @@ pub mod addons;
 /// this is to allow using the proc macro's inside lib itself that implements its own traits.
 extern crate self as flecs_ecs;
 
-pub mod prelude {
-    pub use crate::addons::*;
-    pub use crate::core::*;
-    pub use crate::macros::*;
-}
+pub mod prelude;
