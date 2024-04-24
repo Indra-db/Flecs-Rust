@@ -16,7 +16,6 @@ workspace = true
 flecs_ecs_derive = { path = "../flecs_ecs_derive" }
 flecs_ecs_sys = { path = "../flecs_ecs_sys" }
 
-
 [dev-dependencies]
 criterion = "0.5.1"
 seq-macro = "0.3.5"
@@ -25,11 +24,13 @@ ctor = "0.2.7"
 insta = { version = "1.38.0", features = ["yaml","filters"] }
 
 [features]
+
+######################
+# sys feature flags
+######################
+
 # Regenerate the C binding for flecs C
 flecs_regenerate_binding_c = ["flecs_ecs_sys/regenerate_binding"]
-
-# force enables both rust and c ecs asserts, useful when running release mode, but wanting the asserts for safety
-flecs_force_enable_ecs_asserts = ["flecs_ecs_sys/flecs_force_enable_ecs_asserts"]
 
 # force build debug for flecs C, even in release mode
 flecs_force_build_debug_c = ["flecs_ecs_sys/force_build_debug"]
@@ -37,8 +38,30 @@ flecs_force_build_debug_c = ["flecs_ecs_sys/force_build_debug"]
 # force build release for C flecs, even in debug mode
 flecs_force_build_release_c = ["flecs_ecs_sys/force_build_release"]
 
+# force enables both rust and c ecs asserts, useful when running release mode, but wanting the asserts for safety
+flecs_force_enable_ecs_asserts = ["flecs_ecs_sys/flecs_force_enable_ecs_asserts"]
+
 # tell C flecs to use the OS allocator instead of its own
 flecs_use_os_alloc = ["flecs_ecs_sys/use_os_alloc"]
+
+# Enabling this will not build a copy of flecs into this library.
+# Instead, the executable that this is linked with will need to
+# provide the symbols required. This is useful when using both
+# Rust and C++ code in an application and a copy of flecs is
+# already being linked into the executable via other means.
+flecs_disable_build_c = ["flecs_ecs_sys/disable_build_c"]
+
+######################
+# Flecs feature flags
+######################
+
+# indicate that the flecs library is meant to be used in a singleworld application
+# this will enable some optimization that would otherwise not be possible
+# in Flecs C++ it's necessary for components to be registered manually before being used in multithreaded systems
+# this is not necessary in Rust and is considered multithreaded safe for single world applications.
+# If you intent to have multiple worlds, you should not enable this feature and register components manually
+# if the intent is to share components between worlds, like in C++. In the future this limiation might be mitigated.
+flecs_single_world_application = []
 
 # Module support
 flecs_module = ["flecs_ecs_sys/flecs_module"]
@@ -109,15 +132,8 @@ flecs_rest = ["flecs_ecs_sys/flecs_rest", "flecs_http", "flecs_json", "flecs_rul
 # Journaling addon (disabled by default)
 flecs_journal = ["flecs_ecs_sys/flecs_journal","flecs_log"]
 
-# Enabling this will not build a copy of flecs into this library.
-# Instead, the executable that this is linked with will need to
-# provide the symbols required. This is useful when using both
-# Rust and C++ code in an application and a copy of flecs is
-# already being linked into the executable via other means.
-flecs_disable_build_c = ["flecs_ecs_sys/disable_build_c"]
-
-
 default = [
+    "flecs_single_world_application",
     "flecs_regenerate_binding_c",
     "flecs_module",
     "flecs_parser",
@@ -147,7 +163,60 @@ default = [
 flecs_ecs_derive = { version = "=0.1.0", path = "../flecs_ecs_derive" }
 flecs_ecs_sys = { version = "=0.1.0", path = "../flecs_ecs_sys" }
 
+
+######################
+# Benchmarks
+######################
+
+# [[bench]]
+# name = "add_operations"
+# harness = false 
+
+[[bench]]
+name = "add_remove_operations"
+harness = false
+
+[[bench]]
+name = "create_delete_entities"
+harness = false
+
+# [[bench]]
+# name = "get_mut_remove_operations"
+# harness = false
+
+[[bench]]
+name = "get_operations"
+harness = false
+
+[[bench]]
+name = "has_operations"
+harness = false
+
+[[bench]]
+name = "hooks"
+harness = false
+
+# [[bench]]
+# name = "relationship_operations"
+# harness = false
+
+# [[bench]]
+# name = "remove_operations"
+# harness = false
+
+# [[bench]]
+# name = "set_operations"
+# harness = false
+
+# [[bench]]
+# name = "world"
+# harness = false
+
+######################
+# Examples
+######################
 # These examples are only the examples that rely on a certain feature to compile successfully.
+
 [[example]]
 name = "system_ctx"
 path = "examples/system_ctx.rs"
