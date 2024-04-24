@@ -12,6 +12,47 @@ pub(crate) fn try_register_component_impl<'a, T>(
 where
     T: ComponentId,
 {
+    #[cfg(feature = "flecs_single_world_application")]
+    {
+        return register_component_single_world_application::<T>(&world, name);
+    }
+
+    #[cfg(not(feature = "flecs_single_world_application"))]
+    {
+        return register_component_multi_world_application::<T>(&world, name);
+    }
+}
+
+#[doc(hidden)]
+pub fn register_component_single_world_application<'a, T>(
+    world: &impl IntoWorld<'a>,
+    name: *const i8,
+) -> u64
+where
+    T: ComponentId,
+{
+    let world_ptr = world.world_ptr_mut();
+
+    if !T::is_registered() {
+        register_component_data::<T>(world_ptr, name, false, false);
+
+        if T::IS_ENUM {
+            register_enum_data::<T>(world_ptr);
+        }
+    }
+
+    // SAFETY: either it was registered just now or it was already registered
+    unsafe { T::get_id_unchecked() }
+}
+
+#[doc(hidden)]
+pub fn register_component_multi_world_application<'a, T>(
+    world: &impl IntoWorld<'a>,
+    name: *const i8,
+) -> u64
+where
+    T: ComponentId,
+{
     let world_ptr = world.world_ptr_mut();
     let is_registered = T::is_registered();
     let is_registered_with_world = if is_registered {
@@ -22,36 +63,18 @@ where
 
     if !is_registered || !is_registered_with_world {
         let has_newly_registered =
-            register_component_data::<T>(world, name, is_registered, is_registered_with_world);
+            register_component_data::<T>(world_ptr, name, is_registered, is_registered_with_world);
 
         if T::IS_ENUM && has_newly_registered && !is_registered_with_world {
-            //TODO we should convert this ecs_cpp functions to rust so if it ever changes, our solution won't break
-            unsafe { sys::ecs_cpp_enum_init(world_ptr, T::get_id_unchecked()) };
-            let enum_array_ptr = T::UnderlyingEnumType::__enum_data_mut();
-
-            for (index, enum_item) in T::UnderlyingEnumType::iter().enumerate() {
-                let name = enum_item.name_cstr();
-                let entity_id: EntityT = unsafe {
-                    sys::ecs_cpp_enum_constant_register(
-                        world_ptr,
-                        T::get_id_unchecked(),
-                        T::UnderlyingEnumType::get_id_variant_of_index_unchecked(
-                            enum_item.enum_index(),
-                        ),
-                        name.as_ptr(),
-                        index as i32,
-                    )
-                };
-                if !T::UnderlyingEnumType::is_index_registered_as_entity(index) {
-                    unsafe { *enum_array_ptr.add(index) = entity_id };
-                }
-            }
+            register_enum_data::<T>(world_ptr);
         }
     }
 
+    // SAFETY: either it was registered just now or it was already registered
     unsafe { T::get_id_unchecked() }
 }
 
+#[inline(always)]
 /// attempts to register the component with the world. If it's already registered, it does nothing.
 pub fn try_register_component<'a, T>(world: impl IntoWorld<'a>)
 where
@@ -60,6 +83,7 @@ where
     try_register_component_impl::<T>(world, std::ptr::null());
 }
 
+#[inline(always)]
 pub fn try_register_component_named<'a, T>(world: impl IntoWorld<'a>, name: &CStr) -> EntityT
 where
     T: ComponentId,
@@ -67,9 +91,35 @@ where
     try_register_component_impl::<T>(world, name.as_ptr())
 }
 
+/// registers enum fields with the world.
+pub(crate) fn register_enum_data<'a, T>(world: *mut WorldT)
+where
+    T: ComponentId,
+{
+    //TODO we should convert this ecs_cpp functions to rust so if it ever changes, our solution won't break
+    unsafe { sys::ecs_cpp_enum_init(world, T::get_id_unchecked()) };
+    let enum_array_ptr = T::UnderlyingEnumType::__enum_data_mut();
+
+    for (index, enum_item) in T::UnderlyingEnumType::iter().enumerate() {
+        let name = enum_item.name_cstr();
+        let entity_id: EntityT = unsafe {
+            sys::ecs_cpp_enum_constant_register(
+                world,
+                T::get_id_unchecked(),
+                T::UnderlyingEnumType::get_id_variant_of_index_unchecked(enum_item.enum_index()),
+                name.as_ptr(),
+                index as i32,
+            )
+        };
+        if !T::UnderlyingEnumType::is_index_registered_as_entity(index) {
+            unsafe { *enum_array_ptr.add(index) = entity_id };
+        }
+    }
+}
+
 /// registers the component with the world.
 pub(crate) fn register_component_data<'a, T>(
-    world: impl IntoWorld<'a>,
+    world: *mut WorldT,
     name: *const c_char,
     is_comp_pre_registered: bool,
     is_comp_pre_registered_with_world: bool,
@@ -77,8 +127,6 @@ pub(crate) fn register_component_data<'a, T>(
 where
     T: ComponentId,
 {
-    let world_ptr = world.world_ptr_mut();
-
     // If the component is not registered with the world (indicating the
     // component has not yet been registered, or the component is used
     // across more than one binary), or if the id does not exists in the
@@ -87,9 +135,9 @@ where
         let mut prev_scope: EntityT = 0;
         let mut prev_with: EntityT = 0;
 
-        if !world_ptr.is_null() {
-            prev_scope = unsafe { sys::ecs_set_scope(world_ptr, 0) };
-            prev_with = unsafe { sys::ecs_set_with(world_ptr, 0) };
+        if !world.is_null() {
+            prev_scope = unsafe { sys::ecs_set_scope(world, 0) };
+            prev_with = unsafe { sys::ecs_set_with(world, 0) };
         }
 
         let id = if is_comp_pre_registered {
@@ -108,10 +156,10 @@ where
         );
 
         if prev_with != 0 {
-            unsafe { sys::ecs_set_with(world_ptr, prev_with) };
+            unsafe { sys::ecs_set_with(world, prev_with) };
         }
         if prev_scope != 0 {
-            unsafe { sys::ecs_set_scope(world_ptr, prev_scope) };
+            unsafe { sys::ecs_set_scope(world, prev_scope) };
         }
 
         return true;
@@ -122,7 +170,7 @@ where
 
 /// registers the component with the world.
 fn register_componment_data_explicit<'a, T>(
-    world: impl IntoWorld<'a>,
+    world: *mut WorldT,
     name: *const c_char,
     id: EntityT,
     is_comp_pre_registered: bool,
@@ -131,8 +179,6 @@ fn register_componment_data_explicit<'a, T>(
 where
     T: ComponentId,
 {
-    let world = world.world_ptr_mut();
-
     ecs_assert!(
         if id == 0 {
             !world.is_null()

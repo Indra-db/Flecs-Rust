@@ -285,3 +285,78 @@ pub struct Template<T> {
 pub struct Templatex {
     pub value: String,
 }
+
+// this component pre-registration is required for the case of if the test cases run in single world application mode (feature flag).
+// since tests run in multi world mode.
+pub fn create_world() -> World {
+    let world = World::new();
+    let world_ref = world.get_world();
+
+    register_component_multi_world_application::<QueryWrapper>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Likes>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Apples>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Pears>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Eats>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<SelfRef>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<SelfRef2>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Position>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Position2>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<PositionClone>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<PositionPair>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<MyStruct>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Velocity>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Color>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Other>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Other2>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Mass>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TypeA>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Prefab>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Obj>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Obj2>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Rel>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Rel2>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<RelFoo>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Alice>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Bob>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Tag>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagA>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagB>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagC>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagD>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagE>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagF>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagG>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagH>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagI>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagJ>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagK>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagL>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagM>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagN>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagO>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagP>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagQ>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagR>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagS>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagT>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagV>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagX>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<TagClone>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Parent>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<EntityType>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Base>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Head>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Turret>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Beam>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Railgun>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Foo>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Bar>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<First>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Pod>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Template<u32>>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Template<Position>>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Template<Velocity>>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Templatex>(&world_ref, std::ptr::null());
+
+    world
+}

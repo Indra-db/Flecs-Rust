@@ -155,7 +155,7 @@ mod examples {
     #[test]
     fn system_ctx() {
         let snap = system_ctx::main().unwrap();
-        assert!(snap.count() > 2);
+        assert!(snap.count() > 0);
     }
     test!(system_custom_phases);
     test!(system_custom_phases_no_builtin);

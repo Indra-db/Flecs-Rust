@@ -101,6 +101,21 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     // Not public API.
     #[doc(hidden)]
     fn __register_lifecycle_hooks(mut _type_hooks: &mut TypeHooksT) {}
+
+    #[doc(hidden)]
+    /// this is cursed, but it's the only way to reset the lock data for the component without making the static mutable.
+    /// this is ONLY used for benchmarking purposes.
+    fn __reset_one_lock_data() {
+        #[allow(invalid_reference_casting)]
+        {
+            let lock: &'static mut OnceLock<IdComponent> = unsafe {
+                &mut *(Self::__get_once_lock_data() as *const OnceLock<IdComponent>
+                    as *mut OnceLock<IdComponent>)
+            };
+
+            lock.take();
+        }
+    }
 }
 
 pub trait ComponentInfo: Sized {

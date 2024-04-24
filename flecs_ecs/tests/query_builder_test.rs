@@ -9,7 +9,7 @@ use common::*;
 
 #[test]
 fn query_builder_builder_assign_same_type() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<(&Position, &Velocity)>()
@@ -30,7 +30,7 @@ fn query_builder_builder_assign_same_type() {
 
 #[test]
 fn query_builder_builder_assign_to_empty() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<(&Position, &Velocity)>()
@@ -51,7 +51,7 @@ fn query_builder_builder_assign_to_empty() {
 
 #[test]
 fn query_builder_builder_assign_from_empty() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -74,7 +74,7 @@ fn query_builder_builder_assign_from_empty() {
 
 #[test]
 fn query_builder_builder_build() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<(&Position, &Velocity)>()
@@ -95,7 +95,7 @@ fn query_builder_builder_build() {
 
 #[test]
 fn query_builder_builder_build_to_let() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<(&Position, &Velocity)>()
@@ -116,7 +116,7 @@ fn query_builder_builder_build_to_let() {
 
 #[test]
 fn query_builder_builder_build_n_statements() {
-    let world = World::new();
+    let world = create_world();
 
     let mut q = world.query::<()>();
     q.with::<&Position>();
@@ -138,7 +138,7 @@ fn query_builder_builder_build_n_statements() {
 
 #[test]
 fn query_builder_1_type() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<&Position>()
@@ -159,7 +159,7 @@ fn query_builder_1_type() {
 
 #[test]
 fn query_builder_2_types() {
-    let world = World::new();
+    let world = create_world();
 
     let e1 = world
         .entity()
@@ -189,7 +189,7 @@ fn query_builder_2_types() {
 
 #[test]
 fn query_builder_id_term() {
-    let world = World::new();
+    let world = create_world();
 
     let tag = world.entity();
 
@@ -214,7 +214,7 @@ fn query_builder_id_term() {
 
 #[test]
 fn query_builder_type_term() {
-    let world = World::new();
+    let world = create_world();
 
     let e1 = world.entity().set(Position { x: 10, y: 20 });
 
@@ -237,7 +237,7 @@ fn query_builder_type_term() {
 
 #[test]
 fn query_builder_id_pair_term() {
-    let world = World::new();
+    let world = create_world();
 
     let likes = world.entity();
     let apples = world.entity();
@@ -264,7 +264,7 @@ fn query_builder_id_pair_term() {
 
 #[test]
 fn query_builder_id_pair_wildcard_term() {
-    let world = World::new();
+    let world = create_world();
 
     let likes = world.entity();
     let apples = world.entity();
@@ -296,7 +296,7 @@ fn query_builder_id_pair_wildcard_term() {
 
 #[test]
 fn query_builder_type_pair_term() {
-    let world = World::new();
+    let world = create_world();
 
     let e1 = world.entity().add::<(Likes, Apples)>();
 
@@ -324,7 +324,7 @@ fn query_builder_type_pair_term() {
 
 #[test]
 fn query_builder_pair_term_w_var() {
-    let world = World::new();
+    let world = create_world();
 
     let e1 = world.entity().add::<(Likes, Apples)>();
 
@@ -360,7 +360,7 @@ fn query_builder_pair_term_w_var() {
 
 #[test]
 fn query_builder_2_pair_terms_w_var() {
-    let world = World::new();
+    let world = create_world();
 
     let bob = world.entity().add::<(Eats, Apples)>();
 
@@ -413,7 +413,7 @@ fn query_builder_2_pair_terms_w_var() {
 
 #[test]
 fn query_builder_set_var() {
-    let world = World::new();
+    let world = create_world();
 
     let apples = world.entity();
     let pears = world.entity();
@@ -448,7 +448,7 @@ fn query_builder_set_var() {
 
 #[test]
 fn query_builder_set_2_vars() {
-    let world = World::new();
+    let world = create_world();
 
     let apples = world.entity();
     let pears = world.entity();
@@ -495,7 +495,7 @@ fn query_builder_set_2_vars() {
 
 #[test]
 fn query_builder_set_var_by_name() {
-    let world = World::new();
+    let world = create_world();
 
     let apples = world.entity();
     let pears = world.entity();
@@ -525,7 +525,7 @@ fn query_builder_set_var_by_name() {
 
 #[test]
 fn query_builder_set_2_vars_by_name() {
-    let world = World::new();
+    let world = create_world();
 
     let apples = world.entity();
     let pears = world.entity();
@@ -572,7 +572,7 @@ fn query_builder_set_2_vars_by_name() {
 
 #[test]
 fn query_builder_expr_w_var() {
-    let world = World::new();
+    let world = create_world();
 
     let rel = world.entity_named(c"Rel");
     let obj = world.entity();
@@ -599,7 +599,7 @@ fn query_builder_expr_w_var() {
 
 #[test]
 fn query_builder_add_1_type() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -621,7 +621,7 @@ fn query_builder_add_1_type() {
 
 #[test]
 fn query_builder_add_2_types() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -644,7 +644,7 @@ fn query_builder_add_2_types() {
 
 #[test]
 fn query_builder_add_1_type_w_1_type() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<&Position>()
@@ -666,7 +666,7 @@ fn query_builder_add_1_type_w_1_type() {
 
 #[test]
 fn query_builder_add_2_types_w_1_type() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<&Position>()
@@ -693,7 +693,7 @@ fn query_builder_add_2_types_w_1_type() {
 
 #[test]
 fn query_builder_add_pair() {
-    let world = World::new();
+    let world = create_world();
 
     let likes = world.entity();
     let bob = world.entity();
@@ -719,7 +719,7 @@ fn query_builder_add_pair() {
 
 #[test]
 fn query_builder_add_not() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<&Position>()
@@ -742,7 +742,7 @@ fn query_builder_add_not() {
 
 #[test]
 fn query_builder_add_or() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -767,7 +767,7 @@ fn query_builder_add_or() {
 
 #[test]
 fn query_builder_add_optional() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -792,7 +792,7 @@ fn query_builder_add_optional() {
 
 #[test]
 fn query_builder_option_type() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<(&Position, Option<&Velocity>)>()
@@ -814,7 +814,7 @@ fn query_builder_option_type() {
 
 #[test]
 fn query_builder_const_type() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<&Position>()
@@ -835,7 +835,7 @@ fn query_builder_const_type() {
 
 #[test]
 fn query_builder_string_term() {
-    let world = World::new();
+    let world = create_world();
 
     world.component::<Position>();
 
@@ -859,7 +859,7 @@ fn query_builder_string_term() {
 
 #[test]
 fn query_builder_singleton_term() {
-    let world = World::new();
+    let world = create_world();
 
     world.set(Other { value: 10 });
 
@@ -896,7 +896,7 @@ fn query_builder_singleton_term() {
 
 #[test]
 fn query_builder_isa_superset_term() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<&SelfRef>()
@@ -934,7 +934,7 @@ fn query_builder_isa_superset_term() {
 
 #[test]
 fn query_builder_isa_self_superset_term() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<&SelfRef>()
@@ -986,7 +986,7 @@ fn query_builder_isa_self_superset_term() {
 
 #[test]
 fn query_builder_childof_superset_term() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<&SelfRef>()
@@ -1024,7 +1024,7 @@ fn query_builder_childof_superset_term() {
 
 #[test]
 fn query_builder_childof_self_superset_term() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<&SelfRef>()
@@ -1076,7 +1076,7 @@ fn query_builder_childof_self_superset_term() {
 
 #[test]
 fn query_builder_isa_superset_term_w_each() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<(&SelfRef, &Other)>()
@@ -1108,7 +1108,7 @@ fn query_builder_isa_superset_term_w_each() {
 
 #[test]
 fn query_builder_isa_self_superset_term_w_each() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<(&SelfRef, &Other)>()
@@ -1145,7 +1145,7 @@ fn query_builder_isa_self_superset_term_w_each() {
 
 #[test]
 fn query_builder_childof_superset_term_w_each() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<(&SelfRef, &Other)>()
@@ -1177,7 +1177,7 @@ fn query_builder_childof_superset_term_w_each() {
 
 #[test]
 fn query_builder_childof_self_superset_term_w_each() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<(&SelfRef, &Other)>()
@@ -1214,7 +1214,7 @@ fn query_builder_childof_self_superset_term_w_each() {
 
 #[test]
 fn query_builder_isa_superset_shortcut() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<(&SelfRef, &Other)>()
@@ -1245,7 +1245,7 @@ fn query_builder_isa_superset_shortcut() {
 
 #[test]
 fn query_builder_isa_superset_shortcut_w_self() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<(&SelfRef, &Other)>()
@@ -1281,7 +1281,7 @@ fn query_builder_isa_superset_shortcut_w_self() {
 
 #[test]
 fn query_builder_childof_superset_shortcut() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<(&SelfRef, &Other)>()
@@ -1312,7 +1312,7 @@ fn query_builder_childof_superset_shortcut() {
 
 #[test]
 fn query_builder_childof_superset_shortcut_w_self() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<(&SelfRef, &Other)>()
@@ -1348,7 +1348,7 @@ fn query_builder_childof_superset_shortcut_w_self() {
 
 #[test]
 fn query_builder_relation() {
-    let world = World::new();
+    let world = create_world();
 
     let likes = world.entity();
     let bob = world.entity();
@@ -1382,7 +1382,7 @@ fn query_builder_relation() {
 
 #[test]
 fn query_builder_relation_w_object_wildcard() {
-    let world = World::new();
+    let world = create_world();
 
     let likes = world.entity();
     let bob = world.entity();
@@ -1421,7 +1421,7 @@ fn query_builder_relation_w_object_wildcard() {
 
 #[test]
 fn query_builder_relation_w_predicate_wildcard() {
-    let world = World::new();
+    let world = create_world();
 
     let likes = world.entity();
     let dislikes = world.entity();
@@ -1456,7 +1456,7 @@ fn query_builder_relation_w_predicate_wildcard() {
 
 #[test]
 fn query_builder_add_pair_w_rel_type() {
-    let world = World::new();
+    let world = create_world();
 
     let dislikes = world.entity();
     let bob = world.entity();
@@ -1490,7 +1490,7 @@ fn query_builder_add_pair_w_rel_type() {
 
 #[test]
 fn query_builder_template_term() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<&Position>()
@@ -1512,7 +1512,7 @@ fn query_builder_template_term() {
 
 #[test]
 fn query_builder_explicit_subject_w_id() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<&Position>()
@@ -1535,7 +1535,7 @@ fn query_builder_explicit_subject_w_id() {
 
 #[test]
 fn query_builder_explicit_subject_w_type() {
-    let world = World::new();
+    let world = create_world();
 
     world.set(Position { x: 10, y: 20 });
 
@@ -1559,7 +1559,7 @@ fn query_builder_explicit_subject_w_type() {
 
 #[test]
 fn query_builder_explicit_object_w_id() {
-    let world = World::new();
+    let world = create_world();
 
     let likes = world.entity();
     let alice = world.entity();
@@ -1586,7 +1586,7 @@ fn query_builder_explicit_object_w_id() {
 
 #[test]
 fn query_builder_explicit_object_w_type() {
-    let world = World::new();
+    let world = create_world();
 
     let likes = world.entity();
     let bob = world.entity();
@@ -1615,7 +1615,7 @@ fn query_builder_explicit_object_w_type() {
 #[test]
 #[ignore = "decided to not support explicit term setting"]
 fn query_builder_explicit_term() {
-    // let world = World::new();
+    // let world = create_world();
 
     // let q = world
     //     .query::<()>()
@@ -1638,7 +1638,7 @@ fn query_builder_explicit_term() {
 #[test]
 #[ignore = "decided to not support explicit term setting"]
 fn query_builder_explicit_term_w_type() {
-    //     let world = World::new();
+    //     let world = create_world();
 
     //     let q = world.query::<()>()
     //         .with(world.term<Position>())
@@ -1660,7 +1660,7 @@ fn query_builder_explicit_term_w_type() {
 #[test]
 #[ignore = "decided to not support explicit term setting"]
 fn query_builder_explicit_term_w_pair_type() {
-    //     let world = World::new();
+    //     let world = create_world();
 
     //     let q = world.query::<()>()
     //         .with_id((world.term<Likes, alice>()))
@@ -1682,7 +1682,7 @@ fn query_builder_explicit_term_w_pair_type() {
 #[test]
 #[ignore = "decided to not support explicit term setting"]
 fn query_builder_explicit_term_w_id() {
-    //     let world = World::new();
+    //     let world = create_world();
 
     //     let apples = world.entity();
     //    let pears = world.entity();
@@ -1706,7 +1706,7 @@ fn query_builder_explicit_term_w_id() {
 
 #[test]
 fn query_builder_explicit_term_w_pair_id() {
-    //     let world = World::new();
+    //     let world = create_world();
 
     //     let likes = world.entity();
     //     let apples = world.entity();
@@ -1731,7 +1731,7 @@ fn query_builder_explicit_term_w_pair_id() {
 
 #[test]
 fn query_builder_1_term_to_empty() {
-    let world = World::new();
+    let world = create_world();
 
     let likes = world.entity();
     let apples = world.entity();
@@ -1749,7 +1749,7 @@ fn query_builder_1_term_to_empty() {
 
 #[test]
 fn query_builder_2_subsequent_args() {
-    let world = World::new();
+    let world = create_world();
 
     let mut count = 0;
 
@@ -1773,7 +1773,7 @@ fn query_builder_2_subsequent_args() {
 
 #[test]
 fn query_builder_optional_tag_is_set() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -1808,7 +1808,7 @@ fn query_builder_optional_tag_is_set() {
 
 #[test]
 fn query_builder_10_terms() {
-    let world = World::new();
+    let world = create_world();
 
     let f = world
         .query::<()>()
@@ -1853,7 +1853,7 @@ fn query_builder_10_terms() {
 
 #[test]
 fn query_builder_16_terms() {
-    let world = World::new();
+    let world = create_world();
 
     let f = world
         .query::<()>()
@@ -1933,7 +1933,7 @@ unsafe extern "C" fn group_by_first_id_negated(
 
 #[test]
 fn query_builder_group_by_raw() {
-    let world = World::new();
+    let world = create_world();
 
     world.component::<TagA>();
     world.component::<TagB>();
@@ -1992,7 +1992,7 @@ fn query_builder_group_by_raw() {
 
 #[test]
 fn query_builder_group_by_template() {
-    let world = World::new();
+    let world = create_world();
 
     world.component::<TagA>();
     world.component::<TagB>();
@@ -2065,7 +2065,7 @@ unsafe extern "C" fn group_by_rel(
 
 #[test]
 fn query_builder_group_by_iter_one() {
-    let world = World::new();
+    let world = create_world();
 
     let rel = world.entity();
     let tgt_a = world.entity();
@@ -2111,7 +2111,7 @@ fn query_builder_group_by_iter_one() {
 
 #[test]
 fn query_builder_group_by_iter_one_template() {
-    let world = World::new();
+    let world = create_world();
 
     world.entity().add::<(Rel, TagA)>();
     let e2 = world.entity().add::<(Rel, TagB)>();
@@ -2151,7 +2151,7 @@ fn query_builder_group_by_iter_one_template() {
 
 #[test]
 fn query_builder_group_by_iter_one_all_groups() {
-    let world = World::new();
+    let world = create_world();
 
     let rel = world.entity();
     let tgt_a = world.entity();
@@ -2228,7 +2228,7 @@ fn query_builder_group_by_iter_one_all_groups() {
 
 #[test]
 fn query_builder_group_by_default_func_w_id() {
-    let world = World::new();
+    let world = create_world();
 
     let rel = world.entity();
     let tgt_a = world.entity();
@@ -2284,7 +2284,7 @@ fn query_builder_group_by_default_func_w_id() {
 
 #[test]
 fn query_builder_group_by_default_func_w_type() {
-    let world = World::new();
+    let world = create_world();
 
     let tgt_a = world.entity();
     let tgt_b = world.entity();
@@ -2369,7 +2369,7 @@ extern "C" fn callback_group_delete(
 
 #[test]
 fn query_builder_group_by_callbacks() {
-    let world = World::new();
+    let world = create_world();
 
     let tgt_a = world.entity();
     let tgt_b = world.entity();
@@ -2435,7 +2435,7 @@ fn query_builder_group_by_callbacks() {
 
 #[test]
 fn query_builder_create_w_no_template_args() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -2456,7 +2456,7 @@ fn query_builder_create_w_no_template_args() {
 
 #[test]
 fn query_builder_any_wildcard() {
-    let world = World::new();
+    let world = create_world();
 
     let likes = world.entity();
     let apple = world.entity();
@@ -2481,7 +2481,7 @@ fn query_builder_any_wildcard() {
 
 #[test]
 fn query_builder_cascade() {
-    let world = World::new();
+    let world = create_world();
 
     let tag = world.entity();
     let foo_ = world.entity();
@@ -2538,7 +2538,7 @@ fn query_builder_cascade() {
 
 #[test]
 fn query_builder_cascade_desc() {
-    let world = World::new();
+    let world = create_world();
 
     let tag = world.entity();
     let foo_ = world.entity();
@@ -2596,7 +2596,7 @@ fn query_builder_cascade_desc() {
 
 #[test]
 fn query_builder_cascade_w_relationship() {
-    let world = World::new();
+    let world = create_world();
 
     let tag = world.entity();
     let foo_ = world.entity();
@@ -2653,7 +2653,7 @@ fn query_builder_cascade_w_relationship() {
 
 #[test]
 fn query_builder_up_w_type() {
-    let world = World::new();
+    let world = create_world();
 
     world.component::<Rel2>().add_id(*flecs::Traversable);
 
@@ -2693,7 +2693,7 @@ fn query_builder_up_w_type() {
 
 #[test]
 fn query_builder_cascade_w_type() {
-    let world = World::new();
+    let world = create_world();
 
     world.component::<Rel>().add_id(*flecs::Traversable);
 
@@ -2752,7 +2752,7 @@ fn query_builder_cascade_w_type() {
 
 #[test]
 fn query_builder_named_query() {
-    let world = World::new();
+    let world = create_world();
 
     let e1 = world.entity().add::<Position>();
     let e2 = world.entity().add::<Position>();
@@ -2777,7 +2777,7 @@ fn query_builder_named_query() {
 
 #[test]
 fn query_builder_term_w_write() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -2798,7 +2798,7 @@ fn query_builder_term_w_write() {
 
 #[test]
 fn query_builder_term_w_read() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -2817,7 +2817,7 @@ fn query_builder_term_w_read() {
 #[test]
 #[ignore = "Iter with stage not implemented"]
 fn query_builder_iter_w_stage() {
-    //     let world = World::new();
+    //     let world = create_world();
 
     //     world.set_stage_count(2);
     //     let stage = world.stage(1);
@@ -2846,7 +2846,7 @@ fn query_builder_iter_w_stage() {
 #[test]
 #[ignore = "transform entity to query functionality possibly missing"]
 fn query_builder_builder_force_assign_operator() {
-    // let world = World::new();
+    // let world = create_world();
 
     // let e1 = world.entity().set(Position { x: 10, y: 20 });
 
@@ -2882,7 +2882,7 @@ fn query_arg(f: &Query<&SelfRef>) -> i32 {
 
 #[test]
 fn query_builder_query_as_arg() {
-    let world = World::new();
+    let world = create_world();
 
     let f = world
         .query::<&SelfRef>()
@@ -2903,7 +2903,7 @@ fn query_builder_query_as_arg() {
 
 #[test]
 fn query_builder_query_default_as_move_arg() {
-    let world = World::new();
+    let world = create_world();
 
     let _f = world.query::<&SelfRef>();
 
@@ -2925,7 +2925,7 @@ fn query_return(world: &World) -> Query<&SelfRef> {
 
 #[test]
 fn query_builder_query_as_return() {
-    let world = World::new();
+    let world = create_world();
 
     let e = world.entity();
     e.set(SelfRef { value: e.id() });
@@ -2950,7 +2950,7 @@ fn query_builder_query_as_return() {
 
 #[test]
 fn query_builder_query_copy() {
-    let world = World::new();
+    let world = create_world();
 
     let e = world.entity();
     e.set(SelfRef { value: e.id() });
@@ -2980,7 +2980,7 @@ fn query_builder_query_copy() {
 
 #[test]
 fn query_builder_world_each_query_1_component() {
-    let world = World::new();
+    let world = create_world();
 
     let e = world.entity();
     e.set(SelfRef { value: e.id() });
@@ -3003,7 +3003,7 @@ fn query_builder_world_each_query_1_component() {
 
 #[test]
 fn query_builder_world_each_query_2_components() {
-    let world = World::new();
+    let world = create_world();
 
     let e = world.entity();
     e.set(SelfRef2 { value: e.id() })
@@ -3031,7 +3031,7 @@ fn query_builder_world_each_query_2_components() {
 
 #[test]
 fn query_builder_world_each_query_1_component_no_entity() {
-    let world = World::new();
+    let world = create_world();
 
     world.entity().set(Position { x: 10, y: 20 });
 
@@ -3055,7 +3055,7 @@ fn query_builder_world_each_query_1_component_no_entity() {
 
 #[test]
 fn query_builder_world_each_query_2_components_no_entity() {
-    let world = World::new();
+    let world = create_world();
 
     world
         .entity()
@@ -3091,7 +3091,7 @@ fn query_builder_world_each_query_2_components_no_entity() {
 
 #[test]
 fn query_builder_term_after_arg() {
-    let world = World::new();
+    let world = create_world();
 
     let e_1 = world.entity().add::<TagA>().add::<TagB>().add::<TagC>();
 
@@ -3118,7 +3118,7 @@ fn query_builder_term_after_arg() {
 
 #[test]
 fn query_builder_name_arg() {
-    let world = World::new();
+    let world = create_world();
 
     let e = world.entity_named(c"Foo").set(Position { x: 10, y: 20 });
 
@@ -3143,7 +3143,7 @@ fn query_builder_name_arg() {
 
 #[test]
 fn query_builder_const_in_term() {
-    let world = World::new();
+    let world = create_world();
 
     world.entity().set(Position { x: 10, y: 20 });
 
@@ -3169,7 +3169,7 @@ fn query_builder_const_in_term() {
 
 #[test]
 fn query_builder_const_optional() {
-    let world = World::new();
+    let world = create_world();
 
     world.entity().set(Position2 { x: 10, y: 20 }).add::<TagD>();
     world.entity().add::<TagD>();
@@ -3199,7 +3199,7 @@ fn query_builder_const_optional() {
 
 #[test]
 fn query_builder_2_terms_w_expr() {
-    let world = World::new();
+    let world = create_world();
 
     let a = world.entity_named(c"A");
     let b = world.entity_named(c"B");
@@ -3230,7 +3230,7 @@ fn query_builder_2_terms_w_expr() {
 #[should_panic]
 #[ignore = "panics in C, not captured by Rust"]
 fn query_builder_assert_on_uninitialized_term() {
-    let world = World::new();
+    let world = create_world();
 
     world.entity_named(c"A");
     world.entity_named(c"B");
@@ -3245,7 +3245,7 @@ fn query_builder_assert_on_uninitialized_term() {
 
 #[test]
 fn query_builder_operator_shortcuts() {
-    let world = World::new();
+    let world = create_world();
 
     let a = world.entity();
     let b = world.entity();
@@ -3311,7 +3311,7 @@ fn query_builder_operator_shortcuts() {
 
 #[test]
 fn query_builder_inout_shortcuts() {
-    let world = World::new();
+    let world = create_world();
 
     let a = world.entity();
     let b = world.entity();
@@ -3350,7 +3350,7 @@ fn query_builder_inout_shortcuts() {
 
 #[test]
 fn query_builder_iter_column_w_const_as_array() {
-    let world = World::new();
+    let world = create_world();
 
     let f = world
         .query::<&Position>()
@@ -3384,7 +3384,7 @@ fn query_builder_iter_column_w_const_as_array() {
 
 #[test]
 fn query_builder_iter_column_w_const_as_ptr() {
-    let world = World::new();
+    let world = create_world();
 
     let f = world
         .query::<&Position>()
@@ -3410,7 +3410,7 @@ fn query_builder_iter_column_w_const_as_ptr() {
 
 #[test]
 fn query_builder_with_id() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -3433,7 +3433,7 @@ fn query_builder_with_id() {
 
 #[test]
 fn query_builder_with_name() {
-    let world = World::new();
+    let world = create_world();
 
     world.component::<Velocity>();
 
@@ -3458,7 +3458,7 @@ fn query_builder_with_name() {
 
 #[test]
 fn query_builder_with_component() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -3481,7 +3481,7 @@ fn query_builder_with_component() {
 
 #[test]
 fn query_builder_with_pair_id() {
-    let world = World::new();
+    let world = create_world();
 
     let likes = world.entity();
     let apples = world.entity();
@@ -3508,7 +3508,7 @@ fn query_builder_with_pair_id() {
 
 #[test]
 fn query_builder_with_pair_name() {
-    let world = World::new();
+    let world = create_world();
 
     let likes = world.entity_named(c"likes");
     let apples = world.entity_named(c"Apples");
@@ -3535,7 +3535,7 @@ fn query_builder_with_pair_name() {
 
 #[test]
 fn query_builder_with_pair_components() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -3558,7 +3558,7 @@ fn query_builder_with_pair_components() {
 
 #[test]
 fn query_builder_with_pair_component_id() {
-    let world = World::new();
+    let world = create_world();
 
     let apples = world.entity();
     let pears = world.entity();
@@ -3584,7 +3584,7 @@ fn query_builder_with_pair_component_id() {
 
 #[test]
 fn query_builder_with_pair_component_name() {
-    let world = World::new();
+    let world = create_world();
 
     let apples = world.entity_named(c"Apples");
     let pears = world.entity_named(c"Pears");
@@ -3610,7 +3610,7 @@ fn query_builder_with_pair_component_name() {
 
 #[test]
 fn query_builder_with_enum() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -3633,7 +3633,7 @@ fn query_builder_with_enum() {
 
 #[test]
 fn query_builder_without_id() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -3656,7 +3656,7 @@ fn query_builder_without_id() {
 
 #[test]
 fn query_builder_without_name() {
-    let world = World::new();
+    let world = create_world();
 
     world.component::<Velocity>();
 
@@ -3681,7 +3681,7 @@ fn query_builder_without_name() {
 
 #[test]
 fn query_builder_without_component() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -3704,7 +3704,7 @@ fn query_builder_without_component() {
 
 #[test]
 fn query_builder_without_pair_id() {
-    let world = World::new();
+    let world = create_world();
 
     let likes = world.entity();
     let apples = world.entity();
@@ -3731,7 +3731,7 @@ fn query_builder_without_pair_id() {
 
 #[test]
 fn query_builder_without_pair_name() {
-    let world = World::new();
+    let world = create_world();
 
     let likes = world.entity_named(c"likes");
     let apples = world.entity_named(c"Apples");
@@ -3758,7 +3758,7 @@ fn query_builder_without_pair_name() {
 
 #[test]
 fn query_builder_without_pair_components() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -3781,7 +3781,7 @@ fn query_builder_without_pair_components() {
 
 #[test]
 fn query_builder_without_pair_component_id() {
-    let world = World::new();
+    let world = create_world();
 
     let apples = world.entity();
     let pears = world.entity();
@@ -3807,7 +3807,7 @@ fn query_builder_without_pair_component_id() {
 
 #[test]
 fn query_builder_without_pair_component_name() {
-    let world = World::new();
+    let world = create_world();
 
     let apples = world.entity_named(c"Apples");
     let pears = world.entity_named(c"Pears");
@@ -3833,7 +3833,7 @@ fn query_builder_without_pair_component_name() {
 
 #[test]
 fn query_builder_without_enum() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -3856,7 +3856,7 @@ fn query_builder_without_enum() {
 
 #[test]
 fn query_builder_write_id() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -3872,7 +3872,7 @@ fn query_builder_write_id() {
 
 #[test]
 fn query_builder_write_name() {
-    let world = World::new();
+    let world = create_world();
 
     world.component::<Position>();
 
@@ -3890,7 +3890,7 @@ fn query_builder_write_name() {
 
 #[test]
 fn query_builder_write_component() {
-    let world = World::new();
+    let world = create_world();
 
     world.component::<Position>();
 
@@ -3908,7 +3908,7 @@ fn query_builder_write_component() {
 
 #[test]
 fn query_builder_write_pair_id() {
-    let world = World::new();
+    let world = create_world();
 
     let likes = world.entity();
     let apples = world.entity();
@@ -3928,7 +3928,7 @@ fn query_builder_write_pair_id() {
 
 #[test]
 fn query_builder_write_pair_name() {
-    let world = World::new();
+    let world = create_world();
 
     let likes = world.entity_named(c"likes");
     let apples = world.entity_named(c"Apples");
@@ -3948,7 +3948,7 @@ fn query_builder_write_pair_name() {
 
 #[test]
 fn query_builder_write_pair_components() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -3965,7 +3965,7 @@ fn query_builder_write_pair_components() {
 
 #[test]
 fn query_builder_write_pair_component_id() {
-    let world = World::new();
+    let world = create_world();
 
     let apples = world.entity();
 
@@ -3984,7 +3984,7 @@ fn query_builder_write_pair_component_id() {
 
 #[test]
 fn query_builder_write_pair_component_name() {
-    let world = World::new();
+    let world = create_world();
 
     let apples = world.entity_named(c"Apples");
 
@@ -4003,7 +4003,7 @@ fn query_builder_write_pair_component_name() {
 
 #[test]
 fn query_builder_write_enum() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -4020,7 +4020,7 @@ fn query_builder_write_enum() {
 
 #[test]
 fn query_builder_read_id() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -4036,7 +4036,7 @@ fn query_builder_read_id() {
 
 #[test]
 fn query_builder_read_name() {
-    let world = World::new();
+    let world = create_world();
 
     world.component::<Position>();
 
@@ -4054,7 +4054,7 @@ fn query_builder_read_name() {
 
 #[test]
 fn query_builder_read_component() {
-    let world = World::new();
+    let world = create_world();
 
     world.component::<Position>();
 
@@ -4072,7 +4072,7 @@ fn query_builder_read_component() {
 
 #[test]
 fn query_builder_read_pair_id() {
-    let world = World::new();
+    let world = create_world();
 
     let likes = world.entity();
     let apples = world.entity();
@@ -4092,7 +4092,7 @@ fn query_builder_read_pair_id() {
 
 #[test]
 fn query_builder_read_pair_name() {
-    let world = World::new();
+    let world = create_world();
 
     let likes = world.entity_named(c"likes");
     let apples = world.entity_named(c"Apples");
@@ -4112,7 +4112,7 @@ fn query_builder_read_pair_name() {
 
 #[test]
 fn query_builder_read_pair_components() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -4129,7 +4129,7 @@ fn query_builder_read_pair_components() {
 
 #[test]
 fn query_builder_read_pair_component_id() {
-    let world = World::new();
+    let world = create_world();
 
     let apples = world.entity();
 
@@ -4148,7 +4148,7 @@ fn query_builder_read_pair_component_id() {
 
 #[test]
 fn query_builder_read_pair_component_name() {
-    let world = World::new();
+    let world = create_world();
 
     let apples = world.entity_named(c"Apples");
 
@@ -4168,7 +4168,7 @@ fn query_builder_read_pair_component_name() {
 
 #[test]
 fn query_builder_read_enum() {
-    let world = World::new();
+    let world = create_world();
 
     let q = world
         .query::<()>()
@@ -4185,7 +4185,7 @@ fn query_builder_read_enum() {
 
 #[test]
 fn query_builder_assign_after_init() {
-    let world = World::new();
+    let world = create_world();
 
     #[allow(unused_assignments)]
     let mut f: Query<()> = world.new_query::<()>();
@@ -4207,7 +4207,7 @@ fn query_builder_assign_after_init() {
 
 #[test]
 fn query_builder_with_t_inout() {
-    let world = World::new();
+    let world = create_world();
 
     let f = world
         .query::<()>()
@@ -4220,7 +4220,7 @@ fn query_builder_with_t_inout() {
 
 #[test]
 fn query_builder_with_t_inout_1() {
-    let world = World::new();
+    let world = create_world();
 
     let f = world
         .query::<()>()
@@ -4233,7 +4233,7 @@ fn query_builder_with_t_inout_1() {
 
 #[test]
 fn query_builder_with_r_t_inout_2() {
-    let world = World::new();
+    let world = create_world();
 
     let f = world
         .query::<()>()
@@ -4246,7 +4246,7 @@ fn query_builder_with_r_t_inout_2() {
 
 #[test]
 fn query_builder_with_r_t_inout_3() {
-    let world = World::new();
+    let world = create_world();
 
     let f = world
         .query::<()>()
@@ -4259,7 +4259,7 @@ fn query_builder_with_r_t_inout_3() {
 
 #[test]
 fn query_builder_with_r_t_inout() {
-    let world = World::new();
+    let world = create_world();
 
     let f = world
         .query::<()>()
@@ -4286,7 +4286,7 @@ fn query_move(f: Query<&SelfRef>) -> i32 {
 
 #[test]
 fn query_builder_query_as_move_arg() {
-    let world = World::new();
+    let world = create_world();
 
     let f = world
         .query::<&SelfRef>()
@@ -4314,7 +4314,7 @@ fn query_auto_return(world: &World) -> Query<&SelfRef> {
 
 #[test]
 fn query_builder_filter_as_return() {
-    let world = World::new();
+    let world = create_world();
 
     let e = world.entity();
     e.set(SelfRef { value: e.id() });
@@ -4339,7 +4339,7 @@ fn query_builder_filter_as_return() {
 
 #[test]
 fn query_builder_filter_copy() {
-    let world = World::new();
+    let world = create_world();
 
     let e = world.entity();
     e.set(SelfRef { value: e.id() });
@@ -4369,7 +4369,7 @@ fn query_builder_filter_copy() {
 
 #[test]
 fn query_builder_world_each_filter_1_component() {
-    let world = World::new();
+    let world = create_world();
 
     let e = world.entity();
     e.set(SelfRef { value: e.id() });
@@ -4392,7 +4392,7 @@ fn query_builder_world_each_filter_1_component() {
 
 #[test]
 fn query_builder_world_each_filter_2_components() {
-    let world = World::new();
+    let world = create_world();
 
     let e = world.entity();
     e.set(SelfRef2 { value: e.id() })
@@ -4420,7 +4420,7 @@ fn query_builder_world_each_filter_2_components() {
 
 #[test]
 fn query_builder_world_each_filter_1_component_no_entity() {
-    let world = World::new();
+    let world = create_world();
 
     world.entity().set(Position { x: 10, y: 20 });
 
@@ -4444,7 +4444,7 @@ fn query_builder_world_each_filter_1_component_no_entity() {
 
 #[test]
 fn query_builder_world_each_filter_2_components_no_entity() {
-    let world = World::new();
+    let world = create_world();
 
     world
         .entity()
@@ -4480,7 +4480,7 @@ fn query_builder_world_each_filter_2_components_no_entity() {
 
 #[test]
 fn query_builder_var_src_w_prefixed_name() {
-    let world = World::new();
+    let world = create_world();
 
     let r = world
         .query::<()>()
@@ -4502,7 +4502,7 @@ fn query_builder_var_src_w_prefixed_name() {
 
 #[test]
 fn query_builder_var_first_w_prefixed_name() {
-    let world = World::new();
+    let world = create_world();
 
     let r = world
         .query::<()>()
@@ -4527,7 +4527,7 @@ fn query_builder_var_first_w_prefixed_name() {
 
 #[test]
 fn query_builder_var_second_w_prefixed_name() {
-    let world = World::new();
+    let world = create_world();
 
     let r = world
         .query::<()>()
@@ -4552,7 +4552,7 @@ fn query_builder_var_second_w_prefixed_name() {
 
 #[test]
 fn query_builder_term_w_second_var_string() {
-    let world = World::new();
+    let world = create_world();
 
     let foo_ = world.entity();
 
@@ -4578,7 +4578,7 @@ fn query_builder_term_w_second_var_string() {
 
 #[test]
 fn query_builder_term_type_w_second_var_string() {
-    let world = World::new();
+    let world = create_world();
 
     let r = world
         .query::<()>()
@@ -4602,7 +4602,7 @@ fn query_builder_term_type_w_second_var_string() {
 
 #[test]
 fn query_builder_named_rule() {
-    let world = World::new();
+    let world = create_world();
 
     let e1 = world.entity().add::<Position>();
     let e2 = world.entity().add::<Position>();
@@ -4626,7 +4626,7 @@ fn query_builder_named_rule() {
 
 #[test]
 fn query_builder_named_scoped_rule() {
-    let world = World::new();
+    let world = create_world();
 
     let e1 = world.entity().add::<Position>();
     let e2 = world.entity().add::<Position>();
@@ -4652,7 +4652,7 @@ fn query_builder_named_scoped_rule() {
 #[test]
 #[should_panic]
 fn query_builder_is_valid() {
-    let world = World::new();
+    let world = create_world();
 
     let _q_1 = world.query::<&Position>();
 
@@ -4666,7 +4666,7 @@ fn query_builder_is_valid() {
 #[test]
 #[ignore = "We don't support unresolved queries. TODO introduce a try_build command which allows fails."]
 fn query_builder_unresolved_by_name() {
-    // let world = World::new();
+    // let world = create_world();
 
     // let q = world.query::<()>()
     //     .flags(EcsQueryAllowUnresolvedByName)
@@ -4685,7 +4685,7 @@ fn query_builder_unresolved_by_name() {
 
 #[test]
 fn query_builder_scope() {
-    let world = World::new();
+    let world = create_world();
 
     let root = world.entity();
     let tag_a = world.entity();
