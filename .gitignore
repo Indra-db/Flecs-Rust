@@ -5,3 +5,4 @@ rustfmt.toml
 .DS_Store
 flecs_ecs/src/main.rs
 flecs_ecs_test/
+flecs_ecs/benches/fbench_log/

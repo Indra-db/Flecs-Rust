@@ -1,0 +1,2 @@
+[alias]
+fbench = "criterion --plotting-backend disabled"
