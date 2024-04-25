@@ -60,7 +60,7 @@ flecs_disable_build_c = ["flecs_ecs_sys/disable_build_c"]
 # in Flecs C++ it's necessary for components to be registered manually before being used in multithreaded systems
 # this is not necessary in Rust and is considered multithreaded safe for single world applications.
 # If you intent to have multiple worlds, you should not enable this feature and register components manually
-# if the intent is to share components between worlds, like in C++. In the future this limiation might be mitigated.
+# if the intent is to share components between worlds, like in C++. In the future this limitation might be mitigated.
 flecs_single_world_application = []
 
 # Module support
