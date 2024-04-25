@@ -109,52 +109,49 @@ pub fn flecs_create_delete_entities_w_tree(criterion: &mut Criterion) {
 
     for width in [1, 10, 100, 1000] {
         for depth in [1, 10, 100, 1000] {
-            group.bench_function(
-                format!("w{}_d{}", width.to_string(), depth.to_string()),
-                |bencher| {
-                    let world = World::new();
+            group.bench_function(format!("w{}_d{}", width, depth), |bencher| {
+                let world = World::new();
 
-                    let mut entities = Vec::with_capacity(depth as usize);
+                let mut entities = Vec::with_capacity(depth as usize);
 
-                    for _ in 0..depth {
-                        let entity = world.entity();
-                        entities.push(entity);
-                    }
+                for _ in 0..depth {
+                    let entity = world.entity();
+                    entities.push(entity);
+                }
 
-                    let id = world.entity();
-                    let add_id = world.entity();
+                let id = world.entity();
+                let add_id = world.entity();
 
-                    world
-                        .observer::<()>()
-                        .with_id(id)
-                        .add_event::<flecs::OnAdd>()
-                        .each_entity(|entity, ()| {
-                            entity.add_id(add_id);
-                        });
+                world
+                    .observer::<()>()
+                    .with_id(id)
+                    .add_event::<flecs::OnAdd>()
+                    .each_entity(|entity, ()| {
+                        entity.add_id(add_id);
+                    });
 
-                    bencher.iter_custom(|iters| {
-                        let start = Instant::now();
-                        for _ in 0..iters {
-                            let root = world.entity();
-                            let mut cur = root;
+                bencher.iter_custom(|iters| {
+                    let start = Instant::now();
+                    for _ in 0..iters {
+                        let root = world.entity();
+                        let mut cur = root;
 
-                            for _ in 0..depth {
-                                for _ in 0..width - 1 {
-                                    let child = world.entity();
-                                    child.child_of_id(cur);
-                                }
+                        for _ in 0..depth {
+                            for _ in 0..width - 1 {
                                 let child = world.entity();
                                 child.child_of_id(cur);
-                                cur = child;
                             }
-
-                            root.destruct();
+                            let child = world.entity();
+                            child.child_of_id(cur);
+                            cur = child;
                         }
-                        let elapsed = start.elapsed();
-                        elapsed / width // calculate overhead per child
-                    });
-                },
-            );
+
+                        root.destruct();
+                    }
+                    let elapsed = start.elapsed();
+                    elapsed / width // calculate overhead per child
+                });
+            });
         }
     }
     group.finish();

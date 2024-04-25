@@ -41,7 +41,7 @@ pub trait IntoTableRange {
 impl IntoTableRange for TableRange<'_> {
     #[inline]
     fn table_range(&self) -> TableRange {
-        self.clone()
+        *self
     }
 
     #[inline]
@@ -57,7 +57,7 @@ impl IntoTableRange for TableRange<'_> {
 impl IntoTableRange for Table<'_> {
     #[inline]
     fn table_range(&self) -> TableRange {
-        TableRange::new(self.clone(), 0, self.count())
+        TableRange::new(*self, 0, self.count())
     }
 
     #[inline]

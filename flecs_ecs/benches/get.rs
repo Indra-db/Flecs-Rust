@@ -421,8 +421,8 @@ pub fn flecs_c_get_components(criterion: &mut Criterion) {
             let entities = create_ids(world, ENTITY_COUNT as i32, 0, false);
             let ids = create_ids(world, 2, 4, true);
 
-            for i in 0..ENTITY_COUNT as usize {
-                ecs_add_id(world, entities[i], ids[0]);
+            for entity in &entities {
+                ecs_add_id(world, *entity, ids[0]);
             }
 
             bencher.iter_custom(|iters| {

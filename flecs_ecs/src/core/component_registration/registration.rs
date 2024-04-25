@@ -14,12 +14,12 @@ where
 {
     #[cfg(feature = "flecs_single_world_application")]
     {
-        return register_component_single_world_application::<T>(&world, name);
+        register_component_single_world_application::<T>(&world, name)
     }
 
     #[cfg(not(feature = "flecs_single_world_application"))]
     {
-        return register_component_multi_world_application::<T>(&world, name);
+        register_component_multi_world_application::<T>(&world, name)
     }
 }
 
@@ -92,7 +92,7 @@ where
 }
 
 /// registers enum fields with the world.
-pub(crate) fn register_enum_data<'a, T>(world: *mut WorldT)
+pub(crate) fn register_enum_data<T>(world: *mut WorldT)
 where
     T: ComponentId,
 {
@@ -118,7 +118,7 @@ where
 }
 
 /// registers the component with the world.
-pub(crate) fn register_component_data<'a, T>(
+pub(crate) fn register_component_data<T>(
     world: *mut WorldT,
     name: *const c_char,
     is_comp_pre_registered: bool,
@@ -169,7 +169,7 @@ where
 }
 
 /// registers the component with the world.
-fn register_componment_data_explicit<'a, T>(
+fn register_componment_data_explicit<T>(
     world: *mut WorldT,
     name: *const c_char,
     id: EntityT,

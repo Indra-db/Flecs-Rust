@@ -6,19 +6,10 @@ use crate::core::*;
 use crate::sys;
 
 /// A wrapper class that gives direct access to the component arrays of a table, the table data
-#[derive(Debug, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Table<'a> {
     world: WorldRef<'a>,
     table: NonNull<TableT>,
-}
-
-impl<'a> Clone for Table<'a> {
-    fn clone(&self) -> Self {
-        Self {
-            world: self.world,
-            table: self.table,
-        }
-    }
 }
 
 impl<'a> Table<'a> {
@@ -585,22 +576,13 @@ impl<'a> Table<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct TableRange<'a> {
     pub table: Table<'a>,
     offset: i32,
     count: i32,
 }
 
-impl<'a> Clone for TableRange<'a> {
-    fn clone(&self) -> Self {
-        Self {
-            table: self.table.clone(),
-            offset: self.offset,
-            count: self.count,
-        }
-    }
-}
 impl<'a> TableRange<'a> {
     /// Creates a new table range
     ///

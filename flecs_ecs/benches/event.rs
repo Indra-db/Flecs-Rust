@@ -81,87 +81,81 @@ pub fn flecs_event_emit_forward(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_event_emit_propagate");
 
     for depth in [1, 1000] {
-        group.bench_function(
-            format!("components_{}_depth_{}", 1, depth.to_string()),
-            |bencher| {
-                let world = World::new();
-                let root = world.entity();
+        group.bench_function(format!("components_{}_depth_{}", 1, depth), |bencher| {
+            let world = World::new();
+            let root = world.entity();
 
-                let mut cur = root;
+            let mut cur = root;
 
-                let ids = vec_of_ids!(world, T, 1, 1);
+            let ids = vec_of_ids!(world, T, 1, 1);
 
-                for id in &ids {
-                    world
-                        .observer::<()>()
-                        .with_id(*id)
-                        .add_event::<flecs::OnAdd>()
-                        .add_event::<flecs::OnRemove>()
-                        .iter_only(|_| {});
+            for id in &ids {
+                world
+                    .observer::<()>()
+                    .with_id(*id)
+                    .add_event::<flecs::OnAdd>()
+                    .add_event::<flecs::OnRemove>()
+                    .iter_only(|_| {});
+            }
+
+            add_component_range!(world, root, T, 1, 1);
+
+            for _ in 0..depth {
+                cur = world.entity().child_of_id(cur);
+            }
+
+            let e = world.entity();
+            bencher.iter_custom(|iters| {
+                let start = Instant::now();
+                for _ in 0..iters {
+                    e.child_of_id(cur);
+                    e.remove_id((*flecs::ChildOf, cur));
                 }
+                let elapsed = start.elapsed();
+                elapsed / 1 //time average per entity operation
+            });
 
-                add_component_range!(world, root, T, 1, 1);
-
-                for _ in 0..depth {
-                    cur = world.entity().child_of_id(cur);
-                }
-
-                let e = world.entity();
-                bencher.iter_custom(|iters| {
-                    let start = Instant::now();
-                    for _ in 0..iters {
-                        e.child_of_id(cur);
-                        e.remove_id((*flecs::ChildOf, cur));
-                    }
-                    let elapsed = start.elapsed();
-                    elapsed / 1 //time average per entity operation
-                });
-
-                reset_component_range!(T, 1, 1);
-            },
-        );
+            reset_component_range!(T, 1, 1);
+        });
     }
 
     for depth in [1, 1000] {
-        group.bench_function(
-            format!("components_{}_depth_{}", 16, depth.to_string()),
-            |bencher| {
-                let world = World::new();
-                let root = world.entity();
+        group.bench_function(format!("components_{}_depth_{}", 16, depth), |bencher| {
+            let world = World::new();
+            let root = world.entity();
 
-                let mut cur = root;
+            let mut cur = root;
 
-                let ids = vec_of_ids!(world, T, 1, 16);
+            let ids = vec_of_ids!(world, T, 1, 16);
 
-                for id in &ids {
-                    world
-                        .observer::<()>()
-                        .with_id(*id)
-                        .add_event::<flecs::OnAdd>()
-                        .add_event::<flecs::OnRemove>()
-                        .iter_only(|_| {});
+            for id in &ids {
+                world
+                    .observer::<()>()
+                    .with_id(*id)
+                    .add_event::<flecs::OnAdd>()
+                    .add_event::<flecs::OnRemove>()
+                    .iter_only(|_| {});
+            }
+
+            add_component_range!(world, root, T, 1, 16);
+
+            for _ in 0..depth {
+                cur = world.entity().child_of_id(cur);
+            }
+
+            let e = world.entity();
+            bencher.iter_custom(|iters| {
+                let start = Instant::now();
+                for _ in 0..iters {
+                    e.child_of_id(cur);
+                    e.remove_id((*flecs::ChildOf, cur));
                 }
+                let elapsed = start.elapsed();
+                elapsed / 1 //time average per entity operation
+            });
 
-                add_component_range!(world, root, T, 1, 16);
-
-                for _ in 0..depth {
-                    cur = world.entity().child_of_id(cur);
-                }
-
-                let e = world.entity();
-                bencher.iter_custom(|iters| {
-                    let start = Instant::now();
-                    for _ in 0..iters {
-                        e.child_of_id(cur);
-                        e.remove_id((*flecs::ChildOf, cur));
-                    }
-                    let elapsed = start.elapsed();
-                    elapsed / 1 //time average per entity operation
-                });
-
-                reset_component_range!(T, 1, 16);
-            },
-        );
+            reset_component_range!(T, 1, 16);
+        });
     }
 }
 

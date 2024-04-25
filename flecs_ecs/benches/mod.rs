@@ -25,7 +25,7 @@ use get::*;
 use has::*;
 use hooks::*;
 use observer::*;
-use query::*;
+//use query::*;
 use relationships::*;
 use set::*;
 
