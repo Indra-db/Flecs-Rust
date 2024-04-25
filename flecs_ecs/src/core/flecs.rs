@@ -13,6 +13,7 @@ macro_rules! create_pre_registered_component {
 
         impl Deref for $struct_name {
             type Target = u64;
+            #[inline(always)]
             fn deref(&self) -> &Self::Target {
                 &Self::ID
             }

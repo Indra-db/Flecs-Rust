@@ -1063,6 +1063,14 @@ impl<'a> EntityView<'a> {
         self
     }
 
+    /// Removes the name of the entity.
+    pub fn remove_name(self) -> Self {
+        unsafe {
+            sys::ecs_set_name(self.world.world_ptr_mut(), *self.id(), std::ptr::null());
+        }
+        self
+    }
+
     /// Sets the alias name of the entity.
     ///
     /// # Arguments

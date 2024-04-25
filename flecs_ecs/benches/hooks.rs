@@ -1,8 +1,9 @@
-mod common;
+#![allow(unused)]
+include!("common.rs");
 use common::*;
 
 pub fn add_remove_hooks_components(criterion: &mut Criterion) {
-    let mut group = create_group(criterion, "add_remove_hooks_components");
+    let mut group = criterion.benchmark_group("add_remove_hooks_components");
 
     bench_add_remove_hooks!(group, "1", 1);
     bench_add_remove_hooks!(group, "2", 2);

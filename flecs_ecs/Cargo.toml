@@ -168,49 +168,9 @@ flecs_ecs_sys = { version = "=0.1.0", path = "../flecs_ecs_sys" }
 # Benchmarks
 ######################
 
-# [[bench]]
-# name = "add_operations"
-# harness = false 
-
 [[bench]]
-name = "add_remove_operations"
+name = "mod"
 harness = false
-
-[[bench]]
-name = "create_delete_entities"
-harness = false
-
-# [[bench]]
-# name = "get_mut_remove_operations"
-# harness = false
-
-[[bench]]
-name = "get_operations"
-harness = false
-
-[[bench]]
-name = "has_operations"
-harness = false
-
-[[bench]]
-name = "hooks"
-harness = false
-
-# [[bench]]
-# name = "relationship_operations"
-# harness = false
-
-# [[bench]]
-# name = "remove_operations"
-# harness = false
-
-# [[bench]]
-# name = "set_operations"
-# harness = false
-
-# [[bench]]
-# name = "world"
-# harness = false
 
 ######################
 # Examples

@@ -1,10 +1,9 @@
-mod common;
+#![allow(unused)]
+include!("common.rs");
 use common::*;
 
 pub fn flecs_has_component_not_found(criterion: &mut Criterion) {
-    let mut group = create_group(criterion, "flecs_has_component_not_found");
-
-    // Not found empty entity
+    let mut group = criterion.benchmark_group("flecs_has_component_not_found");
 
     bench_loop_entities!(
        group,
@@ -16,11 +15,9 @@ pub fn flecs_has_component_not_found(criterion: &mut Criterion) {
        ; (reset_component_range, (C, 1, 1)) // Cleanup
     );
 
-    // // Not found entity
-
     bench_loop_entities!(
         group,
-        "not_entity",
+        "not_empty_entity",
         ENTITY_COUNT
         ; (register_component_range, (C, 2, 2)) // Registration so it doesn't affect the benchmark
         ; (add_component_range, (C, 1, 1)) // Preparation
@@ -32,7 +29,7 @@ pub fn flecs_has_component_not_found(criterion: &mut Criterion) {
 }
 
 pub fn flecs_has_components_found(criterion: &mut Criterion) {
-    let mut group = create_group(criterion, "flecs_has_components_found");
+    let mut group = criterion.benchmark_group("flecs_has_components_found");
 
     bench_loop_entities!(
         group,

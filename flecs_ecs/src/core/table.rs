@@ -6,7 +6,7 @@ use crate::core::*;
 use crate::sys;
 
 /// A wrapper class that gives direct access to the component arrays of a table, the table data
-#[derive(Debug)]
+#[derive(Debug, Copy)]
 pub struct Table<'a> {
     world: WorldRef<'a>,
     table: NonNull<TableT>,

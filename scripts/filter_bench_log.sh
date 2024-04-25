@@ -12,7 +12,7 @@ awk '{
             unit = a[3];
             timing = a[4];         
         }
-        title_width = 80;            
+        title_width = 50;            
         padding = title_width - length(title);
         printf "%-*s %s %s\n", title_width, title, timing, unit;
     }
