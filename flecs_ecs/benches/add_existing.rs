@@ -2,7 +2,7 @@
 include!("common.rs");
 use common::*;
 
-pub fn flecs_add_existing_operations(criterion: &mut Criterion) {
+pub fn add_existing_operations(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_add_existing");
 
     ////////////////////////
@@ -96,7 +96,7 @@ pub fn flecs_add_existing_operations(criterion: &mut Criterion) {
     group.finish();
 }
 
-pub fn flecs_add_existing_cmd(criterion: &mut Criterion) {
+pub fn add_existing_cmd(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_add_existing_cmd");
 
     ////////////////////////
@@ -189,11 +189,3 @@ pub fn flecs_add_existing_cmd(criterion: &mut Criterion) {
 
     group.finish();
 }
-
-criterion_group!(
-    benches,
-    flecs_add_existing_operations,
-    flecs_add_existing_cmd
-);
-
-criterion_main!(benches);

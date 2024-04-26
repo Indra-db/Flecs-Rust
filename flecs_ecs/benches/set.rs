@@ -2,7 +2,7 @@
 include!("common.rs");
 use common::*;
 
-pub fn flecs_set_remove(criterion: &mut Criterion) {
+pub fn set_remove(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_set");
 
     bench_loop_entities!(
@@ -46,7 +46,7 @@ pub fn flecs_set_remove(criterion: &mut Criterion) {
     );
 }
 
-pub fn flecs_set_remove_cmd(criterion: &mut Criterion) {
+pub fn set_remove_cmd(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_set_remove_cmd");
 
     bench_loop_entities!(
@@ -90,7 +90,7 @@ pub fn flecs_set_remove_cmd(criterion: &mut Criterion) {
     );
 }
 
-pub fn flecs_set_found(criterion: &mut Criterion) {
+pub fn set_found(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_set_found");
 
     bench_loop_entities!(
@@ -134,7 +134,7 @@ pub fn flecs_set_found(criterion: &mut Criterion) {
     );
 }
 
-pub fn flecs_set_found_cmd(criterion: &mut Criterion) {
+pub fn set_found_cmd(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_set_found_cmd");
 
     bench_loop_entities!(

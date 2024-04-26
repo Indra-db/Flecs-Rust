@@ -46,8 +46,8 @@ criterion_main!(
     has,
     get,
     set,
-    add_remove,
-    create_delete_entities,
+    g_add_remove,
+    g_create_delete_entities,
     hooks,
     observers,
     entity,
@@ -58,59 +58,59 @@ criterion_group!(
     name = has;
     config = ecs_default_criterion();
     targets =
-    flecs_has_component_not_found,
-    flecs_has_components_found
+    has_component_not_found,
+    has_components_found
 );
 
 criterion_group!(
     name = get;
     config = ecs_default_criterion();
     targets =
-    flecs_get_component_not_found,
-    flecs_get_components_found,
-    flecs_get_components_not_found,
-    flecs_get_mut_components_found,
-    flecs_get_mut_components_not_found,
-    flecs_ensure_mut_components_found,
-    flecs_ensure_mut_components_found_cmd,
-    flecs_ensure_mut_not_found_and_remove,
-    flecs_ensure_mut_not_found_and_remove_cmd,
+    get_component_not_found,
+    get_components_found,
+    get_components_not_found,
+    get_mut_components_found,
+    get_mut_components_not_found,
+    ensure_mut_components_found,
+    ensure_mut_components_found_cmd,
+    ensure_mut_not_found_and_remove,
+    ensure_mut_not_found_and_remove_cmd,
 );
 
 criterion_group!(
     name = add_existing;
     config = ecs_default_criterion();
     targets =
-    flecs_add_existing_operations,
-    flecs_add_existing_cmd,
+    add_existing_operations,
+    add_existing_cmd,
 );
 
 criterion_group!(
-    name = add_remove;
+    name = g_add_remove;
     config = ecs_default_criterion();
     targets =
-    flecs_add_remove,
-    flecs_add_remove_cmd,
-    flecs_add_remove_1_tag_to_entity_with_n_components
+    add_remove,
+    add_remove_cmd,
+    add_remove_1_tag_to_entity_with_n_components
 );
 
 criterion_group!(
     name = set;
     config = ecs_default_criterion();
     targets =
-    flecs_set_remove,
-    flecs_set_remove_cmd,
-    flecs_set_found,
-    flecs_set_found_cmd
+    set_remove,
+    set_remove_cmd,
+    set_found,
+    set_found_cmd
 );
 
 criterion_group!(
-    name = create_delete_entities;
+    name = g_create_delete_entities;
     config = ecs_default_criterion();
     targets =
-    flecs_create_delete_entities,
-    flecs_create_delete_entities_cmd,
-    flecs_create_delete_entities_w_tree
+    create_delete_entities,
+    create_delete_entities_cmd,
+    create_delete_entities_w_tree
 );
 
 criterion_group!(
@@ -141,15 +141,15 @@ criterion_group!(
     name = entity;
     config = ecs_default_criterion();
     targets =
-    flecs_entity_set_name
+    entity_set_name
 );
 
 criterion_group!(
     name = event;
     config = ecs_default_criterion();
     targets =
-    flecs_event_emit,
-    flecs_event_emit_propagate,
-    flecs_event_emit_forward,
-    flecs_event_modified
+    event_emit,
+    event_emit_propagate,
+    event_emit_forward,
+    event_modified
 );

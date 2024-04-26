@@ -2,7 +2,7 @@
 include!("common.rs");
 use common::*;
 
-pub fn flecs_entity_set_name(criterion: &mut Criterion) {
+pub fn entity_set_name(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_entity_set_name");
 
     group.bench_function("", |bencher| {

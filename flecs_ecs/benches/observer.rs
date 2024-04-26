@@ -3,7 +3,7 @@ include!("common.rs");
 use common::*;
 
 pub fn observer_create_w_add(criterion: &mut Criterion) {
-    let mut group = criterion.benchmark_group("observer_on_add_event_add_id_for");
+    let mut group = criterion.benchmark_group("flecs_observer_on_add_event_add_id_for");
 
     for entity_count in [100, 1000, 10_000, 50_000] {
         group.bench_function(format!("{} entities", entity_count), |bencher| {

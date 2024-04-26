@@ -2,7 +2,7 @@
 include!("common.rs");
 use common::*;
 
-pub fn flecs_get_component_not_found(criterion: &mut Criterion) {
+pub fn get_component_not_found(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_get_component_not_found");
 
     bench_loop_entities!(
@@ -28,7 +28,7 @@ pub fn flecs_get_component_not_found(criterion: &mut Criterion) {
     group.finish();
 }
 
-pub fn flecs_get_components_found(criterion: &mut Criterion) {
+pub fn get_components_found(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_get_components_found");
 
     bench_loop_entities!(
@@ -74,7 +74,7 @@ pub fn flecs_get_components_found(criterion: &mut Criterion) {
     group.finish();
 }
 
-pub fn flecs_get_components_not_found(criterion: &mut Criterion) {
+pub fn get_components_not_found(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_get_components_not_found");
 
     bench_loop_entities!(
@@ -118,7 +118,7 @@ pub fn flecs_get_components_not_found(criterion: &mut Criterion) {
     );
 }
 
-pub fn flecs_get_mut_components_found(criterion: &mut Criterion) {
+pub fn get_mut_components_found(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_get_mut_components_found");
 
     bench_loop_entities!(
@@ -164,7 +164,7 @@ pub fn flecs_get_mut_components_found(criterion: &mut Criterion) {
     group.finish();
 }
 
-pub fn flecs_get_mut_components_not_found(criterion: &mut Criterion) {
+pub fn get_mut_components_not_found(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_get_mut_components_not_found");
 
     bench_loop_entities!(
@@ -208,7 +208,7 @@ pub fn flecs_get_mut_components_not_found(criterion: &mut Criterion) {
     );
 }
 
-pub fn flecs_ensure_mut_components_found(criterion: &mut Criterion) {
+pub fn ensure_mut_components_found(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_ensure_mut_components_found");
 
     bench_loop_entities!(
@@ -254,7 +254,7 @@ pub fn flecs_ensure_mut_components_found(criterion: &mut Criterion) {
     group.finish();
 }
 
-pub fn flecs_ensure_mut_components_found_cmd(criterion: &mut Criterion) {
+pub fn ensure_mut_components_found_cmd(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_ensure_mut_components_found_cmd");
 
     bench_loop_entities!(
@@ -300,7 +300,7 @@ pub fn flecs_ensure_mut_components_found_cmd(criterion: &mut Criterion) {
     group.finish();
 }
 
-pub fn flecs_ensure_mut_not_found_and_remove(criterion: &mut Criterion) {
+pub fn ensure_mut_not_found_and_remove(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_ensure_mut_not_found_and_remove");
 
     bench_loop_entities!(
@@ -346,7 +346,7 @@ pub fn flecs_ensure_mut_not_found_and_remove(criterion: &mut Criterion) {
     group.finish();
 }
 
-pub fn flecs_ensure_mut_not_found_and_remove_cmd(criterion: &mut Criterion) {
+pub fn ensure_mut_not_found_and_remove_cmd(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_ensure_mut_not_found_and_remove_cmd");
 
     bench_loop_entities!(
@@ -392,7 +392,7 @@ pub fn flecs_ensure_mut_not_found_and_remove_cmd(criterion: &mut Criterion) {
     group.finish();
 }
 
-pub fn flecs_c_get_components(criterion: &mut Criterion) {
+pub fn c_get_components(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_c_get_component");
     let counts = vec![1, 2, 16, 64];
 

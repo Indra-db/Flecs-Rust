@@ -141,7 +141,7 @@ pub mod common {
         }};
     }
 
-    macro_rules! add_entities_w_rnd_range {
+    macro_rules! add_query_entities_w_rnd_range {
         ($world:expr, $component:ty, $count:expr) => {{
         for _ in 0..QUERY_ENTITY_COUNT {
             let entity = $world.entity();
@@ -481,6 +481,7 @@ pub mod common {
     pub(crate) use add_component_on_remove_hook;
     pub(crate) use add_component_range;
     pub(crate) use add_component_range_cmd;
+    pub(crate) use add_query_entities_w_rnd_range;
     pub(crate) use add_relationship_targets;
     pub(crate) use bench_add_remove_hooks;
     pub(crate) use bench_add_remove_override;

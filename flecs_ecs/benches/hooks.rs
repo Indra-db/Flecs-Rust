@@ -12,7 +12,3 @@ pub fn add_remove_hooks_components(criterion: &mut Criterion) {
 
     group.finish();
 }
-
-criterion_group!(benches, add_remove_hooks_components);
-
-criterion_main!(benches);

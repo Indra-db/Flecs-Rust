@@ -2,7 +2,7 @@
 include!("common.rs");
 use common::*;
 
-pub fn flecs_event_emit(criterion: &mut Criterion) {
+pub fn event_emit(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_event_emit");
 
     for observer_count in [0, 1, 10, 100] {
@@ -38,7 +38,7 @@ pub fn flecs_event_emit(criterion: &mut Criterion) {
     }
 }
 
-pub fn flecs_event_emit_propagate(criterion: &mut Criterion) {
+pub fn event_emit_propagate(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_event_emit_propagate_depth");
 
     for depth in [0, 10, 100, 1000] {
@@ -77,7 +77,7 @@ pub fn flecs_event_emit_propagate(criterion: &mut Criterion) {
     }
 }
 
-pub fn flecs_event_emit_forward(criterion: &mut Criterion) {
+pub fn event_emit_forward(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_event_emit_propagate");
 
     for depth in [1, 1000] {
@@ -159,7 +159,7 @@ pub fn flecs_event_emit_forward(criterion: &mut Criterion) {
     }
 }
 
-pub fn flecs_event_modified(criterion: &mut Criterion) {
+pub fn event_modified(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_event_modified");
 
     for observer_count in [0, 1, 10, 100] {

@@ -2,7 +2,7 @@
 include!("common.rs");
 use common::*;
 
-pub fn flecs_has_component_not_found(criterion: &mut Criterion) {
+pub fn has_component_not_found(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_has_component_not_found");
 
     bench_loop_entities!(
@@ -28,7 +28,7 @@ pub fn flecs_has_component_not_found(criterion: &mut Criterion) {
     group.finish();
 }
 
-pub fn flecs_has_components_found(criterion: &mut Criterion) {
+pub fn has_components_found(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_has_components_found");
 
     bench_loop_entities!(
@@ -73,11 +73,3 @@ pub fn flecs_has_components_found(criterion: &mut Criterion) {
 
     group.finish();
 }
-
-criterion_group!(
-    benches,
-    flecs_has_component_not_found,
-    flecs_has_components_found
-);
-
-criterion_main!(benches);

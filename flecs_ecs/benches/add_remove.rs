@@ -2,7 +2,7 @@
 include!("common.rs");
 use common::*;
 
-pub fn flecs_add_remove(criterion: &mut Criterion) {
+pub fn add_remove(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_add_remove");
 
     bench_loop_entities!(
@@ -88,7 +88,7 @@ pub fn flecs_add_remove(criterion: &mut Criterion) {
     group.finish();
 }
 
-pub fn flecs_c_add_remove_tags(criterion: &mut Criterion) {
+pub fn c_add_remove_tags(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_c_add_remove_tags");
     group.bench_function("32_c", |bencher| {
         unsafe {
@@ -120,7 +120,7 @@ pub fn flecs_c_add_remove_tags(criterion: &mut Criterion) {
     group.finish();
 }
 
-pub fn flecs_add_remove_cmd(criterion: &mut Criterion) {
+pub fn add_remove_cmd(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_add_remove_cmd");
 
     bench_loop_entities!(
@@ -206,7 +206,7 @@ pub fn flecs_add_remove_cmd(criterion: &mut Criterion) {
     group.finish();
 }
 
-pub fn flecs_add_remove_1_tag_to_entity_with_n_components(criterion: &mut Criterion) {
+pub fn add_remove_1_tag_to_entity_with_n_components(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_add_remove_1_tag_to_entity_w_components");
 
     bench_loop_entities!(
@@ -251,12 +251,3 @@ pub fn flecs_add_remove_1_tag_to_entity_with_n_components(criterion: &mut Criter
 
     group.finish();
 }
-
-criterion_group!(
-    benches,
-    flecs_add_remove,
-    flecs_add_remove_cmd,
-    flecs_add_remove_1_tag_to_entity_with_n_components
-);
-
-criterion_main!(benches);

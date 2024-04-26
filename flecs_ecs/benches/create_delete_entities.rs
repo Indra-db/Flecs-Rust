@@ -2,7 +2,7 @@
 include!("common.rs");
 use common::*;
 
-pub fn flecs_create_delete_entities(criterion: &mut Criterion) {
+pub fn create_delete_entities(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_create_delete_entities");
 
     group.bench_function("empty", |bencher| {
@@ -51,7 +51,7 @@ pub fn flecs_create_delete_entities(criterion: &mut Criterion) {
     group.finish();
 }
 
-pub fn flecs_create_delete_entities_cmd(criterion: &mut Criterion) {
+pub fn create_delete_entities_cmd(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_create_delete_entities_cmd");
 
     group.bench_function("empty", |bencher| {
@@ -104,7 +104,7 @@ pub fn flecs_create_delete_entities_cmd(criterion: &mut Criterion) {
     group.finish();
 }
 
-pub fn flecs_create_delete_entities_w_tree(criterion: &mut Criterion) {
+pub fn create_delete_entities_w_tree(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_create_delete_entities_w_tree");
 
     for width in [1, 10, 100, 1000] {
