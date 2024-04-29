@@ -2,7 +2,7 @@ use std::ffi::c_void;
 
 use crate::core::*;
 
-pub trait ReactorAPI<'a, T>: Builder<'a> + private::internal_ReactorAPI<'a, T>
+pub trait ReactorAPI<'a, P, T>: Builder<'a> + private::internal_ReactorAPI<'a, P, T>
 where
     T: Iterable,
 {
@@ -73,7 +73,7 @@ where
 
     fn each_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
-        Func: FnMut(&mut Iter, usize, T::TupleType<'_>),
+        Func: FnMut(&mut Iter<P>, usize, T::TupleType<'_>),
     {
         let binding_ctx = self.get_binding_context();
 
@@ -92,7 +92,7 @@ where
 
     fn iter_only<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
-        Func: FnMut(&mut Iter),
+        Func: FnMut(&mut Iter<P>),
     {
         let binding_ctx = self.get_binding_context();
         let iter_func = Box::new(func);
@@ -109,7 +109,7 @@ where
 
     fn iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
-        Func: FnMut(&mut Iter, T::TupleSliceType<'_>),
+        Func: FnMut(&mut Iter<P>, T::TupleSliceType<'_>),
     {
         let binding_ctx = self.get_binding_context();
 
@@ -128,8 +128,8 @@ where
 }
 
 macro_rules! implement_reactor_api {
-    ($type:ty) => {
-        impl<'a, T> internal_ReactorAPI<'a, T> for $type
+    ($param:ty, $type:ty) => {
+        impl<'a, T> internal_ReactorAPI<'a, $param, T> for $type
         where
             T: Iterable,
         {
@@ -158,7 +158,59 @@ macro_rules! implement_reactor_api {
             }
         }
 
-        impl<'a, T> ReactorAPI<'a, T> for $type
+        impl<'a, T> ReactorAPI<'a, $param, T> for $type
+        where
+            T: Iterable,
+        {
+            fn set_run_callback(
+                &mut self,
+                callback: flecs_ecs::sys::ecs_iter_action_t,
+            ) -> &mut Self {
+                self.desc.run = callback;
+                self
+            }
+
+            // fn set_instanced(&mut self, instanced: bool) {
+            //     self.is_instanced = instanced;
+            // }
+
+            fn set_context(&mut self, context: *mut c_void) -> &mut Self {
+                self.desc.ctx = context;
+                self
+            }
+        }
+    };
+    ($type:ty) => {
+        impl<'a, P, T> internal_ReactorAPI<'a, P, T> for $type
+        where
+            T: Iterable,
+        {
+            fn set_binding_context(&mut self, binding_ctx: *mut c_void) -> &mut Self {
+                self.desc.binding_ctx = binding_ctx;
+                self
+            }
+
+            fn set_binding_context_free(
+                &mut self,
+                binding_ctx_free: flecs_ecs_sys::ecs_ctx_free_t,
+            ) -> &mut Self {
+                self.desc.binding_ctx_free = binding_ctx_free;
+                self
+            }
+
+            fn desc_binding_context(&self) -> *mut c_void {
+                self.desc.binding_ctx
+            }
+
+            fn set_desc_callback(
+                &mut self,
+                callback: Option<unsafe extern "C" fn(*mut flecs_ecs_sys::ecs_iter_t)>,
+            ) {
+                self.desc.callback = callback;
+            }
+        }
+
+        impl<'a, P, T> ReactorAPI<'a, P, T> for $type
         where
             T: Iterable,
         {

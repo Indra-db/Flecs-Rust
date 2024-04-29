@@ -26,7 +26,7 @@ pub mod private {
 
     #[allow(non_camel_case_types)]
     #[doc(hidden)]
-    pub trait internal_ReactorAPI<'a, T>
+    pub trait internal_ReactorAPI<'a, P, T>
     where
         T: Iterable,
     {
@@ -148,7 +148,7 @@ pub mod private {
         #[doc(alias = "iter_invoker::invoke_callback")]
         unsafe extern "C" fn run_each_iter<Func>(iter: *mut IterT)
         where
-            Func: FnMut(&mut Iter, usize, T::TupleType<'_>),
+            Func: FnMut(&mut Iter<P>, usize, T::TupleType<'_>),
         {
             ecs_assert!(
                 {
@@ -196,7 +196,7 @@ pub mod private {
         #[doc(alias = "iter_invoker::invoke_callback")]
         unsafe extern "C" fn run_iter_only<Func>(iter: *mut IterT)
         where
-            Func: FnMut(&mut Iter),
+            Func: FnMut(&mut Iter<P>),
         {
             unsafe {
                 let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
@@ -233,7 +233,7 @@ pub mod private {
         #[doc(alias = "iter_invoker::invoke_callback")]
         unsafe extern "C" fn run_iter<Func>(iter: *mut IterT)
         where
-            Func: FnMut(&mut Iter, T::TupleSliceType<'_>),
+            Func: FnMut(&mut Iter<P>, T::TupleSliceType<'_>),
         {
             let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
             let iter_func = (*ctx).iter.unwrap();
@@ -274,23 +274,23 @@ pub mod private {
         }
 
         extern "C" fn on_free_each_iter(ptr: *mut c_void) {
-            let ptr_func: *mut fn(&mut Iter, usize, T::TupleType<'_>) =
-                ptr as *mut fn(&mut Iter, usize, T::TupleType<'_>);
+            let ptr_func: *mut fn(&mut Iter<P>, usize, T::TupleType<'_>) =
+                ptr as *mut fn(&mut Iter<P>, usize, T::TupleType<'_>);
             unsafe {
                 ptr::drop_in_place(ptr_func);
             }
         }
 
         extern "C" fn on_free_iter_only(ptr: *mut c_void) {
-            let ptr_func: *mut fn(&Iter) = ptr as *mut fn(&Iter);
+            let ptr_func: *mut fn(&Iter<P>) = ptr as *mut fn(&Iter<P>);
             unsafe {
                 ptr::drop_in_place(ptr_func);
             }
         }
 
         extern "C" fn on_free_iter(ptr: *mut c_void) {
-            let ptr_func: *mut fn(&Iter, T::TupleSliceType<'_>) =
-                ptr as *mut fn(&Iter, T::TupleSliceType<'_>);
+            let ptr_func: *mut fn(&Iter<P>, T::TupleSliceType<'_>) =
+                ptr as *mut fn(&Iter<P>, T::TupleSliceType<'_>);
             unsafe {
                 ptr::drop_in_place(ptr_func);
             }

@@ -40,11 +40,9 @@ pub fn main() -> Result<Snap, String> {
 
     // Create an observer for the CloseRequested event to listen to any entity.
     world
-        .observer::<()>()
-        .add_event::<CloseRequested>()
-        .with::<&flecs::Any>()
+        .observer::<CloseRequested, &flecs::Any>()
         .each_iter(|it, _index, _| {
-            let close_requested = unsafe { it.param::<CloseRequested>() };
+            let close_requested = it.param();
             fprintln!(
                 snap,
                 "Close request with reason: {:?}",
@@ -84,14 +82,14 @@ pub fn main() -> Result<Snap, String> {
         );
     });
 
-    widget.emit::<Click>();
+    widget.emit(&mut Click);
 
-    widget.emit_payload(Resize {
+    widget.emit(&mut Resize {
         width: 100.0,
         height: 200.0,
     });
 
-    widget.emit_payload(CloseRequested {
+    widget.emit(&mut CloseRequested {
         reason: CloseReason::User,
     });
 

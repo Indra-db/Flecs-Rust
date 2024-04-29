@@ -1,13 +1,86 @@
-use std::ffi::c_void;
+use std::marker::PhantomData;
+use std::{alloc::Layout, os::raw::c_void};
+
+use flecs_ecs_derive::Component;
 
 use crate::core::*;
 use crate::sys;
 
-/// Event builder trait to implement '`set_event_data`' for untyped and typed `EventBuilderUntyped`
-pub trait EventBuilderImpl<'a> {
-    type Data;
+// Marker type for events with no type
+#[doc(hidden)]
+#[derive(Component)]
+pub struct UntypedEvent;
 
-    fn get_data(&mut self) -> &mut EventBuilderUntyped<'a>;
+/// A strongly-typed interface wrapper around `EventBuilderUntyped` for constructing events with specific data.
+///
+/// # Type parameters
+///
+/// * `T` - The type of the event data to set for the event, which must implement `ComponentId`.
+///
+/// Ensures the use of appropriate data types for events, enhancing type safety and data integrity.
+/// This design aims to prevent the utilization of incompatible components as event data,
+/// thereby ensuring greater explicitness and correctness in event handling.
+pub struct EventBuilder<'a, T: ComponentId> {
+    pub world: WorldRef<'a>,
+    pub(crate) desc: sys::ecs_event_desc_t,
+    pub(crate) ids: TypeT,
+    pub(crate) ids_array: [IdT; sys::FLECS_EVENT_DESC_MAX as usize],
+    _phantom: std::marker::PhantomData<T>,
+}
+
+impl<'a, T: ComponentId> EventBuilder<'a, T> {
+    /// Create a new typed `EventBuilderUntyped`
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world to create the `EventBuilderUntyped` in
+    /// * `event` - The event to create the `EventBuilderUntyped` for
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `event_builder_typed::event_builder_typed`
+    #[doc(alias = "event_builder_typed::event_builder_typed")]
+    pub fn new(world: impl IntoWorld<'a>) -> Self {
+        let mut obj = Self {
+            world: world.world(),
+            desc: Default::default(),
+            ids: Default::default(),
+            ids_array: Default::default(),
+            _phantom: PhantomData,
+        };
+        obj.desc.event = T::get_id(world);
+        obj
+    }
+
+    /// Create a new (untyped) `EventBuilderUntyped`
+    ///
+    /// # Safety
+    /// Caller must ensure either that `event` represents a ZST
+    /// or the event data is set to point to the appropriate type
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The world to create the `EventBuilderUntyped` in
+    /// * `event` - The event to create the `EventBuilderUntyped` for
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `event_builder_base::event_builder_base`
+    #[doc(alias = "event_builder_base::event_builder_base")]
+    pub unsafe fn new_untyped(
+        world: impl IntoWorld<'a>,
+        event: impl Into<Entity>,
+    ) -> EventBuilder<'a, UntypedEvent> {
+        let mut obj = EventBuilder {
+            world: world.world(),
+            desc: Default::default(),
+            ids: Default::default(),
+            ids_array: Default::default(),
+            _phantom: PhantomData,
+        };
+        obj.desc.event = *event.into();
+        obj
+    }
 
     /// Add component id or pair to emit for the event
     ///
@@ -19,11 +92,10 @@ pub trait EventBuilderImpl<'a> {
     ///
     /// * C++ API: `event_builder_base::id`
     #[doc(alias = "event_builder_base::id")]
-    fn add_id(&mut self, id: impl IntoId) -> &mut Self {
+    pub fn add_id(&mut self, id: impl IntoId) -> &mut Self {
         let id = *id.into();
-        let data = self.get_data();
-        let ids = &mut data.ids;
-        let ids_array = &mut data.ids_array;
+        let ids = &mut self.ids;
+        let ids_array = &mut self.ids_array;
         ids.array = ids_array.as_mut_ptr();
         unsafe {
             *ids.array.add(ids.count as usize) = id;
@@ -42,11 +114,11 @@ pub trait EventBuilderImpl<'a> {
     ///
     /// * C++ API: `event_builder_base::id`
     #[doc(alias = "event_builder_base::id")]
-    fn add<T>(&mut self) -> &mut Self
+    pub fn add<C>(&mut self) -> &mut Self
     where
-        T: IntoComponentId,
+        C: IntoComponentId,
     {
-        let world = self.get_data().world;
+        let world = self.world;
         self.add_id(T::get_id(world))
     }
 
@@ -64,12 +136,21 @@ pub trait EventBuilderImpl<'a> {
     ///
     /// * C++ API: `event_builder_base::id`
     #[doc(alias = "event_builder_base::id")]
-    fn add_first_to_emit<First>(&mut self, second: impl Into<Entity>) -> &mut Self
+    fn add_first<First>(&mut self, second: impl Into<Entity>) -> &mut Self
     where
         First: ComponentId,
     {
-        let world = self.get_data().world;
+        let world = self.world;
         self.add_id(ecs_pair(First::get_id(world), *second.into()))
+    }
+
+    #[doc(alias = "event_builder_base::id")]
+    fn add_second<Second>(&mut self, first: impl Into<Entity>) -> &mut Self
+    where
+        Second: ComponentId,
+    {
+        let world = self.world;
+        self.add_id(ecs_pair(*first.into(), Second::get_id(world)))
     }
 
     /// Set the entity to emit for the event
@@ -82,8 +163,8 @@ pub trait EventBuilderImpl<'a> {
     ///
     /// * C++ API: `event_builder_base::entity`
     #[doc(alias = "event_builder_base::entity")]
-    fn set_entity_to_emit(&mut self, entity: impl Into<Entity>) -> &mut Self {
-        let desc = &mut self.get_data().desc;
+    pub fn target(&mut self, entity: impl Into<Entity>) -> &mut Self {
+        let desc = &mut self.desc;
         desc.entity = *entity.into();
         self
     }
@@ -100,46 +181,38 @@ pub trait EventBuilderImpl<'a> {
     ///
     /// * C++ API: `event_builder_base::table`
     #[doc(alias = "event_builder_base::table")]
-    fn set_table_to_emit(&mut self, table: impl IntoTable, offset: i32, count: i32) -> &mut Self {
-        let desc = &mut self.get_data().desc;
+    pub fn table(&mut self, table: impl IntoTable, offset: i32, count: i32) -> &mut Self {
+        let desc = &mut self.desc;
         desc.table = table.table_ptr_mut();
         desc.offset = offset;
         desc.count = count;
         self
     }
 
-    /// Emit the event
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `event_builder_base::emit`
-    #[doc(alias = "event_builder_base::emit")]
-    fn emit(&mut self) {
-        let data = self.get_data();
-        let ids = &mut data.ids;
-        let ids_array = &mut data.ids_array;
-        let desc = &mut data.desc;
-        let world = data.world;
+    pub fn emit(&mut self, data: &mut T) {
+        let ids = &mut self.ids;
+        let ids_array = &mut self.ids_array;
+        let desc = &mut self.desc;
+        let world = self.world;
         ids.array = ids_array.as_mut_ptr();
+        desc.param = data as *mut T as *mut c_void;
         desc.ids = ids;
         desc.observable = world.real_world().world_ptr_mut() as *mut c_void;
         unsafe { sys::ecs_emit(world.world_ptr_mut(), desc) };
     }
 
-    fn enqueue(&mut self) {
-        let data = self.get_data();
-        let ids = &mut data.ids;
-        let ids_array = &mut data.ids_array;
-        let desc = &mut data.desc;
-        let world = data.world;
+    pub fn enqueue(&mut self, data: T) {
+        let ids = &mut self.ids;
+        let ids_array = &mut self.ids_array;
+        let desc = &mut self.desc;
+        let world = self.world;
         ids.array = ids_array.as_mut_ptr();
+        desc.param = Box::leak(Box::new(data)) as *mut T as *mut c_void;
         desc.ids = ids;
         desc.observable = world.real_world().world_ptr_mut() as *mut c_void;
         unsafe {
             sys::ecs_enqueue(world.world_ptr_mut(), desc as *mut sys::ecs_event_desc_t);
+            std::alloc::dealloc(desc.param as *mut u8, Layout::new::<T>());
         };
     }
-
-    fn set_event_data(&mut self, data: Self::Data) -> &mut Self;
-    fn set_const_event_data(&mut self, data: Self::Data) -> &mut Self;
 }

@@ -9,9 +9,8 @@ pub fn main() -> Result<Snap, String> {
 
     // Create an observer for three events
     world
-        .observer::<&Position>()
-        .add_event::<flecs::OnAdd>() //or .add_event_id(OnAdd::ID)
-        .add_event::<flecs::OnRemove>()
+        .observer::<flecs::OnAdd, &Position>()
+        .add_event::<flecs::OnRemove>() //or .add_event_id(OnRemove::ID)
         .add_event::<flecs::OnSet>()
         .each_iter(|it, index, pos| {
             if it.event() == flecs::OnAdd::ID {

@@ -12,8 +12,7 @@ pub fn main() -> Result<Snap, String> {
 
     // Create an observer for three events
     world
-        .observer::<&Position>()
-        .add_event::<MyEvent>()
+        .observer::<MyEvent, &Position>()
         .each_iter(|it, index, _pos| {
             fprintln!(
                 snap,
@@ -31,10 +30,10 @@ pub fn main() -> Result<Snap, String> {
 
     // Emit the custom event. This triggers the observer.
     world
-        .event::<MyEvent>()
+        .event()
         .add::<Position>()
-        .set_entity_to_emit(entity)
-        .emit();
+        .target(entity)
+        .emit(&mut MyEvent);
 
     Ok(snap)
 

@@ -3251,8 +3251,8 @@ impl World {
     ///
     /// * C++ API: `world::event`
     #[doc(alias = "world::event")]
-    pub unsafe fn event_id(&self, event: impl Into<Entity>) -> EventBuilderUntyped {
-        EventBuilderUntyped::new(self, event)
+    pub unsafe fn event_id(&self, event: impl Into<Entity>) -> EventBuilder<UntypedEvent> {
+        EventBuilder::<UntypedEvent>::new_untyped(self, event)
     }
 
     /// Create a new event.
@@ -3309,11 +3309,11 @@ impl World {
     ///
     /// * C++ API: `world::observer`
     #[doc(alias = "world::observer")]
-    pub fn observer<Components>(&self) -> ObserverBuilder<Components>
+    pub fn observer<Event: ComponentId, Components>(&self) -> ObserverBuilder<Event, Components>
     where
         Components: Iterable,
     {
-        ObserverBuilder::<Components>::new(self)
+        ObserverBuilder::<Event, Components>::new(self)
     }
 
     /// Create a new named observer.
@@ -3334,11 +3334,14 @@ impl World {
     ///
     /// * C++ API: `world::observer`
     #[doc(alias = "world::observer")]
-    pub fn observer_named<'a, Components>(&'a self, name: &CStr) -> ObserverBuilder<'a, Components>
+    pub fn observer_named<'a, Event: ComponentId, Components>(
+        &'a self,
+        name: &CStr,
+    ) -> ObserverBuilder<'a, Event, Components>
     where
         Components: Iterable,
     {
-        ObserverBuilder::<Components>::new_named(self, name)
+        ObserverBuilder::<Event, Components>::new_named(self, name)
     }
 }
 

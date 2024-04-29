@@ -15,22 +15,16 @@ use crate::sys;
 /// `ObserverBuilder` is used to configure and build Observers.
 /// Observers are systems that react to events.
 /// Observers let applications register callbacks for ECS events.
-pub struct ObserverBuilder<'a, T>
-where
-    T: Iterable,
-{
+pub struct ObserverBuilder<'a, P = UntypedEvent, T: Iterable = ()> {
     desc: sys::ecs_observer_desc_t,
     term_builder: TermBuilder,
     world: WorldRef<'a>,
     event_count: i32,
     is_instanced: bool,
-    _phantom: std::marker::PhantomData<&'a T>,
+    _phantom: std::marker::PhantomData<&'a (T, P)>,
 }
 
-impl<'a, T> ObserverBuilder<'a, T>
-where
-    T: Iterable,
-{
+impl<'a, P: ComponentId, T: Iterable> ObserverBuilder<'a, P, T> {
     /// Create a new observer builder
     ///
     /// # Arguments
@@ -46,7 +40,7 @@ where
         let mut obj = Self {
             desc,
             term_builder: TermBuilder::default(),
-            event_count: 0,
+            event_count: 1,
             is_instanced: false,
             world: world.world(),
             _phantom: std::marker::PhantomData,
@@ -54,6 +48,7 @@ where
 
         obj.desc.entity =
             unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &Default::default()) };
+        obj.desc.events[0] = P::get_id(world);
 
         T::populate(&mut obj);
         obj
@@ -75,7 +70,7 @@ where
         let mut obj = Self {
             desc,
             term_builder: TermBuilder::default(),
-            event_count: 0,
+            event_count: 1,
             is_instanced: false,
             world: world.world(),
             _phantom: std::marker::PhantomData,
@@ -88,6 +83,25 @@ where
         };
 
         obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world_ptr_mut(), &entity_desc) };
+        obj.desc.events[0] = P::get_id(world);
+
+        T::populate(&mut obj);
+        obj
+    }
+
+    pub fn new_untyped(world: impl IntoWorld<'a>) -> ObserverBuilder<'a, (), T> {
+        let desc = Default::default();
+        let mut obj = ObserverBuilder {
+            desc,
+            term_builder: TermBuilder::default(),
+            event_count: 0,
+            is_instanced: false,
+            world: world.world(),
+            _phantom: std::marker::PhantomData,
+        };
+
+        obj.desc.entity =
+            unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &Default::default()) };
 
         T::populate(&mut obj);
         obj
@@ -122,7 +136,9 @@ where
         T::populate(&mut obj);
         obj
     }
+}
 
+impl<'a, P, T: Iterable> ObserverBuilder<'a, P, T> {
     /// Returns the event count of the builder
     pub fn event_count(&self) -> i32 {
         self.event_count
@@ -138,12 +154,13 @@ where
     ///
     /// * C++ API: `observer_builder_i::event`
     #[doc(alias = "observer_builder_i::event")]
-    pub fn add_event_id(&mut self, event: impl Into<Entity>) -> &mut Self {
+    pub fn add_event_id(&mut self, event: impl Into<Entity>) -> &mut ObserverBuilder<(), T> {
         let event = *event.into();
         let event_count = self.event_count as usize;
         self.event_count += 1;
         self.desc.events[event_count] = event;
-        self
+        // SAFETY: Same layout
+        unsafe { std::mem::transmute(self) }
     }
 
     /// Specify the event(s) for when the observer should run.
@@ -156,7 +173,7 @@ where
     ///
     /// * C++ API: `observer_builder_i::event`
     #[doc(alias = "observer_builder_i::event")]
-    pub fn add_event<E>(&mut self) -> &mut Self
+    pub fn add_event<E>(&mut self) -> &mut ObserverBuilder<(), T>
     where
         E: ComponentId,
     {
@@ -164,7 +181,8 @@ where
         self.event_count += 1;
         let id = E::get_id(self.world());
         self.desc.events[event_count] = id;
-        self
+        // SAFETY: Same layout
+        unsafe { std::mem::transmute(self) }
     }
 
     /// Invoke observer for anything that matches its filter on creation
@@ -184,7 +202,7 @@ where
 }
 
 #[doc(hidden)]
-impl<'a, T: Iterable> internals::QueryConfig<'a> for ObserverBuilder<'a, T> {
+impl<'a, P, T: Iterable> internals::QueryConfig<'a> for ObserverBuilder<'a, P, T> {
     #[inline(always)]
     fn term_builder(&self) -> &TermBuilder {
         &self.term_builder
@@ -205,11 +223,11 @@ impl<'a, T: Iterable> internals::QueryConfig<'a> for ObserverBuilder<'a, T> {
         &mut self.desc.query
     }
 }
-impl<'a, T: Iterable> TermBuilderImpl<'a> for ObserverBuilder<'a, T> {}
+impl<'a, P, T: Iterable> TermBuilderImpl<'a> for ObserverBuilder<'a, P, T> {}
 
-impl<'a, T: Iterable> QueryBuilderImpl<'a> for ObserverBuilder<'a, T> {}
+impl<'a, P, T: Iterable> QueryBuilderImpl<'a> for ObserverBuilder<'a, P, T> {}
 
-impl<'a, T> Builder<'a> for ObserverBuilder<'a, T>
+impl<'a, P, T> Builder<'a> for ObserverBuilder<'a, P, T>
 where
     T: Iterable,
 {
@@ -226,10 +244,10 @@ where
     }
 }
 
-impl<'a, T: Iterable> IntoWorld<'a> for ObserverBuilder<'a, T> {
+impl<'a, P, T: Iterable> IntoWorld<'a> for ObserverBuilder<'a, P, T> {
     fn world(&self) -> WorldRef<'a> {
         self.world
     }
 }
 
-implement_reactor_api!(ObserverBuilder<'a, T>);
+implement_reactor_api!(ObserverBuilder<'a, P, T>);
