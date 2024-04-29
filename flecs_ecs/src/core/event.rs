@@ -184,13 +184,13 @@ impl<'a, T> EventBuilder<'a, T> {
         self
     }
 
-    pub fn emit(&mut self, data: &mut T) {
+    pub fn emit(&mut self, data: &T) {
         let ids = &mut self.ids;
         let ids_array = &mut self.ids_array;
         let desc = &mut self.desc;
         let world = self.world;
         ids.array = ids_array.as_mut_ptr();
-        desc.param = data as *mut T as *mut c_void;
+        desc.const_param = data as *const T as *const c_void;
         desc.ids = ids;
         desc.observable = world.real_world().world_ptr_mut() as *mut c_void;
         unsafe { sys::ecs_emit(world.world_ptr_mut(), desc) };

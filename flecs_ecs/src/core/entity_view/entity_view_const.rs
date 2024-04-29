@@ -2316,7 +2316,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
     pub unsafe fn emit_id(self, event: impl Into<Entity>) {
-        self.world().event_id(event).target(self).emit(&mut ());
+        self.world().event_id(event).target(self).emit(&());
     }
 
     /// Emit event with an immutable payload for entity.
@@ -2329,7 +2329,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
-    pub fn emit<T: ComponentId>(self, event: &mut T) {
+    pub fn emit<T: ComponentId>(self, event: &T) {
         self.world().event().target(self).emit(event);
     }
 
@@ -2485,7 +2485,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::observe`
     #[doc(alias = "entity_builder::observe")]
-    pub fn observe_payload<C>(self, func: impl FnMut(&mut C)) -> Self
+    pub fn observe_payload<C>(self, func: impl FnMut(&C)) -> Self
     where
         C: ComponentId + NotEmptyComponent,
     {
@@ -2494,7 +2494,7 @@ impl<'a> EntityView<'a> {
 
     fn observe_payload_impl<C, Func>(self, func: Func) -> Self
     where
-        Func: FnMut(&mut C),
+        Func: FnMut(&C),
         C: ComponentId,
     {
         let new_binding_ctx = Box::<ObserverEntityBindingCtx>::default();
@@ -2530,7 +2530,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::observe`
     #[doc(alias = "entity_builder::observe")]
-    pub fn observe_payload_entity<C>(self, func: impl FnMut(&mut EntityView, &mut C)) -> Self
+    pub fn observe_payload_entity<C>(self, func: impl FnMut(&mut EntityView, &C)) -> Self
     where
         C: ComponentId + NotEmptyComponent,
     {
@@ -2539,7 +2539,7 @@ impl<'a> EntityView<'a> {
 
     fn observe_payload_entity_impl<C, Func>(self, func: Func) -> Self
     where
-        Func: FnMut(&mut EntityView, &mut C),
+        Func: FnMut(&mut EntityView, &C),
         C: ComponentId,
     {
         let new_binding_ctx = Box::<ObserverEntityBindingCtx>::default();
@@ -2655,7 +2655,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_payload_observer_delegate::invoke")]
     pub(crate) unsafe extern "C" fn run_payload<C, Func>(iter: *mut IterT)
     where
-        Func: FnMut(&mut C),
+        Func: FnMut(&C),
     {
         let ctx: *mut ObserverEntityBindingCtx = (*iter).binding_ctx as *mut _;
         let empty = (*ctx).payload.unwrap();
@@ -2685,7 +2685,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_payload_observer_delegate::invoke")]
     pub(crate) unsafe extern "C" fn run_payload_entity<C, Func>(iter: *mut IterT)
     where
-        Func: FnMut(&mut EntityView, &mut C),
+        Func: FnMut(&mut EntityView, &C),
     {
         let ctx: *mut ObserverEntityBindingCtx = (*iter).binding_ctx as *mut _;
         let empty = (*ctx).payload_entity.unwrap();

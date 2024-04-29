@@ -33,7 +33,7 @@ pub fn main() -> Result<Snap, String> {
         .event()
         .add::<Position>()
         .target(entity)
-        .emit(&mut MyEvent);
+        .emit(&MyEvent);
 
     Ok(snap)
 

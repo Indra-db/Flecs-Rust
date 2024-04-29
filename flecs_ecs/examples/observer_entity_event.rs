@@ -63,7 +63,7 @@ pub fn main() -> Result<Snap, String> {
     });
 
     // Observe the Resize event on the widget entity.
-    widget.observe_payload(|payload: &mut Resize| {
+    widget.observe_payload(|payload: &Resize| {
         fprintln!(
             snap,
             "widget resized to {{ {}, {} }}!",
@@ -72,7 +72,7 @@ pub fn main() -> Result<Snap, String> {
         );
     });
 
-    widget.observe_payload_entity(|entity, payload: &mut Resize| {
+    widget.observe_payload_entity(|entity, payload: &Resize| {
         fprintln!(
             snap,
             "{} resized to {{ {}, {} }}!",
@@ -82,14 +82,14 @@ pub fn main() -> Result<Snap, String> {
         );
     });
 
-    widget.emit(&mut Click);
+    widget.emit(&Click);
 
-    widget.emit(&mut Resize {
+    widget.emit(&Resize {
         width: 100.0,
         height: 200.0,
     });
 
-    widget.emit(&mut CloseRequested {
+    widget.emit(&CloseRequested {
         reason: CloseReason::User,
     });
 
