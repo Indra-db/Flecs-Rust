@@ -2316,10 +2316,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
     pub unsafe fn emit_id(self, event: impl Into<Entity>) {
-        self.world()
-            .event_id(event)
-            .target(self)
-            .emit(&mut UntypedEvent);
+        self.world().event_id(event).target(self).emit(&mut ());
     }
 
     /// Emit event with an immutable payload for entity.
@@ -2350,10 +2347,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
     pub unsafe fn enqueue_id(self, event: impl Into<Entity>) {
-        self.world()
-            .event_id(event)
-            .target(self)
-            .enqueue(UntypedEvent);
+        self.world().event_id(event).target(self).enqueue(());
     }
 
     /// enqueue event with payload for entity.

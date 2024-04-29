@@ -10,7 +10,7 @@ pub fn main() -> Result<Snap, String> {
 
     let world = World::new();
 
-    // Create an observer for three events
+    // Create an observer for the custom event
     world
         .observer::<MyEvent, &Position>()
         .each_iter(|it, index, _pos| {

@@ -1,15 +1,8 @@
 use std::marker::PhantomData;
 use std::{alloc::Layout, os::raw::c_void};
 
-use flecs_ecs_derive::Component;
-
 use crate::core::*;
 use crate::sys;
-
-// Marker type for events with no type
-#[doc(hidden)]
-#[derive(Component)]
-pub struct UntypedEvent;
 
 /// A strongly-typed interface wrapper around `EventBuilderUntyped` for constructing events with specific data.
 ///
@@ -20,7 +13,7 @@ pub struct UntypedEvent;
 /// Ensures the use of appropriate data types for events, enhancing type safety and data integrity.
 /// This design aims to prevent the utilization of incompatible components as event data,
 /// thereby ensuring greater explicitness and correctness in event handling.
-pub struct EventBuilder<'a, T: ComponentId> {
+pub struct EventBuilder<'a, T = ()> {
     pub world: WorldRef<'a>,
     pub(crate) desc: sys::ecs_event_desc_t,
     pub(crate) ids: TypeT,
@@ -29,7 +22,7 @@ pub struct EventBuilder<'a, T: ComponentId> {
 }
 
 impl<'a, T: ComponentId> EventBuilder<'a, T> {
-    /// Create a new typed `EventBuilderUntyped`
+    /// Create a new typed `EventBuilder`
     ///
     /// # Arguments
     ///
@@ -51,7 +44,9 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         obj.desc.event = T::get_id(world);
         obj
     }
+}
 
+impl<'a, T> EventBuilder<'a, T> {
     /// Create a new (untyped) `EventBuilderUntyped`
     ///
     /// # Safety
@@ -70,7 +65,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     pub unsafe fn new_untyped(
         world: impl IntoWorld<'a>,
         event: impl Into<Entity>,
-    ) -> EventBuilder<'a, UntypedEvent> {
+    ) -> EventBuilder<'a, ()> {
         let mut obj = EventBuilder {
             world: world.world(),
             desc: Default::default(),
@@ -119,7 +114,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         C: IntoComponentId,
     {
         let world = self.world;
-        self.add_id(T::get_id(world))
+        self.add_id(C::get_id(world))
     }
 
     /// Add a pair of components to emit for the event
@@ -211,7 +206,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         desc.ids = ids;
         desc.observable = world.real_world().world_ptr_mut() as *mut c_void;
         unsafe {
-            sys::ecs_enqueue(world.world_ptr_mut(), desc as *mut sys::ecs_event_desc_t);
+            sys::ecs_enqueue(world.world_ptr_mut(), desc);
             std::alloc::dealloc(desc.param as *mut u8, Layout::new::<T>());
         };
     }

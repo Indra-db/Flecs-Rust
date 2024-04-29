@@ -3251,8 +3251,8 @@ impl World {
     ///
     /// * C++ API: `world::event`
     #[doc(alias = "world::event")]
-    pub unsafe fn event_id(&self, event: impl Into<Entity>) -> EventBuilder<UntypedEvent> {
-        EventBuilder::<UntypedEvent>::new_untyped(self, event)
+    pub unsafe fn event_id(&self, event: impl Into<Entity>) -> EventBuilder<()> {
+        EventBuilder::<()>::new_untyped(self, event)
     }
 
     /// Create a new event.

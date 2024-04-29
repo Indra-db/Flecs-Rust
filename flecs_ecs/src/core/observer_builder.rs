@@ -15,7 +15,7 @@ use crate::sys;
 /// `ObserverBuilder` is used to configure and build Observers.
 /// Observers are systems that react to events.
 /// Observers let applications register callbacks for ECS events.
-pub struct ObserverBuilder<'a, P = UntypedEvent, T: Iterable = ()> {
+pub struct ObserverBuilder<'a, P = (), T: Iterable = ()> {
     desc: sys::ecs_observer_desc_t,
     term_builder: TermBuilder,
     world: WorldRef<'a>,
@@ -46,9 +46,9 @@ impl<'a, P: ComponentId, T: Iterable> ObserverBuilder<'a, P, T> {
             _phantom: std::marker::PhantomData,
         };
 
+        obj.desc.events[0] = P::get_id(world.world());
         obj.desc.entity =
             unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &Default::default()) };
-        obj.desc.events[0] = P::get_id(world);
 
         T::populate(&mut obj);
         obj
@@ -82,13 +82,15 @@ impl<'a, P: ComponentId, T: Iterable> ObserverBuilder<'a, P, T> {
             ..default::Default::default()
         };
 
+        obj.desc.events[0] = P::get_id(world.world());
         obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world_ptr_mut(), &entity_desc) };
-        obj.desc.events[0] = P::get_id(world);
 
         T::populate(&mut obj);
         obj
     }
+}
 
+impl<'a, P, T: Iterable> ObserverBuilder<'a, P, T> {
     pub fn new_untyped(world: impl IntoWorld<'a>) -> ObserverBuilder<'a, (), T> {
         let desc = Default::default();
         let mut obj = ObserverBuilder {
