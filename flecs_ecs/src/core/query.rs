@@ -175,7 +175,7 @@ where
     ///
     /// * C++ API: `query::get_iter`
     #[doc(alias = "query::get_iter")]
-    fn get_iter_raw(&mut self) -> IterT {
+    unsafe fn get_iter_raw(&mut self) -> IterT {
         unsafe { sys::ecs_query_iter(self.world_ptr_mut(), self.query.as_ptr()) }
     }
 

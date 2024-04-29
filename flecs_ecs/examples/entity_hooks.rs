@@ -12,15 +12,15 @@ pub fn main() -> Result<Snap, String> {
 
     world
         .component::<Position>()
-        .on_add(|entity, _pos| {
+        .on_add(move |entity, _pos| {
             let mut snap = snap_clone_add.lock().unwrap();
             fprintln!(snap, "added Position to {:?}", entity.name());
         })
-        .on_remove(|entity, pos| {
+        .on_remove(move |entity, pos| {
             let mut snap = snap_clone_remove.lock().unwrap();
             fprintln!(snap, "removed {:?} from {:?}", pos, entity.name());
         })
-        .on_set(|entity, pos| {
+        .on_set(move |entity, pos| {
             let mut snap = snap_clone_set.lock().unwrap();
             fprintln!(snap, "set {:?} for {:?}", pos, entity.name());
         });

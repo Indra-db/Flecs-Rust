@@ -1,6 +1,7 @@
 use std::{
     ops::{Deref, DerefMut},
     os::raw::c_void,
+    ptr::NonNull,
 };
 
 use crate::core::*;
@@ -43,8 +44,7 @@ impl<'a> EventBuilderUntyped<'a> {
 }
 
 impl<'a> EventBuilderImpl<'a> for EventBuilderUntyped<'a> {
-    type BuiltType = *mut c_void;
-    type ConstBuiltType = *const c_void;
+    type Data = NonNull<u8>;
 
     fn get_data(&mut self) -> &mut EventBuilderUntyped<'a> {
         self
@@ -54,14 +54,14 @@ impl<'a> EventBuilderImpl<'a> for EventBuilderUntyped<'a> {
     ///
     /// # Arguments
     ///
-    /// * `data` - The data to set for the event which is type-erased of type `*mut c_void`
+    /// * `data` - The data to set for the event which is type-erased
     ///
     /// # See also
     ///
     /// * C++ API: `event_builder_base::ctx`
     #[doc(alias = "event_builder_base::ctx")]
-    fn set_event_data(&mut self, data: Self::ConstBuiltType) -> &mut Self {
-        self.desc.const_param = data as *const c_void;
+    fn set_const_event_data(&mut self, data: Self::Data) -> &mut Self {
+        self.desc.const_param = data.as_ptr() as *const c_void;
         self
     }
 
@@ -75,8 +75,8 @@ impl<'a> EventBuilderImpl<'a> for EventBuilderUntyped<'a> {
     ///
     /// * C++ API: `event_builder_base::ctx`
     #[doc(alias = "event_builder_base::ctx")]
-    fn set_event_data_mut(&mut self, data: Self::BuiltType) -> &mut Self {
-        self.desc.param = data as *mut c_void;
+    fn set_event_data(&mut self, data: Self::Data) -> &mut Self {
+        self.desc.param = data.as_ptr() as *mut c_void;
         self
     }
 }
@@ -137,8 +137,7 @@ impl<'a, T: ComponentId> EventBuilderImpl<'a> for EventBuilder<'a, T>
 where
     T: ComponentId,
 {
-    type BuiltType = &'a mut T;
-    type ConstBuiltType = &'a T;
+    type Data = T;
 
     fn get_data(&mut self) -> &mut EventBuilderUntyped<'a> {
         &mut self.builder
@@ -154,8 +153,8 @@ where
     ///
     /// * C++ API: `event_builder_typed::ctx`
     #[doc(alias = "event_builder_typed::ctx")]
-    fn set_event_data(&mut self, data: Self::ConstBuiltType) -> &mut Self {
-        self.desc.const_param = data as *const T as *const c_void;
+    fn set_const_event_data(&mut self, data: Self::Data) -> &mut Self {
+        self.desc.const_param = Box::leak(Box::new(data)) as *const T as *const c_void;
         self
     }
 
@@ -169,8 +168,8 @@ where
     ///
     /// * C++ API: `event_builder_typed::ctx`
     #[doc(alias = "event_builder_typed::ctx")]
-    fn set_event_data_mut(&mut self, data: Self::BuiltType) -> &mut Self {
-        self.desc.param = data as *const T as *mut c_void;
+    fn set_event_data(&mut self, data: Self::Data) -> &mut Self {
+        self.desc.param = Box::leak(Box::new(data)) as *mut T as *mut c_void;
         self
     }
 }

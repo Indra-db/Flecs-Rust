@@ -16,6 +16,7 @@ fn entity_new() {
 fn entity_new_named() {
     let world = create_world();
     let entity = world.entity_named(c"test");
+
     assert!(entity.is_valid());
     assert_eq!(entity.name(), "test");
 }

@@ -5,8 +5,7 @@ use crate::sys;
 
 /// Event builder trait to implement '`set_event_data`' for untyped and typed `EventBuilderUntyped`
 pub trait EventBuilderImpl<'a> {
-    type BuiltType;
-    type ConstBuiltType;
+    type Data;
 
     fn get_data(&mut self) -> &mut EventBuilderUntyped<'a>;
 
@@ -141,6 +140,6 @@ pub trait EventBuilderImpl<'a> {
         };
     }
 
-    fn set_event_data(&mut self, data: Self::ConstBuiltType) -> &mut Self;
-    fn set_event_data_mut(&mut self, data: Self::BuiltType) -> &mut Self;
+    fn set_event_data(&mut self, data: Self::Data) -> &mut Self;
+    fn set_const_event_data(&mut self, data: Self::Data) -> &mut Self;
 }

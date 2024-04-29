@@ -137,7 +137,7 @@ impl Snap {
     }
 
     #[allow(clippy::mut_from_ref)]
-    pub fn from<'a>(it: &'a flecs_ecs::core::Iter) -> &'a mut Snap {
+    pub fn from<'a>(it: &'a mut flecs_ecs::core::Iter) -> &'a mut Snap {
         unsafe { it.context::<Snap>() }
     }
 
