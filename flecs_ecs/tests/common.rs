@@ -1,6 +1,11 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
+use std::{
+    collections::HashMap,
+    ops::{Deref, DerefMut},
+};
+
 use flecs_ecs::prelude::*;
 
 #[cfg(test)]
@@ -286,6 +291,25 @@ pub struct Templatex {
     pub value: String,
 }
 
+#[derive(Component, Default)]
+pub struct Flags {
+    pub map: HashMap<&'static str, usize>,
+}
+
+impl Deref for Flags {
+    type Target = HashMap<&'static str, usize>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.map
+    }
+}
+
+impl DerefMut for Flags {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.map
+    }
+}
+
 // this component pre-registration is required for the case of if the test cases run in single world application mode (feature flag).
 // since tests run in multi world mode.
 pub fn create_world() -> World {
@@ -357,6 +381,9 @@ pub fn create_world() -> World {
     register_component_multi_world_application::<Template<Position>>(&world_ref, std::ptr::null());
     register_component_multi_world_application::<Template<Velocity>>(&world_ref, std::ptr::null());
     register_component_multi_world_application::<Templatex>(&world_ref, std::ptr::null());
+    register_component_multi_world_application::<Flags>(&world_ref, std::ptr::null());
+
+    world.emplace(Flags::default());
 
     world
 }

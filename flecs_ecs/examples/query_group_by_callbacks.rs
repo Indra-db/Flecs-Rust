@@ -15,16 +15,14 @@ extern "C" fn callback_group_create(
     group_id: u64,
     _group_by_ctx: *mut c_void,
 ) -> *mut c_void {
-    let snap = unsafe { &mut *(_group_by_ctx as *mut Snap) };
-
     let world_ref = unsafe { WorldRef::from_ptr(world) };
     fprintln!(
-        snap,
+        world_ref,
         "Group created: {:?}",
         world_ref.world().entity_from_id(group_id).name()
     );
 
-    fprintln!(snap);
+    fprintln!(&world_ref);
 
     let mut counter = GROUP_COUNTER.lock().unwrap();
     *counter += 1;
@@ -40,13 +38,11 @@ extern "C" fn callback_group_delete(
     world: *mut WorldT,
     group_id: u64,
     _ctx: *mut c_void,
-    group_by_ctx: *mut c_void,
+    _group_by_ctx: *mut c_void,
 ) {
-    let snap = unsafe { &mut *(group_by_ctx as *mut Snap) };
-
     let world_ref = unsafe { WorldRef::from_ptr(world) };
     fprintln!(
-        snap,
+        world_ref,
         "Group deleted: {:?}",
         world_ref.world().entity_from_id(group_id).name()
     );
@@ -56,11 +52,11 @@ extern "C" fn callback_group_delete(
 }
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Register components in order so that id for First is lower than Third
     world.component::<First>();
@@ -71,7 +67,6 @@ pub fn main() -> Result<Snap, String> {
     let query = world
         .query::<(&Position,)>()
         .group_by::<Group>()
-        .group_by_ctx(snap.cvoid(), None)
         // Callback invoked when a new group is created
         .on_group_create(Some(callback_group_create))
         // Callback invoked when a group is deleted
@@ -108,7 +103,7 @@ pub fn main() -> Result<Snap, String> {
         .set(Position { x: 6.0, y: 6.0 })
         .add::<Tag>();
 
-    fprintln!(snap);
+    fprintln!(&world);
 
     // The query cache now looks like this:
     //  - group First:
@@ -128,7 +123,7 @@ pub fn main() -> Result<Snap, String> {
         let group = world.entity_from_id(it.group_id());
         let ctx = unsafe { &*(query.group_context(group) as *mut GroupCtx) };
         fprintln!(
-            snap,
+            it,
             "Group: {:?} - Table: [{:?}] - Counter: {}",
             group.path().unwrap(),
             it.archetype(),
@@ -136,17 +131,17 @@ pub fn main() -> Result<Snap, String> {
         );
 
         for i in it.iter() {
-            fprintln!(snap, " [{:?}]", pos[i]);
+            fprintln!(it, " [{:?}]", pos[i]);
         }
 
-        fprintln!(snap);
+        fprintln!(it);
     });
 
     // Deleting the query will call the on_group_deleted callback
 
-    query.destruct();
+    drop(query);
 
-    Ok(snap)
+    Ok(world)
 
     // Output:
     //  Group created: "Third"

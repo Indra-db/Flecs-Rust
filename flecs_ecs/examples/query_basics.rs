@@ -1,11 +1,11 @@
 include!("common");
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create a query for Position, Velocity. Queries are the fastest way to
     // iterate entities as they cache results.
@@ -32,14 +32,14 @@ pub fn main() -> Result<Snap, String> {
     query.each_entity(|e, (pos, vel)| {
         pos.x += vel.x;
         pos.y += vel.y;
-        fprintln!(snap, "{}: [{:?}]", e.name(), pos);
+        fprintln!(e, "{}: [{:?}]", e.name(), pos);
     });
 
     // There's an equivalent function that does not include the entity argument
     query.each(|(pos, vel)| {
         pos.x += vel.x;
         pos.y += vel.y;
-        fprintln!(snap, "[{:?}]", pos);
+        println!("[{:?}]", pos);
     });
 
     // Iter is a bit more verbose, but allows for more control over how entities
@@ -49,11 +49,13 @@ pub fn main() -> Result<Snap, String> {
         for i in it.iter() {
             pos[i].x += vel[i].x;
             pos[i].y += vel[i].y;
-            fprintln!(snap, "[{:?}]", pos[i]);
+            fprintln!(it, "[{:?}]", pos[i]);
         }
     });
 
-    Ok(snap)
+    drop(query);
+
+    Ok(world)
 
     // Output:
     //  e1: [Position { x: 11.0, y: 22.0 }]

@@ -1,11 +1,11 @@
 include!("common");
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create an observer for three events
     world
@@ -19,14 +19,14 @@ pub fn main() -> Result<Snap, String> {
                 // a ctor for the component was registered it will be called before
                 // the EcsOnAdd event, but a value assigned by set won't be visible.
                 fprintln!(
-                    snap,
+                    it,
                     " - OnAdd: {}: {}",
                     it.event_id().to_str(),
                     it.entity(index)
                 );
             } else {
                 fprintln!(
-                    snap,
+                    it,
                     " - {}: {}: {}: with {:?}",
                     it.event().name(),
                     it.event_id().to_str(),
@@ -45,7 +45,7 @@ pub fn main() -> Result<Snap, String> {
     // Remove Position again (no event emitted)
     entity.remove::<Position>();
 
-    Ok(snap)
+    Ok(world)
 
     // Output:
     //  - OnAdd: Position: e1

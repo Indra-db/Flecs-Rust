@@ -1,11 +1,11 @@
 include!("common");
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create a few test entities for a Position, Velocity query
     world
@@ -29,10 +29,10 @@ pub fn main() -> Result<Snap, String> {
     world.each_entity::<(&mut Position, &Velocity)>(|entity, (pos, vel)| {
         pos.x += vel.x;
         pos.y += vel.y;
-        fprintln!(snap, "Entity {}: {:?}", entity.name(), pos);
+        fprintln!(entity, "Entity {}: {:?}", entity.name(), pos);
     });
 
-    Ok(snap)
+    Ok(world)
 
     // Output:
     //  Entity e1: Position { x: 11.0, y: 22.0 }

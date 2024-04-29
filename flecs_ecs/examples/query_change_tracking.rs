@@ -17,14 +17,14 @@ struct Dirty {
 }
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
+pub fn main() -> Result<World, String> {
+    let world = World::new();
+
     //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
+    world.import::<Snap>();
 
     //todo v4 bug flecs core
     /*
-
-        let world = World::new();
 
         // Create a query that just reads a component. We'll use this query for
         // change tracking. Change tracking for a query is automatically enabled
@@ -144,7 +144,7 @@ pub fn main() -> Result<Snap, String> {
         fprintln!(snap);
     */
 
-    Ok(snap)
+    Ok(world)
 
     // Output:
     //  query_read.is_changed(): true

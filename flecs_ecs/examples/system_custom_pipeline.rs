@@ -12,11 +12,11 @@ include!("common");
 struct Physics;
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create a pipeline that matches systems with Physics. Note that this
     // pipeline does not require the use of phases (see custom_phases) or of the
@@ -31,19 +31,19 @@ pub fn main() -> Result<Snap, String> {
     world.set_pipeline(pipeline.entity());
 
     // Create system with Physics tag
-    world.system::<()>().kind::<Physics>().iter_only(|_| {
-        fprintln!(snap, "System with Physics ran!");
+    world.system::<()>().kind::<Physics>().iter_only(|it| {
+        fprintln!(it, "System with Physics ran!");
     });
 
     // Create system without Physics tag
-    world.system::<()>().iter_only(|_| {
-        fprintln!(snap, "System without Physics ran!");
+    world.system::<()>().iter_only(|it| {
+        fprintln!(it, "System without Physics ran!");
     });
 
     // Runs the pipeline & system
     world.progress();
 
-    Ok(snap)
+    Ok(world)
 
     // Output:
     //   System with Physics ran!

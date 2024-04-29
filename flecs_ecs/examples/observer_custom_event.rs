@@ -4,11 +4,11 @@ include!("common");
 struct MyEvent;
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create an observer for three events
     world
@@ -16,7 +16,7 @@ pub fn main() -> Result<Snap, String> {
         .add_event::<MyEvent>()
         .each_iter(|it, index, _pos| {
             fprintln!(
-                snap,
+                it,
                 " - {}: {}: {}",
                 it.event().name(),
                 it.event_id().to_str(),
@@ -36,7 +36,7 @@ pub fn main() -> Result<Snap, String> {
         .set_entity_to_emit(entity)
         .emit();
 
-    Ok(snap)
+    Ok(world)
 
     // Output:
     //  - MyEvent: Position: e1

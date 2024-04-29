@@ -88,34 +88,39 @@ fn main_() {
 
 #[allow(unused_macros)]
 macro_rules! fprintln {
-    ($str_vec:expr) => {
+    ($world:expr) => {
         {
-            $str_vec.push(format!("\n"));
+            let world = ($world).world();
+            world.get_mut::<Snap>().push(format!("\n"));
             println!();
         }
     };
-    ($str_vec:expr, $format_string:expr) => {
+    ($world:expr, $format_string:expr) => {
         {
-            $str_vec.push(format!($format_string));
+            let world = ($world).world();
+            world.get_mut::<Snap>().push(format!($format_string));
             println!($format_string);
         }
     };
-    ($str_vec:expr, $format_string:expr, $($arg:expr),*) => {
+    ($world:expr, $format_string:expr, $($arg:expr),*) => {
         {
-            $str_vec.push(format!($format_string, $($arg),*));
+            let world = ($world).world();
+            world.get_mut::<Snap>().push(format!($format_string, $($arg),*));
             println!($format_string, $($arg),*);
         }
     };
 }
 
-impl std::process::Termination for Snap {
-    fn report(self) -> std::process::ExitCode {
-        std::process::ExitCode::SUCCESS
-    }
-}
-
+#[derive(Component)]
 pub struct Snap {
     pub str: Vec<String>,
+}
+
+impl Module for Snap {
+    fn module(world: &World) {
+        let snap = Snap::setup_snapshot_test();
+        world.emplace(snap);
+    }
 }
 
 #[allow(dead_code)]
@@ -124,21 +129,12 @@ impl Snap {
         Snap { str: Vec::new() }
     }
 
-    pub fn cvoid(&self) -> *mut std::ffi::c_void {
-        self as *const Snap as *mut std::ffi::c_void
-    }
-
     pub fn push(&mut self, str: String) {
         self.str.push(str);
     }
 
     pub fn count(&self) -> usize {
         self.str.len()
-    }
-
-    #[allow(clippy::mut_from_ref)]
-    pub fn from<'a>(it: &'a mut flecs_ecs::core::Iter) -> &'a mut Snap {
-        unsafe { it.context::<Snap>() }
     }
 
     pub fn test(&self) {

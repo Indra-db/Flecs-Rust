@@ -343,12 +343,11 @@ fn entity_get_generic_mut() {
     assert!(entity.is_valid());
     assert!(entity.has::<Position>());
 
-    let mut invoked = false;
     world
         .observer::<&Position>()
         .add_event::<flecs::OnSet>()
-        .each(|_| {
-            invoked = true;
+        .each_entity(|entity, _| {
+            entity.world().get_mut::<Flags>().insert("invoked", 1);
         });
 
     let pos = entity.get_untyped_mut(position.id());
@@ -359,7 +358,7 @@ fn entity_get_generic_mut() {
     assert_eq!(pos.y, 20);
 
     entity.modified_id(position);
-    assert!(invoked);
+    assert!(world.get::<Flags>().contains_key("invoked"));
 }
 
 #[test]
@@ -1720,23 +1719,20 @@ fn entity_defer_set_3_components() {
 fn entity_set_2_w_on_set() {
     let world = create_world();
 
-    let mut position_set = 0;
-    let mut velocity_set = 0;
-
     world
-        .observer::<(&Position,)>()
+        .observer::<&Position>()
         .add_event::<flecs::OnSet>()
-        .each(|(p,)| {
-            position_set += 1;
+        .each_entity(|entity, p| {
+            entity.world().get_mut::<Flags>().insert("position_set", 1);
             assert_eq!(p.x, 10);
             assert_eq!(p.y, 20);
         });
 
     world
-        .observer::<(&Velocity,)>()
+        .observer::<&Velocity>()
         .add_event::<flecs::OnSet>()
-        .each(|(v,)| {
-            velocity_set += 1;
+        .each_entity(|entity, v| {
+            entity.world().get_mut::<Flags>().insert("velocity_set", 1);
             assert_eq!(v.x, 1);
             assert_eq!(v.y, 2);
         });
@@ -1746,8 +1742,8 @@ fn entity_set_2_w_on_set() {
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    assert_eq!(position_set, 1);
-    assert_eq!(velocity_set, 1);
+    assert!(world.get::<Flags>().contains_key("position_set"));
+    assert!(world.get::<Flags>().contains_key("velocity_set"));
 
     let p = e.get::<Position>();
     assert_eq!(p.x, 10);
@@ -1762,14 +1758,11 @@ fn entity_set_2_w_on_set() {
 fn entity_defer_set_2_w_on_set() {
     let world = create_world();
 
-    let mut position_set = 0;
-    let mut velocity_set = 0;
-
     world
         .observer::<&Position>()
         .add_event::<flecs::OnSet>()
-        .each_entity(|_e, p| {
-            position_set += 1;
+        .each_entity(|e, p| {
+            e.world().get_mut::<Flags>().insert("position_set", 1);
             assert_eq!(p.x, 10);
             assert_eq!(p.y, 20);
         });
@@ -1777,8 +1770,8 @@ fn entity_defer_set_2_w_on_set() {
     world
         .observer::<&Velocity>()
         .add_event::<flecs::OnSet>()
-        .each_entity(|_e, v| {
-            velocity_set += 1;
+        .each_entity(|e, v| {
+            e.world().get_mut::<Flags>().insert("velocity_set", 1);
             assert_eq!(v.x, 1);
             assert_eq!(v.y, 2);
         });
@@ -1790,13 +1783,13 @@ fn entity_defer_set_2_w_on_set() {
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    assert_eq!(position_set, 0);
-    assert_eq!(velocity_set, 0);
+    assert!(!world.get::<Flags>().contains_key("position_set"));
+    assert!(!world.get::<Flags>().contains_key("velocity_set"));
 
     world.defer_end();
 
-    assert_eq!(position_set, 1); //assert 2 == 1
-    assert_eq!(velocity_set, 1);
+    assert!(world.get::<Flags>().contains_key("position_set"));
+    assert!(world.get::<Flags>().contains_key("velocity_set"));
 
     let p = e.get::<Position>();
     assert_eq!(p.x, 10);

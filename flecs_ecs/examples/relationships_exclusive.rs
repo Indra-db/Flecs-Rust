@@ -5,11 +5,11 @@ include!("common");
 struct Platoon;
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Register Platoon as exclusive relationship. This ensures that an entity
     // can only belong to a single Platoon.
@@ -27,17 +27,17 @@ pub fn main() -> Result<Snap, String> {
 
     // Log platoon of unit
     fprintln!(
-        snap,
+        &world,
         "Unit in platoon 1: {}",
         unit.has_first::<Platoon>(platoon_1)
     ); // true
     fprintln!(
-        snap,
+        &world,
         "Unit in platoon 2: {}",
         unit.has_first::<Platoon>(platoon_2)
     ); // false
 
-    fprintln!(snap);
+    fprintln!(&world);
 
     // Add unit to platoon 2. Because Platoon is an exclusive relationship, this
     // both removes (Platoon, platoon_1) and adds (Platoon, platoon_2) in a
@@ -46,17 +46,17 @@ pub fn main() -> Result<Snap, String> {
 
     // Log platoon of unit
     fprintln!(
-        snap,
+        &world,
         "Unit in platoon 1: {}",
         unit.has_first::<Platoon>(platoon_1)
     ); // false
     fprintln!(
-        snap,
+        &world,
         "Unit in platoon 2: {}",
         unit.has_first::<Platoon>(platoon_2)
     ); // true
 
-    Ok(snap)
+    Ok(world)
 
     // Output:
     //  Unit in platoon 1: true

@@ -1,11 +1,11 @@
 include!("common");
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create a system for Position, Velocity. Systems are like queries (see
     // queries) with a function that can be ran or scheduled (see pipeline).
@@ -15,7 +15,7 @@ pub fn main() -> Result<Snap, String> {
         .each_entity(|e, (p, v)| {
             p.x += v.x;
             p.y += v.y;
-            fprintln!(snap, "{}: {{ {}, {} }}", e.name(), p.x, p.y);
+            fprintln!(e, "{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 
     // Create a few test entities for a Position, Velocity query
@@ -35,7 +35,7 @@ pub fn main() -> Result<Snap, String> {
     // Run the system
     s.run();
 
-    Ok(snap)
+    Ok(world)
 
     // Output:
     //  e1: { 11, 22 }

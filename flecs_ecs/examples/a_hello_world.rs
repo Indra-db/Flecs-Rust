@@ -1,12 +1,12 @@
 include!("common");
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     // Create a new world
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Register system
     let _sys = world
@@ -25,7 +25,7 @@ pub fn main() -> Result<Snap, String> {
         .add::<(Eats, Apples)>();
 
     // Show us what you got
-    fprintln!(snap, "{}'s got [{:?}]", bob.name(), bob.archetype());
+    fprintln!(&world, "{}'s got [{:?}]", bob.name(), bob.archetype());
 
     // Run systems twice. Usually this function is called once per frame
     world.progress();
@@ -35,9 +35,9 @@ pub fn main() -> Result<Snap, String> {
     let pos = bob.try_get::<Position>().unwrap();
     // See if Bob has moved (he has)
     //fprintln!(snap,"Bob's position: {:?}", pos);
-    fprintln!(snap, "{}'s position: {:?}", bob.name(), pos);
+    fprintln!(&world, "{}'s position: {:?}", bob.name(), pos);
 
-    Ok(snap)
+    Ok(world)
 
     // Output:
     //  Bob's got [Position, Velocity, (Identifier,Name), (Eats,Apples)]

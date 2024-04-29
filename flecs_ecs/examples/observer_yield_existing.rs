@@ -8,11 +8,11 @@ include!("common");
 // Iterable component to the event (see EcsIterable for more details).
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create existing entities with Position component
     world.entity_named(c"e1").set(Position { x: 10.0, y: 20.0 });
@@ -25,7 +25,7 @@ pub fn main() -> Result<Snap, String> {
         .yield_existing(true)
         .each_iter(|it, index, pos| {
             fprintln!(
-                snap,
+                it,
                 " - {}: {}: {}: {{ {}, {} }}",
                 it.event().name(),
                 it.event_id().to_str(),
@@ -35,7 +35,7 @@ pub fn main() -> Result<Snap, String> {
             );
         });
 
-    Ok(snap)
+    Ok(world)
 
     // Output:
     //  - OnSet: Position: e1: { 10, 20 }

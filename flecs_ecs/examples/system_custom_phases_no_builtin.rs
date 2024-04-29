@@ -6,17 +6,15 @@ include!("common");
 
 // Dummy system
 fn sys(it: &mut Iter) {
-    let name = it.system().name();
-    let snap = Snap::from(it);
-    fprintln!(snap, "system {}", name);
+    fprintln!(it, "system {}", it.system().name());
 }
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create three custom phases. Note that the phases have the Phase tag,
     // which is necessary for the builtin pipeline to discover which systems it
@@ -38,25 +36,22 @@ pub fn main() -> Result<Snap, String> {
     world
         .system_named::<()>(c"CollisionSystem")
         .kind_id(collisions)
-        .set_context(snap.cvoid())
         .iter_only(sys);
 
     world
         .system_named::<()>(c"PhysicsSystem")
         .kind_id(physics)
-        .set_context(snap.cvoid())
         .iter_only(sys);
 
     world
         .system_named::<()>(c"GameSystem")
         .kind_id(update)
-        .set_context(snap.cvoid())
         .iter_only(sys);
 
     // Run pipeline
     world.progress();
 
-    Ok(snap)
+    Ok(world)
 
     // Output:
     //   system GameSystem

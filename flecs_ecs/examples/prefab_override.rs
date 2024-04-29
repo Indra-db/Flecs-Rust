@@ -1,11 +1,11 @@
 include!("common");
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Attack and Damage are properties that can be shared across many
     // spaceships. This saves memory, and speeds up prefab creation as we don't
@@ -26,14 +26,14 @@ pub fn main() -> Result<Snap, String> {
     // The entity will now have a private copy of the Damage component, but not
     // of the Attack and Defense components. We can see this when we look at the
     // type of the instance:
-    fprintln!(snap, "{}", inst.archetype());
+    fprintln!(&world, "{}", inst.archetype());
 
     // Even though Attack was not automatically overridden, we can always
     // override it manually afterwards by adding it:
     inst.add::<Attack>();
 
     // The Attack component now shows up in the entity type:
-    fprintln!(snap, "{}", inst.archetype());
+    fprintln!(&world, "{}", inst.archetype());
 
     // We can get all components on the instance, regardless of whether they
     // are overridden or not. Note that the overridden components (Attack and
@@ -42,11 +42,11 @@ pub fn main() -> Result<Snap, String> {
     let defence = inst.try_get::<Defence>().unwrap();
     let damage = inst.try_get::<Damage>().unwrap();
 
-    fprintln!(snap, "attack: {}", attack.value);
-    fprintln!(snap, "defence: {}", defence.value);
-    fprintln!(snap, "damage: {}", damage.value);
+    fprintln!(&world, "attack: {}", attack.value);
+    fprintln!(&world, "defence: {}", defence.value);
+    fprintln!(&world, "damage: {}", damage.value);
 
-    Ok(snap)
+    Ok(world)
 
     // Output:
     //  Damage, (Identifier,Name), (IsA,SpaceShip)

@@ -20,7 +20,7 @@ struct Resize {
     height: f32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 enum CloseReason {
     User,
     _System,
@@ -32,11 +32,11 @@ struct CloseRequested {
 }
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create an observer for the CloseRequested event to listen to any entity.
     world
@@ -44,39 +44,33 @@ pub fn main() -> Result<Snap, String> {
         .add_event::<CloseRequested>()
         .with::<&flecs::Any>()
         .each_iter(|it, _index, _| {
-            let close_requested = unsafe { it.param::<CloseRequested>() };
-            fprintln!(
-                snap,
-                "Close request with reason: {:?}",
-                close_requested.reason
-            );
+            let reason = unsafe { it.param::<CloseRequested>().reason };
+            fprintln!(it, "Close request with reason: {:?}", reason);
         });
 
     let widget = world.entity_named(c"MyWidget");
-    fprintln!(snap, "widget: {:?}", widget);
+    fprintln!(&world, "widget: {:?}", widget);
 
     // Observe the Click event on the widget entity.
     widget.observe::<Click>(|| {
-        fprintln!(snap, "clicked!");
+        println!("clicked!");
     });
 
     widget.observe_entity::<Click>(|entity| {
-        fprintln!(snap, "clicked on {:?}", entity.name());
+        fprintln!(entity, "clicked on {:?}", entity.name());
     });
 
     // Observe the Resize event on the widget entity.
     widget.observe_payload(|payload: &mut Resize| {
-        fprintln!(
-            snap,
+        println!(
             "widget resized to {{ {}, {} }}!",
-            payload.width,
-            payload.height
+            payload.width, payload.height
         );
     });
 
     widget.observe_payload_entity(|entity, payload: &mut Resize| {
         fprintln!(
-            snap,
+            entity,
             "{} resized to {{ {}, {} }}!",
             entity.name(),
             payload.width,
@@ -95,7 +89,7 @@ pub fn main() -> Result<Snap, String> {
         reason: CloseReason::User,
     });
 
-    Ok(snap)
+    Ok(world)
 
     // Output:
     //  widget: Entity name: MyWidget -- id: 506 -- archetype: (Identifier,Name)

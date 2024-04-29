@@ -1,11 +1,11 @@
 include!("common");
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create a query for Position, Velocity. We'll create a few entities that
     // have Velocity as owned and shared component.
@@ -51,25 +51,27 @@ pub fn main() -> Result<Snap, String> {
         // Check if Velocity is owned, in which case it's accessed as array.
         // Position will always be owned, since we set the term to Self.
         if it.is_self(1) {
-            fprintln!(snap, "Velocity is owned");
+            fprintln!(it, "Velocity is owned");
 
             for i in it.iter() {
                 position[i].x += velocity[i].x;
                 position[i].y += velocity[i].y;
-                fprintln!(snap, "entity {} has {:?}", it.entity(i).name(), position[i]);
+                fprintln!(it, "entity {} has {:?}", it.entity(i).name(), position[i]);
             }
         } else {
-            fprintln!(snap, "Velocity is shared");
+            fprintln!(it, "Velocity is shared");
 
             for i in it.iter() {
                 position[i].x += velocity[0].x;
                 position[i].y += velocity[0].y;
-                fprintln!(snap, "entity {} has {:?}", it.entity(i).name(), position[i]);
+                fprintln!(it, "entity {} has {:?}", it.entity(i).name(), position[i]);
             }
         }
     });
 
-    Ok(snap)
+    drop(query);
+
+    Ok(world)
 
     // Output:
     //  Velocity is shared

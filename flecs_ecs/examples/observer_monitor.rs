@@ -10,11 +10,11 @@ include!("common");
 // observer.
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create observer for custom event
     world
@@ -23,14 +23,14 @@ pub fn main() -> Result<Snap, String> {
         .each_iter(|it, index, (_pos, _vel)| {
             if it.event() == flecs::OnAdd::ID {
                 fprintln!(
-                    snap,
+                    it,
                     " - Enter: {}: {}",
                     it.event_id().to_str(),
                     it.entity(index).name()
                 );
             } else if it.event() == flecs::OnRemove::ID {
                 fprintln!(
-                    snap,
+                    it,
                     " - Leave: {}: {}",
                     it.event_id().to_str(),
                     it.entity(index).name()
@@ -50,7 +50,7 @@ pub fn main() -> Result<Snap, String> {
     // This triggers the monitor with EcsOnRemove, as the entity no longer matches.
     entity.remove::<Position>();
 
-    Ok(snap)
+    Ok(world)
 
     // Output:
     //  - Enter: Velocity: e

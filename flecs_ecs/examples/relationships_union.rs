@@ -31,15 +31,14 @@ enum Direction {
     Right,
 }
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
+pub fn main() -> Result<World, String> {
+    let world = World::new();
+
     //ignore snap in example, it's for snapshot testing
-    let snap = Snap::setup_snapshot_test();
+    world.import::<Snap>();
 
     // disabled v4 not yet supported
     /*
-
-        let world = World::new();
-
         // Register Movement and Direction as union relationships. This ensures that
         // an entity can only have one Movement and one Direction.
         world.component::<Movement>().add::<flecs::Union>();
@@ -104,7 +103,7 @@ pub fn main() -> Result<Snap, String> {
 
     */
 
-    Ok(snap)
+    Ok(world)
 
     // Output:
     //   e3: Movement: Walking, Direction: Back

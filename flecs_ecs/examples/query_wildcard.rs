@@ -3,11 +3,11 @@ include!("common");
 pub use flecs_ecs::{core::*, macros::Component};
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create a query that matches edible components
     let query = world
@@ -35,10 +35,12 @@ pub fn main() -> Result<Snap, String> {
         let pair = it.pair(0).unwrap();
         let food = pair.second_id();
 
-        fprintln!(snap, "{} eats {} {}", entity, eats.amount, food);
+        fprintln!(it, "{} eats {} {}", entity, eats.amount, food);
     });
 
-    Ok(snap)
+    drop(query);
+
+    Ok(world)
 
     // Output:
     //  Alice eats 4 Apples

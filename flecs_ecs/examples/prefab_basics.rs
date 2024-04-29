@@ -20,11 +20,11 @@ include!("common");
 // children for the instance (see hierarchy example).
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create a prefab with Position and Velocity components
     let spaceship = world.prefab_named(c"Prefab").set(Defence { value: 50.0 });
@@ -35,19 +35,19 @@ pub fn main() -> Result<Snap, String> {
     // Because of the IsA relationship, the instance now shares the Defense
     // component with the prefab, and can be retrieved as a regular component:
     let d_inst = inst.try_get::<Defence>().unwrap();
-    fprintln!(snap, "{:?}", d_inst);
+    fprintln!(&world, "{:?}", d_inst);
 
     // Because the component is shared, changing the value on the prefab will
     // also change the value for the instance:
     spaceship.set(Defence { value: 100.0 });
-    fprintln!(snap, "after set: {:?}", d_inst);
+    fprintln!(&world, "after set: {:?}", d_inst);
 
     // Prefab components can be iterated like regular components:
     world.each_entity::<&Defence>(|entity, d| {
-        fprintln!(snap, "{}: defence: {}", entity.path().unwrap(), d.value);
+        fprintln!(&world, "{}: defence: {}", entity.path().unwrap(), d.value);
     });
 
-    Ok(snap)
+    Ok(world)
 
     // Output:
     //  Defence { value: 50.0 }

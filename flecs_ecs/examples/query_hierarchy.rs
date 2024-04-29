@@ -7,11 +7,11 @@ struct Local;
 struct WorldX;
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     let sun = world
         .entity_named(c"Sun")
@@ -79,7 +79,7 @@ pub fn main() -> Result<Snap, String> {
         .build()
         .each_entity(|entity, position| {
             fprintln!(
-                snap,
+                entity,
                 "Entity {} is at ({}, {})",
                 entity.name(),
                 position.x,
@@ -87,7 +87,9 @@ pub fn main() -> Result<Snap, String> {
             );
         });
 
-    Ok(snap)
+    drop(query);
+
+    Ok(world)
 
     // Output:
     //  Entity Sun is at (1, 1)

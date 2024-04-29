@@ -1,11 +1,11 @@
 include!("common");
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // This example shows how to annotate systems that delete entities, in a way
     // that allows the scheduler to correctly insert sync points. See the
@@ -36,7 +36,7 @@ pub fn main() -> Result<Snap, String> {
         .write::<&flecs::Wildcard>()
         .each_entity(|e, p| {
             if p.x >= 3.0 {
-                fprintln!(snap, "Delete entity {}", e.name());
+                fprintln!(e, "Delete entity {}", e.name());
                 e.destruct();
             }
         });
@@ -46,7 +46,7 @@ pub fn main() -> Result<Snap, String> {
     world
         .system_named::<&Position>(c"PrintPosition")
         .each_entity(|e, p| {
-            fprintln!(snap, "{}: {{ {}, {} }}", e.name(), p.x, p.y);
+            fprintln!(e, "{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 
     // Create a few test entities for a Position, Velocity query
@@ -71,7 +71,7 @@ pub fn main() -> Result<Snap, String> {
     }
     set_log_level(-1);
 
-    Ok(snap)
+    Ok(world)
 
     // Output:
     //  info: pipeline rebuild

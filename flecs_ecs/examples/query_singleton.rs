@@ -6,11 +6,11 @@ struct Gravity {
 }
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Set singleton
     world.set(Gravity { value: 9.81 });
@@ -32,10 +32,17 @@ pub fn main() -> Result<Snap, String> {
 
     query.each_entity(|entity, (velocity, gravity)| {
         velocity.y += gravity.value;
-        fprintln!(snap, "Entity {} has {:?}", entity.path().unwrap(), velocity);
+        fprintln!(
+            entity,
+            "Entity {} has {:?}",
+            entity.path().unwrap(),
+            velocity
+        );
     });
 
-    Ok(snap)
+    drop(query);
+
+    Ok(world)
 
     // Output:
     // Entity ::e1 has Velocity { x: 0.0, y: 9.81 }

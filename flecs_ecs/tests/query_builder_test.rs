@@ -1751,16 +1751,14 @@ fn query_builder_1_term_to_empty() {
 fn query_builder_2_subsequent_args() {
     let world = create_world();
 
-    let mut count = 0;
-
     let s = world
         .system::<(&RelFoo, &Velocity)>()
         .term_at(0)
         .set_second_id(*flecs::Wildcard)
         .term_at(1)
         .singleton()
-        .iter_only(|it| {
-            count += it.count();
+        .iter_only(move |it| {
+            *it.world().get_mut::<Flags>().entry("count").or_default() += it.count();
         });
 
     world.entity().add::<(RelFoo, Tag)>();
@@ -1768,7 +1766,7 @@ fn query_builder_2_subsequent_args() {
 
     s.run();
 
-    assert_eq!(count, 1);
+    assert_eq!(world.get::<Flags>().get("count").unwrap(), &1);
 }
 
 #[test]

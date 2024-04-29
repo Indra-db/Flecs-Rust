@@ -3,11 +3,11 @@
 include!("common");
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create a prefab hierarchy.
     let spaceship = world
@@ -51,20 +51,20 @@ pub fn main() -> Result<Snap, String> {
 
     // Inspect the type of the entity. This outputs:
     //    Position,(Identifier,Name),(IsA,MammothFreighter)
-    fprintln!(snap, "Instance type: [{}]", inst.archetype());
+    fprintln!(&world, "Instance type: [{}]", inst.archetype());
 
     // Even though the instance doesn't have a private copy of ImpulseSpeed, we
     // can still get it using the regular API (outputs 50)
     let impulse_speed = inst.try_get::<ImpulseSpeed>();
-    fprintln!(snap, "ImpulseSpeed: {}", impulse_speed.unwrap().value);
+    fprintln!(&world, "ImpulseSpeed: {}", impulse_speed.unwrap().value);
 
     // Prefab components can be iterated just like regular components:
     world.each_entity::<(&ImpulseSpeed, &mut Position)>(|entity, (impulse_speed, position)| {
         position.x += impulse_speed.value;
-        fprintln!(snap, "Entity {}: {:?}", entity.name(), position);
+        fprintln!(entity, "Entity {}: {:?}", entity.name(), position);
     });
 
-    Ok(snap)
+    Ok(world)
 
     // Output:
     //  Instance type: [Position, (Identifier,Name), (IsA,MammothFreighter)]

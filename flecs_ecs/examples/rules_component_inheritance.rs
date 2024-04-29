@@ -27,11 +27,11 @@ struct Marksman;
 struct BuilderX;
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Make the ECS aware of the inheritance relationships. Note that IsA
     // relationship used here is the same as in the prefab example.
@@ -62,10 +62,12 @@ pub fn main() -> Result<Snap, String> {
 
     // Iterate the rule
     r.each_entity(|e, _| {
-        fprintln!(snap, "Unit {} found", e.name());
+        fprintln!(e, "Unit {} found", e.name());
     });
 
-    Ok(snap)
+    drop(r);
+
+    Ok(world)
 
     // Output:
     //  Unit wizard_1 found

@@ -22,11 +22,11 @@ include!("common");
 struct Likes;
 
 #[allow(dead_code)]
-pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
+pub fn main() -> Result<World, String> {
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     let bob = world.entity_named(c"Bob");
     let alice = world.entity_named(c"Alice");
@@ -64,7 +64,7 @@ pub fn main() -> Result<Snap, String> {
     // Check a few facts
 
     fprintln!(
-        snap,
+        &world,
         "Are Bob and Alice friends? {}",
         if friends
             .iterable()
@@ -79,7 +79,7 @@ pub fn main() -> Result<Snap, String> {
     );
 
     fprintln!(
-        snap,
+        &world,
         "Are Bob and John friends? {}",
         if friends
             .iterable()
@@ -94,7 +94,7 @@ pub fn main() -> Result<Snap, String> {
     );
 
     fprintln!(
-        snap,
+        &world,
         "Are Jane and John friends? {}",
         if friends
             .iterable()
@@ -112,7 +112,7 @@ pub fn main() -> Result<Snap, String> {
     // substituted, either yields a fact that is true.
 
     fprintln!(
-        snap,
+        &world,
         "Are John and Jane friends? {}",
         if friends
             .iterable()
@@ -126,7 +126,9 @@ pub fn main() -> Result<Snap, String> {
         }
     );
 
-    Ok(snap)
+    drop(friends);
+
+    Ok(world)
 
     // Output:
     //  Are Bob and Alice friends? Yes
