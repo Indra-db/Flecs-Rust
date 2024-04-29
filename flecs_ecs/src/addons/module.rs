@@ -19,7 +19,7 @@ impl World {
 
         // Initialise component for the module and add Module tag
         let module = self.component::<T>();
-        module.add::<flecs::Module>();
+        module.add::<flecs::EcsModule>();
 
         // Build the module
         T::module(self);
