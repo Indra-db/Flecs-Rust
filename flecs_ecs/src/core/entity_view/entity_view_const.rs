@@ -2343,11 +2343,11 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
-    pub fn emit_payload<T: NotEmptyComponent + ComponentId>(self, payload: &T) {
+    pub fn emit_const_payload<T: NotEmptyComponent + ComponentId>(self, payload: T) {
         self.world()
             .event::<T>()
             .set_entity_to_emit(self)
-            .set_event_data(payload)
+            .set_const_event_data(payload)
             .emit();
     }
 
@@ -2361,11 +2361,11 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
-    pub fn emit_payload_mut<T: NotEmptyComponent + ComponentId>(self, payload: &mut T) {
+    pub fn emit_payload<T: NotEmptyComponent + ComponentId>(self, payload: T) {
         self.world()
             .event::<T>()
             .set_entity_to_emit(self)
-            .set_event_data_mut(payload)
+            .set_event_data(payload)
             .emit();
     }
 
@@ -2436,11 +2436,11 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
-    pub fn enqueue_payload<T: NotEmptyComponent + ComponentId>(self, payload: &T) {
+    pub fn enqueue_const_payload<T: NotEmptyComponent + ComponentId>(self, payload: T) {
         self.world()
             .event::<T>()
             .set_entity_to_emit(self)
-            .set_event_data(payload)
+            .set_const_event_data(payload)
             .enqueue();
     }
 
@@ -2468,11 +2468,11 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
-    pub fn enqueue_payload_mut<T: NotEmptyComponent + ComponentId>(self, payload: &mut T) {
+    pub fn enqueue_payload<T: NotEmptyComponent + ComponentId>(self, payload: T) {
         self.world()
             .event::<T>()
             .set_entity_to_emit(self)
-            .set_event_data_mut(payload)
+            .set_event_data(payload)
             .enqueue();
     }
 }

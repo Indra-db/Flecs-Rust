@@ -6,8 +6,9 @@ include!("common");
 
 // Dummy system
 fn sys(it: &mut Iter) {
+    let name = it.system().name();
     let snap = Snap::from(it);
-    fprintln!(snap, "system {}", it.system().name());
+    fprintln!(snap, "system {}", name);
 }
 
 #[allow(dead_code)]
