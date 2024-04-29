@@ -6,6 +6,11 @@ pub trait Module: ComponentId {
 
 impl World {
     pub fn import<T: Module>(&self) -> EntityView {
+        // If we have already registered this type don't re-create the module
+        if T::is_registered_with_world(self) {
+            return self.component::<T>().entity;
+        }
+
         // Reset scope
         let prev_scope = self.set_scope_id(0);
 
