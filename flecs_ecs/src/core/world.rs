@@ -1681,6 +1681,41 @@ impl World {
         }
     }
 
+    /// Emplace a component.
+    ///
+    /// Emplace is similar to `set()` except that the component constructor is not
+    /// invoked, allowing the component to be "constructed" directly in the storage.
+    ///
+    /// # SAFETY
+    ///
+    /// `emplace` can only be used if the entity does not yet have the component. If
+    /// the entity has the component, the operation will fail and panic.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: The type of the component to emplace.
+    ///
+    /// # Arguments
+    ///
+    /// * `value`: The value to emplace.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::emplace`
+    #[doc(alias = "world::emplace")]
+    pub fn emplace<T>(&self, value: T)
+    where
+        T: IntoComponentId,
+    {
+        let id = T::get_id(self);
+        let raw_world = self.raw_world;
+        let ptr = unsafe { sys::ecs_emplace_id(raw_world.as_ptr(), id, id) } as *mut T;
+        unsafe {
+            std::ptr::write(ptr, value);
+            sys::ecs_modified_id(raw_world.as_ptr(), id, id);
+        }
+    }
+
     /// Add a singleton component.
     ///
     /// # Type Parameters
