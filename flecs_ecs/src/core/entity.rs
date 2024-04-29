@@ -65,6 +65,8 @@ impl ComponentInfo for Entity {
     const IS_TAG: bool = false;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = false;
+    const IS_REF: bool = false;
+    const IS_MUT: bool = false;
 }
 
 impl ComponentId for Entity {

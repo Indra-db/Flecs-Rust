@@ -51,7 +51,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     /// checks if the component is registered with a world.
     #[inline(always)]
     fn is_registered() -> bool {
-        Self::__get_once_lock_data().get().is_some()
+        Self::UnderlyingType::__get_once_lock_data().get().is_some()
     }
 
     /// checks if the component is registered with a world.
@@ -62,7 +62,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
     fn is_registered_with_world<'a>(world: impl IntoWorld<'a>) -> bool {
-        if Self::is_registered() {
+        if Self::UnderlyingType::is_registered() {
             unsafe { is_component_registered_with_world::<Self::UnderlyingType>(world.world_ptr()) }
         } else {
             false
@@ -72,7 +72,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     /// returns the component id of the component. If the component is not registered, it will register it.
     fn get_id<'a>(world: impl IntoWorld<'a>) -> IdT {
         try_register_component::<Self::UnderlyingType>(world);
-        unsafe { Self::get_id_unchecked() }
+        unsafe { Self::UnderlyingType::get_id_unchecked() }
     }
 
     /// returns the component id of the component.
@@ -84,7 +84,10 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     /// only use this if you know what you are doing and you are sure the component is registered in the world
     #[inline(always)]
     unsafe fn get_id_unchecked() -> IdT {
-        Self::__get_once_lock_data().get().unwrap_unchecked().id
+        Self::UnderlyingType::__get_once_lock_data()
+            .get()
+            .unwrap_unchecked()
+            .id
     }
 
     // Not public API.
@@ -95,7 +98,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     #[doc(hidden)]
     #[inline(always)]
     fn __initialize<F: FnOnce() -> IdComponent>(f: F) -> &'static IdComponent {
-        Self::__get_once_lock_data().get_or_init(f)
+        Self::UnderlyingType::__get_once_lock_data().get_or_init(f)
     }
 
     // Not public API.
@@ -109,7 +112,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
         #[allow(invalid_reference_casting)]
         {
             let lock: &'static mut OnceLock<IdComponent> = unsafe {
-                &mut *(Self::__get_once_lock_data() as *const OnceLock<IdComponent>
+                &mut *(Self::UnderlyingType::__get_once_lock_data() as *const OnceLock<IdComponent>
                     as *mut OnceLock<IdComponent>)
             };
 
@@ -124,6 +127,8 @@ pub trait ComponentInfo: Sized {
     const NEEDS_DROP: bool = std::mem::needs_drop::<Self>();
     const IMPLS_CLONE: bool;
     const IMPLS_DEFAULT: bool;
+    const IS_REF: bool;
+    const IS_MUT: bool;
 }
 
 pub trait CachedEnumData: ComponentType<Enum> + ComponentId {
@@ -204,6 +209,8 @@ impl<T: ComponentInfo> ComponentInfo for &T {
     const IS_TAG: bool = T::IS_TAG;
     const IMPLS_CLONE: bool = T::IMPLS_CLONE;
     const IMPLS_DEFAULT: bool = T::IMPLS_DEFAULT;
+    const IS_REF: bool = true;
+    const IS_MUT: bool = false;
 }
 
 impl<T: ComponentInfo> ComponentInfo for &mut T {
@@ -211,6 +218,8 @@ impl<T: ComponentInfo> ComponentInfo for &mut T {
     const IS_TAG: bool = T::IS_TAG;
     const IMPLS_CLONE: bool = T::IMPLS_CLONE;
     const IMPLS_DEFAULT: bool = T::IMPLS_DEFAULT;
+    const IS_REF: bool = false;
+    const IS_MUT: bool = true;
 }
 
 impl<T: ComponentId> ComponentId for &'static T {

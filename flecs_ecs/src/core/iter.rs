@@ -457,14 +457,14 @@ impl<'a> Iter<'a> {
     /// # See also
     ///
     /// * C++ API: `iter::field`
-    pub fn field<T: ComponentId>(&self, index: i32) -> Option<Field<T>> {
+    pub fn field<T: ComponentId>(&self, index: i32) -> Option<Field<T::UnderlyingType>> {
         ecs_assert!(
             (self.iter.flags & sys::EcsIterCppEach == 0),
             FlecsErrorCode::InvalidOperation,
             "cannot .field from .each, use .field_at instead",
         );
 
-        let id = T::get_id(self.world());
+        let id = <T::UnderlyingType as ComponentId>::get_id(self.world());
 
         if index > self.iter.field_count {
             return None;
@@ -475,7 +475,7 @@ impl<'a> Iter<'a> {
         let is_id_correct = id == term_id;
 
         if is_id_correct || is_pair {
-            return Some(unsafe { self.field_internal::<T>(index) });
+            return Some(unsafe { self.field_internal::<T::UnderlyingType>(index) });
         }
 
         None
@@ -520,7 +520,7 @@ impl<'a> Iter<'a> {
         unsafe { &mut *(field.array.add(row * field.size)) }
     }
 
-    pub fn field_at_mut<T>(&self, index: i32, row: usize) -> Option<&mut T>
+    pub fn field_at_mut<T>(&self, index: i32, row: usize) -> Option<&mut T::UnderlyingType>
     where
         T: ComponentId,
     {
@@ -540,7 +540,7 @@ impl<'a> Iter<'a> {
         }
     }
 
-    pub fn field_at<T>(&self, index: i32, row: usize) -> Option<&T>
+    pub fn field_at<T>(&self, index: i32, row: usize) -> Option<&T::UnderlyingType>
     where
         T: ComponentId,
     {
