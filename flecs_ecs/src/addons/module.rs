@@ -1,11 +1,11 @@
-use crate::core::{flecs, ComponentId, World};
+use crate::core::{flecs, ComponentId, EntityView, World};
 
 pub trait Module: ComponentId {
     fn module(world: &World);
 }
 
 impl World {
-    pub fn import<T: Module>(&self) {
+    pub fn import<T: Module>(&self) -> EntityView {
         // Reset scope
         let prev_scope = self.set_scope_id(0);
 
@@ -13,13 +13,15 @@ impl World {
         self.set_scope::<T>();
 
         // Initialise component for the module and add Module tag
-        let entity = self.component::<T>();
-        entity.add::<flecs::Module>();
+        let module = self.component::<T>();
+        module.add::<flecs::Module>();
 
         // Build the module
         T::module(self);
 
         // Return out scope to the previous scope
         self.set_scope_id(prev_scope);
+
+        module.entity
     }
 }
