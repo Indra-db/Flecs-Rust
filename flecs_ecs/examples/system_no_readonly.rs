@@ -26,7 +26,7 @@ pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     world.import::<Snap>();
 
-    // Broken until ids can be turned in to queries
+    // TODO: Broken until ids can be turned in to queries
 
     // // Create query to find all waiters without a plate
     // let mut q_waiter = world
