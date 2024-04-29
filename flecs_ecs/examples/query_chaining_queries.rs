@@ -23,7 +23,7 @@ struct ArtifactPower {
 }
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let forest = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -86,10 +86,7 @@ pub fn main() -> Result<World, String> {
             });
     });
 
-    drop(query_enchanted);
-    drop(query_creatures);
-
-    Ok(forest)
+    Ok(Snap::from(&forest))
 
     // Output:
     //  Creature id: 525 at location 0,0 is enchanted with mystical energy, ability power: 0

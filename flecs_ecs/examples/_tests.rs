@@ -90,8 +90,7 @@ mod examples {
         ($name:ident) => {
             #[test]
             fn $name() {
-                use crate::$name::Snap;
-                $name::main().unwrap().get::<Snap>().test();
+                $name::main().unwrap().test();
             }
         };
     }
@@ -155,8 +154,8 @@ mod examples {
     test!(system_basics);
     #[test]
     fn system_ctx() {
-        let world = system_ctx::main().unwrap();
-        assert!(world.get::<system_ctx::Snap>().count() > 0);
+        let snap = system_ctx::main().unwrap();
+        assert!(snap.count() > 0);
     }
     test!(system_custom_phases);
     test!(system_custom_phases_no_builtin);

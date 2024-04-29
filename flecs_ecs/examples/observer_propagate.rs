@@ -12,7 +12,7 @@ include!("common");
 // Events are only propagated along traversable relationship edges.
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -50,7 +50,7 @@ pub fn main() -> Result<World, String> {
     // observer, as the observer query now matches.
     parent.set(Position { x: 1.0, y: 2.0 });
 
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  - OnSet: Position: e: self: { 10, 20 }, parent: { 1, 2 }

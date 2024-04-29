@@ -23,7 +23,7 @@ struct TirePressure {
     value: f32,
 }
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -65,7 +65,7 @@ pub fn main() -> Result<World, String> {
         fprintln!(&world, "entity lookup failed");
     }
 
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  TirePressure, (Identifier,Name), (ChildOf,my_car), (IsA,Wheel)

@@ -123,6 +123,12 @@ impl Module for Snap {
     }
 }
 
+impl std::process::Termination for Snap {
+    fn report(self) -> std::process::ExitCode {
+        std::process::ExitCode::SUCCESS
+    }
+}
+
 #[allow(dead_code)]
 impl Snap {
     pub fn setup_snapshot_test() -> Snap {
@@ -144,5 +150,11 @@ impl Snap {
             insta::assert_yaml_snapshot!(self.str);
 
         });
+    }
+
+    pub fn from(world: &World) -> Self {
+        Self {
+            str: std::mem::take(&mut world.get_mut::<Snap>().str),
+        }
     }
 }

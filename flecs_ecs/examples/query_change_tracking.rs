@@ -17,7 +17,7 @@ struct Dirty {
 }
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -144,7 +144,7 @@ pub fn main() -> Result<World, String> {
         fprintln!(snap);
     */
 
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  query_read.is_changed(): true

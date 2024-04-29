@@ -3,7 +3,7 @@ include!("common");
 pub use flecs_ecs::{core::*, macros::Component};
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -38,9 +38,7 @@ pub fn main() -> Result<World, String> {
         fprintln!(it, "{} eats {} {}", entity, eats.amount, food);
     });
 
-    drop(query);
-
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Alice eats 4 Apples

@@ -1,7 +1,7 @@
 include!("common");
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -35,5 +35,5 @@ pub fn main() -> Result<World, String> {
     //  set Position { x: 10.0, y: 20.0 } for "Bob"
     //  removed Position { x: 10.0, y: 20.0 } from "Bob"
 
-    Ok(world)
+    Ok(Snap::from(&world))
 }

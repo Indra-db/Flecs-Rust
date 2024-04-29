@@ -34,7 +34,7 @@ enum TileStatus {
 }
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -126,7 +126,7 @@ pub fn main() -> Result<World, String> {
     // (Tile, Tile.Stone)
     fprintln!(&world, "{:?}", tile.archetype());
 
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Total Output:
     //  (relationships_enum.Tile,relationships_enum.Tile.Stone), (relationships_enum.TileStatus,relationships_enum.TileStatus.Free)

@@ -6,7 +6,7 @@ struct Timeout {
 }
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -64,7 +64,7 @@ pub fn main() -> Result<World, String> {
         println!("Tick...");
     }
 
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  PrintExpire: MyEntity has 2.00 seconds left

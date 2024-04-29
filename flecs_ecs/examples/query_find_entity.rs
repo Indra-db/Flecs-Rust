@@ -1,7 +1,7 @@
 include!("common");
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -22,9 +22,7 @@ pub fn main() -> Result<World, String> {
         fprintln!(&world, "Entity not found");
     }
 
-    drop(query);
-
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Entity found: "::e2"

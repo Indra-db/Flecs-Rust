@@ -10,7 +10,7 @@ include!("common");
 // they are guaranteed to always run on the main thread.
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -35,7 +35,7 @@ pub fn main() -> Result<World, String> {
     // Second frame. This runs only the Update system
     world.progress();
 
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Startup

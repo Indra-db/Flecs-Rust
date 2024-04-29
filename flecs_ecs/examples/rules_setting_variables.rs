@@ -39,7 +39,7 @@ const PLAYER_COUNT: usize = 100;
 const PLATOONS_PER_PLAYER: usize = 3;
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -125,9 +125,7 @@ pub fn main() -> Result<World, String> {
             );
         });
 
-    drop(rule);
-
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Unit id: 529 of class Wizard in platoon id: 526 for player MyPlayer

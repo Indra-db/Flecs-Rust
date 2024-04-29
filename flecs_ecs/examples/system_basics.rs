@@ -1,7 +1,7 @@
 include!("common");
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -35,7 +35,7 @@ pub fn main() -> Result<World, String> {
     // Run the system
     s.run();
 
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  e1: { 11, 22 }

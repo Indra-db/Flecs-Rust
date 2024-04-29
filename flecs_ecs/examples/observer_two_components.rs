@@ -5,7 +5,7 @@ include!("common");
 // observer for Position,Velocity won't match an entity that only has Position.
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -35,7 +35,7 @@ pub fn main() -> Result<World, String> {
     // Set Velocity (emits EcsOnSet, matches observer)
     entity.set(Velocity { x: 1.0, y: 2.0 });
 
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  - OnSet: Velocity: e: p: { 10, 20 }, v: { 1, 2 }

@@ -27,7 +27,7 @@ struct Marksman;
 struct BuilderX;
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -65,9 +65,7 @@ pub fn main() -> Result<World, String> {
         fprintln!(e, "Unit {} found", e.name());
     });
 
-    drop(r);
-
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Unit wizard_1 found

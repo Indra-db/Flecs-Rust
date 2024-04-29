@@ -5,7 +5,7 @@ include!("common");
 struct Platoon;
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -56,7 +56,7 @@ pub fn main() -> Result<World, String> {
         unit.has_first::<Platoon>(platoon_2)
     ); // true
 
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Unit in platoon 1: true

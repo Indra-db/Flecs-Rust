@@ -37,7 +37,7 @@ fn iterate_components(entity: EntityView) {
     });
 }
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -59,7 +59,7 @@ pub fn main() -> Result<World, String> {
     fprintln!(&world, "Position's components:");
     iterate_components(world.component::<Position>().entity());
 
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Bob's components:

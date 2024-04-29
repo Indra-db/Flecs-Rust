@@ -1,7 +1,7 @@
 include!("common");
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     // Create a new world
     let world = World::new();
 
@@ -37,7 +37,7 @@ pub fn main() -> Result<World, String> {
     //fprintln!(snap,"Bob's position: {:?}", pos);
     fprintln!(&world, "{}'s position: {:?}", bob.name(), pos);
 
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Bob's got [Position, Velocity, (Identifier,Name), (Eats,Apples)]

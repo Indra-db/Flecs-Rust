@@ -36,7 +36,7 @@ fn iterate_tree(entity: EntityView, position_parent: &Position) {
 }
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -85,7 +85,7 @@ pub fn main() -> Result<World, String> {
     // Do a depth-first traversal of the tree
     iterate_tree(sun, &Position { x: 0.0, y: 0.0 });
 
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Is the Moon a child of the Earth? true / true

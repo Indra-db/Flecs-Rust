@@ -33,7 +33,7 @@ fn rand(max: u64) -> f32 {
 }
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -90,9 +90,7 @@ pub fn main() -> Result<World, String> {
     // Run the system
     sys.run();
 
-    drop(query_collide);
-
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  532 and 539 collided!

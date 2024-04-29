@@ -4042,9 +4042,3 @@ impl World {
         App::new(self)
     }
 }
-
-impl std::process::Termination for World {
-    fn report(self) -> std::process::ExitCode {
-        std::process::ExitCode::SUCCESS
-    }
-}

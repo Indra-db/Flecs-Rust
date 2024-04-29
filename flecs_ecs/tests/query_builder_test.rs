@@ -3,6 +3,7 @@ use std::ffi::c_void;
 
 use flecs_ecs::core::*;
 use flecs_ecs::sys;
+use flecs_ecs_derive::Component;
 
 mod common;
 use common::*;
@@ -1749,7 +1750,11 @@ fn query_builder_1_term_to_empty() {
 
 #[test]
 fn query_builder_2_subsequent_args() {
-    let world = create_world();
+    #[derive(Component, Default)]
+    struct Flags {
+        count: usize,
+    }
+    let world = create_world_with_flags::<Flags>();
 
     let s = world
         .system::<(&RelFoo, &Velocity)>()
@@ -1758,7 +1763,7 @@ fn query_builder_2_subsequent_args() {
         .term_at(1)
         .singleton()
         .iter_only(move |it| {
-            *it.world().get_mut::<Flags>().entry("count").or_default() += it.count();
+            it.world().get_mut::<Flags>().count += it.count();
         });
 
     world.entity().add::<(RelFoo, Tag)>();
@@ -1766,7 +1771,7 @@ fn query_builder_2_subsequent_args() {
 
     s.run();
 
-    assert_eq!(world.get::<Flags>().get("count").unwrap(), &1);
+    assert_eq!(world.get::<Flags>().count, 1);
 }
 
 #[test]

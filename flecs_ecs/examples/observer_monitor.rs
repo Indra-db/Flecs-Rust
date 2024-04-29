@@ -10,7 +10,7 @@ include!("common");
 // observer.
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -50,7 +50,7 @@ pub fn main() -> Result<World, String> {
     // This triggers the monitor with EcsOnRemove, as the entity no longer matches.
     entity.remove::<Position>();
 
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  - Enter: Velocity: e

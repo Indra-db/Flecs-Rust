@@ -23,7 +23,7 @@ struct Expires {
 struct MustHave;
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -132,9 +132,7 @@ pub fn main() -> Result<World, String> {
         fprintln!(entity, "requires: {} gigawatts", requires.amount);
     });
 
-    drop(query);
-
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     // e1: requires: 1.21

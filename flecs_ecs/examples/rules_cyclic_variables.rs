@@ -7,7 +7,7 @@ include!("common");
 struct Likes;
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -59,9 +59,7 @@ pub fn main() -> Result<World, String> {
         fprintln!(it, "{} likes {}", x.name(), y.name());
     });
 
-    drop(rule);
-
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Alice likes Bob

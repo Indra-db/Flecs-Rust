@@ -52,7 +52,7 @@ extern "C" fn callback_group_delete(
 }
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -138,10 +138,9 @@ pub fn main() -> Result<World, String> {
     });
 
     // Deleting the query will call the on_group_deleted callback
+    query.destruct();
 
-    drop(query);
-
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Group created: "Third"

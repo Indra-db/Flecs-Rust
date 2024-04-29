@@ -20,7 +20,7 @@ struct Waiter;
 struct Plate;
 
 #[allow(dead_code)]
-pub fn main() -> Result<World, String> {
+pub fn main() -> Result<Snap, String> {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
@@ -89,7 +89,7 @@ pub fn main() -> Result<World, String> {
 
     // q_waiter.destruct();
 
-    Ok(world)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Assigned waiter_3 to plate_1!
