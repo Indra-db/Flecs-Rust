@@ -4,6 +4,9 @@ pub mod app;
 #[cfg(feature = "flecs_meta")]
 pub mod meta;
 
+#[cfg(feature = "flecs_module")]
+pub mod module;
+
 #[cfg(feature = "flecs_system")]
 pub mod system;
 
