@@ -285,6 +285,16 @@ pub mod rest {
         pub impl_: *mut ::std::os::raw::c_void,
     }
 
+    impl Default for Rest {
+        fn default() -> Self {
+            Self {
+                port: Default::default(),
+                ipaddr: std::ptr::null_mut::<std::os::raw::c_char>(),
+                impl_: std::ptr::null_mut::<std::os::raw::c_void>(),
+            }
+        }
+    }
+
     impl FlecsConstantId for Rest {
         const ID: u64 = ECS_REST;
     }
