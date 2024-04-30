@@ -346,4 +346,4 @@ impl<'a, T: Iterable> IntoWorld<'a> for SystemBuilder<'a, T> {
     }
 }
 
-implement_reactor_api!(SystemBuilder<'a, T>);
+implement_reactor_api!((), SystemBuilder<'a, T>);

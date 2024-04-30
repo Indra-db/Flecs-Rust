@@ -302,19 +302,6 @@ pub unsafe fn ecs_field<T: ComponentId>(it: *const IterT, index: i32) -> *mut T 
     sys::ecs_field_w_size(it, size, index) as *mut T
 }
 
-/// Get the `InOutKind` for the given type.
-///
-/// # Type Parameters
-///
-/// * `T`: The type to get the `InOutKind` for.
-///
-/// # See also
-///
-/// * C++ API: `type_to_inout`
-pub(crate) fn type_to_inout<T: InOutType>() -> InOutKind {
-    T::IN_OUT
-}
-
 /// Get the `OperKind` for the given type.
 ///
 /// # Type Parameters

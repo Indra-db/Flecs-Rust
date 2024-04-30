@@ -207,6 +207,8 @@ fn impl_cached_component_data_struct(
                     use flecs_ecs::core::utility::traits::DoesNotImpl;
                     flecs_ecs::core::utility::types::ImplementsDefault::<#name #type_generics>::IMPLS
                 };
+                const IS_REF: bool = false;
+                const IS_MUT: bool = false;
             }
         }
     } else {
@@ -446,6 +448,8 @@ fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> TokenStream {
                 use flecs_ecs::core::utility::traits::DoesNotImpl;
                 flecs_ecs::core::utility::types::ImplementsDefault::<#name #type_generics>::IMPLS
             };
+            const IS_REF: bool = false;
+            const IS_MUT: bool = false;
         }
 
         #component_id
@@ -519,6 +523,8 @@ fn generate_component_id_impl(
                     use flecs_ecs::core::utility::traits::DoesNotImpl;
                     flecs_ecs::core::utility::types::ImplementsDefault::<#name<#ty>>::IMPLS
                 };
+                const IS_REF: bool = false;
+                const IS_MUT: bool = false;
             }
         }
     } else {
@@ -562,6 +568,8 @@ fn generate_component_id_impl(
                     use flecs_ecs::core::utility::traits::DoesNotImpl;
                     flecs_ecs::core::utility::types::ImplementsDefault::<#name<#ty>>::IMPLS
                 };
+                const IS_REF: bool = false;
+                const IS_MUT: bool = false;
             }
         }
     }

@@ -24,6 +24,8 @@ macro_rules! create_pre_registered_component {
             const IS_TAG: bool = true;
             const IMPLS_CLONE: bool = false;
             const IMPLS_DEFAULT: bool = false;
+            const IS_REF: bool = false;
+            const IS_MUT: bool = false;
         }
 
         impl EmptyComponent for $struct_name {}
@@ -291,6 +293,8 @@ pub mod rest {
         const IS_TAG: bool = true;
         const IMPLS_CLONE: bool = false;
         const IMPLS_DEFAULT: bool = false;
+        const IS_REF: bool = false;
+        const IS_MUT: bool = false;
     }
     impl NotEmptyComponent for Rest {}
 

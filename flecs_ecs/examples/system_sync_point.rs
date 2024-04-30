@@ -35,7 +35,7 @@ pub fn main() -> Result<Snap, String> {
     world
         .system_named::<()>(c"SetVelocitySP")
         .with::<&PositionSP>()
-        .set_as_inout_none()
+        .set_inout_none()
         .write::<&mut VelocitySP>() // VelocitySP is written, but shouldn't be matched
         .each_entity(|e, ()| {
             e.set(VelocitySP { x: 1.0, y: 2.0 });

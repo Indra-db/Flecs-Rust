@@ -13,8 +13,7 @@ pub fn main() -> Result<Snap, String> {
 
     // Create observer for custom event
     world
-        .observer::<(&Position, &Velocity)>()
-        .add_event::<flecs::OnSet>()
+        .observer::<flecs::OnSet, (&Position, &Velocity)>()
         .each_iter(|it, index, (pos, vel)| {
             fprintln!(
                 it,

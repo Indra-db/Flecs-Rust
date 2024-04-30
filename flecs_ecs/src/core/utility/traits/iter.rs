@@ -18,7 +18,7 @@ pub trait IterOperations {
     fn query_ptr(&self) -> *const QueryT;
 }
 
-pub trait IterAPI<'a, T>: IterOperations + IntoWorld<'a>
+pub trait IterAPI<'a, P, T>: IterOperations + IntoWorld<'a>
 where
     T: Iterable,
 {
@@ -118,7 +118,7 @@ where
         }
     }
 
-    fn each_iter(&self, mut func: impl FnMut(&mut Iter, usize, T::TupleType<'_>)) {
+    fn each_iter(&self, mut func: impl FnMut(&mut Iter<P>, usize, T::TupleType<'_>)) {
         unsafe {
             let mut iter = self.retrieve_iter();
 
@@ -266,7 +266,7 @@ where
     #[doc(alias = "find_delegate::invoke_callback")]
     fn find_iter(
         &self,
-        mut func: impl FnMut(&mut Iter, usize, T::TupleType<'_>) -> bool,
+        mut func: impl FnMut(&mut Iter<P>, usize, T::TupleType<'_>) -> bool,
     ) -> Option<EntityView<'a>> {
         unsafe {
             let mut iter = self.retrieve_iter();
@@ -315,7 +315,7 @@ where
     ///
     /// * C++ API: `iterable::iter`
     #[doc(alias = "iterable::iter")]
-    fn iter(&self, mut func: impl FnMut(&mut Iter, T::TupleSliceType<'_>)) {
+    fn iter(&self, mut func: impl FnMut(&mut Iter<P>, T::TupleSliceType<'_>)) {
         unsafe {
             let mut iter = self.retrieve_iter();
             let world = self.world_ptr_mut();
@@ -349,7 +349,7 @@ where
     ///
     /// * C++ API: `iterable::iter`
     #[doc(alias = "iterable::iter")]
-    fn iter_only(&self, mut func: impl FnMut(&mut Iter)) {
+    fn iter_only(&self, mut func: impl FnMut(&mut Iter<P>)) {
         unsafe {
             let mut iter = self.retrieve_iter();
             let world = self.world_ptr_mut();
@@ -504,7 +504,7 @@ where
         rust_string
     }
 
-    fn iterable(&self) -> IterIterable<T> {
+    fn iterable(&self) -> IterIterable<P, T> {
         IterIterable::new(self.retrieve_iter(), self.iter_next_func())
     }
 

@@ -282,30 +282,59 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.init_current_term(id);
         let current_term = self.current_term_mut();
         if current_term.inout == InOutKind::InOutDefault as i16 {
-            self.set_as_inout_none();
+            self.set_inout_none();
         }
         self
     }
 
     /// set term with type
     ///
+    /// if T is passed along, inout is set to `inout_none` which indicates
+    /// that you are not planning on fetching the component data
+    /// for reading or writing purposes use &T or &mut T instead.
+    /// you can alternatively use `.set_in()` and `.set_inout()` to set the
+    /// inout mode explicitly.
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Position;
+    ///
+    /// #[derive(Component)]
+    /// struct Velocity;
+    ///
+    /// #[derive(Component)]
+    /// struct Mass;
+    ///
+    /// let world = World::new();
+    ///
+    /// world.query::<()>()
+    ///     //this can be retrieved from it.field if desired
+    ///     .with::<Position>().set_inout() //equivalent to .with::<&mut Position>()
+    ///     .with::<&Velocity>() //equivalent to .with::<Velocity>().set_in()
+    ///     .with::<&mut Mass>() //equivalent to .with::<Mass>().set_inout()
+    ///     .build();
+    /// ```
+    ///
     /// # See also
     ///
     /// * C++ API: `query_builder_i::with`
     #[doc(alias = "query_builder_i::with")]
-    fn with<T: InOutType>(&mut self) -> &mut Self {
-        if <T::Type as IntoComponentId>::IS_PAIR {
-            self.with_id(<T::Type as IntoComponentId>::get_id(self.world()));
+    fn with<T: IntoComponentId>(&mut self) -> &mut Self {
+        if <T as IntoComponentId>::IS_PAIR {
+            self.with_id(<T as IntoComponentId>::get_id(self.world()));
         } else {
             self.term();
             let world = self.world();
-            let id = T::Type::get_id(world);
+            let id = T::get_id(world);
             self.init_current_term(id);
-            let term = self.current_term_mut();
-
-            term.inout = type_to_inout::<T>() as i16;
-            if term.inout == InOutKind::InOutDefault as i16 {
-                self.set_as_inout_none();
+            if T::First::IS_REF {
+                self.set_in();
+            } else if T::First::IS_MUT {
+                self.set_inout();
+            } else {
+                self.set_inout_none();
             }
         }
         self
@@ -333,7 +362,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::with`
     #[doc(alias = "query_builder_i::with")]
-    fn with_enum_wildcard<T: ComponentType<Enum> + InOutType>(&mut self) -> &mut Self {
+    fn with_enum_wildcard<T: ComponentType<Enum> + ComponentId>(&mut self) -> &mut Self {
         self.with_first::<T>(flecs::Wildcard::ID)
     }
 
@@ -343,8 +372,8 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::with`
     #[doc(alias = "query_builder_i::with")]
-    fn with_first<First: InOutType>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
-        self.with_id((First::Type::get_id(self.world()), second))
+    fn with_first<First: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
+        self.with_id((First::get_id(self.world()), second))
     }
 
     /// set term with pairs
@@ -353,8 +382,8 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::with`
     #[doc(alias = "query_builder_i::with")]
-    fn with_first_name<First: InOutType>(&mut self, second: &'a CStr) -> &mut Self {
-        self.with_first_id(First::Type::get_id(self.world()), second)
+    fn with_first_name<First: ComponentId>(&mut self, second: &'a CStr) -> &mut Self {
+        self.with_first_id(First::get_id(self.world()), second)
     }
 
     /// set term with pairs
@@ -363,8 +392,8 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::with`
     #[doc(alias = "query_builder_i::with")]
-    fn with_second<Second: InOutType>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
-        self.with_id((first, Second::Type::get_id(self.world())))
+    fn with_second<Second: ComponentId>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
+        self.with_id((first, Second::get_id(self.world())))
     }
 
     /// set term with pairs
@@ -373,8 +402,8 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::with`
     #[doc(alias = "query_builder_i::with")]
-    fn with_second_name<Second: InOutType>(&mut self, first: &'a CStr) -> &mut Self {
-        self.with_second_id(first, Second::Type::get_id(self.world()))
+    fn with_second_name<Second: ComponentId>(&mut self, first: &'a CStr) -> &mut Self {
+        self.with_second_id(first, Second::get_id(self.world()))
     }
 
     /// set term with Name
@@ -388,7 +417,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.set_first_name(name);
         let term = self.current_term();
         if term.inout == InOutKind::InOutDefault as i16 {
-            self.set_as_inout_none();
+            self.set_inout_none();
         }
         self
     }
@@ -404,7 +433,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.set_first_name(first).set_second_name(second);
         let term = self.current_term();
         if term.inout == InOutKind::InOutDefault as i16 {
-            self.set_as_inout_none();
+            self.set_inout_none();
         }
         self
     }
@@ -416,7 +445,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.set_second_name(second);
         let term = self.current_term();
         if term.inout == InOutKind::InOutDefault as i16 {
-            self.set_as_inout_none();
+            self.set_inout_none();
         }
         self
     }
@@ -427,7 +456,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.set_first_name(first).set_second_id(second.into());
         let term = self.current_term();
         if term.inout == InOutKind::InOutDefault as i16 {
-            self.set_as_inout_none();
+            self.set_inout_none();
         }
         self
     }
@@ -450,7 +479,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::without`
     #[doc(alias = "query_builder_i::without")]
-    fn without<T: InOutType>(&mut self) -> &mut Self {
+    fn without<T: IntoComponentId>(&mut self) -> &mut Self {
         self.with::<T>().not()
     }
 
@@ -473,7 +502,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::without`
     #[doc(alias = "query_builder_i::without")]
-    fn without_enum_wildcard<T: InOutType + ComponentType<Enum> + CachedEnumData>(
+    fn without_enum_wildcard<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
         &mut self,
     ) -> &mut Self {
         self.with_enum_wildcard::<T>().not()
@@ -485,7 +514,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::without`
     #[doc(alias = "query_builder_i::without")]
-    fn without_first<First: InOutType>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
+    fn without_first<First: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
         self.with_first::<First>(second).not()
     }
 
@@ -495,7 +524,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::without`
     #[doc(alias = "query_builder_i::without")]
-    fn without_first_name<First: InOutType>(&mut self, second: &'a CStr) -> &mut Self {
+    fn without_first_name<First: ComponentId>(&mut self, second: &'a CStr) -> &mut Self {
         self.with_first_name::<First>(second).not()
     }
 
@@ -505,7 +534,10 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::without`
     #[doc(alias = "query_builder_i::without")]
-    fn without_second<Second: InOutType>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
+    fn without_second<Second: ComponentId>(
+        &mut self,
+        first: impl Into<Entity> + Copy,
+    ) -> &mut Self {
         self.with_second::<Second>(first).not()
     }
 
@@ -515,7 +547,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::without`
     #[doc(alias = "query_builder_i::without")]
-    fn without_second_name<Second: InOutType>(&mut self, first: &'a CStr) -> &mut Self {
+    fn without_second_name<Second: ComponentId>(&mut self, first: &'a CStr) -> &mut Self {
         self.with_second_name::<Second>(first).not()
     }
 
@@ -632,7 +664,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// Set the type as current term and in mode inout
-    fn write<T: InOutType>(&mut self) -> &mut Self {
+    fn write<T: IntoComponentId>(&mut self) -> &mut Self {
         self.with::<T>();
         TermBuilderImpl::write_curr(self)
     }
@@ -665,31 +697,31 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// Set the relationship as current term and in mode inout
-    fn write_first<T: InOutType>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
+    fn write_first<T: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
         self.with_first::<T>(second);
         TermBuilderImpl::write_curr(self)
     }
 
     /// Set the relationship as current term and in mode inout
-    fn write_first_name<T: InOutType>(&mut self, second: &'a CStr) -> &mut Self {
+    fn write_first_name<T: ComponentId>(&mut self, second: &'a CStr) -> &mut Self {
         self.with_first_name::<T>(second);
         TermBuilderImpl::write_curr(self)
     }
 
     /// Set the relationship as current term and in mode inout
-    fn write_second<T: InOutType>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
+    fn write_second<T: ComponentId>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
         self.with_second::<T>(first);
         TermBuilderImpl::write_curr(self)
     }
 
     /// Set the relationship as current term and in mode inout
-    fn write_second_name<T: InOutType>(&mut self, first: &'a CStr) -> &mut Self {
+    fn write_second_name<T: ComponentId>(&mut self, first: &'a CStr) -> &mut Self {
         self.with_second_name::<T>(first);
         TermBuilderImpl::write_curr(self)
     }
 
     /// Set the type as current term and in mode in
-    fn read<T: InOutType>(&mut self) -> &mut Self {
+    fn read<T: IntoComponentId>(&mut self) -> &mut Self {
         self.with::<T>();
         TermBuilderImpl::read_curr(self)
     }
@@ -722,25 +754,25 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// Set the relationship as current term and in mode in
-    fn read_first<T: InOutType>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
+    fn read_first<T: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
         self.with_first::<T>(second);
         TermBuilderImpl::read_curr(self)
     }
 
     /// Set the relationship as current term and in mode in
-    fn read_first_name<T: InOutType>(&mut self, second: &'a CStr) -> &mut Self {
+    fn read_first_name<T: ComponentId>(&mut self, second: &'a CStr) -> &mut Self {
         self.with_first_name::<T>(second);
         TermBuilderImpl::read_curr(self)
     }
 
     /// Set the relationship as current term and in mode in
-    fn read_second<T: InOutType>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
+    fn read_second<T: ComponentId>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
         self.with_second::<T>(first);
         TermBuilderImpl::read_curr(self)
     }
 
     /// Set the relationship as current term and in mode in
-    fn read_second_name<T: InOutType>(&mut self, first: &'a CStr) -> &mut Self {
+    fn read_second_name<T: ComponentId>(&mut self, first: &'a CStr) -> &mut Self {
         self.with_second_name::<T>(first);
         TermBuilderImpl::read_curr(self)
     }

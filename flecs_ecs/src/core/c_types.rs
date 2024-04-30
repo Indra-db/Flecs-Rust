@@ -524,6 +524,8 @@ impl ComponentInfo for sys::EcsComponent {
     const IS_TAG: bool = false;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = true;
+    const IS_REF: bool = false;
+    const IS_MUT: bool = false;
 }
 
 impl ComponentType<Struct> for sys::EcsComponent {}
@@ -571,6 +573,8 @@ impl ComponentInfo for TickSource {
     const IS_ENUM: bool = false;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = true;
+    const IS_REF: bool = false;
+    const IS_MUT: bool = false;
 }
 
 #[cfg(feature = "flecs_system")]

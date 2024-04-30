@@ -3,16 +3,16 @@ use std::ffi::{c_void, CStr};
 use crate::core::*;
 use crate::sys;
 
-pub struct IterIterable<'a, T>
+pub struct IterIterable<'a, P, T>
 where
     T: Iterable,
 {
     iter: IterT,
     iter_next: unsafe extern "C" fn(*mut IterT) -> bool,
-    _phantom: std::marker::PhantomData<&'a T>,
+    _phantom: std::marker::PhantomData<&'a (P, T)>,
 }
 
-impl<'a, T> IterIterable<'a, T>
+impl<'a, P, T> IterIterable<'a, P, T>
 where
     T: Iterable,
 {
@@ -115,7 +115,7 @@ where
     }
 }
 
-impl<'a, T> IterOperations for IterIterable<'a, T>
+impl<'a, P, T> IterOperations for IterIterable<'a, P, T>
 where
     T: Iterable,
 {
@@ -136,7 +136,7 @@ where
     }
 }
 
-impl<'a, T> IterAPI<'a, T> for IterIterable<'a, T>
+impl<'a, P, T> IterAPI<'a, P, T> for IterIterable<'a, P, T>
 where
     T: Iterable,
 {
@@ -148,7 +148,7 @@ where
     }
 }
 
-impl<'a, T> IntoWorld<'a> for IterIterable<'a, T>
+impl<'a, P, T> IntoWorld<'a> for IterIterable<'a, P, T>
 where
     T: Iterable,
 {

@@ -1,13 +1,15 @@
+use std::marker::PhantomData;
 use std::{ffi::CStr, os::raw::c_void, ptr::NonNull};
 
 use crate::core::*;
 use crate::sys;
 
-pub struct Iter<'a> {
+pub struct Iter<'a, P = ()> {
     iter: &'a mut IterT,
+    marker: PhantomData<P>,
 }
 
-impl<'a> Iter<'a> {
+impl<'a, P> Iter<'a, P> {
     pub fn world(&self) -> WorldRef<'a> {
         unsafe { WorldRef::from_ptr(self.iter.world) }
     }
@@ -26,12 +28,16 @@ impl<'a> Iter<'a> {
     /// # See also
     ///
     /// * C++ API: `iter::iter`
-    #[doc(alias = "iter::iter")]
-    pub fn new(iter: &'a mut IterT) -> Self {
-        Self { iter }
+    /// # Safety
+    /// - caller must ensure that iter.param points to type T
+    pub unsafe fn new(iter: &'a mut IterT) -> Self {
+        Self {
+            iter,
+            marker: PhantomData,
+        }
     }
 
-    pub fn iter(&self) -> IterIterator {
+    pub fn iter(&self) -> IterIterator<P> {
         IterIterator {
             iter: self,
             index: 0,
@@ -200,7 +206,7 @@ impl<'a> Iter<'a> {
     /// * C++ API: `iter::ctx`
     ///
     /// # Safety
-    /// - caller must ensure the ctx variable was set to a type accessible as T and is not aliased
+    /// - caller must ensure the ctx variable was set to a type accessible as C and is not aliased
     #[doc(alias = "iter::ctx")]
     pub unsafe fn context<T>(&mut self) -> &'a mut T {
         unsafe { &mut *(self.iter.ctx as *mut T) }
@@ -231,17 +237,17 @@ impl<'a> Iter<'a> {
     /// Access param.
     /// param contains the pointer passed to the param argument of `system::run`
     ///
-    /// # Safety
-    ///
-    /// This function is unsafe because you need to guarantee is has a param, and you're requesting for the correct type.
-    /// it's essentially casting a `c_void` to a type T
-    ///
     /// # See also
     ///
     /// * C++ API: `iter::param`
     #[doc(alias = "iter::param")]
-    pub unsafe fn param<T: ComponentId>(&mut self) -> &mut T {
-        unsafe { &mut *(self.iter.param as *mut T) }
+    pub fn param(&mut self) -> &mut P {
+        let ptr = self.iter.param as *mut P;
+        assert!(
+            !ptr.is_null(),
+            "Tried to get param on an iterator where it was null."
+        );
+        unsafe { &mut *ptr }
     }
 
     /// # Arguments
@@ -457,14 +463,14 @@ impl<'a> Iter<'a> {
     /// # See also
     ///
     /// * C++ API: `iter::field`
-    pub fn field<T: ComponentId>(&self, index: i32) -> Option<Field<T>> {
+    pub fn field<T: ComponentId>(&self, index: i32) -> Option<Field<T::UnderlyingType>> {
         ecs_assert!(
             (self.iter.flags & sys::EcsIterCppEach == 0),
             FlecsErrorCode::InvalidOperation,
             "cannot .field from .each, use .field_at instead",
         );
 
-        let id = T::get_id(self.world());
+        let id = <T::UnderlyingType as ComponentId>::get_id(self.world());
 
         if index > self.iter.field_count {
             return None;
@@ -475,7 +481,7 @@ impl<'a> Iter<'a> {
         let is_id_correct = id == term_id;
 
         if is_id_correct || is_pair {
-            return Some(unsafe { self.field_internal::<T>(index) });
+            return Some(unsafe { self.field_internal::<T::UnderlyingType>(index) });
         }
 
         None
@@ -520,7 +526,7 @@ impl<'a> Iter<'a> {
         unsafe { &mut *(field.array.add(row * field.size)) }
     }
 
-    pub fn field_at_mut<T>(&self, index: i32, row: usize) -> Option<&mut T>
+    pub fn field_at_mut<T>(&self, index: i32, row: usize) -> Option<&mut T::UnderlyingType>
     where
         T: ComponentId,
     {
@@ -540,7 +546,7 @@ impl<'a> Iter<'a> {
         }
     }
 
-    pub fn field_at<T>(&self, index: i32, row: usize) -> Option<&T>
+    pub fn field_at<T>(&self, index: i32, row: usize) -> Option<&T::UnderlyingType>
     where
         T: ComponentId,
     {
@@ -658,12 +664,12 @@ impl<'a> Iter<'a> {
     }
 }
 
-pub struct IterIterator<'a> {
-    iter: &'a Iter<'a>,
+pub struct IterIterator<'a, P> {
+    iter: &'a Iter<'a, P>,
     index: usize,
 }
 
-impl<'a> Iterator for IterIterator<'a> {
+impl<'a, P> Iterator for IterIterator<'a, P> {
     type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {

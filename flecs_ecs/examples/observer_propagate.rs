@@ -20,10 +20,9 @@ pub fn main() -> Result<Snap, String> {
 
     // Create observer that listens for events from both self and parent
     world
-        .observer::<(&Position, &Position)>()
+        .observer::<flecs::OnSet, (&Position, &Position)>()
         .term_at(1)
         .parent()
-        .add_event::<flecs::OnSet>()
         .each_iter(|it, index, (pos_self, pos_parent)| {
             fprintln!(
                 it,

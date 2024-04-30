@@ -778,7 +778,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         self
     }
 
-    /// Set read=write access of term
+    /// Set read/write access of term
     ///
     /// # Arguments
     ///
@@ -788,7 +788,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::inout`
     #[doc(alias = "term_builder_i::inout")]
-    fn set_inout(&mut self, inout: InOutKind) -> &mut Self {
+    fn set_inout_kind(&mut self, inout: InOutKind) -> &mut Self {
         self.current_term_mut().inout = inout.into();
         self
     }
@@ -810,7 +810,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::inout_stage`
     #[doc(alias = "term_builder_i::inout_stage")]
     fn inout_stage(&mut self, inout: InOutKind) -> &mut Self {
-        self.set_inout(inout);
+        self.set_inout_kind(inout);
         if self.current_term_mut().oper != OperKind::Not as i16 {
             self.src().entity(0);
         }
@@ -871,8 +871,8 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::in`
     #[doc(alias = "term_builder_i::in")]
     #[inline(always)]
-    fn set_as_in(&mut self) -> &mut Self {
-        self.set_inout(InOutKind::In)
+    fn set_in(&mut self) -> &mut Self {
+        self.set_inout_kind(InOutKind::In)
     }
 
     /// short for `set_inout(InOutKind::Out)`
@@ -884,8 +884,8 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::out`
     #[doc(alias = "term_builder_i::out")]
     #[inline(always)]
-    fn set_as_out(&mut self) -> &mut Self {
-        self.set_inout(InOutKind::Out)
+    fn set_out(&mut self) -> &mut Self {
+        self.set_inout_kind(InOutKind::Out)
     }
 
     /// short for `set_inout(InOutKind::InOut)`
@@ -897,8 +897,8 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::inout`
     #[doc(alias = "term_builder_i::inout")]
     #[inline(always)]
-    fn set_as_inout(&mut self) -> &mut Self {
-        self.set_inout(InOutKind::InOut)
+    fn set_inout(&mut self) -> &mut Self {
+        self.set_inout_kind(InOutKind::InOut)
     }
 
     /// short for `set_inout(InOutKind::InOutNone)`
@@ -910,8 +910,8 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::inout_none`
     #[doc(alias = "term_builder_i::inout_none")]
     #[inline(always)]
-    fn set_as_inout_none(&mut self) -> &mut Self {
-        self.set_inout(InOutKind::InOutNone)
+    fn set_inout_none(&mut self) -> &mut Self {
+        self.set_inout_kind(InOutKind::InOutNone)
     }
 
     /// set operator of term

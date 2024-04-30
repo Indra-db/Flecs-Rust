@@ -868,7 +868,7 @@ fn query_builder_singleton_term() {
         .query::<&SelfRef>()
         .with::<&Other>()
         .singleton()
-        .set_as_inout()
+        .set_inout()
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -904,7 +904,7 @@ fn query_builder_isa_superset_term() {
         .with::<&Other>()
         .src()
         .up_id(*flecs::IsA)
-        .set_as_in()
+        .set_in()
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -943,7 +943,7 @@ fn query_builder_isa_self_superset_term() {
         .src()
         .self_()
         .up_id(*flecs::IsA)
-        .set_as_in()
+        .set_in()
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -994,7 +994,7 @@ fn query_builder_childof_superset_term() {
         .with::<&Other>()
         .src()
         .up()
-        .set_as_in()
+        .set_in()
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -1033,7 +1033,7 @@ fn query_builder_childof_self_superset_term() {
         .src()
         .self_()
         .up()
-        .set_as_in()
+        .set_in()
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -2665,7 +2665,7 @@ fn query_builder_up_w_type() {
         .with::<&Other2>()
         .src()
         .up_type::<Rel2>()
-        .set_as_in()
+        .set_in()
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3324,13 +3324,13 @@ fn query_builder_inout_shortcuts() {
     let query = world
         .query::<()>()
         .with_id(a)
-        .set_as_in()
+        .set_in()
         .with_id(b)
-        .set_as_out()
+        .set_out()
         .with_id(c)
-        .set_as_inout()
+        .set_inout()
         .with_id(d)
-        .set_as_inout_none()
+        .set_inout_none()
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 

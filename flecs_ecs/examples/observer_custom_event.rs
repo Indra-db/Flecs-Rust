@@ -10,10 +10,9 @@ pub fn main() -> Result<Snap, String> {
     //ignore snap in example, it's for snapshot testing
     world.import::<Snap>();
 
-    // Create an observer for three events
+    // Create an observer for the custom event
     world
-        .observer::<&Position>()
-        .add_event::<MyEvent>()
+        .observer::<MyEvent, &Position>()
         .each_iter(|it, index, _pos| {
             fprintln!(
                 it,
@@ -31,10 +30,10 @@ pub fn main() -> Result<Snap, String> {
 
     // Emit the custom event. This triggers the observer.
     world
-        .event::<MyEvent>()
+        .event()
         .add::<Position>()
-        .set_entity_to_emit(entity)
-        .emit();
+        .target(entity)
+        .emit(&MyEvent);
 
     Ok(Snap::from(&world))
 
