@@ -4,7 +4,5 @@ expression: self.str
 ---
 - "widget: Entity name: MyWidget -- [ID] -- archetype: (Identifier,Name)"
 - "clicked on \"MyWidget\""
-- clicked!
 - "MyWidget resized to { 100, 200 }!"
-- "widget resized to { 100, 200 }!"
 - "Close request with reason: User"

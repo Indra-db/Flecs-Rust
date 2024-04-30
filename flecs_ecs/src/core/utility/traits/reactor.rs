@@ -33,7 +33,7 @@ where
 
     fn each<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
-        Func: FnMut(T::TupleType<'_>),
+        Func: FnMut(T::TupleType<'_>) + 'static,
     {
         let binding_ctx = self.get_binding_context();
 
@@ -52,7 +52,7 @@ where
 
     fn each_entity<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
-        Func: FnMut(&mut EntityView, T::TupleType<'_>),
+        Func: FnMut(&mut EntityView, T::TupleType<'_>) + 'static,
     {
         let binding_ctx = self.get_binding_context();
 
@@ -73,7 +73,7 @@ where
 
     fn each_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
-        Func: FnMut(&mut Iter<P>, usize, T::TupleType<'_>),
+        Func: FnMut(&mut Iter<P>, usize, T::TupleType<'_>) + 'static,
     {
         let binding_ctx = self.get_binding_context();
 
@@ -92,7 +92,7 @@ where
 
     fn iter_only<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
-        Func: FnMut(&mut Iter<P>),
+        Func: FnMut(&mut Iter<P>) + 'static,
     {
         let binding_ctx = self.get_binding_context();
         let iter_func = Box::new(func);
@@ -109,7 +109,7 @@ where
 
     fn iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
-        Func: FnMut(&mut Iter<P>, T::TupleSliceType<'_>),
+        Func: FnMut(&mut Iter<P>, T::TupleSliceType<'_>) + 'static,
     {
         let binding_ctx = self.get_binding_context();
 

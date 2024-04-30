@@ -13,10 +13,10 @@ pub struct VelocitySP {
 }
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // System that sets velocity using ecs_set for entities with PositionSP.
     // While systems are progressing, operations like ecs_set are deferred until
@@ -53,7 +53,7 @@ pub fn main() -> Result<Snap, String> {
     world
         .system_named::<&PositionSP>(c"PrintPositionSP")
         .each_entity(|e, p| {
-            fprintln!(snap, "{}: {{ {}, {} }}", e.name(), p.x, p.y);
+            fprintln!(e, "{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 
     // Create a few test entities for a PositionSP, VelocitySP query
@@ -74,7 +74,7 @@ pub fn main() -> Result<Snap, String> {
     world.progress();
     set_log_level(-1);
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     // info: pipeline rebuild

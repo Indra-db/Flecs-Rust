@@ -1,10 +1,10 @@
 include!("common");
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Entity used for Grows relationship
     let grows = world.entity_named(c"Grows");
@@ -24,46 +24,46 @@ pub fn main() -> Result<Snap, String> {
         .add_id((grows, pears));
 
     // Has can be used with relationships as well
-    fprintln!(snap, "Bob eats apples? {}", bob.has_first::<Eats>(apples));
+    fprintln!(&world, "Bob eats apples? {}", bob.has_first::<Eats>(apples));
 
     // Wildcards can be used to match relationships
     fprintln!(
-        snap,
+        &world,
         "Bob grows food? {}, {}",
         bob.has_id((grows, flecs::Wildcard::ID)),
         //or you can do
         bob.has_second::<flecs::Wildcard>(grows)
     );
 
-    fprintln!(snap);
+    fprintln!(&world);
 
     // Print the type of the entity. Should output:
     //   (Identifier,Name),(Eats,Apples),(Eats,Pears),(Grows,Pears)
-    fprintln!(snap, "Bob's type: [{}]", bob.archetype());
+    fprintln!(&world, "Bob's type: [{}]", bob.archetype());
 
-    fprintln!(snap);
+    fprintln!(&world);
 
     // Relationships can be iterated for an entity. This iterates (Eats, *):
     bob.each_target::<Eats>(|second| {
-        fprintln!(snap, "Bob eats {}", second.name());
+        fprintln!(&world, "Bob eats {}", second.name());
     });
 
-    fprintln!(snap);
+    fprintln!(&world);
 
     // Iterate by explicitly providing the pair. This iterates (*, Pears):
     bob.each_pair(flecs::Wildcard::ID, pears, |id| {
-        fprintln!(snap, "Bob {} pears", id.first_id().name());
+        fprintln!(&world, "Bob {} pears", id.first_id().name());
     });
 
-    fprintln!(snap);
+    fprintln!(&world);
 
     // Get first target of relationship
-    fprintln!(snap, "Bob eats {}", bob.target::<Eats>(0).name());
+    fprintln!(&world, "Bob eats {}", bob.target::<Eats>(0).name());
 
     // Get second target of relationship
-    fprintln!(snap, "Bob also eats {}", bob.target::<Eats>(1).name());
+    fprintln!(&world, "Bob also eats {}", bob.target::<Eats>(1).name());
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Bob eats apples? true

@@ -9,10 +9,10 @@ struct Planet;
 #[derive(Debug, Component)]
 struct Moon;
 
-fn iterate_tree(entity: EntityView, position_parent: &Position, snap: &mut Snap) {
+fn iterate_tree(entity: EntityView, position_parent: &Position) {
     // Print hierarchical name of entity & the entity type
     fprintln!(
-        snap,
+        entity,
         "{} [{:?}]",
         entity.path().unwrap(),
         entity.archetype()
@@ -28,19 +28,19 @@ fn iterate_tree(entity: EntityView, position_parent: &Position, snap: &mut Snap)
     };
 
     // Print the position
-    fprintln!(snap, "{:?}", pos_actual);
+    fprintln!(entity, "{:?}", pos_actual);
 
     entity.each_child(|child| {
-        iterate_tree(child, &pos_actual, snap);
+        iterate_tree(child, &pos_actual);
     });
 }
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create a simple hierarchy.
     // Hierarchies use ECS relationships and the builtin flecs::ChildOf relationship to
@@ -74,18 +74,18 @@ pub fn main() -> Result<Snap, String> {
 
     // Is the Moon a child of the Earth?
     fprintln!(
-        snap,
+        &world,
         "Is the Moon a child of the Earth? {} / {}",
         moon.has_id((flecs::ChildOf::ID, earth)), //or you can do
         moon.has_first::<flecs::ChildOf>(earth)
     );
 
-    fprintln!(snap);
+    fprintln!(&world);
 
     // Do a depth-first traversal of the tree
-    iterate_tree(sun, &Position { x: 0.0, y: 0.0 }, &mut snap);
+    iterate_tree(sun, &Position { x: 0.0, y: 0.0 });
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Is the Moon a child of the Earth? true / true

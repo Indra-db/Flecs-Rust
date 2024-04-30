@@ -5,10 +5,10 @@ struct Healthy;
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     let apples = world.entity_named(c"Apples").add::<Healthy>();
     let salad = world.entity_named(c"Salad").add::<Healthy>();
@@ -58,14 +58,14 @@ pub fn main() -> Result<Snap, String> {
     // Iterate the rule
     rule.each_iter(|it, index, ()| {
         fprintln!(
-            snap,
+            it,
             "{} eats {}",
             it.entity(index).name(),
             it.get_var(food_var.unwrap()).name()
         );
     });
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     // Bob eats Apples

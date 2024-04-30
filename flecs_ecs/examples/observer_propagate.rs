@@ -13,10 +13,10 @@ include!("common");
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create observer that listens for events from both self and parent
     world
@@ -25,7 +25,7 @@ pub fn main() -> Result<Snap, String> {
         .parent()
         .each_iter(|it, index, (pos_self, pos_parent)| {
             fprintln!(
-                snap,
+                it,
                 " - {}: {}: {}: self: {{ {}, {} }}, parent: {{ {}, {} }}",
                 it.event().name(),
                 it.event_id().to_str(),
@@ -49,7 +49,7 @@ pub fn main() -> Result<Snap, String> {
     // observer, as the observer query now matches.
     parent.set(Position { x: 1.0, y: 2.0 });
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //  - OnSet: Position: e: self: { 10, 20 }, parent: { 1, 2 }

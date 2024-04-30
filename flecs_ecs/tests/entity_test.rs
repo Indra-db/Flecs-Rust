@@ -334,7 +334,11 @@ fn entity_get_generic() {
 
 #[test]
 fn entity_get_generic_mut() {
-    let world = create_world();
+    #[derive(Component, Default)]
+    struct Flags {
+        invoked: usize,
+    }
+    let world = create_world_with_flags::<Flags>();
 
     let position = world.component::<Position>();
 
@@ -343,10 +347,11 @@ fn entity_get_generic_mut() {
     assert!(entity.is_valid());
     assert!(entity.has::<Position>());
 
-    let mut invoked = false;
-    world.observer::<flecs::OnSet, &Position>().each(|_| {
-        invoked = true;
-    });
+    world
+        .observer::<flecs::OnSet, &Position>()
+        .each_entity(|entity, _| {
+            entity.world().get_mut::<Flags>().invoked += 1;
+        });
 
     let pos = entity.get_untyped_mut(position.id());
     assert!(!pos.is_null());
@@ -356,7 +361,7 @@ fn entity_get_generic_mut() {
     assert_eq!(pos.y, 20);
 
     entity.modified_id(position);
-    assert!(invoked);
+    assert_eq!(world.get::<Flags>().invoked, 1);
 }
 
 #[test]
@@ -1715,30 +1720,36 @@ fn entity_defer_set_3_components() {
 
 #[test]
 fn entity_set_2_w_on_set() {
-    let world = create_world();
+    #[derive(Component, Default)]
+    struct Flags {
+        position_set: u32,
+        velocity_set: u32,
+    }
+    let world = create_world_with_flags::<Flags>();
 
-    let mut position_set = 0;
-    let mut velocity_set = 0;
+    world
+        .observer::<flecs::OnSet, &Position>()
+        .each_entity(|entity, p| {
+            entity.world().get_mut::<Flags>().position_set += 1;
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+        });
 
-    world.observer::<flecs::OnSet, &Position>().each(|p| {
-        position_set += 1;
-        assert_eq!(p.x, 10);
-        assert_eq!(p.y, 20);
-    });
-
-    world.observer::<flecs::OnSet, &Velocity>().each(|v| {
-        velocity_set += 1;
-        assert_eq!(v.x, 1);
-        assert_eq!(v.y, 2);
-    });
+    world
+        .observer::<flecs::OnSet, &Velocity>()
+        .each_entity(|entity, v| {
+            entity.world().get_mut::<Flags>().velocity_set += 1;
+            assert_eq!(v.x, 1);
+            assert_eq!(v.y, 2);
+        });
 
     let e = world
         .entity()
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    assert_eq!(position_set, 1);
-    assert_eq!(velocity_set, 1);
+    assert_eq!(world.get::<Flags>().position_set, 1);
+    assert_eq!(world.get::<Flags>().velocity_set, 1);
 
     let p = e.get::<Position>();
     assert_eq!(p.x, 10);
@@ -1751,23 +1762,25 @@ fn entity_set_2_w_on_set() {
 
 #[test]
 fn entity_defer_set_2_w_on_set() {
-    let world = create_world();
-
-    let mut position_set = 0;
-    let mut velocity_set = 0;
+    #[derive(Component, Default)]
+    struct Flags {
+        position_set: u32,
+        velocity_set: u32,
+    }
+    let world = create_world_with_flags::<Flags>();
 
     world
         .observer::<flecs::OnSet, &Position>()
-        .each_entity(|_e, p| {
-            position_set += 1;
+        .each_entity(|e, p| {
+            e.world().get_mut::<Flags>().position_set += 1;
             assert_eq!(p.x, 10);
             assert_eq!(p.y, 20);
         });
 
     world
         .observer::<flecs::OnSet, &Velocity>()
-        .each_entity(|_e, v| {
-            velocity_set += 1;
+        .each_entity(|e, v| {
+            e.world().get_mut::<Flags>().velocity_set += 1;
             assert_eq!(v.x, 1);
             assert_eq!(v.y, 2);
         });
@@ -1779,13 +1792,13 @@ fn entity_defer_set_2_w_on_set() {
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    assert_eq!(position_set, 0);
-    assert_eq!(velocity_set, 0);
+    assert_eq!(world.get::<Flags>().position_set, 0);
+    assert_eq!(world.get::<Flags>().velocity_set, 0);
 
     world.defer_end();
 
-    assert_eq!(position_set, 1); //assert 2 == 1
-    assert_eq!(velocity_set, 1);
+    assert_eq!(world.get::<Flags>().position_set, 1);
+    assert_eq!(world.get::<Flags>().velocity_set, 1);
 
     let p = e.get::<Position>();
     assert_eq!(p.x, 10);

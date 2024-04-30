@@ -36,14 +36,13 @@ struct Person;
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
+    let world = World::new();
+
     //ignore snap in example, it's for snapshot testing
-    let snap = Snap::setup_snapshot_test();
+    world.import::<Snap>();
 
     //todo v4 broken example bug flecs core
     /*
-
-
-    let world = World::new();
 
     // Register the LocatedIn relationship as transitive
     world.component::<LocatedIn>().add::<flecs::Transitive>();
@@ -151,10 +150,10 @@ pub fn main() -> Result<Snap, String> {
         );
     });
 
-    Ok(snap)
+    Ok(Snap::from(&world))
     */
 
-    Ok(snap)
+    Ok(Snap::from(&world))
     // Output:
     //  Bob lives in UnitedStates
     //  Alice lives in UnitedStates

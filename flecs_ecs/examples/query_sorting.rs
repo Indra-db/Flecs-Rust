@@ -12,16 +12,16 @@ extern "C" fn compare_position(
     (p1.x > p2.x) as i32 - (p1.x < p2.x) as i32
 }
 
-fn print_query(query: &Query<&Position>, snap: &mut Snap) {
-    query.each(|pos| fprintln!(snap, "{:?}", pos));
+fn print_query(query: &Query<&Position>) {
+    query.each_entity(|entity, pos| fprintln!(entity, "{:?}", pos));
 }
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create entities, set position in random order
     let entity = world.entity().set(Position { x: 1.0, y: 0.0 });
@@ -40,31 +40,31 @@ pub fn main() -> Result<Snap, String> {
     let sys = world
         .system::<&Position>()
         .order_by(compare_position)
-        .each(|pos| {
-            fprintln!(snap, "{:?}", pos);
+        .each_entity(|entity, pos| {
+            fprintln!(entity, "{:?}", pos);
         });
 
-    fprintln!(snap);
-    fprintln!(snap, "--- First iteration ---");
-    print_query(&query, &mut snap);
+    fprintln!(&world);
+    fprintln!(&world, "--- First iteration ---");
+    print_query(&query);
 
     // Change the value of one entity, invalidating the order
     entity.set(Position { x: 7.0, y: 0.0 });
 
     // Iterate query again, printed values are still ordered
-    fprintln!(snap);
-    fprintln!(snap, "--- Second iteration ---");
-    print_query(&query, &mut snap);
+    fprintln!(&world);
+    fprintln!(&world, "--- Second iteration ---");
+    print_query(&query);
 
     // Create new entity to show that data is also sorted for new entities
     world.entity().set(Position { x: 3.0, y: 0.0 });
 
     // Run system, printed values are ordered
-    fprintln!(snap);
-    fprintln!(snap, "--- System iteration ---");
+    fprintln!(&world);
+    fprintln!(&world, "--- System iteration ---");
     sys.run();
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //

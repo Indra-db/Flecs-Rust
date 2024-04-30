@@ -51,10 +51,10 @@ struct Mage;
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create npc's in world cell 0_0
     world
@@ -102,33 +102,34 @@ pub fn main() -> Result<Snap, String> {
     let query = world.query::<&Npc>().group_by::<WorldCell>().build();
 
     // Iterate all tables
-    fprintln!(snap, "All tables");
+    fprintln!(&world, "All tables");
 
     query.iter_only(|iter| {
         let group = world.entity_from_id(iter.group_id());
         fprintln!(
-            snap,
+            iter,
             "group: {:?} - Table [{}]",
             group.path().unwrap(),
             iter.table().unwrap().to_string().unwrap()
         );
     });
 
-    fprintln!(snap);
+    fprintln!(&world);
 
-    fprintln!(snap, "Tables for cell 1_0:");
+    fprintln!(&world, "Tables for cell 1_0:");
 
     query.iterable().set_group::<Cell_1_0>().iter_only(|iter| {
+        let world = iter.world();
         let group = world.entity_from_id(iter.group_id());
         fprintln!(
-            snap,
+            iter,
             "group: {:?} - Table [{}]",
             group.path().unwrap(),
             iter.table().unwrap().to_string().unwrap()
         );
     });
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //  All tables

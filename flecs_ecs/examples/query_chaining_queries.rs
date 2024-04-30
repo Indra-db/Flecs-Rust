@@ -24,9 +24,10 @@ struct ArtifactPower {
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
     let forest = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    forest.import::<Snap>();
 
     // Populate the forest with creatures. Some are enchanted.
     for i in 0..10 {
@@ -77,7 +78,7 @@ pub fn main() -> Result<Snap, String> {
                let pos = &loc[index];
                let abil_power = ability[index].power;
                let entity = it.entity(index);
-                fprintln!(snap,
+                fprintln!(it,
                     "Creature id: {entity} at location {},{} is enchanted with mystical energy, ability power: {} "
                     , pos.x, pos.y, abil_power
 
@@ -85,7 +86,7 @@ pub fn main() -> Result<Snap, String> {
             });
     });
 
-    Ok(snap)
+    Ok(Snap::from(&forest))
 
     // Output:
     //  Creature id: 525 at location 0,0 is enchanted with mystical energy, ability power: 0

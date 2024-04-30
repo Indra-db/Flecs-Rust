@@ -5,17 +5,17 @@ struct MyEvent;
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create an observer for the custom event
     world
         .observer::<MyEvent, &Position>()
         .each_iter(|it, index, _pos| {
             fprintln!(
-                snap,
+                it,
                 " - {}: {}: {}",
                 it.event().name(),
                 it.event_id().to_str(),
@@ -35,7 +35,7 @@ pub fn main() -> Result<Snap, String> {
         .target(entity)
         .emit(&MyEvent);
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //  - MyEvent: Position: e1

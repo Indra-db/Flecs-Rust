@@ -40,10 +40,10 @@ const PLATOONS_PER_PLAYER: usize = 3;
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Make the ECS aware of the inheritance relationships. Note that IsA
     // relationship used here is the same as in the prefab example.
@@ -116,7 +116,7 @@ pub fn main() -> Result<Snap, String> {
         .each_iter(|it, index, _| {
             let unit = it.entity(index);
             fprintln!(
-                snap,
+                it,
                 "Unit id: {} of class {} in platoon id: {} for player {}",
                 unit,
                 it.id(0).to_str(),
@@ -125,7 +125,7 @@ pub fn main() -> Result<Snap, String> {
             );
         });
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Unit id: 529 of class Wizard in platoon id: 526 for player MyPlayer

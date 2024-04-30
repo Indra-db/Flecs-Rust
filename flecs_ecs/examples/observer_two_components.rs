@@ -6,17 +6,17 @@ include!("common");
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create observer for custom event
     world
         .observer::<flecs::OnSet, (&Position, &Velocity)>()
         .each_iter(|it, index, (pos, vel)| {
             fprintln!(
-                snap,
+                it,
                 " - {}: {}: {}: p: {{ {}, {} }}, v: {{ {}, {} }}",
                 it.event().name(),
                 it.event_id().to_str(),
@@ -34,7 +34,7 @@ pub fn main() -> Result<Snap, String> {
     // Set Velocity (emits EcsOnSet, matches observer)
     entity.set(Velocity { x: 1.0, y: 2.0 });
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //  - OnSet: Velocity: e: p: { 10, 20 }, v: { 1, 2 }

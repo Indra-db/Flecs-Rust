@@ -2395,7 +2395,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::observe`
     #[doc(alias = "entity_builder::observe")]
-    pub fn observe<C>(self, func: impl FnMut()) -> Self
+    pub fn observe<C>(self, func: impl FnMut() + 'static) -> Self
     where
         C: ComponentId + EmptyComponent,
     {
@@ -2404,7 +2404,7 @@ impl<'a> EntityView<'a> {
 
     fn observe_impl<C, Func>(self, func: Func) -> Self
     where
-        Func: FnMut(),
+        Func: FnMut() + 'static,
         C: ComponentId,
     {
         let new_binding_ctx = Box::<ObserverEntityBindingCtx>::default();
@@ -2440,7 +2440,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::observe`
     #[doc(alias = "entity_builder::observe")]
-    pub fn observe_entity<C>(self, func: impl FnMut(&mut EntityView)) -> Self
+    pub fn observe_entity<C>(self, func: impl FnMut(&mut EntityView) + 'static) -> Self
     where
         C: ComponentId + EmptyComponent,
     {
@@ -2449,7 +2449,7 @@ impl<'a> EntityView<'a> {
 
     fn observe_entity_impl<C, Func>(self, func: Func) -> Self
     where
-        Func: FnMut(&mut EntityView),
+        Func: FnMut(&mut EntityView) + 'static,
         C: ComponentId,
     {
         let new_binding_ctx = Box::<ObserverEntityBindingCtx>::default();
@@ -2485,7 +2485,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::observe`
     #[doc(alias = "entity_builder::observe")]
-    pub fn observe_payload<C>(self, func: impl FnMut(&C)) -> Self
+    pub fn observe_payload<C>(self, func: impl FnMut(&C) + 'static) -> Self
     where
         C: ComponentId + NotEmptyComponent,
     {
@@ -2494,7 +2494,7 @@ impl<'a> EntityView<'a> {
 
     fn observe_payload_impl<C, Func>(self, func: Func) -> Self
     where
-        Func: FnMut(&C),
+        Func: FnMut(&C) + 'static,
         C: ComponentId,
     {
         let new_binding_ctx = Box::<ObserverEntityBindingCtx>::default();
@@ -2530,7 +2530,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::observe`
     #[doc(alias = "entity_builder::observe")]
-    pub fn observe_payload_entity<C>(self, func: impl FnMut(&mut EntityView, &C)) -> Self
+    pub fn observe_payload_entity<C>(self, func: impl FnMut(&mut EntityView, &C) + 'static) -> Self
     where
         C: ComponentId + NotEmptyComponent,
     {
@@ -2539,7 +2539,7 @@ impl<'a> EntityView<'a> {
 
     fn observe_payload_entity_impl<C, Func>(self, func: Func) -> Self
     where
-        Func: FnMut(&mut EntityView, &C),
+        Func: FnMut(&mut EntityView, &C) + 'static,
         C: ComponentId,
     {
         let new_binding_ctx = Box::<ObserverEntityBindingCtx>::default();

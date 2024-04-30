@@ -25,10 +25,10 @@ include!("common");
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create the same prefab hierarchy as from the hierarchy example, but now
     // with the SlotOf relationship.
@@ -61,13 +61,13 @@ pub fn main() -> Result<Snap, String> {
     let inst_cockpit = inst.target_id(cockpit, 0);
     let inst_seat = inst.target_id(pilot_seat, 0);
 
-    fprintln!(snap, "instance engine: {}", inst_engine.path().unwrap());
+    fprintln!(&world, "instance engine: {}", inst_engine.path().unwrap());
 
-    fprintln!(snap, "instance cockpit: {}", inst_cockpit.path().unwrap());
+    fprintln!(&world, "instance cockpit: {}", inst_cockpit.path().unwrap());
 
-    fprintln!(snap, "instance seat: {}", inst_seat.path().unwrap());
+    fprintln!(&world, "instance seat: {}", inst_seat.path().unwrap());
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //  instance engine: ::my_spaceship::Engine

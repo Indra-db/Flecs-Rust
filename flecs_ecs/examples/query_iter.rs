@@ -2,10 +2,10 @@ include!("common");
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     let query = world.new_query::<(&mut Position, &Velocity)>();
 
@@ -31,36 +31,36 @@ pub fn main() -> Result<Snap, String> {
     // The function passed to iter is by default called for each table the query
     // is matched with.
     query.iter(|it, (position, velocity)| {
-        fprintln!(snap);
+        fprintln!(it);
         // Print the table & number of entities matched in current callback
-        fprintln!(snap, "Table: {:?}", it.archetype());
-        fprintln!(snap, " - number of entities: {}", it.count());
-        fprintln!(snap);
+        fprintln!(it, "Table: {:?}", it.archetype());
+        fprintln!(it, " - number of entities: {}", it.count());
+        fprintln!(it);
 
         // Print information about the components being matched
         for i in 0..it.field_count() {
-            fprintln!(snap, " - term {} : ", i);
-            fprintln!(snap, "   - component: {}", it.id(i).to_str());
-            fprintln!(snap, "   - type size: {}", it.size(i));
+            fprintln!(it, " - term {} : ", i);
+            fprintln!(it, "   - component: {}", it.id(i).to_str());
+            fprintln!(it, "   - type size: {}", it.size(i));
         }
 
-        fprintln!(snap);
+        fprintln!(it);
 
         for i in it.iter() {
             position[i].x += velocity[i].x;
             position[i].y += velocity[i].y;
             fprintln!(
-                snap,
+                it,
                 " - entity {}: has {:?}",
                 it.entity(i).name(),
                 position[i]
             );
         }
 
-        fprintln!(snap);
+        fprintln!(it);
     });
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Table: Position, Velocity, (Identifier,Name)

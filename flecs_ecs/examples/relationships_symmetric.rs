@@ -5,10 +5,10 @@ struct TradesWith;
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Register TradesWith as symmetric relationship. Symmetric relationships
     // go both ways, adding (R, B) to A will also add (R, A) to B.
@@ -24,17 +24,17 @@ pub fn main() -> Result<Snap, String> {
 
     // Log platoon of unit
     fprintln!(
-        snap,
+        &world,
         "Player 1 trades with Player 2: {}",
         player_1.has_first::<TradesWith>(player_2)
     ); // true
     fprintln!(
-        snap,
+        &world,
         "Player 2 trades with Player 1: {}",
         player_2.has_first::<TradesWith>(player_1)
     ); // true
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Player 1 trades with Player 2: true

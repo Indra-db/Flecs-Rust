@@ -2,10 +2,10 @@ include!("common");
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create an entity with name Bob
     let bob = world
@@ -19,7 +19,7 @@ pub fn main() -> Result<Snap, String> {
 
     // Get the value for the Position component
     let pos = bob.try_get::<Position>().unwrap();
-    fprintln!(snap, "Bob's position: {:?}", pos);
+    fprintln!(&world, "Bob's position: {:?}", pos);
 
     // Overwrite the value of the Position component
     bob.set(Position { x: 20.0, y: 30.0 });
@@ -34,17 +34,17 @@ pub fn main() -> Result<Snap, String> {
 
     // Print all of the components the entity has. This will output:
     //    Position, Walking, (Identifier,Name)
-    fprintln!(snap, "[{}]", alice.archetype());
+    fprintln!(&world, "[{}]", alice.archetype());
 
     // Remove tag
     alice.remove::<Walking>();
 
     // Iterate all entities with position
     world.each_entity::<&Position>(|entity, pos| {
-        fprintln!(snap, "{} has {:?}", entity.name(), pos);
+        fprintln!(entity, "{} has {:?}", entity.name(), pos);
     });
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Bob's position: Position { x: 10.0, y: 20.0 }

@@ -5,10 +5,10 @@ include!("common");
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create a prefab hierarchy.
     let spaceship = world.prefab_named(c"SpaceShip");
@@ -24,14 +24,22 @@ pub fn main() -> Result<Snap, String> {
     // and Cockpit entities.
     if let Some(inst_engine) = inst.try_lookup(c"Engine") {
         if let Some(inst_cockpit) = inst.try_lookup(c"Cockpit") {
-            fprintln!(snap, "instance engine:  {:?}", inst_engine.path().unwrap());
-            fprintln!(snap, "instance cockpit: {:?}", inst_cockpit.path().unwrap());
+            fprintln!(
+                &world,
+                "instance engine:  {:?}",
+                inst_engine.path().unwrap()
+            );
+            fprintln!(
+                &world,
+                "instance cockpit: {:?}",
+                inst_cockpit.path().unwrap()
+            );
         } else {
-            fprintln!(snap, "entity lookup failed");
+            fprintln!(&world, "entity lookup failed");
         }
     }
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //  instance engine:  "::my_spaceship::Engine"

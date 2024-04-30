@@ -27,6 +27,6 @@ expression: self.str
 - "Group: \"::test_examples::query_group_by_callbacks::Third\" - Table: [Some(test_examples.query_group_by_callbacks.Position, test_examples.query_group_by_callbacks.Tag, (test_examples.query_group_by_callbacks.Group,test_examples.query_group_by_callbacks.Third))] - Counter: 1"
 - " [Position { x: 4.0, y: 4.0 }]"
 - "\n"
-- "Group deleted: \"Second\""
 - "Group deleted: \"First\""
 - "Group deleted: \"Third\""
+- "Group deleted: \"Second\""

@@ -23,10 +23,10 @@ extern "C" fn callback_group_by_relationship(
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Register components in order so that id for First is lower than Third
     world.component::<First>();
@@ -69,7 +69,7 @@ pub fn main() -> Result<Snap, String> {
         .set(Position { x: 6.0, y: 6.0 })
         .add::<Tag>();
 
-    fprintln!(snap);
+    fprintln!(&world);
 
     // The query cache now looks like this:
     //  - group First:
@@ -88,20 +88,20 @@ pub fn main() -> Result<Snap, String> {
     query.iter(|it, pos| {
         let group = world.entity_from_id(it.group_id());
         fprintln!(
-            snap,
+            it,
             "Group: {:?} - Table: [{:?}]",
             group.path().unwrap(),
             it.archetype()
         );
 
         for i in it.iter() {
-            fprintln!(snap, " [{:?}]", pos[i]);
+            fprintln!(it, " [{:?}]", pos[i]);
         }
 
-        fprintln!(snap);
+        fprintln!(it);
     });
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Group: "::First" - Table: [Position, (Group,First)]

@@ -8,10 +8,10 @@ struct Likes;
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     let bob = world.entity_named(c"Bob");
     let alice = world.entity_named(c"Alice");
@@ -56,10 +56,10 @@ pub fn main() -> Result<Snap, String> {
     rule.iter_only(|it| {
         let x = it.get_var(x_var);
         let y = it.get_var(y_var);
-        fprintln!(snap, "{} likes {}", x.name(), y.name());
+        fprintln!(it, "{} likes {}", x.name(), y.name());
     });
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Alice likes Bob

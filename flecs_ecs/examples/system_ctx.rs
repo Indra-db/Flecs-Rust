@@ -1,4 +1,5 @@
 include!("common");
+
 use std::{
     ffi::c_void,
     time::{SystemTime, UNIX_EPOCH},
@@ -33,15 +34,15 @@ fn rand(max: u64) -> f32 {
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
+    let world = World::new();
+
     //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
+    world.import::<Snap>();
 
     // Applications can pass context data to a system. A common use case where this
     // comes in handy is when a system needs to iterate more than one query. The
     // following example shows how to pass a custom query into a system for a simple
     // collision detection example.
-
-    let world = World::new();
 
     let mut query_collide = world.new_query::<(&Position, &Radius)>();
 
@@ -68,7 +69,7 @@ pub fn main() -> Result<Snap, String> {
                 let d_sqr = distance_sqr(p1, p2);
                 let r_sqr = sqr(r1.value + r2.value);
                 if r_sqr > d_sqr {
-                    fprintln!(snap, "{} and {} collided!", e1, e2);
+                    fprintln!(it, "{} and {} collided!", e1, e2);
                 }
             });
         });
@@ -89,7 +90,7 @@ pub fn main() -> Result<Snap, String> {
     // Run the system
     sys.run();
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //  532 and 539 collided!

@@ -29,10 +29,10 @@ struct Railgun;
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Associate types with prefabs
     world.prefab_type::<Turret>();
@@ -61,11 +61,11 @@ pub fn main() -> Result<Snap, String> {
     let inst_head = inst.target::<Head>(0);
     let inst_beam = inst.target::<Beam>(0);
 
-    fprintln!(snap, "instance base: {}", inst_base.path().unwrap());
-    fprintln!(snap, "instance head: {}", inst_head.path().unwrap());
-    fprintln!(snap, "instance beam: {}", inst_beam.path().unwrap());
+    fprintln!(&world, "instance base: {}", inst_base.path().unwrap());
+    fprintln!(&world, "instance head: {}", inst_head.path().unwrap());
+    fprintln!(&world, "instance beam: {}", inst_beam.path().unwrap());
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //  instance base: ::my_railgun::Base

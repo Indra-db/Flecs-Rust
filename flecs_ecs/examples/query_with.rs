@@ -5,10 +5,10 @@ struct Npc;
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create a query for Position, Npc. By adding the Npc component using the
     // "with" method, the component is not a part of the query type, and as a
@@ -33,10 +33,10 @@ pub fn main() -> Result<Snap, String> {
 
     // Note how the Npc tag is not part of the each signature
     query.each_entity(|entity, pos| {
-        fprintln!(snap, "Entity {}: {:?}", entity.name(), pos);
+        fprintln!(entity, "Entity {}: {:?}", entity.name(), pos);
     });
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //  Entity e1: Position { x: 10.0, y: 20.0 }

@@ -2,10 +2,10 @@ include!("common");
 
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create a system for moving an entity
     world
@@ -21,7 +21,7 @@ pub fn main() -> Result<Snap, String> {
         .system::<&Position>()
         .kind::<flecs::pipeline::PostUpdate>()
         .each_entity(|e, p| {
-            fprintln!(snap, "{}: {{ {}, {} }}", e.name(), p.x, p.y);
+            fprintln!(e, "{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 
     // Create a few test entities for a Position, Velocity query
@@ -40,7 +40,7 @@ pub fn main() -> Result<Snap, String> {
     // function is usually called in a loop.
     world.progress();
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //  e1: { 11, 22 }

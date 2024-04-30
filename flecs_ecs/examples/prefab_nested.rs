@@ -24,10 +24,10 @@ struct TirePressure {
 }
 #[allow(dead_code)]
 pub fn main() -> Result<Snap, String> {
-    //ignore snap in example, it's for snapshot testing
-    let mut snap = Snap::setup_snapshot_test();
-
     let world = World::new();
+
+    //ignore snap in example, it's for snapshot testing
+    world.import::<Snap>();
 
     // Create a Wheel prefab, make sure each instantiated wheel has a private
     // copy of the TirePressure component.
@@ -55,17 +55,17 @@ pub fn main() -> Result<Snap, String> {
     if let Some(inst) = inst_car.try_lookup(c"FrontLeft") {
         // The type shows that the child has a private copy of the TirePressure
         // component, and an IsA relationship to the Wheel prefab.
-        fprintln!(snap, "{:?}", inst.archetype());
+        fprintln!(&world, "{:?}", inst.archetype());
 
         // Get the TirePressure component & print its value
         if let Some(p) = inst.try_get::<TirePressure>() {
-            fprintln!(snap, "pressure: {}", p.value);
+            fprintln!(&world, "pressure: {}", p.value);
         };
     } else {
-        fprintln!(snap, "entity lookup failed");
+        fprintln!(&world, "entity lookup failed");
     }
 
-    Ok(snap)
+    Ok(Snap::from(&world))
 
     // Output:
     //  TirePressure, (Identifier,Name), (ChildOf,my_car), (IsA,Wheel)
