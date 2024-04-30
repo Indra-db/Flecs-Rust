@@ -42,7 +42,7 @@ where
     }
 }
 
-impl<'a, T> IterAPI<'a, T> for Query<'a, T>
+impl<'a, T> IterAPI<'a, (), T> for Query<'a, T>
 where
     T: Iterable,
 {

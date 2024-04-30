@@ -40,11 +40,9 @@ pub fn main() -> Result<Snap, String> {
 
     // Create an observer for the CloseRequested event to listen to any entity.
     world
-        .observer::<()>()
-        .add_event::<CloseRequested>()
-        .with::<&flecs::Any>()
+        .observer::<CloseRequested, &flecs::Any>()
         .each_iter(|it, _index, _| {
-            let close_requested = unsafe { it.param::<CloseRequested>() };
+            let close_requested = it.param();
             fprintln!(
                 snap,
                 "Close request with reason: {:?}",
@@ -65,7 +63,7 @@ pub fn main() -> Result<Snap, String> {
     });
 
     // Observe the Resize event on the widget entity.
-    widget.observe_payload(|payload: &mut Resize| {
+    widget.observe_payload(|payload: &Resize| {
         fprintln!(
             snap,
             "widget resized to {{ {}, {} }}!",
@@ -74,7 +72,7 @@ pub fn main() -> Result<Snap, String> {
         );
     });
 
-    widget.observe_payload_entity(|entity, payload: &mut Resize| {
+    widget.observe_payload_entity(|entity, payload: &Resize| {
         fprintln!(
             snap,
             "{} resized to {{ {}, {} }}!",
@@ -84,14 +82,14 @@ pub fn main() -> Result<Snap, String> {
         );
     });
 
-    widget.emit::<Click>();
+    widget.emit(&Click);
 
-    widget.emit_payload(Resize {
+    widget.emit(&Resize {
         width: 100.0,
         height: 200.0,
     });
 
-    widget.emit_payload(CloseRequested {
+    widget.emit(&CloseRequested {
         reason: CloseReason::User,
     });
 

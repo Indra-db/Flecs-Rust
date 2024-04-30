@@ -344,12 +344,9 @@ fn entity_get_generic_mut() {
     assert!(entity.has::<Position>());
 
     let mut invoked = false;
-    world
-        .observer::<&Position>()
-        .add_event::<flecs::OnSet>()
-        .each(|_| {
-            invoked = true;
-        });
+    world.observer::<flecs::OnSet, &Position>().each(|_| {
+        invoked = true;
+    });
 
     let pos = entity.get_untyped_mut(position.id());
     assert!(!pos.is_null());
@@ -1723,23 +1720,17 @@ fn entity_set_2_w_on_set() {
     let mut position_set = 0;
     let mut velocity_set = 0;
 
-    world
-        .observer::<(&Position,)>()
-        .add_event::<flecs::OnSet>()
-        .each(|(p,)| {
-            position_set += 1;
-            assert_eq!(p.x, 10);
-            assert_eq!(p.y, 20);
-        });
+    world.observer::<flecs::OnSet, &Position>().each(|p| {
+        position_set += 1;
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+    });
 
-    world
-        .observer::<(&Velocity,)>()
-        .add_event::<flecs::OnSet>()
-        .each(|(v,)| {
-            velocity_set += 1;
-            assert_eq!(v.x, 1);
-            assert_eq!(v.y, 2);
-        });
+    world.observer::<flecs::OnSet, &Velocity>().each(|v| {
+        velocity_set += 1;
+        assert_eq!(v.x, 1);
+        assert_eq!(v.y, 2);
+    });
 
     let e = world
         .entity()
@@ -1766,8 +1757,7 @@ fn entity_defer_set_2_w_on_set() {
     let mut velocity_set = 0;
 
     world
-        .observer::<&Position>()
-        .add_event::<flecs::OnSet>()
+        .observer::<flecs::OnSet, &Position>()
         .each_entity(|_e, p| {
             position_set += 1;
             assert_eq!(p.x, 10);
@@ -1775,8 +1765,7 @@ fn entity_defer_set_2_w_on_set() {
         });
 
     world
-        .observer::<&Velocity>()
-        .add_event::<flecs::OnSet>()
+        .observer::<flecs::OnSet, &Velocity>()
         .each_entity(|_e, v| {
             velocity_set += 1;
             assert_eq!(v.x, 1);
@@ -3587,8 +3576,7 @@ fn entity_emplace_w_observer() {
     let world = create_world();
 
     world
-        .observer::<&Position>()
-        .add_event_id(*flecs::OnAdd)
+        .observer::<flecs::OnAdd, &Position>()
         .each_entity(|e, _| {
             e.emplace(Velocity { x: 1, y: 2 });
         });

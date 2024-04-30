@@ -5,7 +5,7 @@ include!("common");
 // they have the flecs::Phase tag.
 
 // Dummy system
-fn sys(it: &mut Iter) {
+fn sys(it: &mut Iter<()>) {
     let name = it.system().name();
     let snap = Snap::from(it);
     fprintln!(snap, "system {}", name);

@@ -2316,57 +2316,21 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
     pub unsafe fn emit_id(self, event: impl Into<Entity>) {
-        self.world().event_id(event).set_entity_to_emit(self).emit();
-    }
-
-    /// Emit event for entity
-    ///
-    /// # Type Parameters
-    ///
-    /// * T - the event type to emit. Type must be empty.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::emit`
-    #[doc(alias = "entity_view::emit")]
-    pub fn emit<T: EmptyComponent + ComponentId>(self) {
-        unsafe { self.emit_id(T::get_id(self)) }
+        self.world().event_id(event).target(self).emit(&());
     }
 
     /// Emit event with an immutable payload for entity.
     ///
     /// # Type Parameters
     ///
-    /// * T - the event type to emit. Type must contain data (not empty struct).
+    /// * T - the event type to emit.
     ///
     /// # See also
     ///
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
-    pub fn emit_const_payload<T: NotEmptyComponent + ComponentId>(self, payload: T) {
-        self.world()
-            .event::<T>()
-            .set_entity_to_emit(self)
-            .set_const_event_data(payload)
-            .emit();
-    }
-
-    /// Emit event with a mutable payload for entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// * T - the event type to emit. Type must contain data (not empty struct).
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::emit`
-    #[doc(alias = "entity_view::emit")]
-    pub fn emit_payload<T: NotEmptyComponent + ComponentId>(self, payload: T) {
-        self.world()
-            .event::<T>()
-            .set_entity_to_emit(self)
-            .set_event_data(payload)
-            .emit();
+    pub fn emit<T: ComponentId>(self, event: &T) {
+        self.world().event().target(self).emit(event);
     }
 
     /// Enqueue event for entity.
@@ -2383,33 +2347,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
     pub unsafe fn enqueue_id(self, event: impl Into<Entity>) {
-        self.world()
-            .event_id(event)
-            .set_entity_to_emit(self)
-            .enqueue();
-    }
-
-    /// Enqueue event for entity
-    ///
-    /// # Type Parameters
-    ///
-    /// * T - the event type to enqueue. Type must be empty.
-    ///
-    /// # Usage:
-    ///
-    #[cfg_attr(doctest, doc = " ````no_test")]
-    /// ```rust
-    /// world.defer_begin();
-    /// entity.enqueue::<MyEvent>();
-    /// world.defer_end();
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::enqueue`
-    #[doc(alias = "entity_view::enqueue")]
-    pub fn enqueue<T: EmptyComponent + ComponentId>(self) {
-        unsafe { self.enqueue_id(T::get_id(self.world)) };
+        self.world().event_id(event).target(self).enqueue(());
     }
 
     /// enqueue event with payload for entity.
@@ -2428,7 +2366,7 @@ impl<'a> EntityView<'a> {
     /// }
     ///
     /// world.defer_begin();
-    /// entity.enqueue_payload(&Resize{width: 10, height: 20});
+    /// entity.enqueue(Resize{width: 10, height: 20});
     /// world.defer_end();
     /// ```
     ///
@@ -2436,44 +2374,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
-    pub fn enqueue_const_payload<T: NotEmptyComponent + ComponentId>(self, payload: T) {
-        self.world()
-            .event::<T>()
-            .set_entity_to_emit(self)
-            .set_const_event_data(payload)
-            .enqueue();
-    }
-
-    /// enqueue event with payload for entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// * T - the event type to enqueue. Type must contain data (not empty struct).
-    ///
-    /// # Usage:
-    ///
-    #[cfg_attr(doctest, doc = " ````no_test")]
-    /// ```rust
-    /// struct Resize {
-    ///    width: i32,
-    ///   height: i32,
-    /// }
-    ///
-    /// world.defer_begin();
-    /// entity.enqueue_payload(&mut Resize{width: 10, height: 20});
-    /// world.defer_end();
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::enqueue`
-    #[doc(alias = "entity_view::enqueue")]
-    pub fn enqueue_payload<T: NotEmptyComponent + ComponentId>(self, payload: T) {
-        self.world()
-            .event::<T>()
-            .set_entity_to_emit(self)
-            .set_event_data(payload)
-            .enqueue();
+    pub fn enqueue<T: NotEmptyComponent + ComponentId>(self, event: T) {
+        self.world().event().target(self).enqueue(event);
     }
 }
 
@@ -2583,7 +2485,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::observe`
     #[doc(alias = "entity_builder::observe")]
-    pub fn observe_payload<C>(self, func: impl FnMut(&mut C)) -> Self
+    pub fn observe_payload<C>(self, func: impl FnMut(&C)) -> Self
     where
         C: ComponentId + NotEmptyComponent,
     {
@@ -2592,7 +2494,7 @@ impl<'a> EntityView<'a> {
 
     fn observe_payload_impl<C, Func>(self, func: Func) -> Self
     where
-        Func: FnMut(&mut C),
+        Func: FnMut(&C),
         C: ComponentId,
     {
         let new_binding_ctx = Box::<ObserverEntityBindingCtx>::default();
@@ -2628,7 +2530,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::observe`
     #[doc(alias = "entity_builder::observe")]
-    pub fn observe_payload_entity<C>(self, func: impl FnMut(&mut EntityView, &mut C)) -> Self
+    pub fn observe_payload_entity<C>(self, func: impl FnMut(&mut EntityView, &C)) -> Self
     where
         C: ComponentId + NotEmptyComponent,
     {
@@ -2637,7 +2539,7 @@ impl<'a> EntityView<'a> {
 
     fn observe_payload_entity_impl<C, Func>(self, func: Func) -> Self
     where
-        Func: FnMut(&mut EntityView, &mut C),
+        Func: FnMut(&mut EntityView, &C),
         C: ComponentId,
     {
         let new_binding_ctx = Box::<ObserverEntityBindingCtx>::default();
@@ -2753,7 +2655,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_payload_observer_delegate::invoke")]
     pub(crate) unsafe extern "C" fn run_payload<C, Func>(iter: *mut IterT)
     where
-        Func: FnMut(&mut C),
+        Func: FnMut(&C),
     {
         let ctx: *mut ObserverEntityBindingCtx = (*iter).binding_ctx as *mut _;
         let empty = (*ctx).payload.unwrap();
@@ -2783,7 +2685,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_payload_observer_delegate::invoke")]
     pub(crate) unsafe extern "C" fn run_payload_entity<C, Func>(iter: *mut IterT)
     where
-        Func: FnMut(&mut EntityView, &mut C),
+        Func: FnMut(&mut EntityView, &C),
     {
         let ctx: *mut ObserverEntityBindingCtx = (*iter).binding_ctx as *mut _;
         let empty = (*ctx).payload_entity.unwrap();

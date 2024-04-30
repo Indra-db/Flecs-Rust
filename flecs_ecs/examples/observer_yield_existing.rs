@@ -20,8 +20,7 @@ pub fn main() -> Result<Snap, String> {
 
     // Create an observer for three events
     world
-        .observer::<&Position>()
-        .add_event::<flecs::OnSet>()
+        .observer::<flecs::OnSet, &Position>()
         .yield_existing(true)
         .each_iter(|it, index, pos| {
             fprintln!(

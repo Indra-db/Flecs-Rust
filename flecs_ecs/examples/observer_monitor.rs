@@ -18,8 +18,7 @@ pub fn main() -> Result<Snap, String> {
 
     // Create observer for custom event
     world
-        .observer::<(&Position, &Velocity)>()
-        .add_event::<flecs::Monitor>()
+        .observer::<flecs::Monitor, (&Position, &Velocity)>()
         .each_iter(|it, index, (_pos, _vel)| {
             if it.event() == flecs::OnAdd::ID {
                 fprintln!(
