@@ -3,8 +3,6 @@
 
 use std::{marker::PhantomData, os::raw::c_void, ptr::NonNull};
 
-use sys::ecs_header_t;
-
 use crate::core::*;
 use crate::sys;
 

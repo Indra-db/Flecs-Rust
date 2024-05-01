@@ -13,12 +13,11 @@ pub fn event_emit(criterion: &mut Criterion) {
             let evt = world.entity();
 
             for _ in 0..observer_count {
-                // world
-                //     .observer::<()>()
-                //     .with::<&T1>()
-                //     .self_()
-                //     .add_event_id(evt.id())
-                //     .iter_only(|_| {});
+                world
+                    .observer_id::<()>(evt)
+                    .with::<&T1>()
+                    .self_()
+                    .iter_only(|_| {});
             }
 
             bencher.iter_custom(|iters| {

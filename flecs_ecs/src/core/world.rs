@@ -3340,6 +3340,18 @@ impl World {
         ObserverBuilder::<Event, Components>::new(self)
     }
 
+    pub fn observer_id<Components>(
+        &self,
+        event: impl Into<Entity>,
+    ) -> ObserverBuilder<(), Components>
+    where
+        Components: Iterable,
+    {
+        let mut builder = ObserverBuilder::<(), Components>::new_untyped(self);
+        builder.add_event_id(event);
+        builder
+    }
+
     /// Create a new named observer.
     ///
     /// # Type Parameters
