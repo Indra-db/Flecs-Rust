@@ -3371,15 +3371,11 @@ impl World {
 
 /// Query mixin implementation
 impl World {
-    /// Create a new query.
+    /// Create a new uncached query.
     ///
     /// # Type Parameters
     ///
     /// * `Components` - The components to match on.
-    ///
-    /// # Returns
-    ///
-    /// A new query.
     ///
     /// # See also
     ///
