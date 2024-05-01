@@ -1,11 +1,11 @@
 use flecs_ecs::core::*;
 use flecs_ecs::macros::*;
 
-#[derive(Component)]
-struct Tag;
-
 #[test]
 fn query_uncached_destruction_no_panic() {
+    #[derive(Component)]
+    struct Tag;
+
     let world = World::new();
     let query = world.new_query::<&Tag>();
     let query2 = query.clone();
@@ -17,6 +17,9 @@ fn query_uncached_destruction_no_panic() {
 #[test]
 #[should_panic]
 fn query_cached_destruction_lingering_references_panic() {
+    #[derive(Component)]
+    struct Tag;
+
     let world = World::new();
     let query = world.query::<&Tag>().set_cached().build();
     let query2 = query.clone();

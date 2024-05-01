@@ -3,6 +3,8 @@
 
 use std::{marker::PhantomData, os::raw::c_void, ptr::NonNull};
 
+use sys::ecs_header_t;
+
 use crate::core::*;
 use crate::sys;
 
@@ -157,7 +159,6 @@ where
             !query_ptr.is_null(),
             "Failed to create query from query descriptor"
         );
-        unsafe { sys::ecs_poly_claim_(query_ptr as *mut c_void) };
 
         let query = unsafe { NonNull::new_unchecked(query_ptr) };
 
@@ -192,6 +193,10 @@ where
             }
             unsafe { sys::ecs_query_fini(self.query.as_ptr()) };
         }
+    }
+
+    pub fn reference_count(&self) -> i32 {
+        unsafe { sys::ecs_poly_refcount(self.query.as_ptr() as *mut c_void) }
     }
 
     /// Get the iterator for the query
