@@ -19,11 +19,28 @@ pub struct World {
     pub(crate) raw_world: NonNull<WorldT>,
 }
 
+impl Clone for World {
+    fn clone(&self) -> Self {
+        unsafe { sys::ecs_poly_claim_(self.raw_world.as_ptr() as *mut c_void) };
+        Self {
+            raw_world: self.raw_world,
+        }
+    }
+}
+
 impl Default for World {
     fn default() -> Self {
         let world = Self {
             raw_world: unsafe { NonNull::new_unchecked(sys::ecs_init()) },
         };
+        let ctx = Box::leak(Box::new(WorldCtx::new()));
+        unsafe {
+            sys::ecs_set_binding_ctx(
+                world.raw_world.as_ptr(),
+                ctx as *mut WorldCtx as *mut c_void,
+                Some(world_ctx_destruct),
+            );
+        }
 
         world.init_builtin_components();
         world
@@ -37,6 +54,10 @@ impl Drop for World {
             if unsafe { sys::ecs_stage_get_id(world_ptr) } == -1 {
                 unsafe { sys::ecs_stage_free(world_ptr) };
             } else {
+                if !self.world_ctx().is_ref_count_zero() {
+                    panic!("The code base still has lingering references to `Query` objects. This is a bug in the user code. 
+                    Please ensure that all `Query` objects are out of scope before the world is destroyed.");
+                }
                 unsafe { sys::ecs_fini(self.raw_world.as_ptr()) };
             }
         }
@@ -64,17 +85,20 @@ impl World {
 
     /// deletes and recreates the world
     ///
+    /// # Safety
+    /// This function panics if lingering references to `Query` and `World` objects are still present.
+    ///
     /// # See also
     ///
     /// * C++ API: `world::reset`
     #[doc(alias = "world::reset")]
-    pub fn reset(&mut self) {
-        assert!(
-            unsafe { sys::ecs_poly_refcount(self.raw_world.as_ptr() as *mut c_void) == 1 },
-            "Reset would invalidate other handles"
-        );
+    pub fn reset(self) -> Self {
+        if unsafe { sys::ecs_poly_refcount(self.raw_world.as_ptr() as *mut c_void) } > 1 {
+            panic!("Reset would invalidate other world handles that are still lingering in the user's code base. 
+            This is a bug in the user code. Please ensure that all world handles are out of scope before calling `reset`.");
+        }
         unsafe { sys::ecs_fini(self.raw_world.as_ptr()) };
-        self.raw_world = unsafe { NonNull::new_unchecked(sys::ecs_init()) };
+        World::new()
     }
 
     /// obtain pointer to C world object
@@ -3386,7 +3410,7 @@ impl World {
     ///
     /// * C++ API: `world::query`
     #[doc(alias = "world::query")]
-    pub fn new_query_named<'a, Components>(&'a self, name: &CStr) -> Query<'a, Components>
+    pub fn new_query_named<Components>(&self, name: &CStr) -> Query<Components>
     where
         Components: Iterable,
     {

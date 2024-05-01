@@ -13,21 +13,23 @@ pub fn event_emit(criterion: &mut Criterion) {
             let evt = world.entity();
 
             for _ in 0..observer_count {
-                world
-                    .observer::<()>()
-                    .with::<&T1>()
-                    .self_()
-                    .add_event_id(evt.id())
-                    .iter_only(|_| {});
+                // world
+                //     .observer::<()>()
+                //     .with::<&T1>()
+                //     .self_()
+                //     .add_event_id(evt.id())
+                //     .iter_only(|_| {});
             }
 
             bencher.iter_custom(|iters| {
                 let start = Instant::now();
                 for _ in 0..iters {
-                    EventBuilderUntyped::new(&world, evt)
-                        .add::<T1>()
-                        .set_table_to_emit(table, 0, 0)
-                        .emit();
+                    unsafe {
+                        EventBuilder::<()>::new_untyped(&world, evt)
+                            .add::<T1>()
+                            .table(table, 0, 0)
+                            .emit(&());
+                    }
                 }
                 let elapsed = start.elapsed();
                 elapsed / 1 //time average per entity operation
@@ -53,20 +55,22 @@ pub fn event_emit_propagate(criterion: &mut Criterion) {
                 cur = world.entity().child_of_id(cur);
             }
 
-            world
-                .observer::<()>()
-                .with::<&T1>()
-                .parent()
-                .add_event_id(evt.id())
-                .iter_only(|_| {});
+            // world
+            //     .observer::<()>()
+            //     .with::<&T1>()
+            //     .parent()
+            //     .add_event_id(evt.id())
+            //     .iter_only(|_| {});
 
             bencher.iter_custom(|iters| {
                 let start = Instant::now();
                 for _ in 0..iters {
-                    EventBuilderUntyped::new(&world, evt)
-                        .add::<T1>()
-                        .set_table_to_emit(root_table, 0, 0)
-                        .emit();
+                    unsafe {
+                        EventBuilder::<()>::new_untyped(&world, evt)
+                            .add::<T1>()
+                            .table(root_table, 0, 0)
+                            .emit(&());
+                    }
                 }
                 let elapsed = start.elapsed();
                 elapsed / 1 //time average per entity operation
@@ -91,9 +95,8 @@ pub fn event_emit_forward(criterion: &mut Criterion) {
 
             for id in &ids {
                 world
-                    .observer::<()>()
+                    .observer::<flecs::OnAdd, ()>()
                     .with_id(*id)
-                    .add_event::<flecs::OnAdd>()
                     .add_event::<flecs::OnRemove>()
                     .iter_only(|_| {});
             }
@@ -130,9 +133,8 @@ pub fn event_emit_forward(criterion: &mut Criterion) {
 
             for id in &ids {
                 world
-                    .observer::<()>()
+                    .observer::<flecs::OnAdd, ()>()
                     .with_id(*id)
-                    .add_event::<flecs::OnAdd>()
                     .add_event::<flecs::OnRemove>()
                     .iter_only(|_| {});
             }
@@ -171,7 +173,7 @@ pub fn event_modified(criterion: &mut Criterion) {
 
             for _ in 0..observer_count {
                 world
-                    .observer::<()>()
+                    .observer::<flecs::OnSet, ()>()
                     .with::<&C1>()
                     .self_()
                     .add_event::<flecs::OnSet>()

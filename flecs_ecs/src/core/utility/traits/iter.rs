@@ -18,10 +18,14 @@ pub trait IterOperations {
     fn query_ptr(&self) -> *const QueryT;
 }
 
-pub trait IterAPI<'a, P, T>: IterOperations + IntoWorld<'a>
+pub trait IterAPI<P, T>: IterOperations
 where
     T: Iterable,
 {
+    fn world(&self) -> WorldRef<'_>;
+
+    fn world_ptr_mut(&self) -> *mut sys::ecs_world_t;
+
     // TODO once we have tests in place, I will split this functionality up into multiple functions, which should give a small performance boost
     // by caching if the query has used a "is_ref" operation.
     // is_ref is true for any query that contains fields that are not matched on the entity itself
@@ -167,13 +171,13 @@ where
     ///
     /// # Returns
     ///
-    /// * Some(EntityView<'a>) if the entity was found, None if no entity was found
+    /// * Some(EntityView<'_>) if the entity was found, None if no entity was found
     ///
     /// # See also
     ///
     /// * C++ API: `find_delegate::invoke_callback`
     #[doc(alias = "find_delegate::invoke_callback")]
-    fn find(&self, mut func: impl FnMut(T::TupleType<'_>) -> bool) -> Option<EntityView<'a>> {
+    fn find(&self, mut func: impl FnMut(T::TupleType<'_>) -> bool) -> Option<EntityView<'_>> {
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity: Option<EntityView> = None;
@@ -210,7 +214,7 @@ where
     ///
     /// # Returns
     ///
-    /// * Some(EntityView<'a>) if the entity was found, None if no entity was found
+    /// * Some(EntityView<'_>) if the entity was found, None if no entity was found
     ///
     /// # See also
     ///
@@ -219,7 +223,7 @@ where
     fn find_entity(
         &self,
         mut func: impl FnMut(EntityView, T::TupleType<'_>) -> bool,
-    ) -> Option<EntityView<'a>> {
+    ) -> Option<EntityView<'_>> {
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity_result: Option<EntityView> = None;
@@ -258,7 +262,7 @@ where
     ///
     /// # Returns
     ///
-    /// * Some(EntityView<'a>) if the entity was found, None if no entity was found
+    /// * Some(EntityView<'_>) if the entity was found, None if no entity was found
     ///
     /// # See also
     ///
@@ -267,7 +271,7 @@ where
     fn find_iter(
         &self,
         mut func: impl FnMut(&mut Iter<P>, usize, T::TupleType<'_>) -> bool,
-    ) -> Option<EntityView<'a>> {
+    ) -> Option<EntityView<'_>> {
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity_result: Option<EntityView> = None;
@@ -376,7 +380,7 @@ where
     ///
     /// * C++ API: `query_base::entity`
     #[doc(alias = "query_base::entity")]
-    fn as_entity(&self) -> EntityView;
+    fn entity(&self) -> EntityView;
 
     /// Each term iterator.
     /// The `each_term` iterator accepts a function that is invoked for each term
@@ -417,7 +421,7 @@ where
     ///
     /// * C++ API: `query_base::term`
     #[doc(alias = "query_base::term")]
-    fn term(&self, index: usize) -> TermRef<'a> {
+    fn term(&self, index: usize) -> TermRef<'_> {
         let query = self.query_ptr();
         ecs_assert!(
             !query.is_null(),
@@ -516,7 +520,7 @@ where
     /// * C++ API: `iter_iterable::first`
     #[doc(alias = "iterable::first")]
     #[doc(alias = "iter_iterable::first")]
-    fn first_entity(&mut self) -> Option<EntityView<'a>> {
+    fn first_entity(&mut self) -> Option<EntityView<'_>> {
         let mut entity = None;
 
         let it = &mut self.retrieve_iter();

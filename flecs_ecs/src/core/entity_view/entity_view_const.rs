@@ -2110,10 +2110,6 @@ impl<'a> EntityView<'a> {
     /// # Returns
     /// - An `Entity` object representing the destination entity.
     ///
-    /// ## Safety
-    /// This function makes use of `unsafe` operations to interact with the underlying ECS.
-    /// Ensure that the provided `dest_id` is valid or zero
-    ///
     /// # See also
     ///
     /// * C++ API: `entity_view::clone`

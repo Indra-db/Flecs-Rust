@@ -177,7 +177,7 @@ impl<'a, T> Builder<'a> for QueryBuilder<'a, T>
 where
     T: Iterable,
 {
-    type BuiltType = Query<'a, T>;
+    type BuiltType = Query<T>;
 
     /// Build the `observer_builder` into an query
     ///

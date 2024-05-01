@@ -123,7 +123,7 @@ create_pre_registered_component!(Query, ECS_QUERY);
 create_pre_registered_component!(Observer, ECS_OBSERVER);
 
 // Core scopes & entities
-create_pre_registered_component!(World, ECS_WORLD);
+create_pre_registered_component!(EcsWorld, ECS_WORLD);
 create_pre_registered_component!(Flecs, ECS_FLECS);
 create_pre_registered_component!(FlecsCore, ECS_FLECS_CORE);
 create_pre_registered_component!(FlecsInternals, ECS_FLECS_INTERNALS);

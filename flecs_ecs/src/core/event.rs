@@ -66,12 +66,12 @@ impl<'a, T> EventBuilder<'a, T> {
         world: impl IntoWorld<'a>,
         event: impl Into<Entity>,
     ) -> EventBuilder<'a, ()> {
-        let mut obj = EventBuilder {
+        let mut obj = EventBuilder::<'a, ()> {
             world: world.world(),
             desc: Default::default(),
             ids: Default::default(),
             ids_array: Default::default(),
-            _phantom: PhantomData,
+            _phantom: PhantomData::<()>,
         };
         obj.desc.event = *event.into();
         obj

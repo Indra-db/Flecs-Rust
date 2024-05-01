@@ -90,7 +90,7 @@ impl<'a> Observer<'a> {
     #[doc(alias = "observer::query")]
     pub fn query(&mut self) -> Query<()> {
         unsafe {
-            Query::<()>::new_ownership(NonNull::new_unchecked(sys::ecs_observer_get_query(
+            Query::<()>::new_from(NonNull::new_unchecked(sys::ecs_observer_get_query(
                 self.world_ptr(),
                 *self.entity.id(),
             )

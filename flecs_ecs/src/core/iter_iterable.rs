@@ -136,15 +136,25 @@ where
     }
 }
 
-impl<'a, P, T> IterAPI<'a, P, T> for IterIterable<'a, P, T>
+impl<'a, P, T> IterAPI<P, T> for IterIterable<'a, P, T>
 where
     T: Iterable,
 {
-    fn as_entity(&self) -> EntityView<'a> {
+    fn entity(&self) -> EntityView {
         let world = unsafe { WorldRef::from_ptr(self.iter.real_world) };
         EntityView::new_from(world, unsafe {
             sys::ecs_get_entity(self.iter.query as *const c_void)
         })
+    }
+
+    #[inline(always)]
+    fn world(&self) -> WorldRef<'a> {
+        unsafe { WorldRef::from_ptr(<Self as IterAPI<P, T>>::world_ptr_mut(self)) }
+    }
+
+    #[inline(always)]
+    fn world_ptr_mut(&self) -> *mut sys::ecs_world_t {
+        self.iter.world
     }
 }
 
