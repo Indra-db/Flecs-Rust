@@ -52,11 +52,8 @@ disable_build_c = []
 # Module support
 flecs_module = []
 
-# String parser for queries
-flecs_parser = []
-
 # ECS data definition format
-flecs_plecs = ["flecs_module", "flecs_parser", "flecs_expr"]
+flecs_script = ["flecs_module", "flecs_meta", "flecs_doc"]
 
 # Constraint solver for advanced queries
 flecs_rules = []
@@ -68,7 +65,7 @@ flecs_snapshot = []
 flecs_stats = []
 
 # Track runtime statistics periodically
-flecs_monitor = ["flecs_stats", "flecs_system", "flecs_timer"]
+flecs_monitor = ["flecs_stats", "flecs_system", "flecs_timer", "flecs_module"]
 
 # Expose component data as statistics
 flecs_metrics = ["flecs_meta", "flecs_units", "flecs_pipeline"]
@@ -94,11 +91,8 @@ flecs_meta_c = []
 # Builtin standard units
 flecs_units = ["flecs_module", "flecs_meta"]
 
-# Parsing strings to/from component values
-flecs_expr = ["flecs_meta", "flecs_parser"]
-
 # Parsing JSON to/from component values
-flecs_json = ["flecs_expr"]
+flecs_json = ["flecs_meta"]
 
 # Document entities & components
 flecs_doc = ["flecs_module"]

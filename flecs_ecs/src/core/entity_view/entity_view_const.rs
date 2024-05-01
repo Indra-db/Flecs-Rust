@@ -123,6 +123,7 @@ impl<'a> EntityView<'a> {
             root_sep: SEPARATOR.as_ptr(),
             _canary: 0,
             id: 0,
+            parent: 0,
             symbol: std::ptr::null(),
             use_low_id: false,
             add: std::ptr::null(),

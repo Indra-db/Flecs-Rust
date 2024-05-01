@@ -49,7 +49,7 @@ where
         // world is deleted.
         unsafe {
             if self.query.as_ref().entity == 0
-                && sys::ecs_poly_release_(self.query.as_ptr() as *mut c_void) == 0
+                && sys::flecs_poly_release_(self.query.as_ptr() as *mut c_void) == 0
             {
                 sys::ecs_query_fini(self.query.as_ptr());
             }
@@ -122,7 +122,7 @@ where
     #[doc(alias = "query::query")]
     #[inline]
     pub unsafe fn new_from(query: NonNull<QueryT>) -> Self {
-        unsafe { sys::ecs_poly_claim_(query.as_ptr() as *mut c_void) };
+        unsafe { sys::flecs_poly_claim_(query.as_ptr() as *mut c_void) };
 
         let new_query = Self {
             query,
@@ -185,7 +185,7 @@ where
         );
 
         if unsafe { (*self.query.as_ptr()).entity } != 0 {
-            if unsafe { sys::ecs_poly_release_(self.query.as_ptr() as *mut c_void) } > 0 {
+            if unsafe { sys::flecs_poly_release_(self.query.as_ptr() as *mut c_void) } > 0 {
                 panic!("The code base still has lingering references to `Query` objects. This is a bug in the user code. 
                 Please ensure that all `Query` objects are out of scope that are a clone/copy of the current one.");
             }
@@ -194,7 +194,7 @@ where
     }
 
     pub fn reference_count(&self) -> i32 {
-        unsafe { sys::ecs_poly_refcount(self.query.as_ptr() as *mut c_void) }
+        unsafe { sys::flecs_poly_refcount(self.query.as_ptr() as *mut c_void) }
     }
 
     /// Get the iterator for the query

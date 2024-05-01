@@ -332,8 +332,10 @@ impl<'a> EntityView<'a> {
         T: IntoComponentId,
     {
         let id = T::get_id(self.world);
+        let mut pre_existing = false;
         unsafe {
-            let ptr = sys::ecs_emplace_id(self.world_ptr_mut(), *self.id(), id) as *mut T;
+            let ptr = sys::ecs_emplace_id(self.world_ptr_mut(), *self.id(), id, &mut pre_existing)
+                as *mut T;
             std::ptr::write(ptr, value);
             sys::ecs_modified_id(self.world_ptr_mut(), *self.id(), id);
         }

@@ -117,6 +117,7 @@ impl Default for ecs_entity_desc_t {
             add: std::ptr::null(),
             add_expr: std::ptr::null(),
             set: std::ptr::null(),
+            parent: Default::default(),
         }
     }
 }

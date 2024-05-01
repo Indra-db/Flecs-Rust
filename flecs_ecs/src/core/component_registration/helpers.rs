@@ -51,6 +51,7 @@ pub(crate) fn create_entity_desc(
     let entity_desc: flecs_ecs_sys::ecs_entity_desc_t = flecs_ecs_sys::ecs_entity_desc_t {
         _canary: 0,
         id,
+        parent: 0,
         name,
         sep: SEPARATOR.as_ptr(),
         root_sep: std::ptr::null(),

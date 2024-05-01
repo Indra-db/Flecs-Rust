@@ -21,7 +21,7 @@ pub struct World {
 
 impl Clone for World {
     fn clone(&self) -> Self {
-        unsafe { sys::ecs_poly_claim_(self.raw_world.as_ptr() as *mut c_void) };
+        unsafe { sys::flecs_poly_claim_(self.raw_world.as_ptr() as *mut c_void) };
         Self {
             raw_world: self.raw_world,
         }
@@ -50,7 +50,7 @@ impl Default for World {
 impl Drop for World {
     fn drop(&mut self) {
         let world_ptr = self.raw_world.as_ptr();
-        if unsafe { sys::ecs_poly_release_(world_ptr as *mut c_void) } == 0 {
+        if unsafe { sys::flecs_poly_release_(world_ptr as *mut c_void) } == 0 {
             if unsafe { sys::ecs_stage_get_id(world_ptr) } == -1 {
                 unsafe { sys::ecs_stage_free(world_ptr) };
             } else {
@@ -93,7 +93,7 @@ impl World {
     /// * C++ API: `world::reset`
     #[doc(alias = "world::reset")]
     pub fn reset(self) -> Self {
-        if unsafe { sys::ecs_poly_refcount(self.raw_world.as_ptr() as *mut c_void) } > 1 {
+        if unsafe { sys::flecs_poly_refcount(self.raw_world.as_ptr() as *mut c_void) } > 1 {
             panic!("Reset would invalidate other world handles that are still lingering in the user's code base. 
             This is a bug in the user code. Please ensure that all world handles are out of scope before calling `reset`.");
         }
@@ -436,17 +436,17 @@ impl World {
     pub fn is_stage(&self) -> bool {
         unsafe {
             ecs_assert!(
-                sys::ecs_poly_is_(
+                sys::flecs_poly_is_(
                     self.raw_world.as_ptr() as *const c_void,
                     sys::ecs_world_t_magic as i32
-                ) || sys::ecs_poly_is_(
+                ) || sys::flecs_poly_is_(
                     self.raw_world.as_ptr() as *const c_void,
                     sys::ecs_stage_t_magic as i32
                 ),
                 FlecsErrorCode::InvalidParameter,
                 "Parameter is not a world or stage"
             );
-            sys::ecs_poly_is_(
+            sys::flecs_poly_is_(
                 self.raw_world.as_ptr() as *const c_void,
                 sys::ecs_stage_t_magic as i32,
             )
@@ -1733,7 +1733,9 @@ impl World {
     {
         let id = T::get_id(self);
         let raw_world = self.raw_world;
-        let ptr = unsafe { sys::ecs_emplace_id(raw_world.as_ptr(), id, id) } as *mut T;
+        let mut pre_existing = false;
+        let ptr =
+            unsafe { sys::ecs_emplace_id(raw_world.as_ptr(), id, id, &mut pre_existing) } as *mut T;
         unsafe {
             std::ptr::write(ptr, value);
             sys::ecs_modified_id(raw_world.as_ptr(), id, id);
