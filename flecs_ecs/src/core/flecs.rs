@@ -197,9 +197,6 @@ create_pre_registered_component!(Remove, ECS_REMOVE);
 create_pre_registered_component!(Delete, ECS_DELETE);
 create_pre_registered_component!(Panic, ECS_PANIC);
 
-// Misc
-create_pre_registered_component!(DefaultChildComponent, ECS_DEFAULT_CHILD_COMPONENT);
-
 // Builtin predicate ids (used by rule engine)
 create_pre_registered_component!(PredEq, ECS_PRED_EQ);
 create_pre_registered_component!(PredMatch, ECS_PRED_MATCH);

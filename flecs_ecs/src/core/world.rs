@@ -444,7 +444,7 @@ impl World {
                     sys::ecs_stage_t_magic as i32
                 ),
                 FlecsErrorCode::InvalidParameter,
-                "Parameter is not a world or stage"
+                "flecs::world instance contains invalid reference to world or stage"
             );
             sys::flecs_poly_is_(
                 self.raw_world.as_ptr() as *const c_void,
@@ -785,12 +785,14 @@ impl World {
         unsafe { sys::ecs_set_lookup_path(self.raw_world.as_ptr(), &*search_path.into()) }
     }
 
-    /// Lookup entity by name
+    /// Lookup an entity by name.
+    /// The entity is searched recursively recursively traversing
+    /// up the tree until found.
     ///
     /// # Safety
     ///
-    /// This function can return an entity with id 0 if the entity is not found.
-    /// Ensure that the entity exists before using it.
+    /// Panics: Ensure that the entity exists before using it.
+    /// Use `try_lookup` variant otherwise.
     ///
     /// # Arguments
     ///
@@ -805,17 +807,17 @@ impl World {
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
     #[inline(always)]
-    pub fn lookup(&self, name: &CStr) -> EntityView {
-        self.try_lookup(name)
-            .expect("Entity not found, when unsure, use try_lookup")
+    pub fn lookup_recursively(&self, name: &CStr) -> EntityView {
+        self.try_lookup_recursive(name)
+            .expect("Entity not found, when unsure, use try_lookup_recursive")
     }
 
     /// Lookup entity by name, only the current scope is searched
     ///
     /// # Safety
     ///
-    /// This function can return an entity with id 0 if the entity is not found.
-    /// Ensure that the entity exists before using it.
+    /// Panics: Ensure that the entity exists before using it.
+    /// Use `try_lookup` variant otherwise.
     ///
     /// # Arguments
     ///
@@ -830,9 +832,9 @@ impl World {
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
     #[inline(always)]
-    pub fn lookup_current_scope(&self, name: &CStr) -> EntityView {
-        self.try_lookup_current_scope(name)
-            .expect("Entity not found, when unsure, use try_lookup_current_scope")
+    pub fn lookup(&self, name: &CStr) -> EntityView {
+        self.try_lookup(name)
+            .expect("Entity not found, when unsure, use try_lookup")
     }
 
     /// Lookup entity by name
@@ -840,7 +842,7 @@ impl World {
     /// # Arguments
     ///
     /// * `name` - The name of the entity to lookup.
-    /// * `search_path` - When false, only the current scope is searched.
+    /// * `recursively` - Recursively traverse up the tree until entity is found.
     ///
     /// # Returns
     ///
@@ -850,7 +852,7 @@ impl World {
     ///
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
-    fn try_lookup_impl(&self, name: &CStr, search_path: bool) -> Option<EntityView> {
+    fn try_lookup_impl(&self, name: &CStr, recursive: bool) -> Option<EntityView> {
         let entity_id = unsafe {
             sys::ecs_lookup_path_w_sep(
                 self.raw_world.as_ptr(),
@@ -858,7 +860,7 @@ impl World {
                 name.as_ptr(),
                 SEPARATOR.as_ptr(),
                 SEPARATOR.as_ptr(),
-                search_path,
+                recursive,
             )
         };
         if entity_id == 0 {
@@ -868,7 +870,9 @@ impl World {
         }
     }
 
-    /// Lookup entity by name
+    /// Lookup an entity by name.
+    /// The entity is searched recursively recursively traversing
+    /// up the tree until found.
     ///
     /// # Arguments
     ///
@@ -883,7 +887,7 @@ impl World {
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
     #[inline(always)]
-    pub fn try_lookup(&self, name: &CStr) -> Option<EntityView> {
+    pub fn try_lookup_recursive(&self, name: &CStr) -> Option<EntityView> {
         self.try_lookup_impl(name, true)
     }
 
@@ -902,7 +906,7 @@ impl World {
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
     #[inline(always)]
-    pub fn try_lookup_current_scope(&self, name: &CStr) -> Option<EntityView> {
+    pub fn try_lookup(&self, name: &CStr) -> Option<EntityView> {
         self.try_lookup_impl(name, false)
     }
 
@@ -916,7 +920,7 @@ impl World {
     ///
     /// * C++ API: `world::set`
     #[doc(alias = "world::set")]
-    pub fn set<T: ComponentId>(&self, component: T) {
+    pub fn set<T: ComponentId + NotEmptyComponent + ComponentType<Struct>>(&self, component: T) {
         let id = T::get_id(self);
         set_helper(self.raw_world.as_ptr(), id, component, id);
     }
@@ -1276,7 +1280,7 @@ impl World {
     // #[inline(always)]
     pub fn get_ref<T>(&self) -> Ref<T::UnderlyingType>
     where
-        T: ComponentId,
+        T: ComponentId + NotEmptyComponent,
     {
         EntityView::new_from(self, T::get_id(self)).get_ref::<T>()
     }
@@ -1729,7 +1733,7 @@ impl World {
     #[doc(alias = "world::emplace")]
     pub fn emplace<T>(&self, value: T)
     where
-        T: IntoComponentId,
+        T: ComponentId,
     {
         let id = T::get_id(self);
         let raw_world = self.raw_world;
@@ -3471,6 +3475,34 @@ impl World {
         Components: Iterable,
     {
         QueryBuilder::<Components>::new_named(self, name)
+    }
+
+    /// Convert a query entity to a query.
+    ///
+    /// # Safety
+    ///
+    /// Proceed with caution. Use `.iter_only` instead.
+    ///
+    /// # Returns
+    ///
+    /// returns the untyped query if the entity is alive, otherwise `None`.
+    pub fn try_query_from(&self, query_entity: impl Into<Entity>) -> Option<Query<()>> {
+        Query::<()>::new_from_entity(self, query_entity)
+    }
+
+    /// Convert a query entity to a query.
+    /// this method is the same as `try_to_query` but it automatically unwraps the result.
+    ///
+    /// # Safety
+    ///
+    /// Proceed with caution. Use `.iter_only` instead.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the entity is not alive or a query. Use `try_to_query` if you are unsure.
+    pub fn query_from(&self, query_entity: impl Into<Entity>) -> Query<()> {
+        self.try_query_from(query_entity)
+            .expect("entity / query is not alive or valid")
     }
 
     /// Create and iterate an uncached query.

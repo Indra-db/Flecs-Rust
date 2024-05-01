@@ -175,6 +175,31 @@ impl<'a> App<'a> {
     /// * C++ API: `app_builder::run`
     #[doc(alias = "app_builder::run")]
     pub fn run(&mut self) -> i32 {
-        unsafe { sys::ecs_app_run(self.world.ptr_mut(), &mut self.desc) }
+        let world_ptr = self.world.ptr_mut();
+        let result = unsafe { sys::ecs_app_run(world_ptr, &mut self.desc) };
+        unsafe {
+            if sys::ecs_should_quit(world_ptr) {
+                // Only free world if quit flag is set. This ensures that we won't
+                // try to cleanup the world if the app is used in an environment
+                // that takes over the main loop, like with emscripten.
+                if sys::flecs_poly_release_(world_ptr as *mut c_void) == 0 {
+                    sys::ecs_fini(world_ptr);
+                }
+            }
+        }
+        result
+
+        /*
+                int result = ecs_app_run(world_, &desc_);
+        if (ecs_should_quit(world_)) {
+            // Only free world if quit flag is set. This ensures that we won't
+            // try to cleanup the world if the app is used in an environment
+            // that takes over the main loop, like with emscripten.
+            if (!flecs_poly_release(world_)) {
+                ecs_fini(world_);
+            }
+        }
+        return result;
+         */
     }
 }

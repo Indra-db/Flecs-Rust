@@ -681,7 +681,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub fn get<T: ComponentId>(&self) -> &'a T::UnderlyingType {
+    pub fn get<T: ComponentId + NotEmptyComponent>(&self) -> &'a T::UnderlyingType {
         self.try_get::<T>()
             .expect("Component does not exist on this entity")
     }
@@ -712,7 +712,9 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    pub unsafe fn get_unchecked<T: ComponentId>(&self) -> &'a T::UnderlyingType {
+    pub unsafe fn get_unchecked<T: ComponentId + NotEmptyComponent>(
+        &self,
+    ) -> &'a T::UnderlyingType {
         if !T::IS_ENUM {
             if T::IS_TAG {
                 ecs_assert!(
@@ -1126,12 +1128,12 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::get_mut`
     #[doc(alias = "entity_view::get_mut")]
     #[allow(clippy::mut_from_ref)]
-    pub fn get_mut<T: ComponentId>(self) -> &'a mut T::UnderlyingType {
+    pub fn get_mut<T: ComponentId + NotEmptyComponent>(self) -> &'a mut T::UnderlyingType {
         self.try_get_mut::<T>()
             .expect("Component does not exist on this entity")
     }
 
-    pub fn get_callback_mut<T: ComponentId>(
+    pub fn get_callback_mut<T: ComponentId + NotEmptyComponent>(
         self,
         callback: impl FnOnce(&mut T::UnderlyingType),
     ) -> bool {
@@ -1636,7 +1638,7 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `path` - The name of the entity to lookup.
-    /// * `search_path` - Whether to search the entire path or just the current scope.
+    /// * `recursively` - Recursively traverse up the tree until entity is found.
     ///
     /// # Returns
     ///
@@ -1647,7 +1649,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::lookup`
     #[doc(alias = "entity_view::lookup")]
     #[inline(always)]
-    fn try_lookup_impl(self, name: &CStr, search_path: bool) -> Option<EntityView<'a>> {
+    fn try_lookup_impl(self, name: &CStr, recursively: bool) -> Option<EntityView<'a>> {
         ecs_assert!(
             self.id != 0,
             FlecsErrorCode::InvalidParameter,
@@ -1660,7 +1662,7 @@ impl<'a> EntityView<'a> {
                 name.as_ptr(),
                 SEPARATOR.as_ptr(),
                 SEPARATOR.as_ptr(),
-                search_path,
+                recursively,
             )
         };
 
@@ -1672,9 +1674,11 @@ impl<'a> EntityView<'a> {
     }
 
     /// Lookup an entity by name.
+    /// The entity is searched recursively recursively traversing
+    /// up the tree until found.
     ///
-    /// Lookup an entity in the scope of this entity. The provided path may
-    /// contain double colons as scope separators, for example: "`Foo::Bar`".
+    /// The provided path may contain double colons as scope separators,
+    /// for example: "`Foo::Bar`".
     ///
     /// # Arguments
     ///
@@ -1689,7 +1693,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::lookup`
     #[doc(alias = "entity_view::lookup")]
     #[inline(always)]
-    pub fn try_lookup(&self, name: &CStr) -> Option<EntityView> {
+    pub fn try_lookup_recursive(&self, name: &CStr) -> Option<EntityView> {
         self.try_lookup_impl(name, true)
     }
 
@@ -1711,11 +1715,41 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::lookup`
     #[doc(alias = "entity_view::lookup")]
     #[inline(always)]
-    pub fn try_lookup_current_scope(&self, name: &CStr) -> Option<EntityView> {
+    pub fn try_lookup(&self, name: &CStr) -> Option<EntityView> {
         self.try_lookup_impl(name, false)
     }
 
     /// Lookup an entity by name.
+    /// The entity is searched recursively recursively traversing
+    /// up the tree until found.
+    ///
+    /// The provided path may contain double colons as scope separators,
+    /// for example: "`Foo::Bar`".
+    ///
+    /// # Safety
+    ///
+    /// This function can return an entity with id 0 if the entity is not found.
+    /// Ensure that the entity exists before using it.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the entity to lookup.
+    ///
+    /// # Returns
+    ///
+    /// The entity, entity id will be 0 if not found.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::lookup`
+    #[doc(alias = "entity_view::lookup")]
+    #[inline(always)]
+    pub fn lookup_recursively(&self, name: &CStr) -> EntityView {
+        self.try_lookup_recursive(name)
+            .expect("Entity not found, when unsure, use try_lookup_recursive")
+    }
+
+    /// Lookup an entity by name, only in the current scope of the entity.
     ///
     /// Lookup an entity in the scope of this entity. The provided path may
     /// contain double colons as scope separators, for example: "`Foo::Bar`".
@@ -1741,34 +1775,6 @@ impl<'a> EntityView<'a> {
     pub fn lookup(&self, name: &CStr) -> EntityView {
         self.try_lookup(name)
             .expect("Entity not found, when unsure, use try_lookup")
-    }
-
-    /// Lookup an entity by name, only in the current scope of the entity.
-    ///
-    /// Lookup an entity in the scope of this entity. The provided path may
-    /// contain double colons as scope separators, for example: "`Foo::Bar`".
-    ///
-    /// # Safety
-    ///
-    /// This function can return an entity with id 0 if the entity is not found.
-    /// Ensure that the entity exists before using it.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the entity to lookup.
-    ///
-    /// # Returns
-    ///
-    /// The entity, entity id will be 0 if not found.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::lookup`
-    #[doc(alias = "entity_view::lookup")]
-    #[inline(always)]
-    pub fn lookup_current_scope(&self, name: &CStr) -> EntityView {
-        self.try_lookup_current_scope(name)
-            .expect("Entity not found, when unsure, use try_lookup_current_scope")
     }
 
     /// Check if entity has the provided entity.
