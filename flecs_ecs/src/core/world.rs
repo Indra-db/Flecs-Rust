@@ -1709,29 +1709,29 @@ impl World {
         }
     }
 
-    /// Emplace a component.
+    /// insert a component.
     ///
-    /// Emplace is similar to `set()` except that the component constructor is not
+    /// insert is similar to `set()` except that the component constructor is not
     /// invoked, allowing the component to be "constructed" directly in the storage.
     ///
     /// # SAFETY
     ///
-    /// `emplace` can only be used if the entity does not yet have the component. If
+    /// `insert` can only be used if the entity does not yet have the component. If
     /// the entity has the component, the operation will fail and panic.
     ///
     /// # Type Parameters
     ///
-    /// * `T`: The type of the component to emplace.
+    /// * `T`: The type of the component to insert.
     ///
     /// # Arguments
     ///
-    /// * `value`: The value to emplace.
+    /// * `value`: The value to insert.
     ///
     /// # See also
     ///
-    /// * C++ API: `world::emplace`
-    #[doc(alias = "world::emplace")]
-    pub fn emplace<T>(&self, value: T)
+    /// * C++ API: `world::insert`
+    #[doc(alias = "world::insert")]
+    pub fn insert<T>(&self, value: T)
     where
         T: ComponentId,
     {

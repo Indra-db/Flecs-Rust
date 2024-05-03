@@ -2453,10 +2453,10 @@ fn entity_scope_before_builder_method() {
 }
 
 #[test]
-fn entity_emplace() {
+fn entity_insert() {
     let world = create_world();
 
-    let e = world.entity().emplace(Position { x: 10, y: 20 });
+    let e = world.entity().insert(Position { x: 10, y: 20 });
     assert!(e.has::<Position>());
 
     let p = e.get::<Position>();
@@ -3594,16 +3594,16 @@ fn entity_set_alias() {
 }
 
 #[test]
-fn entity_emplace_w_observer() {
+fn entity_insert_w_observer() {
     let world = create_world();
 
     world
         .observer::<flecs::OnAdd, &Position>()
         .each_entity(|e, _| {
-            e.emplace(Velocity { x: 1, y: 2 });
+            e.insert(Velocity { x: 1, y: 2 });
         });
 
-    let e = world.entity().emplace(Position { x: 10, y: 20 });
+    let e = world.entity().insert(Position { x: 10, y: 20 });
 
     assert!(e.has::<Position>());
     assert!(e.has::<Velocity>());

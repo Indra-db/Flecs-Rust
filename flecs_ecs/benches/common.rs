@@ -197,7 +197,7 @@ pub mod common {
     macro_rules! set_component_range {
         ($world:expr, $entity:expr, $component:ty, $start:expr, $end:expr) => {{
             seq!(P in $start..=$end {
-                $entity.emplace::<$component~P>($component~P(0.0));
+                $entity.insert::<$component~P>($component~P(0.0));
         });
         }};
     }

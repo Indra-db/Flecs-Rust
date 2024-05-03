@@ -307,29 +307,29 @@ impl<'a> EntityView<'a> {
         )
     }
 
-    /// Emplace a component.
+    /// insert a component.
     ///
-    /// Emplace is similar to `set()` except that the component constructor is not
+    /// insert is similar to `set()` except that the component constructor is not
     /// invoked, allowing the component to be "constructed" directly in the storage.
     ///
     /// # SAFETY
     ///
-    /// `emplace` can only be used if the entity does not yet have the component. If
+    /// `insert` can only be used if the entity does not yet have the component. If
     /// the entity has the component, the operation will fail and panic.
     ///
     /// # Type Parameters
     ///
-    /// * `T`: The type of the component to emplace.
+    /// * `T`: The type of the component to insert.
     ///
     /// # Arguments
     ///
-    /// * `value`: The value to emplace.
+    /// * `value`: The value to insert.
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_builder::emplace`
-    #[doc(alias = "entity_builder::emplace")]
-    pub fn emplace<T>(self, value: T) -> Self
+    /// * C++ API: `entity_builder::insert`
+    #[doc(alias = "entity_builder::insert")]
+    pub fn insert<T>(self, value: T) -> Self
     where
         T: IntoComponentId,
     {
@@ -357,7 +357,7 @@ impl<'a> EntityView<'a> {
                                 return self;
                             }
 
-                            // use emplace batching //slower performance
+                            // use insert batching //slower performance
                             let ptr =
                                 sys::ecs_emplace_id(world_ptr, self_id, id, &mut is_new) as *mut T;
 

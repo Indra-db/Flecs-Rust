@@ -369,7 +369,7 @@ pub fn create_world_with_flags<T: ComponentId + Default>() -> World {
     let world = create_world();
 
     register_component_multi_world_application::<T>(&world, std::ptr::null());
-    world.emplace(T::default());
+    world.insert(T::default());
 
     world
 }
