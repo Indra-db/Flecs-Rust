@@ -44,6 +44,8 @@ pub fn set_remove(criterion: &mut Criterion) {
         ; (set_component_range, (C, 1, 64)), (remove_component_range, (C, 1, 64))
         ; (reset_component_range, (C, 1, 64))
     );
+
+    group.finish();
 }
 
 pub fn set_remove_cmd(criterion: &mut Criterion) {
@@ -88,6 +90,8 @@ pub fn set_remove_cmd(criterion: &mut Criterion) {
         ; (set_component_range_cmd, (C, 1, 64)), (remove_component_range, (C, 1, 64))
         ; (reset_component_range, (C, 1, 64))
     );
+
+    group.finish();
 }
 
 pub fn set_found(criterion: &mut Criterion) {
@@ -132,6 +136,8 @@ pub fn set_found(criterion: &mut Criterion) {
         ; (set_component_range, (C, 1, 64))
         ; (reset_component_range, (C, 1, 64))
     );
+
+    group.finish();
 }
 
 pub fn set_found_cmd(criterion: &mut Criterion) {
@@ -176,4 +182,6 @@ pub fn set_found_cmd(criterion: &mut Criterion) {
         ; (set_component_range_cmd, (C, 1, 64))
         ; (reset_component_range, (C, 1, 64))
     );
+
+    group.finish();
 }

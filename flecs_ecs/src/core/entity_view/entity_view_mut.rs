@@ -334,13 +334,81 @@ impl<'a> EntityView<'a> {
         T: IntoComponentId,
     {
         let id = T::get_id(self.world);
-        let mut pre_existing = false;
+        let self_id = *self.id();
+        let world_ptr = self.world.world_ptr_mut();
+        let mut is_new = false;
         unsafe {
-            let ptr = sys::ecs_emplace_id(self.world_ptr_mut(), *self.id(), id, &mut pre_existing)
-                as *mut T;
-            std::ptr::write(ptr, value);
-            sys::ecs_modified_id(self.world_ptr_mut(), *self.id(), id);
+            if sys::ecs_is_deferred(world_ptr) {
+                if !T::IS_PAIR {
+                    if T::First::NEEDS_DROP {
+                        if T::First::IMPLS_DEFAULT {
+                            let comp =
+                                sys::ecs_ensure_modified_id(world_ptr, self_id, id) as *mut T;
+                            std::ptr::drop_in_place(comp);
+                            std::ptr::write(comp, value);
+                            //use set batching //faster performance, no panic possible
+                        } else {
+                            if self.has_id(id) {
+                                //use set batching //faster performance, no panic possible since it's already present
+                                let comp =
+                                    sys::ecs_ensure_modified_id(world_ptr, self_id, id) as *mut T;
+                                std::ptr::drop_in_place(comp);
+                                std::ptr::write(comp, value);
+                                return self;
+                            }
+
+                            // use emplace batching //slower performance
+                            let ptr =
+                                sys::ecs_emplace_id(world_ptr, self_id, id, &mut is_new) as *mut T;
+
+                            if !is_new {
+                                std::ptr::drop_in_place(ptr);
+                            }
+                            std::ptr::write(ptr, value);
+                            sys::ecs_modified_id(world_ptr, self_id, id);
+                        }
+                    } else {
+                        //use set batching
+                        let comp = sys::ecs_ensure_modified_id(world_ptr, self_id, id) as *mut T;
+                        std::ptr::drop_in_place(comp);
+                        std::ptr::write(comp, value);
+                    }
+                }
+            } else
+            /* not deferred */
+            {
+                let ptr = sys::ecs_emplace_id(world_ptr, self_id, id, &mut is_new) as *mut T;
+
+                if !is_new {
+                    std::ptr::drop_in_place(ptr);
+                }
+                std::ptr::write(ptr, value);
+                sys::ecs_modified_id(world_ptr, self_id, id);
+            }
         }
+
+        // unsafe {
+        //     if !sys::ecs_is_deferred(world_ptr) {
+        //         let ptr = sys::ecs_emplace_id(world_ptr, self_id, id, &mut is_new) as *mut T;
+
+        //         if !is_new {
+        //             std::ptr::drop_in_place(ptr);
+        //         }
+        //         std::ptr::write(ptr, value);
+        //         sys::ecs_modified_id(world_ptr, self_id, id);
+        //     } else {
+        //         let ptr =
+        //             sys::ecs_emplace_modified_id(world_ptr, self_id, id, &mut is_new) as *mut T;
+
+        //         if !is_new {
+        //             std::ptr::drop_in_place(ptr);
+        //         }
+        //         // else {
+        //         //     sys::ecs_modified_id(world_ptr, self_id, id);
+        //         // }
+        //         std::ptr::write(ptr, value);
+        //     }
+        // }
         self
     }
 
@@ -976,7 +1044,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::set")]
     pub fn set_enum_first<First, Second>(self, first: First, constant: Second) -> Self
     where
-        First: ComponentId + ComponentType<Struct>,
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         set_helper(

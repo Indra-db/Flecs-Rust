@@ -1737,10 +1737,12 @@ impl World {
     {
         let id = T::get_id(self);
         let raw_world = self.raw_world;
-        let mut pre_existing = false;
-        let ptr =
-            unsafe { sys::ecs_emplace_id(raw_world.as_ptr(), id, id, &mut pre_existing) } as *mut T;
+        let mut is_new = false;
+        let ptr = unsafe { sys::ecs_emplace_id(raw_world.as_ptr(), id, id, &mut is_new) } as *mut T;
         unsafe {
+            if !is_new {
+                std::ptr::drop_in_place(ptr);
+            }
             std::ptr::write(ptr, value);
             sys::ecs_modified_id(raw_world.as_ptr(), id, id);
         }

@@ -689,8 +689,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         self
     }
 
+    /// Cascade iterates a hierarchy in top to bottom order (breadth first search)
     /// The cascade flag is like up, but returns results in breadth-first order.
-    /// Only supported for `flecs::query`
+    /// Only supported for `flecs::query`.
     ///
     /// # See also
     ///
@@ -701,6 +702,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         self
     }
 
+    /// Cascade iterates a hierarchy in top to bottom order (breadth first search)
     /// The cascade flag is like up, but returns results in breadth-first order.
     /// Only supported for `flecs::query`
     ///
@@ -723,6 +725,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         self
     }
 
+    /// Cascade iterates a hierarchy in top to bottom order (breadth first search)
     /// The cascade flag is like up, but returns results in breadth-first order.
     /// Only supported for `flecs::query`
     ///

@@ -202,6 +202,7 @@ impl<'a, T> EventBuilder<'a, T> {
         let desc = &mut self.desc;
         let world = self.world;
         ids.array = ids_array.as_mut_ptr();
+
         desc.param = Box::leak(Box::new(data)) as *mut T as *mut c_void;
         desc.ids = ids;
         desc.observable = world.real_world().world_ptr_mut() as *mut c_void;
