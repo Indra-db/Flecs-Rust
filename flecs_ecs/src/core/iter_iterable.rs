@@ -73,7 +73,7 @@ where
         self
     }
 
-    /// set variable of iter as range
+    /// set variable of iter as table
     ///
     /// # Arguments
     ///
@@ -83,11 +83,11 @@ where
     ///
     /// # See also
     ///
-    /// * C++ API: `iter_iterable::set_var_as_range`
-    #[doc(alias = "iter_iterable::set_var_as_range")]
-    pub fn set_var_as_range(&mut self, var_id: i32, range: impl IntoTableRange) -> &mut Self {
+    /// * C++ API: `iter_iterable::set_var`
+    #[doc(alias = "iter_iterable::set_var")]
+    pub fn set_var_table(&mut self, var_id: i32, table: impl IntoTableRange) -> &mut Self {
         ecs_assert!(var_id != -1, FlecsErrorCode::InvalidParameter, 0);
-        unsafe { sys::ecs_iter_set_var_as_range(&mut self.iter, var_id, &range.table_range_raw()) };
+        unsafe { sys::ecs_iter_set_var_as_range(&mut self.iter, var_id, &table.table_range_raw()) };
         self
     }
 
@@ -111,6 +111,29 @@ where
             name.to_str().unwrap()
         );
         unsafe { sys::ecs_iter_set_var(&mut self.iter, var_id, *value.into()) };
+        self
+    }
+
+    /// set variable for rule iter as table
+    ///
+    /// # Arguments
+    ///
+    /// * `name`: the name of the variable to set
+    /// * `range`: the range to set
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter_iterable::set_var`
+    #[doc(alias = "iter_iterable::set_var")]
+    pub fn set_var_table_rule(&mut self, name: &CStr, table: impl IntoTableRange) -> &mut Self {
+        let qit = unsafe { &mut self.iter.priv_.iter.query };
+        let var_id = unsafe { sys::ecs_query_find_var(qit.query, name.as_ptr()) };
+        ecs_assert!(
+            var_id != -1,
+            FlecsErrorCode::InvalidParameter,
+            name.to_str().unwrap()
+        );
+        unsafe { sys::ecs_iter_set_var_as_range(&mut self.iter, var_id, &table.table_range_raw()) };
         self
     }
 }

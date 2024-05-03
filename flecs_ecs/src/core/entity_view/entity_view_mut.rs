@@ -4,6 +4,8 @@ use flecs_ecs::core::*;
 
 use crate::sys;
 
+//TODO add multi component inseration (entity_builder::insert)
+
 // functions in here match most of the functions in the c++ entity and entity_builder class
 impl<'a> EntityView<'a> {
     /// Add an id to an entity.
@@ -332,11 +334,81 @@ impl<'a> EntityView<'a> {
         T: IntoComponentId,
     {
         let id = T::get_id(self.world);
+        let self_id = *self.id();
+        let world_ptr = self.world.world_ptr_mut();
+        let mut is_new = false;
         unsafe {
-            let ptr = sys::ecs_emplace_id(self.world_ptr_mut(), *self.id(), id) as *mut T;
-            std::ptr::write(ptr, value);
-            sys::ecs_modified_id(self.world_ptr_mut(), *self.id(), id);
+            if sys::ecs_is_deferred(world_ptr) {
+                if !T::IS_PAIR {
+                    if T::First::NEEDS_DROP {
+                        if T::First::IMPLS_DEFAULT {
+                            let comp =
+                                sys::ecs_ensure_modified_id(world_ptr, self_id, id) as *mut T;
+                            std::ptr::drop_in_place(comp);
+                            std::ptr::write(comp, value);
+                            //use set batching //faster performance, no panic possible
+                        } else {
+                            if self.has_id(id) {
+                                //use set batching //faster performance, no panic possible since it's already present
+                                let comp =
+                                    sys::ecs_ensure_modified_id(world_ptr, self_id, id) as *mut T;
+                                std::ptr::drop_in_place(comp);
+                                std::ptr::write(comp, value);
+                                return self;
+                            }
+
+                            // use emplace batching //slower performance
+                            let ptr =
+                                sys::ecs_emplace_id(world_ptr, self_id, id, &mut is_new) as *mut T;
+
+                            if !is_new {
+                                std::ptr::drop_in_place(ptr);
+                            }
+                            std::ptr::write(ptr, value);
+                            sys::ecs_modified_id(world_ptr, self_id, id);
+                        }
+                    } else {
+                        //use set batching
+                        let comp = sys::ecs_ensure_modified_id(world_ptr, self_id, id) as *mut T;
+                        std::ptr::drop_in_place(comp);
+                        std::ptr::write(comp, value);
+                    }
+                }
+            } else
+            /* not deferred */
+            {
+                let ptr = sys::ecs_emplace_id(world_ptr, self_id, id, &mut is_new) as *mut T;
+
+                if !is_new {
+                    std::ptr::drop_in_place(ptr);
+                }
+                std::ptr::write(ptr, value);
+                sys::ecs_modified_id(world_ptr, self_id, id);
+            }
         }
+
+        // unsafe {
+        //     if !sys::ecs_is_deferred(world_ptr) {
+        //         let ptr = sys::ecs_emplace_id(world_ptr, self_id, id, &mut is_new) as *mut T;
+
+        //         if !is_new {
+        //             std::ptr::drop_in_place(ptr);
+        //         }
+        //         std::ptr::write(ptr, value);
+        //         sys::ecs_modified_id(world_ptr, self_id, id);
+        //     } else {
+        //         let ptr =
+        //             sys::ecs_emplace_modified_id(world_ptr, self_id, id, &mut is_new) as *mut T;
+
+        //         if !is_new {
+        //             std::ptr::drop_in_place(ptr);
+        //         }
+        //         // else {
+        //         //     sys::ecs_modified_id(world_ptr, self_id, id);
+        //         // }
+        //         std::ptr::write(ptr, value);
+        //     }
+        // }
         self
     }
 
@@ -642,7 +714,10 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn override_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
+    pub fn override_first<First: ComponentId + NotEmptyComponent>(
+        self,
+        second: impl Into<Entity>,
+    ) -> Self {
         let world = self.world;
         self.override_id((First::get_id(world), second.into()))
     }
@@ -661,7 +736,10 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn override_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
+    pub fn override_second<Second: ComponentId + NotEmptyComponent>(
+        self,
+        first: impl Into<Entity>,
+    ) -> Self {
         let world = self.world;
         self.override_id((first.into(), Second::get_id(world)))
     }
@@ -705,7 +783,10 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
-    pub fn set_override<T: ComponentId>(self, component: T) -> Self {
+    pub fn set_override<T: ComponentId + NotEmptyComponent + ComponentType<Struct>>(
+        self,
+        component: T,
+    ) -> Self {
         self.override_type::<T>().set(component)
     }
 
@@ -815,7 +896,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set`
     #[doc(alias = "entity_builder::set")]
-    pub fn set<T: ComponentId>(self, component: T) -> Self {
+    pub fn set<T: ComponentId + NotEmptyComponent>(self, component: T) -> Self {
         set_helper(
             self.world.world_ptr_mut(),
             *self.id(),
@@ -963,7 +1044,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::set")]
     pub fn set_enum_first<First, Second>(self, first: First, constant: Second) -> Self
     where
-        First: ComponentId + ComponentType<Struct>,
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         set_helper(
@@ -1376,7 +1457,9 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity::ensure`
     #[doc(alias = "entity::ensure")]
     #[allow(clippy::mut_from_ref)]
-    pub fn ensure_mut<T: ComponentId>(self) -> &'a mut T::UnderlyingType {
+    pub fn ensure_mut<T: ComponentId + NotEmptyComponent + ComponentType<Struct>>(
+        self,
+    ) -> &'a mut T::UnderlyingType {
         let component_id = T::get_id(self.world);
 
         ecs_assert!(
@@ -1392,7 +1475,7 @@ impl<'a> EntityView<'a> {
         }
     }
 
-    pub fn ensure_callback_mut<T: ComponentId>(
+    pub fn ensure_callback_mut<T: ComponentId + NotEmptyComponent + ComponentType<Struct>>(
         self,
         callback: impl FnOnce(&mut T::UnderlyingType),
     ) {
@@ -1406,6 +1489,10 @@ impl<'a> EntityView<'a> {
     /// the component, it will be overridden, and the value of the base component
     /// will be copied to the entity before this function returns.
     ///
+    /// # Safety
+    ///
+    /// The caller must ensure that the id is valid, not an enum, and not a tag, zero sized type.
+    ///
     /// # Arguments
     ///
     /// * `comp`: The component to get.
@@ -1418,7 +1505,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::ensure`
     #[doc(alias = "entity::ensure")]
-    pub fn ensure_untyped_mut(self, id: impl IntoId) -> *mut c_void {
+    pub unsafe fn ensure_untyped_mut(self, id: impl IntoId) -> *mut c_void {
         unsafe {
             sys::ecs_ensure_id(self.world.world_ptr_mut(), *self.id(), *id.into()) as *mut c_void
         }
@@ -1614,7 +1701,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
-    pub fn get_ref<T: ComponentId>(&self) -> Ref<'a, T::UnderlyingType> {
+    pub fn get_ref<T: ComponentId + NotEmptyComponent>(&self) -> Ref<'a, T::UnderlyingType> {
         Ref::<T::UnderlyingType>::new(self.world, *self.id(), T::get_id(self.world))
     }
 
@@ -1639,7 +1726,10 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
-    pub fn get_ref_first<First: ComponentId>(self, second: impl Into<Entity>) -> Ref<'a, First> {
+    pub fn get_ref_first<First: ComponentId + NotEmptyComponent>(
+        self,
+        second: impl Into<Entity>,
+    ) -> Ref<'a, First> {
         Ref::<First>::new(
             self.world,
             *self.id(),
@@ -1668,7 +1758,10 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
-    pub fn get_ref_second<Second: ComponentId>(&self, first: impl Into<Entity>) -> Ref<Second> {
+    pub fn get_ref_second<Second: ComponentId + NotEmptyComponent>(
+        &self,
+        first: impl Into<Entity>,
+    ) -> Ref<Second> {
         Ref::<Second>::new(
             self.world,
             *self.id(),

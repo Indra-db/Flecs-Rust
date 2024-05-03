@@ -52,7 +52,7 @@ pub fn main() -> Result<Snap, String> {
     inst_car.is_a_id(car);
 
     // Lookup one of the wheels
-    if let Some(inst) = inst_car.try_lookup(c"FrontLeft") {
+    if let Some(inst) = inst_car.try_lookup_recursive(c"FrontLeft") {
         // The type shows that the child has a private copy of the TirePressure
         // component, and an IsA relationship to the Wheel prefab.
         fprintln!(&world, "{:?}", inst.archetype());

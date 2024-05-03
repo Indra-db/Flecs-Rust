@@ -32,6 +32,7 @@ pub type PrimitiveKindT = sys::ecs_primitive_kind_t;
 pub type FTimeT = f32;
 #[cfg(feature = "flecs_system")]
 pub type TickSource = EcsTickSource;
+pub type DefaultChildComponent = sys::EcsDefaultChildComponent;
 
 pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\0") };
 
@@ -399,28 +400,31 @@ pub(crate) const ECS_TRAVERSABLE: u64 = FLECS_HI_COMPONENT_ID + 24;
 pub(crate) const ECS_WITH: u64 = FLECS_HI_COMPONENT_ID + 25;
 pub(crate) const ECS_ONE_OF: u64 = FLECS_HI_COMPONENT_ID + 26;
 pub(crate) const ECS_CAN_TOGGLE: u64 = FLECS_HI_COMPONENT_ID + 27;
+pub(crate) const ECS_TRAIT: u64 = FLECS_HI_COMPONENT_ID + 28;
+pub(crate) const ECS_RELATIONSHIP: u64 = FLECS_HI_COMPONENT_ID + 29;
+pub(crate) const ECS_TARGET: u64 = FLECS_HI_COMPONENT_ID + 30;
 
 // Builtin relationships
-pub(crate) const ECS_CHILD_OF: u64 = FLECS_HI_COMPONENT_ID + 28;
-pub(crate) const ECS_IS_A: u64 = FLECS_HI_COMPONENT_ID + 29;
-pub(crate) const ECS_DEPENDS_ON: u64 = FLECS_HI_COMPONENT_ID + 30;
+pub(crate) const ECS_CHILD_OF: u64 = FLECS_HI_COMPONENT_ID + 31;
+pub(crate) const ECS_IS_A: u64 = FLECS_HI_COMPONENT_ID + 32;
+pub(crate) const ECS_DEPENDS_ON: u64 = FLECS_HI_COMPONENT_ID + 33;
 
 // Identifier tags
-pub(crate) const ECS_NAME: u64 = FLECS_HI_COMPONENT_ID + 31;
-pub(crate) const ECS_SYMBOL: u64 = FLECS_HI_COMPONENT_ID + 32;
-pub(crate) const ECS_ALIAS: u64 = FLECS_HI_COMPONENT_ID + 33;
+pub(crate) const ECS_NAME: u64 = FLECS_HI_COMPONENT_ID + 34;
+pub(crate) const ECS_SYMBOL: u64 = FLECS_HI_COMPONENT_ID + 35;
+pub(crate) const ECS_ALIAS: u64 = FLECS_HI_COMPONENT_ID + 36;
 
 // Events
-pub(crate) const ECS_ON_ADD: u64 = FLECS_HI_COMPONENT_ID + 34;
-pub(crate) const ECS_ON_REMOVE: u64 = FLECS_HI_COMPONENT_ID + 35;
-pub(crate) const ECS_ON_SET: u64 = FLECS_HI_COMPONENT_ID + 36;
-pub(crate) const ECS_UNSET: u64 = FLECS_HI_COMPONENT_ID + 37;
-pub(crate) const ECS_ON_DELETE: u64 = FLECS_HI_COMPONENT_ID + 38;
-pub(crate) const ECS_ON_DELETE_TARGET: u64 = FLECS_HI_COMPONENT_ID + 39;
-pub(crate) const ECS_ON_TABLE_CREATE: u64 = FLECS_HI_COMPONENT_ID + 40;
-pub(crate) const ECS_ON_TABLE_DELETE: u64 = FLECS_HI_COMPONENT_ID + 41;
-pub(crate) const ECS_ON_TABLE_EMPTY: u64 = FLECS_HI_COMPONENT_ID + 42;
-pub(crate) const ECS_ON_TABLE_FILL: u64 = FLECS_HI_COMPONENT_ID + 43;
+pub(crate) const ECS_ON_ADD: u64 = FLECS_HI_COMPONENT_ID + 37;
+pub(crate) const ECS_ON_REMOVE: u64 = FLECS_HI_COMPONENT_ID + 38;
+pub(crate) const ECS_ON_SET: u64 = FLECS_HI_COMPONENT_ID + 39;
+pub(crate) const ECS_UNSET: u64 = FLECS_HI_COMPONENT_ID + 40;
+pub(crate) const ECS_ON_DELETE: u64 = FLECS_HI_COMPONENT_ID + 41;
+pub(crate) const ECS_ON_DELETE_TARGET: u64 = FLECS_HI_COMPONENT_ID + 42;
+pub(crate) const ECS_ON_TABLE_CREATE: u64 = FLECS_HI_COMPONENT_ID + 43;
+pub(crate) const ECS_ON_TABLE_DELETE: u64 = FLECS_HI_COMPONENT_ID + 44;
+pub(crate) const ECS_ON_TABLE_EMPTY: u64 = FLECS_HI_COMPONENT_ID + 45;
+pub(crate) const ECS_ON_TABLE_FILL: u64 = FLECS_HI_COMPONENT_ID + 46;
 
 // Timers
 pub(crate) const ECS_TICK_SOURCE: u64 = FLECS_HI_COMPONENT_ID + 47;
@@ -433,7 +437,6 @@ pub(crate) const ECS_DELETE: u64 = FLECS_HI_COMPONENT_ID + 51;
 pub(crate) const ECS_PANIC: u64 = FLECS_HI_COMPONENT_ID + 52;
 
 // Misc
-// todo v4 this needs changing
 pub(crate) const ECS_DEFAULT_CHILD_COMPONENT: u64 = FLECS_HI_COMPONENT_ID + 55;
 
 // Builtin predicate ids (used by rule engine)
@@ -507,14 +510,54 @@ pub(crate) const ECS_DOC_COLOR: u64 = FLECS_HI_COMPONENT_ID + 117;
 // REST module components
 pub(crate) const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 118;
 
-fn ecs_component_data() -> IdComponent {
-    IdComponent {
-        id: unsafe { sys::FLECS_IDEcsComponentID_ },
-    }
+impl NotEmptyComponent for sys::EcsDefaultChildComponent {}
+
+impl ComponentType<Struct> for sys::EcsDefaultChildComponent {}
+
+impl ComponentInfo for sys::EcsDefaultChildComponent {
+    const IS_ENUM: bool = false;
+    const IS_TAG: bool = false;
+    const IMPLS_CLONE: bool = true;
+    const IMPLS_DEFAULT: bool = false;
+    const IS_REF: bool = false;
+    const IS_MUT: bool = false;
 }
 
-fn ecs_poly_data() -> IdComponent {
-    IdComponent { id: ECS_POLY }
+impl ComponentId for sys::EcsDefaultChildComponent {
+    type UnderlyingType = sys::EcsDefaultChildComponent;
+    type UnderlyingEnumType = NoneEnum;
+
+    fn register_explicit<'a>(_world: impl IntoWorld<'a>) {
+        //this is already registered in the world inside C
+    }
+
+    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &CStr) -> EntityT {
+        //this is already registered in the world inside C
+        ECS_DEFAULT_CHILD_COMPONENT
+    }
+
+    fn is_registered() -> bool {
+        //this is already registered in the world inside C
+        true
+    }
+
+    fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
+        //this is already registered in the world inside C
+        true
+    }
+
+    unsafe fn get_id_unchecked() -> IdT {
+        ECS_DEFAULT_CHILD_COMPONENT
+    }
+
+    fn get_id<'a>(_: impl IntoWorld<'a>) -> IdT {
+        ECS_DEFAULT_CHILD_COMPONENT
+    }
+
+    fn __get_once_lock_data() -> &'static OnceLock<IdComponent> {
+        static ONCE_LOCK: OnceLock<IdComponent> = OnceLock::new();
+        &ONCE_LOCK
+    }
 }
 
 impl NotEmptyComponent for sys::EcsComponent {}
@@ -566,6 +609,12 @@ impl ComponentId for sys::EcsComponent {
         &ONCE_LOCK
     }
 }
+
+#[cfg(feature = "flecs_system")]
+impl NotEmptyComponent for TickSource {}
+
+#[cfg(feature = "flecs_system")]
+impl ComponentType<Struct> for TickSource {}
 
 #[cfg(feature = "flecs_system")]
 impl ComponentInfo for TickSource {
