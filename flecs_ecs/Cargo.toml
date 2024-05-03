@@ -55,13 +55,13 @@ flecs_disable_build_c = ["flecs_ecs_sys/disable_build_c"]
 # Flecs feature flags
 ######################
 
-# indicate that the flecs library is meant to be used in a singleworld application
-# this will enable some optimization that would otherwise not be possible
-# in Flecs C++ it's necessary for components to be registered manually before being used in multithreaded systems
+# indicate that the flecs library is meant to be used in a multi-world application
+# this will disable some optimizations.
+# In Flecs C++ it's necessary for components to be registered manually before being used in multithreaded systems
 # this is not necessary in Rust and is considered multithreaded safe for single world applications.
-# If you intent to have multiple worlds, you should not enable this feature and register components manually
+# If you intend to have multiple worlds, you should enable this feature and register components manually
 # if the intent is to share components between worlds, like in C++. In the future this limitation might be mitigated.
-flecs_single_world_application = []
+flecs_multi_world_application = []
 
 # Module support
 flecs_module = ["flecs_ecs_sys/flecs_module"]
@@ -133,7 +133,6 @@ flecs_rest = ["flecs_ecs_sys/flecs_rest", "flecs_http", "flecs_json", "flecs_rul
 flecs_journal = ["flecs_ecs_sys/flecs_journal","flecs_log"]
 
 default = [
-    "flecs_single_world_application",
     "flecs_regenerate_binding_c",
     "flecs_module",
     "flecs_parser",
