@@ -29,6 +29,7 @@ pub mod private {
     pub trait internal_ReactorAPI<'a, P, T>
     where
         T: Iterable,
+        P: ComponentId,
     {
         fn set_binding_context(&mut self, binding_ctx: *mut c_void) -> &mut Self;
 

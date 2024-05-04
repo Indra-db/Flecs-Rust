@@ -71,6 +71,7 @@ impl World {
     }
 
     fn init_builtin_components(&self) {
+        self.component::<()>();
         #[cfg(feature = "flecs_system")]
         System::system_init(self);
         //#[cfg(feature = "flecs_timer")]

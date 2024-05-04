@@ -122,7 +122,10 @@ where
         }
     }
 
-    fn each_iter(&self, mut func: impl FnMut(&mut Iter<P>, usize, T::TupleType<'_>)) {
+    fn each_iter(&self, mut func: impl FnMut(&mut Iter<P>, usize, T::TupleType<'_>))
+    where
+        P: ComponentId,
+    {
         unsafe {
             let mut iter = self.retrieve_iter();
 
@@ -271,7 +274,10 @@ where
     fn find_iter(
         &self,
         mut func: impl FnMut(&mut Iter<P>, usize, T::TupleType<'_>) -> bool,
-    ) -> Option<EntityView<'_>> {
+    ) -> Option<EntityView<'_>>
+    where
+        P: ComponentId,
+    {
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity_result: Option<EntityView> = None;
@@ -319,7 +325,10 @@ where
     ///
     /// * C++ API: `iterable::iter`
     #[doc(alias = "iterable::iter")]
-    fn iter(&self, mut func: impl FnMut(&mut Iter<P>, T::TupleSliceType<'_>)) {
+    fn iter(&self, mut func: impl FnMut(&mut Iter<P>, T::TupleSliceType<'_>))
+    where
+        P: ComponentId,
+    {
         unsafe {
             let mut iter = self.retrieve_iter();
             let world = self.world_ptr_mut();
@@ -353,7 +362,10 @@ where
     ///
     /// * C++ API: `iterable::iter`
     #[doc(alias = "iterable::iter")]
-    fn iter_only(&self, mut func: impl FnMut(&mut Iter<P>)) {
+    fn iter_only(&self, mut func: impl FnMut(&mut Iter<P>))
+    where
+        P: ComponentId,
+    {
         unsafe {
             let mut iter = self.retrieve_iter();
             let world = self.world_ptr_mut();

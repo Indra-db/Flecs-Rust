@@ -220,7 +220,7 @@ pub(crate) fn set_helper<T: ComponentId>(
         if !sys::ecs_is_deferred(world) {
             let comp = sys::ecs_ensure_id(world, entity, id) as *mut T;
             std::ptr::drop_in_place(comp);
-            std::ptr::write(comp, value); // TODO: this does not drop the value that was there before
+            std::ptr::write(comp, value);
             sys::ecs_modified_id(world, entity, id);
         } else {
             let comp = sys::ecs_ensure_modified_id(world, entity, id) as *mut T;

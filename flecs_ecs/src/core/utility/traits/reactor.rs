@@ -5,6 +5,7 @@ use crate::core::*;
 pub trait ReactorAPI<'a, P, T>: Builder<'a> + private::internal_ReactorAPI<'a, P, T>
 where
     T: Iterable,
+    P: ComponentId,
 {
     /// Set action / ctx
     ///
@@ -184,6 +185,7 @@ macro_rules! implement_reactor_api {
         impl<'a, P, T> internal_ReactorAPI<'a, P, T> for $type
         where
             T: Iterable,
+            P: ComponentId,
         {
             fn set_binding_context(&mut self, binding_ctx: *mut c_void) -> &mut Self {
                 self.desc.binding_ctx = binding_ctx;
@@ -213,6 +215,7 @@ macro_rules! implement_reactor_api {
         impl<'a, P, T> ReactorAPI<'a, P, T> for $type
         where
             T: Iterable,
+            P: ComponentId,
         {
             fn set_run_callback(
                 &mut self,
