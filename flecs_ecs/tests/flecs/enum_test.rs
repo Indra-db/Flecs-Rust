@@ -1,4 +1,4 @@
-use flecs_ecs::core::{CachedEnumData, World};
+use flecs_ecs::prelude::*;
 use flecs_ecs_derive::Component;
 
 #[repr(C)]
@@ -71,6 +71,24 @@ pub enum EnumClassWithLargeConstant {
     Z = 1000,
 }
 
+pub fn create_world() -> World {
+    let world = World::new();
+
+    register_component_multi_world_application::<EnumClassWithLargeConstant>(
+        &world,
+        std::ptr::null(),
+    );
+    register_component_multi_world_application::<EnumWithLargeConstant>(&world, std::ptr::null());
+    register_component_multi_world_application::<EnumIncorrectType>(&world, std::ptr::null());
+    register_component_multi_world_application::<ConstantsWithNum>(&world, std::ptr::null());
+    register_component_multi_world_application::<PrefixEnum>(&world, std::ptr::null());
+    register_component_multi_world_application::<EnumClass>(&world, std::ptr::null());
+    register_component_multi_world_application::<SparseEnum>(&world, std::ptr::null());
+    register_component_multi_world_application::<AnotherEnum>(&world, std::ptr::null());
+    register_component_multi_world_application::<StandardEnum>(&world, std::ptr::null());
+    world
+}
+
 /*
     test_int(enum_type.first_id(), Red);
     test_int(enum_type.last(), Blue);
@@ -103,9 +121,9 @@ pub enum EnumClassWithLargeConstant {
 
 #[test]
 fn enum_standard_enum_reflection() {
-    let world = World::new();
+    let world = create_world();
     let entity = world.component::<StandardEnum>().as_entity();
-    assert_eq!(entity.path().unwrap(), "::enum::StandardEnum");
+    assert_eq!(entity.path().unwrap(), "::flecs::enum_test::StandardEnum");
 
     let entity2 = world.entity().set(StandardEnum::Blue);
 
@@ -130,5 +148,5 @@ fn enum_standard_enum_reflection() {
     assert_ne!(red, 0);
     assert_ne!(green, 0);
     assert!(StandardEnum::Red.is_field_registered_as_entity());
-    assert_eq!(red.path().unwrap(), "::enum::StandardEnum::Red");
+    assert_eq!(red.path().unwrap(), "::flecs::enum_test::StandardEnum::Red");
 }

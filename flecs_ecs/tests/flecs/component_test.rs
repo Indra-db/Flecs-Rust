@@ -1,13 +1,11 @@
-use flecs_ecs::core::*;
-
-mod common;
-use common::*;
+use crate::common_test::*;
 
 #[test]
 fn temp_test_hook() {
     static mut COUNT: u32 = 0;
     static mut COUNT2: u32 = 0;
     {
+        structs!();
         let world = World::new();
         world
             .component::<Position>()

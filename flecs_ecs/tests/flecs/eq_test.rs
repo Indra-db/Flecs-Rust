@@ -1,10 +1,9 @@
-mod common;
-use common::*;
-use flecs_ecs::core::*;
+use crate::common_test::*;
 
 /// test for compilation errors, no forgotten implementation
 #[test]
 fn entity_eq_test() {
+    structs!();
     let world = World::new();
 
     let a_u64: u64 = 1;
