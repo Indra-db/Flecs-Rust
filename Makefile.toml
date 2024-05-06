@@ -1,0 +1,42 @@
+[env]
+CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
+
+[tasks.format]
+install_crate = "rustfmt"
+command = "cargo"
+args = ["fmt"]
+workspace = false
+
+[tasks.clean]
+command = "cargo"
+args = ["clean", "-p", "flecs_ecs"]
+workspace = false
+
+[tasks.build]
+command = "cargo"
+args = ["build"]
+workspace = false
+
+[tasks.test]
+command = "cargo"
+args = ["test", "-p", "flecs_ecs"]
+workspace = false
+ 
+[tasks.typos]
+command = "typos"
+workspace = false
+
+[tasks.clippy]
+command = "cargo"
+args = ["clippy", "--all-targets"]
+workspace = false
+
+[tasks.flecs]
+dependencies = [
+    "format",
+    "typos",
+    "clippy",
+    "build",
+    "test"
+]
+workspace = false
