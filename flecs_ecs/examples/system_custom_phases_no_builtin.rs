@@ -5,7 +5,7 @@ include!("common");
 // they have the flecs::Phase tag.
 
 // Dummy system
-fn sys(it: &mut Iter) {
+fn sys(it: Iter) {
     fprintln!(it, "system {}", it.system().name());
 }
 

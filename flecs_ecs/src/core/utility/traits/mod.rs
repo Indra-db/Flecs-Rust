@@ -100,7 +100,7 @@ pub mod private {
         #[doc(alias = "iter_invoker::invoke_callback")]
         unsafe extern "C" fn run_each_entity<Func>(iter: *mut IterT)
         where
-            Func: FnMut(&mut EntityView, T::TupleType<'_>),
+            Func: FnMut(EntityView, T::TupleType<'_>),
         {
             ecs_assert!(
                 {
@@ -129,10 +129,10 @@ pub mod private {
 
             for i in 0..iter_count {
                 let world = WorldRef::from_ptr((*iter).world);
-                let mut entity = EntityView::new_from(world, *(*iter).entities.add(i));
+                let entity = EntityView::new_from(world, *(*iter).entities.add(i));
                 let tuple = components_data.get_tuple(i);
 
-                each_entity(&mut entity, tuple);
+                each_entity(entity, tuple);
             }
             sys::ecs_table_unlock((*iter).world, (*iter).table);
         }
@@ -149,7 +149,7 @@ pub mod private {
         #[doc(alias = "iter_invoker::invoke_callback")]
         unsafe extern "C" fn run_each_iter<Func>(iter: *mut IterT)
         where
-            Func: FnMut(&mut Iter<P>, usize, T::TupleType<'_>),
+            Func: FnMut(Iter<P>, usize, T::TupleType<'_>),
         {
             ecs_assert!(
                 {
@@ -175,12 +175,12 @@ pub mod private {
             };
 
             sys::ecs_table_lock((*iter).world, (*iter).table);
-            let mut iter_t = Iter::new(&mut (*iter));
 
             for i in 0..iter_count {
+                let iter_t = Iter::new(&mut (*iter));
                 let tuple = components_data.get_tuple(i);
 
-                each_iter(&mut iter_t, i, tuple);
+                each_iter(iter_t, i, tuple);
             }
             sys::ecs_table_unlock((*iter).world, (*iter).table);
         }
@@ -197,7 +197,7 @@ pub mod private {
         #[doc(alias = "iter_invoker::invoke_callback")]
         unsafe extern "C" fn run_iter_only<Func>(iter: *mut IterT)
         where
-            Func: FnMut(&mut Iter<P>),
+            Func: FnMut(Iter<P>),
         {
             unsafe {
                 let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
@@ -214,8 +214,8 @@ pub mod private {
                 sys::ecs_table_lock((*iter).world, (*iter).table);
 
                 for _ in 0..iter_count {
-                    let mut iter_t = Iter::new(&mut *iter);
-                    iter_only(&mut iter_t);
+                    let iter_t = Iter::new(&mut *iter);
+                    iter_only(iter_t);
                 }
 
                 sys::ecs_table_unlock((*iter).world, (*iter).table);
@@ -234,7 +234,7 @@ pub mod private {
         #[doc(alias = "iter_invoker::invoke_callback")]
         unsafe extern "C" fn run_iter<Func>(iter: *mut IterT)
         where
-            Func: FnMut(&mut Iter<P>, T::TupleSliceType<'_>),
+            Func: FnMut(Iter<P>, T::TupleSliceType<'_>),
         {
             let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
             let iter_func = (*ctx).iter.unwrap();
@@ -252,8 +252,8 @@ pub mod private {
             sys::ecs_table_lock((*iter).world, (*iter).table);
 
             let tuple = components_data.get_slice(iter_count);
-            let mut iter_t = Iter::new(&mut *iter);
-            iter_func(&mut iter_t, tuple);
+            let iter_t = Iter::new(&mut *iter);
+            iter_func(iter_t, tuple);
             sys::ecs_table_unlock((*iter).world, (*iter).table);
         }
 

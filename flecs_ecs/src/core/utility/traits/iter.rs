@@ -122,7 +122,7 @@ where
         }
     }
 
-    fn each_iter(&self, mut func: impl FnMut(&mut Iter<P>, usize, T::TupleType<'_>))
+    fn each_iter(&self, mut func: impl FnMut(Iter<P>, usize, T::TupleType<'_>))
     where
         P: ComponentId,
     {
@@ -151,12 +151,11 @@ where
 
                 sys::ecs_table_lock(world, iter.table);
 
-                let mut iter_t = Iter::new(&mut iter);
-
                 for i in 0..iter_count {
+                    let iter_t = Iter::new(&mut iter);
                     let tuple = components_data.get_tuple(i);
 
-                    func(&mut iter_t, i, tuple);
+                    func(iter_t, i, tuple);
                 }
 
                 sys::ecs_table_unlock(world, iter.table);
@@ -273,7 +272,7 @@ where
     #[doc(alias = "find_delegate::invoke_callback")]
     fn find_iter(
         &self,
-        mut func: impl FnMut(&mut Iter<P>, usize, T::TupleType<'_>) -> bool,
+        mut func: impl FnMut(Iter<P>, usize, T::TupleType<'_>) -> bool,
     ) -> Option<EntityView<'_>>
     where
         P: ComponentId,
@@ -294,12 +293,12 @@ where
                 };
 
                 sys::ecs_table_lock(world, iter.table);
-                let mut iter_t = Iter::new(&mut iter);
 
                 for i in 0..iter_count {
+                    let iter_t = Iter::new(&mut iter);
                     let world = self.world();
                     let tuple = components_data.get_tuple(i);
-                    if func(&mut iter_t, i, tuple) {
+                    if func(iter_t, i, tuple) {
                         entity_result = Some(EntityView::new_from(world, *iter.entities.add(i)));
                         break;
                     }
@@ -325,7 +324,7 @@ where
     ///
     /// * C++ API: `iterable::iter`
     #[doc(alias = "iterable::iter")]
-    fn iter(&self, mut func: impl FnMut(&mut Iter<P>, T::TupleSliceType<'_>))
+    fn iter(&self, mut func: impl FnMut(Iter<P>, T::TupleSliceType<'_>))
     where
         P: ComponentId,
     {
@@ -340,8 +339,8 @@ where
                 sys::ecs_table_lock(world, iter.table);
 
                 let tuple = components_data.get_slice(iter_count);
-                let mut iter_t = Iter::new(&mut iter);
-                func(&mut iter_t, tuple);
+                let iter_t = Iter::new(&mut iter);
+                func(iter_t, tuple);
 
                 sys::ecs_table_unlock(world, iter.table);
             }
@@ -362,7 +361,7 @@ where
     ///
     /// * C++ API: `iterable::iter`
     #[doc(alias = "iterable::iter")]
-    fn iter_only(&self, mut func: impl FnMut(&mut Iter<P>))
+    fn iter_only(&self, mut func: impl FnMut(Iter<P>))
     where
         P: ComponentId,
     {
@@ -371,8 +370,8 @@ where
             let world = self.world_ptr_mut();
             while self.iter_next(&mut iter) {
                 sys::ecs_table_lock(world, iter.table);
-                let mut iter_t = Iter::new(&mut iter);
-                func(&mut iter_t);
+                let iter_t = Iter::new(&mut iter);
+                func(iter_t);
                 sys::ecs_table_unlock(world, iter.table);
             }
         }

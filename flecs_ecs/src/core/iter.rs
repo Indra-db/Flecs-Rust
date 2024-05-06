@@ -187,18 +187,18 @@ where
     /// * C++ API: `iter::get_var`
     #[doc(alias = "iter::get_var")]
     #[cfg(feature = "flecs_rules")]
-    pub fn get_var_by_name(&mut self, name: &CStr) -> EntityView<'a> {
+    pub fn get_var_by_name(&self, name: &CStr) -> EntityView<'a> {
         let world = self.world();
-        let iter: &mut IterT = self.iter;
-        let rit = unsafe { &mut iter.priv_.iter.query };
-        let rule_query = rit.query;
+        let rule_query = unsafe { self.iter.priv_.iter.query.query };
         let var_id = unsafe { sys::ecs_query_find_var(rule_query, name.as_ptr()) };
         ecs_assert!(
             var_id != -1,
             FlecsErrorCode::InvalidParameter,
             name.to_str().unwrap()
         );
-        EntityView::new_from(world, unsafe { sys::ecs_iter_get_var(iter, var_id) })
+        EntityView::new_from(world, unsafe {
+            sys::ecs_iter_get_var(self.iter as *const _ as *mut _, var_id)
+        })
     }
 
     /// Access ctx.
@@ -248,7 +248,29 @@ where
     ///
     /// * C++ API: `iter::param`
     #[doc(alias = "iter::param")]
-    pub fn param(&mut self) -> &mut P {
+    pub fn param(&self) -> &P {
+        ecs_assert!(
+            !P::IS_TAG,
+            FlecsErrorCode::InvalidParameter,
+            "cannot access tag data, no payload provided"
+        );
+
+        let ptr = self.iter.param as *const P;
+
+        assert!(
+            !ptr.is_null(),
+            "Tried to get param on an iterator where it was null."
+        );
+
+        if P::IS_TAG {
+            panic!("cannot access tag data, no payload provided");
+        }
+
+        unsafe { &*ptr }
+    }
+
+    #[doc(alias = "iter::param")]
+    pub fn param_mut(&mut self) -> &mut P {
         ecs_assert!(
             !P::IS_TAG,
             FlecsErrorCode::InvalidParameter,

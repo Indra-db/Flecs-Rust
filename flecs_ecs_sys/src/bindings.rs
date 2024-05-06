@@ -1401,7 +1401,7 @@ pub const ecs_inout_kind_t_EcsIn: ecs_inout_kind_t = 4;
 #[doc = "< Term is only written"]
 pub const ecs_inout_kind_t_EcsOut: ecs_inout_kind_t = 5;
 #[doc = "Specify read/write access for term"]
-pub type ecs_inout_kind_t = ::std::os::raw::c_uint;
+pub type ecs_inout_kind_t = ::std::os::raw::c_int;
 #[doc = "< The term must match"]
 pub const ecs_oper_kind_t_EcsAnd: ecs_oper_kind_t = 0;
 #[doc = "< One of the terms in an or chain must match"]
@@ -1417,7 +1417,7 @@ pub const ecs_oper_kind_t_EcsOrFrom: ecs_oper_kind_t = 5;
 #[doc = "< Term must match none of the components from term id"]
 pub const ecs_oper_kind_t_EcsNotFrom: ecs_oper_kind_t = 6;
 #[doc = "Specify operator for term"]
-pub type ecs_oper_kind_t = ::std::os::raw::c_uint;
+pub type ecs_oper_kind_t = ::std::os::raw::c_int;
 #[doc = "< Behavior determined by query creation context"]
 pub const ecs_query_cache_kind_t_EcsQueryCacheDefault: ecs_query_cache_kind_t = 0;
 #[doc = "< Cache query terms that are cacheable"]
@@ -1427,7 +1427,7 @@ pub const ecs_query_cache_kind_t_EcsQueryCacheAll: ecs_query_cache_kind_t = 2;
 #[doc = "< No caching"]
 pub const ecs_query_cache_kind_t_EcsQueryCacheNone: ecs_query_cache_kind_t = 3;
 #[doc = "Specify cache policy for query"]
-pub type ecs_query_cache_kind_t = ::std::os::raw::c_uint;
+pub type ecs_query_cache_kind_t = ::std::os::raw::c_int;
 #[doc = "Type that describes a reference to an entity or variable in a term."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2387,6 +2387,7 @@ pub struct EcsDefaultChildComponent {
     pub component: ecs_id_t,
 }
 extern "C" {
+    #[doc = "Builtin component ids"]
     pub static FLECS_IDEcsComponentID_: ecs_entity_t;
 }
 extern "C" {
@@ -2412,9 +2413,11 @@ extern "C" {
     pub static FLECS_IDEcsTickSourceID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Pipeline module component ids"]
     pub static FLECS_IDEcsPipelineQueryID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Timer module component ids"]
     pub static FLECS_IDEcsTimerID_: ecs_entity_t;
 }
 extern "C" {
@@ -2638,6 +2641,7 @@ extern "C" {
     pub static EcsEmpty: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Pipeline module tags"]
     pub static FLECS_IDEcsPipelineID_: ecs_entity_t;
 }
 extern "C" {
@@ -4197,7 +4201,7 @@ pub const ecs_http_method_t_EcsHttpDelete: ecs_http_method_t = 3;
 pub const ecs_http_method_t_EcsHttpOptions: ecs_http_method_t = 4;
 pub const ecs_http_method_t_EcsHttpMethodUnsupported: ecs_http_method_t = 5;
 #[doc = "Supported request methods"]
-pub type ecs_http_method_t = ::std::os::raw::c_uint;
+pub type ecs_http_method_t = ::std::os::raw::c_int;
 #[doc = "A request"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -4330,6 +4334,7 @@ extern "C" {
     ) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
+    #[doc = "Component that instantiates the REST API"]
     pub static FLECS_IDEcsRestID_: ecs_entity_t;
 }
 #[repr(C)]
@@ -4987,45 +4992,59 @@ extern "C" {
     pub static mut FLECS_IDFlecsMetricsID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Tag added to metrics, and used as first element of metric kind pair"]
     pub static mut EcsMetric: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Tag added to metrics, and used as first element of metric kind pair"]
     pub static mut FLECS_IDEcsMetricID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Metric that has monotonically increasing value"]
     pub static mut EcsCounter: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Metric that has monotonically increasing value"]
     pub static mut FLECS_IDEcsCounterID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Counter metric that is auto-incremented by source value"]
     pub static mut EcsCounterIncrement: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Counter metric that is auto-incremented by source value"]
     pub static mut FLECS_IDEcsCounterIncrementID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Counter metric that counts the number of entities with an id"]
     pub static mut EcsCounterId: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Counter metric that counts the number of entities with an id"]
     pub static mut FLECS_IDEcsCounterIdID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Metric that represents current value"]
     pub static mut EcsGauge: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Metric that represents current value"]
     pub static mut FLECS_IDEcsGaugeID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Tag added to metric instances"]
     pub static mut EcsMetricInstance: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Tag added to metric instances"]
     pub static mut FLECS_IDEcsMetricInstanceID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Component with metric instance value"]
     pub static mut FLECS_IDEcsMetricValueID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Component with entity source of metric instance"]
     pub static mut FLECS_IDEcsMetricSourceID_: ecs_entity_t;
 }
 #[repr(C)]
@@ -5067,9 +5086,11 @@ extern "C" {
     pub fn FlecsMetricsImport(world: *mut ecs_world_t);
 }
 extern "C" {
+    #[doc = "Module id"]
     pub static mut FLECS_IDFlecsAlertsID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Tag added to alert, and used as first element of alert severity pair"]
     pub static mut FLECS_IDEcsAlertID_: ecs_entity_t;
 }
 extern "C" {
@@ -5082,9 +5103,11 @@ extern "C" {
     pub static mut FLECS_IDEcsAlertTimeoutID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Alert severity tags"]
     pub static mut EcsAlertInfo: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Alert severity tags"]
     pub static mut FLECS_IDEcsAlertInfoID_: ecs_entity_t;
 }
 extern "C" {
@@ -5484,9 +5507,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
+    #[doc = "Parent scope for prefixes"]
     pub static mut EcsUnitPrefixes: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Parent scope for prefixes"]
     pub static mut FLECS_IDEcsUnitPrefixesID_: ecs_entity_t;
 }
 extern "C" {
@@ -5658,9 +5683,11 @@ extern "C" {
     pub static mut FLECS_IDEcsYobiID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_duration Duration\n @ingroup c_addons_units\n @{"]
     pub static mut EcsDuration: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_duration Duration\n @ingroup c_addons_units\n @{"]
     pub static mut FLECS_IDEcsDurationID_: ecs_entity_t;
 }
 extern "C" {
@@ -5712,9 +5739,11 @@ extern "C" {
     pub static mut FLECS_IDEcsDaysID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_time Time\n @ingroup c_addons_units\n @{"]
     pub static mut EcsTime: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_time Time\n @ingroup c_addons_units\n @{"]
     pub static mut FLECS_IDEcsTimeID_: ecs_entity_t;
 }
 extern "C" {
@@ -5724,9 +5753,11 @@ extern "C" {
     pub static mut FLECS_IDEcsDateID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_mass Mass\n @ingroup c_addons_units\n @{"]
     pub static mut EcsMass: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_mass Mass\n @ingroup c_addons_units\n @{"]
     pub static mut FLECS_IDEcsMassID_: ecs_entity_t;
 }
 extern "C" {
@@ -5742,9 +5773,11 @@ extern "C" {
     pub static mut FLECS_IDEcsKiloGramsID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_electric_Current Electric Current\n @ingroup c_addons_units\n @{"]
     pub static mut EcsElectricCurrent: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_electric_Current Electric Current\n @ingroup c_addons_units\n @{"]
     pub static mut FLECS_IDEcsElectricCurrentID_: ecs_entity_t;
 }
 extern "C" {
@@ -5754,9 +5787,11 @@ extern "C" {
     pub static mut FLECS_IDEcsAmpereID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_amount Amount\n @ingroup c_addons_units\n @{"]
     pub static mut EcsAmount: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_amount Amount\n @ingroup c_addons_units\n @{"]
     pub static mut FLECS_IDEcsAmountID_: ecs_entity_t;
 }
 extern "C" {
@@ -5766,9 +5801,11 @@ extern "C" {
     pub static mut FLECS_IDEcsMoleID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_luminous_intensity Luminous Intensity\n @ingroup c_addons_units\n @{"]
     pub static mut EcsLuminousIntensity: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_luminous_intensity Luminous Intensity\n @ingroup c_addons_units\n @{"]
     pub static mut FLECS_IDEcsLuminousIntensityID_: ecs_entity_t;
 }
 extern "C" {
@@ -5778,9 +5815,11 @@ extern "C" {
     pub static mut FLECS_IDEcsCandelaID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_force Force\n @ingroup c_addons_units\n @{"]
     pub static mut EcsForce: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_force Force\n @ingroup c_addons_units\n @{"]
     pub static mut FLECS_IDEcsForceID_: ecs_entity_t;
 }
 extern "C" {
@@ -5790,9 +5829,11 @@ extern "C" {
     pub static mut FLECS_IDEcsNewtonID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_length Length\n @ingroup c_addons_units\n @{"]
     pub static mut EcsLength: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_length Length\n @ingroup c_addons_units\n @{"]
     pub static mut FLECS_IDEcsLengthID_: ecs_entity_t;
 }
 extern "C" {
@@ -5850,9 +5891,11 @@ extern "C" {
     pub static mut FLECS_IDEcsPixelsID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_pressure Pressure\n @ingroup c_addons_units\n @{"]
     pub static mut EcsPressure: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_pressure Pressure\n @ingroup c_addons_units\n @{"]
     pub static mut FLECS_IDEcsPressureID_: ecs_entity_t;
 }
 extern "C" {
@@ -5868,9 +5911,11 @@ extern "C" {
     pub static mut FLECS_IDEcsBarID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_speed Speed\n @ingroup c_addons_units\n @{"]
     pub static mut EcsSpeed: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_speed Speed\n @ingroup c_addons_units\n @{"]
     pub static mut FLECS_IDEcsSpeedID_: ecs_entity_t;
 }
 extern "C" {
@@ -5898,9 +5943,11 @@ extern "C" {
     pub static mut FLECS_IDEcsMilesPerHourID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_temperature Temperature\n @ingroup c_addons_units\n @{"]
     pub static mut EcsTemperature: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_temperature Temperature\n @ingroup c_addons_units\n @{"]
     pub static mut FLECS_IDEcsTemperatureID_: ecs_entity_t;
 }
 extern "C" {
@@ -5922,9 +5969,11 @@ extern "C" {
     pub static mut FLECS_IDEcsFahrenheitID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_data Data\n @ingroup c_addons_units\n @{"]
     pub static mut EcsData: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_data Data\n @ingroup c_addons_units\n @{"]
     pub static mut FLECS_IDEcsDataID_: ecs_entity_t;
 }
 extern "C" {
@@ -5994,9 +6043,11 @@ extern "C" {
     pub static mut FLECS_IDEcsGibiBytesID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_datarate Data Rate\n @ingroup c_addons_units\n @{"]
     pub static mut EcsDataRate: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_datarate Data Rate\n @ingroup c_addons_units\n @{"]
     pub static mut FLECS_IDEcsDataRateID_: ecs_entity_t;
 }
 extern "C" {
@@ -6048,9 +6099,11 @@ extern "C" {
     pub static mut FLECS_IDEcsGigaBytesPerSecondID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_duration Duration\n @ingroup c_addons_units\n @{"]
     pub static mut EcsAngle: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_duration Duration\n @ingroup c_addons_units\n @{"]
     pub static mut FLECS_IDEcsAngleID_: ecs_entity_t;
 }
 extern "C" {
@@ -6066,9 +6119,11 @@ extern "C" {
     pub static mut FLECS_IDEcsDegreesID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_angle Angle\n @ingroup c_addons_units\n @{"]
     pub static mut EcsFrequency: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_angle Angle\n @ingroup c_addons_units\n @{"]
     pub static mut FLECS_IDEcsFrequencyID_: ecs_entity_t;
 }
 extern "C" {
@@ -6096,9 +6151,11 @@ extern "C" {
     pub static mut FLECS_IDEcsGigaHertzID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_uri Uri\n @ingroup c_addons_units\n @{"]
     pub static mut EcsUri: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_units_uri Uri\n @ingroup c_addons_units\n @{"]
     pub static mut FLECS_IDEcsUriID_: ecs_entity_t;
 }
 extern "C" {
@@ -6120,9 +6177,11 @@ extern "C" {
     pub static mut FLECS_IDEcsUriFileID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@}"]
     pub static mut EcsAcceleration: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "@}"]
     pub static mut FLECS_IDEcsAccelerationID_: ecs_entity_t;
 }
 extern "C" {
@@ -6377,6 +6436,7 @@ extern "C" {
     pub fn FlecsScriptImport(world: *mut ecs_world_t);
 }
 extern "C" {
+    #[doc = "@defgroup c_addons_doc Doc\n @ingroup c_addons\n Utilities for documenting entities, components and systems.\n\n @{"]
     pub static FLECS_IDEcsDocDescriptionID_: ecs_entity_t;
 }
 extern "C" {
@@ -6493,6 +6553,7 @@ pub type ecs_f32_t = f32;
 pub type ecs_f64_t = f64;
 pub type ecs_string_t = *mut ::std::os::raw::c_char;
 extern "C" {
+    #[doc = "Meta module component ids"]
     pub static FLECS_IDEcsTypeID_: ecs_entity_t;
 }
 extern "C" {
@@ -6538,6 +6599,7 @@ extern "C" {
     pub static EcsQuantity: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Primitive type component ids"]
     pub static FLECS_IDecs_bool_tID_: ecs_entity_t;
 }
 extern "C" {
@@ -6600,7 +6662,7 @@ pub const ecs_type_kind_t_EcsVectorType: ecs_type_kind_t = 5;
 pub const ecs_type_kind_t_EcsOpaqueType: ecs_type_kind_t = 6;
 pub const ecs_type_kind_t_EcsTypeKindLast: ecs_type_kind_t = 6;
 #[doc = "Type kinds supported by meta addon"]
-pub type ecs_type_kind_t = ::std::os::raw::c_uint;
+pub type ecs_type_kind_t = ::std::os::raw::c_int;
 #[doc = "Component that is automatically added to every type with the right kind."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -6631,7 +6693,7 @@ pub const ecs_primitive_kind_t_EcsEntity: ecs_primitive_kind_t = 17;
 pub const ecs_primitive_kind_t_EcsId: ecs_primitive_kind_t = 18;
 pub const ecs_primitive_kind_t_EcsPrimitiveKindLast: ecs_primitive_kind_t = 18;
 #[doc = "Primitive type kinds supported by meta addon"]
-pub type ecs_primitive_kind_t = ::std::os::raw::c_uint;
+pub type ecs_primitive_kind_t = ::std::os::raw::c_int;
 #[doc = "Component added to primitive types"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -6902,7 +6964,7 @@ pub const ecs_meta_type_op_kind_t_EcsOpEntity: ecs_meta_type_op_kind_t = 25;
 pub const ecs_meta_type_op_kind_t_EcsOpId: ecs_meta_type_op_kind_t = 26;
 pub const ecs_meta_type_op_kind_t_EcsMetaTypeOpKindLast: ecs_meta_type_op_kind_t = 26;
 #[doc = "Serializer utilities"]
-pub type ecs_meta_type_op_kind_t = ::std::os::raw::c_uint;
+pub type ecs_meta_type_op_kind_t = ::std::os::raw::c_int;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_meta_type_op_t {
