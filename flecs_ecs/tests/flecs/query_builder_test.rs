@@ -2330,7 +2330,7 @@ fn query_builder_group_by_iter_one_all_groups() {
     let e5_found = Cell::new(false);
     let e6_found = Cell::new(false);
 
-    let func = |it: &mut Iter, size: usize, ()| {
+    let func = |it: Iter, size: usize, ()| {
         let e = it.entity(size);
         if it.group_id() == group_id.get() {
             if e == e1 {
@@ -2399,7 +2399,7 @@ fn query_builder_group_by_default_func_w_id() {
     let mut e3_found = false;
     let mut count = 0;
 
-    q.each_iter(|it: &mut Iter, size: usize, ()| {
+    q.each_iter(|it: Iter, size: usize, ()| {
         let e = it.entity(size);
         if e == e1 {
             assert_eq!(it.group_id(), tgt_c);
@@ -2455,7 +2455,7 @@ fn query_builder_group_by_default_func_w_type() {
     let mut e3_found = false;
     let mut count = 0;
 
-    q.each_iter(|it: &mut Iter, size: usize, ()| {
+    q.each_iter(|it: Iter, size: usize, ()| {
         let e = it.entity(size);
         if e == e1 {
             assert_eq!(it.group_id(), tgt_c);
@@ -2546,7 +2546,7 @@ fn query_builder_group_by_callbacks() {
     let mut e3_found = false;
     let mut count = 0;
 
-    q.each_iter(|it: &mut Iter, size: usize, ()| {
+    q.each_iter(|it: Iter, size: usize, ()| {
         let e = it.entity(size);
         if e == e1 {
             assert_eq!(it.group_id(), tgt_c);

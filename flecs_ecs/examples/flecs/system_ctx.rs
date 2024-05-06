@@ -56,7 +56,7 @@ fn main() {
     let sys = world
         .system::<(&Position, &Radius)>()
         .set_context(&mut query_collide as *mut Query<(&Position, &Radius)> as *mut c_void)
-        .each_iter(|it, index, (p1, r1)| {
+        .each_iter(|mut it, index, (p1, r1)| {
             let query = unsafe { it.context::<Query<(&Position, &Radius)>>() };
             let e1 = it.entity(index);
 
