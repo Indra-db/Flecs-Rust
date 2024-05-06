@@ -21,7 +21,7 @@ pub struct Eats;
 pub struct Apples;
 
 #[test]
-fn main_hello_world() {
+fn main() {
     // Create a new world
     let world = World::new();
 
