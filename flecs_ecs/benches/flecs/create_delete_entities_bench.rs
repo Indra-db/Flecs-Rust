@@ -1,6 +1,4 @@
-#![allow(unused)]
-include!("common.rs");
-use common::*;
+use crate::common_bench::*;
 
 pub fn create_delete_entities(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_create_delete_entities");

@@ -1,6 +1,4 @@
-#![allow(unused)]
-include!("common.rs");
-use common::*;
+use crate::common_bench::*;
 
 pub fn add_remove_hooks_components(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("add_remove_hooks_components");

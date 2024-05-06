@@ -1,6 +1,4 @@
-#![allow(unused)]
-include!("common.rs");
-use common::*;
+use crate::common_bench::*;
 
 pub fn set_remove(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_set");

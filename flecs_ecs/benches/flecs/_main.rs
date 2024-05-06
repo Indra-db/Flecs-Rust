@@ -1,40 +1,43 @@
 use std::time::Duration;
 
 use criterion::{criterion_group, criterion_main, Criterion};
-// include!("common.rs") is used so this file can exist and we can manually control the order of the benchmarks
+pub use seq_macro::seq;
 
-mod add_existing;
-mod add_remove;
-mod create_delete_entities;
-mod entity;
-mod event;
-mod get;
-mod has;
-mod hooks;
-mod observer;
-mod query;
-mod relationships;
-mod set;
+pub mod common_bench;
 
-use add_existing::*;
-use add_remove::*;
-use create_delete_entities::*;
-use entity::*;
-use event::*;
-use get::*;
-use has::*;
-use hooks::*;
-use observer::*;
-//use query::*;
-use relationships::*;
-use set::*;
+mod add_existing_bench;
+mod add_remove_bench;
+mod create_delete_entities_bench;
+mod entity_bench;
+mod event_bench;
+mod get_bench;
+mod has_bench;
+mod hooks_bench;
+mod observer_bench;
+mod query_bench;
+mod relationships_bench;
+mod set_bench;
+
+use add_existing_bench::*;
+use add_remove_bench::*;
+use create_delete_entities_bench::*;
+use entity_bench::*;
+use event_bench::*;
+use get_bench::*;
+use has_bench::*;
+use hooks_bench::*;
+use observer_bench::*;
+//use query_bench::*;
+use relationships_bench::*;
+use set_bench::*;
 
 fn ecs_default_criterion() -> Criterion {
     let mut criterion_config = Criterion::default().configure_from_args();
     criterion_config = criterion_config
-        .warm_up_time(Duration::from_millis(500))
-        .measurement_time(Duration::from_secs(3))
-        .sample_size(50)
+        .warm_up_time(Duration::from_millis(100))
+        .measurement_time(Duration::from_millis(300))
+        //.measurement_time(Duration::from_secs(1))
+        .sample_size(10)
         .noise_threshold(0.01)
         .confidence_level(0.95)
         .significance_level(0.05)
@@ -43,19 +46,19 @@ fn ecs_default_criterion() -> Criterion {
 }
 
 criterion_main!(
-    has,
-    get,
-    set,
-    g_add_remove,
-    g_create_delete_entities,
-    hooks,
-    observers,
-    entity,
-    event
+    has_bench,
+    get_bench,
+    set_bench,
+    g_add_remove_bench,
+    g_create_delete_entities_bench,
+    hooks_bench,
+    observers_bench,
+    entity_bench,
+    event_bench
 );
 
 criterion_group!(
-    name = has;
+    name = has_bench;
     config = ecs_default_criterion();
     targets =
     has_component_not_found,
@@ -63,7 +66,7 @@ criterion_group!(
 );
 
 criterion_group!(
-    name = get;
+    name = get_bench;
     config = ecs_default_criterion();
     targets =
     get_component_not_found,
@@ -78,7 +81,7 @@ criterion_group!(
 );
 
 criterion_group!(
-    name = add_existing;
+    name = add_existing_bench;
     config = ecs_default_criterion();
     targets =
     add_existing_operations,
@@ -86,7 +89,7 @@ criterion_group!(
 );
 
 criterion_group!(
-    name = g_add_remove;
+    name = g_add_remove_bench;
     config = ecs_default_criterion();
     targets =
     add_remove,
@@ -95,7 +98,7 @@ criterion_group!(
 );
 
 criterion_group!(
-    name = set;
+    name = set_bench;
     config = ecs_default_criterion();
     targets =
     set_remove,
@@ -105,7 +108,7 @@ criterion_group!(
 );
 
 criterion_group!(
-    name = g_create_delete_entities;
+    name = g_create_delete_entities_bench;
     config = ecs_default_criterion();
     targets =
     create_delete_entities,
@@ -114,38 +117,39 @@ criterion_group!(
 );
 
 criterion_group!(
-    name = hooks;
+    name = hooks_bench;
     config = ecs_default_criterion();
     targets =
     add_remove_hooks_components
 );
 
 criterion_group!(
-    name = relationships;
+    name = relationships_bench;
     config = ecs_default_criterion();
     targets =
     get_relationship_targets,
     override_components_add_remove,
     get_inherited_w_depth,
-    change_parent
+    change_parent,
+    lookup_depth
 );
 
 criterion_group!(
-    name = observers;
+    name = observers_bench;
     config = ecs_default_criterion();
     targets =
     observer_create_w_add
 );
 
 criterion_group!(
-    name = entity;
+    name = entity_bench;
     config = ecs_default_criterion();
     targets =
-    entity_set_name
+    entity
 );
 
 criterion_group!(
-    name = event;
+    name = event_bench;
     config = ecs_default_criterion();
     targets =
     event_emit,

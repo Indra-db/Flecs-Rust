@@ -1,11 +1,9 @@
-#![allow(unused)]
-include!("common.rs");
-use common::*;
+use crate::common_bench::*;
 
-pub fn entity_set_name(criterion: &mut Criterion) {
-    let mut group = criterion.benchmark_group("flecs_entity_set_name");
+pub fn entity(criterion: &mut Criterion) {
+    let mut group = criterion.benchmark_group("flecs_entity");
 
-    group.bench_function("", |bencher| {
+    group.bench_function("set_remove_name", |bencher| {
         let world = World::new();
 
         let e = world.entity();

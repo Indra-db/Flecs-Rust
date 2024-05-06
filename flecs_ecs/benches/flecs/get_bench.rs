@@ -1,6 +1,4 @@
-#![allow(unused)]
-include!("common.rs");
-use common::*;
+use crate::common_bench::*;
 
 pub fn get_component_not_found(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_get_component_not_found");
@@ -392,6 +390,7 @@ pub fn ensure_mut_not_found_and_remove_cmd(criterion: &mut Criterion) {
     group.finish();
 }
 
+#[allow(unused)]
 pub fn c_get_components(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_c_get_component");
     let counts = vec![1, 2, 16, 64];

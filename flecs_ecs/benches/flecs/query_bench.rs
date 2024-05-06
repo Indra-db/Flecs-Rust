@@ -90,6 +90,3 @@ fn query_each_benchmark(c: &mut Criterion) {
         });
     });
 }
-
-criterion_group!(benches, query_each_benchmark);
-criterion_main!(benches);

@@ -1,6 +1,4 @@
-#![allow(unused)]
-include!("common.rs");
-use common::*;
+use crate::common_bench::*;
 
 pub fn event_emit(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_event_emit");
@@ -54,12 +52,11 @@ pub fn event_emit_propagate(criterion: &mut Criterion) {
                 cur = world.entity().child_of_id(cur);
             }
 
-            // world
-            //     .observer::<()>()
-            //     .with::<&T1>()
-            //     .parent()
-            //     .add_event_id(evt.id())
-            //     .iter_only(|_| {});
+            world
+                .observer_id::<()>(evt.id())
+                .with::<&T1>()
+                .parent()
+                .iter_only(|_| {});
 
             bencher.iter_custom(|iters| {
                 let start = Instant::now();
@@ -167,15 +164,12 @@ pub fn event_modified(criterion: &mut Criterion) {
         group.bench_function(format!("{}_observers", observer_count), |bencher| {
             let world = World::new();
             let e = world.entity().add::<C1>();
-            let table = e.table().unwrap();
-            let evt = world.entity();
 
             for _ in 0..observer_count {
                 world
                     .observer::<flecs::OnSet, ()>()
                     .with::<&C1>()
                     .self_()
-                    .add_event::<flecs::OnSet>()
                     .iter_only(|_| {});
             }
 
@@ -189,7 +183,7 @@ pub fn event_modified(criterion: &mut Criterion) {
                 elapsed / 1 //time average per entity operation
             });
 
-            reset_component_range!(T, 1, 1);
+            reset_component_range!(C, 1, 1);
         });
     }
 }

@@ -1,6 +1,4 @@
-#![allow(unused)]
-include!("common.rs");
-use common::*;
+use crate::common_bench::*;
 
 pub fn observer_create_w_add(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_observer_on_add_event_add_id_for");

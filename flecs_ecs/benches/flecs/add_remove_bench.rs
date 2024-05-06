@@ -1,6 +1,4 @@
-#![allow(unused)]
-include!("common.rs");
-use common::*;
+use crate::common_bench::*;
 
 pub fn add_remove(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_add_remove");
@@ -88,6 +86,7 @@ pub fn add_remove(criterion: &mut Criterion) {
     group.finish();
 }
 
+#[allow(unused)]
 pub fn c_add_remove_tags(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_c_add_remove_tags");
     group.bench_function("32_c", |bencher| {

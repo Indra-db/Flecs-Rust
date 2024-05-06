@@ -1,6 +1,4 @@
-#![allow(unused)]
-include!("common.rs");
-use common::*;
+use crate::common_bench::*;
 
 pub fn has_component_not_found(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("flecs_has_component_not_found");

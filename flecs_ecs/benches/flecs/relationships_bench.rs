@@ -1,8 +1,5 @@
-#![allow(unused)]
-include!("common.rs");
+use crate::common_bench::*;
 use std::ffi::CString;
-
-use common::*;
 
 pub fn get_relationship_targets(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("get_relationship_targets");
