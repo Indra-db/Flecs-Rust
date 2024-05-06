@@ -67,17 +67,15 @@ pub fn create_ids(world: *mut ecs_world_t, count: i32, size: ecs_size_t, low: bo
                         vec[i],
                         FLECS_IDEcsComponentID_,
                         std::mem::size_of::<EcsComponent>(),
-                        &EcsComponent {
-                            size: size as i32,
-                            alignment: 4,
-                        } as *const EcsComponent as *const std::ffi::c_void,
+                        &EcsComponent { size, alignment: 4 } as *const EcsComponent
+                            as *const std::ffi::c_void,
                     );
                 }
             }
         }
-        return vec;
+        vec
     } else {
-        return Vec::new();
+        Vec::new()
     }
 }
 
