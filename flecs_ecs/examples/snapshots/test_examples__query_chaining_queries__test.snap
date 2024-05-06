@@ -1,9 +1,0 @@
----
-source: flecs_ecs/examples/common
-expression: self.str
----
-- "Creature [ID] at location 0,0 is enchanted with mystical energy, ability power: 0 "
-- "Creature [ID] at location 2,2 is enchanted with mystical energy, ability power: 3 "
-- "Creature [ID] at location 4,4 is enchanted with mystical energy, ability power: 6 "
-- "Creature [ID] at location 6,6 is enchanted with mystical energy, ability power: 9 "
-- "Creature [ID] at location 8,8 is enchanted with mystical energy, ability power: 12 "

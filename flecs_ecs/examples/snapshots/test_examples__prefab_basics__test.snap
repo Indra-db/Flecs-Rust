@@ -1,7 +1,0 @@
----
-source: flecs_ecs/examples/common
-expression: self.str
----
-- "Defence { value: 50.0 }"
-- "after set: Defence { value: 100.0 }"
-- "::my_spaceship: defence: 100"

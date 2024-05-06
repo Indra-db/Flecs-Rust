@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_snapshot_test.rs
+expression: self.str
+---
+- "Entity found: \"::e2\""

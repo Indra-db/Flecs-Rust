@@ -331,7 +331,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::insert")]
     pub fn insert<T>(self, value: T) -> Self
     where
-        T: IntoComponentId,
+        T: ComponentId,
     {
         let id = T::get_id(self.world);
         let self_id = *self.id();
@@ -339,40 +339,37 @@ impl<'a> EntityView<'a> {
         let mut is_new = false;
         unsafe {
             if sys::ecs_is_deferred(world_ptr) {
-                if !T::IS_PAIR {
-                    if T::First::NEEDS_DROP {
-                        if T::First::IMPLS_DEFAULT {
+                if T::NEEDS_DROP {
+                    if T::IMPLS_DEFAULT {
+                        let comp = sys::ecs_ensure_modified_id(world_ptr, self_id, id) as *mut T;
+                        std::ptr::drop_in_place(comp);
+                        std::ptr::write(comp, value);
+                        //use set batching //faster performance, no panic possible
+                    } else {
+                        if self.has_id(id) {
+                            //use set batching //faster performance, no panic possible since it's already present
                             let comp =
                                 sys::ecs_ensure_modified_id(world_ptr, self_id, id) as *mut T;
                             std::ptr::drop_in_place(comp);
                             std::ptr::write(comp, value);
-                            //use set batching //faster performance, no panic possible
-                        } else {
-                            if self.has_id(id) {
-                                //use set batching //faster performance, no panic possible since it's already present
-                                let comp =
-                                    sys::ecs_ensure_modified_id(world_ptr, self_id, id) as *mut T;
-                                std::ptr::drop_in_place(comp);
-                                std::ptr::write(comp, value);
-                                return self;
-                            }
-
-                            // use insert batching //slower performance
-                            let ptr =
-                                sys::ecs_emplace_id(world_ptr, self_id, id, &mut is_new) as *mut T;
-
-                            if !is_new {
-                                std::ptr::drop_in_place(ptr);
-                            }
-                            std::ptr::write(ptr, value);
-                            sys::ecs_modified_id(world_ptr, self_id, id);
+                            return self;
                         }
-                    } else {
-                        //use set batching
-                        let comp = sys::ecs_ensure_modified_id(world_ptr, self_id, id) as *mut T;
-                        std::ptr::drop_in_place(comp);
-                        std::ptr::write(comp, value);
+
+                        // use insert batching //slower performance
+                        let ptr =
+                            sys::ecs_emplace_id(world_ptr, self_id, id, &mut is_new) as *mut T;
+
+                        if !is_new {
+                            std::ptr::drop_in_place(ptr);
+                        }
+                        std::ptr::write(ptr, value);
+                        sys::ecs_modified_id(world_ptr, self_id, id);
                     }
+                } else {
+                    //use set batching
+                    let comp = sys::ecs_ensure_modified_id(world_ptr, self_id, id) as *mut T;
+                    std::ptr::drop_in_place(comp);
+                    std::ptr::write(comp, value);
                 }
             } else
             /* not deferred */

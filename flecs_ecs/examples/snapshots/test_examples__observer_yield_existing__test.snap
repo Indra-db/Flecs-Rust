@@ -1,6 +1,0 @@
----
-source: flecs_ecs/examples/common
-expression: self.str
----
-- " - OnSet: test_examples.observer_yield_existing.Position: e1: { 10, 20 }"
-- " - OnSet: test_examples.observer_yield_existing.Position: e2: { 20, 30 }"

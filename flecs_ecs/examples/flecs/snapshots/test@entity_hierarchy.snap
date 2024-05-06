@@ -1,0 +1,16 @@
+---
+source: flecs_ecs/examples/flecs/z_snapshot_test.rs
+expression: self.str
+---
+- Is the Moon a child of the Earth? true / true
+- "\n"
+- "::Sun [examples.entity_hierarchy.Position, (Identifier,Name)]"
+- "Position { x: 1.0, y: 1.0 }"
+- "::Sun::Mercury [examples.entity_hierarchy.Position, examples.entity_hierarchy.Planet, (Identifier,Name), (ChildOf,Sun)]"
+- "Position { x: 2.0, y: 2.0 }"
+- "::Sun::Venus [examples.entity_hierarchy.Position, examples.entity_hierarchy.Planet, (Identifier,Name), (ChildOf,Sun)]"
+- "Position { x: 3.0, y: 3.0 }"
+- "::Sun::Earth [examples.entity_hierarchy.Position, examples.entity_hierarchy.Planet, (Identifier,Name), (ChildOf,Sun)]"
+- "Position { x: 4.0, y: 4.0 }"
+- "::Sun::Earth::Moon [examples.entity_hierarchy.Position, examples.entity_hierarchy.Moon, (Identifier,Name), (ChildOf,Sun.Earth)]"
+- "Position { x: 4.1, y: 4.1 }"

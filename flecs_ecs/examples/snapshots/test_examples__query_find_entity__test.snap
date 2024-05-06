@@ -1,5 +1,0 @@
----
-source: flecs_ecs/examples/common
-expression: self.str
----
-- "Entity found: \"::e2\""

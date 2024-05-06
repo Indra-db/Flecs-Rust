@@ -1,0 +1,7 @@
+---
+source: xxxxxxx
+assertion_line: 0
+expression: (self xxx . yyystr)
+---
+- "Bob's got [examples.a_hello_world.Position, examples.a_hello_world.Velocity, (Identifier,Name), (examples.a_hello_world.Eats,examples.a_hello_world.Apples)]"
+- "Bob's position: Position { x: 2.0, y: 4.0 }"

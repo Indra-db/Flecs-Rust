@@ -1,7 +1,0 @@
----
-source: flecs_ecs/examples/common
-expression: self.str
----
-- "instance base: ::my_railgun::Base"
-- "instance head: ::my_railgun::Head"
-- "instance beam: ::my_railgun::Beam"

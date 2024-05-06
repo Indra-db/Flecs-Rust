@@ -1,0 +1,26 @@
+---
+source: flecs_ecs/examples/flecs/z_snapshot_test.rs
+expression: self.str
+---
+- "\n"
+- "--- First iteration ---"
+- "Position { x: 1.0, y: 0.0 }"
+- "Position { x: 2.0, y: 0.0 }"
+- "Position { x: 4.0, y: 0.0 }"
+- "Position { x: 5.0, y: 0.0 }"
+- "Position { x: 6.0, y: 0.0 }"
+- "\n"
+- "--- Second iteration ---"
+- "Position { x: 2.0, y: 0.0 }"
+- "Position { x: 4.0, y: 0.0 }"
+- "Position { x: 5.0, y: 0.0 }"
+- "Position { x: 6.0, y: 0.0 }"
+- "Position { x: 7.0, y: 0.0 }"
+- "\n"
+- "--- System iteration ---"
+- "Position { x: 2.0, y: 0.0 }"
+- "Position { x: 3.0, y: 0.0 }"
+- "Position { x: 4.0, y: 0.0 }"
+- "Position { x: 5.0, y: 0.0 }"
+- "Position { x: 6.0, y: 0.0 }"
+- "Position { x: 7.0, y: 0.0 }"

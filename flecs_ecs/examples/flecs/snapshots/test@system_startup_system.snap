@@ -1,0 +1,7 @@
+---
+source: flecs_ecs/examples/flecs/system_startup_system.rs
+expression: self.str
+---
+- Startup
+- Update
+- Update

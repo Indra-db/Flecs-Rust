@@ -168,127 +168,127 @@ harness = false
 ######################
 # These examples are only the examples that rely on a certain feature to compile successfully.
 
-[[example]]
-name = "system_ctx"
-path = "examples/system_ctx.rs"
-required-features = ["flecs_system"]
+# [[example]]
+# name = "system_ctx"
+# path = "examples/flecs/system_ctx.rs"
+# required-features = ["flecs_system"]
+
+# [[example]]
+# name = "system_custom_phases_no_builtin"
+# path = "examples/flecs/system_custom_phases_no_builtin.rs"
+# required-features = ["flecs_system"]
+
+# [[example]]
+# name = "system_custom_phases"
+# path = "examples/flecs/system_custom_phases.rs"
+# required-features = ["flecs_system"]
+
+# [[example]]
+# name = "system_custom_runner"
+# path = "examples/flecs/system_custom_runner.rs"
+# required-features = ["flecs_system"]
+
+# [[example]]
+# name = "system_custom_pipeline"
+# path = "examples/flecs/system_custom_pipeline.rs"
+# required-features = ["flecs_system"]
+
+# [[example]]
+# name = "system_delta_time"
+# path = "examples/flecs/system_delta_time.rs"
+# required-features = ["flecs_system"]
+
+# [[example]]
+# name = "system_mutate_entity_handle"
+# path = "examples/flecs/system_mutate_entity_handle.rs"
+# required-features = ["flecs_system"]
+
+# [[example]]
+# name = "system_mutate_entity"
+# path = "examples/flecs/system_mutate_entity.rs"
+# required-features = ["flecs_system"]
+
+# [[example]]
+# name = "system_no_readonly"
+# path = "examples/flecs/system_no_readonly.rs"
+# required-features = ["flecs_system"]
+
+# [[example]]
+# name = "system_pipeline"
+# path = "examples/flecs/system_pipeline.rs"
+# required-features = ["flecs_system"]
+
+# [[example]]
+# name = "system_startup_system"
+# path = "examples/flecs/system_startup_system.rs"
+# required-features = ["flecs_system"]
+
+# [[example]]
+# name = "system_sync_point_delete"
+# path = "examples/flecs/system_sync_point_delete.rs"
+# required-features = ["flecs_system"]
+
+# [[example]]
+# name = "system_sync_point"
+# path = "examples/flecs/system_sync_point.rs"
+# required-features = ["flecs_system"]
+
+# [[example]]
+# name = "system_target_fps"
+# path = "examples/flecs/system_target_fps.rs"
+# required-features = ["flecs_system"]
+
+# [[example]]
+# name = "system_time_interval"
+# path = "examples/flecs/system_time_interval.rs"
+# required-features = ["flecs_system"]
+
+# [[example]]
+# name = "a_hello_world"
+# path = "examples/flecs/a_hello_world.rs"
+# required-features = ["flecs_system"]
+
+# [[example]]
+# name = "system_basics"
+# path = "examples/flecs/system_basics.rs"
+# required-features = ["flecs_system"]
+
+# [[example]]
+# name = "query_sorting"
+# path = "examples/flecs/query_sorting.rs"
+# required-features = ["flecs_system"]
+
+# [[example]]
+# name = "rules_basics"
+# path = "examples/flecs/rules_basics.rs"
+# required-features = ["flecs_rules"]
+
+# [[example]]
+# name = "rules_component_inheritance"
+# path = "examples/flecs/rules_component_inheritance.rs"
+# required-features = ["flecs_rules"]
+
+# [[example]]
+# name = "rules_cyclic_variables"
+# path = "examples/flecs/rules_cyclic_variables.rs"
+# required-features = ["flecs_rules"]
+
+# [[example]]
+# name = "rules_facts"
+# path = "examples/flecs/rules_facts.rs"
+# required-features = ["flecs_rules"]
+
+# [[example]]
+# name = "rules_setting_variables"
+# path = "examples/flecs/rules_setting_variables.rs"
+# required-features = ["flecs_rules"]
+
+# [[example]]
+# name = "rules_transitive_queries"
+# path = "examples/flecs/rules_transitive_queries.rs"
+# required-features = ["flecs_rules"]
 
 [[example]]
-name = "system_custom_phases_no_builtin"
-path = "examples/system_custom_phases_no_builtin.rs"
-required-features = ["flecs_system"]
-
-[[example]]
-name = "system_custom_phases"
-path = "examples/system_custom_phases.rs"
-required-features = ["flecs_system"]
-
-[[example]]
-name = "system_custom_runner"
-path = "examples/system_custom_runner.rs"
-required-features = ["flecs_system"]
-
-[[example]]
-name = "system_custom_pipeline"
-path = "examples/system_custom_pipeline.rs"
-required-features = ["flecs_system"]
-
-[[example]]
-name = "system_delta_time"
-path = "examples/system_delta_time.rs"
-required-features = ["flecs_system"]
-
-[[example]]
-name = "system_mutate_entity_handle"
-path = "examples/system_mutate_entity_handle.rs"
-required-features = ["flecs_system"]
-
-[[example]]
-name = "system_mutate_entity"
-path = "examples/system_mutate_entity.rs"
-required-features = ["flecs_system"]
-
-[[example]]
-name = "system_no_readonly"
-path = "examples/system_no_readonly.rs"
-required-features = ["flecs_system"]
-
-[[example]]
-name = "system_pipeline"
-path = "examples/system_pipeline.rs"
-required-features = ["flecs_system"]
-
-[[example]]
-name = "system_startup_system"
-path = "examples/system_startup_system.rs"
-required-features = ["flecs_system"]
-
-[[example]]
-name = "system_sync_point_delete"
-path = "examples/system_sync_point_delete.rs"
-required-features = ["flecs_system"]
-
-[[example]]
-name = "system_sync_point"
-path = "examples/system_sync_point.rs"
-required-features = ["flecs_system"]
-
-[[example]]
-name = "system_target_fps"
-path = "examples/system_target_fps.rs"
-required-features = ["flecs_system"]
-
-[[example]]
-name = "system_time_interval"
-path = "examples/system_time_interval.rs"
-required-features = ["flecs_system"]
-
-[[example]]
-name = "a_hello_world"
-path = "examples/a_hello_world.rs"
-required-features = ["flecs_system"]
-
-[[example]]
-name = "system_basics"
-path = "examples/system_basics.rs"
-required-features = ["flecs_system"]
-
-[[example]]
-name = "query_sorting"
-path = "examples/query_sorting.rs"
-required-features = ["flecs_system"]
-
-[[example]]
-name = "rules_basics"
-path = "examples/rules_basics.rs"
-required-features = ["flecs_rules"]
-
-[[example]]
-name = "rules_component_inheritance"
-path = "examples/rules_component_inheritance.rs"
-required-features = ["flecs_rules"]
-
-[[example]]
-name = "rules_cyclic_variables"
-path = "examples/rules_cyclic_variables.rs"
-required-features = ["flecs_rules"]
-
-[[example]]
-name = "rules_facts"
-path = "examples/rules_facts.rs"
-required-features = ["flecs_rules"]
-
-[[example]]
-name = "rules_setting_variables"
-path = "examples/rules_setting_variables.rs"
-required-features = ["flecs_rules"]
-
-[[example]]
-name = "rules_transitive_queries"
-path = "examples/rules_transitive_queries.rs"
-required-features = ["flecs_rules"]
-
-[[example]]
-name = "test_examples"
-path = "examples/_tests.rs"
+name = "examples"
+path = "examples/flecs/z_main_test.rs"
 test = true
