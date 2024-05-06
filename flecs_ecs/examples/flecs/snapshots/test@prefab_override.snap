@@ -1,0 +1,9 @@
+---
+source: flecs_ecs/examples/flecs/z_snapshot_test.rs
+expression: self.str
+---
+- "examples.prefab_override.Damage, (Identifier,Name), (IsA,SpaceShip)"
+- "examples.prefab_override.Attack, examples.prefab_override.Damage, (Identifier,Name), (IsA,SpaceShip)"
+- "attack: 75"
+- "defence: 100"
+- "damage: 0"

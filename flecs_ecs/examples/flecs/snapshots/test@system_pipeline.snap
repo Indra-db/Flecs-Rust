@@ -1,0 +1,6 @@
+---
+source: flecs_ecs/examples/flecs/system_pipeline.rs
+expression: self.str
+---
+- "e1: { 11, 22 }"
+- "e2: { 13, 24 }"

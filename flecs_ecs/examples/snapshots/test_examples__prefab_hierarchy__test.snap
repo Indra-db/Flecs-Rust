@@ -1,6 +1,0 @@
----
-source: flecs_ecs/examples/common
-expression: self.str
----
-- "instance engine:  \"::my_spaceship::Engine\""
-- "instance cockpit: \"::my_spaceship::Cockpit\""

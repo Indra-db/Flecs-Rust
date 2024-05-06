@@ -7,7 +7,7 @@ use super::*;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-#[cfg(feature = "flecs_alerts")]
+//#[cfg(feature = "flecs_alerts")] //TODO flecs ecs_alert_init not properly defined in flecs c api.
 pub struct ecs_alert_desc_t {
     pub _canary: i32,
     #[doc = "Entity associated with alert"]

@@ -1,0 +1,7 @@
+---
+source: flecs_ecs/examples/flecs/z_snapshot_test.rs
+expression: self.str
+---
+- "instance base: ::my_railgun::Base"
+- "instance head: ::my_railgun::Head"
+- "instance beam: ::my_railgun::Beam"

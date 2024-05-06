@@ -1,8 +1,0 @@
----
-source: flecs_ecs/examples/common
-expression: self.str
----
-- Are Bob and Alice friends? Yes
-- Are Bob and John friends? No
-- Are Jane and John friends? Yes
-- Are John and Jane friends? Yes

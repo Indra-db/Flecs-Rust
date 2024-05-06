@@ -1,0 +1,7 @@
+---
+source: flecs_ecs/examples/flecs/z_snapshot_test.rs
+expression: self.str
+---
+- system GameSystem
+- system PhysicsSystem
+- system CollisionSystem

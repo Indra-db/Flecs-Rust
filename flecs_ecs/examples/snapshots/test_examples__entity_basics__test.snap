@@ -1,8 +1,0 @@
----
-source: flecs_ecs/examples/common
-expression: self.str
----
-- "Bob's position: Position { x: 10.0, y: 20.0 }"
-- "[test_examples.entity_basics.Position, test_examples.entity_basics.Walking, (Identifier,Name)]"
-- "Alice has Position { x: 10.0, y: 20.0 }"
-- "Bob has Position { x: 20.0, y: 30.0 }"

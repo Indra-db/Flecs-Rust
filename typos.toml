@@ -1,9 +1,0 @@
-[default.extend-words]
-inout = "inout"
-
-[files]
-extend-exclude = [
-  "flecs_ecs_sys/**/*",
-  "target/**/*",
-]
-

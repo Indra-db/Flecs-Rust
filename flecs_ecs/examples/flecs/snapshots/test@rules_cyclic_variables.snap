@@ -1,0 +1,8 @@
+---
+source: flecs_ecs/examples/flecs/z_snapshot_test.rs
+expression: self.str
+---
+- Alice likes Bob
+- John likes Jane
+- Jane likes John
+- Bob likes Alice

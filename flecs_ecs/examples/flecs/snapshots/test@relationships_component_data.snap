@@ -1,0 +1,12 @@
+---
+source: flecs_ecs/examples/flecs/z_snapshot_test.rs
+expression: self.str
+---
+- "e1: requires: 1.21"
+- "e1: requires: 1.5"
+- "expires: 0.5"
+- "::examples::relationships_component_data::Requires"
+- "::examples::relationships_component_data::Requires"
+- "::examples::relationships_component_data::Expires"
+- "::examples::relationships_component_data::Position"
+- "requires: 1.21 gigawatts"

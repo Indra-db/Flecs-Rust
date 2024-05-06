@@ -35,7 +35,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-13, macos-14, ubuntu-22.04, windows-2022]
-    name: cargo clippy + test + build and run examples
+    name: cargo clippy + test
     steps:
       - uses: actions/checkout@v4
       - name: install stable toolchain
@@ -47,20 +47,6 @@ jobs:
         run: cargo clippy --all-targets --workspace -- -D warnings
       - name: cargo test
         run: cargo test --workspace
-        
-      # Commented out for the time being -> integrated most examples within `cargo test`
-
-      # - name: Set execute permission on script
-      #   run: chmod +x ./scripts/run_examples.sh
-      # - name: Build all examples
-      #   run: cargo build --examples
-
-      # # CI env variable for insta snapshot testing library
-      # - name: Run examples
-      #   env:
-      #     CI: true
-      #   run: ./scripts/run_examples.sh
-      #   shell: bash
 
   build-doc:
     name: cargo docs-rs

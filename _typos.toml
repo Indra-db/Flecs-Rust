@@ -1,0 +1,6 @@
+[files]
+extend-exclude = [
+  "flecs_ecs_sys/**/*",
+  "target/**/*",
+]
+

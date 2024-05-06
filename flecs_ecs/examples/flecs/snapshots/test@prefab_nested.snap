@@ -1,0 +1,6 @@
+---
+source: flecs_ecs/examples/flecs/z_snapshot_test.rs
+expression: self.str
+---
+- "examples.prefab_nested.TirePressure, (Identifier,Name), (ChildOf,my_car), (IsA,Wheel)"
+- "pressure: 32"
