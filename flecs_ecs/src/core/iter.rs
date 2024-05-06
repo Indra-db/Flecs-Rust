@@ -9,7 +9,10 @@ pub struct Iter<'a, P = ()> {
     marker: PhantomData<P>,
 }
 
-impl<'a, P> Iter<'a, P> {
+impl<'a, P> Iter<'a, P>
+where
+    P: ComponentId,
+{
     pub fn world(&self) -> WorldRef<'a> {
         unsafe { WorldRef::from_ptr(self.iter.world) }
     }
@@ -226,27 +229,43 @@ impl<'a, P> Iter<'a, P> {
     /// Access param.
     /// param contains the pointer passed to the param argument of `system::run`
     ///
+    /// # Safety
+    ///
+    /// - Caller must ensure the type is correct when accessing the pointer.
+    ///
     /// # See also
     ///
     /// * C++ API: `iter::param`
     #[doc(alias = "iter::param")]
-    pub fn param_untyped(&self) -> *mut c_void {
+    pub unsafe fn param_untyped(&self) -> *mut c_void {
         self.iter.param
     }
 
     /// Access param.
-    /// param contains the pointer passed to the param argument of `system::run`
+    /// param contains the pointer passed to the param argument of `system::run` or the event payload
     ///
     /// # See also
     ///
     /// * C++ API: `iter::param`
     #[doc(alias = "iter::param")]
     pub fn param(&mut self) -> &mut P {
+        ecs_assert!(
+            !P::IS_TAG,
+            FlecsErrorCode::InvalidParameter,
+            "cannot access tag data, no payload provided"
+        );
+
         let ptr = self.iter.param as *mut P;
+
         assert!(
             !ptr.is_null(),
             "Tried to get param on an iterator where it was null."
         );
+
+        if P::IS_TAG {
+            panic!("cannot access tag data, no payload provided");
+        }
+
         unsafe { &mut *ptr }
     }
 
@@ -669,7 +688,10 @@ pub struct IterIterator<'a, P> {
     index: usize,
 }
 
-impl<'a, P> Iterator for IterIterator<'a, P> {
+impl<'a, P> Iterator for IterIterator<'a, P>
+where
+    P: ComponentId,
+{
     type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {

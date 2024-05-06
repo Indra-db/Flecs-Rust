@@ -12,20 +12,20 @@ pub(crate) fn try_register_component_impl<'a, T>(
 where
     T: ComponentId,
 {
-    #[cfg(feature = "flecs_single_world_application")]
+    #[cfg(not(feature = "flecs_multi_world_application"))]
     {
-        register_component_single_world_application::<T>(&world, name)
+        register_component_single_world_application::<T>(world, name)
     }
 
-    #[cfg(not(feature = "flecs_single_world_application"))]
+    #[cfg(feature = "flecs_multi_world_application")]
     {
-        register_component_multi_world_application::<T>(&world, name)
+        register_component_multi_world_application::<T>(world, name)
     }
 }
 
 #[doc(hidden)]
 pub fn register_component_single_world_application<'a, T>(
-    world: &impl IntoWorld<'a>,
+    world: impl IntoWorld<'a>,
     name: *const i8,
 ) -> u64
 where

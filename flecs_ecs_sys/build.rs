@@ -54,7 +54,7 @@ fn generate_bindings() {
         .blocklist_function("ecs_printv_")
         .blocklist_function("ecs_parser_errorv_")
         .blocklist_function("ecs_strbuf_vappend")
-        .blocklist_function("ecs_vasprintf")
+        .blocklist_function("flecs_vasprintf")
         .layout_tests(false)
         .raw_line("#![allow(clippy::all)]")
         .raw_line("#![allow(warnings)]")
@@ -68,14 +68,9 @@ fn generate_bindings() {
         bindings = bindings.clang_arg("-DFLECS_MODULE");
     }
 
-    #[cfg(feature = "flecs_parser")]
+    #[cfg(feature = "flecs_script")]
     {
-        bindings = bindings.clang_arg("-DFLECS_PARSER");
-    }
-
-    #[cfg(feature = "flecs_plecs")]
-    {
-        bindings = bindings.clang_arg("-DFLECS_PLECS");
+        bindings = bindings.clang_arg("-DFLECS_SCRIPT");
     }
 
     #[cfg(feature = "flecs_rules")]
@@ -136,11 +131,6 @@ fn generate_bindings() {
     #[cfg(feature = "flecs_units")]
     {
         bindings = bindings.clang_arg("-DFLECS_UNITS");
-    }
-
-    #[cfg(feature = "flecs_expr")]
-    {
-        bindings = bindings.clang_arg("-DFLECS_EXPR");
     }
 
     #[cfg(feature = "flecs_json")]
@@ -211,11 +201,8 @@ fn main() {
         #[cfg(feature = "flecs_module")]
         build.define("FLECS_MODULE", None);
 
-        #[cfg(feature = "flecs_parser")]
-        build.define("FLECS_PARSER", None);
-
-        #[cfg(feature = "flecs_plecs")]
-        build.define("FLECS_PLECS", None);
+        #[cfg(feature = "flecs_script")]
+        build.define("FLECS_SCRIPT", None);
 
         #[cfg(feature = "flecs_rules")]
         build.define("FLECS_RULES", None);
@@ -252,9 +239,6 @@ fn main() {
 
         #[cfg(feature = "flecs_units")]
         build.define("FLECS_UNITS", None);
-
-        #[cfg(feature = "flecs_expr")]
-        build.define("FLECS_EXPR", None);
 
         #[cfg(feature = "flecs_json")]
         build.define("FLECS_JSON", None);

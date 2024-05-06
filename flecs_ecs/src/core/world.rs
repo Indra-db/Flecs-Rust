@@ -19,11 +19,28 @@ pub struct World {
     pub(crate) raw_world: NonNull<WorldT>,
 }
 
+impl Clone for World {
+    fn clone(&self) -> Self {
+        unsafe { sys::flecs_poly_claim_(self.raw_world.as_ptr() as *mut c_void) };
+        Self {
+            raw_world: self.raw_world,
+        }
+    }
+}
+
 impl Default for World {
     fn default() -> Self {
         let world = Self {
             raw_world: unsafe { NonNull::new_unchecked(sys::ecs_init()) },
         };
+        let ctx = Box::leak(Box::new(WorldCtx::new()));
+        unsafe {
+            sys::ecs_set_binding_ctx(
+                world.raw_world.as_ptr(),
+                ctx as *mut WorldCtx as *mut c_void,
+                Some(world_ctx_destruct),
+            );
+        }
 
         world.init_builtin_components();
         world
@@ -33,10 +50,14 @@ impl Default for World {
 impl Drop for World {
     fn drop(&mut self) {
         let world_ptr = self.raw_world.as_ptr();
-        if unsafe { sys::ecs_poly_release_(world_ptr as *mut c_void) } == 0 {
+        if unsafe { sys::flecs_poly_release_(world_ptr as *mut c_void) } == 0 {
             if unsafe { sys::ecs_stage_get_id(world_ptr) } == -1 {
                 unsafe { sys::ecs_stage_free(world_ptr) };
             } else {
+                if !self.world_ctx().is_ref_count_zero() {
+                    panic!("The code base still has lingering references to `Query` objects. This is a bug in the user code. 
+                    Please ensure that all `Query` objects are out of scope before the world is destroyed.");
+                }
                 unsafe { sys::ecs_fini(self.raw_world.as_ptr()) };
             }
         }
@@ -50,6 +71,7 @@ impl World {
     }
 
     fn init_builtin_components(&self) {
+        self.component::<()>();
         #[cfg(feature = "flecs_system")]
         System::system_init(self);
         //#[cfg(feature = "flecs_timer")]
@@ -64,17 +86,20 @@ impl World {
 
     /// deletes and recreates the world
     ///
+    /// # Safety
+    /// This function panics if lingering references to `Query` and `World` objects are still present.
+    ///
     /// # See also
     ///
     /// * C++ API: `world::reset`
     #[doc(alias = "world::reset")]
-    pub fn reset(&mut self) {
-        assert!(
-            unsafe { sys::ecs_poly_refcount(self.raw_world.as_ptr() as *mut c_void) == 1 },
-            "Reset would invalidate other handles"
-        );
+    pub fn reset(self) -> Self {
+        if unsafe { sys::flecs_poly_refcount(self.raw_world.as_ptr() as *mut c_void) } > 1 {
+            panic!("Reset would invalidate other world handles that are still lingering in the user's code base. 
+            This is a bug in the user code. Please ensure that all world handles are out of scope before calling `reset`.");
+        }
         unsafe { sys::ecs_fini(self.raw_world.as_ptr()) };
-        self.raw_world = unsafe { NonNull::new_unchecked(sys::ecs_init()) };
+        World::new()
     }
 
     /// obtain pointer to C world object
@@ -412,17 +437,17 @@ impl World {
     pub fn is_stage(&self) -> bool {
         unsafe {
             ecs_assert!(
-                sys::ecs_poly_is_(
+                sys::flecs_poly_is_(
                     self.raw_world.as_ptr() as *const c_void,
                     sys::ecs_world_t_magic as i32
-                ) || sys::ecs_poly_is_(
+                ) || sys::flecs_poly_is_(
                     self.raw_world.as_ptr() as *const c_void,
                     sys::ecs_stage_t_magic as i32
                 ),
                 FlecsErrorCode::InvalidParameter,
-                "Parameter is not a world or stage"
+                "flecs::world instance contains invalid reference to world or stage"
             );
-            sys::ecs_poly_is_(
+            sys::flecs_poly_is_(
                 self.raw_world.as_ptr() as *const c_void,
                 sys::ecs_stage_t_magic as i32,
             )
@@ -761,12 +786,14 @@ impl World {
         unsafe { sys::ecs_set_lookup_path(self.raw_world.as_ptr(), &*search_path.into()) }
     }
 
-    /// Lookup entity by name
+    /// Lookup an entity by name.
+    /// The entity is searched recursively recursively traversing
+    /// up the tree until found.
     ///
     /// # Safety
     ///
-    /// This function can return an entity with id 0 if the entity is not found.
-    /// Ensure that the entity exists before using it.
+    /// Panics: Ensure that the entity exists before using it.
+    /// Use `try_lookup` variant otherwise.
     ///
     /// # Arguments
     ///
@@ -781,17 +808,17 @@ impl World {
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
     #[inline(always)]
-    pub fn lookup(&self, name: &CStr) -> EntityView {
-        self.try_lookup(name)
-            .expect("Entity not found, when unsure, use try_lookup")
+    pub fn lookup_recursively(&self, name: &CStr) -> EntityView {
+        self.try_lookup_recursive(name)
+            .expect("Entity not found, when unsure, use try_lookup_recursive")
     }
 
     /// Lookup entity by name, only the current scope is searched
     ///
     /// # Safety
     ///
-    /// This function can return an entity with id 0 if the entity is not found.
-    /// Ensure that the entity exists before using it.
+    /// Panics: Ensure that the entity exists before using it.
+    /// Use `try_lookup` variant otherwise.
     ///
     /// # Arguments
     ///
@@ -806,9 +833,9 @@ impl World {
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
     #[inline(always)]
-    pub fn lookup_current_scope(&self, name: &CStr) -> EntityView {
-        self.try_lookup_current_scope(name)
-            .expect("Entity not found, when unsure, use try_lookup_current_scope")
+    pub fn lookup(&self, name: &CStr) -> EntityView {
+        self.try_lookup(name)
+            .expect("Entity not found, when unsure, use try_lookup")
     }
 
     /// Lookup entity by name
@@ -816,7 +843,7 @@ impl World {
     /// # Arguments
     ///
     /// * `name` - The name of the entity to lookup.
-    /// * `search_path` - When false, only the current scope is searched.
+    /// * `recursively` - Recursively traverse up the tree until entity is found.
     ///
     /// # Returns
     ///
@@ -826,7 +853,7 @@ impl World {
     ///
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
-    fn try_lookup_impl(&self, name: &CStr, search_path: bool) -> Option<EntityView> {
+    fn try_lookup_impl(&self, name: &CStr, recursive: bool) -> Option<EntityView> {
         let entity_id = unsafe {
             sys::ecs_lookup_path_w_sep(
                 self.raw_world.as_ptr(),
@@ -834,7 +861,7 @@ impl World {
                 name.as_ptr(),
                 SEPARATOR.as_ptr(),
                 SEPARATOR.as_ptr(),
-                search_path,
+                recursive,
             )
         };
         if entity_id == 0 {
@@ -844,7 +871,9 @@ impl World {
         }
     }
 
-    /// Lookup entity by name
+    /// Lookup an entity by name.
+    /// The entity is searched recursively recursively traversing
+    /// up the tree until found.
     ///
     /// # Arguments
     ///
@@ -859,7 +888,7 @@ impl World {
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
     #[inline(always)]
-    pub fn try_lookup(&self, name: &CStr) -> Option<EntityView> {
+    pub fn try_lookup_recursive(&self, name: &CStr) -> Option<EntityView> {
         self.try_lookup_impl(name, true)
     }
 
@@ -878,7 +907,7 @@ impl World {
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
     #[inline(always)]
-    pub fn try_lookup_current_scope(&self, name: &CStr) -> Option<EntityView> {
+    pub fn try_lookup(&self, name: &CStr) -> Option<EntityView> {
         self.try_lookup_impl(name, false)
     }
 
@@ -892,7 +921,7 @@ impl World {
     ///
     /// * C++ API: `world::set`
     #[doc(alias = "world::set")]
-    pub fn set<T: ComponentId>(&self, component: T) {
+    pub fn set<T: ComponentId + NotEmptyComponent + ComponentType<Struct>>(&self, component: T) {
         let id = T::get_id(self);
         set_helper(self.raw_world.as_ptr(), id, component, id);
     }
@@ -1252,7 +1281,7 @@ impl World {
     // #[inline(always)]
     pub fn get_ref<T>(&self) -> Ref<T::UnderlyingType>
     where
-        T: ComponentId,
+        T: ComponentId + NotEmptyComponent,
     {
         EntityView::new_from(self, T::get_id(self)).get_ref::<T>()
     }
@@ -1681,36 +1710,40 @@ impl World {
         }
     }
 
-    /// Emplace a component.
+    /// insert a component.
     ///
-    /// Emplace is similar to `set()` except that the component constructor is not
+    /// insert is similar to `set()` except that the component constructor is not
     /// invoked, allowing the component to be "constructed" directly in the storage.
     ///
     /// # SAFETY
     ///
-    /// `emplace` can only be used if the entity does not yet have the component. If
+    /// `insert` can only be used if the entity does not yet have the component. If
     /// the entity has the component, the operation will fail and panic.
     ///
     /// # Type Parameters
     ///
-    /// * `T`: The type of the component to emplace.
+    /// * `T`: The type of the component to insert.
     ///
     /// # Arguments
     ///
-    /// * `value`: The value to emplace.
+    /// * `value`: The value to insert.
     ///
     /// # See also
     ///
-    /// * C++ API: `world::emplace`
-    #[doc(alias = "world::emplace")]
-    pub fn emplace<T>(&self, value: T)
+    /// * C++ API: `world::insert`
+    #[doc(alias = "world::insert")]
+    pub fn insert<T>(&self, value: T)
     where
-        T: IntoComponentId,
+        T: ComponentId,
     {
         let id = T::get_id(self);
         let raw_world = self.raw_world;
-        let ptr = unsafe { sys::ecs_emplace_id(raw_world.as_ptr(), id, id) } as *mut T;
+        let mut is_new = false;
+        let ptr = unsafe { sys::ecs_emplace_id(raw_world.as_ptr(), id, id, &mut is_new) } as *mut T;
         unsafe {
+            if !is_new {
+                std::ptr::drop_in_place(ptr);
+            }
             std::ptr::write(ptr, value);
             sys::ecs_modified_id(raw_world.as_ptr(), id, id);
         }
@@ -3316,6 +3349,18 @@ impl World {
         ObserverBuilder::<Event, Components>::new(self)
     }
 
+    pub fn observer_id<Components>(
+        &self,
+        event: impl Into<Entity>,
+    ) -> ObserverBuilder<(), Components>
+    where
+        Components: Iterable,
+    {
+        let mut builder = ObserverBuilder::<(), Components>::new_untyped(self);
+        builder.add_event_id(event);
+        builder
+    }
+
     /// Create a new named observer.
     ///
     /// # Type Parameters
@@ -3347,15 +3392,11 @@ impl World {
 
 /// Query mixin implementation
 impl World {
-    /// Create a new query.
+    /// Create a new uncached query.
     ///
     /// # Type Parameters
     ///
     /// * `Components` - The components to match on.
-    ///
-    /// # Returns
-    ///
-    /// A new query.
     ///
     /// # See also
     ///
@@ -3386,7 +3427,7 @@ impl World {
     ///
     /// * C++ API: `world::query`
     #[doc(alias = "world::query")]
-    pub fn new_query_named<'a, Components>(&'a self, name: &CStr) -> Query<'a, Components>
+    pub fn new_query_named<Components>(&self, name: &CStr) -> Query<Components>
     where
         Components: Iterable,
     {
@@ -3437,6 +3478,34 @@ impl World {
         Components: Iterable,
     {
         QueryBuilder::<Components>::new_named(self, name)
+    }
+
+    /// Convert a query entity to a query.
+    ///
+    /// # Safety
+    ///
+    /// Proceed with caution. Use `.iter_only` instead.
+    ///
+    /// # Returns
+    ///
+    /// returns the untyped query if the entity is alive, otherwise `None`.
+    pub fn try_query_from(&self, query_entity: impl Into<Entity>) -> Option<Query<()>> {
+        Query::<()>::new_from_entity(self, query_entity)
+    }
+
+    /// Convert a query entity to a query.
+    /// this method is the same as `try_to_query` but it automatically unwraps the result.
+    ///
+    /// # Safety
+    ///
+    /// Proceed with caution. Use `.iter_only` instead.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the entity is not alive or a query. Use `try_to_query` if you are unsure.
+    pub fn query_from(&self, query_entity: impl Into<Entity>) -> Query<()> {
+        self.try_query_from(query_entity)
+            .expect("entity / query is not alive or valid")
     }
 
     /// Create and iterate an uncached query.

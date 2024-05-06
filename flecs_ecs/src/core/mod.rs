@@ -25,6 +25,7 @@ pub mod table;
 pub mod term;
 pub mod utility;
 pub mod world;
+pub(crate) mod world_ctx;
 
 pub use archetype::*;
 pub use builder::*;
@@ -52,3 +53,4 @@ pub use table::*;
 pub use term::*;
 pub use utility::*;
 pub use world::*;
+pub(crate) use world_ctx::*;

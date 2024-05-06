@@ -119,7 +119,7 @@ pub struct Snap {
 impl Module for Snap {
     fn module(world: &World) {
         let snap = Snap::setup_snapshot_test();
-        world.emplace(snap);
+        world.insert(snap);
     }
 }
 

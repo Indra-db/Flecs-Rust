@@ -64,8 +64,8 @@ pub fn register_ctor_lifecycle_actions<T: Default>(type_hooks: &mut TypeHooksT) 
     type_hooks.ctor = Some(ctor::<T>);
 }
 
-pub fn register_ctor_panic_lifecycle_actions<T>(type_hooks: &mut TypeHooksT) {
-    type_hooks.ctor = Some(panic_ctor::<T>);
+pub fn register_ctor_panic_lifecycle_actions<T>(_type_hooks: &mut TypeHooksT) {
+    //type_hooks.ctor = Some(panic_ctor::<T>);
 }
 
 pub fn register_copy_lifecycle_action<T: Clone>(type_hooks: &mut TypeHooksT) {

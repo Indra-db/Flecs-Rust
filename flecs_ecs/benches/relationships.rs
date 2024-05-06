@@ -180,7 +180,7 @@ pub fn lookup_depth(criterion: &mut Criterion) {
             bencher.iter_custom(|iters| {
                 let start = Instant::now();
                 for _ in 0..iters {
-                    world.try_lookup(lookup_cstr);
+                    world.try_lookup_recursive(lookup_cstr);
                 }
                 let elapsed = start.elapsed();
                 elapsed / 1 //time average per entity operation

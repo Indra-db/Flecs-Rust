@@ -22,8 +22,8 @@ pub fn main() -> Result<Snap, String> {
     // Because of the IsA relationship, the instance now has the Engine and Cockpit
     // children of the prefab. This means that the instance can look up the Engine
     // and Cockpit entities.
-    if let Some(inst_engine) = inst.try_lookup(c"Engine") {
-        if let Some(inst_cockpit) = inst.try_lookup(c"Cockpit") {
+    if let Some(inst_engine) = inst.try_lookup_recursive(c"Engine") {
+        if let Some(inst_cockpit) = inst.try_lookup_recursive(c"Cockpit") {
             fprintln!(
                 &world,
                 "instance engine:  {:?}",

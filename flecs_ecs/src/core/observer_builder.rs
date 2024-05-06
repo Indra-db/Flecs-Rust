@@ -35,7 +35,7 @@ impl<'a, P: ComponentId, T: Iterable> ObserverBuilder<'a, P, T> {
     ///
     /// * C++ API: `observer_builder::observer_builder`
     #[doc(alias = "observer_builder::observer_builder")]
-    pub fn new(world: impl IntoWorld<'a>) -> Self {
+    pub(crate) fn new(world: impl IntoWorld<'a>) -> Self {
         let desc = Default::default();
         let mut obj = Self {
             desc,
@@ -91,7 +91,7 @@ impl<'a, P: ComponentId, T: Iterable> ObserverBuilder<'a, P, T> {
 }
 
 impl<'a, P, T: Iterable> ObserverBuilder<'a, P, T> {
-    pub fn new_untyped(world: impl IntoWorld<'a>) -> ObserverBuilder<'a, (), T> {
+    pub(crate) fn new_untyped(world: impl IntoWorld<'a>) -> ObserverBuilder<'a, (), T> {
         let desc = Default::default();
         let mut obj = ObserverBuilder {
             desc,

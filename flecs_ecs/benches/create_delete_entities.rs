@@ -120,13 +120,12 @@ pub fn create_delete_entities_w_tree(criterion: &mut Criterion) {
                 }
 
                 let id = world.entity();
-                let add_id = world.entity();
+                let add_id = world.entity().id();
 
                 world
-                    .observer::<()>()
+                    .observer::<flecs::OnAdd, ()>()
                     .with_id(id)
-                    .add_event::<flecs::OnAdd>()
-                    .each_entity(|entity, ()| {
+                    .each_entity(move |entity, ()| {
                         entity.add_id(add_id);
                     });
 

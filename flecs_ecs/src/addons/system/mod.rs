@@ -138,14 +138,14 @@ impl<'a> System<'a> {
     ///
     /// * C++ API: `system::query`
     #[doc(alias = "system::query")]
-    pub fn query(&self) -> Query<'a, ()> {
+    pub fn query(&self) -> Query<()> {
         let query = unsafe {
             NonNull::new_unchecked(sys::ecs_system_get_query(
                 self.world.world_ptr_mut(),
                 *self.id(),
             ))
         };
-        Query::<()>::new_ownership(query)
+        unsafe { Query::<()>::new_from(query) }
     }
 
     /// Run the system

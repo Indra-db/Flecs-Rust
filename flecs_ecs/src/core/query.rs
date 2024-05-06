@@ -3,23 +3,63 @@
 
 use std::{marker::PhantomData, os::raw::c_void, ptr::NonNull};
 
+use sys::ecs_get_alive;
+
 use crate::core::*;
 use crate::sys;
 
-/// Cached query implementation. Fast to iterate, but slower to create than `Filters`
+/// Queries are used to iterate over entities that match a certain filter of components.
+/// They can be either:
+/// - cached, which means they are stored in the world and can be retrieved by name or entity.
+///   They don't go out of scope until explicitly destroyed.
+///   They are slower to create than uncached queries, but faster to iterate.
+/// - uncached, which means they are created on the fly and are only valid for the duration of the query, scope.
+///   They are faster to create than cached queries, but slower to iterate.
 ///
+/// # Safety
 ///
-#[derive(Clone)]
-pub struct Query<'a, T>
+/// Queries are reference counter and won't cause any lifetime issues nor dangling references.
+/// You need to ensure that you're holding no query objects anymore when the world is destroyed.
+/// This will otherwise panic.
+pub struct Query<T>
 where
     T: Iterable,
 {
     pub(crate) query: NonNull<QueryT>,
-    _phantom_lifetime: PhantomData<&'a ()>,
     _phantom: PhantomData<T>,
 }
 
-impl<'a, T> IterOperations for Query<'a, T>
+impl<T> Clone for Query<T>
+where
+    T: Iterable,
+{
+    fn clone(&self) -> Self {
+        unsafe { Query::<T>::new_from(self.query) }
+    }
+}
+
+impl<T> Drop for Query<T>
+where
+    T: Iterable,
+{
+    fn drop(&mut self) {
+        self.world().world_ctx_mut().dec_query_ref_count();
+
+        // Only free if query is not associated with entity. Queries are associated with entities
+        // when they are either named or cached, such as system, cached queries and named queries. These queries have to be either explicitly
+        // deleted with the .destruct() method, or will be deleted when the
+        // world is deleted.
+        unsafe {
+            if self.query.as_ref().entity == 0
+                && sys::flecs_poly_release_(self.query.as_ptr() as *mut c_void) == 0
+            {
+                sys::ecs_query_fini(self.query.as_ptr());
+            }
+        }
+    }
+}
+
+impl<T> IterOperations for Query<T>
 where
     T: Iterable,
 {
@@ -42,72 +82,57 @@ where
     }
 }
 
-impl<'a, T> IterAPI<'a, (), T> for Query<'a, T>
+impl<T> IterAPI<(), T> for Query<T>
 where
     T: Iterable,
 {
-    fn as_entity(&self) -> EntityView<'a> {
-        EntityView::new_from(self.world(), unsafe {
-            sys::ecs_get_entity(self.query.as_ptr() as *const c_void)
-        })
+    #[inline(always)]
+    fn entity(&self) -> EntityView {
+        EntityView::new_from(self.world(), unsafe { (*self.query.as_ptr()).entity })
+    }
+
+    #[inline(always)]
+    fn world(&self) -> WorldRef<'_> {
+        unsafe { WorldRef::from_ptr(self.world_ptr_mut()) }
+    }
+
+    #[inline(always)]
+    fn world_ptr_mut(&self) -> *mut sys::ecs_world_t {
+        unsafe { (*self.query_ptr()).world }
     }
 }
 
-impl<'a, T> IntoWorld<'a> for Query<'a, T>
+impl<T> Query<T>
 where
     T: Iterable,
 {
-    #[inline]
-    fn world(&self) -> WorldRef<'a> {
-        unsafe { WorldRef::from_ptr(self.query.as_ref().world) }
-    }
-}
-
-impl<'a, T> Query<'a, T>
-where
-    T: Iterable,
-{
-    // /// Create a new query
-    // ///
-    // /// # Arguments
-    // ///
-    // /// * `world` - The world to create the query in
-    // ///
-    // /// # See also
-    // ///
-    // /// * C++ API: `query::query`
-    // #[doc(alias = "query::query")]
-    // pub fn new(world: impl IntoWorld<'a>) -> Self {
-    //     let mut desc = sys::ecs_query_desc_t::default();
-    //     T::register_ids_descriptor(world.world_ptr_mut(), &mut desc.filter);
-    //     let mut filter: FilterT = Default::default();
-    //     desc.filter.storage = &mut filter;
-    //     let query =
-    //         unsafe { NonNull::new_unchecked(sys::ecs_query_init(world.world_ptr_mut(), &desc)) };
-    //     Self {
-    //         world: world.world(),
-    //         query,
-    //         _phantom: std::marker::PhantomData,
-    //     }
-    // }
-
-    /// Create a new query from a query descriptor
+    /// wraps the query pointer in a new query
+    ///
+    /// # Safety
+    ///
+    /// this is unsafe due to the fact that the type of the query is not checked.
+    /// the user is responsible for ensuring that the query is of the correct type.
+    /// if not possible, only use `.iter` functions that do not pass in the components in the callback
     ///
     /// # Arguments
     ///
-    /// * `world` - The world to create the query in
-    /// * `desc` - The query descriptor to create the query from
+    /// * `query` - The query pointer to wrap
     ///
     /// # See also
     ///
     /// * C++ API: `query::query`
     #[doc(alias = "query::query")]
-    pub fn new_ownership(query: NonNull<QueryT>) -> Self {
-        Self {
+    #[inline]
+    pub unsafe fn new_from(query: NonNull<QueryT>) -> Self {
+        unsafe { sys::flecs_poly_claim_(query.as_ptr() as *mut c_void) };
+
+        let new_query = Self {
             query,
             _phantom: std::marker::PhantomData,
-            _phantom_lifetime: PhantomData,
-        }
+        };
+
+        new_query.world().world_ctx_mut().inc_query_ref_count();
+        new_query
     }
 
     /// Create a new query from a query descriptor
@@ -125,26 +150,51 @@ where
     ///
     /// * C++ API: `query::query`
     #[doc(alias = "query::query")]
-    pub(crate) fn new_from_desc(
+    pub(crate) fn new_from_desc<'a>(
         world: impl IntoWorld<'a>,
         desc: &mut sys::ecs_query_desc_t,
     ) -> Self {
-        let query_ptr = unsafe { sys::ecs_query_init(world.world_ptr_mut(), desc) };
+        let world_ptr = world.world_ptr_mut();
+
+        let query_ptr = unsafe { sys::ecs_query_init(world_ptr, desc) };
+
         ecs_assert!(
             !query_ptr.is_null(),
             "Failed to create query from query descriptor"
         );
+
         let query = unsafe { NonNull::new_unchecked(query_ptr) };
-        Self {
+
+        let new_query = Self {
             query,
             _phantom: PhantomData,
-            _phantom_lifetime: PhantomData,
-        }
+        };
+
+        new_query.world().world_ctx_mut().inc_query_ref_count();
+        new_query
     }
 
-    /// get the query entity
-    pub fn entity(&self) -> EntityView<'a> {
-        EntityView::new_from(self.world(), unsafe { (*self.query.as_ptr()).entity })
+    pub(crate) fn new_from_entity<'a>(
+        world: impl IntoWorld<'a>,
+        entity: impl Into<Entity>,
+    ) -> Option<Query<()>> {
+        let world_ptr = world.world_ptr_mut();
+        let entity = *entity.into();
+        unsafe {
+            if ecs_get_alive(world_ptr, entity) != 0 {
+                let query_poly =
+                    sys::ecs_get_id(world_ptr, entity, ecs_pair(*flecs::Poly, *flecs::Query));
+
+                if !query_poly.is_null() {
+                    sys::flecs_poly_claim_(query_poly as *mut c_void);
+                    let query = NonNull::new_unchecked(query_poly as *mut QueryT);
+                    let new_query = Query::<()>::new_from(query);
+                    new_query.world().world_ctx_mut().inc_query_ref_count();
+                    return Some(new_query);
+                }
+            }
+            None
+        }
     }
 
     /// Free the query
@@ -162,7 +212,17 @@ where
             "destruct() should only be called on queries associated with entities"
         );
 
-        //calls drop
+        if unsafe { (*self.query.as_ptr()).entity } != 0 {
+            if unsafe { sys::flecs_poly_release_(self.query.as_ptr() as *mut c_void) } > 0 {
+                panic!("The code base still has lingering references to `Query` objects. This is a bug in the user code. 
+                Please ensure that all `Query` objects are out of scope that are a clone/copy of the current one.");
+            }
+            unsafe { sys::ecs_query_fini(self.query.as_ptr()) };
+        }
+    }
+
+    pub fn reference_count(&self) -> i32 {
+        unsafe { sys::flecs_poly_refcount(self.query.as_ptr() as *mut c_void) }
     }
 
     /// Get the iterator for the query
@@ -237,31 +297,6 @@ where
             unsafe { (*group_info).ctx }
         } else {
             std::ptr::null_mut()
-        }
-    }
-}
-
-impl<'a, T> Drop for Query<'a, T>
-where
-    T: Iterable,
-{
-    /// Destroy a query. This operation destroys a query and its resources.
-    /// If the query is used as the parent of subqueries, those subqueries will be orphaned
-    /// and must be deinitialized as well.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_base::~query_base`
-    #[doc(alias = "query_base::~query_base")]
-    fn drop(&mut self) {
-        // Only free if query is not associated with entity, such as system
-        // queries and named queries. Named queries have to be either explicitly
-        // deleted with the .destruct() method, or will be deleted when the
-        // world is deleted.
-        unsafe {
-            if (*self.query.as_ptr()).entity != 0 {
-                sys::ecs_query_fini(self.query.as_ptr());
-            }
         }
     }
 }

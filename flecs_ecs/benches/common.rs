@@ -98,11 +98,11 @@ pub mod common {
     /// This function is called at the end of each iteration to do this reset.
     #[inline(always)]
     pub fn reset_component<T: ComponentId>() {
-        #[cfg(feature = "flecs_single_world_application")]
+        #[cfg(not(feature = "flecs_multi_world_application"))]
         T::__reset_one_lock_data();
     }
 
-    #[cfg(feature = "flecs_single_world_application")]
+    #[cfg(not(feature = "flecs_multi_world_application"))]
     macro_rules! reset_components {
         ($($type:ty),*) => {{
             $(
@@ -113,12 +113,12 @@ pub mod common {
         }};
     }
 
-    #[cfg(not(feature = "flecs_single_world_application"))]
+    #[cfg(feature = "flecs_multi_world_application")]
     macro_rules! reset_components {
         ($($type:ty),*) => {};
     }
 
-    #[cfg(not(feature = "flecs_single_world_application"))]
+    #[cfg(feature = "flecs_multi_world_application")]
     macro_rules! reset_component_range {
         ($component:ty, $start:expr, $end:expr) => {};
     }
@@ -197,7 +197,7 @@ pub mod common {
     macro_rules! set_component_range {
         ($world:expr, $entity:expr, $component:ty, $start:expr, $end:expr) => {{
             seq!(P in $start..=$end {
-                $entity.set::<$component~P>($component~P(0.0));
+                $entity.insert::<$component~P>($component~P(0.0));
         });
         }};
     }

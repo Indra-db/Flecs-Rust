@@ -55,22 +55,19 @@ flecs_disable_build_c = ["flecs_ecs_sys/disable_build_c"]
 # Flecs feature flags
 ######################
 
-# indicate that the flecs library is meant to be used in a singleworld application
-# this will enable some optimization that would otherwise not be possible
-# in Flecs C++ it's necessary for components to be registered manually before being used in multithreaded systems
+# indicate that the flecs library is meant to be used in a multi-world application
+# this will disable some optimizations.
+# In Flecs C++ it's necessary for components to be registered manually before being used in multithreaded systems
 # this is not necessary in Rust and is considered multithreaded safe for single world applications.
-# If you intent to have multiple worlds, you should not enable this feature and register components manually
+# If you intend to have multiple worlds, you should enable this feature and register components manually
 # if the intent is to share components between worlds, like in C++. In the future this limitation might be mitigated.
-flecs_single_world_application = []
+flecs_multi_world_application = []
 
 # Module support
 flecs_module = ["flecs_ecs_sys/flecs_module"]
 
-# String parser for queries
-flecs_parser = ["flecs_ecs_sys/flecs_parser"]
-
 # ECS data definition format
-flecs_plecs = ["flecs_ecs_sys/flecs_plecs", "flecs_module", "flecs_parser", "flecs_expr"]
+flecs_script = ["flecs_ecs_sys/flecs_script", "flecs_meta", "flecs_doc", "flecs_module"]
 
 # Constraint solver for advanced queries
 flecs_rules = ["flecs_ecs_sys/flecs_rules"]
@@ -82,7 +79,7 @@ flecs_snapshot = ["flecs_ecs_sys/flecs_snapshot"]
 flecs_stats = ["flecs_ecs_sys/flecs_stats"]
 
 # Track runtime statistics periodically
-flecs_monitor = ["flecs_ecs_sys/flecs_monitor","flecs_stats", "flecs_system", "flecs_timer"]
+flecs_monitor = ["flecs_ecs_sys/flecs_monitor","flecs_stats", "flecs_system", "flecs_timer", "flecs_module"]
 
 # Expose component data as statistics
 flecs_metrics = ["flecs_ecs_sys/flecs_metrics", "flecs_meta", "flecs_units", "flecs_pipeline"]
@@ -105,11 +102,8 @@ flecs_meta = ["flecs_ecs_sys/flecs_meta", "flecs_module"]
 # Builtin standard units
 flecs_units = ["flecs_ecs_sys/flecs_units", "flecs_module", "flecs_meta"]
 
-# Parsing strings to/from component values
-flecs_expr = ["flecs_ecs_sys/flecs_expr", "flecs_meta", "flecs_parser"]
-
 # Parsing JSON to/from component values
-flecs_json = ["flecs_ecs_sys/flecs_json", "flecs_expr"]
+flecs_json = ["flecs_ecs_sys/flecs_json", "flecs_meta"]
 
 # Document entities & components
 flecs_doc = ["flecs_ecs_sys/flecs_doc", "flecs_module"]
@@ -133,11 +127,9 @@ flecs_rest = ["flecs_ecs_sys/flecs_rest", "flecs_http", "flecs_json", "flecs_rul
 flecs_journal = ["flecs_ecs_sys/flecs_journal","flecs_log"]
 
 default = [
-    "flecs_single_world_application",
     "flecs_regenerate_binding_c",
     "flecs_module",
-    "flecs_parser",
-    "flecs_plecs",
+    "flecs_script",
     "flecs_rules",
     "flecs_snapshot",
     "flecs_stats",
@@ -149,7 +141,6 @@ default = [
     "flecs_timer",
     "flecs_meta",
     "flecs_units",
-    "flecs_expr",
     "flecs_json",
     "flecs_doc",
     "flecs_log",
