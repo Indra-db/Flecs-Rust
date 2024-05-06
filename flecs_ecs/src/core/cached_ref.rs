@@ -7,13 +7,13 @@ use crate::sys;
 
 /// A reference to a component from a specific entity.
 /// Refs are a fast mechanism for referring to a specific entity/component
-pub struct Ref<'a, T: ComponentId> {
+pub struct CachedRef<'a, T: ComponentId> {
     world: WorldRef<'a>,
     component_ref: RefT,
     _marker: PhantomData<T>,
 }
 
-impl<'a, T: ComponentId> Ref<'a, T> {
+impl<'a, T: ComponentId> CachedRef<'a, T> {
     /// Create a new ref to a component.
     ///
     /// # Arguments
@@ -45,9 +45,9 @@ impl<'a, T: ComponentId> Ref<'a, T> {
         let component_ref = unsafe { sys::ecs_ref_init_id(world_ptr, *entity.into(), id) };
         assert_ne!(
             component_ref.entity, 0,
-            "Tried to create invalid `Ref` type."
+            "Tried to create invalid `CachedRef` type."
         );
-        Ref {
+        CachedRef {
             world: unsafe { WorldRef::from_ptr(world_ptr) },
             component_ref,
             _marker: PhantomData,
@@ -73,7 +73,7 @@ impl<'a, T: ComponentId> Ref<'a, T> {
 
     pub fn get(&mut self) -> &mut T {
         self.try_get()
-            .expect("Called Ref::get but the Ref was invalid")
+            .expect("Called CachedRef::get but the CachedRef was invalid")
     }
 
     pub fn entity(&self) -> EntityView<'a> {

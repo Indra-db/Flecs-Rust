@@ -1698,8 +1698,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
-    pub fn get_ref<T: ComponentId + NotEmptyComponent>(&self) -> Ref<'a, T::UnderlyingType> {
-        Ref::<T::UnderlyingType>::new(self.world, *self.id(), T::get_id(self.world))
+    pub fn get_ref<T: ComponentId + NotEmptyComponent>(&self) -> CachedRef<'a, T::UnderlyingType> {
+        CachedRef::<T::UnderlyingType>::new(self.world, *self.id(), T::get_id(self.world))
     }
 
     /// Get a reference to the first component of pair
@@ -1726,8 +1726,8 @@ impl<'a> EntityView<'a> {
     pub fn get_ref_first<First: ComponentId + NotEmptyComponent>(
         self,
         second: impl Into<Entity>,
-    ) -> Ref<'a, First> {
-        Ref::<First>::new(
+    ) -> CachedRef<'a, First> {
+        CachedRef::<First>::new(
             self.world,
             *self.id(),
             ecs_pair(First::get_id(self.world), *second.into()),
@@ -1758,8 +1758,8 @@ impl<'a> EntityView<'a> {
     pub fn get_ref_second<Second: ComponentId + NotEmptyComponent>(
         &self,
         first: impl Into<Entity>,
-    ) -> Ref<Second> {
-        Ref::<Second>::new(
+    ) -> CachedRef<Second> {
+        CachedRef::<Second>::new(
             self.world,
             *self.id(),
             ecs_pair(*first.into(), Second::get_id(self.world)),

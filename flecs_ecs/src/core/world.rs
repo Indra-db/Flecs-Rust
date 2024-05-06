@@ -1279,7 +1279,7 @@ impl World {
     /// * C++ API: `world::get_ref`
     // #[doc(alias = "world::get_ref")]
     // #[inline(always)]
-    pub fn get_ref<T>(&self) -> Ref<T::UnderlyingType>
+    pub fn get_ref<T>(&self) -> CachedRef<T::UnderlyingType>
     where
         T: ComponentId + NotEmptyComponent,
     {
