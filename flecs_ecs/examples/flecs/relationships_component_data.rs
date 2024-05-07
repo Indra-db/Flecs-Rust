@@ -81,8 +81,8 @@ fn main() {
         .entity()
         .set_first::<Expires, Position>(Expires { timeout: 0.5 });
 
-    let expires = e3.try_get_first::<Expires, Position>();
-    fprintln!(&world, "expires: {}", expires.unwrap().timeout);
+    let expires = e3.get_first::<Expires, Position>();
+    fprintln!(&world, "expires: {}", expires.timeout);
 
     // You can prevent a pair from assuming the type of a component by adding
     // the Tag property to a relationship:

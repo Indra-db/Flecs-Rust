@@ -1056,190 +1056,6 @@ impl World {
         self.modified_id(T::get_id(self));
     }
 
-    /// Get singleton component as const.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The type of the component to get.
-    ///
-    /// # Returns
-    ///
-    /// The singleton component as const, or None if the component does not exist.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get`
-    #[doc(alias = "world::get")]
-    #[inline(always)]
-    pub fn try_get<T>(&self) -> Option<&T>
-    where
-        T: ComponentId + NotEmptyComponent,
-    {
-        let component_id = T::get_id(self);
-        let singleton_entity = EntityView::new_from(self, component_id);
-
-        // This branch will be removed in release mode since this can be determined at compile time.
-        if !T::IS_ENUM {
-            unsafe {
-                (sys::ecs_get_id(self.raw_world.as_ptr(), *singleton_entity.id, component_id)
-                    as *const T)
-                    .as_ref()
-            }
-        } else {
-            let target = unsafe {
-                sys::ecs_get_target(
-                    self.raw_world.as_ptr(),
-                    *singleton_entity.id,
-                    component_id,
-                    0,
-                )
-            };
-
-            if target == 0 {
-                // if there is no matching pair for (r,*), try just r
-                unsafe {
-                    (sys::ecs_get_id(self.raw_world.as_ptr(), *singleton_entity.id, component_id)
-                        as *const T)
-                        .as_ref()
-                }
-            } else {
-                // get constant value from constant entity
-                let constant_value = unsafe {
-                    (sys::ecs_get_mut_id(self.raw_world.as_ptr(), target, component_id) as *const T)
-                        .as_ref()
-                };
-
-                ecs_assert!(
-                    constant_value.is_some(),
-                    FlecsErrorCode::InternalError,
-                    "missing enum constant value {}",
-                    std::any::type_name::<T>()
-                );
-
-                constant_value
-            }
-        }
-    }
-    /// Get singleton component as const.
-    ///
-    /// # Safety
-    ///
-    /// This will panic if the component as singleton does not exist.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The type of the component to get.
-    ///
-    /// # Returns
-    ///
-    /// The singleton component as const.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get`
-    #[doc(alias = "world::get")]
-    pub fn get<T>(&self) -> &T
-    where
-        T: ComponentId + NotEmptyComponent,
-    {
-        self.try_get::<T>()
-            .expect("Component does not exist as a singleton")
-    }
-
-    /// Get singleton component as mutable.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The type of the component to get.
-    ///
-    /// # Returns
-    ///
-    /// The singleton component as mutable, or None if the component does not exist.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get_mut`
-    #[doc(alias = "world::get_mut")]
-    #[inline(always)]
-    pub fn try_get_mut<T>(&self) -> Option<&mut T>
-    where
-        T: ComponentId + NotEmptyComponent,
-    {
-        let component_id = T::get_id(self);
-        let singleton_entity = EntityView::new_from(self, component_id);
-
-        // This branch will be removed in release mode since this can be determined at compile time.
-        if !T::IS_ENUM {
-            unsafe {
-                (sys::ecs_get_mut_id(self.raw_world.as_ptr(), *singleton_entity.id, component_id)
-                    as *mut T)
-                    .as_mut()
-            }
-        } else {
-            let target = unsafe {
-                sys::ecs_get_target(
-                    self.raw_world.as_ptr(),
-                    *singleton_entity.id,
-                    component_id,
-                    0,
-                )
-            };
-
-            if target == 0 {
-                // if there is no matching pair for (r,*), try just r
-                unsafe {
-                    (sys::ecs_get_mut_id(
-                        self.raw_world.as_ptr(),
-                        *singleton_entity.id,
-                        component_id,
-                    ) as *mut T)
-                        .as_mut()
-                }
-            } else {
-                // get mutable value from constant entity
-                let constant_value = unsafe {
-                    (sys::ecs_get_mut_id(self.raw_world.as_ptr(), target, component_id) as *mut T)
-                        .as_mut()
-                };
-
-                ecs_assert!(
-                    constant_value.is_some(),
-                    FlecsErrorCode::InternalError,
-                    "missing enum constant value {}",
-                    std::any::type_name::<T>()
-                );
-
-                constant_value
-            }
-        }
-    }
-
-    /// Get singleton component as mutable.
-    ///
-    /// # Safety
-    ///
-    /// This will panic if the component as singleton does not exist.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The type of the component to get.
-    ///
-    /// # Returns
-    ///
-    /// The singleton component as mutable.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get_mut`
-    #[doc(alias = "world::get_mut")]
-    pub fn get_mut<T>(&self) -> &mut T
-    where
-        T: ComponentId + NotEmptyComponent,
-    {
-        self.try_get_mut::<T>()
-            .expect("Component does not exist as a singleton")
-    }
-
     /// Get singleton component as mutable.
     ///
     /// # Type Parameters
@@ -1358,257 +1174,6 @@ impl World {
                 index.unwrap_or(0) as i32,
             )
         })
-    }
-
-    /// Get immutable reference for the first element of a singleton pair
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first part of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second`: The second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// An option containing the reference to the first element of the pair if it exists, otherwise None.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get`
-    #[doc(alias = "world::get")]
-    #[inline(always)]
-    pub fn get_first_id<First>(&self, second: impl Into<Entity>) -> Option<&First>
-    where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        let component_id = First::get_id(self);
-
-        ecs_assert!(
-            std::mem::size_of::<First>() != 0,
-            FlecsErrorCode::InvalidParameter,
-            "invalid type: {}",
-            std::any::type_name::<First>()
-        );
-
-        unsafe {
-            (sys::ecs_get_id(
-                self.raw_world.as_ptr(),
-                component_id,
-                ecs_pair(component_id, *second.into()),
-            ) as *const First)
-                .as_ref()
-        }
-    }
-
-    /// Get mutable reference for the first element of a singleton pair
-    /// If the pair does not exist, it will be created.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first part of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get_mut`
-    #[doc(alias = "world::get_mut")]
-    #[allow(clippy::mut_from_ref)]
-    #[inline(always)]
-    pub fn get_first_id_mut<First>(&self, second: impl Into<Entity>) -> Option<&mut First>
-    where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        let component_id = First::get_id(self);
-
-        ecs_assert!(
-            std::mem::size_of::<First>() != 0,
-            FlecsErrorCode::InvalidParameter,
-            "invalid type: {}",
-            std::any::type_name::<First>()
-        );
-
-        unsafe {
-            (sys::ecs_get_mut_id(
-                self.raw_world.as_ptr(),
-                component_id,
-                ecs_pair(component_id, *second.into()),
-            ) as *mut First)
-                .as_mut()
-        }
-    }
-
-    /// Get an immutable reference for the first element of a singleton pair
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first part of the pair.
-    /// * `Second`: The second part of the pair.
-    ///
-    /// # Returns
-    ///
-    /// An option containing the reference to the first element of the pair if it exists, otherwise None.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get`
-    #[doc(alias = "world::get")]
-    pub fn get_first<First, Second>(&self) -> Option<&First>
-    where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-        Second: ComponentId + ComponentType<Struct>,
-    {
-        self.get_first_id(Second::get_id(self))
-    }
-
-    /// Get a mutable reference for the first element of a singleton pair
-    /// If the pair does not exist, it will be created.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first part of the pair.
-    /// * `Second`: The second part of the pair.
-    ///
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get_mut`
-    #[doc(alias = "world::get_mut")]
-    pub fn get_first_mut<First, Second>(&self) -> Option<&mut First>
-    where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-        Second: ComponentId + ComponentType<Struct>,
-    {
-        self.get_first_id_mut(Second::get_id(self))
-    }
-
-    /// Get immutable reference for the second element of a singleton pair
-    ///
-    /// # Type Parameters
-    ///
-    /// * `second`: The second part of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// An option containing the reference to the second element of the pair if it exists, otherwise None.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get`
-    #[doc(alias = "world::get")]
-    #[inline(always)]
-    pub fn get_second_id<Second>(&self, first: impl Into<Entity>) -> Option<&Second>
-    where
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        let component_id = Second::get_id(self);
-
-        ecs_assert!(
-            std::mem::size_of::<Second>() != 0,
-            FlecsErrorCode::InvalidParameter,
-            "invalid type: {}",
-            std::any::type_name::<Second>()
-        );
-
-        unsafe {
-            (sys::ecs_get_id(
-                self.raw_world.as_ptr(),
-                component_id,
-                ecs_pair(*first.into(), component_id),
-            ) as *const Second)
-                .as_ref()
-        }
-    }
-
-    /// Get mutable reference for the second element of a singleton pair
-    /// If the pair does not exist, it will be created.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `second`: The second part of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get_mut`
-    #[doc(alias = "world::get_mut")]
-    #[inline(always)]
-    #[allow(clippy::mut_from_ref)]
-    pub fn get_second_id_mut<Second>(&self, first: impl Into<Entity>) -> Option<&mut Second>
-    where
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        let component_id = Second::get_id(self);
-
-        ecs_assert!(
-            std::mem::size_of::<Second>() != 0,
-            FlecsErrorCode::InvalidParameter,
-            "invalid type: {}",
-            std::any::type_name::<Second>()
-        );
-
-        unsafe {
-            (sys::ecs_get_mut_id(
-                self.raw_world.as_ptr(),
-                component_id,
-                ecs_pair(*first.into(), component_id),
-            ) as *mut Second)
-                .as_mut()
-        }
-    }
-
-    /// Get an immutable reference for the second element of a singleton pair.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first element of the pair.
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// An option containing the reference to the second element of the pair if it exists, otherwise None.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get`
-    #[doc(alias = "world::get")]
-    pub fn get_second<First, Second>(&self) -> Option<&Second>
-    where
-        First: ComponentId + ComponentType<Struct>,
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        self.get_second_id(First::get_id(self))
-    }
-
-    /// Get a mutable reference for the second element of a singleton pair.
-    /// If the pair does not exist, it will be created.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first element of the pair.
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get_mut`
-    #[doc(alias = "world::get_mut")]
-    pub fn get_second_mut<First, Second>(&self) -> Option<&mut Second>
-    where
-        First: ComponentId + ComponentType<Struct>,
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        self.get_second_id_mut(First::get_id(self))
     }
 
     /// Check if world has the provided id.
@@ -3244,25 +2809,1119 @@ impl World {
     }
 }
 
-/// Term mixin implementation
+/// Get implementation variants
 impl World {
-    // /// Creates a term for a (component) type.
-    // ///
-    // /// # Type Parameters
-    // ///
-    // /// * `T` - The component type.
-    // ///
-    // /// # Returns
-    // ///
-    // /// The term for the component type.
-    // ///
-    // /// # See also
-    // ///
-    // /// * C++ API: `world::term`
-    // #[doc(alias = "world::term")]
-    // pub fn term<T: IntoComponentId>(&self) -> Term {
-    //     Term::new_type::<T>(self)
-    // }
+    /// Get option immutable singleton component from world.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[inline(always)]
+    pub fn try_get<T: ComponentId + NotEmptyComponent>(&self) -> Option<Ref<'_, T>> {
+        EntityView::new_from(self.world(), T::get_id(self)).try_get::<T>()
+    }
+
+    /// Get immutable singleton component from world.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    pub fn get<T: ComponentId + NotEmptyComponent>(&self) -> Ref<'_, T> {
+        self.try_get::<T>()
+            .expect("Component does not exist on this entity")
+    }
+
+    /// invokes the callback with the singleton component if it exists
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # Returns
+    ///
+    /// `true` if the component exists and the callback was invoked, `false` otherwise
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    pub fn get_callback<T: ComponentId>(&self, callback: impl FnOnce(Ref<T>)) -> bool {
+        EntityView::new_from(self.world(), T::get_id(self)).get_callback(callback)
+    }
+
+    /// Get an option immutable singleton reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub fn try_get_first_id<First>(&self, second: impl Into<Entity>) -> Option<Ref<'_, First>>
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        let second = second.into();
+        EntityView::new_from(self.world(), ecs_pair(*second, First::get_id(self)))
+            .try_get_first_id::<First>(second)
+    }
+
+    /// Get an immutable singleton reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub fn get_first_id<First>(&self, second: impl Into<Entity>) -> Ref<'_, First>
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_first_id(second)
+            .expect("Component does not exist on this entity")
+    }
+
+    /// Get an option immutable singleton reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub fn try_get_first<First, Second>(&self) -> Option<Ref<'_, First>>
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId,
+    {
+        self.try_get_first_id::<First>(Second::get_id(self))
+    }
+
+    /// Get an immutable singleton reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub fn get_first<First, Second>(&self) -> Ref<'_, First>
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId,
+    {
+        self.try_get_first::<First, Second>()
+            .expect("Component does not exist on this entity")
+    }
+
+    /// Get an option immutable singleton reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub fn try_get_second_id<Second>(&self, first: impl Into<Entity>) -> Option<Ref<'_, Second>>
+    where
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        let first = first.into();
+        EntityView::new_from(self.world(), ecs_pair(*first, Second::get_id(self)))
+            .try_get_second_id::<Second>(first)
+    }
+
+    /// Get an immutable singleton reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub fn get_second_id<Second>(&self, first: impl Into<Entity>) -> Ref<'_, Second>
+    where
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_second_id(first)
+            .expect("Component does not exist on this entity")
+    }
+
+    /// Get an option immutable singleton reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub fn try_get_second<First, Second>(&self) -> Option<Ref<'_, Second>>
+    where
+        First: ComponentId + ComponentType<Struct> + EmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_second_id::<Second>(First::get_id(self))
+    }
+
+    /// Get an immutable singleton reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub fn get_second<First, Second>(&self) -> Ref<'_, Second>
+    where
+        First: ComponentId + ComponentType<Struct> + EmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_second::<First, Second>()
+            .expect("Component does not exist on this entity")
+    }
+
+    /// Get option immutable singleton component from entity
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    #[inline(always)]
+    pub unsafe fn try_get_unchecked<T: ComponentId>(&self) -> Option<Ref<'_, T>> {
+        EntityView::new_from(self.world(), T::get_id(self)).try_get_unchecked::<T>()
+    }
+
+    /// Get immutable singleton component from entity
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub unsafe fn get_unchecked<T: ComponentId + NotEmptyComponent>(&self) -> Ref<'_, T> {
+        self.try_get_unchecked::<T>()
+            .expect("Component does not exist on this entity")
+    }
+
+    /// invokes the callback with the singleton component if it exists
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # Returns
+    ///
+    /// `true` if the component exists and the callback was invoked, `false` otherwise
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    pub unsafe fn get_callback_unchecked<T: ComponentId>(
+        &self,
+        callback: impl FnOnce(Ref<'_, T>),
+    ) -> bool {
+        EntityView::new_from(self.world(), T::get_id(self)).get_callback_unchecked(callback)
+    }
+
+    /// Get an option immutable singleton reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub unsafe fn try_get_first_id_unchecked<First>(
+        &self,
+        second: impl Into<Entity>,
+    ) -> Option<Ref<'_, First>>
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        let second = second.into();
+        EntityView::new_from(self.world(), ecs_pair(*second, First::get_id(self)))
+            .try_get_first_id_unchecked::<First>(second)
+    }
+
+    /// Get an option immutable singleton reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub unsafe fn get_first_id_unchecked<First>(&self, second: impl Into<Entity>) -> Ref<'_, First>
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_first_id_unchecked(second)
+            .expect("Component does not exist on this entity")
+    }
+
+    /// Get an immutable singleton reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub unsafe fn try_get_first_unchecked<First, Second>(&self) -> Option<Ref<'_, First>>
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId,
+    {
+        self.try_get_first_id_unchecked::<First>(Second::get_id(self))
+    }
+
+    /// Get an immutable singleton reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub unsafe fn get_first_unchecked<First, Second>(&self) -> Ref<'_, First>
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId,
+    {
+        self.try_get_first_unchecked::<First, Second>()
+            .expect("Component does not exist on this entity")
+    }
+
+    /// Get an immutable singleton reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub unsafe fn try_get_second_id_unchecked<Second>(
+        &self,
+        first: impl Into<Entity>,
+    ) -> Option<Ref<'_, Second>>
+    where
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        let first = first.into();
+        EntityView::new_from(self.world(), ecs_pair(*first, Second::get_id(self)))
+            .try_get_second_id_unchecked::<Second>(first)
+    }
+
+    /// Get an immutable singleton reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub unsafe fn get_second_id_unchecked<Second>(
+        &self,
+        first: impl Into<Entity>,
+    ) -> Ref<'_, Second>
+    where
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_second_id_unchecked(first)
+            .expect("Component does not exist on this entity")
+    }
+
+    /// Get an immutable singleton reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub unsafe fn try_get_second_unchecked<First, Second>(&self) -> Option<Ref<'_, Second>>
+    where
+        First: ComponentId + ComponentType<Struct> + EmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_second_id_unchecked::<Second>(First::get_id(self))
+    }
+
+    /// Get an immutable singleton reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub unsafe fn get_second_unchecked<First, Second>(&self) -> Ref<'_, Second>
+    where
+        First: ComponentId + ComponentType<Struct> + EmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_second_unchecked::<First, Second>()
+            .expect("Component does not exist on this entity")
+    }
+
+    /// Get singleton component value or pair as untyped pointer
+    ///
+    /// # Returns
+    ///
+    /// * `*const c_void` - Pointer to the component value, nullptr if the entity does not have the component
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get`
+    #[doc(alias = "world::get")]
+    pub fn get_untyped(&self, component_id: impl IntoId) -> *const c_void {
+        let id = *component_id.into();
+        EntityView::new_from(self.world(), Entity::from(id)).get_untyped(id)
+    }
+
+    /// Gets option mutable singleton component from entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    #[allow(clippy::mut_from_ref)]
+    pub fn try_get_mut<T: ComponentId>(&self) -> Option<Mut<'_, T>> {
+        EntityView::new_from(self.world(), T::get_id(self)).try_get_mut::<T>()
+    }
+
+    /// Gets a mutable singleton reference to a component, assuming it exists.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    #[allow(clippy::mut_from_ref)]
+    pub fn get_mut<T: ComponentId + NotEmptyComponent>(&self) -> Mut<'_, T> {
+        self.try_get_mut::<T>()
+            .expect("Component does not exist on this entity")
+    }
+
+    /// invokes the callback with the singleton component if it exists
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # Returns
+    ///
+    /// `true` if the component exists and the callback was invoked, `false` otherwise
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`}
+    #[doc(alias = "world::get_mut")]
+    pub fn get_callback_mut<T: ComponentId + NotEmptyComponent>(
+        &self,
+        callback: impl FnOnce(Mut<T>),
+    ) -> bool {
+        EntityView::new_from(self.world(), T::get_id(self)).get_callback_mut(callback)
+    }
+
+    /// Get mutable component value or pair (untyped).
+    ///
+    /// # Arguments
+    ///
+    /// * `comp`: The component to get.
+    ///
+    /// # Returns
+    ///
+    /// Pointer to the component value.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub fn get_untyped_mut(&self, id: impl IntoId) -> *mut c_void {
+        let id = *id.into();
+        EntityView::new_from(self.world(), Entity::from(id)).get_untyped_mut(id)
+    }
+
+    /// Get an option mutable singleton reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub fn try_get_first_id_mut<First>(&self, second: impl Into<Entity>) -> Option<Mut<'_, First>>
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        let second = second.into();
+        EntityView::new_from(self.world(), ecs_pair(*second, First::get_id(self)))
+            .try_get_first_id_mut::<First>(second)
+    }
+
+    /// Get a mutable singleton reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub fn get_first_id_mut<First>(&self, second: impl Into<Entity>) -> Mut<'_, First>
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_first_id_mut::<First>(second)
+            .expect("Component does not exist on this entity")
+    }
+
+    /// Get an option mutable singleton reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub fn try_get_first_mut<First, Second>(&self) -> Option<Mut<'_, First>>
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId + ComponentType<Struct>,
+    {
+        self.try_get_first_id_mut::<First>(Second::get_id(self))
+    }
+
+    /// Get a mutable singleton reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub fn get_first_mut<First, Second>(&self) -> Mut<'_, First>
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId + ComponentType<Struct>,
+    {
+        self.get_first_id_mut::<First>(Second::get_id(self))
+    }
+
+    /// Get an option mutable singleton reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub fn try_get_second_id_mut<Second>(&self, first: impl Into<Entity>) -> Option<Mut<'_, Second>>
+    where
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        let first = first.into();
+        EntityView::new_from(self.world(), ecs_pair(*first, Second::get_id(self)))
+            .try_get_second_id_mut::<Second>(first)
+    }
+
+    /// Get a mutable singleton reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub fn get_second_id_mut<Second>(&self, first: impl Into<Entity>) -> Mut<'_, Second>
+    where
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_second_id_mut::<Second>(first)
+            .expect("Component does not exist on this entity")
+    }
+
+    /// Get an option mutable singleton reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub fn try_get_second_mut<First, Second>(&self) -> Option<Mut<'_, Second>>
+    where
+        First: ComponentId + ComponentType<Struct> + EmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_second_id_mut::<Second>(First::get_id(self))
+    }
+
+    /// Get a mutable singleton reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    /// - Panics if the table is modified (e.g. add,remove components) while a component reference is held to prevent UB.
+    ///
+    /// # Safety
+    ///
+    /// - Locks the table and counts references to prevent invalid references (UB)
+    /// due to modifications (adding/removing components).
+    /// - This safety check can be disabled for performance improvement with the
+    /// `unsafe_remove_alias_checks` feature or the `_unchecked` variant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub fn get_second_mut<First, Second>(&self) -> Mut<'_, Second>
+    where
+        First: ComponentId + ComponentType<Struct> + EmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.get_second_id_mut::<Second>(First::get_id(self))
+    }
+
+    /// Gets option mutable singleton component if present.
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    #[allow(clippy::mut_from_ref)]
+    pub unsafe fn try_get_mut_unchecked<T: ComponentId>(&self) -> Option<Mut<'_, T>> {
+        EntityView::new_from(self.world(), T::get_id(self)).try_get_mut_unchecked::<T>()
+    }
+
+    /// Gets a mutable singleton reference to a component, assuming it exists.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    #[allow(clippy::mut_from_ref)]
+    pub unsafe fn get_mut_unchecked<T: ComponentId + NotEmptyComponent>(&self) -> Mut<'_, T> {
+        self.try_get_mut_unchecked::<T>()
+            .expect("Component does not exist on this entity")
+    }
+
+    /// invokes the callback with the singleton component if it exists
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # Returns
+    ///
+    /// `true` if the component exists and the callback was invoked, `false` otherwise
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub unsafe fn get_callback_mut_unchecked<T: ComponentId + NotEmptyComponent>(
+        &self,
+        callback: impl FnOnce(Mut<T>),
+    ) -> bool {
+        EntityView::new_from(self.world(), T::get_id(self)).get_callback_mut_unchecked(callback)
+    }
+
+    /// Get an option mutable singleton reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub unsafe fn try_get_first_id_mut_unchecked<First>(
+        &self,
+        second: impl Into<Entity>,
+    ) -> Option<Mut<'_, First>>
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        let second = second.into();
+        EntityView::new_from(self.world(), ecs_pair(*second, First::get_id(self)))
+            .try_get_first_id_mut_unchecked::<First>(second)
+    }
+
+    /// Get a mutable singleton reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub unsafe fn get_first_id_mut_unchecked<First>(
+        &self,
+        second: impl Into<Entity>,
+    ) -> Mut<'_, First>
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_first_id_mut_unchecked::<First>(second)
+            .expect("Component does not exist on this entity")
+    }
+
+    /// Get an option mutable singleton reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub unsafe fn try_get_first_mut_unchecked<First, Second>(&self) -> Option<Mut<'_, First>>
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId + ComponentType<Struct>,
+    {
+        self.try_get_first_id_mut_unchecked::<First>(Second::get_id(self))
+    }
+
+    /// Get a mutable singleton reference for the first element of a pair
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub unsafe fn get_first_mut_unchecked<First, Second>(&self) -> Mut<'_, First>
+    where
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId + ComponentType<Struct>,
+    {
+        self.get_first_id_mut_unchecked::<First>(Second::get_id(self))
+    }
+
+    /// Get an option mutable singleton reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub unsafe fn try_get_second_id_mut_unchecked<Second>(
+        &self,
+        first: impl Into<Entity>,
+    ) -> Option<Mut<'_, Second>>
+    where
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        let first = first.into();
+        EntityView::new_from(self.world(), ecs_pair(*first, Second::get_id(self)))
+            .try_get_second_id_mut_unchecked::<Second>(first)
+    }
+
+    /// Get a mutable singleton reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub unsafe fn get_second_id_mut_unchecked<Second>(
+        &self,
+        first: impl Into<Entity>,
+    ) -> Mut<'_, Second>
+    where
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_second_id_mut_unchecked::<Second>(first)
+            .expect("Component does not exist on this entity")
+    }
+
+    /// Get an option mutable singleton reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub unsafe fn try_get_second_mut_unchecked<First, Second>(&self) -> Option<Mut<'_, Second>>
+    where
+        First: ComponentId + ComponentType<Struct> + EmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.try_get_second_id_mut_unchecked::<Second>(First::get_id(self))
+    }
+
+    /// Get a mutable singleton reference for the second element of a pair.
+    /// This operation gets the value for a pair from the entity.
+    ///
+    /// # Panics
+    ///
+    /// - Panics if the component is missing. Use the `try_` variant for a safe check.
+    ///
+    /// # Safety
+    ///
+    /// - This function does no runtime alias checking / table locking. It up to the caller to ensure not
+    /// to change the table (e.g adding removing/components) while holding a reference
+    /// to the component that could invalidate the reference.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_mut`
+    #[doc(alias = "world::get_mut")]
+    pub unsafe fn get_second_mut_unchecked<First, Second>(&self) -> Mut<'_, Second>
+    where
+        First: ComponentId + ComponentType<Struct> + EmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+    {
+        self.get_second_id_mut_unchecked::<Second>(First::get_id(self))
+    }
 }
 
 // Event mixin implementation

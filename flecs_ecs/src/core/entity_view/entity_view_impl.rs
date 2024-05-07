@@ -1,4 +1,7 @@
+use std::ptr::NonNull;
+
 use crate::core::*;
+use crate::sys;
 
 impl<'a> IdOperations<'a> for EntityView<'a> {
     type IdType = Entity;
@@ -21,9 +24,14 @@ impl<'a> IdOperations<'a> for EntityView<'a> {
     /// * C API: `ecs_id_t`
     #[doc(alias = "ecs_id_t")]
     fn new_from(world: impl IntoWorld<'a>, id: impl IntoId) -> Self {
+        let id = Entity::from(*id.into());
+        let record =
+            unsafe { NonNull::new_unchecked(sys::ecs_record_find(world.world_ptr_mut(), *id)) };
+
         Self {
             world: world.world(),
-            id: Entity::from(*id.into()),
+            id,
+            record,
         }
     }
 }

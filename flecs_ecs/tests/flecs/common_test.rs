@@ -8,11 +8,23 @@ use std::{
 
 pub use flecs_ecs::prelude::*;
 
+unsafe extern "C" fn abort_via_panic() {
+    let chars = flecs_ecs::sys::ecs_strerror(flecs_ecs::sys::ecs_log_last_error());
+    let string: String = std::ffi::CStr::from_ptr(chars)
+        .to_string_lossy()
+        .into_owned();
+    panic!("abort: {}", string);
+}
+
 #[cfg(test)]
 #[ctor::ctor]
 fn init() {
     unsafe {
-        flecs_ecs::sys::ecs_os_init();
+        flecs_ecs::sys::ecs_init();
+        // flecs_ecs::sys::ecs_os_set_api_defaults();
+        // let mut api = flecs_ecs::sys::ecs_os_get_api();
+        // api.abort_ = Some(abort_via_panic);
+        // flecs_ecs::sys::ecs_os_set_api(&mut api);
     }
 }
 

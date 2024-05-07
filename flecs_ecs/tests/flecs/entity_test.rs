@@ -1649,14 +1649,14 @@ fn entity_get_mut_1_component_w_callback() {
     let e_2 = world.entity().set(Position { x: 11, y: 22 });
     let e_3 = world.entity().set(Velocity { x: 1, y: 2 });
 
-    assert!(e_1.get_callback_mut::<Position>(|p| {
+    assert!(e_1.get_callback_mut::<Position>(|mut p| {
         assert_eq!(p.x, 10);
         assert_eq!(p.y, 20);
         p.x += 1;
         p.y += 2;
     }));
 
-    assert!(e_2.get_callback_mut::<Position>(|p| {
+    assert!(e_2.get_callback_mut::<Position>(|mut p| {
         assert_eq!(p.x, 11);
         assert_eq!(p.y, 22);
         p.x += 1;
@@ -1910,7 +1910,7 @@ fn entity_set_2_after_set_1() {
     if let Some(p) = e.try_get::<Position>() {
         assert_eq!(p.x, 5);
         assert_eq!(p.y, 10);
-    }
+    };
 
     e.set(Position { x: 10, y: 20 });
     e.set(Velocity { x: 1, y: 2 });
@@ -1918,12 +1918,12 @@ fn entity_set_2_after_set_1() {
     if let Some(p) = e.try_get::<Position>() {
         assert_eq!(p.x, 10);
         assert_eq!(p.y, 20);
-    }
+    };
 
     if let Some(v) = e.try_get::<Velocity>() {
         assert_eq!(v.x, 1);
         assert_eq!(v.y, 2);
-    }
+    };
 }
 
 #[test]
@@ -1942,12 +1942,12 @@ fn entity_set_2_after_set_2() {
     if let Some(p) = e.try_get::<Position>() {
         assert_eq!(p.x, 5);
         assert_eq!(p.y, 10);
-    }
+    };
 
     if let Some(v) = e.try_get::<Velocity>() {
         assert_eq!(v.x, 1);
         assert_eq!(v.y, 2);
-    }
+    };
 
     e.set(Position { x: 10, y: 20 });
     e.set(Velocity { x: 3, y: 4 });
@@ -1955,12 +1955,12 @@ fn entity_set_2_after_set_2() {
     if let Some(p) = e.try_get::<Position>() {
         assert_eq!(p.x, 10);
         assert_eq!(p.y, 20);
-    }
+    };
 
     if let Some(v) = e.try_get::<Velocity>() {
         assert_eq!(v.x, 3);
         assert_eq!(v.y, 4);
-    }
+    };
 }
 
 #[test]
@@ -3171,8 +3171,9 @@ fn entity_clone() {
 
     let ptr = dst.try_get::<PositionClone>();
     assert!(ptr.is_some());
-    assert_ne!(ptr.unwrap().x, 10);
-    assert_ne!(ptr.unwrap().y, 20);
+    let ptr = ptr.unwrap();
+    assert_ne!(ptr.x, 10);
+    assert_ne!(ptr.y, 20);
 }
 
 #[test]
@@ -3189,8 +3190,9 @@ fn entity_clone_w_value() {
 
     let ptr = dst.try_get::<PositionClone>();
     assert!(ptr.is_some());
-    assert_eq!(ptr.unwrap().x, 10);
-    assert_eq!(ptr.unwrap().y, 20);
+    let ptr = ptr.unwrap();
+    assert_eq!(ptr.x, 10);
+    assert_eq!(ptr.y, 20);
 }
 
 #[test]
@@ -3210,8 +3212,9 @@ fn entity_clone_to_existing() {
 
     let ptr = dst.try_get::<PositionClone>();
     assert!(ptr.is_some());
-    assert_eq!(ptr.unwrap().x, 10);
-    assert_eq!(ptr.unwrap().y, 20);
+    let ptr = ptr.unwrap();
+    assert_eq!(ptr.x, 10);
+    assert_eq!(ptr.y, 20);
 }
 
 #[test]
