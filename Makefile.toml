@@ -40,3 +40,19 @@ dependencies = [
     "test"
 ]
 workspace = false
+
+[tasks.chmod]
+script = [
+    "chmod +x ${CARGO_MAKE_WORKING_DIRECTORY}/scripts"
+]
+workspace = false
+
+[tasks.filter_fbench]
+script = { file = "${CARGO_MAKE_WORKING_DIRECTORY}/scripts/filter_bench_log.sh", absolute_path = true }
+dependencies = ["chmod"]
+workspace = false
+
+[tasks.fbench]
+script = { file = "${CARGO_MAKE_WORKING_DIRECTORY}/scripts/fbench_log.sh", absolute_path = true }
+dependencies = ["chmod"]
+workspace = false

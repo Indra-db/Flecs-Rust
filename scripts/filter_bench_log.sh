@@ -17,4 +17,4 @@ awk '{
         printf "%-*s %s %s\n", title_width, title, timing, unit;
     }
     prev=$0
-}' ../flecs_ecs/benches/fbench_log/bench.log > ../flecs_ecs/benches/fbench_log/bench_filtered.log
+}' ${CARGO_MAKE_WORKING_DIRECTORY}/flecs_ecs/benches/fbench_log/bench.log > ${CARGO_MAKE_WORKING_DIRECTORY}/flecs_ecs/benches/fbench_log/bench_filtered.log

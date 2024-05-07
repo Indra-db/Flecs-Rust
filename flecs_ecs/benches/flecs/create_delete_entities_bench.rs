@@ -110,23 +110,6 @@ pub fn create_delete_entities_w_tree(criterion: &mut Criterion) {
             group.bench_function(format!("w{}_d{}", width, depth), |bencher| {
                 let world = World::new();
 
-                let mut entities = Vec::with_capacity(depth as usize);
-
-                for _ in 0..depth {
-                    let entity = world.entity();
-                    entities.push(entity);
-                }
-
-                let id = world.entity();
-                let add_id = world.entity().id();
-
-                world
-                    .observer::<flecs::OnAdd, ()>()
-                    .with_id(id)
-                    .each_entity(move |entity, ()| {
-                        entity.add_id(add_id);
-                    });
-
                 bencher.iter_custom(|iters| {
                     let start = Instant::now();
                     for _ in 0..iters {
