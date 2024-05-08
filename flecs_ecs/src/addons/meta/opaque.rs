@@ -1,3 +1,4 @@
+#![allow(clippy::missing_transmute_annotations)]
 use std::ffi::{c_char, c_void};
 
 use crate::core::*;

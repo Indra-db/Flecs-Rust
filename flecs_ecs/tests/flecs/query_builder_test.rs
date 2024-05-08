@@ -1,94 +1,9 @@
+#![allow(dead_code)]
 use std::cell::Cell;
 use std::ffi::c_void;
 
 use crate::common_test::*;
 use flecs_ecs::sys;
-
-// this component pre-registration is required for the case of if the test cases run in single world application mode (feature flag).
-// since tests run in multi world mode.
-// pub fn create_world() -> World {
-//     let world = World::new();
-
-//     // register_component_multi_world_application::<QueryWrapper>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Likes>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Apples>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Pears>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Eats>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<SelfRef>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<SelfRef2>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Position>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Position2>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<PositionClone>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<PositionPair>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<MyStruct>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Velocity>(&world, std::ptr::null());
-//     // //register_component_multi_world_application::<Color>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Other>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Other2>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Mass>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TypeA>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Prefab>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Obj>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Obj2>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Rel>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Rel2>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<RelFoo>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Alice>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Bob>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Tag>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagA>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagB>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagC>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagD>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagE>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagF>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagG>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagH>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagI>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagJ>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagK>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagL>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagM>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagN>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagO>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagP>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagQ>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagR>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagS>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagT>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagV>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagX>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<TagClone>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Parent>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<EntityType>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Base>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Head>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Turret>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Beam>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Railgun>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Foo>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Bar>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<First>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Pod>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Template<u32>>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Template<Position>>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Template<Velocity>>(&world, std::ptr::null());
-//     // register_component_multi_world_application::<Templatex>(&world, std::ptr::null());
-
-//     world
-// }
-
-// #[derive(Debug, Component)]
-// pub struct Position {
-//     pub x: i32,
-//     pub y: i32,
-// }
-
-// #[derive(Debug, Component)]
-// pub struct Velocity {
-//     pub x: i32,
-//     pub y: i32,
-// }
 
 #[test]
 fn query_builder_builder_assign_same_type() {

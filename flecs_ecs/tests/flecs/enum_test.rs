@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use flecs_ecs::prelude::*;
 use flecs_ecs_derive::Component;
 

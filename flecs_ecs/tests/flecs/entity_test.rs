@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use std::ffi::{c_void, CStr};
 
 use crate::common_test::*;

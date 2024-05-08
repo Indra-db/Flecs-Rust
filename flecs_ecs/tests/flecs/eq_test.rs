@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::common_test::*;
 
 /// test for compilation errors, no forgotten implementation

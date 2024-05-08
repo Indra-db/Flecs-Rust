@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use flecs_ecs::core::*;
 use flecs_ecs::macros::*;
 

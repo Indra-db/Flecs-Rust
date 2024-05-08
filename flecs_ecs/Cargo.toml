@@ -163,12 +163,6 @@ flecs_ecs_sys = { version = "=0.1.0", path = "../flecs_ecs_sys" }
 [lib]
 bench = false
 
-# solves criterion problem for using baseline
-[[bin]]
-name = "main"
-path = "src/main.rs"
-bench = false
-
 [[bench]]
 name = "main"
 path = "benches/flecs/_main.rs"
