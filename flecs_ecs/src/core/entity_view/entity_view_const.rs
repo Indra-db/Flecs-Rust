@@ -6,7 +6,7 @@ use std::{
 
 use crate::sys;
 use flecs_ecs::core::*;
-use sys::ecs_get_with;
+use sys::{ecs_get_with, ecs_record_t};
 
 #[derive(Clone, Copy)]
 pub struct EntityView<'a> {
@@ -686,12 +686,30 @@ impl<'a> EntityView<'a> {
             .expect("Component does not exist on this entity")
     }
 
-    pub fn get_callback<T: ComponentId>(self, callback: impl FnOnce(&T::UnderlyingType)) -> bool {
-        if let Some(component) = self.try_get::<T>() {
-            callback(component);
-            return true;
+    pub fn get_callback<T: GetTuple>(self, callback: impl FnOnce(T::TupleType<'_>)) {
+        // if let Some(component) = self.try_get::<T>() {
+        //     callback(component);
+        //     return true;
+        // }
+        // false
+        let world_ptr = self.world.world_ptr_mut();
+
+        let record: *mut ecs_record_t = if T::ALL_IMMUTABLE {
+            unsafe { sys::ecs_read_begin(world_ptr, *self.id()) as *mut ecs_record_t }
+        } else {
+            unsafe { sys::ecs_write_begin(world_ptr, *self.id()) }
+        };
+
+        let tuple_data = T::create_ptrs::<true>(self.world, record);
+        let tuple = tuple_data.get_tuple();
+
+        callback(tuple);
+
+        if T::ALL_IMMUTABLE {
+            unsafe { sys::ecs_read_end(record) }
+        } else {
+            unsafe { sys::ecs_write_end(record) }
         }
-        false
     }
 
     /// Get Component from entity unchecked
