@@ -521,6 +521,8 @@ impl ComponentInfo for sys::EcsDefaultChildComponent {
     const IMPLS_DEFAULT: bool = false;
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
+    type TagType =
+        flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
 }
 
 impl ComponentId for sys::EcsDefaultChildComponent {
@@ -569,6 +571,8 @@ impl ComponentInfo for sys::EcsComponent {
     const IMPLS_DEFAULT: bool = true;
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
+    type TagType =
+        flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
 }
 
 impl ComponentType<Struct> for sys::EcsComponent {}
@@ -624,6 +628,8 @@ impl ComponentInfo for TickSource {
     const IMPLS_DEFAULT: bool = true;
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
+    type TagType =
+        flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
 }
 
 #[cfg(feature = "flecs_system")]

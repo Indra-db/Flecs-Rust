@@ -67,6 +67,7 @@ impl ComponentInfo for Entity {
     const IMPLS_DEFAULT: bool = false;
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
+    type TagType = FlecsFirstIsNotATag;
 }
 
 impl ComponentId for Entity {

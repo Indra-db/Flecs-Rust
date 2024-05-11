@@ -46,84 +46,80 @@ impl<T: GetTuple, const LEN: usize> GetComponentPointers<T> for ComponentsData<T
 }
 
 pub trait GetTupleTypeOperation {
-    type CastType;
-    type ActualType<'w>;
-    type OnlyType: ComponentId;
+    type ActualType;
+    type OnlyType: IntoComponentId;
     const IS_OPTION: bool;
     const IS_IMMUTABLE: bool;
 
-    fn create_tuple_data<'a>(array_components_data: *mut c_void) -> Self::ActualType<'a>;
+    fn create_tuple_data<'a>(array_components_data: *mut c_void) -> Self::ActualType;
 }
 
-impl<T> GetTupleTypeOperation for &T
+impl<'w, T> GetTupleTypeOperation for &'w T
 where
-    T: ComponentId,
+    T: FlecsCastType,
+    T: 'w,
 {
-    type CastType = *const T;
-    type ActualType<'w> = &'w T;
+    type ActualType = &'w <T as FlecsCastType>::CastType;
     type OnlyType = T;
     const IS_OPTION: bool = false;
     const IS_IMMUTABLE: bool = true;
 
-    fn create_tuple_data<'a>(array_components_data: *mut c_void) -> Self::ActualType<'a> {
-        let data_ptr = array_components_data as Self::CastType;
+    fn create_tuple_data<'a>(array_components_data: *mut c_void) -> Self::ActualType {
+        let data_ptr = array_components_data as *const <T as FlecsCastType>::CastType;
         // SAFETY: up to this point we have checked that the data is not null
         unsafe { &*data_ptr }
     }
 }
 
-impl<T> GetTupleTypeOperation for &mut T
+impl<'w, T> GetTupleTypeOperation for &'w mut T
 where
-    T: ComponentId,
+    T: FlecsCastType,
 {
-    type CastType = *mut T;
-    type ActualType<'w> = &'w mut T;
+    type ActualType = &'w mut <T as FlecsCastType>::CastType;
     type OnlyType = T;
     const IS_OPTION: bool = false;
     const IS_IMMUTABLE: bool = false;
 
-    fn create_tuple_data<'a>(array_components_data: *mut c_void) -> Self::ActualType<'a> {
-        let data_ptr = array_components_data as Self::CastType;
+    fn create_tuple_data<'a>(array_components_data: *mut c_void) -> Self::ActualType {
+        let data_ptr = array_components_data as *mut <T as FlecsCastType>::CastType;
         // SAFETY: up to this point we have checked that the data is not null
         unsafe { &mut *data_ptr }
     }
 }
 
-impl<T> GetTupleTypeOperation for Option<&T>
+impl<'w, T> GetTupleTypeOperation for Option<&'w T>
 where
-    T: ComponentId,
+    T: FlecsCastType,
 {
-    type CastType = *const T;
-    type ActualType<'w> = Option<&'w T>;
+    type ActualType = Option<&'w <T as FlecsCastType>::CastType>;
     type OnlyType = T;
     const IS_OPTION: bool = true;
     const IS_IMMUTABLE: bool = true;
 
-    fn create_tuple_data<'a>(array_components_data: *mut c_void) -> Self::ActualType<'a> {
+    fn create_tuple_data<'a>(array_components_data: *mut c_void) -> Self::ActualType {
         if array_components_data.is_null() {
             None
         } else {
-            let data_ptr = array_components_data as Self::CastType;
+            let data_ptr = array_components_data as *const <T as FlecsCastType>::CastType;
             Some(unsafe { &*data_ptr })
         }
     }
 }
 
-impl<T> GetTupleTypeOperation for Option<&mut T>
+impl<'w, T> GetTupleTypeOperation for Option<&'w mut T>
 where
-    T: ComponentId,
+    T: FlecsCastType,
 {
-    type CastType = *mut T;
-    type ActualType<'w> = Option<&'w mut T>;
+    type ActualType = Option<&'w mut <T as FlecsCastType>::CastType>;
     type OnlyType = T;
     const IS_OPTION: bool = true;
     const IS_IMMUTABLE: bool = false;
 
-    fn create_tuple_data<'a>(array_components_data: *mut c_void) -> Self::ActualType<'a> {
+    fn create_tuple_data<'a>(array_components_data: *mut c_void) -> Self::ActualType {
         if array_components_data.is_null() {
             None
         } else {
-            let data_ptr = array_components_data as Self::CastType;
+            let data_ptr = array_components_data as *mut <T as FlecsCastType>::CastType;
             Some(unsafe { &mut *data_ptr })
         }
     }
@@ -160,7 +156,7 @@ where
     A: GetTupleTypeOperation,
 {
     type Pointers = ComponentsData<A, 1>;
-    type TupleType<'w> = A::ActualType<'w>;
+    type TupleType<'w> = A::ActualType;
     const ALL_IMMUTABLE: bool = A::IS_IMMUTABLE;
 
     fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
@@ -171,24 +167,24 @@ where
         let mut has_all_components = true;
 
         let id = unsafe { sys::ecs_table_get_column_index(world_ptr, table, 
-            <A::OnlyType as ComponentId>::get_id(world)) };
+            <A::OnlyType as IntoComponentId>::get_id(world)) };
 
             if id == -1 {
                 components[0] = std::ptr::null_mut();
                 has_all_components = false;
-                if SHOULD_PANIC {
+                if SHOULD_PANIC && !A::IS_OPTION {
                     ecs_assert!(false, FlecsErrorCode::OperationFailed,
                         "Component `{}` not found on `EntityView::get` operation 
                         with parameters: `{}`. 
                         Use `try_get` variant to avoid assert/panicking if you want to handle the error 
                         or use `Option<{}> instead to handle individual cases.",
-                        std::any::type_name::<A::OnlyType>(), std::any::type_name::<Self>(), std::any::type_name::<A::OnlyType>());
+                        std::any::type_name::<A::OnlyType>(), std::any::type_name::<Self>(), std::any::type_name::<A::ActualType>());
                     panic!("Component `{}` not found on `EntityView::get` operation 
                     with parameters: `{}`. 
                     Use `try_get` variant to avoid assert/panicking if 
                     you want to handle the error or use `Option<{}> 
                     instead to handle individual cases.",
-                    std::any::type_name::<A::OnlyType>(), std::any::type_name::<Self>(), std::any::type_name::<A::OnlyType>());
+                    std::any::type_name::<A::OnlyType>(), std::any::type_name::<Self>(), std::any::type_name::<A::ActualType>());
                 }
             } else { 
                 components[0] = unsafe { sys::ecs_record_get_column(record, id, 0) };
@@ -249,7 +245,7 @@ macro_rules! impl_get_tuple {
     ($($t:ident),*) => {
         impl<$($t: GetTupleTypeOperation),*> GetTuple for ($($t,)*) {
             type TupleType<'w> = ($(
-                $t::ActualType<'w>,
+                $t::ActualType,
             )*);
 
             type Pointers = ComponentsData<Self, { tuple_count!($($t),*) }>;
@@ -269,25 +265,25 @@ macro_rules! impl_get_tuple {
 
                 $(
                     let column_index = unsafe { sys::ecs_table_get_column_index(world_ptr, table,
-                        <$t::OnlyType as ComponentId>::get_id(world_ref)) };
+                        <$t::OnlyType as IntoComponentId>::get_id(world_ref)) };
 
 
                     if column_index != -1 {
                         components[index] = unsafe { sys::ecs_record_get_column(record, column_index, 0) };
                     } else {
-                        if SHOULD_PANIC {
+                        if SHOULD_PANIC && !$t::IS_OPTION {
                             ecs_assert!(false, FlecsErrorCode::OperationFailed,
                                 "Component `{}` not found on `EntityView::get` operation 
                                 with parameters: `{}`. 
                                 Use `try_get` variant to avoid assert/panicking if you want to handle 
                                 the error or use `Option<{}> instead to handle individual cases.",
                                 std::any::type_name::<$t::OnlyType>(), std::any::type_name::<Self>(),
-                                std::any::type_name::<$t::OnlyType>());
+                                std::any::type_name::<$t::ActualType>());
                             panic!("Component `{}` not found on `EntityView::get`operation 
                             with parameters: `{}`. 
                             Use `try_get` variant to avoid assert/panicking if you want to handle the error 
                             or use `Option<{}> instead to handle individual cases.", std::any::type_name::<$t::OnlyType>(),
-                            std::any::type_name::<Self>(), std::any::type_name::<$t::OnlyType>());
+                            std::any::type_name::<Self>(), std::any::type_name::<$t::ActualType>());
                         }
                         components[index] = std::ptr::null_mut();
                         has_all_components = false;

@@ -26,6 +26,8 @@ macro_rules! create_pre_registered_component {
             const IMPLS_DEFAULT: bool = false;
             const IS_REF: bool = false;
             const IS_MUT: bool = false;
+            type TagType =
+                flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsATag;
         }
 
         impl EmptyComponent for $struct_name {}
@@ -297,11 +299,13 @@ pub mod rest {
     }
     impl ComponentInfo for Rest {
         const IS_ENUM: bool = false;
-        const IS_TAG: bool = true;
+        const IS_TAG: bool = false;
         const IMPLS_CLONE: bool = false;
-        const IMPLS_DEFAULT: bool = false;
+        const IMPLS_DEFAULT: bool = true;
         const IS_REF: bool = false;
         const IS_MUT: bool = false;
+        type TagType =
+            flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
     }
     impl NotEmptyComponent for Rest {}
 
@@ -347,7 +351,9 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
     const IMPLS_DEFAULT: bool = { flecs_ecs::core::utility::types::ImplementsDefault::<()>::IMPLS };
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
+    type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsATag;
 }
+
 impl flecs_ecs::core::component_registration::registration_traits::ComponentId for () {
     type UnderlyingType = ();
     type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;

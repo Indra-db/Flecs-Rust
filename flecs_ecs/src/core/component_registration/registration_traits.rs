@@ -129,6 +129,7 @@ pub trait ComponentInfo: Sized {
     const IMPLS_DEFAULT: bool;
     const IS_REF: bool;
     const IS_MUT: bool;
+    type TagType;
 }
 
 pub trait CachedEnumData: ComponentType<Enum> + ComponentId {
@@ -211,6 +212,7 @@ impl<T: ComponentInfo> ComponentInfo for &T {
     const IMPLS_DEFAULT: bool = T::IMPLS_DEFAULT;
     const IS_REF: bool = true;
     const IS_MUT: bool = false;
+    type TagType = T::TagType;
 }
 
 impl<T: ComponentInfo> ComponentInfo for &mut T {
@@ -220,6 +222,7 @@ impl<T: ComponentInfo> ComponentInfo for &mut T {
     const IMPLS_DEFAULT: bool = T::IMPLS_DEFAULT;
     const IS_REF: bool = false;
     const IS_MUT: bool = true;
+    type TagType = T::TagType;
 }
 
 impl<T: ComponentId> ComponentId for &'static T {
@@ -250,6 +253,11 @@ pub trait FlecsCloneType {
     type Type: Clone;
 }
 
+pub trait FlecsPairType {
+    type Type: ComponentId + NotEmptyComponent;
+    const IS_FIRST: bool;
+}
+
 impl<T> FlecsDefaultType for ConditionalTypeSelector<false, T> {
     type Type = FlecsNoneDefaultDummy;
 }
@@ -270,4 +278,42 @@ where
     T: Clone,
 {
     type Type = T;
+}
+
+pub struct FlecsFirstIsNotATag;
+pub struct FlecsFirstIsATag;
+
+impl<T> FlecsPairType for ConditionalTypePairSelector<FlecsFirstIsNotATag, T>
+where
+    T: IntoComponentId,
+    T::First: NotEmptyComponent + ComponentId,
+{
+    type Type = T::First;
+    const IS_FIRST: bool = true;
+}
+
+impl<U> FlecsPairType for ConditionalTypePairSelector<FlecsFirstIsATag, U>
+where
+    U: IntoComponentId,
+    U::Second: NotEmptyComponent + ComponentId,
+{
+    type Type = U::Second;
+    const IS_FIRST: bool = false;
+}
+
+pub trait FlecsCastType: IntoComponentId {
+    type CastType: NotEmptyComponent + ComponentId;
+    const IS_FIRST: bool;
+}
+
+impl<T> FlecsCastType for T
+where
+    T: IntoComponentId,
+    flecs_ecs::core::ConditionalTypePairSelector<<T::First as ComponentInfo>::TagType, T>:
+        flecs_ecs::core::FlecsPairType,
+    <T as flecs_ecs::core::IntoComponentId>::First: ComponentInfo,
+{
+    type CastType =
+        <ConditionalTypePairSelector<<T::First as ComponentInfo>::TagType, T> as FlecsPairType>::Type;
+    const IS_FIRST : bool = <ConditionalTypePairSelector<<T::First as ComponentInfo>::TagType, T> as FlecsPairType>::IS_FIRST;
 }

@@ -3,6 +3,7 @@ use crate::core::*;
 pub trait IntoComponentId {
     const IS_ENUM: bool;
     const IS_PAIR: bool;
+    const IS_TAGS: bool = Self::First::IS_TAG && Self::Second::IS_TAG;
     // These types are useful for merging functions in World class such ass add_pair<T,U> into add<T>.
     // When IntoComponentId is not a pair, First and Second will be same
     type First: ComponentId;

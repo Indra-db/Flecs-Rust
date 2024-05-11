@@ -77,9 +77,17 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
                     Fields::Unit => false,
                 };
                 is_tag = if has_fields {
-                    quote! { const IS_TAG: bool = false; }
+                    quote! { 
+                        const IS_TAG: bool = false;
+                        type TagType =
+                        flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
+                    }
                 } else {
-                    quote! { const IS_TAG: bool = true; }
+                    quote! { 
+                        const IS_TAG: bool = true; 
+                        type TagType =
+                        flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsATag;
+                    }
                 };
                 impl_cached_component_data_struct(&mut input, has_fields, &is_tag)
             }
@@ -98,9 +106,17 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let name = &input.ident;
 
     is_tag = if has_fields {
-        quote! { const IS_TAG: bool = false; }
+        quote! {
+            const IS_TAG: bool = false;
+            type TagType =
+            flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
+        }
     } else {
-        quote! { const IS_TAG: bool = true; }
+        quote! {  
+            const IS_TAG: bool = true; 
+            type TagType =
+            flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsATag;
+        }
     };
 
     let attrs = input
@@ -440,6 +456,8 @@ fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> TokenStream {
         impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name #type_generics #where_clause{
             const IS_ENUM: bool = true;
             const IS_TAG: bool = false;
+            type TagType =
+            flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
             const IMPLS_CLONE: bool = {
                 use flecs_ecs::core::utility::traits::DoesNotImpl;
                 flecs_ecs::core::utility::types::ImplementsClone::<#name #type_generics>::IMPLS
@@ -560,6 +578,8 @@ fn generate_component_id_impl(
             impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name<#ty> {
                 const IS_ENUM: bool = true;
                 const IS_TAG: bool = false;
+                type TagType =
+                flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
                 const IMPLS_CLONE: bool = {
                     use flecs_ecs::core::utility::traits::DoesNotImpl;
                     flecs_ecs::core::utility::types::ImplementsClone::<#name<#ty>>::IMPLS
