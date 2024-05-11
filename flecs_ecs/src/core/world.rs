@@ -941,85 +941,55 @@ impl World {
     ///
     /// * C++ API: `world::set`
     #[doc(alias = "world::set")]
-    pub fn set_first_id<First>(&self, second: impl Into<Entity>, first: First)
+    pub unsafe fn set_first<First>(&self, second: impl Into<Entity>, first: First)
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let entity = EntityView::new_from(self, First::get_id(self));
-        entity.set_first_id::<First>(first, second);
-    }
-
-    /// Set singleton pair.
-    /// This operation sets the pair value, and uses First as type. If it does not yet exist, it will be added.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first element of the pair
-    /// * `Second`: The second element of the pair
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The value to set for first component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::set`
-    #[doc(alias = "world::set")]
-    pub fn set_first<First, Second>(&self, first: First)
-    where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-        Second: ComponentId + ComponentType<Struct>,
-    {
-        let entity = EntityView::new_from(self, First::get_id(self));
-        entity.set_first::<First, Second>(first);
+        entity.set_first::<First>(first, second);
     }
 
     /// Set a singleton pair using the second element type and a first id.
     ///
-    /// # Type Parameters
+    /// # Safety
     ///
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The ID of the first element of the pair.
-    /// * `second`: The second element of the pair to be set.
+    /// Caller must ensure that `first` and `Second` pair id data type is the one provided.
     ///
     /// # See also
     ///
     /// * C++ API: `world::set`
     #[doc(alias = "world::set")]
-    pub fn set_second_id<Second>(&self, first: impl Into<Entity>, second: Second)
+    pub unsafe fn set_second<Second>(&self, first: impl Into<Entity>, second: Second)
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let entity = EntityView::new_from(self, Second::get_id(self));
-        entity.set_second_id::<Second>(second, first);
+        entity.set_second::<Second>(second, first);
     }
 
     /// Set singleton pair.
-    /// This operation sets the pair value, and uses Second as type. If it does not yet exist, it will be added.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second`: The second element of the pair
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    /// * `value`: The value to set.
+    /// This operation sets the pair value, and uses the first non tag / ZST as type. If the
+    /// entity did not yet have the pair, it will be added, otherwise overriden.
     ///
     /// # See also
     ///
     /// * C++ API: `world::set`
     #[doc(alias = "world::set")]
-    pub fn set_second<First, Second>(&self, second: Second)
+    pub fn set_pair<First, Second>(&self, data: <(First, Second) as FlecsCastType>::CastType)
     where
-        First: ComponentId + ComponentType<Struct> + EmptyComponent,
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        First: ComponentId,
+        Second: ComponentId,
+        (First, Second): FlecsCastType,
     {
-        let entity = EntityView::new_from(self, First::get_id(self));
-        entity.set_second::<First, Second>(second);
+        const {
+            assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.")
+        };
+
+        let entity = EntityView::new_from(
+            self,
+            <<(First, Second) as FlecsCastType>::CastType as ComponentId>::get_id(self),
+        );
+        entity.set_pair::<First, Second>(data);
     }
 
     /// signal that singleton component was modified.

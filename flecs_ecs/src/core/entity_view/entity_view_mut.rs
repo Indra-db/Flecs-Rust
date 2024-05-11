@@ -716,7 +716,8 @@ impl<'a> EntityView<'a> {
         second: impl Into<Entity>,
     ) -> Self {
         let world = self.world;
-        self.override_id((First::get_id(world), second.into()))
+        let pair_id = ecs_pair(First::get_id(world), *second.into());
+        self.override_id(pair_id)
     }
 
     /// Mark pair for auto-overriding with a given first ID.
@@ -738,7 +739,8 @@ impl<'a> EntityView<'a> {
         first: impl Into<Entity>,
     ) -> Self {
         let world = self.world;
-        self.override_id((first.into(), Second::get_id(world)))
+        let pair_id = ecs_pair(*first.into(), Second::get_id(world));
+        self.override_id(pair_id)
     }
 
     /// Sets a component for an entity and marks it as overridden.
@@ -746,10 +748,6 @@ impl<'a> EntityView<'a> {
     /// This function sets a component for an entity and marks the component
     /// as overridden, meaning that it will not be updated by systems that
     /// typically update this component.
-    ///
-    /// # Arguments
-    ///
-    /// * `component_id`: The ID of the component to set and mark as overridden.
     ///
     /// # See also
     ///
@@ -768,14 +766,6 @@ impl<'a> EntityView<'a> {
 
     /// Sets a component mark override for the entity and sets the component data.
     ///
-    /// # Arguments
-    ///
-    /// * `component` - The component data to set.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The type of the component data.
-    ///
     /// # See also
     ///
     /// * C++ API: `entity_builder::set_override`
@@ -789,98 +779,64 @@ impl<'a> EntityView<'a> {
 
     /// Sets a pair, mark component for auto-overriding.
     ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The type of the first element of the pair.
-    /// * `Second`: The type of the second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    ///
     /// # See also
     ///
     /// * C++ API: `entity_builder::set_override`
-    pub fn set_override_first<First, Second>(self, first: First) -> Self
+    pub fn set_override_pair<First, Second>(
+        self,
+        data: <(First, Second) as FlecsCastType>::CastType,
+    ) -> Self
     where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-        Second: ComponentId + ComponentType<Struct>,
+        First: ComponentId,
+        Second: ComponentId,
+        (First, Second): FlecsCastType,
     {
-        let second_id = Second::get_id(self.world);
-        self.override_first::<First>(second_id)
-            .set_first_id(first, second_id)
+        let id_pair = <(First, Second) as IntoComponentId>::get_id(self.world);
+        unsafe { self.override_id(id_pair).set_id(data, id_pair) }
     }
 
     /// Sets a pair, mark component for auto-overriding.
     ///
-    /// # Type Parameters
+    /// # Safety
     ///
-    /// * `First`: The type of the first element of the pair.
-    /// * `Second`: The type of the second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second`: The first element of the pair.
+    /// Caller must ensure that `First` and `second` pair id data type is the one provided.
     ///
     /// # See also
     ///
     /// * C++ API: `entity_builder::set_override`
-    pub fn set_override_second<First, Second>(self, second: Second) -> Self
+    #[doc(alias = "entity_builder::set_override")]
+    pub unsafe fn set_override_first<First>(self, first: First, second: impl Into<Entity>) -> Self
     where
-        First: ComponentId + ComponentType<Struct>,
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
+        let second_id = *second.into();
         let first_id = First::get_id(self.world);
-        self.override_second::<Second>(first_id)
-            .set_second_id(second, first_id)
+        let pair_id = ecs_pair(first_id, second_id);
+        self.override_id(pair_id).set_id(first, pair_id)
     }
 
     /// Sets a pair, mark component for auto-overriding.
     ///
-    /// # Type Parameters
+    /// # Safety
     ///
-    /// * `First`: The type of the first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    /// * `second`: The ID of the second element of the pair.
+    /// Caller must ensure that `Sirst` and `fecond` pair id data type is the one provided.
     ///
     /// # See also
     ///
     /// * C++ API: `entity_builder::set_override`
     #[doc(alias = "entity_builder::set_override")]
-    pub fn set_override_first_id<First>(self, first: First, second: impl Into<Entity>) -> Self
-    where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        let second = *second.into();
-        self.override_first::<First>(second)
-            .set_first_id(first, second)
-    }
-
-    /// Sets a pair, mark component for auto-overriding.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second`: The type of the second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The ID of the second element of the pair.
-    /// * `second`: The first element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set_override`
-    #[doc(alias = "entity_builder::set_override")]
-    pub fn set_override_second_id<Second>(self, second: Second, first: impl Into<Entity>) -> Self
+    pub unsafe fn set_override_second<Second>(
+        self,
+        second: Second,
+        first: impl Into<Entity>,
+    ) -> Self
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
-        let first = first.into();
-        self.override_second::<Second>(first)
-            .set_second_id(second, first)
+        let first_id = first.into();
+        let second_id = Second::get_id(self.world);
+        let pair_id = ecs_pair(*first_id, second_id);
+        self.override_id(pair_id).set_id(second, pair_id)
     }
 
     /// Sets a component of type `T` on the entity.
@@ -903,22 +859,59 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Set a pair for an entity using the first element type and a second component ID.
+    /// Sets the data of the specified id. Can be a pair or Component.
     ///
-    /// # Type Parameters
+    /// # Safety
     ///
-    /// * `First`: The first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The ID of the first element of the pair.
-    /// * `second`: The second element of the pair to be set.
+    /// Caller must ensure that `data` is a valid data for the id.
     ///
     /// # See also
     ///
     /// * C++ API: `entity_builder::set`
     #[doc(alias = "entity_builder::set")]
-    pub fn set_first_id<First>(self, first: First, second: impl Into<Entity>) -> Self
+    pub unsafe fn set_id(self, data: impl ComponentId, id: impl IntoId) -> Self {
+        set_helper(self.world.world_ptr_mut(), *self.id(), data, id);
+        self
+    }
+
+    /// Set a pair for an entity.
+    /// This operation sets the pair value, and uses the first non tag / ZST as type. If the
+    /// entity did not yet have the pair, it will be added, otherwise overriden.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_builder::set`
+    #[doc(alias = "entity_builder::set")]
+    pub fn set_pair<First, Second>(self, data: <(First, Second) as FlecsCastType>::CastType) -> Self
+    where
+        First: ComponentId,
+        Second: ComponentId,
+        (First, Second): FlecsCastType,
+    {
+        const {
+            assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.")
+        };
+
+        set_helper(
+            self.world.world_ptr_mut(),
+            *self.id(),
+            data,
+            ecs_pair(First::get_id(self.world), Second::get_id(self.world)),
+        );
+        self
+    }
+
+    /// Set a pair for an entity using the first element type and a second component ID.
+    ///
+    /// # Safety
+    ///
+    /// Caller must ensure that `First` and `second` pair id data type is the one provided.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_builder::set`
+    #[doc(alias = "entity_builder::set")]
+    pub unsafe fn set_first<First>(self, first: First, second: impl Into<Entity>) -> Self
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -931,53 +924,17 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Set a pair for an entity.
-    /// This operation sets the pair value, and uses First as type. If the
-    /// entity did not yet have the pair, it will be added.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first element of the pair
-    /// * `Second`: The second element of the pair
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The value to set for first component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set`
-    #[doc(alias = "entity_builder::set")]
-    pub fn set_first<First, Second>(self, first: First) -> Self
-    where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-        Second: ComponentId + ComponentType<Struct>,
-    {
-        set_helper(
-            self.world.world_ptr_mut(),
-            *self.id(),
-            first,
-            (First::get_id(self.world), Second::get_id(self.world)),
-        );
-        self
-    }
-
     /// Set a pair for an entity using the second element type and a first id.
     ///
-    /// # Type Parameters
+    /// # Safety
     ///
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The ID of the first element of the pair.
-    /// * `second`: The second element of the pair to be set.
+    /// Caller must ensure that `first` and `Second` pair id data type is the one provided.
     ///
     /// # See also
     ///
     /// * C++ API: `entity_builder::set_second`
     #[doc(alias = "entity_builder::set_second")]
-    pub fn set_second_id<Second>(self, second: Second, first: impl Into<Entity>) -> Self
+    pub unsafe fn set_second<Second>(self, second: Second, first: impl Into<Entity>) -> Self
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -986,37 +943,6 @@ impl<'a> EntityView<'a> {
             *self.id(),
             second,
             (first.into(), Second::get_id(self.world)),
-        );
-        self
-    }
-
-    /// Set a pair for an entity.
-    /// This operation sets the pair value, and uses Second as type. If the
-    /// entity did not yet have the pair, it will be added.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second`: The second element of the pair
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    /// * `value`: The value to set.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set_second`
-    #[doc(alias = "entity_builder::set_second")]
-    pub fn set_second<First, Second>(self, second: Second) -> Self
-    where
-        First: ComponentId + ComponentType<Struct> + EmptyComponent,
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        set_helper(
-            self.world.world_ptr_mut(),
-            *self.id(),
-            second,
-            ecs_pair(First::get_id(self.world), Second::get_id(self.world)),
         );
         self
     }
