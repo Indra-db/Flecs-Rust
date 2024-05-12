@@ -10,7 +10,7 @@ use sys::ecs_record_t;
 
 pub struct ComponentsData<T: GetTuple, const LEN: usize> {
     pub array_components: [*mut c_void; LEN],
-    has_all_components: bool,
+    pub has_all_components: bool,
     _marker: PhantomData<T>,
 }
 
@@ -21,6 +21,8 @@ pub trait GetComponentPointers<T: GetTuple> {
     ) -> Self;
 
     fn get_tuple(&self) -> T::TupleType<'_>;
+
+    fn has_all_components(&self) -> bool;
 }
 
 impl<T: GetTuple, const LEN: usize> GetComponentPointers<T> for ComponentsData<T, LEN> {
@@ -42,6 +44,10 @@ impl<T: GetTuple, const LEN: usize> GetComponentPointers<T> for ComponentsData<T
 
     fn get_tuple(&self) -> T::TupleType<'_> {
         T::create_tuple(&self.array_components[..])
+    }
+
+    fn has_all_components(&self) -> bool {
+        self.has_all_components
     }
 }
 
@@ -271,22 +277,24 @@ macro_rules! impl_get_tuple {
                     if column_index != -1 {
                         components[index] = unsafe { sys::ecs_record_get_column(record, column_index, 0) };
                     } else {
-                        if SHOULD_PANIC && !$t::IS_OPTION {
-                            ecs_assert!(false, FlecsErrorCode::OperationFailed,
-                                "Component `{}` not found on `EntityView::get` operation 
-                                with parameters: `{}`. 
-                                Use `try_get` variant to avoid assert/panicking if you want to handle 
-                                the error or use `Option<{}> instead to handle individual cases.",
-                                std::any::type_name::<$t::OnlyType>(), std::any::type_name::<Self>(),
-                                std::any::type_name::<$t::ActualType>());
-                            panic!("Component `{}` not found on `EntityView::get`operation 
-                            with parameters: `{}`. 
-                            Use `try_get` variant to avoid assert/panicking if you want to handle the error 
-                            or use `Option<{}> instead to handle individual cases.", std::any::type_name::<$t::OnlyType>(),
-                            std::any::type_name::<Self>(), std::any::type_name::<$t::ActualType>());
-                        }
                         components[index] = std::ptr::null_mut();
-                        has_all_components = false;
+                        if !$t::IS_OPTION {
+                            if SHOULD_PANIC {
+                                // ecs_assert!(false, FlecsErrorCode::OperationFailed,
+                                //     "Component `{}` not found on `EntityView::get` operation
+                                //     with parameters: `{}`.
+                                //     Use `try_get` variant to avoid assert/panicking if you want to handle
+                                //     the error or use `Option<{}> instead to handle individual cases.",
+                                //     std::any::type_name::<$t::OnlyType>(), std::any::type_name::<Self>(),
+                                //     std::any::type_name::<$t::ActualType>());
+                                panic!("Component `{}` not found on `EntityView::get`operation 
+                                with parameters: `{}`. 
+                                Use `try_get` variant to avoid assert/panicking if you want to handle the error 
+                                or use `Option<{}> instead to handle individual cases.", std::any::type_name::<$t::OnlyType>(),
+                                std::any::type_name::<Self>(), std::any::type_name::<$t::ActualType>());
+                            }
+                            has_all_components = false;
+                        }
                     }
                     index += 1;
                 )*

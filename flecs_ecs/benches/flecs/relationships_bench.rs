@@ -48,7 +48,7 @@ pub fn get_inherited_w_depth(criterion: &mut Criterion) {
                 let start = Instant::now();
                 for _ in 0..iters {
                     for entity in &entities {
-                        let _c1 = entity.get::<C1>();
+                        let _c1 = entity.get::<&C1>(|_c1| {});
                     }
                 }
                 let elapsed = start.elapsed();

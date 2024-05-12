@@ -1026,213 +1026,103 @@ impl World {
         self.modified_id(T::get_id(self));
     }
 
-    /// Get singleton component as const.
+    /// gets a mutable or immutable singleton component and/or relationship(s) from the world.
+    /// Only one singleton component at a time is retrievable, but you can call this function multiple times within the callback.
+    /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
+    /// use `Option` wrapper to indicate if the component is optional.
     ///
-    /// # Type Parameters
+    /// - `try_get` assumes when not using `Option` wrapper, that the entity has the component. If it does not, it will not run the callback.
+    /// If unsure and you still want to have the callback be ran, use `Option` wrapper instead.
     ///
-    /// * `T` - The type of the component to get.
+    /// # Note
     ///
-    /// # Returns
+    /// - You can only get relationships with a payload, so where one is not a tag / not a zst.
+    /// tag relationships, use `has` functionality instead.
+    /// - This causes the table to lock where the entity belongs to to prevent invalided references, see #Panics.
+    /// The lock is dropped at the end of the callback.
     ///
-    /// The singleton component as const, or None if the component does not exist.
+    /// # Panics
     ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get`
-    #[doc(alias = "world::get")]
-    #[inline(always)]
-    pub fn try_get<T>(&self) -> Option<&T>
-    where
-        T: ComponentId + NotEmptyComponent,
-    {
-        let component_id = T::get_id(self);
-        let singleton_entity = EntityView::new_from(self, component_id);
-
-        // This branch will be removed in release mode since this can be determined at compile time.
-        if !T::IS_ENUM {
-            unsafe {
-                (sys::ecs_get_id(self.raw_world.as_ptr(), *singleton_entity.id, component_id)
-                    as *const T)
-                    .as_ref()
-            }
-        } else {
-            let target = unsafe {
-                sys::ecs_get_target(
-                    self.raw_world.as_ptr(),
-                    *singleton_entity.id,
-                    component_id,
-                    0,
-                )
-            };
-
-            if target == 0 {
-                // if there is no matching pair for (r,*), try just r
-                unsafe {
-                    (sys::ecs_get_id(self.raw_world.as_ptr(), *singleton_entity.id, component_id)
-                        as *const T)
-                        .as_ref()
-                }
-            } else {
-                // get constant value from constant entity
-                let constant_value = unsafe {
-                    (sys::ecs_get_mut_id(self.raw_world.as_ptr(), target, component_id) as *const T)
-                        .as_ref()
-                };
-
-                ecs_assert!(
-                    constant_value.is_some(),
-                    FlecsErrorCode::InternalError,
-                    "missing enum constant value {}",
-                    std::any::type_name::<T>()
-                );
-
-                constant_value
-            }
-        }
-    }
-    /// Get singleton component as const.
-    ///
-    /// # Safety
-    ///
-    /// This will panic if the component as singleton does not exist.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The type of the component to get.
+    /// - This will panic if within the callback you do any operation that could invalidate the reference.
+    /// This happens when the entity is moved to a different table in memory. Such as adding, removing components or
+    /// creating/deleting entities where the entity belongs to the same table (which could cause a table grow operation).
+    /// In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
     ///
     /// # Returns
     ///
-    /// The singleton component as const.
+    /// - If the callback has ran.
     ///
-    /// # See also
+    /// # Example
     ///
-    /// * C++ API: `world::get`
-    #[doc(alias = "world::get")]
-    pub fn get<T>(&self) -> &T
-    where
-        T: ComponentId + NotEmptyComponent,
-    {
-        self.try_get::<T>()
-            .expect("Component does not exist as a singleton")
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)] struct Tag;
+    /// #[derive(Component)]
+    /// pub struct Position {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let entity = world.set::(Position { x: 10.0, y: 20.0 })
+    ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
+    ///    
+    /// world.try_get::<&Position>(|(pos)| {});
+    /// world.try_get::<&mut(Tag,Position)>(|tag_pos_rel| {});
+    /// ```
+    pub fn try_get<T: GetTupleTypeOperation>(&self, callback: impl FnOnce(T::ActualType)) -> bool {
+        let entity = EntityView::new_from(self, T::OnlyType::get_id(self));
+        entity.try_get::<T>(callback)
     }
 
-    /// Get singleton component as mutable.
+    /// gets a mutable or immutable singleton component and/or relationship(s) from the world.
+    /// Only one singleton component at a time is retrievable, but you can call this function multiple times within the callback.
+    /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
+    /// use `Option` wrapper to indicate if the component is optional.
     ///
-    /// # Type Parameters
+    /// # Note
     ///
-    /// * `T` - The type of the component to get.
+    /// - You can only get relationships with a payload, so where one is not a tag / not a zst.
+    /// tag relationships, use `has` functionality instead.
+    /// - This causes the table to lock where the entity belongs to to prevent invalided references, see #Panics.
+    /// The lock is dropped at the end of the callback.
     ///
-    /// # Returns
+    /// # Panics
     ///
-    /// The singleton component as mutable, or None if the component does not exist.
+    /// - This will panic if within the callback you do any operation that could invalidate the reference.
+    /// This happens when the entity is moved to a different table in memory. Such as adding, removing components or
+    /// creating/deleting entities where the entity belongs to the same table (which could cause a table grow operation).
+    /// In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
     ///
-    /// # See also
+    /// - `get` assumes when not using `Option` wrapper, that the entity has the component.
+    /// This will panic if the entity does not have the component. If unsure, use `Option` wrapper or `try_get` function instead.
+    /// `try_get` does not run the callback if the entity does not have the component that isn't marked `Option`.
     ///
-    /// * C++ API: `world::get_mut`
-    #[doc(alias = "world::get_mut")]
-    #[inline(always)]
-    pub fn try_get_mut<T>(&self) -> Option<&mut T>
-    where
-        T: ComponentId + NotEmptyComponent,
-    {
-        let component_id = T::get_id(self);
-        let singleton_entity = EntityView::new_from(self, component_id);
-
-        // This branch will be removed in release mode since this can be determined at compile time.
-        if !T::IS_ENUM {
-            unsafe {
-                (sys::ecs_get_mut_id(self.raw_world.as_ptr(), *singleton_entity.id, component_id)
-                    as *mut T)
-                    .as_mut()
-            }
-        } else {
-            let target = unsafe {
-                sys::ecs_get_target(
-                    self.raw_world.as_ptr(),
-                    *singleton_entity.id,
-                    component_id,
-                    0,
-                )
-            };
-
-            if target == 0 {
-                // if there is no matching pair for (r,*), try just r
-                unsafe {
-                    (sys::ecs_get_mut_id(
-                        self.raw_world.as_ptr(),
-                        *singleton_entity.id,
-                        component_id,
-                    ) as *mut T)
-                        .as_mut()
-                }
-            } else {
-                // get mutable value from constant entity
-                let constant_value = unsafe {
-                    (sys::ecs_get_mut_id(self.raw_world.as_ptr(), target, component_id) as *mut T)
-                        .as_mut()
-                };
-
-                ecs_assert!(
-                    constant_value.is_some(),
-                    FlecsErrorCode::InternalError,
-                    "missing enum constant value {}",
-                    std::any::type_name::<T>()
-                );
-
-                constant_value
-            }
-        }
-    }
-
-    /// Get singleton component as mutable.
+    /// # Example
     ///
-    /// # Safety
+    /// ```
+    /// use flecs_ecs::prelude::*;
     ///
-    /// This will panic if the component as singleton does not exist.
+    /// #[derive(Component)] struct Tag;
+    /// #[derive(Component)]
+    /// pub struct Position {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
     ///
-    /// # Type Parameters
+    /// let world = World::new();
     ///
-    /// * `T` - The type of the component to get.
-    ///
-    /// # Returns
-    ///
-    /// The singleton component as mutable.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get_mut`
-    #[doc(alias = "world::get_mut")]
-    pub fn get_mut<T>(&self) -> &mut T
-    where
-        T: ComponentId + NotEmptyComponent,
-    {
-        self.try_get_mut::<T>()
-            .expect("Component does not exist as a singleton")
-    }
-
-    /// Get singleton component as mutable.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The type of the component to get.
-    ///
-    /// # Returns
-    ///
-    /// The singleton component as mutable.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::ensure`
-    #[doc(alias = "world::ensure")]
-    #[inline(always)]
-    #[allow(clippy::mut_from_ref)]
-    pub fn ensure_mut<T>(&self) -> &mut T::UnderlyingType
-    where
-        T: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        let component_id = T::get_id(self);
-        let singleton_entity = EntityView::new_from(self, component_id);
-        singleton_entity.ensure_mut::<T>()
+    /// let entity = world.set::(Position { x: 10.0, y: 20.0 })
+    ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
+    ///    
+    /// world.get::<&Position>(|(pos)| {});
+    /// world.get::<&mut(Tag,Position)>(|tag_pos_rel| {});
+    /// ```
+    pub fn get<T: GetTupleTypeOperation>(&self, callback: impl FnOnce(T::ActualType)) {
+        let entity = EntityView::new_from(self, T::OnlyType::get_id(self));
+        entity.get::<T>(callback)
     }
 
     /// Get a reference to a singleton component.
@@ -1328,257 +1218,6 @@ impl World {
                 index.unwrap_or(0) as i32,
             )
         })
-    }
-
-    /// Get immutable reference for the first element of a singleton pair
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first part of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second`: The second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// An option containing the reference to the first element of the pair if it exists, otherwise None.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get`
-    #[doc(alias = "world::get")]
-    #[inline(always)]
-    pub fn get_first_id<First>(&self, second: impl Into<Entity>) -> Option<&First>
-    where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        let component_id = First::get_id(self);
-
-        ecs_assert!(
-            std::mem::size_of::<First>() != 0,
-            FlecsErrorCode::InvalidParameter,
-            "invalid type: {}",
-            std::any::type_name::<First>()
-        );
-
-        unsafe {
-            (sys::ecs_get_id(
-                self.raw_world.as_ptr(),
-                component_id,
-                ecs_pair(component_id, *second.into()),
-            ) as *const First)
-                .as_ref()
-        }
-    }
-
-    /// Get mutable reference for the first element of a singleton pair
-    /// If the pair does not exist, it will be created.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first part of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get_mut`
-    #[doc(alias = "world::get_mut")]
-    #[allow(clippy::mut_from_ref)]
-    #[inline(always)]
-    pub fn get_first_id_mut<First>(&self, second: impl Into<Entity>) -> Option<&mut First>
-    where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        let component_id = First::get_id(self);
-
-        ecs_assert!(
-            std::mem::size_of::<First>() != 0,
-            FlecsErrorCode::InvalidParameter,
-            "invalid type: {}",
-            std::any::type_name::<First>()
-        );
-
-        unsafe {
-            (sys::ecs_get_mut_id(
-                self.raw_world.as_ptr(),
-                component_id,
-                ecs_pair(component_id, *second.into()),
-            ) as *mut First)
-                .as_mut()
-        }
-    }
-
-    /// Get an immutable reference for the first element of a singleton pair
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first part of the pair.
-    /// * `Second`: The second part of the pair.
-    ///
-    /// # Returns
-    ///
-    /// An option containing the reference to the first element of the pair if it exists, otherwise None.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get`
-    #[doc(alias = "world::get")]
-    pub fn get_first<First, Second>(&self) -> Option<&First>
-    where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-        Second: ComponentId + ComponentType<Struct>,
-    {
-        self.get_first_id(Second::get_id(self))
-    }
-
-    /// Get a mutable reference for the first element of a singleton pair
-    /// If the pair does not exist, it will be created.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first part of the pair.
-    /// * `Second`: The second part of the pair.
-    ///
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get_mut`
-    #[doc(alias = "world::get_mut")]
-    pub fn get_first_mut<First, Second>(&self) -> Option<&mut First>
-    where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-        Second: ComponentId + ComponentType<Struct>,
-    {
-        self.get_first_id_mut(Second::get_id(self))
-    }
-
-    /// Get immutable reference for the second element of a singleton pair
-    ///
-    /// # Type Parameters
-    ///
-    /// * `second`: The second part of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// An option containing the reference to the second element of the pair if it exists, otherwise None.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get`
-    #[doc(alias = "world::get")]
-    #[inline(always)]
-    pub fn get_second_id<Second>(&self, first: impl Into<Entity>) -> Option<&Second>
-    where
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        let component_id = Second::get_id(self);
-
-        ecs_assert!(
-            std::mem::size_of::<Second>() != 0,
-            FlecsErrorCode::InvalidParameter,
-            "invalid type: {}",
-            std::any::type_name::<Second>()
-        );
-
-        unsafe {
-            (sys::ecs_get_id(
-                self.raw_world.as_ptr(),
-                component_id,
-                ecs_pair(*first.into(), component_id),
-            ) as *const Second)
-                .as_ref()
-        }
-    }
-
-    /// Get mutable reference for the second element of a singleton pair
-    /// If the pair does not exist, it will be created.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `second`: The second part of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get_mut`
-    #[doc(alias = "world::get_mut")]
-    #[inline(always)]
-    #[allow(clippy::mut_from_ref)]
-    pub fn get_second_id_mut<Second>(&self, first: impl Into<Entity>) -> Option<&mut Second>
-    where
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        let component_id = Second::get_id(self);
-
-        ecs_assert!(
-            std::mem::size_of::<Second>() != 0,
-            FlecsErrorCode::InvalidParameter,
-            "invalid type: {}",
-            std::any::type_name::<Second>()
-        );
-
-        unsafe {
-            (sys::ecs_get_mut_id(
-                self.raw_world.as_ptr(),
-                component_id,
-                ecs_pair(*first.into(), component_id),
-            ) as *mut Second)
-                .as_mut()
-        }
-    }
-
-    /// Get an immutable reference for the second element of a singleton pair.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first element of the pair.
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// An option containing the reference to the second element of the pair if it exists, otherwise None.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get`
-    #[doc(alias = "world::get")]
-    pub fn get_second<First, Second>(&self) -> Option<&Second>
-    where
-        First: ComponentId + ComponentType<Struct>,
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        self.get_second_id(First::get_id(self))
-    }
-
-    /// Get a mutable reference for the second element of a singleton pair.
-    /// If the pair does not exist, it will be created.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first element of the pair.
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get_mut`
-    #[doc(alias = "world::get_mut")]
-    pub fn get_second_mut<First, Second>(&self) -> Option<&mut Second>
-    where
-        First: ComponentId + ComponentType<Struct>,
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        self.get_second_id_mut(First::get_id(self))
     }
 
     /// Check if world has the provided id.

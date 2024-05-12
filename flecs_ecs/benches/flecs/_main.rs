@@ -23,7 +23,7 @@ use add_remove_bench::*;
 use create_delete_entities_bench::*;
 use entity_bench::*;
 use event_bench::*;
-use get_bench::*;
+// use get_bench::*;
 use has_bench::*;
 use hooks_bench::*;
 use observer_bench::*;
@@ -47,7 +47,7 @@ fn ecs_default_criterion() -> Criterion {
 
 criterion_main!(
     has_bench,
-    get_bench,
+    //get_bench,
     set_bench,
     g_add_remove_bench,
     g_create_delete_entities_bench,
@@ -65,20 +65,20 @@ criterion_group!(
     has_components_found
 );
 
-criterion_group!(
-    name = get_bench;
-    config = ecs_default_criterion();
-    targets =
-    get_component_not_found,
-    get_components_found,
-    get_components_not_found,
-    get_mut_components_found,
-    get_mut_components_not_found,
-    ensure_mut_components_found,
-    ensure_mut_components_found_cmd,
-    ensure_mut_not_found_and_remove,
-    ensure_mut_not_found_and_remove_cmd,
-);
+// criterion_group!(
+//     name = get_bench;
+//     config = ecs_default_criterion();
+//     targets =
+//     get_component_not_found,
+//     get_components_found,
+//     get_components_not_found,
+//     get_mut_components_found,
+//     get_mut_components_not_found,
+//     ensure_mut_components_found,
+//     ensure_mut_components_found_cmd,
+//     ensure_mut_not_found_and_remove,
+//     ensure_mut_not_found_and_remove_cmd,
+// );
 
 criterion_group!(
     name = add_existing_bench;

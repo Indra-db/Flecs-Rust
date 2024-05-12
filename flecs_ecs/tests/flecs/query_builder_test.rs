@@ -1814,16 +1814,14 @@ fn query_builder_2_subsequent_args() {
         .set_second_id(*flecs::Wildcard)
         .term_at(1)
         .singleton()
-        .iter_only(move |it| {
-            it.world().get_mut::<Flags>().count += it.count();
-        });
+        .iter_only(move |it| it.real_world().get::<&mut Flags>(|f| f.count += it.count()));
 
     world.entity().add::<(RelFoo, Tag)>();
     world.set(Velocity { x: 0, y: 0 });
 
     s.run();
 
-    assert_eq!(world.get::<Flags>().count, 1);
+    world.get::<&Flags>(|f| assert_eq!(f.count, 1));
 }
 
 #[test]
@@ -3477,13 +3475,15 @@ fn query_builder_iter_column_w_const_as_array() {
 
     assert_eq!(count, 2);
 
-    let p = e1.get::<Position>();
-    assert_eq!(p.x, 11);
-    assert_eq!(p.y, 22);
+    e1.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
 
-    let p = e2.get::<Position>();
-    assert_eq!(p.x, 21);
-    assert_eq!(p.y, 32);
+    e2.get::<&Position>(|p| {
+        assert_eq!(p.x, 21);
+        assert_eq!(p.y, 32);
+    });
 }
 
 #[test]

@@ -57,7 +57,9 @@ fn main() {
     //fprintln!(snap,"Bob's position: {:?}", pos);
     fprintln!(&world, "{}'s position: {:?}", bob.name(), pos);
 
-    world.get::<Snap>().test("hello world".to_string());
+    world.get::<&Snap>(|snap| {
+        snap.test("hello world".to_string());
+    });
 
     // Output:
     //  Bob's got [Position, Velocity, (Identifier,Name), (Eats,Apples)]

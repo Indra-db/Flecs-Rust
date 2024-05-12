@@ -596,102 +596,127 @@ impl<'a> EntityView<'a> {
     pub fn each_child(self, func: impl FnMut(EntityView)) {
         self.each_child_of_id(flecs::ChildOf::ID, func);
     }
-    /// Get (struct) Component from entity
-    /// use `.unwrap()` or `.unwrap_unchecked()` or `get_unchecked()` if you're sure the entity has the component
+
+    /// gets mutable or immutable component(s) and/or relationship(s) from an entity.
+    /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
+    /// use `Option` wrapper to indicate if the component is optional.
+    /// use `()` tuple format when getting multiple components.
     ///
-    /// # Type Parameters
+    /// - `try_get` assumes when not using `Option` wrapper, that the entity has the component. If it does not, it will not run the callback.
+    /// If unsure and you still want to have the callback be ran, use `Option` wrapper instead.
     ///
-    /// * `T` - The component type to get
+    /// # Note
+    ///
+    /// - You can only get relationships with a payload, so where one is not a tag / not a zst.
+    /// tag relationships, use `has` functionality instead.
+    /// - This causes the table to lock where the entity belongs to to prevent invalided references, see #Panics.
+    /// The lock is dropped at the end of the callback.
+    ///
+    /// # Panics
+    ///
+    /// - This will panic if within the callback you do any operation that could invalidate the reference.
+    /// This happens when the entity is moved to a different table in memory. Such as adding, removing components or
+    /// creating/deleting entities where the entity belongs to the same table (which could cause a table grow operation).
+    /// In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
     ///
     /// # Returns
     ///
-    /// * Option<&T> - The component, None if the entity does not have the component
+    /// - If the callback has ran.
     ///
-    /// # See also
+    /// # Example
     ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
-    #[inline(always)]
-    pub fn try_get<T: ComponentId>(self) -> Option<&'a T::UnderlyingType> {
-        if !T::IS_ENUM {
-            if T::IS_TAG {
-                ecs_assert!(
-                    false,
-                    FlecsErrorCode::InvalidParameter,
-                    "component {} has no size",
-                    std::any::type_name::<T>()
-                );
-                None
-            } else {
-                let component_id = T::get_id(self.world);
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)] struct Tag;
+    /// #[derive(Component)]
+    /// pub struct Position {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let entity = world.entity()
+    ///                   .set::(Position { x: 10.0, y: 20.0 })
+    ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
+    ///    
+    /// entity.try_get::<&Position>(|(pos)| {});
+    /// entity.try_get::<(Option<&Tag>, &Position)>( |(tag, pos)| {});
+    /// entity.try_get::<(&mut(Tag,Position), Position)>(|(tag_pos_rel, pos)| {});
+    /// ```
+    pub fn try_get<T: GetTuple>(self, callback: impl FnOnce(T::TupleType<'_>)) -> bool {
+        let world_ptr = self.world.world_ptr_mut();
 
-                unsafe {
-                    (sys::ecs_get_id(self.world.world_ptr_mut(), *self.id, component_id)
-                        as *const T::UnderlyingType)
-                        .as_ref()
-                }
-            }
+        let record: *mut ecs_record_t = if T::ALL_IMMUTABLE {
+            unsafe { sys::ecs_read_begin(world_ptr, *self.id()) as *mut ecs_record_t }
         } else {
-            let component_id: IdT = T::get_id(self.world);
-            let target: IdT = unsafe {
-                sys::ecs_get_target(self.world.world_ptr_mut(), *self.id, component_id, 0)
-            };
+            unsafe { sys::ecs_write_begin(world_ptr, *self.id()) }
+        };
 
-            if target == 0 {
-                // if there is no matching pair for (r,*), try just r
-                unsafe {
-                    (sys::ecs_get_id(self.world.world_ptr_mut(), *self.id, component_id)
-                        as *const T::UnderlyingType)
-                        .as_ref()
-                }
-            } else {
-                // get constant value from constant entity
-                let constant_value = unsafe {
-                    sys::ecs_get_id(self.world.world_ptr_mut(), target, component_id)
-                        as *const T::UnderlyingType
-                };
+        let tuple_data = T::create_ptrs::<false>(self.world, record);
+        let has_all_components = tuple_data.has_all_components();
 
-                ecs_assert!(
-                    !constant_value.is_null(),
-                    FlecsErrorCode::InternalError,
-                    "missing enum constant value {}",
-                    std::any::type_name::<T>()
-                );
-
-                unsafe { constant_value.as_ref() }
-            }
+        if has_all_components {
+            let tuple = tuple_data.get_tuple();
+            callback(tuple);
         }
+
+        if T::ALL_IMMUTABLE {
+            unsafe { sys::ecs_read_end(record) }
+        } else {
+            unsafe { sys::ecs_write_end(record) }
+        }
+
+        has_all_components
     }
 
-    /// Get (struct) Component from entity
+    /// gets mutable or immutable component(s) and/or relationship(s) from an entity.
+    /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
+    /// use `Option` wrapper to indicate if the component is optional.
+    /// use `()` tuple format when getting multiple components.
     ///
-    /// # Safety
+    /// # Note
     ///
-    /// if the entity does not have the component, this will cause a panic
+    /// - You can only get relationships with a payload, so where one is not a tag / not a zst.
+    /// tag relationships, use `has` functionality instead.
+    /// - This causes the table to lock where the entity belongs to to prevent invalided references, see #Panics.
+    /// The lock is dropped at the end of the callback.
     ///
-    /// # Type Parameters
+    /// # Panics
     ///
-    /// * `T` - The component type to get
+    /// - This will panic if within the callback you do any operation that could invalidate the reference.
+    /// This happens when the entity is moved to a different table in memory. Such as adding, removing components or
+    /// creating/deleting entities where the entity belongs to the same table (which could cause a table grow operation).
+    /// In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
     ///
-    /// # Returns
+    /// - `get` assumes when not using `Option` wrapper, that the entity has the component.
+    /// This will panic if the entity does not have the component. If unsure, use `Option` wrapper or `try_get` function instead.
+    /// `try_get` does not run the callback if the entity does not have the component that isn't marked `Option`.
     ///
-    /// A reference to the component
+    /// # Example
     ///
-    /// # See also
+    /// ```
+    /// use flecs_ecs::prelude::*;
     ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
-    pub fn get<T: ComponentId + NotEmptyComponent>(&self) -> &'a T::UnderlyingType {
-        self.try_get::<T>()
-            .expect("Component does not exist on this entity")
-    }
-
-    pub fn get_callback<T: GetTuple>(self, callback: impl FnOnce(T::TupleType<'_>)) {
-        // if let Some(component) = self.try_get::<T>() {
-        //     callback(component);
-        //     return true;
-        // }
-        // false
+    /// #[derive(Component)] struct Tag;
+    /// #[derive(Component)]
+    /// pub struct Position {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let entity = world.entity()
+    ///                   .set::(Position { x: 10.0, y: 20.0 })
+    ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
+    ///    
+    /// entity.get::<&Position>(|(pos)| {});
+    /// entity.get::<(Option<&Tag>, &Position)>( |(tag, pos)| {});
+    /// entity.get::<(&mut(Tag,Position), Position)>(|(tag_pos_rel, pos)| {});
+    /// ```
+    pub fn get<T: GetTuple>(self, callback: impl FnOnce(T::TupleType<'_>)) {
         let world_ptr = self.world.world_ptr_mut();
 
         let record: *mut ecs_record_t = if T::ALL_IMMUTABLE {
@@ -712,331 +737,6 @@ impl<'a> EntityView<'a> {
         }
     }
 
-    /// Get Component from entity unchecked
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The component type to get
-    ///
-    /// # Returns
-    ///
-    /// * &T - The component or a reference the enum constant
-    ///
-    /// # Safety
-    ///
-    /// if the entity does not have the component, this will cause a panic
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
-    pub unsafe fn get_unchecked<T: ComponentId + NotEmptyComponent>(
-        &self,
-    ) -> &'a T::UnderlyingType {
-        if !T::IS_ENUM {
-            if T::IS_TAG {
-                ecs_assert!(
-                    false,
-                    FlecsErrorCode::InvalidParameter,
-                    "component {} has no size",
-                    std::any::type_name::<T>()
-                );
-                panic!("cannot get a tag component, it has no size");
-            } else {
-                let component_id = T::get_id_unchecked();
-
-                let ptr = sys::ecs_get_id(self.world.world_ptr_mut(), *self.id, component_id)
-                    as *const T::UnderlyingType;
-                ecs_assert!(
-                    !ptr.is_null(),
-                    FlecsErrorCode::InternalError,
-                    "missing component {}",
-                    std::any::type_name::<T>()
-                );
-                &*ptr
-            }
-        } else {
-            let component_id: IdT = T::get_id(self.world);
-            let target: IdT = unsafe {
-                sys::ecs_get_target(self.world.world_ptr_mut(), *self.id, component_id, 0)
-            };
-
-            if target == 0 {
-                // if there is no matching pair for (r,*), try just r
-                unsafe {
-                    &*(sys::ecs_get_id(self.world.world_ptr_mut(), *self.id, component_id)
-                        as *const T::UnderlyingType)
-                }
-            } else {
-                // get constant value from constant entity
-                let constant_value = unsafe {
-                    sys::ecs_get_id(self.world.world_ptr_mut(), target, component_id)
-                        as *const T::UnderlyingType
-                };
-
-                ecs_assert!(
-                    !constant_value.is_null(),
-                    FlecsErrorCode::InternalError,
-                    "missing enum constant value {}",
-                    std::any::type_name::<T>()
-                );
-
-                unsafe { &*constant_value }
-            }
-        }
-    }
-
-    /// Get an option immutable reference for the first element of a pair
-    /// This operation gets the value for a pair from the entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first part of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second`: The second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// An option containing the reference to the first element of the pair if it exists, otherwise None.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
-    pub fn try_get_first_id<First>(self, second: impl Into<Entity>) -> Option<&'a First>
-    where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        let component_id = First::get_id(self.world);
-
-        ecs_assert!(
-            std::mem::size_of::<First>() != 0,
-            FlecsErrorCode::InvalidParameter,
-            "invalid type: {}",
-            std::any::type_name::<First>()
-        );
-
-        unsafe {
-            (sys::ecs_get_id(
-                self.world.world_ptr_mut(),
-                *self.id,
-                ecs_pair(component_id, *second.into()),
-            ) as *const First)
-                .as_ref()
-        }
-    }
-
-    /// Get an option immutable reference for the first element of a pair
-    /// This operation gets the value for a pair from the entity.
-    ///
-    /// # Safety
-    ///
-    /// This will cause a panic if the entity does not have the component
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first part of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second`: The second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// The reference to the first element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
-    pub fn get_first_id<First>(self, second: impl Into<Entity>) -> &'a First
-    where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        self.try_get_first_id(second)
-            .expect("Component does not exist on this entity")
-    }
-
-    /// Get an immutable reference for the first element of a pair
-    /// This operation gets the value for a pair from the entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first part of the pair.
-    /// * `Second`: The second part of the pair.
-    ///
-    /// # Returns
-    ///
-    /// An option containing the reference to the first element of the pair if it exists, otherwise None.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
-    pub fn try_get_first<First, Second>(self) -> Option<&'a First>
-    where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-        Second: ComponentId,
-    {
-        self.try_get_first_id(Second::get_id(self.world))
-    }
-
-    /// Get an immutable reference for the first element of a pair
-    /// This operation gets the value for a pair from the entity.
-    ///
-    /// # Safety
-    ///
-    /// This will cause a panic if the entity does not have the component
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first part of the pair.
-    /// * `Second`: The second part of the pair.
-    ///
-    /// # Returns
-    ///
-    /// The reference to the first element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
-    pub fn get_first<First, Second>(self) -> &'a First
-    where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-        Second: ComponentId,
-    {
-        self.try_get_first::<First, Second>()
-            .expect("Component does not exist on this entity")
-    }
-
-    /// Get an immutable reference for the second element of a pair.
-    /// This operation gets the value for a pair from the entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// An option containing the reference to the second element of the pair if it exists, otherwise None.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
-    pub fn try_get_second_id<Second>(self, first: impl Into<Entity>) -> Option<&'a Second>
-    where
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        let component_id = Second::get_id(self.world);
-        ecs_assert!(
-            std::mem::size_of::<Second>() != 0,
-            FlecsErrorCode::InvalidParameter,
-            "invalid type: {}",
-            std::any::type_name::<Second>()
-        );
-
-        unsafe {
-            (sys::ecs_get_id(
-                self.world.world_ptr_mut(),
-                *self.id,
-                ecs_pair(*first.into(), component_id),
-            ) as *const Second)
-                .as_ref()
-        }
-    }
-
-    /// Get an immutable reference for the second element of a pair.
-    /// This operation gets the value for a pair from the entity.
-    ///
-    /// # Safety
-    ///
-    /// This will cause a panic if the entity does not have the component
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// The reference to the second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
-    pub fn get_second_id<Second>(self, first: impl Into<Entity>) -> &'a Second
-    where
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        self.try_get_second_id(first)
-            .expect("Component does not exist on this entity")
-    }
-
-    /// Get an immutable reference for the second element of a pair.
-    /// This operation gets the value for a pair from the entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first element of the pair.
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// An option containing the reference to the second element of the pair if it exists, otherwise None.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
-    pub fn try_get_second<First, Second>(self) -> Option<&'a Second>
-    where
-        First: ComponentId + ComponentType<Struct> + EmptyComponent,
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        self.try_get_second_id(First::get_id(self.world))
-    }
-
-    /// Get an immutable reference for the second element of a pair.
-    /// This operation gets the value for a pair from the entity.
-    ///
-    /// # Safety
-    ///
-    /// This will cause a panic if the entity does not have the component
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first element of the pair.
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// The reference to the second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get`
-    #[doc(alias = "entity_view::get")]
-    pub fn get_second<First, Second>(self) -> &'a Second
-    where
-        First: ComponentId + ComponentType<Struct> + EmptyComponent,
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        self.try_get_second::<First, Second>()
-            .expect("Component does not exist on this entity")
-    }
-
     /// Get component value or pair as untyped pointer
     ///
     /// # Arguments
@@ -1054,115 +754,6 @@ impl<'a> EntityView<'a> {
     pub fn get_untyped(self, component_id: impl IntoId) -> *const c_void {
         unsafe { sys::ecs_get_id(self.world.world_ptr_mut(), *self.id, *component_id.into()) }
     }
-
-    /// Gets mut component.
-    ///
-    /// This operation returns a mutable reference to the component. If a base entity had
-    /// the component, it will be overridden, and the value of the base component
-    /// will be copied to the entity before this function returns.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: The component to get.
-    ///
-    /// # Returns
-    ///
-    /// A mutable ref to the component value.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get_mut`
-    #[doc(alias = "entity_view::get_mut")]
-    #[allow(clippy::mut_from_ref)]
-    pub fn try_get_mut<T: ComponentId>(self) -> Option<&'a mut T::UnderlyingType> {
-        // This branch will be removed in release mode since this can be determined at compile time.
-        if !T::IS_ENUM {
-            let component_id = T::get_id(self.world);
-
-            ecs_assert!(
-                std::mem::size_of::<T>() != 0,
-                FlecsErrorCode::InvalidParameter,
-                "invalid type: {}",
-                std::any::type_name::<T>()
-            );
-
-            unsafe {
-                (sys::ecs_get_mut_id(self.world.world_ptr_mut(), *self.id(), component_id)
-                    as *mut T::UnderlyingType)
-                    .as_mut()
-            }
-        } else {
-            let component_id: IdT = T::get_id(self.world);
-            let target: IdT = unsafe {
-                sys::ecs_get_target(self.world.world_ptr_mut(), *self.id(), component_id, 0)
-            };
-
-            if target == 0 {
-                // if there is no matching pair for (r,*), try just r
-                unsafe {
-                    (sys::ecs_get_mut_id(self.world.world_ptr_mut(), *self.id(), component_id)
-                        as *mut T::UnderlyingType)
-                        .as_mut()
-                }
-            } else {
-                // get constant value from constant entity
-                let constant_value = unsafe {
-                    (sys::ecs_get_mut_id(self.world.world_ptr_mut(), target, component_id)
-                        as *mut T::UnderlyingType)
-                        .as_mut()
-                };
-
-                ecs_assert!(
-                    constant_value.is_some(),
-                    FlecsErrorCode::InternalError,
-                    "missing enum constant value {}",
-                    std::any::type_name::<T>()
-                );
-
-                constant_value
-            }
-        }
-    }
-
-    /// Gets a mutable reference to a component, assuming it exists.
-    ///
-    /// This function unwraps the result of `try_get_mut`, which should only be used when you are certain
-    /// that the component exists. Using this function when the component is not present will cause a panic.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: The component to get.
-    ///
-    /// # Returns
-    ///
-    /// A mutable reference to the component value.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the component does not exist.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get_mut`
-    #[doc(alias = "entity_view::get_mut")]
-    #[allow(clippy::mut_from_ref)]
-    pub fn get_mut<T: ComponentId + NotEmptyComponent>(self) -> &'a mut T::UnderlyingType {
-        self.try_get_mut::<T>()
-            .expect("Component does not exist on this entity")
-    }
-
-    pub fn get_callback_mut<T: ComponentId + NotEmptyComponent>(
-        self,
-        callback: impl FnOnce(&mut T::UnderlyingType),
-    ) -> bool {
-        if let Some(comp) = self.try_get_mut::<T>() {
-            callback(comp);
-            true
-        } else {
-            false
-        }
-    }
-
     /// Get mutable component value or pair (untyped).
     /// This operation returns a mutable ref to the component. If a base entity had
     /// the component, it will be overridden, and the value of the base component
@@ -1182,256 +773,6 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::get_mut")]
     pub fn get_untyped_mut(self, id: impl IntoId) -> *mut c_void {
         unsafe { sys::ecs_get_mut_id(self.world.world_ptr_mut(), *self.id(), *id.into()) }
-    }
-
-    /// Get a mutable reference for the first element of a pair
-    /// This operation gets the value for a pair from the entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first part of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get_mut`
-    #[doc(alias = "entity_view::get_mut")]
-    pub fn try_get_first_id_mut<First>(self, second: impl Into<Entity>) -> Option<&'a mut First>
-    where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        let component_id = First::get_id(self.world);
-
-        ecs_assert!(
-            std::mem::size_of::<First>() != 0,
-            FlecsErrorCode::InvalidParameter,
-            "invalid type: {}",
-            std::any::type_name::<First>()
-        );
-
-        // SAFETY: The pointer is valid because sys::ecs_get_mut_id adds the component if not present, so
-        // it is guaranteed to be valid
-        unsafe {
-            (sys::ecs_get_mut_id(
-                self.world.world_ptr_mut(),
-                *self.id(),
-                ecs_pair(component_id, *second.into()),
-            ) as *mut First)
-                .as_mut()
-        }
-    }
-
-    /// Get a mutable reference for the first element of a pair
-    /// This operation gets the value for a pair from the entity.
-    ///
-    /// This function unwraps the result of `try_get_first_id_mut`, which should only be used when you are certain
-    /// that the component exists. Using this function when the component is not present will cause a panic.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first part of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second`: The second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// A mutable reference to the first element of the pair.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the component does not exist.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get_mut`
-    #[doc(alias = "entity_view::get_mut")]
-    pub fn get_first_id_mut<First>(self, second: impl Into<Entity>) -> &'a mut First
-    where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        self.try_get_first_id_mut::<First>(second)
-            .expect("Component does not exist on this entity")
-    }
-
-    /// Get a mutable reference for the first element of a pair
-    /// This operation gets the value for a pair from the entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first part of the pair.
-    /// * `Second`: The second part of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get_mut`
-    #[doc(alias = "entity_view::get_mut")]
-    pub fn try_get_first_mut<First, Second>(&mut self) -> Option<&'a mut First>
-    where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-        Second: ComponentId + ComponentType<Struct>,
-    {
-        self.try_get_first_id_mut::<First>(Second::get_id(self.world))
-    }
-
-    /// Get a mutable reference for the first element of a pair
-    /// This operation gets the value for a pair from the entity.
-    ///
-    /// This function unwraps the result of `try_get_first_mut`, which should only be used when you are certain
-    /// that the component exists. Using this function when the component is not present will cause a panic.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first part of the pair.
-    /// * `Second`: The second part of the pair.
-    ///
-    /// # Returns
-    ///
-    /// A mutable reference to the first element of the pair.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the component does not exist.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get_mut`
-    #[doc(alias = "entity_view::get_mut")]
-    pub fn get_first_mut<First, Second>(&mut self) -> &'a mut First
-    where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-        Second: ComponentId + ComponentType<Struct>,
-    {
-        self.get_first_id_mut::<First>(Second::get_id(self.world))
-    }
-
-    /// Get a mutable reference for the second element of a pair.
-    /// This operation gets the value for a pair from the entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get_mut`
-    #[doc(alias = "entity_view::get_mut")]
-    pub fn try_get_second_id_mut<Second>(self, first: impl Into<Entity>) -> Option<&'a mut Second>
-    where
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        let component_id = Second::get_id(self.world);
-
-        ecs_assert!(
-            std::mem::size_of::<Second>() != 0,
-            FlecsErrorCode::InvalidParameter,
-            "invalid type: {}",
-            std::any::type_name::<Second>()
-        );
-
-        // SAFETY: The pointer is valid because sys::ecs_get_mut_id adds the component if not present, so
-        // it is guaranteed to be valid
-        unsafe {
-            (sys::ecs_get_mut_id(
-                self.world.world_ptr_mut(),
-                *self.id(),
-                ecs_pair(*first.into(), component_id),
-            ) as *mut Second)
-                .as_mut()
-        }
-    }
-
-    /// Get a mutable reference for the second element of a pair.
-    /// This operation gets the value for a pair from the entity.
-    ///
-    /// This function unwraps the result of `try_get_second_id_mut`, which should only be used when you are certain
-    /// that the component exists. Using this function when the component is not present will cause a panic.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// A mutable reference to the second element of the pair.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the component does not exist.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get_mut`
-    #[doc(alias = "entity_view::get_mut")]
-    pub fn get_second_id_mut<Second>(self, first: impl Into<Entity>) -> &'a mut Second
-    where
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        self.try_get_second_id_mut::<Second>(first)
-            .expect("Component does not exist on this entity")
-    }
-
-    /// Get a mutable reference for the second element of a pair.
-    /// This operation gets the value for a pair from the entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first element of the pair.
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get_mut`
-    #[doc(alias = "entity_view::get_mut")]
-    pub fn try_get_second_mut<First, Second>(&mut self) -> Option<&'a mut Second>
-    where
-        First: ComponentId + ComponentType<Struct> + EmptyComponent,
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        self.try_get_second_id_mut::<Second>(First::get_id(self.world))
-    }
-
-    /// Get a mutable reference for the second element of a pair.
-    /// This operation gets the value for a pair from the entity.
-    ///
-    /// This function unwraps the result of `try_get_second_mut`, which should only be used when you are certain
-    /// that the component exists. Using this function when the component is not present will cause a panic.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first element of the pair.
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// A mutable reference to the second element of the pair.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the component does not exist.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::get_mut`
-    #[doc(alias = "entity_view::get_mut")]
-    pub fn get_second_mut<First, Second>(&mut self) -> &'a mut Second
-    where
-        First: ComponentId + ComponentType<Struct> + EmptyComponent,
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
-    {
-        self.get_second_id_mut::<Second>(First::get_id(self.world))
     }
 
     /// Get target for a given pair.
@@ -2265,59 +1606,6 @@ impl<'a> EntityView<'a> {
     #[doc(hidden)]
     fn set_stage(self, stage: impl IntoWorld<'a>) -> EntityView<'a> {
         EntityView::new_from(stage, *self.id)
-    }
-
-    /// Turn entity into an enum constant.
-    ///
-    /// # Safety
-    ///
-    /// This function returns an Option because the entity might not be a constant.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The enum type.
-    ///
-    /// # Returns
-    ///
-    /// * `Some(&T)` - The enum constant if the entity is a constant.
-    /// * `None` - If the entity is not a constant.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::to_constant`
-    #[doc(alias = "entity_view::to_constant")]
-    pub fn try_to_constant<T: ComponentId>(self) -> Option<&'a T::UnderlyingType> {
-        let ptr = self.try_get::<T>();
-        ecs_assert!(
-            ptr.is_some(),
-            FlecsErrorCode::InvalidParameter,
-            "entity is not a constant"
-        );
-        ptr
-    }
-
-    /// Turn entity into an enum constant.
-    ///
-    /// # Safety
-    ///
-    /// This function panics if the entity is not a constant.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The enum type.
-    ///
-    /// # Returns
-    ///
-    /// * `Some(&T)` - The enum constant if the entity is a constant.
-    /// * `None` - If the entity is not a constant.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::to_constant`
-    #[doc(alias = "entity_view::to_constant")]
-    pub fn to_constant<T: ComponentId>(self) -> &'a T::UnderlyingType {
-        self.try_to_constant::<T>()
-            .expect("Entity is not a constant")
     }
 }
 

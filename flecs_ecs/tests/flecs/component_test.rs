@@ -32,31 +32,43 @@ fn temp_test_hook() {
         let entity = world.entity().add::<Position>();
 
         assert_eq!(unsafe { COUNT }, 1);
-        let pos_e1 = entity.get::<Position>();
-        assert_eq!(pos_e1.x, 10);
-        assert_eq!(pos_e1.y, 20);
+
+        entity.get::<&Position>(|pos| {
+            assert_eq!(pos.x, 10);
+            assert_eq!(pos.y, 20);
+        });
 
         entity.add::<Position>();
         assert_eq!(unsafe { COUNT }, 1);
-        let pos_e1 = entity.get::<Position>();
-        assert_eq!(pos_e1.x, 10);
-        assert_eq!(pos_e1.y, 20);
+
+        entity.get::<&Position>(|pos| {
+            assert_eq!(pos.x, 10);
+            assert_eq!(pos.y, 20);
+        });
 
         let entity2 = world.entity().add::<Position>();
         assert_eq!(unsafe { COUNT }, 2);
-        let pos_e2 = entity2.get::<Position>();
-        assert_eq!(pos_e1.x, 10);
-        assert_eq!(pos_e1.y, 20);
-        assert_eq!(pos_e2.x, 10);
-        assert_eq!(pos_e2.y, 20);
+
+        entity2.get::<&Position>(|pos_e2| {
+            assert_eq!(pos_e2.x, 10);
+            assert_eq!(pos_e2.y, 20);
+
+            entity.get::<&Position>(|pos_e1| {
+                assert_eq!(pos_e1.x, 10);
+                assert_eq!(pos_e1.y, 20);
+            });
+        });
 
         entity.remove::<Position>();
         assert_eq!(unsafe { COUNT }, 1);
 
         entity2.set(Velocity { x: 3, y: 5 });
-        let vel_e2 = entity2.get::<Velocity>();
-        assert_eq!(vel_e2.x, 30);
-        assert_eq!(vel_e2.y, 50);
+
+        entity2.get::<&Velocity>(|vel_e2| {
+            assert_eq!(vel_e2.x, 30);
+            assert_eq!(vel_e2.y, 50);
+        });
+
         assert_eq!(unsafe { COUNT2 }, 1);
 
         entity.remove::<Position>();

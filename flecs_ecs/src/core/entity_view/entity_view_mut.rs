@@ -782,7 +782,7 @@ impl<'a> EntityView<'a> {
     /// # See also
     ///
     /// * C++ API: `entity_builder::set_override`
-    pub fn set_override_pair<First, Second>(
+    pub fn set_pair_override<First, Second>(
         self,
         data: <(First, Second) as FlecsCastType>::CastType,
     ) -> Self

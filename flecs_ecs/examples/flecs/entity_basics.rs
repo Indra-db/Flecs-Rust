@@ -35,8 +35,9 @@ fn main() {
         .add::<Walking>();
 
     // Get the value for the Position component
-    let pos = bob.try_get::<Position>().unwrap();
-    fprintln!(&world, "Bob's position: {:?}", pos);
+    bob.get::<Option<&Position>>(|pos| {
+        fprintln!(&world, "Bob's position: {:?}", pos.unwrap());
+    });
 
     // Overwrite the value of the Position component
     bob.set(Position { x: 20.0, y: 30.0 });
@@ -61,7 +62,9 @@ fn main() {
         fprintln!(entity, "{} has {:?}", entity.name(), pos);
     });
 
-    world.get::<Snap>().test("entity_basics".to_string());
+    world.get::<&Snap>(|snap| {
+        snap.test("entity_basics".to_string());
+    });
 
     // Output:
     //  Bob's position: Position { x: 10.0, y: 20.0 }
