@@ -786,9 +786,13 @@ impl<'a> EntityView<'a> {
         Second: ComponentId,
         (First, Second): FlecsCastType,
     {
-        const {
-            assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
-        };
+        // const {
+        //     assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
+        // };
+        // TODO rust 1.79 replace with const
+        if <(First, Second) as IntoComponentId>::IS_TAGS {
+            panic!("setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
+        }
 
         set_helper(
             self.world.world_ptr_mut(),
