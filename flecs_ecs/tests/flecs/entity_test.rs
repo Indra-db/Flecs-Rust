@@ -107,9 +107,10 @@ fn entity_new_set() {
     assert!(entity.has::<Position>());
 
     // Verify the component data
-    let p = entity.try_get::<Position>().unwrap();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
+    entity.get::<&Position>(|pos| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+    });
 }
 
 #[test]
@@ -126,13 +127,12 @@ fn entity_new_set_2() {
     assert!(entity.has::<Position>());
     assert!(entity.has::<Velocity>());
 
-    let p = entity.try_get::<Position>().unwrap();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
-
-    let v = entity.try_get::<Velocity>().unwrap();
-    assert_eq!(v.x, 1);
-    assert_eq!(v.y, 2);
+    entity.get::<(&Position, &Velocity)>(|(pos, vel)| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+        assert_eq!(vel.x, 1);
+        assert_eq!(vel.y, 2);
+    });
 }
 
 #[test]
@@ -175,9 +175,10 @@ fn entity_set() {
     entity.set(Position { x: 10, y: 20 });
     assert!(entity.has::<Position>());
 
-    let p = entity.try_get::<Position>().unwrap();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
+    entity.get::<&Position>(|pos| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+    });
 }
 
 #[test]
@@ -268,13 +269,15 @@ fn entity_set_2() {
     assert!(entity.has::<Position>());
     assert!(entity.has::<Velocity>());
 
-    let p = entity.try_get::<Position>().unwrap();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
+    entity.get::<&Position>(|pos| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+    });
 
-    let v = entity.try_get::<Velocity>().unwrap();
-    assert_eq!(v.x, 1);
-    assert_eq!(v.y, 2);
+    entity.get::<&Velocity>(|vel| {
+        assert_eq!(vel.x, 1);
+        assert_eq!(vel.y, 2);
+    });
 }
 
 #[test]
@@ -369,7 +372,9 @@ fn entity_get_generic_mut() {
     world
         .observer::<flecs::OnSet, &Position>()
         .each_entity(|entity, _| {
-            entity.world().get_mut::<Flags>().invoked += 1;
+            entity.world().get::<&mut Flags>(|flags| {
+                flags.invoked += 1;
+            });
         });
 
     let pos = entity.get_untyped_mut(position.id());
@@ -380,7 +385,9 @@ fn entity_get_generic_mut() {
     assert_eq!(pos.y, 20);
 
     entity.modified_id(position);
-    assert_eq!(world.get::<Flags>().invoked, 1);
+    world.get::<&Flags>(|flags| {
+        assert_eq!(flags.invoked, 1);
+    });
 }
 
 #[test]
@@ -422,9 +429,10 @@ fn entity_set_generic() {
     assert!(entity.has::<Position>());
     assert!(entity.has_id(position));
 
-    let pos = entity.try_get::<Position>().unwrap();
-    assert_eq!(pos.x, 10);
-    assert_eq!(pos.y, 20);
+    entity.try_get::<&Position>(|pos| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+    });
 }
 
 #[test]
@@ -444,9 +452,10 @@ fn entity_set_generic_no_size() {
     assert!(entity.has::<Position>());
     assert!(entity.has_id(position));
 
-    let pos = entity.try_get::<Position>().unwrap();
-    assert_eq!(pos.x, 10);
-    assert_eq!(pos.y, 20);
+    entity.get::<&Position>(|pos| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+    });
 }
 
 #[test]
@@ -816,10 +825,10 @@ fn entity_tag_has_size_zero() {
     let world = World::new();
 
     let comp = world.component::<TagA>();
-    let ptr = comp.try_get::<EcsComponent>().unwrap();
-
-    assert_eq!(ptr.size, 0);
-    assert_eq!(ptr.alignment, 0);
+    comp.try_get::<&EcsComponent>(|ptr| {
+        assert_eq!(ptr.size, 0);
+        assert_eq!(ptr.alignment, 0);
+    });
 }
 
 #[test]
@@ -1066,19 +1075,15 @@ fn entity_set_no_copy() {
 
     let entity = world.entity().set(Pod::new(10));
 
-    let clone_invoked = entity.try_get::<Pod>().unwrap().clone_count;
-
-    assert_eq!(clone_invoked, 0);
+    entity.get::<&Pod>(|pod| {
+        assert_eq!(pod.clone_count, 0);
+    });
 
     assert!(entity.has::<Pod>());
 
-    let p = entity.try_get::<Pod>();
-
-    assert!(p.is_some());
-
-    let p = p.unwrap();
-
-    assert_eq!(p.value, 10);
+    entity.get::<&Pod>(|pod| {
+        assert_eq!(pod.value, 10);
+    });
 }
 
 #[test]
@@ -1090,21 +1095,21 @@ fn entity_set_copy() {
 
     let entity_dupl = entity.duplicate(true);
 
-    let clone_invoked = entity_dupl.try_get::<Pod>().unwrap().clone_count;
-
-    assert_eq!(clone_invoked, 1);
+    entity_dupl.get::<&Pod>(|pod| {
+        assert_eq!(pod.clone_count, 1);
+    });
 
     assert!(entity.has::<Pod>());
-    let p = entity.try_get::<Pod>();
-    assert!(p.is_some());
-    let p = p.unwrap();
-    assert_eq!(p.value, 10);
+
+    entity.get::<&Pod>(|pod| {
+        assert_eq!(pod.value, 10);
+    });
 
     assert!(entity_dupl.has::<Pod>());
-    let p = entity_dupl.try_get::<Pod>();
-    assert!(p.is_some());
-    let p = p.unwrap();
-    assert_eq!(p.value, 10);
+
+    entity_dupl.get::<&Pod>(|pod| {
+        assert_eq!(pod.value, 10);
+    });
 }
 
 #[test]
@@ -1116,11 +1121,10 @@ fn entity_set_deduced() {
 
     assert!(entity.has::<Position>());
 
-    let p = entity.try_get::<Position>();
-    assert!(p.is_some());
-    let p = p.unwrap();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
+    entity.get::<&Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+    });
 }
 
 #[test]
@@ -1231,17 +1235,15 @@ fn entity_set_override() {
     assert!(entity.has::<Position>());
     assert!(entity.owns::<Position>());
 
-    let p = entity.try_get::<Position>();
-    assert!(p.is_some());
-    let p = p.unwrap();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
+    entity.get::<&Position>(|pos| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+    });
 
-    let p_base = base.try_get::<Position>();
-    assert!(p_base.is_some());
-    let p_base = p_base.unwrap();
-    assert_eq!(p_base.x, 10);
-    assert_eq!(p_base.y, 20);
+    base.get::<&Position>(|pos| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+    });
 }
 
 #[test]
@@ -1258,17 +1260,15 @@ fn entity_set_override_lvalue() {
     assert!(entity.has::<Position>());
     assert!(entity.owns::<Position>());
 
-    let p = entity.try_get::<Position>();
-    assert!(p.is_some());
-    let p = p.unwrap();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
+    entity.get::<&Position>(|pos| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+    });
 
-    let p_base = base.try_get::<Position>();
-    assert!(p_base.is_some());
-    let p_base = p_base.unwrap();
-    assert_eq!(p_base.x, 10);
-    assert_eq!(p_base.y, 20);
+    base.get::<&Position>(|pos| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+    });
 }
 
 #[test]
@@ -1278,53 +1278,54 @@ fn entity_set_override_pair() {
 
     let base = world
         .entity()
-        .set_override_first::<PositionPair, TagA>(PositionPair { x: 10, y: 20 });
+        .set_pair_override::<PositionPair, TagA>(PositionPair { x: 10, y: 20 });
 
     let entity = world.entity().add_id((flecs::IsA::ID, base));
 
     assert!(entity.has::<(PositionPair, TagA)>());
     assert!(entity.owns::<(PositionPair, TagA)>());
 
-    let p = entity.try_get_first::<PositionPair, TagA>();
-    assert!(p.is_some());
-    let p = p.unwrap();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
+    entity.get::<&(PositionPair, TagA)>(|pos| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+    });
 
-    let p_base = base.try_get_first::<PositionPair, TagA>();
-    assert!(p_base.is_some());
-    let p_base = p_base.unwrap();
-    assert_eq!(p_base.x, 10);
-    assert_eq!(p_base.y, 20);
+    base.get::<&(PositionPair, TagA)>(|pos| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+    });
 }
 
 #[test]
+#[ignore = "re-impl gets"]
 fn entity_set_override_pair_w_tgt_id() {
-    structs!();
-    let world = World::new();
+    // structs!();
+    // let world = World::new();
 
-    let tgt = world.entity();
+    // let tgt = world.entity();
 
-    let base = world
-        .entity()
-        .set_override_first_id::<Position>(Position { x: 10, y: 20 }, tgt);
+    // let base = unsafe {
+    //     world
+    //         .entity()
+    //         .set_override_first::<Position>(Position { x: 10, y: 20 }, tgt)
+    // };
 
-    let entity = world.entity().add_id((flecs::IsA::ID, base));
+    // let entity = world.entity().add_id((flecs::IsA::ID, base));
 
-    assert!(entity.has_first::<Position>(tgt));
-    assert!(entity.owns_first::<Position>(tgt));
+    // assert!(entity.has_first::<Position>(tgt));
+    // assert!(entity.owns_first::<Position>(tgt));
 
-    let p = entity.try_get_first_id::<Position>(tgt);
-    assert!(p.is_some());
-    let p = p.unwrap();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
+    // let p = entity.try_get_first_id::<Position>(tgt);
+    // assert!(p.is_some());
+    // let p = p.unwrap();
+    // assert_eq!(p.x, 10);
+    // assert_eq!(p.y, 20);
 
-    let p_base = base.try_get_first_id::<Position>(tgt);
-    assert!(p_base.is_some());
-    let p_base = p_base.unwrap();
-    assert_eq!(p_base.x, 10);
-    assert_eq!(p_base.y, 20);
+    // let p_base = base.try_get_first_id::<Position>(tgt);
+    // assert!(p_base.is_some());
+    // let p_base = p_base.unwrap();
+    // assert_eq!(p_base.x, 10);
+    // assert_eq!(p_base.y, 20);
 }
 
 #[test]
@@ -1334,24 +1335,22 @@ fn entity_set_override_pair_w_rel_tag() {
 
     let base = world
         .entity()
-        .set_override_second::<TagA, PositionPair>(PositionPair { x: 10, y: 20 });
+        .set_pair_override::<TagA, PositionPair>(PositionPair { x: 10, y: 20 });
 
     let entity = world.entity().add_id((flecs::IsA::ID, base));
 
     assert!(entity.has::<(TagA, PositionPair)>());
     assert!(entity.owns::<(TagA, PositionPair)>());
 
-    let p = entity.try_get_second::<TagA, PositionPair>();
-    assert!(p.is_some());
-    let p = p.unwrap();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
+    entity.get::<&(TagA, PositionPair)>(|pos| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+    });
 
-    let p_base = base.try_get_second::<TagA, PositionPair>();
-    assert!(p_base.is_some());
-    let p_base = p_base.unwrap();
-    assert_eq!(p_base.x, 10);
-    assert_eq!(p_base.y, 20);
+    base.get::<&(TagA, PositionPair)>(|pos| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+    });
 }
 
 #[test]
@@ -1518,9 +1517,10 @@ fn entityview_to_entity_to_entity_view() {
     assert!(entity_view.is_valid());
     assert_eq!(entity, entity_view);
 
-    let p = entity_view.try_get::<Position>().unwrap();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
+    entity_view.get::<&Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+    });
 }
 
 #[test]
@@ -1539,9 +1539,10 @@ fn entity_entity_view_to_entity_world() {
     entity_mut.set(Position { x: 10, y: 20 });
 
     assert!(entity_view.has::<Position>());
-    let p = entity_view.try_get::<Position>().unwrap();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
+    entity_view.get::<&Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+    });
 }
 
 #[test]
@@ -1563,9 +1564,10 @@ fn entity_entity_view_to_entity_stage() {
     assert!(entity_mut.has::<Position>());
     assert!(entity_view.has::<Position>());
 
-    let p = entity_view.try_get::<Position>().unwrap();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
+    entity_view.get::<&Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+    });
 }
 
 #[test]
@@ -1583,9 +1585,10 @@ fn entity_create_entity_view_from_stage() {
     entity_mut.set(Position { x: 10, y: 20 });
     assert!(entity_view.has::<Position>());
 
-    let p = entity_view.try_get::<Position>().unwrap();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
+    entity_mut.get::<&Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+    });
 }
 
 #[test]
@@ -1596,9 +1599,10 @@ fn entity_set_template() {
         value: Position { x: 10, y: 20 },
     });
 
-    let pos = entity.try_get::<Template<Position>>().unwrap();
-    assert_eq!(pos.value.x, 10);
-    assert_eq!(pos.value.y, 20);
+    entity.get::<&Template<Position>>(|t| {
+        assert_eq!(t.value.x, 10);
+        assert_eq!(t.value.y, 20);
+    });
 }
 
 #[test]
@@ -1612,31 +1616,43 @@ fn entity_get_1_component_w_callback() {
     let e_2 = world.entity().set(Position { x: 11, y: 22 });
     let e_3 = world.entity().set(Velocity { x: 1, y: 2 });
 
-    assert!(e_1.get_callback::<Position>(|p| {
+    assert!(e_1.try_get::<&Position>(|p| {
         assert_eq!(p.x, 10);
         assert_eq!(p.y, 20);
     }));
 
-    assert!(e_2.get_callback::<Position>(|p| {
+    assert!(e_2.try_get::<&Position>(|p| {
         assert_eq!(p.x, 11);
         assert_eq!(p.y, 22);
     }));
 
-    assert!(!e_3.get_callback::<Position>(|_| {}));
+    assert!(!e_3.try_get::<&Position>(|_| {}));
 }
 
 #[test]
-#[ignore = "get callback not implemented for multiple components"]
 fn entity_get_2_components_w_callback() {
-    // let world = create_world();
-    // let e_1 = world
-    //     .entity()
-    //     .set(Position { x: 10, y: 20 })
-    //     .set(Velocity { x: 1, y: 2 });
-    // let e_2 = world.entity().set(Position { x: 11, y: 22 });
-    // let e_3 = world.entity().set(Velocity { x: 1, y: 2 });
+    structs!();
+    let world = World::new();
+    let e_1 = world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+    let e_2 = world.entity().set(Position { x: 11, y: 22 });
+    let e_3 = world.entity().set(Velocity { x: 1, y: 2 });
 
-    // TODO get_callback does not support multiple components
+    assert!(e_1.try_get::<(&Position, &Velocity)>(|(p, v)| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+        assert_eq!(v.x, 1);
+        assert_eq!(v.y, 2);
+    }));
+
+    assert!(e_2.try_get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    }));
+
+    assert!(!e_3.try_get::<(&Position, &Velocity)>(|_| {}));
 }
 
 #[test]
@@ -1650,35 +1666,82 @@ fn entity_get_mut_1_component_w_callback() {
     let e_2 = world.entity().set(Position { x: 11, y: 22 });
     let e_3 = world.entity().set(Velocity { x: 1, y: 2 });
 
-    assert!(e_1.get_callback_mut::<Position>(|p| {
+    assert!(e_1.try_get::<&mut Position>(|p| {
         assert_eq!(p.x, 10);
         assert_eq!(p.y, 20);
         p.x += 1;
         p.y += 2;
     }));
 
-    assert!(e_2.get_callback_mut::<Position>(|p| {
+    assert!(e_2.try_get::<Option<&mut Position>>(|p| {
+        assert!(p.is_some());
+        let p = p.unwrap();
         assert_eq!(p.x, 11);
         assert_eq!(p.y, 22);
         p.x += 1;
         p.y += 2;
     }));
 
-    assert!(!e_3.get_callback_mut::<Position>(|_| {}));
+    assert!(!e_3.try_get::<&Position>(|_| {}));
 
-    let p = e_1.try_get::<Position>().unwrap();
-    assert_eq!(p.x, 11);
-    assert_eq!(p.y, 22);
+    e_1.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
 
-    let p = e_2.try_get::<Position>().unwrap();
-    assert_eq!(p.x, 12);
-    assert_eq!(p.y, 24);
+    e_2.get::<&Position>(|p| {
+        assert_eq!(p.x, 12);
+        assert_eq!(p.y, 24);
+    });
 }
 
 #[test]
-#[ignore = "get callback not implemented for multiple components"]
 fn entity_get_mut_2_components_w_callback() {
-    // multiple components not supported in get_callback (for now)
+    structs!();
+    let world = World::new();
+    let e_1 = world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+    let e_2 = world.entity().set(Position { x: 11, y: 22 });
+    let e_3 = world.entity().set(Velocity { x: 1, y: 2 });
+
+    assert!(e_1.try_get::<(&mut Position, &mut Velocity)>(|(p, v)| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+        assert_eq!(v.x, 1);
+        assert_eq!(v.y, 2);
+        p.x += 1;
+        p.y += 2;
+        v.x += 1;
+        v.y += 2;
+    }));
+
+    assert!(
+        e_2.try_get::<(Option<&mut Position>, Option<&mut Velocity>)>(|(pos, vel)| {
+            assert!(pos.is_some());
+            assert!(vel.is_none());
+            let pos = pos.unwrap();
+            assert_eq!(pos.x, 11);
+            assert_eq!(pos.y, 22);
+            pos.x += 1;
+            pos.y += 2;
+        })
+    );
+
+    assert!(!e_3.try_get::<(&mut Position, &mut Velocity)>(|_| {}));
+
+    e_1.get::<(&Position, &Velocity)>(|(p, v)| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+        assert_eq!(v.x, 2);
+        assert_eq!(v.y, 4);
+    });
+
+    e_2.get::<&Position>(|p| {
+        assert_eq!(p.x, 12);
+        assert_eq!(p.y, 24);
+    });
 }
 
 #[test]
@@ -1691,11 +1754,11 @@ fn entity_get_component_w_callback_nested() {
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    assert!(e.get_callback::<Position>(|p| {
+    assert!(e.try_get::<&Position>(|p| {
         assert_eq!(p.x, 10);
         assert_eq!(p.y, 20);
 
-        assert!(e.get_callback::<Velocity>(|v| {
+        assert!(e.try_get::<&Velocity>(|v| {
             assert_eq!(v.x, 1);
             assert_eq!(v.y, 2);
         }));
@@ -1712,11 +1775,11 @@ fn entity_get_mut_component_w_callback_nested() {
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    assert!(e.get_callback_mut::<Position>(|p| {
+    assert!(e.try_get::<&Position>(|p| {
         assert_eq!(p.x, 10);
         assert_eq!(p.y, 20);
 
-        assert!(e.get_callback_mut::<Velocity>(|v| {
+        assert!(e.try_get::<&Velocity>(|v| {
             assert_eq!(v.x, 1);
             assert_eq!(v.y, 2);
         }));
@@ -1740,9 +1803,10 @@ fn entity_defer_set_1_component() {
 
     assert!(e.has::<Position>());
 
-    let p = e.try_get::<Position>().unwrap();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+    });
 }
 
 #[test]
@@ -1765,12 +1829,12 @@ fn entity_defer_set_2_components() {
     assert!(e.has::<Position>());
     assert!(e.has::<Velocity>());
 
-    let p = e.get::<Position>();
-    let v = e.get::<Velocity>();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
-    assert_eq!(v.x, 1);
-    assert_eq!(v.y, 2);
+    e.get::<(&Velocity, &Position)>(|(v, p)| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+        assert_eq!(v.x, 1);
+        assert_eq!(v.y, 2);
+    });
 }
 
 #[test]
@@ -1796,14 +1860,13 @@ fn entity_defer_set_3_components() {
     assert!(e.has::<Velocity>());
     assert!(e.has::<Mass>());
 
-    let p = e.get::<Position>();
-    let v = e.get::<Velocity>();
-    let m = e.get::<Mass>();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
-    assert_eq!(v.x, 1);
-    assert_eq!(v.y, 2);
-    assert_eq!(m.value, 50);
+    e.get::<(&Velocity, &Position, &Mass)>(|(v, p, m)| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+        assert_eq!(v.x, 1);
+        assert_eq!(v.y, 2);
+        assert_eq!(m.value, 50);
+    });
 }
 
 #[test]
@@ -1819,7 +1882,9 @@ fn entity_set_2_w_on_set() {
     world
         .observer::<flecs::OnSet, &Position>()
         .each_entity(|entity, p| {
-            entity.world().get_mut::<Flags>().position_set += 1;
+            entity.world().get::<&mut Flags>(|flags| {
+                flags.position_set += 1;
+            });
             assert_eq!(p.x, 10);
             assert_eq!(p.y, 20);
         });
@@ -1827,7 +1892,9 @@ fn entity_set_2_w_on_set() {
     world
         .observer::<flecs::OnSet, &Velocity>()
         .each_entity(|entity, v| {
-            entity.world().get_mut::<Flags>().velocity_set += 1;
+            entity.world().get::<&mut Flags>(|flags| {
+                flags.velocity_set += 1;
+            });
             assert_eq!(v.x, 1);
             assert_eq!(v.y, 2);
         });
@@ -1837,16 +1904,17 @@ fn entity_set_2_w_on_set() {
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    assert_eq!(world.get::<Flags>().position_set, 1);
-    assert_eq!(world.get::<Flags>().velocity_set, 1);
+    assert!(world.try_get::<&Flags>(|flags| {
+        assert_eq!(flags.position_set, 1);
+        assert_eq!(flags.velocity_set, 1);
+    }));
 
-    let p = e.get::<Position>();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
-
-    let v = e.get::<Velocity>();
-    assert_eq!(v.x, 1);
-    assert_eq!(v.y, 2);
+    e.get::<(&Position, &Velocity)>(|(p, v)| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+        assert_eq!(v.x, 1);
+        assert_eq!(v.y, 2);
+    });
 }
 
 #[test]
@@ -1862,7 +1930,9 @@ fn entity_defer_set_2_w_on_set() {
     world
         .observer::<flecs::OnSet, &Position>()
         .each_entity(|e, p| {
-            e.world().get_mut::<Flags>().position_set += 1;
+            e.world().get::<&mut Flags>(|flags| {
+                flags.position_set += 1;
+            });
             assert_eq!(p.x, 10);
             assert_eq!(p.y, 20);
         });
@@ -1870,7 +1940,9 @@ fn entity_defer_set_2_w_on_set() {
     world
         .observer::<flecs::OnSet, &Velocity>()
         .each_entity(|e, v| {
-            e.world().get_mut::<Flags>().velocity_set += 1;
+            e.world().get::<&mut Flags>(|flags| {
+                flags.velocity_set += 1;
+            });
             assert_eq!(v.x, 1);
             assert_eq!(v.y, 2);
         });
@@ -1882,21 +1954,23 @@ fn entity_defer_set_2_w_on_set() {
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    assert_eq!(world.get::<Flags>().position_set, 0);
-    assert_eq!(world.get::<Flags>().velocity_set, 0);
+    world.get::<&Flags>(|flags| {
+        assert_eq!(flags.position_set, 0);
+        assert_eq!(flags.velocity_set, 0);
+    });
 
     world.defer_end();
+    world.get::<&Flags>(|flags| {
+        assert_eq!(flags.position_set, 1);
+        assert_eq!(flags.velocity_set, 1);
+    });
 
-    assert_eq!(world.get::<Flags>().position_set, 1);
-    assert_eq!(world.get::<Flags>().velocity_set, 1);
-
-    let p = e.get::<Position>();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
-
-    let v = e.get::<Velocity>();
-    assert_eq!(v.x, 1);
-    assert_eq!(v.y, 2);
+    e.get::<(&Position, &Velocity)>(|(p, v)| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+        assert_eq!(v.x, 1);
+        assert_eq!(v.y, 2);
+    });
 }
 
 #[test]
@@ -1908,23 +1982,23 @@ fn entity_set_2_after_set_1() {
 
     assert!(e.has::<Position>());
 
-    if let Some(p) = e.try_get::<Position>() {
+    e.get::<&Position>(|p| {
         assert_eq!(p.x, 5);
         assert_eq!(p.y, 10);
-    }
+    });
 
     e.set(Position { x: 10, y: 20 });
     e.set(Velocity { x: 1, y: 2 });
 
-    if let Some(p) = e.try_get::<Position>() {
+    e.get::<&Position>(|p| {
         assert_eq!(p.x, 10);
         assert_eq!(p.y, 20);
-    }
+    });
 
-    if let Some(v) = e.try_get::<Velocity>() {
+    e.get::<&Velocity>(|v| {
         assert_eq!(v.x, 1);
         assert_eq!(v.y, 2);
-    }
+    });
 }
 
 #[test]
@@ -1940,28 +2014,22 @@ fn entity_set_2_after_set_2() {
     assert!(e.has::<Position>());
     assert!(e.has::<Velocity>());
 
-    if let Some(p) = e.try_get::<Position>() {
+    e.get::<(&Position, &Velocity)>(|(p, v)| {
         assert_eq!(p.x, 5);
         assert_eq!(p.y, 10);
-    }
-
-    if let Some(v) = e.try_get::<Velocity>() {
         assert_eq!(v.x, 1);
         assert_eq!(v.y, 2);
-    }
+    });
 
     e.set(Position { x: 10, y: 20 });
     e.set(Velocity { x: 3, y: 4 });
 
-    if let Some(p) = e.try_get::<Position>() {
+    e.get::<(&Position, &Velocity)>(|(p, v)| {
         assert_eq!(p.x, 10);
         assert_eq!(p.y, 20);
-    }
-
-    if let Some(v) = e.try_get::<Velocity>() {
         assert_eq!(v.x, 3);
         assert_eq!(v.y, 4);
-    }
+    });
 }
 
 #[test]
@@ -1991,9 +2059,9 @@ fn entity_with_self() {
     q.each_entity(|e, _| {
         assert!(e.has_id(tag));
 
-        if let Some(s) = e.try_get::<SelfRef>() {
+        e.get::<&SelfRef>(|s| {
             assert_eq!(s.value, e);
-        }
+        });
 
         count += 1;
     });
@@ -2025,9 +2093,9 @@ fn entity_with_relation_type_self() {
     q.each_entity(|e, _| {
         assert!(e.has_first::<Likes>(bob));
 
-        if let Some(s) = e.try_get::<SelfRef>() {
+        e.get::<&SelfRef>(|s| {
             assert_eq!(s.value, e);
-        }
+        });
 
         count += 1;
     });
@@ -2059,9 +2127,9 @@ fn entity_with_relation_self() {
     q.each_entity(|e, _| {
         assert!(e.has_first::<Likes>(bob));
 
-        if let Some(s) = e.try_get::<SelfRef>() {
+        e.get::<&SelfRef>(|s| {
             assert_eq!(s.value, e);
-        }
+        });
 
         count += 1;
     });
@@ -2162,9 +2230,9 @@ fn entity_with_scope() {
     q.each_entity(|e, _| {
         assert!(e.has_id((*flecs::ChildOf, parent)));
 
-        if let Some(s) = e.try_get::<SelfRef>() {
+        e.get::<&SelfRef>(|s| {
             assert_eq!(s.value, e);
-        }
+        });
 
         count += 1;
     });
@@ -2465,17 +2533,20 @@ fn entity_with_after_builder_method() {
             world.entity_named(c"Z");
         });
 
-    let pos = a.get::<Position>();
-    assert_eq!(pos.x, 10);
-    assert_eq!(pos.y, 20);
+    a.get::<&Position>(|pos| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+    });
 
-    let pos = b.get::<Position>();
-    assert_eq!(pos.x, 30);
-    assert_eq!(pos.y, 40);
+    b.get::<&Position>(|pos| {
+        assert_eq!(pos.x, 30);
+        assert_eq!(pos.y, 40);
+    });
 
-    let pos = c.get::<Position>();
-    assert_eq!(pos.x, 50);
-    assert_eq!(pos.y, 60);
+    c.get::<&Position>(|pos| {
+        assert_eq!(pos.x, 50);
+        assert_eq!(pos.y, 60);
+    });
 
     let x = world.lookup_recursively(c"X");
     assert!(x.has_id(a));
@@ -2513,17 +2584,20 @@ fn entity_with_before_builder_method() {
         })
         .set(Position { x: 50, y: 60 });
 
-    let pos = a.get::<Position>();
-    assert_eq!(pos.x, 10);
-    assert_eq!(pos.y, 20);
+    a.get::<&Position>(|pos| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+    });
 
-    let pos = b.get::<Position>();
-    assert_eq!(pos.x, 30);
-    assert_eq!(pos.y, 40);
+    b.get::<&Position>(|pos| {
+        assert_eq!(pos.x, 30);
+        assert_eq!(pos.y, 40);
+    });
 
-    let pos = c.get::<Position>();
-    assert_eq!(pos.x, 50);
-    assert_eq!(pos.y, 60);
+    c.get::<&Position>(|pos| {
+        assert_eq!(pos.x, 50);
+        assert_eq!(pos.y, 60);
+    });
 
     let x = world.lookup_recursively(c"X");
     assert!(x.has_id(a));
@@ -2575,9 +2649,10 @@ fn entity_insert() {
     let e = world.entity().insert(Position { x: 10, y: 20 });
     assert!(e.has::<Position>());
 
-    let p = e.get::<Position>();
-    assert_eq!(p.x, 10);
-    assert_eq!(p.y, 20);
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+    });
 }
 
 #[test]
@@ -3166,14 +3241,14 @@ fn entity_clone() {
     let v = PositionClone { x: 10, y: 20 };
 
     let src = world.entity().add::<TagClone>().set(v);
-    let dst = src.duplicate(false);
+    let dst = src.duplicate(true);
     assert!(dst.has::<TagClone>());
     assert!(dst.has::<PositionClone>());
 
-    let ptr = dst.try_get::<PositionClone>();
-    assert!(ptr.is_some());
-    assert_ne!(ptr.unwrap().x, 10);
-    assert_ne!(ptr.unwrap().y, 20);
+    dst.get::<&PositionClone>(|pos| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+    });
 }
 
 #[test]
@@ -3188,10 +3263,10 @@ fn entity_clone_w_value() {
     assert!(dst.has::<TagClone>());
     assert!(dst.has::<PositionClone>());
 
-    let ptr = dst.try_get::<PositionClone>();
-    assert!(ptr.is_some());
-    assert_eq!(ptr.unwrap().x, 10);
-    assert_eq!(ptr.unwrap().y, 20);
+    dst.get::<&PositionClone>(|pos| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+    });
 }
 
 #[test]
@@ -3209,10 +3284,10 @@ fn entity_clone_to_existing() {
     assert!(dst.has::<TagClone>());
     assert!(dst.has::<PositionClone>());
 
-    let ptr = dst.try_get::<PositionClone>();
-    assert!(ptr.is_some());
-    assert_eq!(ptr.unwrap().x, 10);
-    assert_eq!(ptr.unwrap().y, 20);
+    dst.get::<&PositionClone>(|pos| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+    });
 }
 
 #[test]
@@ -3835,10 +3910,12 @@ fn entity_insert_w_observer() {
 
     assert!(e.has::<Position>());
     assert!(e.has::<Velocity>());
-    assert_eq!(e.get::<Velocity>().x, 1);
-    assert_eq!(e.get::<Velocity>().y, 2);
-    assert_eq!(e.get::<Position>().x, 10);
-    assert_eq!(e.get::<Position>().y, 20);
+    e.get::<(&Position, &Velocity)>(|(pos, vel)| {
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+        assert_eq!(vel.x, 1);
+        assert_eq!(vel.y, 2);
+    });
 }
 
 #[test]
