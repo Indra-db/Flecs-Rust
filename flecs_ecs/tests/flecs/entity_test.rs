@@ -2646,7 +2646,7 @@ fn entity_insert() {
     structs!();
     let world = World::new();
 
-    let e = world.entity().insert(Position { x: 10, y: 20 });
+    let e = world.entity().set(Position { x: 10, y: 20 });
     assert!(e.has::<Position>());
 
     e.get::<&Position>(|p| {
@@ -3903,10 +3903,10 @@ fn entity_insert_w_observer() {
     world
         .observer::<flecs::OnAdd, &Position>()
         .each_entity(|e, _| {
-            e.insert(Velocity { x: 1, y: 2 });
+            e.set(Velocity { x: 1, y: 2 });
         });
 
-    let e = world.entity().insert(Position { x: 10, y: 20 });
+    let e = world.entity().set(Position { x: 10, y: 20 });
 
     assert!(e.has::<Position>());
     assert!(e.has::<Velocity>());

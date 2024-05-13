@@ -1530,45 +1530,6 @@ impl World {
         }
     }
 
-    /// insert a component.
-    ///
-    /// insert is similar to `set()` except that the component constructor is not
-    /// invoked, allowing the component to be "constructed" directly in the storage.
-    ///
-    /// # SAFETY
-    ///
-    /// `insert` can only be used if the entity does not yet have the component. If
-    /// the entity has the component, the operation will fail and panic.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: The type of the component to insert.
-    ///
-    /// # Arguments
-    ///
-    /// * `value`: The value to insert.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::insert`
-    #[doc(alias = "world::insert")]
-    pub fn insert<T>(&self, value: T)
-    where
-        T: ComponentId,
-    {
-        let id = T::get_id(self);
-        let raw_world = self.raw_world;
-        let mut is_new = false;
-        let ptr = unsafe { sys::ecs_emplace_id(raw_world.as_ptr(), id, id, &mut is_new) } as *mut T;
-        unsafe {
-            if !is_new {
-                std::ptr::drop_in_place(ptr);
-            }
-            std::ptr::write(ptr, value);
-            sys::ecs_modified_id(raw_world.as_ptr(), id, id);
-        }
-    }
-
     /// Add a singleton component.
     ///
     /// # Type Parameters

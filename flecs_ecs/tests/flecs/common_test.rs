@@ -366,11 +366,13 @@ pub use structs;
 //     world
 // }
 
-pub fn create_world_with_flags<T: ComponentId + Default>() -> World {
+pub fn create_world_with_flags<
+    T: ComponentId + Default + NotEmptyComponent + ComponentType<Struct>,
+>() -> World {
     let world = World::new();
 
     register_component_multi_world_application::<T>(&world, std::ptr::null());
-    world.insert(T::default());
+    world.set(T::default());
 
     world
 }

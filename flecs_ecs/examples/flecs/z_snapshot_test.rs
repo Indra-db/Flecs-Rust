@@ -11,7 +11,7 @@ macro_rules! snapshot_test {
         impl Module for Snap {
             fn module(world: &World) {
                 let snap = Snap::setup_snapshot_test();
-                world.insert(snap);
+                world.set(snap);
             }
         }
 

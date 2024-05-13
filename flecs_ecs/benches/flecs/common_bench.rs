@@ -186,7 +186,7 @@ macro_rules! add_component_on_remove_hook {
 macro_rules! set_component_range {
         ($world:expr, $entity:expr, $component:ty, $start:expr, $end:expr) => {{
             seq!(P in $start..=$end {
-                $entity.insert::<$component~P>($component~P(0.0));
+                $entity.set::<$component~P>($component~P(0.0));
         });
         }};
     }

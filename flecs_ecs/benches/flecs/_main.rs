@@ -1,3 +1,6 @@
+#![allow(unused_imports)]
+#![allow(unused)]
+
 use std::time::Duration;
 
 use criterion::{criterion_group, criterion_main, Criterion};

@@ -2930,7 +2930,7 @@ fn query_builder_builder_force_assign_operator() {
     //     .set_cache_kind(QueryCacheKind::Auto)
     //     .build();
     // let entity_query = q.entity().id();
-    // let f = world.entity().insert(QueryWrapper {
+    // let f = world.entity().set(QueryWrapper {
     //     query_entity: entity_query,
     // });
 

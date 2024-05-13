@@ -202,30 +202,61 @@ pub fn ecs_record_to_row(row: u32) -> i32 {
 /// * `entity`: The ID of the entity.
 /// * `value`: The value to set for the component.
 /// * `id`: The ID of the component type.
-pub(crate) fn set_helper<T: ComponentId>(
-    world: *mut WorldT,
-    entity: impl Into<Entity>,
-    value: T,
-    id: impl IntoId,
-) {
+pub(crate) fn set_helper<T: ComponentId>(world: *mut WorldT, entity: u64, value: T, id: u64) {
     ecs_assert!(
         std::mem::size_of::<T>() != 0,
         FlecsErrorCode::InvalidParameter,
         "invalid type: {}",
         std::any::type_name::<T>()
     );
-    let entity = *entity.into();
-    let id = *id.into();
+
+    let mut is_new = false;
     unsafe {
-        if !sys::ecs_is_deferred(world) {
-            let comp = sys::ecs_ensure_id(world, entity, id) as *mut T;
-            std::ptr::drop_in_place(comp);
-            std::ptr::write(comp, value);
+        if sys::ecs_is_deferred(world) {
+            if T::NEEDS_DROP {
+                if T::IMPLS_DEFAULT {
+                    //use set batching //faster performance, no panic possible
+                    let comp = sys::ecs_ensure_modified_id(world, entity, id) as *mut T;
+                    //SAFETY: ecs_ensure_modified_id will default initialize the component
+                    std::ptr::drop_in_place(comp);
+                    std::ptr::write(comp, value);
+                } else {
+                    //when it has the component, we know it won't panic using set and impl drop.
+                    if sys::ecs_has_id(world, entity, id) {
+                        //use set batching //faster performance, no panic possible since it's already present
+                        let comp = sys::ecs_ensure_modified_id(world, entity, id) as *mut T;
+                        //SAFETY: ecs_ensure_modified_id will default initialize the component
+                        std::ptr::drop_in_place(comp);
+                        std::ptr::write(comp, value);
+                        return;
+                    }
+
+                    // if does not impl default or not have the id
+                    // use insert //slower performance
+                    let ptr = sys::ecs_emplace_id(world, entity, id, &mut is_new) as *mut T;
+
+                    if !is_new {
+                        std::ptr::drop_in_place(ptr);
+                    }
+                    std::ptr::write(ptr, value);
+                    sys::ecs_modified_id(world, entity, id);
+                }
+            } else {
+                //if not needs drop, use set batching, faster performance
+                let comp = sys::ecs_ensure_modified_id(world, entity, id) as *mut T;
+                std::ptr::drop_in_place(comp);
+                std::ptr::write(comp, value);
+            }
+        } else
+        /* not deferred */
+        {
+            let ptr = sys::ecs_emplace_id(world, entity, id, &mut is_new) as *mut T;
+
+            if !is_new {
+                std::ptr::drop_in_place(ptr);
+            }
+            std::ptr::write(ptr, value);
             sys::ecs_modified_id(world, entity, id);
-        } else {
-            let comp = sys::ecs_ensure_modified_id(world, entity, id) as *mut T;
-            std::ptr::drop_in_place(comp);
-            std::ptr::write(comp, value);
         }
     }
 }

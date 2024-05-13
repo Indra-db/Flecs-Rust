@@ -22,7 +22,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
     pub fn add_id(self, id: impl IntoId) -> Self {
-        unsafe { sys::ecs_add_id(self.world.world_ptr_mut(), *self.id(), *id.into()) }
+        unsafe { sys::ecs_add_id(self.world.world_ptr_mut(), *self.id, *id.into()) }
         self
     }
 
@@ -307,90 +307,6 @@ impl<'a> EntityView<'a> {
         )
     }
 
-    /// insert a component.
-    ///
-    /// insert is similar to `set()` except that the component constructor is not
-    /// invoked, allowing the component to be "constructed" directly in the storage.
-    ///
-    /// # SAFETY
-    ///
-    /// `insert` can only be used if the entity does not yet have the component. If
-    /// the entity has the component, the operation will fail and panic.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: The type of the component to insert.
-    ///
-    /// # Arguments
-    ///
-    /// * `value`: The value to insert.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::insert`
-    #[doc(alias = "entity_builder::insert")]
-    pub fn insert<T>(self, value: T) -> Self
-    where
-        T: ComponentId,
-    {
-        let id = T::get_id(self.world);
-        let self_id = *self.id();
-        let world_ptr = self.world.world_ptr_mut();
-        let mut is_new = false;
-        unsafe {
-            if sys::ecs_is_deferred(world_ptr) {
-                if T::NEEDS_DROP {
-                    if T::IMPLS_DEFAULT {
-                        //use set batching //faster performance, no panic possible
-                        let comp = sys::ecs_ensure_modified_id(world_ptr, self_id, id) as *mut T;
-                        //SAFETY: ecs_ensure_modified_id will default initialize the component
-                        std::ptr::drop_in_place(comp);
-                        std::ptr::write(comp, value);
-                    } else {
-                        //when it has the component, we know it won't panic using set and impl drop.
-                        if self.has_id(id) {
-                            //use set batching //faster performance, no panic possible since it's already present
-                            let comp =
-                                sys::ecs_ensure_modified_id(world_ptr, self_id, id) as *mut T;
-                            //SAFETY: ecs_ensure_modified_id will default initialize the component
-                            std::ptr::drop_in_place(comp);
-                            std::ptr::write(comp, value);
-                            return self;
-                        }
-
-                        // if does not impl default or not have the id
-                        // use insert //slower performance
-                        let ptr =
-                            sys::ecs_emplace_id(world_ptr, self_id, id, &mut is_new) as *mut T;
-
-                        if !is_new {
-                            std::ptr::drop_in_place(ptr);
-                        }
-                        std::ptr::write(ptr, value);
-                        sys::ecs_modified_id(world_ptr, self_id, id);
-                    }
-                } else {
-                    //if not needs drop, use set batching, faster performance
-                    let comp = sys::ecs_ensure_modified_id(world_ptr, self_id, id) as *mut T;
-                    std::ptr::drop_in_place(comp);
-                    std::ptr::write(comp, value);
-                }
-            } else
-            /* not deferred */
-            {
-                let ptr = sys::ecs_emplace_id(world_ptr, self_id, id, &mut is_new) as *mut T;
-
-                if !is_new {
-                    std::ptr::drop_in_place(ptr);
-                }
-                std::ptr::write(ptr, value);
-                sys::ecs_modified_id(world_ptr, self_id, id);
-            }
-        }
-
-        self
-    }
-
     /// Remove an entity from an entity.
     ///
     /// # Arguments
@@ -402,7 +318,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_builder::remove`
     #[doc(alias = "entity_builder::remove")]
     pub fn remove_id(self, id: impl IntoId) -> Self {
-        unsafe { sys::ecs_remove_id(self.world.world_ptr_mut(), *self.id(), *id.into()) }
+        unsafe { sys::ecs_remove_id(self.world.world_ptr_mut(), *self.id, *id.into()) }
         self
     }
 
@@ -739,7 +655,7 @@ impl<'a> EntityView<'a> {
         unsafe {
             sys::ecs_add_id(
                 self.world.world_ptr_mut(),
-                *self.id(),
+                *self.id,
                 ECS_OVERRIDE | *id.into(),
             );
         }
@@ -834,7 +750,7 @@ impl<'a> EntityView<'a> {
     pub fn set<T: ComponentId + NotEmptyComponent>(self, component: T) -> Self {
         set_helper(
             self.world.world_ptr_mut(),
-            *self.id(),
+            *self.id,
             component,
             T::get_id(self.world),
         );
@@ -852,7 +768,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_builder::set`
     #[doc(alias = "entity_builder::set")]
     pub unsafe fn set_id(self, data: impl ComponentId, id: impl IntoId) -> Self {
-        set_helper(self.world.world_ptr_mut(), *self.id(), data, id);
+        set_helper(self.world.world_ptr_mut(), *self.id, data, *id.into());
         self
     }
 
@@ -876,7 +792,7 @@ impl<'a> EntityView<'a> {
 
         set_helper(
             self.world.world_ptr_mut(),
-            *self.id(),
+            *self.id,
             data,
             ecs_pair(First::get_id(self.world), Second::get_id(self.world)),
         );
@@ -899,9 +815,9 @@ impl<'a> EntityView<'a> {
     {
         set_helper(
             self.world.world_ptr_mut(),
-            *self.id(),
+            *self.id,
             first,
-            (First::get_id(self.world), second.into()),
+            ecs_pair(First::get_id(self.world), *second.into()),
         );
         self
     }
@@ -922,9 +838,9 @@ impl<'a> EntityView<'a> {
     {
         set_helper(
             self.world.world_ptr_mut(),
-            *self.id(),
+            *self.id,
             second,
-            (first.into(), Second::get_id(self.world)),
+            ecs_pair(*first.into(), Second::get_id(self.world)),
         );
         self
     }
@@ -954,7 +870,7 @@ impl<'a> EntityView<'a> {
     {
         set_helper(
             self.world.world_ptr_mut(),
-            *self.id(),
+            *self.id,
             first,
             ecs_pair(
                 First::get_id(self.world),
@@ -986,13 +902,7 @@ impl<'a> EntityView<'a> {
         size: usize,
         ptr: *const c_void,
     ) -> Self {
-        sys::ecs_set_id(
-            self.world.world_ptr_mut(),
-            *self.id(),
-            *id.into(),
-            size,
-            ptr,
-        );
+        sys::ecs_set_id(self.world.world_ptr_mut(), *self.id, *id.into(), size, ptr);
 
         self
     }
@@ -1044,7 +954,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::set_name")]
     pub fn set_name(self, name: &CStr) -> Self {
         unsafe {
-            sys::ecs_set_name(self.world.world_ptr_mut(), *self.id(), name.as_ptr());
+            sys::ecs_set_name(self.world.world_ptr_mut(), *self.id, name.as_ptr());
         }
         self
     }
@@ -1052,7 +962,7 @@ impl<'a> EntityView<'a> {
     /// Removes the name of the entity.
     pub fn remove_name(self) -> Self {
         unsafe {
-            sys::ecs_set_name(self.world.world_ptr_mut(), *self.id(), std::ptr::null());
+            sys::ecs_set_name(self.world.world_ptr_mut(), *self.id, std::ptr::null());
         }
         self
     }
@@ -1069,7 +979,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::set_alias")]
     pub fn set_alias(self, name: &CStr) -> Self {
         unsafe {
-            sys::ecs_set_alias(self.world.world_ptr_mut(), *self.id(), name.as_ptr());
+            sys::ecs_set_alias(self.world.world_ptr_mut(), *self.id, name.as_ptr());
         }
         self
     }
@@ -1083,7 +993,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_builder::enable`
     #[doc(alias = "entity_builder::enable")]
     pub fn enable_self(self) -> Self {
-        unsafe { sys::ecs_enable(self.world.world_ptr_mut(), *self.id(), true) }
+        unsafe { sys::ecs_enable(self.world.world_ptr_mut(), *self.id, true) }
         self
     }
     /// Enables an ID which represents a component or pair.
@@ -1101,7 +1011,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_builder::enable`
     #[doc(alias = "entity_builder::enable")]
     pub fn enable_id(self, id: impl IntoId) -> Self {
-        unsafe { sys::ecs_enable_id(self.world.world_ptr_mut(), *self.id(), *id.into(), true) }
+        unsafe { sys::ecs_enable_id(self.world.world_ptr_mut(), *self.id, *id.into(), true) }
         self
     }
 
@@ -1149,7 +1059,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_builder::disable`
     #[doc(alias = "entity_builder::disable")]
     pub fn disable_self(self) -> Self {
-        unsafe { sys::ecs_enable(self.world.world_ptr_mut(), *self.id(), false) }
+        unsafe { sys::ecs_enable(self.world.world_ptr_mut(), *self.id, false) }
         self
     }
 
@@ -1167,7 +1077,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_builder::disable`
     #[doc(alias = "entity_builder::disable")]
     pub fn disable_id(self, id: impl IntoId) -> Self {
-        unsafe { sys::ecs_enable_id(self.world.world_ptr_mut(), *self.id(), *id.into(), false) }
+        unsafe { sys::ecs_enable_id(self.world.world_ptr_mut(), *self.id, *id.into(), false) }
         self
     }
 
@@ -1217,7 +1127,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::with")]
     pub fn with(self, func: impl FnOnce()) -> Self {
         unsafe {
-            let prev = sys::ecs_set_with(self.world.world_ptr_mut(), *self.id());
+            let prev = sys::ecs_set_with(self.world.world_ptr_mut(), *self.id);
             func();
             sys::ecs_set_with(self.world.world_ptr_mut(), prev);
         }
@@ -1239,7 +1149,7 @@ impl<'a> EntityView<'a> {
         unsafe {
             let prev = sys::ecs_set_with(
                 self.world.world_ptr_mut(),
-                ecs_pair(*first.into(), *self.id()),
+                ecs_pair(*first.into(), *self.id),
             );
             func();
             sys::ecs_set_with(self.world.world_ptr_mut(), prev);
@@ -1263,7 +1173,7 @@ impl<'a> EntityView<'a> {
         unsafe {
             let prev = sys::ecs_set_with(
                 self.world.world_ptr_mut(),
-                ecs_pair(*self.id(), *second.into()),
+                ecs_pair(*self.id, *second.into()),
             );
             func();
             sys::ecs_set_with(self.world.world_ptr_mut(), prev);
@@ -1323,7 +1233,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::scope")]
     pub fn run_in_scope(self, func: impl FnOnce()) -> Self {
         unsafe {
-            let prev = sys::ecs_set_scope(self.world.world_ptr_mut(), *self.id());
+            let prev = sys::ecs_set_scope(self.world.world_ptr_mut(), *self.id);
             func();
             sys::ecs_set_scope(self.world.world_ptr_mut(), prev);
         }
@@ -1375,7 +1285,7 @@ impl<'a> EntityView<'a> {
         );
 
         unsafe {
-            &mut *(sys::ecs_ensure_id(self.world.world_ptr_mut(), *self.id(), component_id)
+            &mut *(sys::ecs_ensure_id(self.world.world_ptr_mut(), *self.id, component_id)
                 as *mut T::UnderlyingType)
         }
     }
@@ -1412,7 +1322,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity::ensure")]
     pub unsafe fn ensure_untyped_mut(self, id: impl IntoId) -> *mut c_void {
         unsafe {
-            sys::ecs_ensure_id(self.world.world_ptr_mut(), *self.id(), *id.into()) as *mut c_void
+            sys::ecs_ensure_id(self.world.world_ptr_mut(), *self.id, *id.into()) as *mut c_void
         }
     }
 
@@ -1449,7 +1359,7 @@ impl<'a> EntityView<'a> {
         unsafe {
             &mut *(sys::ecs_ensure_id(
                 self.world.world_ptr_mut(),
-                *self.id(),
+                *self.id,
                 ecs_pair(component_id, *second.into()),
             ) as *mut First)
         }
@@ -1508,7 +1418,7 @@ impl<'a> EntityView<'a> {
         unsafe {
             &mut *(sys::ecs_ensure_id(
                 self.world.world_ptr_mut(),
-                *self.id(),
+                *self.id,
                 ecs_pair(*first.into(), component_id),
             ) as *mut Second)
         }
@@ -1545,7 +1455,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
     pub fn modified_id(self, id: impl IntoId) {
-        unsafe { sys::ecs_modified_id(self.world.world_ptr_mut(), *self.id(), *id.into()) }
+        unsafe { sys::ecs_modified_id(self.world.world_ptr_mut(), *self.id, *id.into()) }
     }
 
     /// Signal that component was modified.
@@ -1607,7 +1517,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
     pub fn get_ref<T: ComponentId + NotEmptyComponent>(&self) -> CachedRef<'a, T::UnderlyingType> {
-        CachedRef::<T::UnderlyingType>::new(self.world, *self.id(), T::get_id(self.world))
+        CachedRef::<T::UnderlyingType>::new(self.world, *self.id, T::get_id(self.world))
     }
 
     /// Get a reference to the first component of pair
@@ -1637,7 +1547,7 @@ impl<'a> EntityView<'a> {
     ) -> CachedRef<'a, First> {
         CachedRef::<First>::new(
             self.world,
-            *self.id(),
+            *self.id,
             ecs_pair(First::get_id(self.world), *second.into()),
         )
     }
@@ -1669,7 +1579,7 @@ impl<'a> EntityView<'a> {
     ) -> CachedRef<Second> {
         CachedRef::<Second>::new(
             self.world,
-            *self.id(),
+            *self.id,
             ecs_pair(*first.into(), Second::get_id(self.world)),
         )
     }
@@ -1685,7 +1595,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity::clear")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn clear(&self) {
-        unsafe { sys::ecs_clear(self.world.world_ptr_mut(), *self.id()) }
+        unsafe { sys::ecs_clear(self.world.world_ptr_mut(), *self.id) }
     }
 
     /// Delete an entity.
@@ -1698,6 +1608,6 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity::destruct`
     #[doc(alias = "entity::destruct")]
     pub fn destruct(self) {
-        unsafe { sys::ecs_delete(self.world.world_ptr_mut(), *self.id()) }
+        unsafe { sys::ecs_delete(self.world.world_ptr_mut(), *self.id) }
     }
 }
