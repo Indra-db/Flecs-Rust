@@ -1,6 +1,8 @@
 ---
-source: flecs_ecs/examples/flecs/z_snapshot_test.rs
+source: flecs_ecs/examples/flecs/a_hello_world.rs
 expression: self.str
 ---
 - "Bob's got [examples.a_hello_world.Position, examples.a_hello_world.Velocity, (Identifier,Name), (examples.a_hello_world.Eats,examples.a_hello_world.Apples)]"
 - "Bob's position: Position { x: 2.0, y: 4.0 }"
+- "Bob's try_get position: Position { x: 2.0, y: 4.0 }"
+- "Bob has a position component, so the try_get callback ran."

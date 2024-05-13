@@ -161,7 +161,7 @@ impl<'a> System<'a> {
     #[doc(alias = "system::run")]
     #[inline]
     pub fn run_dt_param(&self, delta_time: FTime, param: *mut c_void) -> SystemRunnerFluent {
-        SystemRunnerFluent::new(&self.world, *self.id(), 0, 0, delta_time, param)
+        SystemRunnerFluent::new(self.world.real_world(), *self.id(), 0, 0, delta_time, param)
     }
 
     /// Run the system

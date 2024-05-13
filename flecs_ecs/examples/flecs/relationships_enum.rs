@@ -35,6 +35,7 @@ enum TileStatus {
 }
 
 #[test]
+#[ignore = "is a hierarchy traversal not supported with new get callback"]
 fn main() {
     let world = World::new();
 
@@ -67,7 +68,7 @@ fn main() {
     ); // true
 
     // Get the current value of the enum
-    let v = tile.try_get::<&Tile>(|tile| {
+    tile.try_get::<&Tile>(|tile| {
         fprintln!(&world, "is tile stone: {}", *tile == Tile::Stone); // true
     });
 

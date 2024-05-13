@@ -49,14 +49,14 @@ macro_rules! snapshot_test {
 
         macro_rules! fprintln {
             ($world:expr) => {{
-                let world = ($world).world();
+                let world = ($world).world().real_world();
                 world.get::<&mut Snap>(|snap| {
                     snap.push(format!("\n"));
                 });
                 println!();
             }};
             ($world:expr, $format_string:expr) => {{
-                let world = ($world).world();
+                let world = ($world).world().real_world();
                 world.get::<&mut Snap>(|snap| {
                     snap.push(format!($format_string));
                 });
@@ -64,49 +64,49 @@ macro_rules! snapshot_test {
             }};
             //recursive macro failed to work due to macro within macro declaration I suspect.
             ($world:expr, $format_string:expr, $arg1:expr) => {{
-                let world = ($world).world();
+                let world = ($world).world().real_world();
                 world.get::<&mut Snap>(|snap| {
                     snap.push(format!($format_string, $arg1));
                 });
                 println!($format_string, $arg1);
             }};
             ($world:expr, $format_string:expr, $arg1:expr, $arg2:expr) => {{
-                let world = ($world).world();
+                let world = ($world).world().real_world();
                 world.get::<&mut Snap>(|snap| {
                     snap.push(format!($format_string, $arg1, $arg2));
                 });
                 println!($format_string, $arg1, $arg2);
             }};
             ($world:expr, $format_string:expr, $arg1:expr, $arg2:expr, $arg3:expr) => {{
-                let world = ($world).world();
+                let world = ($world).world().real_world();
                 world.get::<&mut Snap>(|snap| {
                     snap.push(format!($format_string, $arg1, $arg2, $arg3));
                 });
                 println!($format_string, $arg1, $arg2, $arg3);
             }};
             ($world:expr, $format_string:expr, $arg1:expr, $arg2:expr, $arg3:expr, $arg4: expr) => {{
-                let world = ($world).world();
+                let world = ($world).world().real_world();
                 world.get::<&mut Snap>(|snap| {
                     snap.push(format!($format_string, $arg1, $arg2, $arg3, $arg4));
                 });
                 println!($format_string, $arg1, $arg2, $arg3, $arg4);
             }};
             ($world:expr, $format_string:expr, $arg1:expr, $arg2:expr, $arg3:expr, $arg4: expr, $arg5:expr) => {{
-                let world = ($world).world();
+                let world = ($world).world().real_world();
                 world.get::<&mut Snap>(|snap| {
                     snap.push(format!($format_string, $arg1, $arg2, $arg3, $arg4, $arg5));
                 });
                 println!($format_string, $arg1, $arg2, $arg3, $arg4, $arg5);
             }};
             ($world:expr, $format_string:expr, $arg1:expr, $arg2:expr, $arg3:expr, $arg4: expr, $arg5:expr, $arg6:expr) => {{
-                let world = ($world).world();
+                let world = ($world).world().real_world();
                 world.get::<&mut Snap>(|snap| {
                     snap.push(format!($format_string, $arg1, $arg2, $arg3, $arg4, $arg5, $arg6));
                 });
                 println!($format_string, $arg1, $arg2, $arg3, $arg4, $arg5, $arg6);
             }};
             ($world:expr, $format_string:expr, $arg1:expr, $arg2:expr, $arg3:expr, $arg4: expr, $arg5:expr, $arg6:expr, $arg7:expr) => {{
-                let world = ($world).world();
+                let world = ($world).world().real_world();
                 world.get::<&mut Snap>(|snap| {
                     snap.push(format!($format_string, $arg1, $arg2, $arg3, $arg4, $arg5, $arg6, $arg7));
                 });

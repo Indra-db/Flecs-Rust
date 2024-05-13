@@ -341,21 +341,25 @@ impl<'a> EntityView<'a> {
             if sys::ecs_is_deferred(world_ptr) {
                 if T::NEEDS_DROP {
                     if T::IMPLS_DEFAULT {
+                        //use set batching //faster performance, no panic possible
                         let comp = sys::ecs_ensure_modified_id(world_ptr, self_id, id) as *mut T;
+                        //SAFETY: ecs_ensure_modified_id will default initialize the component
                         std::ptr::drop_in_place(comp);
                         std::ptr::write(comp, value);
-                        //use set batching //faster performance, no panic possible
                     } else {
+                        //when it has the component, we know it won't panic using set and impl drop.
                         if self.has_id(id) {
                             //use set batching //faster performance, no panic possible since it's already present
                             let comp =
                                 sys::ecs_ensure_modified_id(world_ptr, self_id, id) as *mut T;
+                            //SAFETY: ecs_ensure_modified_id will default initialize the component
                             std::ptr::drop_in_place(comp);
                             std::ptr::write(comp, value);
                             return self;
                         }
 
-                        // use insert batching //slower performance
+                        // if does not impl default or not have the id
+                        // use insert //slower performance
                         let ptr =
                             sys::ecs_emplace_id(world_ptr, self_id, id, &mut is_new) as *mut T;
 
@@ -366,7 +370,7 @@ impl<'a> EntityView<'a> {
                         sys::ecs_modified_id(world_ptr, self_id, id);
                     }
                 } else {
-                    //use set batching
+                    //if not needs drop, use set batching, faster performance
                     let comp = sys::ecs_ensure_modified_id(world_ptr, self_id, id) as *mut T;
                     std::ptr::drop_in_place(comp);
                     std::ptr::write(comp, value);
@@ -384,28 +388,6 @@ impl<'a> EntityView<'a> {
             }
         }
 
-        // unsafe {
-        //     if !sys::ecs_is_deferred(world_ptr) {
-        //         let ptr = sys::ecs_emplace_id(world_ptr, self_id, id, &mut is_new) as *mut T;
-
-        //         if !is_new {
-        //             std::ptr::drop_in_place(ptr);
-        //         }
-        //         std::ptr::write(ptr, value);
-        //         sys::ecs_modified_id(world_ptr, self_id, id);
-        //     } else {
-        //         let ptr =
-        //             sys::ecs_emplace_modified_id(world_ptr, self_id, id, &mut is_new) as *mut T;
-
-        //         if !is_new {
-        //             std::ptr::drop_in_place(ptr);
-        //         }
-        //         // else {
-        //         //     sys::ecs_modified_id(world_ptr, self_id, id);
-        //         // }
-        //         std::ptr::write(ptr, value);
-        //     }
-        // }
         self
     }
 

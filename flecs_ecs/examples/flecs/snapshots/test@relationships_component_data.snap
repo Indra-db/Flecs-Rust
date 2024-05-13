@@ -1,9 +1,9 @@
 ---
-source: flecs_ecs/examples/flecs/z_snapshot_test.rs
+source: flecs_ecs/examples/flecs/relationships_component_data.rs
 expression: self.str
 ---
 - "e1: requires: 1.21"
-- "e1: requires: 1.5"
+- "e2: requires: 1.5"
 - "expires: 0.5"
 - "::examples::relationships_component_data::Requires"
 - "::examples::relationships_component_data::Requires"

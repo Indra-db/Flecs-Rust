@@ -6,7 +6,7 @@ use crate::core::*;
 use crate::sys;
 
 pub struct SystemRunnerFluent<'a> {
-    stage: &'a World,
+    stage: WorldRef<'a>,
     id: EntityT,
     stage_current: i32,
     stage_count: i32,
@@ -19,7 +19,7 @@ pub struct SystemRunnerFluent<'a> {
 impl<'a> SystemRunnerFluent<'a> {
     /// Create a new system runner fluent interface
     pub fn new(
-        world: &'a World,
+        world: impl IntoWorld<'a>,
         id: impl Into<Entity>,
         stage_current: i32,
         stage_count: i32,
@@ -27,7 +27,7 @@ impl<'a> SystemRunnerFluent<'a> {
         param: *mut c_void,
     ) -> Self {
         Self {
-            stage: world,
+            stage: world.world(),
             id: *id.into(),
             stage_current,
             stage_count,
@@ -51,8 +51,8 @@ impl<'a> SystemRunnerFluent<'a> {
     }
 
     /// Set the stage
-    pub fn set_stage(&mut self, stage: &'a World) -> &mut Self {
-        self.stage = stage;
+    pub fn set_stage(&mut self, stage: impl IntoWorld<'a>) -> &mut Self {
+        self.stage = stage.world();
         self
     }
 }

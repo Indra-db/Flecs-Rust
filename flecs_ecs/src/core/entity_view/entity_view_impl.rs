@@ -3,6 +3,7 @@ use crate::core::*;
 impl<'a> IdOperations<'a> for EntityView<'a> {
     type IdType = Entity;
 
+    #[inline(always)]
     fn id(&self) -> Self::IdType {
         self.id
     }

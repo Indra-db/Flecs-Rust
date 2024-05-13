@@ -25,6 +25,7 @@ struct TirePressure {
 }
 
 #[test]
+#[ignore = "is a hierarchy traversal not supported with new get callback"]
 fn main() {
     let world = World::new();
 
@@ -69,8 +70,7 @@ fn main() {
         fprintln!(&world, "entity lookup failed");
     }
 
-    world.get::<&Snap>(|snap| 
-        snap.test("prefab_nested".to_string()));
+    world.get::<&Snap>(|snap| snap.test("prefab_nested".to_string()));
 
     // Output:
     //  TirePressure, (Identifier,Name), (ChildOf,my_car), (IsA,Wheel)

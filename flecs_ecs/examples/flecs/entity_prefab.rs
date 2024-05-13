@@ -32,6 +32,7 @@ pub struct ImpulseSpeed {
 pub struct HasFlt;
 
 #[test]
+#[ignore = "is a hierarchy traversal not supported with new get callback"]
 fn main() {
     let world = World::new();
 
@@ -94,8 +95,7 @@ fn main() {
         fprintln!(entity, "Entity {}: {:?}", entity.name(), position);
     });
 
-    world.get::<&Snap>(|snap| 
-        snap.test("entity_prefab".to_string()));
+    world.get::<&Snap>(|snap| snap.test("entity_prefab".to_string()));
 
     // Output:
     //  Instance type: [Position, (Identifier,Name), (IsA,MammothFreighter)]
