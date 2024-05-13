@@ -44,8 +44,7 @@ fn main() {
     // Runs the pipeline & system
     world.progress();
 
-world.get::<&Snap>(|snap| snap
-        .test("system_custom_pipeline".to_string()));
+    world.get::<&Snap>(|snap| snap.test("system_custom_pipeline".to_string()));
 
     // Output:
     //   System with Physics ran!

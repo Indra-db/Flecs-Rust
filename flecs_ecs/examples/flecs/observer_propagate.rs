@@ -57,8 +57,7 @@ fn main() {
     // observer, as the observer query now matches.
     parent.set(Position { x: 1.0, y: 2.0 });
 
-    world.get::<&Snap>(|snap| 
-        snap.test("observer_propagate".to_string()));
+    world.get::<&Snap>(|snap| snap.test("observer_propagate".to_string()));
 
     // Output:
     //  - OnSet: Position: e: self: { 10, 20 }, parent: { 1, 2 }

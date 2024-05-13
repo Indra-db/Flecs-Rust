@@ -83,8 +83,7 @@ fn main() {
     fprintln!(&world, "Position's components:");
     iterate_components(world.component::<Position>().entity());
 
-    world.get::<&Snap>(|snap| 
-        snap.test("entity_iterate_components".to_string()));
+    world.get::<&Snap>(|snap| snap.test("entity_iterate_components".to_string()));
 
     // Output:
     //  Bob's components:

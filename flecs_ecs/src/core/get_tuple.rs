@@ -341,62 +341,30 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::assertions_on_constants)]
     fn are_all_terms_const() {
-        assert_eq!(<(&Position, &Velocity) as GetTuple>::ALL_IMMUTABLE, true);
+        assert!(<(&Position, &Velocity) as GetTuple>::ALL_IMMUTABLE);
 
-        assert_eq!(
-            <(Option<&Position>, &Velocity) as GetTuple>::ALL_IMMUTABLE,
-            true
-        );
+        assert!(<(Option<&Position>, &Velocity) as GetTuple>::ALL_IMMUTABLE);
 
-        assert_eq!(
-            <(&Position, Option<&Velocity>) as GetTuple>::ALL_IMMUTABLE,
-            true
-        );
+        assert!(<(&Position, Option<&Velocity>) as GetTuple>::ALL_IMMUTABLE);
 
-        assert_eq!(
-            <(Option<&Position>, Option<&Velocity>) as GetTuple>::ALL_IMMUTABLE,
-            true
-        );
+        assert!(<(Option<&Position>, Option<&Velocity>) as GetTuple>::ALL_IMMUTABLE);
 
-        assert_eq!(
-            <(&mut Position, &Velocity) as GetTuple>::ALL_IMMUTABLE,
-            false
-        );
+        assert!(!<(&mut Position, &Velocity) as GetTuple>::ALL_IMMUTABLE);
 
-        assert_eq!(
-            <(&Position, &mut Velocity) as GetTuple>::ALL_IMMUTABLE,
-            false
-        );
+        assert!(!<(&Position, &mut Velocity) as GetTuple>::ALL_IMMUTABLE);
 
-        assert_eq!(
-            <(Option<&mut Position>, &Velocity) as GetTuple>::ALL_IMMUTABLE,
-            false
-        );
+        assert!(!<(Option<&mut Position>, &Velocity) as GetTuple>::ALL_IMMUTABLE);
 
-        assert_eq!(
-            <(Option<&Position>, &mut Velocity) as GetTuple>::ALL_IMMUTABLE,
-            false
-        );
+        assert!(!<(Option<&Position>, &mut Velocity) as GetTuple>::ALL_IMMUTABLE);
 
-        assert_eq!(
-            <(&mut Position, Option<&Velocity>) as GetTuple>::ALL_IMMUTABLE,
-            false
-        );
+        assert!(!<(&mut Position, Option<&Velocity>) as GetTuple>::ALL_IMMUTABLE);
 
-        assert_eq!(
-            <(Option<&mut Position>, Option<&Velocity>) as GetTuple>::ALL_IMMUTABLE,
-            false
-        );
+        assert!(!<(Option<&mut Position>, Option<&Velocity>) as GetTuple>::ALL_IMMUTABLE);
 
-        assert_eq!(
-            <(&mut Position, &mut Velocity) as GetTuple>::ALL_IMMUTABLE,
-            false
-        );
+        assert!(!<(&mut Position, &mut Velocity) as GetTuple>::ALL_IMMUTABLE);
 
-        assert_eq!(
-            <(Option<&mut Position>, &mut Velocity) as GetTuple>::ALL_IMMUTABLE,
-            false
-        );
+        assert!(!<(Option<&mut Position>, &mut Velocity) as GetTuple>::ALL_IMMUTABLE);
     }
 }

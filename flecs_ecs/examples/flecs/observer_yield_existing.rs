@@ -42,8 +42,7 @@ fn main() {
             );
         });
 
-    world.get::<&Snap>(|snap| 
-        snap.test("observer_yield_existing".to_string()));
+    world.get::<&Snap>(|snap| snap.test("observer_yield_existing".to_string()));
     // Output:
     //  - OnSet: Position: e1: { 10, 20 }
     //  - OnSet: Position: e2: { 20, 30 }

@@ -35,8 +35,7 @@ fn main() {
         player_2.has_first::<TradesWith>(player_1)
     ); // true
 
-world.get::<&Snap>(|snap| snap
-        .test("relationships_symmetric".to_string()));
+    world.get::<&Snap>(|snap| snap.test("relationships_symmetric".to_string()));
 
     // Output:
     //  Player 1 trades with Player 2: true

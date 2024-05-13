@@ -126,8 +126,7 @@ fn main() {
             );
         });
 
-world.get::<&Snap>(|snap| snap
-        .test("rules_setting_variables".to_string()));
+    world.get::<&Snap>(|snap| snap.test("rules_setting_variables".to_string()));
 
     // Output:
     //  Unit id: 529 of class Wizard in platoon id: 526 for player MyPlayer

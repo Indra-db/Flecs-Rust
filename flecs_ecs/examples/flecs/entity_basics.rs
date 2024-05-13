@@ -36,7 +36,7 @@ fn main() {
 
     // Get the value for the Position component
     // - get panics if the component is not present, use try_get for a non-panicking version which does not run the callback.
-    // - or use Option to handle the invididual component missing.
+    // - or use Option to handle the individual component missing.
     bob.get::<Option<&Position>>(|pos| {
         if let Some(pos) = pos {
             fprintln!(&world, "Bob's position: {:?}", pos);

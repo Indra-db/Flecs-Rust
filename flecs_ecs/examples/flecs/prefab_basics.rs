@@ -55,8 +55,7 @@ fn main() {
         fprintln!(&world, "{}: defence: {}", entity.path().unwrap(), d.value);
     });
 
-    world.get::<&Snap>(|snap| 
-        snap.test("prefab_basics".to_string()));
+    world.get::<&Snap>(|snap| snap.test("prefab_basics".to_string()));
 
     // Output:
     //  Defence { value: 50.0 }

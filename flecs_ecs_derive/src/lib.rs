@@ -77,14 +77,14 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
                     Fields::Unit => false,
                 };
                 is_tag = if has_fields {
-                    quote! { 
+                    quote! {
                         const IS_TAG: bool = false;
                         type TagType =
                         flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
                     }
                 } else {
-                    quote! { 
-                        const IS_TAG: bool = true; 
+                    quote! {
+                        const IS_TAG: bool = true;
                         type TagType =
                         flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsATag;
                     }
@@ -112,8 +112,8 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
             flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
         }
     } else {
-        quote! {  
-            const IS_TAG: bool = true; 
+        quote! {
+            const IS_TAG: bool = true;
             type TagType =
             flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsATag;
         }

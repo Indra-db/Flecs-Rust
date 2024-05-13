@@ -62,8 +62,7 @@ fn main() {
         fprintln!(&world, "damage: {}", damage.value);
     });
 
-    world.get::<&Snap>(|snap| 
-        snap.test("prefab_override".to_string()));
+    world.get::<&Snap>(|snap| snap.test("prefab_override".to_string()));
 
     // Output:
     //  Damage, (Identifier,Name), (IsA,SpaceShip)

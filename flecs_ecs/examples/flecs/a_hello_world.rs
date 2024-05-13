@@ -52,7 +52,7 @@ fn main() {
     world.progress();
 
     // - get panics if the component is not present, use try_get for a non-panicking version which does not run the callback.
-    // - or use Option to handle the invididual component missing.
+    // - or use Option to handle the individual component missing.
     bob.get::<&Position>(|pos| {
         // See if Bob has moved (he has)
         fprintln!(&world, "{}'s position: {:?}", bob.name(), pos);

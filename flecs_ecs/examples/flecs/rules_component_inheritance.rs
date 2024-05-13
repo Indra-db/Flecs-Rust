@@ -66,8 +66,7 @@ fn main() {
         fprintln!(e, "Unit {} found", e.name());
     });
 
-world.get::<&Snap>(|snap| snap
-        .test("rules_component_inheritance".to_string()));
+    world.get::<&Snap>(|snap| snap.test("rules_component_inheritance".to_string()));
 
     // Output:
     //  Unit wizard_1 found

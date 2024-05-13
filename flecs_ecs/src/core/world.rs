@@ -928,14 +928,9 @@ impl World {
 
     /// Set a singleton pair using the second element type and a first id.
     ///
-    /// # Type Parameters
+    /// # Safety
     ///
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The ID of the first element of the pair.
-    /// * `second`: The second element of the pair to be set.
+    /// Caller must ensure that `First` and `second` pair id data type is the one provided.
     ///
     /// # See also
     ///
@@ -969,7 +964,7 @@ impl World {
 
     /// Set singleton pair.
     /// This operation sets the pair value, and uses the first non tag / ZST as type. If the
-    /// entity did not yet have the pair, it will be added, otherwise overriden.
+    /// entity did not yet have the pair, it will be added, otherwise overridden.
     ///
     /// # See also
     ///
@@ -982,7 +977,7 @@ impl World {
         (First, Second): FlecsCastType,
     {
         const {
-            assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.")
+            assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
         };
 
         let entity = EntityView::new_from(
@@ -1154,7 +1149,7 @@ impl World {
             self,
             <<T::OnlyType as FlecsCastType>::CastType as IntoComponentId>::get_id(self),
         );
-        entity.get::<T>(callback)
+        entity.get::<T>(callback);
     }
 
     /// gets mutable or immutable component(s) and/or relationship(s) from the world in a callback and return a value.

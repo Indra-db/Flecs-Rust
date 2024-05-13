@@ -36,8 +36,7 @@ fn main() {
     // Second frame. This runs only the Update system
     world.progress();
 
-world.get::<&Snap>(|snap| snap
-        .test("system_startup_system".to_string()));
+    world.get::<&Snap>(|snap| snap.test("system_startup_system".to_string()));
 
     // Output:
     //  Startup

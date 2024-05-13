@@ -774,7 +774,7 @@ impl<'a> EntityView<'a> {
 
     /// Set a pair for an entity.
     /// This operation sets the pair value, and uses the first non tag / ZST as type. If the
-    /// entity did not yet have the pair, it will be added, otherwise overriden.
+    /// entity did not yet have the pair, it will be added, otherwise overridden.
     ///
     /// # See also
     ///
@@ -787,7 +787,7 @@ impl<'a> EntityView<'a> {
         (First, Second): FlecsCastType,
     {
         const {
-            assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.")
+            assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
         };
 
         set_helper(

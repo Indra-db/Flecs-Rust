@@ -63,8 +63,7 @@ fn main() {
     // This triggers the monitor with EcsOnRemove, as the entity no longer matches.
     entity.remove::<Position>();
 
-    world.get::<&Snap>(|snap| 
-        snap.test("observer_monitor".to_string()));
+    world.get::<&Snap>(|snap| snap.test("observer_monitor".to_string()));
 
     // Output:
     //  - Enter: Velocity: e

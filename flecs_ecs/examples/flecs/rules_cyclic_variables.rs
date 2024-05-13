@@ -60,8 +60,7 @@ fn main() {
         fprintln!(it, "{} likes {}", x.name(), y.name());
     });
 
-world.get::<&Snap>(|snap| snap
-        .test("rules_cyclic_variables".to_string()));
+    world.get::<&Snap>(|snap| snap.test("rules_cyclic_variables".to_string()));
 
     // Output:
     //  Alice likes Bob

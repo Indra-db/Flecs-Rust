@@ -88,8 +88,7 @@ fn main() {
         reason: CloseReason::User,
     });
 
-    world.get::<&Snap>(|snap| 
-        snap.test("observer_entity_event".to_string()));
+    world.get::<&Snap>(|snap| snap.test("observer_entity_event".to_string()));
     // Output:
     //  widget: Entity name: MyWidget -- id: 506 -- archetype: (Identifier,Name)
     //  clicked on "MyWidget"

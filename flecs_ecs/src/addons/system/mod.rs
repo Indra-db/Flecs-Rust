@@ -211,7 +211,7 @@ impl<'a> System<'a> {
         param: *mut c_void,
     ) -> SystemRunnerFluent {
         SystemRunnerFluent::new(
-            &self.world,
+            self.world,
             *self.id(),
             stage_current,
             stage_count,
