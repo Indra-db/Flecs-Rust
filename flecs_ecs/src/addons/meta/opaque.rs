@@ -1,4 +1,3 @@
-#![allow(clippy::missing_transmute_annotations)]
 use std::ffi::{c_char, c_void};
 
 use crate::core::*;
@@ -57,67 +56,133 @@ where
     }
 
     pub fn serialize(&mut self, func: SerializeFn<T>) -> &mut Self {
-        self.desc.type_.serialize = Some(unsafe { std::mem::transmute(func) });
+        self.desc.type_.serialize = Some(unsafe {
+            std::mem::transmute::<
+                extern "C" fn(*const flecs_ecs_sys::ecs_serializer_t, *const T) -> i32,
+                unsafe extern "C" fn(
+                    *const flecs_ecs_sys::ecs_serializer_t,
+                    *const std::ffi::c_void,
+                ) -> i32,
+            >(func)
+        });
         self
     }
 
     pub fn assign_bool(&mut self, func: AssignBoolFn<T>) -> &mut Self {
-        self.desc.type_.assign_bool = Some(unsafe { std::mem::transmute(func) });
+        self.desc.type_.assign_bool = Some(unsafe {
+            std::mem::transmute::<
+                extern "C" fn(*mut T, bool),
+                unsafe extern "C" fn(*mut std::ffi::c_void, bool),
+            >(func)
+        });
         self
     }
 
     pub fn assign_char(&mut self, func: AssignCharFn<T>) -> &mut Self {
-        self.desc.type_.assign_char = Some(unsafe { std::mem::transmute(func) });
+        self.desc.type_.assign_char = Some(unsafe {
+            std::mem::transmute::<
+                extern "C" fn(*mut T, i8),
+                unsafe extern "C" fn(*mut std::ffi::c_void, i8),
+            >(func)
+        });
         self
     }
 
     pub fn assign_int(&mut self, func: AssignIntFn<T>) -> &mut Self {
-        self.desc.type_.assign_int = Some(unsafe { std::mem::transmute(func) });
+        self.desc.type_.assign_int = Some(unsafe {
+            std::mem::transmute::<
+                extern "C" fn(*mut T, i64),
+                unsafe extern "C" fn(*mut std::ffi::c_void, i64),
+            >(func)
+        });
         self
     }
 
     pub fn assign_uint(&mut self, func: AssignUIntFn<T>) -> &mut Self {
-        self.desc.type_.assign_uint = Some(unsafe { std::mem::transmute(func) });
+        self.desc.type_.assign_uint = Some(unsafe {
+            std::mem::transmute::<
+                extern "C" fn(*mut T, u64),
+                unsafe extern "C" fn(*mut std::ffi::c_void, u64),
+            >(func)
+        });
         self
     }
 
     pub fn assign_float(&mut self, func: AssignFloatFn<T>) -> &mut Self {
-        self.desc.type_.assign_float = Some(unsafe { std::mem::transmute(func) });
+        self.desc.type_.assign_float = Some(unsafe {
+            std::mem::transmute::<
+                extern "C" fn(*mut T, f32),
+                unsafe extern "C" fn(*mut std::ffi::c_void, f64),
+            >(func)
+        });
         self
     }
 
     pub fn assign_string(&mut self, func: AssignStringFn<T>) -> &mut Self {
-        self.desc.type_.assign_string = Some(unsafe { std::mem::transmute(func) });
+        self.desc.type_.assign_string = Some(unsafe {
+            std::mem::transmute::<
+                extern "C" fn(*mut T, *const i8),
+                unsafe extern "C" fn(*mut std::ffi::c_void, *const i8),
+            >(func)
+        });
         self
     }
 
     pub fn assign_entity(&mut self, func: AssignEntityFn<T>) -> &mut Self {
-        self.desc.type_.assign_entity = Some(unsafe { std::mem::transmute(func) });
+        self.desc.type_.assign_entity = Some(unsafe {
+            std::mem::transmute::<
+                extern "C" fn(*mut T, *mut flecs_ecs_sys::ecs_world_t, u64),
+                unsafe extern "C" fn(*mut std::ffi::c_void, *mut flecs_ecs_sys::ecs_world_t, u64),
+            >(func)
+        });
         self
     }
 
     pub fn assign_null(&mut self, func: AssignNullFn<T>) -> &mut Self {
-        self.desc.type_.assign_null = Some(unsafe { std::mem::transmute(func) });
+        self.desc.type_.assign_null = Some(unsafe {
+            std::mem::transmute::<extern "C" fn(*mut T), unsafe extern "C" fn(*mut std::ffi::c_void)>(
+                func,
+            )
+        });
         self
     }
 
     pub fn clear(&mut self, func: ClearFn<T>) -> &mut Self {
-        self.desc.type_.clear = Some(unsafe { std::mem::transmute(func) });
+        self.desc.type_.clear = Some(unsafe {
+            std::mem::transmute::<extern "C" fn(*mut T), unsafe extern "C" fn(*mut std::ffi::c_void)>(
+                func,
+            )
+        });
         self
     }
 
     pub fn ensure_member(&mut self, func: EnsureMemberFn<T>) -> &mut Self {
-        self.desc.type_.ensure_member = Some(unsafe { std::mem::transmute(func) });
+        self.desc.type_.ensure_member = Some(unsafe {
+            std::mem::transmute::<
+                extern "C" fn(*mut T, *const i8) -> *mut std::ffi::c_void,
+                unsafe extern "C" fn(*mut std::ffi::c_void, *const i8) -> *mut std::ffi::c_void,
+            >(func)
+        });
         self
     }
 
     pub fn count(&mut self, func: CountFn<T>) -> &mut Self {
-        self.desc.type_.count = Some(unsafe { std::mem::transmute(func) });
+        self.desc.type_.count = Some(unsafe {
+            std::mem::transmute::<
+                extern "C" fn(*mut T) -> usize,
+                unsafe extern "C" fn(*const std::ffi::c_void) -> usize,
+            >(func)
+        });
         self
     }
 
     pub fn resize(&mut self, func: ResizeFn<T>) -> &mut Self {
-        self.desc.type_.resize = Some(unsafe { std::mem::transmute(func) });
+        self.desc.type_.resize = Some(unsafe {
+            std::mem::transmute::<
+                extern "C" fn(*mut T, usize),
+                unsafe extern "C" fn(*mut std::ffi::c_void, usize),
+            >(func)
+        });
         self
     }
 }

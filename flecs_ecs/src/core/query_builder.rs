@@ -821,8 +821,17 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     where
         T: ComponentId,
     {
-        #![allow(clippy::missing_transmute_annotations)]
-        let cmp: sys::ecs_order_by_action_t = Some(unsafe { std::mem::transmute(compare) });
+        let cmp: sys::ecs_order_by_action_t = Some(unsafe {
+            std::mem::transmute::<
+                extern "C" fn(u64, *const T, u64, *const T) -> i32,
+                unsafe extern "C" fn(
+                    u64,
+                    *const std::ffi::c_void,
+                    u64,
+                    *const std::ffi::c_void,
+                ) -> i32,
+            >(compare)
+        });
         self.order_by_id(T::get_id(self.world()), cmp);
         self
     }
