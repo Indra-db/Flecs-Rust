@@ -117,7 +117,7 @@ impl ComponentId for Entity {
 impl Deref for Entity {
     type Target = u64;
 
-    #[inline]
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         &self.0
     }

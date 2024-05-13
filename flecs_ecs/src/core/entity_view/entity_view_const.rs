@@ -597,7 +597,7 @@ impl<'a> EntityView<'a> {
         self.each_child_of_id(flecs::ChildOf::ID, func);
     }
 
-    /// gets mutable or immutable component(s) and/or relationship(s) from an entity.
+    /// gets mutable or immutable component(s) and/or relationship(s) from an entity in a callback.
     /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
     /// use `Option` wrapper to indicate if the component is optional.
     /// use `()` tuple format when getting multiple components.
@@ -607,6 +607,7 @@ impl<'a> EntityView<'a> {
     ///
     /// # Note
     ///
+    /// - You cannot get single component tags with this function, use `has` functionality instead.
     /// - You can only get relationships with a payload, so where one is not a tag / not a zst.
     /// tag relationships, use `has` functionality instead.
     /// - This causes the table to lock where the entity belongs to to prevent invalided references, see #Panics.
@@ -629,6 +630,13 @@ impl<'a> EntityView<'a> {
     /// use flecs_ecs::prelude::*;
     ///
     /// #[derive(Component)] struct Tag;
+    ///
+    /// #[derive(Component)]
+    /// pub struct Velocity {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
+    ///
     /// #[derive(Component)]
     /// pub struct Position {
     ///     pub x: f32,
@@ -638,14 +646,28 @@ impl<'a> EntityView<'a> {
     /// let world = World::new();
     ///
     /// let entity = world.entity()
-    ///                   .set::(Position { x: 10.0, y: 20.0 })
+    ///                   .set(Position { x: 10.0, y: 20.0 })
     ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
     ///    
-    /// entity.try_get::<&Position>(|(pos)| {});
-    /// entity.try_get::<(Option<&Tag>, &Position)>( |(tag, pos)| {});
-    /// entity.try_get::<(&mut(Tag,Position), Position)>(|(tag_pos_rel, pos)| {});
+    /// let has_run = entity.try_get::<&Position>(|(pos)| {
+    ///     assert_eq!(pos.x, 10.0);
+    /// });
+    /// assert!(has_run);
+    ///
+    /// let has_run = entity.try_get::<(Option<&Velocity>, &Position)>( |(tag, pos)| {
+    ///     assert_eq!(pos.x, 10.0);
+    ///     assert!(tag.is_none());
+    /// });
+    /// assert!(has_run);
+    ///
+    /// let has_run = entity.try_get::<(&mut(Tag,Position), &Position)>(|(tag_pos_rel, pos)| {
+    ///     assert_eq!(pos.x, 10.0);
+    ///     assert_eq!(tag_pos_rel.x, 30.0);
+    /// });
+    /// assert!(has_run);
+    ///
     /// ```
-    pub fn try_get<T: GetTuple>(self, callback: impl FnOnce(T::TupleType<'_>)) -> bool {
+    pub fn try_get<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>)) -> bool {
         let world_ptr = self.world.world_ptr_mut();
 
         let record: *mut ecs_record_t = if T::ALL_IMMUTABLE {
@@ -671,13 +693,204 @@ impl<'a> EntityView<'a> {
         has_all_components
     }
 
-    /// gets mutable or immutable component(s) and/or relationship(s) from an entity.
+    /// gets mutable or immutable component(s) and/or relationship(s) from an entity in a callback.
     /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
     /// use `Option` wrapper to indicate if the component is optional.
     /// use `()` tuple format when getting multiple components.
     ///
     /// # Note
     ///
+    /// - You cannot get single component tags with this function, use `has` functionality instead.
+    /// - You can only get relationships with a payload, so where one is not a tag / not a zst.
+    /// tag relationships, use `has` functionality instead.
+    /// - This causes the table to lock where the entity belongs to to prevent invalided references, see #Panics.
+    /// The lock is dropped at the end of the callback.
+    ///
+    /// # Panics
+    ///
+    /// - This will panic if within the callback you do any operation that could invalidate the reference.
+    /// This happens when the entity is moved to a different table in memory. Such as adding, removing components or
+    /// creating/deleting entities where the entity belongs to the same table (which could cause a table grow operation).
+    /// In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
+    ///
+    /// - `map` assumes when not using `Option` wrapper, that the entity has the component.
+    /// This will panic if the entity does not have the component. If unsure, use `Option` wrapper or `try_map` function instead.
+    /// `try_map` does not run the callback if the entity does not have the component that isn't marked `Option`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)] struct Tag;
+    ///
+    /// #[derive(Component)]
+    /// pub struct Velocity {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
+    ///
+    /// #[derive(Component)]
+    /// pub struct Position {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let entity = world.entity()
+    ///                   .set(Position { x: 10.0, y: 20.0 })
+    ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
+    ///    
+    /// entity.get::<&Position>(|(pos)| {
+    ///     assert_eq!(pos.x, 10.0);
+    /// });
+    /// entity.get::<(Option<&Velocity>, &Position)>( |(vel, pos)| {
+    ///     assert_eq!(pos.x, 10.0);
+    ///     assert!(vel.is_none());
+    /// });
+    /// entity.get::<(&mut(Tag,Position), &Position)>(|(tag_pos_rel, pos)| {
+    ///     assert_eq!(pos.x, 10.0);
+    ///    assert_eq!(tag_pos_rel.x, 30.0);
+    /// });
+    /// ```
+    pub fn get<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>)) {
+        let world_ptr = self.world.world_ptr_mut();
+
+        let record: *mut ecs_record_t = if T::ALL_IMMUTABLE {
+            unsafe { sys::ecs_read_begin(world_ptr, *self.id()) as *mut ecs_record_t }
+        } else {
+            unsafe { sys::ecs_write_begin(world_ptr, *self.id()) }
+        };
+
+        let tuple_data = T::create_ptrs::<true>(self.world, record);
+        let tuple = tuple_data.get_tuple();
+
+        callback(tuple);
+
+        if T::ALL_IMMUTABLE {
+            unsafe { sys::ecs_read_end(record) }
+        } else {
+            unsafe { sys::ecs_write_end(record) }
+        }
+    }
+
+    /// gets mutable or immutable component(s) and/or relationship(s) from an entity in a callback and return a value.
+    /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
+    /// use `Option` wrapper to indicate if the component is optional.
+    /// use `()` tuple format when getting multiple components.
+    ///
+    /// - `try_map` assumes when not using `Option` wrapper, that the entity has the component. If it does not, it will not run the callback and return None.
+    /// If unsure and you still want to have the callback be ran, use `Option` wrapper instead.
+    ///
+    /// # Note
+    ///
+    /// - You cannot get single component tags with this function, use `has` functionality instead.
+    /// - You can only get relationships with a payload, so where one is not a tag / not a zst.
+    /// tag relationships, use `has` functionality instead.
+    /// - This causes the table to lock where the entity belongs to to prevent invalided references, see #Panics.
+    /// The lock is dropped at the end of the callback.
+    ///
+    /// # Panics
+    ///
+    /// - This will panic if within the callback you do any operation that could invalidate the reference.
+    /// This happens when the entity is moved to a different table in memory. Such as adding, removing components or
+    /// creating/deleting entities where the entity belongs to the same table (which could cause a table grow operation).
+    /// In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
+    ///
+    /// # Returns
+    ///
+    /// - a Some(value) if the callback has ran. Where the type of value is specified in `Return` generic (can be elided).
+    /// None if the callback has not ran.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)] struct Tag;
+    ///
+    /// #[derive(Component)]
+    /// pub struct Velocity {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
+    ///
+    /// #[derive(Component)]
+    /// pub struct Position {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let entity = world.entity()
+    ///                   .set(Position { x: 10.0, y: 20.0 })
+    ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
+    ///    
+    /// let pos_x = entity.try_map::<&Position, _>(|(pos)| {
+    ///     assert_eq!(pos.x, 10.0);
+    ///     Some(pos.x)
+    /// });
+    /// assert!(pos_x.is_some());
+    /// assert_eq!(pos_x.unwrap(), 10.0);
+    ///
+    /// let is_pos_x_10 = entity.try_map::<(Option<&Velocity>, &Position), _>( |(tag, pos)| {
+    ///     assert_eq!(pos.x, 10.0);
+    ///     assert!(tag.is_none());
+    ///     Some(pos.x == 10.0)
+    /// });
+    /// assert!(is_pos_x_10.is_some());
+    /// assert!(is_pos_x_10.unwrap());
+    ///
+    /// // no return type
+    /// let has_run = entity.try_map::<(&mut(Tag,Position), &Position),_>(|(tag_pos_rel, pos)| {
+    ///     assert_eq!(pos.x, 10.0);
+    ///     assert_eq!(tag_pos_rel.x, 30.0);
+    ///     Some(())
+    /// });
+    /// assert!(has_run.is_some());
+    ///
+    /// ```
+    pub fn try_map<T: GetTuple, Return>(
+        self,
+        callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Option<Return>,
+    ) -> Option<Return> {
+        let world_ptr = self.world.world_ptr_mut();
+
+        let record: *mut ecs_record_t = if T::ALL_IMMUTABLE {
+            unsafe { sys::ecs_read_begin(world_ptr, *self.id()) as *mut ecs_record_t }
+        } else {
+            unsafe { sys::ecs_write_begin(world_ptr, *self.id()) }
+        };
+
+        let tuple_data = T::create_ptrs::<false>(self.world, record);
+        let has_all_components = tuple_data.has_all_components();
+
+        let ret = if has_all_components {
+            let tuple = tuple_data.get_tuple();
+            callback(tuple)
+        } else {
+            None
+        };
+
+        if T::ALL_IMMUTABLE {
+            unsafe { sys::ecs_read_end(record) }
+        } else {
+            unsafe { sys::ecs_write_end(record) }
+        }
+
+        ret
+    }
+
+    /// gets mutable or immutable component(s) and/or relationship(s) from an entity in a callback.
+    /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
+    /// use `Option` wrapper to indicate if the component is optional.
+    /// use `()` tuple format when getting multiple components.
+    ///
+    /// # Note
+    ///
+    /// - You cannot get single component tags with this function, use `has` functionality instead.
     /// - You can only get relationships with a payload, so where one is not a tag / not a zst.
     /// tag relationships, use `has` functionality instead.
     /// - This causes the table to lock where the entity belongs to to prevent invalided references, see #Panics.
@@ -700,6 +913,13 @@ impl<'a> EntityView<'a> {
     /// use flecs_ecs::prelude::*;
     ///
     /// #[derive(Component)] struct Tag;
+    ///
+    /// #[derive(Component)]
+    /// pub struct Velocity {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
+    ///
     /// #[derive(Component)]
     /// pub struct Position {
     ///     pub x: f32,
@@ -709,14 +929,39 @@ impl<'a> EntityView<'a> {
     /// let world = World::new();
     ///
     /// let entity = world.entity()
-    ///                   .set::(Position { x: 10.0, y: 20.0 })
+    ///                   .set(Position { x: 10.0, y: 20.0 })
     ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
-    ///    
-    /// entity.get::<&Position>(|(pos)| {});
-    /// entity.get::<(Option<&Tag>, &Position)>( |(tag, pos)| {});
-    /// entity.get::<(&mut(Tag,Position), Position)>(|(tag_pos_rel, pos)| {});
+    ///
+    /// let position_parent = Position { x: 20.0, y: 30.0 };
+    ///
+    /// let pos_actual = entity.map::<&Position, _>(|pos| {
+    ///     assert_eq!(pos.x, 10.0);
+    ///     // Calculate actual position
+    ///     Position {
+    ///         x: pos.x + position_parent.x,
+    ///         y: pos.y + position_parent.y,
+    ///     }
+    /// });
+    ///
+    /// let pos_x = entity.map::<(Option<&Velocity>, &Position),_>( |(vel, pos)| {
+    ///     assert_eq!(pos.x, 10.0);
+    ///     assert!(vel.is_none());
+    ///     pos.x
+    /// });
+    /// assert_eq!(pos_x, 10.0);
+    ///
+    /// let is_x_10 = entity.map::<(&mut(Tag,Position), &Position), _>(|(tag_pos_rel, pos)| {
+    ///     assert_eq!(pos.x, 10.0);
+    ///     assert_eq!(tag_pos_rel.x, 30.0);
+    ///     pos.x == 10.0
+    /// });
+    /// assert!(is_x_10);
+    ///
     /// ```
-    pub fn get<T: GetTuple>(self, callback: impl FnOnce(T::TupleType<'_>)) {
+    pub fn map<T: GetTuple, Return>(
+        self,
+        callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return,
+    ) -> Return {
         let world_ptr = self.world.world_ptr_mut();
 
         let record: *mut ecs_record_t = if T::ALL_IMMUTABLE {
@@ -728,13 +973,15 @@ impl<'a> EntityView<'a> {
         let tuple_data = T::create_ptrs::<true>(self.world, record);
         let tuple = tuple_data.get_tuple();
 
-        callback(tuple);
+        let ret = callback(tuple);
 
         if T::ALL_IMMUTABLE {
             unsafe { sys::ecs_read_end(record) }
         } else {
             unsafe { sys::ecs_write_end(record) }
         }
+
+        ret
     }
 
     /// Get component value or pair as untyped pointer
@@ -2053,6 +2300,80 @@ impl<'a> EntityView<'a> {
         let ptr_struct: *mut ObserverEntityBindingCtx = ptr as *mut ObserverEntityBindingCtx;
         unsafe {
             ptr::drop_in_place(ptr_struct);
+        }
+    }
+}
+
+impl<'a> EntityView<'a> {
+    /// Get Component from entity
+    /// use `.unwrap()` or `.unwrap_unchecked()` or `get_unchecked()` if you're sure the entity has the component
+    ///
+    /// # Safety
+    ///
+    /// - This guarantees no safety with table locking that the reference cannot be invalidated by other operations.
+    /// Use with caution or use `try_get`, `get`, `map`, `try_map` variants.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
+    #[inline(always)]
+    pub fn try_get_unchecked<T: ComponentId>(self) -> Option<&'a T::UnderlyingType> {
+        if !T::IS_ENUM {
+            if T::IS_TAG {
+                // ecs_assert!(
+                //     false,
+                //     FlecsErrorCode::InvalidParameter,
+                //     "component {} has no size",
+                //     std::any::type_name::<T>()
+                // );
+                // None
+
+                let component_id = T::get_id(self.world);
+
+                unsafe {
+                    (sys::ecs_get_id(self.world.world_ptr_mut(), *self.id, component_id)
+                        as *const T::UnderlyingType)
+                        .as_ref()
+                }
+            } else {
+                let component_id = T::get_id(self.world);
+
+                unsafe {
+                    (sys::ecs_get_id(self.world.world_ptr_mut(), *self.id, component_id)
+                        as *const T::UnderlyingType)
+                        .as_ref()
+                }
+            }
+        } else {
+            let component_id: IdT = T::get_id(self.world);
+            let target: IdT = unsafe {
+                sys::ecs_get_target(self.world.world_ptr_mut(), *self.id, component_id, 0)
+            };
+
+            if target == 0 {
+                // if there is no matching pair for (r,*), try just r
+                unsafe {
+                    (sys::ecs_get_id(self.world.world_ptr_mut(), *self.id, component_id)
+                        as *const T::UnderlyingType)
+                        .as_ref()
+                }
+            } else {
+                // get constant value from constant entity
+                let constant_value = unsafe {
+                    sys::ecs_get_id(self.world.world_ptr_mut(), target, component_id)
+                        as *const T::UnderlyingType
+                };
+
+                ecs_assert!(
+                    !constant_value.is_null(),
+                    FlecsErrorCode::InternalError,
+                    "missing enum constant value {}",
+                    std::any::type_name::<T>()
+                );
+
+                unsafe { constant_value.as_ref() }
+            }
         }
     }
 }

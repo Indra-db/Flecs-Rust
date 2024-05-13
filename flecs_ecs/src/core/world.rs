@@ -1036,6 +1036,7 @@ impl World {
     ///
     /// # Note
     ///
+    /// - You cannot get single component tags with this function, use `has` functionality instead.
     /// - You can only get relationships with a payload, so where one is not a tag / not a zst.
     /// tag relationships, use `has` functionality instead.
     /// - This causes the table to lock where the entity belongs to to prevent invalided references, see #Panics.
@@ -1057,7 +1058,9 @@ impl World {
     /// ```
     /// use flecs_ecs::prelude::*;
     ///
-    /// #[derive(Component)] struct Tag;
+    /// #[derive(Component)]
+    /// struct Tag;
+    ///
     /// #[derive(Component)]
     /// pub struct Position {
     ///     pub x: f32,
@@ -1066,14 +1069,31 @@ impl World {
     ///
     /// let world = World::new();
     ///
-    /// let entity = world.set::(Position { x: 10.0, y: 20.0 })
-    ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
+    /// world.set(Position { x: 10.0, y: 20.0 });
+    /// world.set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
     ///    
-    /// world.try_get::<&Position>(|(pos)| {});
-    /// world.try_get::<&mut(Tag,Position)>(|tag_pos_rel| {});
+    /// let has_run = world.try_get::<&Position>(|pos| {
+    ///    assert_eq!(pos.x, 10.0);
+    /// });
+    /// assert!(has_run);
+    ///
+    /// let has_run = world.try_get::<&mut(Tag,Position)>(|pos| {
+    ///     assert_eq!(pos.x, 30.0);
+    /// });
+    /// assert!(has_run);
+    ///
     /// ```
-    pub fn try_get<T: GetTupleTypeOperation>(&self, callback: impl FnOnce(T::ActualType)) -> bool {
-        let entity = EntityView::new_from(self, T::OnlyType::get_id(self));
+    pub fn try_get<T: GetTupleTypeOperation>(
+        &self,
+        callback: impl for<'e> FnOnce(T::ActualType<'e>),
+    ) -> bool
+    where
+        T::OnlyType: FlecsCastType,
+    {
+        let entity = EntityView::new_from(
+            self,
+            <<T::OnlyType as FlecsCastType>::CastType as IntoComponentId>::get_id(self),
+        );
         entity.try_get::<T>(callback)
     }
 
@@ -1084,6 +1104,7 @@ impl World {
     ///
     /// # Note
     ///
+    /// - You cannot get single component tags with this function, use `has` functionality instead.
     /// - You can only get relationships with a payload, so where one is not a tag / not a zst.
     /// tag relationships, use `has` functionality instead.
     /// - This causes the table to lock where the entity belongs to to prevent invalided references, see #Panics.
@@ -1106,6 +1127,7 @@ impl World {
     /// use flecs_ecs::prelude::*;
     ///
     /// #[derive(Component)] struct Tag;
+    ///
     /// #[derive(Component)]
     /// pub struct Position {
     ///     pub x: f32,
@@ -1114,15 +1136,204 @@ impl World {
     ///
     /// let world = World::new();
     ///
-    /// let entity = world.set::(Position { x: 10.0, y: 20.0 })
+    /// world.set(Position { x: 10.0, y: 20.0 });
+    /// world.set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
+    ///    
+    /// world.get::<&Position>(|pos| {
+    ///     assert_eq!(pos.x, 10.0);
+    /// });
+    /// world.get::<&mut(Tag,Position)>(|pos| {
+    ///     assert_eq!(pos.x, 30.0);    
+    /// });
+    /// ```
+    pub fn get<T: GetTupleTypeOperation>(&self, callback: impl for<'e> FnOnce(T::ActualType<'e>))
+    where
+        T::OnlyType: FlecsCastType,
+    {
+        let entity = EntityView::new_from(
+            self,
+            <<T::OnlyType as FlecsCastType>::CastType as IntoComponentId>::get_id(self),
+        );
+        entity.get::<T>(callback)
+    }
+
+    /// gets mutable or immutable component(s) and/or relationship(s) from the world in a callback and return a value.
+    /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
+    /// use `Option` wrapper to indicate if the component is optional.
+    ///
+    /// - `try_map` assumes when not using `Option` wrapper, that the entity has the component. If it does not, it will not run the callback and return None.
+    /// If unsure and you still want to have the callback be ran, use `Option` wrapper instead.
+    ///
+    /// # Note
+    ///
+    /// - You cannot get single component tags with this function, use `has` functionality instead.
+    /// - You can only get relationships with a payload, so where one is not a tag / not a zst.
+    /// tag relationships, use `has` functionality instead.
+    /// - This causes the table to lock where the entity belongs to to prevent invalided references, see #Panics.
+    /// The lock is dropped at the end of the callback.
+    ///
+    /// # Panics
+    ///
+    /// - This will panic if within the callback you do any operation that could invalidate the reference.
+    /// This happens when the entity is moved to a different table in memory. Such as adding, removing components or
+    /// creating/deleting entities where the entity belongs to the same table (which could cause a table grow operation).
+    /// In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
+    ///
+    /// # Returns
+    ///
+    /// - a Some(value) if the callback has ran. Where the type of value is specified in `Return` generic (can be elided).
+    /// None if the callback has not ran.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)] struct Tag;
+    ///
+    /// #[derive(Component)]
+    /// pub struct Velocity {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
+    ///
+    /// #[derive(Component)]
+    /// pub struct Position {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let entity = world.entity()
+    ///                   .set(Position { x: 10.0, y: 20.0 })
     ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
     ///    
-    /// world.get::<&Position>(|(pos)| {});
-    /// world.get::<&mut(Tag,Position)>(|tag_pos_rel| {});
+    /// let pos_x = entity.try_map::<&Position, _>(|(pos)| {
+    ///     assert_eq!(pos.x, 10.0);
+    ///     Some(pos.x)
+    /// });
+    /// assert!(pos_x.is_some());
+    /// assert_eq!(pos_x.unwrap(), 10.0);
+    ///
+    /// let is_pos_x_10 = entity.try_map::<(Option<&Velocity>, &Position), _>( |(tag, pos)| {
+    ///     assert_eq!(pos.x, 10.0);
+    ///     assert!(tag.is_none());
+    ///     Some(pos.x == 10.0)
+    /// });
+    /// assert!(is_pos_x_10.is_some());
+    /// assert!(is_pos_x_10.unwrap());
+    ///
+    /// // no return type
+    /// let has_run = entity.try_map::<(&mut(Tag,Position), &Position),_>(|(tag_pos_rel, pos)| {
+    ///     assert_eq!(pos.x, 10.0);
+    ///     assert_eq!(tag_pos_rel.x, 30.0);
+    ///     Some(())
+    /// });
+    /// assert!(has_run.is_some());
+    ///
     /// ```
-    pub fn get<T: GetTupleTypeOperation>(&self, callback: impl FnOnce(T::ActualType)) {
-        let entity = EntityView::new_from(self, T::OnlyType::get_id(self));
-        entity.get::<T>(callback)
+    pub fn try_map<T: GetTupleTypeOperation, Return>(
+        &self,
+        callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Option<Return>,
+    ) -> Option<Return>
+    where
+        T::OnlyType: FlecsCastType,
+    {
+        let entity = EntityView::new_from(
+            self,
+            <<T::OnlyType as FlecsCastType>::CastType as IntoComponentId>::get_id(self),
+        );
+        entity.try_map::<T, Return>(callback)
+    }
+
+    /// gets mutable or immutable singleton component and/or relationship from the world in a callback.
+    /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
+    /// use `Option` wrapper to indicate if the component is optional.
+    /// use `()` tuple format when getting multiple components.
+    ///
+    /// # Note
+    ///
+    /// - You cannot get single component tags with this function, use `has` functionality instead.
+    /// - You can only get relationships with a payload, so where one is not a tag / not a zst.
+    /// tag relationships, use `has` functionality instead.
+    /// - This causes the table to lock where the entity belongs to to prevent invalided references, see #Panics.
+    /// The lock is dropped at the end of the callback.
+    ///
+    /// # Panics
+    ///
+    /// - This will panic if within the callback you do any operation that could invalidate the reference.
+    /// This happens when the entity is moved to a different table in memory. Such as adding, removing components or
+    /// creating/deleting entities where the entity belongs to the same table (which could cause a table grow operation).
+    /// In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
+    ///
+    /// - `get` assumes when not using `Option` wrapper, that the entity has the component.
+    /// This will panic if the entity does not have the component. If unsure, use `Option` wrapper or `try_get` function instead.
+    /// `try_get` does not run the callback if the entity does not have the component that isn't marked `Option`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)] struct Tag;
+    ///
+    /// #[derive(Component)]
+    /// pub struct Velocity {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
+    ///
+    /// #[derive(Component)]
+    /// pub struct Position {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let entity = world.entity()
+    ///                   .set(Position { x: 10.0, y: 20.0 })
+    ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
+    ///
+    /// let position_parent = Position { x: 20.0, y: 30.0 };
+    ///
+    /// let pos_actual = entity.map::<&Position, _>(|pos| {
+    ///     assert_eq!(pos.x, 10.0);
+    ///     // Calculate actual position
+    ///     Position {
+    ///         x: pos.x + position_parent.x,
+    ///         y: pos.y + position_parent.y,
+    ///     }
+    /// });
+    ///
+    /// let pos_x = entity.map::<(Option<&Velocity>, &Position),_>( |(vel, pos)| {
+    ///     assert_eq!(pos.x, 10.0);
+    ///     assert!(vel.is_none());
+    ///     pos.x
+    /// });
+    /// assert_eq!(pos_x, 10.0);
+    ///
+    /// let is_x_10 = entity.map::<(&mut(Tag,Position), &Position), _>(|(tag_pos_rel, pos)| {
+    ///     assert_eq!(pos.x, 10.0);
+    ///     assert_eq!(tag_pos_rel.x, 30.0);
+    ///     pos.x == 10.0
+    /// });
+    /// assert!(is_x_10);
+    ///
+    /// ```
+    pub fn map<T: GetTupleTypeOperation, Return>(
+        &self,
+        callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Return,
+    ) -> Return
+    where
+        T::OnlyType: FlecsCastType,
+    {
+        let entity = EntityView::new_from(
+            self,
+            <<T::OnlyType as FlecsCastType>::CastType as IntoComponentId>::get_id(self),
+        );
+        entity.map::<T, Return>(callback)
     }
 
     /// Get a reference to a singleton component.

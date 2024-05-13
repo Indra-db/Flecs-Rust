@@ -2,7 +2,17 @@ use crate::core::*;
 use std::{ffi::CStr, sync::OnceLock};
 
 pub trait EmptyComponent {}
+
+#[diagnostic::on_unimplemented(
+    message = "the size of type `{Self}` should not be zero, should not a tag.",
+    label = "Supports only non-empty components"
+)]
 pub trait NotEmptyComponent {}
+
+impl<T> NotEmptyComponent for &T where T: NotEmptyComponent {}
+impl<T> NotEmptyComponent for &mut T where T: NotEmptyComponent {}
+impl<T> NotEmptyComponent for Option<&T> where T: NotEmptyComponent {}
+impl<T> NotEmptyComponent for Option<&mut T> where T: NotEmptyComponent {}
 
 pub trait ECSComponentType {}
 
