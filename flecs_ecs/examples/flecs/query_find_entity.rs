@@ -30,7 +30,7 @@ fn main() {
         fprintln!(&world, "Entity not found");
     }
 
-    world.get::<Snap>().test("query_find_entity".to_string());
+    world.get::<&Snap>(|snap| snap.test("query_find_entity".to_string()));
 
     // Output:
     //  Entity found: "::e2"

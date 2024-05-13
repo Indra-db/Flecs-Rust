@@ -83,7 +83,7 @@ fn main() {
         fprintln!(it);
     });
 
-    world.get::<Snap>().test("query_group_by".to_string());
+    world.get::<&Snap>(|snap| snap.test("query_group_by".to_string()));
 
     // Output:
     //  Group: "::First" - Table: [Position, (Group,First)]

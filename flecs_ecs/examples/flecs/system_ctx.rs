@@ -97,7 +97,7 @@ fn main() {
     // Run the system
     sys.run();
 
-    assert!(world.get::<Snap>().count() > 0);
+    assert!(world.map::<&Snap, _>(|snap| snap.count() > 0));
 
     // Output:
     //  532 and 539 collided!

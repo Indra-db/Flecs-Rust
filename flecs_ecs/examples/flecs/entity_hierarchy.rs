@@ -28,14 +28,14 @@ fn iterate_tree(entity: EntityView, position_parent: &Position) {
         entity.archetype()
     );
 
-    // Get the position of the entity
-    let pos = entity.try_get::<Position>().unwrap();
-
-    // Calculate actual position
-    let pos_actual = Position {
-        x: pos.x + position_parent.x,
-        y: pos.y + position_parent.y,
-    };
+    // Map is the same as get, but allows you to return a value
+    let pos_actual = entity.map::<&Position, _>(|pos| {
+        // Calculate actual position
+        Position {
+            x: pos.x + position_parent.x,
+            y: pos.y + position_parent.y,
+        }
+    });
 
     // Print the position
     fprintln!(entity, "{:?}", pos_actual);
@@ -95,7 +95,7 @@ fn main() {
     // Do a depth-first traversal of the tree
     iterate_tree(sun, &Position { x: 0.0, y: 0.0 });
 
-    world.get::<Snap>().test("entity_hierarchy".to_string());
+    world.get::<&Snap>(|snap| snap.test("entity_hierarchy".to_string()));
 
     // Output:
     //  Is the Moon a child of the Earth? true / true

@@ -69,7 +69,7 @@ fn main() {
     // Run the system
     system.run();
 
-    world.get::<Snap>().test("system_custom_runner".to_string());
+    world.get::<&Snap>(|snap| snap.test("system_custom_runner".to_string()));
 
     // Output:
     //  Move begin

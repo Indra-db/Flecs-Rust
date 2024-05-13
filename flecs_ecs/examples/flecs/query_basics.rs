@@ -67,7 +67,7 @@ fn main() {
         }
     });
 
-    world.get::<Snap>().test("query_basics".to_string());
+    world.get::<&Snap>(|snap| snap.test("query_basics".to_string()));
 
     // Output:
     //  e1: [Position { x: 11.0, y: 22.0 }]

@@ -90,7 +90,8 @@ fn main() {
         },
     );
 
-    world.get::<Snap>().test("prefab_variant".to_string());
+    world.get::<&Snap>(|snap| 
+        snap.test("prefab_variant".to_string()));
 
     // Output:
     //   my_freighter:

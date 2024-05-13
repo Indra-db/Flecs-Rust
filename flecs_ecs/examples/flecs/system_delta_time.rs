@@ -32,7 +32,7 @@ fn main() {
 
     world.progress();
 
-    assert!(world.get::<Snap>().count() > 0);
+    assert!(world.map::<&Snap, _>(|snap| snap.count() > 0));
 
     // Output:
     //  delta_time: 0.016666668

@@ -20,7 +20,6 @@ fn main() {
     world.import::<Snap>();
 
     world.set(Timeout { value: 3.5 });
-    let time_out = world.get::<Timeout>();
 
     world
         .system::<&mut Timeout>()
@@ -42,18 +41,13 @@ fn main() {
     world.set_target_fps(60.0);
 
     while world.progress() {
-        if time_out.value <= 0.0 {
+        if world.map::<&Timeout, _>(|timeout| timeout.value <= 0.0) {
             fprintln!(&world, "Timed out!");
             break;
         }
     }
 
-    assert!(world
-        .get::<Snap>()
-        .str
-        .last()
-        .unwrap()
-        .contains("Timed out!"));
+    assert!(world.map::<&Snap, _>(|snap| snap.str.last().unwrap().contains("Timed out!")));
 
     // Output:
     // FastTick

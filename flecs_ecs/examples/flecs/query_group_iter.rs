@@ -129,7 +129,7 @@ fn main() {
         );
     });
 
-    world.get::<Snap>().test("query_group_iter".to_string());
+    world.get::<&Snap>(|snap| snap.test("query_group_iter".to_string()));
 
     // Output:
     //  All tables

@@ -65,7 +65,7 @@ fn main() {
         println!("Tick...");
     }
 
-    assert!(world.get::<Snap>().str.last().unwrap().contains("deleted"));
+    assert!(world.map::<&Snap, _>(|snap| snap.str.last().unwrap().contains("deleted")));
 
     // Output:
     //  PrintExpire: MyEntity has 2.00 seconds left

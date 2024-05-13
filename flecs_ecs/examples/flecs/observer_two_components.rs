@@ -48,9 +48,8 @@ fn main() {
     // Set Velocity (emits EcsOnSet, matches observer)
     entity.set(Velocity { x: 1.0, y: 2.0 });
 
-    world
-        .get::<Snap>()
-        .test("observer_two_components".to_string());
+    world.get::<&Snap>(|snap| 
+        snap.test("observer_two_components".to_string()));
 
     // Output:
     //  - OnSet: Velocity: e: p: { 10, 20 }, v: { 1, 2 }

@@ -33,12 +33,12 @@ fn main() {
     // Create a few entities that match the query
     world
         .entity_named(c"Bob")
-        .set_first::<EatsAmount, Apples>(EatsAmount { amount: 10 })
-        .set_first::<EatsAmount, Pears>(EatsAmount { amount: 5 });
+        .set_pair::<EatsAmount, Apples>(EatsAmount { amount: 10 })
+        .set_pair::<EatsAmount, Pears>(EatsAmount { amount: 5 });
 
     world
         .entity_named(c"Alice")
-        .set_first::<EatsAmount, Apples>(EatsAmount { amount: 4 });
+        .set_pair::<EatsAmount, Apples>(EatsAmount { amount: 4 });
 
     // Iterate the query with a flecs::iter. This makes it possible to inspect
     // the pair that we are currently matched with.
@@ -50,7 +50,7 @@ fn main() {
         fprintln!(it, "{} eats {} {}", entity, eats.amount, food);
     });
 
-    world.get::<Snap>().test("query_wildcard".to_string());
+    world.get::<&Snap>(|snap| snap.test("query_wildcard".to_string()));
 
     // Output:
     //  Alice eats 4 Apples

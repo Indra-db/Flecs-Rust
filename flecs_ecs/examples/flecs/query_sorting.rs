@@ -72,7 +72,7 @@ fn main() {
     fprintln!(&world, "--- System iteration ---");
     sys.run();
 
-    world.get::<Snap>().test("query_sorting".to_string());
+    world.get::<&Snap>(|snap| snap.test("query_sorting".to_string()));
 
     // Output:
     //

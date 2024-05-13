@@ -70,7 +70,7 @@ fn main() {
         );
     });
 
-    world.get::<Snap>().test("rules_basics".to_string());
+    world.get::<&Snap>(|snap| snap.test("rules_basics".to_string()));
 
     // Output:
     // Bob eats Apples

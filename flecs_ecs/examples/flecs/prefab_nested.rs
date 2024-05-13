@@ -60,14 +60,17 @@ fn main() {
         fprintln!(&world, "{:?}", inst.archetype());
 
         // Get the TirePressure component & print its value
-        if let Some(p) = inst.try_get::<TirePressure>() {
-            fprintln!(&world, "pressure: {}", p.value);
-        };
+        inst.try_get::<Option<&TirePressure>>(|p| {
+            if let Some(p) = p {
+                fprintln!(&world, "pressure: {}", p.value);
+            }
+        });
     } else {
         fprintln!(&world, "entity lookup failed");
     }
 
-    world.get::<Snap>().test("prefab_nested".to_string());
+    world.get::<&Snap>(|snap| 
+        snap.test("prefab_nested".to_string()));
 
     // Output:
     //  TirePressure, (Identifier,Name), (ChildOf,my_car), (IsA,Wheel)

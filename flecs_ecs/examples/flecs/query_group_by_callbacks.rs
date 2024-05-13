@@ -162,9 +162,7 @@ fn main() {
     // Deleting the query will call the on_group_deleted callback
     query.destruct();
 
-    world
-        .get::<Snap>()
-        .test("query_group_by_callbacks".to_string());
+    world.get::<&Snap>(|snap| snap.test("query_group_by_callbacks".to_string()));
 
     // Output:
     //  Group created: "Third"

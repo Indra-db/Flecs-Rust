@@ -49,7 +49,7 @@ fn main() {
     // Run the system
     s.run();
 
-    world.get::<Snap>().test("system_basics".to_string());
+    world.get::<&Snap>(|snap| snap.test("system_basics".to_string()));
 
     // Output:
     //  e1: { 11, 22 }

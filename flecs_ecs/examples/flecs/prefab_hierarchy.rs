@@ -40,7 +40,8 @@ fn main() {
         }
     }
 
-    world.get::<Snap>().test("prefab_hierarchy".to_string());
+    world.get::<&Snap>(|snap| 
+        snap.test("prefab_hierarchy".to_string()));
 
     // Output:
     //  instance engine:  "::my_spaceship::Engine"

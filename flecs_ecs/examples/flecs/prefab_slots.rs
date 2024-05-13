@@ -68,7 +68,8 @@ fn main() {
 
     fprintln!(&world, "instance seat: {}", inst_seat.path().unwrap());
 
-    world.get::<Snap>().test("prefab_slots".to_string());
+    world.get::<&Snap>(|snap| 
+        snap.test("prefab_slots".to_string()));
 
     // Output:
     //  instance engine: ::my_spaceship::Engine

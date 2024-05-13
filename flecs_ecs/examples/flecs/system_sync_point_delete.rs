@@ -90,7 +90,7 @@ fn main() {
 
     // world
     //     .get::<Snap>()
-    //     .test("system_sync_point_delete".to_string());
+    //     .test("system_sync_point_delete".to_string()));
 
     // Output:
     //  info: pipeline rebuild

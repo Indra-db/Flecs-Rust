@@ -52,9 +52,7 @@ fn main() {
     // Run pipeline
     world.progress();
 
-    world
-        .get::<Snap>()
-        .test("system_custom_phases_no_builtin".to_string());
+    world.get::<&Snap>(|snap| snap.test("system_custom_phases_no_builtin".to_string()));
 
     // Output:
     //   system GameSystem

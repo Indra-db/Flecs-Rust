@@ -102,7 +102,7 @@ fn main() {
         }
     });
 
-    world.get::<Snap>().test("relationships_union".to_string());
+    world.get::<&Snap>(|snap| snap.test("relationships_union".to_string()));
 
     */
 

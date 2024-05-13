@@ -151,7 +151,7 @@ fn main() {
         );
     });
 
-    world.get::<Snap>().test("rules_transitive_queries".to_string());
+    world.get::<&Snap>(|snap| snap.test("rules_transitive_queries".to_string()));
     */
 
     // Output:

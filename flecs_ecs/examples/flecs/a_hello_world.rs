@@ -51,17 +51,33 @@ fn main() {
     world.progress();
     world.progress();
 
-    //you can use `.unwrap_unchecked()` if you are sure the component exists or `get_unchecked()`
-    let pos = bob.try_get::<Position>().unwrap();
-    // See if Bob has moved (he has)
-    //fprintln!(snap,"Bob's position: {:?}", pos);
-    fprintln!(&world, "{}'s position: {:?}", bob.name(), pos);
-
-    world.get::<&Snap>(|snap| {
-        snap.test("hello world".to_string());
+    // - get panics if the component is not present, use try_get for a non-panicking version which does not run the callback.
+    // - or use Option to handle the invididual component missing.
+    bob.get::<&Position>(|pos| {
+        // See if Bob has moved (he has)
+        fprintln!(&world, "{}'s position: {:?}", bob.name(), pos);
     });
+
+    // Option example
+    let has_run = bob.try_get::<Option<&Position>>(|pos| {
+        if let Some(pos) = pos {
+            // See if Bob has moved (he has)
+            fprintln!(&world, "{}'s try_get position: {:?}", bob.name(), pos);
+        }
+    });
+
+    if has_run {
+        fprintln!(
+            &world,
+            "Bob has a position component, so the try_get callback ran."
+        );
+    }
+
+    world.get::<&Snap>(|snap| snap.test("hello world".to_string()));
 
     // Output:
     //  Bob's got [Position, Velocity, (Identifier,Name), (Eats,Apples)]
     //  Bob's position: Position { x: 2.0, y: 4.0 }
+    //  Bob's try_get position: Position { x: 2.0, y: 4.0 }
+    //  Bob has a position component, so the try_get callback ran.
 }

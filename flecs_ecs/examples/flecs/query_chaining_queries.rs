@@ -87,9 +87,7 @@ fn main() {
             });
     });
 
-    forest
-        .get::<Snap>()
-        .test("query_chaining_queries".to_string());
+    forest.get::<&Snap>(|snap| snap.test("query_chaining_queries".to_string()));
 
     // Output:
     //  Creature id: 525 at location 0,0 is enchanted with mystical energy, ability power: 0

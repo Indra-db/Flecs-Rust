@@ -46,7 +46,7 @@ fn main() {
         fprintln!(entity, "Entity {}: {:?}", entity.name(), pos);
     });
 
-    world.get::<Snap>().test("query_world_query".to_string());
+    world.get::<&Snap>(|snap| snap.test("query_world_query".to_string()));
 
     // Output:
     //  Entity e1: Position { x: 11.0, y: 22.0 }

@@ -47,7 +47,7 @@ fn main() {
         );
     });
 
-    world.get::<Snap>().test("query_singleton".to_string());
+    world.get::<&Snap>(|snap| snap.test("query_singleton".to_string()));
 
     // Output:
     // Entity ::e1 has Velocity { x: 0.0, y: 9.81 }

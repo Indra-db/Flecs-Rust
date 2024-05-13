@@ -127,7 +127,7 @@ fn main() {
         }
     );
 
-    world.get::<Snap>().test("rules_facts".to_string());
+    world.get::<&Snap>(|snap| snap.test("rules_facts".to_string()));
 
     // Output:
     //  Are Bob and Alice friends? Yes

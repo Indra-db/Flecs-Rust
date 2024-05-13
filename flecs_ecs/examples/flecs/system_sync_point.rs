@@ -77,7 +77,7 @@ fn main() {
     world.progress();
     set_log_level(-1);
 
-    world.get::<Snap>().test("system_sync_point".to_string());
+    world.get::<&Snap>(|snap| snap.test("system_sync_point".to_string()));
 
     // Output:
     // info: pipeline rebuild

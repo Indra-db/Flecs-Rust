@@ -84,8 +84,9 @@ fn main() {
 
     // Even though the instance doesn't have a private copy of ImpulseSpeed, we
     // can still get it using the regular API (outputs 50)
-    let impulse_speed = inst.try_get::<ImpulseSpeed>();
-    fprintln!(&world, "ImpulseSpeed: {}", impulse_speed.unwrap().value);
+    inst.try_get::<&ImpulseSpeed>(|impulse_speed| {
+        fprintln!(&world, "ImpulseSpeed: {}", impulse_speed.value);
+    });
 
     // Prefab components can be iterated just like regular components:
     world.each_entity::<(&ImpulseSpeed, &mut Position)>(|entity, (impulse_speed, position)| {
@@ -93,7 +94,8 @@ fn main() {
         fprintln!(entity, "Entity {}: {:?}", entity.name(), position);
     });
 
-    world.get::<Snap>().test("entity_prefab".to_string());
+    world.get::<&Snap>(|snap| 
+        snap.test("entity_prefab".to_string()));
 
     // Output:
     //  Instance type: [Position, (Identifier,Name), (IsA,MammothFreighter)]

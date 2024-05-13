@@ -43,34 +43,34 @@ fn main() {
     // the pair assumes the type of the component.
     let e1 = world
         .entity()
-        .set_first::<_, Gigawatts>(Requires { amount: 1.21 });
+        .set_pair::<_, Gigawatts>(Requires { amount: 1.21 });
 
-    let require = e1.try_get_first::<Requires, Gigawatts>();
-
-    if let Some(r) = require {
-        fprintln!(&world, "e1: requires: {}", r.amount);
-    } else {
-        fprintln!(
-            &world,
-            "e1: does not have a relationship with Requires, Gigawatts"
-        );
-    }
+    let require = e1.try_get::<Option<&(Requires, Gigawatts)>>(|req| {
+        if let Some((req)) = req {
+            fprintln!(&world, "e1: requires: {}", req.amount);
+        } else {
+            fprintln!(
+                &world,
+                "e1: does not have a relationship with Requires, Gigawatts"
+            );
+        }
+    });
 
     // The component can be either the first or second part of a pair:
     let e2 = world
         .entity()
-        .set_second::<Gigawatts, Requires>(Requires { amount: 1.5 });
+        .set_pair::<Gigawatts, Requires>(Requires { amount: 1.5 });
 
-    let require = e2.try_get_second::<Gigawatts, Requires>();
-
-    if let Some(r) = require {
-        fprintln!(&world, "e1: requires: {}", r.amount);
-    } else {
-        fprintln!(
-            &world,
-            "e1: does not have a relationship with Gigawatts, Requires"
-        );
-    }
+    let require = e2.try_get::<Option<&(Gigawatts, Requires)>>(|req| {
+        if let Some((req)) = req {
+            fprintln!(&world, "e2: requires: {}", req.amount);
+        } else {
+            fprintln!(
+                &world,
+                "e2: does not have a relationship with Gigawatts, Requires"
+            );
+        }
+    });
 
     // Note that <Requires, Gigawatts> and <Gigawatts, Requires> are two
     // different pairs, and can be added to an entity at the same time.
@@ -79,10 +79,11 @@ fn main() {
     // the first element:
     let e3 = world
         .entity()
-        .set_first::<Expires, Position>(Expires { timeout: 0.5 });
+        .set_pair::<Expires, Position>(Expires { timeout: 0.5 });
 
-    let expires = e3.try_get_first::<Expires, Position>();
-    fprintln!(&world, "expires: {}", expires.unwrap().timeout);
+    let expires = e3.try_get::<&(Expires, Position)>(|expires| {
+        fprintln!(&world, "expires: {}", expires.timeout);
+    });
 
     // You can prevent a pair from assuming the type of a component by adding
     // the Tag property to a relationship:
@@ -142,9 +143,7 @@ fn main() {
         fprintln!(entity, "requires: {} gigawatts", requires.amount);
     });
 
-    world
-        .get::<Snap>()
-        .test("relationships_component_data".to_string());
+    world.get::<&Snap>(|snap| snap.test("relationships_component_data".to_string()));
 
     // Output:
     // e1: requires: 1.21

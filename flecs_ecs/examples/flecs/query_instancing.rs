@@ -83,7 +83,7 @@ fn main() {
         }
     });
 
-    world.get::<Snap>().test("query_instancing".to_string());
+    world.get::<&Snap>(|snap| snap.test("query_instancing".to_string()));
 
     // Output:
     //  Velocity is shared

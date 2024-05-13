@@ -65,7 +65,8 @@ fn main() {
     fprintln!(&world, "instance head: {}", inst_head.path().unwrap());
     fprintln!(&world, "instance beam: {}", inst_beam.path().unwrap());
 
-    world.get::<Snap>().test("prefab_typed".to_string());
+    world.get::<&Snap>(|snap| 
+        snap.test("prefab_typed".to_string()));
 
     // Output:
     //  instance base: ::my_railgun::Base

@@ -143,9 +143,8 @@ fn main() {
         });
         fprintln!(snap);
 
-            world
-        .get::<Snap>()
-        .test("query_change_tracking".to_string());
+        world.get::<&Snap>(|snap| snap
+        .test("query_change_tracking".to_string()));
     */
 
     // Output:

@@ -54,7 +54,7 @@ fn main() {
     // function is usually called in a loop.
     world.progress();
 
-    world.get::<Snap>().test("system_pipeline".to_string());
+    world.get::<&Snap>(|snap| snap.test("system_pipeline".to_string()));
 
     // Output:
     //  e1: { 11, 22 }

@@ -79,7 +79,7 @@ fn main() {
         fprintln!(it);
     });
 
-    world.get::<Snap>().test("query_iter".to_string());
+    world.get::<&Snap>(|snap| snap.test("query_iter".to_string()));
 
     // Output:
     //  Table: Position, Velocity, (Identifier,Name)

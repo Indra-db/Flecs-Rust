@@ -24,31 +24,31 @@ fn main() {
     let sun = world
         .entity_named(c"Sun")
         .add::<(Position, WorldX)>()
-        .set_first::<Position, Local>(Position { x: 1.0, y: 1.0 });
+        .set_pair::<Position, Local>(Position { x: 1.0, y: 1.0 });
 
     world
         .entity_named(c"Mercury")
         .child_of_id(sun)
         .add::<(Position, WorldX)>()
-        .set_first::<Position, Local>(Position { x: 1.0, y: 1.0 });
+        .set_pair::<Position, Local>(Position { x: 1.0, y: 1.0 });
 
     world
         .entity_named(c"Venus")
         .child_of_id(sun)
         .add::<(Position, WorldX)>()
-        .set_first::<Position, Local>(Position { x: 2.0, y: 2.0 });
+        .set_pair::<Position, Local>(Position { x: 2.0, y: 2.0 });
 
     let earth = world
         .entity_named(c"Earth")
         .child_of_id(sun)
         .add::<(Position, WorldX)>()
-        .set_first::<Position, Local>(Position { x: 3.0, y: 3.0 });
+        .set_pair::<Position, Local>(Position { x: 3.0, y: 3.0 });
 
     world
         .entity_named(c"Moon")
         .child_of_id(earth)
         .add::<(Position, WorldX)>()
-        .set_first::<Position, Local>(Position { x: 0.1, y: 0.1 });
+        .set_pair::<Position, Local>(Position { x: 0.1, y: 0.1 });
 
     let query = world
         .query::<(&Position, Option<&Position>, &mut Position)>()
@@ -95,7 +95,7 @@ fn main() {
             );
         });
 
-    world.get::<Snap>().test("query_hierarchy".to_string());
+    world.get::<&Snap>(|snap| snap.test("query_hierarchy".to_string()));
 
     // Output:
     //  Entity Sun is at (1, 1)

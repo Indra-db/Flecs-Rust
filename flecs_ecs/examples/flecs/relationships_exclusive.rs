@@ -57,9 +57,7 @@ fn main() {
         unit.has_first::<Platoon>(platoon_2)
     ); // true
 
-    world
-        .get::<Snap>()
-        .test("relationships_exclusive".to_string());
+    world.get::<&Snap>(|snap| snap.test("relationships_exclusive".to_string()));
 
     // Output:
     //  Unit in platoon 1: true

@@ -67,10 +67,9 @@ fn main() {
     ); // true
 
     // Get the current value of the enum
-    let v = tile.try_get::<Tile>();
-    if let Some(tile_value) = v {
-        fprintln!(&world, "is tile stone: {}", *tile_value == Tile::Stone); // true
-    }
+    let v = tile.try_get::<&Tile>(|tile| {
+        fprintln!(&world, "is tile stone: {}", *tile == Tile::Stone); // true
+    });
 
     // Create a few more entities that we can query
     world
@@ -127,7 +126,7 @@ fn main() {
     // (Tile, Tile.Stone)
     fprintln!(&world, "{:?}", tile.archetype());
 
-    world.get::<Snap>().test("relationships_enum".to_string());
+    world.get::<&Snap>(|snap| snap.test("relationships_enum".to_string()));
 
     // Total Output:
     //  (relationships_enum.Tile,relationships_enum.Tile.Stone), (relationships_enum.TileStatus,relationships_enum.TileStatus.Free)

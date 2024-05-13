@@ -46,5 +46,6 @@ fn main() {
     //  set Position { x: 10.0, y: 20.0 } for "Bob"
     //  removed Position { x: 10.0, y: 20.0 } from "Bob"
 
-    world.get::<Snap>().test("entity_hooks".to_string());
+    world.get::<&Snap>(|snap| 
+        snap.test("entity_hooks".to_string()));
 }

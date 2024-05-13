@@ -43,10 +43,8 @@ fn main() {
         .target(entity)
         .emit(&MyEvent);
 
-    world
-        .get::<Snap>()
-        .test("observer_custom_event".to_string());
-
+    world.get::<&Snap>(|snap| 
+        snap.test("observer_custom_event".to_string()));
     // Output:
     //  - MyEvent: Position: e1
 }

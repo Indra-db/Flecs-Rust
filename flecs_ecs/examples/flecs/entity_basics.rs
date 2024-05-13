@@ -35,8 +35,12 @@ fn main() {
         .add::<Walking>();
 
     // Get the value for the Position component
+    // - get panics if the component is not present, use try_get for a non-panicking version which does not run the callback.
+    // - or use Option to handle the invididual component missing.
     bob.get::<Option<&Position>>(|pos| {
-        fprintln!(&world, "Bob's position: {:?}", pos.unwrap());
+        if let Some(pos) = pos {
+            fprintln!(&world, "Bob's position: {:?}", pos);
+        }
     });
 
     // Overwrite the value of the Position component
@@ -62,9 +66,7 @@ fn main() {
         fprintln!(entity, "{} has {:?}", entity.name(), pos);
     });
 
-    world.get::<&Snap>(|snap| {
-        snap.test("entity_basics".to_string());
-    });
+    world.get::<&Snap>(|snap| snap.test("entity_basics".to_string()));
 
     // Output:
     //  Bob's position: Position { x: 10.0, y: 20.0 }

@@ -52,7 +52,8 @@ fn main() {
     // Remove Position again (no event emitted)
     entity.remove::<Position>();
 
-    world.get::<Snap>().test("observer_basics".to_string());
+    world.get::<&Snap>(|snap| 
+        snap.test("observer_basics".to_string()));
 
     // Output:
     //  - OnAdd: Position: e1

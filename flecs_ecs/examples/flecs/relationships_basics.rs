@@ -69,7 +69,7 @@ fn main() {
     // Get second target of relationship
     fprintln!(&world, "Bob also eats {}", bob.target::<Eats>(1).name());
 
-    world.get::<Snap>().test("relationships_basics".to_string());
+    world.get::<&Snap>(|snap| snap.test("relationships_basics".to_string()));
 
     // Output:
     //  Bob eats apples? true
