@@ -4,6 +4,7 @@
 #![allow(warnings)]
 use super::*;
 use libc::FILE;
+pub const FLECS_TERM_COUNT_MAX: u32 = 16;
 
 pub const FLECS_VERSION_MAJOR: u32 = 4;
 pub const FLECS_VERSION_MINOR: u32 = 0;
@@ -14,7 +15,6 @@ pub const FLECS_ENTITY_PAGE_BITS: u32 = 12;
 pub const FLECS_ID_DESC_MAX: u32 = 32;
 pub const FLECS_EVENT_DESC_MAX: u32 = 8;
 pub const FLECS_VARIABLE_COUNT_MAX: u32 = 64;
-pub const FLECS_TERM_COUNT_MAX: u32 = 16;
 pub const FLECS_TERM_ARG_COUNT_MAX: u32 = 16;
 pub const FLECS_QUERY_VARIABLE_COUNT_MAX: u32 = 64;
 pub const FLECS_QUERY_SCOPE_NESTING_MAX: u32 = 8;

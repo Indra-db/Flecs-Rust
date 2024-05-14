@@ -39,6 +39,7 @@ fn generate_bindings() {
         .clang_arg("-fparse-all-comments")
         .parse_callbacks(Box::new(CommentsCallbacks))
         .blocklist_item("FLECS_HI_COMPONENT_ID")
+        .blocklist_item("FLECS_TERM_COUNT_MAX")
         .blocklist_item("ECS_PAIR")
         .blocklist_item("ECS_OVERRIDE")
         .blocklist_item("ECS_TOGGLE")
@@ -173,6 +174,20 @@ fn generate_bindings() {
         bindings = bindings.clang_arg("-DFLECS_JOURNAL");
     }
 
+    let term_count_max = if cfg!(feature = "flecs_term_count_64") {
+        64
+    } else if cfg!(feature = "flecs_term_count_32") {
+        32
+    } else {
+        16 // default value
+    };
+
+    let term_arg = format!("-DFLECS_TERM_COUNT_MAX={}", term_count_max);
+
+    bindings = bindings
+        .clang_arg(term_arg)
+        .raw_line(format!("pub const FLECS_TERM_COUNT_MAX: u32 = {};", term_count_max).as_str());
+
     let bindings = bindings.generate().expect("Unable to generate bindings");
 
     let crate_root: PathBuf = env::var("CARGO_MANIFEST_DIR").unwrap().into();
@@ -284,6 +299,19 @@ fn main() {
         {
             build.define("FLECS_KEEP_ASSERTS", None);
         }
+
+        let term_count_max = if cfg!(feature = "flecs_term_count_64") {
+            64
+        } else if cfg!(feature = "flecs_term_count_32") {
+            32
+        } else {
+            16 // default value
+        };
+
+        build.define(
+            "FLECS_TERM_COUNT_MAX",
+            Some(term_count_max.to_string().as_str()),
+        );
 
         build.compile("flecs");
 

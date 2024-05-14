@@ -63,6 +63,11 @@ flecs_disable_build_c = ["flecs_ecs_sys/disable_build_c"]
 # if the intent is to share components between worlds, like in C++. In the future this limitation might be mitigated.
 flecs_multi_world_application = []
 
+# Adjust the maximum number of terms in queries to 32. Default is 16.
+flecs_term_count_32 = ["flecs_ecs_sys/flecs_term_count_32"]
+# Adjust the maximum number of terms in queries to 64. Default is 16.
+flecs_term_count_64 = ["flecs_ecs_sys/flecs_term_count_64"]
+
 # Module support
 flecs_module = ["flecs_ecs_sys/flecs_module"]
 

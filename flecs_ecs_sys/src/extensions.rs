@@ -60,7 +60,6 @@ impl Default for ecs_query_desc_t {
             binding_ctx: std::ptr::null_mut(),
             ctx_free: Default::default(),
             binding_ctx_free: Default::default(),
-            terms: Default::default(),
             expr: std::ptr::null(),
             cache_kind: Default::default(),
             flags: Default::default(),
@@ -68,6 +67,10 @@ impl Default for ecs_query_desc_t {
             order_by_table_callback: Default::default(),
             group_by_callback: Default::default(),
             entity: Default::default(),
+            #[cfg(not(feature = "flecs_term_count_64"))]
+            terms: Default::default(),
+            #[cfg(feature = "flecs_term_count_64")]
+            terms: [Default::default(); 64],
         }
     }
 }
