@@ -713,9 +713,9 @@ impl<'a> EntityView<'a> {
     /// creating/deleting entities where the entity belongs to the same table (which could cause a table grow operation).
     /// In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
     ///
-    /// - `map` assumes when not using `Option` wrapper, that the entity has the component.
+    /// - `get` assumes when not using `Option` wrapper, that the entity has the component.
     /// This will panic if the entity does not have the component. If unsure, use `Option` wrapper or `try_map` function instead.
-    /// `try_map` does not run the callback if the entity does not have the component that isn't marked `Option`.
+    /// `try_get` does not run the callback if the entity does not have the component that isn't marked `Option`.
     ///
     /// # Example
     ///
@@ -772,6 +772,133 @@ impl<'a> EntityView<'a> {
             unsafe { sys::ecs_read_end(record) }
         } else {
             unsafe { sys::ecs_write_end(record) }
+        }
+    }
+
+    /// Clones components and/or relationship(s) from an entity and returns it.
+    /// each component type must be marked `&`. This helps Rust type checker to determine if it's a relationship.
+    /// use `Option` wrapper to indicate if the component is optional.
+    /// use `()` tuple format when getting multiple components.
+    ///
+    /// # Note
+    ///
+    /// - You cannot clone single component tags with this function.
+    /// - You can only get relationships with a payload, so where one is not a tag / not a zst.
+    ///
+    /// # Panics
+    ///
+    /// - `cloned` assumes when not using `Option` wrapper, that the entity has the component.
+    /// This will panic if the entity does not have the component. If unsure, use `Option` wrapper or `try_cloned` function instead.
+    /// `try_cloned` will return a `None` tuple instead if the entity does not have the component that isn't marked `Option`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)] struct Tag;
+    ///
+    /// #[derive(Component, Clone)]
+    /// pub struct Velocity {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
+    ///
+    /// #[derive(Component, Clone)]
+    /// pub struct Position {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let entity = world.entity()
+    ///                   .set(Position { x: 10.0, y: 20.0 })
+    ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
+    ///    
+    /// let pos = entity.cloned::<&Position>();
+    /// assert_eq!(pos.x, 10.0);
+    ///
+    /// let (vel, pos) = entity.cloned::<(Option<&Velocity>, &Position)>();
+    /// assert_eq!(pos.x, 10.0);
+    /// assert!(vel.is_none());
+    ///
+    /// let (tag_pos_rel, pos) = entity.cloned::<(&(Tag,Position), &Position)>();
+    /// assert_eq!(pos.x, 10.0);
+    /// assert_eq!(tag_pos_rel.x, 30.0);
+    /// ```
+    pub fn cloned<T: ClonedTuple>(self) -> T::TupleType<'a> {
+        let world_ptr = self.world.world_ptr_mut();
+
+        let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
+        let tuple_data = T::create_ptrs::<true>(self.world, record);
+        tuple_data.get_tuple()
+    }
+
+    /// Clones components and/or relationship(s) from an entity and returns an Option.
+    /// None if the entity does not have all components that are not marked Option, otherwise Some(tuple).
+    /// each component type must be marked `&`. This helps Rust type checker to determine if it's a relationship.
+    /// use `Option` wrapper to indicate if the component is optional.
+    /// use `()` tuple format when getting multiple components.
+    ///
+    /// # Note
+    ///
+    /// - You cannot clone single component tags with this function.
+    /// - You can only clone relationships with a payload, so where one is not a tag / not a zst.
+    ///
+    /// # Returns
+    ///
+    /// - Some(tuple) if the entity has all components, None otherwise.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)] struct Tag;
+    ///
+    /// #[derive(Component, Clone)]
+    /// pub struct Velocity {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
+    ///
+    /// #[derive(Component, Clone)]
+    /// pub struct Position {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let entity = world.entity()
+    ///                   .set(Position { x: 10.0, y: 20.0 })
+    ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
+    ///    
+    /// let pos = entity.try_cloned::<&Position>();
+    /// assert!(pos.is_some());
+    /// assert_eq!(pos.unwrap().x, 10.0);
+    ///
+    /// let (vel, pos) = entity.try_cloned::<(Option<&Velocity>, &Position)>().unwrap();
+    /// assert_eq!(pos.x, 10.0);
+    /// assert!(vel.is_none());
+    ///
+    /// let (tag_pos_rel, pos) = entity.try_cloned::<(&(Tag,Position), &Position)>().unwrap();
+    /// assert_eq!(pos.x, 10.0);
+    /// assert_eq!(tag_pos_rel.x, 30.0);
+    /// ```
+    pub fn try_cloned<T: ClonedTuple>(self) -> Option<T::TupleType<'a>> {
+        let world_ptr = self.world.world_ptr_mut();
+
+        let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
+        let tuple_data = T::create_ptrs::<false>(self.world, record);
+        //todo we can maybe early return if we don't yet if doesn't have all. Same for try_get
+        let has_all_components = tuple_data.has_all_components();
+
+        if has_all_components {
+            Some(tuple_data.get_tuple())
+        } else {
+            None
         }
     }
 

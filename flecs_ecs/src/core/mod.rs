@@ -1,6 +1,7 @@
 pub mod archetype;
 pub mod builder;
 pub mod c_types;
+pub(crate) mod cloned_tuple;
 pub mod component_registration;
 pub mod components;
 pub mod entity;
@@ -27,6 +28,7 @@ pub(crate) mod world_ctx;
 pub use archetype::*;
 pub use builder::*;
 pub use c_types::*;
+pub(crate) use cloned_tuple::*;
 pub use component_registration::*;
 pub use components::*;
 pub use entity::*;

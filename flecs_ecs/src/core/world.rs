@@ -1156,6 +1156,65 @@ impl World {
         entity.get::<T>(callback);
     }
 
+    /// Clones a singleton component and/or relationship from the world and returns it.
+    /// each component type must be marked `&`. This helps Rust type checker to determine if it's a relationship.
+    /// use `Option` wrapper to indicate if the component is optional.
+    /// use `()` tuple format when getting multiple components.
+    ///
+    /// # Note
+    ///
+    /// - You cannot clone component tags with this function.
+    /// - You can only clone relationships with a payload, so where one is not a tag / not a zst.
+    ///
+    /// # Panics
+    ///
+    /// - This will panic if the world does not have the singleton component that isn't marked `Option`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)] struct Tag;
+    ///
+    /// #[derive(Component, Clone)]
+    /// pub struct Position {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
+    ///
+    /// #[derive(Component, Clone)]
+    /// pub struct Velocity {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// world.set(Position { x: 10.0, y: 20.0 });
+    /// world.set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
+    ///    
+    /// let pos = world.cloned::<&Position>();
+    /// assert_eq!(pos.x, 10.0);
+    ///
+    /// let tag_pos = world.cloned::<&(Tag, Position)>();
+    /// assert_eq!(tag_pos.x, 30.0);
+    ///
+    /// let vel = world.cloned::<Option<&Velocity>>();
+    /// assert!(vel.is_none());
+    ///
+    /// ```
+    pub fn cloned<T: ClonedTupleTypeOperation>(&self) -> T::ActualType
+    where
+        T::OnlyType: FlecsCastType,
+    {
+        let entity = EntityView::new_from(
+            self,
+            <<T::OnlyType as FlecsCastType>::CastType as IntoComponentId>::get_id(self),
+        );
+        entity.cloned::<T>()
+    }
+
     /// gets mutable or immutable component(s) and/or relationship(s) from the world in a callback and return a value.
     /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
     /// use `Option` wrapper to indicate if the component is optional.
