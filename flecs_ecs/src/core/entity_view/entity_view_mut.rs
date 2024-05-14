@@ -767,8 +767,12 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set`
     #[doc(alias = "entity_builder::set")]
-    pub unsafe fn set_id(self, data: impl ComponentId, id: impl IntoId) -> Self {
-        set_helper(self.world.world_ptr_mut(), *self.id, data, *id.into());
+    pub unsafe fn set_id<T>(self, data: T, id: impl IntoId) -> Self
+    where
+        T: ComponentId,
+    {
+        let id = *id.into();
+        set_helper(self.world.world_ptr_mut(), *self.id, data, id);
         self
     }
 

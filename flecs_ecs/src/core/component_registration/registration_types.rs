@@ -14,6 +14,7 @@ pub struct Enum;
 pub struct Struct;
 
 #[derive(Component)]
+#[repr(C)]
 pub enum NoneEnum {
     None = 1,
 }

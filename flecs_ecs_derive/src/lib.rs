@@ -10,6 +10,33 @@ use syn::{
     Data, DeriveInput, Fields, Ident, LitInt, Result,
 };
 
+#[proc_macro_derive(Raptor)]
+pub fn repr_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let has_repr_c = check_repr_c(&input); // Ensure this function correctly checks for #[repr(C)]
+    let name = &input.ident;
+
+    let generated_code = match &input.data {
+        Data::Enum(_) if !has_repr_c => {
+            // Case for enums without #[repr(C)]
+            quote! { impl flecs_ecs::core::EmptyComponent for #name {} }
+        }
+        Data::Enum(_) => {
+            // Case for enums with #[repr(C)]
+            quote! { impl flecs_ecs::core::NotEmptyComponent for #name {} }
+        }
+        _ => {
+            // Error case for non-enum types
+            return quote! {
+                compile_error!("The type is neither a struct nor an enum!");
+            }
+            .into();
+        }
+    };
+
+    generated_code.into()
+}
+
 /// `Component` macro for defining ECS components with optional register attribute when the type is generic over a single T.
 ///
 /// When a type is decorated with `#[derive(Component)]`, several trait implementations are automatically added based on its structure:
@@ -49,6 +76,7 @@ use syn::{
 /// }
 ///
 /// #[derive(Component)]
+/// #[repr(C)]
 /// enum State {
 ///     #[default]
 ///     Idle,
@@ -59,65 +87,38 @@ use syn::{
 #[proc_macro_derive(Component, attributes(register))]
 pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let mut input = parse_macro_input!(input as DeriveInput);
-
     let is_not_generic = input.generics.params.is_empty();
     let has_more_than_one_generic = input.generics.params.len() > 1;
 
     let is_struct = matches!(input.data, Data::Struct(_));
+    let has_repr_c = check_repr_c(&input);
+    let is_tag;
+    let mut generated_impls = vec![];
 
-    let mut has_fields = false;
-    let mut is_tag;
-
-    let common_traits: TokenStream = {
-        match input.data.clone() {
-            Data::Struct(data_struct) => {
-                has_fields = match &data_struct.fields {
-                    Fields::Named(fields) => !fields.named.is_empty(),
-                    Fields::Unnamed(fields) => !fields.unnamed.is_empty(),
-                    Fields::Unit => false,
-                };
-                is_tag = if has_fields {
-                    quote! {
-                        const IS_TAG: bool = false;
-                        type TagType =
-                        flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
-                    }
-                } else {
-                    quote! {
-                        const IS_TAG: bool = true;
-                        type TagType =
-                        flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsATag;
-                    }
-                };
-                impl_cached_component_data_struct(&mut input, has_fields, &is_tag)
-            }
-            Data::Enum(_) => {
-                has_fields = true;
-                impl_cached_component_data_enum(&mut input)
-            }
-            _ => quote! {
-                has_fields = false;
-                is_tag = quote! {};
-                compile_error!("The type is neither a struct nor an enum!");
-            },
+    match input.data.clone() {
+        Data::Struct(data_struct) => {
+            let has_fields = match data_struct.fields {
+                Fields::Named(ref fields) => !fields.named.is_empty(),
+                Fields::Unnamed(ref fields) => !fields.unnamed.is_empty(),
+                Fields::Unit => false,
+            };
+            is_tag = generate_tag_trait(has_fields);
+            generated_impls.push(impl_cached_component_data_struct(
+                &mut input, has_fields, &is_tag,
+            ));
         }
+        Data::Enum(_) => {
+            is_tag = generate_tag_trait(!has_repr_c);
+            if !has_repr_c {
+                generated_impls.push(impl_cached_component_data_struct(&mut input, true, &is_tag));
+            } else {
+                generated_impls.push(impl_cached_component_data_enum(&mut input));
+            }
+        }
+        _ => return quote! { compile_error!("The type is neither a struct nor an enum!"); }.into(),
     };
 
     let name = &input.ident;
-
-    is_tag = if has_fields {
-        quote! {
-            const IS_TAG: bool = false;
-            type TagType =
-            flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
-        }
-    } else {
-        quote! {
-            const IS_TAG: bool = true;
-            type TagType =
-            flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsATag;
-        }
-    };
 
     let attrs = input
         .attrs
@@ -157,10 +158,24 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
         #component_id_trait
 
-        #common_traits
+        #( #generated_impls )*
     };
 
     output.into()
+}
+
+fn generate_tag_trait(has_fields: bool) -> proc_macro2::TokenStream {
+    if has_fields {
+        quote! {
+            const IS_TAG: bool = false;
+            type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
+        }
+    } else {
+        quote! {
+            const IS_TAG: bool = true;
+            type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsATag;
+        }
+    }
 }
 
 // This function generates a series of trait implementations for structs.
@@ -337,7 +352,7 @@ fn generate_variant_match_arm(
     }
 }
 
-fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> TokenStream {
+fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> proc_macro2::TokenStream {
     let is_generic = !ast.generics.params.is_empty();
 
     ast.generics.make_where_clause();
@@ -387,6 +402,7 @@ fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> TokenStream {
         }
 
         fn enum_index(&self) -> usize {
+            const _: () = assert!(std::mem::size_of::<#name>()  == 4, "Enum size is not 4 bytes. For Flecs enum behaviour, the enum size must be 4 bytes");
             match self {
                 #(#variant_index_arms),*
             }
@@ -476,6 +492,33 @@ fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> TokenStream {
 
         #cached_enum_data
     }
+}
+
+fn check_repr_c(input: &syn::DeriveInput) -> bool {
+    for attr in &input.attrs {
+        if attr.path().is_ident("repr") {
+            let result = attr.parse_args_with(|input: ParseStream| {
+                let mut found_repr_c = false;
+                while !input.is_empty() {
+                    let path = input.call(syn::Path::parse_mod_style)?;
+
+                    if path.is_ident("C") {
+                        found_repr_c = true;
+                        break;
+                    }
+                }
+                Ok(found_repr_c)
+            });
+
+            if let Ok(found_repr_c) = result {
+                if found_repr_c {
+                    return true; // Return true immediately if `#[repr(C)]` is found
+                }
+            }
+        }
+    }
+
+    false // Return false if no `#[repr(C)]` is found
 }
 
 struct TypeAttributes(Vec<Ident>);
