@@ -670,11 +670,15 @@ impl<'a> EntityView<'a> {
     pub fn try_get<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>)) -> bool {
         let world_ptr = self.world.world_ptr_mut();
 
+        #[cfg(not(feature = "flecs_unsafe_get"))]
         let record: *mut ecs_record_t = if T::ALL_IMMUTABLE {
             unsafe { sys::ecs_read_begin(world_ptr, *self.id()) as *mut ecs_record_t }
         } else {
             unsafe { sys::ecs_write_begin(world_ptr, *self.id()) }
         };
+
+        #[cfg(feature = "flecs_unsafe_get")]
+        let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
 
         let tuple_data = T::create_ptrs::<false>(self.world, record);
         let has_all_components = tuple_data.has_all_components();
@@ -684,6 +688,7 @@ impl<'a> EntityView<'a> {
             callback(tuple);
         }
 
+        #[cfg(not(feature = "flecs_unsafe_get"))]
         if T::ALL_IMMUTABLE {
             unsafe { sys::ecs_read_end(record) }
         } else {
@@ -757,17 +762,22 @@ impl<'a> EntityView<'a> {
     pub fn get<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>)) {
         let world_ptr = self.world.world_ptr_mut();
 
+        #[cfg(not(feature = "flecs_unsafe_get"))]
         let record: *mut ecs_record_t = if T::ALL_IMMUTABLE {
-            unsafe { sys::ecs_read_begin(world_ptr, *self.id()) as *mut ecs_record_t }
+            unsafe { sys::ecs_read_begin(world_ptr, *self.id) as *mut ecs_record_t }
         } else {
-            unsafe { sys::ecs_write_begin(world_ptr, *self.id()) }
+            unsafe { sys::ecs_write_begin(world_ptr, *self.id) }
         };
+
+        #[cfg(feature = "flecs_unsafe_get")]
+        let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
 
         let tuple_data = T::create_ptrs::<true>(self.world, record);
         let tuple = tuple_data.get_tuple();
 
         callback(tuple);
 
+        #[cfg(not(feature = "flecs_unsafe_get"))]
         if T::ALL_IMMUTABLE {
             unsafe { sys::ecs_read_end(record) }
         } else {
@@ -985,11 +995,15 @@ impl<'a> EntityView<'a> {
     ) -> Option<Return> {
         let world_ptr = self.world.world_ptr_mut();
 
+        #[cfg(not(feature = "flecs_unsafe_get"))]
         let record: *mut ecs_record_t = if T::ALL_IMMUTABLE {
             unsafe { sys::ecs_read_begin(world_ptr, *self.id()) as *mut ecs_record_t }
         } else {
             unsafe { sys::ecs_write_begin(world_ptr, *self.id()) }
         };
+
+        #[cfg(feature = "flecs_unsafe_get")]
+        let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
 
         let tuple_data = T::create_ptrs::<false>(self.world, record);
         let has_all_components = tuple_data.has_all_components();
@@ -1001,6 +1015,7 @@ impl<'a> EntityView<'a> {
             None
         };
 
+        #[cfg(not(feature = "flecs_unsafe_get"))]
         if T::ALL_IMMUTABLE {
             unsafe { sys::ecs_read_end(record) }
         } else {
@@ -1091,17 +1106,22 @@ impl<'a> EntityView<'a> {
     ) -> Return {
         let world_ptr = self.world.world_ptr_mut();
 
+        #[cfg(not(feature = "flecs_unsafe_get"))]
         let record: *mut ecs_record_t = if T::ALL_IMMUTABLE {
             unsafe { sys::ecs_read_begin(world_ptr, *self.id()) as *mut ecs_record_t }
         } else {
             unsafe { sys::ecs_write_begin(world_ptr, *self.id()) }
         };
 
+        #[cfg(feature = "flecs_unsafe_get")]
+        let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
+
         let tuple_data = T::create_ptrs::<true>(self.world, record);
         let tuple = tuple_data.get_tuple();
 
         let ret = callback(tuple);
 
+        #[cfg(not(feature = "flecs_unsafe_get"))]
         if T::ALL_IMMUTABLE {
             unsafe { sys::ecs_read_end(record) }
         } else {
