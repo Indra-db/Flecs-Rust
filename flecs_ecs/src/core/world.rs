@@ -2746,11 +2746,25 @@ impl World {
         EntityView::new_from(self, T::get_id(self))
     }
 
-    /// Create an entity that's associated with a name
+    /// Create an entity that's associated with a name.
+    /// The name must be a valid C str.
     ///
-    /// # Arguments
+    /// Named entities can be looked up with the lookup functions. Entity names
+    /// may be scoped, where each element in the name is separated by "::".
+    /// For example: "`Foo::Bar`". If parts of the hierarchy in the scoped name do
+    /// not yet exist, they will be automatically created.
     ///
-    /// * `name` - The name to use for the new entity.
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// let entity = world.entity_named(c"Foo");
+    /// assert_eq!(entity.get_name(), Some("Foo"));
+    ///
+    /// ```
     ///
     /// # See also
     ///
@@ -2768,6 +2782,28 @@ impl World {
     #[doc(alias = "world::entity")]
     pub fn entity(&self) -> EntityView {
         EntityView::new(self)
+    }
+
+    /// Create entity with id 0.
+    /// This function is useful when the API must provide an entity that
+    /// belongs to a world, but the entity id is 0.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    /// let entity = world.entity_null();
+    /// assert_eq!(entity.id(), 0);
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::entity`
+    #[doc(alias = "world::entity")]
+    pub fn entity_null(&self) -> EntityView {
+        EntityView::new_null(self)
     }
 
     /// Create a new entity with the provided id.

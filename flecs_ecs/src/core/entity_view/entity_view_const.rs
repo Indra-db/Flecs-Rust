@@ -64,7 +64,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity::entity`
     #[doc(alias = "entity::entity")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new(world: impl IntoWorld<'a>) -> Self {
+    pub(crate) fn new(world: impl IntoWorld<'a>) -> Self {
         let world_ptr = world.world_ptr_mut();
         let id = if unsafe { sys::ecs_get_scope(world_ptr) == 0 && ecs_get_with(world_ptr) == 0 } {
             unsafe { sys::ecs_new(world_ptr) }
@@ -80,20 +80,11 @@ impl<'a> EntityView<'a> {
 
     /// Creates a wrapper around an existing entity / id.
     ///
-    /// # Arguments
-    ///
-    /// * `world` - The world the entity belongs to. If strictly only a storage is needed, this can be None.
-    /// * `id` - The entity id.
-    ///
-    /// # Safety
-    ///
-    /// The world must be not be None if you want to do operations on the entity.
-    ///
     /// # See also
     ///
     /// * C++ API: `entity::entity`
     #[doc(alias = "entity::entity")]
-    pub fn new_from(world: impl IntoWorld<'a>, id: impl Into<Entity>) -> Self {
+    pub(crate) fn new_from(world: impl IntoWorld<'a>, id: impl Into<Entity>) -> Self {
         Self {
             world: world.world(),
             id: id.into(),
@@ -107,16 +98,11 @@ impl<'a> EntityView<'a> {
     /// For example: "`Foo::Bar`". If parts of the hierarchy in the scoped name do
     /// not yet exist, they will be automatically created.
     ///
-    /// # Arguments
-    ///
-    /// - `world`: The world in which to create the entity.
-    /// - `name`: The entity name.
-    ///
     /// # See also
     ///
     /// * C++ API: `entity::entity`
     #[doc(alias = "entity::entity")]
-    pub fn new_named(world: impl IntoWorld<'a>, name: &CStr) -> Self {
+    pub(crate) fn new_named(world: impl IntoWorld<'a>, name: &CStr) -> Self {
         let desc = sys::ecs_entity_desc_t {
             name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
@@ -145,7 +131,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::null`
     #[doc(alias = "entity::null")]
-    pub fn new_null(world: &'a World) -> EntityView<'a> {
+    pub(crate) fn new_null(world: &'a World) -> EntityView<'a> {
         Self::new_from(world, 0)
     }
 
@@ -155,6 +141,27 @@ impl<'a> EntityView<'a> {
     }
 
     /// checks if entity is valid
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// let entity = world.entity();
+    /// let entity_rust_copy = entity; //this is a rust copy, not an entity clone, these have the same id.
+    /// let entity_cloned = entity.duplicate(false); //this is an entity clone, these have different ids.
+    ///
+    /// assert!(entity.is_valid());
+    /// assert!(entity_rust_copy.is_valid());
+    /// assert!(entity_cloned.is_valid());
+    ///
+    /// entity.destruct(); //takes self, entity becomes not useable
+    ///
+    /// assert!(!entity_rust_copy.is_valid());
+    /// assert!(entity_cloned.is_valid());
+    /// ```
     ///
     /// # See also
     ///
