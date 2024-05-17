@@ -687,7 +687,7 @@ impl<'a> EntityView<'a> {
         #[cfg(feature = "flecs_unsafe_get")]
         let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
 
-        let tuple_data = T::create_ptrs::<false>(self.world, record);
+        let tuple_data = T::create_ptrs::<false>(self.world, self.id, record);
         let has_all_components = tuple_data.has_all_components();
 
         if has_all_components {
@@ -779,7 +779,7 @@ impl<'a> EntityView<'a> {
         #[cfg(feature = "flecs_unsafe_get")]
         let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
 
-        let tuple_data = T::create_ptrs::<true>(self.world, record);
+        let tuple_data = T::create_ptrs::<true>(self.world, self.id, record);
         let tuple = tuple_data.get_tuple();
 
         callback(tuple);
@@ -1012,7 +1012,7 @@ impl<'a> EntityView<'a> {
         #[cfg(feature = "flecs_unsafe_get")]
         let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
 
-        let tuple_data = T::create_ptrs::<false>(self.world, record);
+        let tuple_data = T::create_ptrs::<false>(self.world, self.id, record);
         let has_all_components = tuple_data.has_all_components();
 
         let ret = if has_all_components {
@@ -1123,7 +1123,7 @@ impl<'a> EntityView<'a> {
         #[cfg(feature = "flecs_unsafe_get")]
         let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
 
-        let tuple_data = T::create_ptrs::<true>(self.world, record);
+        let tuple_data = T::create_ptrs::<true>(self.world, self.id, record);
         let tuple = tuple_data.get_tuple();
 
         let ret = callback(tuple);

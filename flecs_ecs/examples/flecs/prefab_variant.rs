@@ -32,7 +32,6 @@ pub struct ImpulseSpeed {
 // by adding or overriding components on the variant.
 
 #[test]
-#[ignore = "is a hierarchy traversal not supported with new get callback"]
 fn main() {
     let world = World::new();
 

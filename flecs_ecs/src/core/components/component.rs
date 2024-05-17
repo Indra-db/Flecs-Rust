@@ -67,6 +67,18 @@ impl<'a, T: ComponentId> Component<'a, T> {
         }
     }
 
+    /// Add the trait to mark the component inheritable `(flecs::OnInstantiate, flecs::Inherit)`
+    pub fn inheritable(&self) {
+        self.entity
+            .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+    }
+
+    /// Add the trait to mark the component not inheritable `(flecs::OnInstantiate, flecs::NoInherit)`
+    pub fn not_inheritable(&self) {
+        self.entity
+            .add_id((flecs::OnInstantiate::ID, flecs::DontInherit::ID));
+    }
+
     /// Return the component as an entity
     ///
     /// # See also

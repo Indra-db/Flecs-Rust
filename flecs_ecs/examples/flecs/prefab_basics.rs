@@ -26,12 +26,14 @@ pub struct Defence {
 }
 
 #[test]
-#[ignore = "is a hierarchy traversal not supported with new get callback"]
 fn main() {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
     world.import::<Snap>();
+
+    // Add the traits to mark the component to be inherited
+    world.component::<Defence>().inheritable();
 
     // Create a prefab with Position and Velocity components
     let spaceship = world.prefab_named(c"Prefab").set(Defence { value: 50.0 });

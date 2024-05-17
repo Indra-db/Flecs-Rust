@@ -32,12 +32,17 @@ pub struct ImpulseSpeed {
 pub struct HasFlt;
 
 #[test]
-#[ignore = "is a hierarchy traversal not supported with new get callback"]
 fn main() {
     let world = World::new();
 
     //ignore snap in example, it's for snapshot testing
     world.import::<Snap>();
+
+    // Add the traits to mark the components to be inherited
+    world.component::<Defence>().inheritable();
+    world.component::<ImpulseSpeed>().inheritable();
+    world.component::<FreightCapacity>().inheritable();
+    world.component::<HasFlt>().inheritable();
 
     // Create a prefab hierarchy.
     let spaceship = world

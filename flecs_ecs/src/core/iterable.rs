@@ -412,7 +412,7 @@ where
                     (unsafe { (*ti).size == 0 } || !unsafe { sys::ecs_has_id(filter.world_ptr(), id, *flecs::Union)})
                 } else { true }
             } else { true }
-        }, FlecsErrorCode::InvalidParameter, "use `with()` method to add union relationship");
+        }, FlecsErrorCode::InvalidParameter, "use `with` method to add union relationship");
         
         filter.with_id(id);
         let term = filter.current_term_mut();

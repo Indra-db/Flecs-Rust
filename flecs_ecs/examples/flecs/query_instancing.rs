@@ -21,10 +21,8 @@ fn main() {
     //ignore snap in example, it's for snapshot testing
     world.import::<Snap>();
 
-    // Register Velocity as inheritable, a shared component
-    world
-        .component::<Velocity>()
-        .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+    // Add the traits to mark the component to be inherited
+    world.component::<Velocity>().inheritable();
 
     // Create a query for Position, Velocity. We'll create a few entities that
     // have Velocity as owned and shared component.

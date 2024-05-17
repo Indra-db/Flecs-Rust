@@ -28,7 +28,6 @@ struct Beam;
 struct Railgun;
 
 #[test]
-#[ignore = "is a hierarchy traversal not supported with new get callback"]
 fn main() {
     let world = World::new();
 

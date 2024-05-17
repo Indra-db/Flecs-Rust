@@ -17,6 +17,7 @@ pub struct ComponentsData<T: GetTuple, const LEN: usize> {
 pub trait GetComponentPointers<T: GetTuple> {
     fn new<'a, const SHOULD_PANIC: bool>(
         world: impl IntoWorld<'a>,
+        entity: Entity,
         record: *const ecs_record_t,
     ) -> Self;
 
@@ -28,12 +29,17 @@ pub trait GetComponentPointers<T: GetTuple> {
 impl<T: GetTuple, const LEN: usize> GetComponentPointers<T> for ComponentsData<T, LEN> {
     fn new<'a, const SHOULD_PANIC: bool>(
         world: impl IntoWorld<'a>,
+        entity: Entity,
         record: *const ecs_record_t,
     ) -> Self {
         let mut array_components = [std::ptr::null::<c_void>() as *mut c_void; LEN];
 
-        let has_all_components =
-            T::populate_array_ptrs::<SHOULD_PANIC>(world, record, &mut array_components[..]);
+        let has_all_components = T::populate_array_ptrs::<SHOULD_PANIC>(
+            world,
+            entity,
+            record,
+            &mut array_components[..],
+        );
 
         Self {
             array_components,
@@ -145,13 +151,15 @@ pub trait GetTuple: Sized {
 
     fn create_ptrs<'a, const SHOULD_PANIC: bool>(
         world: impl IntoWorld<'a>,
+        entity: Entity,
         record: *const ecs_record_t,
     ) -> Self::Pointers {
-        Self::Pointers::new::<'a, SHOULD_PANIC>(world, record)
+        Self::Pointers::new::<'a, SHOULD_PANIC>(world, entity, record)
     }
 
     fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
         world: impl IntoWorld<'a>,
+        entity: Entity,
         record: *const ecs_record_t,
         components: &mut [*mut c_void],
     ) -> bool;
@@ -173,35 +181,40 @@ where
     const ALL_IMMUTABLE: bool = A::IS_IMMUTABLE;
 
     fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
-        world: impl IntoWorld<'a>, record: *const ecs_record_t, components: &mut [*mut c_void]
+        world: impl IntoWorld<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void]
     ) -> bool {
         let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut WorldT };
         let table = unsafe { (*record).table };
+        let entity = *entity;
+        let id = <A::OnlyType as IntoComponentId>::get_id(world);
         let mut has_all_components = true;
 
-        let id = unsafe { sys::ecs_table_get_column_index(world_ptr, table, 
-            <A::OnlyType as IntoComponentId>::get_id(world)) };
+       let component_ptr =  if A::IS_IMMUTABLE { 
+         unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
+        } else {
+            unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,table,id)}
+        };
 
-            if id == -1 {
-                components[0] = std::ptr::null_mut();
-                has_all_components = false;
-                if SHOULD_PANIC && !A::IS_OPTION {
-                    ecs_assert!(false, FlecsErrorCode::OperationFailed,
-                        "Component `{}` not found on `EntityView::get` operation 
-                        with parameters: `{}`. 
-                        Use `try_get` variant to avoid assert/panicking if you want to handle the error 
-                        or use `Option<{}> instead to handle individual cases.",
-                        std::any::type_name::<A::OnlyType>(), std::any::type_name::<Self>(), std::any::type_name::<A::ActualType<'a>>());
-                    panic!("Component `{}` not found on `EntityView::get` operation 
+        if component_ptr.is_null() {
+            components[0] = std::ptr::null_mut();
+            has_all_components = false;
+            if SHOULD_PANIC && !A::IS_OPTION {
+                ecs_assert!(false, FlecsErrorCode::OperationFailed,
+                    "Component `{}` not found on `EntityView::get` operation 
                     with parameters: `{}`. 
-                    Use `try_get` variant to avoid assert/panicking if 
-                    you want to handle the error or use `Option<{}> 
-                    instead to handle individual cases.",
+                    Use `try_get` variant to avoid assert/panicking if you want to handle the error 
+                    or use `Option<{}> instead to handle individual cases.",
                     std::any::type_name::<A::OnlyType>(), std::any::type_name::<Self>(), std::any::type_name::<A::ActualType<'a>>());
-                }
-            } else { 
-                components[0] = unsafe { sys::ecs_record_get_column(record, id, 0) };
-            } 
+                panic!("Component `{}` not found on `EntityView::get` operation 
+                with parameters: `{}`. 
+                Use `try_get` variant to avoid assert/panicking if 
+                you want to handle the error or use `Option<{}> 
+                instead to handle individual cases.",
+                std::any::type_name::<A::OnlyType>(), std::any::type_name::<Self>(), std::any::type_name::<A::ActualType<'a>>());
+            }
+        } else { 
+            components[0] = component_ptr;
+        } 
         
 
         has_all_components
@@ -267,22 +280,27 @@ macro_rules! impl_get_tuple {
 
             #[allow(unused)]
             fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
-                world: impl IntoWorld<'a>, record: *const ecs_record_t, components: &mut [*mut c_void]
+                world: impl IntoWorld<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void]
             ) -> bool {
 
                 let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut WorldT };
                 let world_ref = world.world();
                 let table = unsafe { (*record).table };
+                let entity = *entity;
                 let mut index : usize = 0;
                 let mut has_all_components = true;
 
                 $(
-                    let column_index = unsafe { sys::ecs_table_get_column_index(world_ptr, table,
-                        <$t::OnlyType as IntoComponentId>::get_id(world_ref)) };
+                    let id = <$t::OnlyType as IntoComponentId>::get_id(world_ref);
 
+                    let component_ptr =  if $t::IS_IMMUTABLE {
+                            unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table, id) }
+                        } else {
+                            unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,table, id)}
+                        };
 
-                    if column_index != -1 {
-                        components[index] = unsafe { sys::ecs_record_get_column(record, column_index, 0) };
+                    if !component_ptr.is_null() {
+                        components[index] = component_ptr;
                     } else {
                         components[index] = std::ptr::null_mut();
                         if !$t::IS_OPTION {

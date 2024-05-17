@@ -7539,6 +7539,25 @@ extern "C" {
         type_: ecs_entity_t,
     ) -> *const ecs_member_t;
 }
+extern "C" {
+    #[doc = "FLECS_API\n ecs_record_w_id_t ecs_new_w_record(\n     ecs_world_t *world);"]
+    pub fn ecs_rust_mut_get_id(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+        record: *const ecs_record_t,
+        table: *mut ecs_table_t,
+        id: ecs_id_t,
+    ) -> *mut ::std::os::raw::c_void;
+}
+extern "C" {
+    pub fn ecs_rust_get_id(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+        record: *const ecs_record_t,
+        table: *mut ecs_table_t,
+        id: ecs_id_t,
+    ) -> *mut ::std::os::raw::c_void;
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_event_id_record_t {

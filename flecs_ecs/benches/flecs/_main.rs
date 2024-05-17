@@ -49,15 +49,15 @@ fn ecs_default_criterion() -> Criterion {
 }
 
 criterion_main!(
-    has_bench,
+    //has_bench,
     //get_bench,
-    set_bench,
-    g_add_remove_bench,
+    // set_bench,
+    // g_add_remove_bench,
     g_create_delete_entities_bench,
-    hooks_bench,
-    observers_bench,
-    entity_bench,
-    event_bench
+    // hooks_bench,
+    // observers_bench,
+    // entity_bench,
+    // event_bench
 );
 
 criterion_group!(
