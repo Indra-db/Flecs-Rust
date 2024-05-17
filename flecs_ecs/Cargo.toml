@@ -85,9 +85,6 @@ flecs_module = ["flecs_ecs_sys/flecs_module"]
 # ECS data definition format
 flecs_script = ["flecs_ecs_sys/flecs_script", "flecs_meta", "flecs_doc", "flecs_module"]
 
-# Constraint solver for advanced queries
-flecs_rules = ["flecs_ecs_sys/flecs_rules"]
-
 # Snapshot & restore ECS data
 flecs_snapshot = ["flecs_ecs_sys/flecs_snapshot"]
 
@@ -101,7 +98,7 @@ flecs_monitor = ["flecs_ecs_sys/flecs_monitor","flecs_stats", "flecs_system", "f
 flecs_metrics = ["flecs_ecs_sys/flecs_metrics", "flecs_meta", "flecs_units", "flecs_pipeline"]
 
 # Monitor conditions for errors
-flecs_alerts = ["flecs_ecs_sys/flecs_alerts", "flecs_rules", "flecs_pipeline"]
+flecs_alerts = ["flecs_ecs_sys/flecs_alerts", "flecs_pipeline"]
 
 # System support
 flecs_system = ["flecs_ecs_sys/flecs_system", "flecs_module"]
@@ -137,7 +134,7 @@ flecs_os_api_impl = ["flecs_ecs_sys/flecs_os_api_impl"]
 flecs_http = ["flecs_ecs_sys/flecs_http"]
 
 # REST API for querying application data
-flecs_rest = ["flecs_ecs_sys/flecs_rest", "flecs_http", "flecs_json", "flecs_rules", "flecs_pipeline"]
+flecs_rest = ["flecs_ecs_sys/flecs_rest", "flecs_http", "flecs_json", "flecs_pipeline"]
 
 # Journaling addon (disabled by default)
 flecs_journal = ["flecs_ecs_sys/flecs_journal","flecs_log"]
@@ -146,7 +143,6 @@ default = [
     "flecs_regenerate_binding_c",
     "flecs_module",
     "flecs_script",
-    "flecs_rules",
     "flecs_snapshot",
     "flecs_stats",
     "flecs_monitor",
@@ -272,42 +268,34 @@ harness = false
 # [[example]]
 # name = "system_basics"
 # path = "examples/flecs/system_basics.rs"
-# required-features = ["flecs_system"]
 
 # [[example]]
 # name = "query_sorting"
 # path = "examples/flecs/query_sorting.rs"
-# required-features = ["flecs_system"]
 
 # [[example]]
 # name = "rules_basics"
 # path = "examples/flecs/rules_basics.rs"
-# required-features = ["flecs_rules"]
 
 # [[example]]
 # name = "rules_component_inheritance"
 # path = "examples/flecs/rules_component_inheritance.rs"
-# required-features = ["flecs_rules"]
 
 # [[example]]
 # name = "rules_cyclic_variables"
 # path = "examples/flecs/rules_cyclic_variables.rs"
-# required-features = ["flecs_rules"]
 
 # [[example]]
 # name = "rules_facts"
 # path = "examples/flecs/rules_facts.rs"
-# required-features = ["flecs_rules"]
 
 # [[example]]
 # name = "rules_setting_variables"
 # path = "examples/flecs/rules_setting_variables.rs"
-# required-features = ["flecs_rules"]
 
 # [[example]]
 # name = "rules_transitive_queries"
 # path = "examples/flecs/rules_transitive_queries.rs"
-# required-features = ["flecs_rules"]
 
 [[example]]
 name = "examples"

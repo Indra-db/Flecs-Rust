@@ -929,6 +929,10 @@ fn query_builder_isa_superset_term() {
     structs!();
     let world = World::new();
 
+    world
+        .component::<Other>()
+        .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+
     let q = world
         .query::<&SelfRef>()
         .with::<&Other>()
@@ -967,6 +971,10 @@ fn query_builder_isa_superset_term() {
 fn query_builder_isa_self_superset_term() {
     structs!();
     let world = World::new();
+
+    world
+        .component::<Other>()
+        .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
 
     let q = world
         .query::<&SelfRef>()
@@ -1113,6 +1121,10 @@ fn query_builder_isa_superset_term_w_each() {
     structs!();
     let world = World::new();
 
+    world
+        .component::<Other>()
+        .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+
     let q = world
         .query::<(&SelfRef, &Other)>()
         .term_at(1)
@@ -1145,6 +1157,10 @@ fn query_builder_isa_superset_term_w_each() {
 fn query_builder_isa_self_superset_term_w_each() {
     structs!();
     let world = World::new();
+
+    world
+        .component::<Other>()
+        .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
 
     let q = world
         .query::<(&SelfRef, &Other)>()
@@ -1255,6 +1271,10 @@ fn query_builder_isa_superset_shortcut() {
     structs!();
     let world = World::new();
 
+    world
+        .component::<Other>()
+        .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+
     let q = world
         .query::<(&SelfRef, &Other)>()
         .term_at(1)
@@ -1286,6 +1306,10 @@ fn query_builder_isa_superset_shortcut() {
 fn query_builder_isa_superset_shortcut_w_self() {
     structs!();
     let world = World::new();
+
+    world
+        .component::<Other>()
+        .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
 
     let q = world
         .query::<(&SelfRef, &Other)>()
@@ -2550,7 +2574,10 @@ fn query_builder_cascade() {
     structs!();
     let world = World::new();
 
-    let tag = world.entity();
+    let tag = world
+        .entity()
+        .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+
     let foo_ = world.entity();
     let bar = world.entity();
 
@@ -2608,7 +2635,10 @@ fn query_builder_cascade_desc() {
     structs!();
     let world = World::new();
 
-    let tag = world.entity();
+    let tag = world
+        .entity()
+        .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+
     let foo_ = world.entity();
     let bar = world.entity();
 

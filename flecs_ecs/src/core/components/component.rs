@@ -255,7 +255,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
-        let ctx: *mut ComponentBindingCtx = (*iter).binding_ctx as *mut _;
+        let ctx: *mut ComponentBindingCtx = (*iter).callback_ctx as *mut _;
         let on_add = (*ctx).on_add.unwrap();
         let on_add = on_add as *mut Func;
         let on_add = &mut *on_add;
@@ -270,7 +270,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
-        let ctx: *mut ComponentBindingCtx = unsafe { (*iter).binding_ctx as *mut _ };
+        let ctx: *mut ComponentBindingCtx = unsafe { (*iter).callback_ctx as *mut _ };
         let on_set = unsafe { (*ctx).on_set.unwrap() };
         let on_set = on_set as *mut Func;
         let on_set = unsafe { &mut *on_set };
@@ -285,7 +285,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
-        let ctx: *mut ComponentBindingCtx = unsafe { (*iter).binding_ctx as *mut _ };
+        let ctx: *mut ComponentBindingCtx = unsafe { (*iter).callback_ctx as *mut _ };
         let on_remove = unsafe { (*ctx).on_remove.unwrap() };
         let on_remove = on_remove as *mut Func;
         let on_remove = unsafe { &mut *on_remove };

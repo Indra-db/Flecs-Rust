@@ -79,7 +79,7 @@ impl<'a> Observer<'a> {
     /// * C++ API: `observer::ctx`
     #[doc(alias = "observer::ctx")]
     pub fn context(&self) -> *mut c_void {
-        unsafe { sys::ecs_observer_get_ctx(self.world.world_ptr_mut(), *self.id) }
+        unsafe { (*sys::ecs_observer_get(self.world.world_ptr_mut(), *self.id)).ctx }
     }
 
     /// Get the query for the observer
@@ -90,11 +90,9 @@ impl<'a> Observer<'a> {
     #[doc(alias = "observer::query")]
     pub fn query(&mut self) -> Query<()> {
         unsafe {
-            Query::<()>::new_from(NonNull::new_unchecked(sys::ecs_observer_get_query(
-                self.world_ptr(),
-                *self.entity.id(),
-            )
-                as *mut sys::ecs_query_t))
+            Query::<()>::new_from(NonNull::new_unchecked(
+                (*sys::ecs_observer_get(self.world_ptr(), *self.entity.id())).query,
+            ))
         }
     }
 }

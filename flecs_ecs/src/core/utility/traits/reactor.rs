@@ -135,7 +135,7 @@ macro_rules! implement_reactor_api {
             T: Iterable,
         {
             fn set_binding_context(&mut self, binding_ctx: *mut c_void) -> &mut Self {
-                self.desc.binding_ctx = binding_ctx;
+                self.desc.callback_ctx = binding_ctx;
                 self
             }
 
@@ -143,12 +143,12 @@ macro_rules! implement_reactor_api {
                 &mut self,
                 binding_ctx_free: flecs_ecs_sys::ecs_ctx_free_t,
             ) -> &mut Self {
-                self.desc.binding_ctx_free = binding_ctx_free;
+                self.desc.callback_ctx_free = binding_ctx_free;
                 self
             }
 
             fn desc_binding_context(&self) -> *mut c_void {
-                self.desc.binding_ctx
+                self.desc.callback_ctx
             }
 
             fn set_desc_callback(
@@ -188,7 +188,7 @@ macro_rules! implement_reactor_api {
             P: ComponentId,
         {
             fn set_binding_context(&mut self, binding_ctx: *mut c_void) -> &mut Self {
-                self.desc.binding_ctx = binding_ctx;
+                self.desc.callback_ctx = binding_ctx;
                 self
             }
 
@@ -196,12 +196,12 @@ macro_rules! implement_reactor_api {
                 &mut self,
                 binding_ctx_free: flecs_ecs_sys::ecs_ctx_free_t,
             ) -> &mut Self {
-                self.desc.binding_ctx_free = binding_ctx_free;
+                self.desc.callback_ctx_free = binding_ctx_free;
                 self
             }
 
             fn desc_binding_context(&self) -> *mut c_void {
-                self.desc.binding_ctx
+                self.desc.callback_ctx
             }
 
             fn set_desc_callback(

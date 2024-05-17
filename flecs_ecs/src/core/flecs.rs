@@ -106,14 +106,17 @@ pub mod query_flags {
     create_pre_registered_component!(TableOnly, ECS_QUERY_TABLE_ONLY);
 }
 
-// Indicates that the id is a pair.
-create_pre_registered_component!(Pair, ECS_PAIR);
-// Automatically override component when it is inherited
-create_pre_registered_component!(Override, ECS_OVERRIDE);
-// Adds bitset to storage which allows component to be enabled/disabled
-create_pre_registered_component!(Toggle, ECS_TOGGLE);
-// Include all components from entity to which AND is applied
-create_pre_registered_component!(And, ECS_AND);
+pub mod id_flags {
+    use super::*;
+    // Indicates that the id is a pair.
+    create_pre_registered_component!(Pair, ECS_PAIR);
+    // Automatically override component when it is inherited
+    create_pre_registered_component!(AutoOverride, ECS_AUTO_OVERRIDE);
+    // Adds bitset to storage which allows component to be enabled/disabled
+    create_pre_registered_component!(Toggle, ECS_TOGGLE);
+    // Include all components from entity to which AND is applied
+    create_pre_registered_component!(And, ECS_AND);
+}
 
 // Builtin component ids
 create_pre_registered_component!(EcsComponent, ECS_COMPONENT);
@@ -139,7 +142,7 @@ create_pre_registered_component!(Flag, ECS_FLAG);
 create_pre_registered_component!(Monitor, ECS_MONITOR);
 create_pre_registered_component!(Empty, ECS_EMPTY);
 
-// Relationship properties
+// Component traits
 create_pre_registered_component!(Wildcard, ECS_WILDCARD);
 create_pre_registered_component!(Any, ECS_ANY);
 create_pre_registered_component!(This_, ECS_THIS);
@@ -149,7 +152,6 @@ create_pre_registered_component!(Reflexive, ECS_REFLEXIVE);
 create_pre_registered_component!(Symmetric, ECS_SYMMETRIC);
 create_pre_registered_component!(Final, ECS_FINAL);
 create_pre_registered_component!(DontInherit, ECS_DONT_INHERIT);
-create_pre_registered_component!(AlwaysOverride, ECS_ALWAYS_OVERRIDE);
 create_pre_registered_component!(PairIsTag, ECS_PAIR_IS_TAG);
 create_pre_registered_component!(Exclusive, ECS_EXCLUSIVE);
 create_pre_registered_component!(Acyclic, ECS_ACYCLIC);
@@ -157,6 +159,18 @@ create_pre_registered_component!(Traversable, ECS_TRAVERSABLE);
 create_pre_registered_component!(With, ECS_WITH);
 create_pre_registered_component!(OneOf, ECS_ONE_OF);
 create_pre_registered_component!(CanToggle, ECS_CAN_TOGGLE);
+
+// OnInstantiate traits
+create_pre_registered_component!(OnInstantiate, ECS_ON_INSTANTIATE);
+create_pre_registered_component!(Override, ECS_OVERRIDE);
+create_pre_registered_component!(Inherit, ECS_INHERIT);
+
+// OnDelete/OnDeleteTarget traits
+create_pre_registered_component!(OnDelete, ECS_ON_DELETE);
+create_pre_registered_component!(OnDeleteTarget, ECS_ON_DELETE_TARGET);
+create_pre_registered_component!(Remove, ECS_REMOVE);
+create_pre_registered_component!(Delete, ECS_DELETE);
+create_pre_registered_component!(Panic, ECS_PANIC);
 
 // Builtin relationships
 create_pre_registered_component!(ChildOf, ECS_CHILD_OF);
@@ -174,8 +188,6 @@ create_pre_registered_component!(OnAdd, ECS_ON_ADD);
 create_pre_registered_component!(OnRemove, ECS_ON_REMOVE);
 create_pre_registered_component!(OnSet, ECS_ON_SET);
 create_pre_registered_component!(Unset, ECS_UNSET);
-create_pre_registered_component!(OnDelete, ECS_ON_DELETE);
-create_pre_registered_component!(OnDeleteTarget, ECS_ON_DELETE_TARGET);
 create_pre_registered_component!(OnTableCreate, ECS_ON_TABLE_CREATE);
 create_pre_registered_component!(OnTableDelete, ECS_ON_TABLE_DELETE);
 create_pre_registered_component!(OnTableEmpty, ECS_ON_TABLE_EMPTY);
@@ -194,10 +206,8 @@ pub mod timers {
     create_pre_registered_component!(RateFilter, ECS_RATE_FILTER);
 }
 
-// Actions
-create_pre_registered_component!(Remove, ECS_REMOVE);
-create_pre_registered_component!(Delete, ECS_DELETE);
-create_pre_registered_component!(Panic, ECS_PANIC);
+create_pre_registered_component!(Sparse, ECS_SPARSE);
+create_pre_registered_component!(Union, ECS_UNION);
 
 // Builtin predicate ids (used by rule engine)
 create_pre_registered_component!(PredEq, ECS_PRED_EQ);

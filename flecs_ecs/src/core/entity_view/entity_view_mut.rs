@@ -4,8 +4,6 @@ use flecs_ecs::core::*;
 
 use crate::sys;
 
-//TODO add multi component inseration (entity_builder::insert)
-
 // functions in here match most of the functions in the c++ entity and entity_builder class
 impl<'a> EntityView<'a> {
     /// Add an id to an entity.
@@ -576,8 +574,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn override_id(self, id: impl IntoId) -> Self {
-        self.add_id(ECS_OVERRIDE | id.into())
+    pub fn auto_override_id(self, id: impl IntoId) -> Self {
+        self.add_id(ECS_AUTO_OVERRIDE | id.into())
     }
 
     /// Mark component for auto-overriding.
@@ -590,9 +588,9 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn override_type<T: IntoComponentId>(self) -> Self {
+    pub fn auto_override<T: IntoComponentId>(self) -> Self {
         let world = self.world;
-        self.override_id(T::get_id(world))
+        self.auto_override_id(T::get_id(world))
     }
 
     /// Mark pair for auto-overriding with a given second ID.
@@ -609,13 +607,13 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn override_first<First: ComponentId + NotEmptyComponent>(
+    pub fn auto_override_first<First: ComponentId + NotEmptyComponent>(
         self,
         second: impl Into<Entity>,
     ) -> Self {
         let world = self.world;
         let pair_id = ecs_pair(First::get_id(world), *second.into());
-        self.override_id(pair_id)
+        self.auto_override_id(pair_id)
     }
 
     /// Mark pair for auto-overriding with a given first ID.
@@ -632,13 +630,13 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn override_second<Second: ComponentId + NotEmptyComponent>(
+    pub fn auto_override_second<Second: ComponentId + NotEmptyComponent>(
         self,
         first: impl Into<Entity>,
     ) -> Self {
         let world = self.world;
         let pair_id = ecs_pair(*first.into(), Second::get_id(world));
-        self.override_id(pair_id)
+        self.auto_override_id(pair_id)
     }
 
     /// Sets a component for an entity and marks it as overridden.
@@ -649,14 +647,14 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_builder::set_override`
-    #[doc(alias = "entity_builder::set_override")]
-    pub fn set_override_id(self, id: impl IntoId) -> Self {
+    /// * C++ API: `entity_builder::set_auto_override`
+    #[doc(alias = "entity_builder::set_auto_override")]
+    pub fn set_auto_override_id(self, id: impl IntoId) -> Self {
         unsafe {
             sys::ecs_add_id(
                 self.world.world_ptr_mut(),
                 *self.id,
-                ECS_OVERRIDE | *id.into(),
+                ECS_AUTO_OVERRIDE | *id.into(),
             );
         }
         self
@@ -666,20 +664,20 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_builder::set_override`
-    #[doc(alias = "entity_builder::set_override")]
-    pub fn set_override<T: ComponentId + NotEmptyComponent + ComponentType<Struct>>(
+    /// * C++ API: `entity_builder::set_auto_override`
+    #[doc(alias = "entity_builder::set_auto_override")]
+    pub fn set_auto_override<T: ComponentId + NotEmptyComponent + ComponentType<Struct>>(
         self,
         component: T,
     ) -> Self {
-        self.override_type::<T>().set(component)
+        self.auto_override::<T>().set(component)
     }
 
     /// Sets a pair, mark component for auto-overriding.
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_builder::set_override`
+    /// * C++ API: `entity_builder::set_auto_override`
     pub fn set_pair_override<First, Second>(
         self,
         data: <(First, Second) as FlecsCastType>::CastType,
@@ -690,7 +688,7 @@ impl<'a> EntityView<'a> {
         (First, Second): FlecsCastType,
     {
         let id_pair = <(First, Second) as IntoComponentId>::get_id(self.world);
-        unsafe { self.override_id(id_pair).set_id(data, id_pair) }
+        unsafe { self.auto_override_id(id_pair).set_id(data, id_pair) }
     }
 
     /// Sets a pair, mark component for auto-overriding.
@@ -701,16 +699,20 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_builder::set_override`
-    #[doc(alias = "entity_builder::set_override")]
-    pub unsafe fn set_override_first<First>(self, first: First, second: impl Into<Entity>) -> Self
+    /// * C++ API: `entity_builder::set_auto_override`
+    #[doc(alias = "entity_builder::set_auto_override")]
+    pub unsafe fn set_auto_override_first<First>(
+        self,
+        first: First,
+        second: impl Into<Entity>,
+    ) -> Self
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let second_id = *second.into();
         let first_id = First::get_id(self.world);
         let pair_id = ecs_pair(first_id, second_id);
-        self.override_id(pair_id).set_id(first, pair_id)
+        self.auto_override_id(pair_id).set_id(first, pair_id)
     }
 
     /// Sets a pair, mark component for auto-overriding.
@@ -721,9 +723,9 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_builder::set_override`
-    #[doc(alias = "entity_builder::set_override")]
-    pub unsafe fn set_override_second<Second>(
+    /// * C++ API: `entity_builder::set_auto_override`
+    #[doc(alias = "entity_builder::set_auto_override")]
+    pub unsafe fn set_auto_override_second<Second>(
         self,
         second: Second,
         first: impl Into<Entity>,
@@ -734,7 +736,7 @@ impl<'a> EntityView<'a> {
         let first_id = first.into();
         let second_id = Second::get_id(self.world);
         let pair_id = ecs_pair(*first_id, second_id);
-        self.override_id(pair_id).set_id(second, pair_id)
+        self.auto_override_id(pair_id).set_id(second, pair_id)
     }
 
     /// Sets a component of type `T` on the entity.

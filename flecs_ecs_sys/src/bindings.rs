@@ -41,12 +41,14 @@ pub const EcsIdOnDeleteObjectRemove: u32 = 8;
 pub const EcsIdOnDeleteObjectDelete: u32 = 16;
 pub const EcsIdOnDeleteObjectPanic: u32 = 32;
 pub const EcsIdOnDeleteObjectMask: u32 = 56;
-pub const EcsIdExclusive: u32 = 64;
-pub const EcsIdDontInherit: u32 = 128;
-pub const EcsIdTraversable: u32 = 256;
-pub const EcsIdTag: u32 = 512;
-pub const EcsIdWith: u32 = 1024;
-pub const EcsIdAlwaysOverride: u32 = 4096;
+pub const EcsIdOnInstantiateOverride: u32 = 64;
+pub const EcsIdOnInstantiateInherit: u32 = 128;
+pub const EcsIdOnInstantiateDontInherit: u32 = 256;
+pub const EcsIdOnInstantiateMask: u32 = 448;
+pub const EcsIdExclusive: u32 = 512;
+pub const EcsIdTraversable: u32 = 1024;
+pub const EcsIdTag: u32 = 2048;
+pub const EcsIdWith: u32 = 4096;
 pub const EcsIdCanToggle: u32 = 8192;
 pub const EcsIdHasOnAdd: u32 = 65536;
 pub const EcsIdHasOnRemove: u32 = 131072;
@@ -56,7 +58,9 @@ pub const EcsIdHasOnTableFill: u32 = 1048576;
 pub const EcsIdHasOnTableEmpty: u32 = 2097152;
 pub const EcsIdHasOnTableCreate: u32 = 4194304;
 pub const EcsIdHasOnTableDelete: u32 = 8388608;
-pub const EcsIdEventMask: u32 = 16711680;
+pub const EcsIdIsSparse: u32 = 16777216;
+pub const EcsIdIsUnion: u32 = 33554432;
+pub const EcsIdEventMask: u32 = 67043328;
 pub const EcsIdMarkedForDelete: u32 = 1073741824;
 pub const EcsIterIsValid: u32 = 1;
 pub const EcsIterNoData: u32 = 2;
@@ -92,6 +96,8 @@ pub const EcsQueryHasMonitor: u32 = 2097152;
 pub const EcsQueryIsTrivial: u32 = 4194304;
 pub const EcsQueryHasCacheable: u32 = 8388608;
 pub const EcsQueryIsCacheable: u32 = 16777216;
+pub const EcsQueryHasTableThisVar: u32 = 33554432;
+pub const EcsQueryHasSparseThis: u32 = 67108864;
 pub const EcsObserverIsMulti: u32 = 2;
 pub const EcsObserverIsMonitor: u32 = 4;
 pub const EcsObserverIsDisabled: u32 = 8;
@@ -119,10 +125,12 @@ pub const EcsTableHasOnTableFill: u32 = 1048576;
 pub const EcsTableHasOnTableEmpty: u32 = 2097152;
 pub const EcsTableHasOnTableCreate: u32 = 4194304;
 pub const EcsTableHasOnTableDelete: u32 = 8388608;
-pub const EcsTableHasTraversable: u32 = 33554432;
+pub const EcsTableHasSparse: u32 = 16777216;
+pub const EcsTableHasUnion: u32 = 33554432;
+pub const EcsTableHasTraversable: u32 = 67108864;
 pub const EcsTableMarkedForDelete: u32 = 1073741824;
 pub const EcsTableHasLifecycle: u32 = 3072;
-pub const EcsTableIsComplex: u32 = 19456;
+pub const EcsTableIsComplex: u32 = 16796672;
 pub const EcsTableHasAddActions: u32 = 328712;
 pub const EcsTableHasRemoveActions: u32 = 657416;
 pub const EcsAperiodicEmptyTables: u32 = 2;
@@ -167,6 +175,9 @@ pub const EcsTermIsScope: u32 = 256;
 pub const EcsTermIsMember: u32 = 512;
 pub const EcsTermIsToggle: u32 = 1024;
 pub const EcsTermKeepAlive: u32 = 2048;
+pub const EcsTermIsSparse: u32 = 4096;
+pub const EcsTermIsUnion: u32 = 8192;
+pub const EcsTermIsOr: u32 = 16384;
 pub const flecs_iter_cache_ids: u32 = 1;
 pub const flecs_iter_cache_columns: u32 = 2;
 pub const flecs_iter_cache_sources: u32 = 4;
@@ -422,6 +433,14 @@ extern "C" {
 extern "C" {
     #[doc = "Remove an element"]
     pub fn flecs_sparse_remove(sparse: *mut ecs_sparse_t, elem_size: ecs_size_t, id: u64);
+}
+extern "C" {
+    #[doc = "Remove an element without liveliness checking"]
+    pub fn flecs_sparse_remove_fast(
+        sparse: *mut ecs_sparse_t,
+        size: ecs_size_t,
+        index: u64,
+    ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
     #[doc = "Test if id is alive, which requires the generation count to match."]
@@ -759,6 +778,62 @@ extern "C" {
 extern "C" {
     #[doc = "Copy map."]
     pub fn ecs_map_copy(dst: *mut ecs_map_t, src: *const ecs_map_t);
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_switch_node_t {
+    #[doc = "Next node in list"]
+    pub next: u32,
+    #[doc = "Prev node in list"]
+    pub prev: u32,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_switch_page_t {
+    #[doc = "vec<ecs_switch_node_t>"]
+    pub nodes: ecs_vec_t,
+    #[doc = "vec<uint64_t>"]
+    pub values: ecs_vec_t,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_switch_t {
+    #[doc = "map<uint64_t, uint32_t>"]
+    pub hdrs: ecs_map_t,
+    #[doc = "vec<ecs_switch_page_t>"]
+    pub pages: ecs_vec_t,
+}
+extern "C" {
+    #[doc = "Init new switch."]
+    pub fn flecs_switch_init(sw: *mut ecs_switch_t, allocator: *mut ecs_allocator_t);
+}
+extern "C" {
+    #[doc = "Fini switch."]
+    pub fn flecs_switch_fini(sw: *mut ecs_switch_t);
+}
+extern "C" {
+    #[doc = "Set value of element."]
+    pub fn flecs_switch_set(sw: *mut ecs_switch_t, element: u32, value: u64) -> bool;
+}
+extern "C" {
+    #[doc = "Reset value of element."]
+    pub fn flecs_switch_reset(sw: *mut ecs_switch_t, element: u32) -> bool;
+}
+extern "C" {
+    #[doc = "Get value for element."]
+    pub fn flecs_switch_get(sw: *const ecs_switch_t, element: u32) -> u64;
+}
+extern "C" {
+    #[doc = "Get first element for value."]
+    pub fn flecs_switch_first(sw: *const ecs_switch_t, value: u64) -> u32;
+}
+extern "C" {
+    #[doc = "Get next element."]
+    pub fn flecs_switch_next(sw: *const ecs_switch_t, previous: u32) -> u32;
+}
+extern "C" {
+    #[doc = "Get target iterator."]
+    pub fn flecs_switch_targets(sw: *const ecs_switch_t) -> ecs_map_iter_t;
 }
 extern "C" {
     pub static mut ecs_block_allocator_alloc_count: i64;
@@ -1519,14 +1594,18 @@ pub struct ecs_observer_t {
     pub callback: ecs_iter_action_t,
     #[doc = "< See ecs_observer_desc_t::run"]
     pub run: ecs_run_action_t,
-    #[doc = "< Callback context"]
+    #[doc = "< Observer context"]
     pub ctx: *mut ::std::os::raw::c_void,
-    #[doc = "< Binding context (for language bindings)"]
-    pub binding_ctx: *mut ::std::os::raw::c_void,
+    #[doc = "< Callback language binfding context"]
+    pub callback_ctx: *mut ::std::os::raw::c_void,
+    #[doc = "< Run language binfding context"]
+    pub run_ctx: *mut ::std::os::raw::c_void,
     #[doc = "< Callback to free ctx"]
     pub ctx_free: ecs_ctx_free_t,
-    #[doc = "< Callback to free binding_ctx"]
-    pub binding_ctx_free: ecs_ctx_free_t,
+    #[doc = "< Callback to free callback_ctx"]
+    pub callback_ctx_free: ecs_ctx_free_t,
+    #[doc = "< Callback to free run_ctx"]
+    pub run_ctx_free: ecs_ctx_free_t,
     #[doc = "< Observable for observer"]
     pub observable: *mut ecs_observable_t,
     #[doc = "< The world"]
@@ -2090,8 +2169,10 @@ pub struct ecs_iter_t {
     pub param: *mut ::std::os::raw::c_void,
     #[doc = "< System context"]
     pub ctx: *mut ::std::os::raw::c_void,
-    #[doc = "< Binding context"]
-    pub binding_ctx: *mut ::std::os::raw::c_void,
+    #[doc = "< Callback language binding context"]
+    pub callback_ctx: *mut ::std::os::raw::c_void,
+    #[doc = "< Run language binding context"]
+    pub run_ctx: *mut ::std::os::raw::c_void,
     #[doc = "< Time elapsed since last frame"]
     pub delta_time: f32,
     #[doc = "< Time elapsed since last system invocation"]
@@ -2180,12 +2261,16 @@ pub struct ecs_observer_desc_t {
     pub run: ecs_run_action_t,
     #[doc = "User context to pass to callback"]
     pub ctx: *mut ::std::os::raw::c_void,
-    #[doc = "Context to be used for language bindings"]
-    pub binding_ctx: *mut ::std::os::raw::c_void,
     #[doc = "Callback to free ctx"]
     pub ctx_free: ecs_ctx_free_t,
-    #[doc = "Callback to free binding_ctx"]
-    pub binding_ctx_free: ecs_ctx_free_t,
+    #[doc = "Context associated with callback (for language bindings)."]
+    pub callback_ctx: *mut ::std::os::raw::c_void,
+    #[doc = "Callback to free callback ctx."]
+    pub callback_ctx_free: ecs_ctx_free_t,
+    #[doc = "Context associated with run (for language bindings)."]
+    pub run_ctx: *mut ::std::os::raw::c_void,
+    #[doc = "Callback to free run ctx."]
+    pub run_ctx_free: ecs_ctx_free_t,
     #[doc = "Observable with which to register the observer"]
     pub observable: *mut flecs_poly_t,
     #[doc = "Optional shared last event id for multiple observers. Ensures only one\n of the observers with the shared id gets triggered for an event"]
@@ -2461,12 +2546,20 @@ extern "C" {
     pub static EcsFinal: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Ensures that component is never inherited from an IsA target.\n\n Behavior:\n   if DontInherit(X) and X(B) and IsA(A, B) then X(A) is false."]
-    pub static EcsDontInherit: ecs_entity_t;
+    #[doc = "Relationship that specifies component inheritance behavior."]
+    pub static EcsOnInstantiate: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Ensures a component is always overridden.\n\n Behavior:\n   As if the component is added together with OVERRIDE | T"]
-    pub static EcsAlwaysOverride: ecs_entity_t;
+    #[doc = "Override component on instantiate.\n This will copy the component from the base entity (IsA target) to the\n instance. The base component will never be inherited from the prefab."]
+    pub static EcsOverride: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "Inherit component on instantiate.\n This will inherit (share) the component from the base entity (IsA target).\n The component can be manually overridden by adding it to the instance."]
+    pub static EcsInherit: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "Never inherit component on instantiate.\n This will not copy or share the component from the base entity (IsA target).\n When the component is added to an instance, its value will never be copied\n from the base entity."]
+    pub static EcsDontInherit: ecs_entity_t;
 }
 extern "C" {
     #[doc = "Marks relationship as commutative.\n Behavior:\n   if R(X, Y) then R(Y, X)"]
@@ -2615,6 +2708,14 @@ extern "C" {
 extern "C" {
     #[doc = "Panic cleanup policy. Must be used as target in pair with EcsOnDelete or\n EcsOnDeleteTarget."]
     pub static EcsPanic: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "Mark component as sparse"]
+    pub static EcsSparse: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "Mark relationship as union"]
+    pub static EcsUnion: ecs_entity_t;
 }
 extern "C" {
     #[doc = "Builtin predicates for comparing entity ids in queries. Only supported by queries"]
@@ -3601,25 +3702,11 @@ extern "C" {
     pub fn ecs_observer_default_run_action(it: *mut ecs_iter_t) -> bool;
 }
 extern "C" {
-    #[doc = "Get observer ctx.\n Return the value set in ecs_observer_desc_t::ctx.\n\n @param world The world.\n @param observer The observer.\n @return The context."]
-    pub fn ecs_observer_get_ctx(
+    #[doc = "Get observer object.\n Returns the observer object. Can be used to access various information about\n the observer, like the query and context.\n\n @param world The world.\n @param observer The observer.\n @return The observer object."]
+    pub fn ecs_observer_get(
         world: *const ecs_world_t,
         observer: ecs_entity_t,
-    ) -> *mut ::std::os::raw::c_void;
-}
-extern "C" {
-    #[doc = "Get observer binding ctx.\n Return the value set in ecs_observer_desc_t::binding_ctx.\n\n @param world The world.\n @param observer The observer.\n @return The context."]
-    pub fn ecs_observer_get_binding_ctx(
-        world: *const ecs_world_t,
-        observer: ecs_entity_t,
-    ) -> *mut ::std::os::raw::c_void;
-}
-extern "C" {
-    #[doc = "Get observer query.\n Return the observer query.\n\n @param world The world.\n @param observer The observer.\n @return The observer query."]
-    pub fn ecs_observer_get_query(
-        world: *const ecs_world_t,
-        observer: ecs_entity_t,
-    ) -> *const ecs_query_t;
+    ) -> *const ecs_observer_t;
 }
 extern "C" {
     #[doc = "Progress any iterator.\n This operation is useful in combination with iterators for which it is not\n known what created them. Example use cases are functions that should accept\n any kind of iterator (such as serializers) or iterators created from poly\n objects.\n\n This operation is slightly slower than using a type-specific iterator (e.g.\n ecs_query_next, ecs_query_next) as it has to call a function pointer which\n introduces a level of indirection.\n\n @param it The iterator.\n @return True if iterator has more results, false if not."]
@@ -4512,7 +4599,7 @@ pub struct EcsTickSource {
     #[doc = "< Time elapsed since last tick"]
     pub time_elapsed: f32,
 }
-#[doc = "Use with ecs_system_init()"]
+#[doc = "Use with ecs_system_init() to create or update a system."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_system_desc_t {
@@ -4521,17 +4608,22 @@ pub struct ecs_system_desc_t {
     pub entity: ecs_entity_t,
     #[doc = "System query parameters"]
     pub query: ecs_query_desc_t,
-    #[doc = "Callback that is invoked when a system is ran.\n When left to NULL, the default system runner is used, which calls the\n \"callback\" action for each result returned from the system's query.\n\n It should not be assumed that the input iterator can always be iterated\n with ecs_query_next(). When a system is multithreaded and/or paged, the\n iterator can be either a worker or paged iterator. The correct function\n to use for iteration is ecs_iter_next().\n\n An implementation can test whether the iterator is a query iterator by\n testing whether the it->next value is equal to ecs_query_next()."]
-    pub run: ecs_run_action_t,
     #[doc = "Callback that is ran for each result returned by the system's query. This\n means that this callback can be invoked multiple times per system per\n frame, typically once for each matching table."]
     pub callback: ecs_iter_action_t,
+    #[doc = "Callback that is invoked when a system is ran.\n When left to NULL, the default system runner is used, which calls the\n \"callback\" action for each result returned from the system's query.\n\n It should not be assumed that the input iterator can always be iterated\n with ecs_query_next(). When a system is multithreaded and/or paged, the\n iterator can be either a worker or paged iterator. The correct function\n to use for iteration is ecs_iter_next().\n\n An implementation can test whether the iterator is a query iterator by\n testing whether the it->next value is equal to ecs_query_next()."]
+    pub run: ecs_run_action_t,
     #[doc = "Context to be passed to callback (as ecs_iter_t::param)"]
     pub ctx: *mut ::std::os::raw::c_void,
-    #[doc = "Binding context, for when system is implemented in other language"]
-    pub binding_ctx: *mut ::std::os::raw::c_void,
-    #[doc = "Functions that are invoked during system cleanup to free context data.\n When set, functions are called unconditionally, even when the ctx\n pointers are NULL."]
+    #[doc = "Callback to free ctx."]
     pub ctx_free: ecs_ctx_free_t,
-    pub binding_ctx_free: ecs_ctx_free_t,
+    #[doc = "Context associated with callback (for language bindings)."]
+    pub callback_ctx: *mut ::std::os::raw::c_void,
+    #[doc = "Callback to free callback ctx."]
+    pub callback_ctx_free: ecs_ctx_free_t,
+    #[doc = "Context associated with run (for language bindings)."]
+    pub run_ctx: *mut ::std::os::raw::c_void,
+    #[doc = "Callback to free run ctx."]
+    pub run_ctx_free: ecs_ctx_free_t,
     #[doc = "Interval in seconds at which the system should run"]
     pub interval: f32,
     #[doc = "Rate at which the system should run"]
@@ -4547,6 +4639,52 @@ extern "C" {
     #[doc = "Create a system"]
     pub fn ecs_system_init(world: *mut ecs_world_t, desc: *const ecs_system_desc_t)
         -> ecs_entity_t;
+}
+#[doc = "System type, get with ecs_system_get()"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_system_t {
+    pub hdr: ecs_header_t,
+    #[doc = "See ecs_system_desc_t"]
+    pub run: ecs_run_action_t,
+    #[doc = "See ecs_system_desc_t"]
+    pub action: ecs_iter_action_t,
+    #[doc = "System query"]
+    pub query: *mut ecs_query_t,
+    #[doc = "Entity associated with query"]
+    pub query_entity: ecs_entity_t,
+    #[doc = "Tick source associated with system"]
+    pub tick_source: ecs_entity_t,
+    #[doc = "Is system multithreaded"]
+    pub multi_threaded: bool,
+    #[doc = "Is system ran in immediate mode"]
+    pub immediate: bool,
+    #[doc = "Userdata for system"]
+    pub ctx: *mut ::std::os::raw::c_void,
+    #[doc = "Callback language binding context"]
+    pub callback_ctx: *mut ::std::os::raw::c_void,
+    #[doc = "Run language binding context"]
+    pub run_ctx: *mut ::std::os::raw::c_void,
+    #[doc = "Callback to free ctx."]
+    pub ctx_free: ecs_ctx_free_t,
+    #[doc = "Callback to free callback ctx."]
+    pub callback_ctx_free: ecs_ctx_free_t,
+    #[doc = "Callback to free run ctx."]
+    pub run_ctx_free: ecs_ctx_free_t,
+    #[doc = "Time spent on running system"]
+    pub time_spent: f32,
+    #[doc = "Time passed since last invocation"]
+    pub time_passed: f32,
+    #[doc = "Last frame for which the system was considered"]
+    pub last_frame: i64,
+    #[doc = "Mixins"]
+    pub world: *mut ecs_world_t,
+    pub entity: ecs_entity_t,
+    pub dtor: flecs_poly_dtor_t,
+}
+extern "C" {
+    #[doc = "Get system object.\n Returns the system object. Can be used to access various information about\n the system, like the query and context.\n\n @param world The world.\n @param system The system.\n @return The system object."]
+    pub fn ecs_system_get(world: *const ecs_world_t, system: ecs_entity_t) -> *const ecs_system_t;
 }
 extern "C" {
     #[doc = "Run a specific system manually.\n This operation runs a single system manually. It is an efficient way to\n invoke logic on a set of entities, as manual systems are only matched to\n tables at creation time or after creation time, when a new table is created.\n\n Manual systems are useful to evaluate lists of pre-matched entities at\n application defined times. Because none of the matching logic is evaluated\n before the system is invoked, manual systems are much more efficient than\n manually obtaining a list of entities and retrieving their components.\n\n An application may pass custom data to a system through the param parameter.\n This data can be accessed by the system through the param member in the\n ecs_iter_t value that is passed to the system callback.\n\n Any system may interrupt execution by setting the interrupted_by member in\n the ecs_iter_t value. This is particularly useful for manual systems, where\n the value of interrupted_by is returned by this operation. This, in\n combination with the param argument lets applications use manual systems\n to lookup entities: once the entity has been found its handle is passed to\n interrupted_by, which is then subsequently returned.\n\n @param world The world.\n @param system The system to run.\n @param delta_time The time passed since the last system invocation.\n @param param A user-defined parameter to pass to the system.\n @return handle to last evaluated entity if system was interrupted."]
@@ -4567,27 +4705,6 @@ extern "C" {
         delta_time: f32,
         param: *mut ::std::os::raw::c_void,
     ) -> ecs_entity_t;
-}
-extern "C" {
-    #[doc = "Get the query object for a system.\n Systems use queries under the hood. This enables an application to get access\n to the underlying query object of a system. This can be useful when, for\n example, an application needs to enable sorting for a system.\n\n @param world The world.\n @param system The system from which to obtain the query.\n @return The query."]
-    pub fn ecs_system_get_query(
-        world: *const ecs_world_t,
-        system: ecs_entity_t,
-    ) -> *mut ecs_query_t;
-}
-extern "C" {
-    #[doc = "Get system context.\n This operation returns the context pointer set for the system. If\n the provided entity is not a system, the function will return NULL.\n\n @param world The world.\n @param system The system from which to obtain the context.\n @return The context."]
-    pub fn ecs_system_get_ctx(
-        world: *const ecs_world_t,
-        system: ecs_entity_t,
-    ) -> *mut ::std::os::raw::c_void;
-}
-extern "C" {
-    #[doc = "Get system binding context.\n The binding context is a context typically used to attach any language\n binding specific data that is needed when invoking a callback that is\n implemented in another language.\n\n @param world The world.\n @param system The system from which to obtain the context.\n @return The context."]
-    pub fn ecs_system_get_binding_ctx(
-        world: *const ecs_world_t,
-        system: ecs_entity_t,
-    ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
     pub fn FlecsSystemImport(world: *mut ecs_world_t);

@@ -1,5 +1,5 @@
 ---
-source: flecs_ecs/examples/flecs/z_snapshot_test.rs
+source: flecs_ecs/examples/flecs/query_instancing.rs
 expression: self.str
 ---
 - Velocity is shared

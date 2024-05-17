@@ -36,7 +36,7 @@ fn main() {
     // Damage is a property that is private to a spaceship, so add an auto
     // override for it. This ensures that each prefab instance will have a
     // private copy of the component.
-    spaceship.set_override(Damage { value: 0.0 });
+    spaceship.set_auto_override(Damage { value: 0.0 });
 
     // Create a prefab instance.
     let inst = world.entity_named(c"my_spaceship").is_a_id(spaceship);

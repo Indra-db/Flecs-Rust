@@ -60,9 +60,6 @@ flecs_module = []
 # ECS data definition format
 flecs_script = ["flecs_module", "flecs_meta", "flecs_doc"]
 
-# Constraint solver for advanced queries
-flecs_rules = []
-
 # Snapshot & restore ECS data
 flecs_snapshot = []
 
@@ -76,7 +73,7 @@ flecs_monitor = ["flecs_stats", "flecs_system", "flecs_timer", "flecs_module"]
 flecs_metrics = ["flecs_meta", "flecs_units", "flecs_pipeline"]
 
 # Monitor conditions for errors
-flecs_alerts = ["flecs_rules", "flecs_pipeline"]
+flecs_alerts = ["flecs_pipeline"]
 
 # System support
 flecs_system = ["flecs_module"]
@@ -115,7 +112,7 @@ flecs_os_api_impl = []
 flecs_http = []
 
 # REST API for querying application data
-flecs_rest = ["flecs_http", "flecs_json", "flecs_rules", "flecs_pipeline"]
+flecs_rest = ["flecs_http", "flecs_json", "flecs_pipeline"]
 
 # Journaling addon (disabled by default)
 flecs_journal = ["flecs_log"]

@@ -85,13 +85,15 @@ impl Default for ecs_observer_desc_t {
             callback: Default::default(),
             run: Default::default(),
             ctx: std::ptr::null_mut(),
-            binding_ctx: std::ptr::null_mut(),
+            callback_ctx: std::ptr::null_mut(),
             ctx_free: Default::default(),
-            binding_ctx_free: Default::default(),
+            callback_ctx_free: Default::default(),
             observable: std::ptr::null_mut(),
             last_event_id: std::ptr::null_mut(),
             term_index: Default::default(),
             query: Default::default(),
+            run_ctx: std::ptr::null_mut(),
+            run_ctx_free: Default::default(),
         }
     }
 }
@@ -153,14 +155,16 @@ impl Default for ecs_system_desc_t {
             run: Default::default(),
             callback: Default::default(),
             ctx: std::ptr::null_mut(),
-            binding_ctx: std::ptr::null_mut(),
+            callback_ctx: std::ptr::null_mut(),
             ctx_free: Default::default(),
-            binding_ctx_free: Default::default(),
             interval: Default::default(),
             rate: Default::default(),
             tick_source: Default::default(),
             multi_threaded: Default::default(),
             immediate: Default::default(),
+            callback_ctx_free: Default::default(),
+            run_ctx: std::ptr::null_mut(),
+            run_ctx_free: Default::default(),
         }
     }
 }

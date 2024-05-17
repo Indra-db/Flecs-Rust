@@ -464,9 +464,12 @@ fn entity_add_role() {
     let world = World::new();
     let entity = world.entity();
 
-    let entity = entity.add_flags(flecs::Pair::ID);
+    let entity = entity.add_flags(flecs::id_flags::Pair::ID);
 
-    assert_eq!(entity.id() & flecs::Pair::ID, flecs::Pair::ID);
+    assert_eq!(
+        entity.id() & flecs::id_flags::Pair::ID,
+        flecs::id_flags::Pair::ID
+    );
 }
 
 #[test]
@@ -476,8 +479,11 @@ fn entity_remove_role() {
     let entity = world.entity();
     let id = entity;
 
-    let entity = entity.add_flags(flecs::Pair::ID);
-    assert_eq!(entity.id() & flecs::Pair::ID, flecs::Pair::ID);
+    let entity = entity.add_flags(flecs::id_flags::Pair::ID);
+    assert_eq!(
+        entity.id() & flecs::id_flags::Pair::ID,
+        flecs::id_flags::Pair::ID
+    );
 
     let entity = entity.remove_flags();
     assert_eq!(entity, id);
@@ -489,11 +495,11 @@ fn entity_has_role() {
     let world = World::new();
     let entity = world.entity();
 
-    let entity = entity.add_flags(flecs::Pair::ID);
-    assert!(entity.has_flags_for(flecs::Pair::ID));
+    let entity = entity.add_flags(flecs::id_flags::Pair::ID);
+    assert!(entity.has_flags_for(flecs::id_flags::Pair::ID));
 
     let entity = entity.remove_flags();
-    assert!(!entity.has_flags_for(flecs::Pair::ID));
+    assert!(!entity.has_flags_for(flecs::id_flags::Pair::ID));
 }
 
 #[test]
@@ -504,9 +510,9 @@ fn entity_pair_role() {
     let entity2 = world.entity();
 
     let pair: IdView = IdView::new_from(&world, (entity, entity2));
-    let pair = pair.add_flags(flecs::Pair::ID);
+    let pair = pair.add_flags(flecs::id_flags::Pair::ID);
 
-    assert!(pair.has_flags_for(flecs::Pair::ID));
+    assert!(pair.has_flags_for(flecs::id_flags::Pair::ID));
 
     let rel = pair.first_id();
     let obj = pair.second_id();
@@ -764,11 +770,18 @@ fn entity_force_owned() {
     structs!();
     let world = World::new();
 
+    world
+        .component::<Position>()
+        .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+    world
+        .component::<Velocity>()
+        .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+
     let prefab = world
         .prefab()
         .add::<Position>()
         .add::<Velocity>()
-        .override_type::<Position>();
+        .auto_override::<Position>();
 
     let entity = world.entity().add_id((flecs::IsA::ID, prefab));
 
@@ -783,12 +796,19 @@ fn entity_force_owned_2() {
     structs!();
     let world = World::new();
 
+    world
+        .component::<Position>()
+        .add_id((*flecs::OnInstantiate, *flecs::Inherit));
+    world
+        .component::<Velocity>()
+        .add_id((*flecs::OnInstantiate, *flecs::Inherit));
+
     let prefab = world
         .prefab()
         .add::<Position>()
         .add::<Velocity>()
-        .override_type::<Position>()
-        .override_type::<Velocity>();
+        .auto_override::<Position>()
+        .auto_override::<Velocity>();
 
     let entity = world.entity().add_id((flecs::IsA::ID, prefab));
 
@@ -803,11 +823,18 @@ fn entity_force_owned_nested() {
     structs!();
     let world = World::new();
 
+    world
+        .component::<Position>()
+        .add_id((*flecs::OnInstantiate, *flecs::Inherit));
+    world
+        .component::<Velocity>()
+        .add_id((*flecs::OnInstantiate, *flecs::Inherit));
+
     let prefab = world
         .prefab()
         .add::<Position>()
         .add::<Velocity>()
-        .override_type::<Position>();
+        .auto_override::<Position>();
 
     let prefab_2 = world.entity().add_id((flecs::IsA::ID, prefab));
 
@@ -1132,7 +1159,11 @@ fn entity_override() {
     structs!();
     let world = World::new();
 
-    let base = world.entity().override_type::<Position>();
+    world
+        .component::<Position>()
+        .add_id((*flecs::OnInstantiate, *flecs::Inherit));
+
+    let base = world.entity().auto_override::<Position>();
 
     let entity = world.entity().add_id((flecs::IsA::ID, base));
 
@@ -1141,14 +1172,18 @@ fn entity_override() {
 }
 
 #[test]
-fn entity_override_id() {
+fn entity_auto_override_id() {
     structs!();
     let world = World::new();
 
-    let tag_a = world.entity();
-    let tag_b = world.entity();
+    let tag_a = world
+        .entity()
+        .add_id((*flecs::OnInstantiate, *flecs::Inherit));
+    let tag_b = world
+        .entity()
+        .add_id((*flecs::OnInstantiate, *flecs::Inherit));
 
-    let base = world.entity().override_id(tag_a).add_id(tag_b);
+    let base = world.entity().auto_override_id(tag_a).add_id(tag_b);
 
     let entity = world.entity().add_id((flecs::IsA::ID, base));
 
@@ -1164,12 +1199,16 @@ fn entity_override_pair_w_tgt_id() {
     structs!();
     let world = World::new();
 
+    world
+        .component::<Position>()
+        .add_id((*flecs::OnInstantiate, *flecs::Inherit));
+
     let tgt_a = world.entity();
     let tgt_b = world.entity();
 
     let base = world
         .entity()
-        .override_first::<Position>(tgt_a)
+        .auto_override_first::<Position>(tgt_a)
         .add_first::<Position>(tgt_b);
 
     let entity = world.entity().add_id((flecs::IsA::ID, base));
@@ -1186,13 +1225,15 @@ fn entity_override_pair_w_ids() {
     structs!();
     let world = World::new();
 
-    let rel = world.entity();
+    let rel = world
+        .entity()
+        .add_id((*flecs::OnInstantiate, *flecs::Inherit));
     let tgt_a = world.entity();
     let tgt_b = world.entity();
 
     let base = world
         .entity()
-        .override_id((rel, tgt_a))
+        .auto_override_id((rel, tgt_a))
         .add_id((rel, tgt_b));
 
     let entity = world.entity().add_id((flecs::IsA::ID, base));
@@ -1209,9 +1250,12 @@ fn entity_override_pair() {
     structs!();
     let world = World::new();
 
+    world
+        .component::<Position>()
+        .add_id((*flecs::OnInstantiate, *flecs::Inherit));
     let base = world
         .entity()
-        .override_type::<(Position, TagA)>()
+        .auto_override::<(Position, TagA)>()
         .add::<(Position, TagB)>();
 
     let entity = world.entity().add_id((flecs::IsA::ID, base));
@@ -1224,11 +1268,15 @@ fn entity_override_pair() {
 }
 
 #[test]
-fn entity_set_override() {
+fn entity_set_auto_override() {
     structs!();
     let world = World::new();
 
-    let base = world.entity().set_override(Position { x: 10, y: 20 });
+    world
+        .component::<Position>()
+        .add_id((*flecs::OnInstantiate, *flecs::Inherit));
+
+    let base = world.entity().set_auto_override(Position { x: 10, y: 20 });
 
     let entity = world.entity().add_id((flecs::IsA::ID, base));
 
@@ -1247,13 +1295,17 @@ fn entity_set_override() {
 }
 
 #[test]
-fn entity_set_override_lvalue() {
+fn entity_set_auto_override_lvalue() {
     structs!();
     let world = World::new();
+
+    world
+        .component::<Position>()
+        .add_id((*flecs::OnInstantiate, *flecs::Inherit));
 
     let plvalue = Position { x: 10, y: 20 };
 
-    let base = world.entity().set_override(plvalue);
+    let base = world.entity().set_auto_override(plvalue);
 
     let entity = world.entity().add_id((flecs::IsA::ID, base));
 
@@ -1272,9 +1324,13 @@ fn entity_set_override_lvalue() {
 }
 
 #[test]
-fn entity_set_override_pair() {
+fn entity_set_auto_override_pair() {
     structs!();
     let world = World::new();
+
+    world
+        .component::<PositionPair>()
+        .add_id((*flecs::OnInstantiate, *flecs::Inherit));
 
     let base = world
         .entity()
@@ -1298,7 +1354,7 @@ fn entity_set_override_pair() {
 
 #[test]
 #[ignore = "re-impl gets"]
-fn entity_set_override_pair_w_tgt_id() {
+fn entity_set_auto_override_pair_w_tgt_id() {
     // structs!();
     // let world = World::new();
 
@@ -1307,7 +1363,7 @@ fn entity_set_override_pair_w_tgt_id() {
     // let base = unsafe {
     //     world
     //         .entity()
-    //         .set_override_first::<Position>(Position { x: 10, y: 20 }, tgt)
+    //         .set_auto_override_first::<Position>(Position { x: 10, y: 20 }, tgt)
     // };
 
     // let entity = world.entity().add_id((flecs::IsA::ID, base));
@@ -1329,9 +1385,13 @@ fn entity_set_override_pair_w_tgt_id() {
 }
 
 #[test]
-fn entity_set_override_pair_w_rel_tag() {
+fn entity_set_auto_override_pair_w_rel_tag() {
     structs!();
     let world = World::new();
+
+    world
+        .component::<PositionPair>()
+        .add_id((*flecs::OnInstantiate, *flecs::Inherit));
 
     let base = world
         .entity()
@@ -2311,7 +2371,7 @@ fn entity_no_recursive_lookup() {
 fn entity_defer_new_w_name() {
     structs!();
     let world = World::new();
-    let mut e = EntityView::new_null(&world);
+    let mut e = world.entity_null();
 
     world.defer(|| {
         e = world.entity_named(c"Foo");
@@ -2326,7 +2386,7 @@ fn entity_defer_new_w_name() {
 fn entity_defer_new_w_nested_name() {
     structs!();
     let world = World::new();
-    let mut e = EntityView::new_null(&world);
+    let mut e = world.entity_null();
 
     world.defer(|| {
         e = world.entity_named(c"Foo::Bar");
@@ -2343,7 +2403,7 @@ fn entity_defer_new_w_scope_name() {
     structs!();
     let world = World::new();
     let parent = world.entity_named(c"Parent");
-    let mut e = EntityView::new_null(&world);
+    let mut e = world.entity_null();
 
     world.defer(|| {
         parent.scope(|_w| {
@@ -2362,7 +2422,7 @@ fn entity_defer_new_w_scope_nested_name() {
     structs!();
     let world = World::new();
     let parent = world.entity_named(c"Parent");
-    let mut e = EntityView::new_null(&world);
+    let mut e = world.entity_null();
 
     world.defer(|| {
         parent.scope(|_w| {
@@ -2382,7 +2442,7 @@ fn entity_defer_new_w_scope() {
     let world = World::new();
 
     let parent = world.entity();
-    let mut e = EntityView::new_null(&world);
+    let mut e = world.entity_null();
 
     world.defer(|| {
         parent.scope(|_w| {
@@ -2398,7 +2458,7 @@ fn entity_defer_new_w_scope() {
 fn entity_defer_new_w_with() {
     structs!();
     let world = World::new();
-    let mut e = EntityView::new_null(&world);
+    let mut e = world.entity_null();
     let tag = world.entity();
 
     world.defer(|| {
@@ -2417,7 +2477,7 @@ fn entity_defer_new_w_name_scope_with() {
     structs!();
     let world = World::new();
     let tag = world.entity();
-    let mut e = EntityView::new_null(&world);
+    let mut e = world.entity_null();
     let parent = world.entity_named(c"Parent");
 
     world.defer(|| {
@@ -2446,7 +2506,7 @@ fn entity_defer_new_w_nested_name_scope_with() {
     let world = World::new();
     let tag = world.entity();
     let parent = world.entity_named(c"Parent");
-    let mut e = EntityView::new_null(&world);
+    let mut e = world.entity_null();
 
     world.defer(|| {
         tag.with(|| {
@@ -2472,7 +2532,7 @@ fn entity_defer_new_w_nested_name_scope_with() {
 fn entity_defer_w_with_implicit_component() {
     structs!();
     let world = World::new();
-    let mut e = EntityView::new_null(&world);
+    let mut e = world.entity_null();
 
     world.defer(|| {
         world.with::<Tag>(|| {
@@ -2679,7 +2739,7 @@ fn entity_role_id_str() {
     structs!();
     let world = World::new();
 
-    let id = world.id_from_id(flecs::Override::ID | world.entity_named(c"Foo").id());
+    let id = world.id_from_id(flecs::id_flags::AutoOverride::ID | world.entity_named(c"Foo").id());
 
     assert_eq!(id.to_str(), "OVERRIDE|Foo");
 }
@@ -2706,7 +2766,7 @@ fn entity_id_str_from_entity() {
 fn entity_null_entity_w_world() {
     structs!();
     let world = World::new();
-    let e = EntityView::new_null(&world);
+    let e = world.entity_null();
     assert_eq!(e.id(), 0);
 }
 

@@ -39,72 +39,53 @@ fn main() {
     //ignore snap in example, it's for snapshot testing
     world.import::<Snap>();
 
-    // disabled v4 not yet supported
-    /*
-        // Register Movement and Direction as union relationships. This ensures that
-        // an entity can only have one Movement and one Direction.
-        world.component::<Movement>().add::<flecs::Union>();
-        world.component::<Direction>().add::<flecs::Union>();
+    // Register Movement and Direction as union relationships. This ensures that
+    // an entity can only have one Movement and one Direction.
+    world.component::<Movement>().add::<flecs::Union>();
+    world.component::<Direction>().add::<flecs::Union>();
 
-        // Create a query that subscribes for all entities that have a Direction
-        // and that are walking.
-        // with<T>() requests no data by  so we must specify what we want.
-        // in() requests Read-Only
-        let q = world
+    // Create a query that subscribes for all entities that have a Direction
+    // and that are walking.
+    let q = world
         .query::<()>()
         .with_enum(Movement::Walking)
-        .in_()
         .with_enum_wildcard::<Direction>()
-        .in_()
         .build();
 
     // Create a few entities with various state combinations
     world
-    .entity_named(c"e1")
-    .add_enum(Movement::Walking)
-    .add_enum(Direction::Front);
+        .entity_named(c"e1")
+        .add_enum(Movement::Walking)
+        .add_enum(Direction::Front);
 
     world
-    .entity_named(c"e2")
-    .add_enum(Movement::Running)
-    .add_enum(Direction::Left);
+        .entity_named(c"e2")
+        .add_enum(Movement::Running)
+        .add_enum(Direction::Left);
 
     let e3 = world
-    .entity_named(c"e3")
-    .add_enum(Movement::Running)
-    .add_enum(Direction::Back);
+        .entity_named(c"e3")
+        .add_enum(Movement::Running)
+        .add_enum(Direction::Back);
 
     // Add Walking to e3. This will remove the Running case
     e3.add_enum(Movement::Walking);
 
     // Iterate the query
-    q.iter_only(|it| {
-        // Get the column with direction states. This is stored as an array
-        // with identifiers to the individual states
-        //since it's an union, we need to get the entity id for safety
-        let movement = it.field::<Entity>(0).unwrap();
-        let direction = it.field::<Entity>(1).unwrap();
+    q.each_iter(|it, index, ()| {
+        let entity = it.entity(index);
 
-        for i in 0..it.count() {
-            fprintln!(
-                snap,
-                "{}: Movement: {:?}, Direction: {:?}",
-                it.entity(i).name(),
-                movement[i]
-                .entity_view(it.world())
-                .to_constant::<Movement>()
-                .unwrap(),
-                direction[i]
-                .entity_view(it.world())
-                .to_constant::<Direction>()
-                .unwrap()
-            );
-        }
+        // Movement will always be Walking, Direction can be any state
+        fprintln!(
+            &world,
+            "{}: Movement: {:?}, Direction: {:?}",
+            entity.name(),
+            it.pair(0).unwrap().second_id().name(),
+            it.pair(1).unwrap().second_id().name()
+        );
     });
 
     world.get::<&Snap>(|snap| snap.test("relationships_union".to_string()));
-
-    */
 
     // Output:
     //   e3: Movement: Walking, Direction: Back

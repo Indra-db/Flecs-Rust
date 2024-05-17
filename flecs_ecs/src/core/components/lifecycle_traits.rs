@@ -58,6 +58,9 @@ pub fn register_lifecycle_actions<T>(type_hooks: &mut TypeHooksT) {
 
     //type_hooks.move_ctor = Some(move_ctor::<T>);
     type_hooks.ctor_move_dtor = Some(ctor_move_dtor::<T>);
+
+    //TODO we could potentially add an autoamtic check if the type is unmoveable to add
+    //a sparse component tag
 }
 
 pub fn register_ctor_lifecycle_actions<T: Default>(type_hooks: &mut TypeHooksT) {

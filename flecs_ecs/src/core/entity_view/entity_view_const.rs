@@ -2286,8 +2286,8 @@ impl<'a> EntityView<'a> {
         desc.query.terms[0].id = ECS_ANY;
         desc.query.terms[0].src.id = entity;
         desc.callback = callback;
-        desc.binding_ctx = binding_ctx as *mut c_void;
-        desc.binding_ctx_free = Some(Self::binding_entity_ctx_drop);
+        desc.callback_ctx = binding_ctx as *mut c_void;
+        desc.callback_ctx_free = Some(Self::binding_entity_ctx_drop);
 
         let observer = unsafe { sys::ecs_observer_init(world, &desc) };
         ecs_add_pair(world, observer, ECS_CHILD_OF, entity);
@@ -2307,7 +2307,7 @@ impl<'a> EntityView<'a> {
     where
         Func: FnMut(),
     {
-        let ctx: *mut ObserverEntityBindingCtx = (*iter).binding_ctx as *mut _;
+        let ctx: *mut ObserverEntityBindingCtx = (*iter).callback_ctx as *mut _;
         let empty = (*ctx).empty.unwrap();
         let empty = &mut *(empty as *mut Func);
         let iter_count = (*iter).count as usize;
@@ -2335,7 +2335,7 @@ impl<'a> EntityView<'a> {
     where
         Func: FnMut(&mut EntityView),
     {
-        let ctx: *mut ObserverEntityBindingCtx = (*iter).binding_ctx as *mut _;
+        let ctx: *mut ObserverEntityBindingCtx = (*iter).callback_ctx as *mut _;
         let empty = (*ctx).empty_entity.unwrap();
         let empty = &mut *(empty as *mut Func);
         let iter_count = (*iter).count as usize;
@@ -2367,7 +2367,7 @@ impl<'a> EntityView<'a> {
     where
         Func: FnMut(&C),
     {
-        let ctx: *mut ObserverEntityBindingCtx = (*iter).binding_ctx as *mut _;
+        let ctx: *mut ObserverEntityBindingCtx = (*iter).callback_ctx as *mut _;
         let empty = (*ctx).payload.unwrap();
         let empty = &mut *(empty as *mut Func);
         let iter_count = (*iter).count as usize;
@@ -2397,7 +2397,7 @@ impl<'a> EntityView<'a> {
     where
         Func: FnMut(&mut EntityView, &C),
     {
-        let ctx: *mut ObserverEntityBindingCtx = (*iter).binding_ctx as *mut _;
+        let ctx: *mut ObserverEntityBindingCtx = (*iter).callback_ctx as *mut _;
         let empty = (*ctx).payload_entity.unwrap();
         let empty = &mut *(empty as *mut Func);
         let iter_count = (*iter).count as usize;

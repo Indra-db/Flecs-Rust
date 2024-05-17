@@ -65,7 +65,7 @@ pub mod private {
                 "used to assert if using .field() in each functions."
             );
 
-            let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
+            let ctx: *mut ObserverSystemBindingCtx = (*iter).callback_ctx as *mut _;
             let each = (*ctx).each.unwrap();
             let each = &mut *(each as *mut Func);
 
@@ -112,7 +112,7 @@ pub mod private {
                 "used to assert if using .field() in each functions."
             );
 
-            let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
+            let ctx: *mut ObserverSystemBindingCtx = (*iter).callback_ctx as *mut _;
             let each_entity = (*ctx).each_entity.unwrap();
             let each_entity = &mut *(each_entity as *mut Func);
 
@@ -161,7 +161,7 @@ pub mod private {
                 "used to assert if using .field() in each functions."
             );
 
-            let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
+            let ctx: *mut ObserverSystemBindingCtx = (*iter).callback_ctx as *mut _;
             let each_iter = (*ctx).each_iter.unwrap();
             let each_iter = &mut *(each_iter as *mut Func);
 
@@ -200,7 +200,7 @@ pub mod private {
             Func: FnMut(Iter<P>),
         {
             unsafe {
-                let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
+                let ctx: *mut ObserverSystemBindingCtx = (*iter).callback_ctx as *mut _;
                 let iter_only = (*ctx).iter_only.unwrap();
                 let iter_only = &mut *(iter_only as *mut Func);
                 let iter_count = {
@@ -236,7 +236,7 @@ pub mod private {
         where
             Func: FnMut(Iter<P>, T::TupleSliceType<'_>),
         {
-            let ctx: *mut ObserverSystemBindingCtx = (*iter).binding_ctx as *mut _;
+            let ctx: *mut ObserverSystemBindingCtx = (*iter).callback_ctx as *mut _;
             let iter_func = (*ctx).iter.unwrap();
             let iter_func = &mut *(iter_func as *mut Func);
 

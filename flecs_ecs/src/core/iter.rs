@@ -108,6 +108,9 @@ where
     /// * C++ API: `iter::count`
     #[doc(alias = "iter::count")]
     pub fn count(&self) -> usize {
+        //TODO soft assert
+        // ecs_check(iter_->flags & EcsIterIsValid, ECS_INVALID_PARAMETER,
+        //     "operation invalid before calling next()");
         self.iter.count as usize
     }
 
@@ -168,7 +171,6 @@ where
     ///
     /// * C++ API: `iter::get_var`
     #[doc(alias = "iter::get_var")]
-    #[cfg(feature = "flecs_rules")]
     pub fn get_var(&self, var_id: i32) -> EntityView<'a> {
         ecs_assert!(var_id != -1, FlecsErrorCode::InvalidParameter, 0);
         let var = unsafe { sys::ecs_iter_get_var(self.iter as *const _ as *mut IterT, var_id) };
@@ -186,7 +188,6 @@ where
     ///
     /// * C++ API: `iter::get_var`
     #[doc(alias = "iter::get_var")]
-    #[cfg(feature = "flecs_rules")]
     pub fn get_var_by_name(&self, name: &CStr) -> EntityView<'a> {
         let world = self.world();
         let rule_query = unsafe { self.iter.priv_.iter.query.query };
@@ -702,6 +703,49 @@ where
             count,
             is_shared,
         )
+    }
+
+    /// Progress iterator.
+    ///
+    /// # Safety
+    ///
+    /// This operation is unsafe because it can only be called from a context where
+    /// the iterator is not being progressed automatically. An example of a valid
+    /// context is inside of a `run()` callback. An example of an invalid context is
+    /// inside of an `each()` callback.
+    pub unsafe fn next_iter(&mut self) -> bool {
+        if self.iter.flags & sys::EcsIterIsValid != 0 && !self.iter.table.is_null() {
+            unsafe {
+                sys::ecs_table_unlock(self.iter.world, self.iter.table);
+            };
+        }
+
+        let result = {
+            if let Some(next) = self.iter.next {
+                unsafe { next(self.iter) }
+            } else {
+                false
+            }
+        };
+
+        self.iter.flags |= sys::EcsIterIsValid;
+        if result && !self.iter.table.is_null() {
+            unsafe {
+                sys::ecs_table_lock(self.iter.world, self.iter.table);
+            };
+        }
+        result
+    }
+
+    /// Forward to each.
+    /// If a system has an each callback registered, this operation will forward
+    /// the current iterator to the each callback.
+    fn each(&mut self) {
+        if let Some(each) = self.iter.callback {
+            unsafe {
+                each(self.iter);
+            }
+        }
     }
 }
 

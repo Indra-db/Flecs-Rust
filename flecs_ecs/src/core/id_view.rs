@@ -10,7 +10,7 @@ use crate::sys;
 ///
 /// * entities (including components, tags)
 /// * pair ids
-/// * entities with id flags set (like `flecs::Override`, `flecs::Toggle`)
+/// * entities with id flags set (like `flecs::AutoOverride`, `flecs::Toggle`)
 ///
 /// # See also
 ///

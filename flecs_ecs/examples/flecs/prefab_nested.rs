@@ -35,7 +35,7 @@ fn main() {
     // Create a Wheel prefab, make sure each instantiated wheel has a private
     // copy of the TirePressure component.
     let wheel = world.prefab_named(c"Wheel");
-    wheel.set_override(TirePressure { value: 32.0 });
+    wheel.set_auto_override(TirePressure { value: 32.0 });
 
     // Create a Car prefab with four wheels. Note how we're using the scope
     // method, which has the same effect as adding the (ChildOf, Car) pair.

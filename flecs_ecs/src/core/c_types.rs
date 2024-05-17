@@ -259,7 +259,7 @@ impl From<sys::ecs_query_cache_kind_t> for QueryCacheKind {
 /// Indicates that the id is a pair.
 pub(crate) const ECS_PAIR: u64 = 1 << 63;
 /// Automatically override component when it is inherited
-pub(crate) const ECS_OVERRIDE: u64 = 1 << 62;
+pub(crate) const ECS_AUTO_OVERRIDE: u64 = 1 << 62;
 /// Adds bitset to storage which allows component to be enabled/disabled
 pub(crate) const ECS_TOGGLE: u64 = 1 << 61;
 /// Include all components from entity to which AND is applied
@@ -391,77 +391,82 @@ pub(crate) const ECS_TRANSITIVE: u64 = FLECS_HI_COMPONENT_ID + 15;
 pub(crate) const ECS_REFLEXIVE: u64 = FLECS_HI_COMPONENT_ID + 16;
 pub(crate) const ECS_SYMMETRIC: u64 = FLECS_HI_COMPONENT_ID + 17;
 pub(crate) const ECS_FINAL: u64 = FLECS_HI_COMPONENT_ID + 18;
-pub(crate) const ECS_DONT_INHERIT: u64 = FLECS_HI_COMPONENT_ID + 19;
-pub(crate) const ECS_ALWAYS_OVERRIDE: u64 = FLECS_HI_COMPONENT_ID + 20;
-pub(crate) const ECS_PAIR_IS_TAG: u64 = FLECS_HI_COMPONENT_ID + 21;
-pub(crate) const ECS_EXCLUSIVE: u64 = FLECS_HI_COMPONENT_ID + 22;
-pub(crate) const ECS_ACYCLIC: u64 = FLECS_HI_COMPONENT_ID + 23;
-pub(crate) const ECS_TRAVERSABLE: u64 = FLECS_HI_COMPONENT_ID + 24;
-pub(crate) const ECS_WITH: u64 = FLECS_HI_COMPONENT_ID + 25;
-pub(crate) const ECS_ONE_OF: u64 = FLECS_HI_COMPONENT_ID + 26;
-pub(crate) const ECS_CAN_TOGGLE: u64 = FLECS_HI_COMPONENT_ID + 27;
-pub(crate) const ECS_TRAIT: u64 = FLECS_HI_COMPONENT_ID + 28;
-pub(crate) const ECS_RELATIONSHIP: u64 = FLECS_HI_COMPONENT_ID + 29;
-pub(crate) const ECS_TARGET: u64 = FLECS_HI_COMPONENT_ID + 30;
+pub(crate) const ECS_ON_INSTANTIATE: u64 = FLECS_HI_COMPONENT_ID + 19;
+pub(crate) const ECS_OVERRIDE: u64 = FLECS_HI_COMPONENT_ID + 20;
+pub(crate) const ECS_INHERIT: u64 = FLECS_HI_COMPONENT_ID + 21;
+pub(crate) const ECS_DONT_INHERIT: u64 = FLECS_HI_COMPONENT_ID + 22;
+pub(crate) const ECS_PAIR_IS_TAG: u64 = FLECS_HI_COMPONENT_ID + 23;
+pub(crate) const ECS_EXCLUSIVE: u64 = FLECS_HI_COMPONENT_ID + 24;
+pub(crate) const ECS_ACYCLIC: u64 = FLECS_HI_COMPONENT_ID + 25;
+pub(crate) const ECS_TRAVERSABLE: u64 = FLECS_HI_COMPONENT_ID + 26;
+pub(crate) const ECS_WITH: u64 = FLECS_HI_COMPONENT_ID + 27;
+pub(crate) const ECS_ONE_OF: u64 = FLECS_HI_COMPONENT_ID + 28;
+pub(crate) const ECS_CAN_TOGGLE: u64 = FLECS_HI_COMPONENT_ID + 29;
+pub(crate) const ECS_TRAIT: u64 = FLECS_HI_COMPONENT_ID + 30;
+pub(crate) const ECS_RELATIONSHIP: u64 = FLECS_HI_COMPONENT_ID + 31;
+pub(crate) const ECS_TARGET: u64 = FLECS_HI_COMPONENT_ID + 32;
 
 // Builtin relationships
-pub(crate) const ECS_CHILD_OF: u64 = FLECS_HI_COMPONENT_ID + 31;
-pub(crate) const ECS_IS_A: u64 = FLECS_HI_COMPONENT_ID + 32;
-pub(crate) const ECS_DEPENDS_ON: u64 = FLECS_HI_COMPONENT_ID + 33;
+pub(crate) const ECS_CHILD_OF: u64 = FLECS_HI_COMPONENT_ID + 33;
+pub(crate) const ECS_IS_A: u64 = FLECS_HI_COMPONENT_ID + 34;
+pub(crate) const ECS_DEPENDS_ON: u64 = FLECS_HI_COMPONENT_ID + 35;
 
 // Identifier tags
-pub(crate) const ECS_NAME: u64 = FLECS_HI_COMPONENT_ID + 34;
-pub(crate) const ECS_SYMBOL: u64 = FLECS_HI_COMPONENT_ID + 35;
-pub(crate) const ECS_ALIAS: u64 = FLECS_HI_COMPONENT_ID + 36;
+pub(crate) const ECS_NAME: u64 = FLECS_HI_COMPONENT_ID + 36;
+pub(crate) const ECS_SYMBOL: u64 = FLECS_HI_COMPONENT_ID + 37;
+pub(crate) const ECS_ALIAS: u64 = FLECS_HI_COMPONENT_ID + 38;
 
 // Events
-pub(crate) const ECS_ON_ADD: u64 = FLECS_HI_COMPONENT_ID + 37;
-pub(crate) const ECS_ON_REMOVE: u64 = FLECS_HI_COMPONENT_ID + 38;
-pub(crate) const ECS_ON_SET: u64 = FLECS_HI_COMPONENT_ID + 39;
-pub(crate) const ECS_UNSET: u64 = FLECS_HI_COMPONENT_ID + 40;
-pub(crate) const ECS_ON_DELETE: u64 = FLECS_HI_COMPONENT_ID + 41;
-pub(crate) const ECS_ON_DELETE_TARGET: u64 = FLECS_HI_COMPONENT_ID + 42;
-pub(crate) const ECS_ON_TABLE_CREATE: u64 = FLECS_HI_COMPONENT_ID + 43;
-pub(crate) const ECS_ON_TABLE_DELETE: u64 = FLECS_HI_COMPONENT_ID + 44;
-pub(crate) const ECS_ON_TABLE_EMPTY: u64 = FLECS_HI_COMPONENT_ID + 45;
-pub(crate) const ECS_ON_TABLE_FILL: u64 = FLECS_HI_COMPONENT_ID + 46;
+pub(crate) const ECS_ON_ADD: u64 = FLECS_HI_COMPONENT_ID + 39;
+pub(crate) const ECS_ON_REMOVE: u64 = FLECS_HI_COMPONENT_ID + 40;
+pub(crate) const ECS_ON_SET: u64 = FLECS_HI_COMPONENT_ID + 41;
+pub(crate) const ECS_UNSET: u64 = FLECS_HI_COMPONENT_ID + 42;
+pub(crate) const ECS_ON_DELETE: u64 = FLECS_HI_COMPONENT_ID + 43;
+pub(crate) const ECS_ON_DELETE_TARGET: u64 = FLECS_HI_COMPONENT_ID + 44;
+pub(crate) const ECS_ON_TABLE_CREATE: u64 = FLECS_HI_COMPONENT_ID + 45;
+pub(crate) const ECS_ON_TABLE_DELETE: u64 = FLECS_HI_COMPONENT_ID + 46;
+pub(crate) const ECS_ON_TABLE_EMPTY: u64 = FLECS_HI_COMPONENT_ID + 47;
+pub(crate) const ECS_ON_TABLE_FILL: u64 = FLECS_HI_COMPONENT_ID + 48;
 
 // Timers
-pub(crate) const ECS_TICK_SOURCE: u64 = FLECS_HI_COMPONENT_ID + 47;
-pub(crate) const ECS_TIMER: u64 = FLECS_HI_COMPONENT_ID + 48;
-pub(crate) const ECS_RATE_FILTER: u64 = FLECS_HI_COMPONENT_ID + 49;
+pub(crate) const ECS_TICK_SOURCE: u64 = FLECS_HI_COMPONENT_ID + 49;
+pub(crate) const ECS_TIMER: u64 = FLECS_HI_COMPONENT_ID + 50;
+pub(crate) const ECS_RATE_FILTER: u64 = FLECS_HI_COMPONENT_ID + 51;
 
 // Actions
-pub(crate) const ECS_REMOVE: u64 = FLECS_HI_COMPONENT_ID + 50;
-pub(crate) const ECS_DELETE: u64 = FLECS_HI_COMPONENT_ID + 51;
-pub(crate) const ECS_PANIC: u64 = FLECS_HI_COMPONENT_ID + 52;
+pub(crate) const ECS_REMOVE: u64 = FLECS_HI_COMPONENT_ID + 52;
+pub(crate) const ECS_DELETE: u64 = FLECS_HI_COMPONENT_ID + 53;
+pub(crate) const ECS_PANIC: u64 = FLECS_HI_COMPONENT_ID + 54;
+
+pub(crate) const ECS_SPARSE: u64 = FLECS_HI_COMPONENT_ID + 55;
+pub(crate) const ECS_UNION: u64 = FLECS_HI_COMPONENT_ID + 56;
 
 // Misc
-pub(crate) const ECS_DEFAULT_CHILD_COMPONENT: u64 = FLECS_HI_COMPONENT_ID + 55;
+pub(crate) const ECS_DEFAULT_CHILD_COMPONENT: u64 = FLECS_HI_COMPONENT_ID + 57;
 
 // Builtin predicate ids (used by rule engine)
-pub(crate) const ECS_PRED_EQ: u64 = FLECS_HI_COMPONENT_ID + 56;
-pub(crate) const ECS_PRED_MATCH: u64 = FLECS_HI_COMPONENT_ID + 57;
-pub(crate) const ECS_PRED_LOOKUP: u64 = FLECS_HI_COMPONENT_ID + 58;
-pub(crate) const ECS_SCOPE_OPEN: u64 = FLECS_HI_COMPONENT_ID + 59;
-pub(crate) const ECS_SCOPE_CLOSE: u64 = FLECS_HI_COMPONENT_ID + 60;
+pub(crate) const ECS_PRED_EQ: u64 = FLECS_HI_COMPONENT_ID + 58;
+pub(crate) const ECS_PRED_MATCH: u64 = FLECS_HI_COMPONENT_ID + 59;
+pub(crate) const ECS_PRED_LOOKUP: u64 = FLECS_HI_COMPONENT_ID + 60;
+pub(crate) const ECS_SCOPE_OPEN: u64 = FLECS_HI_COMPONENT_ID + 61;
+pub(crate) const ECS_SCOPE_CLOSE: u64 = FLECS_HI_COMPONENT_ID + 62;
 
 // Systems
-pub(crate) const ECS_MONITOR: u64 = FLECS_HI_COMPONENT_ID + 61;
-pub(crate) const ECS_EMPTY: u64 = FLECS_HI_COMPONENT_ID + 62;
-pub(crate) const ECS_PIPELINE: u64 = FLECS_HI_COMPONENT_ID + 63;
-pub(crate) const ECS_ON_START: u64 = FLECS_HI_COMPONENT_ID + 64;
-pub(crate) const ECS_PRE_FRAME: u64 = FLECS_HI_COMPONENT_ID + 65;
-pub(crate) const ECS_ON_LOAD: u64 = FLECS_HI_COMPONENT_ID + 66;
-pub(crate) const ECS_POST_LOAD: u64 = FLECS_HI_COMPONENT_ID + 67;
-pub(crate) const ECS_PRE_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 68;
-pub(crate) const ECS_ON_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 69;
-pub(crate) const ECS_ON_VALIDATE: u64 = FLECS_HI_COMPONENT_ID + 70;
-pub(crate) const ECS_POST_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 71;
-pub(crate) const ECS_PRE_STORE: u64 = FLECS_HI_COMPONENT_ID + 72;
-pub(crate) const ECS_ON_STORE: u64 = FLECS_HI_COMPONENT_ID + 73;
-pub(crate) const ECS_POST_FRAME: u64 = FLECS_HI_COMPONENT_ID + 74;
-pub(crate) const ECS_PHASE: u64 = FLECS_HI_COMPONENT_ID + 75;
+pub(crate) const ECS_MONITOR: u64 = FLECS_HI_COMPONENT_ID + 63;
+pub(crate) const ECS_EMPTY: u64 = FLECS_HI_COMPONENT_ID + 64;
+pub(crate) const ECS_PIPELINE: u64 = FLECS_HI_COMPONENT_ID + 65;
+pub(crate) const ECS_ON_START: u64 = FLECS_HI_COMPONENT_ID + 66;
+pub(crate) const ECS_PRE_FRAME: u64 = FLECS_HI_COMPONENT_ID + 67;
+pub(crate) const ECS_ON_LOAD: u64 = FLECS_HI_COMPONENT_ID + 68;
+pub(crate) const ECS_POST_LOAD: u64 = FLECS_HI_COMPONENT_ID + 69;
+pub(crate) const ECS_PRE_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 70;
+pub(crate) const ECS_ON_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 71;
+pub(crate) const ECS_ON_VALIDATE: u64 = FLECS_HI_COMPONENT_ID + 72;
+pub(crate) const ECS_POST_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 73;
+pub(crate) const ECS_PRE_STORE: u64 = FLECS_HI_COMPONENT_ID + 74;
+pub(crate) const ECS_ON_STORE: u64 = FLECS_HI_COMPONENT_ID + 75;
+pub(crate) const ECS_POST_FRAME: u64 = FLECS_HI_COMPONENT_ID + 76;
+pub(crate) const ECS_PHASE: u64 = FLECS_HI_COMPONENT_ID + 77;
 
 // Meta primitive components (don't use low ids to save id space)
 pub(crate) const ECS_BOOL_T: u64 = FLECS_HI_COMPONENT_ID + 80;
