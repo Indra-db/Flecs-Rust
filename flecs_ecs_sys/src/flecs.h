@@ -3996,7 +3996,7 @@ typedef struct ecs_component_desc_t {
  * @endcode
  * 
  * When this code is called from a system, it is important to use the world
- * provided by its iterator object. For example:
+ * provided by its iterator object to ensure thread safety. For example:
  * 
  * @code
  * void Collide(ecs_iter_t *it) {
@@ -4004,8 +4004,20 @@ typedef struct ecs_component_desc_t {
  * }
  * @endcode
  * 
- * This ensures thread safe allocation and cleanup of any resources required by 
- * the iterator.
+ * An iterator contains resources that need to be released. By default this 
+ * is handled by the last call to next() that returns false. When iteration is
+ * ended before iteration has completed, an application has to manually call
+ * ecs_iter_fini to release the iterator resources:
+ * 
+ * @code
+ * ecs_iter_t it = ecs_query_iter(world, q);
+ * while (ecs_query_next(&it)) {
+ *   if (cond) {
+ *     ecs_iter_fini(&it);
+ *     break;
+ *   }
+ * }
+ * @endcode
  *
  * @ingroup queries
  */
@@ -4024,7 +4036,6 @@ struct ecs_iter_t {
     ecs_var_t *variables;         /**< Values of variables (if any) */
     int32_t *columns;             /**< Query term to table column mapping */
     ecs_entity_t *sources;        /**< Entity on which the id was matched (0 if same as entities) */
-    ecs_ref_t *references;        /**< Cached refs to components (if iterating a cache) */
     ecs_flags64_t constrained_vars; /**< Bitset that marks constrained variables */
     uint64_t group_id;            /**< Group id for table, if group_by is used */
     int32_t field_count;          /**< Number of fields in iterator */
@@ -4472,7 +4483,7 @@ extern "C" {
 FLECS_API extern const ecs_id_t ECS_PAIR;
 
 /** Automatically override component when it is inherited */
-FLECS_API extern const ecs_id_t ECS_OVERRIDE;
+FLECS_API extern const ecs_id_t ECS_AUTO_OVERRIDE;
 
 /** Adds bitset to storage which allows component to be enabled/disabled */
 FLECS_API extern const ecs_id_t ECS_TOGGLE;
@@ -5686,33 +5697,59 @@ void ecs_remove_id(
     ecs_entity_t entity,
     ecs_id_t id);
 
-/** Add override for (component) id.
- * Adding an override to an entity ensures that when the entity is instantiated
- * (by adding an IsA relationship to it) the component with the override is
- * copied to a component that is private to the instance. By default components
- * reachable through an IsA relationship are shared.
- *
- * Adding an override does not add the component. If an override is added to an
- * entity that does not have the component, it will still be added to the
- * instance, but with an uninitialized value (unless the component has a ctor).
- * When the entity does have the entity, the component of the instance will be
- * initialized with the value of the component on the entity.
- *
- * This is the same as what happens when calling ecs_add_id() for an id that is
- * inherited (reachable through an IsA relationship).
- *
- * This operation is equivalent to doing:
+/** Add auto override for (component) id.
+ * An auto override is a component that is automatically added to an entity when
+ * it is instantiated from a prefab. Auto overrides are added to the entity that
+ * is inherited from (usually a prefab). For example:
+ * 
+ * @code
+ * ecs_entity_t prefab = ecs_insert(world, 
+ *   ecs_value(Position, {10, 20}),
+ *   ecs_value(Mass, {100}));
+ * 
+ * ecs_auto_override(world, prefab, Position);
+ * 
+ * ecs_entity_t inst = ecs_new_w_pair(world, EcsIsA, prefab);
+ * assert(ecs_owns(world, inst, Position)); // true
+ * assert(ecs_owns(world, inst, Mass)); // false
+ * @endcode
+ * 
+ * An auto override is equivalent to a manual override:
+ * 
+ * @code
+  * ecs_entity_t prefab = ecs_insert(world, 
+ *   ecs_value(Position, {10, 20}),
+ *   ecs_value(Mass, {100}));
+ * 
+ * ecs_entity_t inst = ecs_new_w_pair(world, EcsIsA, prefab);
+ * assert(ecs_owns(world, inst, Position)); // false
+ * ecs_add(world, inst, Position); // manual override
+ * assert(ecs_owns(world, inst, Position)); // true
+ * assert(ecs_owns(world, inst, Mass)); // false
+ * @endcode
+ * 
+ * This operation is equivalent to manually adding the id with the AUTO_OVERRIDE
+ * bit applied:
  *
  * @code
- * ecs_add_id(world, entity, ECS_OVERRIDE | id);
+ * ecs_add_id(world, entity, ECS_AUTO_OVERRIDE | id);
  * @endcode
+ * 
+ * When a component is overridden and inherited from a prefab, the value from 
+ * the prefab component is copied to the instance. When the component is not
+ * inherited from a prefab, it is added to the instance as if using ecs_add_id.
+ * 
+ * Overriding is the default behavior on prefab instantiation. Auto overriding
+ * is only useful for components with the (OnInstantiate, Inherit) trait.
+ * When a component has the (OnInstantiate, DontInherit) trait and is overridden
+ * the component is added, but the value from the prefab will not be copied.
  *
  * @param world The world.
  * @param entity The entity.
- * @param id The id to override.
+ * @param id The (component) id to auto override.
  */
 FLECS_API
-void ecs_override_id(
+void ecs_auto_override_id(
     ecs_world_t *world,
     ecs_entity_t entity,
     ecs_id_t id);
@@ -8963,11 +9000,11 @@ int ecs_value_move_ctor(
     ecs_remove_id(world, subject, ecs_pair(first, second))
 
 
-#define ecs_override(world, entity, T)\
-    ecs_override_id(world, entity, ecs_id(T))
+#define ecs_auto_override(world, entity, T)\
+    ecs_auto_override_id(world, entity, ecs_id(T))
 
-#define ecs_override_pair(world, subject, first, second)\
-    ecs_override_id(world, subject, ecs_pair(first, second))
+#define ecs_auto_override_pair(world, subject, first, second)\
+    ecs_auto_override_id(world, subject, ecs_pair(first, second))
 
 /** @} */
 
@@ -8999,7 +9036,7 @@ int ecs_value_move_ctor(
         sizeof(Second), &(Second)__VA_ARGS__)
 
 #define ecs_set_override(world, entity, T, ...)\
-    ecs_add_id(world, entity, ECS_OVERRIDE | ecs_id(T));\
+    ecs_add_id(world, entity, ECS_AUTO_OVERRIDE | ecs_id(T));\
     ecs_set(world, entity, T, __VA_ARGS__)
 
 /* emplace */
@@ -13238,7 +13275,7 @@ FLECS_API
 extern ECS_COMPONENT_DECLARE(EcsScript);
 
 typedef struct ecs_script_t ecs_script_t;
-typedef struct ecs_script_assembly_t ecs_script_assembly_t;
+typedef struct ecs_script_template_t ecs_script_template_t;
 
 /** Script variable. */
 typedef struct ecs_script_var_t {
@@ -13264,7 +13301,7 @@ typedef struct ecs_script_vars_t {
  */
 typedef struct EcsScript {
     ecs_script_t *script;
-    ecs_script_assembly_t *assembly; /* Only set for assembly scripts */
+    ecs_script_template_t *template_; /* Only set for template scripts */
 } EcsScript;
 
 
@@ -13399,7 +13436,7 @@ ecs_entity_t ecs_script_init(
  *
  * @param world The world.
  * @param script The script entity.
- * @param instance An assembly instance (optional).
+ * @param instance An template instance (optional).
  * @param code The script code.
  */
 FLECS_API
@@ -15484,10 +15521,10 @@ enum query_cache_kind_t {
     QueryCacheNone = EcsQueryCacheNone
 };
 
-/** Id flags */
-static const flecs::entity_t Pair = ECS_PAIR;
-static const flecs::entity_t Override = ECS_OVERRIDE;
-static const flecs::entity_t Toggle = ECS_TOGGLE;
+/** Id bit flags */
+static const flecs::entity_t PAIR = ECS_PAIR;
+static const flecs::entity_t AUTO_OVERRIDE = ECS_AUTO_OVERRIDE;
+static const flecs::entity_t TOGGLE = ECS_TOGGLE;
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Builtin components and tags
@@ -15537,16 +15574,13 @@ static const flecs::entity_t Flecs = EcsFlecs;
 static const flecs::entity_t FlecsCore = EcsFlecsCore;
 static const flecs::entity_t World = EcsWorld;
 
-/* Relationship properties */
+/* Component traits */
 static const flecs::entity_t Wildcard = EcsWildcard;
 static const flecs::entity_t Any = EcsAny;
 static const flecs::entity_t This = EcsThis;
 static const flecs::entity_t Transitive = EcsTransitive;
 static const flecs::entity_t Reflexive = EcsReflexive;
 static const flecs::entity_t Final = EcsFinal;
-static const flecs::entity_t OnInstantiate = EcsOnInstantiate;
-static const flecs::entity_t Inherit = EcsInherit;
-static const flecs::entity_t DontInherit = EcsDontInherit;
 static const flecs::entity_t PairIsTag = EcsPairIsTag;
 static const flecs::entity_t Exclusive = EcsExclusive;
 static const flecs::entity_t Acyclic = EcsAcyclic;
@@ -15559,6 +15593,19 @@ static const flecs::entity_t Relationship = EcsRelationship;
 static const flecs::entity_t Target = EcsTarget;
 static const flecs::entity_t CanToggle = EcsCanToggle;
 
+/* OnInstantiate trait */
+static const flecs::entity_t OnInstantiate = EcsOnInstantiate;
+static const flecs::entity_t Override = EcsOverride;
+static const flecs::entity_t Inherit = EcsInherit;
+static const flecs::entity_t DontInherit = EcsDontInherit;
+
+/* OnDelete/OnDeleteTarget traits */
+static const flecs::entity_t OnDelete = EcsOnDelete;
+static const flecs::entity_t OnDeleteTarget = EcsOnDeleteTarget;
+static const flecs::entity_t Remove = EcsRemove;
+static const flecs::entity_t Delete = EcsDelete;
+static const flecs::entity_t Panic = EcsPanic;
+
 /* Builtin relationships */
 static const flecs::entity_t IsA = EcsIsA;
 static const flecs::entity_t ChildOf = EcsChildOf;
@@ -15568,13 +15615,6 @@ static const flecs::entity_t SlotOf = EcsSlotOf;
 /* Builtin identifiers */
 static const flecs::entity_t Name = EcsName;
 static const flecs::entity_t Symbol = EcsSymbol;
-
-/* Cleanup policies */
-static const flecs::entity_t OnDelete = EcsOnDelete;
-static const flecs::entity_t OnDeleteTarget = EcsOnDeleteTarget;
-static const flecs::entity_t Remove = EcsRemove;
-static const flecs::entity_t Delete = EcsDelete;
-static const flecs::entity_t Panic = EcsPanic;
 
 /* Storage */
 static const flecs::entity_t Sparse = EcsSparse;
@@ -16726,7 +16766,7 @@ struct entity;
  * A flecs id is an identifier that can be added to entities. Ids can be:
  * - entities (including components, tags)
  * - pair ids
- * - entities with id flags set (like flecs::Override, flecs::Toggle)
+ * - entities with id flags set (like flecs::AUTO_OVERRIDE, flecs::TOGGLE)
  */
 struct id {
     id()
@@ -16755,7 +16795,7 @@ struct id {
 
     /** Test if id is pair (has first, second) */
     bool is_pair() const {
-        return (id_ & ECS_ID_FLAGS_MASK) == flecs::Pair;
+        return (id_ & ECS_ID_FLAGS_MASK) == flecs::PAIR;
     }
 
     /** Test if id is a wildcard */
@@ -22981,60 +23021,60 @@ struct entity_builder : entity_view {
      *
      * @param id The id to mark for overriding.
      */    
-    Self& override(flecs::id_t id) {
-        return this->add(ECS_OVERRIDE | id);
+    Self& auto_override(flecs::id_t id) {
+        return this->add(ECS_AUTO_OVERRIDE | id);
     }
 
     /** Mark pair for auto-overriding.
-     * @see override(flecs::id_t id)
+     * @see auto_override(flecs::id_t id)
      *
      * @param first The first element of the pair.
      * @param second The second element of the pair.
      */     
-    Self& override(flecs::entity_t first, flecs::entity_t second) {
-        return this->override(ecs_pair(first, second));
+    Self& auto_override(flecs::entity_t first, flecs::entity_t second) {
+        return this->auto_override(ecs_pair(first, second));
     }
 
     /** Mark component for auto-overriding.
-     * @see override(flecs::id_t id)
+     * @see auto_override(flecs::id_t id)
      *
      * @tparam T The component to mark for overriding.
      */     
     template <typename T>
-    Self& override() {
-        return this->override(_::type<T>::id(this->world_));
+    Self& auto_override() {
+        return this->auto_override(_::type<T>::id(this->world_));
     }
 
     /** Mark pair for auto-overriding.
-     * @see override(flecs::id_t id)
+     * @see auto_override(flecs::id_t id)
      *
      * @tparam First The first element of the pair.
      * @param second The second element of the pair.
      */     
     template <typename First>
-    Self& override(flecs::entity_t second) {
-        return this->override(_::type<First>::id(this->world_), second);
+    Self& auto_override(flecs::entity_t second) {
+        return this->auto_override(_::type<First>::id(this->world_), second);
     }
 
     /** Mark pair for auto-overriding.
-     * @see override(flecs::id_t id)
+     * @see auto_override(flecs::id_t id)
      *
      * @tparam First The first element of the pair.
      * @tparam Second The second element of the pair.
      */     
     template <typename First, typename Second>
-    Self& override() {
-        return this->override<First>(_::type<Second>::id(this->world_));
+    Self& auto_override() {
+        return this->auto_override<First>(_::type<Second>::id(this->world_));
     }
 
     /** Set component, mark component for auto-overriding.
-     * @see override(flecs::id_t id)
+     * @see auto_override(flecs::id_t id)
      *
      * @tparam T The component to set and for which to add the OVERRIDE flag
      */    
     template <typename T>
-    Self& set_override(const T& val) {
-        this->override<T>();
+    Self& set_auto_override(const T& val) {
+        this->auto_override<T>();
         return this->set<T>(val);
     }
 
@@ -23044,69 +23084,69 @@ struct entity_builder : entity_view {
      * @tparam T The component to set and for which to add the OVERRIDE flag
      */    
     template <typename T>
-    Self& set_override(T&& val) {
-        this->override<T>();
+    Self& set_auto_override(T&& val) {
+        this->auto_override<T>();
         return this->set<T>(FLECS_FWD(val));
     }
 
     /** Set pair, mark component for auto-overriding.
-     * @see override(flecs::id_t id)
+     * @see auto_override(flecs::id_t id)
      *
      * @tparam First The first element of the pair.
      * @param second The second element of the pair.
      */    
     template <typename First>
-    Self& set_override(flecs::entity_t second, const First& val) {
-        this->override<First>(second);
+    Self& set_auto_override(flecs::entity_t second, const First& val) {
+        this->auto_override<First>(second);
         return this->set<First>(second, val);
     }
 
     /** Set pair, mark component for auto-overriding.
-     * @see override(flecs::id_t id)
+     * @see auto_override(flecs::id_t id)
      *
      * @tparam First The first element of the pair.
      * @param second The second element of the pair.
      */    
     template <typename First>
-    Self& set_override(flecs::entity_t second, First&& val) {
-        this->override<First>(second);
+    Self& set_auto_override(flecs::entity_t second, First&& val) {
+        this->auto_override<First>(second);
         return this->set<First>(second, FLECS_FWD(val));
     }
 
     /** Set component, mark component for auto-overriding.
-     * @see override(flecs::id_t id)
+     * @see auto_override(flecs::id_t id)
      *
      * @tparam First The first element of the pair.
      * @tparam Second The second element of the pair.
      */    
     template <typename First, typename Second, typename P = pair<First, Second>, 
         typename A = actual_type_t<P>, if_not_t< flecs::is_pair<First>::value> = 0>    
-    Self& set_override(const A& val) {
-        this->override<First, Second>();
+    Self& set_auto_override(const A& val) {
+        this->auto_override<First, Second>();
         return this->set<First, Second>(val);
     }
 
     /** Set component, mark component for auto-overriding.
-     * @see override(flecs::id_t id)
+     * @see auto_override(flecs::id_t id)
      *
      * @tparam First The first element of the pair.
      * @tparam Second The second element of the pair.
      */    
     template <typename First, typename Second, typename P = pair<First, Second>, 
         typename A = actual_type_t<P>, if_not_t< flecs::is_pair<First>::value> = 0>    
-    Self& set_override(A&& val) {
-        this->override<First, Second>();
+    Self& set_auto_override(A&& val) {
+        this->auto_override<First, Second>();
         return this->set<First, Second>(FLECS_FWD(val));
     }
 
     /** Emplace component, mark component for auto-overriding.
-     * @see override(flecs::id_t id)
+     * @see auto_override(flecs::id_t id)
      *
      * @tparam T The component to emplace and override.
      */    
     template <typename T, typename ... Args>
-    Self& emplace_override(Args&&... args) {
-        this->override<T>();
+    Self& emplace_auto_override(Args&&... args) {
+        this->auto_override<T>();
 
         flecs::emplace<T>(this->world_, this->id_, 
             _::type<T>::id(this->world_), FLECS_FWD(args)...);
@@ -23115,7 +23155,7 @@ struct entity_builder : entity_view {
     }
 
     /** Emplace pair, mark pair for auto-overriding.
-     * @see override(flecs::id_t id)
+     * @see auto_override(flecs::id_t id)
      *
      * @tparam First The first element of the pair to emplace and override.
      * @tparam Second The second element of the pair to emplace and override.
@@ -23123,8 +23163,8 @@ struct entity_builder : entity_view {
     template <typename First, typename Second, typename P = pair<First, Second>, 
         typename A = actual_type_t<P>, if_not_t< flecs::is_pair<First>::value> = 0,
             typename ... Args>
-    Self& emplace_override(Args&&... args) {
-        this->override<First, Second>();
+    Self& emplace_auto_override(Args&&... args) {
+        this->auto_override<First, Second>();
 
         flecs::emplace<A>(this->world_, this->id_, 
             ecs_pair(_::type<First>::id(this->world_),

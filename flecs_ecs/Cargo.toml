@@ -150,7 +150,7 @@ flecs_rest = ["flecs_ecs_sys/flecs_rest", "flecs_http", "flecs_json", "flecs_pip
 flecs_journal = ["flecs_ecs_sys/flecs_journal","flecs_log"]
 
 default = [
-    "flecs_regenerate_binding_c",
+    #"flecs_regenerate_binding_c",
     "flecs_module",
     "flecs_script",
     "flecs_snapshot",

@@ -2109,7 +2109,7 @@ pub struct ecs_component_desc_t {
     #[doc = "Parameters for type (size, hooks, ...)"]
     pub type_: ecs_type_info_t,
 }
-#[doc = "Iterator.\n Used for iterating queries. The ecs_iter_t type contains all the information\n that is provided by a query, and contains all the state required for the\n iterator code.\n\n Functions that create iterators accept as first argument the world, and as\n second argument the object they iterate. For example:\n\n @code\n ecs_iter_t it = ecs_query_iter(world, q);\n @endcode\n\n When this code is called from a system, it is important to use the world\n provided by its iterator object. For example:\n\n @code\n void Collide(ecs_iter_t *it) {\n   ecs_iter_t qit = ecs_query_iter(it->world, Colliders);\n }\n @endcode\n\n This ensures thread safe allocation and cleanup of any resources required by\n the iterator.\n\n @ingroup queries"]
+#[doc = "Iterator.\n Used for iterating queries. The ecs_iter_t type contains all the information\n that is provided by a query, and contains all the state required for the\n iterator code.\n\n Functions that create iterators accept as first argument the world, and as\n second argument the object they iterate. For example:\n\n @code\n ecs_iter_t it = ecs_query_iter(world, q);\n @endcode\n\n When this code is called from a system, it is important to use the world\n provided by its iterator object to ensure thread safety. For example:\n\n @code\n void Collide(ecs_iter_t *it) {\n   ecs_iter_t qit = ecs_query_iter(it->world, Colliders);\n }\n @endcode\n\n An iterator contains resources that need to be released. By default this\n is handled by the last call to next() that returns false. When iteration is\n ended before iteration has completed, an application has to manually call\n ecs_iter_fini to release the iterator resources:\n\n @code\n ecs_iter_t it = ecs_query_iter(world, q);\n while (ecs_query_next(&it)) {\n   if (cond) {\n     ecs_iter_fini(&it);\n     break;\n   }\n }\n @endcode\n\n @ingroup queries"]
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct ecs_iter_t {
@@ -2135,8 +2135,6 @@ pub struct ecs_iter_t {
     pub columns: *mut i32,
     #[doc = "< Entity on which the id was matched (0 if same as entities)"]
     pub sources: *mut ecs_entity_t,
-    #[doc = "< Cached refs to components (if iterating a cache)"]
-    pub references: *mut ecs_ref_t,
     #[doc = "< Bitset that marks constrained variables"]
     pub constrained_vars: ecs_flags64_t,
     #[doc = "< Group id for table, if group_by is used"]
@@ -2470,6 +2468,10 @@ pub struct EcsPoly {
 #[derive(Debug, Copy, Clone)]
 pub struct EcsDefaultChildComponent {
     pub component: ecs_id_t,
+}
+extern "C" {
+    #[doc = "Automatically override component when it is inherited"]
+    pub static ECS_AUTO_OVERRIDE: ecs_id_t;
 }
 extern "C" {
     pub static FLECS_IDEcsComponentID_: ecs_entity_t;
@@ -3049,8 +3051,8 @@ extern "C" {
     pub fn ecs_remove_id(world: *mut ecs_world_t, entity: ecs_entity_t, id: ecs_id_t);
 }
 extern "C" {
-    #[doc = "Add override for (component) id.\n Adding an override to an entity ensures that when the entity is instantiated\n (by adding an IsA relationship to it) the component with the override is\n copied to a component that is private to the instance. By default components\n reachable through an IsA relationship are shared.\n\n Adding an override does not add the component. If an override is added to an\n entity that does not have the component, it will still be added to the\n instance, but with an uninitialized value (unless the component has a ctor).\n When the entity does have the entity, the component of the instance will be\n initialized with the value of the component on the entity.\n\n This is the same as what happens when calling ecs_add_id() for an id that is\n inherited (reachable through an IsA relationship).\n\n This operation is equivalent to doing:\n\n @code\n ecs_add_id(world, entity, ECS_OVERRIDE | id);\n @endcode\n\n @param world The world.\n @param entity The entity.\n @param id The id to override."]
-    pub fn ecs_override_id(world: *mut ecs_world_t, entity: ecs_entity_t, id: ecs_id_t);
+    #[doc = "Add auto override for (component) id.\n An auto override is a component that is automatically added to an entity when\n it is instantiated from a prefab. Auto overrides are added to the entity that\n is inherited from (usually a prefab). For example:\n\n @code\n ecs_entity_t prefab = ecs_insert(world,\n   ecs_value(Position, {10, 20}),\n   ecs_value(Mass, {100}));\n\n ecs_auto_override(world, prefab, Position);\n\n ecs_entity_t inst = ecs_new_w_pair(world, EcsIsA, prefab);\n assert(ecs_owns(world, inst, Position)); // true\n assert(ecs_owns(world, inst, Mass)); // false\n @endcode\n\n An auto override is equivalent to a manual override:\n\n @code\n ecs_entity_t prefab = ecs_insert(world,\n   ecs_value(Position, {10, 20}),\n   ecs_value(Mass, {100}));\n\n ecs_entity_t inst = ecs_new_w_pair(world, EcsIsA, prefab);\n assert(ecs_owns(world, inst, Position)); // false\n ecs_add(world, inst, Position); // manual override\n assert(ecs_owns(world, inst, Position)); // true\n assert(ecs_owns(world, inst, Mass)); // false\n @endcode\n\n This operation is equivalent to manually adding the id with the AUTO_OVERRIDE\n bit applied:\n\n @code\n ecs_add_id(world, entity, ECS_AUTO_OVERRIDE | id);\n @endcode\n\n When a component is overridden and inherited from a prefab, the value from\n the prefab component is copied to the instance. When the component is not\n inherited from a prefab, it is added to the instance as if using ecs_add_id.\n\n Overriding is the default behavior on prefab instantiation. Auto overriding\n is only useful for components with the (OnInstantiate, Inherit) trait.\n When a component has the (OnInstantiate, DontInherit) trait and is overridden\n the component is added, but the value from the prefab will not be copied.\n\n @param world The world.\n @param entity The entity.\n @param id The (component) id to auto override."]
+    pub fn ecs_auto_override_id(world: *mut ecs_world_t, entity: ecs_entity_t, id: ecs_id_t);
 }
 extern "C" {
     #[doc = "Clear all components.\n This operation will remove all components from an entity.\n\n @param world The world.\n @param entity The entity."]
@@ -6274,7 +6276,7 @@ pub struct ecs_script_t {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct ecs_script_assembly_t {
+pub struct ecs_script_template_t {
     _unused: [u8; 0],
 }
 #[doc = "Script variable."]
@@ -6302,8 +6304,8 @@ pub struct ecs_script_vars_t {
 #[derive(Debug, Copy, Clone)]
 pub struct EcsScript {
     pub script: *mut ecs_script_t,
-    #[doc = "Only set for assembly scripts"]
-    pub assembly: *mut ecs_script_assembly_t,
+    #[doc = "Only set for template scripts"]
+    pub template_: *mut ecs_script_template_t,
 }
 extern "C" {
     #[doc = "Parse script.\n This operation parses a script and returns a script object upon success. To\n run the script, call ecs_script_eval().\n\n @param world The world.\n @param name Name of the script (typically a file/module name).\n @param code The script code.\n @return Script object if success, NULL if failed."]
@@ -6364,7 +6366,7 @@ extern "C" {
         -> ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Update script with new code.\n\n @param world The world.\n @param script The script entity.\n @param instance An assembly instance (optional).\n @param code The script code."]
+    #[doc = "Update script with new code.\n\n @param world The world.\n @param script The script entity.\n @param instance An template instance (optional).\n @param code The script code."]
     pub fn ecs_script_update(
         world: *mut ecs_world_t,
         script: ecs_entity_t,
