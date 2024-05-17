@@ -800,6 +800,9 @@ impl<'a> EntityView<'a> {
             panic!("setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
         }
 
+        // let world = self.world;
+        // self.add_id((First::get_id(world), enum_value.get_id_variant(world)))
+
         set_helper(
             self.world.world_ptr_mut(),
             *self.id,

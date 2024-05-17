@@ -43,7 +43,7 @@ where
 impl<T, U> IntoComponentId for (T, U)
 where
     T: ComponentId,
-    U: ComponentId + ComponentType<Struct>,
+    U: ComponentId,
 {
     const IS_ENUM: bool = false;
     const IS_PAIR: bool = true;

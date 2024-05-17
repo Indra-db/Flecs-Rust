@@ -970,73 +970,77 @@ fn entity_is_component_enabled() {
     assert!(entity.is_enabled::<Mass>());
 }
 
-//todo v4 bug flecs core
 /// # See also
 /// * C++ tests: `Entity_is_enabled_pair_enabled` + `Entity_is_disabled_pair_enabled` combined
-//#[test]
-// fn entity_is_enabled_pair() {
-//     let world = create_world();
+#[test]
+fn entity_is_enabled_pair() {
+    structs!();
+    let world = World::new();
 
-//     world.component::<Position>().add_id(flecs::CanToggle::ID);
-//     world.component::<TagA>().add_id(flecs::CanToggle::ID);
-//     world.component::<TagB>().add_id(flecs::CanToggle::ID);
-//     world.component::<TagC>().add_id(flecs::CanToggle::ID);
+    world.component::<Position>().add_id(flecs::CanToggle::ID);
+    world.component::<TagA>().add_id(flecs::CanToggle::ID);
+    world.component::<TagB>().add_id(flecs::CanToggle::ID);
+    world.component::<TagC>().add_id(flecs::CanToggle::ID);
 
-//     let entity = world
-//         .entity()
-//         .add::<(Position, TagA)>()
-//         .add::<(TagB, TagC)>()
-//         .disable::<(Position, TagC)>();
+    let entity = world
+        .entity()
+        .add::<(Position, TagA)>()
+        .add::<(Position, TagC)>()
+        .add::<(TagB, TagC)>()
+        .disable::<(Position, TagC)>();
 
-//     assert!(entity.is_enabled::<(Position, TagA)>());
-//     assert!(!entity.is_enabled::<(Position, TagB)>());
-//     assert!(!entity.is_enabled::<(Position, TagC)>());
+    assert!(entity.is_enabled::<(Position, TagA)>());
+    assert!(!entity.is_enabled::<(Position, TagB)>());
+    assert!(!entity.is_enabled::<(Position, TagC)>());
 
-//     entity.enable::<(Position, TagB)>();
-//     assert!(entity.is_enabled::<(Position, TagB)>());
+    entity.enable::<(Position, TagC)>();
+    assert!(entity.is_enabled::<(Position, TagC)>());
 
-//     entity.disable::<(Position, TagA)>();
-//     assert!(!entity.is_enabled::<(Position, TagA)>());
+    entity.disable::<(Position, TagA)>();
+    assert!(!entity.is_enabled::<(Position, TagA)>());
 
-//     entity.enable::<(Position, TagA)>();
-//     entity.enable::<(Position, TagC)>();
-//     assert!(entity.is_enabled::<(Position, TagA)>());
-//     assert!(entity.is_enabled::<(Position, TagC)>());
+    entity.enable::<(Position, TagA)>();
+    entity.enable::<(Position, TagC)>();
+    assert!(entity.is_enabled::<(Position, TagA)>());
+    assert!(entity.is_enabled::<(Position, TagC)>());
 
-//     entity.disable::<(Position, TagB)>();
-//     assert!(!entity.is_enabled::<(Position, TagB)>());
-// }
+    entity.disable::<(Position, TagC)>();
+    assert!(!entity.is_enabled::<(Position, TagC)>());
+    //component it doesn't have
+    assert!(!entity.is_enabled::<(Position, TagB)>());
+}
 
-//todo v4 bug flecs core
 /// # See also
 /// * C++ tests: `Entity_is_disabled_pair_enabled_w_tgt_id` + `Entity_is_enabled_pair_enabled_w_tgt_id` +
 ///  `Entity_is_pair_enabled_w_tgt_id` + `Entity_is_disabled_pair_enabled_w_ids` +
 /// `Entity_is_enabled_pair_enabled_w_ids` + `Entity_is_pair_enabled_w_ids` combined
-//#[test]
-// fn entity_is_enabled_pair_ids() {
-//     let world = create_world();
+#[test]
+fn entity_is_enabled_pair_ids() {
+    structs!();
+    let world = World::new();
 
-//     let rel = world.entity();
-//     let tgt_a = world.entity();
-//     let tgt_b = world.entity();
+    let rel = world.entity().add_id(flecs::CanToggle::ID);
+    let tgt_a = world.entity();
+    let tgt_b = world.entity();
 
-//     let e = world.entity().add_id((rel, tgt_a));
+    let e = world.entity().add_id((rel, tgt_a));
 
-//     assert!(e.is_enabled_id((rel, tgt_a)));
-//     assert!(!e.is_enabled_id((rel, tgt_b)));
+    assert!(e.is_enabled_id((rel, tgt_a)));
+    assert!(!e.is_enabled_id((rel, tgt_b)));
 
-//     e.disable_id((rel, tgt_a));
-//     assert!(!e.is_enabled_id((rel, tgt_a)));
+    e.disable_id((rel, tgt_a));
+    assert!(!e.is_enabled_id((rel, tgt_a)));
 
-//     e.enable_id((rel, tgt_a));
-//     assert!(e.is_enabled_id((rel, tgt_a)));
+    e.enable_id((rel, tgt_a));
+    assert!(e.is_enabled_id((rel, tgt_a)));
 
-//     e.add_id((rel, tgt_b)).disable_id((rel, tgt_b));
-//     assert!(!e.is_enabled_id((rel, tgt_b)));
+    e.add_id((rel, tgt_b)).disable_id((rel, tgt_b));
+    assert!(!e.is_enabled_id((rel, tgt_b)));
 
-//     e.enable_id((rel, tgt_b));
-//     assert!(e.is_enabled_id((rel, tgt_b)));
-// }
+    e.enable_id((rel, tgt_b));
+    assert!(e.is_enabled_id((rel, tgt_b)));
+}
+
 #[test]
 fn entity_is_first_enabled() {
     structs!();

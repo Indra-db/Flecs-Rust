@@ -188,13 +188,41 @@ where
         let entity = *entity;
         let id = <A::OnlyType as IntoComponentId>::get_id(world);
         let mut has_all_components = true;
+        
+        let component_ptr = if A::OnlyType::IS_ENUM {
 
-       let component_ptr =  if A::IS_IMMUTABLE { 
-         unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
+            let target: IdT = unsafe {
+                sys::ecs_get_target(world_ptr, entity, id, 0)
+            };
+
+            if target == 0 {
+                // if there is no matching pair for (r,*), try just r
+                unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
+            } else {
+                if !A::IS_IMMUTABLE {
+                    ecs_assert!(false, "Enums registered with `set_enum` should be `get` immutable, changing it won't actually change the value.");
+                }
+                
+                // get constant value from constant entity
+                let constant_value = unsafe { sys::ecs_get_id(world_ptr, target, id) } as *mut c_void;
+
+                ecs_assert!(
+                    !constant_value.is_null(),
+                    FlecsErrorCode::InternalError,
+                    "missing enum constant value {}",
+                    std::any::type_name::<A>()
+                );
+
+                unsafe { constant_value }
+            }
         } else {
-            unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,table,id)}
+            if A::IS_IMMUTABLE { 
+                unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
+             } else {
+               unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,table,id)}
+             }
         };
-
+        
         if component_ptr.is_null() {
             components[0] = std::ptr::null_mut();
             has_all_components = false;
@@ -205,22 +233,22 @@ where
                     Use `try_get` variant to avoid assert/panicking if you want to handle the error 
                     or use `Option<{}> instead to handle individual cases.",
                     std::any::type_name::<A::OnlyType>(), std::any::type_name::<Self>(), std::any::type_name::<A::ActualType<'a>>());
-                panic!("Component `{}` not found on `EntityView::get` operation 
-                with parameters: `{}`. 
-                Use `try_get` variant to avoid assert/panicking if 
-                you want to handle the error or use `Option<{}> 
-                instead to handle individual cases.",
-                std::any::type_name::<A::OnlyType>(), std::any::type_name::<Self>(), std::any::type_name::<A::ActualType<'a>>());
-            }
-        } else { 
-            components[0] = component_ptr;
-        } 
+                    panic!("Component `{}` not found on `EntityView::get` operation 
+                    with parameters: `{}`. 
+                    Use `try_get` variant to avoid assert/panicking if 
+                    you want to handle the error or use `Option<{}> 
+                    instead to handle individual cases.",
+                    std::any::type_name::<A::OnlyType>(), std::any::type_name::<Self>(), std::any::type_name::<A::ActualType<'a>>());
+                }
+            } else { 
+                components[0] = component_ptr;
+            } 
+            
+            
+            has_all_components
+        }
         
-
-        has_all_components
-    }
-
-    fn create_tuple<'a>(array_components: &[*mut c_void]) -> Self::TupleType<'a> {
+        fn create_tuple<'a>(array_components: &[*mut c_void]) -> Self::TupleType<'a> {
         A::create_tuple_data(array_components[0])
     }
 }
@@ -293,11 +321,39 @@ macro_rules! impl_get_tuple {
                 $(
                     let id = <$t::OnlyType as IntoComponentId>::get_id(world_ref);
 
-                    let component_ptr =  if $t::IS_IMMUTABLE {
-                            unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table, id) }
-                        } else {
-                            unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,table, id)}
+                    let component_ptr = if $t::OnlyType::IS_ENUM {
+
+                        let target: IdT = unsafe {
+                            sys::ecs_get_target(world_ptr, entity, id, 0)
                         };
+
+                        if target == 0 {
+                            // if there is no matching pair for (r,*), try just r
+                            unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
+                        } else {
+                            if !$t::IS_IMMUTABLE {
+                                ecs_assert!(false, "Enums registered with `set_enum` should be `get` immutable, changing it won't actually change the value.");
+                            }
+
+                            // get constant value from constant entity
+                            let constant_value = unsafe { sys::ecs_get_id(world_ptr, target, id) } as *mut c_void;
+
+                            ecs_assert!(
+                                !constant_value.is_null(),
+                                FlecsErrorCode::InternalError,
+                                "missing enum constant value {}",
+                                std::any::type_name::<$t>()
+                            );
+
+                            unsafe { constant_value }
+                        }
+                    } else {
+                        if $t::IS_IMMUTABLE {
+                            unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
+                         } else {
+                           unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,table,id)}
+                         }
+                    };
 
                     if !component_ptr.is_null() {
                         components[index] = component_ptr;
