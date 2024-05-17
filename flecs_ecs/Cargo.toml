@@ -55,15 +55,25 @@ flecs_disable_build_c = ["flecs_ecs_sys/disable_build_c"]
 # Flecs feature flags
 ######################
 
-# Disables/removes table locking for `get` operations. This feature can improve performance by 30-50%, making it beneficial for release builds.
-# 
-# However, using this feature removes a critical safety measure. Normally, the table is locked during a `get` operation to prevent undefined 
-# behavior if the table is modified (such as adding or removing components) during the operation. Such modifications can cause the entity 
-# or table to relocate, leading to a panic if table locking is enabled. Without table locking, these modifications can result in undefined 
+# When set, the Rust API will require that components are registered before they
+# are used. This is useful in multithreaded applications, where components need
+# to be registered beforehand, and to catch issues in projects where component 
+# registration is mandatory. Disabling automatic component registration also
+# improves performance, more so in multi-world applications. 
+# The C API is not affected by this feature.
+flecs_manual_registration = []
+
+# Disables/removes table locking for `get` operations. This feature can improve performance by 30-50%,
+# making it beneficial for release builds. However, using this feature removes a critical safety measure. 
+# Normally, the table is locked during a `get` operation to prevent undefined 
+# behavior if the table is modified (such as adding or removing components) during the operation. 
+# Such modifications can cause the entity or table to relocate, leading to a panic if table locking is enabled. 
+# Without table locking, these modifications can result in undefined 
 # behavior, which can be difficult to debug and may cause serious issues.
 # 
-# Therefore, it is strongly recommended to use this feature only when you are certain that the table will not be modified during the `get` 
-# operation. It is also advised not to use this feature in debug builds, where safety and correctness checks are more critical.
+# Therefore, it is strongly recommended to use this feature only when you are certain that the table will 
+# not be modified during the `get` operation. It is also advised not to use this feature in debug builds, 
+# where safety and correctness checks are more critical.
 flecs_unsafe_get = []
 
 # indicate that the flecs library is meant to be used in a multi-world application

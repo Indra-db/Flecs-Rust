@@ -81,8 +81,27 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
 
     /// returns the component id of the component. If the component is not registered, it will register it.
     fn get_id<'a>(world: impl IntoWorld<'a>) -> IdT {
-        try_register_component::<Self::UnderlyingType>(world);
-        unsafe { Self::UnderlyingType::get_id_unchecked() }
+        #[cfg(feature = "flecs_manual_registration")]
+        {
+            ecs_assert!(
+                {
+                    if !Self::is_registered() || !Self::is_registered_with_world(world.world()) {
+                        false
+                    } else {
+                        true
+                    }
+                },
+                FlecsErrorCode::InvalidOperation,
+                "Component {} is not registered with the world before usage",
+                Self::name()
+            );
+            unsafe { Self::UnderlyingType::get_id_unchecked() }
+        }
+        #[cfg(not(feature = "flecs_manual_registration"))]
+        {
+            try_register_component::<Self::UnderlyingType>(world);
+            unsafe { Self::UnderlyingType::get_id_unchecked() }
+        }
     }
 
     /// returns the component id of the component.

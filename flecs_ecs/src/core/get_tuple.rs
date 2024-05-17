@@ -215,13 +215,12 @@ where
 
                 unsafe { constant_value }
             }
-        } else {
-            if A::IS_IMMUTABLE { 
-                unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
-             } else {
-               unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,table,id)}
-             }
-        };
+        } else if A::IS_IMMUTABLE { 
+            unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
+         } else {
+           unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,table,id)}
+         };
+         
         
         if component_ptr.is_null() {
             components[0] = std::ptr::null_mut();
@@ -347,13 +346,12 @@ macro_rules! impl_get_tuple {
 
                             unsafe { constant_value }
                         }
-                    } else {
-                        if $t::IS_IMMUTABLE {
-                            unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
-                         } else {
-                           unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,table,id)}
-                         }
-                    };
+                    } else if $t::IS_IMMUTABLE {
+                        unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
+                     } else {
+                       unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,table,id)}
+                     };
+
 
                     if !component_ptr.is_null() {
                         components[index] = component_ptr;
