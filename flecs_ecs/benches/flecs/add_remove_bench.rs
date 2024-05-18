@@ -49,7 +49,7 @@ pub fn add_remove(criterion: &mut Criterion) {
         ENTITY_COUNT
         ; (register_component_range, (C, 1, 1))
         ; // Preparation
-        ; (add_component_range, (C, 1, 1)), (remove_component_range, (C, 1, 1))
+        ; (set_component_range, (C, 1, 1)), (remove_component_range, (C, 1, 1))
         ; (reset_component_range, (C, 1, 1))
     );
 
@@ -59,7 +59,7 @@ pub fn add_remove(criterion: &mut Criterion) {
         ENTITY_COUNT
         ; (register_component_range, (C, 1, 2))
         ; // Preparation
-        ; (add_component_range, (C, 1, 2)), (remove_component_range, (C, 1, 2))
+        ; (set_component_range, (C, 1, 2)), (remove_component_range, (C, 1, 2))
         ; (reset_component_range, (C, 1, 2))
     );
 
@@ -69,7 +69,7 @@ pub fn add_remove(criterion: &mut Criterion) {
         ENTITY_COUNT
         ; (register_component_range, (C, 1, 16))
         ; // Preparation
-        ; (add_component_range, (C, 1, 16)), (remove_component_range, (C, 1, 16))
+        ; (set_component_range, (C, 1, 16)), (remove_component_range, (C, 1, 16))
         ; (reset_component_range, (C, 1, 16))
     );
 
@@ -79,7 +79,7 @@ pub fn add_remove(criterion: &mut Criterion) {
         ENTITY_COUNT
         ; (register_component_range, (C, 1, 64))
         ; // Preparation
-        ; (add_component_range, (C, 1, 64)), (remove_component_range, (C, 1, 64))
+        ; (set_component_range, (C, 1, 64)), (remove_component_range, (C, 1, 64))
         ; (reset_component_range, (C, 1, 64))
     );
 
@@ -168,7 +168,7 @@ pub fn add_remove_cmd(criterion: &mut Criterion) {
         ENTITY_COUNT
         ; (register_component_range, (C, 1, 1))
         ; // Preparation
-        ; (add_component_range_cmd, (C, 1, 1)), (remove_component_range_cmd, (C, 1, 1))
+        ; (set_component_range_cmd, (C, 1, 1)), (remove_component_range_cmd, (C, 1, 1))
         ; (reset_component_range, (C, 1, 1))
     );
 
@@ -178,7 +178,7 @@ pub fn add_remove_cmd(criterion: &mut Criterion) {
         ENTITY_COUNT
         ; (register_component_range, (C, 1, 2))
         ; // Preparation
-        ; (add_component_range_cmd, (C, 1, 2)), (remove_component_range_cmd, (C, 1, 2))
+        ; (set_component_range_cmd, (C, 1, 2)), (remove_component_range_cmd, (C, 1, 2))
         ; (reset_component_range, (C, 1, 2))
     );
 
@@ -188,7 +188,7 @@ pub fn add_remove_cmd(criterion: &mut Criterion) {
         ENTITY_COUNT
         ; (register_component_range, (C, 1, 16))
         ; // Preparation
-        ; (add_component_range_cmd, (C, 1, 16)), (remove_component_range_cmd, (C, 1, 16))
+        ; (set_component_range_cmd, (C, 1, 16)), (remove_component_range_cmd, (C, 1, 16))
         ; (reset_component_range, (C, 1, 16))
     );
 
@@ -198,7 +198,7 @@ pub fn add_remove_cmd(criterion: &mut Criterion) {
         ENTITY_COUNT
         ; (register_component_range, (C, 1, 64))
         ; // Preparation
-        ; (add_component_range_cmd, (C, 1, 64)), (remove_component_range_cmd, (C, 1, 64))
+        ; (set_component_range_cmd, (C, 1, 64)), (remove_component_range_cmd, (C, 1, 64))
         ; (reset_component_range, (C, 1, 64))
     );
 
@@ -213,7 +213,7 @@ pub fn add_remove_1_tag_to_entity_with_n_components(criterion: &mut Criterion) {
         "1",
         ENTITY_COUNT
         ; (register_component_range, (T, 1, 1))
-        ; (add_component_range, (C, 1, 1))
+        ; (set_component_range_cmd, (C, 1, 1))
         ; (add_component_range, (T, 1, 1)), (remove_component_range, (T, 1, 1))
         ; (reset_component_range, (T, 1, 1)), (reset_component_range, (C, 1, 1))
     );
@@ -223,7 +223,7 @@ pub fn add_remove_1_tag_to_entity_with_n_components(criterion: &mut Criterion) {
         "2",
         ENTITY_COUNT
         ; (register_component_range, (T, 1, 1))
-        ; (add_component_range, (C, 1, 2))
+        ; (set_component_range_cmd, (C, 1, 2))
         ; (add_component_range, (T, 1, 1)), (remove_component_range, (T, 1, 1))
         ; (reset_component_range, (T, 1, 1)), (reset_component_range, (C, 1, 2))
     );
@@ -233,7 +233,7 @@ pub fn add_remove_1_tag_to_entity_with_n_components(criterion: &mut Criterion) {
         "16",
         ENTITY_COUNT
         ; (register_component_range, (T, 1, 1))
-        ; (add_component_range, (C, 1, 16))
+        ; (set_component_range_cmd, (C, 1, 16))
         ; (add_component_range, (T, 1, 1)), (remove_component_range, (T, 1, 1))
         ; (reset_component_range, (T, 1, 1)), (reset_component_range, (C, 1, 16))
     );
@@ -243,7 +243,7 @@ pub fn add_remove_1_tag_to_entity_with_n_components(criterion: &mut Criterion) {
         "64",
         ENTITY_COUNT
         ; (register_component_range, (T, 1, 1))
-        ; (add_component_range, (C, 1, 64))
+        ; (set_component_range_cmd, (C, 1, 64))
         ; (add_component_range, (T, 1, 1)), (remove_component_range, (T, 1, 1))
         ; (reset_component_range, (T, 1, 1)), (reset_component_range, (C, 1, 64))
     );

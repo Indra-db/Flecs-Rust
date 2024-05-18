@@ -43,34 +43,34 @@ fn query_each_benchmark(c: &mut Criterion) {
         e.set(Pos { x: 10.0, y: 20.0 });
         e.set(Vel { x: 5.0, y: 5.0 });
         if flip_coin() {
-            e.add::<X2>();
+            e.set(X2 { x: 0.0, y: 0.0 });
         }
         if flip_coin() {
-            e.add::<X3>();
+            e.set(X3 { x: 0.0, y: 0.0 });
         }
         if flip_coin() {
-            e.add::<X4>();
+            e.set(X4 { x: 0.0, y: 0.0 });
         }
         if flip_coin() {
-            e.add::<X5>();
+            e.set(X5 { x: 0.0, y: 0.0 });
         }
         if flip_coin() {
-            e.add::<X6>();
+            e.set(X6 { x: 0.0, y: 0.0 });
         }
         if flip_coin() {
-            e.add::<X7>();
+            e.set(X7 { x: 0.0, y: 0.0 });
         }
         if flip_coin() {
-            e.add::<X8>();
+            e.set(X8 { x: 0.0, y: 0.0 });
         }
         if flip_coin() {
-            e.add::<X9>();
+            e.set(X9 { x: 0.0, y: 0.0 });
         }
         if flip_coin() {
-            e.add::<X10>();
+            e.set(X10 { x: 0.0, y: 0.0 });
         }
         if flip_coin() {
-            e.add::<X11>();
+            e.set(X11 { x: 0.0, y: 0.0 });
         }
     }
 

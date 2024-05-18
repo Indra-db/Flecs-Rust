@@ -163,7 +163,7 @@ pub fn event_modified(criterion: &mut Criterion) {
     for observer_count in [0, 1, 10, 100] {
         group.bench_function(format!("{}_observers", observer_count), |bencher| {
             let world = World::new();
-            let e = world.entity().add::<C1>();
+            let e = world.entity().set(C1(0.0));
 
             for _ in 0..observer_count {
                 world

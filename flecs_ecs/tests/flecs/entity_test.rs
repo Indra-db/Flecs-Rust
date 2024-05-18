@@ -74,7 +74,7 @@ fn entity_new_add() {
     structs!();
     let world = World::new();
 
-    let entity = world.entity().add::<Position>();
+    let entity = world.entity().set(Position { x: 0, y: 0 });
 
     assert!(entity.is_valid());
     assert!(entity.has::<Position>());
@@ -85,7 +85,10 @@ fn entity_new_add_2() {
     structs!();
     let world = World::new();
 
-    let entity = world.entity().add::<Position>().add::<Velocity>();
+    let entity = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
 
     assert!(entity.is_valid());
     assert!(entity.has::<Position>());
@@ -144,7 +147,7 @@ fn entity_add() {
 
     assert!(entity.is_valid());
 
-    entity.add::<Position>();
+    entity.set(Position { x: 0, y: 0 });
 
     assert!(entity.has::<Position>());
 }
@@ -157,7 +160,7 @@ fn entity_remove() {
     let entity = world.entity();
     assert!(entity.is_valid());
 
-    entity.add::<Position>();
+    entity.set(Position { x: 0, y: 0 });
     assert!(entity.has::<Position>());
 
     entity.remove::<Position>();
@@ -189,7 +192,9 @@ fn entity_add_2() {
     let entity = world.entity();
     assert!(entity.is_valid());
 
-    entity.add::<Position>().add::<Velocity>();
+    entity
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
 
     assert!(entity.has::<Position>());
     assert!(entity.has::<Velocity>());
@@ -245,7 +250,10 @@ fn entity_remove_2() {
     structs!();
     let world = World::new();
 
-    let entity = world.entity().add::<Position>().add::<Velocity>();
+    let entity = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
 
     assert!(entity.has::<Position>());
     assert!(entity.has::<Velocity>());
@@ -338,14 +346,14 @@ fn entity_remove_instanceof() {
 fn entity_get_generic() {
     structs!();
     let world = World::new();
-    let position = world.add::<Position>();
+    world.set(Position { x: 0, y: 0 });
 
     let entity = world.entity().set(Position { x: 10, y: 20 });
 
     assert!(entity.is_valid());
     assert!(entity.has::<Position>());
 
-    let pos_void = entity.get_untyped(position);
+    let pos_void = entity.get_untyped(world.id_from::<Position>());
     assert!(!pos_void.is_null());
 
     let pos = unsafe { &*(pos_void as *const Position) };
@@ -739,7 +747,10 @@ fn entity_delete() {
     structs!();
     let world = World::new();
 
-    let entity = world.entity().add::<Position>().add::<Velocity>();
+    let entity = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
 
     entity.destruct();
     assert!(!entity.is_alive());
@@ -755,7 +766,10 @@ fn entity_clear() {
     structs!();
     let world = World::new();
 
-    let entity = world.entity().add::<Position>().add::<Velocity>();
+    let entity = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
 
     entity.clear();
     assert!(!entity.has::<Position>());
@@ -779,8 +793,8 @@ fn entity_force_owned() {
 
     let prefab = world
         .prefab()
-        .add::<Position>()
-        .add::<Velocity>()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 })
         .auto_override::<Position>();
 
     let entity = world.entity().add_id((flecs::IsA::ID, prefab));
@@ -805,8 +819,8 @@ fn entity_force_owned_2() {
 
     let prefab = world
         .prefab()
-        .add::<Position>()
-        .add::<Velocity>()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 })
         .auto_override::<Position>()
         .auto_override::<Velocity>();
 
@@ -832,8 +846,8 @@ fn entity_force_owned_nested() {
 
     let prefab = world
         .prefab()
-        .add::<Position>()
-        .add::<Velocity>()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 })
         .auto_override::<Position>();
 
     let prefab_2 = world.entity().add_id((flecs::IsA::ID, prefab));
@@ -875,9 +889,9 @@ fn entity_get_target() {
 
     let rel = world.entity();
 
-    let obj1 = world.entity().add::<Position>();
-    let obj2 = world.entity().add::<Velocity>();
-    let obj3 = world.entity().add::<Mass>();
+    let obj1 = world.entity().set(Position { x: 0, y: 0 });
+    let obj2 = world.entity().set(Velocity { x: 0, y: 0 });
+    let obj3 = world.entity().set(Mass { value: 0 });
     let child = world
         .entity()
         .add_id((rel, obj1))
@@ -925,9 +939,9 @@ fn entity_is_component_enabled() {
 
     let entity = world
         .entity()
-        .add::<Position>()
-        .add::<Velocity>()
-        .add::<Mass>();
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 })
+        .set(Mass { value: 0 });
 
     assert!(entity.is_enabled::<Position>());
     assert!(entity.is_enabled::<Velocity>());
@@ -984,8 +998,8 @@ fn entity_is_enabled_pair() {
 
     let entity = world
         .entity()
-        .add::<(Position, TagA)>()
-        .add::<(Position, TagC)>()
+        .set_pair::<Position, TagA>(Position { x: 0, y: 0 })
+        .set_pair::<Position, TagC>(Position { x: 0, y: 0 })
         .add::<(TagB, TagC)>()
         .disable::<(Position, TagC)>();
 
@@ -1049,7 +1063,9 @@ fn entity_is_first_enabled() {
     let tgt_a = world.entity();
     let tgt_b = world.entity();
 
-    let e = world.entity().add_first::<Position>(tgt_a);
+    let e = world
+        .entity()
+        .set_first::<Position>(Position { x: 0, y: 0 }, tgt_a);
 
     assert!(e.is_enabled_first::<Position>(tgt_a));
     assert!(!e.is_enabled_first::<Position>(tgt_b));
@@ -1068,7 +1084,7 @@ fn entity_get_type() {
         assert_eq!(type_1.count(), 0);
     }
 
-    entity.add::<Position>();
+    entity.set(Position { x: 0, y: 0 });
 
     {
         let type_2 = entity.archetype();
@@ -1076,7 +1092,7 @@ fn entity_get_type() {
         assert_eq!(type_2[0], world.id_from::<Position>());
     }
 
-    entity.add::<Velocity>();
+    entity.set(Velocity { x: 0, y: 0 });
     let type_3 = entity.archetype();
     assert_eq!(type_3.count(), 2);
     assert_eq!(type_3[1], world.id_from::<Velocity>());
@@ -1087,7 +1103,7 @@ fn entity_get_nonempty_type() {
     structs!();
     let world = World::new();
 
-    let entity = world.entity().add::<Position>();
+    let entity = world.entity().set(Position { x: 0, y: 0 });
     assert!(entity.is_valid());
 
     let type_1 = entity.archetype();
@@ -1213,7 +1229,7 @@ fn entity_override_pair_w_tgt_id() {
     let base = world
         .entity()
         .auto_override_first::<Position>(tgt_a)
-        .add_first::<Position>(tgt_b);
+        .set_first::<Position>(Position { x: 0, y: 0 }, tgt_b);
 
     let entity = world.entity().add_id((flecs::IsA::ID, base));
 
@@ -1260,7 +1276,7 @@ fn entity_override_pair() {
     let base = world
         .entity()
         .auto_override::<(Position, TagA)>()
-        .add::<(Position, TagB)>();
+        .set_pair::<Position, TagB>(Position { x: 0, y: 0 });
 
     let entity = world.entity().add_id((flecs::IsA::ID, base));
 
@@ -3364,7 +3380,7 @@ fn entity_clone_to_existing_overlap() {
     let v = PositionClone { x: 10, y: 20 };
 
     let src = world.entity().add::<TagClone>().set(v);
-    let dst = world.entity().add::<PositionClone>();
+    let dst = world.entity().set(PositionClone { x: 0, y: 0 });
 
     src.duplicate_into(true, dst);
 }

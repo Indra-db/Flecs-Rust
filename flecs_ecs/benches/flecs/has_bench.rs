@@ -18,7 +18,7 @@ pub fn has_component_not_found(criterion: &mut Criterion) {
         "not_empty_entity",
         ENTITY_COUNT
         ; (register_component_range, (C, 2, 2)) // Registration so it doesn't affect the benchmark
-        ; (add_component_range, (C, 1, 1)) // Preparation
+        ; (set_component_range, (C, 1, 1)) // Preparation
         ; (has_component_range, (C, 2, 2)) // Benchmark
         ; (reset_component_range, (C, 1, 2)) // Cleanup
     );
@@ -34,7 +34,7 @@ pub fn has_components_found(criterion: &mut Criterion) {
         "1",
         ENTITY_COUNT
         ; // Empty registration
-        ; (add_component_range, (C, 1, 1)) // Preparation
+        ; (set_component_range, (C, 1, 1)) // Preparation
         ; (has_component_range, (C, 1, 1)) // Benchmark
         ; (reset_component_range, (C, 1, 1)) // Cleanup
     );
@@ -44,7 +44,7 @@ pub fn has_components_found(criterion: &mut Criterion) {
         "2",
         ENTITY_COUNT
         ; // Empty registration
-        ;(add_component_range, (C, 1, 2)) //preparation code
+        ;(set_component_range, (C, 1, 2)) //preparation code
         ; (has_component_range, (C, 1, 2)) //benchmark code
         ; (reset_component_range, (C, 1, 2)) //reset code
     );
@@ -54,7 +54,7 @@ pub fn has_components_found(criterion: &mut Criterion) {
         "16",
         ENTITY_COUNT
         ; //registration code
-        ;(add_component_range, (C, 1, 16)) //preparation code
+        ;(set_component_range, (C, 1, 16)) //preparation code
         ; (has_component_range, (C, 1, 16)) //benchmark code
         ; (reset_component_range, (C, 1, 16)) //reset code
     );
@@ -64,7 +64,7 @@ pub fn has_components_found(criterion: &mut Criterion) {
         "64",
         ENTITY_COUNT
         ; //registration code
-        ;(add_component_range, (C, 1, 64)) //preparation code
+        ;(set_component_range, (C, 1, 64)) //preparation code
         ; (has_component_range, (C, 1, 64)) //benchmark code
         ; (reset_component_range, (C, 1, 64)) //reset code
     );

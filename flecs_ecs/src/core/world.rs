@@ -1603,7 +1603,7 @@ impl World {
     /// * C++ API: `world::add`
     #[doc(alias = "world::add")]
     #[inline(always)]
-    pub fn add<T: IntoComponentId>(&self) -> EntityView {
+    pub fn add<T: IntoComponentId + EmptyComponent>(&self) -> EntityView {
         if T::IS_PAIR {
             let first_id = <T::First as ComponentId>::get_id(self);
             EntityView::new_from(self, first_id).add::<T>()

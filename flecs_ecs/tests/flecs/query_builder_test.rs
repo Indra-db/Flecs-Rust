@@ -15,8 +15,11 @@ fn query_builder_builder_assign_same_type() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>().add::<Velocity>();
-    world.entity().add::<Position>();
+    let e1 = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
+    world.entity().set(Position { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, (_p, _v)| {
@@ -37,8 +40,11 @@ fn query_builder_builder_assign_to_empty() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>().add::<Velocity>();
-    world.entity().add::<Position>();
+    let e1 = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
+    world.entity().set(Position { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -61,8 +67,11 @@ fn query_builder_builder_assign_from_empty() {
         .with::<&Velocity>()
         .build();
 
-    let e1 = world.entity().add::<Position>().add::<Velocity>();
-    world.entity().add::<Position>();
+    let e1 = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
+    world.entity().set(Position { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -83,8 +92,11 @@ fn query_builder_builder_build() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>().add::<Velocity>();
-    world.entity().add::<Position>();
+    let e1 = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
+    world.entity().set(Position { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, (_p, _v)| {
@@ -105,8 +117,11 @@ fn query_builder_builder_build_to_let() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>().add::<Velocity>();
-    world.entity().add::<Position>();
+    let e1 = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
+    world.entity().set(Position { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -128,8 +143,11 @@ fn query_builder_builder_build_n_statements() {
     q.set_cache_kind(QueryCacheKind::Auto);
     let q = q.build();
 
-    let e1 = world.entity().add::<Position>().add::<Velocity>();
-    world.entity().add::<Position>();
+    let e1 = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
+    world.entity().set(Position { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -150,8 +168,8 @@ fn query_builder_1_type() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>();
-    world.entity().add::<Velocity>();
+    let e1 = world.entity().set(Position { x: 0, y: 0 });
+    world.entity().set(Velocity { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _p| {
@@ -626,8 +644,8 @@ fn query_builder_add_1_type() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>();
-    world.entity().add::<Velocity>();
+    let e1 = world.entity().set(Position { x: 0, y: 0 });
+    world.entity().set(Velocity { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -650,8 +668,11 @@ fn query_builder_add_2_types() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>().add::<Velocity>();
-    world.entity().add::<Velocity>();
+    let e1 = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
+    world.entity().set(Velocity { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -673,8 +694,11 @@ fn query_builder_add_1_type_w_1_type() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>().add::<Velocity>();
-    world.entity().add::<Velocity>();
+    let e1 = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
+    world.entity().set(Velocity { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -699,10 +723,10 @@ fn query_builder_add_2_types_w_1_type() {
 
     let e1 = world
         .entity()
-        .add::<Position>()
-        .add::<Velocity>()
-        .add::<Mass>();
-    world.entity().add::<Velocity>();
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 })
+        .set(Mass { value: 0 });
+    world.entity().set(Velocity { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -752,8 +776,11 @@ fn query_builder_add_not() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>();
-    world.entity().add::<Position>().add::<Velocity>();
+    let e1 = world.entity().set(Position { x: 0, y: 0 });
+    world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _p| {
@@ -777,9 +804,9 @@ fn query_builder_add_or() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>();
-    let e2 = world.entity().add::<Velocity>();
-    world.entity().add::<Mass>();
+    let e1 = world.entity().set(Position { x: 0, y: 0 });
+    let e2 = world.entity().set(Velocity { x: 0, y: 0 });
+    world.entity().set(Mass { value: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -803,9 +830,12 @@ fn query_builder_add_optional() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>();
-    let e2 = world.entity().add::<Position>().add::<Velocity>();
-    world.entity().add::<Velocity>().add::<Mass>();
+    let e1 = world.entity().set(Position { x: 0, y: 0 });
+    let e2 = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
+    world.entity().set(Velocity { x: 0, y: 0 }).set(Mass { value: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -826,9 +856,12 @@ fn query_builder_option_type() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>();
-    let e2 = world.entity().add::<Position>().add::<Velocity>();
-    world.entity().add::<Velocity>().add::<Mass>();
+    let e1 = world.entity().set(Position { x: 0, y: 0 });
+    let e2 = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
+    world.entity().set(Velocity { x: 0, y: 0 }).set(Mass { value: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -849,8 +882,8 @@ fn query_builder_const_type() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>();
-    world.entity().add::<Velocity>();
+    let e1 = world.entity().set(Position { x: 0, y: 0 });
+    world.entity().set(Velocity { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _p| {
@@ -874,8 +907,8 @@ fn query_builder_string_term() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>();
-    world.entity().add::<Velocity>();
+    let e1 = world.entity().set(Position { x: 0, y: 0 });
+    world.entity().set(Velocity { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -1569,8 +1602,8 @@ fn query_builder_template_term() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>().add::<Template<u32>>();
-    world.entity().add::<Position>();
+    let e1 = world.entity().set(Position { x: 0, y: 0 }).set(Template::<u32>{ value: 10 });
+    world.entity().set(Position { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _p| {
@@ -1593,8 +1626,11 @@ fn query_builder_explicit_subject_w_id() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>().add::<Velocity>();
-    world.entity().add::<Velocity>();
+    let e1 = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
+    world.entity().set(Velocity { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _p| {
@@ -1698,8 +1734,8 @@ fn query_builder_explicit_term() {
     //     .set_cache_kind(QueryCacheKind::Auto)
     //     .build();
 
-    // let e1 = world.entity().add::<Position>();
-    // world.entity().add::<Velocity>();
+    // let e1 = world.entity().set(Position { x: 0, y: 0 });
+    // world.entity().set(Velocity { x: 0, y: 0 });
 
     // let mut count = 0;
     // q.each_entity(|e, _| {
@@ -1720,8 +1756,8 @@ fn query_builder_explicit_term_w_type() {
     //         .set_cache_kind(QueryCacheKind::Auto)
     //         .build();
 
-    //     let e1 = world.entity().add::<Position>();
-    //     world.entity().add::<Velocity>();
+    //     let e1 = world.entity().set(Position { x: 0, y: 0 });
+    //     world.entity().set(Velocity { x: 0, y: 0 });
 
     //    let mut count = 0;
     //     q.each_entity(|e, _| {
@@ -1840,7 +1876,7 @@ fn query_builder_2_subsequent_args() {
         .singleton()
         .iter_only(move |it| it.real_world().get::<&mut Flags>(|f| f.count += it.count()));
 
-    world.entity().add::<(RelFoo, Tag)>();
+    world.entity().set_pair::<RelFoo, Tag>(RelFoo { foo: 10 });
     world.set(Velocity { x: 0, y: 0 });
 
     s.run();
@@ -2532,7 +2568,7 @@ fn query_builder_create_w_no_template_args() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>();
+    let e1 = world.entity().set(Position { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -2856,8 +2892,8 @@ fn query_builder_named_query() {
     structs!();
     let world = World::new();
 
-    let e1 = world.entity().add::<Position>();
-    let e2 = world.entity().add::<Position>();
+    let e1 = world.entity().set(Position { x: 0, y: 0 });
+    let e2 = world.entity().set(Position { x: 0, y: 0 });
 
     let q = world
         .query_named::<()>(c"my_query")
@@ -2926,7 +2962,7 @@ fn query_builder_iter_w_stage() {
     //     world.set_stage_count(2);
     //     let stage = world.stage(1);
 
-    //     let e1 = world.entity().add::<Position>();
+    //     let e1 = world.entity().set(Position { x: 0, y: 0 });
 
     //     let q = world.query::<&Position>();
 
@@ -3555,8 +3591,11 @@ fn query_builder_with_id() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>().add::<Velocity>();
-    world.entity().add::<Position>();
+    let e1 = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
+    world.entity().set(Position { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3581,8 +3620,11 @@ fn query_builder_with_name() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>().add::<Velocity>();
-    world.entity().add::<Position>();
+    let e1 = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
+    world.entity().set(Position { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3605,8 +3647,11 @@ fn query_builder_with_component() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>().add::<Velocity>();
-    world.entity().add::<Position>();
+    let e1 = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
+    world.entity().set(Position { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3633,8 +3678,8 @@ fn query_builder_with_pair_id() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>().add_id((likes, apples));
-    world.entity().add::<Position>().add_id((likes, pears));
+    let e1 = world.entity().set(Position { x: 0, y: 0 }).add_id((likes, apples));
+    world.entity().set(Position { x: 0, y: 0 }).add_id((likes, pears));
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3661,8 +3706,8 @@ fn query_builder_with_pair_name() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>().add_id((likes, apples));
-    world.entity().add::<Position>().add_id((likes, pears));
+    let e1 = world.entity().set(Position { x: 0, y: 0 }).add_id((likes, apples));
+    world.entity().set(Position { x: 0, y: 0 }).add_id((likes, pears));
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3685,8 +3730,8 @@ fn query_builder_with_pair_components() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>().add::<(Likes, Apples)>();
-    world.entity().add::<Position>().add::<(Likes, Pears)>();
+    let e1 = world.entity().set(Position { x: 0, y: 0 }).add::<(Likes, Apples)>();
+    world.entity().set(Position { x: 0, y: 0 }).add::<(Likes, Pears)>();
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3712,8 +3757,8 @@ fn query_builder_with_pair_component_id() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>().add_first::<Likes>(apples);
-    world.entity().add::<Position>().add_first::<Likes>(pears);
+    let e1 = world.entity().set(Position { x: 0, y: 0 }).add_first::<Likes>(apples);
+    world.entity().set(Position { x: 0, y: 0 }).add_first::<Likes>(pears);
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3739,8 +3784,8 @@ fn query_builder_with_pair_component_name() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>().add_first::<Likes>(apples);
-    world.entity().add::<Position>().add_first::<Likes>(pears);
+    let e1 = world.entity().set(Position { x: 0, y: 0 }).add_first::<Likes>(apples);
+    world.entity().set(Position { x: 0, y: 0 }).add_first::<Likes>(pears);
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3770,8 +3815,8 @@ fn query_builder_with_enum() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add::<Position>().add_enum(Color::Green);
-    world.entity().add::<Position>().add_enum(Color::Red);
+    let e1 = world.entity().set(Position { x: 0, y: 0 }).add_enum(Color::Green);
+    world.entity().set(Position { x: 0, y: 0 }).add_enum(Color::Red);
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3794,8 +3839,11 @@ fn query_builder_without_id() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    world.entity().add::<Position>().add::<Velocity>();
-    let e2 = world.entity().add::<Position>();
+    world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
+    let e2 = world.entity().set(Position { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3820,8 +3868,11 @@ fn query_builder_without_name() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    world.entity().add::<Position>().add::<Velocity>();
-    let e2 = world.entity().add::<Position>();
+    world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
+    let e2 = world.entity().set(Position { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3844,8 +3895,11 @@ fn query_builder_without_component() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    world.entity().add::<Position>().add::<Velocity>();
-    let e2 = world.entity().add::<Position>();
+    world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
+    let e2 = world.entity().set(Position { x: 0, y: 0 });
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3872,8 +3926,8 @@ fn query_builder_without_pair_id() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    world.entity().add::<Position>().add_id((likes, apples));
-    let e2 = world.entity().add::<Position>().add_id((likes, pears));
+    world.entity().set(Position { x: 0, y: 0 }).add_id((likes, apples));
+    let e2 = world.entity().set(Position { x: 0, y: 0 }).add_id((likes, pears));
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3900,8 +3954,8 @@ fn query_builder_without_pair_name() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    world.entity().add::<Position>().add_id((likes, apples));
-    let e2 = world.entity().add::<Position>().add_id((likes, pears));
+    world.entity().set(Position { x: 0, y: 0 }).add_id((likes, apples));
+    let e2 = world.entity().set(Position { x: 0, y: 0 }).add_id((likes, pears));
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3924,8 +3978,8 @@ fn query_builder_without_pair_components() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    world.entity().add::<Position>().add::<(Likes, Apples)>();
-    let e2 = world.entity().add::<Position>().add::<(Likes, Pears)>();
+    world.entity().set(Position { x: 0, y: 0 }).add::<(Likes, Apples)>();
+    let e2 = world.entity().set(Position { x: 0, y: 0 }).add::<(Likes, Pears)>();
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3951,8 +4005,8 @@ fn query_builder_without_pair_component_id() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    world.entity().add::<Position>().add_first::<Likes>(apples);
-    let e2 = world.entity().add::<Position>().add_first::<Likes>(pears);
+    world.entity().set(Position { x: 0, y: 0 }).add_first::<Likes>(apples);
+    let e2 = world.entity().set(Position { x: 0, y: 0 }).add_first::<Likes>(pears);
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3978,8 +4032,8 @@ fn query_builder_without_pair_component_name() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    world.entity().add::<Position>().add_first::<Likes>(apples);
-    let e2 = world.entity().add::<Position>().add_first::<Likes>(pears);
+    world.entity().set(Position { x: 0, y: 0 }).add_first::<Likes>(apples);
+    let e2 = world.entity().set(Position { x: 0, y: 0 }).add_first::<Likes>(pears);
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -4010,8 +4064,8 @@ fn query_builder_without_enum() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    world.entity().add::<Position>().add_enum(Color::Green);
-    let e2 = world.entity().add::<Position>().add_enum(Color::Red);
+    world.entity().set(Position { x: 0, y: 0 }).add_enum(Color::Green);
+    let e2 = world.entity().set(Position { x: 0, y: 0 }).add_enum(Color::Red);
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -4822,8 +4876,8 @@ fn query_builder_named_rule() {
     structs!();
     let world = World::new();
 
-    let e1 = world.entity().add::<Position>();
-    let e2 = world.entity().add::<Position>();
+    let e1 = world.entity().set(Position { x: 0, y: 0 });
+    let e2 = world.entity().set(Position { x: 0, y: 0 });
 
     let q = world
         .query_named::<&Position>(c"my_query")
@@ -4847,8 +4901,8 @@ fn query_builder_named_scoped_rule() {
     structs!();
     let world = World::new();
 
-    let e1 = world.entity().add::<Position>();
-    let e2 = world.entity().add::<Position>();
+    let e1 = world.entity().set(Position { x: 0, y: 0 });
+    let e2 = world.entity().set(Position { x: 0, y: 0 });
 
     let q = world
         .query_named::<&Position>(c"my::query")

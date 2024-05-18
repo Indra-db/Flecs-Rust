@@ -28,11 +28,10 @@ fn main() {
 
     let entity = world.entity_named(c"Bob");
 
-    entity.add::<Position>();
-
     entity.set(Position { x: 10.0, y: 20.0 });
 
     // This operation changes the entity's archetype, which invokes a move
+    // add is used for adding tags.
     entity.add::<Tag>();
 
     entity.destruct();

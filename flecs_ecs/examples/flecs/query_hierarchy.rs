@@ -2,7 +2,7 @@ use crate::z_ignore_test_common::*;
 
 use flecs_ecs::prelude::*;
 
-#[derive(Debug, Component)]
+#[derive(Debug, Component, Default)]
 pub struct Position {
     pub x: f32,
     pub y: f32,
@@ -19,31 +19,31 @@ fn main() {
 
     let sun = world
         .entity_named(c"Sun")
-        .add::<(Position, WorldX)>()
+        .set_pair::<Position, WorldX>(Position::default())
         .set_pair::<Position, Local>(Position { x: 1.0, y: 1.0 });
 
     world
         .entity_named(c"Mercury")
         .child_of_id(sun)
-        .add::<(Position, WorldX)>()
+        .set_pair::<Position, WorldX>(Position::default())
         .set_pair::<Position, Local>(Position { x: 1.0, y: 1.0 });
 
     world
         .entity_named(c"Venus")
         .child_of_id(sun)
-        .add::<(Position, WorldX)>()
+        .set_pair::<Position, WorldX>(Position::default())
         .set_pair::<Position, Local>(Position { x: 2.0, y: 2.0 });
 
     let earth = world
         .entity_named(c"Earth")
         .child_of_id(sun)
-        .add::<(Position, WorldX)>()
+        .set_pair::<Position, WorldX>(Position::default())
         .set_pair::<Position, Local>(Position { x: 3.0, y: 3.0 });
 
     world
         .entity_named(c"Moon")
         .child_of_id(earth)
-        .add::<(Position, WorldX)>()
+        .set_pair::<Position, WorldX>(Position::default())
         .set_pair::<Position, Local>(Position { x: 0.1, y: 0.1 });
 
     let query = world

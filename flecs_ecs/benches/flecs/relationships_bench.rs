@@ -35,7 +35,7 @@ pub fn get_inherited_w_depth(criterion: &mut Criterion) {
             let world = World::new();
             let entities = create_entities(&world, ENTITY_COUNT as usize);
 
-            let mut base = world.entity().add::<C1>();
+            let mut base = world.entity().set(C1(0.0));
             for _ in 0..*depth {
                 base = world.entity().add_first::<flecs::IsA>(base);
             }

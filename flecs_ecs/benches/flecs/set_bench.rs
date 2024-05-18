@@ -100,7 +100,7 @@ pub fn set_found(criterion: &mut Criterion) {
         "components/1",
         ENTITY_COUNT
         ; (register_component_range, (C, 1, 1))
-        ; (add_component_range, (C, 1, 1))
+        ; (set_component_range, (C, 1, 1))
         ; (set_component_range, (C, 1, 1))
         ; (reset_component_range, (C, 1, 1))
     );
@@ -110,7 +110,7 @@ pub fn set_found(criterion: &mut Criterion) {
         "components/2",
         ENTITY_COUNT
         ; (register_component_range, (C, 1, 2))
-        ; (add_component_range, (C, 1, 2))
+        ; (set_component_range, (C, 1, 2))
         ; (set_component_range, (C, 1, 2))
         ; (reset_component_range, (C, 1, 2))
     );
@@ -120,7 +120,7 @@ pub fn set_found(criterion: &mut Criterion) {
         "components/16",
         ENTITY_COUNT
         ; (register_component_range, (C, 1, 16))
-        ; (add_component_range, (C, 1, 16))
+        ; (set_component_range, (C, 1, 16))
         ; (set_component_range, (C, 1, 16))
         ; (reset_component_range, (C, 1, 16))
     );
@@ -130,7 +130,7 @@ pub fn set_found(criterion: &mut Criterion) {
         "components/64",
         ENTITY_COUNT
         ; (register_component_range, (C, 1, 64))
-        ; (add_component_range, (C, 1, 64))
+        ; (set_component_range, (C, 1, 64))
         ; (set_component_range, (C, 1, 64))
         ; (reset_component_range, (C, 1, 64))
     );
@@ -146,7 +146,7 @@ pub fn set_found_cmd(criterion: &mut Criterion) {
         "components/1",
         ENTITY_COUNT
         ; (register_component_range, (C, 1, 1))
-        ; (add_component_range, (C, 1, 1))
+        ; (set_component_range, (C, 1, 1))
         ; (set_component_range_cmd, (C, 1, 1))
         ; (reset_component_range, (C, 1, 1))
     );
@@ -156,7 +156,7 @@ pub fn set_found_cmd(criterion: &mut Criterion) {
         "components/2",
         ENTITY_COUNT
         ; (register_component_range, (C, 1, 2))
-        ; (add_component_range, (C, 1, 2))
+        ; (set_component_range, (C, 1, 2))
         ; (set_component_range_cmd, (C, 1, 2))
         ; (reset_component_range, (C, 1, 2))
     );
@@ -166,7 +166,7 @@ pub fn set_found_cmd(criterion: &mut Criterion) {
         "components/16",
         ENTITY_COUNT
         ; (register_component_range, (C, 1, 16))
-        ; (add_component_range, (C, 1, 16))
+        ; (set_component_range, (C, 1, 16))
         ; (set_component_range_cmd, (C, 1, 16))
         ; (reset_component_range, (C, 1, 16))
     );
@@ -176,7 +176,7 @@ pub fn set_found_cmd(criterion: &mut Criterion) {
         "components/64",
         ENTITY_COUNT
         ; (register_component_range, (C, 1, 64))
-        ; (add_component_range, (C, 1, 64))
+        ; (set_component_range, (C, 1, 64))
         ; (set_component_range_cmd, (C, 1, 64))
         ; (reset_component_range, (C, 1, 64))
     );

@@ -47,7 +47,7 @@ fn main() {
 
     // Even though Attack was not automatically overridden, we can always
     // override it manually afterwards by adding it:
-    inst.add::<Attack>();
+    inst.override_type::<Attack>();
 
     // The Attack component now shows up in the entity type:
     println!("{}", inst.archetype());

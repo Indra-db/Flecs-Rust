@@ -162,7 +162,7 @@ macro_rules! add_component_range_cmd {
 macro_rules! add_relationship_targets {
         ($entity:expr, $amount:expr) => {{
             seq!(P in 1..=$amount {
-                $entity.add::<(C1, T~P)>();
+                $entity.set_pair::<C1, T~P>(C1(0.0));
         });
         }};
     }
@@ -326,7 +326,8 @@ macro_rules! bench_loop_entities {
 macro_rules! bench_create_delete_entity {
 
         ($group:expr,$name:literal,$entity_count:expr
-        ,$ttype:ty, $start:expr, $end:expr)
+        ,$ttype:ty, $start:expr, $end:expr
+        ,$benchmark:ident)
         => {{
             $group.bench_function($name, |bencher| {
                 let world = World::new();
@@ -338,7 +339,8 @@ macro_rules! bench_create_delete_entity {
                     for _ in 0..iters {
                         for _ in 0..$entity_count {
                             let entity = world.entity();
-                            add_component_range!(world, entity, $ttype, $start, $end);
+                            $benchmark!(&world, entity, $ttype, $start, $end);
+                            //add_component_range!(world, entity, $ttype, $start, $end);
                             entity.destruct();
                         }
                     }
@@ -353,7 +355,8 @@ macro_rules! bench_create_delete_entity {
 macro_rules! bench_create_delete_entity_cmd {
 
         ($group:expr,$name:literal,$entity_count:expr
-        ,$ttype:ty, $start:expr, $end:expr)
+        ,$ttype:ty, $start:expr, $end:expr
+        ,$benchmark:ident)
         => {{
             $group.bench_function($name, |bencher| {
                 let world = World::new();
@@ -366,7 +369,8 @@ macro_rules! bench_create_delete_entity_cmd {
                         world.defer_begin();
                         for _ in 0..$entity_count {
                             let entity = world.entity();
-                            add_component_range!(world, entity, $ttype, $start, $end);
+                            $benchmark!(&world, entity, $ttype, $start, $end);
+                            //add_component_range!(world, entity, $ttype, $start, $end);
                             entity.destruct();
                         }
                         world.defer_end();
@@ -417,7 +421,7 @@ macro_rules! bench_add_remove_override {
 
             let base = world.entity();
             for _ in 0..$amount {
-                add_component_range!(&world, base, C, 1, $amount);
+                set_component_range!(&world, base, C, 1, $amount);
             }
 
             for entity in &entities {
@@ -428,7 +432,7 @@ macro_rules! bench_add_remove_override {
                 let start = Instant::now();
                 for _ in 0..iters {
                     for entity in &entities {
-                        add_component_range!(&world, entity, C, 1, $amount);
+                        set_component_range!(&world, entity, C, 1, $amount);
                         remove_component_range!(&world, entity, C, 1, $amount);
                     }
                 }
@@ -454,7 +458,7 @@ macro_rules! bench_add_remove_hooks {
                 let start = Instant::now();
                 for _ in 0..iters {
                     for entity in &entities {
-                        add_component_range!(&world, entity, C, 1, $amount);
+                        set_component_range!(&world, entity, C, 1, $amount);
                         remove_component_range!(&world, entity, C, 1, $amount);
                     }
                 }

@@ -36,15 +36,47 @@ pub fn create_delete_entities(criterion: &mut Criterion) {
     });
 
     // tags
-    bench_create_delete_entity!(group, "tag_1", ENTITY_COUNT, T, 1, 1);
-    bench_create_delete_entity!(group, "tag_2", ENTITY_COUNT, T, 1, 2);
-    bench_create_delete_entity!(group, "tag_16", ENTITY_COUNT, T, 1, 16);
-    bench_create_delete_entity!(group, "tag_64", ENTITY_COUNT, T, 1, 64);
+    bench_create_delete_entity!(group, "tag_1", ENTITY_COUNT, T, 1, 1, add_component_range);
+    bench_create_delete_entity!(group, "tag_2", ENTITY_COUNT, T, 1, 2, add_component_range);
+    bench_create_delete_entity!(group, "tag_16", ENTITY_COUNT, T, 1, 16, add_component_range);
+    bench_create_delete_entity!(group, "tag_64", ENTITY_COUNT, T, 1, 64, add_component_range);
     // components
-    bench_create_delete_entity!(group, "component_1", ENTITY_COUNT, C, 1, 1);
-    bench_create_delete_entity!(group, "component_2", ENTITY_COUNT, C, 1, 2);
-    bench_create_delete_entity!(group, "component_16", ENTITY_COUNT, C, 1, 16);
-    bench_create_delete_entity!(group, "component_64", ENTITY_COUNT, C, 1, 64);
+    bench_create_delete_entity!(
+        group,
+        "component_1",
+        ENTITY_COUNT,
+        C,
+        1,
+        1,
+        set_component_range
+    );
+    bench_create_delete_entity!(
+        group,
+        "component_2",
+        ENTITY_COUNT,
+        C,
+        1,
+        2,
+        set_component_range
+    );
+    bench_create_delete_entity!(
+        group,
+        "component_16",
+        ENTITY_COUNT,
+        C,
+        1,
+        16,
+        set_component_range
+    );
+    bench_create_delete_entity!(
+        group,
+        "component_64",
+        ENTITY_COUNT,
+        C,
+        1,
+        64,
+        set_component_range
+    );
 
     group.finish();
 }
@@ -89,15 +121,47 @@ pub fn create_delete_entities_cmd(criterion: &mut Criterion) {
     });
 
     //tags
-    bench_create_delete_entity_cmd!(group, "tag_1", ENTITY_COUNT, T, 1, 1);
-    bench_create_delete_entity_cmd!(group, "tag_2", ENTITY_COUNT, T, 1, 2);
-    bench_create_delete_entity_cmd!(group, "tag_16", ENTITY_COUNT, T, 1, 16);
-    bench_create_delete_entity_cmd!(group, "tag_64", ENTITY_COUNT, T, 1, 64);
+    bench_create_delete_entity_cmd!(group, "tag_1", ENTITY_COUNT, T, 1, 1, add_component_range);
+    bench_create_delete_entity_cmd!(group, "tag_2", ENTITY_COUNT, T, 1, 2, add_component_range);
+    bench_create_delete_entity_cmd!(group, "tag_16", ENTITY_COUNT, T, 1, 16, add_component_range);
+    bench_create_delete_entity_cmd!(group, "tag_64", ENTITY_COUNT, T, 1, 64, add_component_range);
     // components
-    bench_create_delete_entity_cmd!(group, "component_1", ENTITY_COUNT, C, 1, 1);
-    bench_create_delete_entity_cmd!(group, "component_2", ENTITY_COUNT, C, 1, 2);
-    bench_create_delete_entity_cmd!(group, "component_16", ENTITY_COUNT, C, 1, 16);
-    bench_create_delete_entity_cmd!(group, "component_64", ENTITY_COUNT, C, 1, 64);
+    bench_create_delete_entity_cmd!(
+        group,
+        "component_1",
+        ENTITY_COUNT,
+        C,
+        1,
+        1,
+        set_component_range
+    );
+    bench_create_delete_entity_cmd!(
+        group,
+        "component_2",
+        ENTITY_COUNT,
+        C,
+        1,
+        2,
+        set_component_range
+    );
+    bench_create_delete_entity_cmd!(
+        group,
+        "component_16",
+        ENTITY_COUNT,
+        C,
+        1,
+        16,
+        set_component_range
+    );
+    bench_create_delete_entity_cmd!(
+        group,
+        "component_64",
+        ENTITY_COUNT,
+        C,
+        1,
+        64,
+        set_component_range
+    );
 
     group.finish();
 }
