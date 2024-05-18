@@ -1,6 +1,5 @@
 ---
-source: flecs_ecs/examples/flecs/relationships_union.rs
-expression: self.str
+source: flecs_ecs/examples/flecs/z_snapshot_test.rs
+expression: str_output
 ---
-- "e3: Movement: \"Walking\", Direction: \"Back\""
-- "e1: Movement: \"Walking\", Direction: \"Front\""
+"e3: Movement: \"Walking\", Direction: \"Back\"\ne1: Movement: \"Walking\", Direction: \"Front\"\n"

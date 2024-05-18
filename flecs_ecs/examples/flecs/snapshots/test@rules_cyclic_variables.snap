@@ -1,8 +1,5 @@
 ---
 source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: self.str
+expression: str_output
 ---
-- Alice likes Bob
-- John likes Jane
-- Jane likes John
-- Bob likes Alice
+"Alice likes Bob\nJohn likes Jane\nJane likes John\nBob likes Alice\n"

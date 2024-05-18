@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -19,12 +19,8 @@ pub struct Position {
 //
 // Events are only propagated along traversable relationship edges.
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create observer that listens for events from both self and parent
     world
@@ -32,8 +28,7 @@ fn main() {
         .term_at(1)
         .parent()
         .each_iter(|it, index, (pos_self, pos_parent)| {
-            fprintln!(
-                it,
+            println!(
                 " - {}: {}: {}: self: {{ {}, {} }}, parent: {{ {}, {} }}",
                 it.event().name(),
                 it.event_id().to_str(),
@@ -57,8 +52,13 @@ fn main() {
     // observer, as the observer query now matches.
     parent.set(Position { x: 1.0, y: 2.0 });
 
-    world.get::<&Snap>(|snap| snap.test("observer_propagate".to_string()));
-
     // Output:
     //  - OnSet: Position: e: self: { 10, 20 }, parent: { 1, 2 }
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("observer_propagate".to_string());
 }

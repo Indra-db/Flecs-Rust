@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 #[derive(Component)]
 pub struct PositionSP {
@@ -13,13 +13,8 @@ pub struct VelocitySP {
     y: f32,
 }
 
-#[test]
-#[ignore = "`set_log_level` is not safe in parallel tests"]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // System that sets velocity using ecs_set for entities with PositionSP.
     // While systems are progressing, operations like ecs_set are deferred until
@@ -56,7 +51,7 @@ fn main() {
     world
         .system_named::<&PositionSP>(c"PrintPositionSP")
         .each_entity(|e, p| {
-            fprintln!(e, "{}: {{ {}, {} }}", e.name(), p.x, p.y);
+            println!("{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 
     // Create a few test entities for a PositionSP, VelocitySP query
@@ -77,8 +72,6 @@ fn main() {
     world.progress();
     set_log_level(-1);
 
-    world.get::<&Snap>(|snap| snap.test("system_sync_point".to_string()));
-
     // Output:
     // info: pipeline rebuild
     // info: | schedule: threading: 0, staging: 1:
@@ -95,4 +88,12 @@ fn main() {
     //
     // Removing '.write::<&mut VelocitySP>()' from the system will remove the first
     // sync point from the schedule.
+}
+
+#[test]
+#[ignore = "`set_log_level` is not safe in parallel tests"]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("system_sync_point".to_string());
 }

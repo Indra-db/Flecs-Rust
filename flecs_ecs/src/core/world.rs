@@ -1637,31 +1637,26 @@ impl World {
 
     /// Add a singleton pair by first id.
     ///
-    /// # Type Parameters
+    /// # Safety
     ///
-    /// * `Second` - The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
+    /// Caller must ensure the id is a non ZST types. Otherwise it could cause the payload to have uninitialized data.
     ///
     /// # Returns
     ///
     /// `EntityView` handle to the singleton pair.
     #[inline(always)]
-    pub fn add_second<Second: ComponentId>(&self, first: impl Into<Entity>) -> EntityView {
+    pub fn add_second<Second: ComponentId + EmptyComponent>(
+        &self,
+        first: impl Into<Entity>,
+    ) -> EntityView {
         EntityView::new_from(self, Second::get_id(self)).add_second::<Second>(first)
     }
 
     /// Add a singleton pair by second id.
     ///
-    /// # Type Parameters
+    /// # Safety
     ///
-    /// * `First` - The first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second`: The second element of the pair.
+    /// Caller must ensure the id is a non ZST types. Otherwise it could cause the payload to have uninitialized data.
     ///
     /// # Returns
     ///
@@ -1672,7 +1667,10 @@ impl World {
     /// * C++ API: `world::add`
     #[doc(alias = "world::add")]
     #[inline(always)]
-    pub fn add_first<First: ComponentId>(&self, second: impl Into<Entity>) -> EntityView {
+    pub fn add_first<First: ComponentId + EmptyComponent>(
+        &self,
+        second: impl Into<Entity>,
+    ) -> EntityView {
         EntityView::new_from(self, First::get_id(self)).add_first::<First>(second)
     }
 
@@ -1698,10 +1696,10 @@ impl World {
     #[inline(always)]
     pub fn add_enum_tag<First, Second>(&self, enum_value: Second) -> EntityView
     where
-        First: ComponentId,
+        First: ComponentId + EmptyComponent,
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
-        EntityView::new_from(self, First::get_id(self)).add_enum_tag::<First, Second>(enum_value)
+        EntityView::new_from(self, First::get_id(self)).add_pair_enum::<First, Second>(enum_value)
     }
 
     /// Remove singleton component by id.
@@ -2870,7 +2868,7 @@ impl World {
     ///
     /// * C++ API: `world::prefab`
     #[doc(alias = "world::prefab")]
-    pub fn prefab_type<T: ComponentId>(&self) -> EntityView {
+    pub fn prefab_type<T: ComponentId + EmptyComponent>(&self) -> EntityView {
         let result = Component::<T>::new(self).entity;
         result.add_id(ECS_PREFAB);
         result.add::<T>();
@@ -2895,7 +2893,10 @@ impl World {
     ///
     /// * C++ API: `world::prefab`
     #[doc(alias = "world::prefab")]
-    pub fn prefab_type_named<'a, T: ComponentId>(&'a self, name: &CStr) -> EntityView<'a> {
+    pub fn prefab_type_named<'a, T: ComponentId + EmptyComponent>(
+        &'a self,
+        name: &CStr,
+    ) -> EntityView<'a> {
         let result = Component::<T>::new_named(self, name).entity;
         result.add_id(ECS_PREFAB);
         result.add::<T>();

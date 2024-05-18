@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // Just like how entities can be associated with a type (like components)
 // prefabs can be associated with types as well. Types can be more convenient to
@@ -27,12 +27,8 @@ struct Beam;
 #[derive(Component)]
 struct Railgun;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Associate types with prefabs
     world.prefab_type::<Turret>();
@@ -61,14 +57,19 @@ fn main() {
     let inst_head = inst.target::<Head>(0);
     let inst_beam = inst.target::<Beam>(0);
 
-    fprintln!(&world, "instance base: {}", inst_base.path().unwrap());
-    fprintln!(&world, "instance head: {}", inst_head.path().unwrap());
-    fprintln!(&world, "instance beam: {}", inst_beam.path().unwrap());
-
-    world.get::<&Snap>(|snap| snap.test("prefab_typed".to_string()));
+    println!("instance base: {}", inst_base.path().unwrap());
+    println!("instance head: {}", inst_head.path().unwrap());
+    println!("instance beam: {}", inst_beam.path().unwrap());
 
     // Output:
     //  instance base: ::my_railgun::Base
     //  instance head: ::my_railgun::Head
     //  instance beam: ::my_railgun::Beam
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("prefab_typed".to_string());
 }

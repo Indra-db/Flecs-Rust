@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -25,15 +25,15 @@ pub struct Human;
 
 fn iterate_components(entity: EntityView) {
     // 1. The easiest way to print the components is to use archetype
-    fprintln!(entity, "[{:?}]", entity.archetype());
-    fprintln!(entity);
+    println!("[{:?}]", entity.archetype());
+    println!();
     // 2. To get individual component ids, use for_each
     let mut count_components = 0;
     entity.each_component(|id| {
-        fprintln!(entity, "{}: {}", count_components, id.to_str());
+        println!("{}: {}", count_components, id.to_str());
         count_components += 1;
     });
-    fprintln!(entity);
+    println!();
 
     // 3. we can also inspect and print the ids in our own way. This is a
     // bit more complicated as we need to handle the edge cases of what can be
@@ -56,16 +56,12 @@ fn iterate_components(entity: EntityView) {
             string.push_str(format!("entity: {}", comp.name()).as_str());
         }
 
-        fprintln!(id, "{}", string);
+        println!("{}", string);
     });
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     let bob = world
         .entity_named(c"Bob")
@@ -74,16 +70,14 @@ fn main() {
         .add::<Human>()
         .add::<(Eats, Apples)>();
 
-    fprintln!(&world, "Bob's components:");
+    println!("Bob's components:");
     iterate_components(bob);
 
-    fprintln!(&world);
+    println!();
 
     // We can use the same function to iterate the components of a component
-    fprintln!(&world, "Position's components:");
+    println!("Position's components:");
     iterate_components(world.component::<Position>().entity());
-
-    world.get::<&Snap>(|snap| snap.test("entity_iterate_components".to_string()));
 
     // Output:
     //  Bob's components:
@@ -113,4 +107,11 @@ fn main() {
     //  1: rel: Identifier, target: Name
     //  2: rel: Identifier, target: Symbol
     //  3: rel: ChildOf, target: common
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("entity_iterate_components".to_string());
 }

@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // Nested prefabs make it possible to reuse an existing prefab inside another
 // prefab. An example of where this could be useful is a car with four wheels:
@@ -24,12 +24,8 @@ struct TirePressure {
     value: f32,
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create a Wheel prefab, make sure each instantiated wheel has a private
     // copy of the TirePressure component.
@@ -57,21 +53,26 @@ fn main() {
     if let Some(inst) = inst_car.try_lookup_recursive(c"FrontLeft") {
         // The type shows that the child has a private copy of the TirePressure
         // component, and an IsA relationship to the Wheel prefab.
-        fprintln!(&world, "{:?}", inst.archetype());
+        println!("{:?}", inst.archetype());
 
         // Get the TirePressure component & print its value
         inst.try_get::<Option<&TirePressure>>(|p| {
             if let Some(p) = p {
-                fprintln!(&world, "pressure: {}", p.value);
+                println!("pressure: {}", p.value);
             }
         });
     } else {
-        fprintln!(&world, "entity lookup failed");
+        println!("entity lookup failed");
     }
-
-    world.get::<&Snap>(|snap| snap.test("prefab_nested".to_string()));
 
     // Output:
     //  TirePressure, (Identifier,Name), (ChildOf,my_car), (IsA,Wheel)
     //  pressure: 32
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("prefab_nested".to_string());
 }

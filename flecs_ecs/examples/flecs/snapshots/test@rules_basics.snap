@@ -1,7 +1,5 @@
 ---
 source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: self.str
+expression: str_output
 ---
-- Bob eats Apples
-- Alice eats Apples
-- Alice eats Salad
+"Bob eats Apples\nAlice eats Apples\nAlice eats Salad\n"

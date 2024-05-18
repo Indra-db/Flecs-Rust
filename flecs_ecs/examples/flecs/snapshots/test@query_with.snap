@@ -1,6 +1,5 @@
 ---
-source: flecs_ecs/examples/flecs/query_with.rs
-expression: self.str
+source: flecs_ecs/examples/flecs/z_snapshot_test.rs
+expression: str_output
 ---
-- "Entity e1: Position { x: 10.0, y: 20.0 }"
-- "Entity e2: Position { x: 10.0, y: 20.0 }"
+"Entity e1: Position { x: 10.0, y: 20.0 }\nEntity e2: Position { x: 10.0, y: 20.0 }\n"

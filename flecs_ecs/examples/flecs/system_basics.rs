@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -14,12 +14,8 @@ pub struct Velocity {
     pub y: f32,
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create a system for Position, Velocity. Systems are like queries (see
     // queries) with a function that can be ran or scheduled (see pipeline).
@@ -29,7 +25,7 @@ fn main() {
         .each_entity(|e, (p, v)| {
             p.x += v.x;
             p.y += v.y;
-            fprintln!(e, "{}: {{ {}, {} }}", e.name(), p.x, p.y);
+            println!("{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 
     // Create a few test entities for a Position, Velocity query
@@ -49,9 +45,14 @@ fn main() {
     // Run the system
     s.run();
 
-    world.get::<&Snap>(|snap| snap.test("system_basics".to_string()));
-
     // Output:
     //  e1: { 11, 22 }
     //  e2: { 13, 24 }
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("system_basics".to_string());
 }

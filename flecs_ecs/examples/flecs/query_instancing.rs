@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -14,12 +14,8 @@ pub struct Velocity {
     pub y: f32,
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Add the traits to mark the component to be inherited
     world.component::<Velocity>().inheritable();
@@ -68,25 +64,23 @@ fn main() {
         // Check if Velocity is owned, in which case it's accessed as array.
         // Position will always be owned, since we set the term to Self.
         if it.is_self(1) {
-            fprintln!(it, "Velocity is owned");
+            println!("Velocity is owned");
 
             for i in it.iter() {
                 position[i].x += velocity[i].x;
                 position[i].y += velocity[i].y;
-                fprintln!(it, "entity {} has {:?}", it.entity(i).name(), position[i]);
+                println!("entity {} has {:?}", it.entity(i).name(), position[i]);
             }
         } else {
-            fprintln!(it, "Velocity is shared");
+            println!("Velocity is shared");
 
             for i in it.iter() {
                 position[i].x += velocity[0].x;
                 position[i].y += velocity[0].y;
-                fprintln!(it, "entity {} has {:?}", it.entity(i).name(), position[i]);
+                println!("entity {} has {:?}", it.entity(i).name(), position[i]);
             }
         }
     });
-
-    world.get::<&Snap>(|snap| snap.test("query_instancing".to_string()));
 
     // Output:
     //  Velocity is shared
@@ -95,4 +89,11 @@ fn main() {
     //  Velocity is owned
     //  entity e3 has Position { x: 13.0, y: 24.0 }
     //  entity e4 has Position { x: 14.0, y: 25.0 }
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("query_instancing".to_string());
 }

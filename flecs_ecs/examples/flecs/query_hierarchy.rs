@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -14,12 +14,8 @@ struct Local;
 #[derive(Debug, Component)]
 struct WorldX;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     let sun = world
         .entity_named(c"Sun")
@@ -86,8 +82,7 @@ fn main() {
         .set_second::<WorldX>()
         .build()
         .each_entity(|entity, position| {
-            fprintln!(
-                entity,
+            println!(
                 "Entity {} is at ({}, {})",
                 entity.name(),
                 position.x,
@@ -95,12 +90,17 @@ fn main() {
             );
         });
 
-    world.get::<&Snap>(|snap| snap.test("query_hierarchy".to_string()));
-
     // Output:
     //  Entity Sun is at (1, 1)
     //  Entity Mercury is at (2, 2)
     //  Entity Venus is at (3, 3)
     //  Entity Earth is at (4, 4)
     //  Entity Moon is at (4.1, 4.1)
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("query_hierarchy".to_string());
 }

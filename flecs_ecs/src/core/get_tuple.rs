@@ -195,12 +195,9 @@ where
                 sys::ecs_get_target(world_ptr, entity, id, 0)
             };
 
-            if target == 0 {
-                // if there is no matching pair for (r,*), try just r
-                unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
-            } else {
+            if target != 0 {
                 if !A::IS_IMMUTABLE {
-                    ecs_assert!(false, "Enums registered with `set_enum` should be `get` immutable, changing it won't actually change the value.");
+                    ecs_assert!(false, "Enums registered with `add_enum` should be `get` immutable, changing it won't actually change the value.");
                 }
                 
                 // get constant value from constant entity
@@ -214,6 +211,9 @@ where
                 );
 
                 unsafe { constant_value }
+            } else {
+                // if there is no matching pair for (r,*), try just r
+                unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
             }
         } else if A::IS_IMMUTABLE { 
             unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
@@ -326,10 +326,7 @@ macro_rules! impl_get_tuple {
                             sys::ecs_get_target(world_ptr, entity, id, 0)
                         };
 
-                        if target == 0 {
-                            // if there is no matching pair for (r,*), try just r
-                            unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
-                        } else {
+                        if target != 0 {
                             if !$t::IS_IMMUTABLE {
                                 ecs_assert!(false, "Enums registered with `set_enum` should be `get` immutable, changing it won't actually change the value.");
                             }
@@ -345,6 +342,9 @@ macro_rules! impl_get_tuple {
                             );
 
                             unsafe { constant_value }
+                        } else {
+                            // if there is no matching pair for (r,*), try just r
+                            unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
                         }
                     } else if $t::IS_IMMUTABLE {
                         unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }

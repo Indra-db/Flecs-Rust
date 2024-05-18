@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Component)]
@@ -8,12 +8,8 @@ pub struct Eats;
 #[derive(Component)]
 struct Healthy;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     let apples = world.entity_named(c"Apples").add::<Healthy>();
     let salad = world.entity_named(c"Salad").add::<Healthy>();
@@ -62,18 +58,22 @@ fn main() {
 
     // Iterate the rule
     rule.each_iter(|it, index, ()| {
-        fprintln!(
-            it,
+        println!(
             "{} eats {}",
             it.entity(index).name(),
             it.get_var(food_var.unwrap()).name()
         );
     });
 
-    world.get::<&Snap>(|snap| snap.test("rules_basics".to_string()));
-
     // Output:
     // Bob eats Apples
     // Alice eats Apples
     // Alice eats Salad
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("rules_basics".to_string());
 }

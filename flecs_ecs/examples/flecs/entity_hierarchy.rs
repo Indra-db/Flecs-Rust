@@ -1,6 +1,5 @@
 #![allow(dead_code)]
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
 
 use flecs_ecs::prelude::*;
 
@@ -21,12 +20,7 @@ struct Moon;
 
 fn iterate_tree(entity: EntityView, position_parent: &Position) {
     // Print hierarchical name of entity & the entity type
-    fprintln!(
-        entity,
-        "{} [{:?}]",
-        entity.path().unwrap(),
-        entity.archetype()
-    );
+    println!("{} [{:?}]", entity.path().unwrap(), entity.archetype());
 
     // Map is the same as get, but allows you to return a value
     let pos_actual = entity.map::<&Position, _>(|pos| {
@@ -38,19 +32,15 @@ fn iterate_tree(entity: EntityView, position_parent: &Position) {
     });
 
     // Print the position
-    fprintln!(entity, "{:?}", pos_actual);
+    println!("{:?}", pos_actual);
 
     entity.each_child(|child| {
         iterate_tree(child, &pos_actual);
     });
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create a simple hierarchy.
     // Hierarchies use ECS relationships and the builtin flecs::ChildOf relationship to
@@ -83,19 +73,16 @@ fn main() {
         .child_of_id(earth);
 
     // Is the Moon a child of the Earth?
-    fprintln!(
-        &world,
+    println!(
         "Is the Moon a child of the Earth? {} / {}",
         moon.has_id((flecs::ChildOf::ID, earth)), //or you can do
         moon.has_first::<flecs::ChildOf>(earth)
     );
 
-    fprintln!(&world);
+    println!();
 
     // Do a depth-first traversal of the tree
     iterate_tree(sun, &Position { x: 0.0, y: 0.0 });
-
-    world.get::<&Snap>(|snap| snap.test("entity_hierarchy".to_string()));
 
     // Output:
     //  Is the Moon a child of the Earth? true / true
@@ -109,4 +96,11 @@ fn main() {
     //  Position { x: 4.0, y: 4.0 }
     //  ::Sun::Earth::Moon [Component, Position, Sun.Earth.Moon, (Identifier,Name), (Identifier,Symbol), (ChildOf,Sun.Earth), (OnDelete,Panic)]
     //  Position { x: 4.1, y: 4.1 }
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("entity_hierarchy".to_string());
 }

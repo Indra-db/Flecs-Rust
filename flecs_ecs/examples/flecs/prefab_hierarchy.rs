@@ -1,15 +1,11 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // When a prefab has children, they are instantiated for an instance when the
 // IsA relationship to the prefab is added.
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create a prefab hierarchy.
     let spaceship = world.prefab_named(c"SpaceShip");
@@ -25,24 +21,21 @@ fn main() {
     // and Cockpit entities.
     if let Some(inst_engine) = inst.try_lookup_recursive(c"Engine") {
         if let Some(inst_cockpit) = inst.try_lookup_recursive(c"Cockpit") {
-            fprintln!(
-                &world,
-                "instance engine:  {:?}",
-                inst_engine.path().unwrap()
-            );
-            fprintln!(
-                &world,
-                "instance cockpit: {:?}",
-                inst_cockpit.path().unwrap()
-            );
+            println!("instance engine:  {:?}", inst_engine.path().unwrap());
+            println!("instance cockpit: {:?}", inst_cockpit.path().unwrap());
         } else {
-            fprintln!(&world, "entity lookup failed");
+            println!("entity lookup failed");
         }
     }
-
-    world.get::<&Snap>(|snap| snap.test("prefab_hierarchy".to_string()));
 
     // Output:
     //  instance engine:  "::my_spaceship::Engine"
     //  instance cockpit: "::my_spaceship::Cockpit"
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("prefab_hierarchy".to_string());
 }

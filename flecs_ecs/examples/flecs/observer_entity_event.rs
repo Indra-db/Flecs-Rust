@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // Entity events are events that are emitted and observed for a specific entity.
 // They are a thin wrapper around regular observers, which match against queries
@@ -32,23 +32,19 @@ struct CloseRequested {
     reason: CloseReason,
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create an observer for the CloseRequested event to listen to any entity.
     world
         .observer::<CloseRequested, &flecs::Any>()
         .each_iter(|it, _index, _| {
             let reason = it.param().reason;
-            fprintln!(it, "Close request with reason: {:?}", reason);
+            println!("Close request with reason: {:?}", reason);
         });
 
     let widget = world.entity_named(c"MyWidget");
-    fprintln!(&world, "widget: {:?}", widget);
+    println!("widget: {:?}", widget);
 
     // Observe the Click event on the widget entity.
     widget.observe::<Click>(|| {
@@ -56,7 +52,7 @@ fn main() {
     });
 
     widget.observe_entity::<Click>(|entity| {
-        fprintln!(entity, "clicked on {:?}", entity.name());
+        println!("clicked on {:?}", entity.name());
     });
 
     // Observe the Resize event on the widget entity.
@@ -68,8 +64,7 @@ fn main() {
     });
 
     widget.observe_payload_entity(|entity, payload: &Resize| {
-        fprintln!(
-            entity,
+        println!(
             "{} resized to {{ {}, {} }}!",
             entity.name(),
             payload.width,
@@ -88,7 +83,6 @@ fn main() {
         reason: CloseReason::User,
     });
 
-    world.get::<&Snap>(|snap| snap.test("observer_entity_event".to_string()));
     // Output:
     //  widget: Entity name: MyWidget -- id: 506 -- archetype: (Identifier,Name)
     //  clicked on "MyWidget"
@@ -96,4 +90,11 @@ fn main() {
     //  MyWidget resized to { 100, 200 }!
     //  widget resized to { 100, 200 }!
     //  Close request with reason: User
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("observer_entity_event".to_string());
 }

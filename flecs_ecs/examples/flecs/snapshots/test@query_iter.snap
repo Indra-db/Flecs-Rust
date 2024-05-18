@@ -1,31 +1,5 @@
 ---
 source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: self.str
+expression: str_output
 ---
-- "\n"
-- "Table: Some(examples.query_iter.Position, examples.query_iter.Velocity, (Identifier,Name))"
-- " - number of entities: 2"
-- "\n"
-- " - term 0 : "
-- "   - component: examples.query_iter.Position"
-- "   - type size: 8"
-- " - term 1 : "
-- "   - component: examples.query_iter.Velocity"
-- "   - type size: 8"
-- "\n"
-- " - entity e1: has Position { x: 11.0, y: 22.0 }"
-- " - entity e2: has Position { x: 13.0, y: 24.0 }"
-- "\n"
-- "\n"
-- "Table: Some(examples.query_iter.Position, examples.query_iter.Velocity, examples.query_iter.Mass, (Identifier,Name))"
-- " - number of entities: 1"
-- "\n"
-- " - term 0 : "
-- "   - component: examples.query_iter.Position"
-- "   - type size: 8"
-- " - term 1 : "
-- "   - component: examples.query_iter.Velocity"
-- "   - type size: 8"
-- "\n"
-- " - entity e3: has Position { x: 14.0, y: 25.0 }"
-- "\n"
+"\nTable: Some(examples.query_iter.Position, examples.query_iter.Velocity, (Identifier,Name))\n - number of entities: 2\n\n - term 0 : \n   - component: examples.query_iter.Position\n   - type size: 8\n - term 1 : \n   - component: examples.query_iter.Velocity\n   - type size: 8\n\n - entity e1: has Position { x: 11.0, y: 22.0 }\n - entity e2: has Position { x: 13.0, y: 24.0 }\n\n\nTable: Some(examples.query_iter.Position, examples.query_iter.Velocity, examples.query_iter.Mass, (Identifier,Name))\n - number of entities: 1\n\n - term 0 : \n   - component: examples.query_iter.Position\n   - type size: 8\n - term 1 : \n   - component: examples.query_iter.Velocity\n   - type size: 8\n\n - entity e3: has Position { x: 14.0, y: 25.0 }\n\n"

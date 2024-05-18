@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // Transitive relationships make it possible to tell the ECS that if an entity
 // has a relationship (R, X) and X has relationship (R, Y), the entity should be
@@ -35,15 +35,8 @@ struct City;
 #[derive(Component)]
 struct Person;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
-
-    //todo v4 broken example bug flecs core
-    /*
 
     // Register the LocatedIn relationship as transitive
     world.component::<LocatedIn>().add::<flecs::Transitive>();
@@ -143,19 +136,18 @@ fn main() {
 
     // Iterate the rule
     rule.iterable().each_iter(|it, index, _| {
-        fprintln!(
-            snap,
-            "{} lives in {}",
-            it.entity(index),
-            it.get_var(location_var)
-        );
+        println!("{} lives in {}", it.entity(index), it.get_var(location_var));
     });
-
-    world.get::<&Snap>(|snap| snap.test("rules_transitive_queries".to_string()));
-    */
 
     // Output:
     //  Bob lives in UnitedStates
     //  Alice lives in UnitedStates
     //  Job lives in Netherlands
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("rules_transitive_queries".to_string());
 }

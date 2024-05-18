@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // This example shows how to run a system at a specified time interval.
 
@@ -12,12 +12,8 @@ fn tick(it: Iter) {
     println!("{}", it.system().name());
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     world.set(Timeout { value: 3.5 });
 
@@ -42,12 +38,10 @@ fn main() {
 
     while world.progress() {
         if world.map::<&Timeout, _>(|timeout| timeout.value <= 0.0) {
-            fprintln!(&world, "Timed out!");
+            println!("Timed out!");
             break;
         }
     }
-
-    assert!(world.map::<&Snap, _>(|snap| snap.str.last().unwrap().contains("Timed out!")));
 
     // Output:
     // FastTick
@@ -61,4 +55,11 @@ fn main() {
     // FastTick
     // FastTick
     // Timed out!
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    assert!(output_capture.output_string().contains("Timed out!"));
 }

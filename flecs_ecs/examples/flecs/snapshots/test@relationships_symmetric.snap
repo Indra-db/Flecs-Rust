@@ -1,6 +1,5 @@
 ---
 source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: self.str
+expression: str_output
 ---
-- "Player 1 trades with Player 2: true"
-- "Player 2 trades with Player 1: true"
+"Player 1 trades with Player 2: true\nPlayer 2 trades with Player 1: true\n"

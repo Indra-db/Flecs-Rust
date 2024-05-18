@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -21,15 +21,11 @@ extern "C" fn compare_position(
 }
 
 fn print_query(query: &Query<&Position>) {
-    query.each_entity(|entity, pos| fprintln!(entity, "{:?}", pos));
+    query.each_entity(|entity, pos| println!("{:?}", pos));
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create entities, set position in random order
     let entity = world.entity().set(Position { x: 1.0, y: 0.0 });
@@ -49,30 +45,28 @@ fn main() {
         .system::<&Position>()
         .order_by(compare_position)
         .each_entity(|entity, pos| {
-            fprintln!(entity, "{:?}", pos);
+            println!("{:?}", pos);
         });
 
-    fprintln!(&world);
-    fprintln!(&world, "--- First iteration ---");
+    println!();
+    println!("--- First iteration ---");
     print_query(&query);
 
     // Change the value of one entity, invalidating the order
     entity.set(Position { x: 7.0, y: 0.0 });
 
     // Iterate query again, printed values are still ordered
-    fprintln!(&world);
-    fprintln!(&world, "--- Second iteration ---");
+    println!();
+    println!("--- Second iteration ---");
     print_query(&query);
 
     // Create new entity to show that data is also sorted for new entities
     world.entity().set(Position { x: 3.0, y: 0.0 });
 
     // Run system, printed values are ordered
-    fprintln!(&world);
-    fprintln!(&world, "--- System iteration ---");
+    println!();
+    println!("--- System iteration ---");
     sys.run();
-
-    world.get::<&Snap>(|snap| snap.test("query_sorting".to_string()));
 
     // Output:
     //
@@ -97,4 +91,11 @@ fn main() {
     //  Position { x: 5.0, y: 0.0 }
     //  Position { x: 6.0, y: 0.0 }
     //  Position { x: 7.0, y: 0.0 }
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("query_sorting".to_string());
 }

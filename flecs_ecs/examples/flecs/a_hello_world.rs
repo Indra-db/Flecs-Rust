@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -20,13 +20,9 @@ pub struct Eats;
 #[derive(Component)]
 pub struct Apples;
 
-#[test]
 fn main() {
     // Create a new world
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Register system
     let _sys = world
@@ -45,7 +41,8 @@ fn main() {
         .add::<(Eats, Apples)>();
 
     // Show us what you got
-    fprintln!(&world, "{}'s got [{:?}]", bob.name(), bob.archetype());
+    // println!( "{}'s got [{:?}]", bob.name(), bob.archetype());
+    println!("{}'s got [{:?}]", bob.name(), bob.archetype());
 
     // Run systems twice. Usually this function is called once per frame
     world.progress();
@@ -55,29 +52,32 @@ fn main() {
     // - or use Option to handle the individual component missing.
     bob.get::<&Position>(|pos| {
         // See if Bob has moved (he has)
-        fprintln!(&world, "{}'s position: {:?}", bob.name(), pos);
+        println!("{}'s position: {:?}", bob.name(), pos);
     });
 
     // Option example
     let has_run = bob.try_get::<Option<&Position>>(|pos| {
         if let Some(pos) = pos {
             // See if Bob has moved (he has)
-            fprintln!(&world, "{}'s try_get position: {:?}", bob.name(), pos);
+            //println!( "{}'s try_get position: {:?}", bob.name(), pos);
+            println!("{}'s try_get position: {:?}", bob.name(), pos);
         }
     });
 
     if has_run {
-        fprintln!(
-            &world,
-            "Bob has a position component, so the try_get callback ran."
-        );
+        println!("Bob has a position component, so the try_get callback ran.");
     }
-
-    world.get::<&Snap>(|snap| snap.test("hello world".to_string()));
 
     // Output:
     //  Bob's got [Position, Velocity, (Identifier,Name), (Eats,Apples)]
     //  Bob's position: Position { x: 2.0, y: 4.0 }
     //  Bob's try_get position: Position { x: 2.0, y: 4.0 }
     //  Bob has a position component, so the try_get callback ran.
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("hello world".to_string());
 }

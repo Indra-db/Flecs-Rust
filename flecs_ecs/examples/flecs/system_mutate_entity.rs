@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Component)]
@@ -7,12 +7,8 @@ struct Timeout {
     pub value: f32,
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // System that deletes an entity after a timeout expires
     world
@@ -32,7 +28,7 @@ fn main() {
                 // See the mutate_entity_handle example.
                 let e = it.entity(index);
                 e.destruct();
-                fprintln!(it, "Expire: {} deleted!", e.name());
+                println!("Expire: {} deleted!", e.name());
             }
         });
 
@@ -49,7 +45,7 @@ fn main() {
     world
         .observer::<flecs::OnRemove, &Timeout>()
         .each_entity(|e, _timeout| {
-            fprintln!(e, "Expired: {} actually deleted", e.name());
+            println!("Expired: {} actually deleted", e.name());
         });
 
     let e = world.entity_named(c"MyEntity").set(Timeout { value: 2.5 });
@@ -65,8 +61,6 @@ fn main() {
         println!("Tick...");
     }
 
-    assert!(world.map::<&Snap, _>(|snap| snap.str.last().unwrap().contains("deleted")));
-
     // Output:
     //  PrintExpire: MyEntity has 2.00 seconds left
     //  Tick...
@@ -75,4 +69,11 @@ fn main() {
     //  Expire: MyEntity deleted!
     //  PrintExpire: MyEntity has -0.03 seconds left
     //  Expired: MyEntity actually deleted
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    assert!(output_capture.output_string().contains("deleted"));
 }

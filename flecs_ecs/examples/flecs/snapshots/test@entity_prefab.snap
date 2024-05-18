@@ -1,7 +1,5 @@
 ---
 source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: self.str
+expression: str_output
 ---
-- "Instance type: [examples.entity_prefab.Position, (Identifier,Name), (IsA,MammothFreighter)]"
-- "ImpulseSpeed: 50"
-- "Entity my_mammoth_freighter: Position { x: 50.0, y: 0.0 }"
+"Instance type: [examples.entity_prefab.Position, (Identifier,Name), (IsA,MammothFreighter)]\nImpulseSpeed: 50\nEntity my_mammoth_freighter: Position { x: 50.0, y: 0.0 }\n"

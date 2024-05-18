@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -31,12 +31,8 @@ pub struct ImpulseSpeed {
 // variants applications can reuse a common set of components and specialize it
 // by adding or overriding components on the variant.
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create a base prefab for SpaceShips.
     let spaceship = world
@@ -82,15 +78,13 @@ fn main() {
     // Queries can match components from multiple levels of inheritance
     world.each_entity::<(&Position, &ImpulseSpeed, &Defence, &FreightCapacity)>(
         |e, (p, s, d, c)| {
-            fprintln!(e, "{}:", e.name());
-            fprintln!(e, " - position: {}, {}", p.x, p.y);
-            fprintln!(e, " - impulse speed: {}", s.value);
-            fprintln!(e, " - defense: {}", d.value);
-            fprintln!(e, " - capacity: {}", c.value);
+            println!("{}:", e.name());
+            println!(" - position: {}, {}", p.x, p.y);
+            println!(" - impulse speed: {}", s.value);
+            println!(" - defense: {}", d.value);
+            println!(" - capacity: {}", c.value);
         },
     );
-
-    world.get::<&Snap>(|snap| snap.test("prefab_variant".to_string()));
 
     // Output:
     //   my_freighter:
@@ -98,4 +92,11 @@ fn main() {
     //    - impulse speed: 50
     //    - defense: 100
     //    - capacity: 500
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("prefab_variant".to_string());
 }

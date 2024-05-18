@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -17,12 +17,8 @@ pub struct Velocity {
 #[derive(Component)]
 pub struct Walking;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create an entity with name Bob
     let bob = world
@@ -39,7 +35,7 @@ fn main() {
     // - or use Option to handle the individual component missing.
     bob.get::<Option<&Position>>(|pos| {
         if let Some(pos) = pos {
-            fprintln!(&world, "Bob's position: {:?}", pos);
+            println!("Bob's position: {:?}", pos);
         }
     });
 
@@ -56,21 +52,26 @@ fn main() {
 
     // Print all of the components the entity has. This will output:
     //    Position, Walking, (Identifier,Name)
-    fprintln!(&world, "[{}]", alice.archetype());
+    println!("[{}]", alice.archetype());
 
     // Remove tag
     alice.remove::<Walking>();
 
     // Iterate all entities with position
     world.each_entity::<&Position>(|entity, pos| {
-        fprintln!(entity, "{} has {:?}", entity.name(), pos);
+        println!("{} has {:?}", entity.name(), pos);
     });
-
-    world.get::<&Snap>(|snap| snap.test("entity_basics".to_string()));
 
     // Output:
     //  Bob's position: Position { x: 10.0, y: 20.0 }
     //  [Position, Walking, (Identifier,Name)]
     //  Alice has Position { x: 10.0, y: 20.0 }
     //  Bob has Position { x: 20.0, y: 30.0 }
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("entity_basics".to_string());
 }

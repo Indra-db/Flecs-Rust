@@ -1,9 +1,5 @@
 ---
 source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: self.str
+expression: str_output
 ---
-- "my_freighter:"
-- " - position: 10, 20"
-- " - impulse speed: 50"
-- " - defense: 100"
-- " - capacity: 500"
+"my_freighter:\n - position: 10, 20\n - impulse speed: 50\n - defense: 100\n - capacity: 500\n"

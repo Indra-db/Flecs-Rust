@@ -1,15 +1,5 @@
 ---
 source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: self.str
+expression: str_output
 ---
-- All tables
-- "group: \"::examples::query_group_iter::Cell_0_0\" - Table [examples.query_group_iter.Merchant, examples.query_group_iter.Npc, (examples.query_group_iter.WorldCell,examples.query_group_iter.Cell_0_0)]"
-- "group: \"::examples::query_group_iter::Cell_0_1\" - Table [examples.query_group_iter.Npc, examples.query_group_iter.Beggar, (examples.query_group_iter.WorldCell,examples.query_group_iter.Cell_0_1)]"
-- "group: \"::examples::query_group_iter::Cell_0_1\" - Table [examples.query_group_iter.Npc, examples.query_group_iter.Soldier, (examples.query_group_iter.WorldCell,examples.query_group_iter.Cell_0_1)]"
-- "group: \"::examples::query_group_iter::Cell_1_0\" - Table [examples.query_group_iter.Npc, examples.query_group_iter.Mage, (examples.query_group_iter.WorldCell,examples.query_group_iter.Cell_1_0)]"
-- "group: \"::examples::query_group_iter::Cell_1_0\" - Table [examples.query_group_iter.Npc, examples.query_group_iter.Beggar, (examples.query_group_iter.WorldCell,examples.query_group_iter.Cell_1_0)]"
-- "group: \"::examples::query_group_iter::Cell_1_1\" - Table [examples.query_group_iter.Npc, examples.query_group_iter.Soldier, (examples.query_group_iter.WorldCell,examples.query_group_iter.Cell_1_1)]"
-- "\n"
-- "Tables for cell 1_0:"
-- "group: \"::examples::query_group_iter::Cell_1_0\" - Table [examples.query_group_iter.Npc, examples.query_group_iter.Mage, (examples.query_group_iter.WorldCell,examples.query_group_iter.Cell_1_0)]"
-- "group: \"::examples::query_group_iter::Cell_1_0\" - Table [examples.query_group_iter.Npc, examples.query_group_iter.Beggar, (examples.query_group_iter.WorldCell,examples.query_group_iter.Cell_1_0)]"
+"All tables\ngroup: \"::examples::query_group_iter::Cell_0_0\" - Table [examples.query_group_iter.Merchant, examples.query_group_iter.Npc, (examples.query_group_iter.WorldCell,examples.query_group_iter.Cell_0_0)]\ngroup: \"::examples::query_group_iter::Cell_0_1\" - Table [examples.query_group_iter.Npc, examples.query_group_iter.Beggar, (examples.query_group_iter.WorldCell,examples.query_group_iter.Cell_0_1)]\ngroup: \"::examples::query_group_iter::Cell_0_1\" - Table [examples.query_group_iter.Npc, examples.query_group_iter.Soldier, (examples.query_group_iter.WorldCell,examples.query_group_iter.Cell_0_1)]\ngroup: \"::examples::query_group_iter::Cell_1_0\" - Table [examples.query_group_iter.Npc, examples.query_group_iter.Mage, (examples.query_group_iter.WorldCell,examples.query_group_iter.Cell_1_0)]\ngroup: \"::examples::query_group_iter::Cell_1_0\" - Table [examples.query_group_iter.Npc, examples.query_group_iter.Beggar, (examples.query_group_iter.WorldCell,examples.query_group_iter.Cell_1_0)]\ngroup: \"::examples::query_group_iter::Cell_1_1\" - Table [examples.query_group_iter.Npc, examples.query_group_iter.Soldier, (examples.query_group_iter.WorldCell,examples.query_group_iter.Cell_1_1)]\n\nTables for cell 1_0:\ngroup: \"::examples::query_group_iter::Cell_1_0\" - Table [examples.query_group_iter.Npc, examples.query_group_iter.Mage, (examples.query_group_iter.WorldCell,examples.query_group_iter.Cell_1_0)]\ngroup: \"::examples::query_group_iter::Cell_1_0\" - Table [examples.query_group_iter.Npc, examples.query_group_iter.Beggar, (examples.query_group_iter.WorldCell,examples.query_group_iter.Cell_1_0)]\n"

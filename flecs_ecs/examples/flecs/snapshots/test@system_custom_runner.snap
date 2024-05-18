@@ -1,8 +1,5 @@
 ---
-source: flecs_ecs/examples/flecs/system_custom_runner.rs
-expression: self.str
+source: flecs_ecs/examples/flecs/z_snapshot_test.rs
+expression: str_output
 ---
-- Move begin
-- "e1: { 11, 22 }"
-- "e2: { 13, 24 }"
-- Move end
+"Move begin\ne1: { 11, 22 }\ne2: { 13, 24 }\nMove end\n"

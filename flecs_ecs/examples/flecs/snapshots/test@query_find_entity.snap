@@ -1,5 +1,5 @@
 ---
 source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: self.str
+expression: str_output
 ---
-- "Entity found: \"::e2\""
+"Entity found: \"::e2\"\n"

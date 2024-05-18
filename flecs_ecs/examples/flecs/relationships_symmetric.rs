@@ -1,15 +1,11 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 #[derive(Component)]
 struct TradesWith;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Register TradesWith as symmetric relationship. Symmetric relationships
     // go both ways, adding (R, B) to A will also add (R, A) to B.
@@ -24,20 +20,23 @@ fn main() {
     player_1.add_first::<TradesWith>(player_2);
 
     // Log platoon of unit
-    fprintln!(
-        &world,
+    println!(
         "Player 1 trades with Player 2: {}",
         player_1.has_first::<TradesWith>(player_2)
     ); // true
-    fprintln!(
-        &world,
+    println!(
         "Player 2 trades with Player 1: {}",
         player_2.has_first::<TradesWith>(player_1)
     ); // true
 
-    world.get::<&Snap>(|snap| snap.test("relationships_symmetric".to_string()));
-
     // Output:
     //  Player 1 trades with Player 2: true
     //  Player 2 trades with Player 1: true
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("relationships_symmetric".to_string());
 }

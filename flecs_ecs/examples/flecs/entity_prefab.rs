@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -31,14 +31,11 @@ pub struct ImpulseSpeed {
 #[derive(Component)]
 pub struct HasFlt;
 
-#[test]
 fn main() {
     let world = World::new();
 
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
-
     // Add the traits to mark the components to be inherited
+    world.component::<Position>().inheritable();
     world.component::<Defence>().inheritable();
     world.component::<ImpulseSpeed>().inheritable();
     world.component::<FreightCapacity>().inheritable();
@@ -86,24 +83,29 @@ fn main() {
 
     // Inspect the type of the entity. This outputs:
     //    Position,(Identifier,Name),(IsA,MammothFreighter)
-    fprintln!(&world, "Instance type: [{}]", inst.archetype());
+    println!("Instance type: [{}]", inst.archetype());
 
     // Even though the instance doesn't have a private copy of ImpulseSpeed, we
     // can still get it using the regular API (outputs 50)
     inst.try_get::<&ImpulseSpeed>(|impulse_speed| {
-        fprintln!(&world, "ImpulseSpeed: {}", impulse_speed.value);
+        println!("ImpulseSpeed: {}", impulse_speed.value);
     });
 
     // Prefab components can be iterated just like regular components:
     world.each_entity::<(&ImpulseSpeed, &mut Position)>(|entity, (impulse_speed, position)| {
         position.x += impulse_speed.value;
-        fprintln!(entity, "Entity {}: {:?}", entity.name(), position);
+        println!("Entity {}: {:?}", entity.name(), position);
     });
-
-    world.get::<&Snap>(|snap| snap.test("entity_prefab".to_string()));
 
     // Output:
     //  Instance type: [Position, (Identifier,Name), (IsA,MammothFreighter)]
     //  ImpulseSpeed: 50
     //  Entity my_mammoth_freighter: Position { x: 50.0, y: 0.0 }
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("entity_prefab".to_string());
 }

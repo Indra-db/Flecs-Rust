@@ -1,6 +1,0 @@
----
-source: flecs_ecs/examples/flecs/system_sync_point.rs
-expression: self.str
----
-- "e1: { 11, 22 }"
-- "e2: { 11, 22 }"

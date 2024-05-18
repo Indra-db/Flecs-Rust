@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 // This example shows how relationships can be combined with components to attach
@@ -32,12 +32,8 @@ struct Expires {
 #[derive(Component)]
 struct MustHave;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // When one element of a pair is a component and the other element is a tag,
     // the pair assumes the type of the component.
@@ -47,12 +43,9 @@ fn main() {
 
     let require = e1.try_get::<Option<&(Requires, Gigawatts)>>(|req| {
         if let Some((req)) = req {
-            fprintln!(&world, "e1: requires: {}", req.amount);
+            println!("e1: requires: {}", req.amount);
         } else {
-            fprintln!(
-                &world,
-                "e1: does not have a relationship with Requires, Gigawatts"
-            );
+            println!("e1: does not have a relationship with Requires, Gigawatts");
         }
     });
 
@@ -63,12 +56,9 @@ fn main() {
 
     let require = e2.try_get::<Option<&(Gigawatts, Requires)>>(|req| {
         if let Some((req)) = req {
-            fprintln!(&world, "e2: requires: {}", req.amount);
+            println!("e2: requires: {}", req.amount);
         } else {
-            fprintln!(
-                &world,
-                "e2: does not have a relationship with Gigawatts, Requires"
-            );
+            println!("e2: does not have a relationship with Gigawatts, Requires");
         }
     });
 
@@ -82,7 +72,7 @@ fn main() {
         .set_pair::<Expires, Position>(Expires { timeout: 0.5 });
 
     let expires = e3.try_get::<&(Expires, Position)>(|expires| {
-        fprintln!(&world, "expires: {}", expires.timeout);
+        println!("expires: {}", expires.timeout);
     });
 
     // You can prevent a pair from assuming the type of a component by adding
@@ -94,8 +84,7 @@ fn main() {
     world.entity().add::<(MustHave, Position)>();
 
     // The id::type_id method can be used to find the component type for a pair:
-    fprintln!(
-        &world,
+    println!(
         "{}",
         world
             .id_from::<(Requires, Gigawatts)>()
@@ -103,8 +92,7 @@ fn main() {
             .path()
             .unwrap()
     );
-    fprintln!(
-        &world,
+    println!(
         "{}",
         world
             .id_from::<(Gigawatts, Requires)>()
@@ -112,8 +100,7 @@ fn main() {
             .path()
             .unwrap()
     );
-    fprintln!(
-        &world,
+    println!(
         "{}",
         world
             .id_from::<(Expires, Position)>()
@@ -121,8 +108,7 @@ fn main() {
             .path()
             .unwrap()
     );
-    fprintln!(
-        &world,
+    println!(
         "{}",
         world
             .id_from::<(MustHave, Position)>()
@@ -140,10 +126,8 @@ fn main() {
         .build();
 
     query.each_entity(|entity, requires| {
-        fprintln!(entity, "requires: {} gigawatts", requires.amount);
+        println!("requires: {} gigawatts", requires.amount);
     });
-
-    world.get::<&Snap>(|snap| snap.test("relationships_component_data".to_string()));
 
     // Output:
     // e1: requires: 1.21
@@ -154,4 +138,11 @@ fn main() {
     // ::Expires
     // 0
     // requires: 1.21 gigawatts
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("relationships_component_data".to_string());
 }

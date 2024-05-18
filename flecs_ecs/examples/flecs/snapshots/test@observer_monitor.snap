@@ -1,6 +1,5 @@
 ---
 source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: self.str
+expression: str_output
 ---
-- " - Enter: examples.observer_monitor.Velocity: e"
-- " - Leave: examples.observer_monitor.Position: e"
+" - Enter: examples.observer_monitor.Velocity: e\n - Leave: examples.observer_monitor.Position: e\n"

@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -23,22 +23,18 @@ pub struct Velocity {
 
 extern "C" fn run_callback(it: *mut IterT) {
     let world_ref = unsafe { WorldRef::from_ptr((*it).world) };
-    fprintln!(world_ref, "Move begin");
+    println!("Move begin");
 
     // Walk over the iterator, forward to the system callback
     while unsafe { flecs_ecs_sys::ecs_iter_next(it) } {
         unsafe { ((*it).callback).unwrap()(it) };
     }
 
-    fprintln!(world_ref, "Move end");
+    println!("Move end");
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     let system = world
         .system::<(&mut Position, &Velocity)>()
@@ -49,7 +45,7 @@ fn main() {
         .each_entity(|e, (pos, vel)| {
             pos.x += vel.x;
             pos.y += vel.y;
-            fprintln!(e, "{}: {{ {}, {} }}", e.name(), pos.x, pos.y);
+            println!("{}: {{ {}, {} }}", e.name(), pos.x, pos.y);
         });
 
     // Create a few test entities for a Position, Velocity query
@@ -69,11 +65,16 @@ fn main() {
     // Run the system
     system.run();
 
-    world.get::<&Snap>(|snap| snap.test("system_custom_runner".to_string()));
-
     // Output:
     //  Move begin
     //  e1: {11, 22}
     //  e2: {13, 24}
     //  Move end
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("system_custom_runner".to_string());
 }

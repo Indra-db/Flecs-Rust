@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -11,12 +11,8 @@ pub struct Position {
 #[derive(Component)]
 struct Npc;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create a query for Position, Npc. By adding the Npc component using the
     // "with" method, the component is not a part of the query type, and as a
@@ -41,12 +37,17 @@ fn main() {
 
     // Note how the Npc tag is not part of the each signature
     query.each_entity(|entity, pos| {
-        fprintln!(entity, "Entity {}: {:?}", entity.name(), pos);
+        println!("Entity {}: {:?}", entity.name(), pos);
     });
-
-    world.get::<&Snap>(|snap| snap.test("query_with".to_string()));
 
     // Output:
     //  Entity e1: Position { x: 10.0, y: 20.0 }
     //  Entity e2: Position { x: 10.0, y: 20.0 }
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("query_with".to_string());
 }

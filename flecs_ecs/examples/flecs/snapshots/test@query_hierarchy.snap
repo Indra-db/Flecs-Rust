@@ -1,9 +1,5 @@
 ---
 source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: self.str
+expression: str_output
 ---
-- "Entity Sun is at (1, 1)"
-- "Entity Mercury is at (2, 2)"
-- "Entity Venus is at (3, 3)"
-- "Entity Earth is at (4, 4)"
-- "Entity Moon is at (4.1, 4.1)"
+"Entity Sun is at (1, 1)\nEntity Mercury is at (2, 2)\nEntity Venus is at (3, 3)\nEntity Earth is at (4, 4)\nEntity Moon is at (4.1, 4.1)\n"

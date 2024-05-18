@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // this example is to showcase how you can chain queries together where the second query
 // uses the results of the first query to filter the results
@@ -23,12 +23,8 @@ struct ArtifactPower {
     _magic_level: f32,
 }
 
-#[test]
 fn main() {
     let forest = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    forest.import::<Snap>();
 
     // Populate the forest with creatures. Some are enchanted.
     for i in 0..10 {
@@ -79,7 +75,7 @@ fn main() {
                let pos = &loc[index];
                let abil_power = ability[index].power;
                let entity = it.entity(index);
-                fprintln!(it,
+                println!(
                     "Creature id: {entity} at location {},{} is enchanted with mystical energy, ability power: {} "
                     , pos.x, pos.y, abil_power
 
@@ -87,12 +83,17 @@ fn main() {
             });
     });
 
-    forest.get::<&Snap>(|snap| snap.test("query_chaining_queries".to_string()));
-
     // Output:
     //  Creature id: 525 at location 0,0 is enchanted with mystical energy, ability power: 0
     //  Creature id: 527 at location 2,2 is enchanted with mystical energy, ability power: 3
     //  Creature id: 529 at location 4,4 is enchanted with mystical energy, ability power: 6
     //  Creature id: 531 at location 6,6 is enchanted with mystical energy, ability power: 9
     //  Creature id: 533 at location 8,8 is enchanted with mystical energy, ability power: 12
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("query_chaining_queries".to_string());
 }

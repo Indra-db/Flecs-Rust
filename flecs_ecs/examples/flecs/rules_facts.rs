@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // This example shows how to use rules for testing facts. A fact is a query that
 // has no variable elements. Consider a regular ECS query like this:
@@ -22,12 +22,8 @@ use flecs_ecs::prelude::*;
 #[derive(Component)]
 struct Likes;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     let bob = world.entity_named(c"Bob");
     let alice = world.entity_named(c"Alice");
@@ -64,8 +60,7 @@ fn main() {
 
     // Check a few facts
 
-    fprintln!(
-        &world,
+    println!(
         "Are Bob and Alice friends? {}",
         if friends
             .iterable()
@@ -79,8 +74,7 @@ fn main() {
         }
     );
 
-    fprintln!(
-        &world,
+    println!(
         "Are Bob and John friends? {}",
         if friends
             .iterable()
@@ -94,8 +88,7 @@ fn main() {
         }
     );
 
-    fprintln!(
-        &world,
+    println!(
         "Are Jane and John friends? {}",
         if friends
             .iterable()
@@ -112,8 +105,7 @@ fn main() {
     // It doesn't matter who we assign to X or Y. After the variables are
     // substituted, either yields a fact that is true.
 
-    fprintln!(
-        &world,
+    println!(
         "Are John and Jane friends? {}",
         if friends
             .iterable()
@@ -127,11 +119,16 @@ fn main() {
         }
     );
 
-    world.get::<&Snap>(|snap| snap.test("rules_facts".to_string()));
-
     // Output:
     //  Are Bob and Alice friends? Yes
     //  Are Bob and John friends? No
     //  Are Jane and John friends? Yes
     //  Are John and Jane friends? Yes
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("rules_facts".to_string());
 }

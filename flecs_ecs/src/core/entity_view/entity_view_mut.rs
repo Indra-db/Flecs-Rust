@@ -6,37 +6,50 @@ use crate::sys;
 
 // functions in here match most of the functions in the c++ entity and entity_builder class
 impl<'a> EntityView<'a> {
+    fn check_add_id_validity(world: *mut sys::ecs_world_t, id: u64) {
+        let is_alive = unsafe { sys::ecs_is_alive(world, id) };
+        let is_pair = unsafe { sys::ecs_id_is_pair(id) };
+        let is_invalid_type = unsafe { sys::ecs_get_typeid(world, id) != 0 };
+
+        if !is_alive && !is_pair {
+            panic!("Id is not a valid component, pair or entity.");
+        }
+
+        if is_invalid_type {
+            panic!("Id is not a ZST type such as a Tag or Entity.");
+        }
+    }
     /// Add an id to an entity.
     /// This Id can be a component, a pair, a tag or another entity.
     ///
-    /// Add an entity to the entity. This is typically used for tagging.
+    /// # Safety
     ///
-    /// # Arguments
-    ///
-    /// - `component_id`: The component to add.
+    /// Caller must ensure the id is a non ZST types. Otherwise it could cause you to read uninitialized payload data.
+    /// use `set_id` for ZST types.
     ///
     /// # See also
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
     pub fn add_id(self, id: impl IntoId) -> Self {
-        unsafe { sys::ecs_add_id(self.world.world_ptr_mut(), *self.id, *id.into()) }
+        let id = *id.into();
+        let world = self.world.world_ptr_mut();
+
+        Self::check_add_id_validity(world, id);
+
+        unsafe { sys::ecs_add_id(world, *self.id, id) }
         self
     }
 
-    /// Add a component to an entity.
-    ///
-    /// To ensure the component is initialized, it should have a constructor.
-    ///
-    /// # Type Parameters
-    ///
-    /// - `T`: The component type to add.
-    ///
-    /// # SAFETY
-    ///
-    /// This function is unsafe, but not marked unsafe. This is because the function does not initialize the component
-    /// When it's Trivial. This usually means anything that does not store any heap data, will be uninitialized.
-    /// Prefer Set for no risk of Undefined behavior.
+    pub(crate) unsafe fn add_id_unchecked(self, id: impl IntoId) -> Self {
+        let id = *id.into();
+        let world = self.world.world_ptr_mut();
+
+        unsafe { sys::ecs_add_id(world, *self.id, id) }
+        self
+    }
+
+    /// Add a Tag or Tags relationship to an entity.
     ///
     /// # See also
     ///
@@ -47,37 +60,15 @@ impl<'a> EntityView<'a> {
         T: IntoComponentId,
     {
         let world = self.world;
-        self.add_id(T::get_id(world))
+        unsafe { self.add_id_unchecked(T::get_id(world)) }
     }
 
     /// Adds a pair to the entity
     ///
-    /// # Type Parameters
+    /// # Safety
     ///
-    /// * `Second` - the second element of the pair
-    ///
-    /// # Arguments
-    ///
-    /// * `first` - the first element of the pair
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add`
-    #[doc(alias = "entity_builder::add")]
-    pub fn add_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
-        let world = self.world;
-        self.add_id((first.into(), Second::get_id(world)))
-    }
-
-    /// Adds a pair to the entity
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First` - the first element of the pair
-    ///
-    /// # Arguments
-    ///
-    /// * `second` - the second element of the pair
+    /// Caller must ensure the id is a non ZST types. Otherwise it could cause you to read uninitialized payload data.
+    /// use `set_first` for ZST types.
     ///
     /// # See also
     ///
@@ -85,31 +76,38 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::add")]
     pub fn add_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         let world = self.world;
-        self.add_id((First::get_id(world), second.into()))
+        unsafe { self.add_id_unchecked((First::get_id(world), second.into())) }
     }
 
-    /// Adds a pair to the entity composed of a tag and an enum constant.
+    /// Adds a pair to the entity
     ///
-    /// # Type Parameters
+    /// # Safety
     ///
-    /// - `T`: The tag (first element of the pair).
-    /// - `U`: The enum constant (second element of the pair).
-    ///
-    /// # Arguments
-    ///
-    /// - `enum_value`: The enum constant.
+    /// Caller must ensure the id is a non ZST types. Otherwise it could cause you to read uninitialized payload data.
+    /// use `set_second` for ZST types.
     ///
     /// # See also
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    pub fn add_enum_tag<First, Second>(self, enum_value: Second) -> Self
+    pub fn add_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
+        let world = self.world;
+        unsafe { self.add_id_unchecked((first.into(), Second::get_id(world))) }
+    }
+
+    /// Adds a pair to the entity composed of a tag and an enum constant.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_builder::add`
+    #[doc(alias = "entity_builder::add")]
+    pub fn add_pair_enum<First, Second>(self, enum_value: Second) -> Self
     where
-        First: ComponentId,
+        First: ComponentId + EmptyComponent,
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         let world = self.world;
-        self.add_id((First::get_id(world), enum_value.get_id_variant(world)))
+        unsafe { self.add_id_unchecked((First::get_id(world), enum_value.get_id_variant(world))) }
     }
 
     /// Adds a pair to the entity where the first element is the enumeration type,
@@ -142,7 +140,7 @@ impl<'a> EntityView<'a> {
             FlecsErrorCode::InvalidParameter,
             "Component was not found in reflection data."
         );
-        self.add_id((first, second))
+        unsafe { self.add_id_unchecked((first, second)) }
     }
 
     /// Conditional add.
@@ -575,7 +573,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
     pub fn auto_override_id(self, id: impl IntoId) -> Self {
-        self.add_id(ECS_AUTO_OVERRIDE | id.into())
+        unsafe { self.add_id_unchecked(ECS_AUTO_OVERRIDE | id.into()) }
     }
 
     /// Mark component for auto-overriding.

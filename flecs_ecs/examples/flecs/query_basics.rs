@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -14,12 +14,8 @@ pub struct Velocity {
     pub y: f32,
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create a query for Position, Velocity. Queries are the fastest way to
     // iterate entities as they cache results.
@@ -46,7 +42,7 @@ fn main() {
     query.each_entity(|e, (pos, vel)| {
         pos.x += vel.x;
         pos.y += vel.y;
-        fprintln!(e, "{}: [{:?}]", e.name(), pos);
+        println!("{}: [{:?}]", e.name(), pos);
     });
 
     // There's an equivalent function that does not include the entity argument
@@ -63,11 +59,9 @@ fn main() {
         for i in it.iter() {
             pos[i].x += vel[i].x;
             pos[i].y += vel[i].y;
-            fprintln!(it, "[{:?}]", pos[i]);
+            println!("[{:?}]", pos[i]);
         }
     });
-
-    world.get::<&Snap>(|snap| snap.test("query_basics".to_string()));
 
     // Output:
     //  e1: [Position { x: 11.0, y: 22.0 }]
@@ -76,4 +70,11 @@ fn main() {
     //  [Position { x: 16.0, y: 28.0 }]
     //  [Position { x: 13.0, y: 26.0 }]
     //  [Position { x: 19.0, y: 32.0 }]
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("query_basics".to_string());
 }

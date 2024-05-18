@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -14,13 +14,8 @@ pub struct Velocity {
     pub y: f32,
 }
 
-#[test]
-#[ignore = "`set_log_level` is not safe in parallel tests"]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // This example shows how to annotate systems that delete entities, in a way
     // that allows the scheduler to correctly insert sync points. See the
@@ -51,7 +46,7 @@ fn main() {
         .write::<&flecs::Wildcard>()
         .each_entity(|e, p| {
             if p.x >= 3.0 {
-                fprintln!(e, "Delete entity {}", e.name());
+                println!("Delete entity {}", e.name());
                 e.destruct();
             }
         });
@@ -61,7 +56,7 @@ fn main() {
     world
         .system_named::<&Position>(c"PrintPosition")
         .each_entity(|e, p| {
-            fprintln!(e, "{}: {{ {}, {} }}", e.name(), p.x, p.y);
+            println!("{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 
     // Create a few test entities for a Position, Velocity query
@@ -111,4 +106,12 @@ fn main() {
     // remove the first sync point.
 
     // Note how after both entities are deleted, all three systems will be de-activated and not ran by the scheduler
+}
+
+#[test]
+#[ignore = "`set_log_level` is not safe in parallel tests"]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("system_sync_point_delete".to_string());
 }

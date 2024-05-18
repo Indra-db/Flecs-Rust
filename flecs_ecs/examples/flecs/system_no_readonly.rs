@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // When an application calls world.progress(), the world is put in readonly mode.
 // This ensures that systems (on multiple threads) can safely iterate
@@ -20,12 +20,8 @@ struct Waiter;
 #[derive(Component)]
 struct Plate;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // TODO: Broken until ids can be turned in to queries
 
@@ -34,6 +30,8 @@ fn main() {
     //     .query::<&Waiter>()
     //     .without::<(&Plate, flecs::Wildcard)>()
     //     .build();
+
+    // let q_waiter_clone = q_waiter.clone();
 
     // // System that assigns plates to waiter. By making this system no_readonly
     // // plate assignments are assigned directly (not deferred) to waiters, which
@@ -69,7 +67,7 @@ fn main() {
 
     //                 plate.add_first::<&Waiter>(waiter);
 
-    //                 fprintln!(it, "Assigned {} to {}!", waiter.name(), plate.name());
+    //                 println!("Assigned {} to {}!", waiter.name(), plate.name());
     //             }
     //         }
     //     });
@@ -88,11 +86,18 @@ fn main() {
     // // run systems
     // world.progress();
 
+    // // We cannot keep lingering reference to the query after the world has been destroyed (Safety)
     // q_waiter.destruct();
-
-    //assert_eq!(world.get::<Snap>().count(), 2);
 
     // Output:
     //  Assigned waiter_3 to plate_1!
     //  Assigned waiter_2 to plate_3!
+}
+
+#[test]
+#[ignore = "todo fix"]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("system_no_readonly".to_string());
 }

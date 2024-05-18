@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // Prefabs are entities that can be used as templates for other entities. They
 // are created with a builtin Prefab tag, which by default excludes them from
@@ -25,12 +25,8 @@ pub struct Defence {
     pub value: f32,
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Add the traits to mark the component to be inherited
     world.component::<Defence>().inheritable();
@@ -44,23 +40,28 @@ fn main() {
     // Because of the IsA relationship, the instance now shares the Defense
     // component with the prefab, and can be retrieved as a regular component:
     inst.try_get::<&Defence>(|d_inst| {
-        fprintln!(&world, "{:?}", d_inst);
+        println!("{:?}", d_inst);
         // Because the component is shared, changing the value on the prefab will
         // also change the value for the instance:
         // this is safe during a table lock because it also has the component and won't cause the table to move.
         spaceship.set(Defence { value: 100.0 });
-        fprintln!(&world, "after set: {:?}", d_inst);
+        println!("after set: {:?}", d_inst);
     });
 
     // Prefab components can be iterated like regular components:
     world.each_entity::<&Defence>(|entity, d| {
-        fprintln!(&world, "{}: defence: {}", entity.path().unwrap(), d.value);
+        println!("{}: defence: {}", entity.path().unwrap(), d.value);
     });
-
-    world.get::<&Snap>(|snap| snap.test("prefab_basics".to_string()));
 
     // Output:
     //  Defence { value: 50.0 }
     //  after set: Defence { value: 100.0 }
     //  ::my_spaceship: 100
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("prefab_basics".to_string());
 }

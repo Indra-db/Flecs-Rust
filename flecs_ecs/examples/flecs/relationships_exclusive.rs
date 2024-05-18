@@ -1,16 +1,12 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // Type for Platoon relationship
 #[derive(Component)]
 struct Platoon;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Register Platoon as exclusive relationship. This ensures that an entity
     // can only belong to a single Platoon.
@@ -27,18 +23,16 @@ fn main() {
     unit.add_first::<Platoon>(platoon_1);
 
     // Log platoon of unit
-    fprintln!(
-        &world,
+    println!(
         "Unit in platoon 1: {}",
         unit.has_first::<Platoon>(platoon_1)
     ); // true
-    fprintln!(
-        &world,
+    println!(
         "Unit in platoon 2: {}",
         unit.has_first::<Platoon>(platoon_2)
     ); // false
 
-    fprintln!(&world);
+    println!();
 
     // Add unit to platoon 2. Because Platoon is an exclusive relationship, this
     // both removes (Platoon, platoon_1) and adds (Platoon, platoon_2) in a
@@ -46,18 +40,14 @@ fn main() {
     unit.add_first::<Platoon>(platoon_2);
 
     // Log platoon of unit
-    fprintln!(
-        &world,
+    println!(
         "Unit in platoon 1: {}",
         unit.has_first::<Platoon>(platoon_1)
     ); // false
-    fprintln!(
-        &world,
+    println!(
         "Unit in platoon 2: {}",
         unit.has_first::<Platoon>(platoon_2)
     ); // true
-
-    world.get::<&Snap>(|snap| snap.test("relationships_exclusive".to_string()));
 
     // Output:
     //  Unit in platoon 1: true
@@ -65,4 +55,11 @@ fn main() {
     //
     //  Unit in platoon 1: false
     //  Unit in platoon 2: true
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("relationships_exclusive".to_string());
 }

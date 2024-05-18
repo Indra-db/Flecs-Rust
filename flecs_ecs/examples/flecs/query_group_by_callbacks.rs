@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 use std::ffi::c_void;
 use std::sync::Mutex;
@@ -38,13 +38,12 @@ extern "C" fn callback_group_create(
     _group_by_ctx: *mut c_void,
 ) -> *mut c_void {
     let world_ref = unsafe { WorldRef::from_ptr(world) };
-    fprintln!(
-        world_ref,
+    println!(
         "Group created: {:?}",
         world_ref.world().entity_from_id(group_id).name()
     );
 
-    fprintln!(&world_ref);
+    println!();
 
     let mut counter = GROUP_COUNTER.lock().unwrap();
     *counter += 1;
@@ -63,8 +62,7 @@ extern "C" fn callback_group_delete(
     _group_by_ctx: *mut c_void,
 ) {
     let world_ref = unsafe { WorldRef::from_ptr(world) };
-    fprintln!(
-        world_ref,
+    println!(
         "Group deleted: {:?}",
         world_ref.world().entity_from_id(group_id).name()
     );
@@ -73,12 +71,8 @@ extern "C" fn callback_group_delete(
     // or use the callback group_by_ctx where you pass a context to the callback
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Register components in order so that id for First is lower than Third
     world.component::<First>();
@@ -125,7 +119,7 @@ fn main() {
         .set(Position { x: 6.0, y: 6.0 })
         .add::<Tag>();
 
-    fprintln!(&world);
+    println!();
 
     // The query cache now looks like this:
     //  - group First:
@@ -144,8 +138,7 @@ fn main() {
     query.iter(|it, (pos,)| {
         let group = world.entity_from_id(it.group_id());
         let ctx = unsafe { &*(query.group_context(group) as *mut GroupCtx) };
-        fprintln!(
-            it,
+        println!(
             "Group: {:?} - Table: [{:?}] - Counter: {}",
             group.path().unwrap(),
             it.archetype(),
@@ -153,16 +146,14 @@ fn main() {
         );
 
         for i in it.iter() {
-            fprintln!(it, " [{:?}]", pos[i]);
+            println!(" [{:?}]", pos[i]);
         }
 
-        fprintln!(it);
+        println!();
     });
 
     // Deleting the query will call the on_group_deleted callback
     query.destruct();
-
-    world.get::<&Snap>(|snap| snap.test("query_group_by_callbacks".to_string()));
 
     // Output:
     //  Group created: "Third"
@@ -190,4 +181,11 @@ fn main() {
     //  Group deleted: "Second"
     //  Group deleted: "First"
     //  Group deleted: "Third"
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("query_group_by_callbacks".to_string());
 }

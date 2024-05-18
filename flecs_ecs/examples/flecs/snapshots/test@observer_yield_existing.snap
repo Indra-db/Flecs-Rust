@@ -1,6 +1,5 @@
 ---
 source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: self.str
+expression: str_output
 ---
-- " - OnSet: examples.observer_yield_existing.Position: e1: { 10, 20 }"
-- " - OnSet: examples.observer_yield_existing.Position: e2: { 20, 30 }"
+" - OnSet: examples.observer_yield_existing.Position: e1: { 10, 20 }\n - OnSet: examples.observer_yield_existing.Position: e2: { 20, 30 }\n"

@@ -1,19 +1,15 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create system that prints delta_time. This system doesn't query for any
     // components which means it won't match any entities, but will still be ran
     // once for each call to ecs_progress.
     world.system::<()>().iter_only(|it| {
-        fprintln!(it.world(), "delta_time: {}", it.delta_time());
+        println!("delta_time: {}", it.delta_time());
     });
 
     // Call progress with 0.0f for the delta_time parameter. This will cause
@@ -32,10 +28,15 @@ fn main() {
 
     world.progress();
 
-    assert!(world.map::<&Snap, _>(|snap| snap.count() > 0));
-
     // Output:
     //  delta_time: 0.016666668
     //  delta_time: 0.10155179
     //  delta_time: 0.10091246
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    assert!(output_capture.output().lock().unwrap().len() > 0);
 }

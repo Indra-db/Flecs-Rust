@@ -1,6 +1,5 @@
 ---
-source: flecs_ecs/examples/flecs/system_pipeline.rs
-expression: self.str
+source: flecs_ecs/examples/flecs/z_snapshot_test.rs
+expression: str_output
 ---
-- "e1: { 11, 22 }"
-- "e2: { 13, 24 }"
+"e1: { 11, 22 }\ne2: { 13, 24 }\n"

@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -23,27 +23,21 @@ pub struct Velocity {
 // provided as event. No additional event kinds should be provided for a monitor
 // observer.
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create observer for custom event
     world
         .observer::<flecs::Monitor, (&Position, &Velocity)>()
         .each_iter(|it, index, (_pos, _vel)| {
             if it.event() == flecs::OnAdd::ID {
-                fprintln!(
-                    it,
+                println!(
                     " - Enter: {}: {}",
                     it.event_id().to_str(),
                     it.entity(index).name()
                 );
             } else if it.event() == flecs::OnRemove::ID {
-                fprintln!(
-                    it,
+                println!(
                     " - Leave: {}: {}",
                     it.event_id().to_str(),
                     it.entity(index).name()
@@ -63,9 +57,14 @@ fn main() {
     // This triggers the monitor with EcsOnRemove, as the entity no longer matches.
     entity.remove::<Position>();
 
-    world.get::<&Snap>(|snap| snap.test("observer_monitor".to_string()));
-
     // Output:
     //  - Enter: Velocity: e
     //  - Leave: Position: e
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("observer_monitor".to_string());
 }

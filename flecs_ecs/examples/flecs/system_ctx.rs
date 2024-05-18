@@ -1,7 +1,8 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 use std::{
+    borrow::Borrow,
     ffi::c_void,
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -39,12 +40,8 @@ fn rand(max: u64) -> f32 {
     (random_number % max) as f32
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Applications can pass context data to a system. A common use case where this
     // comes in handy is when a system needs to iterate more than one query. The
@@ -76,7 +73,7 @@ fn main() {
                 let d_sqr = distance_sqr(p1, p2);
                 let r_sqr = sqr(r1.value + r2.value);
                 if r_sqr > d_sqr {
-                    fprintln!(it, "{} and {} collided!", e1, e2);
+                    println!("{} and {} collided!", e1, e2);
                 }
             });
         });
@@ -97,8 +94,6 @@ fn main() {
     // Run the system
     sys.run();
 
-    assert!(world.map::<&Snap, _>(|snap| snap.count() > 0));
-
     // Output:
     //  532 and 539 collided!
     //  532 and 540 collided!
@@ -106,4 +101,11 @@ fn main() {
     //  536 and 537 collided!
     //  536 and 540 collided!
     //  537 and 540 collided!
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    assert!(output_capture.output().lock().unwrap().len() > 0);
 }

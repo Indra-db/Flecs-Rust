@@ -1,16 +1,12 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Component)]
 pub struct Eats;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Entity used for Grows relationship
     let grows = world.entity_named(c"Grows");
@@ -30,46 +26,43 @@ fn main() {
         .add_id((grows, pears));
 
     // Has can be used with relationships as well
-    fprintln!(&world, "Bob eats apples? {}", bob.has_first::<Eats>(apples));
+    println!("Bob eats apples? {}", bob.has_first::<Eats>(apples));
 
     // Wildcards can be used to match relationships
-    fprintln!(
-        &world,
+    println!(
         "Bob grows food? {}, {}",
         bob.has_id((grows, flecs::Wildcard::ID)),
         //or you can do
         bob.has_second::<flecs::Wildcard>(grows)
     );
 
-    fprintln!(&world);
+    println!();
 
     // Print the type of the entity. Should output:
     //   (Identifier,Name),(Eats,Apples),(Eats,Pears),(Grows,Pears)
-    fprintln!(&world, "Bob's type: [{}]", bob.archetype());
+    println!("Bob's type: [{}]", bob.archetype());
 
-    fprintln!(&world);
+    println!();
 
     // Relationships can be iterated for an entity. This iterates (Eats, *):
     bob.each_target::<Eats>(|second| {
-        fprintln!(&world, "Bob eats {}", second.name());
+        println!("Bob eats {}", second.name());
     });
 
-    fprintln!(&world);
+    println!();
 
     // Iterate by explicitly providing the pair. This iterates (*, Pears):
     bob.each_pair(flecs::Wildcard::ID, pears, |id| {
-        fprintln!(&world, "Bob {} pears", id.first_id().name());
+        println!("Bob {} pears", id.first_id().name());
     });
 
-    fprintln!(&world);
+    println!();
 
     // Get first target of relationship
-    fprintln!(&world, "Bob eats {}", bob.target::<Eats>(0).name());
+    println!("Bob eats {}", bob.target::<Eats>(0).name());
 
     // Get second target of relationship
-    fprintln!(&world, "Bob also eats {}", bob.target::<Eats>(1).name());
-
-    world.get::<&Snap>(|snap| snap.test("relationships_basics".to_string()));
+    println!("Bob also eats {}", bob.target::<Eats>(1).name());
 
     // Output:
     //  Bob eats apples? true
@@ -85,4 +78,11 @@ fn main() {
 
     //  Bob eats Apples
     //  Bob also eats Pears
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("relationships_basics".to_string());
 }

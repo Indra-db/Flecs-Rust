@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // This example extends the component_inheritance example, and shows how
 // we can use a single rule to match units from different players and platoons
@@ -39,12 +39,8 @@ struct Platoon;
 const PLAYER_COUNT: usize = 100;
 const PLATOONS_PER_PLAYER: usize = 3;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Make the ECS aware of the inheritance relationships. Note that IsA
     // relationship used here is the same as in the prefab example.
@@ -116,8 +112,7 @@ fn main() {
         .set_var(player_var, world.lookup_recursively(c"MyPlayer"))
         .each_iter(|it, index, _| {
             let unit = it.entity(index);
-            fprintln!(
-                it,
+            println!(
                 "Unit id: {} of class {} in platoon id: {} for player {}",
                 unit,
                 it.id(0).to_str(),
@@ -125,8 +120,6 @@ fn main() {
                 it.get_var(player_var)
             );
         });
-
-    world.get::<&Snap>(|snap| snap.test("rules_setting_variables".to_string()));
 
     // Output:
     //  Unit id: 529 of class Wizard in platoon id: 526 for player MyPlayer
@@ -138,4 +131,11 @@ fn main() {
 
     // Try removing the set_var call, this will cause the iterator to return
     // all units in all platoons for all players.
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("rules_setting_variables".to_string());
 }

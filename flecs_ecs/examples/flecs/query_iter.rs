@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -19,12 +19,8 @@ pub struct Mass {
     pub value: f32,
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     let query = world.new_query::<(&mut Position, &Velocity)>();
 
@@ -50,36 +46,29 @@ fn main() {
     // The function passed to iter is by default called for each table the query
     // is matched with.
     query.iter(|it, (position, velocity)| {
-        fprintln!(it);
+        println!();
         // Print the table & number of entities matched in current callback
-        fprintln!(it, "Table: {:?}", it.archetype());
-        fprintln!(it, " - number of entities: {}", it.count());
-        fprintln!(it);
+        println!("Table: {:?}", it.archetype());
+        println!(" - number of entities: {}", it.count());
+        println!();
 
         // Print information about the components being matched
         for i in 0..it.field_count() {
-            fprintln!(it, " - term {} : ", i);
-            fprintln!(it, "   - component: {}", it.id(i).to_str());
-            fprintln!(it, "   - type size: {}", it.size(i));
+            println!(" - term {} : ", i);
+            println!("   - component: {}", it.id(i).to_str());
+            println!("   - type size: {}", it.size(i));
         }
 
-        fprintln!(it);
+        println!();
 
         for i in it.iter() {
             position[i].x += velocity[i].x;
             position[i].y += velocity[i].y;
-            fprintln!(
-                it,
-                " - entity {}: has {:?}",
-                it.entity(i).name(),
-                position[i]
-            );
+            println!(" - entity {}: has {:?}", it.entity(i).name(), position[i]);
         }
 
-        fprintln!(it);
+        println!();
     });
-
-    world.get::<&Snap>(|snap| snap.test("query_iter".to_string()));
 
     // Output:
     //  Table: Position, Velocity, (Identifier,Name)
@@ -108,4 +97,11 @@ fn main() {
     //
     //  - entity e3: has Position { x: 14.0, y: 25.0 }
     //
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("query_iter".to_string());
 }

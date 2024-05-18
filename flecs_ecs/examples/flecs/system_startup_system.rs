@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // Startup systems are systems registered with the EcsOnStart phase, and are
 // only ran during the first frame. Just like with regular phases, custom phases
@@ -10,24 +10,20 @@ use flecs_ecs::prelude::*;
 // match components, can introduce merge points), with as only exception that
 // they are guaranteed to always run on the main thread.
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Startup system
     world
         .system_named::<()>(c"Startup")
         .kind::<flecs::pipeline::OnStart>()
         .iter_only(|it| {
-            fprintln!(it, "{}", it.system().name());
+            println!("{}", it.system().name());
         });
 
     // Regular system
     world.system_named::<()>(c"Update").iter_only(|it| {
-        fprintln!(it, "{}", it.system().name());
+        println!("{}", it.system().name());
     });
 
     // First frame. This runs both the Startup and Update systems
@@ -36,10 +32,15 @@ fn main() {
     // Second frame. This runs only the Update system
     world.progress();
 
-    world.get::<&Snap>(|snap| snap.test("system_startup_system".to_string()));
-
     // Output:
     //  Startup
     //  Update
     //  Update
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("system_startup_system".to_string());
 }

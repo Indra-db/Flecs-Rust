@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // When an enumeration constant is added to an entity, it is added as a relationship
 // pair where the relationship is the enum type, and the target is the constant. For
@@ -34,13 +34,8 @@ enum TileStatus {
     Occupied,
 }
 
-#[test]
-#[ignore = "is a hierarchy traversal not supported with new get callback"]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create an entity with (Tile, Red) and (TileStatus, Free) relationships
     let tile = world
@@ -49,27 +44,26 @@ fn main() {
         .add_enum(TileStatus::Free);
 
     // (Tile, Tile.Stone), (TileStatus, TileStatus.Free)
-    fprintln!(&world, "{:?}", tile.archetype());
+    println!("{:?}", tile.archetype());
 
     // Replace (TileStatus, Free) with (TileStatus, Occupied)
     tile.add_enum(TileStatus::Occupied);
 
     // (Tile, Tile.Stone), (TileStatus, TileStatus.Occupied)
-    fprintln!(&world, "{:?}", tile.archetype());
+    println!("{:?}", tile.archetype());
 
-    fprintln!(&world);
+    println!();
 
     // Check if the entity has the Tile relationship and the Tile::Stone pair
-    fprintln!(&world, "has tile enum: {}", tile.has::<Tile>()); // true
-    fprintln!(
-        &world,
+    println!("has tile enum: {}", tile.has::<Tile>()); // true
+    println!(
         "is the enum from tile stone?: {}",
         tile.has_enum(Tile::Stone)
     ); // true
 
     // Get the current value of the enum
     tile.try_get::<&Tile>(|tile| {
-        fprintln!(&world, "is tile stone: {}", *tile == Tile::Stone); // true
+        println!("is tile stone: {}", *tile == Tile::Stone); // true
     });
 
     // Create a few more entities that we can query
@@ -83,7 +77,7 @@ fn main() {
         .add_enum(Tile::Sand)
         .add_enum(TileStatus::Occupied);
 
-    fprintln!(&world);
+    println!();
 
     // Iterate all entities with a Tile relationship
     world
@@ -93,7 +87,7 @@ fn main() {
         .each_iter(|it, _, _| {
             let pair = it.pair(0).unwrap();
             let tile_constant = pair.second_id();
-            fprintln!(it, "{}", tile_constant.path().unwrap());
+            println!("{}", tile_constant.path().unwrap());
         });
 
     // Output:s:
@@ -101,7 +95,7 @@ fn main() {
     //  ::Tile::Grass
     //  ::Tile::Sand
 
-    fprintln!(&world);
+    println!();
 
     // Iterate only occupied tiles
     world
@@ -112,22 +106,20 @@ fn main() {
         .each_iter(|it, _, _| {
             let pair = it.pair(0).unwrap();
             let tile_constant = pair.second_id();
-            fprintln!(it, "{}", tile_constant.path().unwrap());
+            println!("{}", tile_constant.path().unwrap());
         });
 
     // Output:s:
     //  ::Tile::Stone
     //  ::Tile::Sand
 
-    fprintln!(&world);
+    println!();
 
     // Remove any instance of the TileStatus relationship
     tile.remove::<TileStatus>();
 
     // (Tile, Tile.Stone)
-    fprintln!(&world, "{:?}", tile.archetype());
-
-    world.get::<&Snap>(|snap| snap.test("relationships_enum".to_string()));
+    println!("{:?}", tile.archetype());
 
     // Total Output:
     //  (relationships_enum.Tile,relationships_enum.Tile.Stone), (relationships_enum.TileStatus,relationships_enum.TileStatus.Free)
@@ -145,4 +137,12 @@ fn main() {
     //  ::relationships_enum::Tile::Sand
     //
     //  (relationships_enum.Tile,relationships_enum.Tile.Stone)
+}
+
+#[test]
+#[ignore = "is a hierarchy traversal not supported with new get callback"]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("relationships_enum".to_string());
 }

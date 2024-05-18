@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -14,12 +14,8 @@ pub struct Velocity {
     pub y: f32,
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create a few test entities for a Position, Velocity query
     world
@@ -43,12 +39,17 @@ fn main() {
     world.each_entity::<(&mut Position, &Velocity)>(|entity, (pos, vel)| {
         pos.x += vel.x;
         pos.y += vel.y;
-        fprintln!(entity, "Entity {}: {:?}", entity.name(), pos);
+        println!("Entity {}: {:?}", entity.name(), pos);
     });
-
-    world.get::<&Snap>(|snap| snap.test("query_world_query".to_string()));
 
     // Output:
     //  Entity e1: Position { x: 11.0, y: 22.0 }
     //  Entity e2: Position { x: 13.0, y: 24.0 }
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("query_world_query".to_string());
 }

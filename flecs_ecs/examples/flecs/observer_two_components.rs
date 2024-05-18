@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -18,19 +18,14 @@ pub struct Velocity {
 // entire observer filter will be forwarded to the callback. For example, an
 // observer for Position,Velocity won't match an entity that only has Position.
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create observer for custom event
     world
         .observer::<flecs::OnSet, (&Position, &Velocity)>()
         .each_iter(|it, index, (pos, vel)| {
-            fprintln!(
-                it,
+            println!(
                 " - {}: {}: {}: p: {{ {}, {} }}, v: {{ {}, {} }}",
                 it.event().name(),
                 it.event_id().to_str(),
@@ -48,8 +43,13 @@ fn main() {
     // Set Velocity (emits EcsOnSet, matches observer)
     entity.set(Velocity { x: 1.0, y: 2.0 });
 
-    world.get::<&Snap>(|snap| snap.test("observer_two_components".to_string()));
-
     // Output:
     //  - OnSet: Velocity: e: p: { 10, 20 }, v: { 1, 2 }
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("observer_two_components".to_string());
 }

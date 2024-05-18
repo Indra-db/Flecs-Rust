@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -8,12 +8,8 @@ pub struct Position {
     pub y: f32,
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
     // Create a few test entities for a Position query
     world.entity_named(c"e1").set(Position { x: 10.0, y: 20.0 });
 
@@ -25,13 +21,18 @@ fn main() {
     let entity: Option<EntityView> = query.find(|pos| (pos.x - 20.0).abs() < f32::EPSILON);
 
     if let Some(entity) = entity {
-        fprintln!(&world, "Entity found: {:?}", entity.path().unwrap());
+        println!("Entity found: {:?}", entity.path().unwrap());
     } else {
-        fprintln!(&world, "Entity not found");
+        println!("Entity not found");
     }
-
-    world.get::<&Snap>(|snap| snap.test("query_find_entity".to_string()));
 
     // Output:
     //  Entity found: "::e2"
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("query_find_entity".to_string());
 }

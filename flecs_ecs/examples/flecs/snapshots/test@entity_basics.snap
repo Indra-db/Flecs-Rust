@@ -1,8 +1,5 @@
 ---
 source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: self.str
+expression: str_output
 ---
-- "Bob's position: Position { x: 10.0, y: 20.0 }"
-- "[examples.entity_basics.Position, examples.entity_basics.Walking, (Identifier,Name)]"
-- "Alice has Position { x: 10.0, y: 20.0 }"
-- "Bob has Position { x: 20.0, y: 30.0 }"
+"Bob's position: Position { x: 10.0, y: 20.0 }\n[examples.entity_basics.Position, examples.entity_basics.Walking, (Identifier,Name)]\nAlice has Position { x: 10.0, y: 20.0 }\nBob has Position { x: 20.0, y: 30.0 }\n"

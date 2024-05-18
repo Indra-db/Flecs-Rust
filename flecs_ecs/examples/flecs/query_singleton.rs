@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 #[derive(Debug, Component)]
 struct Gravity {
@@ -12,12 +12,8 @@ pub struct Velocity {
     pub y: f32,
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Set singleton
     world.set(Gravity { value: 9.81 });
@@ -39,18 +35,18 @@ fn main() {
 
     query.each_entity(|entity, (velocity, gravity)| {
         velocity.y += gravity.value;
-        fprintln!(
-            entity,
-            "Entity {} has {:?}",
-            entity.path().unwrap(),
-            velocity
-        );
+        println!("Entity {} has {:?}", entity.path().unwrap(), velocity);
     });
-
-    world.get::<&Snap>(|snap| snap.test("query_singleton".to_string()));
 
     // Output:
     // Entity ::e1 has Velocity { x: 0.0, y: 9.81 }
     // Entity ::e2 has Velocity { x: 0.0, y: 10.81 }
     // Entity ::e3 has Velocity { x: 0.0, y: 11.81 }
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("query_singleton".to_string());
 }

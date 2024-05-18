@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -11,19 +11,14 @@ pub struct Position {
 #[derive(Component)]
 struct MyEvent;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create an observer for the custom event
     world
         .observer::<MyEvent, &Position>()
         .each_iter(|it, index, _pos| {
-            fprintln!(
-                it,
+            println!(
                 " - {}: {}: {}",
                 it.event().name(),
                 it.event_id().to_str(),
@@ -43,7 +38,13 @@ fn main() {
         .target(entity)
         .emit(&MyEvent);
 
-    world.get::<&Snap>(|snap| snap.test("observer_custom_event".to_string()));
     // Output:
     //  - MyEvent: Position: e1
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("observer_custom_event".to_string());
 }

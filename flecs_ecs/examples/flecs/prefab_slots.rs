@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // Slots can be combined with prefab hierarchies to make it easier to access
 // the child entities created for an instance.
@@ -24,12 +24,8 @@ use flecs_ecs::prelude::*;
 // entities by name to get access to the instantiated children, like what the
 // hierarchy example does.
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create the same prefab hierarchy as from the hierarchy example, but now
     // with the SlotOf relationship.
@@ -62,16 +58,21 @@ fn main() {
     let inst_cockpit = inst.target_id(cockpit, 0);
     let inst_seat = inst.target_id(pilot_seat, 0);
 
-    fprintln!(&world, "instance engine: {}", inst_engine.path().unwrap());
+    println!("instance engine: {}", inst_engine.path().unwrap());
 
-    fprintln!(&world, "instance cockpit: {}", inst_cockpit.path().unwrap());
+    println!("instance cockpit: {}", inst_cockpit.path().unwrap());
 
-    fprintln!(&world, "instance seat: {}", inst_seat.path().unwrap());
-
-    world.get::<&Snap>(|snap| snap.test("prefab_slots".to_string()));
+    println!("instance seat: {}", inst_seat.path().unwrap());
 
     // Output:
     //  instance engine: ::my_spaceship::Engine
     //  instance cockpit: ::my_spaceship::Cockpit
     //  instance seat: ::my_spaceship::Cockpit::PilotSeat
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("prefab_slots".to_string());
 }

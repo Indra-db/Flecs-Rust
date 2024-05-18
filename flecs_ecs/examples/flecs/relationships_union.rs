@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // This example shows how to use union relationships. Union relationships behave
 // much like exclusive relationships in that entities can have only one instance
@@ -32,12 +32,8 @@ enum Direction {
     Right,
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Register Movement and Direction as union relationships. This ensures that
     // an entity can only have one Movement and one Direction.
@@ -76,8 +72,7 @@ fn main() {
         let entity = it.entity(index);
 
         // Movement will always be Walking, Direction can be any state
-        fprintln!(
-            &world,
+        println!(
             "{}: Movement: {:?}, Direction: {:?}",
             entity.name(),
             it.pair(0).unwrap().second_id().name(),
@@ -85,9 +80,14 @@ fn main() {
         );
     });
 
-    world.get::<&Snap>(|snap| snap.test("relationships_union".to_string()));
-
     // Output:
     //   e3: Movement: Walking, Direction: Back
     //   e1: Movement: Walking, Direction: Front
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("relationships_union".to_string());
 }

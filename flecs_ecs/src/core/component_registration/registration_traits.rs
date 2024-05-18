@@ -3,6 +3,13 @@ use std::{ffi::CStr, sync::OnceLock};
 
 pub trait EmptyComponent {}
 
+impl<T, U> EmptyComponent for (T, U)
+where
+    T: EmptyComponent,
+    U: EmptyComponent,
+{
+}
+
 #[diagnostic::on_unimplemented(
     message = "the size of type `{Self}` should not be zero, should not a tag.",
     label = "Supports only non-empty components"

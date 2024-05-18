@@ -1,10 +1,5 @@
 ---
 source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: self.str
+expression: str_output
 ---
-- "Unit [ID] of class examples.rules_setting_variables.Wizard in platoon [ID] for player MyPlayer"
-- "Unit [ID] of class examples.rules_setting_variables.Wizard in platoon [ID] for player MyPlayer"
-- "Unit [ID] of class examples.rules_setting_variables.Wizard in platoon [ID] for player MyPlayer"
-- "Unit [ID] of class examples.rules_setting_variables.Marksman in platoon [ID] for player MyPlayer"
-- "Unit [ID] of class examples.rules_setting_variables.Marksman in platoon [ID] for player MyPlayer"
-- "Unit [ID] of class examples.rules_setting_variables.Marksman in platoon [ID] for player MyPlayer"
+"Unit [ID] of class examples.rules_setting_variables.Wizard in platoon [ID] for player MyPlayer\nUnit [ID] of class examples.rules_setting_variables.Wizard in platoon [ID] for player MyPlayer\nUnit [ID] of class examples.rules_setting_variables.Wizard in platoon [ID] for player MyPlayer\nUnit [ID] of class examples.rules_setting_variables.Marksman in platoon [ID] for player MyPlayer\nUnit [ID] of class examples.rules_setting_variables.Marksman in platoon [ID] for player MyPlayer\nUnit [ID] of class examples.rules_setting_variables.Marksman in platoon [ID] for player MyPlayer\n"

@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // This example is the same as the mutate_entity example, but instead stores the
 // handle of the to be deleted entity in a component.
@@ -13,12 +13,8 @@ struct Timeout {
 #[derive(Component)]
 pub struct Tag;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // System that deletes an entity after a timeout expires
     world
@@ -50,7 +46,7 @@ fn main() {
                 // A shortcut is to use the iterator directly:
                 let world = it.world();
                 let to_delete = world.get_alive(timeout.to_delete);
-                fprintln!(it, "Expire: {} deleted!", to_delete.name());
+                println!("Expire: {} deleted!", to_delete.name());
                 to_delete.destruct();
             }
         });
@@ -70,7 +66,7 @@ fn main() {
     world
         .observer::<flecs::OnRemove, &Tag>()
         .each_entity(|e, _tag| {
-            fprintln!(e, "Expired: {} actually deleted", e.name());
+            println!("Expired: {} actually deleted", e.name());
         });
 
     let to_delete = world.entity_named(c"ToDelete").add::<Tag>();
@@ -91,8 +87,6 @@ fn main() {
         println!("Tick...");
     }
 
-    assert!(world.map::<&Snap, _>(|snap| snap.str.last().unwrap().contains("deleted")));
-
     // Output:
     //  PrintExpire: ToDelete has 2.00 seconds left
     //  Tick...
@@ -101,4 +95,11 @@ fn main() {
     //  Expire: ToDelete deleted!
     //  PrintExpire: ToDelete has -0.03 seconds left
     //  Expired: ToDelete actually deleted
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    assert!(output_capture.output_string().contains("deleted"));
 }

@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // This example shows how a rule may have terms with cyclic dependencies on
 // variables.
@@ -7,12 +7,8 @@ use flecs_ecs::prelude::*;
 #[derive(Component)]
 struct Likes;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     let bob = world.entity_named(c"Bob");
     let alice = world.entity_named(c"Alice");
@@ -57,10 +53,8 @@ fn main() {
     rule.iter_only(|it| {
         let x = it.get_var(x_var);
         let y = it.get_var(y_var);
-        fprintln!(it, "{} likes {}", x.name(), y.name());
+        println!("{} likes {}", x.name(), y.name());
     });
-
-    world.get::<&Snap>(|snap| snap.test("rules_cyclic_variables".to_string()));
 
     // Output:
     //  Alice likes Bob
@@ -73,4 +67,11 @@ fn main() {
     // within the given constraints. Since we did not give it any constraints
     // that would favor a person being matched by X or Y, the rule engine
     // returns both.
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("rules_cyclic_variables".to_string());
 }

@@ -1,3 +1,4 @@
+#![feature(internal_output_capture)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(unused_variables)]
@@ -12,7 +13,7 @@ fn init() {
     }
 }
 
-pub mod z_snapshot_test;
+pub mod z_ignore_test_common;
 
 mod a_hello_world;
 

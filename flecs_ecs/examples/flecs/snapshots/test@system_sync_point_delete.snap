@@ -1,9 +1,0 @@
----
-source: flecs_ecs/examples/flecs/system_sync_point_delete.rs
-expression: self.str
----
-- "e1: { 1, 2 }"
-- "e2: { 2, 4 }"
-- Delete entity e2
-- "e1: { 2, 4 }"
-- Delete entity e1

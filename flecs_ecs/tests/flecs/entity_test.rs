@@ -2745,7 +2745,7 @@ fn entity_role_id_str() {
 
     let id = world.id_from_id(flecs::id_flags::AutoOverride::ID | world.entity_named(c"Foo").id());
 
-    assert_eq!(id.to_str(), "OVERRIDE|Foo");
+    assert_eq!(id.to_str(), "AUTO_OVERRIDE|Foo");
 }
 
 #[test]

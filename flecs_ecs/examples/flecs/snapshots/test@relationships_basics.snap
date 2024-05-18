@@ -1,17 +1,5 @@
 ---
 source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: self.str
+expression: str_output
 ---
-- Bob eats apples? true
-- "Bob grows food? true, true"
-- "\n"
-- "Bob's type: [(Identifier,Name), (examples.relationships_basics.Eats,Apples), (examples.relationships_basics.Eats,Pears), (Grows,Pears)]"
-- "\n"
-- Bob eats Apples
-- Bob eats Pears
-- "\n"
-- Bob Eats pears
-- Bob Grows pears
-- "\n"
-- Bob eats Apples
-- Bob also eats Pears
+"Bob eats apples? true\nBob grows food? true, true\n\nBob's type: [(Identifier,Name), (examples.relationships_basics.Eats,Apples), (examples.relationships_basics.Eats,Pears), (Grows,Pears)]\n\nBob eats Apples\nBob eats Pears\n\nBob Eats pears\nBob Grows pears\n\nBob eats Apples\nBob also eats Pears\n"

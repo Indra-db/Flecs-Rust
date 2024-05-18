@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // This example shows how rules can be used to match simple inheritance trees.
 
@@ -27,12 +27,8 @@ struct Marksman;
 #[derive(Component)]
 struct BuilderX;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Make the ECS aware of the inheritance relationships. Note that IsA
     // relationship used here is the same as in the prefab example.
@@ -63,14 +59,19 @@ fn main() {
 
     // Iterate the rule
     r.each_entity(|e, _| {
-        fprintln!(e, "Unit {} found", e.name());
+        println!("Unit {} found", e.name());
     });
-
-    world.get::<&Snap>(|snap| snap.test("rules_component_inheritance".to_string()));
 
     // Output:
     //  Unit wizard_1 found
     //  Unit wizard_2 found
     //  Unit marksman_1 found
     //  Unit marksman_2 found
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("rules_component_inheritance".to_string());
 }

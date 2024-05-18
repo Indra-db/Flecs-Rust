@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Component)]
@@ -17,12 +17,8 @@ pub struct Damage {
     pub value: f32,
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Add the traits to mark the components to be inherited
     world.component::<Defence>().inheritable();
@@ -47,25 +43,23 @@ fn main() {
     // The entity will now have a private copy of the Damage component, but not
     // of the Attack and Defense components. We can see this when we look at the
     // type of the instance:
-    fprintln!(&world, "{}", inst.archetype());
+    println!("{}", inst.archetype());
 
     // Even though Attack was not automatically overridden, we can always
     // override it manually afterwards by adding it:
     inst.add::<Attack>();
 
     // The Attack component now shows up in the entity type:
-    fprintln!(&world, "{}", inst.archetype());
+    println!("{}", inst.archetype());
 
     // We can get all components on the instance, regardless of whether they
     // are overridden or not. Note that the overridden components (Attack and
     // Damage) are initialized with the values from the prefab component:
     inst.try_get::<(&Attack, &Defence, &Damage)>(|(attack, defence, damage)| {
-        fprintln!(&world, "attack: {}", attack.value);
-        fprintln!(&world, "defence: {}", defence.value);
-        fprintln!(&world, "damage: {}", damage.value);
+        println!("attack: {}", attack.value);
+        println!("defence: {}", defence.value);
+        println!("damage: {}", damage.value);
     });
-
-    world.get::<&Snap>(|snap| snap.test("prefab_override".to_string()));
 
     // Output:
     //  Damage, (Identifier,Name), (IsA,SpaceShip)
@@ -73,4 +67,11 @@ fn main() {
     //  attack: 75
     //  defence: 100
     //  damage: 0
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("prefab_override".to_string());
 }

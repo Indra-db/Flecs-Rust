@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 use std::ffi::c_void;
 
@@ -44,12 +44,8 @@ extern "C" fn callback_group_by_relationship(
     }
 }
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Register components in order so that id for First is lower than Third
     world.component::<First>();
@@ -92,7 +88,7 @@ fn main() {
         .set(Position { x: 6.0, y: 6.0 })
         .add::<Tag>();
 
-    fprintln!(&world);
+    println!();
 
     // The query cache now looks like this:
     //  - group First:
@@ -110,21 +106,18 @@ fn main() {
 
     query.iter(|it, pos| {
         let group = world.entity_from_id(it.group_id());
-        fprintln!(
-            it,
+        println!(
             "Group: {:?} - Table: [{:?}]",
             group.path().unwrap(),
             it.archetype()
         );
 
         for i in it.iter() {
-            fprintln!(it, " [{:?}]", pos[i]);
+            println!(" [{:?}]", pos[i]);
         }
 
-        fprintln!(it);
+        println!();
     });
-
-    world.get::<&Snap>(|snap| snap.test("query_group_by_custom".to_string()));
 
     // Output:
     //  Group: "::First" - Table: [Position, (Group,First)]
@@ -144,4 +137,11 @@ fn main() {
     //
     //  Group: "::Third" - Table: [Position, Tag, (Group,Third)]
     //  [Position { x: 4.0, y: 4.0 }]
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("query_group_by_custom".to_string());
 }

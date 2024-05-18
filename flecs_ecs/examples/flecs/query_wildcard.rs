@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 pub use flecs_ecs::{core::*, macros::Component};
 
@@ -14,12 +14,8 @@ pub struct Apples;
 #[derive(Component)]
 pub struct Pears;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create a query that matches edible components
     let query = world
@@ -47,13 +43,18 @@ fn main() {
         let pair = it.pair(0).unwrap();
         let food = pair.second_id();
 
-        fprintln!(it, "{} eats {} {}", entity, eats.amount, food);
+        println!("{} eats {} {}", entity, eats.amount, food);
     });
-
-    world.get::<&Snap>(|snap| snap.test("query_wildcard".to_string()));
 
     // Output:
     //  Alice eats 4 Apples
     //  Bob eats 10 Apples
     //  Bob eats 5 Pears
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("query_wildcard".to_string());
 }

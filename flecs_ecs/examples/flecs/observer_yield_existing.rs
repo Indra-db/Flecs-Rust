@@ -1,5 +1,5 @@
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
@@ -15,12 +15,8 @@ pub struct Position {
 // Custom events can also implement behavior for yield_existing by adding the
 // Iterable component to the event (see EcsIterable for more details).
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create existing entities with Position component
     world.entity_named(c"e1").set(Position { x: 10.0, y: 20.0 });
@@ -31,8 +27,7 @@ fn main() {
         .observer::<flecs::OnSet, &Position>()
         .yield_existing(true)
         .each_iter(|it, index, pos| {
-            fprintln!(
-                it,
+            println!(
                 " - {}: {}: {}: {{ {}, {} }}",
                 it.event().name(),
                 it.event_id().to_str(),
@@ -42,8 +37,14 @@ fn main() {
             );
         });
 
-    world.get::<&Snap>(|snap| snap.test("observer_yield_existing".to_string()));
     // Output:
     //  - OnSet: Position: e1: { 10, 20 }
     //  - OnSet: Position: e2: { 20, 30 }
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("observer_yield_existing".to_string());
 }

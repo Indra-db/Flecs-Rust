@@ -1,6 +1,6 @@
 #![allow(non_camel_case_types)]
-use crate::z_snapshot_test::*;
-snapshot_test!();
+use crate::z_ignore_test_common::*;
+
 use flecs_ecs::prelude::*;
 // A group iterator iterates over a single group of a grouped query (see the
 // group_by example for more details). This can be useful when an application
@@ -49,12 +49,8 @@ struct Beggar;
 #[derive(Debug, Component)]
 struct Mage;
 
-#[test]
 fn main() {
     let world = World::new();
-
-    //ignore snap in example, it's for snapshot testing
-    world.import::<Snap>();
 
     // Create npc's in world cell 0_0
     world
@@ -102,34 +98,30 @@ fn main() {
     let query = world.query::<&Npc>().group_by::<WorldCell>().build();
 
     // Iterate all tables
-    fprintln!(&world, "All tables");
+    println!("All tables");
 
     query.iter_only(|iter| {
         let group = world.entity_from_id(iter.group_id());
-        fprintln!(
-            iter,
+        println!(
             "group: {:?} - Table [{}]",
             group.path().unwrap(),
             iter.table().unwrap().to_string().unwrap()
         );
     });
 
-    fprintln!(&world);
+    println!();
 
-    fprintln!(&world, "Tables for cell 1_0:");
+    println!("Tables for cell 1_0:");
 
     query.iterable().set_group::<Cell_1_0>().iter_only(|iter| {
         let world = iter.world();
         let group = world.entity_from_id(iter.group_id());
-        fprintln!(
-            iter,
+        println!(
             "group: {:?} - Table [{}]",
             group.path().unwrap(),
             iter.table().unwrap().to_string().unwrap()
         );
     });
-
-    world.get::<&Snap>(|snap| snap.test("query_group_iter".to_string()));
 
     // Output:
     //  All tables
@@ -143,4 +135,11 @@ fn main() {
     //  Tables for cell 1_0:
     //  group: "::Cell_1_0" - Table [Npc, Mage, (WorldCell,Cell_1_0)]
     //  group: "::Cell_1_0" - Table [Npc, Beggar, (WorldCell,Cell_1_0)]
+}
+
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("query_group_iter".to_string());
 }
