@@ -18,30 +18,30 @@ fn main() {
     let world = World::new();
 
     let sun = world
-        .entity_named(c"Sun")
+        .entity_named("Sun")
         .set_pair::<Position, WorldX>(Position::default())
         .set_pair::<Position, Local>(Position { x: 1.0, y: 1.0 });
 
     world
-        .entity_named(c"Mercury")
+        .entity_named("Mercury")
         .child_of_id(sun)
         .set_pair::<Position, WorldX>(Position::default())
         .set_pair::<Position, Local>(Position { x: 1.0, y: 1.0 });
 
     world
-        .entity_named(c"Venus")
+        .entity_named("Venus")
         .child_of_id(sun)
         .set_pair::<Position, WorldX>(Position::default())
         .set_pair::<Position, Local>(Position { x: 2.0, y: 2.0 });
 
     let earth = world
-        .entity_named(c"Earth")
+        .entity_named("Earth")
         .child_of_id(sun)
         .set_pair::<Position, WorldX>(Position::default())
         .set_pair::<Position, Local>(Position { x: 3.0, y: 3.0 });
 
     world
-        .entity_named(c"Moon")
+        .entity_named("Moon")
         .child_of_id(earth)
         .set_pair::<Position, WorldX>(Position::default())
         .set_pair::<Position, Local>(Position { x: 0.1, y: 0.1 });

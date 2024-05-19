@@ -31,7 +31,7 @@ fn main() {
     // writing the component value.
 
     world
-        .system_named::<()>(c"SetVelocitySP")
+        .system_named::<()>("SetVelocitySP")
         .with::<&PositionSP>()
         .set_inout_none()
         .write::<&mut VelocitySP>() // VelocitySP is written, but shouldn't be matched
@@ -41,7 +41,7 @@ fn main() {
 
     // This system reads VelocitySP, which causes the insertion of a sync point.
     world
-        .system_named::<(&mut PositionSP, &VelocitySP)>(c"Move")
+        .system_named::<(&mut PositionSP, &VelocitySP)>("Move")
         .each(|(p, v)| {
             p.x += v.x;
             p.y += v.y;
@@ -49,19 +49,19 @@ fn main() {
 
     // Print resulting PositionSP
     world
-        .system_named::<&PositionSP>(c"PrintPositionSP")
+        .system_named::<&PositionSP>("PrintPositionSP")
         .each_entity(|e, p| {
             println!("{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 
     // Create a few test entities for a PositionSP, VelocitySP query
     world
-        .entity_named(c"e1")
+        .entity_named("e1")
         .set(PositionSP { x: 10.0, y: 20.0 })
         .set(VelocitySP { x: 1.0, y: 2.0 });
 
     world
-        .entity_named(c"e2")
+        .entity_named("e2")
         .set(PositionSP { x: 10.0, y: 20.0 })
         .set(VelocitySP { x: 3.0, y: 4.0 });
 

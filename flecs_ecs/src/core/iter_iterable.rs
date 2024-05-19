@@ -1,4 +1,4 @@
-use std::ffi::{c_void, CStr};
+use std::ffi::{c_void};
 
 use crate::core::*;
 use crate::sys;
@@ -102,13 +102,15 @@ where
     ///
     /// * C++ API: `iter_iterable::set_var`
     #[doc(alias = "iter_iterable::set_var")]
-    pub fn set_var_rule(&mut self, name: &CStr, value: impl Into<Entity>) -> &mut Self {
+    pub fn set_var_rule(&mut self, name: &str, value: impl Into<Entity>) -> &mut Self {
+        let name = compact_str::format_compact!("{}\0", name);
+
         let qit = unsafe { &mut self.iter.priv_.iter.query };
-        let var_id = unsafe { sys::ecs_query_find_var(qit.query, name.as_ptr()) };
+        let var_id = unsafe { sys::ecs_query_find_var(qit.query, name.as_ptr() as *const _) };
         ecs_assert!(
             var_id != -1,
             FlecsErrorCode::InvalidParameter,
-            name.to_str().unwrap()
+            name.as_str()
         );
         unsafe { sys::ecs_iter_set_var(&mut self.iter, var_id, *value.into()) };
         self
@@ -125,13 +127,15 @@ where
     ///
     /// * C++ API: `iter_iterable::set_var`
     #[doc(alias = "iter_iterable::set_var")]
-    pub fn set_var_table_rule(&mut self, name: &CStr, table: impl IntoTableRange) -> &mut Self {
+    pub fn set_var_table_rule(&mut self, name: &str, table: impl IntoTableRange) -> &mut Self {
+        let name = compact_str::format_compact!("{}\0", name);
+
         let qit = unsafe { &mut self.iter.priv_.iter.query };
-        let var_id = unsafe { sys::ecs_query_find_var(qit.query, name.as_ptr()) };
+        let var_id = unsafe { sys::ecs_query_find_var(qit.query, name.as_ptr() as *const _) };
         ecs_assert!(
             var_id != -1,
             FlecsErrorCode::InvalidParameter,
-            name.to_str().unwrap()
+            name.as_str()
         );
         unsafe { sys::ecs_iter_set_var_as_range(&mut self.iter, var_id, &table.table_range_raw()) };
         self

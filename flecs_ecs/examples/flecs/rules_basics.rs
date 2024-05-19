@@ -11,20 +11,20 @@ struct Healthy;
 fn main() {
     let world = World::new();
 
-    let apples = world.entity_named(c"Apples").add::<Healthy>();
-    let salad = world.entity_named(c"Salad").add::<Healthy>();
-    let burgers = world.entity_named(c"Burgers");
-    let pizza = world.entity_named(c"Pizza");
-    let chocolate = world.entity_named(c"Chocolate");
+    let apples = world.entity_named("Apples").add::<Healthy>();
+    let salad = world.entity_named("Salad").add::<Healthy>();
+    let burgers = world.entity_named("Burgers");
+    let pizza = world.entity_named("Pizza");
+    let chocolate = world.entity_named("Chocolate");
 
     world
-        .entity_named(c"Bob")
+        .entity_named("Bob")
         .add_first::<Eats>(apples)
         .add_first::<Eats>(burgers)
         .add_first::<Eats>(pizza);
 
     world
-        .entity_named(c"Alice")
+        .entity_named("Alice")
         .add_first::<Eats>(salad)
         .add_first::<Eats>(chocolate)
         .add_first::<Eats>(apples);
@@ -47,14 +47,14 @@ fn main() {
         //
         // By replacing * with _Food, both terms are constrained to use the
         // same entity.
-        .with_first_name::<&Eats>(c"$food")
+        .with_first_name::<&Eats>("$food")
         .with::<&Healthy>()
-        .set_src_name(c"$food")
+        .set_src_name("$food")
         .build();
 
     // Lookup the index of the variable. This will let us quickly lookup its
     // value while we're iterating.
-    let food_var = rule.find_var(c"food");
+    let food_var = rule.find_var("food");
 
     // Iterate the rule
     rule.each_iter(|it, index, ()| {

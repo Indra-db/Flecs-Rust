@@ -15,6 +15,7 @@ workspace = true
 [dependencies]
 flecs_ecs_derive = { path = "../flecs_ecs_derive" }
 flecs_ecs_sys = { path = "../flecs_ecs_sys" }
+compact_str = "0.7.1"
 
 [dev-dependencies]
 criterion = "0.5.1"

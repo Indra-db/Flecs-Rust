@@ -188,14 +188,16 @@ where
     ///
     /// * C++ API: `iter::get_var`
     #[doc(alias = "iter::get_var")]
-    pub fn get_var_by_name(&self, name: &CStr) -> EntityView<'a> {
+    pub fn get_var_by_name(&self, name: &str) -> EntityView<'a> {
+        let name = compact_str::format_compact!("{}\0", name);
+
         let world = self.world();
         let rule_query = unsafe { self.iter.priv_.iter.query.query };
-        let var_id = unsafe { sys::ecs_query_find_var(rule_query, name.as_ptr()) };
+        let var_id = unsafe { sys::ecs_query_find_var(rule_query, name.as_ptr() as *const _) };
         ecs_assert!(
             var_id != -1,
             FlecsErrorCode::InvalidParameter,
-            name.to_str().unwrap()
+            name.as_str()
         );
         EntityView::new_from(world, unsafe {
             sys::ecs_iter_get_var(self.iter as *const _ as *mut _, var_id)

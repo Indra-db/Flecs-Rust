@@ -1,5 +1,5 @@
 use std::{
-    ffi::{CStr, CString},
+    ffi::{CString},
     os::raw::c_char,
 };
 
@@ -416,20 +416,19 @@ pub(crate) unsafe fn print_c_string(c_string: *const c_char) {
 
 /// Strips the given prefix from the given C string, returning a new C string with the prefix removed.
 /// If the given C string does not start with the given prefix, returns None.
-pub(crate) fn strip_prefix_cstr_raw<'a>(cstr: &'a CStr, prefix: &CStr) -> Option<&'a CStr> {
-    let cstr_bytes = cstr.to_bytes();
-    let prefix_bytes = prefix.to_bytes();
+pub(crate) fn strip_prefix_str_raw<'a>(str: &'a str, prefix: &str) -> Option<&'a str> {
+    let str_bytes = str.as_bytes();
+    let prefix_bytes = prefix.as_bytes();
 
-    if cstr_bytes.starts_with(prefix_bytes) {
+    if str_bytes.starts_with(prefix_bytes) {
         // SAFETY: We are slicing `cstr_bytes` which is guaranteed to be a valid
         // C string since it comes from a `&CStr`. We also check that it starts
         // with `prefix_bytes`, and we only slice off `prefix_bytes`, so the rest
         // remains a valid C string.
-        unsafe {
-            Some(CStr::from_bytes_with_nul_unchecked(
-                &cstr_bytes[prefix_bytes.len()..],
-            ))
-        }
+        Some(
+            std::str::from_utf8(&str_bytes[prefix_bytes.len()..])
+                .expect("error: pass valid utf strings"),
+        )
     } else {
         None
     }

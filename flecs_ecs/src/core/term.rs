@@ -1,7 +1,7 @@
-use std::ffi::CStr;
-
 use crate::core::*;
 use crate::sys;
+
+use self::internals::StringToFree;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 pub enum TermRefMode {
@@ -62,12 +62,18 @@ pub mod internals {
     use crate::core::*;
     use crate::sys;
 
+    pub(crate) struct StringToFree {
+        pub(crate) ptr: *mut i8,
+        pub(crate) len: usize,
+        pub(crate) capacity: usize,
+    }
     #[derive(Default)]
     pub struct TermBuilder {
         pub(crate) expr_count: i32,
         pub(crate) current_term_index: i32,
         pub(crate) next_term_index: i32,
         pub(crate) term_ref_mode: TermRefMode,
+        pub(crate) str_ptrs_to_free: Vec<StringToFree>,
     }
 
     #[doc(hidden)]
@@ -383,10 +389,17 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::name`
     #[doc(alias = "term_builder_i::name")]
-    fn name(&mut self, name: &'a CStr) -> &mut Self {
+    fn name(&mut self, name: &'a str) -> &mut Self {
+        let name = format!("{}\0", name);
         let term_ref = self.term_ref_mut();
         term_ref.name = name.as_ptr() as *mut i8;
         term_ref.id |= flecs::IsEntity::ID;
+        self.term_builder_mut().str_ptrs_to_free.push(StringToFree {
+            ptr: name.as_ptr() as *mut i8,
+            len: name.len(),
+            capacity: name.capacity(),
+        });
+        std::mem::forget(name);
         self
     }
 
@@ -400,10 +413,18 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::var`
     #[doc(alias = "term_builder_i::var")]
-    fn set_var(&mut self, var_name: &'a CStr) -> &mut Self {
+    fn set_var(&mut self, var_name: &'a str) -> &mut Self {
+        let var_name = format!("{}\0", var_name);
+
         let term_ref = self.term_ref_mut();
         term_ref.id |= flecs::IsVariable::ID;
         term_ref.name = var_name.as_ptr() as *mut i8;
+        self.term_builder_mut().str_ptrs_to_free.push(StringToFree {
+            ptr: var_name.as_ptr() as *mut i8,
+            len: var_name.len(),
+            capacity: var_name.capacity(),
+        });
+        std::mem::forget(var_name);
         self
     }
 
@@ -497,7 +518,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
-    fn set_src_name(&mut self, name: &'a CStr) -> &mut Self {
+    fn set_src_name(&mut self, name: &'a str) -> &mut Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
@@ -505,9 +526,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         );
 
         self.src();
-        if let Some(stripped_name) =
-            strip_prefix_cstr_raw(name, CStr::from_bytes_with_nul(b"$\0").unwrap())
-        {
+        if let Some(stripped_name) = strip_prefix_str_raw(name, "$") {
             self.set_var(stripped_name)
         } else {
             self.name(name)
@@ -553,7 +572,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
-    fn set_first_name(&mut self, name: &'a CStr) -> &mut Self {
+    fn set_first_name(&mut self, name: &'a str) -> &mut Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
@@ -561,9 +580,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         );
 
         self.first();
-        if let Some(stripped_name) =
-            strip_prefix_cstr_raw(name, CStr::from_bytes_with_nul(b"$\0").unwrap())
-        {
+        if let Some(stripped_name) = strip_prefix_str_raw(name, "$") {
             self.set_var(stripped_name)
         } else {
             self.name(name)
@@ -609,7 +626,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
-    fn set_second_name(&mut self, name: &'a CStr) -> &mut Self {
+    fn set_second_name(&mut self, name: &'a str) -> &mut Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
@@ -617,9 +634,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         );
 
         self.second();
-        if let Some(stripped_name) =
-            strip_prefix_cstr_raw(name, CStr::from_bytes_with_nul(b"$\0").unwrap())
-        {
+        if let Some(stripped_name) = strip_prefix_str_raw(name, "$") {
             self.set_var(stripped_name)
         } else {
             self.name(name)

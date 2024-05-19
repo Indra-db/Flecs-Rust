@@ -11,9 +11,9 @@ pub struct Position {
 fn main() {
     let world = World::new();
     // Create a few test entities for a Position query
-    world.entity_named(c"e1").set(Position { x: 10.0, y: 20.0 });
+    world.entity_named("e1").set(Position { x: 10.0, y: 20.0 });
 
-    world.entity_named(c"e2").set(Position { x: 20.0, y: 30.0 });
+    world.entity_named("e2").set(Position { x: 20.0, y: 30.0 });
 
     // Create a simple query for component Position
     let query = world.new_query::<&Position>();

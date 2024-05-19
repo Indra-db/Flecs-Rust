@@ -25,10 +25,10 @@ struct Likes;
 fn main() {
     let world = World::new();
 
-    let bob = world.entity_named(c"Bob");
-    let alice = world.entity_named(c"Alice");
-    let john = world.entity_named(c"John");
-    let jane = world.entity_named(c"Jane");
+    let bob = world.entity_named("Bob");
+    let alice = world.entity_named("Alice");
+    let john = world.entity_named("John");
+    let jane = world.entity_named("Jane");
 
     bob.add_first::<Likes>(alice);
     alice.add_first::<Likes>(bob);
@@ -49,14 +49,14 @@ fn main() {
 
     let friends = world
         .query::<()>()
-        .with_first_name::<&Likes>(c"$Y")
-        .set_src_name(c"$X")
-        .with_first_name::<&Likes>(c"$X")
-        .set_src_name(c"$Y")
+        .with_first_name::<&Likes>("$Y")
+        .set_src_name("$X")
+        .with_first_name::<&Likes>("$X")
+        .set_src_name("$Y")
         .build();
 
-    let x_var = friends.find_var(c"X").unwrap();
-    let y_var = friends.find_var(c"Y").unwrap();
+    let x_var = friends.find_var("X").unwrap();
+    let y_var = friends.find_var("Y").unwrap();
 
     // Check a few facts
 

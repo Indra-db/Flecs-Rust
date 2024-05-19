@@ -1,7 +1,7 @@
 use std::fmt::Display;
 use std::ops::{BitAnd, BitOr};
 use std::sync::OnceLock;
-use std::{ffi::CStr, ops::Deref};
+use std::{ops::Deref};
 
 use crate::core::*;
 use crate::sys;
@@ -79,7 +79,7 @@ impl ComponentId for Entity {
     }
 
     #[inline]
-    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &CStr) -> EntityT {
+    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
         // already registered by flecs in World
         unsafe { sys::FLECS_IDecs_entity_tID_ }
     }

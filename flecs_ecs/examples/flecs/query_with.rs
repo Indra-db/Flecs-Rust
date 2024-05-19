@@ -23,17 +23,17 @@ fn main() {
 
     // Create a few test entities for the Position, Npc query
     world
-        .entity_named(c"e1")
+        .entity_named("e1")
         .set(Position { x: 10.0, y: 20.0 })
         .add::<Npc>();
 
     world
-        .entity_named(c"e2")
+        .entity_named("e2")
         .set(Position { x: 10.0, y: 20.0 })
         .add::<Npc>();
 
     // This entity will not match as it does not have Position, Npc
-    world.entity_named(c"e3").set(Position { x: 10.0, y: 20.0 });
+    world.entity_named("e3").set(Position { x: 10.0, y: 20.0 });
 
     // Note how the Npc tag is not part of the each signature
     query.each_entity(|entity, pos| {

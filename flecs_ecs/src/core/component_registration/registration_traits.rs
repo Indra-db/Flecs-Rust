@@ -61,7 +61,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     }
 
     /// attempts to register the component with name with the world. If it's already registered, it does nothing.
-    fn register_explicit_named<'a>(world: impl IntoWorld<'a>, name: &CStr) -> EntityT {
+    fn register_explicit_named<'a>(world: impl IntoWorld<'a>, name: &str) -> EntityT {
         try_register_component_named::<Self::UnderlyingType>(world, name)
     }
 

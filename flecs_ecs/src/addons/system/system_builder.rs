@@ -78,7 +78,9 @@ where
     }
 
     /// Create a new system builder with a name
-    pub fn new_named(world: &'a World, name: &CStr) -> Self {
+    pub fn new_named(world: &'a World, name: &str) -> Self {
+        let name = compact_str::format_compact!("{}\0", name);
+
         let mut obj = Self {
             desc: Default::default(),
             term_builder: TermBuilder::default(),
@@ -88,7 +90,7 @@ where
         };
 
         let entity_desc: sys::ecs_entity_desc_t = sys::ecs_entity_desc_t {
-            name: name.as_ptr(),
+            name: name.as_ptr() as *const _,
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
@@ -336,7 +338,17 @@ where
     /// * C++ API: `node_builder::build`
     #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
-        System::new(self.world(), self.desc, self.is_instanced)
+        let system = System::new(self.world(), self.desc, self.is_instanced);
+        for string_parts in self.term_builder.str_ptrs_to_free.iter() {
+            unsafe {
+                String::from_raw_parts(
+                    string_parts.ptr as *mut u8,
+                    string_parts.len,
+                    string_parts.capacity,
+                );
+            }
+        }
+        system
     }
 }
 

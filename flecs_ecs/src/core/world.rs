@@ -1,6 +1,7 @@
 //! World operations.
 
-use std::{ffi::CStr, os::raw::c_void, ptr::NonNull};
+use std::ffi::CStr;
+use std::{os::raw::c_void, ptr::NonNull};
 
 #[cfg(feature = "flecs_app")]
 use crate::addons::app::App;
@@ -808,7 +809,7 @@ impl World {
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
     #[inline(always)]
-    pub fn lookup_recursively(&self, name: &CStr) -> EntityView {
+    pub fn lookup_recursively(&self, name: &str) -> EntityView {
         self.try_lookup_recursive(name)
             .expect("Entity not found, when unsure, use try_lookup_recursive")
     }
@@ -833,7 +834,7 @@ impl World {
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
     #[inline(always)]
-    pub fn lookup(&self, name: &CStr) -> EntityView {
+    pub fn lookup(&self, name: &str) -> EntityView {
         self.try_lookup(name)
             .expect("Entity not found, when unsure, use try_lookup")
     }
@@ -853,12 +854,14 @@ impl World {
     ///
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
-    fn try_lookup_impl(&self, name: &CStr, recursive: bool) -> Option<EntityView> {
+    fn try_lookup_impl(&self, name: &str, recursive: bool) -> Option<EntityView> {
+        let name = compact_str::format_compact!("{}\0", name);
+
         let entity_id = unsafe {
             sys::ecs_lookup_path_w_sep(
                 self.raw_world.as_ptr(),
                 0,
-                name.as_ptr(),
+                name.as_ptr() as *const _,
                 SEPARATOR.as_ptr(),
                 SEPARATOR.as_ptr(),
                 recursive,
@@ -888,7 +891,7 @@ impl World {
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
     #[inline(always)]
-    pub fn try_lookup_recursive(&self, name: &CStr) -> Option<EntityView> {
+    pub fn try_lookup_recursive(&self, name: &str) -> Option<EntityView> {
         self.try_lookup_impl(name, true)
     }
 
@@ -907,7 +910,7 @@ impl World {
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
     #[inline(always)]
-    pub fn try_lookup(&self, name: &CStr) -> Option<EntityView> {
+    pub fn try_lookup(&self, name: &str) -> Option<EntityView> {
         self.try_lookup_impl(name, false)
     }
 
@@ -1843,7 +1846,9 @@ impl World {
     /// * C++ API: `world::use`
     #[doc(alias = "world::use")]
     #[inline(always)]
-    pub fn set_alias_component<T: ComponentId>(&self, alias: &CStr) -> EntityView {
+    pub fn set_alias_component<T: ComponentId>(&self, alias: &str) -> EntityView {
+        let alias = compact_str::format_compact!("{}\0", alias);
+
         let id = T::get_id(self);
         if alias.is_empty() {
             unsafe {
@@ -1854,7 +1859,7 @@ impl World {
                 );
             };
         } else {
-            unsafe { sys::ecs_set_alias(self.raw_world.as_ptr(), id, alias.as_ptr()) };
+            unsafe { sys::ecs_set_alias(self.raw_world.as_ptr(), id, alias.as_ptr() as *const _) };
         }
         EntityView::new_from(self, id)
     }
@@ -1875,19 +1880,22 @@ impl World {
     /// * C++ API: `world::use`
     #[doc(alias = "world::use")]
     #[inline(always)]
-    pub fn set_alias_entity_by_name(&self, name: &CStr, alias: &CStr) -> EntityView {
+    pub fn set_alias_entity_by_name(&self, name: &str, alias: &str) -> EntityView {
+        let name = compact_str::format_compact!("{}\0", name);
+        let alias = compact_str::format_compact!("{}\0", alias);
+
         let id = unsafe {
             sys::ecs_lookup_path_w_sep(
                 self.raw_world.as_ptr(),
                 0,
-                name.as_ptr(),
+                name.as_ptr() as *const _,
                 SEPARATOR.as_ptr(),
                 SEPARATOR.as_ptr(),
                 true,
             )
         };
         ecs_assert!(id != 0, FlecsErrorCode::InvalidParameter);
-        unsafe { sys::ecs_set_alias(self.raw_world.as_ptr(), id, alias.as_ptr()) };
+        unsafe { sys::ecs_set_alias(self.raw_world.as_ptr(), id, alias.as_ptr() as *const _) };
         EntityView::new_from(self, id)
     }
 
@@ -1903,7 +1911,9 @@ impl World {
     /// * C++ API: `world::use`
     #[doc(alias = "world::use")]
     #[inline(always)]
-    pub fn set_alias_entity(&self, entity: impl Into<Entity>, alias: &CStr) {
+    pub fn set_alias_entity(&self, entity: impl Into<Entity>, alias: &str) {
+        let alias = compact_str::format_compact!("{}\0", alias);
+
         let entity = *entity.into();
         if alias.is_empty() {
             unsafe {
@@ -1914,7 +1924,9 @@ impl World {
                 );
             };
         } else {
-            unsafe { sys::ecs_set_alias(self.raw_world.as_ptr(), entity, alias.as_ptr()) };
+            unsafe {
+                sys::ecs_set_alias(self.raw_world.as_ptr(), entity, alias.as_ptr() as *const _);
+            };
         }
     }
 
@@ -2156,7 +2168,7 @@ impl World {
     ///
     /// * C++ API: `world::scope`
     #[doc(alias = "world::scope")]
-    pub fn scope_name(&self, name: &CStr, f: impl FnMut(&World)) {
+    pub fn scope_name(&self, name: &str, f: impl FnMut(&World)) {
         self.scope_id(EntityView::new_named(self, name).id, f);
     }
 
@@ -2727,7 +2739,7 @@ impl World {
     ///
     /// * C++ API: `world::entity`
     #[doc(alias = "world::entity")]
-    pub fn entity_from_named<'a, T: ComponentId>(&'a self, name: &CStr) -> EntityView<'a> {
+    pub fn entity_from_named<'a, T: ComponentId>(&'a self, name: &str) -> EntityView<'a> {
         EntityView::new_from(self, T::register_explicit_named(self, name))
     }
 
@@ -2745,7 +2757,7 @@ impl World {
     }
 
     /// Create an entity that's associated with a name.
-    /// The name must be a valid C str.
+    /// The name does an extra allocation if it's bigger than 24 bytes. To avoid this, use `entity_named_cstr`.
     ///
     /// Named entities can be looked up with the lookup functions. Entity names
     /// may be scoped, where each element in the name is separated by "::".
@@ -2759,7 +2771,7 @@ impl World {
     ///
     /// let world = World::new();
     ///
-    /// let entity = world.entity_named(c"Foo");
+    /// let entity = world.entity_named("Foo");
     /// assert_eq!(entity.get_name(), Some("Foo"));
     ///
     /// ```
@@ -2768,8 +2780,36 @@ impl World {
     ///
     /// * C++ API: `world::entity`
     #[doc(alias = "world::entity")]
-    pub fn entity_named(&self, name: &CStr) -> EntityView {
+    pub fn entity_named(&self, name: &str) -> EntityView {
         EntityView::new_named(self, name)
+    }
+
+    /// Create an entity that's associated with a name.
+    /// The name must be a valid C str. No extra allocation is done.
+    ///
+    /// Named entities can be looked up with the lookup functions. Entity names
+    /// may be scoped, where each element in the name is separated by "::".
+    /// For example: "`Foo::Bar`". If parts of the hierarchy in the scoped name do
+    /// not yet exist, they will be automatically created.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// let entity = world.entity_named("Foo");
+    /// assert_eq!(entity.get_name(), Some("Foo"));
+    ///
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::entity`
+    #[doc(alias = "world::entity")]
+    pub fn entity_named_cstr(&self, name: &CStr) -> EntityView {
+        EntityView::new_named_cstr(self, name)
     }
 
     /// Create a new entity.
@@ -2848,7 +2888,7 @@ impl World {
     ///
     /// * C++ API: `world::prefab`
     #[doc(alias = "world::prefab")]
-    pub fn prefab_named<'a>(&'a self, name: &CStr) -> EntityView<'a> {
+    pub fn prefab_named<'a>(&'a self, name: &str) -> EntityView<'a> {
         let result = EntityView::new_named(self, name);
         result.add_id(ECS_PREFAB);
         result
@@ -2895,7 +2935,7 @@ impl World {
     #[doc(alias = "world::prefab")]
     pub fn prefab_type_named<'a, T: ComponentId + EmptyComponent>(
         &'a self,
-        name: &CStr,
+        name: &str,
     ) -> EntityView<'a> {
         let result = Component::<T>::new_named(self, name).entity;
         result.add_id(ECS_PREFAB);
@@ -3057,7 +3097,7 @@ impl World {
     #[doc(alias = "world::component")]
     pub fn component_named<'a, T: ComponentId>(
         &'a self,
-        name: &CStr,
+        name: &str,
     ) -> Component<'a, T::UnderlyingType> {
         Component::<T::UnderlyingType>::new_named(self, name)
     }
@@ -3257,7 +3297,7 @@ impl World {
     #[doc(alias = "world::observer")]
     pub fn observer_named<'a, Event: ComponentId, Components>(
         &'a self,
-        name: &CStr,
+        name: &str,
     ) -> ObserverBuilder<'a, Event, Components>
     where
         Components: Iterable,
@@ -3303,7 +3343,7 @@ impl World {
     ///
     /// * C++ API: `world::query`
     #[doc(alias = "world::query")]
-    pub fn new_query_named<Components>(&self, name: &CStr) -> Query<Components>
+    pub fn new_query_named<Components>(&self, name: &str) -> Query<Components>
     where
         Components: Iterable,
     {
@@ -3349,7 +3389,7 @@ impl World {
     ///
     /// * C++ API: `world::query_builder`
     #[doc(alias = "world::query_builder")]
-    pub fn query_named<'a, Components>(&'a self, name: &CStr) -> QueryBuilder<'a, Components>
+    pub fn query_named<'a, Components>(&'a self, name: &str) -> QueryBuilder<'a, Components>
     where
         Components: Iterable,
     {
@@ -3491,7 +3531,7 @@ impl World {
     ///
     /// * C++ API: `world::system_builder`
     #[doc(alias = "world::system_builder")]
-    pub fn system_named<'a, Components>(&'a self, name: &CStr) -> SystemBuilder<'a, Components>
+    pub fn system_named<'a, Components>(&'a self, name: &str) -> SystemBuilder<'a, Components>
     where
         Components: Iterable,
     {
@@ -3549,7 +3589,7 @@ impl World {
     /// * C++ API: `world::pipeline`
     #[doc(alias = "world::pipeline")]
     #[inline(always)]
-    pub fn pipeline_named<'a>(&'a self, name: &CStr) -> PipelineBuilder<'a, ()> {
+    pub fn pipeline_named<'a>(&'a self, name: &str) -> PipelineBuilder<'a, ()> {
         PipelineBuilder::<()>::new_named(self, name)
     }
 

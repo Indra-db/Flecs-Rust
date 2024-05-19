@@ -42,75 +42,75 @@ fn main() {
     world.component::<LocatedIn>().add::<flecs::Transitive>();
 
     // Populate the store with locations
-    let earth = world.entity_named(c"Earth").add::<Planet>();
+    let earth = world.entity_named("Earth").add::<Planet>();
 
     // Continents
     let north_america = world
-        .entity_named(c"NorthAmerica")
+        .entity_named("NorthAmerica")
         .add::<Continent>()
         .add_first::<LocatedIn>(earth);
 
     let europe = world
-        .entity_named(c"Europe")
+        .entity_named("Europe")
         .add::<Continent>()
         .add_first::<LocatedIn>(earth);
 
     // Countries
     let united_states = world
-        .entity_named(c"UnitedStates")
+        .entity_named("UnitedStates")
         .add::<Country>()
         .add_first::<LocatedIn>(north_america);
 
     let netherlands = world
-        .entity_named(c"Netherlands")
+        .entity_named("Netherlands")
         .add::<Country>()
         .add_first::<LocatedIn>(europe);
 
     // States
     let california = world
-        .entity_named(c"California")
+        .entity_named("California")
         .add::<State>()
         .add_first::<LocatedIn>(united_states);
 
     let washington = world
-        .entity_named(c"Washington")
+        .entity_named("Washington")
         .add::<State>()
         .add_first::<LocatedIn>(united_states);
 
     let noord_holland = world
-        .entity_named(c"NoordHolland")
+        .entity_named("NoordHolland")
         .add::<State>()
         .add_first::<LocatedIn>(netherlands);
 
     // Cities
     let san_francisco = world
-        .entity_named(c"SanFrancisco")
+        .entity_named("SanFrancisco")
         .add::<City>()
         .add_first::<LocatedIn>(california);
 
     let seattle = world
-        .entity_named(c"Seattle")
+        .entity_named("Seattle")
         .add::<City>()
         .add_first::<LocatedIn>(washington);
 
     let amsterdam = world
-        .entity_named(c"Amsterdam")
+        .entity_named("Amsterdam")
         .add::<City>()
         .add_first::<LocatedIn>(noord_holland);
 
     // Inhabitants
     world
-        .entity_named(c"Bob")
+        .entity_named("Bob")
         .add::<Person>()
         .add_first::<LocatedIn>(san_francisco);
 
     world
-        .entity_named(c"Alice")
+        .entity_named("Alice")
         .add::<Person>()
         .add_first::<LocatedIn>(seattle);
 
     world
-        .entity_named(c"Job")
+        .entity_named("Job")
         .add::<Person>()
         .add_first::<LocatedIn>(amsterdam);
 
@@ -125,14 +125,14 @@ fn main() {
     let rule = world
         .query::<()>()
         .with::<&Person>()
-        .with_first_name::<&LocatedIn>(c"$Location")
+        .with_first_name::<&LocatedIn>("$Location")
         .with::<&Country>()
-        .set_src_name(c"$Location")
+        .set_src_name("$Location")
         .build();
 
     // Lookup the index of the variable. This will let us quickly lookup its
     // value while we're iterating.
-    let location_var = rule.find_var(c"Location").unwrap();
+    let location_var = rule.find_var("Location").unwrap();
 
     // Iterate the rule
     rule.iterable().each_iter(|it, index, _| {

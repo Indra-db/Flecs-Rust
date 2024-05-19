@@ -42,17 +42,17 @@ fn main() {
     world.component::<BuilderX>().is_a::<Unit>();
 
     // Create a few units
-    world.entity_named(c"warrior_1").add::<Warrior>();
-    world.entity_named(c"warrior_2").add::<Warrior>();
+    world.entity_named("warrior_1").add::<Warrior>();
+    world.entity_named("warrior_2").add::<Warrior>();
 
-    world.entity_named(c"marksman_1").add::<Marksman>();
-    world.entity_named(c"marksman_2").add::<Marksman>();
+    world.entity_named("marksman_1").add::<Marksman>();
+    world.entity_named("marksman_2").add::<Marksman>();
 
-    world.entity_named(c"wizard_1").add::<Wizard>();
-    world.entity_named(c"wizard_2").add::<Wizard>();
+    world.entity_named("wizard_1").add::<Wizard>();
+    world.entity_named("wizard_2").add::<Wizard>();
 
-    world.entity_named(c"builder_1").add::<BuilderX>();
-    world.entity_named(c"builder_2").add::<BuilderX>();
+    world.entity_named("builder_1").add::<BuilderX>();
+    world.entity_named("builder_2").add::<BuilderX>();
 
     // Create a rule to find all ranged units
     let r = world.new_query::<&RangedUnit>();

@@ -102,7 +102,30 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::entity`
     #[doc(alias = "entity::entity")]
-    pub(crate) fn new_named(world: impl IntoWorld<'a>, name: &CStr) -> Self {
+    pub(crate) fn new_named(world: impl IntoWorld<'a>, name: &str) -> Self {
+        let name = compact_str::format_compact!("{}\0", name);
+
+        let desc = sys::ecs_entity_desc_t {
+            name: name.as_ptr() as *const _,
+            sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
+            _canary: 0,
+            id: 0,
+            parent: 0,
+            symbol: std::ptr::null(),
+            use_low_id: false,
+            add: std::ptr::null(),
+            add_expr: std::ptr::null(),
+            set: std::ptr::null(),
+        };
+        let id = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &desc) };
+        Self {
+            world: world.world(),
+            id: id.into(),
+        }
+    }
+
+    pub(crate) fn new_named_cstr(world: impl IntoWorld<'a>, name: &CStr) -> Self {
         let desc = sys::ecs_entity_desc_t {
             name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
@@ -257,7 +280,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::path`
     #[doc(alias = "entity_view::path")]
-    pub fn path_w_sep(self, sep: &CStr, init_sep: &CStr) -> Option<String> {
+    pub fn path_w_sep(self, sep: &str, init_sep: &str) -> Option<String> {
         self.path_from_id_w_sep(0, sep, init_sep)
     }
 
@@ -283,16 +306,37 @@ impl<'a> EntityView<'a> {
     pub fn path_from_id_w_sep(
         &self,
         parent: impl Into<Entity>,
-        sep: &CStr,
-        init_sep: &CStr,
+        sep: &str,
+        init_sep: &str,
     ) -> Option<String> {
+        let sep = compact_str::format_compact!("{}\0", sep);
+        let init_sep = compact_str::format_compact!("{}\0", init_sep);
+
         NonNull::new(unsafe {
             sys::ecs_get_path_w_sep(
                 self.world.world_ptr_mut(),
                 *parent.into(),
                 *self.id,
-                sep.as_ptr(),
-                init_sep.as_ptr(),
+                sep.as_ptr() as *const _,
+                init_sep.as_ptr() as *const _,
+            )
+        })
+        .map(|s| unsafe {
+            let len = CStr::from_ptr(s.as_ptr()).to_bytes().len();
+            // Convert the C string to a Rust String without any new heap allocation.
+            // The String will de-allocate the C string when it goes out of scope.
+            String::from_utf8_unchecked(Vec::from_raw_parts(s.as_ptr() as *mut u8, len, len))
+        })
+    }
+
+    fn path_from_id_default_sep(&self, parent: impl Into<Entity>) -> Option<String> {
+        NonNull::new(unsafe {
+            sys::ecs_get_path_w_sep(
+                self.world.world_ptr_mut(),
+                *parent.into(),
+                *self.id,
+                SEPARATOR.as_ptr(),
+                SEPARATOR.as_ptr(),
             )
         })
         .map(|s| unsafe {
@@ -338,10 +382,10 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
     pub fn path_from<T: ComponentId>(self) -> Option<String> {
-        self.path_from_id_w_sep(T::get_id(self.world), SEPARATOR, SEPARATOR)
+        self.path_from_id_default_sep(T::get_id(self.world))
     }
 
-    pub fn path_from_w_sep<T: ComponentId>(&self, sep: &CStr, init_sep: &CStr) -> Option<String> {
+    pub fn path_from_w_sep<T: ComponentId>(&self, sep: &str, init_sep: &str) -> Option<String> {
         self.path_from_id_w_sep(T::get_id(self.world), sep, init_sep)
     }
 
@@ -1409,7 +1453,9 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::lookup`
     #[doc(alias = "entity_view::lookup")]
     #[inline(always)]
-    fn try_lookup_impl(self, name: &CStr, recursively: bool) -> Option<EntityView<'a>> {
+    fn try_lookup_impl(self, name: &str, recursively: bool) -> Option<EntityView<'a>> {
+        let name = compact_str::format_compact!("{}\0", name);
+
         ecs_assert!(
             self.id != 0,
             FlecsErrorCode::InvalidParameter,
@@ -1419,7 +1465,7 @@ impl<'a> EntityView<'a> {
             sys::ecs_lookup_path_w_sep(
                 self.world.world_ptr_mut(),
                 *self.id,
-                name.as_ptr(),
+                name.as_ptr() as *const _,
                 SEPARATOR.as_ptr(),
                 SEPARATOR.as_ptr(),
                 recursively,
@@ -1453,7 +1499,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::lookup`
     #[doc(alias = "entity_view::lookup")]
     #[inline(always)]
-    pub fn try_lookup_recursive(&self, name: &CStr) -> Option<EntityView> {
+    pub fn try_lookup_recursive(&self, name: &str) -> Option<EntityView> {
         self.try_lookup_impl(name, true)
     }
 
@@ -1475,7 +1521,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::lookup`
     #[doc(alias = "entity_view::lookup")]
     #[inline(always)]
-    pub fn try_lookup(&self, name: &CStr) -> Option<EntityView> {
+    pub fn try_lookup(&self, name: &str) -> Option<EntityView> {
         self.try_lookup_impl(name, false)
     }
 
@@ -1504,7 +1550,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::lookup`
     #[doc(alias = "entity_view::lookup")]
     #[inline(always)]
-    pub fn lookup_recursively(&self, name: &CStr) -> EntityView {
+    pub fn lookup_recursively(&self, name: &str) -> EntityView {
         self.try_lookup_recursive(name)
             .expect("Entity not found, when unsure, use try_lookup_recursive")
     }
@@ -1532,7 +1578,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::lookup`
     #[doc(alias = "entity_view::lookup")]
     #[inline(always)]
-    pub fn lookup(&self, name: &CStr) -> EntityView {
+    pub fn lookup(&self, name: &str) -> EntityView {
         self.try_lookup(name)
             .expect("Entity not found, when unsure, use try_lookup")
     }

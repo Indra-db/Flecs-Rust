@@ -32,7 +32,7 @@ fn main() {
 
     // Basic move system.
     world
-        .system_named::<(&mut Position, &Velocity)>(c"Move")
+        .system_named::<(&mut Position, &Velocity)>("Move")
         .each(|(p, v)| {
             p.x += v.x;
             p.y += v.y;
@@ -42,7 +42,7 @@ fn main() {
     // component could be written by the system. Position itself is added as
     // const, since inside the system we're only reading it.
     world
-        .system_named::<&Position>(c"DeleteEntity")
+        .system_named::<&Position>("DeleteEntity")
         .write::<&flecs::Wildcard>()
         .each_entity(|e, p| {
             if p.x >= 3.0 {
@@ -54,19 +54,19 @@ fn main() {
     // Print resulting Position. Note that this system will never print entities
     // that have been deleted by the previous system.
     world
-        .system_named::<&Position>(c"PrintPosition")
+        .system_named::<&Position>("PrintPosition")
         .each_entity(|e, p| {
             println!("{}: {{ {}, {} }}", e.name(), p.x, p.y);
         });
 
     // Create a few test entities for a Position, Velocity query
     world
-        .entity_named(c"e1")
+        .entity_named("e1")
         .set(Position { x: 0.0, y: 0.0 })
         .set(Velocity { x: 1.0, y: 2.0 });
 
     world
-        .entity_named(c"e2")
+        .entity_named("e2")
         .set(Position { x: 1.0, y: 2.0 })
         .set(Velocity { x: 1.0, y: 2.0 });
 

@@ -29,28 +29,28 @@ fn main() {
 
     // Create a Wheel prefab, make sure each instantiated wheel has a private
     // copy of the TirePressure component.
-    let wheel = world.prefab_named(c"Wheel");
+    let wheel = world.prefab_named("Wheel");
     wheel.set_auto_override(TirePressure { value: 32.0 });
 
     // Create a Car prefab with four wheels. Note how we're using the scope
     // method, which has the same effect as adding the (ChildOf, Car) pair.
-    let car = world.prefab_named(c"Car");
+    let car = world.prefab_named("Car");
     car.run_in_scope(|| {
-        world.prefab_named(c"FrontLeft").is_a_id(wheel);
+        world.prefab_named("FrontLeft").is_a_id(wheel);
 
-        world.prefab_named(c"FrontRight").is_a_id(wheel);
+        world.prefab_named("FrontRight").is_a_id(wheel);
 
-        world.prefab_named(c"BackLeft").is_a_id(wheel);
+        world.prefab_named("BackLeft").is_a_id(wheel);
 
-        world.prefab_named(c"BackRight").is_a_id(wheel);
+        world.prefab_named("BackRight").is_a_id(wheel);
     });
 
     // Create a prefab instance.
-    let inst_car = world.entity_named(c"my_car");
+    let inst_car = world.entity_named("my_car");
     inst_car.is_a_id(car);
 
     // Lookup one of the wheels
-    if let Some(inst) = inst_car.try_lookup_recursive(c"FrontLeft") {
+    if let Some(inst) = inst_car.try_lookup_recursive("FrontLeft") {
         // The type shows that the child has a private copy of the TirePressure
         // component, and an IsA relationship to the Wheel prefab.
         println!("{:?}", inst.archetype());

@@ -2,10 +2,7 @@
 //! Observers are systems that react to events.
 //! Observers let applications register callbacks for ECS events.
 
-use std::{
-    default,
-    ffi::{c_void, CStr},
-};
+use std::{default, ffi::c_void};
 
 use crate::core::internals::*;
 use crate::core::private::internal_ReactorAPI;
@@ -65,7 +62,9 @@ impl<'a, P: ComponentId, T: Iterable> ObserverBuilder<'a, P, T> {
     ///
     /// * C++ API: `node_builder::node_builder`
     #[doc(alias = "node_builder::node_builder")]
-    pub fn new_named(world: impl IntoWorld<'a>, name: &CStr) -> Self {
+    pub fn new_named(world: impl IntoWorld<'a>, name: &str) -> Self {
+        let name = compact_str::format_compact!("{}\0", name);
+
         let desc = Default::default();
         let mut obj = Self {
             desc,
@@ -76,7 +75,7 @@ impl<'a, P: ComponentId, T: Iterable> ObserverBuilder<'a, P, T> {
             _phantom: std::marker::PhantomData,
         };
         let entity_desc: sys::ecs_entity_desc_t = sys::ecs_entity_desc_t {
-            name: name.as_ptr(),
+            name: name.as_ptr() as *const _,
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..default::Default::default()
@@ -242,7 +241,17 @@ where
     /// * C++ API: `node_builder::build`
     #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
-        Observer::new(self.world(), self.desc, self.is_instanced)
+        let observer = Observer::new(self.world(), self.desc, self.is_instanced);
+        for string_parts in self.term_builder.str_ptrs_to_free.iter() {
+            unsafe {
+                String::from_raw_parts(
+                    string_parts.ptr as *mut u8,
+                    string_parts.len,
+                    string_parts.capacity,
+                );
+            }
+        }
+        observer
     }
 }
 

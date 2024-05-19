@@ -9,16 +9,16 @@ fn main() {
     let world = World::new();
 
     // Entity used for Grows relationship
-    let grows = world.entity_named(c"Grows");
+    let grows = world.entity_named("Grows");
 
     // Relationship objects
-    let apples = world.entity_named(c"Apples");
-    let pears = world.entity_named(c"Pears");
+    let apples = world.entity_named("Apples");
+    let pears = world.entity_named("Pears");
 
     // Create an entity with 3 relationships. Relationships are like regular components,
     // but combine two types/identifiers into an (relationship, object) pair.
     let bob = world
-        .entity_named(c"Bob")
+        .entity_named("Bob")
         // Pairs can be constructed from a type and entity
         .add_first::<Eats>(apples)
         .add_first::<Eats>(pears)

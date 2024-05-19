@@ -9,7 +9,7 @@ mod system_runner_fluent;
 pub use system_builder::*;
 pub use system_runner_fluent::*;
 
-use std::{ffi::CStr, ops::Deref, os::raw::c_void, ptr::NonNull};
+use std::{ops::Deref, os::raw::c_void, ptr::NonNull};
 
 use self::flecs::system::TickSource;
 use crate::core::*;
@@ -95,9 +95,7 @@ impl<'a> System<'a> {
     /// * C++ API: `system::system_init`
     #[doc(alias = "system::system_init")]
     pub(crate) fn system_init(world: &World) {
-        world.component_named::<TickSource>(
-            CStr::from_bytes_with_nul(b"flecs::system::TickSource\0").unwrap(),
-        );
+        world.component_named::<TickSource>("flecs::system::TickSource");
     }
 
     /// Set the context for the system

@@ -227,17 +227,17 @@ where
             has_all_components = false;
             if SHOULD_PANIC && !A::IS_OPTION {
                 ecs_assert!(false, FlecsErrorCode::OperationFailed,
-                    "Component `{}` not found on `EntityView::get` operation 
-                    with parameters: `{}`. 
-                    Use `try_get` variant to avoid assert/panicking if you want to handle the error 
-                    or use `Option<{}> instead to handle individual cases.",
-                    std::any::type_name::<A::OnlyType>(), std::any::type_name::<Self>(), std::any::type_name::<A::ActualType<'a>>());
-                    panic!("Component `{}` not found on `EntityView::get` operation 
-                    with parameters: `{}`. 
-                    Use `try_get` variant to avoid assert/panicking if 
-                    you want to handle the error or use `Option<{}> 
-                    instead to handle individual cases.",
-                    std::any::type_name::<A::OnlyType>(), std::any::type_name::<Self>(), std::any::type_name::<A::ActualType<'a>>());
+"Component `{}` not found on `EntityView::get` operation 
+with parameters: `{}`. 
+Use `try_get` variant to avoid assert/panicking if you want to handle the error 
+or use `Option<{}> instead to handle individual cases.",
+std::any::type_name::<A::OnlyType>(), std::any::type_name::<Self>(), std::any::type_name::<A::ActualType<'a>>());
+panic!("Component `{}` not found on `EntityView::get` operation 
+with parameters: `{}`. 
+Use `try_get` variant to avoid assert/panicking if 
+you want to handle the error or use `Option<{}> 
+instead to handle individual cases.",
+std::any::type_name::<A::OnlyType>(), std::any::type_name::<Self>(), std::any::type_name::<A::ActualType<'a>>());
                 }
             } else { 
                 components[0] = component_ptr;
@@ -360,17 +360,17 @@ macro_rules! impl_get_tuple {
                         if !$t::IS_OPTION {
                             if SHOULD_PANIC {
                                 ecs_assert!(false, FlecsErrorCode::OperationFailed,
-                                    "Component `{}` not found on `EntityView::get` operation 
-                                    with parameters: `{}`. 
-                                    Use `try_get` variant to avoid assert/panicking if you want to handle 
-                                    the error or use `Option<{}> instead to handle individual cases.",
-                                    std::any::type_name::<$t::OnlyType>(), std::any::type_name::<Self>(),
-                                    std::any::type_name::<$t::ActualType<'a>>());
-                                panic!("Component `{}` not found on `EntityView::get`operation 
-                                with parameters: `{}`. 
-                                Use `try_get` variant to avoid assert/panicking if you want to handle the error 
-                                or use `Option<{}> instead to handle individual cases.", std::any::type_name::<$t::OnlyType>(),
-                                std::any::type_name::<Self>(), std::any::type_name::<$t::ActualType<'a>>());
+"Component `{}` not found on `EntityView::get` operation 
+with parameters: `{}`. 
+Use `try_get` variant to avoid assert/panicking if you want to handle 
+the error or use `Option<{}> instead to handle individual cases.",
+std::any::type_name::<$t::OnlyType>(), std::any::type_name::<Self>(),
+std::any::type_name::<$t::ActualType<'a>>());
+panic!("Component `{}` not found on `EntityView::get`operation 
+with parameters: `{}`. 
+Use `try_get` variant to avoid assert/panicking if you want to handle the error 
+or use `Option<{}> instead to handle individual cases.", std::any::type_name::<$t::OnlyType>(),
+std::any::type_name::<Self>(), std::any::type_name::<$t::ActualType<'a>>());
                             }
                             has_all_components = false;
                         }

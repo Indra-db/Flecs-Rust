@@ -26,7 +26,7 @@ fn main() {
             println!("set {:?} for {:?}", pos, entity.name());
         });
 
-    let entity = world.entity_named(c"Bob");
+    let entity = world.entity_named("Bob");
 
     entity.set(Position { x: 10.0, y: 20.0 });
 

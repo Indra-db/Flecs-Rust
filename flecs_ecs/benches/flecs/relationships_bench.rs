@@ -104,9 +104,8 @@ pub fn change_parent(criterion: &mut Criterion) {
 
         for i in 0..ENTITY_COUNT {
             let name = format!("child_{}", i);
-            let name_c = std::ffi::CString::new(name).unwrap();
-            let name_cstr = name_c.as_c_str();
-            let entity = world.entity_named(name_cstr);
+            let name_str = name.as_str();
+            let entity = world.entity_named(name_str);
             entity.child_of_id(p2);
             entities.push(entity);
         }
@@ -160,24 +159,23 @@ pub fn lookup_depth(criterion: &mut Criterion) {
         group.bench_function(depth.to_string(), |bencher| {
             let world = World::new();
 
-            let mut lookup_str = String::from("foo");
+            let mut lookup_string = String::from("foo");
             for _ in 0..depth {
-                lookup_str = format!("{}.foo", lookup_str);
+                lookup_string = format!("{}.foo", lookup_string);
             }
 
-            let mut e = world.entity_named(c"foo");
+            let mut e = world.entity_named("foo");
             for _ in 0..depth {
-                let child = world.entity_named(c"foo").child_of_id(e);
+                let child = world.entity_named("foo").child_of_id(e);
                 e = child;
             }
 
-            let lookup_cstring = CString::new(lookup_str).unwrap();
-            let lookup_cstr = lookup_cstring.as_c_str();
+            let lookup_str = lookup_string.as_str();
 
             bencher.iter_custom(|iters| {
                 let start = Instant::now();
                 for _ in 0..iters {
-                    world.try_lookup_recursive(lookup_cstr);
+                    world.try_lookup_recursive(lookup_str);
                 }
                 let elapsed = start.elapsed();
                 elapsed / 1 //time average per entity operation

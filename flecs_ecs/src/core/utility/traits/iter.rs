@@ -1,5 +1,4 @@
 use std::ffi::c_char;
-use std::ffi::CStr;
 
 use flecs_ecs::core::*;
 use flecs_ecs::sys;
@@ -497,8 +496,11 @@ where
         rust_string
     }
 
-    fn find_var(&self, name: &CStr) -> Option<i32> {
-        let var_index = unsafe { sys::ecs_query_find_var(self.query_ptr(), name.as_ptr()) };
+    fn find_var(&self, name: &str) -> Option<i32> {
+        let name = compact_str::format_compact!("{}\0", name);
+
+        let var_index =
+            unsafe { sys::ecs_query_find_var(self.query_ptr(), name.as_ptr() as *const _) };
         if var_index == -1 {
             None
         } else {

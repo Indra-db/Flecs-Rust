@@ -38,7 +38,7 @@ fn main() {
         });
 
     // Create entity, set Position (emits EcsOnSet, does not yet match observer)
-    let entity = world.entity_named(c"e").set(Position { x: 10.0, y: 20.0 });
+    let entity = world.entity_named("e").set(Position { x: 10.0, y: 20.0 });
 
     // Set Velocity (emits EcsOnSet, matches observer)
     entity.set(Velocity { x: 1.0, y: 2.0 });

@@ -26,7 +26,7 @@ pub fn create_delete_entities(criterion: &mut Criterion) {
             let start = Instant::now();
             for _ in 0..iters {
                 for _ in 0..ENTITY_COUNT {
-                    let entity = world.entity_named(c"hello");
+                    let entity = world.entity_named("hello");
                     entity.destruct();
                 }
             }
@@ -110,7 +110,7 @@ pub fn create_delete_entities_cmd(criterion: &mut Criterion) {
             for _ in 0..iters {
                 world.defer_begin();
                 for _ in 0..ENTITY_COUNT {
-                    let entity = world.entity_named(c"hello");
+                    let entity = world.entity_named("hello");
                     entity.destruct();
                 }
                 world.defer_end();

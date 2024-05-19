@@ -19,9 +19,9 @@ fn main() {
     world.set(Gravity { value: 9.81 });
 
     // Set Velocity
-    world.entity_named(c"e1").set(Velocity { x: 0.0, y: 0.0 });
-    world.entity_named(c"e2").set(Velocity { x: 0.0, y: 1.0 });
-    world.entity_named(c"e3").set(Velocity { x: 0.0, y: 2.0 });
+    world.entity_named("e1").set(Velocity { x: 0.0, y: 0.0 });
+    world.entity_named("e2").set(Velocity { x: 0.0, y: 1.0 });
+    world.entity_named("e3").set(Velocity { x: 0.0, y: 2.0 });
 
     // Create query that matches Gravity as singleton
     let query = world

@@ -24,12 +24,12 @@ fn main() {
         });
 
     world
-        .system_named::<()>(c"Tick")
+        .system_named::<()>("Tick")
         .interval(1.0)
         .iter_only(tick);
 
     world
-        .system_named::<()>(c"FastTick")
+        .system_named::<()>("FastTick")
         .interval(0.5)
         .iter_only(tick);
 

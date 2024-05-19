@@ -43,7 +43,7 @@ fn main() {
 
     // Create a prefab hierarchy.
     let spaceship = world
-        .prefab_named(c"Spaceship")
+        .prefab_named("Spaceship")
         // Add components to prefab entity as usual
         .set(ImpulseSpeed { value: 50.0 })
         .set(Defence { value: 50.0 })
@@ -54,20 +54,20 @@ fn main() {
         .auto_override::<Position>();
 
     let freighter = world
-        .prefab_named(c"Freighter")
+        .prefab_named("Freighter")
         .is_a_id(spaceship)
         .set(FreightCapacity { value: 100.0 })
         .set(Defence { value: 100.0 })
         .add::<HasFlt>();
 
     let mammoth_freighter = world
-        .prefab_named(c"MammothFreighter")
+        .prefab_named("MammothFreighter")
         .is_a_id(freighter)
         .set(FreightCapacity { value: 500.0 })
         .set(Defence { value: 300.0 });
 
     world
-        .prefab_named(c"Frigate")
+        .prefab_named("Frigate")
         .is_a_id(spaceship)
         .add::<HasFlt>()
         .set(Attack { value: 100.0 })
@@ -78,7 +78,7 @@ fn main() {
     // The instance will have a private copy of the Position component, because
     // of the override in the spaceship entity. All other components are shared.
     let inst = world
-        .entity_named(c"my_mammoth_freighter")
+        .entity_named("my_mammoth_freighter")
         .is_a_id(mammoth_freighter);
 
     // Inspect the type of the entity. This outputs:

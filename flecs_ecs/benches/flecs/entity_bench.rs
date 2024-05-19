@@ -11,7 +11,7 @@ pub fn entity(criterion: &mut Criterion) {
         bencher.iter_custom(|iters| {
             let start = Instant::now();
             for _ in 0..iters {
-                e.set_name(c"foo");
+                e.set_name("foo");
                 e.remove_name();
             }
             let elapsed = start.elapsed();

@@ -28,7 +28,7 @@ fn main() {
     // spaceships. This saves memory, and speeds up prefab creation as we don't
     // have to copy the values of Attack and Defense to private components.
     let spaceship = world
-        .prefab_named(c"SpaceShip")
+        .prefab_named("SpaceShip")
         .set(Attack { value: 75.0 })
         .set(Defence { value: 100.0 });
 
@@ -38,7 +38,7 @@ fn main() {
     spaceship.set_auto_override(Damage { value: 0.0 });
 
     // Create a prefab instance.
-    let inst = world.entity_named(c"my_spaceship").is_a_id(spaceship);
+    let inst = world.entity_named("my_spaceship").is_a_id(spaceship);
 
     // The entity will now have a private copy of the Damage component, but not
     // of the Attack and Defense components. We can see this when we look at the

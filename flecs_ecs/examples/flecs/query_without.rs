@@ -25,13 +25,13 @@ fn main() {
     let query = world.query::<&Position>().without::<&Npc>().build();
 
     // Create a few test entities for the Position query
-    world.entity_named(c"e1").set(Position { x: 10.0, y: 20.0 });
+    world.entity_named("e1").set(Position { x: 10.0, y: 20.0 });
 
-    world.entity_named(c"e2").set(Position { x: 10.0, y: 20.0 });
+    world.entity_named("e2").set(Position { x: 10.0, y: 20.0 });
 
     // This entity will not match as it has Npc
     world
-        .entity_named(c"e3")
+        .entity_named("e3")
         .set(Position { x: 10.0, y: 20.0 })
         .add::<Npc>();
 

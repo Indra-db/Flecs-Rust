@@ -36,26 +36,26 @@ fn main() {
 
     // Create a base prefab for SpaceShips.
     let spaceship = world
-        .prefab_named(c"SpaceShip")
+        .prefab_named("SpaceShip")
         .set(ImpulseSpeed { value: 50.0 })
         .set(Defence { value: 25.0 });
 
     // Create a Freighter variant which inherits from SpaceShip
     let freighter = world
-        .prefab_named(c"Freighter")
+        .prefab_named("Freighter")
         .is_a_id(spaceship)
         .set(FreightCapacity { value: 100.0 })
         .set(Defence { value: 50.0 });
 
     // Create a MammotFreighter variant which inherits from Freighter
     let mammoth_freighter = world
-        .prefab_named(c"MammothFreighter")
+        .prefab_named("MammothFreighter")
         .is_a_id(freighter)
         .set(FreightCapacity { value: 500.0 });
 
     // Create a Frigate variant which inherits from SpaceShip
     world
-        .prefab_named(c"Frigate")
+        .prefab_named("Frigate")
         .is_a_id(spaceship)
         .set(Attack { value: 100.0 })
         .set(Defence { value: 75.0 })
@@ -65,7 +65,7 @@ fn main() {
     // ImpulseSpeed from SpaceShip, Defence from Freighter and FreightCapacity
     // from MammothFreighter.
     let inst = world
-        .entity_named(c"my_freighter")
+        .entity_named("my_freighter")
         .is_a_id(mammoth_freighter);
 
     // Add a private Position component.

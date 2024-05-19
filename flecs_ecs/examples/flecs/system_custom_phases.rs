@@ -28,17 +28,17 @@ fn main() {
 
     // Create 3 dummy systems.
     world
-        .system_named::<()>(c"CollisionSystem")
+        .system_named::<()>("CollisionSystem")
         .kind_id(collisions)
         .iter_only(sys);
 
     world
-        .system_named::<()>(c"PhysicsSystem")
+        .system_named::<()>("PhysicsSystem")
         .kind_id(physics)
         .iter_only(sys);
 
     world
-        .system_named::<()>(c"GameSystem")
+        .system_named::<()>("GameSystem")
         .kind::<flecs::pipeline::OnUpdate>()
         .iter_only(sys);
 

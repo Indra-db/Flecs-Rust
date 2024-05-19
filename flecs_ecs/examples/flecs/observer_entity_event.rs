@@ -43,7 +43,7 @@ fn main() {
             println!("Close request with reason: {:?}", reason);
         });
 
-    let widget = world.entity_named(c"MyWidget");
+    let widget = world.entity_named("MyWidget");
     println!("widget: {:?}", widget);
 
     // Observe the Click event on the widget entity.

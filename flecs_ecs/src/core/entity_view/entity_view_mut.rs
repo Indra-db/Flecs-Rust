@@ -1,4 +1,4 @@
-use std::{ffi::CStr, os::raw::c_void};
+use std::{os::raw::c_void};
 
 use flecs_ecs::core::*;
 
@@ -427,7 +427,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_builder::is_a`
     #[doc(alias = "entity_builder::is_a")]
     pub fn is_a_id(self, second: impl Into<Entity>) -> Self {
-        self.add_id((ECS_IS_A, second.into()))
+        unsafe { self.add_id_unchecked((ECS_IS_A, second.into())) }
     }
 
     /// Shortcut for add(IsA, entity).
@@ -456,7 +456,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_builder::child_of`
     #[doc(alias = "entity_builder::child_of")]
     pub fn child_of_id(self, parent: impl Into<Entity>) -> Self {
-        self.add_id((ECS_CHILD_OF, parent.into()))
+        unsafe { self.add_id_unchecked((ECS_CHILD_OF, parent.into())) }
     }
 
     /// Shortcut for add(ChildOf, entity).
@@ -485,7 +485,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_builder::depends_on`
     #[doc(alias = "entity_builder::depends_on")]
     pub fn depends_on_id(self, second: impl Into<Entity>) -> Self {
-        self.add_id((ECS_DEPENDS_ON, second.into()))
+        unsafe { self.add_id_unchecked((ECS_DEPENDS_ON, second.into())) }
     }
 
     /// Shortcut for add(DependsOn, entity).
@@ -536,7 +536,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_builder::slot_of`
     #[doc(alias = "entity_builder::slot_of")]
     pub fn slot_of_id(self, second: impl Into<Entity>) -> Self {
-        self.add_id((ECS_SLOT_OF, second.into()))
+        unsafe { self.add_id_unchecked((ECS_SLOT_OF, second.into())) }
     }
 
     /// Shortcut for add(SlotOf, entity).
@@ -989,9 +989,15 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set_name`
     #[doc(alias = "entity_builder::set_name")]
-    pub fn set_name(self, name: &CStr) -> Self {
+    pub fn set_name(self, name: &str) -> Self {
+        let name = compact_str::format_compact!("{}\0", name);
+
         unsafe {
-            sys::ecs_set_name(self.world.world_ptr_mut(), *self.id, name.as_ptr());
+            sys::ecs_set_name(
+                self.world.world_ptr_mut(),
+                *self.id,
+                name.as_ptr() as *const _,
+            );
         }
         self
     }
@@ -1014,9 +1020,15 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set_alias`
     #[doc(alias = "entity_builder::set_alias")]
-    pub fn set_alias(self, name: &CStr) -> Self {
+    pub fn set_alias(self, name: &str) -> Self {
+        let name = compact_str::format_compact!("{}\0", name);
+
         unsafe {
-            sys::ecs_set_alias(self.world.world_ptr_mut(), *self.id, name.as_ptr());
+            sys::ecs_set_alias(
+                self.world.world_ptr_mut(),
+                *self.id,
+                name.as_ptr() as *const _,
+            );
         }
         self
     }

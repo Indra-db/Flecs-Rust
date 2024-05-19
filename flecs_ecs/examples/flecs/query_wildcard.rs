@@ -28,12 +28,12 @@ fn main() {
 
     // Create a few entities that match the query
     world
-        .entity_named(c"Bob")
+        .entity_named("Bob")
         .set_pair::<EatsAmount, Apples>(EatsAmount { amount: 10 })
         .set_pair::<EatsAmount, Pears>(EatsAmount { amount: 5 });
 
     world
-        .entity_named(c"Alice")
+        .entity_named("Alice")
         .set_pair::<EatsAmount, Apples>(EatsAmount { amount: 4 });
 
     // Iterate the query with a flecs::iter. This makes it possible to inspect

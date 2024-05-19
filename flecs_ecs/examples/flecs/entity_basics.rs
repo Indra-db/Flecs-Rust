@@ -22,7 +22,7 @@ fn main() {
 
     // Create an entity with name Bob
     let bob = world
-        .entity_named(c"Bob")
+        .entity_named("Bob")
         // The set operation finds or creates a component, and sets it.
         // Components are automatically registered with the world
         .set(Position { x: 10.0, y: 20.0 })
@@ -44,7 +44,7 @@ fn main() {
 
     // Create another named entity
     let alice = world
-        .entity_named(c"Alice")
+        .entity_named("Alice")
         .set(Position { x: 10.0, y: 20.0 });
 
     // Add a tag after entity is created

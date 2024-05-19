@@ -15,14 +15,14 @@ fn main() {
 
     // Startup system
     world
-        .system_named::<()>(c"Startup")
+        .system_named::<()>("Startup")
         .kind::<flecs::pipeline::OnStart>()
         .iter_only(|it| {
             println!("{}", it.system().name());
         });
 
     // Regular system
-    world.system_named::<()>(c"Update").iter_only(|it| {
+    world.system_named::<()>("Update").iter_only(|it| {
         println!("{}", it.system().name());
     });
 

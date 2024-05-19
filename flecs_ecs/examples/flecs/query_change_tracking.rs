@@ -46,32 +46,32 @@ fn main() {
     // // Create two prefabs with a Dirty component. We can use this to share a
     // // single Dirty value for all entities in a table.
     // let prefab_dirty_false = world
-    //     .prefab_named(c"prefab_dirty_false")
+    //     .prefab_named("prefab_dirty_false")
     //     .set(Dirty { value: false });
 
     // let prefab_dirty_true = world
-    //     .prefab_named(c"prefab_dirty_true")
+    //     .prefab_named("prefab_dirty_true")
     //     .set(Dirty { value: true });
 
     // // Create instances of p1 and p2. Because the entities have different
     // // prefabs, they end up in different tables.
     // world
-    //     .entity_named(c"e1_dirty_false")
+    //     .entity_named("e1_dirty_false")
     //     .is_a_id(prefab_dirty_false)
     //     .set(Position { x: 10.0, y: 20.0 });
 
     // world
-    //     .entity_named(c"e2_dirty_false")
+    //     .entity_named("e2_dirty_false")
     //     .is_a_id(prefab_dirty_false)
     //     .set(Position { x: 30.0, y: 40.0 });
 
     // world
-    //     .entity_named(c"e3_dirty_true")
+    //     .entity_named("e3_dirty_true")
     //     .is_a_id(prefab_dirty_true)
     //     .set(Position { x: 40.0, y: 50.0 });
 
     // world
-    //     .entity_named(c"e4_dirty_true")
+    //     .entity_named("e4_dirty_true")
     //     .is_a_id(prefab_dirty_true)
     //     .set(Position { x: 50.0, y: 60.0 });
 

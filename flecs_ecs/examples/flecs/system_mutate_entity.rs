@@ -48,7 +48,7 @@ fn main() {
             println!("Expired: {} actually deleted", e.name());
         });
 
-    let e = world.entity_named(c"MyEntity").set(Timeout { value: 2.5 });
+    let e = world.entity_named("MyEntity").set(Timeout { value: 2.5 });
 
     world.set_target_fps(1.0);
 

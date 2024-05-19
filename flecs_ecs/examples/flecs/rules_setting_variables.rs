@@ -56,7 +56,7 @@ fn main() {
     for p in 0..PLAYER_COUNT {
         let player = if p == 0 {
             // Give first player a name so we can look it up later
-            world.entity_named(c"MyPlayer")
+            world.entity_named("MyPlayer")
         } else {
             world.entity()
         };
@@ -94,9 +94,9 @@ fn main() {
     let rule = world
         .query::<&RangedUnit>()
         .with::<&Platoon>()
-        .set_second_name(c"$Platoon")
-        .with_first_name::<&Player>(c"$Player")
-        .set_src_name(c"$Platoon")
+        .set_second_name("$Platoon")
+        .with_first_name::<&Player>("$Player")
+        .set_src_name("$Platoon")
         .build();
 
     // If we would iterate this rule it would return all ranged units for all
@@ -104,12 +104,12 @@ fn main() {
     // platoon or a single player setting a variable beforehand. In this example
     // we'll just find all platoons & ranged units for a single player.
 
-    let player_var = rule.find_var(c"Player").unwrap();
-    let platoon_var = rule.find_var(c"Platoon").unwrap();
+    let player_var = rule.find_var("Player").unwrap();
+    let platoon_var = rule.find_var("Platoon").unwrap();
 
     // Iterate rule, limit the results to units of MyPlayer
     rule.iterable()
-        .set_var(player_var, world.lookup_recursively(c"MyPlayer"))
+        .set_var(player_var, world.lookup_recursively("MyPlayer"))
         .each_iter(|it, index, _| {
             let unit = it.entity(index);
             println!(

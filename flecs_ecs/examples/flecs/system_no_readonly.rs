@@ -37,7 +37,7 @@ fn main() {
     // // plate assignments are assigned directly (not deferred) to waiters, which
     // // ensures that we won't assign plates to the same waiter more than once.
     // world
-    //     .system_named::<&Plate>(c"AssignPlate")
+    //     .system_named::<&Plate>("AssignPlate")
     //     .without::<(&Waiter, flecs::Wildcard)>()
     //     .immediate(true)
     //     .iter_only(move |it| {
@@ -72,13 +72,13 @@ fn main() {
     //         }
     //     });
 
-    // let waiter_1 = world.entity_named(c"waiter_1").add::<Waiter>();
-    // world.entity_named(c"waiter_2").add::<Waiter>();
-    // world.entity_named(c"waiter_3").add::<Waiter>();
+    // let waiter_1 = world.entity_named("waiter_1").add::<Waiter>();
+    // world.entity_named("waiter_2").add::<Waiter>();
+    // world.entity_named("waiter_3").add::<Waiter>();
 
-    // world.entity_named(c"plate_1").add::<Plate>();
-    // let plate_2 = world.entity_named(c"plate_2").add::<Plate>();
-    // world.entity_named(c"plate_3").add::<Plate>();
+    // world.entity_named("plate_1").add::<Plate>();
+    // let plate_2 = world.entity_named("plate_2").add::<Plate>();
+    // world.entity_named("plate_3").add::<Plate>();
 
     // waiter_1.add_first::<&Plate>(plate_2);
     // plate_2.add_first::<&Waiter>(waiter_1);

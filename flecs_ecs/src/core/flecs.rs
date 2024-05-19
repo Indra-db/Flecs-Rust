@@ -1,4 +1,4 @@
-use std::{ffi::CStr, ops::Deref, sync::OnceLock};
+use std::{ops::Deref, sync::OnceLock};
 
 use crate::core::*;
 
@@ -40,7 +40,7 @@ macro_rules! create_pre_registered_component {
 
             fn register_explicit<'a>(_world: impl IntoWorld<'a>) {}
 
-            fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &CStr) -> EntityT {
+            fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
                 $const_name
             }
 
@@ -326,7 +326,7 @@ pub mod rest {
         type UnderlyingEnumType = NoneEnum;
         fn register_explicit<'a>(_world: impl IntoWorld<'a>) {}
 
-        fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &CStr) -> EntityT {
+        fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
             ECS_REST
         }
         fn is_registered() -> bool {

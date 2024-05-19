@@ -84,11 +84,13 @@ where
 }
 
 #[inline(always)]
-pub fn try_register_component_named<'a, T>(world: impl IntoWorld<'a>, name: &CStr) -> EntityT
+pub fn try_register_component_named<'a, T>(world: impl IntoWorld<'a>, name: &str) -> EntityT
 where
     T: ComponentId,
 {
-    try_register_component_impl::<T>(world, name.as_ptr())
+    let name = compact_str::format_compact!("{}\0", name);
+
+    try_register_component_impl::<T>(world, name.as_ptr() as *const c_char)
 }
 
 /// registers enum fields with the world.

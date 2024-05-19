@@ -1,6 +1,6 @@
 //! Registering and working with components
 
-use std::{ffi::CStr, marker::PhantomData, ops::Deref, os::raw::c_void, ptr};
+use std::{marker::PhantomData, ops::Deref, os::raw::c_void, ptr};
 
 use crate::core::*;
 use crate::sys;
@@ -56,7 +56,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     ///
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
-    pub fn new_named(world: impl IntoWorld<'a>, name: &CStr) -> Self {
+    pub fn new_named(world: impl IntoWorld<'a>, name: &str) -> Self {
         if !T::is_registered_with_world(world.world()) {
             T::register_explicit_named(world.world(), name);
         }

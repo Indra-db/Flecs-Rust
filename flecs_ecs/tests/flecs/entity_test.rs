@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use std::ffi::{c_void, CStr};
+use std::ffi::c_void;
 
 use crate::common_test::*;
 
@@ -15,7 +15,7 @@ fn entity_new() {
 fn entity_new_named() {
     structs!();
     let world = World::new();
-    let entity = world.entity_named(c"test");
+    let entity = world.entity_named("test");
 
     assert!(entity.is_valid());
     assert_eq!(entity.name(), "test");
@@ -25,11 +25,11 @@ fn entity_new_named() {
 fn entity_new_named_from_scope() {
     structs!();
     let world = World::new();
-    let entity = world.entity_named(c"Foo");
+    let entity = world.entity_named("Foo");
     assert!(entity.is_valid());
 
     let prev = world.set_scope_id(entity);
-    let child = world.entity_named(c"Bar");
+    let child = world.entity_named("Bar");
     assert!(child.is_valid());
 
     world.set_scope_id(prev);
@@ -45,7 +45,7 @@ fn entity_new_nested_named_from_nested_scope() {
     let world = World::new();
 
     // Create an entity with nested name "Foo::Bar"
-    let entity = world.entity_named(CStr::from_bytes_with_nul(b"Foo::Bar\0").unwrap());
+    let entity = world.entity_named("Foo::Bar");
 
     // Verify that the entity exists and its name and path are correct
     assert!(entity.is_valid());
@@ -56,7 +56,7 @@ fn entity_new_nested_named_from_nested_scope() {
     let prev = world.set_scope_id(entity);
 
     // Create a child entity with nested name "Hello::World" under the current scope
-    let child = world.entity_named(CStr::from_bytes_with_nul(b"Hello::World\0").unwrap());
+    let child = world.entity_named("Hello::World");
 
     // Verify that the child entity exists
     assert!(child.is_valid());
@@ -710,7 +710,7 @@ fn entity_set_name() {
 
     let entity = world.entity();
 
-    entity.set_name(c"Foo");
+    entity.set_name("Foo");
 
     assert_eq!(entity.name(), "Foo");
 }
@@ -722,7 +722,7 @@ fn entity_set_name_optional() {
 
     let entity = world.entity();
 
-    entity.set_name(c"Foo");
+    entity.set_name("Foo");
 
     assert_eq!(entity.get_name(), Some("Foo"));
 }
@@ -732,13 +732,13 @@ fn entity_change_name() {
     structs!();
     let world = World::new();
 
-    let entity = world.entity_named(c"Bar");
+    let entity = world.entity_named("Bar");
     assert_eq!(entity.name(), "Bar");
 
-    entity.set_name(c"Foo");
+    entity.set_name("Foo");
     assert_eq!(entity.name(), "Foo");
 
-    entity.set_name(c"Bar");
+    entity.set_name("Bar");
     assert_eq!(entity.name(), "Bar");
 }
 
@@ -1438,7 +1438,7 @@ fn entity_name() {
     structs!();
     let world = World::new();
 
-    let entity = world.entity_named(c"Foo");
+    let entity = world.entity_named("Foo");
 
     assert_eq!(entity.name(), "Foo");
     assert_eq!(entity.get_name(), Some("Foo"));
@@ -1464,9 +1464,9 @@ fn entity_path() {
     structs!();
     let world = World::new();
 
-    let parent = world.entity_named(c"parent");
+    let parent = world.entity_named("parent");
     world.set_scope_id(parent.id());
-    let child = world.entity_named(c"child");
+    let child = world.entity_named("child");
 
     assert_eq!(&child.path().unwrap(), "::parent::child");
 }
@@ -1476,11 +1476,11 @@ fn entity_path_from() {
     structs!();
     let world = World::new();
 
-    let parent = world.entity_named(c"parent");
+    let parent = world.entity_named("parent");
     world.set_scope_id(parent.id());
-    let child = world.entity_named(c"child");
+    let child = world.entity_named("child");
     world.set_scope_id(child.id());
-    let grandchild = world.entity_named(c"grandchild");
+    let grandchild = world.entity_named("grandchild");
 
     assert_eq!(&grandchild.path().unwrap(), "::parent::child::grandchild");
     assert_eq!(
@@ -1494,11 +1494,11 @@ fn entity_path_from_type() {
     structs!();
     let world = World::new();
 
-    let parent = world.entity_named(c"parent");
+    let parent = world.entity_named("parent");
     world.set_scope_id(parent.id());
-    let child = world.entity_named(c"child");
+    let child = world.entity_named("child");
     world.set_scope_id(child.id());
-    let grandchild = world.entity_named(c"grandchild");
+    let grandchild = world.entity_named("grandchild");
 
     assert_eq!(&grandchild.path().unwrap(), "::parent::child::grandchild");
     assert_eq!(
@@ -1512,11 +1512,11 @@ fn entity_path_custom_sep() {
     structs!();
     let world = World::new();
 
-    let parent = world.entity_named(c"parent");
+    let parent = world.entity_named("parent");
     world.set_scope_id(parent.id());
-    let child = world.entity_named(c"child");
+    let child = world.entity_named("child");
 
-    assert_eq!(&child.path_w_sep(c"_", c"?").unwrap(), "?parent_child");
+    assert_eq!(&child.path_w_sep("_", "?").unwrap(), "?parent_child");
 }
 
 #[test]
@@ -1524,18 +1524,18 @@ fn entity_path_from_custom_sep() {
     structs!();
     let world = World::new();
 
-    let parent = world.entity_named(c"parent");
+    let parent = world.entity_named("parent");
     world.set_scope_id(parent.id());
-    let child = world.entity_named(c"child");
+    let child = world.entity_named("child");
     world.set_scope_id(child.id());
-    let grandchild = world.entity_named(c"grandchild");
+    let grandchild = world.entity_named("grandchild");
 
     assert_eq!(
-        &grandchild.path_w_sep(c"_", c"?").unwrap(),
+        &grandchild.path_w_sep("_", "?").unwrap(),
         "?parent_child_grandchild"
     );
     assert_eq!(
-        &grandchild.path_from_id_w_sep(parent, c"_", c"::").unwrap(),
+        &grandchild.path_from_id_w_sep(parent, "_", "::").unwrap(),
         "child_grandchild"
     );
 }
@@ -1547,16 +1547,16 @@ fn entity_path_from_type_custom_sep() {
 
     let parent = world.entity_from::<Parent>();
     world.set_scope_id(parent.id());
-    let child = world.entity_named(c"child");
+    let child = world.entity_named("child");
     world.set_scope_id(child.id());
-    let grandchild = world.entity_named(c"grandchild");
+    let grandchild = world.entity_named("grandchild");
 
     assert_eq!(
-        &grandchild.path_w_sep(c"_", c"?").unwrap(),
+        &grandchild.path_w_sep("_", "?").unwrap(),
         "?flecs_entity_test_entity_path_from_type_custom_sep_Parent_child_grandchild"
     );
     assert_eq!(
-        &grandchild.path_from_id_w_sep(parent, c"_", c"::").unwrap(),
+        &grandchild.path_from_id_w_sep(parent, "_", "::").unwrap(),
         "child_grandchild"
     );
 }
@@ -1566,7 +1566,7 @@ fn entity_implicit_path_to_char() {
     structs!();
     let world = World::new();
 
-    let entity = world.entity_named(c"Foo::Bar");
+    let entity = world.entity_named("Foo::Bar");
     assert!(entity.is_valid());
     assert_eq!(entity.name(), "Bar");
     assert_eq!(entity.path().unwrap(), "::Foo::Bar");
@@ -1577,7 +1577,7 @@ fn entity_implicit_type_str_to_char() {
     structs!();
     let world = World::new();
 
-    let entity = world.entity_named(c"Foo");
+    let entity = world.entity_named("Foo");
     assert!(entity.is_valid());
 
     assert_eq!(entity.archetype().to_string().unwrap(), "(Identifier,Name)");
@@ -2222,13 +2222,13 @@ fn entity_with_self_w_name() {
     structs!();
     let world = World::new();
 
-    let tier1 = world.entity_named(c"Tier1").with(|| {
-        let tier2 = world.entity_named(c"Tier2");
+    let tier1 = world.entity_named("Tier1").with(|| {
+        let tier2 = world.entity_named("Tier2");
         tier2.set(SelfRef {
             value: tier2.into(),
         });
     });
-    let tier2 = world.try_lookup_recursive(c"Tier2");
+    let tier2 = world.try_lookup_recursive("Tier2");
     assert!(tier2.is_some());
     let tier2 = tier2.unwrap();
     assert!(tier2.has_id(tier1));
@@ -2239,14 +2239,14 @@ fn entity_with_self_nested() {
     structs!();
     let world = World::new();
 
-    let tier1 = world.entity_named(c"Tier1").with(|| {
-        world.entity_named(c"Tier2").with(|| {
-            world.entity_named(c"Tier3");
+    let tier1 = world.entity_named("Tier1").with(|| {
+        world.entity_named("Tier2").with(|| {
+            world.entity_named("Tier3");
         });
     });
 
-    let tier2 = world.try_lookup_recursive(c"Tier2").unwrap();
-    let tier3 = world.try_lookup_recursive(c"Tier3").unwrap();
+    let tier2 = world.try_lookup_recursive("Tier2").unwrap();
+    let tier3 = world.try_lookup_recursive("Tier3").unwrap();
 
     assert!(tier2.has_id(tier1));
     assert!(tier3.has_id(tier2));
@@ -2257,42 +2257,42 @@ fn entity_with_scope() {
     structs!();
     let world = World::new();
 
-    let parent = world.entity_named(c"P").scope(|_| {
-        let e1 = world.entity_named(c"C1");
+    let parent = world.entity_named("P").scope(|_| {
+        let e1 = world.entity_named("C1");
         e1.set(SelfRef { value: e1.into() });
-        let e2 = world.entity_named(c"C2");
+        let e2 = world.entity_named("C2");
         e2.set(SelfRef { value: e2.into() });
-        let e3 = world.entity_named(c"C3");
+        let e3 = world.entity_named("C3");
         e3.set(SelfRef { value: e3.into() });
 
-        assert_eq!(world.lookup_recursively(c"C1"), e1);
-        assert_eq!(world.lookup_recursively(c"C2"), e2);
-        assert_eq!(world.lookup_recursively(c"C3"), e3);
-        assert_eq!(world.lookup_recursively(c"::P::C1"), e1);
-        assert_eq!(world.lookup_recursively(c"::P::C2"), e2);
-        assert_eq!(world.lookup_recursively(c"::P::C3"), e3);
+        assert_eq!(world.lookup_recursively("C1"), e1);
+        assert_eq!(world.lookup_recursively("C2"), e2);
+        assert_eq!(world.lookup_recursively("C3"), e3);
+        assert_eq!(world.lookup_recursively("::P::C1"), e1);
+        assert_eq!(world.lookup_recursively("::P::C2"), e2);
+        assert_eq!(world.lookup_recursively("::P::C3"), e3);
     });
 
     // Ensure entities are created in correct scope
-    assert!(world.try_lookup_recursive(c"C1").is_none());
-    assert!(world.try_lookup_recursive(c"C2").is_none());
-    assert!(world.try_lookup_recursive(c"C3").is_none());
+    assert!(world.try_lookup_recursive("C1").is_none());
+    assert!(world.try_lookup_recursive("C2").is_none());
+    assert!(world.try_lookup_recursive("C3").is_none());
 
-    assert!(parent.try_lookup_recursive(c"C1").is_some());
-    assert!(parent.try_lookup_recursive(c"C2").is_some());
-    assert!(parent.try_lookup_recursive(c"C3").is_some());
+    assert!(parent.try_lookup_recursive("C1").is_some());
+    assert!(parent.try_lookup_recursive("C2").is_some());
+    assert!(parent.try_lookup_recursive("C3").is_some());
 
     assert_eq!(
-        world.lookup_recursively(c"P::C1"),
-        parent.lookup_recursively(c"C1")
+        world.lookup_recursively("P::C1"),
+        parent.lookup_recursively("C1")
     );
     assert_eq!(
-        world.lookup_recursively(c"P::C2"),
-        parent.lookup_recursively(c"C2")
+        world.lookup_recursively("P::C2"),
+        parent.lookup_recursively("C2")
     );
     assert_eq!(
-        world.lookup_recursively(c"P::C3"),
-        parent.lookup_recursively(c"C3")
+        world.lookup_recursively("P::C3"),
+        parent.lookup_recursively("C3")
     );
 
     // Ensures that while self is (implicitly) registered within the with, it
@@ -2325,25 +2325,25 @@ fn entity_with_scope_nested() {
     structs!();
     let world = World::new();
 
-    let parent = world.entity_named(c"P").scope(|world| {
-        let child = world.entity_named(c"C").scope(|world| {
-            let grandchild = world.entity_named(c"GC");
-            assert_eq!(grandchild, world.lookup_recursively(c"GC"));
-            assert_eq!(grandchild, world.lookup_recursively(c"::P::C::GC"));
+    let parent = world.entity_named("P").scope(|world| {
+        let child = world.entity_named("C").scope(|world| {
+            let grandchild = world.entity_named("GC");
+            assert_eq!(grandchild, world.lookup_recursively("GC"));
+            assert_eq!(grandchild, world.lookup_recursively("::P::C::GC"));
         });
 
-        assert_eq!(world.lookup_recursively(c"C"), child);
-        assert_eq!(world.lookup_recursively(c"::P::C"), child);
+        assert_eq!(world.lookup_recursively("C"), child);
+        assert_eq!(world.lookup_recursively("::P::C"), child);
     });
 
-    assert!(world.try_lookup_recursive(c"C").is_none());
-    assert!(world.try_lookup_recursive(c"GC").is_none());
-    assert!(world.try_lookup_recursive(c"C::GC").is_none());
+    assert!(world.try_lookup_recursive("C").is_none());
+    assert!(world.try_lookup_recursive("GC").is_none());
+    assert!(world.try_lookup_recursive("C::GC").is_none());
 
-    let child = world.lookup_recursively(c"P::C");
+    let child = world.lookup_recursively("P::C");
     assert!(child.has_id((flecs::ChildOf::ID, parent)));
 
-    let grandchild = world.lookup_recursively(c"P::C::GC");
+    let grandchild = world.lookup_recursively("P::C::GC");
     assert!(grandchild.has_id((flecs::ChildOf::ID, child)));
 }
 
@@ -2352,24 +2352,24 @@ fn entity_with_scope_nested_same_name_as_parent() {
     structs!();
     let world = World::new();
 
-    let parent = world.entity_named(c"P").scope(|world| {
-        let child = world.entity_named(c"C").scope(|world| {
-            let gchild = world.entity_named(c"C");
-            assert_eq!(gchild, world.lookup_recursively(c"C"));
-            assert_eq!(gchild, world.lookup_recursively(c"::P::C::C"));
+    let parent = world.entity_named("P").scope(|world| {
+        let child = world.entity_named("C").scope(|world| {
+            let gchild = world.entity_named("C");
+            assert_eq!(gchild, world.lookup_recursively("C"));
+            assert_eq!(gchild, world.lookup_recursively("::P::C::C"));
         });
 
-        assert_eq!(world.lookup_recursively(c"C"), child);
-        assert_eq!(world.lookup_recursively(c"::P::C"), child);
+        assert_eq!(world.lookup_recursively("C"), child);
+        assert_eq!(world.lookup_recursively("::P::C"), child);
     });
 
-    assert!(world.try_lookup_recursive(c"C").is_none());
-    assert!(world.try_lookup_recursive(c"C::C").is_none());
+    assert!(world.try_lookup_recursive("C").is_none());
+    assert!(world.try_lookup_recursive("C::C").is_none());
 
-    let child = world.lookup_recursively(c"P::C");
+    let child = world.lookup_recursively("P::C");
     assert!(child.has_id((flecs::ChildOf::ID, parent)));
 
-    let gchild = world.lookup_recursively(c"P::C::C");
+    let gchild = world.lookup_recursively("P::C::C");
     assert!(gchild.has_id((flecs::ChildOf::ID, child)));
 }
 
@@ -2378,13 +2378,13 @@ fn entity_no_recursive_lookup() {
     structs!();
     let world = World::new();
 
-    let p = world.entity_named(c"P");
-    let c = world.entity_named(c"C").child_of_id(p);
-    let gc = world.entity_named(c"GC").child_of_id(c);
+    let p = world.entity_named("P");
+    let c = world.entity_named("C").child_of_id(p);
+    let gc = world.entity_named("GC").child_of_id(c);
 
-    assert_eq!(c.lookup(c"GC"), gc);
-    assert!(c.try_lookup(c"C").is_none());
-    assert!(c.try_lookup(c"P").is_none());
+    assert_eq!(c.lookup("GC"), gc);
+    assert!(c.try_lookup("C").is_none());
+    assert!(c.try_lookup("P").is_none());
 }
 
 #[test]
@@ -2394,7 +2394,7 @@ fn entity_defer_new_w_name() {
     let mut e = world.entity_null();
 
     world.defer(|| {
-        e = world.entity_named(c"Foo");
+        e = world.entity_named("Foo");
         assert!(e.is_valid());
     });
 
@@ -2409,7 +2409,7 @@ fn entity_defer_new_w_nested_name() {
     let mut e = world.entity_null();
 
     world.defer(|| {
-        e = world.entity_named(c"Foo::Bar");
+        e = world.entity_named("Foo::Bar");
         assert!(e.is_valid());
     });
 
@@ -2422,12 +2422,12 @@ fn entity_defer_new_w_nested_name() {
 fn entity_defer_new_w_scope_name() {
     structs!();
     let world = World::new();
-    let parent = world.entity_named(c"Parent");
+    let parent = world.entity_named("Parent");
     let mut e = world.entity_null();
 
     world.defer(|| {
         parent.scope(|_w| {
-            e = world.entity_named(c"Foo");
+            e = world.entity_named("Foo");
             assert!(e.is_valid());
         });
     });
@@ -2441,12 +2441,12 @@ fn entity_defer_new_w_scope_name() {
 fn entity_defer_new_w_scope_nested_name() {
     structs!();
     let world = World::new();
-    let parent = world.entity_named(c"Parent");
+    let parent = world.entity_named("Parent");
     let mut e = world.entity_null();
 
     world.defer(|| {
         parent.scope(|_w| {
-            e = world.entity_named(c"Foo::Bar");
+            e = world.entity_named("Foo::Bar");
             assert!(e.is_valid());
         });
     });
@@ -2498,12 +2498,12 @@ fn entity_defer_new_w_name_scope_with() {
     let world = World::new();
     let tag = world.entity();
     let mut e = world.entity_null();
-    let parent = world.entity_named(c"Parent");
+    let parent = world.entity_named("Parent");
 
     world.defer(|| {
         tag.with(|| {
             parent.scope(|_w| {
-                e = world.entity_named(c"Foo");
+                e = world.entity_named("Foo");
                 assert!(e.is_valid());
                 assert!(!e.has_id(tag));
             });
@@ -2525,13 +2525,13 @@ fn entity_defer_new_w_nested_name_scope_with() {
     structs!();
     let world = World::new();
     let tag = world.entity();
-    let parent = world.entity_named(c"Parent");
+    let parent = world.entity_named("Parent");
     let mut e = world.entity_null();
 
     world.defer(|| {
         tag.with(|| {
             parent.scope(|_w| {
-                e = world.entity_named(c"Foo::Bar");
+                e = world.entity_named("Foo::Bar");
                 assert!(e.is_valid());
                 assert!(!e.has_id(tag));
             });
@@ -2596,21 +2596,21 @@ fn entity_with_after_builder_method() {
     let world = World::new();
 
     let a = world.entity().set(Position { x: 10, y: 20 }).with(|| {
-        world.entity_named(c"X");
+        world.entity_named("X");
     });
 
     let b = world
         .entity()
         .set(Position { x: 30, y: 40 })
         .with_first::<Likes>(|| {
-            world.entity_named(c"Y");
+            world.entity_named("Y");
         });
 
     let c = world
         .entity()
         .set(Position { x: 50, y: 60 })
         .with_first_id(*flecs::IsA, || {
-            world.entity_named(c"Z");
+            world.entity_named("Z");
         });
 
     a.get::<&Position>(|pos| {
@@ -2628,13 +2628,13 @@ fn entity_with_after_builder_method() {
         assert_eq!(pos.y, 60);
     });
 
-    let x = world.lookup_recursively(c"X");
+    let x = world.lookup_recursively("X");
     assert!(x.has_id(a));
 
-    let y = world.lookup_recursively(c"Y");
+    let y = world.lookup_recursively("Y");
     assert!(y.has_first::<Likes>(b));
 
-    let z = world.lookup_recursively(c"Z");
+    let z = world.lookup_recursively("Z");
     assert!(z.has_id((*flecs::IsA, c)));
 }
 
@@ -2646,21 +2646,21 @@ fn entity_with_before_builder_method() {
     let a = world
         .entity()
         .with(|| {
-            world.entity_named(c"X");
+            world.entity_named("X");
         })
         .set(Position { x: 10, y: 20 });
 
     let b = world
         .entity()
         .with_first::<Likes>(|| {
-            world.entity_named(c"Y");
+            world.entity_named("Y");
         })
         .set(Position { x: 30, y: 40 });
 
     let c = world
         .entity()
         .with_first_id(*flecs::IsA, || {
-            world.entity_named(c"Z");
+            world.entity_named("Z");
         })
         .set(Position { x: 50, y: 60 });
 
@@ -2679,13 +2679,13 @@ fn entity_with_before_builder_method() {
         assert_eq!(pos.y, 60);
     });
 
-    let x = world.lookup_recursively(c"X");
+    let x = world.lookup_recursively("X");
     assert!(x.has_id(a));
 
-    let y = world.lookup_recursively(c"Y");
+    let y = world.lookup_recursively("Y");
     assert!(y.has_first::<Likes>(b));
 
-    let z = world.lookup_recursively(c"Z");
+    let z = world.lookup_recursively("Z");
     assert!(z.has_id((*flecs::IsA, c)));
 }
 
@@ -2695,13 +2695,13 @@ fn entity_scope_after_builder_method() {
     let world = World::new();
 
     world
-        .entity_named(c"P")
+        .entity_named("P")
         .set(Position { x: 10, y: 20 })
         .scope(|_| {
-            world.entity_named(c"C");
+            world.entity_named("C");
         });
 
-    let c = world.lookup_recursively(c"P::C");
+    let c = world.lookup_recursively("P::C");
     assert!(c.is_valid());
 }
 
@@ -2711,13 +2711,13 @@ fn entity_scope_before_builder_method() {
     let world = World::new();
 
     world
-        .entity_named(c"P")
+        .entity_named("P")
         .scope(|_| {
-            world.entity_named(c"C");
+            world.entity_named("C");
         })
         .set(Position { x: 10, y: 20 });
 
-    let c = world.lookup_recursively(c"P::C");
+    let c = world.lookup_recursively("P::C");
     assert!(c.is_valid());
 }
 
@@ -2740,7 +2740,7 @@ fn entity_entity_id_str() {
     structs!();
     let world = World::new();
 
-    let id = world.entity_named(c"Foo");
+    let id = world.entity_named("Foo");
     assert_eq!(id.to_str(), "Foo");
 }
 
@@ -2749,7 +2749,7 @@ fn entity_pair_id_str() {
     structs!();
     let world = World::new();
 
-    let id = world.id_from_id((world.entity_named(c"Rel"), world.entity_named(c"Obj")));
+    let id = world.id_from_id((world.entity_named("Rel"), world.entity_named("Obj")));
 
     assert_eq!(id.to_str(), "(Rel,Obj)");
 }
@@ -2759,7 +2759,7 @@ fn entity_role_id_str() {
     structs!();
     let world = World::new();
 
-    let id = world.id_from_id(flecs::id_flags::AutoOverride::ID | world.entity_named(c"Foo").id());
+    let id = world.id_from_id(flecs::id_flags::AutoOverride::ID | world.entity_named("Foo").id());
 
     assert_eq!(id.to_str(), "AUTO_OVERRIDE|Foo");
 }
@@ -2769,7 +2769,7 @@ fn entity_id_str_from_entity_view() {
     structs!();
     let world = World::new();
 
-    let id = world.entity_named(c"Foo");
+    let id = world.entity_named("Foo");
     assert_eq!(id.to_str(), "Foo");
 }
 
@@ -2778,7 +2778,7 @@ fn entity_id_str_from_entity() {
     structs!();
     let world = World::new();
 
-    let id = world.entity_named(c"Foo");
+    let id = world.entity_named("Foo");
     assert_eq!(id.to_str(), "Foo");
 }
 
@@ -3293,21 +3293,21 @@ fn entity_create_named_twice_deferred() {
 
     world.defer_begin();
 
-    let e1 = world.entity_named(c"e");
-    let e2 = world.entity_named(c"e");
+    let e1 = world.entity_named("e");
+    let e2 = world.entity_named("e");
 
-    let f1 = world.entity_named(c"p::f");
-    let f2 = world.entity_named(c"p::f");
+    let f1 = world.entity_named("p::f");
+    let f2 = world.entity_named("p::f");
 
-    world.entity_named(c"q").scope(|_w| {
-        world.entity_named(c"g");
+    world.entity_named("q").scope(|_w| {
+        world.entity_named("g");
     });
 
     world.defer_end();
 
     assert_eq!(e1.path().unwrap(), "::e");
     assert_eq!(f1.path().unwrap(), "::p::f");
-    assert!(world.try_lookup_recursive(c"::q::g").is_some());
+    assert!(world.try_lookup_recursive("::q::g").is_some());
 
     assert_eq!(e1, e2);
     assert_eq!(f1, f2);
@@ -3392,7 +3392,7 @@ fn entity_entity_w_root_name() {
     structs!();
     let world = World::new();
 
-    let e = world.entity_named(c"::foo");
+    let e = world.entity_named("::foo");
     assert_eq!(e.name(), "foo");
     assert_eq!(e.path().unwrap(), "::foo");
 }
@@ -3402,9 +3402,9 @@ fn entity_entity_w_root_name_from_scope() {
     structs!();
     let world = World::new();
 
-    let p = world.entity_named(c"parent");
+    let p = world.entity_named("parent");
     world.set_scope_id(p);
-    let e = world.entity_named(c"::foo");
+    let e = world.entity_named("::foo");
     world.set_scope_id(0);
 
     assert_eq!(e.name(), "foo");
@@ -3463,7 +3463,7 @@ fn entity_prefab_hierarchy_w_types() {
     );
 
     let railgun = world.prefab_type::<Railgun>().is_a::<Turret>();
-    let railgun_base = railgun.lookup_recursively(c"Base");
+    let railgun_base = railgun.lookup_recursively("Base");
     let railgun_head = world
         .prefab_type::<Head>()
         .child_of::<Railgun>()
@@ -3548,7 +3548,7 @@ fn entity_prefab_hierarchy_w_root_types() {
     let inst = world.entity().is_a::<Turret>();
     assert!(inst.is_valid());
 
-    let inst_base = inst.lookup_recursively(c"Base");
+    let inst_base = inst.lookup_recursively("Base");
     assert!(inst_base.is_valid());
 }
 
@@ -3968,11 +3968,11 @@ fn entity_set_alias() {
     structs!();
     let world = World::new();
 
-    let e = world.entity_named(c"parent::child");
-    e.set_alias(c"parent_child");
+    let e = world.entity_named("parent::child");
+    e.set_alias("parent_child");
 
-    assert_eq!(e, world.lookup_recursively(c"parent::child"));
-    assert_eq!(e, world.lookup_recursively(c"parent_child"));
+    assert_eq!(e, world.lookup_recursively("parent::child"));
+    assert_eq!(e, world.lookup_recursively("parent_child"));
 }
 
 #[test]

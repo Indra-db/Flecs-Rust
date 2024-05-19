@@ -538,7 +538,7 @@ impl ComponentId for sys::EcsDefaultChildComponent {
         //this is already registered in the world inside C
     }
 
-    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &CStr) -> EntityT {
+    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
         //this is already registered in the world inside C
         ECS_DEFAULT_CHILD_COMPONENT
     }
@@ -590,7 +590,7 @@ impl ComponentId for sys::EcsComponent {
         //this is already registered in the world inside C
     }
 
-    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &CStr) -> EntityT {
+    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
         //this is already registered in the world inside C
         unsafe { sys::FLECS_IDEcsComponentID_ }
     }
@@ -646,7 +646,7 @@ impl ComponentId for TickSource {
         //this is already registered in the world inside C
     }
 
-    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &CStr) -> EntityT {
+    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
         //this is already registered in the world inside C
         ECS_TICK_SOURCE
     }
