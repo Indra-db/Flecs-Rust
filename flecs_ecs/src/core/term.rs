@@ -919,7 +919,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         self.set_inout_kind(InOutKind::InOut)
     }
 
-    /// short for `set_inout(InOutKind::InOutNone)`
+    /// short for `set_inout(InOutKind::None)`
     ///
     /// # See also
     ///
@@ -929,7 +929,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::inout_none")]
     #[inline(always)]
     fn set_inout_none(&mut self) -> &mut Self {
-        self.set_inout_kind(InOutKind::InOutNone)
+        self.set_inout_kind(InOutKind::None)
     }
 
     /// set operator of term
@@ -1080,7 +1080,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::filter")]
     #[inline(always)]
     fn filter(&mut self) -> &mut Self {
-        self.current_term_mut().inout |= InOutKind::InOutFilter as i16;
+        self.current_term_mut().inout |= InOutKind::Filter as i16;
         self
     }
 }

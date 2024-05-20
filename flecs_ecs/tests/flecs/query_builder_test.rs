@@ -3521,7 +3521,7 @@ fn query_builder_inout_shortcuts() {
 
     t = query.term(3);
     assert_eq!(t.id(), d);
-    assert_eq!(t.inout(), InOutKind::InOutNone);
+    assert_eq!(t.inout(), InOutKind::None);
 }
 
 #[test]
@@ -4552,7 +4552,7 @@ fn query_builder_with_t_inout() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    assert_eq!(f.term(0).inout(), InOutKind::InOutNone);
+    assert_eq!(f.term(0).inout(), InOutKind::None);
 }
 
 #[test]
@@ -4580,7 +4580,7 @@ fn query_builder_with_r_t_inout_2() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    assert_eq!(f.term(0).inout(), InOutKind::InOutNone);
+    assert_eq!(f.term(0).inout(), InOutKind::None);
 }
 
 #[test]
@@ -4594,7 +4594,7 @@ fn query_builder_with_r_t_inout_3() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    assert_eq!(f.term(0).inout(), InOutKind::InOutNone);
+    assert_eq!(f.term(0).inout(), InOutKind::None);
 }
 
 #[test]
@@ -4611,7 +4611,7 @@ fn query_builder_with_r_t_inout() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    assert_eq!(f.term(0).inout(), InOutKind::InOutNone);
+    assert_eq!(f.term(0).inout(), InOutKind::None);
 }
 
 #[test]

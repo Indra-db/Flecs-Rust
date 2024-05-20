@@ -44,9 +44,9 @@ pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\
 ///
 /// Variants:
 ///
-/// - `InOutDefault`: Default behavior, which is `InOut` for regular terms and `In` for shared terms.
-/// - `InOutNone`: Indicates the term is neither read nor written by the system.
-/// - `InOutFilter`: Same as `InOutNOne` + prevents term from triggering observers
+/// - `Default`: Default behavior, which is `InOut` for regular terms and `In` for shared terms.
+/// - `None`: Indicates the term is neither read nor written by the system.
+/// - `Filter`: Same as `None` + prevents term from triggering observers
 /// - `InOut`: The term is both read and written, implying a mutable access to the component data.
 /// - `In`: The term is only read, implying an immutable access to the component data.
 /// - `Out`: The term is only written, providing exclusive access to modify the component data.
@@ -54,9 +54,9 @@ pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum InOutKind {
-    InOutDefault = sys::ecs_inout_kind_t_EcsInOutDefault as u32,
-    InOutNone = sys::ecs_inout_kind_t_EcsInOutNone as u32,
-    InOutFilter = sys::ecs_inout_kind_t_EcsInOutFilter as u32,
+    Default = sys::ecs_inout_kind_t_EcsInOutDefault as u32,
+    None = sys::ecs_inout_kind_t_EcsInOutNone as u32,
+    Filter = sys::ecs_inout_kind_t_EcsInOutFilter as u32,
     InOut = sys::ecs_inout_kind_t_EcsInOut as u32,
     In = sys::ecs_inout_kind_t_EcsIn as u32,
     Out = sys::ecs_inout_kind_t_EcsOut as u32,
@@ -71,13 +71,13 @@ impl InOutKind {
 impl From<sys::ecs_inout_kind_t> for InOutKind {
     fn from(value: sys::ecs_inout_kind_t) -> Self {
         match value {
-            sys::ecs_inout_kind_t_EcsInOutDefault => InOutKind::InOutDefault,
-            sys::ecs_inout_kind_t_EcsInOutNone => InOutKind::InOutNone,
+            sys::ecs_inout_kind_t_EcsInOutDefault => InOutKind::Default,
+            sys::ecs_inout_kind_t_EcsInOutNone => InOutKind::None,
+            sys::ecs_inout_kind_t_EcsInOutFilter => InOutKind::Filter,
             sys::ecs_inout_kind_t_EcsInOut => InOutKind::InOut,
             sys::ecs_inout_kind_t_EcsIn => InOutKind::In,
             sys::ecs_inout_kind_t_EcsOut => InOutKind::Out,
-            sys::ecs_inout_kind_t_EcsInOutFilter => InOutKind::InOutFilter,
-            _ => InOutKind::InOutDefault,
+            _ => InOutKind::Default,
         }
     }
 }
@@ -92,13 +92,13 @@ const EcsInOutFilter: i16 = sys::ecs_inout_kind_t_EcsInOutFilter as i16;
 impl From<i16> for InOutKind {
     fn from(value: i16) -> Self {
         match value {
-            EcsInOutDefault => InOutKind::InOutDefault,
-            EcsInOutNone => InOutKind::InOutNone,
+            EcsInOutDefault => InOutKind::Default,
+            EcsInOutNone => InOutKind::None,
+            EcsInOutFilter => InOutKind::Filter,
             EcsInOut => InOutKind::InOut,
             EcsIn => InOutKind::In,
             EcsOut => InOutKind::Out,
-            EcsInOutFilter => InOutKind::InOutFilter,
-            _ => InOutKind::InOutDefault,
+            _ => InOutKind::Default,
         }
     }
 }
@@ -106,12 +106,12 @@ impl From<i16> for InOutKind {
 impl From<InOutKind> for i16 {
     fn from(value: InOutKind) -> Self {
         match value {
-            InOutKind::InOutDefault => sys::ecs_inout_kind_t_EcsInOutDefault as i16,
-            InOutKind::InOutNone => sys::ecs_inout_kind_t_EcsInOutNone as i16,
+            InOutKind::Default => sys::ecs_inout_kind_t_EcsInOutDefault as i16,
+            InOutKind::None => sys::ecs_inout_kind_t_EcsInOutNone as i16,
+            InOutKind::Filter => sys::ecs_inout_kind_t_EcsInOutFilter as i16,
             InOutKind::InOut => sys::ecs_inout_kind_t_EcsInOut as i16,
             InOutKind::In => sys::ecs_inout_kind_t_EcsIn as i16,
             InOutKind::Out => sys::ecs_inout_kind_t_EcsOut as i16,
-            InOutKind::InOutFilter => sys::ecs_inout_kind_t_EcsInOutFilter as i16,
         }
     }
 }
