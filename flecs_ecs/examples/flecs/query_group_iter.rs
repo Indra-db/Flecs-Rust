@@ -137,6 +137,7 @@ fn main() {
     //  group: "::Cell_1_0" - Table [Npc, Beggar, (WorldCell,Cell_1_0)]
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();

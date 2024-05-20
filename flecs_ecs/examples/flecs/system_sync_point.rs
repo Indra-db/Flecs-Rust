@@ -90,6 +90,7 @@ fn main() {
     // sync point from the schedule.
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 #[ignore = "`set_log_level` is not safe in parallel tests"]
 fn test() {

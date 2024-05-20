@@ -75,6 +75,7 @@ fn main() {
     //  Bob has a position component, so the try_get callback ran.
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();

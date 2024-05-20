@@ -183,6 +183,7 @@ fn main() {
     //  Group deleted: "Third"
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();

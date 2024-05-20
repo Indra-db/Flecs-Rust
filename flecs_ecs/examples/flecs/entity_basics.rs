@@ -69,6 +69,7 @@ fn main() {
     //  Bob has Position { x: 20.0, y: 30.0 }
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();

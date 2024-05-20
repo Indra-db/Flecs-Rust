@@ -18,7 +18,9 @@ fn main() {
     let world = World::new();
 
     // Add the traits to mark the component to be inherited
-    world.component::<Velocity>().inheritable();
+    world
+        .component::<Velocity>()
+        .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
 
     // Create a query for Position, Velocity. We'll create a few entities that
     // have Velocity as owned and shared component.
@@ -91,6 +93,7 @@ fn main() {
     //  entity e4 has Position { x: 14.0, y: 25.0 }
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();

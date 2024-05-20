@@ -133,6 +133,7 @@ fn main() {
     // all units in all platoons for all players.
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();

@@ -142,6 +142,7 @@ fn main() {
     // requires: 1.21 gigawatts
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 #[ignore = "PairIsTag with add only allowing tags is problematic, set asserts."]
 fn test() {

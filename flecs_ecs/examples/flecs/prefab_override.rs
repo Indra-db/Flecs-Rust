@@ -21,8 +21,12 @@ fn main() {
     let world = World::new();
 
     // Add the traits to mark the components to be inherited
-    world.component::<Defence>().inheritable();
-    world.component::<Attack>().inheritable();
+    world
+        .component::<Defence>()
+        .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
+    world
+        .component::<Attack>()
+        .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
 
     // Attack and Damage are properties that can be shared across many
     // spaceships. This saves memory, and speeds up prefab creation as we don't
@@ -69,6 +73,7 @@ fn main() {
     //  damage: 0
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();

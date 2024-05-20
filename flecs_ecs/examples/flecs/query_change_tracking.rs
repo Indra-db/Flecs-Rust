@@ -156,6 +156,7 @@ fn main() {
     //  iter.is_changed() for table [Position, (Identifier,Name), (IsA,prefab_dirty_true)]: true
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 #[ignore = "v4 bug flecs core"]
 fn test() {

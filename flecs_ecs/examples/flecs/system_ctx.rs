@@ -103,6 +103,7 @@ fn main() {
     //  537 and 540 collided!
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();

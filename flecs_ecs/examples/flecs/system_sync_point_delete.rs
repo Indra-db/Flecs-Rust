@@ -108,6 +108,7 @@ fn main() {
     // Note how after both entities are deleted, all three systems will be de-activated and not ran by the scheduler
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 #[ignore = "`set_log_level` is not safe in parallel tests"]
 fn test() {

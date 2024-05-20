@@ -29,7 +29,9 @@ fn main() {
     let world = World::new();
 
     // Add the traits to mark the component to be inherited
-    world.component::<Defence>().inheritable();
+    world
+        .component::<Defence>()
+        .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
 
     // Create a prefab with Position and Velocity components
     let spaceship = world.prefab_named("Prefab").set(Defence { value: 50.0 });
@@ -59,6 +61,7 @@ fn main() {
     //  ::my_spaceship: 100
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();

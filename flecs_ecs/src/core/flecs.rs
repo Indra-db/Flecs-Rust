@@ -2,6 +2,8 @@ use std::{ops::Deref, sync::OnceLock};
 
 use crate::core::*;
 
+pub trait FlecsTrait {}
+
 #[macro_export]
 macro_rules! create_pre_registered_component {
     ($struct_name:ident, $const_name:ident) => {
@@ -10,6 +12,8 @@ macro_rules! create_pre_registered_component {
         impl FlecsConstantId for $struct_name {
             const ID: u64 = $const_name;
         }
+
+        impl FlecsTrait for $struct_name {}
 
         impl Deref for $struct_name {
             type Target = u64;

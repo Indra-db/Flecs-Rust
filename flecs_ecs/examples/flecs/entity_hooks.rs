@@ -42,6 +42,7 @@ fn main() {
     //  removed Position { x: 10.0, y: 20.0 } from "Bob"
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();

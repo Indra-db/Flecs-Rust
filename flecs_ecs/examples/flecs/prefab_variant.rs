@@ -94,6 +94,7 @@ fn main() {
     //    - capacity: 500
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();

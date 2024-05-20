@@ -91,6 +91,7 @@ fn main() {
     //  Creature id: 533 at location 8,8 is enchanted with mystical energy, ability power: 12
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();

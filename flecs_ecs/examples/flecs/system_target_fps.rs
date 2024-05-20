@@ -37,6 +37,7 @@ fn main() {
     //  Delta time: 1.0170991
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();

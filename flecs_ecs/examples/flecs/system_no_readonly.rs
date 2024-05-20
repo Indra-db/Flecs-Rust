@@ -94,6 +94,7 @@ fn main() {
     //  Assigned waiter_2 to plate_3!
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 #[ignore = "todo fix"]
 fn test() {

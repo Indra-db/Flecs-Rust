@@ -1,5 +1,9 @@
-#![feature(internal_output_capture)]
-#[allow(clippy::all)]
+//#![feature(internal_output_capture)]
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_variables)]
+#![allow(unused)]
+
 // to initialize the OS api for flecs before tests run.
 #[cfg(test)]
 #[ctor::ctor]

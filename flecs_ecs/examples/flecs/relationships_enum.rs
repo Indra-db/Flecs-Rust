@@ -139,6 +139,7 @@ fn main() {
     //  (relationships_enum.Tile,relationships_enum.Tile.Stone)
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 #[ignore = "is a hierarchy traversal not supported with new get callback"]
 fn test() {

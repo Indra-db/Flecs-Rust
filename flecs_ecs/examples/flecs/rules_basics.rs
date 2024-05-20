@@ -71,6 +71,7 @@ fn main() {
     // Alice eats Salad
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();

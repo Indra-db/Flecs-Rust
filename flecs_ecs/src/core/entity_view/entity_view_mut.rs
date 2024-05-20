@@ -1,8 +1,11 @@
 use std::os::raw::c_void;
 
 use flecs_ecs::core::*;
+use sys::EcsIsA;
 
 use crate::sys;
+
+use self::flecs::FlecsTrait;
 
 // functions in here match most of the functions in the c++ entity and entity_builder class
 impl<'a> EntityView<'a> {
@@ -63,13 +66,38 @@ impl<'a> EntityView<'a> {
         unsafe { self.add_id_unchecked(T::get_id(world)) }
     }
 
+    /// Adds a flecs trait.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_builder::add`
+    #[doc(alias = "entity_builder::add")]
+    pub fn add_trait<T>(self) -> Self
+    where
+        T: IntoComponentId,
+        T::First: EmptyComponent + FlecsTrait,
+    {
+        let world = self.world;
+        unsafe { self.add_id_unchecked(T::get_id(world)) }
+    }
+
+    /// Override a component on an entity.
+    /// This is useful if you want to override a component that is inherited by a prefab on a per entity basis
+    ///
+    /// # Panics
+    ///
+    /// Caller must ensure the entity has the component to override.
     pub fn override_type<T>(self) -> Self
     where
         T: IntoComponentId,
     {
-        //TODO check if is_a target
-        let world = self.world;
-        unsafe { self.add_id_unchecked(T::get_id(world)) }
+        let id = T::get_id(self.world);
+        let world_ptr = self.world.world_ptr_mut();
+
+        if unsafe { sys::ecs_get_target_for_id(world_ptr, *self.id, EcsIsA, id) } == 0 {
+            panic!("Entity does not have the component to override");
+        }
+        unsafe { self.add_id_unchecked(id) }
     }
 
     /// Adds a pair to the entity

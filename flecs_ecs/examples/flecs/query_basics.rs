@@ -72,6 +72,7 @@ fn main() {
     //  [Position { x: 19.0, y: 32.0 }]
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();

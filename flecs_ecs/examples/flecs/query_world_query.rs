@@ -47,6 +47,7 @@ fn main() {
     //  Entity e2: Position { x: 13.0, y: 24.0 }
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();

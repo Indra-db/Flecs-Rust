@@ -35,11 +35,21 @@ fn main() {
     let world = World::new();
 
     // Add the traits to mark the components to be inherited
-    world.component::<Position>().inheritable();
-    world.component::<Defence>().inheritable();
-    world.component::<ImpulseSpeed>().inheritable();
-    world.component::<FreightCapacity>().inheritable();
-    world.component::<HasFlt>().inheritable();
+    world
+        .component::<Position>()
+        .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
+    world
+        .component::<Defence>()
+        .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
+    world
+        .component::<ImpulseSpeed>()
+        .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
+    world
+        .component::<FreightCapacity>()
+        .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
+    world
+        .component::<HasFlt>()
+        .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
 
     // Create a prefab hierarchy.
     let spaceship = world
@@ -103,6 +113,7 @@ fn main() {
     //  Entity my_mammoth_freighter: Position { x: 50.0, y: 0.0 }
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 #[test]
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();

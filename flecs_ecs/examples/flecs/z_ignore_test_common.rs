@@ -1,17 +1,19 @@
-use std::{
-    io::{set_output_capture, Error},
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
+#[cfg(feature = "flecs_nightly_tests")]
 pub use capture_stdio::*;
+#[cfg(feature = "flecs_nightly_tests")]
+use std::io::{set_output_capture, Error};
 
 /// Wrap `std::io::set_output_capture`
+#[cfg(feature = "flecs_nightly_tests")]
 pub struct OutputCapture {
     local_stream: Arc<Mutex<Vec<u8>>>,
     original: Option<Arc<Mutex<Vec<u8>>>>,
     restored: bool,
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 impl Capture for OutputCapture {
     fn capture() -> Result<Self, Error> {
         let local_stream = Arc::new(Mutex::new(vec![]));
@@ -31,6 +33,7 @@ impl Capture for OutputCapture {
     }
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 impl OutputCapture {
     /// Get the captured output
     pub fn output(&self) -> Arc<Mutex<Vec<u8>>> {
@@ -56,6 +59,7 @@ impl OutputCapture {
     }
 }
 
+#[cfg(feature = "flecs_nightly_tests")]
 impl Drop for OutputCapture {
     fn drop(&mut self) {
         if !self.restored {
