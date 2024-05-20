@@ -299,7 +299,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.term();
         self.init_current_term(id);
         let current_term = self.current_term_mut();
-        if current_term.inout == InOutKind::InOutDefault as i16 {
+        if current_term.inout == InOutKind::Default as i16 {
             self.set_inout_none();
         }
         self
@@ -434,7 +434,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.term();
         self.set_first_name(name);
         let term = self.current_term();
-        if term.inout == InOutKind::InOutDefault as i16 {
+        if term.inout == InOutKind::Default as i16 {
             self.set_inout_none();
         }
         self
@@ -450,7 +450,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.term();
         self.set_first_name(first).set_second_name(second);
         let term = self.current_term();
-        if term.inout == InOutKind::InOutDefault as i16 {
+        if term.inout == InOutKind::Default as i16 {
             self.set_inout_none();
         }
         self
@@ -462,7 +462,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.init_current_term(first.into());
         self.set_second_name(second);
         let term = self.current_term();
-        if term.inout == InOutKind::InOutDefault as i16 {
+        if term.inout == InOutKind::Default as i16 {
             self.set_inout_none();
         }
         self
@@ -473,7 +473,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.term();
         self.set_first_name(first).set_second_id(second.into());
         let term = self.current_term();
-        if term.inout == InOutKind::InOutDefault as i16 {
+        if term.inout == InOutKind::Default as i16 {
             self.set_inout_none();
         }
         self
