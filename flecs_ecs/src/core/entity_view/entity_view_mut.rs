@@ -75,7 +75,7 @@ impl<'a> EntityView<'a> {
     pub fn add_trait<T>(self) -> Self
     where
         T: IntoComponentId,
-        T::First: EmptyComponent + FlecsTrait,
+        T::First: FlecsTrait,
     {
         let world = self.world;
         unsafe { self.add_id_unchecked(T::get_id(world)) }

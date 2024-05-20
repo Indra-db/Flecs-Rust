@@ -2130,7 +2130,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
-    pub fn enqueue<T: NotEmptyComponent + ComponentId>(self, event: T) {
+    pub fn enqueue<T: ComponentId>(self, event: T) {
         self.world().event().target(self).enqueue(event);
     }
 }
