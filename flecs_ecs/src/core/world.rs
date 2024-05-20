@@ -2758,6 +2758,7 @@ impl World {
 
     /// Create an entity that's associated with a name.
     /// The name does an extra allocation if it's bigger than 24 bytes. To avoid this, use `entity_named_cstr`.
+    /// length of 24 bytes: `"hi this is 24 bytes long"`
     ///
     /// Named entities can be looked up with the lookup functions. Entity names
     /// may be scoped, where each element in the name is separated by "::".
