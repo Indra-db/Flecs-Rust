@@ -208,6 +208,26 @@ type GroupByFn = extern "C" fn(*mut WorldT, *mut TableT, IdT, *mut c_void) -> u6
 
 /// Functions to build a query using terms.
 pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
+    /// set the name of the query-like object
+    fn named(&mut self, name: &str) -> &mut Self {
+        let name = compact_str::format_compact!("{}\0", name);
+        let world_ptr = self.world_ptr_mut();
+
+        let entity_desc: sys::ecs_entity_desc_t = sys::ecs_entity_desc_t {
+            name: name.as_ptr() as *const _,
+            sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
+            ..std::default::Default::default()
+        };
+        let entity_field_ref = &mut self.query_desc_mut().entity;
+        if *entity_field_ref != 0 {
+            unsafe { sys::ecs_delete(world_ptr, *entity_field_ref) };
+        }
+
+        *entity_field_ref = unsafe { sys::ecs_entity_init(world_ptr, &entity_desc) };
+        self
+    }
+
     /// set itself to be instanced
     ///
     /// # See also
