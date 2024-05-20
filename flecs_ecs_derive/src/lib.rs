@@ -90,7 +90,7 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let is_not_generic = input.generics.params.is_empty();
     let has_more_than_one_generic = input.generics.params.len() > 1;
 
-    let is_struct = matches!(input.data, Data::Struct(_));
+    let mut is_struct = matches!(input.data, Data::Struct(_));
     let has_repr_c = check_repr_c(&input);
     let is_tag;
     let mut generated_impls = vec![];
@@ -110,6 +110,7 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
         Data::Enum(_) => {
             is_tag = generate_tag_trait(!has_repr_c);
             if !has_repr_c {
+                is_struct = true;
                 generated_impls.push(impl_cached_component_data_struct(&mut input, true, &is_tag));
             } else {
                 generated_impls.push(impl_cached_component_data_enum(&mut input));

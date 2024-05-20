@@ -1,7 +1,4 @@
-use std::{
-    ffi::{CString},
-    os::raw::c_char,
-};
+use std::{ffi::CString, os::raw::c_char};
 
 use crate::core::*;
 use crate::sys;

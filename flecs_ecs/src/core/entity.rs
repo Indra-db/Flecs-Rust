@@ -1,7 +1,7 @@
 use std::fmt::Display;
+use std::ops::Deref;
 use std::ops::{BitAnd, BitOr};
 use std::sync::OnceLock;
-use std::{ops::Deref};
 
 use crate::core::*;
 use crate::sys;

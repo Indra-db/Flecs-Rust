@@ -1,4 +1,4 @@
-use std::{os::raw::c_void};
+use std::os::raw::c_void;
 
 use flecs_ecs::core::*;
 
