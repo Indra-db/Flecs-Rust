@@ -192,6 +192,8 @@ impl<'a> Script<'a> {
         filename: &str,
     ) -> Entity {
         let filename = compact_str::format_compact!("{}\0", filename);
+        let world = world.world_ptr_mut();
+        let entity = entity.into();
 
         let desc = sys::ecs_script_desc_t {
             entity,
@@ -224,6 +226,8 @@ impl<'a> Script<'a> {
     #[doc(alias = "ecs_script_init")]
     pub fn init_script_from_code(world: impl IntoWorld<'a>, entity: Entity, code: &str) -> Entity {
         let code = compact_str::format_compact!("{}\0", code);
+        let world = world.world_ptr_mut();
+        let entity = entity.into();
 
         let desc = sys::ecs_script_desc_t {
             entity,
