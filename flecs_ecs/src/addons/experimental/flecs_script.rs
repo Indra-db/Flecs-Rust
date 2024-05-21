@@ -167,4 +167,107 @@ impl<'a> Script<'a> {
             None
         }
     }
+
+    /// Loads a script from a file into the ECS world.
+    ///
+    /// This function initializes an ECS script from a file specified by `filename`.
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - A pointer to the ECS world.
+    /// * `entity` - The entity handle associated with the script.
+    /// * `filename` - The path to the script file as a string slice.
+    ///
+    /// # Returns
+    ///
+    /// Returns the entity handle of the loaded script.
+    ///
+    /// # See also
+    ///
+    /// * C API: `ecs_script_init`
+    #[doc(alias = "ecs_script_init")]
+    pub fn init_script_from_file(
+        world: impl IntoWorld<'a>,
+        entity: Entity,
+        filename: &str,
+    ) -> Entity {
+        let filename = compact_str::format_compact!("{}\0", filename);
+
+        let desc = sys::ecs_script_desc_t {
+            entity,
+            filename: filename.as_ptr() as *const i8,
+            code: std::ptr::null(),
+        };
+
+        let result = unsafe { sys::ecs_script_init(world, &desc) };
+
+        result.into()
+    }
+
+    /// Loads a script from a code string into the ECS world.
+    ///
+    /// This function initializes an ECS script from a code string specified by `code`.
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - A pointer to the ECS world.
+    /// * `entity` - The entity handle associated with the script.
+    /// * `code` - The script code as a string slice.
+    ///
+    /// # Returns
+    ///
+    /// Returns the entity handle of the loaded script.
+    ///
+    /// # See also
+    ///
+    /// * C API: `ecs_script_init`
+    #[doc(alias = "ecs_script_init")]
+    pub fn init_script_from_code(world: impl IntoWorld<'a>, entity: Entity, code: &str) -> Entity {
+        let code = compact_str::format_compact!("{}\0", code);
+
+        let desc = sys::ecs_script_desc_t {
+            entity,
+            filename: std::ptr::null(),
+            code: code.as_ptr() as *const i8,
+        };
+
+        let result = unsafe { sys::ecs_script_init(world, &desc) };
+
+        result.into()
+    }
+
+    /// Update script with new code.
+    ///
+    /// # Arguments
+    ///
+    /// * code - The script code.
+    ///
+    /// * script - The script entity.
+    ///
+    /// * instance - An template instance (optional).
+    ///
+    /// # Returns
+    ///
+    /// True if success, false if failed.
+    ///
+    /// # See also
+    ///
+    /// * C API: `ecs_script_update`
+    #[doc(alias = "ecs_script_update")]
+    pub fn update(
+        world: impl IntoWorld<'a>,
+        script: impl Into<Entity>,
+        instance: Option<impl Into<Entity>>,
+        code: &str,
+    ) -> bool {
+        let code = compact_str::format_compact!("{}\0", code);
+        unsafe {
+            sys::ecs_script_update(
+                world.world_ptr_mut(),
+                *script.into(),
+                instance.map(|e| *e.into()).unwrap_or(0),
+                code.as_ptr() as *const i8,
+            ) == 0
+        }
+    }
 }
