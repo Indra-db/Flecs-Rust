@@ -8,7 +8,7 @@ use syn::{
     parse::{Parse, ParseStream},
     parse_macro_input,
     token::Comma,
-    Data, DeriveInput, Fields, Ident, LitInt, LitStr, Result, Token, Type,
+    Data, DeriveInput, Expr, Fields, Ident, LitInt, LitStr, Result, Token, Type,
 };
 
 #[proc_macro_derive(Raptor)]
@@ -695,7 +695,7 @@ pub fn tuples(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     })
 }
 
-#[derive(Default, Debug, PartialEq, PartialOrd, Ord, Eq, Clone, Copy)]
+#[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 enum Access {
     Write,
     Read,
@@ -964,17 +964,17 @@ impl Parse for Dsl {
     }
 }
 
-struct System {
-    world: Ident,
+struct Builder {
+    world: Expr,
     dsl: Dsl,
 }
 
-impl Parse for System {
+impl Parse for Builder {
     fn parse(input: ParseStream) -> Result<Self> {
-        let world = input.parse::<Ident>()?;
+        let world = input.parse::<Expr>()?;
         input.parse::<Token![,]>()?;
         let dsl = input.parse::<Dsl>()?;
-        Ok(System { world, dsl })
+        Ok(Builder { world, dsl })
     }
 }
 
@@ -1010,7 +1010,10 @@ fn expand_trav(term: &TermId) -> Vec<TokenStream> {
 }
 
 fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
-    terms.sort_by_key(|t| t.access);
+    terms.sort_by_key(|t| match t.access {
+        Access::None => 1,
+        _ => 0,
+    });
     let iter_terms = terms
         .iter()
         .filter_map(|t| {
@@ -1162,7 +1165,7 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
 
 #[proc_macro]
 pub fn query(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
-    let input = parse_macro_input!(input as System);
+    let input = parse_macro_input!(input as Builder);
     let mut terms = input.dsl.terms;
 
     let (iter_type, builder_calls) = expand_dsl(&mut terms);
@@ -1178,7 +1181,7 @@ pub fn query(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
 #[proc_macro]
 pub fn system(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
-    let input = parse_macro_input!(input as System);
+    let input = parse_macro_input!(input as Builder);
     let mut terms = input.dsl.terms;
 
     let (iter_type, builder_calls) = expand_dsl(&mut terms);
@@ -1194,7 +1197,7 @@ pub fn system(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
 #[proc_macro]
 pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
-    let input = parse_macro_input!(input as System);
+    let input = parse_macro_input!(input as Builder);
     let mut terms = input.dsl.terms;
 
     let (iter_type, builder_calls) = expand_dsl(&mut terms);
