@@ -4,10 +4,11 @@ use proc_macro::TokenStream as ProcMacroTokenStream;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use syn::{
+    parenthesized,
     parse::{Parse, ParseStream},
     parse_macro_input,
     token::Comma,
-    Data, DeriveInput, Fields, Ident, LitInt, Result,
+    Data, DeriveInput, Fields, Ident, LitInt, LitStr, Result, Token, Type,
 };
 
 #[proc_macro_derive(Raptor)]
@@ -692,4 +693,517 @@ pub fn tuples(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
             #invocations
         )*
     })
+}
+
+#[derive(Default, Debug, PartialEq, PartialOrd, Ord, Eq, Clone, Copy)]
+enum Access {
+    Write,
+    Read,
+    #[default]
+    None,
+}
+
+impl Parse for Access {
+    fn parse(input: ParseStream) -> Result<Self> {
+        if input.peek(Token![&]) {
+            input.parse::<Token![&]>()?;
+            if input.peek(Token![mut]) {
+                input.parse::<Token![mut]>()?;
+                Ok(Access::Write)
+            } else {
+                Ok(Access::Read)
+            }
+        } else {
+            Ok(Access::None)
+        }
+    }
+}
+
+#[derive(Debug)]
+enum TermIdent {
+    Local(Ident),
+    Variable(LitStr),
+    Type(Type),
+    Literal(LitStr),
+    Singleton,
+    Wildcard,
+    Any,
+}
+
+impl Parse for TermIdent {
+    fn parse(input: ParseStream) -> Result<Self> {
+        if input.peek(Token![*]) {
+            Ok(TermIdent::Wildcard)
+        } else if input.peek(Token![_]) {
+            Ok(TermIdent::Any)
+        } else if input.peek(Token![$]) {
+            // Variable
+            input.parse::<Token![$]>()?;
+            if input.peek(Ident) {
+                Ok(TermIdent::Local(input.parse::<Ident>()?))
+            } else if input.peek(LitStr) {
+                Ok(TermIdent::Variable(input.parse::<LitStr>()?))
+            } else {
+                Ok(TermIdent::Singleton)
+            }
+        } else if input.peek(LitStr) {
+            Ok(TermIdent::Literal(input.parse::<LitStr>()?))
+        } else {
+            Ok(TermIdent::Type(input.parse::<Type>()?))
+        }
+    }
+}
+
+#[derive(Default, Debug)]
+enum TermOper {
+    Not,
+    Optional,
+    AndFrom,
+    NotFrom,
+    OrFrom,
+    Or,
+    #[default]
+    And,
+}
+
+mod kw {
+    // Operators
+    syn::custom_keyword!(and);
+    syn::custom_keyword!(not);
+    syn::custom_keyword!(or);
+
+    // Traversal
+    syn::custom_keyword!(cascade);
+    syn::custom_keyword!(desc);
+    syn::custom_keyword!(up);
+}
+
+impl Parse for TermOper {
+    fn parse(input: ParseStream) -> Result<Self> {
+        if input.peek(kw::and) {
+            input.parse::<kw::and>()?;
+            input.parse::<Token![|]>()?;
+            Ok(TermOper::AndFrom)
+        } else if input.peek(kw::not) {
+            input.parse::<kw::not>()?;
+            input.parse::<Token![|]>()?;
+            Ok(TermOper::NotFrom)
+        } else if input.peek(kw::or) {
+            input.parse::<kw::or>()?;
+            input.parse::<Token![|]>()?;
+            Ok(TermOper::OrFrom)
+        } else if input.peek(Token![!]) {
+            input.parse::<Token![!]>()?;
+            Ok(TermOper::Not)
+        } else if input.peek(Token![?]) {
+            input.parse::<Token![?]>()?;
+            Ok(TermOper::Optional)
+        } else {
+            Ok(TermOper::And)
+        }
+    }
+}
+
+#[derive(Default, Debug)]
+struct TermId {
+    ident: Option<TermIdent>,
+    trav_self: bool,
+    trav_up: bool,
+    up_ident: Option<TermIdent>,
+    trav_desc: bool,
+    trav_cascade: bool,
+    cascade_ident: Option<TermIdent>,
+}
+
+fn peek_trav(input: ParseStream) -> bool {
+    input.peek(kw::cascade)
+        || input.peek(kw::desc)
+        || input.peek(kw::up)
+        || input.peek(Token![self])
+}
+
+impl Parse for TermId {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let ident = if !peek_trav(input) {
+            let ident = input.parse::<TermIdent>()?;
+            if input.peek(Token![|]) && !input.peek2(Token![|]) {
+                input.parse::<Token![|]>()?;
+            }
+            Some(ident)
+        } else {
+            None
+        };
+        let mut out = Self {
+            ident,
+            ..Self::default()
+        };
+        while peek_trav(input) {
+            if input.peek(kw::cascade) {
+                input.parse::<kw::cascade>()?;
+                out.trav_cascade = true;
+
+                if input.peek(Ident) || input.peek(Token![$]) {
+                    out.cascade_ident = Some(input.parse::<TermIdent>()?);
+                }
+            }
+            if input.peek(kw::desc) {
+                input.parse::<kw::desc>()?;
+                out.trav_desc = true;
+            }
+            if input.peek(kw::up) {
+                input.parse::<kw::up>()?;
+                out.trav_up = true;
+
+                if input.peek(Ident) || input.peek(Token![$]) {
+                    out.up_ident = Some(input.parse::<TermIdent>()?);
+                }
+            }
+            if input.peek(Token![self]) {
+                input.parse::<Token![self]>()?;
+                out.trav_self = true;
+            }
+            if input.peek(Token![|]) && !input.peek2(Token![|]) {
+                input.parse::<Token![|]>()?;
+            }
+        }
+
+        Ok(out)
+    }
+}
+
+#[derive(Default, Debug)]
+struct Term {
+    access: Access,
+    oper: TermOper,
+    source: TermId,
+    first: TermId,
+    second: TermId,
+}
+
+impl Parse for Term {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let access = input.parse::<Access>()?;
+        let oper = input.parse::<TermOper>()?;
+        if input.peek(Ident) || input.peek(Token![$]) || input.peek(LitStr) {
+            let initial = input.parse::<TermId>()?;
+            if !input.peek(Token![,]) && !input.is_empty() {
+                // Component or pair with explicit source
+                let inner;
+                parenthesized!(inner in input);
+                let source = inner.parse::<TermId>()?;
+                if inner.peek(Token![,]) {
+                    // Pair
+                    inner.parse::<Token![,]>()?;
+                    let second = inner.parse::<TermId>()?;
+                    Ok(Term {
+                        access,
+                        oper,
+                        source,
+                        first: initial,
+                        second,
+                    })
+                } else {
+                    // Component
+                    Ok(Term {
+                        access,
+                        oper,
+                        source,
+                        first: TermId::default(),
+                        second: initial,
+                    })
+                }
+            } else {
+                // Base case single component identifier
+                Ok(Term {
+                    access,
+                    oper,
+                    source: TermId::default(),
+                    first: TermId::default(),
+                    second: initial,
+                })
+            }
+        } else {
+            // Pair without explicit source
+            let inner;
+            parenthesized!(inner in input);
+            let first = inner.parse::<TermId>()?;
+            inner.parse::<Token![,]>()?;
+            let second = inner.parse::<TermId>()?;
+            Ok(Term {
+                access,
+                oper,
+                source: TermId::default(),
+                first,
+                second,
+            })
+        }
+    }
+}
+
+#[derive(Debug)]
+struct Dsl {
+    terms: Vec<Term>,
+}
+
+impl Parse for Dsl {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let mut terms = Vec::new();
+        terms.push(input.parse::<Term>()?);
+        while input.peek(Token![,]) || input.peek(Token![|]) {
+            if input.peek(Token![|]) {
+                input.parse::<Token![|]>()?;
+                input.parse::<Token![|]>()?;
+                terms.last_mut().unwrap().oper = TermOper::Or;
+            } else {
+                input.parse::<Token![,]>()?;
+            }
+            terms.push(input.parse::<Term>()?);
+        }
+
+        Ok(Dsl { terms })
+    }
+}
+
+struct System {
+    world: Ident,
+    dsl: Dsl,
+}
+
+impl Parse for System {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let world = input.parse::<Ident>()?;
+        input.parse::<Token![,]>()?;
+        let dsl = input.parse::<Dsl>()?;
+        Ok(System { world, dsl })
+    }
+}
+
+fn expand_trav(term: &TermId) -> Vec<TokenStream> {
+    let mut ops = Vec::new();
+    if term.trav_up {
+        match &term.up_ident {
+            Some(ident) => match ident {
+                TermIdent::Local(ident) => ops.push(quote! { .up_id(#ident) }),
+                TermIdent::Type(ty) => ops.push(quote! { .up_type::<#ty>() }),
+                _ => panic!("Invalid up traversal."),
+            },
+            None => ops.push(quote! { .up() }),
+        }
+    }
+    if term.trav_cascade {
+        match &term.cascade_ident {
+            Some(ident) => match ident {
+                TermIdent::Local(ident) => ops.push(quote! { .cascade_id(#ident) }),
+                TermIdent::Type(ty) => ops.push(quote! { .cascade_type::<#ty>() }),
+                _ => panic!("Invalid cascade traversal."),
+            },
+            None => ops.push(quote! { .cascade() }),
+        }
+    }
+    if term.trav_desc {
+        ops.push(quote! { .desc() });
+    }
+    if term.trav_self {
+        ops.push(quote! { .self_() });
+    }
+    ops
+}
+
+fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
+    terms.sort_by_key(|t| t.access);
+    let iter_terms = terms
+        .iter()
+        .filter_map(|t| {
+            let target = t.second.ident.as_ref().expect("Term with no target.");
+            let target = match &target {
+                TermIdent::Type(ty) => quote! { #ty },
+                TermIdent::Wildcard => quote! { flecs::Wildcard },
+                TermIdent::Any => quote! { flecs::Any },
+                _ => quote! { () },
+            };
+            let iter_type = match &t.first.ident {
+                Some(rel) => match &rel {
+                    TermIdent::Type(ty) => quote! { (#ty, #target) },
+                    TermIdent::Wildcard => quote! { (flecs::Wildcard, #target) },
+                    TermIdent::Any => quote! { (flecs::Any, #target) },
+                    _ => quote! { ((), #target) },
+                },
+                None => quote! { #target },
+            };
+            match t.access {
+                Access::Write => Some(quote! { &mut #iter_type }),
+                Access::Read => Some(quote! { & #iter_type }),
+                Access::None => None,
+            }
+        })
+        .collect::<Vec<_>>();
+    let iter_type = if iter_terms.len() == 1 {
+        quote! {
+            #( #iter_terms )*
+        }
+    } else {
+        quote! {
+            (#(
+                #iter_terms,
+            )*)
+        }
+    };
+    let builder_calls = terms
+        .iter()
+        .enumerate()
+        .filter_map(|(i, t)| {
+            let index = i as i32;
+            let second = t.second.ident.as_ref().expect("Term with no target.");
+            let mut ops = Vec::new();
+            if t.access == Access::None {
+                ops.push(quote! { .term() });
+            } else {
+                ops.push(quote! { .term_at(#index) });
+            }
+
+            // Configure first
+            if let Some(first) = &t.first.ident {
+                match first {
+                    TermIdent::Variable(var) => {
+                        let var_name = format!("${}", var.value());
+                        ops.push(quote! { .set_first_name(#var_name) });
+                    }
+                    TermIdent::Type(ty) => {
+                        if t.access == Access::None {
+                            ops.push(quote! { .set_first::<#ty>() });
+                        }
+                    }
+                    TermIdent::Local(ident) => ops.push(quote! { .set_first_id(#ident) }),
+                    TermIdent::Literal(lit) => ops.push(quote! { .set_first_name(#lit) }),
+                    TermIdent::Wildcard => ops.push(quote! { .set_first::<flecs::Wildcard>() }),
+                    TermIdent::Any => ops.push(quote! { .set_first::<flecs::Any>() }),
+                    TermIdent::Singleton => panic!("Unexpected singleton identifier."),
+                };
+            }
+
+            // Configure second
+            match second {
+                TermIdent::Variable(var) => {
+                    let var_name = format!("${}", var.value());
+                    ops.push(quote! { .set_second_name(#var_name) });
+                }
+                TermIdent::Type(ty) => {
+                    if t.access == Access::None {
+                        ops.push(quote! { .set_second::<#ty>() });
+                    }
+                }
+                TermIdent::Local(ident) => ops.push(quote! { .set_second_id(#ident) }),
+                TermIdent::Literal(lit) => ops.push(quote! { .set_second_name(#lit) }),
+                TermIdent::Wildcard => ops.push(quote! { .set_second::<flecs::Wildcard>() }),
+                TermIdent::Any => ops.push(quote! { .set_second::<flecs::Any>() }),
+                TermIdent::Singleton => panic!("Unexpected singleton identifier."),
+            };
+
+            // Configure source
+            if let Some(source) = &t.source.ident {
+                match source {
+                    TermIdent::Variable(var) => {
+                        let var_name = format!("${}", var.value());
+                        ops.push(quote! { .set_src_name(#var_name) });
+                    }
+                    TermIdent::Type(ty) => {
+                        if t.access == Access::None {
+                            ops.push(quote! { .set_first::<#ty>() });
+                        }
+                    }
+                    TermIdent::Local(ident) => ops.push(quote! { .set_src_id(#ident) }),
+                    TermIdent::Literal(lit) => ops.push(quote! { .set_src_name(#lit) }),
+                    TermIdent::Wildcard => ops.push(quote! { .set_src::<flecs::Wildcard>() }),
+                    TermIdent::Any => ops.push(quote! { .set_src::<flecs::Any>() }),
+                    TermIdent::Singleton => ops.push(quote! { .singleton() }),
+                };
+            }
+
+            // Configure operator
+            match &t.oper {
+                TermOper::Not => ops.push(quote! { .not() }),
+                TermOper::Optional => ops.push(quote! { .optional() }),
+                TermOper::Or => ops.push(quote! { .or() }),
+                TermOper::AndFrom => ops.push(quote! { .and_from() }),
+                TermOper::NotFrom => ops.push(quote! { .not_from() }),
+                TermOper::OrFrom => ops.push(quote! { .or_from() }),
+                TermOper::And => {}
+            }
+
+            // Configure traversal for first
+            let id_ops = expand_trav(&t.first);
+            if !id_ops.is_empty() {
+                ops.push(quote! { .first() #( #id_ops )* });
+            }
+
+            // Configure traversal for second
+            let id_ops = expand_trav(&t.second);
+            if !id_ops.is_empty() {
+                ops.push(quote! { .second() #( #id_ops )* });
+            }
+
+            // Configure traversal for source
+            let id_ops = expand_trav(&t.source);
+            if !id_ops.is_empty() {
+                ops.push(quote! { .src() #( #id_ops )* });
+            }
+
+            if ops.len() > 1 {
+                Some(quote! {
+                    #( #ops )*
+                })
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>();
+    (iter_type, builder_calls)
+}
+
+#[proc_macro]
+pub fn query(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
+    let input = parse_macro_input!(input as System);
+    let mut terms = input.dsl.terms;
+
+    let (iter_type, builder_calls) = expand_dsl(&mut terms);
+    let world = input.world;
+    let output = quote! {
+        #world.query::<#iter_type>()
+        #(
+            #builder_calls
+        )*
+    };
+    ProcMacroTokenStream::from(output)
+}
+
+#[proc_macro]
+pub fn system(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
+    let input = parse_macro_input!(input as System);
+    let mut terms = input.dsl.terms;
+
+    let (iter_type, builder_calls) = expand_dsl(&mut terms);
+    let world = input.world;
+    let output = quote! {
+        #world.system::<#iter_type>()
+        #(
+            #builder_calls
+        )*
+    };
+    ProcMacroTokenStream::from(output)
+}
+
+#[proc_macro]
+pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
+    let input = parse_macro_input!(input as System);
+    let mut terms = input.dsl.terms;
+
+    let (iter_type, builder_calls) = expand_dsl(&mut terms);
+    let world = input.world;
+    let output = quote! {
+        #world.observer::<#iter_type>()
+        #(
+            #builder_calls
+        )*
+    };
+    ProcMacroTokenStream::from(output)
 }
