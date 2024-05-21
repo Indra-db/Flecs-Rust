@@ -883,13 +883,18 @@ impl Parse for TermId {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
+enum TermType {
+    Pair(TermId, TermId),
+    Component(TermId),
+}
+
+#[derive(Debug)]
 struct Term {
     access: Access,
     oper: TermOper,
     source: TermId,
-    first: TermId,
-    second: TermId,
+    ty: TermType,
 }
 
 impl Parse for Term {
@@ -911,8 +916,7 @@ impl Parse for Term {
                         access,
                         oper,
                         source,
-                        first: initial,
-                        second,
+                        ty: TermType::Pair(initial, second),
                     })
                 } else {
                     // Component
@@ -920,8 +924,7 @@ impl Parse for Term {
                         access,
                         oper,
                         source,
-                        first: TermId::default(),
-                        second: initial,
+                        ty: TermType::Component(initial),
                     })
                 }
             } else {
@@ -930,8 +933,7 @@ impl Parse for Term {
                     access,
                     oper,
                     source: TermId::default(),
-                    first: TermId::default(),
-                    second: initial,
+                    ty: TermType::Component(initial),
                 })
             }
         } else {
@@ -945,8 +947,7 @@ impl Parse for Term {
                 access,
                 oper,
                 source: TermId::default(),
-                first,
-                second,
+                ty: TermType::Pair(first, second),
             })
         }
     }
@@ -1021,6 +1022,16 @@ fn expand_trav(term: &TermId) -> Vec<TokenStream> {
     ops
 }
 
+fn expand_type(ident: &TermIdent) -> TokenStream {
+    match ident {
+        TermIdent::Type(ty) => quote! { #ty },
+        TermIdent::Wildcard => quote! { flecs::Wildcard },
+        TermIdent::Any => quote! { flecs::Any },
+        TermIdent::SelfType => quote! { Self },
+        _ => quote! { () },
+    }
+}
+
 fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
     terms.sort_by_key(|t| match t.access {
         Access::None => 1,
@@ -1029,23 +1040,18 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
     let iter_terms = terms
         .iter()
         .filter_map(|t| {
-            let target = t.second.ident.as_ref().expect("Term with no target.");
-            let target = match &target {
-                TermIdent::Type(ty) => quote! { #ty },
-                TermIdent::Wildcard => quote! { flecs::Wildcard },
-                TermIdent::Any => quote! { flecs::Any },
-                TermIdent::SelfType => quote! { Self },
-                _ => quote! { () },
-            };
-            let iter_type = match &t.first.ident {
-                Some(rel) => match &rel {
-                    TermIdent::Type(ty) => quote! { (#ty, #target) },
-                    TermIdent::Wildcard => quote! { (flecs::Wildcard, #target) },
-                    TermIdent::Any => quote! { (flecs::Any, #target) },
-                    TermIdent::SelfType => quote! { (Self, #target) },
-                    _ => quote! { ((), #target) },
-                },
-                None => quote! { #target },
+            let iter_type = match &t.ty {
+                TermType::Pair(first, second) => {
+                    let first = first.ident.as_ref().expect("Pair with no first.");
+                    let second = second.ident.as_ref().expect("Pair with no second.");
+                    let first = expand_type(first);
+                    let second = expand_type(second);
+                    quote! { (#first, #second) }
+                }
+                TermType::Component(id) => {
+                    let id = id.ident.as_ref().expect("Term with no component.");
+                    expand_type(id)
+                }
             };
             match t.access {
                 Access::Write => Some(quote! { &mut #iter_type }),
@@ -1070,63 +1076,117 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
         .enumerate()
         .filter_map(|(i, t)| {
             let index = i as i32;
-            let second = t.second.ident.as_ref().expect("Term with no target.");
             let mut ops = Vec::new();
-            if t.access == Access::None {
-                ops.push(quote! { .term() });
+            let mut needs_accessor = false;
+            let mut term_accessor = if t.access == Access::None {
+                quote! { .term() }
             } else {
-                ops.push(quote! { .term_at(#index) });
-            }
-
-            // Configure first
-            if let Some(first) = &t.first.ident {
-                match first {
-                    TermIdent::Variable(var) => {
-                        let var_name = format!("${}", var.value());
-                        ops.push(quote! { .set_first_name(#var_name) });
-                    }
-                    TermIdent::Type(ty) => {
-                        if t.access == Access::None {
-                            ops.push(quote! { .set_first::<#ty>() });
-                        }
-                    }
-                    TermIdent::SelfType => {
-                        if t.access == Access::None {
-                            ops.push(quote! { .set_first::<Self>() });
-                        }
-                    }
-                    TermIdent::SelfVar => ops.push(quote! { .set_first_id(self) }),
-                    TermIdent::Local(ident) => ops.push(quote! { .set_first_id(#ident) }),
-                    TermIdent::Literal(lit) => ops.push(quote! { .set_first_name(#lit) }),
-                    TermIdent::Wildcard => ops.push(quote! { .set_first::<flecs::Wildcard>() }),
-                    TermIdent::Any => ops.push(quote! { .set_first::<flecs::Any>() }),
-                    TermIdent::Singleton => panic!("Unexpected singleton identifier."),
-                };
-            }
-
-            // Configure second
-            match second {
-                TermIdent::Variable(var) => {
-                    let var_name = format!("${}", var.value());
-                    ops.push(quote! { .set_second_name(#var_name) });
-                }
-                TermIdent::Type(ty) => {
-                    if t.access == Access::None {
-                        ops.push(quote! { .set_second::<#ty>() });
-                    }
-                }
-                TermIdent::SelfType => {
-                    if t.access == Access::None {
-                        ops.push(quote! { .set_second::<Self>() });
-                    }
-                }
-                TermIdent::SelfVar => ops.push(quote! { .set_second_id(self) }),
-                TermIdent::Local(ident) => ops.push(quote! { .set_second_id(#ident) }),
-                TermIdent::Literal(lit) => ops.push(quote! { .set_second_name(#lit) }),
-                TermIdent::Wildcard => ops.push(quote! { .set_second::<flecs::Wildcard>() }),
-                TermIdent::Any => ops.push(quote! { .set_second::<flecs::Any>() }),
-                TermIdent::Singleton => panic!("Unexpected singleton identifier."),
+                quote! { .term_at(#index) }
             };
+
+            match &t.ty {
+                TermType::Pair(first, second) => {
+                    let first_id = first.ident.as_ref().expect("Pair with no first.");
+                    let second_id = second.ident.as_ref().expect("Pair with no second.");
+
+                    match first_id {
+                        TermIdent::Variable(var) => {
+                            let var_name = format!("${}", var.value());
+                            ops.push(quote! { .set_first_name(#var_name) });
+                        }
+                        TermIdent::Type(ty) => {
+                            if t.access == Access::None {
+                                ops.push(quote! { .set_first::<#ty>() });
+                            }
+                        }
+                        TermIdent::SelfType => {
+                            if t.access == Access::None {
+                                ops.push(quote! { .set_first::<Self>() });
+                            }
+                        }
+                        TermIdent::SelfVar => ops.push(quote! { .set_first_id(self) }),
+                        TermIdent::Local(ident) => ops.push(quote! { .set_first_id(#ident) }),
+                        TermIdent::Literal(lit) => ops.push(quote! { .set_first_name(#lit) }),
+                        TermIdent::Wildcard => ops.push(quote! { .set_first::<flecs::Wildcard>() }),
+                        TermIdent::Any => ops.push(quote! { .set_first::<flecs::Any>() }),
+                        TermIdent::Singleton => panic!("Unexpected singleton identifier."),
+                    };
+
+                    match second_id {
+                        TermIdent::Variable(var) => {
+                            let var_name = format!("${}", var.value());
+                            ops.push(quote! { .set_second_name(#var_name) });
+                        }
+                        TermIdent::Type(ty) => {
+                            if t.access == Access::None {
+                                ops.push(quote! { .set_second::<#ty>() });
+                            }
+                        }
+                        TermIdent::SelfType => {
+                            if t.access == Access::None {
+                                ops.push(quote! { .set_second::<Self>() });
+                            }
+                        }
+                        TermIdent::SelfVar => ops.push(quote! { .set_second_id(self) }),
+                        TermIdent::Local(ident) => ops.push(quote! { .set_second_id(#ident) }),
+                        TermIdent::Literal(lit) => ops.push(quote! { .set_second_name(#lit) }),
+                        TermIdent::Wildcard => {
+                            ops.push(quote! { .set_second::<flecs::Wildcard>() })
+                        }
+                        TermIdent::Any => ops.push(quote! { .set_second::<flecs::Any>() }),
+                        TermIdent::Singleton => panic!("Unexpected singleton identifier."),
+                    };
+
+                    // Configure traversal for first
+                    let id_ops = expand_trav(&first);
+                    if !id_ops.is_empty() {
+                        ops.push(quote! { .first() #( #id_ops )* });
+                    }
+
+                    // Configure traversal for second
+                    let id_ops = expand_trav(&second);
+                    if !id_ops.is_empty() {
+                        ops.push(quote! { .second() #( #id_ops )* });
+                    }
+                }
+                TermType::Component(term) => {
+                    let id = term.ident.as_ref().expect("Term with no component.");
+
+                    match id {
+                        TermIdent::Variable(var) => {
+                            let var_name = var.value();
+                            ops.push(quote! { .set_var(#var_name) });
+                        }
+                        TermIdent::Type(ty) => {
+                            if t.access == Access::None {
+                                term_accessor = quote! { .with::<#ty>() };
+                                needs_accessor = true;
+                            }
+                        }
+                        TermIdent::SelfType => {
+                            if t.access == Access::None {
+                                term_accessor = quote! { .with::<Self>() };
+                                needs_accessor = true;
+                            }
+                        }
+                        TermIdent::SelfVar => ops.push(quote! { .set_id(self) }),
+                        TermIdent::Local(ident) => ops.push(quote! { .set_id(#ident) }),
+                        TermIdent::Literal(lit) => ops.push(quote! { .name(#lit) }),
+                        TermIdent::Wildcard => {
+                            term_accessor = quote! { .with::<flecs::Wildcard>() };
+                            needs_accessor = true;
+                        }
+                        TermIdent::Any => term_accessor = quote! { .with::<flecs::Any>() },
+                        TermIdent::Singleton => panic!("Unexpected singleton identifier."),
+                    };
+
+                    // Configure traversal
+                    let id_ops = expand_trav(&term);
+                    if !id_ops.is_empty() {
+                        ops.push(quote! { #( #id_ops )* });
+                    }
+                }
+            }
 
             // Configure source
             if let Some(source) = &t.source.ident {
@@ -1157,26 +1217,15 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                 TermOper::And => {}
             }
 
-            // Configure traversal for first
-            let id_ops = expand_trav(&t.first);
-            if !id_ops.is_empty() {
-                ops.push(quote! { .first() #( #id_ops )* });
-            }
-
-            // Configure traversal for second
-            let id_ops = expand_trav(&t.second);
-            if !id_ops.is_empty() {
-                ops.push(quote! { .second() #( #id_ops )* });
-            }
-
             // Configure traversal for source
             let id_ops = expand_trav(&t.source);
             if !id_ops.is_empty() {
                 ops.push(quote! { .src() #( #id_ops )* });
             }
 
-            if ops.len() > 1 {
+            if !ops.is_empty() || needs_accessor {
                 Some(quote! {
+                    #term_accessor
                     #( #ops )*
                 })
             } else {
@@ -1216,18 +1265,37 @@ pub fn system(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
             #builder_calls
         )*
     };
+    dbg!(output.to_string());
     ProcMacroTokenStream::from(output)
+}
+
+struct Observer {
+    world: Expr,
+    event: Type,
+    dsl: Dsl,
+}
+
+impl Parse for Observer {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let world = input.parse::<Expr>()?;
+        input.parse::<Token![,]>()?;
+        let event = input.parse::<Type>()?;
+        input.parse::<Token![,]>()?;
+        let dsl = input.parse::<Dsl>()?;
+        Ok(Observer { world, event, dsl })
+    }
 }
 
 #[proc_macro]
 pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
-    let input = parse_macro_input!(input as Builder);
+    let input = parse_macro_input!(input as Observer);
     let mut terms = input.dsl.terms;
 
     let (iter_type, builder_calls) = expand_dsl(&mut terms);
+    let event_type = input.event;
     let world = input.world;
     let output = quote! {
-        #world.observer::<#iter_type>()
+        #world.observer::<#event_type, #iter_type>()
         #(
             #builder_calls
         )*
