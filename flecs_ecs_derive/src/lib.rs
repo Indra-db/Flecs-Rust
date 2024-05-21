@@ -1176,7 +1176,10 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                             term_accessor = quote! { .with::<flecs::Wildcard>() };
                             needs_accessor = true;
                         }
-                        TermIdent::Any => term_accessor = quote! { .with::<flecs::Any>() },
+                        TermIdent::Any => {
+                            term_accessor = quote! { .with::<flecs::Any>() };
+                            needs_accessor = true;
+                        }
                         TermIdent::Singleton => panic!("Unexpected singleton identifier."),
                     };
 
