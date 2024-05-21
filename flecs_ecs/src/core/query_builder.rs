@@ -685,18 +685,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
 
         self.set_term_ref_mode(TermRefMode::Src);
 
-        // *self.next_term_index_mut() = self.current_term_index();
         *self.current_term_index_mut() = index;
-
-        //*self.current_term_index_mut() = prev_index;
-
-        // ecs_assert!(
-        //     unsafe { sys::ecs_term_is_initialized(self.term_ptr_mut()) },
-        //     FlecsErrorCode::InvalidOperation,
-        //     "term_at() called without initializing term"
-        // );
-
-        //compile_error!("have to fix");
 
         self
     }

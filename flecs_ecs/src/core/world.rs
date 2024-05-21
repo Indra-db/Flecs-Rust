@@ -113,6 +113,7 @@ impl World {
     ///
     /// * C++ API: `world::c_ptr`
     #[doc(alias = "world::c_ptr")]
+    #[inline(always)]
     pub fn ptr_mut(&self) -> *mut WorldT {
         self.raw_world.as_ptr()
     }
