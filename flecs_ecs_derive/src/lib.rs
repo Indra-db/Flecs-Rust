@@ -1131,20 +1131,20 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                         TermIdent::Local(ident) => ops.push(quote! { .set_second_id(#ident) }),
                         TermIdent::Literal(lit) => ops.push(quote! { .set_second_name(#lit) }),
                         TermIdent::Wildcard => {
-                            ops.push(quote! { .set_second::<flecs::Wildcard>() })
+                            ops.push(quote! { .set_second::<flecs::Wildcard>() });
                         }
                         TermIdent::Any => ops.push(quote! { .set_second::<flecs::Any>() }),
                         TermIdent::Singleton => panic!("Unexpected singleton identifier."),
                     };
 
                     // Configure traversal for first
-                    let id_ops = expand_trav(&first);
+                    let id_ops = expand_trav(first);
                     if !id_ops.is_empty() {
                         ops.push(quote! { .first() #( #id_ops )* });
                     }
 
                     // Configure traversal for second
-                    let id_ops = expand_trav(&second);
+                    let id_ops = expand_trav(second);
                     if !id_ops.is_empty() {
                         ops.push(quote! { .second() #( #id_ops )* });
                     }
@@ -1181,7 +1181,7 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                     };
 
                     // Configure traversal
-                    let id_ops = expand_trav(&term);
+                    let id_ops = expand_trav(term);
                     if !id_ops.is_empty() {
                         ops.push(quote! { #( #id_ops )* });
                     }
