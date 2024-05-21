@@ -725,6 +725,7 @@ enum TermIdent {
     Variable(LitStr),
     Type(Type),
     Literal(LitStr),
+    Self_,
     Singleton,
     Wildcard,
     Any,
@@ -1076,6 +1077,11 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                             ops.push(quote! { .set_first::<#ty>() });
                         }
                     }
+                    TermIdent::Self_ => {
+                        if t.access == Access::None {
+                            ops.push(quote! { .set_first::<Self>() });
+                        }
+                    }
                     TermIdent::Local(ident) => ops.push(quote! { .set_first_id(#ident) }),
                     TermIdent::Literal(lit) => ops.push(quote! { .set_first_name(#lit) }),
                     TermIdent::Wildcard => ops.push(quote! { .set_first::<flecs::Wildcard>() }),
@@ -1095,6 +1101,11 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                         ops.push(quote! { .set_second::<#ty>() });
                     }
                 }
+                TermIdent::Self_ => {
+                    if t.access == Access::None {
+                        ops.push(quote! { .set_second::<Self>() });
+                    }
+                }
                 TermIdent::Local(ident) => ops.push(quote! { .set_second_id(#ident) }),
                 TermIdent::Literal(lit) => ops.push(quote! { .set_second_name(#lit) }),
                 TermIdent::Wildcard => ops.push(quote! { .set_second::<flecs::Wildcard>() }),
@@ -1110,9 +1121,10 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                         ops.push(quote! { .set_src_name(#var_name) });
                     }
                     TermIdent::Type(ty) => {
-                        if t.access == Access::None {
-                            ops.push(quote! { .set_first::<#ty>() });
-                        }
+                        ops.push(quote! { .set_src::<#ty>() });
+                    }
+                    TermIdent::Self_ => {
+                        ops.push(quote! { .set_src::<Self>() });
                     }
                     TermIdent::Local(ident) => ops.push(quote! { .set_src_id(#ident) }),
                     TermIdent::Literal(lit) => ops.push(quote! { .set_src_name(#lit) }),
