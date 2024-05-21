@@ -833,8 +833,10 @@ impl Parse for TermId {
         } else {
             None
         };
-        let mut out = Self::default();
-        out.ident = ident;
+        let mut out = Self {
+            ident,
+            ..Self::default()
+        };
         while peek_trav(input) {
             if input.peek(kw::cascade) {
                 input.parse::<kw::cascade>()?;
@@ -1087,7 +1089,7 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                 }
                 TermIdent::Type(ty) => {
                     if t.access == Access::None {
-                        ops.push(quote! { .set_second::<#ty>() })
+                        ops.push(quote! { .set_second::<#ty>() });
                     }
                 }
                 TermIdent::Local(ident) => ops.push(quote! { .set_second_id(#ident) }),
