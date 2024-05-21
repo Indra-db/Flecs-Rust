@@ -725,7 +725,8 @@ enum TermIdent {
     Variable(LitStr),
     Type(Type),
     Literal(LitStr),
-    Self_,
+    SelfType,
+    SelfVar,
     Singleton,
     Wildcard,
     Any,
@@ -744,15 +745,25 @@ impl Parse for TermIdent {
                 Ok(TermIdent::Local(input.parse::<Ident>()?))
             } else if input.peek(LitStr) {
                 Ok(TermIdent::Variable(input.parse::<LitStr>()?))
+            } else if input.peek(Token![self]) {
+                input.parse::<Token![self]>()?;
+                Ok(TermIdent::SelfVar)
             } else {
                 Ok(TermIdent::Singleton)
             }
         } else if input.peek(LitStr) {
             Ok(TermIdent::Literal(input.parse::<LitStr>()?))
+        } else if input.peek(Token![Self]) {
+            input.parse::<Token![Self]>()?;
+            Ok(TermIdent::SelfType)
         } else {
             Ok(TermIdent::Type(input.parse::<Type>()?))
         }
     }
+}
+
+fn peek_id(input: &ParseStream) -> bool {
+    input.peek(Ident) || input.peek(Token![$]) || input.peek(LitStr) || input.peek(Token![Self])
 }
 
 #[derive(Default, Debug)]
@@ -885,7 +896,7 @@ impl Parse for Term {
     fn parse(input: ParseStream) -> Result<Self> {
         let access = input.parse::<Access>()?;
         let oper = input.parse::<TermOper>()?;
-        if input.peek(Ident) || input.peek(Token![$]) || input.peek(LitStr) {
+        if peek_id(&input) {
             let initial = input.parse::<TermId>()?;
             if !input.peek(Token![,]) && !input.is_empty() {
                 // Component or pair with explicit source
@@ -1023,6 +1034,7 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                 TermIdent::Type(ty) => quote! { #ty },
                 TermIdent::Wildcard => quote! { flecs::Wildcard },
                 TermIdent::Any => quote! { flecs::Any },
+                TermIdent::SelfType => quote! { Self },
                 _ => quote! { () },
             };
             let iter_type = match &t.first.ident {
@@ -1030,6 +1042,7 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                     TermIdent::Type(ty) => quote! { (#ty, #target) },
                     TermIdent::Wildcard => quote! { (flecs::Wildcard, #target) },
                     TermIdent::Any => quote! { (flecs::Any, #target) },
+                    TermIdent::SelfType => quote! { (Self, #target) },
                     _ => quote! { ((), #target) },
                 },
                 None => quote! { #target },
@@ -1077,11 +1090,12 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                             ops.push(quote! { .set_first::<#ty>() });
                         }
                     }
-                    TermIdent::Self_ => {
+                    TermIdent::SelfType => {
                         if t.access == Access::None {
                             ops.push(quote! { .set_first::<Self>() });
                         }
                     }
+                    TermIdent::SelfVar => ops.push(quote! { .set_first_id(self) }),
                     TermIdent::Local(ident) => ops.push(quote! { .set_first_id(#ident) }),
                     TermIdent::Literal(lit) => ops.push(quote! { .set_first_name(#lit) }),
                     TermIdent::Wildcard => ops.push(quote! { .set_first::<flecs::Wildcard>() }),
@@ -1101,11 +1115,12 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                         ops.push(quote! { .set_second::<#ty>() });
                     }
                 }
-                TermIdent::Self_ => {
+                TermIdent::SelfType => {
                     if t.access == Access::None {
                         ops.push(quote! { .set_second::<Self>() });
                     }
                 }
+                TermIdent::SelfVar => ops.push(quote! { .set_second_id(self) }),
                 TermIdent::Local(ident) => ops.push(quote! { .set_second_id(#ident) }),
                 TermIdent::Literal(lit) => ops.push(quote! { .set_second_name(#lit) }),
                 TermIdent::Wildcard => ops.push(quote! { .set_second::<flecs::Wildcard>() }),
@@ -1120,12 +1135,9 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                         let var_name = format!("${}", var.value());
                         ops.push(quote! { .set_src_name(#var_name) });
                     }
-                    TermIdent::Type(ty) => {
-                        ops.push(quote! { .set_src::<#ty>() });
-                    }
-                    TermIdent::Self_ => {
-                        ops.push(quote! { .set_src::<Self>() });
-                    }
+                    TermIdent::Type(ty) => ops.push(quote! { .set_src::<#ty>() }),
+                    TermIdent::SelfType => ops.push(quote! { .set_src::<Self>() }),
+                    TermIdent::SelfVar => ops.push(quote! { .set_src_id(self) }),
                     TermIdent::Local(ident) => ops.push(quote! { .set_src_id(#ident) }),
                     TermIdent::Literal(lit) => ops.push(quote! { .set_src_name(#lit) }),
                     TermIdent::Wildcard => ops.push(quote! { .set_src::<flecs::Wildcard>() }),
