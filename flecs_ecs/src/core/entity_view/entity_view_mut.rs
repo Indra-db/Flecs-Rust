@@ -60,8 +60,18 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::add")]
     pub fn add<T>(self) -> Self
     where
-        T: IntoComponentId + EmptyComponent,
+        T: IntoComponentId,
     {
+        const {
+            if !T::IS_TAGS {
+                if !T::First::IS_TAG && !T::First::IMPLS_DEFAULT {
+                    assert!(false, "Adding an element that is not a Tag / Zero sized type requires to implement Default");
+                }
+                if T::IS_PAIR && !T::Second::IS_TAG && !T::Second::IMPLS_DEFAULT {
+                    assert!(false, "Adding an element that is not a Tag / Zero sized type requires to implement Default");
+                }
+            }
+        }
         let world = self.world;
         unsafe { self.add_id_unchecked(T::get_id(world)) }
     }

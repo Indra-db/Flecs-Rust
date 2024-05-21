@@ -7,7 +7,7 @@ use flecs_ecs::prelude::*;
 
 // Some demo components:
 
-#[derive(Debug, Component)]
+#[derive(Debug, Component, Default)]
 pub struct Position {
     pub x: f32,
     pub y: f32,
@@ -81,11 +81,8 @@ fn main() {
 
     // Even though Position is a component, <MustHave, Position> contains no
     // data because MustHave has the Tag property.
-    world
-        .entity()
-        .set_pair::<MustHave, Position>(Position { x: 4.0, y: 5.0 });
+    world.entity().add::<(MustHave, Position)>(); // due to a Rust limitation, Position requires Default to add this sort of relationship.
 
-    // The id::type_id method can be used to find the component type for a pair:
     println!(
         "{}",
         world
@@ -144,7 +141,6 @@ fn main() {
 
 #[cfg(feature = "flecs_nightly_tests")]
 #[test]
-#[ignore = "PairIsTag with add only allowing tags is problematic, set asserts."]
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();
     main();
