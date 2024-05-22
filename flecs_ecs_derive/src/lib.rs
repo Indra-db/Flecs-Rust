@@ -978,16 +978,22 @@ impl Parse for Dsl {
 }
 
 struct Builder {
+    name: Option<LitStr>,
     world: Expr,
     dsl: Dsl,
 }
 
 impl Parse for Builder {
     fn parse(input: ParseStream) -> Result<Self> {
+        let name = if input.peek(LitStr) {
+            Some(input.parse::<LitStr>()?)
+        } else {
+            None
+        };
         let world = input.parse::<Expr>()?;
         input.parse::<Token![,]>()?;
         let dsl = input.parse::<Dsl>()?;
-        Ok(Builder { world, dsl })
+        Ok(Builder { name, world, dsl })
     }
 }
 
@@ -1246,11 +1252,19 @@ pub fn query(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
     let (iter_type, builder_calls) = expand_dsl(&mut terms);
     let world = input.world;
-    let output = quote! {
-        #world.query::<#iter_type>()
-        #(
-            #builder_calls
-        )*
+    let output = match input.name {
+        Some(name) => quote! {
+            #world.query_named::<#iter_type>(#name)
+            #(
+                #builder_calls
+            )*
+        },
+        None => quote! {
+            #world.query::<#iter_type>()
+            #(
+                #builder_calls
+            )*
+        },
     };
     ProcMacroTokenStream::from(output)
 }
@@ -1262,16 +1276,25 @@ pub fn system(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
     let (iter_type, builder_calls) = expand_dsl(&mut terms);
     let world = input.world;
-    let output = quote! {
-        #world.system::<#iter_type>()
-        #(
-            #builder_calls
-        )*
+    let output = match input.name {
+        Some(name) => quote! {
+            #world.system_named::<#iter_type>(#name)
+            #(
+                #builder_calls
+            )*
+        },
+        None => quote! {
+            #world.system::<#iter_type>()
+            #(
+                #builder_calls
+            )*
+        },
     };
     ProcMacroTokenStream::from(output)
 }
 
 struct Observer {
+    name: Option<LitStr>,
     world: Expr,
     event: Type,
     dsl: Dsl,
@@ -1279,12 +1302,22 @@ struct Observer {
 
 impl Parse for Observer {
     fn parse(input: ParseStream) -> Result<Self> {
+        let name = if input.peek(LitStr) {
+            Some(input.parse::<LitStr>()?)
+        } else {
+            None
+        };
         let world = input.parse::<Expr>()?;
         input.parse::<Token![,]>()?;
         let event = input.parse::<Type>()?;
         input.parse::<Token![,]>()?;
         let dsl = input.parse::<Dsl>()?;
-        Ok(Observer { world, event, dsl })
+        Ok(Observer {
+            name,
+            world,
+            event,
+            dsl,
+        })
     }
 }
 
@@ -1296,11 +1329,20 @@ pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let (iter_type, builder_calls) = expand_dsl(&mut terms);
     let event_type = input.event;
     let world = input.world;
-    let output = quote! {
-        #world.observer::<#event_type, #iter_type>()
-        #(
-            #builder_calls
-        )*
+    let output = match input.name {
+        Some(name) => quote! {
+            #world.observer_named::<#event_type, #iter_type>(#name)
+            #(
+                #builder_calls
+            )*
+        },
+        None => quote! {
+            #world.observer::<#event_type, #iter_type>()
+            #(
+                #builder_calls
+            )*
+        },
     };
+
     ProcMacroTokenStream::from(output)
 }
