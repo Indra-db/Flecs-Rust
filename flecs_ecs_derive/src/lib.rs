@@ -1,12 +1,13 @@
 extern crate proc_macro;
 
 use proc_macro::TokenStream as ProcMacroTokenStream;
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote};
 use syn::{
     parenthesized,
     parse::{Parse, ParseStream},
     parse_macro_input,
+    spanned::Spanned,
     token::Comma,
     Data, DeriveInput, Expr, Fields, Ident, LitInt, LitStr, Result, Token, Type,
 };
@@ -956,10 +957,20 @@ impl Parse for Term {
 #[derive(Debug)]
 struct Dsl {
     terms: Vec<Term>,
+    doc: Option<TokenStream>,
 }
 
 impl Parse for Dsl {
     fn parse(input: ParseStream) -> Result<Self> {
+        let string = input.cursor().token_stream().to_string();
+        let stripped = string
+            .replace("\"", "")
+            .replace("& mut", "")
+            .replace("&", "")
+            .replace(" ,", ",");
+        let string = stripped.split_whitespace().collect::<Vec<_>>().join(" ");
+        let doc = syn::parse_str::<TokenStream>(&format!("#[doc = \"{string}\"]")).ok();
+
         let mut terms = Vec::new();
         terms.push(input.parse::<Term>()?);
         while input.peek(Token![,]) || input.peek(Token![|]) {
@@ -973,7 +984,7 @@ impl Parse for Dsl {
             terms.push(input.parse::<Term>()?);
         }
 
-        Ok(Dsl { terms })
+        Ok(Dsl { terms, doc })
     }
 }
 
@@ -1246,11 +1257,30 @@ pub fn query(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
     let (iter_type, builder_calls) = expand_dsl(&mut terms);
     let world = input.world;
+<<<<<<< Updated upstream
     let output = quote! {
         #world.query::<#iter_type>()
         #(
             #builder_calls
         )*
+=======
+    let doc = input.dsl.doc;
+    let output = match input.name {
+        Some(name) => quote! {
+            #doc
+            #world.query_named::<#iter_type>(#name)
+            #(
+                #builder_calls
+            )*
+        },
+        None => quote! {
+            #doc
+            #world.query::<#iter_type>()
+            #(
+                #builder_calls
+            )*
+        },
+>>>>>>> Stashed changes
     };
     ProcMacroTokenStream::from(output)
 }
@@ -1262,11 +1292,30 @@ pub fn system(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
     let (iter_type, builder_calls) = expand_dsl(&mut terms);
     let world = input.world;
+<<<<<<< Updated upstream
     let output = quote! {
         #world.system::<#iter_type>()
         #(
             #builder_calls
         )*
+=======
+    let doc = input.dsl.doc;
+    let output = match input.name {
+        Some(name) => quote! {
+            #doc
+            #world.system_named::<#iter_type>(#name)
+            #(
+                #builder_calls
+            )*
+        },
+        None => quote! {
+            #doc
+            #world.system::<#iter_type>()
+            #(
+                #builder_calls
+            )*
+        },
+>>>>>>> Stashed changes
     };
     ProcMacroTokenStream::from(output)
 }
@@ -1296,11 +1345,30 @@ pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let (iter_type, builder_calls) = expand_dsl(&mut terms);
     let event_type = input.event;
     let world = input.world;
+<<<<<<< Updated upstream
     let output = quote! {
         #world.observer::<#event_type, #iter_type>()
         #(
             #builder_calls
         )*
+=======
+    let doc = input.dsl.doc;
+    let output = match input.name {
+        Some(name) => quote! {
+            #doc
+            #world.observer_named::<#event_type, #iter_type>(#name)
+            #(
+                #builder_calls
+            )*
+        },
+        None => quote! {
+            #doc
+            #world.observer::<#event_type, #iter_type>()
+            #(
+                #builder_calls
+            )*
+        },
+>>>>>>> Stashed changes
     };
     ProcMacroTokenStream::from(output)
 }
