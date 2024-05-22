@@ -986,7 +986,9 @@ struct Builder {
 impl Parse for Builder {
     fn parse(input: ParseStream) -> Result<Self> {
         let name = if input.peek(LitStr) {
-            Some(input.parse::<LitStr>()?)
+            let name = input.parse::<LitStr>()?;
+            input.parse::<Token![,]>()?;
+            Some(name)
         } else {
             None
         };
@@ -1303,7 +1305,9 @@ struct Observer {
 impl Parse for Observer {
     fn parse(input: ParseStream) -> Result<Self> {
         let name = if input.peek(LitStr) {
-            Some(input.parse::<LitStr>()?)
+            let name = input.parse::<LitStr>()?;
+            input.parse::<Token![,]>()?;
+            Some(name)
         } else {
             None
         };
