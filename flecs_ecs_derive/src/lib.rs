@@ -1,13 +1,12 @@
 extern crate proc_macro;
 
 use proc_macro::TokenStream as ProcMacroTokenStream;
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use syn::{
     parenthesized,
     parse::{Parse, ParseStream},
     parse_macro_input,
-    spanned::Spanned,
     token::Comma,
     Data, DeriveInput, Expr, Fields, Ident, LitInt, LitStr, Result, Token, Type,
 };
@@ -964,9 +963,9 @@ impl Parse for Dsl {
     fn parse(input: ParseStream) -> Result<Self> {
         let string = input.cursor().token_stream().to_string();
         let stripped = string
-            .replace("\"", "")
+            .replace('\"', "")
             .replace("& mut", "")
-            .replace("&", "")
+            .replace('&', "")
             .replace(" ,", ",");
         let string = stripped.split_whitespace().collect::<Vec<_>>().join(" ");
         let doc = syn::parse_str::<TokenStream>(&format!("#[doc = \"{string}\"]")).ok();
@@ -989,16 +988,24 @@ impl Parse for Dsl {
 }
 
 struct Builder {
+    name: Option<LitStr>,
     world: Expr,
     dsl: Dsl,
 }
 
 impl Parse for Builder {
     fn parse(input: ParseStream) -> Result<Self> {
+        let name = if input.peek(LitStr) {
+            let name = input.parse::<LitStr>()?;
+            input.parse::<Token![,]>()?;
+            Some(name)
+        } else {
+            None
+        };
         let world = input.parse::<Expr>()?;
         input.parse::<Token![,]>()?;
         let dsl = input.parse::<Dsl>()?;
-        Ok(Builder { world, dsl })
+        Ok(Builder { name, world, dsl })
     }
 }
 
@@ -1257,13 +1264,6 @@ pub fn query(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
     let (iter_type, builder_calls) = expand_dsl(&mut terms);
     let world = input.world;
-<<<<<<< Updated upstream
-    let output = quote! {
-        #world.query::<#iter_type>()
-        #(
-            #builder_calls
-        )*
-=======
     let doc = input.dsl.doc;
     let output = match input.name {
         Some(name) => quote! {
@@ -1280,7 +1280,6 @@ pub fn query(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
                 #builder_calls
             )*
         },
->>>>>>> Stashed changes
     };
     ProcMacroTokenStream::from(output)
 }
@@ -1292,17 +1291,12 @@ pub fn system(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
     let (iter_type, builder_calls) = expand_dsl(&mut terms);
     let world = input.world;
-<<<<<<< Updated upstream
-    let output = quote! {
-        #world.system::<#iter_type>()
-        #(
-            #builder_calls
-        )*
-=======
+
     let doc = input.dsl.doc;
     let output = match input.name {
         Some(name) => quote! {
             #doc
+
             #world.system_named::<#iter_type>(#name)
             #(
                 #builder_calls
@@ -1315,12 +1309,12 @@ pub fn system(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
                 #builder_calls
             )*
         },
->>>>>>> Stashed changes
     };
     ProcMacroTokenStream::from(output)
 }
 
 struct Observer {
+    name: Option<LitStr>,
     world: Expr,
     event: Type,
     dsl: Dsl,
@@ -1328,12 +1322,24 @@ struct Observer {
 
 impl Parse for Observer {
     fn parse(input: ParseStream) -> Result<Self> {
+        let name = if input.peek(LitStr) {
+            let name = input.parse::<LitStr>()?;
+            input.parse::<Token![,]>()?;
+            Some(name)
+        } else {
+            None
+        };
         let world = input.parse::<Expr>()?;
         input.parse::<Token![,]>()?;
         let event = input.parse::<Type>()?;
         input.parse::<Token![,]>()?;
         let dsl = input.parse::<Dsl>()?;
-        Ok(Observer { world, event, dsl })
+        Ok(Observer {
+            name,
+            world,
+            event,
+            dsl,
+        })
     }
 }
 
@@ -1345,13 +1351,7 @@ pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let (iter_type, builder_calls) = expand_dsl(&mut terms);
     let event_type = input.event;
     let world = input.world;
-<<<<<<< Updated upstream
-    let output = quote! {
-        #world.observer::<#event_type, #iter_type>()
-        #(
-            #builder_calls
-        )*
-=======
+
     let doc = input.dsl.doc;
     let output = match input.name {
         Some(name) => quote! {
@@ -1368,7 +1368,7 @@ pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
                 #builder_calls
             )*
         },
->>>>>>> Stashed changes
     };
+
     ProcMacroTokenStream::from(output)
 }
