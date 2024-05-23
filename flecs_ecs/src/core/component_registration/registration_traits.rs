@@ -139,7 +139,15 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
 
     // Not public API.
     #[doc(hidden)]
-    fn __register_lifecycle_hooks(mut _type_hooks: &mut TypeHooksT) {}
+    fn __register_lifecycle_hooks(_type_hooks: &mut TypeHooksT) {}
+
+    // Not public API.
+    #[doc(hidden)]
+    fn __register_default_hooks(_type_hooks: &mut TypeHooksT) {}
+
+    // Not public API.
+    #[doc(hidden)]
+    fn __register_clone_hooks(_type_hooks: &mut TypeHooksT) {}
 
     #[doc(hidden)]
     /// this is cursed, but it's the only way to reset the lock data for the component without making the static mutable.
