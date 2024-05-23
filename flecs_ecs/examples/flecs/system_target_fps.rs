@@ -8,8 +8,10 @@ fn main() {
     // Create system that prints delta_time. This system doesn't query for any
     // components which means it won't match any entities, but will still be ran
     // once for each call to ecs_progress.
-    world.system::<()>().iter_only(|it| {
-        println!("Delta time: {}", it.delta_time());
+    world.system::<()>().run(|mut it| {
+        while it.next_iter() {
+            println!("Delta time: {}", it.delta_time());
+        }
     });
 
     // Set target FPS to 1 frame per second

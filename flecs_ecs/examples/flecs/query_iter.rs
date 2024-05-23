@@ -45,7 +45,7 @@ fn main() {
     // of information on the entities currently being iterated.
     // The function passed to iter is by default called for each table the query
     // is matched with.
-    query.iter(|it, (position, velocity)| {
+    query.run_iter(|it, (position, velocity)| {
         println!();
         // Print the table & number of entities matched in current callback
         println!("Table: {:?}", it.archetype());

@@ -1415,6 +1415,7 @@ impl World {
     pub fn get_ref<T>(&self) -> CachedRef<T::UnderlyingType>
     where
         T: ComponentId + NotEmptyComponent,
+        T::UnderlyingType: NotEmptyComponent,
     {
         EntityView::new_from(self, T::get_id(self)).get_ref::<T>()
     }

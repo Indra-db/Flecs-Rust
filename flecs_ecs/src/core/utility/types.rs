@@ -4,90 +4,48 @@ pub type FTime = f32;
 
 pub(crate) type EcsCtxFreeT = extern "C" fn(*mut c_void);
 
-#[doc(hidden)]
-pub struct ObserverSystemBindingCtx {
-    pub(crate) each: Option<*mut c_void>,
-    pub(crate) each_entity: Option<*mut c_void>,
-    pub(crate) each_iter: Option<*mut c_void>,
-    pub(crate) iter: Option<*mut c_void>,
-    pub(crate) iter_only: Option<*mut c_void>,
-    pub(crate) free_each: Option<EcsCtxFreeT>,
-    pub(crate) free_each_entity: Option<EcsCtxFreeT>,
-    pub(crate) free_each_iter: Option<EcsCtxFreeT>,
-    pub(crate) free_iter: Option<EcsCtxFreeT>,
-    pub(crate) free_iter_only: Option<EcsCtxFreeT>,
-}
+// #[doc(hidden)]
+// pub struct ReactorBindingType {
+//     pub(crate) callback: Option<*mut c_void>,
+//     pub(crate) free_callback: Option<EcsCtxFreeT>,
+// }
 
-impl Drop for ObserverSystemBindingCtx {
-    fn drop(&mut self) {
-        if let Some(each) = self.each {
-            if let Some(free_each) = self.free_each {
-                free_each(each);
-            }
-        }
-        if let Some(each_entity) = self.each_entity {
-            if let Some(free_each_entity) = self.free_each_entity {
-                free_each_entity(each_entity);
-            }
-        }
-        if let Some(iter) = self.iter {
-            if let Some(free_iter) = self.free_iter {
-                free_iter(iter);
-            }
-        }
-        if let Some(iter_only) = self.iter_only {
-            if let Some(free_iter_only) = self.free_iter_only {
-                free_iter_only(iter_only);
-            }
-        }
-    }
-}
+// impl Drop for ReactorBindingType {
+//     fn drop(&mut self) {
+//         if let Some(callback) = self.callback {
+//             if let Some(free_callback) = self.free_callback {
+//                 free_callback(callback);
+//             }
+//         }
+//     }
+// }
 
-#[allow(clippy::derivable_impls)]
-impl Default for ObserverSystemBindingCtx {
-    fn default() -> Self {
-        Self {
-            each: None,
-            each_entity: None,
-            each_iter: None,
-            iter: None,
-            iter_only: None,
-            free_each: None,
-            free_each_entity: None,
-            free_each_iter: None,
-            free_iter: None,
-            free_iter_only: None,
-        }
-    }
-}
-impl ObserverSystemBindingCtx {
-    #[allow(clippy::too_many_arguments)]
-    pub(crate) fn new(
-        each: Option<*mut c_void>,
-        each_entity: Option<*mut c_void>,
-        each_iter: Option<*mut c_void>,
-        iter: Option<*mut c_void>,
-        iter_only: Option<*mut c_void>,
-        free_each: Option<EcsCtxFreeT>,
-        free_each_entity: Option<EcsCtxFreeT>,
-        free_each_iter: Option<EcsCtxFreeT>,
-        free_iter: Option<EcsCtxFreeT>,
-        free_iter_only: Option<EcsCtxFreeT>,
-    ) -> Self {
-        Self {
-            each,
-            each_entity,
-            each_iter,
-            iter,
-            iter_only,
-            free_each,
-            free_each_entity,
-            free_each_iter,
-            free_iter,
-            free_iter_only,
-        }
-    }
-}
+// impl Default for ReactorBindingType {
+//     fn default() -> Self {
+//         Self {
+//             callback: None,
+//             free_callback: None,
+//         }
+//     }
+// }
+
+// impl ReactorBindingType {
+//     pub(crate) fn new(callback: Option<*mut c_void>, free_callback: Option<EcsCtxFreeT>) -> Self {
+//         Self {
+//             callback,
+//             free_callback,
+//         }
+//     }
+// }
+// pub(crate) enum TypeBinding {
+//     Each(ReactorBindingType),
+//     EachEntity(ReactorBindingType),
+//     EachIter(ReactorBindingType),
+//     Run(ReactorBindingType),
+//     RunIter(ReactorBindingType),
+//     RunEach(ReactorBindingType),
+//     RunEachEntity(ReactorBindingType),
+// }
 
 pub(crate) struct ObserverEntityBindingCtx {
     pub(crate) empty: Option<*mut c_void>,

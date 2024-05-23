@@ -4,12 +4,17 @@ use std::{ffi::CStr, os::raw::c_void, ptr::NonNull};
 use crate::core::*;
 use crate::sys;
 
-pub struct Iter<'a, P = ()> {
+pub(crate) enum IterType {
+    Run,
+    Each,
+}
+
+pub struct Iter<'a, const IS_RUN: bool = true, P = ()> {
     iter: &'a mut IterT,
     marker: PhantomData<P>,
 }
 
-impl<'a, P> Iter<'a, P>
+impl<'a, const IS_RUN: bool, P> Iter<'a, IS_RUN, P>
 where
     P: ComponentId,
 {
@@ -40,7 +45,7 @@ where
         }
     }
 
-    pub fn iter(&self) -> IterIterator<P> {
+    pub fn iter(&self) -> IterIterator<IS_RUN, P> {
         IterIterator {
             iter: self,
             index: 0,
@@ -715,34 +720,46 @@ where
     /// the iterator is not being progressed automatically. An example of a valid
     /// context is inside of a `run()` callback. An example of an invalid context is
     /// inside of an `each()` callback.
-    pub unsafe fn next_iter(&mut self) -> bool {
-        if self.iter.flags & sys::EcsIterIsValid != 0 && !self.iter.table.is_null() {
-            unsafe {
-                sys::ecs_table_unlock(self.iter.world, self.iter.table);
-            };
-        }
-
-        let result = {
-            if let Some(next) = self.iter.next {
-                unsafe { next(self.iter) }
-            } else {
-                false
+    pub fn next_iter(&mut self) -> bool {
+        if IS_RUN {
+            if self.iter.flags & sys::EcsIterIsValid != 0 && !self.iter.table.is_null() {
+                unsafe {
+                    sys::ecs_table_unlock(self.iter.world, self.iter.table);
+                };
             }
-        };
 
-        self.iter.flags |= sys::EcsIterIsValid;
-        if result && !self.iter.table.is_null() {
-            unsafe {
-                sys::ecs_table_lock(self.iter.world, self.iter.table);
+            let result = {
+                if let Some(next) = self.iter.next {
+                    //sets flag invalid
+                    unsafe { next(self.iter) }
+                } else {
+                    self.iter.flags &= !sys::EcsIterIsValid;
+                    return false;
+                }
             };
+
+            self.iter.flags |= sys::EcsIterIsValid;
+            if result && !self.iter.table.is_null() {
+                unsafe {
+                    sys::ecs_table_lock(self.iter.world, self.iter.table);
+                };
+            }
+
+            result
+        } else {
+            ecs_assert!(
+                false,
+                FlecsErrorCode::InvalidOperation,
+                "you should not call next_iter in an `each` callback or `run_iter`"
+            );
+            false
         }
-        result
     }
 
     /// Forward to each.
     /// If a system has an each callback registered, this operation will forward
     /// the current iterator to the each callback.
-    fn each(&mut self) {
+    pub fn each(&mut self) {
         if let Some(each) = self.iter.callback {
             unsafe {
                 each(self.iter);
@@ -751,12 +768,12 @@ where
     }
 }
 
-pub struct IterIterator<'a, P> {
-    iter: &'a Iter<'a, P>,
+pub struct IterIterator<'a, const IS_RUN: bool, P> {
+    iter: &'a Iter<'a, IS_RUN, P>,
     index: usize,
 }
 
-impl<'a, P> Iterator for IterIterator<'a, P>
+impl<'a, const IS_RUN: bool, P> Iterator for IterIterator<'a, IS_RUN, P>
 where
     P: ComponentId,
 {

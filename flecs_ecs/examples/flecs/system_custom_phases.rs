@@ -6,8 +6,10 @@ use flecs_ecs::prelude::*;
 // they have the flecs::Phase tag.
 
 // Dummy system
-fn sys(it: Iter) {
-    println!("system {}", it.system().name());
+fn sys(mut it: Iter) {
+    while it.next_iter() {
+        println!("system {}", it.system().name());
+    }
 }
 
 fn main() {
@@ -30,17 +32,17 @@ fn main() {
     world
         .system_named::<()>("CollisionSystem")
         .kind_id(collisions)
-        .iter_only(sys);
+        .run(sys);
 
     world
         .system_named::<()>("PhysicsSystem")
         .kind_id(physics)
-        .iter_only(sys);
+        .run(sys);
 
     world
         .system_named::<()>("GameSystem")
         .kind::<flecs::pipeline::OnUpdate>()
-        .iter_only(sys);
+        .run(sys);
 
     // Run pipeline
     world.progress();

@@ -1603,7 +1603,11 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
-    pub fn get_ref<T: ComponentId + NotEmptyComponent>(&self) -> CachedRef<'a, T::UnderlyingType> {
+    pub fn get_ref<T>(&self) -> CachedRef<'a, T::UnderlyingType>
+    where
+        T: ComponentId + NotEmptyComponent,
+        T::UnderlyingType: NotEmptyComponent,
+    {
         CachedRef::<T::UnderlyingType>::new(self.world, *self.id, T::get_id(self.world))
     }
 

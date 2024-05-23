@@ -49,6 +49,7 @@ struct Beggar;
 #[derive(Debug, Component)]
 struct Mage;
 
+#[test]
 fn main() {
     let world = World::new();
 
@@ -100,27 +101,31 @@ fn main() {
     // Iterate all tables
     println!("All tables");
 
-    query.iter_only(|iter| {
-        let group = world.entity_from_id(iter.group_id());
-        println!(
-            "group: {:?} - Table [{}]",
-            group.path().unwrap(),
-            iter.table().unwrap().to_string().unwrap()
-        );
+    query.run(|mut iter| {
+        while iter.next_iter() {
+            let group = world.entity_from_id(iter.group_id());
+            println!(
+                "group: {:?} - Table [{}]",
+                group.path().unwrap(),
+                iter.table().unwrap().to_string().unwrap()
+            );
+        }
     });
 
     println!();
 
     println!("Tables for cell 1_0:");
 
-    query.iterable().set_group::<Cell_1_0>().iter_only(|iter| {
-        let world = iter.world();
-        let group = world.entity_from_id(iter.group_id());
-        println!(
-            "group: {:?} - Table [{}]",
-            group.path().unwrap(),
-            iter.table().unwrap().to_string().unwrap()
-        );
+    query.iterable().set_group::<Cell_1_0>().run(|mut iter| {
+        while iter.next_iter() {
+            let world = iter.world();
+            let group = world.entity_from_id(iter.group_id());
+            println!(
+                "group: {:?} - Table [{}]",
+                group.path().unwrap(),
+                iter.table().unwrap().to_string().unwrap()
+            );
+        }
     });
 
     // Output:
