@@ -65,10 +65,10 @@ impl<'a> EntityView<'a> {
         const {
             if !T::IS_TAGS {
                 if !T::First::IS_TAG && !T::First::IMPLS_DEFAULT {
-                    assert!(false, "Adding an element that is not a Tag / Zero sized type requires to implement Default");
+                    panic!("Adding an element that is not a Tag / Zero sized type requires to implement Default");
                 }
                 if T::IS_PAIR && !T::Second::IS_TAG && !T::Second::IMPLS_DEFAULT {
-                    assert!(false, "Adding an element that is not a Tag / Zero sized type requires to implement Default");
+                    panic!("Adding an element that is not a Tag / Zero sized type requires to implement Default");
                 }
             }
         }

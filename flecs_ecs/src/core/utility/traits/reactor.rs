@@ -270,7 +270,7 @@ where
     ///
     /// The "iter" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:
-    ///  - func: (it: &mut Iter) + func_each: (comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///  - `func`: (it: &mut Iter) + `func_each`: (comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
@@ -387,7 +387,7 @@ where
     ///
     /// The "iter" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:
-    /// - func: (it: &mut Iter) + func_each_entity: (entity: EntityView, comp1 : &mut T1, comp2 : &mut T2, ...)
+    /// - `func`: (it: &mut Iter) + `func_each_entity`: (entity: `EntityView`, comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
