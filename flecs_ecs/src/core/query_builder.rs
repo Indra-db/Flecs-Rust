@@ -161,6 +161,11 @@ impl<'a, T: Iterable> internals::QueryConfig<'a> for QueryBuilder<'a, T> {
     fn query_desc_mut(&mut self) -> &mut sys::ecs_query_desc_t {
         &mut self.desc
     }
+
+    #[inline(always)]
+    fn count_generic_terms(&mut self) -> i32 {
+        T::COUNT
+    }
 }
 
 impl<'a, T: Iterable> TermBuilderImpl<'a> for QueryBuilder<'a, T> {}

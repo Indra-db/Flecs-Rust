@@ -75,6 +75,7 @@ pub trait IterableTypeOperation {
     type ActualType<'w>;
     type SliceType<'w>;
     type OnlyType: ComponentId;
+    const ONE: i32 = 1;
 
     fn populate_term(term: &mut sys::ecs_term_t);
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a>;
@@ -344,6 +345,7 @@ pub trait Iterable: Sized {
     type Pointers: ComponentPointers<Self>;
     type TupleType<'a>;
     type TupleSliceType<'a>;
+    const COUNT: i32;
 
     fn create_ptrs(iter: &IterT) -> Self::Pointers {
         Self::Pointers::new(iter)
@@ -388,10 +390,11 @@ pub trait Iterable: Sized {
 impl<A> Iterable for A
 where
     A: IterableTypeOperation,
-{
+{ 
     type Pointers = ComponentsData<A, 1>;
     type TupleType<'w> = A::ActualType<'w>;
     type TupleSliceType<'w> = A::SliceType<'w>;
+    const COUNT : i32 = 1;
 
     fn populate<'a>(filter: &mut impl QueryBuilderImpl<'a>) {
         let id = <A::OnlyType as ComponentId>::get_id(filter.world());
@@ -627,7 +630,7 @@ macro_rules! impl_iterable {
                 $t::SliceType<'w>,
             )*);
             type Pointers = ComponentsData<Self, { tuple_count!($($t),*) }>;
-
+            const COUNT : i32 = tuple_count!($($t),*);
 
             fn populate<'a>(filter: &mut impl QueryBuilderImpl<'a>) {
                 let _world = filter.world();

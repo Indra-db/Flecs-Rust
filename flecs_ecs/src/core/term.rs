@@ -84,6 +84,8 @@ pub mod internals {
         fn query_desc(&self) -> &sys::ecs_query_desc_t;
         fn query_desc_mut(&mut self) -> &mut sys::ecs_query_desc_t;
 
+        fn count_generic_terms(&mut self) -> i32;
+
         #[inline(always)]
         fn current_term_ref_mode(&self) -> TermRefMode {
             self.term_builder().term_ref_mode
