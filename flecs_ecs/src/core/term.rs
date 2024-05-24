@@ -245,6 +245,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term::reset`
     #[doc(alias = "term::reset")]
     fn reset(&mut self) {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         // we don't for certain if this causes any side effects not using the nullptr and just using the default value.
         // if it does we can use Option.
         let term = self.current_term_mut();
@@ -355,6 +358,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::id`
     #[doc(alias = "term_builder_i::id")]
     fn set_id(&mut self, id: impl Into<Entity>) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         let term_ref = self.term_ref_mut();
         term_ref.id = *id.into();
         self
@@ -377,6 +383,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::entity`
     #[doc(alias = "term_builder_i::entity")]
     fn entity(&mut self, entity: impl Into<Entity>) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         self.term_ref_mut().id = *entity.into() | ECS_IS_ENTITY;
         self
     }
@@ -392,6 +401,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::name`
     #[doc(alias = "term_builder_i::name")]
     fn name(&mut self, name: &'a str) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         let name = format!("{}\0", name);
         let term_ref = self.term_ref_mut();
         term_ref.name = name.as_ptr() as *mut i8;
@@ -416,6 +428,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::var`
     #[doc(alias = "term_builder_i::var")]
     fn set_var(&mut self, var_name: &'a str) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         let var_name = format!("{}\0", var_name);
 
         let term_ref = self.term_ref_mut();
@@ -441,6 +456,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::flags`
     #[doc(alias = "term_builder_i::flags")]
     fn flags(&mut self, flags: u64) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         self.term_ref_mut().id = flags;
         self
     }
@@ -452,6 +470,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
     fn src(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         self.set_term_ref_mode(TermRefMode::Src);
         self
     }
@@ -465,6 +486,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
     fn first(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         self.set_term_ref_mode(TermRefMode::First);
         self
     }
@@ -477,6 +501,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
     fn second(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         self.set_term_ref_mode(TermRefMode::Second);
         self
     }
@@ -492,6 +519,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
     fn set_src_id(&mut self, id: impl Into<Entity>) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         self.src().set_id(id)
     }
 
@@ -506,6 +536,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
     fn set_src<T: ComponentId>(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         self.set_src_id(T::get_id(self.world()))
     }
 
@@ -521,6 +554,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
     fn set_src_name(&mut self, name: &'a str) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
@@ -546,6 +582,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
     fn set_first_id(&mut self, id: impl Into<Entity>) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         self.first().set_id(id)
     }
 
@@ -560,6 +599,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
     fn set_first<T: ComponentId>(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         self.set_first_id(T::get_id(self.world()))
     }
 
@@ -575,6 +617,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
     fn set_first_name(&mut self, name: &'a str) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
@@ -600,6 +645,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
     fn set_second_id(&mut self, id: impl Into<Entity>) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         self.second().set_id(id)
     }
 
@@ -614,6 +662,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
     fn set_second<T: ComponentId>(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         self.set_second_id(T::get_id(self.world()))
     }
 
@@ -809,6 +860,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::inout`
     #[doc(alias = "term_builder_i::inout")]
     fn set_inout_kind(&mut self, inout: InOutKind) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         self.current_term_mut().inout = inout.into();
         self
     }
@@ -830,6 +884,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::inout_stage`
     #[doc(alias = "term_builder_i::inout_stage")]
     fn inout_stage(&mut self, inout: InOutKind) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         self.set_inout_kind(inout);
         if self.current_term_mut().oper != OperKind::Not as i16 {
             self.src().entity(0);
@@ -850,6 +907,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::write")]
     #[inline(always)]
     fn write_curr(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         self.inout_stage(InOutKind::Out)
     }
 
@@ -865,6 +925,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::read")]
     #[inline(always)]
     fn read_curr(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         self.inout_stage(InOutKind::In)
     }
 
@@ -879,6 +942,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::read_write")]
     #[inline(always)]
     fn read_write(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         self.inout_stage(InOutKind::InOut)
     }
 
@@ -892,6 +958,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::in")]
     #[inline(always)]
     fn set_in(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. use &T instead")
+        }
         self.set_inout_kind(InOutKind::In)
     }
 
@@ -905,6 +974,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::out")]
     #[inline(always)]
     fn set_out(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. Use &mut T instead.")
+        }
         self.set_inout_kind(InOutKind::Out)
     }
 
@@ -918,6 +990,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::inout")]
     #[inline(always)]
     fn set_inout(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. Use &mut T instead.")
+        }
         self.set_inout_kind(InOutKind::InOut)
     }
 
@@ -931,6 +1006,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::inout_none")]
     #[inline(always)]
     fn set_inout_none(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature.")
+        }
         self.set_inout_kind(InOutKind::None)
     }
 
@@ -946,6 +1024,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::oper")]
     #[inline(always)]
     fn set_oper(&mut self, oper: OperKind) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
         self.current_term_mut().oper = oper as i16;
         self
     }
@@ -960,6 +1041,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::and")]
     #[inline(always)]
     fn and(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature.")
+        }
         self.set_oper(OperKind::And)
     }
 
@@ -973,6 +1057,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::or")]
     #[inline(always)]
     fn or(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature.")
+        }
         self.set_oper(OperKind::Or)
     }
 
@@ -987,6 +1074,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[allow(clippy::should_implement_trait)]
     #[inline(always)]
     fn not(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature.")
+        }
         self.set_oper(OperKind::Not)
     }
 
@@ -1000,6 +1090,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::optional")]
     #[inline(always)]
     fn optional(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. Use Option<> instead.")
+        }
         self.set_oper(OperKind::Optional)
     }
 
@@ -1013,6 +1106,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::and_from")]
     #[inline(always)]
     fn and_from(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature.")
+        }
         self.set_oper(OperKind::AndFrom)
     }
 
@@ -1026,6 +1122,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::or_from")]
     #[inline(always)]
     fn or_from(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature.")
+        }
         self.set_oper(OperKind::OrFrom)
     }
 
@@ -1039,6 +1138,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::not_from")]
     #[inline(always)]
     fn not_from(&mut self) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature.")
+        }
         self.set_oper(OperKind::NotFrom)
     }
 

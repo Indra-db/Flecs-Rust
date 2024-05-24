@@ -295,6 +295,10 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// * C++ API: `query_builder_i::expr`
     #[doc(alias = "query_builder_i::expr")]
     fn expr(&mut self, expr: &'a str) -> &mut Self {
+        if self.current_term_index() < self.count_generic_terms() {
+            panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        }
+
         let expr = format!("{}\0", expr);
 
         ecs_assert!(
