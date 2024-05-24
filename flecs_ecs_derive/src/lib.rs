@@ -4,10 +4,10 @@ use proc_macro::TokenStream as ProcMacroTokenStream;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use syn::{
-    parenthesized,
+    bracketed, parenthesized,
     parse::{Parse, ParseStream},
     parse_macro_input,
-    token::Comma,
+    token::{Bracket, Comma},
     Data, DeriveInput, Expr, Fields, Ident, LitInt, LitStr, Result, Token, Type,
 };
 
@@ -696,25 +696,65 @@ pub fn tuples(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 }
 
 #[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
-enum Access {
-    Write,
-    Read,
+enum Reference {
+    Mut,
+    Ref,
     #[default]
     None,
 }
 
-impl Parse for Access {
+impl Parse for Reference {
     fn parse(input: ParseStream) -> Result<Self> {
         if input.peek(Token![&]) {
             input.parse::<Token![&]>()?;
             if input.peek(Token![mut]) {
                 input.parse::<Token![mut]>()?;
-                Ok(Access::Write)
+                Ok(Reference::Mut)
             } else {
-                Ok(Access::Read)
+                Ok(Reference::Ref)
             }
         } else {
-            Ok(Access::None)
+            Ok(Reference::None)
+        }
+    }
+}
+
+#[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
+enum Access {
+    In,
+    Out,
+    InOut,
+    Filter,
+    None,
+    #[default]
+    Omitted,
+}
+
+impl Parse for Access {
+    fn parse(input: ParseStream) -> Result<Self> {
+        if input.peek(Bracket) {
+            let inner;
+            bracketed!(inner in input);
+            if inner.peek(Token![in]) {
+                inner.parse::<Token![in]>()?;
+                Ok(Access::In)
+            } else if inner.peek(kw::out) {
+                inner.parse::<kw::out>()?;
+                Ok(Access::Out)
+            } else if inner.peek(kw::inout) {
+                inner.parse::<kw::inout>()?;
+                Ok(Access::InOut)
+            } else if inner.peek(kw::filter) {
+                inner.parse::<kw::out>()?;
+                Ok(Access::Filter)
+            } else if inner.peek(kw::none) {
+                inner.parse::<kw::none>()?;
+                Ok(Access::None)
+            } else {
+                Ok(Access::Omitted)
+            }
+        } else {
+            Ok(Access::Omitted)
         }
     }
 }
@@ -788,6 +828,12 @@ mod kw {
     syn::custom_keyword!(cascade);
     syn::custom_keyword!(desc);
     syn::custom_keyword!(up);
+
+    // Access
+    syn::custom_keyword!(out);
+    syn::custom_keyword!(inout);
+    syn::custom_keyword!(filter);
+    syn::custom_keyword!(none);
 }
 
 impl Parse for TermOper {
@@ -892,6 +938,7 @@ enum TermType {
 #[derive(Debug)]
 struct Term {
     access: Access,
+    reference: Reference,
     oper: TermOper,
     source: TermId,
     ty: TermType,
@@ -899,8 +946,9 @@ struct Term {
 
 impl Parse for Term {
     fn parse(input: ParseStream) -> Result<Self> {
-        let oper = input.parse::<TermOper>()?;
         let access = input.parse::<Access>()?;
+        let oper = input.parse::<TermOper>()?;
+        let reference = input.parse::<Reference>()?;
         if peek_id(&input) {
             let initial = input.parse::<TermId>()?;
             if !input.peek(Token![,]) && !input.is_empty() {
@@ -914,6 +962,7 @@ impl Parse for Term {
                     let second = inner.parse::<TermId>()?;
                     Ok(Term {
                         access,
+                        reference,
                         oper,
                         source,
                         ty: TermType::Pair(initial, second),
@@ -922,6 +971,7 @@ impl Parse for Term {
                     // Component
                     Ok(Term {
                         access,
+                        reference,
                         oper,
                         source,
                         ty: TermType::Component(initial),
@@ -931,6 +981,7 @@ impl Parse for Term {
                 // Base case single component identifier
                 Ok(Term {
                     access,
+                    reference,
                     oper,
                     source: TermId::default(),
                     ty: TermType::Component(initial),
@@ -945,6 +996,7 @@ impl Parse for Term {
             let second = inner.parse::<TermId>()?;
             Ok(Term {
                 access,
+                reference,
                 oper,
                 source: TermId::default(),
                 ty: TermType::Pair(first, second),
@@ -1065,10 +1117,10 @@ fn expand_term_type(term: &Term) -> Option<TokenStream> {
         }
     };
 
-    let access_type = match term.access {
-        Access::Write => quote! { &mut #ty },
-        Access::Read => quote! { & #ty },
-        Access::None => return None,
+    let access_type = match term.reference {
+        Reference::Mut => quote! { &mut #ty },
+        Reference::Ref => quote! { & #ty },
+        Reference::None => return None,
     };
 
     match &term.oper {
@@ -1226,11 +1278,20 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
 
             // Configure access
             if !iter_term {
-                ops.push(match &t.access {
-                    Access::Write => quote! { .inout() },
-                    Access::Read => quote! { .in() },
-                    Access::None => quote! { .inout_none() },
+                ops.push(match &t.reference {
+                    Reference::Mut => quote! { .set_inout() },
+                    Reference::Ref => quote! { .set_in() },
+                    Reference::None => quote! { .set_inout_none() },
                 });
+            }
+
+            match &t.access {
+                Access::In => ops.push(quote! { .set_in() }),
+                Access::Out => ops.push(quote! { .set_out() }),
+                Access::InOut => ops.push(quote! { .set_inout() }),
+                Access::Filter => ops.push(quote! { .filter() }),
+                Access::None => ops.push(quote! { .set_inout_none() }),
+                Access::Omitted => {}
             }
 
             if !ops.is_empty() || needs_accessor {
