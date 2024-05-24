@@ -899,8 +899,8 @@ struct Term {
 
 impl Parse for Term {
     fn parse(input: ParseStream) -> Result<Self> {
-        let access = input.parse::<Access>()?;
         let oper = input.parse::<TermOper>()?;
+        let access = input.parse::<Access>()?;
         if peek_id(&input) {
             let initial = input.parse::<TermId>()?;
             if !input.peek(Token![,]) && !input.is_empty() {
@@ -1071,11 +1071,16 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                     expand_type(id)
                 }
             };
-            match t.access {
+            let access_type = match t.access {
                 Access::Write => Some(quote! { &mut #iter_type }),
                 Access::Read => Some(quote! { & #iter_type }),
                 Access::None => None,
-            }
+            };
+            access_type.map(|ty| match t.oper {
+                TermOper::Optional | TermOper::Or => quote! { Option<#ty> },
+                TermOper::And => quote! { #ty },
+                _ => panic!("Invalid operation for static component access."),
+            })
         })
         .collect::<Vec<_>>();
     let iter_type = if iter_terms.len() == 1 {
