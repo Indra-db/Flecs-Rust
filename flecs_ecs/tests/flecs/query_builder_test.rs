@@ -1878,9 +1878,7 @@ fn query_builder_2_subsequent_args() {
     let world = create_world_with_flags::<Flags>();
 
     let s = world
-        .system::<(&mut RelFoo, &Velocity)>()
-        .term_at(0)
-        .set_second_id(*flecs::Wildcard)
+        .system::<(&mut (RelFoo, flecs::Wildcard), &Velocity)>()
         .term_at(1)
         .singleton()
         .run(|mut it| {

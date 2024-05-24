@@ -96,7 +96,11 @@ fn main() {
         .add::<Soldier>()
         .add::<Npc>();
 
-    let query = world.query::<&Npc>().group_by::<WorldCell>().build();
+    let query = world
+        .query::<()>()
+        .with::<&Npc>()
+        .group_by::<WorldCell>()
+        .build();
 
     // Iterate all tables
     println!("All tables");

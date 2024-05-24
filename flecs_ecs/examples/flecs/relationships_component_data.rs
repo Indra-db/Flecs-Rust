@@ -39,7 +39,7 @@ fn main() {
     // the pair assumes the type of the component.
     let e1 = world
         .entity()
-        .set_pair::<_, Gigawatts>(Requires { amount: 1.21 });
+        .set_pair::<Requires, Gigawatts>(Requires { amount: 1.21 });
 
     let require = e1.try_get::<Option<&(Requires, Gigawatts)>>(|req| {
         if let Some((req)) = req {

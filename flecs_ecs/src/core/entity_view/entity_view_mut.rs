@@ -796,6 +796,7 @@ impl<'a> EntityView<'a> {
         First: ComponentId,
         Second: ComponentId,
         (First, Second): FlecsCastType,
+        <(First, Second) as FlecsCastType>::CastType: NotEmptyComponent,
     {
         let id_pair = <(First, Second) as IntoComponentId>::get_id(self.world);
         self.auto_override_id(id_pair).set_id(data, id_pair)

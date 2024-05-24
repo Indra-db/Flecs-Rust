@@ -11,7 +11,7 @@ where
 }
 
 #[diagnostic::on_unimplemented(
-    message = "the size of type `{Self}` should not be zero, should not a tag.",
+    message = "the size of type `{Self}` should not be zero, should not be a tag.",
     label = "Supports only non-empty components"
 )]
 pub trait NotEmptyComponent {}
@@ -20,6 +20,16 @@ impl<T> NotEmptyComponent for &T where T: NotEmptyComponent {}
 impl<T> NotEmptyComponent for &mut T where T: NotEmptyComponent {}
 impl<T> NotEmptyComponent for Option<&T> where T: NotEmptyComponent {}
 impl<T> NotEmptyComponent for Option<&mut T> where T: NotEmptyComponent {}
+impl<T, U> NotEmptyComponent for (T, U)
+where
+    (T, U): IntoComponentId,
+    <(T, U) as FlecsCastType>::CastType: NotEmptyComponent,
+    registration_types::ConditionalTypePairSelector<
+        <<(T, U) as IntoComponentId>::First as registration_traits::ComponentInfo>::TagType,
+        (T, U),
+    >: registration_traits::FlecsPairType,
+{
+}
 
 pub trait ECSComponentType {}
 
@@ -298,7 +308,7 @@ pub trait FlecsCloneType {
 }
 
 pub trait FlecsPairType {
-    type Type: ComponentId + NotEmptyComponent;
+    type Type: ComponentId;
     const IS_FIRST: bool;
 }
 
@@ -330,7 +340,7 @@ pub struct FlecsFirstIsATag;
 impl<T> FlecsPairType for ConditionalTypePairSelector<FlecsFirstIsNotATag, T>
 where
     T: IntoComponentId,
-    T::First: NotEmptyComponent + ComponentId,
+    T::First: ComponentId,
 {
     type Type = T::First;
     const IS_FIRST: bool = true;
@@ -339,14 +349,14 @@ where
 impl<U> FlecsPairType for ConditionalTypePairSelector<FlecsFirstIsATag, U>
 where
     U: IntoComponentId,
-    U::Second: NotEmptyComponent + ComponentId,
+    U::Second: ComponentId,
 {
     type Type = U::Second;
     const IS_FIRST: bool = false;
 }
 
 pub trait FlecsCastType: IntoComponentId {
-    type CastType: NotEmptyComponent + ComponentId;
+    type CastType: ComponentId;
     const IS_FIRST: bool;
 }
 
