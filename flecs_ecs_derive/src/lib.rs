@@ -1051,41 +1051,33 @@ fn expand_type(ident: &TermIdent) -> TokenStream {
 }
 
 fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
-    terms.sort_by_key(|t| match t.access {
-        Access::None => 1,
-        _ => 0,
-    });
-    let mut or = false;
-    let iter_terms = terms
-        .iter()
-        .filter_map(|t| {
-            let iter_type = match &t.ty {
-                TermType::Pair(first, second) => {
-                    let first = first.ident.as_ref().expect("Pair with no first.");
-                    let second = second.ident.as_ref().expect("Pair with no second.");
-                    let first = expand_type(first);
-                    let second = expand_type(second);
-                    quote! { (#first, #second) }
-                }
-                TermType::Component(id) => {
-                    let id = id.ident.as_ref().expect("Term with no component.");
-                    expand_type(id)
-                }
-            };
-            let access_type = match t.access {
-                Access::Write => Some(quote! { &mut #iter_type }),
-                Access::Read => Some(quote! { & #iter_type }),
-                Access::None => None,
-            };
-            let optional = or || matches!(t.oper, TermOper::Or | TermOper::Optional);
-            or = t.oper == TermOper::Or;
-            if optional {
-                access_type.map(|ty| quote! { Option<#ty> })
-            } else {
-                access_type.map(|ty| quote! { #ty })
+    let mut iter_terms = Vec::new();
+    for t in terms.iter() {
+        let iter_type = match &t.ty {
+            TermType::Pair(first, second) => {
+                let first = first.ident.as_ref().expect("Pair with no first.");
+                let second = second.ident.as_ref().expect("Pair with no second.");
+                let first = expand_type(first);
+                let second = expand_type(second);
+                quote! { (#first, #second) }
             }
-        })
-        .collect::<Vec<_>>();
+            TermType::Component(id) => {
+                let id = id.ident.as_ref().expect("Term with no component.");
+                expand_type(id)
+            }
+        };
+        let access_type = match t.access {
+            Access::Write => quote! { &mut #iter_type },
+            Access::Read => quote! { & #iter_type },
+            Access::None => break,
+        };
+
+        if t.oper == TermOper::Optional {
+            iter_terms.push(quote! { Option<#access_type> });
+        } else {
+            iter_terms.push(access_type);
+        }
+    }
     let iter_type = if iter_terms.len() == 1 {
         quote! {
             #( #iter_terms )*
@@ -1104,7 +1096,8 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
             let index = i as i32;
             let mut ops = Vec::new();
             let mut needs_accessor = false;
-            let mut term_accessor = if t.access == Access::None {
+            let iter_term = i < iter_terms.len();
+            let mut term_accessor = if !iter_term {
                 quote! { .term() }
             } else {
                 quote! { .term_at(#index) }
@@ -1114,28 +1107,23 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                 TermType::Pair(first, second) => {
                     let first_id = first.ident.as_ref().expect("Pair with no first.");
                     let second_id = second.ident.as_ref().expect("Pair with no second.");
+                    let first_ty = expand_type(first_id);
+                    let second_ty = expand_type(second_id);
 
                     match first_id {
                         TermIdent::Variable(var) => {
                             let var_name = format!("${}", var.value());
                             ops.push(quote! { .set_first_name(#var_name) });
                         }
-                        TermIdent::Type(ty) => {
-                            if t.access == Access::None {
-                                ops.push(quote! { .set_first::<#ty>() });
-                            }
-                        }
-                        TermIdent::SelfType => {
-                            if t.access == Access::None {
-                                ops.push(quote! { .set_first::<Self>() });
-                            }
-                        }
                         TermIdent::SelfVar => ops.push(quote! { .set_first_id(self) }),
                         TermIdent::Local(ident) => ops.push(quote! { .set_first_id(#ident) }),
                         TermIdent::Literal(lit) => ops.push(quote! { .set_first_name(#lit) }),
-                        TermIdent::Wildcard => ops.push(quote! { .set_first::<flecs::Wildcard>() }),
-                        TermIdent::Any => ops.push(quote! { .set_first::<flecs::Any>() }),
                         TermIdent::Singleton => panic!("Unexpected singleton identifier."),
+                        _ => {
+                            if !iter_term {
+                                ops.push(quote! { .set_first::<#first_ty>() });
+                            }
+                        }
                     };
 
                     match second_id {
@@ -1143,24 +1131,15 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                             let var_name = format!("${}", var.value());
                             ops.push(quote! { .set_second_name(#var_name) });
                         }
-                        TermIdent::Type(ty) => {
-                            if t.access == Access::None {
-                                ops.push(quote! { .set_second::<#ty>() });
-                            }
-                        }
-                        TermIdent::SelfType => {
-                            if t.access == Access::None {
-                                ops.push(quote! { .set_second::<Self>() });
-                            }
-                        }
                         TermIdent::SelfVar => ops.push(quote! { .set_second_id(self) }),
                         TermIdent::Local(ident) => ops.push(quote! { .set_second_id(#ident) }),
                         TermIdent::Literal(lit) => ops.push(quote! { .set_second_name(#lit) }),
-                        TermIdent::Wildcard => {
-                            ops.push(quote! { .set_second::<flecs::Wildcard>() });
-                        }
-                        TermIdent::Any => ops.push(quote! { .set_second::<flecs::Any>() }),
                         TermIdent::Singleton => panic!("Unexpected singleton identifier."),
+                        _ => {
+                            if !iter_term {
+                                ops.push(quote! { .set_second::<#second_ty>() });
+                            }
+                        }
                     };
 
                     // Configure traversal for first
@@ -1177,36 +1156,23 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                 }
                 TermType::Component(term) => {
                     let id = term.ident.as_ref().expect("Term with no component.");
+                    let ty = expand_type(id);
 
                     match id {
                         TermIdent::Variable(var) => {
                             let var_name = var.value();
                             ops.push(quote! { .set_var(#var_name) });
                         }
-                        TermIdent::Type(ty) => {
-                            if t.access == Access::None {
+                        TermIdent::SelfVar => ops.push(quote! { .set_id(self) }),
+                        TermIdent::Local(ident) => ops.push(quote! { .set_id(#ident) }),
+                        TermIdent::Literal(lit) => ops.push(quote! { .name(#lit) }),
+                        TermIdent::Singleton => panic!("Unexpected singleton identifier."),
+                        _ => {
+                            if !iter_term {
                                 term_accessor = quote! { .with::<#ty>() };
                                 needs_accessor = true;
                             }
                         }
-                        TermIdent::SelfType => {
-                            if t.access == Access::None {
-                                term_accessor = quote! { .with::<Self>() };
-                                needs_accessor = true;
-                            }
-                        }
-                        TermIdent::SelfVar => ops.push(quote! { .set_id(self) }),
-                        TermIdent::Local(ident) => ops.push(quote! { .set_id(#ident) }),
-                        TermIdent::Literal(lit) => ops.push(quote! { .name(#lit) }),
-                        TermIdent::Wildcard => {
-                            term_accessor = quote! { .with::<flecs::Wildcard>() };
-                            needs_accessor = true;
-                        }
-                        TermIdent::Any => {
-                            term_accessor = quote! { .with::<flecs::Any>() };
-                            needs_accessor = true;
-                        }
-                        TermIdent::Singleton => panic!("Unexpected singleton identifier."),
                     };
 
                     // Configure traversal
@@ -1219,19 +1185,17 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
 
             // Configure source
             if let Some(source) = &t.source.ident {
+                let ty = expand_type(source);
                 match source {
                     TermIdent::Variable(var) => {
                         let var_name = format!("${}", var.value());
                         ops.push(quote! { .set_src_name(#var_name) });
                     }
-                    TermIdent::Type(ty) => ops.push(quote! { .set_src::<#ty>() }),
-                    TermIdent::SelfType => ops.push(quote! { .set_src::<Self>() }),
                     TermIdent::SelfVar => ops.push(quote! { .set_src_id(self) }),
                     TermIdent::Local(ident) => ops.push(quote! { .set_src_id(#ident) }),
                     TermIdent::Literal(lit) => ops.push(quote! { .set_src_name(#lit) }),
-                    TermIdent::Wildcard => ops.push(quote! { .set_src::<flecs::Wildcard>() }),
-                    TermIdent::Any => ops.push(quote! { .set_src::<flecs::Any>() }),
                     TermIdent::Singleton => ops.push(quote! { .singleton() }),
+                    _ => ops.push(quote! { .set_src::<#ty>() }),
                 };
             }
 
