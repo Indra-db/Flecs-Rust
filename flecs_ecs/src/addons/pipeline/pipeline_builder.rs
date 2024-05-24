@@ -140,7 +140,7 @@ impl<'a, T: Iterable> internals::QueryConfig<'a> for PipelineBuilder<'a, T> {
     }
 
     #[inline(always)]
-    fn count_generic_terms(&mut self) -> i32 {
+    fn count_generic_terms(&self) -> i32 {
         T::COUNT
     }
 }

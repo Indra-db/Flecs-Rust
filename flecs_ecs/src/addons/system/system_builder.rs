@@ -320,7 +320,7 @@ impl<'a, T: Iterable> internals::QueryConfig<'a> for SystemBuilder<'a, T> {
         &mut self.desc.query
     }
     #[inline(always)]
-    fn count_generic_terms(&mut self) -> i32 {
+    fn count_generic_terms(&self) -> i32 {
         T::COUNT
     }
 }
