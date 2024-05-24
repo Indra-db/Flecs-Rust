@@ -1224,6 +1224,15 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                 ops.push(quote! { .src() #( #id_ops )* });
             }
 
+            // Configure access
+            if !iter_term {
+                ops.push(match &t.access {
+                    Access::Write => quote! { .inout() },
+                    Access::Read => quote! { .in() },
+                    Access::None => quote! { .inout_none() },
+                });
+            }
+
             if !ops.is_empty() || needs_accessor {
                 Some(quote! {
                     #term_accessor
