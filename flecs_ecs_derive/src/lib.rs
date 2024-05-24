@@ -1040,43 +1040,51 @@ fn expand_trav(term: &TermId) -> Vec<TokenStream> {
     ops
 }
 
-fn expand_type(ident: &TermIdent) -> TokenStream {
+fn expand_type(ident: &TermIdent) -> Option<TokenStream> {
     match ident {
-        TermIdent::Type(ty) => quote! { #ty },
-        TermIdent::Wildcard => quote! { flecs::Wildcard },
-        TermIdent::Any => quote! { flecs::Any },
-        TermIdent::SelfType => quote! { Self },
-        _ => quote! { () },
+        TermIdent::Type(ty) => Some(quote! { #ty }),
+        TermIdent::Wildcard => Some(quote! { flecs::Wildcard }),
+        TermIdent::Any => Some(quote! { flecs::Any }),
+        TermIdent::SelfType => Some(quote! { Self }),
+        _ => None,
+    }
+}
+
+fn expand_term_type(term: &Term) -> Option<TokenStream> {
+    let ty = match &term.ty {
+        TermType::Pair(first, second) => {
+            let first = first.ident.as_ref()?;
+            let second = second.ident.as_ref()?;
+            let first = expand_type(first)?;
+            let second = expand_type(second)?;
+            quote! { (#first, #second) }
+        }
+        TermType::Component(id) => {
+            let id = id.ident.as_ref()?;
+            expand_type(id)?
+        }
+    };
+
+    let access_type = match term.access {
+        Access::Write => quote! { &mut #ty },
+        Access::Read => quote! { & #ty },
+        Access::None => return None,
+    };
+
+    if term.oper == TermOper::Optional {
+        Some(quote! { Option<#access_type> })
+    } else {
+        Some(access_type)
     }
 }
 
 fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
     let mut iter_terms = Vec::new();
     for t in terms.iter() {
-        let iter_type = match &t.ty {
-            TermType::Pair(first, second) => {
-                let first = first.ident.as_ref().expect("Pair with no first.");
-                let second = second.ident.as_ref().expect("Pair with no second.");
-                let first = expand_type(first);
-                let second = expand_type(second);
-                quote! { (#first, #second) }
-            }
-            TermType::Component(id) => {
-                let id = id.ident.as_ref().expect("Term with no component.");
-                expand_type(id)
-            }
+        match expand_term_type(t) {
+            Some(ty) => iter_terms.push(ty),
+            None => break,
         };
-        let access_type = match t.access {
-            Access::Write => quote! { &mut #iter_type },
-            Access::Read => quote! { & #iter_type },
-            Access::None => break,
-        };
-
-        if t.oper == TermOper::Optional {
-            iter_terms.push(quote! { Option<#access_type> });
-        } else {
-            iter_terms.push(access_type);
-        }
     }
     let iter_type = if iter_terms.len() == 1 {
         quote! {
