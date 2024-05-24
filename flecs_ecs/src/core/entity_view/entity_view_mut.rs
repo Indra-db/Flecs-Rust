@@ -10,16 +10,20 @@ use self::flecs::FlecsTrait;
 // functions in here match most of the functions in the c++ entity and entity_builder class
 impl<'a> EntityView<'a> {
     fn check_add_id_validity(world: *mut sys::ecs_world_t, id: u64) {
-        let is_alive = unsafe { sys::ecs_is_alive(world, id) };
-        let is_pair = unsafe { sys::ecs_id_is_pair(id) };
-        let is_invalid_type = unsafe { sys::ecs_get_typeid(world, id) != 0 };
+        let is_valid_id = unsafe { sys::ecs_id_is_valid(world, id) };
 
-        if !is_alive && !is_pair {
+        if !is_valid_id {
             panic!("Id is not a valid component, pair or entity.");
         }
 
-        if is_invalid_type {
-            panic!("Id is not a ZST type such as a Tag or Entity.");
+        let is_not_tag = unsafe { sys::ecs_get_typeid(world, id) != 0 };
+
+        if is_not_tag {
+            let hooks = unsafe { sys::ecs_get_hooks_id(world, id) };
+            let is_default_hook = unsafe { (*hooks).ctor.is_some() };
+            if !is_default_hook {
+                panic!("Id is not a ZST type such as a Tag or Entity or does not implement the Default hook for a non ZST type.");
+            }
         }
     }
     /// Add an id to an entity.
@@ -121,9 +125,38 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    pub fn add_first<First: ComponentId + EmptyComponent>(self, second: impl Into<Entity>) -> Self {
+    pub fn add_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
+        const {
+            if !First::IS_TAG && !First::IMPLS_DEFAULT {
+                panic!("Adding an element that is not a Tag / Zero sized type requires to implement Default");
+            }
+        }
+
         let world = self.world;
-        self.add_id((First::get_id(world), second.into()))
+        let world_ptr = world.world_ptr_mut();
+
+        let second = *second.into();
+
+        let is_valid_id = unsafe { sys::ecs_id_is_valid(world_ptr, second) };
+
+        if !is_valid_id {
+            panic!("Id is not a valid component or entity.");
+        }
+
+        if First::IS_TAG {
+            let is_second_not_tag = unsafe { sys::ecs_get_typeid(world_ptr, second) != 0 };
+
+            if is_second_not_tag {
+                let hooks = unsafe { sys::ecs_get_hooks_id(world_ptr, second) };
+                let is_default_hook = unsafe { (*hooks).ctor.is_some() };
+                if !is_default_hook {
+                    panic!("second id is not a ZST type such as a Tag or Entity or does not implement the Default hook for a non ZST type.");
+                }
+            }
+        }
+
+        // SAFETY: we know that the id is a valid because first is a Type and second has been checked
+        unsafe { self.add_id_unchecked((First::get_id(world), second)) }
     }
 
     /// Adds a pair to the entity
@@ -137,12 +170,35 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    pub fn add_second<Second: ComponentId + EmptyComponent>(
-        self,
-        first: impl Into<Entity>,
-    ) -> Self {
+    pub fn add_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
         let world = self.world;
-        self.add_id((first.into(), Second::get_id(world)))
+        let world_ptr = world.world_ptr_mut();
+
+        let first = *first.into();
+
+        let is_valid = unsafe { sys::ecs_id_is_valid(world_ptr, first) };
+
+        if !is_valid {
+            panic!("Id is not a valid component or entity.");
+        }
+
+        let is_first_tag = unsafe { sys::ecs_get_typeid(world_ptr, first) == 0 };
+
+        if is_first_tag {
+            if !Second::IS_TAG && !Second::IMPLS_DEFAULT {
+                panic!("first id is a tag type such as a Tag or Entity, but second id is not a ZST type such as a Tag or Entity or does not implement the Default hook for a non ZST type.");
+            }
+        } else {
+            let hooks = unsafe { sys::ecs_get_hooks_id(world_ptr, first) };
+            let is_default_hook = unsafe { (*hooks).ctor.is_some() };
+            if !is_default_hook {
+                panic!("first id is not a ZST type such as a Tag or Entity and does not implement the Default hook.
+                Use `set` id variant.");
+            }
+        }
+
+        // SAFETY: we know that the id is a valid because first is a Type and second has been checked
+        self.add_id((first, Second::get_id(world)))
     }
 
     /// Adds a pair to the entity composed of a tag and an enum constant.
@@ -153,11 +209,17 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::add")]
     pub fn add_pair_enum<First, Second>(self, enum_value: Second) -> Self
     where
-        First: ComponentId + EmptyComponent,
+        First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
+        const {
+            if !First::IS_TAG && First::IMPLS_DEFAULT {
+                panic!("Adding an element that is not a Tag / Zero sized type requires to implement Default");
+            }
+        }
         let world = self.world;
-        unsafe { self.add_id_unchecked((First::get_id(world), enum_value.get_id_variant(world))) }
+        let enum_id = enum_value.get_id_variant(world);
+        unsafe { self.add_id_unchecked((First::get_id(world), enum_id)) }
     }
 
     /// Adds a pair to the entity where the first element is the enumeration type,
@@ -249,10 +311,10 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::add_if")]
     pub fn add_if<T: IntoComponentId>(self, condition: bool) -> Self {
         let world = self.world;
-        let id = T::get_id(world);
         if condition {
-            self.add_id(id)
+            self.add::<T>()
         } else {
+            let id = T::get_id(world);
             // the compiler will optimize this branch away since it's known at compile time
             if T::IS_PAIR {
                 // If second is 0 or if relationship is exclusive, use wildcard for
@@ -339,7 +401,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::add_if`
     #[doc(alias = "entity_builder::add_if")]
-    pub fn add_enum_tag_if<T>(self, enum_value: T, condition: bool) -> Self
+    pub fn add_enum_if<T>(self, enum_value: T, condition: bool) -> Self
     where
         T: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
@@ -736,7 +798,7 @@ impl<'a> EntityView<'a> {
         (First, Second): FlecsCastType,
     {
         let id_pair = <(First, Second) as IntoComponentId>::get_id(self.world);
-        unsafe { self.auto_override_id(id_pair).set_id(data, id_pair) }
+        self.auto_override_id(id_pair).set_id(data, id_pair)
     }
 
     /// Sets a pair, mark component for auto-overriding.
@@ -817,18 +879,28 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set`
     #[doc(alias = "entity_builder::set")]
-    pub unsafe fn set_id<T>(self, data: T, id: impl IntoId) -> Self
+    pub fn set_id<T>(self, data: T, id: impl IntoId) -> Self
     where
-        T: ComponentId,
+        T: ComponentId + NotEmptyComponent,
     {
+        let world = self.world.world_ptr_mut();
         let id = *id.into();
-        set_helper(self.world.world_ptr_mut(), *self.id, data, id);
+        let data_id = T::get_id(self.world);
+        let id_data_id = unsafe { sys::ecs_get_typeid(world, id) };
+
+        if data_id != id_data_id {
+            panic!("Data type does not match id type. For pairs this is the first element occurance that is not a ZST type.");
+        }
+
+        set_helper(world, *self.id, data, id);
         self
     }
 
     /// Set a pair for an entity.
-    /// This operation sets the pair value, and uses the first non tag / ZST as type. If the
-    /// entity did not yet have the pair, it will be added, otherwise overridden.
+    /// This operation sets the pair value, and uses the first non tag / ZST as type.
+    /// If the data is an flecs enum (Repr(C)), it will use the enum variant id.
+    ///
+    /// If the entity did not yet have the pair, it will be added, otherwise overridden.
     ///
     /// # See also
     ///
@@ -840,16 +912,9 @@ impl<'a> EntityView<'a> {
         Second: ComponentId,
         (First, Second): FlecsCastType,
     {
-        // const {
-        //     assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
-        // };
-        // TODO rust 1.79 replace with const
-        if <(First, Second) as IntoComponentId>::IS_TAGS {
-            panic!("setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
-        }
-
-        // let world = self.world;
-        // self.add_id((First::get_id(world), enum_value.get_id_variant(world)))
+        const {
+            assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
+        };
 
         set_helper(
             self.world.world_ptr_mut(),
@@ -866,16 +931,21 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set`
     #[doc(alias = "entity_builder::set")]
-    pub fn set_first<First>(self, first: First, second: impl Into<Entity>) -> Self
+    pub fn set_first<First>(self, second: impl Into<Entity>, first: First) -> Self
     where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        First: ComponentId + NotEmptyComponent,
     {
-        set_helper(
-            self.world.world_ptr_mut(),
-            *self.id,
-            first,
-            ecs_pair(First::get_id(self.world), *second.into()),
-        );
+        let world_ptr = self.world.world_ptr_mut();
+        let first_id = First::get_id(self.world);
+        let second_id = *second.into();
+        let pair_id = ecs_pair(first_id, second_id);
+        let data_id = unsafe { sys::ecs_get_typeid(world_ptr, pair_id) };
+
+        if data_id != first_id {
+            panic!("First type does not match id data type. For pairs this is the first element occurance that is not a ZST type.");
+        }
+
+        set_helper(world_ptr, *self.id, first, pair_id);
         self
     }
 
@@ -889,34 +959,21 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set_second`
     #[doc(alias = "entity_builder::set_second")]
-    pub fn set_second<Second>(self, second: Second, first: impl Into<Entity>) -> Self
+    pub fn set_second<Second>(self, first: impl Into<Entity>, second: Second) -> Self
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
-        let first_id = *first.into();
         let world = self.world.world_ptr_mut();
-        let is_alive = unsafe { sys::ecs_is_alive(world, first_id) };
-        let is_pair = unsafe { sys::ecs_id_is_pair(first_id) };
-        let is_invalid_type = unsafe { sys::ecs_get_typeid(world, first_id) != 0 };
+        let first_id = *first.into();
+        let second_id = Second::get_id(self.world);
+        let pair_id = ecs_pair(first_id, second_id);
+        let data_id = unsafe { sys::ecs_get_typeid(world, pair_id) };
 
-        if !is_alive {
-            panic!("Id is not a valid component or entity.");
+        if data_id != second_id {
+            panic!("Second type does not match id data type. For pairs this is the first element occurance that is not a ZST type.");
         }
 
-        if is_pair {
-            panic!("Id should not be a pair.");
-        }
-
-        if is_invalid_type {
-            panic!("Id is not a ZST type such as a Tag or Entity.");
-        }
-
-        set_helper(
-            world,
-            *self.id,
-            second,
-            ecs_pair(first_id, Second::get_id(self.world)),
-        );
+        set_helper(world, *self.id, second, pair_id);
         self
     }
 
@@ -938,7 +995,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set`
     #[doc(alias = "entity_builder::set")]
-    pub fn set_first_w_enum<First, Second>(self, first: First, constant: Second) -> Self
+    pub fn set_pair_enum<First, Second>(self, enum_variant: Second, first: First) -> Self
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
@@ -949,7 +1006,7 @@ impl<'a> EntityView<'a> {
             first,
             ecs_pair(
                 First::get_id(self.world),
-                **constant.get_id_variant(self.world),
+                **enum_variant.get_id_variant(self.world),
             ),
         );
         self
@@ -978,7 +1035,6 @@ impl<'a> EntityView<'a> {
         ptr: *const c_void,
     ) -> Self {
         sys::ecs_set_id(self.world.world_ptr_mut(), *self.id, *id.into(), size, ptr);
-
         self
     }
 

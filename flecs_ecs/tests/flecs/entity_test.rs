@@ -1065,7 +1065,7 @@ fn entity_is_first_enabled() {
 
     let e = world
         .entity()
-        .set_first::<Position>(Position { x: 0, y: 0 }, tgt_a);
+        .set_first::<Position>(tgt_a, Position { x: 0, y: 0 });
 
     assert!(e.is_enabled_first::<Position>(tgt_a));
     assert!(!e.is_enabled_first::<Position>(tgt_b));
@@ -1229,7 +1229,7 @@ fn entity_override_pair_w_tgt_id() {
     let base = world
         .entity()
         .auto_override_first::<Position>(tgt_a)
-        .set_first::<Position>(Position { x: 0, y: 0 }, tgt_b);
+        .set_first::<Position>(tgt_b, Position { x: 0, y: 0 });
 
     let entity = world.entity().add_id((flecs::IsA::ID, base));
 
