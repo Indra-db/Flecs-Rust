@@ -156,7 +156,7 @@ pub mod internals {
     }
 }
 
-fn check_term_access_validity(term: &impl TermBuilderImpl<'a>) {
+fn check_term_access_validity<'a>(term: &impl TermBuilderImpl<'a>) {
     if term.current_term_index() < term.count_generic_terms() {
         panic!("This function should only be used on terms that are not part of the generic type signature. ")
     }
@@ -362,7 +362,9 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::id`
     #[doc(alias = "term_builder_i::id")]
     fn set_id(&mut self, id: impl Into<Entity>) -> &mut Self {
-        check_term_access_validity(self);
+        if self.current_term_ref_mode() != TermRefMode::Src {
+            check_term_access_validity(self);
+        }
 
         let term_ref = self.term_ref_mut();
         term_ref.id = *id.into();
@@ -403,8 +405,6 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::name`
     #[doc(alias = "term_builder_i::name")]
     fn name(&mut self, name: &'a str) -> &mut Self {
-        check_term_access_validity(self);
-
         let name = format!("{}\0", name);
         let term_ref = self.term_ref_mut();
         term_ref.name = name.as_ptr() as *mut i8;
@@ -469,8 +469,6 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
     fn src(&mut self) -> &mut Self {
-        check_term_access_validity(self);
-
         self.set_term_ref_mode(TermRefMode::Src);
         self
     }
@@ -514,7 +512,6 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
     fn set_src_id(&mut self, id: impl Into<Entity>) -> &mut Self {
-        check_term_access_validity(self);
         self.src().set_id(id)
     }
 
@@ -529,7 +526,6 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
     fn set_src<T: ComponentId>(&mut self) -> &mut Self {
-        check_term_access_validity(self);
         self.set_src_id(T::get_id(self.world()))
     }
 
@@ -545,7 +541,6 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
     fn set_src_name(&mut self, name: &'a str) -> &mut Self {
-        check_term_access_validity(self);
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,

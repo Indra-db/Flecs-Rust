@@ -329,7 +329,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.init_current_term(id);
         let current_term = self.current_term_mut();
         if current_term.inout == InOutKind::Default as i16 {
-            self.set_inout_none();
+            self.current_term_mut().inout = InOutKind::None as i16;
         }
         self
     }
@@ -377,11 +377,11 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
             let id = T::get_id(world);
             self.init_current_term(id);
             if T::First::IS_REF {
-                self.set_in();
+                self.current_term_mut().inout = InOutKind::In as i16;
             } else if T::First::IS_MUT {
-                self.set_inout();
+                self.current_term_mut().inout = InOutKind::InOut as i16;
             } else {
-                self.set_inout_none();
+                self.current_term_mut().inout = InOutKind::None as i16;
             }
         }
         self
@@ -464,7 +464,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.set_first_name(name);
         let term = self.current_term();
         if term.inout == InOutKind::Default as i16 {
-            self.set_inout_none();
+            self.current_term_mut().inout = InOutKind::None as i16;
         }
         self
     }
@@ -492,7 +492,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.set_second_name(second);
         let term = self.current_term();
         if term.inout == InOutKind::Default as i16 {
-            self.set_inout_none();
+            self.current_term_mut().inout = InOutKind::None as i16;
         }
         self
     }
@@ -503,7 +503,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.set_first_name(first).set_second_id(second.into());
         let term = self.current_term();
         if term.inout == InOutKind::Default as i16 {
-            self.set_inout_none();
+            self.current_term_mut().inout = InOutKind::None as i16;
         }
         self
     }
