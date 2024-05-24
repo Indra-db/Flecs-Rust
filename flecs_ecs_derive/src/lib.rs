@@ -1071,10 +1071,10 @@ fn expand_term_type(term: &Term) -> Option<TokenStream> {
         Access::None => return None,
     };
 
-    if term.oper == TermOper::Optional {
-        Some(quote! { Option<#access_type> })
-    } else {
-        Some(access_type)
+    match &term.oper {
+        TermOper::Optional => Some(quote! { Option<#access_type> }),
+        TermOper::And => Some(quote! { #access_type }),
+        _ => None,
     }
 }
 
