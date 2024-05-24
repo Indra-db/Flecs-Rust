@@ -766,7 +766,7 @@ fn peek_id(input: &ParseStream) -> bool {
     input.peek(Ident) || input.peek(Token![$]) || input.peek(LitStr) || input.peek(Token![Self])
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, PartialEq, Eq)]
 enum TermOper {
     Not,
     Optional,
@@ -1055,6 +1055,7 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
         Access::None => 1,
         _ => 0,
     });
+    let mut or = false;
     let iter_terms = terms
         .iter()
         .filter_map(|t| {
@@ -1076,11 +1077,17 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                 Access::Read => Some(quote! { & #iter_type }),
                 Access::None => None,
             };
-            access_type.map(|ty| match t.oper {
-                TermOper::Optional | TermOper::Or => quote! { Option<#ty> },
-                TermOper::And => quote! { #ty },
-                _ => panic!("Invalid operation for static component access."),
-            })
+            let optional = or
+                || match t.oper {
+                    TermOper::Or | TermOper::Optional => true,
+                    _ => false,
+                };
+            or = t.oper == TermOper::Or;
+            if optional {
+                access_type.map(|ty| quote! { Option<#ty> })
+            } else {
+                access_type.map(|ty| quote! { #ty })
+            }
         })
         .collect::<Vec<_>>();
     let iter_type = if iter_terms.len() == 1 {
