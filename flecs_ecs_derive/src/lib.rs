@@ -1077,11 +1077,7 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                 Access::Read => Some(quote! { & #iter_type }),
                 Access::None => None,
             };
-            let optional = or
-                || match t.oper {
-                    TermOper::Or | TermOper::Optional => true,
-                    _ => false,
-                };
+            let optional = or || matches!(t.oper, TermOper::Or | TermOper::Optional);
             or = t.oper == TermOper::Or;
             if optional {
                 access_type.map(|ty| quote! { Option<#ty> })
