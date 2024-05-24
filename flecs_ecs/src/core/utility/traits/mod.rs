@@ -31,6 +31,8 @@ pub mod private {
         T: Iterable,
         P: ComponentId,
     {
+        fn set_instanced(&mut self, instanced: bool);
+
         fn set_callback_binding_context(&mut self, binding_ctx: *mut c_void) -> &mut Self;
 
         fn set_callback_binding_context_free(
@@ -67,29 +69,22 @@ pub mod private {
         where
             Func: FnMut(T::TupleType<'_>),
         {
-            ecs_assert!(
-                {
-                    unsafe {
-                        (*iter).flags |= sys::EcsIterCppEach;
-                    }
-                    true
-                },
-                "used to assert if using .field() in each functions."
-            );
+            let iter = unsafe { &mut *iter };
+            iter.flags |= sys::EcsIterCppEach;
 
-            let each = &mut *((*iter).callback_ctx as *mut Func);
+            let each = &mut *(iter.callback_ctx as *mut Func);
 
             let mut components_data = T::create_ptrs(&*iter);
             let iter_count = {
-                if (*iter).count == 0 {
+                if iter.count == 0 && iter.table.is_null() {
                     1_usize
                 } else {
-                    (*iter).count as usize
+                    iter.count as usize
                 }
             };
 
             if !CALLED_FROM_RUN {
-                sys::ecs_table_lock((*iter).world, (*iter).table);
+                sys::ecs_table_lock(iter.world, iter.table);
             }
 
             for i in 0..iter_count {
@@ -98,7 +93,7 @@ pub mod private {
             }
 
             if !CALLED_FROM_RUN {
-                sys::ecs_table_unlock((*iter).world, (*iter).table);
+                sys::ecs_table_unlock(iter.world, iter.table);
             }
         }
 
@@ -117,41 +112,40 @@ pub mod private {
         ) where
             Func: FnMut(EntityView, T::TupleType<'_>),
         {
-            ecs_assert!(
-                {
-                    unsafe {
-                        (*iter).flags |= sys::EcsIterCppEach;
-                    }
-                    true
-                },
-                "used to assert if using .field() in each functions."
-            );
+            let iter = unsafe { &mut *iter };
+            iter.flags |= sys::EcsIterCppEach;
 
-            let each_entity = &mut *((*iter).callback_ctx as *mut Func);
+            let each_entity = &mut *(iter.callback_ctx as *mut Func);
 
             let mut components_data = T::create_ptrs(&*iter);
             let iter_count = {
-                if (*iter).count == 0 {
+                if iter.count == 0 && iter.table.is_null() {
                     1_usize
                 } else {
-                    (*iter).count as usize
+                    iter.count as usize
                 }
             };
 
+            ecs_assert!(
+                iter.count > 0,
+                FlecsErrorCode::InvalidOperation,
+                "no entities returned, use each() without flecs::entity argument",
+            );
+
             if !CALLED_FROM_RUN {
-                sys::ecs_table_lock((*iter).world, (*iter).table);
+                sys::ecs_table_lock(iter.world, iter.table);
             }
 
             for i in 0..iter_count {
-                let world = WorldRef::from_ptr((*iter).world);
-                let entity = EntityView::new_from(world, *(*iter).entities.add(i));
+                let world = WorldRef::from_ptr(iter.world);
+                let entity = EntityView::new_from(world, *iter.entities.add(i));
                 let tuple = components_data.get_tuple(i);
 
                 each_entity(entity, tuple);
             }
 
             if !CALLED_FROM_RUN {
-                sys::ecs_table_unlock((*iter).world, (*iter).table);
+                sys::ecs_table_unlock(iter.world, iter.table);
             }
         }
 
@@ -169,36 +163,29 @@ pub mod private {
         where
             Func: FnMut(Iter<false, P>, usize, T::TupleType<'_>),
         {
-            ecs_assert!(
-                {
-                    unsafe {
-                        (*iter).flags |= sys::EcsIterCppEach;
-                    }
-                    true
-                },
-                "used to assert if using .field() in each functions."
-            );
+            let iter = unsafe { &mut *iter };
+            iter.flags |= sys::EcsIterCppEach;
 
-            let each_iter = &mut *((*iter).callback_ctx as *mut Func);
+            let each_iter = &mut *(iter.callback_ctx as *mut Func);
 
             let mut components_data = T::create_ptrs(&*iter);
             let iter_count = {
-                if (*iter).count == 0 {
+                if iter.count == 0 && iter.table.is_null() {
                     1_usize
                 } else {
-                    (*iter).count as usize
+                    iter.count as usize
                 }
             };
 
-            sys::ecs_table_lock((*iter).world, (*iter).table);
+            sys::ecs_table_lock(iter.world, iter.table);
 
             for i in 0..iter_count {
-                let iter_t = Iter::new(&mut (*iter));
+                let iter_t = Iter::new(iter);
                 let tuple = components_data.get_tuple(i);
 
                 each_iter(iter_t, i, tuple);
             }
-            sys::ecs_table_unlock((*iter).world, (*iter).table);
+            sys::ecs_table_unlock(iter.world, iter.table);
         }
 
         /// Callback of the `iter_only` functionality
@@ -216,12 +203,13 @@ pub mod private {
             Func: FnMut(Iter<true, P>),
         {
             unsafe {
-                let run = &mut *((*iter).run_ctx as *mut Func);
+                let iter = &mut *iter;
+                let run = &mut *(iter.run_ctx as *mut Func);
                 let mut iter_t = Iter::new(&mut *iter);
                 iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
                 run(iter_t);
                 // ecs_assert!(
-                //     (*iter).flags & sys::EcsIterIsValid == 0,
+                //     iter.flags & sys::EcsIterIsValid == 0,
                 //     FlecsErrorCode::InvalidOperation,
                 //     "iterators must be manually finished with ecs_iter_fini"
                 // );
@@ -242,23 +230,24 @@ pub mod private {
         where
             Func: FnMut(Iter<false, P>, T::TupleSliceType<'_>),
         {
-            let run_iter = &mut *((*iter).callback_ctx as *mut Func);
+            let iter = &mut *iter;
+            let run_iter = &mut *(iter.callback_ctx as *mut Func);
 
             let mut components_data = T::create_ptrs(&*iter);
             let iter_count = {
-                if (*iter).count == 0 {
+                if iter.count == 0 {
                     1_usize
                 } else {
-                    (*iter).count as usize
+                    iter.count as usize
                 }
             };
 
-            sys::ecs_table_lock((*iter).world, (*iter).table);
+            sys::ecs_table_lock(iter.world, iter.table);
 
             let tuple = components_data.get_slice(iter_count);
             let iter_t = Iter::new(&mut *iter);
             run_iter(iter_t, tuple);
-            sys::ecs_table_unlock((*iter).world, (*iter).table);
+            sys::ecs_table_unlock(iter.world, iter.table);
         }
 
         extern "C" fn free_callback<Func>(ptr: *mut c_void) {

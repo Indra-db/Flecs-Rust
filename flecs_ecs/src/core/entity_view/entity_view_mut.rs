@@ -889,7 +889,7 @@ impl<'a> EntityView<'a> {
         let id_data_id = unsafe { sys::ecs_get_typeid(world, id) };
 
         if data_id != id_data_id {
-            panic!("Data type does not match id type. For pairs this is the first element occurance that is not a ZST type.");
+            panic!("Data type does not match id type. For pairs this is the first element occurrence that is not a ZST type.");
         }
 
         set_helper(world, *self.id, data, id);
@@ -942,7 +942,7 @@ impl<'a> EntityView<'a> {
         let data_id = unsafe { sys::ecs_get_typeid(world_ptr, pair_id) };
 
         if data_id != first_id {
-            panic!("First type does not match id data type. For pairs this is the first element occurance that is not a ZST type.");
+            panic!("First type does not match id data type. For pairs this is the first element occurrence that is not a ZST type.");
         }
 
         set_helper(world_ptr, *self.id, first, pair_id);
@@ -970,7 +970,7 @@ impl<'a> EntityView<'a> {
         let data_id = unsafe { sys::ecs_get_typeid(world, pair_id) };
 
         if data_id != second_id {
-            panic!("Second type does not match id data type. For pairs this is the first element occurance that is not a ZST type.");
+            panic!("Second type does not match id data type. For pairs this is the first element occurrence that is not a ZST type.");
         }
 
         set_helper(world, *self.id, second, pair_id);

@@ -7,8 +7,6 @@ where
     T: Iterable,
     P: ComponentId,
 {
-    //fn set_instanced(&mut self, instanced: bool);
-
     /// Set context
     ///
     /// # See also
@@ -32,7 +30,7 @@ where
             Self::execute_each::<false, Func> as unsafe extern "C" fn(_),
         ));
 
-        //self.set_instanced(true);
+        self.set_instanced(true);
 
         self.build()
     }
@@ -50,7 +48,7 @@ where
             Self::execute_each_entity::<false, Func> as unsafe extern "C" fn(_),
         ));
 
-        //self.set_instanced(true);
+        self.set_instanced(true);
 
         self.build()
     }
@@ -65,11 +63,13 @@ where
         self.set_callback_binding_context(each_iter_static_ref as *mut _ as *mut c_void);
         self.set_callback_binding_context_free(Some(Self::free_callback::<Func>));
 
+        self.set_instanced(true);
+
         self.set_desc_callback(Some(
             Self::execute_each_iter::<Func> as unsafe extern "C" fn(_),
         ));
 
-        //self.set_instanced(true);
+        self.set_instanced(true);
 
         self.build()
     }
@@ -375,6 +375,8 @@ where
         self.set_callback_binding_context(each_static_ref as *mut _ as *mut c_void);
         self.set_callback_binding_context_free(Some(Self::free_callback::<FuncEach>));
 
+        self.set_instanced(true);
+
         self.set_desc_callback(Some(
             Self::execute_each::<true, FuncEach> as unsafe extern "C" fn(_),
         ));
@@ -492,6 +494,8 @@ where
         self.set_callback_binding_context(each_entity_static_ref as *mut _ as *mut c_void);
         self.set_callback_binding_context_free(Some(Self::free_callback::<FuncEachEntity>));
 
+        self.set_instanced(true);
+
         self.set_desc_callback(Some(
             Self::execute_each_entity::<true, FuncEachEntity> as unsafe extern "C" fn(_),
         ));
@@ -506,6 +510,10 @@ macro_rules! implement_reactor_api {
         where
             T: Iterable,
         {
+            fn set_instanced(&mut self, instanced: bool) {
+                self.is_instanced = instanced;
+            }
+
             fn set_callback_binding_context(&mut self, binding_ctx: *mut c_void) -> &mut Self {
                 self.desc.callback_ctx = binding_ctx;
                 self
@@ -555,10 +563,6 @@ macro_rules! implement_reactor_api {
         where
             T: Iterable,
         {
-            // fn set_instanced(&mut self, instanced: bool) {
-            //     self.is_instanced = instanced;
-            // }
-
             fn set_context(&mut self, context: *mut c_void) -> &mut Self {
                 self.desc.ctx = context;
                 self
@@ -571,6 +575,10 @@ macro_rules! implement_reactor_api {
             T: Iterable,
             P: ComponentId,
         {
+            fn set_instanced(&mut self, instanced: bool) {
+                self.is_instanced = instanced;
+            }
+
             fn set_callback_binding_context(&mut self, binding_ctx: *mut c_void) -> &mut Self {
                 self.desc.callback_ctx = binding_ctx;
                 self
@@ -621,10 +629,6 @@ macro_rules! implement_reactor_api {
             T: Iterable,
             P: ComponentId,
         {
-            // fn set_instanced(&mut self, instanced: bool) {
-            //     self.is_instanced = instanced;
-            // }
-
             fn set_context(&mut self, context: *mut c_void) -> &mut Self {
                 self.desc.ctx = context;
                 self

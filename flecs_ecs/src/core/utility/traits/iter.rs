@@ -43,18 +43,18 @@ where
     fn each(&self, mut func: impl FnMut(T::TupleType<'_>)) {
         unsafe {
             let mut iter = self.retrieve_iter();
-
-            ecs_assert!(
-                {
-                    iter.flags |= sys::EcsIterCppEach;
-                    true
-                },
-                "used to assert if using .field() in each functions."
-            );
+            iter.flags |= sys::EcsIterIsInstanced;
+            iter.flags |= sys::EcsIterCppEach;
 
             while self.iter_next(&mut iter) {
                 let mut components_data = T::create_ptrs(&iter);
-                let iter_count = iter.count as usize;
+                let iter_count = {
+                    if iter.count == 0 && iter.table.is_null() {
+                        1_usize
+                    } else {
+                        iter.count as usize
+                    }
+                };
 
                 sys::ecs_table_lock(self.world_ptr_mut(), iter.table);
 
@@ -81,26 +81,26 @@ where
     #[doc(alias = "iterable::each")]
     fn each_entity(&self, mut func: impl FnMut(EntityView, T::TupleType<'_>)) {
         unsafe {
-            let mut iter = self.retrieve_iter();
-
-            ecs_assert!(
-                {
-                    iter.flags |= sys::EcsIterCppEach;
-                    true
-                },
-                "used to assert if using .field() in each functions."
-            );
-
             let world = self.world_ptr_mut();
+            let mut iter = self.retrieve_iter();
+            iter.flags |= sys::EcsIterIsInstanced;
+            iter.flags |= sys::EcsIterCppEach;
+
             while self.iter_next(&mut iter) {
                 let mut components_data = T::create_ptrs(&iter);
                 let iter_count = {
-                    if iter.count == 0 {
+                    if iter.count == 0 && iter.table.is_null() {
                         1_usize
                     } else {
                         iter.count as usize
                     }
                 };
+
+                ecs_assert!(
+                    iter.count > 0,
+                    FlecsErrorCode::InvalidOperation,
+                    "no entities returned, use each() without flecs::entity argument",
+                );
 
                 sys::ecs_table_lock(world, iter.table);
 
@@ -126,22 +126,15 @@ where
         P: ComponentId,
     {
         unsafe {
-            let mut iter = self.retrieve_iter();
-
-            ecs_assert!(
-                {
-                    iter.flags |= sys::EcsIterCppEach;
-                    true
-                },
-                "used to assert if using .field() in each functions."
-            );
-
             let world = self.world_ptr_mut();
+            let mut iter = self.retrieve_iter();
+            iter.flags |= sys::EcsIterIsInstanced;
+            iter.flags |= sys::EcsIterCppEach;
 
             while self.iter_next(&mut iter) {
                 let mut components_data = T::create_ptrs(&iter);
                 let iter_count = {
-                    if iter.count == 0 {
+                    if iter.count == 0 && iter.table.is_null() {
                         1_usize
                     } else {
                         iter.count as usize
