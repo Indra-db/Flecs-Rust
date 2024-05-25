@@ -1,6 +1,6 @@
 # Flecs ECS Rust API
 
-[![Generic badge](https://img.shields.io/badge/Flecs_Version-3.2.12-E56717.svg)](https://github.com/SanderMertens/flecs/releases)
+[![Generic badge](https://img.shields.io/badge/Flecs_Version-4.0.0-E56717.svg)](https://github.com/SanderMertens/flecs/releases)
 [![License](https://badgen.net/pypi/license/pip/)](https://github.com/Indra-db/flecs-ecs-rs/blob/master/LICENSE)
 [![CI](https://github.com/indra-db/flecs_ecs_rs/actions/workflows/ci.yml/badge.svg)](https://github.com/indra-db/flecs_ecs_rs/actions/workflows/ci.yml)
 [![Flecs C/C++ Docs](https://img.shields.io/badge/Flecs%20C%2FC%2B%2B%20Docs-View-161b22)](https://www.flecs.dev/flecs/md_docs_2Docs.html)
@@ -10,7 +10,7 @@
 
 Hello there! Welcome to my Rust wrapper around the ECS library called [Flecs](https://github.com/SanderMertens/flecs). This project endeavors to offer Rust developers an intuitive and streamlined interface to harness the full potential of Flecs, the most advanced open source Entity Component System (ECS) library available today.
 
-## ⚠️ Status: Alpha release happening this month
+## ⚠️ Status: Alpha release happening mid June
 
 The project is at a stage where the **core functionality** of Flecs has been **ported successfully** and is available to use today. While you're encouraged to explore, test, and provide feedback, please be aware of potential bugs and breaking changes as we continue to refine the API and add new features.
 
