@@ -958,8 +958,8 @@ struct Term {
 
 impl Parse for Term {
     fn parse(input: ParseStream) -> Result<Self> {
-        let oper = input.parse::<TermOper>()?;
         let access = input.parse::<Access>()?;
+        let oper = input.parse::<TermOper>()?;
         let reference = input.parse::<Reference>()?;
         if peek_id(&input) {
             let initial = input.parse::<TermId>()?;
