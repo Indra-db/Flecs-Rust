@@ -11,33 +11,6 @@ use syn::{
     Data, DeriveInput, Fields, Ident, LitInt, LitStr, Result, Token, Type,
 };
 
-#[proc_macro_derive(Raptor)]
-pub fn repr_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
-    let has_repr_c = check_repr_c(&input); // Ensure this function correctly checks for #[repr(C)]
-    let name = &input.ident;
-
-    let generated_code = match &input.data {
-        Data::Enum(_) if !has_repr_c => {
-            // Case for enums without #[repr(C)]
-            quote! { impl flecs_ecs::core::EmptyComponent for #name {} }
-        }
-        Data::Enum(_) => {
-            // Case for enums with #[repr(C)]
-            quote! { impl flecs_ecs::core::NotEmptyComponent for #name {} }
-        }
-        _ => {
-            // Error case for non-enum types
-            return quote! {
-                compile_error!("The type is neither a struct nor an enum!");
-            }
-            .into();
-        }
-    };
-
-    generated_code.into()
-}
-
 /// `Component` macro for defining ECS components with optional register attribute when the type is generic over a single T.
 ///
 /// When a type is decorated with `#[derive(Component)]`, several trait implementations are automatically added based on its structure:
@@ -154,8 +127,16 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
         quote! {}
     };
 
+    input.generics.make_where_clause();
+
+    let (impl_generics, type_generics, where_clause) = &input.generics.split_for_impl();
+
     // Combine the generated code with the original struct definition
     let output = quote! {
+
+        unsafe impl #impl_generics Send for #name #type_generics #where_clause{}
+        unsafe impl #impl_generics Sync for #name #type_generics #where_clause{}
+
         #is_attribute_supported
 
         #component_id_trait

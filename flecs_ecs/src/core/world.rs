@@ -20,6 +20,8 @@ pub struct World {
     pub(crate) raw_world: NonNull<WorldT>,
 }
 
+unsafe impl Send for World {}
+
 impl Clone for World {
     fn clone(&self) -> Self {
         unsafe { sys::flecs_poly_claim_(self.raw_world.as_ptr() as *mut c_void) };

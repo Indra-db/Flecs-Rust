@@ -45,6 +45,8 @@ pub struct WorldRef<'a> {
     _marker: PhantomData<&'a ()>,
 }
 
+unsafe impl<'a> Send for WorldRef<'a> {}
+
 impl<'a> WorldRef<'a> {
     #[inline(always)]
     pub fn real_world(&self) -> WorldRef<'a> {
