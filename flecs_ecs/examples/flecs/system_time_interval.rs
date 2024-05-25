@@ -8,8 +8,10 @@ struct Timeout {
     pub value: f32,
 }
 
-fn tick(it: Iter) {
-    println!("{}", it.system().name());
+fn tick(mut it: Iter) {
+    while it.next_iter() {
+        println!("{}", it.system().name());
+    }
 }
 
 fn main() {
@@ -23,15 +25,9 @@ fn main() {
             timeout.value -= it.delta_time();
         });
 
-    world
-        .system_named::<()>("Tick")
-        .interval(1.0)
-        .iter_only(tick);
+    world.system_named::<()>("Tick").interval(1.0).run(tick);
 
-    world
-        .system_named::<()>("FastTick")
-        .interval(0.5)
-        .iter_only(tick);
+    world.system_named::<()>("FastTick").interval(0.5).run(tick);
 
     // Run the main loop at 60 FPS
     world.set_target_fps(60.0);

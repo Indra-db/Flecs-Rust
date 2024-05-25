@@ -17,13 +17,17 @@ fn main() {
     world
         .system_named::<()>("Startup")
         .kind::<flecs::pipeline::OnStart>()
-        .iter_only(|it| {
-            println!("{}", it.system().name());
+        .run(|mut it| {
+            while it.next_iter() {
+                println!("{}", it.system().name());
+            }
         });
 
     // Regular system
-    world.system_named::<()>("Update").iter_only(|it| {
-        println!("{}", it.system().name());
+    world.system_named::<()>("Update").run(|mut it| {
+        while it.next_iter() {
+            println!("{}", it.system().name());
+        }
     });
 
     // First frame. This runs both the Startup and Update systems

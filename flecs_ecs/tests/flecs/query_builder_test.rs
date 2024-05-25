@@ -949,7 +949,7 @@ fn query_builder_singleton_term() {
 
     let mut count = 0;
 
-    q.iter(|it, s| {
+    q.run_iter(|it, s| {
         let o = &it.field::<Other>(1).unwrap()[0];
         assert!(!it.is_self(1));
         assert_eq!(o.value, 10);
@@ -992,7 +992,7 @@ fn query_builder_isa_superset_term() {
 
     let mut count = 0;
 
-    q.iter(|it, s| {
+    q.run_iter(|it, s| {
         let o = &it.field::<Other>(1).unwrap()[0];
         assert!(!it.is_self(1));
         assert_eq!(o.value, 10);
@@ -1041,7 +1041,7 @@ fn query_builder_isa_self_superset_term() {
     let mut count = 0;
     let mut owned_count = 0;
 
-    q.iter(|it, s| {
+    q.run_iter(|it, s| {
         let o = &it.field::<Other>(1).unwrap();
 
         if !it.is_self(1) {
@@ -1088,7 +1088,7 @@ fn query_builder_childof_superset_term() {
 
     let mut count = 0;
 
-    q.iter(|it, s| {
+    q.run_iter(|it, s| {
         let o = &it.field::<Other>(1).unwrap()[0];
         assert!(!it.is_self(1));
         assert_eq!(o.value, 10);
@@ -1133,7 +1133,7 @@ fn query_builder_childof_self_superset_term() {
     let mut count = 0;
     let mut owned_count = 0;
 
-    q.iter(|it, s| {
+    q.run_iter(|it, s| {
         let o = &it.field::<Other>(1).unwrap();
 
         if !it.is_self(1) {
@@ -1878,12 +1878,14 @@ fn query_builder_2_subsequent_args() {
     let world = create_world_with_flags::<Flags>();
 
     let s = world
-        .system::<(&RelFoo, &Velocity)>()
-        .term_at(0)
-        .set_second_id(*flecs::Wildcard)
+        .system::<(&mut (RelFoo, flecs::Wildcard), &Velocity)>()
         .term_at(1)
         .singleton()
-        .iter_only(move |it| it.real_world().get::<&mut Flags>(|f| f.count += it.count()));
+        .run(|mut it| {
+            while it.next_iter() {
+                it.real_world().get::<&mut Flags>(|f| f.count += it.count());
+            }
+        });
 
     world.entity().set_pair::<RelFoo, Tag>(RelFoo { foo: 10 });
     world.set(Velocity { x: 0, y: 0 });
@@ -1911,18 +1913,20 @@ fn query_builder_optional_tag_is_set() {
 
     let mut count = 0;
 
-    q.iter_only(|it| {
-        assert_eq!(it.count(), 1);
+    q.run(|mut it| {
+        while it.next_iter() {
+            assert_eq!(it.count(), 1);
 
-        count += it.count();
+            count += it.count();
 
-        if it.entity(0) == e_1 {
-            assert!(it.is_set(0));
-            assert!(it.is_set(1));
-        } else {
-            assert_eq!(it.entity(0), e_2);
-            assert!(it.is_set(0));
-            assert!(!it.is_set(1));
+            if it.entity(0) == e_1 {
+                assert!(it.is_set(0));
+                assert!(it.is_set(1));
+            } else {
+                assert_eq!(it.entity(0), e_2);
+                assert!(it.is_set(0));
+                assert!(!it.is_set(1));
+            }
         }
     });
 
@@ -1965,11 +1969,13 @@ fn query_builder_10_terms() {
         .add::<TagJ>();
 
     let mut count = 0;
-    f.iter_only(|it| {
-        assert_eq!(it.count(), 1);
-        assert_eq!(it.entity(0), e);
-        assert_eq!(it.field_count(), 10);
-        count += 1;
+    f.run(|mut it| {
+        while it.next_iter() {
+            assert_eq!(it.count(), 1);
+            assert_eq!(it.entity(0), e);
+            assert_eq!(it.field_count(), 10);
+            count += 1;
+        }
     });
 
     assert_eq!(count, 1);
@@ -2027,11 +2033,13 @@ fn query_builder_16_terms() {
         .add::<TagT>();
 
     let mut count = 0;
-    f.iter_only(|it| {
-        assert_eq!(it.count(), 1);
-        assert_eq!(it.entity(0), e);
-        assert_eq!(it.field_count(), 16);
-        count += 1;
+    f.run(|mut it| {
+        while it.next_iter() {
+            assert_eq!(it.count(), 1);
+            assert_eq!(it.entity(0), e);
+            assert_eq!(it.field_count(), 16);
+            count += 1;
+        }
     });
 
     assert_eq!(count, 1);
@@ -2084,34 +2092,38 @@ fn query_builder_group_by_raw() {
 
     let mut count = 0;
 
-    q.iter_only(|it| {
-        assert_eq!(it.count(), 1);
-        if count == 0 {
-            assert!(it.entity(0) == e1);
-        } else if count == 1 {
-            assert!(it.entity(0) == e2);
-        } else if count == 2 {
-            assert!(it.entity(0) == e3);
-        } else {
-            panic!();
+    q.run(|mut it| {
+        while it.next_iter() {
+            assert_eq!(it.count(), 1);
+            if count == 0 {
+                assert!(it.entity(0) == e1);
+            } else if count == 1 {
+                assert!(it.entity(0) == e2);
+            } else if count == 2 {
+                assert!(it.entity(0) == e3);
+            } else {
+                panic!();
+            }
+            count += 1;
         }
-        count += 1;
     });
     assert_eq!(count, 3);
 
     count = 0;
-    q_reverse.iter_only(|it| {
-        assert_eq!(it.count(), 1);
-        if count == 0 {
-            assert!(it.entity(0) == e3);
-        } else if count == 1 {
-            assert!(it.entity(0) == e2);
-        } else if count == 2 {
-            assert!(it.entity(0) == e1);
-        } else {
-            panic!();
+    q_reverse.run(|mut it| {
+        while it.next_iter() {
+            assert_eq!(it.count(), 1);
+            if count == 0 {
+                assert!(it.entity(0) == e3);
+            } else if count == 1 {
+                assert!(it.entity(0) == e2);
+            } else if count == 2 {
+                assert!(it.entity(0) == e1);
+            } else {
+                panic!();
+            }
+            count += 1;
         }
-        count += 1;
     });
     assert_eq!(count, 3);
 }
@@ -2144,34 +2156,38 @@ fn query_builder_group_by_template() {
 
     let mut count = 0;
 
-    q.iter_only(|it| {
-        assert_eq!(it.count(), 1);
-        if count == 0 {
-            assert!(it.entity(0) == e1);
-        } else if count == 1 {
-            assert!(it.entity(0) == e2);
-        } else if count == 2 {
-            assert!(it.entity(0) == e3);
-        } else {
-            panic!();
+    q.run(|mut it| {
+        while it.next_iter() {
+            assert_eq!(it.count(), 1);
+            if count == 0 {
+                assert!(it.entity(0) == e1);
+            } else if count == 1 {
+                assert!(it.entity(0) == e2);
+            } else if count == 2 {
+                assert!(it.entity(0) == e3);
+            } else {
+                panic!();
+            }
+            count += 1;
         }
-        count += 1;
     });
     assert_eq!(count, 3);
 
     count = 0;
-    q_reverse.iter_only(|it| {
-        assert_eq!(it.count(), 1);
-        if count == 0 {
-            assert!(it.entity(0) == e3);
-        } else if count == 1 {
-            assert!(it.entity(0) == e2);
-        } else if count == 2 {
-            assert!(it.entity(0) == e1);
-        } else {
-            panic!();
+    q_reverse.run(|mut it| {
+        while it.next_iter() {
+            assert_eq!(it.count(), 1);
+            if count == 0 {
+                assert!(it.entity(0) == e3);
+            } else if count == 1 {
+                assert!(it.entity(0) == e2);
+            } else if count == 2 {
+                assert!(it.entity(0) == e1);
+            } else {
+                panic!();
+            }
+            count += 1;
         }
-        count += 1;
     });
     assert_eq!(count, 3);
 }
@@ -2312,7 +2328,7 @@ fn query_builder_group_by_iter_one_all_groups() {
     let e5_found = Cell::new(false);
     let e6_found = Cell::new(false);
 
-    let func = |it: Iter, size: usize, ()| {
+    let func = |it: Iter<false>, size: usize, ()| {
         let e = it.entity(size);
         if it.group_id() == group_id.get() {
             if e == e1 {
@@ -2381,7 +2397,7 @@ fn query_builder_group_by_default_func_w_id() {
     let mut e3_found = false;
     let mut count = 0;
 
-    q.each_iter(|it: Iter, size: usize, ()| {
+    q.each_iter(|it: Iter<false>, size: usize, ()| {
         let e = it.entity(size);
         if e == e1 {
             assert_eq!(it.group_id(), tgt_c);
@@ -2437,7 +2453,7 @@ fn query_builder_group_by_default_func_w_type() {
     let mut e3_found = false;
     let mut count = 0;
 
-    q.each_iter(|it: Iter, size: usize, ()| {
+    q.each_iter(|it: Iter<false>, size: usize, ()| {
         let e = it.entity(size);
         if e == e1 {
             assert_eq!(it.group_id(), tgt_c);
@@ -2528,7 +2544,7 @@ fn query_builder_group_by_callbacks() {
     let mut e3_found = false;
     let mut count = 0;
 
-    q.each_iter(|it: Iter, size: usize, ()| {
+    q.each_iter(|it: Iter<false>, size: usize, ()| {
         let e = it.entity(size);
         if e == e1 {
             assert_eq!(it.group_id(), tgt_c);
@@ -2822,7 +2838,7 @@ fn query_builder_up_w_type() {
 
     let mut count = 0;
 
-    q.iter(|it, s| {
+    q.run_iter(|it, s| {
         let o = &it.field::<Other2>(1).unwrap()[0];
         assert!(!it.is_self(1));
         assert_eq!(o.value, 10);
@@ -3301,7 +3317,7 @@ fn query_builder_name_arg() {
         .build();
 
     let mut count = 0;
-    f.iter(|it, p| {
+    f.run_iter(|it, p| {
         count += 1;
         assert_eq!(p[0].x, 10);
         assert_eq!(p[0].y, 20);
@@ -3325,13 +3341,15 @@ fn query_builder_const_in_term() {
         .build();
 
     let mut count = 0;
-    f.iter_only(|it| {
-        let p = it.field::<Position>(0).unwrap();
-        assert!(it.is_readonly(0));
-        for i in it.iter() {
-            count += 1;
-            assert_eq!(p[i].x, 10);
-            assert_eq!(p[i].y, 20);
+    f.run(|mut it| {
+        while it.next_iter() {
+            let p = it.field::<Position>(0).unwrap();
+            assert!(it.is_readonly(0));
+            for i in it.iter() {
+                count += 1;
+                assert_eq!(p[i].x, 10);
+                assert_eq!(p[i].y, 20);
+            }
         }
     });
 
@@ -3353,16 +3371,18 @@ fn query_builder_const_optional() {
 
     let mut count = 0;
     let mut set_count = 0;
-    f.iter_only(|it| {
-        assert_eq!(it.count(), 1);
-        if it.is_set(1) {
-            let p = &it.field::<Position2>(1).unwrap()[0];
-            assert!(it.is_readonly(1));
-            assert_eq!(p.x, 10);
-            assert_eq!(p.y, 20);
-            set_count += 1;
+    f.run(|mut it| {
+        while it.next_iter() {
+            assert_eq!(it.count(), 1);
+            if it.is_set(1) {
+                let p = &it.field::<Position2>(1).unwrap()[0];
+                assert!(it.is_readonly(1));
+                assert_eq!(p.x, 10);
+                assert_eq!(p.y, 20);
+                set_count += 1;
+            }
+            count += 1;
         }
-        count += 1;
     });
 
     assert_eq!(count, 2);
@@ -3538,13 +3558,15 @@ fn query_builder_iter_column_w_const_as_array() {
     let e2 = world.entity().set(Position { x: 20, y: 30 });
 
     let mut count = 0;
-    f.iter_only(|it| {
-        let mut p = it.field::<Position>(0).unwrap();
-        for i in it.iter() {
-            p[i].x += 1;
-            p[i].y += 2;
+    f.run(|mut it| {
+        while it.next_iter() {
+            let mut p = it.field::<Position>(0).unwrap();
+            for i in it.iter() {
+                p[i].x += 1;
+                p[i].y += 2;
 
-            count += 1;
+                count += 1;
+            }
         }
     });
 
@@ -3576,12 +3598,14 @@ fn query_builder_iter_column_w_const_as_ptr() {
     world.entity().is_a_id(base);
 
     let mut count = 0;
-    f.iter_only(|it| {
-        let p = &it.field::<Position>(0).unwrap()[0];
-        for _i in it.iter() {
-            assert_eq!(p.x, 10);
-            assert_eq!(p.y, 20);
-            count += 1;
+    f.run(|mut it| {
+        while it.next_iter() {
+            let p = &it.field::<Position>(0).unwrap()[0];
+            for _i in it.iter() {
+                assert_eq!(p.x, 10);
+                assert_eq!(p.y, 20);
+                count += 1;
+            }
         }
     });
 
@@ -4840,9 +4864,11 @@ fn query_builder_var_src_w_prefixed_name() {
     let e = world.entity().add::<Foo>();
 
     let mut count = 0;
-    r.iter_only(|it| {
-        assert_eq!(it.get_var_by_name("Var"), e);
-        count += 1;
+    r.run(|mut it| {
+        while it.next_iter() {
+            assert_eq!(it.get_var_by_name("Var"), e);
+            count += 1;
+        }
     });
 
     assert_eq!(count, 1);
@@ -4864,11 +4890,13 @@ fn query_builder_var_first_w_prefixed_name() {
     let e = world.entity().add::<Foo>();
 
     let mut count = 0;
-    r.iter_only(|it| {
-        assert_eq!(it.count(), 1);
-        assert_eq!(it.entity(0), e);
-        assert_eq!(it.get_var_by_name("Var"), world.id_from::<Foo>());
-        count += 1;
+    r.run(|mut it| {
+        while it.next_iter() {
+            assert_eq!(it.count(), 1);
+            assert_eq!(it.entity(0), e);
+            assert_eq!(it.get_var_by_name("Var"), world.id_from::<Foo>());
+            count += 1;
+        }
     });
 
     assert_eq!(count, 1);
@@ -4890,11 +4918,13 @@ fn query_builder_var_second_w_prefixed_name() {
     let e = world.entity().add_first::<Foo>(t);
 
     let mut count = 0;
-    r.iter_only(|it| {
-        assert_eq!(it.count(), 1);
-        assert_eq!(it.entity(0), e);
-        assert_eq!(it.get_var_by_name("Var"), t);
-        count += 1;
+    r.run(|mut it| {
+        while it.next_iter() {
+            assert_eq!(it.count(), 1);
+            assert_eq!(it.entity(0), e);
+            assert_eq!(it.get_var_by_name("Var"), t);
+            count += 1;
+        }
     });
 
     assert_eq!(count, 1);
@@ -4917,11 +4947,13 @@ fn query_builder_term_w_second_var_string() {
     let e = world.entity().add_id((foo_, t));
 
     let mut count = 0;
-    r.iter_only(|it| {
-        assert_eq!(it.count(), 1);
-        assert_eq!(it.entity(0), e);
-        assert_eq!(it.get_var_by_name("Var"), t);
-        count += 1;
+    r.run(|mut it| {
+        while it.next_iter() {
+            assert_eq!(it.count(), 1);
+            assert_eq!(it.entity(0), e);
+            assert_eq!(it.get_var_by_name("Var"), t);
+            count += 1;
+        }
     });
 
     assert_eq!(count, 1);
@@ -4942,11 +4974,13 @@ fn query_builder_term_type_w_second_var_string() {
     let e = world.entity().add_first::<Foo>(t);
 
     let mut count = 0;
-    r.iter_only(|it| {
-        assert_eq!(it.count(), 1);
-        assert_eq!(it.entity(0), e);
-        assert_eq!(it.get_var_by_name("Var"), t);
-        count += 1;
+    r.run(|mut it| {
+        while it.next_iter() {
+            assert_eq!(it.count(), 1);
+            assert_eq!(it.entity(0), e);
+            assert_eq!(it.get_var_by_name("Var"), t);
+            count += 1;
+        }
     });
 
     assert_eq!(count, 1);

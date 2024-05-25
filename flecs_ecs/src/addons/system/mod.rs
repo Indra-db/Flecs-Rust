@@ -56,11 +56,6 @@ impl<'a> System<'a> {
             );
         }
 
-        /*
-                if (!(desc->query.flags & EcsQueryIsInstanced)) {
-            ECS_BIT_COND(desc->query.flags, EcsQueryIsInstanced, instanced);
-        } */
-
         let id = unsafe { sys::ecs_system_init(world.world_ptr_mut(), &desc) };
         let entity = EntityView::new_from(world.world(), id);
 

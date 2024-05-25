@@ -55,10 +55,10 @@ fn main() {
     world.entity_named("builder_2").add::<BuilderX>();
 
     // Create a rule to find all ranged units
-    let r = world.new_query::<&RangedUnit>();
+    let r = world.query::<&RangedUnit>().build();
 
     // Iterate the rule
-    r.each_entity(|e, _| {
+    r.each_entity(|e, rangedunit| {
         println!("Unit {} found", e.name());
     });
 

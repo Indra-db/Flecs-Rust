@@ -74,7 +74,9 @@ pub trait IterableTypeOperation {
     type CastType;
     type ActualType<'w>;
     type SliceType<'w>;
-    type OnlyType: ComponentId;
+    type OnlyType: IntoComponentId;
+    type OnlyPairType: ComponentId;
+    const ONE: i32 = 1;
 
     fn populate_term(term: &mut sys::ecs_term_t);
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a>;
@@ -96,12 +98,13 @@ pub trait IterableTypeOperation {
 
 impl<T> IterableTypeOperation for &T
 where
-    T: ComponentId,
+    T: FlecsCastType,
 {
-    type CastType = *const T;
-    type ActualType<'w> = &'w T;
-    type SliceType<'w> = &'w [T];
+    type CastType = *const <T as FlecsCastType>::CastType;
+    type ActualType<'w> = &'w <T as FlecsCastType>::CastType;
+    type SliceType<'w> = &'w [<T as FlecsCastType>::CastType];
     type OnlyType = T;
+    type OnlyPairType = <T as FlecsCastType>::CastType;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::In as i16;
@@ -153,12 +156,13 @@ where
 
 impl<T> IterableTypeOperation for &mut T
 where
-    T: ComponentId,
+    T: FlecsCastType,
 {
-    type CastType = *mut T;
-    type ActualType<'w> = &'w mut T;
-    type SliceType<'w> = &'w mut [T];
+    type CastType = *mut <T as FlecsCastType>::CastType;
+    type ActualType<'w> = &'w mut <T as FlecsCastType>::CastType;
+    type SliceType<'w> = &'w mut [<T as FlecsCastType>::CastType];
     type OnlyType = T;
+    type OnlyPairType = <T as FlecsCastType>::CastType;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::InOut as i16;
@@ -210,12 +214,13 @@ where
 
 impl<T> IterableTypeOperation for Option<&T>
 where
-    T: ComponentId,
+    T: FlecsCastType,
 {
-    type CastType = *const T;
-    type ActualType<'w> = Option<&'w T>;
-    type SliceType<'w> = Option<&'w [T]>;
+    type CastType = *const <T as FlecsCastType>::CastType;
+    type ActualType<'w> = Option<&'w <T as FlecsCastType>::CastType>;
+    type SliceType<'w> = Option<&'w [<T as FlecsCastType>::CastType]>;
     type OnlyType = T;
+    type OnlyPairType = <T as FlecsCastType>::CastType;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::In as i16;
@@ -276,12 +281,13 @@ where
 
 impl<T> IterableTypeOperation for Option<&mut T>
 where
-    T: ComponentId,
+    T: FlecsCastType,
 {
-    type CastType = *mut T;
-    type ActualType<'w> = Option<&'w mut T>;
-    type SliceType<'w> = Option<&'w mut [T]>;
+    type CastType = *mut <T as FlecsCastType>::CastType;
+    type ActualType<'w> = Option<&'w mut <T as FlecsCastType>::CastType>;
+    type SliceType<'w> = Option<&'w mut [<T as FlecsCastType>::CastType]>;
     type OnlyType = T;
+    type OnlyPairType = <T as FlecsCastType>::CastType;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::InOut as i16;
@@ -344,6 +350,7 @@ pub trait Iterable: Sized {
     type Pointers: ComponentPointers<Self>;
     type TupleType<'a>;
     type TupleSliceType<'a>;
+    const COUNT: i32;
 
     fn create_ptrs(iter: &IterT) -> Self::Pointers {
         Self::Pointers::new(iter)
@@ -388,13 +395,14 @@ pub trait Iterable: Sized {
 impl<A> Iterable for A
 where
     A: IterableTypeOperation,
-{
+{ 
     type Pointers = ComponentsData<A, 1>;
     type TupleType<'w> = A::ActualType<'w>;
     type TupleSliceType<'w> = A::SliceType<'w>;
+    const COUNT : i32 = 1;
 
     fn populate<'a>(filter: &mut impl QueryBuilderImpl<'a>) {
-        let id = <A::OnlyType as ComponentId>::get_id(filter.world());
+        let id = <A::OnlyType as IntoComponentId>::get_id(filter.world());
 
         ecs_assert!(
         {
@@ -427,7 +435,7 @@ where
         index: &mut usize,
     ) {
         let world = unsafe { WorldRef::from_ptr(world) };
-        terms[*index].id = <A::OnlyType as ComponentId>::get_id(world);
+        terms[*index].id = <A::OnlyType as IntoComponentId>::get_id(world);
         A::populate_term(&mut terms[*index]);
         *index += 1;
     }
@@ -438,7 +446,7 @@ where
         is_ref: &mut [bool],
     ) -> bool {
         components[0] =
-            unsafe { ecs_field::<A::OnlyType>(it, 0) as *mut u8 };
+            unsafe { ecs_field::<A::OnlyPairType>(it, 0) as *mut u8 };
         is_ref[0] = if !it.sources.is_null() {
             unsafe { *it.sources.add(0) != 0 }
         } else {
@@ -627,12 +635,12 @@ macro_rules! impl_iterable {
                 $t::SliceType<'w>,
             )*);
             type Pointers = ComponentsData<Self, { tuple_count!($($t),*) }>;
-
+            const COUNT : i32 = tuple_count!($($t),*);
 
             fn populate<'a>(filter: &mut impl QueryBuilderImpl<'a>) {
                 let _world = filter.world();
                 $(
-                    filter.with_id(<$t::OnlyType as ComponentId>::get_id(_world));
+                    filter.with_id(<$t::OnlyType as IntoComponentId>::get_id(_world));
                     let term = filter.current_term_mut();
                     $t::populate_term(term);
 
@@ -654,7 +662,7 @@ macro_rules! impl_iterable {
                 let mut any_ref = false;
                 $(
                     components[index as usize] =
-                    unsafe { ecs_field::<$t::OnlyType>(it, index) as *mut u8 };
+                    unsafe { ecs_field::<$t::OnlyPairType>(it, index) as *mut u8 };
                     is_ref[index as usize] = if !it.sources.is_null() {
                         unsafe { *it.sources.add(index as usize) != 0 }
                     } else {

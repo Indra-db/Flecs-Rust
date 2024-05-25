@@ -376,22 +376,26 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentId f
             std::sync::OnceLock::new();
         &ONCE_LOCK
     }
+
     fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
-        const NEEDS_DROP:bool =  <() as flecs_ecs::core::component_registration::registration_traits::ComponentInfo> ::NEEDS_DROP;
-        const IMPLS_CLONE: bool = <() as ComponentInfo>::IMPLS_CLONE;
-        const IMPLS_DEFAULT: bool = <() as ComponentInfo>::IMPLS_DEFAULT;
         flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<()>(type_hooks);
+    }
+
+    fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+        const IMPLS_DEFAULT: bool = <() as ComponentInfo>::IMPLS_DEFAULT;
+
+        if IMPLS_DEFAULT {
+            flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,()>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >( type_hooks);
+        }
+    }
+
+    fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+        const IMPLS_CLONE: bool = <() as ComponentInfo>::IMPLS_CLONE;
+
         if IMPLS_CLONE {
             flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,()>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >( type_hooks);
         } else {
             flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<()>(
-                type_hooks,
-            );
-        }
-        if IMPLS_DEFAULT {
-            flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,()>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >( type_hooks);
-        } else {
-            flecs_ecs::core::lifecycle_traits::register_ctor_panic_lifecycle_actions::<()>(
                 type_hooks,
             );
         }

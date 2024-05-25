@@ -20,6 +20,8 @@ pub struct World {
     pub(crate) raw_world: NonNull<WorldT>,
 }
 
+unsafe impl Send for World {}
+
 impl Clone for World {
     fn clone(&self) -> Self {
         unsafe { sys::flecs_poly_claim_(self.raw_world.as_ptr() as *mut c_void) };
@@ -940,7 +942,7 @@ impl World {
     ///
     /// * C++ API: `world::set`
     #[doc(alias = "world::set")]
-    pub unsafe fn set_first<First>(&self, second: impl Into<Entity>, first: First)
+    pub fn set_first<First>(&self, second: impl Into<Entity>, first: First)
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
@@ -958,12 +960,12 @@ impl World {
     ///
     /// * C++ API: `world::set`
     #[doc(alias = "world::set")]
-    pub unsafe fn set_second<Second>(&self, first: impl Into<Entity>, second: Second)
+    pub fn set_second<Second>(&self, first: impl Into<Entity>, second: Second)
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let entity = EntityView::new_from(self, Second::get_id(self));
-        entity.set_second::<Second>(second, first);
+        entity.set_second::<Second>(first, second);
     }
 
     /// Set singleton pair.
@@ -983,10 +985,6 @@ impl World {
         // const {
         //     assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
         // };
-        // TODO: rust 1.79 const compiler error
-        if <(First, Second) as IntoComponentId>::IS_TAGS {
-            panic!("setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
-        }
 
         let entity = EntityView::new_from(
             self,
@@ -1415,6 +1413,7 @@ impl World {
     pub fn get_ref<T>(&self) -> CachedRef<T::UnderlyingType>
     where
         T: ComponentId + NotEmptyComponent,
+        T::UnderlyingType: NotEmptyComponent,
     {
         EntityView::new_from(self, T::get_id(self)).get_ref::<T>()
     }
@@ -1698,9 +1697,9 @@ impl World {
     /// * C++ API: `world::add`
     #[doc(alias = "world::add")]
     #[inline(always)]
-    pub fn add_enum_tag<First, Second>(&self, enum_value: Second) -> EntityView
+    pub fn add_pair_enum<First, Second>(&self, enum_value: Second) -> EntityView
     where
-        First: ComponentId + EmptyComponent,
+        First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         EntityView::new_from(self, First::get_id(self)).add_pair_enum::<First, Second>(enum_value)

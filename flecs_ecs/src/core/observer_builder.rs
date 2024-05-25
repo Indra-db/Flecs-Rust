@@ -223,6 +223,11 @@ impl<'a, P, T: Iterable> internals::QueryConfig<'a> for ObserverBuilder<'a, P, T
     fn query_desc_mut(&mut self) -> &mut sys::ecs_query_desc_t {
         &mut self.desc.query
     }
+
+    #[inline(always)]
+    fn count_generic_terms(&self) -> i32 {
+        T::COUNT
+    }
 }
 impl<'a, P, T: Iterable> TermBuilderImpl<'a> for ObserverBuilder<'a, P, T> {}
 
