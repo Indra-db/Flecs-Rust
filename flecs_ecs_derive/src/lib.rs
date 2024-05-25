@@ -11,33 +11,6 @@ use syn::{
     Data, DeriveInput, Expr, Fields, Ident, LitInt, LitStr, Result, Token, Type,
 };
 
-#[proc_macro_derive(Raptor)]
-pub fn repr_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
-    let has_repr_c = check_repr_c(&input); // Ensure this function correctly checks for #[repr(C)]
-    let name = &input.ident;
-
-    let generated_code = match &input.data {
-        Data::Enum(_) if !has_repr_c => {
-            // Case for enums without #[repr(C)]
-            quote! { impl flecs_ecs::core::EmptyComponent for #name {} }
-        }
-        Data::Enum(_) => {
-            // Case for enums with #[repr(C)]
-            quote! { impl flecs_ecs::core::NotEmptyComponent for #name {} }
-        }
-        _ => {
-            // Error case for non-enum types
-            return quote! {
-                compile_error!("The type is neither a struct nor an enum!");
-            }
-            .into();
-        }
-    };
-
-    generated_code.into()
-}
-
 /// `Component` macro for defining ECS components with optional register attribute when the type is generic over a single T.
 ///
 /// When a type is decorated with `#[derive(Component)]`, several trait implementations are automatically added based on its structure:
@@ -154,8 +127,16 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
         quote! {}
     };
 
+    input.generics.make_where_clause();
+
+    let (impl_generics, type_generics, where_clause) = &input.generics.split_for_impl();
+
     // Combine the generated code with the original struct definition
     let output = quote! {
+
+        unsafe impl #impl_generics Send for #name #type_generics #where_clause{}
+        unsafe impl #impl_generics Sync for #name #type_generics #where_clause{}
+
         #is_attribute_supported
 
         #component_id_trait
@@ -201,24 +182,29 @@ fn impl_cached_component_data_struct(
             &ONCE_LOCK
         }
 
-        fn __register_lifecycle_hooks(mut type_hooks: &mut flecs_ecs::core::TypeHooksT)  {
+        fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT)  {
+            flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<#name>(type_hooks);
+        }
+
+        fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
             use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
-            const NEEDS_DROP: bool = <#name as flecs_ecs::core::component_registration::registration_traits::ComponentInfo>::NEEDS_DROP;
-            const IMPLS_CLONE: bool = #name::IMPLS_CLONE;
-            const IMPLS_DEFAULT: bool = #name::IMPLS_DEFAULT;
-
-            flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<#name>(&mut type_hooks);
-
-            if IMPLS_CLONE {
-                flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type,>(&mut type_hooks);
-            } else {
-                flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name>(&mut type_hooks);
-            }
+            const IMPLS_DEFAULT: bool =  #name::IMPLS_DEFAULT;
 
             if IMPLS_DEFAULT {
-                flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type,>(&mut type_hooks);
+                flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
+            }
+        }
+
+        fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+            use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+            const IMPLS_CLONE: bool = #name::IMPLS_CLONE;
+
+            if IMPLS_CLONE {
+                flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
             } else {
-                flecs_ecs::core::lifecycle_traits::register_ctor_panic_lifecycle_actions::<#name>(&mut type_hooks);
+                flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name>(
+                    type_hooks,
+                );
             }
         }
     };
@@ -433,23 +419,30 @@ fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> proc_macro2::T
                 &ONCE_LOCK
             }
 
-            fn __register_lifecycle_hooks(mut type_hooks: &mut flecs_ecs::core::TypeHooksT)  {
-                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
-                const NEEDS_DROP: bool = <#name as flecs_ecs::core::component_registration::registration_traits::ComponentInfo>::NEEDS_DROP;
-                const IMPLS_CLONE: bool = #name::IMPLS_CLONE;
-                const IMPLS_DEFAULT: bool = #name::IMPLS_DEFAULT;
-                flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<#name>(&mut type_hooks);
 
-                if IMPLS_CLONE {
-                    flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type,>(&mut type_hooks);
-                } else {
-                    flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name>(&mut type_hooks);
-                }
+            fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT)  {
+                flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<#name>(type_hooks);
+            }
+
+            fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                const IMPLS_DEFAULT: bool =  #name::IMPLS_DEFAULT;
 
                 if IMPLS_DEFAULT {
-                    flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type,>(&mut type_hooks);
+                    flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
+                }
+            }
+
+            fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                const IMPLS_CLONE: bool = #name::IMPLS_CLONE;
+
+                if IMPLS_CLONE {
+                    flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
                 } else {
-                    flecs_ecs::core::lifecycle_traits::register_ctor_panic_lifecycle_actions::<#name>(&mut type_hooks);
+                    flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name>(
+                        type_hooks,
+                    );
                 }
             }
     };
@@ -553,23 +546,29 @@ fn generate_component_id_impl(
                     static ONCE_LOCK: std::sync::OnceLock<flecs_ecs::core::IdComponent> = std::sync::OnceLock::new();
                     &ONCE_LOCK
                 }
-                fn __register_lifecycle_hooks(mut type_hooks: &mut flecs_ecs::core::TypeHooksT)  {
-                    use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
-                    const NEEDS_DROP: bool = <#name<#ty> as flecs_ecs::core::component_registration::registration_traits::ComponentInfo>::NEEDS_DROP;
-                    const IMPLS_CLONE: bool = #name::<#ty>::IMPLS_CLONE;
-                    const IMPLS_DEFAULT: bool = #name::<#ty>::IMPLS_DEFAULT;
-                    flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<#name<#ty>>(&mut type_hooks);
+                fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT)  {
+                    flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<#name<#ty>>(type_hooks);
+                }
 
-                    if IMPLS_CLONE {
-                        flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name<#ty>>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type,>(&mut type_hooks);
-                    } else {
-                        flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name<#ty>>(&mut type_hooks);
-                    }
+                fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+                    use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                    const IMPLS_DEFAULT: bool =  #name::<#ty>::IMPLS_DEFAULT;
 
                     if IMPLS_DEFAULT {
-                        flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name<#ty>>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type,>(&mut type_hooks);
+                        flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name<#ty>>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
+                    }
+                }
+
+                fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+                    use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                    const IMPLS_CLONE: bool = #name::<#ty>::IMPLS_CLONE;
+
+                    if IMPLS_CLONE {
+                        flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name<#ty>>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
                     } else {
-                        flecs_ecs::core::lifecycle_traits::register_ctor_panic_lifecycle_actions::<#name<#ty>>(&mut type_hooks);
+                        flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name<#ty>>(
+                            type_hooks,
+                        );
                     }
                 }
             }
@@ -599,23 +598,29 @@ fn generate_component_id_impl(
                     static ONCE_LOCK: std::sync::OnceLock<flecs_ecs::core::IdComponent> = std::sync::OnceLock::new();
                     &ONCE_LOCK
                 }
-                fn __register_lifecycle_hooks(mut type_hooks: &mut flecs_ecs::core::TypeHooksT)  {
-                    use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
-                    const NEEDS_DROP: bool = <#name<#ty> as flecs_ecs::core::component_registration::registration_traits::ComponentInfo>::NEEDS_DROP;
-                    const IMPLS_CLONE: bool = #name::<#ty>::IMPLS_CLONE;
-                    const IMPLS_DEFAULT: bool = #name::<#ty>::IMPLS_DEFAULT;
-                    flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<#name<#ty>>(&mut type_hooks);
+                fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT)  {
+                    flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<#name<#ty>>(type_hooks);
+                }
 
-                    if IMPLS_CLONE {
-                        flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name<#ty>>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type,>(&mut type_hooks);
-                    } else {
-                        flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name<#ty>>(&mut type_hooks);
-                    }
+                fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+                    use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                    const IMPLS_DEFAULT: bool =  #name::<#ty>::IMPLS_DEFAULT;
 
                     if IMPLS_DEFAULT {
-                        flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name<#ty>>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type,>(&mut type_hooks);
+                        flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name<#ty>>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
+                    }
+                }
+
+                fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+                    use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                    const IMPLS_CLONE: bool = #name::<#ty>::IMPLS_CLONE;
+
+                    if IMPLS_CLONE {
+                        flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name<#ty>>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
                     } else {
-                        flecs_ecs::core::lifecycle_traits::register_ctor_panic_lifecycle_actions::<#name<#ty>>(&mut type_hooks);
+                        flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name<#ty>>(
+                            type_hooks,
+                        );
                     }
                 }
             }

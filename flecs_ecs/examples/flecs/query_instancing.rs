@@ -62,7 +62,7 @@ fn main() {
     // to check whether a field is owned or not in order to know how to access
     // it. In the case of an owned field it is iterated as an array, whereas
     // in the case of a shared field, it is accessed as a pointer.
-    query.iter(|it, (position, velocity)| {
+    query.run_iter(|it, (position, velocity)| {
         // Check if Velocity is owned, in which case it's accessed as array.
         // Position will always be owned, since we set the term to Self.
         if it.is_self(1) {

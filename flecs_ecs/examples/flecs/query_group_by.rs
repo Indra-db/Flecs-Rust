@@ -63,7 +63,7 @@ fn main() {
 
     println!();
 
-    query.iter(|it, pos| {
+    query.run_iter(|it, pos| {
         let group = world.entity_from_id(it.group_id());
         println!(
             "Group: {:?} - Table: [{:?}]",

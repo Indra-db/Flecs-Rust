@@ -7,6 +7,7 @@ use flecs_ecs::prelude::*;
 #[derive(Component)]
 struct Likes;
 
+#[test]
 fn main() {
     let world = World::new();
 
@@ -50,10 +51,12 @@ fn main() {
 
     // Because the query doesn't use the This variable we cannot use "each"
     // which iterates the entities array. Instead we can use iter like this:
-    rule.iter_only(|it| {
-        let x = it.get_var(x_var);
-        let y = it.get_var(y_var);
-        println!("{} likes {}", x.name(), y.name());
+    rule.run(|mut it| {
+        while it.next_iter() {
+            let x = it.get_var(x_var);
+            let y = it.get_var(y_var);
+            println!("{} likes {}", x.name(), y.name());
+        }
     });
 
     // Output:

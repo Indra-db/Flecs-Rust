@@ -55,7 +55,7 @@ fn main() {
     // Iter is a bit more verbose, but allows for more control over how entities
     // are iterated as it provides multiple entities in the same callback.
     // There's also an `iter_only` function that only provides the iterator.
-    query.iter(|it, (pos, vel)| {
+    query.run_iter(|it, (pos, vel)| {
         for i in it.iter() {
             pos[i].x += vel[i].x;
             pos[i].y += vel[i].y;

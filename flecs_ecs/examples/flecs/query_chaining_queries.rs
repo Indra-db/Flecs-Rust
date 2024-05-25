@@ -65,7 +65,7 @@ fn main() {
     let query_enchanted = forest.query::<()>().with::<&Enchanted>().build();
 
     // Iterate over creatures to find the enchanted ones
-    query_creatures.iter(|iter, (loc, ability)| {
+    query_creatures.run_iter(|iter, (loc, ability)| {
 
         // Filter for enchanted creatures within the current iteration
         query_enchanted

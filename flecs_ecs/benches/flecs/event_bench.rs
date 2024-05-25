@@ -15,7 +15,7 @@ pub fn event_emit(criterion: &mut Criterion) {
                     .observer_id::<()>(evt)
                     .with::<&T1>()
                     .self_()
-                    .iter_only(|_| {});
+                    .run(|_| {});
             }
 
             bencher.iter_custom(|iters| {
@@ -56,7 +56,7 @@ pub fn event_emit_propagate(criterion: &mut Criterion) {
                 .observer_id::<()>(evt.id())
                 .with::<&T1>()
                 .parent()
-                .iter_only(|_| {});
+                .run(|_| {});
 
             bencher.iter_custom(|iters| {
                 let start = Instant::now();
@@ -94,7 +94,7 @@ pub fn event_emit_forward(criterion: &mut Criterion) {
                     .observer::<flecs::OnAdd, ()>()
                     .with_id(*id)
                     .add_event::<flecs::OnRemove>()
-                    .iter_only(|_| {});
+                    .run(|_| {});
             }
 
             add_component_range!(world, root, T, 1, 1);
@@ -132,7 +132,7 @@ pub fn event_emit_forward(criterion: &mut Criterion) {
                     .observer::<flecs::OnAdd, ()>()
                     .with_id(*id)
                     .add_event::<flecs::OnRemove>()
-                    .iter_only(|_| {});
+                    .run(|_| {});
             }
 
             add_component_range!(world, root, T, 1, 16);
@@ -170,7 +170,7 @@ pub fn event_modified(criterion: &mut Criterion) {
                     .observer::<flecs::OnSet, ()>()
                     .with::<&C1>()
                     .self_()
-                    .iter_only(|_| {});
+                    .run(|_| {});
             }
 
             let id = *world.entity_from::<C1>();

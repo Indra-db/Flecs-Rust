@@ -63,7 +63,7 @@ fn main() {
         // we have tests in place to ensure that the `Option` API is working as expected.
         .build();
 
-    query.iter(|it, (local, parent_world, world)| {
+    query.run_iter(|it, (local, parent_world, world)| {
         for i in it.iter() {
             world[i].x = local[i].x;
             world[i].y = local[i].y;

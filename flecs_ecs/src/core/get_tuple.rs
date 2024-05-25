@@ -68,7 +68,7 @@ pub trait GetTupleTypeOperation {
 
 impl<T> GetTupleTypeOperation for &T
 where
-    T: FlecsCastType,
+    T: FlecsCastType + NotEmptyComponent,
 {
     type ActualType<'e> = &'e <T as FlecsCastType>::CastType;
     type OnlyType = T;
@@ -84,7 +84,7 @@ where
 
 impl<T> GetTupleTypeOperation for &mut T
 where
-    T: FlecsCastType,
+    T: FlecsCastType + NotEmptyComponent,
 {
     type ActualType<'e> = &'e mut <T as FlecsCastType>::CastType;
     type OnlyType = T;
@@ -100,7 +100,7 @@ where
 
 impl<T> GetTupleTypeOperation for Option<&T>
 where
-    T: FlecsCastType,
+    T: FlecsCastType + NotEmptyComponent,
 {
     type ActualType<'e> = Option<&'e <T as FlecsCastType>::CastType>;
     type OnlyType = T;
@@ -119,7 +119,7 @@ where
 
 impl<T> GetTupleTypeOperation for Option<&mut T>
 where
-    T: FlecsCastType,
+    T: FlecsCastType + NotEmptyComponent,
 {
     type ActualType<'e> = Option<&'e mut <T as FlecsCastType>::CastType>;
     type OnlyType = T;
