@@ -932,7 +932,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set`
     #[doc(alias = "entity_builder::set")]
-    pub fn set_first<First>(self, second: impl Into<Entity>, first: First) -> Self
+    pub fn set_first<First>(self, first: First, second: impl Into<Entity>) -> Self
     where
         First: ComponentId + NotEmptyComponent,
     {

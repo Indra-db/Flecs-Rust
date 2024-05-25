@@ -947,7 +947,7 @@ impl World {
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let entity = EntityView::new_from(self, First::get_id(self));
-        entity.set_first::<First>(second, first);
+        entity.set_first::<First>(first, second);
     }
 
     /// Set a singleton pair using the second element type and a first id.
