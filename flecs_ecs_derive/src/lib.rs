@@ -745,7 +745,7 @@ impl Parse for Access {
                 inner.parse::<kw::inout>()?;
                 Ok(Access::InOut)
             } else if inner.peek(kw::filter) {
-                inner.parse::<kw::out>()?;
+                inner.parse::<kw::filter>()?;
                 Ok(Access::Filter)
             } else if inner.peek(kw::none) {
                 inner.parse::<kw::none>()?;
@@ -775,8 +775,10 @@ enum TermIdent {
 impl Parse for TermIdent {
     fn parse(input: ParseStream) -> Result<Self> {
         if input.peek(Token![*]) {
+            input.parse::<Token![*]>()?;
             Ok(TermIdent::Wildcard)
         } else if input.peek(Token![_]) {
+            input.parse::<Token![_]>()?;
             Ok(TermIdent::Any)
         } else if input.peek(Token![$]) {
             // Variable
@@ -803,7 +805,12 @@ impl Parse for TermIdent {
 }
 
 fn peek_id(input: &ParseStream) -> bool {
-    input.peek(Ident) || input.peek(Token![$]) || input.peek(LitStr) || input.peek(Token![Self])
+    input.peek(Ident)
+        || input.peek(Token![*])
+        || input.peek(Token![_])
+        || input.peek(Token![$])
+        || input.peek(LitStr)
+        || input.peek(Token![Self])
 }
 
 #[derive(Default, Debug, PartialEq, Eq)]
