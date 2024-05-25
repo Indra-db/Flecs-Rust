@@ -1210,11 +1210,15 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
             // Configure operator
             match &t.oper {
                 TermOper::Not => ops.push(quote! { .not() }),
-                TermOper::Optional => ops.push(quote! { .optional() }),
                 TermOper::Or => ops.push(quote! { .or() }),
                 TermOper::AndFrom => ops.push(quote! { .and_from() }),
                 TermOper::NotFrom => ops.push(quote! { .not_from() }),
                 TermOper::OrFrom => ops.push(quote! { .or_from() }),
+                TermOper::Optional => {
+                    if !iter_term {
+                        ops.push(quote! { .optional() })
+                    }
+                }
                 TermOper::And => {}
             }
 
