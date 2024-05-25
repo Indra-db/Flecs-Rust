@@ -745,7 +745,7 @@ impl Parse for Access {
                 inner.parse::<kw::inout>()?;
                 Ok(Access::InOut)
             } else if inner.peek(kw::filter) {
-                inner.parse::<kw::out>()?;
+                inner.parse::<kw::filter>()?;
                 Ok(Access::Filter)
             } else if inner.peek(kw::none) {
                 inner.parse::<kw::none>()?;
