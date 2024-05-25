@@ -982,9 +982,9 @@ impl World {
         Second: ComponentId,
         (First, Second): FlecsCastType,
     {
-        const {
-            assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
-        };
+        // const {
+        //     assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
+        // };
 
         let entity = EntityView::new_from(
             self,
