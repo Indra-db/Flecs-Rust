@@ -1,8 +1,8 @@
 extern crate proc_macro;
 
 use proc_macro::TokenStream as ProcMacroTokenStream;
-use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use proc_macro2::{Span, TokenStream};
+use quote::{format_ident, quote, quote_spanned};
 use syn::{
     bracketed, parenthesized,
     parse::{Parse, ParseStream},
@@ -874,7 +874,7 @@ impl Parse for TermOper {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 struct TermId {
     ident: Option<TermIdent>,
     trav_self: bool,
@@ -883,6 +883,22 @@ struct TermId {
     trav_desc: bool,
     trav_cascade: bool,
     cascade_ident: Option<TermIdent>,
+    span: Span,
+}
+
+impl TermId {
+    fn new(ident: Option<TermIdent>, span: Span) -> Self {
+        Self {
+            ident,
+            trav_self: false,
+            trav_up: false,
+            up_ident: None,
+            trav_desc: false,
+            trav_cascade: false,
+            cascade_ident: None,
+            span,
+        }
+    }
 }
 
 fn peek_trav(input: ParseStream) -> bool {
@@ -894,6 +910,7 @@ fn peek_trav(input: ParseStream) -> bool {
 
 impl Parse for TermId {
     fn parse(input: ParseStream) -> Result<Self> {
+        let span: Span = input.span();
         let ident = if !peek_trav(input) {
             let ident = input.parse::<TermIdent>()?;
             if input.peek(Token![|]) && !input.peek2(Token![|]) {
@@ -903,10 +920,7 @@ impl Parse for TermId {
         } else {
             None
         };
-        let mut out = Self {
-            ident,
-            ..Self::default()
-        };
+        let mut out = Self::new(ident, span);
         while peek_trav(input) {
             if input.peek(kw::cascade) {
                 input.parse::<kw::cascade>()?;
@@ -954,10 +968,12 @@ struct Term {
     oper: TermOper,
     source: TermId,
     ty: TermType,
+    span: Span,
 }
 
 impl Parse for Term {
     fn parse(input: ParseStream) -> Result<Self> {
+        let span = input.span();
         let access = input.parse::<Access>()?;
         let oper = input.parse::<TermOper>()?;
         let reference = input.parse::<Reference>()?;
@@ -978,6 +994,7 @@ impl Parse for Term {
                         oper,
                         source,
                         ty: TermType::Pair(initial, second),
+                        span,
                     })
                 } else {
                     // Component
@@ -987,6 +1004,7 @@ impl Parse for Term {
                         oper,
                         source,
                         ty: TermType::Component(initial),
+                        span,
                     })
                 }
             } else {
@@ -995,8 +1013,9 @@ impl Parse for Term {
                     access,
                     reference,
                     oper,
-                    source: TermId::default(),
+                    source: TermId::new(None, input.span()),
                     ty: TermType::Component(initial),
+                    span,
                 })
             }
         } else {
@@ -1010,8 +1029,9 @@ impl Parse for Term {
                 access,
                 reference,
                 oper,
-                source: TermId::default(),
+                source: TermId::new(None, input.span()),
                 ty: TermType::Pair(first, second),
+                span,
             })
         }
     }
@@ -1080,7 +1100,8 @@ fn expand_trav(term: &TermId) -> Vec<TokenStream> {
             Some(ident) => match ident {
                 TermIdent::Local(ident) => ops.push(quote! { .up_id(#ident) }),
                 TermIdent::Type(ty) => ops.push(quote! { .up_type::<#ty>() }),
-                _ => panic!("Invalid up traversal."),
+                _ => ops
+                    .push(quote_spanned!(term.span => ; compile_error!("Invalid up traversal.") )),
             },
             None => ops.push(quote! { .up() }),
         }
@@ -1090,7 +1111,9 @@ fn expand_trav(term: &TermId) -> Vec<TokenStream> {
             Some(ident) => match ident {
                 TermIdent::Local(ident) => ops.push(quote! { .cascade_id(#ident) }),
                 TermIdent::Type(ty) => ops.push(quote! { .cascade_type::<#ty>() }),
-                _ => panic!("Invalid cascade traversal."),
+                _ => ops.push(
+                    quote_spanned!(term.span => ; compile_error!("Invalid cascade traversal.") ),
+                ),
             },
             None => ops.push(quote! { .cascade() }),
         }
@@ -1190,7 +1213,7 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                         TermIdent::SelfVar => ops.push(quote! { .set_first_id(self) }),
                         TermIdent::Local(ident) => ops.push(quote! { .set_first_id(#ident) }),
                         TermIdent::Literal(lit) => ops.push(quote! { .set_first_name(#lit) }),
-                        TermIdent::Singleton => panic!("Unexpected singleton identifier."),
+                        TermIdent::Singleton => ops.push(quote_spanned!{ first.span => ; compile_error!("Unexpected singleton identifier.") }),
                         _ => {
                             if !iter_term {
                                 ops.push(quote! { .set_first::<#first_ty>() });
@@ -1206,7 +1229,7 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                         TermIdent::SelfVar => ops.push(quote! { .set_second_id(self) }),
                         TermIdent::Local(ident) => ops.push(quote! { .set_second_id(#ident) }),
                         TermIdent::Literal(lit) => ops.push(quote! { .set_second_name(#lit) }),
-                        TermIdent::Singleton => panic!("Unexpected singleton identifier."),
+                        TermIdent::Singleton => ops.push(quote_spanned!{ second.span => ; compile_error!("Unexpected singleton identifier.") }),
                         _ => {
                             if !iter_term {
                                 ops.push(quote! { .set_second::<#second_ty>() });
@@ -1238,7 +1261,7 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                         TermIdent::SelfVar => ops.push(quote! { .set_id(self) }),
                         TermIdent::Local(ident) => ops.push(quote! { .set_id(#ident) }),
                         TermIdent::Literal(lit) => ops.push(quote! { .name(#lit) }),
-                        TermIdent::Singleton => panic!("Unexpected singleton identifier."),
+                        TermIdent::Singleton => ops.push(quote_spanned!{ term.span => ; compile_error!("Unexpected singleton identifier.") }),
                         _ => {
                             if !iter_term {
                                 term_accessor = quote! { .with::<#ty>() };
@@ -1272,14 +1295,23 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
             }
 
             // Configure operator
-            match &t.oper {
-                TermOper::Not => ops.push(quote! { .not() }),
-                TermOper::Optional => ops.push(quote! { .optional() }),
-                TermOper::Or => ops.push(quote! { .or() }),
-                TermOper::AndFrom => ops.push(quote! { .and_from() }),
-                TermOper::NotFrom => ops.push(quote! { .not_from() }),
-                TermOper::OrFrom => ops.push(quote! { .or_from() }),
-                TermOper::And => {}
+
+            if iter_term {
+                if !matches!(t.oper, TermOper::And | TermOper::Optional) {
+                    ops.push(quote_spanned!{
+                        t.span => ; compile_error!("Only 'optional' and 'and' operators allowed for static terms.")
+                    });
+                }
+            } else {
+                match &t.oper {
+                    TermOper::Not => ops.push(quote! { .not() }),
+                    TermOper::Or => ops.push(quote! { .or() }),
+                    TermOper::AndFrom => ops.push(quote! { .and_from() }),
+                    TermOper::NotFrom => ops.push(quote! { .not_from() }),
+                    TermOper::OrFrom => ops.push(quote! { .or_from() }),
+                    TermOper::Optional => ops.push(quote! { .optional() }),
+                    TermOper::And => {}
+                }
             }
 
             // Configure traversal for source
@@ -1289,21 +1321,25 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
             }
 
             // Configure access
-            if !iter_term {
+            if iter_term {
+                if !matches!(t.access, Access::Omitted | Access::Filter) {
+                    ops.push(quote_spanned!{t.span => ; compile_error!("Only [filter] is allowed on static terms.")});
+                }
+            } else {
                 ops.push(match &t.reference {
                     Reference::Mut => quote! { .set_inout() },
                     Reference::Ref => quote! { .set_in() },
                     Reference::None => quote! { .set_inout_none() },
                 });
-            }
 
-            match &t.access {
-                Access::In => ops.push(quote! { .set_in() }),
-                Access::Out => ops.push(quote! { .set_out() }),
-                Access::InOut => ops.push(quote! { .set_inout() }),
-                Access::Filter => ops.push(quote! { .filter() }),
-                Access::None => ops.push(quote! { .set_inout_none() }),
-                Access::Omitted => {}
+                match &t.access {
+                    Access::In => ops.push(quote! { .set_in() }),
+                    Access::Out => ops.push(quote! { .set_out() }),
+                    Access::InOut => ops.push(quote! { .set_inout() }),
+                    Access::Filter => ops.push(quote! { .filter() }),
+                    Access::None => ops.push(quote! { .set_inout_none() }),
+                    Access::Omitted => {}
+                }
             }
 
             if !ops.is_empty() || needs_accessor {
