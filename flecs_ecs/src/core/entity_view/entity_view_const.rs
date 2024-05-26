@@ -653,23 +653,24 @@ impl<'a> EntityView<'a> {
     /// use `Option` wrapper to indicate if the component is optional.
     /// use `()` tuple format when getting multiple components.
     ///
-    /// - `try_get` assumes when not using `Option` wrapper, that the entity has the component. If it does not, it will not run the callback.
-    /// If unsure and you still want to have the callback be ran, use `Option` wrapper instead.
+    /// - `try_get` assumes when not using `Option` wrapper, that the entity has the component.
+    ///   If it does not, it will not run the callback.
+    ///   If unsure and you still want to have the callback be ran, use `Option` wrapper instead.
     ///
     /// # Note
     ///
     /// - You cannot get single component tags with this function, use `has` functionality instead.
     /// - You can only get relationships with a payload, so where one is not a tag / not a zst.
-    /// tag relationships, use `has` functionality instead.
+    ///   tag relationships, use `has` functionality instead.
     /// - This causes the table to lock where the entity belongs to to prevent invalided references, see #Panics.
-    /// The lock is dropped at the end of the callback.
+    ///   The lock is dropped at the end of the callback.
     ///
     /// # Panics
     ///
     /// - This will panic if within the callback you do any operation that could invalidate the reference.
-    /// This happens when the entity is moved to a different table in memory. Such as adding, removing components or
-    /// creating/deleting entities where the entity belongs to the same table (which could cause a table grow operation).
-    /// In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
+    ///   This happens when the entity is moved to a different table in memory. Such as adding, removing components or
+    ///   creating/deleting entities where the entity belongs to the same table (which could cause a table grow operation).
+    ///   In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
     ///
     /// # Returns
     ///
@@ -754,20 +755,20 @@ impl<'a> EntityView<'a> {
     ///
     /// - You cannot get single component tags with this function, use `has` functionality instead.
     /// - You can only get relationships with a payload, so where one is not a tag / not a zst.
-    /// tag relationships, use `has` functionality instead.
+    ///   tag relationships, use `has` functionality instead.
     /// - This causes the table to lock where the entity belongs to to prevent invalided references, see #Panics.
-    /// The lock is dropped at the end of the callback.
+    ///   The lock is dropped at the end of the callback.
     ///
     /// # Panics
     ///
     /// - This will panic if within the callback you do any operation that could invalidate the reference.
-    /// This happens when the entity is moved to a different table in memory. Such as adding, removing components or
-    /// creating/deleting entities where the entity belongs to the same table (which could cause a table grow operation).
-    /// In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
+    ///   This happens when the entity is moved to a different table in memory. Such as adding, removing components or
+    ///   creating/deleting entities where the entity belongs to the same table (which could cause a table grow operation).
+    ///   In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
     ///
     /// - `get` assumes when not using `Option` wrapper, that the entity has the component.
-    /// This will panic if the entity does not have the component. If unsure, use `Option` wrapper or `try_map` function instead.
-    /// `try_get` does not run the callback if the entity does not have the component that isn't marked `Option`.
+    ///   This will panic if the entity does not have the component. If unsure, use `Option` wrapper or `try_map` function instead.
+    ///   `try_get` does not run the callback if the entity does not have the component that isn't marked `Option`.
     ///
     /// # Example
     ///
@@ -841,8 +842,8 @@ impl<'a> EntityView<'a> {
     /// # Panics
     ///
     /// - `cloned` assumes when not using `Option` wrapper, that the entity has the component.
-    /// This will panic if the entity does not have the component. If unsure, use `Option` wrapper or `try_cloned` function instead.
-    /// `try_cloned` will return a `None` tuple instead if the entity does not have the component that isn't marked `Option`.
+    ///   This will panic if the entity does not have the component. If unsure, use `Option` wrapper or `try_cloned` function instead.
+    ///   `try_cloned` will return a `None` tuple instead if the entity does not have the component that isn't marked `Option`.
     ///
     /// # Example
     ///
@@ -961,28 +962,29 @@ impl<'a> EntityView<'a> {
     /// use `Option` wrapper to indicate if the component is optional.
     /// use `()` tuple format when getting multiple components.
     ///
-    /// - `try_map` assumes when not using `Option` wrapper, that the entity has the component. If it does not, it will not run the callback and return None.
-    /// If unsure and you still want to have the callback be ran, use `Option` wrapper instead.
+    /// - `try_map` assumes when not using `Option` wrapper, that the entity has the component.
+    ///   If it does not, it will not run the callback and return None.
+    ///   If unsure and you still want to have the callback be ran, use `Option` wrapper instead.
     ///
     /// # Note
     ///
     /// - You cannot get single component tags with this function, use `has` functionality instead.
     /// - You can only get relationships with a payload, so where one is not a tag / not a zst.
-    /// tag relationships, use `has` functionality instead.
+    ///   tag relationships, use `has` functionality instead.
     /// - This causes the table to lock where the entity belongs to to prevent invalided references, see #Panics.
-    /// The lock is dropped at the end of the callback.
+    ///   The lock is dropped at the end of the callback.
     ///
     /// # Panics
     ///
     /// - This will panic if within the callback you do any operation that could invalidate the reference.
-    /// This happens when the entity is moved to a different table in memory. Such as adding, removing components or
-    /// creating/deleting entities where the entity belongs to the same table (which could cause a table grow operation).
-    /// In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
+    ///   This happens when the entity is moved to a different table in memory. Such as adding, removing components or
+    ///   creating/deleting entities where the entity belongs to the same table (which could cause a table grow operation).
+    ///   In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
     ///
     /// # Returns
     ///
     /// - a Some(value) if the callback has ran. Where the type of value is specified in `Return` generic (can be elided).
-    /// None if the callback has not ran.
+    ///   None if the callback has not ran.
     ///
     /// # Example
     ///
@@ -1074,20 +1076,20 @@ impl<'a> EntityView<'a> {
     ///
     /// - You cannot get single component tags with this function, use `has` functionality instead.
     /// - You can only get relationships with a payload, so where one is not a tag / not a zst.
-    /// tag relationships, use `has` functionality instead.
+    ///   tag relationships, use `has` functionality instead.
     /// - This causes the table to lock where the entity belongs to to prevent invalided references, see #Panics.
-    /// The lock is dropped at the end of the callback.
+    ///   The lock is dropped at the end of the callback.
     ///
     /// # Panics
     ///
     /// - This will panic if within the callback you do any operation that could invalidate the reference.
-    /// This happens when the entity is moved to a different table in memory. Such as adding, removing components or
-    /// creating/deleting entities where the entity belongs to the same table (which could cause a table grow operation).
-    /// In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
+    ///   This happens when the entity is moved to a different table in memory. Such as adding, removing components or
+    ///   creating/deleting entities where the entity belongs to the same table (which could cause a table grow operation).
+    ///   In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
     ///
     /// - `get` assumes when not using `Option` wrapper, that the entity has the component.
-    /// This will panic if the entity does not have the component. If unsure, use `Option` wrapper or `try_get` function instead.
-    /// `try_get` does not run the callback if the entity does not have the component that isn't marked `Option`.
+    ///   This will panic if the entity does not have the component. If unsure, use `Option` wrapper or `try_get` function instead.
+    ///   `try_get` does not run the callback if the entity does not have the component that isn't marked `Option`.
     ///
     /// # Example
     ///
@@ -2496,7 +2498,7 @@ impl<'a> EntityView<'a> {
     /// # Safety
     ///
     /// - This guarantees no safety with table locking that the reference cannot be invalidated by other operations.
-    /// Use with caution or use `try_get`, `get`, `map`, `try_map` variants.
+    ///   Use with caution or use `try_get`, `get`, `map`, `try_map` variants.
     ///
     /// # See also
     ///
