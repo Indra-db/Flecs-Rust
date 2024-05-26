@@ -1408,7 +1408,6 @@ pub fn system(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
             )*
         },
     };
-    dbg!(output.to_string());
     ProcMacroTokenStream::from(output)
 }
 
