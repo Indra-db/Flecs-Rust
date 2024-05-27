@@ -7,7 +7,7 @@ pub trait FlecsTrait {}
 #[macro_export]
 macro_rules! create_pre_registered_component {
     ($struct_name:ident, $const_name:ident) => {
-        #[derive(Debug)]
+        #[derive(Debug, Default)]
         pub struct $struct_name;
 
         impl FlecsConstantId for $struct_name {
