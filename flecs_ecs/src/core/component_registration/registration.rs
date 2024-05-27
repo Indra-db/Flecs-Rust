@@ -171,7 +171,7 @@ where
 }
 
 /// registers the component with the world.
-fn register_componment_data_explicit<T>(
+pub(crate) fn register_componment_data_explicit<T>(
     world: *mut WorldT,
     name: *const c_char,
     id: EntityT,

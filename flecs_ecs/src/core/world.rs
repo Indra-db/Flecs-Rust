@@ -74,17 +74,8 @@ impl World {
     }
 
     fn init_builtin_components(&self) {
+        // used for event handling with no data
         self.component::<()>();
-        #[cfg(feature = "flecs_system")]
-        System::system_init(self);
-        //#[cfg(feature = "flecs_timer")]
-        //todo!();
-        //#[cfg(feature = "flecs_doc")]
-        //todo!();
-        //#[cfg(feature = "flecs_rest")]
-        //todo!();
-        //#[cfg(feature = "flecs_meta")]
-        //todo!();
     }
 
     /// deletes and recreates the world
@@ -2946,7 +2937,7 @@ impl World {
 }
 /// Id mixin implementation
 impl World {
-    /// Get  id of component / pair
+    /// Get the id view of component / pair
     ///
     /// # Type Parameters
     ///

@@ -11,7 +11,6 @@ pub use system_runner_fluent::*;
 
 use std::{ops::Deref, os::raw::c_void, ptr::NonNull};
 
-use self::flecs::system::TickSource;
 use crate::core::*;
 use crate::sys;
 
@@ -77,20 +76,6 @@ impl<'a> System<'a> {
         Self {
             entity: system_entity,
         }
-    }
-
-    /// Initialize the system module and register the `TickSource` component
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - The world to initialize the system module in.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system::system_init`
-    #[doc(alias = "system::system_init")]
-    pub(crate) fn system_init(world: &World) {
-        world.component_named::<TickSource>("flecs::system::TickSource");
     }
 
     /// Set the context for the system

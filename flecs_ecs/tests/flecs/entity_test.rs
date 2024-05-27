@@ -2398,7 +2398,7 @@ fn entity_defer_new_w_name() {
         assert!(e.is_valid());
     });
 
-    assert!(e.has_first::<flecs::EcsIdentifier>(flecs::Name::ID));
+    assert!(e.has_first::<flecs::Identifier>(flecs::Name::ID));
     assert_eq!(e.name(), "Foo");
 }
 
@@ -2413,7 +2413,7 @@ fn entity_defer_new_w_nested_name() {
         assert!(e.is_valid());
     });
 
-    assert!(e.has_first::<flecs::EcsIdentifier>(flecs::Name::ID));
+    assert!(e.has_first::<flecs::Identifier>(flecs::Name::ID));
     assert_eq!(e.name(), "Bar");
     assert_eq!(e.path().unwrap(), "::Foo::Bar");
 }
@@ -2432,7 +2432,7 @@ fn entity_defer_new_w_scope_name() {
         });
     });
 
-    assert!(e.has_first::<flecs::EcsIdentifier>(flecs::Name::ID));
+    assert!(e.has_first::<flecs::Identifier>(flecs::Name::ID));
     assert_eq!(e.name(), "Foo");
     assert_eq!(e.path().unwrap(), "::Parent::Foo");
 }
@@ -2451,7 +2451,7 @@ fn entity_defer_new_w_scope_nested_name() {
         });
     });
 
-    assert!(e.has_first::<flecs::EcsIdentifier>(flecs::Name::ID));
+    assert!(e.has_first::<flecs::Identifier>(flecs::Name::ID));
     assert_eq!(e.name(), "Bar");
     assert_eq!(e.path().unwrap(), "::Parent::Foo::Bar");
 }
@@ -2515,7 +2515,7 @@ fn entity_defer_new_w_name_scope_with() {
     });
 
     assert!(e.has_id(tag));
-    assert!(e.has_first::<flecs::EcsIdentifier>(flecs::Name::ID));
+    assert!(e.has_first::<flecs::Identifier>(flecs::Name::ID));
     assert_eq!(e.name(), "Foo");
     assert_eq!(e.path().unwrap(), "::Parent::Foo");
 }
@@ -2543,7 +2543,7 @@ fn entity_defer_new_w_nested_name_scope_with() {
     });
 
     assert!(e.has_id(tag));
-    assert!(e.has_first::<flecs::EcsIdentifier>(flecs::Name::ID));
+    assert!(e.has_first::<flecs::Identifier>(flecs::Name::ID));
     assert_eq!(e.name(), "Bar");
     assert_eq!(e.path().unwrap(), "::Parent::Foo::Bar");
 }

@@ -182,8 +182,11 @@ where
         let entity = *entity.into();
         unsafe {
             if ecs_get_alive(world_ptr, entity) != 0 {
-                let query_poly =
-                    sys::ecs_get_id(world_ptr, entity, ecs_pair(*flecs::Poly, *flecs::Query));
+                let query_poly = sys::ecs_get_id(
+                    world_ptr,
+                    entity,
+                    ecs_pair(flecs::Poly::ID, flecs::Query::ID),
+                );
 
                 if !query_poly.is_null() {
                     sys::flecs_poly_claim_(query_poly as *mut c_void);

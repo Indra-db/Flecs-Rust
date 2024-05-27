@@ -7,6 +7,7 @@ pub trait FlecsTrait {}
 #[macro_export]
 macro_rules! create_pre_registered_component {
     ($struct_name:ident, $const_name:ident) => {
+        #[derive(Debug)]
         pub struct $struct_name;
 
         impl FlecsConstantId for $struct_name {
@@ -123,9 +124,15 @@ pub mod id_flags {
 }
 
 // Builtin component ids
-create_pre_registered_component!(EcsComponent, ECS_COMPONENT);
-create_pre_registered_component!(EcsIdentifier, ECS_IDENTIFIER);
-create_pre_registered_component!(Poly, ECS_POLY);
+pub type Component = crate::sys::EcsComponent;
+pub type Identifier = crate::sys::EcsIdentifier;
+pub type Poly = crate::sys::EcsPoly;
+pub type DefaultChildComponent = crate::sys::EcsDefaultChildComponent;
+
+crate::impl_component_traits_binding_type_w_id!(Component, ECS_COMPONENT);
+crate::impl_component_traits_binding_type_w_id!(Identifier, ECS_IDENTIFIER);
+crate::impl_component_traits_binding_type_w_id!(Poly, ECS_POLY);
+crate::impl_component_traits_binding_type_w_id!(DefaultChildComponent, ECS_DEFAULT_CHILD_COMPONENT);
 
 // Poly target components
 create_pre_registered_component!(Query, ECS_QUERY);
@@ -187,7 +194,6 @@ create_pre_registered_component!(Symbol, ECS_SYMBOL);
 create_pre_registered_component!(Alias, ECS_ALIAS);
 
 // Events
-
 create_pre_registered_component!(OnAdd, ECS_ON_ADD);
 create_pre_registered_component!(OnRemove, ECS_ON_REMOVE);
 create_pre_registered_component!(OnSet, ECS_ON_SET);
@@ -198,16 +204,24 @@ create_pre_registered_component!(OnTableEmpty, ECS_ON_TABLE_EMPTY);
 create_pre_registered_component!(OnTableFill, ECS_ON_TABLE_FILL);
 
 // System
+#[cfg(feature = "flecs_system")]
 pub mod system {
     use super::*;
+    pub type TickSource = crate::sys::EcsTickSource;
+    crate::impl_component_traits_binding_type_w_id!(TickSource, ECS_TICK_SOURCE);
+
     create_pre_registered_component!(System, ECS_SYSTEM);
-    create_pre_registered_component!(TickSource, ECS_TICK_SOURCE);
 }
 
-pub mod timers {
+#[cfg(feature = "flecs_timer")]
+pub mod timer {
     use super::*;
-    create_pre_registered_component!(Timer, ECS_TIMER);
-    create_pre_registered_component!(RateFilter, ECS_RATE_FILTER);
+
+    pub type Timer = crate::sys::EcsTimer;
+    crate::impl_component_traits_binding_type_w_id!(Timer, ECS_TIMER);
+
+    pub type RateFilter = crate::sys::EcsRateFilter;
+    crate::impl_component_traits_binding_type_w_id!(RateFilter, ECS_RATE_FILTER);
 }
 
 create_pre_registered_component!(Sparse, ECS_SPARSE);
@@ -221,6 +235,7 @@ create_pre_registered_component!(ScopeOpen, ECS_SCOPE_OPEN);
 create_pre_registered_component!(ScopeClose, ECS_SCOPE_CLOSE);
 
 // Systems
+#[cfg(feature = "flecs_system")]
 pub mod pipeline {
     use super::*;
     create_pre_registered_component!(Pipeline, ECS_PIPELINE);
@@ -238,6 +253,7 @@ pub mod pipeline {
     create_pre_registered_component!(Phase, ECS_PHASE);
 }
 
+#[cfg(feature = "flecs_meta")]
 pub mod meta {
     use super::*;
     // Meta primitive components (don't use low ids to save id space)
@@ -285,6 +301,7 @@ pub mod doc {
     create_pre_registered_component!(Color, ECS_DOC_COLOR);
 }
 
+#[cfg(feature = "flecs_rest")]
 pub mod rest {
     use super::*;
     // REST module components
@@ -308,48 +325,7 @@ pub mod rest {
         }
     }
 
-    impl FlecsConstantId for Rest {
-        const ID: u64 = ECS_REST;
-    }
-    impl ComponentInfo for Rest {
-        const IS_ENUM: bool = false;
-        const IS_TAG: bool = false;
-        const IMPLS_CLONE: bool = false;
-        const IMPLS_DEFAULT: bool = true;
-        const IS_REF: bool = false;
-        const IS_MUT: bool = false;
-        type TagType =
-            flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
-    }
-    impl NotEmptyComponent for Rest {}
-
-    impl ComponentType<Struct> for Rest {}
-
-    impl ComponentId for Rest {
-        type UnderlyingType = Rest;
-        type UnderlyingEnumType = NoneEnum;
-        fn register_explicit<'a>(_world: impl IntoWorld<'a>) {}
-
-        fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
-            ECS_REST
-        }
-        fn is_registered() -> bool {
-            true
-        }
-        fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
-            true
-        }
-        fn get_id<'a>(_world: impl IntoWorld<'a>) -> IdT {
-            ECS_REST
-        }
-        unsafe fn get_id_unchecked() -> IdT {
-            ECS_REST
-        }
-        fn __get_once_lock_data() -> &'static OnceLock<IdComponent> {
-            static ONCE_LOCK: OnceLock<IdComponent> = OnceLock::new();
-            &ONCE_LOCK
-        }
-    }
+    crate::impl_component_traits_binding_type_w_id!(Rest, ECS_REST);
 }
 
 // default component for event API

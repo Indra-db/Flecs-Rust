@@ -1,12 +1,8 @@
 #![allow(non_upper_case_globals)]
 
-use std::{ffi::CStr, sync::OnceLock};
+use std::ffi::CStr;
 
-use crate::core::*;
 use crate::sys;
-
-#[cfg(feature = "flecs_system")]
-use crate::sys::EcsTickSource;
 
 pub const RUST_ecs_id_FLAGS_MASK: u64 = 0xFF << 60;
 pub const RUST_ECS_COMPONENT_MASK: u64 = !RUST_ecs_id_FLAGS_MASK;
@@ -30,9 +26,6 @@ pub type TermRefT = sys::ecs_term_ref_t;
 pub type TermT = sys::ecs_term_t;
 pub type PrimitiveKindT = sys::ecs_primitive_kind_t;
 pub type FTimeT = f32;
-#[cfg(feature = "flecs_system")]
-pub type TickSource = EcsTickSource;
-pub type DefaultChildComponent = sys::EcsDefaultChildComponent;
 
 pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\0") };
 
@@ -515,162 +508,97 @@ pub(crate) const ECS_DOC_COLOR: u64 = FLECS_HI_COMPONENT_ID + 117;
 // REST module components
 pub(crate) const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 118;
 
-impl NotEmptyComponent for sys::EcsDefaultChildComponent {}
+#[macro_export]
+macro_rules! impl_component_traits_binding_type {
+    ($name:ident) => {
+        impl NotEmptyComponent for $name {}
 
-impl ComponentType<Struct> for sys::EcsDefaultChildComponent {}
+        impl ComponentType<flecs_ecs::core::Struct> for $name {}
 
-impl ComponentInfo for sys::EcsDefaultChildComponent {
-    const IS_ENUM: bool = false;
-    const IS_TAG: bool = false;
-    const IMPLS_CLONE: bool = true;
-    const IMPLS_DEFAULT: bool = false;
-    const IS_REF: bool = false;
-    const IS_MUT: bool = false;
-    type TagType =
-        flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
+        impl ComponentInfo for $name {
+            const IS_ENUM: bool = false;
+            const IS_TAG: bool = false;
+            type TagType = FlecsFirstIsNotATag;
+            const IMPLS_CLONE: bool = true;
+            const IMPLS_DEFAULT: bool = false;
+            const IS_REF: bool = false;
+            const IS_MUT: bool = false;
+        }
+        impl ComponentId for $name {
+            type UnderlyingType = $name;
+            type UnderlyingEnumType = NoneEnum;
+            fn __get_once_lock_data() -> &'static std::sync::OnceLock<IdComponent> {
+                static ONCE_LOCK: std::sync::OnceLock<IdComponent> = std::sync::OnceLock::new();
+                &ONCE_LOCK
+            }
+            fn __register_lifecycle_hooks(type_hooks: &mut TypeHooksT) {
+                register_lifecycle_actions::<$name>(type_hooks);
+            }
+            fn __register_default_hooks(_type_hooks: &mut TypeHooksT) {}
+
+            fn __register_clone_hooks(type_hooks: &mut TypeHooksT) {
+                register_copy_lifecycle_action::<$name>(type_hooks);
+            }
+        }
+    };
 }
 
-impl ComponentId for sys::EcsDefaultChildComponent {
-    type UnderlyingType = sys::EcsDefaultChildComponent;
-    type UnderlyingEnumType = NoneEnum;
+#[macro_export]
+macro_rules! impl_component_traits_binding_type_w_id {
+    ($name:ident, $id:ident) => {
+        impl FlecsConstantId for $name {
+            const ID: u64 = $id;
+        }
+        impl NotEmptyComponent for $name {}
 
-    fn register_explicit<'a>(_world: impl IntoWorld<'a>) {
-        //this is already registered in the world inside C
-    }
+        impl ComponentType<flecs_ecs::core::Struct> for $name {}
 
-    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
-        //this is already registered in the world inside C
-        ECS_DEFAULT_CHILD_COMPONENT
-    }
+        impl ComponentInfo for $name {
+            const IS_ENUM: bool = false;
+            const IS_TAG: bool = false;
+            type TagType = FlecsFirstIsNotATag;
+            const IMPLS_CLONE: bool = true;
+            const IMPLS_DEFAULT: bool = false;
+            const IS_REF: bool = false;
+            const IS_MUT: bool = false;
+        }
+        impl ComponentId for $name {
+            type UnderlyingType = $name;
+            type UnderlyingEnumType = NoneEnum;
+            fn __get_once_lock_data() -> &'static std::sync::OnceLock<IdComponent> {
+                static ONCE_LOCK: std::sync::OnceLock<IdComponent> = std::sync::OnceLock::new();
+                &ONCE_LOCK
+            }
+            fn __register_lifecycle_hooks(type_hooks: &mut TypeHooksT) {
+                register_lifecycle_actions::<$name>(type_hooks);
+            }
+            fn __register_default_hooks(_type_hooks: &mut TypeHooksT) {}
 
-    fn is_registered() -> bool {
-        //this is already registered in the world inside C
-        true
-    }
+            fn __register_clone_hooks(type_hooks: &mut TypeHooksT) {
+                register_copy_lifecycle_action::<$name>(type_hooks);
+            }
 
-    fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
-        //this is already registered in the world inside C
-        true
-    }
+            fn register_explicit<'a>(_world: impl IntoWorld<'a>) {}
 
-    unsafe fn get_id_unchecked() -> IdT {
-        ECS_DEFAULT_CHILD_COMPONENT
-    }
+            fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
+                $id
+            }
 
-    fn get_id<'a>(_: impl IntoWorld<'a>) -> IdT {
-        ECS_DEFAULT_CHILD_COMPONENT
-    }
+            fn is_registered() -> bool {
+                true
+            }
 
-    fn __get_once_lock_data() -> &'static OnceLock<IdComponent> {
-        static ONCE_LOCK: OnceLock<IdComponent> = OnceLock::new();
-        &ONCE_LOCK
-    }
-}
+            fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
+                true
+            }
 
-impl NotEmptyComponent for sys::EcsComponent {}
+            fn get_id<'a>(_world: impl IntoWorld<'a>) -> IdT {
+                $id
+            }
 
-impl ComponentInfo for sys::EcsComponent {
-    const IS_ENUM: bool = false;
-    const IS_TAG: bool = false;
-    const IMPLS_CLONE: bool = true;
-    const IMPLS_DEFAULT: bool = true;
-    const IS_REF: bool = false;
-    const IS_MUT: bool = false;
-    type TagType =
-        flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
-}
-
-impl ComponentType<Struct> for sys::EcsComponent {}
-
-impl ComponentId for sys::EcsComponent {
-    type UnderlyingType = sys::EcsComponent;
-    type UnderlyingEnumType = NoneEnum;
-
-    fn register_explicit<'a>(_world: impl IntoWorld<'a>) {
-        //this is already registered in the world inside C
-    }
-
-    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
-        //this is already registered in the world inside C
-        unsafe { sys::FLECS_IDEcsComponentID_ }
-    }
-
-    fn is_registered() -> bool {
-        //this is already registered in the world inside C
-        true
-    }
-
-    fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
-        //this is already registered in the world inside C
-        true
-    }
-
-    fn get_id<'a>(_world: impl IntoWorld<'a>) -> IdT {
-        unsafe { sys::FLECS_IDEcsComponentID_ }
-    }
-
-    unsafe fn get_id_unchecked() -> IdT {
-        sys::FLECS_IDEcsComponentID_
-    }
-
-    fn __get_once_lock_data() -> &'static OnceLock<IdComponent> {
-        static ONCE_LOCK: OnceLock<IdComponent> = OnceLock::new();
-        &ONCE_LOCK
-    }
-}
-
-#[cfg(feature = "flecs_system")]
-impl NotEmptyComponent for TickSource {}
-
-#[cfg(feature = "flecs_system")]
-impl ComponentType<Struct> for TickSource {}
-
-#[cfg(feature = "flecs_system")]
-impl ComponentInfo for TickSource {
-    const IS_TAG: bool = false;
-    const IS_ENUM: bool = false;
-    const IMPLS_CLONE: bool = true;
-    const IMPLS_DEFAULT: bool = true;
-    const IS_REF: bool = false;
-    const IS_MUT: bool = false;
-    type TagType =
-        flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
-}
-
-#[cfg(feature = "flecs_system")]
-impl ComponentId for TickSource {
-    type UnderlyingType = TickSource;
-    type UnderlyingEnumType = NoneEnum;
-
-    fn register_explicit<'a>(_world: impl IntoWorld<'a>) {
-        //this is already registered in the world inside C
-    }
-
-    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
-        //this is already registered in the world inside C
-        ECS_TICK_SOURCE
-    }
-
-    fn is_registered() -> bool {
-        //this is already registered in the world inside C
-        true
-    }
-
-    fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
-        //this is already registered in the world inside C
-        true
-    }
-
-    unsafe fn get_id_unchecked() -> IdT {
-        ECS_TICK_SOURCE
-    }
-
-    fn get_id<'a>(_: impl IntoWorld<'a>) -> IdT {
-        ECS_TICK_SOURCE
-    }
-
-    fn __get_once_lock_data() -> &'static OnceLock<IdComponent> {
-        static ONCE_LOCK: OnceLock<IdComponent> = OnceLock::new();
-        &ONCE_LOCK
-    }
+            unsafe fn get_id_unchecked() -> IdT {
+                $id
+            }
+        }
+    };
 }
