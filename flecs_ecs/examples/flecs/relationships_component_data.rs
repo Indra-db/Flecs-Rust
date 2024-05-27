@@ -77,7 +77,9 @@ fn main() {
 
     // You can prevent a pair from assuming the type of a component by adding
     // the Tag property to a relationship:
-    world.component::<MustHave>().add::<flecs::PairIsTag>();
+    world
+        .component::<MustHave>()
+        .add_trait::<flecs::PairIsTag>();
 
     // Even though Position is a component, <MustHave, Position> contains no
     // data because MustHave has the Tag property.
@@ -118,11 +120,7 @@ fn main() {
 
     // When querying for a relationship component, add the pair type as template
     // argument to the builder:
-    let query = world
-        .query::<&Requires>()
-        .term_at(0)
-        .set_second::<Gigawatts>()
-        .build();
+    let query = world.query::<&(Requires, Gigawatts)>().build();
 
     query.each_entity(|entity, requires| {
         println!("requires: {} gigawatts", requires.amount);
