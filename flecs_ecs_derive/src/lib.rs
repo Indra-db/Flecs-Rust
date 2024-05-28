@@ -1336,8 +1336,7 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                     Reference::None => {},
                     _ => ops.push(
                         quote_spanned!{
-                            t.span => ; 
-                            compile_error!("Static term located after a dynamic term, re-order such that `&` and `&mut are first.")
+                            t.span => ; compile_error!("Static term located after a dynamic term, re-order such that `&` and `&mut are first.")
                         })
                 }
 
