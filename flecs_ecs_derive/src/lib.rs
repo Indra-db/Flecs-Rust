@@ -1332,11 +1332,14 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                     ops.push(quote_spanned!{t.span => ; compile_error!("Only [filter] is allowed on static terms.")});
                 }
             } else {
-                ops.push(match &t.reference {
-                    Reference::Mut => quote! { .set_inout() },
-                    Reference::Ref => quote! { .set_in() },
-                    Reference::None => quote! { .set_inout_none() },
-                });
+                match &t.reference {
+                    Reference::None => {},
+                    _ => ops.push(
+                        quote_spanned!{
+                            t.span => ; 
+                            compile_error!("Static term located after a dynamic term, re-order such that `&` and `&mut are first.")
+                        })
+                }
 
                 match &t.access {
                     Access::In => ops.push(quote! { .set_in() }),
