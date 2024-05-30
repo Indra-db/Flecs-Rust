@@ -738,7 +738,7 @@ impl<'a> EntityView<'a> {
 
         #[cfg(not(feature = "flecs_unsafe_get"))]
         unsafe {
-            sys::ecs_read_end(record)
+            sys::ecs_read_end(record);
         }
 
         has_all_components
@@ -821,7 +821,7 @@ impl<'a> EntityView<'a> {
 
         #[cfg(not(feature = "flecs_unsafe_get"))]
         unsafe {
-            sys::ecs_read_end(record)
+            sys::ecs_read_end(record);
         }
     }
 
@@ -1055,7 +1055,7 @@ impl<'a> EntityView<'a> {
 
         #[cfg(not(feature = "flecs_unsafe_get"))]
         unsafe {
-            sys::ecs_read_end(record)
+            sys::ecs_read_end(record);
         }
 
         ret
@@ -1155,7 +1155,7 @@ impl<'a> EntityView<'a> {
 
         #[cfg(not(feature = "flecs_unsafe_get"))]
         unsafe {
-            sys::ecs_read_end(record)
+            sys::ecs_read_end(record);
         }
 
         ret
