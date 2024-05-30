@@ -737,10 +737,8 @@ impl<'a> EntityView<'a> {
         }
 
         #[cfg(not(feature = "flecs_unsafe_get"))]
-        if T::ALL_IMMUTABLE {
-            unsafe { sys::ecs_read_end(record) }
-        } else {
-            unsafe { sys::ecs_write_end(record) }
+        unsafe {
+            sys::ecs_read_end(record)
         }
 
         has_all_components
@@ -822,10 +820,8 @@ impl<'a> EntityView<'a> {
         callback(tuple);
 
         #[cfg(not(feature = "flecs_unsafe_get"))]
-        if T::ALL_IMMUTABLE {
-            unsafe { sys::ecs_read_end(record) }
-        } else {
-            unsafe { sys::ecs_write_end(record) }
+        unsafe {
+            sys::ecs_read_end(record)
         }
     }
 
@@ -1058,10 +1054,8 @@ impl<'a> EntityView<'a> {
         };
 
         #[cfg(not(feature = "flecs_unsafe_get"))]
-        if T::ALL_IMMUTABLE {
-            unsafe { sys::ecs_read_end(record) }
-        } else {
-            unsafe { sys::ecs_write_end(record) }
+        unsafe {
+            sys::ecs_read_end(record)
         }
 
         ret
@@ -1160,10 +1154,8 @@ impl<'a> EntityView<'a> {
         let ret = callback(tuple);
 
         #[cfg(not(feature = "flecs_unsafe_get"))]
-        if T::ALL_IMMUTABLE {
-            unsafe { sys::ecs_read_end(record) }
-        } else {
-            unsafe { sys::ecs_write_end(record) }
+        unsafe {
+            sys::ecs_read_end(record)
         }
 
         ret
