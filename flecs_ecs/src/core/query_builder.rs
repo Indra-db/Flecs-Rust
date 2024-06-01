@@ -638,15 +638,6 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.with_second_id(first, second).not()
     }
 
-    /// set term without term
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::without`
-    // fn without_term(&mut self, term: Term) -> &mut Self {
-    //     self.with_term(term).not()
-    // }
-
     /// Term notation for more complex query features
     ///
     /// # See also

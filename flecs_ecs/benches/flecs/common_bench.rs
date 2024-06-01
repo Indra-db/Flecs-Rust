@@ -223,21 +223,22 @@ macro_rules! has_component_range {
         }};
     }
 
-// macro_rules! get_component_range {
-//         ($world:expr, $entity:expr, $component:ty, $start:expr, $end:expr) => {{
-//             seq!(P in $start..=$end {
-//                 let _ = $entity.try_get::<$component~P>();
-//         });
-//         }};
-//     }
+macro_rules! get_component_range {
+        ($world:expr, $entity:expr, $component:ty, $start:expr, $end:expr) => {{
+            seq!(P in $start..=$end {
+                let ok = $entity.try_get::<(#(&$component~P,)*)>(|_| {});
+                black_box(ok);
+            });
+        }}
+    }
 
-// macro_rules! get_mut_component_range {
-//         ($world:expr, $entity:expr, $component:ty, $start:expr, $end:expr) => {{
-//             seq!(P in $start..=$end {
-//                 let _ = $entity.try_get_mut::<$component~P>();
-//         });
-//         }};
-//     }
+macro_rules! get_mut_component_range {
+        ($world:expr, $entity:expr, $component:ty, $start:expr, $end:expr) => {{
+            seq!(P in $start..=$end {
+                let _ = $entity.try_get::<(#(&mut $component~P,)*)>(|_| {});
+            });
+        }};
+    }
 
 #[allow(unused)]
 macro_rules! get_mut_component_range_cmd {
@@ -486,7 +487,7 @@ pub(crate) use bench_get_relationship_target;
 pub(crate) use bench_loop_entities;
 // pub(crate) use ensure_mut_component_range;
 // pub(crate) use ensure_mut_component_range_cmd;
-// pub(crate) use get_component_range;
+pub(crate) use get_component_range;
 // pub(crate) use get_mut_component_range;
 #[allow(unused)]
 pub(crate) use get_mut_component_range_cmd;

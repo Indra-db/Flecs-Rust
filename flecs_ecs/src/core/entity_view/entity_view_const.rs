@@ -728,6 +728,16 @@ impl<'a> EntityView<'a> {
         #[cfg(feature = "flecs_unsafe_get")]
         let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
 
+        #[cfg(not(feature = "flecs_unsafe_get"))]
+        if record.is_null() {
+            return false;
+        }
+
+        #[cfg(feature = "flecs_unsafe_get")]
+        if unsafe { (*record).table.is_null() } {
+            return false;
+        }
+
         let tuple_data = T::create_ptrs::<false>(self.world, self.id, record);
         let has_all_components = tuple_data.has_all_components();
 
@@ -814,6 +824,16 @@ impl<'a> EntityView<'a> {
         #[cfg(feature = "flecs_unsafe_get")]
         let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
 
+        #[cfg(not(feature = "flecs_unsafe_get"))]
+        if record.is_null() {
+            return;
+        }
+
+        #[cfg(feature = "flecs_unsafe_get")]
+        if unsafe { (*record).table.is_null() } {
+            return;
+        }
+
         let tuple_data = T::create_ptrs::<true>(self.world, self.id, record);
         let tuple = tuple_data.get_tuple();
 
@@ -881,6 +901,11 @@ impl<'a> EntityView<'a> {
         let world_ptr = self.world.world_ptr_mut();
 
         let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
+
+        if unsafe { (*record).table.is_null() } {
+            panic!("Entity does not have any components");
+        }
+
         let tuple_data = T::create_ptrs::<true>(self.world, record);
         tuple_data.get_tuple()
     }
@@ -941,6 +966,10 @@ impl<'a> EntityView<'a> {
         let world_ptr = self.world.world_ptr_mut();
 
         let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
+
+        if unsafe { (*record).table.is_null() } {
+            return None;
+        }
 
         let tuple_data = T::create_ptrs::<false>(self.world, record);
         //todo we can maybe early return if we don't yet if doesn't have all. Same for try_get
@@ -1042,6 +1071,16 @@ impl<'a> EntityView<'a> {
 
         #[cfg(feature = "flecs_unsafe_get")]
         let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
+
+        #[cfg(not(feature = "flecs_unsafe_get"))]
+        if record.is_null() {
+            return None;
+        }
+
+        #[cfg(feature = "flecs_unsafe_get")]
+        if unsafe { (*record).table.is_null() } {
+            return None;
+        }
 
         let tuple_data = T::create_ptrs::<false>(self.world, self.id, record);
         let has_all_components = tuple_data.has_all_components();
@@ -1147,6 +1186,16 @@ impl<'a> EntityView<'a> {
 
         #[cfg(feature = "flecs_unsafe_get")]
         let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
+
+        #[cfg(not(feature = "flecs_unsafe_get"))]
+        if record.is_null() {
+            panic!("Entity does not have any components");
+        }
+
+        #[cfg(feature = "flecs_unsafe_get")]
+        if unsafe { (*record).table.is_null() } {
+            panic!("Entity does not have any components");
+        }
 
         let tuple_data = T::create_ptrs::<true>(self.world, self.id, record);
         let tuple = tuple_data.get_tuple();
