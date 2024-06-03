@@ -157,7 +157,7 @@ where
     where
         Phase: ComponentId + ComponentType<Struct>,
     {
-        self.kind_id(Phase::get_id(self.world()))
+        self.kind_id(Phase::id(self.world()))
     }
 
     /// Specify in which enum phase the system should run
@@ -293,7 +293,7 @@ where
     where
         Component: ComponentId,
     {
-        self.desc.tick_source = Component::get_id(self.world());
+        self.desc.tick_source = Component::id(self.world());
         self
     }
 }

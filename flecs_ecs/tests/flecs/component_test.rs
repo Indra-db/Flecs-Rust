@@ -7,7 +7,6 @@ fn temp_test_hook() {
     static mut COUNT_SET_POS: u32 = 0;
     static mut COUNT_SET_VEL: u32 = 0;
     {
-        structs!();
         let world = World::new();
         world
             .component::<Position>()

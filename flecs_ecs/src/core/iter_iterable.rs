@@ -51,7 +51,7 @@ where
     #[doc(alias = "iter_iterable::set_group")]
     pub fn set_group<Group: ComponentId>(&mut self) -> &mut Self {
         let world = unsafe { WorldRef::from_ptr(self.iter.real_world) };
-        unsafe { sys::ecs_iter_set_group(&mut self.iter, Group::get_id(world)) }
+        unsafe { sys::ecs_iter_set_group(&mut self.iter, Group::id(world)) }
         self
     }
 

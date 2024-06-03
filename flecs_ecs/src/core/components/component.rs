@@ -39,8 +39,9 @@ impl<'a, T: ComponentId> Component<'a, T> {
             T::register_explicit(world.world());
         }
 
+        let world = world.world();
         Self {
-            base: UntypedComponent::new(world, unsafe { T::get_id_unchecked() }),
+            base: UntypedComponent::new(world, T::id(world)),
             _marker: PhantomData,
         }
     }
@@ -61,8 +62,9 @@ impl<'a, T: ComponentId> Component<'a, T> {
             T::register_explicit_named(world.world(), name);
         }
 
+        let world = world.world();
         Self {
-            base: UntypedComponent::new(world, unsafe { T::get_id_unchecked() }),
+            base: UntypedComponent::new(world, T::id(world)),
             _marker: PhantomData,
         }
     }
@@ -308,7 +310,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
         OpaqueType: ComponentId,
     {
         let mut ts = Opaque::<OpaqueType>::new(self.world);
-        ts.desc.entity = T::get_id(self.world);
+        ts.desc.entity = T::id(self.world);
         unsafe { sys::ecs_opaque_init(self.world.world_ptr_mut(), &ts.desc) };
         self
     }

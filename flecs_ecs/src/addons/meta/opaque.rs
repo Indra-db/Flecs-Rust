@@ -43,7 +43,7 @@ where
         Self {
             world: world.world(),
             desc: ecs_opaque_desc_t {
-                entity: T::get_id(world),
+                entity: T::id(world),
                 type_: Default::default(),
             },
             phantom: std::marker::PhantomData,

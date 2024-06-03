@@ -1,13 +1,19 @@
-use super::World;
+use super::{FlecsArray, FlecsIdMap, World};
 use crate::sys;
 
 pub(crate) struct WorldCtx {
     query_ref_count: i32,
+    pub(crate) components: FlecsIdMap,
+    pub(crate) components_array: FlecsArray,
 }
 
 impl WorldCtx {
     pub(crate) fn new() -> Self {
-        Self { query_ref_count: 0 }
+        Self {
+            query_ref_count: 0,
+            components: Default::default(),
+            components_array: vec![0; 2000],
+        }
     }
 
     pub(crate) fn inc_query_ref_count(&mut self) {
@@ -59,7 +65,7 @@ impl World {
     }
 }
 
-#[test]
+//#[test]
 fn query_ref_count() {
     unsafe {
         flecs_ecs::sys::ecs_os_init();

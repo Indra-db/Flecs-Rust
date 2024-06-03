@@ -41,7 +41,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
             ids_array: Default::default(),
             _phantom: PhantomData,
         };
-        obj.desc.event = T::get_id(world);
+        obj.desc.event = T::id(world);
         obj
     }
 
@@ -134,7 +134,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         First: ComponentId,
     {
         let world = self.world;
-        self.add_id(ecs_pair(First::get_id(world), *second.into()))
+        self.add_id(ecs_pair(First::id(world), *second.into()))
     }
 
     #[doc(alias = "event_builder_base::id")]
@@ -143,7 +143,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         Second: ComponentId,
     {
         let world = self.world;
-        self.add_id(ecs_pair(*first.into(), Second::get_id(world)))
+        self.add_id(ecs_pair(*first.into(), Second::id(world)))
     }
 
     /// Set the entity to emit for the event
