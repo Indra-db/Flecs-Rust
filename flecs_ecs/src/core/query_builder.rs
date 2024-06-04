@@ -397,8 +397,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         &mut self,
         value: T,
     ) -> &mut Self {
-        let enum_id = T::get_id(self.world());
-        // SAFETY: we know that the enum_value is a valid because of the T::get_id call
+        let enum_id = T::id(self.world());
         let enum_field_id = value.get_id_variant(self.world());
         self.with_id((enum_id, enum_field_id))
     }
@@ -420,7 +419,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// * C++ API: `query_builder_i::with`
     #[doc(alias = "query_builder_i::with")]
     fn with_first<First: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
-        self.with_id((First::get_id(self.world()), second))
+        self.with_id((First::id(self.world()), second))
     }
 
     /// set term with pairs
@@ -430,7 +429,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// * C++ API: `query_builder_i::with`
     #[doc(alias = "query_builder_i::with")]
     fn with_first_name<First: ComponentId>(&mut self, second: &'a str) -> &mut Self {
-        self.with_first_id(First::get_id(self.world()), second)
+        self.with_first_id(First::id(self.world()), second)
     }
 
     /// set term with pairs
@@ -440,7 +439,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// * C++ API: `query_builder_i::with`
     #[doc(alias = "query_builder_i::with")]
     fn with_second<Second: ComponentId>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
-        self.with_id((first, Second::get_id(self.world())))
+        self.with_id((first, Second::id(self.world())))
     }
 
     /// set term with pairs
@@ -450,7 +449,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// * C++ API: `query_builder_i::with`
     #[doc(alias = "query_builder_i::with")]
     fn with_second_name<Second: ComponentId>(&mut self, first: &'a str) -> &mut Self {
-        self.with_second_id(first, Second::get_id(self.world()))
+        self.with_second_id(first, Second::id(self.world()))
     }
 
     /// set term with Name
@@ -859,7 +858,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
                 ) -> i32,
             >(compare)
         });
-        self.order_by_id(T::get_id(self.world()), cmp);
+        self.order_by_id(T::id(self.world()), cmp);
         self
     }
 
@@ -902,7 +901,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     where
         T: ComponentId,
     {
-        self.group_by_id_fn(T::get_id(self.world()), None)
+        self.group_by_id_fn(T::id(self.world()), None)
     }
 
     /// Group and sort matched tables.
@@ -936,7 +935,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     where
         T: ComponentId,
     {
-        self.group_by_id_fn(T::get_id(self.world()), group_by_action);
+        self.group_by_id_fn(T::id(self.world()), group_by_action);
         self
     }
 

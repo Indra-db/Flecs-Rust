@@ -3,17 +3,18 @@
 
 use std::time::Duration;
 
-use criterion::{criterion_group, criterion_main, Criterion};
+//use criterion::{criterion_group, criterion_main, Criterion};
 pub use seq_macro::seq;
 
-pub mod common_bench;
+fn main() {}
+//pub mod common_bench;
 
 // mod add_existing_bench;
 // mod add_remove_bench;
 // mod create_delete_entities_bench;
 // mod entity_bench;
 // mod event_bench;
-mod get_bench;
+//mod get_bench;
 // mod has_bench;
 // mod hooks_bench;
 // mod observer_bench;
@@ -27,7 +28,7 @@ mod get_bench;
 // use entity_bench::*;
 // use event_bench::*;
 
-use get_bench::*;
+//use get_bench::*;
 // use has_bench::*;
 // use hooks_bench::*;
 // use observer_bench::*;
@@ -35,31 +36,31 @@ use get_bench::*;
 // use relationships_bench::*;
 // use set_bench::*;
 
-fn ecs_default_criterion() -> Criterion {
-    let mut criterion_config = Criterion::default().configure_from_args();
-    criterion_config = criterion_config
-        .warm_up_time(Duration::from_millis(100))
-        .measurement_time(Duration::from_millis(300))
-        //.measurement_time(Duration::from_secs(1))
-        .sample_size(10)
-        .noise_threshold(0.01)
-        .confidence_level(0.95)
-        .significance_level(0.05)
-        .without_plots();
-    criterion_config
-}
+// fn ecs_default_criterion() -> Criterion {
+//     let mut criterion_config = Criterion::default().configure_from_args();
+//     criterion_config = criterion_config
+//         .warm_up_time(Duration::from_millis(100))
+//         .measurement_time(Duration::from_millis(300))
+//         //.measurement_time(Duration::from_secs(1))
+//         .sample_size(10)
+//         .noise_threshold(0.01)
+//         .confidence_level(0.95)
+//         .significance_level(0.05)
+//         .without_plots();
+//     criterion_config
+// }
 
-criterion_main!(
-    //has_bench,
-    get_bench,
-    // set_bench,
-    // g_add_remove_bench,
-    //g_create_delete_entities_bench,
-    // hooks_bench,
-    // observers_bench,
-    // entity_bench,
-    // event_bench
-);
+// criterion_main!(
+//     //has_bench,
+//     //get_bench,
+//     // set_bench,
+//     // g_add_remove_bench,
+//     //g_create_delete_entities_bench,
+//     // hooks_bench,
+//     // observers_bench,
+//     // entity_bench,
+//     // event_bench
+// );
 
 // criterion_group!(
 //     name = has_bench;
@@ -69,20 +70,20 @@ criterion_main!(
 //     has_components_found
 // );
 
-criterion_group!(
-    name = get_bench;
-    config = ecs_default_criterion();
-    targets =
-    get_component_not_found,
-    get_components_found,
-    // get_components_not_found,
-    // get_mut_components_found,
-    // get_mut_components_not_found,
-    // ensure_mut_components_found,
-    // ensure_mut_components_found_cmd,
-    // ensure_mut_not_found_and_remove,
-    // ensure_mut_not_found_and_remove_cmd,
-);
+// criterion_group!(
+//     name = get_bench;
+//     config = ecs_default_criterion();
+//     targets =
+//     get_component_not_found,
+//     get_components_found,
+//     // get_components_not_found,
+//     // get_mut_components_found,
+//     // get_mut_components_not_found,
+//     // ensure_mut_components_found,
+//     // ensure_mut_components_found_cmd,
+//     // ensure_mut_not_found_and_remove,
+//     // ensure_mut_not_found_and_remove_cmd,
+// );
 
 // criterion_group!(
 //     name = add_existing_bench;

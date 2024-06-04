@@ -268,7 +268,7 @@ macro_rules! get_mut_component_range_cmd {
 macro_rules! register_component_range {
         ($world:expr, $component:ty, $start:expr, $end:expr) => {{
             seq!(P in $start..=$end {
-                <$component~P as ComponentId>::get_id(&$world);
+                <$component~P as ComponentId>::id(&$world);
             });
         }};
     }

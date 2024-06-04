@@ -34,7 +34,7 @@ impl<'a, T: ComponentId + NotEmptyComponent> CachedRef<'a, T> {
             unsafe { sys::ecs_get_world(world.world_ptr_mut() as *const c_void) as *mut WorldT };
 
         if id == 0 {
-            id = T::get_id(world);
+            id = T::id(world);
         }
 
         ecs_assert!(

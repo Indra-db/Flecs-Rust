@@ -43,7 +43,7 @@ impl<'a, P: ComponentId, T: Iterable> ObserverBuilder<'a, P, T> {
             _phantom: std::marker::PhantomData,
         };
 
-        obj.desc.events[0] = P::get_id(world.world());
+        obj.desc.events[0] = P::id(world.world());
         obj.desc.entity =
             unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &Default::default()) };
 
@@ -81,7 +81,7 @@ impl<'a, P: ComponentId, T: Iterable> ObserverBuilder<'a, P, T> {
             ..default::Default::default()
         };
 
-        obj.desc.events[0] = P::get_id(world.world());
+        obj.desc.events[0] = P::id(world.world());
         obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world_ptr_mut(), &entity_desc) };
 
         T::populate(&mut obj);
@@ -180,7 +180,7 @@ impl<'a, P, T: Iterable> ObserverBuilder<'a, P, T> {
     {
         let event_count = self.event_count as usize;
         self.event_count += 1;
-        let id = E::get_id(self.world());
+        let id = E::id(self.world());
         self.desc.events[event_count] = id;
         // SAFETY: Same layout
         unsafe { std::mem::transmute(self) }

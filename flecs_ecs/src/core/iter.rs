@@ -519,7 +519,7 @@ where
             "cannot .field from .each, use .field_at instead",
         );
 
-        let id = <T::UnderlyingType as ComponentId>::get_id(self.world());
+        let id = <T::UnderlyingType as ComponentId>::id(self.world());
 
         if index > self.iter.field_count {
             return None;

@@ -5,7 +5,6 @@ use crate::common_test::*;
 
 #[test]
 fn entity_new() {
-    structs!();
     let world = World::new();
     let entity = world.entity();
     assert!(entity.is_valid());
@@ -13,7 +12,6 @@ fn entity_new() {
 
 #[test]
 fn entity_new_named() {
-    structs!();
     let world = World::new();
     let entity = world.entity_named("test");
 
@@ -23,7 +21,6 @@ fn entity_new_named() {
 
 #[test]
 fn entity_new_named_from_scope() {
-    structs!();
     let world = World::new();
     let entity = world.entity_named("Foo");
     assert!(entity.is_valid());
@@ -71,7 +68,6 @@ fn entity_new_nested_named_from_nested_scope() {
 
 #[test]
 fn entity_new_add() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity().set(Position { x: 0, y: 0 });
@@ -82,7 +78,6 @@ fn entity_new_add() {
 
 #[test]
 fn entity_new_add_2() {
-    structs!();
     let world = World::new();
 
     let entity = world
@@ -97,7 +92,6 @@ fn entity_new_add_2() {
 
 #[test]
 fn entity_new_set() {
-    structs!();
     let world = World::new();
 
     // Create an entity and set the Position component data
@@ -118,7 +112,6 @@ fn entity_new_set() {
 
 #[test]
 fn entity_new_set_2() {
-    structs!();
     let world = World::new();
 
     let entity = world
@@ -140,7 +133,6 @@ fn entity_new_set_2() {
 
 #[test]
 fn entity_add() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity();
@@ -154,7 +146,6 @@ fn entity_add() {
 
 #[test]
 fn entity_remove() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity();
@@ -169,7 +160,6 @@ fn entity_remove() {
 
 #[test]
 fn entity_set() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity();
@@ -186,7 +176,6 @@ fn entity_set() {
 
 #[test]
 fn entity_add_2() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity();
@@ -202,7 +191,6 @@ fn entity_add_2() {
 
 #[test]
 fn entity_add_entity() {
-    structs!();
     let world = World::new();
 
     let tag = world.entity();
@@ -217,7 +205,6 @@ fn entity_add_entity() {
 
 #[test]
 fn entity_add_childof() {
-    structs!();
     let world = World::new();
 
     let parent = world.entity();
@@ -232,7 +219,6 @@ fn entity_add_childof() {
 
 #[test]
 fn entity_add_instanceof() {
-    structs!();
     let world = World::new();
 
     let base = world.entity();
@@ -247,7 +233,6 @@ fn entity_add_instanceof() {
 
 #[test]
 fn entity_remove_2() {
-    structs!();
     let world = World::new();
 
     let entity = world
@@ -266,7 +251,6 @@ fn entity_remove_2() {
 
 #[test]
 fn entity_set_2() {
-    structs!();
     let world = World::new();
 
     let entity = world
@@ -290,7 +274,6 @@ fn entity_set_2() {
 
 #[test]
 fn entity_remove_entity() {
-    structs!();
     let world = World::new();
 
     let tag = world.entity();
@@ -308,7 +291,6 @@ fn entity_remove_entity() {
 
 #[test]
 fn entity_remove_childof() {
-    structs!();
     let world = World::new();
 
     let parent = world.entity();
@@ -326,7 +308,6 @@ fn entity_remove_childof() {
 
 #[test]
 fn entity_remove_instanceof() {
-    structs!();
     let world = World::new();
 
     let base = world.entity();
@@ -344,7 +325,6 @@ fn entity_remove_instanceof() {
 
 #[test]
 fn entity_get_generic() {
-    structs!();
     let world = World::new();
     world.set(Position { x: 0, y: 0 });
 
@@ -367,7 +347,7 @@ fn entity_get_generic_mut() {
     struct Flags {
         invoked: usize,
     }
-    structs!();
+
     let world = create_world_with_flags::<Flags>();
 
     let position = world.component::<Position>();
@@ -400,7 +380,6 @@ fn entity_get_generic_mut() {
 
 #[test]
 fn entity_get_mut_generic_w_id() {
-    structs!();
     let world = World::new();
 
     let position = world.component::<Position>();
@@ -420,7 +399,6 @@ fn entity_get_mut_generic_w_id() {
 
 #[test]
 fn entity_set_generic() {
-    structs!();
     let world = World::new();
     let position = world.component::<Position>();
 
@@ -445,7 +423,6 @@ fn entity_set_generic() {
 
 #[test]
 fn entity_set_generic_no_size() {
-    structs!();
     let world = World::new();
     let position = world.component::<Position>();
 
@@ -468,7 +445,6 @@ fn entity_set_generic_no_size() {
 
 #[test]
 fn entity_add_role() {
-    structs!();
     let world = World::new();
     let entity = world.entity();
 
@@ -482,7 +458,6 @@ fn entity_add_role() {
 
 #[test]
 fn entity_remove_role() {
-    structs!();
     let world = World::new();
     let entity = world.entity();
     let id = entity;
@@ -499,7 +474,6 @@ fn entity_remove_role() {
 
 #[test]
 fn entity_has_role() {
-    structs!();
     let world = World::new();
     let entity = world.entity();
 
@@ -512,7 +486,6 @@ fn entity_has_role() {
 
 #[test]
 fn entity_pair_role() {
-    structs!();
     let world = World::new();
     let entity = world.entity();
     let entity2 = world.entity();
@@ -531,7 +504,6 @@ fn entity_pair_role() {
 
 #[test]
 fn entity_equals() {
-    structs!();
     let world = World::new();
     let e1 = world.entity();
     let e2 = world.entity();
@@ -556,7 +528,6 @@ fn entity_equals() {
 
 #[test]
 fn entity_compare_0() {
-    structs!();
     let world = World::new();
     let e = world.entity();
     let e0 = world.entity_from_id(0);
@@ -575,7 +546,6 @@ fn entity_compare_0() {
 
 #[test]
 fn entity_compare_literal() {
-    structs!();
     let world = World::new();
 
     let e1 = world.entity_from_id(500);
@@ -611,7 +581,6 @@ fn entity_compare_literal() {
 
 #[test]
 fn entity_greater_than() {
-    structs!();
     let world = World::new();
 
     let e1 = world.entity();
@@ -623,7 +592,6 @@ fn entity_greater_than() {
 
 #[test]
 fn entity_less_than() {
-    structs!();
     let world = World::new();
 
     let e1 = world.entity();
@@ -635,7 +603,6 @@ fn entity_less_than() {
 
 #[test]
 fn entity_not_0_or_1() {
-    structs!();
     let world = World::new();
 
     let e = world.entity();
@@ -648,7 +615,6 @@ fn entity_not_0_or_1() {
 
 #[test]
 fn entity_has_childof() {
-    structs!();
     let world = World::new();
 
     let parent = world.entity();
@@ -660,7 +626,6 @@ fn entity_has_childof() {
 
 #[test]
 fn entity_has_instanceof() {
-    structs!();
     let world = World::new();
 
     let base = world.entity();
@@ -672,7 +637,6 @@ fn entity_has_instanceof() {
 
 #[test]
 fn entity_has_instanceof_indirect() {
-    structs!();
     let world = World::new();
 
     let base_of_base = world.entity();
@@ -685,7 +649,6 @@ fn entity_has_instanceof_indirect() {
 
 #[test]
 fn entity_null_string() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity();
@@ -695,7 +658,6 @@ fn entity_null_string() {
 
 #[test]
 fn entity_none_string() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity();
@@ -705,7 +667,6 @@ fn entity_none_string() {
 
 #[test]
 fn entity_set_name() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity();
@@ -717,7 +678,6 @@ fn entity_set_name() {
 
 #[test]
 fn entity_set_name_optional() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity();
@@ -729,7 +689,6 @@ fn entity_set_name_optional() {
 
 #[test]
 fn entity_change_name() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity_named("Bar");
@@ -744,7 +703,6 @@ fn entity_change_name() {
 
 #[test]
 fn entity_delete() {
-    structs!();
     let world = World::new();
 
     let entity = world
@@ -763,7 +721,6 @@ fn entity_delete() {
 
 #[test]
 fn entity_clear() {
-    structs!();
     let world = World::new();
 
     let entity = world
@@ -781,7 +738,6 @@ fn entity_clear() {
 
 #[test]
 fn entity_force_owned() {
-    structs!();
     let world = World::new();
 
     world
@@ -807,7 +763,6 @@ fn entity_force_owned() {
 
 #[test]
 fn entity_force_owned_2() {
-    structs!();
     let world = World::new();
 
     world
@@ -834,7 +789,6 @@ fn entity_force_owned_2() {
 
 #[test]
 fn entity_force_owned_nested() {
-    structs!();
     let world = World::new();
 
     world
@@ -862,7 +816,6 @@ fn entity_force_owned_nested() {
 
 #[test]
 fn entity_tag_has_size_zero() {
-    structs!();
     let world = World::new();
 
     let comp = world.component::<TagA>();
@@ -874,7 +827,6 @@ fn entity_tag_has_size_zero() {
 
 #[test]
 fn entity_get_null_name() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity();
@@ -884,7 +836,6 @@ fn entity_get_null_name() {
 
 #[test]
 fn entity_get_target() {
-    structs!();
     let world = World::new();
 
     let rel = world.entity();
@@ -916,7 +867,6 @@ fn entity_get_target() {
 
 #[test]
 fn entity_get_parent() {
-    structs!();
     let world = World::new();
 
     let parent = world.entity();
@@ -930,7 +880,6 @@ fn entity_get_parent() {
 /// * C++ tests: `Entity_is_enabled_component_enabled` + `Entity_is_disabled_component_enabled` combined
 #[test]
 fn entity_is_component_enabled() {
-    structs!();
     let world = World::new();
 
     world.component::<Position>().add_id(flecs::CanToggle::ID);
@@ -988,7 +937,6 @@ fn entity_is_component_enabled() {
 /// * C++ tests: `Entity_is_enabled_pair_enabled` + `Entity_is_disabled_pair_enabled` combined
 #[test]
 fn entity_is_enabled_pair() {
-    structs!();
     let world = World::new();
 
     world.component::<Position>().add_id(flecs::CanToggle::ID);
@@ -1030,7 +978,6 @@ fn entity_is_enabled_pair() {
 /// `Entity_is_enabled_pair_enabled_w_ids` + `Entity_is_pair_enabled_w_ids` combined
 #[test]
 fn entity_is_enabled_pair_ids() {
-    structs!();
     let world = World::new();
 
     let rel = world.entity().add_id(flecs::CanToggle::ID);
@@ -1057,7 +1004,6 @@ fn entity_is_enabled_pair_ids() {
 
 #[test]
 fn entity_is_first_enabled() {
-    structs!();
     let world = World::new();
 
     let tgt_a = world.entity();
@@ -1073,7 +1019,6 @@ fn entity_is_first_enabled() {
 
 #[test]
 fn entity_get_type() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity();
@@ -1100,7 +1045,6 @@ fn entity_get_type() {
 
 #[test]
 fn entity_get_nonempty_type() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity().set(Position { x: 0, y: 0 });
@@ -1117,7 +1061,6 @@ fn entity_get_nonempty_type() {
 
 #[test]
 fn entity_set_no_copy() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity().set(Pod::new(10));
@@ -1135,7 +1078,6 @@ fn entity_set_no_copy() {
 
 #[test]
 fn entity_set_copy() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity().set(Pod::new(10));
@@ -1161,7 +1103,6 @@ fn entity_set_copy() {
 
 #[test]
 fn entity_set_deduced() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity().set(Position { x: 10, y: 20 });
@@ -1176,7 +1117,6 @@ fn entity_set_deduced() {
 
 #[test]
 fn entity_override() {
-    structs!();
     let world = World::new();
 
     world
@@ -1193,7 +1133,6 @@ fn entity_override() {
 
 #[test]
 fn entity_auto_override_id() {
-    structs!();
     let world = World::new();
 
     let tag_a = world
@@ -1216,7 +1155,6 @@ fn entity_auto_override_id() {
 
 #[test]
 fn entity_override_pair_w_tgt_id() {
-    structs!();
     let world = World::new();
 
     world
@@ -1242,7 +1180,6 @@ fn entity_override_pair_w_tgt_id() {
 
 #[test]
 fn entity_override_pair_w_ids() {
-    structs!();
     let world = World::new();
 
     let rel = world
@@ -1267,7 +1204,6 @@ fn entity_override_pair_w_ids() {
 
 #[test]
 fn entity_override_pair() {
-    structs!();
     let world = World::new();
 
     world
@@ -1289,7 +1225,6 @@ fn entity_override_pair() {
 
 #[test]
 fn entity_set_auto_override() {
-    structs!();
     let world = World::new();
 
     world
@@ -1316,7 +1251,6 @@ fn entity_set_auto_override() {
 
 #[test]
 fn entity_set_auto_override_lvalue() {
-    structs!();
     let world = World::new();
 
     world
@@ -1345,28 +1279,27 @@ fn entity_set_auto_override_lvalue() {
 
 #[test]
 fn entity_set_auto_override_pair() {
-    structs!();
     let world = World::new();
 
     world
-        .component::<PositionPair>()
+        .component::<Position>()
         .add_id((*flecs::OnInstantiate, *flecs::Inherit));
 
     let base = world
         .entity()
-        .set_pair_override::<PositionPair, TagA>(PositionPair { x: 10, y: 20 });
+        .set_pair_override::<Position, TagA>(Position { x: 10, y: 20 });
 
     let entity = world.entity().add_id((flecs::IsA::ID, base));
 
-    assert!(entity.has::<(PositionPair, TagA)>());
-    assert!(entity.owns::<(PositionPair, TagA)>());
+    assert!(entity.has::<(Position, TagA)>());
+    assert!(entity.owns::<(Position, TagA)>());
 
-    entity.get::<&(PositionPair, TagA)>(|pos| {
+    entity.get::<&(Position, TagA)>(|pos| {
         assert_eq!(pos.x, 10);
         assert_eq!(pos.y, 20);
     });
 
-    base.get::<&(PositionPair, TagA)>(|pos| {
+    base.get::<&(Position, TagA)>(|pos| {
         assert_eq!(pos.x, 10);
         assert_eq!(pos.y, 20);
     });
@@ -1375,7 +1308,7 @@ fn entity_set_auto_override_pair() {
 #[test]
 #[ignore = "re-impl gets"]
 fn entity_set_auto_override_pair_w_tgt_id() {
-    // structs!();
+    //
     // let world = World::new();
 
     // let tgt = world.entity();
@@ -1406,28 +1339,27 @@ fn entity_set_auto_override_pair_w_tgt_id() {
 
 #[test]
 fn entity_set_auto_override_pair_w_rel_tag() {
-    structs!();
     let world = World::new();
 
     world
-        .component::<PositionPair>()
+        .component::<Position>()
         .add_id((*flecs::OnInstantiate, *flecs::Inherit));
 
     let base = world
         .entity()
-        .set_pair_override::<TagA, PositionPair>(PositionPair { x: 10, y: 20 });
+        .set_pair_override::<TagA, Position>(Position { x: 10, y: 20 });
 
     let entity = world.entity().add_id((flecs::IsA::ID, base));
 
-    assert!(entity.has::<(TagA, PositionPair)>());
-    assert!(entity.owns::<(TagA, PositionPair)>());
+    assert!(entity.has::<(TagA, Position)>());
+    assert!(entity.owns::<(TagA, Position)>());
 
-    entity.get::<&(TagA, PositionPair)>(|pos| {
+    entity.get::<&(TagA, Position)>(|pos| {
         assert_eq!(pos.x, 10);
         assert_eq!(pos.y, 20);
     });
 
-    base.get::<&(TagA, PositionPair)>(|pos| {
+    base.get::<&(TagA, Position)>(|pos| {
         assert_eq!(pos.x, 10);
         assert_eq!(pos.y, 20);
     });
@@ -1435,7 +1367,6 @@ fn entity_set_auto_override_pair_w_rel_tag() {
 
 #[test]
 fn entity_name() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity_named("Foo");
@@ -1448,7 +1379,6 @@ fn entity_name() {
 
 #[test]
 fn entity_name_empty() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity();
@@ -1461,7 +1391,6 @@ fn entity_name_empty() {
 
 #[test]
 fn entity_path() {
-    structs!();
     let world = World::new();
 
     let parent = world.entity_named("parent");
@@ -1473,7 +1402,6 @@ fn entity_path() {
 
 #[test]
 fn entity_path_from() {
-    structs!();
     let world = World::new();
 
     let parent = world.entity_named("parent");
@@ -1491,7 +1419,6 @@ fn entity_path_from() {
 
 #[test]
 fn entity_path_from_type() {
-    structs!();
     let world = World::new();
 
     let parent = world.entity_named("parent");
@@ -1509,7 +1436,6 @@ fn entity_path_from_type() {
 
 #[test]
 fn entity_path_custom_sep() {
-    structs!();
     let world = World::new();
 
     let parent = world.entity_named("parent");
@@ -1521,7 +1447,6 @@ fn entity_path_custom_sep() {
 
 #[test]
 fn entity_path_from_custom_sep() {
-    structs!();
     let world = World::new();
 
     let parent = world.entity_named("parent");
@@ -1542,7 +1467,6 @@ fn entity_path_from_custom_sep() {
 
 #[test]
 fn entity_path_from_type_custom_sep() {
-    structs!();
     let world = World::new();
 
     let parent = world.entity_from::<Parent>();
@@ -1553,7 +1477,7 @@ fn entity_path_from_type_custom_sep() {
 
     assert_eq!(
         &grandchild.path_w_sep("_", "?").unwrap(),
-        "?flecs_entity_test_entity_path_from_type_custom_sep_Parent_child_grandchild"
+        "?flecs_common_test_Parent_child_grandchild"
     );
     assert_eq!(
         &grandchild.path_from_id_w_sep(parent, "_", "::").unwrap(),
@@ -1563,7 +1487,6 @@ fn entity_path_from_type_custom_sep() {
 
 #[test]
 fn entity_implicit_path_to_char() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity_named("Foo::Bar");
@@ -1574,7 +1497,6 @@ fn entity_implicit_path_to_char() {
 
 #[test]
 fn entity_implicit_type_str_to_char() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity_named("Foo");
@@ -1585,7 +1507,6 @@ fn entity_implicit_type_str_to_char() {
 
 #[test]
 fn entityview_to_entity_to_entity_view() {
-    structs!();
     let world = World::new();
 
     let entity = world.entity().set(Position { x: 10, y: 20 });
@@ -1605,7 +1526,6 @@ fn entityview_to_entity_to_entity_view() {
 
 #[test]
 fn entity_entity_view_to_entity_world() {
-    structs!();
     let world = World::new();
     let entity = world.entity().set(Position { x: 10, y: 20 });
     assert!(entity.is_valid());
@@ -1627,7 +1547,6 @@ fn entity_entity_view_to_entity_world() {
 
 #[test]
 fn entity_entity_view_to_entity_stage() {
-    structs!();
     let world = World::new();
 
     let entity_view: EntityView = world.entity();
@@ -1652,7 +1571,6 @@ fn entity_entity_view_to_entity_stage() {
 
 #[test]
 fn entity_create_entity_view_from_stage() {
-    structs!();
     let world = World::new();
     let stage = world.stage(0);
 
@@ -1673,7 +1591,6 @@ fn entity_create_entity_view_from_stage() {
 
 #[test]
 fn entity_set_template() {
-    structs!();
     let world = World::new();
     let entity = world.entity().set(Template::<Position> {
         value: Position { x: 10, y: 20 },
@@ -1687,7 +1604,6 @@ fn entity_set_template() {
 
 #[test]
 fn entity_get_1_component_w_callback() {
-    structs!();
     let world = World::new();
     let e_1 = world
         .entity()
@@ -1711,7 +1627,6 @@ fn entity_get_1_component_w_callback() {
 
 #[test]
 fn entity_get_2_components_w_callback() {
-    structs!();
     let world = World::new();
     let e_1 = world
         .entity()
@@ -1737,7 +1652,6 @@ fn entity_get_2_components_w_callback() {
 
 #[test]
 fn entity_get_mut_1_component_w_callback() {
-    structs!();
     let world = World::new();
     let e_1 = world
         .entity()
@@ -1777,7 +1691,6 @@ fn entity_get_mut_1_component_w_callback() {
 
 #[test]
 fn entity_get_mut_2_components_w_callback() {
-    structs!();
     let world = World::new();
     let e_1 = world
         .entity()
@@ -1826,7 +1739,6 @@ fn entity_get_mut_2_components_w_callback() {
 
 #[test]
 fn entity_get_component_w_callback_nested() {
-    structs!();
     let world = World::new();
 
     let e = world
@@ -1847,7 +1759,6 @@ fn entity_get_component_w_callback_nested() {
 
 #[test]
 fn entity_get_mut_component_w_callback_nested() {
-    structs!();
     let world = World::new();
 
     let e = world
@@ -1870,7 +1781,6 @@ fn entity_get_mut_component_w_callback_nested() {
 
 #[test]
 fn entity_defer_set_1_component() {
-    structs!();
     let world = World::new();
 
     world.defer_begin();
@@ -1891,7 +1801,6 @@ fn entity_defer_set_1_component() {
 
 #[test]
 fn entity_defer_set_2_components() {
-    structs!();
     let world = World::new();
 
     world.defer_begin();
@@ -1919,7 +1828,6 @@ fn entity_defer_set_2_components() {
 
 #[test]
 fn entity_defer_set_3_components() {
-    structs!();
     let world = World::new();
 
     world.defer_begin();
@@ -1956,7 +1864,7 @@ fn entity_set_2_w_on_set() {
         position_set: u32,
         velocity_set: u32,
     }
-    structs!();
+
     let world = create_world_with_flags::<Flags>();
 
     world
@@ -2004,7 +1912,7 @@ fn entity_defer_set_2_w_on_set() {
         position_set: u32,
         velocity_set: u32,
     }
-    structs!();
+
     let world = create_world_with_flags::<Flags>();
 
     world
@@ -2055,7 +1963,6 @@ fn entity_defer_set_2_w_on_set() {
 
 #[test]
 fn entity_set_2_after_set_1() {
-    structs!();
     let world = World::new();
 
     let e = world.entity().set(Position { x: 5, y: 10 });
@@ -2083,7 +1990,6 @@ fn entity_set_2_after_set_1() {
 
 #[test]
 fn entity_set_2_after_set_2() {
-    structs!();
     let world = World::new();
 
     let e = world
@@ -2114,7 +2020,6 @@ fn entity_set_2_after_set_2() {
 
 #[test]
 fn entity_with_self() {
-    structs!();
     let world = World::new();
 
     let tag = world.entity();
@@ -2151,7 +2056,6 @@ fn entity_with_self() {
 
 #[test]
 fn entity_with_relation_type_self() {
-    structs!();
     let world = World::new();
 
     let bob = world.entity().with_first::<Likes>(|| {
@@ -2164,6 +2068,8 @@ fn entity_with_relation_type_self() {
         let e3 = world.entity();
         e3.set(SelfRef { value: e3.into() });
     });
+
+    dbg!(bob);
 
     assert!(!world.component::<SelfRef>().has_first::<Likes>(bob));
 
@@ -2185,7 +2091,6 @@ fn entity_with_relation_type_self() {
 
 #[test]
 fn entity_with_relation_self() {
-    structs!();
     let world = World::new();
 
     let bob = world.entity().with_first::<Likes>(|| {
@@ -2219,7 +2124,6 @@ fn entity_with_relation_self() {
 
 #[test]
 fn entity_with_self_w_name() {
-    structs!();
     let world = World::new();
 
     let tier1 = world.entity_named("Tier1").with(|| {
@@ -2236,7 +2140,6 @@ fn entity_with_self_w_name() {
 
 #[test]
 fn entity_with_self_nested() {
-    structs!();
     let world = World::new();
 
     let tier1 = world.entity_named("Tier1").with(|| {
@@ -2254,7 +2157,6 @@ fn entity_with_self_nested() {
 
 #[test]
 fn entity_with_scope() {
-    structs!();
     let world = World::new();
 
     let parent = world.entity_named("P").scope(|_| {
@@ -2322,7 +2224,6 @@ fn entity_with_scope() {
 
 #[test]
 fn entity_with_scope_nested() {
-    structs!();
     let world = World::new();
 
     let parent = world.entity_named("P").scope(|world| {
@@ -2349,7 +2250,6 @@ fn entity_with_scope_nested() {
 
 #[test]
 fn entity_with_scope_nested_same_name_as_parent() {
-    structs!();
     let world = World::new();
 
     let parent = world.entity_named("P").scope(|world| {
@@ -2375,7 +2275,6 @@ fn entity_with_scope_nested_same_name_as_parent() {
 
 #[test]
 fn entity_no_recursive_lookup() {
-    structs!();
     let world = World::new();
 
     let p = world.entity_named("P");
@@ -2389,7 +2288,6 @@ fn entity_no_recursive_lookup() {
 
 #[test]
 fn entity_defer_new_w_name() {
-    structs!();
     let world = World::new();
     let mut e = world.entity_null();
 
@@ -2404,7 +2302,6 @@ fn entity_defer_new_w_name() {
 
 #[test]
 fn entity_defer_new_w_nested_name() {
-    structs!();
     let world = World::new();
     let mut e = world.entity_null();
 
@@ -2420,7 +2317,6 @@ fn entity_defer_new_w_nested_name() {
 
 #[test]
 fn entity_defer_new_w_scope_name() {
-    structs!();
     let world = World::new();
     let parent = world.entity_named("Parent");
     let mut e = world.entity_null();
@@ -2439,7 +2335,6 @@ fn entity_defer_new_w_scope_name() {
 
 #[test]
 fn entity_defer_new_w_scope_nested_name() {
-    structs!();
     let world = World::new();
     let parent = world.entity_named("Parent");
     let mut e = world.entity_null();
@@ -2458,7 +2353,6 @@ fn entity_defer_new_w_scope_nested_name() {
 
 #[test]
 fn entity_defer_new_w_scope() {
-    structs!();
     let world = World::new();
 
     let parent = world.entity();
@@ -2476,7 +2370,6 @@ fn entity_defer_new_w_scope() {
 
 #[test]
 fn entity_defer_new_w_with() {
-    structs!();
     let world = World::new();
     let mut e = world.entity_null();
     let tag = world.entity();
@@ -2494,7 +2387,6 @@ fn entity_defer_new_w_with() {
 
 #[test]
 fn entity_defer_new_w_name_scope_with() {
-    structs!();
     let world = World::new();
     let tag = world.entity();
     let mut e = world.entity_null();
@@ -2522,7 +2414,6 @@ fn entity_defer_new_w_name_scope_with() {
 
 #[test]
 fn entity_defer_new_w_nested_name_scope_with() {
-    structs!();
     let world = World::new();
     let tag = world.entity();
     let parent = world.entity_named("Parent");
@@ -2550,7 +2441,6 @@ fn entity_defer_new_w_nested_name_scope_with() {
 
 #[test]
 fn entity_defer_w_with_implicit_component() {
-    structs!();
     let world = World::new();
     let mut e = world.entity_null();
 
@@ -2568,7 +2458,6 @@ fn entity_defer_w_with_implicit_component() {
 
 #[test]
 fn entity_defer_suspend_resume() {
-    structs!();
     let world = World::new();
     let e = world.entity();
 
@@ -2592,7 +2481,6 @@ fn entity_defer_suspend_resume() {
 
 #[test]
 fn entity_with_after_builder_method() {
-    structs!();
     let world = World::new();
 
     let a = world.entity().set(Position { x: 10, y: 20 }).with(|| {
@@ -2640,7 +2528,6 @@ fn entity_with_after_builder_method() {
 
 #[test]
 fn entity_with_before_builder_method() {
-    structs!();
     let world = World::new();
 
     let a = world
@@ -2691,7 +2578,6 @@ fn entity_with_before_builder_method() {
 
 #[test]
 fn entity_scope_after_builder_method() {
-    structs!();
     let world = World::new();
 
     world
@@ -2707,7 +2593,6 @@ fn entity_scope_after_builder_method() {
 
 #[test]
 fn entity_scope_before_builder_method() {
-    structs!();
     let world = World::new();
 
     world
@@ -2723,7 +2608,6 @@ fn entity_scope_before_builder_method() {
 
 #[test]
 fn entity_insert() {
-    structs!();
     let world = World::new();
 
     let e = world.entity().set(Position { x: 10, y: 20 });
@@ -2737,7 +2621,6 @@ fn entity_insert() {
 
 #[test]
 fn entity_entity_id_str() {
-    structs!();
     let world = World::new();
 
     let id = world.entity_named("Foo");
@@ -2746,7 +2629,6 @@ fn entity_entity_id_str() {
 
 #[test]
 fn entity_pair_id_str() {
-    structs!();
     let world = World::new();
 
     let id = world.id_from_id((world.entity_named("Rel"), world.entity_named("Obj")));
@@ -2756,7 +2638,6 @@ fn entity_pair_id_str() {
 
 #[test]
 fn entity_role_id_str() {
-    structs!();
     let world = World::new();
 
     let id = world.id_from_id(flecs::id_flags::AutoOverride::ID | world.entity_named("Foo").id());
@@ -2766,7 +2647,6 @@ fn entity_role_id_str() {
 
 #[test]
 fn entity_id_str_from_entity_view() {
-    structs!();
     let world = World::new();
 
     let id = world.entity_named("Foo");
@@ -2775,7 +2655,6 @@ fn entity_id_str_from_entity_view() {
 
 #[test]
 fn entity_id_str_from_entity() {
-    structs!();
     let world = World::new();
 
     let id = world.entity_named("Foo");
@@ -2784,7 +2663,6 @@ fn entity_id_str_from_entity() {
 
 #[test]
 fn entity_null_entity_w_world() {
-    structs!();
     let world = World::new();
     let e = world.entity_null();
     assert_eq!(e.id(), 0);
@@ -2792,7 +2670,6 @@ fn entity_null_entity_w_world() {
 
 #[test]
 fn entity_is_wildcard() {
-    structs!();
     let world = World::new();
 
     let e1 = world.entity();
@@ -2815,7 +2692,6 @@ fn entity_is_wildcard() {
 
 #[test]
 fn entity_has_id_t() {
-    structs!();
     let world = World::new();
 
     let id_1 = world.entity();
@@ -2829,7 +2705,6 @@ fn entity_has_id_t() {
 
 #[test]
 fn entity_has_pair_id_t() {
-    structs!();
     let world = World::new();
 
     let id_1 = world.entity();
@@ -2844,7 +2719,6 @@ fn entity_has_pair_id_t() {
 
 #[test]
 fn entity_has_pair_id_t_w_type() {
-    structs!();
     let world = World::new();
 
     let id_2 = world.entity();
@@ -2858,7 +2732,6 @@ fn entity_has_pair_id_t_w_type() {
 
 #[test]
 fn entity_has_id() {
-    structs!();
     let world = World::new();
 
     let id_1 = world.entity();
@@ -2872,7 +2745,6 @@ fn entity_has_id() {
 
 #[test]
 fn entity_has_pair_id() {
-    structs!();
     let world = World::new();
 
     let id_1 = world.entity();
@@ -2887,7 +2759,6 @@ fn entity_has_pair_id() {
 
 #[test]
 fn entity_has_pair_id_w_type() {
-    structs!();
     let world = World::new();
 
     let id_2 = world.entity();
@@ -2901,7 +2772,6 @@ fn entity_has_pair_id_w_type() {
 
 #[test]
 fn entity_has_wildcard_id() {
-    structs!();
     let world = World::new();
 
     let id = world.entity();
@@ -2915,7 +2785,6 @@ fn entity_has_wildcard_id() {
 
 #[test]
 fn entity_has_wildcard_pair_id() {
-    structs!();
     let world = World::new();
 
     let rel = world.entity();
@@ -2936,7 +2805,6 @@ fn entity_has_wildcard_pair_id() {
 
 #[test]
 fn entity_owns_id_t() {
-    structs!();
     let world = World::new();
 
     let id_1 = world.entity();
@@ -2950,7 +2818,6 @@ fn entity_owns_id_t() {
 
 #[test]
 fn entity_owns_pair_id_t() {
-    structs!();
     let world = World::new();
 
     let id_1 = world.entity();
@@ -2965,7 +2832,6 @@ fn entity_owns_pair_id_t() {
 
 #[test]
 fn entity_owns_pair_id_t_w_type() {
-    structs!();
     let world = World::new();
 
     let id_2 = world.entity();
@@ -2979,7 +2845,6 @@ fn entity_owns_pair_id_t_w_type() {
 
 #[test]
 fn entity_owns_id() {
-    structs!();
     let world = World::new();
 
     let id_1 = world.entity();
@@ -2993,7 +2858,6 @@ fn entity_owns_id() {
 
 #[test]
 fn entity_owns_pair_id() {
-    structs!();
     let world = World::new();
 
     let id_1 = world.entity();
@@ -3008,7 +2872,6 @@ fn entity_owns_pair_id() {
 
 #[test]
 fn entity_owns_wildcard_id() {
-    structs!();
     let world = World::new();
 
     let id = world.entity();
@@ -3022,7 +2885,6 @@ fn entity_owns_wildcard_id() {
 
 #[test]
 fn entity_owns_wildcard_pair() {
-    structs!();
     let world = World::new();
 
     let rel = world.entity();
@@ -3043,7 +2905,6 @@ fn entity_owns_wildcard_pair() {
 
 #[test]
 fn entity_owns_pair_id_w_type() {
-    structs!();
     let world = World::new();
 
     let id_2 = world.entity();
@@ -3057,7 +2918,6 @@ fn entity_owns_pair_id_w_type() {
 
 #[test]
 fn entity_id_from_world() {
-    structs!();
     let world = World::new();
 
     let e = world.entity();
@@ -3080,7 +2940,6 @@ fn entity_id_from_world() {
 
 #[test]
 fn entity_id_pair_from_world() {
-    structs!();
     let world = World::new();
 
     let rel = world.entity();
@@ -3106,7 +2965,6 @@ fn entity_id_pair_from_world() {
 
 #[test]
 fn entity_is_a_id() {
-    structs!();
     let world = World::new();
 
     let base = world.entity();
@@ -3118,7 +2976,6 @@ fn entity_is_a_id() {
 
 #[test]
 fn entity_is_a_w_type() {
-    structs!();
     let world = World::new();
 
     let base = world.entity_from::<Prefab>();
@@ -3131,7 +2988,6 @@ fn entity_is_a_w_type() {
 
 #[test]
 fn entity_child_of_id() {
-    structs!();
     let world = World::new();
 
     let base = world.entity();
@@ -3143,7 +2999,6 @@ fn entity_child_of_id() {
 
 #[test]
 fn entity_child_of_w_type() {
-    structs!();
     let world = World::new();
 
     let base = world.entity_from::<Parent>();
@@ -3156,7 +3011,6 @@ fn entity_child_of_w_type() {
 
 #[test]
 fn entity_slot_of() {
-    structs!();
     let world = World::new();
 
     let base = world.prefab();
@@ -3170,7 +3024,6 @@ fn entity_slot_of() {
 
 #[test]
 fn entity_slot_of_w_type() {
-    structs!();
     let world = World::new();
 
     let base = world.prefab_type::<Parent>();
@@ -3184,7 +3037,6 @@ fn entity_slot_of_w_type() {
 
 #[test]
 fn entity_slot() {
-    structs!();
     let world = World::new();
 
     let base = world.prefab();
@@ -3198,7 +3050,6 @@ fn entity_slot() {
 
 #[test]
 fn entity_id_get_entity() {
-    structs!();
     let world = World::new();
 
     let e = world.entity();
@@ -3211,7 +3062,6 @@ fn entity_id_get_entity() {
 #[test]
 #[should_panic]
 fn entity_id_get_invalid_entity() {
-    structs!();
     let world = World::new();
 
     let r = world.entity();
@@ -3224,7 +3074,6 @@ fn entity_id_get_invalid_entity() {
 
 #[test]
 fn entity_each_in_stage() {
-    structs!();
     let world = World::new();
 
     let e = world.entity().add::<(Rel, Obj)>();
@@ -3249,7 +3098,6 @@ fn entity_each_in_stage() {
 
 #[test]
 fn entity_iter_recycled_parent() {
-    structs!();
     let world = World::new();
 
     let e = world.entity();
@@ -3272,7 +3120,6 @@ fn entity_iter_recycled_parent() {
 
 #[test]
 fn entity_get_obj_by_template() {
-    structs!();
     let world = World::new();
 
     let e1 = world.entity();
@@ -3288,7 +3135,6 @@ fn entity_get_obj_by_template() {
 
 #[test]
 fn entity_create_named_twice_deferred() {
-    structs!();
     let world = World::new();
 
     world.defer_begin();
@@ -3315,17 +3161,16 @@ fn entity_create_named_twice_deferred() {
 
 #[test]
 fn entity_clone() {
-    structs!();
     let world = World::new();
 
-    let v = PositionClone { x: 10, y: 20 };
+    let v = Position { x: 10, y: 20 };
 
-    let src = world.entity().add::<TagClone>().set(v);
+    let src = world.entity().add::<Tag>().set(v);
     let dst = src.duplicate(true);
-    assert!(dst.has::<TagClone>());
-    assert!(dst.has::<PositionClone>());
+    assert!(dst.has::<Tag>());
+    assert!(dst.has::<Position>());
 
-    dst.get::<&PositionClone>(|pos| {
+    dst.get::<&Position>(|pos| {
         assert_eq!(pos.x, 10);
         assert_eq!(pos.y, 20);
     });
@@ -3333,17 +3178,16 @@ fn entity_clone() {
 
 #[test]
 fn entity_clone_w_value() {
-    structs!();
     let world = World::new();
 
-    let v = PositionClone { x: 10, y: 20 };
+    let v = Position { x: 10, y: 20 };
 
-    let src = world.entity().add::<TagClone>().set(v);
+    let src = world.entity().add::<Tag>().set(v);
     let dst = src.duplicate(true);
-    assert!(dst.has::<TagClone>());
-    assert!(dst.has::<PositionClone>());
+    assert!(dst.has::<Tag>());
+    assert!(dst.has::<Position>());
 
-    dst.get::<&PositionClone>(|pos| {
+    dst.get::<&Position>(|pos| {
         assert_eq!(pos.x, 10);
         assert_eq!(pos.y, 20);
     });
@@ -3351,20 +3195,19 @@ fn entity_clone_w_value() {
 
 #[test]
 fn entity_clone_to_existing() {
-    structs!();
     let world = World::new();
 
-    let v = PositionClone { x: 10, y: 20 };
+    let v = Position { x: 10, y: 20 };
 
-    let src = world.entity().add::<TagClone>().set(v);
+    let src = world.entity().add::<Tag>().set(v);
     let dst = world.entity();
     let result = src.duplicate_into(true, dst);
     assert_eq!(result, dst);
 
-    assert!(dst.has::<TagClone>());
-    assert!(dst.has::<PositionClone>());
+    assert!(dst.has::<Tag>());
+    assert!(dst.has::<Position>());
 
-    dst.get::<&PositionClone>(|pos| {
+    dst.get::<&Position>(|pos| {
         assert_eq!(pos.x, 10);
         assert_eq!(pos.y, 20);
     });
@@ -3374,13 +3217,12 @@ fn entity_clone_to_existing() {
 #[should_panic]
 #[ignore = "Panic test: panics in C, which isn't captured by rust"]
 fn entity_clone_to_existing_overlap() {
-    structs!();
     let world = World::new();
 
-    let v = PositionClone { x: 10, y: 20 };
+    let v = Position { x: 10, y: 20 };
 
-    let src = world.entity().add::<TagClone>().set(v);
-    let dst = world.entity().set(PositionClone { x: 0, y: 0 });
+    let src = world.entity().add::<Tag>().set(v);
+    let dst = world.entity().set(Position { x: 0, y: 0 });
 
     src.duplicate_into(true, dst);
 }
@@ -3389,7 +3231,6 @@ fn entity_clone_to_existing_overlap() {
 
 #[test]
 fn entity_entity_w_root_name() {
-    structs!();
     let world = World::new();
 
     let e = world.entity_named("::foo");
@@ -3399,7 +3240,6 @@ fn entity_entity_w_root_name() {
 
 #[test]
 fn entity_entity_w_root_name_from_scope() {
-    structs!();
     let world = World::new();
 
     let p = world.entity_named("parent");
@@ -3413,16 +3253,12 @@ fn entity_entity_w_root_name_from_scope() {
 
 #[test]
 fn entity_entity_w_type() {
-    structs!();
     let world = World::new();
 
     let e = world.entity_from::<EntityType>();
 
     assert_eq!(e.name(), "EntityType");
-    assert_eq!(
-        e.path().unwrap(),
-        "::flecs::entity_test::entity_entity_w_type::EntityType"
-    );
+    assert_eq!(e.path().unwrap(), "::flecs::common_test::EntityType");
     //assert!(!e.has::<flecs::EcsComponent>());
     //TODO this assert should work, but we register it a bit different than cpp, no problem though.
     let e_2 = world.entity_from::<EntityType>();
@@ -3431,7 +3267,6 @@ fn entity_entity_w_type() {
 
 #[test]
 fn entity_prefab_hierarchy_w_types() {
-    structs!();
     let world = World::new();
 
     let turret = world.prefab_type::<Turret>();
@@ -3444,23 +3279,14 @@ fn entity_prefab_hierarchy_w_types() {
     assert!(turret_base.is_valid());
     assert!(turret_base.has_id((*flecs::ChildOf, turret)));
 
-    assert_eq!(
-        turret.path().unwrap(),
-        "::flecs::entity_test::entity_prefab_hierarchy_w_types::Turret"
-    );
+    assert_eq!(turret.path().unwrap(), "::flecs::common_test::Turret");
     assert_eq!(
         turret_base.path().unwrap(),
-        "::flecs::entity_test::entity_prefab_hierarchy_w_types::Turret::Base"
+        "::flecs::common_test::Turret::Base"
     );
 
-    assert_eq!(
-        turret.symbol(),
-        "flecs::entity_test::entity_prefab_hierarchy_w_types::Turret"
-    );
-    assert_eq!(
-        turret_base.symbol(),
-        "flecs::entity_test::entity_prefab_hierarchy_w_types::Base"
-    );
+    assert_eq!(turret.symbol(), "flecs::common_test::Turret");
+    assert_eq!(turret_base.symbol(), "flecs::common_test::Base");
 
     let railgun = world.prefab_type::<Railgun>().is_a::<Turret>();
     let railgun_base = railgun.lookup_recursively("Base");
@@ -3481,40 +3307,27 @@ fn entity_prefab_hierarchy_w_types() {
     assert!(railgun_head.has_id((*flecs::ChildOf, railgun)));
     assert!(railgun_beam.has_id((*flecs::ChildOf, railgun)));
 
-    assert_eq!(
-        railgun.path().unwrap(),
-        "::flecs::entity_test::entity_prefab_hierarchy_w_types::Railgun"
-    );
+    assert_eq!(railgun.path().unwrap(), "::flecs::common_test::Railgun");
     assert_eq!(
         railgun_base.path().unwrap(),
-        "::flecs::entity_test::entity_prefab_hierarchy_w_types::Railgun::Base"
+        "::flecs::common_test::Railgun::Base"
     );
     assert_eq!(
         railgun_head.path().unwrap(),
-        "::flecs::entity_test::entity_prefab_hierarchy_w_types::Railgun::Head"
+        "::flecs::common_test::Railgun::Head"
     );
     assert_eq!(
         railgun_beam.path().unwrap(),
-        "::flecs::entity_test::entity_prefab_hierarchy_w_types::Railgun::Beam"
+        "::flecs::common_test::Railgun::Beam"
     );
 
-    assert_eq!(
-        railgun.symbol(),
-        "flecs::entity_test::entity_prefab_hierarchy_w_types::Railgun"
-    );
-    assert_eq!(
-        railgun_head.symbol(),
-        "flecs::entity_test::entity_prefab_hierarchy_w_types::Head"
-    );
-    assert_eq!(
-        railgun_beam.symbol(),
-        "flecs::entity_test::entity_prefab_hierarchy_w_types::Beam"
-    );
+    assert_eq!(railgun.symbol(), "flecs::common_test::Railgun");
+    assert_eq!(railgun_head.symbol(), "flecs::common_test::Head");
+    assert_eq!(railgun_beam.symbol(), "flecs::common_test::Beam");
 }
 
 #[test]
 fn entity_prefab_hierarchy_w_root_types() {
-    structs!();
     let world = World::new();
 
     let turret = world.prefab_type::<Turret>();
@@ -3527,23 +3340,14 @@ fn entity_prefab_hierarchy_w_root_types() {
     assert!(turret_base.is_valid());
     assert!(turret_base.has_id((*flecs::ChildOf, turret)));
 
-    assert_eq!(
-        turret.path().unwrap(),
-        "::flecs::entity_test::entity_prefab_hierarchy_w_root_types::Turret"
-    );
+    assert_eq!(turret.path().unwrap(), "::flecs::common_test::Turret");
     assert_eq!(
         turret_base.path().unwrap(),
-        "::flecs::entity_test::entity_prefab_hierarchy_w_root_types::Turret::Base"
+        "::flecs::common_test::Turret::Base"
     );
 
-    assert_eq!(
-        turret.symbol(),
-        "flecs::entity_test::entity_prefab_hierarchy_w_root_types::Turret"
-    );
-    assert_eq!(
-        turret_base.symbol(),
-        "flecs::entity_test::entity_prefab_hierarchy_w_root_types::Base"
-    );
+    assert_eq!(turret.symbol(), "flecs::common_test::Turret");
+    assert_eq!(turret_base.symbol(), "flecs::common_test::Base");
 
     let inst = world.entity().is_a::<Turret>();
     assert!(inst.is_valid());
@@ -3554,7 +3358,6 @@ fn entity_prefab_hierarchy_w_root_types() {
 
 #[test]
 fn entity_entity_array() {
-    structs!();
     let world = World::new();
 
     let entities = [world.entity(), world.entity(), world.entity()];
@@ -3569,7 +3372,6 @@ fn entity_entity_array() {
 
 #[test]
 fn entity_entity_w_type_defer() {
-    structs!();
     let world = World::new();
 
     world.defer_begin();
@@ -3579,16 +3381,12 @@ fn entity_entity_w_type_defer() {
     world.defer_end();
 
     assert_eq!(e.name(), "Tag");
-    assert_eq!(
-        e.symbol(),
-        "flecs::entity_test::entity_entity_w_type_defer::Tag"
-    );
+    assert_eq!(e.symbol(), "flecs::common_test::Tag");
     assert_eq!(world.id_from::<Tag>(), e);
 }
 
 #[test]
 fn entity_add_if_true_t() {
-    structs!();
     let world = World::new();
 
     let e = world.entity();
@@ -3599,7 +3397,6 @@ fn entity_add_if_true_t() {
 
 #[test]
 fn entity_add_if_false_t() {
-    structs!();
     let world = World::new();
 
     let e = world.entity();
@@ -3615,7 +3412,6 @@ fn entity_add_if_false_t() {
 
 #[test]
 fn entity_add_if_true_id() {
-    structs!();
     let world = World::new();
 
     let e = world.entity();
@@ -3627,7 +3423,6 @@ fn entity_add_if_true_id() {
 
 #[test]
 fn entity_add_if_false_id() {
-    structs!();
     let world = World::new();
 
     let e = world.entity();
@@ -3644,7 +3439,6 @@ fn entity_add_if_false_id() {
 
 #[test]
 fn entity_add_if_true_r_o() {
-    structs!();
     let world = World::new();
 
     let e = world.entity();
@@ -3655,21 +3449,19 @@ fn entity_add_if_true_r_o() {
 
 #[test]
 fn entity_add_if_false_r_o() {
-    structs!();
     let world = World::new();
 
     let e = world.entity();
-    e.add_if::<(Rel2, Obj2)>(false);
-    assert!(!e.has::<(Rel2, Obj2)>());
-    e.add::<(Rel2, Obj2)>();
-    assert!(e.has::<(Rel2, Obj2)>());
-    e.add_if::<(Rel2, Obj2)>(false);
-    assert!(!e.has::<(Rel2, Obj2)>());
+    e.add_if::<(Rel, Obj2)>(false);
+    assert!(!e.has::<(Rel, Obj2)>());
+    e.add::<(Rel, Obj2)>();
+    assert!(e.has::<(Rel, Obj2)>());
+    e.add_if::<(Rel, Obj2)>(false);
+    assert!(!e.has::<(Rel, Obj2)>());
 }
 
 #[test]
 fn entity_add_if_true_r_o_2() {
-    structs!();
     let world = World::new();
 
     let e = world.entity();
@@ -3681,23 +3473,21 @@ fn entity_add_if_true_r_o_2() {
 
 #[test]
 fn entity_add_if_false_r_o_2() {
-    structs!();
     let world = World::new();
 
     let e = world.entity();
     let o = world.entity();
 
-    e.add_first_if::<Rel2>(o, false);
-    assert!(!e.has_first::<Rel2>(o));
-    e.add_first::<Rel2>(o);
-    assert!(e.has_first::<Rel2>(o));
-    e.add_first_if::<Rel2>(o, false);
-    assert!(!e.has_first::<Rel2>(o));
+    e.add_first_if::<Rel>(o, false);
+    assert!(!e.has_first::<Rel>(o));
+    e.add_first::<Rel>(o);
+    assert!(e.has_first::<Rel>(o));
+    e.add_first_if::<Rel>(o, false);
+    assert!(!e.has_first::<Rel>(o));
 }
 
 #[test]
 fn entity_add_if_true_r_o_3() {
-    structs!();
     let world = World::new();
 
     let e = world.entity();
@@ -3710,7 +3500,6 @@ fn entity_add_if_true_r_o_3() {
 
 #[test]
 fn entity_add_if_false_r_o_3() {
-    structs!();
     let world = World::new();
 
     let e = world.entity();
@@ -3727,7 +3516,6 @@ fn entity_add_if_false_r_o_3() {
 
 #[test]
 fn entity_add_if_exclusive_r_o() {
-    structs!();
     let world = World::new();
 
     let e = world.entity();
@@ -3749,7 +3537,6 @@ fn entity_add_if_exclusive_r_o() {
 
 #[test]
 fn entity_add_if_exclusive_r_o_2() {
-    structs!();
     let world = World::new();
 
     world.component::<First>().add::<flecs::Exclusive>();
@@ -3772,7 +3559,6 @@ fn entity_add_if_exclusive_r_o_2() {
 
 #[test]
 fn entity_add_if_exclusive_r_o_3() {
-    structs!();
     let world = World::new();
 
     world.component::<Rel>().add::<flecs::Exclusive>();
@@ -3793,7 +3579,6 @@ fn entity_add_if_exclusive_r_o_3() {
 
 #[test]
 fn entity_add_if_pair_w_0_object() {
-    structs!();
     let world = World::new();
 
     let e = world.entity();
@@ -3810,7 +3595,6 @@ fn entity_add_if_pair_w_0_object() {
 
 #[test]
 fn entity_children_w_custom_relation() {
-    structs!();
     let world = World::new();
 
     let rel = world.entity();
@@ -3840,7 +3624,6 @@ fn entity_children_w_custom_relation() {
 
 #[test]
 fn entity_children_w_custom_relation_type() {
-    structs!();
     let world = World::new();
 
     let parent = world.entity();
@@ -3868,7 +3651,6 @@ fn entity_children_w_custom_relation_type() {
 
 #[test]
 fn entity_children_w_this() {
-    structs!();
     let world = World::new();
 
     let mut count = 0;
@@ -3880,7 +3662,6 @@ fn entity_children_w_this() {
 
 #[test]
 fn entity_children_w_wildcard() {
-    structs!();
     let world = World::new();
 
     let mut count = 0;
@@ -3892,7 +3673,6 @@ fn entity_children_w_wildcard() {
 
 #[test]
 fn entity_children_w_any() {
-    structs!();
     let world = World::new();
 
     let mut count = 0;
@@ -3905,7 +3685,6 @@ fn entity_children_w_any() {
 #[test]
 #[ignore = "re-enable when static ids are gone"]
 fn entity_children_from_root() {
-    structs!();
     let world = World::new();
 
     let mut count = 0;
@@ -3919,7 +3698,6 @@ fn entity_children_from_root() {
 
 #[test]
 fn entity_children_from_root_world() {
-    structs!();
     let world = World::new();
 
     let mut count = 0;
@@ -3931,7 +3709,6 @@ fn entity_children_from_root_world() {
 
 #[test]
 fn entity_get_depth() {
-    structs!();
     let world = World::new();
 
     let e1 = world.entity();
@@ -3947,7 +3724,6 @@ fn entity_get_depth() {
 
 #[test]
 fn entity_get_depth_w_type() {
-    structs!();
     let world = World::new();
 
     world.component::<Rel>().add::<flecs::Traversable>();
@@ -3965,7 +3741,6 @@ fn entity_get_depth_w_type() {
 
 #[test]
 fn entity_set_alias() {
-    structs!();
     let world = World::new();
 
     let e = world.entity_named("parent::child");
@@ -3977,7 +3752,6 @@ fn entity_set_alias() {
 
 #[test]
 fn entity_insert_w_observer() {
-    structs!();
     let world = World::new();
 
     world

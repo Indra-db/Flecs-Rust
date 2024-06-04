@@ -554,6 +554,7 @@ macro_rules! impl_component_traits_binding_type_w_id {
         impl ComponentType<flecs_ecs::core::Struct> for $name {}
 
         impl ComponentInfo for $name {
+            const IS_GENERIC: bool = false;
             const IS_ENUM: bool = false;
             const IS_TAG: bool = false;
             type TagType = FlecsFirstIsNotATag;
@@ -565,9 +566,12 @@ macro_rules! impl_component_traits_binding_type_w_id {
         impl ComponentId for $name {
             type UnderlyingType = $name;
             type UnderlyingEnumType = NoneEnum;
-            fn __get_once_lock_data() -> &'static std::sync::OnceLock<IdComponent> {
-                static ONCE_LOCK: std::sync::OnceLock<IdComponent> = std::sync::OnceLock::new();
-                &ONCE_LOCK
+
+            #[inline(always)]
+            fn index() -> u32 {
+                static INDEX: std::sync::atomic::AtomicU32 =
+                    std::sync::atomic::AtomicU32::new(u32::MAX);
+                Self::get_or_init_index(&INDEX)
             }
             fn __register_lifecycle_hooks(type_hooks: &mut TypeHooksT) {
                 register_lifecycle_actions::<$name>(type_hooks);
@@ -584,19 +588,11 @@ macro_rules! impl_component_traits_binding_type_w_id {
                 $id
             }
 
-            fn is_registered() -> bool {
-                true
-            }
-
             fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
                 true
             }
 
-            fn get_id<'a>(_world: impl IntoWorld<'a>) -> IdT {
-                $id
-            }
-
-            unsafe fn get_id_unchecked() -> IdT {
+            fn id<'a>(_world: impl IntoWorld<'a>) -> IdT {
                 $id
             }
         }

@@ -16,6 +16,7 @@ workspace = true
 flecs_ecs_derive = { path = "../flecs_ecs_derive" }
 flecs_ecs_sys = { path = "../flecs_ecs_sys" }
 compact_str = "0.7.1"
+fxhash = "0.2.1"
 
 [dev-dependencies]
 criterion = "0.5.1"
@@ -26,7 +27,7 @@ insta = { version = "1.38.0", features = ["yaml","filters"] }
 #capture-stdio = "0.1.1" #used for capturing stdout in the examples test cases. Works only on Nightly.
 
 [features]
-
+ 
 ######################
 # sys feature flags
 ######################

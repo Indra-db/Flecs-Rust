@@ -1,4 +1,4 @@
-use std::{ops::Deref, sync::OnceLock};
+use std::ops::Deref;
 
 use crate::core::*;
 
@@ -25,6 +25,7 @@ macro_rules! create_pre_registered_component {
         }
 
         impl ComponentInfo for $struct_name {
+            const IS_GENERIC: bool = false;
             const IS_ENUM: bool = false;
             const IS_TAG: bool = true;
             const IMPLS_CLONE: bool = false;
@@ -49,25 +50,19 @@ macro_rules! create_pre_registered_component {
                 $const_name
             }
 
-            fn is_registered() -> bool {
-                true
-            }
-
             fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
                 true
             }
 
-            fn get_id<'a>(_world: impl IntoWorld<'a>) -> IdT {
+            fn id<'a>(_world: impl IntoWorld<'a>) -> IdT {
                 $const_name
             }
 
-            unsafe fn get_id_unchecked() -> IdT {
-                $const_name
-            }
-
-            fn __get_once_lock_data() -> &'static OnceLock<IdComponent> {
-                static ONCE_LOCK: OnceLock<IdComponent> = OnceLock::new();
-                &ONCE_LOCK
+            #[inline(always)]
+            fn index() -> u32 {
+                static INDEX: std::sync::atomic::AtomicU32 =
+                    std::sync::atomic::AtomicU32::new(u32::MAX);
+                Self::get_or_init_index(&INDEX)
             }
         }
     };
@@ -335,6 +330,7 @@ impl flecs_ecs::core::EmptyComponent for () {}
 impl flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for () {}
 
 impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo for () {
+    const IS_GENERIC: bool = false;
     const IS_ENUM: bool = false;
     const IS_TAG: bool = true;
     const IMPLS_CLONE: bool = { flecs_ecs::core::utility::types::ImplementsClone::<()>::IMPLS };
@@ -347,10 +343,11 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
 impl flecs_ecs::core::component_registration::registration_traits::ComponentId for () {
     type UnderlyingType = ();
     type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
-    fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::IdComponent> {
-        static ONCE_LOCK: std::sync::OnceLock<flecs_ecs::core::IdComponent> =
-            std::sync::OnceLock::new();
-        &ONCE_LOCK
+
+    #[inline(always)]
+    fn index() -> u32 {
+        static INDEX: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(u32::MAX);
+        Self::get_or_init_index(&INDEX)
     }
 
     fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {

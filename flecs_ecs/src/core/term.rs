@@ -205,40 +205,12 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term::term")]
     fn init_term_from<T: IntoComponentId>(&mut self) {
         if !T::IS_PAIR {
-            let id: IdT = if T::First::is_registered() {
-                unsafe { T::First::get_id_unchecked() }
-            } else {
-                ecs_assert!(
-                    false,
-                    FlecsErrorCode::InvalidOperation,
-                    "component not registered"
-                );
-                0
-            };
+            let id: IdT = T::First::id(self.world());
             self.init_current_term(id);
         } else {
-            let id_rel = if T::First::is_registered() {
-                unsafe { T::First::get_id_unchecked() }
-            } else {
-                ecs_assert!(
-                    false,
-                    FlecsErrorCode::InvalidOperation,
-                    "component not registered"
-                );
-                0
-            };
-
-            let id_target = if T::Second::is_registered() {
-                unsafe { T::Second::get_id_unchecked() }
-            } else {
-                ecs_assert!(
-                    false,
-                    FlecsErrorCode::InvalidOperation,
-                    "component not registered"
-                );
-                0
-            };
-
+            let world = self.world();
+            let id_rel = T::First::id(world);
+            let id_target = T::Second::id(world);
             self.init_current_term((id_rel, id_target));
         }
     }
@@ -526,7 +498,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::src`
     #[doc(alias = "term_builder_i::src")]
     fn set_src<T: ComponentId>(&mut self) -> &mut Self {
-        self.set_src_id(T::get_id(self.world()))
+        self.set_src_id(T::id(self.world()))
     }
 
     /// Select src identifier, initialize it with name. If name starts with a $
@@ -582,7 +554,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::first")]
     fn set_first<T: ComponentId>(&mut self) -> &mut Self {
         check_term_access_validity(self);
-        self.set_first_id(T::get_id(self.world()))
+        self.set_first_id(T::id(self.world()))
     }
 
     /// Select first identifier, initialize it with name. If name starts with a $
@@ -639,7 +611,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::second")]
     fn set_second<T: ComponentId>(&mut self) -> &mut Self {
         check_term_access_validity(self);
-        self.set_second_id(T::get_id(self.world()))
+        self.set_second_id(T::id(self.world()))
     }
 
     /// Select second identifier, initialize it with name. If name starts with a $
@@ -727,7 +699,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::up")]
     fn up_type<TravRel: ComponentId>(&mut self) -> &mut Self {
         self.term_ref_mut().id |= ECS_UP;
-        self.current_term_mut().trav = TravRel::get_id(self.world());
+        self.current_term_mut().trav = TravRel::id(self.world());
         self
     }
 
@@ -781,7 +753,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::cascade")]
     fn cascade_type<TravRel: ComponentId>(&mut self) -> &mut Self {
         self.term_ref_mut().id |= ECS_CASCADE;
-        self.current_term_mut().trav = TravRel::get_id(self.world());
+        self.current_term_mut().trav = TravRel::id(self.world());
         self
     }
 

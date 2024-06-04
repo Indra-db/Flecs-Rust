@@ -1,7 +1,6 @@
 use std::fmt::Display;
 use std::ops::Deref;
 use std::ops::{BitAnd, BitOr};
-use std::sync::OnceLock;
 
 use crate::core::*;
 use crate::sys;
@@ -61,6 +60,7 @@ impl Entity {
 }
 
 impl ComponentInfo for Entity {
+    const IS_GENERIC: bool = false;
     const IS_ENUM: bool = false;
     const IS_TAG: bool = false;
     const IMPLS_CLONE: bool = true;
@@ -74,6 +74,12 @@ impl ComponentId for Entity {
     type UnderlyingType = Entity;
     type UnderlyingEnumType = NoneEnum;
 
+    #[inline(always)]
+    fn index() -> u32 {
+        static INDEX: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(u32::MAX);
+        Self::get_or_init_index(&INDEX)
+    }
+
     fn register_explicit<'a>(_world: impl IntoWorld<'a>) {
         // already registered by flecs in World
     }
@@ -85,32 +91,15 @@ impl ComponentId for Entity {
     }
 
     #[inline]
-    fn is_registered() -> bool {
-        true
-    }
-
-    #[inline]
     fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
         //because this is always registered in the c world
         true
     }
 
     #[inline]
-    unsafe fn get_id_unchecked() -> IdT {
-        //this is safe because it's already registered in flecs_c / world
-        sys::FLECS_IDecs_entity_tID_
-    }
-
-    #[inline]
-    fn get_id<'a>(_world: impl IntoWorld<'a>) -> IdT {
+    fn id<'a>(_world: impl IntoWorld<'a>) -> IdT {
         //this is safe because it's already registered in flecs_c / world
         unsafe { sys::FLECS_IDecs_entity_tID_ }
-    }
-
-    #[inline]
-    fn __get_once_lock_data() -> &'static OnceLock<IdComponent> {
-        static ONCE_LOCK: OnceLock<IdComponent> = OnceLock::new();
-        &ONCE_LOCK
     }
 }
 

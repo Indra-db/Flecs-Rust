@@ -119,7 +119,7 @@ impl<'a> Table<'a> {
     /// * C++ API: `table::type_index`
     #[doc(alias = "table::type_index")]
     pub fn find_type_index<T: ComponentId>(&self) -> Option<i32> {
-        self.find_type_index_id(T::get_id(self.world))
+        self.find_type_index_id(T::id(self.world))
     }
 
     /// Find type index for pair of component types
@@ -161,7 +161,7 @@ impl<'a> Table<'a> {
     /// * C++ API: `table::type_index`
     #[doc(alias = "table::type_index")]
     pub fn find_type_index_pair<First: ComponentId, Second: ComponentId>(&self) -> Option<i32> {
-        self.find_type_index_pair_ids(First::get_id(self.world), Second::get_id(self.world))
+        self.find_type_index_pair_ids(First::id(self.world), Second::id(self.world))
     }
 
     /// Find type index for pair of component types
@@ -186,7 +186,7 @@ impl<'a> Table<'a> {
         &self,
         second: impl Into<Entity>,
     ) -> Option<i32> {
-        self.find_type_index_pair_ids(First::get_id(self.world), second)
+        self.find_type_index_pair_ids(First::id(self.world), second)
     }
 
     /// Find index for (component) id in table type
@@ -238,7 +238,7 @@ impl<'a> Table<'a> {
     /// * C++ API: `table::column_index`
     #[doc(alias = "table::column_index")]
     pub fn find_column_index<T: ComponentId>(&self) -> Option<i32> {
-        self.find_column_index_id(T::get_id(self.world))
+        self.find_column_index_id(T::id(self.world))
     }
 
     /// Find index for pair of component types in table
@@ -261,10 +261,7 @@ impl<'a> Table<'a> {
     /// * C++ API: `table::column_index`
     #[doc(alias = "table::column_index")]
     pub fn find_column_index_pair<First: ComponentId, Second: ComponentId>(&self) -> Option<i32> {
-        self.find_column_index_id(ecs_pair(
-            First::get_id(self.world),
-            Second::get_id(self.world),
-        ))
+        self.find_column_index_id(ecs_pair(First::id(self.world), Second::id(self.world)))
     }
 
     /// Find index for pair of component ids in table type
@@ -316,7 +313,7 @@ impl<'a> Table<'a> {
         &self,
         second: impl Into<Entity>,
     ) -> Option<i32> {
-        self.find_column_index_pair_ids(First::get_id(self.world), second)
+        self.find_column_index_pair_ids(First::id(self.world), second)
     }
 
     /// Test if table has component type
@@ -439,10 +436,9 @@ impl<'a> Table<'a> {
     /// * C++ API: `table::get`
     #[doc(alias = "table::get")]
     pub fn get_mut<T: ComponentId>(&self) -> Option<&mut [T]> {
-        self.get_mut_untyped(T::get_id(self.world))
-            .map(|ptr| unsafe {
-                std::slice::from_raw_parts_mut(ptr as *mut T, self.count() as usize)
-            })
+        self.get_mut_untyped(T::id(self.world)).map(|ptr| unsafe {
+            std::slice::from_raw_parts_mut(ptr as *mut T, self.count() as usize)
+        })
     }
 
     /// Get column, components array ptr from table by component type.
@@ -507,7 +503,7 @@ impl<'a> Table<'a> {
     pub fn get_pair_mut_untyped<First: ComponentId, Second: ComponentId>(
         &self,
     ) -> Option<*mut c_void> {
-        self.get_pair_ids_mut_untyped(First::get_id(self.world), Second::get_id(self.world))
+        self.get_pair_ids_mut_untyped(First::id(self.world), Second::id(self.world))
     }
 
     /// Get column size from table at the provided column index.
@@ -545,7 +541,7 @@ impl<'a> Table<'a> {
     /// * C++ API: `table::depth`
     #[doc(alias = "table::depth")]
     pub fn depth<Rel: ComponentId>(&self) -> i32 {
-        self.depth_id(Rel::get_id(self.world))
+        self.depth_id(Rel::id(self.world))
     }
 
     /// Return depth for table in tree for relationship type.

@@ -42,14 +42,12 @@ use syn::{
 /// }
 ///
 /// #[derive(Component)]
-/// #[register(Position)] //this will generate the ComponentId trait for the type Generic<Position>
 /// struct Generic<T>
-///     where T: Default + Clone
 /// {
 ///     value: T,
 /// }
 ///
-/// #[derive(Component)]
+/// #[derive(Componfent)]
 /// #[repr(C)]
 /// enum State {
 ///     #[default]
@@ -58,13 +56,10 @@ use syn::{
 ///     Jumping,
 /// }
 /// ```
-#[proc_macro_derive(Component, attributes(register))]
+#[proc_macro_derive(Component)]
 pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let mut input = parse_macro_input!(input as DeriveInput);
-    let is_not_generic = input.generics.params.is_empty();
-    let has_more_than_one_generic = input.generics.params.len() > 1;
 
-    let mut is_struct = matches!(input.data, Data::Struct(_));
     let has_repr_c = check_repr_c(&input);
     let is_tag;
     let mut generated_impls = vec![];
@@ -84,7 +79,6 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
         Data::Enum(_) => {
             is_tag = generate_tag_trait(!has_repr_c);
             if !has_repr_c {
-                is_struct = true;
                 generated_impls.push(impl_cached_component_data_struct(&mut input, true, &is_tag));
             } else {
                 generated_impls.push(impl_cached_component_data_enum(&mut input));
@@ -95,38 +89,6 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
     let name = &input.ident;
 
-    let attrs = input
-        .attrs
-        .clone()
-        .into_iter()
-        .find(|attr| attr.path().is_ident("register"));
-
-    let type_attrs = attrs.map(|attr| {
-        attr.parse_args::<TypeAttributes>()
-            .unwrap_or_else(|_| TypeAttributes(Vec::new()))
-    });
-
-    let mut has_attributes = false;
-    let component_id_trait = if let Some(type_attrs) = type_attrs {
-        type_attrs
-            .0
-            .into_iter()
-            .map(|ty| {
-                has_attributes = true;
-                generate_component_id_impl(name, &ty, is_struct, &is_tag)
-            })
-            .collect()
-    } else {
-        quote! {}
-    };
-
-    let is_attribute_supported = if has_attributes && is_not_generic || has_more_than_one_generic {
-        quote! { compile_error!("the register attribute can only be used when the type is generic over a single T.
-        For more complex cases please implement `ComponentId` trait manually over the specialized T"); }
-    } else {
-        quote! {}
-    };
-
     input.generics.make_where_clause();
 
     let (impl_generics, type_generics, where_clause) = &input.generics.split_for_impl();
@@ -136,10 +98,6 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
         unsafe impl #impl_generics Send for #name #type_generics #where_clause{}
         unsafe impl #impl_generics Sync for #name #type_generics #where_clause{}
-
-        #is_attribute_supported
-
-        #component_id_trait
 
         #( #generated_impls )*
     };
@@ -175,46 +133,104 @@ fn impl_cached_component_data_struct(
     let name = &ast.ident;
 
     let (impl_generics, type_generics, where_clause) = &ast.generics.split_for_impl();
-
-    let component_info_impl = quote! {
-        fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::IdComponent> {
-            static ONCE_LOCK: std::sync::OnceLock<flecs_ecs::core::IdComponent> = std::sync::OnceLock::new();
-            &ONCE_LOCK
+    let iter = &ast.generics.params.iter();
+    let mut contains_type_bound = false;
+    iter.clone().for_each(|param| {
+        if let syn::GenericParam::Type(type_param) = param {
+            if !type_param.bounds.empty_or_trailing() {
+                contains_type_bound = true;
+            }
         }
+    });
 
-        fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT)  {
-            flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<#name>(type_hooks);
+    let mut contains_where_bound = false;
+    if let Some(where_clause) = &ast.generics.where_clause {
+        contains_where_bound = !where_clause.predicates.is_empty();
+    }
+
+    let hook_impl = if !is_generic {
+        quote! {
+
+            fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                const IMPLS_DEFAULT: bool =  #name::IMPLS_DEFAULT;
+
+                if IMPLS_DEFAULT {
+                    flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
+                }
+            }
+
+            fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                const IMPLS_CLONE: bool = #name::IMPLS_CLONE;
+
+                if IMPLS_CLONE {
+                    flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
+                } else {
+                    flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name>(
+                        type_hooks,
+                    );
+                }
+            }
         }
-
+    } else if !contains_where_bound && !contains_type_bound {
+        quote! {
         fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
             use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
-            const IMPLS_DEFAULT: bool =  #name::IMPLS_DEFAULT;
+            const IMPLS_DEFAULT: bool =  #name::<flecs_ecs::core::Struct>::IMPLS_DEFAULT;
 
             if IMPLS_DEFAULT {
-                flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
+                flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name #type_generics>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
             }
         }
 
         fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
             use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
-            const IMPLS_CLONE: bool = #name::IMPLS_CLONE;
+            const IMPLS_CLONE: bool = #name::<flecs_ecs::core::Struct>::IMPLS_CLONE;
 
             if IMPLS_CLONE {
-                flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
+                flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name #type_generics>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
             } else {
-                flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name>(
+                flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name #type_generics>(
                     type_hooks,
                 );
             }
         }
+        }
+    } else {
+        quote! {}
     };
 
+    let component_info_impl = quote! {
+        #[inline(always)]
+        fn index() -> u32 {
+            static INDEX: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(u32::MAX);
+            Self::get_or_init_index(&INDEX)
+        }
+
+        fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT)  {
+            flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<#name #type_generics>(type_hooks);
+        }
+
+        #hook_impl
+    };
+
+    let is_generic_const = if !is_generic {
+        quote! {
+            const IS_GENERIC: bool = false;
+        }
+    } else {
+        quote! {
+            const IS_GENERIC: bool = true;
+        }
+    };
     // Common trait implementation for ComponentType and ComponentId
-    let common_traits = if !is_generic {
+    let common_traits = {
         quote! {
             impl #impl_generics  flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for #name #type_generics #where_clause{}
 
             impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name #type_generics #where_clause {
+                #is_generic_const
                 const IS_ENUM: bool = false;
 
                 #is_tag
@@ -230,23 +246,25 @@ fn impl_cached_component_data_struct(
                 const IS_MUT: bool = false;
             }
         }
+    };
+    let where_clause_quote = if contains_where_bound {
+        quote! { #where_clause Self: 'static }
     } else {
         quote! {
-            impl #impl_generics  flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for #name #type_generics #where_clause{}
+            where
+            Self: 'static
         }
     };
 
-    let component_id = if !is_generic {
-        quote! {
-            impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentId for #name #type_generics #where_clause{
-                type UnderlyingType = #name;
-                type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
+    let component_id = quote! {
+        impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentId for #name #type_generics
+        #where_clause_quote
+        {
+            type UnderlyingType = #name #type_generics;
+            type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
 
-                #component_info_impl
-            }
+            #component_info_impl
         }
-    } else {
-        quote! {}
     };
 
     // Specific trait implementation based on the presence of fields
@@ -414,11 +432,11 @@ fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> proc_macro2::T
     };
 
     let component_info_impl = quote! {
-            fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::IdComponent> {
-                static ONCE_LOCK: std::sync::OnceLock<flecs_ecs::core::IdComponent> = std::sync::OnceLock::new();
-                &ONCE_LOCK
+            #[inline(always)]
+            fn index() -> u32 {
+                static INDEX: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(u32::MAX);
+                Self::get_or_init_index(&INDEX)
             }
-
 
             fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT)  {
                 flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<#name>(type_hooks);
@@ -460,26 +478,52 @@ fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> proc_macro2::T
         quote! {}
     };
 
+    let component_info = if !is_generic {
+        quote! {
+            impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name #type_generics #where_clause {
+                const IS_GENERIC: bool = false;
+                const IS_ENUM: bool = true;
+                const IS_TAG: bool = false;
+                type TagType =
+                flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
+                const IMPLS_CLONE: bool = {
+                    use flecs_ecs::core::utility::traits::DoesNotImpl;
+                    flecs_ecs::core::utility::types::ImplementsClone::<#name #type_generics>::IMPLS
+                };
+                const IMPLS_DEFAULT: bool = {
+                    use flecs_ecs::core::utility::traits::DoesNotImpl;
+                    flecs_ecs::core::utility::types::ImplementsDefault::<#name #type_generics>::IMPLS
+                };
+                const IS_REF: bool = false;
+                const IS_MUT: bool = false;
+            }
+        }
+    } else {
+        quote! {
+            impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name #type_generics #where_clause {
+                const IS_GENERIC: bool = true;
+                const IS_ENUM: bool = true;
+                const IS_TAG: bool = false;
+                type TagType =
+                flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
+                const IMPLS_CLONE: bool = {
+                    use flecs_ecs::core::utility::traits::DoesNotImpl;
+                    flecs_ecs::core::utility::types::ImplementsClone::<#name #type_generics>::IMPLS
+                };
+                const IMPLS_DEFAULT: bool = {
+                    use flecs_ecs::core::utility::traits::DoesNotImpl;
+                    flecs_ecs::core::utility::types::ImplementsDefault::<#name #type_generics>::IMPLS
+                };
+                const IS_REF: bool = false;
+                const IS_MUT: bool = false;
+            }
+        }
+    };
+
     quote! {
         impl #impl_generics flecs_ecs::core::ComponentType<flecs_ecs::core::Enum> for #name #type_generics #where_clause {}
 
-
-        impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name #type_generics #where_clause{
-            const IS_ENUM: bool = true;
-            const IS_TAG: bool = false;
-            type TagType =
-            flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
-            const IMPLS_CLONE: bool = {
-                use flecs_ecs::core::utility::traits::DoesNotImpl;
-                flecs_ecs::core::utility::types::ImplementsClone::<#name #type_generics>::IMPLS
-            };
-            const IMPLS_DEFAULT: bool = {
-                use flecs_ecs::core::utility::traits::DoesNotImpl;
-                flecs_ecs::core::utility::types::ImplementsDefault::<#name #type_generics>::IMPLS
-            };
-            const IS_REF: bool = false;
-            const IS_MUT: bool = false;
-        }
+        #component_info
 
         #component_id
 
@@ -514,135 +558,6 @@ fn check_repr_c(input: &syn::DeriveInput) -> bool {
     }
 
     false // Return false if no `#[repr(C)]` is found
-}
-
-struct TypeAttributes(Vec<Ident>);
-
-impl Parse for TypeAttributes {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
-        let mut types = Vec::new();
-        while !input.is_empty() {
-            types.push(input.parse()?);
-            if !input.is_empty() {
-                input.parse::<syn::Token![,]>()?;
-            }
-        }
-        Ok(TypeAttributes(types))
-    }
-}
-
-fn generate_component_id_impl(
-    name: &Ident,
-    ty: &Ident,
-    is_struct: bool,
-    is_tag: &TokenStream,
-) -> TokenStream {
-    if is_struct {
-        quote! {
-            impl flecs_ecs::core::component_registration::registration_traits::ComponentId for #name<#ty> {
-                type UnderlyingType = #name<#ty>;
-                type UnderlyingEnumType = flecs_ecs::core::component_registration::registration_types::NoneEnum;
-                fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::IdComponent> {
-                    static ONCE_LOCK: std::sync::OnceLock<flecs_ecs::core::IdComponent> = std::sync::OnceLock::new();
-                    &ONCE_LOCK
-                }
-                fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT)  {
-                    flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<#name<#ty>>(type_hooks);
-                }
-
-                fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
-                    use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
-                    const IMPLS_DEFAULT: bool =  #name::<#ty>::IMPLS_DEFAULT;
-
-                    if IMPLS_DEFAULT {
-                        flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name<#ty>>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
-                    }
-                }
-
-                fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
-                    use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
-                    const IMPLS_CLONE: bool = #name::<#ty>::IMPLS_CLONE;
-
-                    if IMPLS_CLONE {
-                        flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name<#ty>>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
-                    } else {
-                        flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name<#ty>>(
-                            type_hooks,
-                        );
-                    }
-                }
-            }
-
-            impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name<#ty> {
-                const IS_ENUM: bool = false;
-
-                #is_tag
-                const IMPLS_CLONE: bool = {
-                    use flecs_ecs::core::utility::traits::DoesNotImpl;
-                    flecs_ecs::core::utility::types::ImplementsClone::<#name<#ty>>::IMPLS
-                };
-                const IMPLS_DEFAULT: bool = {
-                    use flecs_ecs::core::utility::traits::DoesNotImpl;
-                    flecs_ecs::core::utility::types::ImplementsDefault::<#name<#ty>>::IMPLS
-                };
-                const IS_REF: bool = false;
-                const IS_MUT: bool = false;
-            }
-        }
-    } else {
-        quote! {
-            impl flecs_ecs::core::component_registration::registration_traits::ComponentId for #name<#ty> {
-                type UnderlyingType = #name<#ty>;
-                type UnderlyingEnumType = #name<#ty>;
-                fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::IdComponent> {
-                    static ONCE_LOCK: std::sync::OnceLock<flecs_ecs::core::IdComponent> = std::sync::OnceLock::new();
-                    &ONCE_LOCK
-                }
-                fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT)  {
-                    flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<#name<#ty>>(type_hooks);
-                }
-
-                fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
-                    use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
-                    const IMPLS_DEFAULT: bool =  #name::<#ty>::IMPLS_DEFAULT;
-
-                    if IMPLS_DEFAULT {
-                        flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name<#ty>>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
-                    }
-                }
-
-                fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
-                    use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
-                    const IMPLS_CLONE: bool = #name::<#ty>::IMPLS_CLONE;
-
-                    if IMPLS_CLONE {
-                        flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name<#ty>>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
-                    } else {
-                        flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name<#ty>>(
-                            type_hooks,
-                        );
-                    }
-                }
-            }
-
-            impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name<#ty> {
-                const IS_ENUM: bool = true;
-                const IS_TAG: bool = false;
-                type TagType =
-                flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
-                const IMPLS_CLONE: bool = {
-                    use flecs_ecs::core::utility::traits::DoesNotImpl;
-                    flecs_ecs::core::utility::types::ImplementsClone::<#name<#ty>>::IMPLS
-                };
-                const IMPLS_DEFAULT: bool = {
-                    use flecs_ecs::core::utility::traits::DoesNotImpl;
-                    flecs_ecs::core::utility::types::ImplementsDefault::<#name<#ty>>::IMPLS
-                };
-                const IS_REF: bool = false;
-                const IS_MUT: bool = false;
-            }
-        }
-    }
 }
 
 struct Tuples {

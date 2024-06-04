@@ -156,7 +156,7 @@ impl<'a> EntityView<'a> {
         }
 
         // SAFETY: we know that the id is a valid because first is a Type and second has been checked
-        unsafe { self.add_id_unchecked((First::get_id(world), second)) }
+        unsafe { self.add_id_unchecked((First::id(world), second)) }
     }
 
     /// Adds a pair to the entity
@@ -198,7 +198,7 @@ impl<'a> EntityView<'a> {
         }
 
         // SAFETY: we know that the id is a valid because first is a Type and second has been checked
-        self.add_id((first, Second::get_id(world)))
+        self.add_id((first, Second::id(world)))
     }
 
     /// Adds a pair to the entity composed of a tag and an enum constant.
@@ -219,7 +219,7 @@ impl<'a> EntityView<'a> {
         // }
         let world = self.world;
         let enum_id = enum_value.get_id_variant(world);
-        unsafe { self.add_id_unchecked((First::get_id(world), enum_id)) }
+        unsafe { self.add_id_unchecked((First::id(world), enum_id)) }
     }
 
     /// Adds a pair to the entity where the first element is the enumeration type,
@@ -244,8 +244,8 @@ impl<'a> EntityView<'a> {
         enum_value: T,
     ) -> Self {
         let world = self.world;
-        let first = T::get_id(world);
-        // SAFETY: we know that the enum_value is a valid because of the T::get_id call
+        let first = T::id(world);
+        // SAFETY: we know that the enum_value is a valid because of the T::id call
         let second = unsafe { enum_value.get_id_variant_unchecked(world) };
         ecs_assert!(
             second != 0,
@@ -357,7 +357,7 @@ impl<'a> EntityView<'a> {
         condition: bool,
     ) -> Self {
         let world = self.world;
-        self.add_id_if((First::get_id(world), second.into()), condition)
+        self.add_id_if((First::id(world), second.into()), condition)
     }
 
     /// Conditional add.
@@ -382,7 +382,7 @@ impl<'a> EntityView<'a> {
         condition: bool,
     ) -> Self {
         let world = self.world;
-        self.add_id_if((first.into(), Second::get_id(world)), condition)
+        self.add_id_if((first.into(), Second::id(world)), condition)
     }
 
     /// Conditional add.
@@ -406,9 +406,9 @@ impl<'a> EntityView<'a> {
         T: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         let world = self.world;
-        // SAFETY: we know that the enum_value is a valid because of the T::get_id call
+        // SAFETY: we know that the enum_value is a valid because of the T::id call
         self.add_id_if(
-            (T::get_id(world), unsafe {
+            (T::id(world), unsafe {
                 enum_value.get_id_variant_unchecked(world)
             }),
             condition,
@@ -473,7 +473,7 @@ impl<'a> EntityView<'a> {
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         let world = self.world;
-        self.remove_id((First::get_id(world), enum_value.get_id_variant(world)))
+        self.remove_id((First::id(world), enum_value.get_id_variant(world)))
     }
 
     /// Removes a pair.
@@ -493,7 +493,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::remove_second")]
     pub fn remove_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         let world = self.world;
-        self.remove_id((First::get_id(world), second.into()))
+        self.remove_id((First::id(world), second.into()))
     }
 
     /// Removes a pair.
@@ -513,7 +513,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::remove_second")]
     pub fn remove_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
         let world = self.world;
-        self.remove_id((first.into(), Second::get_id(world)))
+        self.remove_id((first.into(), Second::id(world)))
     }
 
     /// Shortcut for add(IsA, id).
@@ -542,7 +542,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::is_a")]
     pub fn is_a<T: ComponentId>(self) -> Self {
         let world = self.world;
-        self.is_a_id(T::get_id(world))
+        self.is_a_id(T::id(world))
     }
 
     /// Shortcut for add(ChildOf, entity).
@@ -571,7 +571,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::child_of")]
     pub fn child_of<T: ComponentId>(self) -> Self {
         let world = self.world;
-        self.child_of_id(T::get_id(world))
+        self.child_of_id(T::id(world))
     }
 
     /// Shortcut for add(DependsOn, entity).
@@ -600,7 +600,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::depends_on")]
     pub fn depends_on<T: ComponentId + ComponentType<Struct>>(self) -> Self {
         let world = self.world;
-        self.depends_on_id(T::get_id(world))
+        self.depends_on_id(T::id(world))
     }
 
     /// Shortcut for add(Dependency, entity) for Enums.
@@ -651,7 +651,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::slot_of")]
     pub fn slot_of<T: ComponentId>(self) -> Self {
         let world = self.world;
-        self.slot_of_id(T::get_id(world))
+        self.slot_of_id(T::id(world))
     }
 
     /// Shortcut for add(SlotOf, target(ChildOf)).
@@ -722,7 +722,7 @@ impl<'a> EntityView<'a> {
         second: impl Into<Entity>,
     ) -> Self {
         let world = self.world;
-        let pair_id = ecs_pair(First::get_id(world), *second.into());
+        let pair_id = ecs_pair(First::id(world), *second.into());
         self.auto_override_id(pair_id)
     }
 
@@ -745,7 +745,7 @@ impl<'a> EntityView<'a> {
         first: impl Into<Entity>,
     ) -> Self {
         let world = self.world;
-        let pair_id = ecs_pair(*first.into(), Second::get_id(world));
+        let pair_id = ecs_pair(*first.into(), Second::id(world));
         self.auto_override_id(pair_id)
     }
 
@@ -821,7 +821,7 @@ impl<'a> EntityView<'a> {
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let second_id = *second.into();
-        let first_id = First::get_id(self.world);
+        let first_id = First::id(self.world);
         let pair_id = ecs_pair(first_id, second_id);
         self.auto_override_id(pair_id).set_id(first, pair_id)
     }
@@ -845,7 +845,7 @@ impl<'a> EntityView<'a> {
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         let first_id = first.into();
-        let second_id = Second::get_id(self.world);
+        let second_id = Second::id(self.world);
         let pair_id = ecs_pair(*first_id, second_id);
         self.auto_override_id(pair_id).set_id(second, pair_id)
     }
@@ -865,7 +865,7 @@ impl<'a> EntityView<'a> {
             self.world.world_ptr_mut(),
             *self.id,
             component,
-            T::get_id(self.world),
+            T::id(self.world),
         );
         self
     }
@@ -886,7 +886,7 @@ impl<'a> EntityView<'a> {
     {
         let world = self.world.world_ptr_mut();
         let id = *id.into();
-        let data_id = T::get_id(self.world);
+        let data_id = T::id(self.world);
         let id_data_id = unsafe { sys::ecs_get_typeid(world, id) };
 
         if data_id != id_data_id {
@@ -921,7 +921,7 @@ impl<'a> EntityView<'a> {
             self.world.world_ptr_mut(),
             *self.id,
             data,
-            ecs_pair(First::get_id(self.world), Second::get_id(self.world)),
+            ecs_pair(First::id(self.world), Second::id(self.world)),
         );
         self
     }
@@ -937,7 +937,7 @@ impl<'a> EntityView<'a> {
         First: ComponentId + NotEmptyComponent,
     {
         let world_ptr = self.world.world_ptr_mut();
-        let first_id = First::get_id(self.world);
+        let first_id = First::id(self.world);
         let second_id = *second.into();
         let pair_id = ecs_pair(first_id, second_id);
         let data_id = unsafe { sys::ecs_get_typeid(world_ptr, pair_id) };
@@ -966,7 +966,7 @@ impl<'a> EntityView<'a> {
     {
         let world = self.world.world_ptr_mut();
         let first_id = *first.into();
-        let second_id = Second::get_id(self.world);
+        let second_id = Second::id(self.world);
         let pair_id = ecs_pair(first_id, second_id);
         let data_id = unsafe { sys::ecs_get_typeid(world, pair_id) };
 
@@ -1006,7 +1006,7 @@ impl<'a> EntityView<'a> {
             *self.id,
             first,
             ecs_pair(
-                First::get_id(self.world),
+                First::id(self.world),
                 **enum_variant.get_id_variant(self.world),
             ),
         );
@@ -1190,7 +1190,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::enable")]
     pub fn enable_second<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         let world = self.world;
-        self.enable_id((First::get_id(world), second.into()))
+        self.enable_id((First::id(world), second.into()))
     }
 
     /// Disables self (entity).
@@ -1256,7 +1256,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::disable")]
     pub fn disable_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         let world = self.world;
-        self.disable_id((First::get_id(world), second.into()))
+        self.disable_id((First::id(world), second.into()))
     }
     /// Entities created in the function will have the current entity.
     /// This operation is thread safe.
@@ -1342,7 +1342,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::with")]
     pub fn with_first<First: ComponentId>(self, func: impl FnOnce()) -> Self {
         let world = self.world;
-        self.with_first_id(First::get_id(world), func)
+        self.with_first_id(First::id(world), func)
     }
 
     /// Entities created in the function will have (self, Second)
@@ -1362,7 +1362,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::with")]
     pub fn with_second<Second: ComponentId>(self, func: impl FnOnce()) -> Self {
         let world = self.world;
-        self.with_second_id(Second::get_id(world), func)
+        self.with_second_id(Second::id(world), func)
     }
 
     /// The function will be ran with the scope set to the current entity.
@@ -1419,7 +1419,7 @@ impl<'a> EntityView<'a> {
     pub fn ensure_mut<T: ComponentId + NotEmptyComponent + ComponentType<Struct>>(
         self,
     ) -> &'a mut T::UnderlyingType {
-        let component_id = T::get_id(self.world);
+        let component_id = T::id(self.world);
 
         ecs_assert!(
             std::mem::size_of::<T>() != 0,
@@ -1489,7 +1489,7 @@ impl<'a> EntityView<'a> {
     where
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
-        let component_id = First::get_id(self.world);
+        let component_id = First::id(self.world);
 
         ecs_assert!(
             std::mem::size_of::<First>() != 0,
@@ -1526,7 +1526,7 @@ impl<'a> EntityView<'a> {
         First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
         Second: ComponentId + ComponentType<Struct>,
     {
-        self.ensure_first_id_mut::<First>(Second::get_id(self.world))
+        self.ensure_first_id_mut::<First>(Second::id(self.world))
     }
 
     /// Get a mutable reference for the second element of a pair.
@@ -1548,7 +1548,7 @@ impl<'a> EntityView<'a> {
     where
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
-        let component_id = Second::get_id(self.world);
+        let component_id = Second::id(self.world);
 
         ecs_assert!(
             std::mem::size_of::<Second>() != 0,
@@ -1585,7 +1585,7 @@ impl<'a> EntityView<'a> {
         First: ComponentId + ComponentType<Struct> + EmptyComponent,
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
-        self.ensure_second_id_mut::<Second>(First::get_id(self.world))
+        self.ensure_second_id_mut::<Second>(First::id(self.world))
     }
 
     /// Signal that component or pair was modified.
@@ -1644,7 +1644,7 @@ impl<'a> EntityView<'a> {
             std::any::type_name::<First>()
         );
 
-        self.modified_id((First::get_id(self.world), second.into()));
+        self.modified_id((First::id(self.world), second.into()));
     }
 
     /// Get a reference to a component or pair.
@@ -1665,7 +1665,7 @@ impl<'a> EntityView<'a> {
         T: ComponentId + NotEmptyComponent,
         T::UnderlyingType: NotEmptyComponent,
     {
-        CachedRef::<T::UnderlyingType>::new(self.world, *self.id, T::get_id(self.world))
+        CachedRef::<T::UnderlyingType>::new(self.world, *self.id, T::id(self.world))
     }
 
     /// Get a reference to the first component of pair
@@ -1696,7 +1696,7 @@ impl<'a> EntityView<'a> {
         CachedRef::<First>::new(
             self.world,
             *self.id,
-            ecs_pair(First::get_id(self.world), *second.into()),
+            ecs_pair(First::id(self.world), *second.into()),
         )
     }
 
@@ -1728,7 +1728,7 @@ impl<'a> EntityView<'a> {
         CachedRef::<Second>::new(
             self.world,
             *self.id,
-            ecs_pair(*first.into(), Second::get_id(self.world)),
+            ecs_pair(*first.into(), Second::id(self.world)),
         )
     }
 

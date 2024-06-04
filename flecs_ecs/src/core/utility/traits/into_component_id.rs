@@ -31,7 +31,7 @@ where
 
     #[inline]
     fn get_id<'a>(world: impl IntoWorld<'a>) -> IdT {
-        T::get_id(world)
+        T::id(world)
     }
 
     #[inline]
@@ -53,7 +53,7 @@ where
     #[inline]
     fn get_id<'a>(world: impl IntoWorld<'a>) -> IdT {
         let world = world.world();
-        ecs_pair(T::get_id(world), U::get_id(world))
+        ecs_pair(T::id(world), U::id(world))
     }
 
     #[inline]

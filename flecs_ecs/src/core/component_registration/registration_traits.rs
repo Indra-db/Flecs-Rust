@@ -1,5 +1,8 @@
 use crate::core::*;
-use std::{ffi::CStr, sync::OnceLock};
+use std::{
+    ffi::CStr,
+    sync::atomic::{AtomicU32, Ordering},
+};
 
 pub trait EmptyComponent {}
 
@@ -76,28 +79,31 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     }
 
     /// checks if the component is registered with a world.
-    #[inline(always)]
-    fn is_registered() -> bool {
-        Self::UnderlyingType::__get_once_lock_data().get().is_some()
-    }
-
-    /// checks if the component is registered with a world.
-    /// # Safety
-    /// This function is unsafe because it assumes world is not nullptr
-    /// this is highly unlikely a world would be nullptr, hence this function is not marked as unsafe.
-    /// this will be changed in the future where we get rid of the pointers.
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
-    fn is_registered_with_world<'a>(world: impl IntoWorld<'a>) -> bool {
-        if Self::UnderlyingType::is_registered() {
-            unsafe { is_component_registered_with_world::<Self::UnderlyingType>(world.world_ptr()) }
+    #[doc(hidden)]
+    fn is_registered_with_world<'a>(_world: impl IntoWorld<'a>) -> bool {
+        if !Self::IS_GENERIC {
+            let index = Self::index();
+            let world = _world.world();
+            let components_array = world.components_array();
+            let len = components_array.len();
+
+            if len > index as usize {
+                components_array[index as usize] != 0
+            } else {
+                false
+            }
         } else {
-            false
+            let world = _world.world();
+            let components_map = world.components_map();
+            components_map.contains_key(&std::any::TypeId::of::<Self>())
         }
     }
 
     /// returns the component id of the component. If the component is not registered, it will register it.
-    fn get_id<'a>(world: impl IntoWorld<'a>) -> IdT {
+    #[inline(always)]
+    fn id<'a>(world: impl IntoWorld<'a>) -> EntityT {
         #[cfg(feature = "flecs_manual_registration")]
         {
             ecs_assert!(
@@ -112,39 +118,53 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
                 "Component {} is not registered with the world before usage",
                 Self::name()
             );
-            unsafe { Self::UnderlyingType::get_id_unchecked() }
+            Self::__get_id_internal(world)
         }
         #[cfg(not(feature = "flecs_manual_registration"))]
         {
-            try_register_component::<Self::UnderlyingType>(world);
-            unsafe { Self::UnderlyingType::get_id_unchecked() }
+            Self::UnderlyingType::__get_id_internal(world)
         }
     }
 
-    /// returns the component id of the component.
-    /// # Safety
-    /// safe version is `get_id`
-    /// this function is unsafe because it assumes that the component is registered,
-    /// the lock data being initialized is not checked and will panic if it's not.
-    /// does not check if the component is registered in the world, if not, it might cause problems depending on usage.
-    /// only use this if you know what you are doing and you are sure the component is registered in the world
-    #[inline(always)]
-    unsafe fn get_id_unchecked() -> IdT {
-        Self::UnderlyingType::__get_once_lock_data()
-            .get()
-            .unwrap_unchecked()
-            .id
-    }
-
-    // Not public API.
-    #[doc(hidden)]
-    fn __get_once_lock_data() -> &'static OnceLock<IdComponent>;
-
-    // Not public API.
     #[doc(hidden)]
     #[inline(always)]
-    fn __initialize<F: FnOnce() -> IdComponent>(f: F) -> &'static IdComponent {
-        Self::UnderlyingType::__get_once_lock_data().get_or_init(f)
+    fn __get_id_internal<'a>(world: impl IntoWorld<'a>) -> EntityT {
+        if !Self::IS_GENERIC {
+            unsafe {
+                let index = Self::index();
+                let world = world.world();
+                let components_array = world.components_array();
+                let len = components_array.len();
+
+                let val = if len > index as usize {
+                    components_array[index as usize]
+                } else {
+                    components_array.reserve(len);
+                    let capacity = components_array.capacity();
+                    std::ptr::write_bytes(
+                        components_array.as_mut_ptr().add(len),
+                        0,
+                        capacity - len,
+                    );
+                    components_array.set_len(capacity);
+                    0
+                };
+
+                if val == 0 {
+                    let new_id = try_register_component::<Self>(world);
+                    components_array[index as usize] = new_id;
+                    return new_id;
+                }
+
+                val
+            }
+        } else {
+            let world = world.world();
+            let components_map = world.components_map();
+            *(components_map
+                .entry(std::any::TypeId::of::<Self>())
+                .or_insert_with(|| try_register_component::<Self>(world)))
+        }
     }
 
     // Not public API.
@@ -160,22 +180,33 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     fn __register_clone_hooks(_type_hooks: &mut TypeHooksT) {}
 
     #[doc(hidden)]
-    /// this is cursed, but it's the only way to reset the lock data for the component without making the static mutable.
-    /// this is ONLY used for benchmarking purposes.
-    fn __reset_one_lock_data() {
-        #[allow(invalid_reference_casting)]
-        {
-            let lock: &'static mut OnceLock<IdComponent> = unsafe {
-                &mut *(Self::UnderlyingType::__get_once_lock_data() as *const OnceLock<IdComponent>
-                    as *mut OnceLock<IdComponent>)
-            };
+    #[inline(always)]
+    fn fetch_new_index() -> u32 {
+        static INDEX_POOL: AtomicU32 = AtomicU32::new(1);
+        INDEX_POOL.fetch_add(1, Ordering::Relaxed)
+    }
 
-            lock.take();
+    #[doc(hidden)]
+    #[inline(always)]
+    fn get_or_init_index(id: &AtomicU32) -> u32 {
+        match id.fetch_update(Ordering::Acquire, Ordering::Relaxed, |v| {
+            if v != u32::MAX {
+                None
+            } else {
+                Some(Self::fetch_new_index())
+            }
+        }) {
+            Ok(_) => id.load(Ordering::Acquire),
+            Err(old) => old,
         }
     }
+
+    #[doc(hidden)]
+    fn index() -> u32;
 }
 
 pub trait ComponentInfo: Sized {
+    const IS_GENERIC: bool;
     const IS_ENUM: bool;
     const IS_TAG: bool;
     const NEEDS_DROP: bool = std::mem::needs_drop::<Self>();
@@ -260,6 +291,7 @@ pub trait CachedEnumData: ComponentType<Enum> + ComponentId {
 }
 
 impl<T: ComponentInfo> ComponentInfo for &T {
+    const IS_GENERIC: bool = T::IS_GENERIC;
     const IS_ENUM: bool = T::IS_ENUM;
     const IS_TAG: bool = T::IS_TAG;
     const IMPLS_CLONE: bool = T::IMPLS_CLONE;
@@ -270,6 +302,7 @@ impl<T: ComponentInfo> ComponentInfo for &T {
 }
 
 impl<T: ComponentInfo> ComponentInfo for &mut T {
+    const IS_GENERIC: bool = T::IS_GENERIC;
     const IS_ENUM: bool = T::IS_ENUM;
     const IS_TAG: bool = T::IS_TAG;
     const IMPLS_CLONE: bool = T::IMPLS_CLONE;
@@ -280,8 +313,10 @@ impl<T: ComponentInfo> ComponentInfo for &mut T {
 }
 
 impl<T: ComponentId> ComponentId for &'static T {
-    fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::IdComponent> {
-        Self::UnderlyingType::__get_once_lock_data()
+    #[inline(always)]
+    fn index() -> u32 {
+        static INDEX: AtomicU32 = AtomicU32::new(u32::MAX);
+        Self::get_or_init_index(&INDEX)
     }
 
     type UnderlyingType = T::UnderlyingType;
@@ -290,8 +325,10 @@ impl<T: ComponentId> ComponentId for &'static T {
 }
 
 impl<T: ComponentId> ComponentId for &'static mut T {
-    fn __get_once_lock_data() -> &'static std::sync::OnceLock<flecs_ecs::core::IdComponent> {
-        Self::UnderlyingType::__get_once_lock_data()
+    #[inline(always)]
+    fn index() -> u32 {
+        static INDEX: AtomicU32 = AtomicU32::new(u32::MAX);
+        Self::get_or_init_index(&INDEX)
     }
 
     type UnderlyingType = T::UnderlyingType;

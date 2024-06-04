@@ -151,7 +151,7 @@ macro_rules! ecs_assert {
             if $arg.is_null() {
                 "<null>"
             } else {
-                unsafe { CStr::from_ptr($arg).to_str().unwrap_or("<invalid>") }
+                unsafe { std::ffi::CStr::from_ptr($arg).to_str().unwrap_or("<invalid>") }
             }
         );
     };
