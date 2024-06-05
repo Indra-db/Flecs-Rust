@@ -149,7 +149,6 @@ flecs_nightly_tests = []
 
 default = [
     #"flecs_regenerate_binding_c",
-    "flecs_manual_registration",
     "flecs_module",
     "flecs_script",
     "flecs_snapshot",

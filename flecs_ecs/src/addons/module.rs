@@ -14,12 +14,12 @@ impl World {
         // Reset scope
         let prev_scope = self.set_scope_id(0);
 
-        // Set scope to our module
-        self.set_scope::<T>();
-
         // Initialise component for the module and add Module tag
         let module = self.component::<T>();
         module.add::<flecs::EcsModule>();
+
+        // Set scope to our module
+        self.set_scope_id(module.entity);
 
         // Build the module
         T::module(self);
