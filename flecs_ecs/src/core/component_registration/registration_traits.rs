@@ -104,31 +104,12 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     /// returns the component id of the component. If the component is not registered, it will register it.
     #[inline(always)]
     fn id<'a>(world: impl IntoWorld<'a>) -> EntityT {
-        #[cfg(feature = "flecs_manual_registration")]
-        {
-            ecs_assert!(
-                {
-                    if !Self::is_registered_with_world(world.world()) {
-                        false
-                    } else {
-                        true
-                    }
-                },
-                FlecsErrorCode::InvalidOperation,
-                "Component {} is not registered with the world before usage",
-                Self::name()
-            );
-            Self::__get_id_internal(world)
-        }
-        #[cfg(not(feature = "flecs_manual_registration"))]
-        {
-            Self::UnderlyingType::__get_id_internal(world)
-        }
+        Self::UnderlyingType::__get_id_internal::<true>(world)
     }
 
     #[doc(hidden)]
     #[inline(always)]
-    fn __get_id_internal<'a>(world: impl IntoWorld<'a>) -> EntityT {
+    fn __get_id_internal<'a, const CHECK_MANUAL_REG: bool>(world: impl IntoWorld<'a>) -> EntityT {
         if !Self::IS_GENERIC {
             unsafe {
                 let index = Self::index();
@@ -151,6 +132,16 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
                 };
 
                 if val == 0 {
+                    #[cfg(feature = "flecs_manual_registration")]
+                    if CHECK_MANUAL_REG {
+                        ecs_assert!(
+                            false,
+                            FlecsErrorCode::InvalidOperation,
+                            "Component {} is not registered with the world before usage",
+                            Self::name()
+                        );
+                    }
+
                     let new_id = try_register_component::<Self>(world);
                     components_array[index as usize] = new_id;
                     return new_id;
@@ -163,7 +154,19 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
             let components_map = world.components_map();
             *(components_map
                 .entry(std::any::TypeId::of::<Self>())
-                .or_insert_with(|| try_register_component::<Self>(world)))
+                .or_insert_with(|| {
+                    #[cfg(feature = "flecs_manual_registration")]
+                    if CHECK_MANUAL_REG {
+                        ecs_assert!(
+                            false,
+                            FlecsErrorCode::InvalidOperation,
+                            "Component {} is not registered with the world before usage",
+                            Self::name()
+                        );
+                    }
+
+                    try_register_component::<Self>(world)
+                }))
         }
     }
 

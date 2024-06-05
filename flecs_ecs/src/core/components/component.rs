@@ -35,9 +35,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
     pub fn new(world: impl IntoWorld<'a>) -> Self {
-        if !T::is_registered_with_world(world.world()) {
-            T::register_explicit(world.world());
-        }
+        T::__get_id_internal::<false>(world.world());
 
         let world = world.world();
         Self {
