@@ -69,23 +69,97 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     type UnderlyingEnumType: ComponentId + CachedEnumData;
 
     /// attempts to register the component with the world. If it's already registered, it does nothing.
-    fn register_explicit<'a>(world: impl IntoWorld<'a>) {
-        try_register_component::<Self::UnderlyingType>(world);
+    #[inline(always)]
+    #[doc(hidden)]
+    fn register_explicit<'a>(world: impl IntoWorld<'a>) -> EntityT {
+        if !Self::IS_GENERIC {
+            let index = Self::index() as usize;
+            let world = world.world();
+            let components_array = world.components_array();
+            let len = components_array.len();
+
+            if len > index {
+                if components_array[index] == 0 {
+                    let id = try_register_component::<Self>(world);
+                    components_array[index] = id;
+                    return id;
+                }
+                components_array[index]
+            } else {
+                components_array.reserve(len);
+                let capacity = components_array.capacity();
+                unsafe {
+                    std::ptr::write_bytes(
+                        components_array.as_mut_ptr().add(len),
+                        0,
+                        capacity - len,
+                    );
+                    components_array.set_len(capacity);
+                }
+                let id = try_register_component::<Self>(world);
+                components_array[index] = id;
+                id
+            }
+        } else {
+            let world = world.world();
+            let components_map = world.components_map();
+            *(components_map
+                .entry(std::any::TypeId::of::<Self>())
+                .or_insert_with(|| try_register_component::<Self>(world)))
+        }
     }
 
     /// attempts to register the component with name with the world. If it's already registered, it does nothing.
+    #[inline(always)]
+    #[doc(hidden)]
     fn register_explicit_named<'a>(world: impl IntoWorld<'a>, name: &str) -> EntityT {
-        try_register_component_named::<Self::UnderlyingType>(world, name)
+        if !Self::IS_GENERIC {
+            let index = Self::index() as usize;
+            let world = world.world();
+            let components_array = world.components_array();
+            let len = components_array.len();
+
+            if len > index {
+                if components_array[index] == 0 {
+                    let id = try_register_component_named::<Self>(world, name);
+                    components_array[index] = id;
+                    return id;
+                }
+                components_array[index]
+            } else {
+                components_array.reserve(len);
+                let capacity = components_array.capacity();
+                unsafe {
+                    std::ptr::write_bytes(
+                        components_array.as_mut_ptr().add(len),
+                        0,
+                        capacity - len,
+                    );
+                    components_array.set_len(capacity);
+                }
+                let id = try_register_component_named::<Self>(world, name);
+                components_array[index] = id;
+                id
+            }
+        } else {
+            let world = world.world();
+            let components_map = world.components_map();
+            *(components_map
+                .entry(std::any::TypeId::of::<Self>())
+                .or_insert_with(|| {
+                    try_register_component_named::<Self::UnderlyingType>(world, name)
+                }))
+        }
     }
 
     /// checks if the component is registered with a world.
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
     #[doc(hidden)]
-    fn is_registered_with_world<'a>(_world: impl IntoWorld<'a>) -> bool {
+    fn is_registered_with_world<'a>(world: impl IntoWorld<'a>) -> bool {
         if !Self::IS_GENERIC {
             let index = Self::index();
-            let world = _world.world();
+            let world = world.world();
             let components_array = world.components_array();
             let len = components_array.len();
 
@@ -95,7 +169,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
                 false
             }
         } else {
-            let world = _world.world();
+            let world = world.world();
             let components_map = world.components_map();
             components_map.contains_key(&std::any::TypeId::of::<Self>())
         }
@@ -104,12 +178,12 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     /// returns the component id of the component. If the component is not registered, it will register it.
     #[inline(always)]
     fn id<'a>(world: impl IntoWorld<'a>) -> EntityT {
-        Self::UnderlyingType::__get_id_internal::<true>(world)
+        Self::UnderlyingType::__get_id_internal(world)
     }
 
     #[doc(hidden)]
     #[inline(always)]
-    fn __get_id_internal<'a, const CHECK_MANUAL_REG: bool>(world: impl IntoWorld<'a>) -> EntityT {
+    fn __get_id_internal<'a>(world: impl IntoWorld<'a>) -> EntityT {
         if !Self::IS_GENERIC {
             unsafe {
                 let index = Self::index();
@@ -133,7 +207,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
 
                 if val == 0 {
                     #[cfg(feature = "flecs_manual_registration")]
-                    if CHECK_MANUAL_REG {
+                    {
                         ecs_assert!(
                             false,
                             FlecsErrorCode::InvalidOperation,
@@ -156,7 +230,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
                 .entry(std::any::TypeId::of::<Self>())
                 .or_insert_with(|| {
                     #[cfg(feature = "flecs_manual_registration")]
-                    if CHECK_MANUAL_REG {
+                    {
                         ecs_assert!(
                             false,
                             FlecsErrorCode::InvalidOperation,

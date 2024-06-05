@@ -35,11 +35,12 @@ impl<'a, T: ComponentId> Component<'a, T> {
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
     pub fn new(world: impl IntoWorld<'a>) -> Self {
-        T::__get_id_internal::<false>(world.world());
+        let world = world.world();
+        let id = T::register_explicit(world);
 
         let world = world.world();
         Self {
-            base: UntypedComponent::new(world, T::id(world)),
+            base: UntypedComponent::new(world, id),
             _marker: PhantomData,
         }
     }
@@ -56,9 +57,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
     pub fn new_named(world: impl IntoWorld<'a>, name: &str) -> Self {
-        if !T::is_registered_with_world(world.world()) {
-            T::register_explicit_named(world.world(), name);
-        }
+        T::register_explicit_named(world.world(), name);
 
         let world = world.world();
         Self {

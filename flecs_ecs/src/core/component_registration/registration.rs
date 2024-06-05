@@ -20,7 +20,7 @@ where
 
 #[inline(always)]
 /// attempts to register the component with the world. If it's already registered, it does nothing.
-pub fn try_register_component<'a, T>(world: impl IntoWorld<'a>) -> EntityT
+pub(crate) fn try_register_component<'a, T>(world: impl IntoWorld<'a>) -> EntityT
 where
     T: ComponentId,
 {
@@ -28,7 +28,7 @@ where
 }
 
 #[inline(always)]
-pub fn try_register_component_named<'a, T>(world: impl IntoWorld<'a>, name: &str) -> EntityT
+pub(crate) fn try_register_component_named<'a, T>(world: impl IntoWorld<'a>, name: &str) -> EntityT
 where
     T: ComponentId,
 {

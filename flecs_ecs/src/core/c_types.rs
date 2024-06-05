@@ -582,7 +582,9 @@ macro_rules! impl_component_traits_binding_type_w_id {
                 register_copy_lifecycle_action::<$name>(type_hooks);
             }
 
-            fn register_explicit<'a>(_world: impl IntoWorld<'a>) {}
+            fn register_explicit<'a>(_world: impl IntoWorld<'a>) -> EntityT {
+                $id
+            }
 
             fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
                 $id
