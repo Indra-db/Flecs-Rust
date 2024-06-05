@@ -241,7 +241,7 @@ impl<'a> EntityView<'a> {
 
     /// Returns the entity name as a `CStr`.
     ///
-    /// if the entity has no name, this will return None
+    /// If the entity has no name, this will return `None`.
     ///
     /// # See also
     ///
@@ -948,8 +948,8 @@ impl<'a> EntityView<'a> {
         tuple_data.get_tuple()
     }
 
-    /// Clones components and/or relationship(s) from an entity and returns an Option.
-    /// None if the entity does not have all components that are not marked Option, otherwise Some(tuple).
+    /// Clones components and/or relationship(s) from an entity and returns an `Option`.
+    /// `None` if the entity does not have all components that are not marked `Option`, otherwise `Some(tuple)`.
     /// each component type must be marked `&`. This helps Rust type checker to determine if it's a relationship.
     /// use `Option` wrapper to indicate if the component is optional.
     /// use `()` tuple format when getting multiple components.
@@ -961,7 +961,7 @@ impl<'a> EntityView<'a> {
     ///
     /// # Returns
     ///
-    /// - Some(tuple) if the entity has all components, None otherwise.
+    /// - `Some(tuple)` if the entity has all components, `None` otherwise.
     ///
     /// # Example
     ///
@@ -1026,7 +1026,7 @@ impl<'a> EntityView<'a> {
     /// use `()` tuple format when getting multiple components.
     ///
     /// - `try_map` assumes when not using `Option` wrapper, that the entity has the component.
-    ///   If it does not, it will not run the callback and return None.
+    ///   If it does not, it will not run the callback and return `None`.
     ///   If unsure and you still want to have the callback be ran, use `Option` wrapper instead.
     ///
     /// # Note
@@ -1046,8 +1046,8 @@ impl<'a> EntityView<'a> {
     ///
     /// # Returns
     ///
-    /// - a Some(value) if the callback has ran. Where the type of value is specified in `Return` generic (can be elided).
-    ///   None if the callback has not ran.
+    /// - a `Some(value)` if the callback has ran. Where the type of value is specified in `Return` generic (can be elided).
+    ///   `None` if the callback has not ran.
     ///
     /// # Example
     ///
@@ -1558,7 +1558,7 @@ impl<'a> EntityView<'a> {
     ///
     /// # Returns
     ///
-    /// The entity if found, otherwise None.
+    /// The entity if found, otherwise `None`.
     ///
     /// # See also
     ///
@@ -1580,7 +1580,7 @@ impl<'a> EntityView<'a> {
     ///
     /// # Returns
     ///
-    /// The entity if found, otherwise None.
+    /// The entity if found, otherwise `None`.
     ///
     /// # See also
     ///

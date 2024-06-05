@@ -165,7 +165,7 @@ where
     ///
     /// # Returns
     ///
-    /// * Some(EntityView<'_>) if the entity was found, None if no entity was found
+    /// * `Some(EntityView<'_>)` if the entity was found, `None` if no entity was found.
     ///
     /// # See also
     ///
@@ -208,7 +208,7 @@ where
     ///
     /// # Returns
     ///
-    /// * Some(EntityView<'_>) if the entity was found, None if no entity was found
+    /// * `Some(EntityView<'_>)` if the entity was found, `None` if no entity was found.
     ///
     /// # See also
     ///
@@ -256,7 +256,7 @@ where
     ///
     /// # Returns
     ///
-    /// * Some(EntityView<'_>) if the entity was found, None if no entity was found
+    /// * `Some(EntityView<'_>)` if the entity was found, `None` if no entity was found.
     ///
     /// # See also
     ///

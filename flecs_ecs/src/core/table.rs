@@ -87,7 +87,7 @@ impl<'a> Table<'a> {
     ///
     /// # Returns
     ///
-    /// The index of the id in the table type, or None if the id is not found
+    /// The index of the id in the table type, or `None` if the id is not found
     ///
     /// # See also
     ///
@@ -112,7 +112,7 @@ impl<'a> Table<'a> {
     ///
     /// # Returns
     ///
-    /// The index of the component in the table type, or None if the component is not in the table
+    /// The index of the component in the table type, or `None` if the component is not in the table
     ///
     /// # See also
     ///
@@ -131,7 +131,7 @@ impl<'a> Table<'a> {
     ///
     /// # Returns
     ///
-    /// The index of the pair in the table type, or None if the pair is not in the table
+    /// The index of the pair in the table type, or `None` if the pair is not in the table
     ///
     /// # See also
     ///
@@ -154,7 +154,7 @@ impl<'a> Table<'a> {
     ///
     /// # Returns
     ///
-    /// The index of the pair in the table type, or None if the pair is not in the table
+    /// The index of the pair in the table type, or `None` if the pair is not in the table
     ///
     /// # See also
     ///
@@ -176,7 +176,7 @@ impl<'a> Table<'a> {
     ///
     /// # Returns
     ///
-    /// The index of  the pair in the table type, or None if the pair is not in the table
+    /// The index of  the pair in the table type, or `None` if the pair is not in the table
     ///
     /// # See also
     ///
@@ -202,7 +202,7 @@ impl<'a> Table<'a> {
     ///
     /// # Returns
     ///
-    /// The index of the id in the table, or None if the id is not in the table
+    /// The index of the id in the table, or `None` if the id is not in the table
     ///
     /// # See also
     ///
@@ -231,7 +231,7 @@ impl<'a> Table<'a> {
     ///
     /// # Returns
     ///
-    /// The index of the component in the table, or None if the component is not in the table
+    /// The index of the component in the table, or `None` if the component is not in the table
     ///
     /// # See also
     ///
@@ -254,7 +254,7 @@ impl<'a> Table<'a> {
     ///
     /// # Returns
     ///
-    /// The index of the pair in the table, or None if the pair is not in the table
+    /// The index of the pair in the table, or `None` if the pair is not in the table
     ///
     /// # See also
     ///
@@ -277,7 +277,7 @@ impl<'a> Table<'a> {
     ///
     /// # Returns
     ///
-    /// The index of the pair in the table, or None if the pair is not in the table
+    /// The index of the pair in the table, or `None` if the pair is not in the table
     ///
     /// # See also
     ///
@@ -303,7 +303,7 @@ impl<'a> Table<'a> {
     ///
     /// # Returns
     ///
-    /// The index of the pair in the table, or None if the pair is not in the table
+    /// The index of the pair in the table, or `None` if the pair is not in the table
     ///
     /// # See also
     ///
@@ -406,7 +406,7 @@ impl<'a> Table<'a> {
     ///
     /// # Returns
     ///
-    /// Some(Pointer) to the column, or None if not a component
+    /// Some(Pointer) to the column, or `None` if not a component
     ///
     /// # See also
     ///
@@ -429,7 +429,7 @@ impl<'a> Table<'a> {
     ///
     /// # Returns
     ///
-    /// Some(Pointer) to the column, or None if not found
+    /// Some(Pointer) to the column, or `None` if not found
     ///
     /// # See also
     ///
@@ -449,7 +449,7 @@ impl<'a> Table<'a> {
     ///
     /// # Returns
     ///
-    /// Some(Pointer) to the column, or None if not found
+    /// Some(Pointer) to the column, or `None` if not found
     ///
     /// # See also
     ///
@@ -471,7 +471,7 @@ impl<'a> Table<'a> {
     ///
     /// # Returns
     ///
-    /// Some(Pointer) to the column, or None if not found
+    /// Some(Pointer) to the column, or `None` if not found
     ///
     /// # See also
     ///
@@ -494,7 +494,7 @@ impl<'a> Table<'a> {
     ///
     /// # Returns
     ///
-    /// Some(Pointer) to the column, or None if not found
+    /// Some(Pointer) to the column, or `None` if not found
     ///
     /// # See also
     ///
@@ -661,7 +661,7 @@ impl<'a> TableRange<'a> {
     ///
     /// # Returns
     ///
-    /// Some(Pointer) to the column, or None if not a component
+    /// Some(Pointer) to the column, or `None` if not a component
     ///
     /// # See also
     ///
