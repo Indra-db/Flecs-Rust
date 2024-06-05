@@ -555,6 +555,30 @@ impl<'a> EntityView<'a> {
         });
     }
 
+    /// Get the count of targets for a given relationship.
+    ///
+    /// # Arguments
+    ///
+    /// * `relationship` - The relationship for which to get the target count.
+    ///
+    /// # Returns
+    ///
+    /// The count of targets for the given relationship.
+    /// If it doesn't have the relationship, this function will return `None`.
+    pub fn target_id_count(self, relationship: impl Into<Entity>) -> Option<i32> {
+        let world = self.world.real_world().ptr_mut();
+        let id = ecs_pair(*relationship.into(), ECS_WILDCARD);
+        let table = unsafe { sys::ecs_get_table(self.world.world_ptr_mut(), *self.id) };
+
+        let count = unsafe { sys::ecs_rust_rel_count(world, id, table) };
+
+        if count == -1 {
+            None
+        } else {
+            Some(count)
+        }
+    }
+
     /// Iterate over targets for a given relationship.
     ///
     /// # Type Parameters
@@ -574,6 +598,23 @@ impl<'a> EntityView<'a> {
         T: ComponentId,
     {
         self.each_target_id(EntityView::new_from(self.world, T::id(self.world)), func);
+    }
+
+    /// Get the count of targets for a given relationship.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The relationship for which to get the target count.
+    ///
+    /// # Returns
+    ///
+    /// The count of targets for the given relationship.
+    /// If it doesn't have the relationship, this function will return `None`.
+    pub fn each_target_count<T>(self) -> Option<i32>
+    where
+        T: ComponentId,
+    {
+        self.target_id_count(T::id(self.world))
     }
 
     /// Iterate children for entity

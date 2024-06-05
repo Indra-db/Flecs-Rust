@@ -72220,3 +72220,25 @@ void* ecs_rust_get_id(
 error:
     return NULL;
 }
+
+int32_t ecs_rust_rel_count(
+    const ecs_world_t *world,
+    ecs_id_t id,
+    ecs_table_t* table)
+{
+    ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
+
+    if (!table) return -1;
+
+    flecs_poly_assert(world, ecs_world_t);
+    ecs_assert(id != 0, ECS_INVALID_PARAMETER, NULL);
+
+    ecs_id_record_t *idr = flecs_id_record_get(world, id);
+    if (!idr) {
+        return -1;
+    }
+    ecs_table_record_t *tr = ecs_table_cache_get(&idr->cache, table);
+    return tr->count;
+error:
+    return -1;
+}
