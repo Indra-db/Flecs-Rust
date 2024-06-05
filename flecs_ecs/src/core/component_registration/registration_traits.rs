@@ -108,7 +108,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
         {
             ecs_assert!(
                 {
-                    if !Self::is_registered() || !Self::is_registered_with_world(world.world()) {
+                    if !Self::is_registered_with_world(world.world()) {
                         false
                     } else {
                         true

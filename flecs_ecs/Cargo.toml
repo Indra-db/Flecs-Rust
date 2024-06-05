@@ -79,14 +79,6 @@ flecs_manual_registration = []
 # where safety and correctness checks are more critical.
 flecs_unsafe_get = []
 
-# indicate that the flecs library is meant to be used in a multi-world application
-# this will disable some optimizations.
-# In Flecs C++ it's necessary for components to be registered manually before being used in multithreaded systems
-# this is not necessary in Rust and is considered multithreaded safe for single world applications.
-# If you intend to have multiple worlds, you should enable this feature and register components manually
-# if the intent is to share components between worlds, like in C++. In the future this limitation might be mitigated.
-flecs_multi_world_application = []
-
 # Adjust the maximum number of terms in queries to 32. Default is 16.
 flecs_term_count_32 = ["flecs_ecs_sys/flecs_term_count_32"]
 # Adjust the maximum number of terms in queries to 64. Default is 16.
@@ -157,6 +149,7 @@ flecs_nightly_tests = []
 
 default = [
     #"flecs_regenerate_binding_c",
+    "flecs_manual_registration",
     "flecs_module",
     "flecs_script",
     "flecs_snapshot",
