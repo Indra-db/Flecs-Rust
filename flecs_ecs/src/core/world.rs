@@ -731,19 +731,27 @@ impl World {
         unsafe { sys::ecs_enable_range_check(self.raw_world.as_ptr(), enabled) };
     }
 
-    /// Get the current scope. Get the scope set by `sys::ecs_set_scope`. If no scope is set, this operation will return 0.
+    /// Get the current scope. Get the scope set by `set_scope`.
+    /// If no scope is set, this operation will return None.
     ///
     /// # Returns
     ///
     /// Returns an `EntityView` representing the current scope.
+    /// If no scope is set, this operation will return None.
     ///
     /// # See also
     ///
     /// * C++ API: `world::get_scope`
     #[doc(alias = "world::get_scope")]
     #[inline(always)]
-    pub fn get_scope<T: ComponentId>(&self) -> EntityView {
-        EntityView::new_from(self, unsafe { sys::ecs_get_scope(self.raw_world.as_ptr()) })
+    pub fn get_scope<T: ComponentId>(&self) -> Option<EntityView> {
+        let scope = unsafe { sys::ecs_get_scope(self.raw_world.as_ptr()) };
+
+        if scope == 0 {
+            None
+        } else {
+            Some(EntityView::new_from(self, scope))
+        }
     }
 
     /// Set the current scope. This operation sets the scope of the current stage to the provided entity.
@@ -795,15 +803,11 @@ impl World {
 
     /// Sets the search path for entity lookup operations.
     ///
-    /// This function configures the search path used for looking up entities. The search path is an array of entity IDs that define the scopes within which lookup operations will search for entities.
+    /// This function configures the search path used for looking up an entity.
     ///
     /// # Best Practices
     ///
     /// * It's advisable to restore the previous search path after making temporary changes.
-    ///
-    /// # Search Path Evaluation
-    ///
-    /// * The search path is evaluated starting from the last element of the array.
     ///
     /// # Default Behavior
     ///
@@ -816,15 +820,10 @@ impl World {
     /// # Considerations
     ///
     /// * If the custom search path doesn't include `flecs.core`, operations that rely on looking up names from `flecs.core` may fail.
-    /// * The search path array is not managed by the Rust runtime. Ensure the array remains valid for as long as it is used as the search path.
-    ///
-    /// # Array Termination
-    ///
-    /// * The provided array must be terminated with a 0 element. This allows for pushing/popping elements onto/from an existing array without needing to call `sys::ecs_set_lookup_path` again.
     ///
     /// # Arguments
     ///
-    /// * `search_path` - A 0-terminated array of entity IDs defining the new search path.
+    /// * `search_path` - The entity to set as the search path.
     ///
     /// # Returns
     ///
@@ -845,9 +844,9 @@ impl World {
     /// The entity is searched recursively recursively traversing
     /// up the tree until found.
     ///
-    /// # Safety
+    /// # Panics
     ///
-    /// Panics: Ensure that the entity exists before using it.
+    /// Ensure that the entity exists before using it.
     /// Use `try_lookup` variant otherwise.
     ///
     /// # Arguments
@@ -856,7 +855,7 @@ impl World {
     ///
     /// # Returns
     ///
-    /// The entity, if not found, the entity will have an id of 0.
+    /// The entity
     ///
     /// # See also
     ///
@@ -870,9 +869,9 @@ impl World {
 
     /// Lookup entity by name, only the current scope is searched
     ///
-    /// # Safety
+    /// # Panics
     ///
-    /// Panics: Ensure that the entity exists before using it.
+    /// Ensure that the entity exists before using it.
     /// Use `try_lookup` variant otherwise.
     ///
     /// # Arguments
@@ -881,7 +880,7 @@ impl World {
     ///
     /// # Returns
     ///
-    /// The entity, if not found, returns an entity with id 0.
+    /// The entity
     ///
     /// # See also
     ///
@@ -908,7 +907,7 @@ impl World {
     ///
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
-    fn try_lookup_impl(&self, name: &str, recursive: bool) -> Option<EntityView> {
+    fn try_lookup_impl(&self, name: &str, recursively: bool) -> Option<EntityView> {
         let name = compact_str::format_compact!("{}\0", name);
 
         let entity_id = unsafe {
@@ -918,7 +917,7 @@ impl World {
                 name.as_ptr() as *const _,
                 SEPARATOR.as_ptr(),
                 SEPARATOR.as_ptr(),
-                recursive,
+                recursively,
             )
         };
         if entity_id == 0 {
