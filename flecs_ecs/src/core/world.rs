@@ -107,7 +107,7 @@ impl World {
 
     fn init_builtin_components(&self) {
         // used for event handling with no data
-        self.component::<()>();
+        self.component_named::<()>("flecs::rs::() - None");
     }
 
     /// deletes and recreates the world
