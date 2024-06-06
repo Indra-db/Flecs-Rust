@@ -732,12 +732,12 @@ impl World {
     }
 
     /// Get the current scope. Get the scope set by `set_scope`.
-    /// If no scope is set, this operation will return None.
+    /// If no scope is set, this operation will return `None`.
     ///
     /// # Returns
     ///
     /// Returns an `EntityView` representing the current scope.
-    /// If no scope is set, this operation will return None.
+    /// If no scope is set, this operation will return `None`.
     ///
     /// # See also
     ///
@@ -901,7 +901,7 @@ impl World {
     ///
     /// # Returns
     ///
-    /// The entity if found, otherwise None.
+    /// The entity if found, otherwise `None`.
     ///
     /// # See also
     ///
@@ -937,7 +937,7 @@ impl World {
     ///
     /// # Returns
     ///
-    /// The entity if found, otherwise None.
+    /// The entity if found, otherwise `None`.
     ///
     /// # See also
     ///
@@ -956,7 +956,7 @@ impl World {
     ///
     /// # Returns
     ///
-    /// The entity if found, otherwise None.
+    /// The entity if found, otherwise `None`.
     ///
     /// # See also
     ///
@@ -1273,7 +1273,7 @@ impl World {
     /// use `Option` wrapper to indicate if the component is optional.
     ///
     /// - `try_map` assumes when not using `Option` wrapper, that the entity has the component.
-    ///   If it does not, it will not run the callback and return None.
+    ///   If it does not, it will not run the callback and return `None`.
     ///   If unsure and you still want to have the callback be ran, use `Option` wrapper instead.
     ///
     /// # Note
@@ -1293,8 +1293,8 @@ impl World {
     ///
     /// # Returns
     ///
-    /// - a Some(value) if the callback has ran. Where the type of value is specified in `Return` generic (can be elided).
-    ///   None if the callback has not ran.
+    /// - a `Some(value)` if the callback has ran. Where the type of value is specified in `Return` generic (can be elided).
+    ///   `None` if the callback has not ran.
     ///
     /// # Example
     ///
