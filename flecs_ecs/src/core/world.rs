@@ -149,7 +149,7 @@ impl World {
     ///
     /// * C++ API: `world::get_info`
     #[doc(alias = "world::get_info")]
-    pub fn get_info(&self) -> sys::ecs_world_info_t {
+    pub fn get_info(&self) -> WorldInfoT {
         // SAFETY: The pointer is valid for the lifetime of the world.
         unsafe { *sys::ecs_get_world_info(self.raw_world.as_ptr()) }
     }
