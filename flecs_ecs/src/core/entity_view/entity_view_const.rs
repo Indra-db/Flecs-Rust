@@ -6,7 +6,9 @@ use std::{
 
 use crate::sys;
 use flecs_ecs::core::*;
-use sys::{ecs_get_with, ecs_record_t};
+use sys::ecs_get_with;
+#[cfg(not(feature = "flecs_unsafe_get"))]
+use sys::ecs_record_t;
 
 #[derive(Clone, Copy)]
 pub struct EntityView<'a> {
