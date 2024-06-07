@@ -149,9 +149,9 @@ impl World {
     ///
     /// * C++ API: `world::get_info`
     #[doc(alias = "world::get_info")]
-    fn get_info(&self) -> &sys::ecs_world_info_t {
+    pub fn get_info(&self) -> WorldInfoT {
         // SAFETY: The pointer is valid for the lifetime of the world.
-        unsafe { &*sys::ecs_get_world_info(self.raw_world.as_ptr()) }
+        unsafe { *sys::ecs_get_world_info(self.raw_world.as_ptr()) }
     }
 
     /// Gets the last `delta_time`.
@@ -732,12 +732,12 @@ impl World {
     }
 
     /// Get the current scope. Get the scope set by `set_scope`.
-    /// If no scope is set, this operation will return None.
+    /// If no scope is set, this operation will return `None`.
     ///
     /// # Returns
     ///
     /// Returns an `EntityView` representing the current scope.
-    /// If no scope is set, this operation will return None.
+    /// If no scope is set, this operation will return `None`.
     ///
     /// # See also
     ///
@@ -901,7 +901,7 @@ impl World {
     ///
     /// # Returns
     ///
-    /// The entity if found, otherwise None.
+    /// The entity if found, otherwise `None`.
     ///
     /// # See also
     ///
@@ -937,7 +937,7 @@ impl World {
     ///
     /// # Returns
     ///
-    /// The entity if found, otherwise None.
+    /// The entity if found, otherwise `None`.
     ///
     /// # See also
     ///
@@ -956,7 +956,7 @@ impl World {
     ///
     /// # Returns
     ///
-    /// The entity if found, otherwise None.
+    /// The entity if found, otherwise `None`.
     ///
     /// # See also
     ///
@@ -1273,7 +1273,7 @@ impl World {
     /// use `Option` wrapper to indicate if the component is optional.
     ///
     /// - `try_map` assumes when not using `Option` wrapper, that the entity has the component.
-    ///   If it does not, it will not run the callback and return None.
+    ///   If it does not, it will not run the callback and return `None`.
     ///   If unsure and you still want to have the callback be ran, use `Option` wrapper instead.
     ///
     /// # Note
@@ -1293,8 +1293,8 @@ impl World {
     ///
     /// # Returns
     ///
-    /// - a Some(value) if the callback has ran. Where the type of value is specified in `Return` generic (can be elided).
-    ///   None if the callback has not ran.
+    /// - a `Some(value)` if the callback has ran. Where the type of value is specified in `Return` generic (can be elided).
+    ///   `None` if the callback has not ran.
     ///
     /// # Example
     ///
@@ -4066,6 +4066,47 @@ impl World {
     #[inline(always)]
     pub fn using_task_threads(&self) -> bool {
         unsafe { sys::ecs_using_task_threads(self.raw_world.as_ptr()) }
+    }
+}
+
+/// Module mixin implementation
+#[cfg(feature = "flecs_module")]
+impl World {
+    /// Define a module.
+    /// This operation is not mandatory, but can be called inside the module ctor to
+    /// obtain the entity associated with the module, or override the module name.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `M` - The type of the module.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name to give the module.
+    ///
+    /// # Returns
+    ///
+    /// The module entity.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::module`
+    pub fn module<M: ComponentId>(&self, name: &str) -> EntityView {
+        let name = compact_str::format_compact!("{}\0", name);
+
+        let id = self.component_id::<M>();
+
+        unsafe {
+            sys::ecs_add_path_w_sep(
+                self.raw_world.as_ptr(),
+                *id,
+                0,
+                name.as_ptr() as *const _,
+                SEPARATOR.as_ptr(),
+                SEPARATOR.as_ptr(),
+            );
+        }
+        self.set_scope_id(id)
     }
 }
 

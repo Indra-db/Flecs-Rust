@@ -400,7 +400,7 @@ where
     }
 
     /// Obtain pair id matched for field.
-    /// This operation will return None if the field is not a pair.
+    /// This operation will return `None` if the field is not a pair.
     ///
     /// # Arguments
     ///

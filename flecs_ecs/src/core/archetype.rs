@@ -62,7 +62,7 @@ impl<'a> Archetype<'a> {
     ///
     /// # Returns
     ///
-    /// Some(String) - if the type is not null. None - if the type is null.
+    /// `Some(String)` - if the type is not null. `None` - if the type is null.
     ///
     /// # See also
     ///
@@ -123,8 +123,8 @@ impl<'a> Archetype<'a> {
     /// # Returns
     ///
     /// Result returned as Id Type.
-    /// Some(Id) - if the type is not null and the index is within bounds.
-    /// None - if the type is null or the index is out of bounds.
+    /// - `Some(Id)` - if the type is not null and the index is within bounds.
+    /// - `None` - if the type is null or the index is out of bounds.
     ///
     /// # See also
     ///
