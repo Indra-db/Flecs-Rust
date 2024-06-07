@@ -9,6 +9,9 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  RUST_NIGHTLY_TOOLCHAIN: nightly-2024-05-06
+
 jobs:
   rustfmt:
     runs-on: ubuntu-latest
@@ -22,6 +25,19 @@ jobs:
           components: rustfmt
       - name: cargo fmt
         run: cargo fmt --all --check
+
+  miri:
+    runs-on: ubuntu-latest
+    name: cargo miri
+    steps:
+      - uses: actions/checkout@v4
+      - name: install nightly toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+          components: miri
+      - name: cargo miri
+        run: cargo miri test --workspace
 
   typos:
     runs-on: ubuntu-latest
