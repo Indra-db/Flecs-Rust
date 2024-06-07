@@ -1,4 +1,4 @@
-# Flecs ECS Rust API
+![flecs](assets/flecs_rust_logo.png)
 
 [![Generic badge](https://img.shields.io/badge/Flecs_Version-4.0.0-E56717.svg)](https://github.com/SanderMertens/flecs/releases)
 [![License](https://badgen.net/pypi/license/pip/)](https://github.com/Indra-db/flecs-ecs-rs/blob/master/LICENSE)
