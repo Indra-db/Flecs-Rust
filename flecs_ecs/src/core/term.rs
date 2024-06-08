@@ -1077,22 +1077,27 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
             "no component specified for singleton"
         );
 
-        unsafe {
-            let sid = if self.current_term_mut().id != 0 {
-                self.current_term_mut().id
-            } else {
-                self.current_term_mut().first.id
-            };
+        let singleton_id = match self.current_term_mut().id {
+            0 => self.current_term_mut().first.id,
+            id => id,
+        };
 
-            ecs_assert!(sid != 0, FlecsErrorCode::InvalidParameter, "invalid id");
+        ecs_assert!(
+            singleton_id != 0,
+            FlecsErrorCode::InvalidParameter,
+            "invalid id"
+        );
 
-            if !ecs_is_pair(sid) {
-                self.current_term_mut().src.id = sid;
-            } else {
-                self.current_term_mut().src.id =
-                    sys::ecs_get_alive(self.world_ptr_mut(), *ecs_first(sid));
-            }
-        }
+        self.current_term_mut().src.id = if ecs_is_pair(singleton_id) {
+            unsafe { sys::ecs_get_alive(self.world_ptr_mut(), *ecs_first(singleton_id)) }
+        } else {
+            println!("singleton id: {}", singleton_id);
+            singleton_id
+        };
+        
+        let current_term = self.current_term_mut();
+        println!("current_term: {:?}", current_term);
+
         self
     }
 
