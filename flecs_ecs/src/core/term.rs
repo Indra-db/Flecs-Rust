@@ -157,7 +157,9 @@ pub mod internals {
 }
 
 fn check_term_access_validity<'a>(term: &impl TermBuilderImpl<'a>) {
-    if term.current_term_index() < term.count_generic_terms() {
+    if term.current_term_index() < term.count_generic_terms()
+        && term.current_term_ref_mode() != TermRefMode::Src
+    {
         panic!("This function should only be used on terms that are not part of the generic type signature. ")
     }
 }
