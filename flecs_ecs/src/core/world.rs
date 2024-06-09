@@ -75,6 +75,7 @@ impl Drop for World {
                 unsafe { sys::ecs_fini(self.raw_world.as_ptr()) };
                 let is_ref_count_not_zero = !ctx.is_ref_count_zero();
                 if is_ref_count_not_zero && !ctx.is_panicking {
+                    ctx.set_is_panicking_true();
                     panic!("The code base still has lingering references to `Query` objects. This is a bug in the user code.
                         Please ensure that all `Query` objects are out of scope before the world is destroyed.");
                 }

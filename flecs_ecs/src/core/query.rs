@@ -3,6 +3,7 @@
 
 use std::{marker::PhantomData, os::raw::c_void, ptr::NonNull};
 
+use flecs_ecs_sys::ecs_get_binding_ctx;
 use sys::ecs_get_alive;
 
 use crate::core::*;
@@ -43,23 +44,27 @@ where
     T: Iterable,
 {
     fn drop(&mut self) {
-        // Only free if query is not associated with entity. Queries are associated with entities
-        // when they are either named or cached, such as system, cached queries and named queries. These queries have to be either explicitly
-        // deleted with the .destruct() method, or will be deleted when the
-        // world is deleted.
-        let query_void_ptr = self.query.as_ptr() as *mut c_void;
-        let ecs_header = query_void_ptr as *mut sys::ecs_header_t;
-
         unsafe {
-            let is_valid = (*ecs_header).magic == 0x6563736f;
-            if is_valid {
-                self.world().world_ctx_mut().dec_query_ref_count();
+            let query_ptr = self.query.as_ptr();
+            let world_ctx = &*((*query_ptr).binding_ctx as *mut WorldCtx);
 
-                if self.query.as_ref().entity == 0
-                    && sys::flecs_poly_release_(self.query.as_ptr() as *mut c_void) == 0
-                {
-                    sys::ecs_query_fini(self.query.as_ptr());
-                }
+            // If the world didn't end through normal reasons (user dropping it manually or resetting it)
+            // and it's holding remaining references to queries in Rust, the world will panic, in that case, don't invoke
+            // the query destruction since the memory will already be invalidated.
+            if world_ctx.is_panicking {
+                return;
+            }
+
+            self.world().world_ctx_mut().dec_query_ref_count();
+
+            // Only free if query is not associated with entity. Queries are associated with entities
+            // when they are either named or cached, such as system, cached queries and named queries. These queries have to be either explicitly
+            // deleted with the .destruct() method, or will be deleted when the
+            // world is deleted.
+            if self.query.as_ref().entity == 0
+                && sys::flecs_poly_release_(self.query.as_ptr() as *mut c_void) == 0
+            {
+                sys::ecs_query_fini(self.query.as_ptr());
             }
         }
     }
@@ -168,6 +173,8 @@ where
             !query_ptr.is_null(),
             "Failed to create query from query descriptor"
         );
+
+        unsafe { (*query_ptr).binding_ctx = ecs_get_binding_ctx(world_ptr) };
 
         let query = unsafe { NonNull::new_unchecked(query_ptr) };
 
