@@ -1,6 +1,6 @@
 //! Cached query implementation. Fast to iterate, but slower to create than Filter
 
-use std::os::raw::{c_int, c_void};
+use std::os::raw::c_void;
 
 use crate::core::internals::*;
 use crate::core::*;
@@ -206,8 +206,6 @@ where
     }
 }
 
-// This is a raw function pointer type, compatible with C to pass to the desc.
-type OrderByFn<T> = extern "C" fn(EntityT, *const T, EntityT, *const T) -> c_int;
 // Assuming some imports and definitions from your previous example, and adding the required ones for this example.
 type GroupByFn = extern "C" fn(*mut WorldT, *mut TableT, IdT, *mut c_void) -> u64;
 
@@ -838,26 +836,28 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// # Arguments
     ///
     /// * `compare`: The compare function used to sort the components.
+    ///     The signature of the function must be `fn(Entity, &T, Entity, &T) -> i32`.
     ///
     /// # See also
     ///
     /// * C++ API: `query_builder_i::order_by`
     #[doc(alias = "query_builder_i::order_by")]
-    fn order_by<T>(&mut self, compare: OrderByFn<T>) -> &mut Self
+    fn order_by<T>(&mut self, compare: impl OrderByFn<T>) -> &mut Self
     where
         T: ComponentId,
     {
         let cmp: sys::ecs_order_by_action_t = Some(unsafe {
             std::mem::transmute::<
-                extern "C" fn(u64, *const T, u64, *const T) -> i32,
+                extern "C" fn(Entity, &T, Entity, &T) -> i32,
                 unsafe extern "C" fn(
                     u64,
                     *const std::ffi::c_void,
                     u64,
                     *const std::ffi::c_void,
                 ) -> i32,
-            >(compare)
+            >(compare.to_extern_fn())
         });
+
         self.order_by_id(T::id(self.world()), cmp);
         self
     }
@@ -1027,5 +1027,33 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         let desc = self.query_desc_mut();
         desc.on_group_delete = action;
         self
+    }
+}
+
+pub trait OrderByFn<T>
+where
+    T: ComponentId,
+{
+    fn to_extern_fn(self) -> extern "C" fn(Entity, &T, Entity, &T) -> i32;
+}
+
+impl<F, T: ComponentId> OrderByFn<T> for F
+where
+    F: Fn(Entity, &T, Entity, &T) -> i32,
+{
+    fn to_extern_fn(self) -> extern "C" fn(Entity, &T, Entity, &T) -> i32 {
+        // const {
+        assert!(std::mem::size_of::<Self>() == 0);
+        // }
+        std::mem::forget(self);
+
+        extern "C" fn output<F, T>(e1: Entity, e1_data: &T, e2: Entity, e2_data: &T) -> i32
+        where
+            F: Fn(Entity, &T, Entity, &T) -> i32,
+        {
+            (unsafe { std::mem::transmute_copy::<_, F>(&()) })(e1, e1_data, e2, e2_data)
+        }
+
+        output::<F, T>
     }
 }

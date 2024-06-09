@@ -8,15 +8,7 @@ pub struct Position {
     pub y: f32,
 }
 
-extern "C" fn compare_position(
-    _e1: EntityT,
-    p1: *const Position,
-    _e2: EntityT,
-    p2: *const Position,
-) -> std::ffi::c_int {
-    let p1 = unsafe { &*p1 };
-    let p2 = unsafe { &*p2 };
-
+fn compare_position(_e1: Entity, p1: &Position, _e2: Entity, p2: &Position) -> i32 {
     (p1.x > p2.x) as i32 - (p1.x < p2.x) as i32
 }
 
@@ -24,6 +16,7 @@ fn print_query(query: &Query<&Position>) {
     query.each_entity(|entity, pos| println!("{:?}", pos));
 }
 
+#[test]
 fn main() {
     let world = World::new();
 
@@ -37,7 +30,9 @@ fn main() {
     // Create a sorted query
     let query = world
         .query::<&Position>()
-        .order_by(compare_position)
+        .order_by::<Position>(|_e1, p1: &Position, _e2, p2: &Position| -> i32 {
+            (p1.x > p2.x) as i32 - (p1.x < p2.x) as i32
+        })
         .build();
 
     // Create a sorted system

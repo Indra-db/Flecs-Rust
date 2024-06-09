@@ -48,14 +48,15 @@ impl OutputCapture {
         let str_output = String::from_utf8(self.output().lock().unwrap().clone()).unwrap();
         let mut settings = insta::Settings::clone_current();
         #[allow(clippy::double_parens)]
-        settings
-            ._private_inner_mut()
-            .filters((vec![(r"id: (\d+)\s", "[ID] ")]));
-        // settings
-        //     ._private_inner_mut()
-        //     // r##"hello "{world}""##
-        //     //TODO fix, this redacts all the following lines as well
-        //     .filters((vec![(r"Group deleted: .*", "Group deleted: redacted")]));
+        settings._private_inner_mut().filters(
+            (vec![
+                (r"id: (\d+)\s", "[ID] "),
+                (
+                    r#"Group deleted: \\"([^\\"]+)\\""#,
+                    "group deleted: redacted",
+                ),
+            ]),
+        );
         settings.set_prepend_module_to_snapshot(false);
         settings.set_snapshot_suffix(name);
         settings.set_snapshot_path("z_ignore_test_snapshots");
