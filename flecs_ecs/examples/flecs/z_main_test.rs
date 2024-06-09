@@ -1,4 +1,4 @@
-//#![feature(internal_output_capture)]
+#![cfg_attr(feature = "flecs_nightly_tests", feature(internal_output_capture))]
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(unused_variables)]

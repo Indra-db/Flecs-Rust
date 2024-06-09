@@ -18,13 +18,7 @@ fn main() {
     let world = World::new();
 
     // Create a query that matches edible components
-    let query = world
-        .query::<&EatsAmount>()
-        .term_at(0)
-        // Change first argument to (Eats, *)
-        // alternative you can do  `.set_second_id(flecs::Wildcard::ID)``
-        .set_second::<flecs::Wildcard>()
-        .build();
+    let query = world.new_query::<&(EatsAmount, flecs::Wildcard)>();
 
     // Create a few entities that match the query
     world

@@ -47,20 +47,14 @@ fn main() {
         .set_pair::<Position, Local>(Position { x: 0.1, y: 0.1 });
 
     let query = world
-        .query::<(&Position, Option<&Position>, &mut Position)>()
-        .term_at(0)
-        .set_second::<Local>()
-        .term_at(1)
-        .set_second::<WorldX>()
-        .term_at(2)
-        .set_second::<WorldX>()
+        .query::<(
+            &(Position, Local),
+            Option<&(Position, WorldX)>,
+            &mut (Position, WorldX),
+        )>()
         .term_at(1)
         .parent()
         .cascade()
-        //.optional() -- `.optional()` is equivalent to `Option<&Position>` - however be aware that
-        // this won't provide a nice API with `Option<&Position>` but rather return a slice where you have to do
-        // `.as_ptr().is_null()` to check if the value is actually valid. This will likely be removed from the API once
-        // we have tests in place to ensure that the `Option` API is working as expected.
         .build();
 
     query.run_iter(|it, (local, parent_world, world)| {
@@ -75,12 +69,8 @@ fn main() {
         }
     });
 
-    //TODO: pair wrapper class to clean up, beautify this API
     world
-        .query::<&Position>()
-        .term_at(0)
-        .set_second::<WorldX>()
-        .build()
+        .new_query::<&(Position, WorldX)>()
         .each_entity(|entity, position| {
             println!(
                 "Entity {} is at ({}, {})",
