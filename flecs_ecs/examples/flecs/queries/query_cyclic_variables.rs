@@ -77,5 +77,5 @@ fn main() {
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();
     main();
-    output_capture.test("rules_cyclic_variables".to_string());
+    output_capture.test("query_cyclic_variables".to_string());
 }

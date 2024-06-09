@@ -150,5 +150,5 @@ fn main() {
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();
     main();
-    output_capture.test("rules_transitive_queries".to_string());
+    output_capture.test("query_transitive_queries".to_string());
 }

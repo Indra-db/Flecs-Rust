@@ -76,5 +76,5 @@ fn main() {
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();
     main();
-    output_capture.test("rules_basics".to_string());
+    output_capture.test("query_basics".to_string());
 }

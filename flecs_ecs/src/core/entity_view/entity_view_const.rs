@@ -815,7 +815,7 @@ impl<'a> EntityView<'a> {
     ///   In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
     ///
     /// - `get` assumes when not using `Option` wrapper, that the entity has the component.
-    ///   This will panic if the entity does not have the component. If unsure, use `Option` wrapper or `try_map` function instead.
+    ///   This will panic if the entity does not have the component. If unsure, use `Option` wrapper or `try_get` function instead.
     ///   `try_get` does not run the callback if the entity does not have the component that isn't marked `Option`.
     ///
     /// # Example

@@ -74,5 +74,5 @@ fn main() {
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();
     main();
-    output_capture.test("rules_component_inheritance".to_string());
+    output_capture.test("query_component_inheritance".to_string());
 }
