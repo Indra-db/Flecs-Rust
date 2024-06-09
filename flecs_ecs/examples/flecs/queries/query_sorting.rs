@@ -16,7 +16,6 @@ fn print_query(query: &Query<&Position>) {
     query.each_entity(|entity, pos| println!("{:?}", pos));
 }
 
-#[test]
 fn main() {
     let world = World::new();
 

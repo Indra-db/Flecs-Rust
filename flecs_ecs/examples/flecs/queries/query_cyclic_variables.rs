@@ -7,7 +7,6 @@ use flecs_ecs::prelude::*;
 #[derive(Component)]
 struct Likes;
 
-#[test]
 fn main() {
     let world = World::new();
 

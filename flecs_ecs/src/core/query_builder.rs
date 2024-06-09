@@ -184,7 +184,7 @@ where
 {
     type BuiltType = Query<T>;
 
-    /// Build the `observer_builder` into an query
+    /// Build the `query_builder` into an query
     ///
     /// See also
     ///

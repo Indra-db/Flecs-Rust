@@ -86,24 +86,6 @@ impl Drop for World {
     }
 }
 
-// fn register_component_ids_map(raw_world: *mut WorldT) -> NonNull<FlecsIdMap> {
-//     unsafe {
-//         let name = c"flecs::rust::component_ids";
-//         let id = register_componment_data_explicit::<ComponentIds>(
-//             raw_world,
-//             name.as_ptr(),
-//             0,
-//             false,
-//             false,
-//         );
-//         sys::ecs_add_id(raw_world, id, flecs::Sparse::ID);
-
-//         let ptr = sys::ecs_emplace_id(raw_world, id, id, &mut false) as *mut FlecsIdMap;
-//         std::ptr::write(ptr, Default::default());
-//         NonNull::new(ptr).unwrap()
-//     }
-// }
-
 impl World {
     /// Creates a new world, same as `default()`
     pub fn new() -> Self {
@@ -117,19 +99,33 @@ impl World {
 
     /// deletes and recreates the world
     ///
-    /// # Safety
+    /// # Panics
     /// This function panics if lingering references to `Query` and `World` objects are still present.
     ///
     /// # See also
     ///
     /// * C++ API: `world::reset`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// let e = world.entity().id();
+    ///
+    /// assert!(world.exists(e));
+    /// let new_world = world.reset();
+    /// assert!(!new_world.exists(e));
+    /// ```
     #[doc(alias = "world::reset")]
     pub fn reset(self) -> Self {
         if unsafe { sys::flecs_poly_refcount(self.raw_world.as_ptr() as *mut c_void) } > 1 {
             panic!("Reset would invalidate other world handles that are still lingering in the user's code base. 
             This is a bug in the user code. Please ensure that all world handles are out of scope before calling `reset`.");
         }
-        unsafe { sys::ecs_fini(self.raw_world.as_ptr()) };
+        drop(self);
         World::new()
     }
 
@@ -148,15 +144,15 @@ impl World {
         self.raw_world.as_ptr()
     }
 
-    /// Get the world's info.
+    /// Get the world's info. See [`sys::WorldInfo`] for what information you can retrieve.
     ///
     /// # See also
     ///
     /// * C++ API: `world::get_info`
     #[doc(alias = "world::get_info")]
-    pub fn get_info(&self) -> WorldInfoT {
+    pub fn get_info(&self) -> &sys::WorldInfo {
         // SAFETY: The pointer is valid for the lifetime of the world.
-        unsafe { *sys::ecs_get_world_info(self.raw_world.as_ptr()) }
+        unsafe { &*sys::ecs_get_world_info(self.raw_world.as_ptr()) }
     }
 
     /// Gets the last `delta_time`.
@@ -365,7 +361,7 @@ impl World {
 
     /// Ends a block of operations to defer.
     ///
-    /// This should follow a `defer_begin` call.
+    /// This should follow a [`defer_begin`](World::defer_begin) call.
     ///
     /// ## safety
     /// this operation is thread safe

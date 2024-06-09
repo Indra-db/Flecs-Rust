@@ -2939,10 +2939,6 @@ extern "C" {
     pub fn ecs_get_build_info() -> *const ecs_build_info_t;
 }
 extern "C" {
-    #[doc = "Get world info.\n\n @param world The world.\n @return Pointer to the world info. Valid for as long as the world exists."]
-    pub fn ecs_get_world_info(world: *const ecs_world_t) -> *const ecs_world_info_t;
-}
-extern "C" {
     #[doc = "Dimension the world for a specified number of entities.\n This operation will preallocate memory in the world for the specified number\n of entities. Specifying a number lower than the current number of entities in\n the world will have no effect.\n\n @param world The world.\n @param entity_count The number of entities to preallocate."]
     pub fn ecs_dim(world: *mut ecs_world_t, entity_count: i32);
 }

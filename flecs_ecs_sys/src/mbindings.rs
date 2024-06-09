@@ -96,3 +96,157 @@ extern "C" {
         reply_out: *mut ecs_http_reply_t,
     ) -> ::std::os::raw::c_int;
 }
+
+/// Type that contains information about the world.
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct WorldInfo {
+    /// Last issued component entity id.
+    pub last_component_id: ecs_entity_t,
+    /// First allowed entity id.
+    pub min_id: ecs_entity_t,
+    /// Last allowed entity id.
+    pub max_id: ecs_entity_t,
+    /// Raw delta time (no time scaling).
+    pub delta_time_raw: f32,
+    /// Time passed to or computed by `ecs_progress`.
+    pub delta_time: f32,
+    /// Time scale applied to `delta_time`.
+    pub time_scale: f32,
+    /// Target fps.
+    pub target_fps: f32,
+    /// Total time spent processing a frame.
+    pub frame_time_total: f32,
+    /// Total time spent in systems.
+    pub system_time_total: f32,
+    /// Total time spent notifying observers.
+    pub emit_time_total: f32,
+    /// Total time spent in merges.
+    pub merge_time_total: f32,
+    /// Time elapsed in simulation.
+    pub world_time_total: f32,
+    /// Time elapsed in simulation (no scaling).
+    pub world_time_total_raw: f32,
+    /// Time spent on query rematching.
+    pub rematch_time_total: f32,
+    /// Total number of frames.
+    pub frame_count_total: i64,
+    /// Total number of merges.
+    pub merge_count_total: i64,
+    /// Total number of rematches.
+    pub rematch_count_total: i64,
+    /// Total number of times a new id was created.
+    pub id_create_total: i64,
+    /// Total number of times an id was deleted.
+    pub id_delete_total: i64,
+    /// Total number of times a table was created.
+    pub table_create_total: i64,
+    /// Total number of times a table was deleted.
+    pub table_delete_total: i64,
+    /// Total number of pipeline builds.
+    pub pipeline_build_count_total: i64,
+    /// Total number of systems ran in last frame.
+    pub systems_ran_frame: i64,
+    /// Total number of times observer was invoked.
+    pub observers_ran_frame: i64,
+    /// Number of tag (no data) ids in the world.
+    pub tag_id_count: i32,
+    /// Number of component (data) ids in the world.
+    pub component_id_count: i32,
+    /// Number of pair ids in the world.
+    pub pair_id_count: i32,
+    /// Number of tables.
+    pub table_count: i32,
+    /// Number of tables without entities.
+    pub empty_table_count: i32,
+    pub cmd: WorldInfoCmd,
+    /// Value set by `ecs_set_name_prefix()`. Used
+    /// to remove library prefixes of symbol names (such as `Ecs`, `ecs_`) when
+    /// registering them as names.
+    pub name_prefix: *const std::os::raw::c_char,
+}
+
+/// Command counts.
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct WorldInfoCmd {
+    /// Add commands processed.
+    pub add_count: i64,
+    /// Remove commands processed.
+    pub remove_count: i64,
+    /// Delete commands processed.
+    pub delete_count: i64,
+    /// Clear commands processed.
+    pub clear_count: i64,
+    /// Set commands processed.
+    pub set_count: i64,
+    /// Ensure/emplace commands processed.
+    pub ensure_count: i64,
+    /// Modified commands processed.
+    pub modified_count: i64,
+    /// Commands discarded, happens when entity is no longer alive when running the command.
+    pub discard_count: i64,
+    /// Enqueued custom events.
+    pub event_count: i64,
+    /// Other commands processed.
+    pub other_count: i64,
+    /// Entities for which commands were batched.
+    pub batched_entity_count: i64,
+    /// Commands batched.
+    pub batched_command_count: i64,
+}
+
+extern "C" {
+    #[doc = "Get world info.\n\n @param world The world.\n @return Pointer to the world info. Valid for as long as the world exists."]
+    pub fn ecs_get_world_info(world: *const ecs_world_t) -> *const WorldInfo;
+}
+
+#[test]
+fn compile_test_check_if_any_ecs_world_info_fields_changed() {
+    let info = ecs_world_info_t {
+        last_component_id: 0,
+        min_id: 0,
+        max_id: 0,
+        delta_time_raw: 0.0,
+        delta_time: 0.0,
+        time_scale: 0.0,
+        target_fps: 0.0,
+        frame_time_total: 0.0,
+        system_time_total: 0.0,
+        emit_time_total: 0.0,
+        merge_time_total: 0.0,
+        world_time_total: 0.0,
+        world_time_total_raw: 0.0,
+        rematch_time_total: 0.0,
+        frame_count_total: 0,
+        merge_count_total: 0,
+        rematch_count_total: 0,
+        id_create_total: 0,
+        id_delete_total: 0,
+        table_create_total: 0,
+        table_delete_total: 0,
+        pipeline_build_count_total: 0,
+        systems_ran_frame: 0,
+        observers_ran_frame: 0,
+        tag_id_count: 0,
+        component_id_count: 0,
+        pair_id_count: 0,
+        table_count: 0,
+        empty_table_count: 0,
+        cmd: ecs_world_info_t__bindgen_ty_1 {
+            add_count: 0,
+            remove_count: 0,
+            delete_count: 0,
+            clear_count: 0,
+            set_count: 0,
+            ensure_count: 0,
+            modified_count: 0,
+            discard_count: 0,
+            event_count: 0,
+            other_count: 0,
+            batched_entity_count: 0,
+            batched_command_count: 0,
+        },
+        name_prefix: std::ptr::null(),
+    };
+}

@@ -50,6 +50,7 @@ fn generate_bindings() {
         .blocklist_type("ecs_alert_desc_t")
         .blocklist_function("ecs_http_server_http_request")
         .blocklist_function("ecs_log_enable_timedelta")
+        .blocklist_function("ecs_get_world_info")
         // These use va_list
         .blocklist_function("ecs_logv_")
         .blocklist_function("ecs_printv_")

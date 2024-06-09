@@ -49,7 +49,6 @@ struct Beggar;
 #[derive(Debug, Component)]
 struct Mage;
 
-#[test]
 fn main() {
     let world = World::new();
 
