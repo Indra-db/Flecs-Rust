@@ -1,5 +1,0 @@
----
-source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: str_output
----
-"Alice likes Bob\nJohn likes Jane\nJane likes John\nBob likes Alice\n"

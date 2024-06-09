@@ -1,5 +1,0 @@
----
-source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: str_output
----
-"Bob's components:\n[examples.entity_iterate_components.Position, examples.entity_iterate_components.Velocity, examples.entity_iterate_components.Human, (Identifier,Name), (examples.entity_iterate_components.Eats,examples.entity_iterate_components.Apples)]\n\n0: examples.entity_iterate_components.Position\n1: examples.entity_iterate_components.Velocity\n2: examples.entity_iterate_components.Human\n3: (Identifier,Name)\n4: (examples.entity_iterate_components.Eats,examples.entity_iterate_components.Apples)\n\n0: entity: Position\n1: entity: Velocity\n2: entity: Human\n3: rel: Identifier, target: Name\n4: rel: Eats, target: Apples\n\nPosition's components:\n[Component, (Identifier,Name), (Identifier,Symbol), (ChildOf,examples.entity_iterate_components)]\n\n0: Component\n1: (Identifier,Name)\n2: (Identifier,Symbol)\n3: (ChildOf,examples.entity_iterate_components)\n\n0: entity: Component\n1: rel: Identifier, target: Name\n2: rel: Identifier, target: Symbol\n3: rel: ChildOf, target: entity_iterate_components\n"

@@ -55,7 +55,7 @@ impl Default for World {
             sys::ecs_set_binding_ctx(
                 world.raw_world.as_ptr(),
                 ctx as *mut WorldCtx as *mut c_void,
-                Some(world_ctx_destruct),
+                None, //we manually destroy it in world drop for ref count check
             );
         }
 
@@ -71,11 +71,16 @@ impl Drop for World {
             if unsafe { sys::ecs_stage_get_id(world_ptr) } == -1 {
                 unsafe { sys::ecs_stage_free(world_ptr) };
             } else {
-                if !self.world_ctx().is_ref_count_zero() {
-                    panic!("The code base still has lingering references to `Query` objects. This is a bug in the user code. 
-                    Please ensure that all `Query` objects are out of scope before the world is destroyed.");
-                }
+                let ctx = self.world_ctx_mut();
                 unsafe { sys::ecs_fini(self.raw_world.as_ptr()) };
+                let is_ref_count_not_zero = !ctx.is_ref_count_zero();
+                if is_ref_count_not_zero && !ctx.is_panicking {
+                    panic!("The code base still has lingering references to `Query` objects. This is a bug in the user code.
+                        Please ensure that all `Query` objects are out of scope before the world is destroyed.");
+                }
+
+                let ctx = unsafe { Box::from_raw(ctx as *mut WorldCtx) };
+                drop(ctx);
             }
         }
     }

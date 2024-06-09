@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"Are Bob and Alice friends? Yes\nAre Bob and John friends? No\nAre Jane and John friends? Yes\nAre John and Jane friends? Yes\n"

@@ -1,5 +1,0 @@
----
-source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: str_output
----
-"instance base: ::my_railgun::Base\ninstance head: ::my_railgun::Head\ninstance beam: ::my_railgun::Beam\n"

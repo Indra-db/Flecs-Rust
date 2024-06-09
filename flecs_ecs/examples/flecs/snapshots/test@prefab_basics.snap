@@ -1,5 +1,0 @@
----
-source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: str_output
----
-"Defence { value: 50.0 }\nafter set: Defence { value: 100.0 }\n::my_spaceship: defence: 100\n"

@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"instance base: ::my_railgun::Base\ninstance head: ::my_railgun::Head\ninstance beam: ::my_railgun::Beam\n"

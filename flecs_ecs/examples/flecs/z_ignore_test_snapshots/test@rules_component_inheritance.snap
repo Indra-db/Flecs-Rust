@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"Unit wizard_1 found\nUnit wizard_2 found\nUnit marksman_1 found\nUnit marksman_2 found\n"

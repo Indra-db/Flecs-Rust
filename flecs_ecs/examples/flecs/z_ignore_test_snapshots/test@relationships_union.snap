@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"e3: Movement: \"Walking\", Direction: \"Back\"\ne1: Movement: \"Walking\", Direction: \"Front\"\n"

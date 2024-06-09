@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"Player 1 trades with Player 2: true\nPlayer 2 trades with Player 1: true\n"

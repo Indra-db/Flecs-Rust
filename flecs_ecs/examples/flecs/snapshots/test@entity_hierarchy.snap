@@ -1,5 +1,0 @@
----
-source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: str_output
----
-"Is the Moon a child of the Earth? true / true\n\n::Sun [examples.entity_hierarchy.Position, (Identifier,Name)]\nPosition { x: 1.0, y: 1.0 }\n::Sun::Mercury [examples.entity_hierarchy.Position, examples.entity_hierarchy.Planet, (Identifier,Name), (ChildOf,Sun)]\nPosition { x: 2.0, y: 2.0 }\n::Sun::Venus [examples.entity_hierarchy.Position, examples.entity_hierarchy.Planet, (Identifier,Name), (ChildOf,Sun)]\nPosition { x: 3.0, y: 3.0 }\n::Sun::Earth [examples.entity_hierarchy.Position, examples.entity_hierarchy.Planet, (Identifier,Name), (ChildOf,Sun)]\nPosition { x: 4.0, y: 4.0 }\n::Sun::Earth::Moon [examples.entity_hierarchy.Position, examples.entity_hierarchy.Moon, (Identifier,Name), (ChildOf,Sun.Earth)]\nPosition { x: 4.1, y: 4.1 }\n"

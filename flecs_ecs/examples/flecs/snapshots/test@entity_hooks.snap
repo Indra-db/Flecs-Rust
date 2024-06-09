@@ -1,5 +1,0 @@
----
-source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: str_output
----
-"added Position to \"Bob\"\nset Position { x: 10.0, y: 20.0 } for \"Bob\"\nremoved Position { x: 10.0, y: 20.0 } from \"Bob\"\n"

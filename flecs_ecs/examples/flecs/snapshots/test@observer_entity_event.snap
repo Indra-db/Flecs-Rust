@@ -1,5 +1,0 @@
----
-source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: str_output
----
-"widget: Entity name: MyWidget -- [ID] -- archetype: (Identifier,Name)\nclicked on \"MyWidget\"\nclicked!\nwidget resized to { 100, 200 }!\nMyWidget resized to { 100, 200 }!\nClose request with reason: User\n"

@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+" - OnSet: examples.observers.observer_yield_existing.Position: e1: { 10, 20 }\n - OnSet: examples.observers.observer_yield_existing.Position: e2: { 20, 30 }\n"

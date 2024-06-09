@@ -1,5 +1,0 @@
----
-source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: str_output
----
-"Bob lives in UnitedStates\nAlice lives in UnitedStates\nJob lives in Netherlands\n"

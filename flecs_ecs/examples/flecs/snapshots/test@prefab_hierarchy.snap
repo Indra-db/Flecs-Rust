@@ -1,5 +1,0 @@
----
-source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: str_output
----
-"instance engine:  \"::my_spaceship::Engine\"\ninstance cockpit: \"::my_spaceship::Cockpit\"\n"

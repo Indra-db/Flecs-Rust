@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"Unit [ID] of class examples.queries.query_setting_variables.Wizard in platoon [ID] for player MyPlayer\nUnit [ID] of class examples.queries.query_setting_variables.Wizard in platoon [ID] for player MyPlayer\nUnit [ID] of class examples.queries.query_setting_variables.Wizard in platoon [ID] for player MyPlayer\nUnit [ID] of class examples.queries.query_setting_variables.Marksman in platoon [ID] for player MyPlayer\nUnit [ID] of class examples.queries.query_setting_variables.Marksman in platoon [ID] for player MyPlayer\nUnit [ID] of class examples.queries.query_setting_variables.Marksman in platoon [ID] for player MyPlayer\n"

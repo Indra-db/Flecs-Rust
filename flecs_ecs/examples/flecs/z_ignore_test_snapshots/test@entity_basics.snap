@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"Bob's position: Position { x: 10.0, y: 20.0 }\n[examples.entities.entity_basics.Position, examples.entities.entity_basics.Walking, (Identifier,Name)]\nAlice has Position { x: 10.0, y: 20.0 }\nBob has Position { x: 20.0, y: 30.0 }\n"

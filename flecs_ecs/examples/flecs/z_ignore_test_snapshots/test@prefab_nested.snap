@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"examples.prefabs.prefab_nested.TirePressure, (Identifier,Name), (ChildOf,my_car), (IsA,Wheel)\npressure: 32\n"

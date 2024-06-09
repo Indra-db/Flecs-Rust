@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"Alice eats 4 Apples\nBob eats 10 Apples\nBob eats 5 Pears\n"

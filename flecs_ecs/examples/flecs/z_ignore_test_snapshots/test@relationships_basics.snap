@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"Bob eats apples? true\nBob grows food? true, true\n\nBob's type: [(Identifier,Name), (examples.relationships.relationships_basics.Eats,Apples), (examples.relationships.relationships_basics.Eats,Pears), (Grows,Pears)]\n\nBob eats Apples\nBob eats Pears\n\nBob Eats pears\nBob Grows pears\n\nBob eats Apples\nBob also eats Pears\n"

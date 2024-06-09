@@ -1,5 +1,0 @@
----
-source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: str_output
----
-"Unit in platoon 1: true\nUnit in platoon 2: false\n\nUnit in platoon 1: false\nUnit in platoon 2: true\n"

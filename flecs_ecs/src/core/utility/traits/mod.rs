@@ -120,6 +120,8 @@ pub mod private {
             let mut components_data = T::create_ptrs(&*iter);
             let iter_count = {
                 if iter.count == 0 && iter.table.is_null() {
+                    // If query has no This terms, count can be 0. Since each does not
+                    // have an entity parameter, just pass through components
                     1_usize
                 } else {
                     iter.count as usize

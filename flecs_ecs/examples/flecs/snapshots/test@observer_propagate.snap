@@ -1,5 +1,0 @@
----
-source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: str_output
----
-" - OnSet: examples.observer_propagate.Position: e: self: { 10, 20 }, parent: { 1, 2 }\n"

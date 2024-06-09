@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"Entity ::e1 has Velocity { x: 0.0, y: 9.81 }\nEntity ::e2 has Velocity { x: 0.0, y: 10.81 }\nEntity ::e3 has Velocity { x: 0.0, y: 11.81 }\n"

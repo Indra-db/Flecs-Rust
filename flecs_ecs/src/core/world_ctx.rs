@@ -5,6 +5,7 @@ pub(crate) struct WorldCtx {
     query_ref_count: i32,
     pub(crate) components: FlecsIdMap,
     pub(crate) components_array: FlecsArray,
+    pub(crate) is_panicking: bool,
 }
 
 impl WorldCtx {
@@ -13,6 +14,7 @@ impl WorldCtx {
             query_ref_count: 0,
             components: Default::default(),
             components_array: vec![0; 2000],
+            is_panicking: false,
         }
     }
 
@@ -47,11 +49,10 @@ impl WorldCtx {
     pub(crate) fn is_ref_count_zero(&self) -> bool {
         self.query_ref_count == 0
     }
-}
 
-pub(crate) extern "C" fn world_ctx_destruct(ctx: *mut std::ffi::c_void) {
-    let ctx = unsafe { Box::from_raw(ctx as *mut WorldCtx) };
-    drop(ctx);
+    pub(crate) fn set_is_panicking_true(&mut self) {
+        self.is_panicking = true;
+    }
 }
 
 impl World {

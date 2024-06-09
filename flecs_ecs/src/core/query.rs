@@ -43,17 +43,23 @@ where
     T: Iterable,
 {
     fn drop(&mut self) {
-        self.world().world_ctx_mut().dec_query_ref_count();
-
         // Only free if query is not associated with entity. Queries are associated with entities
         // when they are either named or cached, such as system, cached queries and named queries. These queries have to be either explicitly
         // deleted with the .destruct() method, or will be deleted when the
         // world is deleted.
+        let query_void_ptr = self.query.as_ptr() as *mut c_void;
+        let ecs_header = query_void_ptr as *mut sys::ecs_header_t;
+
         unsafe {
-            if self.query.as_ref().entity == 0
-                && sys::flecs_poly_release_(self.query.as_ptr() as *mut c_void) == 0
-            {
-                sys::ecs_query_fini(self.query.as_ptr());
+            let is_valid = (*ecs_header).magic == 0x6563736f;
+            if is_valid {
+                self.world().world_ctx_mut().dec_query_ref_count();
+
+                if self.query.as_ref().entity == 0
+                    && sys::flecs_poly_release_(self.query.as_ptr() as *mut c_void) == 0
+                {
+                    sys::ecs_query_fini(self.query.as_ptr());
+                }
             }
         }
     }
@@ -216,11 +222,17 @@ where
         );
 
         if unsafe { (*self.query.as_ptr()).entity } != 0 {
+            let world = self.world();
+            let world_ctx = world.world_ctx_mut();
+            world_ctx.dec_query_ref_count();
             if unsafe { sys::flecs_poly_release_(self.query.as_ptr() as *mut c_void) } > 0 {
+                world_ctx.set_is_panicking_true();
+                unsafe { sys::ecs_query_fini(self.query.as_ptr()) };
                 panic!("The code base still has lingering references to `Query` objects. This is a bug in the user code. 
                 Please ensure that all `Query` objects are out of scope that are a clone/copy of the current one.");
+            } else {
+                unsafe { sys::ecs_query_fini(self.query.as_ptr()) };
             }
-            unsafe { sys::ecs_query_fini(self.query.as_ptr()) };
         }
     }
 

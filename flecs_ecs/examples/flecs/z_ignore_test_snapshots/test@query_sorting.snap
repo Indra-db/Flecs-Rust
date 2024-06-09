@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"\n--- First iteration ---\nPosition { x: 1.0, y: 0.0 }\nPosition { x: 2.0, y: 0.0 }\nPosition { x: 4.0, y: 0.0 }\nPosition { x: 5.0, y: 0.0 }\nPosition { x: 6.0, y: 0.0 }\n\n--- Second iteration ---\nPosition { x: 2.0, y: 0.0 }\nPosition { x: 4.0, y: 0.0 }\nPosition { x: 5.0, y: 0.0 }\nPosition { x: 6.0, y: 0.0 }\nPosition { x: 7.0, y: 0.0 }\n\n--- System iteration ---\nPosition { x: 2.0, y: 0.0 }\nPosition { x: 3.0, y: 0.0 }\nPosition { x: 4.0, y: 0.0 }\nPosition { x: 5.0, y: 0.0 }\nPosition { x: 6.0, y: 0.0 }\nPosition { x: 7.0, y: 0.0 }\n"

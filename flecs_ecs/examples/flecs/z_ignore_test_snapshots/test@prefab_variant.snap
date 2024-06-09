@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"my_freighter:\n - position: 10, 20\n - impulse speed: 50\n - defense: 100\n - capacity: 500\n"

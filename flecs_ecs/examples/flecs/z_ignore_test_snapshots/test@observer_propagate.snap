@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+" - OnSet: examples.observers.observer_propagate.Position: e: self: { 10, 20 }, parent: { 1, 2 }\n"

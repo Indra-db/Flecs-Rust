@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"Instance type: [examples.entities.entity_prefab.Position, (Identifier,Name), (IsA,MammothFreighter)]\nImpulseSpeed: 50\nEntity my_mammoth_freighter: Position { x: 50.0, y: 0.0 }\n"

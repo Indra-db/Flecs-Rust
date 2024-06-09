@@ -168,7 +168,6 @@ where
         self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
 
         self.set_desc_run(Some(Self::execute_run::<Func> as unsafe extern "C" fn(_)));
-        //TODO are we sure this shouldn't be instanced?
         self.build()
     }
 

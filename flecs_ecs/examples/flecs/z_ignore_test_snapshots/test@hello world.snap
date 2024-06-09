@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"Bob's got [examples.hello_world.Position, examples.hello_world.Velocity, (Identifier,Name), (examples.hello_world.Eats,examples.hello_world.Apples)]\nBob's position: Position { x: 2.0, y: 4.0 }\nBob's try_get position: Position { x: 2.0, y: 4.0 }\nBob has a position component, so the try_get callback ran.\n"

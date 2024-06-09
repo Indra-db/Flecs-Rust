@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"Move begin\ne1: { 11, 22 }\ne2: { 13, 24 }\nMove end\n"

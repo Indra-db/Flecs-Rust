@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"Bob lives in UnitedStates\nAlice lives in UnitedStates\nJob lives in Netherlands\n"

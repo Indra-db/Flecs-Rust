@@ -1,5 +1,0 @@
----
-source: flecs_ecs/examples/flecs/z_snapshot_test.rs
-expression: str_output
----
-" - OnAdd: examples.observer_basics.Position: e1\n - OnSet: examples.observer_basics.Position: e1: with Position { x: 10.0, y: 20.0 }\n - OnRemove: examples.observer_basics.Position: e1: with Position { x: 10.0, y: 20.0 }\n"
