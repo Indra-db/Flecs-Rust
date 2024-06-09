@@ -43,7 +43,7 @@ impl<'a, P: ComponentId, T: Iterable> ObserverBuilder<'a, P, T> {
             _phantom: std::marker::PhantomData,
         };
 
-        obj.desc.events[0] = P::id(world.world());
+        obj.desc.events[0] = P::UnderlyingType::id(world.world());
         obj.desc.entity =
             unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &Default::default()) };
 

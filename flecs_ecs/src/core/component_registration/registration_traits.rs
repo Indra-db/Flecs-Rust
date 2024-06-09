@@ -392,8 +392,7 @@ impl<T: ComponentInfo> ComponentInfo for &mut T {
 impl<T: ComponentId> ComponentId for &'static T {
     #[inline(always)]
     fn index() -> u32 {
-        static INDEX: AtomicU32 = AtomicU32::new(u32::MAX);
-        Self::get_or_init_index(&INDEX)
+        T::UnderlyingType::index()
     }
 
     type UnderlyingType = T::UnderlyingType;
@@ -404,8 +403,7 @@ impl<T: ComponentId> ComponentId for &'static T {
 impl<T: ComponentId> ComponentId for &'static mut T {
     #[inline(always)]
     fn index() -> u32 {
-        static INDEX: AtomicU32 = AtomicU32::new(u32::MAX);
-        Self::get_or_init_index(&INDEX)
+        T::UnderlyingType::index()
     }
 
     type UnderlyingType = T::UnderlyingType;

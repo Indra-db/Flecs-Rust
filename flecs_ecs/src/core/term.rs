@@ -943,7 +943,8 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[inline(always)]
     fn set_inout_none(&mut self) -> &mut Self {
         check_term_access_validity(self);
-        self.set_inout_kind(InOutKind::None)
+        self.current_term_mut().inout = InOutKind::None as i16;
+        self
     }
 
     /// set operator of term

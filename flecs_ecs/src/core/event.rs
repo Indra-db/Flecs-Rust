@@ -41,7 +41,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
             ids_array: Default::default(),
             _phantom: PhantomData,
         };
-        obj.desc.event = T::id(world);
+        obj.desc.event = T::UnderlyingType::id(world);
         obj
     }
 
@@ -188,7 +188,11 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         let desc = &mut self.desc;
         let world = self.world;
         ids.array = ids_array.as_mut_ptr();
-        desc.const_param = data as *const T as *const c_void;
+
+        if !T::IS_TAG {
+            desc.const_param = data as *const T as *const c_void;
+        }
+
         desc.ids = ids;
         desc.observable = world.real_world().world_ptr_mut() as *mut c_void;
         unsafe { sys::ecs_emit(world.world_ptr_mut(), desc) };
@@ -209,7 +213,73 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         desc.observable = world.real_world().world_ptr_mut() as *mut c_void;
         unsafe {
             sys::ecs_enqueue(world.world_ptr_mut(), desc);
-            std::alloc::dealloc(desc.param as *mut u8, Layout::new::<T>());
+            if !T::IS_TAG {
+                std::alloc::dealloc(desc.param as *mut u8, Layout::new::<T>());
+            }
         };
     }
+}
+
+#[test]
+fn event_test() {
+    let world = World::new();
+
+    #[derive(flecs_ecs_derive::Component)]
+    struct myEvent1;
+
+    #[derive(flecs_ecs_derive::Component)]
+    struct Data;
+
+    world
+        .observer::<myEvent1, &flecs::Any>()
+        .each_entity(|e, any| {
+            println!("xxxx");
+            println!("xxxx");
+        });
+
+    let entity = world.entity().add::<Data>();
+    let entity = world.entity().add::<Data>();
+    let entity = world.entity().add::<Data>();
+
+    world
+        .event()
+        .add::<flecs::Any>()
+        .target(entity)
+        .emit(&myEvent1);
+
+    entity.emit(&myEvent1);
+
+    /*
+        ecs.observer()
+        .event<Evt>()
+        .with(flecs::Any).src(e2)
+        .each([&](flecs::entity e) {
+            test_assert(e == 0);
+            count_b ++;
+        });
+
+    ecs.event<Evt>()
+        .id(flecs::Any)
+        .entity(e1)
+        .emit();
+     */
+}
+
+#[test]
+fn test_bug() {
+    let world = World::new();
+
+    let johnville = world.entity();
+
+    #[derive(flecs_ecs_derive::Component)]
+    struct Rent {
+        amount: f32,
+    }
+
+    #[derive(flecs_ecs_derive::Component)]
+    struct LivesIn;
+
+    let sys = flecs_ecs_derive::system!(world, (LivesIn, $johnville)).each(|_| {});
+
+    sys.run();
 }
