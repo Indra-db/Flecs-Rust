@@ -24,7 +24,9 @@ seq-macro = "0.3.5"
 rand = "0.8.5"
 ctor = "0.2.7"
 insta = { version = "1.38.0", features = ["yaml","filters"] }
-#capture-stdio = "0.1.1" #used for capturing stdout in the examples test cases. Works only on Nightly.
+# used for capturing stdout in the examples test cases. Works only on Nightly, meant
+# to be used with flecs_nightly_tests feature flag
+#capture-stdio = "0.1.1" 
 
 [features]
  
@@ -149,6 +151,7 @@ flecs_nightly_tests = []
 
 default = [
     #"flecs_regenerate_binding_c",
+    #"flecs_nightly_tests",
     "flecs_module",
     "flecs_script",
     "flecs_snapshot",
@@ -191,121 +194,8 @@ harness = false
 ######################
 # Examples
 ######################
-# These examples are only the examples that rely on a certain feature to compile successfully.
-
-# [[example]]
-# name = "system_ctx"
-# path = "examples/flecs/system_ctx.rs"
-# required-features = ["flecs_system"]
-
-# [[example]]
-# name = "system_custom_phases_no_builtin"
-# path = "examples/flecs/system_custom_phases_no_builtin.rs"
-# required-features = ["flecs_system"]
-
-# [[example]]
-# name = "system_custom_phases"
-# path = "examples/flecs/system_custom_phases.rs"
-# required-features = ["flecs_system"]
-
-# [[example]]
-# name = "system_custom_runner"
-# path = "examples/flecs/system_custom_runner.rs"
-# required-features = ["flecs_system"]
-
-# [[example]]
-# name = "system_custom_pipeline"
-# path = "examples/flecs/system_custom_pipeline.rs"
-# required-features = ["flecs_system"]
-
-# [[example]]
-# name = "system_delta_time"
-# path = "examples/flecs/system_delta_time.rs"
-# required-features = ["flecs_system"]
-
-# [[example]]
-# name = "system_mutate_entity_handle"
-# path = "examples/flecs/system_mutate_entity_handle.rs"
-# required-features = ["flecs_system"]
-
-# [[example]]
-# name = "system_mutate_entity"
-# path = "examples/flecs/system_mutate_entity.rs"
-# required-features = ["flecs_system"]
-
-# [[example]]
-# name = "system_no_readonly"
-# path = "examples/flecs/system_no_readonly.rs"
-# required-features = ["flecs_system"]
-
-# [[example]]
-# name = "system_pipeline"
-# path = "examples/flecs/system_pipeline.rs"
-# required-features = ["flecs_system"]
-
-# [[example]]
-# name = "system_startup_system"
-# path = "examples/flecs/system_startup_system.rs"
-# required-features = ["flecs_system"]
-
-# [[example]]
-# name = "system_sync_point_delete"
-# path = "examples/flecs/system_sync_point_delete.rs"
-# required-features = ["flecs_system"]
-
-# [[example]]
-# name = "system_sync_point"
-# path = "examples/flecs/system_sync_point.rs"
-# required-features = ["flecs_system"]
-
-# [[example]]
-# name = "system_target_fps"
-# path = "examples/flecs/system_target_fps.rs"
-# required-features = ["flecs_system"]
-
-# [[example]]
-# name = "system_time_interval"
-# path = "examples/flecs/system_time_interval.rs"
-# required-features = ["flecs_system"]
-
-# [[example]]
-# name = "a_hello_world"
-# path = "examples/flecs/a_hello_world.rs"
-# required-features = ["flecs_system"]
-
-# [[example]]
-# name = "system_basics"
-# path = "examples/flecs/system_basics.rs"
-
-# [[example]]
-# name = "query_sorting"
-# path = "examples/flecs/query_sorting.rs"
-
-# [[example]]
-# name = "rules_basics"
-# path = "examples/flecs/rules_basics.rs"
-
-# [[example]]
-# name = "rules_component_inheritance"
-# path = "examples/flecs/rules_component_inheritance.rs"
-
-# [[example]]
-# name = "rules_cyclic_variables"
-# path = "examples/flecs/rules_cyclic_variables.rs"
-
-# [[example]]
-# name = "rules_facts"
-# path = "examples/flecs/rules_facts.rs"
-
-# [[example]]
-# name = "rules_setting_variables"
-# path = "examples/flecs/rules_setting_variables.rs"
-
-# [[example]]
-# name = "rules_transitive_queries"
-# path = "examples/flecs/rules_transitive_queries.rs"
 
 [[example]]
 name = "examples"
-path = "examples/flecs/z_main_test.rs"
+path = "examples/flecs/z_ignore_main_test.rs"
 test = true
