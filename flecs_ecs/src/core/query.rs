@@ -27,6 +27,8 @@ where
     T: Iterable,
 {
     pub(crate) query: NonNull<QueryT>,
+    // this is a leaked box, which is valid during the lifecycle of the query object.
+    world_ctx: NonNull<WorldCtx>,
     _phantom: PhantomData<T>,
 }
 
@@ -45,13 +47,10 @@ where
 {
     fn drop(&mut self) {
         unsafe {
-            let query_ptr = self.query.as_ptr();
-            let world_ctx = &*((*query_ptr).binding_ctx as *mut WorldCtx);
-
             // If the world didn't end through normal reasons (user dropping it manually or resetting it)
             // and it's holding remaining references to queries in Rust, the world will panic, in that case, don't invoke
             // the query destruction since the memory will already be invalidated.
-            if world_ctx.is_panicking {
+            if self.world_ctx.as_ref().is_panicking {
                 return;
             }
 
@@ -135,14 +134,18 @@ where
     #[doc(alias = "query::query")]
     #[inline]
     pub unsafe fn new_from(query: NonNull<QueryT>) -> Self {
-        unsafe { sys::flecs_poly_claim_(query.as_ptr() as *mut c_void) };
+        sys::flecs_poly_claim_(query.as_ptr() as *mut c_void);
+
+        let world_ctx = ecs_get_binding_ctx((*query.as_ptr()).world) as *mut WorldCtx;
+        (*world_ctx).inc_query_ref_count();
+        let world_ctx = NonNull::new_unchecked(world_ctx);
 
         let new_query = Self {
             query,
+            world_ctx,
             _phantom: std::marker::PhantomData,
         };
 
-        new_query.world().world_ctx_mut().inc_query_ref_count();
         new_query
     }
 
@@ -174,17 +177,20 @@ where
             "Failed to create query from query descriptor"
         );
 
-        unsafe { (*query_ptr).binding_ctx = ecs_get_binding_ctx(world_ptr) };
+        unsafe {
+            let world_ctx = ecs_get_binding_ctx(world_ptr) as *mut WorldCtx;
+            (*world_ctx).inc_query_ref_count();
+            let world_ctx = NonNull::new_unchecked(world_ctx);
 
-        let query = unsafe { NonNull::new_unchecked(query_ptr) };
+            let query = NonNull::new_unchecked(query_ptr);
 
-        let new_query = Self {
-            query,
-            _phantom: PhantomData,
-        };
-
-        new_query.world().world_ctx_mut().inc_query_ref_count();
-        new_query
+            let new_query = Self {
+                query,
+                world_ctx,
+                _phantom: PhantomData,
+            };
+            new_query
+        }
     }
 
     pub(crate) fn new_from_entity<'a>(
