@@ -140,13 +140,11 @@ where
         (*world_ctx).inc_query_ref_count();
         let world_ctx = NonNull::new_unchecked(world_ctx);
 
-        let new_query = Self {
+        Self {
             query,
             world_ctx,
             _phantom: std::marker::PhantomData,
-        };
-
-        new_query
+        }
     }
 
     /// Create a new query from a query descriptor
@@ -184,12 +182,11 @@ where
 
             let query = NonNull::new_unchecked(query_ptr);
 
-            let new_query = Self {
+            Self {
                 query,
                 world_ctx,
                 _phantom: PhantomData,
-            };
-            new_query
+            }
         }
     }
 
