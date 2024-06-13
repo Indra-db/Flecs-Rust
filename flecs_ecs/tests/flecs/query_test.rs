@@ -32,3 +32,29 @@ fn query_cached_destruction_lingering_references_panic() {
     query2.run(|_| {});
     drop(query2);
 }
+
+#[test]
+fn query_iter_stage() {
+    #[derive(Component, Debug)]
+    struct Comp(usize);
+
+    let world = World::new();
+    world.set_threads(4);
+
+    let query = world.new_query::<&Comp>();
+
+    for i in 0..4 {
+        world.entity().set(Comp(i));
+    }
+
+    world
+        .system::<&Comp>()
+        .multi_threaded(true)
+        .each_entity(move |e, _| {
+            query.iter_stage(e).each(|vel| {
+                println!("{:?}", vel);
+            });
+        });
+
+    world.progress();
+}

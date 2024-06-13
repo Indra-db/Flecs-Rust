@@ -8,6 +8,9 @@ pub trait IterOperations {
     fn retrieve_iter(&self) -> IterT;
 
     #[doc(hidden)]
+    fn retrieve_iter_stage<'a>(&self, stage: impl IntoWorld<'a>) -> IterT;
+
+    #[doc(hidden)]
     fn iter_next(&self, iter: &mut IterT) -> bool;
 
     #[doc(hidden)]
@@ -847,6 +850,10 @@ where
 
     fn iterable(&self) -> IterIterable<P, T> {
         IterIterable::new(self.retrieve_iter(), self.iter_next_func())
+    }
+
+    fn iter_stage<'a>(&'a self, stage: impl IntoWorld<'a>) -> IterIterable<'a, P, T> {
+        IterIterable::new(self.retrieve_iter_stage(stage), self.iter_next_func())
     }
 
     /// Return first matching entity.

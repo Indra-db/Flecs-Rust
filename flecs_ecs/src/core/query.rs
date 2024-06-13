@@ -79,6 +79,11 @@ where
     }
 
     #[inline(always)]
+    fn retrieve_iter_stage<'a>(&self, stage: impl IntoWorld<'a>) -> IterT {
+        unsafe { sys::ecs_query_iter(stage.world_ptr_mut(), self.query.as_ptr()) }
+    }
+
+    #[inline(always)]
     fn iter_next(&self, iter: &mut IterT) -> bool {
         unsafe { sys::ecs_query_next(iter) }
     }
