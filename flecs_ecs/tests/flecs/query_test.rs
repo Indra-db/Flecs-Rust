@@ -53,7 +53,7 @@ fn query_iter_stage() {
         .each_entity(move |e, _| {
             query.iter_stage(e).each(|vel| {
                 println!("{:?}", vel);
-            })
+            });
         });
 
     world.progress();
