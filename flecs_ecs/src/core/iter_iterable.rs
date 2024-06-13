@@ -140,6 +140,11 @@ where
         unsafe { sys::ecs_iter_set_var_as_range(&mut self.iter, var_id, &table.table_range_raw()) };
         self
     }
+
+    pub fn stage(&mut self, stage: impl IntoWorld<'a>) -> &mut Self {
+        self.iter = unsafe { sys::ecs_query_iter(stage.world_ptr_mut(), self.iter.query) };
+        self
+    }
 }
 
 impl<'a, P, T> IterOperations for IterIterable<'a, P, T>
@@ -148,6 +153,10 @@ where
 {
     fn retrieve_iter(&self) -> IterT {
         self.iter
+    }
+
+    fn retrieve_iter_stage<'w>(&self, _stage: impl IntoWorld<'w>) -> IterT {
+        panic!("Cannot change the stage of an iterator that already exists.");
     }
 
     fn iter_next(&self, iter: &mut IterT) -> bool {
