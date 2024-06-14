@@ -1042,9 +1042,9 @@ where
     F: Fn(Entity, &T, Entity, &T) -> i32,
 {
     fn to_extern_fn(self) -> extern "C" fn(Entity, &T, Entity, &T) -> i32 {
-        // const {
-        assert!(std::mem::size_of::<Self>() == 0);
-        // }
+        const {
+            assert!(std::mem::size_of::<Self>() == 0);
+        }
         std::mem::forget(self);
 
         extern "C" fn output<F, T>(e1: Entity, e1_data: &T, e2: Entity, e2_data: &T) -> i32

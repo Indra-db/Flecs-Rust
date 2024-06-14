@@ -64,18 +64,15 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::add")]
     pub fn add<T>(self) -> Self
     where
-        T: IntoComponentId,
+        T: FlecsCastType,
     {
-        // const {
-        //     if !T::IS_TAGS {
-        //         if !T::First::IS_TAG && !T::First::IMPLS_DEFAULT {
-        //             panic!("Adding an element that is not a Tag / Zero sized type requires to implement Default");
-        //         }
-        //         if T::IS_PAIR && !T::Second::IS_TAG && !T::Second::IMPLS_DEFAULT {
-        //             panic!("Adding an element that is not a Tag / Zero sized type requires to implement Default");
-        //         }
-        //     }
-        // }
+        const {
+            if T::CastType::IS_GENERIC {
+                panic!("Adding a generic type requires to use the set function. This is due to Rust type system limitations.");
+            } else if !T::CastType::IS_TAG && !T::CastType::IMPLS_DEFAULT {
+                panic!("Adding an element that is not a Tag / Zero sized type requires to implement Default");
+            }
+        }
         let world = self.world;
         unsafe { self.add_id_unchecked(T::get_id(world)) }
     }
@@ -126,11 +123,11 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
     pub fn add_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
-        // const {
-        //     if !First::IS_TAG && !First::IMPLS_DEFAULT {
-        //         panic!("Adding an element that is not a Tag / Zero sized type requires to implement Default");
-        //     }
-        // }
+        const {
+            if !First::IS_TAG && !First::IMPLS_DEFAULT {
+                panic!("Adding an element that is not a Tag / Zero sized type requires to implement Default");
+            }
+        }
 
         let world = self.world;
         let world_ptr = world.world_ptr_mut();
@@ -212,11 +209,11 @@ impl<'a> EntityView<'a> {
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
-        // const {
-        //     if !First::IS_TAG && First::IMPLS_DEFAULT {
-        //         panic!("Adding an element that is not a Tag / Zero sized type requires to implement Default");
-        //     }
-        // }
+        const {
+            if !First::IS_TAG && First::IMPLS_DEFAULT {
+                panic!("Adding an element that is not a Tag / Zero sized type requires to implement Default");
+            }
+        }
         let world = self.world;
         let enum_id = enum_value.get_id_variant(world);
         unsafe { self.add_id_unchecked((First::id(world), enum_id)) }
@@ -309,7 +306,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::add_if`
     #[doc(alias = "entity_builder::add_if")]
-    pub fn add_if<T: IntoComponentId>(self, condition: bool) -> Self {
+    pub fn add_if<T: FlecsCastType>(self, condition: bool) -> Self {
         let world = self.world;
         if condition {
             self.add::<T>()
@@ -913,9 +910,9 @@ impl<'a> EntityView<'a> {
         Second: ComponentId,
         (First, Second): FlecsCastType,
     {
-        // const {
-        //     assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
-        // };
+        const {
+            assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
+        };
 
         set_helper(
             self.world.world_ptr_mut(),

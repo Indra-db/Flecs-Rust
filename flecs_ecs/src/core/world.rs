@@ -1034,9 +1034,9 @@ impl World {
         Second: ComponentId,
         (First, Second): FlecsCastType,
     {
-        // const {
-        //     assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
-        // };
+        const {
+            assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
+        };
 
         let entity = EntityView::new_from(
             self,
@@ -1660,14 +1660,9 @@ impl World {
     /// * C++ API: `world::add`
     #[doc(alias = "world::add")]
     #[inline(always)]
-    pub fn add<T: IntoComponentId + EmptyComponent>(&self) -> EntityView {
-        if T::IS_PAIR {
-            let first_id = <T::First as ComponentId>::id(self);
-            EntityView::new_from(self, first_id).add::<T>()
-        } else {
-            let id = T::get_id(self);
-            EntityView::new_from(self, id).add::<T>()
-        }
+    pub fn add<T: FlecsCastType>(&self) -> EntityView {
+        let id = T::CastType::id(self);
+        EntityView::new_from(self, id).add::<T>()
     }
 
     /// Add a singleton enum component.
@@ -2962,7 +2957,7 @@ impl World {
     pub fn prefab_type<T: ComponentId + EmptyComponent>(&self) -> EntityView {
         let result = Component::<T>::new(self).entity;
         result.add_id(ECS_PREFAB);
-        result.add::<T>();
+        unsafe { result.add_id_unchecked(T::get_id(self)) };
         result
     }
 
@@ -2990,7 +2985,7 @@ impl World {
     ) -> EntityView<'a> {
         let result = Component::<T>::new_named(self, name).entity;
         result.add_id(ECS_PREFAB);
-        result.add::<T>();
+        unsafe { result.add_id_unchecked(T::get_id(self)) };
         result
     }
 }
