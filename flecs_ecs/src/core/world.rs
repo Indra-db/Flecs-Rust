@@ -130,7 +130,7 @@ impl World {
         World::new()
     }
 
-    /// obtain pointer to C world object
+    /// obtain pointer to C world object.
     ///
     /// # Returns
     ///
@@ -141,6 +141,7 @@ impl World {
     /// * C++ API: `world::c_ptr`
     #[doc(alias = "world::c_ptr")]
     #[inline(always)]
+    #[doc(hidden)]
     pub fn ptr_mut(&self) -> *mut WorldT {
         self.raw_world.as_ptr()
     }
@@ -150,22 +151,25 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get_info`
+    ///
+    /// # Example
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// let world_info = world.get_info();
+    ///
+    /// world.progress();
+    ///
+    /// assert!(world_info.delta_time > 0.0);
+    /// assert!(world_info.world_time_total > 0.0);
+    /// assert!(world_info.systems_ran_frame == 0);
+    /// ```
     #[doc(alias = "world::get_info")]
     pub fn get_info(&self) -> &sys::WorldInfo {
         // SAFETY: The pointer is valid for the lifetime of the world.
         unsafe { &*sys::ecs_get_world_info(self.raw_world.as_ptr()) }
-    }
-
-    /// Gets the last `delta_time`.
-    ///
-    /// Returns the time that has passed since the last frame.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::delta_time`
-    #[doc(alias = "world::delta_time")]
-    pub fn delta_time(&self) -> f32 {
-        self.get_info().delta_time
     }
 
     /// Signals the application to quit.
@@ -175,6 +179,22 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::quit`
+    ///
+    /// # Example
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// let mut count = 0;
+    /// while world.progress() {
+    ///     count += 1;
+    ///     if count == 5 {
+    ///         world.quit();
+    ///     }
+    /// }
+    /// assert!(count == 5);
+    /// ```
     #[doc(alias = "world::quit")]
     pub fn quit(&self) {
         unsafe {
@@ -204,6 +224,16 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::should_quit`
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// assert!(!world.should_quit());
+    /// world.quit();
+    /// assert!(world.should_quit());
+    /// ```
     #[doc(alias = "world::should_quit")]
     pub fn should_quit(&self) -> bool {
         unsafe { sys::ecs_should_quit(self.raw_world.as_ptr()) }
@@ -212,7 +242,6 @@ impl World {
     /// Begins a frame.
     ///
     /// When an application does not use `progress()` to control the main loop, it
-    /// can still use Flecs features such as FPS limiting and time measurements.
     /// can still use Flecs features such as FPS limiting and time measurements processed.
     ///
     /// Calls to `frame_begin` must always be followed by `frame_end`.
@@ -234,6 +263,36 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::frame_begin`
+    ///
+    /// # Example
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Position {
+    ///    x: f32,
+    ///    y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let delta_time = 1.0 / 60.0; // 60 FPS
+    ///
+    /// let entity = world.entity().set(Position { x: 5.0, y: 0.0 });
+    ///
+    /// let sys = world.system::<&Position>().each(|pos| {});
+    ///
+    /// let world_info = world.get_info();
+    ///
+    /// //assert!(world_info.systems_ran_frame == 0);
+    /////
+    /// //let delta_time_measured = world.frame_begin(0.0);
+    /////
+    /// //world.frame_end();
+    /////
+    /// //assert!(world_info.systems_ran_frame == 1);
+    ///
+    /// ```
     #[doc(alias = "world::frame_begin")]
     pub fn frame_begin(&self, delta_time: f32) -> f32 {
         unsafe { sys::ecs_frame_begin(self.raw_world.as_ptr(), delta_time) }
@@ -313,6 +372,36 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::readonly_begin`
+    ///
+    /// # Example
+    /// ```
+    ///
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Position { x: i32, y: i32 }
+    ///
+    /// let world = World::new();
+    ///
+    /// let stage = world.stage(0);
+    ///
+    /// world.readonly_begin(false);
+    ///
+    /// assert_eq!(stage.count::<Position>(), 0);
+    ///
+    /// world.readonly_end();
+    ///
+    /// world.readonly_begin(false);
+    ///
+    /// stage.entity().set(Position { x: 10, y: 20 });
+    /// stage.entity().set(Position { x: 10, y: 20 });
+    ///
+    /// assert_eq!(stage.count::<Position>(), 0);
+    ///
+    /// world.readonly_end();
+    ///
+    /// assert_eq!(stage.count::<Position>(), 2);
+    /// ```
     #[doc(alias = "world::readonly_begin")]
     pub fn readonly_begin(&self, multi_threaded: bool) -> bool {
         unsafe { sys::ecs_readonly_begin(self.raw_world.as_ptr(), multi_threaded) }
@@ -334,6 +423,10 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::readonly_end`
+    ///
+    /// # Example
+    ///
+    /// see [`World::readonly_begin`]
     #[doc(alias = "world::readonly_end")]
     pub fn readonly_end(&self) {
         unsafe {
@@ -355,6 +448,34 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::defer_begin`
+    ///
+    /// # Example
+    ///
+    /// ```
+    ///
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Position {
+    ///    x: i32,
+    ///    y: i32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// world.defer_begin();
+    ///
+    /// let e = world
+    ///     .entity()
+    ///     .set(Position { x: 10, y: 20 });
+    ///
+    /// assert!(!e.has::<Position>());
+    ///
+    /// world.defer_end();
+    ///
+    /// assert!(e.has::<Position>());
+    ///
+    /// ```
     #[doc(alias = "world::defer_begin")]
     pub fn defer_begin(&self) -> bool {
         unsafe { sys::ecs_defer_begin(self.raw_world.as_ptr()) }
@@ -373,6 +494,10 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::defer_end`
+    ///
+    /// # Example
+    ///
+    /// see [`World::defer_begin`]
     #[doc(alias = "world::defer_end")]
     pub fn defer_end(&self) -> bool {
         unsafe { sys::ecs_defer_end(self.raw_world.as_ptr()) }
@@ -387,6 +512,24 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::is_deferred`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// assert!(!world.is_deferred());
+    ///
+    /// world.defer_begin();
+    ///
+    /// assert!(world.is_deferred());
+    ///
+    /// world.defer_end();
+    ///
+    /// assert!(!world.is_deferred());
+    /// ```
     #[doc(alias = "world::is_deferred")]
     pub fn is_deferred(&self) -> bool {
         unsafe { sys::ecs_is_deferred(self.raw_world.as_ptr()) }
@@ -428,6 +571,20 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get_stage_count`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// assert_eq!(world.get_stage_count(), 1);
+    ///
+    /// world.set_stage_count(4);
+    ///
+    /// assert_eq!(world.get_stage_count(), 4);
+    /// ```
     #[doc(alias = "world::get_stage_count")]
     pub fn get_stage_count(&self) -> i32 {
         unsafe { sys::ecs_get_stage_count(self.raw_world.as_ptr()) }
@@ -445,8 +602,26 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get_stage_id`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// assert_eq!(world.stage_id(), 0);
+    ///
+    /// world.set_stage_count(4);
+    ///
+    /// assert_eq!(world.stage_id(), 0);
+    ///
+    /// let stage = world.stage(3);
+    ///
+    /// assert_eq!(stage.stage_id(), 3);
+    /// ```
     #[doc(alias = "world::get_stage_id")]
-    pub fn get_stage_id(&self) -> i32 {
+    pub fn stage_id(&self) -> i32 {
         unsafe { sys::ecs_stage_get_id(self.raw_world.as_ptr()) }
     }
 
@@ -462,6 +637,20 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::is_stage`
+    ///
+    /// # Example
+    ///
+    /// ```
+    ///
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// assert!(!world.is_stage());
+    ///
+    /// let stage = world.stage(0);
+    ///
+    /// assert!(stage.is_stage());
     #[doc(alias = "world::is_stage")]
     pub fn is_stage(&self) -> bool {
         unsafe {
@@ -495,6 +684,29 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::merge`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Position { x: i32, y: i32 }
+    ///
+    /// let world = World::new();
+    ///
+    /// let e = world.entity();
+    ///
+    /// let stage = world.create_async_stage();
+    ///
+    /// e.mut_current_stage(stage).set(Position { x: 10, y: 20 });
+    ///
+    /// assert!(!e.has::<Position>());
+    ///
+    /// stage.merge();
+    ///
+    /// assert!(e.has::<Position>());
+    /// ```
     #[doc(alias = "world::merge")]
     pub fn merge(&self) {
         unsafe { sys::ecs_merge(self.raw_world.as_ptr()) };
@@ -523,6 +735,24 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get_stage`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// assert_eq!(world.stage_id(), 0);
+    ///
+    /// world.set_stage_count(4);
+    ///
+    /// assert_eq!(world.stage_id(), 0);
+    ///
+    /// let stage = world.stage(3);
+    ///
+    /// assert_eq!(stage.stage_id(), 3);
+    /// ```
     #[doc(alias = "world::get_stage")]
     pub fn stage(&self, stage_id: i32) -> WorldRef {
         unsafe { WorldRef::from_ptr(sys::ecs_get_stage(self.raw_world.as_ptr(), stage_id)) }
@@ -551,6 +781,29 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::async_stage`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Position { x: i32, y: i32 }
+    ///
+    /// let world = World::new();
+    ///
+    /// let e = world.entity();
+    ///
+    /// let stage = world.create_async_stage();
+    ///
+    /// e.mut_current_stage(stage).set(Position { x: 10, y: 20 });
+    ///
+    /// assert!(!e.has::<Position>());
+    ///
+    /// stage.merge();
+    ///
+    /// assert!(e.has::<Position>());
+    /// ```
     #[doc(alias = "world::async_stage")]
     pub fn create_async_stage(&self) -> WorldRef {
         unsafe { WorldRef::from_ptr(sys::ecs_stage_new(self.raw_world.as_ptr())) }
@@ -568,6 +821,21 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get_world`
+    ///
+    /// # Example
+    ///
+    /// ```
+    ///
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// let stage = world.stage(0);
+    ///
+    /// let world_ref = stage.get_world();
+    ///
+    /// assert!(!world_ref.is_stage());
+    /// ```
     #[doc(alias = "world::get_world")]
     pub fn get_world(&self) -> WorldRef {
         self.world().real_world()
@@ -585,6 +853,24 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::is_readonly`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// assert!(!world.is_readonly());
+    ///
+    /// world.readonly_begin(false);
+    ///
+    /// assert!(world.is_readonly());
+    ///
+    /// world.readonly_end();
+    ///
+    /// assert!(!world.is_readonly());
+    /// ```
     #[doc(alias = "world::is_readonly")]
     pub fn is_readonly(&self) -> bool {
         unsafe { sys::ecs_stage_is_readonly(self.raw_world.as_ptr()) }
@@ -603,6 +889,27 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::set_ctx`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    /// use core::ffi::c_void;
+    ///
+    /// extern "C" fn free_ctx(ctx: *mut c_void) {
+    ///    unsafe {
+    ///       Box::from_raw(ctx as *mut i32);
+    ///   }
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let ctx = Box::leak(Box::new(42));
+    ///
+    /// world.set_context(ctx as *mut i32 as *mut c_void, Some(free_ctx));
+    ///
+    /// assert_eq!(world.context() as *const i32, ctx);
+    /// ```
     #[doc(alias = "world::set_ctx")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     pub fn set_context(&self, ctx: *mut c_void, ctx_free: sys::ecs_ctx_free_t) {
@@ -618,6 +925,10 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get_ctx`
+    ///
+    /// # Example
+    ///
+    /// see [`World::set_context`]
     #[doc(alias = "world::get_ctx")]
     pub fn context(&self) -> *mut c_void {
         unsafe { sys::ecs_get_ctx(self.raw_world.as_ptr()) }
@@ -678,7 +989,7 @@ impl World {
     ///
     /// * C++ API: `world::get_binding_context`
     #[doc(alias = "world::get_binding_context")]
-    pub fn get_binding_context(&self) -> *mut c_void {
+    pub(crate) fn get_binding_context(&self) -> *mut c_void {
         unsafe { sys::ecs_get_binding_ctx(self.raw_world.as_ptr()) }
     }
 
@@ -710,6 +1021,24 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::set_entity_range`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// world.set_entity_range(5000, 0);
+    ///
+    /// let e = world.entity();
+    ///
+    /// assert_eq!(e.id(), 5000);
+    ///
+    /// let e = world.entity();
+    ///
+    /// assert_eq!(e.id(), 5001);
+    /// ```
     #[doc(alias = "world::set_entity_range")]
     pub fn set_entity_range(&self, min: impl Into<Entity>, max: impl Into<Entity>) {
         unsafe { sys::ecs_set_entity_range(self.raw_world.as_ptr(), *min.into(), *max.into()) };
@@ -728,6 +1057,23 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::enable_range_check`
+    ///
+    /// # Example
+    ///
+    /// ```should_panic
+    ///
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// let e = world.entity();
+    /// let e2 = world.entity();
+    ///
+    /// world.set_entity_range(5000, 0);
+    /// world.enable_range_check(true);
+    ///
+    /// e.add_id(e2); //panics! because e and e2 are outside the range
+    /// ```
     #[doc(alias = "world::enable_range_check")]
     pub fn enable_range_check(&self, enabled: bool) {
         unsafe { sys::ecs_enable_range_check(self.raw_world.as_ptr(), enabled) };
@@ -744,9 +1090,25 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::get_scope`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// let e = world.entity_named("scope");
+    ///
+    /// world.set_scope_id(e);
+    ///
+    /// let s = world.get_scope();
+    ///
+    /// assert_eq!(s.unwrap(), e);
+    /// ```
     #[doc(alias = "world::get_scope")]
     #[inline(always)]
-    pub fn get_scope<T: ComponentId>(&self) -> Option<EntityView> {
+    pub fn get_scope(&self) -> Option<EntityView> {
         let scope = unsafe { sys::ecs_get_scope(self.raw_world.as_ptr()) };
 
         if scope == 0 {
@@ -773,6 +1135,23 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::set_scope`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// let e = world.entity_named("scope");
+    ///
+    /// // previous scope can be used to set the scope back to the original.
+    /// let previous_scope = world.set_scope_id(e);
+    ///
+    /// let s = world.get_scope();
+    ///
+    /// assert_eq!(s.unwrap(), e);
+    /// ```
     #[doc(alias = "world::set_scope")]
     #[inline(always)]
     pub fn set_scope_id(&self, id: impl IntoId) -> EntityView {
@@ -797,6 +1176,24 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::set_scope`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Scope;
+    ///
+    /// let world = World::new();
+    ///
+    /// // previous scope can be used to set the scope back to the original.
+    /// let previous_scope = world.set_scope::<Scope>();
+    ///
+    /// let s = world.get_scope();
+    ///
+    /// assert_eq!(s.unwrap(), world.component_id::<Scope>());
+    /// ```
     #[doc(alias = "world::set_scope")]
     #[inline(always)]
     pub fn set_scope<T: ComponentId>(&self) -> EntityView {
@@ -838,6 +1235,7 @@ impl World {
     #[doc(alias = "world::set_lookup_path")]
     #[doc(alias = "wsys::ecs_set_lookup_path")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
+                                               // TODO we need to improve this function somehow, it's not very ergonomic
     pub fn set_lookup_path(&self, search_path: impl Into<Entity>) -> *mut EntityT {
         unsafe { sys::ecs_set_lookup_path(self.raw_world.as_ptr(), &*search_path.into()) }
     }
@@ -862,6 +1260,23 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::lookup`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Position { x: i32, y: i32 }
+    ///
+    /// let world = World::new();
+    /// let a = world.entity().set(Position { x: 10, y: 20 }).with(|| {
+    ///    world.entity_named("X");
+    ///  });
+    ///
+    /// let x = world.lookup_recursively("X");
+    /// assert!(x.has_id(a));
+    /// ```
     #[doc(alias = "world::lookup")]
     #[inline(always)]
     pub fn lookup_recursively(&self, name: &str) -> EntityView {
