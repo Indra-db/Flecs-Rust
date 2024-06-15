@@ -11,6 +11,7 @@ mod entity_test;
 mod enum_test;
 mod eq_test;
 mod is_ref_test;
+mod observer_test;
 mod query_builder_test;
 mod query_test;
 mod world_test;

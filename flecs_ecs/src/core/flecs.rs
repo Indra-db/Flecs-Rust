@@ -194,7 +194,7 @@ create_pre_registered_component!(Alias, ECS_ALIAS);
 create_pre_registered_component!(OnAdd, ECS_ON_ADD);
 create_pre_registered_component!(OnRemove, ECS_ON_REMOVE);
 create_pre_registered_component!(OnSet, ECS_ON_SET);
-create_pre_registered_component!(Unset, ECS_UNSET);
+create_pre_registered_component!(UnSet, ECS_UNSET);
 create_pre_registered_component!(OnTableCreate, ECS_ON_TABLE_CREATE);
 create_pre_registered_component!(OnTableDelete, ECS_ON_TABLE_DELETE);
 create_pre_registered_component!(OnTableEmpty, ECS_ON_TABLE_EMPTY);

@@ -225,6 +225,8 @@ impl World {
     ///
     /// * C++ API: `world::should_quit`
     ///
+    /// # Example
+    ///
     /// ```
     /// use flecs_ecs::prelude::*;
     ///
@@ -265,6 +267,7 @@ impl World {
     /// * C++ API: `world::frame_begin`
     ///
     /// # Example
+    ///
     /// ```
     /// use flecs_ecs::prelude::*;
     ///
@@ -374,6 +377,7 @@ impl World {
     /// * C++ API: `world::readonly_begin`
     ///
     /// # Example
+    ///
     /// ```
     ///
     /// use flecs_ecs::prelude::*;

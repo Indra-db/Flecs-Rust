@@ -196,8 +196,8 @@ impl<'a, P, T: Iterable> ObserverBuilder<'a, P, T> {
     ///
     /// * C++ API: `observer_builder_i::yield_existing`
     #[doc(alias = "observer_builder_i::yield_existing")]
-    pub fn yield_existing(&mut self, should_yield: bool) -> &mut Self {
-        self.desc.yield_existing = should_yield;
+    pub fn yield_existing(&mut self) -> &mut Self {
+        self.desc.yield_existing = true;
         self
     }
 }

@@ -51,9 +51,7 @@ fn query_iter_stage() {
         .system::<&Comp>()
         .multi_threaded(true)
         .each_entity(move |e, _| {
-            query.iter_stage(e).each(|vel| {
-                println!("{:?}", vel);
-            });
+            query.iter_stage(e).each(|_vel| {});
         });
 
     world.progress();

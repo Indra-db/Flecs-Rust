@@ -1107,7 +1107,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::filter")]
     #[inline(always)]
     fn filter(&mut self) -> &mut Self {
-        self.current_term_mut().inout |= InOutKind::Filter as i16;
+        self.current_term_mut().inout = InOutKind::Filter as i16;
         self
     }
 }

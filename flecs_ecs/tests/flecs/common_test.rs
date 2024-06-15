@@ -43,13 +43,13 @@ pub struct SelfRef2 {
     pub value: Entity,
 }
 
-#[derive(Debug, Component)]
+#[derive(Debug, Component, Default)]
 pub struct Position {
     pub x: i32,
     pub y: i32,
 }
 
-#[derive(Debug, Component)]
+#[derive(Debug, Component, Default)]
 pub struct Velocity {
     pub x: i32,
     pub y: i32,
@@ -66,7 +66,7 @@ pub struct Other {
     pub value: i32,
 }
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct Mass {
     pub value: i32,
 }

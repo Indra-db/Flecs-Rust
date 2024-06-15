@@ -25,7 +25,7 @@ fn main() {
     // Create an observer for three events
     world
         .observer::<flecs::OnSet, &Position>()
-        .yield_existing(true)
+        .yield_existing()
         .each_iter(|it, index, pos| {
             println!(
                 " - {}: {}: {}: {{ {}, {} }}",

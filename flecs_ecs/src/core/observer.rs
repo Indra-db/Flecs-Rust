@@ -95,4 +95,14 @@ impl<'a> Observer<'a> {
             ))
         }
     }
+
+    /// Get the observer's entity
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `observer::entity`
+    #[doc(alias = "observer::entity")]
+    pub fn entity(&self) -> EntityView<'a> {
+        self.entity
+    }
 }
