@@ -460,6 +460,10 @@ fn observer_yield_existing() {
     let e2 = world.entity().add::<TagA>();
     let e3 = world.entity().add::<TagA>().add::<TagB>();
 
+    let e1_id = e1.id();
+    let e2_id = e2.id();
+    let e3_id = e3.id();
+
     world.set(Count(0));
     world
         .observer::<flecs::OnAdd, &TagA>()
@@ -467,11 +471,11 @@ fn observer_yield_existing() {
         .each_entity(move |e, _tag_a| {
             let world = e.world();
             world.get::<&mut Count>(|count| {
-                if e == e1 {
+                if e == e1_id {
                     count.0 += 1;
-                } else if e == e2 {
+                } else if e == e2_id {
                     count.0 += 2;
-                } else if e == e3 {
+                } else if e == e3_id {
                     count.0 += 3;
                 }
             });
@@ -489,6 +493,11 @@ fn observer_yield_existing_2_terms() {
     let e1 = world.entity().add::<TagA>().add::<TagB>();
     let e2 = world.entity().add::<TagA>().add::<TagB>();
     let e3 = world.entity().add::<TagA>().add::<TagB>().add::<TagC>();
+
+    let e1_id = e1.id();
+    let e2_id = e2.id();
+    let e3_id = e3.id();
+
     world.entity().add::<TagA>();
     world.entity().add::<TagB>();
 
@@ -496,13 +505,14 @@ fn observer_yield_existing_2_terms() {
     world
         .observer::<flecs::OnAdd, (&TagA, &TagB)>()
         .yield_existing()
-        .each_entity(|e, _| {
+        .each_entity(move |e, _| {
+            let world = e.world();
             world.get::<&mut Count>(|count| {
-                if e == e1 {
+                if e == e1_id {
                     count.0 += 1;
-                } else if e == e2 {
+                } else if e == e2_id {
                     count.0 += 2;
-                } else if e == e3 {
+                } else if e == e3_id {
                     count.0 += 3;
                 }
             });
@@ -539,8 +549,8 @@ fn observer_on_remove() {
     world.set(Count(0));
     world
         .observer::<flecs::OnRemove, &Position>()
-        .each_entity(|_e, _p| {
-            world.get::<&mut Count>(|count| {
+        .each_entity(|e, _p| {
+            e.world().get::<&mut Count>(|count| {
                 count.0 += 1;
             });
         });
@@ -558,6 +568,7 @@ fn observer_on_add_tag_action() {
     let world = World::new();
     world.set(Count(0));
     world.observer::<flecs::OnAdd, &TagA>().run(|mut it| {
+        let world = it.world();
         while it.next_iter() {
             world.get::<&mut Count>(|count| {
                 count.0 += 1;
@@ -576,6 +587,7 @@ fn observer_on_add_tag_iter() {
     let world = World::new();
     world.set(Count(0));
     world.observer::<flecs::OnAdd, &TagA>().run(|mut it| {
+        let world = it.world();
         while it.next_iter() {
             world.get::<&mut Count>(|count| {
                 count.0 += 1;
@@ -594,7 +606,8 @@ fn observer_on_add_tag_each() {
     world.set(Count(0));
     world
         .observer::<flecs::OnAdd, &TagA>()
-        .each_entity(|_e, _tag_a| {
+        .each_entity(|e, _tag_a| {
+            let world = e.world();
             world.get::<&mut Count>(|count| {
                 count.0 += 1;
             });
@@ -613,8 +626,8 @@ fn observer_on_add_expr() {
     world
         .observer::<flecs::OnAdd, ()>()
         .expr("flecs.common_test.Tag")
-        .each_entity(|_e, _| {
-            world.get::<&mut Count>(|count| {
+        .each_entity(|e, _| {
+            e.world().get::<&mut Count>(|count| {
                 count.0 += 1;
             });
         });
@@ -639,8 +652,8 @@ fn observer_observer_w_filter_term() {
         .with_id(tag_a)
         .with_id(tag_b)
         .filter()
-        .each_entity(|_e, _| {
-            world.get::<&mut Count>(|count| {
+        .each_entity(|e, _| {
+            e.world().get::<&mut Count>(|count| {
                 count.0 += 1;
             });
         });
@@ -668,14 +681,14 @@ fn observer_run_callback() {
     let world = World::new();
 
     world.set(Count(0));
-    world.observer::<flecs::OnAdd, &Position>().run_each(
+    world.observer::<flecs::OnAdd, &Position>().run_each_entity(
         |mut it| {
             while it.next_iter() {
                 it.each();
             }
         },
-        |_p| {
-            world.get::<&mut Count>(|count| {
+        |e, _p| {
+            e.world().get::<&mut Count>(|count| {
                 count.0 += 1;
             });
         },
@@ -724,8 +737,8 @@ fn observer_on_set_w_set() {
     world.set(Count(0));
     world
         .observer::<flecs::OnSet, &Position>()
-        .each_entity(|_e, _p| {
-            world.get::<&mut Count>(|count| {
+        .each_entity(|e, _p| {
+            e.world().get::<&mut Count>(|count| {
                 count.0 += 1;
             });
         });
@@ -745,8 +758,8 @@ fn observer_on_set_w_defer_set() {
     world.set(Count(0));
     world
         .observer::<flecs::OnSet, &Position>()
-        .each_entity(|_e, _p| {
-            world.get::<&mut Count>(|count| {
+        .each_entity(|e, _p| {
+            e.world().get::<&mut Count>(|count| {
                 count.0 += 1;
             });
         });
@@ -770,10 +783,10 @@ fn observer_on_add_singleton() {
         .observer::<flecs::OnSet, &Position>()
         .term_at(0)
         .singleton()
-        .each(|pos| {
+        .each_entity(|e, pos| {
             assert_eq!(pos.x, 10);
             assert_eq!(pos.y, 20);
-            world.get::<&mut Count>(|count| {
+            e.world().get::<&mut Count>(|count| {
                 count.0 += 1;
             });
         });
@@ -795,6 +808,7 @@ fn observer_on_add_pair_singleton() {
         .with_first::<Position>(tgt)
         .singleton()
         .run(|mut it| {
+            let world = it.world();
             while it.next_iter() {
                 let pos = it.field::<&Position>(0).unwrap();
                 for i in it.iter() {
@@ -823,10 +837,10 @@ fn observer_on_add_pair_wildcard_singleton() {
         .observer::<flecs::OnSet, &(Position, flecs::Wildcard)>()
         .term_at(0)
         .singleton()
-        .each(|pos| {
+        .each_entity(|e, pos| {
             assert_eq!(pos.x, 10);
             assert_eq!(pos.y, 20);
-            world.get::<&mut Count>(|count| {
+            e.world().get::<&mut Count>(|count| {
                 count.0 += 1;
             });
         });
@@ -849,8 +863,8 @@ fn observer_on_add_with_pair_singleton() {
         .observer::<flecs::OnSet, ()>()
         .with_first::<Position>(tgt)
         .singleton()
-        .each_entity(|_e, _| {
-            world.get::<&mut Count>(|count| {
+        .each_entity(|e, _| {
+            e.world().get::<&mut Count>(|count| {
                 count.0 += 1;
             });
         });

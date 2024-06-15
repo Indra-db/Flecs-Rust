@@ -19,7 +19,7 @@ where
 
     fn each<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
-        Func: FnMut(T::TupleType<'_>) + 'a,
+        Func: FnMut(T::TupleType<'_>) + 'static,
     {
         let each_func = Box::new(func);
         let each_static_ref = Box::leak(each_func);
@@ -37,7 +37,7 @@ where
 
     fn each_entity<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
-        Func: FnMut(EntityView, T::TupleType<'_>) + 'a,
+        Func: FnMut(EntityView, T::TupleType<'_>) + 'static,
     {
         let each_entity_func = Box::new(func);
         let each_entity_static_ref = Box::leak(each_entity_func);
@@ -159,7 +159,7 @@ where
     #[doc(alias = "iterable::run")]
     fn run<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
-        Func: FnMut(Iter<true, P>) + 'a,
+        Func: FnMut(Iter<true, P>) + 'static,
     {
         let run = Box::new(func);
         let run_static_ref = Box::leak(run);
@@ -357,8 +357,8 @@ where
         func_each: FuncEach,
     ) -> <Self as builder::Builder<'a>>::BuiltType
     where
-        Func: FnMut(Iter<true, P>) + 'a,
-        FuncEach: FnMut(T::TupleType<'_>) + 'a,
+        Func: FnMut(Iter<true, P>) + 'static,
+        FuncEach: FnMut(T::TupleType<'_>) + 'static,
     {
         let run_func = Box::new(func);
         let run_static_ref = Box::leak(run_func);
