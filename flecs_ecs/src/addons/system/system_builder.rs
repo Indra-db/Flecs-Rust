@@ -188,8 +188,8 @@ where
     ///
     /// * C++ API: `system_builder_i::multi_threaded`
     #[doc(alias = "system_builder_i::multi_threaded")]
-    pub fn multi_threaded(&mut self, value: bool) -> &mut Self {
-        self.desc.multi_threaded = value;
+    pub fn multi_threaded(&mut self) -> &mut Self {
+        self.desc.multi_threaded = true;
         self
     }
 

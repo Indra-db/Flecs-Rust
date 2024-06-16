@@ -198,7 +198,7 @@ impl<'a> EntityView<'a> {
         self.add_id((first, Second::id(world)))
     }
 
-    /// Adds a pair to the entity composed of a tag and an enum constant.
+    /// Adds a pair to the entity composed of a tag and an (C) flecs enum constant.
     ///
     /// # See also
     ///
@@ -210,7 +210,7 @@ impl<'a> EntityView<'a> {
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         const {
-            if !First::IS_TAG && First::IMPLS_DEFAULT {
+            if !First::IS_TAG && !First::IMPLS_DEFAULT {
                 panic!("Adding an element that is not a Tag / Zero sized type requires to implement Default");
             }
         }
@@ -222,7 +222,7 @@ impl<'a> EntityView<'a> {
     /// Adds a pair to the entity where the first element is the enumeration type,
     /// and the second element is the enumeration constant.
     ///
-    /// This function works with regular (C style) enumerations as well as enum classes.
+    /// This function works only with regular (C style) enumerations.
     ///
     /// # Type Parameters
     ///
