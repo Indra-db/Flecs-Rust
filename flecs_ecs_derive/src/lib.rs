@@ -984,6 +984,11 @@ impl Parse for Dsl {
                 terms.last_mut().unwrap().oper = TermOper::Or;
             } else {
                 input.parse::<Token![,]>()?;
+
+                // Handle optional trailing comma
+                if input.is_empty() {
+                    break;
+                }
             }
             terms.push(input.parse::<Term>()?);
         }
@@ -1010,6 +1015,7 @@ impl Parse for Builder {
         let world = input.parse::<Expr>()?;
         input.parse::<Token![,]>()?;
         let dsl = input.parse::<Dsl>()?;
+
         Ok(Builder { name, world, dsl })
     }
 }
@@ -1363,6 +1369,7 @@ impl Parse for Observer {
         let event = input.parse::<Type>()?;
         input.parse::<Token![,]>()?;
         let dsl = input.parse::<Dsl>()?;
+
         Ok(Observer {
             name,
             world,
