@@ -7,6 +7,7 @@ pub mod common_test;
 
 mod clone_default_impl_test;
 mod component_test;
+mod observer_mt;
 mod entity_test;
 mod enum_test;
 mod eq_test;

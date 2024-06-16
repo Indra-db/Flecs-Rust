@@ -49,7 +49,7 @@ fn query_iter_stage() {
 
     world
         .system::<&Comp>()
-        .multi_threaded(true)
+        .multi_threaded()
         .each_entity(move |e, _| {
             query.iter_stage(e).each(|_vel| {});
         });
