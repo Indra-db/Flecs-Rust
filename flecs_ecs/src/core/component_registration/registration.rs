@@ -4,13 +4,20 @@ use crate::core::*;
 use crate::sys;
 
 #[doc(hidden)]
-pub fn internal_register_component<'a, T>(world: impl IntoWorld<'a>, name: *const i8) -> u64
+pub fn internal_register_component<'a, const IS_NAMED: bool, T>(
+    world: impl IntoWorld<'a>,
+    name: *const i8,
+) -> u64
 where
     T: ComponentId,
 {
     let world_ptr = world.world_ptr_mut();
 
-    let id = register_component_data::<T>(world_ptr, name);
+    let id = if IS_NAMED {
+        register_component_data_named::<T>(world_ptr, name)
+    } else {
+        register_component_data::<T>(world_ptr)
+    };
 
     if T::IS_ENUM {
         register_enum_data::<T>(world_ptr, id);
@@ -24,7 +31,7 @@ pub(crate) fn try_register_component<'a, T>(world: impl IntoWorld<'a>) -> Entity
 where
     T: ComponentId,
 {
-    internal_register_component::<T>(world, std::ptr::null())
+    internal_register_component::<false, T>(world, std::ptr::null())
 }
 
 #[inline(always)]
@@ -34,7 +41,7 @@ where
 {
     let name = compact_str::format_compact!("{}\0", name);
 
-    internal_register_component::<T>(world, name.as_ptr() as *const c_char)
+    internal_register_component::<true, T>(world, name.as_ptr() as *const c_char)
 }
 
 /// registers enum fields with the world.
@@ -64,14 +71,37 @@ where
 }
 
 /// registers the component with the world.
-pub(crate) fn register_component_data<T>(world: *mut WorldT, name: *const c_char) -> EntityT
+pub(crate) fn register_component_data_named<T>(world: *mut WorldT, name: *const c_char) -> EntityT
+where
+    T: ComponentId,
+{
+    let prev_scope = if !name.is_null() && unsafe { sys::ecs_get_scope(world) == 0 } {
+        unsafe { sys::ecs_set_scope(world, 0) }
+    } else {
+        0
+    };
+    let prev_with = unsafe { sys::ecs_set_with(world, 0) };
+
+    let id = register_componment_data_explicit::<T>(world, name);
+
+    if prev_with != 0 {
+        unsafe { sys::ecs_set_with(world, prev_with) };
+    }
+    if prev_scope != 0 {
+        unsafe { sys::ecs_set_scope(world, prev_scope) };
+    }
+    id
+}
+
+/// registers the component with the world.
+pub(crate) fn register_component_data<T>(world: *mut WorldT) -> EntityT
 where
     T: ComponentId,
 {
     let prev_scope = unsafe { sys::ecs_set_scope(world, 0) };
     let prev_with = unsafe { sys::ecs_set_with(world, 0) };
 
-    let id = register_componment_data_explicit::<T>(world, name);
+    let id = register_componment_data_explicit::<T>(world, std::ptr::null());
 
     if prev_with != 0 {
         unsafe { sys::ecs_set_with(world, prev_with) };

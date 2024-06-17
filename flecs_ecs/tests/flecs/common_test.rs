@@ -259,7 +259,7 @@ pub fn create_world_with_flags<
 >() -> World {
     let world = World::new();
 
-    internal_register_component::<T>(&world, std::ptr::null());
+    internal_register_component::<false, T>(&world, std::ptr::null());
     world.set(T::default());
 
     world
