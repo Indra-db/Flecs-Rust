@@ -85,11 +85,6 @@ fn generate_bindings() {
         bindings = bindings.clang_arg("-DFLECS_STATS");
     }
 
-    #[cfg(feature = "flecs_monitor")]
-    {
-        bindings = bindings.clang_arg("-DFLECS_MONITOR");
-    }
-
     #[cfg(feature = "flecs_metrics")]
     {
         bindings = bindings.clang_arg("-DFLECS_METRICS");
@@ -220,9 +215,6 @@ fn main() {
 
         #[cfg(feature = "flecs_stats")]
         build.define("FLECS_STATS", None);
-
-        #[cfg(feature = "flecs_monitor")]
-        build.define("FLECS_MONITOR", None);
 
         #[cfg(feature = "flecs_metrics")]
         build.define("FLECS_METRICS", None);

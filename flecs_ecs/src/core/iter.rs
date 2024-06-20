@@ -486,7 +486,7 @@ where
             FlecsErrorCode::InvalidOperation,
             "cannot .field from .each, use .field_at instead",
         );
-        self.field_internal::<T>(index)
+        self.field_internal::<T>(index).unwrap()
     }
 
     /// Get read/write access to field data.
@@ -530,7 +530,7 @@ where
         let is_id_correct = id == term_id;
 
         if is_id_correct || is_pair {
-            return Some(unsafe { self.field_internal::<T::UnderlyingType>(index) });
+            return unsafe { self.field_internal::<T::UnderlyingType>(index) };
         }
 
         None
@@ -676,7 +676,7 @@ where
         self.iter.group_id
     }
 
-    unsafe fn field_internal<T>(&self, index: i32) -> Field<T> {
+    unsafe fn field_internal<T>(&self, index: i32) -> Option<Field<T>> {
         let is_shared = !self.is_self(index);
 
         // If a shared column is retrieved with 'column', there will only be a
@@ -685,9 +685,13 @@ where
         let count = if is_shared { 1 } else { self.count() };
         let array =
             unsafe { sys::ecs_field_w_size(self.iter, std::mem::size_of::<T>(), index) as *mut T };
+
+        if array.is_null() {
+            return None;
+        }
         let slice = unsafe { std::slice::from_raw_parts_mut(array, count) };
 
-        Field::<T>::new(slice, is_shared)
+        Some(Field::<T>::new(slice, is_shared))
     }
 
     fn field_untyped_internal(&self, index: i32) -> FieldUntyped {

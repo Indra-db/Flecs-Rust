@@ -25,7 +25,7 @@ fn main() {
         .build();
 
     // Configure the world to use the custom pipeline
-    world.set_pipeline(pipeline.entity());
+    world.set_pipeline_id(pipeline.entity());
 
     // Create system with Physics tag
     world.system::<()>().kind::<Physics>().run(|mut it| {

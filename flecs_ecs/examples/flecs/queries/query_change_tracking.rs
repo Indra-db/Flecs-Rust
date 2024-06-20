@@ -23,120 +23,129 @@ struct Dirty {
 }
 
 fn main() {
+    //TODO CHANGE TRACKING IS BROKEN IN V4, WILL BE FIXED BEFORE RELEASE
     let world = World::new();
 
+    // Make Dirty inheritable so that queries can match it on prefabs
+    world
+        .component::<Dirty>()
+        .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
     //todo v4 bug flecs core
 
-    // // Create a query that just reads a component. We'll use this query for
-    // // change tracking. Change tracking for a query is automatically enabled
-    // // when query::changed() is called.
-    // // Each query has its own private dirty state which is reset only when the
-    // // query is iterated.
+    // Create a query that just reads a component. We'll use this query for
+    // change tracking. Change tracking for a query is automatically enabled
+    // when query::changed() is called.
+    // Each query has its own private dirty state which is reset only when the
+    // query is iterated.
 
-    // let query_read = world.query::<&Position>().set_cached().build();
+    let query_read = world.query::<&Position>().set_cached().build();
 
-    // // Create a query that writes the component based on a Dirty state.
-    // let query_write = world
-    //     .query::<(&Dirty, &mut Position)>()
-    //     .term_at(0)
-    //     .up()
-    //     .instanced()
-    //     .build();
+    // Create a query that writes the component based on a Dirty state.
+    let query_write = world
+        .query::<(&Dirty, &mut Position)>()
+        .term_at(0)
+        .up()
+        .instanced()
+        .build();
 
-    // // Create two prefabs with a Dirty component. We can use this to share a
-    // // single Dirty value for all entities in a table.
-    // let prefab_dirty_false = world
-    //     .prefab_named("prefab_dirty_false")
-    //     .set(Dirty { value: false });
+    // Create two prefabs with a Dirty component. We can use this to share a
+    // single Dirty value for all entities in a table.
+    let prefab_dirty_false = world
+        .prefab_named("prefab_dirty_false")
+        .set(Dirty { value: false });
 
-    // let prefab_dirty_true = world
-    //     .prefab_named("prefab_dirty_true")
-    //     .set(Dirty { value: true });
+    let prefab_dirty_true = world
+        .prefab_named("prefab_dirty_true")
+        .set(Dirty { value: true });
 
-    // // Create instances of p1 and p2. Because the entities have different
-    // // prefabs, they end up in different tables.
-    // world
-    //     .entity_named("e1_dirty_false")
-    //     .is_a_id(prefab_dirty_false)
-    //     .set(Position { x: 10.0, y: 20.0 });
+    // Create instances of p1 and p2. Because the entities have different
+    // prefabs, they end up in different tables.
+    world
+        .entity_named("e1_dirty_false")
+        .is_a_id(prefab_dirty_false)
+        .set(Position { x: 10.0, y: 20.0 });
 
-    // world
-    //     .entity_named("e2_dirty_false")
-    //     .is_a_id(prefab_dirty_false)
-    //     .set(Position { x: 30.0, y: 40.0 });
+    world
+        .entity_named("e2_dirty_false")
+        .is_a_id(prefab_dirty_false)
+        .set(Position { x: 30.0, y: 40.0 });
 
-    // world
-    //     .entity_named("e3_dirty_true")
-    //     .is_a_id(prefab_dirty_true)
-    //     .set(Position { x: 40.0, y: 50.0 });
+    world
+        .entity_named("e3_dirty_true")
+        .is_a_id(prefab_dirty_true)
+        .set(Position { x: 40.0, y: 50.0 });
 
-    // world
-    //     .entity_named("e4_dirty_true")
-    //     .is_a_id(prefab_dirty_true)
-    //     .set(Position { x: 50.0, y: 60.0 });
+    world
+        .entity_named("e4_dirty_true")
+        .is_a_id(prefab_dirty_true)
+        .set(Position { x: 50.0, y: 60.0 });
 
-    // // We can use the changed() function on the query to check if any of the
-    // // tables it is matched with has changed. Since this is the first time that
-    // // we check this and the query is matched with the tables we just created,
-    // // the function will return true.
-    // println!();
-    // println!("query_read.is_changed(): {}", query_read.is_changed());
-    // println!();
+    // We can use the changed() function on the query to check if any of the
+    // tables it is matched with has changed. Since this is the first time that
+    // we check this and the query is matched with the tables we just created,
+    // the function will return true.
+    println!();
+    println!("query_read.is_changed(): {}", query_read.is_changed());
+    println!();
 
-    // // The changed state will remain true until we have iterated each table.
-    // query_read.iter_only(|mut iter| {
-    //     // With the it.changed() function we can check if the table we're
-    //     // currently iterating has changed since last iteration.
-    //     // Because this is the first time the query is iterated, all tables
-    //     // will show up as changed.
-    //     println!(
-    //         "iiter.is_changed() for table [{}]: {}",
-    //         iter.archetype().unwrap(),
-    //         iter.is_changed()
-    //     );
-    // });
+    // The changed state will remain true until we have iterated each table.
+    query_read.run(|mut iter| {
+        while iter.next_iter() {
+            // With the it.changed() function we can check if the table we're
+            // currently iterating has changed since last iteration.
+            // Because this is the first time the query is iterated, all tables
+            // will show up as changed.
+            println!(
+                "iiter.is_changed() for table [{}]: {}",
+                iter.archetype().unwrap(),
+                iter.is_changed()
+            );
+        }
+    });
 
-    // // Now that we have iterated all tables, the dirty state is reset.
-    // println!();
-    // println!("query_read.is_changed(): {:?}", query_read.is_changed());
-    // println!();
+    // Now that we have iterated all tables, the dirty state is reset.
+    println!();
+    println!("query_read.is_changed(): {:?}", query_read.is_changed());
+    println!();
 
-    // // Iterate the write query. Because the Position term is InOut (default)
-    // // iterating the query will write to the dirty state of iterated tables.
-    // query_write.iter(|mut it, (dirty, pos)| {
-    //     println!("iterate table [{}]", it.archetype().unwrap());
+    // Iterate the write query. Because the Position term is InOut (default)
+    // iterating the query will write to the dirty state of iterated tables.
+    query_write.run_iter(|mut it, (dirty, pos)| {
+        println!("iterate table [{}]", it.archetype().unwrap());
 
-    //     // Because we enforced that Dirty is a shared component, we can check
-    //     // a single value for the entire table.
-    //     if !dirty[0].value {
-    //         // If the dirty flag is false, skip the table. This way the table's
-    //         // dirty state is not updated by the query.
-    //         it.skip();
-    //         println!("iter.skip() for table [{}]", it.archetype().unwrap());
-    //         return;
-    //     }
+        // Because we enforced that Dirty is a shared component, we can check
+        // a single value for the entire table.
+        if !dirty[0].value {
+            // If the dirty flag is false, skip the table. This way the table's
+            // dirty state is not updated by the query.
+            it.skip();
+            println!("iter.skip() for table [{}]", it.archetype().unwrap());
+            return;
+        }
 
-    //     // For all other tables the dirty state will be set.
-    //     for i in it.iter() {
-    //         pos[i].x += 1.0;
-    //         pos[i].y += 1.0;
-    //     }
-    // });
+        // For all other tables the dirty state will be set.
+        for i in it.iter() {
+            pos[i].x += 1.0;
+            pos[i].y += 1.0;
+        }
+    });
 
-    // // One of the tables has changed, so q_read.changed() will return true
-    // println!();
-    // println!("query_read.is_changed(): {}", query_read.is_changed());
-    // println!();
+    // One of the tables has changed, so q_read.changed() will return true
+    println!();
+    println!("query_read.is_changed(): {}", query_read.is_changed());
+    println!();
 
-    // // When we iterate the read query, we'll see that one table has changed.
-    // query_read.iter_only(|mut iter| {
-    //     println!(
-    //         "iter.is_changed() for table [{}]: {}",
-    //         iter.archetype().unwrap(),
-    //         iter.is_changed()
-    //     );
-    // });
-    // println!();
+    // When we iterate the read query, we'll see that one table has changed.
+    query_read.run(|mut iter| {
+        while iter.next_iter() {
+            println!(
+                "iter.is_changed() for table [{}]: {}",
+                iter.archetype().unwrap(),
+                iter.is_changed()
+            );
+        }
+    });
+    println!();
 
     // Output:
     //  query_read.is_changed(): true

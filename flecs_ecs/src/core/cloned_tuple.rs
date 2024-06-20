@@ -162,7 +162,7 @@ where
                     std::any::type_name::<A::OnlyType>(), std::any::type_name::<Self>(), std::any::type_name::<A::ActualType>());
                 }
             } else {
-                components[0] = unsafe { sys::ecs_record_get_column(record, id, 0) };
+                components[0] = unsafe { sys::ecs_record_get_by_column(record, id, 0) };
             }
 
         has_all_components
@@ -242,7 +242,7 @@ macro_rules! impl_cloned_tuple {
 
 
                     if column_index != -1 {
-                        components[index] = unsafe { sys::ecs_record_get_column(record, column_index, 0) };
+                        components[index] = unsafe { sys::ecs_record_get_by_column(record, column_index, 0) };
                     } else {
                         components[index] = std::ptr::null_mut();
                         if !$t::IS_OPTION {

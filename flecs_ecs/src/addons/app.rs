@@ -122,10 +122,9 @@ impl<'a> App<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `app_builder::enable_monitor`
-    #[doc(alias = "app_builder::enable_monitor")]
-    #[cfg(feature = "flecs_monitor")]
-    pub fn enable_monitor(&mut self, enable: bool) -> &mut Self {
+    /// * C++ API: `app_builder::enable_stats`
+    #[doc(alias = "app_builder::enable_stats")]
+    pub fn enable_stats(&mut self, enable: bool) -> &mut Self {
         self.desc.enable_monitor = enable;
         self
     }

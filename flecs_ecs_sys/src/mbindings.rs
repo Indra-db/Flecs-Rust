@@ -250,3 +250,15 @@ fn compile_test_check_if_any_ecs_world_info_fields_changed() {
         name_prefix: std::ptr::null(),
     };
 }
+
+unsafe impl Send for EcsWorldStats {}
+
+unsafe impl Sync for EcsWorldStats {}
+
+unsafe impl Send for EcsWorldSummary {}
+
+unsafe impl Sync for EcsWorldSummary {}
+
+unsafe impl Send for EcsPipelineStats {}
+
+unsafe impl Sync for EcsPipelineStats {}

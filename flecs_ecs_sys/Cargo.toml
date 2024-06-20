@@ -64,10 +64,7 @@ flecs_script = ["flecs_module", "flecs_meta", "flecs_doc"]
 flecs_snapshot = []
 
 # Access runtime statistics
-flecs_stats = []
-
-# Track runtime statistics periodically
-flecs_monitor = ["flecs_stats", "flecs_system", "flecs_timer", "flecs_module"]
+flecs_stats = ["flecs_pipeline", "flecs_timer", "flecs_module"]
 
 # Expose component data as statistics
 flecs_metrics = ["flecs_meta", "flecs_units", "flecs_pipeline"]

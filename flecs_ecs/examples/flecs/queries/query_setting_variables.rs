@@ -2,7 +2,7 @@ use crate::z_ignore_test_common::*;
 
 use flecs_ecs::prelude::*;
 // This example extends the component_inheritance example, and shows how
-// we can use a single rule to match units from different players and platoons
+// we can use a single query to match units from different players and platoons
 // by setting query variables before we iterate.
 //
 // The units in this example belong to a platoon, with the platoons belonging
@@ -84,31 +84,32 @@ fn main() {
         }
     }
 
-    // Create a rule to find all RangedUnits for a platoon/player. The
+    // Create a query to find all RangedUnits for a platoon/player. The
     // equivalent query in the query DSL would look like this:
     //   (Platoon, $Platoon), Player($Platoon, $Player)
     //
     // The way to read how this query is evaluated is:
     // - find all entities with (Platoon, *), store * in _Platoon
     // - check if _Platoon has (Player, *), store * in _Player
-    let rule = world
+    let query = world
         .query::<&RangedUnit>()
         .with::<&Platoon>()
-        .set_second_name("$Platoon")
-        .with_first_name::<&Player>("$Player")
-        .set_src_name("$Platoon")
+        .set_second_name("$platoon")
+        .with_first_name::<&Player>("$player")
+        .set_src_name("$platoon")
         .build();
 
-    // If we would iterate this rule it would return all ranged units for all
+    // If we would iterate this query it would return all ranged units for all
     // platoons & for all players. We can limit the results to just a single
     // platoon or a single player setting a variable beforehand. In this example
     // we'll just find all platoons & ranged units for a single player.
 
-    let player_var = rule.find_var("Player").unwrap();
-    let platoon_var = rule.find_var("Platoon").unwrap();
+    let player_var = query.find_var("player").unwrap();
+    let platoon_var = query.find_var("platoon").unwrap();
 
-    // Iterate rule, limit the results to units of MyPlayer
-    rule.iterable()
+    // Iterate query, limit the results to units of MyPlayer
+    query
+        .iterable()
         .set_var(player_var, world.lookup_recursively("MyPlayer"))
         .each_iter(|it, index, _| {
             let unit = it.entity(index);

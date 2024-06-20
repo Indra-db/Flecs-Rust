@@ -1,6 +1,6 @@
 //! Cached query implementation. Fast to iterate, but slower to create than Filter
 
-use std::os::raw::c_void;
+use std::ffi::c_void;
 
 use crate::core::internals::*;
 use crate::core::*;
@@ -252,7 +252,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::filter_flags`
     #[doc(alias = "query_builder_i::filter_flags")]
-    fn flags(&mut self, flags: sys::ecs_flags32_t) -> &mut Self {
+    fn query_flags(&mut self, flags: sys::ecs_flags32_t) -> &mut Self {
         self.query_desc_mut().flags |= flags;
         self
     }
@@ -293,10 +293,6 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// * C++ API: `query_builder_i::expr`
     #[doc(alias = "query_builder_i::expr")]
     fn expr(&mut self, expr: &'a str) -> &mut Self {
-        if self.current_term_index() < self.count_generic_terms() {
-            panic!("This function should only be used on terms that are not part of the generic type signature. ")
-        }
-
         let expr = format!("{}\0", expr);
 
         ecs_assert!(
@@ -845,6 +841,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     fn order_by<T>(&mut self, compare: impl OrderByFn<T>) -> &mut Self
     where
         T: ComponentId,
+        Self: QueryBuilderImpl<'a>,
     {
         let cmp: sys::ecs_order_by_action_t = Some(unsafe {
             std::mem::transmute::<
@@ -858,8 +855,19 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
             >(compare.to_extern_fn())
         });
 
-        self.order_by_id(T::id(self.world()), cmp);
+        self.__internal_order_by_id(T::id(self.world()), cmp);
         self
+    }
+
+    #[doc(hidden)]
+    fn __internal_order_by_id(
+        &mut self,
+        component: impl Into<Entity>,
+        compare: sys::ecs_order_by_action_t,
+    ) {
+        let desc = self.query_desc_mut();
+        desc.order_by_callback = compare;
+        desc.order_by = *component.into();
     }
 
     /// Sorts the output of a query.
@@ -877,10 +885,21 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     fn order_by_id(
         &mut self,
         component: impl Into<Entity>,
-        compare: sys::ecs_order_by_action_t,
+        compare: impl OrderByFnVoid,
     ) -> &mut Self {
         let desc = self.query_desc_mut();
-        desc.order_by_callback = compare;
+        let cmp: sys::ecs_order_by_action_t = Some(unsafe {
+            std::mem::transmute::<
+                extern "C" fn(Entity, *const c_void, Entity, *const c_void) -> i32,
+                unsafe extern "C" fn(
+                    u64,
+                    *const std::ffi::c_void,
+                    u64,
+                    *const std::ffi::c_void,
+                ) -> i32,
+            >(compare.to_extern_fn())
+        });
+        desc.order_by_callback = cmp;
         desc.order_by = *component.into();
         self
     }
@@ -1055,5 +1074,35 @@ where
         }
 
         output::<F, T>
+    }
+}
+
+pub trait OrderByFnVoid {
+    fn to_extern_fn(self) -> extern "C" fn(Entity, *const c_void, Entity, *const c_void) -> i32;
+}
+
+impl<F> OrderByFnVoid for F
+where
+    F: Fn(Entity, *const c_void, Entity, *const c_void) -> i32,
+{
+    fn to_extern_fn(self) -> extern "C" fn(Entity, *const c_void, Entity, *const c_void) -> i32 {
+        const {
+            assert!(std::mem::size_of::<Self>() == 0);
+        }
+        std::mem::forget(self);
+
+        extern "C" fn output<F>(
+            e1: Entity,
+            e1_data: *const c_void,
+            e2: Entity,
+            e2_data: *const c_void,
+        ) -> i32
+        where
+            F: Fn(Entity, *const c_void, Entity, *const c_void) -> i32,
+        {
+            (unsafe { std::mem::transmute_copy::<_, F>(&()) })(e1, e1_data, e2, e2_data)
+        }
+
+        output::<F>
     }
 }

@@ -329,4 +329,9 @@ where
             std::ptr::null_mut()
         }
     }
+
+    /// get the raw `c_ptr` of the query
+    pub fn c_ptr(&self) -> NonNull<QueryT> {
+        self.query
+    }
 }

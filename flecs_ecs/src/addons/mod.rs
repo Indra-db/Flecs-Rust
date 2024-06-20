@@ -17,3 +17,9 @@ pub mod system;
 pub mod pipeline;
 
 pub mod experimental;
+
+#[cfg(feature = "flecs_stats")]
+pub mod stats;
+
+#[cfg(feature = "flecs_rest")]
+pub mod rest;

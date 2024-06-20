@@ -95,7 +95,9 @@ impl World {
 
     fn init_builtin_components(&self) {
         // used for event handling with no data
-        self.component_named::<()>("flecs::rs::() - None");
+        self.component_named::<()>("flecs::rust::() - None");
+        #[cfg(feature = "flecs_stats")]
+        self.component_named::<crate::prelude::stats::Stats>("flecs::rust::Stats");
     }
 
     /// deletes and recreates the world
@@ -4092,10 +4094,10 @@ impl World {
     ///
     /// # See also
     ///
-    /// * C++ API: `world::set_pipeline`
-    #[doc(alias = "world::set_pipeline")]
+    /// * C++ API: `world::set_pipeline_id`
+    #[doc(alias = "world::set_pipeline_id")]
     #[inline(always)]
-    pub fn set_pipeline(&self, pipeline: impl Into<Entity>) {
+    pub fn set_pipeline_id(&self, pipeline: impl Into<Entity>) {
         unsafe {
             sys::ecs_set_pipeline(self.raw_world.as_ptr(), *pipeline.into());
         }
@@ -4109,10 +4111,10 @@ impl World {
     ///
     /// # See also
     ///
-    /// * C++ API: `world::set_pipeline`
-    #[doc(alias = "world::set_pipeline")]
+    /// * C++ API: `world::set_pipeline_id`
+    #[doc(alias = "world::set_pipeline_id")]
     #[inline(always)]
-    pub fn set_pipeline_type<Pipeline>(&self)
+    pub fn set_pipeline<Pipeline>(&self)
     where
         Pipeline: ComponentType<Struct> + ComponentId,
     {
@@ -4190,7 +4192,7 @@ impl World {
     /// synchronization.
     ///
     /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
-    /// `set_pipeline()`). Using `progress()` auto-invokes this for the default pipeline.
+    /// `set_pipeline_id()`). Using `progress()` auto-invokes this for the default pipeline.
     /// Additional pipelines may be run explicitly.
     ///
     /// # Note
@@ -4216,7 +4218,7 @@ impl World {
     /// synchronization.
     ///
     /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
-    /// `set_pipeline()`). Using `progress()` auto-invokes this for the default pipeline.
+    /// `set_pipeline_id()`). Using `progress()` auto-invokes this for the default pipeline.
     /// Additional pipelines may be run explicitly.
     ///
     /// # Note
@@ -4245,7 +4247,7 @@ impl World {
     /// synchronization.
     ///
     /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
-    /// `set_pipeline()`). Using `progress()` auto-invokes this for the default pipeline.
+    /// `set_pipeline_id()`). Using `progress()` auto-invokes this for the default pipeline.
     /// Additional pipelines may be run explicitly.
     ///
     /// # Note
@@ -4279,7 +4281,7 @@ impl World {
     /// synchronization.
     ///
     /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
-    /// `set_pipeline()`). Using `progress()` auto-invokes this for the default pipeline.
+    /// `set_pipeline_id()`). Using `progress()` auto-invokes this for the default pipeline.
     /// Additional pipelines may be run explicitly.
     ///
     /// # Note
@@ -4522,7 +4524,8 @@ impl World {
                 SEPARATOR.as_ptr(),
             );
         }
-        self.set_scope_id(id)
+        self.set_scope_id(id);
+        EntityView::new_from(self, *id)
     }
 }
 

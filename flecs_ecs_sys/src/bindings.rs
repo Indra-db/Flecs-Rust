@@ -98,10 +98,26 @@ pub const EcsQueryHasCacheable: u32 = 8388608;
 pub const EcsQueryIsCacheable: u32 = 16777216;
 pub const EcsQueryHasTableThisVar: u32 = 33554432;
 pub const EcsQueryHasSparseThis: u32 = 67108864;
+pub const EcsTermMatchAny: u32 = 1;
+pub const EcsTermMatchAnySrc: u32 = 2;
+pub const EcsTermTransitive: u32 = 4;
+pub const EcsTermReflexive: u32 = 8;
+pub const EcsTermIdInherited: u32 = 16;
+pub const EcsTermIsTrivial: u32 = 32;
+pub const EcsTermNoData: u32 = 64;
+pub const EcsTermIsCacheable: u32 = 128;
+pub const EcsTermIsScope: u32 = 256;
+pub const EcsTermIsMember: u32 = 512;
+pub const EcsTermIsToggle: u32 = 1024;
+pub const EcsTermKeepAlive: u32 = 2048;
+pub const EcsTermIsSparse: u32 = 4096;
+pub const EcsTermIsUnion: u32 = 8192;
+pub const EcsTermIsOr: u32 = 16384;
 pub const EcsObserverIsMulti: u32 = 2;
 pub const EcsObserverIsMonitor: u32 = 4;
 pub const EcsObserverIsDisabled: u32 = 8;
 pub const EcsObserverIsParentDisabled: u32 = 16;
+pub const EcsObserverBypassQuery: u32 = 32;
 pub const EcsTableHasBuiltins: u32 = 2;
 pub const EcsTableIsPrefab: u32 = 4;
 pub const EcsTableHasIsA: u32 = 8;
@@ -163,21 +179,6 @@ pub const EcsIsEntity: u64 = 144115188075855872;
 pub const EcsIsName: u64 = 72057594037927936;
 pub const EcsTraverseFlags: i64 = -576460752303423488;
 pub const EcsTermRefFlags: i64 = -72057594037927936;
-pub const EcsTermMatchAny: u32 = 1;
-pub const EcsTermMatchAnySrc: u32 = 2;
-pub const EcsTermTransitive: u32 = 4;
-pub const EcsTermReflexive: u32 = 8;
-pub const EcsTermIdInherited: u32 = 16;
-pub const EcsTermIsTrivial: u32 = 32;
-pub const EcsTermNoData: u32 = 64;
-pub const EcsTermIsCacheable: u32 = 128;
-pub const EcsTermIsScope: u32 = 256;
-pub const EcsTermIsMember: u32 = 512;
-pub const EcsTermIsToggle: u32 = 1024;
-pub const EcsTermKeepAlive: u32 = 2048;
-pub const EcsTermIsSparse: u32 = 4096;
-pub const EcsTermIsUnion: u32 = 8192;
-pub const EcsTermIsOr: u32 = 16384;
 pub const flecs_iter_cache_ids: u32 = 1;
 pub const flecs_iter_cache_columns: u32 = 2;
 pub const flecs_iter_cache_sources: u32 = 4;
@@ -268,7 +269,7 @@ extern "C" {
         vec: *mut ecs_vec_t,
         size: ecs_size_t,
         elem_count: i32,
-    ) -> *mut ecs_vec_t;
+    );
 }
 extern "C" {
     pub fn ecs_vec_init_if(vec: *mut ecs_vec_t, size: ecs_size_t);
@@ -999,23 +1000,29 @@ extern "C" {
 extern "C" {
     pub fn ecs_strbuf_written(buffer: *const ecs_strbuf_t) -> i32;
 }
+#[doc = "Time type."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_time_t {
+    #[doc = "< Second part."]
     pub sec: u32,
+    #[doc = "< Nanosecond part."]
     pub nanosec: u32,
 }
 extern "C" {
-    #[doc = "Allocation counters"]
+    #[doc = "< malloc count."]
     pub static mut ecs_os_api_malloc_count: i64;
 }
 extern "C" {
+    #[doc = "< realloc count."]
     pub static mut ecs_os_api_realloc_count: i64;
 }
 extern "C" {
+    #[doc = "< calloc count."]
     pub static mut ecs_os_api_calloc_count: i64;
 }
 extern "C" {
+    #[doc = "< free count."]
     pub static mut ecs_os_api_free_count: i64;
 }
 #[doc = "Use handle types that _at least_ can store pointers"]
@@ -1024,82 +1031,102 @@ pub type ecs_os_cond_t = usize;
 pub type ecs_os_mutex_t = usize;
 pub type ecs_os_dl_t = usize;
 pub type ecs_os_sock_t = usize;
-#[doc = "64 bit thread id"]
+#[doc = "64 bit thread id."]
 pub type ecs_os_thread_id_t = u64;
-#[doc = "Generic function pointer type"]
+#[doc = "Generic function pointer type."]
 pub type ecs_os_proc_t = ::std::option::Option<unsafe extern "C" fn()>;
-#[doc = "OS API init"]
+#[doc = "OS API init."]
 pub type ecs_os_api_init_t = ::std::option::Option<unsafe extern "C" fn()>;
-#[doc = "OS API deinit"]
+#[doc = "OS API deinit."]
 pub type ecs_os_api_fini_t = ::std::option::Option<unsafe extern "C" fn()>;
-#[doc = "Memory management"]
+#[doc = "OS API malloc function type."]
 pub type ecs_os_api_malloc_t =
     ::std::option::Option<unsafe extern "C" fn(size: ecs_size_t) -> *mut ::std::os::raw::c_void>;
+#[doc = "OS API free function type."]
 pub type ecs_os_api_free_t =
     ::std::option::Option<unsafe extern "C" fn(ptr: *mut ::std::os::raw::c_void)>;
+#[doc = "OS API realloc function type."]
 pub type ecs_os_api_realloc_t = ::std::option::Option<
     unsafe extern "C" fn(
         ptr: *mut ::std::os::raw::c_void,
         size: ecs_size_t,
     ) -> *mut ::std::os::raw::c_void,
 >;
+#[doc = "OS API calloc function type."]
 pub type ecs_os_api_calloc_t =
     ::std::option::Option<unsafe extern "C" fn(size: ecs_size_t) -> *mut ::std::os::raw::c_void>;
+#[doc = "OS API strdup function type."]
 pub type ecs_os_api_strdup_t = ::std::option::Option<
     unsafe extern "C" fn(str_: *const ::std::os::raw::c_char) -> *mut ::std::os::raw::c_char,
 >;
-#[doc = "Threads"]
+#[doc = "OS API thread_callback function type."]
 pub type ecs_os_thread_callback_t = ::std::option::Option<
     unsafe extern "C" fn(arg1: *mut ::std::os::raw::c_void) -> *mut ::std::os::raw::c_void,
 >;
+#[doc = "OS API thread_new function type."]
 pub type ecs_os_api_thread_new_t = ::std::option::Option<
     unsafe extern "C" fn(
         callback: ecs_os_thread_callback_t,
         param: *mut ::std::os::raw::c_void,
     ) -> ecs_os_thread_t,
 >;
+#[doc = "OS API thread_join function type."]
 pub type ecs_os_api_thread_join_t = ::std::option::Option<
     unsafe extern "C" fn(thread: ecs_os_thread_t) -> *mut ::std::os::raw::c_void,
 >;
+#[doc = "OS API thread_self function type."]
 pub type ecs_os_api_thread_self_t =
     ::std::option::Option<unsafe extern "C" fn() -> ecs_os_thread_id_t>;
-#[doc = "Tasks"]
+#[doc = "OS API task_new function type."]
 pub type ecs_os_api_task_new_t = ::std::option::Option<
     unsafe extern "C" fn(
         callback: ecs_os_thread_callback_t,
         param: *mut ::std::os::raw::c_void,
     ) -> ecs_os_thread_t,
 >;
+#[doc = "OS API task_join function type."]
 pub type ecs_os_api_task_join_t = ::std::option::Option<
     unsafe extern "C" fn(thread: ecs_os_thread_t) -> *mut ::std::os::raw::c_void,
 >;
-#[doc = "Atomic increment / decrement"]
+#[doc = "Atomic increment / decrement */\n/** OS API ainc function type."]
 pub type ecs_os_api_ainc_t = ::std::option::Option<unsafe extern "C" fn(value: *mut i32) -> i32>;
+#[doc = "OS API lainc function type."]
 pub type ecs_os_api_lainc_t = ::std::option::Option<unsafe extern "C" fn(value: *mut i64) -> i64>;
-#[doc = "Mutex"]
+#[doc = "Mutex */\n/** OS API mutex_new function type."]
 pub type ecs_os_api_mutex_new_t = ::std::option::Option<unsafe extern "C" fn() -> ecs_os_mutex_t>;
+#[doc = "OS API mutex_lock function type."]
 pub type ecs_os_api_mutex_lock_t =
     ::std::option::Option<unsafe extern "C" fn(mutex: ecs_os_mutex_t)>;
+#[doc = "OS API mutex_unlock function type."]
 pub type ecs_os_api_mutex_unlock_t =
     ::std::option::Option<unsafe extern "C" fn(mutex: ecs_os_mutex_t)>;
+#[doc = "OS API mutex_free function type."]
 pub type ecs_os_api_mutex_free_t =
     ::std::option::Option<unsafe extern "C" fn(mutex: ecs_os_mutex_t)>;
-#[doc = "Condition variable"]
+#[doc = "Condition variable */\n/** OS API cond_new function type."]
 pub type ecs_os_api_cond_new_t = ::std::option::Option<unsafe extern "C" fn() -> ecs_os_cond_t>;
+#[doc = "OS API cond_free function type."]
 pub type ecs_os_api_cond_free_t = ::std::option::Option<unsafe extern "C" fn(cond: ecs_os_cond_t)>;
+#[doc = "OS API cond_signal function type."]
 pub type ecs_os_api_cond_signal_t =
     ::std::option::Option<unsafe extern "C" fn(cond: ecs_os_cond_t)>;
+#[doc = "OS API cond_broadcast function type."]
 pub type ecs_os_api_cond_broadcast_t =
     ::std::option::Option<unsafe extern "C" fn(cond: ecs_os_cond_t)>;
+#[doc = "OS API cond_wait function type."]
 pub type ecs_os_api_cond_wait_t =
     ::std::option::Option<unsafe extern "C" fn(cond: ecs_os_cond_t, mutex: ecs_os_mutex_t)>;
+#[doc = "OS API sleep function type."]
 pub type ecs_os_api_sleep_t = ::std::option::Option<unsafe extern "C" fn(sec: i32, nanosec: i32)>;
+#[doc = "OS API enable_high_timer_resolution function type."]
 pub type ecs_os_api_enable_high_timer_resolution_t =
     ::std::option::Option<unsafe extern "C" fn(enable: bool)>;
+#[doc = "OS API get_time function type."]
 pub type ecs_os_api_get_time_t =
     ::std::option::Option<unsafe extern "C" fn(time_out: *mut ecs_time_t)>;
+#[doc = "OS API now function type."]
 pub type ecs_os_api_now_t = ::std::option::Option<unsafe extern "C" fn() -> u64>;
-#[doc = "Logging"]
+#[doc = "OS API log function type."]
 pub type ecs_os_api_log_t = ::std::option::Option<
     unsafe extern "C" fn(
         level: i32,
@@ -1108,108 +1135,138 @@ pub type ecs_os_api_log_t = ::std::option::Option<
         msg: *const ::std::os::raw::c_char,
     ),
 >;
-#[doc = "Application termination"]
+#[doc = "OS API abort function type."]
 pub type ecs_os_api_abort_t = ::std::option::Option<unsafe extern "C" fn()>;
-#[doc = "Dynamic libraries"]
+#[doc = "OS API dlopen function type."]
 pub type ecs_os_api_dlopen_t = ::std::option::Option<
     unsafe extern "C" fn(libname: *const ::std::os::raw::c_char) -> ecs_os_dl_t,
 >;
+#[doc = "OS API dlproc function type."]
 pub type ecs_os_api_dlproc_t = ::std::option::Option<
     unsafe extern "C" fn(
         lib: ecs_os_dl_t,
         procname: *const ::std::os::raw::c_char,
     ) -> ecs_os_proc_t,
 >;
+#[doc = "OS API dlclose function type."]
 pub type ecs_os_api_dlclose_t = ::std::option::Option<unsafe extern "C" fn(lib: ecs_os_dl_t)>;
+#[doc = "OS API module_to_path function type."]
 pub type ecs_os_api_module_to_path_t = ::std::option::Option<
     unsafe extern "C" fn(module_id: *const ::std::os::raw::c_char) -> *mut ::std::os::raw::c_char,
 >;
-#[doc = "Prefix members of struct with 'ecs_' as some system headers may define\n macros for functions like \"strdup\", \"log\" or \"_free\""]
+#[doc = "OS API interface."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_os_api_t {
-    #[doc = "API init / deinit"]
+    #[doc = "< init callback."]
     pub init_: ecs_os_api_init_t,
+    #[doc = "< fini callback."]
     pub fini_: ecs_os_api_fini_t,
-    #[doc = "Memory management"]
+    #[doc = "< malloc callback."]
     pub malloc_: ecs_os_api_malloc_t,
+    #[doc = "< realloc callback."]
     pub realloc_: ecs_os_api_realloc_t,
+    #[doc = "< calloc callback."]
     pub calloc_: ecs_os_api_calloc_t,
+    #[doc = "< free callback."]
     pub free_: ecs_os_api_free_t,
-    #[doc = "Strings"]
+    #[doc = "< strdup callback."]
     pub strdup_: ecs_os_api_strdup_t,
-    #[doc = "Threads"]
+    #[doc = "< thread_new callback."]
     pub thread_new_: ecs_os_api_thread_new_t,
+    #[doc = "< thread_join callback."]
     pub thread_join_: ecs_os_api_thread_join_t,
+    #[doc = "< thread_self callback."]
     pub thread_self_: ecs_os_api_thread_self_t,
-    #[doc = "Tasks"]
+    #[doc = "< task_new callback."]
     pub task_new_: ecs_os_api_thread_new_t,
+    #[doc = "< task_join callback."]
     pub task_join_: ecs_os_api_thread_join_t,
-    #[doc = "Atomic increment / decrement"]
+    #[doc = "< ainc callback."]
     pub ainc_: ecs_os_api_ainc_t,
+    #[doc = "< adec callback."]
     pub adec_: ecs_os_api_ainc_t,
+    #[doc = "< lainc callback."]
     pub lainc_: ecs_os_api_lainc_t,
+    #[doc = "< ladec callback."]
     pub ladec_: ecs_os_api_lainc_t,
-    #[doc = "Mutex"]
+    #[doc = "< mutex_new callback."]
     pub mutex_new_: ecs_os_api_mutex_new_t,
+    #[doc = "< mutex_free callback."]
     pub mutex_free_: ecs_os_api_mutex_free_t,
+    #[doc = "< mutex_lock callback."]
     pub mutex_lock_: ecs_os_api_mutex_lock_t,
+    #[doc = "< mutex_unlock callback."]
     pub mutex_unlock_: ecs_os_api_mutex_lock_t,
-    #[doc = "Condition variable"]
+    #[doc = "< cond_new callback."]
     pub cond_new_: ecs_os_api_cond_new_t,
+    #[doc = "< cond_free callback."]
     pub cond_free_: ecs_os_api_cond_free_t,
+    #[doc = "< cond_signal callback."]
     pub cond_signal_: ecs_os_api_cond_signal_t,
+    #[doc = "< cond_broadcast callback."]
     pub cond_broadcast_: ecs_os_api_cond_broadcast_t,
+    #[doc = "< cond_wait callback."]
     pub cond_wait_: ecs_os_api_cond_wait_t,
-    #[doc = "Time"]
+    #[doc = "< sleep callback."]
     pub sleep_: ecs_os_api_sleep_t,
+    #[doc = "< now callback."]
     pub now_: ecs_os_api_now_t,
+    #[doc = "< get_time callback."]
     pub get_time_: ecs_os_api_get_time_t,
-    #[doc = "Logging function. The level should be interpreted as: */\n/* >0: Debug tracing. Only enabled in debug builds. */\n/*  0: Tracing. Enabled in debug/release builds. */\n/* -2: Warning. An issue occurred, but operation was successful. */\n/* -3: Error. An issue occurred, and operation was unsuccessful. */\n/* -4: Fatal. An issue occurred, and application must quit."]
+    #[doc = "< log callback.\n The level should be interpreted as:\n >0: Debug tracing. Only enabled in debug builds.\n  0: Tracing. Enabled in debug/release builds.\n -2: Warning. An issue occurred, but operation was successful.\n -3: Error. An issue occurred, and operation was unsuccessful.\n -4: Fatal. An issue occurred, and application must quit."]
     pub log_: ecs_os_api_log_t,
-    #[doc = "Application termination"]
+    #[doc = "< abort callback."]
     pub abort_: ecs_os_api_abort_t,
-    #[doc = "Dynamic library loading"]
+    #[doc = "< dlopen callback."]
     pub dlopen_: ecs_os_api_dlopen_t,
+    #[doc = "< dlproc callback."]
     pub dlproc_: ecs_os_api_dlproc_t,
+    #[doc = "< dlclose callback."]
     pub dlclose_: ecs_os_api_dlclose_t,
-    #[doc = "Overridable function that translates from a logical module id to a\n shared library filename"]
+    #[doc = "< module_to_dl callback."]
     pub module_to_dl_: ecs_os_api_module_to_path_t,
-    #[doc = "Overridable function that translates from a logical module id to a\n path that contains module-specif resources or assets"]
+    #[doc = "< module_to_etc callback."]
     pub module_to_etc_: ecs_os_api_module_to_path_t,
-    #[doc = "Trace level"]
+    #[doc = "< Tracing level."]
     pub log_level_: i32,
-    #[doc = "Trace indentation"]
+    #[doc = "< Tracing indentation level."]
     pub log_indent_: i32,
-    #[doc = "Last error code"]
+    #[doc = "< Last logged error code."]
     pub log_last_error_: i32,
-    #[doc = "Last recorded timestamp"]
+    #[doc = "< Last logged timestamp."]
     pub log_last_timestamp_: i64,
-    #[doc = "OS API flags"]
+    #[doc = "< OS API flags"]
     pub flags_: ecs_flags32_t,
-    #[doc = "File used for logging output (hint, log_ decides where to write)"]
+    #[doc = "< File used for logging output\n (hint, log_ decides where to write)"]
     pub log_out_: *mut FILE,
 }
 extern "C" {
+    #[doc = "Static OS API variable with configured callbacks."]
     pub static mut ecs_os_api: ecs_os_api_t;
 }
 extern "C" {
+    #[doc = "Initialize OS API.\n This operation is not usually called by an application. To override callbacks\n of the OS API, use the following pattern:\n\n @code\n ecs_os_set_api_defaults();\n ecs_os_api_t os_api = ecs_os_get_api();\n os_api.abort_ = my_abort;\n ecs_os_set_api(&os_api);\n @endcode"]
     pub fn ecs_os_init();
 }
 extern "C" {
+    #[doc = "Deinitialize OS API.\n This operation is not usually called by an application."]
     pub fn ecs_os_fini();
 }
 extern "C" {
+    #[doc = "Override OS API.\n This overrides the OS API struct with new values for callbacks. See\n ecs_os_init() on how to use the function.\n\n @param os_api Pointer to struct with values to set."]
     pub fn ecs_os_set_api(os_api: *mut ecs_os_api_t);
 }
 extern "C" {
+    #[doc = "Get OS API.\n\n @return A value with the current OS API callbacks\n @see ecs_os_init()"]
     pub fn ecs_os_get_api() -> ecs_os_api_t;
 }
 extern "C" {
+    #[doc = "Set default values for OS API.\n This initializes the OS API struct with default values for callbacks like\n malloc and free.\n\n @see ecs_os_init()"]
     pub fn ecs_os_set_api_defaults();
 }
 extern "C" {
-    #[doc = "Logging"]
+    #[doc = "Log at debug level.\n\n @param file The file to log.\n @param line The line to log.\n @param msg The message to log."]
     pub fn ecs_os_dbg(
         file: *const ::std::os::raw::c_char,
         line: i32,
@@ -1217,6 +1274,7 @@ extern "C" {
     );
 }
 extern "C" {
+    #[doc = "Log at trace level.\n\n @param file The file to log.\n @param line The line to log.\n @param msg The message to log."]
     pub fn ecs_os_trace(
         file: *const ::std::os::raw::c_char,
         line: i32,
@@ -1224,6 +1282,7 @@ extern "C" {
     );
 }
 extern "C" {
+    #[doc = "Log at warning level.\n\n @param file The file to log.\n @param line The line to log.\n @param msg The message to log."]
     pub fn ecs_os_warn(
         file: *const ::std::os::raw::c_char,
         line: i32,
@@ -1231,6 +1290,7 @@ extern "C" {
     );
 }
 extern "C" {
+    #[doc = "Log at error level.\n\n @param file The file to log.\n @param line The line to log.\n @param msg The message to log."]
     pub fn ecs_os_err(
         file: *const ::std::os::raw::c_char,
         line: i32,
@@ -1238,6 +1298,7 @@ extern "C" {
     );
 }
 extern "C" {
+    #[doc = "Log at fatal level.\n\n @param file The file to log.\n @param line The line to log.\n @param msg The message to log."]
     pub fn ecs_os_fatal(
         file: *const ::std::os::raw::c_char,
         line: i32,
@@ -1245,31 +1306,34 @@ extern "C" {
     );
 }
 extern "C" {
+    #[doc = "Convert errno to string.\n\n @param err The error number.\n @return A string describing the error."]
     pub fn ecs_os_strerror(err: ::std::os::raw::c_int) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
+    #[doc = "Utility for assigning strings.\n This operation frees an existing string and duplicates the input string.\n\n @param str Pointer to a string value.\n @param value The string value to assign."]
     pub fn ecs_os_strset(
         str_: *mut *mut ::std::os::raw::c_char,
         value: *const ::std::os::raw::c_char,
     );
 }
 extern "C" {
-    #[doc = "Sleep with floating point time"]
+    #[doc = "Sleep with floating point time.\n\n @param t The time in seconds."]
     pub fn ecs_sleepf(t: f64);
 }
 extern "C" {
-    #[doc = "Measure time since provided timestamp"]
+    #[doc = "Measure time since provided timestamp.\n Use with a time value initialized to 0 to obtain the number of seconds since\n the epoch. The operation will write the current timestamp in start.\n\n Usage:\n @code\n ecs_time_t t = {};\n ecs_time_measure(&t);\n // code\n double elapsed = ecs_time_measure(&t);\n @endcode\n\n @param start The starting timestamp.\n @return The time elapsed since start."]
     pub fn ecs_time_measure(start: *mut ecs_time_t) -> f64;
 }
 extern "C" {
-    #[doc = "Calculate difference between two timestamps"]
+    #[doc = "Calculate difference between two timestamps.\n\n @param t1 The first timestamp.\n @param t2 The first timestamp.\n @return The difference between timestamps."]
     pub fn ecs_time_sub(t1: ecs_time_t, t2: ecs_time_t) -> ecs_time_t;
 }
 extern "C" {
-    #[doc = "Convert time value to a double"]
+    #[doc = "Convert time value to a double.\n\n @param t The timestamp.\n @return The timestamp converted to a double."]
     pub fn ecs_time_to_double(t: ecs_time_t) -> f64;
 }
 extern "C" {
+    #[doc = "Return newly allocated memory that contains a copy of src.\n\n @param src The source pointer.\n @param size The number of bytes to copy.\n @return The duplicated memory."]
     pub fn ecs_os_memdup(
         src: *const ::std::os::raw::c_void,
         size: ecs_size_t,
@@ -1311,7 +1375,9 @@ pub type ecs_entity_t = ecs_id_t;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_type_t {
+    #[doc = "< Array with ids."]
     pub array: *mut ecs_id_t,
+    #[doc = "< Number of elements in array."]
     pub count: i32,
 }
 #[repr(C)]
@@ -1339,24 +1405,24 @@ pub struct ecs_id_record_t {
 pub struct ecs_table_record_t {
     _unused: [u8; 0],
 }
-#[doc = "A poly object.\n A poly (short for polymorph) object is an object that has a variable list of\n capabilities, determined by a mixin table. This is the current list of types\n in the flecs API that can be used as an flecs_poly_t:\n\n - ecs_world_t\n - ecs_stage_t\n - ecs_query_t\n\n Functions that accept an flecs_poly_t argument can accept objects of these\n types. If the object does not have the requested mixin the API will throw an\n assert.\n\n The poly/mixin framework enables partially overlapping features to be\n implemented once, and enables objects of different types to interact with\n each other depending on what mixins they have, rather than their type\n (in some ways it's like a mini-ECS). Additionally, each poly object has a\n header that enables the API to do sanity checking on the input arguments."]
-pub type flecs_poly_t = ::std::os::raw::c_void;
+#[doc = "A poly object.\n A poly (short for polymorph) object is an object that has a variable list of\n capabilities, determined by a mixin table. This is the current list of types\n in the flecs API that can be used as an ecs_poly_t:\n\n - ecs_world_t\n - ecs_stage_t\n - ecs_query_t\n\n Functions that accept an ecs_poly_t argument can accept objects of these\n types. If the object does not have the requested mixin the API will throw an\n assert.\n\n The poly/mixin framework enables partially overlapping features to be\n implemented once, and enables objects of different types to interact with\n each other depending on what mixins they have, rather than their type\n (in some ways it's like a mini-ECS). Additionally, each poly object has a\n header that enables the API to do sanity checking on the input arguments."]
+pub type ecs_poly_t = ::std::os::raw::c_void;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_mixins_t {
     _unused: [u8; 0],
 }
-#[doc = "Header for flecs_poly_t objects."]
+#[doc = "Header for ecs_poly_t objects."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_header_t {
-    #[doc = "Magic number verifying it's a flecs object"]
+    #[doc = "< Magic number verifying it's a flecs object"]
     pub magic: i32,
-    #[doc = "Magic number indicating which type of flecs object"]
+    #[doc = "< Magic number indicating which type of flecs object"]
     pub type_: i32,
-    #[doc = "Refcount, to enable RAII handles"]
+    #[doc = "< Refcount, to enable RAII handles"]
     pub refcount: i32,
-    #[doc = "Table with offsets to (optional) mixins"]
+    #[doc = "< Table with offsets to (optional) mixins"]
     pub mixins: *mut ecs_mixins_t,
 }
 #[doc = "Function prototype for runnables (systems, observers).\n The run callback overrides the default behavior for iterating through the\n results of a runnable object.\n\n The default runnable iterates the iterator, and calls an iter_action (see\n below) for each returned result.\n\n @param it The iterator to be iterated by the runnable."]
@@ -1461,8 +1527,8 @@ pub type ecs_move_t = ::std::option::Option<
         type_info: *const ecs_type_info_t,
     ),
 >;
-#[doc = "Destructor function for poly objects"]
-pub type flecs_poly_dtor_t = ::std::option::Option<unsafe extern "C" fn(poly: *mut flecs_poly_t)>;
+#[doc = "Destructor function for poly objects."]
+pub type flecs_poly_dtor_t = ::std::option::Option<unsafe extern "C" fn(poly: *mut ecs_poly_t)>;
 #[doc = "< InOut for regular terms, In for shared terms"]
 pub const ecs_inout_kind_t_EcsInOutDefault: ecs_inout_kind_t = 0;
 #[doc = "< Term is neither read nor written"]
@@ -1512,7 +1578,7 @@ pub struct ecs_term_ref_t {
     #[doc = "< Name. This can be either the variable name\n (when the EcsIsVariable flag is set) or an\n entity name. When ecs_term_t::move is true,\n the API assumes ownership over the string and\n will free it when the term is destroyed."]
     pub name: *const ::std::os::raw::c_char,
 }
-#[doc = "Type that describes a term (single element in a query)"]
+#[doc = "Type that describes a term (single element in a query)."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_term_t {
@@ -1535,10 +1601,11 @@ pub struct ecs_term_t {
     #[doc = "< Flags that help eval, set by ecs_query_init"]
     pub flags_: ecs_flags16_t,
 }
-#[doc = "Queries are lists of constraints (terms) that match entities."]
+#[doc = "Queries are lists of constraints (terms) that match entities.\n Created with ecs_query_init()."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_query_t {
+    #[doc = "< Object header"]
     pub hdr: ecs_header_t,
     #[doc = "< Query terms"]
     pub terms: [ecs_term_t; 16usize],
@@ -1548,12 +1615,16 @@ pub struct ecs_query_t {
     pub ids: [ecs_id_t; 16usize],
     #[doc = "< Query flags"]
     pub flags: ecs_flags32_t,
+    #[doc = "< Number of query variables"]
+    pub var_count: i16,
     #[doc = "< Number of query terms"]
     pub term_count: i8,
     #[doc = "< Number of fields returned by query"]
     pub field_count: i8,
     #[doc = "< Fields with a fixed source"]
     pub fixed_fields: ecs_flags16_t,
+    #[doc = "< Fields with a static (component) id"]
+    pub static_id_fields: ecs_flags16_t,
     #[doc = "< Fields that have data"]
     pub data_fields: ecs_flags16_t,
     #[doc = "< Fields that write data"]
@@ -1566,6 +1637,8 @@ pub struct ecs_query_t {
     pub set_fields: ecs_flags16_t,
     #[doc = "< Caching policy of query"]
     pub cache_kind: ecs_query_cache_kind_t,
+    #[doc = "< Array with variable names for iterator"]
+    pub vars: *mut *mut ::std::os::raw::c_char,
     #[doc = "< User context to pass to callback"]
     pub ctx: *mut ::std::os::raw::c_void,
     #[doc = "< Context to be used for language bindings"]
@@ -1579,10 +1652,11 @@ pub struct ecs_query_t {
     #[doc = "< Number of times query is evaluated"]
     pub eval_count: i32,
 }
-#[doc = "An observer reacts to events matching a query"]
+#[doc = "An observer reacts to events matching a query.\n Created with ecs_observer_init()."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_observer_t {
+    #[doc = "< Object header"]
     pub hdr: ecs_header_t,
     #[doc = "< Observer query"]
     pub query: *mut ecs_query_t,
@@ -1931,13 +2005,16 @@ extern "C" {
     pub fn flecs_resume_readonly(world: *mut ecs_world_t, state: *mut ecs_suspend_readonly_state_t);
 }
 extern "C" {
-    pub fn flecs_poly_claim_(poly: *mut flecs_poly_t) -> i32;
+    pub fn flecs_poly_claim_(poly: *mut ecs_poly_t) -> i32;
 }
 extern "C" {
-    pub fn flecs_poly_release_(poly: *mut flecs_poly_t) -> i32;
+    pub fn flecs_poly_release_(poly: *mut ecs_poly_t) -> i32;
 }
 extern "C" {
-    pub fn flecs_poly_refcount(poly: *mut flecs_poly_t) -> i32;
+    pub fn flecs_poly_refcount(poly: *mut ecs_poly_t) -> i32;
+}
+extern "C" {
+    pub fn flecs_query_next_instanced(it: *mut ecs_iter_t) -> bool;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2050,17 +2127,20 @@ extern "C" {
         value_size: ecs_size_t,
     ) -> *mut ::std::os::raw::c_void;
 }
-#[doc = "Utility to hold a value of a dynamic type"]
+#[doc = "Utility to hold a value of a dynamic type."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_value_t {
+    #[doc = "< Type of value."]
     pub type_: ecs_entity_t,
+    #[doc = "< Pointer to value."]
     pub ptr: *mut ::std::os::raw::c_void,
 }
 #[doc = "Used with ecs_entity_init().\n\n @ingroup entities"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_entity_desc_t {
+    #[doc = "< Used for validity testing. Must be 0."]
     pub _canary: i32,
     #[doc = "< Set to modify existing entity (optional)"]
     pub id: ecs_entity_t,
@@ -2087,6 +2167,7 @@ pub struct ecs_entity_desc_t {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_bulk_desc_t {
+    #[doc = "< Used for validity testing. Must be 0."]
     pub _canary: i32,
     #[doc = "< Entities to bulk insert. Entity ids provided by\n the application must be empty (cannot\n have components). If no entity ids are provided, the\n operation will create 'count' new entities."]
     pub entities: *mut ecs_entity_t,
@@ -2103,6 +2184,7 @@ pub struct ecs_bulk_desc_t {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_component_desc_t {
+    #[doc = "< Used for validity testing. Must be 0."]
     pub _canary: i32,
     #[doc = "Existing entity to associate with observer (optional)"]
     pub entity: ecs_entity_t,
@@ -2202,6 +2284,7 @@ pub struct ecs_iter_t {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_query_desc_t {
+    #[doc = "Used for validity testing. Must be 0."]
     pub _canary: i32,
     #[doc = "Query terms"]
     pub terms: [ecs_term_t; 16usize],
@@ -2244,6 +2327,7 @@ pub struct ecs_query_desc_t {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_observer_desc_t {
+    #[doc = "Used for validity testing. Must be 0."]
     pub _canary: i32,
     #[doc = "Existing entity to associate with observer (optional)"]
     pub entity: ecs_entity_t,
@@ -2270,11 +2354,12 @@ pub struct ecs_observer_desc_t {
     #[doc = "Callback to free run ctx."]
     pub run_ctx_free: ecs_ctx_free_t,
     #[doc = "Observable with which to register the observer"]
-    pub observable: *mut flecs_poly_t,
+    pub observable: *mut ecs_poly_t,
     #[doc = "Optional shared last event id for multiple observers. Ensures only one\n of the observers with the shared id gets triggered for an event"]
     pub last_event_id: *mut i32,
     #[doc = "Used for internal purposes"]
-    pub term_index: i32,
+    pub term_index_: i32,
+    pub flags_: ecs_flags32_t,
 }
 #[doc = "Used with ecs_emit().\n\n @ingroup observers"]
 #[repr(C)]
@@ -2299,7 +2384,7 @@ pub struct ecs_event_desc_t {
     #[doc = "Same as param, but with the guarantee that the value won't be modified.\n When an event with a const parameter is enqueued, the value of the param\n is copied to a temporary storage of the event type."]
     pub const_param: *const ::std::os::raw::c_void,
     #[doc = "Observable (usually the world)"]
-    pub observable: *mut flecs_poly_t,
+    pub observable: *mut ecs_poly_t,
     #[doc = "Event flags"]
     pub flags: ecs_flags32_t,
 }
@@ -2388,6 +2473,7 @@ pub struct ecs_world_info_t {
     pub table_count: i32,
     #[doc = "< Number of tables without entities"]
     pub empty_table_count: i32,
+    #[doc = "< Command statistics."]
     pub cmd: ecs_world_info_t__bindgen_ty_1,
     #[doc = "< Value set by ecs_set_name_prefix(). Used\n to remove library prefixes of symbol\n names (such as `Ecs`, `ecs_`) when\n registering them as names."]
     pub name_prefix: *const ::std::os::raw::c_char,
@@ -2461,12 +2547,13 @@ pub struct EcsComponent {
 #[derive(Debug, Copy, Clone)]
 pub struct EcsPoly {
     #[doc = "< Pointer to poly object"]
-    pub poly: *mut flecs_poly_t,
+    pub poly: *mut ecs_poly_t,
 }
 #[doc = "When added to an entity this informs serialization formats which component\n to use when a value is assigned to an entity without specifying the\n component. This is intended as a hint, serialization formats are not required\n to use it. Adding this component does not change the behavior of core ECS\n operations."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsDefaultChildComponent {
+    #[doc = "< Default component id."]
     pub component: ecs_id_t,
 }
 extern "C" {
@@ -2474,29 +2561,35 @@ extern "C" {
     pub static ECS_AUTO_OVERRIDE: ecs_id_t;
 }
 extern "C" {
-    #[doc = "Builtin component ids"]
+    #[doc = "Component component id."]
     pub static FLECS_IDEcsComponentID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Identifier component id."]
     pub static FLECS_IDEcsIdentifierID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Poly component id."]
     pub static FLECS_IDEcsPolyID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "DefaultChildComponent component id."]
     pub static FLECS_IDEcsDefaultChildComponentID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Tag added to queries."]
     pub static EcsQuery: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Tag added to observers."]
     pub static EcsObserver: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "System module component ids"]
+    #[doc = "Tag added to systems."]
     pub static EcsSystem: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "TickSource component id."]
     pub static FLECS_IDEcsTickSourceID_: ecs_entity_t;
 }
 extern "C" {
@@ -2504,10 +2597,11 @@ extern "C" {
     pub static FLECS_IDEcsPipelineQueryID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Timer module component ids"]
+    #[doc = "Timer component id."]
     pub static FLECS_IDEcsTimerID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "RateFilter component id."]
     pub static FLECS_IDEcsRateFilterID_: ecs_entity_t;
 }
 extern "C" {
@@ -2723,64 +2817,79 @@ extern "C" {
     pub static EcsUnion: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Builtin predicates for comparing entity ids in queries. Only supported by queries"]
+    #[doc = "Marker used to indicate $var == ... matching in queries."]
     pub static EcsPredEq: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Marker used to indicate $var == \"name\" matching in queries."]
     pub static EcsPredMatch: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Marker used to indicate $var ~= \"pattern\" matching in queries."]
     pub static EcsPredLookup: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Builtin marker entities for opening/closing query scopes"]
+    #[doc = "Marker used to indicate the start of a scope ({) in queries."]
     pub static EcsScopeOpen: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Marker used to indicate the end of a scope (}) in queries."]
     pub static EcsScopeClose: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Tag used to indicate query is empty"]
+    #[doc = "Tag used to indicate query is empty.\n This tag is removed automatically when a query becomes non-empty, and is not\n automatically readded when it becomes empty."]
     pub static EcsEmpty: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Pipeline module tags"]
+    #[doc = "< Pipeline component id."]
     pub static FLECS_IDEcsPipelineID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< OnStart pipeline phase."]
     pub static EcsOnStart: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< PreFrame pipeline phase."]
     pub static EcsPreFrame: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< OnLoad pipeline phase."]
     pub static EcsOnLoad: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< PostLoad pipeline phase."]
     pub static EcsPostLoad: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< PreUpdate pipeline phase."]
     pub static EcsPreUpdate: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< OnUpdate pipeline phase."]
     pub static EcsOnUpdate: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< OnValidate pipeline phase."]
     pub static EcsOnValidate: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< PostUpdate pipeline phase."]
     pub static EcsPostUpdate: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< PreStore pipeline phase."]
     pub static EcsPreStore: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< OnStore pipeline phase."]
     pub static EcsOnStore: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< PostFrame pipeline phase."]
     pub static EcsPostFrame: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Phase pipeline phase."]
     pub static EcsPhase: ecs_entity_t;
 }
 extern "C" {
@@ -2835,7 +2944,7 @@ extern "C" {
     pub fn ecs_quit(world: *mut ecs_world_t);
 }
 extern "C" {
-    #[doc = "Return whether a quit has been signaled.\n\n @param world The world."]
+    #[doc = "Return whether a quit has been requested.\n\n @param world The world.\n @return Whether a quit has been requested.\n @see ecs_quit()"]
     pub fn ecs_should_quit(world: *const ecs_world_t) -> bool;
 }
 extern "C" {
@@ -2935,7 +3044,7 @@ extern "C" {
     pub fn ecs_get_binding_ctx(world: *const ecs_world_t) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[doc = "Get build info.\n  Returns information about the current Flecs build."]
+    #[doc = "Get build info.\n  Returns information about the current Flecs build.\n\n @return A struct with information about the current Flecs build."]
     pub fn ecs_get_build_info() -> *const ecs_build_info_t;
 }
 extern "C" {
@@ -2955,7 +3064,7 @@ extern "C" {
     pub fn ecs_enable_range_check(world: *mut ecs_world_t, enable: bool) -> bool;
 }
 extern "C" {
-    #[doc = "Get the largest issued entity id (not counting generation).\n\n @param world The world."]
+    #[doc = "Get the largest issued entity id (not counting generation).\n\n @param world The world.\n @return The largest issued entity id."]
     pub fn ecs_get_max_id(world: *const ecs_world_t) -> ecs_entity_t;
 }
 extern "C" {
@@ -2975,18 +3084,18 @@ extern "C" {
 }
 extern "C" {
     #[doc = "Get world from poly.\n\n @param poly A pointer to a poly object.\n @return The world."]
-    pub fn ecs_get_world(poly: *const flecs_poly_t) -> *const ecs_world_t;
+    pub fn ecs_get_world(poly: *const ecs_poly_t) -> *const ecs_world_t;
 }
 extern "C" {
     #[doc = "Get entity from poly.\n\n @param poly A pointer to a poly object.\n @return Entity associated with the poly object."]
-    pub fn ecs_get_entity(poly: *const flecs_poly_t) -> ecs_entity_t;
+    pub fn ecs_get_entity(poly: *const ecs_poly_t) -> ecs_entity_t;
 }
 extern "C" {
     #[doc = "Test if pointer is of specified type.\n Usage:\n\n @code\n flecs_poly_is(ptr, ecs_world_t)\n @endcode\n\n This operation only works for poly types.\n\n @param object The object to test.\n @param type The id of the type.\n @return True if the pointer is of the specified type."]
-    pub fn flecs_poly_is_(object: *const flecs_poly_t, type_: i32) -> bool;
+    pub fn flecs_poly_is_(object: *const ecs_poly_t, type_: i32) -> bool;
 }
 extern "C" {
-    #[doc = "Make a pair id.\n This function is equivalent to using the ecs_pair() macro, and is added for\n convenience to make it easier for non C/C++ bindings to work with pairs.\n\n @param first The first element of the pair of the pair.\n @param second The target of the pair."]
+    #[doc = "Make a pair id.\n This function is equivalent to using the ecs_pair() macro, and is added for\n convenience to make it easier for non C/C++ bindings to work with pairs.\n\n @param first The first element of the pair of the pair.\n @param second The target of the pair.\n @return A pair id."]
     pub fn ecs_make_pair(first: ecs_entity_t, second: ecs_entity_t) -> ecs_id_t;
 }
 extern "C" {
@@ -3136,6 +3245,10 @@ extern "C" {
     pub fn ecs_ref_update(world: *const ecs_world_t, ref_: *mut ecs_ref_t);
 }
 extern "C" {
+    #[doc = "Find record for entity.\n An entity record contains the table and row for the entity.\n\n @param world The world.\n @param entity The entity.\n @return The record, NULL if the entity does not exist."]
+    pub fn ecs_record_find(world: *const ecs_world_t, entity: ecs_entity_t) -> *mut ecs_record_t;
+}
+extern "C" {
     #[doc = "Begin exclusive write access to entity.\n This operation provides safe exclusive access to the components of an entity\n without the overhead of deferring operations.\n\n When this operation is called simultaneously for the same entity more than\n once it will throw an assert. Note that for this to happen, asserts must be\n enabled. It is up to the application to ensure that access is exclusive, for\n example by using a read-write mutex.\n\n Exclusive access is enforced at the table level, so only one entity can be\n exclusively accessed per table. The exclusive access check is thread safe.\n\n This operation must be followed up with ecs_write_end().\n\n @param world The world.\n @param entity The entity.\n @return A record to the entity."]
     pub fn ecs_write_begin(world: *mut ecs_world_t, entity: ecs_entity_t) -> *mut ecs_record_t;
 }
@@ -3152,7 +3265,7 @@ extern "C" {
     pub fn ecs_read_end(record: *const ecs_record_t);
 }
 extern "C" {
-    #[doc = "Get entity corresponding with record.\n This operation only works for entities that are not empty.\n\n @param record The record for which to obtain the entity id."]
+    #[doc = "Get entity corresponding with record.\n This operation only works for entities that are not empty.\n\n @param record The record for which to obtain the entity id.\n @return The entity id for the record."]
     pub fn ecs_record_get_entity(record: *const ecs_record_t) -> ecs_entity_t;
 }
 extern "C" {
@@ -3172,12 +3285,20 @@ extern "C" {
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[doc = "Test if entity for record has component.\n\n @param world The world.\n @param record Record to the entity.\n @param id The (component) id."]
+    #[doc = "Test if entity for record has a (component) id.\n\n @param world The world.\n @param record Record to the entity.\n @param id The (component) id.\n @return Whether the entity has the component."]
     pub fn ecs_record_has_id(
         world: *mut ecs_world_t,
         record: *const ecs_record_t,
         id: ecs_id_t,
     ) -> bool;
+}
+extern "C" {
+    #[doc = "Get component pointer from column/record.\n This returns a pointer to the component using a table column index. The\n table's column index can be found with ecs_table_get_column_index().\n\n Usage:\n @code\n ecs_record_t *r = ecs_record_find(world, entity);\n int32_t column = ecs_table_get_column_index(world, table, ecs_id(Position));\n Position *ptr = ecs_record_get_by_column(r, column, sizeof(Position));\n @endcode\n\n @param record The record.\n @param column The column index in the entity's table.\n @param size The component size.\n @return The component pointer."]
+    pub fn ecs_record_get_by_column(
+        record: *const ecs_record_t,
+        column: i32,
+        size: usize,
+    ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
     #[doc = "Emplace a component.\n Emplace is similar to ecs_ensure_id() except that the component constructor\n is not invoked for the returned pointer, allowing the component to be\n constructed directly in the storage.\n\n When the is_new parameter is not provided, the operation will assert when the\n component already exists. When the is_new parameter is provided, it will\n indicate whether the returned storage has been constructed.\n\n When is_new indicates that the storage has not yet been constructed, it must\n be constructed by the code invoking this operation. Not constructing the\n component will result in undefined behavior.\n\n @param world The world.\n @param entity The entity.\n @param id The component to obtain.\n @param is_new Whether this is an existing or new component.\n @return The (uninitialized) component pointer."]
@@ -3348,7 +3469,7 @@ extern "C" {
     ) -> ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Lookup a child entity by name.\n Returns an entity that matches the specified name. Only looks for entities in\n the provided parent. If no parent is provided, look in the current scope (\n root if no scope is provided).\n\n @param world The world.\n @param name The entity name.\n @return The entity with the specified name, or 0 if no entity was found."]
+    #[doc = "Lookup a child entity by name.\n Returns an entity that matches the specified name. Only looks for entities in\n the provided parent. If no parent is provided, look in the current scope (\n root if no scope is provided).\n\n @param world The world.\n @param parent The parent for which to lookup the child.\n @param name The entity name.\n @return The entity with the specified name, or 0 if no entity was found."]
     pub fn ecs_lookup_child(
         world: *const ecs_world_t,
         parent: ecs_entity_t,
@@ -3479,7 +3600,7 @@ extern "C" {
     pub fn ecs_get_typeid(world: *const ecs_world_t, id: ecs_id_t) -> ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Utility to match an id with a pattern.\n This operation returns true if the provided pattern matches the provided\n id. The pattern may contain a wildcard (or wildcards, when a pair).\n\n @param id The id.\n @param pattern The pattern to compare with."]
+    #[doc = "Utility to match an id with a pattern.\n This operation returns true if the provided pattern matches the provided\n id. The pattern may contain a wildcard (or wildcards, when a pair).\n\n @param id The id.\n @param pattern The pattern to compare with.\n @return Whether the id matches the pattern."]
     pub fn ecs_id_match(id: ecs_id_t, pattern: ecs_id_t) -> bool;
 }
 extern "C" {
@@ -3538,16 +3659,19 @@ extern "C" {
     pub fn ecs_query_str(query: *const ecs_query_t) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[doc = "@defgroup each_iter Each iterator\n @brief Find all entities that have a single (component) id.\n @{"]
+    #[doc = "Iterate all entities with specified (component id).\n This returns an iterator that yields all entities with a single specified\n component. This is a much lighter weight operation than creating and\n iterating a query.\n\n Usage:\n @code\n ecs_iter_t it = ecs_each(world, Player);\n while (ecs_each_next(&it)) {\n   for (int i = 0; i < it.count; i ++) {\n     // Iterate as usual.\n   }\n }\n @endcode\n\n If the specified id is a component, it is possible to access the component\n pointer with ecs_field just like with regular queries:\n\n @code\n ecs_iter_t it = ecs_each(world, Position);\n while (ecs_each_next(&it)) {\n   Position *p = ecs_field(&it, Position, 0);\n   for (int i = 0; i < it.count; i ++) {\n     // Iterate as usual.\n   }\n }\n @endcode\n\n @param world The world.\n @param id The (component) id to iterate.\n @return An iterator that iterates all entities with the (component) id."]
     pub fn ecs_each_id(world: *const ecs_world_t, id: ecs_id_t) -> ecs_iter_t;
 }
 extern "C" {
+    #[doc = "Progress an iterator created with ecs_each_id().\n\n @param it The iterator.\n @return True if the iterator has more results, false if not."]
     pub fn ecs_each_next(it: *mut ecs_iter_t) -> bool;
 }
 extern "C" {
+    #[doc = "Iterate children of parent.\n Equivalent to:\n @code\n ecs_iter_t it = ecs_each_id(world, ecs_pair(EcsChildOf, parent));\n @endcode\n\n @param world The world.\n @param parent The parent.\n @return An iterator that iterates all children of the parent."]
     pub fn ecs_children(world: *const ecs_world_t, parent: ecs_entity_t) -> ecs_iter_t;
 }
 extern "C" {
+    #[doc = "Progress an iterator created with ecs_children().\n\n @param it The iterator.\n @return True if the iterator has more results, false if not."]
     pub fn ecs_children_next(it: *mut ecs_iter_t) -> bool;
 }
 extern "C" {
@@ -3562,10 +3686,6 @@ extern "C" {
     pub fn ecs_query_fini(query: *mut ecs_query_t);
 }
 extern "C" {
-    #[doc = "Return number of variables in query.\n\n @param query The query.\n @return The number of variables/"]
-    pub fn ecs_query_var_count(query: *const ecs_query_t) -> i32;
-}
-extern "C" {
     #[doc = "Find variable index.\n This operation looks up the index of a variable in the query. This index can\n be used in operations like ecs_iter_set_var() and ecs_iter_get_var().\n\n @param query The query.\n @param name The variable name.\n @return The variable index."]
     pub fn ecs_query_find_var(
         query: *const ecs_query_t,
@@ -3573,30 +3693,26 @@ extern "C" {
     ) -> i32;
 }
 extern "C" {
-    #[doc = "Get variable name.\n This operation returns the variable name for an index.\n\n @param query The query.\n @param var_id The variable index."]
+    #[doc = "Get variable name.\n This operation returns the variable name for an index.\n\n @param query The query.\n @param var_id The variable index.\n @return The variable name."]
     pub fn ecs_query_var_name(
         query: *const ecs_query_t,
         var_id: i32,
     ) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[doc = "Test if variable is an entity.\n Internally the query engine has entity variables and table variables. When\n iterating through query variables (by using ecs_query_variable_count) only\n the values for entity variables are accessible. This operation enables an\n application to check if a variable is an entity variable.\n\n @param query The query.\n @param var_id The variable id."]
+    #[doc = "Test if variable is an entity.\n Internally the query engine has entity variables and table variables. When\n iterating through query variables (by using ecs_query_variable_count) only\n the values for entity variables are accessible. This operation enables an\n application to check if a variable is an entity variable.\n\n @param query The query.\n @param var_id The variable id.\n @return Whether the variable is an entity variable."]
     pub fn ecs_query_var_is_entity(query: *const ecs_query_t, var_id: i32) -> bool;
 }
 extern "C" {
-    #[doc = "Iterate a query.\n Note that query iterators may allocate memory, and that unless the iterator\n is iterated until completion, it may still hold resources. When stopping\n iteration before ecs_query_next has returned false, use ecs_iter_fini to\n cleanup any remaining resources.\n\n @param world The world.\n @param query The query.\n @return An iterator."]
+    #[doc = "Create a query iterator.\n Use an iterator to iterate through the entities that match an entity. Queries\n can return multiple results, and have to be iterated by repeatedly calling\n ecs_query_next() until the operation returns false.\n\n Depending on the query, a single result can contain an entire table, a range\n of entities in a table, or a single entity. Iteration code has an inner and\n an outer loop. The outer loop loops through the query results, and typically\n corresponds with a table. The inner loop loops entities in the result.\n\n Example:\n @code\n ecs_iter_t it = ecs_query_iter(world, q);\n\n while (ecs_query_next(&it)) {\n   Position *p = ecs_field(&it, Position, 0);\n   Velocity *v = ecs_field(&it, Velocity, 1);\n\n   for (int i = 0; i < it.count; i ++) {\n     p\\[i\\].x += v\\[i\\].x;\n     p\\[i\\].y += v\\[i\\].y;\n   }\n }\n @endcode\n\n The world passed into the operation must be either the actual world or the\n current stage, when iterating from a system. The stage is accessible through\n the it.world member.\n\n Example:\n @code\n void MySystem(ecs_iter_t *it) {\n   ecs_query_t *q = it->ctx; // Query passed as system context\n\n   // Create query iterator from system stage\n   ecs_iter_t qit = ecs_query_iter(it->world, q);\n   while (ecs_query_next(&qit)) {\n     // Iterate as usual\n   }\n }\n @endcode\n\n If query iteration is stopped without the last call to ecs_query_next()\n returning false, iterator resources need to be cleaned up explicitly.\n\n Example:\n @code\n ecs_iter_t it = ecs_query_iter(world, q);\n\n while (ecs_query_next(&it)) {\n   if (!ecs_field_is_set(&it, 0)) {\n     ecs_iter_fini(&it); // Free iterator resources\n     break;\n   }\n\n   for (int i = 0; i < it.count; i ++) {\n     // ...\n   }\n }\n @endcode\n\n @param world The world.\n @param query The query.\n @return An iterator.\n @see ecs_query_next()"]
     pub fn ecs_query_iter(world: *const ecs_world_t, query: *const ecs_query_t) -> ecs_iter_t;
 }
 extern "C" {
-    #[doc = "Progress query iterator.\n\n @param it The iterator."]
+    #[doc = "Progress query iterator.\n\n @param it The iterator.\n @return True if the iterator has more results, false if not.\n @see ecs_query_iter()"]
     pub fn ecs_query_next(it: *mut ecs_iter_t) -> bool;
 }
 extern "C" {
-    #[doc = "Progress instanced iterator.\n Should not be called unless you know what you're doing :-)\n\n @param it The iterator."]
-    pub fn ecs_query_next_instanced(it: *mut ecs_iter_t) -> bool;
-}
-extern "C" {
-    #[doc = "Returns true if query matches with entity."]
+    #[doc = "Match entity with query.\n This operation matches an entity with a query and returns the result of the\n match in the \"it\" out parameter. An application should free the iterator\n resources if this function returns true.\n\n Usage:\n @code\n ecs_iter_t it;\n if (ecs_query_has(q, e, &it)) {\n   ecs_iter_fini(&it);\n }\n @endcode\n\n @param query The query.\n @param entity The entity to match\n @param it The iterator with matched data.\n @return True if entity matches the query, false if not."]
     pub fn ecs_query_has(
         query: *mut ecs_query_t,
         entity: ecs_entity_t,
@@ -3604,7 +3720,7 @@ extern "C" {
     ) -> bool;
 }
 extern "C" {
-    #[doc = "Returns true if query matches with table."]
+    #[doc = "Match table with query.\n This operation matches a table with a query and returns the result of the\n match in the \"it\" out parameter. An application should free the iterator\n resources if this function returns true.\n\n Usage:\n @code\n ecs_iter_t it;\n if (ecs_query_has_table(q, t, &it)) {\n   ecs_iter_fini(&it);\n }\n @endcode\n\n @param query The query.\n @param table The table to match\n @param it The iterator with matched data.\n @return True if table matches the query, false if not."]
     pub fn ecs_query_has_table(
         query: *mut ecs_query_t,
         table: *mut ecs_table_t,
@@ -3612,7 +3728,7 @@ extern "C" {
     ) -> bool;
 }
 extern "C" {
-    #[doc = "Returns true if query matches with table."]
+    #[doc = "Match range with query.\n This operation matches a range with a query and returns the result of the\n match in the \"it\" out parameter. An application should free the iterator\n resources if this function returns true.\n\n The entire range must match the query for the operation to return true.\n\n Usage:\n @code\n ecs_table_range_t range = {\n   .table = table,\n   .offset = 1,\n   .count = 2\n };\n\n ecs_iter_t it;\n if (ecs_query_has_range(q, &range, &it)) {\n   ecs_iter_fini(&it);\n }\n @endcode\n\n @param query The query.\n @param range The range to match\n @param it The iterator with matched data.\n @return True if range matches the query, false if not."]
     pub fn ecs_query_has_range(
         query: *mut ecs_query_t,
         range: *mut ecs_table_range_t,
@@ -3620,22 +3736,22 @@ extern "C" {
     ) -> bool;
 }
 extern "C" {
-    #[doc = "Returns how often a match event happened for a cached query.\n This operation can be used to determine whether the query cache has been\n updated with new tables."]
+    #[doc = "Returns how often a match event happened for a cached query.\n This operation can be used to determine whether the query cache has been\n updated with new tables.\n\n @param query The query.\n @return The number of match events happened."]
     pub fn ecs_query_match_count(query: *const ecs_query_t) -> i32;
 }
 extern "C" {
-    #[doc = "Convert query to a string.\n This will convert the query program to a string which can aid in debugging\n the behavior of a query.\n\n The returned string must be freed with ecs_os_free().\n\n @param query The query.\n @return The string"]
+    #[doc = "Convert query to a string.\n This will convert the query program to a string which can aid in debugging\n the behavior of a query.\n\n The returned string must be freed with ecs_os_free().\n\n @param query The query.\n @return The query plan."]
     pub fn ecs_query_plan(query: *const ecs_query_t) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[doc = "Convert query to string with profile.\n To use this you must set the EcsIterProfile flag on an iterator before\n starting iteration:\n   it.flags |= EcsIterProfile\n\n @param query The query.\n @return The string"]
-    pub fn ecs_query_str_w_profile(
+    #[doc = "Convert query to string with profile.\n To use this you must set the EcsIterProfile flag on an iterator before\n starting iteration:\n   it.flags |= EcsIterProfile\n\n The returned string must be freed with ecs_os_free().\n\n @param query The query.\n @param it The iterator with profile data.\n @return The query plan with profile data."]
+    pub fn ecs_query_plan_w_profile(
         query: *const ecs_query_t,
         it: *const ecs_iter_t,
     ) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[doc = "Populate variables from key-value string.\n Convenience function to set query variables from a key-value string separated\n by comma's. The string must have the following format:\n   var_a: value, var_b: value\n\n The key-value list may optionally be enclosed in parenthesis.\n\n This function uses the script addon.\n\n @param query The query.\n @param it The iterator for which to set the variables.\n @param expr The key-value expression."]
+    #[doc = "Populate variables from key-value string.\n Convenience function to set query variables from a key-value string separated\n by comma's. The string must have the following format:\n   var_a: value, var_b: value\n\n The key-value list may optionally be enclosed in parenthesis.\n\n This function uses the script addon.\n\n @param query The query.\n @param it The iterator for which to set the variables.\n @param expr The key-value expression.\n @return Pointer to the next character after the last parsed one."]
     pub fn ecs_query_args_parse(
         query: *mut ecs_query_t,
         it: *mut ecs_iter_t,
@@ -3672,9 +3788,13 @@ extern "C" {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_query_count_t {
+    #[doc = "< Number of results returned by query."]
     pub results: i32,
+    #[doc = "< Number of entities returned by query."]
     pub entities: i32,
+    #[doc = "< Number of tables returned by query."]
     pub tables: i32,
+    #[doc = "< Number of empty tables returned by query."]
     pub empty_tables: i32,
 }
 extern "C" {
@@ -3690,18 +3810,15 @@ extern "C" {
     pub fn ecs_emit(world: *mut ecs_world_t, desc: *mut ecs_event_desc_t);
 }
 extern "C" {
+    #[doc = "Enqueue event.\n Same as ecs_emit(), but enqueues an event in the command queue instead. The\n event will be emitted when ecs_defer_end() is called.\n\n If this operation is called when the provided world is not in deferred mode\n it behaves just like ecs_emit().\n\n @param world The world.\n @param desc Event parameters."]
     pub fn ecs_enqueue(world: *mut ecs_world_t, desc: *mut ecs_event_desc_t);
 }
 extern "C" {
-    #[doc = "Create observer.\n Observers are like triggers, but can subscribe for multiple terms. An\n observer only triggers when the source of the event meets all terms.\n\n See the documentation for ecs_observer_desc_t for more details.\n\n @param world The world.\n @param desc The observer creation parameters."]
+    #[doc = "Create observer.\n Observers are like triggers, but can subscribe for multiple terms. An\n observer only triggers when the source of the event meets all terms.\n\n See the documentation for ecs_observer_desc_t for more details.\n\n @param world The world.\n @param desc The observer creation parameters.\n @return The observer, or 0 if the operation failed."]
     pub fn ecs_observer_init(
         world: *mut ecs_world_t,
         desc: *const ecs_observer_desc_t,
     ) -> ecs_entity_t;
-}
-extern "C" {
-    #[doc = "Default run action for observer.\n This function can be called from a custom observer run action (see\n ecs_observer_desc_t::run for more details). This function ensures that the\n observer's query is applied to the iterator's table, filters out duplicate\n events and implements EcsMonitor logic.\n\n @param it The iterator.\n @return True if the observer was invoked."]
-    pub fn ecs_observer_default_run_action(it: *mut ecs_iter_t) -> bool;
 }
 extern "C" {
     #[doc = "Get observer object.\n Returns the observer object. Can be used to access various information about\n the observer, like the query and context.\n\n @param world The world.\n @param observer The observer.\n @return The observer object."]
@@ -3763,6 +3880,7 @@ extern "C" {
     pub fn ecs_iter_var_is_constrained(it: *mut ecs_iter_t, var_id: i32) -> bool;
 }
 extern "C" {
+    #[doc = "Returns whether current iterator result has changed.\n This operation must be used in combination with a query that supports change\n detection (e.g. is cached). The operation returns whether the currently\n iterated result has changed since the last time it was iterated by the query.\n\n Change detection works on a per-table basis. Changes to individual entities\n cannot be detected this way.\n\n @param it The iterator.\n @return True if the result changed, false if it didn't."]
     pub fn ecs_iter_changed(it: *mut ecs_iter_t) -> bool;
 }
 extern "C" {
@@ -3866,7 +3984,7 @@ extern "C" {
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[doc = "Get column from table by component id.\n This operation returns the component array for the provided component  id.\n\n @param table The table.\n @param id The component id for the column.\n @param offset The index of the first row to return (0 for entire column).\n @return The component array, or NULL if the index is not a component."]
+    #[doc = "Get column from table by component id.\n This operation returns the component array for the provided component  id.\n\n @param world The world.\n @param table The table.\n @param id The component id for the column.\n @param offset The index of the first row to return (0 for entire column).\n @return The component array, or NULL if the index is not a component."]
     pub fn ecs_table_get_id(
         world: *const ecs_world_t,
         table: *const ecs_table_t,
@@ -3955,18 +4073,6 @@ extern "C" {
     ) -> bool;
 }
 extern "C" {
-    #[doc = "Find record for entity."]
-    pub fn ecs_record_find(world: *const ecs_world_t, entity: ecs_entity_t) -> *mut ecs_record_t;
-}
-extern "C" {
-    #[doc = "Get component pointer from column/record."]
-    pub fn ecs_record_get_column(
-        r: *const ecs_record_t,
-        column: i32,
-        c_size: usize,
-    ) -> *mut ::std::os::raw::c_void;
-}
-extern "C" {
     #[doc = "Search for component id in table type.\n This operation returns the index of first occurrence of the id in the table\n type. The id may be a wildcard.\n\n When id_out is provided, the function will assign it with the found id. The\n found id may be different from the provided id if it is a wildcard.\n\n This is a constant time operation.\n\n @param world The world.\n @param table The table.\n @param id The id to search for.\n @param id_out If provided, it will be set to the found id (optional).\n @return The index of the id in the table type."]
     pub fn ecs_search(
         world: *const ecs_world_t,
@@ -4046,7 +4152,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Destruct a value, free storage\n\n @param world The world.\n @param type The type of the value to destruct.\n @return Zero if success, nonzero if failed."]
+    #[doc = "Destruct a value, free storage\n\n @param world The world.\n @param type The type of the value to destruct.\n @param ptr A pointer to the value.\n @return Zero if success, nonzero if failed."]
     pub fn ecs_value_free(
         world: *mut ecs_world_t,
         type_: ecs_entity_t,
@@ -4108,7 +4214,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Tracing"]
+    #[doc = "Log message indicating an operation is deprecated."]
     pub fn ecs_deprecated_(
         file: *const ::std::os::raw::c_char,
         line: i32,
@@ -4263,7 +4369,7 @@ extern "C" {
 pub struct ecs_http_server_t {
     _unused: [u8; 0],
 }
-#[doc = "A connection manages communication with the remote host"]
+#[doc = "A connection manages communication with the remote host."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_http_connection_t {
@@ -4272,7 +4378,7 @@ pub struct ecs_http_connection_t {
     pub host: [::std::os::raw::c_char; 128usize],
     pub port: [::std::os::raw::c_char; 16usize],
 }
-#[doc = "Helper type used for headers & URL query parameters"]
+#[doc = "Helper type used for headers & URL query parameters."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_http_key_value_t {
@@ -4285,9 +4391,9 @@ pub const ecs_http_method_t_EcsHttpPut: ecs_http_method_t = 2;
 pub const ecs_http_method_t_EcsHttpDelete: ecs_http_method_t = 3;
 pub const ecs_http_method_t_EcsHttpOptions: ecs_http_method_t = 4;
 pub const ecs_http_method_t_EcsHttpMethodUnsupported: ecs_http_method_t = 5;
-#[doc = "Supported request methods"]
+#[doc = "Supported request methods."]
 pub type ecs_http_method_t = ::std::os::raw::c_uint;
-#[doc = "A request"]
+#[doc = "An HTTP request."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_http_request_t {
@@ -4301,7 +4407,7 @@ pub struct ecs_http_request_t {
     pub param_count: i32,
     pub conn: *mut ecs_http_connection_t,
 }
-#[doc = "A reply"]
+#[doc = "An HTTP reply."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_http_reply_t {
@@ -4317,31 +4423,39 @@ pub struct ecs_http_reply_t {
     pub headers: ecs_strbuf_t,
 }
 extern "C" {
-    #[doc = "Global statistics."]
+    #[doc = "< Total number of HTTP requests received."]
     pub static mut ecs_http_request_received_count: i64;
 }
 extern "C" {
+    #[doc = "< Total number of invalid HTTP requests."]
     pub static mut ecs_http_request_invalid_count: i64;
 }
 extern "C" {
+    #[doc = "< Total number of successful HTTP requests."]
     pub static mut ecs_http_request_handled_ok_count: i64;
 }
 extern "C" {
+    #[doc = "< Total number of HTTP requests with errors."]
     pub static mut ecs_http_request_handled_error_count: i64;
 }
 extern "C" {
+    #[doc = "< Total number of HTTP requests with an unknown endpoint."]
     pub static mut ecs_http_request_not_handled_count: i64;
 }
 extern "C" {
+    #[doc = "< Total number of preflight HTTP requests received."]
     pub static mut ecs_http_request_preflight_count: i64;
 }
 extern "C" {
+    #[doc = "< Total number of HTTP replies successfully sent."]
     pub static mut ecs_http_send_ok_count: i64;
 }
 extern "C" {
+    #[doc = "< Total number of HTTP replies that failed to send."]
     pub static mut ecs_http_send_error_count: i64;
 }
 extern "C" {
+    #[doc = "< Total number of HTTP busy replies."]
     pub static mut ecs_http_busy_count: i64;
 }
 #[doc = "Request callback.\n Invoked for each valid request. The function should populate the reply and\n return true. When the function returns false, the server will reply with a\n 404 (Not found) code."]
@@ -4419,9 +4533,10 @@ extern "C" {
     ) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[doc = "Component that instantiates the REST API"]
+    #[doc = "Component that instantiates the REST API."]
     pub static FLECS_IDEcsRestID_: ecs_entity_t;
 }
+#[doc = "Component that creates a REST API server when instantiated."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsRest {
@@ -4443,7 +4558,7 @@ extern "C" {
     pub fn ecs_rest_server_fini(srv: *mut ecs_http_server_t);
 }
 extern "C" {
-    #[doc = "Module import"]
+    #[doc = "Rest module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsRest)\n @endcode\n\n @param world The world."]
     pub fn FlecsRestImport(world: *mut ecs_world_t);
 }
 #[doc = "Component used for one shot/interval timer functionality"]
@@ -4534,20 +4649,20 @@ extern "C" {
     );
 }
 extern "C" {
-    #[doc = "Module"]
+    #[doc = "Timer module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsTimer)\n @endcode\n\n @param world The world."]
     pub fn FlecsTimerImport(world: *mut ecs_world_t);
 }
-#[doc = "Pipeline descriptor (used with ecs_pipeline_init())"]
+#[doc = "Pipeline descriptor, used with ecs_pipeline_init()."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_pipeline_desc_t {
-    #[doc = "Existing entity to associate with pipeline (optional)"]
+    #[doc = "Existing entity to associate with pipeline (optional)."]
     pub entity: ecs_entity_t,
-    #[doc = "Query descriptor. The first term of the query must match the EcsSystem\n component."]
+    #[doc = "The pipeline query.\n Pipelines are queries that are matched with system entities. Pipeline\n queries are the same as regular queries, which means the same query rules\n apply. A common mistake is to try a pipeline that matches systems in a\n list of phases by specifying all the phases, like:\n   OnUpdate, OnPhysics, OnRender\n\n That however creates a query that matches entities with OnUpdate _and_\n OnPhysics _and_ OnRender tags, which is likely undesired. Instead, a\n query could use the or operator match a system that has one of the\n specified phases:\n   OnUpdate || OnPhysics || OnRender\n\n This will return the correct set of systems, but they likely won't be in\n the correct order. To make sure systems are returned in the correct order\n two query ordering features can be used:\n - group_by\n - order_by\n\n Take a look at the system manual for a more detailed explanation of\n how query features can be applied to pipelines, and how the builtin\n pipeline query works."]
     pub query: ecs_query_desc_t,
 }
 extern "C" {
-    #[doc = "Create a custom pipeline."]
+    #[doc = "Create a custom pipeline.\n\n @param world The world.\n @param desc The pipeline descriptor.\n @return The pipeline, 0 if failed."]
     pub fn ecs_pipeline_init(
         world: *mut ecs_world_t,
         desc: *const ecs_pipeline_desc_t,
@@ -4574,23 +4689,23 @@ extern "C" {
     pub fn ecs_reset_clock(world: *mut ecs_world_t);
 }
 extern "C" {
-    #[doc = "Run pipeline.\n This will run all systems in the provided pipeline. This operation may be\n invoked from multiple threads, and only when staging is disabled, as the\n pipeline manages staging and, if necessary, synchronization between threads.\n\n If 0 is provided for the pipeline id, the default pipeline will be ran (this\n is either the builtin pipeline or the pipeline set with set_pipeline()).\n\n When using progress() this operation will be invoked automatically for the\n default pipeline (either the builtin pipeline or the pipeline set with\n set_pipeline()). An application may run additional pipelines.\n\n @param world The world.\n @param pipeline The pipeline to run."]
+    #[doc = "Run pipeline.\n This will run all systems in the provided pipeline. This operation may be\n invoked from multiple threads, and only when staging is disabled, as the\n pipeline manages staging and, if necessary, synchronization between threads.\n\n If 0 is provided for the pipeline id, the default pipeline will be ran (this\n is either the builtin pipeline or the pipeline set with set_pipeline()).\n\n When using progress() this operation will be invoked automatically for the\n default pipeline (either the builtin pipeline or the pipeline set with\n set_pipeline()). An application may run additional pipelines.\n\n @param world The world.\n @param pipeline The pipeline to run.\n @param delta_time The delta_time to pass to systems."]
     pub fn ecs_run_pipeline(world: *mut ecs_world_t, pipeline: ecs_entity_t, delta_time: f32);
 }
 extern "C" {
-    #[doc = "Set number of worker threads.\n Setting this value to a value higher than 1 will start as many threads and\n will cause systems to evenly distribute matched entities across threads. The\n operation may be called multiple times to reconfigure the number of threads\n used, but never while running a system / pipeline.\n Calling ecs_set_threads() will also end the use of task threads setup with\n ecs_set_task_threads() and vice-versa"]
+    #[doc = "Set number of worker threads.\n Setting this value to a value higher than 1 will start as many threads and\n will cause systems to evenly distribute matched entities across threads. The\n operation may be called multiple times to reconfigure the number of threads\n used, but never while running a system / pipeline.\n Calling ecs_set_threads() will also end the use of task threads setup with\n ecs_set_task_threads() and vice-versa.\n\n @param world The world.\n @param threads The number of threads to create."]
     pub fn ecs_set_threads(world: *mut ecs_world_t, threads: i32);
 }
 extern "C" {
-    #[doc = "Set number of worker task threads.\n ecs_set_task_threads() is similar to ecs_set_threads(), except threads are treated\n as short-lived tasks and will be created and joined around each update of the world.\n Creation and joining of these tasks will use the os_api_t tasks APIs rather than the\n the standard thread API functions, although they may be the same if desired.\n This function is useful for multithreading world updates using an external\n asynchronous job system rather than long running threads by providing the APIs\n to create tasks for your job system and then wait on their conclusion.\n The operation may be called multiple times to reconfigure the number of task threads\n used, but never while running a system / pipeline.\n Calling ecs_set_task_threads() will also end the use of threads setup with\n ecs_set_threads() and vice-versa"]
+    #[doc = "Set number of worker task threads.\n ecs_set_task_threads() is similar to ecs_set_threads(), except threads are treated\n as short-lived tasks and will be created and joined around each update of the world.\n Creation and joining of these tasks will use the os_api_t tasks APIs rather than the\n the standard thread API functions, although they may be the same if desired.\n This function is useful for multithreading world updates using an external\n asynchronous job system rather than long running threads by providing the APIs\n to create tasks for your job system and then wait on their conclusion.\n The operation may be called multiple times to reconfigure the number of task threads\n used, but never while running a system / pipeline.\n Calling ecs_set_task_threads() will also end the use of threads setup with\n ecs_set_threads() and vice-versa\n\n @param world The world.\n @param task_threads The number of task threads to create."]
     pub fn ecs_set_task_threads(world: *mut ecs_world_t, task_threads: i32);
 }
 extern "C" {
-    #[doc = "Returns true if task thread use have been requested."]
+    #[doc = "Returns true if task thread use have been requested.\n\n @param world The world.\n @result Whether the world is using task threads."]
     pub fn ecs_using_task_threads(world: *mut ecs_world_t) -> bool;
 }
 extern "C" {
-    #[doc = "Module"]
+    #[doc = "Pipeline module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsPipeline)\n @endcode\n\n @param world The world."]
     pub fn FlecsPipelineImport(world: *mut ecs_world_t);
 }
 #[doc = "Component used to provide a tick source to systems"]
@@ -4710,6 +4825,7 @@ extern "C" {
     ) -> ecs_entity_t;
 }
 extern "C" {
+    #[doc = "System module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsSystem)\n @endcode\n\n @param world The world."]
     pub fn FlecsSystemImport(world: *mut ecs_world_t);
 }
 #[doc = "Simple value that indicates current state"]
@@ -4907,12 +5023,8 @@ pub struct ecs_query_stats_t {
     pub result_count: ecs_metric_t,
     #[doc = "< Number of matched tables"]
     pub matched_table_count: ecs_metric_t,
-    #[doc = "< Number of matched empty tables"]
-    pub matched_empty_table_count: ecs_metric_t,
     #[doc = "< Number of matched entities"]
     pub matched_entity_count: ecs_metric_t,
-    #[doc = "< Number of times query is evaluated"]
-    pub eval_count: ecs_metric_t,
     pub last_: i64,
     #[doc = "Current position in ringbuffer"]
     pub t: i32,
@@ -4951,8 +5063,6 @@ pub struct ecs_pipeline_stats_t {
     pub systems: ecs_vec_t,
     #[doc = "Vector with sync point stats"]
     pub sync_points: ecs_vec_t,
-    #[doc = "Map with system statistics. For each system in the systems vector, an\n entry in the map exists of type ecs_system_stats_t."]
-    pub system_stats: ecs_map_t,
     #[doc = "Current position in ring buffer"]
     pub t: i32,
     #[doc = "< Number of systems in pipeline"]
@@ -5104,74 +5214,175 @@ extern "C" {
     pub fn ecs_metric_copy(m: *mut ecs_metric_t, dst: i32, src: i32);
 }
 extern "C" {
+    #[doc = "< Flecs stats module."]
+    pub static mut FLECS_IDFlecsStatsID_: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "< Component id for EcsWorldStats."]
+    pub static mut FLECS_IDEcsWorldStatsID_: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "< Component id for EcsWorldSummary."]
+    pub static mut FLECS_IDEcsWorldSummaryID_: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "< Component id for EcsSystemStats."]
+    pub static mut FLECS_IDEcsSystemStatsID_: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "< Component id for EcsPipelineStats."]
+    pub static mut FLECS_IDEcsPipelineStatsID_: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "< Tag used for metrics collected in last second."]
+    pub static mut EcsPeriod1s: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "< Tag used for metrics collected in last minute."]
+    pub static mut EcsPeriod1m: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "< Tag used for metrics collected in last hour."]
+    pub static mut EcsPeriod1h: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "< Tag used for metrics collected in last day."]
+    pub static mut EcsPeriod1d: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "< Tag used for metrics collected in last week."]
+    pub static mut EcsPeriod1w: ecs_entity_t;
+}
+#[doc = "Common data for statistics."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsStatsHeader {
+    pub elapsed: f32,
+    pub reduce_count: i32,
+}
+#[doc = "Component that stores world statistics."]
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct EcsWorldStats {
+    pub hdr: EcsStatsHeader,
+    pub stats: ecs_world_stats_t,
+}
+#[doc = "Component that stores system statistics."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsSystemStats {
+    pub hdr: EcsStatsHeader,
+    pub stats: ecs_map_t,
+}
+#[doc = "Component that stores pipeline statistics."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsPipelineStats {
+    pub hdr: EcsStatsHeader,
+    pub stats: ecs_map_t,
+}
+#[doc = "Component that stores a summary of world statistics."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsWorldSummary {
+    #[doc = "< Target FPS"]
+    pub target_fps: f64,
+    #[doc = "< Total time spent processing a frame"]
+    pub frame_time_total: f64,
+    #[doc = "< Total time spent in systems"]
+    pub system_time_total: f64,
+    #[doc = "< Total time spent in merges"]
+    pub merge_time_total: f64,
+    #[doc = "< Time spent processing a frame"]
+    pub frame_time_last: f64,
+    #[doc = "< Time spent in systems"]
+    pub system_time_last: f64,
+    #[doc = "< Time spent in merges"]
+    pub merge_time_last: f64,
+    #[doc = "< Number of frames processed"]
+    pub frame_count: i64,
+    #[doc = "< Number of commands processed"]
+    pub command_count: i64,
+    #[doc = "< Build info"]
+    pub build_info: ecs_build_info_t,
+}
+extern "C" {
+    #[doc = "Stats module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsStats)\n @endcode\n\n @param world The world."]
+    pub fn FlecsStatsImport(world: *mut ecs_world_t);
+}
+extern "C" {
+    #[doc = "Flecs metrics module."]
     pub static mut FLECS_IDFlecsMetricsID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Tag added to metrics, and used as first element of metric kind pair"]
+    #[doc = "Tag added to metrics, and used as first element of metric kind pair."]
     pub static mut EcsMetric: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Tag added to metrics, and used as first element of metric kind pair"]
+    #[doc = "Tag added to metrics, and used as first element of metric kind pair."]
     pub static mut FLECS_IDEcsMetricID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Metric that has monotonically increasing value"]
+    #[doc = "Metric that has monotonically increasing value."]
     pub static mut EcsCounter: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Metric that has monotonically increasing value"]
+    #[doc = "Metric that has monotonically increasing value."]
     pub static mut FLECS_IDEcsCounterID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Counter metric that is auto-incremented by source value"]
+    #[doc = "Counter metric that is auto-incremented by source value."]
     pub static mut EcsCounterIncrement: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Counter metric that is auto-incremented by source value"]
+    #[doc = "Counter metric that is auto-incremented by source value."]
     pub static mut FLECS_IDEcsCounterIncrementID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Counter metric that counts the number of entities with an id"]
+    #[doc = "Counter metric that counts the number of entities with an id."]
     pub static mut EcsCounterId: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Counter metric that counts the number of entities with an id"]
+    #[doc = "Counter metric that counts the number of entities with an id."]
     pub static mut FLECS_IDEcsCounterIdID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Metric that represents current value"]
+    #[doc = "Metric that represents current value."]
     pub static mut EcsGauge: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Metric that represents current value"]
+    #[doc = "Metric that represents current value."]
     pub static mut FLECS_IDEcsGaugeID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Tag added to metric instances"]
+    #[doc = "Tag added to metric instances."]
     pub static mut EcsMetricInstance: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Tag added to metric instances"]
+    #[doc = "Tag added to metric instances."]
     pub static mut FLECS_IDEcsMetricInstanceID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Component with metric instance value"]
+    #[doc = "Component with metric instance value."]
     pub static mut FLECS_IDEcsMetricValueID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Component with entity source of metric instance"]
+    #[doc = "Component with entity source of metric instance."]
     pub static mut FLECS_IDEcsMetricSourceID_: ecs_entity_t;
 }
+#[doc = "Component that stores metric value."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsMetricValue {
     pub value: f64,
 }
+#[doc = "Component that stores metric source."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsMetricSource {
     pub entity: ecs_entity_t,
 }
+#[doc = "Used with ecs_metric_init to create metric."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_metric_desc_t {
@@ -5197,67 +5408,81 @@ extern "C" {
         -> ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Module import"]
+    #[doc = "Metrics module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsMetrics)\n @endcode\n\n @param world The world."]
     pub fn FlecsMetricsImport(world: *mut ecs_world_t);
 }
 extern "C" {
-    #[doc = "Module id"]
+    #[doc = "Module id."]
     pub static mut FLECS_IDFlecsAlertsID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Tag added to alert, and used as first element of alert severity pair"]
+    #[doc = "< Component added to alert, and used as first element of alert severity pair."]
     pub static mut FLECS_IDEcsAlertID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Component added to alert instance."]
     pub static mut FLECS_IDEcsAlertInstanceID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Component added to alert source which tracks how many active alerts there are."]
     pub static mut FLECS_IDEcsAlertsActiveID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Component added to alert which tracks how long an alert has been inactive."]
     pub static mut FLECS_IDEcsAlertTimeoutID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Alert severity tags"]
+    #[doc = "< Info alert severity."]
     pub static mut EcsAlertInfo: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Alert severity tags"]
+    #[doc = "< Info alert severity."]
     pub static mut FLECS_IDEcsAlertInfoID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Warning alert severity."]
     pub static mut EcsAlertWarning: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Warning alert severity."]
     pub static mut FLECS_IDEcsAlertWarningID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Error alert severity."]
     pub static mut EcsAlertError: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Error alert severity."]
     pub static mut FLECS_IDEcsAlertErrorID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Critical alert severity."]
     pub static mut EcsAlertCritical: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Critical alert severity."]
     pub static mut FLECS_IDEcsAlertCriticalID_: ecs_entity_t;
 }
-#[doc = "Alert information. Added to each alert instance"]
+#[doc = "Component added to alert instance."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsAlertInstance {
+    #[doc = "< Generated alert message"]
     pub message: *mut ::std::os::raw::c_char,
 }
 #[doc = "Map with active alerts for entity."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsAlertsActive {
+    #[doc = "< Number of alerts for source with info severity"]
     pub info_count: i32,
+    #[doc = "< Number of alerts for source with warning severity"]
     pub warning_count: i32,
+    #[doc = "< Number of alerts for source with error severity"]
     pub error_count: i32,
     pub alerts: ecs_map_t,
 }
+#[doc = "Alert severity filter.\n A severity filter can adjust the severity of an alert based on whether an\n entity in the alert query has a specific component. For example, a filter\n could check if an entity has the \"Production\" tag, and increase the default\n severity of an alert from Warning to Error."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_alert_severity_filter_t {
@@ -5291,81 +5516,8 @@ extern "C" {
     ) -> ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Module import"]
+    #[doc = "Alert module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsAlerts)\n @endcode\n\n @param world The world."]
     pub fn FlecsAlertsImport(world: *mut ecs_world_t);
-}
-extern "C" {
-    pub static mut FLECS_IDFlecsMonitorID_: ecs_entity_t;
-}
-extern "C" {
-    pub static mut FLECS_IDEcsWorldStatsID_: ecs_entity_t;
-}
-extern "C" {
-    pub static mut FLECS_IDEcsWorldSummaryID_: ecs_entity_t;
-}
-extern "C" {
-    pub static mut FLECS_IDEcsPipelineStatsID_: ecs_entity_t;
-}
-extern "C" {
-    pub static mut EcsPeriod1s: ecs_entity_t;
-}
-extern "C" {
-    pub static mut EcsPeriod1m: ecs_entity_t;
-}
-extern "C" {
-    pub static mut EcsPeriod1h: ecs_entity_t;
-}
-extern "C" {
-    pub static mut EcsPeriod1d: ecs_entity_t;
-}
-extern "C" {
-    pub static mut EcsPeriod1w: ecs_entity_t;
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct EcsStatsHeader {
-    pub elapsed: f32,
-    pub reduce_count: i32,
-}
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub struct EcsWorldStats {
-    pub hdr: EcsStatsHeader,
-    pub stats: ecs_world_stats_t,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct EcsPipelineStats {
-    pub hdr: EcsStatsHeader,
-    pub stats: ecs_pipeline_stats_t,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct EcsWorldSummary {
-    #[doc = "< Target FPS"]
-    pub target_fps: f64,
-    #[doc = "< Total time spent processing a frame"]
-    pub frame_time_total: f64,
-    #[doc = "< Total time spent in systems"]
-    pub system_time_total: f64,
-    #[doc = "< Total time spent in merges"]
-    pub merge_time_total: f64,
-    #[doc = "< Time spent processing a frame"]
-    pub frame_time_last: f64,
-    #[doc = "< Time spent in systems"]
-    pub system_time_last: f64,
-    #[doc = "< Time spent in merges"]
-    pub merge_time_last: f64,
-    #[doc = "< Number of frames processed"]
-    pub frame_count: i64,
-    #[doc = "< Number of commands processed"]
-    pub command_count: i64,
-    #[doc = "< Build info"]
-    pub build_info: ecs_build_info_t,
-}
-extern "C" {
-    #[doc = "Module import"]
-    pub fn FlecsMonitorImport(world: *mut ecs_world_t);
 }
 #[doc = "Used with ecs_ptr_from_json(), ecs_entity_from_json()."]
 #[repr(C)]
@@ -5477,26 +5629,16 @@ extern "C" {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_entity_to_json_desc_t {
+    #[doc = "< Serialize entity id"]
+    pub serialize_entity_id: bool,
     #[doc = "< Serialize full pathname"]
     pub serialize_path: bool,
-    #[doc = "< Serialize doc name"]
-    pub serialize_label: bool,
-    #[doc = "< Serialize brief doc description"]
-    pub serialize_brief: bool,
-    #[doc = "< Serialize doc link (URL)"]
-    pub serialize_link: bool,
-    #[doc = "< Serialize doc color"]
-    pub serialize_color: bool,
-    #[doc = "< Serialize (component) ids"]
-    pub serialize_ids: bool,
-    #[doc = "< Serialize labels of (component) ids"]
-    pub serialize_id_labels: bool,
+    #[doc = "< Serialize doc attributes"]
+    pub serialize_doc: bool,
+    #[doc = "< Serialize full paths for tags, components and pairs"]
+    pub serialize_full_paths: bool,
     #[doc = "< Serialize base components"]
-    pub serialize_base: bool,
-    #[doc = "< Serialize private components"]
-    pub serialize_private: bool,
-    #[doc = "< Serialize ids hidden by override"]
-    pub serialize_hidden: bool,
+    pub serialize_inherited: bool,
     #[doc = "< Serialize component values"]
     pub serialize_values: bool,
     #[doc = "< Serialize type info (requires serialize_values)"]
@@ -5529,46 +5671,22 @@ extern "C" {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_iter_to_json_desc_t {
-    #[doc = "< Serialize query term component ids"]
-    pub serialize_term_ids: bool,
-    #[doc = "< Serialize query term component id labels"]
-    pub serialize_term_labels: bool,
-    #[doc = "< Serialize actual (matched) component ids"]
-    pub serialize_ids: bool,
-    #[doc = "< Serialize actual (matched) component id labels"]
-    pub serialize_id_labels: bool,
-    #[doc = "< Serialize sources"]
-    pub serialize_sources: bool,
-    #[doc = "< Serialize variables"]
-    pub serialize_variables: bool,
-    #[doc = "< Serialize is_set (for optional terms)"]
-    pub serialize_is_set: bool,
+    #[doc = "< Serialize entity ids"]
+    pub serialize_entity_ids: bool,
     #[doc = "< Serialize component values"]
     pub serialize_values: bool,
-    #[doc = "< Serialize component values"]
-    pub serialize_private: bool,
-    #[doc = "< Serialize entities (for This terms)"]
-    pub serialize_entities: bool,
-    #[doc = "< Serialize doc name for entities"]
-    pub serialize_entity_labels: bool,
-    #[doc = "< Serialize numerical ids for entities"]
-    pub serialize_entity_ids: bool,
-    #[doc = "< Serialize names (not paths) for entities"]
-    pub serialize_entity_names: bool,
-    #[doc = "< Serialize doc name for variables"]
-    pub serialize_variable_labels: bool,
-    #[doc = "< Serialize numerical ids for variables"]
-    pub serialize_variable_ids: bool,
-    #[doc = "< Serialize doc color for entities"]
-    pub serialize_colors: bool,
-    #[doc = "< Serialize evaluation duration"]
-    pub measure_eval_duration: bool,
-    #[doc = "< Serialize type information"]
-    pub serialize_type_info: bool,
+    #[doc = "< Serialize doc attributes"]
+    pub serialize_doc: bool,
+    #[doc = "< Serialize doc names of matched variables"]
+    pub serialize_var_labels: bool,
+    #[doc = "< Serialize full paths for tags, components and pairs"]
+    pub serialize_full_paths: bool,
+    #[doc = "< Serialize inherited components"]
+    pub serialize_inherited: bool,
     #[doc = "< Serialize entire table vs. matched components"]
     pub serialize_table: bool,
-    #[doc = "< Use row-based serialization, with entities in separate elements"]
-    pub serialize_rows: bool,
+    #[doc = "< Serialize type information"]
+    pub serialize_type_info: bool,
     #[doc = "< Serialize metadata for fields returned by query"]
     pub serialize_field_info: bool,
     #[doc = "< Serialize query terms"]
@@ -5579,8 +5697,14 @@ pub struct ecs_iter_to_json_desc_t {
     pub serialize_query_profile: bool,
     #[doc = "< If true, query won't be evaluated"]
     pub dont_serialize_results: bool,
+    #[doc = "< Serialize active alerts for entity"]
+    pub serialize_alerts: bool,
+    #[doc = "< Serialize references (incoming edges) for relationship"]
+    pub serialize_refs: ecs_entity_t,
+    #[doc = "< Serialize which queries entity matches with"]
+    pub serialize_matches: bool,
     #[doc = "< Query object (required for serialize_query_\\[plan|profile\\])."]
-    pub query: *mut flecs_poly_t,
+    pub query: *mut ecs_poly_t,
 }
 extern "C" {
     #[doc = "Serialize iterator into JSON string.\n This operation will iterate the contents of the iterator and serialize them\n to JSON. The function accepts iterators from any source.\n\n @param iter The iterator to serialize to JSON.\n @return A JSON string with the serialized iterator data, or NULL if failed."]
@@ -5622,712 +5746,955 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Parent scope for prefixes"]
+    #[doc = "Legacy deserializer functions. These can be used to load a v3 JSON string and\n save it to the new format. These functions will be removed in the next\n release."]
+    pub fn ecs_ptr_from_json_legacy(
+        world: *const ecs_world_t,
+        type_: ecs_entity_t,
+        ptr: *mut ::std::os::raw::c_void,
+        json: *const ::std::os::raw::c_char,
+        desc: *const ecs_from_json_desc_t,
+    ) -> *const ::std::os::raw::c_char;
+}
+extern "C" {
+    pub fn ecs_entity_from_json_legacy(
+        world: *mut ecs_world_t,
+        entity: ecs_entity_t,
+        json: *const ::std::os::raw::c_char,
+        desc: *const ecs_from_json_desc_t,
+    ) -> *const ::std::os::raw::c_char;
+}
+extern "C" {
+    pub fn ecs_world_from_json_legacy(
+        world: *mut ecs_world_t,
+        json: *const ::std::os::raw::c_char,
+        desc: *const ecs_from_json_desc_t,
+    ) -> *const ::std::os::raw::c_char;
+}
+extern "C" {
+    pub fn ecs_world_from_json_file_legacy(
+        world: *mut ecs_world_t,
+        filename: *const ::std::os::raw::c_char,
+        desc: *const ecs_from_json_desc_t,
+    ) -> *const ::std::os::raw::c_char;
+}
+extern "C" {
+    #[doc = "< Parent scope for prefixes."]
     pub static mut EcsUnitPrefixes: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Parent scope for prefixes"]
+    #[doc = "< Parent scope for prefixes."]
     pub static mut FLECS_IDEcsUnitPrefixesID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Yocto unit prefix."]
     pub static mut EcsYocto: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Yocto unit prefix."]
     pub static mut FLECS_IDEcsYoctoID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Zepto unit prefix."]
     pub static mut EcsZepto: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Zepto unit prefix."]
     pub static mut FLECS_IDEcsZeptoID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Atto unit prefix."]
     pub static mut EcsAtto: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Atto unit prefix."]
     pub static mut FLECS_IDEcsAttoID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Femto unit prefix."]
     pub static mut EcsFemto: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Femto unit prefix."]
     pub static mut FLECS_IDEcsFemtoID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Pico unit prefix."]
     pub static mut EcsPico: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Pico unit prefix."]
     pub static mut FLECS_IDEcsPicoID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Nano unit prefix."]
     pub static mut EcsNano: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Nano unit prefix."]
     pub static mut FLECS_IDEcsNanoID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Micro unit prefix."]
     pub static mut EcsMicro: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Micro unit prefix."]
     pub static mut FLECS_IDEcsMicroID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Milli unit prefix."]
     pub static mut EcsMilli: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Milli unit prefix."]
     pub static mut FLECS_IDEcsMilliID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Centi unit prefix."]
     pub static mut EcsCenti: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Centi unit prefix."]
     pub static mut FLECS_IDEcsCentiID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Deci unit prefix."]
     pub static mut EcsDeci: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Deci unit prefix."]
     pub static mut FLECS_IDEcsDeciID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Deca unit prefix."]
     pub static mut EcsDeca: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Deca unit prefix."]
     pub static mut FLECS_IDEcsDecaID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Hecto unit prefix."]
     pub static mut EcsHecto: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Hecto unit prefix."]
     pub static mut FLECS_IDEcsHectoID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Kilo unit prefix."]
     pub static mut EcsKilo: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Kilo unit prefix."]
     pub static mut FLECS_IDEcsKiloID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Mega unit prefix."]
     pub static mut EcsMega: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Mega unit prefix."]
     pub static mut FLECS_IDEcsMegaID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Giga unit prefix."]
     pub static mut EcsGiga: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Giga unit prefix."]
     pub static mut FLECS_IDEcsGigaID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Tera unit prefix."]
     pub static mut EcsTera: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Tera unit prefix."]
     pub static mut FLECS_IDEcsTeraID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Peta unit prefix."]
     pub static mut EcsPeta: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Peta unit prefix."]
     pub static mut FLECS_IDEcsPetaID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Exa unit prefix."]
     pub static mut EcsExa: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Exa unit prefix."]
     pub static mut FLECS_IDEcsExaID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Zetta unit prefix."]
     pub static mut EcsZetta: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Zetta unit prefix."]
     pub static mut FLECS_IDEcsZettaID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Yotta unit prefix."]
     pub static mut EcsYotta: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Yotta unit prefix."]
     pub static mut FLECS_IDEcsYottaID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Kibi unit prefix."]
     pub static mut EcsKibi: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Kibi unit prefix."]
     pub static mut FLECS_IDEcsKibiID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Mebi unit prefix."]
     pub static mut EcsMebi: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Mebi unit prefix."]
     pub static mut FLECS_IDEcsMebiID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Gibi unit prefix."]
     pub static mut EcsGibi: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Gibi unit prefix."]
     pub static mut FLECS_IDEcsGibiID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Tebi unit prefix."]
     pub static mut EcsTebi: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Tebi unit prefix."]
     pub static mut FLECS_IDEcsTebiID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Pebi unit prefix."]
     pub static mut EcsPebi: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Pebi unit prefix."]
     pub static mut FLECS_IDEcsPebiID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Exbi unit prefix."]
     pub static mut EcsExbi: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Exbi unit prefix."]
     pub static mut FLECS_IDEcsExbiID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Zebi unit prefix."]
     pub static mut EcsZebi: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Zebi unit prefix."]
     pub static mut FLECS_IDEcsZebiID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Yobi unit prefix."]
     pub static mut EcsYobi: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Yobi unit prefix."]
     pub static mut FLECS_IDEcsYobiID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_duration Duration\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Duration quantity."]
     pub static mut EcsDuration: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_duration Duration\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Duration quantity."]
     pub static mut FLECS_IDEcsDurationID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< PicoSeconds duration unit."]
     pub static mut EcsPicoSeconds: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< PicoSeconds duration unit."]
     pub static mut FLECS_IDEcsPicoSecondsID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< NanoSeconds duration unit."]
     pub static mut EcsNanoSeconds: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< NanoSeconds duration unit."]
     pub static mut FLECS_IDEcsNanoSecondsID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MicroSeconds duration unit."]
     pub static mut EcsMicroSeconds: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MicroSeconds duration unit."]
     pub static mut FLECS_IDEcsMicroSecondsID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MilliSeconds duration unit."]
     pub static mut EcsMilliSeconds: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MilliSeconds duration unit."]
     pub static mut FLECS_IDEcsMilliSecondsID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Seconds duration unit."]
     pub static mut EcsSeconds: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Seconds duration unit."]
     pub static mut FLECS_IDEcsSecondsID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Minutes duration unit."]
     pub static mut EcsMinutes: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Minutes duration unit."]
     pub static mut FLECS_IDEcsMinutesID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Hours duration unit."]
     pub static mut EcsHours: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Hours duration unit."]
     pub static mut FLECS_IDEcsHoursID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Days duration unit."]
     pub static mut EcsDays: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Days duration unit."]
     pub static mut FLECS_IDEcsDaysID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_time Time\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Time quantity."]
     pub static mut EcsTime: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_time Time\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Time quantity."]
     pub static mut FLECS_IDEcsTimeID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Date unit."]
     pub static mut EcsDate: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Date unit."]
     pub static mut FLECS_IDEcsDateID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_mass Mass\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Mass quantity."]
     pub static mut EcsMass: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_mass Mass\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Mass quantity."]
     pub static mut FLECS_IDEcsMassID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Grams unit."]
     pub static mut EcsGrams: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Grams unit."]
     pub static mut FLECS_IDEcsGramsID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KiloGrams unit."]
     pub static mut EcsKiloGrams: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KiloGrams unit."]
     pub static mut FLECS_IDEcsKiloGramsID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_electric_Current Electric Current\n @ingroup c_addons_units\n @{"]
+    #[doc = "< ElectricCurrent quantity."]
     pub static mut EcsElectricCurrent: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_electric_Current Electric Current\n @ingroup c_addons_units\n @{"]
+    #[doc = "< ElectricCurrent quantity."]
     pub static mut FLECS_IDEcsElectricCurrentID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Ampere unit."]
     pub static mut EcsAmpere: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Ampere unit."]
     pub static mut FLECS_IDEcsAmpereID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_amount Amount\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Amount quantity."]
     pub static mut EcsAmount: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_amount Amount\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Amount quantity."]
     pub static mut FLECS_IDEcsAmountID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Mole unit."]
     pub static mut EcsMole: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Mole unit."]
     pub static mut FLECS_IDEcsMoleID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_luminous_intensity Luminous Intensity\n @ingroup c_addons_units\n @{"]
+    #[doc = "< LuminousIntensity quantity."]
     pub static mut EcsLuminousIntensity: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_luminous_intensity Luminous Intensity\n @ingroup c_addons_units\n @{"]
+    #[doc = "< LuminousIntensity quantity."]
     pub static mut FLECS_IDEcsLuminousIntensityID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Candela unit."]
     pub static mut EcsCandela: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Candela unit."]
     pub static mut FLECS_IDEcsCandelaID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_force Force\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Force quantity."]
     pub static mut EcsForce: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_force Force\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Force quantity."]
     pub static mut FLECS_IDEcsForceID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Newton unit."]
     pub static mut EcsNewton: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Newton unit."]
     pub static mut FLECS_IDEcsNewtonID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_length Length\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Length quantity."]
     pub static mut EcsLength: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_length Length\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Length quantity."]
     pub static mut FLECS_IDEcsLengthID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Meters unit."]
     pub static mut EcsMeters: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Meters unit."]
     pub static mut FLECS_IDEcsMetersID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< PicoMeters unit."]
     pub static mut EcsPicoMeters: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< PicoMeters unit."]
     pub static mut FLECS_IDEcsPicoMetersID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< NanoMeters unit."]
     pub static mut EcsNanoMeters: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< NanoMeters unit."]
     pub static mut FLECS_IDEcsNanoMetersID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MicroMeters unit."]
     pub static mut EcsMicroMeters: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MicroMeters unit."]
     pub static mut FLECS_IDEcsMicroMetersID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MilliMeters unit."]
     pub static mut EcsMilliMeters: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MilliMeters unit."]
     pub static mut FLECS_IDEcsMilliMetersID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< CentiMeters unit."]
     pub static mut EcsCentiMeters: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< CentiMeters unit."]
     pub static mut FLECS_IDEcsCentiMetersID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KiloMeters unit."]
     pub static mut EcsKiloMeters: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KiloMeters unit."]
     pub static mut FLECS_IDEcsKiloMetersID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Miles unit."]
     pub static mut EcsMiles: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Miles unit."]
     pub static mut FLECS_IDEcsMilesID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Pixels unit."]
     pub static mut EcsPixels: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Pixels unit."]
     pub static mut FLECS_IDEcsPixelsID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_pressure Pressure\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Pressure quantity."]
     pub static mut EcsPressure: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_pressure Pressure\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Pressure quantity."]
     pub static mut FLECS_IDEcsPressureID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Pascal unit."]
     pub static mut EcsPascal: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Pascal unit."]
     pub static mut FLECS_IDEcsPascalID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Bar unit."]
     pub static mut EcsBar: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Bar unit."]
     pub static mut FLECS_IDEcsBarID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_speed Speed\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Speed quantity."]
     pub static mut EcsSpeed: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_speed Speed\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Speed quantity."]
     pub static mut FLECS_IDEcsSpeedID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MetersPerSecond unit."]
     pub static mut EcsMetersPerSecond: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MetersPerSecond unit."]
     pub static mut FLECS_IDEcsMetersPerSecondID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KiloMetersPerSecond unit."]
     pub static mut EcsKiloMetersPerSecond: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KiloMetersPerSecond unit."]
     pub static mut FLECS_IDEcsKiloMetersPerSecondID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KiloMetersPerHour unit."]
     pub static mut EcsKiloMetersPerHour: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KiloMetersPerHour unit."]
     pub static mut FLECS_IDEcsKiloMetersPerHourID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MilesPerHour unit."]
     pub static mut EcsMilesPerHour: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MilesPerHour unit."]
     pub static mut FLECS_IDEcsMilesPerHourID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_temperature Temperature\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Temperature quantity."]
     pub static mut EcsTemperature: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_temperature Temperature\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Temperature quantity."]
     pub static mut FLECS_IDEcsTemperatureID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Kelvin unit."]
     pub static mut EcsKelvin: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Kelvin unit."]
     pub static mut FLECS_IDEcsKelvinID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Celsius unit."]
     pub static mut EcsCelsius: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Celsius unit."]
     pub static mut FLECS_IDEcsCelsiusID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Fahrenheit unit."]
     pub static mut EcsFahrenheit: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Fahrenheit unit."]
     pub static mut FLECS_IDEcsFahrenheitID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_data Data\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Data quantity."]
     pub static mut EcsData: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_data Data\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Data quantity."]
     pub static mut FLECS_IDEcsDataID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Bits unit."]
     pub static mut EcsBits: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Bits unit."]
     pub static mut FLECS_IDEcsBitsID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KiloBits unit."]
     pub static mut EcsKiloBits: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KiloBits unit."]
     pub static mut FLECS_IDEcsKiloBitsID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MegaBits unit."]
     pub static mut EcsMegaBits: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MegaBits unit."]
     pub static mut FLECS_IDEcsMegaBitsID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< GigaBits unit."]
     pub static mut EcsGigaBits: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< GigaBits unit."]
     pub static mut FLECS_IDEcsGigaBitsID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Bytes unit."]
     pub static mut EcsBytes: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Bytes unit."]
     pub static mut FLECS_IDEcsBytesID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KiloBytes unit."]
     pub static mut EcsKiloBytes: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KiloBytes unit."]
     pub static mut FLECS_IDEcsKiloBytesID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MegaBytes unit."]
     pub static mut EcsMegaBytes: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MegaBytes unit."]
     pub static mut FLECS_IDEcsMegaBytesID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< GigaBytes unit."]
     pub static mut EcsGigaBytes: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< GigaBytes unit."]
     pub static mut FLECS_IDEcsGigaBytesID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KibiBytes unit."]
     pub static mut EcsKibiBytes: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KibiBytes unit."]
     pub static mut FLECS_IDEcsKibiBytesID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MebiBytes unit."]
     pub static mut EcsMebiBytes: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MebiBytes unit."]
     pub static mut FLECS_IDEcsMebiBytesID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< GibiBytes unit."]
     pub static mut EcsGibiBytes: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< GibiBytes unit."]
     pub static mut FLECS_IDEcsGibiBytesID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_datarate Data Rate\n @ingroup c_addons_units\n @{"]
+    #[doc = "< DataRate quantity."]
     pub static mut EcsDataRate: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_datarate Data Rate\n @ingroup c_addons_units\n @{"]
+    #[doc = "< DataRate quantity."]
     pub static mut FLECS_IDEcsDataRateID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< BitsPerSecond unit."]
     pub static mut EcsBitsPerSecond: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< BitsPerSecond unit."]
     pub static mut FLECS_IDEcsBitsPerSecondID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KiloBitsPerSecond unit."]
     pub static mut EcsKiloBitsPerSecond: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KiloBitsPerSecond unit."]
     pub static mut FLECS_IDEcsKiloBitsPerSecondID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MegaBitsPerSecond unit."]
     pub static mut EcsMegaBitsPerSecond: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MegaBitsPerSecond unit."]
     pub static mut FLECS_IDEcsMegaBitsPerSecondID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< GigaBitsPerSecond unit."]
     pub static mut EcsGigaBitsPerSecond: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< GigaBitsPerSecond unit."]
     pub static mut FLECS_IDEcsGigaBitsPerSecondID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< BytesPerSecond unit."]
     pub static mut EcsBytesPerSecond: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< BytesPerSecond unit."]
     pub static mut FLECS_IDEcsBytesPerSecondID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KiloBytesPerSecond unit."]
     pub static mut EcsKiloBytesPerSecond: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KiloBytesPerSecond unit."]
     pub static mut FLECS_IDEcsKiloBytesPerSecondID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MegaBytesPerSecond unit."]
     pub static mut EcsMegaBytesPerSecond: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MegaBytesPerSecond unit."]
     pub static mut FLECS_IDEcsMegaBytesPerSecondID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< GigaBytesPerSecond unit."]
     pub static mut EcsGigaBytesPerSecond: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< GigaBytesPerSecond unit."]
     pub static mut FLECS_IDEcsGigaBytesPerSecondID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_duration Duration\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Angle quantity."]
     pub static mut EcsAngle: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_duration Duration\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Angle quantity."]
     pub static mut FLECS_IDEcsAngleID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Radians unit."]
     pub static mut EcsRadians: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Radians unit."]
     pub static mut FLECS_IDEcsRadiansID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Degrees unit."]
     pub static mut EcsDegrees: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Degrees unit."]
     pub static mut FLECS_IDEcsDegreesID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_angle Angle\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Frequency quantity."]
     pub static mut EcsFrequency: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_angle Angle\n @ingroup c_addons_units\n @{"]
+    #[doc = "< Frequency quantity."]
     pub static mut FLECS_IDEcsFrequencyID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Hertz unit."]
     pub static mut EcsHertz: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Hertz unit."]
     pub static mut FLECS_IDEcsHertzID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KiloHertz unit."]
     pub static mut EcsKiloHertz: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< KiloHertz unit."]
     pub static mut FLECS_IDEcsKiloHertzID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MegaHertz unit."]
     pub static mut EcsMegaHertz: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< MegaHertz unit."]
     pub static mut FLECS_IDEcsMegaHertzID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< GigaHertz unit."]
     pub static mut EcsGigaHertz: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< GigaHertz unit."]
     pub static mut FLECS_IDEcsGigaHertzID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_uri Uri\n @ingroup c_addons_units\n @{"]
+    #[doc = "< URI quantity."]
     pub static mut EcsUri: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_units_uri Uri\n @ingroup c_addons_units\n @{"]
+    #[doc = "< URI quantity."]
     pub static mut FLECS_IDEcsUriID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< UriHyperlink unit."]
     pub static mut EcsUriHyperlink: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< UriHyperlink unit."]
     pub static mut FLECS_IDEcsUriHyperlinkID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< UriImage unit."]
     pub static mut EcsUriImage: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< UriImage unit."]
     pub static mut FLECS_IDEcsUriImageID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< UriFile unit."]
     pub static mut EcsUriFile: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< UriFile unit."]
     pub static mut FLECS_IDEcsUriFileID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@}"]
+    #[doc = "< Color quantity."]
+    pub static mut EcsColor: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "< Color quantity."]
+    pub static mut FLECS_IDEcsColorID_: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "< ColorRgb unit."]
+    pub static mut EcsColorRgb: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "< ColorRgb unit."]
+    pub static mut FLECS_IDEcsColorRgbID_: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "< ColorHsl unit."]
+    pub static mut EcsColorHsl: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "< ColorHsl unit."]
+    pub static mut FLECS_IDEcsColorHslID_: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "< ColorCss unit."]
+    pub static mut EcsColorCss: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "< ColorCss unit."]
+    pub static mut FLECS_IDEcsColorCssID_: ecs_entity_t;
+}
+extern "C" {
+    #[doc = "< Acceleration unit."]
     pub static mut EcsAcceleration: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "@}"]
+    #[doc = "< Acceleration unit."]
     pub static mut FLECS_IDEcsAccelerationID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Percentage unit."]
     pub static mut EcsPercentage: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Percentage unit."]
     pub static mut FLECS_IDEcsPercentageID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Bel unit."]
     pub static mut EcsBel: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Bel unit."]
     pub static mut FLECS_IDEcsBelID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< DeciBel unit."]
     pub static mut EcsDeciBel: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< DeciBel unit."]
     pub static mut FLECS_IDEcsDeciBelID_: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Module"]
+    #[doc = "Units module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsUnits)\n @endcode\n\n @param world The world."]
     pub fn FlecsUnitsImport(world: *mut ecs_world_t);
 }
 extern "C" {
     pub static mut FLECS_IDEcsScriptID_: ecs_entity_t;
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ecs_script_t {
-    _unused: [u8; 0],
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -6354,7 +6721,15 @@ pub struct ecs_script_vars_t {
     pub cursor: *mut ecs_stack_cursor_t,
     pub allocator: *mut ecs_allocator_t,
 }
-#[doc = "Script component.\n This component is added to the entities of managed scripts and assemblies."]
+#[doc = "Script object."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_script_t {
+    pub world: *mut ecs_world_t,
+    pub name: *const ::std::os::raw::c_char,
+    pub code: *const ::std::os::raw::c_char,
+}
+#[doc = "Script component.\n This component is added to the entities of managed scripts and templates."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsScript {
@@ -6375,7 +6750,7 @@ extern "C" {
     pub fn ecs_script_eval(script: *mut ecs_script_t) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Free script.\n This operation frees a script object.\n\n Assemblies created by the script rely upon resources in the script object,\n and for that reason keep the script alive until all assemblies created by the\n script are deleted.\n\n @param script The script."]
+    #[doc = "Free script.\n This operation frees a script object.\n\n Templates created by the script rely upon resources in the script object,\n and for that reason keep the script alive until all templates created by the\n script are deleted.\n\n @param script The script."]
     pub fn ecs_script_free(script: *mut ecs_script_t);
 }
 extern "C" {
@@ -6547,25 +6922,30 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Module import"]
+    #[doc = "Script module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsScript)\n @endcode\n\n @param world The world."]
     pub fn FlecsScriptImport(world: *mut ecs_world_t);
 }
 extern "C" {
-    #[doc = "@defgroup c_addons_doc Doc\n @ingroup c_addons\n Utilities for documenting entities, components and systems.\n\n @{"]
+    #[doc = "< Component id for EcsDocDescription."]
     pub static FLECS_IDEcsDocDescriptionID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Tag for adding brief descriptions to entities.\n Added to an entity as (EcsDocDescription, EcsBrief) by ecs_doc_set_brief()."]
     pub static EcsDocBrief: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Tag for adding detailed descriptions to entities.\n Added to an entity as (EcsDocDescription, EcsDocDetail) by ecs_doc_set_detail()."]
     pub static EcsDocDetail: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Tag for adding a link to entities.\n Added to an entity as (EcsDocDescription, EcsDocLink) by ecs_doc_set_link()."]
     pub static EcsDocLink: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Tag for adding a color to entities.\n Added to an entity as (EcsDocDescription, EcsDocColor) by ecs_doc_set_link()."]
     pub static EcsDocColor: ecs_entity_t;
 }
+#[doc = "Component that stores description.\n Used as pair together with the following tags to store entity documentation:\n - EcsName\n - EcsDocBrief\n - EcsDocDetail\n - EcsDocLink\n - EcsDocColor"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsDocDescription {
@@ -6647,7 +7027,7 @@ extern "C" {
     ) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[doc = "Module import"]
+    #[doc = "Doc module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsDoc)\n @endcode\n\n @param world The world."]
     pub fn FlecsDocImport(world: *mut ecs_world_t);
 }
 #[doc = "Primitive type definitions.\n These typedefs allow the builtin primitives to be used as regular components:\n\n @code\n ecs_set(world, e, ecs_i32_t, {10});\n @endcode\n\n Or a more useful example (create an enum constant with a manual value):\n\n @code\n ecs_set_pair_second(world, e, EcsConstant, ecs_i32_t, {10});\n @endcode"]
@@ -6668,104 +7048,135 @@ pub type ecs_f32_t = f32;
 pub type ecs_f64_t = f64;
 pub type ecs_string_t = *mut ::std::os::raw::c_char;
 extern "C" {
-    #[doc = "Meta module component ids"]
+    #[doc = "< Id for component added to all types with reflection data."]
     pub static FLECS_IDEcsTypeID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Id for component that stores a type specific serializer."]
     pub static FLECS_IDEcsTypeSerializerID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Id for component that stores reflection data for a primitive type."]
     pub static FLECS_IDEcsPrimitiveID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Id for component that stores reflection data for an enum type."]
     pub static FLECS_IDEcsEnumID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Id for component that stores reflection data for a bitmask type."]
     pub static FLECS_IDEcsBitmaskID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Id for component that stores reflection data for struct members."]
     pub static FLECS_IDEcsMemberID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Id for component that stores min/max ranges for member values."]
     pub static FLECS_IDEcsMemberRangesID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Id for component that stores reflection data for a struct type."]
     pub static FLECS_IDEcsStructID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Id for component that stores reflection data for an array type."]
     pub static FLECS_IDEcsArrayID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Id for component that stores reflection data for a vector type."]
     pub static FLECS_IDEcsVectorID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Id for component that stores reflection data for an opaque type."]
     pub static FLECS_IDEcsOpaqueID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Id for component that stores unit data."]
     pub static FLECS_IDEcsUnitID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Id for component that stores unit prefix data."]
     pub static FLECS_IDEcsUnitPrefixID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Tag added to enum/bitmask constants."]
     pub static EcsConstant: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Tag added to unit quantities."]
     pub static EcsQuantity: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Primitive type component ids"]
+    #[doc = "< Builtin boolean type."]
     pub static FLECS_IDecs_bool_tID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Builtin char type."]
     pub static FLECS_IDecs_char_tID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Builtin byte type."]
     pub static FLECS_IDecs_byte_tID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Builtin 8 bit unsigned int type."]
     pub static FLECS_IDecs_u8_tID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Builtin 16 bit unsigned int type."]
     pub static FLECS_IDecs_u16_tID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Builtin 32 bit unsigned int type."]
     pub static FLECS_IDecs_u32_tID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Builtin 64 bit unsigned int type."]
     pub static FLECS_IDecs_u64_tID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Builtin pointer sized unsigned int type."]
     pub static FLECS_IDecs_uptr_tID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Builtin 8 bit signed int type."]
     pub static FLECS_IDecs_i8_tID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Builtin 16 bit signed int type."]
     pub static FLECS_IDecs_i16_tID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Builtin 32 bit signed int type."]
     pub static FLECS_IDecs_i32_tID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Builtin 64 bit signed int type."]
     pub static FLECS_IDecs_i64_tID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Builtin pointer sized signed int type."]
     pub static FLECS_IDecs_iptr_tID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Builtin 32 bit floating point type."]
     pub static FLECS_IDecs_f32_tID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Builtin 64 bit floating point type."]
     pub static FLECS_IDecs_f64_tID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Builtin string type."]
     pub static FLECS_IDecs_string_tID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Builtin entity type."]
     pub static FLECS_IDecs_entity_tID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "< Builtin (component) id type."]
     pub static FLECS_IDecs_id_tID_: ecs_entity_t;
 }
 pub const ecs_type_kind_t_EcsPrimitiveType: ecs_type_kind_t = 0;
@@ -6782,6 +7193,7 @@ pub type ecs_type_kind_t = ::std::os::raw::c_uint;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsType {
+    #[doc = "< Type kind."]
     pub kind: ecs_type_kind_t,
     #[doc = "< Did the type exist or is it populated from reflection"]
     pub existing: bool,
@@ -6813,30 +7225,40 @@ pub type ecs_primitive_kind_t = ::std::os::raw::c_uint;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsPrimitive {
+    #[doc = "< Primitive type kind."]
     pub kind: ecs_primitive_kind_t,
 }
 #[doc = "Component added to member entities"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsMember {
+    #[doc = "< Member type."]
     pub type_: ecs_entity_t,
+    #[doc = "< Number of elements (for inline arrays)."]
     pub count: i32,
+    #[doc = "< Member unit."]
     pub unit: ecs_entity_t,
+    #[doc = "< Member offset."]
     pub offset: i32,
 }
 #[doc = "Type expressing a range for a member value"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_member_value_range_t {
+    #[doc = "< Min member value."]
     pub min: f64,
+    #[doc = "< Max member value."]
     pub max: f64,
 }
 #[doc = "Component added to member entities to express valid value ranges"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsMemberRanges {
+    #[doc = "< Member value range."]
     pub value: ecs_member_value_range_t,
+    #[doc = "< Member value warning range."]
     pub warning: ecs_member_value_range_t,
+    #[doc = "< Member value error range."]
     pub error: ecs_member_value_range_t,
 }
 #[doc = "Element type of members vector in EcsStruct"]
@@ -6845,9 +7267,11 @@ pub struct EcsMemberRanges {
 pub struct ecs_member_t {
     #[doc = "Must be set when used with ecs_struct_desc_t"]
     pub name: *const ::std::os::raw::c_char,
+    #[doc = "Member type."]
     pub type_: ecs_entity_t,
-    #[doc = "May be set when used with ecs_struct_desc_t"]
+    #[doc = "Element count (for inline arrays). May be set when used with ecs_struct_desc_t"]
     pub count: i32,
+    #[doc = "May be set when used with ecs_struct_desc_t. Member offset."]
     pub offset: i32,
     #[doc = "May be set when used with ecs_struct_desc_t, will be auto-populated if\n type entity is also a unit"]
     pub unit: ecs_entity_t,
@@ -6859,6 +7283,7 @@ pub struct ecs_member_t {
     pub warning_range: ecs_member_value_range_t,
     #[doc = "Should not be set by ecs_struct_desc_t"]
     pub size: ecs_size_t,
+    #[doc = "Should not be set by ecs_struct_desc_t"]
     pub member: ecs_entity_t,
 }
 #[doc = "Component added to struct type entities"]
@@ -6868,6 +7293,7 @@ pub struct EcsStruct {
     #[doc = "vector<ecs_member_t>"]
     pub members: ecs_vec_t,
 }
+#[doc = "Type that describes an enum constant"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_enum_constant_t {
@@ -6882,9 +7308,10 @@ pub struct ecs_enum_constant_t {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsEnum {
-    #[doc = "map<i32_t, ecs_enum_constant_t>"]
+    #[doc = "< map<i32_t, ecs_enum_constant_t>"]
     pub constants: ecs_map_t,
 }
+#[doc = "Type that describes an bitmask constant"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_bitmask_constant_t {
@@ -6899,7 +7326,7 @@ pub struct ecs_bitmask_constant_t {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsBitmask {
-    #[doc = "map<u32_t, ecs_bitmask_constant_t>"]
+    #[doc = "< map<u32_t, ecs_bitmask_constant_t>"]
     pub constants: ecs_map_t,
 }
 #[doc = "Component added to array type entities"]
@@ -6937,7 +7364,9 @@ pub struct ecs_serializer_t {
             member: *const ::std::os::raw::c_char,
         ) -> ::std::os::raw::c_int,
     >,
+    #[doc = "< The world."]
     pub world: *const ecs_world_t,
+    #[doc = "< Serializer context."]
     pub ctx: *mut ::std::os::raw::c_void,
 }
 #[doc = "Callback invoked serializing an opaque type."]
@@ -6947,6 +7376,7 @@ pub type ecs_meta_serialize_t = ::std::option::Option<
         src: *const ::std::os::raw::c_void,
     ) -> ::std::os::raw::c_int,
 >;
+#[doc = "Opaque type reflection data.\n An opaque type is a type with an unknown layout that can be mapped to a type\n known to the reflection framework. See the opaque type reflection examples."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsOpaque {
@@ -7027,9 +7457,11 @@ pub struct ecs_unit_translation_t {
     #[doc = "< Power to apply to factor (e.g. \"1\", \"3\", \"-9\")"]
     pub power: i32,
 }
+#[doc = "Component that stores unit data."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsUnit {
+    #[doc = "< Unit symbol."]
     pub symbol: *mut ::std::os::raw::c_char,
     #[doc = "< Order of magnitude prefix relative to derived"]
     pub prefix: ecs_entity_t,
@@ -7040,6 +7472,7 @@ pub struct EcsUnit {
     #[doc = "< Translation for derived unit"]
     pub translation: ecs_unit_translation_t,
 }
+#[doc = "Component that stores unit prefix data."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsUnitPrefix {
@@ -7078,14 +7511,17 @@ pub const ecs_meta_type_op_kind_t_EcsOpString: ecs_meta_type_op_kind_t = 24;
 pub const ecs_meta_type_op_kind_t_EcsOpEntity: ecs_meta_type_op_kind_t = 25;
 pub const ecs_meta_type_op_kind_t_EcsOpId: ecs_meta_type_op_kind_t = 26;
 pub const ecs_meta_type_op_kind_t_EcsMetaTypeOpKindLast: ecs_meta_type_op_kind_t = 26;
-#[doc = "Serializer utilities"]
+#[doc = "Serializer instruction opcodes.\n The meta type serializer works by generating a flattened array with\n instructions that tells a serializer what kind of fields can be found in a\n type at which offsets."]
 pub type ecs_meta_type_op_kind_t = ::std::os::raw::c_uint;
+#[doc = "Meta type serializer instruction data."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_meta_type_op_t {
+    #[doc = "< Instruction opcode."]
     pub kind: ecs_meta_type_op_kind_t,
     #[doc = "< Offset of current field"]
     pub offset: ecs_size_t,
+    #[doc = "< Number of elements (for inline arrays)."]
     pub count: i32,
     #[doc = "< Name of value (only used for struct members)"]
     pub name: *const ::std::os::raw::c_char,
@@ -7100,12 +7536,14 @@ pub struct ecs_meta_type_op_t {
     #[doc = "< string -> member index (structs only)"]
     pub members: *mut ecs_hashmap_t,
 }
+#[doc = "Component that stores the type serializer.\n Added to all types with reflection data."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsTypeSerializer {
     #[doc = "< vector<ecs_meta_type_op_t>"]
     pub ops: ecs_vec_t,
 }
+#[doc = "Type with information about currently serialized scope."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_meta_scope_t {
@@ -7138,13 +7576,17 @@ pub struct ecs_meta_scope_t {
     #[doc = "< Was scope populated (for collections)"]
     pub is_empty_scope: bool,
 }
-#[doc = "Type that enables iterating/populating a value using reflection data"]
+#[doc = "Type that enables iterating/populating a value using reflection data."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_meta_cursor_t {
+    #[doc = "< The world."]
     pub world: *const ecs_world_t,
+    #[doc = "< Cursor scope stack."]
     pub scope: [ecs_meta_scope_t; 32usize],
+    #[doc = "< Current scope depth."]
     pub depth: i32,
+    #[doc = "< Does the cursor point to a valid field."]
     pub valid: bool,
     #[doc = "< If in root scope, this allows for a push for primitive types"]
     pub is_primitive_scope: bool,
@@ -7156,9 +7598,11 @@ pub struct ecs_meta_cursor_t {
             arg3: *mut ::std::os::raw::c_void,
         ) -> ecs_entity_t,
     >,
+    #[doc = "< Context for lookup_action"]
     pub lookup_ctx: *mut ::std::os::raw::c_void,
 }
 extern "C" {
+    #[doc = "Create meta cursor.\n A meta cursor allows for walking over, reading and writing a value without\n having to know its type at compile time.\n\n When a value is assigned through the cursor API, it will get converted to\n the actual value of the underlying type. This allows the underlying type to\n change without having to update the serialized data. For example, an integer\n field can be set by a string, a floating point can be set as integer etc.\n\n @param world The world.\n @param type The type of the value.\n @param ptr Pointer to the value.\n @return A meta cursor for the value."]
     pub fn ecs_meta_cursor(
         world: *const ecs_world_t,
         type_: ecs_entity_t,
@@ -7166,155 +7610,155 @@ extern "C" {
     ) -> ecs_meta_cursor_t;
 }
 extern "C" {
-    #[doc = "Get pointer to current field"]
+    #[doc = "Get pointer to current field.\n\n @param cursor The cursor.\n @return A pointer to the current field."]
     pub fn ecs_meta_get_ptr(cursor: *mut ecs_meta_cursor_t) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[doc = "Move cursor to next field"]
+    #[doc = "Move cursor to next field.\n\n @param cursor The cursor.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_next(cursor: *mut ecs_meta_cursor_t) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Move cursor to a element"]
+    #[doc = "Move cursor to a field.\n\n @param cursor The cursor.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_elem(cursor: *mut ecs_meta_cursor_t, elem: i32) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Move cursor to member"]
+    #[doc = "Move cursor to member.\n\n @param cursor The cursor.\n @param name The name of the member.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_member(
         cursor: *mut ecs_meta_cursor_t,
         name: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Move cursor to member, supports dot-separated nested members"]
+    #[doc = "Move cursor to member.\n Same as ecs_meta_member(), but with support for \"foo.bar\" syntax.\n\n @param cursor The cursor.\n @param name The name of the member.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_dotmember(
         cursor: *mut ecs_meta_cursor_t,
         name: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Push a scope (required/only valid for structs & collections)"]
+    #[doc = "Push a scope (required/only valid for structs & collections).\n\n @param cursor The cursor.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_push(cursor: *mut ecs_meta_cursor_t) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Pop a struct or collection scope (must follow a push)"]
+    #[doc = "Pop a struct or collection scope (must follow a push).\n\n @param cursor The cursor.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_pop(cursor: *mut ecs_meta_cursor_t) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Is the current scope a collection?"]
+    #[doc = "Is the current scope a collection?.\n\n @param cursor The cursor.\n @return True if current scope is a collection, false if not."]
     pub fn ecs_meta_is_collection(cursor: *const ecs_meta_cursor_t) -> bool;
 }
 extern "C" {
-    #[doc = "Get type of current element."]
+    #[doc = "Get type of current field.\n\n @param cursor The cursor.\n @return The type of the current field."]
     pub fn ecs_meta_get_type(cursor: *const ecs_meta_cursor_t) -> ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Get unit of current element."]
+    #[doc = "Get unit of current field.\n\n @param cursor The cursor.\n @return The unit of the current field."]
     pub fn ecs_meta_get_unit(cursor: *const ecs_meta_cursor_t) -> ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Get member name of current member"]
+    #[doc = "Get member name of current field.\n\n @param cursor The cursor.\n @return The member name of the current field."]
     pub fn ecs_meta_get_member(cursor: *const ecs_meta_cursor_t) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[doc = "Get member entity of current member"]
+    #[doc = "Get member entity of current field.\n\n @param cursor The cursor.\n @return The member entity of the current field."]
     pub fn ecs_meta_get_member_id(cursor: *const ecs_meta_cursor_t) -> ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Set field with boolean value"]
+    #[doc = "Set field with boolean value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_set_bool(cursor: *mut ecs_meta_cursor_t, value: bool) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Set field with char value"]
+    #[doc = "Set field with char value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_set_char(
         cursor: *mut ecs_meta_cursor_t,
         value: ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Set field with int value"]
+    #[doc = "Set field with int value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_set_int(cursor: *mut ecs_meta_cursor_t, value: i64) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Set field with uint value"]
+    #[doc = "Set field with uint value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_set_uint(cursor: *mut ecs_meta_cursor_t, value: u64) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Set field with float value"]
+    #[doc = "Set field with float value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_set_float(cursor: *mut ecs_meta_cursor_t, value: f64) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Set field with string value"]
+    #[doc = "Set field with string value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_set_string(
         cursor: *mut ecs_meta_cursor_t,
         value: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Set field with string literal value (has enclosing \"\")"]
+    #[doc = "Set field with string literal value (has enclosing \"\").\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_set_string_literal(
         cursor: *mut ecs_meta_cursor_t,
         value: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Set field with entity value"]
+    #[doc = "Set field with entity value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_set_entity(
         cursor: *mut ecs_meta_cursor_t,
         value: ecs_entity_t,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Set field with (component) id value"]
+    #[doc = "Set field with (component) id value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_set_id(
         cursor: *mut ecs_meta_cursor_t,
         value: ecs_id_t,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Set field with null value"]
+    #[doc = "Set field with null value.\n\n @param cursor The cursor.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_set_null(cursor: *mut ecs_meta_cursor_t) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Set field with dynamic value"]
+    #[doc = "Set field with dynamic value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_set_value(
         cursor: *mut ecs_meta_cursor_t,
         value: *const ecs_value_t,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = "Get field value as boolean."]
+    #[doc = "Get field value as boolean.\n\n @param cursor The cursor.\n @return The value of the current field."]
     pub fn ecs_meta_get_bool(cursor: *const ecs_meta_cursor_t) -> bool;
 }
 extern "C" {
-    #[doc = "Get field value as char."]
+    #[doc = "Get field value as char.\n\n @param cursor The cursor.\n @return The value of the current field."]
     pub fn ecs_meta_get_char(cursor: *const ecs_meta_cursor_t) -> ::std::os::raw::c_char;
 }
 extern "C" {
-    #[doc = "Get field value as signed integer."]
+    #[doc = "Get field value as signed integer.\n\n @param cursor The cursor.\n @return The value of the current field."]
     pub fn ecs_meta_get_int(cursor: *const ecs_meta_cursor_t) -> i64;
 }
 extern "C" {
-    #[doc = "Get field value as unsigned integer."]
+    #[doc = "Get field value as unsigned integer.\n\n @param cursor The cursor.\n @return The value of the current field."]
     pub fn ecs_meta_get_uint(cursor: *const ecs_meta_cursor_t) -> u64;
 }
 extern "C" {
-    #[doc = "Get field value as float."]
+    #[doc = "Get field value as float.\n\n @param cursor The cursor.\n @return The value of the current field."]
     pub fn ecs_meta_get_float(cursor: *const ecs_meta_cursor_t) -> f64;
 }
 extern "C" {
-    #[doc = "Get field value as string.\n This operation does not perform conversions. If the field is not a string,\n this operation will fail."]
+    #[doc = "Get field value as string.\n This operation does not perform conversions. If the field is not a string,\n this operation will fail.\n\n @param cursor The cursor.\n @return The value of the current field."]
     pub fn ecs_meta_get_string(cursor: *const ecs_meta_cursor_t) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[doc = "Get field value as entity.\n This operation does not perform conversions."]
+    #[doc = "Get field value as entity.\n This operation does not perform conversions.\n\n @param cursor The cursor.\n @return The value of the current field."]
     pub fn ecs_meta_get_entity(cursor: *const ecs_meta_cursor_t) -> ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Get field value as (component) id.\n This operation can convert from an entity."]
+    #[doc = "Get field value as (component) id.\n This operation can convert from an entity.\n\n @param cursor The cursor.\n @return The value of the current field."]
     pub fn ecs_meta_get_id(cursor: *const ecs_meta_cursor_t) -> ecs_id_t;
 }
 extern "C" {
-    #[doc = "Convert pointer of primitive kind to float."]
+    #[doc = "Convert pointer of primitive kind to float.\n\n @param type_kind The primitive type kind of the value.\n @param ptr Pointer to a value of a primitive type.\n @return The value in floating point format."]
     pub fn ecs_meta_ptr_to_float(
         type_kind: ecs_primitive_kind_t,
         ptr: *const ::std::os::raw::c_void,
@@ -7324,12 +7768,13 @@ extern "C" {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_primitive_desc_t {
-    #[doc = "< Existing entity to use for type (optional)"]
+    #[doc = "< Existing entity to use for type (optional)."]
     pub entity: ecs_entity_t,
+    #[doc = "< Primitive type kind."]
     pub kind: ecs_primitive_kind_t,
 }
 extern "C" {
-    #[doc = "Create a new primitive type"]
+    #[doc = "Create a new primitive type.\n\n @param world The world.\n @param desc The type descriptor.\n @return The new type, 0 if failed."]
     pub fn ecs_primitive_init(
         world: *mut ecs_world_t,
         desc: *const ecs_primitive_desc_t,
@@ -7339,24 +7784,26 @@ extern "C" {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_enum_desc_t {
-    #[doc = "< Existing entity to use for type (optional)"]
+    #[doc = "< Existing entity to use for type (optional)."]
     pub entity: ecs_entity_t,
+    #[doc = "< Enum constants."]
     pub constants: [ecs_enum_constant_t; 32usize],
 }
 extern "C" {
-    #[doc = "Create a new enum type"]
+    #[doc = "Create a new enum type.\n\n @param world The world.\n @param desc The type descriptor.\n @return The new type, 0 if failed."]
     pub fn ecs_enum_init(world: *mut ecs_world_t, desc: *const ecs_enum_desc_t) -> ecs_entity_t;
 }
 #[doc = "Used with ecs_bitmask_init()."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_bitmask_desc_t {
-    #[doc = "< Existing entity to use for type (optional)"]
+    #[doc = "< Existing entity to use for type (optional)."]
     pub entity: ecs_entity_t,
+    #[doc = "< Bitmask constants."]
     pub constants: [ecs_bitmask_constant_t; 32usize],
 }
 extern "C" {
-    #[doc = "Create a new bitmask type"]
+    #[doc = "Create a new bitmask type.\n\n @param world The world.\n @param desc The type descriptor.\n @return The new type, 0 if failed."]
     pub fn ecs_bitmask_init(
         world: *mut ecs_world_t,
         desc: *const ecs_bitmask_desc_t,
@@ -7366,25 +7813,28 @@ extern "C" {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_array_desc_t {
-    #[doc = "< Existing entity to use for type (optional)"]
+    #[doc = "< Existing entity to use for type (optional)."]
     pub entity: ecs_entity_t,
+    #[doc = "< Element type."]
     pub type_: ecs_entity_t,
+    #[doc = "< Number of elements."]
     pub count: i32,
 }
 extern "C" {
-    #[doc = "Create a new array type"]
+    #[doc = "Create a new array type.\n\n @param world The world.\n @param desc The type descriptor.\n @return The new type, 0 if failed."]
     pub fn ecs_array_init(world: *mut ecs_world_t, desc: *const ecs_array_desc_t) -> ecs_entity_t;
 }
 #[doc = "Used with ecs_vector_init()."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_vector_desc_t {
-    #[doc = "< Existing entity to use for type (optional)"]
+    #[doc = "< Existing entity to use for type (optional)."]
     pub entity: ecs_entity_t,
+    #[doc = "< Element type."]
     pub type_: ecs_entity_t,
 }
 extern "C" {
-    #[doc = "Create a new vector type"]
+    #[doc = "Create a new vector type.\n\n @param world The world.\n @param desc The type descriptor.\n @return The new type, 0 if failed."]
     pub fn ecs_vector_init(world: *mut ecs_world_t, desc: *const ecs_vector_desc_t)
         -> ecs_entity_t;
 }
@@ -7392,12 +7842,13 @@ extern "C" {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_struct_desc_t {
-    #[doc = "< Existing entity to use for type (optional)"]
+    #[doc = "< Existing entity to use for type (optional)."]
     pub entity: ecs_entity_t,
+    #[doc = "< Struct members."]
     pub members: [ecs_member_t; 32usize],
 }
 extern "C" {
-    #[doc = "Create a new struct type"]
+    #[doc = "Create a new struct type.\n\n @param world The world.\n @param desc The type descriptor.\n @return The new type, 0 if failed."]
     pub fn ecs_struct_init(world: *mut ecs_world_t, desc: *const ecs_struct_desc_t)
         -> ecs_entity_t;
 }
@@ -7405,11 +7856,13 @@ extern "C" {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_opaque_desc_t {
+    #[doc = "< Existing entity to use for type (optional)."]
     pub entity: ecs_entity_t,
+    #[doc = "< Type that the opaque type maps to."]
     pub type_: EcsOpaque,
 }
 extern "C" {
-    #[doc = "Create a new opaque type.\n Opaque types are types of which the layout doesn't match what can be modelled\n with the primitives of the meta framework, but which have a structure\n that can be described with meta primitives. Typical examples are STL types\n such as std::string or std::vector, types with a nontrivial layout, and types\n that only expose getter/setter methods.\n\n An opaque type is a combination of a serialization function, and a handle to\n a meta type which describes the structure of the serialized output. For\n example, an opaque type for std::string would have a serializer function that\n accesses .c_str(), and with type ecs_string_t.\n\n The serializer callback accepts a serializer object and a pointer to the\n value of the opaque type to be serialized. The serializer has two methods:\n\n - value, which serializes a value (such as .c_str())\n - member, which specifies a member to be serialized (in the case of a struct)"]
+    #[doc = "Create a new opaque type.\n Opaque types are types of which the layout doesn't match what can be modelled\n with the primitives of the meta framework, but which have a structure\n that can be described with meta primitives. Typical examples are STL types\n such as std::string or std::vector, types with a nontrivial layout, and types\n that only expose getter/setter methods.\n\n An opaque type is a combination of a serialization function, and a handle to\n a meta type which describes the structure of the serialized output. For\n example, an opaque type for std::string would have a serializer function that\n accesses .c_str(), and with type ecs_string_t.\n\n The serializer callback accepts a serializer object and a pointer to the\n value of the opaque type to be serialized. The serializer has two methods:\n\n - value, which serializes a value (such as .c_str())\n - member, which specifies a member to be serialized (in the case of a struct)\n\n @param world The world.\n @param desc The type descriptor.\n @return The new type, 0 if failed."]
     pub fn ecs_opaque_init(world: *mut ecs_world_t, desc: *const ecs_opaque_desc_t)
         -> ecs_entity_t;
 }
@@ -7417,52 +7870,52 @@ extern "C" {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_unit_desc_t {
-    #[doc = "Existing entity to associate with unit (optional)"]
+    #[doc = "Existing entity to associate with unit (optional)."]
     pub entity: ecs_entity_t,
-    #[doc = "Unit symbol, e.g. \"m\", \"%\", \"g\". (optional)"]
+    #[doc = "Unit symbol, e.g. \"m\", \"%\", \"g\". (optional)."]
     pub symbol: *const ::std::os::raw::c_char,
-    #[doc = "Unit quantity, e.g. distance, percentage, weight. (optional)"]
+    #[doc = "Unit quantity, e.g. distance, percentage, weight. (optional)."]
     pub quantity: ecs_entity_t,
-    #[doc = "Base unit, e.g. \"meters\" (optional)"]
+    #[doc = "Base unit, e.g. \"meters\" (optional)."]
     pub base: ecs_entity_t,
-    #[doc = "Over unit, e.g. \"per second\" (optional)"]
+    #[doc = "Over unit, e.g. \"per second\" (optional)."]
     pub over: ecs_entity_t,
-    #[doc = "Translation to apply to derived unit (optional)"]
+    #[doc = "Translation to apply to derived unit (optional)."]
     pub translation: ecs_unit_translation_t,
     #[doc = "Prefix indicating order of magnitude relative to the derived unit. If set\n together with \"translation\", the values must match. If translation is not\n set, setting prefix will auto-populate it.\n Additionally, setting the prefix will enforce that the symbol (if set)\n is consistent with the prefix symbol + symbol of the derived unit. If the\n symbol is not set, it will be auto populated."]
     pub prefix: ecs_entity_t,
 }
 extern "C" {
-    #[doc = "Create a new unit"]
+    #[doc = "Create a new unit.\n\n @param world The world.\n @param desc The unit descriptor.\n @return The new unit, 0 if failed."]
     pub fn ecs_unit_init(world: *mut ecs_world_t, desc: *const ecs_unit_desc_t) -> ecs_entity_t;
 }
 #[doc = "Used with ecs_unit_prefix_init()."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_unit_prefix_desc_t {
-    #[doc = "Existing entity to associate with unit prefix (optional)"]
+    #[doc = "Existing entity to associate with unit prefix (optional)."]
     pub entity: ecs_entity_t,
-    #[doc = "Unit symbol, e.g. \"m\", \"%\", \"g\". (optional)"]
+    #[doc = "Unit symbol, e.g. \"m\", \"%\", \"g\". (optional)."]
     pub symbol: *const ::std::os::raw::c_char,
-    #[doc = "Translation to apply to derived unit (optional)"]
+    #[doc = "Translation to apply to derived unit (optional)."]
     pub translation: ecs_unit_translation_t,
 }
 extern "C" {
-    #[doc = "Create a new unit prefix"]
+    #[doc = "Create a new unit prefix.\n\n @param world The world.\n @param desc The type descriptor.\n @return The new unit prefix, 0 if failed."]
     pub fn ecs_unit_prefix_init(
         world: *mut ecs_world_t,
         desc: *const ecs_unit_prefix_desc_t,
     ) -> ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Create a new quantity"]
+    #[doc = "Create a new quantity.\n\n @param world The world.\n @param desc The quantity descriptor.\n @return The new quantity, 0 if failed."]
     pub fn ecs_quantity_init(
         world: *mut ecs_world_t,
         desc: *const ecs_entity_desc_t,
     ) -> ecs_entity_t;
 }
 extern "C" {
-    #[doc = "Module import"]
+    #[doc = "Meta module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsMeta)\n @endcode\n\n @param world The world."]
     pub fn FlecsMetaImport(world: *mut ecs_world_t);
 }
 extern "C" {

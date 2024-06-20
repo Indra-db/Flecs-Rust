@@ -90,10 +90,11 @@ impl Default for ecs_observer_desc_t {
             callback_ctx_free: Default::default(),
             observable: std::ptr::null_mut(),
             last_event_id: std::ptr::null_mut(),
-            term_index: Default::default(),
+            term_index_: Default::default(),
             query: Default::default(),
             run_ctx: std::ptr::null_mut(),
             run_ctx_free: Default::default(),
+            flags_: Default::default(),
         }
     }
 }

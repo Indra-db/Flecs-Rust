@@ -1428,7 +1428,10 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target_for")]
-    pub fn target_for_first<First: ComponentId>(&self, second: impl Into<Entity>) -> *const First {
+    pub fn target_for_first<First: ComponentId + NotEmptyComponent>(
+        &self,
+        second: impl Into<Entity>,
+    ) -> *const First {
         let comp_id = First::id(self.world);
         ecs_assert!(
             std::mem::size_of::<First>() != 0,

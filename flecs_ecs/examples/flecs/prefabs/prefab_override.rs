@@ -2,6 +2,22 @@ use crate::z_ignore_test_common::*;
 
 use flecs_ecs::prelude::*;
 
+// When an entity is instantiated from a prefab, components are by default
+// copied from the prefab to the instance. This behavior can be customized with
+// the OnInstantiate trait, which has three options:
+//
+// - Override (copy to instance)
+// - Inherit (inherit from prefab)
+// - DontInherit (don't copy or inherit)
+//
+// When a component is inheritable, it can be overridden manually by adding the
+// component to the instance, which also copies the value from the prefab
+// component. Additionally, when creating a prefab it is possible to flag a
+// component as "auto override", which can change the behavior for a specific
+// prefab from "inherit" to "override".
+//
+// This example shows how these different features can be used.
+
 #[derive(Component)]
 pub struct Attack {
     pub value: f32,
@@ -34,12 +50,8 @@ fn main() {
     let spaceship = world
         .prefab_named("SpaceShip")
         .set(Attack { value: 75.0 })
-        .set(Defence { value: 100.0 });
-
-    // Damage is a property that is private to a spaceship, so add an auto
-    // override for it. This ensures that each prefab instance will have a
-    // private copy of the component.
-    spaceship.set_auto_override(Damage { value: 0.0 });
+        .set(Defence { value: 100.0 })
+        .set(Damage { value: 50.0 });
 
     // Create a prefab instance.
     let inst = world.entity_named("my_spaceship").is_a_id(spaceship);
@@ -70,7 +82,7 @@ fn main() {
     //  Attack, Damage, (Identifier,Name), (IsA,SpaceShip)
     //  attack: 75
     //  defence: 100
-    //  damage: 0
+    //  damage: 50
 }
 
 #[cfg(feature = "flecs_nightly_tests")]

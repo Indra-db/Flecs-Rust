@@ -14,10 +14,6 @@ use flecs_ecs::prelude::*;
 // prefab. The reason for this is that an instantiated child is an exact copy
 // of the prefab child, and the prefab child only has an IsA relationship to the
 // nested prefab.
-//
-// This example shows how auto overriding (see the auto override example) can be
-// used to give instantiated children from a nested prefab a private copy of an
-// inherited component.
 
 #[derive(Debug, Component)]
 struct TirePressure {
@@ -27,10 +23,9 @@ struct TirePressure {
 fn main() {
     let world = World::new();
 
-    // Create a Wheel prefab, make sure each instantiated wheel has a private
-    // copy of the TirePressure component.
+    // Creates a wheel prefab
     let wheel = world.prefab_named("Wheel");
-    wheel.set_auto_override(TirePressure { value: 32.0 });
+    wheel.set(TirePressure { value: 32.0 });
 
     // Create a Car prefab with four wheels. Note how we're using the scope
     // method, which has the same effect as adding the (ChildOf, Car) pair.

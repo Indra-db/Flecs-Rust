@@ -653,6 +653,11 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::up")]
     #[inline]
     fn up(&mut self) -> &mut Self {
+        ecs_assert!(
+            self.current_term_ref_mode() == TermRefMode::Src,
+            FlecsErrorCode::InvalidParameter,
+            "up traversal can only be applied to term source"
+        );
         self.term_ref_mut().id |= ECS_UP;
         self
     }
@@ -681,6 +686,11 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::up`
     #[doc(alias = "term_builder_i::up")]
     fn up_id(&mut self, traverse_relationship: impl Into<Entity>) -> &mut Self {
+        ecs_assert!(
+            self.current_term_ref_mode() == TermRefMode::Src,
+            FlecsErrorCode::InvalidParameter,
+            "up traversal can only be applied to term source"
+        );
         let term_ref = self.term_ref_mut();
         term_ref.id |= ECS_UP;
         self.current_term_mut().trav = *traverse_relationship.into();
@@ -700,6 +710,11 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::up`
     #[doc(alias = "term_builder_i::up")]
     fn up_type<TravRel: ComponentId>(&mut self) -> &mut Self {
+        ecs_assert!(
+            self.current_term_ref_mode() == TermRefMode::Src,
+            FlecsErrorCode::InvalidParameter,
+            "up traversal can only be applied to term source"
+        );
         self.term_ref_mut().id |= ECS_UP;
         self.current_term_mut().trav = TravRel::id(self.world());
         self
@@ -714,6 +729,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::cascade`
     #[doc(alias = "term_builder_i::cascade")]
     fn cascade(&mut self) -> &mut Self {
+        self.up();
         self.term_ref_mut().id |= ECS_CASCADE;
         self
     }
@@ -731,13 +747,8 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::cascade`
     #[doc(alias = "term_builder_i::cascade")]
     fn cascade_id(&mut self, traverse_relationship: impl Into<Entity>) -> &mut Self {
-        //ecs_assert!(
-        //    traverse_relationship != 0,
-        //    FlecsErrorCode::InvalidOperation,
-        //    "Opt the usage of `cascade` if you are passing 0"
-        //);
+        self.up_id(traverse_relationship);
         self.term_ref_mut().id |= ECS_CASCADE;
-        self.current_term_mut().trav = *traverse_relationship.into();
         self
     }
 
@@ -754,8 +765,8 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     /// * C++ API: `term_builder_i::cascade`
     #[doc(alias = "term_builder_i::cascade")]
     fn cascade_type<TravRel: ComponentId>(&mut self) -> &mut Self {
+        self.up_type::<TravRel>();
         self.term_ref_mut().id |= ECS_CASCADE;
-        self.current_term_mut().trav = TravRel::id(self.world());
         self
     }
 
