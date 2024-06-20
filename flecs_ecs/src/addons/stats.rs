@@ -374,19 +374,7 @@ where
         }
     }
 
-    fn register_explicit<'a>(_world: impl IntoWorld<'a>) -> EntityT {
-        unsafe { sys::FLECS_IDFlecsStatsID_ }
-    }
-
-    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
-        unsafe { sys::FLECS_IDFlecsStatsID_ }
-    }
-
-    fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
-        true
-    }
-
-    fn id<'a>(_world: impl IntoWorld<'a>) -> EntityT {
-        unsafe { sys::FLECS_IDFlecsStatsID_ }
+    fn register_explicit<'a>(world: impl IntoWorld<'a>) -> EntityT {
+        Self::register_explicit_named(world, "flecs::stats")
     }
 }
