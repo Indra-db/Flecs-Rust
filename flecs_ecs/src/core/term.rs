@@ -380,6 +380,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term_builder_i::name")]
     fn name(&mut self, name: &'a str) -> &mut Self {
         let name = format!("{}\0", name);
+        let name = std::mem::ManuallyDrop::new(name);
         let term_ref = self.term_ref_mut();
         term_ref.name = name.as_ptr() as *mut i8;
         term_ref.id |= flecs::IsEntity::ID;
@@ -388,7 +389,6 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
             len: name.len(),
             capacity: name.capacity(),
         });
-        std::mem::forget(name);
         self
     }
 
@@ -406,7 +406,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
         check_term_access_validity(self);
 
         let var_name = format!("{}\0", var_name);
-
+        let var_name = std::mem::ManuallyDrop::new(var_name);
         let term_ref = self.term_ref_mut();
         term_ref.id |= flecs::IsVariable::ID;
         term_ref.name = var_name.as_ptr() as *mut i8;
@@ -415,7 +415,6 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
             len: var_name.len(),
             capacity: var_name.capacity(),
         });
-        std::mem::forget(var_name);
         self
     }
 

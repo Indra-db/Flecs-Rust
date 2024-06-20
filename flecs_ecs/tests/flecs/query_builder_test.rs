@@ -4899,7 +4899,7 @@ fn query_builder_is_valid() {
 
     let _q_2 = world
         .query::<()>()
-        .expr("foo_")
+        .expr("foo")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 }

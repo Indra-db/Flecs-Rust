@@ -294,7 +294,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     #[doc(alias = "query_builder_i::expr")]
     fn expr(&mut self, expr: &'a str) -> &mut Self {
         let expr = format!("{}\0", expr);
-
+        let expr = std::mem::ManuallyDrop::new(expr);
         ecs_assert!(
             *self.expr_count_mut() == 0,
             FlecsErrorCode::InvalidOperation,
@@ -308,7 +308,6 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
             len: expr.len(),
             capacity: expr.capacity(),
         });
-        std::mem::forget(expr);
         self
     }
 
