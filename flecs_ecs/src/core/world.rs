@@ -96,8 +96,6 @@ impl World {
     fn init_builtin_components(&self) {
         // used for event handling with no data
         self.component_named::<()>("flecs::rust::() - None");
-        #[cfg(feature = "flecs_stats")]
-        self.component_named::<crate::prelude::stats::Stats>("flecs::rust::Stats");
     }
 
     /// deletes and recreates the world
