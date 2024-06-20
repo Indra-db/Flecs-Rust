@@ -1542,7 +1542,7 @@ pub const ecs_inout_kind_t_EcsIn: ecs_inout_kind_t = 4;
 #[doc = "< Term is only written"]
 pub const ecs_inout_kind_t_EcsOut: ecs_inout_kind_t = 5;
 #[doc = "Specify read/write access for term"]
-pub type ecs_inout_kind_t = ::std::os::raw::c_uint;
+pub type ecs_inout_kind_t = ::std::os::raw::c_int;
 #[doc = "< The term must match"]
 pub const ecs_oper_kind_t_EcsAnd: ecs_oper_kind_t = 0;
 #[doc = "< One of the terms in an or chain must match"]
@@ -1558,7 +1558,7 @@ pub const ecs_oper_kind_t_EcsOrFrom: ecs_oper_kind_t = 5;
 #[doc = "< Term must match none of the components from term id"]
 pub const ecs_oper_kind_t_EcsNotFrom: ecs_oper_kind_t = 6;
 #[doc = "Specify operator for term"]
-pub type ecs_oper_kind_t = ::std::os::raw::c_uint;
+pub type ecs_oper_kind_t = ::std::os::raw::c_int;
 #[doc = "< Behavior determined by query creation context"]
 pub const ecs_query_cache_kind_t_EcsQueryCacheDefault: ecs_query_cache_kind_t = 0;
 #[doc = "< Cache query terms that are cacheable"]
@@ -1568,7 +1568,7 @@ pub const ecs_query_cache_kind_t_EcsQueryCacheAll: ecs_query_cache_kind_t = 2;
 #[doc = "< No caching"]
 pub const ecs_query_cache_kind_t_EcsQueryCacheNone: ecs_query_cache_kind_t = 3;
 #[doc = "Specify cache policy for query"]
-pub type ecs_query_cache_kind_t = ::std::os::raw::c_uint;
+pub type ecs_query_cache_kind_t = ::std::os::raw::c_int;
 #[doc = "Type that describes a reference to an entity or variable in a term."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -4392,7 +4392,7 @@ pub const ecs_http_method_t_EcsHttpDelete: ecs_http_method_t = 3;
 pub const ecs_http_method_t_EcsHttpOptions: ecs_http_method_t = 4;
 pub const ecs_http_method_t_EcsHttpMethodUnsupported: ecs_http_method_t = 5;
 #[doc = "Supported request methods."]
-pub type ecs_http_method_t = ::std::os::raw::c_uint;
+pub type ecs_http_method_t = ::std::os::raw::c_int;
 #[doc = "An HTTP request."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -7188,7 +7188,7 @@ pub const ecs_type_kind_t_EcsVectorType: ecs_type_kind_t = 5;
 pub const ecs_type_kind_t_EcsOpaqueType: ecs_type_kind_t = 6;
 pub const ecs_type_kind_t_EcsTypeKindLast: ecs_type_kind_t = 6;
 #[doc = "Type kinds supported by meta addon"]
-pub type ecs_type_kind_t = ::std::os::raw::c_uint;
+pub type ecs_type_kind_t = ::std::os::raw::c_int;
 #[doc = "Component that is automatically added to every type with the right kind."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -7220,7 +7220,7 @@ pub const ecs_primitive_kind_t_EcsEntity: ecs_primitive_kind_t = 17;
 pub const ecs_primitive_kind_t_EcsId: ecs_primitive_kind_t = 18;
 pub const ecs_primitive_kind_t_EcsPrimitiveKindLast: ecs_primitive_kind_t = 18;
 #[doc = "Primitive type kinds supported by meta addon"]
-pub type ecs_primitive_kind_t = ::std::os::raw::c_uint;
+pub type ecs_primitive_kind_t = ::std::os::raw::c_int;
 #[doc = "Component added to primitive types"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -7512,7 +7512,7 @@ pub const ecs_meta_type_op_kind_t_EcsOpEntity: ecs_meta_type_op_kind_t = 25;
 pub const ecs_meta_type_op_kind_t_EcsOpId: ecs_meta_type_op_kind_t = 26;
 pub const ecs_meta_type_op_kind_t_EcsMetaTypeOpKindLast: ecs_meta_type_op_kind_t = 26;
 #[doc = "Serializer instruction opcodes.\n The meta type serializer works by generating a flattened array with\n instructions that tells a serializer what kind of fields can be found in a\n type at which offsets."]
-pub type ecs_meta_type_op_kind_t = ::std::os::raw::c_uint;
+pub type ecs_meta_type_op_kind_t = ::std::os::raw::c_int;
 #[doc = "Meta type serializer instruction data."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
