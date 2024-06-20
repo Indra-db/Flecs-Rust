@@ -80,13 +80,18 @@ impl ComponentId for Entity {
         Self::get_or_init_index(&INDEX)
     }
 
-    fn register_explicit<'a>(_world: impl IntoWorld<'a>) -> EntityT {
+    fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
+        _world: impl IntoWorld<'a>,
+    ) -> EntityT {
         // already registered by flecs in World
         unsafe { sys::FLECS_IDecs_entity_tID_ }
     }
 
     #[inline]
-    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
+    fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
+        _world: impl IntoWorld<'a>,
+        _name: &str,
+    ) -> EntityT {
         // already registered by flecs in World
         unsafe { sys::FLECS_IDecs_entity_tID_ }
     }

@@ -1,5 +1,3 @@
-use flecs_ecs_derive::Component;
-
 use crate::core::{EntityT, IntoWorld, World};
 use crate::sys;
 
@@ -19,7 +17,7 @@ pub struct Stats;
 
 impl Module for Stats {
     fn module(world: &World) {
-        //world.module::<Stats>("flecs::rust::stats");
+        world.module::<Stats>("flecs::stats");
         unsafe { sys::FlecsStatsImport(world.ptr_mut()) };
         world.component::<WorldSummary>();
         world.component::<WorldStats>();
@@ -85,20 +83,13 @@ where
         }
     }
 
-    fn register_explicit<'a>(_world: impl IntoWorld<'a>) -> EntityT {
-        unsafe { sys::FLECS_IDEcsWorldStatsID_ }
-    }
-
-    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
-        unsafe { sys::FLECS_IDEcsWorldStatsID_ }
-    }
-
-    fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
-        true
-    }
-
-    fn id<'a>(_world: impl IntoWorld<'a>) -> EntityT {
-        unsafe { sys::FLECS_IDEcsWorldStatsID_ }
+    fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
+        world: impl IntoWorld<'a>,
+    ) -> EntityT {
+        Self::__register_or_get_id_named::<MANUAL_REGISTRATION_CHECK>(
+            world,
+            "flecs::stats::WorldStats",
+        )
     }
 }
 
@@ -158,20 +149,13 @@ where
         }
     }
 
-    fn register_explicit<'a>(_world: impl IntoWorld<'a>) -> EntityT {
-        unsafe { sys::FLECS_IDEcsPipelineStatsID_ }
-    }
-
-    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
-        unsafe { sys::FLECS_IDEcsPipelineStatsID_ }
-    }
-
-    fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
-        true
-    }
-
-    fn id<'a>(_world: impl IntoWorld<'a>) -> EntityT {
-        unsafe { sys::FLECS_IDEcsPipelineStatsID_ }
+    fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
+        world: impl IntoWorld<'a>,
+    ) -> EntityT {
+        Self::__register_or_get_id_named::<MANUAL_REGISTRATION_CHECK>(
+            world,
+            "flecs::stats::PipelineStats",
+        )
     }
 }
 
@@ -231,20 +215,13 @@ where
         }
     }
 
-    fn register_explicit<'a>(_world: impl IntoWorld<'a>) -> EntityT {
-        unsafe { sys::FLECS_IDEcsWorldSummaryID_ }
-    }
-
-    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
-        unsafe { sys::FLECS_IDEcsWorldSummaryID_ }
-    }
-
-    fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
-        true
-    }
-
-    fn id<'a>(_world: impl IntoWorld<'a>) -> EntityT {
-        unsafe { sys::FLECS_IDEcsWorldSummaryID_ }
+    fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
+        world: impl IntoWorld<'a>,
+    ) -> EntityT {
+        Self::__register_or_get_id_named::<MANUAL_REGISTRATION_CHECK>(
+            world,
+            "flecs::stats::WorldSummary",
+        )
     }
 }
 
@@ -304,20 +281,13 @@ where
         }
     }
 
-    fn register_explicit<'a>(_world: impl IntoWorld<'a>) -> EntityT {
-        unsafe { sys::FLECS_IDEcsSystemStatsID_ }
-    }
-
-    fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
-        unsafe { sys::FLECS_IDEcsSystemStatsID_ }
-    }
-
-    fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
-        true
-    }
-
-    fn id<'a>(_world: impl IntoWorld<'a>) -> EntityT {
-        unsafe { sys::FLECS_IDEcsSystemStatsID_ }
+    fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
+        world: impl IntoWorld<'a>,
+    ) -> EntityT {
+        Self::__register_or_get_id_named::<MANUAL_REGISTRATION_CHECK>(
+            world,
+            "flecs::stats::SystemStats",
+        )
     }
 }
 
@@ -343,7 +313,7 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentId f
 where
     Self: 'static,
 {
-    type UnderlyingType = sys::EcsSystemStats;
+    type UnderlyingType = Stats;
     type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
     #[inline(always)]
     fn index() -> u32 {
@@ -351,30 +321,30 @@ where
         Self::get_or_init_index(&INDEX)
     }
     fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
-        flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<sys::EcsSystemStats>(
-            type_hooks,
-        );
+        flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<Stats>(type_hooks);
     }
     fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
         use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
-        const IMPLS_DEFAULT: bool = sys::EcsSystemStats::IMPLS_DEFAULT;
+        const IMPLS_DEFAULT: bool = Stats::IMPLS_DEFAULT;
         if IMPLS_DEFAULT {
-            flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,sys::EcsSystemStats>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
+            flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,Stats>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
         }
     }
     fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
         use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
-        const IMPLS_CLONE: bool = sys::EcsSystemStats::IMPLS_CLONE;
+        const IMPLS_CLONE: bool = Stats::IMPLS_CLONE;
         if IMPLS_CLONE {
-            flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,sys::EcsSystemStats>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
+            flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,Stats>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
         } else {
-            flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<
-                sys::EcsSystemStats,
-            >(type_hooks);
+            flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<Stats>(
+                type_hooks,
+            );
         }
     }
 
-    fn register_explicit<'a>(world: impl IntoWorld<'a>) -> EntityT {
-        Self::register_explicit_named(world, "flecs::stats")
+    fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
+        world: impl IntoWorld<'a>,
+    ) -> EntityT {
+        Self::__register_or_get_id_named::<MANUAL_REGISTRATION_CHECK>(world, "flecs::stats")
     }
 }

@@ -44,11 +44,11 @@ macro_rules! create_pre_registered_component {
             type UnderlyingType = $struct_name;
             type UnderlyingEnumType = NoneEnum;
 
-            fn register_explicit<'a>(_world: impl IntoWorld<'a>) -> EntityT {
+            fn __register_or_get_id<'a,const MANUAL_REGISTRATION_CHECK: bool>(_world: impl IntoWorld<'a>) -> EntityT {
                 $const_name
             }
 
-            fn register_explicit_named<'a>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
+            fn __register_or_get_id_named<'a,const MANUAL_REGISTRATION_CHECK: bool>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
                 $const_name
             }
 

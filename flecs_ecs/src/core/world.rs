@@ -97,8 +97,6 @@ impl World {
     fn init_builtin_components(&self) {
         // used for event handling with no data
         self.component_named::<()>("flecs::rust::() - None");
-        #[cfg(feature = "flecs_stats")]
-        Stats::register_explicit(self);
     }
 
     /// deletes and recreates the world
@@ -3207,7 +3205,7 @@ impl World {
     /// * C++ API: `world::entity`
     #[doc(alias = "world::entity")]
     pub fn entity_from_named<'a, T: ComponentId>(&'a self, name: &str) -> EntityView<'a> {
-        EntityView::new_from(self, T::register_explicit_named(self, name))
+        EntityView::new_from(self, T::__register_or_get_id_named::<true>(self, name))
     }
 
     /// Create an entity that's associated with a type
@@ -4511,10 +4509,9 @@ impl World {
     ///
     /// * C++ API: `world::module`
     pub fn module<M: ComponentId>(&self, name: &str) -> EntityView {
+        let id = self.component_named::<M>(name).id();
+
         let name = compact_str::format_compact!("{}\0", name);
-
-        let id = self.component_id::<M>();
-
         unsafe {
             sys::ecs_add_path_w_sep(
                 self.raw_world.as_ptr(),
