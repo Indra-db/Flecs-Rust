@@ -14,6 +14,7 @@ use crate::addons::system::{System, SystemBuilder};
 use crate::addons::pipeline::PipelineBuilder;
 
 use crate::core::*;
+use crate::prelude::stats::Stats;
 use crate::sys;
 
 pub type FlecsArray = std::vec::Vec<u64>;
@@ -96,6 +97,8 @@ impl World {
     fn init_builtin_components(&self) {
         // used for event handling with no data
         self.component_named::<()>("flecs::rust::() - None");
+        #[cfg(feature = "flecs_stats")]
+        Stats::register_explicit(self);
     }
 
     /// deletes and recreates the world
