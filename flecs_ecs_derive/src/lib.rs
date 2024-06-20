@@ -1057,8 +1057,8 @@ fn expand_trav(term: &TermId) -> Vec<TokenStream> {
 fn expand_type(ident: &TermIdent) -> Option<TokenStream> {
     match ident {
         TermIdent::Type(ty) => Some(quote! { #ty }),
-        TermIdent::Wildcard => Some(quote! { flecs::Wildcard }),
-        TermIdent::Any => Some(quote! { flecs::Any }),
+        TermIdent::Wildcard => Some(quote! { flecs_ecs::core::flecs::Wildcard }),
+        TermIdent::Any => Some(quote! { flecs_ecs::core::flecs::Any }),
         TermIdent::SelfType => Some(quote! { Self }),
         _ => None,
     }
