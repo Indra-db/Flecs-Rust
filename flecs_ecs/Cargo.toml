@@ -13,8 +13,8 @@ categories = ["game-development", "api-bindings", "simulation", "development-too
 workspace = true
 
 [dependencies]
-flecs_ecs_derive = { path = "../flecs_ecs_derive" }
-flecs_ecs_sys = { path = "../flecs_ecs_sys" }
+flecs_ecs_derive = { path = "../flecs_ecs_derive", version = "*"}
+flecs_ecs_sys = { path = "../flecs_ecs_sys", version = "*"}
 compact_str = "0.7.1"
 fxhash = "0.2.1"
 
@@ -96,10 +96,7 @@ flecs_script = ["flecs_ecs_sys/flecs_script", "flecs_meta", "flecs_doc", "flecs_
 flecs_snapshot = ["flecs_ecs_sys/flecs_snapshot"]
 
 # Access runtime statistics
-flecs_stats = ["flecs_ecs_sys/flecs_stats"]
-
-# Track runtime statistics periodically
-flecs_monitor = ["flecs_ecs_sys/flecs_monitor","flecs_stats", "flecs_system", "flecs_timer", "flecs_module"]
+flecs_stats = ["flecs_ecs_sys/flecs_stats", "flecs_pipeline", "flecs_timer", "flecs_module"]
 
 # Expose component data as statistics
 flecs_metrics = ["flecs_ecs_sys/flecs_metrics", "flecs_meta", "flecs_units", "flecs_pipeline"]
@@ -150,13 +147,12 @@ flecs_journal = ["flecs_ecs_sys/flecs_journal","flecs_log"]
 flecs_nightly_tests = []
 
 default = [
-    #"flecs_regenerate_binding_c",
+    "flecs_regenerate_binding_c",
     #"flecs_nightly_tests",
     "flecs_module",
     "flecs_script",
     "flecs_snapshot",
     "flecs_stats",
-    "flecs_monitor",
     "flecs_metrics",
     "flecs_alerts",
     "flecs_system",
