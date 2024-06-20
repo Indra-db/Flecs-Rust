@@ -262,3 +262,7 @@ unsafe impl Sync for EcsWorldSummary {}
 unsafe impl Send for EcsPipelineStats {}
 
 unsafe impl Sync for EcsPipelineStats {}
+
+unsafe impl Send for EcsSystemStats {}
+
+unsafe impl Sync for EcsSystemStats {}
