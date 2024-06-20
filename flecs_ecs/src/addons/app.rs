@@ -114,11 +114,11 @@ impl<'a> App<'a> {
         self
     }
 
-    /// Enable the monitor.
+    /// Enable the stats.
     ///
     /// # Arguments
     ///
-    /// * `enable` - Whether to enable the monitor.
+    /// * `enable` - Whether to enable the stats.
     ///
     /// # See also
     ///

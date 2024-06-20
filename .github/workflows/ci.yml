@@ -46,7 +46,7 @@ jobs:
       - name: cargo clippy
         run: cargo clippy --all-targets --workspace -- -D warnings
       - name: cargo test
-        run: cargo test --workspace
+        run: cargo test --workspace -- --test-threads=1
 
   build-doc:
     name: cargo docs-rs
