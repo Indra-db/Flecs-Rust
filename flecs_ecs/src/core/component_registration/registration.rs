@@ -75,7 +75,7 @@ pub(crate) fn register_component_data_named<T>(world: *mut WorldT, name: *const 
 where
     T: ComponentId,
 {
-    let prev_scope = if !name.is_null() && unsafe { sys::ecs_get_scope(world) == 0 } {
+    let prev_scope = if !name.is_null() && unsafe { sys::ecs_get_scope(world) != 0 } {
         unsafe { sys::ecs_set_scope(world, 0) }
     } else {
         0
@@ -120,6 +120,25 @@ pub(crate) fn register_componment_data_explicit<T>(
 where
     T: ComponentId,
 {
+    let only_type_name = crate::core::get_only_type_name::<T>();
+    let only_type_name = compact_str::format_compact!("{}\0", only_type_name);
+
+    // If no name was provided first check if a type with the provided
+    // symbol was already registered.
+    let id = if name.is_null() {
+        let prev_scope = unsafe { sys::ecs_set_scope(world, 0) };
+        let id = unsafe {
+            sys::ecs_lookup_symbol(world, only_type_name.as_ptr() as *const i8, false, false)
+        };
+        unsafe { sys::ecs_set_scope(world, prev_scope) };
+        id
+    } else {
+        0
+    };
+    if id != 0 {
+        return id;
+    }
+
     let type_name = crate::core::type_name_cstring::<T>();
     let type_name_ptr = type_name.as_ptr();
 

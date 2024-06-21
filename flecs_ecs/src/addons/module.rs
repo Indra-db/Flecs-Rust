@@ -6,16 +6,16 @@ pub trait Module: ComponentId {
 
 impl World {
     pub fn import<T: Module>(&self) -> EntityView {
+        let module = self.component::<T>();
         // If we have already registered this type don't re-create the module
-        if T::is_registered_with_world(self) {
-            return self.component::<T>().entity;
+        if module.has::<flecs::EcsModule>() {
+            return module.entity;
         }
 
         // Reset scope
         let prev_scope = self.set_scope_id(0);
 
         // Initialise component for the module and add Module tag
-        let module = self.component::<T>();
         module.add::<flecs::EcsModule>();
 
         // Set scope to our module

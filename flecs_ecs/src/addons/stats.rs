@@ -17,7 +17,6 @@ pub struct Stats;
 
 impl Module for Stats {
     fn module(world: &World) {
-        world.module::<Stats>("flecs::stats");
         unsafe { sys::FlecsStatsImport(world.ptr_mut()) };
         world.component::<WorldSummary>();
         world.component::<WorldStats>();
@@ -82,15 +81,6 @@ where
             >(type_hooks);
         }
     }
-
-    fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-        world: impl IntoWorld<'a>,
-    ) -> EntityT {
-        Self::__register_or_get_id_named::<MANUAL_REGISTRATION_CHECK>(
-            world,
-            "flecs::stats::WorldStats",
-        )
-    }
 }
 
 ///////////////////////////////////////////////
@@ -147,15 +137,6 @@ where
                 sys::EcsPipelineStats,
             >(type_hooks);
         }
-    }
-
-    fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-        world: impl IntoWorld<'a>,
-    ) -> EntityT {
-        Self::__register_or_get_id_named::<MANUAL_REGISTRATION_CHECK>(
-            world,
-            "flecs::stats::PipelineStats",
-        )
     }
 }
 
@@ -214,15 +195,6 @@ where
             >(type_hooks);
         }
     }
-
-    fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-        world: impl IntoWorld<'a>,
-    ) -> EntityT {
-        Self::__register_or_get_id_named::<MANUAL_REGISTRATION_CHECK>(
-            world,
-            "flecs::stats::WorldSummary",
-        )
-    }
 }
 
 ///////////////////////////////////////////////
@@ -279,15 +251,6 @@ where
                 sys::EcsSystemStats,
             >(type_hooks);
         }
-    }
-
-    fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-        world: impl IntoWorld<'a>,
-    ) -> EntityT {
-        Self::__register_or_get_id_named::<MANUAL_REGISTRATION_CHECK>(
-            world,
-            "flecs::stats::SystemStats",
-        )
     }
 }
 

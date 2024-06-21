@@ -14,7 +14,6 @@ use crate::addons::system::{System, SystemBuilder};
 use crate::addons::pipeline::PipelineBuilder;
 
 use crate::core::*;
-use crate::prelude::stats::Stats;
 use crate::sys;
 
 pub type FlecsArray = std::vec::Vec<u64>;

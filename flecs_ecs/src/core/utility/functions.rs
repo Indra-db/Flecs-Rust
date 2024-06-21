@@ -158,6 +158,35 @@ pub fn type_name_cstring<T>() -> CString {
     CString::new(std::any::type_name::<T>()).unwrap()
 }
 
+/// Get the type name of the given type.
+///
+/// # Type Parameters
+///
+/// * `T`: The type to get the name of.
+///
+/// # Returns
+///
+/// `[Type]` string slice.
+///
+/// # Example
+///
+/// ```
+/// use flecs_ecs::core::get_only_type_name;
+///
+/// pub mod Bar {
+///     pub struct Foo;
+/// }
+///
+/// let name = get_only_type_name::<Bar::Foo>();
+/// assert_eq!(name, "Foo");
+/// ```
+#[inline(always)]
+pub fn get_only_type_name<T>() -> &'static str {
+    use std::any::type_name;
+    let name = type_name::<T>();
+    name.split("::").last().unwrap_or(name)
+}
+
 /// Returns true if the given type is an empty type.
 ///
 /// # Type Parameters
