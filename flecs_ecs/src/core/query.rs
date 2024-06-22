@@ -97,7 +97,7 @@ where
     }
 }
 
-impl<T> IterAPI<(), T> for Query<T>
+impl<T> QueryAPI<(), T> for Query<T>
 where
     T: QueryTuple,
 {

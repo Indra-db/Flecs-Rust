@@ -5,7 +5,7 @@
 use std::{default, ffi::c_void};
 
 use crate::core::internals::*;
-use crate::core::private::internal_ReactorAPI;
+use crate::core::private::internal_SystemAPI;
 use crate::core::*;
 use crate::sys;
 

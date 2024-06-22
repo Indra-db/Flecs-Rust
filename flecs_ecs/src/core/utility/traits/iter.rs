@@ -20,7 +20,7 @@ pub trait IterOperations {
     fn query_ptr(&self) -> *const QueryT;
 }
 
-pub trait IterAPI<P, T>: IterOperations
+pub trait QueryAPI<P, T>: IterOperations
 where
     T: QueryTuple,
 {

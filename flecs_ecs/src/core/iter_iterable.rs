@@ -167,7 +167,7 @@ where
     }
 }
 
-impl<'a, P, T> IterAPI<P, T> for QueryIter<'a, P, T>
+impl<'a, P, T> QueryAPI<P, T> for QueryIter<'a, P, T>
 where
     T: QueryTuple,
 {
@@ -180,7 +180,7 @@ where
 
     #[inline(always)]
     fn world(&self) -> WorldRef<'a> {
-        unsafe { WorldRef::from_ptr(<Self as IterAPI<P, T>>::world_ptr_mut(self)) }
+        unsafe { WorldRef::from_ptr(<Self as QueryAPI<P, T>>::world_ptr_mut(self)) }
     }
 
     #[inline(always)]

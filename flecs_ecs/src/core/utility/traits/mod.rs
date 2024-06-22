@@ -26,7 +26,7 @@ pub mod private {
 
     #[allow(non_camel_case_types)]
     #[doc(hidden)]
-    pub trait internal_ReactorAPI<'a, P, T>
+    pub trait internal_SystemAPI<'a, P, T>
     where
         T: QueryTuple,
         P: ComponentId,

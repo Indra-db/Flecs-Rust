@@ -2,7 +2,7 @@
 
 use crate::addons::system::*;
 use crate::core::internals::*;
-use crate::core::private::internal_ReactorAPI;
+use crate::core::private::internal_SystemAPI;
 use crate::core::*;
 
 /// `SystemBuilder` is a builder pattern for creating systems.

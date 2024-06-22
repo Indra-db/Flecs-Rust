@@ -2,7 +2,7 @@ use std::ffi::c_void;
 
 use crate::core::*;
 
-pub trait ReactorAPI<'a, P, T>: Builder<'a> + private::internal_ReactorAPI<'a, P, T>
+pub trait SystemAPI<'a, P, T>: Builder<'a> + private::internal_SystemAPI<'a, P, T>
 where
     T: QueryTuple,
     P: ComponentId,
@@ -505,7 +505,7 @@ where
 
 macro_rules! implement_reactor_api {
     ($param:ty, $type:ty) => {
-        impl<'a, T> internal_ReactorAPI<'a, $param, T> for $type
+        impl<'a, T> internal_SystemAPI<'a, $param, T> for $type
         where
             T: QueryTuple,
         {
@@ -558,7 +558,7 @@ macro_rules! implement_reactor_api {
             }
         }
 
-        impl<'a, T> ReactorAPI<'a, $param, T> for $type
+        impl<'a, T> SystemAPI<'a, $param, T> for $type
         where
             T: QueryTuple,
         {
@@ -569,7 +569,7 @@ macro_rules! implement_reactor_api {
         }
     };
     ($type:ty) => {
-        impl<'a, P, T> internal_ReactorAPI<'a, P, T> for $type
+        impl<'a, P, T> internal_SystemAPI<'a, P, T> for $type
         where
             T: QueryTuple,
             P: ComponentId,
@@ -623,7 +623,7 @@ macro_rules! implement_reactor_api {
             }
         }
 
-        impl<'a, P, T> ReactorAPI<'a, P, T> for $type
+        impl<'a, P, T> SystemAPI<'a, P, T> for $type
         where
             T: QueryTuple,
             P: ComponentId,
