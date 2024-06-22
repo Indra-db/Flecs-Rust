@@ -4,7 +4,7 @@ use crate::core::*;
 
 pub trait ReactorAPI<'a, P, T>: Builder<'a> + private::internal_ReactorAPI<'a, P, T>
 where
-    T: Iterable,
+    T: QueryTuple,
     P: ComponentId,
 {
     /// Set context
@@ -507,7 +507,7 @@ macro_rules! implement_reactor_api {
     ($param:ty, $type:ty) => {
         impl<'a, T> internal_ReactorAPI<'a, $param, T> for $type
         where
-            T: Iterable,
+            T: QueryTuple,
         {
             fn set_instanced(&mut self, instanced: bool) {
                 self.is_instanced = instanced;
@@ -560,7 +560,7 @@ macro_rules! implement_reactor_api {
 
         impl<'a, T> ReactorAPI<'a, $param, T> for $type
         where
-            T: Iterable,
+            T: QueryTuple,
         {
             fn set_context(&mut self, context: *mut c_void) -> &mut Self {
                 self.desc.ctx = context;
@@ -571,7 +571,7 @@ macro_rules! implement_reactor_api {
     ($type:ty) => {
         impl<'a, P, T> internal_ReactorAPI<'a, P, T> for $type
         where
-            T: Iterable,
+            T: QueryTuple,
             P: ComponentId,
         {
             fn set_instanced(&mut self, instanced: bool) {
@@ -625,7 +625,7 @@ macro_rules! implement_reactor_api {
 
         impl<'a, P, T> ReactorAPI<'a, P, T> for $type
         where
-            T: Iterable,
+            T: QueryTuple,
             P: ComponentId,
         {
             fn set_context(&mut self, context: *mut c_void) -> &mut Self {

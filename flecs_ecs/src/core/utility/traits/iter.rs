@@ -22,7 +22,7 @@ pub trait IterOperations {
 
 pub trait IterAPI<P, T>: IterOperations
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     fn world(&self) -> WorldRef<'_>;
 
@@ -911,7 +911,7 @@ where
 
 unsafe extern "C" fn __internal_query_execute_each<T, Func>(iter: *mut IterT)
 where
-    T: Iterable,
+    T: QueryTuple,
     Func: FnMut(T::TupleType<'_>),
 {
     let func = &mut *((*iter).callback_ctx as *mut Func);
@@ -927,7 +927,7 @@ where
 
 unsafe extern "C" fn __internal_query_execute_each_entity<T, Func>(iter: *mut IterT)
 where
-    T: Iterable,
+    T: QueryTuple,
     Func: FnMut(EntityView, T::TupleType<'_>),
 {
     let func = &mut *((*iter).callback_ctx as *mut Func);

@@ -12,7 +12,7 @@ use crate::sys;
 /// `ObserverBuilder` is used to configure and build Observers.
 /// Observers are systems that react to events.
 /// Observers let applications register callbacks for ECS events.
-pub struct ObserverBuilder<'a, P = (), T: Iterable = ()> {
+pub struct ObserverBuilder<'a, P = (), T: QueryTuple = ()> {
     desc: sys::ecs_observer_desc_t,
     term_builder: TermBuilder,
     world: WorldRef<'a>,
@@ -21,7 +21,7 @@ pub struct ObserverBuilder<'a, P = (), T: Iterable = ()> {
     _phantom: std::marker::PhantomData<&'a (T, P)>,
 }
 
-impl<'a, P: ComponentId, T: Iterable> ObserverBuilder<'a, P, T> {
+impl<'a, P: ComponentId, T: QueryTuple> ObserverBuilder<'a, P, T> {
     /// Create a new observer builder
     ///
     /// # Arguments
@@ -89,7 +89,7 @@ impl<'a, P: ComponentId, T: Iterable> ObserverBuilder<'a, P, T> {
     }
 }
 
-impl<'a, P, T: Iterable> ObserverBuilder<'a, P, T> {
+impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
     pub(crate) fn new_untyped(world: impl IntoWorld<'a>) -> ObserverBuilder<'a, (), T> {
         let desc = Default::default();
         let mut obj = ObserverBuilder {
@@ -139,7 +139,7 @@ impl<'a, P, T: Iterable> ObserverBuilder<'a, P, T> {
     }
 }
 
-impl<'a, P, T: Iterable> ObserverBuilder<'a, P, T> {
+impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
     /// Returns the event count of the builder
     pub fn event_count(&self) -> i32 {
         self.event_count
@@ -203,7 +203,7 @@ impl<'a, P, T: Iterable> ObserverBuilder<'a, P, T> {
 }
 
 #[doc(hidden)]
-impl<'a, P, T: Iterable> internals::QueryConfig<'a> for ObserverBuilder<'a, P, T> {
+impl<'a, P, T: QueryTuple> internals::QueryConfig<'a> for ObserverBuilder<'a, P, T> {
     #[inline(always)]
     fn term_builder(&self) -> &TermBuilder {
         &self.term_builder
@@ -229,13 +229,13 @@ impl<'a, P, T: Iterable> internals::QueryConfig<'a> for ObserverBuilder<'a, P, T
         T::COUNT
     }
 }
-impl<'a, P, T: Iterable> TermBuilderImpl<'a> for ObserverBuilder<'a, P, T> {}
+impl<'a, P, T: QueryTuple> TermBuilderImpl<'a> for ObserverBuilder<'a, P, T> {}
 
-impl<'a, P, T: Iterable> QueryBuilderImpl<'a> for ObserverBuilder<'a, P, T> {}
+impl<'a, P, T: QueryTuple> QueryBuilderImpl<'a> for ObserverBuilder<'a, P, T> {}
 
 impl<'a, P, T> Builder<'a> for ObserverBuilder<'a, P, T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     type BuiltType = Observer<'a>;
 
@@ -260,7 +260,7 @@ where
     }
 }
 
-impl<'a, P, T: Iterable> IntoWorld<'a> for ObserverBuilder<'a, P, T> {
+impl<'a, P, T: QueryTuple> IntoWorld<'a> for ObserverBuilder<'a, P, T> {
     fn world(&self) -> WorldRef<'a> {
         self.world
     }

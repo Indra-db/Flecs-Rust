@@ -24,7 +24,7 @@ use crate::sys;
 /// This will otherwise panic.
 pub struct Query<T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     pub(crate) query: NonNull<QueryT>,
     // this is a leaked box, which is valid during the lifecycle of the query object.
@@ -34,7 +34,7 @@ where
 
 impl<T> Clone for Query<T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     fn clone(&self) -> Self {
         unsafe { Query::<T>::new_from(self.query) }
@@ -43,7 +43,7 @@ where
 
 impl<T> Drop for Query<T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     fn drop(&mut self) {
         unsafe {
@@ -71,7 +71,7 @@ where
 
 impl<T> IterOperations for Query<T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     #[inline(always)]
     fn retrieve_iter(&self) -> IterT {
@@ -99,7 +99,7 @@ where
 
 impl<T> IterAPI<(), T> for Query<T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     #[inline(always)]
     fn entity(&self) -> EntityView {
@@ -119,7 +119,7 @@ where
 
 impl<T> Query<T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     /// wraps the query pointer in a new query
     ///

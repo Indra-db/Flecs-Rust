@@ -28,7 +28,7 @@ pub mod private {
     #[doc(hidden)]
     pub trait internal_ReactorAPI<'a, P, T>
     where
-        T: Iterable,
+        T: QueryTuple,
         P: ComponentId,
     {
         fn set_instanced(&mut self, instanced: bool);

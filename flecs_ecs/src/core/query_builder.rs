@@ -9,7 +9,7 @@ use crate::sys;
 /// Fast to iterate, but slower to create than Filter
 pub struct QueryBuilder<'a, T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     pub(crate) desc: sys::ecs_query_desc_t,
     pub(crate) term_builder: TermBuilder,
@@ -19,7 +19,7 @@ where
 
 impl<'a, T> QueryBuilder<'a, T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     /// Create a new query builder
     ///
@@ -141,7 +141,7 @@ where
 }
 
 #[doc(hidden)]
-impl<'a, T: Iterable> internals::QueryConfig<'a> for QueryBuilder<'a, T> {
+impl<'a, T: QueryTuple> internals::QueryConfig<'a> for QueryBuilder<'a, T> {
     #[inline(always)]
     fn term_builder(&self) -> &TermBuilder {
         &self.term_builder
@@ -168,11 +168,11 @@ impl<'a, T: Iterable> internals::QueryConfig<'a> for QueryBuilder<'a, T> {
     }
 }
 
-impl<'a, T: Iterable> TermBuilderImpl<'a> for QueryBuilder<'a, T> {}
+impl<'a, T: QueryTuple> TermBuilderImpl<'a> for QueryBuilder<'a, T> {}
 
-impl<'a, T: Iterable> QueryBuilderImpl<'a> for QueryBuilder<'a, T> {}
+impl<'a, T: QueryTuple> QueryBuilderImpl<'a> for QueryBuilder<'a, T> {}
 
-impl<'a, T: Iterable> IntoWorld<'a> for QueryBuilder<'a, T> {
+impl<'a, T: QueryTuple> IntoWorld<'a> for QueryBuilder<'a, T> {
     fn world(&self) -> WorldRef<'a> {
         self.world
     }
@@ -180,7 +180,7 @@ impl<'a, T: Iterable> IntoWorld<'a> for QueryBuilder<'a, T> {
 
 impl<'a, T> Builder<'a> for QueryBuilder<'a, T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     type BuiltType = Query<T>;
 

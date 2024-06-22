@@ -5,7 +5,7 @@ use crate::sys;
 
 pub struct IterIterable<'a, P, T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     iter: IterT,
     iter_next: unsafe extern "C" fn(*mut IterT) -> bool,
@@ -14,7 +14,7 @@ where
 
 impl<'a, P, T> IterIterable<'a, P, T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     pub fn new(iter: IterT, iter_next: unsafe extern "C" fn(*mut IterT) -> bool) -> Self {
         Self {
@@ -144,7 +144,7 @@ where
 
 impl<'a, P, T> IterOperations for IterIterable<'a, P, T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     fn retrieve_iter(&self) -> IterT {
         self.iter
@@ -169,7 +169,7 @@ where
 
 impl<'a, P, T> IterAPI<P, T> for IterIterable<'a, P, T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     fn entity(&self) -> EntityView {
         let world = unsafe { WorldRef::from_ptr(self.iter.real_world) };
@@ -191,7 +191,7 @@ where
 
 impl<'a, P, T> IntoWorld<'a> for IterIterable<'a, P, T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     fn world(&self) -> WorldRef<'a> {
         unsafe { WorldRef::from_ptr(self.iter.world) }

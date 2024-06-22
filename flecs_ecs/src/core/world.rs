@@ -3733,7 +3733,7 @@ impl World {
     #[doc(alias = "world::observer")]
     pub fn observer<Event: ComponentId, Components>(&self) -> ObserverBuilder<Event, Components>
     where
-        Components: Iterable,
+        Components: QueryTuple,
     {
         ObserverBuilder::<Event, Components>::new(self)
     }
@@ -3743,7 +3743,7 @@ impl World {
         event: impl Into<Entity>,
     ) -> ObserverBuilder<(), Components>
     where
-        Components: Iterable,
+        Components: QueryTuple,
     {
         let mut builder = ObserverBuilder::<(), Components>::new_untyped(self);
         builder.add_event_id(event);
@@ -3773,7 +3773,7 @@ impl World {
         name: &str,
     ) -> ObserverBuilder<'a, Event, Components>
     where
-        Components: Iterable,
+        Components: QueryTuple,
     {
         ObserverBuilder::<Event, Components>::new_named(self, name)
     }
@@ -3793,7 +3793,7 @@ impl World {
     #[doc(alias = "world::query")]
     pub fn new_query<Components>(&self) -> Query<Components>
     where
-        Components: Iterable,
+        Components: QueryTuple,
     {
         QueryBuilder::<Components>::new(self).build()
     }
@@ -3818,7 +3818,7 @@ impl World {
     #[doc(alias = "world::query")]
     pub fn new_query_named<Components>(&self, name: &str) -> Query<Components>
     where
-        Components: Iterable,
+        Components: QueryTuple,
     {
         QueryBuilder::<Components>::new_named(self, name).build()
     }
@@ -3839,7 +3839,7 @@ impl World {
     #[doc(alias = "world::query_builder")]
     pub fn query<Components>(&self) -> QueryBuilder<Components>
     where
-        Components: Iterable,
+        Components: QueryTuple,
     {
         QueryBuilder::<Components>::new(self)
     }
@@ -3864,7 +3864,7 @@ impl World {
     #[doc(alias = "world::query_builder")]
     pub fn query_named<'a, Components>(&'a self, name: &str) -> QueryBuilder<'a, Components>
     where
-        Components: Iterable,
+        Components: QueryTuple,
     {
         QueryBuilder::<Components>::new_named(self, name)
     }
@@ -3915,7 +3915,7 @@ impl World {
     #[doc(alias = "world::each")]
     pub fn each<Components>(&self, func: impl FnMut(Components::TupleType<'_>)) -> Query<Components>
     where
-        Components: Iterable,
+        Components: QueryTuple,
     {
         let query = QueryBuilder::<Components>::new(self).build();
         query.each(func);
@@ -3943,7 +3943,7 @@ impl World {
         func: impl FnMut(EntityView, Components::TupleType<'_>),
     ) -> Query<Components>
     where
-        Components: Iterable,
+        Components: QueryTuple,
     {
         let query = QueryBuilder::<Components>::new(self).build();
         query.each_entity(func);
@@ -3973,10 +3973,10 @@ impl World {
     /// Creates a new `SystemBuilder` instance for constructing systems.
     ///
     /// This function initializes a `SystemBuilder` which is used to create systems that match specific components.
-    /// It is a generic method that works with any component types that implement the `Iterable` trait.
+    /// It is a generic method that works with any component types that implement the `QueryTuple` trait.
     ///
     /// # Type Parameters
-    /// - `Components`: The components to match on. Must implement the `Iterable` trait.
+    /// - `Components`: The components to match on. Must implement the `QueryTuple` trait.
     ///
     /// # See also
     ///
@@ -3984,7 +3984,7 @@ impl World {
     #[doc(alias = "world::system_builder")]
     pub fn system<Components>(&self) -> SystemBuilder<Components>
     where
-        Components: Iterable,
+        Components: QueryTuple,
     {
         SystemBuilder::<Components>::new(self)
     }
@@ -3998,7 +3998,7 @@ impl World {
     /// * `name` - A string slice representing the name of the system.
     ///
     /// # Type Parameters
-    /// - `Components`: The components to match on. Must implement the `Iterable` trait.
+    /// - `Components`: The components to match on. Must implement the `QueryTuple` trait.
     ///
     /// # See also
     ///
@@ -4006,7 +4006,7 @@ impl World {
     #[doc(alias = "world::system_builder")]
     pub fn system_named<'a, Components>(&'a self, name: &str) -> SystemBuilder<'a, Components>
     where
-        Components: Iterable,
+        Components: QueryTuple,
     {
         SystemBuilder::<Components>::new_named(self, name)
     }
@@ -4020,7 +4020,7 @@ impl World {
     /// * `desc` - A system description that outlines the parameters for the system builder.
     ///
     /// # Type Parameters
-    /// - `Components`: The components to match on. Must implement the `Iterable` trait.
+    /// - `Components`: The components to match on. Must implement the `QueryTuple` trait.
     ///
     /// # See also
     ///
@@ -4031,7 +4031,7 @@ impl World {
         desc: sys::ecs_system_desc_t,
     ) -> SystemBuilder<Components>
     where
-        Components: Iterable,
+        Components: QueryTuple,
     {
         SystemBuilder::<Components>::new_from_desc(self, desc)
     }

@@ -8,7 +8,7 @@ use crate::core::*;
 /// `SystemBuilder` is a builder pattern for creating systems.
 pub struct SystemBuilder<'a, T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     desc: sys::ecs_system_desc_t,
     term_builder: TermBuilder,
@@ -19,7 +19,7 @@ where
 
 impl<'a, T> SystemBuilder<'a, T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     /// Create a new system builder
     pub fn new(world: &'a World) -> Self {
@@ -299,7 +299,7 @@ where
 }
 
 #[doc(hidden)]
-impl<'a, T: Iterable> internals::QueryConfig<'a> for SystemBuilder<'a, T> {
+impl<'a, T: QueryTuple> internals::QueryConfig<'a> for SystemBuilder<'a, T> {
     #[inline(always)]
     fn term_builder(&self) -> &TermBuilder {
         &self.term_builder
@@ -325,13 +325,13 @@ impl<'a, T: Iterable> internals::QueryConfig<'a> for SystemBuilder<'a, T> {
     }
 }
 
-impl<'a, T: Iterable> TermBuilderImpl<'a> for SystemBuilder<'a, T> {}
+impl<'a, T: QueryTuple> TermBuilderImpl<'a> for SystemBuilder<'a, T> {}
 
-impl<'a, T: Iterable> QueryBuilderImpl<'a> for SystemBuilder<'a, T> {}
+impl<'a, T: QueryTuple> QueryBuilderImpl<'a> for SystemBuilder<'a, T> {}
 
 impl<'a, T> Builder<'a> for SystemBuilder<'a, T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     type BuiltType = System<'a>;
 
@@ -356,7 +356,7 @@ where
     }
 }
 
-impl<'a, T: Iterable> IntoWorld<'a> for SystemBuilder<'a, T> {
+impl<'a, T: QueryTuple> IntoWorld<'a> for SystemBuilder<'a, T> {
     fn world(&self) -> WorldRef<'a> {
         self.world
     }

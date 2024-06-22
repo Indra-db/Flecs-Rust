@@ -9,7 +9,7 @@ use crate::sys;
 /// Pipelines order and schedule systems for execution.
 pub struct PipelineBuilder<'a, T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     desc: sys::ecs_pipeline_desc_t,
     term_builder: TermBuilder,
@@ -20,7 +20,7 @@ where
 
 impl<'a, T> PipelineBuilder<'a, T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     /// Create a new pipeline builder
     pub fn new(world: &'a World) -> Self {
@@ -118,7 +118,7 @@ where
 }
 
 #[doc(hidden)]
-impl<'a, T: Iterable> internals::QueryConfig<'a> for PipelineBuilder<'a, T> {
+impl<'a, T: QueryTuple> internals::QueryConfig<'a> for PipelineBuilder<'a, T> {
     #[inline(always)]
     fn term_builder(&self) -> &TermBuilder {
         &self.term_builder
@@ -145,12 +145,12 @@ impl<'a, T: Iterable> internals::QueryConfig<'a> for PipelineBuilder<'a, T> {
     }
 }
 
-impl<'a, T: Iterable> QueryBuilderImpl<'a> for PipelineBuilder<'a, T> {}
-impl<'a, T: Iterable> TermBuilderImpl<'a> for PipelineBuilder<'a, T> {}
+impl<'a, T: QueryTuple> QueryBuilderImpl<'a> for PipelineBuilder<'a, T> {}
+impl<'a, T: QueryTuple> TermBuilderImpl<'a> for PipelineBuilder<'a, T> {}
 
 impl<'a, T> Builder<'a> for PipelineBuilder<'a, T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     type BuiltType = Pipeline<'a, T>;
 
@@ -169,7 +169,7 @@ where
     }
 }
 
-impl<'a, T: Iterable> IntoWorld<'a> for PipelineBuilder<'a, T> {
+impl<'a, T: QueryTuple> IntoWorld<'a> for PipelineBuilder<'a, T> {
     fn world(&self) -> WorldRef<'a> {
         self.world
     }

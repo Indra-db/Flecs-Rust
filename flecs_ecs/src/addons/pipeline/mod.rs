@@ -11,7 +11,7 @@ use crate::sys;
 /// Pipelines order and schedule systems for execution.
 pub struct Pipeline<'a, T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     entity: EntityView<'a>,
     phantom: std::marker::PhantomData<T>,
@@ -19,7 +19,7 @@ where
 
 impl<'a, T> Deref for Pipeline<'a, T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     type Target = EntityView<'a>;
 
@@ -31,7 +31,7 @@ where
 
 impl<'a, T> DerefMut for Pipeline<'a, T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
@@ -41,7 +41,7 @@ where
 
 impl<'a, T> From<Pipeline<'a, T>> for EntityView<'a>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     fn from(pipeline: Pipeline<'a, T>) -> Self {
         pipeline.entity
@@ -50,7 +50,7 @@ where
 
 impl<'a, T> Pipeline<'a, T>
 where
-    T: Iterable,
+    T: QueryTuple,
 {
     /// Create a new pipeline.
     ///

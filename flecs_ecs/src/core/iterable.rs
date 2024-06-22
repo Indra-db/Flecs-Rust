@@ -9,14 +9,14 @@ pub struct ArrayElement {
     pub is_ref: bool,
 }
 
-pub struct ComponentsData<T: Iterable, const LEN: usize> {
+pub struct ComponentsData<T: QueryTuple, const LEN: usize> {
     pub array_components: [*mut u8; LEN],
     pub is_ref_array_components: [bool; LEN],
     pub is_any_array_a_ref: bool,
     _marker: PhantomData<T>,
 }
 
-pub trait ComponentPointers<T: Iterable> {
+pub trait ComponentPointers<T: QueryTuple> {
     fn new(iter: &IterT) -> Self;
 
     fn get_tuple(&mut self, index: usize) -> T::TupleType<'_>;
@@ -24,7 +24,7 @@ pub trait ComponentPointers<T: Iterable> {
     fn get_slice(&mut self, count: usize) -> T::TupleSliceType<'_>;
 }
 
-impl<T: Iterable, const LEN: usize> ComponentPointers<T> for ComponentsData<T, LEN> {
+impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T, LEN> {
     fn new(iter: &IterT) -> Self {
         let mut array_components = [std::ptr::null::<u8>() as *mut u8; LEN];
         let mut is_ref_array_components = [false; LEN];
@@ -346,7 +346,7 @@ where
     }
 }
 
-pub trait Iterable: Sized {
+pub trait QueryTuple: Sized {
     type Pointers: ComponentPointers<Self>;
     type TupleType<'a>;
     type TupleSliceType<'a>;
@@ -392,7 +392,7 @@ pub trait Iterable: Sized {
 /////////////////////
 
 #[rustfmt::skip]
-impl<A> Iterable for A
+impl<A> QueryTuple for A
 where
     A: IterableTypeOperation,
 { 
@@ -626,7 +626,7 @@ macro_rules! tuple_count {
 
 macro_rules! impl_iterable {
     ($($t:ident),*) => {
-        impl<$($t: IterableTypeOperation),*> Iterable for ($($t,)*) {
+        impl<$($t: IterableTypeOperation),*> QueryTuple for ($($t,)*) {
             type TupleType<'w> = ($(
                 $t::ActualType<'w>,
             )*);
