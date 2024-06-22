@@ -741,4 +741,4 @@ macro_rules! impl_iterable {
     }
 }
 
-tuples!(impl_iterable, 0, 12);
+tuples!(impl_iterable, 0, 16);
