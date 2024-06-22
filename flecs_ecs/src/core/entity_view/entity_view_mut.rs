@@ -714,7 +714,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn auto_override_first<First: ComponentId + NotEmptyComponent>(
+    pub fn auto_override_first<First: ComponentId + DataComponent>(
         self,
         second: impl Into<Entity>,
     ) -> Self {
@@ -737,7 +737,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn auto_override_second<Second: ComponentId + NotEmptyComponent>(
+    pub fn auto_override_second<Second: ComponentId + DataComponent>(
         self,
         first: impl Into<Entity>,
     ) -> Self {
@@ -773,7 +773,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set_auto_override`
     #[doc(alias = "entity_builder::set_auto_override")]
-    pub fn set_auto_override<T: ComponentId + NotEmptyComponent + ComponentType<Struct>>(
+    pub fn set_auto_override<T: ComponentId + DataComponent + ComponentType<Struct>>(
         self,
         component: T,
     ) -> Self {
@@ -793,7 +793,7 @@ impl<'a> EntityView<'a> {
         First: ComponentId,
         Second: ComponentId,
         (First, Second): FlecsCastType,
-        <(First, Second) as FlecsCastType>::CastType: NotEmptyComponent,
+        <(First, Second) as FlecsCastType>::CastType: DataComponent,
     {
         let id_pair = <(First, Second) as IntoComponentId>::get_id(self.world);
         self.auto_override_id(id_pair).set_id(data, id_pair)
@@ -815,7 +815,7 @@ impl<'a> EntityView<'a> {
         second: impl Into<Entity>,
     ) -> Self
     where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        First: ComponentId + ComponentType<Struct> + DataComponent,
     {
         let second_id = *second.into();
         let first_id = First::id(self.world);
@@ -839,7 +839,7 @@ impl<'a> EntityView<'a> {
         first: impl Into<Entity>,
     ) -> Self
     where
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + DataComponent,
     {
         let first_id = first.into();
         let second_id = Second::id(self.world);
@@ -857,7 +857,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set`
     #[doc(alias = "entity_builder::set")]
-    pub fn set<T: ComponentId + NotEmptyComponent>(self, component: T) -> Self {
+    pub fn set<T: ComponentId + DataComponent>(self, component: T) -> Self {
         set_helper(
             self.world.world_ptr_mut(),
             *self.id,
@@ -879,7 +879,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::set")]
     pub fn set_id<T>(self, data: T, id: impl IntoId) -> Self
     where
-        T: ComponentId + NotEmptyComponent,
+        T: ComponentId + DataComponent,
     {
         let world = self.world.world_ptr_mut();
         let id = *id.into();
@@ -931,7 +931,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::set")]
     pub fn set_first<First>(self, first: First, second: impl Into<Entity>) -> Self
     where
-        First: ComponentId + NotEmptyComponent,
+        First: ComponentId + DataComponent,
     {
         let world_ptr = self.world.world_ptr_mut();
         let first_id = First::id(self.world);
@@ -959,7 +959,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::set_second")]
     pub fn set_second<Second>(self, first: impl Into<Entity>, second: Second) -> Self
     where
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + DataComponent,
     {
         let world = self.world.world_ptr_mut();
         let first_id = *first.into();
@@ -995,7 +995,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::set")]
     pub fn set_pair_enum<First, Second>(self, enum_variant: Second, first: First) -> Self
     where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        First: ComponentId + ComponentType<Struct> + DataComponent,
         Second: ComponentId + ComponentType<Enum> + CachedEnumData,
     {
         set_helper(
@@ -1413,7 +1413,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity::ensure`
     #[doc(alias = "entity::ensure")]
     #[allow(clippy::mut_from_ref)]
-    pub fn ensure_mut<T: ComponentId + NotEmptyComponent + ComponentType<Struct>>(
+    pub fn ensure_mut<T: ComponentId + DataComponent + ComponentType<Struct>>(
         self,
     ) -> &'a mut T::UnderlyingType {
         let component_id = T::id(self.world);
@@ -1431,7 +1431,7 @@ impl<'a> EntityView<'a> {
         }
     }
 
-    pub fn ensure_callback_mut<T: ComponentId + NotEmptyComponent + ComponentType<Struct>>(
+    pub fn ensure_callback_mut<T: ComponentId + DataComponent + ComponentType<Struct>>(
         self,
         callback: impl FnOnce(&mut T::UnderlyingType),
     ) {
@@ -1484,7 +1484,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity::ensure")]
     pub fn ensure_first_id_mut<First>(self, second: impl Into<Entity>) -> &'a mut First
     where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        First: ComponentId + ComponentType<Struct> + DataComponent,
     {
         let component_id = First::id(self.world);
 
@@ -1520,7 +1520,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity::ensure")]
     pub fn ensure_first_mut<First, Second>(&mut self) -> &'a mut First
     where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        First: ComponentId + ComponentType<Struct> + DataComponent,
         Second: ComponentId + ComponentType<Struct>,
     {
         self.ensure_first_id_mut::<First>(Second::id(self.world))
@@ -1543,7 +1543,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity::ensure")]
     pub fn ensure_second_id_mut<Second>(self, first: impl Into<Entity>) -> &'a mut Second
     where
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + DataComponent,
     {
         let component_id = Second::id(self.world);
 
@@ -1580,7 +1580,7 @@ impl<'a> EntityView<'a> {
     pub fn ensure_second_mut<First, Second>(&mut self) -> &'a mut Second
     where
         First: ComponentId + ComponentType<Struct> + TagComponent,
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + DataComponent,
     {
         self.ensure_second_id_mut::<Second>(First::id(self.world))
     }
@@ -1659,8 +1659,8 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity::get_ref")]
     pub fn get_ref<T>(&self) -> CachedRef<'a, T::UnderlyingType>
     where
-        T: ComponentId + NotEmptyComponent,
-        T::UnderlyingType: NotEmptyComponent,
+        T: ComponentId + DataComponent,
+        T::UnderlyingType: DataComponent,
     {
         CachedRef::<T::UnderlyingType>::new(self.world, *self.id, T::id(self.world))
     }
@@ -1686,7 +1686,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
-    pub fn get_ref_first<First: ComponentId + NotEmptyComponent>(
+    pub fn get_ref_first<First: ComponentId + DataComponent>(
         self,
         second: impl Into<Entity>,
     ) -> CachedRef<'a, First> {
@@ -1718,7 +1718,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
-    pub fn get_ref_second<Second: ComponentId + NotEmptyComponent>(
+    pub fn get_ref_second<Second: ComponentId + DataComponent>(
         &self,
         first: impl Into<Entity>,
     ) -> CachedRef<Second> {

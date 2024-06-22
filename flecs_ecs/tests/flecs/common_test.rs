@@ -286,9 +286,8 @@ pub struct Templatex {
     pub value: String,
 }
 
-pub fn create_world_with_flags<
-    T: ComponentId + Default + NotEmptyComponent + ComponentType<Struct>,
->() -> World {
+pub fn create_world_with_flags<T: ComponentId + Default + DataComponent + ComponentType<Struct>>(
+) -> World {
     let world = World::new();
 
     internal_register_component::<false, T>(&world, std::ptr::null());

@@ -1398,7 +1398,7 @@ impl World {
     ///
     /// * C++ API: `world::set`
     #[doc(alias = "world::set")]
-    pub fn set<T: ComponentId + NotEmptyComponent + ComponentType<Struct>>(&self, component: T) {
+    pub fn set<T: ComponentId + DataComponent + ComponentType<Struct>>(&self, component: T) {
         let id = T::id(self);
         set_helper(self.raw_world.as_ptr(), id, component, id);
     }
@@ -1415,7 +1415,7 @@ impl World {
     #[doc(alias = "world::set")]
     pub fn set_first<First>(&self, second: impl Into<Entity>, first: First)
     where
-        First: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        First: ComponentId + ComponentType<Struct> + DataComponent,
     {
         let entity = EntityView::new_from(self, First::id(self));
         entity.set_first::<First>(first, second);
@@ -1433,7 +1433,7 @@ impl World {
     #[doc(alias = "world::set")]
     pub fn set_second<Second>(&self, first: impl Into<Entity>, second: Second)
     where
-        Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
+        Second: ComponentId + ComponentType<Struct> + DataComponent,
     {
         let entity = EntityView::new_from(self, Second::id(self));
         entity.set_second::<Second>(first, second);
@@ -1885,8 +1885,8 @@ impl World {
     // #[inline(always)]
     pub fn get_ref<T>(&self) -> CachedRef<T::UnderlyingType>
     where
-        T: ComponentId + NotEmptyComponent,
-        T::UnderlyingType: NotEmptyComponent,
+        T: ComponentId + DataComponent,
+        T::UnderlyingType: DataComponent,
     {
         EntityView::new_from(self, T::id(self)).get_ref::<T>()
     }

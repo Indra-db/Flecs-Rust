@@ -16,7 +16,7 @@ use syn::{
 /// When a type is decorated with `#[derive(Component)]`, several trait implementations are automatically added based on its structure:
 ///
 /// - Depending on whether the type is a struct or an enum, the relevant `ComponentType<Struct>` or `ComponentType<Enum>` trait is implemented.
-/// - Based on the presence of fields or variants, the type will implement either `EmptyComponent` or `NotEmptyComponent`.
+/// - Based on the presence of fields or variants, the type will implement either `TagComponent` or `DataComponent`.
 /// - The `ComponentId` trait is implemented, providing storage mechanisms for the component.
 ///
 /// The `register` attribute can be used to handle `ComponentId` implementation trait over a specific T in a generic component with the world.
@@ -269,9 +269,9 @@ fn impl_cached_component_data_struct(
 
     // Specific trait implementation based on the presence of fields
     let is_empty_component_trait = if has_fields {
-        quote! { impl #impl_generics flecs_ecs::core::NotEmptyComponent for #name #type_generics #where_clause{} }
+        quote! { impl #impl_generics flecs_ecs::core::DataComponent for #name #type_generics #where_clause{} }
     } else {
-        quote! { impl #impl_generics flecs_ecs::core::EmptyComponent for #name #type_generics #where_clause {} }
+        quote! { impl #impl_generics flecs_ecs::core::TagComponent for #name #type_generics #where_clause {} }
     };
 
     // Combine common and specific trait implementations
@@ -392,7 +392,7 @@ fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> proc_macro2::T
     let has_variants = !variants.is_empty();
     let size_variants = variants.len() as u32;
     let not_empty_trait_or_error = if has_variants {
-        quote! { impl #impl_generics flecs_ecs::core::NotEmptyComponent for #name #type_generics #where_clause {} }
+        quote! { impl #impl_generics flecs_ecs::core::DataComponent for #name #type_generics #where_clause {} }
     } else {
         quote! { compile_error!("Enum components should have at least one variant!"); }
     };

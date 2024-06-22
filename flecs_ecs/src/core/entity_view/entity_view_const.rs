@@ -1428,7 +1428,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target_for")]
-    pub fn target_for_first<First: ComponentId + NotEmptyComponent>(
+    pub fn target_for_first<First: ComponentId + DataComponent>(
         &self,
         second: impl Into<Entity>,
     ) -> *const First {
@@ -2314,7 +2314,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::observe")]
     pub fn observe_payload<C>(self, func: impl FnMut(&C) + 'static) -> Self
     where
-        C: ComponentId + NotEmptyComponent,
+        C: ComponentId + DataComponent,
     {
         self.observe_payload_impl::<C, _>(func)
     }
@@ -2359,7 +2359,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::observe")]
     pub fn observe_payload_entity<C>(self, func: impl FnMut(&mut EntityView, &C) + 'static) -> Self
     where
-        C: ComponentId + NotEmptyComponent,
+        C: ComponentId + DataComponent,
     {
         self.observe_payload_entity_impl::<C, _>(func)
     }

@@ -511,7 +511,7 @@ pub(crate) const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 118;
 #[macro_export]
 macro_rules! impl_component_traits_binding_type {
     ($name:ident) => {
-        impl NotEmptyComponent for $name {}
+        impl DataComponent for $name {}
 
         impl ComponentType<flecs_ecs::core::Struct> for $name {}
 
@@ -549,7 +549,7 @@ macro_rules! impl_component_traits_binding_type_w_id {
         impl FlecsConstantId for $name {
             const ID: u64 = $id;
         }
-        impl NotEmptyComponent for $name {}
+        impl DataComponent for $name {}
 
         impl ComponentType<flecs_ecs::core::Struct> for $name {}
 

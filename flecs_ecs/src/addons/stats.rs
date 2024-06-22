@@ -29,7 +29,7 @@ impl Module for Stats {
 /// trait implementations
 ///////////////////////////
 
-impl flecs_ecs::core::NotEmptyComponent for sys::EcsWorldStats {}
+impl flecs_ecs::core::DataComponent for sys::EcsWorldStats {}
 
 impl flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for sys::EcsWorldStats {}
 
@@ -86,7 +86,7 @@ where
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
 
-impl flecs_ecs::core::NotEmptyComponent for sys::EcsPipelineStats {}
+impl flecs_ecs::core::DataComponent for sys::EcsPipelineStats {}
 
 impl flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for sys::EcsPipelineStats {}
 
@@ -143,7 +143,7 @@ where
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
 
-impl flecs_ecs::core::NotEmptyComponent for sys::EcsWorldSummary {}
+impl flecs_ecs::core::DataComponent for sys::EcsWorldSummary {}
 
 impl flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for sys::EcsWorldSummary {}
 
@@ -200,7 +200,7 @@ where
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
 
-impl flecs_ecs::core::NotEmptyComponent for sys::EcsSystemStats {}
+impl flecs_ecs::core::DataComponent for sys::EcsSystemStats {}
 
 impl flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for sys::EcsSystemStats {}
 
@@ -257,7 +257,7 @@ where
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
 
-impl flecs_ecs::core::NotEmptyComponent for Stats {}
+impl flecs_ecs::core::DataComponent for Stats {}
 
 impl flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for Stats {}
 
