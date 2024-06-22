@@ -1,6 +1,6 @@
 use flecs_ecs_derive::Component;
 
-use crate::core::IntoComponentId;
+use super::ComponentId;
 
 /// Component data that is cached by the `ComponentId` trait.
 /// This data is used to register components with the world.
@@ -33,9 +33,10 @@ pub struct ConditionalTypeSelector<const B: bool, T> {
 //     phantom: std::marker::PhantomData<T>,
 // }
 
-pub struct ConditionalTypePairSelector<T, U>
+pub struct ConditionalTypePairSelector<T, First, Second>
 where
-    U: IntoComponentId,
+    First: ComponentId,
+    Second: ComponentId,
 {
-    phantom: std::marker::PhantomData<(T, U)>,
+    phantom: std::marker::PhantomData<(T, First, Second)>,
 }

@@ -98,13 +98,13 @@ pub trait IterableTypeOperation {
 
 impl<T> IterableTypeOperation for &T
 where
-    T: FlecsCastType,
+    T: IntoComponentId,
 {
-    type CastType = *const <T as FlecsCastType>::CastType;
-    type ActualType<'w> = &'w <T as FlecsCastType>::CastType;
-    type SliceType<'w> = &'w [<T as FlecsCastType>::CastType];
+    type CastType = *const <T as IntoComponentId>::CastType;
+    type ActualType<'w> = &'w <T as IntoComponentId>::CastType;
+    type SliceType<'w> = &'w [<T as IntoComponentId>::CastType];
     type OnlyType = T;
-    type OnlyPairType = <T as FlecsCastType>::CastType;
+    type OnlyPairType = <T as IntoComponentId>::CastType;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::In as i16;
@@ -156,13 +156,13 @@ where
 
 impl<T> IterableTypeOperation for &mut T
 where
-    T: FlecsCastType,
+    T: IntoComponentId,
 {
-    type CastType = *mut <T as FlecsCastType>::CastType;
-    type ActualType<'w> = &'w mut <T as FlecsCastType>::CastType;
-    type SliceType<'w> = &'w mut [<T as FlecsCastType>::CastType];
+    type CastType = *mut <T as IntoComponentId>::CastType;
+    type ActualType<'w> = &'w mut <T as IntoComponentId>::CastType;
+    type SliceType<'w> = &'w mut [<T as IntoComponentId>::CastType];
     type OnlyType = T;
-    type OnlyPairType = <T as FlecsCastType>::CastType;
+    type OnlyPairType = <T as IntoComponentId>::CastType;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::InOut as i16;
@@ -214,13 +214,13 @@ where
 
 impl<T> IterableTypeOperation for Option<&T>
 where
-    T: FlecsCastType,
+    T: IntoComponentId,
 {
-    type CastType = *const <T as FlecsCastType>::CastType;
-    type ActualType<'w> = Option<&'w <T as FlecsCastType>::CastType>;
-    type SliceType<'w> = Option<&'w [<T as FlecsCastType>::CastType]>;
+    type CastType = *const <T as IntoComponentId>::CastType;
+    type ActualType<'w> = Option<&'w <T as IntoComponentId>::CastType>;
+    type SliceType<'w> = Option<&'w [<T as IntoComponentId>::CastType]>;
     type OnlyType = T;
-    type OnlyPairType = <T as FlecsCastType>::CastType;
+    type OnlyPairType = <T as IntoComponentId>::CastType;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::In as i16;
@@ -281,13 +281,13 @@ where
 
 impl<T> IterableTypeOperation for Option<&mut T>
 where
-    T: FlecsCastType,
+    T: IntoComponentId,
 {
-    type CastType = *mut <T as FlecsCastType>::CastType;
-    type ActualType<'w> = Option<&'w mut <T as FlecsCastType>::CastType>;
-    type SliceType<'w> = Option<&'w mut [<T as FlecsCastType>::CastType]>;
+    type CastType = *mut <T as IntoComponentId>::CastType;
+    type ActualType<'w> = Option<&'w mut <T as IntoComponentId>::CastType>;
+    type SliceType<'w> = Option<&'w mut [<T as IntoComponentId>::CastType]>;
     type OnlyType = T;
-    type OnlyPairType = <T as FlecsCastType>::CastType;
+    type OnlyPairType = <T as IntoComponentId>::CastType;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::InOut as i16;

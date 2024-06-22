@@ -4,8 +4,10 @@ pub trait IntoComponentId {
     const IS_ENUM: bool;
     const IS_PAIR: bool;
     const IS_TAGS: bool = Self::First::IS_TAG && Self::Second::IS_TAG;
+    const IS_FIRST: bool;
     // These types are useful for merging functions in World class such ass add_pair<T,U> into add<T>.
     // When IntoComponentId is not a pair, First and Second will be same
+    type CastType: ComponentId;
     type First: ComponentId;
     type Second: ComponentId;
 
@@ -22,12 +24,14 @@ pub trait IntoComponentId {
 
 impl<T> IntoComponentId for T
 where
-    T: ComponentId,
+    T: ComponentId + ComponentInfo,
 {
     const IS_ENUM: bool = T::IS_ENUM;
     const IS_PAIR: bool = false;
+    const IS_FIRST: bool = !T::IS_TAG;
     type First = T;
     type Second = T;
+    type CastType = T;
 
     #[inline]
     fn get_id<'a>(world: impl IntoWorld<'a>) -> IdT {
@@ -42,14 +46,19 @@ where
 
 impl<T, U> IntoComponentId for (T, U)
 where
-    T: ComponentId,
-    U: ComponentId,
+    T: ComponentId + ComponentInfo,
+    U: ComponentId + ComponentInfo,
+    flecs_ecs::core::ConditionalTypePairSelector<<T as ComponentInfo>::TagType, T, U>:
+        flecs_ecs::core::FlecsPairType,
 {
     const IS_ENUM: bool = false;
     const IS_PAIR: bool = true;
+    const IS_FIRST: bool =
+        <ConditionalTypePairSelector<<T as ComponentInfo>::TagType, T,U> as FlecsPairType>::IS_FIRST;
     type First = T;
     type Second = U;
-
+    type CastType =
+        <ConditionalTypePairSelector<<T as ComponentInfo>::TagType, T, U> as FlecsPairType>::Type;
     #[inline]
     fn get_id<'a>(world: impl IntoWorld<'a>) -> IdT {
         let world = world.world();

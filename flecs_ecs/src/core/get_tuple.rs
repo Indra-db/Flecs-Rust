@@ -68,15 +68,15 @@ pub trait GetTupleTypeOperation {
 
 impl<T> GetTupleTypeOperation for &T
 where
-    T: FlecsCastType + DataComponent,
+    T: IntoComponentId + DataComponent,
 {
-    type ActualType<'e> = &'e <T as FlecsCastType>::CastType;
+    type ActualType<'e> = &'e <T as IntoComponentId>::CastType;
     type OnlyType = T;
     const IS_OPTION: bool = false;
     const IS_IMMUTABLE: bool = true;
 
     fn create_tuple_data<'a>(array_components_data: *mut c_void) -> Self::ActualType<'a> {
-        let data_ptr = array_components_data as *const <T as FlecsCastType>::CastType;
+        let data_ptr = array_components_data as *const <T as IntoComponentId>::CastType;
         // SAFETY: up to this point we have checked that the data is not null
         unsafe { &*data_ptr }
     }
@@ -84,15 +84,15 @@ where
 
 impl<T> GetTupleTypeOperation for &mut T
 where
-    T: FlecsCastType + DataComponent,
+    T: IntoComponentId + DataComponent,
 {
-    type ActualType<'e> = &'e mut <T as FlecsCastType>::CastType;
+    type ActualType<'e> = &'e mut <T as IntoComponentId>::CastType;
     type OnlyType = T;
     const IS_OPTION: bool = false;
     const IS_IMMUTABLE: bool = false;
 
     fn create_tuple_data<'a>(array_components_data: *mut c_void) -> Self::ActualType<'a> {
-        let data_ptr = array_components_data as *mut <T as FlecsCastType>::CastType;
+        let data_ptr = array_components_data as *mut <T as IntoComponentId>::CastType;
         // SAFETY: up to this point we have checked that the data is not null
         unsafe { &mut *data_ptr }
     }
@@ -100,9 +100,9 @@ where
 
 impl<T> GetTupleTypeOperation for Option<&T>
 where
-    T: FlecsCastType + DataComponent,
+    T: IntoComponentId + DataComponent,
 {
-    type ActualType<'e> = Option<&'e <T as FlecsCastType>::CastType>;
+    type ActualType<'e> = Option<&'e <T as IntoComponentId>::CastType>;
     type OnlyType = T;
     const IS_OPTION: bool = true;
     const IS_IMMUTABLE: bool = true;
@@ -111,7 +111,7 @@ where
         if array_components_data.is_null() {
             None
         } else {
-            let data_ptr = array_components_data as *const <T as FlecsCastType>::CastType;
+            let data_ptr = array_components_data as *const <T as IntoComponentId>::CastType;
             Some(unsafe { &*data_ptr })
         }
     }
@@ -119,9 +119,9 @@ where
 
 impl<T> GetTupleTypeOperation for Option<&mut T>
 where
-    T: FlecsCastType + DataComponent,
+    T: IntoComponentId + DataComponent,
 {
-    type ActualType<'e> = Option<&'e mut <T as FlecsCastType>::CastType>;
+    type ActualType<'e> = Option<&'e mut <T as IntoComponentId>::CastType>;
     type OnlyType = T;
     const IS_OPTION: bool = true;
     const IS_IMMUTABLE: bool = false;
@@ -130,7 +130,7 @@ where
         if array_components_data.is_null() {
             None
         } else {
-            let data_ptr = array_components_data as *mut <T as FlecsCastType>::CastType;
+            let data_ptr = array_components_data as *mut <T as IntoComponentId>::CastType;
             Some(unsafe { &mut *data_ptr })
         }
     }

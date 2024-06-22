@@ -1447,11 +1447,11 @@ impl World {
     ///
     /// * C++ API: `world::set`
     #[doc(alias = "world::set")]
-    pub fn set_pair<First, Second>(&self, data: <(First, Second) as FlecsCastType>::CastType)
+    pub fn set_pair<First, Second>(&self, data: <(First, Second) as IntoComponentId>::CastType)
     where
         First: ComponentId,
         Second: ComponentId,
-        (First, Second): FlecsCastType,
+        (First, Second): IntoComponentId,
     {
         const {
             assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
@@ -1459,7 +1459,7 @@ impl World {
 
         let entity = EntityView::new_from(
             self,
-            <<(First, Second) as FlecsCastType>::CastType as ComponentId>::id(self),
+            <<(First, Second) as IntoComponentId>::CastType as ComponentId>::id(self),
         );
         entity.set_pair::<First, Second>(data);
     }
@@ -1561,12 +1561,10 @@ impl World {
         callback: impl for<'e> FnOnce(T::ActualType<'e>),
     ) -> bool
     where
-        T::OnlyType: FlecsCastType,
+        T::OnlyType: IntoComponentId,
     {
-        let entity = EntityView::new_from(
-            self,
-            <<T::OnlyType as FlecsCastType>::CastType as IntoComponentId>::get_id(self),
-        );
+        let entity =
+            EntityView::new_from(self, <<T::OnlyType as IntoComponentId>::CastType>::id(self));
         entity.try_get::<T>(callback)
     }
 
@@ -1621,12 +1619,10 @@ impl World {
     /// ```
     pub fn get<T: GetTupleTypeOperation>(&self, callback: impl for<'e> FnOnce(T::ActualType<'e>))
     where
-        T::OnlyType: FlecsCastType,
+        T::OnlyType: IntoComponentId,
     {
-        let entity = EntityView::new_from(
-            self,
-            <<T::OnlyType as FlecsCastType>::CastType as IntoComponentId>::get_id(self),
-        );
+        let entity =
+            EntityView::new_from(self, <<T::OnlyType as IntoComponentId>::CastType>::id(self));
         entity.get::<T>(callback);
     }
 
@@ -1680,12 +1676,10 @@ impl World {
     /// ```
     pub fn cloned<T: ClonedTupleTypeOperation>(&self) -> T::ActualType
     where
-        T::OnlyType: FlecsCastType,
+        T::OnlyType: IntoComponentId,
     {
-        let entity = EntityView::new_from(
-            self,
-            <<T::OnlyType as FlecsCastType>::CastType as IntoComponentId>::get_id(self),
-        );
+        let entity =
+            EntityView::new_from(self, <<T::OnlyType as IntoComponentId>::CastType>::id(self));
         entity.cloned::<T>()
     }
 
@@ -1771,12 +1765,10 @@ impl World {
         callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Option<Return>,
     ) -> Option<Return>
     where
-        T::OnlyType: FlecsCastType,
+        T::OnlyType: IntoComponentId,
     {
-        let entity = EntityView::new_from(
-            self,
-            <<T::OnlyType as FlecsCastType>::CastType as IntoComponentId>::get_id(self),
-        );
+        let entity =
+            EntityView::new_from(self, <<T::OnlyType as IntoComponentId>::CastType>::id(self));
         entity.try_map::<T, Return>(callback)
     }
 
@@ -1860,12 +1852,10 @@ impl World {
         callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Return,
     ) -> Return
     where
-        T::OnlyType: FlecsCastType,
+        T::OnlyType: IntoComponentId,
     {
-        let entity = EntityView::new_from(
-            self,
-            <<T::OnlyType as FlecsCastType>::CastType as IntoComponentId>::get_id(self),
-        );
+        let entity =
+            EntityView::new_from(self, <<T::OnlyType as IntoComponentId>::CastType>::id(self));
         entity.map::<T, Return>(callback)
     }
 
@@ -2079,7 +2069,7 @@ impl World {
     /// * C++ API: `world::add`
     #[doc(alias = "world::add")]
     #[inline(always)]
-    pub fn add<T: FlecsCastType>(&self) -> EntityView {
+    pub fn add<T: IntoComponentId>(&self) -> EntityView {
         let id = T::CastType::id(self);
         EntityView::new_from(self, id).add::<T>()
     }
@@ -3376,7 +3366,7 @@ impl World {
     pub fn prefab_type<T: ComponentId + TagComponent>(&self) -> EntityView {
         let result = Component::<T>::new(self).entity;
         result.add_id(ECS_PREFAB);
-        unsafe { result.add_id_unchecked(T::get_id(self)) };
+        unsafe { result.add_id_unchecked(T::id(self)) };
         result
     }
 
@@ -3404,7 +3394,7 @@ impl World {
     ) -> EntityView<'a> {
         let result = Component::<T>::new_named(self, name).entity;
         result.add_id(ECS_PREFAB);
-        unsafe { result.add_id_unchecked(T::get_id(self)) };
+        unsafe { result.add_id_unchecked(T::id(self)) };
         result
     }
 }

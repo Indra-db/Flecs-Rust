@@ -64,7 +64,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::add")]
     pub fn add<T>(self) -> Self
     where
-        T: FlecsCastType,
+        T: IntoComponentId,
     {
         const {
             if T::CastType::IS_GENERIC {
@@ -306,7 +306,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::add_if`
     #[doc(alias = "entity_builder::add_if")]
-    pub fn add_if<T: FlecsCastType>(self, condition: bool) -> Self {
+    pub fn add_if<T: IntoComponentId>(self, condition: bool) -> Self {
         let world = self.world;
         if condition {
             self.add::<T>()
@@ -787,13 +787,13 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_builder::set_auto_override`
     pub fn set_pair_override<First, Second>(
         self,
-        data: <(First, Second) as FlecsCastType>::CastType,
+        data: <(First, Second) as IntoComponentId>::CastType,
     ) -> Self
     where
         First: ComponentId,
         Second: ComponentId,
-        (First, Second): FlecsCastType,
-        <(First, Second) as FlecsCastType>::CastType: DataComponent,
+        (First, Second): IntoComponentId,
+        <(First, Second) as IntoComponentId>::CastType: DataComponent,
     {
         let id_pair = <(First, Second) as IntoComponentId>::get_id(self.world);
         self.auto_override_id(id_pair).set_id(data, id_pair)
@@ -904,11 +904,14 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set`
     #[doc(alias = "entity_builder::set")]
-    pub fn set_pair<First, Second>(self, data: <(First, Second) as FlecsCastType>::CastType) -> Self
+    pub fn set_pair<First, Second>(
+        self,
+        data: <(First, Second) as IntoComponentId>::CastType,
+    ) -> Self
     where
         First: ComponentId,
         Second: ComponentId,
-        (First, Second): FlecsCastType,
+        (First, Second): IntoComponentId,
     {
         const {
             assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");

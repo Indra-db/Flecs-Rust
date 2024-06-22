@@ -25,11 +25,14 @@ impl<T> DataComponent for Option<&T> where T: DataComponent {}
 impl<T> DataComponent for Option<&mut T> where T: DataComponent {}
 impl<T, U> DataComponent for (T, U)
 where
+    T: ComponentId,
+    U: ComponentId,
     (T, U): IntoComponentId,
-    <(T, U) as FlecsCastType>::CastType: DataComponent,
+    <(T, U) as IntoComponentId>::CastType: DataComponent,
     registration_types::ConditionalTypePairSelector<
         <<(T, U) as IntoComponentId>::First as registration_traits::ComponentInfo>::TagType,
-        (T, U),
+        T,
+        U,
     >: registration_traits::FlecsPairType,
 {
 }
@@ -437,37 +440,20 @@ where
 pub struct FlecsFirstIsNotATag;
 pub struct FlecsFirstIsATag;
 
-impl<T> FlecsPairType for ConditionalTypePairSelector<FlecsFirstIsNotATag, T>
+impl<T, U> FlecsPairType for ConditionalTypePairSelector<FlecsFirstIsNotATag, T, U>
 where
-    T: IntoComponentId,
-    T::First: ComponentId,
+    T: ComponentId,
+    U: ComponentId,
 {
-    type Type = T::First;
+    type Type = T;
     const IS_FIRST: bool = true;
 }
 
-impl<U> FlecsPairType for ConditionalTypePairSelector<FlecsFirstIsATag, U>
+impl<T, U> FlecsPairType for ConditionalTypePairSelector<FlecsFirstIsATag, T, U>
 where
-    U: IntoComponentId,
-    U::Second: ComponentId,
+    T: ComponentId,
+    U: ComponentId,
 {
-    type Type = U::Second;
+    type Type = U;
     const IS_FIRST: bool = false;
-}
-
-pub trait FlecsCastType: IntoComponentId {
-    type CastType: ComponentId;
-    const IS_FIRST: bool;
-}
-
-impl<T> FlecsCastType for T
-where
-    T: IntoComponentId,
-    flecs_ecs::core::ConditionalTypePairSelector<<T::First as ComponentInfo>::TagType, T>:
-        flecs_ecs::core::FlecsPairType,
-    <T as flecs_ecs::core::IntoComponentId>::First: ComponentInfo,
-{
-    type CastType =
-        <ConditionalTypePairSelector<<T::First as ComponentInfo>::TagType, T> as FlecsPairType>::Type;
-    const IS_FIRST : bool = <ConditionalTypePairSelector<<T::First as ComponentInfo>::TagType, T> as FlecsPairType>::IS_FIRST;
 }

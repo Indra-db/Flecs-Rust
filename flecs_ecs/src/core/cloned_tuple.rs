@@ -61,15 +61,15 @@ pub trait ClonedTupleTypeOperation {
 
 impl<T> ClonedTupleTypeOperation for &T
 where
-    T: FlecsCastType,
-    <T as FlecsCastType>::CastType: Clone,
+    T: IntoComponentId,
+    <T as IntoComponentId>::CastType: Clone,
 {
-    type ActualType = <T as FlecsCastType>::CastType;
+    type ActualType = <T as IntoComponentId>::CastType;
     type OnlyType = T;
     const IS_OPTION: bool = false;
 
     fn create_tuple_data(array_components_data: *mut c_void) -> Self::ActualType {
-        let data_ptr = array_components_data as *const <T as FlecsCastType>::CastType;
+        let data_ptr = array_components_data as *const <T as IntoComponentId>::CastType;
         // SAFETY: up to this point we have checked that the data is not null
         unsafe { (*data_ptr).clone() }
     }
@@ -77,10 +77,10 @@ where
 
 impl<T> ClonedTupleTypeOperation for Option<&T>
 where
-    T: FlecsCastType,
-    <T as FlecsCastType>::CastType: Clone,
+    T: IntoComponentId,
+    <T as IntoComponentId>::CastType: Clone,
 {
-    type ActualType = Option<<T as FlecsCastType>::CastType>;
+    type ActualType = Option<<T as IntoComponentId>::CastType>;
     type OnlyType = T;
     const IS_OPTION: bool = true;
 
@@ -88,7 +88,7 @@ where
         if array_components_data.is_null() {
             None
         } else {
-            let data_ptr = array_components_data as *const <T as FlecsCastType>::CastType;
+            let data_ptr = array_components_data as *const <T as IntoComponentId>::CastType;
             Some(unsafe { (*data_ptr).clone() })
         }
     }
