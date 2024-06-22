@@ -2028,7 +2028,7 @@ impl World {
     #[inline(always)]
     pub fn has_enum<T>(&self, constant: T) -> bool
     where
-        T: ComponentId + ComponentType<Enum> + CachedEnumData,
+        T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         let id = T::id(self);
         EntityView::new_from(self, id).has_enum_id::<T>(id, constant)
@@ -2099,7 +2099,7 @@ impl World {
     /// * C++ API: `world::add`
     #[doc(alias = "world::add")]
     #[inline(always)]
-    pub fn add_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
+    pub fn add_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &self,
         enum_value: T,
     ) -> EntityView {
@@ -2168,7 +2168,7 @@ impl World {
     pub fn add_pair_enum<First, Second>(&self, enum_value: Second) -> EntityView
     where
         First: ComponentId,
-        Second: ComponentId + ComponentType<Enum> + CachedEnumData,
+        Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         EntityView::new_from(self, First::id(self)).add_pair_enum::<First, Second>(enum_value)
     }
@@ -2236,7 +2236,7 @@ impl World {
     pub fn remove_enum_tag<First, Second>(&self, enum_value: Second)
     where
         First: ComponentId,
-        Second: ComponentId + ComponentType<Enum> + CachedEnumData,
+        Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         EntityView::new_from(self, First::id(self)).remove_enum_tag::<First, Second>(enum_value);
     }
@@ -2495,7 +2495,7 @@ impl World {
     ///
     /// * C++ API: `world::count`
     #[doc(alias = "world::count")]
-    pub fn count_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
+    pub fn count_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &self,
         enum_value: T,
     ) -> i32 {
@@ -2529,7 +2529,7 @@ impl World {
     pub fn count_enum_tag_pair<First, Second>(&self, enum_value: Second) -> i32
     where
         First: ComponentId,
-        Second: ComponentId + ComponentType<Enum> + CachedEnumData,
+        Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         unsafe {
             sys::ecs_count_id(
@@ -2731,7 +2731,7 @@ impl World {
     #[doc(alias = "world::with")]
     pub fn with_enum<T>(&self, enum_value: T, func: impl FnMut())
     where
-        T: ComponentId + ComponentType<Enum> + CachedEnumData,
+        T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         self.with_id(enum_value.get_id_variant(self), func);
     }
@@ -2755,7 +2755,7 @@ impl World {
     pub fn with_enum_pair<First, Second>(&self, enum_value: Second, func: impl FnMut())
     where
         First: ComponentId,
-        Second: ComponentId + ComponentType<Enum> + CachedEnumData,
+        Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         self.with_id(
             ecs_pair(First::id(self), **(enum_value.get_id_variant(self))),
@@ -2843,7 +2843,7 @@ impl World {
     ///
     /// * C++ API: `world::delete_with`
     #[doc(alias = "world::delete_with")]
-    pub fn delete_with_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
+    pub fn delete_with_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &self,
         enum_value: T,
     ) {
@@ -2867,7 +2867,7 @@ impl World {
     pub fn delete_with_enum_pair<First, Second>(&self, enum_value: Second)
     where
         First: ComponentId,
-        Second: ComponentId + ComponentType<Enum> + CachedEnumData,
+        Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         self.delete_with_id(ecs_pair(First::id(self), **enum_value.get_id_variant(self)));
     }
@@ -2952,7 +2952,7 @@ impl World {
     ///
     /// * C++ API: `world::remove_all`
     #[doc(alias = "world::remove_all")]
-    pub fn remove_all_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
+    pub fn remove_all_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &self,
         enum_value: T,
     ) {
@@ -2977,7 +2977,7 @@ impl World {
     pub fn remove_all_enum_pair<First, Second>(&self, enum_value: Second)
     where
         First: ComponentId,
-        Second: ComponentId + ComponentType<Enum> + CachedEnumData,
+        Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         self.remove_all_id((First::id(self), enum_value.get_id_variant(self)));
     }
@@ -3184,7 +3184,7 @@ impl World {
     #[doc(alias = "world::id")] //enum mixin implementation
     pub fn entity_from_enum<T>(&self, enum_value: T) -> EntityView
     where
-        T: ComponentId + ComponentType<Enum> + CachedEnumData,
+        T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         EntityView::new_from(self, enum_value.get_id_variant(self))
     }
@@ -3625,7 +3625,7 @@ impl World {
     ///
     /// * C++ API: `world::to_entity`
     #[doc(alias = "world::to_entity")]
-    pub fn to_entity<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
+    pub fn to_entity<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &self,
         enum_value: T,
     ) -> EntityView {

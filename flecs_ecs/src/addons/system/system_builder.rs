@@ -172,7 +172,7 @@ where
     #[doc(alias = "system_builder_i::kind")]
     pub fn kind_enum<Phase>(&mut self, phase: Phase) -> &mut Self
     where
-        Phase: ComponentId + ComponentType<Enum> + CachedEnumData,
+        Phase: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         let enum_id = phase.get_id_variant(self.world());
         self.kind_id(enum_id)

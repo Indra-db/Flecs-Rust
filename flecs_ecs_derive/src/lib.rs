@@ -425,7 +425,7 @@ fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> proc_macro2::T
     };
 
     let cached_enum_data = quote! {
-        impl #impl_generics flecs_ecs::core::CachedEnumData for #name #type_generics #where_clause{
+        impl #impl_generics flecs_ecs::core::EnumComponentInfo for #name #type_generics #where_clause{
             #cached_enum_data_impl
         }
 

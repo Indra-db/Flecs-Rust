@@ -386,7 +386,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::with`
     #[doc(alias = "query_builder_i::with")]
-    fn with_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
+    fn with_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &mut self,
         value: T,
     ) -> &mut Self {
@@ -528,7 +528,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::without`
     #[doc(alias = "query_builder_i::without")]
-    fn without_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
+    fn without_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &mut self,
         value: T,
     ) -> &mut Self {
@@ -541,7 +541,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::without`
     #[doc(alias = "query_builder_i::without")]
-    fn without_enum_wildcard<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
+    fn without_enum_wildcard<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &mut self,
     ) -> &mut Self {
         self.with_enum_wildcard::<T>().not()
@@ -707,7 +707,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// Set the type as current term and in mode inout
-    fn write_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
+    fn write_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &mut self,
         value: T,
     ) -> &mut Self {
@@ -764,7 +764,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// Set the type as current term and in mode in
-    fn read_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
+    fn read_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &mut self,
         value: T,
     ) -> &mut Self {

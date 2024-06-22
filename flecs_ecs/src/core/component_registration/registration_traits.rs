@@ -69,7 +69,7 @@ impl<T> ComponentType<Enum> for &mut T where T: ComponentType<Enum> {}
 /// If the ID is already known, the trait takes care of the component registration and checks for consistency in the input.
 pub trait ComponentId: Sized + ComponentInfo + 'static {
     type UnderlyingType: ComponentId;
-    type UnderlyingEnumType: ComponentId + CachedEnumData;
+    type UnderlyingEnumType: ComponentId + EnumComponentInfo;
 
     /// attempts to register the component with the world. If it's already registered, it does nothing.
     #[doc(hidden)]
@@ -285,7 +285,7 @@ pub trait ComponentInfo: Sized {
     type TagType;
 }
 
-pub trait CachedEnumData: ComponentType<Enum> + ComponentId {
+pub trait EnumComponentInfo: ComponentType<Enum> + ComponentId {
     const SIZE_ENUM_FIELDS: u32;
     type VariantIterator: Iterator<Item = Self>;
 

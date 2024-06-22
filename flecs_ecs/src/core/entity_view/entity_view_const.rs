@@ -1404,7 +1404,10 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target_for")]
     #[inline(always)]
-    pub fn target_for<T: ComponentOrPairId>(self, relationship: impl Into<Entity>) -> EntityView<'a> {
+    pub fn target_for<T: ComponentOrPairId>(
+        self,
+        relationship: impl Into<Entity>,
+    ) -> EntityView<'a> {
         self.target_for_id(relationship, T::get_id(self.world))
     }
 
@@ -1716,7 +1719,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::has")]
     pub fn has_enum<T>(self, constant: T) -> bool
     where
-        T: ComponentId + ComponentType<Enum> + CachedEnumData,
+        T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         let component_id: IdT = T::id(self.world);
         // Safety: we know the enum fields are registered because of the previous T::id call
@@ -1734,7 +1737,7 @@ impl<'a> EntityView<'a> {
     // this is pub(crate) because it's used for development purposes only
     pub(crate) fn has_enum_id<T>(self, enum_id: impl Into<Entity>, constant: T) -> bool
     where
-        T: ComponentId + ComponentType<Enum> + CachedEnumData,
+        T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         let enum_constant_entity_id = constant.get_id_variant(self.world);
         self.has_id((enum_id.into(), enum_constant_entity_id))
@@ -1803,7 +1806,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    pub fn has_pair_enum<T: ComponentId, U: ComponentId + CachedEnumData>(
+    pub fn has_pair_enum<T: ComponentId, U: ComponentId + EnumComponentInfo>(
         &self,
         constant: U,
     ) -> bool {

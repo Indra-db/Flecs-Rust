@@ -207,7 +207,7 @@ impl<'a> EntityView<'a> {
     pub fn add_pair_enum<First, Second>(self, enum_value: Second) -> Self
     where
         First: ComponentId,
-        Second: ComponentId + ComponentType<Enum> + CachedEnumData,
+        Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         const {
             if !First::IS_TAG && !First::IMPLS_DEFAULT {
@@ -226,7 +226,7 @@ impl<'a> EntityView<'a> {
     ///
     /// # Type Parameters
     ///
-    /// - `T`: The enumeration type, which derives from `ComponentId`, `ComponentType<Enum>`, and `CachedEnumData`.
+    /// - `T`: The enumeration type, which derives from `ComponentId`, `ComponentType<Enum>`, and `EnumComponentInfo`.
     ///
     /// # Arguments
     ///
@@ -236,7 +236,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    pub fn add_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
+    pub fn add_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         self,
         enum_value: T,
     ) -> Self {
@@ -400,7 +400,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::add_if")]
     pub fn add_enum_if<T>(self, enum_value: T, condition: bool) -> Self
     where
-        T: ComponentId + ComponentType<Enum> + CachedEnumData,
+        T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         let world = self.world;
         // SAFETY: we know that the enum_value is a valid because of the T::id call
@@ -467,7 +467,7 @@ impl<'a> EntityView<'a> {
     pub fn remove_enum_tag<First, Second>(self, enum_value: Second) -> Self
     where
         First: ComponentId,
-        Second: ComponentId + ComponentType<Enum> + CachedEnumData,
+        Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         let world = self.world;
         self.remove_id((First::id(world), enum_value.get_id_variant(world)))
@@ -614,7 +614,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::depends_on`
     #[doc(alias = "entity_builder::depends_on")]
-    pub fn depends_on_enum<T: ComponentId + ComponentType<Enum> + CachedEnumData>(
+    pub fn depends_on_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         self,
         enum_value: T,
     ) -> Self {
@@ -999,7 +999,7 @@ impl<'a> EntityView<'a> {
     pub fn set_pair_enum<First, Second>(self, enum_variant: Second, first: First) -> Self
     where
         First: ComponentId + ComponentType<Struct> + DataComponent,
-        Second: ComponentId + ComponentType<Enum> + CachedEnumData,
+        Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         set_helper(
             self.world.world_ptr_mut(),
