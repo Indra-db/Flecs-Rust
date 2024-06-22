@@ -36,7 +36,7 @@ macro_rules! create_pre_registered_component {
                 flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsATag;
         }
 
-        impl EmptyComponent for $struct_name {}
+        impl TagComponent for $struct_name {}
 
         impl ComponentType<Struct> for $struct_name {}
 
@@ -332,7 +332,7 @@ pub mod rest {
 
 // default component for event API
 
-impl flecs_ecs::core::EmptyComponent for () {}
+impl flecs_ecs::core::TagComponent for () {}
 
 impl flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for () {}
 

@@ -2224,7 +2224,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::observe")]
     pub fn observe<C>(self, func: impl FnMut() + 'static) -> Self
     where
-        C: ComponentId + EmptyComponent,
+        C: ComponentId + TagComponent,
     {
         self.observe_impl::<C, _>(func)
     }
@@ -2269,7 +2269,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::observe")]
     pub fn observe_entity<C>(self, func: impl FnMut(&mut EntityView) + 'static) -> Self
     where
-        C: ComponentId + EmptyComponent,
+        C: ComponentId + TagComponent,
     {
         self.observe_entity_impl::<C, _>(func)
     }

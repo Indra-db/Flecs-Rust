@@ -1579,7 +1579,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity::ensure")]
     pub fn ensure_second_mut<First, Second>(&mut self) -> &'a mut Second
     where
-        First: ComponentId + ComponentType<Struct> + EmptyComponent,
+        First: ComponentId + ComponentType<Struct> + TagComponent,
         Second: ComponentId + ComponentType<Struct> + NotEmptyComponent,
     {
         self.ensure_second_id_mut::<Second>(First::id(self.world))

@@ -4,12 +4,12 @@ use std::{
     sync::atomic::{AtomicU32, Ordering},
 };
 
-pub trait EmptyComponent {}
+pub trait TagComponent {}
 
-impl<T, U> EmptyComponent for (T, U)
+impl<T, U> TagComponent for (T, U)
 where
-    T: EmptyComponent,
-    U: EmptyComponent,
+    T: TagComponent,
+    U: TagComponent,
 {
 }
 
