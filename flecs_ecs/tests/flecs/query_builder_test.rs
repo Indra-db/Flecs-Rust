@@ -1828,7 +1828,7 @@ fn query_builder_2_subsequent_args() {
         .term_at(1)
         .singleton()
         .run(|mut it| {
-            while it.next_iter() {
+            while it.next() {
                 it.real_world().get::<&mut Flags>(|f| f.count += it.count());
             }
         });
@@ -1859,7 +1859,7 @@ fn query_builder_optional_tag_is_set() {
     let mut count = 0;
 
     q.run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             assert_eq!(it.count(), 1);
 
             count += it.count();
@@ -1914,7 +1914,7 @@ fn query_builder_10_terms() {
 
     let mut count = 0;
     f.run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             assert_eq!(it.count(), 1);
             assert_eq!(it.entity(0), e);
             assert_eq!(it.field_count(), 10);
@@ -1977,7 +1977,7 @@ fn query_builder_16_terms() {
 
     let mut count = 0;
     f.run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             assert_eq!(it.count(), 1);
             assert_eq!(it.entity(0), e);
             assert_eq!(it.field_count(), 16);
@@ -2035,7 +2035,7 @@ fn query_builder_group_by_raw() {
     let mut count = 0;
 
     q.run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             assert_eq!(it.count(), 1);
             if count == 0 {
                 assert!(it.entity(0) == e1);
@@ -2053,7 +2053,7 @@ fn query_builder_group_by_raw() {
 
     count = 0;
     q_reverse.run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             assert_eq!(it.count(), 1);
             if count == 0 {
                 assert!(it.entity(0) == e3);
@@ -2098,7 +2098,7 @@ fn query_builder_group_by_template() {
     let mut count = 0;
 
     q.run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             assert_eq!(it.count(), 1);
             if count == 0 {
                 assert!(it.entity(0) == e1);
@@ -2116,7 +2116,7 @@ fn query_builder_group_by_template() {
 
     count = 0;
     q_reverse.run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             assert_eq!(it.count(), 1);
             if count == 0 {
                 assert!(it.entity(0) == e3);
@@ -3255,7 +3255,7 @@ fn query_builder_const_in_term() {
 
     let mut count = 0;
     f.run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             let p = it.field::<Position>(0).unwrap();
             assert!(it.is_readonly(0));
             for i in it.iter() {
@@ -3284,7 +3284,7 @@ fn query_builder_const_optional() {
     let mut count = 0;
     let mut set_count = 0;
     f.run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             assert_eq!(it.count(), 1);
             if it.is_set(1) {
                 let p = &it.field::<Position>(1).unwrap()[0];
@@ -3466,7 +3466,7 @@ fn query_builder_iter_column_w_const_as_array() {
 
     let mut count = 0;
     f.run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             let mut p = it.field::<Position>(0).unwrap();
             for i in it.iter() {
                 p[i].x += 1;
@@ -3505,7 +3505,7 @@ fn query_builder_iter_column_w_const_as_ptr() {
 
     let mut count = 0;
     f.run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             let p = &it.field::<Position>(0).unwrap()[0];
             for _i in it.iter() {
                 assert_eq!(p.x, 10);
@@ -4724,7 +4724,7 @@ fn query_builder_var_src_w_prefixed_name() {
 
     let mut count = 0;
     r.run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             assert_eq!(it.get_var_by_name("Var"), e);
             count += 1;
         }
@@ -4749,7 +4749,7 @@ fn query_builder_var_first_w_prefixed_name() {
 
     let mut count = 0;
     r.run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             assert_eq!(it.count(), 1);
             assert_eq!(it.entity(0), e);
             assert_eq!(it.get_var_by_name("Var"), world.id_from::<Foo>());
@@ -4776,7 +4776,7 @@ fn query_builder_var_second_w_prefixed_name() {
 
     let mut count = 0;
     r.run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             assert_eq!(it.count(), 1);
             assert_eq!(it.entity(0), e);
             assert_eq!(it.get_var_by_name("Var"), t);
@@ -4804,7 +4804,7 @@ fn query_builder_term_w_second_var_string() {
 
     let mut count = 0;
     r.run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             assert_eq!(it.count(), 1);
             assert_eq!(it.entity(0), e);
             assert_eq!(it.get_var_by_name("Var"), t);
@@ -4830,7 +4830,7 @@ fn query_builder_term_type_w_second_var_string() {
 
     let mut count = 0;
     r.run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             assert_eq!(it.count(), 1);
             assert_eq!(it.entity(0), e);
             assert_eq!(it.get_var_by_name("Var"), t);

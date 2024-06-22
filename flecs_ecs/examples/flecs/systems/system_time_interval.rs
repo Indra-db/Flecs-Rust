@@ -9,7 +9,7 @@ struct Timeout {
 }
 
 fn tick(mut it: Iter) {
-    while it.next_iter() {
+    while it.next() {
         println!("{}", it.system().name());
     }
 }

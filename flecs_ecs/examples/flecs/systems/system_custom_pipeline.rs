@@ -29,14 +29,14 @@ fn main() {
 
     // Create system with Physics tag
     world.system::<()>().kind::<Physics>().run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             println!("System with Physics ran!");
         }
     });
 
     // Create system without Physics tag
     world.system::<()>().run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             println!("System without Physics ran!");
         }
     });

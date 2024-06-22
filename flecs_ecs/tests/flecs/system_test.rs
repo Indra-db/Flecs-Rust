@@ -22,7 +22,7 @@ fn system_iter() {
     world
         .system::<(&mut Position, &mut Velocity)>()
         .run(|mut it| {
-            while it.next_iter() {
+            while it.next() {
                 let mut p = it.field::<Position>(0).unwrap();
                 let v = it.field::<Velocity>(1).unwrap();
                 for i in it.iter() {
@@ -52,7 +52,7 @@ fn system_iter_const() {
         .set(Velocity { x: 1, y: 2 });
 
     world.system::<(&mut Position, &Velocity)>().run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             let mut p = it.field::<Position>(0).unwrap();
             let v = it.field::<&Velocity>(1).unwrap();
             for i in it.iter() {
@@ -99,7 +99,7 @@ fn system_iter_shared() {
         .system::<&mut Position>()
         .expr("flecs.common_test.Velocity(self|up IsA)")
         .run(|mut it| {
-            while it.next_iter() {
+            while it.next() {
                 let mut p = it.field::<Position>(0).unwrap();
                 let v = it.field::<&Velocity>(1).unwrap();
 
@@ -154,7 +154,7 @@ fn system_iter_optional() {
     world
         .system::<(&mut Position, Option<&mut Velocity>, Option<&mut Mass>)>()
         .run(|mut it| {
-            while it.next_iter() {
+            while it.next() {
                 let mut p = it.field::<Position>(0).unwrap();
 
                 if it.is_set(1) && it.is_set(2) {
@@ -355,7 +355,7 @@ fn system_signature() {
         .system::<()>()
         .expr("flecs.common_test.Position, flecs.common_test.Velocity")
         .run(|mut it| {
-            while it.next_iter() {
+            while it.next() {
                 let mut p = it.field::<Position>(0).unwrap();
                 let v = it.field::<Velocity>(1).unwrap();
 
@@ -392,7 +392,7 @@ fn system_signature_const() {
         .system::<()>()
         .expr("flecs.common_test.Position, [in] flecs.common_test.Velocity")
         .run(|mut it| {
-            while it.next_iter() {
+            while it.next() {
                 let mut p = it.field::<Position>(0).unwrap();
                 let v = it.field::<Velocity>(1).unwrap();
 
@@ -443,7 +443,7 @@ fn system_signature_shared() {
         .system::<()>()
         .expr("flecs.common_test.Position, [in] flecs.common_test.Velocity(self|up IsA)")
         .run(|mut it| {
-            while it.next_iter() {
+            while it.next() {
                 let mut p = it.field::<Position>(0).unwrap();
                 let v = it.field::<Velocity>(1).unwrap();
 
@@ -499,7 +499,7 @@ fn system_signature_optional() {
         .system::<()>()
         .expr("flecs.common_test.Position, ?flecs.common_test.Velocity, ?Mass")
         .run(|mut it| {
-            while it.next_iter() {
+            while it.next() {
                 let mut p = it.field::<Position>(0).unwrap();
 
                 if it.is_set(1) && it.is_set(2) {
@@ -549,12 +549,12 @@ fn system_copy_name_on_create() {
 
     let system_1 = world
         .system_named::<&mut Position>(name)
-        .run(|mut it| while it.next_iter() {});
+        .run(|mut it| while it.next() {});
 
     name = "world";
     let system_2 = world
         .system_named::<&mut Position>(name)
-        .run(|mut it| while it.next_iter() {});
+        .run(|mut it| while it.next() {});
 
     assert!(system_1.id() != system_2.id());
 }
@@ -565,7 +565,7 @@ fn system_nested_system() {
 
     let system_1 = world
         .system_named::<&mut Position>("foo::bar")
-        .run(|mut it| while it.next_iter() {});
+        .run(|mut it| while it.next() {});
 
     assert_eq!(system_1.name(), "bar");
 
@@ -586,7 +586,7 @@ fn system_empty_signature() {
 
     world.system::<()>().run(|mut it| {
         let world = it.world();
-        while it.next_iter() {
+        while it.next() {
             world.get::<&mut Count>(|c| {
                 c.0 += 1;
             });
@@ -608,7 +608,7 @@ fn system_iter_tag() {
 
     world.system::<&TagA>().run(|mut it| {
         let world = it.world();
-        while it.next_iter() {
+        while it.next() {
             world.get::<&mut Count>(|c| {
                 c.0 += 1;
             });
@@ -838,7 +838,7 @@ fn system_get_query() {
 
     q.run(|mut it| {
         let world = it.world();
-        while it.next_iter() {
+        while it.next() {
             let pos = it.field::<&Position>(0).unwrap();
             for i in it.iter() {
                 assert_eq!(i as i32, pos[i].x);
@@ -976,7 +976,7 @@ fn system_add_from_iter() {
     let e3 = world.entity().set(Position { x: 2, y: 0 });
 
     world.system::<&Position>().run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             for i in it.iter() {
                 it.entity(i).add::<Velocity>();
                 assert!(!it.entity(i).has::<Velocity>());
@@ -1000,7 +1000,7 @@ fn system_delete_from_iter() {
     let e3 = world.entity().set(Position { x: 2, y: 0 });
 
     world.system::<&Position>().run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             for i in it.iter() {
                 it.entity(i).destruct();
                 // Delete is deferred
@@ -1032,7 +1032,7 @@ fn system_add_from_iter_world_handle() {
 
     world.system::<&EntityRef>().run(|mut it| {
         let world = it.world();
-        while it.next_iter() {
+        while it.next() {
             let c = it.field::<EntityRef>(0).unwrap();
             for i in it.iter() {
                 world
@@ -1070,7 +1070,7 @@ fn system_new_from_iter() {
     let e3 = world.entity().set(Position { x: 0, y: 0 });
 
     world.system::<&Position>().run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             for i in it.iter() {
                 it.entity(i).set(EntityRef {
                     value: it.world().entity().add::<Velocity>().id(),
@@ -1120,7 +1120,7 @@ fn system_each_w_mut_children_it() {
 
     world.system::<&Position>().run(|mut it| {
         let world = it.world();
-        while it.next_iter() {
+        while it.next() {
             for i in it.iter() {
                 it.entity(i).each_child(|child| {
                     child.add::<Velocity>();
@@ -1166,7 +1166,7 @@ fn system_readonly_children_iter() {
 
     world.system::<&EntityRef>().run(|mut it| {
         let world = it.world();
-        while it.next_iter() {
+        while it.next() {
             let c = it.field::<EntityRef>(0).unwrap();
             for i in it.iter() {
                 world.entity_from_id(c[i].value).each_child(|child| {
@@ -1217,7 +1217,7 @@ fn system_rate_filter() {
 
     let root = world.system_named::<()>("root").run(|mut it| {
         let world = it.world();
-        while it.next_iter() {
+        while it.next() {
             world.get::<&mut Counter>(|c| {
                 c.root += 1;
             });
@@ -1229,7 +1229,7 @@ fn system_rate_filter() {
         .rate_w_tick_source(root.id(), 1)
         .run(|mut it| {
             let world = it.world();
-            while it.next_iter() {
+            while it.next() {
                 world.get::<&mut Counter>(|c| {
                     c.l1_a += 1;
                 });
@@ -1241,7 +1241,7 @@ fn system_rate_filter() {
         .rate_w_tick_source(root.id(), 2)
         .run(|mut it| {
             let world = it.world();
-            while it.next_iter() {
+            while it.next() {
                 world.get::<&mut Counter>(|c| {
                     c.l1_b += 1;
                 });
@@ -1253,7 +1253,7 @@ fn system_rate_filter() {
         .rate_w_tick_source(root.id(), 3)
         .run(|mut it| {
             let world = it.world();
-            while it.next_iter() {
+            while it.next() {
                 world.get::<&mut Counter>(|c| {
                     c.l1_c += 1;
                 });
@@ -1265,7 +1265,7 @@ fn system_rate_filter() {
         .rate_w_tick_source(l1_a.id(), 2)
         .run(|mut it| {
             let world = it.world();
-            while it.next_iter() {
+            while it.next() {
                 world.get::<&mut Counter>(|c| {
                     c.l2_a += 1;
                 });
@@ -1277,7 +1277,7 @@ fn system_rate_filter() {
         .rate_w_tick_source(l1_b.id(), 2)
         .run(|mut it| {
             let world = it.world();
-            while it.next_iter() {
+            while it.next() {
                 world.get::<&mut Counter>(|c| {
                     c.l2_b += 1;
                 });
@@ -1319,7 +1319,7 @@ fn system_update_rate_filter() {
 
     let root = world.system_named::<()>("root").run(|mut it| {
         let world = it.world();
-        while it.next_iter() {
+        while it.next() {
             world.get::<&mut Counter>(|c| {
                 c.root += 1;
             });
@@ -1331,7 +1331,7 @@ fn system_update_rate_filter() {
         .rate_w_tick_source(root.id(), 2)
         .run(|mut it| {
             let world = it.world();
-            while it.next_iter() {
+            while it.next() {
                 world.get::<&mut Counter>(|c| {
                     c.l1 += 1;
                 });
@@ -1343,7 +1343,7 @@ fn system_update_rate_filter() {
         .rate_w_tick_source(l1.id(), 3)
         .run(|mut it| {
             let world = it.world();
-            while it.next_iter() {
+            while it.next() {
                 world.get::<&mut Counter>(|c| {
                     c.l2 += 1;
                 });
@@ -1427,7 +1427,7 @@ fn system_test_let_defer_iter() {
     let e3 = world.entity().add::<Tag>().set(Value { value: 30 });
 
     let s = world.system::<&mut Value>().with::<Tag>().run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             let mut v = it.field::<Value>(0).unwrap();
             for i in it.iter() {
                 v[i].value += 1;
@@ -1480,7 +1480,7 @@ fn system_custom_pipeline() {
     // world.system::<()>()
     //     .kind(PostFrame)
     //     .run(|mut it| {
-    //         while it.next_iter() {
+    //         while it.next() {
     //                 world.get::<&Count>(|c| {
     //                 assert_eq!(c.0,2);
     //             });
@@ -1494,7 +1494,7 @@ fn system_custom_pipeline() {
     // world.system::<()>()
     //     .kind(OnFrame)
     //     .run(|mut it| {
-    //         while it.next_iter() {
+    //         while it.next() {
     //             world.get::<&Count>(|c| {
     //                 assert_eq!(c.0,1);
     //             });
@@ -1508,7 +1508,7 @@ fn system_custom_pipeline() {
     // world.system::<()>()
     //     .kind(PreFrame)
     //     .run(|mut it| {
-    //         while it.next_iter() {
+    //         while it.next() {
     //             assert_eq!(count, 0);
     //             world.get::<&mut Count>(|c| {
     //                 c.0 += 1;
@@ -1543,7 +1543,7 @@ fn system_custom_pipeline_w_kind() {
     world.set(Count(0));
 
     world.system::<()>().kind_id(tag).run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             let world = it.world();
             world.get::<&mut Count>(|c| {
                 assert_eq!(c, 0);
@@ -1554,7 +1554,7 @@ fn system_custom_pipeline_w_kind() {
 
     world.system::<()>().kind_id(tag).run(|mut it| {
         let world = it.world();
-        while it.next_iter() {
+        while it.next() {
             world.get::<&mut Count>(|c| {
                 assert_eq!(c.0, 1);
                 c.0 += 1;
@@ -1564,7 +1564,7 @@ fn system_custom_pipeline_w_kind() {
 
     world.system::<()>().kind_id(tag).run(|mut it| {
         let world = it.world();
-        while it.next_iter() {
+        while it.next() {
             world.get::<&mut Count>(|c| {
                 assert_eq!(c.0, 2);
                 c.0 += 1;
@@ -1934,7 +1934,7 @@ fn system_instanced_query_w_singleton_iter() {
         .instanced()
         .run(|mut it| {
             let world = it.world();
-            while it.next_iter() {
+            while it.next() {
                 let s = it.field::<SelfRef>(0).unwrap();
                 let mut p = it.field::<Position>(1).unwrap();
                 let v = it.field::<Velocity>(2).unwrap();
@@ -2026,7 +2026,7 @@ fn system_instanced_query_w_base_iter() {
         .instanced()
         .run(|mut it| {
             let world = it.world();
-            while it.next_iter() {
+            while it.next() {
                 let s = it.field::<SelfRef>(0).unwrap();
                 let mut p = it.field::<Position>(1).unwrap();
                 let v = it.field::<&Velocity>(2).unwrap();
@@ -2119,7 +2119,7 @@ fn system_un_instanced_query_w_singleton_iter() {
         .singleton()
         .run(|mut it| {
             let world = it.world();
-            while it.next_iter() {
+            while it.next() {
                 let s = it.field::<SelfRef>(0).unwrap();
                 let mut p = it.field::<Position>(1).unwrap();
                 let v = it.field::<&Velocity>(2).unwrap();
@@ -2210,7 +2210,7 @@ fn system_un_instanced_query_w_base_iter() {
         .system::<(&SelfRef, &mut Position, &Velocity)>()
         .run(|mut it| {
             let world = it.world();
-            while it.next_iter() {
+            while it.next() {
                 let s = it.field::<SelfRef>(0).unwrap();
                 let mut p = it.field::<Position>(1).unwrap();
                 let v = it.field::<&Velocity>(2).unwrap();
@@ -2301,13 +2301,7 @@ struct PipelineType;
 struct First;
 #[derive(Component)]
 struct Second;
-#[derive(Component)]
-struct Count2 {
-    i1: i32,
-    i2: i32,
-}
 
-#[ignore = "fix this test"]
 #[test]
 fn system_system_w_type_kind_type_pipeline() {
     let world = World::new();
@@ -2329,7 +2323,7 @@ fn system_system_w_type_kind_type_pipeline() {
     let entity = world.entity().add::<Tag>();
     let entity_id = entity.id();
 
-    world.set(Count2 { i1: 0, i2: 0 });
+    world.set(Count2 { a: 0, b: 0 });
 
     world
         .system::<&Tag>()
@@ -2338,9 +2332,9 @@ fn system_system_w_type_kind_type_pipeline() {
             let world = e.world();
             assert!(e == entity_id);
             world.get::<&mut Count2>(|c| {
-                assert_eq!(c.i1, 0);
-                assert_eq!(c.i2, 1);
-                c.i1 += 1;
+                assert_eq!(c.a, 0);
+                assert_eq!(c.b, 1);
+                c.a += 1;
             });
         });
 
@@ -2351,16 +2345,16 @@ fn system_system_w_type_kind_type_pipeline() {
             let world = e.world();
             assert!(e == entity_id);
             world.get::<&mut Count2>(|c| {
-                assert_eq!(c.i1, 0);
-                c.i1 += 1;
+                assert_eq!(c.b, 0);
+                c.b += 1;
             });
         });
 
     world.progress();
 
     world.get::<&Count2>(|c| {
-        assert_eq!(c.i1, 1);
-        assert_eq!(c.i2, 1);
+        assert_eq!(c.a, 1);
+        assert_eq!(c.b, 1);
     });
 }
 
@@ -2372,7 +2366,7 @@ fn system_entity_ctor() {
 
     let sys = world.system::<()>().run(|mut it| {
         let world = it.world();
-        while it.next_iter() {
+        while it.next() {
             world.get::<&mut Count>(|c| {
                 c.0 += 1;
             });
@@ -2419,387 +2413,433 @@ fn system_ensure_instanced_w_each() {
     });
 }
 
-// #[test] fn system_multithread_system_w_query_each() {
-//     let world = World::new();
-
-//     world.set_threads(2);
-
-//     let e1 = world.entity()
-//         .set(Position{x: 10, y: 20})
-//         .set(Velocity{x: 1, y: 2});
-
-//     let q = world.new_query::<&Velocity>();
-
-//     world.system::<&mut Position>()
-//         .multi_threaded()
-//         .each_entity(move |e, p| {
-//             let world = e.world();
-//             q.iter_stage(world).each(|v| {
-//                 p.x += v.x;
-//                 p.y += v.y;
-//             });
-//         });
-
-//     world.progress();
-
-//     e1.get::<&Position>(|p| {
-//     assert_eq!(p.x, 11);
-//     assert_eq!(p.y, 22);
-// });
-// }
-
-// #[test] fn system_multithread_system_w_query_each_w_iter() {
-//     let world = World::new();
-
-//     world.set_threads(2);
-
-//     let e = world.entity()
-//         .set(Position{x: 10, y: 20})
-//         .set(Velocity{x: 1, y: 2});
-
-//     let q = world.new_query::<&Velocity>();
-
-//     world.system::<&mut Position>()
-//         .multi_threaded()
-//         .each_iter(|it, i, p| {
-//             q.iter_stage(it).each(|v| {
-//                 p.x += v.x;
-//                 p.y += v.y;
-//             });
-//         });
-
-//     world.progress();
-
-//     e.get::<&Position>(|p| {
-//     assert_eq!(p.x, 11);
-//     assert_eq!(p.y, 22);
-// });
-// }
-
-// #[test] fn system_multithread_system_w_query_each_w_world() {
-//     let world = World::new();
-
-//     world.set_threads(2);
-
-//     let e = world.entity()
-//         .set(Position{x: 10, y: 20})
-//         .set(Velocity{x: 1, y: 2});
-
-//     let q = world.new_query::<&Velocity>();
-//     world.system::<&mut Position>()
-//         .multi_threaded()
-//         .each_iter(|it, i, p| {
-//             q.iter_stage(it.world()).each(|v| {
-//                 p.x += v.x;
-//                 p.y += v.y;
-//             });
-//         });
-
-//     world.progress();
-
-//     e.get::<&Position>(|p| {
-//     assert_eq!(p.x, 11);
-//     assert_eq!(p.y, 22);
-// });
-// }
-
-// #[test] fn system_multithread_system_w_query_iter() {
-//     let world = World::new();
-
-//     world.set_threads(2);
-
-//     let e = world.entity()
-//         .set(Position{x: 10, y: 20})
-//         .set(Velocity{x: 1, y: 2});
-
-//     let q = world.new_query::<&Velocity>();
-
-//     world.system::<&mut Position>()
-//         .multi_threaded()
-//         .each_entity(|e, p| {
-//             q.iter_stage(e).run(|mut it| {
-//                 while it.next_iter() {
-//                     let v = it.field::<Velocity>(0).unwrap();
-
-//                     for i in it.iter() {
-//                         p.x += v[i].x;
-//                         p.y += v[i].y;
-//                     }
-//                 }
-//             });
-//         });
-
-//     world.progress();
-
-//     e.get::<&Position>(|p| {
-//     assert_eq!(p.x, 11);
-//     assert_eq!(p.y, 22);
-// });
-// }
-
-// #[test] fn system_multithread_system_w_query_iter_w_iter() {
-//     let world = World::new();
-
-//     world.set_threads(2);
-
-//     let e = world.entity()
-//         .set(Position{x: 10, y: 20})
-//         .set(Velocity{x: 1, y: 2});
-
-//     let q = world.query::<Velocity>();
-
-//     world.system::<&mut Position>()
-//         .multi_threaded()
-//         .each_iter(|it, i, p| {
-//             q.iter(it).run(|mut it| {
-//                 while it.next_iter() {
-//                     let v = it.field::<Velocity>(0).unwrap();
-//                     for i in it.iter() {
-//                         p.x += v[i].x;
-//                         p.y += v[i].y;
-//                     }
-//                 }
-//             });
-//         });
-
-//     world.progress();
-
-//     e.get::<&Position>(|p| {
-//     assert_eq!(p.x, 11);
-//     assert_eq!(p.y, 22);
-// });
-// }
-
-// #[test] fn system_multithread_system_w_query_iter_w_world() {
-//     let world = World::new();
-
-//     world.set_threads(2);
-
-//     let e = world.entity()
-//         .set(Position{x: 10, y: 20})
-//         .set(Velocity{x: 1, y: 2});
-
-//     let q = world.new_query::<&Velocity>();
-
-//     world.system::<&mut Position>()
-//         .multi_threaded()
-//         .each_iter(|it, i, p| {
-//             q.iter_stage(it.world()).run(|mut it| {
-//                 while it.next_iter() {
-//                     let v = it.field::<Velocity>(0).unwrap();
-//                     for i in it.iter() {
-//                         p.x += v[i].x;
-//                         p.y += v[i].y;
-//                     }
-//                 }
-//             });
-//         });
-
-//     world.progress();
-
-//     e.get::<&Position>(|p| {
-//     assert_eq!(p.x, 11);
-//     assert_eq!(p.y, 22);
-// });
-// }
-
-// #[test] fn system_run_callback() {
-//     let world = World::new();
-
-//     let entity = world.entity()
-//         .set(Position{x: 10, y: 20})
-//         .set(Velocity{x: 1, y: 2});
-
-//     world.system::<(&mut Position, &Velocity)>()
-//         .run_each(|mut it| {
-//                 while it.next_iter() {
-//                     it.each();
-//                 }
-//             },
-//             |(p,v)| {
-//                 p.x += v.x;
-//                 p.y += v.y;
-//             });
-
-//     world.progress();
-
-//     entity.get::<&Position>(|p| {
-//     assert_eq!(p.x, 11);
-//     assert_eq!(p.y, 22);
-// });
-
-//     entity.get::<&Velocity>(|v| {
-//     assert_eq!(v.x, 1);
-//     assert_eq!(v.y, 2);
-// });}
-
-// #[test] fn system_startup_system() {
-//     let world = World::new();
-
-//     int32_t count_a = 0, count_b = 0;
-
-//     world.system::<()>()
-//         .kind(flecs::OnStart)
-//         .run(|mut it| {
-//             while it.next_iter() {
-//                 assert!(it.delta_time() == 0);
-//                 count_a ++;
-//             }
-//         });
-
-//     world.system::<()>()
-//         .kind(flecs::OnUpdate)
-//         .run(|mut it| {
-//             while it.next_iter() {
-//                 assert!(it.delta_time() != 0);
-//                 count_b ++;
-//             }
-//         });
-
-//     world.progress();
-//     assert_eq!(count_a, 1);
-//     assert_eq!(count_b, 1);
-
-//     world.progress();
-//     assert_eq!(count_a, 1);
-//     assert_eq!(count_b, 2);
-// }
-
-// #[test] fn system_interval_tick_source() {
-//     let world = World::new();
-
-//     flecs::timer t = world.timer().interval(2.1);
-
-//     flecs::Timer& timer = t.ensure<flecs::Timer>();
-//     timer.time = 0;
-
-//     int32_t sys_a_invoked = 0, sys_b_invoked = 0;
-
-//     world.system::<()>()
-//         .tick_source(t)
-//         .run(|mut it| {
-//             while it.next_iter() {
-//                 sys_a_world.get::<&mut Count>(|c| {
-//                     c.0 += 1;
-//                 });
-//             }
-//         });
-
-//     world.system::<()>()
-//         .tick_source(t)
-//         .run(|mut it| {
-//             while it.next_iter() {
-//                 sys_b_world.get::<&mut Count>(|c| {
-//                     c.0 += 1;
-//                 });
-//             }
-//         });
-
-//     world.progress(1.0);
-//     assert_eq!(0, sys_a_invoked);
-//     assert_eq!(0, sys_b_invoked);
-
-//     world.progress(1.0);
-//     assert_eq!(0, sys_a_invoked);
-//     assert_eq!(0, sys_b_invoked);
-
-//     world.progress(1.0);
-//     assert_eq!(1, sys_a_invoked);
-//     assert_eq!(1, sys_b_invoked);
-// }
-
-// #[test] fn system_rate_tick_source() {
-//     let world = World::new();
-
-//     flecs::timer t = world.timer().rate(3);
-
-//     int32_t sys_a_invoked = 0, sys_b_invoked = 0;
-
-//     world.system::<()>()
-//         .tick_source(t)
-//         .run(|mut it| {
-//             while it.next_iter() {
-//                 sys_a_world.get::<&mut Count>(|c| {
-//                     c.0 += 1;
-//                 });
-//             }
-//         });
-
-//     world.system::<()>()
-//         .tick_source(t)
-//         .run(|mut it| {
-//             while it.next_iter() {
-//                 sys_b_world.get::<&mut Count>(|c| {
-//                     c.0 += 1;
-//                 });
-//             }
-//         });
-
-//     world.progress(1.0);
-//     assert_eq!(0, sys_a_invoked);
-//     assert_eq!(0, sys_b_invoked);
-
-//     world.progress(1.0);
-//     assert_eq!(0, sys_a_invoked);
-//     assert_eq!(0, sys_b_invoked);
-
-//     world.progress(1.0);
-//     assert_eq!(1, sys_a_invoked);
-//     assert_eq!(1, sys_b_invoked);
-// }
-
-// #[test] fn system_nested_rate_tick_source() {
-//     let world = World::new();
-
-//     flecs::timer t_3 = world.timer().rate(3);
-//     flecs::timer t_6 = world.timer().rate(2, t_3);
-
-//     int32_t sys_a_invoked = 0, sys_b_invoked = 0;
-
-//     world.system::<()>()
-//         .tick_source(t_3)
-//         .run(|mut it| {
-//             while it.next_iter() {
-//                 sys_a_world.get::<&mut Count>(|c| {
-//                     c.0 += 1;
-//                 });
-//             }
-//         });
-
-//     world.system::<()>()
-//         .tick_source(t_6)
-//         .run(|mut it| {
-//             while it.next_iter() {
-//                 sys_b_world.get::<&mut Count>(|c| {
-//                     c.0 += 1;
-//                 });
-//             }
-//         });
-
-//     world.progress(1.0);
-//     assert_eq!(0, sys_a_invoked);
-//     assert_eq!(0, sys_b_invoked);
-
-//     world.progress(1.0);
-//     assert_eq!(0, sys_a_invoked);
-//     assert_eq!(0, sys_b_invoked);
-
-//     world.progress(1.0);
-//     assert_eq!(1, sys_a_invoked);
-//     assert_eq!(0, sys_b_invoked);
-
-//     world.progress(1.0);
-//     assert_eq!(1, sys_a_invoked);
-//     assert_eq!(0, sys_b_invoked);
-
-//     world.progress(1.0);
-//     assert_eq!(1, sys_a_invoked);
-//     assert_eq!(0, sys_b_invoked);
-
-//     world.progress(1.0);
-//     assert_eq!(2, sys_a_invoked);
-//     assert_eq!(1, sys_b_invoked);
-// }
+#[test]
+fn system_multithread_system_w_query_each() {
+    let world = World::new();
+
+    world.set_threads(2);
+
+    let e1 = world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+
+    let q = world.new_query::<&Velocity>();
+
+    world
+        .system::<&mut Position>()
+        .multi_threaded()
+        .each_entity(move |e, p| {
+            let world = e.world();
+            q.iter_stage(world).each(|v| {
+                p.x += v.x;
+                p.y += v.y;
+            });
+        });
+
+    world.progress();
+
+    e1.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+}
+
+#[test]
+fn system_multithread_system_w_query_each_w_iter() {
+    let world = World::new();
+
+    world.set_threads(2);
+
+    let e = world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+
+    let q = world.new_query::<&Velocity>();
+
+    world
+        .system::<&mut Position>()
+        .multi_threaded()
+        .each_iter(move |it, _i, p| {
+            q.iter_stage(it.world()).each(|v| {
+                p.x += v.x;
+                p.y += v.y;
+            });
+        });
+
+    world.progress();
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+}
+
+#[test]
+fn system_multithread_system_w_query_each_w_world() {
+    let world = World::new();
+
+    world.set_threads(2);
+
+    let e = world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+
+    let q = world.new_query::<&Velocity>();
+    world
+        .system::<&mut Position>()
+        .multi_threaded()
+        .each_iter(move |it, _i, p| {
+            let world = it.world();
+            q.iter_stage(world).each(|v| {
+                p.x += v.x;
+                p.y += v.y;
+            });
+        });
+
+    world.progress();
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+}
+
+#[test]
+fn system_multithread_system_w_query_iter() {
+    let world = World::new();
+
+    world.set_threads(2);
+
+    let e = world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+
+    let q = world.new_query::<&Velocity>();
+
+    world
+        .system::<&mut Position>()
+        .multi_threaded()
+        .each_entity(move |e, p| {
+            q.iter_stage(e).run(|mut it| {
+                while it.next() {
+                    let v = it.field::<Velocity>(0).unwrap();
+
+                    for i in it.iter() {
+                        p.x += v[i].x;
+                        p.y += v[i].y;
+                    }
+                }
+            });
+        });
+
+    world.progress();
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+}
+
+#[test]
+fn system_multithread_system_w_query_iter_w_iter() {
+    let world = World::new();
+
+    world.set_threads(2);
+
+    let e = world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+
+    let q = world.new_query::<&Velocity>();
+
+    world
+        .system::<&mut Position>()
+        .multi_threaded()
+        .each_iter(move |it, _i, p| {
+            q.iter_stage(it.world()).run(|mut it| {
+                while it.next() {
+                    let v = it.field::<Velocity>(0).unwrap();
+                    for i in it.iter() {
+                        p.x += v[i].x;
+                        p.y += v[i].y;
+                    }
+                }
+            });
+        });
+
+    world.progress();
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+}
+
+#[test]
+fn system_multithread_system_w_query_iter_w_world() {
+    let world = World::new();
+
+    world.set_threads(2);
+
+    let e = world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+
+    let q = world.new_query::<&Velocity>();
+
+    world
+        .system::<&mut Position>()
+        .multi_threaded()
+        .each_iter(move |it, _i, p| {
+            q.iter_stage(it.world()).run(|mut it| {
+                while it.next() {
+                    let v = it.field::<Velocity>(0).unwrap();
+                    for i in it.iter() {
+                        p.x += v[i].x;
+                        p.y += v[i].y;
+                    }
+                }
+            });
+        });
+
+    world.progress();
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+}
+
+#[test]
+fn system_run_callback() {
+    let world = World::new();
+
+    let entity = world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+
+    world.system::<(&mut Position, &Velocity)>().run_each(
+        |mut it| {
+            while it.next() {
+                it.each();
+            }
+        },
+        |(p, v)| {
+            p.x += v.x;
+            p.y += v.y;
+        },
+    );
+
+    world.progress();
+
+    entity.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+
+    entity.get::<&Velocity>(|v| {
+        assert_eq!(v.x, 1);
+        assert_eq!(v.y, 2);
+    });
+}
+
+#[test]
+fn system_startup_system() {
+    let world = World::new();
+
+    world.set(Count2 { a: 0, b: 0 });
+
+    world
+        .system::<()>()
+        .kind_id(flecs::pipeline::OnStart::ID)
+        .run(|mut it| {
+            let world = it.world();
+            while it.next() {
+                assert!(it.delta_time() == 0.0);
+                world.get::<&mut Count2>(|c| {
+                    c.a += 1;
+                });
+            }
+        });
+
+    world
+        .system::<()>()
+        .kind_id(flecs::pipeline::OnUpdate::ID)
+        .run(|mut it| {
+            let world = it.world();
+            while it.next() {
+                assert!(it.delta_time() != 0.0);
+                world.get::<&mut Count2>(|c| {
+                    c.b += 1;
+                });
+            }
+        });
+
+    world.progress();
+    world.get::<&Count2>(|c| {
+        assert_eq!(c.a, 1);
+        assert_eq!(c.b, 1);
+
+        world.progress();
+
+        assert_eq!(c.a, 1);
+        assert_eq!(c.b, 2);
+    });
+}
+
+#[ignore = "timer addon not implemented"]
+#[test]
+fn system_interval_tick_source() {
+    //let world = World::new();
+
+    // flecs::timer t = world.timer().interval(2.1);
+
+    // flecs::Timer& timer = t.ensure<flecs::Timer>();
+    // timer.time = 0;
+
+    // world.set(Count2 { a: 0, b: 0 });
+
+    // world.system::<()>()
+    //     .tick_source(t)
+    //     .run(|mut it| {
+    //         let world = it.world();
+    //         while it.next() {
+    //             world.get::<&mut Count2>(|c| {
+    //                 c.a += 1;
+    //             });
+    //         }
+    //     });
+
+    // world.system::<()>()
+    //     .tick_source(t)
+    //     .run(|mut it| {
+    //         let world = it.world();
+    //         while it.next() {
+    //             world.get::<&mut Count2>(|c| {
+    //                 c.b += 1;
+    //             });
+    //         }
+    //     });
+
+    // world.get::<&Count2>(|c| {
+    //     world.progress_time(1.0);
+    //     assert_eq!(c.a, 0);
+    //     assert_eq!(c.b, 0);
+
+    //     world.progress_time(1.0);
+
+    //     assert_eq!(c.a, 0);
+    //     assert_eq!(c.b, 0);
+
+    //     world.progress_time(1.0);
+    //     assert_eq!(c.a, 1);
+    //     assert_eq!(c.b, 1);
+    // });
+}
+
+#[ignore = "timer addon not implemented"]
+#[test]
+fn system_rate_tick_source() {
+    // let world = World::new();
+
+    // flecs::timer t = world.timer().rate(3);
+
+    // int32_t sys_a_invoked = 0, sys_b_invoked = 0;
+
+    // world.system::<()>()
+    //     .tick_source(t)
+    //     .run(|mut it| {
+    //         while it.next() {
+    //             sys_a_world.get::<&mut Count>(|c| {
+    //                 c.0 += 1;
+    //             });
+    //         }
+    //     });
+
+    // world.system::<()>()
+    //     .tick_source(t)
+    //     .run(|mut it| {
+    //         while it.next() {
+    //             sys_b_world.get::<&mut Count>(|c| {
+    //                 c.0 += 1;
+    //             });
+    //         }
+    //     });
+
+    // world.progress(1.0);
+    // assert_eq!(0, sys_a_invoked);
+    // assert_eq!(0, sys_b_invoked);
+
+    // world.progress(1.0);
+    // assert_eq!(0, sys_a_invoked);
+    // assert_eq!(0, sys_b_invoked);
+
+    // world.progress(1.0);
+    // assert_eq!(1, sys_a_invoked);
+    // assert_eq!(1, sys_b_invoked);
+}
+
+#[ignore = "timer addon not implemented"]
+#[test]
+fn system_nested_rate_tick_source() {
+    // let world = World::new();
+
+    // flecs::timer t_3 = world.timer().rate(3);
+    // flecs::timer t_6 = world.timer().rate(2, t_3);
+
+    // int32_t sys_a_invoked = 0, sys_b_invoked = 0;
+
+    // world.system::<()>()
+    //     .tick_source(t_3)
+    //     .run(|mut it| {
+    //         while it.next() {
+    //             sys_a_world.get::<&mut Count>(|c| {
+    //                 c.0 += 1;
+    //             });
+    //         }
+    //     });
+
+    // world.system::<()>()
+    //     .tick_source(t_6)
+    //     .run(|mut it| {
+    //         while it.next() {
+    //             sys_b_world.get::<&mut Count>(|c| {
+    //                 c.0 += 1;
+    //             });
+    //         }
+    //     });
+
+    // world.progress(1.0);
+    // assert_eq!(0, sys_a_invoked);
+    // assert_eq!(0, sys_b_invoked);
+
+    // world.progress(1.0);
+    // assert_eq!(0, sys_a_invoked);
+    // assert_eq!(0, sys_b_invoked);
+
+    // world.progress(1.0);
+    // assert_eq!(1, sys_a_invoked);
+    // assert_eq!(0, sys_b_invoked);
+
+    // world.progress(1.0);
+    // assert_eq!(1, sys_a_invoked);
+    // assert_eq!(0, sys_b_invoked);
+
+    // world.progress(1.0);
+    // assert_eq!(1, sys_a_invoked);
+    // assert_eq!(0, sys_b_invoked);
+
+    // world.progress(1.0);
+    // assert_eq!(2, sys_a_invoked);
+    // assert_eq!(1, sys_b_invoked);
+}
 
 // #[test] fn system_table_get() {
 //     let world = World::new();
@@ -2856,7 +2896,7 @@ fn system_ensure_instanced_w_each() {
 
 //     flecs::entity s1 = world.system::<()>()
 //         .interval(1.0)
-//         .run(|mut it| { while it.next_iter() {} });
+//         .run(|mut it| { while it.next() {} });
 
 //     {
 //         const flecs::Timer *t = s1.get<flecs::Timer>();
@@ -2868,7 +2908,7 @@ fn system_ensure_instanced_w_each() {
 
 //     flecs::entity s2 = world.system::<()>()
 //         .interval(1.0)
-//         .run(|mut it| { while it.next_iter() {} });
+//         .run(|mut it| { while it.next() {} });
 
 //     {
 //         const flecs::Timer *t = s1.get<flecs::Timer>();
@@ -2956,7 +2996,7 @@ fn system_ensure_instanced_w_each() {
 
 //     world.system::<()>().kind(PipelineStepEnum::CustomStep)
 //         .run([&ran_test](flecs::iter& it) {
-//             while it.next_iter() {
+//             while it.next() {
 //                 ran_test = true;
 //             }
 //         });
@@ -2975,7 +3015,7 @@ fn system_ensure_instanced_w_each() {
 
 //     world.system::<()>().kind(PipelineStepEnum::CustomStep2)
 //         .run([&ran_test](flecs::iter& it) {
-//             while it.next_iter() {
+//             while it.next() {
 //                 ran_test = true;
 //             }
 //         });
@@ -3383,7 +3423,7 @@ fn system_ensure_instanced_w_each() {
 //     let s = world.system::<Entity>()
 //         .with::<Singleton>().singleton().in()
 //         .run(|mut it| {
-//             while it.next_iter() {
+//             while it.next() {
 //                 let e = it.field::<Entity>(0).unwrap();
 //                 let s = it.field::<const Singleton>(1).unwrap();
 //                 assert!(!it.is_self(1));
@@ -3442,7 +3482,7 @@ fn system_ensure_instanced_w_each() {
 //         .with::<TagI>()
 //         .with::<TagJ>()
 //         .run(|mut it| {
-//             while it.next_iter() {
+//             while it.next() {
 //                 assert_eq!(it.count(), 1);
 //                 assert!(it.entity(0) == e);
 //                 assert_eq!(it.field_count(), 10);
@@ -3500,7 +3540,7 @@ fn system_ensure_instanced_w_each() {
 //         .with::<TagO>()
 //         .with::<TagP>()
 //         .run(|mut it| {
-//             while it.next_iter() {
+//             while it.next() {
 //                 assert_eq!(it.count(), 1);
 //                 assert!(it.entity(0) == e);
 //                 assert_eq!(it.field_count(), 16);
@@ -3523,7 +3563,7 @@ fn system_ensure_instanced_w_each() {
 //     let s = world.system::<&Position>("MySystem")
 //         .term_at(0).src().name("MySystem")
 //         .run(|mut it| {
-//             while it.next_iter() {}
+//             while it.next() {}
 //         });
 
 //     assert!(s.has::<Position>());
@@ -4242,7 +4282,7 @@ fn system_ensure_instanced_w_each() {
 //     let q = world.query::<&mut Position, &mut Velocity>();
 
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             let mut p = it.field::<Position>(0).unwrap();
 //             let v = it.field::<Velocity>(1).unwrap();
 
@@ -4272,7 +4312,7 @@ fn system_ensure_instanced_w_each() {
 //     let q = world.query::<Position, &Velocity>();
 
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             let mut p = it.field::<Position>(0).unwrap();
 //             let v = it.field::<&Velocity>(1).unwrap();
 
@@ -4311,7 +4351,7 @@ fn system_ensure_instanced_w_each() {
 //         .build();
 
 //     q.run([](flecs::iter&it) {
-//         while it.next_iter() {
+//         while it.next() {
 //             let mut p = it.field::<Position>(0).unwrap();
 //             let v = it.field::<&Velocity>(1).unwrap();
 
@@ -4366,7 +4406,7 @@ fn system_ensure_instanced_w_each() {
 //     let q = world.query::<Position, Velocity*, Mass*>();
 
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             let mut p = it.field::<Position>(0).unwrap();
 //             let v = it.field::<Velocity>(1).unwrap();
 //             let m = it.field::<Mass>(2).unwrap();
@@ -4565,7 +4605,7 @@ fn system_ensure_instanced_w_each() {
 //     let q = world.query_builder<>().expr("flecs.common_test.Position, flecs.common_test.Velocity").build();
 
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             let mut p = it.field::<Position>(0).unwrap();
 //             let v = it.field::<Velocity>(1).unwrap();
 
@@ -4595,7 +4635,7 @@ fn system_ensure_instanced_w_each() {
 //     let q = world.query_builder<>().expr("flecs.common_test.Position, [in] flecs.common_test.Velocity").build();
 
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             let mut p = it.field::<Position>(0).unwrap();
 //             let v = it.field::<&Velocity>(1).unwrap();
 
@@ -4634,7 +4674,7 @@ fn system_ensure_instanced_w_each() {
 //         .build();
 
 //     q.run([](flecs::iter&it) {
-//         while it.next_iter() {
+//         while it.next() {
 //             let mut p = it.field::<Position>(0).unwrap();
 //             let v = it.field::<&Velocity>(1).unwrap();
 
@@ -4689,7 +4729,7 @@ fn system_ensure_instanced_w_each() {
 //     let q = world.query_builder<>().expr("flecs.common_test.Position, ?flecs.common_test.Velocity, ?Mass").build();
 
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             let mut p = it.field::<Position>(0).unwrap();
 //             let v = it.field::<&Velocity>(1).unwrap();
 //             let m = it.field::<const Mass>(2).unwrap();
@@ -4743,7 +4783,7 @@ fn system_ensure_instanced_w_each() {
 //     int32_t entity_count = 0;
 
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             table_world.get::<&mut Count>(|c| {
 //                     c.0 += 1;
 //                 });
@@ -4813,7 +4853,7 @@ fn system_ensure_instanced_w_each() {
 //         .build();
 
 //     q.run([](flecs::iter it) {
-//         while it.next_iter() {
+//         while it.next() {
 //             let mut p = it.field::<Position>(0).unwrap();
 //             assert_eq!(it.count(), 5);
 //             assert_eq!(p[0].x, 1);
@@ -4948,7 +4988,7 @@ fn system_ensure_instanced_w_each() {
 //         .build();
 
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             assert!(it.id(0) == it.world().id<Tag>());
 //             assert!(it.entity(0) == e);
 //         }
@@ -4997,7 +5037,7 @@ fn system_ensure_instanced_w_each() {
 //         .build();
 
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             for i in it.iter() {
 //                 test_expect_abort();
 //                 it.entity(i).remove::<Tag>();
@@ -5172,7 +5212,7 @@ fn system_ensure_instanced_w_each() {
 
 //     int count = 0;
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             let a = it.field::<Eats>(0).unwrap();
 //             assert_eq!(it.count(), 1);
 
@@ -5210,7 +5250,7 @@ fn system_ensure_instanced_w_each() {
 
 //     int count = 0;
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             assert_eq!(it.count(), 1);
 
 //             let a = it.field::<EatsApples>(0).unwrap();
@@ -5316,7 +5356,7 @@ fn system_ensure_instanced_w_each() {
 
 //     world.set(Count(0));
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             count += it.count();
 //         }
 //     });
@@ -5338,7 +5378,7 @@ fn system_ensure_instanced_w_each() {
 
 //     world.set(Count(0));
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             count += it.count();
 //         }
 //     });
@@ -5362,7 +5402,7 @@ fn system_ensure_instanced_w_each() {
 
 //     world.set(Count(0));
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             count += it.count();
 //         }
 //     });
@@ -5419,7 +5459,7 @@ fn system_ensure_instanced_w_each() {
 
 //     world.set(Count(0));
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             let b_e = it.field::<BeginEvent>(0).unwrap();
 //             let e_e = it.field::<EndEvent>(1).unwrap();
 
@@ -5472,7 +5512,7 @@ fn system_ensure_instanced_w_each() {
 //     let q = world.query::<Position>();
 
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             assert!(it.type().count() >= 1);
 //             assert!(it.table().has::<Position>());
 //         }
@@ -5751,7 +5791,7 @@ fn system_ensure_instanced_w_each() {
 //     world.set(Count(0));
 
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             let s = it.field::<SelfRef>(0).unwrap();
 //             let mut p = it.field::<Position>(1).unwrap();
 //             let v = it.field::<&Velocity>(2).unwrap();
@@ -5817,7 +5857,7 @@ fn system_ensure_instanced_w_each() {
 
 //     world.set(Count(0));
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             let s = it.field::<SelfRef>(0).unwrap();
 //             let mut p = it.field::<Position>(1).unwrap();
 //             let v = it.field::<&Velocity>(2).unwrap();
@@ -5900,7 +5940,7 @@ fn system_ensure_instanced_w_each() {
 
 //     world.set(Count(0));
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             let s = it.field::<SelfRef>(0).unwrap();
 //             let mut p = it.field::<Position>(1).unwrap();
 //             let v = it.field::<&Velocity>(2).unwrap();
@@ -5965,7 +6005,7 @@ fn system_ensure_instanced_w_each() {
 
 //     world.set(Count(0));
 //     q.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             let s = it.field::<SelfRef>(0).unwrap();
 //             let mut p = it.field::<Position>(1).unwrap();
 //             let v = it.field::<&Velocity>(2).unwrap();
@@ -6066,7 +6106,7 @@ fn system_ensure_instanced_w_each() {
 
 //     int count = 0;
 //     qc.q.run(|mut it| { // Ensure we can iterate const query
-//         while it.next_iter() {
+//         while it.next() {
 //             count += it.count();
 //         }
 //     });
@@ -6433,13 +6473,13 @@ fn system_ensure_instanced_w_each() {
 //     w.entity().set(Position{x: 20, y: 30});
 
 //     test_bool(qr.changed(), true);
-//     qr.run([](flecs::iter &it) { while it.next_iter() {} });
+//     qr.run([](flecs::iter &it) { while it.next() {} });
 //     test_bool(qr.changed(), false);
 
 //     int32_t count = 0, change_count = 0;
 
 //     qw.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             assert_eq!(it.count(), 1);
 
 //             world.get::<&mut Count>(|c| {
@@ -6468,7 +6508,7 @@ fn system_ensure_instanced_w_each() {
 //     test_bool(qr.changed(), true);
 
 //     qr.run(|mut it| {
-//         while it.next_iter() {
+//         while it.next() {
 //             assert_eq!(it.count(), 1);
 
 //             world.get::<&mut Count>(|c| {
@@ -6709,7 +6749,7 @@ fn system_ensure_instanced_w_each() {
 
 //     world.query::<Position>()
 //         .run(|mut it| {
-//             while it.next_iter() {
+//             while it.next() {
 //                 assert_eq!(it.count(), 3);
 
 //                 let entities = it.entities();

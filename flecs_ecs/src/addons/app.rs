@@ -125,7 +125,7 @@ impl<'a> App<'a> {
     /// * C++ API: `app_builder::enable_stats`
     #[doc(alias = "app_builder::enable_stats")]
     pub fn enable_stats(&mut self, enable: bool) -> &mut Self {
-        self.desc.enable_monitor = enable;
+        self.desc.enable_stats = enable;
         self
     }
 

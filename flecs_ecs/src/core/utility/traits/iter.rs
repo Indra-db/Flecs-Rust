@@ -453,7 +453,7 @@ where
     ///
     /// query.run(|mut it| {
     ///     println!("start operations");
-    ///     while it.next_iter() {
+    ///     while it.next() {
     ///         count_tables += 1;
     ///         let pos = it.field::<&Position>(1).unwrap(); //at index 1 in (&Tag, &Position)
     ///         for i in it.iter() {
@@ -502,7 +502,7 @@ where
         // ecs_assert!(
         //     iter.flags & sys::EcsIterIsValid != 0,
         //     FlecsErrorCode::InvalidOperation,
-        //     "when using `run()`, you must call `while it.next_iter()` in the callback"
+        //     "when using `run()`, you must call `while it.next()` in the callback"
         // );
     }
 
@@ -558,7 +558,7 @@ where
     /// query.run_each(
     ///     |mut it| {
     ///         println!("start operations");
-    ///         while it.next_iter() {
+    ///         while it.next() {
     ///             count_tables += 1;
     ///             it.each();
     ///         }
@@ -655,7 +655,7 @@ where
     /// query.run_each_entity(
     ///     |mut it| {
     ///         println!("start operations");
-    ///         while it.next_iter() {
+    ///         while it.next() {
     ///             count_tables += 1;
     ///             it.each();
     ///         }

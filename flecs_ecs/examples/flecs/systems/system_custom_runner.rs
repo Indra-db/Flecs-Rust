@@ -31,7 +31,7 @@ fn main() {
             |mut iter| {
                 println!("Move begin");
 
-                while iter.next_iter() {
+                while iter.next() {
                     iter.each();
                 }
 

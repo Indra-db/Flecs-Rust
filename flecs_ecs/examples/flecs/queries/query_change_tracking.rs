@@ -90,7 +90,7 @@ fn main() {
 
     // The changed state will remain true until we have iterated each table.
     query_read.run(|mut iter| {
-        while iter.next_iter() {
+        while iter.next() {
             // With the it.changed() function we can check if the table we're
             // currently iterating has changed since last iteration.
             // Because this is the first time the query is iterated, all tables
@@ -137,7 +137,7 @@ fn main() {
 
     // When we iterate the read query, we'll see that one table has changed.
     query_read.run(|mut iter| {
-        while iter.next_iter() {
+        while iter.next() {
             println!(
                 "iter.is_changed() for table [{}]: {}",
                 iter.archetype().unwrap(),

@@ -724,7 +724,13 @@ where
     /// the iterator is not being progressed automatically. An example of a valid
     /// context is inside of a `run()` callback. An example of an invalid context is
     /// inside of an `each()` callback.
-    pub fn next_iter(&mut self) -> bool {
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter::next`
+    #[doc(alias = "iter::next")]
+    #[allow(clippy::should_implement_trait)]
+    pub fn next(&mut self) -> bool {
         if IS_RUN {
             if self.iter.flags & sys::EcsIterIsValid != 0 && !self.iter.table.is_null() {
                 unsafe {
@@ -754,7 +760,7 @@ where
             ecs_assert!(
                 false,
                 FlecsErrorCode::InvalidOperation,
-                "you should not call next_iter in an `each` callback or `run_iter`"
+                "you should not call next in an `each` callback or `run_iter`"
             );
             false
         }
@@ -768,6 +774,39 @@ where
             unsafe {
                 each(self.iter);
             }
+        }
+    }
+
+    /// Free iterator resources.
+    /// This operation only needs to be called when the iterator is not iterated
+    /// until completion (e.g. the last call to `next()` did not return false).
+    ///
+    /// Failing to call this operation on an unfinished iterator will throw a
+    /// `fatal LEAK_DETECTED` error.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Debug, Component, Default)]
+    /// pub struct Position {
+    ///     pub x: i32,
+    ///     pub y: i32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// world
+    ///     .new_query::<&mut Position>()
+    ///     .run(|it| {
+    ///         // this will ensure that the iterator is freed and no assertion will happen
+    ///         it.fini();    
+    ///     });
+    /// ```
+    pub fn fini(self) {
+        unsafe {
+            sys::ecs_iter_fini(self.iter);
         }
     }
 }

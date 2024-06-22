@@ -13,7 +13,7 @@ fn query_uncached_destruction_no_panic() {
     drop(query);
     query2.run(|mut it| {
         dbg!(it.iter_mut().flags & flecs_ecs::sys::EcsIterIsValid != 0);
-        while it.next_iter() {}
+        while it.next() {}
         dbg!(it.iter_mut().flags & flecs_ecs::sys::EcsIterIsValid != 0);
     });
     drop(query2);

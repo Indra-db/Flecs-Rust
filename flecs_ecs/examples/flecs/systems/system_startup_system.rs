@@ -18,14 +18,14 @@ fn main() {
         .system_named::<()>("Startup")
         .kind::<flecs::pipeline::OnStart>()
         .run(|mut it| {
-            while it.next_iter() {
+            while it.next() {
                 println!("{}", it.system().name());
             }
         });
 
     // Regular system
     world.system_named::<()>("Update").run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             println!("{}", it.system().name());
         }
     });

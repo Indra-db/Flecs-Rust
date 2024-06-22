@@ -7,7 +7,7 @@ use flecs_ecs::prelude::*;
 
 // Dummy system
 fn sys(mut it: Iter) {
-    while it.next_iter() {
+    while it.next() {
         println!("system {}", it.system().name());
     }
 }

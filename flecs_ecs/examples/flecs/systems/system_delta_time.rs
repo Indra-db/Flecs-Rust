@@ -9,7 +9,7 @@ fn main() {
     // components which means it won't match any entities, but will still be ran
     // once for each call to ecs_progress.
     world.system::<()>().run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             println!("delta_time: {}", it.delta_time());
         }
     });

@@ -582,11 +582,16 @@ macro_rules! impl_component_traits_binding_type_w_id {
                 register_copy_lifecycle_action::<$name>(type_hooks);
             }
 
-            fn __register_or_get_id<'a,const MANUAL_REGISTRATION_CHECK: bool>(_world: impl IntoWorld<'a>) -> EntityT {
+            fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
+                _world: impl IntoWorld<'a>,
+            ) -> EntityT {
                 $id
             }
 
-            fn __register_or_get_id_named<'a,const MANUAL_REGISTRATION_CHECK: bool>(_world: impl IntoWorld<'a>, _name: &str) -> EntityT {
+            fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
+                _world: impl IntoWorld<'a>,
+                _name: &str,
+            ) -> EntityT {
                 $id
             }
 

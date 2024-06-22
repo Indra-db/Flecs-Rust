@@ -1,27 +1,9 @@
 #![allow(dead_code)]
-use std::ops::Deref;
 
 use flecs_ecs::core::*;
 use flecs_ecs::macros::*;
 
 use crate::common_test::*;
-
-#[derive(Debug, Component)]
-struct Count(i32);
-
-impl Deref for Count {
-    type Target = i32;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl PartialEq<i32> for &mut Count {
-    fn eq(&self, other: &i32) -> bool {
-        self.0 == *other
-    }
-}
 
 #[derive(Debug, Component)]
 struct LastEntity(Entity);
@@ -285,7 +267,7 @@ fn observer_2_entities_iter() {
         .observer::<flecs::OnSet, &Position>()
         .run(move |mut it| {
             let world = it.world();
-            while it.next_iter() {
+            while it.next() {
                 let p = it.field::<&Position>(0).unwrap();
 
                 for i in it.iter() {
@@ -339,7 +321,7 @@ fn observer_2_entities_table_column() {
         .observer::<flecs::OnSet, &Position>()
         .run(move |mut it| {
             let world = it.world();
-            while it.next_iter() {
+            while it.next() {
                 let table_range = it.table_range().unwrap();
                 let p = table_range.get_mut::<Position>().unwrap();
 
@@ -569,7 +551,7 @@ fn observer_on_add_tag_action() {
     world.set(Count(0));
     world.observer::<flecs::OnAdd, &TagA>().run(|mut it| {
         let world = it.world();
-        while it.next_iter() {
+        while it.next() {
             world.get::<&mut Count>(|count| {
                 count.0 += 1;
             });
@@ -588,7 +570,7 @@ fn observer_on_add_tag_iter() {
     world.set(Count(0));
     world.observer::<flecs::OnAdd, &TagA>().run(|mut it| {
         let world = it.world();
-        while it.next_iter() {
+        while it.next() {
             world.get::<&mut Count>(|count| {
                 count.0 += 1;
             });
@@ -683,7 +665,7 @@ fn observer_run_callback() {
     world.set(Count(0));
     world.observer::<flecs::OnAdd, &Position>().run_each_entity(
         |mut it| {
-            while it.next_iter() {
+            while it.next() {
                 it.each();
             }
         },
@@ -714,7 +696,7 @@ fn observer_get_query() {
         .each_entity(|_e, _p| {});
     let q = o.query();
     q.run(|mut it| {
-        while it.next_iter() {
+        while it.next() {
             let pos = it.field::<&Position>(0).unwrap();
             for i in it.iter() {
                 assert_eq!(i as i32, pos[i].x);
@@ -809,7 +791,7 @@ fn observer_on_add_pair_singleton() {
         .singleton()
         .run(|mut it| {
             let world = it.world();
-            while it.next_iter() {
+            while it.next() {
                 let pos = it.field::<&Position>(0).unwrap();
                 for i in it.iter() {
                     assert_eq!(pos[i].x, 10);

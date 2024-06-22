@@ -9,6 +9,7 @@ mod system_runner_fluent;
 pub use system_builder::*;
 pub use system_runner_fluent::*;
 
+use std::ops::DerefMut;
 use std::{ops::Deref, os::raw::c_void, ptr::NonNull};
 
 use crate::core::*;
@@ -26,6 +27,13 @@ impl<'a> Deref for System<'a> {
     #[inline]
     fn deref(&self) -> &Self::Target {
         &self.entity
+    }
+}
+
+impl<'a> DerefMut for System<'a> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.entity
     }
 }
 

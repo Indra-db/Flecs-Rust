@@ -15,6 +15,22 @@ fn init() {
         flecs_ecs::sys::ecs_os_init();
     }
 }
+#[derive(Debug, Component)]
+pub struct Count(pub i32);
+
+impl Deref for Count {
+    type Target = i32;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl PartialEq<i32> for &mut Count {
+    fn eq(&self, other: &i32) -> bool {
+        self.0 == *other
+    }
+}
 
 #[derive(Component)]
 pub struct QueryWrapper {
@@ -39,8 +55,18 @@ pub struct SelfRef {
 }
 
 #[derive(Component)]
+pub struct EntityRef {
+    pub value: Entity,
+}
+
+#[derive(Component)]
 pub struct SelfRef2 {
     pub value: Entity,
+}
+
+#[derive(Component)]
+pub struct Value {
+    pub value: i32,
 }
 
 #[derive(Debug, Component, Default)]
@@ -195,6 +221,12 @@ pub struct Bar;
 
 #[derive(Component)]
 pub struct First;
+
+#[derive(Component)]
+pub struct Count2 {
+    pub a: i32,
+    pub b: i32,
+}
 
 #[derive(Component)]
 pub struct Pod {

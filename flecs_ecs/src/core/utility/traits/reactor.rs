@@ -74,7 +74,7 @@ where
         self.build()
     }
 
-    /// Run iterator. This operation expects manual iteration over the tables with `iter.next_iter()` and `iter.iter()`.
+    /// Run iterator. This operation expects manual iteration over the tables with `iter.next()` and `iter.iter()`.
     ///
     /// The "run" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:
@@ -128,7 +128,7 @@ where
     ///
     /// let system = world.system::<(&Tag, &Position)>().run(move |mut it| {
     ///     println!("start operations");
-    ///     while it.next_iter() {
+    ///     while it.next() {
     ///         *count_tables_ref.borrow_mut() += 1;
     ///         let pos = it.field::<&Position>(1).unwrap(); //at index 1 in (&Tag, &Position)
     ///         for i in it.iter() {
@@ -265,7 +265,7 @@ where
     }
 
     /// Run iterator with each forwarding. This operation expects manual
-    /// iteration over the tables with `iter.next_iter()` and `iter.each()`
+    /// iteration over the tables with `iter.next()` and `iter.each()`
     ///
     /// The "iter" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:
@@ -322,7 +322,7 @@ where
     /// let system = world.system::<(&Tag, &Position)>().run_each(
     ///     move |mut it| {
     ///         println!("start operations");
-    ///         while it.next_iter() {
+    ///         while it.next() {
     ///             *count_tables_ref.borrow_mut() += 1;
     ///             it.each();
     ///         }
@@ -384,7 +384,7 @@ where
     }
 
     /// Run iterator with each entity forwarding. This operation expects manual
-    /// iteration over the tables with `iter.next_iter()` and `iter.each()`  
+    /// iteration over the tables with `iter.next()` and `iter.each()`  
     ///
     /// The "iter" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:
@@ -441,7 +441,7 @@ where
     /// let system = world.system::<(&Tag, &Position)>().run_each_entity(
     ///     move |mut it| {
     ///         println!("start operations");
-    ///         while it.next_iter() {
+    ///         while it.next() {
     ///             *count_tables_ref.borrow_mut() += 1;
     ///             it.each();
     ///         }

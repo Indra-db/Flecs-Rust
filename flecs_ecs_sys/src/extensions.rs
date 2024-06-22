@@ -190,7 +190,7 @@ impl Default for ecs_app_desc_t {
             threads: Default::default(),
             frames: Default::default(),
             enable_rest: Default::default(),
-            enable_monitor: Default::default(),
+            enable_stats: Default::default(),
             port: Default::default(),
             init: Default::default(),
             ctx: std::ptr::null_mut(),

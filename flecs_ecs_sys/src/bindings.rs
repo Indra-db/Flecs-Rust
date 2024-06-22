@@ -1910,7 +1910,6 @@ pub union ecs_iter_private_t__bindgen_ty_1 {
     pub each: ecs_each_iter_t,
 }
 extern "C" {
-    #[doc = "Global type handles"]
     pub fn flecs_module_path_from_c(
         c_name: *const ::std::os::raw::c_char,
     ) -> *mut ::std::os::raw::c_char;
@@ -4322,7 +4321,7 @@ pub struct ecs_app_desc_t {
     #[doc = "< Enables ECS access over HTTP, necessary for explorer"]
     pub enable_rest: bool,
     #[doc = "< Periodically collect statistics"]
-    pub enable_monitor: bool,
+    pub enable_stats: bool,
     #[doc = "< HTTP port used by REST API"]
     pub port: u16,
     #[doc = "< If set, function is ran before starting the\n main loop."]
@@ -5631,8 +5630,6 @@ extern "C" {
 pub struct ecs_entity_to_json_desc_t {
     #[doc = "< Serialize entity id"]
     pub serialize_entity_id: bool,
-    #[doc = "< Serialize full pathname"]
-    pub serialize_path: bool,
     #[doc = "< Serialize doc attributes"]
     pub serialize_doc: bool,
     #[doc = "< Serialize full paths for tags, components and pairs"]
@@ -5681,6 +5678,8 @@ pub struct ecs_iter_to_json_desc_t {
     pub serialize_var_labels: bool,
     #[doc = "< Serialize full paths for tags, components and pairs"]
     pub serialize_full_paths: bool,
+    #[doc = "< Serialize field data"]
+    pub serialize_fields: bool,
     #[doc = "< Serialize inherited components"]
     pub serialize_inherited: bool,
     #[doc = "< Serialize entire table vs. matched components"]
