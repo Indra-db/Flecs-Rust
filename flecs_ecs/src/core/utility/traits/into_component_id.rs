@@ -28,7 +28,7 @@ where
 {
     const IS_ENUM: bool = T::IS_ENUM;
     const IS_PAIR: bool = false;
-    const IS_FIRST: bool = !T::IS_TAG;
+    const IS_FIRST: bool = true;
     type First = T;
     type Second = T;
     type CastType = T;
