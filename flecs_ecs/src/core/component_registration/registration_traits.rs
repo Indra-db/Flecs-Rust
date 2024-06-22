@@ -27,10 +27,10 @@ impl<T, U> DataComponent for (T, U)
 where
     T: ComponentId,
     U: ComponentId,
-    (T, U): IntoComponentId,
-    <(T, U) as IntoComponentId>::CastType: DataComponent,
+    (T, U): ComponentOrPairId,
+    <(T, U) as ComponentOrPairId>::CastType: DataComponent,
     registration_types::ConditionalTypePairSelector<
-        <<(T, U) as IntoComponentId>::First as registration_traits::ComponentInfo>::TagType,
+        <<(T, U) as ComponentOrPairId>::First as registration_traits::ComponentInfo>::TagType,
         T,
         U,
     >: registration_traits::FlecsPairType,

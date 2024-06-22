@@ -205,7 +205,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     ///
     /// * C++ API: `term::term`
     #[doc(alias = "term::term")]
-    fn init_term_from<T: IntoComponentId>(&mut self) {
+    fn init_term_from<T: ComponentOrPairId>(&mut self) {
         if !T::IS_PAIR {
             let id: IdT = T::First::id(self.world());
             self.init_current_term(id);

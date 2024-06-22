@@ -53,7 +53,7 @@ impl<T: ClonedTuple, const LEN: usize> ClonedComponentPointers<T> for Components
 
 pub trait ClonedTupleTypeOperation {
     type ActualType: Clone;
-    type OnlyType: IntoComponentId;
+    type OnlyType: ComponentOrPairId;
     const IS_OPTION: bool;
 
     fn create_tuple_data(array_components_data: *mut c_void) -> Self::ActualType;
@@ -61,15 +61,15 @@ pub trait ClonedTupleTypeOperation {
 
 impl<T> ClonedTupleTypeOperation for &T
 where
-    T: IntoComponentId,
-    <T as IntoComponentId>::CastType: Clone,
+    T: ComponentOrPairId,
+    <T as ComponentOrPairId>::CastType: Clone,
 {
-    type ActualType = <T as IntoComponentId>::CastType;
+    type ActualType = <T as ComponentOrPairId>::CastType;
     type OnlyType = T;
     const IS_OPTION: bool = false;
 
     fn create_tuple_data(array_components_data: *mut c_void) -> Self::ActualType {
-        let data_ptr = array_components_data as *const <T as IntoComponentId>::CastType;
+        let data_ptr = array_components_data as *const <T as ComponentOrPairId>::CastType;
         // SAFETY: up to this point we have checked that the data is not null
         unsafe { (*data_ptr).clone() }
     }
@@ -77,10 +77,10 @@ where
 
 impl<T> ClonedTupleTypeOperation for Option<&T>
 where
-    T: IntoComponentId,
-    <T as IntoComponentId>::CastType: Clone,
+    T: ComponentOrPairId,
+    <T as ComponentOrPairId>::CastType: Clone,
 {
-    type ActualType = Option<<T as IntoComponentId>::CastType>;
+    type ActualType = Option<<T as ComponentOrPairId>::CastType>;
     type OnlyType = T;
     const IS_OPTION: bool = true;
 
@@ -88,7 +88,7 @@ where
         if array_components_data.is_null() {
             None
         } else {
-            let data_ptr = array_components_data as *const <T as IntoComponentId>::CastType;
+            let data_ptr = array_components_data as *const <T as ComponentOrPairId>::CastType;
             Some(unsafe { (*data_ptr).clone() })
         }
     }
@@ -142,7 +142,7 @@ where
         let mut has_all_components = true;
 
         let id = unsafe { sys::ecs_table_get_column_index(world_ptr, table,
-            <A::OnlyType as IntoComponentId>::get_id(world)) };
+            <A::OnlyType as ComponentOrPairId>::get_id(world)) };
 
             if id == -1 {
                 components[0] = std::ptr::null_mut();
@@ -238,7 +238,7 @@ macro_rules! impl_cloned_tuple {
 
                 $(
                     let column_index = unsafe { sys::ecs_table_get_column_index(world_ptr, table,
-                        <$t::OnlyType as IntoComponentId>::get_id(world_ref)) };
+                        <$t::OnlyType as ComponentOrPairId>::get_id(world_ref)) };
 
 
                     if column_index != -1 {

@@ -1447,19 +1447,19 @@ impl World {
     ///
     /// * C++ API: `world::set`
     #[doc(alias = "world::set")]
-    pub fn set_pair<First, Second>(&self, data: <(First, Second) as IntoComponentId>::CastType)
+    pub fn set_pair<First, Second>(&self, data: <(First, Second) as ComponentOrPairId>::CastType)
     where
         First: ComponentId,
         Second: ComponentId,
-        (First, Second): IntoComponentId,
+        (First, Second): ComponentOrPairId,
     {
         const {
-            assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
+            assert!(!<(First, Second) as ComponentOrPairId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
         };
 
         let entity = EntityView::new_from(
             self,
-            <<(First, Second) as IntoComponentId>::CastType as ComponentId>::id(self),
+            <<(First, Second) as ComponentOrPairId>::CastType as ComponentId>::id(self),
         );
         entity.set_pair::<First, Second>(data);
     }
@@ -1561,10 +1561,12 @@ impl World {
         callback: impl for<'e> FnOnce(T::ActualType<'e>),
     ) -> bool
     where
-        T::OnlyType: IntoComponentId,
+        T::OnlyType: ComponentOrPairId,
     {
-        let entity =
-            EntityView::new_from(self, <<T::OnlyType as IntoComponentId>::CastType>::id(self));
+        let entity = EntityView::new_from(
+            self,
+            <<T::OnlyType as ComponentOrPairId>::CastType>::id(self),
+        );
         entity.try_get::<T>(callback)
     }
 
@@ -1619,10 +1621,12 @@ impl World {
     /// ```
     pub fn get<T: GetTupleTypeOperation>(&self, callback: impl for<'e> FnOnce(T::ActualType<'e>))
     where
-        T::OnlyType: IntoComponentId,
+        T::OnlyType: ComponentOrPairId,
     {
-        let entity =
-            EntityView::new_from(self, <<T::OnlyType as IntoComponentId>::CastType>::id(self));
+        let entity = EntityView::new_from(
+            self,
+            <<T::OnlyType as ComponentOrPairId>::CastType>::id(self),
+        );
         entity.get::<T>(callback);
     }
 
@@ -1676,10 +1680,12 @@ impl World {
     /// ```
     pub fn cloned<T: ClonedTupleTypeOperation>(&self) -> T::ActualType
     where
-        T::OnlyType: IntoComponentId,
+        T::OnlyType: ComponentOrPairId,
     {
-        let entity =
-            EntityView::new_from(self, <<T::OnlyType as IntoComponentId>::CastType>::id(self));
+        let entity = EntityView::new_from(
+            self,
+            <<T::OnlyType as ComponentOrPairId>::CastType>::id(self),
+        );
         entity.cloned::<T>()
     }
 
@@ -1765,10 +1771,12 @@ impl World {
         callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Option<Return>,
     ) -> Option<Return>
     where
-        T::OnlyType: IntoComponentId,
+        T::OnlyType: ComponentOrPairId,
     {
-        let entity =
-            EntityView::new_from(self, <<T::OnlyType as IntoComponentId>::CastType>::id(self));
+        let entity = EntityView::new_from(
+            self,
+            <<T::OnlyType as ComponentOrPairId>::CastType>::id(self),
+        );
         entity.try_map::<T, Return>(callback)
     }
 
@@ -1852,10 +1860,12 @@ impl World {
         callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Return,
     ) -> Return
     where
-        T::OnlyType: IntoComponentId,
+        T::OnlyType: ComponentOrPairId,
     {
-        let entity =
-            EntityView::new_from(self, <<T::OnlyType as IntoComponentId>::CastType>::id(self));
+        let entity = EntityView::new_from(
+            self,
+            <<T::OnlyType as ComponentOrPairId>::CastType>::id(self),
+        );
         entity.map::<T, Return>(callback)
     }
 
@@ -1992,7 +2002,7 @@ impl World {
     #[inline(always)]
     pub fn has<T>(&self) -> bool
     where
-        T: IntoComponentId,
+        T: ComponentOrPairId,
     {
         EntityView::new_from(self, T::get_id(self)).has::<T>()
     }
@@ -2069,7 +2079,7 @@ impl World {
     /// * C++ API: `world::add`
     #[doc(alias = "world::add")]
     #[inline(always)]
-    pub fn add<T: IntoComponentId>(&self) -> EntityView {
+    pub fn add<T: ComponentOrPairId>(&self) -> EntityView {
         let id = T::CastType::id(self);
         EntityView::new_from(self, id).add::<T>()
     }
@@ -2198,7 +2208,7 @@ impl World {
     /// * C++ API: `world::remove`
     #[doc(alias = "world::remove")]
     #[inline(always)]
-    pub fn remove<T: IntoComponentId>(&self) {
+    pub fn remove<T: ComponentOrPairId>(&self) {
         if T::IS_PAIR {
             let first_id = <T::First as ComponentId>::id(self);
             EntityView::new_from(self, first_id).remove::<T>();
@@ -2419,7 +2429,7 @@ impl World {
     ///
     /// * C++ API: `world::count`
     #[doc(alias = "world::count")]
-    pub fn count<T: IntoComponentId>(&self) -> i32 {
+    pub fn count<T: ComponentOrPairId>(&self) -> i32 {
         self.count_id(T::get_id(self))
     }
 
@@ -2662,7 +2672,7 @@ impl World {
     ///
     /// * C++ API: `world::with`
     #[doc(alias = "world::with")]
-    pub fn with<T: IntoComponentId>(&self, func: impl FnMut()) {
+    pub fn with<T: ComponentOrPairId>(&self, func: impl FnMut()) {
         self.with_id(T::get_id(self), func);
     }
 
@@ -2779,7 +2789,7 @@ impl World {
     ///
     /// * C++ API: `world::delete_with`
     #[doc(alias = "world::delete_with")]
-    pub fn delete_entities_with<T: IntoComponentId>(&self) {
+    pub fn delete_entities_with<T: ComponentOrPairId>(&self) {
         self.delete_with_id(T::get_id(self));
     }
 
@@ -2888,7 +2898,7 @@ impl World {
     ///
     /// * C++ API: `world::remove_all`
     #[doc(alias = "world::remove_all")]
-    pub fn remove_all<T: IntoComponentId>(&self) {
+    pub fn remove_all<T: ComponentOrPairId>(&self) {
         self.remove_all_id(T::get_id(self));
     }
 
@@ -3423,7 +3433,7 @@ impl World {
     /// * C++ API: `world::id`
     /// * C++ API: `world::pair`
     #[doc(alias = "world::pair")]
-    pub fn id_from<T: IntoComponentId>(&self) -> IdView {
+    pub fn id_from<T: ComponentOrPairId>(&self) -> IdView {
         IdView::new_from(self, T::get_id(self))
     }
 
@@ -3639,7 +3649,7 @@ impl World {
     // ///
     // /// * C++ API: `world::term`
     // #[doc(alias = "world::term")]
-    // pub fn term<T: IntoComponentId>(&self) -> Term {
+    // pub fn term<T: ComponentOrPairId>(&self) -> Term {
     //     Term::new_type::<T>(self)
     // }
 }

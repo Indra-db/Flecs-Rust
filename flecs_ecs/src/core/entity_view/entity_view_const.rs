@@ -1404,7 +1404,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target_for")]
     #[inline(always)]
-    pub fn target_for<T: IntoComponentId>(self, relationship: impl Into<Entity>) -> EntityView<'a> {
+    pub fn target_for<T: ComponentOrPairId>(self, relationship: impl Into<Entity>) -> EntityView<'a> {
         self.target_for_id(relationship, T::get_id(self.world))
     }
 
@@ -1687,7 +1687,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    pub fn has<T: IntoComponentId>(self) -> bool {
+    pub fn has<T: ComponentOrPairId>(self) -> bool {
         if !T::IS_ENUM {
             unsafe { sys::ecs_has_id(self.world.world_ptr_mut(), *self.id, T::get_id(self.world)) }
         } else {
@@ -1845,7 +1845,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::owns`
     #[doc(alias = "entity_view::owns")]
-    pub fn owns<T: IntoComponentId>(self) -> bool {
+    pub fn owns<T: ComponentOrPairId>(self) -> bool {
         unsafe { sys::ecs_owns_id(self.world.world_ptr_mut(), *self.id, T::get_id(self.world)) }
     }
 
@@ -1933,7 +1933,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    pub fn is_enabled<T: IntoComponentId>(self) -> bool {
+    pub fn is_enabled<T: ComponentOrPairId>(self) -> bool {
         unsafe {
             sys::ecs_is_enabled_id(self.world.world_ptr_mut(), *self.id, T::get_id(self.world))
         }

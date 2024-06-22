@@ -1,12 +1,12 @@
 use crate::core::*;
 
-pub trait IntoComponentId {
+pub trait ComponentOrPairId {
     const IS_ENUM: bool;
     const IS_PAIR: bool;
     const IS_TAGS: bool = Self::First::IS_TAG && Self::Second::IS_TAG;
     const IS_FIRST: bool;
     // These types are useful for merging functions in World class such ass add_pair<T,U> into add<T>.
-    // When IntoComponentId is not a pair, First and Second will be same
+    // When ComponentOrPairId is not a pair, First and Second will be same
     type CastType: ComponentId;
     type First: ComponentId;
     type Second: ComponentId;
@@ -22,7 +22,7 @@ pub trait IntoComponentId {
     fn name() -> &'static str;
 }
 
-impl<T> IntoComponentId for T
+impl<T> ComponentOrPairId for T
 where
     T: ComponentId + ComponentInfo,
 {
@@ -44,7 +44,7 @@ where
     }
 }
 
-impl<T, U> IntoComponentId for (T, U)
+impl<T, U> ComponentOrPairId for (T, U)
 where
     T: ComponentId + ComponentInfo,
     U: ComponentId + ComponentInfo,

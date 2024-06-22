@@ -74,7 +74,7 @@ pub trait IterableTypeOperation {
     type CastType;
     type ActualType<'w>;
     type SliceType<'w>;
-    type OnlyType: IntoComponentId;
+    type OnlyType: ComponentOrPairId;
     type OnlyPairType: ComponentId;
     const ONE: i32 = 1;
 
@@ -98,13 +98,13 @@ pub trait IterableTypeOperation {
 
 impl<T> IterableTypeOperation for &T
 where
-    T: IntoComponentId,
+    T: ComponentOrPairId,
 {
-    type CastType = *const <T as IntoComponentId>::CastType;
-    type ActualType<'w> = &'w <T as IntoComponentId>::CastType;
-    type SliceType<'w> = &'w [<T as IntoComponentId>::CastType];
+    type CastType = *const <T as ComponentOrPairId>::CastType;
+    type ActualType<'w> = &'w <T as ComponentOrPairId>::CastType;
+    type SliceType<'w> = &'w [<T as ComponentOrPairId>::CastType];
     type OnlyType = T;
-    type OnlyPairType = <T as IntoComponentId>::CastType;
+    type OnlyPairType = <T as ComponentOrPairId>::CastType;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::In as i16;
@@ -156,13 +156,13 @@ where
 
 impl<T> IterableTypeOperation for &mut T
 where
-    T: IntoComponentId,
+    T: ComponentOrPairId,
 {
-    type CastType = *mut <T as IntoComponentId>::CastType;
-    type ActualType<'w> = &'w mut <T as IntoComponentId>::CastType;
-    type SliceType<'w> = &'w mut [<T as IntoComponentId>::CastType];
+    type CastType = *mut <T as ComponentOrPairId>::CastType;
+    type ActualType<'w> = &'w mut <T as ComponentOrPairId>::CastType;
+    type SliceType<'w> = &'w mut [<T as ComponentOrPairId>::CastType];
     type OnlyType = T;
-    type OnlyPairType = <T as IntoComponentId>::CastType;
+    type OnlyPairType = <T as ComponentOrPairId>::CastType;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::InOut as i16;
@@ -214,13 +214,13 @@ where
 
 impl<T> IterableTypeOperation for Option<&T>
 where
-    T: IntoComponentId,
+    T: ComponentOrPairId,
 {
-    type CastType = *const <T as IntoComponentId>::CastType;
-    type ActualType<'w> = Option<&'w <T as IntoComponentId>::CastType>;
-    type SliceType<'w> = Option<&'w [<T as IntoComponentId>::CastType]>;
+    type CastType = *const <T as ComponentOrPairId>::CastType;
+    type ActualType<'w> = Option<&'w <T as ComponentOrPairId>::CastType>;
+    type SliceType<'w> = Option<&'w [<T as ComponentOrPairId>::CastType]>;
     type OnlyType = T;
-    type OnlyPairType = <T as IntoComponentId>::CastType;
+    type OnlyPairType = <T as ComponentOrPairId>::CastType;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::In as i16;
@@ -281,13 +281,13 @@ where
 
 impl<T> IterableTypeOperation for Option<&mut T>
 where
-    T: IntoComponentId,
+    T: ComponentOrPairId,
 {
-    type CastType = *mut <T as IntoComponentId>::CastType;
-    type ActualType<'w> = Option<&'w mut <T as IntoComponentId>::CastType>;
-    type SliceType<'w> = Option<&'w mut [<T as IntoComponentId>::CastType]>;
+    type CastType = *mut <T as ComponentOrPairId>::CastType;
+    type ActualType<'w> = Option<&'w mut <T as ComponentOrPairId>::CastType>;
+    type SliceType<'w> = Option<&'w mut [<T as ComponentOrPairId>::CastType]>;
     type OnlyType = T;
-    type OnlyPairType = <T as IntoComponentId>::CastType;
+    type OnlyPairType = <T as ComponentOrPairId>::CastType;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::InOut as i16;
@@ -402,7 +402,7 @@ where
     const COUNT : i32 = 1;
 
     fn populate<'a>(filter: &mut impl QueryBuilderImpl<'a>) {
-        let id = <A::OnlyType as IntoComponentId>::get_id(filter.world());
+        let id = <A::OnlyType as ComponentOrPairId>::get_id(filter.world());
 
         ecs_assert!(
         {
@@ -435,7 +435,7 @@ where
         index: &mut usize,
     ) {
         let world = unsafe { WorldRef::from_ptr(world) };
-        terms[*index].id = <A::OnlyType as IntoComponentId>::get_id(world);
+        terms[*index].id = <A::OnlyType as ComponentOrPairId>::get_id(world);
         A::populate_term(&mut terms[*index]);
         *index += 1;
     }
@@ -641,7 +641,7 @@ macro_rules! impl_iterable {
                 let _world = filter.world();
 
                 $(
-                    let id = <$t::OnlyType as IntoComponentId>::get_id(_world);
+                    let id = <$t::OnlyType as ComponentOrPairId>::get_id(_world);
 
                     ecs_assert!(
                     {

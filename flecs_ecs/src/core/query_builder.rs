@@ -361,9 +361,9 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::with`
     #[doc(alias = "query_builder_i::with")]
-    fn with<T: IntoComponentId>(&mut self) -> &mut Self {
-        if <T as IntoComponentId>::IS_PAIR {
-            self.with_id(<T as IntoComponentId>::get_id(self.world()));
+    fn with<T: ComponentOrPairId>(&mut self) -> &mut Self {
+        if <T as ComponentOrPairId>::IS_PAIR {
+            self.with_id(<T as ComponentOrPairId>::get_id(self.world()));
         } else {
             self.term();
             let world = self.world();
@@ -518,7 +518,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::without`
     #[doc(alias = "query_builder_i::without")]
-    fn without<T: IntoComponentId>(&mut self) -> &mut Self {
+    fn without<T: ComponentOrPairId>(&mut self) -> &mut Self {
         self.with::<T>().not()
     }
 
@@ -683,7 +683,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// Set the type as current term and in mode inout
-    fn write<T: IntoComponentId>(&mut self) -> &mut Self {
+    fn write<T: ComponentOrPairId>(&mut self) -> &mut Self {
         self.with::<T>();
         TermBuilderImpl::write_curr(self)
     }
@@ -740,7 +740,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// Set the type as current term and in mode in
-    fn read<T: IntoComponentId>(&mut self) -> &mut Self {
+    fn read<T: ComponentOrPairId>(&mut self) -> &mut Self {
         self.with::<T>();
         TermBuilderImpl::read_curr(self)
     }

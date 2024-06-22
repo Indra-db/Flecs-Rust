@@ -59,7 +59,7 @@ impl<T: GetTuple, const LEN: usize> GetComponentPointers<T> for ComponentsData<T
 
 pub trait GetTupleTypeOperation {
     type ActualType<'e>;
-    type OnlyType: IntoComponentId;
+    type OnlyType: ComponentOrPairId;
     const IS_OPTION: bool;
     const IS_IMMUTABLE: bool;
 
@@ -68,15 +68,15 @@ pub trait GetTupleTypeOperation {
 
 impl<T> GetTupleTypeOperation for &T
 where
-    T: IntoComponentId + DataComponent,
+    T: ComponentOrPairId + DataComponent,
 {
-    type ActualType<'e> = &'e <T as IntoComponentId>::CastType;
+    type ActualType<'e> = &'e <T as ComponentOrPairId>::CastType;
     type OnlyType = T;
     const IS_OPTION: bool = false;
     const IS_IMMUTABLE: bool = true;
 
     fn create_tuple_data<'a>(array_components_data: *mut c_void) -> Self::ActualType<'a> {
-        let data_ptr = array_components_data as *const <T as IntoComponentId>::CastType;
+        let data_ptr = array_components_data as *const <T as ComponentOrPairId>::CastType;
         // SAFETY: up to this point we have checked that the data is not null
         unsafe { &*data_ptr }
     }
@@ -84,15 +84,15 @@ where
 
 impl<T> GetTupleTypeOperation for &mut T
 where
-    T: IntoComponentId + DataComponent,
+    T: ComponentOrPairId + DataComponent,
 {
-    type ActualType<'e> = &'e mut <T as IntoComponentId>::CastType;
+    type ActualType<'e> = &'e mut <T as ComponentOrPairId>::CastType;
     type OnlyType = T;
     const IS_OPTION: bool = false;
     const IS_IMMUTABLE: bool = false;
 
     fn create_tuple_data<'a>(array_components_data: *mut c_void) -> Self::ActualType<'a> {
-        let data_ptr = array_components_data as *mut <T as IntoComponentId>::CastType;
+        let data_ptr = array_components_data as *mut <T as ComponentOrPairId>::CastType;
         // SAFETY: up to this point we have checked that the data is not null
         unsafe { &mut *data_ptr }
     }
@@ -100,9 +100,9 @@ where
 
 impl<T> GetTupleTypeOperation for Option<&T>
 where
-    T: IntoComponentId + DataComponent,
+    T: ComponentOrPairId + DataComponent,
 {
-    type ActualType<'e> = Option<&'e <T as IntoComponentId>::CastType>;
+    type ActualType<'e> = Option<&'e <T as ComponentOrPairId>::CastType>;
     type OnlyType = T;
     const IS_OPTION: bool = true;
     const IS_IMMUTABLE: bool = true;
@@ -111,7 +111,7 @@ where
         if array_components_data.is_null() {
             None
         } else {
-            let data_ptr = array_components_data as *const <T as IntoComponentId>::CastType;
+            let data_ptr = array_components_data as *const <T as ComponentOrPairId>::CastType;
             Some(unsafe { &*data_ptr })
         }
     }
@@ -119,9 +119,9 @@ where
 
 impl<T> GetTupleTypeOperation for Option<&mut T>
 where
-    T: IntoComponentId + DataComponent,
+    T: ComponentOrPairId + DataComponent,
 {
-    type ActualType<'e> = Option<&'e mut <T as IntoComponentId>::CastType>;
+    type ActualType<'e> = Option<&'e mut <T as ComponentOrPairId>::CastType>;
     type OnlyType = T;
     const IS_OPTION: bool = true;
     const IS_IMMUTABLE: bool = false;
@@ -130,7 +130,7 @@ where
         if array_components_data.is_null() {
             None
         } else {
-            let data_ptr = array_components_data as *mut <T as IntoComponentId>::CastType;
+            let data_ptr = array_components_data as *mut <T as ComponentOrPairId>::CastType;
             Some(unsafe { &mut *data_ptr })
         }
     }
@@ -186,7 +186,7 @@ where
         let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut WorldT };
         let table = unsafe { (*record).table };
         let entity = *entity;
-        let id = <A::OnlyType as IntoComponentId>::get_id(world);
+        let id = <A::OnlyType as ComponentOrPairId>::get_id(world);
         let mut has_all_components = true;
         
         let component_ptr = if A::OnlyType::IS_ENUM {
@@ -318,7 +318,7 @@ macro_rules! impl_get_tuple {
                 let mut has_all_components = true;
 
                 $(
-                    let id = <$t::OnlyType as IntoComponentId>::get_id(world_ref);
+                    let id = <$t::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
                     let component_ptr = if $t::OnlyType::IS_ENUM {
 

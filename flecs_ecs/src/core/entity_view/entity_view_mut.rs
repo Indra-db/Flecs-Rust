@@ -64,7 +64,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::add")]
     pub fn add<T>(self) -> Self
     where
-        T: IntoComponentId,
+        T: ComponentOrPairId,
     {
         const {
             if T::CastType::IS_GENERIC {
@@ -85,7 +85,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::add")]
     pub fn add_trait<T>(self) -> Self
     where
-        T: IntoComponentId,
+        T: ComponentOrPairId,
         T::First: FlecsTrait,
     {
         let world = self.world;
@@ -100,7 +100,7 @@ impl<'a> EntityView<'a> {
     /// Caller must ensure the entity has the component to override.
     pub fn override_type<T>(self) -> Self
     where
-        T: IntoComponentId,
+        T: ComponentOrPairId,
     {
         let id = T::get_id(self.world);
         let world_ptr = self.world.world_ptr_mut();
@@ -306,7 +306,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::add_if`
     #[doc(alias = "entity_builder::add_if")]
-    pub fn add_if<T: IntoComponentId>(self, condition: bool) -> Self {
+    pub fn add_if<T: ComponentOrPairId>(self, condition: bool) -> Self {
         let world = self.world;
         if condition {
             self.add::<T>()
@@ -437,7 +437,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::remove`
     #[doc(alias = "entity_builder::remove")]
-    pub fn remove<T: IntoComponentId>(self) -> Self {
+    pub fn remove<T: ComponentOrPairId>(self) -> Self {
         let world = self.world;
 
         //this branch will be compiled away in release mode
@@ -695,7 +695,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::override`
     #[doc(alias = "entity_builder::override")]
-    pub fn auto_override<T: IntoComponentId>(self) -> Self {
+    pub fn auto_override<T: ComponentOrPairId>(self) -> Self {
         let world = self.world;
         self.auto_override_id(T::get_id(world))
     }
@@ -787,15 +787,15 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_builder::set_auto_override`
     pub fn set_pair_override<First, Second>(
         self,
-        data: <(First, Second) as IntoComponentId>::CastType,
+        data: <(First, Second) as ComponentOrPairId>::CastType,
     ) -> Self
     where
         First: ComponentId,
         Second: ComponentId,
-        (First, Second): IntoComponentId,
-        <(First, Second) as IntoComponentId>::CastType: DataComponent,
+        (First, Second): ComponentOrPairId,
+        <(First, Second) as ComponentOrPairId>::CastType: DataComponent,
     {
-        let id_pair = <(First, Second) as IntoComponentId>::get_id(self.world);
+        let id_pair = <(First, Second) as ComponentOrPairId>::get_id(self.world);
         self.auto_override_id(id_pair).set_id(data, id_pair)
     }
 
@@ -906,15 +906,15 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::set")]
     pub fn set_pair<First, Second>(
         self,
-        data: <(First, Second) as IntoComponentId>::CastType,
+        data: <(First, Second) as ComponentOrPairId>::CastType,
     ) -> Self
     where
         First: ComponentId,
         Second: ComponentId,
-        (First, Second): IntoComponentId,
+        (First, Second): ComponentOrPairId,
     {
         const {
-            assert!(!<(First, Second) as IntoComponentId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
+            assert!(!<(First, Second) as ComponentOrPairId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
         };
 
         set_helper(
@@ -1169,7 +1169,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::enable`
     #[doc(alias = "entity_builder::enable")]
-    pub fn enable<T: IntoComponentId>(self) -> Self {
+    pub fn enable<T: ComponentOrPairId>(self) -> Self {
         let world = self.world;
         self.enable_id(T::get_id(world))
     }
@@ -1235,7 +1235,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::disable`
     #[doc(alias = "entity_builder::disable")]
-    pub fn disable<T: IntoComponentId>(self) -> Self {
+    pub fn disable<T: ComponentOrPairId>(self) -> Self {
         let world = self.world;
         self.disable_id(T::get_id(world))
     }
@@ -1612,7 +1612,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
-    pub fn modified<T: IntoComponentId>(&self) {
+    pub fn modified<T: ComponentOrPairId>(&self) {
         ecs_assert!(
             std::mem::size_of::<T>() != 0,
             FlecsErrorCode::InvalidParameter,

@@ -109,7 +109,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     #[doc(alias = "event_builder_base::id")]
     pub fn add<C>(&mut self) -> &mut Self
     where
-        C: IntoComponentId,
+        C: ComponentOrPairId,
     {
         let world = self.world;
         self.add_id(C::get_id(world))
