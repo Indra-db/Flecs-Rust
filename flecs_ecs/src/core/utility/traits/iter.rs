@@ -848,12 +848,12 @@ where
         rust_string
     }
 
-    fn iterable(&self) -> IterIterable<P, T> {
-        IterIterable::new(self.retrieve_iter(), self.iter_next_func())
+    fn iterable(&self) -> QueryIter<P, T> {
+        QueryIter::new(self.retrieve_iter(), self.iter_next_func())
     }
 
-    fn iter_stage<'a>(&'a self, stage: impl IntoWorld<'a>) -> IterIterable<'a, P, T> {
-        IterIterable::new(self.retrieve_iter_stage(stage), self.iter_next_func())
+    fn iter_stage<'a>(&'a self, stage: impl IntoWorld<'a>) -> QueryIter<'a, P, T> {
+        QueryIter::new(self.retrieve_iter_stage(stage), self.iter_next_func())
     }
 
     /// Return first matching entity.

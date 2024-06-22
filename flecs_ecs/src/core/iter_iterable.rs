@@ -3,7 +3,7 @@ use std::ffi::c_void;
 use crate::core::*;
 use crate::sys;
 
-pub struct IterIterable<'a, P, T>
+pub struct QueryIter<'a, P, T>
 where
     T: QueryTuple,
 {
@@ -12,7 +12,7 @@ where
     _phantom: std::marker::PhantomData<&'a (P, T)>,
 }
 
-impl<'a, P, T> IterIterable<'a, P, T>
+impl<'a, P, T> QueryIter<'a, P, T>
 where
     T: QueryTuple,
 {
@@ -142,7 +142,7 @@ where
     }
 }
 
-impl<'a, P, T> IterOperations for IterIterable<'a, P, T>
+impl<'a, P, T> IterOperations for QueryIter<'a, P, T>
 where
     T: QueryTuple,
 {
@@ -167,7 +167,7 @@ where
     }
 }
 
-impl<'a, P, T> IterAPI<P, T> for IterIterable<'a, P, T>
+impl<'a, P, T> IterAPI<P, T> for QueryIter<'a, P, T>
 where
     T: QueryTuple,
 {
@@ -189,7 +189,7 @@ where
     }
 }
 
-impl<'a, P, T> IntoWorld<'a> for IterIterable<'a, P, T>
+impl<'a, P, T> IntoWorld<'a> for QueryIter<'a, P, T>
 where
     T: QueryTuple,
 {
