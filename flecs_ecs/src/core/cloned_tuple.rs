@@ -282,4 +282,4 @@ macro_rules! impl_cloned_tuple {
     }
 }
 
-tuples!(impl_cloned_tuple, 0, 12);
+tuples!(impl_cloned_tuple, 0, 16);
