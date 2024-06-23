@@ -287,12 +287,13 @@ impl World {
     ///
     /// let world_info = world.get_info();
     ///
-    /// //assert!(world_info.systems_ran_frame == 0);
-    /////
-    /// //let delta_time_measured = world.frame_begin(0.0);
-    /////
-    /// //world.frame_end();
-    /////
+    /// assert!(world_info.systems_ran_frame == 0);
+    ///
+    /// let delta_time_measured = world.frame_begin(0.0);
+    ///
+    /// world.frame_end();
+    ///
+    /// //TODO
     /// //assert!(world_info.systems_ran_frame == 1);
     ///
     /// ```
@@ -557,12 +558,55 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::set_stage_count`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// world.set_stage_count(2);
+    ///
+    /// world.readonly_begin(false);
+    ///
+    /// let stage1 = world.stage(0);
+    ///
+    /// let e1 = stage1.entity_named("e1");
+    ///
+    /// world.readonly_end();
+    ///
+    /// assert!(e1.id() != 0);
+    /// assert_eq!(e1.name(), "e1");
+    /// ```
     #[doc(alias = "world::set_stage_count")]
     pub fn set_stage_count(&self, stages: i32) {
         unsafe {
             sys::ecs_set_stage_count(self.raw_world.as_ptr(), stages);
         }
     }
+
+    /*
+      ecs_world_t *world = ecs_mini();
+
+    ecs_set_stage_count(world, 2);
+
+    ecs_readonly_begin(world, false);
+
+    ecs_world_t *s = ecs_get_stage(world, 1);
+
+    ecs_entity_t e = ecs_entity_init(s, &(ecs_entity_desc_t){
+        .name = "Foo"
+    });
+
+    ecs_readonly_end(world);
+
+    test_assert(e != 0);
+    test_str(ecs_get_name(world, e), "Foo");
+
+    ecs_fini(world);
+    }
+         */
 
     /// Get number of configured stages.
     ///
