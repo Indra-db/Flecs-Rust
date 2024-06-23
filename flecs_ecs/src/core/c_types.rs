@@ -508,7 +508,7 @@ pub(crate) const ECS_DOC_COLOR: u64 = FLECS_HI_COMPONENT_ID + 117;
 // REST module components
 pub(crate) const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 118;
 
-#[macro_export]
+#[allow(unused_macros)]
 macro_rules! impl_component_traits_binding_type {
     ($name:ident) => {
         impl DataComponent for $name {}
@@ -543,7 +543,6 @@ macro_rules! impl_component_traits_binding_type {
     };
 }
 
-#[macro_export]
 macro_rules! impl_component_traits_binding_type_w_id {
     ($name:ident, $id:ident) => {
         impl FlecsConstantId for $name {
@@ -605,3 +604,7 @@ macro_rules! impl_component_traits_binding_type_w_id {
         }
     };
 }
+
+#[allow(unused_imports)]
+pub(crate) use impl_component_traits_binding_type;
+pub(crate) use impl_component_traits_binding_type_w_id;

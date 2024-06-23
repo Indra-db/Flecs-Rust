@@ -138,7 +138,6 @@ impl FlecsErrorCode {
 /// In release mode, the condition is not checked.
 /// Can be turned off by disabling the `flecs_ecs_asserts` feature
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-#[macro_export]
 macro_rules! ecs_assert {
     ($condition:expr $(,)?, $error_code:expr $(,)?) => {
         assert!($condition, "{}", $error_code);
@@ -161,13 +160,11 @@ macro_rules! ecs_assert {
 }
 
 #[cfg(all(not(debug_assertions), not(feature = "flecs_force_enable_ecs_asserts")))]
-#[macro_export]
 macro_rules! ecs_assert {
     ($($args:tt)*) => {};
 }
 
 /// Macro to abort the application when an error occurs.
-#[macro_export]
 macro_rules! ecs_abort {
     ($error_code:expr $(,)?) => {
         let file = file!();
@@ -219,5 +216,5 @@ macro_rules! ecs_abort {
     };
 }
 
-pub use ecs_abort;
-pub use ecs_assert;
+pub(crate) use ecs_abort;
+pub(crate) use ecs_assert;

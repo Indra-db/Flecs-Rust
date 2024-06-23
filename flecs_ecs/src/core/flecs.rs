@@ -4,7 +4,6 @@ use crate::core::*;
 
 pub trait FlecsTrait {}
 
-#[macro_export]
 macro_rules! create_pre_registered_component {
     ($struct_name:ident, $const_name:ident) => {
         #[derive(Debug, Default)]
@@ -131,10 +130,10 @@ pub type Identifier = crate::sys::EcsIdentifier;
 pub type Poly = crate::sys::EcsPoly;
 pub type DefaultChildComponent = crate::sys::EcsDefaultChildComponent;
 
-crate::impl_component_traits_binding_type_w_id!(Component, ECS_COMPONENT);
-crate::impl_component_traits_binding_type_w_id!(Identifier, ECS_IDENTIFIER);
-crate::impl_component_traits_binding_type_w_id!(Poly, ECS_POLY);
-crate::impl_component_traits_binding_type_w_id!(DefaultChildComponent, ECS_DEFAULT_CHILD_COMPONENT);
+impl_component_traits_binding_type_w_id!(Component, ECS_COMPONENT);
+impl_component_traits_binding_type_w_id!(Identifier, ECS_IDENTIFIER);
+impl_component_traits_binding_type_w_id!(Poly, ECS_POLY);
+impl_component_traits_binding_type_w_id!(DefaultChildComponent, ECS_DEFAULT_CHILD_COMPONENT);
 
 // Poly target components
 create_pre_registered_component!(Query, ECS_QUERY);
@@ -210,7 +209,7 @@ create_pre_registered_component!(OnTableFill, ECS_ON_TABLE_FILL);
 pub mod system {
     use super::*;
     pub type TickSource = crate::sys::EcsTickSource;
-    crate::impl_component_traits_binding_type_w_id!(TickSource, ECS_TICK_SOURCE);
+    impl_component_traits_binding_type_w_id!(TickSource, ECS_TICK_SOURCE);
 
     create_pre_registered_component!(System, ECS_SYSTEM);
 }
@@ -220,10 +219,10 @@ pub mod timer {
     use super::*;
 
     pub type Timer = crate::sys::EcsTimer;
-    crate::impl_component_traits_binding_type_w_id!(Timer, ECS_TIMER);
+    impl_component_traits_binding_type_w_id!(Timer, ECS_TIMER);
 
     pub type RateFilter = crate::sys::EcsRateFilter;
-    crate::impl_component_traits_binding_type_w_id!(RateFilter, ECS_RATE_FILTER);
+    impl_component_traits_binding_type_w_id!(RateFilter, ECS_RATE_FILTER);
 }
 
 create_pre_registered_component!(Sparse, ECS_SPARSE);
@@ -327,7 +326,7 @@ pub mod rest {
         }
     }
 
-    crate::impl_component_traits_binding_type_w_id!(Rest, ECS_REST);
+    impl_component_traits_binding_type_w_id!(Rest, ECS_REST);
 }
 
 // default component for event API
