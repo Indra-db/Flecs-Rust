@@ -1,9 +1,9 @@
+#![doc(hidden)]
 use std::ffi::c_char;
 
 use crate::core::*;
 use crate::sys;
 
-#[doc(hidden)]
 pub fn internal_register_component<'a, const IS_NAMED: bool, T>(
     world: impl IntoWorld<'a>,
     name: *const i8,
@@ -59,7 +59,7 @@ where
             sys::ecs_cpp_enum_constant_register(
                 world,
                 id,
-                T::UnderlyingEnumType::get_id_variant_of_index_unchecked(enum_item.enum_index()),
+                T::UnderlyingEnumType::id_variant_of_index_unchecked(enum_item.enum_index()),
                 name.as_ptr(),
                 index as i32,
             )

@@ -25,28 +25,50 @@ pub mod utility;
 pub mod world;
 pub(crate) mod world_ctx;
 
+#[doc(hidden)]
 pub use archetype::*;
+#[doc(hidden)]
 pub use builder::*;
+#[doc(hidden)]
 pub use c_types::*;
 pub(crate) use cloned_tuple::*;
+#[doc(hidden)]
 pub use component_registration::*;
+#[doc(hidden)]
 pub use components::*;
+#[doc(hidden)]
 pub use entity::*;
+#[doc(hidden)]
 pub use entity_view::*;
+#[doc(hidden)]
 pub use event::*;
+#[doc(hidden)]
 pub use field::*;
 pub(crate) use get_tuple::*;
+#[doc(hidden)]
 pub use id::*;
+#[doc(hidden)]
 pub use id_view::*;
+#[doc(hidden)]
 pub use iter::*;
+#[doc(hidden)]
 pub use observer::*;
+#[doc(hidden)]
 pub use observer_builder::*;
+#[doc(hidden)]
 pub use query::*;
+#[doc(hidden)]
 pub use query_builder::*;
+#[doc(hidden)]
 pub use query_iter::*;
+#[doc(hidden)]
 pub use query_tuple::*;
+#[doc(hidden)]
 pub use table::*;
+#[doc(hidden)]
 pub use term::*;
+#[doc(hidden)]
 pub use utility::*;
+#[doc(hidden)]
 pub use world::*;
 pub(crate) use world_ctx::*;

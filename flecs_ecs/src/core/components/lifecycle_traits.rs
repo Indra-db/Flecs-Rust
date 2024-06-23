@@ -1,3 +1,4 @@
+#![doc(hidden)]
 //! Implementation for lifecycle actions.
 //!
 //! Considerations on implementation for user experience vs performance.:

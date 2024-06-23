@@ -1,3 +1,4 @@
+//! Periodically tracks statistics for the world and systems.
 use crate::core::{EntityT, IntoWorld, World};
 use crate::sys;
 

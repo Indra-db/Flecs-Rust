@@ -1,4 +1,4 @@
-//! Optional addon for running the main application loop.
+//! addon for running the main application loop.
 
 use std::ffi::c_void;
 

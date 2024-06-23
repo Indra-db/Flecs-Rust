@@ -125,9 +125,9 @@ fn enum_standard_enum_reflection() {
 
     let redd = StandardEnum::Red;
 
-    let red = redd.get_id_variant(&world);
-    let green = StandardEnum::Green.get_id_variant(&world);
-    let _blue = StandardEnum::Blue.get_id_variant(&world);
+    let red = redd.id_variant(&world);
+    let green = StandardEnum::Green.id_variant(&world);
+    let _blue = StandardEnum::Blue.id_variant(&world);
 
     assert_ne!(red, 0);
     assert_ne!(green, 0);

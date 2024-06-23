@@ -4,8 +4,10 @@ use std::{
     sync::atomic::{AtomicU32, Ordering},
 };
 
+/// Indicates that the type is a tag component. A tag component is a component that does not have any data. Is a zero-sized type.
 pub trait TagComponent {}
 
+#[doc(hidden)]
 impl<T, U> TagComponent for (T, U)
 where
     T: TagComponent,
@@ -17,12 +19,18 @@ where
     message = "the size of type `{Self}` should not be zero, should not be a tag.",
     label = "Supports only non-empty components"
 )]
+/// Indicates that the type is a non-tag component. A non-tag component contains data, is not a zero-sized type.
 pub trait DataComponent {}
 
+#[doc(hidden)]
 impl<T> DataComponent for &T where T: DataComponent {}
+#[doc(hidden)]
 impl<T> DataComponent for &mut T where T: DataComponent {}
+#[doc(hidden)]
 impl<T> DataComponent for Option<&T> where T: DataComponent {}
+#[doc(hidden)]
 impl<T> DataComponent for Option<&mut T> where T: DataComponent {}
+#[doc(hidden)]
 impl<T, U> DataComponent for (T, U)
 where
     T: ComponentId,
@@ -37,15 +45,20 @@ where
 {
 }
 
+/// Indicates what component types are supported by the ECS.
 pub trait ECSComponentType {}
 
 impl ECSComponentType for Enum {}
 impl ECSComponentType for Struct {}
 
+/// Indicates what the type of the component is.
 pub trait ComponentType<T: ECSComponentType> {}
 
+#[doc(hidden)]
 impl<T> ComponentType<Enum> for &T where T: ComponentType<Enum> {}
+#[doc(hidden)]
 impl<T> ComponentType<Enum> for &mut T where T: ComponentType<Enum> {}
+
 /// Trait that manages component IDs across multiple worlds & binaries.
 ///
 /// proc macro Component should be used to implement this trait automatically
@@ -68,7 +81,9 @@ impl<T> ComponentType<Enum> for &mut T where T: ComponentType<Enum> {}
 /// In such a case, the component is registered with the present world using the pre-existing ID.
 /// If the ID is already known, the trait takes care of the component registration and checks for consistency in the input.
 pub trait ComponentId: Sized + ComponentInfo + 'static {
+    #[doc(hidden)]
     type UnderlyingType: ComponentId;
+    #[doc(hidden)]
     type UnderlyingEnumType: ComponentId + EnumComponentInfo;
 
     /// attempts to register the component with the world. If it's already registered, it does nothing.
@@ -209,7 +224,6 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     /// checks if the component is registered with a world.
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
-    #[doc(hidden)]
     fn is_registered_with_world<'a>(world: impl IntoWorld<'a>) -> bool {
         if !Self::IS_GENERIC {
             let index = Self::index();
@@ -229,7 +243,9 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
         }
     }
 
-    /// returns the component id of the component. If the component is not registered, it will register it.
+    /// returns the component id registered with a particular world. If the component is not registered, it will register it.
+    /// # Note
+    /// Each world has it's own unique id for the component.
     #[inline(always)]
     fn id<'a>(world: impl IntoWorld<'a>) -> EntityT {
         Self::UnderlyingType::__register_or_get_id::<true>(world)
@@ -273,6 +289,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     fn index() -> u32;
 }
 
+/// Component information trait.
 pub trait ComponentInfo: Sized {
     const IS_GENERIC: bool;
     const IS_ENUM: bool;
@@ -280,11 +297,15 @@ pub trait ComponentInfo: Sized {
     const NEEDS_DROP: bool = std::mem::needs_drop::<Self>();
     const IMPLS_CLONE: bool;
     const IMPLS_DEFAULT: bool;
+    #[doc(hidden)]
     const IS_REF: bool;
+    #[doc(hidden)]
     const IS_MUT: bool;
+    #[doc(hidden)]
     type TagType;
 }
 
+/// Caches the ids, index and name of the enum variants.
 pub trait EnumComponentInfo: ComponentType<Enum> + ComponentId {
     const SIZE_ENUM_FIELDS: u32;
     type VariantIterator: Iterator<Item = Self>;
@@ -323,7 +344,7 @@ pub trait EnumComponentInfo: ComponentType<Enum> + ComponentId {
     }
 
     /// get the entity id of the variant of the enum. This function will register the enum with the world if it's not registered.
-    fn get_id_variant<'a>(&self, world: impl IntoWorld<'a>) -> EntityView<'a> {
+    fn id_variant<'a>(&self, world: impl IntoWorld<'a>) -> EntityView<'a> {
         try_register_component::<Self>(world.world());
         let index = self.enum_index();
         EntityView::new_from(world, unsafe { *Self::__enum_data_mut().add(index) })
@@ -333,12 +354,12 @@ pub trait EnumComponentInfo: ComponentType<Enum> + ComponentId {
     ///
     /// This function is unsafe because it assumes the enum has been registered as a component with the world.
     /// if uncertain, use `try_register_component::<T>` to try and register it
-    unsafe fn get_id_variant_unchecked<'a>(&self, world: impl IntoWorld<'a>) -> EntityView<'a> {
+    unsafe fn id_variant_unchecked<'a>(&self, world: impl IntoWorld<'a>) -> EntityView<'a> {
         let index = self.enum_index();
         EntityView::new_from(world, unsafe { *Self::__enum_data_mut().add(index) })
     }
 
-    fn get_id_variant_of_index(index: usize) -> Option<u64> {
+    fn id_variant_of_index(index: usize) -> Option<u64> {
         if index < Self::SIZE_ENUM_FIELDS as usize {
             Some(unsafe { *Self::__enum_data_mut().add(index) })
         } else {
@@ -350,7 +371,7 @@ pub trait EnumComponentInfo: ComponentType<Enum> + ComponentId {
     /// This function is unsafe because it dereferences a raw pointer and you must ensure that the
     /// index is within the bounds of the number of variants in the enum.
     /// if uncertain, use `SIZE_ENUM_FIELDS` to check the number of variants.
-    unsafe fn get_id_variant_of_index_unchecked(index: usize) -> u64 {
+    unsafe fn id_variant_of_index_unchecked(index: usize) -> u64 {
         unsafe { *Self::__enum_data_mut().add(index) }
     }
 
@@ -358,6 +379,7 @@ pub trait EnumComponentInfo: ComponentType<Enum> + ComponentId {
     fn __enum_data_mut() -> *mut u64;
 }
 
+#[doc(hidden)]
 impl<T: ComponentInfo> ComponentInfo for &T {
     const IS_GENERIC: bool = T::IS_GENERIC;
     const IS_ENUM: bool = T::IS_ENUM;
@@ -369,6 +391,7 @@ impl<T: ComponentInfo> ComponentInfo for &T {
     type TagType = T::TagType;
 }
 
+#[doc(hidden)]
 impl<T: ComponentInfo> ComponentInfo for &mut T {
     const IS_GENERIC: bool = T::IS_GENERIC;
     const IS_ENUM: bool = T::IS_ENUM;
@@ -380,6 +403,7 @@ impl<T: ComponentInfo> ComponentInfo for &mut T {
     type TagType = T::TagType;
 }
 
+#[doc(hidden)]
 impl<T: ComponentId> ComponentId for &'static T {
     #[inline(always)]
     fn index() -> u32 {
@@ -391,6 +415,7 @@ impl<T: ComponentId> ComponentId for &'static T {
     type UnderlyingEnumType = T::UnderlyingEnumType;
 }
 
+#[doc(hidden)]
 impl<T: ComponentId> ComponentId for &'static mut T {
     #[inline(always)]
     fn index() -> u32 {
@@ -402,23 +427,29 @@ impl<T: ComponentId> ComponentId for &'static mut T {
     type UnderlyingEnumType = T::UnderlyingEnumType;
 }
 
+#[doc(hidden)]
 pub trait FlecsDefaultType {
+    #[doc(hidden)]
     type Type: Default;
 }
 
+#[doc(hidden)]
 pub trait FlecsCloneType {
     type Type: Clone;
 }
 
+#[doc(hidden)]
 pub trait FlecsPairType {
     type Type: ComponentId;
     const IS_FIRST: bool;
 }
 
+#[doc(hidden)]
 impl<T> FlecsDefaultType for ConditionalTypeSelector<false, T> {
     type Type = FlecsNoneDefaultDummy;
 }
 
+#[doc(hidden)]
 impl<T> FlecsDefaultType for ConditionalTypeSelector<true, T>
 where
     T: Default,
@@ -426,10 +457,12 @@ where
     type Type = T;
 }
 
+#[doc(hidden)]
 impl<T> FlecsCloneType for ConditionalTypeSelector<false, T> {
     type Type = FlecsNoneCloneDummy;
 }
 
+#[doc(hidden)]
 impl<T> FlecsCloneType for ConditionalTypeSelector<true, T>
 where
     T: Clone,
@@ -437,9 +470,13 @@ where
     type Type = T;
 }
 
+#[doc(hidden)]
 pub struct FlecsFirstIsNotATag;
+
+#[doc(hidden)]
 pub struct FlecsFirstIsATag;
 
+#[doc(hidden)]
 impl<T, U> FlecsPairType for ConditionalTypePairSelector<FlecsFirstIsNotATag, T, U>
 where
     T: ComponentId,
@@ -449,6 +486,7 @@ where
     const IS_FIRST: bool = true;
 }
 
+#[doc(hidden)]
 impl<T, U> FlecsPairType for ConditionalTypePairSelector<FlecsFirstIsATag, T, U>
 where
     T: ComponentId,

@@ -174,7 +174,7 @@ where
     where
         Phase: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        let enum_id = phase.get_id_variant(self.world());
+        let enum_id = phase.id_variant(self.world());
         self.kind_id(enum_id)
     }
 

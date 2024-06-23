@@ -10,6 +10,7 @@ use sys::ecs_get_with;
 #[cfg(not(feature = "flecs_unsafe_get"))]
 use sys::ecs_record_t;
 
+/// `EntityView` is a wrapper around an entity id with the world. It provides methods to interact with entities.
 #[derive(Clone, Copy)]
 pub struct EntityView<'a> {
     pub(crate) world: WorldRef<'a>,
@@ -1723,7 +1724,7 @@ impl<'a> EntityView<'a> {
     {
         let component_id: IdT = T::id(self.world);
         // Safety: we know the enum fields are registered because of the previous T::id call
-        let enum_constant_entity_id = unsafe { constant.get_id_variant_unchecked(self.world) };
+        let enum_constant_entity_id = unsafe { constant.id_variant_unchecked(self.world) };
 
         ecs_assert!(
             *enum_constant_entity_id.id != 0,
@@ -1739,7 +1740,7 @@ impl<'a> EntityView<'a> {
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        let enum_constant_entity_id = constant.get_id_variant(self.world);
+        let enum_constant_entity_id = constant.id_variant(self.world);
         self.has_id((enum_id.into(), enum_constant_entity_id))
     }
 
@@ -1811,7 +1812,7 @@ impl<'a> EntityView<'a> {
         constant: U,
     ) -> bool {
         let component_id: IdT = T::id(self.world);
-        let enum_constant_entity_id = constant.get_id_variant(self.world);
+        let enum_constant_entity_id = constant.id_variant(self.world);
 
         self.has_id((component_id, enum_constant_entity_id))
     }

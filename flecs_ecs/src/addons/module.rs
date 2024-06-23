@@ -1,3 +1,5 @@
+//! Modules organize components, systems and more in reusable units of code.
+
 use crate::core::{flecs, ComponentId, EntityView, World};
 
 pub trait Module: ComponentId {

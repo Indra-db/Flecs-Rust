@@ -508,41 +508,6 @@ pub(crate) const ECS_DOC_COLOR: u64 = FLECS_HI_COMPONENT_ID + 117;
 // REST module components
 pub(crate) const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 118;
 
-#[allow(unused_macros)]
-macro_rules! impl_component_traits_binding_type {
-    ($name:ident) => {
-        impl DataComponent for $name {}
-
-        impl ComponentType<flecs_ecs::core::Struct> for $name {}
-
-        impl ComponentInfo for $name {
-            const IS_ENUM: bool = false;
-            const IS_TAG: bool = false;
-            type TagType = FlecsFirstIsNotATag;
-            const IMPLS_CLONE: bool = true;
-            const IMPLS_DEFAULT: bool = false;
-            const IS_REF: bool = false;
-            const IS_MUT: bool = false;
-        }
-        impl ComponentId for $name {
-            type UnderlyingType = $name;
-            type UnderlyingEnumType = NoneEnum;
-            fn __get_once_lock_data() -> &'static std::sync::OnceLock<IdComponent> {
-                static ONCE_LOCK: std::sync::OnceLock<IdComponent> = std::sync::OnceLock::new();
-                &ONCE_LOCK
-            }
-            fn __register_lifecycle_hooks(type_hooks: &mut TypeHooksT) {
-                register_lifecycle_actions::<$name>(type_hooks);
-            }
-            fn __register_default_hooks(_type_hooks: &mut TypeHooksT) {}
-
-            fn __register_clone_hooks(type_hooks: &mut TypeHooksT) {
-                register_copy_lifecycle_action::<$name>(type_hooks);
-            }
-        }
-    };
-}
-
 macro_rules! impl_component_traits_binding_type_w_id {
     ($name:ident, $id:ident) => {
         impl FlecsConstantId for $name {
@@ -605,6 +570,4 @@ macro_rules! impl_component_traits_binding_type_w_id {
     };
 }
 
-#[allow(unused_imports)]
-pub(crate) use impl_component_traits_binding_type;
 pub(crate) use impl_component_traits_binding_type_w_id;

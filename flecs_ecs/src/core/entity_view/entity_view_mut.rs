@@ -215,7 +215,7 @@ impl<'a> EntityView<'a> {
             }
         }
         let world = self.world;
-        let enum_id = enum_value.get_id_variant(world);
+        let enum_id = enum_value.id_variant(world);
         unsafe { self.add_id_unchecked((First::id(world), enum_id)) }
     }
 
@@ -243,7 +243,7 @@ impl<'a> EntityView<'a> {
         let world = self.world;
         let first = T::id(world);
         // SAFETY: we know that the enum_value is a valid because of the T::id call
-        let second = unsafe { enum_value.get_id_variant_unchecked(world) };
+        let second = unsafe { enum_value.id_variant_unchecked(world) };
         ecs_assert!(
             second != 0,
             FlecsErrorCode::InvalidParameter,
@@ -406,7 +406,7 @@ impl<'a> EntityView<'a> {
         // SAFETY: we know that the enum_value is a valid because of the T::id call
         self.add_id_if(
             (T::id(world), unsafe {
-                enum_value.get_id_variant_unchecked(world)
+                enum_value.id_variant_unchecked(world)
             }),
             condition,
         )
@@ -470,7 +470,7 @@ impl<'a> EntityView<'a> {
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         let world = self.world;
-        self.remove_id((First::id(world), enum_value.get_id_variant(world)))
+        self.remove_id((First::id(world), enum_value.id_variant(world)))
     }
 
     /// Removes a pair.
@@ -619,7 +619,7 @@ impl<'a> EntityView<'a> {
         enum_value: T,
     ) -> Self {
         let world = self.world;
-        self.depends_on_id(enum_value.get_id_variant(world))
+        self.depends_on_id(enum_value.id_variant(world))
     }
 
     /// Shortcut for add(SlotOf, entity).
@@ -1005,10 +1005,7 @@ impl<'a> EntityView<'a> {
             self.world.world_ptr_mut(),
             *self.id,
             first,
-            ecs_pair(
-                First::id(self.world),
-                **enum_variant.get_id_variant(self.world),
-            ),
+            ecs_pair(First::id(self.world), **enum_variant.id_variant(self.world)),
         );
         self
     }

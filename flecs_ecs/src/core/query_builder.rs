@@ -391,7 +391,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         value: T,
     ) -> &mut Self {
         let enum_id = T::id(self.world());
-        let enum_field_id = value.get_id_variant(self.world());
+        let enum_field_id = value.id_variant(self.world());
         self.with_id((enum_id, enum_field_id))
     }
 

@@ -158,18 +158,18 @@ impl World {
     ///
     /// let world = World::new();
     ///
-    /// let world_info = world.get_info();
-    ///
     /// world.progress();
+    ///
+    /// let world_info = world.info();
     ///
     /// assert!(world_info.delta_time > 0.0);
     /// assert!(world_info.world_time_total > 0.0);
     /// assert!(world_info.systems_ran_frame == 0);
     /// ```
     #[doc(alias = "world::get_info")]
-    pub fn get_info(&self) -> &sys::WorldInfo {
+    pub fn info(&self) -> sys::WorldInfo {
         // SAFETY: The pointer is valid for the lifetime of the world.
-        unsafe { &*sys::ecs_get_world_info(self.raw_world.as_ptr()) }
+        unsafe { *sys::ecs_get_world_info(self.raw_world.as_ptr()) }
     }
 
     /// Signals the application to quit.
@@ -285,7 +285,7 @@ impl World {
     ///
     /// let sys = world.system::<&Position>().each(|pos| {});
     ///
-    /// let world_info = world.get_info();
+    /// let world_info = world.info();
     ///
     /// assert!(world_info.systems_ran_frame == 0);
     ///
@@ -2543,12 +2543,7 @@ impl World {
         &self,
         enum_value: T,
     ) -> i32 {
-        unsafe {
-            sys::ecs_count_id(
-                self.raw_world.as_ptr(),
-                *(enum_value.get_id_variant(self).id),
-            )
-        }
+        unsafe { sys::ecs_count_id(self.raw_world.as_ptr(), *(enum_value.id_variant(self).id)) }
     }
 
     /// Count entities with the provided pair enum tag.
@@ -2578,7 +2573,7 @@ impl World {
         unsafe {
             sys::ecs_count_id(
                 self.raw_world.as_ptr(),
-                ecs_pair(First::id(self), *(enum_value.get_id_variant(self)).id),
+                ecs_pair(First::id(self), *(enum_value.id_variant(self)).id),
             )
         }
     }
@@ -2777,7 +2772,7 @@ impl World {
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        self.with_id(enum_value.get_id_variant(self), func);
+        self.with_id(enum_value.id_variant(self), func);
     }
 
     /// Entities created in function are created with enum tag pair
@@ -2802,7 +2797,7 @@ impl World {
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         self.with_id(
-            ecs_pair(First::id(self), **(enum_value.get_id_variant(self))),
+            ecs_pair(First::id(self), **(enum_value.id_variant(self))),
             func,
         );
     }
@@ -2891,7 +2886,7 @@ impl World {
         &self,
         enum_value: T,
     ) {
-        self.delete_with_id(enum_value.get_id_variant(self));
+        self.delete_with_id(enum_value.id_variant(self));
     }
 
     /// Delete all entities with the given enum tag pair / relationship
@@ -2913,7 +2908,7 @@ impl World {
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        self.delete_with_id(ecs_pair(First::id(self), **enum_value.get_id_variant(self)));
+        self.delete_with_id(ecs_pair(First::id(self), **enum_value.id_variant(self)));
     }
 
     /// Remove all instances of the given id from entities
@@ -3000,7 +2995,7 @@ impl World {
         &self,
         enum_value: T,
     ) {
-        self.remove_all_id(enum_value.get_id_variant(self));
+        self.remove_all_id(enum_value.id_variant(self));
     }
 
     /// Remove all instances with the given enum tag pair / relationship from entities
@@ -3023,7 +3018,7 @@ impl World {
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        self.remove_all_id((First::id(self), enum_value.get_id_variant(self)));
+        self.remove_all_id((First::id(self), enum_value.id_variant(self)));
     }
 
     /// Defers all operations executed in the passed-in closure. If the world
@@ -3230,7 +3225,7 @@ impl World {
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        EntityView::new_from(self, enum_value.get_id_variant(self))
+        EntityView::new_from(self, enum_value.id_variant(self))
     }
 
     /// Create an entity that's associated with a type and name
@@ -3673,7 +3668,7 @@ impl World {
         &self,
         enum_value: T,
     ) -> EntityView {
-        EntityView::new_from(self, enum_value.get_id_variant(self))
+        EntityView::new_from(self, enum_value.id_variant(self))
     }
 }
 
@@ -4379,7 +4374,7 @@ impl World {
     #[doc(alias = "world::get_time_scale")]
     #[inline(always)]
     pub fn get_time_scale(&self) -> super::FTime {
-        self.get_info().time_scale
+        self.info().time_scale
     }
 
     /// Get target frames per second (FPS).
@@ -4399,7 +4394,7 @@ impl World {
     #[doc(alias = "world::get_target_fps")]
     #[inline(always)]
     pub fn get_target_fps(&self) -> super::FTime {
-        self.get_info().target_fps
+        self.info().target_fps
     }
 
     /// Set target frames per second (FPS).

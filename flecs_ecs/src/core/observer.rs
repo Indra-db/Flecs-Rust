@@ -1,3 +1,4 @@
+use std::ops::DerefMut;
 use std::ptr::NonNull;
 use std::{ops::Deref, os::raw::c_void};
 
@@ -18,6 +19,13 @@ impl<'a> Deref for Observer<'a> {
     #[inline]
     fn deref(&self) -> &Self::Target {
         &self.entity
+    }
+}
+
+impl<'a> DerefMut for Observer<'a> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.entity
     }
 }
 

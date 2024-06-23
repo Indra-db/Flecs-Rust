@@ -1,3 +1,4 @@
+#![doc(hidden)]
 mod declarations;
 mod opaque;
 

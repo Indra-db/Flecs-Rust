@@ -1,3 +1,4 @@
+#![doc(hidden)]
 use std::ffi::c_void;
 
 type EcsCtxFreeT = unsafe extern "C" fn(*mut c_void);

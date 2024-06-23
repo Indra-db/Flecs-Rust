@@ -1,3 +1,5 @@
+#![doc(hidden)]
+
 use std::ffi::c_char;
 
 use crate::core::*;
