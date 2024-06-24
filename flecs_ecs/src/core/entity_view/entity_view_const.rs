@@ -784,7 +784,9 @@ impl<'a> EntityView<'a> {
 
         if has_all_components {
             let tuple = tuple_data.get_tuple();
+            self.world.defer_begin();
             callback(tuple);
+            self.world.defer_end();
         }
 
         #[cfg(not(feature = "flecs_unsafe_get"))]
@@ -877,8 +879,9 @@ impl<'a> EntityView<'a> {
 
         let tuple_data = T::create_ptrs::<true>(self.world, self.id, record);
         let tuple = tuple_data.get_tuple();
-
+        self.world.defer_begin();
         callback(tuple);
+        self.world.defer_end();
 
         #[cfg(not(feature = "flecs_unsafe_get"))]
         unsafe {
@@ -1128,7 +1131,10 @@ impl<'a> EntityView<'a> {
 
         let ret = if has_all_components {
             let tuple = tuple_data.get_tuple();
-            callback(tuple)
+            self.world.defer_begin();
+            let val = callback(tuple);
+            self.world.defer_end();
+            val
         } else {
             None
         };
@@ -1241,7 +1247,9 @@ impl<'a> EntityView<'a> {
         let tuple_data = T::create_ptrs::<true>(self.world, self.id, record);
         let tuple = tuple_data.get_tuple();
 
+        self.world.defer_begin();
         let ret = callback(tuple);
+        self.world.defer_end();
 
         #[cfg(not(feature = "flecs_unsafe_get"))]
         unsafe {

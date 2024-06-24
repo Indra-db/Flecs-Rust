@@ -3060,7 +3060,6 @@ fn entity_id_get_entity() {
 }
 
 #[test]
-#[should_panic]
 fn entity_id_get_invalid_entity() {
     let world = World::new();
 
@@ -3069,7 +3068,7 @@ fn entity_id_get_invalid_entity() {
 
     let id = world.id_from_id((r, o));
 
-    assert!(!id.entity_view().is_valid());
+    assert!(!id.is_valid());
 }
 
 #[test]

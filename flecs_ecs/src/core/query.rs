@@ -1,6 +1,7 @@
 //! Query API. Queries are used to iterate over entities that match a filter.
 //! Queries are better for persistence than filters, but are slower to create.
 
+use core::panic;
 use std::{marker::PhantomData, os::raw::c_void, ptr::NonNull};
 
 use flecs_ecs_sys::ecs_get_binding_ctx;
@@ -175,10 +176,9 @@ where
 
         let query_ptr = unsafe { sys::ecs_query_init(world_ptr, desc) };
 
-        ecs_assert!(
-            !query_ptr.is_null(),
-            "Failed to create query from query descriptor"
-        );
+        if query_ptr.is_null() {
+            panic!("Failed to create query, this is due to the user creating an invalid query. Most likely by using `expr` with a wrong expression.");
+        }
 
         unsafe {
             let world_ctx = ecs_get_binding_ctx(world_ptr) as *mut WorldCtx;

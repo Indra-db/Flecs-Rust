@@ -23,14 +23,16 @@ fn observer_2_terms_on_add() {
             });
         });
 
+    let e = world.entity();
     world.get::<&mut Count>(|count| {
-        let e = world.entity();
         assert_eq!(count.0, 0);
-
-        e.set(Position { x: 10, y: 20 });
+    });
+    e.set(Position { x: 10, y: 20 });
+    world.get::<&mut Count>(|count| {
         assert_eq!(count.0, 0);
-
-        e.set(Velocity { x: 1, y: 2 });
+    });
+    e.set(Velocity { x: 1, y: 2 });
+    world.get::<&mut Count>(|count| {
         assert_eq!(count.0, 1);
     });
 }
@@ -54,20 +56,24 @@ fn observer_2_terms_on_remove() {
             assert_eq!(vel.y, 2);
         });
 
+    let e = world.entity();
     world.get::<&mut Count>(|count| {
-        let e = world.entity();
         assert_eq!(count, 0);
-
-        e.set(Position { x: 10, y: 20 });
+    });
+    e.set(Position { x: 10, y: 20 });
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 0);
-
-        e.set(Velocity { x: 1, y: 2 });
+    });
+    e.set(Velocity { x: 1, y: 2 });
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 0);
-
-        e.remove::<Velocity>();
+    });
+    e.remove::<Velocity>();
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
-
-        e.remove::<Position>();
+    });
+    e.remove::<Position>();
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
     });
 }
@@ -91,14 +97,16 @@ fn observer_2_terms_on_set() {
             assert_eq!(vel.y, 2);
         });
 
+    let e = world.entity();
     world.get::<&mut Count>(|count| {
-        let e = world.entity();
         assert_eq!(count, 0);
-
-        e.set(Position { x: 10, y: 20 });
+    });
+    e.set(Position { x: 10, y: 20 });
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 0);
-
-        e.set(Velocity { x: 1, y: 2 });
+    });
+    e.set(Velocity { x: 1, y: 2 });
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
     });
 }
@@ -122,20 +130,24 @@ fn observer_2_terms_un_set() {
             assert_eq!(vel.y, 2);
         });
 
+    let e = world.entity();
     world.get::<&mut Count>(|count| {
-        let e = world.entity();
         assert_eq!(count, 0);
-
-        e.set(Position { x: 10, y: 20 });
+    });
+    e.set(Position { x: 10, y: 20 });
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 0);
-
-        e.set(Velocity { x: 1, y: 2 });
+    });
+    e.set(Velocity { x: 1, y: 2 });
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 0);
-
-        e.remove::<Velocity>();
+    });
+    e.remove::<Velocity>();
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
-
-        e.remove::<Position>();
+    });
+    e.remove::<Position>();
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
     });
 }
@@ -291,13 +303,17 @@ fn observer_2_entities_iter() {
             }
         });
 
+    e1.set(Position { x: 10, y: 20 });
     world.get::<&mut Count>(|count| {
         world.get::<&mut LastEntity>(|last| {
-            e1.set(Position { x: 10, y: 20 });
             assert_eq!(count, 1);
             assert!(last.0 == e1.id());
+        });
+    });
 
-            e2.set(Position { x: 30, y: 40 });
+    e2.set(Position { x: 30, y: 40 });
+    world.get::<&mut Count>(|count| {
+        world.get::<&mut LastEntity>(|last| {
             assert_eq!(count, 2);
             assert!(last.0 == e2.id());
         });
@@ -346,13 +362,17 @@ fn observer_2_entities_table_column() {
             }
         });
 
+    e1.set(Position { x: 10, y: 20 });
     world.get::<&mut Count>(|count| {
         world.get::<&mut LastEntity>(|last| {
-            e1.set(Position { x: 10, y: 20 });
             assert_eq!(count, 1);
             assert!(last.0 == e1.id());
+        });
+    });
 
-            e2.set(Position { x: 30, y: 40 });
+    e2.set(Position { x: 30, y: 40 });
+    world.get::<&mut Count>(|count| {
+        world.get::<&mut LastEntity>(|last| {
             assert_eq!(count, 2);
             assert!(last.0 == e2.id());
         });
@@ -394,13 +414,16 @@ fn observer_2_entities_each() {
             });
         });
 
+    e1.set(Position { x: 10, y: 20 });
     world.get::<&mut Count>(|count| {
         world.get::<&mut LastEntity>(|last| {
-            e1.set(Position { x: 10, y: 20 });
             assert_eq!(count, 1);
             assert!(last.0 == e1);
-
-            e2.set(Position { x: 30, y: 40 });
+        });
+    });
+    e2.set(Position { x: 30, y: 40 });
+    world.get::<&mut Count>(|count| {
+        world.get::<&mut LastEntity>(|last| {
             assert_eq!(count, 2);
             assert!(last.0 == e2);
         });
@@ -540,7 +563,11 @@ fn observer_on_remove() {
 
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 0);
-        e.remove::<Position>();
+    });
+
+    e.remove::<Position>();
+
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
     });
 }
@@ -643,17 +670,41 @@ fn observer_observer_w_filter_term() {
 
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 0);
-        e.add_id(tag_b);
+    });
+
+    e.add_id(tag_b);
+
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 0);
-        e.add_id(tag_a);
+    });
+
+    e.add_id(tag_a);
+
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
-        e.remove_id(tag_b);
+    });
+
+    e.remove_id(tag_b);
+
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
-        e.add_id(tag_b);
+    });
+
+    e.add_id(tag_b);
+
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
-        e.clear();
+    });
+
+    e.clear();
+
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
-        e.add_id(tag_a);
+    });
+
+    e.add_id(tag_a);
+
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
     });
 }
@@ -678,7 +729,11 @@ fn observer_run_callback() {
     let e = world.entity();
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 0);
-        e.add::<Position>();
+    });
+
+    e.add::<Position>();
+
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
     });
 }
@@ -728,7 +783,11 @@ fn observer_on_set_w_set() {
 
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 0);
-        e.set(Position { x: 10, y: 20 });
+    });
+
+    e.set(Position { x: 10, y: 20 });
+
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
     });
 }
@@ -748,10 +807,23 @@ fn observer_on_set_w_defer_set() {
     let e = world.entity();
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 0);
-        world.defer_begin();
-        e.set(Position { x: 10, y: 20 });
+    });
+
+    world.defer_begin();
+
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 0);
-        world.defer_end();
+    });
+
+    e.set(Position { x: 10, y: 20 });
+
+    world.get::<&mut Count>(|count| {
+        assert_eq!(count, 0);
+    });
+
+    world.defer_end();
+
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
     });
 }
@@ -827,10 +899,15 @@ fn observer_on_add_pair_wildcard_singleton() {
             });
         });
 
+    world.set_first::<Position>(tgt_1, Position { x: 10, y: 20 });
+
     world.get::<&mut Count>(|count| {
-        world.set_first::<Position>(tgt_1, Position { x: 10, y: 20 });
         assert_eq!(count, 1);
-        world.set_first::<Position>(tgt_2, Position { x: 10, y: 20 });
+    });
+
+    world.set_first::<Position>(tgt_2, Position { x: 10, y: 20 });
+
+    world.get::<&mut Count>(|count| {
         assert_eq!(count, 2);
     });
 }
@@ -850,8 +927,8 @@ fn observer_on_add_with_pair_singleton() {
                 count.0 += 1;
             });
         });
+    world.set_first::<Position>(tgt, Position { x: 10, y: 20 });
     world.get::<&mut Count>(|count| {
-        world.set_first::<Position>(tgt, Position { x: 10, y: 20 });
         assert_eq!(count, 1);
     });
 }

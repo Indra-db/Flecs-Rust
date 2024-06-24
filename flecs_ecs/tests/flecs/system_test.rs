@@ -2686,9 +2686,9 @@ fn system_startup_system() {
     world.get::<&Count2>(|c| {
         assert_eq!(c.a, 1);
         assert_eq!(c.b, 1);
-
-        world.progress();
-
+    });
+    world.progress();
+    world.get::<&Count2>(|c| {
         assert_eq!(c.a, 1);
         assert_eq!(c.b, 2);
     });
