@@ -1,5 +1,4 @@
-//! Query API. Queries are used to iterate over entities that match a filter.
-//! Queries are better for persistence than filters, but are slower to create.
+//! Queries are used to iterate over entities that match a filter.
 
 use core::panic;
 use std::{marker::PhantomData, os::raw::c_void, ptr::NonNull};
@@ -98,7 +97,7 @@ where
     }
 }
 
-impl<T> QueryAPI<(), T> for Query<T>
+impl<'a, T> QueryAPI<'a, (), T> for Query<T>
 where
     T: QueryTuple,
 {
@@ -106,15 +105,15 @@ where
     fn entity(&self) -> EntityView {
         EntityView::new_from(self.world(), unsafe { (*self.query.as_ptr()).entity })
     }
+}
 
+impl<'a, T> IntoWorld<'a> for Query<T>
+where
+    T: QueryTuple,
+{
     #[inline(always)]
-    fn world(&self) -> WorldRef<'_> {
-        unsafe { WorldRef::from_ptr(self.world_ptr_mut()) }
-    }
-
-    #[inline(always)]
-    fn world_ptr_mut(&self) -> *mut sys::ecs_world_t {
-        unsafe { (*self.query_ptr()).world }
+    fn world(&self) -> WorldRef<'a> {
+        unsafe { WorldRef::from_ptr(self.query.as_ref().world) }
     }
 }
 

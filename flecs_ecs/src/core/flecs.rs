@@ -1,7 +1,9 @@
+//! Contains flecs traits and pre-registered components.
 use std::ops::Deref;
 
 use crate::core::*;
 
+#[doc(hidden)]
 pub trait FlecsTrait {}
 
 macro_rules! create_pre_registered_component {

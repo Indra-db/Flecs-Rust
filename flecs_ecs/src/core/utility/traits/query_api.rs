@@ -20,14 +20,10 @@ pub trait IterOperations {
     fn query_ptr(&self) -> *const QueryT;
 }
 
-pub trait QueryAPI<P, T>: IterOperations
+pub trait QueryAPI<'a, P, T>: IterOperations + IntoWorld<'a>
 where
     T: QueryTuple,
 {
-    fn world(&self) -> WorldRef<'_>;
-
-    fn world_ptr_mut(&self) -> *mut sys::ecs_world_t;
-
     // TODO once we have tests in place, I will split this functionality up into multiple functions, which should give a small performance boost
     // by caching if the query has used a "is_ref" operation.
     // is_ref is true for any query that contains fields that are not matched on the entity itself
@@ -174,7 +170,7 @@ where
     ///
     /// * C++ API: `find_delegate::invoke_callback`
     #[doc(alias = "find_delegate::invoke_callback")]
-    fn find(&self, mut func: impl FnMut(T::TupleType<'_>) -> bool) -> Option<EntityView<'_>> {
+    fn find(&self, mut func: impl FnMut(T::TupleType<'_>) -> bool) -> Option<EntityView<'a>> {
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity: Option<EntityView> = None;
@@ -220,7 +216,7 @@ where
     fn find_entity(
         &self,
         mut func: impl FnMut(EntityView, T::TupleType<'_>) -> bool,
-    ) -> Option<EntityView<'_>> {
+    ) -> Option<EntityView<'a>> {
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity_result: Option<EntityView> = None;
@@ -268,7 +264,7 @@ where
     fn find_iter(
         &self,
         mut func: impl FnMut(Iter<false, P>, usize, T::TupleType<'_>) -> bool,
-    ) -> Option<EntityView<'_>>
+    ) -> Option<EntityView<'a>>
     where
         P: ComponentId,
     {
@@ -852,7 +848,7 @@ where
         QueryIter::new(self.retrieve_iter(), self.iter_next_func())
     }
 
-    fn iter_stage<'a>(&'a self, stage: impl IntoWorld<'a>) -> QueryIter<'a, P, T> {
+    fn iter_stage(&'a self, stage: impl IntoWorld<'a>) -> QueryIter<'a, P, T> {
         QueryIter::new(self.retrieve_iter_stage(stage), self.iter_next_func())
     }
 
@@ -864,7 +860,7 @@ where
     /// * C++ API: `iter_iterable::first`
     #[doc(alias = "iterable::first")]
     #[doc(alias = "iter_iterable::first")]
-    fn first_entity(&mut self) -> Option<EntityView<'_>> {
+    fn first_entity(&mut self) -> Option<EntityView<'a>> {
         let mut entity = None;
 
         let it = &mut self.retrieve_iter();

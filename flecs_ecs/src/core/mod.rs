@@ -34,7 +34,7 @@ pub use c_types::*;
 pub(crate) use cloned_tuple::*;
 #[doc(hidden)]
 pub use component_registration::*;
-#[doc(hidden)]
+#[doc(inline)]
 pub use components::*;
 #[doc(hidden)]
 pub use entity::*;

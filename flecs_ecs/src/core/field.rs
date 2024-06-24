@@ -1,3 +1,5 @@
+//! Table column API.
+
 use std::{
     ops::{Deref, DerefMut, Index, IndexMut},
     os::raw::c_void,
@@ -5,7 +7,7 @@ use std::{
 
 use crate::core::*;
 
-/// Wrapper class around a column.
+/// Wrapper class around a table column.
 ///
 /// # Type parameters
 ///
@@ -55,6 +57,8 @@ impl<'a, T: ComponentId> DerefMut for Field<'a, T> {
     }
 }
 
+/// Wrapper class around an untyped table column.
+/// This class is used primarily for dynamic component types.
 pub struct FieldUntyped {
     pub(crate) array: *mut c_void,
     pub(crate) size: usize,

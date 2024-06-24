@@ -142,6 +142,7 @@ where
     }
 }
 
+#[doc(hidden)]
 impl<'a, P, T> IterOperations for QueryIter<'a, P, T>
 where
     T: QueryTuple,
@@ -167,25 +168,16 @@ where
     }
 }
 
-impl<'a, P, T> QueryAPI<P, T> for QueryIter<'a, P, T>
+impl<'a, P, T> QueryAPI<'a, P, T> for QueryIter<'a, P, T>
 where
     T: QueryTuple,
+    Self: IntoWorld<'a>,
 {
     fn entity(&self) -> EntityView {
         let world = unsafe { WorldRef::from_ptr(self.iter.real_world) };
         EntityView::new_from(world, unsafe {
             sys::ecs_get_entity(self.iter.query as *const c_void)
         })
-    }
-
-    #[inline(always)]
-    fn world(&self) -> WorldRef<'a> {
-        unsafe { WorldRef::from_ptr(<Self as QueryAPI<P, T>>::world_ptr_mut(self)) }
-    }
-
-    #[inline(always)]
-    fn world_ptr_mut(&self) -> *mut sys::ecs_world_t {
-        self.iter.world
     }
 }
 

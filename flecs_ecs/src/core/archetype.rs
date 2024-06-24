@@ -1,3 +1,5 @@
+//! an Archetype type can be used to describe what types of components an entity has.
+
 use std::{
     ffi::CStr,
     fmt::{Debug, Display},

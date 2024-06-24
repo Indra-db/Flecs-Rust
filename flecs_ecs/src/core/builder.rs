@@ -1,3 +1,5 @@
+#![doc(hidden)]
+
 pub trait Builder<'a> {
     type BuiltType;
 
