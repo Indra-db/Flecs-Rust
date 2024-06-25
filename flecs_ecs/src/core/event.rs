@@ -1,10 +1,12 @@
+//! API for emitting events that trigger [`Observer`]s.
+
 use std::marker::PhantomData;
 use std::{alloc::Layout, os::raw::c_void};
 
 use crate::core::*;
 use crate::sys;
 
-/// A strongly-typed interface wrapper around `EventBuilderUntyped` for constructing events with specific data.
+/// A strongly-typed or dynamic interface wrapper for constructing events with specific data.
 ///
 /// # Type parameters
 ///
@@ -24,11 +26,6 @@ pub struct EventBuilder<'a, T = ()> {
 impl<'a, T: ComponentId> EventBuilder<'a, T> {
     /// Create a new typed `EventBuilder`
     ///
-    /// # Arguments
-    ///
-    /// * `world` - The world to create the `EventBuilderUntyped` in
-    /// * `event` - The event to create the `EventBuilderUntyped` for
-    ///
     /// # See also
     ///
     /// * C++ API: `event_builder_typed::event_builder_typed`
@@ -45,7 +42,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         obj
     }
 
-    /// Create a new (untyped) `EventBuilderUntyped`
+    /// Create a new (untyped) `EventBuilder`
     ///
     /// # Safety
     /// Caller must ensure either that `event` represents a ZST
@@ -53,8 +50,8 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     ///
     /// # Arguments
     ///
-    /// * `world` - The world to create the `EventBuilderUntyped` in
-    /// * `event` - The event to create the `EventBuilderUntyped` for
+    /// * `world` - The world to create the `EventBuilder` in
+    /// * `event` - The event to create the `EventBuilder` for
     ///
     /// # See also
     ///

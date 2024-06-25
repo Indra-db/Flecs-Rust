@@ -1,3 +1,4 @@
+//! Class that extends the capabilities of a [`Query`] by providing additional operations on the query's iterator.
 use std::ffi::c_void;
 
 use crate::core::*;

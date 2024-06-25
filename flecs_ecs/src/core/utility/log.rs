@@ -1,3 +1,4 @@
+//! sets various internal logging options
 use crate::sys;
 
 /// Sets the logging level to the specified value.

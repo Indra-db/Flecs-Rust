@@ -120,7 +120,7 @@ where
         }
     }
 
-    fn each_iter(&self, mut func: impl FnMut(Iter<false, P>, usize, T::TupleType<'_>))
+    fn each_iter(&self, mut func: impl FnMut(TableIter<false, P>, usize, T::TupleType<'_>))
     where
         P: ComponentId,
     {
@@ -143,7 +143,7 @@ where
                 sys::ecs_table_lock(world, iter.table);
 
                 for i in 0..iter_count {
-                    let iter_t = Iter::new(&mut iter);
+                    let iter_t = TableIter::new(&mut iter);
                     let tuple = components_data.get_tuple(i);
 
                     func(iter_t, i, tuple);
@@ -249,7 +249,7 @@ where
     /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
     /// if it is, it returns that entity.
     /// The following function signatures is valid:
-    ///  - func(iter : Iter, index : usize, comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///  - func(iter : TableIter, index : usize, comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
     /// Each iterators are automatically instanced.
     ///
@@ -263,7 +263,7 @@ where
     #[doc(alias = "find_delegate::invoke_callback")]
     fn find_iter(
         &self,
-        mut func: impl FnMut(Iter<false, P>, usize, T::TupleType<'_>) -> bool,
+        mut func: impl FnMut(TableIter<false, P>, usize, T::TupleType<'_>) -> bool,
     ) -> Option<EntityView<'a>>
     where
         P: ComponentId,
@@ -286,7 +286,7 @@ where
                 sys::ecs_table_lock(world, iter.table);
 
                 for i in 0..iter_count {
-                    let iter_t = Iter::new(&mut iter);
+                    let iter_t = TableIter::new(&mut iter);
                     let world = self.world();
                     let tuple = components_data.get_tuple(i);
                     if func(iter_t, i, tuple) {
@@ -305,9 +305,9 @@ where
     ///
     /// The "iter" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:
-    ///  - func(it: &mut Iter, comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///  - func(it: &mut TableIter, comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
-    /// Iter iterators are not automatically instanced. When a result contains
+    /// TableIter iterators are not automatically instanced. When a result contains
     /// shared components, entities of the result will be iterated one by one.
     /// This ensures that applications can't accidentally read out of bounds by
     /// accessing a shared component as an array.
@@ -374,7 +374,7 @@ where
     /// // Entity name:  -- id: 510 -- archetype: flecs_ecs.Tag, flecs_ecs.Position, flecs_ecs.Velocity: Position { x: 1, y: 2 }
     /// // Entity name:  -- id: 511 -- archetype: flecs_ecs.Position, flecs_ecs.Velocity: Position { x: 3, y: 4 }
     /// ```
-    fn run_iter(&self, mut func: impl FnMut(Iter<false, P>, T::TupleSliceType<'_>))
+    fn run_iter(&self, mut func: impl FnMut(TableIter<false, P>, T::TupleSliceType<'_>))
     where
         P: ComponentId,
     {
@@ -389,7 +389,7 @@ where
                 sys::ecs_table_lock(world, iter.table);
 
                 let tuple = components_data.get_slice(iter_count);
-                let iter_t = Iter::new(&mut iter);
+                let iter_t = TableIter::new(&mut iter);
                 func(iter_t, tuple);
 
                 sys::ecs_table_unlock(world, iter.table);
@@ -401,13 +401,13 @@ where
     ///
     /// The "run" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:
-    ///  - func(it: &mut Iter)
+    ///  - func(it: &mut TableIter)
     ///
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
     ///
-    /// Iter iterators are not automatically instanced. When a result contains
+    /// TableIter iterators are not automatically instanced. When a result contains
     /// shared components, entities of the result will be iterated one by one.
     /// This ensures that applications can't accidentally read out of bounds by
     /// accessing a shared component as an array.
@@ -476,12 +476,12 @@ where
     ///
     /// * C++ API: `iterable::run`
     #[doc(alias = "iterable::run")]
-    fn run(&self, mut func: impl FnMut(Iter<true, P>))
+    fn run(&self, mut func: impl FnMut(TableIter<true, P>))
     where
         P: ComponentId,
     {
         let mut iter = self.retrieve_iter();
-        let mut iter_t = unsafe { Iter::new(&mut iter) };
+        let mut iter_t = unsafe { TableIter::new(&mut iter) };
         iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
         func(iter_t);
 
@@ -505,13 +505,13 @@ where
     /// Run iterator with each forwarding.
     /// The "iter" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:
-    ///  - `func`: (it: &mut Iter) + `func_each`: (comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///  - `func`: (it: &mut TableIter) + `func_each`: (comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
     ///
-    /// Iter iterators are not automatically instanced. When a result contains
+    /// TableIter iterators are not automatically instanced. When a result contains
     /// shared components, entities of the result will be iterated one by one.
     /// This ensures that applications can't accidentally read out of bounds by
     /// accessing a shared component as an array.
@@ -581,7 +581,7 @@ where
     ///
     /// * C++ API: `iterable::run`
     #[doc(alias = "iterable::run")]
-    fn run_each<FuncEach>(&self, mut func: impl FnMut(Iter<true, P>), mut func_each: FuncEach)
+    fn run_each<FuncEach>(&self, mut func: impl FnMut(TableIter<true, P>), mut func_each: FuncEach)
     where
         P: ComponentId,
         FuncEach: FnMut(T::TupleType<'_>),
@@ -592,7 +592,7 @@ where
             __internal_query_execute_each::<T, FuncEach>
                 as unsafe extern "C" fn(*mut sys::ecs_iter_t),
         );
-        let mut iter_t = unsafe { Iter::new(&mut iter) };
+        let mut iter_t = unsafe { TableIter::new(&mut iter) };
         iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
         func(iter_t);
         iter.callback = None;
@@ -603,13 +603,13 @@ where
     ///
     /// The "iter" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:
-    /// - `func`: (it: &mut Iter) + `func_each`: (entity: Entity, comp1 : &mut T1, comp2 : &mut T2, ...)
+    /// - `func`: (it: &mut TableIter) + `func_each`: (entity: Entity, comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
     ///
-    /// Iter iterators are not automatically instanced. When a result contains
+    /// TableIter iterators are not automatically instanced. When a result contains
     /// shared components, entities of the result will be iterated one by one.
     /// This ensures that applications can't accidentally read out of bounds by
     ///
@@ -680,7 +680,7 @@ where
     #[doc(alias = "iterable::run")]
     fn run_each_entity<FuncEachEntity>(
         &self,
-        mut func: impl FnMut(Iter<true, P>),
+        mut func: impl FnMut(TableIter<true, P>),
         mut func_each: FuncEachEntity,
     ) where
         P: ComponentId,
@@ -692,7 +692,7 @@ where
             __internal_query_execute_each_entity::<T, FuncEachEntity>
                 as unsafe extern "C" fn(*mut sys::ecs_iter_t),
         );
-        let mut iter_t = unsafe { Iter::new(&mut iter) };
+        let mut iter_t = unsafe { TableIter::new(&mut iter) };
         iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
         func(iter_t);
         iter.callback = None;

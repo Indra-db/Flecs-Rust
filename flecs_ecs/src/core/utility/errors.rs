@@ -1,15 +1,7 @@
+#![doc(hidden)]
 use std::fmt::{Display, Formatter};
 
-pub struct InvalidStrFromId {
-    pub id: u64,
-}
-
-impl std::fmt::Display for InvalidStrFromId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Invalid string conversion from id: {}", self.id)
-    }
-}
-
+#[doc(hidden)]
 /// Enum representing the error codes that can be used by `ecs_asserts` and `ecs_abort`
 pub enum FlecsErrorCode {
     InvalidOperation,

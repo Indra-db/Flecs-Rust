@@ -55,7 +55,7 @@ where
 
     fn each_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
-        Func: FnMut(Iter<false, P>, usize, T::TupleType<'_>) + 'static,
+        Func: FnMut(TableIter<false, P>, usize, T::TupleType<'_>) + 'static,
     {
         let each_iter_func = Box::new(func);
         let each_iter_static_ref = Box::leak(each_iter_func);
@@ -78,13 +78,13 @@ where
     ///
     /// The "run" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:
-    ///  - func(it: &mut Iter)
+    ///  - func(it: &mut TableIter)
     ///
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
     ///
-    /// Iter iterators are not automatically instanced. When a result contains
+    /// TableIter iterators are not automatically instanced. When a result contains
     /// shared components, entities of the result will be iterated one by one.
     /// This ensures that applications can't accidentally read out of bounds by
     /// accessing a shared component as an array.
@@ -159,7 +159,7 @@ where
     #[doc(alias = "iterable::run")]
     fn run<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
-        Func: FnMut(Iter<true, P>) + 'static,
+        Func: FnMut(TableIter<true, P>) + 'static,
     {
         let run = Box::new(func);
         let run_static_ref = Box::leak(run);
@@ -175,9 +175,9 @@ where
     ///
     /// The "iter" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:
-    ///  - func(it: &mut Iter, comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///  - func(it: &mut TableIter, comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
-    /// Iter iterators are not automatically instanced. When a result contains
+    /// TableIter iterators are not automatically instanced. When a result contains
     /// shared components, entities of the result will be iterated one by one.
     /// This ensures that applications can't accidentally read out of bounds by
     /// accessing a shared component as an array.
@@ -250,7 +250,7 @@ where
     /// ```
     fn run_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
-        Func: FnMut(Iter<false, P>, T::TupleSliceType<'_>) + 'static,
+        Func: FnMut(TableIter<false, P>, T::TupleSliceType<'_>) + 'static,
     {
         let iter_func = Box::new(func);
         let iter_static_ref = Box::leak(iter_func);
@@ -269,13 +269,13 @@ where
     ///
     /// The "iter" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:
-    ///  - `func`: (it: &mut Iter) + `func_each`: (comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///  - `func`: (it: &mut TableIter) + `func_each`: (comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
     ///
-    /// Iter iterators are not automatically instanced. When a result contains
+    /// TableIter iterators are not automatically instanced. When a result contains
     /// shared components, entities of the result will be iterated one by one.
     /// This ensures that applications can't accidentally read out of bounds by
     /// accessing a shared component as an array.
@@ -357,7 +357,7 @@ where
         func_each: FuncEach,
     ) -> <Self as builder::Builder<'a>>::BuiltType
     where
-        Func: FnMut(Iter<true, P>) + 'static,
+        Func: FnMut(TableIter<true, P>) + 'static,
         FuncEach: FnMut(T::TupleType<'_>) + 'static,
     {
         let run_func = Box::new(func);
@@ -388,13 +388,13 @@ where
     ///
     /// The "iter" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:
-    /// - `func`: (it: &mut Iter) + `func_each_entity`: (entity: `EntityView`, comp1 : &mut T1, comp2 : &mut T2, ...)
+    /// - `func`: (it: &mut TableIter) + `func_each_entity`: (entity: `EntityView`, comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
     ///
-    /// Iter iterators are not automatically instanced. When a result contains
+    /// TableIter iterators are not automatically instanced. When a result contains
     /// shared components, entities of the result will be iterated one by one.
     /// This ensures that applications can't accidentally read out of bounds by
     /// accessing a shared component as an array.
@@ -476,7 +476,7 @@ where
         func_each_entity: FuncEachEntity,
     ) -> <Self as builder::Builder<'a>>::BuiltType
     where
-        Func: FnMut(Iter<true, P>) + 'static,
+        Func: FnMut(TableIter<true, P>) + 'static,
         FuncEachEntity: FnMut(EntityView, T::TupleType<'_>) + 'static,
     {
         let run_func = Box::new(func);

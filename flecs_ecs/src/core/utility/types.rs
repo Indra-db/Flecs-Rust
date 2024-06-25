@@ -1,3 +1,4 @@
+#![doc(hidden)]
 use std::os::raw::c_void;
 
 pub type FTime = f32;

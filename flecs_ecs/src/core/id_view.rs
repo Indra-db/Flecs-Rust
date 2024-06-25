@@ -1,4 +1,4 @@
-//! Class for working with entity, component, tag and pair ids.
+//! Provides functionality for working with various IDs in an ECS framework, including entity IDs, component IDs, tag IDs, and pair IDs.
 
 use crate::core::*;
 use crate::sys;

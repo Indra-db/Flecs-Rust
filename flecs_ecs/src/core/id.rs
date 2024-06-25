@@ -1,3 +1,5 @@
+//! Ids are the things that can be added to an entity. They can present either [`Entity`] or an ECS relationship pair id.
+
 use std::{
     fmt::Display,
     ops::{BitAnd, BitOr, Deref},
@@ -6,7 +8,7 @@ use std::{
 use crate::core::*;
 
 /// An Identifier for what could represent either what [`Entity`]
-/// as well as a Pair and can have optional id flags
+/// as well as an ECS relationship pair and can have optional id flags
 /// Ids are the things that can be added to an entity.
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(transparent)]

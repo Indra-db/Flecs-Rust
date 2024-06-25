@@ -6,7 +6,7 @@ use flecs_ecs::prelude::*;
 // they have the flecs::Phase tag.
 
 // Dummy system
-fn sys(mut it: Iter) {
+fn sys(mut it: TableIter) {
     while it.next() {
         println!("system {}", it.system().name());
     }

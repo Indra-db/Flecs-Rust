@@ -1,3 +1,4 @@
+#![doc(hidden)]
 use crate::core::*;
 
 /// Represents the operation type of a system in an ECS framework.

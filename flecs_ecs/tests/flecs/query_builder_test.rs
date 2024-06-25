@@ -2266,7 +2266,7 @@ fn query_builder_group_by_iter_one_all_groups() {
     let e5_found = Cell::new(false);
     let e6_found = Cell::new(false);
 
-    let func = |it: Iter<false>, size: usize, ()| {
+    let func = |it: TableIter<false>, size: usize, ()| {
         let e = it.entity(size);
         if it.group_id() == group_id.get() {
             if e == e1 {
@@ -2334,7 +2334,7 @@ fn query_builder_group_by_default_func_w_id() {
     let mut e3_found = false;
     let mut count = 0;
 
-    q.each_iter(|it: Iter<false>, size: usize, ()| {
+    q.each_iter(|it: TableIter<false>, size: usize, ()| {
         let e = it.entity(size);
         if e == e1 {
             assert_eq!(it.group_id(), tgt_c);
@@ -2389,7 +2389,7 @@ fn query_builder_group_by_default_func_w_type() {
     let mut e3_found = false;
     let mut count = 0;
 
-    q.each_iter(|it: Iter<false>, size: usize, ()| {
+    q.each_iter(|it: TableIter<false>, size: usize, ()| {
         let e = it.entity(size);
         if e == e1 {
             assert_eq!(it.group_id(), tgt_c);
@@ -2479,7 +2479,7 @@ fn query_builder_group_by_callbacks() {
     let mut e3_found = false;
     let mut count = 0;
 
-    q.each_iter(|it: Iter<false>, size: usize, ()| {
+    q.each_iter(|it: TableIter<false>, size: usize, ()| {
         let e = it.entity(size);
         if e == e1 {
             assert_eq!(it.group_id(), tgt_c);
@@ -2905,7 +2905,7 @@ fn query_builder_term_w_read() {
 }
 
 #[test]
-#[ignore = "Iter with stage not implemented"]
+#[ignore = "TableIter with stage not implemented"]
 fn query_builder_iter_w_stage() {
     //     let world = create_world();
 

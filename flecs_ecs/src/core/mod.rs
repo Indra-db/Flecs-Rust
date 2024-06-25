@@ -12,7 +12,6 @@ pub mod flecs;
 pub(crate) mod get_tuple;
 pub mod id;
 pub mod id_view;
-pub mod iter;
 pub mod observer;
 pub mod observer_builder;
 pub mod query;
@@ -20,6 +19,7 @@ pub mod query_builder;
 pub mod query_iter;
 pub(crate) mod query_tuple;
 pub mod table;
+pub mod table_iter;
 pub mod term;
 pub mod utility;
 pub mod world;
@@ -50,8 +50,6 @@ pub use id::*;
 #[doc(hidden)]
 pub use id_view::*;
 #[doc(hidden)]
-pub use iter::*;
-#[doc(hidden)]
 pub use observer::*;
 #[doc(hidden)]
 pub use observer_builder::*;
@@ -65,6 +63,8 @@ pub use query_iter::*;
 pub use query_tuple::*;
 #[doc(hidden)]
 pub use table::*;
+#[doc(hidden)]
+pub use table_iter::*;
 #[doc(hidden)]
 pub use term::*;
 #[doc(hidden)]

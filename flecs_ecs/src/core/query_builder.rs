@@ -1,4 +1,4 @@
-//! Cached query implementation. Fast to iterate, but slower to create than Filter
+//! Builder for [`Query`].
 
 use std::ffi::c_void;
 

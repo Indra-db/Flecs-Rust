@@ -8,7 +8,7 @@ struct Timeout {
     pub value: f32,
 }
 
-fn tick(mut it: Iter) {
+fn tick(mut it: TableIter) {
     while it.next() {
         println!("{}", it.system().name());
     }

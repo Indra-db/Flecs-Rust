@@ -1,3 +1,5 @@
+//! An id that represents either an entity, component, [`Query`], [`Observer`] or [`System`][crate::addons::system::System] in the [`World`].
+
 use std::fmt::Display;
 use std::ops::Deref;
 use std::ops::{BitAnd, BitOr};

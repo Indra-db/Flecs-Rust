@@ -163,7 +163,7 @@ pub mod private {
         #[doc(alias = "iter_invoker::invoke_callback")]
         unsafe extern "C" fn execute_each_iter<Func>(iter: *mut IterT)
         where
-            Func: FnMut(Iter<false, P>, usize, T::TupleType<'_>),
+            Func: FnMut(TableIter<false, P>, usize, T::TupleType<'_>),
         {
             let iter = unsafe { &mut *iter };
             iter.flags |= sys::EcsIterCppEach;
@@ -182,7 +182,7 @@ pub mod private {
             sys::ecs_table_lock(iter.world, iter.table);
 
             for i in 0..iter_count {
-                let iter_t = Iter::new(iter);
+                let iter_t = TableIter::new(iter);
                 let tuple = components_data.get_tuple(i);
 
                 each_iter(iter_t, i, tuple);
@@ -202,13 +202,13 @@ pub mod private {
         #[doc(alias = "iter_invoker::invoke_callback")]
         unsafe extern "C" fn execute_run<Func>(iter: *mut IterT)
         where
-            Func: FnMut(Iter<true, P>),
+            Func: FnMut(TableIter<true, P>),
         {
             unsafe {
                 let iter = &mut *iter;
                 println!("iter: {:?}", iter.next.is_some());
                 let run = &mut *(iter.run_ctx as *mut Func);
-                let mut iter_t = Iter::new(&mut *iter);
+                let mut iter_t = TableIter::new(&mut *iter);
                 iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
                 run(iter_t);
                 // ecs_assert!(
@@ -231,7 +231,7 @@ pub mod private {
         #[doc(alias = "iter_invoker::invoke_callback")]
         unsafe extern "C" fn execute_run_iter<Func>(iter: *mut IterT)
         where
-            Func: FnMut(Iter<false, P>, T::TupleSliceType<'_>),
+            Func: FnMut(TableIter<false, P>, T::TupleSliceType<'_>),
         {
             let iter = &mut *iter;
             let run_iter = &mut *(iter.callback_ctx as *mut Func);
@@ -248,7 +248,7 @@ pub mod private {
             sys::ecs_table_lock(iter.world, iter.table);
 
             let tuple = components_data.get_slice(iter_count);
-            let iter_t = Iter::new(&mut *iter);
+            let iter_t = TableIter::new(&mut *iter);
             run_iter(iter_t, tuple);
             sys::ecs_table_unlock(iter.world, iter.table);
         }

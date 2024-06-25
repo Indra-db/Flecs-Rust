@@ -8,6 +8,7 @@ pub mod registration_types;
 pub(crate) use helpers::*;
 #[doc(hidden)]
 pub use registration::*;
+#[doc(hidden)]
 pub use registration_traits::*;
 #[doc(hidden)]
 pub use registration_types::*;

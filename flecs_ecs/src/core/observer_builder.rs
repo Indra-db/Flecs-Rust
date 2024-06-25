@@ -1,6 +1,4 @@
-//! `ObserverBuilder` is used to configure and build Observers.
-//! Observers are systems that react to events.
-//! Observers let applications register callbacks for ECS events.
+//! builder for [`Observer`].
 
 use std::{default, ffi::c_void};
 

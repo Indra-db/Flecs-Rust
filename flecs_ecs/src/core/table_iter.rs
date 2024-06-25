@@ -1,3 +1,4 @@
+//! Iterators used to iterate over tables and table rows in [`Query`], [`System`][crate::addons::system::System] and [`Observer`].
 use std::marker::PhantomData;
 use std::{ffi::CStr, os::raw::c_void, ptr::NonNull};
 
@@ -9,12 +10,12 @@ pub(crate) enum IterType {
     Each,
 }
 
-pub struct Iter<'a, const IS_RUN: bool = true, P = ()> {
+pub struct TableIter<'a, const IS_RUN: bool = true, P = ()> {
     iter: &'a mut IterT,
     marker: PhantomData<P>,
 }
 
-impl<'a, const IS_RUN: bool, P> Iter<'a, IS_RUN, P>
+impl<'a, const IS_RUN: bool, P> TableIter<'a, IS_RUN, P>
 where
     P: ComponentId,
 {
@@ -45,8 +46,38 @@ where
         }
     }
 
-    pub fn iter(&self) -> IterIterator<IS_RUN, P> {
-        IterIterator {
+    /// Return the iterator type
+    ///
+    /// # Example
+    ///
+    /// ```
+    ///
+    /// #[derive(Component)]
+    /// struct Position {
+    ///    x: f32,
+    ///    y: f32,
+    /// }
+    ///
+    /// use flecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// world.entity().set(Position { x: 1.0, y: 2.0 });
+    ///
+    /// let query = world.new_query::<&Position>();
+    ///
+    /// query.run(|it| {
+    ///   while it.next() { //for each different table
+    ///     for i in it.iter() {  //for each entity in the table
+    ///         let pos = it.field::<Position>(0).unwrap();
+    ///         assert_eq!(pos[0].x, 1.0);
+    ///         assert_eq!(pos[0].y, 2.0);
+    ///     }
+    ///   }
+    /// });
+    /// ```
+    pub fn iter(&self) -> TableRowIter<IS_RUN, P> {
+        TableRowIter {
             iter: self,
             index: 0,
         }
@@ -811,12 +842,13 @@ where
     }
 }
 
-pub struct IterIterator<'a, const IS_RUN: bool, P> {
-    iter: &'a Iter<'a, IS_RUN, P>,
+/// Iterator to iterate over rows in a table
+pub struct TableRowIter<'a, const IS_RUN: bool, P> {
+    iter: &'a TableIter<'a, IS_RUN, P>,
     index: usize,
 }
 
-impl<'a, const IS_RUN: bool, P> Iterator for IterIterator<'a, IS_RUN, P>
+impl<'a, const IS_RUN: bool, P> Iterator for TableRowIter<'a, IS_RUN, P>
 where
     P: ComponentId,
 {

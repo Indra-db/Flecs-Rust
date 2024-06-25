@@ -1,3 +1,5 @@
+//! API for building [`Query`], [`Observer`] and [`System`][crate::addons::system::System] with their respected builders.
+
 use crate::core::*;
 use crate::sys;
 
@@ -163,7 +165,7 @@ fn check_term_access_validity<'a>(term: &impl TermBuilderImpl<'a>) {
         panic!("This function should only be used on terms that are not part of the generic type signature. ")
     }
 }
-/// Term builder interface.
+/// Term builder interface for building queries, observers and systems.
 /// A term is a single element of a query expression.
 pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a> {
     /// initializes a new term from a id of a component or pair

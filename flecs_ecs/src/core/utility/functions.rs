@@ -1,3 +1,6 @@
+#![doc(hidden)]
+//! (internal) utility functions for dealing with ECS identifiers. This module is mostly used internally by the library.
+//! but can be used by the user if needed.
 use std::{ffi::CString, os::raw::c_char};
 
 use crate::core::*;

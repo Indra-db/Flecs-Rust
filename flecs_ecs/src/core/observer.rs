@@ -1,3 +1,4 @@
+//! Observers are systems that react to events. Observers let applications register callbacks for ECS events.
 use std::ops::DerefMut;
 use std::ptr::NonNull;
 use std::{ops::Deref, os::raw::c_void};
@@ -5,7 +6,6 @@ use std::{ops::Deref, os::raw::c_void};
 use crate::core::*;
 use crate::sys;
 
-/// `ObserverBuilder` is used to configure and build Observers.
 /// Observers are systems that react to events.
 /// Observers let applications register callbacks for ECS events.
 #[derive(Clone)]
