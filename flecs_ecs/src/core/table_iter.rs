@@ -58,7 +58,7 @@ where
     ///    y: f32,
     /// }
     ///
-    /// use flecs::prelude::*;
+    /// use flecs_ecs::prelude::*;
     ///
     /// let world = World::new();
     ///
@@ -66,7 +66,7 @@ where
     ///
     /// let query = world.new_query::<&Position>();
     ///
-    /// query.run(|it| {
+    /// query.run(|mut it| {
     ///   while it.next() { //for each different table
     ///     for i in it.iter() {  //for each entity in the table
     ///         let pos = it.field::<Position>(0).unwrap();

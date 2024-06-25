@@ -2248,6 +2248,8 @@ pub struct ecs_iter_t {
     pub param: *mut ::std::os::raw::c_void,
     #[doc = "< System context"]
     pub ctx: *mut ::std::os::raw::c_void,
+    #[doc = "< System binding context"]
+    pub binding_ctx: *mut ::std::os::raw::c_void,
     #[doc = "< Callback language binding context"]
     pub callback_ctx: *mut ::std::os::raw::c_void,
     #[doc = "< Run language binding context"]
@@ -2436,12 +2438,12 @@ pub struct ecs_world_info_t {
     pub emit_time_total: f32,
     #[doc = "< Total time spent in merges"]
     pub merge_time_total: f32,
-    #[doc = "< Time elapsed in simulation"]
-    pub world_time_total: f32,
-    #[doc = "< Time elapsed in simulation (no scaling)"]
-    pub world_time_total_raw: f32,
     #[doc = "< Time spent on query rematching"]
     pub rematch_time_total: f32,
+    #[doc = "< Time elapsed in simulation"]
+    pub world_time_total: f64,
+    #[doc = "< Time elapsed in simulation (no scaling)"]
+    pub world_time_total_raw: f64,
     #[doc = "< Total number of frames"]
     pub frame_count_total: i64,
     #[doc = "< Total number of merges"]
@@ -5286,6 +5288,8 @@ pub struct EcsPipelineStats {
 pub struct EcsWorldSummary {
     #[doc = "< Target FPS"]
     pub target_fps: f64,
+    #[doc = "< Simulation time scale"]
+    pub time_scale: f64,
     #[doc = "< Total time spent processing a frame"]
     pub frame_time_total: f64,
     #[doc = "< Total time spent in systems"]

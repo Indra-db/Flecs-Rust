@@ -78,13 +78,13 @@ where
     ///
     /// The "run" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:
-    ///  - func(it: &mut TableIter)
+    ///  - func(it: &mut `TableIter`)
     ///
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
     ///
-    /// TableIter iterators are not automatically instanced. When a result contains
+    /// [`TableIter`] iterators are not automatically instanced. When a result contains
     /// shared components, entities of the result will be iterated one by one.
     /// This ensures that applications can't accidentally read out of bounds by
     /// accessing a shared component as an array.
@@ -175,9 +175,9 @@ where
     ///
     /// The "iter" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:
-    ///  - func(it: &mut TableIter, comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///  - func(it: &mut `TableIter`, comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
-    /// TableIter iterators are not automatically instanced. When a result contains
+    /// [`TableIter`] iterators are not automatically instanced. When a result contains
     /// shared components, entities of the result will be iterated one by one.
     /// This ensures that applications can't accidentally read out of bounds by
     /// accessing a shared component as an array.
@@ -269,13 +269,13 @@ where
     ///
     /// The "iter" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:
-    ///  - `func`: (it: &mut TableIter) + `func_each`: (comp1 : &mut T1, comp2 : &mut T2, ...)
+    ///  - `func`: (it: &mut `TableIter`) + `func_each`: (comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
     ///
-    /// TableIter iterators are not automatically instanced. When a result contains
+    /// [`TableIter`] iterators are not automatically instanced. When a result contains
     /// shared components, entities of the result will be iterated one by one.
     /// This ensures that applications can't accidentally read out of bounds by
     /// accessing a shared component as an array.
@@ -388,13 +388,13 @@ where
     ///
     /// The "iter" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:
-    /// - `func`: (it: &mut TableIter) + `func_each_entity`: (entity: `EntityView`, comp1 : &mut T1, comp2 : &mut T2, ...)
+    /// - `func`: (it: &mut `TableIter`) + `func_each_entity`: (entity: `EntityView`, comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
     ///
-    /// TableIter iterators are not automatically instanced. When a result contains
+    /// [`TableIter`] iterators are not automatically instanced. When a result contains
     /// shared components, entities of the result will be iterated one by one.
     /// This ensures that applications can't accidentally read out of bounds by
     /// accessing a shared component as an array.
