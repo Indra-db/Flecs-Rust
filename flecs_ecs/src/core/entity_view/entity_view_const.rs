@@ -7,8 +7,6 @@ use std::{
 use crate::sys;
 use flecs_ecs::core::*;
 use sys::ecs_get_with;
-#[cfg(not(feature = "flecs_unsafe_get"))]
-use sys::ecs_record_t;
 
 /// `EntityView` is a wrapper around an entity id with the world. It provides methods to interact with entities.
 #[derive(Clone, Copy)]
@@ -763,18 +761,8 @@ impl<'a> EntityView<'a> {
     pub fn try_get<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>)) -> bool {
         let world_ptr = self.world.world_ptr_mut();
 
-        #[cfg(not(feature = "flecs_unsafe_get"))]
-        let record = unsafe { sys::ecs_read_begin(world_ptr, *self.id) as *mut ecs_record_t };
-
-        #[cfg(feature = "flecs_unsafe_get")]
         let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
 
-        #[cfg(not(feature = "flecs_unsafe_get"))]
-        if record.is_null() {
-            return false;
-        }
-
-        #[cfg(feature = "flecs_unsafe_get")]
         if unsafe { (*record).table.is_null() } {
             return false;
         }
@@ -787,11 +775,6 @@ impl<'a> EntityView<'a> {
             self.world.defer_begin();
             callback(tuple);
             self.world.defer_end();
-        }
-
-        #[cfg(not(feature = "flecs_unsafe_get"))]
-        unsafe {
-            sys::ecs_read_end(record);
         }
 
         has_all_components
@@ -861,18 +844,8 @@ impl<'a> EntityView<'a> {
     pub fn get<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>)) {
         let world_ptr = self.world.world_ptr_mut();
 
-        #[cfg(not(feature = "flecs_unsafe_get"))]
-        let record = unsafe { sys::ecs_read_begin(world_ptr, *self.id) as *mut ecs_record_t };
-
-        #[cfg(feature = "flecs_unsafe_get")]
         let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
 
-        #[cfg(not(feature = "flecs_unsafe_get"))]
-        if record.is_null() {
-            return;
-        }
-
-        #[cfg(feature = "flecs_unsafe_get")]
         if unsafe { (*record).table.is_null() } {
             return;
         }
@@ -882,11 +855,6 @@ impl<'a> EntityView<'a> {
         self.world.defer_begin();
         callback(tuple);
         self.world.defer_end();
-
-        #[cfg(not(feature = "flecs_unsafe_get"))]
-        unsafe {
-            sys::ecs_read_end(record);
-        }
     }
 
     /// Clones components and/or relationship(s) from an entity and returns it.
@@ -1110,18 +1078,8 @@ impl<'a> EntityView<'a> {
     ) -> Option<Return> {
         let world_ptr = self.world.world_ptr_mut();
 
-        #[cfg(not(feature = "flecs_unsafe_get"))]
-        let record = unsafe { sys::ecs_read_begin(world_ptr, *self.id) as *mut ecs_record_t };
-
-        #[cfg(feature = "flecs_unsafe_get")]
         let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
 
-        #[cfg(not(feature = "flecs_unsafe_get"))]
-        if record.is_null() {
-            return None;
-        }
-
-        #[cfg(feature = "flecs_unsafe_get")]
         if unsafe { (*record).table.is_null() } {
             return None;
         }
@@ -1138,11 +1096,6 @@ impl<'a> EntityView<'a> {
         } else {
             None
         };
-
-        #[cfg(not(feature = "flecs_unsafe_get"))]
-        unsafe {
-            sys::ecs_read_end(record);
-        }
 
         ret
     }
@@ -1228,18 +1181,8 @@ impl<'a> EntityView<'a> {
     ) -> Return {
         let world_ptr = self.world.world_ptr_mut();
 
-        #[cfg(not(feature = "flecs_unsafe_get"))]
-        let record = unsafe { sys::ecs_read_begin(world_ptr, *self.id) as *mut ecs_record_t };
-
-        #[cfg(feature = "flecs_unsafe_get")]
         let record = unsafe { sys::ecs_record_find(world_ptr, *self.id) };
 
-        #[cfg(not(feature = "flecs_unsafe_get"))]
-        if record.is_null() {
-            panic!("Entity does not have any components");
-        }
-
-        #[cfg(feature = "flecs_unsafe_get")]
         if unsafe { (*record).table.is_null() } {
             panic!("Entity does not have any components");
         }
@@ -1250,11 +1193,6 @@ impl<'a> EntityView<'a> {
         self.world.defer_begin();
         let ret = callback(tuple);
         self.world.defer_end();
-
-        #[cfg(not(feature = "flecs_unsafe_get"))]
-        unsafe {
-            sys::ecs_read_end(record);
-        }
 
         ret
     }

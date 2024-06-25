@@ -68,19 +68,6 @@ flecs_disable_build_c = ["flecs_ecs_sys/disable_build_c"]
 # The C API is not affected by this feature.
 flecs_manual_registration = []
 
-# Disables/removes table locking for `get` operations. This feature can improve performance by 30-50%,
-# making it beneficial for release builds. However, using this feature removes a critical safety measure. 
-# Normally, the table is locked during a `get` operation to prevent undefined 
-# behavior if the table is modified (such as adding or removing components) during the operation. 
-# Such modifications can cause the entity or table to relocate, leading to a panic if table locking is enabled. 
-# Without table locking, these modifications can result in undefined 
-# behavior, which can be difficult to debug and may cause serious issues.
-# 
-# Therefore, it is strongly recommended to use this feature only when you are certain that the table will 
-# not be modified during the `get` operation. It is also advised not to use this feature in debug builds, 
-# where safety and correctness checks are more critical.
-flecs_unsafe_get = []
-
 # Adjust the maximum number of terms in queries to 32. Default is 16.
 flecs_term_count_32 = ["flecs_ecs_sys/flecs_term_count_32"]
 # Adjust the maximum number of terms in queries to 64. Default is 16.
