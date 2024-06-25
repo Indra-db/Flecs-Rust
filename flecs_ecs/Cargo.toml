@@ -68,9 +68,7 @@ flecs_disable_build_c = ["flecs_ecs_sys/disable_build_c"]
 # The C API is not affected by this feature.
 flecs_manual_registration = []
 
-# Adjust the maximum number of terms in queries to 32. Default is 16.
-flecs_term_count_32 = ["flecs_ecs_sys/flecs_term_count_32"]
-# Adjust the maximum number of terms in queries to 64. Default is 16.
+# Adjust the maximum number of terms in queries to 64. Default is 32.
 flecs_term_count_64 = ["flecs_ecs_sys/flecs_term_count_64"]
 
 # Module support

@@ -49,9 +49,7 @@ disable_build_c = []
 # Flecs C defines / features
 ###############################
 
-# Adjust the maximum number of terms in queries to 32. Default is 16.
-flecs_term_count_32 = []
-# Adjust the maximum number of terms in queries to 64. Default is 16.
+# Adjust the maximum number of terms in queries to 64. Default is 32.
 flecs_term_count_64 = []
 
 # Module support

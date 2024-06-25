@@ -167,10 +167,8 @@ fn generate_bindings() {
 
     let term_count_max = if cfg!(feature = "flecs_term_count_64") {
         64
-    } else if cfg!(feature = "flecs_term_count_32") {
-        32
     } else {
-        16 // default value
+        32 // default value
     };
 
     let term_arg = format!("-DFLECS_TERM_COUNT_MAX={}", term_count_max);
@@ -287,10 +285,8 @@ fn main() {
 
         let term_count_max = if cfg!(feature = "flecs_term_count_64") {
             64
-        } else if cfg!(feature = "flecs_term_count_32") {
-            32
         } else {
-            16 // default value
+            32 // default value
         };
 
         build.define(

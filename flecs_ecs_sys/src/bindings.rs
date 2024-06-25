@@ -4,7 +4,7 @@
 #![allow(warnings)]
 use super::*;
 use libc::FILE;
-pub const FLECS_TERM_COUNT_MAX: u32 = 16;
+pub const FLECS_TERM_COUNT_MAX: u32 = 32;
 
 pub const FLECS_VERSION_MAJOR: u32 = 4;
 pub const FLECS_VERSION_MINOR: u32 = 0;
@@ -1608,11 +1608,11 @@ pub struct ecs_query_t {
     #[doc = "< Object header"]
     pub hdr: ecs_header_t,
     #[doc = "< Query terms"]
-    pub terms: [ecs_term_t; 16usize],
+    pub terms: [ecs_term_t; 32usize],
     #[doc = "< Component sizes. Indexed by field"]
-    pub sizes: [i32; 16usize],
+    pub sizes: [i32; 32usize],
     #[doc = "< Component ids. Indexed by field"]
-    pub ids: [ecs_id_t; 16usize],
+    pub ids: [ecs_id_t; 32usize],
     #[doc = "< Query flags"]
     pub flags: ecs_flags32_t,
     #[doc = "< Number of query variables"]
@@ -1622,19 +1622,19 @@ pub struct ecs_query_t {
     #[doc = "< Number of fields returned by query"]
     pub field_count: i8,
     #[doc = "< Fields with a fixed source"]
-    pub fixed_fields: ecs_flags16_t,
+    pub fixed_fields: ecs_flags32_t,
     #[doc = "< Fields with a static (component) id"]
-    pub static_id_fields: ecs_flags16_t,
+    pub static_id_fields: ecs_flags32_t,
     #[doc = "< Fields that have data"]
-    pub data_fields: ecs_flags16_t,
+    pub data_fields: ecs_flags32_t,
     #[doc = "< Fields that write data"]
-    pub write_fields: ecs_flags16_t,
+    pub write_fields: ecs_flags32_t,
     #[doc = "< Fields that read data"]
-    pub read_fields: ecs_flags16_t,
+    pub read_fields: ecs_flags32_t,
     #[doc = "< Fields that don't write shared data"]
-    pub shared_readonly_fields: ecs_flags16_t,
+    pub shared_readonly_fields: ecs_flags32_t,
     #[doc = "< Fields that will be set"]
-    pub set_fields: ecs_flags16_t,
+    pub set_fields: ecs_flags32_t,
     #[doc = "< Caching policy of query"]
     pub cache_kind: ecs_query_cache_kind_t,
     #[doc = "< Array with variable names for iterator"]
@@ -2223,11 +2223,11 @@ pub struct ecs_iter_t {
     #[doc = "< Number of fields in iterator"]
     pub field_count: i32,
     #[doc = "< Fields that are set"]
-    pub set_fields: ecs_flags16_t,
+    pub set_fields: ecs_flags32_t,
     #[doc = "< Bitset with shared fields"]
-    pub shared_fields: ecs_flags16_t,
+    pub shared_fields: ecs_flags32_t,
     #[doc = "< Bitset with fields matched through up traversal"]
-    pub up_fields: ecs_flags16_t,
+    pub up_fields: ecs_flags32_t,
     #[doc = "< The system (if applicable)"]
     pub system: ecs_entity_t,
     #[doc = "< The event (if applicable)"]
@@ -2286,7 +2286,7 @@ pub struct ecs_query_desc_t {
     #[doc = "Used for validity testing. Must be 0."]
     pub _canary: i32,
     #[doc = "Query terms"]
-    pub terms: [ecs_term_t; 16usize],
+    pub terms: [ecs_term_t; 32usize],
     #[doc = "Query DSL expression (optional)"]
     pub expr: *const ::std::os::raw::c_char,
     #[doc = "Caching policy of query"]
