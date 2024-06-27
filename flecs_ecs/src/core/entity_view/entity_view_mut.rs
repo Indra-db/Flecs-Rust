@@ -659,12 +659,12 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::slot")]
     pub fn slot(self) -> Self {
         ecs_assert!(
-            self.target::<flecs::ChildOf>(0) != 0,
+            self.target::<flecs::ChildOf>(0).is_some(),
             FlecsErrorCode::InvalidParameter,
             "add ChildOf pair before using slot()"
         );
         let id = self.target_id(ECS_CHILD_OF, 0);
-        self.slot_of_id(id)
+        self.slot_of_id(id.expect("ChildOf pair not found"))
     }
 
     /// Mark id for auto-overriding.

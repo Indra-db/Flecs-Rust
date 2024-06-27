@@ -1253,15 +1253,20 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target")]
-    pub fn target<First: ComponentId>(self, index: i32) -> EntityView<'a> {
-        EntityView::new_from(self.world, unsafe {
+    pub fn target<First: ComponentId>(self, index: i32) -> Option<EntityView<'a>> {
+        let id = unsafe {
             sys::ecs_get_target(
                 self.world.world_ptr_mut(),
                 *self.id,
                 First::id(self.world),
                 index,
             )
-        })
+        };
+        if id == 0 {
+            None
+        } else {
+            Some(EntityView::new_from(self.world, id))
+        }
     }
 
     /// Get target for a given pair.
@@ -1279,10 +1284,15 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target")]
-    pub fn target_id(self, first: impl Into<Entity>, index: i32) -> EntityView<'a> {
-        EntityView::new_from(self.world, unsafe {
+    pub fn target_id(self, first: impl Into<Entity>, index: i32) -> Option<EntityView<'a>> {
+        let id = unsafe {
             sys::ecs_get_target(self.world.world_ptr_mut(), *self.id, *first.into(), index)
-        })
+        };
+        if id == 0 {
+            None
+        } else {
+            Some(EntityView::new_from(self.world, id))
+        }
     }
 
     /// Get the target of a pair for a given relationship id.
@@ -1318,15 +1328,20 @@ impl<'a> EntityView<'a> {
         &self,
         relationship: impl Into<Entity>,
         component_id: impl IntoId,
-    ) -> EntityView<'a> {
-        EntityView::new_from(self.world, unsafe {
+    ) -> Option<EntityView<'a>> {
+        let id = unsafe {
             sys::ecs_get_target_for_id(
                 self.world.world_ptr_mut(),
                 *self.id,
                 *relationship.into(),
                 *component_id.into(),
             )
-        })
+        };
+        if id == 0 {
+            None
+        } else {
+            Some(EntityView::new_from(self.world, id))
+        }
     }
 
     /// Get the target for a given component and relationship.
@@ -1354,7 +1369,7 @@ impl<'a> EntityView<'a> {
     pub fn target_for<T: ComponentOrPairId>(
         self,
         relationship: impl Into<Entity>,
-    ) -> EntityView<'a> {
+    ) -> Option<EntityView<'a>> {
         self.target_for_id(relationship, T::get_id(self.world))
     }
 
@@ -1378,7 +1393,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target_for")]
-    pub fn target_for_first<First: ComponentId + DataComponent>(
+    // TODO needs to be made safe
+    pub(crate) fn target_for_first<First: ComponentId + DataComponent>(
         &self,
         second: impl Into<Entity>,
     ) -> *const First {
@@ -1451,7 +1467,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::parent`
     #[doc(alias = "entity_view::parent")]
     #[inline(always)]
-    pub fn parent(self) -> EntityView<'a> {
+    pub fn parent(self) -> Option<EntityView<'a>> {
         self.target_id(ECS_CHILD_OF, 0)
     }
 

@@ -989,5 +989,5 @@ fn observer_name_from_root() {
 
     assert_eq!(o.name(), "MyObserver");
     let ns = world.entity_named("::ns");
-    assert!(ns == o.parent());
+    assert!(ns == o.parent().unwrap());
 }

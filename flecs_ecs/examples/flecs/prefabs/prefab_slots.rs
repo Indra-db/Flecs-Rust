@@ -54,9 +54,9 @@ fn main() {
     let inst = world.entity_named("my_spaceship").is_a_id(spaceship);
 
     // Get the instantiated entities for the prefab slots
-    let inst_engine = inst.target_id(engine, 0);
-    let inst_cockpit = inst.target_id(cockpit, 0);
-    let inst_seat = inst.target_id(pilot_seat, 0);
+    let inst_engine = inst.target_id(engine, 0).unwrap();
+    let inst_cockpit = inst.target_id(cockpit, 0).unwrap();
+    let inst_seat = inst.target_id(pilot_seat, 0).unwrap();
 
     println!("instance engine: {}", inst_engine.path().unwrap());
 

@@ -849,20 +849,19 @@ fn entity_get_target() {
         .add_id((rel, obj2))
         .add_id((rel, obj3));
 
-    let mut target = child.target_id(rel, 0);
+    let mut target = child.target_id(rel, 0).unwrap();
     assert!(target.is_valid());
     assert_eq!(target, obj1);
 
-    target = child.target_id(rel, 1);
+    target = child.target_id(rel, 1).unwrap();
     assert!(target.is_valid());
     assert_eq!(target, obj2);
 
-    target = child.target_id(rel, 2);
+    target = child.target_id(rel, 2).unwrap();
     assert!(target.is_valid());
     assert_eq!(target, obj3);
 
-    target = child.target_id(rel, 3);
-    assert!(!target.is_valid());
+    assert!(child.target_id(rel, 3).is_none());
 }
 
 #[test]
@@ -872,8 +871,8 @@ fn entity_get_parent() {
     let parent = world.entity();
     let child = world.entity().child_of_id(parent);
 
-    assert_eq!(child.target_id(flecs::ChildOf::ID, 0), parent);
-    assert_eq!(child.parent(), parent);
+    assert_eq!(child.target_id(flecs::ChildOf::ID, 0).unwrap(), parent);
+    assert_eq!(child.parent().unwrap(), parent);
 }
 
 /// # See also
@@ -3128,8 +3127,8 @@ fn entity_get_obj_by_template() {
     e1.add_first::<Rel>(o1);
     e1.add_first::<Rel>(o2);
 
-    assert_eq!(o1, e1.target::<Rel>(0));
-    assert_eq!(o2, e1.target::<Rel>(1));
+    assert_eq!(o1, e1.target::<Rel>(0).unwrap());
+    assert_eq!(o2, e1.target::<Rel>(1).unwrap());
 }
 
 #[test]

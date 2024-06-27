@@ -59,10 +59,10 @@ fn main() {
     println!();
 
     // Get first target of relationship
-    println!("Bob eats {}", bob.target::<Eats>(0).name());
+    println!("Bob eats {}", bob.target::<Eats>(0).unwrap().name());
 
     // Get second target of relationship
-    println!("Bob also eats {}", bob.target::<Eats>(1).name());
+    println!("Bob also eats {}", bob.target::<Eats>(1).unwrap().name());
 
     // Output:
     //  Bob eats apples? true
