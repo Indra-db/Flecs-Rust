@@ -9,6 +9,8 @@ use crate::core::*;
 use crate::sys;
 
 /// Pipelines order and schedule systems for execution.
+///
+/// These are typically constructed via [`World::pipeline()`].
 pub struct Pipeline<'a, T>
 where
     T: QueryTuple,

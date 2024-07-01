@@ -174,7 +174,7 @@ impl World {
 
     /// Signals the application to quit.
     ///
-    /// After calling this function, the next call to `progress()` returns false.
+    /// After calling this function, the next call to [`World::progress()`] returns false.
     ///
     /// # See also
     ///
@@ -321,7 +321,7 @@ impl World {
 
     /// Begin readonly mode.
     ///
-    /// When an application does not use `sys::ecs_progress` to control the main loop,
+    /// When an application does not use [`World::progress()`] to control the main loop,
     /// it can still use Flecs features such as the defer queue. To stage changes, this function
     /// must be called after `sys::ecs_frame_begin`.
     ///
@@ -354,7 +354,7 @@ impl World {
     ///
     /// While in readonly mode, applications can still enqueue ECS operations on a
     /// stage. Stages are managed automatically when using the pipeline addon and
-    /// `sys::ecs_progress()`, but they can also be configured manually.
+    /// [`World::progress()`], but they can also be configured manually.
     ///
     /// Number of stages typically corresponds with number of threads
     ///
@@ -431,7 +431,7 @@ impl World {
     ///
     /// # Example
     ///
-    /// see [`World::readonly_begin`]
+    /// see [`World::readonly_begin()`]
     #[doc(alias = "world::readonly_end")]
     pub fn readonly_end(&self) {
         unsafe {
@@ -725,7 +725,7 @@ impl World {
     /// When automatic merging is disabled, an application can call this
     /// operation on either an individual stage, or on the world which will merge
     /// all stages. This operation may only be called when staging is not enabled
-    /// (either after `progress()` or after `readonly_end()`).
+    /// (either after [`World::progress()`] or after `readonly_end()`).
     ///
     /// This operation may be called on an already merged stage or world.
     ///
@@ -3769,6 +3769,8 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::observer_id()`]
+    /// * [`World::observer_named()`]
     /// * C++ API: `world::observer`
     #[doc(alias = "world::observer")]
     pub fn observer<Event: ComponentId, Components>(&self) -> ObserverBuilder<Event, Components>
@@ -3806,6 +3808,8 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::observer()`]
+    /// * [`World::observer_id()`]
     /// * C++ API: `world::observer`
     #[doc(alias = "world::observer")]
     pub fn observer_named<'a, Event: ComponentId, Components>(
@@ -4080,10 +4084,12 @@ impl World {
 /// Pipeline mixin implementation
 #[cfg(feature = "flecs_pipeline")]
 impl World {
-    /// Create a new pipeline.
+    /// Create a new [`Pipeline`](crate::addons::pipeline::Pipeline).
     ///
     /// # See also
     ///
+    /// * [`World::pipeline_named()`]
+    /// * [`World::pipeline_type()`]
     /// * C++ API: `world::pipeline`
     #[doc(alias = "world::pipeline")]
     #[inline(always)]
@@ -4091,7 +4097,7 @@ impl World {
         PipelineBuilder::<()>::new(self)
     }
 
-    /// Create a new named pipeline.
+    /// Create a new named [`Pipeline`](crate::addons::pipeline::Pipeline).
     ///
     /// # Arguments
     ///
@@ -4099,6 +4105,8 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::pipeline()`]
+    /// * [`World::pipeline_type()`]
     /// * C++ API: `world::pipeline`
     #[doc(alias = "world::pipeline")]
     #[inline(always)]
@@ -4106,7 +4114,7 @@ impl World {
         PipelineBuilder::<()>::new_named(self, name)
     }
 
-    /// Create a new pipeline with the provided associated type
+    /// Create a new [`Pipeline`](crate::addons::pipeline::Pipeline) with the provided associated type.
     ///
     /// # Type Parameters
     ///
@@ -4114,6 +4122,8 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::pipeline()`]
+    /// * [`World::pipeline_named()`]
     /// * C++ API: `world::pipeline`
     #[doc(alias = "world::pipeline")]
     #[inline(always)]
@@ -4124,7 +4134,7 @@ impl World {
         PipelineBuilder::<()>::new_w_entity(self, Pipeline::id(self))
     }
 
-    /// Set a custom pipeline. This operation sets the pipeline to run when `sys::ecs_progress` is invoked.
+    /// Set a custom pipeline. This operation sets the pipeline to run when [`World::progress()`] is invoked.
     ///
     /// # Arguments
     ///
@@ -4132,6 +4142,8 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::get_pipeline()`]
+    /// * [`World::set_pipeline()`]
     /// * C++ API: `world::set_pipeline_id`
     #[doc(alias = "world::set_pipeline_id")]
     #[inline(always)]
@@ -4141,7 +4153,7 @@ impl World {
         }
     }
 
-    /// Set a custom pipeline by type. This operation sets the pipeline to run when `sys::ecs_progress` is invoked.
+    /// Set a custom pipeline by type. This operation sets the pipeline to run when [`World::progress()`] is invoked.
     ///
     /// # Type Parameters
     ///
@@ -4149,6 +4161,8 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::get_pipeline()`]
+    /// * [`World::set_pipeline_id()`]
     /// * C++ API: `world::set_pipeline_id`
     #[doc(alias = "world::set_pipeline_id")]
     #[inline(always)]
@@ -4169,6 +4183,8 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::set_pipeline()`]
+    /// * [`World::set_pipeline_id()`]
     /// * C++ API: `world::get_pipeline`
     #[doc(alias = "world::get_pipeline")]
     #[inline(always)]
@@ -4181,17 +4197,21 @@ impl World {
     /// Progress world one tick.
     ///
     /// Progresses the world by running all enabled and periodic systems
-    /// on their matching entities. Automatically measures the time passed
-    /// since the last frame by passing 0.0 to `delta_time`. This mode is
-    /// useful for applications that do not manage time explicitly and want
-    /// the system to measure the time automatically.
+    /// on their matching entities.
+    ///
+    /// This is a wrapper around [`World::progress_time()`]. It passes `0.0` as
+    /// the `delta_time` to automatically measure the time passed since the last
+    /// frame. This mode is useful for applications that do not manage time
+    /// explicitly and want the system to measure the time automatically.
     ///
     /// # Returns
     ///
-    /// True if the world has been progressed, false if `sys::ecs_quit` has been called.
+    /// True if the world has been progressed, false if [`World::quit()`] has been called.
     ///
     /// # See also
     ///
+    /// * [`World::progress_time()`]
+    /// * C API: `ecs_progress`
     /// * C++ API: `world::progress`
     #[doc(alias = "world::progress")]
     #[inline(always)]
@@ -4203,7 +4223,8 @@ impl World {
     ///
     /// Progresses the world by running all enabled and periodic systems
     /// on their matching entities for the specified time since the last frame.
-    /// When `delta_time` is 0, `sys::ecs_progress` will automatically measure the time passed
+    ///
+    /// When `delta_time` is 0, `World::progress_time()` will automatically measure the time passed
     /// since the last frame. For applications not using time management, passing a
     /// non-zero `delta_time` (1.0 recommended) skips automatic time measurement to avoid overhead.
     ///
@@ -4213,10 +4234,12 @@ impl World {
     ///
     /// # Returns
     ///
-    /// True if the world has been progressed, false if `sys::ecs_quit` has been called.
+    /// True if the world has been progressed, false if [`World::quit()`] has been called.
     ///
     /// # See also
     ///
+    /// * [`World::progress()`]
+    /// * C API: `ecs_progress`
     /// * C++ API: `world::progress`
     #[doc(alias = "world::progress")]
     #[inline(always)]
@@ -4230,8 +4253,8 @@ impl World {
     /// synchronization.
     ///
     /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
-    /// `set_pipeline_id()`). Using `progress()` auto-invokes this for the default pipeline.
-    /// Additional pipelines may be run explicitly.
+    /// `set_pipeline_id()`). Using [`World::progress()`] auto-invokes this for the
+    /// default pipeline. Additional pipelines may be run explicitly.
     ///
     /// # Note
     ///
@@ -4243,6 +4266,9 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::run_pipeline()`]
+    /// * [`World::run_pipeline_id_time()`]
+    /// * [`World::run_pipeline_time()`]
     /// * C++ API: `world::run_pipeline`
     #[doc(alias = "world::run_pipeline")]
     #[inline(always)]
@@ -4256,8 +4282,8 @@ impl World {
     /// synchronization.
     ///
     /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
-    /// `set_pipeline_id()`). Using `progress()` auto-invokes this for the default pipeline.
-    /// Additional pipelines may be run explicitly.
+    /// `set_pipeline_id()`). Using [`World::progress()`] auto-invokes this for the
+    /// default pipeline. Additional pipelines may be run explicitly.
     ///
     /// # Note
     ///
@@ -4270,6 +4296,9 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::run_pipeline()`]
+    /// * [`World::run_pipeline_id()`]
+    /// * [`World::run_pipeline_time()`]
     /// * C++ API: `world::run_pipeline`
     #[doc(alias = "world::run_pipeline")]
     #[inline(always)]
@@ -4284,8 +4313,7 @@ impl World {
     /// threads if staging is disabled, managing staging and, if needed, thread
     /// synchronization.
     ///
-    /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
-    /// `set_pipeline_id()`). Using `progress()` auto-invokes this for the default pipeline.
+    /// Using [`World::progress()`] auto-invokes this for the default pipeline.
     /// Additional pipelines may be run explicitly.
     ///
     /// # Note
@@ -4302,6 +4330,9 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::run_pipeline()`]
+    /// * [`World::run_pipeline_id()`]
+    /// * [`World::run_pipeline_id_time()`]
     /// * C++ API: `world::run_pipeline`
     #[doc(alias = "world::run_pipeline")]
     pub fn run_pipeline_time<Component>(&self, delta_time: super::FTime)
@@ -4318,8 +4349,7 @@ impl World {
     /// threads if staging is disabled, managing staging and, if needed, thread
     /// synchronization.
     ///
-    /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
-    /// `set_pipeline_id()`). Using `progress()` auto-invokes this for the default pipeline.
+    /// Using [`World::progress()`] auto-invokes this for the default pipeline.
     /// Additional pipelines may be run explicitly.
     ///
     /// # Note
@@ -4332,6 +4362,9 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::run_pipeline_id()`]
+    /// * [`World::run_pipeline_id_time()`]
+    /// * [`World::run_pipeline_time()`]
     /// * C++ API: `world::run_pipeline`
     #[doc(alias = "world::run_pipeline")]
     pub fn run_pipeline<Component>(&self)
@@ -4401,14 +4434,14 @@ impl World {
     /// Set target frames per second (FPS).
     ///
     /// Configures the world to run at the specified target FPS, ensuring that
-    /// `sys::ecs_progress` is not called more frequently than this rate. This mechanism
-    /// enables tracking the elapsed time since the last `sys::ecs_progress` call and
+    /// [`World::progress()`] is not called more frequently than this rate. This mechanism
+    /// enables tracking the elapsed time since the last [`World::progress()`] call and
     /// sleeping for any remaining time in the frame, if applicable.
     ///
     /// Utilizing this feature promotes consistent system execution intervals and
     /// conserves CPU resources by avoiding more frequent system runs than necessary.
     ///
-    /// It's important to note that `sys::ecs_progress` will only introduce sleep periods
+    /// It's important to note that [`World::progress()`] will only introduce sleep periods
     /// when there is surplus time within a frame. This accounts for time consumed both
     /// within Flecs and in external operations.
     ///
@@ -4571,7 +4604,7 @@ impl World {
 impl World {
     /// Create a new app.
     /// The app builder is a convenience wrapper around a loop that runs
-    /// `world::progress`. An app allows for writing platform agnostic code,
+    /// [`World::progress()`]. An app allows for writing platform agnostic code,
     /// as it provides hooks to modules for overtaking the main loop which is
     /// required for frameworks like emscripten.
     ///

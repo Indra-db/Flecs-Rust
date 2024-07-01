@@ -8,6 +8,8 @@ use crate::sys;
 
 /// Observers are systems that react to events.
 /// Observers let applications register callbacks for ECS events.
+///
+/// These are typically constructed via [`World::observer()`].
 #[derive(Clone)]
 pub struct Observer<'a> {
     entity: EntityView<'a>,
