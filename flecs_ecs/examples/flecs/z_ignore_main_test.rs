@@ -1,5 +1,6 @@
 #![cfg_attr(feature = "flecs_nightly_tests", feature(internal_output_capture))]
 #![allow(dead_code)]
+#![allow(clippy::print_stderr, clippy::print_stdout)]
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 #![allow(unused)]
