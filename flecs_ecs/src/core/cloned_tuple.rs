@@ -84,7 +84,7 @@ where
     type OnlyType = T;
     const IS_OPTION: bool = true;
 
-    fn create_tuple_data<'a>(array_components_data: *mut c_void) -> Self::ActualType {
+    fn create_tuple_data(array_components_data: *mut c_void) -> Self::ActualType {
         if array_components_data.is_null() {
             None
         } else {

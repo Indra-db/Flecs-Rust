@@ -437,6 +437,7 @@ pub(crate) unsafe fn print_c_string(c_string: *const c_char) {
 
     // Convert CStr to a Rust string slice (&str)
     // This can fail if the C string is not valid UTF-8, so handle errors appropriately
+    #[allow(clippy::print_stdout)]
     match c_str.to_str() {
         Ok(s) => println!("{}", s),
         Err(_) => println!("Failed to convert C string to Rust string"),

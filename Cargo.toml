@@ -11,7 +11,10 @@ repository = "https://github.com/Indra-db/flecs_ecs_rs"
 clippy.doc_markdown = "warn"
 clippy.float_cmp = "warn"
 clippy.float_cmp_const = "warn"
+clippy.print_stderr = "warn"
+clippy.print_stdout = "warn"
 clippy.semicolon_if_nothing_returned = "warn"
+rust.unused_lifetimes = "warn"
 
 [profile.release]
 lto = true
