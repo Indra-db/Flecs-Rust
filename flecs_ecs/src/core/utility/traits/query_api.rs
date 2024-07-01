@@ -914,8 +914,10 @@ where
     ///
     /// * C++ API: `iter_iterable::set_group`
     #[doc(alias = "iter_iterable::set_group")]
-    pub fn set_group_id(&mut self, group_id: impl Into<Entity>) -> QueryIter<P, T> {
-        self.iterable().set_group_id(group_id)
+    fn set_group_id(&mut self, group_id: impl Into<Entity>) -> QueryIter<P, T> {
+        let mut iter = self.iterable();
+        iter.set_group_id(group_id);
+        iter
     }
 
     /// Limit results to tables with specified group id (grouped queries only)
@@ -928,8 +930,10 @@ where
     ///
     /// * C++ API: `iter_iterable::set_group`
     #[doc(alias = "iter_iterable::set_group")]
-    pub fn set_group<Group: ComponentId>(&mut self) -> QueryIter<P, T> {
-        self.iterable().set_group::<Group>()
+    fn set_group<Group: ComponentId>(&mut self) -> QueryIter<P, T> {
+        let mut iter = self.iterable();
+        iter.set_group::<Group>();
+        iter
     }
 
     /// set variable of iter
@@ -945,7 +949,9 @@ where
     /// * C++ API: `iterable::set_var`
     #[doc(alias = "iterable::set_var")]
     fn set_var(&mut self, var_id: i32, value: impl Into<Entity>) -> QueryIter<P, T> {
-        self.iterable().set_var(var_id, value)
+        let mut iter = self.iterable();
+        iter.set_var(var_id, value);
+        iter
     }
 
     /// set variable of iter as table
@@ -960,8 +966,10 @@ where
     ///
     /// * C++ API: `iter_iterable::set_var`
     #[doc(alias = "iter_iterable::set_var")]
-    pub fn set_var_table(&mut self, var_id: i32, table: impl IntoTableRange) -> QueryIter<P, T> {
-        self.iterable().set_var_table(var_id, table)
+    fn set_var_table(&mut self, var_id: i32, table: impl IntoTableRange) -> QueryIter<P, T> {
+        let mut iter = self.iterable();
+        iter.set_var_table(var_id, table);
+        iter
     }
 
     /// set variable for rule iter
@@ -975,8 +983,10 @@ where
     ///
     /// * C++ API: `iter_iterable::set_var`
     #[doc(alias = "iter_iterable::set_var")]
-    pub fn set_var_expr(&mut self, name: &str, value: impl Into<Entity>) -> QueryIter<P, T> {
-        self.iterable().set_var_expr(name, value)
+    fn set_var_expr(&mut self, name: &str, value: impl Into<Entity>) -> QueryIter<P, T> {
+        let mut iter = self.iterable();
+        iter.set_var_expr(name, value);
+        iter
     }
 
     /// set variable for rule iter as table
@@ -990,12 +1000,10 @@ where
     ///
     /// * C++ API: `iter_iterable::set_var`
     #[doc(alias = "iter_iterable::set_var")]
-    pub fn set_var_table_expr(
-        &mut self,
-        name: &str,
-        table: impl IntoTableRange,
-    ) -> QueryIter<P, T> {
-        self.iterable().set_var_table_expr(name, table)
+    fn set_var_table_expr(&mut self, name: &str, table: impl IntoTableRange) -> QueryIter<P, T> {
+        let mut iter = self.iterable();
+        iter.set_var_table_expr(name, table);
+        iter
     }
 }
 
