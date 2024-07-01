@@ -206,7 +206,6 @@ pub mod private {
         {
             unsafe {
                 let iter = &mut *iter;
-                println!("iter: {:?}", iter.next.is_some());
                 let run = &mut *(iter.run_ctx as *mut Func);
                 let mut iter_t = TableIter::new(&mut *iter);
                 iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
