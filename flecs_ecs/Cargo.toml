@@ -12,6 +12,10 @@ categories = ["game-development", "api-bindings", "simulation", "development-too
 [lints]
 workspace = true
 
+[package.metadata.docs.rs]
+rustdoc-args = [ "-Zunstable-options", "--generate-link-to-definition"]
+cargo-args = ["-Zunstable-options", "-Zrustdoc-scrape-examples"]
+
 [dependencies]
 flecs_ecs_derive = { path = "../flecs_ecs_derive", version = "*"}
 flecs_ecs_sys = { path = "../flecs_ecs_sys", version = "*"}
@@ -180,3 +184,4 @@ harness = false
 name = "examples"
 path = "examples/flecs/z_ignore_main_test.rs"
 test = true
+doc-scrape-examples = true
