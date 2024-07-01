@@ -263,6 +263,44 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     #[doc(hidden)]
     fn __register_clone_hooks(_type_hooks: &mut TypeHooksT) {}
 
+    fn register_default_hooks<'a>(world: impl IntoWorld<'a>)
+    where
+        Self: Default,
+    {
+        ecs_assert!(Self::IS_GENERIC, FlecsErrorCode::InvalidOperation, "There is no need to register default hooks for non generic components. This is done automatically if a type has Default implemented");
+        let world_ptr = world.world_ptr_mut();
+        let id = Self::id(world);
+        let hooks = unsafe { flecs_ecs_sys::ecs_get_hooks_id(world_ptr, id) };
+        if hooks.is_null() {
+            let mut hooks = Default::default();
+            register_ctor_lifecycle_actions::<Self>(&mut hooks);
+            unsafe { flecs_ecs_sys::ecs_set_hooks_id(world_ptr, id, &hooks) }
+        } else {
+            let hooks = &mut unsafe { *hooks };
+            register_ctor_lifecycle_actions::<Self>(hooks);
+            unsafe { flecs_ecs_sys::ecs_set_hooks_id(world_ptr, id, hooks) }
+        }
+    }
+
+    fn register_clone_hooks<'a>(world: impl IntoWorld<'a>)
+    where
+        Self: Clone,
+    {
+        ecs_assert!(Self::IS_GENERIC, FlecsErrorCode::InvalidOperation, "There is no need to register clone hooks for non generic components. This is done automatically if a type has Clone implemented");
+        let world_ptr = world.world_ptr_mut();
+        let id = Self::id(world);
+        let hooks = unsafe { flecs_ecs_sys::ecs_get_hooks_id(world_ptr, id) };
+        if hooks.is_null() {
+            let mut hooks = Default::default();
+            register_copy_lifecycle_action::<Self>(&mut hooks);
+            unsafe { flecs_ecs_sys::ecs_set_hooks_id(world_ptr, id, &hooks) }
+        } else {
+            let hooks = &mut unsafe { *hooks };
+            register_copy_lifecycle_action::<Self>(hooks);
+            unsafe { flecs_ecs_sys::ecs_set_hooks_id(world_ptr, id, hooks) }
+        }
+    }
+
     #[doc(hidden)]
     #[inline(always)]
     fn fetch_new_index() -> u32 {
