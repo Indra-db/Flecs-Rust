@@ -759,9 +759,9 @@ where
     }
 }
 
-impl<'a, const IS_RUN: bool, P> TableIter<'a, IS_RUN, P>
-    where
-        P: ComponentId,
+impl<'a, P> TableIter<'a, true, P>
+where
+    P: ComponentId,
 {
     /// Progress iterator.
     ///
