@@ -1,5 +1,7 @@
 extern crate proc_macro;
 
+use std::collections::HashMap;
+
 use proc_macro::TokenStream as ProcMacroTokenStream;
 use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote, quote_spanned};
@@ -119,6 +121,43 @@ fn generate_tag_trait(has_fields: bool) -> proc_macro2::TokenStream {
     }
 }
 
+#[derive(Debug)]
+struct GenericTypeInfo {
+    contains_type_bound: bool,
+    contains_generic_type: bool,
+    is_bound_default: bool,
+    is_bound_clone: bool,
+}
+
+impl Default for GenericTypeInfo {
+    fn default() -> Self {
+        Self {
+            contains_type_bound: false,
+            contains_generic_type: false,
+            is_bound_default: false,
+            is_bound_clone: false,
+        }
+    }
+}
+
+impl GenericTypeInfo {
+    pub fn set_contains_type_bound(&mut self) {
+        self.contains_type_bound = true;
+    }
+
+    pub fn set_contains_generic_type(&mut self) {
+        self.contains_generic_type = true;
+    }
+
+    pub fn set_is_bound_default(&mut self) {
+        self.is_bound_default = true;
+    }
+
+    pub fn set_is_bound_clone(&mut self) {
+        self.is_bound_clone = true;
+    }
+}
+
 // This function generates a series of trait implementations for structs.
 // The implementations depend on the presence or absence of fields in the struct.
 fn impl_cached_component_data_struct(
@@ -134,13 +173,90 @@ fn impl_cached_component_data_struct(
 
     let (impl_generics, type_generics, where_clause) = &ast.generics.split_for_impl();
     let iter = &ast.generics.params.iter();
-    let mut contains_type_bound = false;
+    let iter_where = where_clause.iter();
+    let mut contains_lifetime_bound = false;
+
+    let mut type_info_map: HashMap<Ident, GenericTypeInfo> = HashMap::new();
+
+    //populate map with all the type generics
     iter.clone().for_each(|param| {
         if let syn::GenericParam::Type(type_param) = param {
+            type_info_map.insert(type_param.ident.clone(), Default::default());
+        }
+    });
+
+    iter.clone().for_each(|param| {
+        if let syn::GenericParam::Type(type_param) = param {
+            type_info_map
+                .get_mut(&type_param.ident)
+                .unwrap()
+                .set_contains_generic_type();
             if !type_param.bounds.empty_or_trailing() {
-                contains_type_bound = true;
+                type_info_map
+                    .get_mut(&type_param.ident)
+                    .unwrap()
+                    .set_contains_type_bound();
+                type_param.bounds.iter().for_each(|bound| {
+                    if let syn::TypeParamBound::Trait(trait_bound) = bound {
+                        if trait_bound.path.is_ident("Default") {
+                            type_info_map
+                                .get_mut(&type_param.ident)
+                                .unwrap()
+                                .set_is_bound_default();
+                        } else if trait_bound.path.is_ident("Clone") {
+                            type_info_map
+                                .get_mut(&type_param.ident)
+                                .unwrap()
+                                .set_is_bound_clone();
+                        }
+                    }
+                });
+            }
+        } else if let syn::GenericParam::Lifetime(_) = param {
+            contains_lifetime_bound = true;
+        }
+    });
+
+    iter_where.for_each(|where_clause| {
+        for predicate in where_clause.predicates.iter() {
+            if let syn::WherePredicate::Type(predicate_type) = predicate {
+                // Extract the Ident from the bounded type
+                if let Type::Path(type_path) = &predicate_type.bounded_ty {
+                    if let Some(segment) = type_path.path.segments.first() {
+                        let type_ident = &segment.ident;
+                        for bound in predicate_type.bounds.iter() {
+                            if let syn::TypeParamBound::Trait(trait_bound) = bound {
+                                if trait_bound.path.is_ident("Default") {
+                                    if let Some(gtype_info) = type_info_map.get_mut(type_ident) {
+                                        gtype_info.set_is_bound_default();
+                                    }
+                                } else if trait_bound.path.is_ident("Clone") {
+                                    if let Some(gtype_info) = type_info_map.get_mut(type_ident) {
+                                        gtype_info.set_is_bound_clone();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
+    });
+
+    let mut contains_any_type_bound = false;
+    let mut contains_any_generic_type = false;
+    let mut contains_all_default_bound = true;
+    let mut contains_all_clone_bound = true;
+
+    type_info_map.iter().for_each(|(_, type_info)| {
+        if type_info.contains_type_bound {
+            contains_any_type_bound = true;
+        }
+        if type_info.contains_generic_type {
+            contains_any_generic_type = true;
+        }
+        contains_all_default_bound = contains_all_default_bound && type_info.is_bound_default;
+        contains_all_clone_bound = contains_all_clone_bound && type_info.is_bound_clone;
     });
 
     let mut contains_where_bound = false;
@@ -173,32 +289,89 @@ fn impl_cached_component_data_struct(
                 }
             }
         }
-    } else if !contains_where_bound && !contains_type_bound {
+    } else if contains_lifetime_bound && !contains_any_generic_type {
         quote! {
-        fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
-            use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
-            const IMPLS_DEFAULT: bool =  #name::<flecs_ecs::core::Struct>::IMPLS_DEFAULT;
 
-            if IMPLS_DEFAULT {
-                flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name #type_generics>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
+            fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                const IMPLS_DEFAULT: bool =  #name::<'_>::IMPLS_DEFAULT;
+
+                if IMPLS_DEFAULT {
+                    flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name #type_generics>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
+                }
+            }
+
+            fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                const IMPLS_CLONE: bool = #name::<'_>::IMPLS_CLONE;
+
+                if IMPLS_CLONE {
+                    flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name #type_generics>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
+                } else {
+                    flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name>(
+                        type_hooks,
+                    );
+                }
             }
         }
+    // } else if contains_any_generic_type && contains_all_default_bound && contains_all_clone_bound {
+    //     quote! {
+    //     fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    //         use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+    //         const IMPLS_DEFAULT: bool =  #name::#type_generics::IMPLS_DEFAULT;
 
-        fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
-            use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
-            const IMPLS_CLONE: bool = #name::<flecs_ecs::core::Struct>::IMPLS_CLONE;
+    //         if IMPLS_DEFAULT {
+    //             flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name #type_generics>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
+    //         }
+    //     }
 
-            if IMPLS_CLONE {
-                flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name #type_generics>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
-            } else {
-                flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name #type_generics>(
-                    type_hooks,
-                );
-            }
-        }
-        }
+    //     fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    //         use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+    //         const IMPLS_CLONE: bool = #name::#type_generics::IMPLS_CLONE;
+
+    //         if IMPLS_CLONE {
+    //             flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name #type_generics>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
+    //         } else {
+    //             flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name #type_generics>(
+    //                 type_hooks,
+    //             );
+    //         }
+    //     }
+    //     }
+    // } else if contains_any_generic_type && contains_all_default_bound {
+    //     quote! {
+    //         fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    //             use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+    //             const IMPLS_DEFAULT: bool =  #name::#type_generics::IMPLS_DEFAULT;
+
+    //             if IMPLS_DEFAULT {
+    //                 flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name #type_generics>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
+    //             }
+    //         }
+    //     }
+    // } else if contains_any_generic_type && contains_all_clone_bound {
+    //     quote! {
+    //         fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    //             use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+    //             const IMPLS_CLONE: bool = #name::#type_generics::IMPLS_CLONE;
+
+    //             if IMPLS_CLONE {
+    //                 flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name #type_generics>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
+    //             } else {
+    //                 flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name #type_generics>(
+    //                     type_hooks,
+    //                 );
+    //             }
+    //         }
+    //     }
     } else {
-        quote! {}
+        quote! {
+            fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+                    flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name #type_generics>(
+                        type_hooks,
+                    );
+            }
+        }
     };
 
     let component_info_impl = quote! {
@@ -215,13 +388,57 @@ fn impl_cached_component_data_struct(
         #hook_impl
     };
 
-    let is_generic_const = if !is_generic {
+    let is_generic_const = if !contains_any_generic_type {
         quote! {
             const IS_GENERIC: bool = false;
         }
     } else {
         quote! {
             const IS_GENERIC: bool = true;
+        }
+    };
+    let clone_default = if !is_generic || (contains_lifetime_bound && !contains_any_generic_type) {
+        quote! {
+            const IMPLS_CLONE: bool = {
+                use flecs_ecs::core::utility::traits::DoesNotImpl;
+                flecs_ecs::core::utility::types::ImplementsClone::<#name #type_generics>::IMPLS
+            };
+            const IMPLS_DEFAULT: bool = {
+                use flecs_ecs::core::utility::traits::DoesNotImpl;
+                flecs_ecs::core::utility::types::ImplementsDefault::<#name #type_generics>::IMPLS
+            };
+        }
+    } else if contains_any_generic_type && contains_all_default_bound && contains_all_clone_bound {
+        quote! {
+            const IMPLS_CLONE: bool = {
+                use flecs_ecs::core::utility::traits::DoesNotImpl;
+                flecs_ecs::core::utility::types::ImplementsClone::<#name #type_generics>::IMPLS
+            };
+            const IMPLS_DEFAULT: bool = {
+                use flecs_ecs::core::utility::traits::DoesNotImpl;
+                flecs_ecs::core::utility::types::ImplementsDefault::<#name #type_generics>::IMPLS
+            };
+        }
+    } else if contains_any_generic_type && contains_all_default_bound {
+        quote! {
+            const IMPLS_CLONE: bool = false;
+            const IMPLS_DEFAULT: bool = {
+                use flecs_ecs::core::utility::traits::DoesNotImpl;
+                flecs_ecs::core::utility::types::ImplementsDefault::<#name #type_generics>::IMPLS
+            };
+        }
+    } else if contains_any_generic_type && contains_all_clone_bound {
+        quote! {
+            const IMPLS_CLONE: bool = {
+                use flecs_ecs::core::utility::traits::DoesNotImpl;
+                flecs_ecs::core::utility::types::ImplementsClone::<#name #type_generics>::IMPLS
+            };
+            const IMPLS_DEFAULT: bool = false;
+        }
+    } else {
+        quote! {
+            const IMPLS_CLONE: bool = false;
+            const IMPLS_DEFAULT: bool = false;
         }
     };
     // Common trait implementation for ComponentType and ComponentId
@@ -234,14 +451,7 @@ fn impl_cached_component_data_struct(
                 const IS_ENUM: bool = false;
 
                 #is_tag
-                const IMPLS_CLONE: bool = {
-                    use flecs_ecs::core::utility::traits::DoesNotImpl;
-                    flecs_ecs::core::utility::types::ImplementsClone::<#name #type_generics>::IMPLS
-                };
-                const IMPLS_DEFAULT: bool = {
-                    use flecs_ecs::core::utility::traits::DoesNotImpl;
-                    flecs_ecs::core::utility::types::ImplementsDefault::<#name #type_generics>::IMPLS
-                };
+                #clone_default
                 const IS_REF: bool = false;
                 const IS_MUT: bool = false;
             }
