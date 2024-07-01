@@ -263,7 +263,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     #[doc(hidden)]
     fn __register_clone_hooks(_type_hooks: &mut TypeHooksT) {}
 
-    fn register_default_hooks<'a>(world: impl IntoWorld<'a>)
+    fn register_ctor_hook<'a>(world: impl IntoWorld<'a>)
     where
         Self: Default,
     {
@@ -282,7 +282,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
         }
     }
 
-    fn register_clone_hooks<'a>(world: impl IntoWorld<'a>)
+    fn register_clone_hook<'a>(world: impl IntoWorld<'a>)
     where
         Self: Clone,
     {
