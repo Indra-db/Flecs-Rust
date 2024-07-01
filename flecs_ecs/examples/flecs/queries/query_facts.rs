@@ -47,7 +47,7 @@ fn main() {
     // entities directly, but then we would have to create a rule for each
     // fact, vs reusing a single rule for multiple facts.
 
-    let friends = world
+    let mut friends = world
         .query::<()>()
         .with_first_name::<&Likes>("$Y")
         .set_src_name("$X")
