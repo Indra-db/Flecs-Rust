@@ -5,8 +5,11 @@ use crate::core::internals::*;
 use crate::core::*;
 use crate::sys;
 
-/// Pipeline builder used to configure and build Pipelines.
+/// [`PipelineBuilder`] is used to configure and build [`Pipeline`]s.
+///
 /// Pipelines order and schedule systems for execution.
+///
+/// These are typically constructed via [`World::pipeline()`].
 pub struct PipelineBuilder<'a, T>
 where
     T: QueryTuple,
