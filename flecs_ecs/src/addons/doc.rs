@@ -21,7 +21,7 @@ use crate::sys;
 /// world.entity()
 ///      .set_doc_brief("A vast expanse of nothingness.");
 /// ```
-pub trait Doc {
+pub trait Doc<'a>: IntoWorld<'a> + Into<Entity> + Clone {
     /// Add human-readable name to entity.
     ///
     /// Contrary to entity names, human readable names do not have to be unique and
@@ -36,7 +36,10 @@ pub trait Doc {
     /// * [`World::set_doc_name()`]
     /// * [`World::set_doc_name_id()`]
     /// * C++ API: `doc::set_name()`
-    fn set_doc_name(self, name: &str);
+    fn set_doc_name(&self, name: &str) -> &Self {
+        self.world().set_doc_name_id(self.clone(), name);
+        self
+    }
 
     /// Add brief description to entity.
     ///
@@ -49,7 +52,10 @@ pub trait Doc {
     /// * [`World::set_doc_brief()`]
     /// * [`World::set_doc_brief_id()`]
     /// * C++ API: `doc::set_brief()`
-    fn set_doc_brief(self, brief: &str);
+    fn set_doc_brief(&self, brief: &str) -> &Self {
+        self.world().set_doc_brief_id(self.clone(), brief);
+        self
+    }
 
     /// Add detailed description to entity.
     ///
@@ -62,7 +68,10 @@ pub trait Doc {
     /// * [`World::set_doc_detail()`]
     /// * [`World::set_doc_detail_id()`]
     /// * C++ API: `doc::set_detail()`
-    fn set_doc_detail(self, detail: &str);
+    fn set_doc_detail(&self, detail: &str) -> &Self {
+        self.world().set_doc_detail_id(self.clone(), detail);
+        self
+    }
 
     /// Add link to external documentation to entity.
     ///
@@ -75,7 +84,10 @@ pub trait Doc {
     /// * [`World::set_doc_link()`]
     /// * [`World::set_doc_link_id()`]
     /// * C++ API: `doc::set_link()`
-    fn set_doc_link(self, link: &str);
+    fn set_doc_link(&self, link: &str) -> &Self {
+        self.world().set_doc_link_id(self.clone(), link);
+        self
+    }
 
     /// Add color to entity.
     ///
@@ -91,30 +103,13 @@ pub trait Doc {
     /// * [`World::set_doc_color()`]
     /// * [`World::set_doc_color_id()`]
     /// * C++ API: `doc::set_color()`
-    fn set_doc_color(self, color: &str);
-}
-
-impl<'a, T: Into<Entity> + IntoWorld<'a>> Doc for T {
-    fn set_doc_name(self, name: &str) {
-        self.world().set_doc_name_id(self, name);
-    }
-
-    fn set_doc_brief(self, brief: &str) {
-        self.world().set_doc_brief_id(self, brief);
-    }
-
-    fn set_doc_detail(self, detail: &str) {
-        self.world().set_doc_detail_id(self, detail);
-    }
-
-    fn set_doc_link(self, link: &str) {
-        self.world().set_doc_link_id(self, link);
-    }
-
-    fn set_doc_color(self, color: &str) {
-        self.world().set_doc_color_id(self, color);
+    fn set_doc_color(&self, color: &str) -> &Self {
+        self.world().set_doc_color_id(self.clone(), color);
+        self
     }
 }
+
+impl<'a, T> Doc<'a> for T where T: Into<Entity> + IntoWorld<'a> + Clone {}
 
 /// ```
 /// use flecs_ecs::{addons::doc::Doc, core::World, macros::Component};
@@ -343,4 +338,25 @@ impl World {
             sys::ecs_doc_set_color(self.ptr_mut(), *entity.into(), color.as_ptr() as *const _);
         };
     }
+}
+
+#[test]
+fn test_compile_doc() {
+    #[derive(flecs_ecs_derive::Component)]
+    struct Tag;
+    let world = World::default();
+    let entity = world.entity();
+    entity.set_doc_name("name");
+
+    let query = world.query::<()>().set_cached().build();
+    query.set_doc_name("name");
+
+    let system = world.system::<()>().build();
+    system.set_doc_name("name");
+
+    let observer = world.observer::<flecs::OnAdd, &Tag>().run(|_| {});
+    observer.set_doc_name("name");
+
+    let comp = world.component::<()>();
+    comp.set_doc_name("name").set_doc_brief("Unit");
 }
