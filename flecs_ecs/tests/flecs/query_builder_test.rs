@@ -4113,7 +4113,7 @@ fn query_builder_write_component() {
     let q = world
         .query::<()>()
         .with::<&Position>()
-        .write::<&Position>()
+        .write::<Position>()
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
