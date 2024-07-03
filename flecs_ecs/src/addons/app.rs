@@ -123,8 +123,10 @@ impl<'a> App<'a> {
     ///
     /// # See also
     ///
+    /// * [`addons::stats`](crate::addons::stats)
     /// * C++ API: `app_builder::enable_stats`
     #[doc(alias = "app_builder::enable_stats")]
+    #[cfg(feature = "flecs_stats")]
     pub fn enable_stats(&mut self, enable: bool) -> &mut Self {
         self.desc.enable_stats = enable;
         self
