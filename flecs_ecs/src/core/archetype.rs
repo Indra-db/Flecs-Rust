@@ -11,11 +11,17 @@ use crate::core::*;
 use crate::sys;
 
 /// Archetype type.
-/// A type is a vector of component ids which can be requested from entities or tables.
+///
+/// A type is a vector of component [ids](Id) which can be requested from [entities] or [tables].
 ///
 /// # See also
 ///
+/// * [`EntityView::archetype()`]
+/// * [`Table::archetype()`]
 /// * C++ API: `type`
+///
+/// [entities]: EntityView::archetype
+/// [tables]: Table::archetype
 #[doc(alias = "type")]
 pub struct Archetype<'a> {
     world: WorldRef<'a>,
@@ -102,13 +108,13 @@ impl<'a> Archetype<'a> {
     ///
     /// # Returns
     ///
-    /// `Some(&[IdT])` - A slice to the array if the type is not null and has elements.
+    /// `Some(&[Id])` - A slice to the array if the type is not null and has elements.
     /// `None` - If the type is null or has no elements.
     ///
     /// # Safety
     ///
     /// This method is safe as long as the underlying array pointed to by `type_vec` does not change
-    /// while the slice is in use and the elements are valid `IdT` instances. The caller must ensure
+    /// while the slice is in use and the elements are valid [`Id`] instances. The caller must ensure
     /// that the `EcsType` instance (or the underlying `type_vec` data it points to) lives at least as
     /// long as the returned slice to avoid dangling references.
     ///
@@ -120,17 +126,20 @@ impl<'a> Archetype<'a> {
         self.type_vec
     }
 
-    /// Get id (struct) at specified index in type
+    /// Get [id](IdView) at specified index in type
     ///
     /// # Returns
     ///
-    /// Result returned as Id Type.
-    /// - `Some(Id)` - if the type is not null and the index is within bounds.
+    /// Result returned as `IdView`.
+    ///
+    /// - [`Some(IdView)`] - if the type is not null and the index is within bounds.
     /// - `None` - if the type is null or the index is out of bounds.
     ///
     /// # See also
     ///
     /// * C++ API: `type::get`
+    ///
+    /// [`Some(IdView)`]: IdView
     #[doc(alias = "type::get")]
     pub fn get(&self, index: usize) -> Option<IdView> {
         if index < self.count() {
