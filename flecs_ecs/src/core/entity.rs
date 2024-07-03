@@ -195,6 +195,7 @@ mod bit_operations {
 }
 
 mod from_operations {
+    #[cfg(feature = "flecs_system")]
     use crate::prelude::system::System;
 
     use super::*;
@@ -246,6 +247,7 @@ mod from_operations {
         }
     }
 
+    #[cfg(feature = "flecs_system")]
     impl<'a> From<System<'a>> for Entity {
         #[inline]
         fn from(system: System<'a>) -> Self {
