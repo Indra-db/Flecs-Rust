@@ -4558,47 +4558,6 @@ impl World {
     }
 }
 
-/// Module mixin implementation
-#[cfg(feature = "flecs_module")]
-impl World {
-    /// Define a module.
-    /// This operation is not mandatory, but can be called inside the module ctor to
-    /// obtain the entity associated with the module, or override the module name.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `M` - The type of the module.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name to give the module.
-    ///
-    /// # Returns
-    ///
-    /// The module entity.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::module`
-    pub fn module<M: ComponentId>(&self, name: &str) -> EntityView {
-        let id = self.component_named::<M>(name).id();
-
-        let name = compact_str::format_compact!("{}\0", name);
-        unsafe {
-            sys::ecs_add_path_w_sep(
-                self.raw_world.as_ptr(),
-                *id,
-                0,
-                name.as_ptr() as *const _,
-                SEPARATOR.as_ptr(),
-                SEPARATOR.as_ptr(),
-            );
-        }
-        self.set_scope_id(id);
-        EntityView::new_from(self, *id)
-    }
-}
-
 /// App mixin implementation
 #[cfg(feature = "flecs_app")]
 impl World {
