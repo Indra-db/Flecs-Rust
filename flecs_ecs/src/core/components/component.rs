@@ -10,6 +10,7 @@ use crate::addons::meta::Opaque;
 
 /// Component class.
 /// Class used to register components and component metadata.
+#[derive(Clone, Copy)]
 pub struct Component<'a, T: ComponentId> {
     pub base: UntypedComponent<'a>,
     _marker: PhantomData<T>,
