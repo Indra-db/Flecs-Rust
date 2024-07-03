@@ -86,7 +86,7 @@ fn main() {
 
     // The "merge" lines indicate sync points.
     //
-    // Removing '.write::< VelocitySP>()' from the system will remove the first
+    // Removing `.write::<VelocitySP>()` from the system will remove the first
     // sync point from the schedule.
 }
 
