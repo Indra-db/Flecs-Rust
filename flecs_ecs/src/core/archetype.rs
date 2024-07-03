@@ -3,7 +3,6 @@
 use std::{
     ffi::CStr,
     fmt::{Debug, Display},
-    ops::Deref,
     ptr::NonNull,
 };
 
@@ -138,13 +137,5 @@ impl<'a> Archetype<'a> {
         } else {
             None
         }
-    }
-}
-
-impl<'a> Deref for Archetype<'a> {
-    type Target = [Id];
-
-    fn deref(&self) -> &Self::Target {
-        self.type_vec
     }
 }
