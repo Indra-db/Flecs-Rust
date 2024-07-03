@@ -124,7 +124,7 @@ where
     /// * C++ API: `iter::entity`
     #[doc(alias = "iter::entity")]
     pub fn entity(&self, row: usize) -> EntityView<'a> {
-        unsafe { EntityView::new_from(self.world(), *self.iter.entities.add(row)) }
+        unsafe { EntityView::new_from(self.real_world(), *self.iter.entities.add(row)) }
     }
 
     /// Return a mut reference to the raw iterator object
