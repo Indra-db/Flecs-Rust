@@ -4,9 +4,6 @@ use std::any::TypeId;
 use std::ffi::CStr;
 use std::{os::raw::c_void, ptr::NonNull};
 
-#[cfg(feature = "flecs_app")]
-use crate::addons::app::App;
-
 #[cfg(feature = "flecs_system")]
 use crate::addons::system::{System, SystemBuilder};
 
@@ -4555,24 +4552,5 @@ impl World {
     #[inline(always)]
     pub fn using_task_threads(&self) -> bool {
         unsafe { sys::ecs_using_task_threads(self.raw_world.as_ptr()) }
-    }
-}
-
-/// App mixin implementation
-#[cfg(feature = "flecs_app")]
-impl World {
-    /// Create a new app.
-    /// The app builder is a convenience wrapper around a loop that runs
-    /// [`World::progress()`]. An app allows for writing platform agnostic code,
-    /// as it provides hooks to modules for overtaking the main loop which is
-    /// required for frameworks like emscripten.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::app`
-    #[doc(alias = "world::app")]
-    #[inline(always)]
-    pub fn app(&self) -> App {
-        App::new(self)
     }
 }
