@@ -637,6 +637,68 @@ where
         }
     }
 
+    /// Get the component id of the field matched with the specified index.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The field index.
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Action;
+    ///
+    /// #[derive(Component)]
+    /// struct DerivedAction;
+    ///
+    /// #[derive(Component)]
+    /// struct DerivedAction2;
+    ///
+    /// let mut world = World::new();
+    ///
+    /// let comp = world.component::<Action>();
+    ///
+    /// world
+    ///     .component::<DerivedAction>()
+    ///     .add_trait::<(flecs::IsA, Action)>();
+    ///
+    /// world
+    ///     .component::<DerivedAction>()
+    ///     .add_trait::<(flecs::IsA, Action)>();
+    ///
+    /// world
+    ///     .component::<DerivedAction2>()
+    ///     .add_trait::<(flecs::IsA, Action)>();
+    ///
+    /// let entity = world
+    ///     .entity()
+    ///     .add::<DerivedAction>()
+    ///     .add::<DerivedAction2>();
+    ///
+    /// world.new_query::<&Action>().run(|mut it| {
+    ///     let mut vec = vec![];
+    ///     while it.next() {
+    ///         for i in it.iter() {
+    ///             vec.push(it.component_id_at(0));
+    ///         }
+    ///     }
+    ///    let id = world.component_id::<DerivedAction>();
+    ///    let id2 = world.component_id::<DerivedAction2>();
+    ///    assert_eq!(vec, vec![id, id2]);
+    /// });
+    /// ```
+    pub fn component_id_at(&self, index: i32) -> Id {
+        ecs_assert!(
+            index < self.iter.field_count,
+            FlecsErrorCode::InvalidParameter,
+            index
+        );
+
+        let id = unsafe { self.iter.ids.add(index as usize).read() };
+        Id::new(id)
+    }
+
     /// Get readonly access to entity ids.
     ///
     /// # Returns
