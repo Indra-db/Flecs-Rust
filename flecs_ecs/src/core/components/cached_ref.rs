@@ -5,8 +5,7 @@ use std::{marker::PhantomData, os::raw::c_void, ptr::NonNull};
 use crate::core::*;
 use crate::sys;
 
-/// A reference to a component from a specific entity.
-/// Refs are a fast mechanism for referring to a specific entity/component
+/// A cached reference for fast access to a component from a specific entity.
 pub struct CachedRef<'a, T: ComponentId + DataComponent> {
     world: WorldRef<'a>,
     component_ref: RefT,

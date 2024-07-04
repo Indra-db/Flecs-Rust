@@ -1,19 +1,19 @@
-pub mod archetype;
+mod archetype;
 pub mod builder;
 pub mod c_types;
 pub(crate) mod cloned_tuple;
 pub mod component_registration;
-pub mod components;
-pub mod entity;
-pub mod entity_view;
-pub mod event;
+mod components;
+mod entity;
+mod entity_view;
+mod event;
 pub mod field;
 pub mod flecs;
 pub(crate) mod get_tuple;
-pub mod id;
-pub mod id_view;
-pub mod observer;
-pub mod observer_builder;
+mod id;
+mod id_view;
+mod observer;
+mod observer_builder;
 pub mod query;
 pub mod query_builder;
 pub mod query_iter;
@@ -22,11 +22,10 @@ pub mod table;
 pub mod table_iter;
 pub mod term;
 pub mod utility;
-pub mod world;
+mod world;
 pub(crate) mod world_ctx;
 
-#[doc(hidden)]
-pub use archetype::*;
+pub use archetype::Archetype;
 #[doc(hidden)]
 pub use builder::*;
 #[doc(hidden)]
@@ -36,23 +35,16 @@ pub(crate) use cloned_tuple::*;
 pub use component_registration::*;
 #[doc(inline)]
 pub use components::*;
-#[doc(hidden)]
-pub use entity::*;
-#[doc(hidden)]
-pub use entity_view::*;
-#[doc(hidden)]
-pub use event::*;
+pub use entity::Entity;
+pub use entity_view::EntityView;
+pub use event::EventBuilder;
 #[doc(hidden)]
 pub use field::*;
 pub(crate) use get_tuple::*;
-#[doc(hidden)]
-pub use id::*;
-#[doc(hidden)]
-pub use id_view::*;
-#[doc(hidden)]
-pub use observer::*;
-#[doc(hidden)]
-pub use observer_builder::*;
+pub use id::Id;
+pub use id_view::IdView;
+pub use observer::Observer;
+pub use observer_builder::ObserverBuilder;
 #[doc(hidden)]
 pub use query::*;
 #[doc(hidden)]
@@ -69,6 +61,6 @@ pub use table_iter::*;
 pub use term::*;
 #[doc(hidden)]
 pub use utility::*;
-#[doc(hidden)]
-pub use world::*;
+pub use world::World;
+pub(crate) use world::{FlecsArray, FlecsIdMap};
 pub(crate) use world_ctx::*;
