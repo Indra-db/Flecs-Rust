@@ -120,6 +120,45 @@ where
         }
     }
 
+    /// Each iterator. This variant of `each` provides access to the [`TableIter`] object,
+    /// which contains more information about the object being iterated.
+    /// The `usize` argument contains the index of the entity being iterated,
+    /// which can be used to obtain entity-specific data from the `TableIter` object.
+    ///
+    /// # Example
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component, Debug)]
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
+    ///
+    /// #[derive(Component, Debug)]
+    /// struct Likes;
+    ///
+    /// let world = World::new();
+    ///
+    /// let eva = world.entity_named("eva");
+    ///
+    /// world
+    ///     .entity_named("adam")
+    ///     .set(Position { x: 10, y: 20 })
+    ///     .add_first::<Likes>(eva);
+    ///
+    /// world
+    ///     .query::<&Position>()
+    ///     .with::<(Likes, flecs::Wildcard)>()
+    ///     .build()
+    ///     .each_iter(|it, index, p| {
+    ///     let e = it.entity(index);
+    ///     println!("{:?}: {:?} - {:?}", e.name(), p, it.id(1).to_str());
+    /// });
+    ///
+    /// // Output:
+    /// //  "adam": Position { x: 10, y: 20 } - "(flecs_ecs.main.Likes,eva)"
+    /// ```
     fn each_iter(&self, mut func: impl FnMut(TableIter<false, P>, usize, T::TupleType<'_>))
     where
         P: ComponentId,
