@@ -50,18 +50,17 @@ fn system_iter_macro() {
         .entity()
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
-    
-    system!(world, &mut Position, &Velocity)
-        .run(|mut it| {
-            while it.next() {
-                let mut p = it.field::<Position>(0).unwrap();
-                let v = it.field::<Velocity>(1).unwrap();
-                for i in it.iter() {
-                    p[i].x += v[i].x;
-                    p[i].y += v[i].y;
-                }
+
+    system!(world, &mut Position, &Velocity).run(|mut it| {
+        while it.next() {
+            let mut p = it.field::<Position>(0).unwrap();
+            let v = it.field::<Velocity>(1).unwrap();
+            for i in it.iter() {
+                p[i].x += v[i].x;
+                p[i].y += v[i].y;
             }
-        });
+        }
+    });
 
     world.progress();
 
