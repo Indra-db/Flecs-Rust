@@ -13,23 +13,22 @@ use syn::{
     Data, DeriveInput, Expr, Fields, Ident, LitInt, LitStr, Result, Token, Type,
 };
 
-/// `Component` macro for defining ECS components with optional register attribute when the type is generic over a single T.
+/// `Component` macro for defining Flecs ECS components.
 ///
 /// When a type is decorated with `#[derive(Component)]`, several trait implementations are automatically added based on its structure:
 ///
-/// - Depending on whether the type is a struct or an enum, the relevant `ComponentType<Struct>` or `ComponentType<Enum>` trait is implemented.
+/// - Depending on whether the type is a struct or Rust enum or `repr(C)` enum.
+/// when it's a struct or Rust Enum it implements`ComponentType<Struct>` and in a C compatible enum the `ComponentType<Enum>` trait is implemented.
 /// - Based on the presence of fields or variants, the type will implement either `TagComponent` or `DataComponent`.
 /// - The `ComponentId` trait is implemented, providing storage mechanisms for the component.
 ///
-/// The `register` attribute can be used to handle `ComponentId` implementation trait over a specific T in a generic component with the world.
-/// This attribute is only supported when the type is generic over a single T.
+/// # Generic types
+/// - Generic types are supported, but they don't have first-class support for the `ComponentId` trait where it automatically registers the
+/// ctor and copy hooks (Default & Clone) which are used for either `EntityView::add` or `EntityView::duplicate` and some other operations.
+/// In that case, the user has to manually register the hooks for each variant of T of the generic component
+/// by using `T::register_ctor_hook` and `T::register_clone_hook`.
 ///
-/// ## Requirements:
-///
-/// - Types deriving `ComponentId` should also implement `Clone` and `Default` when the Type needs a `Drop`.
-///   The `Default` implementation can usually be derived via `#[derive(Default)]`. For enums, you'll need to flag the default variant within the enumeration.
-///
-/// # Note:
+/// # Enums:
 ///
 /// Ensure that enums annotated with `Component` have at least one variant; otherwise, a compile-time error will be triggered.
 ///
@@ -49,7 +48,7 @@ use syn::{
 ///     value: T,
 /// }
 ///
-/// #[derive(Componfent)]
+/// #[derive(Component)]
 /// #[repr(C)]
 /// enum State {
 ///     #[default]
@@ -732,7 +731,7 @@ fn check_repr_c(input: &syn::DeriveInput) -> bool {
                 while !input.is_empty() {
                     let path = input.call(syn::Path::parse_mod_style)?;
 
-                    if path.is_ident("C") {
+                    if path.is_ident("C") || path.is_ident("i32") || path.is_ident("u32") {
                         found_repr_c = true;
                         break;
                     }
