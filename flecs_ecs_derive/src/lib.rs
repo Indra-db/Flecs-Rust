@@ -18,15 +18,15 @@ use syn::{
 /// When a type is decorated with `#[derive(Component)]`, several trait implementations are automatically added based on its structure:
 ///
 /// - Depending on whether the type is a struct or Rust enum or `repr(C)` enum.
-/// when it's a struct or Rust Enum it implements`ComponentType<Struct>` and in a C compatible enum the `ComponentType<Enum>` trait is implemented.
+///   when it's a struct or Rust Enum it implements`ComponentType<Struct>` and in a C compatible enum the `ComponentType<Enum>` trait is implemented.
 /// - Based on the presence of fields or variants, the type will implement either `TagComponent` or `DataComponent`.
 /// - The `ComponentId` trait is implemented, providing storage mechanisms for the component.
 ///
 /// # Generic types
 /// - Generic types are supported, but they don't have first-class support for the `ComponentId` trait where it automatically registers the
-/// ctor and copy hooks (Default & Clone) which are used for either `EntityView::add` or `EntityView::duplicate` and some other operations.
-/// In that case, the user has to manually register the hooks for each variant of T of the generic component
-/// by using `T::register_ctor_hook` and `T::register_clone_hook`.
+///   ctor and copy hooks (Default & Clone) which are used for either `EntityView::add` or `EntityView::duplicate` and some other operations.
+///   In that case, the user has to manually register the hooks for each variant of T of the generic component
+///   by using `T::register_ctor_hook` and `T::register_clone_hook`.
 ///
 /// # Enums:
 ///
