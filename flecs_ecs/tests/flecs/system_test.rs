@@ -43,6 +43,37 @@ fn system_iter() {
 }
 
 #[test]
+fn system_iter_macro() {
+    let world = World::new();
+
+    let entity = world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+    
+    system!(world, &mut Position, &Velocity)
+        .run(|mut it| {
+            while it.next() {
+                let mut p = it.field::<Position>(0).unwrap();
+                let v = it.field::<Velocity>(1).unwrap();
+                for i in it.iter() {
+                    p[i].x += v[i].x;
+                    p[i].y += v[i].y;
+                }
+            }
+        });
+
+    world.progress();
+
+    entity.get::<(&Position, &Velocity)>(|(p, v)| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+        assert_eq!(v.x, 1);
+        assert_eq!(v.y, 2);
+    });
+}
+
+#[test]
 fn system_iter_const() {
     let world = World::new();
 
@@ -1931,6 +1962,83 @@ fn system_instanced_query_w_singleton_iter() {
         .system::<(&SelfRef, &mut Position, &Velocity)>()
         .term_at(2)
         .singleton()
+        .instanced()
+        .run(|mut it| {
+            let world = it.world();
+            while it.next() {
+                let s = it.field::<SelfRef>(0).unwrap();
+                let mut p = it.field::<Position>(1).unwrap();
+                let v = it.field::<Velocity>(2).unwrap();
+
+                assert!(it.count() > 1);
+
+                for i in it.iter() {
+                    p[i].x += v[i].x;
+                    p[i].y += v[i].y;
+                    assert!(it.entity(i) == s[i].value);
+                    world.get::<&mut Count>(|c| {
+                        c.0 += 1;
+                    });
+                }
+            }
+        });
+
+    s.run();
+
+    world.get::<&Count>(|c| {
+        assert_eq!(c.0, 5);
+    });
+
+    e1.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+
+    e2.get::<&Position>(|p| {
+        assert_eq!(p.x, 21);
+        assert_eq!(p.y, 32);
+    });
+
+    e3.get::<&Position>(|p| {
+        assert_eq!(p.x, 31);
+        assert_eq!(p.y, 42);
+    });
+
+    e4.get::<&Position>(|p| {
+        assert_eq!(p.x, 41);
+        assert_eq!(p.y, 52);
+    });
+
+    e5.get::<&Position>(|p| {
+        assert_eq!(p.x, 51);
+        assert_eq!(p.y, 62);
+    });
+}
+
+#[test]
+fn system_instanced_query_w_singleton_each_macro() {
+    let world = World::new();
+
+    world.set(Velocity { x: 1, y: 2 });
+
+    let e1 = world.entity().set(Position { x: 10, y: 20 });
+    e1.set(SelfRef { value: e1.id() });
+    let e2 = world.entity().set(Position { x: 20, y: 30 });
+    e2.set(SelfRef { value: e2.id() });
+    let e3 = world.entity().set(Position { x: 30, y: 40 });
+    e3.set(SelfRef { value: e3.id() });
+    let e4 = world.entity().set(Position { x: 40, y: 50 });
+    e4.set(SelfRef { value: e4.id() });
+    let e5 = world.entity().set(Position { x: 50, y: 60 });
+    e5.set(SelfRef { value: e5.id() });
+
+    e4.add::<Tag>();
+    e5.add::<Tag>();
+
+    world.set(Count(0));
+
+    let s = system!(world, &SelfRef, &mut Position, &Velocity($))
+        .term_at(2)
         .instanced()
         .run(|mut it| {
             let world = it.world();

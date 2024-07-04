@@ -1305,7 +1305,7 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
         .iter()
         .enumerate()
         .filter_map(|(i, t)| {
-            let index = i as i32;
+            let index = i as u32;
             let mut ops = Vec::new();
             let mut needs_accessor = false;
             let iter_term = i < iter_terms.len();
