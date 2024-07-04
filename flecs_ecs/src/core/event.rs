@@ -15,6 +15,11 @@ use crate::sys;
 /// Ensures the use of appropriate data types for events, enhancing type safety and data integrity.
 /// This design aims to prevent the utilization of incompatible components as event data,
 /// thereby ensuring greater explicitness and correctness in event handling.
+///
+/// # See also
+///
+/// * [`World::event()`]
+/// * [`World::event_id()`]
 pub struct EventBuilder<'a, T = ()> {
     pub world: WorldRef<'a>,
     pub(crate) desc: sys::ecs_event_desc_t,
@@ -24,13 +29,14 @@ pub struct EventBuilder<'a, T = ()> {
 }
 
 impl<'a, T: ComponentId> EventBuilder<'a, T> {
-    /// Create a new typed `EventBuilder`
+    /// Create a new typed [`EventBuilder`].
     ///
     /// # See also
     ///
+    /// * [`EventBuilder::new_untyped()`]
     /// * C++ API: `event_builder_typed::event_builder_typed`
     #[doc(alias = "event_builder_typed::event_builder_typed")]
-    pub fn new(world: impl IntoWorld<'a>) -> Self {
+    pub(crate) fn new(world: impl IntoWorld<'a>) -> Self {
         let mut obj = Self {
             world: world.world(),
             desc: Default::default(),
@@ -42,9 +48,10 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         obj
     }
 
-    /// Create a new (untyped) `EventBuilder`
+    /// Create a new (untyped) [`EventBuilder`].
     ///
     /// # Safety
+    ///
     /// Caller must ensure either that `event` represents a ZST
     /// or the event data is set to point to the appropriate type
     ///
@@ -55,9 +62,10 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     ///
     /// # See also
     ///
+    /// * [`EventBuilder::new()`]
     /// * C++ API: `event_builder_base::event_builder_base`
     #[doc(alias = "event_builder_base::event_builder_base")]
-    pub unsafe fn new_untyped(
+    pub(crate) unsafe fn new_untyped(
         world: impl IntoWorld<'a>,
         event: impl Into<Entity>,
     ) -> EventBuilder<'a, ()> {
@@ -72,7 +80,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         obj
     }
 
-    /// Add component id or pair to emit for the event
+    /// Add component id or pair to emit for the event.
     ///
     /// # Arguments
     ///
@@ -94,7 +102,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         self
     }
 
-    /// Add component to emit for the event
+    /// Add component to emit for the event.
     ///
     /// # Type parameters
     ///
@@ -112,7 +120,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         self.add_id(C::get_id(world))
     }
 
-    /// Add a pair of components to emit for the event
+    /// Add a pair of components to emit for the event.
     ///
     /// # Type parameters
     ///
@@ -143,7 +151,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         self.add_id(ecs_pair(*first.into(), Second::id(world)))
     }
 
-    /// Set the entity to emit for the event
+    /// Set the entity to emit for the event.
     ///
     /// # Arguments
     ///
@@ -159,7 +167,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         self
     }
 
-    /// Set the table to emit for the event
+    /// Set the table to emit for the event.
     ///
     /// # Arguments
     ///

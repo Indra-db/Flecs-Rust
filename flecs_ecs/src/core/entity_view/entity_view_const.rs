@@ -2099,7 +2099,7 @@ impl<'a> EntityView<'a> {
 
 // Event mixin
 impl<'a> EntityView<'a> {
-    /// Emit event for entity
+    /// Emit event for entity.
     ///
     /// # Safety
     /// Caller must ensure that any type associated with `event` is a ZST
@@ -2110,6 +2110,13 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
+    /// * [`EntityView::emit()`]
+    /// * [`EntityView::enqueue_id()`]
+    /// * [`EntityView::enqueue()`]
+    /// * [`EntityView::observe()`]
+    /// * [`EntityView::observe_payload()`]
+    /// * [`World::event_id()`]
+    /// * [`World::event()`]
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
     pub unsafe fn emit_id(self, event: impl Into<Entity>) {
@@ -2124,6 +2131,13 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
+    /// * [`EntityView::emit_id()`]
+    /// * [`EntityView::enqueue_id()`]
+    /// * [`EntityView::enqueue()`]
+    /// * [`EntityView::observe()`]
+    /// * [`EntityView::observe_payload()`]
+    /// * [`World::event_id()`]
+    /// * [`World::event()`]
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
     pub fn emit<T: ComponentId>(self, event: &T) {
@@ -2141,13 +2155,20 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
+    /// * [`EntityView::emit_id()`]
+    /// * [`EntityView::emit()`]
+    /// * [`EntityView::enqueue()`]
+    /// * [`EntityView::observe()`]
+    /// * [`EntityView::observe_payload()`]
+    /// * [`World::event_id()`]
+    /// * [`World::event()`]
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
     pub unsafe fn enqueue_id(self, event: impl Into<Entity>) {
         self.world().event_id(event).entity(self).enqueue(());
     }
 
-    /// enqueue event for entity.
+    /// Enqueue event for entity.
     ///
     /// # Type Parameters
     ///
@@ -2169,6 +2190,13 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
+    /// * [`EntityView::emit_id()`]
+    /// * [`EntityView::emit()`]
+    /// * [`EntityView::enqueue_id()`]
+    /// * [`EntityView::observe()`]
+    /// * [`EntityView::observe_payload()`]
+    /// * [`World::event_id()`]
+    /// * [`World::event()`]
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
     pub fn enqueue<T: ComponentId>(self, event: T) {
@@ -2190,6 +2218,13 @@ impl<'a> EntityView<'a> {
     ///
     /// See also
     ///
+    /// * [`EntityView::emit()`]
+    /// * [`EntityView::enqueue()`]
+    /// * [`EntityView::observe_entity()`]
+    /// * [`EntityView::observe_payload_entity()`]
+    /// * [`EntityView::observe_payload()`]
+    /// * [`World::event_id()`]
+    /// * [`World::event()`]
     /// * C++ API: `entity_builder::observe`
     #[doc(alias = "entity_builder::observe")]
     pub fn observe<C>(self, func: impl FnMut() + 'static) -> Self
@@ -2235,6 +2270,13 @@ impl<'a> EntityView<'a> {
     ///
     /// See also
     ///
+    /// * [`EntityView::emit()`]
+    /// * [`EntityView::enqueue()`]
+    /// * [`EntityView::observe()`]
+    /// * [`EntityView::observe_payload_entity()`]
+    /// * [`EntityView::observe_payload()`]
+    /// * [`World::event_id()`]
+    /// * [`World::event()`]
     /// * C++ API: `entity_builder::observe`
     #[doc(alias = "entity_builder::observe")]
     pub fn observe_entity<C>(self, func: impl FnMut(&mut EntityView) + 'static) -> Self
@@ -2280,6 +2322,13 @@ impl<'a> EntityView<'a> {
     ///
     /// See also
     ///
+    /// * [`EntityView::emit()`]
+    /// * [`EntityView::enqueue()`]
+    /// * [`EntityView::observe_entity()`]
+    /// * [`EntityView::observe()`]
+    /// * [`EntityView::observe_payload_entity()`]
+    /// * [`World::event_id()`]
+    /// * [`World::event()`]
     /// * C++ API: `entity_builder::observe`
     #[doc(alias = "entity_builder::observe")]
     pub fn observe_payload<C>(self, func: impl FnMut(&C) + 'static) -> Self
@@ -2325,6 +2374,13 @@ impl<'a> EntityView<'a> {
     ///
     /// See also
     ///
+    /// * [`EntityView::emit()`]
+    /// * [`EntityView::enqueue()`]
+    /// * [`EntityView::observe_entity()`]
+    /// * [`EntityView::observe()`]
+    /// * [`EntityView::observe_payload()`]
+    /// * [`World::event_id()`]
+    /// * [`World::event()`]
     /// * C++ API: `entity_builder::observe`
     #[doc(alias = "entity_builder::observe")]
     pub fn observe_payload_entity<C>(self, func: impl FnMut(&mut EntityView, &C) + 'static) -> Self

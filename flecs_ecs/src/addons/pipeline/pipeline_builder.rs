@@ -26,7 +26,7 @@ where
     T: QueryTuple,
 {
     /// Create a new pipeline builder
-    pub fn new(world: &'a World) -> Self {
+    pub(crate) fn new(world: &'a World) -> Self {
         let desc = Default::default();
         let mut obj = Self {
             desc,
@@ -44,7 +44,7 @@ where
     }
 
     /// Create a new pipeline builder with an associated entity
-    pub fn new_w_entity(world: &'a World, entity: impl Into<Entity>) -> Self {
+    pub(crate) fn new_w_entity(world: &'a World, entity: impl Into<Entity>) -> Self {
         let mut obj = Self::new(world);
         obj.desc.entity = *entity.into();
         obj
@@ -96,7 +96,7 @@ where
     }
 
     /// Create a new pipeline builder with a name
-    pub fn new_named(world: &'a World, name: &str) -> Self {
+    pub(crate) fn new_named(world: &'a World, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
 
         let mut obj = Self {

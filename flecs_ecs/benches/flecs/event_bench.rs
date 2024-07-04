@@ -22,7 +22,7 @@ pub fn event_emit(criterion: &mut Criterion) {
                 let start = Instant::now();
                 for _ in 0..iters {
                     unsafe {
-                        EventBuilder::<()>::new_untyped(&world, evt)
+                        world.event_id(evt)
                             .add::<T1>()
                             .table(table, 0, 0)
                             .emit(&());
@@ -62,7 +62,7 @@ pub fn event_emit_propagate(criterion: &mut Criterion) {
                 let start = Instant::now();
                 for _ in 0..iters {
                     unsafe {
-                        EventBuilder::<()>::new_untyped(&world, evt)
+                        world.event_id(evt)
                             .add::<T1>()
                             .table(root_table, 0, 0)
                             .emit(&());
