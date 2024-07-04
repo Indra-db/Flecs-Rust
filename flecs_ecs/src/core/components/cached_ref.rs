@@ -6,6 +6,7 @@ use crate::core::*;
 use crate::sys;
 
 /// A cached reference for fast access to a component from a specific entity.
+#[derive(Debug, Clone, Copy)]
 pub struct CachedRef<'a, T: ComponentId + DataComponent> {
     world: WorldRef<'a>,
     component_ref: RefT,
