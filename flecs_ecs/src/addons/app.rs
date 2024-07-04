@@ -6,6 +6,8 @@ use crate::core::*;
 use crate::sys;
 
 /// Application interface.
+///
+/// These are typically constructed via [`World::app()`]
 pub struct App<'a> {
     world: WorldRef<'a>,
     desc: sys::ecs_app_desc_t,
@@ -23,7 +25,7 @@ impl<'a> App<'a> {
     /// * [`World::app()`]
     /// * C++ API: `app_builder::app_builder`
     #[doc(alias = "app_builder::app_builder")]
-    pub fn new(world: impl IntoWorld<'a>) -> Self {
+    pub(crate) fn new(world: impl IntoWorld<'a>) -> Self {
         let mut obj = Self {
             world: world.world(),
             desc: sys::ecs_app_desc_t::default(),

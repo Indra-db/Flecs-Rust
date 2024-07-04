@@ -3711,6 +3711,9 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`EntityView::emit()`]
+    /// * [`EntityView::enqueue()`]
+    /// * [`World::event()`]
     /// * C++ API: `world::event`
     #[doc(alias = "world::event")]
     pub unsafe fn event_id(&self, event: impl Into<Entity>) -> EventBuilder<()> {
@@ -3729,6 +3732,9 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`EntityView::emit()`]
+    /// * [`EntityView::enqueue()`]
+    /// * [`World::event_id()`]
     /// * C++ API: `world::event`
     #[doc(alias = "world::event")]
     pub fn event<T: ComponentId>(&self) -> EventBuilder<T> {
@@ -3769,6 +3775,7 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::new_observer()`]
     /// * [`World::observer_id()`]
     /// * [`World::observer_named()`]
     /// * C++ API: `world::observer`
@@ -3808,6 +3815,7 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::new_observer()`]
     /// * [`World::observer()`]
     /// * [`World::observer_id()`]
     /// * C++ API: `world::observer`

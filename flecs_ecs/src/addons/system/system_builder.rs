@@ -22,7 +22,7 @@ where
     T: QueryTuple,
 {
     /// Create a new system builder
-    pub fn new(world: &'a World) -> Self {
+    pub(crate) fn new(world: &'a World) -> Self {
         let mut obj = Self {
             desc: Default::default(),
             term_builder: TermBuilder::default(),
@@ -78,7 +78,7 @@ where
     }
 
     /// Create a new system builder with a name
-    pub fn new_named(world: &'a World, name: &str) -> Self {
+    pub(crate) fn new_named(world: &'a World, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
 
         let mut obj = Self {
