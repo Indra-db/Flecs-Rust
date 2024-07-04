@@ -287,14 +287,14 @@ where
     ///
     /// * C++ API: `iter::param`
     #[doc(alias = "iter::param")]
-    pub fn param(&self) -> &P {
+    pub fn param(&self) -> &P::UnderlyingType {
         ecs_assert!(
             !P::IS_TAG,
             FlecsErrorCode::InvalidParameter,
             "cannot access tag data, no payload provided"
         );
 
-        let ptr = self.iter.param as *const P;
+        let ptr = self.iter.param as *const P::UnderlyingType;
 
         assert!(
             !ptr.is_null(),

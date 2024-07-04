@@ -153,7 +153,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     ///
     /// * C++ API: `event_builder_base::entity`
     #[doc(alias = "event_builder_base::entity")]
-    pub fn target(&mut self, entity: impl Into<Entity>) -> &mut Self {
+    pub fn entity(&mut self, entity: impl Into<Entity>) -> &mut Self {
         let desc = &mut self.desc;
         desc.entity = *entity.into();
         self

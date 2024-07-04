@@ -2113,7 +2113,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
     pub unsafe fn emit_id(self, event: impl Into<Entity>) {
-        self.world().event_id(event).target(self).emit(&());
+        self.world().event_id(event).entity(self).emit(&());
     }
 
     /// Emit event with an immutable payload for entity.
@@ -2127,7 +2127,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
     pub fn emit<T: ComponentId>(self, event: &T) {
-        self.world().event().target(self).emit(event);
+        self.world().event().entity(self).emit(event);
     }
 
     /// Enqueue event for entity.
@@ -2144,7 +2144,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
     pub unsafe fn enqueue_id(self, event: impl Into<Entity>) {
-        self.world().event_id(event).target(self).enqueue(());
+        self.world().event_id(event).entity(self).enqueue(());
     }
 
     /// enqueue event with payload for entity.
@@ -2172,7 +2172,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
     pub fn enqueue<T: ComponentId>(self, event: T) {
-        self.world().event().target(self).enqueue(event);
+        self.world().event().entity(self).enqueue(event);
     }
 }
 
