@@ -670,7 +670,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     #[doc(alias = "query_builder_i::term_at")]
     fn term_at(&mut self, index: u32) -> &mut Self {
         ecs_assert!(
-            index < sys::FLECS_TERM_COUNT_MAX as u32,
+            index < sys::FLECS_TERM_COUNT_MAX,
             FlecsErrorCode::InvalidParameter,
             "term_at() called with invalid index"
         );
