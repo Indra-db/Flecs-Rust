@@ -61,20 +61,30 @@ impl<'a, T: ComponentId + DataComponent> CachedRef<'a, T> {
     ///
     /// * C++ API: `ref::try_get`
     #[doc(alias = "ref::try_get")]
-    pub fn try_get(&mut self) -> Option<&mut T> {
-        NonNull::new(unsafe {
+    pub fn try_get(&mut self, callback: impl FnOnce(Option<&mut T>)) {
+        let ref_comp = NonNull::new(unsafe {
             sys::ecs_ref_get_id(
                 self.world.world_ptr_mut(),
                 &mut self.component_ref,
                 self.component_ref.id,
             ) as *mut T
         })
-        .map(|mut t| unsafe { t.as_mut() })
+        .map(|mut t| unsafe { t.as_mut() });
+
+        callback(ref_comp);
     }
 
-    pub fn get(&mut self) -> &mut T {
-        self.try_get()
-            .expect("Called CachedRef::get but the CachedRef was invalid")
+    pub fn get(&mut self, callback: impl FnOnce(&mut T)) {
+        let mut ref_comp = NonNull::new(unsafe {
+            sys::ecs_ref_get_id(
+                self.world.world_ptr_mut(),
+                &mut self.component_ref,
+                self.component_ref.id,
+            ) as *mut T
+        })
+        .expect("Component not found, use try_get if you want to handle this case");
+
+        callback(unsafe { ref_comp.as_mut() });
     }
 
     pub fn entity(&self) -> EntityView<'a> {
