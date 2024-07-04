@@ -196,7 +196,7 @@ pub fn get_only_type_name<T>() -> &'static str {
 ///
 /// * `T`: The type to check.
 #[inline(always)]
-pub fn is_empty_type<T>() -> bool {
+pub const fn is_empty_type<T>() -> bool {
     std::mem::size_of::<T>() == 0
 }
 
@@ -232,12 +232,12 @@ pub fn ecs_record_to_row(row: u32) -> i32 {
 /// * `value`: The value to set for the component.
 /// * `id`: The ID of the component type.
 pub(crate) fn set_helper<T: ComponentId>(world: *mut WorldT, entity: u64, value: T, id: u64) {
-    ecs_assert!(
-        std::mem::size_of::<T>() != 0,
-        FlecsErrorCode::InvalidParameter,
-        "invalid type: {}",
-        std::any::type_name::<T>()
-    );
+    const {
+        assert!(
+            std::mem::size_of::<T>() != 0,
+            "cannot set zero-sized-type / tag components"
+        );
+    };
 
     let mut is_new = false;
     unsafe {

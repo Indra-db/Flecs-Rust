@@ -36,10 +36,12 @@ impl<'a, T: ComponentId + DataComponent> CachedRef<'a, T> {
             id = T::id(world);
         }
 
-        ecs_assert!(
-            std::mem::size_of::<T>() != 0,
-            FlecsErrorCode::InvalidParameter
-        );
+        const {
+            assert!(
+                std::mem::size_of::<T>() != 0,
+                "Tried to create invalid `CachedRef` type. Cached Ref cannot be created for zero-sized types / tags."
+            );
+        }
 
         let component_ref = unsafe { sys::ecs_ref_init_id(world_ptr, *entity.into(), id) };
         assert_ne!(
