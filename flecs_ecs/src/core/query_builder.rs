@@ -668,16 +668,16 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::term_at`
     #[doc(alias = "query_builder_i::term_at")]
-    fn term_at(&mut self, index: i32) -> &mut Self {
+    fn term_at(&mut self, index: u32) -> &mut Self {
         ecs_assert!(
-            index >= 0,
+            index < sys::FLECS_TERM_COUNT_MAX as u32,
             FlecsErrorCode::InvalidParameter,
             "term_at() called with invalid index"
         );
 
         self.set_term_ref_mode(TermRefMode::Src);
 
-        *self.current_term_index_mut() = index;
+        *self.current_term_index_mut() = index as i32;
 
         self
     }
