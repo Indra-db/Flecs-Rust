@@ -7,7 +7,6 @@ mod components;
 mod entity;
 mod entity_view;
 mod event;
-pub mod field;
 pub mod flecs;
 pub(crate) mod get_tuple;
 mod id;
@@ -19,7 +18,6 @@ pub mod query_builder;
 pub mod query_iter;
 pub(crate) mod query_tuple;
 pub mod table;
-pub mod table_iter;
 pub mod term;
 pub mod utility;
 mod world;
@@ -38,8 +36,6 @@ pub use components::*;
 pub use entity::Entity;
 pub use entity_view::EntityView;
 pub use event::EventBuilder;
-#[doc(hidden)]
-pub use field::*;
 pub(crate) use get_tuple::*;
 pub use id::Id;
 pub use id_view::IdView;
@@ -55,8 +51,6 @@ pub use query_iter::*;
 pub use query_tuple::*;
 #[doc(hidden)]
 pub use table::*;
-#[doc(hidden)]
-pub use table_iter::*;
 #[doc(hidden)]
 pub use term::*;
 #[doc(hidden)]

@@ -1,5 +1,11 @@
 //! Table is a wrapper class that gives direct access to the component arrays of a table, the table data
 
+mod field;
+mod iter;
+
+pub use field::{Field, FieldUntyped};
+pub use iter::{TableIter, TableRowIter};
+
 use std::{ffi::CStr, os::raw::c_void, ptr::NonNull};
 
 use crate::core::*;
