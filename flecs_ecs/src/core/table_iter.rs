@@ -291,11 +291,12 @@ where
     /// * C++ API: `iter::param`
     #[doc(alias = "iter::param")]
     pub fn param(&self) -> &P::UnderlyingType {
-        ecs_assert!(
-            !P::IS_TAG,
-            FlecsErrorCode::InvalidParameter,
-            "cannot access tag data, no payload provided"
-        );
+        const {
+            assert!(
+                !P::IS_TAG,
+                "called `.param()` on a ZST / tag data, which cannot be used when no payload is provided"
+            );
+        }
 
         let ptr = self.iter.param as *const P::UnderlyingType;
 
@@ -303,10 +304,6 @@ where
             !ptr.is_null(),
             "Tried to get param on an iterator where it was null."
         );
-
-        if P::IS_TAG {
-            panic!("cannot access tag data, no payload provided");
-        }
 
         unsafe { &*ptr }
     }

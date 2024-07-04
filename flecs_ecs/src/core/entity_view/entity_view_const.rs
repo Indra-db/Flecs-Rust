@@ -2147,11 +2147,11 @@ impl<'a> EntityView<'a> {
         self.world().event_id(event).entity(self).enqueue(());
     }
 
-    /// enqueue event with payload for entity.
+    /// enqueue event for entity.
     ///
     /// # Type Parameters
     ///
-    /// * T - the event type to enqueue. Type must contain data (not empty struct).
+    /// * T - the event type to enqueue.
     ///
     /// # Usage:
     ///
