@@ -13,8 +13,11 @@ use crate::addons::pipeline::PipelineBuilder;
 use crate::core::*;
 use crate::sys;
 
-pub type FlecsArray = std::vec::Vec<u64>;
+pub(crate) type FlecsArray = std::vec::Vec<u64>;
 
+/// The container of all ECS data and systems.
+///
+/// If the world is deleted, all data in the world will be deleted as well.
 #[derive(Debug, Eq, PartialEq)]
 pub struct World {
     pub(crate) raw_world: NonNull<WorldT>,
@@ -33,7 +36,7 @@ impl Clone for World {
     }
 }
 
-pub type FlecsIdMap = std::collections::HashMap<TypeId, u64, fxhash::FxBuildHasher>;
+pub(crate) type FlecsIdMap = std::collections::HashMap<TypeId, u64, fxhash::FxBuildHasher>;
 
 unsafe impl Send for World {}
 

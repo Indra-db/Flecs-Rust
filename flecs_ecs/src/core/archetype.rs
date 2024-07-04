@@ -9,9 +9,7 @@ use std::{
 use crate::core::*;
 use crate::sys;
 
-/// Archetype type.
-///
-/// A type is a vector of component [ids](Id) which can be requested from [entities] or [tables].
+/// An archetype is a vector of component [ids](Id) which can be requested from [entities] or [tables].
 ///
 /// # See also
 ///

@@ -414,7 +414,7 @@ impl<'a> EntityView<'a> {
         unsafe { !sys::ecs_has_id(self.world.world_ptr_mut(), *self.id, flecs::Disabled::ID) }
     }
 
-    /// get the entity's archetype
+    /// Get the entity's archetype.
     ///
     /// # See also
     ///
@@ -428,7 +428,7 @@ impl<'a> EntityView<'a> {
             .unwrap_or(Archetype::new(self.world, &[]))
     }
 
-    /// get the entity's type/table
+    /// Get the entity's type/table.
     ///
     /// # See also
     ///
@@ -441,10 +441,11 @@ impl<'a> EntityView<'a> {
     }
 
     /// Get table range for the entity.
+    ///
     /// # Returns
+    ///
     /// Returns a range with the entity's row as offset and count set to 1. If
-    /// the entity is not stored in a table, the function returns a range with
-    /// count 0.
+    /// the entity is not stored in a table, the function returns `None`.
     ///
     /// # See also
     ///
@@ -467,7 +468,7 @@ impl<'a> EntityView<'a> {
     /// Iterate over component ids of an entity.
     ///
     /// # Arguments
-    /// * `func` - The closure invoked for each matching ID. Must match the signature `FnMut(Id)`.
+    /// * `func` - The closure invoked for each matching ID. Must match the signature `FnMut(IdView)`.
     ///
     /// # See also
     ///
@@ -488,7 +489,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * `first` - The first ID to match against.
     /// * `second` - The second ID to match against.
-    /// * `func` - The closure invoked for each matching ID. Must match the signature `FnMut(Id)`.
+    /// * `func` - The closure invoked for each matching ID. Must match the signature `FnMut(IdView)`.
     ///
     /// # See also
     ///
@@ -496,8 +497,8 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::each")]
     pub fn each_pair(
         &self,
-        pred: impl Into<Entity>,
-        obj: impl Into<Entity>,
+        first: impl Into<Entity>,
+        second: impl Into<Entity>,
         mut func: impl FnMut(IdView),
     ) {
         // this is safe because we are only reading the world
@@ -511,10 +512,10 @@ impl<'a> EntityView<'a> {
 
         let table = Table::new(real_world, table);
 
-        let mut pattern: IdT = *pred.into();
-        let obj_id = *obj.into();
-        if obj_id != 0 {
-            pattern = ecs_pair(pattern, obj_id);
+        let mut pattern: IdT = *first.into();
+        let second_id = *second.into();
+        if second_id != 0 {
+            pattern = ecs_pair(pattern, second_id);
         }
 
         let mut cur: i32 = 0;
@@ -1484,7 +1485,7 @@ impl<'a> EntityView<'a> {
     ///
     /// # Returns
     ///
-    /// The found entity, or `Entity::null` if no entity matched.
+    /// The entity if found, otherwise `None`.
     ///
     /// # See also
     ///
@@ -1621,7 +1622,7 @@ impl<'a> EntityView<'a> {
             .expect("Entity not found, when unsure, use try_lookup")
     }
 
-    /// Check if entity has the provided entity.
+    /// Test if an entity has an id.
     ///
     /// # Arguments
     ///
@@ -1629,18 +1630,19 @@ impl<'a> EntityView<'a> {
     ///
     /// # Returns
     ///
-    /// True if the entity has the provided entity, false otherwise.
+    /// True if the entity has or inherits the provided id, false otherwise.
     ///
     /// # See also
     ///
+    /// * [`EntityView::has()`]
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
     #[inline(always)]
-    pub fn has_id(self, entity: impl IntoId) -> bool {
-        unsafe { sys::ecs_has_id(self.world.world_ptr_mut(), *self.id, *entity.into()) }
+    pub fn has_id(self, id: impl IntoId) -> bool {
+        unsafe { sys::ecs_has_id(self.world.world_ptr_mut(), *self.id, *id.into()) }
     }
 
-    /// Check if entity has the provided struct component.
+    /// Check if entity has the provided component.
     ///
     /// # Type Parameters
     ///
@@ -1648,10 +1650,11 @@ impl<'a> EntityView<'a> {
     ///
     /// # Returns
     ///
-    /// True if the entity has the provided component, false otherwise.
+    /// True if the entity has or inherits the provided component, false otherwise.
     ///
     /// # See also
     ///
+    /// * [`EntityView::has_id()`]
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
     pub fn has<T: ComponentOrPairId>(self) -> bool {
