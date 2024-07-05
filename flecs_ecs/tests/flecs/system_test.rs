@@ -1934,7 +1934,6 @@ fn system_un_instanced_query_w_base_each() {
     });
 }
 
-#[ignore = "fix this test"]
 #[test]
 fn system_instanced_query_w_singleton_iter() {
     let world = World::new();
@@ -1972,8 +1971,8 @@ fn system_instanced_query_w_singleton_iter() {
                 assert!(it.count() > 1);
 
                 for i in it.iter() {
-                    p[i].x += v[i].x;
-                    p[i].y += v[i].y;
+                    p[i].x += v[0].x;
+                    p[i].y += v[0].y;
                     assert!(it.entity(i) == s[i].value);
                     world.get::<&mut Count>(|c| {
                         c.0 += 1;
@@ -2049,8 +2048,8 @@ fn system_instanced_query_w_singleton_each_macro() {
                 assert!(it.count() > 1);
 
                 for i in it.iter() {
-                    p[i].x += v[i].x;
-                    p[i].y += v[i].y;
+                    p[i].x += v[0].x;
+                    p[i].y += v[0].y;
                     assert!(it.entity(i) == s[i].value);
                     world.get::<&mut Count>(|c| {
                         c.0 += 1;
