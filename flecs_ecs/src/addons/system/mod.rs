@@ -122,7 +122,7 @@ impl<'a> System<'a> {
     /// * C++ API: `system::ctx`
     #[doc(alias = "system::ctx")]
     pub fn context(&self) -> *mut c_void {
-        unsafe { (*sys::ecs_system_get(self.world.world_ptr_mut(), *self.id())).ctx }
+        unsafe { (*sys::ecs_system_get(self.world.world_ptr(), *self.id())).ctx }
     }
 
     /// Get the underlying query for the system
@@ -133,9 +133,7 @@ impl<'a> System<'a> {
     #[doc(alias = "system::query")]
     pub fn query(&self) -> Query<()> {
         let query = unsafe {
-            NonNull::new_unchecked(
-                (*sys::ecs_system_get(self.world.world_ptr_mut(), *self.id())).query,
-            )
+            NonNull::new_unchecked((*sys::ecs_system_get(self.world.world_ptr(), *self.id())).query)
         };
         unsafe { Query::<()>::new_from(query) }
     }
