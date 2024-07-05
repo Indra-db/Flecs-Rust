@@ -2453,6 +2453,7 @@ extern "C" fn callback_group_delete(
 
 #[test]
 fn query_builder_group_by_callbacks() {
+    let cell_count_group_ctx = Cell::new(5u64);
     let world = World::new();
 
     let tgt_a = world.entity();
@@ -2462,8 +2463,6 @@ fn query_builder_group_by_callbacks() {
     let e1 = world.entity().add_first::<Rel>(tgt_c);
     let e2 = world.entity().add_first::<Rel>(tgt_b);
     let e3 = world.entity().add_first::<Rel>(tgt_a);
-
-    let cell_count_group_ctx = Cell::new(5u64);
 
     let q = world
         .query::<()>()
