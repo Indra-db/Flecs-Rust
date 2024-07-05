@@ -20,8 +20,7 @@ pub struct ecs_alert_desc_t {
     ///
     /// # Examples
     ///
-    #[cfg_attr(doctest, doc = " ````no_test")]
-    /// ```
+    /// ```text
     /// "$this has Position but not Velocity"
     /// "$this has a parent entity $parent without Position"
     /// ```
@@ -54,8 +53,7 @@ extern "C" {
     /// log, when this amount is non-zero. The format is a '+' character followed by
     /// the number of seconds:
     ///
-    #[cfg_attr(doctest, doc = " ````no_test")]
-    /// ```
+    /// ```text
     /// +1 trace: log message
     /// ```
     ///
@@ -74,8 +72,7 @@ extern "C" {
     ///
     /// The request string must be a valid HTTP request. A minimal example:
     ///
-    #[cfg_attr(doctest, doc = " ````no_test")]
-    /// ```
+    /// ```text
     /// GET /entity/flecs/core/World?label=true HTTP/1.1
     /// ```
     ///

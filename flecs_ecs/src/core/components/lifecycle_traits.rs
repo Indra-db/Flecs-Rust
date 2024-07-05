@@ -18,7 +18,6 @@
 // - Bypass the need for `placement_new` with a `placement_ctor` function.
 //   - Drawback: Each field needs manual setting, which impacts user experience.
 //      - example code:
-#![cfg_attr(doctest, doc = " ````no_test")]
 //      ```
 //           struct MyType {
 //               vec: Vec<i32>,
