@@ -1304,15 +1304,6 @@ impl<'a> EntityView<'a> {
     /// be returned. If the id cannot be found on the entity or by following the
     /// relationship, the operation will return 0.
     ///
-    /// This operation can be used to lookup, for example, which prefab is providing
-    /// a component by specifying the `IsA` pair:
-    ///
-    #[cfg_attr(doctest, doc = " ````no_test")]
-    /// ```
-    /// // Is Position provided by the entity or one of its base entities?
-    /// get_target_by_relationship_and_component_id(world, EcsIsA, T::id<Position>(world))
-    /// ```
-    ///
     /// # Arguments
     ///
     /// * `relationship` - The relationship to follow.
@@ -1324,6 +1315,7 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
+    /// * [`EntityView::target_for()`]
     /// * C++ API: `entity_view::target_for`
     #[doc(alias = "entity_view::target_for")]
     pub fn target_for_id(
@@ -1351,6 +1343,19 @@ impl<'a> EntityView<'a> {
     /// This function is a convenient wrapper around `get_target_by_relationship_and_component_id`,
     /// allowing callers to provide a type and automatically deriving the component id.
     ///
+    /// This operation can be used to lookup, for example, which prefab is providing
+    /// a component by specifying the `IsA` pair:
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// # let world = World::new();
+    /// # let entity = world.entity();
+    /// # #[derive(Component)]
+    /// # struct Position(f32, f32, f32);
+    /// // Is Position provided by the entity or one of its base entities?
+    /// let e = entity.target_for::<Position>(flecs::IsA::ID);
+    /// ```
+    ///
     /// # Type Parameters
     ///
     /// * `T` - The component type to use for deriving the id.
@@ -1365,6 +1370,7 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
+    /// * [`EntityView::target_for_id()`]
     /// * C++ API: `entity_view::target`
     #[doc(alias = "entity_view::target_for")]
     #[inline(always)]
@@ -2176,16 +2182,19 @@ impl<'a> EntityView<'a> {
     ///
     /// # Usage:
     ///
-    #[cfg_attr(doctest, doc = " ````no_test")]
-    /// ```rust
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// # let world = World::new();
+    /// # let entity = world.entity();
+    /// #[derive(Component)]
     /// struct Resize {
-    ///    width: i32,
-    ///   height: i32,
+    ///     width: i32,
+    ///     height: i32,
     /// }
     ///
-    /// world.defer_begin();
-    /// entity.enqueue(Resize{width: 10, height: 20});
-    /// world.defer_end();
+    /// world.defer(|| {
+    ///     entity.enqueue(Resize{width: 10, height: 20});
+    /// });
     /// ```
     ///
     /// # See also

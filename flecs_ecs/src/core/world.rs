@@ -3030,8 +3030,9 @@ impl World {
     /// * `func` - The closure to execute.
     ///
     /// # Examples
-    #[cfg_attr(doctest, doc = " ````no_test")]
     /// ```
+    /// # use flecs_ecs::core::World;
+    /// # let world = World::new();
     /// world.defer(|| {
     ///     // deferred operations here
     /// });

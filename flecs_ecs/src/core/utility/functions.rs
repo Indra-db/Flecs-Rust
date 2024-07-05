@@ -351,8 +351,7 @@ pub fn get_generation(entity: impl Into<Entity>) -> u32 {
 ///
 /// # Example
 ///
-#[cfg_attr(doctest, doc = " ````no_test")]
-/// ```
+/// ```ignore
 /// // Assuming `it` is a valid iterator pointer obtained from a query.
 /// let position_ptr: *mut Position = ecs_field(it, 1);
 /// let velocity_ptr: *mut Velocity = ecs_field(it, 2);

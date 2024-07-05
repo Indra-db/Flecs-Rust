@@ -34,7 +34,6 @@ use syn::{
 ///
 /// ## Example:
 ///
-#[cfg_attr(doctest, doc = " ````no_test")]
 /// ```ignore
 /// #[derive(Component)]
 /// struct Position {
@@ -48,7 +47,7 @@ use syn::{
 ///     value: T,
 /// }
 ///
-/// #[derive(Component)]
+/// #[derive(Component, Default)]
 /// #[repr(C)]
 /// enum State {
 ///     #[default]
