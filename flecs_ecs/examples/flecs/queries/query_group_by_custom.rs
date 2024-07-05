@@ -1,9 +1,8 @@
 use crate::z_ignore_test_common::*;
 
 use flecs_ecs::prelude::*;
+use flecs_ecs::sys;
 use std::ffi::c_void;
-
-use flecs_ecs_sys::ecs_search;
 
 #[derive(Debug, Component)]
 pub struct Position {
@@ -28,16 +27,16 @@ pub struct Group;
 
 // callbacks need to be extern "C" to be callable from C
 extern "C" fn callback_group_by_relationship(
-    world: *mut WorldT,
-    table: *mut TableT,
+    world: *mut sys::ecs_world_t,
+    table: *mut sys::ecs_table_t,
     id: u64,
     _group_by_ctx: *mut c_void,
 ) -> u64 {
-    // Use ecs_search to find the target for the relationship in the table
-    let mut match_id: IdT = Default::default();
+    // Use sys::ecs_search to find the target for the relationship in the table
+    let mut match_id: sys::ecs_id_t = Default::default();
     let world = unsafe { WorldRef::from_ptr(world) };
     let id = IdView::new_from(world, (id, flecs::Wildcard::ID)).id();
-    if unsafe { ecs_search(world.world_ptr_mut(), table, *id, &mut match_id) } != -1 {
+    if unsafe { sys::ecs_search(world.world_ptr_mut(), table, *id, &mut match_id) } != -1 {
         *IdView::new_from(world, match_id).second_id().id() // First, Second or Third
     } else {
         0

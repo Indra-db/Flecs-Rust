@@ -1,7 +1,7 @@
 use std::ffi::{c_char, c_void};
 
 use crate::core::*;
-use crate::sys::*;
+use crate::sys::{self, *};
 
 type AssignBoolFn<T> = extern "C" fn(*mut T, bool);
 type AssignCharFn<T> = extern "C" fn(*mut T, i8);
@@ -10,7 +10,7 @@ type AssignUIntFn<T> = extern "C" fn(*mut T, u64);
 type AssignFloatFn<T> = extern "C" fn(*mut T, f32);
 //todo!("replace with idiomatic rust equivalent of c_char. might need changes to flecs")
 type AssignStringFn<T> = extern "C" fn(*mut T, *const c_char);
-type AssignEntityFn<T> = extern "C" fn(*mut T, *mut WorldT, EntityT);
+type AssignEntityFn<T> = extern "C" fn(*mut T, *mut sys::ecs_world_t, sys::ecs_entity_t);
 type AssignNullFn<T> = extern "C" fn(*mut T);
 type ClearFn<T> = extern "C" fn(*mut T);
 //todo!("still have to do ensure_element function for collections")

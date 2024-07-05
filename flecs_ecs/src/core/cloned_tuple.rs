@@ -137,7 +137,7 @@ where
     fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
         world: impl IntoWorld<'a>, record: *const ecs_record_t, components: &mut [*mut c_void]
     ) -> bool {
-        let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut WorldT };
+        let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut sys::ecs_world_t };
         let table = unsafe { (*record).table };
         let mut has_all_components = true;
 
@@ -230,7 +230,7 @@ macro_rules! impl_cloned_tuple {
                 world: impl IntoWorld<'a>, record: *const ecs_record_t, components: &mut [*mut c_void]
             ) -> bool {
 
-                let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut WorldT };
+                let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut sys::ecs_world_t };
                 let world_ref = world.world();
                 let table = unsafe { (*record).table };
                 let mut index : usize = 0;

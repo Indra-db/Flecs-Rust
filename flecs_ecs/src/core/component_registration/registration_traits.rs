@@ -4,6 +4,7 @@ use std::{
 };
 
 use crate::core::*;
+use crate::sys;
 
 /// Indicates that the type is a tag component. A tag component is a component that does not have any data. Is a zero-sized type.
 pub trait TagComponent {}
@@ -96,7 +97,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     #[inline(always)]
     fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
         world: impl IntoWorld<'a>,
-    ) -> EntityT {
+    ) -> sys::ecs_entity_t {
         if !Self::IS_GENERIC {
             let index = Self::index() as usize;
             let world = world.world();
@@ -164,7 +165,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
         world: impl IntoWorld<'a>,
         name: &str,
-    ) -> EntityT {
+    ) -> sys::ecs_entity_t {
         if !Self::IS_GENERIC {
             let index = Self::index() as usize;
             let world = world.world();
@@ -252,21 +253,21 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     /// # Note
     /// Each world has it's own unique id for the component.
     #[inline(always)]
-    fn id<'a>(world: impl IntoWorld<'a>) -> EntityT {
+    fn id<'a>(world: impl IntoWorld<'a>) -> sys::ecs_entity_t {
         Self::UnderlyingType::__register_or_get_id::<true>(world)
     }
 
     // Not public API.
     #[doc(hidden)]
-    fn __register_lifecycle_hooks(_type_hooks: &mut TypeHooksT) {}
+    fn __register_lifecycle_hooks(_type_hooks: &mut sys::ecs_type_hooks_t) {}
 
     // Not public API.
     #[doc(hidden)]
-    fn __register_default_hooks(_type_hooks: &mut TypeHooksT) {}
+    fn __register_default_hooks(_type_hooks: &mut sys::ecs_type_hooks_t) {}
 
     // Not public API.
     #[doc(hidden)]
-    fn __register_clone_hooks(_type_hooks: &mut TypeHooksT) {}
+    fn __register_clone_hooks(_type_hooks: &mut sys::ecs_type_hooks_t) {}
 
     fn register_ctor_hook<'a>(world: impl IntoWorld<'a>)
     where

@@ -1,4 +1,5 @@
 use crate::core::*;
+use crate::sys;
 
 pub trait ComponentOrPairId {
     const IS_ENUM: bool;
@@ -11,7 +12,7 @@ pub trait ComponentOrPairId {
     type First: ComponentId;
     type Second: ComponentId;
 
-    fn get_id<'a>(world: impl IntoWorld<'a>) -> IdT;
+    fn get_id<'a>(world: impl IntoWorld<'a>) -> sys::ecs_id_t;
 
     /// Get the symbol name of the component.
     ///
@@ -34,7 +35,7 @@ where
     type CastType = T;
 
     #[inline]
-    fn get_id<'a>(world: impl IntoWorld<'a>) -> IdT {
+    fn get_id<'a>(world: impl IntoWorld<'a>) -> sys::ecs_id_t {
         T::id(world)
     }
 
@@ -60,7 +61,7 @@ where
     type CastType =
         <ConditionalTypePairSelector<<T as ComponentInfo>::TagType, T, U> as FlecsPairType>::Type;
     #[inline]
-    fn get_id<'a>(world: impl IntoWorld<'a>) -> IdT {
+    fn get_id<'a>(world: impl IntoWorld<'a>) -> sys::ecs_id_t {
         let world = world.world();
         ecs_pair(T::id(world), U::id(world))
     }

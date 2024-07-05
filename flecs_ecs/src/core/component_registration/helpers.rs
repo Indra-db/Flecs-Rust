@@ -3,9 +3,10 @@
 use std::ffi::c_char;
 
 use crate::core::*;
+use crate::sys;
 
 pub(crate) fn create_component_desc(
-    entity: EntityT,
+    entity: sys::ecs_entity_t,
     type_info: flecs_ecs_sys::ecs_type_info_t,
 ) -> flecs_ecs_sys::ecs_component_desc_t {
     flecs_ecs_sys::ecs_component_desc_t {

@@ -27,7 +27,7 @@ where
 
 #[inline(always)]
 /// attempts to register the component with the world. If it's already registered, it does nothing.
-pub(crate) fn try_register_component<'a, T>(world: impl IntoWorld<'a>) -> EntityT
+pub(crate) fn try_register_component<'a, T>(world: impl IntoWorld<'a>) -> sys::ecs_entity_t
 where
     T: ComponentId,
 {
@@ -35,7 +35,10 @@ where
 }
 
 #[inline(always)]
-pub(crate) fn try_register_component_named<'a, T>(world: impl IntoWorld<'a>, name: &str) -> EntityT
+pub(crate) fn try_register_component_named<'a, T>(
+    world: impl IntoWorld<'a>,
+    name: &str,
+) -> sys::ecs_entity_t
 where
     T: ComponentId,
 {
@@ -45,7 +48,7 @@ where
 }
 
 /// registers enum fields with the world.
-pub(crate) fn register_enum_data<T>(world: *mut WorldT, id: EntityT)
+pub(crate) fn register_enum_data<T>(world: *mut sys::ecs_world_t, id: sys::ecs_entity_t)
 where
     T: ComponentId,
 {
@@ -55,7 +58,7 @@ where
 
     for (index, enum_item) in T::UnderlyingEnumType::iter().enumerate() {
         let name = enum_item.name_cstr();
-        let entity_id: EntityT = unsafe {
+        let entity_id: sys::ecs_entity_t = unsafe {
             sys::ecs_cpp_enum_constant_register(
                 world,
                 id,
@@ -71,7 +74,10 @@ where
 }
 
 /// registers the component with the world.
-pub(crate) fn register_component_data_named<T>(world: *mut WorldT, name: *const c_char) -> EntityT
+pub(crate) fn register_component_data_named<T>(
+    world: *mut sys::ecs_world_t,
+    name: *const c_char,
+) -> sys::ecs_entity_t
 where
     T: ComponentId,
 {
@@ -94,7 +100,7 @@ where
 }
 
 /// registers the component with the world.
-pub(crate) fn register_component_data<T>(world: *mut WorldT) -> EntityT
+pub(crate) fn register_component_data<T>(world: *mut sys::ecs_world_t) -> sys::ecs_entity_t
 where
     T: ComponentId,
 {
@@ -114,9 +120,9 @@ where
 
 /// registers the component with the world.
 pub(crate) fn register_componment_data_explicit<T>(
-    world: *mut WorldT,
+    world: *mut sys::ecs_world_t,
     name: *const c_char,
-) -> EntityT
+) -> sys::ecs_entity_t
 where
     T: ComponentId,
 {

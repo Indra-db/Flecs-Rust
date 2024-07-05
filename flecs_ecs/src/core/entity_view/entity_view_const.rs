@@ -512,7 +512,7 @@ impl<'a> EntityView<'a> {
 
         let table = Table::new(real_world, table);
 
-        let mut pattern: IdT = *first.into();
+        let mut pattern: sys::ecs_id_t = *first.into();
         let second_id = *second.into();
         if second_id != 0 {
             pattern = ecs_pair(pattern, second_id);
@@ -1694,7 +1694,7 @@ impl<'a> EntityView<'a> {
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        let component_id: IdT = T::id(self.world);
+        let component_id: sys::ecs_id_t = T::id(self.world);
         // Safety: we know the enum fields are registered because of the previous T::id call
         let enum_constant_entity_id = unsafe { constant.id_variant_unchecked(self.world) };
 
@@ -1783,7 +1783,7 @@ impl<'a> EntityView<'a> {
         &self,
         constant: U,
     ) -> bool {
-        let component_id: IdT = T::id(self.world);
+        let component_id: sys::ecs_id_t = T::id(self.world);
         let enum_constant_entity_id = constant.id_variant(self.world);
 
         self.has_id((component_id, enum_constant_entity_id))
@@ -2427,9 +2427,9 @@ impl<'a> EntityView<'a> {
 // entity observer creation
 impl<'a> EntityView<'a> {
     pub(crate) fn entity_observer_create(
-        world: *mut WorldT,
-        event: EntityT,
-        entity: EntityT,
+        world: *mut sys::ecs_world_t,
+        event: sys::ecs_entity_t,
+        entity: sys::ecs_entity_t,
         binding_ctx: *mut ObserverEntityBindingCtx,
         callback: sys::ecs_iter_action_t,
     ) {
@@ -2455,7 +2455,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_observer_delegate::invoke`
     #[doc(alias = "entity_observer_delegate::invoke")]
-    pub(crate) unsafe extern "C" fn run_empty<Func>(iter: *mut IterT)
+    pub(crate) unsafe extern "C" fn run_empty<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(),
     {
@@ -2483,7 +2483,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_observer_delegate::invoke`
     #[doc(alias = "entity_observer_delegate::invoke")]
-    pub(crate) unsafe extern "C" fn run_empty_entity<Func>(iter: *mut IterT)
+    pub(crate) unsafe extern "C" fn run_empty_entity<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(&mut EntityView),
     {
@@ -2515,7 +2515,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_payload_observer_delegate::invoke`
     #[doc(alias = "entity_payload_observer_delegate::invoke")]
-    pub(crate) unsafe extern "C" fn run_payload<C, Func>(iter: *mut IterT)
+    pub(crate) unsafe extern "C" fn run_payload<C, Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(&C),
     {
@@ -2545,7 +2545,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_payload_observer_delegate::invoke`
     #[doc(alias = "entity_payload_observer_delegate::invoke")]
-    pub(crate) unsafe extern "C" fn run_payload_entity<C, Func>(iter: *mut IterT)
+    pub(crate) unsafe extern "C" fn run_payload_entity<C, Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(&mut EntityView, &C),
     {
@@ -2652,8 +2652,8 @@ impl<'a> EntityView<'a> {
                 }
             }
         } else {
-            let component_id: IdT = T::id(self.world);
-            let target: IdT = unsafe {
+            let component_id: sys::ecs_id_t = T::id(self.world);
+            let target: sys::ecs_id_t = unsafe {
                 sys::ecs_get_target(self.world.world_ptr_mut(), *self.id, component_id, 0)
             };
 

@@ -8,8 +8,8 @@ pub struct QueryIter<'a, P, T>
 where
     T: QueryTuple,
 {
-    iter: IterT,
-    iter_next: unsafe extern "C" fn(*mut IterT) -> bool,
+    iter: sys::ecs_iter_t,
+    iter_next: unsafe extern "C" fn(*mut sys::ecs_iter_t) -> bool,
     _phantom: std::marker::PhantomData<&'a (P, T)>,
 }
 
@@ -17,7 +17,10 @@ impl<'a, P, T> QueryIter<'a, P, T>
 where
     T: QueryTuple,
 {
-    pub fn new(iter: IterT, iter_next: unsafe extern "C" fn(*mut IterT) -> bool) -> Self {
+    pub fn new(
+        iter: sys::ecs_iter_t,
+        iter_next: unsafe extern "C" fn(*mut sys::ecs_iter_t) -> bool,
+    ) -> Self {
         Self {
             iter,
             iter_next,
@@ -148,23 +151,23 @@ impl<'a, P, T> IterOperations for QueryIter<'a, P, T>
 where
     T: QueryTuple,
 {
-    fn retrieve_iter(&self) -> IterT {
+    fn retrieve_iter(&self) -> sys::ecs_iter_t {
         self.iter
     }
 
-    fn retrieve_iter_stage<'w>(&self, _stage: impl IntoWorld<'w>) -> IterT {
+    fn retrieve_iter_stage<'w>(&self, _stage: impl IntoWorld<'w>) -> sys::ecs_iter_t {
         panic!("Cannot change the stage of an iterator that already exists. Use retrieve_iter_stage on the underlying query instead.");
     }
 
-    fn iter_next(&self, iter: &mut IterT) -> bool {
+    fn iter_next(&self, iter: &mut sys::ecs_iter_t) -> bool {
         unsafe { (self.iter_next)(iter) }
     }
 
-    fn query_ptr(&self) -> *const QueryT {
+    fn query_ptr(&self) -> *const sys::ecs_query_t {
         self.iter.query
     }
 
-    fn iter_next_func(&self) -> unsafe extern "C" fn(*mut IterT) -> bool {
+    fn iter_next_func(&self) -> unsafe extern "C" fn(*mut sys::ecs_iter_t) -> bool {
         self.iter_next
     }
 }

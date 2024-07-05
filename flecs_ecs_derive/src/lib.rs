@@ -254,7 +254,7 @@ fn impl_cached_component_data_struct(
     let hook_impl = if !is_generic {
         quote! {
 
-            fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+            fn __register_default_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
                 use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
                 const IMPLS_DEFAULT: bool =  #name::IMPLS_DEFAULT;
 
@@ -263,7 +263,7 @@ fn impl_cached_component_data_struct(
                 }
             }
 
-            fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+            fn __register_clone_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
                 use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
                 const IMPLS_CLONE: bool = #name::IMPLS_CLONE;
 
@@ -279,7 +279,7 @@ fn impl_cached_component_data_struct(
     } else if contains_lifetime_bound && !contains_any_generic_type {
         quote! {
 
-            fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+            fn __register_default_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
                 use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
                 const IMPLS_DEFAULT: bool =  #name::<'_>::IMPLS_DEFAULT;
 
@@ -288,7 +288,7 @@ fn impl_cached_component_data_struct(
                 }
             }
 
-            fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+            fn __register_clone_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
                 use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
                 const IMPLS_CLONE: bool = #name::<'_>::IMPLS_CLONE;
 
@@ -303,7 +303,7 @@ fn impl_cached_component_data_struct(
         }
     // } else if contains_any_generic_type && contains_all_default_bound && contains_all_clone_bound {
     //     quote! {
-    //     fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    //     fn __register_default_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
     //         use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
     //         const IMPLS_DEFAULT: bool =  #name::#type_generics::IMPLS_DEFAULT;
 
@@ -312,7 +312,7 @@ fn impl_cached_component_data_struct(
     //         }
     //     }
 
-    //     fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    //     fn __register_clone_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
     //         use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
     //         const IMPLS_CLONE: bool = #name::#type_generics::IMPLS_CLONE;
 
@@ -327,7 +327,7 @@ fn impl_cached_component_data_struct(
     //     }
     // } else if contains_any_generic_type && contains_all_default_bound {
     //     quote! {
-    //         fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    //         fn __register_default_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
     //             use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
     //             const IMPLS_DEFAULT: bool =  #name::#type_generics::IMPLS_DEFAULT;
 
@@ -338,7 +338,7 @@ fn impl_cached_component_data_struct(
     //     }
     // } else if contains_any_generic_type && contains_all_clone_bound {
     //     quote! {
-    //         fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    //         fn __register_clone_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
     //             use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
     //             const IMPLS_CLONE: bool = #name::#type_generics::IMPLS_CLONE;
 
@@ -353,7 +353,7 @@ fn impl_cached_component_data_struct(
     //     }
     } else {
         quote! {
-            fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+            fn __register_clone_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
                     flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name #type_generics>(
                         type_hooks,
                     );
@@ -368,7 +368,7 @@ fn impl_cached_component_data_struct(
             Self::get_or_init_index(&INDEX)
         }
 
-        fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT)  {
+        fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t)  {
             flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<#name #type_generics>(type_hooks);
         }
 
@@ -627,11 +627,11 @@ fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> proc_macro2::T
                 Self::get_or_init_index(&INDEX)
             }
 
-            fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT)  {
+            fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t)  {
                 flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<#name>(type_hooks);
             }
 
-            fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+            fn __register_default_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
                 use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
                 const IMPLS_DEFAULT: bool =  #name::IMPLS_DEFAULT;
 
@@ -640,7 +640,7 @@ fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> proc_macro2::T
                 }
             }
 
-            fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+            fn __register_clone_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
                 use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
                 const IMPLS_CLONE: bool = #name::IMPLS_CLONE;
 

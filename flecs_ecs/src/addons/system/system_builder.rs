@@ -123,7 +123,7 @@ where
     #[doc(alias = "system_builder_i::kind")]
     pub fn kind_id(&mut self, phase: impl Into<Entity>) -> &mut Self {
         let phase = *phase.into();
-        let current_phase: EntityT = unsafe {
+        let current_phase: sys::ecs_entity_t = unsafe {
             sys::ecs_get_target(self.world_ptr_mut(), self.desc.entity, ECS_DEPENDS_ON, 0)
         };
         unsafe {

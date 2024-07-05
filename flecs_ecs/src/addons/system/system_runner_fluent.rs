@@ -7,7 +7,7 @@ use crate::sys;
 
 pub struct SystemRunnerFluent<'a> {
     stage: WorldRef<'a>,
-    id: EntityT,
+    id: sys::ecs_entity_t,
     stage_current: i32,
     stage_count: i32,
     offset: i32,

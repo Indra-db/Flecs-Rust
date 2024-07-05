@@ -1,4 +1,5 @@
 use crate::core::*;
+use crate::sys;
 
 /// Extracts the Ecs ID from a type.
 /// Extension trait from [`Into<Entity>`] for tuples that implement `Into<Entity>`.
@@ -60,7 +61,7 @@ where
 // // We can not implement for T where T : `Into<Entity>`, because it would essentially extend the trait, which we don't want
 // // so we have to implement for each type that implements `Into<Entity>` separately.
 
-impl IntoId for IdT {
+impl IntoId for sys::ecs_id_t {
     const IS_PAIR: bool = false;
 }
 

@@ -23,8 +23,8 @@ use crate::sys;
 pub struct EventBuilder<'a, T = ()> {
     pub world: WorldRef<'a>,
     pub(crate) desc: sys::ecs_event_desc_t,
-    pub(crate) ids: TypeT,
-    pub(crate) ids_array: [IdT; sys::FLECS_EVENT_DESC_MAX as usize],
+    pub(crate) ids: sys::ecs_type_t,
+    pub(crate) ids_array: [sys::ecs_id_t; sys::FLECS_EVENT_DESC_MAX as usize],
     _phantom: std::marker::PhantomData<T>,
 }
 

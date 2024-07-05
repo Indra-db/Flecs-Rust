@@ -88,7 +88,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     ///
     /// * C++ API: `component::get_binding_context`
     #[doc(alias = "component::get_binding_context")]
-    fn get_binding_context(type_hooks: &mut TypeHooksT) -> &mut ComponentBindingCtx {
+    fn get_binding_context(type_hooks: &mut sys::ecs_type_hooks_t) -> &mut ComponentBindingCtx {
         let mut binding_ctx: *mut ComponentBindingCtx = type_hooks.binding_ctx as *mut _;
 
         if binding_ctx.is_null() {
@@ -107,11 +107,11 @@ impl<'a, T: ComponentId> Component<'a, T> {
     ///
     /// * C++ API: `component::get_hooks`
     #[doc(alias = "component::get_hooks")]
-    pub fn get_hooks(&self) -> TypeHooksT {
-        let type_hooks: *const TypeHooksT =
+    pub fn get_hooks(&self) -> sys::ecs_type_hooks_t {
+        let type_hooks: *const sys::ecs_type_hooks_t =
             unsafe { sys::ecs_get_hooks_id(self.world.world_ptr_mut(), *self.id) };
         if type_hooks.is_null() {
-            TypeHooksT::default()
+            sys::ecs_type_hooks_t::default()
         } else {
             unsafe { *type_hooks }
         }
@@ -140,7 +140,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
-        let mut type_hooks: TypeHooksT = self.get_hooks();
+        let mut type_hooks: sys::ecs_type_hooks_t = self.get_hooks();
 
         ecs_assert!(
             type_hooks.on_add.is_none(),
@@ -169,7 +169,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
-        let mut type_hooks: TypeHooksT = self.get_hooks();
+        let mut type_hooks: sys::ecs_type_hooks_t = self.get_hooks();
 
         ecs_assert!(
             type_hooks.on_remove.is_none(),
@@ -198,7 +198,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
-        let mut type_hooks: TypeHooksT = self.get_hooks();
+        let mut type_hooks: sys::ecs_type_hooks_t = self.get_hooks();
 
         ecs_assert!(
             type_hooks.on_set.is_none(),
@@ -251,7 +251,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     }
 
     /// Function to run the on add hook.
-    unsafe extern "C" fn run_add<Func>(iter: *mut IterT)
+    unsafe extern "C" fn run_add<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
@@ -266,7 +266,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     }
 
     /// Function to run the on set hook.
-    unsafe extern "C" fn run_set<Func>(iter: *mut IterT)
+    unsafe extern "C" fn run_set<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
@@ -281,7 +281,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     }
 
     /// Function to run the on remove hook.
-    unsafe extern "C" fn run_remove<Func>(iter: *mut IterT)
+    unsafe extern "C" fn run_remove<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {

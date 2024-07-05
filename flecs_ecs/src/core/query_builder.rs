@@ -207,7 +207,8 @@ where
 }
 
 // Assuming some imports and definitions from your previous example, and adding the required ones for this example.
-type GroupByFn = extern "C" fn(*mut WorldT, *mut TableT, IdT, *mut c_void) -> u64;
+type GroupByFn =
+    extern "C" fn(*mut sys::ecs_world_t, *mut sys::ecs_table_t, sys::ecs_id_t, *mut c_void) -> u64;
 
 /// Functions to build a query using terms.
 pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {

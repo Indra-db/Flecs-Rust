@@ -6,7 +6,7 @@ use crate::core::*;
 use crate::sys;
 
 pub struct TableIter<'a, const IS_RUN: bool = true, P = ()> {
-    iter: &'a mut IterT,
+    iter: &'a mut sys::ecs_iter_t,
     marker: PhantomData<P>,
 }
 
@@ -34,7 +34,7 @@ where
     /// * C++ API: `iter::iter`
     /// # Safety
     /// - caller must ensure that iter.param points to type T
-    pub unsafe fn new(iter: &'a mut IterT) -> Self {
+    pub unsafe fn new(iter: &'a mut sys::ecs_iter_t) -> Self {
         Self {
             iter,
             marker: PhantomData,
@@ -128,7 +128,7 @@ where
     ///
     /// * C++ API: `iter::c_ptr`
     #[doc(alias = "iter::c_ptr")]
-    pub fn iter_mut(&mut self) -> &mut IterT {
+    pub fn iter_mut(&mut self) -> &mut sys::ecs_iter_t {
         self.iter
     }
 
@@ -204,7 +204,8 @@ where
     #[doc(alias = "iter::get_var")]
     pub fn get_var(&self, var_id: i32) -> EntityView<'a> {
         ecs_assert!(var_id != -1, FlecsErrorCode::InvalidParameter, 0);
-        let var = unsafe { sys::ecs_iter_get_var(self.iter as *const _ as *mut IterT, var_id) };
+        let var =
+            unsafe { sys::ecs_iter_get_var(self.iter as *const _ as *mut sys::ecs_iter_t, var_id) };
         let world = self.world();
         EntityView::new_from(world, var)
     }
@@ -738,7 +739,7 @@ where
     ///
     /// * C++ API: `iter::group_id`
     #[doc(alias = "iter::group_id")]
-    pub fn group_id(&self) -> IdT {
+    pub fn group_id(&self) -> sys::ecs_id_t {
         self.iter.group_id
     }
 
