@@ -5,11 +5,6 @@ use std::{ffi::CStr, os::raw::c_void, ptr::NonNull};
 use crate::core::*;
 use crate::sys;
 
-pub(crate) enum IterType {
-    Run,
-    Each,
-}
-
 pub struct TableIter<'a, const IS_RUN: bool = true, P = ()> {
     iter: &'a mut IterT,
     marker: PhantomData<P>,
