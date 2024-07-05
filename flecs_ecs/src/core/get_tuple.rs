@@ -183,7 +183,7 @@ where
     fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
         world: impl IntoWorld<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void]
     ) -> bool {
-        let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut WorldT };
+        let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut sys::ecs_world_t };
         let table = unsafe { (*record).table };
         let entity = *entity;
         let id = <A::OnlyType as ComponentOrPairId>::get_id(world);
@@ -191,7 +191,7 @@ where
         
         let component_ptr = if A::OnlyType::IS_ENUM {
 
-            let target: IdT = unsafe {
+            let target: sys::ecs_id_t = unsafe {
                 sys::ecs_get_target(world_ptr, entity, id, 0)
             };
 
@@ -310,7 +310,7 @@ macro_rules! impl_get_tuple {
                 world: impl IntoWorld<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void]
             ) -> bool {
 
-                let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut WorldT };
+                let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut sys::ecs_world_t };
                 let world_ref = world.world();
                 let table = unsafe { (*record).table };
                 let entity = *entity;
@@ -322,7 +322,7 @@ macro_rules! impl_get_tuple {
 
                     let component_ptr = if $t::OnlyType::IS_ENUM {
 
-                        let target: IdT = unsafe {
+                        let target: sys::ecs_id_t = unsafe {
                             sys::ecs_get_target(world_ptr, entity, id, 0)
                         };
 

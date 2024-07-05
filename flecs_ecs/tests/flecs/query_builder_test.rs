@@ -1989,18 +1989,18 @@ fn query_builder_16_terms() {
 }
 
 unsafe extern "C" fn group_by_first_id(
-    _world: *mut WorldT,
-    table: *mut TableT,
+    _world: *mut sys::ecs_world_t,
+    table: *mut sys::ecs_table_t,
     _id: u64,
     _ctx: *mut c_void,
 ) -> u64 {
-    let table_type: *const TypeT = sys::ecs_table_get_type(table);
+    let table_type: *const sys::ecs_type_t = sys::ecs_table_get_type(table);
     *(*table_type).array.add(0)
 }
 
 unsafe extern "C" fn group_by_first_id_negated(
-    world: *mut WorldT,
-    table: *mut TableT,
+    world: *mut sys::ecs_world_t,
+    table: *mut sys::ecs_table_t,
     id: u64,
     ctx: *mut c_void,
 ) -> u64 {
@@ -2134,8 +2134,8 @@ fn query_builder_group_by_template() {
 }
 
 unsafe extern "C" fn group_by_rel(
-    world: *mut WorldT,
-    table: *mut TableT,
+    world: *mut sys::ecs_world_t,
+    table: *mut sys::ecs_table_t,
     id: u64,
     _ctx: *mut c_void,
 ) -> u64 {
@@ -2422,7 +2422,7 @@ fn query_builder_group_by_default_func_w_type() {
 }
 
 extern "C" fn callback_group_create(
-    world: *mut WorldT,
+    world: *mut sys::ecs_world_t,
     group_id: u64,
     group_by_ctx: *mut c_void,
 ) -> *mut c_void {
@@ -2435,7 +2435,7 @@ extern "C" fn callback_group_create(
     Box::into_raw(group_id) as *mut c_void
 }
 extern "C" fn callback_group_delete(
-    world: *mut WorldT,
+    world: *mut sys::ecs_world_t,
     group_id: u64,
     ctx: *mut c_void,
     group_by_ctx: *mut c_void,

@@ -40,23 +40,23 @@ pub struct EcsBitmask {
     value: u32,
 }
 
-pub const BOOL: EntityT = ECS_BOOL_T;
-pub const CHAR: EntityT = ECS_CHAR_T;
-pub const BYTE: EntityT = ECS_BYTE_T;
-pub const U32: EntityT = ECS_U32_T;
-pub const U64: EntityT = ECS_U64_T;
-pub const U_PTR: EntityT = ECS_UPTR_T;
-pub const I8: EntityT = ECS_I8_T;
-pub const I16: EntityT = ECS_I16_T;
-pub const I32: EntityT = ECS_I32_T;
-pub const I64: EntityT = ECS_I64_T;
-pub const I_PTR: EntityT = ECS_IPTR_T;
-pub const F32: EntityT = ECS_F32_T;
-pub const F64: EntityT = ECS_F64_T;
-pub const STRING: EntityT = ECS_STRING_T;
-pub const ENTITY: EntityT = ECS_ENTITY_T;
-pub const CONSTANT: EntityT = ECS_CONSTANT;
-pub const QUANTITY: EntityT = ECS_QUANTITY;
+pub const BOOL: sys::ecs_entity_t = ECS_BOOL_T;
+pub const CHAR: sys::ecs_entity_t = ECS_CHAR_T;
+pub const BYTE: sys::ecs_entity_t = ECS_BYTE_T;
+pub const U32: sys::ecs_entity_t = ECS_U32_T;
+pub const U64: sys::ecs_entity_t = ECS_U64_T;
+pub const U_PTR: sys::ecs_entity_t = ECS_UPTR_T;
+pub const I8: sys::ecs_entity_t = ECS_I8_T;
+pub const I16: sys::ecs_entity_t = ECS_I16_T;
+pub const I32: sys::ecs_entity_t = ECS_I32_T;
+pub const I64: sys::ecs_entity_t = ECS_I64_T;
+pub const I_PTR: sys::ecs_entity_t = ECS_IPTR_T;
+pub const F32: sys::ecs_entity_t = ECS_F32_T;
+pub const F64: sys::ecs_entity_t = ECS_F64_T;
+pub const STRING: sys::ecs_entity_t = ECS_STRING_T;
+pub const ENTITY: sys::ecs_entity_t = ECS_ENTITY_T;
+pub const CONSTANT: sys::ecs_entity_t = ECS_CONSTANT;
+pub const QUANTITY: sys::ecs_entity_t = ECS_QUANTITY;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum EcsTypeKind {

@@ -65,8 +65,9 @@ pub mod private {
         /// # See also
         ///
         /// * C++ API: `iter_invoker::invoke_callback`
-        unsafe extern "C" fn execute_each<const CALLED_FROM_RUN: bool, Func>(iter: *mut IterT)
-        where
+        unsafe extern "C" fn execute_each<const CALLED_FROM_RUN: bool, Func>(
+            iter: *mut sys::ecs_iter_t,
+        ) where
             Func: FnMut(T::TupleType<'_>),
         {
             let iter = unsafe { &mut *iter };
@@ -108,7 +109,7 @@ pub mod private {
         /// * C++ API: `iter_invoker::invoke_callback`
         #[doc(alias = "iter_invoker::invoke_callback")]
         unsafe extern "C" fn execute_each_entity<const CALLED_FROM_RUN: bool, Func>(
-            iter: *mut IterT,
+            iter: *mut sys::ecs_iter_t,
         ) where
             Func: FnMut(EntityView, T::TupleType<'_>),
         {
@@ -161,7 +162,7 @@ pub mod private {
         ///
         /// * C++ API: `iter_invoker::invoke_callback`
         #[doc(alias = "iter_invoker::invoke_callback")]
-        unsafe extern "C" fn execute_each_iter<Func>(iter: *mut IterT)
+        unsafe extern "C" fn execute_each_iter<Func>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(TableIter<false, P>, usize, T::TupleType<'_>),
         {
@@ -200,7 +201,7 @@ pub mod private {
         ///
         /// * C++ API: `iter_invoker::invoke_callback`
         #[doc(alias = "iter_invoker::invoke_callback")]
-        unsafe extern "C" fn execute_run<Func>(iter: *mut IterT)
+        unsafe extern "C" fn execute_run<Func>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(TableIter<true, P>),
         {
@@ -228,7 +229,7 @@ pub mod private {
         ///
         /// * C++ API: `iter_invoker::invoke_callback`
         #[doc(alias = "iter_invoker::invoke_callback")]
-        unsafe extern "C" fn execute_run_iter<Func>(iter: *mut IterT)
+        unsafe extern "C" fn execute_run_iter<Func>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(TableIter<false, P>, T::TupleSliceType<'_>),
         {

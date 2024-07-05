@@ -2,6 +2,7 @@
 use std::ops::Deref;
 
 use crate::core::*;
+use crate::sys;
 
 #[doc(hidden)]
 pub trait FlecsTrait {}
@@ -47,14 +48,14 @@ macro_rules! create_pre_registered_component {
 
             fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
                 _world: impl IntoWorld<'a>,
-            ) -> EntityT {
+            ) -> sys::ecs_entity_t {
                 $const_name
             }
 
             fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
                 _world: impl IntoWorld<'a>,
                 _name: &str,
-            ) -> EntityT {
+            ) -> sys::ecs_entity_t {
                 $const_name
             }
 
@@ -62,7 +63,7 @@ macro_rules! create_pre_registered_component {
                 true
             }
 
-            fn id<'a>(_world: impl IntoWorld<'a>) -> IdT {
+            fn id<'a>(_world: impl IntoWorld<'a>) -> sys::ecs_id_t {
                 $const_name
             }
 
@@ -358,11 +359,11 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentId f
         Self::get_or_init_index(&INDEX)
     }
 
-    fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<()>(type_hooks);
     }
 
-    fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_default_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         const IMPLS_DEFAULT: bool = <() as ComponentInfo>::IMPLS_DEFAULT;
 
         if IMPLS_DEFAULT {
@@ -370,7 +371,7 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentId f
         }
     }
 
-    fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         const IMPLS_CLONE: bool = <() as ComponentInfo>::IMPLS_CLONE;
 
         if IMPLS_CLONE {

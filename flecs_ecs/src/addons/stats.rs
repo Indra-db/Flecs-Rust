@@ -1,5 +1,5 @@
 //! Periodically tracks statistics for the world and systems.
-use crate::core::{EntityT, IntoWorld, World};
+use crate::core::{IntoWorld, World};
 use crate::sys;
 
 #[cfg(feature = "flecs_module")]
@@ -61,19 +61,19 @@ where
         static INDEX: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(u32::MAX);
         Self::get_or_init_index(&INDEX)
     }
-    fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<sys::EcsWorldStats>(
             type_hooks,
         );
     }
-    fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_default_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
         const IMPLS_DEFAULT: bool = sys::EcsWorldStats::IMPLS_DEFAULT;
         if IMPLS_DEFAULT {
             flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,sys::EcsWorldStats>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
         }
     }
-    fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
         const IMPLS_CLONE: bool = sys::EcsWorldStats::IMPLS_CLONE;
         if IMPLS_CLONE {
@@ -118,19 +118,19 @@ where
         static INDEX: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(u32::MAX);
         Self::get_or_init_index(&INDEX)
     }
-    fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<sys::EcsPipelineStats>(
             type_hooks,
         );
     }
-    fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_default_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
         const IMPLS_DEFAULT: bool = sys::EcsPipelineStats::IMPLS_DEFAULT;
         if IMPLS_DEFAULT {
             flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,sys::EcsPipelineStats>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
         }
     }
-    fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
         const IMPLS_CLONE: bool = sys::EcsPipelineStats::IMPLS_CLONE;
         if IMPLS_CLONE {
@@ -175,19 +175,19 @@ where
         static INDEX: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(u32::MAX);
         Self::get_or_init_index(&INDEX)
     }
-    fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<sys::EcsWorldSummary>(
             type_hooks,
         );
     }
-    fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_default_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
         const IMPLS_DEFAULT: bool = sys::EcsWorldSummary::IMPLS_DEFAULT;
         if IMPLS_DEFAULT {
             flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,sys::EcsWorldSummary>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
         }
     }
-    fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
         const IMPLS_CLONE: bool = sys::EcsWorldSummary::IMPLS_CLONE;
         if IMPLS_CLONE {
@@ -232,19 +232,19 @@ where
         static INDEX: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(u32::MAX);
         Self::get_or_init_index(&INDEX)
     }
-    fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<sys::EcsSystemStats>(
             type_hooks,
         );
     }
-    fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_default_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
         const IMPLS_DEFAULT: bool = sys::EcsSystemStats::IMPLS_DEFAULT;
         if IMPLS_DEFAULT {
             flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,sys::EcsSystemStats>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
         }
     }
-    fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
         const IMPLS_CLONE: bool = sys::EcsSystemStats::IMPLS_CLONE;
         if IMPLS_CLONE {
@@ -286,17 +286,17 @@ where
         static INDEX: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(u32::MAX);
         Self::get_or_init_index(&INDEX)
     }
-    fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<Stats>(type_hooks);
     }
-    fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_default_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
         const IMPLS_DEFAULT: bool = Stats::IMPLS_DEFAULT;
         if IMPLS_DEFAULT {
             flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,Stats>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
         }
     }
-    fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
         const IMPLS_CLONE: bool = Stats::IMPLS_CLONE;
         if IMPLS_CLONE {
@@ -310,7 +310,7 @@ where
 
     fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
         world: impl IntoWorld<'a>,
-    ) -> EntityT {
+    ) -> sys::ecs_entity_t {
         Self::__register_or_get_id_named::<MANUAL_REGISTRATION_CHECK>(world, "flecs::stats")
     }
 }

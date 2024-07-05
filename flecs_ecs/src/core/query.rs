@@ -26,7 +26,7 @@ pub struct Query<T>
 where
     T: QueryTuple,
 {
-    pub(crate) query: NonNull<QueryT>,
+    pub(crate) query: NonNull<sys::ecs_query_t>,
     // this is a leaked box, which is valid during the lifecycle of the query object.
     world_ctx: NonNull<WorldCtx>,
     _phantom: PhantomData<T>,
@@ -74,25 +74,25 @@ where
     T: QueryTuple,
 {
     #[inline(always)]
-    fn retrieve_iter(&self) -> IterT {
+    fn retrieve_iter(&self) -> sys::ecs_iter_t {
         unsafe { sys::ecs_query_iter(self.world_ptr_mut(), self.query.as_ptr()) }
     }
 
     #[inline(always)]
-    fn retrieve_iter_stage<'a>(&self, stage: impl IntoWorld<'a>) -> IterT {
+    fn retrieve_iter_stage<'a>(&self, stage: impl IntoWorld<'a>) -> sys::ecs_iter_t {
         unsafe { sys::ecs_query_iter(stage.world_ptr_mut(), self.query.as_ptr()) }
     }
 
     #[inline(always)]
-    fn iter_next(&self, iter: &mut IterT) -> bool {
+    fn iter_next(&self, iter: &mut sys::ecs_iter_t) -> bool {
         unsafe { sys::ecs_query_next(iter) }
     }
 
-    fn query_ptr(&self) -> *const QueryT {
+    fn query_ptr(&self) -> *const sys::ecs_query_t {
         self.query.as_ptr()
     }
 
-    fn iter_next_func(&self) -> unsafe extern "C" fn(*mut IterT) -> bool {
+    fn iter_next_func(&self) -> unsafe extern "C" fn(*mut sys::ecs_iter_t) -> bool {
         sys::ecs_query_next
     }
 }
@@ -138,7 +138,7 @@ where
     /// * C++ API: `query::query`
     #[doc(alias = "query::query")]
     #[inline]
-    pub unsafe fn new_from(query: NonNull<QueryT>) -> Self {
+    pub unsafe fn new_from(query: NonNull<sys::ecs_query_t>) -> Self {
         sys::flecs_poly_claim_(query.as_ptr() as *mut c_void);
 
         let world_ctx = ecs_get_binding_ctx((*query.as_ptr()).world) as *mut WorldCtx;
@@ -210,7 +210,7 @@ where
 
                 if !query_poly.is_null() {
                     sys::flecs_poly_claim_(query_poly as *mut c_void);
-                    let query = NonNull::new_unchecked(query_poly as *mut QueryT);
+                    let query = NonNull::new_unchecked(query_poly as *mut sys::ecs_query_t);
                     let new_query = Query::<()>::new_from(query);
                     new_query.world().world_ctx_mut().inc_query_ref_count();
                     return Some(new_query);
@@ -264,7 +264,7 @@ where
     ///
     /// * C++ API: `query::get_iter`
     #[doc(alias = "query::get_iter")]
-    unsafe fn get_iter_raw(&mut self) -> IterT {
+    unsafe fn get_iter_raw(&mut self) -> sys::ecs_iter_t {
         unsafe { sys::ecs_query_iter(self.world_ptr_mut(), self.query.as_ptr()) }
     }
 
@@ -301,7 +301,7 @@ where
     ///
     /// * C++ API: `query_base::get_group_info`
     #[doc(alias = "query_base::get_group_info")]
-    pub fn group_info(&self, group_id: impl Into<Entity>) -> *const QueryGroupInfoT {
+    pub fn group_info(&self, group_id: impl Into<Entity>) -> *const sys::ecs_query_group_info_t {
         unsafe { sys::ecs_query_get_group_info(self.query.as_ptr(), *group_id.into()) }
     }
 
@@ -330,7 +330,7 @@ where
     }
 
     /// get the raw `c_ptr` of the query
-    pub fn c_ptr(&self) -> NonNull<QueryT> {
+    pub fn c_ptr(&self) -> NonNull<sys::ecs_query_t> {
         self.query
     }
 }

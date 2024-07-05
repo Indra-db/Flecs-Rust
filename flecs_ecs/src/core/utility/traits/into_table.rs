@@ -2,33 +2,33 @@ use crate::core::*;
 use crate::sys;
 
 pub trait IntoTable {
-    fn table_ptr_mut(&self) -> *mut TableT;
+    fn table_ptr_mut(&self) -> *mut sys::ecs_table_t;
 }
 
-impl IntoTable for *mut TableT {
+impl IntoTable for *mut sys::ecs_table_t {
     #[inline]
-    fn table_ptr_mut(&self) -> *mut TableT {
+    fn table_ptr_mut(&self) -> *mut sys::ecs_table_t {
         *self
     }
 }
 
-impl IntoTable for *const TableT {
+impl IntoTable for *const sys::ecs_table_t {
     #[inline]
-    fn table_ptr_mut(&self) -> *mut TableT {
-        *self as *mut TableT
+    fn table_ptr_mut(&self) -> *mut sys::ecs_table_t {
+        *self as *mut sys::ecs_table_t
     }
 }
 
 impl IntoTable for Table<'_> {
     #[inline]
-    fn table_ptr_mut(&self) -> *mut TableT {
+    fn table_ptr_mut(&self) -> *mut sys::ecs_table_t {
         self.table.as_ptr()
     }
 }
 
 impl IntoTable for TableRange<'_> {
     #[inline]
-    fn table_ptr_mut(&self) -> *mut TableT {
+    fn table_ptr_mut(&self) -> *mut sys::ecs_table_t {
         self.table.table.as_ptr()
     }
 }

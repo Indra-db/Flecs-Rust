@@ -15,7 +15,7 @@ use crate::sys;
 #[derive(Debug, Clone, Copy)]
 pub struct Table<'a> {
     world: WorldRef<'a>,
-    pub(crate) table: NonNull<TableT>,
+    pub(crate) table: NonNull<sys::ecs_table_t>,
 }
 
 impl<'a> Table<'a> {
@@ -30,7 +30,7 @@ impl<'a> Table<'a> {
     ///
     /// * C++ API: `table::table`
     #[doc(alias = "table::table")]
-    pub fn new(world: impl IntoWorld<'a>, table: NonNull<TableT>) -> Self {
+    pub fn new(world: impl IntoWorld<'a>, table: NonNull<sys::ecs_table_t>) -> Self {
         Self {
             world: world.world(),
             table,
@@ -88,7 +88,7 @@ impl<'a> TableRange<'a> {
     /// The world and table pointers must be valid
     pub(crate) fn new_raw(
         world: impl IntoWorld<'a>,
-        table: NonNull<TableT>,
+        table: NonNull<sys::ecs_table_t>,
         offset: i32,
         count: i32,
     ) -> Self {
@@ -173,7 +173,7 @@ pub trait TableOperations<'a>: IntoTable {
     ///
     /// * C++ API: `table::type_index`
     #[doc(alias = "table::type_index")]
-    fn find_type_index_id(&self, id: IdT) -> Option<i32> {
+    fn find_type_index_id(&self, id: sys::ecs_id_t) -> Option<i32> {
         let index = unsafe {
             sys::ecs_table_get_type_index(self.world().world_ptr(), self.table_ptr_mut(), id)
         };
@@ -289,7 +289,7 @@ pub trait TableOperations<'a>: IntoTable {
     ///
     /// * C++ API: `table::column_index`
     #[doc(alias = "table::column_index")]
-    fn find_column_index_id(&self, id: IdT) -> Option<i32> {
+    fn find_column_index_id(&self, id: sys::ecs_id_t) -> Option<i32> {
         let index = unsafe {
             sys::ecs_table_get_column_index(self.world().world_ptr(), self.table_ptr_mut(), id)
         };
@@ -434,7 +434,7 @@ pub trait TableOperations<'a>: IntoTable {
     ///
     /// * C++ API: `table::has`
     #[doc(alias = "table::has")]
-    fn has_type_id(&self, id: IdT) -> bool {
+    fn has_type_id(&self, id: sys::ecs_id_t) -> bool {
         self.find_type_index_id(id).is_some()
     }
 
@@ -536,7 +536,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # See also
     ///
     /// * C++ API: `table::get`
-    fn get_mut_untyped(&self, id: IdT) -> Option<*mut c_void> {
+    fn get_mut_untyped(&self, id: sys::ecs_id_t) -> Option<*mut c_void> {
         if let Some(index) = self.find_column_index_id(id) {
             self.column_untyped(index)
         } else {
@@ -701,11 +701,11 @@ impl<'a> TableOperations<'a> for TableRange<'a> {
 
 pub struct TableLock<'a> {
     world: WorldRef<'a>,
-    table: NonNull<TableT>,
+    table: NonNull<sys::ecs_table_t>,
 }
 
 impl<'a> TableLock<'a> {
-    pub fn new(world: impl IntoWorld<'a>, table: NonNull<TableT>) -> Self {
+    pub fn new(world: impl IntoWorld<'a>, table: NonNull<sys::ecs_table_t>) -> Self {
         unsafe { sys::ecs_table_lock(world.world_ptr_mut(), table.as_ptr()) };
         Self {
             world: world.world(),

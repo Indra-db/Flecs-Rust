@@ -1,6 +1,7 @@
 use crate::z_ignore_test_common::*;
 
 use flecs_ecs::prelude::*;
+use flecs_ecs::sys;
 use std::ffi::c_void;
 use std::sync::Mutex;
 
@@ -33,7 +34,7 @@ pub struct Group;
 
 // callbacks need to be extern "C" to be callable from C
 extern "C" fn callback_group_create(
-    world: *mut WorldT,
+    world: *mut sys::ecs_world_t,
     group_id: u64,
     _group_by_ctx: *mut c_void,
 ) -> *mut c_void {
@@ -56,7 +57,7 @@ extern "C" fn callback_group_create(
 
 // callbacks need to be extern "C" to be callable from C
 extern "C" fn callback_group_delete(
-    world: *mut WorldT,
+    world: *mut sys::ecs_world_t,
     group_id: u64,
     _ctx: *mut c_void,
     _group_by_ctx: *mut c_void,

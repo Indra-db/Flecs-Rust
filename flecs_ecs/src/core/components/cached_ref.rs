@@ -9,7 +9,7 @@ use crate::sys;
 #[derive(Debug, Clone, Copy)]
 pub struct CachedRef<'a, T: ComponentId + DataComponent> {
     world: WorldRef<'a>,
-    component_ref: RefT,
+    component_ref: sys::ecs_ref_t,
     _marker: PhantomData<T>,
 }
 
@@ -27,11 +27,16 @@ impl<'a, T: ComponentId + DataComponent> CachedRef<'a, T> {
     /// * C++ API: `ref::ref`
     ///
     #[doc(alias = "ref::ref")]
-    pub fn new(world: impl IntoWorld<'a>, entity: impl Into<Entity>, mut id: IdT) -> Self {
+    pub fn new(
+        world: impl IntoWorld<'a>,
+        entity: impl Into<Entity>,
+        mut id: sys::ecs_id_t,
+    ) -> Self {
         // the world we were called with may be a stage; convert it to a world
         // here if that is the case
-        let world_ptr =
-            unsafe { sys::ecs_get_world(world.world_ptr_mut() as *const c_void) as *mut WorldT };
+        let world_ptr = unsafe {
+            sys::ecs_get_world(world.world_ptr_mut() as *const c_void) as *mut sys::ecs_world_t
+        };
 
         if id == 0 {
             id = T::id(world);

@@ -6,12 +6,12 @@ use crate::sys;
 pub trait IntoWorld<'a> {
     #[doc(hidden)]
     #[inline(always)]
-    fn world_ptr_mut(&self) -> *mut WorldT {
+    fn world_ptr_mut(&self) -> *mut sys::ecs_world_t {
         self.world().raw_world.as_ptr()
     }
     #[doc(hidden)]
     #[inline(always)]
-    fn world_ptr(&self) -> *const WorldT {
+    fn world_ptr(&self) -> *const sys::ecs_world_t {
         self.world().raw_world.as_ptr()
     }
 
@@ -55,7 +55,7 @@ impl<'a> IntoWorld<'a> for &'a World {
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub struct WorldRef<'a> {
-    raw_world: NonNull<WorldT>,
+    raw_world: NonNull<sys::ecs_world_t>,
     components: NonNull<FlecsIdMap>,
     pub(crate) components_array: NonNull<FlecsArray>,
     _marker: PhantomData<&'a ()>,
@@ -68,15 +68,15 @@ impl<'a> WorldRef<'a> {
     pub fn real_world(&self) -> WorldRef<'a> {
         unsafe {
             WorldRef::from_ptr(
-                sys::ecs_get_world(self.world_ptr_mut() as *const c_void) as *mut WorldT
+                sys::ecs_get_world(self.world_ptr_mut() as *const c_void) as *mut sys::ecs_world_t
             )
         }
     }
 
     /// # Safety
-    /// Caller must ensure `raw_world` points to a valid `WorldT`
+    /// Caller must ensure `raw_world` points to a valid `sys::ecs_world_t`
     #[inline(always)]
-    pub unsafe fn from_ptr(raw_world: *mut WorldT) -> Self {
+    pub unsafe fn from_ptr(raw_world: *mut sys::ecs_world_t) -> Self {
         WorldRef {
             raw_world: NonNull::new_unchecked(raw_world),
             components: NonNull::new_unchecked(World::get_components_map_ptr(raw_world)),

@@ -17,7 +17,7 @@ pub struct ComponentsData<T: QueryTuple, const LEN: usize> {
 }
 
 pub trait ComponentPointers<T: QueryTuple> {
-    fn new(iter: &IterT) -> Self;
+    fn new(iter: &sys::ecs_iter_t) -> Self;
 
     fn get_tuple(&mut self, index: usize) -> T::TupleType<'_>;
 
@@ -25,7 +25,7 @@ pub trait ComponentPointers<T: QueryTuple> {
 }
 
 impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T, LEN> {
-    fn new(iter: &IterT) -> Self {
+    fn new(iter: &sys::ecs_iter_t) -> Self {
         let mut array_components = [std::ptr::null::<u8>() as *mut u8; LEN];
         let mut is_ref_array_components = [false; LEN];
 
@@ -352,23 +352,27 @@ pub trait QueryTuple: Sized {
     type TupleSliceType<'a>;
     const COUNT: i32;
 
-    fn create_ptrs(iter: &IterT) -> Self::Pointers {
+    fn create_ptrs(iter: &sys::ecs_iter_t) -> Self::Pointers {
         Self::Pointers::new(iter)
     }
 
     fn populate<'a>(filter: &mut impl QueryBuilderImpl<'a>);
 
-    fn register_ids_descriptor(world: *mut WorldT, desc: &mut sys::ecs_query_desc_t) {
+    fn register_ids_descriptor(world: *mut sys::ecs_world_t, desc: &mut sys::ecs_query_desc_t) {
         Self::register_ids_descriptor_at(world, &mut desc.terms[..], &mut 0);
     }
 
     fn register_ids_descriptor_at(
-        world: *mut WorldT,
+        world: *mut sys::ecs_world_t,
         terms: &mut [sys::ecs_term_t],
         index: &mut usize,
     );
 
-    fn populate_array_ptrs(it: &IterT, components: &mut [*mut u8], is_ref: &mut [bool]) -> bool;
+    fn populate_array_ptrs(
+        it: &sys::ecs_iter_t,
+        components: &mut [*mut u8],
+        is_ref: &mut [bool],
+    ) -> bool;
 
     fn create_tuple(array_components: &[*mut u8], index: usize) -> Self::TupleType<'_>;
 
@@ -430,7 +434,7 @@ where
 
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     fn register_ids_descriptor_at(
-        world: *mut WorldT,
+        world: *mut sys::ecs_world_t,
         terms: &mut [sys::ecs_term_t],
         index: &mut usize,
     ) {
@@ -441,7 +445,7 @@ where
     }
 
     fn populate_array_ptrs(
-        it: &IterT,
+        it: &sys::ecs_iter_t,
         components: &mut [*mut u8],
         is_ref: &mut [bool],
     ) -> bool {
@@ -669,13 +673,13 @@ macro_rules! impl_iterable {
             }
 
             #[allow(unused)]
-            fn register_ids_descriptor_at(world: *mut WorldT, terms: &mut [sys::ecs_term_t], index: &mut usize) {
+            fn register_ids_descriptor_at(world: *mut sys::ecs_world_t, terms: &mut [sys::ecs_term_t], index: &mut usize) {
                 $( $t::register_ids_descriptor_at(world, terms, index); )*
             }
 
             #[allow(unused)]
             fn populate_array_ptrs(
-                it: &IterT,
+                it: &sys::ecs_iter_t,
                 components: &mut [*mut u8],
                 is_ref: &mut [bool],
             ) -> bool {

@@ -86,7 +86,7 @@ impl ComponentId for Entity {
 
     fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
         _world: impl IntoWorld<'a>,
-    ) -> EntityT {
+    ) -> sys::ecs_entity_t {
         // already registered by flecs in World
         unsafe { sys::FLECS_IDecs_entity_tID_ }
     }
@@ -95,7 +95,7 @@ impl ComponentId for Entity {
     fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
         _world: impl IntoWorld<'a>,
         _name: &str,
-    ) -> EntityT {
+    ) -> sys::ecs_entity_t {
         // already registered by flecs in World
         unsafe { sys::FLECS_IDecs_entity_tID_ }
     }
@@ -107,7 +107,7 @@ impl ComponentId for Entity {
     }
 
     #[inline]
-    fn id<'a>(_world: impl IntoWorld<'a>) -> IdT {
+    fn id<'a>(_world: impl IntoWorld<'a>) -> sys::ecs_id_t {
         //this is safe because it's already registered in flecs_c / world
         unsafe { sys::FLECS_IDecs_entity_tID_ }
     }

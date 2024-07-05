@@ -5,19 +5,19 @@ use flecs_ecs::sys;
 
 pub trait IterOperations {
     #[doc(hidden)]
-    fn retrieve_iter(&self) -> IterT;
+    fn retrieve_iter(&self) -> sys::ecs_iter_t;
 
     #[doc(hidden)]
-    fn retrieve_iter_stage<'a>(&self, stage: impl IntoWorld<'a>) -> IterT;
+    fn retrieve_iter_stage<'a>(&self, stage: impl IntoWorld<'a>) -> sys::ecs_iter_t;
 
     #[doc(hidden)]
-    fn iter_next(&self, iter: &mut IterT) -> bool;
+    fn iter_next(&self, iter: &mut sys::ecs_iter_t) -> bool;
 
     #[doc(hidden)]
-    fn iter_next_func(&self) -> unsafe extern "C" fn(*mut IterT) -> bool;
+    fn iter_next_func(&self) -> unsafe extern "C" fn(*mut sys::ecs_iter_t) -> bool;
 
     #[doc(hidden)]
-    fn query_ptr(&self) -> *const QueryT;
+    fn query_ptr(&self) -> *const sys::ecs_query_t;
 }
 
 pub trait QueryAPI<'a, P, T>: IterOperations + IntoWorld<'a>
@@ -1046,7 +1046,7 @@ where
     }
 }
 
-unsafe extern "C" fn __internal_query_execute_each<T, Func>(iter: *mut IterT)
+unsafe extern "C" fn __internal_query_execute_each<T, Func>(iter: *mut sys::ecs_iter_t)
 where
     T: QueryTuple,
     Func: FnMut(T::TupleType<'_>),
@@ -1062,7 +1062,7 @@ where
     }
 }
 
-unsafe extern "C" fn __internal_query_execute_each_entity<T, Func>(iter: *mut IterT)
+unsafe extern "C" fn __internal_query_execute_each_entity<T, Func>(iter: *mut sys::ecs_iter_t)
 where
     T: QueryTuple,
     Func: FnMut(EntityView, T::TupleType<'_>),

@@ -51,7 +51,7 @@ use crate::core::*;
 use crate::sys;
 
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub fn register_lifecycle_actions<T>(type_hooks: &mut TypeHooksT) {
+pub fn register_lifecycle_actions<T>(type_hooks: &mut sys::ecs_type_hooks_t) {
     //type_hooks.ctor = Some(ctor::<T>);
     type_hooks.dtor = Some(dtor::<T>);
     type_hooks.move_dtor = Some(move_dtor::<T>); //same implementation as ctor_move_dtor
@@ -63,20 +63,20 @@ pub fn register_lifecycle_actions<T>(type_hooks: &mut TypeHooksT) {
     //a sparse component tag
 }
 
-pub fn register_ctor_lifecycle_actions<T: Default>(type_hooks: &mut TypeHooksT) {
+pub fn register_ctor_lifecycle_actions<T: Default>(type_hooks: &mut sys::ecs_type_hooks_t) {
     type_hooks.ctor = Some(ctor::<T>);
 }
 
-pub fn register_ctor_panic_lifecycle_actions<T>(_type_hooks: &mut TypeHooksT) {
+pub fn register_ctor_panic_lifecycle_actions<T>(_type_hooks: &mut sys::ecs_type_hooks_t) {
     //type_hooks.ctor = Some(panic_ctor::<T>);
 }
 
-pub fn register_copy_lifecycle_action<T: Clone>(type_hooks: &mut TypeHooksT) {
+pub fn register_copy_lifecycle_action<T: Clone>(type_hooks: &mut sys::ecs_type_hooks_t) {
     type_hooks.copy = Some(copy::<T>);
     type_hooks.copy_ctor = Some(copy_ctor::<T>); //same implementation as copy
 }
 
-pub fn register_copy_panic_lifecycle_action<T>(type_hooks: &mut TypeHooksT) {
+pub fn register_copy_panic_lifecycle_action<T>(type_hooks: &mut sys::ecs_type_hooks_t) {
     type_hooks.copy = Some(panic_copy::<T>);
     type_hooks.copy_ctor = Some(panic_copy::<T>); //same implementation as copy
 }

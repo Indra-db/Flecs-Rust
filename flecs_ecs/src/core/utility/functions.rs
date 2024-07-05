@@ -70,7 +70,7 @@ pub fn ecs_dependson(entity: u64) -> u64 {
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 #[inline(always)]
 pub fn ecs_has_pair(
-    world: *const WorldT,
+    world: *const sys::ecs_world_t,
     entity: impl Into<Entity>,
     first: impl Into<Entity>,
     second: impl Into<Entity>,
@@ -87,7 +87,7 @@ pub fn ecs_has_pair(
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 #[inline(always)]
 pub fn ecs_add_pair(
-    world: *mut WorldT,
+    world: *mut sys::ecs_world_t,
     entity: impl Into<Entity>,
     first: impl Into<Entity>,
     second: impl Into<Entity>,
@@ -231,7 +231,12 @@ pub fn ecs_record_to_row(row: u32) -> i32 {
 /// * `entity`: The ID of the entity.
 /// * `value`: The value to set for the component.
 /// * `id`: The ID of the component type.
-pub(crate) fn set_helper<T: ComponentId>(world: *mut WorldT, entity: u64, value: T, id: u64) {
+pub(crate) fn set_helper<T: ComponentId>(
+    world: *mut sys::ecs_world_t,
+    entity: u64,
+    value: T,
+    id: u64,
+) {
     const {
         assert!(
             std::mem::size_of::<T>() != 0,
@@ -298,7 +303,7 @@ pub(crate) fn set_helper<T: ComponentId>(world: *mut WorldT, entity: u64, value:
 ///
 /// # Returns
 ///
-/// * `IdT`: The entity id with the generation removed.
+/// * `sys::ecs_id_t`: The entity id with the generation removed.
 #[inline(always)]
 pub fn strip_generation(entity: impl Into<Entity>) -> u64 {
     unsafe { sys::ecs_strip_generation(*entity.into()) }
@@ -357,7 +362,7 @@ pub fn get_generation(entity: impl Into<Entity>) -> u32 {
 /// let velocity_ptr: *mut Velocity = ecs_field(it, 2);
 /// ```
 #[inline(always)]
-pub unsafe fn ecs_field<T: ComponentId>(it: *const IterT, index: i32) -> *mut T {
+pub unsafe fn ecs_field<T: ComponentId>(it: *const sys::ecs_iter_t, index: i32) -> *mut T {
     let size = std::mem::size_of::<T>();
     sys::ecs_field_w_size(it, size, index) as *mut T
 }

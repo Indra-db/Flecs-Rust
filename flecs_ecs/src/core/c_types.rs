@@ -8,24 +8,6 @@ use crate::sys;
 pub const RUST_ecs_id_FLAGS_MASK: u64 = 0xFF << 60;
 pub const RUST_ECS_COMPONENT_MASK: u64 = !RUST_ecs_id_FLAGS_MASK;
 
-pub type WorldT = sys::ecs_world_t;
-pub type WorldInfoT = sys::ecs_world_info_t;
-pub type IdT = sys::ecs_id_t;
-pub type EntityT = sys::ecs_entity_t;
-pub type TypeT = sys::ecs_type_t;
-pub type TableT = sys::ecs_table_t;
-pub type ObserverT = sys::ecs_observer_t;
-pub type QueryT = sys::ecs_query_t;
-pub type QueryGroupInfoT = sys::ecs_query_group_info_t;
-pub type RefT = sys::ecs_ref_t;
-pub type IterT = sys::ecs_iter_t;
-pub type TypeInfoT = sys::ecs_type_info_t;
-pub type TypeHooksT = sys::ecs_type_hooks_t;
-pub type TypeKindT = sys::ecs_type_kind_t;
-pub type Flags32T = sys::ecs_flags32_t;
-pub type TermRefT = sys::ecs_term_ref_t;
-pub type TermT = sys::ecs_term_t;
-pub type PrimitiveKindT = sys::ecs_primitive_kind_t;
 pub type FTimeT = f32;
 
 pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\0") };
@@ -538,25 +520,25 @@ macro_rules! impl_component_traits_binding_type_w_id {
                     std::sync::atomic::AtomicU32::new(u32::MAX);
                 Self::get_or_init_index(&INDEX)
             }
-            fn __register_lifecycle_hooks(type_hooks: &mut TypeHooksT) {
+            fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
                 register_lifecycle_actions::<$name>(type_hooks);
             }
-            fn __register_default_hooks(_type_hooks: &mut TypeHooksT) {}
+            fn __register_default_hooks(_type_hooks: &mut sys::ecs_type_hooks_t) {}
 
-            fn __register_clone_hooks(type_hooks: &mut TypeHooksT) {
+            fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
                 register_copy_lifecycle_action::<$name>(type_hooks);
             }
 
             fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
                 _world: impl IntoWorld<'a>,
-            ) -> EntityT {
+            ) -> sys::ecs_entity_t {
                 $id
             }
 
             fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
                 _world: impl IntoWorld<'a>,
                 _name: &str,
-            ) -> EntityT {
+            ) -> sys::ecs_entity_t {
                 $id
             }
 
@@ -564,7 +546,7 @@ macro_rules! impl_component_traits_binding_type_w_id {
                 true
             }
 
-            fn id<'a>(_world: impl IntoWorld<'a>) -> IdT {
+            fn id<'a>(_world: impl IntoWorld<'a>) -> sys::ecs_id_t {
                 $id
             }
         }

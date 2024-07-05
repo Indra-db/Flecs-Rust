@@ -20,7 +20,7 @@ pub(crate) type FlecsArray = std::vec::Vec<u64>;
 /// If the world is deleted, all data in the world will be deleted as well.
 #[derive(Debug, Eq, PartialEq)]
 pub struct World {
-    pub(crate) raw_world: NonNull<WorldT>,
+    pub(crate) raw_world: NonNull<sys::ecs_world_t>,
     pub(crate) components: NonNull<FlecsIdMap>,
     pub(crate) components_array: NonNull<FlecsArray>,
 }
@@ -42,7 +42,7 @@ unsafe impl Send for World {}
 
 impl Default for World {
     fn default() -> Self {
-        let raw_world = NonNull::new(unsafe { sys::ecs_init() } as *mut WorldT).unwrap();
+        let raw_world = NonNull::new(unsafe { sys::ecs_init() }).unwrap();
         let ctx = Box::leak(Box::new(WorldCtx::new()));
         let components = unsafe { NonNull::new_unchecked(&mut ctx.components) };
         let components_array = unsafe { NonNull::new_unchecked(&mut ctx.components_array) };
@@ -142,7 +142,7 @@ impl World {
     #[doc(alias = "world::c_ptr")]
     #[inline(always)]
     #[doc(hidden)]
-    pub fn ptr_mut(&self) -> *mut WorldT {
+    pub fn ptr_mut(&self) -> *mut sys::ecs_world_t {
         self.raw_world.as_ptr()
     }
 
@@ -982,15 +982,15 @@ impl World {
         unsafe { sys::ecs_get_ctx(self.raw_world.as_ptr()) }
     }
 
-    pub(crate) fn get_context(world: *mut WorldT) -> *mut WorldCtx {
+    pub(crate) fn get_context(world: *mut sys::ecs_world_t) -> *mut WorldCtx {
         unsafe { sys::ecs_get_binding_ctx(world) as *mut WorldCtx }
     }
 
-    pub(crate) fn get_components_map(world: *mut WorldT) -> &'static mut FlecsIdMap {
+    pub(crate) fn get_components_map(world: *mut sys::ecs_world_t) -> &'static mut FlecsIdMap {
         unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).components }
     }
 
-    pub(crate) fn get_components_map_ptr(world: *mut WorldT) -> *mut FlecsIdMap {
+    pub(crate) fn get_components_map_ptr(world: *mut sys::ecs_world_t) -> *mut FlecsIdMap {
         unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).components }
     }
 
@@ -998,11 +998,11 @@ impl World {
         unsafe { &mut (*(self.components.as_ptr())) }
     }
 
-    pub(crate) fn get_components_array(world: *mut WorldT) -> &'static mut FlecsArray {
+    pub(crate) fn get_components_array(world: *mut sys::ecs_world_t) -> &'static mut FlecsArray {
         unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).components_array }
     }
 
-    pub(crate) fn get_components_array_ptr(world: *mut WorldT) -> *mut FlecsArray {
+    pub(crate) fn get_components_array_ptr(world: *mut sys::ecs_world_t) -> *mut FlecsArray {
         unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).components_array }
     }
 
@@ -1285,7 +1285,7 @@ impl World {
     #[doc(alias = "wsys::ecs_set_lookup_path")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
                                                // TODO we need to improve this function somehow, it's not very ergonomic
-    pub fn set_lookup_path(&self, search_path: impl Into<Entity>) -> *mut EntityT {
+    pub fn set_lookup_path(&self, search_path: impl Into<Entity>) -> *mut sys::ecs_entity_t {
         unsafe { sys::ecs_set_lookup_path(self.raw_world.as_ptr(), &*search_path.into()) }
     }
 
@@ -2592,7 +2592,8 @@ impl World {
     /// * C++ API: `world::scope`
     #[doc(alias = "world::scope")]
     pub fn run_in_scope_with_id(&self, parent_id: impl Into<Entity>, mut func: impl FnMut()) {
-        let prev: IdT = unsafe { sys::ecs_set_scope(self.raw_world.as_ptr(), *parent_id.into()) };
+        let prev: sys::ecs_id_t =
+            unsafe { sys::ecs_set_scope(self.raw_world.as_ptr(), *parent_id.into()) };
         func();
         unsafe {
             sys::ecs_set_scope(self.raw_world.as_ptr(), prev);
@@ -2691,7 +2692,7 @@ impl World {
     /// * C++ API: `world::with`
     #[doc(alias = "world::with")]
     pub fn with_id(&self, id: impl IntoId, mut func: impl FnMut()) {
-        let prev: IdT = unsafe { sys::ecs_set_with(self.raw_world.as_ptr(), *id.into()) };
+        let prev: sys::ecs_id_t = unsafe { sys::ecs_set_with(self.raw_world.as_ptr(), *id.into()) };
         func();
         unsafe {
             sys::ecs_set_with(self.raw_world.as_ptr(), prev);

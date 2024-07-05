@@ -99,23 +99,23 @@ pub mod internals {
         }
 
         #[inline(always)]
-        fn term_mut_at(&mut self, index: i32) -> &mut TermT {
+        fn term_mut_at(&mut self, index: i32) -> &mut sys::ecs_term_t {
             &mut self.query_desc_mut().terms[index as usize]
         }
 
         #[inline(always)]
-        fn current_term_mut(&mut self) -> &mut TermT {
+        fn current_term_mut(&mut self) -> &mut sys::ecs_term_t {
             let index = self.current_term_index();
             self.term_mut_at(index)
         }
 
         #[inline(always)]
-        fn current_term(&self) -> &TermT {
+        fn current_term(&self) -> &sys::ecs_term_t {
             &self.query_desc().terms[self.term_builder().current_term_index as usize]
         }
 
         #[inline(always)]
-        fn term_ref_mut(&mut self) -> &mut TermRefT {
+        fn term_ref_mut(&mut self) -> &mut sys::ecs_term_ref_t {
             let term_mode = self.current_term_ref_mode();
             let term = self.current_term_mut();
 
@@ -209,7 +209,7 @@ pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a
     #[doc(alias = "term::term")]
     fn init_term_from<T: ComponentOrPairId>(&mut self) {
         if !T::IS_PAIR {
-            let id: IdT = T::First::id(self.world());
+            let id: sys::ecs_id_t = T::First::id(self.world());
             self.init_current_term(id);
         } else {
             let world = self.world();
