@@ -169,7 +169,7 @@ impl<'a> IdView<'a> {
     /// * C++ API: `entity_view::is_valid`
     #[doc(alias = "entity_view::is_valid")]
     pub fn is_valid(self) -> bool {
-        unsafe { sys::ecs_is_valid(self.world.world_ptr_mut(), *self.id) }
+        unsafe { sys::ecs_is_valid(self.world.world_ptr(), *self.id) }
     }
 
     /// Test if id has specified first

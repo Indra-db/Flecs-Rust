@@ -75,12 +75,12 @@ where
 {
     #[inline(always)]
     fn retrieve_iter(&self) -> sys::ecs_iter_t {
-        unsafe { sys::ecs_query_iter(self.world_ptr_mut(), self.query.as_ptr()) }
+        unsafe { sys::ecs_query_iter(self.world_ptr(), self.query.as_ptr()) }
     }
 
     #[inline(always)]
     fn retrieve_iter_stage<'a>(&self, stage: impl IntoWorld<'a>) -> sys::ecs_iter_t {
-        unsafe { sys::ecs_query_iter(stage.world_ptr_mut(), self.query.as_ptr()) }
+        unsafe { sys::ecs_query_iter(stage.world_ptr(), self.query.as_ptr()) }
     }
 
     #[inline(always)]
@@ -198,7 +198,7 @@ where
         world: impl IntoWorld<'a>,
         entity: impl Into<Entity>,
     ) -> Option<Query<()>> {
-        let world_ptr = world.world_ptr_mut();
+        let world_ptr = world.world_ptr();
         let entity = *entity.into();
         unsafe {
             if ecs_get_alive(world_ptr, entity) != 0 {
@@ -265,7 +265,7 @@ where
     /// * C++ API: `query::get_iter`
     #[doc(alias = "query::get_iter")]
     unsafe fn get_iter_raw(&mut self) -> sys::ecs_iter_t {
-        unsafe { sys::ecs_query_iter(self.world_ptr_mut(), self.query.as_ptr()) }
+        unsafe { sys::ecs_query_iter(self.world_ptr(), self.query.as_ptr()) }
     }
 
     ///  Returns whether the query data changed since the last iteration.

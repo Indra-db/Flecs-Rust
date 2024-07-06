@@ -121,7 +121,7 @@ pub trait IdOperations<'a>: IntoWorld<'a> + IntoId + Sized + Copy {
         // C string with a static lifetime. The caller must ensure this invariant.
         // ecs_id_ptr never returns null, so we don't need to check for that.
         if let Ok(str) =
-            unsafe { std::ffi::CStr::from_ptr(sys::ecs_id_str(self.world_ptr_mut(), *self.into())) }
+            unsafe { std::ffi::CStr::from_ptr(sys::ecs_id_str(self.world_ptr(), *self.into())) }
                 .to_str()
         {
             str
@@ -154,7 +154,7 @@ pub trait IdOperations<'a>: IntoWorld<'a> + IntoId + Sized + Copy {
         // SAFETY: We assume that `ecs_id_str` returns a pointer to a null-terminated
         // C string with a static lifetime. The caller must ensure this invariant.
         // ecs_id_ptr never returns null, so we don't need to check for that.
-        let c_str_ptr = unsafe { sys::ecs_id_str(self.world_ptr_mut(), *self.into()) };
+        let c_str_ptr = unsafe { sys::ecs_id_str(self.world_ptr(), *self.into()) };
 
         // SAFETY: We assume the C string is valid UTF-8. This is risky if not certain.
         unsafe { std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(c_str_ptr).to_bytes()) }
