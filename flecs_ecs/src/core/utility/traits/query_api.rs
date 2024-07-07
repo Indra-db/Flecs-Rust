@@ -8,7 +8,7 @@ pub trait IterOperations {
     fn retrieve_iter(&self) -> sys::ecs_iter_t;
 
     #[doc(hidden)]
-    fn retrieve_iter_stage<'a>(&self, stage: impl IntoWorld<'a>) -> sys::ecs_iter_t;
+    fn retrieve_iter_stage<'a>(&self, stage: impl WorldProvider<'a>) -> sys::ecs_iter_t;
 
     #[doc(hidden)]
     fn iter_next(&self, iter: &mut sys::ecs_iter_t) -> bool;
@@ -20,7 +20,7 @@ pub trait IterOperations {
     fn query_ptr(&self) -> *const sys::ecs_query_t;
 }
 
-pub trait QueryAPI<'a, P, T>: IterOperations + IntoWorld<'a>
+pub trait QueryAPI<'a, P, T>: IterOperations + WorldProvider<'a>
 where
     T: QueryTuple,
 {
@@ -887,7 +887,7 @@ where
         QueryIter::new(self.retrieve_iter(), self.iter_next_func())
     }
 
-    fn iter_stage(&'a self, stage: impl IntoWorld<'a>) -> QueryIter<'a, P, T> {
+    fn iter_stage(&'a self, stage: impl WorldProvider<'a>) -> QueryIter<'a, P, T> {
         QueryIter::new(self.retrieve_iter_stage(stage), self.iter_next_func())
     }
 

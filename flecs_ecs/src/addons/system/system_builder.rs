@@ -356,7 +356,7 @@ where
     }
 }
 
-impl<'a, T: QueryTuple> IntoWorld<'a> for SystemBuilder<'a, T> {
+impl<'a, T: QueryTuple> WorldProvider<'a> for SystemBuilder<'a, T> {
     fn world(&self) -> WorldRef<'a> {
         self.world
     }

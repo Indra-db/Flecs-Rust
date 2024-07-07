@@ -16,7 +16,7 @@ pub struct ComponentsData<T: GetTuple, const LEN: usize> {
 
 pub trait GetComponentPointers<T: GetTuple> {
     fn new<'a, const SHOULD_PANIC: bool>(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
         entity: Entity,
         record: *const ecs_record_t,
     ) -> Self;
@@ -28,7 +28,7 @@ pub trait GetComponentPointers<T: GetTuple> {
 
 impl<T: GetTuple, const LEN: usize> GetComponentPointers<T> for ComponentsData<T, LEN> {
     fn new<'a, const SHOULD_PANIC: bool>(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
         entity: Entity,
         record: *const ecs_record_t,
     ) -> Self {
@@ -150,7 +150,7 @@ pub trait GetTuple: Sized {
     const ALL_IMMUTABLE: bool;
 
     fn create_ptrs<'a, const SHOULD_PANIC: bool>(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
         entity: Entity,
         record: *const ecs_record_t,
     ) -> Self::Pointers {
@@ -158,7 +158,7 @@ pub trait GetTuple: Sized {
     }
 
     fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
         entity: Entity,
         record: *const ecs_record_t,
         components: &mut [*mut c_void],
@@ -181,7 +181,7 @@ where
     const ALL_IMMUTABLE: bool = A::IS_IMMUTABLE;
 
     fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
-        world: impl IntoWorld<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void]
+        world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void]
     ) -> bool {
         let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut sys::ecs_world_t };
         let table = unsafe { (*record).table };
@@ -307,7 +307,7 @@ macro_rules! impl_get_tuple {
 
             #[allow(unused)]
             fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
-                world: impl IntoWorld<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void]
+                world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void]
             ) -> bool {
 
                 let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut sys::ecs_world_t };

@@ -21,7 +21,7 @@ use crate::sys;
 /// world.entity()
 ///      .set_doc_brief("A vast expanse of nothingness.");
 /// ```
-pub trait Doc<'a>: IntoWorld<'a> + Into<Entity> + Clone {
+pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     /// Add human-readable name to entity.
     ///
     /// Contrary to entity names, human readable names do not have to be unique and
@@ -109,7 +109,7 @@ pub trait Doc<'a>: IntoWorld<'a> + Into<Entity> + Clone {
     }
 }
 
-impl<'a, T> Doc<'a> for T where T: Into<Entity> + IntoWorld<'a> + Clone {}
+impl<'a, T> Doc<'a> for T where T: Into<Entity> + WorldProvider<'a> + Clone {}
 
 /// ```
 /// use flecs_ecs::{addons::doc::Doc, core::World, macros::Component};

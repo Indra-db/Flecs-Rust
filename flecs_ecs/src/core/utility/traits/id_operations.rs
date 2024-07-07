@@ -1,12 +1,12 @@
 use crate::core::*;
 use crate::sys;
 
-pub trait IdOperations<'a>: IntoWorld<'a> + IntoId + Sized + Copy {
+pub trait IdOperations<'a>: WorldProvider<'a> + IntoId + Sized + Copy {
     type IdType;
 
     fn id(&self) -> Self::IdType;
 
-    fn new_from(world: impl IntoWorld<'a>, id: impl IntoId) -> Self;
+    fn new_from(world: impl WorldProvider<'a>, id: impl IntoId) -> Self;
 
     /// checks if the id is a wildcard
     ///

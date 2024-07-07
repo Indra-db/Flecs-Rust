@@ -5,7 +5,7 @@ use crate::core::*;
 use crate::sys;
 
 pub fn internal_register_component<'a, const IS_NAMED: bool, T>(
-    world: impl IntoWorld<'a>,
+    world: impl WorldProvider<'a>,
     name: *const i8,
 ) -> u64
 where
@@ -27,7 +27,7 @@ where
 
 #[inline(always)]
 /// attempts to register the component with the world. If it's already registered, it does nothing.
-pub(crate) fn try_register_component<'a, T>(world: impl IntoWorld<'a>) -> sys::ecs_entity_t
+pub(crate) fn try_register_component<'a, T>(world: impl WorldProvider<'a>) -> sys::ecs_entity_t
 where
     T: ComponentId,
 {
@@ -36,7 +36,7 @@ where
 
 #[inline(always)]
 pub(crate) fn try_register_component_named<'a, T>(
-    world: impl IntoWorld<'a>,
+    world: impl WorldProvider<'a>,
     name: &str,
 ) -> sys::ecs_entity_t
 where

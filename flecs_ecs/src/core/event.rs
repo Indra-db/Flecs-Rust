@@ -36,7 +36,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     /// * [`EventBuilder::new_untyped()`]
     /// * C++ API: `event_builder_typed::event_builder_typed`
     #[doc(alias = "event_builder_typed::event_builder_typed")]
-    pub(crate) fn new(world: impl IntoWorld<'a>) -> Self {
+    pub(crate) fn new(world: impl WorldProvider<'a>) -> Self {
         let mut obj = Self {
             world: world.world(),
             desc: Default::default(),
@@ -66,7 +66,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     /// * C++ API: `event_builder_base::event_builder_base`
     #[doc(alias = "event_builder_base::event_builder_base")]
     pub(crate) unsafe fn new_untyped(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
         event: impl Into<Entity>,
     ) -> EventBuilder<'a, ()> {
         let mut obj = EventBuilder::<'a, ()> {

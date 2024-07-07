@@ -155,7 +155,7 @@ where
         self.iter
     }
 
-    fn retrieve_iter_stage<'w>(&self, _stage: impl IntoWorld<'w>) -> sys::ecs_iter_t {
+    fn retrieve_iter_stage<'w>(&self, _stage: impl WorldProvider<'w>) -> sys::ecs_iter_t {
         panic!("Cannot change the stage of an iterator that already exists. Use retrieve_iter_stage on the underlying query instead.");
     }
 
@@ -175,7 +175,7 @@ where
 impl<'a, P, T> QueryAPI<'a, P, T> for QueryIter<'a, P, T>
 where
     T: QueryTuple,
-    Self: IntoWorld<'a>,
+    Self: WorldProvider<'a>,
 {
     fn entity(&self) -> EntityView {
         let world = unsafe { WorldRef::from_ptr(self.iter.real_world) };
@@ -185,7 +185,7 @@ where
     }
 }
 
-impl<'a, P, T> IntoWorld<'a> for QueryIter<'a, P, T>
+impl<'a, P, T> WorldProvider<'a> for QueryIter<'a, P, T>
 where
     T: QueryTuple,
 {

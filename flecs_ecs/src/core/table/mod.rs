@@ -30,7 +30,7 @@ impl<'a> Table<'a> {
     ///
     /// * C++ API: `table::table`
     #[doc(alias = "table::table")]
-    pub fn new(world: impl IntoWorld<'a>, table: NonNull<sys::ecs_table_t>) -> Self {
+    pub fn new(world: impl WorldProvider<'a>, table: NonNull<sys::ecs_table_t>) -> Self {
         Self {
             world: world.world(),
             table,
@@ -87,7 +87,7 @@ impl<'a> TableRange<'a> {
     ///
     /// The world and table pointers must be valid
     pub(crate) fn new_raw(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
         table: NonNull<sys::ecs_table_t>,
         offset: i32,
         count: i32,
@@ -705,7 +705,7 @@ pub struct TableLock<'a> {
 }
 
 impl<'a> TableLock<'a> {
-    pub fn new(world: impl IntoWorld<'a>, table: NonNull<sys::ecs_table_t>) -> Self {
+    pub(crate) fn new(world: impl WorldProvider<'a>, table: NonNull<sys::ecs_table_t>) -> Self {
         unsafe { sys::ecs_table_lock(world.world_ptr_mut(), table.as_ptr()) };
         Self {
             world: world.world(),

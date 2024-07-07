@@ -47,23 +47,23 @@ macro_rules! create_pre_registered_component {
             type UnderlyingEnumType = NoneEnum;
 
             fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-                _world: impl IntoWorld<'a>,
+                _world: impl WorldProvider<'a>,
             ) -> sys::ecs_entity_t {
                 $const_name
             }
 
             fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-                _world: impl IntoWorld<'a>,
+                _world: impl WorldProvider<'a>,
                 _name: &str,
             ) -> sys::ecs_entity_t {
                 $const_name
             }
 
-            fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
+            fn is_registered_with_world<'a>(_: impl WorldProvider<'a>) -> bool {
                 true
             }
 
-            fn id<'a>(_world: impl IntoWorld<'a>) -> sys::ecs_id_t {
+            fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
                 $const_name
             }
 

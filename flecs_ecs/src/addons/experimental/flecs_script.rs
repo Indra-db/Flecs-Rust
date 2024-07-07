@@ -45,7 +45,7 @@
 //     ///
 //     /// * C API: `ecs_script_parse`
 //     #[doc(alias = "ecs_script_parse")]
-//     pub fn parse(world: impl IntoWorld<'a>, name: &str, code: &str) -> Option<Script<'a>> {
+//     pub fn parse(world: impl WorldProvider<'a>, name: &str, code: &str) -> Option<Script<'a>> {
 //         let name = compact_str::format_compact!("{}\0", name);
 //         let code = compact_str::format_compact!("{}\0", code);
 //         let world_ptr = world.world_ptr_mut();
@@ -99,7 +99,7 @@
 //     ///
 //     /// * C API: `ecs_script_run`
 //     #[doc(alias = "ecs_script_run")]
-//     pub fn run(world: impl IntoWorld<'a>, name: &str, code: &str) -> bool {
+//     pub fn run(world: impl WorldProvider<'a>, name: &str, code: &str) -> bool {
 //         let name = compact_str::format_compact!("{}\0", name);
 //         let code = compact_str::format_compact!("{}\0", code);
 //         let world_ptr = world.world_ptr_mut();
@@ -126,7 +126,7 @@
 //     ///
 //     /// # See also
 //     #[doc(alias = "ecs_script_run_file")]
-//     pub fn run_file(world: impl IntoWorld<'a>, filename: &str) -> bool {
+//     pub fn run_file(world: impl WorldProvider<'a>, filename: &str) -> bool {
 //         let filename = compact_str::format_compact!("{}\0", filename);
 //         let world_ptr = world.world_ptr_mut();
 
@@ -187,7 +187,7 @@
 //     /// * C API: `ecs_script_init`
 //     #[doc(alias = "ecs_script_init")]
 //     pub fn init_script_from_file(
-//         world: impl IntoWorld<'a>,
+//         world: impl WorldProvider<'a>,
 //         entity: Entity,
 //         filename: &str,
 //     ) -> Entity {
@@ -224,7 +224,7 @@
 //     ///
 //     /// * C API: `ecs_script_init`
 //     #[doc(alias = "ecs_script_init")]
-//     pub fn init_script_from_code(world: impl IntoWorld<'a>, entity: Entity, code: &str) -> Entity {
+//     pub fn init_script_from_code(world: impl WorldProvider<'a>, entity: Entity, code: &str) -> Entity {
 //         let code = compact_str::format_compact!("{}\0", code);
 //         let world = world.world_ptr_mut();
 //         let entity = entity.into();
@@ -259,7 +259,7 @@
 //     /// * C API: `ecs_script_update`
 //     #[doc(alias = "ecs_script_update")]
 //     pub fn update(
-//         world: impl IntoWorld<'a>,
+//         world: impl WorldProvider<'a>,
 //         script: impl Into<Entity>,
 //         instance: Option<impl Into<Entity>>,
 //         code: &str,

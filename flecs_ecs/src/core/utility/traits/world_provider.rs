@@ -3,7 +3,10 @@ use std::{ffi::c_void, marker::PhantomData, ops::Deref, ptr::NonNull};
 use crate::core::*;
 use crate::sys;
 
-pub trait IntoWorld<'a> {
+/// Implementations of this trait can provide a reference to a world to operations
+/// needing a world. This allows for easily extracting the world from things that
+/// already have a reference to one.
+pub trait WorldProvider<'a> {
     #[doc(hidden)]
     #[inline(always)]
     fn world_ptr_mut(&self) -> *mut sys::ecs_world_t {
@@ -18,35 +21,35 @@ pub trait IntoWorld<'a> {
     fn world(&self) -> WorldRef<'a>;
 }
 
-impl<'a> IntoWorld<'a> for IdView<'a> {
+impl<'a> WorldProvider<'a> for IdView<'a> {
     #[inline(always)]
     fn world(&self) -> WorldRef<'a> {
         self.world
     }
 }
 
-impl<'a> IntoWorld<'a> for EntityView<'a> {
+impl<'a> WorldProvider<'a> for EntityView<'a> {
     #[inline(always)]
     fn world(&self) -> WorldRef<'a> {
         self.world
     }
 }
 
-impl<'a, T: ComponentId> IntoWorld<'a> for Component<'a, T> {
+impl<'a, T: ComponentId> WorldProvider<'a> for Component<'a, T> {
     #[inline(always)]
     fn world(&self) -> WorldRef<'a> {
         self.base.entity.world
     }
 }
 
-impl<'a> IntoWorld<'a> for UntypedComponent<'a> {
+impl<'a> WorldProvider<'a> for UntypedComponent<'a> {
     #[inline(always)]
     fn world(&self) -> WorldRef<'a> {
         self.world
     }
 }
 
-impl<'a> IntoWorld<'a> for &'a World {
+impl<'a> WorldProvider<'a> for &'a World {
     #[inline(always)]
     fn world(&self) -> WorldRef<'a> {
         (*self).into()
@@ -107,14 +110,14 @@ impl<'a> Deref for WorldRef<'a> {
     }
 }
 
-impl<'a> IntoWorld<'a> for WorldRef<'a> {
+impl<'a> WorldProvider<'a> for WorldRef<'a> {
     #[inline(always)]
     fn world(&self) -> WorldRef<'a> {
         *self
     }
 }
 
-impl<'a> IntoWorld<'a> for &WorldRef<'a> {
+impl<'a> WorldProvider<'a> for &WorldRef<'a> {
     #[inline(always)]
     fn world(&self) -> WorldRef<'a> {
         **self

@@ -96,7 +96,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     #[doc(hidden)]
     #[inline(always)]
     fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
     ) -> sys::ecs_entity_t {
         if !Self::IS_GENERIC {
             let index = Self::index() as usize;
@@ -163,7 +163,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     #[inline(always)]
     #[doc(hidden)]
     fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
         name: &str,
     ) -> sys::ecs_entity_t {
         if !Self::IS_GENERIC {
@@ -230,7 +230,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     /// checks if the component is registered with a world.
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
-    fn is_registered_with_world<'a>(world: impl IntoWorld<'a>) -> bool {
+    fn is_registered_with_world<'a>(world: impl WorldProvider<'a>) -> bool {
         if !Self::IS_GENERIC {
             let index = Self::index();
             let world = world.world();
@@ -253,7 +253,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     /// # Note
     /// Each world has it's own unique id for the component.
     #[inline(always)]
-    fn id<'a>(world: impl IntoWorld<'a>) -> sys::ecs_entity_t {
+    fn id<'a>(world: impl WorldProvider<'a>) -> sys::ecs_entity_t {
         Self::UnderlyingType::__register_or_get_id::<true>(world)
     }
 
@@ -269,7 +269,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
     #[doc(hidden)]
     fn __register_clone_hooks(_type_hooks: &mut sys::ecs_type_hooks_t) {}
 
-    fn register_ctor_hook<'a>(world: impl IntoWorld<'a>)
+    fn register_ctor_hook<'a>(world: impl WorldProvider<'a>)
     where
         Self: Default,
     {
@@ -288,7 +288,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static {
         }
     }
 
-    fn register_clone_hook<'a>(world: impl IntoWorld<'a>)
+    fn register_clone_hook<'a>(world: impl WorldProvider<'a>)
     where
         Self: Clone,
     {
@@ -388,7 +388,7 @@ pub trait EnumComponentInfo: ComponentType<Enum> + ComponentId {
     }
 
     /// get the entity id of the variant of the enum. This function will register the enum with the world if it's not registered.
-    fn id_variant<'a>(&self, world: impl IntoWorld<'a>) -> EntityView<'a> {
+    fn id_variant<'a>(&self, world: impl WorldProvider<'a>) -> EntityView<'a> {
         try_register_component::<Self>(world.world());
         let index = self.enum_index();
         EntityView::new_from(world, unsafe { *Self::__enum_data_mut().add(index) })
@@ -398,7 +398,7 @@ pub trait EnumComponentInfo: ComponentType<Enum> + ComponentId {
     ///
     /// This function is unsafe because it assumes the enum has been registered as a component with the world.
     /// if uncertain, use `try_register_component::<T>` to try and register it
-    unsafe fn id_variant_unchecked<'a>(&self, world: impl IntoWorld<'a>) -> EntityView<'a> {
+    unsafe fn id_variant_unchecked<'a>(&self, world: impl WorldProvider<'a>) -> EntityView<'a> {
         let index = self.enum_index();
         EntityView::new_from(world, unsafe { *Self::__enum_data_mut().add(index) })
     }

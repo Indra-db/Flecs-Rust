@@ -30,7 +30,7 @@ impl Id {
     ///
     /// * `world` - The world the entity belongs to
     #[inline]
-    pub fn entity_view<'a>(&self, world: impl IntoWorld<'a>) -> EntityView<'a> {
+    pub fn entity_view<'a>(&self, world: impl WorldProvider<'a>) -> EntityView<'a> {
         EntityView::new_from(world, self.0)
     }
 }

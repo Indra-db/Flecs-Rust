@@ -28,7 +28,7 @@ impl<'a> UntypedComponent<'a> {
     ///
     /// * C++ API: `untyped_component::untyped_component`
     #[doc(alias = "untyped_component::untyped_component")]
-    pub fn new(world: impl IntoWorld<'a>, id: impl Into<Entity>) -> Self {
+    pub fn new(world: impl WorldProvider<'a>, id: impl Into<Entity>) -> Self {
         UntypedComponent {
             entity: EntityView::new_from(world, id),
         }

@@ -31,7 +31,7 @@ impl<'a> DerefMut for Observer<'a> {
     }
 }
 
-impl<'a> IntoWorld<'a> for Observer<'a> {
+impl<'a> WorldProvider<'a> for Observer<'a> {
     #[inline(always)]
     fn world(&self) -> WorldRef<'a> {
         self.world
@@ -46,7 +46,7 @@ impl<'a> Observer<'a> {
     /// * C++ API: `observer::observer`
     #[doc(alias = "observer::observer")]
     pub fn new(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
         mut desc: sys::ecs_observer_desc_t,
         is_instanced: bool,
     ) -> Self {
