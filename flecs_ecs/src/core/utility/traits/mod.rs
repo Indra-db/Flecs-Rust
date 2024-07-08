@@ -3,18 +3,18 @@ mod inout_oper;
 mod into_component_id;
 mod into_id;
 mod into_table;
-mod into_world;
 mod query_api;
 mod system_api;
+mod world_provider;
 
 pub use id_operations::*;
 pub use inout_oper::*;
 pub use into_component_id::*;
 pub use into_id::*;
 pub use into_table::*;
-pub use into_world::*;
 pub use query_api::*;
 pub use system_api::*;
+pub use world_provider::*;
 
 use crate::core::{ImplementsClone, ImplementsDefault};
 

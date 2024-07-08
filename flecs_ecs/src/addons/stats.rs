@@ -1,5 +1,5 @@
 //! Periodically tracks statistics for the world and systems.
-use crate::core::{WorldProvider, World};
+use crate::core::{World, WorldProvider};
 use crate::sys;
 
 #[cfg(feature = "flecs_module")]
