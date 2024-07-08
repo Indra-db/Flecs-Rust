@@ -699,7 +699,19 @@ impl<'a> TableOperations<'a> for TableRange<'a> {
     }
 }
 
-pub struct TableLock<'a> {
+/// A lock on a [`Table`].
+///
+/// When a table is locked, modifications to it will throw an assert. When the
+/// table is locked recursively, it will take an equal amount of unlock
+/// operations to actually unlock the table.
+///
+/// Table locks can be used to build safe iterators where it is guaranteed that
+/// the contents of a table are not modified while it is being iterated.
+///
+/// The operation only works when called on the world, and has no side effects
+/// when called on a stage. The assumption is that when called on a stage,
+/// operations are deferred already.
+pub(crate) struct TableLock<'a> {
     world: WorldRef<'a>,
     table: NonNull<sys::ecs_table_t>,
 }
