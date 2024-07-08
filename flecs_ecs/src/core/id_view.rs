@@ -377,7 +377,7 @@ impl<'a> IdOperations<'a> for IdView<'a> {
     #[doc(alias = "Id::Id")]
     /// * C API: `ecs_id_t`
     #[doc(alias = "ecs_id_t")]
-    fn new_from(world: impl IntoWorld<'a>, id: impl IntoId) -> Self {
+    fn new_from(world: impl WorldProvider<'a>, id: impl IntoId) -> Self {
         Self {
             world: world.world(),
             id: id.into(),

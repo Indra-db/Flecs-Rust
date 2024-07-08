@@ -65,7 +65,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity::entity`
     #[doc(alias = "entity::entity")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub(crate) fn new(world: impl IntoWorld<'a>) -> Self {
+    pub(crate) fn new(world: impl WorldProvider<'a>) -> Self {
         let world_ptr = world.world_ptr_mut();
         let id = if unsafe { sys::ecs_get_scope(world_ptr) == 0 && ecs_get_with(world_ptr) == 0 } {
             unsafe { sys::ecs_new(world_ptr) }
@@ -85,7 +85,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::entity`
     #[doc(alias = "entity::entity")]
-    pub(crate) fn new_from(world: impl IntoWorld<'a>, id: impl Into<Entity>) -> Self {
+    pub(crate) fn new_from(world: impl WorldProvider<'a>, id: impl Into<Entity>) -> Self {
         Self {
             world: world.world(),
             id: id.into(),
@@ -103,7 +103,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::entity`
     #[doc(alias = "entity::entity")]
-    pub(crate) fn new_named(world: impl IntoWorld<'a>, name: &str) -> Self {
+    pub(crate) fn new_named(world: impl WorldProvider<'a>, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
 
         let desc = sys::ecs_entity_desc_t {
@@ -126,7 +126,7 @@ impl<'a> EntityView<'a> {
         }
     }
 
-    pub(crate) fn new_named_cstr(world: impl IntoWorld<'a>, name: &CStr) -> Self {
+    pub(crate) fn new_named_cstr(world: impl WorldProvider<'a>, name: &CStr) -> Self {
         let desc = sys::ecs_entity_desc_t {
             name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),
@@ -2037,7 +2037,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::mut`
     #[doc(alias = "entity_view::mut")]
-    pub fn mut_current_stage(self, stage: impl IntoWorld<'a>) -> EntityView<'a> {
+    pub fn mut_current_stage(self, stage: impl WorldProvider<'a>) -> EntityView<'a> {
         ecs_assert!(
             !stage.world().is_readonly(),
             FlecsErrorCode::InvalidParameter,
@@ -2065,7 +2065,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::mut")]
     pub fn mut_stage_of<T>(self, entity: T) -> EntityView<'a>
     where
-        T: Into<Entity> + IntoWorld<'a>,
+        T: Into<Entity> + WorldProvider<'a>,
     {
         ecs_assert!(
             !entity.world().is_readonly(),
@@ -2083,7 +2083,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::set_stage`
     #[doc(alias = "entity_view::set_stage")]
     #[doc(hidden)]
-    fn set_stage(self, stage: impl IntoWorld<'a>) -> EntityView<'a> {
+    fn set_stage(self, stage: impl WorldProvider<'a>) -> EntityView<'a> {
         EntityView::new_from(stage, *self.id)
     }
 }

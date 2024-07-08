@@ -35,7 +35,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     ///
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
-    pub fn new(world: impl IntoWorld<'a>) -> Self {
+    pub fn new(world: impl WorldProvider<'a>) -> Self {
         let world = world.world();
         let id = T::__register_or_get_id::<false>(world);
 
@@ -57,7 +57,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     ///
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
-    pub fn new_named(world: impl IntoWorld<'a>, name: &str) -> Self {
+    pub fn new_named(world: impl WorldProvider<'a>, name: &str) -> Self {
         let id = T::__register_or_get_id_named::<false>(world.world(), name);
 
         let world = world.world();

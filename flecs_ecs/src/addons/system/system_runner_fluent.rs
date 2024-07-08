@@ -19,7 +19,7 @@ pub struct SystemRunnerFluent<'a> {
 impl<'a> SystemRunnerFluent<'a> {
     /// Create a new system runner fluent interface
     pub fn new(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
         id: impl Into<Entity>,
         stage_current: i32,
         stage_count: i32,
@@ -51,7 +51,7 @@ impl<'a> SystemRunnerFluent<'a> {
     }
 
     /// Set the stage
-    pub fn set_stage(&mut self, stage: impl IntoWorld<'a>) -> &mut Self {
+    pub fn set_stage(&mut self, stage: impl WorldProvider<'a>) -> &mut Self {
         self.stage = stage.world();
         self
     }

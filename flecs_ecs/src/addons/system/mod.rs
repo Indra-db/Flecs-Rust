@@ -37,7 +37,7 @@ impl<'a> DerefMut for System<'a> {
     }
 }
 
-impl<'a> IntoWorld<'a> for System<'a> {
+impl<'a> WorldProvider<'a> for System<'a> {
     #[inline(always)]
     fn world(&self) -> WorldRef<'a> {
         self.world
@@ -58,7 +58,7 @@ impl<'a> System<'a> {
     /// * C++ API: `system::system`
     #[doc(alias = "system::system")]
     pub fn new(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
         mut desc: sys::ecs_system_desc_t,
         is_instanced: bool,
     ) -> Self {

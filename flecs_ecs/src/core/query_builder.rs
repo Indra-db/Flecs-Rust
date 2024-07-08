@@ -92,7 +92,7 @@ where
     /// * C++ API: `query_builder_i::query_builder_i`
     #[doc(alias = "query_builder_i::query_builder_i")]
     pub(crate) fn new_from_desc(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
         desc: &mut sys::ecs_query_desc_t,
     ) -> Self {
         let obj = Self {
@@ -172,7 +172,7 @@ impl<'a, T: QueryTuple> TermBuilderImpl<'a> for QueryBuilder<'a, T> {}
 
 impl<'a, T: QueryTuple> QueryBuilderImpl<'a> for QueryBuilder<'a, T> {}
 
-impl<'a, T: QueryTuple> IntoWorld<'a> for QueryBuilder<'a, T> {
+impl<'a, T: QueryTuple> WorldProvider<'a> for QueryBuilder<'a, T> {
     fn world(&self) -> WorldRef<'a> {
         self.world
     }

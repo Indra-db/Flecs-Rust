@@ -79,7 +79,7 @@ where
     }
 
     #[inline(always)]
-    fn retrieve_iter_stage<'a>(&self, stage: impl IntoWorld<'a>) -> sys::ecs_iter_t {
+    fn retrieve_iter_stage<'a>(&self, stage: impl WorldProvider<'a>) -> sys::ecs_iter_t {
         unsafe { sys::ecs_query_iter(stage.world_ptr(), self.query.as_ptr()) }
     }
 
@@ -107,7 +107,7 @@ where
     }
 }
 
-impl<'a, T> IntoWorld<'a> for Query<T>
+impl<'a, T> WorldProvider<'a> for Query<T>
 where
     T: QueryTuple,
 {
@@ -168,7 +168,7 @@ where
     /// * C++ API: `query::query`
     #[doc(alias = "query::query")]
     pub(crate) fn new_from_desc<'a>(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
         desc: &mut sys::ecs_query_desc_t,
     ) -> Self {
         let world_ptr = world.world_ptr_mut();
@@ -195,7 +195,7 @@ where
     }
 
     pub(crate) fn new_from_entity<'a>(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
         entity: impl Into<Entity>,
     ) -> Option<Query<()>> {
         let world_ptr = world.world_ptr();

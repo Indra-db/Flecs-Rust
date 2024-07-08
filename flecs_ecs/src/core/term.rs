@@ -167,7 +167,7 @@ fn check_term_access_validity<'a>(term: &impl TermBuilderImpl<'a>) {
 }
 /// Term builder interface for building queries, observers and systems.
 /// A term is a single element of a query expression.
-pub trait TermBuilderImpl<'a>: Sized + IntoWorld<'a> + internals::QueryConfig<'a> {
+pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfig<'a> {
     /// initializes a new term from a id of a component or pair
     ///
     /// # Arguments

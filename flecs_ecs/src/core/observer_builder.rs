@@ -33,7 +33,7 @@ impl<'a, P: ComponentId, T: QueryTuple> ObserverBuilder<'a, P, T> {
     ///
     /// * C++ API: `observer_builder::observer_builder`
     #[doc(alias = "observer_builder::observer_builder")]
-    pub(crate) fn new(world: impl IntoWorld<'a>) -> Self {
+    pub(crate) fn new(world: impl WorldProvider<'a>) -> Self {
         let desc = Default::default();
         let mut obj = Self {
             desc,
@@ -63,7 +63,7 @@ impl<'a, P: ComponentId, T: QueryTuple> ObserverBuilder<'a, P, T> {
     ///
     /// * C++ API: `node_builder::node_builder`
     #[doc(alias = "node_builder::node_builder")]
-    pub fn new_named(world: impl IntoWorld<'a>, name: &str) -> Self {
+    pub fn new_named(world: impl WorldProvider<'a>, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
 
         let desc = Default::default();
@@ -91,7 +91,7 @@ impl<'a, P: ComponentId, T: QueryTuple> ObserverBuilder<'a, P, T> {
 }
 
 impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
-    pub(crate) fn new_untyped(world: impl IntoWorld<'a>) -> ObserverBuilder<'a, (), T> {
+    pub(crate) fn new_untyped(world: impl WorldProvider<'a>) -> ObserverBuilder<'a, (), T> {
         let desc = Default::default();
         let mut obj = ObserverBuilder {
             desc,
@@ -120,7 +120,10 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
     ///
     /// * C++ API: `observer_builder::observer_builder`
     #[doc(alias = "observer_builder::observer_builder")]
-    pub(crate) fn new_from_desc(world: impl IntoWorld<'a>, desc: sys::ecs_observer_desc_t) -> Self {
+    pub(crate) fn new_from_desc(
+        world: impl WorldProvider<'a>,
+        desc: sys::ecs_observer_desc_t,
+    ) -> Self {
         let mut obj = Self {
             desc,
             term_builder: TermBuilder::default(),
@@ -261,7 +264,7 @@ where
     }
 }
 
-impl<'a, P, T: QueryTuple> IntoWorld<'a> for ObserverBuilder<'a, P, T> {
+impl<'a, P, T: QueryTuple> WorldProvider<'a> for ObserverBuilder<'a, P, T> {
     fn world(&self) -> WorldRef<'a> {
         self.world
     }

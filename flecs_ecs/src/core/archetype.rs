@@ -47,7 +47,7 @@ impl<'a> Debug for Archetype<'a> {
 }
 
 impl<'a> Archetype<'a> {
-    pub(crate) fn new(world: impl IntoWorld<'a>, type_vec: &'a [Id]) -> Self {
+    pub(crate) fn new(world: impl WorldProvider<'a>, type_vec: &'a [Id]) -> Self {
         Archetype {
             world: world.world(),
             type_vec,
@@ -56,7 +56,7 @@ impl<'a> Archetype<'a> {
     }
 
     pub(crate) fn new_locked(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
         type_vec: &'a [Id],
         lock: TableLock<'a>,
     ) -> Self {

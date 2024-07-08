@@ -1,5 +1,5 @@
 //! Periodically tracks statistics for the world and systems.
-use crate::core::{IntoWorld, World};
+use crate::core::{WorldProvider, World};
 use crate::sys;
 
 #[cfg(feature = "flecs_module")]
@@ -309,7 +309,7 @@ where
     }
 
     fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
     ) -> sys::ecs_entity_t {
         Self::__register_or_get_id_named::<MANUAL_REGISTRATION_CHECK>(world, "flecs::stats")
     }

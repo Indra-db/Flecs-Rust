@@ -172,7 +172,7 @@ where
     }
 }
 
-impl<'a, T: QueryTuple> IntoWorld<'a> for PipelineBuilder<'a, T> {
+impl<'a, T: QueryTuple> WorldProvider<'a> for PipelineBuilder<'a, T> {
     fn world(&self) -> WorldRef<'a> {
         self.world
     }

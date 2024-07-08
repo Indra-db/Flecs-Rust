@@ -44,7 +44,7 @@ impl Entity {
     ///
     /// * `world` - The world the entity belongs to
     #[inline]
-    pub fn entity_view<'a>(&self, world: impl IntoWorld<'a>) -> EntityView<'a> {
+    pub fn entity_view<'a>(&self, world: impl WorldProvider<'a>) -> EntityView<'a> {
         EntityView::new_from(world, *self)
     }
 
@@ -58,7 +58,7 @@ impl Entity {
     ///
     /// * `world` - The world the entity belongs to
     #[inline]
-    pub fn id_view<'a>(&self, world: impl IntoWorld<'a>) -> IdView<'a> {
+    pub fn id_view<'a>(&self, world: impl WorldProvider<'a>) -> IdView<'a> {
         IdView::new_from(world, *self)
     }
 }
@@ -85,7 +85,7 @@ impl ComponentId for Entity {
     }
 
     fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-        _world: impl IntoWorld<'a>,
+        _world: impl WorldProvider<'a>,
     ) -> sys::ecs_entity_t {
         // already registered by flecs in World
         unsafe { sys::FLECS_IDecs_entity_tID_ }
@@ -93,7 +93,7 @@ impl ComponentId for Entity {
 
     #[inline]
     fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-        _world: impl IntoWorld<'a>,
+        _world: impl WorldProvider<'a>,
         _name: &str,
     ) -> sys::ecs_entity_t {
         // already registered by flecs in World
@@ -101,13 +101,13 @@ impl ComponentId for Entity {
     }
 
     #[inline]
-    fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
+    fn is_registered_with_world<'a>(_: impl WorldProvider<'a>) -> bool {
         //because this is always registered in the c world
         true
     }
 
     #[inline]
-    fn id<'a>(_world: impl IntoWorld<'a>) -> sys::ecs_id_t {
+    fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
         //this is safe because it's already registered in flecs_c / world
         unsafe { sys::FLECS_IDecs_entity_tID_ }
     }

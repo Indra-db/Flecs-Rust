@@ -25,7 +25,7 @@ impl<'a> App<'a> {
     /// * [`World::app()`]
     /// * C++ API: `app_builder::app_builder`
     #[doc(alias = "app_builder::app_builder")]
-    pub(crate) fn new(world: impl IntoWorld<'a>) -> Self {
+    pub(crate) fn new(world: impl WorldProvider<'a>) -> Self {
         let mut obj = Self {
             world: world.world(),
             desc: sys::ecs_app_desc_t::default(),
@@ -213,7 +213,7 @@ impl World {
     }
 }
 
-impl<'a> IntoWorld<'a> for App<'a> {
+impl<'a> WorldProvider<'a> for App<'a> {
     #[inline(always)]
     fn world(&self) -> WorldRef<'a> {
         self.world

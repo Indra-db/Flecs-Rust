@@ -28,7 +28,7 @@ impl<'a, T: ComponentId + DataComponent> CachedRef<'a, T> {
     ///
     #[doc(alias = "ref::ref")]
     pub fn new(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
         entity: impl Into<Entity>,
         mut id: sys::ecs_id_t,
     ) -> Self {

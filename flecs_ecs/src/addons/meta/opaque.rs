@@ -39,7 +39,7 @@ impl<'a, T> Opaque<'a, T>
 where
     T: ComponentId,
 {
-    pub fn new(world: impl IntoWorld<'a>) -> Self {
+    pub fn new(world: impl WorldProvider<'a>) -> Self {
         Self {
             world: world.world(),
             desc: ecs_opaque_desc_t {
