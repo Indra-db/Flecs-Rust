@@ -15,9 +15,24 @@ use crate::sys;
 
 pub(crate) type FlecsArray = std::vec::Vec<u64>;
 
-/// The container of all ECS data and systems.
+/// The `World` is the container for all ECS data. It stores the entities and
+/// their components, does queries and runs systems.
+///
+/// Typically there is only a single world, but there is no limit on the number
+/// of worlds an application can create.
 ///
 /// If the world is deleted, all data in the world will be deleted as well.
+///
+/// # Examples
+///
+/// ```
+/// # use flecs_ecs::core::World;
+/// let world = World::new();
+/// ```
+///
+/// # See also
+///
+/// * [`addons::app`](crate::addons::app)
 #[derive(Debug, Eq, PartialEq)]
 pub struct World {
     pub(crate) raw_world: NonNull<sys::ecs_world_t>,
@@ -103,10 +118,6 @@ impl World {
     /// # Panics
     /// This function panics if lingering references to `Query` and `World` objects are still present.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `world::reset`
-    ///
     /// # Example
     ///
     /// ```
@@ -120,6 +131,10 @@ impl World {
     /// let new_world = world.reset();
     /// assert!(!new_world.exists(e));
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::reset`
     #[doc(alias = "world::reset")]
     pub fn reset(self) -> Self {
         if unsafe { sys::flecs_poly_refcount(self.raw_world.as_ptr() as *mut c_void) } > 1 {
@@ -148,10 +163,6 @@ impl World {
 
     /// Get the world's info. See [`sys::WorldInfo`] for what information you can retrieve.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get_info`
-    ///
     /// # Example
     /// ```
     /// use flecs_ecs::prelude::*;
@@ -166,6 +177,10 @@ impl World {
     /// //assert!(world_info.world_time_total_raw > 0.0); //BUG TODO
     /// //assert!(world_info.systems_ran_frame == 0);
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::get_info`
     #[doc(alias = "world::get_info")]
     pub fn info(&self) -> sys::WorldInfo {
         // SAFETY: The pointer is valid for the lifetime of the world.
@@ -175,10 +190,6 @@ impl World {
     /// Signals the application to quit.
     ///
     /// After calling this function, the next call to [`World::progress()`] returns false.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::quit`
     ///
     /// # Example
     /// ```
@@ -195,11 +206,43 @@ impl World {
     /// }
     /// assert!(count == 5);
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::should_quit()`]
+    /// * C++ API: `world::quit`
     #[doc(alias = "world::quit")]
     pub fn quit(&self) {
         unsafe {
             sys::ecs_quit(self.raw_world.as_ptr());
         }
+    }
+
+    /// Tests if [`World::quit()`] has been called.
+    ///
+    /// # Returns
+    ///
+    /// True if quit has been called, false otherwise.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// assert!(!world.should_quit());
+    /// world.quit();
+    /// assert!(world.should_quit());
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::quit()`]
+    /// * C++ API: `world::should_quit`
+    #[doc(alias = "world::should_quit")]
+    pub fn should_quit(&self) -> bool {
+        unsafe { sys::ecs_should_quit(self.raw_world.as_ptr()) }
     }
 
     /// Registers an action to be executed when the world is destroyed.
@@ -215,38 +258,12 @@ impl World {
         }
     }
 
-    /// Tests if `quit` has been called.
-    ///
-    /// # Returns
-    ///
-    /// True if quit has been called, false otherwise.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::should_quit`
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use flecs_ecs::prelude::*;
-    ///
-    /// let world = World::new();
-    ///
-    /// assert!(!world.should_quit());
-    /// world.quit();
-    /// assert!(world.should_quit());
-    /// ```
-    #[doc(alias = "world::should_quit")]
-    pub fn should_quit(&self) -> bool {
-        unsafe { sys::ecs_should_quit(self.raw_world.as_ptr()) }
-    }
-
     /// Begins a frame.
     ///
-    /// When an application does not use `progress()` to control the main loop, it
+    /// When an application does not use [`World::progress()`] to control the main loop, it
     /// can still use Flecs features such as FPS limiting and time measurements processed.
     ///
-    /// Calls to `frame_begin` must always be followed by `frame_end`.
+    /// Calls to [`World::frame_begin`] must always be followed by [`World::frame_end`].
     ///
     /// The function accepts a `delta_time` parameter, which will get passed to
     /// systems. This value is also used to compute the amount of time the
@@ -261,10 +278,6 @@ impl World {
     ///
     /// # Returns
     /// The provided `delta_time`, or the measured time if 0 was provided.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::frame_begin`
     ///
     /// # Example
     ///
@@ -297,6 +310,11 @@ impl World {
     /// //assert!(world_info.systems_ran_frame == 1);
     ///
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::frame_end()`]
+    /// * C++ API: `world::frame_begin`
     #[doc(alias = "world::frame_begin")]
     pub fn frame_begin(&self, delta_time: f32) -> f32 {
         unsafe { sys::ecs_frame_begin(self.raw_world.as_ptr(), delta_time) }
@@ -304,13 +322,15 @@ impl World {
 
     /// Ends a frame.
     ///
-    /// This operation must be called at the end of the frame, and always after `frame_begin`
+    /// This operation must be called at the end of the frame, and always after
+    /// [`World::frame_begin()`].
     ///
     /// # Safety
     /// The function should only be run from the main thread.
     ///
     /// # See also
     ///
+    /// * [`World::frame_begin()`]
     /// * C++ API: `world::frame_end`
     #[doc(alias = "world::frame_end")]
     pub fn frame_end(&self) {
@@ -323,16 +343,18 @@ impl World {
     ///
     /// When an application does not use [`World::progress()`] to control the main loop,
     /// it can still use Flecs features such as the defer queue. To stage changes, this function
-    /// must be called after `sys::ecs_frame_begin`.
+    /// must be called after [`World::frame_begin()`].
     ///
-    /// A call to `sys::ecs_readonly_begin` must be followed by a call to `sys::ecs_readonly_end`.
+    /// A call to [`World::readonly_begin()`] must be followed by a call to
+    /// [`World::readonly_end()`].
     ///
     /// When staging is enabled, modifications to entities are stored to a stage.
     /// This ensures that arrays are not modified while iterating. Modifications are
-    /// merged back to the "main stage" when `sys::ecs_readonly_end` is invoked.
+    /// merged back to the "main stage" when [`World::readonly_end()`] is invoked.
     ///
     /// While the world is in staging mode, no structural changes (add/remove/...) can
-    /// be made to the world itself. Operations must be executed on a stage instead (see `sys::ecs_get_stage`).
+    /// be made to the world itself. Operations must be executed on a stage instead
+    /// (see [`World::stage()`]).
     ///
     /// Readonly mode is a stronger version of deferred mode. In deferred mode,
     /// ECS operations such as add/remove/set/delete etc. are added to a command
@@ -367,15 +389,11 @@ impl World {
     /// `readonly_end()` should always happen from a context where the code has
     /// exclusive access to the world. The functions themselves are not thread safe.
     ///
-    /// ## Safety
+    /// # Safety
     /// This function should only be run from the main thread.
     ///
     /// # Returns
     /// Whether the world is currently staged and whether it is in readonly mode.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::readonly_begin`
     ///
     /// # Example
     ///
@@ -407,6 +425,11 @@ impl World {
     ///
     /// assert_eq!(stage.count::<Position>(), 2);
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::readonly_end()`]
+    /// * C++ API: `world::readonly_begin`
     #[doc(alias = "world::readonly_begin")]
     pub fn readonly_begin(&self, multi_threaded: bool) -> bool {
         unsafe { sys::ecs_readonly_begin(self.raw_world.as_ptr(), multi_threaded) }
@@ -418,20 +441,22 @@ impl World {
     /// By default, this operation also merges data back into the world, unless auto-merging
     /// was disabled explicitly.
     ///
-    /// ## safety
+    /// # Safety
     /// This function should only be run from the main thread.
     ///
     /// # Returns
     ///
     /// Whether the world is currently staged.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `world::readonly_end`
-    ///
     /// # Example
     ///
-    /// see [`World::readonly_begin()`]
+    /// see [`World::readonly_begin()`].
+    ///
+    /// # See also
+    ///
+    /// * [`World::is_readonly()`]
+    /// * [`World::readonly_begin()`]
+    /// * C++ API: `world::readonly_end`
     #[doc(alias = "world::readonly_end")]
     pub fn readonly_end(&self) {
         unsafe {
@@ -439,20 +464,54 @@ impl World {
         }
     }
 
-    /// Defers operations until the end of the frame.
+    /// Test whether the current world object is readonly.
     ///
-    /// When this operation is invoked while iterating, the operations between `defer_begin`
-    /// and `defer_end` are executed at the end of the frame.
-    ///
-    /// ## safety
-    /// this operation is thread safe
+    /// This function allows the code to test whether the currently used world
+    /// object is readonly or whether it allows for writing.
     ///
     /// # Returns
-    /// Whether the operation was successful.
+    ///
+    /// True if the world or stage is readonly.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// assert!(!world.is_readonly());
+    ///
+    /// world.readonly_begin(false);
+    ///
+    /// assert!(world.is_readonly());
+    ///
+    /// world.readonly_end();
+    ///
+    /// assert!(!world.is_readonly());
+    /// ```
     ///
     /// # See also
     ///
-    /// * C++ API: `world::defer_begin`
+    /// * [`World::readonly_begin()`]
+    /// * [`World::readonly_end()`]
+    /// * C++ API: `world::is_readonly`
+    #[doc(alias = "world::is_readonly")]
+    pub fn is_readonly(&self) -> bool {
+        unsafe { sys::ecs_stage_is_readonly(self.raw_world.as_ptr()) }
+    }
+
+    /// Defers operations until the end of the frame.
+    ///
+    /// When this operation is invoked while iterating, the operations between
+    /// [`World::defer_begin()`] and [`World::defer_end()`] are executed at the
+    /// end of the frame.
+    ///
+    /// # Safety
+    /// This operation is thread safe.
+    ///
+    /// # Returns
+    /// Whether the operation was successful.
     ///
     /// # Example
     ///
@@ -481,6 +540,15 @@ impl World {
     /// assert!(e.has::<Position>());
     ///
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::defer()`]
+    /// * [`World::defer_end()`]
+    /// * [`World::defer_suspend()`]
+    /// * [`World::defer_resume()`]
+    /// * [`World::is_deferred()`]
+    /// * C++ API: `world::defer_begin`
     #[doc(alias = "world::defer_begin")]
     pub fn defer_begin(&self) -> bool {
         unsafe { sys::ecs_defer_begin(self.raw_world.as_ptr()) }
@@ -488,21 +556,26 @@ impl World {
 
     /// Ends a block of operations to defer.
     ///
-    /// This should follow a [`defer_begin`](World::defer_begin) call.
+    /// This should follow a [`World::defer_begin()`] call.
     ///
-    /// ## safety
-    /// this operation is thread safe
+    /// # Safety
+    /// This operation is thread safe.
     ///
     /// # Returns
     /// Whether the operation was successful.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `world::defer_end`
-    ///
     /// # Example
     ///
     /// see [`World::defer_begin`]
+    ///
+    /// # See also
+    ///
+    /// * [`World::defer()`]
+    /// * [`World::defer_begin()`]
+    /// * [`World::defer_suspend()`]
+    /// * [`World::defer_resume()`]
+    /// * [`World::is_deferred()`]
+    /// * C++ API: `world::defer_end`
     #[doc(alias = "world::defer_end")]
     pub fn defer_end(&self) -> bool {
         unsafe { sys::ecs_defer_end(self.raw_world.as_ptr()) }
@@ -513,10 +586,6 @@ impl World {
     /// # Returns
     ///
     /// Whether deferring is enabled.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::is_deferred`
     ///
     /// # Example
     ///
@@ -535,9 +604,94 @@ impl World {
     ///
     /// assert!(!world.is_deferred());
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::defer()`]
+    /// * [`World::defer_begin()`]
+    /// * [`World::defer_end()`]
+    /// * [`World::defer_suspend()`]
+    /// * [`World::defer_resume()`]
+    /// * C++ API: `world::is_deferred`
     #[doc(alias = "world::is_deferred")]
     pub fn is_deferred(&self) -> bool {
         unsafe { sys::ecs_is_deferred(self.raw_world.as_ptr()) }
+    }
+
+    /// Defers all operations executed in the passed-in closure. If the world
+    /// is already in deferred mode, does nothing.
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The closure to execute.
+    ///
+    /// # Examples
+    /// ```
+    /// # use flecs_ecs::core::World;
+    /// # let world = World::new();
+    /// world.defer(|| {
+    ///     // deferred operations here
+    /// });
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::defer_begin()`]
+    /// * [`World::defer_end()`]
+    /// * [`World::defer_suspend()`]
+    /// * [`World::defer_resume()`]
+    /// * [`World::is_deferred()`]
+    /// * C++ API: `world::defer`
+    #[doc(alias = "world::defer")]
+    pub fn defer(&self, func: impl FnOnce()) {
+        unsafe {
+            sys::ecs_defer_begin(self.raw_world.as_ptr());
+        }
+        func();
+        unsafe {
+            sys::ecs_defer_end(self.raw_world.as_ptr());
+        }
+    }
+
+    /// Suspends deferring of operations but do flush the queue.
+    ///
+    /// This operation can be used to do an undeferred operation
+    /// while not flushing the operations in the queue.
+    ///
+    /// An application should invoke [`World::defer_resume()`] before
+    /// [`World::defer_end()`] is called. The operation may only be called
+    /// when deferring is enabled.
+    ///
+    /// # See also
+    ///
+    /// * [`World::defer()`]
+    /// * [`World::defer_begin()`]
+    /// * [`World::defer_end()`]
+    /// * [`World::defer_resume()`]
+    /// * [`World::is_deferred()`]
+    /// * C++ API: `world::defer_suspend`
+    #[doc(alias = "world::defer_suspend")]
+    pub fn defer_suspend(&self) {
+        unsafe {
+            sys::ecs_defer_suspend(self.raw_world.as_ptr());
+        }
+    }
+
+    /// Resumes deferring of operations.
+    ///
+    /// # See also
+    ///
+    /// * [`World::defer()`]
+    /// * [`World::defer_begin()`]
+    /// * [`World::defer_end()`]
+    /// * [`World::defer_suspend()`]
+    /// * [`World::is_deferred()`]
+    /// * C++ API: `world::defer_resume`
+    #[doc(alias = "world::defer_resume")]
+    pub fn defer_resume(&self) {
+        unsafe {
+            sys::ecs_defer_resume(self.raw_world.as_ptr());
+        }
     }
 
     /// Configure world to have N stages.
@@ -547,17 +701,13 @@ impl World {
     /// multiple threads, where each thread gets its own queue, and commands are
     /// merged when threads are synchronized.
     ///
-    /// Note that `set_threads()` already creates the appropriate number of stages.
-    /// The `set_stage_count()` operation is useful for applications that want to manage
+    /// Note that [`World::set_threads()`] already creates the appropriate number of stages.
+    /// The [`World::set_stage_count()`] operation is useful for applications that want to manage
     /// their own stages and/or threads.
     ///
     /// # Arguments
     ///
     /// * `stages`: The number of stages.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::set_stage_count`
     ///
     /// # Example
     ///
@@ -579,6 +729,15 @@ impl World {
     /// assert!(e1.id() != 0);
     /// assert_eq!(e1.name(), "e1");
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::get_stage_count()`]
+    /// * [`World::is_stage()`]
+    /// * [`World::merge()`]
+    /// * [`World::stage()`]
+    /// * [`World::stage_id()`]
+    /// * C++ API: `world::set_stage_count`
     #[doc(alias = "world::set_stage_count")]
     pub fn set_stage_count(&self, stages: i32) {
         unsafe {
@@ -586,39 +745,13 @@ impl World {
         }
     }
 
-    /*
-      ecs_world_t *world = ecs_mini();
-
-    ecs_set_stage_count(world, 2);
-
-    ecs_readonly_begin(world, false);
-
-    ecs_world_t *s = ecs_get_stage(world, 1);
-
-    ecs_entity_t e = ecs_entity_init(s, &(ecs_entity_desc_t){
-        .name = "Foo"
-    });
-
-    ecs_readonly_end(world);
-
-    test_assert(e != 0);
-    test_str(ecs_get_name(world, e), "Foo");
-
-    ecs_fini(world);
-    }
-         */
-
     /// Get number of configured stages.
     ///
-    /// Return number of stages set by `set_stage_count`.
+    /// Return number of stages set by [`World::set_stage_count()`].
     ///
     /// # Returns
     ///
     /// The number of stages used for threading.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get_stage_count`
     ///
     /// # Example
     ///
@@ -633,6 +766,15 @@ impl World {
     ///
     /// assert_eq!(world.get_stage_count(), 4);
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::is_stage()`]
+    /// * [`World::merge()`]
+    /// * [`World::set_stage_count()`]
+    /// * [`World::stage()`]
+    /// * [`World::stage_id()`]
+    /// * C++ API: `world::get_stage_count`
     #[doc(alias = "world::get_stage_count")]
     pub fn get_stage_count(&self) -> i32 {
         unsafe { sys::ecs_get_stage_count(self.raw_world.as_ptr()) }
@@ -646,10 +788,6 @@ impl World {
     /// # Returns
     ///
     /// The stage id.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get_stage_id`
     ///
     /// # Example
     ///
@@ -668,6 +806,15 @@ impl World {
     ///
     /// assert_eq!(stage.stage_id(), 3);
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::get_stage_count()`]
+    /// * [`World::is_stage()`]
+    /// * [`World::merge()`]
+    /// * [`World::set_stage_count()`]
+    /// * [`World::stage()`]
+    /// * C++ API: `world::get_stage_id`
     #[doc(alias = "world::get_stage_id")]
     pub fn stage_id(&self) -> i32 {
         unsafe { sys::ecs_stage_get_id(self.raw_world.as_ptr()) }
@@ -682,14 +829,9 @@ impl World {
     ///
     /// True if the world is a stage, false if not.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `world::is_stage`
-    ///
     /// # Example
     ///
     /// ```
-    ///
     /// use flecs_ecs::prelude::*;
     ///
     /// let world = World::new();
@@ -699,6 +841,16 @@ impl World {
     /// let stage = world.stage(0);
     ///
     /// assert!(stage.is_stage());
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::get_stage_count()`]
+    /// * [`World::merge()`]
+    /// * [`World::set_stage_count()`]
+    /// * [`World::stage()`]
+    /// * [`World::stage_id()`]
+    /// * C++ API: `world::is_stage`
     #[doc(alias = "world::is_stage")]
     pub fn is_stage(&self) -> bool {
         unsafe {
@@ -725,13 +877,9 @@ impl World {
     /// When automatic merging is disabled, an application can call this
     /// operation on either an individual stage, or on the world which will merge
     /// all stages. This operation may only be called when staging is not enabled
-    /// (either after [`World::progress()`] or after `readonly_end()`).
+    /// (either after [`World::progress()`] or after [`World::readonly_end()`]).
     ///
     /// This operation may be called on an already merged stage or world.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::merge`
     ///
     /// # Example
     ///
@@ -755,6 +903,15 @@ impl World {
     ///
     /// assert!(e.has::<Position>());
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::get_stage_count()`]
+    /// * [`World::is_stage()`]
+    /// * [`World::set_stage_count()`]
+    /// * [`World::stage()`]
+    /// * [`World::stage_id()`]
+    /// * C++ API: `world::merge`
     #[doc(alias = "world::merge")]
     pub fn merge(&self) {
         unsafe { sys::ecs_merge(self.raw_world.as_ptr()) };
@@ -780,10 +937,6 @@ impl World {
     ///
     /// A thread-specific pointer to the world.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get_stage`
-    ///
     /// # Example
     ///
     /// ```
@@ -801,6 +954,15 @@ impl World {
     ///
     /// assert_eq!(stage.stage_id(), 3);
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::get_stage_count()`]
+    /// * [`World::is_stage()`]
+    /// * [`World::merge()`]
+    /// * [`World::set_stage_count()`]
+    /// * [`World::stage_id()`]
+    /// * C++ API: `world::get_stage`
     #[doc(alias = "world::get_stage")]
     pub fn stage(&self, stage_id: i32) -> WorldRef {
         unsafe { WorldRef::from_ptr(sys::ecs_get_stage(self.raw_world.as_ptr(), stage_id)) }
@@ -826,10 +988,6 @@ impl World {
     ///
     /// The stage.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `world::async_stage`
-    ///
     /// # Example
     ///
     /// ```
@@ -852,6 +1010,10 @@ impl World {
     ///
     /// assert!(e.has::<Position>());
     /// ```
+    /// # See also
+    ///
+    /// * C++ API: `world::async_stage`
+    ///
     #[doc(alias = "world::async_stage")]
     pub fn create_async_stage(&self) -> WorldRef {
         unsafe { WorldRef::from_ptr(sys::ecs_stage_new(self.raw_world.as_ptr())) }
@@ -866,14 +1028,9 @@ impl World {
     ///
     /// The actual world.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get_world`
-    ///
     /// # Example
     ///
     /// ```
-    ///
     /// use flecs_ecs::prelude::*;
     ///
     /// let world = World::new();
@@ -884,44 +1041,13 @@ impl World {
     ///
     /// assert!(!world_ref.is_stage());
     /// ```
-    #[doc(alias = "world::get_world")]
-    pub fn get_world(&self) -> WorldRef {
-        self.world().real_world()
-    }
-
-    /// Test whether the current world object is readonly.
-    ///
-    /// This function allows the code to test whether the currently used world
-    /// object is readonly or whether it allows for writing.
-    ///
-    /// # Returns
-    ///
-    /// True if the world or stage is readonly.
     ///
     /// # See also
     ///
-    /// * C++ API: `world::is_readonly`
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use flecs_ecs::prelude::*;
-    ///
-    /// let world = World::new();
-    ///
-    /// assert!(!world.is_readonly());
-    ///
-    /// world.readonly_begin(false);
-    ///
-    /// assert!(world.is_readonly());
-    ///
-    /// world.readonly_end();
-    ///
-    /// assert!(!world.is_readonly());
-    /// ```
-    #[doc(alias = "world::is_readonly")]
-    pub fn is_readonly(&self) -> bool {
-        unsafe { sys::ecs_stage_is_readonly(self.raw_world.as_ptr()) }
+    /// * C++ API: `world::get_world`
+    #[doc(alias = "world::get_world")]
+    pub fn get_world(&self) -> WorldRef {
+        self.world().real_world()
     }
 
     /// Set world context.
@@ -933,10 +1059,6 @@ impl World {
     ///
     /// * `ctx` - The world context.
     /// * `ctx_free` - The free function for the context. Can pass `None` if no free function is needed.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::set_ctx`
     ///
     /// # Example
     ///
@@ -958,6 +1080,11 @@ impl World {
     ///
     /// assert_eq!(world.context() as *const i32, ctx);
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::context()`]
+    /// * C++ API: `world::set_ctx`
     #[doc(alias = "world::set_ctx")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     pub fn set_context(&self, ctx: *mut c_void, ctx_free: sys::ecs_ctx_free_t) {
@@ -970,13 +1097,14 @@ impl World {
     ///
     /// The configured world context.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get_ctx`
-    ///
     /// # Example
     ///
-    /// see [`World::set_context`]
+    /// See [`World::set_context`].
+    ///
+    /// # See also
+    ///
+    /// * [`World::set_context()`]
+    /// * C++ API: `world::get_ctx`
     #[doc(alias = "world::get_ctx")]
     pub fn context(&self) -> *mut c_void {
         unsafe { sys::ecs_get_ctx(self.raw_world.as_ptr()) }
@@ -1066,10 +1194,6 @@ impl World {
     /// * `min` - Minimum entity ID issued.
     /// * `max` - Maximum entity ID issued.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `world::set_entity_range`
-    ///
     /// # Example
     ///
     /// ```
@@ -1087,6 +1211,11 @@ impl World {
     ///
     /// assert_eq!(e.id(), 5001);
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::enable_range_check()`]
+    /// * C++ API: `world::set_entity_range`
     #[doc(alias = "world::set_entity_range")]
     pub fn set_entity_range(&self, min: impl Into<Entity>, max: impl Into<Entity>) {
         unsafe { sys::ecs_set_entity_range(self.raw_world.as_ptr(), *min.into(), *max.into()) };
@@ -1102,12 +1231,7 @@ impl World {
     ///
     /// * `enabled` - True if the range check should be enabled, false otherwise.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `world::enable_range_check`
-    ///
     /// # Example
-    ///
     ///
     /// ```should_panic
     /// use flecs_ecs::prelude::*;
@@ -1123,6 +1247,11 @@ impl World {
     /// e.add_id(e2); // panics in debug mode! because e and e2 are outside the range
     /// panic!("in release mode, this does not panic, this is to prevent the test from failing")
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::set_entity_range()`]
+    /// * C++ API: `world::enable_range_check`
     #[doc(alias = "world::enable_range_check")]
     pub fn enable_range_check(&self, enabled: bool) {
         unsafe { sys::ecs_enable_range_check(self.raw_world.as_ptr(), enabled) };
@@ -1135,10 +1264,6 @@ impl World {
     ///
     /// Returns an `EntityView` representing the current scope.
     /// If no scope is set, this operation will return `None`.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get_scope`
     ///
     /// # Example
     ///
@@ -1155,6 +1280,12 @@ impl World {
     ///
     /// assert_eq!(s.unwrap(), e);
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::set_scope()`]
+    /// * [`World::set_scope_id()`]
+    /// * C++ API: `world::get_scope`
     #[doc(alias = "world::get_scope")]
     #[inline(always)]
     pub fn get_scope(&self) -> Option<EntityView> {
@@ -1181,10 +1312,6 @@ impl World {
     ///
     /// Returns an `EntityView` representing the newly set scope.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `world::set_scope`
-    ///
     /// # Example
     ///
     /// ```
@@ -1201,6 +1328,12 @@ impl World {
     ///
     /// assert_eq!(s.unwrap(), e);
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::get_scope()`]
+    /// * [`World::set_scope()`]
+    /// * C++ API: `world::set_scope`
     #[doc(alias = "world::set_scope")]
     #[inline(always)]
     pub fn set_scope_id(&self, id: impl IntoId) -> EntityView {
@@ -1222,10 +1355,6 @@ impl World {
     ///
     /// Returns an `EntityView` representing the newly set scope.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `world::set_scope`
-    ///
     /// # Example
     ///
     /// ```
@@ -1243,6 +1372,12 @@ impl World {
     ///
     /// assert_eq!(s.unwrap(), world.component_id::<Scope>());
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::get_scope()`]
+    /// * [`World::set_scope_id()`]
+    /// * C++ API: `world::set_scope`
     #[doc(alias = "world::set_scope")]
     #[inline(always)]
     pub fn set_scope<T: ComponentId>(&self) -> EntityView {
@@ -1279,6 +1414,10 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::lookup()`]
+    /// * [`World::lookup_recursively()`]
+    /// * [`World::try_lookup()`]
+    /// * [`World::try_lookup_recursive()`]
     /// * C++ API: `world::set_lookup_path`
     /// * C API: `sys::ecs_set_lookup_path`
     #[doc(alias = "world::set_lookup_path")]
@@ -1296,7 +1435,7 @@ impl World {
     /// # Panics
     ///
     /// Ensure that the entity exists before using it.
-    /// Use `try_lookup` variant otherwise.
+    /// Use the [`World::try_lookup_recursive()`] variant otherwise.
     ///
     /// # Arguments
     ///
@@ -1305,10 +1444,6 @@ impl World {
     /// # Returns
     ///
     /// The entity
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::lookup`
     ///
     /// # Example
     ///
@@ -1326,6 +1461,14 @@ impl World {
     /// let x = world.lookup_recursively("X");
     /// assert!(x.has_id(a));
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::lookup()`]
+    /// * [`World::set_lookup_path()`]
+    /// * [`World::try_lookup()`]
+    /// * [`World::try_lookup_recursive()`]
+    /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
     #[inline(always)]
     pub fn lookup_recursively(&self, name: &str) -> EntityView {
@@ -1338,7 +1481,7 @@ impl World {
     /// # Panics
     ///
     /// Ensure that the entity exists before using it.
-    /// Use `try_lookup` variant otherwise.
+    /// Use the [`World::try_lookup()`] variant otherwise.
     ///
     /// # Arguments
     ///
@@ -1350,6 +1493,10 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::lookup_recursively()`]
+    /// * [`World::set_lookup_path()`]
+    /// * [`World::try_lookup()`]
+    /// * [`World::try_lookup_recursive()`]
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
     #[inline(always)]
@@ -1358,21 +1505,7 @@ impl World {
             .expect("Entity not found, when unsure, use try_lookup")
     }
 
-    /// Lookup entity by name
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the entity to lookup.
-    /// * `recursively` - Recursively traverse up the tree until entity is found.
-    ///
-    /// # Returns
-    ///
-    /// The entity if found, otherwise `None`.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::lookup`
-    #[doc(alias = "world::lookup")]
+    /// Helper function for [`World::try_lookup()`] and [`World::try_lookup_recursive()`].
     fn try_lookup_impl(&self, name: &str, recursively: bool) -> Option<EntityView> {
         let name = compact_str::format_compact!("{}\0", name);
 
@@ -1407,6 +1540,10 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::lookup()`]
+    /// * [`World::lookup_recursively()`]
+    /// * [`World::set_lookup_path()`]
+    /// * [`World::try_lookup()`]
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
     #[inline(always)]
@@ -1426,6 +1563,10 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::lookup()`]
+    /// * [`World::lookup_recursively()`]
+    /// * [`World::set_lookup_path()`]
+    /// * [`World::try_lookup_recursive()`]
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
     #[inline(always)]
@@ -1517,6 +1658,8 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`EntityView::modified()`]
+    /// * [`World::modified()`]
     /// * C++ API: `world::modified`
     #[doc(alias = "world::modified")]
     #[inline(always)]
@@ -1533,6 +1676,8 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`EntityView::modified()`]
+    /// * [`World::modified_id()`]
     /// * C++ API: `world::modified`
     #[doc(alias = "world::modified")]
     #[inline(always)]
@@ -1971,6 +2116,7 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::target_id()`]
     /// * C++ API: `world::target`
     #[doc(alias = "world::target")]
     pub fn target<First>(&self, index: Option<i32>) -> EntityView
@@ -1996,6 +2142,7 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::target()`]
     /// * C++ API: `world::target`
     #[doc(alias = "world::target")]
     pub fn target_id(&self, relationship: impl Into<Entity>, index: Option<usize>) -> EntityView {
@@ -2022,6 +2169,8 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::has()`]
+    /// * [`World::has_enum()`]
     /// * C++ API: `world::has`
     #[doc(alias = "world::has")]
     #[inline(always)]
@@ -2042,6 +2191,8 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::has_enum()`]
+    /// * [`World::has_id()`]
     /// * C++ API: `world::has`
     #[doc(alias = "world::has")]
     #[inline(always)]
@@ -2068,6 +2219,8 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::has()`]
+    /// * [`World::has_id()`]
     /// * C++ API: `world::has`
     #[doc(alias = "world::has")]
     #[inline(always)]
@@ -3023,60 +3176,6 @@ impl World {
         self.remove_all_id((First::id(self), enum_value.id_variant(self)));
     }
 
-    /// Defers all operations executed in the passed-in closure. If the world
-    /// is already in deferred mode, does nothing.
-    ///
-    /// # Arguments
-    ///
-    /// * `func` - The closure to execute.
-    ///
-    /// # Examples
-    /// ```
-    /// # use flecs_ecs::core::World;
-    /// # let world = World::new();
-    /// world.defer(|| {
-    ///     // deferred operations here
-    /// });
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::defer`
-    #[doc(alias = "world::defer")]
-    pub fn defer(&self, func: impl FnOnce()) {
-        unsafe {
-            sys::ecs_defer_begin(self.raw_world.as_ptr());
-        }
-        func();
-        unsafe {
-            sys::ecs_defer_end(self.raw_world.as_ptr());
-        }
-    }
-
-    /// Suspends deferring of operations.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::defer_suspend`
-    #[doc(alias = "world::defer_suspend")]
-    pub fn defer_suspend(&self) {
-        unsafe {
-            sys::ecs_defer_suspend(self.raw_world.as_ptr());
-        }
-    }
-
-    /// Resumes deferring of operations.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::defer_resume`
-    #[doc(alias = "world::defer_resume")]
-    pub fn defer_resume(&self) {
-        unsafe {
-            sys::ecs_defer_resume(self.raw_world.as_ptr());
-        }
-    }
-
     /// Checks if the given entity ID exists in the world.
     ///
     /// # Arguments
@@ -3285,6 +3384,8 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::entity()`]
+    /// * [`World::entity_named_cstr()`]
     /// * C++ API: `world::entity`
     #[doc(alias = "world::entity")]
     pub fn entity_named(&self, name: &str) -> EntityView {
@@ -3313,6 +3414,8 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::entity()`]
+    /// * [`World::entity_named()`]
     /// * C++ API: `world::entity`
     #[doc(alias = "world::entity")]
     pub fn entity_named_cstr(&self, name: &CStr) -> EntityView {
@@ -3323,6 +3426,8 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::entity_named()`]
+    /// * [`World::entity_named_cstr()`]
     /// * C++ API: `world::entity`
     #[doc(alias = "world::entity")]
     pub fn entity(&self) -> EntityView {
@@ -3373,6 +3478,9 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::prefab_named()`]
+    /// * [`World::prefab_type()`]
+    /// * [`World::prefab_type_named()`]
     /// * C++ API: `world::prefab`
     #[doc(alias = "world::prefab")]
     pub fn prefab(&self) -> EntityView {
@@ -3393,6 +3501,9 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::prefab()`]
+    /// * [`World::prefab_type()`]
+    /// * [`World::prefab_type_named()`]
     /// * C++ API: `world::prefab`
     #[doc(alias = "world::prefab")]
     pub fn prefab_named<'a>(&'a self, name: &str) -> EntityView<'a> {
@@ -3413,6 +3524,9 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::prefab()`]
+    /// * [`World::prefab_named()`]
+    /// * [`World::prefab_type_named()`]
     /// * C++ API: `world::prefab`
     #[doc(alias = "world::prefab")]
     pub fn prefab_type<T: ComponentId + TagComponent>(&self) -> EntityView {
@@ -3438,6 +3552,9 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::prefab()`]
+    /// * [`World::prefab_named()`]
+    /// * [`World::prefab_type()`]
     /// * C++ API: `world::prefab`
     #[doc(alias = "world::prefab")]
     pub fn prefab_type_named<'a, T: ComponentId + TagComponent>(
@@ -4034,6 +4151,7 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::system_named()`]
     /// * C++ API: `world::system_builder`
     #[doc(alias = "world::system_builder")]
     pub fn system<Components>(&self) -> SystemBuilder<Components>
@@ -4056,6 +4174,7 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::system()`]
     /// * C++ API: `world::system_builder`
     #[doc(alias = "world::system_builder")]
     pub fn system_named<'a, Components>(&'a self, name: &str) -> SystemBuilder<'a, Components>
@@ -4489,8 +4608,8 @@ impl World {
     /// Setting this value to a value higher than 1 will start as many threads and
     /// will cause systems to evenly distribute matched entities across threads.
     /// The operation may be called multiple times to reconfigure the number of threads used,
-    /// but never while running a system / pipeline. Calling `sys::ecs_set_threads` will also end the use
-    /// of task threads setup with `sys::ecs_set_task_threads` and vice-versa
+    /// but never while running a system / pipeline. Calling [`World::set_threads()`] will also end the use
+    /// of task threads setup with [`World::set_task_threads()`] and vice-versa
     ///
     /// # Arguments
     ///
@@ -4498,6 +4617,8 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::set_stage_count()`]
+    /// * [`World::set_task_threads()`]
     /// * C++ API: `world::set_threads`
     #[doc(alias = "world::set_threads")]
     #[inline(always)]
@@ -4507,7 +4628,7 @@ impl World {
         }
     }
 
-    /// Get number of configured stages. Return number of stages set by `sys::ecs_set_stage_count`.
+    /// Get number of configured stages. Return number of stages set by [`World::set_stage_count()`].
     ///
     /// # Returns
     ///
@@ -4515,6 +4636,8 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::set_stage_count()`]
+    /// * [`World::set_threads()`]
     /// * C++ API: `world::get_threads`
     #[doc(alias = "world::get_threads")]
     #[inline(always)]
@@ -4525,7 +4648,7 @@ impl World {
     /// Set number of worker task threads.
     ///
     /// Configures the world to use a specified number of short-lived task threads,
-    /// distinct from `sys::ecs_set_threads` where threads persist. Here, threads are
+    /// distinct from [`World::set_threads()`] where threads persist. Here, threads are
     /// created and joined for each world update, leveraging the `os_api_t` tasks
     /// APIs for task management instead of traditional thread APIs. This approach
     /// is advantageous for integrating with external asynchronous job systems,
@@ -4534,8 +4657,8 @@ impl World {
     ///
     /// This function can be invoked multiple times to adjust the count of task threads,
     /// but must not be called concurrently with system or pipeline execution. Switching
-    /// to `sys::ecs_set_task_threads` from `sys::ecs_set_threads` (or vice versa) will terminate
-    /// the use of the previously configured threading model.
+    /// to [`World::set_task_threads()`] from [`World::set_threads()`] (or vice versa) will
+    /// terminate the use of the previously configured threading model.
     ///
     /// # Arguments
     ///
@@ -4543,6 +4666,7 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::using_task_threads()`]
     /// * C++ API: `world::set_task_threads`
     #[doc(alias = "world::set_task_threads")]
     #[inline(always)]
@@ -4560,6 +4684,7 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::set_task_threads()`]
     /// * C++ API: `world::using_task_threads`
     #[doc(alias = "world::using_task_threads")]
     #[inline(always)]

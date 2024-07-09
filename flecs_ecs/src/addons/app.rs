@@ -205,6 +205,7 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`addons::app`](crate::addons::app)
     /// * C++ API: `world::app`
     #[doc(alias = "world::app")]
     #[inline(always)]

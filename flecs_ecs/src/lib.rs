@@ -1,3 +1,9 @@
+//! [Flecs] is a fast and lightweight Entity Component System that lets you build games and simulations with millions of entities.
+//!
+//! This library provides a comprehensive and low-overhead Rust binding for [flecs].
+//!
+//! [Flecs]: https://www.flecs.dev/
+
 #![allow(dead_code)]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
