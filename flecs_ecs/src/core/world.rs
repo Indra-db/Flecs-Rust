@@ -1415,7 +1415,7 @@ impl World {
     /// # See also
     ///
     /// * [`World::lookup()`]
-    /// * [`World::lookup_recursively()`]
+    /// * [`World::lookup_recursive()`]
     /// * [`World::try_lookup()`]
     /// * [`World::try_lookup_recursive()`]
     /// * C++ API: `world::set_lookup_path`
@@ -1458,7 +1458,7 @@ impl World {
     ///    world.entity_named("X");
     ///  });
     ///
-    /// let x = world.lookup_recursively("X");
+    /// let x = world.lookup_recursive("X");
     /// assert!(x.has_id(a));
     /// ```
     ///
@@ -1471,7 +1471,7 @@ impl World {
     /// * C++ API: `world::lookup`
     #[doc(alias = "world::lookup")]
     #[inline(always)]
-    pub fn lookup_recursively(&self, name: &str) -> EntityView {
+    pub fn lookup_recursive(&self, name: &str) -> EntityView {
         self.try_lookup_recursive(name)
             .expect("Entity not found, when unsure, use try_lookup_recursive")
     }
@@ -1493,7 +1493,7 @@ impl World {
     ///
     /// # See also
     ///
-    /// * [`World::lookup_recursively()`]
+    /// * [`World::lookup_recursive()`]
     /// * [`World::set_lookup_path()`]
     /// * [`World::try_lookup()`]
     /// * [`World::try_lookup_recursive()`]
@@ -1541,7 +1541,7 @@ impl World {
     /// # See also
     ///
     /// * [`World::lookup()`]
-    /// * [`World::lookup_recursively()`]
+    /// * [`World::lookup_recursive()`]
     /// * [`World::set_lookup_path()`]
     /// * [`World::try_lookup()`]
     /// * C++ API: `world::lookup`
@@ -1564,7 +1564,7 @@ impl World {
     /// # See also
     ///
     /// * [`World::lookup()`]
-    /// * [`World::lookup_recursively()`]
+    /// * [`World::lookup_recursive()`]
     /// * [`World::set_lookup_path()`]
     /// * [`World::try_lookup_recursive()`]
     /// * C++ API: `world::lookup`

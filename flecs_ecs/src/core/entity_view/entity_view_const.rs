@@ -1582,7 +1582,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::lookup`
     #[doc(alias = "entity_view::lookup")]
     #[inline(always)]
-    pub fn lookup_recursively(&self, name: &str) -> EntityView {
+    pub fn lookup_recursive(&self, name: &str) -> EntityView {
         self.try_lookup_recursive(name)
             .expect("Entity not found, when unsure, use try_lookup_recursive")
     }
