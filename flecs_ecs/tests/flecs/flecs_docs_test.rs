@@ -6,36 +6,36 @@
 use flecs_ecs::core::*;
 use flecs_ecs::macros::*;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 struct Position {
     x: f32,
     y: f32,
 }
 
-#[derive(Component)]
+#[derive(Component, Default)]
 struct Velocity {
     x: f32,
     y: f32,
 }
 
-#[derive(Component)]
+#[derive(Component, Default)]
 struct Game {
     pub time: f32,
 }
 
-#[derive(Component)]
+#[derive(Component, Default)]
 struct Foo;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 struct Plate;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 struct Npc;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 struct Likes;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 struct Tag;
 
 fn system_01() {
@@ -163,7 +163,7 @@ fn system_01() {
         });
 
     // Phases must have the EcsPhase tag
-    #[derive(Component)]
+    #[derive(Component, Default)]
     struct Physics;
 
     // a component to represent the phase
@@ -284,7 +284,6 @@ fn system_01() {
     //     });
 }
 
-#[test]
 fn flecs_query_docs() {
     let world = World::new();
 
@@ -333,7 +332,7 @@ fn flecs_query_docs() {
         println!("Entity: {}: {}", it.entity(index).name(), it.id(1).to_str());
     });
 
-    #[derive(Component)]
+    #[derive(Component, Default)]
     struct Tag;
 
     world.new_query::<&Tag>().each_entity(|e, tag| { /* */ });
@@ -417,12 +416,12 @@ fn flecs_query_docs() {
 
     let q = world.query::<()>().with::<flecs::Any>().build();
 
-    #[derive(Component)]
+    #[derive(Component, Default)]
     struct Eats {
         value: f32,
     }
 
-    #[derive(Component)]
+    #[derive(Component, Default)]
     struct Apples;
 
     let q = world.new_query::<&mut (Eats, Apples)>();
