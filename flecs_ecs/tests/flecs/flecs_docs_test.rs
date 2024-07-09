@@ -2,6 +2,7 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(unused_variables)]
+#![allow(clippy::print_stdout)]
 use flecs_ecs::core::*;
 use flecs_ecs::macros::*;
 
@@ -168,16 +169,16 @@ fn system_01() {
     // a component to represent the phase
     let physics = world.component::<Physics>().add::<flecs::pipeline::Phase>();
     // a (dynamic) entity to represent the phase
-    let collisons = world.entity().add::<flecs::pipeline::Phase>();
+    let collisions = world.entity().add::<flecs::pipeline::Phase>();
 
     // Phases can (but don't have to) depend on other phases which forces ordering
     physics.add_trait::<(flecs::DependsOn, flecs::pipeline::OnUpdate)>();
-    collisons.add_trait::<(flecs::DependsOn, Physics)>();
+    collisions.add_trait::<(flecs::DependsOn, Physics)>();
 
     // Custom phases can be used just like regular phases
     world
         .system_named::<(&Position, &Velocity)>("Collide")
-        .kind_id(collisons) // .kind::<Physics>()
+        .kind_id(collisions) // .kind::<Physics>()
         .each(|(p, v)| {
             // ...
         });

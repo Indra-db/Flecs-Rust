@@ -14,10 +14,7 @@ pub struct Component<'a, T: ComponentId> {
 
 impl<'a, T: ComponentId> Clone for Component<'a, T> {
     fn clone(&self) -> Self {
-        Self {
-            base: self.base.clone(),
-            _marker: PhantomData,
-        }
+        *self
     }
 }
 
