@@ -50,6 +50,15 @@ where
     }
 }
 
+impl<'a, T> From<Pipeline<'a, T>> for Entity
+where
+    T: QueryTuple,
+{
+    fn from(pipeline: Pipeline<'a, T>) -> Self {
+        pipeline.id
+    }
+}
+
 impl<'a, T> Pipeline<'a, T>
 where
     T: QueryTuple,

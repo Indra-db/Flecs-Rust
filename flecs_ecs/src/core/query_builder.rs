@@ -17,6 +17,16 @@ where
     _phantom: std::marker::PhantomData<T>,
 }
 
+pub enum QueryFlags {
+    MatchPrefab = sys::EcsQueryMatchPrefab as isize,
+    MatchDisabled = sys::EcsQueryMatchDisabled as isize,
+    MatchEmptyTables = sys::EcsQueryMatchEmptyTables as isize,
+    NoData = sys::EcsQueryNoData as isize,
+    IsInstanced = sys::EcsQueryIsInstanced as isize,
+    AllowUnresolvedByName = sys::EcsQueryAllowUnresolvedByName as isize,
+    TableOnly = sys::EcsQueryTableOnly as isize,
+}
+
 impl<'a, T> QueryBuilder<'a, T>
 where
     T: QueryTuple,
@@ -253,8 +263,8 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * C++ API: `query_builder_i::filter_flags`
     #[doc(alias = "query_builder_i::filter_flags")]
-    fn query_flags(&mut self, flags: sys::ecs_flags32_t) -> &mut Self {
-        self.query_desc_mut().flags |= flags;
+    fn query_flags(&mut self, flags: QueryFlags) -> &mut Self {
+        self.query_desc_mut().flags |= flags as u32;
         self
     }
 

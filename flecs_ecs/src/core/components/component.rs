@@ -7,11 +7,21 @@ use crate::sys;
 
 /// Component class.
 /// Class used to register components and component metadata.
-#[derive(Clone, Copy)]
 pub struct Component<'a, T: ComponentId> {
     pub base: UntypedComponent<'a>,
     _marker: PhantomData<T>,
 }
+
+impl<'a, T: ComponentId> Clone for Component<'a, T> {
+    fn clone(&self) -> Self {
+        Self {
+            base: self.base.clone(),
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<'a, T: ComponentId> Copy for Component<'a, T> {}
 
 impl<'a, T: ComponentId> Deref for Component<'a, T> {
     type Target = UntypedComponent<'a>;

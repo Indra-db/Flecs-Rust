@@ -4566,4 +4566,31 @@ impl World {
     pub fn using_task_threads(&self) -> bool {
         unsafe { sys::ecs_using_task_threads(self.raw_world.as_ptr()) }
     }
+
+    /// Delete empty tables within the world
+    ///
+    /// # See also
+    ///
+    /// * C API: `ecs_delete_empty_tables`
+    #[doc(alias = "ecs_delete_empty_tables")]
+    #[inline(always)] //min_id_count: i32, time_budget_seconds: f64) -> i32
+    pub fn delete_empty_tables(
+        &self,
+        id: impl Into<Id>,
+        clear_generation: u16,
+        delete_generation: u16,
+        min_id_count: i32,
+        time_budget_seconds: f64,
+    ) -> i32 {
+        unsafe {
+            sys::ecs_delete_empty_tables(
+                self.raw_world.as_ptr(),
+                *id.into(),
+                clear_generation,
+                delete_generation,
+                min_id_count,
+                time_budget_seconds,
+            )
+        }
+    }
 }
