@@ -34,18 +34,18 @@ impl IntoTable for TableRange<'_> {
 }
 
 pub trait IntoTableRange {
-    fn table_range(&self) -> TableRange;
-    fn table_range_raw(&self) -> sys::ecs_table_range_t;
+    fn range(&self) -> TableRange;
+    fn range_raw(&self) -> sys::ecs_table_range_t;
 }
 
 impl IntoTableRange for TableRange<'_> {
     #[inline]
-    fn table_range(&self) -> TableRange {
+    fn range(&self) -> TableRange {
         *self
     }
 
     #[inline]
-    fn table_range_raw(&self) -> sys::ecs_table_range_t {
+    fn range_raw(&self) -> sys::ecs_table_range_t {
         sys::ecs_table_range_t {
             table: self.table.table.as_ptr(),
             offset: self.offset(),
@@ -56,12 +56,12 @@ impl IntoTableRange for TableRange<'_> {
 
 impl IntoTableRange for Table<'_> {
     #[inline]
-    fn table_range(&self) -> TableRange {
+    fn range(&self) -> TableRange {
         TableRange::new(*self, 0, self.count())
     }
 
     #[inline]
-    fn table_range_raw(&self) -> sys::ecs_table_range_t {
+    fn range_raw(&self) -> sys::ecs_table_range_t {
         sys::ecs_table_range_t {
             table: self.table.as_ptr(),
             offset: 0,

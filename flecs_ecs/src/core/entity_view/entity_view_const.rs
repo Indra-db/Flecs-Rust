@@ -452,7 +452,7 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_view::range`
     #[doc(alias = "entity_view::range")]
     #[inline]
-    pub fn table_range(self) -> Option<TableRange<'a>> {
+    pub fn range(self) -> Option<TableRange<'a>> {
         NonNull::new(unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) }).map(
             |record| unsafe {
                 TableRange::new_raw(

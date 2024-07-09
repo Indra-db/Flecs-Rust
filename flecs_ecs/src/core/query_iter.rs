@@ -91,7 +91,7 @@ where
     #[doc(alias = "iter_iterable::set_var")]
     pub fn set_var_table(&mut self, var_id: i32, table: impl IntoTableRange) -> &mut Self {
         ecs_assert!(var_id != -1, FlecsErrorCode::InvalidParameter, 0);
-        unsafe { sys::ecs_iter_set_var_as_range(&mut self.iter, var_id, &table.table_range_raw()) };
+        unsafe { sys::ecs_iter_set_var_as_range(&mut self.iter, var_id, &table.range_raw()) };
         self
     }
 
@@ -141,7 +141,7 @@ where
             FlecsErrorCode::InvalidParameter,
             name.as_str()
         );
-        unsafe { sys::ecs_iter_set_var_as_range(&mut self.iter, var_id, &table.table_range_raw()) };
+        unsafe { sys::ecs_iter_set_var_as_range(&mut self.iter, var_id, &table.range_raw()) };
         self
     }
 }

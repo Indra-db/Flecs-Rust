@@ -194,7 +194,7 @@ where
     ///
     /// * C++ API: `iter::range`
     #[doc(alias = "iter::range")]
-    pub fn table_range(&self) -> Option<TableRange<'a>> {
+    pub fn range(&self) -> Option<TableRange<'a>> {
         self.table()
             .map(|t| TableRange::new(t, self.iter.offset, self.iter.count))
     }

@@ -338,7 +338,7 @@ fn observer_2_entities_table_column() {
         .run(move |mut it| {
             let world = it.world();
             while it.next() {
-                let table_range = it.table_range().unwrap();
+                let table_range = it.range().unwrap();
                 let p = table_range.get_mut::<Position>().unwrap();
 
                 for i in it.iter() {
