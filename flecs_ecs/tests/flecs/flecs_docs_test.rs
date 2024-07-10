@@ -82,6 +82,11 @@ struct Depth {
     value: i32,
 }
 
+#[derive(Component, Default)]
+struct TimeOfDay {
+    pub value: f32,
+}
+
 fn flecs_system_docs_compile_test() {
     let world = World::new();
 
@@ -326,6 +331,16 @@ fn flecs_system_docs_compile_test() {
     //     .each(|(p, v)| {
     //         // ...
     //     });
+
+    //TODO
+
+    //     ```cpp
+    // // Pause timer
+    // tick_source.stop();
+
+    // // Resume timer
+    // tick_source.start();
+    // ```
 }
 
 fn flecs_query_docs_compile_test() {
@@ -1137,4 +1152,501 @@ fn flecs_query_docs_compile_test() {
     let q = world.query::<()>().with_first::<flecs::IsA>(tree).build();
 
     // Iterate as usual
+}
+
+/*
+```cpp
+flecs::entity my_entity = world.entity();
+```
+```cpp
+my_entity.destruct();
+```
+```cpp
+flecs::entity e1 = world.entity(); // Returns 500v0
+e1.destruct(); // Recycles 500
+
+flecs::entity e2 = world.entity(); // Returns 500v1
+
+e1.add<Npc>(); // Fails, 500v0 is not alive
+e2.add<Npc>(); // OK, 500v1 is alive
+```
+```cpp
+flecs::entity e1 = world.entity();
+e1.destruct();
+e1.destruct(); // OK: post condition is satisfied
+```
+```cpp
+my_entity.clear();
+```
+```cpp
+flecs::entity e1 = world.entity();
+flecs::entity e2 = world.entity();
+e1.destruct();
+
+e1.is_alive(); // False
+e2.is_alive(); // True
+```
+```cpp
+flecs::entity e1 = world.entity();
+flecs::entity e2 = world.entity();
+e1.destruct();
+
+e1.is_valid(); // False
+world.entity(0).is_valid(); // False
+```
+```cpp
+flecs::entity e = world.make_alive(1000);
+```
+```cpp
+world.set_version(versioned_id);
+```
+```cpp
+world.set_entity_range(5000, 0);
+```
+```cpp
+world.set_entity_range(5000, 10000);
+```
+```cpp
+world.enable_range_check();
+```
+```cpp
+flecs::entity e = world.entity("MyEntity");
+
+if (e == world.lookup("MyEntity")) {
+    // true
+}
+
+std::cout << e.name() << std::endl;
+```
+```cpp
+flecs::entity p = world.entity("Parent");
+flecs::entity e = world.entity("Child").child_of(p);
+
+if (e == world.lookup("Parent::Child")) {
+    // true
+}
+```
+```cpp
+flecs::entity p = world.entity("Parent");
+flecs::entity e = world.entity("Child").child_of(p);
+
+if (e == p.lookup("Child")) {
+    // true
+}
+```
+```cpp
+flecs::entity p = world.entity("Parent");
+flecs::entity e = world.entity("Child").child_of(p);
+
+// Returns entity name, does not allocate
+std::cout << e.name() << std::endl; // Child
+
+// Returns entity path, does allocate
+std::cout << e.path() << std::endl; // Parent.Child
+```
+```cpp
+flecs::entity e1 = world.entity("Parent::Child");
+flecs::entity e2 = world.entity("Parent::Child");
+
+if (e1 == e2) {
+    // true
+}
+```
+```cpp
+flecs::entity e = world.entity("Foo");
+
+// Change name
+e.set_name("Bar");
+```
+```cpp
+flecs::entity ten = world.entity("10");
+flecs::entity twenty = world.entity("20");
+```
+```cpp
+flecs::entity e = world.entity();
+
+// Enable entity
+e.enable();
+
+// Disable entity
+e.disable();
+```
+```cpp
+// Three entities to disable
+flecs::entity e1 = world.entity();
+flecs::entity e2 = world.entity();
+flecs::entity e3 = world.entity();
+
+// Create prefab that has the three entities
+flecs::entity p = world.prefab();
+p.add(e1);
+p.add(e2);
+p.add(e3);
+
+// Disable entities
+p.disable();
+
+// Enable entities
+p.enable();
+```
+```cpp
+// Three entities to disable
+flecs::entity e1 = world.entity();
+flecs::entity e2 = world.entity();
+flecs::entity e3 = world.entity();
+
+// Create prefab hierarchy with the three entities
+flecs::entity p1 = world.prefab()
+    .add(e1);
+
+flecs::entity p2 = world.prefab()
+    .is_a(p1)
+    .add(e2)
+    .add(e3);
+
+// Disable e1, e2, e3
+p2.disable();
+
+// Enable e1
+p1.enable();
+```
+```cpp
+e.add(flecs::Disabled);
+```
+```cpp
+// Get the entity for the Position component
+flecs::entity pos = world.component<Position>();
+
+// Component entities have the Component component
+const flecs::Component *comp_data = pos.get<flecs::Component>();
+
+std::cout << "{size: " << comp_data->size << ", "
+          << comp_data->alignment << "}\n";
+```
+```cpp
+// Register a sparse component
+world.component<Position>().add(flecs::Sparse);
+```
+```cpp
+int main(int argc, char *argv[]) {
+    flecs::world world;
+
+    flecs::entity e1 = world.entity()
+        .set(Position{10, 20}) // Position registered here
+        .set(Velocity{1, 2}); // Velocity registered here
+
+    flecs::entity e1 = world.entity()
+        .set(Position{10, 20}) // Position already registered
+        .set(Velocity{1, 2}); // Velocity already registered
+}
+```
+```cpp
+world.component<Position>();
+```
+```cpp
+struct movement {
+    movement(flecs::world& world) {
+        world.component<Position>();
+        world.component<Velocity>();
+    }
+};
+
+int main(int argc, char *argv[]) {
+    flecs::world world;
+
+    world.import<movement>();
+}
+
+```
+```cpp
+ecs_component_desc_t desc = {0};
+desc.type.size = 8;
+desc.type.alignment = 8;
+flecs::entity_t comp = ecs_component_init(world, &desc);
+
+flecs::entity e = world.entity();
+
+// Add component
+e.add(comp);
+
+// Get component
+const void *ptr = e.get(comp);
+```
+```cpp
+ecs_component_desc_t desc = {0};
+desc.entity = world.entity("MyComponent");
+desc.type.size = 8;
+desc.type.alignment = 8;
+flecs::entity_t comp = ecs_component_init(world, &desc);
+
+flecs::entity e = world.entity();
+
+// Add component
+e.add(comp);
+
+// Get component
+const void *ptr = e.get(comp);
+```
+```cpp
+flecs::entity pos = world.component<Position>();
+
+// Create entity with Position
+flecs::entity e = world.entity().add<Position>();
+
+// Unregister the component
+pos.destruct();
+
+// Position is removed from e
+```
+```cpp
+// Set singleton
+world.set<TimeOfDay>({ 0.5 });
+
+// Get singleton
+const TimeOfDay *t = world.get<TimeOfDay>();
+```
+```cpp
+// Set singleton
+world.set<TimeOfDay>({ 0.5 });
+
+// Equivalent to:
+world.component<TimeOfDay>().set(TimeOfDay{ 0.5 })
+```
+```cpp
+// Register toggle-able component
+world.component<Position>().add(flecs::CanToggle);
+
+flecs::entity e = world.entity().set(Position{10, 20});
+
+// Disable component
+e.disable<Position>();
+e.is_enabled<Position>(); // False
+
+// Enable component
+e.enable<Position>();
+e.is_enabled<Position>()  // True
+```
+
+*/
+
+fn flecs_entities_components_docs_compile_test() {
+    let world = World::new();
+
+    let my_entity = world.entity();
+
+    my_entity.destruct();
+
+    let e1 = world.entity(); // Returns 500v0
+    e1.destruct(); // Recycles 500
+    let e2 = world.entity(); // Returns 500v1
+                             // Fails, 500v0 is not alive
+    e1.add::<Npc>();
+    // OK, 500v1 is alive
+    e2.add::<Npc>();
+
+    let e1 = world.entity();
+    e1.destruct();
+    e1.destruct(); // OK: post condition is satisfied
+
+    my_entity.clear();
+
+    let e1 = world.entity();
+    let e2 = world.entity();
+    e1.destruct();
+    e1.is_alive(); // False
+    e2.is_alive(); // True
+
+    let e1 = world.entity();
+    let e2 = world.entity();
+    e1.destruct();
+    e1.is_valid(); // False
+    world.entity_from_id(0).is_valid(); // False
+
+    let e = world.make_alive(1000);
+
+    //TODO does not exist yet
+    //world.set_version(versioned_id);
+
+    world.set_entity_range(5000, 0);
+
+    world.set_entity_range(5000, 10000);
+
+    world.enable_range_check(true);
+
+    let e = world.entity_named("MyEntity");
+    if e == world.lookup("MyEntity") {
+        // true
+    }
+    println!("{}", e.name());
+
+    let p = world.entity_named("Parent");
+    let e = world.entity_named("Child").child_of_id(p);
+    if e == world.lookup("Parent::Child") {
+        // true
+    }
+
+    let p = world.entity_named("Parent");
+    let e = world.entity_named("Child").child_of_id(p);
+    if e == p.lookup("Child") {
+        // true
+    }
+
+    let p = world.entity_named("Parent");
+    let e = world.entity_named("Child").child_of_id(p);
+    // Returns entity name, does not allocate
+    println!("{}", e.name()); // Child
+                              // Returns entity path, does allocate
+    println!("{}", e.path().unwrap()); // Parent.Child
+
+    let e1 = world.entity_named("Parent::Child");
+    let e2 = world.entity_named("Parent::Child");
+    if e1 == e2 {
+        // true
+    }
+
+    let e = world.entity_named("Foo");
+    // Change name
+    e.set_name("Bar");
+
+    let ten = world.entity_named("10");
+    let twenty = world.entity_named("20");
+
+    let e = world.entity();
+    // Enable entity
+    e.enable_self();
+    // Disable entity
+    e.disable_self();
+
+    // Three entities to disable
+    let e1 = world.entity();
+    let e2 = world.entity();
+    let e3 = world.entity();
+    // Create prefab that has the three entities
+    let p = world.prefab();
+    p.add_id(e1);
+    p.add_id(e2);
+    p.add_id(e3);
+    // Disable entities
+    p.disable_self();
+    // Enable entities
+    p.enable_self();
+
+    // Three entities to disable
+    let e1 = world.entity();
+    let e2 = world.entity();
+    let e3 = world.entity();
+
+    // Create prefab hierarchy with the three entities
+    let p1 = world.prefab().add_id(e1);
+    let p2 = world.prefab().is_a_id(p1).add_id(e2).add_id(e3);
+
+    // Disable e1, e2, e3
+    p2.disable_self();
+
+    // Enable e1
+    p1.enable_self();
+
+    e.add::<flecs::Disabled>();
+
+    // Get the entity for the Position component
+    let pos = world.component::<Position>();
+    // Component entities have the Component component
+    pos.get::<&flecs::Component>(|comp_data| {
+        println!(
+            "size: {}, alignment: {}",
+            comp_data.size, comp_data.alignment
+        );
+    });
+
+    // Register a sparse component
+    world.component::<Position>().add_trait::<flecs::Sparse>();
+
+    fn main() {
+        let world = World::new();
+        let e1 = world
+            .entity()
+            .set(Position { x: 10.0, y: 20.0 }) // Position registered here
+            .set(Velocity { x: 1.0, y: 2.0 }); // Velocity registered here
+        let e2 = world
+            .entity()
+            .set(Position { x: 10.0, y: 20.0 }) // Position already registered
+            .set(Velocity { x: 1.0, y: 2.0 }); // Velocity already registered
+    }
+
+    world.component::<Position>();
+
+    use flecs_ecs::prelude::*;
+    #[derive(Component)]
+    struct Movement;
+    impl Module for Movement {
+        fn module(world: &World) {
+            world.module::<Movement>("Movement");
+            // Define components, systems, triggers, ... as usual. They will be
+            // automatically created inside the scope of the module.
+        }
+    }
+    let world = World::new();
+    world.import::<Movement>();
+
+    //TODO Rust API does not exist yet
+    // let desc = sys::ecs_component_desc_t {
+    //     type_: sys::ecs_type_info_t {
+    //         size: 8,
+    //         alignment: 8,
+    //         ..Default::default()
+    //     },
+    //     ..Default::default()
+    // };
+    // let comp = sys::ecs_component_init(world, &desc);
+    // let e = world.entity();
+    // // Add component
+    // e.add(comp);
+    // // Get component
+    // let ptr = e.get(comp);
+
+    //ToDO Rust API does not exist yet
+    // let desc = ecs_component_desc_t {
+    //     entity: world.entity_named("MyComponent"),
+    //     size: 8,
+    //     alignment: 8,
+    //     ..Default::default()
+    // };
+    // let comp = ecs_component_init(world, &desc);
+    // let e = world.entity();
+    // // Add component
+    // e.add(comp);
+    // // Get component
+    // let ptr = e.get(comp);
+
+    let pos = world.component::<Position>();
+
+    // Create entity with Position
+    let e = world.entity().add::<Position>();
+
+    // Unregister the component
+    pos.destruct();
+
+    // Position is removed from e
+
+    // Set singleton
+    world.set(TimeOfDay { value: 0.5 });
+    // Get singleton
+    world.get::<&TimeOfDay>(|time| println!("{}", time.value));
+
+    // Set singleton
+    world.set(TimeOfDay { value: 0.5 });
+    // Equivalent to:
+    world.component::<TimeOfDay>().set(TimeOfDay { value: 0.5 });
+
+    // Register toggle-able component
+    world
+        .component::<Position>()
+        .add_trait::<flecs::CanToggle>();
+    let e = world.entity().set(Position { x: 10.0, y: 20.0 });
+    // Disable component
+    e.disable::<Position>();
+    assert!(!e.is_enabled::<Position>()); // False
+                                          // Enable component
+    e.enable::<Position>();
+    assert!(e.is_enabled::<Position>()); // True
 }
