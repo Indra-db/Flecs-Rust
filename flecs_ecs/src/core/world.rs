@@ -3952,7 +3952,7 @@ impl World {
 
 /// Query mixin implementation
 impl World {
-    /// Create a new uncached query.
+    /// Create a new uncached [`Query`].
     ///
     /// # Type Parameters
     ///
@@ -3960,6 +3960,10 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::new_query()`]
+    /// * [`World::new_query_named()`]
+    /// * [`World::query()`]
+    /// * [`World::query_named()`]
     /// * C++ API: `world::query`
     #[doc(alias = "world::query")]
     pub fn new_query<Components>(&self) -> Query<Components>
@@ -3969,7 +3973,7 @@ impl World {
         QueryBuilder::<Components>::new(self).build()
     }
 
-    /// Create a new named query.
+    /// Create a new named [`Query`].
     ///
     /// # Type Parameters
     ///
@@ -3985,6 +3989,10 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::new_query()`]
+    /// * [`World::new_query_named()`]
+    /// * [`World::query()`]
+    /// * [`World::query_named()`]
     /// * C++ API: `world::query`
     #[doc(alias = "world::query")]
     pub fn new_query_named<Components>(&self, name: &str) -> Query<Components>
@@ -3994,7 +4002,7 @@ impl World {
         QueryBuilder::<Components>::new_named(self, name).build()
     }
 
-    /// Create a new query builder.
+    /// Create a new [`QueryBuilder`].
     ///
     /// # Type Parameters
     ///
@@ -4006,6 +4014,9 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::new_query()`]
+    /// * [`World::new_query_named()`]
+    /// * [`World::query_named()`]
     /// * C++ API: `world::query_builder`
     #[doc(alias = "world::query_builder")]
     pub fn query<Components>(&self) -> QueryBuilder<Components>
@@ -4015,7 +4026,7 @@ impl World {
         QueryBuilder::<Components>::new(self)
     }
 
-    /// Create a new named query builder.
+    /// Create a new named [`QueryBuilder`].
     ///
     /// # Type Parameters
     ///
@@ -4031,6 +4042,9 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::new_query()`]
+    /// * [`World::new_query_named()`]
+    /// * [`World::query()`]
     /// * C++ API: `world::query_builder`
     #[doc(alias = "world::query_builder")]
     pub fn query_named<'a, Components>(&'a self, name: &str) -> QueryBuilder<'a, Components>
@@ -4082,6 +4096,8 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`QueryAPI::each()`]
+    /// * [`World::each_entity()`]
     /// * C++ API: `world::each`
     #[doc(alias = "world::each")]
     pub fn each<Components>(&self, func: impl FnMut(Components::TupleType<'_>)) -> Query<Components>
@@ -4107,6 +4123,8 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`QueryAPI::each_entity()`]
+    /// * [`World::each()`]
     /// * C++ API: `world::each`
     #[doc(alias = "world::each")]
     pub fn each_entity<Components>(

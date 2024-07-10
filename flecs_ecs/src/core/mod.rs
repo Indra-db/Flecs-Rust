@@ -13,9 +13,9 @@ mod id;
 mod id_view;
 mod observer;
 mod observer_builder;
-pub mod query;
+mod query;
 pub mod query_builder;
-pub mod query_iter;
+mod query_iter;
 pub(crate) mod query_tuple;
 pub mod table;
 pub mod term;
@@ -41,12 +41,10 @@ pub use id::Id;
 pub use id_view::IdView;
 pub use observer::Observer;
 pub use observer_builder::ObserverBuilder;
-#[doc(hidden)]
-pub use query::*;
+pub use query::Query;
 #[doc(hidden)]
 pub use query_builder::*;
-#[doc(hidden)]
-pub use query_iter::*;
+pub use query_iter::QueryIter;
 #[doc(hidden)]
 pub use query_tuple::*;
 #[doc(hidden)]
