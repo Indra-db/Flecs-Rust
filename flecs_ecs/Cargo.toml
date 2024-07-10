@@ -20,7 +20,7 @@ cargo-args = ["-Zunstable-options", "-Zrustdoc-scrape-examples"]
 [dependencies]
 flecs_ecs_derive = { path = "../flecs_ecs_derive", version = "*"}
 flecs_ecs_sys = { path = "../flecs_ecs_sys", version = "*"}
-compact_str = "0.7.1"
+compact_str = "0.8.0"
 fxhash = "0.2.1"
 
 [dev-dependencies]
