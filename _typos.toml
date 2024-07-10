@@ -4,3 +4,5 @@ extend-exclude = [
   "target/**/*",
 ]
 
+[default.extend-words]
+fo = "fo"
