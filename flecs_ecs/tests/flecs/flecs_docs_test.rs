@@ -3,6 +3,7 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 #![allow(clippy::print_stdout)]
+#![allow(unused_must_use)]
 use std::os::raw::c_void;
 
 use flecs_ecs::macros::*;
@@ -85,6 +86,24 @@ struct Depth {
 #[derive(Component, Default)]
 struct TimeOfDay {
     pub value: f32,
+}
+
+#[derive(Component, Default)]
+struct Eats {
+    amount: u32,
+}
+
+#[derive(Component, Default)]
+struct Apples;
+
+#[derive(Component, Default)]
+struct MaxSpeed {
+    value: u32,
+}
+
+#[derive(Component, Default)]
+struct Defense {
+    value: u32,
 }
 
 fn flecs_system_docs_compile_test() {
@@ -334,13 +353,13 @@ fn flecs_system_docs_compile_test() {
 
     //TODO
 
-    //     ```cpp
+    //     //@rust
     // // Pause timer
     // tick_source.stop();
 
     // // Resume timer
     // tick_source.start();
-    // ```
+    // //@endrust
 }
 
 fn flecs_query_docs_compile_test() {
@@ -1108,7 +1127,7 @@ fn flecs_query_docs_compile_test() {
     let central_park = world.entity().add_first::<LocatedIn>(manhattan);
     let bob = world.entity().add_first::<LocatedIn>(central_park);
 
-    // Matches ManHattan, CentralPark, Bob
+    // Matches ManHattan, CentralPark, bob
     let q = world
         .query::<()>()
         .with_first::<LocatedIn>(new_york)
@@ -1119,7 +1138,7 @@ fn flecs_query_docs_compile_test() {
     // Matches:
     //  - ManHattan (Place = NewYork)
     //  - CentralPark (Place = ManHattan, NewYork)
-    //  - Bob (Place = CentralPark, ManHattan, NewYork)
+    //  - bob (Place = CentralPark, ManHattan, NewYork)
     let q = world
         .query::<()>()
         .with::<LocatedIn>()
@@ -1135,7 +1154,7 @@ fn flecs_query_docs_compile_test() {
     // Matches:
     //  - ManHattan (Place = NewYork)
     //  - CentralPark (Place = NewYork)
-    //  - Bob (Place = NewYork)
+    //  - bob (Place = NewYork)
 
     let q = world
         .query::<()>()
@@ -1155,13 +1174,13 @@ fn flecs_query_docs_compile_test() {
 }
 
 /*
-```cpp
+//@rust
 flecs::entity my_entity = world.entity();
-```
-```cpp
+//@endrust
+//@rust
 my_entity.destruct();
-```
-```cpp
+//@endrust
+//@rust
 flecs::entity e1 = world.entity(); // Returns 500v0
 e1.destruct(); // Recycles 500
 
@@ -1169,47 +1188,47 @@ flecs::entity e2 = world.entity(); // Returns 500v1
 
 e1.add<Npc>(); // Fails, 500v0 is not alive
 e2.add<Npc>(); // OK, 500v1 is alive
-```
-```cpp
+//@endrust
+//@rust
 flecs::entity e1 = world.entity();
 e1.destruct();
 e1.destruct(); // OK: post condition is satisfied
-```
-```cpp
+//@endrust
+//@rust
 my_entity.clear();
-```
-```cpp
+//@endrust
+//@rust
 flecs::entity e1 = world.entity();
 flecs::entity e2 = world.entity();
 e1.destruct();
 
 e1.is_alive(); // False
 e2.is_alive(); // True
-```
-```cpp
+//@endrust
+//@rust
 flecs::entity e1 = world.entity();
 flecs::entity e2 = world.entity();
 e1.destruct();
 
 e1.is_valid(); // False
 world.entity(0).is_valid(); // False
-```
-```cpp
+//@endrust
+//@rust
 flecs::entity e = world.make_alive(1000);
-```
-```cpp
+//@endrust
+//@rust
 world.set_version(versioned_id);
-```
-```cpp
+//@endrust
+//@rust
 world.set_entity_range(5000, 0);
-```
-```cpp
+//@endrust
+//@rust
 world.set_entity_range(5000, 10000);
-```
-```cpp
+//@endrust
+//@rust
 world.enable_range_check();
-```
-```cpp
+//@endrust
+//@rust
 flecs::entity e = world.entity("MyEntity");
 
 if (e == world.lookup("MyEntity")) {
@@ -1217,24 +1236,24 @@ if (e == world.lookup("MyEntity")) {
 }
 
 std::cout << e.name() << std::endl;
-```
-```cpp
+//@endrust
+//@rust
 flecs::entity p = world.entity("Parent");
 flecs::entity e = world.entity("Child").child_of(p);
 
 if (e == world.lookup("Parent::Child")) {
     // true
 }
-```
-```cpp
+//@endrust
+//@rust
 flecs::entity p = world.entity("Parent");
 flecs::entity e = world.entity("Child").child_of(p);
 
 if (e == p.lookup("Child")) {
     // true
 }
-```
-```cpp
+//@endrust
+//@rust
 flecs::entity p = world.entity("Parent");
 flecs::entity e = world.entity("Child").child_of(p);
 
@@ -1243,26 +1262,26 @@ std::cout << e.name() << std::endl; // Child
 
 // Returns entity path, does allocate
 std::cout << e.path() << std::endl; // Parent.Child
-```
-```cpp
+//@endrust
+//@rust
 flecs::entity e1 = world.entity("Parent::Child");
 flecs::entity e2 = world.entity("Parent::Child");
 
 if (e1 == e2) {
     // true
 }
-```
-```cpp
+//@endrust
+//@rust
 flecs::entity e = world.entity("Foo");
 
 // Change name
 e.set_name("Bar");
-```
-```cpp
+//@endrust
+//@rust
 flecs::entity ten = world.entity("10");
 flecs::entity twenty = world.entity("20");
-```
-```cpp
+//@endrust
+//@rust
 flecs::entity e = world.entity();
 
 // Enable entity
@@ -1270,8 +1289,8 @@ e.enable();
 
 // Disable entity
 e.disable();
-```
-```cpp
+//@endrust
+//@rust
 // Three entities to disable
 flecs::entity e1 = world.entity();
 flecs::entity e2 = world.entity();
@@ -1288,8 +1307,8 @@ p.disable();
 
 // Enable entities
 p.enable();
-```
-```cpp
+//@endrust
+//@rust
 // Three entities to disable
 flecs::entity e1 = world.entity();
 flecs::entity e2 = world.entity();
@@ -1309,11 +1328,11 @@ p2.disable();
 
 // Enable e1
 p1.enable();
-```
-```cpp
+//@endrust
+//@rust
 e.add(flecs::Disabled);
-```
-```cpp
+//@endrust
+//@rust
 // Get the entity for the Position component
 flecs::entity pos = world.component<Position>();
 
@@ -1322,12 +1341,12 @@ const flecs::Component *comp_data = pos.get<flecs::Component>();
 
 std::cout << "{size: " << comp_data->size << ", "
           << comp_data->alignment << "}\n";
-```
-```cpp
+//@endrust
+//@rust
 // Register a sparse component
 world.component<Position>().add(flecs::Sparse);
-```
-```cpp
+//@endrust
+//@rust
 int main(int argc, char *argv[]) {
     flecs::world world;
 
@@ -1339,11 +1358,11 @@ int main(int argc, char *argv[]) {
         .set(Position{10, 20}) // Position already registered
         .set(Velocity{1, 2}); // Velocity already registered
 }
-```
-```cpp
+//@endrust
+//@rust
 world.component<Position>();
-```
-```cpp
+//@endrust
+//@rust
 struct movement {
     movement(flecs::world& world) {
         world.component<Position>();
@@ -1357,8 +1376,8 @@ int main(int argc, char *argv[]) {
     world.import<movement>();
 }
 
-```
-```cpp
+//@endrust
+//@rust
 ecs_component_desc_t desc = {0};
 desc.type.size = 8;
 desc.type.alignment = 8;
@@ -1371,8 +1390,8 @@ e.add(comp);
 
 // Get component
 const void *ptr = e.get(comp);
-```
-```cpp
+//@endrust
+//@rust
 ecs_component_desc_t desc = {0};
 desc.entity = world.entity("MyComponent");
 desc.type.size = 8;
@@ -1386,8 +1405,8 @@ e.add(comp);
 
 // Get component
 const void *ptr = e.get(comp);
-```
-```cpp
+//@endrust
+//@rust
 flecs::entity pos = world.component<Position>();
 
 // Create entity with Position
@@ -1397,22 +1416,22 @@ flecs::entity e = world.entity().add<Position>();
 pos.destruct();
 
 // Position is removed from e
-```
-```cpp
+//@endrust
+//@rust
 // Set singleton
 world.set<TimeOfDay>({ 0.5 });
 
 // Get singleton
 const TimeOfDay *t = world.get<TimeOfDay>();
-```
-```cpp
+//@endrust
+//@rust
 // Set singleton
 world.set<TimeOfDay>({ 0.5 });
 
 // Equivalent to:
 world.component<TimeOfDay>().set(TimeOfDay{ 0.5 })
-```
-```cpp
+//@endrust
+//@rust
 // Register toggle-able component
 world.component<Position>().add(flecs::CanToggle);
 
@@ -1425,7 +1444,7 @@ e.is_enabled<Position>(); // False
 // Enable component
 e.enable<Position>();
 e.is_enabled<Position>()  // True
-```
+//@endrust
 
 */
 
@@ -1582,7 +1601,7 @@ fn flecs_entities_components_docs_compile_test() {
         fn module(world: &World) {
             world.module::<Movement>("Movement");
             // Define components, systems, triggers, ... as usual. They will be
-            // automatically created inside the scope of the module.
+            // letmatically created inside the scope of the module.
         }
     }
     let world = World::new();
@@ -1643,10 +1662,215 @@ fn flecs_entities_components_docs_compile_test() {
         .component::<Position>()
         .add_trait::<flecs::CanToggle>();
     let e = world.entity().set(Position { x: 10.0, y: 20.0 });
+
     // Disable component
     e.disable::<Position>();
     assert!(!e.is_enabled::<Position>()); // False
                                           // Enable component
     e.enable::<Position>();
     assert!(e.is_enabled::<Position>()); // True
+}
+
+fn flecs_docs_relationships_compile_test() {
+    let world = World::new();
+
+    let likes = world.entity();
+    let bob = world.entity();
+    let alice = world.entity();
+
+    // bob likes alice
+    bob.add_id((likes, alice));
+
+    // bob likes alice no more
+    bob.remove_id((likes, alice));
+
+    let bob = world.entity();
+    let eats = world.entity();
+    let apples = world.entity();
+    let pears = world.entity();
+    bob.add_id((eats, apples));
+    bob.add_id((eats, pears));
+    bob.has_id((eats, apples)); // true
+    bob.has_id((eats, pears)); // true
+
+    // Find all entities that eat apples
+    let q = world.query::<()>().expr("(Eats, Apples)").build();
+    // Find all entities that eat anything
+    let q = world.query::<()>().expr("(Eats, *)").build();
+    // With the query builder API:
+    let q = world.query::<()>().with_id((eats, apples)).build();
+    // Or when using pair types, when both relationship & target are compile time types, they can be represented as a tuple:
+    let q = world.new_query::<&(Eats, Apples)>();
+
+    bob.has_id((eats, apples));
+
+    bob.has_id((eats, flecs::Wildcard::ID));
+
+    let parent = bob.parent();
+
+    let food = bob.target_id(eats, 0); // first target
+
+    let mut index = 0;
+    while bob.target_id(eats, index).is_some() {
+        index += 1;
+    }
+
+    let parent = bob.target_for::<Position>(flecs::ChildOf::ID);
+
+    bob.each_component(|id| {
+        if id.is_pair() {
+            let first = id.first_id();
+            let second = id.second_id();
+        }
+    });
+
+    world
+        .query::<()>()
+        .with_id((eats, apples))
+        .build()
+        .each_entity(|e, _| {
+            // Iterate as usual
+        });
+
+    world
+        .query::<()>()
+        .with_id((eats, flecs::Wildcard::ID))
+        .build()
+        .each_iter(|it, i, _| {
+            let food = it.pair(0).unwrap().second_id(); // Apples, ...
+            let e = it.entity(i);
+            // Iterate as usual
+        });
+
+    let parent = world.entity();
+
+    parent.each_child(|child| {
+        // ...
+    });
+
+    // Empty types (types without members) are letmatically interpreted as tags
+    #[derive(Component)]
+    struct Begin;
+    #[derive(Component)]
+    struct End;
+    // Tags
+    let likes = world.entity();
+    let apples = world.entity();
+    let e = world.entity();
+    // Both likes and Apples are tags, so (likes, Apples) is a tag
+    e.add_id((likes, apples));
+    // Eats is a type and Apples is a tag, so (Eats, Apples) has type Eats
+    e.set_pair::<Eats, Apples>(Eats { amount: 1 });
+    // Begin is a tags and Position is a type, so (Begin, Position) has type Position
+    e.set_pair::<Begin, Position>(Position { x: 10.0, y: 20.0 });
+    e.set_pair::<End, Position>(Position { x: 100.0, y: 20.0 }); // Same for End
+                                                                 // ChildOf has the Tag property, so even though Position is a type, the pair
+                                                                 // does not assume the Position type
+    e.add_id((flecs::ChildOf::ID, world.component_id::<Position>()));
+    e.add::<(flecs::ChildOf, Position)>();
+
+    let e = world.entity();
+    let first = world.entity();
+    let second = world.entity();
+    let third = world.entity();
+    // Add component position 3 times, for 3 different objects
+    e.set_first::<Position>(Position { x: 1.0, y: 2.0 }, first);
+    e.set_first::<Position>(Position { x: 3.0, y: 4.0 }, second);
+    e.set_first::<Position>(Position { x: 5.0, y: 6.0 }, third);
+
+    let q = world
+        .query::<()>()
+        .with_id((likes, flecs::Wildcard::ID))
+        .build();
+    q.each_iter(|it, i, _| {
+        println!(
+            "entity {} has relationship {} {}",
+            it.entity(i),
+            it.pair(0).unwrap().first_id().name(),
+            it.pair(0).unwrap().second_id().name()
+        );
+    });
+
+    let q = world.query::<()>().expr("(likes, *)").build();
+
+    // bob eats apples and pears
+    let bob = world.entity();
+    let eats = world.entity();
+    let apples = world.entity();
+    let pears = world.entity();
+    bob.add_id((eats, apples));
+    bob.add_id((eats, pears));
+    // Find all (Eats, *) relationships in bob's type
+    bob.each_pair(eats, flecs::Wildcard::ID, |id| {
+        println!("bob eats {}", id.second_id().name());
+    });
+    // For target wildcard pairs, each_target_id() can be used:
+    bob.each_target_id(eats, |entity| {
+        println!("bob eats {}", entity.name());
+    });
+
+    let apple = world.entity();
+    let fruit = world.entity();
+    apple.add_id((flecs::IsA::ID, fruit));
+
+    apple.is_a_id(fruit);
+
+    let granny_smith = world.entity();
+    granny_smith.add_id((flecs::IsA::ID, apple));
+
+    let spaceship = world
+        .entity()
+        .set(MaxSpeed { value: 100 })
+        .set(Defense { value: 50 });
+    let frigate = world
+        .entity()
+        .is_a_id(spaceship) // shorthand for .add(flecs::IsA, Spaceship)
+        .set(Defense { value: 75 });
+
+    // Obtain the inherited component from Spaceship
+    let is_100 = frigate.map::<&mut MaxSpeed, _>(|v| {
+        v.value == 100 // True
+    });
+
+    // Obtain the overridden component from Frigate
+    let is_75 = frigate.map::<&mut Defense, _>(|v| {
+        v.value == 75 // True
+    });
+
+    let fast_frigate = world.entity().is_a_id(frigate).set(MaxSpeed { value: 200 });
+    // Obtain the overridden component from FastFrigate
+    let is_200 = fast_frigate.map::<&mut MaxSpeed, _>(|v| {
+        v.value == 200 // True
+    });
+    // Obtain the inherited component from Frigate
+    let is_75 = fast_frigate.map::<&mut Defense, _>(|v| {
+        v.value == 75 // True
+    });
+
+    let spaceship = world.entity();
+    let cockpit = world.entity();
+    cockpit.add_id((flecs::ChildOf::ID, spaceship));
+
+    cockpit.child_of_id(spaceship);
+
+    let parent = world.entity_named("Parent");
+    let child = world.entity_named("Child").child_of_id(parent);
+    child == world.lookup("Parent::Child"); // true
+    child == parent.lookup("Child"); // true
+
+    let parent = world.entity();
+    let prev = world.set_scope_id(parent);
+    let child_a = world.entity();
+    let child_b = world.entity();
+    // Restore the previous scope
+    world.set_scope_id(prev);
+    child_a.has_id((flecs::ChildOf::ID, parent)); // true
+    child_b.has_id((flecs::ChildOf::ID, parent)); // true
+
+    let parent = world.entity().run_in_scope(|| {
+        let child_a = world.entity();
+        let child_b = world.entity();
+        child_a.has_id((flecs::ChildOf::ID, parent)); // true
+        child_b.has_id((flecs::ChildOf::ID, parent)); // true
+    });
 }
