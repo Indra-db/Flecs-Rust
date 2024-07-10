@@ -37,6 +37,7 @@ where
     ///
     /// # See also
     ///
+    /// * [`World::each()`]
     /// * C++ API: `iterable::each`
     #[doc(alias = "iterable::each")]
     fn each(&self, mut func: impl FnMut(T::TupleType<'_>)) {
@@ -76,6 +77,7 @@ where
     ///
     /// # See also
     ///
+    /// * [`World::each_entity()`]
     /// * C++ API: `iterable::each`
     #[doc(alias = "iterable::each")]
     fn each_entity(&self, mut func: impl FnMut(EntityView, T::TupleType<'_>)) {

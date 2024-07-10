@@ -9,7 +9,12 @@ use sys::ecs_get_alive;
 use crate::core::*;
 use crate::sys;
 
-/// Queries are used to iterate over entities that match a certain filter of components.
+/// Queries quickly find entities that match a list of conditions, and are at the core of many Flecs features like [systems], [observers], [tooling] and serialization.
+///
+/// Flecs queries can do anything from returning entities that match a simple list of components, to matching complex patterns against entity graphs.
+///
+/// See the [Flecs Query Manual] for in-depth documentation of queries.
+///
 /// They can be either:
 /// - cached, which means they are stored in the world and can be retrieved by name or entity.
 ///   They don't go out of scope until explicitly destroyed.
@@ -19,9 +24,26 @@ use crate::sys;
 ///
 /// # Safety
 ///
-/// Queries are reference counter and won't cause any lifetime issues nor dangling references.
+/// Queries are reference counted and won't cause any lifetime issues or dangling references.
 /// You need to ensure that you're holding no query objects anymore when the world is destroyed.
 /// This will otherwise panic.
+///
+/// # See also
+///
+/// * [`QueryBuilder`]
+/// * [`Observer::query()`]
+/// * [`System::query()`](crate::addons::system::System::query)
+/// * [`World::each()`]
+/// * [`World::each_entity()`]
+/// * [`World::new_query()`]
+/// * [`World::new_query_named()`]
+/// * [`World::query()`]
+/// * [`World::query_named()`]
+///
+/// [systems]: crate::addons::system
+/// [observers]: Observer
+/// [tooling]: flecs::rest
+/// [Flecs Query Manual]: https://www.flecs.dev/flecs/md_docs_2Queries.html
 pub struct Query<T>
 where
     T: QueryTuple,
@@ -220,8 +242,8 @@ where
         }
     }
 
-    /// Free the query
-    /// Destroy a query. This operation destroys a query and its resources.
+    /// Destroy a query and its resources.
+    ///
     /// If the query is used as the parent of subqueries, those subqueries will be
     /// orphaned and must be deinitialized as well.
     ///
@@ -250,7 +272,7 @@ where
         }
     }
 
-    pub fn reference_count(&self) -> i32 {
+    pub(crate) fn reference_count(&self) -> i32 {
         unsafe { sys::flecs_poly_refcount(self.query.as_ptr() as *mut c_void) }
     }
 
@@ -268,19 +290,23 @@ where
         unsafe { sys::ecs_query_iter(self.world_ptr(), self.query.as_ptr()) }
     }
 
-    ///  Returns whether the query data changed since the last iteration.
-    ///  This operation must be invoked before obtaining the iterator, as this will
-    ///  reset the changed state. The operation will return true after:
+    /// Returns whether the query data changed since the last iteration.
+    ///
+    /// This operation must be invoked before obtaining the iterator, as this will
+    /// reset the changed state.
+    ///
+    /// # Returns
+    ///
+    /// The operation will return `true` after:
     /// - new entities have been matched with
     /// - matched entities were deleted
     /// - matched components were changed
     ///
-    /// # Returns
-    ///
-    /// return true if entities changed, otherwise false.
+    /// Otherwise, it will return `false`.
     ///
     /// # See also
     ///
+    /// * [`TableIter::is_changed()`]
     /// * C++ API: `query_base::changed`
     #[doc(alias = "query_base::changed")]
     pub fn is_changed(&self) -> bool {
@@ -328,9 +354,11 @@ where
             std::ptr::null_mut()
         }
     }
+}
 
-    /// get the raw `c_ptr` of the query
-    pub fn c_ptr(&self) -> NonNull<sys::ecs_query_t> {
-        self.query
+impl<T: QueryTuple> From<&Query<T>> for NonNull<sys::ecs_query_t> {
+    #[inline]
+    fn from(q: &Query<T>) -> Self {
+        q.query
     }
 }

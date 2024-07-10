@@ -712,6 +712,7 @@ where
     ///
     /// # See also
     ///
+    /// * [`Query::is_changed()`]
     /// * C++ API: `iter::changed`
     #[doc(alias = "iter::changed")]
     pub fn is_changed(&mut self) -> bool {
