@@ -4,7 +4,6 @@ use std::ops::Deref;
 use crate::core::*;
 use crate::sys;
 
-#[doc(hidden)]
 pub trait FlecsTrait {}
 
 macro_rules! create_pre_registered_component {
@@ -174,6 +173,9 @@ create_pre_registered_component!(Traversable, ECS_TRAVERSABLE);
 create_pre_registered_component!(With, ECS_WITH);
 create_pre_registered_component!(OneOf, ECS_ONE_OF);
 create_pre_registered_component!(CanToggle, ECS_CAN_TOGGLE);
+create_pre_registered_component!(Trait, ECS_TRAIT);
+create_pre_registered_component!(Relationship, ECS_RELATIONSHIP);
+create_pre_registered_component!(Target, ECS_TARGET);
 
 // OnInstantiate traits
 create_pre_registered_component!(OnInstantiate, ECS_ON_INSTANTIATE);

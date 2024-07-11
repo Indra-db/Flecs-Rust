@@ -48,7 +48,7 @@ struct Tag;
 #[derive(Component, Default)]
 struct Speed;
 
-#[derive(Component, Default)]
+#[derive(Component, Default, Clone, Copy, PartialEq)]
 struct Mass {
     value: f32,
 }
@@ -128,6 +128,12 @@ struct Mesh;
 struct Health {
     value: u32,
 }
+
+#[derive(Component, Default)]
+struct Archer;
+
+#[derive(Component, Default)]
+struct Node;
 
 fn flecs_system_docs_compile_test() {
     let world = World::new();
@@ -376,13 +382,13 @@ fn flecs_system_docs_compile_test() {
 
     //TODO
 
-    //     //@rust
+    //
     // // Pause timer
     // tick_source.stop();
 
     // // Resume timer
     // tick_source.start();
-    // //@endrust
+    //
 }
 
 fn flecs_query_docs_compile_test() {
@@ -1039,7 +1045,7 @@ fn flecs_query_docs_compile_test() {
     };
 
     // Register 'Movement' component and reflection data
-    world.component<Movement>()
+    world.component::<Movement>()
       .member("value", &Movement::value);
 
     // Create two entities for the direction
@@ -1139,7 +1145,7 @@ fn flecs_query_docs_compile_test() {
 
     // Iterate as usual
 
-    // Create LocatedIn relationship with transitive property
+    // Create locatedin relationship with transitive property
     #[derive(Component)]
     struct LocatedIn;
 
@@ -1159,9 +1165,9 @@ fn flecs_query_docs_compile_test() {
     // Iterate as usual
 
     // Matches:
-    //  - ManHattan (Place = NewYork)
-    //  - CentralPark (Place = ManHattan, NewYork)
-    //  - bob (Place = CentralPark, ManHattan, NewYork)
+    //  - ManHattan (Place = newyork)
+    //  - CentralPark (Place = ManHattan, newyork)
+    //  - bob (Place = CentralPark, ManHattan, newyork)
     let q = world
         .query::<()>()
         .with::<LocatedIn>()
@@ -1171,13 +1177,13 @@ fn flecs_query_docs_compile_test() {
     #[derive(Component)]
     struct City;
 
-    // Add City property to NewYork
+    // Add City property to newyork
     new_york.add::<City>();
 
     // Matches:
-    //  - ManHattan (Place = NewYork)
-    //  - CentralPark (Place = NewYork)
-    //  - bob (Place = NewYork)
+    //  - ManHattan (Place = newyork)
+    //  - CentralPark (Place = newyork)
+    //  - bob (Place = newyork)
 
     let q = world
         .query::<()>()
@@ -1195,281 +1201,6 @@ fn flecs_query_docs_compile_test() {
 
     // Iterate as usual
 }
-
-/*
-//@rust
-flecs::entity my_entity = world.entity();
-//@endrust
-//@rust
-my_entity.destruct();
-//@endrust
-//@rust
-flecs::entity e1 = world.entity(); // Returns 500v0
-e1.destruct(); // Recycles 500
-
-flecs::entity e2 = world.entity(); // Returns 500v1
-
-e1.add<Npc>(); // Fails, 500v0 is not alive
-e2.add<Npc>(); // OK, 500v1 is alive
-//@endrust
-//@rust
-flecs::entity e1 = world.entity();
-e1.destruct();
-e1.destruct(); // OK: post condition is satisfied
-//@endrust
-//@rust
-my_entity.clear();
-//@endrust
-//@rust
-flecs::entity e1 = world.entity();
-flecs::entity e2 = world.entity();
-e1.destruct();
-
-e1.is_alive(); // False
-e2.is_alive(); // True
-//@endrust
-//@rust
-flecs::entity e1 = world.entity();
-flecs::entity e2 = world.entity();
-e1.destruct();
-
-e1.is_valid(); // False
-world.entity(0).is_valid(); // False
-//@endrust
-//@rust
-flecs::entity e = world.make_alive(1000);
-//@endrust
-//@rust
-world.set_version(versioned_id);
-//@endrust
-//@rust
-world.set_entity_range(5000, 0);
-//@endrust
-//@rust
-world.set_entity_range(5000, 10000);
-//@endrust
-//@rust
-world.enable_range_check();
-//@endrust
-//@rust
-flecs::entity e = world.entity("MyEntity");
-
-if (e == world.lookup("MyEntity")) {
-    // true
-}
-
-std::cout << e.name() << std::endl;
-//@endrust
-//@rust
-flecs::entity p = world.entity("Parent");
-flecs::entity e = world.entity("Child").child_of(p);
-
-if (e == world.lookup("Parent::Child")) {
-    // true
-}
-//@endrust
-//@rust
-flecs::entity p = world.entity("Parent");
-flecs::entity e = world.entity("Child").child_of(p);
-
-if (e == p.lookup("Child")) {
-    // true
-}
-//@endrust
-//@rust
-flecs::entity p = world.entity("Parent");
-flecs::entity e = world.entity("Child").child_of(p);
-
-// Returns entity name, does not allocate
-std::cout << e.name() << std::endl; // Child
-
-// Returns entity path, does allocate
-std::cout << e.path() << std::endl; // Parent.Child
-//@endrust
-//@rust
-flecs::entity e1 = world.entity("Parent::Child");
-flecs::entity e2 = world.entity("Parent::Child");
-
-if (e1 == e2) {
-    // true
-}
-//@endrust
-//@rust
-flecs::entity e = world.entity("Foo");
-
-// Change name
-e.set_name("Bar");
-//@endrust
-//@rust
-flecs::entity ten = world.entity("10");
-flecs::entity twenty = world.entity("20");
-//@endrust
-//@rust
-flecs::entity e = world.entity();
-
-// Enable entity
-e.enable();
-
-// Disable entity
-e.disable();
-//@endrust
-//@rust
-// Three entities to disable
-flecs::entity e1 = world.entity();
-flecs::entity e2 = world.entity();
-flecs::entity e3 = world.entity();
-
-// Create prefab that has the three entities
-flecs::entity p = world.prefab();
-p.add(e1);
-p.add(e2);
-p.add(e3);
-
-// Disable entities
-p.disable();
-
-// Enable entities
-p.enable();
-//@endrust
-//@rust
-// Three entities to disable
-flecs::entity e1 = world.entity();
-flecs::entity e2 = world.entity();
-flecs::entity e3 = world.entity();
-
-// Create prefab hierarchy with the three entities
-flecs::entity p1 = world.prefab()
-    .add(e1);
-
-flecs::entity p2 = world.prefab()
-    .is_a(p1)
-    .add(e2)
-    .add(e3);
-
-// Disable e1, e2, e3
-p2.disable();
-
-// Enable e1
-p1.enable();
-//@endrust
-//@rust
-e.add(flecs::Disabled);
-//@endrust
-//@rust
-// Get the entity for the Position component
-flecs::entity pos = world.component<Position>();
-
-// Component entities have the Component component
-const flecs::Component *comp_data = pos.get<flecs::Component>();
-
-std::cout << "{size: " << comp_data->size << ", "
-          << comp_data->alignment << "}\n";
-//@endrust
-//@rust
-// Register a sparse component
-world.component<Position>().add(flecs::Sparse);
-//@endrust
-//@rust
-int main(int argc, char *argv[]) {
-    flecs::world world;
-
-    flecs::entity e1 = world.entity()
-        .set(Position{10, 20}) // Position registered here
-        .set(Velocity{1, 2}); // Velocity registered here
-
-    flecs::entity e1 = world.entity()
-        .set(Position{10, 20}) // Position already registered
-        .set(Velocity{1, 2}); // Velocity already registered
-}
-//@endrust
-//@rust
-world.component<Position>();
-//@endrust
-//@rust
-struct movement {
-    movement(flecs::world& world) {
-        world.component<Position>();
-        world.component<Velocity>();
-    }
-};
-
-int main(int argc, char *argv[]) {
-    flecs::world world;
-
-    world.import<movement>();
-}
-
-//@endrust
-//@rust
-ecs_component_desc_t desc = {0};
-desc.type.size = 8;
-desc.type.alignment = 8;
-flecs::entity_t comp = ecs_component_init(world, &desc);
-
-flecs::entity e = world.entity();
-
-// Add component
-e.add(comp);
-
-// Get component
-const void *ptr = e.get(comp);
-//@endrust
-//@rust
-ecs_component_desc_t desc = {0};
-desc.entity = world.entity("MyComponent");
-desc.type.size = 8;
-desc.type.alignment = 8;
-flecs::entity_t comp = ecs_component_init(world, &desc);
-
-flecs::entity e = world.entity();
-
-// Add component
-e.add(comp);
-
-// Get component
-const void *ptr = e.get(comp);
-//@endrust
-//@rust
-flecs::entity pos = world.component<Position>();
-
-// Create entity with Position
-flecs::entity e = world.entity().add<Position>();
-
-// Unregister the component
-pos.destruct();
-
-// Position is removed from e
-//@endrust
-//@rust
-// Set singleton
-world.set<TimeOfDay>({ 0.5 });
-
-// Get singleton
-const TimeOfDay *t = world.get<TimeOfDay>();
-//@endrust
-//@rust
-// Set singleton
-world.set<TimeOfDay>({ 0.5 });
-
-// Equivalent to:
-world.component<TimeOfDay>().set(TimeOfDay{ 0.5 })
-//@endrust
-//@rust
-// Register toggle-able component
-world.component<Position>().add(flecs::CanToggle);
-
-flecs::entity e = world.entity().set(Position{10, 20});
-
-// Disable component
-e.disable<Position>();
-e.is_enabled<Position>(); // False
-
-// Enable component
-e.enable<Position>();
-e.is_enabled<Position>()  // True
-//@endrust
-
-*/
 
 fn flecs_entities_components_docs_compile_test() {
     let world = World::new();
@@ -2164,7 +1895,7 @@ fn flecs_docs_quick_start_compile_test() {
         fn module(world: &World) {
             world.module::<MyModule>("MyModule");
             // Define components, systems, triggers, ... as usual. They will be
-            // automatically created inside the scope of the module.
+            // letmatically created inside the scope of the module.
         }
     }
 
@@ -2616,7 +2347,7 @@ fn flecs_docs_prefabs_compile_test() {
         .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
 
     // Create prefab
-    let spaceship = world.prefab().set_auto_override(Defense { value: 50 }); // Set & auto override Defense
+    let spaceship = world.prefab().set_auto_override(Defense { value: 50 }); // Set & let override Defense
 
     // Create prefab instance
     let inst = world.entity().is_a_id(spaceship);
@@ -2675,4 +2406,293 @@ fn flecs_docs_prefabs_compile_test() {
 
     // Lookup prefab handle
     let prefab = world.lookup("spaceship");
+}
+
+fn flecs_docs_component_traits_compile_test() {
+    let world = World::new();
+    let e = world.entity();
+    let parent = world.entity();
+    let archer = world.entity();
+
+    #[derive(Component)]
+    struct MyComponent {
+        e: Entity, // Not covered by cleanup traits
+    }
+
+    e.child_of_id(parent); // Covered by cleanup traits
+
+    world.remove_all_id(archer);
+
+    world.remove_all_id(archer);
+    world.remove_all_id((archer, flecs::Wildcard::ID));
+    world.remove_all_id((flecs::Wildcard::ID, archer));
+
+    // Remove Archer from entities when Archer is deleted
+    world
+        .component::<Archer>()
+        .add_trait::<(flecs::OnDelete, flecs::Remove)>();
+
+    let e = world.entity().add::<Archer>();
+
+    // This will remove Archer from e
+    world.component::<Archer>().destruct();
+
+    // Delete entities with Archer when Archer is deleted
+    world
+        .component::<Archer>()
+        .add_trait::<(flecs::OnDelete, flecs::Delete)>();
+
+    let e = world.entity().add::<Archer>();
+
+    // This will delete e
+    world.component::<Archer>().destruct();
+
+    // Delete children when deleting parent
+    world
+        .component::<flecs::ChildOf>()
+        .add_trait::<(flecs::OnDeleteTarget, flecs::Delete)>();
+
+    let p = world.entity();
+    let e = world.entity().add_first::<flecs::ChildOf>(p);
+
+    // This will delete both p and e
+    p.destruct();
+
+    world
+        .observer::<flecs::OnRemove, &Node>()
+        .each_entity(|e, node| {
+            // This observer will be invoked when a Node is removed
+        });
+
+    let p = world.entity().add::<Node>();
+    let c = world.entity().add::<Node>().child_of_id(p);
+
+    {
+        #[derive(Component)]
+        struct Serializable;
+
+        world
+            .component::<Serializable>()
+            .add_trait::<flecs::Trait>();
+    }
+
+    {
+        #[derive(Component)]
+        struct Likes;
+        #[derive(Component)]
+        struct Apples;
+
+        world
+            .component::<Likes>()
+            .add_trait::<flecs::Relationship>();
+
+        let e = world
+            .entity()
+            .add::<Likes>() // Panic, 'Likes' is not used as relationship
+            .add::<(Apples, Likes)>() // Panic, 'Likes' is not used as relationship, but as target
+            .add::<(Likes, Apples)>(); // OK
+    }
+    {
+        #[derive(Component)]
+        struct Likes;
+        #[derive(Component)]
+        struct Loves;
+
+        world
+            .component::<Likes>()
+            .add_trait::<flecs::Relationship>();
+
+        // Even though Likes is marked as relationship and used as target here, this
+        // won't panic as With is marked as trait.
+        world
+            .component::<Loves>()
+            .add_trait::<(flecs::With, Likes)>();
+    }
+
+    #[derive(Component)]
+    struct Likes;
+    #[derive(Component)]
+    struct Apples;
+
+    world.component::<Apples>().add_trait::<flecs::Target>();
+
+    let e = world
+        .entity()
+        .add::<Apples>() // Panic, 'Apples' is not used as target
+        .add::<(Apples, Likes)>() // Panic, 'Apples' is not used as target, but as relationship
+        .add::<(Likes, Apples)>(); // OK
+
+    #[derive(Component)]
+    struct Serializable; // Tag, contains no data
+
+    impl flecs::FlecsTrait for Serializable {}
+
+    #[derive(Component)]
+    struct Position {
+        x: f32,
+        y: f32,
+    }
+
+    let e = world
+        .entity()
+        .set(Position { x: 10.0, y: 20.9 })
+        .add_trait::<(Serializable, Position)>(); // Because Serializable is a tag, the pair
+                                                  // has a value of type Position
+
+    // Gets value from Position component
+    e.get::<&Position>(|pos| {
+        println!("Position: ({}, {})", pos.x, pos.y);
+    });
+    // Gets (unintended) value from (Serializable, Position) pair
+    e.get::<&(Serializable, Position)>(|pos| {
+        println!("Serializable Position: ({}, {})", pos.x, pos.y);
+    });
+
+    // This is currently not supported in Rust due to safety concerns.
+
+    let e = world.entity().add_trait::<flecs::Final>();
+
+    let i = world.entity().is_a_id(e); // not allowed
+
+    // Register component with trait. Optional, since this is the default behavior.
+    world
+        .component::<Mass>()
+        .add_trait::<(flecs::OnInstantiate, flecs::Override)>();
+
+    let base = world.entity().set(Mass { value: 100.0 });
+    let inst = world.entity().is_a_id(base); // Mass is copied to inst
+
+    assert!(inst.owns::<Mass>());
+    assert!(base.cloned::<&Mass>() != inst.cloned::<&Mass>());
+
+    // Register component with trait
+    world
+        .component::<Mass>()
+        .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
+
+    let base = world.entity().set(Mass { value: 100.0 });
+    let inst = world.entity().is_a_id(base);
+
+    assert!(inst.has::<Mass>());
+    assert!(!inst.owns::<Mass>());
+    assert!(base.cloned::<&Mass>() != inst.cloned::<&Mass>());
+
+    // Register component with trait
+    world
+        .component::<Mass>()
+        .add_trait::<(flecs::OnInstantiate, flecs::DontInherit)>();
+
+    let base = world.entity().set(Mass { value: 100.0 });
+    let inst = world.entity().is_a_id(base);
+
+    assert!(!inst.has::<Mass>());
+    assert!(!inst.owns::<Mass>());
+    assert!(!inst.try_get::<&Mass>(|mass| {}));
+
+    let locatedin = world.entity();
+    let manhattan = world.entity();
+    let newyork = world.entity();
+    let usa = world.entity();
+
+    manhattan.add_id((locatedin, newyork));
+    newyork.add_id((locatedin, usa));
+
+    locatedin.add_trait::<flecs::Transitive>();
+
+    let parent_a = world.entity();
+    let parent_b = world.entity();
+    e.child_of_id(parent_a);
+    e.child_of_id(parent_b); // replaces (ChildOf, parent_a)
+
+    let married_to = world.entity().add_trait::<flecs::Exclusive>();
+
+    world
+        .component::<Position>()
+        .add_trait::<flecs::CanToggle>();
+
+    let e = world.entity().set(Position { x: 10.0, y: 20.0 });
+
+    e.disable::<Position>(); // Disable component
+    assert!(!e.is_enabled::<Position>());
+
+    e.enable::<Position>(); // Enable component
+    assert!(e.is_enabled::<Position>());
+
+    let movement = world.entity().add_trait::<flecs::Union>();
+    let walking = world.entity();
+    let running = world.entity();
+
+    let e = world.entity().add_id((movement, running));
+    e.add_id((movement, walking)); // replaces (Movement, Running)
+
+    world.component::<Position>().add_trait::<flecs::Sparse>();
+
+    let married_to = world.entity().add_trait::<flecs::Symmetric>();
+    let bob = world.entity();
+    let alice = world.entity();
+    bob.add_id((married_to, alice)); // Also adds (MarriedTo, Bob) to Alice
+
+    let responsibility = world.entity();
+    let power = world.entity().add_first::<flecs::With>(responsibility);
+
+    // Create new entity that has both Power and Responsibility
+    let e = world.entity().add_id(power);
+
+    let likes = world.entity();
+    let loves = world.entity().add_trait::<(flecs::With, Likes)>();
+    let pears = world.entity();
+
+    // Create new entity with both (Loves, Pears) and (Likes, Pears)
+    let e = world.entity().add_id((loves, pears));
+
+    // Enforce that target of relationship is child of Food
+    let food = world.entity().add_trait::<flecs::OneOf>();
+    let apples = world.entity().child_of_id(food);
+    let fork = world.entity();
+
+    // This is ok, Apples is a child of Food
+    let a = world.entity().add_id((food, apples));
+
+    // This is not ok, Fork is not a child of Food
+    let b = world.entity().add_id((food, fork));
+
+    // Enforce that target of relationship is child of Food
+    let food = world.entity();
+    let eats = world.entity().add_first::<flecs::OneOf>(food);
+    let apples = world.entity().child_of_id(food);
+    let fork = world.entity();
+
+    // This is ok, Apples is a child of Food
+    let a = world.entity().add_id((eats, apples));
+
+    // This is not ok, Fork is not a child of Food
+    let b = world.entity().add_id((eats, fork));
+}
+
+// app.world.set(flecs::rest::Rest::default());
+// // enable stats for flecs (system, pipeline, etc)
+// app.world.import::<stats::Stats>();
+fn flecs_docs_remote_api_compile_test() {
+    let world = World::new();
+
+    // Optional, gather statistics for explorer
+    world.import::<stats::Stats>();
+    // Creates REST server on default port (27750)
+    world.set(flecs::rest::Rest::default());
+    // Runs the system serving up REST requests
+    while world.progress() {}
+
+    world
+        .app()
+        // Optional, gather statistics for explorer
+        .enable_stats(true)
+        .enable_rest(0)
+        .run();
+
+    // Optional, gather statistics for explorer
+    world.import::<stats::Stats>();
+    // Creates REST server on default port (27750)
+    world.set(flecs::rest::Rest::default());
+    // Runs the system serving up REST requests
+    while world.progress() {}
 }
