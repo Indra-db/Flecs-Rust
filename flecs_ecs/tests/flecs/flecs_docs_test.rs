@@ -4,6 +4,9 @@
 #![allow(unused_variables)]
 #![allow(clippy::print_stdout)]
 #![allow(unused_must_use)]
+#![allow(path_statements)]
+#![allow(clippy::no_effect)]
+#![allow(clippy::if_same_then_else)]
 use std::os::raw::c_void;
 
 use flecs_ecs::macros::*;
@@ -12,14 +15,14 @@ use flecs_ecs::sys;
 
 #[derive(Component, Default)]
 struct Position {
-    x: f32,
-    y: f32,
+    pub x: f32,
+    pub y: f32,
 }
 
 #[derive(Component, Default)]
 struct Velocity {
-    x: f32,
-    y: f32,
+    pub x: f32,
+    pub y: f32,
 }
 
 #[derive(Component, Default)]
@@ -105,6 +108,21 @@ struct MaxSpeed {
 struct Defense {
     value: u32,
 }
+
+#[derive(Component, Default)]
+struct Serializable;
+
+#[derive(Component, Default)]
+struct Gravity {
+    x: i32,
+    y: i32,
+}
+
+#[derive(Component, Default)]
+struct Transform;
+
+#[derive(Component, Default)]
+struct Mesh;
 
 fn flecs_system_docs_compile_test() {
     let world = World::new();
@@ -1873,4 +1891,611 @@ fn flecs_docs_relationships_compile_test() {
         child_a.has_id((flecs::ChildOf::ID, parent)); // true
         child_b.has_id((flecs::ChildOf::ID, parent)); // true
     });
+}
+
+fn flecs_docs_quick_start_compile_test() {
+    let world = World::new();
+    let eats = world.entity();
+    let apples = world.entity();
+    let pears = world.entity();
+    let grows = world.entity();
+
+    let world = World::new();
+
+    // Do the ECS stuff
+
+    let e = world.entity();
+    e.is_alive(); // true!
+
+    e.destruct();
+    e.is_alive(); // false!
+
+    let e = world.entity_named("bob");
+
+    println!("Entity name: {}", e.name());
+
+    let e = world.lookup("bob");
+
+    let e = world.entity();
+
+    // Add a component. This creates the component in the ECS storage, but does not
+    // assign it with a value.
+    e.add::<Velocity>();
+
+    // Set the value for the Position & Velocity components. A component will be
+    // added if the entity doesn't have it yet.
+    e.set(Position { x: 10.0, y: 20.0 })
+        .set(Velocity { x: 1.0, y: 2.0 });
+
+    // Get a component
+    e.get::<&Position>(|p| {
+        println!("Position: ({}, {})", p.x, p.y);
+    });
+
+    // Remove component
+    e.remove::<Position>();
+
+    //Rust applications can use the `world::entity_from` function.
+
+    let pos_e = world.entity_from::<Position>();
+    println!("Name: {}", pos_e.name()); // outputs 'Name: Position'
+
+    // It's possible to add components like you would for any entity
+    pos_e.add::<Serializable>();
+
+    let pos_e = world.entity_from::<Position>();
+
+    pos_e.get::<&flecs::Component>(|c| {
+        println!("Component size: {}", c.size);
+    });
+
+    // Option 1: create Tag as empty struct
+    #[derive(Component)]
+    struct Enemy;
+
+    // Create entity, add Enemy tag
+    let e = world.entity().add::<Enemy>();
+    e.has::<Enemy>(); // true!
+
+    e.remove::<Enemy>();
+    e.has::<Enemy>(); // false!
+
+    // Option 2: create Tag as entity
+    let enemy = world.entity();
+
+    // Create entity, add Enemy tag
+    let e = world.entity().add_id(enemy);
+    e.has_id(enemy); // true!
+
+    e.remove_id(enemy);
+    e.has_id(enemy); // false!
+
+    // Create Likes relationship as empty type (tag)
+    #[derive(Component)]
+    struct Likes;
+
+    // Create a small graph with two entities that like each other
+    let bob = world.entity();
+    let alice = world.entity();
+
+    bob.add_first::<Likes>(alice); // bob likes alice
+    alice.add_first::<Likes>(bob); // alice likes bob
+    bob.has_first::<Likes>(alice); // true!
+
+    bob.remove_first::<Likes>(alice);
+    bob.has_first::<Likes>(alice); // false!
+
+    let id = world.id_first::<Likes>(bob);
+
+    let id = world.id_from::<(Likes, Apples)>();
+    if id.is_pair() {
+        let relationship = id.first_id();
+        let target = id.second_id();
+    }
+
+    let bob = world.entity();
+    bob.add_id((eats, apples));
+    bob.add_id((eats, pears));
+    bob.add_id((grows, pears));
+
+    bob.has_id((eats, apples)); // true!
+    bob.has_id((eats, pears)); // true!
+    bob.has_id((grows, pears)); // true!
+
+    let alice = world.entity().add_first::<Likes>(bob);
+    let o = alice.target::<Likes>(0); // Returns bob
+
+    let parent = world.entity();
+    let child = world.entity().child_of_id(parent);
+
+    // Deleting the parent also deletes its children
+    parent.destruct();
+
+    let parent = world.entity_named("parent");
+    let child = world.entity_named("child").child_of_id(parent);
+    println!("Child path: {}", child.path().unwrap()); // output: 'parent::child'
+
+    world.lookup("parent::child"); // returns child
+    parent.lookup("child"); // returns child
+
+    let q = world
+        .query::<(&Position, &mut Position)>()
+        .term_at(1)
+        .parent()
+        .cascade()
+        .build();
+
+    q.each(|(p, p_parent)| {
+        // Do the thing
+    });
+
+    let e = world.entity().add::<Position>().add::<Velocity>();
+
+    println!("Components: {}", e.archetype().to_string().unwrap()); // output: 'Position,Velocity'
+
+    e.each_component(|id| {
+        if id == world.component_id::<Position>() {
+            // Found Position component!
+        }
+    });
+
+    // Set singleton component
+    world.set(Gravity { x: 10, y: 20 });
+
+    // Get singleton component
+    world.get::<&Gravity>(|g| {
+        println!("Gravity: {}, {}", g.x, g.y);
+    });
+
+    let grav_e = world.entity_from::<Gravity>();
+
+    grav_e.set(Gravity { x: 10, y: 20 });
+
+    grav_e.get::<&Gravity>(|g| {
+        println!("Gravity: {}, {}", g.x, g.y);
+    });
+
+    world
+        .query::<(&Velocity, &Gravity)>()
+        .term_at(1)
+        .singleton()
+        .build();
+
+    // For simple queries the world::each function can be used
+    world.each::<(&mut Position, &Velocity)>(|(p, v)| {
+        // EntityView argument is optional, use each_entity to get it
+        p.x += v.x;
+        p.y += v.y;
+    });
+
+    // More complex queries can first be created, then iterated
+    let q = world
+        .query::<&Position>()
+        .with_id((flecs::ChildOf::ID, parent))
+        .build();
+
+    // Option 1: the each() callback iterates over each entity
+    q.each_entity(|e, p| {
+        println!("{}: ({}, {})", e.name(), p.x, p.y);
+    });
+
+    // Option 2: the run() callback offers more control over the iteration
+    q.run(|mut it| {
+        while it.next() {
+            let p = it.field::<Position>(0).unwrap();
+
+            for i in it.iter() {
+                println!("{}: ({}, {})", it.entity(i).name(), p[i].x, p[i].y);
+            }
+        }
+    });
+
+    let q = world
+        .query::<()>()
+        .with::<(flecs::ChildOf, flecs::Wildcard)>()
+        .with::<Position>()
+        .set_oper(OperKind::Not)
+        .build();
+
+    // Iteration code is the same
+
+    // Use each_entity() function that iterates each individual entity
+    let move_sys = world
+        .system::<(&mut Position, &Velocity)>()
+        .each_iter(|it, i, (p, v)| {
+            p.x += v.x * it.delta_time();
+            p.y += v.y * it.delta_time();
+        });
+
+    // Just like with queries, systems have both the run() and
+    // each() methods to iterate entities.
+
+    move_sys.run();
+
+    println!("System: {}", move_sys.name());
+    move_sys.add::<flecs::pipeline::OnUpdate>();
+    move_sys.destruct();
+
+    flecs::pipeline::OnLoad;
+    flecs::pipeline::PostLoad;
+    flecs::pipeline::PreUpdate;
+    flecs::pipeline::OnUpdate;
+    flecs::pipeline::OnValidate;
+    flecs::pipeline::PostUpdate;
+    flecs::pipeline::PreStore;
+    flecs::pipeline::OnStore;
+
+    world
+        .system_named::<(&mut Position, &Velocity)>("Move")
+        .kind::<flecs::pipeline::OnUpdate>()
+        .each(|(p, v)| {});
+    world
+        .system_named::<(&mut Position, &Transform)>("Transform")
+        .kind::<flecs::pipeline::PostUpdate>()
+        .each(|(p, t)| {});
+    world
+        .system_named::<(&Transform, &mut Mesh)>("Render")
+        .kind::<flecs::pipeline::OnStore>()
+        .each(|(t, m)| {});
+
+    world.progress();
+
+    move_sys.add::<flecs::pipeline::OnUpdate>();
+    move_sys.remove::<flecs::pipeline::PostUpdate>();
+
+    world
+        .observer_named::<flecs::OnSet, (&Position, &Velocity)>("OnSetPosition")
+        .each(|(p, v)| {}); // Callback code is same as system
+
+    let e = world.entity(); // Doesn't invoke the observer
+    e.set(Position { x: 10.0, y: 20.0 }); // Doesn't invoke the observer
+    e.set(Velocity { x: 1.0, y: 2.0 }); // Invokes the observer
+    e.set(Position { x: 30.0, y: 40.0 }); // Invokes the observer
+
+    #[derive(Component)]
+    struct MyModule;
+
+    impl Module for MyModule {
+        fn module(world: &World) {
+            world.module::<MyModule>("MyModule");
+            // Define components, systems, triggers, ... as usual. They will be
+            // automatically created inside the scope of the module.
+        }
+    }
+
+    // Import code
+    world.import::<MyModule>();
+}
+
+fn flecs_docs_observers_compile_test() {
+    let world = World::new();
+
+    // Create observer that is invoked whenever Position is set
+    world
+        .observer::<flecs::OnSet, &Position>()
+        .each_entity(|e, p| {
+            println!("Position set: {{ {}, {} }}", p.x, p.y);
+        });
+
+    world.entity().set(Position { x: 10.0, y: 20.0 }); // Invokes observer
+
+    let e = world.entity();
+
+    // OnAdd observer fires
+    e.add::<Position>();
+
+    // OnAdd observer doesn't fire, entity already has component
+    e.add::<Position>();
+
+    let e = world.entity();
+
+    // OnAdd observer fires first, then OnSet observer fires
+    e.set(Position { x: 10.0, y: 20.0 });
+
+    // OnAdd observer doesn't fire, OnSet observer fires
+    e.set(Position { x: 10.0, y: 20.0 });
+
+    let p = world.prefab().set(Position { x: 10.0, y: 20.0 });
+
+    // Produces OnSet event for Position
+    let i = world.entity().is_a_id(p);
+
+    let p = world.prefab().set(Position { x: 10.0, y: 20.0 });
+
+    // Produces OnSet event for inherited Position component
+    let i = world.entity().is_a_id(p);
+
+    // Override component. Produces regular OnSet event.
+    i.set(Position { x: 20.0, y: 30.0 });
+
+    // Reexposes inherited component, produces OnSet event
+    i.remove::<Position>();
+
+    let p = world.prefab().set(Position { x: 10.0, y: 20.0 });
+
+    // Produces OnSet event for Position
+    let i = world.entity().is_a_id(p);
+
+    let e = world.entity().set(Position { x: 10.0, y: 20.0 });
+
+    // OnRemove observer fires
+    e.remove::<Position>();
+
+    // OnRemove observer doesn't fire, entity doesn't have the component
+    e.remove::<Position>();
+
+    // Observer that listens for both OnAdd and OnRemove events
+    world
+        .observer::<flecs::OnAdd, &Position>()
+        .add_event::<flecs::OnRemove>()
+        .each_entity(|e, p| {
+            // ...
+        });
+
+    world
+        .observer::<flecs::OnAdd, &Position>()
+        .add_event::<flecs::OnRemove>()
+        .each_iter(|it, i, p| {
+            if it.event() == flecs::OnAdd::ID {
+                // ...
+            } else if it.event() == flecs::OnRemove::ID {
+                // ...
+            }
+        });
+
+    // Observer that listens for all events for Position
+    world
+        .observer::<flecs::Wildcard, &Position>()
+        .each_entity(|e, p| {
+            // ...
+        });
+
+    // Observer that listens for entities with both Position and Velocity
+    world
+        .observer::<flecs::OnAdd, (&Position, &Velocity)>()
+        .each_entity(|e, (p, v)| {
+            // ...
+        });
+
+    let e = world.entity();
+
+    // Does not trigger "Position, Velocity" observer
+    e.add::<Position>();
+
+    // Entity now matches "Position, Velocity" query, triggers observer
+    e.add::<Velocity>();
+
+    // Observer that only triggers on Position, not on Velocity
+    world
+        .observer::<flecs::OnAdd, &Position>()
+        .with::<Velocity>()
+        .filter()
+        .each_entity(|e, p| {
+            // ...
+        });
+
+    let e = world.entity();
+
+    // Doesn't trigger, entity doesn't have Velocity
+    e.set(Position { x: 10.0, y: 20.0 });
+
+    // Doesn't trigger, Velocity is a filter term
+    e.set(Velocity { x: 1.0, y: 2.0 });
+
+    // Triggers, entity now matches observer query
+    e.set(Position { x: 20.0, y: 30.0 });
+
+    // OnSet observer with both component and tag
+    world
+        .observer::<flecs::OnSet, &Position>()
+        .with::<Npc>() // Tag
+        .each_entity(|e, p| {
+            // ...
+        });
+
+    let e = world.entity();
+
+    // Doesn't trigger, entity doesn't have Npc
+    e.set(Position { x: 10.0, y: 20.0 });
+
+    // Produces and OnAdd event & triggers observer
+    e.add::<Npc>();
+
+    // Produces an OnSet event & triggers observer
+    e.set(Position { x: 20.0, y: 30.0 });
+
+    // Observer with a Not term
+    world
+        .observer::<flecs::OnAdd, &Position>()
+        .without::<Velocity>()
+        .each_entity(|e, p| {
+            // ...
+        });
+
+    let e = world.entity();
+
+    // Triggers the observer
+    e.set(Position { x: 10.0, y: 20.0 });
+
+    // Doesn't trigger the observer, entity doesn't match the observer query
+    e.set(Velocity { x: 1.0, y: 2.0 });
+
+    // Triggers the observer, as the Velocity term was inverted to OnRemove
+    e.remove::<Velocity>();
+
+    // Monitor observer
+    world
+        .observer::<flecs::Monitor, (&Position, &Velocity)>()
+        .each_iter(|it, i, (p, v)| {
+            if it.event() == flecs::OnAdd::ID {
+                // Entity started matching query
+            } else if it.event() == flecs::OnRemove::ID {
+                // Entity stopped matching query
+            }
+        });
+
+    let e = world.entity();
+
+    // Doesn't trigger the monitor, entity doesn't match
+    e.set(Position { x: 10.0, y: 20.0 });
+
+    // Entity now matches, triggers monitor with OnAdd event
+    e.set(Velocity { x: 1.0, y: 2.0 });
+
+    // Entity no longer matches, triggers monitor with OnRemove event
+    e.remove::<Position>();
+
+    // Entity created before the observer
+    let e1 = world.entity().set(Position { x: 10.0, y: 20.0 });
+
+    // Yield existing observer
+    world
+        .observer::<flecs::OnAdd, (&Position, &Velocity)>()
+        .yield_existing()
+        .each_iter(|it, i, (p, v)| {
+            // ...
+        });
+
+    // Observer is invoked for e1
+
+    // Fires observer as usual
+    let e2 = world.entity().set(Position { x: 10.0, y: 20.0 });
+
+    // Entity used for fixed source
+    let game = world.entity().set(TimeOfDay { value: 0.0 });
+
+    // Observer with fixed source
+    world
+        .observer::<flecs::OnSet, &TimeOfDay>()
+        .term_at(0)
+        .set_src_id(game) // Match TimeOfDay on game
+        .each_iter(|it, i, time| {
+            // ...
+        });
+
+    // Triggers observer
+    game.set(TimeOfDay { value: 1.0 });
+
+    // Does not trigger observer
+    let e = world.entity().set(TimeOfDay { value: 0.0 });
+
+    world.set(TimeOfDay { value: 0.0 });
+
+    // Observer with singleton source
+    world
+        .observer::<flecs::OnSet, &TimeOfDay>()
+        .term_at(0)
+        .singleton()
+        .each_iter(|it, i, time| {
+            // ...
+        });
+
+    // Triggers observer
+    world.set(TimeOfDay { value: 1.0 });
+
+    // Does not trigger observer
+    let e = world.entity().set(TimeOfDay { value: 0.0 });
+
+    // Create an observer that matches OnSet(Position) events on self and a parent
+    world
+        .observer::<flecs::OnSet, &Position>()
+        .term_at(0)
+        .self_()
+        .up() // .trav(flecs::ChildOf) (default)
+        .each_entity(|e, p| {
+            // ...
+        });
+
+    let parent = world.entity();
+    let child = world.entity().child_of_id(parent);
+
+    // Invokes observer twice: once for the parent and once for the child
+    parent.set(Position { x: 10.0, y: 20.0 });
+
+    // Create an observer that matches OnAdd(Position) events on a parent
+    world
+        .observer::<flecs::OnAdd, &Position>()
+        .term_at(0)
+        .up() // .trav(flecs::ChildOf) (default)
+        .each_entity(|e, p| {
+            // ...
+        });
+
+    let parent = world.entity().set(Position { x: 10.0, y: 20.0 });
+
+    // Forwards OnAdd event for Position to child
+    let child = world.entity().child_of_id(parent);
+
+    // Create a custom event
+    #[derive(Component)]
+    struct Synchronized;
+
+    // Alternatively, an plain entity could also be used as event
+    // let Synchronized = world.entity();
+
+    // Create an observer that matches a custom event
+    world
+        .observer::<Synchronized, &Position>()
+        .each_entity(|e, p| {
+            // ...
+        });
+
+    let e = world.entity().set(Position { x: 10.0, y: 20.0 });
+
+    // Emit custom event
+    world
+        .event()
+        .add::<Position>()
+        .entity(e)
+        .emit(&Synchronized);
+
+    // Create a custom event
+    #[derive(Component)]
+    struct Clicked;
+
+    // Create entity
+    let widget = world.entity_named("widget");
+
+    // Create an entity observer
+    widget.observe::<Clicked>(|| {
+        // ...
+    });
+
+    // Emit entity event
+    widget.emit(&Clicked);
+
+    // Create a custom event
+    #[derive(Component)]
+    struct Resize {
+        width: u32,
+        height: u32,
+    }
+
+    // Create entity
+    let widget = world.entity_named("widget");
+
+    // Create an entity observer
+    widget.observe_payload::<&Resize>(|r| {
+        // ...
+    });
+
+    // Emit entity event
+    widget.emit(&Resize {
+        width: 100,
+        height: 200,
+    });
+
+    world
+        .observer::<flecs::OnSet, &Position>()
+        .each_entity(|e, p| {
+            // ...
+        });
+
+    // Observer is invoked as part of operation
+    e.set(Position { x: 10.0, y: 20.0 });
+
+    world.defer_begin();
+    e.set(Position { x: 20.0, y: 30.0 });
+    // Operation is delayed until here, observer is also invoked here
+    world.defer_end();
 }
