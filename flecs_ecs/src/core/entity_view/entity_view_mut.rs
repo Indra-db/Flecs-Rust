@@ -1,7 +1,6 @@
 use std::os::raw::c_void;
 
 use flecs_ecs::core::*;
-use sys::EcsIsA;
 
 use crate::sys;
 
@@ -90,25 +89,6 @@ impl<'a> EntityView<'a> {
     {
         let world = self.world;
         unsafe { self.add_id_unchecked(T::get_id(world)) }
-    }
-
-    /// Override a component on an entity.
-    /// This is useful if you want to override a component that is inherited by a prefab on a per entity basis
-    ///
-    /// # Panics
-    ///
-    /// Caller must ensure the entity has the component to override.
-    pub fn override_type<T>(self) -> Self
-    where
-        T: ComponentOrPairId,
-    {
-        let id = T::get_id(self.world);
-        let world_ptr = self.world.world_ptr_mut();
-
-        if unsafe { sys::ecs_get_target_for_id(world_ptr, *self.id, EcsIsA, id) } == 0 {
-            panic!("Entity does not have the component to override");
-        }
-        unsafe { self.add_id_unchecked(id) }
     }
 
     /// Adds a pair to the entity
