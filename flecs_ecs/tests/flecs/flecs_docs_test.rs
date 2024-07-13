@@ -317,11 +317,11 @@ fn flecs_system_docs_compile_test() {
     sys.enable_self();
     sys.add::<flecs::Disabled>();
 
-    world.system::<&Position>().write::<Position>().each(|p| {
+    world.system::<&Position>().write::<Transform>().each(|p| {
         // ...
     });
 
-    world.system::<&Position>().read::<Position>().each(|p| {
+    world.system::<&Position>().read::<Transform>().each(|p| {
         // ...
     });
 
