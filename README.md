@@ -228,7 +228,7 @@ This list contains projects that are not under NDA.
 
 If you want to showcase your project, feel free to open a PR to add it to the list.
 
-* [Hyperion]: It switched from using Envio ECS to Flecs, with great performance improvements.
+* [Hyperion]: It switched from using Envio ECS to Flecs, with great performance improvements. It's quest is to break the world record minecraft event of 10000 players.
     <img src="assets/hyperion.png" alt="hyperion" width="600"/>
 
 ## Acknowledgements
