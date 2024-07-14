@@ -185,6 +185,7 @@ Some of the features that make Flecs stand out are:
 * Singletons (Resources) are modelled as a component added to it's own entity.
 ```rust
 world.set(GameTime { delta_time: 0.0 });
+```
     * [Builder API]
     ```rust
     world.system::<&GameTime>()
@@ -227,8 +228,8 @@ This list contains projects that are not under NDA.
 
 If you want to showcase your project, feel free to open a PR to add it to the list.
 
-* [Hyperion]: It switches from using Envio ECS to Flecs, with great performance improvements.
-    ![Hyperion](assets/hyperion.png)
+* [Hyperion]: It switched from using Envio ECS to Flecs, with great performance improvements.
+    <img src="assets/hyperion.png" alt="hyperion" width="600"/>
 
 ## Acknowledgements
 
