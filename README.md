@@ -183,9 +183,9 @@ Some of the features that make Flecs stand out are:
     .each(|| { });
     ```
 * Singletons (Resources) are modelled as a component added to it's own entity.
-```rust
-world.set(GameTime { delta_time: 0.0 });
-```
+    ```rust
+    world.set(GameTime { delta_time: 0.0 });
+    ```
     * [Builder API]
     ```rust
     world.system::<&GameTime>()
