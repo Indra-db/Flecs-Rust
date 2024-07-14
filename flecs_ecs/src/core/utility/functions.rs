@@ -327,10 +327,10 @@ pub fn get_generation(entity: impl Into<Entity>) -> u32 {
 /// Retrieves a pointer to the data array for a specified query field.
 ///
 /// This function obtains a pointer to an array of data corresponding to the term in the query,
-/// based on the given index. The index starts from 1, representing the first term in the query.
+/// based on the given index. The index starts from 0, representing the first term in the query.
 ///
-/// For instance, given a query "Position, Velocity", invoking this function with index 1 would
-/// return a pointer to the "Position" data array, and index 2 would return the "Velocity" data array.
+/// For instance, given a query "Position, Velocity", invoking this function with index 0 would
+/// return a pointer to the "Position" data array, and index 1 would return the "Velocity" data array.
 ///
 /// If the specified field is not owned by the entity being iterated (e.g., a shared component from a prefab,
 /// a component from a parent, or a component from another entity), this function returns a direct pointer
@@ -348,7 +348,7 @@ pub fn get_generation(entity: impl Into<Entity>) -> u32 {
 /// # Arguments
 ///
 /// - `it`: A pointer to the iterator.
-/// - `index`: The index of the field in the iterator, starting from 1.
+/// - `index`: The index of the field in the iterator, starting from 0.
 ///
 /// # Returns
 ///
@@ -358,8 +358,8 @@ pub fn get_generation(entity: impl Into<Entity>) -> u32 {
 ///
 /// ```ignore
 /// // Assuming `it` is a valid iterator pointer obtained from a query.
-/// let position_ptr: *mut Position = ecs_field(it, 1);
-/// let velocity_ptr: *mut Velocity = ecs_field(it, 2);
+/// let position_ptr: *mut Position = ecs_field(it, 0);
+/// let velocity_ptr: *mut Velocity = ecs_field(it, 1);
 /// ```
 #[inline(always)]
 pub unsafe fn ecs_field<T: ComponentId>(it: *const sys::ecs_iter_t, index: i32) -> *mut T {
