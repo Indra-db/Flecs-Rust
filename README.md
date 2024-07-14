@@ -42,7 +42,14 @@ and start hacking away!
 
 Make sure to check out the Rust docs (improvements coming soon), [Flecs docs](https://www.flecs.dev/flecs/md_docs_2Docs.html), and the 70+ examples in the [examples](https://github.com/Indra-db/Flecs-Rust/blob/main/flecs_ecs/examples/flecs/) directory.
 
-For an example integration of Flecs with WGPU, Vello, and Winit check out the demo [here](https://github.com/james-j-obrien/flecs-wgpu-demo)
+For an example integration of Flecs with the following crates:
+
+`WGPU` for rendering
+`winit` for windowing
+`vello` for rasterization
+`parley` for text
+
+check out the demo [here](https://github.com/james-j-obrien/flecs-wgpu-demo)
 
 <img src="https://github.com/james-j-obrien/flecs-wgpu-demo/assets/30707409/b3b8f2fc-0758-433e-b82b-e3458f61f244" alt="demo" width="300"/>
 
