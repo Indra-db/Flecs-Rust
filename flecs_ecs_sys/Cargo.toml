@@ -7,7 +7,6 @@ repository.workspace = true
 authors = ["Indra de Backere <debackere.indra@gmail.com>"]
 description = "sys binding for C/CPP flecs ECS library <https://github.com/SanderMertens/flecs>"
 keywords = ["flecs", "ecs", "sys"]
-categories = ["External FFI bindings",]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
