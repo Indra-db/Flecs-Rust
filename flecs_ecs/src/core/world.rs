@@ -628,7 +628,7 @@ impl World {
     /// ```
     /// # use flecs_ecs::core::World;
     /// # let world = World::new();
-    /// world.defer(|| {
+    /// let return_something_if_wanted = world.defer(|| {
     ///     // deferred operations here
     /// });
     /// ```
