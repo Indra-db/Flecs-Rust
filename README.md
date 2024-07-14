@@ -1,7 +1,7 @@
 ![flecs](assets/flecs_rust_logo.png)
 
 [![Generic badge](https://img.shields.io/badge/Flecs_Version-4.0.0-E56717.svg)](https://github.com/SanderMertens/flecs/releases)
-[![License](https://badgen.net/pypi/license/pip/)](https://github.com/Indra-db/flecs-ecs-rs/blob/master/LICENSE)
+[![License](https://badgen.net/pypi/license/pip/)](https://github.com/Indra-db/Flecs-Rust/blob/master/LICENSE)
 [![CI](https://github.com/indra-db/flecs_ecs_rs/actions/workflows/ci.yml/badge.svg)](https://github.com/indra-db/flecs_ecs_rs/actions/workflows/ci.yml)
 [![Flecs Official Docs](https://img.shields.io/badge/Flecs%20C%2FC%2B%2B%20Docs-View-161b22)](https://www.flecs.dev/flecs/md_docs_2Docs.html)
 [![Discord Badge](https://img.shields.io/badge/Join%20Flecs%20Discord-5865F2?logo=discord&logoColor=fff&style=flat)](https://discord.gg/jkEZ2jQD6F)
@@ -20,11 +20,11 @@ The Rust API is a wrapper around the [Flecs](https://github.com/SanderMertens/fl
 - Cache-friendly [archetype/SoA storage](https://ajmmertens.medium.com/building-an-ecs-2-archetypes-and-vectorization-fe21690805f9) that can process millions of entities every frame
 - Supports entities with hundreds of components and applications with tens of thousands of archetypes
 - Automatic component registration that works out of the box across shared libraries/DLLs
-- Write free functions with [queries](https://github.com/Indra-db/flecs-ecs-rs/blob/main/flecs_ecs/examples/flecs/queries/query_basics.rs) or run code automatically in [systems](https://github.com/Indra-db/flecs-ecs-rs/blob/main/flecs_ecs/examples/flecs/systems/system_pipeline.rs)
+- Write free functions with [queries](https://github.com/Indra-db/Flecs-Rust/blob/main/flecs_ecs/examples/flecs/queries/query_basics.rs) or run code automatically in [systems](https://github.com/Indra-db/Flecs-Rust/blob/main/flecs_ecs/examples/flecs/systems/system_pipeline.rs)
 - Run games on multiple CPU cores with a fast lockless scheduler
 - Flecs is heavily tested, running more than 8000 tests in its core library alone and used in AAA engines. The Rust API itself has 500+ tests and counting.
 - Integrated (WIP Rust) [reflection framework](https://www.flecs.dev/flecs/group__c__addons__meta.html) with [JSON serializer](https://github.com/SanderMertens/flecs/tree/master/examples/cpp/reflection/basics_json) and support for [runtime components](https://github.com/SanderMertens/flecs/tree/master/examples/cpp/reflection/runtime_component)
-- Powerful [query language](https://github.com/Indra-db/flecs-ecs-rs/tree/main/flecs_ecs/examples/flecs/queries) with support for [joins](https://github.com/Indra-db/flecs-ecs-rs/blob/main/flecs_ecs/examples/flecs/queries/query_setting_variables.rs) and [inheritance](https://github.com/Indra-db/flecs-ecs-rs/blob/main/flecs_ecs/examples/flecs/queries/query_component_inheritance.rs)
+- Powerful [query language](https://github.com/Indra-db/Flecs-Rust/tree/main/flecs_ecs/examples/flecs/queries) with support for [joins](https://github.com/Indra-db/Flecs-Rust/blob/main/flecs_ecs/examples/flecs/queries/query_setting_variables.rs) and [inheritance](https://github.com/Indra-db/Flecs-Rust/blob/main/flecs_ecs/examples/flecs/queries/query_component_inheritance.rs)
 - [Statistics addon](https://www.flecs.dev/flecs/group__c__addons__stats.html) for profiling ECS performance
 - A web-based UI for monitoring & controlling your apps ([demo](https://flecs.dev/explorer), [code](https://github.com/flecs-hub/explorer)):
 
@@ -40,7 +40,7 @@ flecs_ecs = "0.4000.0"
 
 and start hacking away!
 
-Make sure to check out the Rust docs (improvements coming soon), [Flecs docs](https://www.flecs.dev/flecs/md_docs_2Docs.html), and the 70+ examples in the [examples](https://github.com/Indra-db/flecs-ecs-rs/blob/main/flecs_ecs/examples/flecs/) directory.
+Make sure to check out the Rust docs (improvements coming soon), [Flecs docs](https://www.flecs.dev/flecs/md_docs_2Docs.html), and the 70+ examples in the [examples](https://github.com/Indra-db/Flecs-Rust/blob/main/flecs_ecs/examples/flecs/) directory.
 
 For an example integration of Flecs with WGPU, Vello, and Winit check out the demo [here](https://github.com/james-j-obrien/flecs-wgpu-demo)
 
@@ -62,7 +62,7 @@ From initial benchmarks and tests, the Rust API is on par with C-level performan
 
 ### The progress
 
-For detailed feature progress, please visit the [issues](https://github.com/Indra-db/flecs-ecs-rs/issues) page.
+For detailed feature progress, please visit the [issues](https://github.com/Indra-db/Flecs-Rust/issues) page.
 
 - Core library ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600)
 - Addons ![](https://geps.dev/progress/75?dangerColor=800000&warningColor=ff9900&successColor=006600) (Meta + Json + Script are a WIP, expected to be released by end of August, experimental phase sooner)
