@@ -44,10 +44,10 @@ Make sure to check out the Rust docs (improvements coming soon), [Flecs docs](ht
 
 For an example integration of Flecs with the following crates:
 
-`WGPU` for rendering
-`winit` for windowing
-`vello` for rasterization
-`parley` for text
+- `WGPU` for rendering
+- `winit` for windowing
+- `vello` for rasterization
+- `parley` for text
 
 check out the demo [here](https://github.com/james-j-obrien/flecs-wgpu-demo)
 
