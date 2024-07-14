@@ -618,8 +618,7 @@ impl World {
         unsafe { sys::ecs_is_deferred(self.raw_world.as_ptr()) }
     }
 
-    /// Defers all operations executed in the passed-in closure. If the world
-    /// is already in deferred mode, does nothing.
+    /// Defers all operations executed in the passed-in closure.
     ///
     /// # Arguments
     ///
