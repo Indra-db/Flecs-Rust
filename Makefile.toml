@@ -64,3 +64,10 @@ env = { "RUSTDOCFLAGS" = "--cfg docsrs -Zunstable-options --generate-link-to-def
 command = "cargo"
 args = ["doc", "-Zunstable-options", "-Zrustdoc-scrape-examples", "${@}"]
 workspace = false
+
+[tasks.asan-macos]
+condition = { channels = ["nightly"] }
+env = { CC = "/opt/homebrew/opt/llvm/bin/clang", CFLAGS = "-fsanitize=address", RUSTFLAGS = "-Zsanitizer=address -Clink-arg=-fuse-ld=/opt/homebrew/opt/llvm/bin/ld64.lld" }
+command = "cargo"
+args = ["test", "-Zbuild-std", "--target", "aarch64-apple-darwin", "--tests", "--", "--test-threads", "1"]
+workspace = false
