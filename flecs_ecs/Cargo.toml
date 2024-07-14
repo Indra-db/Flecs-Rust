@@ -6,7 +6,7 @@ license.workspace = true
 repository.workspace = true
 authors = ["Indra de Backere <debackere.indra@gmail.com>"]
 description = "Rust API for the C/CPP flecs ECS library <https://github.com/SanderMertens/flecs>"
-keywords = ["ecs", "flecs", "entity-component-system", "game-development", "gamedev"]
+keywords = ["ecs", "flecs", "ECS", "game-development", "gamedev"]
 categories = ["game-development", "api-bindings", "simulation", "development-tools::game-engines", "data-structures"]
 
 [lints] 
