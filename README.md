@@ -57,11 +57,11 @@ check out the demo [here](https://github.com/james-j-obrien/flecs-wgpu-demo)
 
 The project is in the alpha release stage where the **core functionality** and some **addons** of Flecs have been **ported** and are available to use today. While there has been a lot of thought put into the current API, it's still in an experimental phase. The project aims to hit stable when all the soundness/safety issues are resolved and the API has been finalized with all of Flecs functionality. We encourage you to explore, test, and provide feedback, but please be aware of potential bugs and breaking changes as we continue to refine the API and add new features.
 
+This library was made publicly available on the release date of Flecs V4 release.
+
 #### Safety
 
 One important safety factor that has yet to be addressed is having multiple aliases to the same component. This is a known issue and is being worked on. It will be addressed through a table column lock mechanism.
-
-This library was made publicly available on the release date of Flecs V4 release.
 
 #### Performance
 
