@@ -1,7 +1,7 @@
 use crate::z_ignore_test_common::*;
 
 use flecs_ecs::prelude::*;
-// This example shows how rules can be used to match simple inheritance trees.
+// This example shows how queries can be used to match simple inheritance trees.
 
 #[derive(Component)]
 struct Unit;

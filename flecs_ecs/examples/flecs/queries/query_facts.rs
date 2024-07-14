@@ -1,7 +1,7 @@
 use crate::z_ignore_test_common::*;
 
 use flecs_ecs::prelude::*;
-// This example shows how to use rules for testing facts. A fact is a query that
+// This example shows how to use queries for testing facts. A fact is a query that
 // has no variable elements. Consider a regular ECS query like this:
 //   Position, Velocity
 //
