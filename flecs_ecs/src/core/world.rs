@@ -1310,7 +1310,7 @@ impl World {
     ///
     /// # Returns
     ///
-    /// Returns an `EntityView` representing the newly set scope.
+    /// Returns an `EntityView` representing the previous set scope.
     ///
     /// # Example
     ///
@@ -1353,7 +1353,7 @@ impl World {
     ///
     /// # Returns
     ///
-    /// Returns an `EntityView` representing the newly set scope.
+    /// Returns an `EntityView` representing the previous set scope.
     ///
     /// # Example
     ///
