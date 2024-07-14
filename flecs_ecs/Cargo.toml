@@ -161,9 +161,9 @@ default = [
     "flecs_rest",
 ]
 
-[target.'cfg(any())'.dependencies]
-flecs_ecs_derive = { version = "=0.1.0", path = "../flecs_ecs_derive" }
-flecs_ecs_sys = { version = "=0.1.0", path = "../flecs_ecs_sys" }
+# [target.'cfg(any())'.dependencies]
+# flecs_ecs_derive = { version = "=0.1.0", path = "../flecs_ecs_derive" }
+# flecs_ecs_sys = { version = "=0.1.0", path = "../flecs_ecs_sys" }
 
 
 ######################
