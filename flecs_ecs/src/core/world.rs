@@ -628,7 +628,7 @@ impl World {
     /// ```
     /// # use flecs_ecs::core::World;
     /// # let world = World::new();
-    /// world.defer(|| {
+    /// let return_something_if_wanted = world.defer(|| {
     ///     // deferred operations here
     /// });
     /// ```
@@ -642,14 +642,15 @@ impl World {
     /// * [`World::is_deferred()`]
     /// * C++ API: `world::defer`
     #[doc(alias = "world::defer")]
-    pub fn defer(&self, func: impl FnOnce()) {
+    pub fn defer<T>(&self, func: impl FnOnce() -> T) -> T {
         unsafe {
             sys::ecs_defer_begin(self.raw_world.as_ptr());
         }
-        func();
+        let result = func();
         unsafe {
             sys::ecs_defer_end(self.raw_world.as_ptr());
         }
+        result
     }
 
     /// Suspends deferring of operations but do flush the queue.
