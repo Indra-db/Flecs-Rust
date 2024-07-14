@@ -218,9 +218,9 @@ world.set(GameTime { delta_time: 0.0 });
 * support for unregistration: component, modules (plugins), systems, observers
 * event propagation, event forwarding
 * runtime components
-* runtime reflection with a language agonstic reflection framework
+* runtime reflection with a language agnostic reflection framework
 * a language agnostic core
-* etc
+* etc 
 
 ## Projects using Flecs Rust API
 
