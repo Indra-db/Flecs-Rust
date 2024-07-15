@@ -356,7 +356,7 @@ pub trait QueryTuple: Sized {
         Self::Pointers::new(iter)
     }
 
-    fn populate<'a>(filter: &mut impl QueryBuilderImpl<'a>);
+    fn populate<'a>(query: &mut impl QueryBuilderImpl<'a>);
 
     fn register_ids_descriptor(world: *mut sys::ecs_world_t, desc: &mut sys::ecs_query_desc_t) {
         Self::register_ids_descriptor_at(world, &mut desc.terms[..], &mut 0);
@@ -405,13 +405,13 @@ where
     type TupleSliceType<'w> = A::SliceType<'w>;
     const COUNT : i32 = 1;
 
-    fn populate<'a>(filter: &mut impl QueryBuilderImpl<'a>) {
-        let id = <A::OnlyType as ComponentOrPairId>::get_id(filter.world());
+    fn populate<'a>(query: &mut impl QueryBuilderImpl<'a>) {
+        let id = <A::OnlyType as ComponentOrPairId>::get_id(query.world());
 
         ecs_assert!(
         {
             if (id & (sys::ECS_ID_FLAGS_MASK as u64)) == 0 {
-                let ti =  unsafe { sys::ecs_get_type_info(filter.world_ptr(), id) };
+                let ti =  unsafe { sys::ecs_get_type_info(query.world_ptr(), id) };
                 if !ti.is_null() {
                     // Union relationships always return a value of type
                     // flecs::entity_t which holds the target id of the 
@@ -421,13 +421,13 @@ where
                     // functions would accept a parameter of the component
                     // type instead of flecs::entity_t, which would cause
                     // an assert.
-                    (unsafe { (*ti).size == 0 } || !unsafe { sys::ecs_has_id(filter.world_ptr(), id, *flecs::Union)})
+                    (unsafe { (*ti).size == 0 } || !unsafe { sys::ecs_has_id(query.world_ptr(), id, *flecs::Union)})
                 } else { true }
             } else { true }
         }, FlecsErrorCode::InvalidParameter, "use `with` method to add union relationship");
         
-        filter.with_id(id);
-        let term = filter.current_term_mut();
+        query.with_id(id);
+        let term = query.current_term_mut();
         A::populate_term(term);
 
     }
@@ -641,8 +641,8 @@ macro_rules! impl_iterable {
             type Pointers = ComponentsData<Self, { tuple_count!($($t),*) }>;
             const COUNT : i32 = tuple_count!($($t),*);
 
-            fn populate<'a>(filter: &mut impl QueryBuilderImpl<'a>) {
-                let _world = filter.world();
+            fn populate<'a>(query: &mut impl QueryBuilderImpl<'a>) {
+                let _world = query.world();
 
                 $(
                     let id = <$t::OnlyType as ComponentOrPairId>::get_id(_world);
@@ -650,7 +650,7 @@ macro_rules! impl_iterable {
                     ecs_assert!(
                     {
                         if (id & (sys::ECS_ID_FLAGS_MASK as u64)) == 0 {
-                            let ti =  unsafe { sys::ecs_get_type_info(filter.world_ptr(), id) };
+                            let ti =  unsafe { sys::ecs_get_type_info(query.world_ptr(), id) };
                             if !ti.is_null() {
                                 // Union relationships always return a value of type
                                 // flecs::entity_t which holds the target id of the
@@ -660,13 +660,13 @@ macro_rules! impl_iterable {
                                 // functions would accept a parameter of the component
                                 // type instead of flecs::entity_t, which would cause
                                 // an assert.
-                                (unsafe { (*ti).size == 0 } || !unsafe { sys::ecs_has_id(filter.world_ptr(), id, *flecs::Union)})
+                                (unsafe { (*ti).size == 0 } || !unsafe { sys::ecs_has_id(query.world_ptr(), id, *flecs::Union)})
                             } else { true }
                         } else { true }
                     }, FlecsErrorCode::InvalidParameter, "use `with` method to add union relationship");
 
-                    filter.with_id(id);
-                    let term = filter.current_term_mut();
+                    query.with_id(id);
+                    let term = query.current_term_mut();
                     $t::populate_term(term);
 
                 )*

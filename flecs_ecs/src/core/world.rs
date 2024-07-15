@@ -3031,7 +3031,7 @@ impl World {
     ///
     /// # Arguments
     ///
-    /// * `enum_value`: The enum value to filter against for deletion.
+    /// * `enum_value`: The enum value to query against for deletion.
     ///
     /// # See also
     ///
@@ -3053,7 +3053,7 @@ impl World {
     ///
     /// # Arguments
     ///
-    /// * `enum_value`: The enum value to filter against for deletion.
+    /// * `enum_value`: The enum value to query against for deletion.
     ///
     /// # See also
     ///
@@ -3140,7 +3140,7 @@ impl World {
     ///
     /// # Arguments
     ///
-    /// * `enum_value`: The enum value to filter against for removal.
+    /// * `enum_value`: The enum value to query against for removal.
     ///
     /// # See also
     ///
@@ -3162,7 +3162,7 @@ impl World {
     ///
     /// # Arguments
     ///
-    /// * `enum_value`: The enum value to filter against for removal.
+    /// * `enum_value`: The enum value to query against for removal.
     ///
     /// # See also
     ///

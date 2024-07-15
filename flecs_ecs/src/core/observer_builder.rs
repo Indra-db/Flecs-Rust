@@ -190,11 +190,11 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
         unsafe { std::mem::transmute(self) }
     }
 
-    /// Invoke observer for anything that matches its filter on creation
+    /// Invoke observer for anything that matches its query on creation
     ///
     /// # Arguments
     ///
-    /// * `should_yield` - If true, the observer will be invoked for all existing entities that match its filter
+    /// * `should_yield` - If true, the observer will be invoked for all existing entities that match its query
     ///
     /// # See also
     ///

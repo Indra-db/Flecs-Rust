@@ -2,7 +2,7 @@ use crate::z_ignore_test_common::*;
 
 use flecs_ecs::prelude::*;
 // this example is to showcase how you can chain queries together where the second query
-// uses the results of the first query to filter the results
+// uses the results of the first query to query the results
 
 #[derive(Component)]
 struct Enchanted;

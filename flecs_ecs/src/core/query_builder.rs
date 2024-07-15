@@ -253,7 +253,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self
     }
 
-    /// set filter flags
+    /// set querylags
     ///
     /// # Arguments
     ///

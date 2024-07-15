@@ -1,4 +1,4 @@
-//! Queries are used to iterate over entities that match a filter.
+//! Queries are used to iterate over entities that match a query.
 
 use core::panic;
 use std::{marker::PhantomData, os::raw::c_void, ptr::NonNull};

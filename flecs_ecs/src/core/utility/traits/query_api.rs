@@ -740,15 +740,15 @@ where
         iter.callback_ctx = std::ptr::null_mut();
     }
 
-    /// Get the entity of the current filter
+    /// Get the entity of the current query
     ///
     /// # Arguments
     ///
-    /// * `filter`: the filter to get the entity from
+    /// * `query`: the query to get the entity from
     ///
     /// # Returns
     ///
-    /// The entity of the current filter
+    /// The entity of the current query
     ///
     /// # See also
     ///
@@ -758,7 +758,7 @@ where
 
     /// Each term iterator.
     /// The `each_term` iterator accepts a function that is invoked for each term
-    /// in the filter. The following function signature is valid:
+    /// in the query. The following function signature is valid:
     ///  - func(term: &mut Term)
     ///
     /// # See also
@@ -785,7 +785,7 @@ where
     /// # Arguments
     ///
     /// * `index`: the index of the term to get
-    /// * `filter`: the filter to get the term from
+    /// * `query`: the query to get the term from
     ///
     /// # Returns
     ///
@@ -806,15 +806,15 @@ where
         TermRef::new(&query.terms[index])
     }
 
-    /// Get the field count of the current filter
+    /// Get the field count of the current query
     ///
     /// # Arguments
     ///
-    /// * `filter`: the filter to get the field count from
+    /// * `query`: the query to get the field count from
     ///
     /// # Returns
     ///
-    /// The field count of the current filter
+    /// The field count of the current query
     ///
     /// # See also
     ///
@@ -831,16 +831,16 @@ where
         unsafe { (*query).term_count as u32 }
     }
 
-    /// Convert filter to string expression. Convert filter terms to a string expression.
-    /// The resulting expression can be parsed to create the same filter.
+    /// Convert query to string expression. Convert query terms to a string expression.
+    /// The resulting expression can be parsed to create the same query.
     ///
     /// # Arguments
     ///
-    /// * `filter`: the filter to convert to a string
+    /// * `query`: the query to convert to a string
     ///
     /// # Returns
     ///
-    /// The string representation of the filter
+    /// The string representation of the query
     ///
     /// # See also
     ///

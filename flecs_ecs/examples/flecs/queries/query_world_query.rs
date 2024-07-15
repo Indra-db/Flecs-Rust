@@ -33,7 +33,7 @@ fn main() {
 
     // Ad hoc queries are bit slower to iterate than flecs::query, but are
     // faster to create, and in most cases require no allocations. Under the
-    // hood this API uses flecs::filter, which can be used directly for more
+    // hood this API uses flecs::query, which can be used directly for more
     // complex queries.
 
     world.each_entity::<(&mut Position, &Velocity)>(|entity, (pos, vel)| {
