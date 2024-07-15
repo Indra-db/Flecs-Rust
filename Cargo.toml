@@ -5,7 +5,7 @@ resolver = "2"
 [workspace.package]
 edition = "2021"
 license = "MIT"
-repository = "https://github.com/Indra-db/flecs_ecs_rs"
+repository = "https://github.com/Indra-db/Flecs-Rust"
 
 [workspace.lints]
 clippy.doc_markdown = "warn"
