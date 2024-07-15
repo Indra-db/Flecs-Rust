@@ -17,14 +17,17 @@ where
     _phantom: std::marker::PhantomData<T>,
 }
 
-pub enum QueryFlags {
-    MatchPrefab = sys::EcsQueryMatchPrefab as isize,
-    MatchDisabled = sys::EcsQueryMatchDisabled as isize,
-    MatchEmptyTables = sys::EcsQueryMatchEmptyTables as isize,
-    NoData = sys::EcsQueryNoData as isize,
-    IsInstanced = sys::EcsQueryIsInstanced as isize,
-    AllowUnresolvedByName = sys::EcsQueryAllowUnresolvedByName as isize,
-    TableOnly = sys::EcsQueryTableOnly as isize,
+bitflags::bitflags! {
+    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+    pub struct QueryFlags: u32 {
+        const MatchPrefab = sys::EcsQueryMatchPrefab;
+        const MatchDisabled = sys::EcsQueryMatchDisabled;
+        const MatchEmptyTables = sys::EcsQueryMatchEmptyTables;
+        const NoData = sys::EcsQueryNoData;
+        const IsInstanced = sys::EcsQueryIsInstanced;
+        const AllowUnresolvedByName = sys::EcsQueryAllowUnresolvedByName;
+        const TableOnly = sys::EcsQueryTableOnly;
+    }
 }
 
 impl<'a, T> QueryBuilder<'a, T>
@@ -264,7 +267,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// * C++ API: `query_builder_i::filter_flags`
     #[doc(alias = "query_builder_i::filter_flags")]
     fn query_flags(&mut self, flags: QueryFlags) -> &mut Self {
-        self.query_desc_mut().flags |= flags as u32;
+        self.query_desc_mut().flags |= flags.bits();
         self
     }
 
