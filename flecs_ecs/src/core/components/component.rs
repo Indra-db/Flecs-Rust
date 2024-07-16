@@ -113,7 +113,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     #[doc(alias = "component::get_hooks")]
     pub fn get_hooks(&self) -> sys::ecs_type_hooks_t {
         let type_hooks: *const sys::ecs_type_hooks_t =
-            unsafe { sys::ecs_get_hooks_id(self.world.world_ptr_mut(), *self.id) };
+            unsafe { sys::ecs_get_hooks_id(self.world.world_ptr(), *self.id) };
         if type_hooks.is_null() {
             sys::ecs_type_hooks_t::default()
         } else {

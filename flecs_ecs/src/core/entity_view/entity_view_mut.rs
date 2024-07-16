@@ -9,7 +9,7 @@ use self::flecs::FlecsTrait;
 
 // functions in here match most of the functions in the c++ entity and entity_builder class
 impl<'a> EntityView<'a> {
-    fn check_add_id_validity(world: *mut sys::ecs_world_t, id: u64) {
+    fn check_add_id_validity(world: *const sys::ecs_world_t, id: u64) {
         let is_valid_id = unsafe { sys::ecs_id_is_valid(world, id) };
 
         if !is_valid_id {
@@ -130,7 +130,7 @@ impl<'a> EntityView<'a> {
         }
 
         let world = self.world;
-        let world_ptr = world.world_ptr_mut();
+        let world_ptr = world.world_ptr();
 
         let second = *second.into();
 
@@ -169,7 +169,7 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_builder::add")]
     pub fn add_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
         let world = self.world;
-        let world_ptr = world.world_ptr_mut();
+        let world_ptr = world.world_ptr();
 
         let first = *first.into();
 
@@ -280,7 +280,7 @@ impl<'a> EntityView<'a> {
                 let first = id.get_id_first();
                 let mut second = id.get_id_second();
                 if second == 0
-                    || unsafe { sys::ecs_has_id(self.world.world_ptr_mut(), *first, ECS_EXCLUSIVE) }
+                    || unsafe { sys::ecs_has_id(self.world.world_ptr(), *first, ECS_EXCLUSIVE) }
                 {
                     second = ECS_WILDCARD.into();
                 }
@@ -321,7 +321,7 @@ impl<'a> EntityView<'a> {
                 let first = ecs_first(id);
                 let mut second = ecs_second(id);
                 if second == 0
-                    || unsafe { sys::ecs_has_id(self.world.world_ptr_mut(), *first, ECS_EXCLUSIVE) }
+                    || unsafe { sys::ecs_has_id(self.world.world_ptr(), *first, ECS_EXCLUSIVE) }
                 {
                     second = ECS_WILDCARD.into();
                 }
