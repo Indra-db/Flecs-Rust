@@ -112,47 +112,6 @@ fn observer_2_terms_on_set() {
 }
 
 #[test]
-fn observer_2_terms_un_set() {
-    let world = World::new();
-
-    world.set(Count(0));
-
-    world
-        .observer::<flecs::UnSet, (&Position, &Velocity)>()
-        .each_entity(|e, (pos, vel)| {
-            let world = e.world();
-            world.get::<&mut Count>(|count| {
-                count.0 += 1;
-            });
-            assert_eq!(pos.x, 10);
-            assert_eq!(pos.y, 20);
-            assert_eq!(vel.x, 1);
-            assert_eq!(vel.y, 2);
-        });
-
-    let e = world.entity();
-    world.get::<&mut Count>(|count| {
-        assert_eq!(count, 0);
-    });
-    e.set(Position { x: 10, y: 20 });
-    world.get::<&mut Count>(|count| {
-        assert_eq!(count, 0);
-    });
-    e.set(Velocity { x: 1, y: 2 });
-    world.get::<&mut Count>(|count| {
-        assert_eq!(count, 0);
-    });
-    e.remove::<Velocity>();
-    world.get::<&mut Count>(|count| {
-        assert_eq!(count, 1);
-    });
-    e.remove::<Position>();
-    world.get::<&mut Count>(|count| {
-        assert_eq!(count, 1);
-    });
-}
-
-#[test]
 fn observer_10_terms() {
     let world = World::new();
 

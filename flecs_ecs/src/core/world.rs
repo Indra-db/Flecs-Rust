@@ -367,7 +367,7 @@ impl World {
     ///   able to create new entities.
     /// - Implicit component registration, so that this works from systems.
     /// - Mutations to supporting data structures for the evaluation of uncached
-    ///   queries (filters), so that these can be created on the fly.
+    ///   queries, so that these can be created on the fly.
     ///
     /// These mutations are safe in single-threaded applications, but for
     /// multi-threaded applications, the world needs to be entirely immutable. For this

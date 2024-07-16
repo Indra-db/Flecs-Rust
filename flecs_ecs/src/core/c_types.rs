@@ -396,7 +396,6 @@ pub(crate) const ECS_ALIAS: u64 = FLECS_HI_COMPONENT_ID + 38;
 pub(crate) const ECS_ON_ADD: u64 = FLECS_HI_COMPONENT_ID + 39;
 pub(crate) const ECS_ON_REMOVE: u64 = FLECS_HI_COMPONENT_ID + 40;
 pub(crate) const ECS_ON_SET: u64 = FLECS_HI_COMPONENT_ID + 41;
-pub(crate) const ECS_UNSET: u64 = FLECS_HI_COMPONENT_ID + 42;
 pub(crate) const ECS_ON_DELETE: u64 = FLECS_HI_COMPONENT_ID + 43;
 pub(crate) const ECS_ON_DELETE_TARGET: u64 = FLECS_HI_COMPONENT_ID + 44;
 pub(crate) const ECS_ON_TABLE_CREATE: u64 = FLECS_HI_COMPONENT_ID + 45;

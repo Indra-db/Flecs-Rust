@@ -1,6 +1,6 @@
 [package]
 name = "flecs_ecs"
-version = "0.1.1"
+version = "0.1.2"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -19,7 +19,7 @@ cargo-args = ["-Zunstable-options", "-Zrustdoc-scrape-examples"]
 
 [dependencies]
 flecs_ecs_derive = { version = "0.1.0", path = "../flecs_ecs_derive" }
-flecs_ecs_sys = { version = "0.1.0", path = "../flecs_ecs_sys" }
+flecs_ecs_sys = { version = "0.1.1", path = "../flecs_ecs_sys" }
 compact_str = "0.8.0"
 fxhash = "0.2.1"
 
@@ -137,7 +137,7 @@ flecs_journal = ["flecs_ecs_sys/flecs_journal","flecs_log"]
 flecs_nightly_tests = []
 
 default = [
-    #"flecs_regenerate_binding_c",
+    "flecs_regenerate_binding_c",
     #"flecs_nightly_tests",
     "flecs_module",
     "flecs_script",
@@ -158,11 +158,6 @@ default = [
     "flecs_http",
     "flecs_rest",
 ]
-
-# [target.'cfg(any())'.dependencies]
-# flecs_ecs_derive = { version = "=0.1.0", path = "../flecs_ecs_derive" }
-# flecs_ecs_sys = { version = "=0.1.0", path = "../flecs_ecs_sys" }
-
 
 ######################
 # Examples

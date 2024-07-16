@@ -447,6 +447,15 @@ where
         unsafe { sys::ecs_field_column(self.iter, index) }
     }
 
+    /// Obtain term that triggered an observer
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter::term_index`
+    pub fn term_index(&self) -> i32 {
+        self.iter.term_index + 1
+    }
+
     /// Convert current iterator result to string
     ///
     /// # See also

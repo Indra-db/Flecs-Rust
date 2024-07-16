@@ -205,7 +205,7 @@ where
 
                 ecs_assert!(
                     !constant_value.is_null(),
-                    FlecsErrorCode::InternalError,
+                    FlecsErrorCode::InternalError, 
                     "missing enum constant value {}",
                     std::any::type_name::<A>()
                 );
