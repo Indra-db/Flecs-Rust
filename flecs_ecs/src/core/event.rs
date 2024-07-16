@@ -120,6 +120,22 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         self.add_id(C::get_id(world))
     }
 
+    pub fn add_enum<C: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
+        &mut self,
+        enum_value: C,
+    ) -> &mut Self {
+        let world = self.world;
+        let rel = T::id(world);
+        // SAFETY: we know that the enum_value is a valid because of the T::id call
+        let target = unsafe { enum_value.id_variant_unchecked(world) };
+        ecs_assert!(
+            target != 0,
+            FlecsErrorCode::InvalidParameter,
+            "Component was not found in reflection data."
+        );
+        self.add_id((rel, target))
+    }
+
     /// Add a pair of components to emit for the event.
     ///
     /// # Type parameters

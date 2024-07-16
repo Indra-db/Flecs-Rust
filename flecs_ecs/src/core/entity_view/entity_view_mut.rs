@@ -513,7 +513,7 @@ impl<'a> EntityView<'a> {
         self.remove_id((first.into(), Second::id(world)))
     }
 
-    /// Shortcut for add(IsA, id).
+    /// Shortcut for `add((flecs::IsA, id))`.
     ///
     /// # Arguments
     ///
@@ -527,7 +527,7 @@ impl<'a> EntityView<'a> {
         unsafe { self.add_id_unchecked((ECS_IS_A, second.into())) }
     }
 
-    /// Shortcut for add(IsA, entity).
+    /// Shortcut for `add_id((flecs::IsA::ID, entity))`.
     ///
     /// # Type Parameters
     ///
@@ -542,7 +542,7 @@ impl<'a> EntityView<'a> {
         self.is_a_id(T::id(world))
     }
 
-    /// Shortcut for add(ChildOf, entity).
+    /// Shortcut for `add_id((flecs::ChildOf::ID, entity))`.
     ///
     /// # Arguments
     ///
@@ -556,7 +556,7 @@ impl<'a> EntityView<'a> {
         unsafe { self.add_id_unchecked((ECS_CHILD_OF, parent.into())) }
     }
 
-    /// Shortcut for add(ChildOf, entity).
+    /// Shortcut for `add_id((flecs::ChildOf::ID, entity))`.
     ///
     /// # Type Parameters
     ///
@@ -571,7 +571,7 @@ impl<'a> EntityView<'a> {
         self.child_of_id(T::id(world))
     }
 
-    /// Shortcut for add(DependsOn, entity).
+    /// Shortcut for `add_id((flecs::DependsOn::ID, entity))`.
     ///
     /// # Arguments
     ///
@@ -585,7 +585,7 @@ impl<'a> EntityView<'a> {
         unsafe { self.add_id_unchecked((ECS_DEPENDS_ON, second.into())) }
     }
 
-    /// Shortcut for add(DependsOn, entity).
+    /// Shortcut for `add_id((flecs::ependsOn::ID, entity))`.
     ///
     /// # Type Parameters
     ///
@@ -600,7 +600,7 @@ impl<'a> EntityView<'a> {
         self.depends_on_id(T::id(world))
     }
 
-    /// Shortcut for add(Dependency, entity) for Enums.
+    /// Shortcut for `add_id((flecs::Dependency::ID, entity))`for Enums.
     ///
     /// # Type Parameters
     ///
@@ -622,7 +622,7 @@ impl<'a> EntityView<'a> {
         self.depends_on_id(enum_value.id_variant(world))
     }
 
-    /// Shortcut for add(SlotOf, entity).
+    /// Shortcut for `add_id((flecs::SlotOf::ID, entity))`.
     ///
     /// # Arguments
     ///
@@ -636,7 +636,7 @@ impl<'a> EntityView<'a> {
         unsafe { self.add_id_unchecked((ECS_SLOT_OF, second.into())) }
     }
 
-    /// Shortcut for add(SlotOf, entity).
+    /// Shortcut for `add_id((flecs::SlotOf::ID, entity))`.
     ///
     /// # Type Parameters
     ///
@@ -651,7 +651,7 @@ impl<'a> EntityView<'a> {
         self.slot_of_id(T::id(world))
     }
 
-    /// Shortcut for add(SlotOf, target(ChildOf)).
+    /// Shortcut for `add_id((flecs::SlotOf::ID, target(ChildOf)))`.
     ///
     /// # See also
     ///

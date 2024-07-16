@@ -203,7 +203,6 @@ create_pre_registered_component!(Alias, ECS_ALIAS);
 create_pre_registered_component!(OnAdd, ECS_ON_ADD);
 create_pre_registered_component!(OnRemove, ECS_ON_REMOVE);
 create_pre_registered_component!(OnSet, ECS_ON_SET);
-create_pre_registered_component!(UnSet, ECS_UNSET);
 create_pre_registered_component!(OnTableCreate, ECS_ON_TABLE_CREATE);
 create_pre_registered_component!(OnTableDelete, ECS_ON_TABLE_DELETE);
 create_pre_registered_component!(OnTableEmpty, ECS_ON_TABLE_EMPTY);
@@ -233,10 +232,12 @@ pub mod timer {
 create_pre_registered_component!(Sparse, ECS_SPARSE);
 create_pre_registered_component!(Union, ECS_UNION);
 
-// Builtin predicate ids (used by rule engine)
+// Builtin predicate for comparing entity ids
 create_pre_registered_component!(PredEq, ECS_PRED_EQ);
 create_pre_registered_component!(PredMatch, ECS_PRED_MATCH);
 create_pre_registered_component!(PredLookup, ECS_PRED_LOOKUP);
+
+// builtin marker entities for query scopes
 create_pre_registered_component!(ScopeOpen, ECS_SCOPE_OPEN);
 create_pre_registered_component!(ScopeClose, ECS_SCOPE_CLOSE);
 

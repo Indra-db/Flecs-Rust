@@ -1,4 +1,4 @@
-![flecs](assets/flecs_rust_logo.png)
+# ![Flecs](assets/flecs_rust_logo.png)
 
 [![Generic badge](https://img.shields.io/badge/Flecs_Version-4.0.0-E56717.svg)](https://github.com/SanderMertens/flecs/releases)
 [![License](https://badgen.net/pypi/license/pip/)](https://github.com/Indra-db/Flecs-Rust/blob/master/LICENSE)
@@ -78,8 +78,6 @@ For detailed feature progress, please visit the [issues](https://github.com/Indr
 - Documentation ![](https://geps.dev/progress/65?dangerColor=800000&warningColor=ff9900&successColor=006600) Most functions are documented and contain a C++ alias. Flecs documentation site contains Rust code. The remaining % is for adding mostly doc test examples and refining the Rust docs page.
 - Test suite ![](https://geps.dev/progress/70?dangerColor=800000&warningColor=ff9900&successColor=006600) (entity, query, observers systems test cases are done)
 - Examples ![](https://geps.dev/progress/75?dangerColor=800000&warningColor=ff9900&successColor=006600) For the current feature set, all examples are done.
-
-#### What's next?
 
 ## The Aim
 
@@ -229,7 +227,7 @@ This list contains projects that are not under NDA.
 If you want to showcase your project, feel free to open a PR to add it to the list.
 
 * [Hyperion]: It switched from using Envio ECS to Flecs, with great performance improvements. It's quest is to break the world record minecraft event of 10000 players.
-    <img src="assets/hyperion.png" alt="hyperion" width="600"/>
+    <img src="https://github.com/Indra-db/Flecs-Rust/blob/main/assets/hyperion.png" alt="hyperion" width="600"/>
 
 ## Acknowledgements
 
