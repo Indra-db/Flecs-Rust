@@ -6,6 +6,8 @@ use std::{ffi::CString, os::raw::c_char};
 use crate::core::*;
 use crate::sys;
 
+const ECS_GENERATION_MASK: u64 = u32::MAX as u64;
+
 /// Combines two 32 bit integers into a 64 bit integer.
 ///
 /// # Arguments
@@ -18,7 +20,7 @@ use crate::sys;
 /// The combined 64 bit integer.
 #[inline(always)]
 pub fn ecs_entity_id_combine(lo: u64, hi: u64) -> u64 {
-    (hi << 32) + lo
+    (hi << 32) | (lo & ECS_GENERATION_MASK)
 }
 
 /// Combines two 32 bit integers into a 64 bit integer and adds the `ECS_PAIR` flag.
