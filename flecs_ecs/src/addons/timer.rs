@@ -1,3 +1,6 @@
+//! When running a pipeline, systems are ran each time [`World::progress()`](crate::core::World::progress) is called.
+//! The `flecs_timer` feature addon makes it possible to run systems at a specific time interval or rate.
+//!
 use std::ops::{Deref, DerefMut};
 
 use flecs_ecs_sys::{self as sys};
@@ -33,7 +36,7 @@ pub trait TimerAPI: Sized {
 
     /// Get current interval value for the specified timer.
     ///
-    /// This operation returns the value set by [`set_interval`](crate::addons::timer::TimerAPI::set_interval).
+    /// This operation returns the value set by [`set_interval()`](crate::addons::timer::TimerAPI::set_interval).
     ///
     /// # Returns
     ///
@@ -50,7 +53,7 @@ pub trait TimerAPI: Sized {
     /// Set timer timeout.
     /// This operation executes any systems associated with the timer after the specified timeout value.
     /// If the entity contains an existing timer, the timeout value will be reset.
-    /// The timer can be started and stopped with [`start`](crate::addons::timer::TimerAPI::start) and [`stop`](crate::addons::timer::TimerAPI::stop).
+    /// The timer can be started and stopped with [`start()`](crate::addons::timer::TimerAPI::start) and [`stop()`](crate::addons::timer::TimerAPI::stop).
     ///     
     /// The timer is synchronous, and is incremented each frame by `delta_time`.
     ///
@@ -69,7 +72,7 @@ pub trait TimerAPI: Sized {
     }
 
     /// Get current timeout value for the specified timer.
-    /// This operation returns the value set by [`set_timeout`](crate::addons::timer::TimerAPI::set_timeout).
+    /// This operation returns the value set by [`set_timeout()`](crate::addons::timer::TimerAPI::set_timeout).
     ///
     /// After the timeout expires the [`flecs::timer::Timer`](crate::core::flecs::timer::Timer) component is removed from the entity.
     /// This means that if [`TimerAPI::timeout`] is invoked after the timer is expired, the operation will return 0.
@@ -82,6 +85,7 @@ pub trait TimerAPI: Sized {
     /// When the tick source is a system, the system will tick when the timer ticks.
     ///
     /// # Returns
+    ///
     /// The timeout. If no timer is active for this entity, the operation returns 0.
     ///
     /// # See also
@@ -93,7 +97,7 @@ pub trait TimerAPI: Sized {
     }
 
     /// Set rate filter. Will use the frame tick as tick source,
-    /// which corresponds with the number of times [`World::progress`](crate::core::World::progress) is called.
+    /// which corresponds with the number of times [`World::progress()`](crate::core::World::progress) is called.
     /// This operation initializes a rate filter.
     /// Rate filters sample tick sources and tick at a configurable multiple.
     /// A rate filter is a tick source itself, which means that rate filters can be chained.
@@ -111,6 +115,7 @@ pub trait TimerAPI: Sized {
     /// Tick sources can be read by getting the [`flecs::TickSource`](crate::core::flecs::system::TickSource) component.
     /// If the tick source ticked this frame, the 'tick' member will be true.
     /// When the tick source is a system, the system will tick when the timer ticks.
+    ///
     /// # See also
     ///
     /// * [`TimerAPI::set_rate_w_tick_source()`]
@@ -136,7 +141,7 @@ pub trait TimerAPI: Sized {
     /// If a rate filter is created with a rate of 1 it will tick at the exact same time as its source.
     ///
     /// If no tick source is provided (Entity(0)), the rate filter will use the frame tick as source,
-    /// which corresponds with the number of times [`World::progress`](crate::core::World::progress) is called.
+    /// which corresponds with the number of times [`World::progress()`](crate::core::World::progress) is called.
     ///
     /// The `tick_source` entity will be a tick source after this operation.
     /// Tick sources can be read by getting the [`flecs::TickSource`](crate::core::flecs::system::TickSource) component.
@@ -289,7 +294,7 @@ impl<'a> System<'a> {
     /// The provided tick source can be any entity that is a tick source, including another system.
     /// If the provided entity is not a tick source the system will not be ran.
     ///
-    /// To disassociate a tick source from a system, use [`System::reset_tick_source`](crate::addons::system::System::reset_tick_source).
+    /// To disassociate a tick source from a system, use [`System::reset_tick_source()`](crate::addons::system::System::reset_tick_source).
     ///
     /// # See also
     ///
@@ -312,7 +317,7 @@ impl<'a> System<'a> {
     /// The provided tick source can be any entity that is a tick source, including another system.
     /// If the provided entity is not a tick source the system will not be ran.
     ///
-    /// To disassociate a tick source from a system, use [`System::reset_tick_source`](crate::addons::system::System::reset_tick_source).
+    /// To disassociate a tick source from a system, use [`System::reset_tick_source()`](crate::addons::system::System::reset_tick_source).
     ///
     /// # See also
     ///
