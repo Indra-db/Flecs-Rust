@@ -30,9 +30,11 @@ fn generate_bindings() {
 
     let mut bindings = bindgen::Builder::default()
         .header("src/flecs.h")
+        .header("src/flecs_rust.h")
         // Only keep things that we've allowlisted rather than
         // recursively keeping nested uses around.
         .allowlist_file("src/flecs.h")
+        .allowlist_file("src/flecs_rust.h")
         .allowlist_recursively(false)
         // Keep comments and keep all of them, not just doc comments.
         .generate_comments(true)
@@ -189,6 +191,8 @@ fn main() {
     // Tell cargo to invalidate the built crate whenever the sources change
     println!("cargo:rerun-if-changed=src/flecs.h");
     println!("cargo:rerun-if-changed=src/flecs.c");
+    println!("cargo:rerun-if-changed=src/flecs_rust.h");
+    println!("cargo:rerun-if-changed=src/flecs_rust.c");
     println!("cargo:rerun-if-changed=build.rs");
 
     #[cfg(not(feature = "disable_build_c"))]
@@ -196,7 +200,7 @@ fn main() {
         let mut build = cc::Build::new();
 
         build
-            .file("src/flecs.c")
+            .file("src/flecs_rust.c") // This includes flecs.c
             .warnings(true)
             .extra_warnings(true)
             .define("FLECS_CUSTOM_BUILD", None)

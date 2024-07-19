@@ -32450,39 +32450,3 @@ inline flecs::scoped_world world::scope(const char* name) const {
 
 #endif
 
-///////////////////////////////////////////////////////////////
-///////// CUSTOM RUST FUNCTIONALITY
-///////////////////////////////////////////////////////////////
-
-// struct ecs_record_w_id_t {
-//     ecs_record_t* record;
-//     ecs_entity_t id;
-// };
-
-// typedef struct ecs_record_w_id_t ecs_record_w_id_t;
-
-// FLECS_API
-// ecs_record_w_id_t ecs_new_w_record(
-//     ecs_world_t *world);
-
-FLECS_API
-void* ecs_rust_mut_get_id(
-    const ecs_world_t *world,
-    ecs_entity_t entity,
-    const ecs_record_t* record,
-    ecs_table_t* table,
-    ecs_id_t id);
-
-FLECS_API
-void* ecs_rust_get_id(
-    const ecs_world_t *world,
-    ecs_entity_t entity,
-    const ecs_record_t* record,
-    ecs_table_t* table,
-    ecs_id_t id);
-
-FLECS_API
-    int32_t ecs_rust_rel_count(
-    const ecs_world_t *world,
-    ecs_id_t id,
-    ecs_table_t* table);

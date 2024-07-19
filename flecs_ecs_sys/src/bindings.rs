@@ -8061,7 +8061,6 @@ extern "C" {
     ) -> *const ecs_member_t;
 }
 extern "C" {
-    #[doc = "FLECS_API\n ecs_record_w_id_t ecs_new_w_record(\n     ecs_world_t *world);"]
     pub fn ecs_rust_mut_get_id(
         world: *const ecs_world_t,
         entity: ecs_entity_t,
