@@ -258,7 +258,7 @@ pub type ecs_size_t = i32;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_vec_t {
-    pub array: *mut ::std::os::raw::c_void,
+    pub array: *mut ::core::ffi::c_void,
     pub count: i32,
     pub size: i32,
 }
@@ -291,7 +291,7 @@ extern "C" {
         allocator: *mut ecs_allocator_t,
         vec: *mut ecs_vec_t,
         size: ecs_size_t,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     pub fn ecs_vec_remove(vec: *mut ecs_vec_t, size: ecs_size_t, elem: i32);
@@ -362,7 +362,7 @@ extern "C" {
         vec: *mut ecs_vec_t,
         size: ecs_size_t,
         elem_count: i32,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     pub fn ecs_vec_count(vec: *const ecs_vec_t) -> i32;
@@ -375,13 +375,13 @@ extern "C" {
         vec: *const ecs_vec_t,
         size: ecs_size_t,
         index: i32,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
-    pub fn ecs_vec_first(vec: *const ecs_vec_t) -> *mut ::std::os::raw::c_void;
+    pub fn ecs_vec_first(vec: *const ecs_vec_t) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
-    pub fn ecs_vec_last(vec: *const ecs_vec_t, size: ecs_size_t) -> *mut ::std::os::raw::c_void;
+    pub fn ecs_vec_last(vec: *const ecs_vec_t, size: ecs_size_t) -> *mut ::core::ffi::c_void;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -420,7 +420,7 @@ extern "C" {
     pub fn flecs_sparse_add(
         sparse: *mut ecs_sparse_t,
         elem_size: ecs_size_t,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Get last issued id."]
@@ -440,7 +440,7 @@ extern "C" {
         sparse: *mut ecs_sparse_t,
         size: ecs_size_t,
         index: u64,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Test if id is alive, which requires the generation count to match."]
@@ -452,7 +452,7 @@ extern "C" {
         sparse: *const ecs_sparse_t,
         elem_size: ecs_size_t,
         index: i32,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Get the number of alive elements in the sparse set."]
@@ -464,7 +464,7 @@ extern "C" {
         sparse: *const ecs_sparse_t,
         elem_size: ecs_size_t,
         id: u64,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Same as flecs_sparse_get, but doesn't assert if id is not alive."]
@@ -472,7 +472,7 @@ extern "C" {
         sparse: *const ecs_sparse_t,
         elem_size: ecs_size_t,
         id: u64,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Like get_sparse, but don't care whether element is alive or not."]
@@ -480,7 +480,7 @@ extern "C" {
         sparse: *const ecs_sparse_t,
         elem_size: ecs_size_t,
         id: u64,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Get or create element by (sparse) id."]
@@ -488,7 +488,7 @@ extern "C" {
         sparse: *mut ecs_sparse_t,
         elem_size: ecs_size_t,
         id: u64,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Fast version of ensure, no liveliness checking"]
@@ -496,7 +496,7 @@ extern "C" {
         sparse: *mut ecs_sparse_t,
         elem_size: ecs_size_t,
         id: u64,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Get pointer to ids (alive and not alive). Use with count() or size()."]
@@ -510,7 +510,7 @@ extern "C" {
     pub fn ecs_sparse_add(
         sparse: *mut ecs_sparse_t,
         elem_size: ecs_size_t,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     pub fn ecs_sparse_last_id(sparse: *const ecs_sparse_t) -> u64;
@@ -523,19 +523,19 @@ extern "C" {
         sparse: *const ecs_sparse_t,
         elem_size: ecs_size_t,
         index: i32,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     pub fn ecs_sparse_get(
         sparse: *const ecs_sparse_t,
         elem_size: ecs_size_t,
         id: u64,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_block_allocator_block_t {
-    pub memory: *mut ::std::os::raw::c_void,
+    pub memory: *mut ::core::ffi::c_void,
     pub next: *mut ecs_block_allocator_block_t,
 }
 #[repr(C)]
@@ -568,38 +568,38 @@ extern "C" {
     pub fn flecs_ballocator_free(ba: *mut ecs_block_allocator_t);
 }
 extern "C" {
-    pub fn flecs_balloc(allocator: *mut ecs_block_allocator_t) -> *mut ::std::os::raw::c_void;
+    pub fn flecs_balloc(allocator: *mut ecs_block_allocator_t) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
-    pub fn flecs_bcalloc(allocator: *mut ecs_block_allocator_t) -> *mut ::std::os::raw::c_void;
+    pub fn flecs_bcalloc(allocator: *mut ecs_block_allocator_t) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
-    pub fn flecs_bfree(allocator: *mut ecs_block_allocator_t, memory: *mut ::std::os::raw::c_void);
+    pub fn flecs_bfree(allocator: *mut ecs_block_allocator_t, memory: *mut ::core::ffi::c_void);
 }
 extern "C" {
     pub fn flecs_bfree_w_dbg_info(
         allocator: *mut ecs_block_allocator_t,
-        memory: *mut ::std::os::raw::c_void,
-        type_name: *const ::std::os::raw::c_char,
+        memory: *mut ::core::ffi::c_void,
+        type_name: *const ::core::ffi::c_char,
     );
 }
 extern "C" {
     pub fn flecs_brealloc(
         dst: *mut ecs_block_allocator_t,
         src: *mut ecs_block_allocator_t,
-        memory: *mut ::std::os::raw::c_void,
-    ) -> *mut ::std::os::raw::c_void;
+        memory: *mut ::core::ffi::c_void,
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     pub fn flecs_bdup(
         ba: *mut ecs_block_allocator_t,
-        memory: *mut ::std::os::raw::c_void,
-    ) -> *mut ::std::os::raw::c_void;
+        memory: *mut ::core::ffi::c_void,
+    ) -> *mut ::core::ffi::c_void;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_stack_page_t {
-    pub data: *mut ::std::os::raw::c_void,
+    pub data: *mut ::core::ffi::c_void,
     pub next: *mut ecs_stack_page_t,
     pub sp: i16,
     pub id: u32,
@@ -632,17 +632,17 @@ extern "C" {
         stack: *mut ecs_stack_t,
         size: ecs_size_t,
         align: ecs_size_t,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     pub fn flecs_stack_calloc(
         stack: *mut ecs_stack_t,
         size: ecs_size_t,
         align: ecs_size_t,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
-    pub fn flecs_stack_free(ptr: *mut ::std::os::raw::c_void, size: ecs_size_t);
+    pub fn flecs_stack_free(ptr: *mut ::core::ffi::c_void, size: ecs_size_t);
 }
 extern "C" {
     pub fn flecs_stack_reset(stack: *mut ecs_stack_t);
@@ -729,7 +729,7 @@ extern "C" {
     pub fn ecs_map_get_deref_(
         map: *const ecs_map_t,
         key: ecs_map_key_t,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Get or insert element for key."]
@@ -741,7 +741,7 @@ extern "C" {
         map: *mut ecs_map_t,
         elem_size: ecs_size_t,
         key: ecs_map_key_t,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Insert element for key."]
@@ -753,7 +753,7 @@ extern "C" {
         map: *mut ecs_map_t,
         elem_size: ecs_size_t,
         key: ecs_map_key_t,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Remove key from map."]
@@ -869,46 +869,46 @@ extern "C" {
 extern "C" {
     pub fn flecs_strdup(
         a: *mut ecs_allocator_t,
-        str_: *const ::std::os::raw::c_char,
-    ) -> *mut ::std::os::raw::c_char;
+        str_: *const ::core::ffi::c_char,
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
-    pub fn flecs_strfree(a: *mut ecs_allocator_t, str_: *mut ::std::os::raw::c_char);
+    pub fn flecs_strfree(a: *mut ecs_allocator_t, str_: *mut ::core::ffi::c_char);
 }
 extern "C" {
     pub fn flecs_dup(
         a: *mut ecs_allocator_t,
         size: ecs_size_t,
-        src: *const ::std::os::raw::c_void,
-    ) -> *mut ::std::os::raw::c_void;
+        src: *const ::core::ffi::c_void,
+    ) -> *mut ::core::ffi::c_void;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_strbuf_list_elem {
     pub count: i32,
-    pub separator: *const ::std::os::raw::c_char,
+    pub separator: *const ::core::ffi::c_char,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_strbuf_t {
-    pub content: *mut ::std::os::raw::c_char,
+    pub content: *mut ::core::ffi::c_char,
     pub length: ecs_size_t,
     pub size: ecs_size_t,
     pub list_stack: [ecs_strbuf_list_elem; 32usize],
     pub list_sp: i32,
-    pub small_string: [::std::os::raw::c_char; 512usize],
+    pub small_string: [::core::ffi::c_char; 512usize],
 }
 extern "C" {
     #[doc = "Append format string to a buffer.\n Returns false when max is reached, true when there is still space"]
-    pub fn ecs_strbuf_append(buffer: *mut ecs_strbuf_t, fmt: *const ::std::os::raw::c_char, ...);
+    pub fn ecs_strbuf_append(buffer: *mut ecs_strbuf_t, fmt: *const ::core::ffi::c_char, ...);
 }
 extern "C" {
     #[doc = "Append string to buffer.\n Returns false when max is reached, true when there is still space"]
-    pub fn ecs_strbuf_appendstr(buffer: *mut ecs_strbuf_t, str_: *const ::std::os::raw::c_char);
+    pub fn ecs_strbuf_appendstr(buffer: *mut ecs_strbuf_t, str_: *const ::core::ffi::c_char);
 }
 extern "C" {
     #[doc = "Append character to buffer.\n Returns false when max is reached, true when there is still space"]
-    pub fn ecs_strbuf_appendch(buffer: *mut ecs_strbuf_t, ch: ::std::os::raw::c_char);
+    pub fn ecs_strbuf_appendch(buffer: *mut ecs_strbuf_t, ch: ::core::ffi::c_char);
 }
 extern "C" {
     #[doc = "Append int to buffer.\n Returns false when max is reached, true when there is still space"]
@@ -916,11 +916,7 @@ extern "C" {
 }
 extern "C" {
     #[doc = "Append float to buffer.\n Returns false when max is reached, true when there is still space"]
-    pub fn ecs_strbuf_appendflt(
-        buffer: *mut ecs_strbuf_t,
-        v: f64,
-        nan_delim: ::std::os::raw::c_char,
-    );
+    pub fn ecs_strbuf_appendflt(buffer: *mut ecs_strbuf_t, v: f64, nan_delim: ::core::ffi::c_char);
 }
 extern "C" {
     #[doc = "Append boolean to buffer.\n Returns false when max is reached, true when there is still space"]
@@ -934,17 +930,17 @@ extern "C" {
     #[doc = "Append n characters to buffer.\n Returns false when max is reached, true when there is still space"]
     pub fn ecs_strbuf_appendstrn(
         buffer: *mut ecs_strbuf_t,
-        str_: *const ::std::os::raw::c_char,
+        str_: *const ::core::ffi::c_char,
         n: i32,
     );
 }
 extern "C" {
     #[doc = "Return result string"]
-    pub fn ecs_strbuf_get(buffer: *mut ecs_strbuf_t) -> *mut ::std::os::raw::c_char;
+    pub fn ecs_strbuf_get(buffer: *mut ecs_strbuf_t) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Return small string from first element (appends \\0)"]
-    pub fn ecs_strbuf_get_small(buffer: *mut ecs_strbuf_t) -> *mut ::std::os::raw::c_char;
+    pub fn ecs_strbuf_get_small(buffer: *mut ecs_strbuf_t) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Reset buffer without returning a string"]
@@ -954,16 +950,13 @@ extern "C" {
     #[doc = "Push a list"]
     pub fn ecs_strbuf_list_push(
         buffer: *mut ecs_strbuf_t,
-        list_open: *const ::std::os::raw::c_char,
-        separator: *const ::std::os::raw::c_char,
+        list_open: *const ::core::ffi::c_char,
+        separator: *const ::core::ffi::c_char,
     );
 }
 extern "C" {
     #[doc = "Pop a new list"]
-    pub fn ecs_strbuf_list_pop(
-        buffer: *mut ecs_strbuf_t,
-        list_close: *const ::std::os::raw::c_char,
-    );
+    pub fn ecs_strbuf_list_pop(buffer: *mut ecs_strbuf_t, list_close: *const ::core::ffi::c_char);
 }
 extern "C" {
     #[doc = "Insert a new element in list"]
@@ -971,28 +964,21 @@ extern "C" {
 }
 extern "C" {
     #[doc = "Append character to as new element in list."]
-    pub fn ecs_strbuf_list_appendch(buffer: *mut ecs_strbuf_t, ch: ::std::os::raw::c_char);
+    pub fn ecs_strbuf_list_appendch(buffer: *mut ecs_strbuf_t, ch: ::core::ffi::c_char);
 }
 extern "C" {
     #[doc = "Append formatted string as a new element in list"]
-    pub fn ecs_strbuf_list_append(
-        buffer: *mut ecs_strbuf_t,
-        fmt: *const ::std::os::raw::c_char,
-        ...
-    );
+    pub fn ecs_strbuf_list_append(buffer: *mut ecs_strbuf_t, fmt: *const ::core::ffi::c_char, ...);
 }
 extern "C" {
     #[doc = "Append string as a new element in list"]
-    pub fn ecs_strbuf_list_appendstr(
-        buffer: *mut ecs_strbuf_t,
-        str_: *const ::std::os::raw::c_char,
-    );
+    pub fn ecs_strbuf_list_appendstr(buffer: *mut ecs_strbuf_t, str_: *const ::core::ffi::c_char);
 }
 extern "C" {
     #[doc = "Append string as a new element in list"]
     pub fn ecs_strbuf_list_appendstrn(
         buffer: *mut ecs_strbuf_t,
-        str_: *const ::std::os::raw::c_char,
+        str_: *const ::core::ffi::c_char,
         n: i32,
     );
 }
@@ -1033,125 +1019,122 @@ pub type ecs_os_sock_t = usize;
 #[doc = "64 bit thread id."]
 pub type ecs_os_thread_id_t = u64;
 #[doc = "Generic function pointer type."]
-pub type ecs_os_proc_t = ::std::option::Option<unsafe extern "C" fn()>;
+pub type ecs_os_proc_t = ::core::option::Option<unsafe extern "C" fn()>;
 #[doc = "OS API init."]
-pub type ecs_os_api_init_t = ::std::option::Option<unsafe extern "C" fn()>;
+pub type ecs_os_api_init_t = ::core::option::Option<unsafe extern "C" fn()>;
 #[doc = "OS API deinit."]
-pub type ecs_os_api_fini_t = ::std::option::Option<unsafe extern "C" fn()>;
+pub type ecs_os_api_fini_t = ::core::option::Option<unsafe extern "C" fn()>;
 #[doc = "OS API malloc function type."]
 pub type ecs_os_api_malloc_t =
-    ::std::option::Option<unsafe extern "C" fn(size: ecs_size_t) -> *mut ::std::os::raw::c_void>;
+    ::core::option::Option<unsafe extern "C" fn(size: ecs_size_t) -> *mut ::core::ffi::c_void>;
 #[doc = "OS API free function type."]
 pub type ecs_os_api_free_t =
-    ::std::option::Option<unsafe extern "C" fn(ptr: *mut ::std::os::raw::c_void)>;
+    ::core::option::Option<unsafe extern "C" fn(ptr: *mut ::core::ffi::c_void)>;
 #[doc = "OS API realloc function type."]
-pub type ecs_os_api_realloc_t = ::std::option::Option<
+pub type ecs_os_api_realloc_t = ::core::option::Option<
     unsafe extern "C" fn(
-        ptr: *mut ::std::os::raw::c_void,
+        ptr: *mut ::core::ffi::c_void,
         size: ecs_size_t,
-    ) -> *mut ::std::os::raw::c_void,
+    ) -> *mut ::core::ffi::c_void,
 >;
 #[doc = "OS API calloc function type."]
 pub type ecs_os_api_calloc_t =
-    ::std::option::Option<unsafe extern "C" fn(size: ecs_size_t) -> *mut ::std::os::raw::c_void>;
+    ::core::option::Option<unsafe extern "C" fn(size: ecs_size_t) -> *mut ::core::ffi::c_void>;
 #[doc = "OS API strdup function type."]
-pub type ecs_os_api_strdup_t = ::std::option::Option<
-    unsafe extern "C" fn(str_: *const ::std::os::raw::c_char) -> *mut ::std::os::raw::c_char,
+pub type ecs_os_api_strdup_t = ::core::option::Option<
+    unsafe extern "C" fn(str_: *const ::core::ffi::c_char) -> *mut ::core::ffi::c_char,
 >;
 #[doc = "OS API thread_callback function type."]
-pub type ecs_os_thread_callback_t = ::std::option::Option<
-    unsafe extern "C" fn(arg1: *mut ::std::os::raw::c_void) -> *mut ::std::os::raw::c_void,
+pub type ecs_os_thread_callback_t = ::core::option::Option<
+    unsafe extern "C" fn(arg1: *mut ::core::ffi::c_void) -> *mut ::core::ffi::c_void,
 >;
 #[doc = "OS API thread_new function type."]
-pub type ecs_os_api_thread_new_t = ::std::option::Option<
+pub type ecs_os_api_thread_new_t = ::core::option::Option<
     unsafe extern "C" fn(
         callback: ecs_os_thread_callback_t,
-        param: *mut ::std::os::raw::c_void,
+        param: *mut ::core::ffi::c_void,
     ) -> ecs_os_thread_t,
 >;
 #[doc = "OS API thread_join function type."]
-pub type ecs_os_api_thread_join_t = ::std::option::Option<
-    unsafe extern "C" fn(thread: ecs_os_thread_t) -> *mut ::std::os::raw::c_void,
+pub type ecs_os_api_thread_join_t = ::core::option::Option<
+    unsafe extern "C" fn(thread: ecs_os_thread_t) -> *mut ::core::ffi::c_void,
 >;
 #[doc = "OS API thread_self function type."]
 pub type ecs_os_api_thread_self_t =
-    ::std::option::Option<unsafe extern "C" fn() -> ecs_os_thread_id_t>;
+    ::core::option::Option<unsafe extern "C" fn() -> ecs_os_thread_id_t>;
 #[doc = "OS API task_new function type."]
-pub type ecs_os_api_task_new_t = ::std::option::Option<
+pub type ecs_os_api_task_new_t = ::core::option::Option<
     unsafe extern "C" fn(
         callback: ecs_os_thread_callback_t,
-        param: *mut ::std::os::raw::c_void,
+        param: *mut ::core::ffi::c_void,
     ) -> ecs_os_thread_t,
 >;
 #[doc = "OS API task_join function type."]
-pub type ecs_os_api_task_join_t = ::std::option::Option<
-    unsafe extern "C" fn(thread: ecs_os_thread_t) -> *mut ::std::os::raw::c_void,
+pub type ecs_os_api_task_join_t = ::core::option::Option<
+    unsafe extern "C" fn(thread: ecs_os_thread_t) -> *mut ::core::ffi::c_void,
 >;
 #[doc = "Atomic increment / decrement */\n/** OS API ainc function type."]
-pub type ecs_os_api_ainc_t = ::std::option::Option<unsafe extern "C" fn(value: *mut i32) -> i32>;
+pub type ecs_os_api_ainc_t = ::core::option::Option<unsafe extern "C" fn(value: *mut i32) -> i32>;
 #[doc = "OS API lainc function type."]
-pub type ecs_os_api_lainc_t = ::std::option::Option<unsafe extern "C" fn(value: *mut i64) -> i64>;
+pub type ecs_os_api_lainc_t = ::core::option::Option<unsafe extern "C" fn(value: *mut i64) -> i64>;
 #[doc = "Mutex */\n/** OS API mutex_new function type."]
-pub type ecs_os_api_mutex_new_t = ::std::option::Option<unsafe extern "C" fn() -> ecs_os_mutex_t>;
+pub type ecs_os_api_mutex_new_t = ::core::option::Option<unsafe extern "C" fn() -> ecs_os_mutex_t>;
 #[doc = "OS API mutex_lock function type."]
 pub type ecs_os_api_mutex_lock_t =
-    ::std::option::Option<unsafe extern "C" fn(mutex: ecs_os_mutex_t)>;
+    ::core::option::Option<unsafe extern "C" fn(mutex: ecs_os_mutex_t)>;
 #[doc = "OS API mutex_unlock function type."]
 pub type ecs_os_api_mutex_unlock_t =
-    ::std::option::Option<unsafe extern "C" fn(mutex: ecs_os_mutex_t)>;
+    ::core::option::Option<unsafe extern "C" fn(mutex: ecs_os_mutex_t)>;
 #[doc = "OS API mutex_free function type."]
 pub type ecs_os_api_mutex_free_t =
-    ::std::option::Option<unsafe extern "C" fn(mutex: ecs_os_mutex_t)>;
+    ::core::option::Option<unsafe extern "C" fn(mutex: ecs_os_mutex_t)>;
 #[doc = "Condition variable */\n/** OS API cond_new function type."]
-pub type ecs_os_api_cond_new_t = ::std::option::Option<unsafe extern "C" fn() -> ecs_os_cond_t>;
+pub type ecs_os_api_cond_new_t = ::core::option::Option<unsafe extern "C" fn() -> ecs_os_cond_t>;
 #[doc = "OS API cond_free function type."]
-pub type ecs_os_api_cond_free_t = ::std::option::Option<unsafe extern "C" fn(cond: ecs_os_cond_t)>;
+pub type ecs_os_api_cond_free_t = ::core::option::Option<unsafe extern "C" fn(cond: ecs_os_cond_t)>;
 #[doc = "OS API cond_signal function type."]
 pub type ecs_os_api_cond_signal_t =
-    ::std::option::Option<unsafe extern "C" fn(cond: ecs_os_cond_t)>;
+    ::core::option::Option<unsafe extern "C" fn(cond: ecs_os_cond_t)>;
 #[doc = "OS API cond_broadcast function type."]
 pub type ecs_os_api_cond_broadcast_t =
-    ::std::option::Option<unsafe extern "C" fn(cond: ecs_os_cond_t)>;
+    ::core::option::Option<unsafe extern "C" fn(cond: ecs_os_cond_t)>;
 #[doc = "OS API cond_wait function type."]
 pub type ecs_os_api_cond_wait_t =
-    ::std::option::Option<unsafe extern "C" fn(cond: ecs_os_cond_t, mutex: ecs_os_mutex_t)>;
+    ::core::option::Option<unsafe extern "C" fn(cond: ecs_os_cond_t, mutex: ecs_os_mutex_t)>;
 #[doc = "OS API sleep function type."]
-pub type ecs_os_api_sleep_t = ::std::option::Option<unsafe extern "C" fn(sec: i32, nanosec: i32)>;
+pub type ecs_os_api_sleep_t = ::core::option::Option<unsafe extern "C" fn(sec: i32, nanosec: i32)>;
 #[doc = "OS API enable_high_timer_resolution function type."]
 pub type ecs_os_api_enable_high_timer_resolution_t =
-    ::std::option::Option<unsafe extern "C" fn(enable: bool)>;
+    ::core::option::Option<unsafe extern "C" fn(enable: bool)>;
 #[doc = "OS API get_time function type."]
 pub type ecs_os_api_get_time_t =
-    ::std::option::Option<unsafe extern "C" fn(time_out: *mut ecs_time_t)>;
+    ::core::option::Option<unsafe extern "C" fn(time_out: *mut ecs_time_t)>;
 #[doc = "OS API now function type."]
-pub type ecs_os_api_now_t = ::std::option::Option<unsafe extern "C" fn() -> u64>;
+pub type ecs_os_api_now_t = ::core::option::Option<unsafe extern "C" fn() -> u64>;
 #[doc = "OS API log function type."]
-pub type ecs_os_api_log_t = ::std::option::Option<
+pub type ecs_os_api_log_t = ::core::option::Option<
     unsafe extern "C" fn(
         level: i32,
-        file: *const ::std::os::raw::c_char,
+        file: *const ::core::ffi::c_char,
         line: i32,
-        msg: *const ::std::os::raw::c_char,
+        msg: *const ::core::ffi::c_char,
     ),
 >;
 #[doc = "OS API abort function type."]
-pub type ecs_os_api_abort_t = ::std::option::Option<unsafe extern "C" fn()>;
+pub type ecs_os_api_abort_t = ::core::option::Option<unsafe extern "C" fn()>;
 #[doc = "OS API dlopen function type."]
-pub type ecs_os_api_dlopen_t = ::std::option::Option<
-    unsafe extern "C" fn(libname: *const ::std::os::raw::c_char) -> ecs_os_dl_t,
+pub type ecs_os_api_dlopen_t = ::core::option::Option<
+    unsafe extern "C" fn(libname: *const ::core::ffi::c_char) -> ecs_os_dl_t,
 >;
 #[doc = "OS API dlproc function type."]
-pub type ecs_os_api_dlproc_t = ::std::option::Option<
-    unsafe extern "C" fn(
-        lib: ecs_os_dl_t,
-        procname: *const ::std::os::raw::c_char,
-    ) -> ecs_os_proc_t,
+pub type ecs_os_api_dlproc_t = ::core::option::Option<
+    unsafe extern "C" fn(lib: ecs_os_dl_t, procname: *const ::core::ffi::c_char) -> ecs_os_proc_t,
 >;
 #[doc = "OS API dlclose function type."]
-pub type ecs_os_api_dlclose_t = ::std::option::Option<unsafe extern "C" fn(lib: ecs_os_dl_t)>;
+pub type ecs_os_api_dlclose_t = ::core::option::Option<unsafe extern "C" fn(lib: ecs_os_dl_t)>;
 #[doc = "OS API module_to_path function type."]
-pub type ecs_os_api_module_to_path_t = ::std::option::Option<
-    unsafe extern "C" fn(module_id: *const ::std::os::raw::c_char) -> *mut ::std::os::raw::c_char,
+pub type ecs_os_api_module_to_path_t = ::core::option::Option<
+    unsafe extern "C" fn(module_id: *const ::core::ffi::c_char) -> *mut ::core::ffi::c_char,
 >;
 #[doc = "OS API interface."]
 #[repr(C)]
@@ -1266,54 +1249,43 @@ extern "C" {
 }
 extern "C" {
     #[doc = "Log at debug level.\n\n @param file The file to log.\n @param line The line to log.\n @param msg The message to log."]
-    pub fn ecs_os_dbg(
-        file: *const ::std::os::raw::c_char,
-        line: i32,
-        msg: *const ::std::os::raw::c_char,
-    );
+    pub fn ecs_os_dbg(file: *const ::core::ffi::c_char, line: i32, msg: *const ::core::ffi::c_char);
 }
 extern "C" {
     #[doc = "Log at trace level.\n\n @param file The file to log.\n @param line The line to log.\n @param msg The message to log."]
     pub fn ecs_os_trace(
-        file: *const ::std::os::raw::c_char,
+        file: *const ::core::ffi::c_char,
         line: i32,
-        msg: *const ::std::os::raw::c_char,
+        msg: *const ::core::ffi::c_char,
     );
 }
 extern "C" {
     #[doc = "Log at warning level.\n\n @param file The file to log.\n @param line The line to log.\n @param msg The message to log."]
     pub fn ecs_os_warn(
-        file: *const ::std::os::raw::c_char,
+        file: *const ::core::ffi::c_char,
         line: i32,
-        msg: *const ::std::os::raw::c_char,
+        msg: *const ::core::ffi::c_char,
     );
 }
 extern "C" {
     #[doc = "Log at error level.\n\n @param file The file to log.\n @param line The line to log.\n @param msg The message to log."]
-    pub fn ecs_os_err(
-        file: *const ::std::os::raw::c_char,
-        line: i32,
-        msg: *const ::std::os::raw::c_char,
-    );
+    pub fn ecs_os_err(file: *const ::core::ffi::c_char, line: i32, msg: *const ::core::ffi::c_char);
 }
 extern "C" {
     #[doc = "Log at fatal level.\n\n @param file The file to log.\n @param line The line to log.\n @param msg The message to log."]
     pub fn ecs_os_fatal(
-        file: *const ::std::os::raw::c_char,
+        file: *const ::core::ffi::c_char,
         line: i32,
-        msg: *const ::std::os::raw::c_char,
+        msg: *const ::core::ffi::c_char,
     );
 }
 extern "C" {
     #[doc = "Convert errno to string.\n\n @param err The error number.\n @return A string describing the error."]
-    pub fn ecs_os_strerror(err: ::std::os::raw::c_int) -> *const ::std::os::raw::c_char;
+    pub fn ecs_os_strerror(err: ::core::ffi::c_int) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Utility for assigning strings.\n This operation frees an existing string and duplicates the input string.\n\n @param str Pointer to a string value.\n @param value The string value to assign."]
-    pub fn ecs_os_strset(
-        str_: *mut *mut ::std::os::raw::c_char,
-        value: *const ::std::os::raw::c_char,
-    );
+    pub fn ecs_os_strset(str_: *mut *mut ::core::ffi::c_char, value: *const ::core::ffi::c_char);
 }
 extern "C" {
     #[doc = "Sleep with floating point time.\n\n @param t The time in seconds."]
@@ -1334,9 +1306,9 @@ extern "C" {
 extern "C" {
     #[doc = "Return newly allocated memory that contains a copy of src.\n\n @param src The source pointer.\n @param size The number of bytes to copy.\n @return The duplicated memory."]
     pub fn ecs_os_memdup(
-        src: *const ::std::os::raw::c_void,
+        src: *const ::core::ffi::c_void,
         size: ecs_size_t,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Are heap functions available?"]
@@ -1405,7 +1377,7 @@ pub struct ecs_table_record_t {
     _unused: [u8; 0],
 }
 #[doc = "A poly object.\n A poly (short for polymorph) object is an object that has a variable list of\n capabilities, determined by a mixin table. This is the current list of types\n in the flecs API that can be used as an ecs_poly_t:\n\n - ecs_world_t\n - ecs_stage_t\n - ecs_query_t\n\n Functions that accept an ecs_poly_t argument can accept objects of these\n types. If the object does not have the requested mixin the API will throw an\n assert.\n\n The poly/mixin framework enables partially overlapping features to be\n implemented once, and enables objects of different types to interact with\n each other depending on what mixins they have, rather than their type\n (in some ways it's like a mini-ECS). Additionally, each poly object has a\n header that enables the API to do sanity checking on the input arguments."]
-pub type ecs_poly_t = ::std::os::raw::c_void;
+pub type ecs_poly_t = ::core::ffi::c_void;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_mixins_t {
@@ -1425,30 +1397,30 @@ pub struct ecs_header_t {
     pub mixins: *mut ecs_mixins_t,
 }
 #[doc = "Function prototype for runnables (systems, observers).\n The run callback overrides the default behavior for iterating through the\n results of a runnable object.\n\n The default runnable iterates the iterator, and calls an iter_action (see\n below) for each returned result.\n\n @param it The iterator to be iterated by the runnable."]
-pub type ecs_run_action_t = ::std::option::Option<unsafe extern "C" fn(it: *mut ecs_iter_t)>;
+pub type ecs_run_action_t = ::core::option::Option<unsafe extern "C" fn(it: *mut ecs_iter_t)>;
 #[doc = "Function prototype for iterables.\n A system may invoke a callback multiple times, typically once for each\n matched table.\n\n @param it The iterator containing the data for the current match."]
-pub type ecs_iter_action_t = ::std::option::Option<unsafe extern "C" fn(it: *mut ecs_iter_t)>;
+pub type ecs_iter_action_t = ::core::option::Option<unsafe extern "C" fn(it: *mut ecs_iter_t)>;
 #[doc = "Function prototype for iterating an iterator.\n Stored inside initialized iterators. This allows an application to iterate\n an iterator without needing to know what created it.\n\n @param it The iterator to iterate.\n @return True if iterator has no more results, false if it does."]
 pub type ecs_iter_next_action_t =
-    ::std::option::Option<unsafe extern "C" fn(it: *mut ecs_iter_t) -> bool>;
+    ::core::option::Option<unsafe extern "C" fn(it: *mut ecs_iter_t) -> bool>;
 #[doc = "Function prototype for freeing an iterator.\n Free iterator resources.\n\n @param it The iterator to free."]
-pub type ecs_iter_fini_action_t = ::std::option::Option<unsafe extern "C" fn(it: *mut ecs_iter_t)>;
+pub type ecs_iter_fini_action_t = ::core::option::Option<unsafe extern "C" fn(it: *mut ecs_iter_t)>;
 #[doc = "Callback used for comparing components"]
-pub type ecs_order_by_action_t = ::std::option::Option<
+pub type ecs_order_by_action_t = ::core::option::Option<
     unsafe extern "C" fn(
         e1: ecs_entity_t,
-        ptr1: *const ::std::os::raw::c_void,
+        ptr1: *const ::core::ffi::c_void,
         e2: ecs_entity_t,
-        ptr2: *const ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int,
+        ptr2: *const ::core::ffi::c_void,
+    ) -> ::core::ffi::c_int,
 >;
 #[doc = "Callback used for sorting the entire table of components"]
-pub type ecs_sort_table_action_t = ::std::option::Option<
+pub type ecs_sort_table_action_t = ::core::option::Option<
     unsafe extern "C" fn(
         world: *mut ecs_world_t,
         table: *mut ecs_table_t,
         entities: *mut ecs_entity_t,
-        ptr: *mut ::std::os::raw::c_void,
+        ptr: *mut ::core::ffi::c_void,
         size: i32,
         lo: i32,
         hi: i32,
@@ -1456,78 +1428,79 @@ pub type ecs_sort_table_action_t = ::std::option::Option<
     ),
 >;
 #[doc = "Callback used for grouping tables in a query"]
-pub type ecs_group_by_action_t = ::std::option::Option<
+pub type ecs_group_by_action_t = ::core::option::Option<
     unsafe extern "C" fn(
         world: *mut ecs_world_t,
         table: *mut ecs_table_t,
         group_id: ecs_id_t,
-        ctx: *mut ::std::os::raw::c_void,
+        ctx: *mut ::core::ffi::c_void,
     ) -> u64,
 >;
 #[doc = "Callback invoked when a query creates a new group."]
-pub type ecs_group_create_action_t = ::std::option::Option<
+pub type ecs_group_create_action_t = ::core::option::Option<
     unsafe extern "C" fn(
         world: *mut ecs_world_t,
         group_id: u64,
-        group_by_ctx: *mut ::std::os::raw::c_void,
-    ) -> *mut ::std::os::raw::c_void,
+        group_by_ctx: *mut ::core::ffi::c_void,
+    ) -> *mut ::core::ffi::c_void,
 >;
 #[doc = "Callback invoked when a query deletes an existing group."]
-pub type ecs_group_delete_action_t = ::std::option::Option<
+pub type ecs_group_delete_action_t = ::core::option::Option<
     unsafe extern "C" fn(
         world: *mut ecs_world_t,
         group_id: u64,
-        group_ctx: *mut ::std::os::raw::c_void,
-        group_by_ctx: *mut ::std::os::raw::c_void,
+        group_ctx: *mut ::core::ffi::c_void,
+        group_by_ctx: *mut ::core::ffi::c_void,
     ),
 >;
 #[doc = "Initialization action for modules"]
-pub type ecs_module_action_t = ::std::option::Option<unsafe extern "C" fn(world: *mut ecs_world_t)>;
+pub type ecs_module_action_t =
+    ::core::option::Option<unsafe extern "C" fn(world: *mut ecs_world_t)>;
 #[doc = "Action callback on world exit"]
-pub type ecs_fini_action_t = ::std::option::Option<
-    unsafe extern "C" fn(world: *mut ecs_world_t, ctx: *mut ::std::os::raw::c_void),
+pub type ecs_fini_action_t = ::core::option::Option<
+    unsafe extern "C" fn(world: *mut ecs_world_t, ctx: *mut ::core::ffi::c_void),
 >;
 #[doc = "Function to cleanup context data"]
 pub type ecs_ctx_free_t =
-    ::std::option::Option<unsafe extern "C" fn(ctx: *mut ::std::os::raw::c_void)>;
+    ::core::option::Option<unsafe extern "C" fn(ctx: *mut ::core::ffi::c_void)>;
 #[doc = "Callback used for sorting values"]
-pub type ecs_compare_action_t = ::std::option::Option<
+pub type ecs_compare_action_t = ::core::option::Option<
     unsafe extern "C" fn(
-        ptr1: *const ::std::os::raw::c_void,
-        ptr2: *const ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int,
+        ptr1: *const ::core::ffi::c_void,
+        ptr2: *const ::core::ffi::c_void,
+    ) -> ::core::ffi::c_int,
 >;
 #[doc = "Callback used for hashing values"]
 pub type ecs_hash_value_action_t =
-    ::std::option::Option<unsafe extern "C" fn(ptr: *const ::std::os::raw::c_void) -> u64>;
+    ::core::option::Option<unsafe extern "C" fn(ptr: *const ::core::ffi::c_void) -> u64>;
 #[doc = "Constructor/destructor callback"]
-pub type ecs_xtor_t = ::std::option::Option<
+pub type ecs_xtor_t = ::core::option::Option<
     unsafe extern "C" fn(
-        ptr: *mut ::std::os::raw::c_void,
+        ptr: *mut ::core::ffi::c_void,
         count: i32,
         type_info: *const ecs_type_info_t,
     ),
 >;
 #[doc = "Copy is invoked when a component is copied into another component."]
-pub type ecs_copy_t = ::std::option::Option<
+pub type ecs_copy_t = ::core::option::Option<
     unsafe extern "C" fn(
-        dst_ptr: *mut ::std::os::raw::c_void,
-        src_ptr: *const ::std::os::raw::c_void,
+        dst_ptr: *mut ::core::ffi::c_void,
+        src_ptr: *const ::core::ffi::c_void,
         count: i32,
         type_info: *const ecs_type_info_t,
     ),
 >;
 #[doc = "Move is invoked when a component is moved to another component."]
-pub type ecs_move_t = ::std::option::Option<
+pub type ecs_move_t = ::core::option::Option<
     unsafe extern "C" fn(
-        dst_ptr: *mut ::std::os::raw::c_void,
-        src_ptr: *mut ::std::os::raw::c_void,
+        dst_ptr: *mut ::core::ffi::c_void,
+        src_ptr: *mut ::core::ffi::c_void,
         count: i32,
         type_info: *const ecs_type_info_t,
     ),
 >;
 #[doc = "Destructor function for poly objects."]
-pub type flecs_poly_dtor_t = ::std::option::Option<unsafe extern "C" fn(poly: *mut ecs_poly_t)>;
+pub type flecs_poly_dtor_t = ::core::option::Option<unsafe extern "C" fn(poly: *mut ecs_poly_t)>;
 #[doc = "< InOut for regular terms, In for shared terms"]
 pub const ecs_inout_kind_t_EcsInOutDefault: ecs_inout_kind_t = 0;
 #[doc = "< Term is neither read nor written"]
@@ -1541,7 +1514,7 @@ pub const ecs_inout_kind_t_EcsIn: ecs_inout_kind_t = 4;
 #[doc = "< Term is only written"]
 pub const ecs_inout_kind_t_EcsOut: ecs_inout_kind_t = 5;
 #[doc = "Specify read/write access for term"]
-pub type ecs_inout_kind_t = ::std::os::raw::c_uint;
+pub type ecs_inout_kind_t = ::core::ffi::c_uint;
 #[doc = "< The term must match"]
 pub const ecs_oper_kind_t_EcsAnd: ecs_oper_kind_t = 0;
 #[doc = "< One of the terms in an or chain must match"]
@@ -1557,7 +1530,7 @@ pub const ecs_oper_kind_t_EcsOrFrom: ecs_oper_kind_t = 5;
 #[doc = "< Term must match none of the components from term id"]
 pub const ecs_oper_kind_t_EcsNotFrom: ecs_oper_kind_t = 6;
 #[doc = "Specify operator for term"]
-pub type ecs_oper_kind_t = ::std::os::raw::c_uint;
+pub type ecs_oper_kind_t = ::core::ffi::c_uint;
 #[doc = "< Behavior determined by query creation context"]
 pub const ecs_query_cache_kind_t_EcsQueryCacheDefault: ecs_query_cache_kind_t = 0;
 #[doc = "< Cache query terms that are cacheable"]
@@ -1567,7 +1540,7 @@ pub const ecs_query_cache_kind_t_EcsQueryCacheAll: ecs_query_cache_kind_t = 2;
 #[doc = "< No caching"]
 pub const ecs_query_cache_kind_t_EcsQueryCacheNone: ecs_query_cache_kind_t = 3;
 #[doc = "Specify cache policy for query"]
-pub type ecs_query_cache_kind_t = ::std::os::raw::c_uint;
+pub type ecs_query_cache_kind_t = ::core::ffi::c_uint;
 #[doc = "Type that describes a reference to an entity or variable in a term."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1575,7 +1548,7 @@ pub struct ecs_term_ref_t {
     #[doc = "< Entity id. If left to 0 and flags does not\n specify whether id is an entity or a variable\n the id will be initialized to #EcsThis.\n To explicitly set the id to 0, leave the id\n member to 0 and set #EcsIsEntity in flags."]
     pub id: ecs_entity_t,
     #[doc = "< Name. This can be either the variable name\n (when the #EcsIsVariable flag is set) or an\n entity name. When ecs_term_t::move is true,\n the API assumes ownership over the string and\n will free it when the term is destroyed."]
-    pub name: *const ::std::os::raw::c_char,
+    pub name: *const ::core::ffi::c_char,
 }
 #[doc = "Type that describes a term (single element in a query)."]
 #[repr(C)]
@@ -1637,11 +1610,11 @@ pub struct ecs_query_t {
     #[doc = "< Caching policy of query"]
     pub cache_kind: ecs_query_cache_kind_t,
     #[doc = "< Array with variable names for iterator"]
-    pub vars: *mut *mut ::std::os::raw::c_char,
+    pub vars: *mut *mut ::core::ffi::c_char,
     #[doc = "< User context to pass to callback"]
-    pub ctx: *mut ::std::os::raw::c_void,
+    pub ctx: *mut ::core::ffi::c_void,
     #[doc = "< Context to be used for language bindings"]
-    pub binding_ctx: *mut ::std::os::raw::c_void,
+    pub binding_ctx: *mut ::core::ffi::c_void,
     #[doc = "< Entity associated with query (optional)"]
     pub entity: ecs_entity_t,
     #[doc = "< Actual world."]
@@ -1668,11 +1641,11 @@ pub struct ecs_observer_t {
     #[doc = "< See ecs_observer_desc_t::run"]
     pub run: ecs_run_action_t,
     #[doc = "< Observer context"]
-    pub ctx: *mut ::std::os::raw::c_void,
+    pub ctx: *mut ::core::ffi::c_void,
     #[doc = "< Callback language binding context"]
-    pub callback_ctx: *mut ::std::os::raw::c_void,
+    pub callback_ctx: *mut ::core::ffi::c_void,
     #[doc = "< Run language binding context"]
-    pub run_ctx: *mut ::std::os::raw::c_void,
+    pub run_ctx: *mut ::core::ffi::c_void,
     #[doc = "< Callback to free ctx"]
     pub ctx_free: ecs_ctx_free_t,
     #[doc = "< Callback to free callback_ctx"]
@@ -1713,9 +1686,9 @@ pub struct ecs_type_hooks_t {
     #[doc = "Callback that is invoked when an instance of the component is removed.\n This callback is invoked after the triggers are invoked, and before the\n destructor is invoked."]
     pub on_remove: ecs_iter_action_t,
     #[doc = "< User defined context"]
-    pub ctx: *mut ::std::os::raw::c_void,
+    pub ctx: *mut ::core::ffi::c_void,
     #[doc = "< Language binding context"]
-    pub binding_ctx: *mut ::std::os::raw::c_void,
+    pub binding_ctx: *mut ::core::ffi::c_void,
     #[doc = "< Callback to free ctx"]
     pub ctx_free: ecs_ctx_free_t,
     #[doc = "< Callback to free binding_ctx"]
@@ -1734,7 +1707,7 @@ pub struct ecs_type_info_t {
     #[doc = "< Handle to component (do not set)"]
     pub component: ecs_entity_t,
     #[doc = "< Type name."]
-    pub name: *const ::std::os::raw::c_char,
+    pub name: *const ::core::ffi::c_char,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1846,7 +1819,7 @@ pub struct ecs_each_iter_t {
     pub sources: ecs_entity_t,
     pub sizes: ecs_size_t,
     pub columns: i32,
-    pub ptrs: *mut ::std::os::raw::c_void,
+    pub ptrs: *mut ::core::ffi::c_void,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1895,7 +1868,7 @@ pub struct ecs_iter_private_t {
     #[doc = "Iterator specific data"]
     pub iter: ecs_iter_private_t__bindgen_ty_1,
     #[doc = "Query applied after matching a table"]
-    pub entity_iter: *mut ::std::os::raw::c_void,
+    pub entity_iter: *mut ::core::ffi::c_void,
     #[doc = "Inline arrays to reduce allocations"]
     pub cache: ecs_iter_cache_t,
 }
@@ -1908,76 +1881,75 @@ pub union ecs_iter_private_t__bindgen_ty_1 {
     pub each: ecs_each_iter_t,
 }
 extern "C" {
-    pub fn flecs_module_path_from_c(
-        c_name: *const ::std::os::raw::c_char,
-    ) -> *mut ::std::os::raw::c_char;
+    pub fn flecs_module_path_from_c(c_name: *const ::core::ffi::c_char)
+        -> *mut ::core::ffi::c_char;
 }
 extern "C" {
-    pub fn flecs_identifier_is_0(id: *const ::std::os::raw::c_char) -> bool;
+    pub fn flecs_identifier_is_0(id: *const ::core::ffi::c_char) -> bool;
 }
 extern "C" {
     #[doc = "Constructor that zeromem's a component value"]
     pub fn flecs_default_ctor(
-        ptr: *mut ::std::os::raw::c_void,
+        ptr: *mut ::core::ffi::c_void,
         count: i32,
         ctx: *const ecs_type_info_t,
     );
 }
 extern "C" {
     #[doc = "Create allocated string from format"]
-    pub fn flecs_asprintf(fmt: *const ::std::os::raw::c_char, ...) -> *mut ::std::os::raw::c_char;
+    pub fn flecs_asprintf(fmt: *const ::core::ffi::c_char, ...) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Write an escaped character.\n Write a character to an output string, insert escape character if necessary.\n\n @param out The string to write the character to.\n @param in The input character.\n @param delimiter The delimiter used (for example '\"')\n @return Pointer to the character after the last one written."]
     pub fn flecs_chresc(
-        out: *mut ::std::os::raw::c_char,
-        in_: ::std::os::raw::c_char,
-        delimiter: ::std::os::raw::c_char,
-    ) -> *mut ::std::os::raw::c_char;
+        out: *mut ::core::ffi::c_char,
+        in_: ::core::ffi::c_char,
+        delimiter: ::core::ffi::c_char,
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Parse an escaped character.\n Parse a character with a potential escape sequence.\n\n @param in Pointer to character in input string.\n @param out Output string.\n @return Pointer to the character after the last one read."]
     pub fn flecs_chrparse(
-        in_: *const ::std::os::raw::c_char,
-        out: *mut ::std::os::raw::c_char,
-    ) -> *const ::std::os::raw::c_char;
+        in_: *const ::core::ffi::c_char,
+        out: *mut ::core::ffi::c_char,
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Write an escaped string.\n Write an input string to an output string, escape characters where necessary.\n To determine the size of the output string, call the operation with a NULL\n argument for 'out', and use the returned size to allocate a string that is\n large enough.\n\n @param out Pointer to output string (must be).\n @param size Maximum number of characters written to output.\n @param delimiter The delimiter used (for example '\"').\n @param in The input string.\n @return The number of characters that (would) have been written."]
     pub fn flecs_stresc(
-        out: *mut ::std::os::raw::c_char,
+        out: *mut ::core::ffi::c_char,
         size: ecs_size_t,
-        delimiter: ::std::os::raw::c_char,
-        in_: *const ::std::os::raw::c_char,
+        delimiter: ::core::ffi::c_char,
+        in_: *const ::core::ffi::c_char,
     ) -> ecs_size_t;
 }
 extern "C" {
     #[doc = "Return escaped string.\n Return escaped version of input string. Same as flecs_stresc(), but returns an\n allocated string of the right size.\n\n @param delimiter The delimiter used (for example '\"').\n @param in The input string.\n @return Escaped string."]
     pub fn flecs_astresc(
-        delimiter: ::std::os::raw::c_char,
-        in_: *const ::std::os::raw::c_char,
-    ) -> *mut ::std::os::raw::c_char;
+        delimiter: ::core::ffi::c_char,
+        in_: *const ::core::ffi::c_char,
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Skip whitespace and newline characters.\n This function skips whitespace characters.\n\n @param ptr Pointer to (potential) whitespaces to skip.\n @return Pointer to the next non-whitespace character."]
-    pub fn flecs_parse_ws_eol(ptr: *const ::std::os::raw::c_char) -> *const ::std::os::raw::c_char;
+    pub fn flecs_parse_ws_eol(ptr: *const ::core::ffi::c_char) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Parse digit.\n This function will parse until the first non-digit character is found. The\n provided expression must contain at least one digit character.\n\n @param ptr The expression to parse.\n @param token The output buffer.\n @return Pointer to the first non-digit character."]
     pub fn flecs_parse_digit(
-        ptr: *const ::std::os::raw::c_char,
-        token: *mut ::std::os::raw::c_char,
-    ) -> *const ::std::os::raw::c_char;
+        ptr: *const ::core::ffi::c_char,
+        token: *mut ::core::ffi::c_char,
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Convert identifier to snake case"]
-    pub fn flecs_to_snake_case(str_: *const ::std::os::raw::c_char) -> *mut ::std::os::raw::c_char;
+    pub fn flecs_to_snake_case(str_: *const ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     pub fn flecs_table_observed_count(table: *const ecs_table_t) -> i32;
 }
 extern "C" {
-    pub fn flecs_dump_backtrace(stream: *mut ::std::os::raw::c_void);
+    pub fn flecs_dump_backtrace(stream: *mut ::core::ffi::c_void);
 }
 #[doc = "Suspend/resume readonly state. To fully support implicit registration of\n components, it should be possible to register components while the world is\n in readonly mode. It is not uncommon that a component is used first from\n within a system, which are often ran while in readonly mode.\n\n Suspending readonly mode is only allowed when the world is not multithreaded.\n When a world is multithreaded, it is not safe to (even temporarily) leave\n readonly mode, so a multithreaded application should always explicitly\n register components in advance.\n\n These operations also suspend deferred mode."]
 #[repr(C)]
@@ -2040,8 +2012,8 @@ pub struct flecs_hashmap_iter_t {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct flecs_hashmap_result_t {
-    pub key: *mut ::std::os::raw::c_void,
-    pub value: *mut ::std::os::raw::c_void,
+    pub key: *mut ::core::ffi::c_void,
+    pub value: *mut ::core::ffi::c_void,
     pub hash: u64,
 }
 extern "C" {
@@ -2061,15 +2033,15 @@ extern "C" {
     pub fn flecs_hashmap_get_(
         map: *const ecs_hashmap_t,
         key_size: ecs_size_t,
-        key: *const ::std::os::raw::c_void,
+        key: *const ::core::ffi::c_void,
         value_size: ecs_size_t,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     pub fn flecs_hashmap_ensure_(
         map: *mut ecs_hashmap_t,
         key_size: ecs_size_t,
-        key: *const ::std::os::raw::c_void,
+        key: *const ::core::ffi::c_void,
         value_size: ecs_size_t,
     ) -> flecs_hashmap_result_t;
 }
@@ -2077,16 +2049,16 @@ extern "C" {
     pub fn flecs_hashmap_set_(
         map: *mut ecs_hashmap_t,
         key_size: ecs_size_t,
-        key: *mut ::std::os::raw::c_void,
+        key: *mut ::core::ffi::c_void,
         value_size: ecs_size_t,
-        value: *const ::std::os::raw::c_void,
+        value: *const ::core::ffi::c_void,
     );
 }
 extern "C" {
     pub fn flecs_hashmap_remove_(
         map: *mut ecs_hashmap_t,
         key_size: ecs_size_t,
-        key: *const ::std::os::raw::c_void,
+        key: *const ::core::ffi::c_void,
         value_size: ecs_size_t,
     );
 }
@@ -2094,7 +2066,7 @@ extern "C" {
     pub fn flecs_hashmap_remove_w_hash_(
         map: *mut ecs_hashmap_t,
         key_size: ecs_size_t,
-        key: *const ::std::os::raw::c_void,
+        key: *const ::core::ffi::c_void,
         value_size: ecs_size_t,
         hash: u64,
     );
@@ -2120,9 +2092,9 @@ extern "C" {
     pub fn flecs_hashmap_next_(
         it: *mut flecs_hashmap_iter_t,
         key_size: ecs_size_t,
-        key_out: *mut ::std::os::raw::c_void,
+        key_out: *mut ::core::ffi::c_void,
         value_size: ecs_size_t,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 #[doc = "Utility to hold a value of a dynamic type."]
 #[repr(C)]
@@ -2131,7 +2103,7 @@ pub struct ecs_value_t {
     #[doc = "< Type of value."]
     pub type_: ecs_entity_t,
     #[doc = "< Pointer to value."]
-    pub ptr: *mut ::std::os::raw::c_void,
+    pub ptr: *mut ::core::ffi::c_void,
 }
 #[doc = "Used with ecs_entity_init().\n\n @ingroup entities"]
 #[repr(C)]
@@ -2144,13 +2116,13 @@ pub struct ecs_entity_desc_t {
     #[doc = "< Parent entity."]
     pub parent: ecs_entity_t,
     #[doc = "< Name of the entity. If no entity is provided, an\n entity with this name will be looked up first. When\n an entity is provided, the name will be verified\n with the existing entity."]
-    pub name: *const ::std::os::raw::c_char,
+    pub name: *const ::core::ffi::c_char,
     #[doc = "< Optional custom separator for hierarchical names.\n Leave to NULL for default ('.') separator. Set to\n an empty string to prevent tokenization of name."]
-    pub sep: *const ::std::os::raw::c_char,
+    pub sep: *const ::core::ffi::c_char,
     #[doc = "< Optional, used for identifiers relative to root"]
-    pub root_sep: *const ::std::os::raw::c_char,
+    pub root_sep: *const ::core::ffi::c_char,
     #[doc = "< Optional entity symbol. A symbol is an unscoped\n identifier that can be used to lookup an entity. The\n primary use case for this is to associate the entity\n with a language identifier, such as a type or\n function name, where these identifiers differ from\n the name they are registered with in flecs. For\n example, C type \"EcsPosition\" might be registered\n as \"flecs.components.transform.Position\", with the\n symbol set to \"EcsPosition\"."]
-    pub symbol: *const ::std::os::raw::c_char,
+    pub symbol: *const ::core::ffi::c_char,
     #[doc = "< When set to true, a low id (typically reserved for\n components) will be used to create the entity, if\n no id is specified."]
     pub use_low_id: bool,
     #[doc = "0-terminated array of ids to add to the entity."]
@@ -2158,7 +2130,7 @@ pub struct ecs_entity_desc_t {
     #[doc = "0-terminated array of values to set on the entity."]
     pub set: *const ecs_value_t,
     #[doc = "String expression with components to add"]
-    pub add_expr: *const ::std::os::raw::c_char,
+    pub add_expr: *const ::core::ffi::c_char,
 }
 #[doc = "Used with ecs_bulk_init().\n\n @ingroup entities"]
 #[repr(C)]
@@ -2173,7 +2145,7 @@ pub struct ecs_bulk_desc_t {
     #[doc = "< Ids to create the entities with"]
     pub ids: [ecs_id_t; 32usize],
     #[doc = "< Array with component data to insert. Each element in\n the array must correspond with an element in the ids\n array. If an element in the ids array is a tag, the\n data array must contain a NULL. An element may be\n set to NULL for a component, in which case the\n component will not be set by the operation."]
-    pub data: *mut *mut ::std::os::raw::c_void,
+    pub data: *mut *mut ::core::ffi::c_void,
     #[doc = "< Table to insert the entities into. Should not be set\n at the same time as ids. When 'table' is set at the\n same time as 'data', the elements in the data array\n must correspond with the ids in the table's type."]
     pub table: *mut ecs_table_t,
 }
@@ -2199,7 +2171,7 @@ pub struct ecs_iter_t {
     #[doc = "< Entity identifiers"]
     pub entities: *mut ecs_entity_t,
     #[doc = "< Pointers to components. Array if from this, pointer if not."]
-    pub ptrs: *mut *mut ::std::os::raw::c_void,
+    pub ptrs: *mut *mut ::core::ffi::c_void,
     #[doc = "< Component sizes"]
     pub sizes: *const ecs_size_t,
     #[doc = "< Current table"]
@@ -2241,17 +2213,17 @@ pub struct ecs_iter_t {
     #[doc = "< Number of variables for query"]
     pub variable_count: i32,
     #[doc = "< Names of variables (if any)"]
-    pub variable_names: *mut *mut ::std::os::raw::c_char,
+    pub variable_names: *mut *mut ::core::ffi::c_char,
     #[doc = "< Param passed to ecs_run"]
-    pub param: *mut ::std::os::raw::c_void,
+    pub param: *mut ::core::ffi::c_void,
     #[doc = "< System context"]
-    pub ctx: *mut ::std::os::raw::c_void,
+    pub ctx: *mut ::core::ffi::c_void,
     #[doc = "< System binding context"]
-    pub binding_ctx: *mut ::std::os::raw::c_void,
+    pub binding_ctx: *mut ::core::ffi::c_void,
     #[doc = "< Callback language binding context"]
-    pub callback_ctx: *mut ::std::os::raw::c_void,
+    pub callback_ctx: *mut ::core::ffi::c_void,
     #[doc = "< Run language binding context"]
-    pub run_ctx: *mut ::std::os::raw::c_void,
+    pub run_ctx: *mut ::core::ffi::c_void,
     #[doc = "< Time elapsed since last frame"]
     pub delta_time: f32,
     #[doc = "< Time elapsed since last system invocation"]
@@ -2288,7 +2260,7 @@ pub struct ecs_query_desc_t {
     #[doc = "Query terms"]
     pub terms: [ecs_term_t; 32usize],
     #[doc = "Query DSL expression (optional)"]
-    pub expr: *const ::std::os::raw::c_char,
+    pub expr: *const ::core::ffi::c_char,
     #[doc = "Caching policy of query"]
     pub cache_kind: ecs_query_cache_kind_t,
     #[doc = "Flags for enabling query features"]
@@ -2308,13 +2280,13 @@ pub struct ecs_query_desc_t {
     #[doc = "Callback that is invoked when an existing group is deleted. The return\n value of the on_group_create callback is passed as context parameter."]
     pub on_group_delete: ecs_group_delete_action_t,
     #[doc = "Context to pass to group_by"]
-    pub group_by_ctx: *mut ::std::os::raw::c_void,
+    pub group_by_ctx: *mut ::core::ffi::c_void,
     #[doc = "Function to free group_by_ctx"]
     pub group_by_ctx_free: ecs_ctx_free_t,
     #[doc = "User context to pass to callback"]
-    pub ctx: *mut ::std::os::raw::c_void,
+    pub ctx: *mut ::core::ffi::c_void,
     #[doc = "Context to be used for language bindings"]
-    pub binding_ctx: *mut ::std::os::raw::c_void,
+    pub binding_ctx: *mut ::core::ffi::c_void,
     #[doc = "Callback to free ctx"]
     pub ctx_free: ecs_ctx_free_t,
     #[doc = "Callback to free binding_ctx"]
@@ -2341,15 +2313,15 @@ pub struct ecs_observer_desc_t {
     #[doc = "Callback invoked on an event. When left to NULL the default runner\n is used which matches the event with the observer's query, and calls\n 'callback' when it matches.\n A reason to override the run function is to improve performance, if there\n are more efficient way to test whether an event matches the observer than\n the general purpose query matcher."]
     pub run: ecs_run_action_t,
     #[doc = "User context to pass to callback"]
-    pub ctx: *mut ::std::os::raw::c_void,
+    pub ctx: *mut ::core::ffi::c_void,
     #[doc = "Callback to free ctx"]
     pub ctx_free: ecs_ctx_free_t,
     #[doc = "Context associated with callback (for language bindings)."]
-    pub callback_ctx: *mut ::std::os::raw::c_void,
+    pub callback_ctx: *mut ::core::ffi::c_void,
     #[doc = "Callback to free callback ctx."]
     pub callback_ctx_free: ecs_ctx_free_t,
     #[doc = "Context associated with run (for language bindings)."]
-    pub run_ctx: *mut ::std::os::raw::c_void,
+    pub run_ctx: *mut ::core::ffi::c_void,
     #[doc = "Callback to free run ctx."]
     pub run_ctx_free: ecs_ctx_free_t,
     #[doc = "Observable with which to register the observer"]
@@ -2379,9 +2351,9 @@ pub struct ecs_event_desc_t {
     #[doc = "Single-entity alternative to setting table / offset / count"]
     pub entity: ecs_entity_t,
     #[doc = "Optional context.\n The type of the param must be the event, where the event is a component.\n When an event is enqueued, the value of param is coped to a temporary\n storage of the event type."]
-    pub param: *mut ::std::os::raw::c_void,
+    pub param: *mut ::core::ffi::c_void,
     #[doc = "Same as param, but with the guarantee that the value won't be modified.\n When an event with a const parameter is enqueued, the value of the param\n is copied to a temporary storage of the event type."]
-    pub const_param: *const ::std::os::raw::c_void,
+    pub const_param: *const ::core::ffi::c_void,
     #[doc = "Observable (usually the world)"]
     pub observable: *mut ecs_poly_t,
     #[doc = "Event flags"]
@@ -2392,11 +2364,11 @@ pub struct ecs_event_desc_t {
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_build_info_t {
     #[doc = "< Compiler used to compile flecs"]
-    pub compiler: *const ::std::os::raw::c_char,
+    pub compiler: *const ::core::ffi::c_char,
     #[doc = "< Addons included in build"]
-    pub addons: *mut *const ::std::os::raw::c_char,
+    pub addons: *mut *const ::core::ffi::c_char,
     #[doc = "< Stringified version"]
-    pub version: *const ::std::os::raw::c_char,
+    pub version: *const ::core::ffi::c_char,
     #[doc = "< Major flecs version"]
     pub version_major: i16,
     #[doc = "< Minor flecs version"]
@@ -2475,7 +2447,7 @@ pub struct ecs_world_info_t {
     #[doc = "< Command statistics."]
     pub cmd: ecs_world_info_t__bindgen_ty_1,
     #[doc = "< Value set by ecs_set_name_prefix(). Used\n to remove library prefixes of symbol\n names (such as `Ecs`, `ecs_`) when\n registering them as names."]
-    pub name_prefix: *const ::std::os::raw::c_char,
+    pub name_prefix: *const ::core::ffi::c_char,
 }
 #[doc = "-- Command counts --"]
 #[repr(C)]
@@ -2515,14 +2487,14 @@ pub struct ecs_query_group_info_t {
     #[doc = "< Number of tables in group"]
     pub table_count: i32,
     #[doc = "< Group context, returned by on_group_create"]
-    pub ctx: *mut ::std::os::raw::c_void,
+    pub ctx: *mut ::core::ffi::c_void,
 }
 #[doc = "A (string) identifier. Used as pair with #EcsName and #EcsSymbol tags"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsIdentifier {
     #[doc = "< Identifier string"]
-    pub value: *mut ::std::os::raw::c_char,
+    pub value: *mut ::core::ffi::c_char,
     #[doc = "< Length of identifier"]
     pub length: ecs_size_t,
     #[doc = "< Hash of current value"]
@@ -2898,13 +2870,13 @@ extern "C" {
 extern "C" {
     #[doc = "Create a new world with arguments.\n Same as ecs_init(), but allows passing in command line arguments. Command line\n arguments are used to:\n - automatically derive the name of the application from argv\\[0\\]\n\n @return A new world"]
     pub fn ecs_init_w_args(
-        argc: ::std::os::raw::c_int,
-        argv: *mut *mut ::std::os::raw::c_char,
+        argc: ::core::ffi::c_int,
+        argv: *mut *mut ::core::ffi::c_char,
     ) -> *mut ecs_world_t;
 }
 extern "C" {
     #[doc = "Delete a world.\n This operation deletes the world, and everything it contains.\n\n @param world The world to delete.\n @return Zero if successful, non-zero if failed."]
-    pub fn ecs_fini(world: *mut ecs_world_t) -> ::std::os::raw::c_int;
+    pub fn ecs_fini(world: *mut ecs_world_t) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Returns whether the world is being deleted.\n This operation can be used in callbacks like type hooks or observers to\n detect if they are invoked while the world is being deleted.\n\n @param world The world.\n @return True if being deleted, false if not."]
@@ -2915,7 +2887,7 @@ extern "C" {
     pub fn ecs_atfini(
         world: *mut ecs_world_t,
         action: ecs_fini_action_t,
-        ctx: *mut ::std::os::raw::c_void,
+        ctx: *mut ::core::ffi::c_void,
     );
 }
 #[doc = "Type returned by ecs_get_entities()."]
@@ -2946,7 +2918,7 @@ extern "C" {
     pub fn ecs_run_post_frame(
         world: *mut ecs_world_t,
         action: ecs_fini_action_t,
-        ctx: *mut ::std::os::raw::c_void,
+        ctx: *mut ::core::ffi::c_void,
     );
 }
 extern "C" {
@@ -3037,7 +3009,7 @@ extern "C" {
     #[doc = "Set a world context.\n This operation allows an application to register custom data with a world\n that can be accessed anywhere where the application has the world.\n\n @param world The world.\n @param ctx A pointer to a user defined structure.\n @param ctx_free A function that is invoked with ctx when the world is freed."]
     pub fn ecs_set_ctx(
         world: *mut ecs_world_t,
-        ctx: *mut ::std::os::raw::c_void,
+        ctx: *mut ::core::ffi::c_void,
         ctx_free: ecs_ctx_free_t,
     );
 }
@@ -3045,17 +3017,17 @@ extern "C" {
     #[doc = "Set a world binding context.\n Same as ecs_set_ctx() but for binding context. A binding context is intended\n specifically for language bindings to store binding specific data.\n\n @param world The world.\n @param ctx A pointer to a user defined structure.\n @param ctx_free A function that is invoked with ctx when the world is freed."]
     pub fn ecs_set_binding_ctx(
         world: *mut ecs_world_t,
-        ctx: *mut ::std::os::raw::c_void,
+        ctx: *mut ::core::ffi::c_void,
         ctx_free: ecs_ctx_free_t,
     );
 }
 extern "C" {
     #[doc = "Get the world context.\n This operation retrieves a previously set world context.\n\n @param world The world.\n @return The context set with ecs_set_ctx(). If no context was set, the\n         function returns NULL."]
-    pub fn ecs_get_ctx(world: *const ecs_world_t) -> *mut ::std::os::raw::c_void;
+    pub fn ecs_get_ctx(world: *const ecs_world_t) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Get the world binding context.\n This operation retrieves a previously set world binding context.\n\n @param world The world.\n @return The context set with ecs_set_binding_ctx(). If no context was set, the\n         function returns NULL."]
-    pub fn ecs_get_binding_ctx(world: *const ecs_world_t) -> *mut ::std::os::raw::c_void;
+    pub fn ecs_get_binding_ctx(world: *const ecs_world_t) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Get build info.\n  Returns information about the current Flecs build.\n\n @return A struct with information about the current Flecs build."]
@@ -3212,7 +3184,7 @@ extern "C" {
         world: *const ecs_world_t,
         entity: ecs_entity_t,
         id: ecs_id_t,
-    ) -> *const ::std::os::raw::c_void;
+    ) -> *const ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Get a mutable pointer to a component.\n This operation obtains a mutable pointer to the requested component. The\n operation accepts the component entity id.\n\n Unlike ecs_get_id(), this operation does not return inherited components.\n\n @param world The world.\n @param entity The entity.\n @param id The id of the component to get.\n @return The component pointer, NULL if the entity does not have the component."]
@@ -3220,7 +3192,7 @@ extern "C" {
         world: *const ecs_world_t,
         entity: ecs_entity_t,
         id: ecs_id_t,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Get a mutable pointer to a component.\n This operation returns a mutable pointer to a component. If the component did\n not yet exist, it will be added.\n\n If ensure is called when the world is in deferred/readonly mode, the\n function will:\n - return a pointer to a temp storage if the component does not yet exist, or\n - return a pointer to the existing component if it exists\n\n @param world The world.\n @param entity The entity.\n @param id The entity id of the component to obtain.\n @return The component pointer.\n\n @see ecs_ensure_modified_id()\n @see ecs_emplace_id()"]
@@ -3228,7 +3200,7 @@ extern "C" {
         world: *mut ecs_world_t,
         entity: ecs_entity_t,
         id: ecs_id_t,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Combines ensure + modified in single operation.\n This operation is a more efficient alternative to calling ecs_ensure_id() and\n ecs_modified_id() separately. This operation is only valid when the world is in\n deferred mode, which ensures that the Modified event is not emitted before\n the modification takes place.\n\n @param world The world.\n @param entity The entity.\n @param id The id of the component to obtain.\n @return The component pointer."]
@@ -3236,7 +3208,7 @@ extern "C" {
         world: *mut ecs_world_t,
         entity: ecs_entity_t,
         id: ecs_id_t,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Create a component ref.\n A ref is a handle to an entity + component which caches a small amount of\n data to reduce overhead of repeatedly accessing the component. Use\n ecs_ref_get() to get the component data.\n\n @param world The world.\n @param entity The entity.\n @param id The id of the component.\n @return The reference."]
@@ -3252,7 +3224,7 @@ extern "C" {
         world: *const ecs_world_t,
         ref_: *mut ecs_ref_t,
         id: ecs_id_t,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Update ref.\n Ensures contents of ref are up to date. Same as ecs_ref_get_id(), but does not\n return pointer to component id.\n\n @param world The world.\n @param ref The ref."]
@@ -3288,7 +3260,7 @@ extern "C" {
         world: *const ecs_world_t,
         record: *const ecs_record_t,
         id: ecs_id_t,
-    ) -> *const ::std::os::raw::c_void;
+    ) -> *const ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Same as ecs_record_get_id(), but returns a mutable pointer.\n For safe access to the component, obtain the record with ecs_write_begin().\n\n @param world The world.\n @param record Record to the entity.\n @param id The (component) id.\n @return Pointer to component, or NULL if entity does not have the component."]
@@ -3296,7 +3268,7 @@ extern "C" {
         world: *mut ecs_world_t,
         record: *mut ecs_record_t,
         id: ecs_id_t,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Test if entity for record has a (component) id.\n\n @param world The world.\n @param record Record to the entity.\n @param id The (component) id.\n @return Whether the entity has the component."]
@@ -3312,7 +3284,7 @@ extern "C" {
         record: *const ecs_record_t,
         column: i32,
         size: usize,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Emplace a component.\n Emplace is similar to ecs_ensure_id() except that the component constructor\n is not invoked for the returned pointer, allowing the component to be\n constructed directly in the storage.\n\n When the `is_new` parameter is not provided, the operation will assert when the\n component already exists. When the `is_new` parameter is provided, it will\n indicate whether the returned storage has been constructed.\n\n When `is_new` indicates that the storage has not yet been constructed, it must\n be constructed by the code invoking this operation. Not constructing the\n component will result in undefined behavior.\n\n @param world The world.\n @param entity The entity.\n @param id The component to obtain.\n @param is_new Whether this is an existing or new component.\n @return The (uninitialized) component pointer."]
@@ -3321,7 +3293,7 @@ extern "C" {
         entity: ecs_entity_t,
         id: ecs_id_t,
         is_new: *mut bool,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Signal that a component has been modified.\n This operation is usually used after modifying a component value obtained by\n ecs_ensure_id(). The operation will mark the component as dirty, and invoke\n OnSet observers and hooks.\n\n @param world The world.\n @param entity The entity.\n @param id The id of the component that was modified."]
@@ -3334,7 +3306,7 @@ extern "C" {
         entity: ecs_entity_t,
         id: ecs_id_t,
         size: usize,
-        ptr: *const ::std::os::raw::c_void,
+        ptr: *const ::core::ffi::c_void,
     );
 }
 extern "C" {
@@ -3382,21 +3354,21 @@ extern "C" {
     pub fn ecs_type_str(
         world: *const ecs_world_t,
         type_: *const ecs_type_t,
-    ) -> *mut ::std::os::raw::c_char;
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Convert table to string.\n Same as `ecs_type_str(world, ecs_table_get_type(table))`. The result of this\n operation must be freed with ecs_os_free().\n\n @param world The world.\n @param table The table.\n @return The stringified table type.\n\n @see ecs_table_get_type()\n @see ecs_type_str()"]
     pub fn ecs_table_str(
         world: *const ecs_world_t,
         table: *const ecs_table_t,
-    ) -> *mut ::std::os::raw::c_char;
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Convert entity to string.\n Same as combining:\n - ecs_get_path(world, entity)\n - ecs_type_str(world, ecs_get_type(world, entity))\n\n The result of this operation must be freed with ecs_os_free().\n\n @param world The world.\n @param entity The entity.\n @return The entity path with stringified type.\n\n @see ecs_get_path()\n @see ecs_type_str()"]
     pub fn ecs_entity_str(
         world: *const ecs_world_t,
         entity: ecs_entity_t,
-    ) -> *mut ::std::os::raw::c_char;
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Test if an entity has an id.\n This operation returns true if the entity has or inherits the specified id.\n\n @param world The world.\n @param entity The entity.\n @param id The id to test for.\n @return True if the entity has the id, false if not.\n\n @see ecs_owns_id()"]
@@ -3442,21 +3414,21 @@ extern "C" {
     pub fn ecs_get_name(
         world: *const ecs_world_t,
         entity: ecs_entity_t,
-    ) -> *const ::std::os::raw::c_char;
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Get the symbol of an entity.\n This will return the symbol stored in `(EcsIdentifier, EcsSymbol)`.\n\n @param world The world.\n @param entity The entity.\n @return The type of the entity, NULL if the entity has no name.\n\n @see ecs_set_symbol()"]
     pub fn ecs_get_symbol(
         world: *const ecs_world_t,
         entity: ecs_entity_t,
-    ) -> *const ::std::os::raw::c_char;
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Set the name of an entity.\n This will set or overwrite the name of an entity. If no entity is provided,\n a new entity will be created.\n\n The name is stored in `(EcsIdentifier, EcsName)`.\n\n @param world The world.\n @param entity The entity.\n @param name The name.\n @return The provided entity, or a new entity if 0 was provided.\n\n @see ecs_get_name()"]
     pub fn ecs_set_name(
         world: *mut ecs_world_t,
         entity: ecs_entity_t,
-        name: *const ::std::os::raw::c_char,
+        name: *const ::core::ffi::c_char,
     ) -> ecs_entity_t;
 }
 extern "C" {
@@ -3464,7 +3436,7 @@ extern "C" {
     pub fn ecs_set_symbol(
         world: *mut ecs_world_t,
         entity: ecs_entity_t,
-        symbol: *const ::std::os::raw::c_char,
+        symbol: *const ::core::ffi::c_char,
     ) -> ecs_entity_t;
 }
 extern "C" {
@@ -3472,22 +3444,19 @@ extern "C" {
     pub fn ecs_set_alias(
         world: *mut ecs_world_t,
         entity: ecs_entity_t,
-        alias: *const ::std::os::raw::c_char,
+        alias: *const ::core::ffi::c_char,
     );
 }
 extern "C" {
     #[doc = "Lookup an entity by it's path.\n This operation is equivalent to calling:\n\n @code\n ecs_lookup_path_w_sep(world, 0, path, \".\", NULL, true);\n @endcode\n\n @param world The world.\n @param path The entity path.\n @return The entity with the specified path, or 0 if no entity was found.\n\n @see ecs_lookup_child()\n @see ecs_lookup_path_w_sep()\n @see ecs_lookup_symbol()"]
-    pub fn ecs_lookup(
-        world: *const ecs_world_t,
-        path: *const ::std::os::raw::c_char,
-    ) -> ecs_entity_t;
+    pub fn ecs_lookup(world: *const ecs_world_t, path: *const ::core::ffi::c_char) -> ecs_entity_t;
 }
 extern "C" {
     #[doc = "Lookup a child entity by name.\n Returns an entity that matches the specified name. Only looks for entities in\n the provided parent. If no parent is provided, look in the current scope (\n root if no scope is provided).\n\n @param world The world.\n @param parent The parent for which to lookup the child.\n @param name The entity name.\n @return The entity with the specified name, or 0 if no entity was found.\n\n @see ecs_lookup()\n @see ecs_lookup_path_w_sep()\n @see ecs_lookup_symbol()"]
     pub fn ecs_lookup_child(
         world: *const ecs_world_t,
         parent: ecs_entity_t,
-        name: *const ::std::os::raw::c_char,
+        name: *const ::core::ffi::c_char,
     ) -> ecs_entity_t;
 }
 extern "C" {
@@ -3495,9 +3464,9 @@ extern "C" {
     pub fn ecs_lookup_path_w_sep(
         world: *const ecs_world_t,
         parent: ecs_entity_t,
-        path: *const ::std::os::raw::c_char,
-        sep: *const ::std::os::raw::c_char,
-        prefix: *const ::std::os::raw::c_char,
+        path: *const ::core::ffi::c_char,
+        sep: *const ::core::ffi::c_char,
+        prefix: *const ::core::ffi::c_char,
         recursive: bool,
     ) -> ecs_entity_t;
 }
@@ -3505,7 +3474,7 @@ extern "C" {
     #[doc = "Lookup an entity by its symbol name.\n This looks up an entity by symbol stored in `(EcsIdentifier, EcsSymbol)`. The\n operation does not take into account hierarchies.\n\n This operation can be useful to resolve, for example, a type by its C\n identifier, which does not include the Flecs namespacing.\n\n @param world The world.\n @param symbol The symbol.\n @param lookup_as_path If not found as a symbol, lookup as path.\n @param recursive If looking up as path, recursively traverse up the tree.\n @return The entity if found, else 0.\n\n @see ecs_lookup()\n @see ecs_lookup_child()\n @see ecs_lookup_path_w_sep()"]
     pub fn ecs_lookup_symbol(
         world: *const ecs_world_t,
-        symbol: *const ::std::os::raw::c_char,
+        symbol: *const ::core::ffi::c_char,
         lookup_as_path: bool,
         recursive: bool,
     ) -> ecs_entity_t;
@@ -3516,9 +3485,9 @@ extern "C" {
         world: *const ecs_world_t,
         parent: ecs_entity_t,
         child: ecs_entity_t,
-        sep: *const ::std::os::raw::c_char,
-        prefix: *const ::std::os::raw::c_char,
-    ) -> *mut ::std::os::raw::c_char;
+        sep: *const ::core::ffi::c_char,
+        prefix: *const ::core::ffi::c_char,
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Write path identifier to buffer.\n Same as ecs_get_path_w_sep(), but writes result to an ecs_strbuf_t.\n\n @param world The world.\n @param parent The entity from which to create the path.\n @param child The entity to which to create the path.\n @param sep The separator to use between path elements.\n @param prefix The initial character to use for root elements.\n @param buf The buffer to write to.\n\n @see ecs_get_path_w_sep()"]
@@ -3526,8 +3495,8 @@ extern "C" {
         world: *const ecs_world_t,
         parent: ecs_entity_t,
         child: ecs_entity_t,
-        sep: *const ::std::os::raw::c_char,
-        prefix: *const ::std::os::raw::c_char,
+        sep: *const ::core::ffi::c_char,
+        prefix: *const ::core::ffi::c_char,
         buf: *mut ecs_strbuf_t,
     );
 }
@@ -3536,9 +3505,9 @@ extern "C" {
     pub fn ecs_new_from_path_w_sep(
         world: *mut ecs_world_t,
         parent: ecs_entity_t,
-        path: *const ::std::os::raw::c_char,
-        sep: *const ::std::os::raw::c_char,
-        prefix: *const ::std::os::raw::c_char,
+        path: *const ::core::ffi::c_char,
+        sep: *const ::core::ffi::c_char,
+        prefix: *const ::core::ffi::c_char,
     ) -> ecs_entity_t;
 }
 extern "C" {
@@ -3547,9 +3516,9 @@ extern "C" {
         world: *mut ecs_world_t,
         entity: ecs_entity_t,
         parent: ecs_entity_t,
-        path: *const ::std::os::raw::c_char,
-        sep: *const ::std::os::raw::c_char,
-        prefix: *const ::std::os::raw::c_char,
+        path: *const ::core::ffi::c_char,
+        sep: *const ::core::ffi::c_char,
+        prefix: *const ::core::ffi::c_char,
     ) -> ecs_entity_t;
 }
 extern "C" {
@@ -3564,8 +3533,8 @@ extern "C" {
     #[doc = "Set a name prefix for newly created entities.\n This is a utility that lets C modules use prefixed names for C types and\n C functions, while using names for the entity names that do not have the\n prefix. The name prefix is currently only used by ECS_COMPONENT.\n\n @param world The world.\n @param prefix The name prefix to use.\n @return The previous prefix."]
     pub fn ecs_set_name_prefix(
         world: *mut ecs_world_t,
-        prefix: *const ::std::os::raw::c_char,
-    ) -> *const ::std::os::raw::c_char;
+        prefix: *const ::core::ffi::c_char,
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Set search path for lookup operations.\n This operation accepts an array of entity ids that will be used as search\n scopes by lookup operations. The operation returns the current search path.\n It is good practice to restore the old search path.\n\n The search path will be evaluated starting from the last element.\n\n The default search path includes flecs.core. When a custom search path is\n provided it overwrites the existing search path. Operations that rely on\n looking up names from flecs.core without providing the namespace may fail if\n the custom search path does not include flecs.core (EcsFlecsCore).\n\n The search path array is not copied into managed memory. The application must\n ensure that the provided array is valid for as long as it is used as the\n search path.\n\n The provided array must be terminated with a 0 element. This enables an\n application to push/pop elements to an existing array without invoking the\n ecs_set_lookup_path() operation again.\n\n @param world The world.\n @param lookup_path 0-terminated array with entity ids for the lookup path.\n @return Current lookup path array.\n\n @see ecs_get_lookup_path()"]
@@ -3636,11 +3605,11 @@ extern "C" {
 }
 extern "C" {
     #[doc = "Convert id flag to string.\n This operation converts an id flag to a string.\n\n @param id_flags The id flag.\n @return The id flag string, or NULL if no valid id is provided."]
-    pub fn ecs_id_flag_str(id_flags: ecs_id_t) -> *const ::std::os::raw::c_char;
+    pub fn ecs_id_flag_str(id_flags: ecs_id_t) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Convert id to string.\n This operation interprets the structure of an id and converts it to a string.\n\n @param world The world.\n @param id The id to convert to a string.\n @return The id converted to a string."]
-    pub fn ecs_id_str(world: *const ecs_world_t, id: ecs_id_t) -> *mut ::std::os::raw::c_char;
+    pub fn ecs_id_str(world: *const ecs_world_t, id: ecs_id_t) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Write id string to buffer.\n Same as ecs_id_str() but writes result to ecs_strbuf_t.\n\n @param world The world.\n @param id The id to convert to a string.\n @param buf The buffer to write to."]
@@ -3667,11 +3636,11 @@ extern "C" {
     pub fn ecs_term_str(
         world: *const ecs_world_t,
         term: *const ecs_term_t,
-    ) -> *mut ::std::os::raw::c_char;
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Convert query to string expression.\n Convert query to a string expression. The resulting expression can be\n parsed to create the same query.\n\n @param query The query.\n @return The query converted to a string."]
-    pub fn ecs_query_str(query: *const ecs_query_t) -> *mut ::std::os::raw::c_char;
+    pub fn ecs_query_str(query: *const ecs_query_t) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Iterate all entities with specified (component id).\n This returns an iterator that yields all entities with a single specified\n component. This is a much lighter weight operation than creating and\n iterating a query.\n\n Usage:\n @code\n ecs_iter_t it = ecs_each(world, Player);\n while (ecs_each_next(&it)) {\n   for (int i = 0; i < it.count; i ++) {\n     // Iterate as usual.\n   }\n }\n @endcode\n\n If the specified id is a component, it is possible to access the component\n pointer with ecs_field just like with regular queries:\n\n @code\n ecs_iter_t it = ecs_each(world, Position);\n while (ecs_each_next(&it)) {\n   Position *p = ecs_field(&it, Position, 0);\n   for (int i = 0; i < it.count; i ++) {\n     // Iterate as usual.\n   }\n }\n @endcode\n\n @param world The world.\n @param id The (component) id to iterate.\n @return An iterator that iterates all entities with the (component) id."]
@@ -3702,17 +3671,12 @@ extern "C" {
 }
 extern "C" {
     #[doc = "Find variable index.\n This operation looks up the index of a variable in the query. This index can\n be used in operations like ecs_iter_set_var() and ecs_iter_get_var().\n\n @param query The query.\n @param name The variable name.\n @return The variable index."]
-    pub fn ecs_query_find_var(
-        query: *const ecs_query_t,
-        name: *const ::std::os::raw::c_char,
-    ) -> i32;
+    pub fn ecs_query_find_var(query: *const ecs_query_t, name: *const ::core::ffi::c_char) -> i32;
 }
 extern "C" {
     #[doc = "Get variable name.\n This operation returns the variable name for an index.\n\n @param query The query.\n @param var_id The variable index.\n @return The variable name."]
-    pub fn ecs_query_var_name(
-        query: *const ecs_query_t,
-        var_id: i32,
-    ) -> *const ::std::os::raw::c_char;
+    pub fn ecs_query_var_name(query: *const ecs_query_t, var_id: i32)
+        -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Test if variable is an entity.\n Internally the query engine has entity variables and table variables. When\n iterating through query variables (by using ecs_query_variable_count()) only\n the values for entity variables are accessible. This operation enables an\n application to check if a variable is an entity variable.\n\n @param query The query.\n @param var_id The variable id.\n @return Whether the variable is an entity variable."]
@@ -3756,22 +3720,22 @@ extern "C" {
 }
 extern "C" {
     #[doc = "Convert query to a string.\n This will convert the query program to a string which can aid in debugging\n the behavior of a query.\n\n The returned string must be freed with ecs_os_free().\n\n @param query The query.\n @return The query plan."]
-    pub fn ecs_query_plan(query: *const ecs_query_t) -> *mut ::std::os::raw::c_char;
+    pub fn ecs_query_plan(query: *const ecs_query_t) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Convert query to string with profile.\n To use this you must set the EcsIterProfile flag on an iterator before\n starting iteration:\n\n @code\n   it.flags |= EcsIterProfile\n @endcode\n\n The returned string must be freed with ecs_os_free().\n\n @param query The query.\n @param it The iterator with profile data.\n @return The query plan with profile data."]
     pub fn ecs_query_plan_w_profile(
         query: *const ecs_query_t,
         it: *const ecs_iter_t,
-    ) -> *mut ::std::os::raw::c_char;
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Populate variables from key-value string.\n Convenience function to set query variables from a key-value string separated\n by comma's. The string must have the following format:\n\n @code\n   var_a: value, var_b: value\n @endcode\n\n The key-value list may optionally be enclosed in parenthesis.\n\n This function uses the script addon.\n\n @param query The query.\n @param it The iterator for which to set the variables.\n @param expr The key-value expression.\n @return Pointer to the next character after the last parsed one."]
     pub fn ecs_query_args_parse(
         query: *mut ecs_query_t,
         it: *mut ecs_iter_t,
-        expr: *const ::std::os::raw::c_char,
-    ) -> *const ::std::os::raw::c_char;
+        expr: *const ::core::ffi::c_char,
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Returns whether the query data changed since the last iteration.\n The operation will return true after:\n - new entities have been matched with\n - new tables have been matched/unmatched with\n - matched entities were deleted\n - matched components were changed\n\n The operation will not return true after a write-only (EcsOut) or filter\n (EcsInOutNone) term has changed, when a term is not matched with the\n current table (This subject) or for tag terms.\n\n The changed state of a table is reset after it is iterated. If an iterator was\n not iterated until completion, tables may still be marked as changed.\n\n If no iterator is provided the operation will return the changed state of the\n all matched tables of the query.\n\n If an iterator is provided, the operation will return the changed state of\n the currently returned iterator result. The following preconditions must be\n met before using an iterator with change detection:\n\n - The iterator is a query iterator (created with ecs_query_iter())\n - The iterator must be valid (ecs_query_next() must have returned true)\n - The iterator must be instanced\n\n @param query The query (optional if 'it' is provided).\n @return true if entities changed, otherwise false."]
@@ -3790,7 +3754,7 @@ extern "C" {
     pub fn ecs_query_get_group_ctx(
         query: *const ecs_query_t,
         group_id: u64,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Get information about query group.\n This operation returns information about a query group, including the group\n context returned by the on_group_create callback.\n\n @param query The query.\n @param group_id The group for which to obtain the group info.\n @return The group info, NULL if the group doesn't exist."]
@@ -3900,7 +3864,7 @@ extern "C" {
 }
 extern "C" {
     #[doc = "Convert iterator to string.\n Prints the contents of an iterator to a string. Useful for debugging and/or\n testing the output of an iterator.\n\n The function only converts the currently iterated data to a string. To\n convert all data, the application has to manually call the next function and\n call ecs_iter_str() on each result.\n\n @param it The iterator.\n @return A string representing the contents of the iterator."]
-    pub fn ecs_iter_str(it: *const ecs_iter_t) -> *mut ::std::os::raw::c_char;
+    pub fn ecs_iter_str(it: *const ecs_iter_t) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Create a paged iterator.\n Paged iterators limit the results to those starting from 'offset', and will\n return at most 'limit' results.\n\n The iterator must be iterated with ecs_page_next().\n\n A paged iterator acts as a passthrough for data exposed by the parent\n iterator, so that any data provided by the parent will also be provided by\n the paged iterator.\n\n @param it The source iterator.\n @param offset The number of entities to skip.\n @param limit The maximum number of entities to iterate.\n @return A page iterator."]
@@ -3924,7 +3888,7 @@ extern "C" {
         it: *const ecs_iter_t,
         size: usize,
         index: i32,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Test whether the field is readonly.\n This operation returns whether the field is readonly. Readonly fields are\n annotated with \\[in\\], or are added as a const type in the C++ API.\n\n @param it The iterator.\n @param index The index of the field in the iterator.\n @return Whether the field is readonly."]
@@ -3996,7 +3960,7 @@ extern "C" {
         table: *const ecs_table_t,
         index: i32,
         offset: i32,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Get column from table by component id.\n This operation returns the component array for the provided component  id.\n\n @param world The world.\n @param table The table.\n @param id The component id for the column.\n @param offset The index of the first row to return (0 for entire column).\n @return The component array, or NULL if the index is not a component."]
@@ -4005,7 +3969,7 @@ extern "C" {
         table: *const ecs_table_t,
         id: ecs_id_t,
         offset: i32,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Get column size from table.\n This operation returns the component size for the provided index.\n\n @param table The table.\n @param index The column index.\n @return The component size, or 0 if the index is not a component."]
@@ -4125,115 +4089,112 @@ extern "C" {
     pub fn ecs_value_init(
         world: *const ecs_world_t,
         type_: ecs_entity_t,
-        ptr: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
+        ptr: *mut ::core::ffi::c_void,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Construct a value in existing storage\n\n @param world The world.\n @param ti The type info of the type to create.\n @param ptr Pointer to a value of type 'type'\n @return Zero if success, nonzero if failed."]
     pub fn ecs_value_init_w_type_info(
         world: *const ecs_world_t,
         ti: *const ecs_type_info_t,
-        ptr: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
+        ptr: *mut ::core::ffi::c_void,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Construct a value in new storage\n\n @param world The world.\n @param type The type of the value to create.\n @return Pointer to type if success, NULL if failed."]
-    pub fn ecs_value_new(
-        world: *mut ecs_world_t,
-        type_: ecs_entity_t,
-    ) -> *mut ::std::os::raw::c_void;
+    pub fn ecs_value_new(world: *mut ecs_world_t, type_: ecs_entity_t) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Construct a value in new storage\n\n @param world The world.\n @param ti The type info of the type to create.\n @return Pointer to type if success, NULL if failed."]
     pub fn ecs_value_new_w_type_info(
         world: *mut ecs_world_t,
         ti: *const ecs_type_info_t,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Destruct a value\n\n @param world The world.\n @param ti Type info of the value to destruct.\n @param ptr Pointer to constructed value of type 'type'.\n @return Zero if success, nonzero if failed."]
     pub fn ecs_value_fini_w_type_info(
         world: *const ecs_world_t,
         ti: *const ecs_type_info_t,
-        ptr: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
+        ptr: *mut ::core::ffi::c_void,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Destruct a value\n\n @param world The world.\n @param type The type of the value to destruct.\n @param ptr Pointer to constructed value of type 'type'.\n @return Zero if success, nonzero if failed."]
     pub fn ecs_value_fini(
         world: *const ecs_world_t,
         type_: ecs_entity_t,
-        ptr: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
+        ptr: *mut ::core::ffi::c_void,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Destruct a value, free storage\n\n @param world The world.\n @param type The type of the value to destruct.\n @param ptr A pointer to the value.\n @return Zero if success, nonzero if failed."]
     pub fn ecs_value_free(
         world: *mut ecs_world_t,
         type_: ecs_entity_t,
-        ptr: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
+        ptr: *mut ::core::ffi::c_void,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Copy value.\n\n @param world The world.\n @param ti Type info of the value to copy.\n @param dst Pointer to the storage to copy to.\n @param src Pointer to the value to copy.\n @return Zero if success, nonzero if failed."]
     pub fn ecs_value_copy_w_type_info(
         world: *const ecs_world_t,
         ti: *const ecs_type_info_t,
-        dst: *mut ::std::os::raw::c_void,
-        src: *const ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
+        dst: *mut ::core::ffi::c_void,
+        src: *const ::core::ffi::c_void,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Copy value.\n\n @param world The world.\n @param type The type of the value to copy.\n @param dst Pointer to the storage to copy to.\n @param src Pointer to the value to copy.\n @return Zero if success, nonzero if failed."]
     pub fn ecs_value_copy(
         world: *const ecs_world_t,
         type_: ecs_entity_t,
-        dst: *mut ::std::os::raw::c_void,
-        src: *const ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
+        dst: *mut ::core::ffi::c_void,
+        src: *const ::core::ffi::c_void,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Move value.\n\n @param world The world.\n @param ti Type info of the value to move.\n @param dst Pointer to the storage to move to.\n @param src Pointer to the value to move.\n @return Zero if success, nonzero if failed."]
     pub fn ecs_value_move_w_type_info(
         world: *const ecs_world_t,
         ti: *const ecs_type_info_t,
-        dst: *mut ::std::os::raw::c_void,
-        src: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
+        dst: *mut ::core::ffi::c_void,
+        src: *mut ::core::ffi::c_void,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Move value.\n\n @param world The world.\n @param type The type of the value to move.\n @param dst Pointer to the storage to move to.\n @param src Pointer to the value to move.\n @return Zero if success, nonzero if failed."]
     pub fn ecs_value_move(
         world: *const ecs_world_t,
         type_: ecs_entity_t,
-        dst: *mut ::std::os::raw::c_void,
-        src: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
+        dst: *mut ::core::ffi::c_void,
+        src: *mut ::core::ffi::c_void,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Move construct value.\n\n @param world The world.\n @param ti Type info of the value to move.\n @param dst Pointer to the storage to move to.\n @param src Pointer to the value to move.\n @return Zero if success, nonzero if failed."]
     pub fn ecs_value_move_ctor_w_type_info(
         world: *const ecs_world_t,
         ti: *const ecs_type_info_t,
-        dst: *mut ::std::os::raw::c_void,
-        src: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
+        dst: *mut ::core::ffi::c_void,
+        src: *mut ::core::ffi::c_void,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Move construct value.\n\n @param world The world.\n @param type The type of the value to move.\n @param dst Pointer to the storage to move to.\n @param src Pointer to the value to move.\n @return Zero if success, nonzero if failed."]
     pub fn ecs_value_move_ctor(
         world: *const ecs_world_t,
         type_: ecs_entity_t,
-        dst: *mut ::std::os::raw::c_void,
-        src: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
+        dst: *mut ::core::ffi::c_void,
+        src: *mut ::core::ffi::c_void,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Log message indicating an operation is deprecated."]
     pub fn ecs_deprecated_(
-        file: *const ::std::os::raw::c_char,
+        file: *const ::core::ffi::c_char,
         line: i32,
-        msg: *const ::std::os::raw::c_char,
+        msg: *const ::core::ffi::c_char,
     );
 }
 extern "C" {
@@ -4250,62 +4211,62 @@ extern "C" {
 }
 extern "C" {
     #[doc = "Get description for error code"]
-    pub fn ecs_strerror(error_code: i32) -> *const ::std::os::raw::c_char;
+    pub fn ecs_strerror(error_code: i32) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Logging functions (do nothing when logging is enabled)"]
     pub fn ecs_print_(
         level: i32,
-        file: *const ::std::os::raw::c_char,
+        file: *const ::core::ffi::c_char,
         line: i32,
-        fmt: *const ::std::os::raw::c_char,
+        fmt: *const ::core::ffi::c_char,
         ...
     );
 }
 extern "C" {
     pub fn ecs_log_(
         level: i32,
-        file: *const ::std::os::raw::c_char,
+        file: *const ::core::ffi::c_char,
         line: i32,
-        fmt: *const ::std::os::raw::c_char,
+        fmt: *const ::core::ffi::c_char,
         ...
     );
 }
 extern "C" {
     pub fn ecs_abort_(
         error_code: i32,
-        file: *const ::std::os::raw::c_char,
+        file: *const ::core::ffi::c_char,
         line: i32,
-        fmt: *const ::std::os::raw::c_char,
+        fmt: *const ::core::ffi::c_char,
         ...
     );
 }
 extern "C" {
     pub fn ecs_assert_log_(
         error_code: i32,
-        condition_str: *const ::std::os::raw::c_char,
-        file: *const ::std::os::raw::c_char,
+        condition_str: *const ::core::ffi::c_char,
+        file: *const ::core::ffi::c_char,
         line: i32,
-        fmt: *const ::std::os::raw::c_char,
+        fmt: *const ::core::ffi::c_char,
         ...
     );
 }
 extern "C" {
     pub fn ecs_parser_error_(
-        name: *const ::std::os::raw::c_char,
-        expr: *const ::std::os::raw::c_char,
+        name: *const ::core::ffi::c_char,
+        expr: *const ::core::ffi::c_char,
         column: i64,
-        fmt: *const ::std::os::raw::c_char,
+        fmt: *const ::core::ffi::c_char,
         ...
     );
 }
 extern "C" {
     #[doc = "Enable or disable log.\n This will enable builtin log. For log to work, it will have to be\n compiled in which requires defining one of the following macros:\n\n FLECS_LOG_0 - All log is disabled\n FLECS_LOG_1 - Enable log level 1\n FLECS_LOG_2 - Enable log level 2 and below\n FLECS_LOG_3 - Enable log level 3 and below\n\n If no log level is defined and this is a debug build, FLECS_LOG_3 will\n have been automatically defined.\n\n The provided level corresponds with the log level. If -1 is provided as\n value, warnings are disabled. If -2 is provided, errors are disabled as well.\n\n @param level Desired tracing level.\n @return Previous log level."]
-    pub fn ecs_log_set_level(level: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
+    pub fn ecs_log_set_level(level: ::core::ffi::c_int) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Get current log level.\n\n @return Previous log level."]
-    pub fn ecs_log_get_level() -> ::std::os::raw::c_int;
+    pub fn ecs_log_get_level() -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Enable/disable tracing with colors.\n By default colors are enabled.\n\n @param enabled Whether to enable tracing with colors.\n @return Previous color setting."]
@@ -4317,11 +4278,11 @@ extern "C" {
 }
 extern "C" {
     #[doc = "Get last logged error code.\n Calling this operation resets the error code.\n\n @return Last error, 0 if none was logged since last call to last_error."]
-    pub fn ecs_log_last_error() -> ::std::os::raw::c_int;
+    pub fn ecs_log_last_error() -> ::core::ffi::c_int;
 }
 #[doc = "Callback type for init action."]
 pub type ecs_app_init_action_t =
-    ::std::option::Option<unsafe extern "C" fn(world: *mut ecs_world_t) -> ::std::os::raw::c_int>;
+    ::core::option::Option<unsafe extern "C" fn(world: *mut ecs_world_t) -> ::core::ffi::c_int>;
 #[doc = "Used with ecs_app_run()."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -4343,41 +4304,37 @@ pub struct ecs_app_desc_t {
     #[doc = "< If set, function is ran before starting the\n main loop."]
     pub init: ecs_app_init_action_t,
     #[doc = "< Reserved for custom run/frame actions"]
-    pub ctx: *mut ::std::os::raw::c_void,
+    pub ctx: *mut ::core::ffi::c_void,
 }
 #[doc = "Callback type for run action."]
-pub type ecs_app_run_action_t = ::std::option::Option<
-    unsafe extern "C" fn(
-        world: *mut ecs_world_t,
-        desc: *mut ecs_app_desc_t,
-    ) -> ::std::os::raw::c_int,
+pub type ecs_app_run_action_t = ::core::option::Option<
+    unsafe extern "C" fn(world: *mut ecs_world_t, desc: *mut ecs_app_desc_t) -> ::core::ffi::c_int,
 >;
 #[doc = "Callback type for frame action."]
-pub type ecs_app_frame_action_t = ::std::option::Option<
+pub type ecs_app_frame_action_t = ::core::option::Option<
     unsafe extern "C" fn(
         world: *mut ecs_world_t,
         desc: *const ecs_app_desc_t,
-    ) -> ::std::os::raw::c_int,
+    ) -> ::core::ffi::c_int,
 >;
 extern "C" {
     #[doc = "Run application.\n This will run the application with the parameters specified in desc. After\n the application quits (ecs_quit() is called) the world will be cleaned up.\n\n If a custom run action is set, it will be invoked by this operation. The\n default run action calls the frame action in a loop until it returns a\n non-zero value.\n\n @param world The world.\n @param desc Application parameters."]
-    pub fn ecs_app_run(world: *mut ecs_world_t, desc: *mut ecs_app_desc_t)
-        -> ::std::os::raw::c_int;
+    pub fn ecs_app_run(world: *mut ecs_world_t, desc: *mut ecs_app_desc_t) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Default frame callback.\n This operation will run a single frame. By default this operation will invoke\n ecs_progress() directly, unless a custom frame action is set.\n\n @param world The world.\n @param desc The desc struct passed to ecs_app_run().\n @return value returned by ecs_progress()"]
     pub fn ecs_app_run_frame(
         world: *mut ecs_world_t,
         desc: *const ecs_app_desc_t,
-    ) -> ::std::os::raw::c_int;
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Set custom run action.\n See ecs_app_run().\n\n @param callback The run action."]
-    pub fn ecs_app_set_run_action(callback: ecs_app_run_action_t) -> ::std::os::raw::c_int;
+    pub fn ecs_app_set_run_action(callback: ecs_app_run_action_t) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Set custom frame action.\n See ecs_app_run_frame().\n\n @param callback The frame action."]
-    pub fn ecs_app_set_frame_action(callback: ecs_app_frame_action_t) -> ::std::os::raw::c_int;
+    pub fn ecs_app_set_frame_action(callback: ecs_app_frame_action_t) -> ::core::ffi::c_int;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -4390,15 +4347,15 @@ pub struct ecs_http_server_t {
 pub struct ecs_http_connection_t {
     pub id: u64,
     pub server: *mut ecs_http_server_t,
-    pub host: [::std::os::raw::c_char; 128usize],
-    pub port: [::std::os::raw::c_char; 16usize],
+    pub host: [::core::ffi::c_char; 128usize],
+    pub port: [::core::ffi::c_char; 16usize],
 }
 #[doc = "Helper type used for headers & URL query parameters."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_http_key_value_t {
-    pub key: *const ::std::os::raw::c_char,
-    pub value: *const ::std::os::raw::c_char,
+    pub key: *const ::core::ffi::c_char,
+    pub value: *const ::core::ffi::c_char,
 }
 pub const ecs_http_method_t_EcsHttpGet: ecs_http_method_t = 0;
 pub const ecs_http_method_t_EcsHttpPost: ecs_http_method_t = 1;
@@ -4407,15 +4364,15 @@ pub const ecs_http_method_t_EcsHttpDelete: ecs_http_method_t = 3;
 pub const ecs_http_method_t_EcsHttpOptions: ecs_http_method_t = 4;
 pub const ecs_http_method_t_EcsHttpMethodUnsupported: ecs_http_method_t = 5;
 #[doc = "Supported request methods."]
-pub type ecs_http_method_t = ::std::os::raw::c_uint;
+pub type ecs_http_method_t = ::core::ffi::c_uint;
 #[doc = "An HTTP request."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_http_request_t {
     pub id: u64,
     pub method: ecs_http_method_t,
-    pub path: *mut ::std::os::raw::c_char,
-    pub body: *mut ::std::os::raw::c_char,
+    pub path: *mut ::core::ffi::c_char,
+    pub body: *mut ::core::ffi::c_char,
     pub headers: [ecs_http_key_value_t; 32usize],
     pub params: [ecs_http_key_value_t; 32usize],
     pub header_count: i32,
@@ -4427,13 +4384,13 @@ pub struct ecs_http_request_t {
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_http_reply_t {
     #[doc = "< default = 200"]
-    pub code: ::std::os::raw::c_int,
+    pub code: ::core::ffi::c_int,
     #[doc = "< default = \"\""]
     pub body: ecs_strbuf_t,
     #[doc = "< default = OK"]
-    pub status: *const ::std::os::raw::c_char,
+    pub status: *const ::core::ffi::c_char,
     #[doc = "< default = application/json"]
-    pub content_type: *const ::std::os::raw::c_char,
+    pub content_type: *const ::core::ffi::c_char,
     #[doc = "< default = \"\""]
     pub headers: ecs_strbuf_t,
 }
@@ -4474,11 +4431,11 @@ extern "C" {
     pub static mut ecs_http_busy_count: i64;
 }
 #[doc = "Request callback.\n Invoked for each valid request. The function should populate the reply and\n return true. When the function returns false, the server will reply with a\n 404 (Not found) code."]
-pub type ecs_http_reply_action_t = ::std::option::Option<
+pub type ecs_http_reply_action_t = ::core::option::Option<
     unsafe extern "C" fn(
         request: *const ecs_http_request_t,
         reply: *mut ecs_http_reply_t,
-        ctx: *mut ::std::os::raw::c_void,
+        ctx: *mut ::core::ffi::c_void,
     ) -> bool,
 >;
 #[doc = "Used with ecs_http_server_init()."]
@@ -4488,11 +4445,11 @@ pub struct ecs_http_server_desc_t {
     #[doc = "< Function called for each request"]
     pub callback: ecs_http_reply_action_t,
     #[doc = "< Passed to callback (optional)"]
-    pub ctx: *mut ::std::os::raw::c_void,
+    pub ctx: *mut ::core::ffi::c_void,
     #[doc = "< HTTP port"]
     pub port: u16,
     #[doc = "< Interface to listen on (optional)"]
-    pub ipaddr: *const ::std::os::raw::c_char,
+    pub ipaddr: *const ::core::ffi::c_char,
     #[doc = "< Send queue wait time when empty"]
     pub send_queue_wait_ms: i32,
     #[doc = "< Cache invalidation timeout (0 disables caching)"]
@@ -4510,7 +4467,7 @@ extern "C" {
 }
 extern "C" {
     #[doc = "Start server.\n After this operation the server will be able to accept requests.\n\n @param server The server to start.\n @return Zero if successful, non-zero if failed."]
-    pub fn ecs_http_server_start(server: *mut ecs_http_server_t) -> ::std::os::raw::c_int;
+    pub fn ecs_http_server_start(server: *mut ecs_http_server_t) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Process server requests.\n This operation invokes the reply callback for each received request. No new\n requests will be enqueued while processing requests.\n\n @param server The server for which to process requests."]
@@ -4524,28 +4481,28 @@ extern "C" {
     #[doc = "Convenience wrapper around ecs_http_server_http_request()."]
     pub fn ecs_http_server_request(
         srv: *mut ecs_http_server_t,
-        method: *const ::std::os::raw::c_char,
-        req: *const ::std::os::raw::c_char,
+        method: *const ::core::ffi::c_char,
+        req: *const ::core::ffi::c_char,
         reply_out: *mut ecs_http_reply_t,
-    ) -> ::std::os::raw::c_int;
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Get context provided in ecs_http_server_desc_t"]
-    pub fn ecs_http_server_ctx(srv: *mut ecs_http_server_t) -> *mut ::std::os::raw::c_void;
+    pub fn ecs_http_server_ctx(srv: *mut ecs_http_server_t) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Find header in request.\n\n @param req The request.\n @param name name of the header to find\n @return The header value, or NULL if not found."]
     pub fn ecs_http_get_header(
         req: *const ecs_http_request_t,
-        name: *const ::std::os::raw::c_char,
-    ) -> *const ::std::os::raw::c_char;
+        name: *const ::core::ffi::c_char,
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Find query parameter in request.\n\n @param req The request.\n @param name The parameter name.\n @return The decoded parameter value, or NULL if not found."]
     pub fn ecs_http_get_param(
         req: *const ecs_http_request_t,
-        name: *const ::std::os::raw::c_char,
-    ) -> *const ::std::os::raw::c_char;
+        name: *const ::core::ffi::c_char,
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Component that instantiates the REST API."]
@@ -4558,8 +4515,8 @@ pub struct EcsRest {
     #[doc = "< Port of server (optional, default = 27750)"]
     pub port: u16,
     #[doc = "< Interface address (optional, default = 0.0.0.0)"]
-    pub ipaddr: *mut ::std::os::raw::c_char,
-    pub impl_: *mut ::std::os::raw::c_void,
+    pub ipaddr: *mut ::core::ffi::c_char,
+    pub impl_: *mut ::core::ffi::c_void,
 }
 extern "C" {
     #[doc = "Create HTTP server for REST API.\n This allows for the creation of a REST server that can be managed by the\n application without using Flecs systems.\n\n @param world The world.\n @param desc The HTTP server descriptor.\n @return The HTTP server, or NULL if failed."]
@@ -4746,15 +4703,15 @@ pub struct ecs_system_desc_t {
     #[doc = "Callback that is invoked when a system is ran.\n When left to NULL, the default system runner is used, which calls the\n \"callback\" action for each result returned from the system's query.\n\n It should not be assumed that the input iterator can always be iterated\n with ecs_query_next(). When a system is multithreaded and/or paged, the\n iterator can be either a worker or paged iterator. The correct function\n to use for iteration is ecs_iter_next().\n\n An implementation can test whether the iterator is a query iterator by\n testing whether the it->next value is equal to ecs_query_next()."]
     pub run: ecs_run_action_t,
     #[doc = "Context to be passed to callback (as ecs_iter_t::param)"]
-    pub ctx: *mut ::std::os::raw::c_void,
+    pub ctx: *mut ::core::ffi::c_void,
     #[doc = "Callback to free ctx."]
     pub ctx_free: ecs_ctx_free_t,
     #[doc = "Context associated with callback (for language bindings)."]
-    pub callback_ctx: *mut ::std::os::raw::c_void,
+    pub callback_ctx: *mut ::core::ffi::c_void,
     #[doc = "Callback to free callback ctx."]
     pub callback_ctx_free: ecs_ctx_free_t,
     #[doc = "Context associated with run (for language bindings)."]
-    pub run_ctx: *mut ::std::os::raw::c_void,
+    pub run_ctx: *mut ::core::ffi::c_void,
     #[doc = "Callback to free run ctx."]
     pub run_ctx_free: ecs_ctx_free_t,
     #[doc = "Interval in seconds at which the system should run"]
@@ -4793,11 +4750,11 @@ pub struct ecs_system_t {
     #[doc = "Is system ran in immediate mode"]
     pub immediate: bool,
     #[doc = "Userdata for system"]
-    pub ctx: *mut ::std::os::raw::c_void,
+    pub ctx: *mut ::core::ffi::c_void,
     #[doc = "Callback language binding context"]
-    pub callback_ctx: *mut ::std::os::raw::c_void,
+    pub callback_ctx: *mut ::core::ffi::c_void,
     #[doc = "Run language binding context"]
-    pub run_ctx: *mut ::std::os::raw::c_void,
+    pub run_ctx: *mut ::core::ffi::c_void,
     #[doc = "Callback to free ctx."]
     pub ctx_free: ecs_ctx_free_t,
     #[doc = "Callback to free callback ctx."]
@@ -4825,7 +4782,7 @@ extern "C" {
         world: *mut ecs_world_t,
         system: ecs_entity_t,
         delta_time: f32,
-        param: *mut ::std::os::raw::c_void,
+        param: *mut ::core::ffi::c_void,
     ) -> ecs_entity_t;
 }
 extern "C" {
@@ -4836,7 +4793,7 @@ extern "C" {
         stage_current: i32,
         stage_count: i32,
         delta_time: f32,
-        param: *mut ::std::os::raw::c_void,
+        param: *mut ::core::ffi::c_void,
     ) -> ecs_entity_t;
 }
 extern "C" {
@@ -5409,7 +5366,7 @@ pub struct ecs_metric_desc_t {
     #[doc = "Entity associated with member that stores metric value. Must not be set\n at the same time as id. Cannot be combined with EcsCounterId."]
     pub member: ecs_entity_t,
     #[doc = "Member dot expression. Can be used instead of member and supports nested\n members. Must be set together with id and should not be set at the same\n time as member."]
-    pub dotmember: *const ::std::os::raw::c_char,
+    pub dotmember: *const ::core::ffi::c_char,
     #[doc = "Tracks whether entities have the specified component id. Must not be set\n at the same time as member."]
     pub id: ecs_id_t,
     #[doc = "If id is a (R, *) wildcard and relationship R has the OneOf property,\n setting this value to true will track individual targets.\n If the kind is EcsCountId and the id is a (R, *) wildcard, this value\n will create a metric per target."]
@@ -5417,7 +5374,7 @@ pub struct ecs_metric_desc_t {
     #[doc = "Must be EcsGauge, EcsCounter, EcsCounterIncrement or EcsCounterId"]
     pub kind: ecs_entity_t,
     #[doc = "Description of metric. Will only be set if FLECS_DOC addon is enabled"]
-    pub brief: *const ::std::os::raw::c_char,
+    pub brief: *const ::core::ffi::c_char,
 }
 extern "C" {
     #[doc = "Create a new metric.\n Metrics are entities that store values measured from a range of different\n properties in the ECS storage. Metrics provide a single unified interface to\n discovering and reading these values, which can be useful for monitoring\n utilities, or for debugging.\n\n Examples of properties that can be measured by metrics are:\n  - Component member values\n  - How long an entity has had a specific component\n  - How long an entity has had a specific target for a relationship\n  - How many entities have a specific component\n\n Metrics can either be created as a \"gauge\" or \"counter\". A gauge is a metric\n that represents the value of something at a specific point in time, for\n example \"velocity\". A counter metric represents a value that is monotonically\n increasing, for example \"miles driven\".\n\n There are three different kinds of counter metric kinds:\n - EcsCounter\n   When combined with a member, this will store the actual value of the member\n   in the metric. This is useful for values that are already counters, such as\n   a MilesDriven component.\n   This kind creates a metric per entity that has the member/id.\n\n - EcsCounterIncrement\n   When combined with a member, this will increment the value of the metric by\n   the value of the member * delta_time. This is useful for values that are\n   not counters, such as a Velocity component.\n   This kind creates a metric per entity that has the member.\n\n - EcsCounterId\n   This metric kind will count the number of entities with a specific\n   (component) id. This kind creates a single metric instance for regular ids,\n   and a metric instance per target for wildcard ids when targets is set.\n\n @param world The world.\n @param desc Metric description.\n @return The metric entity."]
@@ -5485,7 +5442,7 @@ extern "C" {
 #[derive(Debug, Copy, Clone)]
 pub struct EcsAlertInstance {
     #[doc = "< Generated alert message"]
-    pub message: *mut ::std::os::raw::c_char,
+    pub message: *mut ::core::ffi::c_char,
 }
 #[doc = "Map with active alerts for entity."]
 #[repr(C)]
@@ -5508,7 +5465,7 @@ pub struct ecs_alert_severity_filter_t {
     #[doc = "Component to match"]
     pub with: ecs_id_t,
     #[doc = "Variable to match component on. Do not include the\n '$' character. Leave to NULL for $this."]
-    pub var: *const ::std::os::raw::c_char,
+    pub var: *const ::core::ffi::c_char,
     #[doc = "Index of variable in filter (do not set)"]
     pub _var_index: i32,
 }
@@ -5541,18 +5498,18 @@ extern "C" {
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_from_json_desc_t {
     #[doc = "< Name of expression (used for logging)"]
-    pub name: *const ::std::os::raw::c_char,
+    pub name: *const ::core::ffi::c_char,
     #[doc = "< Full expression (used for logging)"]
-    pub expr: *const ::std::os::raw::c_char,
+    pub expr: *const ::core::ffi::c_char,
     #[doc = "Callback that allows for specifying a custom lookup function. The\n default behavior uses ecs_lookup()"]
-    pub lookup_action: ::std::option::Option<
+    pub lookup_action: ::core::option::Option<
         unsafe extern "C" fn(
             arg1: *const ecs_world_t,
-            value: *const ::std::os::raw::c_char,
-            ctx: *mut ::std::os::raw::c_void,
+            value: *const ::core::ffi::c_char,
+            ctx: *mut ::core::ffi::c_void,
         ) -> ecs_entity_t,
     >,
-    pub lookup_ctx: *mut ::std::os::raw::c_void,
+    pub lookup_ctx: *mut ::core::ffi::c_void,
     #[doc = "Require components to be registered with reflection data. When not\n in strict mode, values for components without reflection are ignored."]
     pub strict: bool,
 }
@@ -5561,78 +5518,78 @@ extern "C" {
     pub fn ecs_ptr_from_json(
         world: *const ecs_world_t,
         type_: ecs_entity_t,
-        ptr: *mut ::std::os::raw::c_void,
-        json: *const ::std::os::raw::c_char,
+        ptr: *mut ::core::ffi::c_void,
+        json: *const ::core::ffi::c_char,
         desc: *const ecs_from_json_desc_t,
-    ) -> *const ::std::os::raw::c_char;
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Parse JSON object with multiple component values into entity. The format\n is the same as the one outputted by ecs_entity_to_json(), but at the moment\n only supports the \"ids\" and \"values\" member.\n\n @param world The world.\n @param entity The entity to serialize to.\n @param json The JSON expression to parse (see entity in JSON format manual).\n @param desc Configuration parameters for deserializer.\n @return Pointer to the character after the last one read, or NULL if failed."]
     pub fn ecs_entity_from_json(
         world: *mut ecs_world_t,
         entity: ecs_entity_t,
-        json: *const ::std::os::raw::c_char,
+        json: *const ::core::ffi::c_char,
         desc: *const ecs_from_json_desc_t,
-    ) -> *const ::std::os::raw::c_char;
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Parse JSON object with multiple entities into the world. The format is the\n same as the one outputted by ecs_world_to_json().\n\n @param world The world.\n @param json The JSON expression to parse (see iterator in JSON format manual).\n @param desc Deserialization parameters.\n @return Last deserialized character, NULL if failed."]
     pub fn ecs_world_from_json(
         world: *mut ecs_world_t,
-        json: *const ::std::os::raw::c_char,
+        json: *const ::core::ffi::c_char,
         desc: *const ecs_from_json_desc_t,
-    ) -> *const ::std::os::raw::c_char;
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Same as ecs_world_from_json(), but loads JSON from file.\n\n @param world The world.\n @param filename The file from which to load the JSON.\n @param desc Deserialization parameters.\n @return Last deserialized character, NULL if failed."]
     pub fn ecs_world_from_json_file(
         world: *mut ecs_world_t,
-        filename: *const ::std::os::raw::c_char,
+        filename: *const ::core::ffi::c_char,
         desc: *const ecs_from_json_desc_t,
-    ) -> *const ::std::os::raw::c_char;
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Serialize array into JSON string.\n This operation serializes a value of the provided type to a JSON string. The\n memory pointed to must be large enough to contain a value of the used type.\n\n If count is 0, the function will serialize a single value, not wrapped in\n array brackets. If count is >= 1, the operation will serialize values to a\n a comma-separated list inside of array brackets.\n\n @param world The world.\n @param type The type of the value to serialize.\n @param data The value to serialize.\n @param count The number of elements to serialize.\n @return String with JSON expression, or NULL if failed."]
     pub fn ecs_array_to_json(
         world: *const ecs_world_t,
         type_: ecs_entity_t,
-        data: *const ::std::os::raw::c_void,
+        data: *const ::core::ffi::c_void,
         count: i32,
-    ) -> *mut ::std::os::raw::c_char;
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Serialize array into JSON string buffer.\n Same as ecs_array_to_json(), but serializes to an ecs_strbuf_t instance.\n\n @param world The world.\n @param type The type of the value to serialize.\n @param data The value to serialize.\n @param count The number of elements to serialize.\n @param buf_out The strbuf to append the string to.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_array_to_json_buf(
         world: *const ecs_world_t,
         type_: ecs_entity_t,
-        data: *const ::std::os::raw::c_void,
+        data: *const ::core::ffi::c_void,
         count: i32,
         buf_out: *mut ecs_strbuf_t,
-    ) -> ::std::os::raw::c_int;
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Serialize value into JSON string.\n Same as ecs_array_to_json(), with count = 0.\n\n @param world The world.\n @param type The type of the value to serialize.\n @param data The value to serialize.\n @return String with JSON expression, or NULL if failed."]
     pub fn ecs_ptr_to_json(
         world: *const ecs_world_t,
         type_: ecs_entity_t,
-        data: *const ::std::os::raw::c_void,
-    ) -> *mut ::std::os::raw::c_char;
+        data: *const ::core::ffi::c_void,
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Serialize value into JSON string buffer.\n Same as ecs_ptr_to_json(), but serializes to an ecs_strbuf_t instance.\n\n @param world The world.\n @param type The type of the value to serialize.\n @param data The value to serialize.\n @param buf_out The strbuf to append the string to.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_ptr_to_json_buf(
         world: *const ecs_world_t,
         type_: ecs_entity_t,
-        data: *const ::std::os::raw::c_void,
+        data: *const ::core::ffi::c_void,
         buf_out: *mut ecs_strbuf_t,
-    ) -> ::std::os::raw::c_int;
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Serialize type info to JSON.\n This serializes type information to JSON, and can be used to store/transmit\n the structure of a (component) value.\n\n If the provided type does not have reflection data, \"0\" will be returned.\n\n @param world The world.\n @param type The type to serialize to JSON.\n @return A JSON string with the serialized type info, or NULL if failed."]
     pub fn ecs_type_info_to_json(
         world: *const ecs_world_t,
         type_: ecs_entity_t,
-    ) -> *mut ::std::os::raw::c_char;
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Serialize type info into JSON string buffer.\n Same as ecs_type_info_to_json(), but serializes to an ecs_strbuf_t instance.\n\n @param world The world.\n @param type The type to serialize.\n @param buf_out The strbuf to append the string to.\n @return Zero if success, non-zero if failed."]
@@ -5640,7 +5597,7 @@ extern "C" {
         world: *const ecs_world_t,
         type_: ecs_entity_t,
         buf_out: *mut ecs_strbuf_t,
-    ) -> ::std::os::raw::c_int;
+    ) -> ::core::ffi::c_int;
 }
 #[doc = "Used with ecs_iter_to_json()."]
 #[repr(C)]
@@ -5671,7 +5628,7 @@ extern "C" {
         world: *const ecs_world_t,
         entity: ecs_entity_t,
         desc: *const ecs_entity_to_json_desc_t,
-    ) -> *mut ::std::os::raw::c_char;
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Serialize entity into JSON string buffer.\n Same as ecs_entity_to_json(), but serializes to an ecs_strbuf_t instance.\n\n @param world The world.\n @param entity The entity to serialize.\n @param buf_out The strbuf to append the string to.\n @return Zero if success, non-zero if failed."]
@@ -5680,7 +5637,7 @@ extern "C" {
         entity: ecs_entity_t,
         buf_out: *mut ecs_strbuf_t,
         desc: *const ecs_entity_to_json_desc_t,
-    ) -> ::std::os::raw::c_int;
+    ) -> ::core::ffi::c_int;
 }
 #[doc = "Used with ecs_iter_to_json()."]
 #[repr(C)]
@@ -5728,7 +5685,7 @@ extern "C" {
     pub fn ecs_iter_to_json(
         iter: *mut ecs_iter_t,
         desc: *const ecs_iter_to_json_desc_t,
-    ) -> *mut ::std::os::raw::c_char;
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Serialize iterator into JSON string buffer.\n Same as ecs_iter_to_json(), but serializes to an ecs_strbuf_t instance.\n\n @param iter The iterator to serialize.\n @param buf_out The strbuf to append the string to.\n @return Zero if success, non-zero if failed."]
@@ -5736,7 +5693,7 @@ extern "C" {
         iter: *mut ecs_iter_t,
         buf_out: *mut ecs_strbuf_t,
         desc: *const ecs_iter_to_json_desc_t,
-    ) -> ::std::os::raw::c_int;
+    ) -> ::core::ffi::c_int;
 }
 #[doc = "Used with ecs_iter_to_json()."]
 #[repr(C)]
@@ -5752,7 +5709,7 @@ extern "C" {
     pub fn ecs_world_to_json(
         world: *mut ecs_world_t,
         desc: *const ecs_world_to_json_desc_t,
-    ) -> *mut ::std::os::raw::c_char;
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Serialize world into JSON string buffer.\n Same as ecs_world_to_json(), but serializes to an ecs_strbuf_t instance.\n\n @param world The world to serialize.\n @param buf_out The strbuf to append the string to.\n @return Zero if success, non-zero if failed."]
@@ -5760,30 +5717,30 @@ extern "C" {
         world: *mut ecs_world_t,
         buf_out: *mut ecs_strbuf_t,
         desc: *const ecs_world_to_json_desc_t,
-    ) -> ::std::os::raw::c_int;
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Legacy deserializer functions. These can be used to load a v3 JSON string and\n save it to the new format. These functions will be removed in the next\n release."]
     pub fn ecs_entity_from_json_legacy(
         world: *mut ecs_world_t,
         entity: ecs_entity_t,
-        json: *const ::std::os::raw::c_char,
+        json: *const ::core::ffi::c_char,
         desc: *const ecs_from_json_desc_t,
-    ) -> *const ::std::os::raw::c_char;
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     pub fn ecs_world_from_json_legacy(
         world: *mut ecs_world_t,
-        json: *const ::std::os::raw::c_char,
+        json: *const ::core::ffi::c_char,
         desc: *const ecs_from_json_desc_t,
-    ) -> *const ::std::os::raw::c_char;
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     pub fn ecs_world_from_json_file_legacy(
         world: *mut ecs_world_t,
-        filename: *const ::std::os::raw::c_char,
+        filename: *const ::core::ffi::c_char,
         desc: *const ecs_from_json_desc_t,
-    ) -> *const ::std::os::raw::c_char;
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "< Parent scope for prefixes."]
@@ -6713,7 +6670,7 @@ pub struct ecs_script_template_t {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_script_var_t {
-    pub name: *const ::std::os::raw::c_char,
+    pub name: *const ::core::ffi::c_char,
     pub value: ecs_value_t,
     pub type_info: *const ecs_type_info_t,
 }
@@ -6734,8 +6691,8 @@ pub struct ecs_script_vars_t {
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_script_t {
     pub world: *mut ecs_world_t,
-    pub name: *const ::std::os::raw::c_char,
-    pub code: *const ::std::os::raw::c_char,
+    pub name: *const ::core::ffi::c_char,
+    pub code: *const ::core::ffi::c_char,
 }
 #[doc = "Script component.\n This component is added to the entities of managed scripts and templates."]
 #[repr(C)]
@@ -6749,13 +6706,13 @@ extern "C" {
     #[doc = "Parse script.\n This operation parses a script and returns a script object upon success. To\n run the script, call ecs_script_eval().\n\n @param world The world.\n @param name Name of the script (typically a file/module name).\n @param code The script code.\n @return Script object if success, NULL if failed."]
     pub fn ecs_script_parse(
         world: *mut ecs_world_t,
-        name: *const ::std::os::raw::c_char,
-        code: *const ::std::os::raw::c_char,
+        name: *const ::core::ffi::c_char,
+        code: *const ::core::ffi::c_char,
     ) -> *mut ecs_script_t;
 }
 extern "C" {
     #[doc = "Evaluate script.\n This operation evaluates (runs) a parsed script.\n\n @param script The script.\n @return Zero if success, non-zero if failed."]
-    pub fn ecs_script_eval(script: *mut ecs_script_t) -> ::std::os::raw::c_int;
+    pub fn ecs_script_eval(script: *mut ecs_script_t) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Free script.\n This operation frees a script object.\n\n Templates created by the script rely upon resources in the script object,\n and for that reason keep the script alive until all templates created by the\n script are deleted.\n\n @param script The script."]
@@ -6765,27 +6722,27 @@ extern "C" {
     #[doc = "Parse script.\n This parses a script and instantiates the entities in the world.\n This operation is the equivalent to doing:\n\n @code\n ecs_script_t *script = ecs_script_parse(world, name, code);\n ecs_script_eval(script);\n ecs_script_free(script);\n @endcode\n\n @param world The world.\n @param name The script name (typically the file).\n @param code The script.\n @return Zero if success, non-zero otherwise."]
     pub fn ecs_script_run(
         world: *mut ecs_world_t,
-        name: *const ::std::os::raw::c_char,
-        code: *const ::std::os::raw::c_char,
-    ) -> ::std::os::raw::c_int;
+        name: *const ::core::ffi::c_char,
+        code: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Parse script file.\n This parses a script file and instantiates the entities in the world. This\n operation is equivalent to loading the file contents and passing it to\n ecs_script_run().\n\n @param world The world.\n @param filename The script file name.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_script_run_file(
         world: *mut ecs_world_t,
-        filename: *const ::std::os::raw::c_char,
-    ) -> ::std::os::raw::c_int;
+        filename: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Convert script AST to string.\n This operation converts the script abstract syntax tree to a string, which\n can be used to debug a script.\n\n @param script The script.\n @param buf The buffer to write to.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_script_ast_to_buf(
         script: *mut ecs_script_t,
         buf: *mut ecs_strbuf_t,
-    ) -> ::std::os::raw::c_int;
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Convert script AST to string.\n This operation converts the script abstract syntax tree to a string, which\n can be used to debug a script.\n\n @param script The script.\n @return The string if success, NULL if failed."]
-    pub fn ecs_script_ast_to_str(script: *mut ecs_script_t) -> *mut ::std::os::raw::c_char;
+    pub fn ecs_script_ast_to_str(script: *mut ecs_script_t) -> *mut ::core::ffi::c_char;
 }
 #[doc = "Used with ecs_script_init()"]
 #[repr(C)]
@@ -6794,9 +6751,9 @@ pub struct ecs_script_desc_t {
     #[doc = "Set to customize entity handle associated with script"]
     pub entity: ecs_entity_t,
     #[doc = "Set to load script from file"]
-    pub filename: *const ::std::os::raw::c_char,
+    pub filename: *const ::core::ffi::c_char,
     #[doc = "Set to parse script from string"]
-    pub code: *const ::std::os::raw::c_char,
+    pub code: *const ::core::ffi::c_char,
 }
 extern "C" {
     #[doc = "Load managed script.\n A managed script tracks which entities it creates, and keeps those entities\n synchronized when the contents of the script are updated. When the script is\n updated, entities that are no longer in the new version will be deleted.\n\n This feature is experimental.\n\n @param world The world.\n @param desc Script descriptor."]
@@ -6809,8 +6766,8 @@ extern "C" {
         world: *mut ecs_world_t,
         script: ecs_entity_t,
         instance: ecs_entity_t,
-        code: *const ::std::os::raw::c_char,
-    ) -> ::std::os::raw::c_int;
+        code: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Clear all entities associated with script.\n\n @param world The world.\n @param script The script entity.\n @param instance The script instance."]
@@ -6836,14 +6793,14 @@ extern "C" {
     #[doc = "Declare a variable.\n This operation declares a new variable in the current scope. If a variable\n with the specified name already exists, the operation will fail.\n\n This operation does not allocate storage for the variable. This is done to\n allow for variables that point to existing storage, which prevents having\n to copy existing values to a variable scope.\n\n @param vars The variable scope.\n @param name The variable name.\n @return The new variable, or NULL if the operation failed."]
     pub fn ecs_script_vars_declare(
         vars: *mut ecs_script_vars_t,
-        name: *const ::std::os::raw::c_char,
+        name: *const ::core::ffi::c_char,
     ) -> *mut ecs_script_var_t;
 }
 extern "C" {
     #[doc = "Define a variable.\n This operation calls `ecs_script_vars_declare()` and allocates storage for\n the variable. If the type has a ctor, it will be called on the new storage.\n\n The scope's stack allocator will be used to allocate the storage. After\n `ecs_script_vars_pop()` is called on the scope, the variable storage will no\n longer be valid.\n\n The operation will fail if the type argument is not a type.\n\n @param vars The variable scope.\n @param name The variable name.\n @param type The variable type.\n @return The new variable, or NULL if the operation failed."]
     pub fn ecs_script_vars_define_id(
         vars: *mut ecs_script_vars_t,
-        name: *const ::std::os::raw::c_char,
+        name: *const ::core::ffi::c_char,
         type_: ecs_entity_t,
     ) -> *mut ecs_script_var_t;
 }
@@ -6851,7 +6808,7 @@ extern "C" {
     #[doc = "Lookup a variable.\n This operation looks up a variable in the current scope. If the variable\n can't be found in the current scope, the operation will recursively search\n the parent scopes.\n\n @param vars The variable scope.\n @param name The variable name.\n @return The variable, or NULL if one with the provided name does not exist."]
     pub fn ecs_script_vars_lookup(
         vars: *const ecs_script_vars_t,
-        name: *const ::std::os::raw::c_char,
+        name: *const ::core::ffi::c_char,
     ) -> *mut ecs_script_var_t;
 }
 extern "C" {
@@ -6859,75 +6816,75 @@ extern "C" {
     pub fn ecs_script_vars_from_iter(
         it: *const ecs_iter_t,
         vars: *mut ecs_script_vars_t,
-        offset: ::std::os::raw::c_int,
+        offset: ::core::ffi::c_int,
     );
 }
 #[doc = "Used with ecs_script_expr_run()."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_script_expr_run_desc_t {
-    pub name: *const ::std::os::raw::c_char,
-    pub expr: *const ::std::os::raw::c_char,
-    pub lookup_action: ::std::option::Option<
+    pub name: *const ::core::ffi::c_char,
+    pub expr: *const ::core::ffi::c_char,
+    pub lookup_action: ::core::option::Option<
         unsafe extern "C" fn(
             arg1: *const ecs_world_t,
-            value: *const ::std::os::raw::c_char,
-            ctx: *mut ::std::os::raw::c_void,
+            value: *const ::core::ffi::c_char,
+            ctx: *mut ::core::ffi::c_void,
         ) -> ecs_entity_t,
     >,
-    pub lookup_ctx: *mut ::std::os::raw::c_void,
+    pub lookup_ctx: *mut ::core::ffi::c_void,
     pub vars: *mut ecs_script_vars_t,
 }
 extern "C" {
     #[doc = "Parse standalone expression into value.\n This operation parses a flecs expression into the provided pointer. The\n memory pointed to must be large enough to contain a value of the used type.\n\n If no type and pointer are provided for the value argument, the operation\n will discover the type from the expression and allocate storage for the\n value. The allocated value must be freed with ecs_value_free().\n\n @param world The world.\n @param ptr The pointer to the expression to parse.\n @param value The value containing type & pointer to write to.\n @param desc Configuration parameters for deserializer.\n @return Pointer to the character after the last one read, or NULL if failed."]
     pub fn ecs_script_expr_run(
         world: *mut ecs_world_t,
-        ptr: *const ::std::os::raw::c_char,
+        ptr: *const ::core::ffi::c_char,
         value: *mut ecs_value_t,
         desc: *const ecs_script_expr_run_desc_t,
-    ) -> *const ::std::os::raw::c_char;
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Evaluate interpolated expressions in string.\n This operation evaluates expressions in a string, and replaces them with\n their evaluated result. Supported expression formats are:\n  - $variable_name\n  - {expression}\n\n The $, { and } characters can be escaped with a backslash (\\).\n\n @param world The world.\n @param str The string to evaluate.\n @param vars The variables to use for evaluation."]
     pub fn ecs_script_string_interpolate(
         world: *mut ecs_world_t,
-        str_: *const ::std::os::raw::c_char,
+        str_: *const ::core::ffi::c_char,
         vars: *const ecs_script_vars_t,
-    ) -> *mut ::std::os::raw::c_char;
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Serialize value into expression string.\n This operation serializes a value of the provided type to a string. The\n memory pointed to must be large enough to contain a value of the used type.\n\n @param world The world.\n @param type The type of the value to serialize.\n @param data The value to serialize.\n @return String with expression, or NULL if failed."]
     pub fn ecs_ptr_to_expr(
         world: *const ecs_world_t,
         type_: ecs_entity_t,
-        data: *const ::std::os::raw::c_void,
-    ) -> *mut ::std::os::raw::c_char;
+        data: *const ::core::ffi::c_void,
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Serialize value into expression buffer.\n Same as ecs_ptr_to_expr(), but serializes to an ecs_strbuf_t instance.\n\n @param world The world.\n @param type The type of the value to serialize.\n @param data The value to serialize.\n @param buf The strbuf to append the string to.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_ptr_to_expr_buf(
         world: *const ecs_world_t,
         type_: ecs_entity_t,
-        data: *const ::std::os::raw::c_void,
+        data: *const ::core::ffi::c_void,
         buf: *mut ecs_strbuf_t,
-    ) -> ::std::os::raw::c_int;
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Similar as ecs_ptr_to_expr(), but serializes values to string.\n Whereas the output of ecs_ptr_to_expr() is a valid expression, the output of\n ecs_ptr_to_str() is a string representation of the value. In most cases the\n output of the two operations is the same, but there are some differences:\n - Strings are not quoted\n\n @param world The world.\n @param type The type of the value to serialize.\n @param data The value to serialize.\n @return String with result, or NULL if failed."]
     pub fn ecs_ptr_to_str(
         world: *const ecs_world_t,
         type_: ecs_entity_t,
-        data: *const ::std::os::raw::c_void,
-    ) -> *mut ::std::os::raw::c_char;
+        data: *const ::core::ffi::c_void,
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Serialize value into string buffer.\n Same as ecs_ptr_to_str(), but serializes to an ecs_strbuf_t instance.\n\n @param world The world.\n @param type The type of the value to serialize.\n @param data The value to serialize.\n @param buf The strbuf to append the string to.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_ptr_to_str_buf(
         world: *const ecs_world_t,
         type_: ecs_entity_t,
-        data: *const ::std::os::raw::c_void,
+        data: *const ::core::ffi::c_void,
         buf: *mut ecs_strbuf_t,
-    ) -> ::std::os::raw::c_int;
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Script module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsScript)\n @endcode\n\n @param world The world."]
@@ -6957,14 +6914,14 @@ extern "C" {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsDocDescription {
-    pub value: *mut ::std::os::raw::c_char,
+    pub value: *mut ::core::ffi::c_char,
 }
 extern "C" {
     #[doc = "Add human-readable name to entity.\n Contrary to entity names, human readable names do not have to be unique and\n can contain special characters used in the query language like '*'.\n\n @param world The world.\n @param entity The entity to which to add the name.\n @param name The name to add.\n\n @see ecs_doc_get_name()\n @see flecs::doc::set_name()\n @see flecs::entity_builder::set_doc_name()"]
     pub fn ecs_doc_set_name(
         world: *mut ecs_world_t,
         entity: ecs_entity_t,
-        name: *const ::std::os::raw::c_char,
+        name: *const ::core::ffi::c_char,
     );
 }
 extern "C" {
@@ -6972,7 +6929,7 @@ extern "C" {
     pub fn ecs_doc_set_brief(
         world: *mut ecs_world_t,
         entity: ecs_entity_t,
-        description: *const ::std::os::raw::c_char,
+        description: *const ::core::ffi::c_char,
     );
 }
 extern "C" {
@@ -6980,7 +6937,7 @@ extern "C" {
     pub fn ecs_doc_set_detail(
         world: *mut ecs_world_t,
         entity: ecs_entity_t,
-        description: *const ::std::os::raw::c_char,
+        description: *const ::core::ffi::c_char,
     );
 }
 extern "C" {
@@ -6988,7 +6945,7 @@ extern "C" {
     pub fn ecs_doc_set_link(
         world: *mut ecs_world_t,
         entity: ecs_entity_t,
-        link: *const ::std::os::raw::c_char,
+        link: *const ::core::ffi::c_char,
     );
 }
 extern "C" {
@@ -6996,7 +6953,7 @@ extern "C" {
     pub fn ecs_doc_set_color(
         world: *mut ecs_world_t,
         entity: ecs_entity_t,
-        color: *const ::std::os::raw::c_char,
+        color: *const ::core::ffi::c_char,
     );
 }
 extern "C" {
@@ -7004,35 +6961,35 @@ extern "C" {
     pub fn ecs_doc_get_name(
         world: *const ecs_world_t,
         entity: ecs_entity_t,
-    ) -> *const ::std::os::raw::c_char;
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Get brief description from entity.\n\n @param world The world.\n @param entity The entity from which to get the description.\n @return The description.\n\n @see ecs_doc_set_brief()\n @see flecs::doc::get_brief()\n @see flecs::entity_view::get_doc_brief()"]
     pub fn ecs_doc_get_brief(
         world: *const ecs_world_t,
         entity: ecs_entity_t,
-    ) -> *const ::std::os::raw::c_char;
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Get detailed description from entity.\n\n @param world The world.\n @param entity The entity from which to get the description.\n @return The description.\n\n @see ecs_doc_set_detail()\n @see flecs::doc::get_detail()\n @see flecs::entity_view::get_doc_detail()"]
     pub fn ecs_doc_get_detail(
         world: *const ecs_world_t,
         entity: ecs_entity_t,
-    ) -> *const ::std::os::raw::c_char;
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Get link to external documentation from entity.\n\n @param world The world.\n @param entity The entity from which to get the link.\n @return The link.\n\n @see ecs_doc_set_link()\n @see flecs::doc::get_link()\n @see flecs::entity_view::get_doc_link()"]
     pub fn ecs_doc_get_link(
         world: *const ecs_world_t,
         entity: ecs_entity_t,
-    ) -> *const ::std::os::raw::c_char;
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Get color from entity.\n\n @param world The world.\n @param entity The entity from which to get the color.\n @return The color.\n\n @see ecs_doc_set_color()\n @see flecs::doc::get_color()\n @see flecs::entity_view::get_doc_color()"]
     pub fn ecs_doc_get_color(
         world: *const ecs_world_t,
         entity: ecs_entity_t,
-    ) -> *const ::std::os::raw::c_char;
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Doc module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsDoc)\n @endcode\n\n @param world The world."]
@@ -7040,8 +6997,8 @@ extern "C" {
 }
 #[doc = "Primitive type definitions.\n These typedefs allow the builtin primitives to be used as regular components:\n\n @code\n ecs_set(world, e, ecs_i32_t, {10});\n @endcode\n\n Or a more useful example (create an enum constant with a manual value):\n\n @code\n ecs_set_pair_second(world, e, EcsConstant, ecs_i32_t, {10});\n @endcode"]
 pub type ecs_bool_t = bool;
-pub type ecs_char_t = ::std::os::raw::c_char;
-pub type ecs_byte_t = ::std::os::raw::c_uchar;
+pub type ecs_char_t = ::core::ffi::c_char;
+pub type ecs_byte_t = ::core::ffi::c_uchar;
 pub type ecs_u8_t = u8;
 pub type ecs_u16_t = u16;
 pub type ecs_u32_t = u32;
@@ -7054,7 +7011,7 @@ pub type ecs_i64_t = i64;
 pub type ecs_iptr_t = isize;
 pub type ecs_f32_t = f32;
 pub type ecs_f64_t = f64;
-pub type ecs_string_t = *mut ::std::os::raw::c_char;
+pub type ecs_string_t = *mut ::core::ffi::c_char;
 extern "C" {
     #[doc = "< Id for component added to all types with reflection data."]
     pub static FLECS_IDEcsTypeID_: ecs_entity_t;
@@ -7196,7 +7153,7 @@ pub const ecs_type_kind_t_EcsVectorType: ecs_type_kind_t = 5;
 pub const ecs_type_kind_t_EcsOpaqueType: ecs_type_kind_t = 6;
 pub const ecs_type_kind_t_EcsTypeKindLast: ecs_type_kind_t = 6;
 #[doc = "Type kinds supported by meta addon"]
-pub type ecs_type_kind_t = ::std::os::raw::c_uint;
+pub type ecs_type_kind_t = ::core::ffi::c_uint;
 #[doc = "Component that is automatically added to every type with the right kind."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -7228,7 +7185,7 @@ pub const ecs_primitive_kind_t_EcsEntity: ecs_primitive_kind_t = 17;
 pub const ecs_primitive_kind_t_EcsId: ecs_primitive_kind_t = 18;
 pub const ecs_primitive_kind_t_EcsPrimitiveKindLast: ecs_primitive_kind_t = 18;
 #[doc = "Primitive type kinds supported by meta addon"]
-pub type ecs_primitive_kind_t = ::std::os::raw::c_uint;
+pub type ecs_primitive_kind_t = ::core::ffi::c_uint;
 #[doc = "Component added to primitive types"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -7274,7 +7231,7 @@ pub struct EcsMemberRanges {
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_member_t {
     #[doc = "Must be set when used with ecs_struct_desc_t"]
-    pub name: *const ::std::os::raw::c_char,
+    pub name: *const ::core::ffi::c_char,
     #[doc = "Member type."]
     pub type_: ecs_entity_t,
     #[doc = "Element count (for inline arrays). May be set when used with ecs_struct_desc_t"]
@@ -7306,7 +7263,7 @@ pub struct EcsStruct {
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_enum_constant_t {
     #[doc = "Must be set when used with ecs_enum_desc_t"]
-    pub name: *const ::std::os::raw::c_char,
+    pub name: *const ::core::ffi::c_char,
     #[doc = "May be set when used with ecs_enum_desc_t"]
     pub value: i32,
     #[doc = "Should not be set by ecs_enum_desc_t"]
@@ -7324,7 +7281,7 @@ pub struct EcsEnum {
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_bitmask_constant_t {
     #[doc = "Must be set when used with ecs_bitmask_desc_t"]
-    pub name: *const ::std::os::raw::c_char,
+    pub name: *const ::core::ffi::c_char,
     #[doc = "May be set when used with ecs_bitmask_desc_t"]
     pub value: ecs_flags32_t,
     #[doc = "Should not be set by ecs_bitmask_desc_t"]
@@ -7358,31 +7315,31 @@ pub struct EcsVector {
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_serializer_t {
     #[doc = "Serialize value"]
-    pub value: ::std::option::Option<
+    pub value: ::core::option::Option<
         unsafe extern "C" fn(
             ser: *const ecs_serializer_t,
             type_: ecs_entity_t,
-            value: *const ::std::os::raw::c_void,
-        ) -> ::std::os::raw::c_int,
+            value: *const ::core::ffi::c_void,
+        ) -> ::core::ffi::c_int,
     >,
     #[doc = "Serialize member"]
-    pub member: ::std::option::Option<
+    pub member: ::core::option::Option<
         unsafe extern "C" fn(
             ser: *const ecs_serializer_t,
-            member: *const ::std::os::raw::c_char,
-        ) -> ::std::os::raw::c_int,
+            member: *const ::core::ffi::c_char,
+        ) -> ::core::ffi::c_int,
     >,
     #[doc = "< The world."]
     pub world: *const ecs_world_t,
     #[doc = "< Serializer context."]
-    pub ctx: *mut ::std::os::raw::c_void,
+    pub ctx: *mut ::core::ffi::c_void,
 }
 #[doc = "Callback invoked serializing an opaque type."]
-pub type ecs_meta_serialize_t = ::std::option::Option<
+pub type ecs_meta_serialize_t = ::core::option::Option<
     unsafe extern "C" fn(
         ser: *const ecs_serializer_t,
-        src: *const ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int,
+        src: *const ::core::ffi::c_void,
+    ) -> ::core::ffi::c_int,
 >;
 #[doc = "Opaque type reflection data.\n An opaque type is a type with an unknown layout that can be mapped to a type\n known to the reflection framework. See the opaque type reflection examples."]
 #[repr(C)]
@@ -7394,67 +7351,60 @@ pub struct EcsOpaque {
     pub serialize: ecs_meta_serialize_t,
     #[doc = "Assign bool value"]
     pub assign_bool:
-        ::std::option::Option<unsafe extern "C" fn(dst: *mut ::std::os::raw::c_void, value: bool)>,
+        ::core::option::Option<unsafe extern "C" fn(dst: *mut ::core::ffi::c_void, value: bool)>,
     #[doc = "Assign char value"]
-    pub assign_char: ::std::option::Option<
-        unsafe extern "C" fn(dst: *mut ::std::os::raw::c_void, value: ::std::os::raw::c_char),
+    pub assign_char: ::core::option::Option<
+        unsafe extern "C" fn(dst: *mut ::core::ffi::c_void, value: ::core::ffi::c_char),
     >,
     #[doc = "Assign int value"]
     pub assign_int:
-        ::std::option::Option<unsafe extern "C" fn(dst: *mut ::std::os::raw::c_void, value: i64)>,
+        ::core::option::Option<unsafe extern "C" fn(dst: *mut ::core::ffi::c_void, value: i64)>,
     #[doc = "Assign unsigned int value"]
     pub assign_uint:
-        ::std::option::Option<unsafe extern "C" fn(dst: *mut ::std::os::raw::c_void, value: u64)>,
+        ::core::option::Option<unsafe extern "C" fn(dst: *mut ::core::ffi::c_void, value: u64)>,
     #[doc = "Assign float value"]
     pub assign_float:
-        ::std::option::Option<unsafe extern "C" fn(dst: *mut ::std::os::raw::c_void, value: f64)>,
+        ::core::option::Option<unsafe extern "C" fn(dst: *mut ::core::ffi::c_void, value: f64)>,
     #[doc = "Assign string value"]
-    pub assign_string: ::std::option::Option<
-        unsafe extern "C" fn(
-            dst: *mut ::std::os::raw::c_void,
-            value: *const ::std::os::raw::c_char,
-        ),
+    pub assign_string: ::core::option::Option<
+        unsafe extern "C" fn(dst: *mut ::core::ffi::c_void, value: *const ::core::ffi::c_char),
     >,
     #[doc = "Assign entity value"]
-    pub assign_entity: ::std::option::Option<
+    pub assign_entity: ::core::option::Option<
         unsafe extern "C" fn(
-            dst: *mut ::std::os::raw::c_void,
+            dst: *mut ::core::ffi::c_void,
             world: *mut ecs_world_t,
             entity: ecs_entity_t,
         ),
     >,
     #[doc = "Assign (component) id value"]
-    pub assign_id: ::std::option::Option<
-        unsafe extern "C" fn(
-            dst: *mut ::std::os::raw::c_void,
-            world: *mut ecs_world_t,
-            id: ecs_id_t,
-        ),
+    pub assign_id: ::core::option::Option<
+        unsafe extern "C" fn(dst: *mut ::core::ffi::c_void, world: *mut ecs_world_t, id: ecs_id_t),
     >,
     #[doc = "Assign null value"]
-    pub assign_null: ::std::option::Option<unsafe extern "C" fn(dst: *mut ::std::os::raw::c_void)>,
+    pub assign_null: ::core::option::Option<unsafe extern "C" fn(dst: *mut ::core::ffi::c_void)>,
     #[doc = "Clear collection elements"]
-    pub clear: ::std::option::Option<unsafe extern "C" fn(dst: *mut ::std::os::raw::c_void)>,
+    pub clear: ::core::option::Option<unsafe extern "C" fn(dst: *mut ::core::ffi::c_void)>,
     #[doc = "Ensure & get collection element"]
-    pub ensure_element: ::std::option::Option<
+    pub ensure_element: ::core::option::Option<
         unsafe extern "C" fn(
-            dst: *mut ::std::os::raw::c_void,
+            dst: *mut ::core::ffi::c_void,
             elem: usize,
-        ) -> *mut ::std::os::raw::c_void,
+        ) -> *mut ::core::ffi::c_void,
     >,
     #[doc = "Ensure & get element"]
-    pub ensure_member: ::std::option::Option<
+    pub ensure_member: ::core::option::Option<
         unsafe extern "C" fn(
-            dst: *mut ::std::os::raw::c_void,
-            member: *const ::std::os::raw::c_char,
-        ) -> *mut ::std::os::raw::c_void,
+            dst: *mut ::core::ffi::c_void,
+            member: *const ::core::ffi::c_char,
+        ) -> *mut ::core::ffi::c_void,
     >,
     #[doc = "Return number of elements"]
     pub count:
-        ::std::option::Option<unsafe extern "C" fn(dst: *const ::std::os::raw::c_void) -> usize>,
+        ::core::option::Option<unsafe extern "C" fn(dst: *const ::core::ffi::c_void) -> usize>,
     #[doc = "Resize to number of elements"]
     pub resize:
-        ::std::option::Option<unsafe extern "C" fn(dst: *mut ::std::os::raw::c_void, count: usize)>,
+        ::core::option::Option<unsafe extern "C" fn(dst: *mut ::core::ffi::c_void, count: usize)>,
 }
 #[doc = "Helper type to describe translation between two units. Note that this\n is not intended as a generic approach to unit conversions (e.g. from celsius\n to fahrenheit) but to translate between units that derive from the same base\n (e.g. meters to kilometers).\n\n Note that power is applied to the factor. When describing a translation of\n 1000, either use {factor = 1000, power = 1} or {factor = 1, power = 3}."]
 #[repr(C)]
@@ -7470,7 +7420,7 @@ pub struct ecs_unit_translation_t {
 #[derive(Debug, Copy, Clone)]
 pub struct EcsUnit {
     #[doc = "< Unit symbol."]
-    pub symbol: *mut ::std::os::raw::c_char,
+    pub symbol: *mut ::core::ffi::c_char,
     #[doc = "< Order of magnitude prefix relative to derived"]
     pub prefix: ecs_entity_t,
     #[doc = "< Base unit (e.g. \"meters\")"]
@@ -7485,7 +7435,7 @@ pub struct EcsUnit {
 #[derive(Debug, Copy, Clone)]
 pub struct EcsUnitPrefix {
     #[doc = "< Symbol of prefix (e.g. \"K\", \"M\", \"Ki\")"]
-    pub symbol: *mut ::std::os::raw::c_char,
+    pub symbol: *mut ::core::ffi::c_char,
     #[doc = "< Translation of prefix"]
     pub translation: ecs_unit_translation_t,
 }
@@ -7520,7 +7470,7 @@ pub const ecs_meta_type_op_kind_t_EcsOpEntity: ecs_meta_type_op_kind_t = 25;
 pub const ecs_meta_type_op_kind_t_EcsOpId: ecs_meta_type_op_kind_t = 26;
 pub const ecs_meta_type_op_kind_t_EcsMetaTypeOpKindLast: ecs_meta_type_op_kind_t = 26;
 #[doc = "Serializer instruction opcodes.\n The meta type serializer works by generating a flattened array with\n instructions that tells a serializer what kind of fields can be found in a\n type at which offsets."]
-pub type ecs_meta_type_op_kind_t = ::std::os::raw::c_uint;
+pub type ecs_meta_type_op_kind_t = ::core::ffi::c_uint;
 #[doc = "Meta type serializer instruction data."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -7532,7 +7482,7 @@ pub struct ecs_meta_type_op_t {
     #[doc = "< Number of elements (for inline arrays)."]
     pub count: i32,
     #[doc = "< Name of value (only used for struct members)"]
-    pub name: *const ::std::os::raw::c_char,
+    pub name: *const ::core::ffi::c_char,
     #[doc = "< Number of operations until next field or end"]
     pub op_count: i32,
     #[doc = "< Size of type of operation"]
@@ -7568,7 +7518,7 @@ pub struct ecs_meta_scope_t {
     #[doc = "< Depth to restore, in case dotmember was used"]
     pub prev_depth: i32,
     #[doc = "< Pointer to the value being iterated"]
-    pub ptr: *mut ::std::os::raw::c_void,
+    pub ptr: *mut ::core::ffi::c_void,
     #[doc = "< Pointer to component, in case size/alignment is needed"]
     pub comp: *const EcsComponent,
     #[doc = "< Opaque type interface"]
@@ -7599,57 +7549,57 @@ pub struct ecs_meta_cursor_t {
     #[doc = "< If in root scope, this allows for a push for primitive types"]
     pub is_primitive_scope: bool,
     #[doc = "Custom entity lookup action for overriding default ecs_lookup"]
-    pub lookup_action: ::std::option::Option<
+    pub lookup_action: ::core::option::Option<
         unsafe extern "C" fn(
             arg1: *const ecs_world_t,
-            arg2: *const ::std::os::raw::c_char,
-            arg3: *mut ::std::os::raw::c_void,
+            arg2: *const ::core::ffi::c_char,
+            arg3: *mut ::core::ffi::c_void,
         ) -> ecs_entity_t,
     >,
     #[doc = "< Context for lookup_action"]
-    pub lookup_ctx: *mut ::std::os::raw::c_void,
+    pub lookup_ctx: *mut ::core::ffi::c_void,
 }
 extern "C" {
     #[doc = "Create meta cursor.\n A meta cursor allows for walking over, reading and writing a value without\n having to know its type at compile time.\n\n When a value is assigned through the cursor API, it will get converted to\n the actual value of the underlying type. This allows the underlying type to\n change without having to update the serialized data. For example, an integer\n field can be set by a string, a floating point can be set as integer etc.\n\n @param world The world.\n @param type The type of the value.\n @param ptr Pointer to the value.\n @return A meta cursor for the value."]
     pub fn ecs_meta_cursor(
         world: *const ecs_world_t,
         type_: ecs_entity_t,
-        ptr: *mut ::std::os::raw::c_void,
+        ptr: *mut ::core::ffi::c_void,
     ) -> ecs_meta_cursor_t;
 }
 extern "C" {
     #[doc = "Get pointer to current field.\n\n @param cursor The cursor.\n @return A pointer to the current field."]
-    pub fn ecs_meta_get_ptr(cursor: *mut ecs_meta_cursor_t) -> *mut ::std::os::raw::c_void;
+    pub fn ecs_meta_get_ptr(cursor: *mut ecs_meta_cursor_t) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Move cursor to next field.\n\n @param cursor The cursor.\n @return Zero if success, non-zero if failed."]
-    pub fn ecs_meta_next(cursor: *mut ecs_meta_cursor_t) -> ::std::os::raw::c_int;
+    pub fn ecs_meta_next(cursor: *mut ecs_meta_cursor_t) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Move cursor to a field.\n\n @param cursor The cursor.\n @return Zero if success, non-zero if failed."]
-    pub fn ecs_meta_elem(cursor: *mut ecs_meta_cursor_t, elem: i32) -> ::std::os::raw::c_int;
+    pub fn ecs_meta_elem(cursor: *mut ecs_meta_cursor_t, elem: i32) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Move cursor to member.\n\n @param cursor The cursor.\n @param name The name of the member.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_member(
         cursor: *mut ecs_meta_cursor_t,
-        name: *const ::std::os::raw::c_char,
-    ) -> ::std::os::raw::c_int;
+        name: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Move cursor to member.\n Same as ecs_meta_member(), but with support for \"foo.bar\" syntax.\n\n @param cursor The cursor.\n @param name The name of the member.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_dotmember(
         cursor: *mut ecs_meta_cursor_t,
-        name: *const ::std::os::raw::c_char,
-    ) -> ::std::os::raw::c_int;
+        name: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Push a scope (required/only valid for structs & collections).\n\n @param cursor The cursor.\n @return Zero if success, non-zero if failed."]
-    pub fn ecs_meta_push(cursor: *mut ecs_meta_cursor_t) -> ::std::os::raw::c_int;
+    pub fn ecs_meta_push(cursor: *mut ecs_meta_cursor_t) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Pop a struct or collection scope (must follow a push).\n\n @param cursor The cursor.\n @return Zero if success, non-zero if failed."]
-    pub fn ecs_meta_pop(cursor: *mut ecs_meta_cursor_t) -> ::std::os::raw::c_int;
+    pub fn ecs_meta_pop(cursor: *mut ecs_meta_cursor_t) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Is the current scope a collection?.\n\n @param cursor The cursor.\n @return True if current scope is a collection, false if not."]
@@ -7665,7 +7615,7 @@ extern "C" {
 }
 extern "C" {
     #[doc = "Get member name of current field.\n\n @param cursor The cursor.\n @return The member name of the current field."]
-    pub fn ecs_meta_get_member(cursor: *const ecs_meta_cursor_t) -> *const ::std::os::raw::c_char;
+    pub fn ecs_meta_get_member(cursor: *const ecs_meta_cursor_t) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Get member entity of current field.\n\n @param cursor The cursor.\n @return The member entity of the current field."]
@@ -7673,65 +7623,62 @@ extern "C" {
 }
 extern "C" {
     #[doc = "Set field with boolean value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
-    pub fn ecs_meta_set_bool(cursor: *mut ecs_meta_cursor_t, value: bool) -> ::std::os::raw::c_int;
+    pub fn ecs_meta_set_bool(cursor: *mut ecs_meta_cursor_t, value: bool) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Set field with char value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_set_char(
         cursor: *mut ecs_meta_cursor_t,
-        value: ::std::os::raw::c_char,
-    ) -> ::std::os::raw::c_int;
+        value: ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Set field with int value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
-    pub fn ecs_meta_set_int(cursor: *mut ecs_meta_cursor_t, value: i64) -> ::std::os::raw::c_int;
+    pub fn ecs_meta_set_int(cursor: *mut ecs_meta_cursor_t, value: i64) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Set field with uint value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
-    pub fn ecs_meta_set_uint(cursor: *mut ecs_meta_cursor_t, value: u64) -> ::std::os::raw::c_int;
+    pub fn ecs_meta_set_uint(cursor: *mut ecs_meta_cursor_t, value: u64) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Set field with float value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
-    pub fn ecs_meta_set_float(cursor: *mut ecs_meta_cursor_t, value: f64) -> ::std::os::raw::c_int;
+    pub fn ecs_meta_set_float(cursor: *mut ecs_meta_cursor_t, value: f64) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Set field with string value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_set_string(
         cursor: *mut ecs_meta_cursor_t,
-        value: *const ::std::os::raw::c_char,
-    ) -> ::std::os::raw::c_int;
+        value: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Set field with string literal value (has enclosing \"\").\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_set_string_literal(
         cursor: *mut ecs_meta_cursor_t,
-        value: *const ::std::os::raw::c_char,
-    ) -> ::std::os::raw::c_int;
+        value: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Set field with entity value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_set_entity(
         cursor: *mut ecs_meta_cursor_t,
         value: ecs_entity_t,
-    ) -> ::std::os::raw::c_int;
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Set field with (component) id value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
-    pub fn ecs_meta_set_id(
-        cursor: *mut ecs_meta_cursor_t,
-        value: ecs_id_t,
-    ) -> ::std::os::raw::c_int;
+    pub fn ecs_meta_set_id(cursor: *mut ecs_meta_cursor_t, value: ecs_id_t) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Set field with null value.\n\n @param cursor The cursor.\n @return Zero if success, non-zero if failed."]
-    pub fn ecs_meta_set_null(cursor: *mut ecs_meta_cursor_t) -> ::std::os::raw::c_int;
+    pub fn ecs_meta_set_null(cursor: *mut ecs_meta_cursor_t) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Set field with dynamic value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_meta_set_value(
         cursor: *mut ecs_meta_cursor_t,
         value: *const ecs_value_t,
-    ) -> ::std::os::raw::c_int;
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     #[doc = "Get field value as boolean.\n\n @param cursor The cursor.\n @return The value of the current field."]
@@ -7739,7 +7686,7 @@ extern "C" {
 }
 extern "C" {
     #[doc = "Get field value as char.\n\n @param cursor The cursor.\n @return The value of the current field."]
-    pub fn ecs_meta_get_char(cursor: *const ecs_meta_cursor_t) -> ::std::os::raw::c_char;
+    pub fn ecs_meta_get_char(cursor: *const ecs_meta_cursor_t) -> ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Get field value as signed integer.\n\n @param cursor The cursor.\n @return The value of the current field."]
@@ -7755,7 +7702,7 @@ extern "C" {
 }
 extern "C" {
     #[doc = "Get field value as string.\n This operation does not perform conversions. If the field is not a string,\n this operation will fail.\n\n @param cursor The cursor.\n @return The value of the current field."]
-    pub fn ecs_meta_get_string(cursor: *const ecs_meta_cursor_t) -> *const ::std::os::raw::c_char;
+    pub fn ecs_meta_get_string(cursor: *const ecs_meta_cursor_t) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "Get field value as entity.\n This operation does not perform conversions.\n\n @param cursor The cursor.\n @return The value of the current field."]
@@ -7769,7 +7716,7 @@ extern "C" {
     #[doc = "Convert pointer of primitive kind to float.\n\n @param type_kind The primitive type kind of the value.\n @param ptr Pointer to a value of a primitive type.\n @return The value in floating point format."]
     pub fn ecs_meta_ptr_to_float(
         type_kind: ecs_primitive_kind_t,
-        ptr: *const ::std::os::raw::c_void,
+        ptr: *const ::core::ffi::c_void,
     ) -> f64;
 }
 #[doc = "Used with ecs_primitive_init()."]
@@ -7881,7 +7828,7 @@ pub struct ecs_unit_desc_t {
     #[doc = "Existing entity to associate with unit (optional)."]
     pub entity: ecs_entity_t,
     #[doc = "Unit symbol, e.g. \"m\", \"%\", \"g\". (optional)."]
-    pub symbol: *const ::std::os::raw::c_char,
+    pub symbol: *const ::core::ffi::c_char,
     #[doc = "Unit quantity, e.g. distance, percentage, weight. (optional)."]
     pub quantity: ecs_entity_t,
     #[doc = "Base unit, e.g. \"meters\" (optional)."]
@@ -7904,7 +7851,7 @@ pub struct ecs_unit_prefix_desc_t {
     #[doc = "Existing entity to associate with unit prefix (optional)."]
     pub entity: ecs_entity_t,
     #[doc = "Unit symbol, e.g. \"m\", \"%\", \"g\". (optional)."]
-    pub symbol: *const ::std::os::raw::c_char,
+    pub symbol: *const ::core::ffi::c_char,
     #[doc = "Translation to apply to derived unit (optional)."]
     pub translation: ecs_unit_translation_t,
 }
@@ -7932,8 +7879,8 @@ extern "C" {
         world: *mut ecs_world_t,
         component: ecs_entity_t,
         kind: ecs_type_kind_t,
-        desc: *const ::std::os::raw::c_char,
-    ) -> ::std::os::raw::c_int;
+        desc: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
 }
 extern "C" {
     pub fn ecs_set_os_api_impl();
@@ -7943,7 +7890,7 @@ extern "C" {
     pub fn ecs_import(
         world: *mut ecs_world_t,
         module: ecs_module_action_t,
-        module_name: *const ::std::os::raw::c_char,
+        module_name: *const ::core::ffi::c_char,
     ) -> ecs_entity_t;
 }
 extern "C" {
@@ -7951,60 +7898,60 @@ extern "C" {
     pub fn ecs_import_c(
         world: *mut ecs_world_t,
         module: ecs_module_action_t,
-        module_name_c: *const ::std::os::raw::c_char,
+        module_name_c: *const ::core::ffi::c_char,
     ) -> ecs_entity_t;
 }
 extern "C" {
     #[doc = "Import a module from a library.\n Similar to ecs_import(), except that this operation will attempt to load the\n module from a dynamic library.\n\n A library may contain multiple modules, which is why both a library name and\n a module name need to be provided. If only a library name is provided, the\n library name will be reused for the module name.\n\n The library will be looked up using a canonical name, which is in the same\n form as a module, like `flecs.components.transform`. To transform this\n identifier to a platform specific library name, the operation relies on the\n module_to_dl callback of the os_api which the application has to override if\n the default does not yield the correct library name.\n\n @param world The world.\n @param library_name The name of the library to load.\n @param module_name The name of the module to load."]
     pub fn ecs_import_from_library(
         world: *mut ecs_world_t,
-        library_name: *const ::std::os::raw::c_char,
-        module_name: *const ::std::os::raw::c_char,
+        library_name: *const ::core::ffi::c_char,
+        module_name: *const ::core::ffi::c_char,
     ) -> ecs_entity_t;
 }
 extern "C" {
     #[doc = "Register a new module."]
     pub fn ecs_module_init(
         world: *mut ecs_world_t,
-        c_name: *const ::std::os::raw::c_char,
+        c_name: *const ::core::ffi::c_char,
         desc: *const ecs_component_desc_t,
     ) -> ecs_entity_t;
 }
 extern "C" {
     pub fn ecs_cpp_get_type_name(
-        type_name: *mut ::std::os::raw::c_char,
-        func_name: *const ::std::os::raw::c_char,
+        type_name: *mut ::core::ffi::c_char,
+        func_name: *const ::core::ffi::c_char,
         len: usize,
         front_len: usize,
-    ) -> *mut ::std::os::raw::c_char;
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     pub fn ecs_cpp_get_symbol_name(
-        symbol_name: *mut ::std::os::raw::c_char,
-        type_name: *const ::std::os::raw::c_char,
+        symbol_name: *mut ::core::ffi::c_char,
+        type_name: *const ::core::ffi::c_char,
         len: usize,
-    ) -> *mut ::std::os::raw::c_char;
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     pub fn ecs_cpp_get_constant_name(
-        constant_name: *mut ::std::os::raw::c_char,
-        func_name: *const ::std::os::raw::c_char,
+        constant_name: *mut ::core::ffi::c_char,
+        func_name: *const ::core::ffi::c_char,
         len: usize,
         back_len: usize,
-    ) -> *mut ::std::os::raw::c_char;
+    ) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
     pub fn ecs_cpp_trim_module(
         world: *mut ecs_world_t,
-        type_name: *const ::std::os::raw::c_char,
-    ) -> *const ::std::os::raw::c_char;
+        type_name: *const ::core::ffi::c_char,
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     pub fn ecs_cpp_component_validate(
         world: *mut ecs_world_t,
         id: ecs_entity_t,
-        name: *const ::std::os::raw::c_char,
-        symbol: *const ::std::os::raw::c_char,
+        name: *const ::core::ffi::c_char,
+        symbol: *const ::core::ffi::c_char,
         size: usize,
         alignment: usize,
         implicit_name: bool,
@@ -8014,8 +7961,8 @@ extern "C" {
     pub fn ecs_cpp_component_register(
         world: *mut ecs_world_t,
         id: ecs_entity_t,
-        name: *const ::std::os::raw::c_char,
-        symbol: *const ::std::os::raw::c_char,
+        name: *const ::core::ffi::c_char,
+        symbol: *const ::core::ffi::c_char,
         size: ecs_size_t,
         alignment: ecs_size_t,
         implicit_name: bool,
@@ -8027,9 +7974,9 @@ extern "C" {
         world: *mut ecs_world_t,
         s_id: ecs_entity_t,
         id: ecs_entity_t,
-        name: *const ::std::os::raw::c_char,
-        type_name: *const ::std::os::raw::c_char,
-        symbol: *const ::std::os::raw::c_char,
+        name: *const ::core::ffi::c_char,
+        type_name: *const ::core::ffi::c_char,
+        symbol: *const ::core::ffi::c_char,
         size: usize,
         alignment: usize,
         is_component: bool,
@@ -8044,8 +7991,8 @@ extern "C" {
         world: *mut ecs_world_t,
         parent: ecs_entity_t,
         id: ecs_entity_t,
-        name: *const ::std::os::raw::c_char,
-        value: ::std::os::raw::c_int,
+        name: *const ::core::ffi::c_char,
+        value: ::core::ffi::c_int,
     ) -> ecs_entity_t;
 }
 extern "C" {
@@ -8067,7 +8014,7 @@ extern "C" {
         record: *const ecs_record_t,
         table: *mut ecs_table_t,
         id: ecs_id_t,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     pub fn ecs_rust_get_id(
@@ -8076,7 +8023,7 @@ extern "C" {
         record: *const ecs_record_t,
         table: *mut ecs_table_t,
         id: ecs_id_t,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     pub fn ecs_rust_rel_count(

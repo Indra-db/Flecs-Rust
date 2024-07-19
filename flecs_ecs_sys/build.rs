@@ -38,6 +38,8 @@ fn generate_bindings() {
         .allowlist_recursively(false)
         // Keep comments and keep all of them, not just doc comments.
         .generate_comments(true)
+        // Prefer core::* over std::*
+        .use_core()
         .clang_arg("-fparse-all-comments")
         .parse_callbacks(Box::new(CommentsCallbacks))
         .blocklist_item("FLECS_HI_COMPONENT_ID")
