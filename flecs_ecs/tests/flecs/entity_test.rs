@@ -3818,3 +3818,21 @@ fn count_target_ids() {
     assert_eq!(e.target_id_count(r).unwrap(), 2);
     assert_eq!(e2.target_id_count(r).unwrap(), 1);
 }
+
+#[test]
+fn entity_id_reuse() {
+    let world = World::new();
+
+    let a = world.entity_named("a");
+    let b = world.entity().child_of_id(a);
+    let first_archetype = b.archetype().to_string();
+    a.destruct();
+
+    let a = world.entity_named("a");
+    let b = world.entity().child_of_id(a);
+    assert!(
+        b.id() > u32::MAX as u64,
+        "this test is not valid if the id was not reused"
+    );
+    assert_eq!(b.archetype().to_string(), first_archetype);
+}
