@@ -510,6 +510,23 @@ where
         self.field_internal::<T>(index).unwrap()
     }
 
+    fn field_checked<T: ComponentId>(&self, index: i32) -> Option<Field<T::UnderlyingType>> {
+        let id = <T::UnderlyingType as ComponentId>::id(self.world());
+
+        if index > self.iter.field_count {
+            return None;
+        }
+
+        let term_id = unsafe { sys::ecs_field_id(self.iter, index) };
+        let is_pair = unsafe { sys::ecs_id_is_pair(term_id) };
+        let is_id_correct = id == term_id;
+
+        if is_id_correct || is_pair {
+            return unsafe { self.field_internal::<T::UnderlyingType>(index) };
+        }
+
+        None
+    }
     /// Get read/write access to field data.
     /// If the matched id for the specified field does not match with the provided
     /// type or if the field is readonly, the function will assert.
@@ -540,21 +557,7 @@ where
             "cannot .field from .each, use .field_at instead",
         );
 
-        let id = <T::UnderlyingType as ComponentId>::id(self.world());
-
-        if index > self.iter.field_count {
-            return None;
-        }
-
-        let term_id = unsafe { sys::ecs_field_id(self.iter, index) };
-        let is_pair = unsafe { sys::ecs_id_is_pair(term_id) };
-        let is_id_correct = id == term_id;
-
-        if is_id_correct || is_pair {
-            return unsafe { self.field_internal::<T::UnderlyingType>(index) };
-        }
-
-        None
+        self.field_checked::<T>(index)
     }
 
     /// Get unchecked access to field data.
@@ -609,7 +612,7 @@ where
             !unsafe { sys::ecs_field_is_readonly(self.iter, index) },
             FlecsErrorCode::AccessViolation,
         );
-        if let Some(field) = self.field::<T>(index) {
+        if let Some(field) = self.field_checked::<T>(index) {
             Some(&mut field.slice_components[row])
         } else {
             None
@@ -620,7 +623,7 @@ where
     where
         T: ComponentId,
     {
-        if let Some(field) = self.field::<T>(index) {
+        if let Some(field) = self.field_checked::<T>(index) {
             Some(&field.slice_components[row])
         } else {
             None
@@ -766,7 +769,13 @@ where
         // If a shared column is retrieved with 'column', there will only be a
         // single value. Ensure that the application does not accidentally read
         // out of bounds.
-        let count = if is_shared { 1 } else { self.count() };
+        let count = if is_shared {
+            1
+        } else {
+            // If column is owned, there will be as many values as there are
+            // entities.
+            self.count()
+        };
         let array =
             unsafe { sys::ecs_field_w_size(self.iter, std::mem::size_of::<T>(), index) as *mut T };
 
