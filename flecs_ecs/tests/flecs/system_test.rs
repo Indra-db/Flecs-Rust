@@ -4,6 +4,7 @@ use std::ffi::c_void;
 
 use flecs_ecs::core::*;
 use flecs_ecs::macros::*;
+use timer::TimerAPI;
 
 use crate::common_test::*;
 
@@ -2800,96 +2801,92 @@ fn system_startup_system() {
     });
 }
 
-#[ignore = "timer addon not implemented"]
 #[test]
 fn system_interval_tick_source() {
-    //let world = World::new();
+    let world = World::new();
 
-    // flecs::timer t = world.timer().interval(2.1);
+    let t = world.timer().set_interval(2.1);
 
-    // flecs::Timer& timer = t.ensure<flecs::Timer>();
-    // timer.time = 0;
+    t.get::<&mut flecs::timer::Timer>(|timer| {
+        timer.time = 0.0;
+    });
 
-    // world.set(Count2 { a: 0, b: 0 });
+    world.set(Count2 { a: 0, b: 0 });
 
-    // world.system::<()>()
-    //     .tick_source(t)
-    //     .run(|mut it| {
-    //         let world = it.world();
-    //         while it.next() {
-    //             world.get::<&mut Count2>(|c| {
-    //                 c.a += 1;
-    //             });
-    //         }
-    //     });
+    world.system::<()>().set_tick_source_id(t).run(|mut it| {
+        let world = it.world();
+        while it.next() {
+            world.get::<&mut Count2>(|c| {
+                c.a += 1;
+            });
+        }
+    });
 
-    // world.system::<()>()
-    //     .tick_source(t)
-    //     .run(|mut it| {
-    //         let world = it.world();
-    //         while it.next() {
-    //             world.get::<&mut Count2>(|c| {
-    //                 c.b += 1;
-    //             });
-    //         }
-    //     });
+    world.system::<()>().set_tick_source_id(t).run(|mut it| {
+        let world = it.world();
+        while it.next() {
+            world.get::<&mut Count2>(|c| {
+                c.b += 1;
+            });
+        }
+    });
 
-    // world.get::<&Count2>(|c| {
-    //     world.progress_time(1.0);
-    //     assert_eq!(c.a, 0);
-    //     assert_eq!(c.b, 0);
+    world.progress_time(1.0);
+    let c = world.cloned::<&Count2>();
+    assert_eq!(c.a, 0);
+    assert_eq!(c.b, 0);
 
-    //     world.progress_time(1.0);
+    world.progress_time(1.0);
+    let c = world.cloned::<&Count2>();
+    assert_eq!(c.a, 0);
+    assert_eq!(c.b, 0);
 
-    //     assert_eq!(c.a, 0);
-    //     assert_eq!(c.b, 0);
-
-    //     world.progress_time(1.0);
-    //     assert_eq!(c.a, 1);
-    //     assert_eq!(c.b, 1);
-    // });
+    world.progress_time(1.0);
+    let c = world.cloned::<&Count2>();
+    assert_eq!(c.a, 1);
+    assert_eq!(c.b, 1);
 }
 
-#[ignore = "timer addon not implemented"]
 #[test]
 fn system_rate_tick_source() {
-    // let world = World::new();
+    let world = World::new();
 
-    // flecs::timer t = world.timer().rate(3);
+    let t = world.timer().set_rate(3);
 
-    // int32_t sys_a_invoked = 0, sys_b_invoked = 0;
+    world.set(Count2 { a: 0, b: 0 });
 
-    // world.system::<()>()
-    //     .tick_source(t)
-    //     .run(|mut it| {
-    //         while it.next() {
-    //             sys_a_world.get::<&mut Count>(|c| {
-    //                 c.0 += 1;
-    //             });
-    //         }
-    //     });
+    world.system::<()>().set_tick_source_id(t).run(|mut it| {
+        let world = it.world();
+        while it.next() {
+            world.get::<&mut Count2>(|c| {
+                c.a += 1;
+            });
+        }
+    });
 
-    // world.system::<()>()
-    //     .tick_source(t)
-    //     .run(|mut it| {
-    //         while it.next() {
-    //             sys_b_world.get::<&mut Count>(|c| {
-    //                 c.0 += 1;
-    //             });
-    //         }
-    //     });
+    world.system::<()>().set_tick_source_id(t).run(|mut it| {
+        let world = it.world();
+        while it.next() {
+            world.get::<&mut Count2>(|c| {
+                c.b += 1;
+            });
+        }
+    });
 
-    // world.progress(1.0);
-    // assert_eq!(0, sys_a_invoked);
-    // assert_eq!(0, sys_b_invoked);
+    world.progress_time(1.0);
+    let c = world.cloned::<&Count2>();
+    assert_eq!(0, c.a);
+    assert_eq!(0, c.b);
 
-    // world.progress(1.0);
-    // assert_eq!(0, sys_a_invoked);
-    // assert_eq!(0, sys_b_invoked);
+    world.progress_time(1.0);
+    let c = world.cloned::<&Count2>();
+    assert_eq!(0, c.a);
+    assert_eq!(0, c.b);
 
-    // world.progress(1.0);
-    // assert_eq!(1, sys_a_invoked);
-    // assert_eq!(1, sys_b_invoked);
+    world.progress_time(1.0);
+    let c = world.cloned::<&Count2>();
+    assert_eq!(1, c.a);
+    assert_eq!(1, c.b);
 }
 
 #[ignore = "timer addon not implemented"]
@@ -2897,8 +2894,8 @@ fn system_rate_tick_source() {
 fn system_nested_rate_tick_source() {
     // let world = World::new();
 
-    // flecs::timer t_3 = world.timer().rate(3);
-    // flecs::timer t_6 = world.timer().rate(2, t_3);
+    // let t_3 = world.timer().rate(3);
+    // let t_6 = world.timer().rate(2, t_3);
 
     // int32_t sys_a_invoked = 0, sys_b_invoked = 0;
 
@@ -2997,37 +2994,40 @@ fn system_nested_rate_tick_source() {
 //     s.run();
 // }
 
-// #[test] fn system_randomize_timers() {
-//     let world = World::new();
+#[test]
+fn system_randomize_timers() {
+    let world = World::new();
 
-//     flecs::entity s1 = world.system::<()>()
-//         .interval(1.0)
-//         .run(|mut it| { while it.next() {} });
+    let s1 = world
+        .system::<()>()
+        .interval(1.0)
+        .run(|mut it| while it.next() {});
 
-//     {
-//         const flecs::Timer *t = s1.get<flecs::Timer>();
-//         assert!(t != nullptr);
-//         assert!(t.time == 0);
-//     }
+    {
+        let t = s1.try_cloned::<&flecs::timer::Timer>();
+        assert!(t.is_some());
+        assert!(t.unwrap().time == 0.0);
+    }
 
-//     world.randomize_timers();
+    world.randomize_timers();
 
-//     flecs::entity s2 = world.system::<()>()
-//         .interval(1.0)
-//         .run(|mut it| { while it.next() {} });
+    let s2 = world
+        .system::<()>()
+        .interval(1.0)
+        .run(|mut it| while it.next() {});
 
-//     {
-//         const flecs::Timer *t = s1.get<flecs::Timer>();
-//         assert!(t != nullptr);
-//         assert!(t.time != 0);
-//     }
+    {
+        let t = s1.try_cloned::<&flecs::timer::Timer>();
+        assert!(t.is_some());
+        assert!(t.unwrap().time != 0.0);
+    }
 
-//     {
-//         const flecs::Timer *t = s2.get<flecs::Timer>();
-//         assert!(t != nullptr);
-//         assert!(t.time != 0);
-//     }
-// }
+    {
+        let t = s2.try_cloned::<&flecs::timer::Timer>();
+        assert!(t.is_some());
+        assert!(t.unwrap().time != 0.0);
+    }
+}
 
 // #[test] fn system_optional_pair_term() {
 //     let world = World::new();

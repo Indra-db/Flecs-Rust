@@ -18,7 +18,7 @@ use crate::sys;
 /// Systems are a query + function that can be ran manually or by a pipeline.
 #[derive(Clone, Copy)]
 pub struct System<'a> {
-    entity: EntityView<'a>,
+    pub(crate) entity: EntityView<'a>,
 }
 
 impl<'a> Deref for System<'a> {
