@@ -13,7 +13,7 @@ impl WorldCtx {
         Self {
             query_ref_count: 0,
             components: Default::default(),
-            components_array: vec![0; 2000],
+            components_array: vec![0; 500],
             is_panicking: false,
         }
     }
