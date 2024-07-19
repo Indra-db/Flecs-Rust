@@ -23,7 +23,6 @@ struct Dirty {
 }
 
 fn main() {
-    //TODO CHANGE TRACKING IS BROKEN IN V4, WILL BE FIXED BEFORE RELEASE
     let world = World::new();
 
     // Make Dirty inheritable so that queries can match it on prefabs
@@ -44,8 +43,8 @@ fn main() {
     let query_write = world
         .query::<(&Dirty, &mut Position)>()
         .term_at(0)
-        .up()
-        .instanced()
+        .up_type::<flecs::IsA>() // Only match Dirty from prefab
+        .instanced() // Instanced iteration is faster (see example)
         .build();
 
     // Create two prefabs with a Dirty component. We can use this to share a
@@ -167,7 +166,6 @@ fn main() {
 
 #[cfg(feature = "flecs_nightly_tests")]
 #[test]
-#[ignore = "v4 bug flecs core"]
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();
     main();
