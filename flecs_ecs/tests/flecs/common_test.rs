@@ -222,7 +222,7 @@ pub struct Bar;
 #[derive(Component)]
 pub struct First;
 
-#[derive(Component)]
+#[derive(Component, Clone, Copy)]
 pub struct Count2 {
     pub a: i32,
     pub b: i32,

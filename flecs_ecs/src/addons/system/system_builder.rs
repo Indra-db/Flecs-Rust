@@ -10,7 +10,7 @@ pub struct SystemBuilder<'a, T>
 where
     T: QueryTuple,
 {
-    desc: sys::ecs_system_desc_t,
+    pub(crate) desc: sys::ecs_system_desc_t,
     term_builder: TermBuilder,
     world: WorldRef<'a>,
     is_instanced: bool,

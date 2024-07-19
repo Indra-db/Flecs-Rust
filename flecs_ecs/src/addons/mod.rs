@@ -15,3 +15,6 @@ pub mod pipeline;
 
 #[cfg(feature = "flecs_stats")]
 pub mod stats;
+
+#[cfg(feature = "flecs_timer")]
+pub mod timer;
