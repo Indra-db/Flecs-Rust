@@ -138,7 +138,7 @@ flecs_journal = ["flecs_ecs_sys/flecs_journal","flecs_log"]
 flecs_nightly_tests = []
 
 default = [
-    "flecs_regenerate_binding_c",
+    #"flecs_regenerate_binding_c",
     #"flecs_nightly_tests",
     "flecs_module",
     "flecs_script",
