@@ -14,7 +14,7 @@ use crate::ecs_pipeline_desc_t;
 impl Default for ecs_type_t {
     fn default() -> Self {
         Self {
-            array: std::ptr::null_mut(),
+            array: core::ptr::null_mut(),
             count: Default::default(),
         }
     }
@@ -24,7 +24,7 @@ impl Default for ecs_term_ref_t {
     fn default() -> Self {
         Self {
             id: Default::default(),
-            name: std::ptr::null_mut(),
+            name: core::ptr::null_mut(),
         }
     }
 }
@@ -54,13 +54,13 @@ impl Default for ecs_query_desc_t {
             group_by: Default::default(),
             on_group_create: Default::default(),
             on_group_delete: Default::default(),
-            group_by_ctx: std::ptr::null_mut(),
+            group_by_ctx: core::ptr::null_mut(),
             group_by_ctx_free: Default::default(),
-            ctx: std::ptr::null_mut(),
-            binding_ctx: std::ptr::null_mut(),
+            ctx: core::ptr::null_mut(),
+            binding_ctx: core::ptr::null_mut(),
             ctx_free: Default::default(),
             binding_ctx_free: Default::default(),
-            expr: std::ptr::null(),
+            expr: core::ptr::null(),
             cache_kind: Default::default(),
             flags: Default::default(),
             order_by_callback: Default::default(),
@@ -84,15 +84,15 @@ impl Default for ecs_observer_desc_t {
             yield_existing: Default::default(),
             callback: Default::default(),
             run: Default::default(),
-            ctx: std::ptr::null_mut(),
-            callback_ctx: std::ptr::null_mut(),
+            ctx: core::ptr::null_mut(),
+            callback_ctx: core::ptr::null_mut(),
             ctx_free: Default::default(),
             callback_ctx_free: Default::default(),
-            observable: std::ptr::null_mut(),
-            last_event_id: std::ptr::null_mut(),
+            observable: core::ptr::null_mut(),
+            last_event_id: core::ptr::null_mut(),
             term_index_: Default::default(),
             query: Default::default(),
-            run_ctx: std::ptr::null_mut(),
+            run_ctx: core::ptr::null_mut(),
             run_ctx_free: Default::default(),
             flags_: Default::default(),
         }
@@ -104,7 +104,7 @@ impl Default for ecs_header_t {
         Self {
             magic: Default::default(),
             type_: Default::default(),
-            mixins: std::ptr::null_mut(),
+            mixins: core::ptr::null_mut(),
             refcount: Default::default(),
         }
     }
@@ -115,14 +115,14 @@ impl Default for ecs_entity_desc_t {
         Self {
             _canary: Default::default(),
             id: Default::default(),
-            name: std::ptr::null(),
-            sep: std::ptr::null(),
-            root_sep: std::ptr::null(),
-            symbol: std::ptr::null(),
+            name: core::ptr::null(),
+            sep: core::ptr::null(),
+            root_sep: core::ptr::null(),
+            symbol: core::ptr::null(),
             use_low_id: Default::default(),
-            add: std::ptr::null(),
-            add_expr: std::ptr::null(),
-            set: std::ptr::null(),
+            add: core::ptr::null(),
+            add_expr: core::ptr::null(),
+            set: core::ptr::null(),
             parent: Default::default(),
         }
     }
@@ -132,16 +132,16 @@ impl Default for ecs_event_desc_t {
     fn default() -> Self {
         Self {
             event: Default::default(),
-            ids: std::ptr::null(),
-            table: std::ptr::null_mut(),
-            other_table: std::ptr::null_mut(),
+            ids: core::ptr::null(),
+            table: core::ptr::null_mut(),
+            other_table: core::ptr::null_mut(),
             offset: Default::default(),
             count: Default::default(),
             entity: Default::default(),
-            param: std::ptr::null_mut(),
-            observable: std::ptr::null_mut(),
+            param: core::ptr::null_mut(),
+            observable: core::ptr::null_mut(),
             flags: Default::default(),
-            const_param: std::ptr::null(),
+            const_param: core::ptr::null(),
         }
     }
 }
@@ -155,8 +155,8 @@ impl Default for ecs_system_desc_t {
             query: Default::default(),
             run: Default::default(),
             callback: Default::default(),
-            ctx: std::ptr::null_mut(),
-            callback_ctx: std::ptr::null_mut(),
+            ctx: core::ptr::null_mut(),
+            callback_ctx: core::ptr::null_mut(),
             ctx_free: Default::default(),
             interval: Default::default(),
             rate: Default::default(),
@@ -164,7 +164,7 @@ impl Default for ecs_system_desc_t {
             multi_threaded: Default::default(),
             immediate: Default::default(),
             callback_ctx_free: Default::default(),
-            run_ctx: std::ptr::null_mut(),
+            run_ctx: core::ptr::null_mut(),
             run_ctx_free: Default::default(),
         }
     }
@@ -193,7 +193,7 @@ impl Default for ecs_app_desc_t {
             enable_stats: Default::default(),
             port: Default::default(),
             init: Default::default(),
-            ctx: std::ptr::null_mut(),
+            ctx: core::ptr::null_mut(),
         }
     }
 }
@@ -246,8 +246,8 @@ impl Default for ecs_type_hooks_t {
             on_add: None,
             on_set: None,
             on_remove: None,
-            ctx: std::ptr::null_mut(),
-            binding_ctx: std::ptr::null_mut(),
+            ctx: core::ptr::null_mut(),
+            binding_ctx: core::ptr::null_mut(),
             ctx_free: None,
             binding_ctx_free: None,
         }
@@ -267,7 +267,7 @@ impl Default for EcsComponent {
 impl Default for EcsPoly {
     fn default() -> Self {
         Self {
-            poly: std::ptr::null_mut(),
+            poly: core::ptr::null_mut(),
         }
     }
 }

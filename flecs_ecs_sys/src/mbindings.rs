@@ -24,11 +24,11 @@ pub struct ecs_alert_desc_t {
     /// "$this has Position but not Velocity"
     /// "$this has a parent entity $parent without Position"
     /// ```
-    pub message: *const ::std::os::raw::c_char,
+    pub message: *const ::core::ffi::c_char,
     #[doc = "User friendly name. Will only be set if FLECS_DOC addon is enabled."]
-    pub doc_name: *const ::std::os::raw::c_char,
+    pub doc_name: *const ::core::ffi::c_char,
     #[doc = "Description of alert. Will only be set if FLECS_DOC addon is enabled"]
-    pub brief: *const ::std::os::raw::c_char,
+    pub brief: *const ::core::ffi::c_char,
     #[doc = "Metric kind. Must be EcsAlertInfo, EcsAlertWarning, EcsAlertError or\n EcsAlertCritical. Defaults to EcsAlertError."]
     pub severity: ecs_entity_t,
     #[doc = "Severity filters can be used to assign different severities to the same\n alert. This prevents having to create multiple alerts, and allows\n entities to transition between severities without resetting the\n alert duration (optional)."]
@@ -40,7 +40,7 @@ pub struct ecs_alert_desc_t {
     #[doc = "(Component) id of member to monitor. If left to 0 this will be set to\n the parent entity of the member (optional)."]
     pub id: ecs_id_t,
     #[doc = "Variable from which to fetch the member (optional). When left to NULL\n 'id' will be obtained from $this."]
-    pub var: *const ::std::os::raw::c_char,
+    pub var: *const ::core::ffi::c_char,
 }
 
 extern "C" {
@@ -88,10 +88,10 @@ extern "C" {
     #[cfg(feature = "flecs_http")]
     pub fn ecs_http_server_http_request(
         srv: *mut ecs_http_server_t,
-        req: *const ::std::os::raw::c_char,
+        req: *const ::core::ffi::c_char,
         len: ecs_size_t,
         reply_out: *mut ecs_http_reply_t,
-    ) -> ::std::os::raw::c_int;
+    ) -> ::core::ffi::c_int;
 }
 
 /// Type that contains information about the world.
@@ -160,7 +160,7 @@ pub struct WorldInfo {
     /// Value set by `ecs_set_name_prefix()`. Used
     /// to remove library prefixes of symbol names (such as `Ecs`, `ecs_`) when
     /// registering them as names.
-    pub name_prefix: *const std::os::raw::c_char,
+    pub name_prefix: *const core::ffi::c_char,
 }
 
 /// Command counts.
@@ -244,7 +244,7 @@ fn compile_test_check_if_any_ecs_world_info_fields_changed() {
             batched_entity_count: 0,
             batched_command_count: 0,
         },
-        name_prefix: std::ptr::null(),
+        name_prefix: core::ptr::null(),
     };
 }
 
