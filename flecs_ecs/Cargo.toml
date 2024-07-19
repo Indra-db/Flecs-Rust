@@ -9,6 +9,8 @@ description = "Rust API for the C/CPP flecs ECS library <https://github.com/Sand
 keywords = ["ecs", "flecs", "ECS", "game-development", "gamedev"]
 categories = ["game-development", "api-bindings", "simulation", "data-structures"]
 
+exclude = ["assets/"]
+
 [lints] 
 workspace = true
 
