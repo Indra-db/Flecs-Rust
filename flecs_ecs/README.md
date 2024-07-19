@@ -1,4 +1,4 @@
-# ![Flecs](flecs_ecs/assets/flecs_rust_logo.png)
+# ![Flecs](assets/flecs_rust_logo.png)
 
 [![Generic badge](https://img.shields.io/badge/Flecs_Version-4.0.0-E56717.svg)](https://github.com/SanderMertens/flecs/releases)
 [![License](https://badgen.net/pypi/license/pip/)](https://github.com/Indra-db/Flecs-Rust/blob/master/LICENSE)
