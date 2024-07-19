@@ -696,31 +696,31 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self
     }
 
-    /// Set the type as current term and in mode inout
+    /// Set the type as current term and in mode out
     fn write<T: ComponentOrPairId>(&mut self) -> &mut Self {
         self.with::<T>();
         TermBuilderImpl::write_curr(self)
     }
 
-    /// Set the id as current term and in mode inout
+    /// Set the id as current term and in mode out
     fn write_id(&mut self, id: impl IntoId) -> &mut Self {
         self.with_id(id);
         TermBuilderImpl::write_curr(self)
     }
 
-    /// Set the name as current term and in mode inout
+    /// Set the name as current term and in mode out
     fn write_name(&mut self, name: &'a str) -> &mut Self {
         self.with_name(name);
         TermBuilderImpl::write_curr(self)
     }
 
-    /// Set the names as current term and in mode inout
+    /// Set the names as current term and in mode out
     fn write_names(&mut self, first: &'a str, second: &'a str) -> &mut Self {
         self.with_names(first, second);
         TermBuilderImpl::write_curr(self)
     }
 
-    /// Set the type as current term and in mode inout
+    /// Set the type as current term and in mode out
     fn write_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &mut self,
         value: T,
@@ -729,25 +729,25 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         TermBuilderImpl::write_curr(self)
     }
 
-    /// Set the relationship as current term and in mode inout
+    /// Set the relationship as current term and in mode out
     fn write_first<T: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
         self.with_first::<T>(second);
         TermBuilderImpl::write_curr(self)
     }
 
-    /// Set the relationship as current term and in mode inout
+    /// Set the relationship as current term and in mode out
     fn write_first_name<T: ComponentId>(&mut self, second: &'a str) -> &mut Self {
         self.with_first_name::<T>(second);
         TermBuilderImpl::write_curr(self)
     }
 
-    /// Set the relationship as current term and in mode inout
+    /// Set the relationship as current term and in mode out
     fn write_second<T: ComponentId>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
         self.with_second::<T>(first);
         TermBuilderImpl::write_curr(self)
     }
 
-    /// Set the relationship as current term and in mode inout
+    /// Set the relationship as current term and in mode out
     fn write_second_name<T: ComponentId>(&mut self, first: &'a str) -> &mut Self {
         self.with_second_name::<T>(first);
         TermBuilderImpl::write_curr(self)
