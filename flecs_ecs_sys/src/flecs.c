@@ -8425,12 +8425,12 @@ void ecs_enable_id(
     bool enable)
 {
     ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
+    ecs_stage_t *stage = flecs_stage_from_world(&world);
+
     ecs_check(ecs_is_valid(world, entity), ECS_INVALID_PARAMETER, NULL);
     ecs_check(ecs_id_is_valid(world, id), ECS_INVALID_PARAMETER, NULL);
     ecs_check(flecs_can_toggle(world, id), ECS_INVALID_OPERATION, 
         "add CanToggle trait to component");
-
-    ecs_stage_t *stage = flecs_stage_from_world(&world);
 
     if (flecs_defer_enable(stage, entity, id, enable)) {
         return;
@@ -9828,6 +9828,10 @@ void flecs_cmd_batch_for_entity(
         flecs_notify_on_add(world, table, start_table, 
             ECS_RECORD_TO_ROW(r->row), 1, &added, 0, set_mask, true);
         flecs_defer_end(world, world->stages[0]);
+        if (r->row & EcsEntityIsTraversable) {
+            /* Update monitors since we didn't do this in flecs_commit. */
+            flecs_update_component_monitors(world, &added, NULL);
+        }
     }
 
     diff->added.array = added.array;
@@ -14862,14 +14866,6 @@ ecs_entity_t ecs_observer_init(
         flecs_poly_assert(poly->poly, ecs_observer_t);
         ecs_observer_t *o = (ecs_observer_t*)poly->poly;
 
-        if (desc->run) {
-            o->run = desc->run;
-        }
-
-        if (desc->callback) {
-            o->callback = desc->callback;
-        }
-
         if (o->ctx_free) {
             if (o->ctx && o->ctx != desc->ctx) {
                 o->ctx_free(o->ctx);
@@ -14877,18 +14873,32 @@ ecs_entity_t ecs_observer_init(
         }
 
         if (o->callback_ctx_free) {
-            if (o->callback_ctx && 
-                o->callback_ctx != desc->callback_ctx) 
-            {
+            if (o->callback_ctx && o->callback_ctx != desc->callback_ctx) {
                 o->callback_ctx_free(o->callback_ctx);
+                o->callback_ctx_free = NULL;
+                o->callback_ctx = NULL;
             }
         }
 
         if (o->run_ctx_free) {
-            if (o->run_ctx && 
-                o->run_ctx != desc->run_ctx) 
-            {
+            if (o->run_ctx && o->run_ctx != desc->run_ctx) {
                 o->run_ctx_free(o->run_ctx);
+                o->run_ctx_free = NULL;
+                o->run_ctx = NULL;
+            }
+        }
+
+        if (desc->run) {
+            o->run = desc->run;
+            if (!desc->callback) {
+                o->callback = NULL;
+            }
+        }
+
+        if (desc->callback) {
+            o->callback = desc->callback;
+            if (!desc->run) {
+                o->run = NULL;
             }
         }
 
@@ -26606,6 +26616,12 @@ void FlecsRestImport(
 
     ecs_set_name_prefix(world, "EcsRest");
     ECS_TAG_DEFINE(world, EcsRestPlecs);
+
+    /* Enable frame time measurements so we're guaranteed to have a delta time
+     * value to pass into the HTTP server. */
+    if (ecs_os_has_time()) {
+        ecs_measure_frame_time(world, true);
+    }
 }
 
 #endif
@@ -33820,7 +33836,10 @@ int flecs_term_finalize(
 
         /* Check if term has toggleable component */
         if (id_flags & EcsIdCanToggle) {
-            term->flags_ |= EcsTermIsToggle;
+            /* If the term isn't matched on a #0 source */
+            if (term->src.id != EcsIsEntity) {
+                term->flags_ |= EcsTermIsToggle;
+            }
         }
 
         /* Check if this is a member query */
@@ -34155,7 +34174,9 @@ int flecs_query_finalize_terms(
             }
         }
 
-        if (term->inout == EcsInOutNone) {
+        if (term->src.id == EcsIsEntity) {
+            nodata_term = true;
+        } else if (term->inout == EcsInOutNone) {
             nodata_term = true;
         } else if (!ecs_get_type_info(world, term->id)) {
             nodata_term = true;
@@ -62946,14 +62967,6 @@ ecs_entity_t ecs_system_init(
         flecs_poly_assert(poly->poly, ecs_system_t);
         ecs_system_t *system = (ecs_system_t*)poly->poly;
 
-        if (desc->run) {
-            system->run = desc->run;
-        }
-
-        if (desc->callback) {
-            system->action = desc->callback;
-        }
-
         if (system->ctx_free) {
             if (system->ctx && system->ctx != desc->ctx) {
                 system->ctx_free(system->ctx);
@@ -62963,12 +62976,30 @@ ecs_entity_t ecs_system_init(
         if (system->callback_ctx_free) {
             if (system->callback_ctx && system->callback_ctx != desc->callback_ctx) {
                 system->callback_ctx_free(system->callback_ctx);
+                system->callback_ctx_free = NULL;
+                system->callback_ctx = NULL;
             }
         }
 
         if (system->run_ctx_free) {
             if (system->run_ctx && system->run_ctx != desc->run_ctx) {
                 system->run_ctx_free(system->run_ctx);
+                system->run_ctx_free = NULL;
+                system->run_ctx = NULL;
+            }
+        }
+
+        if (desc->run) {
+            system->run = desc->run;
+            if (!desc->callback) {
+                system->action = NULL;
+            }
+        }
+
+        if (desc->callback) {
+            system->action = desc->callback;
+            if (!desc->run) {
+                system->run = NULL;
             }
         }
 
@@ -73757,7 +73788,7 @@ bool flecs_query_trivial_test_w_wildcards(
         ecs_table_t *table = ctx->vars[0].range.table;
         for (t = 0; t < term_count; t ++) {
             if (term_set & (1llu << t)) {
-                int32_t column = it->columns[t];
+                int32_t column = it->columns[t]; 
                 ecs_assert(column >= 0, ECS_INTERNAL_ERROR, NULL);
                 it->ids[t] = table->type.array[column];
             }
