@@ -333,6 +333,8 @@ pub mod rest {
     }
 
     impl_component_traits_binding_type_w_id!(Rest, ECS_REST);
+    unsafe impl Send for Rest {}
+    unsafe impl Sync for Rest {}
 }
 
 // default component for event API

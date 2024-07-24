@@ -277,7 +277,7 @@ impl Drop for Pod {
 }
 
 #[derive(Component)]
-pub struct Template<T> {
+pub struct Template<T: Send + Sync> {
     pub value: T,
 }
 

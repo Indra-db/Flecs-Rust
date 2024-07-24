@@ -271,3 +271,8 @@ impl Default for EcsPoly {
         }
     }
 }
+
+unsafe impl Sync for crate::EcsIdentifier {}
+unsafe impl Send for crate::EcsIdentifier {}
+unsafe impl Send for crate::EcsPoly {}
+unsafe impl Sync for crate::EcsPoly {}

@@ -509,6 +509,7 @@ macro_rules! impl_component_traits_binding_type_w_id {
             const IS_REF: bool = false;
             const IS_MUT: bool = false;
         }
+
         impl ComponentId for $name {
             type UnderlyingType = $name;
             type UnderlyingEnumType = NoneEnum;

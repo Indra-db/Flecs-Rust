@@ -87,18 +87,10 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
         _ => return quote! { compile_error!("The type is neither a struct nor an enum!"); }.into(),
     };
 
-    let name = &input.ident;
-
     input.generics.make_where_clause();
-
-    let (impl_generics, type_generics, where_clause) = &input.generics.split_for_impl();
 
     // Combine the generated code with the original struct definition
     let output = quote! {
-
-        unsafe impl #impl_generics Send for #name #type_generics #where_clause{}
-        unsafe impl #impl_generics Sync for #name #type_generics #where_clause{}
-
         #( #generated_impls )*
     };
 

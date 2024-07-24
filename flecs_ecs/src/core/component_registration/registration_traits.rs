@@ -86,7 +86,7 @@ impl<T> ComponentType<Enum> for &mut T where T: ComponentType<Enum> {}
     message = "`{Self}` is not a flecs component.",
     label = "use `#[derive(Component)]` on `{Self}` to mark it as one."
 )]
-pub trait ComponentId: Sized + ComponentInfo + 'static {
+pub trait ComponentId: Sized + ComponentInfo + 'static + Send + Sync {
     #[doc(hidden)]
     type UnderlyingType: ComponentId;
     #[doc(hidden)]
