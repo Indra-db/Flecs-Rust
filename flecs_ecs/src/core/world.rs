@@ -428,6 +428,7 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::is_readonly()`]
     /// * [`World::readonly_end()`]
     /// * C++ API: `world::readonly_begin`
     #[doc(alias = "world::readonly_begin")]
@@ -925,8 +926,8 @@ impl World {
     ///
     /// Note that this function does not(!) create a new world. It simply wraps the
     /// existing world in a thread-specific context, which the API knows how to
-    /// unwrap. The reason the stage is returned as an `sys::ecs_world_t` is so that it
-    /// can be passed transparently to the existing API functions, vs. having to
+    /// unwrap. The reason the stage is returned as an [`sys::ecs_world_t`] is so that
+    /// it can be passed transparently to the existing API functions, vs. having to
     /// create a dedicated API for threading.
     ///
     /// # Arguments
@@ -975,14 +976,14 @@ impl World {
     /// stage, except that it does not allow reading from the world.
     ///
     /// Asynchronous stages are never merged automatically, and must therefore be
-    /// manually merged with the `sys::ecs_merge` function. It is not necessary to call `defer_begin`
-    /// or `defer_end` before and after enqueuing commands, as an
-    /// asynchronous stage unconditionally defers operations.
+    /// manually merged with the [`World::merge()`] function. It is not necessary to call
+    /// [`World::defer_begin()`] or [`World::defer_end()`] before and after enqueuing commands,
+    /// as an asynchronous stage unconditionally defers operations.
     ///
     /// The application must ensure that no commands are added to the stage while the
     /// stage is being merged.
     ///
-    /// An asynchronous stage must be cleaned up by `sys::ecs_async_stage_free`.
+    /// An asynchronous stage will be cleaned up when it is dropped.
     ///
     /// # Returns
     ///
@@ -1148,6 +1149,7 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::get_binding_context()`]
     /// * C++ API: `world::set_binding_context`
     #[doc(alias = "world::set_binding_context")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
@@ -1163,6 +1165,7 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::set_binding_context()`]
     /// * C++ API: `world::get_binding_context`
     #[doc(alias = "world::get_binding_context")]
     pub(crate) fn get_binding_context(&self) -> *mut c_void {
@@ -1215,6 +1218,7 @@ impl World {
     /// # See also
     ///
     /// * [`World::enable_range_check()`]
+    /// * [`World::preallocate_entity_count()`]
     /// * C++ API: `world::set_entity_range`
     #[doc(alias = "world::set_entity_range")]
     pub fn set_entity_range(&self, min: impl Into<Entity>, max: impl Into<Entity>) {
@@ -1809,6 +1813,12 @@ impl World {
     ///     assert_eq!(pos.x, 30.0);    
     /// });
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::cloned()`]
+    /// * [`World::map()`]
+    /// * [`World::try_map()`]
     pub fn get<T: GetTupleTypeOperation>(&self, callback: impl for<'e> FnOnce(T::ActualType<'e>))
     where
         T::OnlyType: ComponentOrPairId,
@@ -1868,6 +1878,12 @@ impl World {
     /// assert!(vel.is_none());
     ///
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::get()`]
+    /// * [`World::map()`]
+    /// * [`World::try_map()`]
     pub fn cloned<T: ClonedTupleTypeOperation>(&self) -> T::ActualType
     where
         T::OnlyType: ComponentOrPairId,
@@ -1956,6 +1972,12 @@ impl World {
     /// assert!(has_run.is_some());
     ///
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::cloned()`]
+    /// * [`World::get()`]
+    /// * [`World::map()`]
     pub fn try_map<T: GetTupleTypeOperation, Return>(
         &self,
         callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Option<Return>,
@@ -2045,6 +2067,12 @@ impl World {
     /// assert!(is_x_10);
     ///
     /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::cloned()`]
+    /// * [`World::get()`]
+    /// * [`World::try_map()`]
     pub fn map<T: GetTupleTypeOperation, Return>(
         &self,
         callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Return,
@@ -4529,6 +4557,7 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::get_time_scale()`]
     /// * C++ API: `world::set_time_scale`
     #[doc(alias = "world::set_time_scale")]
     #[inline(always)]
@@ -4551,6 +4580,7 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::set_time_scale()`]
     /// * C++ API: `world::get_time_scale`
     #[doc(alias = "world::get_time_scale")]
     #[inline(always)]
@@ -4571,6 +4601,7 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::set_target_fps()`]
     /// * C++ API: `world::get_target_fps`
     #[doc(alias = "world::get_target_fps")]
     #[inline(always)]
@@ -4599,6 +4630,7 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::get_target_fps()`]
     /// * C++ API: `world::set_target_fps`
     #[doc(alias = "world::set_target_fps")]
     #[inline(always)]
