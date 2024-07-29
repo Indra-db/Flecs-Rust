@@ -18,3 +18,6 @@ pub mod stats;
 
 #[cfg(feature = "flecs_timer")]
 pub mod timer;
+
+#[cfg(feature = "flecs_meta")]
+pub mod meta;
