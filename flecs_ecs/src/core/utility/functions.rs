@@ -364,7 +364,7 @@ pub fn get_generation(entity: impl Into<Entity>) -> u32 {
 /// let velocity_ptr: *mut Velocity = ecs_field(it, 1);
 /// ```
 #[inline(always)]
-pub unsafe fn ecs_field<T: ComponentId>(it: *const sys::ecs_iter_t, index: i32) -> *mut T {
+pub unsafe fn ecs_field<T>(it: *const sys::ecs_iter_t, index: i32) -> *mut T {
     let size = std::mem::size_of::<T>();
     sys::ecs_field_w_size(it, size, index) as *mut T
 }

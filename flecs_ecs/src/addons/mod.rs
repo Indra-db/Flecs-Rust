@@ -21,3 +21,9 @@ pub mod timer;
 
 #[cfg(feature = "flecs_meta")]
 pub mod meta;
+
+#[cfg(feature = "flecs_script")]
+pub mod script;
+
+#[cfg(feature = "flecs_json")]
+pub mod json;

@@ -5,7 +5,7 @@ use std::ops::Deref;
 use std::ops::{BitAnd, BitOr};
 
 use crate::core::*;
-use crate::sys;
+use flecs_ecs_derive::Component;
 
 /// An identifier that represents an entity.
 ///
@@ -16,7 +16,7 @@ use crate::sys;
 /// and a generation counter used to track entity liveliness in the upper 32
 /// bits. When an id is recycled, its generation count is increased. This
 /// causes recycled ids to be very large (>4 billion), which is normal.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Component)]
 #[repr(transparent)]
 pub struct Entity(pub u64);
 
@@ -63,55 +63,55 @@ impl Entity {
     }
 }
 
-impl ComponentInfo for Entity {
-    const IS_GENERIC: bool = false;
-    const IS_ENUM: bool = false;
-    const IS_TAG: bool = false;
-    const IMPLS_CLONE: bool = true;
-    const IMPLS_DEFAULT: bool = false;
-    const IS_REF: bool = false;
-    const IS_MUT: bool = false;
-    type TagType = FlecsFirstIsNotATag;
-}
+// impl ComponentInfo for Entity {
+//     const IS_GENERIC: bool = false;
+//     const IS_ENUM: bool = false;
+//     const IS_TAG: bool = false;
+//     const IMPLS_CLONE: bool = true;
+//     const IMPLS_DEFAULT: bool = false;
+//     const IS_REF: bool = false;
+//     const IS_MUT: bool = false;
+//     type TagType = FlecsFirstIsNotATag;
+// }
 
-impl ComponentId for Entity {
-    type UnderlyingType = Entity;
-    type UnderlyingEnumType = NoneEnum;
+// impl ComponentId for Entity {
+//     type UnderlyingType = Entity;
+//     type UnderlyingEnumType = NoneEnum;
 
-    #[inline(always)]
-    fn index() -> u32 {
-        static INDEX: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(u32::MAX);
-        Self::get_or_init_index(&INDEX)
-    }
+//     #[inline(always)]
+//     fn index() -> u32 {
+//         static INDEX: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(u32::MAX);
+//         Self::get_or_init_index(&INDEX)
+//     }
 
-    fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-        _world: impl WorldProvider<'a>,
-    ) -> sys::ecs_entity_t {
-        // already registered by flecs in World
-        unsafe { sys::FLECS_IDecs_entity_tID_ }
-    }
+//     fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
+//         _world: impl WorldProvider<'a>,
+//     ) -> sys::ecs_entity_t {
+//         // already registered by flecs in World
+//         unsafe { sys::FLECS_IDecs_entity_tID_ }
+//     }
 
-    #[inline]
-    fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-        _world: impl WorldProvider<'a>,
-        _name: &str,
-    ) -> sys::ecs_entity_t {
-        // already registered by flecs in World
-        unsafe { sys::FLECS_IDecs_entity_tID_ }
-    }
+//     #[inline]
+//     fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
+//         _world: impl WorldProvider<'a>,
+//         _name: &str,
+//     ) -> sys::ecs_entity_t {
+//         // already registered by flecs in World
+//         unsafe { sys::FLECS_IDecs_entity_tID_ }
+//     }
 
-    #[inline]
-    fn is_registered_with_world<'a>(_: impl WorldProvider<'a>) -> bool {
-        //because this is always registered in the c world
-        true
-    }
+//     #[inline]
+//     fn is_registered_with_world<'a>(_: impl WorldProvider<'a>) -> bool {
+//         //because this is always registered in the c world
+//         true
+//     }
 
-    #[inline]
-    fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
-        //this is safe because it's already registered in flecs_c / world
-        unsafe { sys::FLECS_IDecs_entity_tID_ }
-    }
-}
+//     #[inline]
+//     fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
+//         //this is safe because it's already registered in flecs_c / world
+//         unsafe { sys::FLECS_IDecs_entity_tID_ }
+//     }
+// }
 
 impl Deref for Entity {
     type Target = u64;

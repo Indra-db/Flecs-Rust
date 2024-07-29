@@ -12,6 +12,7 @@ mod enum_test;
 mod eq_test;
 mod flecs_docs_test;
 mod is_ref_test;
+mod meta_test;
 mod observer_test;
 mod query_builder_test;
 mod query_test;

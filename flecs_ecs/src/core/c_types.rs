@@ -448,7 +448,7 @@ pub(crate) const ECS_BOOL_T: u64 = FLECS_HI_COMPONENT_ID + 80;
 pub(crate) const ECS_CHAR_T: u64 = FLECS_HI_COMPONENT_ID + 81;
 pub(crate) const ECS_BYTE_T: u64 = FLECS_HI_COMPONENT_ID + 82;
 pub(crate) const ECS_U8_T: u64 = FLECS_HI_COMPONENT_ID + 83;
-pub(crate) const ECS_i16_T: u64 = FLECS_HI_COMPONENT_ID + 84;
+pub(crate) const ECS_U16_T: u64 = FLECS_HI_COMPONENT_ID + 84;
 pub(crate) const ECS_U32_T: u64 = FLECS_HI_COMPONENT_ID + 85;
 pub(crate) const ECS_U64_T: u64 = FLECS_HI_COMPONENT_ID + 86;
 pub(crate) const ECS_UPTR_T: u64 = FLECS_HI_COMPONENT_ID + 87;
@@ -465,7 +465,7 @@ pub(crate) const ECS_ID_T: u64 = FLECS_HI_COMPONENT_ID + 97;
 
 // Meta module component ids
 pub(crate) const ECS_META_TYPE: u64 = FLECS_HI_COMPONENT_ID + 98;
-pub(crate) const ECS_META_TYPE_SERIALIZED: u64 = FLECS_HI_COMPONENT_ID + 99;
+pub(crate) const ECS_META_TYPE_SERIALIZER: u64 = FLECS_HI_COMPONENT_ID + 99;
 pub(crate) const ECS_PRIMITIVE: u64 = FLECS_HI_COMPONENT_ID + 100;
 pub(crate) const ECS_ENUM: u64 = FLECS_HI_COMPONENT_ID + 101;
 pub(crate) const ECS_BITMASK: u64 = FLECS_HI_COMPONENT_ID + 102;
