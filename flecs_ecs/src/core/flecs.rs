@@ -8,7 +8,12 @@ pub trait FlecsTrait {}
 
 macro_rules! create_pre_registered_component {
     ($struct_name:ident, $const_name:ident) => {
+        create_pre_registered_component!($struct_name, $const_name, "");
+    };
+    ($struct_name:ident, $const_name:ident, $doc:tt) => {
         #[derive(Debug, Default)]
+        #[allow(clippy::empty_docs)]
+        #[doc = $doc]
         pub struct $struct_name;
 
         impl FlecsConstantId for $struct_name {
@@ -77,17 +82,43 @@ macro_rules! create_pre_registered_component {
 }
 
 // Term id flags
-create_pre_registered_component!(Self_, ECS_SELF);
-create_pre_registered_component!(Up, ECS_UP);
-create_pre_registered_component!(Trav, ECS_TRAV);
-create_pre_registered_component!(Cascade, ECS_CASCADE);
-create_pre_registered_component!(Desc, ECS_DESC);
-create_pre_registered_component!(IsVariable, ECS_IS_VARIABLE);
-create_pre_registered_component!(IsEntity, ECS_IS_ENTITY);
-create_pre_registered_component!(IsName, ECS_IS_NAME);
-create_pre_registered_component!(TraverseFlags, ECS_TRAVERSE_FLAGS);
-create_pre_registered_component!(TermRefFlags, ECS_TERM_REF_FLAGS);
+create_pre_registered_component!(Self_, ECS_SELF, "Match on self");
+create_pre_registered_component!(Up, ECS_UP, "Match by traversing upwards");
+create_pre_registered_component!(
+    Trav,
+    ECS_TRAV,
+    "Match by traversing downwards (derived, cannot be set)"
+);
+create_pre_registered_component!(
+    Cascade,
+    ECS_CASCADE,
+    "Match by traversing upwards, but iterate in breadth-first order"
+);
+create_pre_registered_component!(
+    Desc,
+    ECS_DESC,
+    "Combine with Cascade to iterate hierarchy bottom to top"
+);
+create_pre_registered_component!(IsVariable, ECS_IS_VARIABLE, "Term id is a variable");
+create_pre_registered_component!(IsEntity, ECS_IS_ENTITY, "Term id is an entity");
+create_pre_registered_component!(
+    IsName,
+    ECS_IS_NAME,
+    "Term id is a name (don't attempt to lookup as entity)"
+);
+create_pre_registered_component!(
+    TraverseFlags,
+    ECS_TRAVERSE_FLAGS,
+    "all term traversal flags"
+);
+create_pre_registered_component!(
+    TermRefFlags,
+    ECS_TERM_REF_FLAGS,
+    "all term reference kind flags"
+);
 
+/// Term flags discovered & set during query creation.
+/// Mostly used internally to store information relevant to queries.
 pub mod term_flags {
     use super::*;
     create_pre_registered_component!(MatchAny, MATCH_ANY);
@@ -103,27 +134,64 @@ pub mod term_flags {
     create_pre_registered_component!(IsToggle, IS_TOGGLE);
 }
 
+/// Query flags discovered & set during query creation.
 pub mod query_flags {
     use super::*;
-    create_pre_registered_component!(MatchPrefab, ECS_QUERY_MATCH_PREFAB);
-    create_pre_registered_component!(MatchDisabled, ECS_QUERY_MATCH_DISABLED);
-    create_pre_registered_component!(MatchEmptyTables, ECS_QUERY_MATCH_EMPTY_TABLES);
-    create_pre_registered_component!(NoData, ECS_QUERY_NO_DATA);
-    create_pre_registered_component!(IsInstanced, ECS_QUERY_IS_INSTANCED);
-    create_pre_registered_component!(AllowUnresolvedByName, ECS_QUERY_ALLOW_UNRESOLVED_BY_NAME);
-    create_pre_registered_component!(TableOnly, ECS_QUERY_TABLE_ONLY);
+    create_pre_registered_component!(
+        MatchPrefab,
+        ECS_QUERY_MATCH_PREFAB,
+        "Query must match prefabs."
+    );
+    create_pre_registered_component!(
+        MatchDisabled,
+        ECS_QUERY_MATCH_DISABLED,
+        "Query must match disabled entities."
+    );
+    create_pre_registered_component!(
+        MatchEmptyTables,
+        ECS_QUERY_MATCH_EMPTY_TABLES,
+        "Query must match empty tables."
+    );
+    create_pre_registered_component!(
+        NoData,
+        ECS_QUERY_NO_DATA,
+        "Query won't provide component data."
+    );
+    create_pre_registered_component!(
+        IsInstanced,
+        ECS_QUERY_IS_INSTANCED,
+        "Query iteration is always instanced."
+    );
+    create_pre_registered_component!(
+        AllowUnresolvedByName,
+        ECS_QUERY_ALLOW_UNRESOLVED_BY_NAME,
+        "Query may have unresolved entity identifiers."
+    );
+    create_pre_registered_component!(
+        TableOnly,
+        ECS_QUERY_TABLE_ONLY,
+        "Query only returns whole tables (ignores toggle/member fields)."
+    );
 }
 
 pub mod id_flags {
     use super::*;
-    // Indicates that the id is a pair.
-    create_pre_registered_component!(Pair, ECS_PAIR);
-    // Automatically override component when it is inherited
-    create_pre_registered_component!(AutoOverride, ECS_AUTO_OVERRIDE);
-    // Adds bitset to storage which allows component to be enabled/disabled
-    create_pre_registered_component!(Toggle, ECS_TOGGLE);
-    // Include all components from entity to which AND is applied
-    create_pre_registered_component!(And, ECS_AND);
+    create_pre_registered_component!(Pair, ECS_PAIR, "Indicates that the id is a pair.");
+    create_pre_registered_component!(
+        AutoOverride,
+        ECS_AUTO_OVERRIDE,
+        "Automatically override component when it is inherited"
+    );
+    create_pre_registered_component!(
+        Toggle,
+        ECS_TOGGLE,
+        "Adds bitset to storage which allows component to be enabled/disabled"
+    );
+    create_pre_registered_component!(
+        And,
+        ECS_AND,
+        "Include all components from entity to which AND is applied"
+    );
 }
 
 // Builtin component ids
@@ -157,30 +225,90 @@ create_pre_registered_component!(Monitor, ECS_MONITOR);
 create_pre_registered_component!(Empty, ECS_EMPTY);
 
 // Component traits
-create_pre_registered_component!(Wildcard, ECS_WILDCARD);
-create_pre_registered_component!(Any, ECS_ANY);
+create_pre_registered_component!(Wildcard, ECS_WILDCARD, "Match all entities");
+create_pre_registered_component!(Any, ECS_ANY, "Match at most one entity");
 create_pre_registered_component!(This_, ECS_THIS);
 create_pre_registered_component!(Variable, ECS_VARIABLE);
-create_pre_registered_component!(Transitive, ECS_TRANSITIVE);
-create_pre_registered_component!(Reflexive, ECS_REFLEXIVE);
-create_pre_registered_component!(Symmetric, ECS_SYMMETRIC);
-create_pre_registered_component!(Final, ECS_FINAL);
-create_pre_registered_component!(DontInherit, ECS_DONT_INHERIT);
+create_pre_registered_component!(
+    Transitive,
+    ECS_TRANSITIVE,
+    "Component trait. Relationship is marked as transitive."
+);
+create_pre_registered_component!(
+    Reflexive,
+    ECS_REFLEXIVE,
+    "Component trait. Relationship is marked as reflexive."
+);
+create_pre_registered_component!(
+    Symmetric,
+    ECS_SYMMETRIC,
+    "Component trait. Relationship is marked as symmetric."
+);
+create_pre_registered_component!(
+    Final,
+    ECS_FINAL,
+    "Component trait. This component cannot be used in an [`IsA`] relationship."
+);
 //create_pre_registered_component!(PairIsTag, ECS_PAIR_IS_TAG); //not supported in Flecs Rust
-create_pre_registered_component!(Exclusive, ECS_EXCLUSIVE);
-create_pre_registered_component!(Acyclic, ECS_ACYCLIC);
-create_pre_registered_component!(Traversable, ECS_TRAVERSABLE);
-create_pre_registered_component!(With, ECS_WITH);
-create_pre_registered_component!(OneOf, ECS_ONE_OF);
-create_pre_registered_component!(CanToggle, ECS_CAN_TOGGLE);
-create_pre_registered_component!(Trait, ECS_TRAIT);
-create_pre_registered_component!(Relationship, ECS_RELATIONSHIP);
-create_pre_registered_component!(Target, ECS_TARGET);
+create_pre_registered_component!(
+    Exclusive,
+    ECS_EXCLUSIVE,
+    "Component trait. Enforces that an entity can only have a single instance of a relationship."
+);
+create_pre_registered_component!(
+    Acyclic,
+    ECS_ACYCLIC,
+    "Component trait. Indicates that the relationship cannot contain cycles."
+);
+create_pre_registered_component!(Traversable, ECS_TRAVERSABLE, "Component trait. This relationship can be traversed automatically by queries, e.g. using [`Up`].");
+create_pre_registered_component!(With, ECS_WITH, "Component trait. Indicates that this relationship must always come together with another component.");
+create_pre_registered_component!(OneOf, ECS_ONE_OF, "Component trait. Enforces that the target of the relationship is a child of a specified entity.");
+create_pre_registered_component!(
+    CanToggle,
+    ECS_CAN_TOGGLE,
+    "Component trait. Allows a component to be toggled."
+);
+create_pre_registered_component!(
+    Trait,
+    ECS_TRAIT,
+    "Component trait. Marks an entity as a trait."
+);
+create_pre_registered_component!(
+    Relationship,
+    ECS_RELATIONSHIP,
+    "Component trait. Enforces that an entity can only be used as a relationship."
+);
+create_pre_registered_component!(
+    Target,
+    ECS_TARGET,
+    "Component trait. Enforces that an entity can only be used as the target of a relationship."
+);
 
 // OnInstantiate traits
-create_pre_registered_component!(OnInstantiate, ECS_ON_INSTANTIATE);
-create_pre_registered_component!(Override, ECS_OVERRIDE);
-create_pre_registered_component!(Inherit, ECS_INHERIT);
+create_pre_registered_component!(
+    OnInstantiate,
+    ECS_ON_INSTANTIATE,
+    "Component trait. Configures behavior of components when an entity is instantiated from another entity. \
+    Used as a pair with one of [`Override`], [`Inherit`], or [`DontInherit`]."
+);
+create_pre_registered_component!(
+    Override,
+    ECS_OVERRIDE,
+    "The default behavior. Inherited components are copied to the instance."
+);
+create_pre_registered_component!(
+    Inherit,
+    ECS_INHERIT,
+    "Inherited components are not copied to the instance. \
+    Operations such as `get` and `has`, and queries will automatically lookup inheritable components \
+    by following the [`IsA`] relationship."
+);
+create_pre_registered_component!(
+    DontInherit,
+    ECS_DONT_INHERIT,
+    "Components with the [`DontInherit`] trait are not inherited from a base entity \
+    (the [`IsA`] target) on instantiation."
+);
 
 // OnDelete/OnDeleteTarget traits
 create_pre_registered_component!(OnDelete, ECS_ON_DELETE);
@@ -190,9 +318,21 @@ create_pre_registered_component!(Delete, ECS_DELETE);
 create_pre_registered_component!(Panic, ECS_PANIC);
 
 // Builtin relationships
-create_pre_registered_component!(ChildOf, ECS_CHILD_OF);
-create_pre_registered_component!(IsA, ECS_IS_A);
-create_pre_registered_component!(DependsOn, ECS_DEPENDS_ON);
+create_pre_registered_component!(
+    ChildOf,
+    ECS_CHILD_OF,
+    "Builtin relationship. Allows for the creation of entity hierarchies."
+);
+create_pre_registered_component!(
+    IsA,
+    ECS_IS_A,
+    "Builtin relationship. Used to express that one entity is equivalent to another."
+);
+create_pre_registered_component!(
+    DependsOn,
+    ECS_DEPENDS_ON,
+    "Builtin relationship. Used to determine the execution order of systems."
+);
 
 // Identifier tags
 create_pre_registered_component!(Name, ECS_NAME);
@@ -200,9 +340,21 @@ create_pre_registered_component!(Symbol, ECS_SYMBOL);
 create_pre_registered_component!(Alias, ECS_ALIAS);
 
 // Events
-create_pre_registered_component!(OnAdd, ECS_ON_ADD);
-create_pre_registered_component!(OnRemove, ECS_ON_REMOVE);
-create_pre_registered_component!(OnSet, ECS_ON_SET);
+create_pre_registered_component!(
+    OnAdd,
+    ECS_ON_ADD,
+    "Event. Invoked whenever a component, tag or pair is added to an entity."
+);
+create_pre_registered_component!(
+    OnRemove,
+    ECS_ON_REMOVE,
+    "Event. Invoked whenever a component, tag or pair is removed from an entity."
+);
+create_pre_registered_component!(
+    OnSet,
+    ECS_ON_SET,
+    "Event. Invoked whenever a component is assigned a new value."
+);
 create_pre_registered_component!(OnTableCreate, ECS_ON_TABLE_CREATE);
 create_pre_registered_component!(OnTableDelete, ECS_ON_TABLE_DELETE);
 create_pre_registered_component!(OnTableEmpty, ECS_ON_TABLE_EMPTY);
@@ -229,8 +381,17 @@ pub mod timer {
     impl_component_traits_binding_type_w_id!(RateFilter, ECS_RATE_FILTER);
 }
 
-create_pre_registered_component!(Sparse, ECS_SPARSE);
-create_pre_registered_component!(Union, ECS_UNION);
+create_pre_registered_component!(
+    Sparse,
+    ECS_SPARSE,
+    "Component trait. Configures a component to use sparse storage."
+);
+create_pre_registered_component!(
+    Union,
+    ECS_UNION,
+    "Component trait. Similar to [`Exclusive`] but combines \
+    different relationship targets in a single table."
+);
 
 // Builtin predicate for comparing entity ids
 create_pre_registered_component!(PredEq, ECS_PRED_EQ);
