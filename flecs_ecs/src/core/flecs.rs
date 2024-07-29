@@ -235,7 +235,7 @@ create_pre_registered_component!(EcsWorld, ECS_WORLD);
 create_pre_registered_component!(Flecs, ECS_FLECS);
 create_pre_registered_component!(FlecsCore, ECS_FLECS_CORE);
 create_pre_registered_component!(FlecsInternals, ECS_FLECS_INTERNALS);
-create_pre_registered_component!(EcsModule, ECS_MODULE);
+create_pre_registered_component!(Module, ECS_MODULE);
 create_pre_registered_component!(Private, ECS_PRIVATE);
 create_pre_registered_component!(Prefab, ECS_PREFAB);
 create_pre_registered_component!(Disabled, ECS_DISABLED);
@@ -450,7 +450,7 @@ pub mod meta {
     create_pre_registered_component!(Char, ECS_CHAR_T);
     create_pre_registered_component!(Byte, ECS_BYTE_T);
     create_pre_registered_component!(U8, ECS_U8_T);
-    create_pre_registered_component!(U8, ECS_U16_T);
+    create_pre_registered_component!(U16, ECS_U16_T);
     create_pre_registered_component!(U32, ECS_U32_T);
     create_pre_registered_component!(U64, ECS_U64_T);
     create_pre_registered_component!(UPtr, ECS_UPTR_T);
@@ -463,10 +463,8 @@ pub mod meta {
     create_pre_registered_component!(F64, ECS_F64_T);
     create_pre_registered_component!(String, ECS_STRING_T);
     create_pre_registered_component!(Entity, ECS_ENTITY_T);
-
     create_pre_registered_component!(Constant, ECS_CONSTANT);
     create_pre_registered_component!(Quantity, ECS_QUANTITY);
-
     create_pre_registered_component!(EcsOpaque, ECS_OPAQUE);
 
     // Meta type components
@@ -483,18 +481,18 @@ pub mod meta {
     pub type Unit = sys::EcsUnit;
     pub type UnitPrefix = sys::EcsUnitPrefix;
 
-    crate::impl_component_traits_binding_type_w_id!(Type, ECS_META_TYPE);
-    crate::impl_component_traits_binding_type_w_id!(TypeSerializer, ECS_META_TYPE_SERIALIZER);
-    crate::impl_component_traits_binding_type_w_id!(Primitive, ECS_PRIMITIVE);
-    crate::impl_component_traits_binding_type_w_id!(EcsEnum, ECS_ENUM);
-    crate::impl_component_traits_binding_type_w_id!(Bitmask, ECS_BITMASK);
-    crate::impl_component_traits_binding_type_w_id!(Member, ECS_MEMBER);
-    crate::impl_component_traits_binding_type_w_id!(MemberRanges, ECS_MEMBER_RANGES);
-    crate::impl_component_traits_binding_type_w_id!(EcsStruct, ECS_STRUCT);
-    crate::impl_component_traits_binding_type_w_id!(Array, ECS_ARRAY);
-    crate::impl_component_traits_binding_type_w_id!(Vector, ECS_VECTOR);
-    crate::impl_component_traits_binding_type_w_id!(Unit, ECS_UNIT);
-    crate::impl_component_traits_binding_type_w_id!(UnitPrefix, ECS_UNIT_PREFIX);
+    super::impl_component_traits_binding_type_w_id!(Type, ECS_META_TYPE);
+    super::impl_component_traits_binding_type_w_id!(TypeSerializer, ECS_META_TYPE_SERIALIZER);
+    super::impl_component_traits_binding_type_w_id!(Primitive, ECS_PRIMITIVE);
+    super::impl_component_traits_binding_type_w_id!(EcsEnum, ECS_ENUM);
+    super::impl_component_traits_binding_type_w_id!(Bitmask, ECS_BITMASK);
+    super::impl_component_traits_binding_type_w_id!(Member, ECS_MEMBER);
+    super::impl_component_traits_binding_type_w_id!(MemberRanges, ECS_MEMBER_RANGES);
+    super::impl_component_traits_binding_type_w_id!(EcsStruct, ECS_STRUCT);
+    super::impl_component_traits_binding_type_w_id!(Array, ECS_ARRAY);
+    super::impl_component_traits_binding_type_w_id!(Vector, ECS_VECTOR);
+    super::impl_component_traits_binding_type_w_id!(Unit, ECS_UNIT);
+    super::impl_component_traits_binding_type_w_id!(UnitPrefix, ECS_UNIT_PREFIX);
 }
 
 // Doc module components

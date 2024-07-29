@@ -11,7 +11,7 @@ impl<'a> Cursor<'a> {
     /// Creates a new cursor instance
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
         type_id: impl Into<Entity>,
         ptr: *mut std::ffi::c_void,
     ) -> Self {
@@ -69,7 +69,7 @@ impl<'a> Cursor<'a> {
     pub fn get_type(&self) -> EntityView {
         unsafe {
             EntityView::new_from(
-                WorldRef::from_ptr(self.cursor.world as *mut WorldT),
+                WorldRef::from_ptr(self.cursor.world as *mut sys::ecs_world_t),
                 sys::ecs_meta_get_type(&self.cursor),
             )
         }
@@ -79,7 +79,7 @@ impl<'a> Cursor<'a> {
     pub fn get_unit(&self) -> EntityView {
         unsafe {
             EntityView::new_from(
-                WorldRef::from_ptr(self.cursor.world as *mut WorldT),
+                WorldRef::from_ptr(self.cursor.world as *mut sys::ecs_world_t),
                 sys::ecs_meta_get_unit(&self.cursor),
             )
         }
@@ -177,7 +177,7 @@ impl<'a> Cursor<'a> {
     pub fn get_entity(&self) -> EntityView {
         unsafe {
             EntityView::new_from(
-                WorldRef::from_ptr(self.cursor.world as *mut WorldT),
+                WorldRef::from_ptr(self.cursor.world as *mut sys::ecs_world_t),
                 sys::ecs_meta_get_entity(&self.cursor),
             )
         }

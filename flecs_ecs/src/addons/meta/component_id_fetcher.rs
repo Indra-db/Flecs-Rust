@@ -6,7 +6,7 @@ pub struct ComponentIdFetcher<T> {
 
 #[derive(Debug)]
 pub struct FetchedId<T> {
-    id: u64,
+    pub id: u64,
     phantom: std::marker::PhantomData<T>,
 }
 
@@ -44,21 +44,21 @@ impl<T> FetchedId<T> {
 }
 
 pub trait FlecsComponent<T> {
-    fn deref_id<'a>(&self, world: impl IntoWorld<'a>) -> FetchedId<T>;
+    fn deref_id<'a>(&self, world: impl WorldProvider<'a>) -> FetchedId<T>;
 }
 
 pub trait ExternalComponent<T> {
-    fn deref_id<'a>(&self, world: impl IntoWorld<'a>) -> FetchedId<T>;
+    fn deref_id<'a>(&self, world: impl WorldProvider<'a>) -> FetchedId<T>;
 }
 
 impl<T: ComponentId> FlecsComponent<T> for &&ComponentIdFetcher<T> {
-    fn deref_id<'a>(&self, world: impl IntoWorld<'a>) -> FetchedId<T> {
+    fn deref_id<'a>(&self, world: impl WorldProvider<'a>) -> FetchedId<T> {
         FetchedId::new(T::id(world))
     }
 }
 
 impl<T: 'static> ExternalComponent<T> for &ComponentIdFetcher<T> {
-    fn deref_id<'a>(&self, world: impl IntoWorld<'a>) -> FetchedId<T> {
+    fn deref_id<'a>(&self, world: impl WorldProvider<'a>) -> FetchedId<T> {
         let world = world.world();
         let map = world.components_map();
         let id = *(map

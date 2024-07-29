@@ -253,7 +253,7 @@ impl<'a, T: 'static> Component<'a, T> {
     ) -> Opaque<'a, T, ElemType> {
         let id: Entity = id.into();
         let copy_id = id;
-        let mut opaque = Opaque::<T, ElemType>::new_id(self.world(), FetchedId::<T>::new(*id));
+        let mut opaque = Opaque::<T, ElemType>::new_id(self.world(), FetchedId::<T>::new(*self.id));
         opaque.as_type(copy_id);
         opaque
     }
@@ -595,7 +595,7 @@ impl<'a> UntypedComponent<'a> {
     }
 }
 
-pub fn flecs_entity_support<'a>(world: impl IntoWorld<'a>) -> Opaque<'a, Entity> {
+pub fn flecs_entity_support<'a>(world: impl WorldProvider<'a>) -> Opaque<'a, Entity> {
     let mut opaque = Opaque::<Entity>::new(world);
     opaque.as_type(flecs::meta::Entity::ID);
     opaque.serialize(|ser: &Serializer, data: &Entity| {

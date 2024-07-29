@@ -23,7 +23,7 @@ where
     T: ComponentId + Sized,
 {
     /// Creates a new Opaque instance
-    pub fn new(world: impl IntoWorld<'a>) -> Self {
+    pub fn new(world: impl WorldProvider<'a>) -> Self {
         Self {
             world: world.world(),
             desc: ecs_opaque_desc_t {
@@ -37,7 +37,7 @@ where
 }
 impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     /// Creates a new Opaque instance of an internal or external component
-    pub fn new_id(world: impl IntoWorld<'a>, id: FetchedId<T>) -> Self {
+    pub fn new_id(world: impl WorldProvider<'a>, id: FetchedId<T>) -> Self {
         Self {
             world: world.world(),
             desc: ecs_opaque_desc_t {

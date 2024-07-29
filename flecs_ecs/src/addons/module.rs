@@ -73,7 +73,7 @@ impl World {
     pub fn import<T: Module>(&self) -> EntityView {
         let module = self.component::<T>();
         // If we have already registered this type don't re-create the module
-        if module.has::<flecs::EcsModule>() {
+        if module.has::<flecs::Module>() {
             return module.entity;
         }
 
@@ -81,7 +81,7 @@ impl World {
         let prev_scope = self.set_scope_id(0);
 
         // Initialise component for the module and add Module tag
-        module.add::<flecs::EcsModule>();
+        module.add::<flecs::Module>();
 
         // Set scope to our module
         self.set_scope_id(module.entity);

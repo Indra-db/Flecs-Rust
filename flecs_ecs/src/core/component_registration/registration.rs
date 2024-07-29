@@ -28,7 +28,7 @@ where
 
 #[doc(hidden)]
 pub(crate) fn external_register_component<'a, T>(
-    world: impl IntoWorld<'a>,
+    world: impl WorldProvider<'a>,
     name: *const i8,
 ) -> u64 {
     external_register_component_data::<T>(world.world_ptr_mut(), name)
@@ -128,9 +128,9 @@ where
 }
 
 pub(crate) fn external_register_component_data<T>(
-    world: *mut WorldT,
+    world: *mut sys::ecs_world_t,
     name: *const c_char,
-) -> EntityT {
+) -> sys::ecs_entity_t {
     let prev_scope = unsafe { sys::ecs_set_scope(world, 0) };
     let prev_with = unsafe { sys::ecs_set_with(world, 0) };
 
@@ -197,9 +197,9 @@ where
 
 /// registers the component with the world.
 pub(crate) fn external_register_componment_data_explicit<T>(
-    world: *mut WorldT,
+    world: *mut sys::ecs_world_t,
     name: *const c_char,
-) -> EntityT {
+) -> sys::ecs_entity_t {
     let only_type_name = crate::core::get_only_type_name::<T>();
     let only_type_name = compact_str::format_compact!("{}\0", only_type_name);
 
