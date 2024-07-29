@@ -167,11 +167,11 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         self.add_id(ecs_pair(*first.into(), Second::id(world)))
     }
 
-    /// Set the entity to emit for the event.
+    /// Set the target entity to emit for the event.
     ///
     /// # Arguments
     ///
-    /// * `entity` - The entity to emit for the event
+    /// * `entity` - The target entity to emit for the event
     ///
     /// # See also
     ///

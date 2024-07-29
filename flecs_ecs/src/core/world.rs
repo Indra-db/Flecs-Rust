@@ -115,6 +115,29 @@ impl World {
     fn init_builtin_components(&self) {
         // used for event handling with no data
         self.component_named::<()>("flecs::rust::() - None");
+
+        #[cfg(feature = "flecs_meta")]
+        {
+            self.component_named::<crate::prelude::meta::EcsTypeKind>("flecs::meta::type_kind");
+            self.component_named::<crate::prelude::meta::EcsPrimitiveKind>(
+                "flecs::meta::primitive_kind",
+            );
+            self.component_named::<crate::prelude::meta::EcsMember>("flecs::meta::member_t");
+            self.component_named::<crate::prelude::meta::EcsEnumConstant>(
+                "flecs::meta::enum_constant",
+            );
+            self.component_named::<crate::prelude::meta::EcsBitmaskConstant>(
+                "flecs::meta::bitmask_constant",
+            );
+
+            let entity = self.entity_named("::flecs::rust").add::<flecs::EcsModule>();
+
+            entity.scope(|world| {
+                let comp = world.component::<Entity>();
+                comp.opaque_func(crate::prelude::meta::flecs_entity_support);
+            });
+        }
+    }
     }
 
     /// deletes and recreates the world

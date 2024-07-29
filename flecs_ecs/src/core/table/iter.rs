@@ -6,7 +6,7 @@ use crate::core::*;
 use crate::sys;
 
 pub struct TableIter<'a, const IS_RUN: bool = true, P = ()> {
-    iter: &'a mut sys::ecs_iter_t,
+    pub(crate) iter: &'a mut sys::ecs_iter_t,
     marker: PhantomData<P>,
 }
 
