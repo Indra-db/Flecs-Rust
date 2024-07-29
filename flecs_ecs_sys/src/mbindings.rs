@@ -287,3 +287,7 @@ unsafe impl Sync for EcsUnit {}
 unsafe impl Send for EcsUnitPrefix {}
 
 unsafe impl Sync for EcsUnitPrefix {}
+
+unsafe impl Send for EcsScript {}
+
+unsafe impl Sync for EcsScript {}

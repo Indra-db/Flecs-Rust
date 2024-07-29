@@ -3,20 +3,19 @@ use std::ffi::CStr;
 use flecs_ecs::core::*;
 use flecs_ecs::sys;
 
-#[repr(C)]
+/// A Script object is not associated to an entity and will be automatically deleted when it goes out of scope.
+/// For scripts that are associated with an entity, use [`ScriptBuilder`][super::ScriptBuilder] alongside [`ScriptEntityView`][super::ScriptEntityView].
+///
 /// # Safety
 ///
 /// Assemblies/Templates created by the script rely upon resources in the script object,
 /// and for that reason keep the script alive until all assemblies created by the script are deleted.
-#[derive(flecs_ecs_derive::Component)]
+#[repr(C)]
 pub struct Script<'a> {
     script: *mut sys::ecs_script_t,
     ast: *mut i8,
     _phantom: std::marker::PhantomData<&'a ()>,
 }
-
-unsafe impl Sync for Script<'_> {}
-unsafe impl Send for Script<'_> {}
 
 impl<'a> Drop for Script<'a> {
     fn drop(&mut self) {
@@ -102,7 +101,7 @@ impl<'a> Script<'a> {
     ///
     /// * C API: `ecs_script_run`
     #[doc(alias = "ecs_script_run")]
-    pub fn run(world: impl WorldProvider<'a>, name: &str, code: &str) -> bool {
+    pub fn run_code(world: impl WorldProvider<'a>, name: &str, code: &str) -> bool {
         let name = compact_str::format_compact!("{}\0", name);
         let code = compact_str::format_compact!("{}\0", code);
         let world_ptr = world.world_ptr_mut();
@@ -148,7 +147,7 @@ impl<'a> Script<'a> {
     ///
     /// * C API: `script_ast_to_buf`
     #[doc(alias = "script_ast_to_buf")]
-    pub fn ast(&mut self) -> Option<&str> {
+    pub fn ast(&mut self) -> Option<String> {
         let ast = unsafe { sys::ecs_script_ast_to_str(self.script) };
 
         if !ast.is_null() {
@@ -165,120 +164,13 @@ impl<'a> Script<'a> {
                 }
             }
             let c_str = unsafe { CStr::from_ptr(ast) };
-            Some(c_str.to_str().unwrap())
+            let str = c_str.to_str().unwrap().to_owned();
+            unsafe {
+                sys::ecs_os_api.free_.expect("os api is missing")(ast as *mut std::ffi::c_void);
+            };
+            Some(str)
         } else {
             None
-        }
-    }
-
-    /// Loads a script from a file into the ECS world.
-    ///
-    /// This function initializes an ECS script from a file specified by `filename`.
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - A pointer to the ECS world.
-    /// * `entity` - The entity handle associated with the script.
-    /// * `filename` - The path to the script file as a string slice.
-    ///
-    /// # Returns
-    ///
-    /// Returns the entity handle of the loaded script.
-    ///
-    /// # See also
-    ///
-    /// * C API: `ecs_script_init`
-    #[doc(alias = "ecs_script_init")]
-    pub fn init_script_from_file(
-        world: impl WorldProvider<'a>,
-        entity: Entity,
-        filename: &str,
-    ) -> Entity {
-        let filename = compact_str::format_compact!("{}\0", filename);
-        let world = world.world_ptr_mut();
-        let entity = entity.into();
-
-        let desc = sys::ecs_script_desc_t {
-            entity,
-            filename: filename.as_ptr() as *const i8,
-            code: std::ptr::null(),
-        };
-
-        let result = unsafe { sys::ecs_script_init(world, &desc) };
-
-        result.into()
-    }
-
-    /// Loads a script from a code string into the ECS world.
-    ///
-    /// This function initializes an ECS script from a code string specified by `code`.
-    ///
-    /// # Arguments
-    ///
-    /// * `world` - A pointer to the ECS world.
-    /// * `entity` - The entity handle associated with the script.
-    /// * `code` - The script code as a string slice.
-    ///
-    /// # Returns
-    ///
-    /// Returns the entity handle of the loaded script.
-    ///
-    /// # See also
-    ///
-    /// * C API: `ecs_script_init`
-    #[doc(alias = "ecs_script_init")]
-    pub fn init_script_from_code(
-        world: impl WorldProvider<'a>,
-        entity: Entity,
-        code: &str,
-    ) -> Entity {
-        let code = compact_str::format_compact!("{}\0", code);
-        let world = world.world_ptr_mut();
-        let entity = entity.into();
-
-        let desc = sys::ecs_script_desc_t {
-            entity,
-            filename: std::ptr::null(),
-            code: code.as_ptr() as *const i8,
-        };
-
-        let result = unsafe { sys::ecs_script_init(world, &desc) };
-
-        result.into()
-    }
-
-    /// Update script with new code.
-    ///
-    /// # Arguments
-    ///
-    /// * code - The script code.
-    ///
-    /// * script - The script entity.
-    ///
-    /// * instance - An template instance (optional).
-    ///
-    /// # Returns
-    ///
-    /// True if success, false if failed.
-    ///
-    /// # See also
-    ///
-    /// * C API: `ecs_script_update`
-    #[doc(alias = "ecs_script_update")]
-    pub fn update(
-        world: impl WorldProvider<'a>,
-        script: impl Into<Entity>,
-        instance: Option<impl Into<Entity>>,
-        code: &str,
-    ) -> bool {
-        let code = compact_str::format_compact!("{}\0", code);
-        unsafe {
-            sys::ecs_script_update(
-                world.world_ptr_mut(),
-                *script.into(),
-                instance.map(|e| *e.into()).unwrap_or(0),
-                code.as_ptr() as *const i8,
-            ) == 0
         }
     }
 
@@ -288,6 +180,7 @@ impl<'a> Script<'a> {
     ///
     /// * C API: `ecs_ptr_to_expr`
     /// * C++ API: `world::to_expr`
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn to_expr_id(
         world: impl WorldProvider<'a>,
         id_of_value: impl Into<Entity>,
@@ -308,25 +201,10 @@ impl<'a> Script<'a> {
     ///
     /// * C API: `ecs_ptr_to_expr`
     /// * C++ API: `world::to_expr`
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn to_expr<T: ComponentId>(world: impl WorldProvider<'a>, value: &T) -> String {
         let world2 = world.world();
         let id = T::get_id(world);
         Self::to_expr_id(world2, id, value as *const T as *const std::ffi::c_void)
-    }
-}
-
-/// Script mixin implementation
-impl World {
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn to_expr_id(
-        &self,
-        id_of_value: impl Into<Entity>,
-        value: *const std::ffi::c_void,
-    ) -> String {
-        Script::to_expr_id(self, id_of_value, value)
-    }
-
-    pub fn to_expr<T: ComponentId>(&self, value: &T) -> String {
-        Script::to_expr(self, value)
     }
 }
