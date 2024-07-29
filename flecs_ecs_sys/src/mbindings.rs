@@ -263,3 +263,27 @@ unsafe impl Sync for EcsPipelineStats {}
 unsafe impl Send for EcsSystemStats {}
 
 unsafe impl Sync for EcsSystemStats {}
+
+unsafe impl Send for EcsTypeSerializer {}
+
+unsafe impl Sync for EcsTypeSerializer {}
+
+unsafe impl Send for EcsEnum {}
+
+unsafe impl Sync for EcsEnum {}
+
+unsafe impl Send for EcsBitmask {}
+
+unsafe impl Sync for EcsBitmask {}
+
+unsafe impl Send for EcsStruct {}
+
+unsafe impl Sync for EcsStruct {}
+
+unsafe impl Send for EcsUnit {}
+
+unsafe impl Sync for EcsUnit {}
+
+unsafe impl Send for EcsUnitPrefix {}
+
+unsafe impl Sync for EcsUnitPrefix {}

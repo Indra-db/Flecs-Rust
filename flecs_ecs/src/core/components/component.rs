@@ -95,7 +95,7 @@ impl<'a, T> Component<'a, T> {
     ///
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
-    pub fn new_id(world: impl IntoWorld<'a>, id: FetchedId<T>) -> Self {
+    pub fn new_id(world: impl WorldProvider<'a>, id: FetchedId<T>) -> Self {
         let world = world.world();
 
         Self {
@@ -115,7 +115,7 @@ impl<'a, T> Component<'a, T> {
     ///
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
-    pub fn new_named_id(world: impl IntoWorld<'a>, id: FetchedId<T>, name: &str) -> Self {
+    pub fn new_named_id(world: impl WorldProvider<'a>, id: FetchedId<T>, name: &str) -> Self {
         let _name = compact_str::format_compact!("{}\0", name);
         let world = world.world();
         //TODO indra this is unfinished

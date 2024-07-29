@@ -1,4 +1,5 @@
 use flecs_ecs::prelude::*;
+use flecs_ecs::sys;
 
 #[macro_export]
 macro_rules! impl_component_traits_primitive_type {
@@ -32,34 +33,34 @@ macro_rules! impl_component_traits_primitive_type {
                 Self::get_or_init_index(&INDEX)
             }
 
-            fn __register_lifecycle_hooks(type_hooks: &mut TypeHooksT) {
+            fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
                 register_lifecycle_actions::<$name>(type_hooks);
             }
-            fn __register_default_hooks(type_hooks: &mut TypeHooksT) {
+            fn __register_default_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
                 register_ctor_lifecycle_actions::<$name>(type_hooks);
             }
-            fn __register_clone_hooks(type_hooks: &mut TypeHooksT) {
+            fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
                 register_copy_lifecycle_action::<$name>(type_hooks);
             }
 
             fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-                _world: impl IntoWorld<'a>,
-            ) -> EntityT {
+                _world: impl WorldProvider<'a>,
+            ) -> sys::ecs_entity_t {
                 $id
             }
 
             fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-                _world: impl IntoWorld<'a>,
+                _world: impl WorldProvider<'a>,
                 _name: &str,
-            ) -> EntityT {
+            ) -> sys::ecs_entity_t {
                 $id
             }
 
-            fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
+            fn is_registered_with_world<'a>(_: impl WorldProvider<'a>) -> bool {
                 true
             }
 
-            fn id<'a>(_world: impl IntoWorld<'a>) -> IdT {
+            fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
                 $id
             }
         }
@@ -86,6 +87,10 @@ impl FlecsConstantId for EntityView<'static> {
     const ID: u64 = ECS_ENTITY_T;
 }
 
+unsafe impl Send for EntityView<'static> {}
+
+unsafe impl Sync for EntityView<'static> {}
+
 impl DataComponent for EntityView<'static> {}
 
 impl ComponentType<flecs_ecs::core::Struct> for EntityView<'static> {}
@@ -105,12 +110,12 @@ impl ComponentId for EntityView<'static> {
     type UnderlyingType = EntityView<'static>;
     type UnderlyingEnumType = NoneEnum;
 
-    fn __register_lifecycle_hooks(type_hooks: &mut TypeHooksT) {
+    fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         register_lifecycle_actions::<EntityView<'static>>(type_hooks);
     }
-    fn __register_default_hooks(_type_hooks: &mut TypeHooksT) {}
+    fn __register_default_hooks(_type_hooks: &mut sys::ecs_type_hooks_t) {}
 
-    fn __register_clone_hooks(type_hooks: &mut TypeHooksT) {
+    fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         register_copy_lifecycle_action::<EntityView<'static>>(type_hooks);
     }
 
@@ -121,23 +126,23 @@ impl ComponentId for EntityView<'static> {
     }
 
     fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-        _world: impl IntoWorld<'a>,
-    ) -> EntityT {
+        _world: impl WorldProvider<'a>,
+    ) -> sys::ecs_entity_t {
         ECS_ENTITY_T
     }
 
     fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-        _world: impl IntoWorld<'a>,
+        _world: impl WorldProvider<'a>,
         _name: &str,
-    ) -> EntityT {
+    ) -> sys::ecs_entity_t {
         ECS_ENTITY_T
     }
 
-    fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
+    fn is_registered_with_world<'a>(_: impl WorldProvider<'a>) -> bool {
         true
     }
 
-    fn id<'a>(_world: impl IntoWorld<'a>) -> IdT {
+    fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
         ECS_ENTITY_T
     }
 }
@@ -171,17 +176,17 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentId f
         Self::get_or_init_index(&INDEX)
     }
 
-    fn __register_lifecycle_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<String>(type_hooks);
     }
-    fn __register_default_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_default_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
         const IMPLS_DEFAULT: bool = String::IMPLS_DEFAULT;
         if IMPLS_DEFAULT {
             flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,String>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
         }
     }
-    fn __register_clone_hooks(type_hooks: &mut flecs_ecs::core::TypeHooksT) {
+    fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
         const IMPLS_CLONE: bool = String::IMPLS_CLONE;
         if IMPLS_CLONE {
@@ -194,23 +199,23 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentId f
     }
 
     fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-        _world: impl IntoWorld<'a>,
-    ) -> EntityT {
+        _world: impl WorldProvider<'a>,
+    ) -> sys::ecs_entity_t {
         ECS_ENTITY_T
     }
 
     fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-        _world: impl IntoWorld<'a>,
+        _world: impl WorldProvider<'a>,
         _name: &str,
-    ) -> EntityT {
+    ) -> sys::ecs_entity_t {
         ECS_ENTITY_T
     }
 
-    fn is_registered_with_world<'a>(_: impl IntoWorld<'a>) -> bool {
+    fn is_registered_with_world<'a>(_: impl WorldProvider<'a>) -> bool {
         true
     }
 
-    fn id<'a>(_world: impl IntoWorld<'a>) -> IdT {
+    fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
         ECS_ENTITY_T
     }
 }

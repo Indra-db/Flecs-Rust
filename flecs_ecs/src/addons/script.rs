@@ -15,6 +15,9 @@ pub struct Script<'a> {
     _phantom: std::marker::PhantomData<&'a ()>,
 }
 
+unsafe impl Sync for Script<'_> {}
+unsafe impl Send for Script<'_> {}
+
 impl<'a> Drop for Script<'a> {
     fn drop(&mut self) {
         if !self.ast.is_null() {
@@ -45,7 +48,7 @@ impl<'a> Script<'a> {
     ///
     /// * C API: `ecs_script_parse`
     #[doc(alias = "ecs_script_parse")]
-    pub fn parse(world: impl IntoWorld<'a>, name: &str, code: &str) -> Option<Script<'a>> {
+    pub fn parse(world: impl WorldProvider<'a>, name: &str, code: &str) -> Option<Script<'a>> {
         let name = compact_str::format_compact!("{}\0", name);
         let code = compact_str::format_compact!("{}\0", code);
         let world_ptr = world.world_ptr_mut();
@@ -99,7 +102,7 @@ impl<'a> Script<'a> {
     ///
     /// * C API: `ecs_script_run`
     #[doc(alias = "ecs_script_run")]
-    pub fn run(world: impl IntoWorld<'a>, name: &str, code: &str) -> bool {
+    pub fn run(world: impl WorldProvider<'a>, name: &str, code: &str) -> bool {
         let name = compact_str::format_compact!("{}\0", name);
         let code = compact_str::format_compact!("{}\0", code);
         let world_ptr = world.world_ptr_mut();
@@ -126,7 +129,7 @@ impl<'a> Script<'a> {
     ///
     /// # See also
     #[doc(alias = "ecs_script_run_file")]
-    pub fn run_file(world: impl IntoWorld<'a>, filename: &str) -> bool {
+    pub fn run_file(world: impl WorldProvider<'a>, filename: &str) -> bool {
         let filename = compact_str::format_compact!("{}\0", filename);
         let world_ptr = world.world_ptr_mut();
 
@@ -187,7 +190,7 @@ impl<'a> Script<'a> {
     /// * C API: `ecs_script_init`
     #[doc(alias = "ecs_script_init")]
     pub fn init_script_from_file(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
         entity: Entity,
         filename: &str,
     ) -> Entity {
@@ -224,7 +227,11 @@ impl<'a> Script<'a> {
     ///
     /// * C API: `ecs_script_init`
     #[doc(alias = "ecs_script_init")]
-    pub fn init_script_from_code(world: impl IntoWorld<'a>, entity: Entity, code: &str) -> Entity {
+    pub fn init_script_from_code(
+        world: impl WorldProvider<'a>,
+        entity: Entity,
+        code: &str,
+    ) -> Entity {
         let code = compact_str::format_compact!("{}\0", code);
         let world = world.world_ptr_mut();
         let entity = entity.into();
@@ -259,7 +266,7 @@ impl<'a> Script<'a> {
     /// * C API: `ecs_script_update`
     #[doc(alias = "ecs_script_update")]
     pub fn update(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
         script: impl Into<Entity>,
         instance: Option<impl Into<Entity>>,
         code: &str,
@@ -282,7 +289,7 @@ impl<'a> Script<'a> {
     /// * C API: `ecs_ptr_to_expr`
     /// * C++ API: `world::to_expr`
     pub fn to_expr_id(
-        world: impl IntoWorld<'a>,
+        world: impl WorldProvider<'a>,
         id_of_value: impl Into<Entity>,
         value: *const std::ffi::c_void,
     ) -> String {
@@ -301,7 +308,7 @@ impl<'a> Script<'a> {
     ///
     /// * C API: `ecs_ptr_to_expr`
     /// * C++ API: `world::to_expr`
-    pub fn to_expr<T: ComponentId>(world: impl IntoWorld<'a>, value: &T) -> String {
+    pub fn to_expr<T: ComponentId>(world: impl WorldProvider<'a>, value: &T) -> String {
         let world2 = world.world();
         let id = T::get_id(world);
         Self::to_expr_id(world2, id, value as *const T as *const std::ffi::c_void)
@@ -316,12 +323,10 @@ impl World {
         id_of_value: impl Into<Entity>,
         value: *const std::ffi::c_void,
     ) -> String {
-        use crate::prelude::experimental::flecs_script::*;
         Script::to_expr_id(self, id_of_value, value)
     }
 
     pub fn to_expr<T: ComponentId>(&self, value: &T) -> String {
-        use crate::prelude::experimental::flecs_script::*;
         Script::to_expr(self, value)
     }
 }

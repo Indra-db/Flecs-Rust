@@ -237,7 +237,7 @@ impl World {
         desc: Option<&FromJsonDesc>,
     ) {
         self.from_json_id(
-            T::get_id(self),
+            T::CastType::get_id(self),
             value as *mut T::CastType as *mut std::ffi::c_void,
             json,
             desc,
