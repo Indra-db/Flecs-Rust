@@ -11,22 +11,32 @@ use flecs_ecs::core::*;
 /// Script mixin implementation
 impl World {
     /// Create a new script builder.
+    /// This will create a new entity that is associated with a script.
+    ///
+    /// The entity will receive an [`EcsScript`][crate::sys::EcsScript] component.
     pub fn script(&self) -> ScriptBuilder {
         ScriptBuilder::new(self)
     }
 
     /// Create a new script builder with a name.
+    /// This will create a new named entity that is associated with a script.
+    ///
+    /// The entity will receive an [`EcsScript`][crate::sys::EcsScript] component.
     pub fn script_named(&self, name: &str) -> ScriptBuilder {
         ScriptBuilder::new_named(self, name)
     }
 
-    /// Create a new script builder with a name.
+    /// Create a new script builder that is associated with an entity.
+    /// This will not create a new entity, but will associate the script with an existing entity.
+    /// This is useful if you want to tie the lifetime of the script to an existing entity.
+    ///
+    /// The entity will set a (new) [`EcsScript`][crate::sys::EcsScript] component.
     pub fn script_from(&self, entity: impl Into<Entity>) -> ScriptBuilder {
         ScriptBuilder::new_from(self, entity)
     }
 
     /// Parse script. This parses a script and instantiates the entities in the world.
-    /// This operation is the equivalent to doing: `parse`, `eval`, `destroy`.
+    /// This operation is the equivalent to doing: [`parse`][flecs_ecs::addons::script::Script::parse], [`eval`][flecs_ecs::addons::script::Script::eval], [`destroy`][flecs_ecs::addons::script::Script::destroy].
     ///
     /// # Arguments
     ///
@@ -63,6 +73,13 @@ impl World {
         Script::run_file(self, filename)
     }
 
+    /// Serialize value into a String.
+    /// This operation serializes a value of the provided type to a string.
+    ///     
+    /// # See also
+    ///
+    /// * C API: `ecs_ptr_to_expr`
+    /// * C++ API: `world::to_expr`
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn to_expr_id(
         &self,
@@ -72,16 +89,31 @@ impl World {
         Script::to_expr_id(self, id_of_value, value)
     }
 
+    /// Serialize value into a String.
+    /// This operation serializes a value of the provided type to a string.
+    ///     
+    /// # See also
+    ///
+    /// * C API: `ecs_ptr_to_expr`
+    /// * C++ API: `world::to_expr`
     pub fn to_expr<T: ComponentId>(&self, value: &T) -> String {
         Script::to_expr(self, value)
     }
 
     /// Wraps the provided entity id in a [`ScriptEntityView`].
+    ///
+    /// # Panics
+    ///
+    /// The entity must have a [`flecs::Script`] component.
     pub fn script_entity_from_id(&self, id: impl Into<Entity>) -> ScriptEntityView {
         ScriptEntityView::new_from(self, id)
     }
 
     /// Wraps the provided entity in a [`ScriptEntityView`].
+    ///
+    /// # Panics
+    ///
+    /// The entity must have a [`flecs::Script`] component.
     pub fn script_entity_from<T: ComponentId>(&self) -> ScriptEntityView {
         ScriptEntityView::new_from(self, T::id(self))
     }
