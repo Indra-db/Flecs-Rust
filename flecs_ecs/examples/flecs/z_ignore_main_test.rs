@@ -21,6 +21,7 @@ mod hello_world;
 mod observers;
 mod prefabs;
 mod queries;
+mod reflection;
 mod relationships;
 mod systems;
 

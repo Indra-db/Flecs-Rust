@@ -74,9 +74,9 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::cursor`
-    pub fn cursor<T: ComponentId>(&self, ptr: *mut c_void) -> Cursor {
+    pub fn cursor<T: ComponentId>(&self, data: &mut T) -> Cursor {
         let type_id = T::get_id(self.world());
-        Cursor::new(self, type_id, ptr)
+        Cursor::new(self, type_id, data as *mut T as *mut c_void)
     }
 
     /// Create primitive type
