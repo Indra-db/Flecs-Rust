@@ -84,6 +84,10 @@ impl<'a> Script<'a> {
         unsafe { sys::ecs_script_eval(self.script) == 0 }
     }
 
+    pub fn destroy(self) {
+        // Drop
+    }
+
     /// Parse script. This parses a script and instantiates the entities in the world.
     /// This operation is the equivalent to doing: `parse`, `eval`, `destroy`.
     ///
@@ -174,7 +178,8 @@ impl<'a> Script<'a> {
         }
     }
 
-    /// Convert value to string
+    /// Serialize value into a String.
+    /// This operation serializes a value of the provided type to a string.
     ///     
     /// # See also
     ///
