@@ -146,10 +146,9 @@ impl World {
         let world = self.world_ptr();
         unsafe {
             let json_ptr = sys::ecs_ptr_to_json(world, tid, value);
-            let json = std::ffi::CStr::from_ptr(json_ptr)
-                .to_str()
-                .unwrap()
-                .to_string();
+            let json = core::ffi::CStr::from_ptr(json_ptr)
+                .to_string_lossy()
+                .into_owned();
             sys::ecs_os_api.free_.expect("os api is missing")(json_ptr as *mut std::ffi::c_void);
             json
         }

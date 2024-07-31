@@ -13,6 +13,7 @@ fn std_string_support(world: WorldRef) -> Opaque<String> {
 
     // Forward std::string value to (JSON/...) serializer
     ts.serialize(|s: &Serializer, data: &String| {
+        let data = compact_str::format_compact!("{}\0", data);
         s.value_id(
             flecs::meta::String,
             &data.as_ptr() as *const *const u8 as *const std::ffi::c_void,
