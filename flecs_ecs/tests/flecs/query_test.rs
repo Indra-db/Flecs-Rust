@@ -56,3 +56,16 @@ fn query_iter_stage() {
 
     world.progress();
 }
+
+#[test]
+#[should_panic]
+fn query_panic_inside() {
+    #[derive(Component)]
+    struct Tag;
+
+    let world = World::new();
+    let query = world.query::<&Tag>().build();
+    query.run(|_| {
+        panic!();
+    });
+}

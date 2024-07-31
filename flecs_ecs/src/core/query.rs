@@ -72,7 +72,7 @@ where
             // If the world didn't end through normal reasons (user dropping it manually or resetting it)
             // and it's holding remaining references to queries in Rust, the world will panic, in that case, don't invoke
             // the query destruction since the memory will already be invalidated.
-            if self.world_ctx.as_ref().is_panicking {
+            if self.world_ctx.as_ref().is_panicking() {
                 return;
             }
 

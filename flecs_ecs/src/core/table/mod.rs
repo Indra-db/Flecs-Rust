@@ -728,6 +728,10 @@ impl<'a> TableLock<'a> {
 
 impl<'a> Drop for TableLock<'a> {
     fn drop(&mut self) {
+        if std::thread::panicking() {
+            return;
+        }
+
         unsafe {
             sys::ecs_table_unlock(self.world.world_ptr_mut(), self.table.as_ptr());
         }

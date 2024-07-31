@@ -81,6 +81,10 @@ impl Default for World {
 
 impl Drop for World {
     fn drop(&mut self) {
+        if std::thread::panicking() {
+            return;
+        }
+
         let world_ptr = self.raw_world.as_ptr();
         if unsafe { sys::flecs_poly_release_(world_ptr as *mut c_void) } == 0 {
             if unsafe { sys::ecs_stage_get_id(world_ptr) } == -1 {
@@ -89,7 +93,7 @@ impl Drop for World {
                 let ctx = self.world_ctx_mut();
                 unsafe { sys::ecs_fini(self.raw_world.as_ptr()) };
                 let is_ref_count_not_zero = !ctx.is_ref_count_zero();
-                if is_ref_count_not_zero && !ctx.is_panicking {
+                if is_ref_count_not_zero && !ctx.is_panicking() {
                     ctx.set_is_panicking_true();
                     panic!("The code base still has lingering references to `Query` objects. This is a bug in the user code.
                         Please ensure that all `Query` objects are out of scope before the world is destroyed.");

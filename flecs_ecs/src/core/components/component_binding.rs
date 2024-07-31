@@ -14,6 +14,10 @@ pub(crate) struct ComponentBindingCtx {
 
 impl Drop for ComponentBindingCtx {
     fn drop(&mut self) {
+        if std::thread::panicking() {
+            return;
+        }
+
         if let Some(on_add) = self.on_add {
             if let Some(free_on_add) = self.free_on_add {
                 unsafe { free_on_add(on_add) };
