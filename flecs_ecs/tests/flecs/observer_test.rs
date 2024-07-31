@@ -950,3 +950,14 @@ fn observer_name_from_root() {
     let ns = world.entity_named("::ns");
     assert!(ns == o.parent().unwrap());
 }
+
+#[test]
+#[should_panic]
+fn observer_panic_inside() {
+    #[derive(Component)]
+    struct Tag;
+
+    let world = World::new();
+    world.observer::<flecs::OnAdd, &Tag>().each(|_| panic!());
+    world.add::<Tag>();
+}
