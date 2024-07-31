@@ -5,7 +5,7 @@ pub(crate) struct WorldCtx {
     query_ref_count: i32,
     pub(crate) components: FlecsIdMap,
     pub(crate) components_array: FlecsArray,
-    pub(crate) is_panicking: bool,
+    is_panicking: bool,
 }
 
 impl WorldCtx {
@@ -52,6 +52,10 @@ impl WorldCtx {
 
     pub(crate) fn set_is_panicking_true(&mut self) {
         self.is_panicking = true;
+    }
+
+    pub(crate) fn is_panicking(&self) -> bool {
+        self.is_panicking
     }
 }
 
