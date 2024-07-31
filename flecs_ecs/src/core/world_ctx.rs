@@ -55,7 +55,7 @@ impl WorldCtx {
     }
 
     pub(crate) fn is_panicking(&self) -> bool {
-        self.is_panicking
+        self.is_panicking || std::thread::panicking()
     }
 }
 

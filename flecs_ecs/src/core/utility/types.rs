@@ -61,6 +61,10 @@ pub(crate) struct ObserverEntityBindingCtx {
 
 impl Drop for ObserverEntityBindingCtx {
     fn drop(&mut self) {
+        if std::thread::panicking() {
+            return;
+        }
+
         if let Some(empty) = self.empty {
             if let Some(free_empty) = self.free_empty {
                 free_empty(empty);

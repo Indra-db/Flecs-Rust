@@ -81,6 +81,10 @@ impl Default for World {
 
 impl Drop for World {
     fn drop(&mut self) {
+        if std::thread::panicking() {
+            return;
+        }
+
         let world_ptr = self.raw_world.as_ptr();
         if unsafe { sys::flecs_poly_release_(world_ptr as *mut c_void) } == 0 {
             if unsafe { sys::ecs_stage_get_id(world_ptr) } == -1 {
