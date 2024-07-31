@@ -17,7 +17,7 @@ pub struct ObserverBuilder<'a, P = (), T: QueryTuple = ()> {
     desc: sys::ecs_observer_desc_t,
     term_builder: TermBuilder,
     world: WorldRef<'a>,
-    event_count: i32,
+    event_count: usize,
     is_instanced: bool,
     _phantom: std::marker::PhantomData<&'a (T, P)>,
 }
@@ -144,11 +144,6 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
 }
 
 impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
-    /// Returns the event count of the builder
-    pub fn event_count(&self) -> i32 {
-        self.event_count
-    }
-
     /// Specify the event(s) for when the observer should run.
     ///
     /// # Arguments
@@ -161,9 +156,8 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
     #[doc(alias = "observer_builder_i::event")]
     pub fn add_event_id(&mut self, event: impl Into<Entity>) -> &mut ObserverBuilder<(), T> {
         let event = *event.into();
-        let event_count = self.event_count as usize;
+        self.desc.events[self.event_count] = event;
         self.event_count += 1;
-        self.desc.events[event_count] = event;
         // SAFETY: Same layout
         unsafe { std::mem::transmute(self) }
     }
@@ -182,10 +176,9 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
     where
         E: ComponentId,
     {
-        let event_count = self.event_count as usize;
-        self.event_count += 1;
         let id = E::id(self.world());
-        self.desc.events[event_count] = id;
+        self.desc.events[self.event_count] = id;
+        self.event_count += 1;
         // SAFETY: Same layout
         unsafe { std::mem::transmute(self) }
     }
