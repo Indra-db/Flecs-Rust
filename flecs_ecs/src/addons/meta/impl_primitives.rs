@@ -198,25 +198,4 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentId f
             );
         }
     }
-
-    fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-        _world: impl WorldProvider<'a>,
-    ) -> sys::ecs_entity_t {
-        ECS_ENTITY_T
-    }
-
-    fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-        _world: impl WorldProvider<'a>,
-        _name: &str,
-    ) -> sys::ecs_entity_t {
-        ECS_ENTITY_T
-    }
-
-    fn is_registered_with_world<'a>(_: impl WorldProvider<'a>) -> bool {
-        true
-    }
-
-    fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
-        ECS_ENTITY_T
-    }
 }

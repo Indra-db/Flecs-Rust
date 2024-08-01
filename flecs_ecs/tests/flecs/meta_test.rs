@@ -897,3 +897,13 @@ fn meta_ser_deser_std_vector_int() {
     let json = world.to_json_dyn::<Vec<i32>>(id, &vec);
     assert_eq!(json, "[1, 2, 3]");
 }
+
+#[test]
+fn meta_ser_deser_std_vector_string() {
+    let world = World::new();
+
+    let vec: Vec<String> = vec!["Hello".to_string(), "World".to_string(), "Foo".to_string()];
+
+    let json = world.to_json_dyn(id!(&world, Vec<String>), &vec);
+    assert_eq!(json, "[\"Hello\", \"World\", \"Foo\"]");
+}
