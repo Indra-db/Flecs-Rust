@@ -169,7 +169,7 @@ fn test_type_w_vec_string() {
         names: vec!["hello".to_string(), "world".to_string()],
     });
 
-    // Convert TypeWithEnum component to flecs expression string
+    // Convert TypeWithVecString component to flecs json string
     e.get::<&TypeWithVecString>(|str| {
         let json: String = world.to_json::<TypeWithVecString>(str);
         assert_eq!(json, "{\"names\":[\"hello\", \"world\"]}");
