@@ -208,8 +208,8 @@ impl<'a> Script<'a> {
     /// * C++ API: `world::to_expr`
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn to_expr<T: ComponentId>(world: impl WorldProvider<'a>, value: &T) -> String {
-        let world2 = world.world();
+        let world = world.world();
         let id = T::get_id(world);
-        Self::to_expr_id(world2, id, value as *const T as *const std::ffi::c_void)
+        Self::to_expr_id(world, id, value as *const T as *const std::ffi::c_void)
     }
 }

@@ -5,7 +5,6 @@ use std::ops::Deref;
 use std::ops::{BitAnd, BitOr};
 
 use crate::core::*;
-use flecs_ecs_derive::Component;
 
 /// An identifier that represents an entity.
 ///

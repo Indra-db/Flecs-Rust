@@ -6,6 +6,7 @@ mod declarations;
 mod impl_bindings;
 mod impl_primitives;
 mod meta_functions;
+pub mod meta_trait;
 mod opaque;
 
 use std::ffi::c_void;
