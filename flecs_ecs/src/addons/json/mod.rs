@@ -67,13 +67,13 @@ impl<'a> EntityView<'a> {
     }
 
     /// Set pair from JSON where First is a type and Second is an entity id.
-    pub fn set_json_first<T: ComponentId>(
+    pub fn set_json_first<Rel: ComponentId>(
         self,
-        second: impl Into<Entity> + Copy,
+        target: impl Into<Entity> + Copy,
         json: &str,
         desc: Option<&FromJsonDesc>,
     ) -> Self {
-        self.set_json_id((T::get_id(self.world), second), json, desc)
+        self.set_json_id((Rel::get_id(self.world), target), json, desc)
     }
 
     /// Set pair from JSON where First is an entity id and Second is a type.
@@ -82,13 +82,13 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::set_json_second`
     #[doc(alias = "entity_builder::set_json_second")]
-    pub fn set_json_second<T: ComponentId>(
+    pub fn set_json_second<Target: ComponentId>(
         self,
-        first: impl Into<Entity> + Copy,
+        rel: impl Into<Entity> + Copy,
         json: &str,
         desc: Option<&FromJsonDesc>,
     ) -> Self {
-        self.set_json_id((first, T::get_id(self.world)), json, desc)
+        self.set_json_id((rel, Target::get_id(self.world)), json, desc)
     }
 
     /// Serialize entity to JSON.
