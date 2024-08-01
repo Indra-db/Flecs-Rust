@@ -81,6 +81,7 @@ impl_component_traits_primitive_type!(i64, ECS_I64_T);
 impl_component_traits_primitive_type!(isize, ECS_IPTR_T);
 impl_component_traits_primitive_type!(f32, ECS_F32_T);
 impl_component_traits_primitive_type!(f64, ECS_F64_T);
+impl_component_traits_primitive_type!(Entity, ECS_ENTITY_T);
 //impl_component_traits_primitive_type!(String, ECS_STRING_T);
 
 impl FlecsConstantId for EntityView<'static> {

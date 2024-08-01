@@ -16,7 +16,7 @@ use flecs_ecs_derive::Component;
 /// and a generation counter used to track entity liveliness in the upper 32
 /// bits. When an id is recycled, its generation count is increased. This
 /// causes recycled ids to be very large (>4 billion), which is normal.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Component)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct Entity(pub u64);
 
