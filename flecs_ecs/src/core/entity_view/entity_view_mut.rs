@@ -914,7 +914,7 @@ impl<'a> EntityView<'a> {
         (First, Second): ComponentOrPairId,
     {
         const {
-            assert!(!<(First, Second) as ComponentOrPairId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
+            assert!(!<(First, Second) as ComponentOrPairId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add::<(Tag1, Tag2)()` instead.");
         };
 
         set_helper(
