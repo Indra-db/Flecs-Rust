@@ -1,4 +1,4 @@
-//! Same example as query_to_json, but with customized serializer parameters
+//! Same example as `query_to_json`, but with customized serializer parameters
 
 use crate::z_ignore_test_common::*;
 

@@ -130,7 +130,7 @@ impl World {
             //    "flecs::meta::bitmask_constant",
             //);
 
-            let entity = self.entity_named("::flecs::rust").add::<flecs::Module>();
+            self.entity_named("::flecs::rust").add::<flecs::Module>();
             crate::addons::meta::meta_init_builtin(self);
             // entity.scope(|world| {
             //     let comp = world.component::<Entity>();

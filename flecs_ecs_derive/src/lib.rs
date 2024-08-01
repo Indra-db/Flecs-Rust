@@ -56,12 +56,11 @@ use syn::{
 ///     Jumping,
 /// }
 /// ```
-#[proc_macro_derive(Component)]
+#[proc_macro_derive(Component, attributes(meta, skip))]
 pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let mut input = parse_macro_input!(input as DeriveInput);
 
     let has_repr_c = check_repr_c(&input);
-    let is_tag;
     let mut generated_impls = vec![];
 
     match input.data.clone() {
@@ -71,13 +70,13 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
                 Fields::Unnamed(ref fields) => !fields.unnamed.is_empty(),
                 Fields::Unit => false,
             };
-            is_tag = generate_tag_trait(has_fields);
+            let is_tag = generate_tag_trait(has_fields);
             generated_impls.push(impl_cached_component_data_struct(
                 &mut input, has_fields, &is_tag,
             ));
         }
         Data::Enum(_) => {
-            is_tag = generate_tag_trait(!has_repr_c);
+            let is_tag = generate_tag_trait(!has_repr_c);
             if !has_repr_c {
                 generated_impls.push(impl_cached_component_data_struct(&mut input, true, &is_tag));
             } else {
@@ -89,12 +88,93 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
     input.generics.make_where_clause();
 
+    let meta_impl = impl_meta(&input, has_repr_c, input.ident.clone());
+
     // Combine the generated code with the original struct definition
     let output = quote! {
         #( #generated_impls )*
+        #meta_impl
     };
 
     output.into()
+}
+
+fn impl_meta(input: &DeriveInput, has_repr_c: bool, struct_name: Ident) -> TokenStream {
+    let has_meta_attribute = input.attrs.iter().any(|attr| attr.path().is_ident("meta"));
+
+    if !has_meta_attribute {
+        return quote! {};
+    }
+
+    let mut meta_fields_impl = Vec::new();
+
+    match input.data.clone() {
+        Data::Struct(data_struct) => {
+            if let Fields::Named(fields_named) = &data_struct.fields {
+                for field in &fields_named.named {
+                    let is_ignored = field.attrs.iter().any(|attr| attr.path().is_ident("skip"));
+
+                    if is_ignored {
+                        continue;
+                    }
+
+                    let field_name = &field.ident;
+                    let field_type = &field.ty;
+
+                    if let Some(field_name) = field_name {
+                        meta_fields_impl.push(quote! {
+                            .member_id(id!(world, #field_type), stringify!(#field_name), 1, offset_of!(#struct_name, #field_name))
+                        });
+                    } else {
+                        meta_fields_impl.push( quote! {
+                            compile_error!("Meta expects named fields, unnamed fields are not supported");
+                        }
+                        );
+                    }
+                }
+            }
+        }
+        Data::Enum(data_enum) => {
+            if !has_repr_c {
+                meta_fields_impl.push( quote! {
+                    compile_error!("Meta currently does not support Rust Algebraic enums, please use #[repr(C)] if it's a C compatible enum");
+                }
+                );
+            } else {
+                for variant in &data_enum.variants {
+                    let is_ignored = variant
+                        .attrs
+                        .iter()
+                        .any(|attr| attr.path().is_ident("skip"));
+
+                    if is_ignored {
+                        continue;
+                    }
+
+                    let variant_name = &variant.ident;
+
+                    meta_fields_impl.push(quote! {
+                        .constant(stringify!(#variant_name), #struct_name::#variant_name as i32)
+                    });
+                }
+            }
+        }
+        _ => return quote! { compile_error!("The type is neither a struct nor an enum!"); },
+    };
+
+    let meta_fn_impl = quote! {
+        let world = component.world();
+        component
+        #( #meta_fields_impl )*;
+    };
+
+    quote! {
+        impl flecs_ecs::addons::meta::meta_trait::Meta<#struct_name> for #struct_name {
+            fn meta(component: flecs_ecs::core::Component::<'_,#struct_name>) {
+                #meta_fn_impl
+            }
+        }
+    }
 }
 
 fn generate_tag_trait(has_fields: bool) -> proc_macro2::TokenStream {

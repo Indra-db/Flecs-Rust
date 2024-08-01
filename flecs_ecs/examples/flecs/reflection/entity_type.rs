@@ -17,10 +17,10 @@ fn main() {
         .component::<TypeWithEntity>()
         .member::<flecs::meta::Entity>("e", 1, offset_of!(TypeWithEntity, e));
 
-    let foo = world.entity_named("foo");
+    let bar = world.entity_named("bar");
 
     // Create a new entity with the TypeWithEntity component
-    let e = world.entity().set(TypeWithEntity { e: foo.into() });
+    let e = world.entity().set(TypeWithEntity { e: bar.into() });
 
     // Convert TypeWithEntity component to flecs expression string
     e.get::<&TypeWithEntity>(|p| {
