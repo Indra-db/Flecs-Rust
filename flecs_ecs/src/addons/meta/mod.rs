@@ -1,4 +1,5 @@
 #![doc(hidden)]
+mod builtin;
 mod component_id_fetcher;
 mod cursor;
 mod declarations;
@@ -9,6 +10,7 @@ mod opaque;
 
 use std::ffi::c_void;
 
+pub use builtin::*;
 pub use component_id_fetcher::*;
 pub use cursor::*;
 pub use declarations::*;
