@@ -119,9 +119,12 @@ pub trait ComponentId: Sized + ComponentInfo + 'static + Send + Sync {
                     }
                     let id = try_register_component::<Self>(world);
                     components_array[index] = id;
-                    world
-                        .components_map()
-                        .insert(std::any::TypeId::of::<Self>(), id);
+                    #[cfg(feature = "flecs_meta")]
+                    {
+                        world
+                            .components_map()
+                            .insert(std::any::TypeId::of::<Self>(), id);
+                    }
                     return id;
                 }
                 components_array[index]
@@ -190,9 +193,12 @@ pub trait ComponentId: Sized + ComponentInfo + 'static + Send + Sync {
                     }
                     let id = try_register_component_named::<Self>(world, name);
                     components_array[index] = id;
-                    world
-                        .components_map()
-                        .insert(std::any::TypeId::of::<Self>(), id);
+                    #[cfg(feature = "flecs_meta")]
+                    {
+                        world
+                            .components_map()
+                            .insert(std::any::TypeId::of::<Self>(), id);
+                    }
                     return id;
                 }
                 components_array[index]
