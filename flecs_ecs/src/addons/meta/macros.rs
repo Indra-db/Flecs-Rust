@@ -1,3 +1,5 @@
+use flecs_ecs::prelude::*;
+
 pub mod type_equality {
     #![doc(hidden)]
     pub trait EqType {
@@ -171,6 +173,7 @@ macro_rules! component {
 /// Supports structs, fieldless enums and tuple structs (up to 12 items).
 /// - Arrays are translated to flecs arrays (`count`).
 /// - Generics are supported, but only type parameters can be passed. Use [`member_ext!`](crate::member_ext) directly if you need more complex types.
+/// - When registering a component of type `Option<T: Default>`, use `#[auto]` to set an appropriate serializer
 /// - Field types are verified using [`assert_is_type!`](crate::assert_is_type!).
 ///
 /// Returns the component.
@@ -207,6 +210,20 @@ macro_rules! component {
 ///     #[name = "CustomName"]
 ///     Struct { foo: u32, bar: u64 }
 /// );
+/// ```
+///
+/// ## Options
+/// ```
+/// # use flecs_ecs::prelude::*;
+/// # let world = World::new();
+/// #[derive(Default)]
+/// struct Struct {
+///     foo: u32,
+///     bar: u64,
+/// }
+///
+/// component_ext!(&world, Struct { foo: u32, bar: u64 });
+/// component_ext!(&world, #[auto] Option<Struct>);
 /// ```
 ///
 /// ## Fieldless enums
@@ -256,6 +273,16 @@ macro_rules! component_ext {
     ($world:expr, $(#[name=$regname:literal])? $component:ident$(<$($generic:ty),*>)?($a:tt$(<$($ag:ty),*>)?, $b:tt$(<$($bg:ty),*>)?, $c:tt$(<$($cg:ty),*>)?, $d:tt$(<$($dg:ty),*>)?, $e:tt$(<$($eg:ty),*>)?, $f:tt$(<$($fg:ty),*>)?, $g:tt$(<$($gg:ty),*>)?, $h:tt$(<$($hg:ty),*>)?, $i:tt$(<$($ig:ty),*>)?, $j:tt$(<$($jg:ty),*>)?, $k:tt$(<$($kg:ty),*>)? $(,)?)) => {$crate::component_ext!($world, $(#[name=$regname])? $component$(<$($generic),*>)?{ 0: $a$(<$($ag),*>)?, 1: $b$(<$($bg),*>)?, 2: $c$(<$($cg),*>)?, 3: $d$(<$($dg),*>)?, 4: $e$(<$($eg),*>)?, 5: $f$(<$($fg),*>)?, 6: $g$(<$($gg),*>)?, 7: $h$(<$($hg),*>)?, 8: $i$(<$($ig),*>)?, 9: $j$(<$($jg),*>)?, 10: $k$(<$($kg),*>)? })};
     ($world:expr, $(#[name=$regname:literal])? $component:ident$(<$($generic:ty),*>)?($a:tt$(<$($ag:ty),*>)?, $b:tt$(<$($bg:ty),*>)?, $c:tt$(<$($cg:ty),*>)?, $d:tt$(<$($dg:ty),*>)?, $e:tt$(<$($eg:ty),*>)?, $f:tt$(<$($fg:ty),*>)?, $g:tt$(<$($gg:ty),*>)?, $h:tt$(<$($hg:ty),*>)?, $i:tt$(<$($ig:ty),*>)?, $j:tt$(<$($jg:ty),*>)?, $k:tt$(<$($kg:ty),*>)?, $l:tt$(<$($lg:ty),*>)? $(,)?)) => {$crate::component_ext!($world, $(#[name=$regname])? $component$(<$($generic),*>)?{ 0: $a$(<$($ag),*>)?, 1: $b$(<$($bg),*>)?, 2: $c$(<$($cg),*>)?, 3: $d$(<$($dg),*>)?, 4: $e$(<$($eg),*>)?, 5: $f$(<$($fg),*>)?, 6: $g$(<$($gg),*>)?, 7: $h$(<$($hg),*>)?, 8: $i$(<$($ig),*>)?, 9: $j$(<$($jg),*>)?, 10: $k$(<$($kg),*>)?, 11: $l$(<$($lg),*>)? })};
 
+    // option
+    ($world:expr, #[auto] Option<$component:ty>) => {{
+        let world = $world;
+        let component = world.component_named_ext(::flecs_ecs::prelude::id!(world, Option<$component>), $crate::component_type_stringify!(Option<$component>));
+        component.opaque_func_id::<_, $component>(
+            FetchedId::new(*component.id()),
+            $crate::addons::meta::macros::opaque_option_struct::<$component>,
+        );
+    }};
+
     // struct
     ($world:expr, #[name=$regname:literal] $component:ty $({$($name:tt : $type:tt$(<$($generic:ty),*>)?),* $(,)?})?) => {{
         let world = $world;
@@ -287,4 +314,63 @@ macro_rules! component_ext {
         $(component.constant(::core::stringify!($name), <$component>::$name as i32);)*
         component
     }};
+}
+
+/// Generate an opaque registration for `Option<T>` based on a struct
+pub fn opaque_option_struct<T: Default>(world: WorldRef) -> Opaque<Option<T>, T> {
+    let id = id!(&world, Option<T>);
+    let mut ts = Opaque::<Option<T>, T>::new_id(world, id);
+
+    // Generate a dummy component to teach Flecs about the format of the Option "struct"
+    #[repr(C)]
+    #[allow(non_snake_case, unused)]
+    struct Dummy<T> {
+        None: bool,
+        Some: T,
+    }
+    let dummy = world.component_ext(id!(&world, Dummy<T>));
+    if !dummy.has::<flecs::meta::Type>() {
+        dummy.member_id(id!(&world, bool), "None", 1, offset_of!(Dummy<T>, None));
+        dummy.member_id(id!(&world, T), "Some", 1, offset_of!(Dummy<T>, Some));
+    }
+    ts.as_type(dummy.id());
+
+    ts.serialize(|s: &Serializer, data: &Option<T>| {
+        let world = unsafe { WorldRef::from_ptr(s.world as *mut flecs_ecs::sys::ecs_world_t) };
+        let id = id!(world, T);
+        match data {
+            Some(ref value) => {
+                s.member("Some");
+                s.value_id(id, value as *const T as *const std::ffi::c_void);
+            }
+            None => {
+                s.member("None");
+                s.value_id(
+                    id!(world, bool),
+                    &false as *const bool as *const std::ffi::c_void,
+                );
+            }
+        }
+        0
+    });
+
+    // TODO: try to relax the Default requirement.
+    fn ensure_member<T: Default>(data: &mut Option<T>, member: *const i8) -> *mut std::ffi::c_void {
+        let member = unsafe { std::ffi::CStr::from_ptr(member) };
+        if member == c"None" {
+            *data = None;
+            static mut BITBUCKET: bool = false;
+            return unsafe { std::ptr::addr_of_mut!(BITBUCKET) } as *mut _;
+        } else if member == c"Some" {
+            if data.is_none() {
+                *data = Some(T::default());
+            }
+            return data.as_mut().unwrap() as *mut _ as *mut _;
+        }
+        std::ptr::null_mut()
+    }
+
+    ts.ensure_member(ensure_member::<T>);
+
+    ts
 }

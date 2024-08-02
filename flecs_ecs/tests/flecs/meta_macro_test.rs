@@ -586,3 +586,31 @@ fn meta_struct_field_order() {
     });
 }
 
+#[test]
+fn meta_ser_deser_option() {
+    let world = World::new();
+
+    #[derive(Component, Default, Debug, PartialEq)]
+    struct OptComponent(Option<u32>);
+
+    component!(&world, #[auto] Option<u32>);
+    component!(&world, OptComponent(Option<u32>));
+
+    {
+        let mut v = OptComponent::default();
+        let json = "{\"0\":{\"None\":false}}".to_string();
+        world.from_json::<OptComponent>(&mut v, &json, None);
+        assert_eq!(v, OptComponent(None));
+        let json = world.to_json::<OptComponent>(&v);
+        assert_eq!(json, "{\"0\":{\"None\":false}}");
+    }
+
+    {
+        let mut v = OptComponent::default();
+        let json = "{\"0\":{\"Some\":42}}".to_string();
+        world.from_json::<OptComponent>(&mut v, &json, None);
+        assert_eq!(v, OptComponent(Some(42)));
+        let json = world.to_json::<OptComponent>(&v);
+        assert_eq!(json, "{\"0\":{\"Some\":42}}");
+    }
+}
