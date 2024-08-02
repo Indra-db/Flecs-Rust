@@ -5,6 +5,7 @@ mod cursor;
 mod declarations;
 mod impl_bindings;
 mod impl_primitives;
+pub mod macros;
 mod meta_functions;
 pub mod meta_trait;
 mod opaque;
