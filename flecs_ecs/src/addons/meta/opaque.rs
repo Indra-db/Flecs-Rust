@@ -18,24 +18,26 @@ pub struct Opaque<'a, T: 'static, ElemType = ()> {
     phantom2: std::marker::PhantomData<ElemType>,
 }
 
-impl<'a, T, ElemType> Opaque<'a, T, ElemType>
-where
-    T: ComponentId + Sized,
-{
+impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     /// Creates a new Opaque instance
     pub fn new(world: impl WorldProvider<'a>) -> Self {
+        let id = *world
+            .world()
+            .components_map()
+            .get(&std::any::TypeId::of::<T>())
+            .expect("Component not registered, pre-register components with `world.component::<T>() or world.component_ext::<T>(id)`");
+
         Self {
             world: world.world(),
             desc: ecs_opaque_desc_t {
-                entity: T::id(world),
+                entity: id,
                 type_: Default::default(),
             },
             phantom: std::marker::PhantomData,
             phantom2: std::marker::PhantomData,
         }
     }
-}
-impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
+
     /// Creates a new Opaque instance of an internal or external component
     pub fn new_id(world: impl WorldProvider<'a>, id: FetchedId<T>) -> Self {
         Self {
