@@ -72,17 +72,6 @@ impl<'a, T: ComponentId> Component<'a, T> {
             _marker: PhantomData,
         }
     }
-
-    /// Return the component as an entity
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::entity`
-    #[doc(alias = "id::entity")]
-    #[inline(always)]
-    pub fn entity(self) -> EntityView<'a> {
-        self.base.entity
-    }
 }
 impl<'a, T> Component<'a, T> {
     /// Create a new component that is not marked within Rust.
@@ -95,7 +84,7 @@ impl<'a, T> Component<'a, T> {
     ///
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
-    pub fn new_id(world: impl WorldProvider<'a>, id: FetchedId<T>) -> Self {
+    pub(crate) fn new_id(world: impl WorldProvider<'a>, id: FetchedId<T>) -> Self {
         let world = world.world();
 
         Self {
@@ -110,6 +99,7 @@ impl<'a, T> Component<'a, T> {
     ///
     /// * `world`: the world.
     /// * `name`: the name of the component.
+    /// Return the component as an entity
     ///
     /// # See also
     ///
@@ -118,12 +108,32 @@ impl<'a, T> Component<'a, T> {
     pub fn new_named_id(world: impl WorldProvider<'a>, id: FetchedId<T>, name: &str) -> Self {
         let _name = compact_str::format_compact!("{}\0", name);
         let world = world.world();
-        //TODO indra this is unfinished
+        let entity = world.entity_from_id(id.id());
+        entity.get_name().map_or_else(
+            || {
+                entity.set_name(name);
+            },
+            |current_name| {
+                if current_name != name {
+                    entity.set_name(name);
+                }
+            },
+        );
 
         Self {
             base: UntypedComponent::new(world, id),
             _marker: PhantomData,
         }
+    }
+    /// Return the component as an entity
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `id::entity`
+    #[doc(alias = "id::entity")]
+    #[inline(always)]
+    pub fn entity(self) -> EntityView<'a> {
+        self.base.entity
     }
 
     /// Get the binding context for the component.

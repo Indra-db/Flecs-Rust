@@ -42,7 +42,7 @@ impl World {
         Component::<T>::new_id(self, id)
     }
 
-    /// Find or register component.
+    /// Find or register component and set the name if not already set.
     ///
     /// # Type Parameters
     ///
