@@ -1935,49 +1935,29 @@ pub trait WorldMap<Return> {
     /// ```
     /// use flecs_ecs::prelude::*;
     ///
-    /// #[derive(Component)] struct Tag;
-    ///
     /// #[derive(Component)]
-    /// pub struct Velocity {
-    ///     pub x: f32,
-    ///     pub y: f32,
-    /// }
-    ///
-    /// #[derive(Component)]
-    /// pub struct Position {
-    ///     pub x: f32,
-    ///     pub y: f32,
+    /// pub struct Gravity {
+    ///     pub value: f32,
     /// }
     ///
     /// let world = World::new();
     ///
-    /// let entity = world.entity()
-    ///                   .set(Position { x: 10.0, y: 20.0 })
-    ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
-    ///    
-    /// let pos_x = entity.try_map::<&Position>(|(pos)| {
-    ///     assert_eq!(pos.x, 10.0);
-    ///     Some(pos.x)
-    /// });
-    /// assert!(pos_x.is_some());
-    /// assert_eq!(pos_x.unwrap(), 10.0);
+    /// let entity = world.set(Gravity { value: 9.81 });
     ///
-    /// let is_pos_x_10 = entity.try_map::<(Option<&Velocity>, &Position)>( |(tag, pos)| {
-    ///     assert_eq!(pos.x, 10.0);
-    ///     assert!(tag.is_none());
-    ///     Some(pos.x == 10.0)
+    /// let gravity = world.try_map::<&Gravity>(|(gravity)| {
+    ///     assert_eq!(gravity.value, 9.81);
+    ///     Some(gravity.value)
     /// });
-    /// assert!(is_pos_x_10.is_some());
-    /// assert!(is_pos_x_10.unwrap());
+    /// assert!(gravity.is_some());
+    /// assert_eq!(gravity.unwrap(), 9.81);
     ///
-    /// // no return type
-    /// let has_run = entity.try_map::<(&mut(Tag,Position), &Position)>(|(tag_pos_rel, pos)| {
-    ///     assert_eq!(pos.x, 10.0);
-    ///     assert_eq!(tag_pos_rel.x, 30.0);
-    ///     Some(())
+    /// let is_981 = world.try_map::<&Gravity>(|(gravity)| {
+    ///     assert_eq!(gravity.value, 9.81);
+    ///     Some(gravity.value == 9.81)
     /// });
-    /// assert!(has_run.is_some());
     ///
+    /// assert!(is_981.is_some());
+    /// assert!(is_981.unwrap());
     /// ```
     ///
     /// # See also
@@ -2021,51 +2001,27 @@ pub trait WorldMap<Return> {
     /// ```
     /// use flecs_ecs::prelude::*;
     ///
-    /// #[derive(Component)] struct Tag;
-    ///
     /// #[derive(Component)]
-    /// pub struct Velocity {
-    ///     pub x: f32,
-    ///     pub y: f32,
-    /// }
-    ///
-    /// #[derive(Component)]
-    /// pub struct Position {
-    ///     pub x: f32,
-    ///     pub y: f32,
+    /// pub struct Gravity {
+    ///     pub value: f32,
     /// }
     ///
     /// let world = World::new();
     ///
-    /// let entity = world.entity()
-    ///                   .set(Position { x: 10.0, y: 20.0 })
-    ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
+    /// let entity = world.set(Gravity { value: 9.81 });
     ///
-    /// let position_parent = Position { x: 20.0, y: 30.0 };
+    /// let gravity = world.map::<&Gravity>(|(gravity)| {
+    ///     assert_eq!(gravity.value, 9.81);
+    ///     gravity.value
+    /// });
+    /// assert_eq!(gravity, 9.81);
     ///
-    /// let pos_actual = entity.map::<&Position>(|pos| {
-    ///     assert_eq!(pos.x, 10.0);
-    ///     // Calculate actual position
-    ///     Position {
-    ///         x: pos.x + position_parent.x,
-    ///         y: pos.y + position_parent.y,
-    ///     }
+    /// let is_981 = world.map::<&Gravity>(|(gravity)| {
+    ///     assert_eq!(gravity.value, 9.81);
+    ///     gravity.value == 9.81
     /// });
     ///
-    /// let pos_x = entity.map::<(Option<&Velocity>, &Position)>( |(vel, pos)| {
-    ///     assert_eq!(pos.x, 10.0);
-    ///     assert!(vel.is_none());
-    ///     pos.x
-    /// });
-    /// assert_eq!(pos_x, 10.0);
-    ///
-    /// let is_x_10 = entity.map::<(&mut(Tag,Position), &Position)>(|(tag_pos_rel, pos)| {
-    ///     assert_eq!(pos.x, 10.0);
-    ///     assert_eq!(tag_pos_rel.x, 30.0);
-    ///     pos.x == 10.0
-    /// });
-    /// assert!(is_x_10);
-    ///
+    /// assert!(is_981);
     /// ```
     ///
     /// # See also
