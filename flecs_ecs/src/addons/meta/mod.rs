@@ -160,7 +160,8 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::vector`
-    pub fn vector<T>(&self, id: FetchedId<T>) -> EntityView {
+    pub fn vector<T: 'static>(&self) -> EntityView {
+        let id = self.component_id_map::<T>();
         self.vector_id(id)
     }
 }
@@ -204,12 +205,12 @@ impl<'a, T: 'static> Component<'a, T> {
     ///
     /// * C++ API: `component::opaque`
     #[doc(alias = "component::opaque")]
-    pub fn opaque_func_id<Func, Elem>(&self, id: FetchedId<T>, func: Func) -> &Self
+    pub fn opaque_func<Func>(&self, func: Func) -> &Self
     where
-        Func: FnOnce(WorldRef<'a>) -> Opaque<'a, T, Elem>,
+        Func: FnOnce(WorldRef<'a>) -> Opaque<'a, T>,
     {
         let mut opaque = func(self.world());
-        opaque.desc.entity = id.id();
+        opaque.desc.entity = self.world().component_id_map::<T>();
         unsafe { sys::ecs_opaque_init(self.world_ptr_mut(), &opaque.desc) };
         self
     }
@@ -218,9 +219,35 @@ impl<'a, T: 'static> Component<'a, T> {
     ///
     /// * C++ API: `component::opaque`
     #[doc(alias = "component::opaque")]
-    pub fn opaque_id(&self, id: FetchedId<T>) -> Opaque<'a, T> {
+    pub fn opaque_func_id<Func, Elem>(&self, id: impl Into<Entity>, func: Func) -> &Self
+    where
+        Func: FnOnce(WorldRef<'a>) -> Opaque<'a, T, Elem>,
+    {
+        let mut opaque = func(self.world());
+        opaque.desc.entity = *id.into();
+        unsafe { sys::ecs_opaque_init(self.world_ptr_mut(), &opaque.desc) };
+        self
+    }
+
+    /// # See also
+    ///
+    /// * C++ API: `component::opaque`
+    #[doc(alias = "component::opaque")]
+    pub fn opaque<Type: 'static>(&self) -> Opaque<'a, T> {
+        let id = self.world().component_id_map::<Type>();
+        let mut opaque = Opaque::<T>::new(self.world());
+        opaque.as_type(id);
+        opaque
+    }
+
+    /// # See also
+    ///
+    /// * C++ API: `component::opaque`
+    #[doc(alias = "component::opaque")]
+    pub fn opaque_id(&self, id: impl Into<Entity>) -> Opaque<'a, T> {
+        let id = id.into();
         let mut opaque = Opaque::<T>::new_id(self.world(), id);
-        opaque.as_type(id.id());
+        opaque.as_type(id);
         opaque
     }
 
@@ -232,7 +259,7 @@ impl<'a, T: 'static> Component<'a, T> {
     where
         E: Into<Entity> + Copy,
     {
-        let mut opaque = Opaque::<T>::new_id(self.world(), FetchedId::<T>::new(*id_type.into()));
+        let mut opaque = Opaque::<T>::new_id(self.world(), id_type);
         opaque.as_type(id_field);
         opaque
     }
@@ -241,9 +268,10 @@ impl<'a, T: 'static> Component<'a, T> {
     /// # See also
     ///
     /// * C++ API: `component::opaque`
-    pub fn opaque_collection<ElemType>(&self, id: FetchedId<T>) -> Opaque<'a, T, ElemType> {
+    pub fn opaque_collection<ElemType>(&self) -> Opaque<'a, T, ElemType> {
+        let id = self.world().component_id_map::<T>();
         let mut opaque = Opaque::<T, ElemType>::new_id(self.world(), id);
-        opaque.as_type(id.id());
+        opaque.as_type(id);
         opaque
     }
 
@@ -257,7 +285,7 @@ impl<'a, T: 'static> Component<'a, T> {
     ) -> Opaque<'a, T, ElemType> {
         let id: Entity = id.into();
         let copy_id = id;
-        let mut opaque = Opaque::<T, ElemType>::new_id(self.world(), FetchedId::<T>::new(*self.id));
+        let mut opaque = Opaque::<T, ElemType>::new_id(self.world(), self.id);
         opaque.as_type(copy_id);
         opaque
     }
@@ -270,30 +298,6 @@ impl<'a, T: 'static> Component<'a, T> {
     pub fn constant(&self, name: &str, value: impl Into<i32>) -> &Self {
         UntypedComponent::constant(self, name, value);
         self
-    }
-}
-
-/// Register opaque type interface
-impl<'a, T: ComponentId> Component<'a, T> {
-    /// # See also
-    ///
-    /// * C++ API: `component::opaque`
-    #[doc(alias = "component::opaque")]
-    pub fn opaque_func<Func>(&self, func: Func) -> &Self
-    where
-        Func: FnOnce(WorldRef<'a>) -> Opaque<'a, T>,
-    {
-        let mut opaque = func(self.world());
-        opaque.desc.entity = T::get_id(self.world());
-        unsafe { sys::ecs_opaque_init(self.world_ptr_mut(), &opaque.desc) };
-        self
-    }
-
-    /// # See also
-    ///
-    /// * C++ API: `component::opaque`
-    pub fn opaque<FieldId: ComponentId>(&self) -> Opaque<'a, T> {
-        self.opaque_dyn_id(T::get_id(self.world()), FieldId::get_id(self.world()))
     }
 }
 

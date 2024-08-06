@@ -18,9 +18,48 @@ macro_rules! generate_vec_meta_registration {
 pub(crate) fn meta_init_builtin(world: &World) {
     world.component::<String>().opaque_func(std_string_support);
 
+    use std::any::TypeId;
+    let map = world.components_map();
+
+    map.insert(TypeId::of::<bool>(), ECS_BOOL_T);
+    map.insert(TypeId::of::<char>(), ECS_CHAR_T);
+    map.insert(TypeId::of::<u8>(), ECS_U8_T);
+    map.insert(TypeId::of::<u16>(), ECS_U16_T);
+    map.insert(TypeId::of::<u32>(), ECS_U32_T);
+    map.insert(TypeId::of::<u64>(), ECS_U64_T);
+    map.insert(TypeId::of::<usize>(), ECS_UPTR_T);
+    map.insert(TypeId::of::<i8>(), ECS_I8_T);
+    map.insert(TypeId::of::<i16>(), ECS_I16_T);
+    map.insert(TypeId::of::<i32>(), ECS_I32_T);
+    map.insert(TypeId::of::<i64>(), ECS_I64_T);
+    map.insert(TypeId::of::<isize>(), ECS_IPTR_T);
+    map.insert(TypeId::of::<f32>(), ECS_F32_T);
+    map.insert(TypeId::of::<f64>(), ECS_F64_T);
+    map.insert(TypeId::of::<Entity>(), ECS_ENTITY_T);
+
+    map.insert(TypeId::of::<flecs::meta::Bool>(), ECS_BOOL_T);
+    map.insert(TypeId::of::<flecs::meta::Char>(), ECS_CHAR_T);
+    map.insert(TypeId::of::<flecs::meta::Byte>(), ECS_BYTE_T);
+    map.insert(TypeId::of::<flecs::meta::U8>(), ECS_U8_T);
+    map.insert(TypeId::of::<flecs::meta::U16>(), ECS_U16_T);
+    map.insert(TypeId::of::<flecs::meta::U32>(), ECS_U32_T);
+    map.insert(TypeId::of::<flecs::meta::U64>(), ECS_U64_T);
+    map.insert(TypeId::of::<flecs::meta::UPtr>(), ECS_UPTR_T);
+    map.insert(TypeId::of::<flecs::meta::I8>(), ECS_I8_T);
+    map.insert(TypeId::of::<flecs::meta::I16>(), ECS_I16_T);
+    map.insert(TypeId::of::<flecs::meta::I32>(), ECS_I32_T);
+    map.insert(TypeId::of::<flecs::meta::I64>(), ECS_I64_T);
+    map.insert(TypeId::of::<flecs::meta::IPtr>(), ECS_IPTR_T);
+    map.insert(TypeId::of::<flecs::meta::F32>(), ECS_F32_T);
+    map.insert(TypeId::of::<flecs::meta::F64>(), ECS_F64_T);
+    map.insert(TypeId::of::<flecs::meta::String>(), ECS_STRING_T);
+    map.insert(TypeId::of::<flecs::meta::Entity>(), ECS_ENTITY_T);
+    map.insert(TypeId::of::<flecs::meta::Constant>(), ECS_CONSTANT);
+    map.insert(TypeId::of::<flecs::meta::Quantity>(), ECS_QUANTITY);
+    map.insert(TypeId::of::<flecs::meta::EcsOpaque>(), ECS_OPAQUE);
+
     generate_vec_meta_registration!(
-        world, String, i8, i16, i32, i64, i128, u8, u16, u32, u64, u128, f32, f64, bool, char,
-        usize, isize
+        world, String, i8, i16, i32, i64, u8, u16, u32, u64, f32, f64, bool, char, usize, isize
     );
 }
 
@@ -48,11 +87,10 @@ fn std_string_support(world: WorldRef) -> Opaque<String> {
 }
 
 pub fn std_vector_support<T: Default>(world: WorldRef) -> Opaque<Vec<T>, T> {
-    let id = id!(&world, Vec<T>);
-    let mut ts = Opaque::<Vec<T>, T>::new_id(world, id);
+    let mut ts = Opaque::<Vec<T>, T>::new(world);
 
     // Let reflection framework know what kind of type this is
-    ts.as_type(world.vector(id));
+    ts.as_type(world.vector::<T>());
 
     // Forward std::vector value to (JSON/...) serializer
     ts.serialize(|s: &Serializer, data: &Vec<T>| {

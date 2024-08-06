@@ -3600,10 +3600,23 @@ impl World {
 }
 /// Id mixin implementation
 impl World {
+    /// Get the id of the provided component type.
+    /// This returns the id of a component type which has been registered with [`ComponentId`] trait.
     pub fn component_id<T: ComponentId>(&self) -> Entity {
         Entity(T::id(self))
     }
 
+    /// Get the id of the provided component type.
+    /// This returns the id of a component type which has potentially not been registered with `ComponentId` trait.
+    /// This holds ids for external components (not marked with the trait), such as in cases of meta fields.
+    /// When meta is enabled, this will also hold ids for components that are registered with the `ComponentId` trait.
+    pub(crate) fn component_id_map<T: 'static>(&self) -> u64 {
+        *self.components_map() 
+            .get(&std::any::TypeId::of::<T>())
+            .unwrap_or_else(|| panic!("Component with name: {} is not registered, pre-register components with `world.component::<T>() or world.component_ext::<T>(id)`", std::any::type_name::<T>()))
+    }
+
+    /// Get the id of the provided pair of components.
     pub fn relationship_id<First: ComponentId, Second: ComponentId>(&self) -> Id {
         Id(ecs_pair(First::id(self), Second::id(self)))
     }

@@ -2,7 +2,6 @@ use crate::core::*;
 use crate::sys::*;
 
 use super::meta_functions::*;
-use super::FetchedId;
 
 /// Serializer object, used for serializing opaque types
 pub type Serializer = ecs_serializer_t;
@@ -25,7 +24,7 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
             .world()
             .components_map()
             .get(&std::any::TypeId::of::<T>())
-            .expect("Component not registered, pre-register components with `world.component::<T>() or world.component_ext::<T>(id)`");
+            .unwrap_or_else(|| panic!("Component with name: {} is not registered, pre-register components with `world.component::<T>() or world.component_ext::<T>(id)`", std::any::type_name::<T>()));
 
         Self {
             world: world.world(),
@@ -39,11 +38,11 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     }
 
     /// Creates a new Opaque instance of an internal or external component
-    pub fn new_id(world: impl WorldProvider<'a>, id: FetchedId<T>) -> Self {
+    pub fn new_id(world: impl WorldProvider<'a>, id: impl Into<Entity>) -> Self {
         Self {
             world: world.world(),
             desc: ecs_opaque_desc_t {
-                entity: id.id(),
+                entity: *id.into(),
                 type_: Default::default(),
             },
             phantom: std::marker::PhantomData,

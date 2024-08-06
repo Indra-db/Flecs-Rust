@@ -33,7 +33,7 @@ fn std_vector_support<T: Default>(world: WorldRef) -> Opaque<Vec<T>, T> {
     let mut ts = Opaque::<Vec<T>, T>::new_id(world, id);
 
     // Let reflection framework know what kind of type this is
-    ts.as_type(world.vector(id));
+    ts.as_type(world.vector::<T>());
 
     // Forward std::vector value to (JSON/...) serializer
     ts.serialize(|s: &Serializer, data: &Vec<T>| {
@@ -587,7 +587,7 @@ fn meta_opaque_vector_w_builder() {
 
     world
         .component::<SerVec>()
-        .opaque_collection_dyn_id::<i32>(world.vector(id!(&world, i32)))
+        .opaque_collection_dyn_id::<i32>(world.vector::<i32>())
         .serialize(|s: &Serializer, data: &SerVec| {
             for el in data.value.iter() {
                 s.value(el);

@@ -278,7 +278,7 @@ macro_rules! component_ext {
         let world = $world;
         let component = world.component_named_ext(::flecs_ecs::prelude::id!(world, Option<$component>), $crate::component_type_stringify!(Option<$component>));
         component.opaque_func_id::<_, $component>(
-            FetchedId::new(*component.id()),
+            *component.id(),
             $crate::addons::meta::macros::opaque_option_struct::<$component>,
         );
     }};
