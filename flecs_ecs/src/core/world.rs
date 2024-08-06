@@ -1898,7 +1898,10 @@ impl World {
         );
         entity.cloned::<T>()
     }
+}
 
+// Split out into a trait to allow inference on return types while specifying the component(s) to map over.
+pub trait WorldMap<Return> {
     /// gets mutable or immutable component(s) and/or relationship(s) from the world in a callback and return a value.
     /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
     /// use `Option` wrapper to indicate if the component is optional.
@@ -1982,19 +1985,12 @@ impl World {
     /// * [`World::cloned()`]
     /// * [`World::get()`]
     /// * [`World::map()`]
-    pub fn try_map<T: GetTupleTypeOperation, Return>(
+    fn try_map<T: GetTupleTypeOperation>(
         &self,
         callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Option<Return>,
     ) -> Option<Return>
     where
-        T::OnlyType: ComponentOrPairId,
-    {
-        let entity = EntityView::new_from(
-            self,
-            <<T::OnlyType as ComponentOrPairId>::CastType>::id(self),
-        );
-        entity.try_map::<T>(callback)
-    }
+        T::OnlyType: ComponentOrPairId;
 
     /// gets mutable or immutable singleton component and/or relationship from the world in a callback.
     /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
@@ -2077,7 +2073,30 @@ impl World {
     /// * [`World::cloned()`]
     /// * [`World::get()`]
     /// * [`World::try_map()`]
-    pub fn map<T: GetTupleTypeOperation, Return>(
+    fn map<T: GetTupleTypeOperation>(
+        &self,
+        callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Return,
+    ) -> Return
+    where
+        T::OnlyType: ComponentOrPairId;
+}
+
+impl<Return> WorldMap<Return> for World {
+    fn try_map<T: GetTupleTypeOperation>(
+        &self,
+        callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Option<Return>,
+    ) -> Option<Return>
+    where
+        T::OnlyType: ComponentOrPairId,
+    {
+        let entity = EntityView::new_from(
+            self,
+            <<T::OnlyType as ComponentOrPairId>::CastType>::id(self),
+        );
+        entity.try_map::<T>(callback)
+    }
+
+    fn map<T: GetTupleTypeOperation>(
         &self,
         callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Return,
     ) -> Return
@@ -2090,7 +2109,9 @@ impl World {
         );
         entity.map::<T>(callback)
     }
+}
 
+impl World {
     /// Get a reference to a singleton component.
     ///
     /// A reference allows for quick and safe access to a component value, and is

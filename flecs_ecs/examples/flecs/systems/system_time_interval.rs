@@ -33,7 +33,7 @@ fn main() {
     world.set_target_fps(60.0);
 
     while world.progress() {
-        if world.map::<&Timeout, _>(|timeout| timeout.value <= 0.0) {
+        if world.map::<&Timeout>(|timeout| timeout.value <= 0.0) {
             println!("Timed out!");
             break;
         }
