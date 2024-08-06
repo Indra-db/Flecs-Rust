@@ -265,21 +265,52 @@ impl<'a, T: 'static> Component<'a, T> {
     }
 
     /// Return opaque type builder for collection type
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    /// let world = World::new();
+    ///
+    /// #[derive(Component)]
+    /// struct SerVec {
+    ///     pub value: Vec<i32>,
+    /// }
+    ///
+    /// world
+    ///     .component::<SerVec>()
+    ///     .opaque_collection_vector::<i32>();
+    /// ```
+    ///
     /// # See also
     ///
     /// * C++ API: `component::opaque`
-    pub fn opaque_collection<ElemType>(&self) -> Opaque<'a, T, ElemType> {
-        let id = self.world().component_id_map::<T>();
-        let mut opaque = Opaque::<T, ElemType>::new_id(self.world(), id);
+    pub fn opaque_collection_vector<ElemType: 'static>(&self) -> Opaque<'a, T, ElemType> {
+        let world = self.world();
+        let mut opaque = Opaque::<T, ElemType>::new(self.world());
+        let id = world.vector::<ElemType>();
         opaque.as_type(id);
         opaque
     }
 
     /// Return opaque type builder for collection type
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    /// let world = World::new();
+    ///
+    /// #[derive(Component)]
+    /// struct SerVec {
+    ///     pub value: Vec<i32>,
+    /// }
+    ///
+    /// world
+    ///     .component::<SerVec>()
+    ///     .opaque_collection_dyn::<i32>(world.vector::<i32>());
+    /// ```
+    ///
     /// # See also
     ///
     /// * C++ API: `component::opaque`
-    pub fn opaque_collection_dyn_id<ElemType>(
+    pub fn opaque_collection_dyn<ElemType>(
         &self,
         id: impl Into<Entity>,
     ) -> Opaque<'a, T, ElemType> {

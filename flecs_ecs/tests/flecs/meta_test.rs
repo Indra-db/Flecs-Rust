@@ -587,7 +587,7 @@ fn meta_opaque_vector_w_builder() {
 
     world
         .component::<SerVec>()
-        .opaque_collection_dyn_id::<i32>(world.vector::<i32>())
+        .opaque_collection_vector::<i32>()
         .serialize(|s: &Serializer, data: &SerVec| {
             for el in data.value.iter() {
                 s.value(el);
