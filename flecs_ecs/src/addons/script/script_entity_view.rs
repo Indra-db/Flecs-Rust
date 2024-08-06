@@ -85,7 +85,7 @@ impl<'a> ScriptEntityView<'a> {
     /// * C API: `script_ast_to_buf`
     #[doc(alias = "script_ast_to_buf")]
     pub fn ast(&mut self) -> Option<String> {
-        let script = self.map::<&flecs::Script, _>(|script| script.script);
+        let script = self.map::<&flecs::Script>(|script| script.script);
 
         let ast = unsafe { sys::ecs_script_ast_to_str(script) };
 

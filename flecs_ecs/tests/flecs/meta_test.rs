@@ -242,7 +242,6 @@ fn meta_partial_struct() {
     let world = World::new();
 
     #[derive(Component)]
-    #[repr(C)]
     struct Position {
         x: f32,
     }
@@ -272,7 +271,6 @@ fn meta_partial_struct_custom_offset() {
     let world = World::new();
 
     #[derive(Component)]
-    #[repr(C)]
     struct Position {
         x: f32,
         y: f32,
@@ -787,19 +785,16 @@ fn meta_error_range() {
 fn meta_struct_member_ptr() {
     let world = World::new();
 
-    #[repr(C)]
     #[derive(Component)]
     struct Test {
         x: i32,
     }
 
-    #[repr(C)]
     #[derive(Component)]
     struct Test2 {
         y: f64,
     }
 
-    #[repr(C)]
     #[derive(Component)]
     struct Nested {
         a: Test, //what offset should this be? Rust returns 16, but CPP gives 0 lol
