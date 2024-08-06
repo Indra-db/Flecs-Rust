@@ -1428,6 +1428,10 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                 if !matches!(t.access, Access::Omitted | Access::Filter) {
                     ops.push(quote_spanned!{t.span => ; compile_error!("Only [filter] is allowed on static terms.")});
                 }
+
+                if t.access == Access::Filter {
+                    ops.push(quote! { .filter() });
+                }
             } else {
                 match &t.reference {
                     Reference::None => {},
