@@ -169,9 +169,12 @@ fn impl_meta(input: &DeriveInput, has_repr_c: bool, struct_name: Ident) -> Token
     };
 
     quote! {
-        impl flecs_ecs::addons::meta::meta_trait::Meta<#struct_name> for #struct_name {
+        impl flecs_ecs::addons::Meta<#struct_name> for #struct_name {
             fn meta(component: flecs_ecs::core::Component::<'_,#struct_name>) {
-                #meta_fn_impl
+                #[cfg(feature = "flecs_meta")]
+                {
+                    #meta_fn_impl
+                }
             }
         }
     }
