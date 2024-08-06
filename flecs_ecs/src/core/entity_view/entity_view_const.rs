@@ -987,7 +987,10 @@ impl<'a> EntityView<'a> {
             None
         }
     }
+}
 
+// Split out into a trait to allow inference on return types while specifying the component(s) to map over.
+pub trait EntityViewMap<Return> {
     /// gets mutable or immutable component(s) and/or relationship(s) from an entity in a callback and return a value.
     /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
     /// use `Option` wrapper to indicate if the component is optional.
@@ -1042,14 +1045,14 @@ impl<'a> EntityView<'a> {
     ///                   .set(Position { x: 10.0, y: 20.0 })
     ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
     ///    
-    /// let pos_x = entity.try_map::<&Position, _>(|(pos)| {
+    /// let pos_x = entity.try_map::<&Position>(|(pos)| {
     ///     assert_eq!(pos.x, 10.0);
     ///     Some(pos.x)
     /// });
     /// assert!(pos_x.is_some());
     /// assert_eq!(pos_x.unwrap(), 10.0);
     ///
-    /// let is_pos_x_10 = entity.try_map::<(Option<&Velocity>, &Position), _>( |(tag, pos)| {
+    /// let is_pos_x_10 = entity.try_map::<(Option<&Velocity>, &Position)>( |(tag, pos)| {
     ///     assert_eq!(pos.x, 10.0);
     ///     assert!(tag.is_none());
     ///     Some(pos.x == 10.0)
@@ -1058,7 +1061,7 @@ impl<'a> EntityView<'a> {
     /// assert!(is_pos_x_10.unwrap());
     ///
     /// // no return type
-    /// let has_run = entity.try_map::<(&mut(Tag,Position), &Position),_>(|(tag_pos_rel, pos)| {
+    /// let has_run = entity.try_map::<(&mut(Tag,Position), &Position)>(|(tag_pos_rel, pos)| {
     ///     assert_eq!(pos.x, 10.0);
     ///     assert_eq!(tag_pos_rel.x, 30.0);
     ///     Some(())
@@ -1066,31 +1069,10 @@ impl<'a> EntityView<'a> {
     /// assert!(has_run.is_some());
     ///
     /// ```
-    pub fn try_map<T: GetTuple, Return>(
+    fn try_map<T: GetTuple>(
         self,
         callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Option<Return>,
-    ) -> Option<Return> {
-        let record = unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) };
-
-        if unsafe { (*record).table.is_null() } {
-            return None;
-        }
-
-        let tuple_data = T::create_ptrs::<false>(self.world, self.id, record);
-        let has_all_components = tuple_data.has_all_components();
-
-        let ret = if has_all_components {
-            let tuple = tuple_data.get_tuple();
-            self.world.defer_begin();
-            let val = callback(tuple);
-            self.world.defer_end();
-            val
-        } else {
-            None
-        };
-
-        ret
-    }
+    ) -> Option<Return>;
 
     /// gets mutable or immutable component(s) and/or relationship(s) from an entity in a callback.
     /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
@@ -1143,7 +1125,7 @@ impl<'a> EntityView<'a> {
     ///
     /// let position_parent = Position { x: 20.0, y: 30.0 };
     ///
-    /// let pos_actual = entity.map::<&Position, _>(|pos| {
+    /// let pos_actual = entity.map::<&Position>(|pos| {
     ///     assert_eq!(pos.x, 10.0);
     ///     // Calculate actual position
     ///     Position {
@@ -1152,14 +1134,14 @@ impl<'a> EntityView<'a> {
     ///     }
     /// });
     ///
-    /// let pos_x = entity.map::<(Option<&Velocity>, &Position),_>( |(vel, pos)| {
+    /// let pos_x = entity.map::<(Option<&Velocity>, &Position)>( |(vel, pos)| {
     ///     assert_eq!(pos.x, 10.0);
     ///     assert!(vel.is_none());
     ///     pos.x
     /// });
     /// assert_eq!(pos_x, 10.0);
     ///
-    /// let is_x_10 = entity.map::<(&mut(Tag,Position), &Position), _>(|(tag_pos_rel, pos)| {
+    /// let is_x_10 = entity.map::<(&mut(Tag,Position), &Position)>(|(tag_pos_rel, pos)| {
     ///     assert_eq!(pos.x, 10.0);
     ///     assert_eq!(tag_pos_rel.x, 30.0);
     ///     pos.x == 10.0
@@ -1167,10 +1149,37 @@ impl<'a> EntityView<'a> {
     /// assert!(is_x_10);
     ///
     /// ```
-    pub fn map<T: GetTuple, Return>(
+    fn map<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return) -> Return;
+}
+
+impl<'a, Return> EntityViewMap<Return> for EntityView<'a> {
+    fn try_map<T: GetTuple>(
         self,
-        callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return,
-    ) -> Return {
+        callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Option<Return>,
+    ) -> Option<Return> {
+        let record = unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) };
+
+        if unsafe { (*record).table.is_null() } {
+            return None;
+        }
+
+        let tuple_data = T::create_ptrs::<false>(self.world, self.id, record);
+        let has_all_components = tuple_data.has_all_components();
+
+        let ret = if has_all_components {
+            let tuple = tuple_data.get_tuple();
+            self.world.defer_begin();
+            let val = callback(tuple);
+            self.world.defer_end();
+            val
+        } else {
+            None
+        };
+
+        ret
+    }
+
+    fn map<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return) -> Return {
         let record = unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) };
 
         if unsafe { (*record).table.is_null() } {
@@ -1186,7 +1195,9 @@ impl<'a> EntityView<'a> {
 
         ret
     }
+}
 
+impl<'a> EntityView<'a> {
     /// Get component value or pair as untyped pointer
     ///
     /// # Arguments

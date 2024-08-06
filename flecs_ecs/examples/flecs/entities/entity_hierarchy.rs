@@ -23,7 +23,7 @@ fn iterate_tree(entity: EntityView, position_parent: &Position) {
     println!("{} [{:?}]", entity.path().unwrap(), entity.archetype());
 
     // Map is the same as get, but allows you to return a value
-    let pos_actual = entity.map::<&Position, _>(|pos| {
+    let pos_actual = entity.map::<&Position>(|pos| {
         // Calculate actual position
         Position {
             x: pos.x + position_parent.x,
