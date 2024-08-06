@@ -408,6 +408,7 @@ impl<'a> UntypedComponent<'a> {
             unit,
             count,
             offset,
+            explicit_offset: true,
         };
 
         entity.set(member);

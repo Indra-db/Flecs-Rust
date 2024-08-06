@@ -7205,6 +7205,8 @@ pub struct EcsMember {
     pub unit: ecs_entity_t,
     #[doc = "< Member offset."]
     pub offset: i32,
+    #[doc = "< Is the offset explicitly set."]
+    pub explicit_offset: bool,
 }
 #[doc = "Type expressing a range for a member value"]
 #[repr(C)]
