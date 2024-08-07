@@ -4,6 +4,7 @@ use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
 #[repr(C)]
+#[meta]
 pub enum Color {
     Red,
     Green,
@@ -11,6 +12,7 @@ pub enum Color {
 }
 
 #[derive(Debug, Component)]
+#[meta]
 pub struct TypeWithEnum {
     pub color: Color,
 }
@@ -20,16 +22,19 @@ fn main() {
     let mut world = World::new();
 
     // Register the Color component
-    world
-        .component::<Color>()
-        .constant("Red", Color::Red as i32)
-        .constant("Green", Color::Green as i32)
-        .constant("Blue", Color::Blue as i32);
+    world.component::<Color>().meta();
+    /* Alternatively, you can do it manually like so (without the derive macro)
+    .constant("Red", Color::Red as i32)
+    .constant("Green", Color::Green as i32)
+    .constant("Blue", Color::Blue as i32);
+    */
 
     // Register the TypeWithEnum component
-    world
-        .component::<TypeWithEnum>()
-        .member::<Color>("color", 1, offset_of!(TypeWithEnum, color));
+    world.component::<TypeWithEnum>().meta();
+
+    /* Alternatively, you can do it manually like so (without the derive macro)
+    .member::<Color>("color", 1, offset_of!(TypeWithEnum, color));
+     */
 
     // Create a new entity
     let e = world.entity().set(TypeWithEnum {

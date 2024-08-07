@@ -3,6 +3,7 @@ use crate::z_ignore_test_common::*;
 use flecs_ecs::prelude::*;
 
 #[derive(Component)]
+#[meta]
 pub struct TypeWithEntity {
     pub e: Entity,
 }
@@ -13,9 +14,11 @@ fn main() {
 
     // Using Entity directly would resolve to a u64 datatype, so
     // use flecs::meta::Entity instead.
-    world
-        .component::<TypeWithEntity>()
-        .member::<flecs::meta::Entity>("e", 1, offset_of!(TypeWithEntity, e));
+    world.component::<TypeWithEntity>().meta();
+
+    /* Alternatively, you can do it manually like so (without the derive macro)
+    .member::<Entity>("e", 1, offset_of!(TypeWithEntity, e));
+    */
 
     let bar = world.entity_named("bar");
 

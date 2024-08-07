@@ -7,18 +7,21 @@ use flecs_ecs::sys;
 use json::IterToJsonDesc;
 
 #[derive(Component)]
+#[meta]
 pub struct Position {
     pub x: f32,
     pub y: f32,
 }
 
 #[derive(Component)]
+#[meta]
 pub struct Velocity {
     pub x: f32,
     pub y: f32,
 }
 
 #[derive(Component)]
+#[meta]
 pub struct Mass {
     pub value: f32,
 }
@@ -28,19 +31,11 @@ fn main() {
     let world = World::new();
 
     // Register components with reflection data
-    world
-        .component::<Position>()
-        .member::<f32>("x", 1, offset_of!(Position, x))
-        .member::<f32>("y", 1, offset_of!(Position, y));
+    world.component::<Position>().meta();
 
-    world
-        .component::<Velocity>()
-        .member::<f32>("x", 1, offset_of!(Velocity, x))
-        .member::<f32>("y", 1, offset_of!(Velocity, y));
+    world.component::<Velocity>().meta();
 
-    world
-        .component::<Mass>()
-        .member::<f32>("value", 1, offset_of!(Mass, value));
+    world.component::<Mass>().meta();
 
     world
         .entity_named("a")

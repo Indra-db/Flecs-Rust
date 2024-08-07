@@ -3,12 +3,14 @@ use crate::z_ignore_test_common::*;
 use flecs_ecs::prelude::*;
 
 #[derive(Default, Component)]
+#[meta]
 pub struct Point {
     pub x: f32,
     pub y: f32,
 }
 
 #[derive(Default, Component)]
+#[meta]
 pub struct Line {
     pub start: Point,
     pub stop: Point,
@@ -18,15 +20,9 @@ pub struct Line {
 fn main() {
     let world = World::new();
 
-    world
-        .component::<Point>()
-        .member::<f32>("x", 1, offset_of!(Point, x))
-        .member::<f32>("y", 1, offset_of!(Point, y));
+    world.component::<Point>().meta();
 
-    world
-        .component::<Line>()
-        .member::<Point>("start", 1, offset_of!(Line, start))
-        .member::<Point>("stop", 1, offset_of!(Line, stop));
+    world.component::<Line>().meta();
 
     // Create entity, set value of Line using reflection API
     let e = world.entity().add::<Line>();
