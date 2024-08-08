@@ -22,7 +22,6 @@ pub struct Mass {
     pub value: f32,
 }
 
-#[test]
 fn main() {
     let world = World::new();
 
@@ -125,4 +124,12 @@ fn main() {
     //        }
     //      ]
     //    }
+}
+
+#[cfg(feature = "flecs_nightly_tests")]
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("reflection_query_to_json".to_string());
 }

@@ -8,7 +8,6 @@ pub struct TypeWithEntity {
     pub e: Entity,
 }
 
-#[test]
 fn main() {
     let mut world = World::new();
 

@@ -16,7 +16,6 @@ pub struct Line {
     pub stop: Point,
 }
 
-#[test]
 fn main() {
     let world = World::new();
 
@@ -37,4 +36,12 @@ fn main() {
 
     // Output:
     //  {start: {x: 10, y: 20}, stop: {x: 30, y: 40}}
+}
+
+#[cfg(feature = "flecs_nightly_tests")]
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("reflection_nested_struct".to_string());
 }

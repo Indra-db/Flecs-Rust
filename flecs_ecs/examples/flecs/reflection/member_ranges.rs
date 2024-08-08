@@ -8,7 +8,6 @@ pub struct CpuUtilization {
     pub value: f64,
 }
 
-#[test]
 fn main() {
     let mut world = World::new();
 

@@ -2,7 +2,6 @@ use crate::z_ignore_test_common::*;
 
 use flecs_ecs::prelude::*;
 
-#[test]
 fn main() {
     let world = World::new();
 
@@ -28,4 +27,12 @@ fn main() {
 
     // Output
     //  {x: 10, y: 20}
+}
+
+#[cfg(feature = "flecs_nightly_tests")]
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("reflection_runtime_component".to_string());
 }

@@ -54,7 +54,6 @@ impl Sandwich {
     }
 }
 
-#[test]
 fn main() {
     let world = World::new();
 
@@ -80,4 +79,12 @@ fn main() {
 
     // Output:
     //  {toppings: lettuce|bacon}
+}
+
+#[cfg(feature = "flecs_nightly_tests")]
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("reflection_bitmask".to_string());
 }

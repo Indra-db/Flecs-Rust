@@ -17,7 +17,6 @@ pub struct TypeWithEnum {
     pub color: Color,
 }
 
-#[test]
 fn main() {
     let mut world = World::new();
 
@@ -49,4 +48,12 @@ fn main() {
 
     // Output:
     //  TypeWithEnum: {color: Green}
+}
+
+#[cfg(feature = "flecs_nightly_tests")]
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("reflection_basics_simple_enum".to_string());
 }

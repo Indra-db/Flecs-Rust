@@ -32,3 +32,11 @@ fn main() {
     // Output:
     //  Position: {x: 2, y: 4}
 }
+
+#[cfg(feature = "flecs_nightly_tests")]
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("reflection_basics".to_string());
+}

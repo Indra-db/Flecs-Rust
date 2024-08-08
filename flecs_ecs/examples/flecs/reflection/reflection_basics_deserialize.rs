@@ -9,7 +9,6 @@ pub struct Position {
     pub y: f32,
 }
 
-#[test]
 fn main() {
     let world = World::new();
 
@@ -51,4 +50,12 @@ fn main() {
     // Output:
     //  {x: 10, y: 20}
     //  {x: 20, y: 10}
+}
+
+#[cfg(feature = "flecs_nightly_tests")]
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("reflection_deserialize".to_string());
 }

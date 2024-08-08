@@ -9,7 +9,6 @@ pub struct Position {
     pub y: f32,
 }
 
-#[test]
 fn main() {
     let mut world = World::new();
 
@@ -38,4 +37,12 @@ fn main() {
 
     // Output:
     // Entity: {"name":"#547", "components":{"Position":{"x":2, "y":4}}}
+}
+
+#[cfg(feature = "flecs_nightly_tests")]
+#[test]
+fn test() {
+    let output_capture = OutputCapture::capture().unwrap();
+    main();
+    output_capture.test("reflection_basics_json".to_string());
 }
