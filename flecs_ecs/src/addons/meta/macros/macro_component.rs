@@ -49,7 +49,10 @@ pub mod type_equality {
             const _: () = {
                 #[allow(unused)]
                 fn dummy(v: $t) {
-                    $crate::addons::meta::macros::type_equality::ty_must_eq::<_, $ti>(v.$i);
+                    $crate::addons::meta::macros::macro_component::type_equality::ty_must_eq::<
+                        _,
+                        $ti,
+                    >(v.$i);
                 }
             };
         };
@@ -279,7 +282,7 @@ macro_rules! component_ext {
         let component = world.component_named_ext(::flecs_ecs::prelude::id!(world, Option<$component>), $crate::component_type_stringify!(Option<$component>));
         component.opaque_func_id::<_, $component>(
             *component.id(),
-            $crate::addons::meta::macros::opaque_option_struct::<$component>,
+            $crate::addons::meta::macros::macro_component::opaque_option_struct::<$component>,
         );
     }};
 

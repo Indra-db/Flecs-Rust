@@ -16,6 +16,7 @@ pub use builtin::*;
 pub use component_id_fetcher::*;
 pub use cursor::*;
 pub use declarations::*;
+pub use macros::*;
 use meta_traits::MetaMember;
 pub use opaque::*;
 
