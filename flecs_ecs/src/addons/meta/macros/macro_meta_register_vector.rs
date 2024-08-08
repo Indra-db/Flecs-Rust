@@ -59,6 +59,8 @@
 /// world.component::<Point>().meta();
 ///
 /// meta_register_vector_type!(&world, Point::new(0.0, 0.0));
+/// // if default is available, one can use that as well
+/// // meta_register_vector_type!(&world, Point::default());
 ///
 /// //this then later on can be used like this...
 /// let id = id!(&world, Vec<Point>);
