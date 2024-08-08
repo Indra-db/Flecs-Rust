@@ -279,7 +279,7 @@ fn meta_partial_struct_custom_offset() {
 
     let c = world
         .component::<Position>()
-        .member::<f32>(("y", 1, offset_of!(Position, y)));
+        .member::<f32>(("y", Count(1), offset_of!(Position, y)));
 
     assert!(c.id() != 0);
 
@@ -361,7 +361,7 @@ fn meta_bitmask() {
 
     world.component::<Sandwich>().member::<Toppings>((
         "toppings",
-        1,
+        Count(1),
         offset_of!(Sandwich, toppings),
     ));
 
@@ -799,8 +799,8 @@ fn meta_struct_member_ptr() {
 
     let n = world
         .component::<Nested>()
-        .member::<Test>(("a", 1, offset_of!(Nested, a)))
-        .member_id(t2, ("b", 2, offset_of!(Nested, b)));
+        .member::<Test>(("a", Count(1), offset_of!(Nested, a)))
+        .member_id(t2, ("b", Count(2), offset_of!(Nested, b)));
 
     //validate Test #1
     assert!(t.id() != 0);

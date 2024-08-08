@@ -123,7 +123,7 @@ fn impl_meta(input: &DeriveInput, has_repr_c: bool, struct_name: Ident) -> Token
 
                     if let Some(field_name) = field_name {
                         meta_fields_impl.push(quote! {
-                            .member_id(id!(world, #field_type), (stringify!(#field_name), 1, core::mem::offset_of!(#struct_name, #field_name)))
+                            .member_id(id!(world, #field_type), (stringify!(#field_name), flecs_ecs::addons::meta::Count(1), core::mem::offset_of!(#struct_name, #field_name)))
                         });
                     } else {
                         meta_fields_impl.push( quote! {

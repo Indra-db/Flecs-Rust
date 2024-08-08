@@ -1,3 +1,5 @@
+use super::Count;
+
 /// Meant to be used with `.member` method of (untyped) components.
 /// This is to allow an unified function API to allow arbitrary number of arguments.
 /// valid options are (name : &'static str,), (name: &'static str, count: i32), (name: &'static str, count: i32, offset: i32)
@@ -43,14 +45,14 @@ impl MetaMember for (&'static str,) {
     }
 }
 
-impl MetaMember for (&'static str, i32) {
+impl MetaMember for (&'static str, Count) {
     const USE_OFFSET: bool = false;
     fn name(&self) -> &str {
         self.0
     }
 
     fn count(&self) -> i32 {
-        self.1
+        self.1 .0
     }
 
     fn offset(&self) -> i32 {
@@ -58,14 +60,14 @@ impl MetaMember for (&'static str, i32) {
     }
 }
 
-impl MetaMember for (&'static str, i32, usize) {
+impl MetaMember for (&'static str, Count, usize) {
     const USE_OFFSET: bool = true;
     fn name(&self) -> &str {
         self.0
     }
 
     fn count(&self) -> i32 {
-        self.1
+        self.1 .0
     }
 
     fn offset(&self) -> i32 {

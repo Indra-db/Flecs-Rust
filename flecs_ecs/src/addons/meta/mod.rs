@@ -25,6 +25,9 @@ use crate::core::*;
 use crate::core::ecs_assert;
 use crate::sys;
 
+//used for `.member` functions
+pub struct Count(pub i32);
+
 impl World {
     /// Find or register component.
     ///
