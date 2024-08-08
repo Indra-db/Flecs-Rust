@@ -139,19 +139,19 @@ fn main() {
 
     query.run_iter(|it, (pos,)| {
         let group = world.entity_from_id(it.group_id());
-        // let ctx = unsafe { &*(query.group_context(group) as *mut GroupCtx) };
-        // println!(
-        //     "Group: {:?} - Table: [{:?}] - Counter: {}",
-        //     group.path().unwrap(),
-        //     it.archetype(),
-        //     ctx.counter
-        // );
+        let ctx = unsafe { &*(query.group_context(group) as *mut GroupCtx) };
+        println!(
+            "Group: {:?} - Table: [{:?}] - Counter: {}",
+            group.path().unwrap(),
+            it.archetype(),
+            ctx.counter
+        );
 
-        // for i in it.iter() {
-        //     println!(" [{:?}]", pos[i]);
-        // }
+        for i in it.iter() {
+            println!(" [{:?}]", pos[i]);
+        }
 
-        // println!();
+        println!();
     });
 
     // Deleting the query will call the on_group_deleted callback

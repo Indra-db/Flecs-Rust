@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"\"{\\\"a\\\":10, \\\"b\\\":20, \\\"result\\\":30}\"\n\"{\\\"a\\\":22, \\\"b\\\":20, \\\"result\\\":42}\"\n"
