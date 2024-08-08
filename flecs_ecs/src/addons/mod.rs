@@ -34,10 +34,11 @@ pub trait Meta<Component> {
 }
 
 impl<'a, T: Meta<T>> crate::core::Component<'a, T> {
-    pub fn meta(self) {
+    pub fn meta(self) -> Self {
         #[cfg(feature = "flecs_meta")]
         {
             T::meta(self);
         }
+        self
     }
 }

@@ -7,6 +7,7 @@ mod impl_bindings;
 mod impl_primitives;
 pub mod macros;
 mod meta_functions;
+mod meta_traits;
 mod opaque;
 
 use std::ffi::c_void;
@@ -15,6 +16,7 @@ pub use builtin::*;
 pub use component_id_fetcher::*;
 pub use cursor::*;
 pub use declarations::*;
+use meta_traits::MetaMember;
 pub use opaque::*;
 
 use crate::core::*;
@@ -374,15 +376,13 @@ impl<'a> UntypedComponent<'a> {
     /// # See also
     ///
     /// * C++ API: `untyped_component::member`
-    pub fn member_id_unit(
+    pub fn member_id_unit<Meta: MetaMember>(
         self,
         type_id: impl Into<Entity>,
         unit: impl Into<Entity>,
-        name: &str,
-        count: i32,
-        offset: i32,
+        data: Meta,
     ) -> Self {
-        let name = compact_str::format_compact!("{}\0", name);
+        let name = compact_str::format_compact!("{}\0", data.name());
         let world = self.world_ptr_mut();
         let id = *self.id;
         let type_id = *type_id.into();
@@ -405,9 +405,9 @@ impl<'a> UntypedComponent<'a> {
         let member: sys::EcsMember = sys::EcsMember {
             type_: type_id,
             unit,
-            count,
-            offset,
-            explicit_offset: true,
+            count: data.count(),
+            offset: data.offset(),
+            explicit_offset: Meta::USE_OFFSET,
         };
 
         entity.set(member);
@@ -419,14 +419,8 @@ impl<'a> UntypedComponent<'a> {
     /// # See also
     ///
     /// * C++ API: `untyped_component::member`
-    pub fn member_id(
-        self,
-        type_id: impl Into<Entity>,
-        name: &str,
-        count: i32,
-        offset: i32,
-    ) -> Self {
-        self.member_id_unit(type_id, 0, name, count, offset)
+    pub fn member_id(self, type_id: impl Into<Entity>, data: impl MetaMember) -> Self {
+        self.member_id_unit(type_id, 0, data)
     }
 
     /// Add member.
@@ -434,8 +428,8 @@ impl<'a> UntypedComponent<'a> {
     /// # See also
     ///
     /// * C++ API: `untyped_component::member`
-    pub fn member<T: ComponentId>(self, name: &str, count: i32, offset: i32) -> Self {
-        self.member_id(T::get_id(self.world()), name, count, offset)
+    pub fn member<T: ComponentId>(self, data: impl MetaMember) -> Self {
+        self.member_id(T::get_id(self.world()), data)
     }
 
     /// Add member with unit.
@@ -446,11 +440,9 @@ impl<'a> UntypedComponent<'a> {
     pub fn member_unit<T: ComponentId>(
         self,
         unit: impl Into<Entity>,
-        name: &str,
-        count: i32,
-        offset: i32,
+        data: impl MetaMember,
     ) -> Self {
-        self.member_id_unit(T::get_id(self.world()), unit, name, count, offset)
+        self.member_id_unit(T::get_id(self.world()), unit, data)
     }
 
     /// Add member with unit typed.
@@ -458,19 +450,8 @@ impl<'a> UntypedComponent<'a> {
     /// # See also
     ///
     /// * C++ API: `untyped_component::member`
-    pub fn member_unit_type<T: ComponentId, U: ComponentId>(
-        self,
-        name: &str,
-        count: i32,
-        offset: i32,
-    ) -> Self {
-        self.member_id_unit(
-            T::get_id(self.world()),
-            U::get_id(self.world()),
-            name,
-            count,
-            offset,
-        )
+    pub fn member_unit_type<T: ComponentId, U: ComponentId>(self, data: impl MetaMember) -> Self {
+        self.member_id_unit(T::get_id(self.world()), U::get_id(self.world()), data)
     }
 
     //TODO

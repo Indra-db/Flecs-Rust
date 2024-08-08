@@ -3778,6 +3778,26 @@ impl World {
         Component::<T::UnderlyingType>::new_named(self, name)
     }
 
+    /// Create new untyped component.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::component`
+    #[doc(alias = "world::component")]
+    pub fn component_untyped(&self) -> UntypedComponent {
+        UntypedComponent::new(self) 
+    }
+
+        /// Create new named untyped component.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::component`
+    #[doc(alias = "world::component")]
+    pub fn component_untyped_named(&self, name: &str) -> UntypedComponent {
+        UntypedComponent::new_named(self,name) 
+    }
+
     /// Find or register untyped component.
     ///
     /// # Type Parameters
@@ -3792,8 +3812,8 @@ impl World {
     ///
     /// * C++ API: `world::component`
     #[doc(alias = "world::component")]
-    pub fn component_untyped<T: ComponentId>(&self) -> UntypedComponent {
-        UntypedComponent::new(self, T::id(self))
+    pub fn component_untyped_from<T: ComponentId>(&self) -> UntypedComponent {
+        UntypedComponent::new_from(self, T::id(self)) 
     }
 
     /// Find or register untyped component.
@@ -3810,8 +3830,8 @@ impl World {
     ///
     /// * C++ API: `world::component`
     #[doc(alias = "world::component")]
-    pub fn component_untyped_id(&self, id: impl Into<Entity>) -> UntypedComponent {
-        UntypedComponent::new(self, id)
+    pub fn component_untyped_from_id(&self, id: impl Into<Entity>) -> UntypedComponent {
+        UntypedComponent::new_from(self, id)
     }
 
     /// Convert enum constant to entity

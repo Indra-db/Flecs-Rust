@@ -110,11 +110,11 @@ macro_rules! member {
 macro_rules! member_ext {
     ($world:expr, $compvar:ident: $component:ty, $name:tt : [$type:ty; $n:literal]) => {
         $crate::assert_is_type!($component, $name: [$type; $n]);
-        $compvar.member_id(::flecs_ecs::prelude::id!($world, $type), ::core::stringify!($name), $n, ::core::mem::offset_of!($component, $name).try_into().unwrap())
+        $compvar.member_id(::flecs_ecs::prelude::id!($world, $type), (::core::stringify!($name), $n, ::core::mem::offset_of!($component, $name).try_into().unwrap()))
     };
     ($world:expr, $compvar:ident: $component:ty, $name:tt : $type:ty) => {
         $crate::assert_is_type!($component, $name: $type);
-        $compvar.member_id(::flecs_ecs::prelude::id!($world, $type), ::core::stringify!($name), 1, ::core::mem::offset_of!($component, $name).try_into().unwrap())
+        $compvar.member_id(::flecs_ecs::prelude::id!($world, $type), (::core::stringify!($name), 1, ::core::mem::offset_of!($component, $name).try_into().unwrap()))
     };
     ($world:expr, $component:ty, $name:tt : $($tail:tt)*) => {{
         let world = $world;
@@ -330,8 +330,8 @@ pub fn opaque_option_struct<T: Default>(world: WorldRef) -> Opaque<Option<T>, T>
     }
     let dummy = world.component_ext(id!(&world, Dummy<T>));
     if !dummy.has::<flecs::meta::Type>() {
-        dummy.member_id(id!(&world, bool), "None", 1, offset_of!(Dummy<T>, None));
-        dummy.member_id(id!(&world, T), "Some", 1, offset_of!(Dummy<T>, Some));
+        dummy.member_id(id!(&world, bool), ("None", 1, offset_of!(Dummy<T>, None)));
+        dummy.member_id(id!(&world, T), ("Some", 1, offset_of!(Dummy<T>, Some)));
     }
     ts.as_type(dummy.id());
 

@@ -54,6 +54,7 @@ impl Sandwich {
     }
 }
 
+#[test]
 fn main() {
     let world = World::new();
 
@@ -63,9 +64,7 @@ fn main() {
         .bit("lettuce", Toppings::LETTUCE)
         .bit("tomato", Toppings::TOMATO);
 
-    world
-        .component::<Sandwich>()
-        .member::<Toppings>("toppings", 1, offset_of!(Sandwich, toppings));
+    world.component::<Sandwich>().member::<Toppings>("toppings");
 
     // Create entity with Sandwich
     let e = world.entity().set(Sandwich {

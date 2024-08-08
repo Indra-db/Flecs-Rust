@@ -14,13 +14,13 @@ pub struct Component<'a, T> {
     _marker: PhantomData<T>,
 }
 
-impl<'a, T: ComponentId> Clone for Component<'a, T> {
+impl<'a, T> Clone for Component<'a, T> {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl<'a, T: ComponentId> Copy for Component<'a, T> {}
+impl<'a, T> Copy for Component<'a, T> {}
 
 impl<'a, T> Deref for Component<'a, T> {
     type Target = UntypedComponent<'a>;
@@ -47,7 +47,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
 
         let world = world.world();
         Self {
-            base: UntypedComponent::new(world, id),
+            base: UntypedComponent::new_from(world, id),
             _marker: PhantomData,
         }
     }
@@ -68,7 +68,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
 
         let world = world.world();
         Self {
-            base: UntypedComponent::new(world, id),
+            base: UntypedComponent::new_from(world, id),
             _marker: PhantomData,
         }
     }
@@ -88,7 +88,7 @@ impl<'a, T> Component<'a, T> {
         let world = world.world();
 
         Self {
-            base: UntypedComponent::new(world, id),
+            base: UntypedComponent::new_from(world, id),
             _marker: PhantomData,
         }
     }
@@ -121,7 +121,7 @@ impl<'a, T> Component<'a, T> {
         );
 
         Self {
-            base: UntypedComponent::new(world, id),
+            base: UntypedComponent::new_from(world, id),
             _marker: PhantomData,
         }
     }

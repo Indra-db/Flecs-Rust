@@ -3,6 +3,7 @@ use crate::z_ignore_test_common::*;
 use flecs_ecs::prelude::*;
 
 #[derive(Component)]
+#[meta]
 pub struct CpuUtilization {
     pub value: f64,
 }
@@ -13,7 +14,7 @@ fn main() {
 
     world
         .component::<CpuUtilization>()
-        .member::<f64>("value", 1, offset_of!(CpuUtilization, value))
+        .meta()
         .range(0.0, 100.0) // Specifics values that the member can assume
         .warning_range(0.0, 60.0) // Values outside this range are considered a warning
         .error_range(0.0, 80.0); // Values outside this range are considered an error
