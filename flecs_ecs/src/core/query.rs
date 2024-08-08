@@ -90,8 +90,7 @@ where
             }
             // we need to free a poly if the refcount is bigger than 1, this happens when the query is cloned
             else {
-                let header =
-                    self.query_ptr() as *const sys::ecs_query_t as *const sys::ecs_header_t;
+                let header = self.query_ptr() as *const sys::ecs_header_t;
                 let ref_count_bigger_than_1 = (*header).refcount > 1;
                 if ref_count_bigger_than_1 {
                     sys::flecs_poly_release_(self.query.as_ptr() as *mut c_void);

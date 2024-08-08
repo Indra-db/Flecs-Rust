@@ -99,7 +99,7 @@ impl<'a, T> Component<'a, T> {
     ///
     /// * `world`: the world.
     /// * `name`: the name of the component.
-    /// Return the component as an entity
+    ///    Return the component as an entity
     ///
     /// # See also
     ///
