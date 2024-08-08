@@ -9,7 +9,7 @@ macro_rules! generate_vec_meta_registration {
                 let id = id!($world, Vec<$t>);
                 $world
                     .component_ext::<Vec<$t>>(id)
-                    .opaque_func_id::<_, $t>(id, std_vector_support::<$t>);
+                    .opaque_func_id::<_, $t>(id, meta_register_vector_default::<$t>);
             }
         )*
     };
@@ -86,7 +86,7 @@ fn std_string_support(world: WorldRef) -> Opaque<String> {
     ts
 }
 
-pub fn std_vector_support<T: Default>(world: WorldRef) -> Opaque<Vec<T>, T> {
+pub fn meta_register_vector_default<T: Default>(world: WorldRef) -> Opaque<Vec<T>, T> {
     let mut ts = Opaque::<Vec<T>, T>::new(world);
 
     // Let reflection framework know what kind of type this is

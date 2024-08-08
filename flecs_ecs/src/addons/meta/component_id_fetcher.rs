@@ -91,7 +91,7 @@ macro_rules! id {
 pub use id;
 
 #[cfg(test)]
-mod test {
+mod tests {
     use flecs_ecs::prelude::*;
     #[test]
     fn meta_id_macro_test() {
