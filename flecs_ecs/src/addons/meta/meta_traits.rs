@@ -1,4 +1,10 @@
+/// Meant to be used with `.member` method of (untyped) components.
+/// This is to allow an unified function API to allow arbitrary number of arguments.
+/// valid options are (name : &'static str,), (name: &'static str, count: i32), (name: &'static str, count: i32, offset: i32)
 pub trait MetaMember: 'static {
+    /// Whether to use explicit offset or not
+    /// when false, flecs calculates the offset for us, this is useful for simple structs.
+    /// but might fail for more complex structs.
     const USE_OFFSET: bool;
 
     fn name(&self) -> &str;

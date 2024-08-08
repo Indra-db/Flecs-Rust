@@ -373,6 +373,11 @@ impl<'a> UntypedComponent<'a> {
 
     /// Add member with unit.
     ///
+    /// [`MetaMember`] is a trait that accepts the following options:
+    /// (name : &'static str,),
+    /// (name: &'static str, count: i32),
+    /// (name: &'static str, count: i32, offset: i32)
+    ///
     /// # See also
     ///
     /// * C++ API: `untyped_component::member`
@@ -416,6 +421,11 @@ impl<'a> UntypedComponent<'a> {
 
     /// Add member.
     ///
+    /// [`MetaMember`] is a trait that accepts the following options:
+    /// (name : &'static str,),
+    /// (name: &'static str, count: i32),
+    /// (name: &'static str, count: i32, offset: i32)
+    ///
     /// # See also
     ///
     /// * C++ API: `untyped_component::member`
@@ -425,6 +435,11 @@ impl<'a> UntypedComponent<'a> {
 
     /// Add member.
     ///
+    /// [`MetaMember`] is a trait that accepts the following options:
+    /// (name : &'static str,),
+    /// (name: &'static str, count: i32),
+    /// (name: &'static str, count: i32, offset: i32)
+    ///
     /// # See also
     ///
     /// * C++ API: `untyped_component::member`
@@ -433,6 +448,11 @@ impl<'a> UntypedComponent<'a> {
     }
 
     /// Add member with unit.
+    ///
+    /// [`MetaMember`] is a trait that accepts the following options:
+    /// (name : &'static str,),
+    /// (name: &'static str, count: i32),
+    /// (name: &'static str, count: i32, offset: i32)
     ///
     /// # See also
     ///
@@ -446,6 +466,11 @@ impl<'a> UntypedComponent<'a> {
     }
 
     /// Add member with unit typed.
+    ///
+    /// [`MetaMember`] is a trait that accepts the following options:
+    /// (name : &'static str,),
+    /// (name: &'static str, count: i32),
+    /// (name: &'static str, count: i32, offset: i32)
     ///
     /// # See also
     ///
