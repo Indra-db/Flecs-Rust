@@ -72,7 +72,6 @@ extern "C" fn callback_group_delete(
     // or use the callback group_by_ctx where you pass a context to the callback
 }
 
-#[test]
 fn main() {
     let world = World::new();
 
