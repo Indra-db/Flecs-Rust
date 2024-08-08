@@ -1,5 +1,9 @@
 name: CI
 
+env:
+  # When changing this, also update the `rust-version` in the workspace `Cargo.toml`
+  RUST_MIN_VER: "1.79"
+
 on:
   push:
     branches:
@@ -67,6 +71,20 @@ jobs:
         run: cargo build --target aarch64-apple-ios --all-targets --workspace
       - name: cargo clippy
         run: cargo clippy --target aarch64-apple-ios --all-targets --workspace
+
+  build-msrv:
+    runs-on: ubuntu-latest
+    name: cargo build (MSRV)
+    env:
+        RUSTFLAGS: -Dwarnings
+    steps:
+      - uses: actions/checkout@v4
+      - name: install MSRV toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_MIN_VER }}
+      - name: cargo build
+        run: cargo build
 
   build-doc:
     name: cargo docs-rs
