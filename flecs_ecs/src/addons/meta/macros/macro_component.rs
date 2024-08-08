@@ -113,11 +113,11 @@ macro_rules! member {
 macro_rules! member_ext {
     ($world:expr, $compvar:ident: $component:ty, $name:tt : [$type:ty; $n:literal]) => {
         $crate::assert_is_type!($component, $name: [$type; $n]);
-        $compvar.member_id(::flecs_ecs::prelude::id!($world, $type), (::core::stringify!($name), Count($n), ::core::mem::offset_of!($component, $name).try_into().unwrap()))
+        $compvar.member_id(::flecs_ecs::prelude::id!($world, $type), (::core::stringify!($name), flecs_ecs::addons::meta::Count($n), ::core::mem::offset_of!($component, $name).try_into().unwrap()))
     };
     ($world:expr, $compvar:ident: $component:ty, $name:tt : $type:ty) => {
         $crate::assert_is_type!($component, $name: $type);
-        $compvar.member_id(::flecs_ecs::prelude::id!($world, $type), (::core::stringify!($name), Count(1), ::core::mem::offset_of!($component, $name).try_into().unwrap()))
+        $compvar.member_id(::flecs_ecs::prelude::id!($world, $type), (::core::stringify!($name), flecs_ecs::addons::meta::Count(1), ::core::mem::offset_of!($component, $name).try_into().unwrap()))
     };
     ($world:expr, $component:ty, $name:tt : $($tail:tt)*) => {{
         let world = $world;
