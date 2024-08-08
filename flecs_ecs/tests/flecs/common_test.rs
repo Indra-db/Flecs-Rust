@@ -76,6 +76,19 @@ pub struct Position {
 }
 
 #[derive(Debug, Component, Default)]
+#[meta]
+pub struct Point {
+    x: f32,
+    pub y: f32,
+}
+
+impl Point {
+    pub fn new(x: f32, y: f32) -> Self {
+        Point { x, y }
+    }
+}
+
+#[derive(Debug, Component, Default)]
 pub struct Velocity {
     pub x: i32,
     pub y: i32,
