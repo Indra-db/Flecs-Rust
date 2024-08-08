@@ -4,6 +4,7 @@ version = "0.1.2"
 edition.workspace = true
 license = "MIT"
 repository.workspace = true
+rust-version.workspace = true
 authors = ["Indra de Backere <debackere.indra@gmail.com>"]
 description = "sys binding for C/CPP flecs ECS library <https://github.com/SanderMertens/flecs>"
 keywords = ["flecs", "ecs", "sys"]

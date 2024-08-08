@@ -5,6 +5,7 @@ edition.workspace = true
 license = "MIT"
 repository.workspace = true
 description = "A procedural macro crate for the Flecs ECS library."
+rust-version.workspace = true
 
 [lib]
 proc-macro = true
