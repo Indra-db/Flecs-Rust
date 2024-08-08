@@ -247,7 +247,7 @@ impl<'a, T: 'static> Component<'a, T> {
     #[doc(alias = "component::opaque")]
     pub fn opaque_id(&self, id: impl Into<Entity>) -> Opaque<'a, T> {
         let id = id.into();
-        let mut opaque = Opaque::<T>::new_id(self.world(), id);
+        let mut opaque = Opaque::<T>::new(self.world());
         opaque.as_type(id);
         opaque
     }
