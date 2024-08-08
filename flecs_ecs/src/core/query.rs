@@ -76,16 +76,26 @@ where
                 return;
             }
 
+            // fn [`destruct`](crate::core::query::destruct) does not decrease the ref count, because it still calls drop.
             self.world().world_ctx_mut().dec_query_ref_count();
 
             // Only free if query is not associated with entity. Queries are associated with entities
             // when they are either named or cached, such as system, cached queries and named queries. These queries have to be either explicitly
             // deleted with the .destruct() method, or will be deleted when the
             // world is deleted.
-            if self.query.as_ref().entity == 0
-                && sys::flecs_poly_release_(self.query.as_ptr() as *mut c_void) == 0
-            {
-                sys::ecs_query_fini(self.query.as_ptr());
+            if self.query.as_ref().entity == 0 {
+                if sys::flecs_poly_release_(self.query.as_ptr() as *mut c_void) == 0 {
+                    sys::ecs_query_fini(self.query.as_ptr());
+                }
+            }
+            // we need to free a poly if the refcount is bigger than 1, this happens when the query is cloned
+            else {
+                let header =
+                    self.query_ptr() as *const sys::ecs_query_t as *const sys::ecs_header_t;
+                let ref_count_bigger_than_1 = (*header).refcount > 1;
+                if ref_count_bigger_than_1 {
+                    sys::flecs_poly_release_(self.query.as_ptr() as *mut c_void);
+                }
             }
         }
     }
@@ -260,7 +270,6 @@ where
         if unsafe { (*self.query.as_ptr()).entity } != 0 {
             let world = self.world();
             let world_ctx = world.world_ctx_mut();
-            world_ctx.dec_query_ref_count();
             if unsafe { sys::flecs_poly_release_(self.query.as_ptr() as *mut c_void) } > 0 {
                 world_ctx.set_is_panicking_true();
                 unsafe { sys::ecs_query_fini(self.query.as_ptr()) };
