@@ -11,6 +11,7 @@ use crate::core::*;
 use super::meta::FetchedId;
 
 pub type FromJsonDesc = sys::ecs_from_json_desc_t;
+pub type WorldToJsonDesc = sys::ecs_world_to_json_desc_t;
 pub type EntityToJsonDesc = sys::ecs_entity_to_json_desc_t;
 pub type IterToJsonDesc = sys::ecs_iter_to_json_desc_t;
 
@@ -183,10 +184,14 @@ impl World {
     ///
     /// * C++ API: `world::to_json`
     #[doc(alias = "world::to_json")]
-    pub fn to_json_world(&self) -> String {
+    pub fn to_json_world(&self, desc: Option<&WorldToJsonDesc>) -> String {
         let world = self.world_ptr_mut();
+        let desc_ptr = desc
+            .map(|d| d as *const WorldToJsonDesc)
+            .unwrap_or(std::ptr::null());
+
         unsafe {
-            let json_ptr = sys::ecs_world_to_json(world, std::ptr::null());
+            let json_ptr = sys::ecs_world_to_json(world, desc_ptr);
             let json = std::ffi::CStr::from_ptr(json_ptr)
                 .to_str()
                 .unwrap()

@@ -343,7 +343,7 @@ fn meta_world_ser_deser_flecs_entity() {
         assert_eq!(world.to_json::<RustEntity>(ptr), "{\"entity\":\"ent1\"}");
     });
 
-    let json = world.to_json_world();
+    let json = world.to_json_world(None);
 
     let world = World::new();
 
@@ -383,7 +383,7 @@ fn meta_new_world_ser_deser_flecs_entity() {
         assert_eq!(world.to_json::<RustEntity>(ptr), "{\"entity\":\"ent1\"}");
     });
 
-    let json = world.to_json_world();
+    let json = world.to_json_world(None);
 
     let world = World::new();
 
@@ -427,7 +427,7 @@ fn meta_new_world_ser_deser_empty_flecs_entity() {
         assert_eq!(world.to_json::<RustEntity>(ptr), "{\"entity\":\"#0\"}");
     });
 
-    let json = world.to_json_world();
+    let json = world.to_json_world(None);
 
     let world = World::new();
 
