@@ -1,3 +1,4 @@
+use core::mem::offset_of;
 use flecs_ecs::prelude::*;
 
 #[test]

@@ -58,7 +58,7 @@ impl MetaMember for (&'static str, i32) {
     }
 }
 
-impl MetaMember for (&'static str, i32, i32) {
+impl MetaMember for (&'static str, i32, usize) {
     const USE_OFFSET: bool = true;
     fn name(&self) -> &str {
         self.0
@@ -69,6 +69,6 @@ impl MetaMember for (&'static str, i32, i32) {
     }
 
     fn offset(&self) -> i32 {
-        self.2
+        self.2 as i32
     }
 }

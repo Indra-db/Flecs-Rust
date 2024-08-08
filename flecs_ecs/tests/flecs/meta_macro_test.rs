@@ -1,6 +1,7 @@
 #![allow(clippy::float_cmp)]
 use std::ffi::CStr;
 
+use core::mem::offset_of;
 use flecs_ecs::prelude::meta::*;
 use flecs_ecs::{component, prelude::*};
 use flecs_ecs_sys::ecs_world_t;
@@ -511,7 +512,7 @@ fn meta_struct_member_ptr() {
     assert!(x.has::<flecs::meta::Member>());
     x.get::<&flecs::meta::Member>(|xm| {
         assert_eq!(xm.type_, flecs::meta::I32);
-        assert_eq!(xm.offset, offset_of!(Test, x));
+        assert_eq!(xm.offset, offset_of!(Test, x) as i32);
     });
 
     //validate Test2 #2
@@ -522,7 +523,7 @@ fn meta_struct_member_ptr() {
     assert!(y.has::<flecs::meta::Member>());
     y.get::<&flecs::meta::Member>(|ym| {
         assert_eq!(ym.type_, flecs::meta::F64);
-        assert_eq!(ym.offset, offset_of!(Test2, y));
+        assert_eq!(ym.offset, offset_of!(Test2, y) as i32);
     });
 
     // Validate Nested
@@ -533,7 +534,7 @@ fn meta_struct_member_ptr() {
     assert!(a.has::<flecs::meta::Member>());
     a.get::<&flecs::meta::Member>(|am| {
         assert_eq!(am.type_, t.id());
-        let offset = offset_of!(Nested, a);
+        let offset = offset_of!(Nested, a) as i32;
         assert_eq!(am.offset, offset);
     });
 
@@ -542,7 +543,7 @@ fn meta_struct_member_ptr() {
     assert!(b.has::<flecs::meta::Member>());
     b.get::<&flecs::meta::Member>(|bm| {
         assert_eq!(bm.type_, t2.id());
-        assert_eq!(bm.offset, offset_of!(Nested, b));
+        assert_eq!(bm.offset, offset_of!(Nested, b) as i32);
         assert_eq!(bm.count, 2);
     });
 }
@@ -565,7 +566,7 @@ fn meta_struct_field_order() {
     assert!(a.has::<flecs::meta::Member>());
     a.get::<&flecs::meta::Member>(|am| {
         assert_eq!(am.type_, flecs::meta::U32);
-        assert_eq!(am.offset, offset_of!(Test, a));
+        assert_eq!(am.offset, offset_of!(Test, a) as i32);
     });
 
     assert_ne!(t.id(), 0);
@@ -574,7 +575,7 @@ fn meta_struct_field_order() {
     assert!(b.has::<flecs::meta::Member>());
     b.get::<&flecs::meta::Member>(|bm| {
         assert_eq!(bm.type_, flecs::meta::I32);
-        assert_eq!(bm.offset, offset_of!(Test, b));
+        assert_eq!(bm.offset, offset_of!(Test, b) as i32);
     });
 
     let e = world.entity().set(Test { a: 10, b: 20 });

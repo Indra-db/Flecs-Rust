@@ -333,8 +333,14 @@ pub fn opaque_option_struct<T: Default>(world: WorldRef) -> Opaque<Option<T>, T>
     }
     let dummy = world.component_ext(id!(&world, Dummy<T>));
     if !dummy.has::<flecs::meta::Type>() {
-        dummy.member_id(id!(&world, bool), ("None", 1, offset_of!(Dummy<T>, None)));
-        dummy.member_id(id!(&world, T), ("Some", 1, offset_of!(Dummy<T>, Some)));
+        dummy.member_id(
+            id!(&world, bool),
+            ("None", 1, core::mem::offset_of!(Dummy<T>, None)),
+        );
+        dummy.member_id(
+            id!(&world, T),
+            ("Some", 1, core::mem::offset_of!(Dummy<T>, Some)),
+        );
     }
     ts.as_type(dummy.id());
 

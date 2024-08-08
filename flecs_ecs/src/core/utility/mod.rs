@@ -15,12 +15,3 @@ pub use log::*;
 pub use traits::*;
 #[doc(hidden)]
 pub use types::*;
-
-#[macro_export]
-macro_rules! offset_of {
-    ($type:ty, $field:ident) => {
-        std::mem::offset_of!($type, $field) as i32
-    };
-}
-
-pub use offset_of;
