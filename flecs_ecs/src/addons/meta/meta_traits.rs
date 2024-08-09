@@ -17,14 +17,17 @@ pub trait MetaMember: 'static {
 impl MetaMember for &'static str {
     const USE_OFFSET: bool = false;
 
+    #[inline(always)]
     fn name(&self) -> &str {
         self
     }
 
+    #[inline(always)]
     fn count(&self) -> i32 {
         0
     }
 
+    #[inline(always)]
     fn offset(&self) -> i32 {
         0
     }
@@ -32,14 +35,18 @@ impl MetaMember for &'static str {
 
 impl MetaMember for (&'static str,) {
     const USE_OFFSET: bool = false;
+
+    #[inline(always)]
     fn name(&self) -> &str {
         self.0
     }
 
+    #[inline(always)]
     fn count(&self) -> i32 {
         0
     }
 
+    #[inline(always)]
     fn offset(&self) -> i32 {
         0
     }
@@ -47,14 +54,18 @@ impl MetaMember for (&'static str,) {
 
 impl MetaMember for (&'static str, Count) {
     const USE_OFFSET: bool = false;
+
+    #[inline(always)]
     fn name(&self) -> &str {
         self.0
     }
 
+    #[inline(always)]
     fn count(&self) -> i32 {
         self.1 .0
     }
 
+    #[inline(always)]
     fn offset(&self) -> i32 {
         0
     }
@@ -62,14 +73,18 @@ impl MetaMember for (&'static str, Count) {
 
 impl MetaMember for (&'static str, Count, usize) {
     const USE_OFFSET: bool = true;
+
+    #[inline(always)]
     fn name(&self) -> &str {
         self.0
     }
 
+    #[inline(always)]
     fn count(&self) -> i32 {
         self.1 .0
     }
 
+    #[inline(always)]
     fn offset(&self) -> i32 {
         self.2 as i32
     }
