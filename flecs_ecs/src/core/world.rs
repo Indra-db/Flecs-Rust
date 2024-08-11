@@ -4,6 +4,8 @@ use std::any::TypeId;
 use std::ffi::CStr;
 use std::{os::raw::c_void, ptr::NonNull};
 
+use entity_view_helper::add_id_unchecked;
+
 #[cfg(feature = "flecs_system")]
 use crate::addons::system::{System, SystemBuilder};
 
@@ -1645,7 +1647,7 @@ impl World {
     where
         First: ComponentId + ComponentType<Struct> + DataComponent,
     {
-        let entity = EntityView::new_from(self, First::id(self));
+        let mut entity = EntityView::new_from(self, First::id(self));
         entity.set_first::<First>(first, second);
     }
 
@@ -1663,7 +1665,7 @@ impl World {
     where
         Second: ComponentId + ComponentType<Struct> + DataComponent,
     {
-        let entity = EntityView::new_from(self, Second::id(self));
+        let mut entity = EntityView::new_from(self, Second::id(self));
         entity.set_second::<Second>(first, second);
     }
 
@@ -1685,7 +1687,7 @@ impl World {
             assert!(!<(First, Second) as ComponentOrPairId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
         };
 
-        let entity = EntityView::new_from(
+        let mut entity = EntityView::new_from(
             self,
             <<(First, Second) as ComponentOrPairId>::CastType as ComponentId>::id(self),
         );
@@ -2159,9 +2161,13 @@ impl World {
         // this branch will compile out in release mode
         if T::IS_PAIR {
             let first_id = id.get_id_first();
-            EntityView::new_from(self, first_id).add_id(id)
+            let mut entity = EntityView::new_from(self, first_id);
+            entity.add_id(id);
+            entity
         } else {
-            EntityView::new_from(self, id).add_id(id)
+            let mut entity = EntityView::new_from(self, id);
+            entity.add_id(id);
+            entity
         }
     }
 
@@ -2182,7 +2188,9 @@ impl World {
     #[inline(always)]
     pub fn add<T: ComponentOrPairId>(&self) -> EntityView {
         let id = T::CastType::id(self);
-        EntityView::new_from(self, id).add::<T>()
+        let mut entity = EntityView::new_from(self, id);
+        entity.add::<T>();
+        entity
     }
 
     /// Add a singleton enum component.
@@ -2204,7 +2212,9 @@ impl World {
         &self,
         enum_value: T,
     ) -> EntityView {
-        EntityView::new_from(self, T::id(self)).add_enum::<T>(enum_value)
+        let mut entity = EntityView::new_from(self, T::id(self));
+        entity.add_enum::<T>(enum_value);
+        entity
     }
 
     /// Add a singleton pair by first id.
@@ -2221,7 +2231,9 @@ impl World {
         &self,
         first: impl Into<Entity>,
     ) -> EntityView {
-        EntityView::new_from(self, Second::id(self)).add_second::<Second>(first)
+        let mut entity = EntityView::new_from(self, Second::id(self));
+        entity.add_second::<Second>(first);
+        entity
     }
 
     /// Add a singleton pair by second id.
@@ -2243,7 +2255,9 @@ impl World {
         &self,
         second: impl Into<Entity>,
     ) -> EntityView {
-        EntityView::new_from(self, First::id(self)).add_first::<First>(second)
+        let mut entity = EntityView::new_from(self, First::id(self));
+        entity.add_first::<First>(second);
+        entity
     }
 
     /// Add a singleton pair with enum tag.
@@ -2271,7 +2285,9 @@ impl World {
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        EntityView::new_from(self, First::id(self)).add_pair_enum::<First, Second>(enum_value)
+        let mut entity = EntityView::new_from(self, First::id(self));
+        entity.add_pair_enum::<First, Second>(enum_value);
+        entity
     }
 
     /// Remove singleton component by id.
@@ -2292,9 +2308,13 @@ impl World {
         let id = *id.into();
         if T::IS_PAIR {
             let first_id = id.get_id_first();
-            EntityView::new_from(self, first_id).remove_id(id)
+            let mut entity = EntityView::new_from(self, first_id);
+            entity.remove_id(id);
+            entity
         } else {
-            EntityView::new_from(self, id).remove_id(id)
+            let mut entity = EntityView::new_from(self, id);
+            entity.remove_id(id);
+            entity
         }
     }
 
@@ -3385,7 +3405,7 @@ impl World {
     /// * C++ API: `world::prefab`
     #[doc(alias = "world::prefab")]
     pub fn prefab(&self) -> EntityView {
-        let result = EntityView::new(self);
+        let mut result = EntityView::new(self);
         result.add_id(flecs::Prefab::ID);
         result
     }
@@ -3408,7 +3428,7 @@ impl World {
     /// * C++ API: `world::prefab`
     #[doc(alias = "world::prefab")]
     pub fn prefab_named<'a>(&'a self, name: &str) -> EntityView<'a> {
-        let result = EntityView::new_named(self, name);
+        let mut result = EntityView::new_named(self, name);
         result.add_id(ECS_PREFAB);
         result
     }
@@ -3431,9 +3451,9 @@ impl World {
     /// * C++ API: `world::prefab`
     #[doc(alias = "world::prefab")]
     pub fn prefab_type<T: ComponentId + TagComponent>(&self) -> EntityView {
-        let result = Component::<T>::new(self).entity;
+        let mut result = Component::<T>::new(self).entity;
         result.add_id(ECS_PREFAB);
-        unsafe { result.add_id_unchecked(T::id(self)) };
+        unsafe { add_id_unchecked(result.world_ptr_mut(), result.entity_id(), T::id(self)) };
         result
     }
 
@@ -3462,9 +3482,9 @@ impl World {
         &'a self,
         name: &str,
     ) -> EntityView<'a> {
-        let result = Component::<T>::new_named(self, name).entity;
+        let mut result = Component::<T>::new_named(self, name).entity;
         result.add_id(ECS_PREFAB);
-        unsafe { result.add_id_unchecked(T::id(self)) };
+        unsafe { add_id_unchecked(self.world_ptr_mut(), result.entity_id(), T::id(self)) };
         result
     }
 }

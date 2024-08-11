@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 
 use crate::core::*;
 
@@ -11,8 +11,16 @@ pub struct UntypedComponent<'a> {
 impl<'a> Deref for UntypedComponent<'a> {
     type Target = EntityView<'a>;
 
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         &self.entity
+    }
+}
+
+impl<'a> DerefMut for UntypedComponent<'a> {
+    #[inline(always)]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.entity
     }
 }
 

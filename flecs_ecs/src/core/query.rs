@@ -54,6 +54,10 @@ where
     _phantom: PhantomData<T>,
 }
 
+trait TestQ<'a> {
+    fn test(&self) -> &'a str;
+}
+
 impl<T> Clone for Query<T>
 where
     T: QueryTuple,

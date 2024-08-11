@@ -1,0 +1,53 @@
+//! this is currently unimplemented, yet to be decided if it will be implemented
+
+//might not be needed, in the original c++ impl it was used in the get_mut functions.
+///
+/// # See also
+///
+/// * C++ API: `entity_view::set_stage`
+#[doc(alias = "entity_view::set_stage")]
+#[doc(hidden)]
+fn set_stage<'a>(self, stage: impl WorldProvider<'a>) -> EntityView<'a> {
+    EntityView::new_from(stage, *self.entity_id())
+}
+
+// TODO this needs a better name and documentation, the rest of the cpp functions still have to be done as well
+// TODO, I removed the second template parameter and changed the fn parameter second to entityT, check validity
+/// Get the target for a given pair of components and a relationship.
+///
+/// # Type Parameters
+///
+/// * `First` - The first component type to use for deriving the id.
+///
+/// # Arguments
+///
+/// * `second` - The second element of the pair.
+///
+/// # Returns
+///
+/// * The entity for which the target has been found.
+///
+/// # See also
+///
+/// * C++ API: `entity_view::target`
+#[doc(alias = "entity_view::target_for")]
+// TODO needs to be made safe
+fn target_for_first<First: ComponentId + DataComponent>(
+    &self,
+    second: impl Into<Entity>,
+) -> *const First {
+    let world = self.world();
+    let comp_id = First::id(world);
+    ecs_assert!(
+        std::mem::size_of::<First>() != 0,
+        FlecsErrorCode::InvalidParameter,
+        "First element is size 0"
+    );
+    unsafe {
+        sys::ecs_get_id(
+            world.world_ptr(),
+            comp_id,
+            ecs_pair(comp_id, *second.into()),
+        ) as *const First
+    }
+}

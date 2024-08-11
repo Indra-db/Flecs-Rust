@@ -1,5 +1,6 @@
 //! Registering and working with components
 
+use std::ops::DerefMut;
 use std::{marker::PhantomData, ops::Deref, os::raw::c_void, ptr};
 
 use crate::core::*;
@@ -27,6 +28,13 @@ impl<'a, T> Deref for Component<'a, T> {
 
     fn deref(&self) -> &Self::Target {
         &self.base
+    }
+}
+
+impl<'a, T: ComponentId> DerefMut for Component<'a, T> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.base
     }
 }
 
