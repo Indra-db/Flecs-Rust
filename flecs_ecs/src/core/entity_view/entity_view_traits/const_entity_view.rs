@@ -43,7 +43,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::is_valid`
     #[doc(alias = "entity_view::is_valid")]
-    fn is_valid(&self) -> bool {
+    fn is_valid(self) -> bool {
         unsafe { sys::ecs_is_valid(self.world_ptr(), *self.entity_id()) }
     }
 
@@ -53,7 +53,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::is_alive`
     #[doc(alias = "entity_view::is_alive")]
-    fn is_alive(&self) -> bool {
+    fn is_alive(self) -> bool {
         unsafe { sys::ecs_is_alive(self.world_ptr(), *self.entity_id()) }
     }
 
@@ -145,7 +145,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::path`
     #[doc(alias = "entity_view::path")]
-    fn path_w_sep(&self, sep: &str, init_sep: &str) -> Option<String> {
+    fn path_w_sep(self, sep: &str, init_sep: &str) -> Option<String> {
         self.path_from_id_w_sep(0, sep, init_sep)
     }
 
@@ -155,7 +155,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::path`
     #[doc(alias = "entity_view::path")]
-    fn path(&self) -> Option<String> {
+    fn path(self) -> Option<String> {
         self.path_from_id(0)
     }
 
@@ -200,7 +200,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    fn path_from_id(&self, parent: impl Into<Entity>) -> Option<String> {
+    fn path_from_id(self, parent: impl Into<Entity>) -> Option<String> {
         NonNull::new(unsafe {
             sys::ecs_get_path_w_sep(
                 self.world_ptr(),
@@ -228,7 +228,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    fn path_from<T: ComponentId>(&self) -> Option<String> {
+    fn path_from<T: ComponentId>(self) -> Option<String> {
         let world = self.world();
         path_from_id_default_sep(world.world_ptr(), self.entity_id(), T::id(world))
     }
@@ -243,7 +243,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::path_from`
     #[doc(alias = "entity_view::path_from")]
-    fn hierarchy_path_from_parent_type<T: ComponentId>(&self) -> Option<String> {
+    fn hierarchy_path_from_parent_type<T: ComponentId>(self) -> Option<String> {
         let world = self.world();
         self.path_from_id(T::id(world))
     }
@@ -258,7 +258,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    fn is_enabled_self(&self) -> bool {
+    fn is_enabled_self(self) -> bool {
         unsafe { !sys::ecs_has_id(self.world_ptr(), *self.entity_id(), flecs::Disabled::ID) }
     }
 
@@ -270,7 +270,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     /// * C++ API: `entity_view::type`
     #[doc(alias = "entity_view::type")]
     #[inline(always)]
-    fn archetype(&self) -> Archetype<'w> {
+    fn archetype(self) -> Archetype<'w> {
         let world = self.world();
         self.table()
             .map(|t| t.archetype())
@@ -284,7 +284,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     /// * C++ API: `entity_view::table`
     #[doc(alias = "entity_view::table")]
     #[inline(always)]
-    fn table(&self) -> Option<Table<'w>> {
+    fn table(self) -> Option<Table<'w>> {
         NonNull::new(unsafe { sys::ecs_get_table(self.world_ptr(), *self.entity_id()) })
             .map(|t| Table::new(self.world(), t))
     }
@@ -301,7 +301,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     /// * C++ API: `entity_view::range`
     #[doc(alias = "entity_view::range")]
     #[inline]
-    fn range(&self) -> Option<TableRange<'w>> {
+    fn range(self) -> Option<TableRange<'w>> {
         NonNull::new(unsafe { sys::ecs_record_find(self.world_ptr(), *self.entity_id()) }).map(
             |record| unsafe {
                 TableRange::new_raw(
@@ -323,7 +323,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    fn each_component(&self, mut func: impl FnMut(IdView)) {
+    fn each_component(self, mut func: impl FnMut(IdView)) {
         let world = self.world();
         let archetype = self.archetype();
         for &id in archetype.as_slice() {
@@ -400,7 +400,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    fn each_target_id(&self, relationship: impl Into<Entity>, mut func: impl FnMut(EntityView)) {
+    fn each_target_id(self, relationship: impl Into<Entity>, mut func: impl FnMut(EntityView)) {
         self.each_pair(relationship.into(), ECS_WILDCARD, |id| {
             let obj = id.second_id();
             func(obj);
@@ -417,7 +417,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// The count of targets for the given relationship.
     /// If it doesn't have the relationship, this function will return `None`.
-    fn target_id_count(&self, relationship: impl Into<Entity>) -> Option<i32> {
+    fn target_id_count(self, relationship: impl Into<Entity>) -> Option<i32> {
         let world = self.world().real_world().ptr_mut();
         let id = ecs_pair(*relationship.into(), ECS_WILDCARD);
         let table = unsafe { sys::ecs_get_table(self.world_ptr(), *self.entity_id()) };
@@ -445,7 +445,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::each`
     #[doc(alias = "entity_view::each")]
-    fn each_target<T>(&self, func: impl FnMut(EntityView))
+    fn each_target<T>(self, func: impl FnMut(EntityView))
     where
         T: ComponentId,
     {
@@ -463,7 +463,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// The count of targets for the given relationship.
     /// If it doesn't have the relationship, this function will return `None`.
-    fn each_target_count<T>(&self) -> Option<i32>
+    fn each_target_count<T>(self) -> Option<i32>
     where
         T: ComponentId,
     {
@@ -482,7 +482,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::children`
     #[doc(alias = "entity_view::children")]
-    fn each_child_of_id(&self, relationship: impl Into<Entity>, mut func: impl FnMut(EntityView)) {
+    fn each_child_of_id(self, relationship: impl Into<Entity>, mut func: impl FnMut(EntityView)) {
         // When the entity is a wildcard, this would attempt to query for all
         //entities with (ChildOf, *) or (ChildOf, _) instead of querying for
         //the children of the wildcard entity.
@@ -519,7 +519,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::children`
     #[doc(alias = "entity_view::children")]
-    fn each_child_of<T>(&self, func: impl FnMut(EntityView))
+    fn each_child_of<T>(self, func: impl FnMut(EntityView))
     where
         T: ComponentId,
     {
@@ -537,7 +537,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::children`
     #[doc(alias = "entity_view::children")]
-    fn each_child(&self, func: impl FnMut(EntityView)) {
+    fn each_child(self, func: impl FnMut(EntityView)) {
         self.each_child_of_id(flecs::ChildOf::ID, func);
     }
 
@@ -612,7 +612,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     /// assert!(has_run);
     ///
     /// ```
-    fn try_get<T: GetTuple>(&self, callback: impl for<'e> FnOnce(T::TupleType<'e>)) -> bool {
+    fn try_get<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>)) -> bool {
         let world = self.world();
         let record = unsafe { sys::ecs_record_find(self.world_ptr(), *self.entity_id()) };
         if unsafe { (*record).table.is_null() } {
@@ -693,7 +693,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///    assert_eq!(tag_pos_rel.x, 30.0);
     /// });
     /// ```
-    fn get<T: GetTuple>(&self, callback: impl for<'e> FnOnce(T::TupleType<'e>)) {
+    fn get<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>)) {
         let world = self.world();
         let record = unsafe { sys::ecs_record_find(self.world_ptr(), *self.entity_id()) };
 
@@ -760,7 +760,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     /// assert_eq!(pos.x, 10.0);
     /// assert_eq!(tag_pos_rel.x, 30.0);
     /// ```
-    fn cloned<T: ClonedTuple>(&self) -> T::TupleType<'w> {
+    fn cloned<T: ClonedTuple>(self) -> T::TupleType<'w> {
         let record = unsafe { sys::ecs_record_find(self.world_ptr(), *self.entity_id()) };
 
         if unsafe { (*record).table.is_null() } {
@@ -823,7 +823,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     /// assert_eq!(pos.x, 10.0);
     /// assert_eq!(tag_pos_rel.x, 30.0);
     /// ```
-    fn try_cloned<T: ClonedTuple>(&self) -> Option<T::TupleType<'w>> {
+    fn try_cloned<T: ClonedTuple>(self) -> Option<T::TupleType<'w>> {
         let record = unsafe { sys::ecs_record_find(self.world_ptr(), *self.entity_id()) };
 
         if unsafe { (*record).table.is_null() } {
@@ -855,7 +855,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::get`
     #[doc(alias = "entity_view::get")]
-    fn get_untyped(&self, component_id: impl IntoId) -> *const c_void {
+    fn get_untyped(self, component_id: impl IntoId) -> *const c_void {
         unsafe { sys::ecs_get_id(self.world_ptr(), *self.entity_id(), *component_id.into()) }
     }
     /// Get mutable component value or pair (untyped).
@@ -875,7 +875,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::get_mut`
     #[doc(alias = "entity_view::get_mut")]
-    fn get_untyped_mut(&self, id: impl IntoId) -> *mut c_void {
+    fn get_untyped_mut(self, id: impl IntoId) -> *mut c_void {
         unsafe { sys::ecs_get_mut_id(self.world_ptr(), *self.entity_id(), *id.into()) }
     }
 
@@ -1038,7 +1038,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     /// * C++ API: `entity_view::depth`
     #[doc(alias = "entity_view::depth")]
     #[inline(always)]
-    fn depth_id(&self, relationship: impl Into<Entity>) -> i32 {
+    fn depth_id(self, relationship: impl Into<Entity>) -> i32 {
         unsafe { sys::ecs_get_depth(self.world_ptr(), *self.entity_id(), *relationship.into()) }
     }
 
@@ -1060,7 +1060,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     /// * C++ API: `entity_view::depth`
     #[doc(alias = "entity_view::depth")]
     #[inline(always)]
-    fn depth<T: ComponentId>(&self) -> i32 {
+    fn depth<T: ComponentId>(self) -> i32 {
         let world = self.world();
         self.depth_id(T::id(world))
     }
@@ -1078,7 +1078,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     /// * C++ API: `entity_view::parent`
     #[doc(alias = "entity_view::parent")]
     #[inline(always)]
-    fn parent(&self) -> Option<EntityView<'w>> {
+    fn parent(self) -> Option<EntityView<'w>> {
         self.target_id(ECS_CHILD_OF, 0)
     }
 
@@ -1221,7 +1221,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     /// * [`EntityView::has_id()`]
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    fn has<T: ComponentOrPairId>(&self) -> bool {
+    fn has<T: ComponentOrPairId>(self) -> bool {
         if !T::IS_ENUM {
             unsafe { sys::ecs_has_id(self.world_ptr(), *self.entity_id(), T::get_id(self.world())) }
         } else {
@@ -1248,7 +1248,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    fn has_enum<T>(&self, constant: T) -> bool
+    fn has_enum<T>(self, constant: T) -> bool
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
@@ -1283,7 +1283,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    fn has_first<First: ComponentId>(&self, second: impl Into<Entity>) -> bool {
+    fn has_first<First: ComponentId>(self, second: impl Into<Entity>) -> bool {
         let world = self.world();
         self.has_id((First::id(world), second.into()))
     }
@@ -1306,7 +1306,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::has`
     #[doc(alias = "entity_view::has")]
-    fn has_second<Second: ComponentId>(&self, first: impl Into<Entity>) -> bool {
+    fn has_second<Second: ComponentId>(self, first: impl Into<Entity>) -> bool {
         let world = self.world();
         self.has_id((first.into(), Second::id(world)))
     }
@@ -1354,7 +1354,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::owns`
     #[doc(alias = "entity_view::owns")]
-    fn owns_id(&self, entity_id: impl IntoId) -> bool {
+    fn owns_id(self, entity_id: impl IntoId) -> bool {
         unsafe { sys::ecs_owns_id(self.world_ptr(), *self.entity_id(), *entity_id.into()) }
     }
 
@@ -1373,7 +1373,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::owns`
     #[doc(alias = "entity_view::owns")]
-    fn owns<T: ComponentOrPairId>(&self) -> bool {
+    fn owns<T: ComponentOrPairId>(self) -> bool {
         unsafe { sys::ecs_owns_id(self.world_ptr(), *self.entity_id(), T::get_id(self.world())) }
     }
 
@@ -1395,7 +1395,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::owns`
     #[doc(alias = "entity_view::owns")]
-    fn owns_first<First: ComponentId>(&self, second: impl Into<Entity>) -> bool {
+    fn owns_first<First: ComponentId>(self, second: impl Into<Entity>) -> bool {
         unsafe {
             sys::ecs_owns_id(
                 self.world_ptr(),
@@ -1423,7 +1423,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::owns`
     #[doc(alias = "entity_view::owns")]
-    fn owns_second<Second: ComponentId>(&self, first: impl Into<Entity>) -> bool {
+    fn owns_second<Second: ComponentId>(self, first: impl Into<Entity>) -> bool {
         unsafe {
             sys::ecs_owns_id(
                 self.world_ptr(),
@@ -1445,7 +1445,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    fn is_enabled_id(&self, id: impl IntoId) -> bool {
+    fn is_enabled_id(self, id: impl IntoId) -> bool {
         unsafe { sys::ecs_is_enabled_id(self.world_ptr(), *self.entity_id(), *id.into()) }
     }
 
@@ -1461,7 +1461,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    fn is_enabled<T: ComponentOrPairId>(&self) -> bool {
+    fn is_enabled<T: ComponentOrPairId>(self) -> bool {
         unsafe {
             sys::ecs_is_enabled_id(self.world_ptr(), *self.entity_id(), T::get_id(self.world()))
         }
@@ -1482,7 +1482,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    fn is_enabled_first<T: ComponentId>(&self, second: impl Into<Entity>) -> bool {
+    fn is_enabled_first<T: ComponentId>(self, second: impl Into<Entity>) -> bool {
         let world = self.world();
         self.is_enabled_id((T::id(world), second.into()))
     }
@@ -1502,7 +1502,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    fn is_enabled_second<U: ComponentId>(&self, first: impl Into<Entity>) -> bool {
+    fn is_enabled_second<U: ComponentId>(self, first: impl Into<Entity>) -> bool {
         let world = self.world();
         self.is_enabled_id((first.into(), U::id(world)))
     }
@@ -1529,7 +1529,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     /// * C++ API: `entity_view::clone`
     #[doc(alias = "entity_view::clone")]
     #[inline(always)]
-    fn duplicate(&self, copy_value: bool) -> EntityView<'w> {
+    fn duplicate(self, copy_value: bool) -> EntityView<'w> {
         let dest_entity = EntityView::new(self.world());
         unsafe {
             sys::ecs_clone(
@@ -1568,7 +1568,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     /// * C++ API: `entity_view::clone`
     #[doc(alias = "entity_view::clone")]
     #[inline(always)]
-    fn duplicate_into(&self, copy_value: bool, dest_id: impl Into<Entity>) -> EntityView<'w> {
+    fn duplicate_into(self, copy_value: bool, dest_id: impl Into<Entity>) -> EntityView<'w> {
         let mut dest_id = *dest_id.into();
         if dest_id == 0 {
             dest_id = unsafe { sys::ecs_new(self.world_ptr_mut()) };
@@ -1606,7 +1606,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::mut`
     #[doc(alias = "entity_view::mut")]
-    fn mut_current_stage(&self, stage: impl WorldProvider<'w>) -> EntityView<'w> {
+    fn mut_current_stage(self, stage: impl WorldProvider<'w>) -> EntityView<'w> {
         ecs_assert!(
             !stage.world().is_readonly(),
             FlecsErrorCode::InvalidParameter,
@@ -1632,7 +1632,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::mut`
     #[doc(alias = "entity_view::mut")]
-    fn mut_stage_of<T>(&self, entity: T) -> EntityView<'w>
+    fn mut_stage_of<T>(self, entity: T) -> EntityView<'w>
     where
         T: Into<Entity> + WorldProvider<'w>,
     {
