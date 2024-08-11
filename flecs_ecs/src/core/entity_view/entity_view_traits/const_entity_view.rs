@@ -43,7 +43,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::is_valid`
     #[doc(alias = "entity_view::is_valid")]
-    fn is_valid(self) -> bool {
+    fn is_valid(&self) -> bool {
         unsafe { sys::ecs_is_valid(self.world_ptr(), *self.entity_id()) }
     }
 
@@ -53,7 +53,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::is_alive`
     #[doc(alias = "entity_view::is_alive")]
-    fn is_alive(self) -> bool {
+    fn is_alive(&self) -> bool {
         unsafe { sys::ecs_is_alive(self.world_ptr(), *self.entity_id()) }
     }
 
@@ -258,7 +258,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    fn is_enabled_self(self) -> bool {
+    fn is_enabled_self(&self) -> bool {
         unsafe { !sys::ecs_has_id(self.world_ptr(), *self.entity_id(), flecs::Disabled::ID) }
     }
 
@@ -1445,7 +1445,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    fn is_enabled_id(self, id: impl IntoId) -> bool {
+    fn is_enabled_id(&self, id: impl IntoId) -> bool {
         unsafe { sys::ecs_is_enabled_id(self.world_ptr(), *self.entity_id(), *id.into()) }
     }
 
@@ -1461,7 +1461,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    fn is_enabled<T: ComponentOrPairId>(self) -> bool {
+    fn is_enabled<T: ComponentOrPairId>(&self) -> bool {
         unsafe {
             sys::ecs_is_enabled_id(self.world_ptr(), *self.entity_id(), T::get_id(self.world()))
         }
@@ -1482,7 +1482,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    fn is_enabled_first<T: ComponentId>(self, second: impl Into<Entity>) -> bool {
+    fn is_enabled_first<T: ComponentId>(&self, second: impl Into<Entity>) -> bool {
         let world = self.world();
         self.is_enabled_id((T::id(world), second.into()))
     }
@@ -1502,7 +1502,7 @@ pub trait ConstEntityView<'w>: WorldProvider<'w> + EntityId + Sized {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    fn is_enabled_second<U: ComponentId>(self, first: impl Into<Entity>) -> bool {
+    fn is_enabled_second<U: ComponentId>(&self, first: impl Into<Entity>) -> bool {
         let world = self.world();
         self.is_enabled_id((first.into(), U::id(world)))
     }

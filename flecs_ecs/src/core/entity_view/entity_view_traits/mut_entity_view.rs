@@ -22,7 +22,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    fn add_id(&mut self, id: impl IntoId) -> &mut Self {
+    fn add_id(self, id: impl IntoId) -> Self {
         let id = *id.into();
         let world = self.world_ptr_mut();
 
@@ -38,7 +38,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    fn add<T>(&mut self) -> &mut Self
+    fn add<T>(self) -> Self
     where
         T: ComponentOrPairId,
     {
@@ -60,7 +60,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    fn add_trait<T>(&mut self) -> &mut Self
+    fn add_trait<T>(self) -> Self
     where
         T: ComponentOrPairId,
         T::First: FlecsTrait,
@@ -76,7 +76,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     /// # Panics
     ///
     /// Caller must ensure the entity has the component to override.
-    fn override_type<T>(&mut self) -> &mut Self
+    fn override_type<T>(self) -> Self
     where
         T: ComponentOrPairId,
     {
@@ -103,7 +103,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    fn add_first<First: ComponentId>(&mut self, second: impl Into<Entity>) -> &mut Self {
+    fn add_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         const {
             if !First::IS_TAG && !First::IMPLS_DEFAULT {
                 panic!("Adding an element that is not a Tag / Zero sized type requires to implement Default");
@@ -155,7 +155,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    fn add_second<Second: ComponentId>(&mut self, first: impl Into<Entity>) -> &mut Self {
+    fn add_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
         let world = self.world();
         let world_ptr = world.world_ptr();
 
@@ -192,7 +192,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
-    fn add_pair_enum<First, Second>(&mut self, enum_value: Second) -> &mut Self
+    fn add_pair_enum<First, Second>(self, enum_value: Second) -> Self
     where
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
@@ -232,9 +232,9 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     /// * C++ API: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
     fn add_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
-        &mut self,
+        self,
         enum_value: T,
-    ) -> &mut Self {
+    ) -> Self {
         let world = self.world();
         let first = T::id(world);
         // SAFETY: we know that the enum_value is a valid because of the T::id call
@@ -260,7 +260,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::add_if`
     #[doc(alias = "entity_builder::add_if")]
-    fn add_id_if<T>(&mut self, id: T, condition: bool) -> &mut Self
+    fn add_id_if<T>(self, id: T, condition: bool) -> Self
     where
         T: IntoId,
     {
@@ -302,7 +302,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::add_if`
     #[doc(alias = "entity_builder::add_if")]
-    fn add_if<T: ComponentOrPairId>(&mut self, condition: bool) -> &mut Self {
+    fn add_if<T: ComponentOrPairId>(self, condition: bool) -> Self {
         let world = self.world();
         if condition {
             self.add::<T>()
@@ -344,11 +344,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::add_if`
     #[doc(alias = "entity_builder::add_if")]
-    fn add_first_if<First: ComponentId>(
-        &mut self,
-        second: impl Into<Entity>,
-        condition: bool,
-    ) -> &mut Self {
+    fn add_first_if<First: ComponentId>(self, second: impl Into<Entity>, condition: bool) -> Self {
         let world = self.world();
         self.add_id_if((First::id(world), second.into()), condition)
     }
@@ -369,11 +365,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::add_if`
     #[doc(alias = "entity_builder::add_if")]
-    fn add_second_if<Second: ComponentId>(
-        &mut self,
-        first: impl Into<Entity>,
-        condition: bool,
-    ) -> &mut Self {
+    fn add_second_if<Second: ComponentId>(self, first: impl Into<Entity>, condition: bool) -> Self {
         let world = self.world();
         self.add_id_if((first.into(), Second::id(world)), condition)
     }
@@ -394,7 +386,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::add_if`
     #[doc(alias = "entity_builder::add_if")]
-    fn add_enum_if<T>(&mut self, enum_value: T, condition: bool) -> &mut Self
+    fn add_enum_if<T>(self, enum_value: T, condition: bool) -> Self
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
@@ -418,7 +410,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::remove`
     #[doc(alias = "entity_builder::remove")]
-    fn remove_id(&mut self, id: impl IntoId) -> &mut Self {
+    fn remove_id(self, id: impl IntoId) -> Self {
         unsafe { sys::ecs_remove_id(self.world_ptr_mut(), *self.entity_id(), *id.into()) }
         self
     }
@@ -433,7 +425,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::remove`
     #[doc(alias = "entity_builder::remove")]
-    fn remove<T: ComponentOrPairId>(&mut self) -> &mut Self {
+    fn remove<T: ComponentOrPairId>(self) -> Self {
         let world = self.world();
 
         //this branch will be compiled away in release mode
@@ -460,7 +452,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::remove`
     #[doc(alias = "entity_builder::remove")]
-    fn remove_enum_tag<First, Second>(&mut self, enum_value: Second) -> &mut Self
+    fn remove_enum_tag<First, Second>(self, enum_value: Second) -> Self
     where
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
@@ -484,7 +476,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::remove_second`
     #[doc(alias = "entity_builder::remove_second")]
-    fn remove_first<First: ComponentId>(&mut self, second: impl Into<Entity>) -> &mut Self {
+    fn remove_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         let world = self.world();
         self.remove_id((First::id(world), second.into()))
     }
@@ -504,7 +496,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::remove_second`
     #[doc(alias = "entity_builder::remove_second")]
-    fn remove_second<Second: ComponentId>(&mut self, first: impl Into<Entity>) -> &mut Self {
+    fn remove_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
         let world = self.world();
         self.remove_id((first.into(), Second::id(world)))
     }
@@ -519,13 +511,14 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::is_a`
     #[doc(alias = "entity_builder::is_a")]
-    fn is_a_id(&mut self, second: impl Into<Entity>) -> &mut Self {
+    #[allow(clippy::wrong_self_convention)]
+    fn is_a_id(self, second: impl Into<Entity>) -> Self {
         unsafe {
             add_id_unchecked(
                 self.world_ptr_mut(),
                 self.entity_id(),
                 (ECS_IS_A, second.into()),
-            )
+            );
         };
         self
     }
@@ -540,7 +533,8 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::is_a`
     #[doc(alias = "entity_builder::is_a")]
-    fn is_a<T: ComponentId>(&mut self) -> &mut Self {
+    #[allow(clippy::wrong_self_convention)]
+    fn is_a<T: ComponentId>(self) -> Self {
         let world = self.world();
         self.is_a_id(T::id(world))
     }
@@ -555,13 +549,13 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::child_of`
     #[doc(alias = "entity_builder::child_of")]
-    fn child_of_id(&mut self, parent: impl Into<Entity>) -> &mut Self {
+    fn child_of_id(self, parent: impl Into<Entity>) -> Self {
         unsafe {
             add_id_unchecked(
                 self.world_ptr_mut(),
                 self.entity_id(),
                 (ECS_CHILD_OF, parent.into()),
-            )
+            );
         };
         self
     }
@@ -576,7 +570,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::child_of`
     #[doc(alias = "entity_builder::child_of")]
-    fn child_of<T: ComponentId>(&mut self) -> &mut Self {
+    fn child_of<T: ComponentId>(self) -> Self {
         let world = self.world();
         self.child_of_id(T::id(world))
     }
@@ -591,13 +585,13 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::depends_on`
     #[doc(alias = "entity_builder::depends_on")]
-    fn depends_on_id(&mut self, second: impl Into<Entity>) -> &mut Self {
+    fn depends_on_id(self, second: impl Into<Entity>) -> Self {
         unsafe {
             add_id_unchecked(
                 self.world_ptr_mut(),
                 self.entity_id(),
                 (ECS_DEPENDS_ON, second.into()),
-            )
+            );
         };
         self
     }
@@ -612,7 +606,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::depends_on`
     #[doc(alias = "entity_builder::depends_on")]
-    fn depends_on<T: ComponentId + ComponentType<Struct>>(&mut self) -> &mut Self {
+    fn depends_on<T: ComponentId + ComponentType<Struct>>(self) -> Self {
         let world = self.world();
         self.depends_on_id(T::id(world))
     }
@@ -632,9 +626,9 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     /// * C++ API: `entity_builder::depends_on`
     #[doc(alias = "entity_builder::depends_on")]
     fn depends_on_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
-        &mut self,
+        self,
         enum_value: T,
-    ) -> &mut Self {
+    ) -> Self {
         let world = self.world();
         self.depends_on_id(enum_value.id_variant(world))
     }
@@ -649,13 +643,13 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::slot_of`
     #[doc(alias = "entity_builder::slot_of")]
-    fn slot_of_id(&mut self, second: impl Into<Entity>) -> &mut Self {
+    fn slot_of_id(self, second: impl Into<Entity>) -> Self {
         unsafe {
             add_id_unchecked(
                 self.world_ptr_mut(),
                 self.entity_id(),
                 (ECS_SLOT_OF, second.into()),
-            )
+            );
         };
         self
     }
@@ -670,7 +664,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::slot_of`
     #[doc(alias = "entity_builder::slot_of")]
-    fn slot_of<T: ComponentId>(&mut self) -> &mut Self {
+    fn slot_of<T: ComponentId>(self) -> Self {
         let world = self.world();
         self.slot_of_id(T::id(world))
     }
@@ -681,7 +675,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::slot`
     #[doc(alias = "entity_builder::slot")]
-    fn slot(&mut self) -> &mut Self {
+    fn slot(self) -> Self {
         ecs_assert!(
             self.target::<flecs::ChildOf>(0).is_some(),
             FlecsErrorCode::InvalidParameter,
@@ -711,7 +705,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
                 self.world_ptr_mut(),
                 self.entity_id(),
                 ECS_AUTO_OVERRIDE | id.into(),
-            )
+            );
         };
         self
     }
@@ -787,7 +781,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::set_auto_override`
     #[doc(alias = "entity_builder::set_auto_override")]
-    fn set_auto_override_id(&mut self, id: impl IntoId) -> &mut Self {
+    fn set_auto_override_id(self, id: impl IntoId) -> Self {
         unsafe {
             sys::ecs_add_id(
                 self.world_ptr_mut(),
@@ -1012,7 +1006,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::set`
     #[doc(alias = "entity_builder::set")]
-    fn set_first<First>(&mut self, first: First, second: impl Into<Entity>) -> &mut Self
+    fn set_first<First>(self, first: First, second: impl Into<Entity>) -> Self
     where
         First: ComponentId + DataComponent,
     {
@@ -1077,7 +1071,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::set`
     #[doc(alias = "entity_builder::set")]
-    fn set_pair_enum<First, Second>(&mut self, enum_variant: Second, first: First) -> &mut Self
+    fn set_pair_enum<First, Second>(self, enum_variant: Second, first: First) -> Self
     where
         First: ComponentId + ComponentType<Struct> + DataComponent,
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
@@ -1110,12 +1104,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::set_ptr`
     #[doc(alias = "entity_builder::set_ptr")]
-    unsafe fn set_ptr_w_size(
-        &mut self,
-        id: impl Into<Entity>,
-        size: usize,
-        ptr: *const c_void,
-    ) -> &mut Self {
+    unsafe fn set_ptr_w_size(self, id: impl Into<Entity>, size: usize, ptr: *const c_void) -> Self {
         sys::ecs_set_id(
             self.world_ptr_mut(),
             *self.entity_id(),
@@ -1141,7 +1130,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::set_ptr`
     #[doc(alias = "entity_builder::set_ptr")]
-    unsafe fn set_ptr(&mut self, id: impl Into<Entity>, ptr: *const c_void) -> &mut Self {
+    unsafe fn set_ptr(self, id: impl Into<Entity>, ptr: *const c_void) -> Self {
         let id = id.into();
         let cptr: *const sys::EcsComponent =
             unsafe { sys::ecs_get_id(self.world_ptr_mut(), *id, sys::FLECS_IDEcsComponentID_) }
@@ -1167,7 +1156,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::set_name`
     #[doc(alias = "entity_builder::set_name")]
-    fn set_name(&mut self, name: &str) -> &mut Self {
+    fn set_name(self, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
 
         unsafe {
@@ -1181,7 +1170,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     }
 
     /// Removes the name of the entity.
-    fn remove_name(&mut self) -> &mut Self {
+    fn remove_name(self) -> Self {
         unsafe {
             sys::ecs_set_name(self.world_ptr_mut(), *self.entity_id(), std::ptr::null());
         }
@@ -1198,7 +1187,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::set_alias`
     #[doc(alias = "entity_builder::set_alias")]
-    fn set_alias(&mut self, name: &str) -> &mut Self {
+    fn set_alias(self, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
 
         unsafe {
@@ -1219,7 +1208,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::enable`
     #[doc(alias = "entity_builder::enable")]
-    fn enable_self(&mut self) -> &mut Self {
+    fn enable_self(self) -> Self {
         unsafe { sys::ecs_enable(self.world_ptr_mut(), *self.entity_id(), true) }
         self
     }
@@ -1237,7 +1226,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::enable`
     #[doc(alias = "entity_builder::enable")]
-    fn enable_id(&mut self, id: impl IntoId) -> &mut Self {
+    fn enable_id(self, id: impl IntoId) -> Self {
         unsafe { sys::ecs_enable_id(self.world_ptr_mut(), *self.entity_id(), *id.into(), true) }
         self
     }
@@ -1252,7 +1241,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::enable`
     #[doc(alias = "entity_builder::enable")]
-    fn enable<T: ComponentOrPairId>(&mut self) -> &mut Self {
+    fn enable<T: ComponentOrPairId>(self) -> Self {
         let world = self.world();
         self.enable_id(T::get_id(world))
     }
@@ -1271,7 +1260,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::enable`
     #[doc(alias = "entity_builder::enable")]
-    fn enable_second<First: ComponentId>(&mut self, second: impl Into<Entity>) -> &mut Self {
+    fn enable_second<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         let world = self.world();
         self.enable_id((First::id(world), second.into()))
     }
@@ -1285,7 +1274,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::disable`
     #[doc(alias = "entity_builder::disable")]
-    fn disable_self(&mut self) -> &mut Self {
+    fn disable_self(self) -> Self {
         unsafe { sys::ecs_enable(self.world_ptr_mut(), *self.entity_id(), false) }
         self
     }
@@ -1303,7 +1292,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::disable`
     #[doc(alias = "entity_builder::disable")]
-    fn disable_id(&mut self, id: impl IntoId) -> &mut Self {
+    fn disable_id(self, id: impl IntoId) -> Self {
         unsafe { sys::ecs_enable_id(self.world_ptr_mut(), *self.entity_id(), *id.into(), false) }
         self
     }
@@ -1318,7 +1307,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::disable`
     #[doc(alias = "entity_builder::disable")]
-    fn disable<T: ComponentOrPairId>(&mut self) -> &mut Self {
+    fn disable<T: ComponentOrPairId>(self) -> Self {
         let world = self.world();
         self.disable_id(T::get_id(world))
     }
@@ -1337,7 +1326,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::disable`
     #[doc(alias = "entity_builder::disable")]
-    fn disable_first<First: ComponentId>(&mut self, second: impl Into<Entity>) -> &mut Self {
+    fn disable_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         let world = self.world();
         self.disable_id((First::id(world), second.into()))
     }
@@ -1352,7 +1341,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::with`
     #[doc(alias = "entity_builder::with")]
-    fn with(&mut self, func: impl FnOnce()) -> &mut Self {
+    fn with(self, func: impl FnOnce()) -> Self {
         unsafe {
             let prev = sys::ecs_set_with(self.world_ptr_mut(), *self.entity_id());
             func();
@@ -1372,7 +1361,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::with`
     #[doc(alias = "entity_builder::with")]
-    fn with_first_id(&mut self, first: impl Into<Entity>, func: impl FnOnce()) -> &mut Self {
+    fn with_first_id(self, first: impl Into<Entity>, func: impl FnOnce()) -> Self {
         unsafe {
             let prev = sys::ecs_set_with(
                 self.world_ptr_mut(),
@@ -1396,7 +1385,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::with`
     #[doc(alias = "entity_builder::with")]
-    fn with_second_id(&mut self, second: impl Into<Entity>, func: impl FnOnce()) -> &mut Self {
+    fn with_second_id(self, second: impl Into<Entity>, func: impl FnOnce()) -> Self {
         unsafe {
             let prev = sys::ecs_set_with(
                 self.world_ptr_mut(),
@@ -1423,7 +1412,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::with`
     #[doc(alias = "entity_builder::with")]
-    fn with_first<First: ComponentId>(&mut self, func: impl FnOnce()) -> &mut Self {
+    fn with_first<First: ComponentId>(self, func: impl FnOnce()) -> Self {
         let world = self.world();
         self.with_first_id(First::id(world), func)
     }
@@ -1443,7 +1432,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::with`
     #[doc(alias = "entity_builder::with")]
-    fn with_second<Second: ComponentId>(&mut self, func: impl FnOnce()) -> &mut Self {
+    fn with_second<Second: ComponentId>(self, func: impl FnOnce()) -> Self {
         let world = self.world();
         self.with_second_id(Second::id(world), func)
     }
@@ -1458,7 +1447,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::scope`
     #[doc(alias = "entity_builder::scope")]
-    fn run_in_scope(&mut self, func: impl FnOnce()) -> &mut Self {
+    fn run_in_scope(self, func: impl FnOnce()) -> Self {
         unsafe {
             let prev = sys::ecs_set_scope(self.world_ptr_mut(), *self.entity_id());
             func();
@@ -1473,7 +1462,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity_builder::scope`
     #[doc(alias = "entity_builder::scope")]
-    fn scope(&mut self, f: impl FnMut(&World)) -> &mut Self {
+    fn scope(self, f: impl FnMut(&World)) -> Self {
         let world = &*self.world();
         world.scope_id(self.entity_id(), f);
         self
@@ -1539,7 +1528,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     /// * [`World::modified()`]
     /// * C++ API: `entity::modified`
     #[doc(alias = "entity::modified")]
-    fn modified_first<First: ComponentId>(&mut self, second: impl Into<Entity>) {
+    fn modified_first<First: ComponentId>(self, second: impl Into<Entity>) {
         ecs_assert!(
             std::mem::size_of::<First>() != 0,
             FlecsErrorCode::InvalidParameter,
@@ -1661,7 +1650,7 @@ pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> 
     ///
     /// * C++ API: `entity::destruct`
     #[doc(alias = "entity::destruct")]
-    fn destruct(&mut self) {
+    fn destruct(self) {
         unsafe { sys::ecs_delete(self.world_ptr_mut(), *self.entity_id()) }
     }
 }
