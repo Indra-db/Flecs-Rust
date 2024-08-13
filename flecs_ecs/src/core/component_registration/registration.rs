@@ -5,7 +5,12 @@ use crate::core::*;
 use crate::sys;
 
 #[doc(hidden)]
-pub fn internal_register_component<'a, const IS_NAMED: bool, T>(
+pub fn internal_register_component<
+    'a,
+    const IS_NAMED: bool,
+    const COMPONENT_REGISTRATION: bool,
+    T,
+>(
     world: impl WorldProvider<'a>,
     name: *const i8,
 ) -> u64
@@ -15,9 +20,9 @@ where
     let world_ptr = world.world_ptr_mut();
 
     let id = if IS_NAMED {
-        register_component_data_named::<T>(world_ptr, name)
+        register_component_data_named::<COMPONENT_REGISTRATION, T>(world_ptr, name)
     } else {
-        register_component_data::<T>(world_ptr)
+        register_component_data::<COMPONENT_REGISTRATION, T>(world_ptr)
     };
 
     if T::IS_ENUM {
@@ -36,15 +41,18 @@ pub(crate) fn external_register_component<'a, T>(
 
 #[inline(always)]
 /// attempts to register the component with the world. If it's already registered, it does nothing.
-pub(crate) fn try_register_component<'a, T>(world: impl WorldProvider<'a>) -> sys::ecs_entity_t
+pub(crate) fn try_register_component<'a, const COMPONENT_REGISTRATION: bool, T>(
+    world: impl WorldProvider<'a>,
+) -> sys::ecs_entity_t
 where
     T: ComponentId,
 {
-    internal_register_component::<false, T>(world, std::ptr::null())
+    const NAMED: bool = false;
+    internal_register_component::<NAMED, COMPONENT_REGISTRATION, T>(world, std::ptr::null())
 }
 
 #[inline(always)]
-pub(crate) fn try_register_component_named<'a, T>(
+pub(crate) fn try_register_component_named<'a, const COMPONENT_REGISTRATION: bool, T>(
     world: impl WorldProvider<'a>,
     name: &str,
 ) -> sys::ecs_entity_t
@@ -52,8 +60,11 @@ where
     T: ComponentId,
 {
     let name = compact_str::format_compact!("{}\0", name);
-
-    internal_register_component::<true, T>(world, name.as_ptr() as *const c_char)
+    const NAMED: bool = true;
+    internal_register_component::<NAMED, COMPONENT_REGISTRATION, T>(
+        world,
+        name.as_ptr() as *const c_char,
+    )
 }
 
 /// registers enum fields with the world.
@@ -83,7 +94,7 @@ where
 }
 
 /// registers the component with the world.
-pub(crate) fn register_component_data_named<T>(
+pub(crate) fn register_component_data_named<const COMPONENT_REGISTRATION: bool, T>(
     world: *mut sys::ecs_world_t,
     name: *const c_char,
 ) -> sys::ecs_entity_t
@@ -96,7 +107,7 @@ where
         0
     };
     let prev_with = unsafe { sys::ecs_set_with(world, 0) };
-
+    unsafe { sys::ecs_set_scope(world, prev_scope) };
     let id = register_componment_data_explicit::<T>(world, name);
 
     if prev_with != 0 {
@@ -109,21 +120,50 @@ where
 }
 
 /// registers the component with the world.
-pub(crate) fn register_component_data<T>(world: *mut sys::ecs_world_t) -> sys::ecs_entity_t
+pub(crate) fn register_component_data<const COMPONENT_REGISTRATION: bool, T>(
+    world: *mut sys::ecs_world_t,
+) -> sys::ecs_entity_t
 where
     T: ComponentId,
 {
     let prev_scope = unsafe { sys::ecs_set_scope(world, 0) };
-    let prev_with = unsafe { sys::ecs_set_with(world, 0) };
+
+    let prev_with = if !COMPONENT_REGISTRATION {
+        unsafe { sys::ecs_set_with(world, 0) }
+    } else {
+        0
+    };
 
     let id = register_componment_data_explicit::<T>(world, std::ptr::null());
 
     if prev_with != 0 {
         unsafe { sys::ecs_set_with(world, prev_with) };
     }
-    if prev_scope != 0 {
+
+    if !COMPONENT_REGISTRATION && prev_scope != 0 {
         unsafe { sys::ecs_set_scope(world, prev_scope) };
     }
+
+    id
+}
+
+pub(crate) fn external_register_component_data<T>(
+    world: *mut sys::ecs_world_t,
+    name: *const c_char,
+) -> sys::ecs_entity_t {
+    let prev_scope = unsafe { sys::ecs_set_scope(world, 0) };
+    let prev_with = unsafe { sys::ecs_set_with(world, 0) };
+
+    let id = external_register_componment_data_explicit::<T>(world, name);
+
+    if prev_with != 0 {
+        unsafe { sys::ecs_set_with(world, prev_with) };
+    }
+
+    if !COMPONENT_REGISTRATION && prev_scope != 0 {
+        unsafe { sys::ecs_set_scope(world, prev_scope) };
+    }
+
     id
 }
 

@@ -303,7 +303,7 @@ pub fn create_world_with_flags<T: ComponentId + Default + DataComponent + Compon
 ) -> World {
     let world = World::new();
 
-    internal_register_component::<false, T>(&world, std::ptr::null());
+    internal_register_component::<false, false, T>(&world, std::ptr::null());
     world.set(T::default());
 
     world

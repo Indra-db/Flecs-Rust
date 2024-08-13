@@ -61,6 +61,39 @@ impl<T> ComponentType<Enum> for &T where T: ComponentType<Enum> {}
 #[doc(hidden)]
 impl<T> ComponentType<Enum> for &mut T where T: ComponentType<Enum> {}
 
+fn try_register_component<'a, const MANUAL_REGISTRATION_CHECK: bool, T>(
+    world: impl WorldProvider<'a>,
+) -> sys::ecs_entity_t
+where
+    T: ComponentId,
+{
+    use crate::core::component_registration::registration;
+    // when a component is registered through [`Component`], manual registration check is set to false
+    // thus for `try_register_component` we set the flag that it uses const component_registration to true
+    if MANUAL_REGISTRATION_CHECK {
+        registration::try_register_component::<false, T>(world)
+    } else {
+        registration::try_register_component::<true, T>(world)
+    }
+}
+
+fn try_register_component_named<'a, const MANUAL_REGISTRATION_CHECK: bool, T>(
+    world: impl WorldProvider<'a>,
+    name: &str,
+) -> sys::ecs_entity_t
+where
+    T: ComponentId,
+{
+    use crate::core::component_registration::registration;
+    // when a component is registered through [`Component`], manual registration check is set to false
+    // thus for `try_register_component` we set the flag that it uses const component_registration to true
+    if MANUAL_REGISTRATION_CHECK {
+        registration::try_register_component_named::<false, T>(world, name)
+    } else {
+        registration::try_register_component_named::<true, T>(world, name)
+    }
+}
+
 /// Trait that manages component IDs across multiple worlds & binaries.
 ///
 /// proc macro Component should be used to implement this trait automatically
@@ -117,7 +150,12 @@ pub trait ComponentId: Sized + ComponentInfo + 'static + Send + Sync {
                             );
                         }
                     }
-                    let id = try_register_component::<Self>(world);
+
+                    let id = registration_traits::try_register_component::<
+                        MANUAL_REGISTRATION_CHECK,
+                        Self,
+                    >(world);
+
                     components_array[index] = id;
                     #[cfg(feature = "flecs_meta")]
                     {
@@ -139,7 +177,12 @@ pub trait ComponentId: Sized + ComponentInfo + 'static + Send + Sync {
                     );
                     components_array.set_len(capacity);
                 }
-                let id = try_register_component::<Self>(world);
+
+                let id = registration_traits::try_register_component::<
+                    MANUAL_REGISTRATION_CHECK,
+                    Self,
+                >(world);
+
                 components_array[index] = id;
                 id
             }
@@ -160,7 +203,10 @@ pub trait ComponentId: Sized + ComponentInfo + 'static + Send + Sync {
                             );
                         }
                     }
-                    try_register_component::<Self>(world)
+
+                    registration_traits::try_register_component::<MANUAL_REGISTRATION_CHECK, Self>(
+                        world,
+                    )
                 }))
         }
     }
@@ -191,7 +237,12 @@ pub trait ComponentId: Sized + ComponentInfo + 'static + Send + Sync {
                             );
                         }
                     }
-                    let id = try_register_component_named::<Self>(world, name);
+
+                    let id = registration_traits::try_register_component_named::<
+                        MANUAL_REGISTRATION_CHECK,
+                        Self,
+                    >(world, name);
+
                     components_array[index] = id;
                     #[cfg(feature = "flecs_meta")]
                     {
@@ -213,7 +264,10 @@ pub trait ComponentId: Sized + ComponentInfo + 'static + Send + Sync {
                     );
                     components_array.set_len(capacity);
                 }
-                let id = try_register_component_named::<Self>(world, name);
+                let id = registration_traits::try_register_component_named::<
+                    MANUAL_REGISTRATION_CHECK,
+                    Self,
+                >(world, name);
                 components_array[index] = id;
                 id
             }
@@ -234,7 +288,10 @@ pub trait ComponentId: Sized + ComponentInfo + 'static + Send + Sync {
                             );
                         }
                     }
-                    try_register_component_named::<Self::UnderlyingType>(world, name)
+                    registration_traits::try_register_component_named::<
+                        MANUAL_REGISTRATION_CHECK,
+                        Self,
+                    >(world, name)
                 }))
         }
     }
@@ -401,7 +458,9 @@ pub trait EnumComponentInfo: ComponentType<Enum> + ComponentId {
 
     /// get the entity id of the variant of the enum. This function will register the enum with the world if it's not registered.
     fn id_variant<'a>(&self, world: impl WorldProvider<'a>) -> EntityView<'a> {
-        try_register_component::<Self>(world.world());
+        use crate::core::component_registration::registration;
+        const COMPONENT_REGISTRATION: bool = false;
+        registration::try_register_component::<COMPONENT_REGISTRATION, Self>(world.world());
         let index = self.enum_index();
         EntityView::new_from(world, unsafe { *Self::__enum_data_mut().add(index) })
     }
