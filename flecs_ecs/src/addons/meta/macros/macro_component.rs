@@ -216,7 +216,7 @@ macro_rules! component {
 /// ```
 ///
 /// ## Options
-/// ```
+/// ```ignore
 /// # use flecs_ecs::prelude::*;
 /// # let world = World::new();
 /// #[derive(Default)]

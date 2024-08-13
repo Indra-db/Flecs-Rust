@@ -16,7 +16,9 @@ macro_rules! generate_vec_meta_registration {
 }
 
 pub(crate) fn meta_init_builtin(world: &World) {
-    world.component::<String>().opaque_func(std_string_support);
+    world
+        .component_named::<String>("flecs::rust::String")
+        .opaque_func(std_string_support);
 
     use std::any::TypeId;
     let map = world.components_map();

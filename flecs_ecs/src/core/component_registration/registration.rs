@@ -32,11 +32,11 @@ where
 }
 
 #[doc(hidden)]
-pub(crate) fn external_register_component<'a, T>(
+pub(crate) fn external_register_component<'a, const COMPONENT_REGISTRATION: bool, T>(
     world: impl WorldProvider<'a>,
     name: *const i8,
 ) -> u64 {
-    external_register_component_data::<T>(world.world_ptr_mut(), name)
+    external_register_component_data::<COMPONENT_REGISTRATION, T>(world.world_ptr_mut(), name)
 }
 
 #[inline(always)]
@@ -101,20 +101,26 @@ pub(crate) fn register_component_data_named<const COMPONENT_REGISTRATION: bool, 
 where
     T: ComponentId,
 {
-    let prev_scope = if !name.is_null() && unsafe { sys::ecs_get_scope(world) != 0 } {
+    let prev_scope = if !COMPONENT_REGISTRATION && unsafe { sys::ecs_get_scope(world) != 0 } {
         unsafe { sys::ecs_set_scope(world, 0) }
     } else {
         0
     };
-    let prev_with = unsafe { sys::ecs_set_with(world, 0) };
-    unsafe { sys::ecs_set_scope(world, prev_scope) };
+    let prev_with = if !COMPONENT_REGISTRATION {
+        unsafe { sys::ecs_set_with(world, 0) }
+    } else {
+        0
+    };
+
     let id = register_componment_data_explicit::<T>(world, name);
 
-    if prev_with != 0 {
-        unsafe { sys::ecs_set_with(world, prev_with) };
-    }
-    if prev_scope != 0 {
-        unsafe { sys::ecs_set_scope(world, prev_scope) };
+    if !COMPONENT_REGISTRATION {
+        if prev_with != 0 {
+            unsafe { sys::ecs_set_with(world, prev_with) };
+        }
+        if prev_scope != 0 {
+            unsafe { sys::ecs_set_scope(world, prev_scope) };
+        }
     }
     id
 }
@@ -126,7 +132,11 @@ pub(crate) fn register_component_data<const COMPONENT_REGISTRATION: bool, T>(
 where
     T: ComponentId,
 {
-    let prev_scope = unsafe { sys::ecs_set_scope(world, 0) };
+    let prev_scope = if !COMPONENT_REGISTRATION && unsafe { sys::ecs_get_scope(world) != 0 } {
+        unsafe { sys::ecs_set_scope(world, 0) }
+    } else {
+        0
+    };
 
     let prev_with = if !COMPONENT_REGISTRATION {
         unsafe { sys::ecs_set_with(world, 0) }
@@ -136,52 +146,46 @@ where
 
     let id = register_componment_data_explicit::<T>(world, std::ptr::null());
 
-    if prev_with != 0 {
-        unsafe { sys::ecs_set_with(world, prev_with) };
-    }
-
-    if !COMPONENT_REGISTRATION && prev_scope != 0 {
-        unsafe { sys::ecs_set_scope(world, prev_scope) };
-    }
-
-    id
-}
-
-pub(crate) fn external_register_component_data<T>(
-    world: *mut sys::ecs_world_t,
-    name: *const c_char,
-) -> sys::ecs_entity_t {
-    let prev_scope = unsafe { sys::ecs_set_scope(world, 0) };
-    let prev_with = unsafe { sys::ecs_set_with(world, 0) };
-
-    let id = external_register_componment_data_explicit::<T>(world, name);
-
-    if prev_with != 0 {
-        unsafe { sys::ecs_set_with(world, prev_with) };
-    }
-
-    if !COMPONENT_REGISTRATION && prev_scope != 0 {
-        unsafe { sys::ecs_set_scope(world, prev_scope) };
+    if !COMPONENT_REGISTRATION {
+        if prev_with != 0 {
+            unsafe { sys::ecs_set_with(world, prev_with) };
+        }
+        if prev_scope != 0 {
+            unsafe { sys::ecs_set_scope(world, prev_scope) };
+        }
     }
 
     id
 }
 
-pub(crate) fn external_register_component_data<T>(
+pub(crate) fn external_register_component_data<const COMPONENT_REGISTRATION: bool, T>(
     world: *mut sys::ecs_world_t,
     name: *const c_char,
 ) -> sys::ecs_entity_t {
-    let prev_scope = unsafe { sys::ecs_set_scope(world, 0) };
-    let prev_with = unsafe { sys::ecs_set_with(world, 0) };
+    let prev_scope = if !COMPONENT_REGISTRATION {
+        unsafe { sys::ecs_set_scope(world, 0) }
+    } else {
+        0
+    };
+
+    let prev_with = if !COMPONENT_REGISTRATION {
+        unsafe { sys::ecs_set_with(world, 0) }
+    } else {
+        0
+    };
 
     let id = external_register_componment_data_explicit::<T>(world, name);
 
-    if prev_with != 0 {
-        unsafe { sys::ecs_set_with(world, prev_with) };
+    if !COMPONENT_REGISTRATION {
+        if prev_with != 0 {
+            unsafe { sys::ecs_set_with(world, prev_with) };
+        }
+
+        if prev_scope != 0 {
+            unsafe { sys::ecs_set_scope(world, prev_scope) };
+        }
     }
-    if prev_scope != 0 {
-        unsafe { sys::ecs_set_scope(world, prev_scope) };
-    }
+
     id
 }
 
