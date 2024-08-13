@@ -10,7 +10,7 @@ mod meta_functions;
 mod meta_traits;
 mod opaque;
 
-use std::ffi::c_void;
+use std::ffi::{c_void, CStr};
 
 pub use builtin::*;
 pub use component_id_fetcher::*;
@@ -144,9 +144,29 @@ impl World {
     ///
     /// * C++ API: `world::vector`
     pub fn vector_id(&self, elem_id: impl Into<Entity>) -> EntityView {
+        let elem_id: u64 = *elem_id.into();
+        let name_elem = unsafe { sys::ecs_get_name(self.world_ptr(), elem_id) };
+        let cstr_name = unsafe { CStr::from_ptr(name_elem) };
+        let name =
+            compact_str::format_compact!("flecs::meta::vector::{}\0", cstr_name.to_string_lossy());
+        let desc = sys::ecs_entity_desc_t {
+            name: name.as_ptr() as *const _,
+            sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
+            _canary: 0,
+            id: 0,
+            parent: 0,
+            symbol: std::ptr::null(),
+            use_low_id: false,
+            add: std::ptr::null(),
+            add_expr: std::ptr::null(),
+            set: std::ptr::null(),
+        };
+        let id = unsafe { sys::ecs_entity_init(self.world_ptr_mut(), &desc) };
+
         let desc = sys::ecs_vector_desc_t {
-            entity: 0u64,
-            type_: *elem_id.into(),
+            entity: id,
+            type_: elem_id,
         };
 
         let eid = unsafe { sys::ecs_vector_init(self.ptr_mut(), &desc) };

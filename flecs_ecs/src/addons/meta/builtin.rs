@@ -8,7 +8,7 @@ macro_rules! generate_vec_meta_registration {
             {
                 let id = id!($world, Vec<$t>);
                 $world
-                    .component_ext::<Vec<$t>>(id)
+                    .component_named_ext::<Vec<$t>>(id, format!("vector::{}", stringify!($t)).as_str())
                     .opaque_func_id::<_, $t>(id, meta_register_vector_default::<$t>);
             }
         )*

@@ -61,9 +61,11 @@ impl<T: 'static> ExternalComponent<T> for &ComponentIdFetcher<T> {
     fn deref_id<'a>(&self, world: impl WorldProvider<'a>) -> FetchedId<T> {
         let world = world.world();
         let map = world.components_map();
-        let id = *(map
-            .entry(std::any::TypeId::of::<T>())
-            .or_insert_with(|| external_register_component::<T>(world, std::ptr::null())));
+        let id = *(map.entry(std::any::TypeId::of::<T>()).or_insert_with(|| {
+            let type_name = get_only_type_name::<T>();
+            let name = compact_str::format_compact!("external_components::{}\0", type_name);
+            external_register_component::<T>(world, name.as_ptr() as *const i8)
+        }));
         FetchedId::new(id)
     }
 }

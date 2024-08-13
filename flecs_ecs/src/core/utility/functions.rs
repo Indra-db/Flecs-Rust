@@ -189,7 +189,9 @@ pub fn type_name_cstring<T>() -> CString {
 pub fn get_only_type_name<T>() -> &'static str {
     use std::any::type_name;
     let name = type_name::<T>();
-    name.split("::").last().unwrap_or(name)
+    let split_name = name.split("::").last().unwrap_or(name);
+    //for nested types like vec<String> we need to remove the last `>`
+    split_name.split(">").next().unwrap_or(split_name)
 }
 
 /// Returns true if the given type is an empty type.
