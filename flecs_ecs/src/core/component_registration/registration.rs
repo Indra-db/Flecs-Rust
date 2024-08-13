@@ -132,10 +132,8 @@ where
         unsafe { sys::ecs_set_with(world, prev_with) };
     }
 
-    if !COMPONENT_REGISTRATION {
-        if prev_scope != 0 {
-            unsafe { sys::ecs_set_scope(world, prev_scope) };
-        }
+    if !COMPONENT_REGISTRATION && prev_scope != 0 {
+        unsafe { sys::ecs_set_scope(world, prev_scope) };
     }
 
     id
