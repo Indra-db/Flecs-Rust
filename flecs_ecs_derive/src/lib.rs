@@ -163,6 +163,8 @@ fn impl_meta(input: &DeriveInput, has_repr_c: bool, struct_name: Ident) -> Token
     };
 
     let meta_fn_impl = quote! {
+        use flecs_ecs::addons::meta::*;
+        use flecs_ecs::core::WorldProvider;
         let world = component.world();
         component
         #( #meta_fields_impl )*;
