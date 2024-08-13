@@ -22,3 +22,10 @@ proc-macro2 = "1.0.67"
 [package.metadata.docs.rs]
 rustdoc-args = [ "-Zunstable-options", "--generate-link-to-definition"]
 cargo-args = ["-Zunstable-options", "-Zrustdoc-scrape-examples"]
+
+[features]
+
+flecs_meta = []
+
+# Default features
+default = []
