@@ -6,6 +6,9 @@
 use crate::core::{flecs, ComponentId, EntityView, IdOperations, World, SEPARATOR};
 use crate::sys;
 
+#[derive(crate::prelude::Component)]
+pub struct CustomModuleName;
+
 /// Define a module
 ///
 /// # Examples:
@@ -71,7 +74,8 @@ impl World {
     /// * [`World::module()`]
     /// * C++ API: `world::import`
     pub fn import<T: Module>(&self) -> EntityView {
-        let module = self.component::<T>();
+        let only_type_name = crate::core::get_only_type_name::<T>();
+        let module = self.component_named::<T>(only_type_name);
         // If we have already registered this type don't re-create the module
         if module.has::<flecs::EcsModule>() {
             return module.entity;
@@ -88,6 +92,11 @@ impl World {
 
         // Build the module
         T::module(self);
+
+        if !module.has::<CustomModuleName>() {
+            // register the type with the full path
+            self.module::<T>(std::any::type_name::<T>());
+        }
 
         // Return out scope to the previous scope
         self.set_scope_id(prev_scope);
@@ -119,7 +128,8 @@ impl World {
     /// * [`World::import()`]
     /// * C++ API: `world::module`
     pub fn module<M: ComponentId>(&self, name: &str) -> EntityView {
-        let id = self.component_named::<M>(name).id();
+        let comp = self.component_named::<M>(name).add::<CustomModuleName>();
+        let id = comp.id();
 
         let name = compact_str::format_compact!("{}\0", name);
         unsafe {

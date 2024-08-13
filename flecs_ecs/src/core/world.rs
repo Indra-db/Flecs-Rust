@@ -115,6 +115,11 @@ impl World {
     fn init_builtin_components(&self) {
         // used for event handling with no data
         self.component_named::<()>("flecs::rust::() - None");
+
+        #[cfg(feature = "flecs_module")]
+        self.component_named::<crate::addons::module::CustomModuleName>(
+            "flecs::rust::module::CustomModuleName",
+        );
     }
 
     /// deletes and recreates the world
