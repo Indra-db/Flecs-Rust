@@ -168,13 +168,27 @@ fn impl_meta(input: &DeriveInput, has_repr_c: bool, struct_name: Ident) -> Token
         #( #meta_fields_impl )*;
     };
 
+    meta_impl_return(meta_fn_impl, struct_name)
+}
+
+#[cfg(feature = "flecs_meta")]
+fn meta_impl_return(meta_fn_impl: TokenStream, struct_name: Ident) -> TokenStream {
     quote! {
         impl flecs_ecs::addons::Meta<#struct_name> for #struct_name {
-            fn meta(component: flecs_ecs::core::Component::<'_,#struct_name>) {
-                #[cfg(feature = "flecs_meta")]
-                {
-                    #meta_fn_impl
-                }
+            fn meta(component: flecs_ecs::core::Component<'_, #struct_name>) {
+                #meta_fn_impl
+            }
+        }
+    }
+}
+
+#[cfg(not(feature = "flecs_meta"))]
+fn meta_impl_return(meta_fn_impl: TokenStream, struct_name: Ident) -> TokenStream {
+    quote! {
+        impl flecs_ecs::addons::Meta<#struct_name> for #struct_name {
+            fn meta(component: flecs_ecs::core::Component<'_, #struct_name>) {
+                println!("Meta is not enabled, please enable the `flecs_meta` feature to use the meta attribute");
+                // Optionally, you can leave this empty or provide an alternative implementation
             }
         }
     }

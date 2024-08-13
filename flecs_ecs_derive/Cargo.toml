@@ -27,5 +27,4 @@ cargo-args = ["-Zunstable-options", "-Zrustdoc-scrape-examples"]
 
 flecs_meta = []
 
-# Default features
 default = []
