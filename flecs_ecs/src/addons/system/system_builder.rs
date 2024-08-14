@@ -13,6 +13,7 @@ where
     pub(crate) desc: sys::ecs_system_desc_t,
     term_builder: TermBuilder,
     world: WorldRef<'a>,
+    is_instanced: bool,
     _phantom: std::marker::PhantomData<&'a T>,
 }
 
@@ -27,6 +28,7 @@ where
             term_builder: TermBuilder::default(),
             world: world.into(),
             _phantom: std::marker::PhantomData,
+            is_instanced: false,
         };
 
         obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world_ptr_mut(), &Default::default()) };
@@ -52,6 +54,7 @@ where
             term_builder: TermBuilder::default(),
             world: world.into(),
             _phantom: std::marker::PhantomData,
+            is_instanced: false,
         };
 
         if obj.desc.entity == 0 {
@@ -83,6 +86,7 @@ where
             term_builder: TermBuilder::default(),
             world: world.into(),
             _phantom: std::marker::PhantomData,
+            is_instanced: false,
         };
 
         let entity_desc: sys::ecs_entity_desc_t = sys::ecs_entity_desc_t {
@@ -338,7 +342,7 @@ where
     /// * C++ API: `node_builder::build`
     #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
-        let system = System::new(self.world(), self.desc);
+        let system = System::new(self.world(), self.desc, self.is_instanced);
         for string_parts in self.term_builder.str_ptrs_to_free.iter() {
             unsafe {
                 String::from_raw_parts(

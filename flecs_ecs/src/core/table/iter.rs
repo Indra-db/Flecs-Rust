@@ -323,7 +323,7 @@ where
     ///
     /// * C++ API: `iter::is_self`
     #[doc(alias = "iter::is_self")]
-    pub fn is_self(&self, index: i8) -> bool {
+    pub fn is_self(&self, index: i32) -> bool {
         unsafe { sys::ecs_field_is_self(self.iter, index) }
     }
 
@@ -339,7 +339,7 @@ where
     ///
     /// * C++ API: `iter::is_set`
     #[doc(alias = "iter::is_set")]
-    pub fn is_set(&self, index: i8) -> bool {
+    pub fn is_set(&self, index: i32) -> bool {
         unsafe { sys::ecs_field_is_set(self.iter, index) }
     }
 
@@ -355,7 +355,7 @@ where
     ///
     /// * C++ API: `iter::is_readonly`
     #[doc(alias = "iter::is_readonly")]
-    pub fn is_readonly(&self, index: i8) -> bool {
+    pub fn is_readonly(&self, index: i32) -> bool {
         unsafe { sys::ecs_field_is_readonly(self.iter, index) }
     }
 
@@ -365,7 +365,7 @@ where
     ///
     /// * C++ API: `iter::field_count`
     #[doc(alias = "iter::field_count")]
-    pub fn field_count(&self) -> i8 {
+    pub fn field_count(&self) -> i32 {
         self.iter.field_count
     }
 
@@ -379,7 +379,7 @@ where
     ///
     /// * C++ API: `iter::size`
     #[doc(alias = "iter::size")]
-    pub fn size(&self, index: i8) -> usize {
+    pub fn size(&self, index: i32) -> usize {
         unsafe { sys::ecs_field_size(self.iter, index) }
     }
 
@@ -393,7 +393,7 @@ where
     ///
     /// * C++ API: `iter::src`
     #[doc(alias = "iter::src")]
-    pub fn src(&self, index: i8) -> EntityView<'a> {
+    pub fn src(&self, index: i32) -> EntityView<'a> {
         unsafe { EntityView::new_from(self.world(), sys::ecs_field_src(self.iter, index)) }
     }
 
@@ -407,7 +407,7 @@ where
     ///
     /// * C++ API: `iter::id`
     #[doc(alias = "iter::id")]
-    pub fn id(&self, index: i8) -> IdView<'a> {
+    pub fn id(&self, index: i32) -> IdView<'a> {
         unsafe { IdView::new_from(self.world(), sys::ecs_field_id(self.iter, index)) }
     }
 
@@ -422,7 +422,7 @@ where
     ///
     /// * C++ API: `iter::pair`
     #[doc(alias = "iter::pair")]
-    pub fn pair(&self, index: i8) -> Option<IdView<'a>> {
+    pub fn pair(&self, index: i32) -> Option<IdView<'a>> {
         unsafe {
             let id = sys::ecs_field_id(self.iter, index);
             if sys::ecs_id_is_pair(id) {
@@ -443,7 +443,7 @@ where
     ///
     /// * C++ API: `iter::column_index`
     #[doc(alias = "iter::column_index")]
-    pub fn column_index(&self, index: i8) -> i32 {
+    pub fn column_index(&self, index: i32) -> i32 {
         unsafe { sys::ecs_field_column(self.iter, index) }
     }
 
@@ -452,7 +452,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iter::term_index`
-    pub fn term_index(&self) -> i8 {
+    pub fn term_index(&self) -> i32 {
         self.iter.term_index + 1
     }
 
@@ -496,7 +496,7 @@ where
     #[doc(alias = "iter::field")]
     // TODO? in C++ API there is a mutable and immutable version of this function
     // Maybe we should create a ColumnView struct that is immutable and use the Column struct for mutable access?
-    pub unsafe fn field_unchecked<T>(&self, index: i8) -> Field<T> {
+    pub unsafe fn field_unchecked<T>(&self, index: i32) -> Field<T> {
         ecs_assert!(
             index < self.iter.field_count,
             FlecsErrorCode::InvalidParameter,
@@ -510,7 +510,7 @@ where
         self.field_internal::<T>(index).unwrap()
     }
 
-    fn field_checked<T: ComponentId>(&self, index: i8) -> Option<Field<T::UnderlyingType>> {
+    fn field_checked<T: ComponentId>(&self, index: i32) -> Option<Field<T::UnderlyingType>> {
         let id = <T::UnderlyingType as ComponentId>::id(self.world());
 
         if index > self.iter.field_count {
@@ -550,7 +550,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iter::field`
-    pub fn field<T: ComponentId>(&self, index: i8) -> Option<Field<T::UnderlyingType>> {
+    pub fn field<T: ComponentId>(&self, index: i32) -> Option<Field<T::UnderlyingType>> {
         ecs_assert!(
             (self.iter.flags & sys::EcsIterCppEach == 0),
             FlecsErrorCode::InvalidOperation,
@@ -575,7 +575,7 @@ where
     ///
     /// * C++ API: `iter::field`
     #[doc(alias = "iter::field")]
-    pub fn field_untyped(&self, index: i8) -> FieldUntyped {
+    pub fn field_untyped(&self, index: i32) -> FieldUntyped {
         ecs_assert!(
             (self.iter.flags & sys::EcsIterCppEach == 0),
             FlecsErrorCode::InvalidOperation,
@@ -589,7 +589,7 @@ where
         self.field_untyped_internal(index)
     }
 
-    pub fn field_at_untyped(&self, index: i8, row: usize) -> *mut c_void {
+    pub fn field_at_untyped(&self, index: i32, row: usize) -> *mut c_void {
         ecs_assert!(
             index < self.iter.field_count,
             FlecsErrorCode::InvalidParameter,
@@ -599,7 +599,7 @@ where
         unsafe { &mut *(field.array.add(row * field.size)) }
     }
 
-    pub fn field_at_mut<T>(&self, index: i8, row: usize) -> Option<&mut T::UnderlyingType>
+    pub fn field_at_mut<T>(&self, index: i32, row: usize) -> Option<&mut T::UnderlyingType>
     where
         T: ComponentId,
     {
@@ -619,7 +619,7 @@ where
         }
     }
 
-    pub fn field_at<T>(&self, index: i8, row: usize) -> Option<&T::UnderlyingType>
+    pub fn field_at<T>(&self, index: i32, row: usize) -> Option<&T::UnderlyingType>
     where
         T: ComponentId,
     {
@@ -681,7 +681,7 @@ where
     ///    assert_eq!(vec, vec![id, id2]);
     /// });
     /// ```
-    pub fn component_id_at(&self, index: i8) -> Id {
+    pub fn component_id_at(&self, index: i32) -> Id {
         ecs_assert!(
             index < self.iter.field_count,
             FlecsErrorCode::InvalidParameter,
@@ -763,7 +763,7 @@ where
         self.iter.group_id
     }
 
-    unsafe fn field_internal<T>(&self, index: i8) -> Option<Field<T>> {
+    unsafe fn field_internal<T>(&self, index: i32) -> Option<Field<T>> {
         let is_shared = !self.is_self(index);
 
         // If a shared column is retrieved with 'column', there will only be a
@@ -787,7 +787,7 @@ where
         Some(Field::<T>::new(slice, is_shared))
     }
 
-    fn field_untyped_internal(&self, index: i8) -> FieldUntyped {
+    fn field_untyped_internal(&self, index: i32) -> FieldUntyped {
         let size = unsafe { sys::ecs_field_size(self.iter, index) };
         let is_shared = !self.is_self(index);
 

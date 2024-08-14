@@ -17,6 +17,7 @@ where
     desc: sys::ecs_pipeline_desc_t,
     term_builder: TermBuilder,
     world: WorldRef<'a>,
+    is_instanced: bool,
     _phantom: std::marker::PhantomData<&'a T>,
 }
 
@@ -31,6 +32,7 @@ where
             desc,
             term_builder: TermBuilder::default(),
             world: world.into(),
+            is_instanced: false,
             _phantom: std::marker::PhantomData,
         };
 
@@ -53,6 +55,7 @@ where
             desc,
             term_builder: TermBuilder::default(),
             world: world.into(),
+            is_instanced: false,
             _phantom: std::marker::PhantomData,
         };
 
@@ -79,6 +82,7 @@ where
             },
 
             world: world.into(),
+            is_instanced: false,
             _phantom: std::marker::PhantomData,
         };
 
@@ -99,6 +103,7 @@ where
             desc: Default::default(),
             term_builder: TermBuilder::default(),
             world: world.into(),
+            is_instanced: false,
             _phantom: std::marker::PhantomData,
         };
 

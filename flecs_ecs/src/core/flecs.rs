@@ -173,7 +173,16 @@ pub mod query_flags {
         ECS_QUERY_MATCH_EMPTY_TABLES,
         "Query must match empty tables."
     );
-
+    create_pre_registered_component!(
+        NoData,
+        ECS_QUERY_NO_DATA,
+        "Query won't provide component data."
+    );
+    create_pre_registered_component!(
+        IsInstanced,
+        ECS_QUERY_IS_INSTANCED,
+        "Query iteration is always instanced."
+    );
     create_pre_registered_component!(
         AllowUnresolvedByName,
         ECS_QUERY_ALLOW_UNRESOLVED_BY_NAME,

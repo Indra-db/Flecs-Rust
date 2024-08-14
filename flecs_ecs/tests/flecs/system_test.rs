@@ -1642,6 +1642,7 @@ fn system_instanced_query_w_singleton_each() {
         .system::<(&SelfRef, &mut Position, &Velocity)>()
         .term_at(2)
         .singleton()
+        .instanced()
         .each_entity(|e, (s, p, v)| {
             let world = e.world();
             assert!(e == s.value);
@@ -1722,6 +1723,7 @@ fn system_instanced_query_w_base_each() {
     world.set(Count(0));
     let s = world
         .system::<(&SelfRef, &mut Position, &Velocity)>()
+        .instanced()
         .each_entity(|e, (s, p, v)| {
             let world = e.world();
             assert!(e == s.value);
@@ -1959,6 +1961,7 @@ fn system_instanced_query_w_singleton_iter() {
         .system::<(&SelfRef, &mut Position, &Velocity)>()
         .term_at(2)
         .singleton()
+        .instanced()
         .run(|mut it| {
             let world = it.world();
             while it.next() {
@@ -2035,6 +2038,7 @@ fn system_instanced_query_w_singleton_each_macro() {
 
     let s = system!(world, &SelfRef, &mut Position, &Velocity($))
         .term_at(2)
+        .instanced()
         .run(|mut it| {
             let world = it.world();
             while it.next() {
@@ -2126,6 +2130,7 @@ fn system_instanced_query_w_base_iter() {
 
     let s = world
         .system::<(&SelfRef, &mut Position, &Velocity)>()
+        .instanced()
         .run(|mut it| {
             let world = it.world();
             while it.next() {
@@ -2496,6 +2501,7 @@ fn system_ensure_instanced_w_each() {
         .system::<&mut Position>()
         .each_iter(move |mut it, i, _p| {
             let world = it.world();
+            assert!(it.iter_mut().flags & flecs_ecs_sys::EcsIterIsInstanced != 0);
             assert!(it.entity(i) == e1_id);
             world.get::<&mut Count>(|c| {
                 c.0 += 1;
@@ -2503,6 +2509,7 @@ fn system_ensure_instanced_w_each() {
         });
 
     let q = sys.query();
+    assert!(unsafe { (*q.query_ptr()).flags } & flecs_ecs_sys::EcsQueryIsInstanced != 0);
 
     world.get::<&Count>(|c| {
         assert_eq!(c.0, 0);
@@ -5634,7 +5641,7 @@ fn system_randomize_timers() {
 
 //     let q = world.query_builder<SelfRef, Position, &Velocity>()
 //         .term_at(2).singleton()
-//
+//         .instanced()
 //         .build();
 
 //     world.set(Count(0));
@@ -5691,7 +5698,7 @@ fn system_randomize_timers() {
 //     let e7 = world.entity().set(Position{x: 70, y: 80}).set(Velocity{x: 4, y: 5}); e7.set(SelfRef{value: e7.id()});
 
 //     let q = world.query_builder<SelfRef, Position, &Velocity>()
-//
+//         .instanced()
 //         .build();
 
 //     world.set(Count(0));
@@ -5884,7 +5891,7 @@ fn system_randomize_timers() {
 
 //     let q = world.query_builder<SelfRef, Position, &Velocity>()
 //         .term_at(2).singleton()
-//
+//         .instanced()
 //         .build();
 
 //     world.set(Count(0));
@@ -5951,7 +5958,7 @@ fn system_randomize_timers() {
 //     let e7 = world.entity().set(Position{x: 70, y: 80}).set(Velocity{x: 4, y: 5}); e7.set(SelfRef{value: e7.id()});
 
 //     let q = world.query_builder<SelfRef, Position, &Velocity>()
-//
+//         .instanced()
 //         .build();
 
 //     world.set(Count(0));

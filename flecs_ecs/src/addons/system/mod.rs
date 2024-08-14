@@ -57,7 +57,19 @@ impl<'a> System<'a> {
     ///
     /// * C++ API: `system::system`
     #[doc(alias = "system::system")]
-    pub fn new(world: impl WorldProvider<'a>, mut desc: sys::ecs_system_desc_t) -> Self {
+    pub fn new(
+        world: impl WorldProvider<'a>,
+        mut desc: sys::ecs_system_desc_t,
+        is_instanced: bool,
+    ) -> Self {
+        if desc.query.flags & sys::EcsQueryIsInstanced == 0 {
+            ecs_bit_cond(
+                &mut desc.query.flags,
+                sys::EcsQueryIsInstanced,
+                is_instanced,
+            );
+        }
+
         let id = unsafe { sys::ecs_system_init(world.world_ptr_mut(), &desc) };
         let entity = EntityView::new_from(world.world(), id);
 

@@ -23,6 +23,8 @@ bitflags::bitflags! {
         const MatchPrefab = sys::EcsQueryMatchPrefab;
         const MatchDisabled = sys::EcsQueryMatchDisabled;
         const MatchEmptyTables = sys::EcsQueryMatchEmptyTables;
+        const NoData = sys::EcsQueryNoData;
+        const IsInstanced = sys::EcsQueryIsInstanced;
         const AllowUnresolvedByName = sys::EcsQueryAllowUnresolvedByName;
         const TableOnly = sys::EcsQueryTableOnly;
     }
@@ -240,6 +242,17 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         }
 
         *entity_field_ref = unsafe { sys::ecs_entity_init(world_ptr, &entity_desc) };
+        self
+    }
+
+    /// set itself to be instanced
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query_builder_i::instanced`
+    #[doc(alias = "query_builder_i::instanced")]
+    fn instanced(&mut self) -> &mut Self {
+        self.query_desc_mut().flags |= flecs::query_flags::IsInstanced::ID as u32;
         self
     }
 
