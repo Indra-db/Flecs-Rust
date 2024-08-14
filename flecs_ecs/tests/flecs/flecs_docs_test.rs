@@ -973,9 +973,6 @@ fn flecs_query_docs_compile_test() {
         .term_at(0)
         // Never inherit Position
         .self_()
-        // Instancing is a property of the iterator, but by setting it on the query
-        // all iterators created for the query will be instanced.
-        .instanced()
         .build();
 
     q.run(|mut it| {

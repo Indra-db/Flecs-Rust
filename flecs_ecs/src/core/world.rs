@@ -91,7 +91,14 @@ impl Drop for World {
                 unsafe { sys::ecs_stage_free(world_ptr) };
             } else {
                 let ctx = self.world_ctx_mut();
-                unsafe { sys::ecs_fini(self.raw_world.as_ptr()) };
+
+                unsafe { 
+                    // before we call ecs_fini(), we increment the reference count back to 1
+                    // otherwise, copies of this object created during ecs_fini (e.g. a component on_remove hook)
+                    // would call again this destructor and ecs_fini().
+                    //sys::flecs_poly_claim(world_ptr);
+                    sys::ecs_fini(self.raw_world.as_ptr()) 
+                };
                 let is_ref_count_not_zero = !ctx.is_ref_count_zero();
                 if is_ref_count_not_zero && !ctx.is_panicking() {
                     ctx.set_is_panicking_true();

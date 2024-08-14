@@ -275,10 +275,10 @@ impl Default for EcsPoly {
 impl Default for crate::ecs_iter_to_json_desc_t {
     fn default() -> Self {
         Self {
+            serialize_builtin: Default::default(),
             serialize_entity_ids: Default::default(),
             serialize_values: Default::default(),
             serialize_doc: Default::default(),
-            serialize_var_labels: Default::default(),
             serialize_full_paths: Default::default(),
             serialize_fields: Default::default(),
             serialize_inherited: Default::default(),

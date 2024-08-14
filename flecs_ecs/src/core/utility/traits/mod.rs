@@ -31,8 +31,6 @@ pub mod private {
         T: QueryTuple,
         P: ComponentId,
     {
-        fn set_instanced(&mut self, instanced: bool);
-
         fn set_callback_binding_context(&mut self, binding_ctx: *mut c_void) -> &mut Self;
 
         fn set_callback_binding_context_free(

@@ -30,8 +30,6 @@ where
             Self::execute_each::<false, Func> as unsafe extern "C" fn(_),
         ));
 
-        self.set_instanced(true);
-
         self.build()
     }
 
@@ -47,8 +45,6 @@ where
         self.set_desc_callback(Some(
             Self::execute_each_entity::<false, Func> as unsafe extern "C" fn(_),
         ));
-
-        self.set_instanced(true);
 
         self.build()
     }
@@ -102,13 +98,9 @@ where
         self.set_callback_binding_context(each_iter_static_ref as *mut _ as *mut c_void);
         self.set_callback_binding_context_free(Some(Self::free_callback::<Func>));
 
-        self.set_instanced(true);
-
         self.set_desc_callback(Some(
             Self::execute_each_iter::<Func> as unsafe extern "C" fn(_),
         ));
-
-        self.set_instanced(true);
 
         self.build()
     }
@@ -122,11 +114,6 @@ where
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
-    ///
-    /// [`TableIter`] iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
     ///
     /// # Example
     ///
@@ -216,11 +203,6 @@ where
     /// table. The following function signature is valid:
     ///  - func(it: &mut `TableIter`, comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
-    /// [`TableIter`] iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
-    ///
     /// # Example
     /// ```
     /// use std::{rc::Rc, cell::RefCell};
@@ -299,7 +281,6 @@ where
         self.set_desc_callback(Some(
             Self::execute_run_iter::<Func> as unsafe extern "C" fn(_),
         ));
-        //TODO are we sure this shouldn't be instanced?
         self.build()
     }
 
@@ -313,11 +294,6 @@ where
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
-    ///
-    /// [`TableIter`] iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
     ///
     /// # Example
     ///
@@ -413,8 +389,6 @@ where
         self.set_callback_binding_context(each_static_ref as *mut _ as *mut c_void);
         self.set_callback_binding_context_free(Some(Self::free_callback::<FuncEach>));
 
-        self.set_instanced(true);
-
         self.set_desc_callback(Some(
             Self::execute_each::<true, FuncEach> as unsafe extern "C" fn(_),
         ));
@@ -432,11 +406,6 @@ where
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
-    ///
-    /// [`TableIter`] iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
     ///
     /// # Example
     ///
@@ -532,8 +501,6 @@ where
         self.set_callback_binding_context(each_entity_static_ref as *mut _ as *mut c_void);
         self.set_callback_binding_context_free(Some(Self::free_callback::<FuncEachEntity>));
 
-        self.set_instanced(true);
-
         self.set_desc_callback(Some(
             Self::execute_each_entity::<true, FuncEachEntity> as unsafe extern "C" fn(_),
         ));
@@ -548,10 +515,6 @@ macro_rules! implement_reactor_api {
         where
             T: QueryTuple,
         {
-            fn set_instanced(&mut self, instanced: bool) {
-                self.is_instanced = instanced;
-            }
-
             fn set_callback_binding_context(&mut self, binding_ctx: *mut c_void) -> &mut Self {
                 self.desc.callback_ctx = binding_ctx;
                 self
@@ -613,10 +576,6 @@ macro_rules! implement_reactor_api {
             T: QueryTuple,
             P: ComponentId,
         {
-            fn set_instanced(&mut self, instanced: bool) {
-                self.is_instanced = instanced;
-            }
-
             fn set_callback_binding_context(&mut self, binding_ctx: *mut c_void) -> &mut Self {
                 self.desc.callback_ctx = binding_ctx;
                 self

@@ -7,9 +7,8 @@ use flecs_ecs::prelude::*;
 // is a cheap way of eliminating redundant work, as many entities can be skipped
 // with a single check.
 //
-// This example shows how to use change tracking in combination with a few other
-// techniques, like using prefabs to store a single dirty state for multiple
-// entities and instanced queries.
+// This example shows how to use change tracking in combination with using
+// prefabs to store a single dirty state for multiple entities.
 
 #[derive(Debug, Component)]
 pub struct Position {
@@ -44,7 +43,6 @@ fn main() {
         .query::<(&Dirty, &mut Position)>()
         .term_at(0)
         .up_type::<flecs::IsA>() // Only match Dirty from prefab
-        .instanced() // Instanced iteration is faster (see example)
         .build();
 
     // Create two prefabs with a Dirty component. We can use this to share a

@@ -33,8 +33,6 @@ where
     /// The following function signatures is valid:
     ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
-    /// Each iterators are automatically instanced.
-    ///
     /// # See also
     ///
     /// * [`World::each()`]
@@ -43,7 +41,6 @@ where
     fn each(&self, mut func: impl FnMut(T::TupleType<'_>)) {
         unsafe {
             let mut iter = self.retrieve_iter();
-            iter.flags |= sys::EcsIterIsInstanced;
             iter.flags |= sys::EcsIterCppEach;
 
             while self.iter_next(&mut iter) {
@@ -73,8 +70,6 @@ where
     /// The following function signatures is valid:
     ///  - func(e : Entity , comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
-    /// Each iterators are automatically instanced.
-    ///
     /// # See also
     ///
     /// * [`World::each_entity()`]
@@ -84,7 +79,6 @@ where
         unsafe {
             let world = self.world_ptr_mut();
             let mut iter = self.retrieve_iter();
-            iter.flags |= sys::EcsIterIsInstanced;
             iter.flags |= sys::EcsIterCppEach;
 
             while self.iter_next(&mut iter) {
@@ -168,7 +162,6 @@ where
         unsafe {
             let world = self.world_ptr_mut();
             let mut iter = self.retrieve_iter();
-            iter.flags |= sys::EcsIterIsInstanced;
             iter.flags |= sys::EcsIterCppEach;
 
             while self.iter_next(&mut iter) {
@@ -200,8 +193,6 @@ where
     /// if it is, it returns that entity.
     /// The following function signatures is valid:
     ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
     ///
     /// # Returns
     ///
@@ -243,8 +234,6 @@ where
     /// if it is, it returns that entity.
     /// The following function signatures is valid:
     ///  - func(entity : Entity, comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
     ///
     /// # Returns
     ///
@@ -291,8 +280,6 @@ where
     /// if it is, it returns that entity.
     /// The following function signatures is valid:
     ///  - func(iter : `TableIter`, index : usize, comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
     ///
     /// # Returns
     ///
@@ -347,11 +334,6 @@ where
     /// The "iter" iterator accepts a function that is invoked for each matching
     /// table. The following function signature is valid:
     ///  - func(it: &mut `TableIter`, comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// [`TableIter`] iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
     ///
     /// # Example
     /// ```
@@ -447,11 +429,6 @@ where
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
-    ///
-    /// [`TableIter`] iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
     ///
     /// # Example
     ///
@@ -552,11 +529,6 @@ where
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
     ///
-    /// [`TableIter`] iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
-    ///
     /// # Example
     ///
     /// ```
@@ -649,10 +621,6 @@ where
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
-    ///
-    /// [`TableIter`] iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
     ///
     /// # Example
     ///

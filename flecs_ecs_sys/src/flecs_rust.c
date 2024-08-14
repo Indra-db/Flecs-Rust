@@ -35,7 +35,7 @@ void* ecs_rust_mut_get_id(
 
     ecs_column_t *column = &table->data.columns[column_index];
 
-    return ecs_vec_get(&column->data, column->size, ECS_RECORD_TO_ROW(record->row));
+    return ecs_vec_get(column->data, column->ti->size, ECS_RECORD_TO_ROW(record->row));
 
 error:
     return NULL;
@@ -74,7 +74,7 @@ void* ecs_rust_get_id(
 
     ecs_column_t *column = &table->data.columns[column_index];
 
-    return ecs_vec_get(&column->data, column->size, ECS_RECORD_TO_ROW(record->row));
+    return ecs_vec_get(column->data, column->ti->size, ECS_RECORD_TO_ROW(record->row));
 
 error:
     return NULL;
