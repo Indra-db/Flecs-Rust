@@ -45,7 +45,7 @@ impl<'a> Observer<'a> {
     ///
     /// * C++ API: `observer::observer`
     #[doc(alias = "observer::observer")]
-    pub fn new(world: impl WorldProvider<'a>, mut desc: sys::ecs_observer_desc_t) -> Self {
+    pub fn new(world: impl WorldProvider<'a>, desc: sys::ecs_observer_desc_t) -> Self {
         let id = unsafe { sys::ecs_observer_init(world.world_ptr_mut(), &desc) };
         let entity = EntityView::new_from(world.world(), id);
 

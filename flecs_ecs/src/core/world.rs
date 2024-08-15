@@ -96,7 +96,7 @@ impl Drop for World {
                     // before we call ecs_fini(), we increment the reference count back to 1
                     // otherwise, copies of this object created during ecs_fini (e.g. a component on_remove hook)
                     // would call again this destructor and ecs_fini().
-                    //sys::flecs_poly_claim(world_ptr);
+                    sys::flecs_poly_claim_(world_ptr as *mut c_void);
                     sys::ecs_fini(self.raw_world.as_ptr()) 
                 };
                 let is_ref_count_not_zero = !ctx.is_ref_count_zero();

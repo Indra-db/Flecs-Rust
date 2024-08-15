@@ -326,14 +326,6 @@ pub(crate) const ECS_QUERY_MATCH_DISABLED: u64 = 1 << 2;
 /// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
 pub(crate) const ECS_QUERY_MATCH_EMPTY_TABLES: u64 = 1 << 3;
 
-/// Query won't provide component data.
-/// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
-pub(crate) const ECS_QUERY_NO_DATA: u64 = 1 << 4;
-
-/// Query iteration is always instanced.
-/// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
-pub(crate) const ECS_QUERY_IS_INSTANCED: u64 = 1 << 5;
-
 /// Query may have unresolved entity identifiers.
 /// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
 pub(crate) const ECS_QUERY_ALLOW_UNRESOLVED_BY_NAME: u64 = 1 << 6;

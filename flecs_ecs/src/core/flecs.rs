@@ -241,6 +241,8 @@ create_pre_registered_component!(Wildcard, ECS_WILDCARD, "Match all entities");
 create_pre_registered_component!(Any, ECS_ANY, "Match at most one entity");
 create_pre_registered_component!(This_, ECS_THIS);
 create_pre_registered_component!(Variable, ECS_VARIABLE);
+// Shortcut as EcsVariable is typically used as source for singleton terms
+create_pre_registered_component!(Singleton, ECS_VARIABLE);
 create_pre_registered_component!(
     Transitive,
     ECS_TRANSITIVE,
