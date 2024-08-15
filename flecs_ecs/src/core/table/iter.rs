@@ -453,7 +453,7 @@ where
     ///
     /// * C++ API: `iter::term_index`
     pub fn term_index(&self) -> i8 {
-        self.iter.term_index + 1
+        self.iter.term_index
     }
 
     /// Convert current iterator result to string
@@ -589,14 +589,18 @@ where
         self.field_untyped_internal(index)
     }
 
-    pub fn field_at_untyped(&self, index: i8, row: usize) -> *mut c_void {
+    pub fn field_at_untyped(&self, index: i8, row: i32) -> *mut c_void {
         ecs_assert!(
             index < self.iter.field_count,
             FlecsErrorCode::InvalidParameter,
             index
         );
+        if self.iter.row_fields & (1u32 << index) != 0 {
+            let field = self.field_at_untyped_internal(index, row);
+            return unsafe { field.array.add(0) };
+        }
         let field = self.field_untyped_internal(index);
-        unsafe { &mut *(field.array.add(row * field.size)) }
+        unsafe { &mut *(field.array.add(row as usize * field.size)) }
     }
 
     pub fn field_at_mut<T>(&self, index: i8, row: usize) -> Option<&mut T::UnderlyingType>
@@ -612,7 +616,13 @@ where
             !unsafe { sys::ecs_field_is_readonly(self.iter, index) },
             FlecsErrorCode::AccessViolation,
         );
-        if let Some(field) = self.field_checked::<T>(index) {
+        if self.iter.row_fields & (1u32 << index) != 0 {
+            if let Some(field) = self.get_field_at_internal::<T>(index, row as i32) {
+                return Some(&mut field.slice_components[0]);
+            } else {
+                return None;
+            }
+        } else if let Some(field) = self.field_checked::<T>(index) {
             Some(&mut field.slice_components[row])
         } else {
             None
@@ -623,7 +633,22 @@ where
     where
         T: ComponentId,
     {
-        if let Some(field) = self.field_checked::<T>(index) {
+        ecs_assert!(
+            index < self.iter.field_count,
+            FlecsErrorCode::InvalidParameter,
+            index
+        );
+        ecs_assert!(
+            !unsafe { sys::ecs_field_is_readonly(self.iter, index) },
+            FlecsErrorCode::AccessViolation,
+        );
+        if self.iter.row_fields & (1u32 << index) != 0 {
+            if let Some(field) = self.get_field_at_internal::<T>(index, row as i32) {
+                return Some(&field.slice_components[0]);
+            } else {
+                return None;
+            }
+        } else if let Some(field) = self.field_checked::<T>(index) {
             Some(&field.slice_components[row])
         } else {
             None
@@ -807,6 +832,50 @@ where
             count,
             is_shared,
         )
+    }
+
+    fn field_at_untyped_internal(&self, index: i8, row: i32) -> FieldUntyped {
+        let size = unsafe { sys::ecs_field_size(self.iter, index) };
+
+        FieldUntyped::new(
+            unsafe { sys::ecs_field_at_w_size(self.iter, 0, index, row) as *mut c_void },
+            size,
+            1,
+            false,
+        )
+    }
+
+    // get field, check if correct type is used
+    fn get_field_at_internal<T>(&self, index: i8, row: i32) -> Option<Field<T::UnderlyingType>>
+    where
+        T: ComponentId,
+    {
+        let id = <T::UnderlyingType as ComponentId>::id(self.world());
+
+        if index > self.iter.field_count {
+            return None;
+        }
+
+        let term_id = unsafe { sys::ecs_field_id(self.iter, index) };
+        let is_pair = unsafe { sys::ecs_id_is_pair(term_id) };
+        let is_id_correct = id == term_id;
+
+        if is_id_correct || is_pair {
+            let array = unsafe {
+                sys::ecs_field_at_w_size(
+                    self.iter,
+                    std::mem::size_of::<T::UnderlyingType>(),
+                    index,
+                    row,
+                ) as *mut T::UnderlyingType
+            };
+
+            let slice = unsafe { std::slice::from_raw_parts_mut(array, self.count()) };
+
+            return Some(Field::<T::UnderlyingType>::new(slice, false));
+        }
+
+        None
     }
 
     /// Forward to each.
