@@ -4,15 +4,25 @@ use crate::core::*;
 use crate::sys;
 use flecs_ecs_derive::tuples;
 
-pub struct ArrayElement {
-    pub ptr: *mut u8,
-    pub is_ref: bool,
+// Not sure if this has any value, but keeping it here for food for thought.
+// pub struct ArrayElement {
+//     pub ptr: *mut u8,
+//     pub index: i8,
+//     pub is_ref: bool,
+//     pub is_bool: bool,
+// }
+
+#[doc(hidden)]
+pub struct IsAnyArray {
+    pub a_ref: bool, //e.g. singleton
+    pub a_row: bool, //e.g. sparse
 }
 
 pub struct ComponentsData<T: QueryTuple, const LEN: usize> {
     pub array_components: [*mut u8; LEN],
     pub is_ref_array_components: [bool; LEN],
-    pub is_any_array_a_ref: bool,
+    pub is_row_array_components: [bool; LEN],
+    pub is_any_array: IsAnyArray,
     _marker: PhantomData<T>,
 }
 
@@ -28,23 +38,31 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
     fn new(iter: &sys::ecs_iter_t) -> Self {
         let mut array_components = [std::ptr::null::<u8>() as *mut u8; LEN];
         let mut is_ref_array_components = [false; LEN];
+        let mut is_row_array_components = [false; LEN];
 
-        let is_any_array_a_ref = T::populate_array_ptrs(
-            iter,
-            &mut array_components[..],
-            &mut is_ref_array_components[..],
-        );
+        let is_any_array = if (iter.ref_fields | iter.up_fields) != 0 {
+            T::populate_array_ptrs(
+                iter,
+                &mut array_components[..],
+                &mut is_ref_array_components[..],
+                &mut is_row_array_components[..],
+            )
+        } else {
+            //TODO we should optimize this away, split up the functions most likely.
+            T::populate_self_array_ptrs(iter, &mut array_components[..])
+        };
 
         Self {
             array_components,
             is_ref_array_components,
-            is_any_array_a_ref,
+            is_row_array_components,
+            is_any_array,
             _marker: PhantomData::<T>,
         }
     }
 
     fn get_tuple(&mut self, index: usize) -> T::TupleType<'_> {
-        if self.is_any_array_a_ref {
+        if self.is_any_array.a_ref {
             T::create_tuple_with_ref(
                 &self.array_components[..],
                 &self.is_ref_array_components[..],
@@ -56,7 +74,7 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
     }
 
     fn get_slice(&mut self, count: usize) -> T::TupleSliceType<'_> {
-        if self.is_any_array_a_ref {
+        if self.is_any_array.a_ref {
             T::create_tuple_slices_with_ref(
                 &self.array_components[..],
                 &self.is_ref_array_components[..],
@@ -83,6 +101,12 @@ pub trait IterableTypeOperation {
     fn create_tuple_with_ref_data<'a>(
         array_components_data: *mut u8,
         is_ref: bool,
+        index: usize,
+    ) -> Self::ActualType<'a>;
+    fn create_tuple_with_ref_and_row_data<'a>(
+        array_components_data: *mut u8,
+        is_ref: bool,
+        is_row: bool,
         index: usize,
     ) -> Self::ActualType<'a>;
     fn create_tuple_slice_data<'a>(
@@ -126,6 +150,45 @@ where
                 &*data_ptr.add(0)
             } else {
                 &*data_ptr.add(index)
+            }
+        }
+    }
+
+    /*
+           if (field.is_ref) {
+           // If this is a reference, set the row to 0 as a ref always is a
+           // single value, not an array. This prevents the application from
+           // having to do an if-check on whether the column is owned.
+           //
+           // This check only happens when the current table being iterated
+           // over caused the query to match a reference. The check is
+           // performed once per iterated table.
+           this->row_ = 0;
+       }
+
+       if (field.is_row) {
+           field.ptr = ecs_field_at_w_size(iter, sizeof(T), field.index,
+               static_cast<int8_t>(row));
+       }
+    */
+
+    fn create_tuple_with_ref_and_row_data<'a>(
+        array_components_data: *mut u8,
+        is_ref: bool,
+        is_row: bool,
+        index: usize,
+    ) -> Self::ActualType<'a> {
+        let data_ptr = array_components_data as Self::CastType;
+        unsafe {
+            if !is_row {
+                if is_ref {
+                    &*data_ptr.add(0)
+                } else {
+                    &*data_ptr.add(index)
+                }
+            } else {
+                let index = if is_ref { 0 } else { index };
+                ecs_field::<Self::OnlyPairType>(data_ptr, index)
             }
         }
     }
@@ -372,13 +435,23 @@ pub trait QueryTuple: Sized {
         it: &sys::ecs_iter_t,
         components: &mut [*mut u8],
         is_ref: &mut [bool],
-    ) -> bool;
+        is_row: &mut [bool],
+    ) -> IsAnyArray;
+
+    fn populate_self_array_ptrs(it: &sys::ecs_iter_t, components: &mut [*mut u8]) -> IsAnyArray;
 
     fn create_tuple(array_components: &[*mut u8], index: usize) -> Self::TupleType<'_>;
 
     fn create_tuple_with_ref<'a>(
         array_components: &'a [*mut u8],
         is_ref_array_components: &[bool],
+        index: usize,
+    ) -> Self::TupleType<'a>;
+
+    fn create_tuple_with_ref_and_row<'a>(
+        array_components: &'a [*mut u8],
+        is_ref_array_components: &[bool],
+        is_row_array_components: &[bool],
         index: usize,
     ) -> Self::TupleType<'a>;
 
@@ -448,15 +521,32 @@ where
         it: &sys::ecs_iter_t,
         components: &mut [*mut u8],
         is_ref: &mut [bool],
-    ) -> bool {
-        components[0] =
-            unsafe { ecs_field::<A::OnlyPairType>(it, 0) as *mut u8 };
-        is_ref[0] = if !it.sources.is_null() {
-            unsafe { *it.sources.add(0) != 0 }
+        is_row: &mut [bool],
+    ) -> IsAnyArray {
+        if it.row_fields & (1u32 << 0) != 0 {
+            is_row[0] = true;
+            is_ref[0] = true;
         } else {
-            false
-        };
-        is_ref[0]
+            components[0] = unsafe { ecs_field::<A::OnlyPairType>(it, 0) as *mut u8 };
+            is_ref[0] = unsafe { *it.sources.add(0) != 0 };
+        }
+        IsAnyArray {
+            a_ref: is_ref[0],
+            a_row: is_row[0],
+        }
+    }
+
+    fn populate_self_array_ptrs(
+        it: &sys::ecs_iter_t,
+        components: &mut [*mut u8],
+    ) -> IsAnyArray{
+        components[0] = unsafe { ecs_field::<A::OnlyPairType>(it, 0) as *mut u8 };
+
+        //TODO optimize this away
+        IsAnyArray {
+            a_ref: false,
+            a_row: false,
+        }
     }
 
     fn create_tuple(array_components: &[*mut u8], index: usize) -> Self::TupleType<'_> {
@@ -473,6 +563,21 @@ where
     ) -> Self::TupleType<'a> {
         A::create_tuple_with_ref_data(array_components[0], is_ref_array_components[0], index)
     }
+
+    fn create_tuple_with_ref_and_row<'a>(
+        array_components: &'a [*mut u8],
+        is_ref_array_components: &[bool],
+        is_row_array_components: &[bool],
+        index: usize,
+    ) -> Self::TupleType<'a> {
+        if is_row_array_components[0] {
+            A::create_tuple_with_ref_data(array_components[0], true, index)
+        } else {
+            A::create_tuple_with_ref_data(array_components[0], is_ref_array_components[0], index)
+        }
+    }
+
+
 
     fn create_tuple_slices(
         array_components: &[*mut u8],
@@ -682,21 +787,45 @@ macro_rules! impl_iterable {
                 it: &sys::ecs_iter_t,
                 components: &mut [*mut u8],
                 is_ref: &mut [bool],
-            ) -> bool {
+                is_row: &mut [bool],
+            ) -> IsAnyArray {
                 let mut index = 0;
                 let mut any_ref = false;
+                let mut any_row = false;
                 $(
-                    components[index as usize] =
-                    unsafe { ecs_field::<$t::OnlyPairType>(it, index) as *mut u8 };
-                    is_ref[index as usize] = if !it.sources.is_null() {
-                        unsafe { *it.sources.add(index as usize) != 0 }
+                    if it.row_fields & (1u32 << index) != 0 {
+                        is_row[index as usize] = true;
+                        is_ref[index as usize] = true;
                     } else {
-                        false
-                    };
+                        components[index as usize] =
+                            unsafe { ecs_field::<$t::OnlyPairType>(it, index) as *mut u8 };
+                        is_ref[index as usize] = unsafe { *it.sources.add(index as usize) != 0 };
+                    }
                     any_ref |= is_ref[index as usize];
+                    any_row |= is_row[index as usize];
                     index += 1;
                 )*
-                any_ref
+                IsAnyArray {
+                    a_ref: any_ref,
+                    a_row: any_row,
+                }
+            }
+
+            #[allow(unused)]
+            fn populate_self_array_ptrs(
+                it: &sys::ecs_iter_t,
+                components: &mut [*mut u8],
+            ) -> IsAnyArray {
+                let mut index = 0;
+                $(
+                    components[index as usize] =
+                        unsafe { ecs_field::<$t::OnlyPairType>(it, index) as *mut u8 };
+                    index += 1;
+                )*
+                IsAnyArray {
+                    a_ref: false,
+                    a_row: false,
+                }
             }
 
             #[allow(unused, clippy::unused_unit)]
