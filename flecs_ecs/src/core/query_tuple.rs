@@ -12,49 +12,75 @@ use flecs_ecs_derive::tuples;
 //     pub is_bool: bool,
 // }
 
+#[doc(hidden)]
+pub struct IsAnyArray {
+    pub a_ref: bool, //e.g. singleton
+    pub a_row: bool, //e.g. sparse
+}
+
 pub struct ComponentsData<T: QueryTuple, const LEN: usize> {
     pub array_components: [*mut u8; LEN],
     pub is_ref_array_components: [bool; LEN],
-    pub is_any_array_a_ref: bool,
+    pub is_row_array_components: [bool; LEN],
+    pub index_array_components: [i8; LEN],
+    pub is_any_array: IsAnyArray,
     _marker: PhantomData<T>,
 }
 
 pub trait ComponentPointers<T: QueryTuple> {
     fn new(iter: &sys::ecs_iter_t) -> Self;
 
-    fn get_tuple(&mut self, index: usize) -> T::TupleType<'_>;
+    fn get_tuple(&mut self, iter: &sys::ecs_iter_t, index: usize) -> T::TupleType<'_>;
 
-    fn get_slice(&mut self, count: usize) -> T::TupleSliceType<'_>;
+    fn get_slice(&mut self, iter: &sys::ecs_iter_t, count: usize) -> T::TupleSliceType<'_>;
 }
 
 impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T, LEN> {
     fn new(iter: &sys::ecs_iter_t) -> Self {
         let mut array_components = [std::ptr::null::<u8>() as *mut u8; LEN];
         let mut is_ref_array_components = [false; LEN];
+        let mut is_row_array_components = [false; LEN];
+        let mut index_array_components = [0; LEN];
 
-        let is_any_array_a_ref = if (iter.ref_fields | iter.up_fields) != 0 {
+        let is_any_array = if (iter.ref_fields | iter.up_fields) != 0 {
             T::populate_array_ptrs(
                 iter,
                 &mut array_components[..],
                 &mut is_ref_array_components[..],
+                &mut is_row_array_components[..],
+                &mut index_array_components[..],
             )
         } else {
             // TODO since we know there is no is_ref and this always return false, we could mitigate a branch if we
             // split up the functions
             T::populate_self_array_ptrs(iter, &mut array_components[..]);
-            false
+            IsAnyArray {
+                a_ref: false,
+                a_row: false,
+            }
         };
 
         Self {
             array_components,
             is_ref_array_components,
-            is_any_array_a_ref,
+            is_row_array_components,
+            index_array_components,
+            is_any_array,
             _marker: PhantomData::<T>,
         }
     }
 
-    fn get_tuple(&mut self, index: usize) -> T::TupleType<'_> {
-        if self.is_any_array_a_ref {
+    fn get_tuple(&mut self, iter: &sys::ecs_iter_t, index: usize) -> T::TupleType<'_> {
+        if self.is_any_array.a_row {
+            T::create_tuple_with_row(
+                iter,
+                &mut self.array_components[..],
+                &self.is_ref_array_components[..],
+                &self.is_row_array_components[..],
+                &self.index_array_components[..],
+                index,
+            )
+        } else if self.is_any_array.a_ref {
             T::create_tuple_with_ref(
                 &self.array_components[..],
                 &self.is_ref_array_components[..],
@@ -65,8 +91,8 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
         }
     }
 
-    fn get_slice(&mut self, count: usize) -> T::TupleSliceType<'_> {
-        if self.is_any_array_a_ref {
+    fn get_slice(&mut self, iter: &sys::ecs_iter_t, count: usize) -> T::TupleSliceType<'_> {
+        if self.is_any_array.a_ref {
             T::create_tuple_slices_with_ref(
                 &self.array_components[..],
                 &self.is_ref_array_components[..],
@@ -89,16 +115,29 @@ pub trait IterableTypeOperation {
     const ONE: i32 = 1;
 
     fn populate_term(term: &mut sys::ecs_term_t);
+
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a>;
+
     fn create_tuple_with_ref_data<'a>(
         array_components_data: *mut u8,
         is_ref: bool,
         index: usize,
     ) -> Self::ActualType<'a>;
+
+    fn create_tuple_with_row_data<'a>(
+        iter: *const sys::ecs_iter_t,
+        array_components_data: *mut u8,
+        is_ref: bool,
+        is_row: bool,
+        index: i8,
+        row: usize,
+    ) -> Self::ActualType<'a>;
+
     fn create_tuple_slice_data<'a>(
         array_components_data: *mut u8,
         count: usize,
     ) -> Self::SliceType<'a>;
+
     fn create_tuple_slices_with_ref_data<'a>(
         array_components_data: *mut u8,
         is_ref_array_components: bool,
@@ -136,6 +175,32 @@ where
                 &*data_ptr.add(0)
             } else {
                 &*data_ptr.add(index)
+            }
+        }
+    }
+
+    fn create_tuple_with_row_data<'a>(
+        iter: *const sys::ecs_iter_t,
+        array_components_data: *mut u8,
+        is_ref: bool,
+        is_row: bool,
+        index: i8,
+        row: usize,
+    ) -> Self::ActualType<'a> {
+        let mut data_ptr = array_components_data as *mut Self::OnlyPairType;
+        unsafe {
+            if is_row {
+                // Get a pointer to the field returned by ecs_field_at
+                //let data_ptr =
+                let field_ptr = ecs_field_at::<Self::OnlyPairType>(iter, index, row as i32);
+
+                // Set the pointer in the array to point to this field
+                data_ptr = field_ptr;
+            }
+            if is_ref {
+                &*data_ptr.add(0)
+            } else {
+                &*data_ptr.add(index as usize)
             }
         }
     }
@@ -194,6 +259,31 @@ where
                 &mut *data_ptr.add(0)
             } else {
                 &mut *data_ptr.add(index)
+            }
+        }
+    }
+
+    fn create_tuple_with_row_data<'a>(
+        iter: *const sys::ecs_iter_t,
+        array_components_data: *mut u8,
+        is_ref: bool,
+        is_row: bool,
+        index: i8,
+        row: usize,
+    ) -> Self::ActualType<'a> {
+        let data_ptr = array_components_data as *mut Self::OnlyPairType;
+        unsafe {
+            if is_row {
+                core::ptr::copy_nonoverlapping(
+                    ecs_field_at::<Self::OnlyPairType>(iter, index, row as i32),
+                    data_ptr.add(index as usize),
+                    1,
+                );
+            }
+            if is_ref {
+                &mut *data_ptr.add(0)
+            } else {
+                &mut *data_ptr.add(index as usize)
             }
         }
     }
@@ -258,6 +348,35 @@ where
             Some(unsafe { &*data_ptr.add(0) })
         } else {
             Some(unsafe { &*data_ptr.add(index) })
+        }
+    }
+
+    fn create_tuple_with_row_data<'a>(
+        iter: *const sys::ecs_iter_t,
+        array_components_data: *mut u8,
+        is_ref: bool,
+        is_row: bool,
+        index: i8,
+        row: usize,
+    ) -> Self::ActualType<'a> {
+        let data_ptr = array_components_data as *mut Self::OnlyPairType;
+        unsafe {
+            if data_ptr.is_null() {
+                return None;
+            }
+
+            if is_row {
+                core::ptr::copy_nonoverlapping(
+                    ecs_field_at::<Self::OnlyPairType>(iter, index, row as i32),
+                    data_ptr.add(index as usize),
+                    1,
+                );
+            }
+            if is_ref {
+                Some(&*data_ptr.add(0))
+            } else {
+                Some(&*data_ptr.add(index as usize))
+            }
         }
     }
 
@@ -328,6 +447,35 @@ where
         }
     }
 
+    fn create_tuple_with_row_data<'a>(
+        iter: *const sys::ecs_iter_t,
+        array_components_data: *mut u8,
+        is_ref: bool,
+        is_row: bool,
+        index: i8,
+        row: usize,
+    ) -> Self::ActualType<'a> {
+        let data_ptr = array_components_data as *mut Self::OnlyPairType;
+        unsafe {
+            if data_ptr.is_null() {
+                return None;
+            }
+
+            if is_row {
+                core::ptr::copy_nonoverlapping(
+                    ecs_field_at::<Self::OnlyPairType>(iter, index, row as i32),
+                    data_ptr.add(index as usize),
+                    1,
+                );
+            }
+            if is_ref {
+                Some(&mut *data_ptr.add(0))
+            } else {
+                Some(&mut *data_ptr.add(index as usize))
+            }
+        }
+    }
+
     fn create_tuple_slice_data<'a>(
         array_components_data: *mut u8,
         count: usize,
@@ -382,7 +530,9 @@ pub trait QueryTuple: Sized {
         it: &sys::ecs_iter_t,
         components: &mut [*mut u8],
         is_ref: &mut [bool],
-    ) -> bool;
+        is_row: &mut [bool],
+        indexes: &mut [i8],
+    ) -> IsAnyArray;
 
     fn populate_self_array_ptrs(it: &sys::ecs_iter_t, components: &mut [*mut u8]);
 
@@ -392,6 +542,15 @@ pub trait QueryTuple: Sized {
         array_components: &'a [*mut u8],
         is_ref_array_components: &[bool],
         index: usize,
+    ) -> Self::TupleType<'a>;
+
+    fn create_tuple_with_row<'a>(
+        iter: *const sys::ecs_iter_t,
+        array_components: &'a mut [*mut u8],
+        is_ref_array_components: &[bool],
+        is_row_array_components: &[bool],
+        indexes: &[i8],
+        row: usize,
     ) -> Self::TupleType<'a>;
 
     fn create_tuple_slices(array_components: &[*mut u8], count: usize) -> Self::TupleSliceType<'_>;
@@ -460,15 +619,21 @@ where
         it: &sys::ecs_iter_t,
         components: &mut [*mut u8],
         is_ref: &mut [bool],
-    ) -> bool {
+        is_row: &mut [bool],
+        indexes: &mut [i8],
+    ) -> IsAnyArray {
         if it.row_fields & (1u32 << 0) != 0 {
-            components[0] = unsafe { ecs_field_at::<A::OnlyPairType>(it, 0, 0) as *mut u8 };
             is_ref[0] = true;
+            is_row[0] = true;
+            indexes[0] = 0;
         } else {
             components[0] = unsafe { ecs_field::<A::OnlyPairType>(it, 0) as *mut u8 };
             is_ref[0] = unsafe { *it.sources.add(0) != 0 };
+        };
+        IsAnyArray {
+            a_ref: is_ref[0],
+            a_row: is_row[0],
         }
-       is_ref[0]
     }
 
     fn populate_self_array_ptrs(
@@ -491,6 +656,25 @@ where
         index: usize
     ) -> Self::TupleType<'a> {
         A::create_tuple_with_ref_data(array_components[0], is_ref_array_components[0], index)
+    }
+
+    fn create_tuple_with_row<'a>(
+            iter: *const sys::ecs_iter_t,
+            array_components: &'a mut [*mut u8],
+            is_ref_array_components: &[bool],
+            is_row_array_components: &[bool],
+            indexes: &[i8],
+            row: usize,
+        ) -> Self::TupleType<'a> {
+
+        A::create_tuple_with_row_data(
+            iter,
+            array_components[0],
+            is_ref_array_components[0],
+            is_row_array_components[0],
+            indexes[0],
+            row,
+        )
     }
 
     fn create_tuple_slices(
@@ -701,23 +885,31 @@ macro_rules! impl_iterable {
                 it: &sys::ecs_iter_t,
                 components: &mut [*mut u8],
                 is_ref: &mut [bool],
-            ) -> bool {
+                is_row: &mut [bool],
+                indexes: &mut [i8],
+            ) -> IsAnyArray {
                 let mut index = 0;
                 let mut any_ref = false;
                 let mut any_row = false;
                 $(
                     if it.row_fields & (1u32 << index) != 0 {
-                        components[index] = unsafe { ecs_field_at::<$t::OnlyPairType>(it, index as i8, 0) as *mut u8 };
+                        //components[index] = unsafe { ecs_field_at::<$t::OnlyPairType>(it, index as i8, 0) as *mut u8 };
                         is_ref[index as usize] = true;
+                        is_row[index as usize] = true;
+                        indexes[index as usize] = index as i8;
                     } else {
                         components[index as usize] =
                             unsafe { ecs_field::<$t::OnlyPairType>(it, index as i8) as *mut u8 };
                         is_ref[index as usize] = unsafe { *it.sources.add(index as usize) != 0 };
                     }
                     any_ref |= is_ref[index as usize];
+                    any_row |= is_row[index as usize];
                     index += 1;
                 )*
-                any_ref
+                IsAnyArray {
+                    a_ref: any_ref,
+                    a_row: any_row,
+                }
             }
 
             #[allow(unused)]
@@ -753,6 +945,22 @@ macro_rules! impl_iterable {
             }
 
             #[allow(unused, clippy::unused_unit)]
+            fn create_tuple_with_row<'a>(
+                iter: *const sys::ecs_iter_t,
+                array_components: &'a mut [*mut u8],
+                is_ref_array_components: &[bool],
+                is_row_array_components: &[bool],
+                indexes: &[i8],
+                row: usize,
+            ) -> Self::TupleType<'a> {
+                let mut column: isize = -1;
+                ($({
+                    column += 1;
+                    $t::create_tuple_with_row_data(iter, array_components[column as usize], is_ref_array_components[column as usize], is_row_array_components[column as usize], indexes[column as usize], row)
+                },)*)
+            }
+
+            #[allow(unused, clippy::unused_unit)]
             fn create_tuple_slices(
                 array_components: &[*mut u8],
                 count: usize,
@@ -781,3 +989,66 @@ macro_rules! impl_iterable {
 }
 
 tuples!(impl_iterable, 0, 16);
+
+#[cfg(test)]
+mod tests {
+    use crate::prelude::*;
+
+    #[derive(Component)]
+    struct Position {
+        x: f32,
+        y: f32,
+    }
+
+    #[derive(Component)]
+    struct Velocity {
+        x: f32,
+        y: f32,
+    }
+
+    #[derive(Component)]
+    struct Mass(f32);
+
+    #[derive(Component)]
+    struct DD(f32);
+
+    #[test]
+    fn sparse_comp() {
+        let world = World::new();
+
+        world.component::<Position>().add_trait::<flecs::Sparse>();
+        world.component::<Velocity>();
+        world.component::<Mass>().add_trait::<flecs::Sparse>();
+
+        world
+            .entity()
+            .set(Position { x: 2.0, y: 2.0 })
+            .set(Velocity { x: 1.0, y: 1.0 })
+            .set(Mass(1.0));
+
+        world
+            .entity()
+            .set(Position { x: 3.0, y: 3.0 })
+            .set(Velocity { x: 1.0, y: 1.0 })
+            .set(Mass(2.0));
+
+        world
+            .entity()
+            .set(Position { x: 4.0, y: 4.0 })
+            .set(Velocity { x: 1.0, y: 1.0 })
+            .set(Mass(3.0));
+
+        world
+            .entity()
+            .set(Position { x: 5.0, y: 5.0 })
+            .set(Velocity { x: 1.0, y: 1.0 })
+            .set(Mass(4.0))
+            .set(DD(1.0));
+
+        let q = world.new_query::<(&Position)>();
+
+        q.each(|(pos)| {
+            println!("{}", pos.x);
+        });
+    }
+}

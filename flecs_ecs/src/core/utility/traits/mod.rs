@@ -87,7 +87,7 @@ pub mod private {
             }
 
             for i in 0..iter_count {
-                let tuple = components_data.get_tuple(i);
+                let tuple = components_data.get_tuple(&*iter, i);
                 each(tuple);
             }
 
@@ -140,7 +140,7 @@ pub mod private {
             for i in 0..iter_count {
                 let world = WorldRef::from_ptr(iter.world);
                 let entity = EntityView::new_from(world, *iter.entities.add(i));
-                let tuple = components_data.get_tuple(i);
+                let tuple = components_data.get_tuple(&*iter, i);
 
                 each_entity(entity, tuple);
             }
@@ -168,7 +168,6 @@ pub mod private {
             iter.flags |= sys::EcsIterCppEach;
 
             let each_iter = &mut *(iter.callback_ctx as *mut Func);
-
             let mut components_data = T::create_ptrs(&*iter);
             let iter_count = {
                 if iter.count == 0 && iter.table.is_null() {
@@ -181,8 +180,8 @@ pub mod private {
             sys::ecs_table_lock(iter.world, iter.table);
 
             for i in 0..iter_count {
+                let tuple = components_data.get_tuple(&*iter, i);
                 let iter_t = TableIter::new(iter);
-                let tuple = components_data.get_tuple(i);
 
                 each_iter(iter_t, i, tuple);
             }
@@ -245,7 +244,7 @@ pub mod private {
 
             sys::ecs_table_lock(iter.world, iter.table);
 
-            let tuple = components_data.get_slice(iter_count);
+            let tuple = components_data.get_slice(&*iter, iter_count);
             let iter_t = TableIter::new(&mut *iter);
             run_iter(iter_t, tuple);
             sys::ecs_table_unlock(iter.world, iter.table);

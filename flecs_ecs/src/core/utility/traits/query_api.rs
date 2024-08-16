@@ -56,7 +56,7 @@ where
                 sys::ecs_table_lock(self.world_ptr_mut(), iter.table);
 
                 for i in 0..iter_count {
-                    let tuple = components_data.get_tuple(i);
+                    let tuple = components_data.get_tuple(&iter, i);
                     func(tuple);
                 }
 
@@ -106,7 +106,7 @@ where
                 // update: I believe it's not possible due to not knowing the order of the components in the tuple. I will leave this here for now, maybe I will come back to it in the future.
                 for i in 0..iter_count {
                     let world = self.world();
-                    let tuple = components_data.get_tuple(i);
+                    let tuple = components_data.get_tuple(&iter, i);
 
                     func(EntityView::new_from(world, *iter.entities.add(i)), tuple);
                 }
@@ -177,8 +177,8 @@ where
                 sys::ecs_table_lock(world, iter.table);
 
                 for i in 0..iter_count {
+                    let tuple = components_data.get_tuple(&iter, i);
                     let iter_t = TableIter::new(&mut iter);
-                    let tuple = components_data.get_tuple(i);
 
                     func(iter_t, i, tuple);
                 }
@@ -216,7 +216,7 @@ where
 
                 for i in 0..iter_count {
                     let world = self.world();
-                    let tuple = components_data.get_tuple(i);
+                    let tuple = components_data.get_tuple(&iter, i);
                     if func(tuple) {
                         entity = Some(EntityView::new_from(world, *iter.entities.add(i)));
                         break;
@@ -262,7 +262,7 @@ where
                     let world = self.world();
                     let entity = EntityView::new_from(world, *iter.entities.add(i));
 
-                    let tuple = components_data.get_tuple(i);
+                    let tuple = components_data.get_tuple(&iter, i);
                     if func(entity, tuple) {
                         entity_result = Some(entity);
                         break;
@@ -314,9 +314,9 @@ where
                 sys::ecs_table_lock(world, iter.table);
 
                 for i in 0..iter_count {
+                    let tuple = components_data.get_tuple(&iter, i);
                     let iter_t = TableIter::new(&mut iter);
                     let world = self.world();
-                    let tuple = components_data.get_tuple(i);
                     if func(iter_t, i, tuple) {
                         entity_result = Some(EntityView::new_from(world, *iter.entities.add(i)));
                         break;
@@ -411,7 +411,7 @@ where
 
                 sys::ecs_table_lock(world, iter.table);
 
-                let tuple = components_data.get_slice(iter_count);
+                let tuple = components_data.get_slice(&iter, iter_count);
                 let iter_t = TableIter::new(&mut iter);
                 func(iter_t, tuple);
 
@@ -1055,7 +1055,7 @@ where
     let iter_count = (*iter).count as usize;
 
     for i in 0..iter_count {
-        let tuple = components_data.get_tuple(i);
+        let tuple = components_data.get_tuple(&unsafe { *iter }, i);
         func(tuple);
     }
 }
@@ -1072,7 +1072,7 @@ where
     let world = WorldRef::from_ptr((*iter).world);
 
     for i in 0..iter_count {
-        let tuple = components_data.get_tuple(i);
+        let tuple = components_data.get_tuple(&*iter, i);
 
         func(EntityView::new_from(world, *(*iter).entities.add(i)), tuple);
     }
