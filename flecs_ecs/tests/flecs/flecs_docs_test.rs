@@ -201,20 +201,28 @@ fn flecs_system_docs_compile_test() {
         });
 
     // Query iteration (run_iter)
-    q.run_iter(|it, (p, v)| {
-        for i in it.iter() {
-            p[i].x += v[i].x;
-            p[i].y += v[i].y;
+    q.run(|mut it| {
+        while it.next() {
+            let mut p = it.field::<Position>(0).unwrap();
+            let v = it.field::<Velocity>(1).unwrap();
+            for i in it.iter() {
+                p[i].x += v[i].x;
+                p[i].y += v[i].y;
+            }
         }
     });
 
     // System iteration (run_iter)
     world
         .system_named::<(&mut Position, &Velocity)>("Move")
-        .run_iter(|it, (p, v)| {
-            for i in it.iter() {
-                p[i].x += v[i].x;
-                p[i].y += v[i].y;
+        .run(|mut it| {
+            while it.next() {
+                let mut p = it.field::<Position>(0).unwrap();
+                let v = it.field::<Velocity>(1).unwrap();
+                for i in it.iter() {
+                    p[i].x += v[i].x;
+                    p[i].y += v[i].y;
+                }
             }
         });
 
@@ -227,10 +235,14 @@ fn flecs_system_docs_compile_test() {
 
     world
         .system_named::<(&mut Position, &Velocity)>("Move")
-        .run_iter(|it, (p, v)| {
-            for i in it.iter() {
-                p[i].x += v[i].x * it.delta_time();
-                p[i].y += v[i].y * it.delta_time();
+        .run(|mut it| {
+            while it.next() {
+                let mut p = it.field::<Position>(0).unwrap();
+                let v = it.field::<Velocity>(1).unwrap();
+                for i in it.iter() {
+                    p[i].x += v[i].x * it.delta_time();
+                    p[i].y += v[i].y * it.delta_time();
+                }
             }
         });
 
@@ -248,8 +260,10 @@ fn flecs_system_docs_compile_test() {
         .term_at(0)
         .singleton()
         .kind::<flecs::pipeline::OnUpdate>()
-        .run_iter(|it, game| {
-            println!("Time: {}", game[0].time);
+        .run(|mut it| {
+            while it.next() {
+                println!("Time: {}", it.field::<Game>(0).unwrap()[9].time);
+            }
         });
 
     world

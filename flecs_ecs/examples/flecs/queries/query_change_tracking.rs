@@ -107,23 +107,28 @@ fn main() {
 
     // Iterate the write query. Because the Position term is InOut (default)
     // iterating the query will write to the dirty state of iterated tables.
-    query_write.run_iter(|mut it, (dirty, pos)| {
-        println!("iterate table [{}]", it.archetype().unwrap());
+    query_write.run(|mut it| {
+        while it.next() {
+            let dirty = it.field::<Dirty>(0).unwrap();
+            let mut pos = it.field::<Position>(1).unwrap();
 
-        // Because we enforced that Dirty is a shared component, we can check
-        // a single value for the entire table.
-        if !dirty[0].value {
-            // If the dirty flag is false, skip the table. This way the table's
-            // dirty state is not updated by the query.
-            it.skip();
-            println!("iter.skip() for table [{}]", it.archetype().unwrap());
-            return;
-        }
+            println!("iterate table [{}]", it.archetype().unwrap());
 
-        // For all other tables the dirty state will be set.
-        for i in it.iter() {
-            pos[i].x += 1.0;
-            pos[i].y += 1.0;
+            // Because we enforced that Dirty is a shared component, we can check
+            // a single value for the entire table.
+            if !dirty[0].value {
+                // If the dirty flag is false, skip the table. This way the table's
+                // dirty state is not updated by the query.
+                it.skip();
+                println!("iter.skip() for table [{}]", it.archetype().unwrap());
+                return;
+            }
+
+            // For all other tables the dirty state will be set.
+            for i in it.iter() {
+                pos[i].x += 1.0;
+                pos[i].y += 1.0;
+            }
         }
     });
 

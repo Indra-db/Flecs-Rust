@@ -41,33 +41,36 @@ fn main() {
         .set(Velocity { x: 4.0, y: 5.0 })
         .set(Mass { value: 50.0 });
 
-    // The iter function provides a flecs::iter object which contains all sorts
+    // The run() function provides a flecs::iter object which contains all sorts
     // of information on the entities currently being iterated.
-    // The function passed to iter is by default called for each table the query
-    // is matched with.
-    query.run_iter(|it, (position, velocity)| {
-        println!();
-        // Print the table & number of entities matched in current callback
-        println!("Table: {:?}", it.archetype());
-        println!(" - number of entities: {}", it.count());
-        println!();
+    query.run(|mut it| {
+        while it.next() {
+            let mut position = it.field::<Position>(0).unwrap();
+            let velocity = it.field::<Velocity>(1).unwrap();
 
-        // Print information about the components being matched
-        for i in 0..it.field_count() {
-            println!(" - term {} : ", i);
-            println!("   - component: {}", it.id(i).to_str());
-            println!("   - type size: {}", it.size(i));
+            println!();
+            // Print the table & number of entities matched in current callback
+            println!("Table: {:?}", it.archetype());
+            println!(" - number of entities: {}", it.count());
+            println!();
+
+            // Print information about the components being matched
+            for i in 0..it.field_count() {
+                println!(" - term {} : ", i);
+                println!("   - component: {}", it.id(i).to_str());
+                println!("   - type size: {}", it.size(i));
+            }
+
+            println!();
+
+            for i in it.iter() {
+                position[i].x += velocity[i].x;
+                position[i].y += velocity[i].y;
+                println!(" - entity {}: has {:?}", it.entity(i).name(), position[i]);
+            }
+
+            println!();
         }
-
-        println!();
-
-        for i in it.iter() {
-            position[i].x += velocity[i].x;
-            position[i].y += velocity[i].y;
-            println!(" - entity {}: has {:?}", it.entity(i).name(), position[i]);
-        }
-
-        println!();
     });
 
     // Output:

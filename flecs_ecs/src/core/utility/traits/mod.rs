@@ -216,40 +216,6 @@ pub mod private {
             }
         }
 
-        /// Callback of the iter functionality
-        ///
-        /// # Arguments
-        ///
-        /// * `iter` - The iterator which gets passed in from `C`
-        ///
-        /// # See also
-        ///
-        /// * C++ API: `iter_invoker::invoke_callback`
-        #[doc(alias = "iter_invoker::invoke_callback")]
-        unsafe extern "C" fn execute_run_iter<Func>(iter: *mut sys::ecs_iter_t)
-        where
-            Func: FnMut(TableIter<false, P>, T::TupleSliceType<'_>),
-        {
-            let iter = &mut *iter;
-            let run_iter = &mut *(iter.callback_ctx as *mut Func);
-
-            let mut components_data = T::create_ptrs(&*iter);
-            let iter_count = {
-                if iter.count == 0 {
-                    1_usize
-                } else {
-                    iter.count as usize
-                }
-            };
-
-            sys::ecs_table_lock(iter.world, iter.table);
-
-            let tuple = components_data.get_slice(&*iter, iter_count);
-            let iter_t = TableIter::new(&mut *iter);
-            run_iter(iter_t, tuple);
-            sys::ecs_table_unlock(iter.world, iter.table);
-        }
-
         extern "C" fn free_callback<Func>(ptr: *mut c_void) {
             unsafe {
                 drop(Box::from_raw(ptr as *mut Func));
