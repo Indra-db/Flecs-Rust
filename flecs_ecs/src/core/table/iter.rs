@@ -619,9 +619,9 @@ where
         );
         if self.iter.row_fields & (1u32 << index) != 0 {
             if let Some(field) = self.get_field_at_internal::<T>(index, row as i32) {
-                return Some(&mut field.slice_components[0]);
+                Some(&mut field.slice_components[0])
             } else {
-                return None;
+                None
             }
         } else if let Some(field) = self.field_checked::<T>(index) {
             Some(&mut field.slice_components[row])
@@ -645,9 +645,9 @@ where
         );
         if self.iter.row_fields & (1u32 << index) != 0 {
             if let Some(field) = self.get_field_at_internal::<T>(index, row as i32) {
-                return Some(&field.slice_components[0]);
+                Some(&field.slice_components[0])
             } else {
-                return None;
+                None
             }
         } else if let Some(field) = self.field_checked::<T>(index) {
             Some(&field.slice_components[row])

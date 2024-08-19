@@ -406,6 +406,7 @@ where
         A::create_tuple_with_ref_data(array_components[0], is_ref_array_components[0], index)
     }
 
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     fn create_tuple_with_row<'a>(
             iter: *const sys::ecs_iter_t,
             array_components: &'a mut [*mut u8],
@@ -417,7 +418,7 @@ where
 
         if is_row_array_components[0] {
             let ptr_to_first_index_array = &mut array_components[0];
-            *ptr_to_first_index_array = unsafe { ecs_field_at::<A::OnlyPairType>(iter, indexes_array_components[0], index_row_entity as i32) } as *mut A::OnlyPairType as *mut u8;
+            *ptr_to_first_index_array = unsafe { ecs_field_at::<A::OnlyPairType>(iter, indexes_array_components[0], index_row_entity as i32) } as *mut u8;
         }
 
         A::create_tuple_with_ref_data(
@@ -615,6 +616,7 @@ macro_rules! impl_iterable {
             }
 
             #[allow(unused, clippy::unused_unit)]
+            #[allow(clippy::not_unsafe_ptr_arg_deref)]
             fn create_tuple_with_row<'a>(
                 iter: *const sys::ecs_iter_t,
                 array_components: &'a mut [*mut u8],

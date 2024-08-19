@@ -5,14 +5,19 @@
 void* ecs_rust_mut_get_id(
     const ecs_world_t *world,
     ecs_entity_t entity,
-    const ecs_record_t* record,
+    const ecs_record_t* r,
     ecs_table_t* table,
     ecs_id_t id)
 {
     ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
     ecs_check(ecs_is_alive(world, entity), ECS_INVALID_PARAMETER, NULL);
 
-    ecs_assert(record != NULL, ECS_INVALID_PARAMETER, NULL);
+    ecs_assert(r != NULL, ECS_INVALID_PARAMETER, NULL);
+
+    if (id < FLECS_HI_COMPONENT_ID) {
+        ecs_get_low_id(table, r, id);
+        return NULL;
+    }
 
     ecs_id_record_t *idr = flecs_id_record_get(world, id);
     if (!idr) {
@@ -35,7 +40,7 @@ void* ecs_rust_mut_get_id(
 
     ecs_column_t *column = &table->data.columns[column_index];
 
-    return ECS_ELEM(column->data, column->ti->size, ECS_RECORD_TO_ROW(record->row));
+    return ECS_ELEM(column->data, column->ti->size, ECS_RECORD_TO_ROW(r->row));
     //return ecs_vec_get(column->data, column->ti->size, ECS_RECORD_TO_ROW(record->row));
 
 error:
@@ -45,14 +50,20 @@ error:
 void* ecs_rust_get_id(
     const ecs_world_t *world,
     ecs_entity_t entity,
-    const ecs_record_t* record,
+    const ecs_record_t* r,
     ecs_table_t* table,
     ecs_id_t id)
 {
     ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
     ecs_check(ecs_is_alive(world, entity), ECS_INVALID_PARAMETER, NULL);
+    ecs_assert(r != NULL, ECS_INVALID_PARAMETER, NULL);
 
-    ecs_assert(record != NULL, ECS_INVALID_PARAMETER, NULL);
+    if (id < FLECS_HI_COMPONENT_ID) {
+        ecs_get_low_id(table, r, id);
+        if (!(table->flags & EcsTableHasIsA)) {
+            return NULL;
+        }
+    }
 
     ecs_id_record_t *idr = flecs_id_record_get(world, id);
     if (!idr) {
@@ -71,12 +82,11 @@ void* ecs_rust_get_id(
 
     int32_t column_index = tr->column;
 
-    //ecs_check(column_index < table->column_count, ECS_NOT_A_COMPONENT, NULL);
+    ecs_check(column_index < table->column_count, ECS_NOT_A_COMPONENT, NULL);
 
     ecs_column_t *column = &table->data.columns[column_index];
 
-    return ECS_ELEM(column->data, column->ti->size, ECS_RECORD_TO_ROW(record->row));
-   //return ecs_vec_get(column->data, column->ti->size, ECS_RECORD_TO_ROW(record->row));
+    return ECS_ELEM(column->data, column->ti->size, ECS_RECORD_TO_ROW(r->row));
 
 error:
     return NULL;

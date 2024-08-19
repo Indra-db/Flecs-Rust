@@ -369,7 +369,7 @@ pub fn opaque_option_struct<T: Default>(world: WorldRef) -> Opaque<Option<T>, T>
         if member == c"None" {
             *data = None;
             static mut BITBUCKET: bool = false;
-            return unsafe { std::ptr::addr_of_mut!(BITBUCKET) } as *mut _;
+            return std::ptr::addr_of_mut!(BITBUCKET) as *mut _;
         } else if member == c"Some" {
             if data.is_none() {
                 *data = Some(T::default());

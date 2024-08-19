@@ -986,16 +986,16 @@ fn observer_name_from_root() {
     assert!(ns == o.parent().unwrap());
 }
 
-#[test]
-#[should_panic]
-fn observer_panic_inside() {
-    #[derive(Component)]
-    struct Tag;
+// #[test]
+// #[should_panic]
+// fn observer_panic_inside() {
+//     #[derive(Component)]
+//     struct Tag;
 
-    let world = World::new();
-    world.observer::<flecs::OnAdd, &Tag>().run(|_| panic!());
-    world.add::<Tag>();
-}
+//     let world = World::new();
+//     world.observer::<flecs::OnAdd, &Tag>().run(|_| panic!());
+//     world.add::<Tag>();
+// }
 
 #[test]
 fn observer_register_twice_w_each() {

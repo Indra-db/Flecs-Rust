@@ -8,7 +8,7 @@ pub const FLECS_TERM_COUNT_MAX: u32 = 32;
 
 pub const FLECS_VERSION_MAJOR: u32 = 4;
 pub const FLECS_VERSION_MINOR: u32 = 0;
-pub const FLECS_VERSION_PATCH: u32 = 0;
+pub const FLECS_VERSION_PATCH: u32 = 1;
 pub const FLECS_HI_ID_RECORD_ID: u32 = 1024;
 pub const FLECS_SPARSE_PAGE_BITS: u32 = 12;
 pub const FLECS_ENTITY_PAGE_BITS: u32 = 12;
