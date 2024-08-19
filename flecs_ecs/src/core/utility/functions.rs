@@ -368,6 +368,14 @@ pub fn get_generation(entity: impl Into<Entity>) -> u32 {
 #[inline(always)]
 pub unsafe fn ecs_field<T>(it: *const sys::ecs_iter_t, index: i8) -> *mut T {
     let size = std::mem::size_of::<T>();
+
+    ecs_assert!(
+        size != 0,
+        FlecsErrorCode::NotAComponent,
+        "{}: cannot fetch terms that are Tags / zero-sized. With queries, either switch the signature from using the type signature to `.with`",
+        core::any::type_name::<T>()
+    );
+
     sys::ecs_field_w_size(it, size, index) as *mut T
 }
 

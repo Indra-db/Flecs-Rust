@@ -179,6 +179,7 @@ where
                 "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
             );
         }
+
         unsafe {
             let world = self.world_ptr_mut();
             let mut iter = self.retrieve_iter();

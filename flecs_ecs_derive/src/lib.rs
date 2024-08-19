@@ -1569,7 +1569,7 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
 ///
 /// Returns `&mut QueryBuilder`.
 ///
-/// Diverges from the [flecs query manual](https://github.com/SanderMertens/flecs/blob/v4/docs/FlecsQueryLanguage.md) in the following respects:
+/// Diverges from the [flecs query manual](https://github.com/SanderMertens/flecs/blob/master/docs/FlecsQueryLanguage.md) in the following respects:
 ///
 /// 1. If the first argument is a string literal it will be used as a name.
 /// 2. The next argument is a value implementing `WorldProvider`
