@@ -369,6 +369,8 @@ pub fn opaque_option_struct<T: Default>(world: WorldRef) -> Opaque<Option<T>, T>
         if member == c"None" {
             *data = None;
             static mut BITBUCKET: bool = false;
+            // rust analyzer marks it as error, but builds perfectly fine without.
+            #[allow(unused_unsafe)]
             return unsafe { std::ptr::addr_of_mut!(BITBUCKET) } as *mut _;
         } else if member == c"Some" {
             if data.is_none() {

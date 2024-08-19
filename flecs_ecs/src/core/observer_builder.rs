@@ -18,7 +18,6 @@ pub struct ObserverBuilder<'a, P = (), T: QueryTuple = ()> {
     term_builder: TermBuilder,
     world: WorldRef<'a>,
     event_count: usize,
-    is_instanced: bool,
     _phantom: std::marker::PhantomData<&'a (T, P)>,
 }
 
@@ -39,7 +38,6 @@ impl<'a, P: ComponentId, T: QueryTuple> ObserverBuilder<'a, P, T> {
             desc,
             term_builder: TermBuilder::default(),
             event_count: 1,
-            is_instanced: false,
             world: world.world(),
             _phantom: std::marker::PhantomData,
         };
@@ -71,7 +69,6 @@ impl<'a, P: ComponentId, T: QueryTuple> ObserverBuilder<'a, P, T> {
             desc,
             term_builder: TermBuilder::default(),
             event_count: 1,
-            is_instanced: false,
             world: world.world(),
             _phantom: std::marker::PhantomData,
         };
@@ -97,7 +94,6 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
             desc,
             term_builder: TermBuilder::default(),
             event_count: 0,
-            is_instanced: false,
             world: world.world(),
             _phantom: std::marker::PhantomData,
         };
@@ -129,7 +125,6 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
             term_builder: TermBuilder::default(),
             event_count: 0,
             world: world.world(),
-            is_instanced: false,
             _phantom: std::marker::PhantomData,
         };
 
@@ -243,7 +238,7 @@ where
     /// * C++ API: `node_builder::build`
     #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
-        let observer = Observer::new(self.world(), self.desc, self.is_instanced);
+        let observer = Observer::new(self.world(), self.desc);
         for string_parts in self.term_builder.str_ptrs_to_free.iter() {
             unsafe {
                 String::from_raw_parts(

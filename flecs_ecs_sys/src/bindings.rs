@@ -8,7 +8,7 @@ pub const FLECS_TERM_COUNT_MAX: u32 = 32;
 
 pub const FLECS_VERSION_MAJOR: u32 = 4;
 pub const FLECS_VERSION_MINOR: u32 = 0;
-pub const FLECS_VERSION_PATCH: u32 = 0;
+pub const FLECS_VERSION_PATCH: u32 = 1;
 pub const FLECS_HI_ID_RECORD_ID: u32 = 1024;
 pub const FLECS_SPARSE_PAGE_BITS: u32 = 12;
 pub const FLECS_ENTITY_PAGE_BITS: u32 = 12;
@@ -50,6 +50,7 @@ pub const EcsIdTraversable: u32 = 1024;
 pub const EcsIdTag: u32 = 2048;
 pub const EcsIdWith: u32 = 4096;
 pub const EcsIdCanToggle: u32 = 8192;
+pub const EcsIdIsTransitive: u32 = 16384;
 pub const EcsIdHasOnAdd: u32 = 65536;
 pub const EcsIdHasOnRemove: u32 = 131072;
 pub const EcsIdHasOnSet: u32 = 262144;
@@ -63,23 +64,20 @@ pub const EcsIdEventMask: u32 = 66519040;
 pub const EcsIdMarkedForDelete: u32 = 1073741824;
 pub const EcsIterIsValid: u32 = 1;
 pub const EcsIterNoData: u32 = 2;
-pub const EcsIterIsInstanced: u32 = 4;
 pub const EcsIterNoResults: u32 = 8;
 pub const EcsIterIgnoreThis: u32 = 16;
 pub const EcsIterHasCondSet: u32 = 64;
 pub const EcsIterProfile: u32 = 128;
 pub const EcsIterTrivialSearch: u32 = 256;
-pub const EcsIterTrivialSearchNoData: u32 = 512;
-pub const EcsIterTrivialTest: u32 = 1024;
-pub const EcsIterTrivialTestWildcard: u32 = 2048;
-pub const EcsIterTrivialSearchWildcard: u32 = 4096;
-pub const EcsIterCacheSearch: u32 = 8192;
-pub const EcsIterFixedInChangeComputed: u32 = 16384;
-pub const EcsIterFixedInChanged: u32 = 32768;
-pub const EcsIterSkip: u32 = 65536;
-pub const EcsIterCppEach: u32 = 131072;
-pub const EcsIterTableOnly: u32 = 262144;
-pub const EcsEventTableOnly: u32 = 262144;
+pub const EcsIterTrivialTest: u32 = 2048;
+pub const EcsIterTrivialCached: u32 = 16384;
+pub const EcsIterCacheSearch: u32 = 32768;
+pub const EcsIterFixedInChangeComputed: u32 = 65536;
+pub const EcsIterFixedInChanged: u32 = 131072;
+pub const EcsIterSkip: u32 = 262144;
+pub const EcsIterCppEach: u32 = 524288;
+pub const EcsIterTableOnly: u32 = 1048576;
+pub const EcsEventTableOnly: u32 = 1048576;
 pub const EcsEventNoOnSet: u32 = 65536;
 pub const EcsQueryMatchThis: u32 = 2048;
 pub const EcsQueryMatchOnlyThis: u32 = 4096;
@@ -96,7 +94,6 @@ pub const EcsQueryIsTrivial: u32 = 4194304;
 pub const EcsQueryHasCacheable: u32 = 8388608;
 pub const EcsQueryIsCacheable: u32 = 16777216;
 pub const EcsQueryHasTableThisVar: u32 = 33554432;
-pub const EcsQueryHasSparseThis: u32 = 67108864;
 pub const EcsQueryCacheYieldEmptyTables: u32 = 134217728;
 pub const EcsTermMatchAny: u32 = 1;
 pub const EcsTermMatchAnySrc: u32 = 2;
@@ -104,7 +101,6 @@ pub const EcsTermTransitive: u32 = 4;
 pub const EcsTermReflexive: u32 = 8;
 pub const EcsTermIdInherited: u32 = 16;
 pub const EcsTermIsTrivial: u32 = 32;
-pub const EcsTermNoData: u32 = 64;
 pub const EcsTermIsCacheable: u32 = 128;
 pub const EcsTermIsScope: u32 = 256;
 pub const EcsTermIsMember: u32 = 512;
@@ -179,7 +175,7 @@ pub const EcsIsName: u64 = 72057594037927936;
 pub const EcsTraverseFlags: i64 = -576460752303423488;
 pub const EcsTermRefFlags: i64 = -72057594037927936;
 pub const flecs_iter_cache_ids: u32 = 1;
-pub const flecs_iter_cache_columns: u32 = 2;
+pub const flecs_iter_cache_trs: u32 = 2;
 pub const flecs_iter_cache_sources: u32 = 4;
 pub const flecs_iter_cache_ptrs: u32 = 8;
 pub const flecs_iter_cache_variables: u32 = 16;
@@ -189,8 +185,6 @@ pub const ECS_MAX_TOKEN_SIZE: u32 = 256;
 pub const EcsQueryMatchPrefab: u32 = 2;
 pub const EcsQueryMatchDisabled: u32 = 4;
 pub const EcsQueryMatchEmptyTables: u32 = 8;
-pub const EcsQueryNoData: u32 = 16;
-pub const EcsQueryIsInstanced: u32 = 32;
 pub const EcsQueryAllowUnresolvedByName: u32 = 64;
 pub const EcsQueryTableOnly: u32 = 128;
 pub const EcsFirstUserComponentId: u32 = 8;
@@ -1371,11 +1365,6 @@ pub struct ecs_table_t {
 pub struct ecs_id_record_t {
     _unused: [u8; 0],
 }
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ecs_table_record_t {
-    _unused: [u8; 0],
-}
 #[doc = "A poly object.\n A poly (short for polymorph) object is an object that has a variable list of\n capabilities, determined by a mixin table. This is the current list of types\n in the flecs API that can be used as an ecs_poly_t:\n\n - ecs_world_t\n - ecs_stage_t\n - ecs_query_t\n\n Functions that accept an ecs_poly_t argument can accept objects of these\n types. If the object does not have the requested mixin the API will throw an\n assert.\n\n The poly/mixin framework enables partially overlapping features to be\n implemented once, and enables objects of different types to interact with\n each other depending on what mixins they have, rather than their type\n (in some ways it's like a mini-ECS). Additionally, each poly object has a\n header that enables the API to do sanity checking on the input arguments."]
 pub type ecs_poly_t = ::core::ffi::c_void;
 #[repr(C)]
@@ -1395,6 +1384,47 @@ pub struct ecs_header_t {
     pub refcount: i32,
     #[doc = "< Table with offsets to (optional) mixins"]
     pub mixins: *mut ecs_mixins_t,
+}
+#[doc = "Record for entity index"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_record_t {
+    #[doc = "< Id record to (*, entity) for target entities"]
+    pub idr: *mut ecs_id_record_t,
+    #[doc = "< Identifies a type (and table) in world"]
+    pub table: *mut ecs_table_t,
+    #[doc = "< Table row of the entity"]
+    pub row: u32,
+    #[doc = "< Index in dense array of entity index"]
+    pub dense: i32,
+}
+#[doc = "Header for table cache elements."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_table_cache_hdr_t {
+    #[doc = "< Table cache of element. Of type ecs_id_record_t* for component index elements."]
+    pub cache: *mut ecs_table_cache_t,
+    #[doc = "< Table associated with element."]
+    pub table: *mut ecs_table_t,
+    #[doc = "< Next/previous elements for id in table cache."]
+    pub prev: *mut ecs_table_cache_hdr_t,
+    #[doc = "< Next/previous elements for id in table cache."]
+    pub next: *mut ecs_table_cache_hdr_t,
+    #[doc = "< Whether element is in empty list."]
+    pub empty: bool,
+}
+#[doc = "Metadata describing where a component id is stored in a table.\n This type is used as element type for the component index table cache. One\n record exists per table/component in the table. Only records for wildcard ids\n can have a count > 1."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_table_record_t {
+    #[doc = "< Table cache header"]
+    pub hdr: ecs_table_cache_hdr_t,
+    #[doc = "< First type index where id occurs in table"]
+    pub index: i16,
+    #[doc = "< Number of times id occurs in table"]
+    pub count: i16,
+    #[doc = "< First column index where id occurs"]
+    pub column: i16,
 }
 #[doc = "Function prototype for runnables (systems, observers).\n The run callback overrides the default behavior for iterating through the\n results of a runnable object.\n\n The default runnable iterates the iterator, and calls an iter_action (see\n below) for each returned result.\n\n @param it The iterator to be iterated by the runnable."]
 pub type ecs_run_action_t = ::core::option::Option<unsafe extern "C" fn(it: *mut ecs_iter_t)>;
@@ -1569,7 +1599,7 @@ pub struct ecs_term_t {
     #[doc = "< Operator of term"]
     pub oper: i16,
     #[doc = "< Index of field for term in iterator"]
-    pub field_index: i16,
+    pub field_index: i8,
     #[doc = "< Flags that help eval, set by ecs_query_init()"]
     pub flags_: ecs_flags16_t,
 }
@@ -1588,7 +1618,7 @@ pub struct ecs_query_t {
     #[doc = "< Query flags"]
     pub flags: ecs_flags32_t,
     #[doc = "< Number of query variables"]
-    pub var_count: i16,
+    pub var_count: i8,
     #[doc = "< Number of query terms"]
     pub term_count: i8,
     #[doc = "< Number of fields returned by query"]
@@ -1603,6 +1633,8 @@ pub struct ecs_query_t {
     pub write_fields: ecs_flags32_t,
     #[doc = "< Fields that read data"]
     pub read_fields: ecs_flags32_t,
+    #[doc = "< Fields that must be acquired with field_at"]
+    pub row_fields: ecs_flags32_t,
     #[doc = "< Fields that don't write shared data"]
     pub shared_readonly_fields: ecs_flags32_t,
     #[doc = "< Fields that will be set"]
@@ -1740,19 +1772,6 @@ pub struct ecs_observable_t {
     #[doc = "sparse<event, ecs_event_record_t>"]
     pub events: ecs_sparse_t,
 }
-#[doc = "Record for entity index"]
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ecs_record_t {
-    #[doc = "Id record to (*, entity) for target entities"]
-    pub idr: *mut ecs_id_record_t,
-    #[doc = "Identifies a type (and table) in world"]
-    pub table: *mut ecs_table_t,
-    #[doc = "Table row of the entity"]
-    pub row: u32,
-    #[doc = "Index in dense array of entity index"]
-    pub dense: i32,
-}
 #[doc = "Range in table"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1819,7 +1838,7 @@ pub struct ecs_each_iter_t {
     pub sources: ecs_entity_t,
     pub sizes: ecs_size_t,
     pub columns: i32,
-    pub ptrs: *mut ::core::ffi::c_void,
+    pub trs: *const ecs_table_record_t,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1981,9 +2000,6 @@ extern "C" {
 }
 extern "C" {
     pub fn flecs_poly_refcount(poly: *mut ecs_poly_t) -> i32;
-}
-extern "C" {
-    pub fn flecs_query_next_instanced(it: *mut ecs_iter_t) -> bool;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2164,14 +2180,12 @@ pub struct ecs_component_desc_t {
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct ecs_iter_t {
-    #[doc = "< The world"]
+    #[doc = "< The world. Can point to stage when in deferred/readonly mode."]
     pub world: *mut ecs_world_t,
-    #[doc = "< Actual world. This differs from world when in readonly mode"]
+    #[doc = "< Actual world. Never points to a stage."]
     pub real_world: *mut ecs_world_t,
     #[doc = "< Entity identifiers"]
-    pub entities: *mut ecs_entity_t,
-    #[doc = "< Pointers to components. Array if from this, pointer if not."]
-    pub ptrs: *mut *mut ::core::ffi::c_void,
+    pub entities: *const ecs_entity_t,
     #[doc = "< Component sizes"]
     pub sizes: *const ecs_size_t,
     #[doc = "< Current table"]
@@ -2182,20 +2196,20 @@ pub struct ecs_iter_t {
     pub ids: *mut ecs_id_t,
     #[doc = "< Values of variables (if any)"]
     pub variables: *mut ecs_var_t,
-    #[doc = "< Query term to table column mapping"]
-    pub columns: *mut i32,
+    #[doc = "< Info on where to find field in table"]
+    pub trs: *mut *const ecs_table_record_t,
     #[doc = "< Entity on which the id was matched (0 if same as entities)"]
     pub sources: *mut ecs_entity_t,
     #[doc = "< Bitset that marks constrained variables"]
     pub constrained_vars: ecs_flags64_t,
     #[doc = "< Group id for table, if group_by is used"]
     pub group_id: u64,
-    #[doc = "< Number of fields in iterator"]
-    pub field_count: i32,
     #[doc = "< Fields that are set"]
     pub set_fields: ecs_flags32_t,
-    #[doc = "< Bitset with shared fields"]
-    pub shared_fields: ecs_flags32_t,
+    #[doc = "< Bitset with fields that aren't component arrays"]
+    pub ref_fields: ecs_flags32_t,
+    #[doc = "< Fields that must be obtained with field_at"]
+    pub row_fields: ecs_flags32_t,
     #[doc = "< Bitset with fields matched through up traversal"]
     pub up_fields: ecs_flags32_t,
     #[doc = "< The system (if applicable)"]
@@ -2206,12 +2220,14 @@ pub struct ecs_iter_t {
     pub event_id: ecs_id_t,
     #[doc = "< Unique event id. Used to dedup observer calls"]
     pub event_cur: i32,
+    #[doc = "< Number of fields in iterator"]
+    pub field_count: i8,
+    #[doc = "< Index of term that emitted an event.\n This field will be set to the 'index' field\n of an observer term."]
+    pub term_index: i8,
+    #[doc = "< Number of variables for query"]
+    pub variable_count: i8,
     #[doc = "< Query being evaluated"]
     pub query: *const ecs_query_t,
-    #[doc = "< Index of term that emitted an event.\n This field will be set to the 'index' field\n of an observer term."]
-    pub term_index: i32,
-    #[doc = "< Number of variables for query"]
-    pub variable_count: i32,
     #[doc = "< Names of variables (if any)"]
     pub variable_names: *mut *mut ::core::ffi::c_char,
     #[doc = "< Param passed to ecs_run"]
@@ -2234,8 +2250,6 @@ pub struct ecs_iter_t {
     pub offset: i32,
     #[doc = "< Number of entities to iterate"]
     pub count: i32,
-    #[doc = "< Number of entities to iterate before next table"]
-    pub instance_count: i32,
     #[doc = "< Iterator flags"]
     pub flags: ecs_flags32_t,
     #[doc = "< When set, system execution is interrupted"]
@@ -2329,7 +2343,7 @@ pub struct ecs_observer_desc_t {
     #[doc = "Optional shared last event id for multiple observers. Ensures only one\n of the observers with the shared id gets triggered for an event"]
     pub last_event_id: *mut i32,
     #[doc = "Used for internal purposes"]
-    pub term_index_: i32,
+    pub term_index_: i8,
     pub flags_: ecs_flags32_t,
 }
 #[doc = "Used with ecs_emit().\n\n @ingroup observers"]
@@ -2942,7 +2956,7 @@ extern "C" {
     pub fn ecs_set_target_fps(world: *mut ecs_world_t, fps: f32);
 }
 extern "C" {
-    #[doc = "Set default query flags.\n Set a default value for the ecs_filter_desc_t::flags field. Default flags\n are applied in addition to the flags provided in the descriptor. For a\n list of available flags, see include/flecs/private/api_flags.h. Typical flags\n to use are:\n\n  - `EcsQueryIsInstanced`\n  - `EcsQueryMatchEmptyTables`\n  - `EcsQueryMatchDisabled`\n  - `EcsQueryMatchPrefab`\n\n @param world The world.\n @param flags The query flags."]
+    #[doc = "Set default query flags.\n Set a default value for the ecs_filter_desc_t::flags field. Default flags\n are applied in addition to the flags provided in the descriptor. For a\n list of available flags, see include/flecs/private/api_flags.h. Typical flags\n to use are:\n\n  - `EcsQueryMatchEmptyTables`\n  - `EcsQueryMatchDisabled`\n  - `EcsQueryMatchPrefab`\n\n @param world The world.\n @param flags The query flags."]
     pub fn ecs_set_default_query_flags(world: *mut ecs_world_t, flags: ecs_flags32_t);
 }
 extern "C" {
@@ -3738,7 +3752,7 @@ extern "C" {
     ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
-    #[doc = "Returns whether the query data changed since the last iteration.\n The operation will return true after:\n - new entities have been matched with\n - new tables have been matched/unmatched with\n - matched entities were deleted\n - matched components were changed\n\n The operation will not return true after a write-only (EcsOut) or filter\n (EcsInOutNone) term has changed, when a term is not matched with the\n current table (This subject) or for tag terms.\n\n The changed state of a table is reset after it is iterated. If an iterator was\n not iterated until completion, tables may still be marked as changed.\n\n If no iterator is provided the operation will return the changed state of the\n all matched tables of the query.\n\n If an iterator is provided, the operation will return the changed state of\n the currently returned iterator result. The following preconditions must be\n met before using an iterator with change detection:\n\n - The iterator is a query iterator (created with ecs_query_iter())\n - The iterator must be valid (ecs_query_next() must have returned true)\n - The iterator must be instanced\n\n @param query The query (optional if 'it' is provided).\n @return true if entities changed, otherwise false."]
+    #[doc = "Returns whether the query data changed since the last iteration.\n The operation will return true after:\n - new entities have been matched with\n - new tables have been matched/unmatched with\n - matched entities were deleted\n - matched components were changed\n\n The operation will not return true after a write-only (EcsOut) or filter\n (EcsInOutNone) term has changed, when a term is not matched with the\n current table (This subject) or for tag terms.\n\n The changed state of a table is reset after it is iterated. If an iterator was\n not iterated until completion, tables may still be marked as changed.\n\n If no iterator is provided the operation will return the changed state of the\n all matched tables of the query.\n\n If an iterator is provided, the operation will return the changed state of\n the currently returned iterator result. The following preconditions must be\n met before using an iterator with change detection:\n\n - The iterator is a query iterator (created with ecs_query_iter())\n - The iterator must be valid (ecs_query_next() must have returned true)\n\n @param query The query (optional if 'it' is provided).\n @return true if entities changed, otherwise false."]
     pub fn ecs_query_changed(query: *mut ecs_query_t) -> bool;
 }
 extern "C" {
@@ -3883,44 +3897,53 @@ extern "C" {
     pub fn ecs_worker_next(it: *mut ecs_iter_t) -> bool;
 }
 extern "C" {
-    #[doc = "Obtain data for a query field.\n This operation retrieves a pointer to an array of data that belongs to the\n term in the query. The index refers to the location of the term in the query,\n and starts counting from zero.\n\n For example, the query `\"Position, Velocity\"` will return the `Position` array\n for index 0, and the `Velocity` array for index 1.\n\n When the specified field is not owned by the entity this function returns a\n pointer instead of an array. This happens when the source of a field is not\n the entity being iterated, such as a shared component (from a prefab), a\n component from a parent, or another entity. The ecs_field_is_self() operation\n can be used to test dynamically if a field is owned.\n\n The provided size must be either 0 or must match the size of the datatype\n of the returned array. If the size does not match, the operation may assert.\n The size can be dynamically obtained with ecs_field_size().\n\n @param it The iterator.\n @param size The type size of the requested data.\n @param index The index of the field in the iterator.\n @return A pointer to the data of the field."]
+    #[doc = "Get data for field.\n This operation retrieves a pointer to an array of data that belongs to the\n term in the query. The index refers to the location of the term in the query,\n and starts counting from zero.\n\n For example, the query `\"Position, Velocity\"` will return the `Position` array\n for index 0, and the `Velocity` array for index 1.\n\n When the specified field is not owned by the entity this function returns a\n pointer instead of an array. This happens when the source of a field is not\n the entity being iterated, such as a shared component (from a prefab), a\n component from a parent, or another entity. The ecs_field_is_self() operation\n can be used to test dynamically if a field is owned.\n\n When a field contains a sparse component, use the ecs_field_at function. When\n a field is guaranteed to be set and owned, the ecs_field_self() function can be\n used. ecs_field_self() has slightly better performance, and provides stricter\n validity checking.\n\n The provided size must be either 0 or must match the size of the type\n of the returned array. If the size does not match, the operation may assert.\n The size can be dynamically obtained with ecs_field_size().\n\n An example:\n\n @code\n while (ecs_query_next(&it)) {\n   Position *p = ecs_field(&it, Position, 0);\n   Velocity *v = ecs_field(&it, Velocity, 1);\n   for (int32_t i = 0; i < it->count; i ++) {\n     p\\[i\\].x += v\\[i\\].x;\n     p\\[i\\].y += v\\[i\\].y;\n   }\n }\n @endcode\n\n @param it The iterator.\n @param size The size of the field type.\n @param index The index of the field.\n @return A pointer to the data of the field."]
     pub fn ecs_field_w_size(
         it: *const ecs_iter_t,
         size: usize,
-        index: i32,
+        index: i8,
+    ) -> *mut ::core::ffi::c_void;
+}
+extern "C" {
+    #[doc = "Get data for field at specified row.\n This operation should be used instead of ecs_field_w_size for sparse\n component fields. This operation should be called for each returned row in a\n result. In the following example the Velocity component is sparse:\n\n @code\n while (ecs_query_next(&it)) {\n   Position *p = ecs_field(&it, Position, 0);\n   for (int32_t i = 0; i < it->count; i ++) {\n     Velocity *v = ecs_field_at(&it, Velocity, 1);\n     p\\[i\\].x += v->x;\n     p\\[i\\].y += v->y;\n   }\n }\n @endcode\n\n @param it the iterator.\n @param size The size of the field type.\n @param index The index of the field.\n @return A pointer to the data of the field."]
+    pub fn ecs_field_at_w_size(
+        it: *const ecs_iter_t,
+        size: usize,
+        index: i8,
+        row: i32,
     ) -> *mut ::core::ffi::c_void;
 }
 extern "C" {
     #[doc = "Test whether the field is readonly.\n This operation returns whether the field is readonly. Readonly fields are\n annotated with \\[in\\], or are added as a const type in the C++ API.\n\n @param it The iterator.\n @param index The index of the field in the iterator.\n @return Whether the field is readonly."]
-    pub fn ecs_field_is_readonly(it: *const ecs_iter_t, index: i32) -> bool;
+    pub fn ecs_field_is_readonly(it: *const ecs_iter_t, index: i8) -> bool;
 }
 extern "C" {
     #[doc = "Test whether the field is writeonly.\n This operation returns whether this is a writeonly field. Writeonly terms are\n annotated with \\[out\\].\n\n Serializers are not required to serialize the values of a writeonly field.\n\n @param it The iterator.\n @param index The index of the field in the iterator.\n @return Whether the field is writeonly."]
-    pub fn ecs_field_is_writeonly(it: *const ecs_iter_t, index: i32) -> bool;
+    pub fn ecs_field_is_writeonly(it: *const ecs_iter_t, index: i8) -> bool;
 }
 extern "C" {
     #[doc = "Test whether field is set.\n\n @param it The iterator.\n @param index The index of the field in the iterator.\n @return Whether the field is set."]
-    pub fn ecs_field_is_set(it: *const ecs_iter_t, index: i32) -> bool;
+    pub fn ecs_field_is_set(it: *const ecs_iter_t, index: i8) -> bool;
 }
 extern "C" {
     #[doc = "Return id matched for field.\n\n @param it The iterator.\n @param index The index of the field in the iterator.\n @return The id matched for the field."]
-    pub fn ecs_field_id(it: *const ecs_iter_t, index: i32) -> ecs_id_t;
+    pub fn ecs_field_id(it: *const ecs_iter_t, index: i8) -> ecs_id_t;
 }
 extern "C" {
     #[doc = "Return index of matched table column.\n This function only returns column indices for fields that have been matched\n on the $this variable. Fields matched on other tables will return -1.\n\n @param it The iterator.\n @param index The index of the field in the iterator.\n @return The index of the matched column, -1 if not matched."]
-    pub fn ecs_field_column(it: *const ecs_iter_t, index: i32) -> i32;
+    pub fn ecs_field_column(it: *const ecs_iter_t, index: i8) -> i32;
 }
 extern "C" {
     #[doc = "Return field source.\n The field source is the entity on which the field was matched.\n\n @param it The iterator.\n @param index The index of the field in the iterator.\n @return The source for the field."]
-    pub fn ecs_field_src(it: *const ecs_iter_t, index: i32) -> ecs_entity_t;
+    pub fn ecs_field_src(it: *const ecs_iter_t, index: i8) -> ecs_entity_t;
 }
 extern "C" {
     #[doc = "Return field type size.\n Return type size of the field. Returns 0 if the field has no data.\n\n @param it The iterator.\n @param index The index of the field in the iterator.\n @return The type size for the field."]
-    pub fn ecs_field_size(it: *const ecs_iter_t, index: i32) -> usize;
+    pub fn ecs_field_size(it: *const ecs_iter_t, index: i8) -> usize;
 }
 extern "C" {
     #[doc = "Test whether the field is matched on self.\n This operation returns whether the field is matched on the currently iterated\n entity. This function will return false when the field is owned by another\n entity, such as a parent or a prefab.\n\n When this operation returns false, the field must be accessed as a single\n value instead of an array. Fields for which this operation returns true\n return arrays with it->count values.\n\n @param it The iterator.\n @param index The index of the field in the iterator.\n @return Whether the field is matched on self."]
-    pub fn ecs_field_is_self(it: *const ecs_iter_t, index: i32) -> bool;
+    pub fn ecs_field_is_self(it: *const ecs_iter_t, index: i8) -> bool;
 }
 extern "C" {
     #[doc = "Get type for table.\n The table type is a vector that contains all component, tag and pair ids.\n\n @param table The table.\n @return The type of the table."]
@@ -3976,8 +3999,16 @@ extern "C" {
     pub fn ecs_table_get_column_size(table: *const ecs_table_t, index: i32) -> usize;
 }
 extern "C" {
-    #[doc = "Returns the number of records in the table.\n This operation returns the number of records that have been populated through\n the regular (entity) API as well as the number of records that have been\n inserted using the direct access API.\n\n @param table The table.\n @return The number of records in a table."]
+    #[doc = "Returns the number of entities in the table.\n This operation returns the number of entities in the table.\n\n @param table The table.\n @return The number of entities in the table."]
     pub fn ecs_table_count(table: *const ecs_table_t) -> i32;
+}
+extern "C" {
+    #[doc = "Returns allocated size of table.\n This operation returns the number of elements allocated in the table\n per column.\n\n @param table The table.\n @return The number of allocated elements in the table."]
+    pub fn ecs_table_size(table: *const ecs_table_t) -> i32;
+}
+extern "C" {
+    #[doc = "Returns array with entity ids for table.\n The size of the returned array is the result of ecs_table_count().\n\n @param table The table.\n @return Array with entity ids for table."]
+    pub fn ecs_table_entities(table: *const ecs_table_t) -> *const ecs_entity_t;
 }
 extern "C" {
     #[doc = "Test if table has id.\n Same as `ecs_table_get_type_index(world, table, id) != -1`.\n\n @param world The world.\n @param table The table.\n @param id The id.\n @return True if the table has the id, false if the table doesn't.\n\n @see ecs_table_get_type_index()"]
@@ -5613,6 +5644,8 @@ pub struct ecs_entity_to_json_desc_t {
     pub serialize_inherited: bool,
     #[doc = "< Serialize component values"]
     pub serialize_values: bool,
+    #[doc = "< Serialize builtin data as components (e.g. \"name\", \"parent\")"]
+    pub serialize_builtin: bool,
     #[doc = "< Serialize type info (requires serialize_values)"]
     pub serialize_type_info: bool,
     #[doc = "< Serialize active alerts for entity"]
@@ -5647,10 +5680,10 @@ pub struct ecs_iter_to_json_desc_t {
     pub serialize_entity_ids: bool,
     #[doc = "< Serialize component values"]
     pub serialize_values: bool,
+    #[doc = "< Serialize builtin data as components (e.g. \"name\", \"parent\")"]
+    pub serialize_builtin: bool,
     #[doc = "< Serialize doc attributes"]
     pub serialize_doc: bool,
-    #[doc = "< Serialize doc names of matched variables"]
-    pub serialize_var_labels: bool,
     #[doc = "< Serialize full paths for tags, components and pairs"]
     pub serialize_full_paths: bool,
     #[doc = "< Serialize field data"]
@@ -5718,29 +5751,6 @@ extern "C" {
         buf_out: *mut ecs_strbuf_t,
         desc: *const ecs_world_to_json_desc_t,
     ) -> ::core::ffi::c_int;
-}
-extern "C" {
-    #[doc = "Legacy deserializer functions. These can be used to load a v3 JSON string and\n save it to the new format. These functions will be removed in the next\n release."]
-    pub fn ecs_entity_from_json_legacy(
-        world: *mut ecs_world_t,
-        entity: ecs_entity_t,
-        json: *const ::core::ffi::c_char,
-        desc: *const ecs_from_json_desc_t,
-    ) -> *const ::core::ffi::c_char;
-}
-extern "C" {
-    pub fn ecs_world_from_json_legacy(
-        world: *mut ecs_world_t,
-        json: *const ::core::ffi::c_char,
-        desc: *const ecs_from_json_desc_t,
-    ) -> *const ::core::ffi::c_char;
-}
-extern "C" {
-    pub fn ecs_world_from_json_file_legacy(
-        world: *mut ecs_world_t,
-        filename: *const ::core::ffi::c_char,
-        desc: *const ecs_from_json_desc_t,
-    ) -> *const ::core::ffi::c_char;
 }
 extern "C" {
     #[doc = "< Parent scope for prefixes."]
@@ -7205,8 +7215,8 @@ pub struct EcsMember {
     pub unit: ecs_entity_t,
     #[doc = "< Member offset."]
     pub offset: i32,
-    #[doc = "< Is the offset explicitly set."]
-    pub explicit_offset: bool,
+    #[doc = "< If offset should be explicitly used."]
+    pub use_offset: bool,
 }
 #[doc = "Type expressing a range for a member value"]
 #[repr(C)]
@@ -7242,6 +7252,8 @@ pub struct ecs_member_t {
     pub offset: i32,
     #[doc = "May be set when used with ecs_struct_desc_t, will be auto-populated if\n type entity is also a unit"]
     pub unit: ecs_entity_t,
+    #[doc = "Set to true to prevent automatic offset computation. This option should\n be used when members are registered out of order or where calculation of\n member offsets doesn't match C type offsets."]
+    pub use_offset: bool,
     #[doc = "Numerical range that specifies which values member can assume. This\n range may be used by UI elements such as a progress bar or slider. The\n value of a member should not exceed this range."]
     pub range: ecs_member_value_range_t,
     #[doc = "Numerical range outside of which the value represents an error. This\n range may be used by UI elements to style a value."]
@@ -8009,39 +8021,15 @@ extern "C" {
         type_: ecs_entity_t,
     ) -> *const ecs_member_t;
 }
-extern "C" {
-    pub fn ecs_rust_mut_get_id(
-        world: *const ecs_world_t,
-        entity: ecs_entity_t,
-        record: *const ecs_record_t,
-        table: *mut ecs_table_t,
-        id: ecs_id_t,
-    ) -> *mut ::core::ffi::c_void;
-}
-extern "C" {
-    pub fn ecs_rust_get_id(
-        world: *const ecs_world_t,
-        entity: ecs_entity_t,
-        record: *const ecs_record_t,
-        table: *mut ecs_table_t,
-        id: ecs_id_t,
-    ) -> *mut ::core::ffi::c_void;
-}
-extern "C" {
-    pub fn ecs_rust_rel_count(
-        world: *const ecs_world_t,
-        id: ecs_id_t,
-        table: *mut ecs_table_t,
-    ) -> i32;
-}
+#[doc = "< Table cache of element. Of type ecs_id_record_t* for component index elements."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct ecs_event_id_record_t {
+pub struct ecs_table_cache_t {
     pub _address: u8,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct ecs_table_cache_hdr_t {
+pub struct ecs_event_id_record_t {
     pub _address: u8,
 }
 #[repr(C)]

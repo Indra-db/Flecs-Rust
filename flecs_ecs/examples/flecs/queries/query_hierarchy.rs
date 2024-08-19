@@ -57,15 +57,13 @@ fn main() {
         .cascade()
         .build();
 
-    query.run_iter(|it, (local, parent_world, world)| {
-        for i in it.iter() {
-            world[i].x = local[i].x;
-            world[i].y = local[i].y;
-            if parent_world.is_some() {
-                let parent_world = parent_world.unwrap();
-                world[i].x += parent_world[i].x;
-                world[i].y += parent_world[i].y;
-            }
+    query.each(|(local, parent_world, world)| {
+        world.x = local.x;
+        world.y = local.y;
+        if parent_world.is_some() {
+            let parent_world = parent_world.unwrap();
+            world.x += parent_world.x;
+            world.y += parent_world.y;
         }
     });
 

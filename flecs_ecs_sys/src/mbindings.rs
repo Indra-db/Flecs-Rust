@@ -5,6 +5,32 @@
 
 use super::*;
 
+extern "C" {
+    pub fn ecs_rust_mut_get_id(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+        record: *const ecs_record_t,
+        table: *mut ecs_table_t,
+        id: ecs_id_t,
+    ) -> *mut ::core::ffi::c_void;
+}
+extern "C" {
+    pub fn ecs_rust_get_id(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+        record: *const ecs_record_t,
+        table: *mut ecs_table_t,
+        id: ecs_id_t,
+    ) -> *mut ::core::ffi::c_void;
+}
+extern "C" {
+    pub fn ecs_rust_rel_count(
+        world: *const ecs_world_t,
+        id: ecs_id_t,
+        table: *mut ecs_table_t,
+    ) -> i32;
+}
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 //#[cfg(feature = "flecs_alerts")] //TODO flecs ecs_alert_init not properly defined in flecs c api.

@@ -436,7 +436,7 @@ impl<'a> UntypedComponent<'a> {
             unit,
             count: data.count(),
             offset: data.offset(),
-            explicit_offset: Meta::USE_OFFSET,
+            use_offset: Meta::USE_OFFSET,
         };
 
         entity.set(member);

@@ -136,21 +136,25 @@ fn main() {
     //     - table [Position, Tag, (Group, Third)]
     //
 
-    query.run_iter(|it, (pos,)| {
-        let group = world.entity_from_id(it.group_id());
-        let ctx = unsafe { &*(query.group_context(group) as *mut GroupCtx) };
-        println!(
-            "Group: {:?} - Table: [{:?}] - Counter: {}",
-            group.path().unwrap(),
-            it.archetype(),
-            ctx.counter
-        );
+    query.run(|mut it| {
+        while it.next() {
+            let pos = it.field::<Position>(0).unwrap();
 
-        for i in it.iter() {
-            println!(" [{:?}]", pos[i]);
+            let group = world.entity_from_id(it.group_id());
+            let ctx = unsafe { &*(query.group_context(group) as *mut GroupCtx) };
+            println!(
+                "Group: {:?} - Table: [{:?}] - Counter: {}",
+                group.path().unwrap(),
+                it.archetype(),
+                ctx.counter
+            );
+
+            for i in it.iter() {
+                println!(" [{:?}]", pos[i]);
+            }
+
+            println!();
         }
-
-        println!();
     });
 
     // Deleting the query will call the on_group_deleted callback

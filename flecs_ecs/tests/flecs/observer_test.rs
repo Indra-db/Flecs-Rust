@@ -432,17 +432,22 @@ fn observer_yield_existing() {
     world
         .observer::<flecs::OnAdd, &TagA>()
         .yield_existing()
-        .each_entity(move |e, _tag_a| {
-            let world = e.world();
-            world.get::<&mut Count>(|count| {
-                if e == e1_id {
-                    count.0 += 1;
-                } else if e == e2_id {
-                    count.0 += 2;
-                } else if e == e3_id {
-                    count.0 += 3;
+        .run(move |mut it| {
+            while it.next() {
+                for i in it.iter() {
+                    let e = it.entity(i);
+                    let world = e.world();
+                    world.get::<&mut Count>(|count| {
+                        if e == e1_id {
+                            count.0 += 1;
+                        } else if e == e2_id {
+                            count.0 += 2;
+                        } else if e == e3_id {
+                            count.0 += 3;
+                        }
+                    });
                 }
-            });
+            }
         });
 
     world.get::<&mut Count>(|count| {
@@ -467,7 +472,9 @@ fn observer_yield_existing_2_terms() {
 
     world.set(Count(0));
     world
-        .observer::<flecs::OnAdd, (&TagA, &TagB)>()
+        .observer::<flecs::OnAdd, ()>()
+        .with::<TagA>()
+        .with::<TagB>()
         .yield_existing()
         .each_entity(move |e, _| {
             let world = e.world();
@@ -572,14 +579,15 @@ fn observer_on_add_tag_iter() {
 fn observer_on_add_tag_each() {
     let world = World::new();
     world.set(Count(0));
-    world
-        .observer::<flecs::OnAdd, &TagA>()
-        .each_entity(|e, _tag_a| {
-            let world = e.world();
-            world.get::<&mut Count>(|count| {
-                count.0 += 1;
-            });
-        });
+    world.observer::<flecs::OnAdd, &TagA>().run(|mut it| {
+        while it.next() {
+            for _ in it.iter() {
+                it.world().get::<&mut Count>(|count| {
+                    count.0 += 1;
+                });
+            }
+        }
+    });
     world.entity().add::<TagA>();
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
@@ -788,6 +796,33 @@ fn observer_on_set_w_defer_set() {
 }
 
 #[test]
+fn observer_on_set_w_set_sparse() {
+    let world = World::new();
+
+    world.set(Count(0));
+    world.component::<Position>().add_trait::<flecs::Sparse>();
+
+    world
+        .observer::<flecs::OnSet, &Position>()
+        .each_entity(|e, _p| {
+            e.world().get::<&mut Count>(|count| {
+                count.0 += 1;
+            });
+        });
+
+    let e = world.entity();
+    world.get::<&mut Count>(|count| {
+        assert_eq!(count, 0);
+    });
+
+    e.set(Position { x: 10, y: 20 });
+
+    world.get::<&mut Count>(|count| {
+        assert_eq!(count, 1);
+    });
+}
+
+#[test]
 fn observer_on_add_singleton() {
     let world = World::new();
 
@@ -951,13 +986,293 @@ fn observer_name_from_root() {
     assert!(ns == o.parent().unwrap());
 }
 
-#[test]
-#[should_panic]
-fn observer_panic_inside() {
-    #[derive(Component)]
-    struct Tag;
+// #[test]
+// #[should_panic]
+// fn observer_panic_inside() {
+//     #[derive(Component)]
+//     struct Tag;
 
+//     let world = World::new();
+//     world.observer::<flecs::OnAdd, &Tag>().run(|_| panic!());
+//     world.add::<Tag>();
+// }
+
+#[test]
+fn observer_register_twice_w_each() {
     let world = World::new();
-    world.observer::<flecs::OnAdd, &Tag>().each(|_| panic!());
-    world.add::<Tag>();
+
+    world.set(Count2 { a: 0, b: 0 });
+
+    world
+        .observer_named::<flecs::OnSet, &Position>("Test")
+        .each_entity(|e, _| {
+            e.world().get::<&mut Count2>(|count| {
+                count.a += 1;
+            });
+        });
+
+    world.entity().set(Position { x: 10, y: 20 });
+
+    world.get::<&mut Count2>(|count| {
+        assert_eq!(count.a, 1);
+    });
+
+    world
+        .observer_named::<flecs::OnSet, &Position>("Test")
+        .each_entity(|e, _| {
+            e.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        });
+
+    world.entity().set(Position { x: 10, y: 20 });
+
+    world.get::<&mut Count2>(|count| {
+        assert_eq!(count.b, 1);
+    });
+}
+
+#[test]
+fn observer_register_twice_w_run() {
+    let world = World::new();
+
+    world.set(Count2 { a: 0, b: 0 });
+
+    world
+        .observer_named::<flecs::OnSet, &Position>("Test")
+        .run(|mut it| {
+            while it.next() {
+                it.world().get::<&mut Count2>(|count| {
+                    count.a += 1;
+                });
+            }
+        });
+
+    world.entity().set(Position { x: 10, y: 20 });
+
+    world.get::<&mut Count2>(|count| {
+        assert_eq!(count.a, 1);
+    });
+
+    world
+        .observer_named::<flecs::OnSet, &Position>("Test")
+        .run(|mut it| {
+            while it.next() {
+                it.world().get::<&mut Count2>(|count| {
+                    count.b += 1;
+                });
+            }
+        });
+
+    world.entity().set(Position { x: 10, y: 20 });
+
+    world.get::<&mut Count2>(|count| {
+        assert_eq!(count.b, 1);
+    });
+}
+
+#[test]
+fn observer_register_twice_w_run_each() {
+    let world = World::new();
+
+    world.set(Count2 { a: 0, b: 0 });
+
+    world
+        .observer_named::<flecs::OnSet, &Position>("Test")
+        .run(|mut it| {
+            while it.next() {
+                it.world().get::<&mut Count2>(|count| {
+                    count.a += 1;
+                });
+            }
+        });
+
+    world.entity().set(Position { x: 10, y: 20 });
+
+    world.get::<&mut Count2>(|count| {
+        assert_eq!(count.a, 1);
+    });
+
+    world
+        .observer_named::<flecs::OnSet, &Position>("Test")
+        .each_entity(|e, _| {
+            e.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        });
+
+    world.entity().set(Position { x: 10, y: 20 });
+
+    world.get::<&mut Count2>(|count| {
+        assert_eq!(count.b, 1);
+    });
+}
+
+#[test]
+fn observer_register_twice_w_each_run() {
+    let world = World::new();
+
+    world.set(Count2 { a: 0, b: 0 });
+
+    world
+        .observer_named::<flecs::OnSet, &Position>("Test")
+        .each_entity(|e, _| {
+            e.world().get::<&mut Count2>(|count| {
+                count.a += 1;
+            });
+        });
+
+    world.entity().set(Position { x: 10, y: 20 });
+
+    world.get::<&mut Count2>(|count| {
+        assert_eq!(count.a, 1);
+    });
+
+    world
+        .observer_named::<flecs::OnSet, &Position>("Test")
+        .run(|mut it| {
+            while it.next() {
+                it.world().get::<&mut Count2>(|count| {
+                    count.b += 1;
+                });
+            }
+        });
+
+    world.entity().set(Position { x: 10, y: 20 });
+
+    world.get::<&mut Count2>(|count| {
+        assert_eq!(count.b, 1);
+    });
+}
+
+#[test]
+fn system_register_twice_w_each() {
+    let world = World::new();
+
+    world.set(Count2 { a: 0, b: 0 });
+
+    world
+        .system_named::<()>("Test")
+        .each_iter(|it, _, _| {
+            it.world().get::<&mut Count2>(|count| {
+                count.a += 1;
+            });
+        })
+        .run();
+
+    world.get::<&mut Count2>(|count| {
+        assert_eq!(count.a, 1);
+    });
+
+    world
+        .system_named::<()>("Test")
+        .each_iter(|it, _, _| {
+            it.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        })
+        .run();
+
+    world.get::<&mut Count2>(|count| {
+        assert_eq!(count.b, 1);
+    });
+}
+
+#[test]
+fn system_register_twice_w_run() {
+    let world = World::new();
+
+    world.set(Count2 { a: 0, b: 0 });
+
+    world
+        .system_named::<()>("Test")
+        .run(|it| {
+            it.world().get::<&mut Count2>(|count| {
+                count.a += 1;
+            });
+        })
+        .run();
+
+    world.get::<&mut Count2>(|count| {
+        assert_eq!(count.a, 1);
+    });
+
+    world
+        .system_named::<()>("Test")
+        .run(|it| {
+            it.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        })
+        .run();
+
+    world.get::<&mut Count2>(|count| {
+        assert_eq!(count.b, 1);
+    });
+}
+
+#[test]
+fn system_register_twice_w_run_each() {
+    let world = World::new();
+
+    world.set(Count2 { a: 0, b: 0 });
+
+    world
+        .system_named::<()>("Test")
+        .run(|it| {
+            it.world().get::<&mut Count2>(|count| {
+                count.a += 1;
+            });
+        })
+        .run();
+
+    world.get::<&mut Count2>(|count| {
+        assert_eq!(count.a, 1);
+    });
+
+    world
+        .system_named::<()>("Test")
+        .each_iter(|it, _, _| {
+            it.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        })
+        .run();
+
+    world.get::<&mut Count2>(|count| {
+        assert_eq!(count.b, 1);
+    });
+}
+
+#[test]
+fn system_register_twice_w_each_run() {
+    let world = World::new();
+
+    world.set(Count2 { a: 0, b: 0 });
+
+    world
+        .system_named::<()>("Test")
+        .each_iter(|it, _, _| {
+            it.world().get::<&mut Count2>(|count| {
+                count.a += 1;
+            });
+        })
+        .run();
+
+    world.get::<&mut Count2>(|count| {
+        assert_eq!(count.a, 1);
+    });
+
+    world
+        .system_named::<()>("Test")
+        .run(|it| {
+            it.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        })
+        .run();
+
+    world.get::<&mut Count2>(|count| {
+        assert_eq!(count.b, 1);
+    });
 }

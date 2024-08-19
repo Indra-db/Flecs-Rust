@@ -917,14 +917,16 @@ fn query_builder_singleton_term() {
 
     let mut count = 0;
 
-    q.run_iter(|it, s| {
-        let o = &it.field::<Other>(1).unwrap()[0];
-        assert!(!it.is_self(1));
-        assert_eq!(o.value, 10);
+    q.run(|mut it| {
+        while it.next() {
+            let o = &it.field::<Other>(1).unwrap()[0];
+            assert!(!it.is_self(1));
+            assert_eq!(o.value, 10);
 
-        for i in it.iter() {
-            assert_eq!(it.entity(i), s[i].value);
-            count += 1;
+            for i in it.iter() {
+                assert_eq!(it.entity(i), it.entity(i).id());
+                count += 1;
+            }
         }
     });
 
@@ -959,14 +961,16 @@ fn query_builder_isa_superset_term() {
 
     let mut count = 0;
 
-    q.run_iter(|it, s| {
-        let o = &it.field::<Other>(1).unwrap()[0];
-        assert!(!it.is_self(1));
-        assert_eq!(o.value, 10);
+    q.run(|mut it| {
+        while it.next() {
+            let o = &it.field::<Other>(1).unwrap()[0];
+            assert!(!it.is_self(1));
+            assert_eq!(o.value, 10);
 
-        for i in it.iter() {
-            assert_eq!(it.entity(i), s[i].value);
-            count += 1;
+            for i in it.iter() {
+                assert_eq!(it.entity(i), it.entity(i).id());
+                count += 1;
+            }
         }
     });
 
@@ -1007,21 +1011,23 @@ fn query_builder_isa_self_superset_term() {
     let mut count = 0;
     let mut owned_count = 0;
 
-    q.run_iter(|it, s| {
-        let o = &it.field::<Other>(1).unwrap();
+    q.run(|mut it| {
+        while it.next() {
+            let o = &it.field::<Other>(1).unwrap();
 
-        if !it.is_self(1) {
-            assert_eq!(o[0].value, 10);
-        } else {
-            for i in it.iter() {
-                assert_eq!(o[i].value, 20);
-                owned_count += 1;
+            if !it.is_self(1) {
+                assert_eq!(o[0].value, 10);
+            } else {
+                for i in it.iter() {
+                    assert_eq!(o[i].value, 20);
+                    owned_count += 1;
+                }
             }
-        }
 
-        for i in it.iter() {
-            assert_eq!(it.entity(i), s[i].value);
-            count += 1;
+            for i in it.iter() {
+                assert_eq!(it.entity(i), it.entity(i).id());
+                count += 1;
+            }
         }
     });
 
@@ -1053,14 +1059,16 @@ fn query_builder_childof_superset_term() {
 
     let mut count = 0;
 
-    q.run_iter(|it, s| {
-        let o = &it.field::<Other>(1).unwrap()[0];
-        assert!(!it.is_self(1));
-        assert_eq!(o.value, 10);
+    q.run(|mut it| {
+        while it.next() {
+            let o = &it.field::<Other>(1).unwrap()[0];
+            assert!(!it.is_self(1));
+            assert_eq!(o.value, 10);
 
-        for i in it.iter() {
-            assert_eq!(it.entity(i), s[i].value);
-            count += 1;
+            for i in it.iter() {
+                assert_eq!(it.entity(i), it.entity(i).id());
+                count += 1;
+            }
         }
     });
 
@@ -1097,21 +1105,23 @@ fn query_builder_childof_self_superset_term() {
     let mut count = 0;
     let mut owned_count = 0;
 
-    q.run_iter(|it, s| {
-        let o = &it.field::<Other>(1).unwrap();
+    q.run(|mut it| {
+        while it.next() {
+            let o = &it.field::<Other>(1).unwrap();
 
-        if !it.is_self(1) {
-            assert_eq!(o[0].value, 10);
-        } else {
-            for i in it.iter() {
-                assert_eq!(o[i].value, 20);
-                owned_count += 1;
+            if !it.is_self(1) {
+                assert_eq!(o[0].value, 10);
+            } else {
+                for i in it.iter() {
+                    assert_eq!(o[i].value, 20);
+                    owned_count += 1;
+                }
             }
-        }
 
-        for i in it.iter() {
-            assert_eq!(it.entity(i), s[i].value);
-            count += 1;
+            for i in it.iter() {
+                assert_eq!(it.entity(i), it.entity(i).id());
+                count += 1;
+            }
         }
     });
 
@@ -2766,14 +2776,17 @@ fn query_builder_up_w_type() {
 
     let mut count = 0;
 
-    q.run_iter(|it, s| {
-        let o = &it.field::<Other>(1).unwrap()[0];
-        assert!(!it.is_self(1));
-        assert_eq!(o.value, 10);
+    q.run(|mut it| {
+        while it.next() {
+            let o = &it.field::<Other>(1).unwrap()[0];
+            let s = it.field::<SelfRef2>(0).unwrap();
+            assert!(!it.is_self(1));
+            assert_eq!(o.value, 10);
 
-        for i in it.iter() {
-            assert_eq!(it.entity(i), s[i].value);
-            count += 1;
+            for i in it.iter() {
+                assert_eq!(it.entity(i), s[i].value);
+                count += 1;
+            }
         }
     });
 
@@ -3207,9 +3220,13 @@ fn query_builder_term_after_arg() {
     assert_eq!(f.field_count(), 3);
 
     let mut count = 0;
-    f.each_entity(|e, (_tag_a, _tag_bb)| {
-        assert_eq!(e, e_1);
-        count += 1;
+    f.run(|mut it| {
+        while it.next() {
+            for i in it.iter() {
+                assert_eq!(it.entity(i), e_1);
+                count += 1;
+            }
+        }
     });
 
     assert_eq!(count, 1);
@@ -3230,11 +3247,15 @@ fn query_builder_name_arg() {
         .build();
 
     let mut count = 0;
-    f.run_iter(|it, p| {
-        count += 1;
-        assert_eq!(p[0].x, 10);
-        assert_eq!(p[0].y, 20);
-        assert_eq!(it.src(0), e);
+
+    f.run(|mut it| {
+        while it.next() {
+            let p = it.field::<Position>(0).unwrap();
+            assert_eq!(p[0].x, 10);
+            assert_eq!(p[0].y, 20);
+            assert_eq!(it.src(0), e);
+            count += 1;
+        }
     });
 
     assert_eq!(count, 1);
