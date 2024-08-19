@@ -661,11 +661,15 @@ fn system_each_tag() {
 
     world.set(Count(0));
 
-    world.system::<&TagA>().each_entity(|e, _tag_a| {
-        let world = e.world();
-        world.get::<&mut Count>(|c| {
-            c.0 += 1;
-        });
+    world.system::<&TagA>().run(|mut it| {
+        while it.next() {
+            for _ in it.iter() {
+                let world = it.world();
+                world.get::<&mut Count>(|c| {
+                    c.0 += 1;
+                });
+            }
+        }
     });
 
     world.entity().add::<TagA>();
@@ -1673,30 +1677,34 @@ fn system_system_w_type_kind_type_pipeline() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    world
-        .system::<&Tag>()
-        .kind::<Second>()
-        .each_entity(move |e, _tag| {
-            let world = e.world();
-            assert!(e == entity_id);
-            world.get::<&mut Count2>(|c| {
-                assert_eq!(c.a, 0);
-                assert_eq!(c.b, 1);
-                c.a += 1;
-            });
-        });
+    world.system::<&Tag>().kind::<Second>().run(move |mut it| {
+        while it.next() {
+            for i in it.iter() {
+                let e = it.entity(i);
+                let world = e.world();
+                assert!(e == entity_id);
+                world.get::<&mut Count2>(|c| {
+                    assert_eq!(c.a, 0);
+                    assert_eq!(c.b, 1);
+                    c.a += 1;
+                });
+            }
+        }
+    });
 
-    world
-        .system::<&Tag>()
-        .kind::<First>()
-        .each_entity(move |e, _tag| {
-            let world = e.world();
-            assert!(e == entity_id);
-            world.get::<&mut Count2>(|c| {
-                assert_eq!(c.b, 0);
-                c.b += 1;
-            });
-        });
+    world.system::<&Tag>().kind::<First>().run(move |mut it| {
+        while it.next() {
+            for i in it.iter() {
+                let world = it.world();
+                let e = it.entity(i);
+                assert!(e == entity_id);
+                world.get::<&mut Count2>(|c| {
+                    assert_eq!(c.b, 0);
+                    c.b += 1;
+                });
+            }
+        }
+    });
 
     world.progress();
 

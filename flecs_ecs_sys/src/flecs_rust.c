@@ -31,11 +31,12 @@ void* ecs_rust_mut_get_id(
 
     int32_t column_index = tr->column;
 
-    ecs_check(column_index < table->column_count, ECS_NOT_A_COMPONENT, NULL);
+    //ecs_check(column_index < table->column_count, ECS_NOT_A_COMPONENT, NULL);
 
     ecs_column_t *column = &table->data.columns[column_index];
 
-    return ecs_vec_get(column->data, column->ti->size, ECS_RECORD_TO_ROW(record->row));
+    return ECS_ELEM(column->data, column->ti->size, ECS_RECORD_TO_ROW(record->row));
+    //return ecs_vec_get(column->data, column->ti->size, ECS_RECORD_TO_ROW(record->row));
 
 error:
     return NULL;
@@ -70,11 +71,12 @@ void* ecs_rust_get_id(
 
     int32_t column_index = tr->column;
 
-    ecs_check(column_index < table->column_count, ECS_NOT_A_COMPONENT, NULL);
+    //ecs_check(column_index < table->column_count, ECS_NOT_A_COMPONENT, NULL);
 
     ecs_column_t *column = &table->data.columns[column_index];
 
-    return ecs_vec_get(column->data, column->ti->size, ECS_RECORD_TO_ROW(record->row));
+    return ECS_ELEM(column->data, column->ti->size, ECS_RECORD_TO_ROW(record->row));
+   //return ecs_vec_get(column->data, column->ti->size, ECS_RECORD_TO_ROW(record->row));
 
 error:
     return NULL;

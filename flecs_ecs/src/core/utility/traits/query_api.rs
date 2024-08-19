@@ -468,7 +468,7 @@ where
     ///     .add::<Position>()
     ///     .add::<Velocity>();
     ///
-    /// let query = world.new_query::<(&Tag, &Position)>();
+    /// let query = world.query::<(&Position)>().with::<Tag>().build();
     ///
     /// let mut count_tables = 0;
     /// let mut count_entities = 0;
@@ -482,9 +482,9 @@ where
     ///         }
     ///         println!("end operations");
     ///     },
-    ///     |(tag, pos)| {
+    ///     |pos| {
     ///         count_entities += 1;
-    ///         println!("{:?}, {:?}", tag, pos);
+    ///         println!("{:?}", pos);
     ///     },
     /// );
     ///
@@ -561,7 +561,7 @@ where
     ///     .add::<Position>()
     ///     .add::<Velocity>();
     ///
-    /// let query = world.new_query::<(&Tag, &Position)>();
+    /// let query = world.query::<(&Position)>().with::<Tag>().build();
     ///
     /// let mut count_tables = 0;
     /// let mut count_entities = 0;
@@ -575,9 +575,9 @@ where
     ///         }
     ///         println!("end operations");
     ///     },
-    ///     |e, (tag, pos)| {
+    ///     |e, pos| {
     ///         count_entities += 1;
-    ///         println!("{:?} : {:?}, {:?}", e, tag, pos);
+    ///         println!("{:?} : {:?}", e, pos);
     ///     },
     /// );
     ///
@@ -586,9 +586,9 @@ where
     ///
     /// // Output:
     /// //  start operations
-    /// //  Entity name:  -- id: 508 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position : Tag, Position { x: 0, y: 0 }
-    /// //  Entity name:  -- id: 511 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position : Tag, Position { x: 0, y: 0 }
-    /// //  Entity name:  -- id: 512 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position, flecs_ecs.main.Velocity : Tag, Position { x: 0, y: 0 }
+    /// //  Entity name:  -- id: 508 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position : Position { x: 0, y: 0 }
+    /// //  Entity name:  -- id: 511 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position : Position { x: 0, y: 0 }
+    /// //  Entity name:  -- id: 512 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position, flecs_ecs.main.Velocity : Position { x: 0, y: 0 }
     /// //  end operations
     /// ```
     ///

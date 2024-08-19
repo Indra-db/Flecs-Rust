@@ -247,7 +247,8 @@ where
     /// let count_entities_ref = count_entities.clone();
     /// let count_tables_ref = count_tables.clone();
     ///
-    /// let system = world.system::<(&Tag, &Position)>().run_each(
+    /// let system = world.system::<(&Position)>().with::<Tag>()
+    /// .run_each(
     ///     move |mut it| {
     ///         println!("start operations");
     ///         while it.next() {
@@ -256,9 +257,9 @@ where
     ///         }
     ///         println!("end operations");
     ///     },
-    ///     move |(tag, pos)| {
+    ///     move |pos| {
     ///         *count_entities_ref.borrow_mut() += 1;
-    ///         println!("{:?}, {:?}", tag, pos);
+    ///         println!("{:?}", pos);
     ///     },
     /// );
     ///
@@ -269,9 +270,9 @@ where
     ///
     /// // Output:
     /// //  start operations
-    /// //  Tag, Position { x: 0, y: 0 }
-    /// //  Tag, Position { x: 0, y: 0 }
-    /// //  Tag, Position { x: 0, y: 0 }
+    /// //  Position { x: 0, y: 0 }
+    /// //  Position { x: 0, y: 0 }
+    /// //  Position { x: 0, y: 0 }
     /// //  end operations
     /// ```
     ///
@@ -359,7 +360,8 @@ where
     /// let count_entities_ref = count_entities.clone();
     /// let count_tables_ref = count_tables.clone();
     ///
-    /// let system = world.system::<(&Tag, &Position)>().run_each_entity(
+    /// let system = world.system::<(&Position)>().with::<Tag>()
+    /// .run_each_entity(
     ///     move |mut it| {
     ///         println!("start operations");
     ///         while it.next() {
@@ -368,9 +370,9 @@ where
     ///         }
     ///         println!("end operations");
     ///     },
-    ///     move |e, (tag, pos)| {
+    ///     move |e, pos| {
     ///         *count_entities_ref.borrow_mut() += 1;
-    ///         println!("{:?}: {:?}, {:?}", e, tag, pos);
+    ///         println!("{:?}: {:?}", e, pos);
     ///     },
     /// );
     ///
@@ -381,9 +383,9 @@ where
     ///
     /// // Output:
     /// //  start operations
-    /// //  Entity name:  -- id: 508 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position: Position { x: 0, y: 0 }
-    /// //  Entity name:  -- id: 511 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position: Position { x: 0, y: 0 }
-    /// //  Entity name:  -- id: 512 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position, flecs_ecs.main.Velocity: Position { x: 0, y: 0 }
+    /// //  Entity name:  -- id: 508 -- archetype: flecs_ecs.main.Position: Position { x: 0, y: 0 }
+    /// //  Entity name:  -- id: 511 -- archetype: flecs_ecs.main.Position: Position { x: 0, y: 0 }
+    /// //  Entity name:  -- id: 512 -- archetype: flecs_ecs.main.Position, flecs_ecs.main.Velocity: Position { x: 0, y: 0 }
     /// //  end operations
     /// ```
     ///

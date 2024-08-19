@@ -3220,9 +3220,13 @@ fn query_builder_term_after_arg() {
     assert_eq!(f.field_count(), 3);
 
     let mut count = 0;
-    f.each_entity(|e, (_tag_a, _tag_bb)| {
-        assert_eq!(e, e_1);
-        count += 1;
+    f.run(|mut it| {
+        while it.next() {
+            for i in it.iter() {
+                assert_eq!(it.entity(i), e_1);
+                count += 1;
+            }
+        }
     });
 
     assert_eq!(count, 1);

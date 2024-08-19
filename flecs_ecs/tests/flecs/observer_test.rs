@@ -432,17 +432,22 @@ fn observer_yield_existing() {
     world
         .observer::<flecs::OnAdd, &TagA>()
         .yield_existing()
-        .each_entity(move |e, _tag_a| {
-            let world = e.world();
-            world.get::<&mut Count>(|count| {
-                if e == e1_id {
-                    count.0 += 1;
-                } else if e == e2_id {
-                    count.0 += 2;
-                } else if e == e3_id {
-                    count.0 += 3;
+        .run(move |mut it| {
+            while it.next() {
+                for i in it.iter() {
+                    let e = it.entity(i);
+                    let world = e.world();
+                    world.get::<&mut Count>(|count| {
+                        if e == e1_id {
+                            count.0 += 1;
+                        } else if e == e2_id {
+                            count.0 += 2;
+                        } else if e == e3_id {
+                            count.0 += 3;
+                        }
+                    });
                 }
-            });
+            }
         });
 
     world.get::<&mut Count>(|count| {
@@ -467,7 +472,9 @@ fn observer_yield_existing_2_terms() {
 
     world.set(Count(0));
     world
-        .observer::<flecs::OnAdd, (&TagA, &TagB)>()
+        .observer::<flecs::OnAdd, ()>()
+        .with::<TagA>()
+        .with::<TagB>()
         .yield_existing()
         .each_entity(move |e, _| {
             let world = e.world();
@@ -572,14 +579,15 @@ fn observer_on_add_tag_iter() {
 fn observer_on_add_tag_each() {
     let world = World::new();
     world.set(Count(0));
-    world
-        .observer::<flecs::OnAdd, &TagA>()
-        .each_entity(|e, _tag_a| {
-            let world = e.world();
-            world.get::<&mut Count>(|count| {
-                count.0 += 1;
-            });
-        });
+    world.observer::<flecs::OnAdd, &TagA>().run(|mut it| {
+        while it.next() {
+            for _ in it.iter() {
+                it.world().get::<&mut Count>(|count| {
+                    count.0 += 1;
+                });
+            }
+        }
+    });
     world.entity().add::<TagA>();
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
@@ -958,6 +966,6 @@ fn observer_panic_inside() {
     struct Tag;
 
     let world = World::new();
-    world.observer::<flecs::OnAdd, &Tag>().each(|_| panic!());
+    world.observer::<flecs::OnAdd, &Tag>().run(|_| panic!());
     world.add::<Tag>();
 }
