@@ -81,7 +81,6 @@ fn main() {
                 println!(
                     "Creature id: {entity} at location {},{} is enchanted with mystical energy, ability power: {} "
                     , pos.x, pos.y, abil_power
-                    
                 );
             });
         }

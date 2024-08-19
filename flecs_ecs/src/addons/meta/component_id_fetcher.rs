@@ -103,7 +103,7 @@ mod tests {
             y: f32,
         }
 
-        struct ExtermalPosition {
+        struct ExternalPosition {
             x: f32,
             y: f32,
         }
@@ -112,7 +112,7 @@ mod tests {
 
         let id = id!(&world, Position).id();
         assert_eq!(id, world.component_id::<Position>());
-        let id_ext = id!(&world, ExtermalPosition).id();
+        let id_ext = id!(&world, ExternalPosition).id();
         assert_ne!(id_ext, id);
 
         //compile test
@@ -121,7 +121,7 @@ mod tests {
         let id_world_ref = id!(world_ref, Position).id();
         assert_eq!(id_world_ref, id);
 
-        let id_ext_world_ref = id!(world_ref, ExtermalPosition).id();
+        let id_ext_world_ref = id!(world_ref, ExternalPosition).id();
         assert_eq!(id_ext_world_ref, id_ext);
     }
 
@@ -137,7 +137,7 @@ mod tests {
             y: f32,
         }
 
-        struct ExtermalPosition {
+        struct ExternalPosition {
             x: f32,
             y: f32,
         }
@@ -148,7 +148,7 @@ mod tests {
         let id = get_id_from_fetcher(fetcher);
         assert_eq!(dbg!(id), dbg!(world.component_id::<Position>()));
 
-        let fetcher_ext = id!(&world, ExtermalPosition);
+        let fetcher_ext = id!(&world, ExternalPosition);
         let id_ext = get_id_from_fetcher(fetcher_ext);
         assert_ne!(dbg!(id_ext), id);
     }

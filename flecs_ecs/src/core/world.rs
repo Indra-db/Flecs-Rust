@@ -92,12 +92,12 @@ impl Drop for World {
             } else {
                 let ctx = self.world_ctx_mut();
 
-                unsafe { 
+                unsafe {
                     // before we call ecs_fini(), we increment the reference count back to 1
                     // otherwise, copies of this object created during ecs_fini (e.g. a component on_remove hook)
                     // would call again this destructor and ecs_fini().
                     sys::flecs_poly_claim_(world_ptr as *mut c_void);
-                    sys::ecs_fini(self.raw_world.as_ptr()) 
+                    sys::ecs_fini(self.raw_world.as_ptr())
                 };
                 let is_ref_count_not_zero = !ctx.is_ref_count_zero();
                 if is_ref_count_not_zero && !ctx.is_panicking() {
@@ -3623,7 +3623,7 @@ impl World {
     /// This holds ids for external components (not marked with the trait), such as in cases of meta fields.
     /// When meta is enabled, this will also hold ids for components that are registered with the `ComponentId` trait.
     pub(crate) fn component_id_map<T: 'static>(&self) -> u64 {
-        *self.components_map() 
+        *self.components_map()
             .get(&std::any::TypeId::of::<T>())
             .unwrap_or_else(|| panic!("Component with name: {} is not registered, pre-register components with `world.component::<T>() or world.component_ext::<T>(id)`", std::any::type_name::<T>()))
     }
@@ -3797,17 +3797,17 @@ impl World {
     /// * C++ API: `world::component`
     #[doc(alias = "world::component")]
     pub fn component_untyped(&self) -> UntypedComponent {
-        UntypedComponent::new(self) 
+        UntypedComponent::new(self)
     }
 
-        /// Create new named untyped component.
+    /// Create new named untyped component.
     ///
     /// # See also
     ///
     /// * C++ API: `world::component`
     #[doc(alias = "world::component")]
     pub fn component_untyped_named(&self, name: &str) -> UntypedComponent {
-        UntypedComponent::new_named(self,name) 
+        UntypedComponent::new_named(self, name)
     }
 
     /// Find or register untyped component.
@@ -3825,7 +3825,7 @@ impl World {
     /// * C++ API: `world::component`
     #[doc(alias = "world::component")]
     pub fn component_untyped_from<T: ComponentId>(&self) -> UntypedComponent {
-        UntypedComponent::new_from(self, T::id(self)) 
+        UntypedComponent::new_from(self, T::id(self))
     }
 
     /// Find or register untyped component.
