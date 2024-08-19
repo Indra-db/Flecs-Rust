@@ -30,8 +30,6 @@ where
             Self::execute_each::<false, Func> as unsafe extern "C" fn(_),
         ));
 
-        self.set_instanced(true);
-
         self.build()
     }
 
@@ -47,8 +45,6 @@ where
         self.set_desc_callback(Some(
             Self::execute_each_entity::<false, Func> as unsafe extern "C" fn(_),
         ));
-
-        self.set_instanced(true);
 
         self.build()
     }
@@ -102,13 +98,9 @@ where
         self.set_callback_binding_context(each_iter_static_ref as *mut _ as *mut c_void);
         self.set_callback_binding_context_free(Some(Self::free_callback::<Func>));
 
-        self.set_instanced(true);
-
         self.set_desc_callback(Some(
             Self::execute_each_iter::<Func> as unsafe extern "C" fn(_),
         ));
-
-        self.set_instanced(true);
 
         self.build()
     }
@@ -122,11 +114,6 @@ where
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
-    ///
-    /// [`TableIter`] iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
     ///
     /// # Example
     ///
@@ -210,99 +197,6 @@ where
         self.build()
     }
 
-    /// run iter iterator. loops the iterator automatically compared to `run()`
-    ///
-    /// The "iter" iterator accepts a function that is invoked for each matching
-    /// table. The following function signature is valid:
-    ///  - func(it: &mut `TableIter`, comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// [`TableIter`] iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
-    ///
-    /// # Example
-    /// ```
-    /// use std::{rc::Rc, cell::RefCell};
-    /// use flecs_ecs::prelude::*;
-    ///
-    /// #[derive(Component, Debug)]
-    /// struct Tag;
-    ///
-    /// #[derive(Debug, Component, Default)]
-    /// pub struct Position {
-    ///     pub x: i32,
-    ///     pub y: i32,
-    /// }
-    ///
-    /// #[derive(Debug, Component, Default)]
-    /// pub struct Velocity {
-    ///     pub x: i32,
-    ///     pub y: i32,
-    /// }
-    ///
-    /// let world = World::new();
-    ///
-    /// world
-    ///     .entity()
-    ///     .add::<Tag>()
-    ///     .add::<Position>()
-    ///     .set(Velocity { x: 3, y: 4 });
-    ///
-    /// world
-    ///     .entity()
-    ///     .add::<Tag>()
-    ///     .add::<Position>()
-    ///     .set(Velocity { x: 1, y: 2 });
-    ///
-    /// world
-    ///     .entity()
-    ///     .add::<Position>()
-    ///     .set(Velocity { x: 3, y: 4 });
-    ///
-    /// let count_entities = Rc::new(RefCell::new(0));
-    /// let count_tables = Rc::new(RefCell::new(0));
-    /// let count_entities_ref = count_entities.clone();
-    /// let count_tables_ref = count_tables.clone();
-    ///
-    /// let system = world
-    ///     .system::<(&mut Position, &Velocity)>()
-    ///     .run_iter(move |it, (pos, vel)| {
-    ///         *count_tables_ref.borrow_mut() += 1;
-    ///         for i in it.iter() {
-    ///             *count_entities_ref.borrow_mut() += 1;
-    ///             let entity = it.entity(i);
-    ///             pos[i].x += vel[i].x;
-    ///             pos[i].y += vel[i].y;
-    ///             println!("{:?}: {:?}", entity, pos[i]);
-    ///         }
-    ///     });
-    /// system.run();
-    ///
-    /// assert_eq!(*count_tables.borrow(), 2);
-    /// assert_eq!(*count_entities.borrow(), 3);
-    ///
-    /// // Output:
-    /// // Entity name:  -- id: 508 -- archetype: flecs_ecs.Tag, flecs_ecs.Position, flecs_ecs.Velocity: Position { x: 3, y: 4 }
-    /// // Entity name:  -- id: 510 -- archetype: flecs_ecs.Tag, flecs_ecs.Position, flecs_ecs.Velocity: Position { x: 1, y: 2 }
-    /// // Entity name:  -- id: 511 -- archetype: flecs_ecs.Position, flecs_ecs.Velocity: Position { x: 3, y: 4 }
-    /// ```
-    fn run_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
-    where
-        Func: FnMut(TableIter<false, P>, T::TupleSliceType<'_>) + 'static,
-    {
-        let iter_func = Box::new(func);
-        let iter_static_ref = Box::leak(iter_func);
-
-        self.set_callback_binding_context(iter_static_ref as *mut _ as *mut c_void);
-        self.set_callback_binding_context_free(Some(Self::free_callback::<Func>));
-        self.set_desc_callback(Some(
-            Self::execute_run_iter::<Func> as unsafe extern "C" fn(_),
-        ));
-        //TODO are we sure this shouldn't be instanced?
-        self.build()
-    }
-
     /// Run iterator with each forwarding. This operation expects manual
     /// iteration over the tables with `iter.next()` and `iter.each()`
     ///
@@ -313,11 +207,6 @@ where
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
-    ///
-    /// [`TableIter`] iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
     ///
     /// # Example
     ///
@@ -358,7 +247,8 @@ where
     /// let count_entities_ref = count_entities.clone();
     /// let count_tables_ref = count_tables.clone();
     ///
-    /// let system = world.system::<(&Tag, &Position)>().run_each(
+    /// let system = world.system::<(&Position)>().with::<Tag>()
+    /// .run_each(
     ///     move |mut it| {
     ///         println!("start operations");
     ///         while it.next() {
@@ -367,9 +257,9 @@ where
     ///         }
     ///         println!("end operations");
     ///     },
-    ///     move |(tag, pos)| {
+    ///     move |pos| {
     ///         *count_entities_ref.borrow_mut() += 1;
-    ///         println!("{:?}, {:?}", tag, pos);
+    ///         println!("{:?}", pos);
     ///     },
     /// );
     ///
@@ -380,9 +270,9 @@ where
     ///
     /// // Output:
     /// //  start operations
-    /// //  Tag, Position { x: 0, y: 0 }
-    /// //  Tag, Position { x: 0, y: 0 }
-    /// //  Tag, Position { x: 0, y: 0 }
+    /// //  Position { x: 0, y: 0 }
+    /// //  Position { x: 0, y: 0 }
+    /// //  Position { x: 0, y: 0 }
     /// //  end operations
     /// ```
     ///
@@ -413,8 +303,6 @@ where
         self.set_callback_binding_context(each_static_ref as *mut _ as *mut c_void);
         self.set_callback_binding_context_free(Some(Self::free_callback::<FuncEach>));
 
-        self.set_instanced(true);
-
         self.set_desc_callback(Some(
             Self::execute_each::<true, FuncEach> as unsafe extern "C" fn(_),
         ));
@@ -432,11 +320,6 @@ where
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
-    ///
-    /// [`TableIter`] iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
     ///
     /// # Example
     ///
@@ -477,7 +360,8 @@ where
     /// let count_entities_ref = count_entities.clone();
     /// let count_tables_ref = count_tables.clone();
     ///
-    /// let system = world.system::<(&Tag, &Position)>().run_each_entity(
+    /// let system = world.system::<(&Position)>().with::<Tag>()
+    /// .run_each_entity(
     ///     move |mut it| {
     ///         println!("start operations");
     ///         while it.next() {
@@ -486,9 +370,9 @@ where
     ///         }
     ///         println!("end operations");
     ///     },
-    ///     move |e, (tag, pos)| {
+    ///     move |e, pos| {
     ///         *count_entities_ref.borrow_mut() += 1;
-    ///         println!("{:?}: {:?}, {:?}", e, tag, pos);
+    ///         println!("{:?}: {:?}", e, pos);
     ///     },
     /// );
     ///
@@ -499,9 +383,9 @@ where
     ///
     /// // Output:
     /// //  start operations
-    /// //  Entity name:  -- id: 508 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position: Position { x: 0, y: 0 }
-    /// //  Entity name:  -- id: 511 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position: Position { x: 0, y: 0 }
-    /// //  Entity name:  -- id: 512 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position, flecs_ecs.main.Velocity: Position { x: 0, y: 0 }
+    /// //  Entity name:  -- id: 508 -- archetype: flecs_ecs.main.Position: Position { x: 0, y: 0 }
+    /// //  Entity name:  -- id: 511 -- archetype: flecs_ecs.main.Position: Position { x: 0, y: 0 }
+    /// //  Entity name:  -- id: 512 -- archetype: flecs_ecs.main.Position, flecs_ecs.main.Velocity: Position { x: 0, y: 0 }
     /// //  end operations
     /// ```
     ///
@@ -532,8 +416,6 @@ where
         self.set_callback_binding_context(each_entity_static_ref as *mut _ as *mut c_void);
         self.set_callback_binding_context_free(Some(Self::free_callback::<FuncEachEntity>));
 
-        self.set_instanced(true);
-
         self.set_desc_callback(Some(
             Self::execute_each_entity::<true, FuncEachEntity> as unsafe extern "C" fn(_),
         ));
@@ -548,10 +430,6 @@ macro_rules! implement_reactor_api {
         where
             T: QueryTuple,
         {
-            fn set_instanced(&mut self, instanced: bool) {
-                self.is_instanced = instanced;
-            }
-
             fn set_callback_binding_context(&mut self, binding_ctx: *mut c_void) -> &mut Self {
                 self.desc.callback_ctx = binding_ctx;
                 self
@@ -613,10 +491,6 @@ macro_rules! implement_reactor_api {
             T: QueryTuple,
             P: ComponentId,
         {
-            fn set_instanced(&mut self, instanced: bool) {
-                self.is_instanced = instanced;
-            }
-
             fn set_callback_binding_context(&mut self, binding_ctx: *mut c_void) -> &mut Self {
                 self.desc.callback_ctx = binding_ctx;
                 self

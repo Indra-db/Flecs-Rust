@@ -21,7 +21,6 @@ struct Waiter;
 #[derive(Component)]
 struct Plate;
 
-#[test]
 fn main() {
     let world = World::new();
 

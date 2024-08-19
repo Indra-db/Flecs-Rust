@@ -77,7 +77,7 @@ impl World {
         let only_type_name = crate::core::get_only_type_name::<T>();
         let module = self.component_named::<T>(only_type_name);
         // If we have already registered this type don't re-create the module
-        if module.has::<flecs::EcsModule>() {
+        if module.has::<flecs::Module>() {
             return module.entity;
         }
 
@@ -85,7 +85,7 @@ impl World {
         let prev_scope = self.set_scope_id(0);
 
         // Initialise component for the module and add Module tag
-        module.add::<flecs::EcsModule>();
+        module.add::<flecs::Module>();
 
         // Set scope to our module
         self.set_scope_id(module.entity);

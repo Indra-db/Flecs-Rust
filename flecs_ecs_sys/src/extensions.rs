@@ -272,6 +272,31 @@ impl Default for EcsPoly {
     }
 }
 
+impl Default for crate::ecs_iter_to_json_desc_t {
+    fn default() -> Self {
+        Self {
+            serialize_builtin: Default::default(),
+            serialize_entity_ids: Default::default(),
+            serialize_values: Default::default(),
+            serialize_doc: Default::default(),
+            serialize_full_paths: Default::default(),
+            serialize_fields: Default::default(),
+            serialize_inherited: Default::default(),
+            serialize_table: Default::default(),
+            serialize_type_info: Default::default(),
+            serialize_field_info: Default::default(),
+            serialize_query_info: Default::default(),
+            serialize_query_plan: Default::default(),
+            serialize_query_profile: Default::default(),
+            dont_serialize_results: Default::default(),
+            serialize_alerts: Default::default(),
+            serialize_refs: Default::default(),
+            serialize_matches: Default::default(),
+            query: core::ptr::null_mut(),
+        }
+    }
+}
+
 unsafe impl Sync for crate::EcsIdentifier {}
 unsafe impl Send for crate::EcsIdentifier {}
 unsafe impl Send for crate::EcsPoly {}

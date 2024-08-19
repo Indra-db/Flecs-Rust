@@ -91,7 +91,14 @@ impl Drop for World {
                 unsafe { sys::ecs_stage_free(world_ptr) };
             } else {
                 let ctx = self.world_ctx_mut();
-                unsafe { sys::ecs_fini(self.raw_world.as_ptr()) };
+
+                unsafe {
+                    // before we call ecs_fini(), we increment the reference count back to 1
+                    // otherwise, copies of this object created during ecs_fini (e.g. a component on_remove hook)
+                    // would call again this destructor and ecs_fini().
+                    sys::flecs_poly_claim_(world_ptr as *mut c_void);
+                    sys::ecs_fini(self.raw_world.as_ptr())
+                };
                 let is_ref_count_not_zero = !ctx.is_ref_count_zero();
                 if is_ref_count_not_zero && !ctx.is_panicking() {
                     ctx.set_is_panicking_true();
@@ -120,6 +127,28 @@ impl World {
         self.component_named::<crate::addons::module::CustomModuleName>(
             "flecs::rust::module::CustomModuleName",
         );
+
+        #[cfg(feature = "flecs_meta")]
+        {
+            self.component_named::<crate::prelude::meta::EcsTypeKind>("flecs::meta::type_kind");
+            self.component_named::<crate::prelude::meta::EcsPrimitiveKind>(
+                "flecs::meta::primitive_kind",
+            );
+            //self.component_named::<crate::prelude::meta::EcsMember>("flecs::meta::member_t");
+            //self.component_named::<crate::prelude::meta::EcsEnumConstant>(
+            //    "flecs::meta::enum_constant",
+            //);
+            //self.component_named::<crate::prelude::meta::EcsBitmaskConstant>(
+            //    "flecs::meta::bitmask_constant",
+            //);
+
+            self.entity_named("::flecs::rust").add::<flecs::Module>();
+            crate::addons::meta::meta_init_builtin(self);
+            // entity.scope(|world| {
+            //     let comp = world.component::<Entity>();
+            //     comp.opaque_func(crate::prelude::meta::flecs_entity_support);
+            // });
+        }
     }
 
     /// deletes and recreates the world
@@ -3583,10 +3612,23 @@ impl World {
 }
 /// Id mixin implementation
 impl World {
+    /// Get the id of the provided component type.
+    /// This returns the id of a component type which has been registered with [`ComponentId`] trait.
     pub fn component_id<T: ComponentId>(&self) -> Entity {
         Entity(T::id(self))
     }
 
+    /// Get the id of the provided component type.
+    /// This returns the id of a component type which has potentially not been registered with `ComponentId` trait.
+    /// This holds ids for external components (not marked with the trait), such as in cases of meta fields.
+    /// When meta is enabled, this will also hold ids for components that are registered with the `ComponentId` trait.
+    pub(crate) fn component_id_map<T: 'static>(&self) -> u64 {
+        *self.components_map()
+            .get(&std::any::TypeId::of::<T>())
+            .unwrap_or_else(|| panic!("Component with name: {} is not registered, pre-register components with `world.component::<T>() or world.component_ext::<T>(id)`", std::any::type_name::<T>()))
+    }
+
+    /// Get the id of the provided pair of components.
     pub fn relationship_id<First: ComponentId, Second: ComponentId>(&self) -> Id {
         Id(ecs_pair(First::id(self), Second::id(self)))
     }
@@ -3748,6 +3790,26 @@ impl World {
         Component::<T::UnderlyingType>::new_named(self, name)
     }
 
+    /// Create new untyped component.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::component`
+    #[doc(alias = "world::component")]
+    pub fn component_untyped(&self) -> UntypedComponent {
+        UntypedComponent::new(self)
+    }
+
+    /// Create new named untyped component.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::component`
+    #[doc(alias = "world::component")]
+    pub fn component_untyped_named(&self, name: &str) -> UntypedComponent {
+        UntypedComponent::new_named(self, name)
+    }
+
     /// Find or register untyped component.
     ///
     /// # Type Parameters
@@ -3762,8 +3824,8 @@ impl World {
     ///
     /// * C++ API: `world::component`
     #[doc(alias = "world::component")]
-    pub fn component_untyped<T: ComponentId>(&self) -> UntypedComponent {
-        UntypedComponent::new(self, T::id(self))
+    pub fn component_untyped_from<T: ComponentId>(&self) -> UntypedComponent {
+        UntypedComponent::new_from(self, T::id(self))
     }
 
     /// Find or register untyped component.
@@ -3780,8 +3842,8 @@ impl World {
     ///
     /// * C++ API: `world::component`
     #[doc(alias = "world::component")]
-    pub fn component_untyped_id(&self, id: impl Into<Entity>) -> UntypedComponent {
-        UntypedComponent::new(self, id)
+    pub fn component_untyped_from_id(&self, id: impl Into<Entity>) -> UntypedComponent {
+        UntypedComponent::new_from(self, id)
     }
 
     /// Convert enum constant to entity

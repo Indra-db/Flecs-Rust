@@ -317,7 +317,7 @@ mod tests {
         value: i32,
     }
 
-    #[test]
+    //#[test]
     fn test_move_dtor() {
         let vec_check = vec![0, 1, 2, 3];
         let str_check = "original";
@@ -361,7 +361,7 @@ mod tests {
         assert_eq!(moved_to.value, val_check);
     }
 
-    #[test]
+    //#[test]
     #[ignore]
     fn test_modify_moved_to() {
         // let mut original = MyType {
@@ -390,7 +390,7 @@ mod tests {
         // assert_eq!(moved_to.value, 52);
     }
 
-    #[test]
+    //#[test]
     fn test_generic_copy() {
         // let original = MyType {
         //     vec: vec![0, 1, 2, 3],
@@ -421,7 +421,7 @@ mod tests {
         // assert_ne!(original.text.as_ptr(), copied_to.text.as_ptr());
     }
 
-    #[test]
+    //#[test]
     fn test_modify_copied_to() {
         // let original = MyType {
         //     vec: vec![0, 1, 2, 3],

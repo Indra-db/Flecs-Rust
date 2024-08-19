@@ -63,19 +63,22 @@ fn main() {
 
     println!();
 
-    query.run_iter(|it, pos| {
-        let group = world.entity_from_id(it.group_id());
-        println!(
-            "Group: {:?} - Table: [{:?}]",
-            group.path().unwrap(),
-            it.archetype()
-        );
+    query.run(|mut it| {
+        while it.next() {
+            let pos = it.field::<Position>(0).unwrap();
+            let group = world.entity_from_id(it.group_id());
+            println!(
+                "Group: {:?} - Table: [{:?}]",
+                group.path().unwrap(),
+                it.archetype()
+            );
 
-        for i in it.iter() {
-            println!(" [{:?}]", pos[i]);
+            for i in it.iter() {
+                println!(" [{:?}]", pos[i]);
+            }
+
+            println!();
         }
-
-        println!();
     });
 
     // Output:

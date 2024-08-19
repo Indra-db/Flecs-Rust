@@ -56,6 +56,7 @@ impl<'a> WorldProvider<'a> for &'a World {
     }
 }
 
+#[repr(C)]
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub struct WorldRef<'a> {
     raw_world: NonNull<sys::ecs_world_t>,
@@ -98,6 +99,25 @@ impl<'a> From<&'a World> for WorldRef<'a> {
             components_array: world.components_array,
             _marker: PhantomData,
         }
+    }
+}
+
+impl<'a> From<&'a mut World> for WorldRef<'a> {
+    #[inline(always)]
+    fn from(world: &'a mut World) -> Self {
+        WorldRef {
+            raw_world: world.raw_world,
+            components: world.components,
+            components_array: world.components_array,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<'a> From<&'a *mut sys::ecs_world_t> for &WorldRef<'a> {
+    #[inline(always)]
+    fn from(value: &'a *mut sys::ecs_world_t) -> Self {
+        unsafe { std::mem::transmute::<&'a *mut sys::ecs_world_t, &WorldRef>(value) }
     }
 }
 

@@ -33,8 +33,6 @@ where
     /// The following function signatures is valid:
     ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
-    /// Each iterators are automatically instanced.
-    ///
     /// # See also
     ///
     /// * [`World::each()`]
@@ -43,7 +41,6 @@ where
     fn each(&self, mut func: impl FnMut(T::TupleType<'_>)) {
         unsafe {
             let mut iter = self.retrieve_iter();
-            iter.flags |= sys::EcsIterIsInstanced;
             iter.flags |= sys::EcsIterCppEach;
 
             while self.iter_next(&mut iter) {
@@ -59,7 +56,7 @@ where
                 sys::ecs_table_lock(self.world_ptr_mut(), iter.table);
 
                 for i in 0..iter_count {
-                    let tuple = components_data.get_tuple(i);
+                    let tuple = components_data.get_tuple(&iter, i);
                     func(tuple);
                 }
 
@@ -73,8 +70,6 @@ where
     /// The following function signatures is valid:
     ///  - func(e : Entity , comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
-    /// Each iterators are automatically instanced.
-    ///
     /// # See also
     ///
     /// * [`World::each_entity()`]
@@ -84,7 +79,6 @@ where
         unsafe {
             let world = self.world_ptr_mut();
             let mut iter = self.retrieve_iter();
-            iter.flags |= sys::EcsIterIsInstanced;
             iter.flags |= sys::EcsIterCppEach;
 
             while self.iter_next(&mut iter) {
@@ -112,7 +106,7 @@ where
                 // update: I believe it's not possible due to not knowing the order of the components in the tuple. I will leave this here for now, maybe I will come back to it in the future.
                 for i in 0..iter_count {
                     let world = self.world();
-                    let tuple = components_data.get_tuple(i);
+                    let tuple = components_data.get_tuple(&iter, i);
 
                     func(EntityView::new_from(world, *iter.entities.add(i)), tuple);
                 }
@@ -168,7 +162,6 @@ where
         unsafe {
             let world = self.world_ptr_mut();
             let mut iter = self.retrieve_iter();
-            iter.flags |= sys::EcsIterIsInstanced;
             iter.flags |= sys::EcsIterCppEach;
 
             while self.iter_next(&mut iter) {
@@ -184,8 +177,8 @@ where
                 sys::ecs_table_lock(world, iter.table);
 
                 for i in 0..iter_count {
+                    let tuple = components_data.get_tuple(&iter, i);
                     let iter_t = TableIter::new(&mut iter);
-                    let tuple = components_data.get_tuple(i);
 
                     func(iter_t, i, tuple);
                 }
@@ -200,8 +193,6 @@ where
     /// if it is, it returns that entity.
     /// The following function signatures is valid:
     ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
     ///
     /// # Returns
     ///
@@ -225,7 +216,7 @@ where
 
                 for i in 0..iter_count {
                     let world = self.world();
-                    let tuple = components_data.get_tuple(i);
+                    let tuple = components_data.get_tuple(&iter, i);
                     if func(tuple) {
                         entity = Some(EntityView::new_from(world, *iter.entities.add(i)));
                         break;
@@ -243,8 +234,6 @@ where
     /// if it is, it returns that entity.
     /// The following function signatures is valid:
     ///  - func(entity : Entity, comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
     ///
     /// # Returns
     ///
@@ -273,7 +262,7 @@ where
                     let world = self.world();
                     let entity = EntityView::new_from(world, *iter.entities.add(i));
 
-                    let tuple = components_data.get_tuple(i);
+                    let tuple = components_data.get_tuple(&iter, i);
                     if func(entity, tuple) {
                         entity_result = Some(entity);
                         break;
@@ -291,8 +280,6 @@ where
     /// if it is, it returns that entity.
     /// The following function signatures is valid:
     ///  - func(iter : `TableIter`, index : usize, comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// Each iterators are automatically instanced.
     ///
     /// # Returns
     ///
@@ -327,9 +314,9 @@ where
                 sys::ecs_table_lock(world, iter.table);
 
                 for i in 0..iter_count {
+                    let tuple = components_data.get_tuple(&iter, i);
                     let iter_t = TableIter::new(&mut iter);
                     let world = self.world();
-                    let tuple = components_data.get_tuple(i);
                     if func(iter_t, i, tuple) {
                         entity_result = Some(EntityView::new_from(world, *iter.entities.add(i)));
                         break;
@@ -342,102 +329,6 @@ where
         }
     }
 
-    /// run iter iterator. loops the iterator automatically compared to `run()`
-    ///
-    /// The "iter" iterator accepts a function that is invoked for each matching
-    /// table. The following function signature is valid:
-    ///  - func(it: &mut `TableIter`, comp1 : &mut T1, comp2 : &mut T2, ...)
-    ///
-    /// [`TableIter`] iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
-    ///
-    /// # Example
-    /// ```
-    /// use flecs_ecs::prelude::*;
-    ///
-    /// #[derive(Component, Debug)]
-    /// struct Tag;
-    ///
-    /// #[derive(Debug, Component, Default)]
-    /// pub struct Position {
-    ///     pub x: i32,
-    ///     pub y: i32,
-    /// }
-    ///
-    /// #[derive(Debug, Component, Default)]
-    /// pub struct Velocity {
-    ///     pub x: i32,
-    ///     pub y: i32,
-    /// }
-    ///
-    /// let world = World::new();
-    ///
-    /// world
-    ///     .entity()
-    ///     .add::<Tag>()
-    ///     .add::<Position>()
-    ///     .set(Velocity { x: 3, y: 4 });
-    ///
-    /// world
-    ///     .entity()
-    ///     .add::<Tag>()
-    ///     .add::<Position>()
-    ///     .set(Velocity { x: 1, y: 2 });
-    ///
-    /// world
-    ///     .entity()
-    ///     .add::<Position>()
-    ///     .set(Velocity { x: 3, y: 4 });
-    ///
-    /// let mut count_entities = 0;
-    /// let mut count_tables = 0;
-    ///
-    /// world
-    ///     .new_query::<(&mut Position, &Velocity)>()
-    ///     .run_iter(|it, (pos, vel)| {
-    ///         count_tables += 1;
-    ///         for i in it.iter() {
-    ///             count_entities += 1;
-    ///             let entity = it.entity(i);
-    ///             pos[i].x += vel[i].x;
-    ///             pos[i].y += vel[i].y;
-    ///             println!("{:?}: {:?}", entity, pos[i]);
-    ///         }
-    ///     });
-    ///
-    /// assert_eq!(count_tables, 2);
-    /// assert_eq!(count_entities, 3);
-    ///
-    /// // Output:
-    /// // Entity name:  -- id: 508 -- archetype: flecs_ecs.Tag, flecs_ecs.Position, flecs_ecs.Velocity: Position { x: 3, y: 4 }
-    /// // Entity name:  -- id: 510 -- archetype: flecs_ecs.Tag, flecs_ecs.Position, flecs_ecs.Velocity: Position { x: 1, y: 2 }
-    /// // Entity name:  -- id: 511 -- archetype: flecs_ecs.Position, flecs_ecs.Velocity: Position { x: 3, y: 4 }
-    /// ```
-    fn run_iter(&self, mut func: impl FnMut(TableIter<false, P>, T::TupleSliceType<'_>))
-    where
-        P: ComponentId,
-    {
-        unsafe {
-            let mut iter = self.retrieve_iter();
-            let world = self.world_ptr_mut();
-
-            while self.iter_next(&mut iter) {
-                let mut components_data = T::create_ptrs(&iter);
-                let iter_count = iter.count as usize;
-
-                sys::ecs_table_lock(world, iter.table);
-
-                let tuple = components_data.get_slice(iter_count);
-                let iter_t = TableIter::new(&mut iter);
-                func(iter_t, tuple);
-
-                sys::ecs_table_unlock(world, iter.table);
-            }
-        }
-    }
-
     /// Run iterator.
     ///
     /// The "run" iterator accepts a function that is invoked for each matching
@@ -447,11 +338,6 @@ where
     /// allows for more control over how entities
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
-    ///
-    /// [`TableIter`] iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
     ///
     /// # Example
     ///
@@ -552,11 +438,6 @@ where
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
     ///
-    /// [`TableIter`] iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    /// accessing a shared component as an array.
-    ///
     /// # Example
     ///
     /// ```
@@ -587,7 +468,7 @@ where
     ///     .add::<Position>()
     ///     .add::<Velocity>();
     ///
-    /// let query = world.new_query::<(&Tag, &Position)>();
+    /// let query = world.query::<(&Position)>().with::<Tag>().build();
     ///
     /// let mut count_tables = 0;
     /// let mut count_entities = 0;
@@ -601,9 +482,9 @@ where
     ///         }
     ///         println!("end operations");
     ///     },
-    ///     |(tag, pos)| {
+    ///     |pos| {
     ///         count_entities += 1;
-    ///         println!("{:?}, {:?}", tag, pos);
+    ///         println!("{:?}", pos);
     ///     },
     /// );
     ///
@@ -650,10 +531,6 @@ where
     /// are iterated as it provides multiple entities in the same callback
     /// and allows to determine what should happen before and past iteration.
     ///
-    /// [`TableIter`] iterators are not automatically instanced. When a result contains
-    /// shared components, entities of the result will be iterated one by one.
-    /// This ensures that applications can't accidentally read out of bounds by
-    ///
     /// # Example
     ///
     /// ```
@@ -684,7 +561,7 @@ where
     ///     .add::<Position>()
     ///     .add::<Velocity>();
     ///
-    /// let query = world.new_query::<(&Tag, &Position)>();
+    /// let query = world.query::<(&Position)>().with::<Tag>().build();
     ///
     /// let mut count_tables = 0;
     /// let mut count_entities = 0;
@@ -698,9 +575,9 @@ where
     ///         }
     ///         println!("end operations");
     ///     },
-    ///     |e, (tag, pos)| {
+    ///     |e, pos| {
     ///         count_entities += 1;
-    ///         println!("{:?} : {:?}, {:?}", e, tag, pos);
+    ///         println!("{:?} : {:?}", e, pos);
     ///     },
     /// );
     ///
@@ -709,9 +586,9 @@ where
     ///
     /// // Output:
     /// //  start operations
-    /// //  Entity name:  -- id: 508 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position : Tag, Position { x: 0, y: 0 }
-    /// //  Entity name:  -- id: 511 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position : Tag, Position { x: 0, y: 0 }
-    /// //  Entity name:  -- id: 512 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position, flecs_ecs.main.Velocity : Tag, Position { x: 0, y: 0 }
+    /// //  Entity name:  -- id: 508 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position : Position { x: 0, y: 0 }
+    /// //  Entity name:  -- id: 511 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position : Position { x: 0, y: 0 }
+    /// //  Entity name:  -- id: 512 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position, flecs_ecs.main.Velocity : Position { x: 0, y: 0 }
     /// //  end operations
     /// ```
     ///
@@ -1046,6 +923,34 @@ where
         iter.set_var_table_expr(name, table);
         iter
     }
+
+    /// Serialize iterator result to JSON.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter::to_json`
+    #[doc(alias = "iter::to_json")]
+    #[cfg(feature = "flecs_json")]
+    fn to_json(&self, desc: Option<&crate::prelude::json::IterToJsonDesc>) -> Option<String> {
+        let desc_ptr = desc
+            .map(|d| d as *const crate::prelude::json::IterToJsonDesc)
+            .unwrap_or(std::ptr::null());
+
+        let mut iter = self.retrieve_iter();
+
+        unsafe {
+            let json_ptr = sys::ecs_iter_to_json(&mut iter, desc_ptr);
+            if json_ptr.is_null() {
+                return None;
+            }
+            let json = std::ffi::CStr::from_ptr(json_ptr)
+                .to_str()
+                .unwrap()
+                .to_string();
+            sys::ecs_os_api.free_.expect("os api is missing")(json_ptr as *mut std::ffi::c_void);
+            Some(json)
+        }
+    }
 }
 
 unsafe extern "C" fn __internal_query_execute_each<T, Func>(iter: *mut sys::ecs_iter_t)
@@ -1059,7 +964,7 @@ where
     let iter_count = (*iter).count as usize;
 
     for i in 0..iter_count {
-        let tuple = components_data.get_tuple(i);
+        let tuple = components_data.get_tuple(&unsafe { *iter }, i);
         func(tuple);
     }
 }
@@ -1076,7 +981,7 @@ where
     let world = WorldRef::from_ptr((*iter).world);
 
     for i in 0..iter_count {
-        let tuple = components_data.get_tuple(i);
+        let tuple = components_data.get_tuple(&*iter, i);
 
         func(EntityView::new_from(world, *(*iter).entities.add(i)), tuple);
     }

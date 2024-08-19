@@ -3,24 +3,26 @@
 use std::{marker::PhantomData, ops::Deref, os::raw::c_void, ptr};
 
 use crate::core::*;
+use crate::prelude::FetchedId;
 use crate::sys;
 
 /// Component class.
 /// Class used to register components and component metadata.
-pub struct Component<'a, T: ComponentId> {
+#[derive(Debug)]
+pub struct Component<'a, T> {
     pub base: UntypedComponent<'a>,
     _marker: PhantomData<T>,
 }
 
-impl<'a, T: ComponentId> Clone for Component<'a, T> {
+impl<'a, T> Clone for Component<'a, T> {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl<'a, T: ComponentId> Copy for Component<'a, T> {}
+impl<'a, T> Copy for Component<'a, T> {}
 
-impl<'a, T: ComponentId> Deref for Component<'a, T> {
+impl<'a, T> Deref for Component<'a, T> {
     type Target = UntypedComponent<'a>;
 
     fn deref(&self) -> &Self::Target {
@@ -29,7 +31,7 @@ impl<'a, T: ComponentId> Deref for Component<'a, T> {
 }
 
 impl<'a, T: ComponentId> Component<'a, T> {
-    /// Create a new component.
+    /// Create a new component that is marked within Rust.
     ///
     /// # Arguments
     ///
@@ -45,7 +47,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
 
         let world = world.world();
         Self {
-            base: UntypedComponent::new(world, id),
+            base: UntypedComponent::new_from(world, id),
             _marker: PhantomData,
         }
     }
@@ -66,11 +68,63 @@ impl<'a, T: ComponentId> Component<'a, T> {
 
         let world = world.world();
         Self {
-            base: UntypedComponent::new(world, id),
+            base: UntypedComponent::new_from(world, id),
+            _marker: PhantomData,
+        }
+    }
+}
+impl<'a, T> Component<'a, T> {
+    /// Create a new component that is not marked within Rust.
+    ///
+    /// # Arguments
+    ///
+    /// * `world`: the world.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `component::component`
+    #[doc(alias = "component::component")]
+    pub(crate) fn new_id(world: impl WorldProvider<'a>, id: FetchedId<T>) -> Self {
+        let world = world.world();
+
+        Self {
+            base: UntypedComponent::new_from(world, id),
             _marker: PhantomData,
         }
     }
 
+    /// Create a new component with a name.
+    ///
+    /// # Arguments
+    ///
+    /// * `world`: the world.
+    /// * `name`: the name of the component.
+    ///    Return the component as an entity
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `component::component`
+    #[doc(alias = "component::component")]
+    pub fn new_named_id(world: impl WorldProvider<'a>, id: FetchedId<T>, name: &str) -> Self {
+        let _name = compact_str::format_compact!("{}\0", name);
+        let world = world.world();
+        let entity = world.entity_from_id(id.id());
+        entity.get_name().map_or_else(
+            || {
+                entity.set_name(name);
+            },
+            |current_name| {
+                if current_name != name {
+                    entity.set_name(name);
+                }
+            },
+        );
+
+        Self {
+            base: UntypedComponent::new_from(world, id),
+            _marker: PhantomData,
+        }
+    }
     /// Return the component as an entity
     ///
     /// # See also

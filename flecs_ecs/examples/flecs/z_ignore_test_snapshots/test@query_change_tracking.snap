@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"\nquery_read.is_changed(): true\n\niiter.is_changed() for table [examples.queries.query_change_tracking.Position, (Identifier,Name), (IsA,prefab_dirty_false)]: true\niiter.is_changed() for table [examples.queries.query_change_tracking.Position, (Identifier,Name), (IsA,prefab_dirty_true)]: true\n\nquery_read.is_changed(): false\n\niterate table [examples.queries.query_change_tracking.Position, (Identifier,Name), (IsA,prefab_dirty_false)]\niter.skip() for table [examples.queries.query_change_tracking.Position, (Identifier,Name), (IsA,prefab_dirty_false)]\niterate table [examples.queries.query_change_tracking.Position, (Identifier,Name), (IsA,prefab_dirty_true)]\n\nquery_read.is_changed(): true\n\niter.is_changed() for table [examples.queries.query_change_tracking.Position, (Identifier,Name), (IsA,prefab_dirty_false)]: false\niter.is_changed() for table [examples.queries.query_change_tracking.Position, (Identifier,Name), (IsA,prefab_dirty_true)]: true\n\n"

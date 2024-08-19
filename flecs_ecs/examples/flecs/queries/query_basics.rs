@@ -52,14 +52,18 @@ fn main() {
         println!("[{:?}]", pos);
     });
 
-    // Iter is a bit more verbose, but allows for more control over how entities
+    // Run is a bit more verbose, but allows for more control over how entities
     // are iterated as it provides multiple entities in the same callback.
-    // There's also an `iter_only` function that only provides the iterator.
-    query.run_iter(|it, (pos, vel)| {
-        for i in it.iter() {
-            pos[i].x += vel[i].x;
-            pos[i].y += vel[i].y;
-            println!("[{:?}]", pos[i]);
+    query.run(|mut it| {
+        while it.next() {
+            let mut p = it.field::<Position>(0).unwrap();
+            let v = it.field::<Velocity>(1).unwrap();
+
+            for i in it.iter() {
+                p[i].x += v[i].x;
+                p[i].y += v[i].y;
+                println!("[{:?}]", p[i]);
+            }
         }
     });
 

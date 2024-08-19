@@ -108,7 +108,7 @@ flecs_pipeline = ["flecs_ecs_sys/flecs_pipeline", "flecs_module", "flecs_system"
 flecs_timer = ["flecs_ecs_sys/flecs_timer", "flecs_module", "flecs_pipeline"]
 
 # Reflection support
-flecs_meta = ["flecs_ecs_sys/flecs_meta", "flecs_module"]
+flecs_meta = ["flecs_ecs_sys/flecs_meta","flecs_ecs_derive/flecs_meta", "flecs_module"]
 
 # Builtin standard units
 flecs_units = ["flecs_ecs_sys/flecs_units", "flecs_module", "flecs_meta"]

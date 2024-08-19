@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"{\"results\":[{\"name\":\"a\", \"fields\":{\"values\":[{\"x\":10, \"y\":20}, {\"x\":1, \"y\":2}]}}, {\"name\":\"b\", \"fields\":{\"values\":[{\"x\":20, \"y\":30}, {\"x\":2, \"y\":3}]}}, {\"name\":\"c\", \"fields\":{\"values\":[{\"x\":30, \"y\":40}, {\"x\":3, \"y\":4}]}}, {\"name\":\"d\", \"fields\":{\"values\":[{\"x\":30, \"y\":40}, {\"x\":4, \"y\":5}]}}]}\n"

@@ -20,6 +20,7 @@ pub struct Stats;
 #[cfg(feature = "flecs_module")]
 impl Module for Stats {
     fn module(world: &World) {
+        world.module::<Stats>("flecs::rust::stats");
         unsafe { sys::FlecsStatsImport(world.ptr_mut()) };
         world.component::<WorldSummary>();
         world.component::<WorldStats>();

@@ -5,6 +5,32 @@
 
 use super::*;
 
+extern "C" {
+    pub fn ecs_rust_mut_get_id(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+        record: *const ecs_record_t,
+        table: *mut ecs_table_t,
+        id: ecs_id_t,
+    ) -> *mut ::core::ffi::c_void;
+}
+extern "C" {
+    pub fn ecs_rust_get_id(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+        record: *const ecs_record_t,
+        table: *mut ecs_table_t,
+        id: ecs_id_t,
+    ) -> *mut ::core::ffi::c_void;
+}
+extern "C" {
+    pub fn ecs_rust_rel_count(
+        world: *const ecs_world_t,
+        id: ecs_id_t,
+        table: *mut ecs_table_t,
+    ) -> i32;
+}
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 //#[cfg(feature = "flecs_alerts")] //TODO flecs ecs_alert_init not properly defined in flecs c api.
@@ -263,3 +289,31 @@ unsafe impl Sync for EcsPipelineStats {}
 unsafe impl Send for EcsSystemStats {}
 
 unsafe impl Sync for EcsSystemStats {}
+
+unsafe impl Send for EcsTypeSerializer {}
+
+unsafe impl Sync for EcsTypeSerializer {}
+
+unsafe impl Send for EcsEnum {}
+
+unsafe impl Sync for EcsEnum {}
+
+unsafe impl Send for EcsBitmask {}
+
+unsafe impl Sync for EcsBitmask {}
+
+unsafe impl Send for EcsStruct {}
+
+unsafe impl Sync for EcsStruct {}
+
+unsafe impl Send for EcsUnit {}
+
+unsafe impl Sync for EcsUnit {}
+
+unsafe impl Send for EcsUnitPrefix {}
+
+unsafe impl Sync for EcsUnitPrefix {}
+
+unsafe impl Send for EcsScript {}
+
+unsafe impl Sync for EcsScript {}

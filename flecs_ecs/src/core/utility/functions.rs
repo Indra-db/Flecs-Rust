@@ -189,7 +189,9 @@ pub fn type_name_cstring<T>() -> CString {
 pub fn get_only_type_name<T>() -> &'static str {
     use std::any::type_name;
     let name = type_name::<T>();
-    name.split("::").last().unwrap_or(name)
+    let split_name = name.split("::").last().unwrap_or(name);
+    //for nested types like vec<String> we need to remove the last `>`
+    split_name.split(">").next().unwrap_or(split_name)
 }
 
 /// Returns true if the given type is an empty type.
@@ -364,9 +366,15 @@ pub fn get_generation(entity: impl Into<Entity>) -> u32 {
 /// let velocity_ptr: *mut Velocity = ecs_field(it, 1);
 /// ```
 #[inline(always)]
-pub unsafe fn ecs_field<T: ComponentId>(it: *const sys::ecs_iter_t, index: i32) -> *mut T {
+pub unsafe fn ecs_field<T>(it: *const sys::ecs_iter_t, index: i8) -> *mut T {
     let size = std::mem::size_of::<T>();
     sys::ecs_field_w_size(it, size, index) as *mut T
+}
+
+#[inline(always)]
+pub(crate) unsafe fn ecs_field_at<T>(it: *const sys::ecs_iter_t, index: i8, row: i32) -> *mut T {
+    let size = std::mem::size_of::<T>();
+    sys::ecs_field_at_w_size(it, size, index, row) as *mut T
 }
 
 /// Get the `OperKind` for the given type.

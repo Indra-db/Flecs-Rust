@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"{x: 10, y: 20}\n{x: 20, y: 10}\n"

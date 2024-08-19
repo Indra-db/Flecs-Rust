@@ -65,21 +65,25 @@ fn main() {
     let mut query_enchanted = forest.query::<()>().with::<&Enchanted>().build();
 
     // Iterate over creatures to find the enchanted ones
-    query_creatures.run_iter(|iter, (loc, ability)| {
+    query_creatures.run(|mut iter| {
 
-        // Filter for enchanted creatures within the current iteration
-        query_enchanted
+        while iter.next() {
+
+            let loc = iter.field::<Location>(0).unwrap();
+            let ability = iter.field::<Ability>(1).unwrap();
+            // Filter for enchanted creatures within the current iteration
+            query_enchanted
             .set_var_table(0, iter.range().unwrap())
             .each_iter( |it, index ,_| {
-               let pos = &loc[index];
-               let abil_power = ability[index].power;
-               let entity = it.entity(index);
+                let pos = &loc[index];
+                let abil_power = ability[index].power;
+                let entity = it.entity(index);
                 println!(
                     "Creature id: {entity} at location {},{} is enchanted with mystical energy, ability power: {} "
                     , pos.x, pos.y, abil_power
-
                 );
             });
+        }
     });
 
     // Output:

@@ -51,6 +51,7 @@ impl OutputCapture {
         settings._private_inner_mut().filters(
             (vec![
                 (r"id: (\d+)\s", "[ID] "),
+                (r"#(\d+)\s", "#[ID] "),
                 (
                     r#"Group deleted: \\"([^\\"]+)\\""#,
                     "group deleted: redacted",

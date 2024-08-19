@@ -14,7 +14,7 @@ fn entity_eq_test() {
     let e1_id: Id = e1_entity.into();
 
     let comp1 = world.component::<Position>();
-    let comp_untyped1 = world.component_untyped::<Position>();
+    let comp_untyped1 = world.component_untyped_from::<Position>();
 
     assert_eq!(e1_id, e1_id);
     assert_eq!(e1_id, e1_entity);

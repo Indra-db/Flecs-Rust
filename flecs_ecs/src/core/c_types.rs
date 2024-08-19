@@ -326,14 +326,6 @@ pub(crate) const ECS_QUERY_MATCH_DISABLED: u64 = 1 << 2;
 /// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
 pub(crate) const ECS_QUERY_MATCH_EMPTY_TABLES: u64 = 1 << 3;
 
-/// Query won't provide component data.
-/// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
-pub(crate) const ECS_QUERY_NO_DATA: u64 = 1 << 4;
-
-/// Query iteration is always instanced.
-/// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
-pub(crate) const ECS_QUERY_IS_INSTANCED: u64 = 1 << 5;
-
 /// Query may have unresolved entity identifiers.
 /// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
 pub(crate) const ECS_QUERY_ALLOW_UNRESOLVED_BY_NAME: u64 = 1 << 6;
@@ -448,7 +440,7 @@ pub(crate) const ECS_BOOL_T: u64 = FLECS_HI_COMPONENT_ID + 80;
 pub(crate) const ECS_CHAR_T: u64 = FLECS_HI_COMPONENT_ID + 81;
 pub(crate) const ECS_BYTE_T: u64 = FLECS_HI_COMPONENT_ID + 82;
 pub(crate) const ECS_U8_T: u64 = FLECS_HI_COMPONENT_ID + 83;
-pub(crate) const ECS_i16_T: u64 = FLECS_HI_COMPONENT_ID + 84;
+pub(crate) const ECS_U16_T: u64 = FLECS_HI_COMPONENT_ID + 84;
 pub(crate) const ECS_U32_T: u64 = FLECS_HI_COMPONENT_ID + 85;
 pub(crate) const ECS_U64_T: u64 = FLECS_HI_COMPONENT_ID + 86;
 pub(crate) const ECS_UPTR_T: u64 = FLECS_HI_COMPONENT_ID + 87;
@@ -465,7 +457,7 @@ pub(crate) const ECS_ID_T: u64 = FLECS_HI_COMPONENT_ID + 97;
 
 // Meta module component ids
 pub(crate) const ECS_META_TYPE: u64 = FLECS_HI_COMPONENT_ID + 98;
-pub(crate) const ECS_META_TYPE_SERIALIZED: u64 = FLECS_HI_COMPONENT_ID + 99;
+pub(crate) const ECS_META_TYPE_SERIALIZER: u64 = FLECS_HI_COMPONENT_ID + 99;
 pub(crate) const ECS_PRIMITIVE: u64 = FLECS_HI_COMPONENT_ID + 100;
 pub(crate) const ECS_ENUM: u64 = FLECS_HI_COMPONENT_ID + 101;
 pub(crate) const ECS_BITMASK: u64 = FLECS_HI_COMPONENT_ID + 102;
@@ -554,3 +546,65 @@ macro_rules! impl_component_traits_binding_type_w_id {
 }
 
 pub(crate) use impl_component_traits_binding_type_w_id;
+
+macro_rules! impl_component_traits_binding_type_w_static_id {
+    ($name:ident, $id:ident) => {
+        impl DataComponent for $name {}
+
+        impl ComponentType<flecs_ecs::core::Struct> for $name {}
+
+        impl ComponentInfo for $name {
+            const IS_GENERIC: bool = false;
+            const IS_ENUM: bool = false;
+            const IS_TAG: bool = false;
+            type TagType = FlecsFirstIsNotATag;
+            const IMPLS_CLONE: bool = true;
+            const IMPLS_DEFAULT: bool = false;
+            const IS_REF: bool = false;
+            const IS_MUT: bool = false;
+        }
+
+        impl ComponentId for $name {
+            type UnderlyingType = $name;
+            type UnderlyingEnumType = NoneEnum;
+
+            #[inline(always)]
+            fn index() -> u32 {
+                static INDEX: std::sync::atomic::AtomicU32 =
+                    std::sync::atomic::AtomicU32::new(u32::MAX);
+                Self::get_or_init_index(&INDEX)
+            }
+            fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
+                register_lifecycle_actions::<$name>(type_hooks);
+            }
+            fn __register_default_hooks(_type_hooks: &mut sys::ecs_type_hooks_t) {}
+
+            fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
+                register_copy_lifecycle_action::<$name>(type_hooks);
+            }
+
+            fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
+                _world: impl WorldProvider<'a>,
+            ) -> sys::ecs_entity_t {
+                unsafe { $id }
+            }
+
+            fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
+                _world: impl WorldProvider<'a>,
+                _name: &str,
+            ) -> sys::ecs_entity_t {
+                unsafe { $id }
+            }
+
+            fn is_registered_with_world<'a>(_: impl WorldProvider<'a>) -> bool {
+                true
+            }
+
+            fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
+                unsafe { $id }
+            }
+        }
+    };
+}
+
+pub(crate) use impl_component_traits_binding_type_w_static_id;
