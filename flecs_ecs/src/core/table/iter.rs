@@ -615,6 +615,7 @@ where
         ecs_assert!(
             !unsafe { sys::ecs_field_is_readonly(self.iter, index) },
             FlecsErrorCode::AccessViolation,
+            "field is readonly, check if your specified query terms are set &mut"
         );
         if self.iter.row_fields & (1u32 << index) != 0 {
             if let Some(field) = self.get_field_at_internal::<T>(index, row as i32) {
