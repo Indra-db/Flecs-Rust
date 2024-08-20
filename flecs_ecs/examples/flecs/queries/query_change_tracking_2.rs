@@ -3,6 +3,7 @@
 use crate::z_ignore_test_common::*;
 
 use flecs_ecs::prelude::*;
+
 // Queries have a builtin mechanism for tracking changes per matched table. This
 // is a cheap way of eliminating redundant work, as many entities can be skipped
 // with a single check.
@@ -28,10 +29,7 @@ pub struct WorldPosition {
 pub struct DummyTag;
 
 // This system updates the WorldPosition component based on the Position and
-// Parent components. If the Parent component is not present, the WorldPosition
-// component is set to the Position component. If the Parent component is
-// present, the WorldPosition component is set to the sum of the Position and
-// Parent components.
+// the optional parent's Position.
 fn update_transforms(mut it: TableIter<true, ()>) {
     while it.next() {
         // With the it.changed() function we can check if the table we're
@@ -100,20 +98,8 @@ fn main() {
         // this is to make sure independent entity is in a different archetype
         .add::<DummyTag>();
 
-    // We can use the changed() function on the query to check if any of the
-    // tables it is matched with has changed. Since this is the first time that
-    // we check this and the query is matched with the tables we just created,
-    // the function will return true.
-    println!();
-    println!(
-        "transform_query.is_changed(): {}",
-        transform_query.is_changed() // true
-    );
-    println!();
-
-    // The changed state will remain true until we have iterated each table.
-    // Because this is the first time the query is iterated, all tables
-    // will show up as changed.
+    // Since this is the first time the query is iterated, all tables
+    // will show up as changed and not skipped
     transform_query.run(update_transforms);
 
     // Output:
@@ -121,28 +107,12 @@ fn main() {
     //  non-skip archetype: Position, WorldPosition, (ChildOf,parent)
     //  non-skip archetype: Position, WorldPosition, DummyTag
 
-    // Now that we have iterated all tables, the state is reset.
-    println!();
-    println!(
-        "transform_query.is_changed(): {:?}",
-        transform_query.is_changed() // false
-    );
-    println!();
-
     // Set the child position to a new value. This will change the table that
     // the child entity is in, which will cause the query to return true when
     // we call changed().
     child.set(Position { x: 110.0, y: 210.0 });
 
-    // One of the tables has changed, so q_read.changed() will return true
-    println!();
-    println!(
-        "transform_query.is_changed(): {}",
-        transform_query.is_changed() // true
-    );
-    println!();
-
-    // When we iterate the read query, we'll see that one table has changed.
+    // When we iterate the query, we'll see that one table has changed and thus not skipped
     transform_query.run(update_transforms);
 
     println!();
@@ -159,16 +129,8 @@ fn main() {
     //  independent: WorldPosition { x: 50.0, y: 30.0 }
     //  child: WorldPosition { x: 120.0, y: 230.0 }
 
-    // now the same, but for independent entity
-
+    // now the same, but for independent entity, which is in a different archetype.
     independent.set(Position { x: 60.0, y: 40.0 });
-
-    println!();
-    println!(
-        "transform_query.is_changed(): {}",
-        transform_query.is_changed() // true
-    );
-    println!();
 
     transform_query.run(update_transforms);
 
