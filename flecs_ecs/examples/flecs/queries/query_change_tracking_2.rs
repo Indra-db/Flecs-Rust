@@ -69,7 +69,7 @@ fn update_transforms(mut it: TableIter<true, ()>) {
 fn print_world_positions(entity: EntityView, world_pos: &WorldPosition) {
     println!("{}: {:?}", entity.name(), world_pos);
 }
-#[test]
+
 fn main() {
     let world = World::new();
 
