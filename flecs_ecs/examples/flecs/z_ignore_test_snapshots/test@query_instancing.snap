@@ -1,5 +1,0 @@
----
-source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
-expression: str_output
----
-"Velocity is shared\nentity e1 has Position { x: 11.0, y: 22.0 }\nentity e2 has Position { x: 11.0, y: 22.0 }\nVelocity is owned\nentity e3 has Position { x: 13.0, y: 24.0 }\nentity e4 has Position { x: 14.0, y: 25.0 }\n"

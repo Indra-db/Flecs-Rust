@@ -1,5 +1,0 @@
----
-source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
-expression: str_output
----
-"\nTable: Some(examples.queries.query_run_iter.Position, examples.queries.query_run_iter.Velocity, (Identifier,Name))\n - number of entities: 2\n\n - term 0 : \n   - component: examples.queries.query_run_iter.Position\n   - type size: 8\n - term 1 : \n   - component: examples.queries.query_run_iter.Velocity\n   - type size: 8\n\n - entity e1: has Position { x: 11.0, y: 22.0 }\n - entity e2: has Position { x: 13.0, y: 24.0 }\n\n\nTable: Some(examples.queries.query_run_iter.Position, examples.queries.query_run_iter.Velocity, examples.queries.query_run_iter.Mass, (Identifier,Name))\n - number of entities: 1\n\n - term 0 : \n   - component: examples.queries.query_run_iter.Position\n   - type size: 8\n - term 1 : \n   - component: examples.queries.query_run_iter.Velocity\n   - type size: 8\n\n - entity e3: has Position { x: 14.0, y: 25.0 }\n\n"

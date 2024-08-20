@@ -37,7 +37,8 @@ fn main() {
 
     // Create an observer for the CloseRequested event to listen to any entity.
     world
-        .observer::<CloseRequested, &flecs::Any>()
+        .observer::<CloseRequested, ()>()
+        .with::<flecs::Any>()
         .each_iter(|it, _index, _| {
             let reason = it.param().reason;
             println!("Close request with reason: {:?}", reason);

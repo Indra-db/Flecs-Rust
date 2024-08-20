@@ -21,6 +21,7 @@ struct Dirty {
     value: bool,
 }
 
+#[test]
 fn main() {
     let world = World::new();
 
@@ -116,11 +117,13 @@ fn main() {
             // Because we enforced that Dirty is a shared component, we can check
             // a single value for the entire table.
             if !dirty[0].value {
+                println!("iter.skip() for table [{}]", it.archetype().unwrap());
+
                 // If the dirty flag is false, skip the table. This way the table's
                 // dirty state is not updated by the query.
                 it.skip();
-                println!("iter.skip() for table [{}]", it.archetype().unwrap());
-                return;
+
+                continue;
             }
 
             // For all other tables the dirty state will be set.
@@ -171,5 +174,5 @@ fn main() {
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();
     main();
-    output_capture.test("query_change_tracking".to_string());
+    output_capture.test("query_change_tracking_2".to_string());
 }

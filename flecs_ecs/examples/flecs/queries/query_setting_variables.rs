@@ -92,7 +92,8 @@ fn main() {
     // - find all entities with (Platoon, *), store * in _Platoon
     // - check if _Platoon has (Player, *), store * in _Player
     let mut query = world
-        .query::<&RangedUnit>()
+        .query::<()>()
+        .with::<RangedUnit>()
         .with::<&Platoon>()
         .set_second_name("$platoon")
         .with_first_name::<&Player>("$player")

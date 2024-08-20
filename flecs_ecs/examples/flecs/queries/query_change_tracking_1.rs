@@ -154,5 +154,5 @@ fn main() {
 fn test() {
     let output_capture = OutputCapture::capture().unwrap();
     main();
-    output_capture.test("query_change_tracking_2".to_string());
+    output_capture.test("query_change_tracking_1".to_string());
 }

@@ -2,4 +2,4 @@
 source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
 expression: str_output
 ---
-"Position: {\"x\":2, \"y\":4}\nEntity: {\"name\":\"#548\", \"components\":{\"Position\":{\"x\":2, \"y\":4}}}\n"
+"Position: {\"x\":2, \"y\":4}\nEntity: {\"name\":\"#561\", \"components\":{\"examples.reflection.reflection_basics_json.Position\":{\"x\":2, \"y\":4}}}\n"
