@@ -23,6 +23,10 @@ pub struct WorldPosition {
     pub y: f32,
 }
 
+// this is to make sure independent entity is in a different archetype
+#[derive(Component)]
+pub struct DummyTag;
+
 // This system updates the WorldPosition component based on the Position and
 // Parent components. If the Parent component is not present, the WorldPosition
 // component is set to the Position component. If the Parent component is
@@ -92,7 +96,9 @@ fn main() {
     let independent = world
         .entity_named("independent")
         .set(Position { x: 50.0, y: 30.0 })
-        .set(WorldPosition { x: 0.0, y: 0.0 });
+        .set(WorldPosition { x: 0.0, y: 0.0 })
+        // this is to make sure independent entity is in a different archetype
+        .add::<DummyTag>();
 
     // We can use the changed() function on the query to check if any of the
     // tables it is matched with has changed. Since this is the first time that
@@ -111,8 +117,9 @@ fn main() {
     transform_query.run(update_transforms);
 
     // Output:
-    //  non-skip archetype: examples.queries.query_change_tracking_2.Position, examples.queries.query_change_tracking_2.WorldPosition, (Identifier,Name)
-    //  non-skip archetype: examples.queries.query_change_tracking_2.Position, examples.queries.query_change_tracking_2.WorldPosition, (Identifier,Name), (ChildOf,parent)
+    //  non-skip archetype: Position, WorldPosition
+    //  non-skip archetype: Position, WorldPosition, (ChildOf,parent)
+    //  non-skip archetype: Position, WorldPosition, DummyTag
 
     // Now that we have iterated all tables, the state is reset.
     println!();
@@ -122,10 +129,10 @@ fn main() {
     );
     println!();
 
-    // Set the parent position to a new value. This will change the table that
-    // the parent entity is in, which will cause the query to return true when
+    // Set the child position to a new value. This will change the table that
+    // the child entity is in, which will cause the query to return true when
     // we call changed().
-    parent.set(Position { x: 110.0, y: 210.0 });
+    child.set(Position { x: 110.0, y: 210.0 });
 
     // One of the tables has changed, so q_read.changed() will return true
     println!();
@@ -141,8 +148,9 @@ fn main() {
     println!();
 
     // Output:
-    //  non-skip archetype: examples.queries.query_change_tracking_2.Position, examples.queries.query_change_tracking_2.WorldPosition, (Identifier,Name)
-    //  non-skip archetype: examples.queries.query_change_tracking_2.Position, examples.queries.query_change_tracking_2.WorldPosition, (Identifier,Name), (ChildOf,parent)
+    //  skip archetype: Position, WorldPosition
+    //  non-skip archetype: Position, WorldPosition, (ChildOf,parent)
+    //  skip archetype: Position, WorldPosition, DummyTag
 
     print_world_pos.each_entity(print_world_positions);
 
@@ -167,8 +175,9 @@ fn main() {
     println!();
 
     // Output:
-    //  non-skip archetype: examples.queries.query_change_tracking_2.Position, examples.queries.query_change_tracking_2.WorldPosition, (Identifier,Name)
-    //  non-skip archetype: examples.queries.query_change_tracking_2.Position, examples.queries.query_change_tracking_2.WorldPosition, (Identifier,Name), (ChildOf,parent)
+    //  skip archetype: Position, WorldPosition
+    //  skip archetype: Position, WorldPosition, (ChildOf,parent)
+    //  non-skip archetype: Position, WorldPosition, DummyTag
 
     print_world_pos.each_entity(print_world_positions);
 
