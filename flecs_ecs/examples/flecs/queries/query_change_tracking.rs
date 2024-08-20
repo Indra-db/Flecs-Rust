@@ -28,7 +28,6 @@ fn main() {
     world
         .component::<Dirty>()
         .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
-    //todo v4 bug flecs core
 
     // Create a query that just reads a component. We'll use this query for
     // change tracking. Change tracking for a query is automatically enabled
