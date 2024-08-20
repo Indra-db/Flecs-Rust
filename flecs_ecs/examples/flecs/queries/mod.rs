@@ -1,6 +1,6 @@
 mod query_basics;
 mod query_chaining_queries;
-mod query_change_tracking;
+mod query_change_tracking_1;
 mod query_change_tracking_2;
 mod query_component_inheritance;
 mod query_cyclic_variables;
