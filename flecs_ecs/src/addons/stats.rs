@@ -20,6 +20,13 @@ pub struct Stats;
 #[cfg(feature = "flecs_module")]
 impl Module for Stats {
     fn module(world: &World) {
+        // TODO UNITS addon
+        /*
+        #ifdef FLECS_UNITS
+        world.import<flecs::units>();
+        #endif
+         */
+
         world.module::<Stats>("flecs::rust::stats");
         unsafe { sys::FlecsStatsImport(world.ptr_mut()) };
         world.component::<WorldSummary>();

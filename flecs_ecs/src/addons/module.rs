@@ -3,7 +3,10 @@
 //! * To define a module, see [`Module`].
 //! * To import a module, see [`World::import()`].
 //! * To override the name of a module, see [`World::module()`].
-use crate::core::{flecs, ComponentId, EntityView, IdOperations, World, SEPARATOR};
+use crate::core::{
+    ecs_pair, flecs, ComponentId, EntityView, FlecsConstantId, IdOperations, World, WorldProvider,
+    SEPARATOR,
+};
 use crate::sys;
 
 #[derive(crate::prelude::Component)]
@@ -81,11 +84,13 @@ impl World {
             return module.entity;
         }
 
+        // Make module component sparse so that it'll never move in memory. This
+        // guarantees that a module drop / destructor can be reliably used to cleanup
+        // module resources.
+        module.add_trait::<flecs::Sparse>();
+
         // Reset scope
         let prev_scope = self.set_scope_id(0);
-
-        // Initialise component for the module and add Module tag
-        module.add::<flecs::Module>();
 
         // Set scope to our module
         self.set_scope_id(module.entity);
@@ -100,6 +105,9 @@ impl World {
 
         // Return out scope to the previous scope
         self.set_scope_id(prev_scope);
+
+        // Initialise component for the module and add Module tag
+        module.add::<flecs::Module>();
 
         module.entity
     }
@@ -132,6 +140,7 @@ impl World {
         let id = comp.id();
 
         let name = compact_str::format_compact!("{}\0", name);
+        let prev_parent = comp.parent().unwrap_or(EntityView::new_null(self));
         unsafe {
             sys::ecs_add_path_w_sep(
                 self.raw_world.as_ptr(),
@@ -142,7 +151,35 @@ impl World {
                 SEPARATOR.as_ptr(),
             );
         }
-        self.set_scope_id(id);
+        let parent = comp.parent().unwrap_or(EntityView::new_null(self));
+
+        if parent != prev_parent {
+            // Module was reparented, cleanup old parent(s)
+            let mut cur = prev_parent;
+            let mut next;
+
+            loop {
+                next = cur.parent().unwrap_or(EntityView::new_null(self));
+
+                let mut it = unsafe {
+                    sys::ecs_each_id(
+                        self.world_ptr(),
+                        ecs_pair(flecs::ChildOf::ID, cur.id.into()),
+                    )
+                };
+                if !unsafe { sys::ecs_iter_is_true(&mut it) } {
+                    cur.destruct();
+                }
+
+                cur = next;
+
+                if cur.id == 0 {
+                    break;
+                }
+            }
+        }
+
+        //self.set_scope_id(id);
         EntityView::new_from(self, *id)
     }
 }
