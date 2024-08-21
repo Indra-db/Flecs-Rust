@@ -3,11 +3,11 @@
 //! * To define a module, see [`Module`].
 //! * To import a module, see [`World::import()`].
 //! * To override the name of a module, see [`World::module()`].
-use crate::core::{flecs, ComponentId, EntityView, IdOperations, World, SEPARATOR};
+use crate::core::{
+    ecs_pair, flecs, register_componment_data_explicit, ComponentId, EntityView, FlecsConstantId,
+    IdOperations, World, WorldProvider, SEPARATOR,
+};
 use crate::sys;
-
-#[derive(crate::prelude::Component)]
-pub struct CustomModuleName;
 
 /// Define a module
 ///
@@ -74,34 +74,51 @@ impl World {
     /// * [`World::module()`]
     /// * C++ API: `world::import`
     pub fn import<T: Module>(&self) -> EntityView {
-        let only_type_name = crate::core::get_only_type_name::<T>();
-        let module = self.component_named::<T>(only_type_name);
+        let module = if T::is_registered_with_world(self) {
+            self.component::<T>().entity
+        } else {
+            let id = self.entity_from_id(register_componment_data_explicit::<T, true>(
+                self.raw_world.as_ptr(),
+                std::ptr::null(),
+            ));
+            let id_u64 = *id.id();
+            let index = T::index() as usize;
+            let components_array = self.components_array();
+            components_array[index] = id_u64;
+            #[cfg(feature = "flecs_meta")]
+            {
+                self.components_map()
+                    .insert(std::any::TypeId::of::<Self>(), id_u64);
+            }
+            id
+        };
+
         // If we have already registered this type don't re-create the module
         if module.has::<flecs::Module>() {
-            return module.entity;
+            return module;
         }
+
+        // Make module component sparse so that it'll never move in memory. This
+        // guarantees that a module drop / destructor can be reliably used to cleanup
+        // module resources.
+        module.add_trait::<flecs::Sparse>();
 
         // Reset scope
         let prev_scope = self.set_scope_id(0);
 
-        // Initialise component for the module and add Module tag
-        module.add::<flecs::Module>();
-
         // Set scope to our module
-        self.set_scope_id(module.entity);
+        self.set_scope_id(module);
 
         // Build the module
         T::module(self);
 
-        if !module.has::<CustomModuleName>() {
-            // register the type with the full path
-            self.module::<T>(std::any::type_name::<T>());
-        }
-
         // Return out scope to the previous scope
         self.set_scope_id(prev_scope);
 
-        module.entity
+        // Initialise component for the module and add Module tag
+        module.add::<flecs::Module>();
+
+        module
     }
 
     /// Define a module.
@@ -128,10 +145,11 @@ impl World {
     /// * [`World::import()`]
     /// * C++ API: `world::module`
     pub fn module<M: ComponentId>(&self, name: &str) -> EntityView {
-        let comp = self.component_named::<M>(name).add::<CustomModuleName>();
+        let comp = self.component::<M>();
         let id = comp.id();
 
         let name = compact_str::format_compact!("{}\0", name);
+        let prev_parent = comp.parent().unwrap_or(EntityView::new_null(self));
         unsafe {
             sys::ecs_add_path_w_sep(
                 self.raw_world.as_ptr(),
@@ -142,7 +160,35 @@ impl World {
                 SEPARATOR.as_ptr(),
             );
         }
-        self.set_scope_id(id);
+        let parent = comp.parent().unwrap_or(EntityView::new_null(self));
+
+        if parent != prev_parent {
+            // Module was reparented, cleanup old parent(s)
+            let mut cur = prev_parent;
+            let mut next;
+
+            loop {
+                next = cur.parent().unwrap_or(EntityView::new_null(self));
+
+                let mut it = unsafe {
+                    sys::ecs_each_id(
+                        self.world_ptr(),
+                        ecs_pair(flecs::ChildOf::ID, cur.id.into()),
+                    )
+                };
+                if !unsafe { sys::ecs_iter_is_true(&mut it) } {
+                    cur.destruct();
+                }
+
+                cur = next;
+
+                if cur.id == 0 {
+                    break;
+                }
+            }
+        }
+
+        //self.set_scope_id(id);
         EntityView::new_from(self, *id)
     }
 }

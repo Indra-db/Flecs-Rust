@@ -123,11 +123,6 @@ impl World {
         // used for event handling with no data
         self.component_named::<()>("flecs::rust::() - None");
 
-        #[cfg(feature = "flecs_module")]
-        self.component_named::<crate::addons::module::CustomModuleName>(
-            "flecs::rust::module::CustomModuleName",
-        );
-
         #[cfg(feature = "flecs_meta")]
         {
             self.component_named::<crate::prelude::meta::EcsTypeKind>("flecs::meta::type_kind");

@@ -16,16 +16,25 @@ pub(crate) fn create_component_desc(
     }
 }
 
-pub(crate) fn create_type_info<T>() -> flecs_ecs_sys::ecs_type_info_t
+pub(crate) fn create_type_info<T, const ALLOCATE_TAG: bool>() -> flecs_ecs_sys::ecs_type_info_t
 where
     T: ComponentId,
 {
-    let size = std::mem::size_of::<T>();
+    let size = {
+        let size = std::mem::size_of::<T>();
+        if ALLOCATE_TAG && size == 0 {
+            1
+        } else {
+            size
+        }
+    };
+
     let alignment = if size != 0 {
         std::mem::align_of::<T>()
     } else {
         0
     };
+
     let mut hooks = Default::default();
     if size != 0 && T::NEEDS_DROP {
         // Register lifecycle callbacks, but only if the component has a
