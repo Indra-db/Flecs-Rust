@@ -16,7 +16,9 @@ pub(crate) fn create_component_desc(
     }
 }
 
-pub(crate) fn create_type_info<T, const ALLOCATE_TAG: bool>() -> flecs_ecs_sys::ecs_type_info_t
+pub(crate) fn create_type_info<T, const ALLOCATE_TAG: bool>(
+    world: *const sys::ecs_world_t,
+) -> flecs_ecs_sys::ecs_type_info_t
 where
     T: ComponentId,
 {
@@ -51,6 +53,7 @@ where
     }
 
     let type_info: flecs_ecs_sys::ecs_type_info_t = flecs_ecs_sys::ecs_type_info_t {
+        world,
         size: size as i32,
         alignment: alignment as i32,
         hooks,
@@ -80,7 +83,9 @@ pub(crate) fn create_entity_desc(
     entity_desc
 }
 
-pub(crate) fn external_create_type_info<T>() -> flecs_ecs_sys::ecs_type_info_t {
+pub(crate) fn external_create_type_info<T>(
+    world: *const sys::ecs_world_t,
+) -> flecs_ecs_sys::ecs_type_info_t {
     let size = std::mem::size_of::<T>();
     let alignment = if size != 0 {
         std::mem::align_of::<T>()
@@ -97,6 +102,7 @@ pub(crate) fn external_create_type_info<T>() -> flecs_ecs_sys::ecs_type_info_t {
     }
 
     let type_info: flecs_ecs_sys::ecs_type_info_t = flecs_ecs_sys::ecs_type_info_t {
+        world,
         size: size as i32,
         alignment: alignment as i32,
         hooks,

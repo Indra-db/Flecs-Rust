@@ -1730,6 +1730,8 @@ pub struct ecs_type_hooks_t {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_type_info_t {
+    #[doc = "< World"]
+    pub world: *const ecs_world_t,
     #[doc = "< Size of type"]
     pub size: ecs_size_t,
     #[doc = "< Alignment of type"]
