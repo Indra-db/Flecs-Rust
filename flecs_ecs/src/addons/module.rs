@@ -4,8 +4,8 @@
 //! * To import a module, see [`World::import()`].
 //! * To override the name of a module, see [`World::module()`].
 use crate::core::{
-    ecs_pair, flecs, ComponentId, EntityView, FlecsConstantId, IdOperations, World, WorldProvider,
-    SEPARATOR,
+    ecs_pair, flecs, register_componment_data_explicit, ComponentId, EntityView, FlecsConstantId,
+    IdOperations, World, WorldProvider, SEPARATOR,
 };
 use crate::sys;
 
@@ -77,11 +77,30 @@ impl World {
     /// * [`World::module()`]
     /// * C++ API: `world::import`
     pub fn import<T: Module>(&self) -> EntityView {
-        let only_type_name = crate::core::get_only_type_name::<T>();
-        let module = self.component_named::<T>(only_type_name);
+        //let only_type_name = crate::core::get_only_type_name::<T>();
+        //let compact_str_type_name = compact_str::format_compact!("{}\0", only_type_name);
+        let module = if T::is_registered_with_world(self) {
+            self.component::<T>().entity
+        } else {
+            let id = self.entity_from_id(register_componment_data_explicit::<T, true>(
+                self.raw_world.as_ptr(),
+                std::ptr::null(),
+            ));
+            let id_u64 = *id.id();
+            let index = T::index() as usize;
+            let components_array = self.components_array();
+            components_array[index] = id_u64;
+            #[cfg(feature = "flecs_meta")]
+            {
+                self.components_map()
+                    .insert(std::any::TypeId::of::<Self>(), id_u64);
+            }
+            id
+        };
+
         // If we have already registered this type don't re-create the module
         if module.has::<flecs::Module>() {
-            return module.entity;
+            return module;
         }
 
         // Make module component sparse so that it'll never move in memory. This
@@ -93,15 +112,15 @@ impl World {
         let prev_scope = self.set_scope_id(0);
 
         // Set scope to our module
-        self.set_scope_id(module.entity);
+        self.set_scope_id(module);
 
         // Build the module
         T::module(self);
 
-        if !module.has::<CustomModuleName>() {
-            // register the type with the full path
-            self.module::<T>(std::any::type_name::<T>());
-        }
+        // if !module.has::<CustomModuleName>() {
+        //     // register the type with the full path
+        //     self.module::<T>(std::any::type_name::<T>());
+        // }
 
         // Return out scope to the previous scope
         self.set_scope_id(prev_scope);
@@ -109,7 +128,7 @@ impl World {
         // Initialise component for the module and add Module tag
         module.add::<flecs::Module>();
 
-        module.entity
+        module
     }
 
     /// Define a module.
@@ -136,7 +155,8 @@ impl World {
     /// * [`World::import()`]
     /// * C++ API: `world::module`
     pub fn module<M: ComponentId>(&self, name: &str) -> EntityView {
-        let comp = self.component_named::<M>(name).add::<CustomModuleName>();
+        let comp = self.component::<M>();
+        //.add::<CustomModuleName>();
         let id = comp.id();
 
         let name = compact_str::format_compact!("{}\0", name);

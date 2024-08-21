@@ -112,7 +112,7 @@ where
         0
     };
 
-    let id = register_componment_data_explicit::<T>(world, name);
+    let id = register_componment_data_explicit::<T, false>(world, name);
 
     if !COMPONENT_REGISTRATION {
         if prev_with != 0 {
@@ -144,7 +144,7 @@ where
         0
     };
 
-    let id = register_componment_data_explicit::<T>(world, std::ptr::null());
+    let id = register_componment_data_explicit::<T, false>(world, std::ptr::null());
 
     if !COMPONENT_REGISTRATION {
         if prev_with != 0 {
@@ -190,7 +190,7 @@ pub(crate) fn external_register_component_data<const COMPONENT_REGISTRATION: boo
 }
 
 /// registers the component with the world.
-pub(crate) fn register_componment_data_explicit<T>(
+pub(crate) fn register_componment_data_explicit<T, const ALLOCATE_TAG: bool>(
     world: *mut sys::ecs_world_t,
     name: *const c_char,
 ) -> sys::ecs_entity_t
@@ -225,7 +225,7 @@ where
 
     let entity = unsafe { flecs_ecs_sys::ecs_entity_init(world, &entity_desc) };
 
-    let type_info = create_type_info::<T>();
+    let type_info = create_type_info::<T, ALLOCATE_TAG>();
 
     let component_desc = create_component_desc(entity, type_info);
 
