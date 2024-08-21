@@ -22,7 +22,7 @@ impl<'a> EntityView<'a> {
             let hooks = unsafe { sys::ecs_get_hooks_id(world, id) };
             let is_default_hook = unsafe { (*hooks).ctor.is_some() };
             if !is_default_hook {
-                panic!("Id is not a ZST type such as a Tag or Entity or does not implement the Default hook for a non ZST type.");
+                panic!("Id is not a zero-sized type (ZST) such as a Tag or Entity or does not implement the Default hook for a non ZST type. Default hooks are automatically implemented if the type has a Default trait.");
             }
         }
     }
@@ -147,7 +147,7 @@ impl<'a> EntityView<'a> {
                 let hooks = unsafe { sys::ecs_get_hooks_id(world_ptr, second) };
                 let is_default_hook = unsafe { (*hooks).ctor.is_some() };
                 if !is_default_hook {
-                    panic!("second id is not a ZST type such as a Tag or Entity or does not implement the Default hook for a non ZST type.");
+                    panic!("second id is not a zero-sized type (ZST) such as a Tag or Entity or does not implement the Default hook for a non ZST type. Default hooks are automatically implemented if the type has a Default trait.");
                 }
             }
         }
@@ -183,14 +183,14 @@ impl<'a> EntityView<'a> {
 
         if is_first_tag {
             if !Second::IS_TAG && !Second::IMPLS_DEFAULT {
-                panic!("first id is a tag type such as a Tag or Entity, but second id is not a ZST type such as a Tag or Entity or does not implement the Default hook for a non ZST type.");
+                panic!("first id is a tag type such as a Tag or Entity, but second id is not a zero-sized type (ZST) such as a Tag or Entity or does not implement the Default hook for a non ZST type. Default hooks are automatically implemented if the type has a Default trait.");
             }
         } else {
             let hooks = unsafe { sys::ecs_get_hooks_id(world_ptr, first) };
             let is_default_hook = unsafe { (*hooks).ctor.is_some() };
             if !is_default_hook {
-                panic!("first id is not a ZST type such as a Tag or Entity and does not implement the Default hook.
-                Use `set` id variant.");
+                panic!("first id is not a zero-sized type (ZST) such as a Tag or Entity and does not implement the Default hook.  Default hooks are automatically implemented if the type has a Default trait.
+                Use `set_id` or `set_pair`.");
             }
         }
 
@@ -873,9 +873,42 @@ impl<'a> EntityView<'a> {
     ///
     /// Caller must ensure that `data` is a valid data for the id.
     ///
+    /// ```no_run
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct InWorld;
+    ///
+    /// #[derive(Component, Debug)]
+    /// struct Position {
+    ///     x: f32,
+    ///     y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let position = world.component::<Position>();
+    /// let in_world = world.component::<InWorld>();
+    ///
+    /// let entity = world.entity();
+    ///
+    /// // using a tuple indicates a relationship. It doesn't have to be a relationship.
+    /// entity.set_id(Position { x: 10.0, y: 20.0 }, (in_world, position));
+    /// // no relationship
+    /// entity.set_id(Position { x: 1.0, y: 2.0 }, position));
+    ///
+    /// entity.get::<&(InWorld, Position)>(|pos| {
+    ///     // ...
+    /// });
+    /// ```
+    ///
     /// # See also
     ///
     /// * C++ API: `entity_builder::set`
+    ///     [`EntityView::add`]
+    ///     [`EntityView::add_id`]
+    ///     [`EntityView::set`]
+    ///     [`EntityView::set_pair`]
     #[doc(alias = "entity_builder::set")]
     pub fn set_id<T>(self, data: T, id: impl IntoId) -> Self
     where
@@ -887,7 +920,7 @@ impl<'a> EntityView<'a> {
         let id_data_id = unsafe { sys::ecs_get_typeid(world, id) };
 
         if data_id != id_data_id {
-            panic!("Data type does not match id type. For pairs this is the first element occurrence that is not a ZST type.");
+            panic!("Data type does not match id type. For pairs this is the first element occurrence that is not a zero-sized type (ZST).");
         }
 
         set_helper(world, *self.id, data, id);
@@ -900,6 +933,28 @@ impl<'a> EntityView<'a> {
     ///
     /// If the entity did not yet have the pair, it will be added, otherwise overridden.
     ///
+    /// ```no_run
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct InWorld;
+    ///
+    /// #[derive(Component, Debug)]
+    /// struct Position {
+    ///     x: f32,
+    ///     y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let entity = world.entity();
+    ///
+    /// entity.set_pair::<InWorld, _>(Position { x: 1.0, y: 2.0 });
+    ///
+    /// entity.get::<&(InWorld, Position)>(|pos| {
+    ///     // ...
+    /// });
+    /// ```
     /// # See also
     ///
     /// * C++ API: `entity_builder::set`
@@ -943,7 +998,7 @@ impl<'a> EntityView<'a> {
         let data_id = unsafe { sys::ecs_get_typeid(world_ptr, pair_id) };
 
         if data_id != first_id {
-            panic!("First type does not match id data type. For pairs this is the first element occurrence that is not a ZST type.");
+            panic!("First type does not match id data type. For pairs this is the first element occurrence that is not a zero-sized type (ZST).");
         }
 
         set_helper(world_ptr, *self.id, first, pair_id);
@@ -954,7 +1009,7 @@ impl<'a> EntityView<'a> {
     ///
     /// # Panics
     ///
-    /// Caller must ensure that first is a ZST type or entity and not a pair.
+    /// Caller must ensure that first is a zero-sized type (ZST) or entity and not a pair.
     ///
     /// # See also
     ///
@@ -971,7 +1026,7 @@ impl<'a> EntityView<'a> {
         let data_id = unsafe { sys::ecs_get_typeid(world, pair_id) };
 
         if data_id != second_id {
-            panic!("Second type does not match id data type. For pairs this is the first element occurrence that is not a ZST type.");
+            panic!("Second type does not match id data type. For pairs this is the first element occurrence that is not a zero-sized type (ZST).");
         }
 
         set_helper(world, *self.id, second, pair_id);
