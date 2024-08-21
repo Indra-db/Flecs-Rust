@@ -9,9 +9,6 @@ use crate::core::{
 };
 use crate::sys;
 
-#[derive(crate::prelude::Component)]
-pub struct CustomModuleName;
-
 /// Define a module
 ///
 /// # Examples:
@@ -77,8 +74,6 @@ impl World {
     /// * [`World::module()`]
     /// * C++ API: `world::import`
     pub fn import<T: Module>(&self) -> EntityView {
-        //let only_type_name = crate::core::get_only_type_name::<T>();
-        //let compact_str_type_name = compact_str::format_compact!("{}\0", only_type_name);
         let module = if T::is_registered_with_world(self) {
             self.component::<T>().entity
         } else {
@@ -117,11 +112,6 @@ impl World {
         // Build the module
         T::module(self);
 
-        // if !module.has::<CustomModuleName>() {
-        //     // register the type with the full path
-        //     self.module::<T>(std::any::type_name::<T>());
-        // }
-
         // Return out scope to the previous scope
         self.set_scope_id(prev_scope);
 
@@ -156,7 +146,6 @@ impl World {
     /// * C++ API: `world::module`
     pub fn module<M: ComponentId>(&self, name: &str) -> EntityView {
         let comp = self.component::<M>();
-        //.add::<CustomModuleName>();
         let id = comp.id();
 
         let name = compact_str::format_compact!("{}\0", name);
