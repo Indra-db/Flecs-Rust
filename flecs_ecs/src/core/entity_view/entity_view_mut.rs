@@ -895,7 +895,7 @@ impl<'a> EntityView<'a> {
     /// // using a tuple indicates a relationship. It doesn't have to be a relationship.
     /// entity.set_id(Position { x: 10.0, y: 20.0 }, (in_world, position));
     /// // no relationship
-    /// entity.set_id(Position { x: 1.0, y: 2.0 }, position));
+    /// entity.set_id(Position { x: 1.0, y: 2.0 }, position);
     ///
     /// entity.get::<&(InWorld, Position)>(|pos| {
     ///     // ...
