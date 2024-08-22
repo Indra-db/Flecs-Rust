@@ -11,6 +11,7 @@ mod query_group_by_callbacks;
 mod query_group_by_custom;
 mod query_group_iter;
 mod query_hierarchy;
+mod query_pass_query_to_system;
 mod query_run;
 mod query_setting_variables;
 mod query_singleton;

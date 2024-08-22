@@ -202,6 +202,32 @@ where
         world: impl WorldProvider<'a>,
         desc: &mut sys::ecs_query_desc_t,
     ) -> Self {
+        if desc.entity != 0 && desc.terms[0].id == 0 {
+            let world_ptr = world.world_ptr();
+            let query_poly = unsafe {
+                sys::ecs_get_id(
+                    world_ptr,
+                    desc.entity,
+                    ecs_pair(flecs::Poly::ID, flecs::Query::ID),
+                )
+            } as *const flecs::Poly;
+
+            if !query_poly.is_null() {
+                unsafe {
+                    let query = NonNull::new_unchecked((*query_poly).poly as *mut sys::ecs_query_t);
+                    sys::flecs_poly_claim_(query.as_ptr() as *mut c_void);
+                    let world_ctx = ecs_get_binding_ctx((*query.as_ptr()).world) as *mut WorldCtx;
+                    (*world_ctx).inc_query_ref_count();
+                    let world_ctx = NonNull::new_unchecked(world_ctx);
+
+                    return Self {
+                        query,
+                        world_ctx,
+                        _phantom: PhantomData,
+                    };
+                }
+            }
+        }
         let world_ptr = world.world_ptr_mut();
 
         let query_ptr = unsafe { sys::ecs_query_init(world_ptr, desc) };
@@ -231,6 +257,7 @@ where
     ) -> Option<Query<()>> {
         let world_ptr = world.world_ptr();
         let entity = *entity.into();
+
         unsafe {
             if ecs_get_alive(world_ptr, entity) != 0 {
                 let query_poly = sys::ecs_get_id(
@@ -240,10 +267,12 @@ where
                 );
 
                 if !query_poly.is_null() {
-                    sys::flecs_poly_claim_(query_poly as *mut c_void);
-                    let query = NonNull::new_unchecked(query_poly as *mut sys::ecs_query_t);
-                    let new_query = Query::<()>::new_from(query);
-                    new_query.world().world_ctx_mut().inc_query_ref_count();
+                    let mut desc = sys::ecs_query_desc_t {
+                        entity,
+                        ..Default::default()
+                    };
+
+                    let new_query = Query::<()>::new_from_desc(world, &mut desc);
                     return Some(new_query);
                 }
             }

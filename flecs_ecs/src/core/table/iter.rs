@@ -757,6 +757,28 @@ where
         unsafe { sys::ecs_iter_changed(self.iter) }
     }
 
+    /// Returns whether the query has any data changed since the last iteration.
+    ///
+    /// This operation must be invoked before obtaining the iterator, as this will
+    /// reset the changed state.
+    ///
+    /// # Returns
+    ///
+    /// The operation will return `true` after:
+    /// - new entities have been matched with
+    /// - matched entities were deleted
+    /// - matched components were changed
+    ///
+    /// Otherwise, it will return `false`.
+    ///
+    /// # See also
+    ///
+    /// * [`TableIter::is_changed()`]
+    /// * [`Query::is_changed()`]
+    pub fn is_any_changed(&self) -> bool {
+        unsafe { sys::ecs_query_changed(self.iter.query as *mut sys::ecs_query_t) }
+    }
+
     /// Skip current table.
     /// This indicates to the query that the data in the current table is not
     /// modified. By default, iterating a table with a query will mark the

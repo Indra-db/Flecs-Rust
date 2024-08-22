@@ -244,8 +244,7 @@ pub(crate) const ECS_AND: u64 = 1 << 60;
 // Builtin component ids
 pub(crate) const ECS_COMPONENT: u64 = 1;
 pub(crate) const ECS_IDENTIFIER: u64 = 2;
-pub(crate) const ECS_ITERABLE: u64 = 3;
-pub(crate) const ECS_POLY: u64 = 4;
+pub(crate) const ECS_POLY: u64 = 3;
 
 // Poly target components
 pub(crate) const ECS_QUERY: u64 = 5;
