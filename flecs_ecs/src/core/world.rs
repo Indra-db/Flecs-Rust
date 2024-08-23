@@ -1729,8 +1729,10 @@ impl World {
     {
         self.modified_id(T::id(self));
     }
+}
 
-    /// gets a mutable or immutable singleton component and/or relationship(s) from the world.
+pub trait WorldGet<Return> {
+    /// gets a mutable or immutable singleton component and/or relationship(s) from the world and return a value.
     /// Only one singleton component at a time is retrievable, but you can call this function multiple times within the callback.
     /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
     /// use `Option` wrapper to indicate if the component is optional.
@@ -1756,7 +1758,8 @@ impl World {
     ///
     /// # Returns
     ///
-    /// - If the callback has ran.
+    /// - If the callback was run, the return value of the callback wrapped in [`Some`]
+    /// - Otherwise, returns [`None`]
     ///
     /// # Example
     ///
@@ -1765,6 +1768,12 @@ impl World {
     ///
     /// #[derive(Component)]
     /// struct Tag;
+    ///
+    /// #[derive(Component)]
+    /// pub struct Velocity {
+    ///     pub x: f32,
+    ///     pub y: f32,
+    /// }
     ///
     /// #[derive(Component)]
     /// pub struct Position {
@@ -1777,31 +1786,27 @@ impl World {
     /// world.set(Position { x: 10.0, y: 20.0 });
     /// world.set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
     ///
-    /// let has_run = world.try_get::<&Position>(|pos| {
-    ///     assert_eq!(pos.x, 10.0);
-    /// });
-    /// assert!(has_run);
+    /// let val = world.try_get::<&Position>(|pos| pos.x);
+    /// assert_eq!(val, Some(10.0));
     ///
-    /// let has_run = world.try_get::<&mut (Tag, Position)>(|pos| {
-    ///     assert_eq!(pos.x, 30.0);
-    /// });
+    /// let val = world.try_get::<&Velocity>(|vel| vel.x);
+    /// assert_eq!(val, None);
+    ///
+    /// let has_run = world
+    ///     .try_get::<&mut (Tag, Position)>(|pos| {
+    ///         assert_eq!(pos.x, 30.0);
+    ///     })
+    ///     .is_some();
     /// assert!(has_run);
     /// ```
-    pub fn try_get<T: GetTupleTypeOperation>(
+    fn try_get<T: GetTupleTypeOperation>(
         &self,
-        callback: impl for<'e> FnOnce(T::ActualType<'e>),
-    ) -> bool
+        callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Return,
+    ) -> Option<Return>
     where
-        T::OnlyType: ComponentOrPairId,
-    {
-        let entity = EntityView::new_from(
-            self,
-            <<T::OnlyType as ComponentOrPairId>::CastType>::id(self),
-        );
-        entity.try_get::<T>(callback).is_some()
-    }
+        T::OnlyType: ComponentOrPairId;
 
-    /// gets a mutable or immutable singleton component and/or relationship(s) from the world.
+    /// gets a mutable or immutable singleton component and/or relationship(s) from the world and return a value.
     /// Only one singleton component at a time is retrievable, but you can call this function multiple times within the callback.
     /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
     /// use `Option` wrapper to indicate if the component is optional.
@@ -1844,9 +1849,9 @@ impl World {
     /// world.set(Position { x: 10.0, y: 20.0 });
     /// world.set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
     ///
-    /// world.get::<&Position>(|pos| {
-    ///     assert_eq!(pos.x, 10.0);
-    /// });
+    /// let val = world.get::<&Position>(|pos| pos.x);
+    /// assert_eq!(val, 10.0);
+    ///
     /// world.get::<&mut (Tag, Position)>(|pos| {
     ///     assert_eq!(pos.x, 30.0);
     /// });
@@ -1857,7 +1862,19 @@ impl World {
     /// * [`World::cloned()`]
     /// * [`World::map()`]
     /// * [`World::try_map()`]
-    pub fn get<T: GetTupleTypeOperation>(&self, callback: impl for<'e> FnOnce(T::ActualType<'e>))
+    fn get<T: GetTupleTypeOperation>(
+        &self,
+        callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Return,
+    ) -> Return
+    where
+        T::OnlyType: ComponentOrPairId;
+}
+
+impl<Return> WorldGet<Return> for World {
+    fn try_get<T: GetTupleTypeOperation>(
+        &self,
+        callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Return,
+    ) -> Option<Return>
     where
         T::OnlyType: ComponentOrPairId,
     {
@@ -1865,9 +1882,25 @@ impl World {
             self,
             <<T::OnlyType as ComponentOrPairId>::CastType>::id(self),
         );
-        entity.get::<T>(callback);
+        entity.try_get::<T>(callback)
     }
 
+    fn get<T: GetTupleTypeOperation>(
+        &self,
+        callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Return,
+    ) -> Return
+    where
+        T::OnlyType: ComponentOrPairId,
+    {
+        let entity = EntityView::new_from(
+            self,
+            <<T::OnlyType as ComponentOrPairId>::CastType>::id(self),
+        );
+        entity.get::<T>(callback)
+    }
+}
+
+impl World {
     /// Clones a singleton component and/or relationship from the world and returns it.
     /// each component type must be marked `&`. This helps Rust type checker to determine if it's a relationship.
     /// use `Option` wrapper to indicate if the component is optional.

@@ -1915,10 +1915,12 @@ fn entity_set_2_w_on_set() {
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    assert!(world.try_get::<&Flags>(|flags| {
-        assert_eq!(flags.position_set, 1);
-        assert_eq!(flags.velocity_set, 1);
-    }));
+    assert!(world
+        .try_get::<&Flags>(|flags| {
+            assert_eq!(flags.position_set, 1);
+            assert_eq!(flags.velocity_set, 1);
+        })
+        .is_some());
 
     e.get::<(&Position, &Velocity)>(|(p, v)| {
         assert_eq!(p.x, 10);
