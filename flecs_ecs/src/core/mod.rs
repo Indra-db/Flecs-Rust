@@ -35,8 +35,7 @@ pub use component_registration::*;
 pub use components::*;
 pub use entity::Entity;
 pub use entity_view::EntityView;
-#[allow(deprecated)]
-pub use entity_view::{EntityViewGet, EntityViewMap};
+pub use entity_view::EntityViewGet;
 pub use event::EventBuilder;
 pub(crate) use get_tuple::*;
 pub use id::Id;
@@ -56,7 +55,6 @@ pub use term::*;
 #[doc(hidden)]
 pub use utility::*;
 pub use world::World;
+pub use world::WorldGet;
 pub(crate) use world::{FlecsArray, FlecsIdMap};
-#[allow(deprecated)]
-pub use world::{WorldGet, WorldMap};
 pub(crate) use world_ctx::*;

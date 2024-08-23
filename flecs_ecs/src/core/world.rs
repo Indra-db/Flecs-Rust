@@ -1860,8 +1860,6 @@ pub trait WorldGet<Return> {
     /// # See also
     ///
     /// * [`World::cloned()`]
-    /// * [`World::map()`]
-    /// * [`World::try_map()`]
     fn get<T: GetTupleTypeOperation>(
         &self,
         callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Return,
@@ -1953,8 +1951,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::get()`]
-    /// * [`World::map()`]
-    /// * [`World::try_map()`]
     pub fn cloned<T: ClonedTupleTypeOperation>(&self) -> T::ActualType
     where
         T::OnlyType: ComponentOrPairId,
@@ -1965,170 +1961,7 @@ impl World {
         );
         entity.cloned::<T>()
     }
-}
 
-#[deprecated]
-// Split out into a trait to allow inference on return types while specifying the component(s) to map over.
-pub trait WorldMap<Return> {
-    /// gets mutable or immutable component(s) and/or relationship(s) from the world in a callback and return a value.
-    /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
-    /// use `Option` wrapper to indicate if the component is optional.
-    ///
-    /// - `try_map` assumes when not using `Option` wrapper, that the entity has the component.
-    ///   If it does not, it will not run the callback and return `None`.
-    ///   If unsure and you still want to have the callback be ran, use `Option` wrapper instead.
-    ///
-    /// # Note
-    ///
-    /// - You cannot get single component tags with this function, use `has` functionality instead.
-    /// - You can only get relationships with a payload, so where one is not a tag / not a zst.
-    ///   tag relationships, use `has` functionality instead.
-    /// - This causes the table to lock where the entity belongs to to prevent invalided references, see #Panics.
-    ///   The lock is dropped at the end of the callback.
-    ///
-    /// # Panics
-    ///
-    /// - This will panic if within the callback you do any operation that could invalidate the reference.
-    ///   This happens when the entity is moved to a different table in memory. Such as adding, removing components or
-    ///   creating/deleting entities where the entity belongs to the same table (which could cause a table grow operation).
-    ///   In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
-    ///
-    /// # Returns
-    ///
-    /// - a `Some(value)` if the callback has ran. Where the type of value is specified in `Return` generic (can be elided).
-    ///   `None` if the callback has not ran.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use flecs_ecs::prelude::*;
-    ///
-    /// #[derive(Component)]
-    /// pub struct Gravity {
-    ///     pub value: f32,
-    /// }
-    ///
-    /// let world = World::new();
-    ///
-    /// let entity = world.set(Gravity { value: 9.81 });
-    ///
-    /// let gravity = world.try_map::<&Gravity>(|(gravity)| {
-    ///     assert_eq!(gravity.value, 9.81);
-    ///     Some(gravity.value)
-    /// });
-    /// assert!(gravity.is_some());
-    /// assert_eq!(gravity.unwrap(), 9.81);
-    ///
-    /// let is_981 = world.try_map::<&Gravity>(|(gravity)| {
-    ///     assert_eq!(gravity.value, 9.81);
-    ///     Some(gravity.value == 9.81)
-    /// });
-    ///
-    /// assert!(is_981.is_some());
-    /// assert!(is_981.unwrap());
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// * [`World::cloned()`]
-    /// * [`World::get()`]
-    /// * [`World::map()`]
-    fn try_map<T: GetTupleTypeOperation>(
-        &self,
-        callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Option<Return>,
-    ) -> Option<Return>
-    where
-        T::OnlyType: ComponentOrPairId;
-
-    /// gets mutable or immutable singleton component and/or relationship from the world in a callback.
-    /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
-    /// use `Option` wrapper to indicate if the component is optional.
-    /// use `()` tuple format when getting multiple components.
-    ///
-    /// # Note
-    ///
-    /// - You cannot get single component tags with this function, use `has` functionality instead.
-    /// - You can only get relationships with a payload, so where one is not a tag / not a zst.
-    ///   tag relationships, use `has` functionality instead.
-    /// - This causes the table to lock where the entity belongs to to prevent invalided references, see #Panics.
-    ///   The lock is dropped at the end of the callback.
-    ///
-    /// # Panics
-    ///
-    /// - This will panic if within the callback you do any operation that could invalidate the reference.
-    ///   This happens when the entity is moved to a different table in memory. Such as adding, removing components or
-    ///   creating/deleting entities where the entity belongs to the same table (which could cause a table grow operation).
-    ///   In case you need to do such operations, you can either do it after the get operation or defer the world with `world.defer_begin()`.
-    ///
-    /// - `get` assumes when not using `Option` wrapper, that the entity has the component.
-    ///   This will panic if the entity does not have the component. If unsure, use `Option` wrapper or `try_get` function instead.
-    ///   `try_get` does not run the callback if the entity does not have the component that isn't marked `Option`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use flecs_ecs::prelude::*;
-    ///
-    /// #[derive(Component)]
-    /// pub struct Gravity {
-    ///     pub value: f32,
-    /// }
-    ///
-    /// let world = World::new();
-    ///
-    /// let entity = world.set(Gravity { value: 9.81 });
-    ///
-    /// let gravity = world.map::<&Gravity>(|(gravity)| {
-    ///     assert_eq!(gravity.value, 9.81);
-    ///     gravity.value
-    /// });
-    /// assert_eq!(gravity, 9.81);
-    ///
-    /// let is_981 = world.map::<&Gravity>(|(gravity)| {
-    ///     assert_eq!(gravity.value, 9.81);
-    ///     gravity.value == 9.81
-    /// });
-    ///
-    /// assert!(is_981);
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// * [`World::cloned()`]
-    /// * [`World::get()`]
-    /// * [`World::try_map()`]
-    fn map<T: GetTupleTypeOperation>(
-        &self,
-        callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Return,
-    ) -> Return
-    where
-        T::OnlyType: ComponentOrPairId;
-}
-
-#[allow(deprecated)]
-impl<Return> WorldMap<Return> for World {
-    fn try_map<T: GetTupleTypeOperation>(
-        &self,
-        callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Option<Return>,
-    ) -> Option<Return>
-    where
-        T::OnlyType: ComponentOrPairId,
-    {
-        self.try_get::<T>(callback).flatten()
-    }
-
-    fn map<T: GetTupleTypeOperation>(
-        &self,
-        callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Return,
-    ) -> Return
-    where
-        T::OnlyType: ComponentOrPairId,
-    {
-        self.get::<T>(callback)
-    }
-}
-
-impl World {
     /// Get a reference to a singleton component.
     ///
     /// A reference allows for quick and safe access to a component value, and is

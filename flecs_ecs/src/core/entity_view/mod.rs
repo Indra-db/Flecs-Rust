@@ -5,5 +5,4 @@ mod entity_view_impl;
 mod entity_view_mut;
 
 pub use entity_view_const::EntityView;
-#[allow(deprecated)]
-pub use entity_view_const::{EntityViewGet, EntityViewMap};
+pub use entity_view_const::EntityViewGet;
