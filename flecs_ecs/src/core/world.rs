@@ -1798,7 +1798,7 @@ impl World {
             self,
             <<T::OnlyType as ComponentOrPairId>::CastType>::id(self),
         );
-        entity.try_get::<T>(callback)
+        entity.try_get::<T>(callback).is_some()
     }
 
     /// gets a mutable or immutable singleton component and/or relationship(s) from the world.

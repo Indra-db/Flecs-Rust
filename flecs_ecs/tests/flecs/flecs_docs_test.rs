@@ -2598,7 +2598,7 @@ fn flecs_docs_component_traits_compile_test() {
 
     assert!(!inst.has::<Mass>());
     assert!(!inst.owns::<Mass>());
-    assert!(!inst.try_get::<&Mass>(|mass| {}));
+    assert!(inst.try_get::<&Mass>(|mass| {}).is_none());
 
     let locatedin = world.entity();
     let manhattan = world.entity();
