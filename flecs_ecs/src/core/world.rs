@@ -1967,6 +1967,7 @@ impl World {
     }
 }
 
+#[deprecated]
 // Split out into a trait to allow inference on return types while specifying the component(s) to map over.
 pub trait WorldMap<Return> {
     /// gets mutable or immutable component(s) and/or relationship(s) from the world in a callback and return a value.
@@ -2104,6 +2105,7 @@ pub trait WorldMap<Return> {
         T::OnlyType: ComponentOrPairId;
 }
 
+#[allow(deprecated)]
 impl<Return> WorldMap<Return> for World {
     fn try_map<T: GetTupleTypeOperation>(
         &self,

@@ -1027,6 +1027,7 @@ impl<'a> EntityView<'a> {
 }
 
 // Split out into a trait to allow inference on return types while specifying the component(s) to map over.
+#[deprecated]
 pub trait EntityViewMap<Return> {
     /// gets mutable or immutable component(s) and/or relationship(s) from an entity in a callback and return a value.
     /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
@@ -1191,6 +1192,7 @@ pub trait EntityViewMap<Return> {
     fn map<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return) -> Return;
 }
 
+#[allow(deprecated)]
 impl<'a, Return> EntityViewMap<Return> for EntityView<'a> {
     fn try_map<T: GetTuple>(
         self,

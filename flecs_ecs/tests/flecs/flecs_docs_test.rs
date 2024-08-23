@@ -1593,22 +1593,22 @@ fn flecs_docs_relationships_compile_test() {
         .set(Defense { value: 75 });
 
     // Obtain the inherited component from Spaceship
-    let is_100 = frigate.map::<&mut MaxSpeed>(|v| {
+    let is_100 = frigate.get::<&mut MaxSpeed>(|v| {
         v.value == 100 // True
     });
 
     // Obtain the overridden component from Frigate
-    let is_75 = frigate.map::<&mut Defense>(|v| {
+    let is_75 = frigate.get::<&mut Defense>(|v| {
         v.value == 75 // True
     });
 
     let fast_frigate = world.entity().is_a_id(frigate).set(MaxSpeed { value: 200 });
     // Obtain the overridden component from FastFrigate
-    let is_200 = fast_frigate.map::<&mut MaxSpeed>(|v| {
+    let is_200 = fast_frigate.get::<&mut MaxSpeed>(|v| {
         v.value == 200 // True
     });
     // Obtain the inherited component from Frigate
-    let is_75 = fast_frigate.map::<&mut Defense>(|v| {
+    let is_75 = fast_frigate.get::<&mut Defense>(|v| {
         v.value == 75 // True
     });
 
