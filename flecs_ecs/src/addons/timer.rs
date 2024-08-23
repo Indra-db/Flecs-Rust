@@ -1,6 +1,5 @@
 //! When running a pipeline, systems are ran each time [`World::progress()`](crate::core::World::progress) is called.
 //! The `flecs_timer` feature addon makes it possible to run systems at a specific time interval or rate.
-//!
 use std::ops::{Deref, DerefMut};
 
 use flecs_ecs_sys::{self as sys};

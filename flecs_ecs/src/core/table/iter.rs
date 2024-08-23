@@ -47,11 +47,10 @@ where
     /// # Example
     ///
     /// ```
-    ///
     /// #[derive(Component)]
     /// struct Position {
-    ///    x: f32,
-    ///    y: f32,
+    ///     x: f32,
+    ///     y: f32,
     /// }
     ///
     /// use flecs_ecs::prelude::*;
@@ -63,13 +62,15 @@ where
     /// let query = world.new_query::<&Position>();
     ///
     /// query.run(|mut it| {
-    ///   while it.next() { //for each different table
-    ///     for i in it.iter() {  //for each entity in the table
-    ///         let pos = it.field::<Position>(0).unwrap();
-    ///         assert_eq!(pos[0].x, 1.0);
-    ///         assert_eq!(pos[0].y, 2.0);
+    ///     while it.next() {
+    ///         //for each different table
+    ///         for i in it.iter() {
+    ///             //for each entity in the table
+    ///             let pos = it.field::<Position>(0).unwrap();
+    ///             assert_eq!(pos[0].x, 1.0);
+    ///             assert_eq!(pos[0].y, 2.0);
+    ///         }
     ///     }
-    ///   }
     /// });
     /// ```
     pub fn iter(&self) -> TableRowIter<IS_RUN, P> {
@@ -702,9 +703,9 @@ where
     ///             vec.push(it.component_id_at(0));
     ///         }
     ///     }
-    ///    let id = world.component_id::<DerivedAction>();
-    ///    let id2 = world.component_id::<DerivedAction2>();
-    ///    assert_eq!(vec, vec![id, id2]);
+    ///     let id = world.component_id::<DerivedAction>();
+    ///     let id2 = world.component_id::<DerivedAction2>();
+    ///     assert_eq!(vec, vec![id, id2]);
     /// });
     /// ```
     pub fn component_id_at(&self, index: i8) -> Id {
@@ -976,12 +977,10 @@ where
     ///
     /// let world = World::new();
     ///
-    /// world
-    ///     .new_query::<&mut Position>()
-    ///     .run(|it| {
-    ///         // this will ensure that the iterator is freed and no assertion will happen
-    ///         it.fini();
-    ///     });
+    /// world.new_query::<&mut Position>().run(|it| {
+    ///     // this will ensure that the iterator is freed and no assertion will happen
+    ///     it.fini();
+    /// });
     /// ```
     pub fn fini(self) {
         unsafe {

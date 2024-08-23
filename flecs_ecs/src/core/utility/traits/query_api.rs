@@ -162,9 +162,9 @@ where
     ///     .with::<(Likes, flecs::Wildcard)>()
     ///     .build()
     ///     .each_iter(|it, index, p| {
-    ///     let e = it.entity(index);
-    ///     println!("{:?}: {:?} - {:?}", e.name(), p, it.id(1).to_str());
-    /// });
+    ///         let e = it.entity(index);
+    ///         println!("{:?}: {:?} - {:?}", e.name(), p, it.id(1).to_str());
+    ///     });
     ///
     /// // Output:
     /// //  "adam": Position { x: 10, y: 20 } - "(flecs_ecs.main.Likes,eva)"

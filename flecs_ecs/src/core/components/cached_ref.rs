@@ -25,7 +25,6 @@ impl<'a, T: ComponentId + DataComponent> CachedRef<'a, T> {
     /// # See also
     ///
     /// * C++ API: `ref::ref`
-    ///
     #[doc(alias = "ref::ref")]
     pub fn new(
         world: impl WorldProvider<'a>,

@@ -1,5 +1,4 @@
 //! System module implementation
-//!
 use std::os::raw::c_void;
 
 use crate::core::*;

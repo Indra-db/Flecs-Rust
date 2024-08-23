@@ -91,13 +91,13 @@ where
     ///     .add_first::<Likes>(eva);
     ///
     /// world
-    /// .system::<&Position>()
-    /// .with::<(Likes, flecs::Wildcard)>()
-    /// .each_iter(|it, index, p| {
-    ///     let e = it.entity(index);
-    ///     println!("{:?}: {:?} - {:?}", e.name(), p, it.id(1).to_str());
-    /// })
-    /// .run();
+    ///     .system::<&Position>()
+    ///     .with::<(Likes, flecs::Wildcard)>()
+    ///     .each_iter(|it, index, p| {
+    ///         let e = it.entity(index);
+    ///         println!("{:?}: {:?} - {:?}", e.name(), p, it.id(1).to_str());
+    ///     })
+    ///     .run();
     ///
     /// // Output:
     /// //  "adam": Position2 { x: 10, y: 20 } - "(flecs_ecs.main.Likes,eva)"

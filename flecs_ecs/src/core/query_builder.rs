@@ -350,9 +350,11 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// let world = World::new();
     ///
-    /// world.query::<()>()
+    /// world
+    ///     .query::<()>()
     ///     //this can be retrieved from it.field if desired
-    ///     .with::<Position>().set_inout() //equivalent to .with::<&mut Position>()
+    ///     .with::<Position>()
+    ///     .set_inout() //equivalent to .with::<&mut Position>()
     ///     .with::<&Velocity>() //equivalent to .with::<Velocity>().set_in()
     ///     .with::<&mut Mass>() //equivalent to .with::<Mass>().set_inout()
     ///     .build();

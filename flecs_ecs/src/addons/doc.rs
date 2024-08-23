@@ -15,11 +15,11 @@ use crate::sys;
 /// struct Tag;
 ///
 /// let world = World::default();
-/// world.component::<Tag>()
-///      .set_doc_name("A tag");
+/// world.component::<Tag>().set_doc_name("A tag");
 ///
-/// world.entity()
-///      .set_doc_brief("A vast expanse of nothingness.");
+/// world
+///     .entity()
+///     .set_doc_brief("A vast expanse of nothingness.");
 /// ```
 pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     /// Add human-readable name to entity.
@@ -121,7 +121,6 @@ impl<'a, T> Doc<'a> for T where T: Into<Entity> + WorldProvider<'a> + Clone {}
 /// world.component::<Tag>();
 /// world.set_doc_name::<Tag>("A tag");
 /// ```
-///
 impl World {
     /// Add human-readable name to entity.
     ///

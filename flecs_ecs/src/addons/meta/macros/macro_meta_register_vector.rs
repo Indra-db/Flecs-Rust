@@ -49,9 +49,9 @@
 /// }
 ///
 /// impl Point {
-///    fn new(x: f32, y: f32) -> Self {
-///       Self { x, y }
-///   }
+///     fn new(x: f32, y: f32) -> Self {
+///         Self { x, y }
+///     }
 /// }
 ///
 /// let world = World::new();
@@ -136,9 +136,9 @@ macro_rules! meta_register_vector_type {
 /// }
 ///
 /// impl Point {
-///    fn new(x: f32, y: f32) -> Self {
-///       Self { x, y }
-///   }
+///     fn new(x: f32, y: f32) -> Self {
+///         Self { x, y }
+///     }
 /// }
 ///
 /// let world = World::new();

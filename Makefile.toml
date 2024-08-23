@@ -71,3 +71,11 @@ env = { CC = "/opt/homebrew/opt/llvm/bin/clang", CFLAGS = "-fsanitize=address", 
 command = "cargo"
 args = ["test", "-Zbuild-std", "--target", "aarch64-apple-darwin", "--tests", "--", "--test-threads", "1"]
 workspace = false
+
+[tasks.fmt]
+description = "Format the code in the flecs_ecs project using cargo fmt with nightly"
+command = "rustup"
+args = ["run", "nightly", "cargo", "fmt", "--", "--config", "format_code_in_doc_comments=true"]
+
+
+

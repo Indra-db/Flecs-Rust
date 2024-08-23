@@ -722,7 +722,8 @@ impl<'a> EntityView<'a> {
     /// ```
     /// use flecs_ecs::prelude::*;
     ///
-    /// #[derive(Component)] struct Tag;
+    /// #[derive(Component)]
+    /// struct Tag;
     ///
     /// #[derive(Component)]
     /// pub struct Velocity {
@@ -738,27 +739,27 @@ impl<'a> EntityView<'a> {
     ///
     /// let world = World::new();
     ///
-    /// let entity = world.entity()
-    ///                   .set(Position { x: 10.0, y: 20.0 })
-    ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
-    ///    
+    /// let entity = world
+    ///     .entity()
+    ///     .set(Position { x: 10.0, y: 20.0 })
+    ///     .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
+    ///
     /// let has_run = entity.try_get::<&Position>(|(pos)| {
     ///     assert_eq!(pos.x, 10.0);
     /// });
     /// assert!(has_run);
     ///
-    /// let has_run = entity.try_get::<(Option<&Velocity>, &Position)>( |(tag, pos)| {
+    /// let has_run = entity.try_get::<(Option<&Velocity>, &Position)>(|(tag, pos)| {
     ///     assert_eq!(pos.x, 10.0);
     ///     assert!(tag.is_none());
     /// });
     /// assert!(has_run);
     ///
-    /// let has_run = entity.try_get::<(&mut(Tag,Position), &Position)>(|(tag_pos_rel, pos)| {
+    /// let has_run = entity.try_get::<(&mut (Tag, Position), &Position)>(|(tag_pos_rel, pos)| {
     ///     assert_eq!(pos.x, 10.0);
     ///     assert_eq!(tag_pos_rel.x, 30.0);
     /// });
     /// assert!(has_run);
-    ///
     /// ```
     pub fn try_get<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>)) -> bool {
         let record = unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) };
@@ -809,7 +810,8 @@ impl<'a> EntityView<'a> {
     /// ```
     /// use flecs_ecs::prelude::*;
     ///
-    /// #[derive(Component)] struct Tag;
+    /// #[derive(Component)]
+    /// struct Tag;
     ///
     /// #[derive(Component)]
     /// pub struct Velocity {
@@ -825,20 +827,21 @@ impl<'a> EntityView<'a> {
     ///
     /// let world = World::new();
     ///
-    /// let entity = world.entity()
-    ///                   .set(Position { x: 10.0, y: 20.0 })
-    ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
-    ///    
+    /// let entity = world
+    ///     .entity()
+    ///     .set(Position { x: 10.0, y: 20.0 })
+    ///     .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
+    ///
     /// entity.get::<&Position>(|(pos)| {
     ///     assert_eq!(pos.x, 10.0);
     /// });
-    /// entity.get::<(Option<&Velocity>, &Position)>( |(vel, pos)| {
+    /// entity.get::<(Option<&Velocity>, &Position)>(|(vel, pos)| {
     ///     assert_eq!(pos.x, 10.0);
     ///     assert!(vel.is_none());
     /// });
-    /// entity.get::<(&mut(Tag,Position), &Position)>(|(tag_pos_rel, pos)| {
+    /// entity.get::<(&mut (Tag, Position), &Position)>(|(tag_pos_rel, pos)| {
     ///     assert_eq!(pos.x, 10.0);
-    ///    assert_eq!(tag_pos_rel.x, 30.0);
+    ///     assert_eq!(tag_pos_rel.x, 30.0);
     /// });
     /// ```
     pub fn get<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>)) {
@@ -876,7 +879,8 @@ impl<'a> EntityView<'a> {
     /// ```
     /// use flecs_ecs::prelude::*;
     ///
-    /// #[derive(Component)] struct Tag;
+    /// #[derive(Component)]
+    /// struct Tag;
     ///
     /// #[derive(Component, Clone)]
     /// pub struct Velocity {
@@ -892,10 +896,11 @@ impl<'a> EntityView<'a> {
     ///
     /// let world = World::new();
     ///
-    /// let entity = world.entity()
-    ///                   .set(Position { x: 10.0, y: 20.0 })
-    ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
-    ///    
+    /// let entity = world
+    ///     .entity()
+    ///     .set(Position { x: 10.0, y: 20.0 })
+    ///     .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
+    ///
     /// let pos = entity.cloned::<&Position>();
     /// assert_eq!(pos.x, 10.0);
     ///
@@ -903,7 +908,7 @@ impl<'a> EntityView<'a> {
     /// assert_eq!(pos.x, 10.0);
     /// assert!(vel.is_none());
     ///
-    /// let (tag_pos_rel, pos) = entity.cloned::<(&(Tag,Position), &Position)>();
+    /// let (tag_pos_rel, pos) = entity.cloned::<(&(Tag, Position), &Position)>();
     /// assert_eq!(pos.x, 10.0);
     /// assert_eq!(tag_pos_rel.x, 30.0);
     /// ```
@@ -938,7 +943,8 @@ impl<'a> EntityView<'a> {
     /// ```
     /// use flecs_ecs::prelude::*;
     ///
-    /// #[derive(Component)] struct Tag;
+    /// #[derive(Component)]
+    /// struct Tag;
     ///
     /// #[derive(Component, Clone)]
     /// pub struct Velocity {
@@ -954,19 +960,24 @@ impl<'a> EntityView<'a> {
     ///
     /// let world = World::new();
     ///
-    /// let entity = world.entity()
-    ///                   .set(Position { x: 10.0, y: 20.0 })
-    ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
-    ///    
+    /// let entity = world
+    ///     .entity()
+    ///     .set(Position { x: 10.0, y: 20.0 })
+    ///     .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
+    ///
     /// let pos = entity.try_cloned::<&Position>();
     /// assert!(pos.is_some());
     /// assert_eq!(pos.unwrap().x, 10.0);
     ///
-    /// let (vel, pos) = entity.try_cloned::<(Option<&Velocity>, &Position)>().unwrap();
+    /// let (vel, pos) = entity
+    ///     .try_cloned::<(Option<&Velocity>, &Position)>()
+    ///     .unwrap();
     /// assert_eq!(pos.x, 10.0);
     /// assert!(vel.is_none());
     ///
-    /// let (tag_pos_rel, pos) = entity.try_cloned::<(&(Tag,Position), &Position)>().unwrap();
+    /// let (tag_pos_rel, pos) = entity
+    ///     .try_cloned::<(&(Tag, Position), &Position)>()
+    ///     .unwrap();
     /// assert_eq!(pos.x, 10.0);
     /// assert_eq!(tag_pos_rel.x, 30.0);
     /// ```
@@ -1025,7 +1036,8 @@ pub trait EntityViewMap<Return> {
     /// ```
     /// use flecs_ecs::prelude::*;
     ///
-    /// #[derive(Component)] struct Tag;
+    /// #[derive(Component)]
+    /// struct Tag;
     ///
     /// #[derive(Component)]
     /// pub struct Velocity {
@@ -1041,10 +1053,11 @@ pub trait EntityViewMap<Return> {
     ///
     /// let world = World::new();
     ///
-    /// let entity = world.entity()
-    ///                   .set(Position { x: 10.0, y: 20.0 })
-    ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
-    ///    
+    /// let entity = world
+    ///     .entity()
+    ///     .set(Position { x: 10.0, y: 20.0 })
+    ///     .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
+    ///
     /// let pos_x = entity.try_map::<&Position>(|(pos)| {
     ///     assert_eq!(pos.x, 10.0);
     ///     Some(pos.x)
@@ -1052,7 +1065,7 @@ pub trait EntityViewMap<Return> {
     /// assert!(pos_x.is_some());
     /// assert_eq!(pos_x.unwrap(), 10.0);
     ///
-    /// let is_pos_x_10 = entity.try_map::<(Option<&Velocity>, &Position)>( |(tag, pos)| {
+    /// let is_pos_x_10 = entity.try_map::<(Option<&Velocity>, &Position)>(|(tag, pos)| {
     ///     assert_eq!(pos.x, 10.0);
     ///     assert!(tag.is_none());
     ///     Some(pos.x == 10.0)
@@ -1061,13 +1074,12 @@ pub trait EntityViewMap<Return> {
     /// assert!(is_pos_x_10.unwrap());
     ///
     /// // no return type
-    /// let has_run = entity.try_map::<(&mut(Tag,Position), &Position)>(|(tag_pos_rel, pos)| {
+    /// let has_run = entity.try_map::<(&mut (Tag, Position), &Position)>(|(tag_pos_rel, pos)| {
     ///     assert_eq!(pos.x, 10.0);
     ///     assert_eq!(tag_pos_rel.x, 30.0);
     ///     Some(())
     /// });
     /// assert!(has_run.is_some());
-    ///
     /// ```
     fn try_map<T: GetTuple>(
         self,
@@ -1103,7 +1115,8 @@ pub trait EntityViewMap<Return> {
     /// ```
     /// use flecs_ecs::prelude::*;
     ///
-    /// #[derive(Component)] struct Tag;
+    /// #[derive(Component)]
+    /// struct Tag;
     ///
     /// #[derive(Component)]
     /// pub struct Velocity {
@@ -1119,9 +1132,10 @@ pub trait EntityViewMap<Return> {
     ///
     /// let world = World::new();
     ///
-    /// let entity = world.entity()
-    ///                   .set(Position { x: 10.0, y: 20.0 })
-    ///                   .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
+    /// let entity = world
+    ///     .entity()
+    ///     .set(Position { x: 10.0, y: 20.0 })
+    ///     .set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
     ///
     /// let position_parent = Position { x: 20.0, y: 30.0 };
     ///
@@ -1134,20 +1148,19 @@ pub trait EntityViewMap<Return> {
     ///     }
     /// });
     ///
-    /// let pos_x = entity.map::<(Option<&Velocity>, &Position)>( |(vel, pos)| {
+    /// let pos_x = entity.map::<(Option<&Velocity>, &Position)>(|(vel, pos)| {
     ///     assert_eq!(pos.x, 10.0);
     ///     assert!(vel.is_none());
     ///     pos.x
     /// });
     /// assert_eq!(pos_x, 10.0);
     ///
-    /// let is_x_10 = entity.map::<(&mut(Tag,Position), &Position)>(|(tag_pos_rel, pos)| {
+    /// let is_x_10 = entity.map::<(&mut (Tag, Position), &Position)>(|(tag_pos_rel, pos)| {
     ///     assert_eq!(pos.x, 10.0);
     ///     assert_eq!(tag_pos_rel.x, 30.0);
     ///     pos.x == 10.0
     /// });
     /// assert!(is_x_10);
-    ///
     /// ```
     fn map<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return) -> Return;
 }
@@ -2189,7 +2202,10 @@ impl<'a> EntityView<'a> {
     /// }
     ///
     /// world.defer(|| {
-    ///     entity.enqueue(Resize{width: 10, height: 20});
+    ///     entity.enqueue(Resize {
+    ///         width: 10,
+    ///         height: 20,
+    ///     });
     /// });
     /// ```
     ///

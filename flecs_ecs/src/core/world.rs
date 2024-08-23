@@ -319,8 +319,8 @@ impl World {
     ///
     /// #[derive(Component)]
     /// struct Position {
-    ///    x: f32,
-    ///    y: f32,
+    ///     x: f32,
+    ///     y: f32,
     /// }
     ///
     /// let world = World::new();
@@ -341,7 +341,6 @@ impl World {
     ///
     /// //TODO
     /// //assert!(world_info.systems_ran_frame == 1);
-    ///
     /// ```
     ///
     /// # See also
@@ -431,11 +430,13 @@ impl World {
     /// # Example
     ///
     /// ```
-    ///
     /// use flecs_ecs::prelude::*;
     ///
     /// #[derive(Component)]
-    /// struct Position { x: i32, y: i32 }
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
     ///
     /// let world = World::new();
     ///
@@ -550,29 +551,25 @@ impl World {
     /// # Example
     ///
     /// ```
-    ///
     /// use flecs_ecs::prelude::*;
     ///
     /// #[derive(Component)]
     /// struct Position {
-    ///    x: i32,
-    ///    y: i32,
+    ///     x: i32,
+    ///     y: i32,
     /// }
     ///
     /// let world = World::new();
     ///
     /// world.defer_begin();
     ///
-    /// let e = world
-    ///     .entity()
-    ///     .set(Position { x: 10, y: 20 });
+    /// let e = world.entity().set(Position { x: 10, y: 20 });
     ///
     /// assert!(!e.has::<Position>());
     ///
     /// world.defer_end();
     ///
     /// assert!(e.has::<Position>());
-    ///
     /// ```
     ///
     /// # See also
@@ -921,7 +918,10 @@ impl World {
     /// use flecs_ecs::prelude::*;
     ///
     /// #[derive(Component)]
-    /// struct Position { x: i32, y: i32 }
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
     ///
     /// let world = World::new();
     ///
@@ -1028,7 +1028,10 @@ impl World {
     /// use flecs_ecs::prelude::*;
     ///
     /// #[derive(Component)]
-    /// struct Position { x: i32, y: i32 }
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
     ///
     /// let world = World::new();
     ///
@@ -1047,7 +1050,6 @@ impl World {
     /// # See also
     ///
     /// * C++ API: `world::async_stage`
-    ///
     #[doc(alias = "world::async_stage")]
     pub fn create_async_stage(&self) -> WorldRef {
         unsafe { WorldRef::from_ptr(sys::ecs_stage_new(self.raw_world.as_ptr())) }
@@ -1097,13 +1099,13 @@ impl World {
     /// # Example
     ///
     /// ```
-    /// use flecs_ecs::prelude::*;
     /// use core::ffi::c_void;
+    /// use flecs_ecs::prelude::*;
     ///
     /// extern "C" fn free_ctx(ctx: *mut c_void) {
-    ///    unsafe {
-    ///       Box::from_raw(ctx as *mut i32);
-    ///   }
+    ///     unsafe {
+    ///         Box::from_raw(ctx as *mut i32);
+    ///     }
     /// }
     ///
     /// let world = World::new();
@@ -1488,12 +1490,15 @@ impl World {
     /// use flecs_ecs::prelude::*;
     ///
     /// #[derive(Component)]
-    /// struct Position { x: i32, y: i32 }
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
     ///
     /// let world = World::new();
     /// let a = world.entity().set(Position { x: 10, y: 20 }).with(|| {
-    ///    world.entity_named("X");
-    ///  });
+    ///     world.entity_named("X");
+    /// });
     ///
     /// let x = world.lookup_recursive("X");
     /// assert!(x.has_id(a));
@@ -1771,17 +1776,16 @@ impl World {
     ///
     /// world.set(Position { x: 10.0, y: 20.0 });
     /// world.set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
-    ///    
+    ///
     /// let has_run = world.try_get::<&Position>(|pos| {
-    ///    assert_eq!(pos.x, 10.0);
+    ///     assert_eq!(pos.x, 10.0);
     /// });
     /// assert!(has_run);
     ///
-    /// let has_run = world.try_get::<&mut(Tag,Position)>(|pos| {
+    /// let has_run = world.try_get::<&mut (Tag, Position)>(|pos| {
     ///     assert_eq!(pos.x, 30.0);
     /// });
     /// assert!(has_run);
-    ///
     /// ```
     pub fn try_get<T: GetTupleTypeOperation>(
         &self,
@@ -1826,7 +1830,8 @@ impl World {
     /// ```
     /// use flecs_ecs::prelude::*;
     ///
-    /// #[derive(Component)] struct Tag;
+    /// #[derive(Component)]
+    /// struct Tag;
     ///
     /// #[derive(Component)]
     /// pub struct Position {
@@ -1838,12 +1843,12 @@ impl World {
     ///
     /// world.set(Position { x: 10.0, y: 20.0 });
     /// world.set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
-    ///    
+    ///
     /// world.get::<&Position>(|pos| {
     ///     assert_eq!(pos.x, 10.0);
     /// });
-    /// world.get::<&mut(Tag,Position)>(|pos| {
-    ///     assert_eq!(pos.x, 30.0);    
+    /// world.get::<&mut (Tag, Position)>(|pos| {
+    ///     assert_eq!(pos.x, 30.0);
     /// });
     /// ```
     ///
@@ -1882,7 +1887,8 @@ impl World {
     /// ```
     /// use flecs_ecs::prelude::*;
     ///
-    /// #[derive(Component)] struct Tag;
+    /// #[derive(Component)]
+    /// struct Tag;
     ///
     /// #[derive(Component, Clone)]
     /// pub struct Position {
@@ -1900,7 +1906,7 @@ impl World {
     ///
     /// world.set(Position { x: 10.0, y: 20.0 });
     /// world.set_pair::<Tag, Position>(Position { x: 30.0, y: 40.0 });
-    ///    
+    ///
     /// let pos = world.cloned::<&Position>();
     /// assert_eq!(pos.x, 10.0);
     ///
@@ -1909,7 +1915,6 @@ impl World {
     ///
     /// let vel = world.cloned::<Option<&Velocity>>();
     /// assert!(vel.is_none());
-    ///
     /// ```
     ///
     /// # See also
@@ -3417,7 +3422,6 @@ impl World {
     ///
     /// let entity = world.entity_named("Foo");
     /// assert_eq!(entity.get_name(), Some("Foo"));
-    ///
     /// ```
     ///
     /// # See also
@@ -3447,7 +3451,6 @@ impl World {
     ///
     /// let entity = world.entity_named("Foo");
     /// assert_eq!(entity.get_name(), Some("Foo"));
-    ///
     /// ```
     ///
     /// # See also
