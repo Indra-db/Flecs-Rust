@@ -1196,43 +1196,11 @@ impl<'a, Return> EntityViewMap<Return> for EntityView<'a> {
         self,
         callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Option<Return>,
     ) -> Option<Return> {
-        let record = unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) };
-
-        if unsafe { (*record).table.is_null() } {
-            return None;
-        }
-
-        let tuple_data = T::create_ptrs::<false>(self.world, self.id, record);
-        let has_all_components = tuple_data.has_all_components();
-
-        let ret = if has_all_components {
-            let tuple = tuple_data.get_tuple();
-            self.world.defer_begin();
-            let val = callback(tuple);
-            self.world.defer_end();
-            val
-        } else {
-            None
-        };
-
-        ret
+        self.try_get(callback).flatten()
     }
 
     fn map<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return) -> Return {
-        let record = unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) };
-
-        if unsafe { (*record).table.is_null() } {
-            panic!("Entity does not have any components");
-        }
-
-        let tuple_data = T::create_ptrs::<true>(self.world, self.id, record);
-        let tuple = tuple_data.get_tuple();
-
-        self.world.defer_begin();
-        let ret = callback(tuple);
-        self.world.defer_end();
-
-        ret
+        self.get(callback)
     }
 }
 

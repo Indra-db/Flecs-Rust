@@ -2112,11 +2112,7 @@ impl<Return> WorldMap<Return> for World {
     where
         T::OnlyType: ComponentOrPairId,
     {
-        let entity = EntityView::new_from(
-            self,
-            <<T::OnlyType as ComponentOrPairId>::CastType>::id(self),
-        );
-        entity.try_map::<T>(callback)
+        self.try_get::<T>(callback).flatten()
     }
 
     fn map<T: GetTupleTypeOperation>(
@@ -2126,11 +2122,7 @@ impl<Return> WorldMap<Return> for World {
     where
         T::OnlyType: ComponentOrPairId,
     {
-        let entity = EntityView::new_from(
-            self,
-            <<T::OnlyType as ComponentOrPairId>::CastType>::id(self),
-        );
-        entity.map::<T>(callback)
+        self.get::<T>(callback)
     }
 }
 
