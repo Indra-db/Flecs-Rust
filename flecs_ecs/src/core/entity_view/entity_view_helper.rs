@@ -400,3 +400,21 @@ where
         Some(run_payload_entity::<C, Func> as unsafe extern "C" fn(_)),
     );
 }
+
+// this is pub(crate) because it's used for development purposes only
+pub(crate) fn has_enum_id<T>(
+    world: WorldRef<'_>,
+    id: Entity,
+    enum_id: impl Into<Entity>,
+    constant: T,
+) -> bool
+where
+    T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
+{
+    let enum_constant_entity_id = constant.id_variant(world);
+    has_id(
+        world.world_ptr(),
+        id,
+        (enum_id.into(), enum_constant_entity_id),
+    )
+}

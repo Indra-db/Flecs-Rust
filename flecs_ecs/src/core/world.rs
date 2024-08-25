@@ -2133,8 +2133,8 @@ impl World {
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        let id = T::id(self);
-        EntityView::new_from(self, id).has_enum_id::<T>(id, constant)
+        let id = Entity(T::id(self));
+        entity_view_helper::has_enum_id::<T>(self.world(), id, id, constant)
     }
 
     /// Add a singleton component by id.

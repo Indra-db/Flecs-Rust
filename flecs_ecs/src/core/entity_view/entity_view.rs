@@ -4,10 +4,11 @@ use std::{
 };
 
 use crate::sys;
-use entity_view::*;
 pub use entity_view_traits::*;
 use flecs_ecs::core::*;
 use sys::ecs_get_with;
+
+use super::entity_view_traits;
 
 /// `EntityView` is a wrapper around an entity id with the world. It provides methods to interact with entities.
 #[derive(Clone, Copy)]
@@ -57,6 +58,14 @@ impl<'a> std::fmt::Debug for EntityView<'a> {
         )
     }
 }
+
+impl<'a> EntityId for EntityView<'a> {
+    fn entity_id(&self) -> Entity {
+        self.id
+    }
+}
+
+impl<'w> IsEntityView<'w> for EntityView<'w> {}
 
 impl<'a> EntityView<'a> {
     /// Create new entity.
@@ -231,29 +240,5 @@ impl<'a> EntityView<'a> {
                 unsafe { constant_value.as_ref() }
             }
         }
-    }
-}
-
-impl<'a> EntityId for EntityView<'a> {
-    fn entity_id(&self) -> Entity {
-        self.id
-    }
-}
-
-impl<'w> IsEntityView<'w> for EntityView<'w> {}
-
-impl<'w> EntityView<'w> {
-    // this is pub(crate) because it's used for development purposes only
-    pub(crate) fn has_enum_id<T>(self, enum_id: impl Into<Entity>, constant: T) -> bool
-    where
-        T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
-    {
-        let world = self.world();
-        let enum_constant_entity_id = constant.id_variant(world);
-        has_id(
-            world.world_ptr(),
-            self.entity_id(),
-            (enum_id.into(), enum_constant_entity_id),
-        )
     }
 }
