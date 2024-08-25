@@ -12,9 +12,7 @@ fn observer_panic_on_add_1() {
     world
         .observer::<flecs::OnAdd, ()>()
         .with::<&Position>()
-        .each_entity(|e, _| {
-            println!("Position added to entity {:?}", e.id());
-        });
+        .each_entity(|_, _| {});
 
     world.entity().set(Position { x: 10, y: 20 });
 }
@@ -27,9 +25,7 @@ fn observer_panic_on_add_2() {
     world
         .observer::<flecs::OnAdd, ()>()
         .with::<&mut Position>()
-        .each_entity(|e, _| {
-            println!("Position added to entity {:?}", e.id());
-        });
+        .each_entity(|_, _| {});
 
     world.entity().set(Position { x: 10, y: 20 });
 }
@@ -41,9 +37,7 @@ fn observer_panic_on_add_3() {
 
     world
         .observer::<flecs::OnAdd, &Position>()
-        .each_entity(|e, _| {
-            println!("Position added to entity {:?}", e.id());
-        });
+        .each_entity(|_, _| {});
 
     world.entity().set(Position { x: 10, y: 20 });
 }
@@ -55,9 +49,7 @@ fn observer_panic_on_add_4() {
 
     world
         .observer::<flecs::OnAdd, &mut Position>()
-        .each_entity(|e, _| {
-            println!("Position added to entity {:?}", e.id());
-        });
+        .each_entity(|_, _| {});
 
     world.entity().set(Position { x: 10, y: 20 });
 }
