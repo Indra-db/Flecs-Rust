@@ -34,8 +34,7 @@ pub use component_registration::*;
 #[doc(inline)]
 pub use components::*;
 pub use entity::Entity;
-pub use entity_view::EntityView;
-pub use entity_view::EntityViewGet;
+pub use entity_view::*;
 pub use event::EventBuilder;
 pub(crate) use get_tuple::*;
 pub use id::Id;

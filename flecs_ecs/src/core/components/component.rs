@@ -3,6 +3,8 @@
 use std::ops::DerefMut;
 use std::{marker::PhantomData, ops::Deref, os::raw::c_void, ptr};
 
+use entity_view::{EntityViewConst, EntityViewMut};
+
 use crate::core::*;
 use crate::prelude::FetchedId;
 use crate::sys;

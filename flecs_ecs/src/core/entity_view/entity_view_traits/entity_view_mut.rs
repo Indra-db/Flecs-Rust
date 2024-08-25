@@ -2,14 +2,14 @@ use std::ffi::c_void;
 
 use self::flecs::FlecsTrait;
 use super::entity_id::EntityId;
-use super::ConstEntityView;
+use super::EntityViewConst;
 use crate::core::*;
 use crate::sys;
 use entity_view::add_id_unchecked;
 use sys::EcsIsA;
 
 // functions in here match most of the functions in the c++ entity and entity_builder class
-pub trait MutEntityView<'w>: WorldProvider<'w> + EntityId + ConstEntityView<'w> {
+pub trait EntityViewMut<'w>: WorldProvider<'w> + EntityId + EntityViewConst<'w> {
     /// Add an id to an entity.
     /// This Id can be a component, a pair, a tag or another entity.
     ///

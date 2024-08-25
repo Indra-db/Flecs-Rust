@@ -3,7 +3,7 @@ use entity_view::entity_view_helper::*;
 use super::entity_id::EntityId;
 use crate::core::*;
 
-pub trait EventEntityView<'w>: EntityId + WorldProvider<'w> + Sized {
+pub trait EntityViewEvent<'w>: EntityId + WorldProvider<'w> + Sized {
     /// Emit event for entity.
     ///
     /// # Safety

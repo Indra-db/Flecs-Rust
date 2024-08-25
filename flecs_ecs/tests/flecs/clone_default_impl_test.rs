@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use flecs_ecs::core::{ComponentInfo, EntityViewGet, World};
+use flecs_ecs::core::{ComponentInfo, EntityViewConst, EntityViewGet, EntityViewMut, World};
 use flecs_ecs_derive::Component;
 
 // normal structs

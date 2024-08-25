@@ -4,8 +4,8 @@ mod entity_view_const;
 pub(super) mod entity_view_helper;
 mod entity_view_impl;
 mod entity_view_mut;
-pub mod entity_view_traits;
+mod entity_view_traits;
 
-pub use entity_view_const::EntityView;
+pub use entity_view_const::*;
 use entity_view_helper::*;
 pub use entity_view_traits::*;

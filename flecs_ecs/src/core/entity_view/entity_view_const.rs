@@ -5,6 +5,7 @@ use std::{
 
 use crate::sys;
 use entity_view::*;
+pub use entity_view_traits::*;
 use flecs_ecs::core::*;
 use sys::ecs_get_with;
 
