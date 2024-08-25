@@ -3828,7 +3828,7 @@ impl World {
     ///
     /// # See also
     ///
-    /// * [`World::new_observer()`]
+    /// * [`World::observer_from()`]
     /// * [`World::observer_id()`]
     /// * [`World::observer_named()`]
     /// * C++ API: `world::observer`
@@ -3868,7 +3868,7 @@ impl World {
     ///
     /// # See also
     ///
-    /// * [`World::new_observer()`]
+    /// * [`World::observer_from()`]
     /// * [`World::observer()`]
     /// * [`World::observer_id()`]
     /// * C++ API: `world::observer`
