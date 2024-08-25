@@ -16,6 +16,7 @@ mod meta_macro_test;
 mod meta_test;
 mod meta_test_rust;
 mod meta_trait_test;
+mod observer_rust_test;
 mod observer_test;
 mod query_builder_test;
 mod query_rust_test;

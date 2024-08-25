@@ -3281,7 +3281,7 @@ impl World {
     /// let world = World::new();
     ///
     /// let entity = world.entity_named("Foo");
-    /// assert_eq!(entity.get_name(), Some("Foo"));
+    /// assert_eq!(entity.get_name(), Some("Foo".to_string()));
     /// ```
     ///
     /// # See also
@@ -3310,7 +3310,7 @@ impl World {
     /// let world = World::new();
     ///
     /// let entity = world.entity_named("Foo");
-    /// assert_eq!(entity.get_name(), Some("Foo"));
+    /// assert_eq!(entity.get_name(), Some("Foo".to_string()));
     /// ```
     ///
     /// # See also

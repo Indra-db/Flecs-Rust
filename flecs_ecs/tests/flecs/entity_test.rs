@@ -684,7 +684,7 @@ fn entity_set_name_optional() {
 
     entity.set_name("Foo");
 
-    assert_eq!(entity.get_name(), Some("Foo"));
+    assert_eq!(entity.get_name(), Some("Foo".to_string()));
 }
 
 #[test]
@@ -1371,9 +1371,9 @@ fn entity_name() {
     let entity = world.entity_named("Foo");
 
     assert_eq!(entity.name(), "Foo");
-    assert_eq!(entity.get_name(), Some("Foo"));
-    assert_eq!(entity.name_cstr(), c"Foo");
-    assert_eq!(entity.get_name_cstr(), Some(c"Foo"));
+    assert_eq!(entity.get_name(), Some("Foo".to_string()));
+    // assert_eq!(entity.name_cstr(), c"Foo");
+    // assert_eq!(entity.get_name_cstr(), Some(c"Foo"));
 }
 
 #[test]
@@ -1384,8 +1384,8 @@ fn entity_name_empty() {
 
     assert_eq!(entity.name(), "");
     assert_eq!(entity.get_name(), None);
-    assert_eq!(entity.name_cstr(), c"");
-    assert_eq!(entity.get_name_cstr(), None);
+    // assert_eq!(entity.name_cstr(), c"");
+    // assert_eq!(entity.get_name_cstr(), None);
 }
 
 #[test]

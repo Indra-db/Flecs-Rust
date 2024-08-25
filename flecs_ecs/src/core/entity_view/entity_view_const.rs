@@ -213,8 +213,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::name`
     #[doc(alias = "entity_view::name")]
-    pub fn name(self) -> &'a str {
-        self.get_name().unwrap_or("")
+    pub fn name(self) -> String {
+        self.get_name().unwrap_or("".to_string())
     }
 
     /// Returns the entity name.
@@ -225,32 +225,46 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::name`
     #[doc(alias = "entity_view::name")]
-    pub fn get_name(self) -> Option<&'a str> {
-        self.get_name_cstr().and_then(|s| s.to_str().ok())
+    pub fn get_name(self) -> Option<String> {
+        // self.get_name_cstr().and_then(|s| s.to_str().ok())
+        let cstr =
+            NonNull::new(unsafe { sys::ecs_get_name(self.world.world_ptr(), *self.id) } as *mut _)
+                .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) });
+        cstr.and_then(|s| s.to_str().ok().map(|s| s.to_string()))
     }
 
-    /// Returns the entity name as a `CStr`.
-    ///
-    /// if the entity has no name, this will return an empty string
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::name`
-    pub fn name_cstr(self) -> &'a CStr {
-        self.get_name_cstr().unwrap_or(c"")
-    }
+    // /// Returns the entity name as a `CStr`.
+    // ///
+    // /// if the entity has no name, this will return an empty string
+    // ///
+    // /// # See also
+    // ///
+    // /// * C++ API: `entity_view::name`
+    // pub fn name_cstr(self) -> &'a CStr {
+    //     self.get_name_cstr().unwrap_or(c"")
+    // }
 
-    /// Returns the entity name as a `CStr`.
-    ///
-    /// If the entity has no name, this will return `None`.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::name`
-    pub fn get_name_cstr(self) -> Option<&'a CStr> {
-        NonNull::new(unsafe { sys::ecs_get_name(self.world.world_ptr(), *self.id) } as *mut _)
-            .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) })
-    }
+    // /// Returns the entity name as a `CStr`.
+    // ///
+    // /// If the entity has no name, this will return `None`.
+    // ///
+    // /// # See also
+    // ///
+    // /// * C++ API: `entity_view::name`
+    // pub fn get_name_cstr(self) -> Option<*const CStr> {
+    //     NonNull::new(unsafe { sys::ecs_get_name(self.world.world_ptr(), *self.id) } as *mut _)
+    //         .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) })
+    // }
+
+    // /// Returns the entity symbol.
+    // ///
+    // /// # See also
+    // ///
+    // /// * C++ API: `entity_view::symbol`
+    // #[doc(alias = "entity_view::symbol")]
+    // pub fn symbol_cstr(self) -> &'a CStr {
+    //     unsafe { CStr::from_ptr(sys::ecs_get_symbol(self.world.world_ptr(), *self.id)) }
+    // }
 
     /// Returns the entity symbol.
     ///
@@ -258,18 +272,13 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::symbol`
     #[doc(alias = "entity_view::symbol")]
-    pub fn symbol_cstr(self) -> &'a CStr {
-        unsafe { CStr::from_ptr(sys::ecs_get_symbol(self.world.world_ptr(), *self.id)) }
-    }
-
-    /// Returns the entity symbol.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::symbol`
-    #[doc(alias = "entity_view::symbol")]
-    pub fn symbol(self) -> &'a str {
-        self.symbol_cstr().to_str().unwrap()
+    pub fn symbol(self) -> String {
+        //self.symbol_cstr().to_str().unwrap()
+        let cstr = unsafe { CStr::from_ptr(sys::ecs_get_symbol(self.world.world_ptr(), *self.id)) };
+        cstr.to_str()
+            .ok()
+            .map(|s| s.to_string())
+            .unwrap_or_default()
     }
 
     /// Return the hierarchical entity path.
