@@ -1611,17 +1611,21 @@ fn entity_get_1_component_w_callback() {
     let e_2 = world.entity().set(Position { x: 11, y: 22 });
     let e_3 = world.entity().set(Velocity { x: 1, y: 2 });
 
-    assert!(e_1.try_get::<&Position>(|p| {
-        assert_eq!(p.x, 10);
-        assert_eq!(p.y, 20);
-    }));
+    assert!(e_1
+        .try_get::<&Position>(|p| {
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+        })
+        .is_some());
 
-    assert!(e_2.try_get::<&Position>(|p| {
-        assert_eq!(p.x, 11);
-        assert_eq!(p.y, 22);
-    }));
+    assert!(e_2
+        .try_get::<&Position>(|p| {
+            assert_eq!(p.x, 11);
+            assert_eq!(p.y, 22);
+        })
+        .is_some());
 
-    assert!(!e_3.try_get::<&Position>(|_| {}));
+    assert!(e_3.try_get::<&Position>(|_| {}).is_none());
 }
 
 #[test]
@@ -1634,19 +1638,23 @@ fn entity_get_2_components_w_callback() {
     let e_2 = world.entity().set(Position { x: 11, y: 22 });
     let e_3 = world.entity().set(Velocity { x: 1, y: 2 });
 
-    assert!(e_1.try_get::<(&Position, &Velocity)>(|(p, v)| {
-        assert_eq!(p.x, 10);
-        assert_eq!(p.y, 20);
-        assert_eq!(v.x, 1);
-        assert_eq!(v.y, 2);
-    }));
+    assert!(e_1
+        .try_get::<(&Position, &Velocity)>(|(p, v)| {
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+            assert_eq!(v.x, 1);
+            assert_eq!(v.y, 2);
+        })
+        .is_some());
 
-    assert!(e_2.try_get::<&Position>(|p| {
-        assert_eq!(p.x, 11);
-        assert_eq!(p.y, 22);
-    }));
+    assert!(e_2
+        .try_get::<&Position>(|p| {
+            assert_eq!(p.x, 11);
+            assert_eq!(p.y, 22);
+        })
+        .is_some());
 
-    assert!(!e_3.try_get::<(&Position, &Velocity)>(|_| {}));
+    assert!(e_3.try_get::<(&Position, &Velocity)>(|_| {}).is_none());
 }
 
 #[test]
@@ -1659,23 +1667,27 @@ fn entity_get_mut_1_component_w_callback() {
     let e_2 = world.entity().set(Position { x: 11, y: 22 });
     let e_3 = world.entity().set(Velocity { x: 1, y: 2 });
 
-    assert!(e_1.try_get::<&mut Position>(|p| {
-        assert_eq!(p.x, 10);
-        assert_eq!(p.y, 20);
-        p.x += 1;
-        p.y += 2;
-    }));
+    assert!(e_1
+        .try_get::<&mut Position>(|p| {
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+            p.x += 1;
+            p.y += 2;
+        })
+        .is_some());
 
-    assert!(e_2.try_get::<Option<&mut Position>>(|p| {
-        assert!(p.is_some());
-        let p = p.unwrap();
-        assert_eq!(p.x, 11);
-        assert_eq!(p.y, 22);
-        p.x += 1;
-        p.y += 2;
-    }));
+    assert!(e_2
+        .try_get::<Option<&mut Position>>(|p| {
+            assert!(p.is_some());
+            let p = p.unwrap();
+            assert_eq!(p.x, 11);
+            assert_eq!(p.y, 22);
+            p.x += 1;
+            p.y += 2;
+        })
+        .is_some());
 
-    assert!(!e_3.try_get::<&Position>(|_| {}));
+    assert!(e_3.try_get::<&Position>(|_| {}).is_none());
 
     e_1.get::<&Position>(|p| {
         assert_eq!(p.x, 11);
@@ -1698,19 +1710,21 @@ fn entity_get_mut_2_components_w_callback() {
     let e_2 = world.entity().set(Position { x: 11, y: 22 });
     let e_3 = world.entity().set(Velocity { x: 1, y: 2 });
 
-    assert!(e_1.try_get::<(&mut Position, &mut Velocity)>(|(p, v)| {
-        assert_eq!(p.x, 10);
-        assert_eq!(p.y, 20);
-        assert_eq!(v.x, 1);
-        assert_eq!(v.y, 2);
-        p.x += 1;
-        p.y += 2;
-        v.x += 1;
-        v.y += 2;
-    }));
+    assert!(e_1
+        .try_get::<(&mut Position, &mut Velocity)>(|(p, v)| {
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+            assert_eq!(v.x, 1);
+            assert_eq!(v.y, 2);
+            p.x += 1;
+            p.y += 2;
+            v.x += 1;
+            v.y += 2;
+        })
+        .is_some());
 
-    assert!(
-        e_2.try_get::<(Option<&mut Position>, Option<&mut Velocity>)>(|(pos, vel)| {
+    assert!(e_2
+        .try_get::<(Option<&mut Position>, Option<&mut Velocity>)>(|(pos, vel)| {
             assert!(pos.is_some());
             assert!(vel.is_none());
             let pos = pos.unwrap();
@@ -1719,9 +1733,11 @@ fn entity_get_mut_2_components_w_callback() {
             pos.x += 1;
             pos.y += 2;
         })
-    );
+        .is_some());
 
-    assert!(!e_3.try_get::<(&mut Position, &mut Velocity)>(|_| {}));
+    assert!(e_3
+        .try_get::<(&mut Position, &mut Velocity)>(|_| {})
+        .is_none());
 
     e_1.get::<(&Position, &Velocity)>(|(p, v)| {
         assert_eq!(p.x, 11);
@@ -1745,15 +1761,19 @@ fn entity_get_component_w_callback_nested() {
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    assert!(e.try_get::<&Position>(|p| {
-        assert_eq!(p.x, 10);
-        assert_eq!(p.y, 20);
+    assert!(e
+        .try_get::<&Position>(|p| {
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
 
-        assert!(e.try_get::<&Velocity>(|v| {
-            assert_eq!(v.x, 1);
-            assert_eq!(v.y, 2);
-        }));
-    }));
+            assert!(e
+                .try_get::<&Velocity>(|v| {
+                    assert_eq!(v.x, 1);
+                    assert_eq!(v.y, 2);
+                })
+                .is_some());
+        })
+        .is_some());
 }
 
 #[test]
@@ -1765,15 +1785,19 @@ fn entity_get_mut_component_w_callback_nested() {
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    assert!(e.try_get::<&Position>(|p| {
-        assert_eq!(p.x, 10);
-        assert_eq!(p.y, 20);
+    assert!(e
+        .try_get::<&Position>(|p| {
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
 
-        assert!(e.try_get::<&Velocity>(|v| {
-            assert_eq!(v.x, 1);
-            assert_eq!(v.y, 2);
-        }));
-    }));
+            assert!(e
+                .try_get::<&Velocity>(|v| {
+                    assert_eq!(v.x, 1);
+                    assert_eq!(v.y, 2);
+                })
+                .is_some());
+        })
+        .is_some());
 }
 
 // TODO set callbacks
@@ -1891,10 +1915,12 @@ fn entity_set_2_w_on_set() {
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    assert!(world.try_get::<&Flags>(|flags| {
-        assert_eq!(flags.position_set, 1);
-        assert_eq!(flags.velocity_set, 1);
-    }));
+    assert!(world
+        .try_get::<&Flags>(|flags| {
+            assert_eq!(flags.position_set, 1);
+            assert_eq!(flags.velocity_set, 1);
+        })
+        .is_some());
 
     e.get::<(&Position, &Velocity)>(|(p, v)| {
         assert_eq!(p.x, 10);

@@ -56,13 +56,15 @@ fn main() {
     });
 
     // Option example
-    let has_run = bob.try_get::<Option<&Position>>(|pos| {
-        if let Some(pos) = pos {
-            // See if Bob has moved (he has)
-            //println!( "{}'s try_get position: {:?}", bob.name(), pos);
-            println!("{}'s try_get position: {:?}", bob.name(), pos);
-        }
-    });
+    let has_run = bob
+        .try_get::<Option<&Position>>(|pos| {
+            if let Some(pos) = pos {
+                // See if Bob has moved (he has)
+                //println!( "{}'s try_get position: {:?}", bob.name(), pos);
+                println!("{}'s try_get position: {:?}", bob.name(), pos);
+            }
+        })
+        .is_some();
 
     if has_run {
         println!("Bob has a position component, so the try_get callback ran.");
