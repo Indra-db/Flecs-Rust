@@ -3779,7 +3779,8 @@ fn entity_insert_w_observer() {
     let world = World::new();
 
     world
-        .observer::<flecs::OnAdd, &Position>()
+        .observer::<flecs::OnAdd, ()>()
+        .with::<Position>()
         .each_entity(|e, _| {
             e.set(Velocity { x: 1, y: 2 });
         });

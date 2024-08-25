@@ -45,7 +45,50 @@ impl<'a> Observer<'a> {
     ///
     /// * C++ API: `observer::observer`
     #[doc(alias = "observer::observer")]
-    pub fn new(world: impl WorldProvider<'a>, desc: sys::ecs_observer_desc_t) -> Self {
+    pub(crate) fn new(world: impl WorldProvider<'a>, desc: sys::ecs_observer_desc_t) -> Self {
+        for event in desc.events {
+            if event == flecs::OnAdd::ID {
+                for term in desc.query.terms {
+                    if (term.first.id | term.id | term.second.id | term.src.id) == 0 {
+                        break;
+                    }
+
+                    if term.inout != sys::ecs_inout_kind_t_EcsInOutFilter as i16
+                        && term.inout != sys::ecs_inout_kind_t_EcsInOutNone as i16
+                    {
+                        panic!(
+                            r#"
+                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                            Cannot create typed observers with the `OnAdd` event or when `InOut` is set to `In` or `InOut`. 
+                            This situation occurs when using `&` or `&mut` with `.with`.
+                        
+                            Accessing the uninitialized value of a component is undefined behavior in Rust.
+                            Instead, use `.with::<T>` to add the component you want to observe, without passing the type directly.
+                        
+                            For example:
+                            ```
+                            .observer::<flecs::OnAdd, &Position>()
+                            ```
+                            should be written as:
+                            ```
+                            .observer::<flecs::OnAdd, ()>()
+                            .with::<Position>() // Note: no `&` or `&mut` here! 
+                            ```
+                        
+                            Invalid signatures include:
+                            ```
+                            .observer::<flecs::OnAdd, &T>()
+                            .observer::<flecs::OnAdd, &mut T>()
+                            .observer::<flecs::OnAdd, ()>().with::<&T>()
+                            .observer::<flecs::OnAdd, ()>().with::<&mut T>()
+                            ```
+                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                            "#
+                        );
+                    }
+                }
+            }
+        }
         let id = unsafe { sys::ecs_observer_init(world.world_ptr_mut(), &desc) };
         let entity = EntityView::new_from(world.world(), id);
 
@@ -53,7 +96,7 @@ impl<'a> Observer<'a> {
     }
 
     /// Wrap an existing observer entity in an observer object
-    pub fn new_from_existing(observer_entity: EntityView<'a>) -> Self {
+    pub(crate) fn new_from_existing(observer_entity: EntityView<'a>) -> Self {
         Self {
             entity: observer_entity,
         }

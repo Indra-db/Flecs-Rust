@@ -11,26 +11,28 @@ pub struct Position {
 fn main() {
     let world = World::new();
 
+    world
+        .observer::<flecs::OnAdd, ()>()
+        .with::<Position>()
+        .each_iter(|it, index, _| {
+            // We use .with::<Position>() because we cannot safely access the component
+            // value here. The component value is uninitialized when the OnAdd event
+            // is emitted, which is UB in Rust. To work around this, we use .with::<T>
+            println!(" - OnAdd: {}: {}", it.event_id().to_str(), it.entity(index));
+        });
+
     // Create an observer for three events
     world
-        .observer::<flecs::OnAdd, &Position>()
+        .observer::<flecs::OnSet, &Position>()
         .add_event::<flecs::OnRemove>() //or .add_event_id(OnRemove::ID)
-        .add_event::<flecs::OnSet>()
         .each_iter(|it, index, pos| {
-            if it.event() == flecs::OnAdd::ID {
-                // No assumptions about the component value should be made here. If
-                // a ctor for the component was registered it will be called before
-                // the EcsOnAdd event, but a value assigned by set won't be visible.
-                println!(" - OnAdd: {}: {}", it.event_id().to_str(), it.entity(index));
-            } else {
-                println!(
-                    " - {}: {}: {}: with {:?}",
-                    it.event().name(),
-                    it.event_id().to_str(),
-                    it.entity(index),
-                    pos
-                );
-            }
+            println!(
+                " - {}: {}: {}: with {:?}",
+                it.event().name(),
+                it.event_id().to_str(),
+                it.entity(index),
+                pos
+            );
         });
 
     // Create entity, set Position (emits EcsOnAdd and EcsOnSet)

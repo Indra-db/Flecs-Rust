@@ -1973,15 +1973,17 @@ fn flecs_docs_observers_compile_test() {
 
     // Observer that listens for both OnAdd and OnRemove events
     world
-        .observer::<flecs::OnAdd, &Position>()
+        .observer::<flecs::OnAdd, ()>()
+        .with::<Position>()
         .add_event::<flecs::OnRemove>()
         .each_entity(|e, p| {
             // ...
         });
 
     world
-        .observer::<flecs::OnAdd, &Position>()
+        .observer::<flecs::OnAdd, ()>()
         .add_event::<flecs::OnRemove>()
+        .with::<Position>()
         .each_iter(|it, i, p| {
             if it.event() == flecs::OnAdd::ID {
                 // ...
@@ -1999,8 +2001,10 @@ fn flecs_docs_observers_compile_test() {
 
     // Observer that listens for entities with both Position and Velocity
     world
-        .observer::<flecs::OnAdd, (&Position, &Velocity)>()
-        .each_entity(|e, (p, v)| {
+        .observer::<flecs::OnAdd, ()>()
+        .with::<Position>()
+        .with::<Velocity>()
+        .each_entity(|e, _| {
             // ...
         });
 
@@ -2014,7 +2018,8 @@ fn flecs_docs_observers_compile_test() {
 
     // Observer that only triggers on Position, not on Velocity
     world
-        .observer::<flecs::OnAdd, &Position>()
+        .observer::<flecs::OnAdd, ()>()
+        .with::<Position>()
         .with::<Velocity>()
         .filter()
         .each_entity(|e, p| {
@@ -2053,7 +2058,8 @@ fn flecs_docs_observers_compile_test() {
 
     // Observer with a Not term
     world
-        .observer::<flecs::OnAdd, &Position>()
+        .observer::<flecs::OnAdd, ()>()
+        .with::<Position>()
         .without::<Velocity>()
         .each_entity(|e, p| {
             // ...
@@ -2097,9 +2103,11 @@ fn flecs_docs_observers_compile_test() {
 
     // Yield existing observer
     world
-        .observer::<flecs::OnAdd, (&Position, &Velocity)>()
+        .observer::<flecs::OnAdd, ()>()
+        .with::<Position>()
+        .with::<Velocity>()
         .yield_existing()
-        .each_iter(|it, i, (p, v)| {
+        .each_iter(|it, i, _| {
             // ...
         });
 
@@ -2161,10 +2169,11 @@ fn flecs_docs_observers_compile_test() {
 
     // Create an observer that matches OnAdd(Position) events on a parent
     world
-        .observer::<flecs::OnAdd, &Position>()
+        .observer::<flecs::OnAdd, ()>()
+        .with::<Position>()
         .term_at(0)
         .up() // .trav(flecs::ChildOf) (default)
-        .each_entity(|e, p| {
+        .each_entity(|e, _| {
             // ...
         });
 

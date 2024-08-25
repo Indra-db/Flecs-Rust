@@ -354,7 +354,10 @@ fn test_compile_doc() {
     let system = world.system::<()>().build();
     system.set_doc_name("name");
 
-    let observer = world.observer::<flecs::OnAdd, &Tag>().run(|_| {});
+    let observer = world
+        .observer::<flecs::OnAdd, ()>()
+        .with::<Tag>()
+        .run(|_| {});
     observer.set_doc_name("name");
 
     let comp = world.component::<()>();

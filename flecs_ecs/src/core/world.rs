@@ -3812,7 +3812,7 @@ impl World {
     ///
     /// * C++ API: `world::observer`
     #[doc(alias = "world::observer")]
-    pub fn new_observer<'a>(&'a self, e: EntityView<'a>) -> Observer<'a> {
+    pub fn observer_from<'a>(&'a self, e: EntityView<'a>) -> Observer<'a> {
         Observer::new_from_existing(e)
     }
 
