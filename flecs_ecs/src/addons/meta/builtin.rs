@@ -88,7 +88,7 @@ fn std_string_support(world: WorldRef) -> Opaque<String> {
     ts
 }
 
-fn meta_ser_stringify_type_debug<T: core::fmt::Debug>(world: WorldRef) -> Opaque<T> {
+pub fn meta_ser_stringify_type_debug<T: core::fmt::Debug>(world: WorldRef) -> Opaque<T> {
     let mut ts = Opaque::<T>::new(world);
 
     // Let reflection framework know what kind of type this is
@@ -107,7 +107,7 @@ fn meta_ser_stringify_type_debug<T: core::fmt::Debug>(world: WorldRef) -> Opaque
     ts
 }
 
-fn meta_ser_stringify_type_display<T: core::fmt::Display>(world: WorldRef) -> Opaque<T> {
+pub fn meta_ser_stringify_type_display<T: core::fmt::Display>(world: WorldRef) -> Opaque<T> {
     let mut ts = Opaque::<T>::new(world);
 
     // Let reflection framework know what kind of type this is
@@ -163,44 +163,4 @@ pub fn meta_register_vector_default<T: Default>(world: WorldRef) -> Opaque<Vec<T
     ts.resize(resize_generic_vec::<T>);
 
     ts
-}
-
-#[test]
-fn test_meta_debug_stringify() {
-    #[derive(Debug, flecs_ecs_derive::Component)]
-    struct Position {
-        x: f32,
-        y: f32,
-    }
-
-    #[derive(flecs_ecs_derive::Component)]
-    struct Velocity {
-        x: f32,
-        y: f32,
-    }
-
-    impl core::fmt::Display for Velocity {
-        fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-            write!(f, "Velocity {{ x: {}, y: {} }}", self.x, self.y)
-        }
-    }
-
-    let world = World::new();
-
-    world
-        .component::<Position>()
-        .opaque_func(meta_ser_stringify_type_debug::<Position>);
-
-    world
-        .component::<Velocity>()
-        .opaque_func(meta_ser_stringify_type_display::<Velocity>);
-
-    let ent = world
-        .entity()
-        .set(Position { x: 1.0, y: 2.0 })
-        .set(Velocity { x: 3.0, y: 4.0 });
-
-    let json = ent.to_json(None);
-
-    println!("{}", json);
 }

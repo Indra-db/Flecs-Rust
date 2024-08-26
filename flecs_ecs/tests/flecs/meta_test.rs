@@ -665,37 +665,6 @@ fn meta_enum_w_bits() {
 }
 
 #[test]
-fn meta_enum() {
-    #[derive(Default)]
-    enum EnumType {
-        #[default]
-        A,
-        B,
-        C,
-    }
-
-    #[derive(Component)]
-    #[meta]
-    struct EnumTypeNewType {
-        enum_type: EnumType,
-    }
-
-    let world = World::new();
-
-    let id = component!(&world, EnumType).member::<u8>("value");
-
-    world.component::<EnumTypeNewType>().meta();
-
-    let e = world.entity().set(EnumTypeNewType {
-        enum_type: EnumType::C,
-    });
-
-    let json = e.to_json(None);
-
-    println!("{}", json);
-}
-
-#[test]
 fn meta_value_range() {
     let world = World::new();
 
