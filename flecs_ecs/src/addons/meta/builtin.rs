@@ -88,6 +88,44 @@ fn std_string_support(world: WorldRef) -> Opaque<String> {
     ts
 }
 
+fn meta_ser_stringify_type_debug<T: core::fmt::Debug>(world: WorldRef) -> Opaque<T> {
+    let mut ts = Opaque::<T>::new(world);
+
+    // Let reflection framework know what kind of type this is
+    ts.as_type(flecs::meta::String);
+
+    // Forward std::string value to (JSON/...) serializer
+    ts.serialize(|s: &Serializer, data: &T| {
+        let data = format!("{:?}", data);
+        let data = compact_str::format_compact!("{}\0", data);
+        s.value_id(
+            flecs::meta::String,
+            &data.as_ptr() as *const *const u8 as *const std::ffi::c_void,
+        )
+    });
+
+    ts
+}
+
+fn meta_ser_stringify_type_display<T: core::fmt::Display>(world: WorldRef) -> Opaque<T> {
+    let mut ts = Opaque::<T>::new(world);
+
+    // Let reflection framework know what kind of type this is
+    ts.as_type(flecs::meta::String);
+
+    // Forward std::string value to (JSON/...) serializer
+    ts.serialize(|s: &Serializer, data: &T| {
+        let data = format!("{}", data);
+        let data = compact_str::format_compact!("{}\0", data);
+        s.value_id(
+            flecs::meta::String,
+            &data.as_ptr() as *const *const u8 as *const std::ffi::c_void,
+        )
+    });
+
+    ts
+}
+
 pub fn meta_register_vector_default<T: Default>(world: WorldRef) -> Opaque<Vec<T>, T> {
     let mut ts = Opaque::<Vec<T>, T>::new(world);
 
@@ -125,4 +163,44 @@ pub fn meta_register_vector_default<T: Default>(world: WorldRef) -> Opaque<Vec<T
     ts.resize(resize_generic_vec::<T>);
 
     ts
+}
+
+#[test]
+fn test_meta_debug_stringify() {
+    #[derive(Debug, flecs_ecs_derive::Component)]
+    struct Position {
+        x: f32,
+        y: f32,
+    }
+
+    #[derive(flecs_ecs_derive::Component)]
+    struct Velocity {
+        x: f32,
+        y: f32,
+    }
+
+    impl core::fmt::Display for Velocity {
+        fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+            write!(f, "Velocity {{ x: {}, y: {} }}", self.x, self.y)
+        }
+    }
+
+    let world = World::new();
+
+    world
+        .component::<Position>()
+        .opaque_func(meta_ser_stringify_type_debug::<Position>);
+
+    world
+        .component::<Velocity>()
+        .opaque_func(meta_ser_stringify_type_display::<Velocity>);
+
+    let ent = world
+        .entity()
+        .set(Position { x: 1.0, y: 2.0 })
+        .set(Velocity { x: 3.0, y: 4.0 });
+
+    let json = ent.to_json(None);
+
+    println!("{}", json);
 }
