@@ -47,6 +47,9 @@ impl<'a> Observer<'a> {
     #[doc(alias = "observer::observer")]
     pub(crate) fn new(world: impl WorldProvider<'a>, desc: sys::ecs_observer_desc_t) -> Self {
         for event in desc.events {
+            if event == 0 {
+                break;
+            }
             if event == flecs::OnAdd::ID {
                 for term in desc.query.terms {
                     if (term.first.id | term.id | term.second.id | term.src.id) == 0 {

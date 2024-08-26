@@ -321,10 +321,6 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     fn with_id(&mut self, id: impl IntoId) -> &mut Self {
         self.term();
         self.init_current_term(id);
-        let current_term = self.current_term_mut();
-        if current_term.inout == InOutKind::Default as i16 {
-            self.current_term_mut().inout = InOutKind::None as i16;
-        }
         self
     }
 
@@ -376,8 +372,6 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
                 self.current_term_mut().inout = InOutKind::In as i16;
             } else if T::First::IS_MUT {
                 self.current_term_mut().inout = InOutKind::InOut as i16;
-            } else {
-                self.current_term_mut().inout = InOutKind::None as i16;
             }
         }
         self
@@ -457,10 +451,6 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     fn with_name(&mut self, name: &'a str) -> &mut Self {
         self.term();
         self.set_first_name(name);
-        let term = self.current_term();
-        if term.inout == InOutKind::Default as i16 {
-            self.current_term_mut().inout = InOutKind::None as i16;
-        }
         self
     }
 
@@ -473,10 +463,6 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     fn with_names(&mut self, first: &'a str, second: &'a str) -> &mut Self {
         self.term();
         self.set_first_name(first).set_second_name(second);
-        let term = self.current_term();
-        if term.inout == InOutKind::Default as i16 {
-            self.set_inout_none();
-        }
         self
     }
 
@@ -485,10 +471,6 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.term();
         self.init_current_term(first.into());
         self.set_second_name(second);
-        let term = self.current_term();
-        if term.inout == InOutKind::Default as i16 {
-            self.current_term_mut().inout = InOutKind::None as i16;
-        }
         self
     }
 
@@ -496,10 +478,6 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     fn with_second_id(&mut self, first: &'a str, second: impl Into<Entity>) -> &mut Self {
         self.term();
         self.set_first_name(first).set_second_id(second.into());
-        let term = self.current_term();
-        if term.inout == InOutKind::Default as i16 {
-            self.current_term_mut().inout = InOutKind::None as i16;
-        }
         self
     }
 
@@ -655,6 +633,11 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
             FlecsErrorCode::InvalidParameter,
             "Maximum number of terms reached in query builder",
         );
+
+        let term = self.current_term_mut();
+        if term.inout == InOutKind::Default as i16 {
+            term.inout = InOutKind::None as i16;
+        }
 
         // let term = &mut self.query_desc_mut().terms[index as usize] as *mut sys::ecs_term_t;
 
