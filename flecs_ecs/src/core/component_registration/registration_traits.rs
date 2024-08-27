@@ -459,8 +459,11 @@ pub trait EnumComponentInfo: ComponentType<Enum> + ComponentId {
     /// get the entity id of the variant of the enum. This function will register the enum with the world if it's not registered.
     fn id_variant<'a>(&self, world: impl WorldProvider<'a>) -> EntityView<'a> {
         use crate::core::component_registration::registration;
-        const COMPONENT_REGISTRATION: bool = false;
-        registration::try_register_component::<COMPONENT_REGISTRATION, Self>(world.world());
+        let world = world.world();
+        if !<Self as ComponentId>::is_registered_with_world(world) {
+            const COMPONENT_REGISTRATION: bool = false;
+            registration::try_register_component::<COMPONENT_REGISTRATION, Self>(world);
+        }
         let index = self.enum_index();
         EntityView::new_from(world, unsafe { *Self::__enum_data_mut().add(index) })
     }
