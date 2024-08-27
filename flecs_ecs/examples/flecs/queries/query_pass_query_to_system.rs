@@ -23,16 +23,17 @@ fn main() {
         .query::<(&Position, &Velocity)>()
         .term_at(0)
         .singleton()
+        // setting it cached is important! otherwise the query will go out of scope since it's not associated with an entity
+        // uncached queries are meant to be shortlived, but faster to create in general. More dynamic in nature.
         .set_cached()
         .build();
 
     world.entity().set(Velocity { x: 590, y: 20 });
 
-    let query_entity = query.entity().id();
-
+    // by using move, we can pass the query directly to the system because queries
+    // do not hold a lifetime, instead they are reference counted to give us the ability to pass them around.
     let sys = world.system::<()>().run(move |it| {
         let world = it.world();
-        let query = world.query_from(query_entity);
         query.run(|mut it| {
             while it.next() {
                 let pos = &it.field::<&Position>(0).unwrap()[0]; //singleton
