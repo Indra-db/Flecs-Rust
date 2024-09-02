@@ -54,13 +54,13 @@ pub const EcsIdIsTransitive: u32 = 16384;
 pub const EcsIdHasOnAdd: u32 = 65536;
 pub const EcsIdHasOnRemove: u32 = 131072;
 pub const EcsIdHasOnSet: u32 = 262144;
-pub const EcsIdHasOnTableFill: u32 = 1048576;
-pub const EcsIdHasOnTableEmpty: u32 = 2097152;
-pub const EcsIdHasOnTableCreate: u32 = 4194304;
-pub const EcsIdHasOnTableDelete: u32 = 8388608;
-pub const EcsIdIsSparse: u32 = 16777216;
-pub const EcsIdIsUnion: u32 = 33554432;
-pub const EcsIdEventMask: u32 = 66519040;
+pub const EcsIdHasOnTableFill: u32 = 524288;
+pub const EcsIdHasOnTableEmpty: u32 = 1048576;
+pub const EcsIdHasOnTableCreate: u32 = 2097152;
+pub const EcsIdHasOnTableDelete: u32 = 4194304;
+pub const EcsIdIsSparse: u32 = 8388608;
+pub const EcsIdIsUnion: u32 = 16777216;
+pub const EcsIdEventMask: u32 = 33488896;
 pub const EcsIdMarkedForDelete: u32 = 1073741824;
 pub const EcsIterIsValid: u32 = 1;
 pub const EcsIterNoData: u32 = 2;
@@ -132,18 +132,21 @@ pub const EcsTableHasOverrides: u32 = 32768;
 pub const EcsTableHasOnAdd: u32 = 65536;
 pub const EcsTableHasOnRemove: u32 = 131072;
 pub const EcsTableHasOnSet: u32 = 262144;
-pub const EcsTableHasOnTableFill: u32 = 1048576;
-pub const EcsTableHasOnTableEmpty: u32 = 2097152;
-pub const EcsTableHasOnTableCreate: u32 = 4194304;
-pub const EcsTableHasOnTableDelete: u32 = 8388608;
-pub const EcsTableHasSparse: u32 = 16777216;
-pub const EcsTableHasUnion: u32 = 33554432;
+pub const EcsTableHasOnTableFill: u32 = 524288;
+pub const EcsTableHasOnTableEmpty: u32 = 1048576;
+pub const EcsTableHasOnTableCreate: u32 = 2097152;
+pub const EcsTableHasOnTableDelete: u32 = 4194304;
+pub const EcsTableHasSparse: u32 = 8388608;
+pub const EcsTableHasUnion: u32 = 16777216;
 pub const EcsTableHasTraversable: u32 = 67108864;
 pub const EcsTableMarkedForDelete: u32 = 1073741824;
 pub const EcsTableHasLifecycle: u32 = 3072;
-pub const EcsTableIsComplex: u32 = 16796672;
+pub const EcsTableIsComplex: u32 = 8408064;
 pub const EcsTableHasAddActions: u32 = 328712;
 pub const EcsTableHasRemoveActions: u32 = 133128;
+pub const EcsTableEdgeFlags: u32 = 25362432;
+pub const EcsTableAddEdgeFlags: u32 = 25231360;
+pub const EcsTableRemoveEdgeFlags: u32 = 25296896;
 pub const EcsAperiodicEmptyTables: u32 = 2;
 pub const EcsAperiodicComponentMonitors: u32 = 4;
 pub const EcsAperiodicEmptyQueries: u32 = 16;
@@ -1130,6 +1133,14 @@ pub type ecs_os_api_dlclose_t = ::core::option::Option<unsafe extern "C" fn(lib:
 pub type ecs_os_api_module_to_path_t = ::core::option::Option<
     unsafe extern "C" fn(module_id: *const ::core::ffi::c_char) -> *mut ::core::ffi::c_char,
 >;
+#[doc = "Performance tracing"]
+pub type ecs_os_api_perf_trace_t = ::core::option::Option<
+    unsafe extern "C" fn(
+        filename: *const ::core::ffi::c_char,
+        line: usize,
+        name: *const ::core::ffi::c_char,
+    ),
+>;
 #[doc = "OS API interface."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1204,6 +1215,10 @@ pub struct ecs_os_api_t {
     pub module_to_dl_: ecs_os_api_module_to_path_t,
     #[doc = "< module_to_etc callback."]
     pub module_to_etc_: ecs_os_api_module_to_path_t,
+    #[doc = "Performance tracing"]
+    pub perf_trace_push_: ecs_os_api_perf_trace_t,
+    #[doc = "Performance tracing"]
+    pub perf_trace_pop_: ecs_os_api_perf_trace_t,
     #[doc = "< Tracing level."]
     pub log_level_: i32,
     #[doc = "< Tracing indentation level."]
@@ -1280,6 +1295,20 @@ extern "C" {
 extern "C" {
     #[doc = "Utility for assigning strings.\n This operation frees an existing string and duplicates the input string.\n\n @param str Pointer to a string value.\n @param value The string value to assign."]
     pub fn ecs_os_strset(str_: *mut *mut ::core::ffi::c_char, value: *const ::core::ffi::c_char);
+}
+extern "C" {
+    pub fn ecs_os_perf_trace_push_(
+        file: *const ::core::ffi::c_char,
+        line: usize,
+        name: *const ::core::ffi::c_char,
+    );
+}
+extern "C" {
+    pub fn ecs_os_perf_trace_pop_(
+        file: *const ::core::ffi::c_char,
+        line: usize,
+        name: *const ::core::ffi::c_char,
+    );
 }
 extern "C" {
     #[doc = "Sleep with floating point time.\n\n @param t The time in seconds."]
@@ -1625,6 +1654,8 @@ pub struct ecs_query_t {
     pub field_count: i8,
     #[doc = "< Fields with a fixed source"]
     pub fixed_fields: ecs_flags32_t,
+    #[doc = "< Fields with non-$this variable source"]
+    pub var_fields: ecs_flags32_t,
     #[doc = "< Fields with a static (component) id"]
     pub static_id_fields: ecs_flags32_t,
     #[doc = "< Fields that have data"]
@@ -4782,6 +4813,8 @@ pub struct ecs_system_t {
     pub multi_threaded: bool,
     #[doc = "Is system ran in immediate mode"]
     pub immediate: bool,
+    #[doc = "Cached system name (for perf tracing)"]
+    pub name: *const ::core::ffi::c_char,
     #[doc = "Userdata for system"]
     pub ctx: *mut ::core::ffi::c_void,
     #[doc = "Callback language binding context"]

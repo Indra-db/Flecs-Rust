@@ -69,6 +69,9 @@ flecs_disable_build_c = ["flecs_ecs_sys/disable_build_c"]
 # Flecs feature flags
 ######################
 
+# Enable flecs performance tracing
+flecs_perf_trace = ["flecs_ecs_sys/flecs_perf_trace"]
+
 # When set, the Rust API will require that components are registered before they
 # are used. This is useful in multithreaded applications, where components need
 # to be registered beforehand, and to catch issues in projects where component 
@@ -141,7 +144,7 @@ flecs_journal = ["flecs_ecs_sys/flecs_journal","flecs_log"]
 flecs_nightly_tests = []
 
 default = [
-    #"flecs_regenerate_binding_c",
+    "flecs_regenerate_binding_c",
     #"flecs_nightly_tests",
     "flecs_module",
     "flecs_script",

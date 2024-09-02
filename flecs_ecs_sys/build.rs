@@ -69,6 +69,11 @@ fn generate_bindings() {
         .clang_arg("-DFLECS_CUSTOM_BUILD")
         .clang_arg("-DFLECS_CPP");
 
+    #[cfg(feature = "flecs_perf_trace")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_PERF_TRACE");
+    }
+
     #[cfg(feature = "flecs_module")]
     {
         bindings = bindings.clang_arg("-DFLECS_MODULE");
@@ -207,6 +212,9 @@ fn main() {
             .extra_warnings(true)
             .define("FLECS_CUSTOM_BUILD", None)
             .define("FLECS_CPP", None);
+
+        #[cfg(feature = "flecs_perf_trace")]
+        build.define("FLECS_PERF_TRACE", None);
 
         #[cfg(feature = "flecs_module")]
         build.define("FLECS_MODULE", None);

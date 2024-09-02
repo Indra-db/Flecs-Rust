@@ -49,6 +49,9 @@ disable_build_c = []
 # Flecs C defines / features
 ###############################
 
+# Enable flecs performance tracing
+flecs_perf_trace = []
+
 # Adjust the maximum number of terms in queries to 64. Default is 32.
 flecs_term_count_64 = []
 
