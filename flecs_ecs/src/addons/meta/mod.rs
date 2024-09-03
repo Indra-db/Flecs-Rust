@@ -95,7 +95,7 @@ impl World {
     /// * C++ API: `world::primitive`
     pub fn primitive(&self, kind: EcsPrimitiveKind) -> EntityView {
         let desc = sys::ecs_primitive_desc_t {
-            kind: kind as u32,
+            kind: kind as sys::ecs_primitive_kind_t,
             entity: 0u64,
         };
 
