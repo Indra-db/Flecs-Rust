@@ -814,6 +814,8 @@ typedef struct ecs_allocator_t ecs_allocator_t;
 #define ECS_ALIGNOF(T) (int64_t)__alignof(T)
 #elif defined(ECS_TARGET_GNU)
 #define ECS_ALIGNOF(T) (int64_t)__alignof__(T)
+#elif defined(ECS_TARGET_CLANG)
+#define ECS_ALIGNOF(T) (int64_t)__alignof__(T)
 #else
 #define ECS_ALIGNOF(T) ((int64_t)&((struct { char c; T d; } *)0)->d)
 #endif
@@ -4546,6 +4548,7 @@ typedef struct ecs_world_info_t {
 
     int64_t frame_count_total;        /**< Total number of frames */
     int64_t merge_count_total;        /**< Total number of merges */
+    int64_t eval_comp_monitors_total; /**< Total number of monitor evaluations */
     int64_t rematch_count_total;      /**< Total number of rematches */
 
     int64_t id_create_total;          /**< Total number of times a new id was created */
@@ -25697,7 +25700,9 @@ private:
     void populate_self(const ecs_iter_t *iter, size_t index, T, Targs... comps) {
         fields_[index].ptr = ecs_field_w_size(iter, sizeof(A), 
             static_cast<int8_t>(index));
-        fields_[index].is_ref = iter->sources[index] != 0;
+        // fields_[index].is_ref = iter->sources[index] != 0;
+        fields_[index].is_ref = false;
+        ecs_assert(iter->sources[index] == 0, ECS_INTERNAL_ERROR, NULL);
         populate_self(iter, index + 1, comps ...);
     }
 
@@ -26532,7 +26537,8 @@ inline const char* type_name() {
     static const size_t len = ECS_FUNC_TYPE_LEN(const char*, type_name, ECS_FUNC_NAME);
     static char result[len + 1] = {};
     static const size_t front_len = ECS_FUNC_NAME_FRONT(const char*, type_name);
-    return ecs_cpp_get_type_name(result, ECS_FUNC_NAME, len, front_len);
+    static const char* cppTypeName = ecs_cpp_get_type_name(result, ECS_FUNC_NAME, len, front_len);
+    return cppTypeName;
 }
 #else
 #error "implicit component registration not supported"
@@ -26544,7 +26550,8 @@ template <typename T>
 inline const char* symbol_name() {
     static const size_t len = ECS_FUNC_TYPE_LEN(const char*, symbol_name, ECS_FUNC_NAME);
     static char result[len + 1] = {};
-    return ecs_cpp_get_symbol_name(result, type_name<T>(), len);
+    static const char* cppSymbolName = ecs_cpp_get_symbol_name(result, type_name<T>(), len);
+    return cppSymbolName;
 }
 
 template <> inline const char* symbol_name<uint8_t>() {

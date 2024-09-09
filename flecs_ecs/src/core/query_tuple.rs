@@ -388,6 +388,7 @@ where
         it: &sys::ecs_iter_t,
         components: &mut [*mut u8],
     ) {
+        ecs_assert!(unsafe { *it.sources.add(0) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
         components[0] = unsafe { ecs_field::<A::OnlyPairType>(it, 0) as *mut u8 };
     }
 
@@ -589,6 +590,7 @@ macro_rules! impl_iterable {
             ) {
                 let mut index = 0;
                 $(
+                    ecs_assert!(unsafe { *it.sources.add(index as usize) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
                     components[index as usize] =
                         unsafe { ecs_field::<$t::OnlyPairType>(it, index) as *mut u8 };
                     index += 1;

@@ -6,6 +6,7 @@
 pub mod common_test;
 
 mod clone_default_impl_test;
+mod component_lifecycle_test;
 mod component_test;
 mod entity_test;
 mod enum_test;

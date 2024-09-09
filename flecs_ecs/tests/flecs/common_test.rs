@@ -15,7 +15,7 @@ fn init() {
         flecs_ecs::sys::ecs_os_init();
     }
 }
-#[derive(Debug, Component)]
+#[derive(Debug, Component, Clone, Copy)]
 pub struct Count(pub i32);
 
 impl Deref for Count {
@@ -69,7 +69,7 @@ pub struct Value {
     pub value: i32,
 }
 
-#[derive(Debug, Component, Default)]
+#[derive(Debug, Component, Default, Clone)]
 pub struct Position {
     pub x: i32,
     pub y: i32,

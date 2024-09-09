@@ -2465,6 +2465,8 @@ pub struct ecs_world_info_t {
     pub frame_count_total: i64,
     #[doc = "< Total number of merges"]
     pub merge_count_total: i64,
+    #[doc = "< Total number of monitor evaluations"]
+    pub eval_comp_monitors_total: i64,
     #[doc = "< Total number of rematches"]
     pub rematch_count_total: i64,
     #[doc = "< Total number of times a new id was created"]
