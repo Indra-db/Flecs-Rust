@@ -211,7 +211,7 @@ extern "C" fn panic_copy<T>(
     _count: i32,
     _type_info: *const sys::ecs_type_info_t,
 ) {
-    panic!("Clone is not implemented for type {} and it's being used in a copy / duplicate operation such as component overriding or duplicating entities / components", std::any::type_name::<T>());
+    panic!("Clone is not implemented for type {} and it's being used in a copy / duplicate operation such as component overriding or duplicating entities / components or prefab copying", std::any::type_name::<T>());
 }
 
 /// This is the generic move for non-trivial types
