@@ -48,9 +48,8 @@ where
     if T::IMPLS_DEFAULT {
         T::__register_default_hooks(&mut hooks);
     }
-    if T::IMPLS_CLONE {
-        T::__register_clone_hooks(&mut hooks);
-    }
+
+    T::__register_clone_hooks(&mut hooks);
 
     let type_info: flecs_ecs_sys::ecs_type_info_t = flecs_ecs_sys::ecs_type_info_t {
         world,
