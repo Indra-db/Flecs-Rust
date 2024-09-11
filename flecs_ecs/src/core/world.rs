@@ -3430,7 +3430,7 @@ impl World {
     /// * [`World::prefab_type_named()`]
     /// * C++ API: `world::prefab`
     #[doc(alias = "world::prefab")]
-    pub fn prefab_type<T: ComponentId + TagComponent>(&self) -> EntityView {
+    pub fn prefab_type<T: ComponentId>(&self) -> EntityView {
         let result = Component::<T>::new(self).entity;
         result.add_id(ECS_PREFAB);
         unsafe { result.add_id_unchecked(T::id(self)) };
@@ -3458,10 +3458,7 @@ impl World {
     /// * [`World::prefab_type()`]
     /// * C++ API: `world::prefab`
     #[doc(alias = "world::prefab")]
-    pub fn prefab_type_named<'a, T: ComponentId + TagComponent>(
-        &'a self,
-        name: &str,
-    ) -> EntityView<'a> {
+    pub fn prefab_type_named<'a, T: ComponentId>(&'a self, name: &str) -> EntityView<'a> {
         let result = Component::<T>::new_named(self, name).entity;
         result.add_id(ECS_PREFAB);
         unsafe { result.add_id_unchecked(T::id(self)) };
