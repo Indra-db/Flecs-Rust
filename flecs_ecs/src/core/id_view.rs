@@ -270,7 +270,7 @@ impl<'a> IdView<'a> {
     #[inline(always)]
     pub fn entity_view(self) -> EntityView<'a> {
         ecs_assert!(!self.is_pair(), FlecsErrorCode::InvalidOperation);
-        ecs_assert!(self.flags().id == 0, FlecsErrorCode::InvalidOperation);
+        ecs_assert!(self.flags().id != 0, FlecsErrorCode::InvalidOperation);
 
         EntityView::new_from(self.world, Entity(*self.id))
     }
