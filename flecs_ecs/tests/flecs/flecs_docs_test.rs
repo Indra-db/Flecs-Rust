@@ -371,20 +371,20 @@ fn flecs_system_docs_compile_test() {
 
     world
         .system::<&Position>()
-        .interval(1.0) // Run at 1Hz
+        .set_interval(1.0) // Run at 1Hz
         .each(|p| {
             // ...
         });
 
     world
         .system::<&Position>()
-        .rate(2) // Run every other frame
+        .set_rate(2) // Run every other frame
         .each(|p| {
             // ...
         });
 
-    // A rate filter can be created with .rate(2)
-    //let tick_source = world.timer().interval(1.0);
+    // A rate filter can be created with .set_rate(2)
+    //let tick_source = world.timer().set_interval(1.0);
     //TODO
 
     // world

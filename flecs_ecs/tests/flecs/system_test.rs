@@ -686,14 +686,18 @@ fn system_each_tag() {
 fn system_set_interval() {
     let world = World::new();
 
-    let _sys = world.system::<()>().kind_id(0).interval(1.0).run(|_it| {});
+    let _sys = world
+        .system::<()>()
+        .kind_id(0)
+        .set_interval(1.0)
+        .run(|_it| {});
 
-    // float i = sys.interval();
+    // float i = sys.set_interval();
     // assert_eq!(i, 1.0f);
 
-    // sys.interval(2.0f);
+    // sys.set_interval(2.0f);
 
-    // i = sys.interval();
+    // i = sys.set_interval();
     // assert_eq!(i, 2.0f);
 }
 
@@ -1261,7 +1265,7 @@ fn system_rate_filter() {
 
     let l1_a = world
         .system_named::<()>("l1_a")
-        .rate_w_tick_source(root.id(), 1)
+        .set_tick_source_rate(root.id(), 1)
         .run(|mut it| {
             let world = it.world();
             while it.next() {
@@ -1273,7 +1277,7 @@ fn system_rate_filter() {
 
     let l1_b = world
         .system_named::<()>("l1_b")
-        .rate_w_tick_source(root.id(), 2)
+        .set_tick_source_rate(root.id(), 2)
         .run(|mut it| {
             let world = it.world();
             while it.next() {
@@ -1285,7 +1289,7 @@ fn system_rate_filter() {
 
     world
         .system_named::<()>("l1_c")
-        .rate_w_tick_source(root.id(), 3)
+        .set_tick_source_rate(root.id(), 3)
         .run(|mut it| {
             let world = it.world();
             while it.next() {
@@ -1297,7 +1301,7 @@ fn system_rate_filter() {
 
     world
         .system_named::<()>("l2_a")
-        .rate_w_tick_source(l1_a.id(), 2)
+        .set_tick_source_rate(l1_a.id(), 2)
         .run(|mut it| {
             let world = it.world();
             while it.next() {
@@ -1309,7 +1313,7 @@ fn system_rate_filter() {
 
     world
         .system_named::<()>("l2_b")
-        .rate_w_tick_source(l1_b.id(), 2)
+        .set_tick_source_rate(l1_b.id(), 2)
         .run(|mut it| {
             let world = it.world();
             while it.next() {
@@ -1363,7 +1367,7 @@ fn system_update_rate_filter() {
 
     let l1 = world
         .system_named::<()>("l1")
-        .rate_w_tick_source(root.id(), 2)
+        .set_tick_source_rate(root.id(), 2)
         .run(|mut it| {
             let world = it.world();
             while it.next() {
@@ -1375,7 +1379,7 @@ fn system_update_rate_filter() {
 
     world
         .system_named::<()>("l2")
-        .rate_w_tick_source(l1.id(), 3)
+        .set_tick_source_rate(l1.id(), 3)
         .run(|mut it| {
             let world = it.world();
             while it.next() {
@@ -1396,7 +1400,7 @@ fn system_update_rate_filter() {
     }
 
     //FIXME
-    //l1.rate(4); // Run twice as slow
+    //l1.set_rate(4); // Run twice as slow
     l1_mult *= 2;
     l2_mult *= 2;
 
@@ -2111,8 +2115,8 @@ fn system_rate_tick_source() {
 fn system_nested_rate_tick_source() {
     // let world = World::new();
 
-    // let t_3 = world.timer().rate(3);
-    // let t_6 = world.timer().rate(2, t_3);
+    // let t_3 = world.timer().set_rate(3);
+    // let t_6 = world.timer().set_rate(2, t_3);
 
     // int32_t sys_a_invoked = 0, sys_b_invoked = 0;
 
@@ -2217,7 +2221,7 @@ fn system_randomize_timers() {
 
     let s1 = world
         .system::<()>()
-        .interval(1.0)
+        .set_interval(1.0)
         .run(|mut it| while it.next() {});
 
     {
@@ -2230,7 +2234,7 @@ fn system_randomize_timers() {
 
     let s2 = world
         .system::<()>()
-        .interval(1.0)
+        .set_interval(1.0)
         .run(|mut it| while it.next() {});
 
     {

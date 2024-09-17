@@ -25,9 +25,12 @@ fn main() {
             timeout.value -= it.delta_time();
         });
 
-    world.system_named::<()>("Tick").interval(1.0).run(tick);
+    world.system_named::<()>("Tick").set_interval(1.0).run(tick);
 
-    world.system_named::<()>("FastTick").interval(0.5).run(tick);
+    world
+        .system_named::<()>("FastTick")
+        .set_interval(0.5)
+        .run(tick);
 
     // Run the main loop at 60 FPS
     world.set_target_fps(60.0);
