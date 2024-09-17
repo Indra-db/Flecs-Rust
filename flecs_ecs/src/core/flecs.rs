@@ -4,6 +4,8 @@ use std::ops::Deref;
 use crate::core::*;
 use crate::sys;
 
+//TODO: a lot of these need to be feature gated
+
 pub trait FlecsTrait {}
 
 macro_rules! create_pre_registered_component {

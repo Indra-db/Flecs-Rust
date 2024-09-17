@@ -3,9 +3,13 @@
 //! added with the doc module can be retrieved at runtime, and can be used by
 //! tooling such as UIs or documentation frameworks.
 
+use std::ffi::CStr;
+use std::ptr::NonNull;
+
 use crate::core::*;
 use crate::sys;
 
+//MARK: trait::Doc
 ///
 ///
 /// ```
@@ -22,6 +26,80 @@ use crate::sys;
 ///     .set_doc_brief("A vast expanse of nothingness.");
 /// ```
 pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
+    //MARK: _getters
+
+    /// Get human readable name for an entity.
+    ///
+    /// # Returns
+    ///
+    /// The human readable name of the entity.
+    ///
+    /// # See also
+    ///
+    /// * [`World::get_doc_name()`]
+    /// * C++ API: `doc::get_name()`
+    fn get_doc_name(&self) -> Option<String> {
+        self.world().get_doc_name_id(self.clone())
+    }
+
+    /// Get brief description for an entity.
+    ///
+    /// # Returns
+    ///
+    /// The brief description of the entity.
+    ///
+    /// # See also
+    ///
+    /// * [`World::get_doc_brief()`]
+    /// * C++ API: `doc::get_brief()`
+    fn get_doc_brief(&self) -> Option<String> {
+        self.world().get_doc_brief_id(self.clone())
+    }
+
+    /// Get detailed description for an entity.
+    ///
+    /// # Returns
+    ///
+    /// The detailed description of the entity.
+    ///
+    /// # See also
+    ///
+    /// * [`World::get_doc_detail()`]
+    /// * C++ API: `doc::get_detail()`
+    fn get_doc_detail(&self) -> Option<String> {
+        self.world().get_doc_detail_id(self.clone())
+    }
+
+    /// Get link to external documentation for an entity.
+    ///
+    /// # Returns
+    ///
+    /// The link to external documentation of the entity.
+    ///
+    /// # See also
+    ///
+    /// * [`World::get_doc_link()`]
+    /// * C++ API: `doc::get_link()`
+    fn get_doc_link(&self) -> Option<String> {
+        self.world().get_doc_link_id(self.clone())
+    }
+
+    /// Get color for an entity.
+    ///
+    /// # Returns
+    ///
+    /// The color of the entity.
+    ///
+    /// # See also
+    ///
+    /// * [`World::get_doc_color()`]
+    /// * C++ API: `doc::get_color()`
+    fn get_doc_color(&self) -> Option<String> {
+        self.world().get_doc_color_id(self.clone())
+    }
+
+    //MARK: _setters
+
     /// Add human-readable name to entity.
     ///
     /// Contrary to entity names, human readable names do not have to be unique and
@@ -111,6 +189,7 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
 
 impl<'a, T> Doc<'a> for T where T: Into<Entity> + WorldProvider<'a> + Clone {}
 
+//MARK: impl World
 /// ```
 /// use flecs_ecs::{addons::doc::Doc, core::World, macros::Component};
 ///
@@ -122,6 +201,236 @@ impl<'a, T> Doc<'a> for T where T: Into<Entity> + WorldProvider<'a> + Clone {}
 /// world.set_doc_name::<Tag>("A tag");
 /// ```
 impl World {
+    //MARK: _World::getters
+
+    /// Get human readable name for an entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The type that implements `ComponentId`.
+    ///
+    /// # Returns
+    ///
+    /// The human readable name of the entity.
+    ///
+    /// # See also
+    ///
+    /// * [`Doc::get_doc_name()`]
+    /// * [`World::get_doc_name_id()`]
+    /// * C++ API: `doc::get_name()`
+    #[doc(alias = "doc::get_name")]
+    #[inline(always)]
+    pub fn get_doc_name<T: ComponentId>(&self) -> Option<String> {
+        self.get_doc_name_id(T::get_id(self))
+    }
+
+    /// Get human readable name for an entity.
+    ///
+    /// # Arguments
+    ///
+    /// * `entity` - The entity for which to get the human readable name.
+    ///
+    /// # Returns
+    ///
+    /// The human readable name of the entity.
+    ///
+    /// # See also
+    ///
+    /// * [`Doc::get_doc_name()`]
+    /// * [`World::get_doc_name()`]
+    /// * C++ API: `world::get_doc_name()`
+    #[doc(alias = "doc::get_name")]
+    #[inline(always)]
+    pub fn get_doc_name_id(&self, entity: impl Into<Entity>) -> Option<String> {
+        let cstr = NonNull::new(
+            unsafe { sys::ecs_doc_get_name(self.world_ptr(), *entity.into()) } as *mut _,
+        )
+        .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) });
+        cstr.and_then(|s| s.to_str().ok().map(|s| s.to_string()))
+    }
+
+    /// Get brief description for an entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The type that implements `ComponentId`.
+    ///
+    /// # Returns
+    ///
+    /// The brief description of the entity.
+    ///
+    /// # See also
+    ///
+    /// * [`Doc::get_doc_brief()`]
+    /// * [`World::get_doc_brief_id()`]
+    /// * C++ API: `doc::get_brief()`
+    #[doc(alias = "doc::get_brief")]
+    #[inline(always)]
+    pub fn get_doc_brief<T: ComponentId>(&self) -> Option<String> {
+        self.get_doc_brief_id(T::get_id(self))
+    }
+
+    /// Get brief description for an entity.
+    ///
+    /// # Arguments
+    ///
+    /// * `entity` - The entity for which to get the brief description
+    ///
+    /// # Returns
+    ///
+    /// The brief description of the entity.
+    ///
+    /// # See also
+    ///
+    /// * [`Doc::get_doc_brief()`]
+    /// * [`World::get_doc_brief()`]
+    /// * C++ API: `doc::get_brief`
+    #[doc(alias = "doc::get_brief")]
+    #[inline(always)]
+    pub fn get_doc_brief_id(&self, entity: impl Into<Entity>) -> Option<String> {
+        let cstr = NonNull::new(
+            unsafe { sys::ecs_doc_get_brief(self.world_ptr(), *entity.into()) } as *mut _,
+        )
+        .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) });
+        cstr.and_then(|s| s.to_str().ok().map(|s| s.to_string()))
+    }
+
+    /// Get detailed description for an entity.
+    /// # Type Parameters
+    ///
+    /// * `T` - The type that implements `ComponentId`.
+    ///
+    /// # Returns
+    ///
+    /// The detailed description of the entity.
+    ///
+    /// # See also
+    ///
+    /// * [`Doc::get_doc_detail()`]
+    /// * [`World::get_doc_detail_id()`]
+    /// * C++ API: `doc::get_detail()`
+    #[doc(alias = "doc::get_detail")]
+    #[inline(always)]
+    pub fn get_doc_detail<T: ComponentId>(&self) -> Option<String> {
+        self.get_doc_detail_id(T::get_id(self))
+    }
+
+    /// Get detailed description for an entity.
+    ///
+    /// # Arguments
+    ///
+    /// * `entity` - The entity for which to get the detailed description.
+    ///
+    /// # Returns
+    ///
+    /// The detailed description of the entity.
+    ///
+    /// # See also
+    ///
+    /// * [`Doc::get_doc_detail()`]
+    /// * [`World::get_doc_detail()`]
+    /// * C++ API: `doc::get_detail`
+    #[doc(alias = "doc::get_detail")]
+    #[inline(always)]
+    pub fn get_doc_detail_id(&self, entity: impl Into<Entity>) -> Option<String> {
+        let cstr = NonNull::new(
+            unsafe { sys::ecs_doc_get_detail(self.world_ptr(), *entity.into()) } as *mut _,
+        )
+        .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) });
+        cstr.and_then(|s| s.to_str().ok().map(|s| s.to_string()))
+    }
+
+    /// Get link to external documentation for an entity.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The type that implements `ComponentId`.
+    ///
+    /// # Returns
+    ///
+    /// The link to external documentation of the entity.
+    ///
+    /// # See also
+    ///
+    /// * [`Doc::get_doc_link()`]
+    /// * [`World::get_doc_link_id()`]
+    /// * C++ API: `doc::get_link()`
+    #[doc(alias = "doc::get_link")]
+    #[inline(always)]
+    pub fn get_doc_link<T: ComponentId>(&self) -> Option<String> {
+        self.get_doc_link_id(T::get_id(self))
+    }
+
+    /// Get link to external documentation for an entity.
+    /// # Arguments
+    ///
+    /// * `entity` - The entity for which to get the link to external documentation.
+    ///
+    /// # Returns
+    ///
+    /// The link to external documentation of the entity.
+    ///
+    /// # See also
+    ///
+    /// * [`Doc::get_doc_link()`]
+    /// * [`World::get_doc_link()`]
+    /// * C++ API: `doc::get_link`
+    #[doc(alias = "doc::get_link")]
+    #[inline(always)]
+    pub fn get_doc_link_id(&self, entity: impl Into<Entity>) -> Option<String> {
+        let cstr = NonNull::new(
+            unsafe { sys::ecs_doc_get_link(self.world_ptr(), *entity.into()) } as *mut _,
+        )
+        .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) });
+        cstr.and_then(|s| s.to_str().ok().map(|s| s.to_string()))
+    }
+
+    /// Get color for an entity.
+    /// # Type Parameters
+    ///
+    /// * `T` - The type that implements `ComponentId`.
+    ///
+    /// # Returns
+    ///
+    /// The color of the entity.
+    ///
+    /// # See also
+    ///
+    /// * [`Doc::get_doc_color()`]
+    /// * [`World::get_doc_color_id()`]
+    /// * C++ API: `doc::get_color()`
+    #[doc(alias = "doc::get_color")]
+    #[inline(always)]
+    pub fn get_doc_color<T: ComponentId>(&self) -> Option<String> {
+        self.get_doc_color_id(T::get_id(self))
+    }
+
+    /// Get color for an entity.
+    /// # Arguments
+    ///
+    /// * `entity` - The entity for which to get the color.
+    ///
+    /// # Returns
+    ///
+    /// The color of the entity.
+    ///
+    /// # See also
+    ///
+    /// * [`Doc::get_doc_color()`]
+    /// * [`World::get_doc_color()`]
+    /// * C++ API: `doc::get_color`
+    #[doc(alias = "doc::get_color")]
+    #[inline(always)]
+    pub fn get_doc_color_id(&self, entity: impl Into<Entity>) -> Option<String> {
+        let cstr = NonNull::new(
+            unsafe { sys::ecs_doc_get_color(self.world_ptr(), *entity.into()) } as *mut _,
+        )
+        .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) });
+        cstr.and_then(|s| s.to_str().ok().map(|s| s.to_string()))
+    }
+
+    //MARK: _World::setters
+
     /// Add human-readable name to entity.
     ///
     /// Contrary to entity names, human readable names do not have to be unique and
