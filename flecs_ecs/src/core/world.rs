@@ -144,6 +144,11 @@ impl World {
             //     comp.opaque_func(crate::prelude::meta::flecs_entity_support);
             // });
         }
+
+        #[cfg(feature = "flecs_units")]
+        {
+            self.import::<crate::addons::units::UnitsModule>();
+        }
     }
 
     /// deletes and recreates the world

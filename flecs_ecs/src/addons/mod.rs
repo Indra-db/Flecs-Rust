@@ -28,6 +28,9 @@ pub mod script;
 #[cfg(feature = "flecs_json")]
 pub mod json;
 
+#[cfg(feature = "flecs_units")]
+pub mod units;
+
 // this is not feature gated to flecs_meta so calling `.meta()` on a component will always work despite meta being disabled.
 pub trait Meta<Component> {
     fn meta(component: flecs_ecs::core::Component<Component>);
