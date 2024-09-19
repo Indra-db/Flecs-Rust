@@ -11,46 +11,6 @@ use crate::sys;
 const ECS_EVENT_DESC_ID_COUNT_MAX: usize = 8;
 
 impl<'a> UntypedComponent<'a> {
-    /*
-
-    template <typename Kind>
-    inline untyped_component& untyped_component::metric(
-        flecs::entity_t parent,
-        const char *brief,
-        const char *metric_name)
-    {
-        flecs::world w(world_);
-        flecs::entity e(world_, id_);
-
-        const flecs::member_t *m = ecs_cpp_last_member(w, e);
-        if (!m) {
-            return *this;
-        }
-
-        flecs::entity me = w.entity(m->member);
-        flecs::entity metric_entity = me;
-        if (parent) {
-            const char *component_name = e.name();
-            if (!metric_name) {
-                if (ecs_os_strcmp(m->name, "value") || !component_name) {
-                    metric_entity = w.scope(parent).entity(m->name);
-                } else {
-                    // If name of member is "value", use name of type.
-                    char *snake_name = flecs_to_snake_case(component_name);
-                    metric_entity = w.scope(parent).entity(snake_name);
-                    ecs_os_free(snake_name);
-                }
-            } else {
-                metric_entity = w.scope(parent).entity(metric_name);
-            }
-        }
-
-        w.metric(metric_entity).member(me).kind<Kind>().brief(brief);
-
-        return *this;
-    }
-         */
-
     /// Register a member as a metric.
     ///
     /// If no explicit name is provided, the metric name will be derived from the member name.
@@ -74,7 +34,7 @@ impl<'a> UntypedComponent<'a> {
     /// * [`get_doc_brief`][crate::addons::doc::Doc::get_doc_brief]
     /// * [`set_doc_brief`][crate::addons::doc::Doc::set_doc_brief]
 
-    fn metric<Kind>(
+    pub fn metric<Kind>(
         &self,
         parent: Option<impl Into<Entity>>,
         brief: Option<&str>,
