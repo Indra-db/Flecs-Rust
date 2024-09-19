@@ -50,6 +50,16 @@ use std::{ffi::c_void, mem::MaybeUninit, ptr};
 use crate::core::*;
 use crate::sys;
 
+#[derive(Default)]
+pub(crate) struct RegistersPanicHooks {
+    pub(crate) ctor: bool,
+    pub(crate) copy: bool,
+}
+
+pub(crate) unsafe extern "C" fn register_panic_hooks_free_ctx(ctx: *mut c_void) {
+    let _box = unsafe { Box::from_raw(ctx as *mut RegistersPanicHooks) };
+}
+
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn register_lifecycle_actions<T>(type_hooks: &mut sys::ecs_type_hooks_t) {
     //type_hooks.ctor = Some(ctor::<T>);
@@ -67,8 +77,8 @@ pub fn register_ctor_lifecycle_actions<T: Default>(type_hooks: &mut sys::ecs_typ
     type_hooks.ctor = Some(ctor::<T>);
 }
 
-pub fn register_ctor_panic_lifecycle_actions<T>(_type_hooks: &mut sys::ecs_type_hooks_t) {
-    //type_hooks.ctor = Some(panic_ctor::<T>);
+pub fn register_ctor_panic_lifecycle_actions<T>(type_hooks: &mut sys::ecs_type_hooks_t) {
+    type_hooks.ctor = Some(panic_ctor::<T>);
 }
 
 pub fn register_copy_lifecycle_action<T: Clone>(type_hooks: &mut sys::ecs_type_hooks_t) {

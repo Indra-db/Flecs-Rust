@@ -45,11 +45,29 @@ where
         // require construction/destruction/copy/move's.
         T::__register_lifecycle_hooks(&mut hooks);
     }
+    // we only want to implement it if it implements the default trait
+    // in the case it does not, flecs registers a ctor hook that zeros out the memory.
+    // on rust side we check for safety and panic if the component does not implement the default trait where needed.
     if T::IMPLS_DEFAULT {
         T::__register_default_hooks(&mut hooks);
     }
 
     T::__register_clone_hooks(&mut hooks);
+
+    // if (!T::IMPLS_DEFAULT && !T::IS_ENUM) || !T::IMPLS_CLONE {
+    //     let mut registered_hooks = RegistersPanicHooks::default();
+    //     if !T::IMPLS_DEFAULT {
+    //         registered_hooks.ctor = true;
+    //     }
+    //     if !T::IMPLS_CLONE {
+    //         registered_hooks.copy = true;
+    //     }
+    //     let box_registers_panic_hooks = Box::<RegistersPanicHooks>::new(registered_hooks);
+    //     let box_registers_panic_hooks_ptr = Box::into_raw(box_registers_panic_hooks);
+    //     // we registered a panic hook
+    //     hooks.binding_ctx = box_registers_panic_hooks_ptr as *mut std::ffi::c_void;
+    //     hooks.binding_ctx_free = Some(register_panic_hooks_free_ctx);
+    // }
 
     let type_info: flecs_ecs_sys::ecs_type_info_t = flecs_ecs_sys::ecs_type_info_t {
         world,

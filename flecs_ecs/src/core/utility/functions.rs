@@ -485,3 +485,28 @@ pub(crate) fn strip_prefix_str_raw<'a>(str: &'a str, prefix: &str) -> Option<&'a
         None
     }
 }
+
+pub(crate) fn check_add_id_validity(world: *const sys::ecs_world_t, id: u64) {
+    let is_valid_id = unsafe { sys::ecs_id_is_valid(world, id) };
+
+    if !is_valid_id {
+        panic!("Id is not a valid component, pair or entity.");
+    }
+
+    let is_not_tag = unsafe { sys::ecs_get_typeid(world, id) != 0 };
+
+    if is_not_tag {
+        assert!(has_default_hook(world,id),"Id is not a zero-sized type (ZST) such as a Tag or Entity or does not implement the Default hook for a non ZST type. Default hooks are automatically implemented if the type has a Default trait.");
+    }
+}
+
+pub(crate) fn has_default_hook(world: *const sys::ecs_world_t, id: u64) -> bool {
+    let hooks = unsafe { sys::ecs_get_hooks_id(world, id) };
+    let ctor_hooks =
+        unsafe { (*hooks).ctor }.expect("ctor hook is always implemented, either in Rust of C");
+
+    #[allow(clippy::fn_address_comparisons)]
+    {
+        ctor_hooks != sys::flecs_default_ctor
+    }
+}

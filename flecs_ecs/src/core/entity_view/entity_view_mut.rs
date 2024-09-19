@@ -9,23 +9,6 @@ use self::flecs::FlecsTrait;
 
 // functions in here match most of the functions in the c++ entity and entity_builder class
 impl<'a> EntityView<'a> {
-    fn check_add_id_validity(world: *const sys::ecs_world_t, id: u64) {
-        let is_valid_id = unsafe { sys::ecs_id_is_valid(world, id) };
-
-        if !is_valid_id {
-            panic!("Id is not a valid component, pair or entity.");
-        }
-
-        let is_not_tag = unsafe { sys::ecs_get_typeid(world, id) != 0 };
-
-        if is_not_tag {
-            let hooks = unsafe { sys::ecs_get_hooks_id(world, id) };
-            let is_default_hook = unsafe { (*hooks).ctor.is_some() };
-            if !is_default_hook {
-                panic!("Id is not a zero-sized type (ZST) such as a Tag or Entity or does not implement the Default hook for a non ZST type. Default hooks are automatically implemented if the type has a Default trait.");
-            }
-        }
-    }
     /// Add an id to an entity.
     /// This Id can be a component, a pair, a tag or another entity.
     ///
@@ -42,7 +25,7 @@ impl<'a> EntityView<'a> {
         let id = *id.into();
         let world = self.world.world_ptr_mut();
 
-        Self::check_add_id_validity(world, id);
+        check_add_id_validity(world, id);
 
         unsafe { sys::ecs_add_id(world, *self.id, id) }
         self
@@ -144,11 +127,7 @@ impl<'a> EntityView<'a> {
             let is_second_not_tag = unsafe { sys::ecs_get_typeid(world_ptr, second) != 0 };
 
             if is_second_not_tag {
-                let hooks = unsafe { sys::ecs_get_hooks_id(world_ptr, second) };
-                let is_default_hook = unsafe { (*hooks).ctor.is_some() };
-                if !is_default_hook {
-                    panic!("second id is not a zero-sized type (ZST) such as a Tag or Entity or does not implement the Default hook for a non ZST type. Default hooks are automatically implemented if the type has a Default trait.");
-                }
+                assert!(has_default_hook(world_ptr,second),"second id is not a zero-sized type (ZST) such as a Tag or Entity or does not implement the Default hook for a non ZST type. Default hooks are automatically implemented if the type has a Default trait.");
             }
         }
 
@@ -186,12 +165,8 @@ impl<'a> EntityView<'a> {
                 panic!("first id is a tag type such as a Tag or Entity, but second id is not a zero-sized type (ZST) such as a Tag or Entity or does not implement the Default hook for a non ZST type. Default hooks are automatically implemented if the type has a Default trait.");
             }
         } else {
-            let hooks = unsafe { sys::ecs_get_hooks_id(world_ptr, first) };
-            let is_default_hook = unsafe { (*hooks).ctor.is_some() };
-            if !is_default_hook {
-                panic!("first id is not a zero-sized type (ZST) such as a Tag or Entity and does not implement the Default hook.  Default hooks are automatically implemented if the type has a Default trait.
+            assert!(has_default_hook(world_ptr,first),"first id is not a zero-sized type (ZST) such as a Tag or Entity and does not implement the Default hook.  Default hooks are automatically implemented if the type has a Default trait.
                 Use `set_id` or `set_pair`.");
-            }
         }
 
         // SAFETY: we know that the id is a valid because first is a Type and second has been checked

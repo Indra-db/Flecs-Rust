@@ -348,9 +348,14 @@ fn impl_cached_component_data_struct(
             fn __register_default_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
                 use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
                 const IMPLS_DEFAULT: bool =  #name::IMPLS_DEFAULT;
+                const IS_ENUM: bool =  <#name as ComponentInfo>::IS_ENUM;
 
                 if IMPLS_DEFAULT {
                     flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
+                } else if !IS_ENUM {
+                    flecs_ecs::core::lifecycle_traits::register_ctor_panic_lifecycle_actions::<#name>(
+                        type_hooks,
+                    );
                 }
             }
 
@@ -373,9 +378,14 @@ fn impl_cached_component_data_struct(
             fn __register_default_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
                 use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
                 const IMPLS_DEFAULT: bool =  #name::<'_>::IMPLS_DEFAULT;
+                const IS_ENUM: bool =  <#name::<'_> as ComponentInfo>::IS_ENUM;
 
                 if IMPLS_DEFAULT {
                     flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name #type_generics>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
+                } else if !IS_ENUM {
+                    flecs_ecs::core::lifecycle_traits::register_ctor_panic_lifecycle_actions::<#name #type_generics>(
+                        type_hooks,
+                    );
                 }
             }
 
@@ -725,9 +735,14 @@ fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> proc_macro2::T
             fn __register_default_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
                 use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
                 const IMPLS_DEFAULT: bool =  #name::IMPLS_DEFAULT;
+                const IS_ENUM: bool =  <#name as ComponentInfo>::IS_ENUM;
 
                 if IMPLS_DEFAULT {
                     flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
+                } else if !IS_ENUM {
+                    flecs_ecs::core::lifecycle_traits::register_ctor_panic_lifecycle_actions::<#name>(
+                        type_hooks,
+                    );
                 }
             }
 
