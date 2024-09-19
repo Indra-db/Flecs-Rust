@@ -69,7 +69,7 @@ pub struct Value {
     pub value: i32,
 }
 
-#[derive(Debug, Component, Default, Clone)]
+#[derive(Debug, Component, Default, Clone, Copy)]
 pub struct Position {
     pub x: i32,
     pub y: i32,
