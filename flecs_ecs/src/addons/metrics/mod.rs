@@ -16,7 +16,7 @@ impl<'a> UntypedComponent<'a> {
     /// If no explicit name is provided, the metric name will be derived from the member name.
     /// When the member name is `"value"`, the operation will use the name of the component instead.
     ///
-    /// If the `brief` parameter is provided, it is set on the metric as if [`set_doc_brief`] was called.
+    /// If the `brief` parameter is provided, it is set on the metric as if [`set_doc_brief`][crate::addons::doc::Doc::set_doc_brief] was called.
     /// The brief description can be retrieved using [`get_doc_brief`][crate::addons::doc::Doc::get_doc_brief].
     ///
     /// # Type Parameters
