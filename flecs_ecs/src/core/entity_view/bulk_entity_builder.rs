@@ -353,6 +353,11 @@ impl<'a> BulkEntityBuilder<'a> {
         self.desc.table = std::ptr::null_mut();
         entities
     }
+
+    /// Returns the number of entities to be created.
+    pub fn count(&self) -> u32 {
+        self.desc.count as u32
+    }
 }
 
 impl World {
