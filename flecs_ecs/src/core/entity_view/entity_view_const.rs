@@ -244,17 +244,22 @@ impl<'a> EntityView<'a> {
     //     self.get_name_cstr().unwrap_or(c"")
     // }
 
-    // /// Returns the entity name as a `CStr`.
-    // ///
-    // /// If the entity has no name, this will return `None`.
-    // ///
-    // /// # See also
-    // ///
-    // /// * C++ API: `entity_view::name`
-    // pub fn get_name_cstr(self) -> Option<*const CStr> {
-    //     NonNull::new(unsafe { sys::ecs_get_name(self.world.world_ptr(), *self.id) } as *mut _)
-    //         .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) })
-    // }
+    /// Returns the entity name as a `CStr`.
+    ///
+    /// If the entity has no name, this will return `None`.
+    ///
+    /// # Safety
+    ///
+    /// This function is unsafe because it returns a raw pointer to the C string. You have to manually
+    /// ensure that the C string is valid for the lifetime of the pointer.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::name`
+    pub(crate) unsafe fn get_name_cstr(&self) -> Option<&CStr> {
+        NonNull::new(unsafe { sys::ecs_get_name(self.world.world_ptr(), *self.id) } as *mut _)
+            .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) })
+    }
 
     // /// Returns the entity symbol.
     // ///

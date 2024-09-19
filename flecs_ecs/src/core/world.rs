@@ -144,11 +144,6 @@ impl World {
             //     comp.opaque_func(crate::prelude::meta::flecs_entity_support);
             // });
         }
-
-        #[cfg(feature = "flecs_units")]
-        {
-            self.import::<crate::addons::units::UnitsModule>();
-        }
     }
 
     /// deletes and recreates the world
@@ -330,22 +325,22 @@ impl World {
     ///
     /// let world = World::new();
     ///
-    /// let delta_time = 1.0 / 60.0; // 60 FPS
-    ///
     /// let entity = world.entity().set(Position { x: 5.0, y: 0.0 });
     ///
     /// let sys = world.system::<&Position>().each(|pos| {});
     ///
     /// let world_info = world.info();
     ///
-    /// assert!(world_info.systems_ran_frame == 0);
+    /// assert_eq!(world_info.systems_ran_frame, 0);
     ///
-    /// let delta_time_measured = world.frame_begin(0.0);
+    /// let dt = world.frame_begin(0.0);
     ///
     /// world.frame_end();
     ///
+    /// let world_info = world.info();
+    ///
     /// //TODO
-    /// //assert!(world_info.systems_ran_frame == 1);
+    /// //assert_eq!(world_info.systems_ran_frame, 1);
     /// ```
     ///
     /// # See also
