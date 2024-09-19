@@ -1,8 +1,9 @@
 #[cfg(feature = "flecs_app")]
 use crate::ecs_app_desc_t;
 use crate::{
-    ecs_entity_desc_t, ecs_event_desc_t, ecs_header_t, ecs_observer_desc_t, ecs_query_desc_t,
-    ecs_term_ref_t, ecs_term_t, ecs_type_hooks_t, ecs_type_t, EcsComponent, EcsOpaque, EcsPoly,
+    ecs_alert_desc_t, ecs_alert_severity_filter_t, ecs_entity_desc_t, ecs_event_desc_t,
+    ecs_header_t, ecs_metric_desc_t, ecs_observer_desc_t, ecs_query_desc_t, ecs_term_ref_t,
+    ecs_term_t, ecs_type_hooks_t, ecs_type_t, EcsComponent, EcsOpaque, EcsPoly,
 };
 
 #[cfg(feature = "flecs_system")]
@@ -194,6 +195,51 @@ impl Default for ecs_app_desc_t {
             port: Default::default(),
             init: Default::default(),
             ctx: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for ecs_alert_desc_t {
+    fn default() -> Self {
+        Self {
+            _canary: Default::default(),
+            entity: Default::default(),
+            query: Default::default(),
+            message: core::ptr::null(),
+            doc_name: core::ptr::null(),
+            brief: core::ptr::null(),
+            severity: Default::default(),
+            severity_filters: Default::default(),
+            retain_period: Default::default(),
+            member: Default::default(),
+            id: Default::default(),
+            var: core::ptr::null(),
+        }
+    }
+}
+
+impl Default for ecs_metric_desc_t {
+    fn default() -> Self {
+        Self {
+            _canary: Default::default(),
+            entity: Default::default(),
+            member: Default::default(),
+            dotmember: core::ptr::null(),
+            id: Default::default(),
+            targets: Default::default(),
+            kind: Default::default(),
+            brief: core::ptr::null(),
+        }
+    }
+}
+
+impl Default for ecs_alert_severity_filter_t {
+    fn default() -> Self {
+        Self {
+            severity: Default::default(),
+            with: Default::default(),
+            var: core::ptr::null(),
+            _var_index: Default::default(),
         }
     }
 }
