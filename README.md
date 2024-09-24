@@ -74,7 +74,7 @@ From initial benchmarks and tests, the Rust API is on par with C-level performan
 For detailed feature progress, please visit the [issues](https://github.com/Indra-db/Flecs-Rust/issues) page.
 
 - Core library ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600)
-- Addons ![](https://geps.dev/progress/75?dangerColor=800000&warningColor=ff9900&successColor=006600) (Meta + Json + Script are a WIP, expected to be released by end of August, experimental phase sooner)
+- Addons ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600)
 - Documentation ![](https://geps.dev/progress/65?dangerColor=800000&warningColor=ff9900&successColor=006600) Most functions are documented and contain a C++ alias. Flecs documentation site contains Rust code. The remaining % is for adding mostly doc test examples and refining the Rust docs page.
 - Test suite ![](https://geps.dev/progress/70?dangerColor=800000&warningColor=ff9900&successColor=006600) (entity, query, observers systems test cases are done)
 - Examples ![](https://geps.dev/progress/75?dangerColor=800000&warningColor=ff9900&successColor=006600) For the current feature set, all examples are done.
