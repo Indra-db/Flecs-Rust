@@ -4122,6 +4122,7 @@ void flecs_bootstrap(
     ecs_add_id(world, EcsThis, EcsNotQueryable);
     ecs_add_id(world, EcsWildcard, EcsNotQueryable);
     ecs_add_id(world, EcsAny, EcsNotQueryable);
+    ecs_add_id(world, EcsVariable, EcsNotQueryable);
 
     /* Tag relationships (relationships that should never have data) */
     ecs_add_id(world, EcsIsA, EcsPairIsTag);
@@ -5705,10 +5706,6 @@ void flecs_notify_on_remove(
             return;
         }
 
-        if (diff_flags & EcsTableHasSparse) {
-            flecs_sparse_on_remove(world, table, row, count, removed);
-        }
-    
         if (diff_flags & EcsTableHasUnion) {
             flecs_union_on_remove(world, table, row, count, removed);
         }
@@ -5723,6 +5720,10 @@ void flecs_notify_on_remove(
                 .count = count,
                 .observable = world
             });
+        }
+
+        if (diff_flags & EcsTableHasSparse) {
+            flecs_sparse_on_remove(world, table, row, count, removed);
         }
     }
 }
@@ -6251,6 +6252,7 @@ void flecs_invoke_hook(
     it.table = table;
     it.trs[0] = tr;
     it.row_fields = !!(((ecs_id_record_t*)tr->hdr.cache)->flags & EcsIdIsSparse);
+    it.ref_fields = it.row_fields;
     it.sizes = ECS_CONST_CAST(ecs_size_t*, &ti->size);
     it.ids[0] = id;
     it.event = event;
@@ -6260,6 +6262,7 @@ void flecs_invoke_hook(
     it.count = count;
     it.offset = row;
     it.flags = EcsIterIsValid;
+
     hook(&it);
     ecs_iter_fini(&it);
 
@@ -6602,6 +6605,15 @@ int flecs_traverse_from_expr(
             if (!id) {
                 break;
             }
+
+            if (!ecs_id_is_valid(world, id)) {
+                char *idstr = ecs_id_str(world, id);
+                ecs_parser_error(name, expr, (ptr - expr), 
+                    "id %s is invalid for add expression", idstr);
+                ecs_os_free(idstr);
+                goto error;
+            }
+
             ecs_vec_append_t(&world->allocator, ids, ecs_id_t)[0] = id;
         }
 
@@ -7940,7 +7952,9 @@ ecs_entity_t ecs_clone(
         .added_flags = dst_table->flags & EcsTableAddEdgeFlags
     };
     ecs_record_t *dst_r = flecs_entities_get(world, dst);
-    flecs_new_entity(world, dst, dst_r, dst_table, &diff, true, 0);
+    /* Note 'ctor' parameter below is set to 'false' if the value will be copied, since flecs_table_move
+       will call a copy constructor */
+    flecs_new_entity(world, dst, dst_r, dst_table, &diff, !copy_value, 0);
     int32_t row = ECS_RECORD_TO_ROW(dst_r->row);
 
     if (copy_value) {
@@ -9993,13 +10007,13 @@ void flecs_cmd_batch_for_entity(
         } while ((cur = next_for_entity));
     }
 
-    if (added.count) {
+    if (added.count && r->table) {
         ecs_table_diff_t add_diff = ECS_TABLE_DIFF_INIT;
         add_diff.added = added;
         add_diff.added_flags = diff->added_flags;
 
         flecs_defer_begin(world, world->stages[0]);
-        flecs_notify_on_add(world, table, start_table, 
+        flecs_notify_on_add(world, r->table, start_table,
             ECS_RECORD_TO_ROW(r->row), 1, &add_diff, 0, set_mask, true, false);
         flecs_defer_end(world, world->stages[0]);
         if (r->row & EcsEntityIsTraversable) {
@@ -10892,7 +10906,7 @@ ecs_entity_t ecs_add_path_w_sep(
      * immediately updated. Without this, we could create multiple entities for
      * the same name in a single command queue. */
     bool suspend_defer = ecs_is_deferred(world) &&
-        (ecs_get_stage_count(world) <= 1);
+        !(world->flags & EcsWorldMultiThreaded);
         
     ecs_entity_t cur = parent;
     char *name = NULL;
@@ -10969,6 +10983,9 @@ ecs_entity_t ecs_new_from_path_w_sep(
  * @brief Id utilities.
  */
 
+
+#ifdef FLECS_SCRIPT
+#endif
 
 bool ecs_id_match(
     ecs_id_t id,
@@ -11094,6 +11111,29 @@ ecs_flags32_t ecs_id_get_flags(
     } else {
         return 0;
     }
+}
+
+ecs_id_t ecs_id_from_str(
+    const ecs_world_t *world,
+    const char *expr)
+{
+#ifdef FLECS_SCRIPT
+    ecs_id_t result;
+
+    /* Temporarily disable parser logging */
+    int prev_level = ecs_log_set_level(-3);
+    if (!flecs_id_parse(world, NULL, expr, &result)) {
+        /* Invalid expression */
+        ecs_log_set_level(prev_level);
+        return 0;
+    }
+    ecs_log_set_level(prev_level);
+    return result;
+#else
+    (void)world;
+    (void)expr;
+    ecs_abort(ECS_UNSUPPORTED, "ecs_id_from_str requires FLECS_SCRIPT addon");
+#endif
 }
 
 /**
@@ -11281,7 +11321,7 @@ void* ecs_field_at_w_size(
 
     ecs_entity_t src = it->sources[index];
     if (!src) {
-        src = ecs_table_entities(it->table)[row];
+        src = ecs_table_entities(it->table)[row + it->offset];
     }
 
     return flecs_sparse_get_any(idr->sparse, flecs_uto(int32_t, size), src);
@@ -12745,6 +12785,7 @@ void flecs_emit_propagate_id(
         it->other_table = NULL;
         it->offset = 0;
         it->count = entity_count;
+        it->up_fields = 1;
         if (entity_count) {
             it->entities = ecs_table_entities(table);
         }
@@ -12783,6 +12824,7 @@ void flecs_emit_propagate_id(
     }
 
     it->event_cur = event_cur;
+    it->up_fields = 0;
 }
 
 static
@@ -13077,6 +13119,7 @@ void flecs_emit_forward_id(
     it->sources[0] = tgt;
     it->event_id = id;
     ECS_CONST_CAST(int32_t*, it->sizes)[0] = 0; /* safe, owned by observer */
+    it->up_fields = 1;
 
     int32_t storage_i = ecs_table_type_to_column_index(tgt_table, column);
     if (storage_i != -1) {
@@ -13137,6 +13180,8 @@ void flecs_emit_forward_id(
             it->trs[0] = base_tr;
         }
     }
+
+    it->up_fields = 0;
 }
 
 static
@@ -14278,13 +14323,13 @@ void flecs_observer_invoke(
             ECS_INTERNAL_ERROR, NULL);
     }
 
-    ecs_termset_t set_fields = it->set_fields;
-    // it->set_fields = 1; /* Field 0 is set otherwise we wouldn't be triggering */
+    ecs_termset_t row_fields = it->row_fields;
+    it->row_fields = query->row_fields;
 
     bool match_this = query->flags & EcsQueryMatchThis;
     if (match_this) {
         callback(it);
-        query->eval_count ++;
+        ecs_os_inc(&query->eval_count);
     } else {
         ecs_entity_t observer_src = ECS_TERM_REF_ID(&term->src);
         if (observer_src && !(term->src.id & EcsIsEntity)) {
@@ -14300,7 +14345,7 @@ void flecs_observer_invoke(
             it->entities = &e;
             if (!observer_src) {
                 callback(it);
-                query->eval_count ++;
+                ecs_os_inc(&query->eval_count);
             } else if (observer_src == e) {
                 ecs_entity_t dummy = 0;
                 it->entities = &dummy;
@@ -14309,7 +14354,7 @@ void flecs_observer_invoke(
                 }
 
                 callback(it);
-                query->eval_count ++;
+                ecs_os_inc(&query->eval_count);
                 it->sources[0] = src;
                 break;
             }
@@ -14319,7 +14364,7 @@ void flecs_observer_invoke(
         it->count = count;
     }
 
-    it->set_fields = set_fields;
+    it->row_fields = row_fields;
 
     flecs_stage_set_system(world->stages[0], old_system);
 
@@ -14569,7 +14614,8 @@ void flecs_multi_observer_builtin_run(ecs_iter_t *it) {
 static
 void flecs_observer_yield_existing(
     ecs_world_t *world,
-    ecs_observer_t *o)
+    ecs_observer_t *o,
+    bool yield_on_remove)
 {
     ecs_run_action_t run = o->run;
     if (!run) {
@@ -14584,6 +14630,19 @@ void flecs_observer_yield_existing(
      * the event, if the event is iterable. */
     int i, count = o->event_count;
     for (i = 0; i < count; i ++) {
+        ecs_entity_t event = o->events[i];
+
+        /* We only yield for OnRemove events if the observer is deleted. */
+        if (event == EcsOnRemove) {
+            if (!yield_on_remove) {
+                continue;
+            }
+        } else {
+            if (yield_on_remove) {
+                continue;
+            }
+        }
+
         ecs_iter_t it = ecs_query_iter(world, o->query);
         it.system = o->entity;
         it.ctx = o;
@@ -14917,6 +14976,8 @@ ecs_observer_t* flecs_observer_init(
     impl->term_index = desc->term_index_;
     impl->flags = desc->flags_;
 
+    bool yield_on_create = false;
+
     /* Check if observer is monitor. Monitors are created as multi observers
      * since they require pre/post checking of the filter to test if the
      * entity is entering/leaving the monitor. */
@@ -14935,8 +14996,19 @@ ecs_observer_t* flecs_observer_init(
             o->events[1] = EcsOnRemove;
             o->event_count ++;
             impl->flags |= EcsObserverIsMonitor;
+            if (desc->yield_existing) {
+                impl->flags |= EcsObserverYieldOnDelete;
+                yield_on_create = true;
+            }
         } else {
             o->events[i] = event;
+            if (desc->yield_existing) {
+                if (event == EcsOnRemove) {
+                    impl->flags |= EcsObserverYieldOnDelete;
+                } else {
+                    yield_on_create = true;
+                }
+            }
         }
 
         o->event_count ++;
@@ -14970,8 +15042,8 @@ ecs_observer_t* flecs_observer_init(
         }
     }
 
-    if (desc->yield_existing) {
-        flecs_observer_yield_existing(world, o);
+    if (yield_on_create) {
+        flecs_observer_yield_existing(world, o, false);
     }
 
     return o;
@@ -15095,6 +15167,10 @@ void flecs_observer_fini(
     ecs_assert(o->query != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_world_t *world = o->query->world;
     ecs_observer_impl_t *impl = flecs_observer_impl(o);
+
+    if (impl->flags & EcsObserverYieldOnDelete) {
+        flecs_observer_yield_existing(world, o, true);
+    }
 
     if (impl->flags & EcsObserverIsMulti) {
         ecs_observer_t **children = ecs_vec_first(&impl->children);
@@ -17659,142 +17735,142 @@ ECS_TAG_DECLARE(EcsAlertError);
 ECS_TAG_DECLARE(EcsAlertCritical);
 #endif
 #ifdef FLECS_UNITS
-ECS_DECLARE(EcsUnitPrefixes);
+ecs_entity_t EcsUnitPrefixes;
 
-ECS_DECLARE(EcsYocto);
-ECS_DECLARE(EcsZepto);
-ECS_DECLARE(EcsAtto);
-ECS_DECLARE(EcsFemto);
-ECS_DECLARE(EcsPico);
-ECS_DECLARE(EcsNano);
-ECS_DECLARE(EcsMicro);
-ECS_DECLARE(EcsMilli);
-ECS_DECLARE(EcsCenti);
-ECS_DECLARE(EcsDeci);
-ECS_DECLARE(EcsDeca);
-ECS_DECLARE(EcsHecto);
-ECS_DECLARE(EcsKilo);
-ECS_DECLARE(EcsMega);
-ECS_DECLARE(EcsGiga);
-ECS_DECLARE(EcsTera);
-ECS_DECLARE(EcsPeta);
-ECS_DECLARE(EcsExa);
-ECS_DECLARE(EcsZetta);
-ECS_DECLARE(EcsYotta);
+ecs_entity_t EcsYocto;
+ecs_entity_t EcsZepto;
+ecs_entity_t EcsAtto;
+ecs_entity_t EcsFemto;
+ecs_entity_t EcsPico;
+ecs_entity_t EcsNano;
+ecs_entity_t EcsMicro;
+ecs_entity_t EcsMilli;
+ecs_entity_t EcsCenti;
+ecs_entity_t EcsDeci;
+ecs_entity_t EcsDeca;
+ecs_entity_t EcsHecto;
+ecs_entity_t EcsKilo;
+ecs_entity_t EcsMega;
+ecs_entity_t EcsGiga;
+ecs_entity_t EcsTera;
+ecs_entity_t EcsPeta;
+ecs_entity_t EcsExa;
+ecs_entity_t EcsZetta;
+ecs_entity_t EcsYotta;
 
-ECS_DECLARE(EcsKibi);
-ECS_DECLARE(EcsMebi);
-ECS_DECLARE(EcsGibi);
-ECS_DECLARE(EcsTebi);
-ECS_DECLARE(EcsPebi);
-ECS_DECLARE(EcsExbi);
-ECS_DECLARE(EcsZebi);
-ECS_DECLARE(EcsYobi);
+ecs_entity_t EcsKibi;
+ecs_entity_t EcsMebi;
+ecs_entity_t EcsGibi;
+ecs_entity_t EcsTebi;
+ecs_entity_t EcsPebi;
+ecs_entity_t EcsExbi;
+ecs_entity_t EcsZebi;
+ecs_entity_t EcsYobi;
 
-ECS_DECLARE(EcsDuration);
-    ECS_DECLARE(EcsPicoSeconds);
-    ECS_DECLARE(EcsNanoSeconds);
-    ECS_DECLARE(EcsMicroSeconds);
-    ECS_DECLARE(EcsMilliSeconds);
-    ECS_DECLARE(EcsSeconds);
-    ECS_DECLARE(EcsMinutes);
-    ECS_DECLARE(EcsHours);
-    ECS_DECLARE(EcsDays);
+ecs_entity_t EcsDuration;
+    ecs_entity_t EcsPicoSeconds;
+    ecs_entity_t EcsNanoSeconds;
+    ecs_entity_t EcsMicroSeconds;
+    ecs_entity_t EcsMilliSeconds;
+    ecs_entity_t EcsSeconds;
+    ecs_entity_t EcsMinutes;
+    ecs_entity_t EcsHours;
+    ecs_entity_t EcsDays;
 
-ECS_DECLARE(EcsTime);
-    ECS_DECLARE(EcsDate);
+ecs_entity_t EcsTime;
+    ecs_entity_t EcsDate;
 
-ECS_DECLARE(EcsMass);
-    ECS_DECLARE(EcsGrams);
-    ECS_DECLARE(EcsKiloGrams);
+ecs_entity_t EcsMass;
+    ecs_entity_t EcsGrams;
+    ecs_entity_t EcsKiloGrams;
 
-ECS_DECLARE(EcsElectricCurrent);
-    ECS_DECLARE(EcsAmpere);
+ecs_entity_t EcsElectricCurrent;
+    ecs_entity_t EcsAmpere;
 
-ECS_DECLARE(EcsAmount);
-    ECS_DECLARE(EcsMole);
+ecs_entity_t EcsAmount;
+    ecs_entity_t EcsMole;
 
-ECS_DECLARE(EcsLuminousIntensity);
-    ECS_DECLARE(EcsCandela);
+ecs_entity_t EcsLuminousIntensity;
+    ecs_entity_t EcsCandela;
 
-ECS_DECLARE(EcsForce);
-    ECS_DECLARE(EcsNewton);
+ecs_entity_t EcsForce;
+    ecs_entity_t EcsNewton;
 
-ECS_DECLARE(EcsLength);
-    ECS_DECLARE(EcsMeters);
-        ECS_DECLARE(EcsPicoMeters);
-        ECS_DECLARE(EcsNanoMeters);
-        ECS_DECLARE(EcsMicroMeters);
-        ECS_DECLARE(EcsMilliMeters);
-        ECS_DECLARE(EcsCentiMeters);
-        ECS_DECLARE(EcsKiloMeters);
-    ECS_DECLARE(EcsMiles);
-    ECS_DECLARE(EcsPixels);
+ecs_entity_t EcsLength;
+    ecs_entity_t EcsMeters;
+        ecs_entity_t EcsPicoMeters;
+        ecs_entity_t EcsNanoMeters;
+        ecs_entity_t EcsMicroMeters;
+        ecs_entity_t EcsMilliMeters;
+        ecs_entity_t EcsCentiMeters;
+        ecs_entity_t EcsKiloMeters;
+    ecs_entity_t EcsMiles;
+    ecs_entity_t EcsPixels;
 
-ECS_DECLARE(EcsPressure);
-    ECS_DECLARE(EcsPascal);
-    ECS_DECLARE(EcsBar);
+ecs_entity_t EcsPressure;
+    ecs_entity_t EcsPascal;
+    ecs_entity_t EcsBar;
 
-ECS_DECLARE(EcsSpeed);
-    ECS_DECLARE(EcsMetersPerSecond);
-    ECS_DECLARE(EcsKiloMetersPerSecond);
-    ECS_DECLARE(EcsKiloMetersPerHour);
-    ECS_DECLARE(EcsMilesPerHour);
+ecs_entity_t EcsSpeed;
+    ecs_entity_t EcsMetersPerSecond;
+    ecs_entity_t EcsKiloMetersPerSecond;
+    ecs_entity_t EcsKiloMetersPerHour;
+    ecs_entity_t EcsMilesPerHour;
 
-ECS_DECLARE(EcsAcceleration);
+ecs_entity_t EcsAcceleration;
 
-ECS_DECLARE(EcsTemperature);
-    ECS_DECLARE(EcsKelvin);
-    ECS_DECLARE(EcsCelsius);
-    ECS_DECLARE(EcsFahrenheit);
+ecs_entity_t EcsTemperature;
+    ecs_entity_t EcsKelvin;
+    ecs_entity_t EcsCelsius;
+    ecs_entity_t EcsFahrenheit;
 
-ECS_DECLARE(EcsData);
-    ECS_DECLARE(EcsBits);
-        ECS_DECLARE(EcsKiloBits);
-        ECS_DECLARE(EcsMegaBits);
-        ECS_DECLARE(EcsGigaBits);
-    ECS_DECLARE(EcsBytes);
-        ECS_DECLARE(EcsKiloBytes);
-        ECS_DECLARE(EcsMegaBytes);
-        ECS_DECLARE(EcsGigaBytes);
-        ECS_DECLARE(EcsKibiBytes);
-        ECS_DECLARE(EcsGibiBytes);
-        ECS_DECLARE(EcsMebiBytes);
+ecs_entity_t EcsData;
+    ecs_entity_t EcsBits;
+        ecs_entity_t EcsKiloBits;
+        ecs_entity_t EcsMegaBits;
+        ecs_entity_t EcsGigaBits;
+    ecs_entity_t EcsBytes;
+        ecs_entity_t EcsKiloBytes;
+        ecs_entity_t EcsMegaBytes;
+        ecs_entity_t EcsGigaBytes;
+        ecs_entity_t EcsKibiBytes;
+        ecs_entity_t EcsGibiBytes;
+        ecs_entity_t EcsMebiBytes;
 
-ECS_DECLARE(EcsDataRate);
-    ECS_DECLARE(EcsBitsPerSecond);
-    ECS_DECLARE(EcsKiloBitsPerSecond);
-    ECS_DECLARE(EcsMegaBitsPerSecond);
-    ECS_DECLARE(EcsGigaBitsPerSecond);
-    ECS_DECLARE(EcsBytesPerSecond);
-    ECS_DECLARE(EcsKiloBytesPerSecond);
-    ECS_DECLARE(EcsMegaBytesPerSecond);
-    ECS_DECLARE(EcsGigaBytesPerSecond);
+ecs_entity_t EcsDataRate;
+    ecs_entity_t EcsBitsPerSecond;
+    ecs_entity_t EcsKiloBitsPerSecond;
+    ecs_entity_t EcsMegaBitsPerSecond;
+    ecs_entity_t EcsGigaBitsPerSecond;
+    ecs_entity_t EcsBytesPerSecond;
+    ecs_entity_t EcsKiloBytesPerSecond;
+    ecs_entity_t EcsMegaBytesPerSecond;
+    ecs_entity_t EcsGigaBytesPerSecond;
 
-ECS_DECLARE(EcsPercentage);
+ecs_entity_t EcsPercentage;
 
-ECS_DECLARE(EcsAngle);
-    ECS_DECLARE(EcsRadians);
-    ECS_DECLARE(EcsDegrees);
+ecs_entity_t EcsAngle;
+    ecs_entity_t EcsRadians;
+    ecs_entity_t EcsDegrees;
 
-ECS_DECLARE(EcsColor);
-    ECS_DECLARE(EcsColorRgb);
-    ECS_DECLARE(EcsColorHsl);
-    ECS_DECLARE(EcsColorCss);
+ecs_entity_t EcsColor;
+    ecs_entity_t EcsColorRgb;
+    ecs_entity_t EcsColorHsl;
+    ecs_entity_t EcsColorCss;
 
-ECS_DECLARE(EcsBel);
-ECS_DECLARE(EcsDeciBel);
+ecs_entity_t EcsBel;
+ecs_entity_t EcsDeciBel;
 
-ECS_DECLARE(EcsFrequency);
-    ECS_DECLARE(EcsHertz);
-    ECS_DECLARE(EcsKiloHertz);
-    ECS_DECLARE(EcsMegaHertz);
-    ECS_DECLARE(EcsGigaHertz);
+ecs_entity_t EcsFrequency;
+    ecs_entity_t EcsHertz;
+    ecs_entity_t EcsKiloHertz;
+    ecs_entity_t EcsMegaHertz;
+    ecs_entity_t EcsGigaHertz;
 
-ECS_DECLARE(EcsUri);
-    ECS_DECLARE(EcsUriHyperlink);
-    ECS_DECLARE(EcsUriImage);
-    ECS_DECLARE(EcsUriFile);
+ecs_entity_t EcsUri;
+    ecs_entity_t EcsUriHyperlink;
+    ecs_entity_t EcsUriImage;
+    ecs_entity_t EcsUriFile;
 #endif
 
 /* -- Private functions -- */
@@ -17859,7 +17935,7 @@ ecs_world_t* flecs_suspend_readonly(
 
     /* Cannot suspend when running with multiple threads */
     ecs_assert(!(world->flags & EcsWorldReadonly) ||
-        (ecs_get_stage_count(world) <= 1), ECS_INVALID_WHILE_READONLY, NULL);
+        !(world->flags & EcsWorldMultiThreaded), ECS_INVALID_WHILE_READONLY, NULL);
 
     state->is_readonly = is_readonly;
     state->is_deferred = stage->defer != 0;
@@ -18680,8 +18756,10 @@ void ecs_set_hooks_id(
 
     if (h->ctx) ti->hooks.ctx = h->ctx;
     if (h->binding_ctx) ti->hooks.binding_ctx = h->binding_ctx;
+    if (h->lifecycle_ctx) ti->hooks.lifecycle_ctx = h->lifecycle_ctx;
     if (h->ctx_free) ti->hooks.ctx_free = h->ctx_free;
     if (h->binding_ctx_free) ti->hooks.binding_ctx_free = h->binding_ctx_free;
+    if (h->lifecycle_ctx_free) ti->hooks.lifecycle_ctx_free = h->lifecycle_ctx_free;
 
     /* If no constructor is set, invoking any of the other lifecycle actions
      * is not safe as they will potentially access uninitialized memory. For
@@ -18785,6 +18863,9 @@ void ecs_run_post_frame(
     ecs_check(action != NULL, ECS_INVALID_PARAMETER, NULL);
 
     ecs_stage_t *stage = flecs_stage_from_world(&world);
+    ecs_check((world->flags & EcsWorldFrameInProgress), ECS_INVALID_OPERATION, 
+        "cannot register post frame action while frame is not in progress");
+
     ecs_action_elem_t *elem = ecs_vec_append_t(&stage->allocator,
         &stage->post_frame_actions, ecs_action_elem_t);
     ecs_assert(elem != NULL, ECS_INTERNAL_ERROR, NULL);
@@ -19064,8 +19145,6 @@ void ecs_set_entity_range(
 {
     flecs_poly_assert(world, ecs_world_t);
     ecs_check(!id_end || id_end > id_start, ECS_INVALID_PARAMETER, NULL);
-    ecs_check(!id_end || id_end > flecs_entities_max_id(world),
-        ECS_INVALID_PARAMETER, NULL);
 
     if (id_start == 0) {
       id_start = flecs_entities_max_id(world) + 1;
@@ -19075,8 +19154,6 @@ void ecs_set_entity_range(
     uint32_t end = (uint32_t)id_end;
 
     flecs_entities_max_id(world) = start - 1;
-    ecs_check(!id_end || id_end > flecs_entities_max_id(world),
-        ECS_INVALID_PARAMETER, NULL);
 
     world->info.min_id = start;
     world->info.max_id = end;
@@ -19130,7 +19207,6 @@ ecs_type_info_t* flecs_type_info_ensure(
             &world->type_info, ecs_type_info_t, component);
         ecs_assert(ti_mut != NULL, ECS_INTERNAL_ERROR, NULL);
         ti_mut->component = component;
-        ti_mut->world = world;
     } else {
         ti_mut = ECS_CONST_CAST(ecs_type_info_t*, ti);
     }
@@ -19222,6 +19298,9 @@ void flecs_type_info_fini(
     }
     if (ti->hooks.binding_ctx_free) {
         ti->hooks.binding_ctx_free(ti->hooks.binding_ctx);
+    }
+    if (ti->hooks.lifecycle_ctx_free) {
+        ti->hooks.lifecycle_ctx_free(ti->hooks.lifecycle_ctx);
     }
     if (ti->name) {
         /* Safe to cast away const, world has ownership over string */
@@ -19357,6 +19436,8 @@ ecs_ftime_t ecs_frame_begin(
     flecs_poly_assert(world, ecs_world_t);
     ecs_check(!(world->flags & EcsWorldReadonly), ECS_INVALID_OPERATION, 
         "cannot begin frame while world is in readonly mode");
+    ecs_check(!(world->flags & EcsWorldFrameInProgress), ECS_INVALID_OPERATION, 
+        "cannot begin frame while frame is already in progress");
     ecs_check(ECS_NEQZERO(user_delta_time) || ecs_os_has_time(), 
         ECS_MISSING_OS_API, "get_time");
 
@@ -19381,6 +19462,8 @@ ecs_ftime_t ecs_frame_begin(
 
     ecs_run_aperiodic(world, 0);
 
+    world->flags |= EcsWorldFrameInProgress;
+
     return world->info.delta_time;
 error:
     return (ecs_ftime_t)0;
@@ -19392,6 +19475,8 @@ void ecs_frame_end(
     flecs_poly_assert(world, ecs_world_t);
     ecs_check(!(world->flags & EcsWorldReadonly), ECS_INVALID_OPERATION, 
         "cannot end frame while world is in readonly mode");
+    ecs_check((world->flags & EcsWorldFrameInProgress), ECS_INVALID_OPERATION, 
+        "cannot end frame while frame is not in progress");
 
     world->info.frame_count_total ++;
     
@@ -19405,6 +19490,9 @@ void ecs_frame_end(
     /* Reset command handler each frame */
     world->on_commands_active = NULL;
     world->on_commands_ctx_active = NULL;
+
+    world->flags &= ~EcsWorldFrameInProgress;
+    
 error:
     return;
 }
@@ -31913,13 +32001,13 @@ int flecs_query_set_caching_policy(
     const ecs_query_desc_t *desc)
 {
     ecs_query_cache_kind_t kind = desc->cache_kind;
+    bool group_order_by = desc->group_by || desc->group_by_callback || 
+            desc->order_by || desc->order_by_callback;
 
     /* If caching policy is default, try to pick a policy that does the right
      * thing in most cases. */
     if (kind == EcsQueryCacheDefault) {
-        if (desc->entity || desc->group_by || desc->group_by_callback || 
-            desc->order_by || desc->order_by_callback)
-        {
+        if (desc->entity || group_order_by) {
             /* If the query is created with an entity handle (typically 
              * indicating that the query is named or belongs to a system) the
              * chance is very high that the query will be reused, so enable
@@ -31967,8 +32055,29 @@ int flecs_query_set_caching_policy(
             /* Same for when the query has no cacheable terms */
             impl->pub.cache_kind = EcsQueryCacheNone;
         } else {
-            /* Part of the query is cacheable */
-            impl->pub.cache_kind = EcsQueryCacheAuto;
+            /* Part of the query is cacheable. Make sure to only create a cache
+             * if the cacheable part of the query contains not just not/optional
+             * terms, as this would build a cache that contains all tables. */
+            int32_t not_optional_terms = 0, cacheable_terms = 0;
+            if (!group_order_by) {
+                int32_t i, term_count = impl->pub.term_count;
+                const ecs_term_t *terms = impl->pub.terms;
+                for (i = 0; i < term_count; i ++) {
+                    const ecs_term_t *term = &terms[i];
+                    if (term->flags_ & EcsTermIsCacheable) {
+                        cacheable_terms ++;
+                        if (term->oper == EcsNot || term->oper == EcsOptional) {
+                            not_optional_terms ++;
+                        }
+                    }
+                }
+            }
+
+            if (group_order_by || cacheable_terms != not_optional_terms) {
+                impl->pub.cache_kind = EcsQueryCacheAuto;
+            } else {
+                impl->pub.cache_kind = EcsQueryCacheNone;
+            }
         }
     }
 
@@ -33903,29 +34012,29 @@ int flecs_term_finalize(
         ecs_record_t *first_record = flecs_entities_get(world, first_entity);
         ecs_table_t *first_table = first_record ? first_record->table : NULL;
         if (first_table) {
-            /* Add traversal flags for transitive relationships */
-            if (ecs_term_ref_is_set(second) && !((second_flags & EcsTraverseFlags) == EcsSelf)) {
-                if (!((src->id & EcsIsVariable) && (src_id == EcsAny))) {
-                    if (!((second->id & EcsIsVariable) && (second_id == EcsAny))) {
-                        if (ecs_table_has_id(world, first_table, EcsTransitive)) {
-                            term->flags_ |= EcsTermTransitive;
+            if (ecs_term_ref_is_set(second)) {
+                /* Add traversal flags for transitive relationships */
+                if (!((second_flags & EcsTraverseFlags) == EcsSelf)) {
+                    if (!((src->id & EcsIsVariable) && (src_id == EcsAny))) {
+                        if (!((second->id & EcsIsVariable) && (second_id == EcsAny))) {
+                            if (ecs_table_has_id(world, first_table, EcsTransitive)) {
+                                term->flags_ |= EcsTermTransitive;
+                            }
+
+                            if (ecs_table_has_id(world, first_table, EcsReflexive)) {
+                                term->flags_ |= EcsTermReflexive;
+                            }
                         }
                     }
                 }
-            }
 
-            if (ECS_IS_PAIR(term->id)) {
-                if (ecs_table_has_id(world, first_table, EcsReflexive)) {
-                    term->flags_ |= EcsTermReflexive;
-                }
-            }
-
-            /* Check if term is union */
-            if (ecs_table_has_id(world, first_table, EcsUnion)) {
-                /* Any wildcards don't need special handling as they just return
-                 * (Rel, *). */
-                if (ECS_IS_PAIR(term->id) && ECS_PAIR_SECOND(term->id) != EcsAny) {
-                    term->flags_ |= EcsTermIsUnion;
+                /* Check if term is union */
+                if (ecs_table_has_id(world, first_table, EcsUnion)) {
+                    /* Any wildcards don't need special handling as they just return
+                    * (Rel, *). */
+                    if (ECS_IS_PAIR(term->id) && ECS_PAIR_SECOND(term->id) != EcsAny) {
+                        term->flags_ |= EcsTermIsUnion;
+                    }
                 }
             }
         }
@@ -33997,7 +34106,7 @@ int flecs_term_finalize(
 
     if (term->flags_ & EcsTermTransitive) {
         trivial_term = false;
-        cacheable_term = false;
+        cacheable_term = false; 
     }
 
     if (term->flags_ & EcsTermIdInherited) {
@@ -34173,6 +34282,7 @@ int flecs_query_finalize_terms(
     }
 
     bool cacheable = true;
+    bool match_nothing = true;
     for (i = 0; i < term_count; i ++) {
         ecs_term_t *term = &terms[i];
         bool prev_is_or = i && term[-1].oper == EcsOr;
@@ -34181,6 +34291,11 @@ int flecs_query_finalize_terms(
 
         if (flecs_term_finalize(world, term, &ctx)) {
             return -1;
+        }
+
+        if (term->src.id != EcsIsEntity) {
+            /* If term doesn't match 0 entity, query doesn't match nothing */
+            match_nothing = false;
         }
 
         if (scope_nesting) {
@@ -34509,6 +34624,9 @@ int flecs_query_finalize_terms(
         cacheable && (cacheable_terms == term_count) &&
             !desc->order_by_callback);
 
+    /* If none of the terms match a source, the query matches nothing */
+    ECS_BIT_COND(q->flags, EcsQueryMatchNothing, match_nothing);
+
     for (i = 0; i < q->term_count; i ++) {
         ecs_term_t *term = &q->terms[i];
         /* Post process term names in case they were used to create variables */
@@ -34702,17 +34820,20 @@ bool flecs_query_finalize_simple(
             if (idr->flags & EcsIdIsSparse) {
                 term->flags_ |= EcsTermIsSparse;
                 cacheable = false; trivial = false;
+                q->row_fields |= flecs_uto(uint32_t, 1llu << i);
             }
         }
 
         if (ECS_IS_PAIR(id)) {
             if (ecs_has_id(world, first, EcsTransitive)) {
                 term->flags_ |= EcsTermTransitive;
-                cacheable = false; trivial = false;
+                trivial = false;
+                cacheable = false; 
             }
             if (ecs_has_id(world, first, EcsReflexive)) {
                 term->flags_ |= EcsTermReflexive;
-                cacheable = false; trivial = false;
+                trivial = false;
+                cacheable = false; 
             }
         }
 
@@ -35116,6 +35237,11 @@ uint64_t flecs_entity_index_new_id(
 
     /* Create new id */
     uint32_t id = (uint32_t)++ index->max_id;
+
+    /* Make sure id hasn't been issued before */
+    ecs_assert(!flecs_entity_index_exists(index, id), ECS_INVALID_OPERATION, 
+        "new entity %u id already in use (likely due to overlapping ranges)", (uint32_t)id);
+
     ecs_vec_append_t(index->allocator, &index->dense, uint64_t)[0] = id;
 
     ecs_entity_index_page_t *page = flecs_entity_index_ensure_page(index, id);
@@ -35147,6 +35273,11 @@ uint64_t* flecs_entity_index_new_ids(
     int32_t i, to_add = new_count - dense_count;
     for (i = 0; i < to_add; i ++) {
         uint32_t id = (uint32_t)++ index->max_id;
+
+        /* Make sure id hasn't been issued before */
+        ecs_assert(!flecs_entity_index_exists(index, id), ECS_INVALID_OPERATION, 
+            "new entity %u id already in use (likely due to overlapping ranges)", (uint32_t)id);
+
         int32_t dense = dense_count + i;
         ecs_vec_get_t(&index->dense, uint64_t, dense)[0] = id;
         ecs_entity_index_page_t *page = flecs_entity_index_ensure_page(index, id);
@@ -38206,7 +38337,6 @@ int32_t ecs_table_get_type_index(
 {
     flecs_poly_assert(world, ecs_world_t);
     ecs_check(table != NULL, ECS_INVALID_PARAMETER, NULL);
-    ecs_check(ecs_id_is_valid(world, id), ECS_INVALID_PARAMETER, NULL);
 
     if (id < FLECS_HI_COMPONENT_ID) {
         int16_t res = table->component_map[id];
@@ -42088,6 +42218,9 @@ int flecs_expr_ser_primitive(
     const void *base, 
     ecs_strbuf_t *str,
     bool is_expr);
+
+void flecs_rtt_init_default_hooks(
+    ecs_iter_t *it);
 
 #endif
 
@@ -49428,14 +49561,16 @@ int flecs_init_type(
 
     EcsType *meta_type = ecs_ensure(world, type, EcsType);
     if (meta_type->kind == 0) {
+        /* Determine if this is an existing type or a reflection-defined type (runtime type) */
         meta_type->existing = ecs_has(world, type, EcsComponent);
 
-        /* Ensure that component has a default constructor, to prevent crashing
-         * serializers on uninitialized values. */
+        /* For existing types, ensure that component has a default constructor, to prevent crashing
+         * serializers on uninitialized values. For runtime types (rtt), the default hooks are set
+         by flecs_meta_rtt_init_default_hooks */
         ecs_type_info_t *ti = flecs_type_info_ensure(world, type);
-        if (!ti->hooks.ctor) {
+        if (meta_type->existing && !ti->hooks.ctor) {
             ti->hooks.ctor = flecs_default_ctor;
-        }
+        } 
     } else {
         if (meta_type->kind != kind) {
             ecs_err("type '%s' reregistered as '%s' (was '%s')", 
@@ -50275,30 +50410,6 @@ void flecs_unit_quantity_monitor(ecs_iter_t *it) {
 }
 
 static
-void ecs_meta_type_init_default_ctor(ecs_iter_t *it) {
-    ecs_world_t *world = it->world;
-    EcsType *type = ecs_field(it, EcsType, 0);
-
-    int i;
-    for (i = 0; i < it->count; i ++) {
-        /* If a component is defined from reflection data, configure it with the
-         * default constructor. This ensures that a new component value does not
-         * contain uninitialized memory, which could cause serializers to crash
-         * when for example inspecting string fields. */
-        if (!type->existing) {
-            ecs_entity_t e = it->entities[i];
-            const ecs_type_info_t *ti = ecs_get_type_info(world, e);
-            if (!ti || !ti->hooks.ctor) {
-                ecs_set_hooks_id(world, e, 
-                    &(ecs_type_hooks_t){ 
-                        .ctor = flecs_default_ctor
-                    });
-            }
-        }
-    }
-}
-
-static
 void flecs_member_on_set(ecs_iter_t *it) {
     EcsMember *mbr = ecs_field(it, EcsMember, 0);
     if (!mbr->count) {
@@ -50560,7 +50671,7 @@ void FlecsMetaImport(
     ecs_observer(world, {
         .query.terms[0] = { .id = ecs_id(EcsType) },
         .events = {EcsOnSet},
-        .callback = ecs_meta_type_init_default_ctor
+        .callback = flecs_rtt_init_default_hooks
     });
 
     ecs_observer(world, {
@@ -50623,6 +50734,687 @@ void FlecsMetaImport(
 
     /* Import reflection definitions for builtin types */
     flecs_meta_import_definitions(world);
+}
+
+#endif
+
+/*
+ * @file addons/meta/rtt_lifecycle.c
+ * @brief Runtime components lifecycle management
+ */
+
+
+#ifdef FLECS_META
+
+/* Stores all the information necessary to forward a hook call to a
+ * struct's member type */
+typedef struct ecs_rtt_call_data_t {
+    union {
+        ecs_xtor_t xtor;
+        ecs_move_t move;
+        ecs_copy_t copy;
+    } hook;
+    const ecs_type_info_t *type_info;
+    int32_t offset;
+    int32_t count;
+} ecs_rtt_call_data_t;
+
+/* Lifecycle context for runtime structs */
+typedef struct ecs_rtt_struct_ctx_t {
+    ecs_vec_t vctor; /* vector<ecs_string_initializertt_call_data_t> */
+    ecs_vec_t vdtor; /* vector<ecs_rtt_call_data_t> */
+    ecs_vec_t vmove; /* vector<ecs_rtt_call_data_t> */
+    ecs_vec_t vcopy; /* vector<ecs_rtt_call_data_t> */
+} ecs_rtt_struct_ctx_t;
+
+/* Lifecycle context for runtime arrays */
+typedef struct ecs_rtt_array_ctx_t {
+    const ecs_type_info_t *type_info;
+    int32_t elem_count;
+} ecs_rtt_array_ctx_t;
+
+/* Lifecycle context for runtime vectors */
+typedef struct ecs_rtt_vector_ctx_t {
+    const ecs_type_info_t *type_info;
+} ecs_rtt_vector_ctx_t;
+
+/* Generic copy assign hook */
+static
+void flecs_rtt_default_copy(
+    void *dst_ptr,
+    const void *src_ptr,
+    int32_t count,
+    const ecs_type_info_t *type_info)
+{
+    ecs_os_memcpy(dst_ptr, src_ptr, count * type_info->size);
+}
+
+/* Generic move assign hook */
+static
+void flecs_rtt_default_move(
+    void *dst_ptr,
+    void *src_ptr,
+    int32_t count,
+    const ecs_type_info_t *type_info)
+{
+    flecs_rtt_default_copy(dst_ptr, src_ptr, count, type_info);
+}
+
+/*
+ *
+ * RTT struct support
+ *
+ */
+
+/* Invokes struct member type's constructor/destructor using saved information
+ * in the lifecycle context */
+static
+void flecs_rtt_struct_xtor(
+    ecs_vec_t *xtor_data_vec,
+    void *ptr,
+    int32_t count,
+    const ecs_type_info_t *type_info)
+{
+    int cb_count = ecs_vec_count(xtor_data_vec);
+    int i, j;
+    for (j = 0; j < count; j++) {
+        void *elem_ptr = ECS_ELEM(ptr, type_info->size, j);
+        for (i = 0; i < cb_count; i++) {
+            ecs_rtt_call_data_t *xtor_data =
+                ecs_vec_get_t(xtor_data_vec, ecs_rtt_call_data_t, i);
+            xtor_data->hook.xtor(
+                ECS_OFFSET(elem_ptr, xtor_data->offset),
+                xtor_data->count,
+                xtor_data->type_info);
+        }
+    }
+}
+
+/* Generic struct constructor. It will read hook information call data from
+ * the structs's lifecycle context and call the constructors configured when
+ * the type was created. */
+static
+void flecs_rtt_struct_ctor(
+    void *ptr,
+    int32_t count,
+    const ecs_type_info_t *type_info)
+{
+    ecs_rtt_struct_ctx_t *rtt_ctx = type_info->hooks.lifecycle_ctx;
+    ecs_assert(rtt_ctx != NULL, ECS_INTERNAL_ERROR, NULL);
+    flecs_rtt_struct_xtor(&rtt_ctx->vctor, ptr, count, type_info);
+}
+
+/* Generic struct destructor. It will read hook information call data from
+ * the structs's lifecycle context and call the constructors configured when
+ * the type was created. */
+static
+void flecs_rtt_struct_dtor(
+    void *ptr,
+    int32_t count,
+    const ecs_type_info_t *type_info)
+{
+    ecs_rtt_struct_ctx_t *rtt_ctx = type_info->hooks.lifecycle_ctx;
+    ecs_assert(rtt_ctx != NULL, ECS_INTERNAL_ERROR, NULL);
+    flecs_rtt_struct_xtor(&rtt_ctx->vdtor, ptr, count, type_info);
+}
+
+/* Generic move hook. It will read hook information call data from the
+ * structs's lifecycle context and call the move hooks configured when
+ * the type was created. */
+static
+void flecs_rtt_struct_move(
+    void *dst_ptr,
+    void *src_ptr,
+    int32_t count,
+    const ecs_type_info_t *type_info)
+{
+    ecs_rtt_struct_ctx_t *rtt_ctx = type_info->hooks.lifecycle_ctx;
+    ecs_assert(rtt_ctx != NULL, ECS_INTERNAL_ERROR, NULL);
+
+    int cb_count = ecs_vec_count(&rtt_ctx->vmove);
+    int i, j;
+    for (j = 0; j < count; j++) {
+        ecs_size_t elem_offset = type_info->size * j;
+        void *elem_dst_ptr = ECS_OFFSET(dst_ptr, elem_offset);
+        void *elem_src_ptr = ECS_OFFSET(src_ptr, elem_offset);
+        for (i = 0; i < cb_count; i++) {
+            ecs_rtt_call_data_t *move_data =
+                ecs_vec_get_t(&rtt_ctx->vmove, ecs_rtt_call_data_t, i);
+            move_data->hook.move(
+                ECS_OFFSET(elem_dst_ptr, move_data->offset),
+                ECS_OFFSET(elem_src_ptr, move_data->offset),
+                move_data->count,
+                move_data->type_info);
+        }
+    }
+}
+
+/* Generic copy hook. It will read hook information call data from the
+ * structs's lifecycle context and call the copy hooks configured when
+ * the type was created. */
+static
+void flecs_rtt_struct_copy(
+    void *dst_ptr,
+    const void *src_ptr,
+    int32_t count,
+    const ecs_type_info_t *type_info)
+{
+    ecs_rtt_struct_ctx_t *rtt_ctx = type_info->hooks.lifecycle_ctx;
+    ecs_assert(rtt_ctx != NULL, ECS_INTERNAL_ERROR, NULL);
+
+    int cb_count = ecs_vec_count(&rtt_ctx->vcopy);
+    int i, j;
+    for (j = 0; j < count; j++) {
+        ecs_size_t elem_offset = type_info->size * j;
+        void *elem_dst_ptr = ECS_OFFSET(dst_ptr, elem_offset);
+        const void *elem_src_ptr = ECS_OFFSET(src_ptr, elem_offset);
+        for (i = 0; i < cb_count; i++) {
+            ecs_rtt_call_data_t *copy_data =
+                ecs_vec_get_t(&rtt_ctx->vcopy, ecs_rtt_call_data_t, i);
+            copy_data->hook.copy(
+                ECS_OFFSET(elem_dst_ptr, copy_data->offset),
+                ECS_OFFSET(elem_src_ptr, copy_data->offset),
+                copy_data->count,
+                copy_data->type_info);
+        }
+    }
+}
+
+static
+void flecs_rtt_free_lifecycle_struct_ctx(
+    void *ctx)
+{
+    if (!ctx) {
+        return;
+    }
+
+    ecs_rtt_struct_ctx_t *lifecycle_ctx = ctx;
+
+    ecs_vec_fini_t(NULL, &lifecycle_ctx->vctor, ecs_rtt_call_data_t);
+    ecs_vec_fini_t(NULL, &lifecycle_ctx->vdtor, ecs_rtt_call_data_t);
+    ecs_vec_fini_t(NULL, &lifecycle_ctx->vmove, ecs_rtt_call_data_t);
+    ecs_vec_fini_t(NULL, &lifecycle_ctx->vcopy, ecs_rtt_call_data_t);
+
+    ecs_os_free(ctx);
+}
+
+static
+ecs_rtt_struct_ctx_t * flecs_rtt_configure_struct_hooks(
+    ecs_world_t *world,
+    const ecs_type_info_t *ti,
+    bool ctor,
+    bool dtor,
+    bool move,
+    bool copy)
+{
+    ecs_type_hooks_t hooks = ti->hooks;
+    if (hooks.lifecycle_ctx_free) {
+        hooks.lifecycle_ctx_free(hooks.lifecycle_ctx);
+    }
+
+    ecs_rtt_struct_ctx_t *rtt_ctx = NULL;
+    if (ctor || dtor || move || copy) {
+        rtt_ctx = ecs_os_malloc_t(ecs_rtt_struct_ctx_t);
+        ecs_vec_init_t(NULL, &rtt_ctx->vctor, ecs_rtt_call_data_t, 0);
+        ecs_vec_init_t(NULL, &rtt_ctx->vdtor, ecs_rtt_call_data_t, 0);
+        ecs_vec_init_t(NULL, &rtt_ctx->vmove, ecs_rtt_call_data_t, 0);
+        ecs_vec_init_t(NULL, &rtt_ctx->vcopy, ecs_rtt_call_data_t, 0);
+        hooks.lifecycle_ctx = rtt_ctx;
+        hooks.lifecycle_ctx_free = flecs_rtt_free_lifecycle_struct_ctx;
+
+        if (ctor) {
+            hooks.ctor = flecs_rtt_struct_ctor;
+        }
+        if (dtor) {
+            hooks.dtor = flecs_rtt_struct_dtor;
+        }
+        if (move) {
+            hooks.move = flecs_rtt_struct_move;
+        }
+        if (copy) {
+            hooks.copy = flecs_rtt_struct_copy;
+        }
+    } else {
+        hooks.lifecycle_ctx = NULL;
+        hooks.lifecycle_ctx_free = NULL;
+    }
+    ecs_set_hooks_id(world, ti->component, &hooks);
+    return rtt_ctx;
+}
+
+/* Checks if a struct member's types have hooks installed. If so, it generates
+ * and installs required hooks for the struct type itself. These hooks will
+ * invoke the member hooks when necessary  */
+static
+void flecs_rtt_init_default_hooks_struct(
+    ecs_world_t *world,
+    ecs_entity_t component,
+    const ecs_type_info_t *ti)
+{
+    /* Obtain struct information to figure out what members it contains: */
+    const EcsStruct *struct_info = ecs_get(world, component, EcsStruct);
+    ecs_assert(struct_info != NULL, ECS_INTERNAL_ERROR, NULL);
+
+    /* These flags will be set to true if we determine we need to generate a
+     * hook of a particular type: */
+    bool ctor_hook_required = false;
+    bool dtor_hook_required = false;
+    bool move_hook_required = false;
+    bool copy_hook_required = false;
+
+    /* Iterate all struct members and see if any member type has hooks. If so,
+     * the struct itself will need to have that hook: */
+    int i, member_count = ecs_vec_count(&struct_info->members);
+    ecs_member_t *members = ecs_vec_first(&struct_info->members);
+    for (i = 0; i < member_count; i++) {
+        ecs_member_t *m = &members[i];
+        const ecs_type_info_t *member_ti = ecs_get_type_info(world, m->type);
+        ctor_hook_required |= member_ti->hooks.ctor &&
+                              member_ti->hooks.ctor != flecs_default_ctor;
+        dtor_hook_required |= member_ti->hooks.dtor != NULL;
+        move_hook_required |= member_ti->hooks.move != NULL;
+        copy_hook_required |= member_ti->hooks.copy != NULL;
+    }
+
+    /* If any hook is required, then create a lifecycle context and configure a
+     * generic hook that will interpret that context: */
+    ecs_rtt_struct_ctx_t *rtt_ctx = flecs_rtt_configure_struct_hooks(
+        world,
+        ti,
+        ctor_hook_required,
+        dtor_hook_required,
+        move_hook_required,
+        copy_hook_required);
+
+    if (!rtt_ctx) {
+        return; /* no hooks required */
+    }
+
+    /* At least a hook was configured, therefore examine each struct member to
+     * build the vector of calls that will then be executed by the generic hook
+     * handler: */
+    for (i = 0; i < member_count; i++) {
+        ecs_member_t *m = &members[i];
+        const ecs_type_info_t *member_ti = ecs_get_type_info(world, m->type);
+        if (ctor_hook_required) {
+            ecs_rtt_call_data_t *ctor_data =
+                ecs_vec_append_t(NULL, &rtt_ctx->vctor, ecs_rtt_call_data_t);
+            ctor_data->count = m->count;
+            ctor_data->offset = m->offset;
+            ctor_data->type_info = member_ti;
+            if (member_ti->hooks.ctor) {
+                ctor_data->hook.xtor = member_ti->hooks.ctor;
+            } else {
+                ctor_data->hook.xtor = flecs_default_ctor;
+            }
+        }
+        if (dtor_hook_required && member_ti->hooks.dtor) {
+            ecs_rtt_call_data_t *dtor_data =
+                ecs_vec_append_t(NULL, &rtt_ctx->vdtor, ecs_rtt_call_data_t);
+            dtor_data->count = m->count;
+            dtor_data->offset = m->offset;
+            dtor_data->type_info = member_ti;
+            dtor_data->hook.xtor = member_ti->hooks.dtor;
+        }
+        if (move_hook_required) {
+            ecs_rtt_call_data_t *move_data =
+                ecs_vec_append_t(NULL, &rtt_ctx->vmove, ecs_rtt_call_data_t);
+            move_data->offset = m->offset;
+            move_data->type_info = member_ti;
+            move_data->count = m->count;
+            if (member_ti->hooks.move) {
+                move_data->hook.move = member_ti->hooks.move;
+            } else {
+                move_data->hook.move = flecs_rtt_default_move;
+            }
+        }
+        if (copy_hook_required) {
+            ecs_rtt_call_data_t *copy_data =
+                ecs_vec_append_t(NULL, &rtt_ctx->vcopy, ecs_rtt_call_data_t);
+            copy_data->offset = m->offset;
+            copy_data->type_info = member_ti;
+            copy_data->count = m->count;
+            if (member_ti->hooks.copy) {
+                copy_data->hook.copy = member_ti->hooks.copy;
+            } else {
+                copy_data->hook.copy = flecs_rtt_default_copy;
+            }
+        }
+    }
+}
+
+/*
+ *
+ * RTT array support
+ *
+ */
+
+static
+void flecs_rtt_free_lifecycle_array_ctx(
+    void *ctx)
+{
+    if (!ctx) {
+        return;
+    }
+
+    ecs_os_free(ctx);
+}
+
+/* Generic array constructor. It will invoke the constructor of the underlying
+ * type for all the elements */
+static
+void flecs_rtt_array_ctor(
+    void *ptr,
+    int32_t count, /* note: "count" is how many arrays to initialize, not how
+                      many elements are in the array */
+    const ecs_type_info_t *type_info)
+{
+    ecs_rtt_array_ctx_t *rtt_ctx = type_info->hooks.lifecycle_ctx;
+    ecs_xtor_t ctor = rtt_ctx->type_info->hooks.ctor;
+    int i;
+    for (i = 0; i < count; i++) {
+        void *arr = ECS_ELEM(ptr, type_info->size, i);
+        ctor(arr, rtt_ctx->elem_count, rtt_ctx->type_info);
+    }
+}
+
+/* Generic array constructor. It will invoke the destructor of the underlying
+ * type for all the elements */
+static
+void flecs_rtt_array_dtor(
+    void *ptr,
+    int32_t count, /* note: "count" is how many arrays to destroy, not how
+                      many elements are in the array */
+    const ecs_type_info_t *type_info)
+{
+    ecs_rtt_array_ctx_t *rtt_ctx = type_info->hooks.lifecycle_ctx;
+    ecs_xtor_t dtor = rtt_ctx->type_info->hooks.dtor;
+    int i;
+    for (i = 0; i < count; i++) {
+        void *arr = ECS_ELEM(ptr, type_info->size, i);
+        dtor(arr, rtt_ctx->elem_count, rtt_ctx->type_info);
+    }
+}
+
+/* Generic array move hook. It will invoke the move hook of the underlying
+ * type for all the elements */
+static
+void flecs_rtt_array_move(
+    void *dst_ptr,
+    void *src_ptr,
+    int32_t count, /* note: "count" is how many arrays to move, not how
+                      many elements are in the array */
+    const ecs_type_info_t *type_info)
+{
+    ecs_rtt_array_ctx_t *rtt_ctx = type_info->hooks.lifecycle_ctx;
+    ecs_move_t move = rtt_ctx->type_info->hooks.move;
+    int i;
+    for (i = 0; i < count; i++) {
+        void *src_arr = ECS_ELEM(src_ptr, type_info->size, i);
+        void *dst_arr = ECS_ELEM(dst_ptr, type_info->size, i);
+        move(dst_arr, src_arr, rtt_ctx->elem_count, rtt_ctx->type_info);
+    }
+}
+
+/* Generic array copy hook. It will invoke the copy hook of the underlying
+ * type for all the elements */
+static
+void flecs_rtt_array_copy(
+    void *dst_ptr,
+    const void *src_ptr,
+    int32_t count, /* note: "count" is how many arrays to copy, not how
+                      many elements are in the array */
+    const ecs_type_info_t *type_info)
+{
+    ecs_rtt_array_ctx_t *rtt_ctx = type_info->hooks.lifecycle_ctx;
+    ecs_copy_t copy = rtt_ctx->type_info->hooks.copy;
+    int i;
+    for (i = 0; i < count; i++) {
+        const void *src_arr = ECS_ELEM(src_ptr, type_info->size, i);
+        void *dst_arr = ECS_ELEM(dst_ptr, type_info->size, i);
+        copy(dst_arr, src_arr, rtt_ctx->elem_count, rtt_ctx->type_info);
+    }
+}
+
+/* Checks if an array's underlying type has hooks installed. If so, it generates
+ * and installs required hooks for the array type itself. These hooks will
+ * invoke the underlying type's hook for each element in the array. */
+static
+void flecs_rtt_init_default_hooks_array(
+    ecs_world_t *world, 
+    ecs_entity_t component)
+{
+    const EcsArray *array_info = ecs_get(world, component, EcsArray);
+    ecs_assert(array_info != NULL, ECS_INTERNAL_ERROR, NULL);
+    const ecs_type_info_t *array_ti =
+        ecs_get_type_info(world, array_info->type);
+    bool ctor_hook_required =
+        array_ti->hooks.ctor && array_ti->hooks.ctor != flecs_default_ctor;
+    bool dtor_hook_required = array_ti->hooks.dtor != NULL;
+    bool move_hook_required = array_ti->hooks.move != NULL;
+    bool copy_hook_required = array_ti->hooks.copy != NULL;
+
+    if (!ctor_hook_required && !dtor_hook_required && !move_hook_required &&
+        !copy_hook_required) {
+        return; /* no hooks required */
+    }
+
+    ecs_rtt_array_ctx_t *rtt_ctx = ecs_os_malloc_t(ecs_rtt_array_ctx_t);
+    rtt_ctx->type_info = array_ti;
+    rtt_ctx->elem_count = array_info->count;
+    ecs_type_hooks_t hooks = *ecs_get_hooks_id(world, component);
+    if (hooks.lifecycle_ctx_free) {
+        hooks.lifecycle_ctx_free(hooks.lifecycle_ctx);
+    }
+
+    hooks.lifecycle_ctx = rtt_ctx;
+    hooks.lifecycle_ctx_free = flecs_rtt_free_lifecycle_array_ctx;
+
+    if (ctor_hook_required) {
+        hooks.ctor = flecs_rtt_array_ctor;
+    }
+
+    if (dtor_hook_required) {
+        hooks.dtor = flecs_rtt_array_dtor;
+    }
+
+    if (move_hook_required) {
+        hooks.move = flecs_rtt_array_move;
+    }
+
+    if (copy_hook_required) {
+        hooks.copy = flecs_rtt_array_copy;
+    }
+
+    ecs_set_hooks_id(world, component, &hooks);
+}
+
+/*
+ *
+ * RTT vector support
+ *
+ */
+
+static
+void flecs_rtt_free_lifecycle_vector_ctx(
+    void *ctx)
+{
+    if (!ctx) {
+        return;
+    }
+
+    ecs_os_free(ctx);
+}
+
+/* Generic vector constructor. Makes sure the vector structure is initialized to
+ * 0 elements */
+static
+void flecs_rtt_vector_ctor(
+    void *ptr,
+    int32_t count,
+    const ecs_type_info_t *type_info)
+{
+    ecs_rtt_vector_ctx_t *rtt_ctx = type_info->hooks.lifecycle_ctx;
+    int i;
+    for (i = 0; i < count; i++) {
+        ecs_vec_t *vec = ECS_ELEM(ptr, type_info->size, i);
+        ecs_vec_init(NULL, vec, rtt_ctx->type_info->size, 0);
+    }
+}
+
+/* Generic vector destructor. It will invoke the destructor for each element of
+ * the vector and finalize resources associated to the vector itself. */
+static
+void flecs_rtt_vector_dtor(
+    void *ptr,
+    int32_t count,
+    const ecs_type_info_t *type_info)
+{
+    ecs_rtt_vector_ctx_t *rtt_ctx = type_info->hooks.lifecycle_ctx;
+    ecs_xtor_t dtor = rtt_ctx->type_info->hooks.dtor;
+    int i;
+    for (i = 0; i < count; i++) {
+        ecs_vec_t *vec = ECS_ELEM(ptr, type_info->size, i);
+        int32_t num_elements = ecs_vec_count(vec);
+        if (dtor && num_elements) {
+            dtor(ecs_vec_first(vec), num_elements, rtt_ctx->type_info);
+        }
+        ecs_vec_fini(NULL, vec, rtt_ctx->type_info->size);
+    }
+}
+
+/* Generic vector move hook. */
+static
+void flecs_rtt_vector_move(
+    void *dst_ptr,
+    void *src_ptr,
+    int32_t count,
+    const ecs_type_info_t *type_info)
+{
+    flecs_rtt_vector_dtor(dst_ptr, count, type_info);
+    int i;
+    for (i = 0; i < count; i++) {
+        ecs_vec_t *src_vec = ECS_ELEM(src_ptr, type_info->size, i);
+        ecs_vec_t *dst_vec = ECS_ELEM(dst_ptr, type_info->size, i);
+        *dst_vec = *src_vec;
+        src_vec->array = NULL;
+        src_vec->count = 0;
+    }
+}
+
+/* Generic vector copy hook. It makes a deep copy of vector contents */
+static
+void flecs_rtt_vector_copy(
+    void *dst_ptr,
+    const void *src_ptr,
+    int32_t count,
+    const ecs_type_info_t *type_info)
+{
+    ecs_rtt_vector_ctx_t *rtt_ctx = type_info->hooks.lifecycle_ctx;
+    flecs_rtt_vector_dtor(dst_ptr, count, type_info);
+    ecs_copy_t copy = rtt_ctx->type_info->hooks.copy
+                          ? rtt_ctx->type_info->hooks.copy
+                          : flecs_rtt_default_copy;
+    ecs_xtor_t ctor = rtt_ctx->type_info->hooks.ctor
+                          ? rtt_ctx->type_info->hooks.ctor
+                          : flecs_default_ctor;
+    ecs_xtor_t dtor = rtt_ctx->type_info->hooks.dtor;
+    int i;
+    for (i = 0; i < count; i++) {
+        const ecs_vec_t *src_vec = ECS_ELEM(src_ptr, type_info->size, i);
+        ecs_vec_t *dst_vec = ECS_ELEM(dst_ptr, type_info->size, i);
+        int32_t src_count = ecs_vec_count(src_vec);
+        int32_t dst_count = ecs_vec_count(dst_vec);
+        if (dtor && dst_count) {
+            dtor(ecs_vec_first(dst_vec), dst_count, rtt_ctx->type_info);
+        }
+        ecs_vec_set_count(NULL, dst_vec, rtt_ctx->type_info->size, src_count);
+        ctor(ecs_vec_first(dst_vec), src_count, rtt_ctx->type_info);
+        copy(
+            ecs_vec_first(dst_vec),
+            ecs_vec_first(src_vec),
+            src_count,
+            rtt_ctx->type_info);
+    }
+}
+
+/* Generates and installs required hooks for managing the vector and underlying
+ * type lifecycle. Vectors always have hooks because at the very least the
+ * vector structure itself must be initialized/destroyed/copied/moved, even if
+ * empty. */
+static
+void flecs_rtt_init_default_hooks_vector(
+    ecs_world_t *world,
+    ecs_entity_t component)
+{
+    const EcsVector *vector_info = ecs_get(world, component, EcsVector);
+    ecs_assert(vector_info != NULL, ECS_INTERNAL_ERROR, NULL);
+    const ecs_type_info_t *vector_ti =
+        ecs_get_type_info(world, vector_info->type);
+    ecs_rtt_vector_ctx_t *rtt_ctx = ecs_os_malloc_t(ecs_rtt_vector_ctx_t);
+    rtt_ctx->type_info = vector_ti;
+    ecs_type_hooks_t hooks = *ecs_get_hooks_id(world, component);
+    if (hooks.lifecycle_ctx_free) {
+        hooks.lifecycle_ctx_free(hooks.lifecycle_ctx);
+    }
+    hooks.lifecycle_ctx = rtt_ctx;
+    hooks.lifecycle_ctx_free = flecs_rtt_free_lifecycle_vector_ctx;
+    hooks.ctor = flecs_rtt_vector_ctor;
+    hooks.dtor = flecs_rtt_vector_dtor;
+    hooks.move = flecs_rtt_vector_move;
+    hooks.copy = flecs_rtt_vector_copy;
+    ecs_set_hooks_id(world, component, &hooks);
+}
+
+void flecs_rtt_init_default_hooks(
+    ecs_iter_t *it)
+{
+    ecs_world_t *world = it->world;
+    EcsType *type_field = ecs_field(it, EcsType, 0);
+
+    int i;
+    for (i = 0; i < it->count; i++) {
+        EcsType *type = &type_field[i];
+        if (type->existing) {
+            continue; /* non-rtt type. Ignore. */
+        }
+
+        /* If a component is defined from reflection data, configure appropriate
+         * default hooks.
+         * - For trivial types, at least set a default constructor so memory is
+         * zero-initialized
+         * - For struct types, configure a hook that in turn calls hooks of
+         * member types, if those member types have hooks defined themselves.
+         * - For array types, configure a hook that in turn calls hooks for the
+         * underlying type, for each element in the array.
+         *  - For vector types, configure hooks to manage the vector structure
+         * itself, move the vector and deep-copy vector elements
+         * */
+
+        ecs_entity_t component = it->entities[i];
+        const ecs_type_info_t *ti = ecs_get_type_info(world, component);
+
+        if (ti) {
+            if (type->kind == EcsStructType) {
+                flecs_rtt_init_default_hooks_struct(world, component, ti);
+            } else if (type->kind == EcsArrayType) {
+                flecs_rtt_init_default_hooks_array(world, component);
+            } else if (type->kind == EcsVectorType) {
+                flecs_rtt_init_default_hooks_vector(world, component);
+            }
+        }
+
+        /* Make sure there is at least a default constructor. This ensures that
+         * a new component value does not contain uninitialized memory, which
+         * could cause serializers to crash when for example inspecting string
+         * fields. */
+        if (!ti || !ti->hooks.ctor) {
+            ecs_set_hooks_id(
+                world,
+                component,
+                &(ecs_type_hooks_t){.ctor = flecs_default_ctor});
+        }
+    }
 }
 
 #endif
@@ -52122,9 +52914,11 @@ int32_t flecs_run_pipeline_ops(
         ecs_system_t* sys = (ecs_system_t*)poly->poly;
 
         /* Keep track of the last frame for which the system has ran, so we
-        * know from where to resume the schedule in case the schedule
-        * changes during a merge. */
-        sys->last_frame = world->info.frame_count_total + 1;
+         * know from where to resume the schedule in case the schedule
+         * changes during a merge. */
+        if (stage_index == 0) {
+            sys->last_frame = world->info.frame_count_total + 1;
+        }
 
         ecs_stage_t* s = NULL;
         if (!op->immediate) {
@@ -52136,7 +52930,7 @@ int32_t flecs_run_pipeline_ops(
         flecs_run_intern(world, s, system, sys, stage_index,
             stage_count, delta_time, NULL);
 
-        world->info.systems_ran_frame++;
+        ecs_os_linc(&world->info.systems_ran_frame);
         ran_since_merge++;
 
         if (ran_since_merge == op->count) {
@@ -56791,12 +57585,6 @@ const char* flecs_id_parse(
     }
 
     if (ecs_term_finalize(world, &term)) {
-        return NULL;
-    }
-
-    if (!ecs_id_is_valid(world, term.id)) {
-        ecs_parser_error(name, expr, (result - expr), 
-            "invalid term for add expression");
         return NULL;
     }
 
@@ -62641,7 +63429,10 @@ ecs_entity_t flecs_run_intern(
 
     ecs_run_action_t run = system_data->run;
     if (run) {
-        if (!system_data->query->term_count) {
+        /* If system query matches nothing, the system run callback doesn't have
+         * anything to iterate, so the iterator resources don't get cleaned up
+         * automatically, so clean it up here. */
+        if (system_data->query->flags & EcsQueryMatchNothing) {
             it->next = flecs_default_next_callback; /* Return once */
             run(it);
             ecs_iter_fini(&qit);
@@ -62739,11 +63530,18 @@ void flecs_system_poly_fini(void *sys)
 }
 
 static
-void flecs_system_init_timer(
+int flecs_system_init_timer(
     ecs_world_t *world,
     ecs_entity_t entity,
     const ecs_system_desc_t *desc)
 {
+    if (ECS_NEQZERO(desc->interval) && ECS_NEQZERO(desc->rate)) {
+        char *name = ecs_get_path(world, entity);
+        ecs_err("system %s cannot have both interval and rate set", name);
+        ecs_os_free(name);
+        return -1;
+    }
+
     if (ECS_NEQZERO(desc->interval) || ECS_NEQZERO(desc->rate) || 
         ECS_NEQZERO(desc->tick_source)) 
     {
@@ -62754,9 +63552,6 @@ void flecs_system_init_timer(
 
         if (desc->rate) {
             ecs_entity_t tick_source = desc->tick_source;
-            if (!tick_source) {
-                tick_source = entity;
-            }
             ecs_set_rate(world, entity, desc->rate, tick_source);
         } else if (desc->tick_source) {
             ecs_set_tick_source(world, entity, desc->tick_source);
@@ -62767,6 +63562,8 @@ void flecs_system_init_timer(
         ecs_abort(ECS_UNSUPPORTED, "timer module not available");
 #endif
     }
+
+    return 0;
 }
 
 ecs_entity_t ecs_system_init(
@@ -62828,14 +63625,18 @@ ecs_entity_t ecs_system_init(
 
         system->name = ecs_get_path(world, entity);
 
-        flecs_system_init_timer(world, entity, desc);
+        if (flecs_system_init_timer(world, entity, desc)) {
+            ecs_delete(world, entity);
+            ecs_defer_end(world);
+            goto error;
+        }
 
         if (ecs_get_name(world, entity)) {
             ecs_trace("#[green]system#[reset] %s created", 
                 ecs_get_name(world, entity));
         }
 
-        ecs_defer_end(world);            
+        ecs_defer_end(world);
     } else {
         flecs_poly_assert(poly->poly, ecs_system_t);
         ecs_system_t *system = (ecs_system_t*)poly->poly;
@@ -62908,7 +63709,9 @@ ecs_entity_t ecs_system_init(
             system->immediate = desc->immediate;
         }
 
-        flecs_system_init_timer(world, entity, desc);
+        if (flecs_system_init_timer(world, entity, desc)) {
+            return 0;
+        }
     }
 
     flecs_poly_modified(world, entity, ecs_system_t);
@@ -64859,7 +65662,29 @@ error:
 }
 
 static
+ecs_flags32_t flecs_query_to_table_flags(
+    const ecs_query_t *q)
+{
+    ecs_flags32_t query_flags = q->flags;
+    if (!(query_flags & EcsQueryMatchDisabled) || 
+        !(query_flags & EcsQueryMatchPrefab)) 
+    {
+        ecs_flags32_t table_flags = EcsTableNotQueryable;
+        if (!(query_flags & EcsQueryMatchDisabled)) {
+            table_flags |= EcsTableIsDisabled;
+        }
+        if (!(query_flags & EcsQueryMatchPrefab)) {
+            table_flags |= EcsTableIsPrefab;
+        }
+
+        return table_flags;
+    }
+    return 0;
+}
+
+static
 bool flecs_query_select_all(
+    const ecs_query_t *q,
     ecs_term_t *term,
     ecs_query_op_t *op,
     ecs_var_id_t src_var,
@@ -64887,6 +65712,7 @@ bool flecs_query_select_all(
             match_any.flags |= (EcsQueryIsEntity << EcsQuerySecond);
         }
         match_any.written = (1ull << src_var);
+        match_any.other = flecs_itolbl(flecs_query_to_table_flags(q));
         flecs_query_op_insert(&match_any, ctx);
         flecs_query_write_ctx(op->src.var, ctx, false);
 
@@ -65300,7 +66126,7 @@ int flecs_query_compile_term(
      * written to yet, insert instruction that selects all entities so we have
      * something to match the optional/not against. */
     if (src_is_var && !src_written && !src_is_wildcard && !src_is_lookup) {
-        src_written = flecs_query_select_all(term, &op, op.src.var, ctx);
+        src_written = flecs_query_select_all(q, term, &op, op.src.var, ctx);
     }
 
     /* A bit of special logic for OR expressions and equality predicates. If the
@@ -65439,20 +66265,7 @@ int flecs_query_compile_term(
      * filtering out disabled/prefab entities is the default and this check is
      * cheap to perform on table flags, it's worth special casing. */
     if (!src_written && op.src.var == 0) {
-        ecs_flags32_t query_flags = q->flags;
-        if (!(query_flags & EcsQueryMatchDisabled) || 
-            !(query_flags & EcsQueryMatchPrefab)) 
-        {
-            ecs_flags32_t table_flags = EcsTableNotQueryable;
-            if (!(query_flags & EcsQueryMatchDisabled)) {
-                table_flags |= EcsTableIsDisabled;
-            }
-            if (!(query_flags & EcsQueryMatchPrefab)) {
-                table_flags |= EcsTableIsPrefab;
-            }
-
-            op.other = flecs_itolbl(table_flags);
-        }
+        op.other = flecs_itolbl(flecs_query_to_table_flags(q));
     }
 
     /* After evaluating a term, a used variable is always written */
@@ -69865,7 +70678,7 @@ ecs_iter_t ecs_query_iter(
     }
 
     /* Ok, only for stats */
-    ECS_CONST_CAST(ecs_query_t*, q)->eval_count ++;
+    ecs_os_linc(&ECS_CONST_CAST(ecs_query_t*, q)->eval_count);
 
     ecs_query_impl_t *impl = flecs_query_impl(q);
     ecs_query_cache_t *cache = impl->cache;
@@ -72408,6 +73221,9 @@ void flecs_trav_entity_down_isa(
                         flecs_trav_entity_down(world, a, cache, dst, trav, e,
                             idr_trav, idr_with, self, empty);
                     }
+
+                    flecs_trav_entity_down_isa(world, a, cache, dst, trav, e, 
+                        idr_with, self, empty);
                 }
             }
         }

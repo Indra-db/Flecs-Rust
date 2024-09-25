@@ -3746,6 +3746,39 @@ fn query_builder_with_pair_component_id() {
 }
 
 #[test]
+fn query_builder_with_pair_name_component_id() {
+    let world = World::new();
+
+    let likes = world.entity_named("Likes");
+    let apples = world.entity_named("Apples");
+    let pears = world.entity_named("Pears");
+
+    let q = world
+        .query::<()>()
+        .with::<Position>()
+        .with_second_id("Likes", apples)
+        .set_cache_kind(QueryCacheKind::Auto)
+        .build();
+
+    let e1 = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .add_id((likes, apples));
+    world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .add_id((likes, pears));
+
+    let mut count = 0;
+    q.each_entity(|e, _| {
+        count += 1;
+        assert_eq!(e, e1);
+    });
+
+    assert_eq!(count, 1);
+}
+
+#[test]
 fn query_builder_with_pair_component_name() {
     let world = World::new();
 
@@ -4043,6 +4076,39 @@ fn query_builder_without_pair_component_name() {
         .entity()
         .set(Position { x: 0, y: 0 })
         .add_first::<Likes>(pears);
+
+    let mut count = 0;
+    q.each_entity(|e, _| {
+        count += 1;
+        assert_eq!(e, e2);
+    });
+
+    assert_eq!(count, 1);
+}
+
+#[test]
+fn query_builder_without_pair_name_component_id() {
+    let world = World::new();
+
+    let likes = world.entity_named("Likes");
+    let apples = world.entity_named("Apples");
+    let pears = world.entity_named("Pears");
+
+    let q = world
+        .query::<()>()
+        .with::<&Position>()
+        .without_second_id("Likes", apples)
+        .set_cache_kind(QueryCacheKind::Auto)
+        .build();
+
+    world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .add_id((likes, apples));
+    let e2 = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .add_id((likes, pears));
 
     let mut count = 0;
     q.each_entity(|e, _| {

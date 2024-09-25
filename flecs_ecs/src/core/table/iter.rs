@@ -107,7 +107,7 @@ where
     /// * C++ API: `iter::event_id`
     #[doc(alias = "iter::event_id")]
     pub fn event_id(&self) -> IdView<'a> {
-        IdView::new_from(self.world(), self.iter.event_id)
+        IdView::new_from_id(self.world(), self.iter.event_id)
     }
 
     /// Obtain mutable handle to entity being iterated over.
@@ -189,6 +189,14 @@ where
     #[doc(alias = "iter::table")]
     pub fn table(&self) -> Option<Table<'a>> {
         NonNull::new(self.iter.table).map(|ptr| Table::new(self.real_world(), ptr))
+    }
+
+    /// # See also
+    ///
+    /// * C++ API: `iter::other_table`
+    #[doc(alias = "iter::table")]
+    pub fn other_table(&self) -> Option<Table<'a>> {
+        NonNull::new(self.iter.other_table).map(|ptr| Table::new(self.real_world(), ptr))
     }
 
     /// # See also
@@ -409,7 +417,7 @@ where
     /// * C++ API: `iter::id`
     #[doc(alias = "iter::id")]
     pub fn id(&self, index: i8) -> IdView<'a> {
-        unsafe { IdView::new_from(self.world(), sys::ecs_field_id(self.iter, index)) }
+        unsafe { IdView::new_from_id(self.world(), sys::ecs_field_id(self.iter, index)) }
     }
 
     /// Obtain pair id matched for field.
@@ -427,7 +435,7 @@ where
         unsafe {
             let id = sys::ecs_field_id(self.iter, index);
             if sys::ecs_id_is_pair(id) {
-                Some(IdView::new_from(self.world(), id))
+                Some(IdView::new_from_id(self.world(), id))
             } else {
                 None
             }

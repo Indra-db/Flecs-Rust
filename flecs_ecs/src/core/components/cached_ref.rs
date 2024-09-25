@@ -94,4 +94,15 @@ impl<'a, T: ComponentId + DataComponent> CachedRef<'a, T> {
     pub fn entity(&self) -> EntityView<'a> {
         EntityView::new_from(self.world, self.component_ref.entity)
     }
+
+    pub fn has(&mut self) -> bool {
+        !unsafe {
+            sys::ecs_ref_get_id(
+                self.world.world_ptr_mut(),
+                &mut self.component_ref,
+                self.component_ref.id,
+            )
+        }
+        .is_null()
+    }
 }

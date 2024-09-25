@@ -3504,7 +3504,7 @@ impl World {
     /// * C++ API: `world::pair`
     #[doc(alias = "world::pair")]
     pub fn id_from<T: ComponentOrPairId>(&self) -> IdView {
-        IdView::new_from(self, T::get_id(self))
+        IdView::new_from_id(self, T::get_id(self))
     }
 
     /// get `IdView` from an id or from a relationship pair
@@ -3540,7 +3540,7 @@ impl World {
             );
         }
 
-        IdView::new_from(self, id)
+        IdView::new_from_id(self, id)
     }
 
     /// get pair id from relationship, object.
@@ -3568,7 +3568,7 @@ impl World {
             FlecsErrorCode::InvalidParameter,
             "cannot create nested pairs"
         );
-        IdView::new_from(self, (First::id(self), id))
+        IdView::new_from_id(self, (First::id(self), id))
     }
 
     /// get pair id from relationship, object.
@@ -3596,7 +3596,7 @@ impl World {
             FlecsErrorCode::InvalidParameter,
             "cannot create nested pairs"
         );
-        IdView::new_from(self, (id, Second::id(self)))
+        IdView::new_from_id(self, (id, Second::id(self)))
     }
 }
 
@@ -3985,29 +3985,37 @@ impl World {
         QueryBuilder::<Components>::new_named(self, name)
     }
 
-    /// Convert a query entity to a query.
+    /// Attempts to convert an entity into a query.
+    ///
+    /// Returns the untyped query if the entity is alive and valid; otherwise, returns `None`.
     ///
     /// # Safety
     ///
     /// Proceed with caution. Use `.iter_only` instead.
     ///
-    /// # Returns
+    /// # See Also
     ///
-    /// returns the untyped query if the entity is alive, otherwise `None`.
+    /// * [`World::query_from`]
     pub fn try_query_from(&self, query_entity: impl Into<Entity>) -> Option<Query<()>> {
         Query::<()>::new_from_entity(self, query_entity)
     }
 
-    /// Convert a query entity to a query.
-    /// this method is the same as `try_to_query` but it automatically unwraps the result.
+    /// Converts an entity into a query, automatically unwrapping the result.
+    ///
+    /// This method panics if the entity is not alive or not a valid query.
+    /// For safer usage, consider using [`World::try_query_from`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if the entity is not alive or not a valid query.
     ///
     /// # Safety
     ///
     /// Proceed with caution. Use `.iter_only` instead.
     ///
-    /// # Panics
+    /// # See Also
     ///
-    /// Panics if the entity is not alive or a query. Use `try_to_query` if you are unsure.
+    /// * [`World::try_query_from`]
     pub fn query_from(&self, query_entity: impl Into<Entity>) -> Query<()> {
         self.try_query_from(query_entity)
             .expect("entity / query is not alive or valid")

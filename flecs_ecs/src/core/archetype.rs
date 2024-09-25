@@ -144,7 +144,7 @@ impl<'a> Archetype<'a> {
     #[doc(alias = "type::get")]
     pub fn get(&self, index: usize) -> Option<IdView> {
         if index < self.count() {
-            Some(IdView::new_from(self.world, self.type_vec[index]))
+            Some(IdView::new_from_id(self.world, self.type_vec[index]))
         } else {
             None
         }

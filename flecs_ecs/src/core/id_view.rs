@@ -377,10 +377,30 @@ impl<'a> IdOperations<'a> for IdView<'a> {
     #[doc(alias = "Id::Id")]
     /// * C API: `ecs_id_t`
     #[doc(alias = "ecs_id_t")]
-    fn new_from(world: impl WorldProvider<'a>, id: impl IntoId) -> Self {
+    fn new_from_id(world: impl WorldProvider<'a>, id: impl IntoId) -> Self {
         Self {
             world: world.world(),
             id: id.into(),
+        }
+    }
+
+    /// Wraps an id or pair from an expression
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The optional world to the id belongs to
+    /// * `expr` - The expression to wrap
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `Id::Id`
+    #[doc(alias = "Id::Id")]
+    fn new_from_str(world: impl WorldProvider<'a>, expr: &str) -> Self {
+        let expr = compact_str::format_compact!("{}\0", expr);
+        let id = unsafe { sys::ecs_id_from_str(world.world_ptr(), expr.as_ptr() as *const _) };
+        Self {
+            world: world.world(),
+            id: Id(id),
         }
     }
 }

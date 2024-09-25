@@ -161,7 +161,7 @@ impl<'a> EntityView<'a> {
 
     /// Get the [`IdView`] representation of the `entity_view`.
     pub fn id_view(&self) -> IdView {
-        IdView::new_from(self.world, *self.id)
+        IdView::new_from_id(self.world, *self.id)
     }
 
     /// checks if entity is valid
@@ -492,7 +492,7 @@ impl<'a> EntityView<'a> {
         let archetype = self.archetype();
 
         for &id in archetype.as_slice() {
-            let ent = IdView::new_from(self.world, id);
+            let ent = IdView::new_from_id(self.world, id);
             func(ent);
         }
     }
@@ -548,7 +548,7 @@ impl<'a> EntityView<'a> {
             };
             cur != -1
         } {
-            let ent = IdView::new_from(self.world, ids[cur as usize]);
+            let ent = IdView::new_from_id(self.world, ids[cur as usize]);
             func(ent);
             cur += 1;
         }

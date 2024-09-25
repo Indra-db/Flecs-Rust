@@ -1337,6 +1337,33 @@ fn system_rate_filter() {
     }
 }
 
+#[test]
+fn system_self_rate_filter() {
+    let world = World::new();
+
+    world.set(Count(0));
+
+    world
+        .system::<&Position>()
+        .set_rate(2)
+        .each_entity(|e, _p| {
+            let world = e.world();
+            world.get::<&mut Count>(|c| {
+                c.0 += 1;
+            });
+        });
+
+    world.entity().set(Position { x: 1, y: 2 });
+
+    for _i in 0..10 {
+        world.progress();
+    }
+
+    world.get::<&Count>(|c| {
+        assert_eq!(c.0, 5);
+    });
+}
+
 #[ignore = "implement missing functions"]
 #[test]
 fn system_update_rate_filter() {
@@ -2248,4 +2275,23 @@ fn system_randomize_timers() {
         assert!(t.is_some());
         assert!(t.unwrap().time != 0.0);
     }
+}
+
+#[test]
+fn system_run_w_0_src_query() {
+    let world = World::new();
+
+    world.set(Count(0));
+
+    world.system::<()>().write::<Position>().run(|it| {
+        let world = it.world();
+        world.get::<&mut Count>(|c| {
+            c.0 += 1;
+        });
+    });
+
+    world.progress();
+    world.get::<&Count>(|c| {
+        assert_eq!(c.0, 1);
+    });
 }

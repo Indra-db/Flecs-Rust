@@ -296,6 +296,8 @@ impl Default for ecs_type_hooks_t {
             binding_ctx: core::ptr::null_mut(),
             ctx_free: None,
             binding_ctx_free: None,
+            lifecycle_ctx: core::ptr::null_mut(),
+            lifecycle_ctx_free: None,
         }
     }
 }

@@ -225,7 +225,7 @@ where
 
     let entity = unsafe { flecs_ecs_sys::ecs_entity_init(world, &entity_desc) };
 
-    let type_info = create_type_info::<T, ALLOCATE_TAG>(world);
+    let type_info = create_type_info::<T, ALLOCATE_TAG>();
 
     let component_desc = create_component_desc(entity, type_info);
 
@@ -272,7 +272,7 @@ pub(crate) fn external_register_componment_data_explicit<T>(
 
     let entity = unsafe { flecs_ecs_sys::ecs_entity_init(world, &entity_desc) };
 
-    let type_info = external_create_type_info::<T>(world);
+    let type_info = external_create_type_info::<T>();
 
     let component_desc = create_component_desc(entity, type_info);
 

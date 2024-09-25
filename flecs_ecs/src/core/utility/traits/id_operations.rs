@@ -6,7 +6,9 @@ pub trait IdOperations<'a>: WorldProvider<'a> + IntoId + Sized + Copy {
 
     fn id(&self) -> Self::IdType;
 
-    fn new_from(world: impl WorldProvider<'a>, id: impl IntoId) -> Self;
+    fn new_from_id(world: impl WorldProvider<'a>, id: impl IntoId) -> Self;
+
+    fn new_from_str(world: impl WorldProvider<'a>, expr: &str) -> Self;
 
     /// checks if the id is a wildcard
     ///
@@ -28,7 +30,7 @@ pub trait IdOperations<'a>: WorldProvider<'a> + IntoId + Sized + Copy {
     #[doc(alias = "id::add_flags")]
     #[inline(always)]
     fn add_flags(self, flags: impl IntoId) -> Self {
-        Self::new_from(self.world(), self.into() | flags.into())
+        Self::new_from_id(self.world(), self.into() | flags.into())
     }
 
     /// Return id with role removed.
@@ -45,7 +47,7 @@ pub trait IdOperations<'a>: WorldProvider<'a> + IntoId + Sized + Copy {
             FlecsErrorCode::InvalidParameter
         );
 
-        Self::new_from(self.world(), self.into() & RUST_ECS_COMPONENT_MASK)
+        Self::new_from_id(self.world(), self.into() & RUST_ECS_COMPONENT_MASK)
     }
 
     /// Return id with role removed
@@ -56,7 +58,7 @@ pub trait IdOperations<'a>: WorldProvider<'a> + IntoId + Sized + Copy {
     #[doc(alias = "id::remove_flags")]
     #[inline(always)]
     fn remove_flags(self) -> Self {
-        Self::new_from(self.world(), self.into() & RUST_ECS_COMPONENT_MASK)
+        Self::new_from_id(self.world(), self.into() & RUST_ECS_COMPONENT_MASK)
     }
 
     /// Get flags associated with id
@@ -71,7 +73,7 @@ pub trait IdOperations<'a>: WorldProvider<'a> + IntoId + Sized + Copy {
     #[doc(alias = "id::flags")]
     #[inline(always)]
     fn flags(self) -> Self {
-        Self::new_from(self.world(), self.into() & RUST_ecs_id_FLAGS_MASK)
+        Self::new_from_id(self.world(), self.into() & RUST_ecs_id_FLAGS_MASK)
     }
 
     /// Test if id has specified role

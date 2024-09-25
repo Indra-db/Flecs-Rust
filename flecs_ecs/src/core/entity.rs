@@ -58,7 +58,7 @@ impl Entity {
     /// * `world` - The world the entity belongs to
     #[inline]
     pub fn id_view<'a>(&self, world: impl WorldProvider<'a>) -> IdView<'a> {
-        IdView::new_from(world, *self)
+        IdView::new_from_id(world, *self)
     }
 }
 

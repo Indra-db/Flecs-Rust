@@ -26,6 +26,7 @@ pub const EcsWorldFini: u32 = 16;
 pub const EcsWorldMeasureFrameTime: u32 = 32;
 pub const EcsWorldMeasureSystemTime: u32 = 64;
 pub const EcsWorldMultiThreaded: u32 = 128;
+pub const EcsWorldFrameInProgress: u32 = 256;
 pub const EcsOsApiHighResolutionTimer: u32 = 1;
 pub const EcsOsApiLogWithColors: u32 = 2;
 pub const EcsOsApiLogWithTimeStamp: u32 = 4;
@@ -83,17 +84,18 @@ pub const EcsQueryMatchThis: u32 = 2048;
 pub const EcsQueryMatchOnlyThis: u32 = 4096;
 pub const EcsQueryMatchOnlySelf: u32 = 8192;
 pub const EcsQueryMatchWildcards: u32 = 16384;
-pub const EcsQueryHasCondSet: u32 = 32768;
-pub const EcsQueryHasPred: u32 = 65536;
-pub const EcsQueryHasScopes: u32 = 131072;
-pub const EcsQueryHasRefs: u32 = 262144;
-pub const EcsQueryHasOutTerms: u32 = 524288;
-pub const EcsQueryHasNonThisOutTerms: u32 = 1048576;
-pub const EcsQueryHasMonitor: u32 = 2097152;
-pub const EcsQueryIsTrivial: u32 = 4194304;
-pub const EcsQueryHasCacheable: u32 = 8388608;
-pub const EcsQueryIsCacheable: u32 = 16777216;
-pub const EcsQueryHasTableThisVar: u32 = 33554432;
+pub const EcsQueryMatchNothing: u32 = 32768;
+pub const EcsQueryHasCondSet: u32 = 65536;
+pub const EcsQueryHasPred: u32 = 131072;
+pub const EcsQueryHasScopes: u32 = 262144;
+pub const EcsQueryHasRefs: u32 = 524288;
+pub const EcsQueryHasOutTerms: u32 = 1048576;
+pub const EcsQueryHasNonThisOutTerms: u32 = 2097152;
+pub const EcsQueryHasMonitor: u32 = 4194304;
+pub const EcsQueryIsTrivial: u32 = 8388608;
+pub const EcsQueryHasCacheable: u32 = 16777216;
+pub const EcsQueryIsCacheable: u32 = 33554432;
+pub const EcsQueryHasTableThisVar: u32 = 67108864;
 pub const EcsQueryCacheYieldEmptyTables: u32 = 134217728;
 pub const EcsTermMatchAny: u32 = 1;
 pub const EcsTermMatchAnySrc: u32 = 2;
@@ -114,6 +116,7 @@ pub const EcsObserverIsMonitor: u32 = 4;
 pub const EcsObserverIsDisabled: u32 = 8;
 pub const EcsObserverIsParentDisabled: u32 = 16;
 pub const EcsObserverBypassQuery: u32 = 32;
+pub const EcsObserverYieldOnDelete: u32 = 64;
 pub const EcsTableHasBuiltins: u32 = 2;
 pub const EcsTableIsPrefab: u32 = 4;
 pub const EcsTableHasIsA: u32 = 8;
@@ -1752,17 +1755,19 @@ pub struct ecs_type_hooks_t {
     pub ctx: *mut ::core::ffi::c_void,
     #[doc = "< Language binding context"]
     pub binding_ctx: *mut ::core::ffi::c_void,
+    #[doc = "< Component lifecycle context (see meta add-on)"]
+    pub lifecycle_ctx: *mut ::core::ffi::c_void,
     #[doc = "< Callback to free ctx"]
     pub ctx_free: ecs_ctx_free_t,
     #[doc = "< Callback to free binding_ctx"]
     pub binding_ctx_free: ecs_ctx_free_t,
+    #[doc = "< Callback to free lifecycle_ctx"]
+    pub lifecycle_ctx_free: ecs_ctx_free_t,
 }
 #[doc = "Type that contains component information (passed to ctors/dtors/...)\n\n @ingroup components"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_type_info_t {
-    #[doc = "< World"]
-    pub world: *const ecs_world_t,
     #[doc = "< Size of type"]
     pub size: ecs_size_t,
     #[doc = "< Alignment of type"]
@@ -3657,12 +3662,17 @@ extern "C" {
     pub fn ecs_id_flag_str(id_flags: ecs_id_t) -> *const ::core::ffi::c_char;
 }
 extern "C" {
-    #[doc = "Convert id to string.\n This operation interprets the structure of an id and converts it to a string.\n\n @param world The world.\n @param id The id to convert to a string.\n @return The id converted to a string."]
+    #[doc = "Convert (component) id to string.\n This operation interprets the structure of an id and converts it to a string.\n\n @param world The world.\n @param id The id to convert to a string.\n @return The id converted to a string."]
     pub fn ecs_id_str(world: *const ecs_world_t, id: ecs_id_t) -> *mut ::core::ffi::c_char;
 }
 extern "C" {
-    #[doc = "Write id string to buffer.\n Same as ecs_id_str() but writes result to ecs_strbuf_t.\n\n @param world The world.\n @param id The id to convert to a string.\n @param buf The buffer to write to."]
+    #[doc = "Write (component) id string to buffer.\n Same as ecs_id_str() but writes result to ecs_strbuf_t.\n\n @param world The world.\n @param id The id to convert to a string.\n @param buf The buffer to write to."]
     pub fn ecs_id_str_buf(world: *const ecs_world_t, id: ecs_id_t, buf: *mut ecs_strbuf_t);
+}
+extern "C" {
+    #[doc = "Convert string to a (component) id.\n This operation is the reverse of ecs_id_str(). The FLECS_SCRIPT addon\n is required for this operation to work.\n\n @param world The world.\n @param expr The string to convert to an id."]
+    pub fn ecs_id_from_str(world: *const ecs_world_t, expr: *const ::core::ffi::c_char)
+        -> ecs_id_t;
 }
 extern "C" {
     #[doc = "Test whether term id is set.\n\n @param id The term id.\n @return True when set, false when not set."]
@@ -5794,912 +5804,456 @@ extern "C" {
     pub static mut EcsUnitPrefixes: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Parent scope for prefixes."]
-    pub static mut FLECS_IDEcsUnitPrefixesID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Yocto unit prefix."]
     pub static mut EcsYocto: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Yocto unit prefix."]
-    pub static mut FLECS_IDEcsYoctoID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Zepto unit prefix."]
     pub static mut EcsZepto: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Zepto unit prefix."]
-    pub static mut FLECS_IDEcsZeptoID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Atto unit prefix."]
     pub static mut EcsAtto: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Atto unit prefix."]
-    pub static mut FLECS_IDEcsAttoID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Femto unit prefix."]
     pub static mut EcsFemto: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Femto unit prefix."]
-    pub static mut FLECS_IDEcsFemtoID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Pico unit prefix."]
     pub static mut EcsPico: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Pico unit prefix."]
-    pub static mut FLECS_IDEcsPicoID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Nano unit prefix."]
     pub static mut EcsNano: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Nano unit prefix."]
-    pub static mut FLECS_IDEcsNanoID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Micro unit prefix."]
     pub static mut EcsMicro: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Micro unit prefix."]
-    pub static mut FLECS_IDEcsMicroID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Milli unit prefix."]
     pub static mut EcsMilli: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Milli unit prefix."]
-    pub static mut FLECS_IDEcsMilliID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Centi unit prefix."]
     pub static mut EcsCenti: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Centi unit prefix."]
-    pub static mut FLECS_IDEcsCentiID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Deci unit prefix."]
     pub static mut EcsDeci: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Deci unit prefix."]
-    pub static mut FLECS_IDEcsDeciID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Deca unit prefix."]
     pub static mut EcsDeca: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Deca unit prefix."]
-    pub static mut FLECS_IDEcsDecaID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Hecto unit prefix."]
     pub static mut EcsHecto: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Hecto unit prefix."]
-    pub static mut FLECS_IDEcsHectoID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Kilo unit prefix."]
     pub static mut EcsKilo: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Kilo unit prefix."]
-    pub static mut FLECS_IDEcsKiloID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Mega unit prefix."]
     pub static mut EcsMega: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Mega unit prefix."]
-    pub static mut FLECS_IDEcsMegaID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Giga unit prefix."]
     pub static mut EcsGiga: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Giga unit prefix."]
-    pub static mut FLECS_IDEcsGigaID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Tera unit prefix."]
     pub static mut EcsTera: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Tera unit prefix."]
-    pub static mut FLECS_IDEcsTeraID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Peta unit prefix."]
     pub static mut EcsPeta: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Peta unit prefix."]
-    pub static mut FLECS_IDEcsPetaID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Exa unit prefix."]
     pub static mut EcsExa: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Exa unit prefix."]
-    pub static mut FLECS_IDEcsExaID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Zetta unit prefix."]
     pub static mut EcsZetta: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Zetta unit prefix."]
-    pub static mut FLECS_IDEcsZettaID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Yotta unit prefix."]
     pub static mut EcsYotta: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Yotta unit prefix."]
-    pub static mut FLECS_IDEcsYottaID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Kibi unit prefix."]
     pub static mut EcsKibi: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Kibi unit prefix."]
-    pub static mut FLECS_IDEcsKibiID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Mebi unit prefix."]
     pub static mut EcsMebi: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Mebi unit prefix."]
-    pub static mut FLECS_IDEcsMebiID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Gibi unit prefix."]
     pub static mut EcsGibi: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Gibi unit prefix."]
-    pub static mut FLECS_IDEcsGibiID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Tebi unit prefix."]
     pub static mut EcsTebi: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Tebi unit prefix."]
-    pub static mut FLECS_IDEcsTebiID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Pebi unit prefix."]
     pub static mut EcsPebi: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Pebi unit prefix."]
-    pub static mut FLECS_IDEcsPebiID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Exbi unit prefix."]
     pub static mut EcsExbi: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Exbi unit prefix."]
-    pub static mut FLECS_IDEcsExbiID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Zebi unit prefix."]
     pub static mut EcsZebi: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Zebi unit prefix."]
-    pub static mut FLECS_IDEcsZebiID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Yobi unit prefix."]
     pub static mut EcsYobi: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Yobi unit prefix."]
-    pub static mut FLECS_IDEcsYobiID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Duration quantity."]
     pub static mut EcsDuration: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Duration quantity."]
-    pub static mut FLECS_IDEcsDurationID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< PicoSeconds duration unit."]
     pub static mut EcsPicoSeconds: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< PicoSeconds duration unit."]
-    pub static mut FLECS_IDEcsPicoSecondsID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< NanoSeconds duration unit."]
     pub static mut EcsNanoSeconds: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< NanoSeconds duration unit."]
-    pub static mut FLECS_IDEcsNanoSecondsID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< MicroSeconds duration unit."]
     pub static mut EcsMicroSeconds: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< MicroSeconds duration unit."]
-    pub static mut FLECS_IDEcsMicroSecondsID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< MilliSeconds duration unit."]
     pub static mut EcsMilliSeconds: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< MilliSeconds duration unit."]
-    pub static mut FLECS_IDEcsMilliSecondsID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Seconds duration unit."]
     pub static mut EcsSeconds: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Seconds duration unit."]
-    pub static mut FLECS_IDEcsSecondsID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Minutes duration unit."]
     pub static mut EcsMinutes: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Minutes duration unit."]
-    pub static mut FLECS_IDEcsMinutesID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Hours duration unit."]
     pub static mut EcsHours: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Hours duration unit."]
-    pub static mut FLECS_IDEcsHoursID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Days duration unit."]
     pub static mut EcsDays: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Days duration unit."]
-    pub static mut FLECS_IDEcsDaysID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Time quantity."]
     pub static mut EcsTime: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Time quantity."]
-    pub static mut FLECS_IDEcsTimeID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Date unit."]
     pub static mut EcsDate: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Date unit."]
-    pub static mut FLECS_IDEcsDateID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Mass quantity."]
     pub static mut EcsMass: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Mass quantity."]
-    pub static mut FLECS_IDEcsMassID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Grams unit."]
     pub static mut EcsGrams: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Grams unit."]
-    pub static mut FLECS_IDEcsGramsID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< KiloGrams unit."]
     pub static mut EcsKiloGrams: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< KiloGrams unit."]
-    pub static mut FLECS_IDEcsKiloGramsID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< ElectricCurrent quantity."]
     pub static mut EcsElectricCurrent: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< ElectricCurrent quantity."]
-    pub static mut FLECS_IDEcsElectricCurrentID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Ampere unit."]
     pub static mut EcsAmpere: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Ampere unit."]
-    pub static mut FLECS_IDEcsAmpereID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Amount quantity."]
     pub static mut EcsAmount: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Amount quantity."]
-    pub static mut FLECS_IDEcsAmountID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Mole unit."]
     pub static mut EcsMole: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Mole unit."]
-    pub static mut FLECS_IDEcsMoleID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< LuminousIntensity quantity."]
     pub static mut EcsLuminousIntensity: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< LuminousIntensity quantity."]
-    pub static mut FLECS_IDEcsLuminousIntensityID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Candela unit."]
     pub static mut EcsCandela: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Candela unit."]
-    pub static mut FLECS_IDEcsCandelaID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Force quantity."]
     pub static mut EcsForce: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Force quantity."]
-    pub static mut FLECS_IDEcsForceID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Newton unit."]
     pub static mut EcsNewton: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Newton unit."]
-    pub static mut FLECS_IDEcsNewtonID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Length quantity."]
     pub static mut EcsLength: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Length quantity."]
-    pub static mut FLECS_IDEcsLengthID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Meters unit."]
     pub static mut EcsMeters: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Meters unit."]
-    pub static mut FLECS_IDEcsMetersID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< PicoMeters unit."]
     pub static mut EcsPicoMeters: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< PicoMeters unit."]
-    pub static mut FLECS_IDEcsPicoMetersID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< NanoMeters unit."]
     pub static mut EcsNanoMeters: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< NanoMeters unit."]
-    pub static mut FLECS_IDEcsNanoMetersID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< MicroMeters unit."]
     pub static mut EcsMicroMeters: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< MicroMeters unit."]
-    pub static mut FLECS_IDEcsMicroMetersID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< MilliMeters unit."]
     pub static mut EcsMilliMeters: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< MilliMeters unit."]
-    pub static mut FLECS_IDEcsMilliMetersID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< CentiMeters unit."]
     pub static mut EcsCentiMeters: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< CentiMeters unit."]
-    pub static mut FLECS_IDEcsCentiMetersID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< KiloMeters unit."]
     pub static mut EcsKiloMeters: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< KiloMeters unit."]
-    pub static mut FLECS_IDEcsKiloMetersID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Miles unit."]
     pub static mut EcsMiles: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Miles unit."]
-    pub static mut FLECS_IDEcsMilesID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Pixels unit."]
     pub static mut EcsPixels: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Pixels unit."]
-    pub static mut FLECS_IDEcsPixelsID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Pressure quantity."]
     pub static mut EcsPressure: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Pressure quantity."]
-    pub static mut FLECS_IDEcsPressureID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Pascal unit."]
     pub static mut EcsPascal: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Pascal unit."]
-    pub static mut FLECS_IDEcsPascalID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Bar unit."]
     pub static mut EcsBar: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Bar unit."]
-    pub static mut FLECS_IDEcsBarID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Speed quantity."]
     pub static mut EcsSpeed: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Speed quantity."]
-    pub static mut FLECS_IDEcsSpeedID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< MetersPerSecond unit."]
     pub static mut EcsMetersPerSecond: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< MetersPerSecond unit."]
-    pub static mut FLECS_IDEcsMetersPerSecondID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< KiloMetersPerSecond unit."]
     pub static mut EcsKiloMetersPerSecond: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< KiloMetersPerSecond unit."]
-    pub static mut FLECS_IDEcsKiloMetersPerSecondID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< KiloMetersPerHour unit."]
     pub static mut EcsKiloMetersPerHour: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< KiloMetersPerHour unit."]
-    pub static mut FLECS_IDEcsKiloMetersPerHourID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< MilesPerHour unit."]
     pub static mut EcsMilesPerHour: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< MilesPerHour unit."]
-    pub static mut FLECS_IDEcsMilesPerHourID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Temperature quantity."]
     pub static mut EcsTemperature: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Temperature quantity."]
-    pub static mut FLECS_IDEcsTemperatureID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Kelvin unit."]
     pub static mut EcsKelvin: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Kelvin unit."]
-    pub static mut FLECS_IDEcsKelvinID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Celsius unit."]
     pub static mut EcsCelsius: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Celsius unit."]
-    pub static mut FLECS_IDEcsCelsiusID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Fahrenheit unit."]
     pub static mut EcsFahrenheit: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Fahrenheit unit."]
-    pub static mut FLECS_IDEcsFahrenheitID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Data quantity."]
     pub static mut EcsData: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Data quantity."]
-    pub static mut FLECS_IDEcsDataID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Bits unit."]
     pub static mut EcsBits: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Bits unit."]
-    pub static mut FLECS_IDEcsBitsID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< KiloBits unit."]
     pub static mut EcsKiloBits: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< KiloBits unit."]
-    pub static mut FLECS_IDEcsKiloBitsID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< MegaBits unit."]
     pub static mut EcsMegaBits: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< MegaBits unit."]
-    pub static mut FLECS_IDEcsMegaBitsID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< GigaBits unit."]
     pub static mut EcsGigaBits: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< GigaBits unit."]
-    pub static mut FLECS_IDEcsGigaBitsID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Bytes unit."]
     pub static mut EcsBytes: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Bytes unit."]
-    pub static mut FLECS_IDEcsBytesID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< KiloBytes unit."]
     pub static mut EcsKiloBytes: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< KiloBytes unit."]
-    pub static mut FLECS_IDEcsKiloBytesID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< MegaBytes unit."]
     pub static mut EcsMegaBytes: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< MegaBytes unit."]
-    pub static mut FLECS_IDEcsMegaBytesID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< GigaBytes unit."]
     pub static mut EcsGigaBytes: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< GigaBytes unit."]
-    pub static mut FLECS_IDEcsGigaBytesID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< KibiBytes unit."]
     pub static mut EcsKibiBytes: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< KibiBytes unit."]
-    pub static mut FLECS_IDEcsKibiBytesID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< MebiBytes unit."]
     pub static mut EcsMebiBytes: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< MebiBytes unit."]
-    pub static mut FLECS_IDEcsMebiBytesID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< GibiBytes unit."]
     pub static mut EcsGibiBytes: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< GibiBytes unit."]
-    pub static mut FLECS_IDEcsGibiBytesID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< DataRate quantity."]
     pub static mut EcsDataRate: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< DataRate quantity."]
-    pub static mut FLECS_IDEcsDataRateID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< BitsPerSecond unit."]
     pub static mut EcsBitsPerSecond: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< BitsPerSecond unit."]
-    pub static mut FLECS_IDEcsBitsPerSecondID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< KiloBitsPerSecond unit."]
     pub static mut EcsKiloBitsPerSecond: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< KiloBitsPerSecond unit."]
-    pub static mut FLECS_IDEcsKiloBitsPerSecondID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< MegaBitsPerSecond unit."]
     pub static mut EcsMegaBitsPerSecond: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< MegaBitsPerSecond unit."]
-    pub static mut FLECS_IDEcsMegaBitsPerSecondID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< GigaBitsPerSecond unit."]
     pub static mut EcsGigaBitsPerSecond: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< GigaBitsPerSecond unit."]
-    pub static mut FLECS_IDEcsGigaBitsPerSecondID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< BytesPerSecond unit."]
     pub static mut EcsBytesPerSecond: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< BytesPerSecond unit."]
-    pub static mut FLECS_IDEcsBytesPerSecondID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< KiloBytesPerSecond unit."]
     pub static mut EcsKiloBytesPerSecond: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< KiloBytesPerSecond unit."]
-    pub static mut FLECS_IDEcsKiloBytesPerSecondID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< MegaBytesPerSecond unit."]
     pub static mut EcsMegaBytesPerSecond: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< MegaBytesPerSecond unit."]
-    pub static mut FLECS_IDEcsMegaBytesPerSecondID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< GigaBytesPerSecond unit."]
     pub static mut EcsGigaBytesPerSecond: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< GigaBytesPerSecond unit."]
-    pub static mut FLECS_IDEcsGigaBytesPerSecondID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Angle quantity."]
     pub static mut EcsAngle: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Angle quantity."]
-    pub static mut FLECS_IDEcsAngleID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Radians unit."]
     pub static mut EcsRadians: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Radians unit."]
-    pub static mut FLECS_IDEcsRadiansID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Degrees unit."]
     pub static mut EcsDegrees: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Degrees unit."]
-    pub static mut FLECS_IDEcsDegreesID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Frequency quantity."]
     pub static mut EcsFrequency: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Frequency quantity."]
-    pub static mut FLECS_IDEcsFrequencyID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Hertz unit."]
     pub static mut EcsHertz: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Hertz unit."]
-    pub static mut FLECS_IDEcsHertzID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< KiloHertz unit."]
     pub static mut EcsKiloHertz: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< KiloHertz unit."]
-    pub static mut FLECS_IDEcsKiloHertzID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< MegaHertz unit."]
     pub static mut EcsMegaHertz: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< MegaHertz unit."]
-    pub static mut FLECS_IDEcsMegaHertzID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< GigaHertz unit."]
     pub static mut EcsGigaHertz: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< GigaHertz unit."]
-    pub static mut FLECS_IDEcsGigaHertzID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< URI quantity."]
     pub static mut EcsUri: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< URI quantity."]
-    pub static mut FLECS_IDEcsUriID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< UriHyperlink unit."]
     pub static mut EcsUriHyperlink: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< UriHyperlink unit."]
-    pub static mut FLECS_IDEcsUriHyperlinkID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< UriImage unit."]
     pub static mut EcsUriImage: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< UriImage unit."]
-    pub static mut FLECS_IDEcsUriImageID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< UriFile unit."]
     pub static mut EcsUriFile: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< UriFile unit."]
-    pub static mut FLECS_IDEcsUriFileID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Color quantity."]
     pub static mut EcsColor: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Color quantity."]
-    pub static mut FLECS_IDEcsColorID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< ColorRgb unit."]
     pub static mut EcsColorRgb: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< ColorRgb unit."]
-    pub static mut FLECS_IDEcsColorRgbID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< ColorHsl unit."]
     pub static mut EcsColorHsl: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< ColorHsl unit."]
-    pub static mut FLECS_IDEcsColorHslID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< ColorCss unit."]
     pub static mut EcsColorCss: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< ColorCss unit."]
-    pub static mut FLECS_IDEcsColorCssID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Acceleration unit."]
     pub static mut EcsAcceleration: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Acceleration unit."]
-    pub static mut FLECS_IDEcsAccelerationID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< Percentage unit."]
     pub static mut EcsPercentage: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< Percentage unit."]
-    pub static mut FLECS_IDEcsPercentageID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "< Bel unit."]
     pub static mut EcsBel: ecs_entity_t;
 }
 extern "C" {
-    #[doc = "< Bel unit."]
-    pub static mut FLECS_IDEcsBelID_: ecs_entity_t;
-}
-extern "C" {
     #[doc = "< DeciBel unit."]
     pub static mut EcsDeciBel: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "< DeciBel unit."]
-    pub static mut FLECS_IDEcsDeciBelID_: ecs_entity_t;
 }
 extern "C" {
     #[doc = "Units module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsUnits)\n @endcode\n\n @param world The world."]

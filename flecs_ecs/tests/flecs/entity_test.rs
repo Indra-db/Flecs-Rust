@@ -490,7 +490,7 @@ fn entity_pair_role() {
     let entity = world.entity();
     let entity2 = world.entity();
 
-    let pair: IdView = IdView::new_from(&world, (entity, entity2));
+    let pair: IdView = IdView::new_from_id(&world, (entity, entity2));
     let pair = pair.add_flags(flecs::id_flags::Pair::ID);
 
     assert!(pair.has_flags_for(flecs::id_flags::Pair::ID));
@@ -3815,51 +3815,42 @@ fn entity_world_lookup_not_recursive() {
     //TODO add back scoped world
 }
 
-////////////////////////
-/// Rust specific tests
-////////////////////////
-
 #[test]
-fn count_target_ids() {
+fn entity_override_sparse() {
     let world = World::new();
 
-    let e = world.entity();
-    let r = world.entity();
-    let o = world.entity();
+    world.component::<Velocity>().add::<flecs::Sparse>();
 
-    e.add_id((r, o));
-    e.add_id((r, o));
+    let base = world.entity().set(Velocity { x: 1, y: 2 });
 
-    assert_eq!(e.target_id_count(r).unwrap(), 1);
+    let e = world.entity().is_a_id(base);
 
-    let e2 = world.entity();
-    e2.add_id((r, o));
+    assert!(e.has::<Velocity>());
+    assert!(e.owns::<Velocity>());
 
-    assert_eq!(e.target_id_count(r).unwrap(), 1);
-    assert_eq!(e2.target_id_count(r).unwrap(), 1);
-
-    let o2 = world.entity();
-
-    e.add_id((r, o2));
-
-    assert_eq!(e.target_id_count(r).unwrap(), 2);
-    assert_eq!(e2.target_id_count(r).unwrap(), 1);
+    e.get::<&Velocity>(|v| {
+        assert_eq!(v.x, 1);
+        assert_eq!(v.y, 2);
+    });
 }
 
 #[test]
-fn entity_id_reuse() {
+fn entity_delete_w_override_sparse() {
     let world = World::new();
 
-    let a = world.entity_named("a");
-    let b = world.entity().child_of_id(a);
-    let first_archetype = b.archetype().to_string();
-    a.destruct();
+    world.component::<Velocity>().add::<flecs::Sparse>();
 
-    let a = world.entity_named("a");
-    let b = world.entity().child_of_id(a);
-    assert!(
-        b.id() > u32::MAX as u64,
-        "this test is not valid if the id was not reused"
-    );
-    assert_eq!(b.archetype().to_string(), first_archetype);
+    let base = world.entity().set(Velocity { x: 1, y: 2 });
+
+    let e = world.entity().is_a_id(base);
+
+    assert!(e.has::<Velocity>());
+    assert!(e.owns::<Velocity>());
+
+    e.get::<&Velocity>(|v| {
+        assert_eq!(v.x, 1);
+        assert_eq!(v.y, 2);
+    });
+
+    e.destruct();
 }
