@@ -101,7 +101,10 @@ impl<'a> BulkEntityBuilder<'a> {
     /// use flecs_ecs::prelude::*;
     ///
     /// #[derive(Component, Default)]
-    /// struct Position { x: i32, y: i32 }
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
     ///
     /// let world = World::new();
     ///
@@ -175,7 +178,10 @@ impl<'a> BulkEntityBuilder<'a> {
     /// use flecs_ecs::prelude::*;
     ///
     /// #[derive(Component, Default)]
-    /// struct Position { x: i32, y: i32 }
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
     ///
     /// let world = World::new();
     ///
@@ -212,7 +218,10 @@ impl<'a> BulkEntityBuilder<'a> {
     /// use flecs_ecs::prelude::*;
     ///
     /// #[derive(Component, Default)]
-    /// struct Position { x: i32, y: i32 }
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
     ///
     /// let world = World::new();
     ///
@@ -252,10 +261,16 @@ impl<'a> BulkEntityBuilder<'a> {
     /// use flecs_ecs::prelude::*;
     ///
     /// #[derive(Component)]
-    /// struct Position { x: i32, y: i32 }
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
     ///
     /// #[derive(Component, Default)]
-    /// struct Velocity { x: i32, y: i32 }
+    /// struct Velocity {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
     ///
     /// let world = World::new();
     ///
@@ -377,7 +392,10 @@ impl World {
     /// use flecs_ecs::prelude::*;
     ///
     /// #[derive(Component, Default)]
-    /// struct Position { x: i32, y: i32 }
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
     ///
     /// let world = World::new();
     ///
@@ -405,7 +423,10 @@ impl World {
     /// use flecs_ecs::prelude::*;
     ///
     /// #[derive(Component, Default)]
-    /// struct Position { x: i32, y: i32 }
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
     ///
     /// let world = World::new();
     ///
@@ -413,7 +434,9 @@ impl World {
     ///
     /// let entities: Vec<Entity> = (0..10).map(|_| world.entity().id()).collect();
     /// let new_entities = world
-    ///     .entity_bulk_w_entity_ids(&entities).set(&positions).build();
+    ///     .entity_bulk_w_entity_ids(&entities)
+    ///     .set(&positions)
+    ///     .build();
     /// ```
     pub fn entity_bulk_w_entity_ids(&self, entities: &[impl Into<Entity>]) -> BulkEntityBuilder {
         BulkEntityBuilder::new_w_entity_ids(self, entities)
