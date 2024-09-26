@@ -4,7 +4,7 @@ use flecs_ecs::core::*;
 use flecs_ecs::sys;
 
 /// Custom error type for `try_first_only` failures.
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum FirstOnlyError {
     NoEntities,
     MoreThanOneEntity,
