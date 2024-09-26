@@ -3,6 +3,13 @@ use std::ffi::c_char;
 use flecs_ecs::core::*;
 use flecs_ecs::sys;
 
+/// Custom error type for `try_first_only` failures.
+#[derive(Debug)]
+pub enum FirstOnlyError {
+    NoEntities,
+    MoreThanOneEntity,
+}
+
 pub trait IterOperations {
     #[doc(hidden)]
     fn retrieve_iter(&self) -> sys::ecs_iter_t;
@@ -893,14 +900,8 @@ where
     #[doc(alias = "iterable::first")]
     #[doc(alias = "iter_iterable::first")]
     fn first_entity(&self) -> EntityView<'a> {
-        let it = &mut self.retrieve_iter();
-
-        if self.iter_next(it) && it.count > 0 {
-            unsafe { sys::ecs_iter_fini(it) };
-            EntityView::new_from(self.world(), unsafe { *it.entities.add(0) })
-        } else {
-            panic!("Expected at least one entity, but none were found.");
-        }
+        self.try_first_entity()
+            .expect("Expected at least one entity, but none were found.")
     }
 
     /// iterates over the first entity in the iterator and returns a user-defined result.
@@ -994,28 +995,16 @@ where
     /// * [`Query::try_first_only`]
     /// * [`Query::first_only`]
     fn first<R>(&self, func: impl FnOnce(T::TupleType<'_>) -> R) -> R {
-        let mut it = self.retrieve_iter();
-
-        // Ensure that at least one entity is present, otherwise panic
-        if self.iter_next(&mut it) && it.count > 0 {
-            let mut components_data = T::create_ptrs(&it);
-            let tuple = components_data.get_tuple(&it, 0);
-
-            // Clean up iterator resources safely
-            let result = func(tuple);
-            unsafe { sys::ecs_iter_fini(&mut it) };
-
-            result
-        } else {
-            panic!("Expected at least one entity, but none were found.");
-        }
+        self.try_first(func)
+            .expect("Expected at least one entity, but none were found.")
     }
 
-    /// iterates over the first entity in the iterator and returns a user-defined result.
+    /// Iterates over the first entity in the iterator and returns a user-defined result.
     ///
     /// # Returns
     ///
-    /// * `Some(result)` if there is exactly one entity, otherwise returns `None`.
+    /// * `Ok(result)` if there is exactly one entity.
+    /// * `Err(FirstOnlyError)` if there are no entities or more than one entity.
     ///
     /// ```rust
     /// use flecs_ecs::prelude::*;
@@ -1030,19 +1019,19 @@ where
     ///
     /// let query = world.new_query::<&Position>();
     ///
-    /// assert_eq!(query.try_first_only(|pos| pos.x), None);
+    /// assert_eq!(query.try_first_only(|pos| pos.x), Err(FirstOnlyError::NoEntities));
     ///
     /// world.entity().set(Position { x: 10, y: 20 });
     ///
     /// let x_pos = query.try_first_only(|pos| pos.x);
     ///
-    /// assert_eq!(x_pos, Some(10));
+    /// assert_eq!(x_pos, Ok(10));
     ///
     /// world.entity().set(Position { x: 40, y: 20 });
     ///
     /// let x_pos = query.try_first_only(|pos| pos.x);
     ///
-    /// assert_eq!(x_pos, None);
+    /// assert_eq!(x_pos, Err(FirstOnlyError::MoreThanOneEntity));
     /// ```
     ///
     /// # See also
@@ -1051,29 +1040,31 @@ where
     /// * [`Query::first_entity`]
     /// * [`Query::try_first`]
     /// * [`Query::first`]
-    /// * [`Query::first_only`]
-    fn try_first_only<R>(&self, func: impl FnOnce(T::TupleType<'_>) -> R) -> Option<R> {
+    fn try_first_only<R>(
+        &self,
+        func: impl FnOnce(T::TupleType<'_>) -> R,
+    ) -> Result<R, FirstOnlyError> {
         let mut it = self.retrieve_iter();
 
-        // Proceed only if we can iterate and there is exactly one entity
+        // Proceed only if we can iterate
         if self.iter_next(&mut it) {
             if it.count == 1 {
                 let mut components_data = T::create_ptrs(&it);
                 let tuple = components_data.get_tuple(&it, 0);
 
                 // Clean up iterator resources safely
-                let result = Some(func(tuple));
+                let result = func(tuple);
                 unsafe { sys::ecs_iter_fini(&mut it) };
 
-                result
+                Ok(result)
             } else {
-                // More or fewer than one entity
+                // More than one entity
                 unsafe { sys::ecs_iter_fini(&mut it) };
-                None
+                Err(FirstOnlyError::MoreThanOneEntity)
             }
         } else {
             // No entities in the iterator
-            None
+            Err(FirstOnlyError::NoEntities)
         }
     }
 
@@ -1115,26 +1106,14 @@ where
     /// * [`Query::first`]
     /// * [`Query::try_first_only`]
     fn first_only<R>(&self, func: impl FnOnce(T::TupleType<'_>) -> R) -> R {
-        let mut it = self.retrieve_iter();
-
-        // Ensure that there is exactly one entity, otherwise panic
-        if self.iter_next(&mut it) {
-            if it.count == 1 {
-                let mut components_data = T::create_ptrs(&it);
-                let tuple = components_data.get_tuple(&it, 0);
-
-                // Clean up iterator resources safely
-                let result = func(tuple);
-                unsafe { sys::ecs_iter_fini(&mut it) };
-
-                result
-            } else if it.count > 1 {
+        match self.try_first_only(func) {
+            Ok(result) => result,
+            Err(FirstOnlyError::MoreThanOneEntity) => {
                 panic!("Expected exactly one entity, but found more than one.");
-            } else {
+            }
+            Err(FirstOnlyError::NoEntities) => {
                 panic!("Expected one entity, but none were found.");
             }
-        } else {
-            panic!("Failed to iterate, no entities were found.");
         }
     }
 
