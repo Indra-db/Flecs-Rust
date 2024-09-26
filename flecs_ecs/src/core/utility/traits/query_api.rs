@@ -793,24 +793,349 @@ where
 
     /// Return first matching entity.
     ///
+    /// # Returns
+    ///
+    /// * `Some(EntityView<'_>)` if the entity was found, `None` if no entity was found.
+    ///
     /// # See also
     ///
     /// * C++ API: `iterable::first`
     /// * C++ API: `iter_iterable::first`
+    ///
+    /// ```rust
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component, Debug)]
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let query = world.query::<&Position>().build();
+    ///
+    /// let entity = query.try_first_entity();
+    ///
+    /// assert!(entity.is_none());
+    ///
+    /// let ent = world.entity().set(Position { x: 10, y: 20 });
+    ///
+    /// let entity = query.try_first_entity();
+    ///
+    /// assert_eq!(entity.unwrap(), ent);
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`Query::try_first_entity`]
+    /// * [`Query::try_first`]
+    /// * [`Query::first`]
+    /// * [`Query::try_first_only`]
+    /// * [`Query::first_only`]
     #[doc(alias = "iterable::first")]
     #[doc(alias = "iter_iterable::first")]
-    fn first_entity(&mut self) -> Option<EntityView<'a>> {
-        let mut entity = None;
-
+    fn try_first_entity(&self) -> Option<EntityView<'a>> {
         let it = &mut self.retrieve_iter();
 
         if self.iter_next(it) && it.count > 0 {
-            entity = Some(EntityView::new_from(self.world(), unsafe {
-                *it.entities.add(0)
-            }));
             unsafe { sys::ecs_iter_fini(it) };
+            Some(EntityView::new_from(self.world(), unsafe {
+                *it.entities.add(0)
+            }))
+        } else {
+            None
         }
-        entity
+    }
+
+    /// Return first matching entity.
+    ///
+    /// # Returns
+    ///
+    /// The first entity in the iterator.
+    ///
+    /// # Panics
+    ///
+    /// if there are no entities.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iterable::first`
+    /// * C++ API: `iter_iterable::first`
+    ///
+    /// ```rust
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component, Debug)]
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let query = world.query::<&Position>().build();
+    ///
+    /// let ent = world.entity().set(Position { x: 10, y: 20 });
+    ///
+    /// let entity = query.first_entity();
+    ///
+    /// assert_eq!(entity, ent);
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`Query::try_first_entity`]
+    /// * [`Query::try_first`]
+    /// * [`Query::first`]
+    /// * [`Query::try_first_only`]
+    /// * [`Query::first_only`]
+    #[doc(alias = "iterable::first")]
+    #[doc(alias = "iter_iterable::first")]
+    fn first_entity(&self) -> EntityView<'a> {
+        let it = &mut self.retrieve_iter();
+
+        if self.iter_next(it) && it.count > 0 {
+            unsafe { sys::ecs_iter_fini(it) };
+            EntityView::new_from(self.world(), unsafe { *it.entities.add(0) })
+        } else {
+            panic!("Expected at least one entity, but none were found.");
+        }
+    }
+
+    /// iterates over the first entity in the iterator and returns a user-defined result.
+    ///
+    /// # Returns
+    ///
+    /// * `Some(result)` if there is at least one entity, otherwise returns `None`.
+    ///
+    /// ```rust
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component, Debug)]
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
+    ///
+    /// let world = World::new();
+    /// let query = world.new_query::<&Position>();
+    ///
+    /// assert_eq!(query.try_first(|pos| pos.x), None);
+    ///
+    /// world.entity().set(Position { x: 10, y: 20 });
+    /// world.entity().set(Position { x: 40, y: 20 });
+    ///
+    /// let x_pos = query.try_first(|pos| pos.x);
+    ///
+    /// assert_eq!(x_pos, Some(10));
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`Query::try_first_entity`]
+    /// * [`Query::first_entity`]
+    /// * [`Query::first`]
+    /// * [`Query::try_first_only`]
+    /// * [`Query::first_only`]
+    fn try_first<R>(&self, func: impl FnOnce(T::TupleType<'_>) -> R) -> Option<R> {
+        let mut it = self.retrieve_iter();
+
+        // Proceed only if there is at least one entity in the iterator
+        if self.iter_next(&mut it) && it.count > 0 {
+            let mut components_data = T::create_ptrs(&it);
+            let tuple = components_data.get_tuple(&it, 0);
+
+            let result = Some(func(tuple));
+            // Clean up iterator resources safely
+            unsafe { sys::ecs_iter_fini(&mut it) };
+
+            result
+        } else {
+            None
+        }
+    }
+
+    /// iterates over the first entity in the iterator and returns a user-defined result.
+    ///
+    /// # Returns
+    ///
+    /// The result of the callback function.
+    ///
+    /// # Panics
+    ///
+    /// if there are no entities.
+    ///
+    /// ```rust
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component, Debug)]
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let query = world.new_query::<&Position>();
+    ///
+    /// world.entity().set(Position { x: 10, y: 20 });
+    ///
+    /// let x_pos = query.first(|pos| pos.x);
+    ///
+    /// assert_eq!(x_pos, 10);
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`Query::try_first_entity`]
+    /// * [`Query::first_entity`]
+    /// * [`Query::try_first`]
+    /// * [`Query::try_first_only`]
+    /// * [`Query::first_only`]
+    fn first<R>(&self, func: impl FnOnce(T::TupleType<'_>) -> R) -> R {
+        let mut it = self.retrieve_iter();
+
+        // Ensure that at least one entity is present, otherwise panic
+        if self.iter_next(&mut it) && it.count > 0 {
+            let mut components_data = T::create_ptrs(&it);
+            let tuple = components_data.get_tuple(&it, 0);
+
+            // Clean up iterator resources safely
+            let result = func(tuple);
+            unsafe { sys::ecs_iter_fini(&mut it) };
+
+            result
+        } else {
+            panic!("Expected at least one entity, but none were found.");
+        }
+    }
+
+    /// iterates over the first entity in the iterator and returns a user-defined result.
+    ///
+    /// # Returns
+    ///
+    /// * `Some(result)` if there is exactly one entity, otherwise returns `None`.
+    ///
+    /// ```rust
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component, Debug)]
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let query = world.new_query::<&Position>();
+    ///
+    /// assert_eq!(query.try_first_only(|pos| pos.x), None);
+    ///
+    /// world.entity().set(Position { x: 10, y: 20 });
+    ///
+    /// let x_pos = query.try_first_only(|pos| pos.x);
+    ///
+    /// assert_eq!(x_pos, Some(10));
+    ///
+    /// world.entity().set(Position { x: 40, y: 20 });
+    ///
+    /// let x_pos = query.try_first_only(|pos| pos.x);
+    ///
+    /// assert_eq!(x_pos, None);
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`Query::try_first_entity`]
+    /// * [`Query::first_entity`]
+    /// * [`Query::try_first`]
+    /// * [`Query::first`]
+    /// * [`Query::first_only`]
+    fn try_first_only<R>(&self, func: impl FnOnce(T::TupleType<'_>) -> R) -> Option<R> {
+        let mut it = self.retrieve_iter();
+
+        // Proceed only if we can iterate and there is exactly one entity
+        if self.iter_next(&mut it) {
+            if it.count == 1 {
+                let mut components_data = T::create_ptrs(&it);
+                let tuple = components_data.get_tuple(&it, 0);
+
+                // Clean up iterator resources safely
+                let result = Some(func(tuple));
+                unsafe { sys::ecs_iter_fini(&mut it) };
+
+                result
+            } else {
+                // More or fewer than one entity
+                unsafe { sys::ecs_iter_fini(&mut it) };
+                None
+            }
+        } else {
+            // No entities in the iterator
+            None
+        }
+    }
+
+    /// iterates over the first entity in the iterator and returns a user-defined result.
+    ///
+    /// # Returns
+    ///
+    /// The result of the callback function.
+    ///
+    /// # Panics
+    ///  
+    /// if there are no entities, or if there are more than one entity.
+    ///
+    /// ```rust
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component, Debug)]
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let query = world.new_query::<&Position>();
+    ///
+    /// world.entity().set(Position { x: 10, y: 20 });
+    ///
+    /// let x_pos = query.first_only(|pos| pos.x);
+    ///
+    /// assert_eq!(x_pos, 10);
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`Query::try_first_entity`]
+    /// * [`Query::first_entity`]
+    /// * [`Query::try_first`]
+    /// * [`Query::first`]
+    /// * [`Query::try_first_only`]
+    fn first_only<R>(&self, func: impl FnOnce(T::TupleType<'_>) -> R) -> R {
+        let mut it = self.retrieve_iter();
+
+        // Ensure that there is exactly one entity, otherwise panic
+        if self.iter_next(&mut it) {
+            if it.count == 1 {
+                let mut components_data = T::create_ptrs(&it);
+                let tuple = components_data.get_tuple(&it, 0);
+
+                // Clean up iterator resources safely
+                let result = func(tuple);
+                unsafe { sys::ecs_iter_fini(&mut it) };
+
+                result
+            } else if it.count > 1 {
+                panic!("Expected exactly one entity, but found more than one.");
+            } else {
+                panic!("Expected one entity, but none were found.");
+            }
+        } else {
+            panic!("Failed to iterate, no entities were found.");
+        }
     }
 
     /// Returns true if iterator yields at least once result.
