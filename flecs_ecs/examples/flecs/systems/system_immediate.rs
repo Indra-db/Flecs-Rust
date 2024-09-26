@@ -44,7 +44,7 @@ fn main() {
             let plate = it.entity(index);
 
             // Find an available waiter
-            if let Some(waiter) = q_waiter.first_entity() {
+            if let Some(waiter) = q_waiter.try_first_entity() {
                 // An available waiter was found, assign a plate to it so
                 // that the next plate will no longer find it.
                 // The defer_suspend function temporarily suspends deferring
