@@ -31,18 +31,18 @@ impl<'a> DerefMut for EntityView<'a> {
     }
 }
 
-impl<'a> std::fmt::Display for EntityView<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<'a> core::fmt::Display for EntityView<'a> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         if let Some(name) = self.get_name() {
-            write!(f, "{}", name)
+            write!(f, "#{} | {}", self.id, name)
         } else {
-            write!(f, "{}", *self.id)
+            write!(f, "#{}", self.id)
         }
     }
 }
 
-impl<'a> std::fmt::Debug for EntityView<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<'a> core::fmt::Debug for EntityView<'a> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let entity_display = match self.get_name() {
             Some(name_str) => format!("Entity: #{} | \"{}\"", self.id, name_str),
             None => format!("Entity: #{}", self.id),
@@ -58,6 +58,16 @@ impl<'a> std::fmt::Debug for EntityView<'a> {
                 }
             });
         });
+
+        if children.is_empty() {
+            return write!(
+                f,
+                "\n  {}\n  Archetype:\n    - {}\n",
+                entity_display,
+                archetype_types_str.join("\n    - "),
+            );
+        }
+
         write!(
             f,
             "\n  {}\n  Archetype:\n    - {}\n  Children:\n    - {}\n",

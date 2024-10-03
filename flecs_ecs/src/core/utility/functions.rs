@@ -518,7 +518,9 @@ pub(crate) fn has_default_hook(world: *const sys::ecs_world_t, id: u64) -> bool 
 pub fn debug_separate_archetype_types_into_strings(archetype: &Archetype) -> Vec<String> {
     let mut result = Vec::with_capacity(archetype.count());
     let mut skip_next = false; // To skip the next part after joining
-    let archetype_str = archetype.to_string().unwrap_or_else(|| "empty".to_string());
+    let archetype_str = archetype
+        .to_string()
+        .unwrap_or_else(|| "empty entity | no components".to_string());
 
     let parts: Vec<&str> = archetype_str.split(',').map(|s| s.trim()).collect();
 
