@@ -43,16 +43,27 @@ impl<'a> std::fmt::Display for EntityView<'a> {
 
 impl<'a> std::fmt::Debug for EntityView<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let name = self.name();
-        let id = self.id;
-        let archetype_str = self
-            .archetype()
-            .to_string()
-            .unwrap_or_else(|| "empty".to_string());
+        let entity_display = match self.get_name() {
+            Some(name_str) => format!("Entity: #{} | \"{}\"", self.id, name_str),
+            None => format!("Entity: #{}", self.id),
+        };
+        let archetype_types_str = debug_separate_archetype_types_into_strings(&self.archetype());
+
+        let mut children = vec![];
+        self.each_child(|child| {
+            children.push({
+                match child.get_name() {
+                    Some(name) => format!("#{} | \"{}\"", child.id, name),
+                    None => format!("#{}", child.id),
+                }
+            });
+        });
         write!(
             f,
-            "Entity name: {} -- id: {} -- archetype: {}",
-            name, id, archetype_str
+            "\n  {}\n  Archetype:\n    - {}\n  Children:\n    - {}\n",
+            entity_display,
+            archetype_types_str.join("\n    - "),
+            children.join("\n    - ")
         )
     }
 }
