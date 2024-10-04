@@ -1019,7 +1019,10 @@ where
     ///
     /// let query = world.new_query::<&Position>();
     ///
-    /// assert_eq!(query.try_first_only(|pos| pos.x), Err(FirstOnlyError::NoEntities));
+    /// assert_eq!(
+    ///     query.try_first_only(|pos| pos.x),
+    ///     Err(FirstOnlyError::NoEntities)
+    /// );
     ///
     /// world.entity().set(Position { x: 10, y: 20 });
     ///

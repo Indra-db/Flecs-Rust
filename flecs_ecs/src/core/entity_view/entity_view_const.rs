@@ -106,7 +106,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::entity`
     #[doc(alias = "entity::entity")]
-    pub(crate) fn new_from(world: impl WorldProvider<'a>, id: impl Into<Entity>) -> Self {
+    #[doc(hidden)] //public due to macro newtype_of and world.entity_from_id has lifetime issues.
+    pub fn new_from(world: impl WorldProvider<'a>, id: impl Into<Entity>) -> Self {
         Self {
             world: world.world(),
             id: id.into(),
