@@ -510,3 +510,37 @@ pub(crate) fn has_default_hook(world: *const sys::ecs_world_t, id: u64) -> bool 
         ctor_hooks != sys::flecs_default_ctor
     }
 }
+
+/// Separate the types of an `Archetype` into a `Vec<String>`.
+///
+/// # Returns
+/// A `Vec<String>` where each entry is a component or relationship of the `Archetype`.
+pub fn debug_separate_archetype_types_into_strings(archetype: &Archetype) -> Vec<String> {
+    let mut result = Vec::with_capacity(archetype.count());
+    let mut skip_next = false; // To skip the next part after joining
+    let archetype_str = archetype
+        .to_string()
+        .unwrap_or_else(|| "empty entity | no components".to_string());
+
+    let parts: Vec<&str> = archetype_str.split(',').map(|s| s.trim()).collect();
+
+    for i in 0..parts.len() {
+        if skip_next {
+            skip_next = false;
+            continue;
+        }
+
+        let part = parts[i];
+
+        if part.starts_with('(') {
+            // Join this part with the next one
+            let combined = format!("{}, {}", part, parts[i + 1]);
+            result.push(combined);
+            skip_next = true; // Skip the next part since it's already used
+        } else {
+            result.push(part.to_string());
+        }
+    }
+
+    result
+}

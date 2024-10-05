@@ -31,28 +31,49 @@ impl<'a> DerefMut for EntityView<'a> {
     }
 }
 
-impl<'a> std::fmt::Display for EntityView<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<'a> core::fmt::Display for EntityView<'a> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         if let Some(name) = self.get_name() {
-            write!(f, "{}", name)
+            write!(f, "#{} | {}", self.id, name)
         } else {
-            write!(f, "{}", *self.id)
+            write!(f, "#{}", self.id)
         }
     }
 }
 
-impl<'a> std::fmt::Debug for EntityView<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let name = self.name();
-        let id = self.id;
-        let archetype_str = self
-            .archetype()
-            .to_string()
-            .unwrap_or_else(|| "empty".to_string());
+impl<'a> core::fmt::Debug for EntityView<'a> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let entity_display = match self.get_name() {
+            Some(name_str) => format!("Entity: #{} | \"{}\"", self.id, name_str),
+            None => format!("Entity: #{}", self.id),
+        };
+        let archetype_types_str = debug_separate_archetype_types_into_strings(&self.archetype());
+
+        let mut children = vec![];
+        self.each_child(|child| {
+            children.push({
+                match child.get_name() {
+                    Some(name) => format!("#{} | \"{}\"", child.id, name),
+                    None => format!("#{}", child.id),
+                }
+            });
+        });
+
+        if children.is_empty() {
+            return write!(
+                f,
+                "\n  {}\n  Archetype:\n    - {}\n",
+                entity_display,
+                archetype_types_str.join("\n    - "),
+            );
+        }
+
         write!(
             f,
-            "Entity name: {} -- id: {} -- archetype: {}",
-            name, id, archetype_str
+            "\n  {}\n  Archetype:\n    - {}\n  Children:\n    - {}\n",
+            entity_display,
+            archetype_types_str.join("\n    - "),
+            children.join("\n    - ")
         )
     }
 }
@@ -85,7 +106,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::entity`
     #[doc(alias = "entity::entity")]
-    pub(crate) fn new_from(world: impl WorldProvider<'a>, id: impl Into<Entity>) -> Self {
+    #[doc(hidden)] //public due to macro newtype_of and world.entity_from_id has lifetime issues.
+    pub fn new_from(world: impl WorldProvider<'a>, id: impl Into<Entity>) -> Self {
         Self {
             world: world.world(),
             id: id.into(),
