@@ -394,7 +394,7 @@ std::any::type_name::<Self>(), std::any::type_name::<$t::ActualType<'a>>());
     }
 }
 
-tuples!(impl_get_tuple, 0, 16);
+tuples!(impl_get_tuple, 0, 32);
 
 #[cfg(test)]
 mod tests {
