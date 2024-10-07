@@ -649,7 +649,7 @@ impl<'a> EntityView<'a> {
     ///
     /// The count of targets for the given relationship.
     /// If it doesn't have the relationship, this function will return `None`.
-    pub fn each_target_count<T>(self) -> Option<i32>
+    pub fn target_count<T>(self) -> Option<i32>
     where
         T: ComponentId,
     {
@@ -723,6 +723,59 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::children")]
     pub fn each_child(self, func: impl FnMut(EntityView)) {
         self.each_child_of_id(flecs::ChildOf::ID, func);
+    }
+
+    /// Returns if the entity has any children.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// let parent = world.entity();
+    /// let child = world.entity().child_of_id(parent);
+    ///
+    /// assert!(parent.has_children());
+    /// assert!(!child.has_children());
+    /// ```
+    pub fn has_children(self) -> bool {
+        let mut it =
+            unsafe { sys::ecs_each_id(self.world_ptr(), ecs_pair(flecs::ChildOf::ID, *self.id)) };
+        if unsafe { sys::ecs_iter_is_true(&mut it) } {
+            return true;
+        }
+        false
+    }
+
+    /// Returns the count of children for the entity.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// let parent = world.entity();
+    /// let child = world.entity().child_of_id(parent);
+    ///
+    /// assert_eq!(parent.count_children(), 1);
+    ///
+    /// let child2 = world.entity().child_of_id(parent);
+    ///
+    /// assert_eq!(parent.count_children(), 2);
+    /// ```
+    pub fn count_children(self) -> u32 {
+        let mut it =
+            unsafe { sys::ecs_each_id(self.world_ptr(), ecs_pair(flecs::ChildOf::ID, *self.id)) };
+
+        let mut count = 0;
+        while unsafe { sys::ecs_each_next(&mut it) } {
+            count += it.count as u32;
+        }
+        count
     }
 }
 
