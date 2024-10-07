@@ -1194,6 +1194,7 @@ where
     ///
     /// * C++ API: `iterable::set_var`
     #[doc(alias = "iterable::set_var")]
+    #[must_use = "This method returns a new query iterator that should be used"]
     fn set_var(&self, var_id: i32, value: impl Into<Entity>) -> QueryIter<P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_var(&mut iter, var_id, value);
