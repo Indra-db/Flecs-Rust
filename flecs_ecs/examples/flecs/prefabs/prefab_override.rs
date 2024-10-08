@@ -44,7 +44,7 @@ fn main() {
         .component::<Attack>()
         .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
 
-    // Attack and Damage are properties that can be shared across many
+    // Attack and Defense are properties that can be shared across many
     // spaceships. This saves memory, and speeds up prefab creation as we don't
     // have to copy the values of Attack and Defense to private components.
     let spaceship = world
