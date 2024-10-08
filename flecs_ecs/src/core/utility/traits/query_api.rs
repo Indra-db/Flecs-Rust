@@ -21,7 +21,7 @@ pub trait IterOperations {
     fn iter_next(&self, iter: &mut sys::ecs_iter_t) -> bool;
 
     #[doc(hidden)]
-    fn iter_next_func(&self) -> unsafe extern "C" fn(*mut sys::ecs_iter_t) -> bool;
+    fn iter_next_func(&self) -> unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t) -> bool;
 
     #[doc(hidden)]
     fn query_ptr(&self) -> *const sys::ecs_query_t;
@@ -540,7 +540,7 @@ where
         iter.callback_ctx = &mut func_each as *mut _ as *mut std::ffi::c_void;
         iter.callback = Some(
             __internal_query_execute_each::<T, FuncEach>
-                as unsafe extern "C" fn(*mut sys::ecs_iter_t),
+                as unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t),
         );
         let mut iter_t = unsafe { TableIter::new(&mut iter) };
         iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
@@ -636,7 +636,7 @@ where
         iter.callback_ctx = &mut func_each as *mut _ as *mut std::ffi::c_void;
         iter.callback = Some(
             __internal_query_execute_each_entity::<T, FuncEachEntity>
-                as unsafe extern "C" fn(*mut sys::ecs_iter_t),
+                as unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t),
         );
         let mut iter_t = unsafe { TableIter::new(&mut iter) };
         iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
@@ -1282,7 +1282,7 @@ where
     }
 }
 
-unsafe extern "C" fn __internal_query_execute_each<T, Func>(iter: *mut sys::ecs_iter_t)
+unsafe extern "C-unwind" fn __internal_query_execute_each<T, Func>(iter: *mut sys::ecs_iter_t)
 where
     T: QueryTuple,
     Func: FnMut(T::TupleType<'_>),
@@ -1298,8 +1298,9 @@ where
     }
 }
 
-unsafe extern "C" fn __internal_query_execute_each_entity<T, Func>(iter: *mut sys::ecs_iter_t)
-where
+unsafe extern "C-unwind" fn __internal_query_execute_each_entity<T, Func>(
+    iter: *mut sys::ecs_iter_t,
+) where
     T: QueryTuple,
     Func: FnMut(EntityView, T::TupleType<'_>),
 {
