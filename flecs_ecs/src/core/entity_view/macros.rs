@@ -173,6 +173,7 @@ macro_rules! newtype_of_entity {
 }
 
 /// A macro to generate newtype wrappers for both [`Entity`][crate::core::Entity] and [`EntityView`][crate::core::EntityView] with various utility implementations.
+/// It uses the macros [`newtype_of_entity`] and [`newtype_of_entity_view`] internally to generate the newtypes.
 ///
 /// This macro takes the full struct definitions for both the entity and the view newtypes, allowing you to define the visibility of each struct and its fields.
 /// It provides implementations for common traits such as `Deref`, `DerefMut`, `From`, `Debug`, and `Display`, and also implements conversion methods between the entity and view types.
