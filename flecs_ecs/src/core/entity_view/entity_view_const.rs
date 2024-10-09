@@ -2177,7 +2177,7 @@ impl<'a> EntityView<'a> {
             C::id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_empty::<Func> as unsafe extern "C" fn(_)),
+            Some(Self::run_empty::<Func> as unsafe extern "C-unwind" fn(_)),
         );
         self
     }
@@ -2229,7 +2229,7 @@ impl<'a> EntityView<'a> {
             C::id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_empty_entity::<Func> as unsafe extern "C" fn(_)),
+            Some(Self::run_empty_entity::<Func> as unsafe extern "C-unwind" fn(_)),
         );
         self
     }
@@ -2281,7 +2281,7 @@ impl<'a> EntityView<'a> {
             C::id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_payload::<C, Func> as unsafe extern "C" fn(_)),
+            Some(Self::run_payload::<C, Func> as unsafe extern "C-unwind" fn(_)),
         );
         self
     }
@@ -2333,7 +2333,7 @@ impl<'a> EntityView<'a> {
             C::id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_payload_entity::<C, Func> as unsafe extern "C" fn(_)),
+            Some(Self::run_payload_entity::<C, Func> as unsafe extern "C-unwind" fn(_)),
         );
         self
     }
@@ -2370,7 +2370,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_observer_delegate::invoke`
     #[doc(alias = "entity_observer_delegate::invoke")]
-    pub(crate) unsafe extern "C" fn run_empty<Func>(iter: *mut sys::ecs_iter_t)
+    pub(crate) unsafe extern "C-unwind" fn run_empty<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(),
     {
@@ -2398,7 +2398,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_observer_delegate::invoke`
     #[doc(alias = "entity_observer_delegate::invoke")]
-    pub(crate) unsafe extern "C" fn run_empty_entity<Func>(iter: *mut sys::ecs_iter_t)
+    pub(crate) unsafe extern "C-unwind" fn run_empty_entity<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(&mut EntityView),
     {
@@ -2430,7 +2430,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_payload_observer_delegate::invoke`
     #[doc(alias = "entity_payload_observer_delegate::invoke")]
-    pub(crate) unsafe extern "C" fn run_payload<C, Func>(iter: *mut sys::ecs_iter_t)
+    pub(crate) unsafe extern "C-unwind" fn run_payload<C, Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(&C),
     {
@@ -2460,7 +2460,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_payload_observer_delegate::invoke`
     #[doc(alias = "entity_payload_observer_delegate::invoke")]
-    pub(crate) unsafe extern "C" fn run_payload_entity<C, Func>(iter: *mut sys::ecs_iter_t)
+    pub(crate) unsafe extern "C-unwind" fn run_payload_entity<C, Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(&mut EntityView, &C),
     {
@@ -2485,7 +2485,7 @@ impl<'a> EntityView<'a> {
     }
 
     /// Callback to free the memory of the `empty` callback
-    pub(crate) extern "C" fn on_free_empty(ptr: *mut c_void) {
+    pub(crate) extern "C-unwind" fn on_free_empty(ptr: *mut c_void) {
         let ptr_func: *mut fn() = ptr as *mut fn();
         unsafe {
             ptr::drop_in_place(ptr_func);
@@ -2493,7 +2493,7 @@ impl<'a> EntityView<'a> {
     }
 
     /// Callback to free the memory of the `empty_entity` callback
-    pub(crate) extern "C" fn on_free_empty_entity(ptr: *mut c_void) {
+    pub(crate) extern "C-unwind" fn on_free_empty_entity(ptr: *mut c_void) {
         let ptr_func: *mut fn(&mut EntityView) = ptr as *mut fn(&mut EntityView);
         unsafe {
             ptr::drop_in_place(ptr_func);
@@ -2501,7 +2501,7 @@ impl<'a> EntityView<'a> {
     }
 
     /// Callback to free the memory of the `payload` callback
-    pub(crate) extern "C" fn on_free_payload<C>(ptr: *mut c_void) {
+    pub(crate) extern "C-unwind" fn on_free_payload<C>(ptr: *mut c_void) {
         let ptr_func: *mut fn(&mut C) = ptr as *mut fn(&mut C);
         unsafe {
             ptr::drop_in_place(ptr_func);
@@ -2509,7 +2509,7 @@ impl<'a> EntityView<'a> {
     }
 
     /// Callback to free the memory of the `payload_entity` callback
-    pub(crate) extern "C" fn on_free_payload_entity<C>(ptr: *mut c_void) {
+    pub(crate) extern "C-unwind" fn on_free_payload_entity<C>(ptr: *mut c_void) {
         let ptr_func: *mut fn(&mut EntityView, &mut C) = ptr as *mut fn(&mut EntityView, &mut C);
         unsafe {
             ptr::drop_in_place(ptr_func);
@@ -2517,7 +2517,7 @@ impl<'a> EntityView<'a> {
     }
 
     /// Executes the drop for the system binding context, meant to be used as a callback
-    pub(crate) extern "C" fn binding_entity_ctx_drop(ptr: *mut c_void) {
+    pub(crate) extern "C-unwind" fn binding_entity_ctx_drop(ptr: *mut c_void) {
         let ptr_struct: *mut ObserverEntityBindingCtx = ptr as *mut ObserverEntityBindingCtx;
         unsafe {
             ptr::drop_in_place(ptr_struct);

@@ -36,6 +36,8 @@ fn generate_bindings() {
         .allowlist_file("src/flecs.h")
         .allowlist_file("src/flecs_rust.h")
         .allowlist_recursively(false)
+        // Use the "C-unwind" ABI
+        .override_abi(bindgen::Abi::CUnwind, ".*")
         // Keep comments and keep all of them, not just doc comments.
         .generate_comments(true)
         // Prefer core::* over std::*

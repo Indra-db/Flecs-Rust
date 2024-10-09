@@ -1102,7 +1102,7 @@ impl World {
     /// use core::ffi::c_void;
     /// use flecs_ecs::prelude::*;
     ///
-    /// extern "C" fn free_ctx(ctx: *mut c_void) {
+    /// extern "C-unwind" fn free_ctx(ctx: *mut c_void) {
     ///     unsafe {
     ///         Box::from_raw(ctx as *mut i32);
     ///     }

@@ -56,7 +56,7 @@ pub(crate) struct RegistersPanicHooks {
     pub(crate) copy: bool,
 }
 
-pub(crate) unsafe extern "C" fn register_panic_hooks_free_ctx(ctx: *mut c_void) {
+pub(crate) unsafe extern "C-unwind" fn register_panic_hooks_free_ctx(ctx: *mut c_void) {
     let _box = unsafe { Box::from_raw(ctx as *mut RegistersPanicHooks) };
 }
 
@@ -103,7 +103,7 @@ pub fn register_copy_panic_lifecycle_action<T>(type_hooks: &mut sys::ecs_type_ho
 ///
 /// * C++ API: `ctor_impl`
 #[doc(alias = "ctor_impl")]
-extern "C" fn ctor<T: Default>(
+extern "C-unwind" fn ctor<T: Default>(
     ptr: *mut c_void,
     count: i32,
     _type_info: *const sys::ecs_type_info_t,
@@ -134,7 +134,11 @@ extern "C" fn ctor<T: Default>(
 ///
 /// * C++ API: `dtor_impl`
 #[doc(alias = "dtor_impl")]
-extern "C" fn dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const sys::ecs_type_info_t) {
+extern "C-unwind" fn dtor<T>(
+    ptr: *mut c_void,
+    count: i32,
+    _type_info: *const sys::ecs_type_info_t,
+) {
     ecs_assert!(
         check_type_info::<T>(_type_info),
         FlecsErrorCode::InternalError
@@ -155,7 +159,7 @@ extern "C" fn dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const sys::ecs_
 ///
 /// * C++ API: `copy_impl`
 #[doc(alias = "copy_impl")]
-extern "C" fn copy<T: Clone>(
+extern "C-unwind" fn copy<T: Clone>(
     dst_ptr: *mut c_void,
     src_ptr: *const c_void,
     count: i32,
@@ -185,7 +189,7 @@ extern "C" fn copy<T: Clone>(
 ///
 /// * C++ API: `copy_impl`
 #[doc(alias = "copy_impl")]
-extern "C" fn copy_ctor<T: Clone>(
+extern "C-unwind" fn copy_ctor<T: Clone>(
     dst_ptr: *mut c_void,
     src_ptr: *const c_void,
     count: i32,
@@ -207,7 +211,7 @@ extern "C" fn copy_ctor<T: Clone>(
     }
 }
 
-extern "C" fn panic_ctor<T>(
+extern "C-unwind" fn panic_ctor<T>(
     _dst_ptr: *mut c_void,
     _count: i32,
     _type_info: *const sys::ecs_type_info_t,
@@ -215,7 +219,7 @@ extern "C" fn panic_ctor<T>(
     panic!("Default is not implemented for type {} which requires drop and it's being used in an operation which calls the constructor", std::any::type_name::<T>());
 }
 
-extern "C" fn panic_copy<T>(
+extern "C-unwind" fn panic_copy<T>(
     _dst_ptr: *mut c_void,
     _src_ptr: *const c_void,
     _count: i32,
@@ -231,7 +235,7 @@ extern "C" fn panic_copy<T>(
 ///
 /// * C++ API: `move_impl`
 #[doc(alias = "move_impl")]
-extern "C" fn move_dtor<T>(
+extern "C-unwind" fn move_dtor<T>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,
     count: i32,
@@ -264,7 +268,7 @@ extern "C" fn move_dtor<T>(
 ///
 /// * C++ API: `move_impl`
 #[doc(alias = "move_impl")]
-extern "C" fn move_ctor<T>(
+extern "C-unwind" fn move_ctor<T>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,
     count: i32,
@@ -285,7 +289,7 @@ extern "C" fn move_ctor<T>(
     }
 }
 
-extern "C" fn ctor_move_dtor<T>(
+extern "C-unwind" fn ctor_move_dtor<T>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,
     count: i32,
