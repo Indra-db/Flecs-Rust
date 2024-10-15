@@ -12,10 +12,16 @@ use crate::core::*;
 use crate::sys;
 
 /// A wrapper class that gives direct access to the component arrays of a table, the table data
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq)]
 pub struct Table<'a> {
     world: WorldRef<'a>,
     pub(crate) table: NonNull<sys::ecs_table_t>,
+}
+
+impl PartialEq for Table<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.table == other.table
+    }
 }
 
 impl<'a> Table<'a> {
