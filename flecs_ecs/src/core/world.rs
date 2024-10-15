@@ -1951,6 +1951,7 @@ impl World {
     /// # See also
     ///
     /// * [`World::get()`]
+    #[must_use]
     pub fn cloned<T: ClonedTupleTypeOperation>(&self) -> T::ActualType
     where
         T::OnlyType: ComponentOrPairId,

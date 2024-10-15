@@ -1027,6 +1027,7 @@ impl<'a> EntityView<'a> {
     /// assert_eq!(pos.x, 10.0);
     /// assert_eq!(tag_pos_rel.x, 30.0);
     /// ```
+    #[must_use]
     pub fn cloned<T: ClonedTuple>(self) -> T::TupleType<'a> {
         let record = unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) };
 
