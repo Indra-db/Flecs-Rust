@@ -10,7 +10,7 @@ use syn::{
     parse::{Parse, ParseStream},
     parse_macro_input,
     token::{Bracket, Comma},
-    Data, DeriveInput, Expr, Fields, Ident, LitInt, LitStr, Result, Token, Type,
+    Data, DeriveInput, Expr, Fields, Ident, LitInt, LitStr, Path, Result, Token, Type,
 };
 
 /// `Component` macro for defining Flecs ECS components.
@@ -978,6 +978,7 @@ enum TermIdent {
     Local(Ident),
     Variable(LitStr),
     Type(Type),
+    EnumType(Path),
     Literal(LitStr),
     SelfType,
     SelfVar,
@@ -1012,6 +1013,9 @@ impl Parse for TermIdent {
         } else if input.peek(Token![Self]) {
             input.parse::<Token![Self]>()?;
             Ok(TermIdent::SelfType)
+        } else if input.peek(kw::variant) {
+            input.parse::<kw::variant>()?;
+            Ok(TermIdent::EnumType(input.parse::<Path>()?))
         } else {
             Ok(TermIdent::Type(input.parse::<Type>()?))
         }
@@ -1055,6 +1059,9 @@ mod kw {
     syn::custom_keyword!(inout);
     syn::custom_keyword!(filter);
     syn::custom_keyword!(none);
+
+    // For flecs enum type
+    syn::custom_keyword!(variant);
 }
 
 impl Parse for TermOper {
@@ -1129,6 +1136,7 @@ impl Parse for TermId {
             None
         };
         let mut out = Self::new(ident, span);
+
         while peek_trav(input) {
             if input.peek(kw::cascade) {
                 input.parse::<kw::cascade>()?;
@@ -1347,6 +1355,7 @@ fn expand_trav(term: &TermId) -> Vec<TokenStream> {
 fn expand_type(ident: &TermIdent) -> Option<TokenStream> {
     match ident {
         TermIdent::Type(ty) => Some(quote! { #ty }),
+        TermIdent::EnumType(ty) => Some(quote! { #ty }),
         TermIdent::Wildcard => Some(quote! { flecs_ecs::core::flecs::Wildcard }),
         TermIdent::Any => Some(quote! { flecs_ecs::core::flecs::Any }),
         TermIdent::SelfType => Some(quote! { Self }),
@@ -1479,12 +1488,18 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                         TermIdent::Local(ident) => ops.push(quote! { .set_id(#ident) }),
                         TermIdent::Literal(lit) => ops.push(quote! { .name(#lit) }),
                         TermIdent::Singleton => ops.push(quote_spanned!{ term.span => ; compile_error!("Unexpected singleton identifier.") }),
+                        TermIdent::EnumType(_) => {
+                            if !iter_term {
+                                term_accessor = quote! { .with_enum(#ty) };
+                                needs_accessor = true;
+                            }
+                        },
                         _ => {
                             if !iter_term {
                                 term_accessor = quote! { .with::<#ty>() };
                                 needs_accessor = true;
                             }
-                        }
+                        },
                     };
 
                     // Configure traversal
