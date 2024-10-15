@@ -32,8 +32,8 @@ pub struct Third;
 #[derive(Component)]
 pub struct Group;
 
-// callbacks need to be extern "C" to be callable from C
-extern "C" fn callback_group_create(
+// Callbacks need to be `extern "C-unwind"` to be callable from C and allow safe unwinding across FFI boundaries.
+extern "C-unwind" fn callback_group_create(
     world: *mut sys::ecs_world_t,
     group_id: u64,
     _group_by_ctx: *mut c_void,
@@ -55,8 +55,8 @@ extern "C" fn callback_group_create(
     Box::into_raw(ctx) as *mut std::ffi::c_void // Cast to make sure function type matches
 }
 
-// callbacks need to be extern "C" to be callable from C
-extern "C" fn callback_group_delete(
+// Callbacks need to be `extern "C-unwind"` to be callable from C and allow safe unwinding across FFI boundaries.
+extern "C-unwind" fn callback_group_delete(
     world: *mut sys::ecs_world_t,
     group_id: u64,
     _ctx: *mut c_void,

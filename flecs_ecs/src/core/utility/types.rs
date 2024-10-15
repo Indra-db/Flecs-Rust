@@ -3,7 +3,7 @@ use std::os::raw::c_void;
 
 pub type FTime = f32;
 
-pub(crate) type EcsCtxFreeT = extern "C" fn(*mut c_void);
+pub(crate) type EcsCtxFreeT = extern "C-unwind" fn(*mut c_void);
 
 // #[doc(hidden)]
 // pub struct ReactorBindingType {

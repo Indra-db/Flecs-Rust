@@ -218,8 +218,12 @@ where
 }
 
 // Assuming some imports and definitions from your previous example, and adding the required ones for this example.
-type GroupByFn =
-    extern "C" fn(*mut sys::ecs_world_t, *mut sys::ecs_table_t, sys::ecs_id_t, *mut c_void) -> u64;
+type GroupByFn = extern "C-unwind" fn(
+    *mut sys::ecs_world_t,
+    *mut sys::ecs_table_t,
+    sys::ecs_id_t,
+    *mut c_void,
+) -> u64;
 
 /// Functions to build a query using terms.
 pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
@@ -830,8 +834,8 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     {
         let cmp: sys::ecs_order_by_action_t = Some(unsafe {
             std::mem::transmute::<
-                extern "C" fn(Entity, &T, Entity, &T) -> i32,
-                unsafe extern "C" fn(
+                extern "C-unwind" fn(Entity, &T, Entity, &T) -> i32,
+                unsafe extern "C-unwind" fn(
                     u64,
                     *const std::ffi::c_void,
                     u64,
@@ -875,8 +879,8 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         let desc = self.query_desc_mut();
         let cmp: sys::ecs_order_by_action_t = Some(unsafe {
             std::mem::transmute::<
-                extern "C" fn(Entity, *const c_void, Entity, *const c_void) -> i32,
-                unsafe extern "C" fn(
+                extern "C-unwind" fn(Entity, *const c_void, Entity, *const c_void) -> i32,
+                unsafe extern "C-unwind" fn(
                     u64,
                     *const std::ffi::c_void,
                     u64,
@@ -1038,20 +1042,20 @@ pub trait OrderByFn<T>
 where
     T: ComponentId,
 {
-    fn to_extern_fn(self) -> extern "C" fn(Entity, &T, Entity, &T) -> i32;
+    fn to_extern_fn(self) -> extern "C-unwind" fn(Entity, &T, Entity, &T) -> i32;
 }
 
 impl<F, T: ComponentId> OrderByFn<T> for F
 where
     F: Fn(Entity, &T, Entity, &T) -> i32,
 {
-    fn to_extern_fn(self) -> extern "C" fn(Entity, &T, Entity, &T) -> i32 {
+    fn to_extern_fn(self) -> extern "C-unwind" fn(Entity, &T, Entity, &T) -> i32 {
         const {
             assert!(std::mem::size_of::<Self>() == 0);
         }
         std::mem::forget(self);
 
-        extern "C" fn output<F, T>(e1: Entity, e1_data: &T, e2: Entity, e2_data: &T) -> i32
+        extern "C-unwind" fn output<F, T>(e1: Entity, e1_data: &T, e2: Entity, e2_data: &T) -> i32
         where
             F: Fn(Entity, &T, Entity, &T) -> i32,
         {
@@ -1063,20 +1067,24 @@ where
 }
 
 pub trait OrderByFnVoid {
-    fn to_extern_fn(self) -> extern "C" fn(Entity, *const c_void, Entity, *const c_void) -> i32;
+    fn to_extern_fn(
+        self,
+    ) -> extern "C-unwind" fn(Entity, *const c_void, Entity, *const c_void) -> i32;
 }
 
 impl<F> OrderByFnVoid for F
 where
     F: Fn(Entity, *const c_void, Entity, *const c_void) -> i32,
 {
-    fn to_extern_fn(self) -> extern "C" fn(Entity, *const c_void, Entity, *const c_void) -> i32 {
+    fn to_extern_fn(
+        self,
+    ) -> extern "C-unwind" fn(Entity, *const c_void, Entity, *const c_void) -> i32 {
         const {
             assert!(std::mem::size_of::<Self>() == 0);
         }
         std::mem::forget(self);
 
-        extern "C" fn output<F>(
+        extern "C-unwind" fn output<F>(
             e1: Entity,
             e1_data: *const c_void,
             e2: Entity,

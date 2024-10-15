@@ -25,8 +25,8 @@ pub struct Third;
 #[derive(Component)]
 pub struct Group;
 
-// callbacks need to be extern "C" to be callable from C
-extern "C" fn callback_group_by_relationship(
+// Callbacks need to be `extern "C-unwind"` to be callable from C and allow safe unwinding across FFI boundaries.
+extern "C-unwind" fn callback_group_by_relationship(
     world: *mut sys::ecs_world_t,
     table: *mut sys::ecs_table_t,
     id: u64,
