@@ -114,3 +114,25 @@ fn entity_eq_test() {
     assert!(!test_equality31);
     assert!(!test_equality32);
 }
+
+#[test]
+fn table_eq_test() {
+    let world = World::new();
+
+    let ent1 = world.entity().add::<Position>();
+    let ent2 = world.entity().add::<Position>();
+    let ent3 = world.entity().add::<Position>().add::<Velocity>();
+
+    let table1 = ent1.table().unwrap();
+    let table2 = ent2.table().unwrap();
+    let table3 = ent3.table().unwrap();
+
+    assert_eq!(table1, table2);
+    assert_ne!(table1, table3);
+
+    ent1.add::<Velocity>();
+    let table1 = ent1.table().unwrap();
+
+    assert_ne!(table1, table2);
+    assert_eq!(table1, table3);
+}
