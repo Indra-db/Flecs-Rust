@@ -1141,7 +1141,7 @@ where
     ///
     /// * C++ API: `iter_iterable::count`
     #[doc(alias = "iter_iterable::count")]
-    fn count(&mut self) -> i32 {
+    fn count(&self) -> i32 {
         let mut it = self.retrieve_iter();
         let mut result = 0;
         while self.iter_next(&mut it) {
