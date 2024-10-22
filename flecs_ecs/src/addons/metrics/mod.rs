@@ -33,7 +33,6 @@ impl<'a> UntypedComponent<'a> {
     ///
     /// * [`get_doc_brief`][crate::addons::doc::Doc::get_doc_brief]
     /// * [`set_doc_brief`][crate::addons::doc::Doc::set_doc_brief]
-
     pub fn metric<Kind>(
         &self,
         parent: Option<impl Into<Entity>>,
