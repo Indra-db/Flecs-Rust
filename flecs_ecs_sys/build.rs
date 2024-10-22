@@ -161,6 +161,11 @@ fn generate_bindings() {
         bindings = bindings.clang_arg("-DFLECS_OS_API_IMPL");
     }
 
+    #[cfg(not(feature = "flecs_os_api_impl"))]
+    {
+        bindings = bindings.clang_arg("-DFLECS_NO_OS_API_IMPL");
+    }
+
     #[cfg(feature = "flecs_http")]
     {
         bindings = bindings.clang_arg("-DFLECS_HTTP");
