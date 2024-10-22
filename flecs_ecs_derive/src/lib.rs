@@ -185,7 +185,7 @@ fn meta_impl_return(meta_fn_impl: TokenStream, struct_name: Ident) -> TokenStrea
 }
 
 #[cfg(not(feature = "flecs_meta"))]
-fn meta_impl_return(meta_fn_impl: TokenStream, struct_name: Ident) -> TokenStream {
+fn meta_impl_return(_meta_fn_impl: TokenStream, struct_name: Ident) -> TokenStream {
     quote! {
         impl flecs_ecs::addons::Meta<#struct_name> for #struct_name {
             fn meta(component: flecs_ecs::core::Component<'_, #struct_name>) {

@@ -3,6 +3,7 @@
 use std::{marker::PhantomData, ops::Deref, os::raw::c_void, ptr};
 
 use crate::core::*;
+#[cfg(feature = "flecs_meta")]
 use crate::prelude::FetchedId;
 use crate::sys;
 
@@ -84,6 +85,7 @@ impl<'a, T> Component<'a, T> {
     ///
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
+    #[cfg(feature = "flecs_meta")]
     pub(crate) fn new_id(world: impl WorldProvider<'a>, id: FetchedId<T>) -> Self {
         let world = world.world();
 
@@ -105,6 +107,7 @@ impl<'a, T> Component<'a, T> {
     ///
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
+    #[cfg(feature = "flecs_meta")]
     pub fn new_named_id(world: impl WorldProvider<'a>, id: FetchedId<T>, name: &str) -> Self {
         let _name = compact_str::format_compact!("{}\0", name);
         let world = world.world();

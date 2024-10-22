@@ -546,6 +546,7 @@ macro_rules! impl_component_traits_binding_type_w_id {
 
 pub(crate) use impl_component_traits_binding_type_w_id;
 
+#[allow(unused_macros)]
 macro_rules! impl_component_traits_binding_type_w_static_id {
     ($name:ident, $id:ident) => {
         impl DataComponent for $name {}
@@ -606,4 +607,5 @@ macro_rules! impl_component_traits_binding_type_w_static_id {
     };
 }
 
+#[allow(unused_imports)]
 pub(crate) use impl_component_traits_binding_type_w_static_id;

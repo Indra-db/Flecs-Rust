@@ -52,6 +52,7 @@ impl<'a, T: Meta<T>> crate::core::Component<'a, T> {
     }
 }
 
+#[allow(unused_macros)]
 macro_rules! create_pre_registered_extern_component {
     ($struct_name:ident, $static_id:ident) => {
         create_pre_registered_extern_component!($struct_name, $static_id, "");
@@ -142,4 +143,5 @@ macro_rules! create_pre_registered_extern_component {
     };
 }
 
+#[allow(unused_imports)]
 pub(crate) use create_pre_registered_extern_component;
