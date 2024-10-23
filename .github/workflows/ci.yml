@@ -79,6 +79,8 @@ jobs:
         RUSTFLAGS: -Dwarnings
     steps:
       - uses: actions/checkout@v4
+      - name: Install aarch64 cross-compilation toolchain
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
       - name: install stable toolchain
         uses: dtolnay/rust-toolchain@master
         with:
