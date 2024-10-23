@@ -154,15 +154,10 @@ where
 
     fn build(&mut self) -> Self::BuiltType {
         let pipeline = Pipeline::<T>::new(self.world(), self.desc);
-        for string_parts in self.term_builder.str_ptrs_to_free.iter() {
-            unsafe {
-                String::from_raw_parts(
-                    string_parts.ptr as *mut u8,
-                    string_parts.len,
-                    string_parts.capacity,
-                );
-            }
+        for s in self.term_builder.str_ptrs_to_free.iter_mut() {
+            unsafe { std::mem::ManuallyDrop::drop(s) };
         }
+        self.term_builder.str_ptrs_to_free.clear();
         pipeline
     }
 }

@@ -7,6 +7,8 @@ use crate::sys;
 use super::Alert;
 use super::SeverityAlert;
 
+use std::mem::ManuallyDrop;
+
 /// [`AlertBuilder`] is a builder pattern for creating [`Alert`]s.
 pub struct AlertBuilder<'a, T>
 where
@@ -16,7 +18,7 @@ where
     term_builder: TermBuilder,
     world: WorldRef<'a>,
     severity_filter_count: i32,
-    str_ptrs_to_free: Vec<StringToFree>,
+    str_ptrs_to_free: Vec<ManuallyDrop<String>>,
     _phantom: std::marker::PhantomData<&'a T>,
 }
 
@@ -25,14 +27,8 @@ where
     T: QueryTuple,
 {
     fn drop(&mut self) {
-        for string_parts in self.str_ptrs_to_free.iter() {
-            unsafe {
-                String::from_raw_parts(
-                    string_parts.ptr as *mut u8,
-                    string_parts.len,
-                    string_parts.capacity,
-                );
-            }
+        for s in self.str_ptrs_to_free.iter_mut() {
+            unsafe { ManuallyDrop::drop(s) };
         }
         self.str_ptrs_to_free.clear();
     }
@@ -125,14 +121,9 @@ where
     /// * `ecs_alert_desc_t::message`
     #[doc(alias = "ecs_alert_desc_t::message")]
     pub fn message(&mut self, message: &str) -> &mut Self {
-        let message = format!("{}\0", message);
-        self.str_ptrs_to_free.push(StringToFree {
-            ptr: message.as_ptr() as *mut _,
-            len: message.len(),
-            capacity: message.capacity(),
-        });
+        let message = ManuallyDrop::new(format!("{}\0", message));
         self.desc.message = message.as_ptr() as *const _;
-        core::mem::forget(message);
+        self.str_ptrs_to_free.push(message);
         self
     }
 
@@ -147,14 +138,9 @@ where
     /// * `ecs_alert_desc_t::brief`
     #[doc(alias = "ecs_alert_desc_t::brief")]
     pub fn brief(&mut self, brief: &str) -> &mut Self {
-        let brief = format!("{}\0", brief);
-        self.str_ptrs_to_free.push(StringToFree {
-            ptr: brief.as_ptr() as *mut _,
-            len: brief.len(),
-            capacity: brief.capacity(),
-        });
+        let brief = ManuallyDrop::new(format!("{}\0", brief));
         self.desc.brief = brief.as_ptr() as *const _;
-        core::mem::forget(brief);
+        self.str_ptrs_to_free.push(brief);
         self
     }
 
@@ -169,14 +155,9 @@ where
     /// * `ecs_alert_desc_t::doc_name`
     #[doc(alias = "ecs_alert_desc_t::doc_name")]
     pub fn doc_name(&mut self, doc_name: &str) -> &mut Self {
-        let doc_name = format!("{}\0", doc_name);
-        self.str_ptrs_to_free.push(StringToFree {
-            ptr: doc_name.as_ptr() as *mut _,
-            len: doc_name.len(),
-            capacity: doc_name.capacity(),
-        });
+        let doc_name = ManuallyDrop::new(format!("{}\0", doc_name));
         self.desc.doc_name = doc_name.as_ptr() as *const _;
-        core::mem::forget(doc_name);
+        self.str_ptrs_to_free.push(doc_name);
         self
     }
 
@@ -255,14 +236,9 @@ where
         filter.severity = *severity.into();
         filter.with = *with.into();
         if let Some(var) = var {
-            let var = format!("{}\0", var);
+            let var = ManuallyDrop::new(format!("{}\0", var));
             filter.var = var.as_ptr() as *const _;
-            self.str_ptrs_to_free.push(StringToFree {
-                ptr: var.as_ptr() as *mut _,
-                len: var.as_bytes().len(),
-                capacity: var.as_bytes().len(),
-            });
-            core::mem::forget(var);
+            self.str_ptrs_to_free.push(var);
         }
         self
     }
@@ -421,14 +397,9 @@ where
         );
 
         if let Some(var) = var {
-            let var = format!("{}\0", var);
-            self.str_ptrs_to_free.push(StringToFree {
-                ptr: var.as_ptr() as *mut _,
-                len: var.len(),
-                capacity: var.capacity(),
-            });
+            let var = ManuallyDrop::new(format!("{}\0", var));
             self.desc.var = var.as_ptr() as *const _;
-            core::mem::forget(var);
+            self.str_ptrs_to_free.push(var);
         }
 
         self.member_id(member_id)
@@ -445,14 +416,9 @@ where
     /// * `ecs_alert_desc_t::var`
     #[doc(alias = "ecs_alert_desc_t::var")]
     pub fn var(&mut self, var: &str) -> &mut Self {
-        let var = format!("{}\0", var);
-        self.str_ptrs_to_free.push(StringToFree {
-            ptr: var.as_ptr() as *mut _,
-            len: var.len(),
-            capacity: var.capacity(),
-        });
+        let var = ManuallyDrop::new(format!("{}\0", var));
         self.desc.var = var.as_ptr() as *const _;
-        core::mem::forget(var);
+        self.str_ptrs_to_free.push(var);
         self
     }
 }
@@ -502,14 +468,8 @@ where
     #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
         let alert = Alert::new(self.world(), self.desc);
-        for string_parts in self.term_builder.str_ptrs_to_free.iter() {
-            unsafe {
-                String::from_raw_parts(
-                    string_parts.ptr as *mut u8,
-                    string_parts.len,
-                    string_parts.capacity,
-                );
-            }
+        for s in self.term_builder.str_ptrs_to_free.iter_mut() {
+            unsafe { ManuallyDrop::drop(s) };
         }
         alert
     }
