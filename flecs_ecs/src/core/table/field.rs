@@ -12,7 +12,6 @@ use crate::core::*;
 /// # Type parameters
 ///
 /// * `T`: The type of the column.
-
 pub struct Field<'a, T> {
     pub(crate) slice_components: &'a mut [T],
     pub(crate) is_shared: bool,

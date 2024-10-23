@@ -1690,7 +1690,6 @@ pub fn query(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 /// Other operators all function according to the manual.
 ///
 /// Advanced operations are currently unsupported.
-
 #[proc_macro]
 pub fn system(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let input = parse_macro_input!(input as Builder);
