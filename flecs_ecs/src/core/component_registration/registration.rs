@@ -12,7 +12,7 @@ pub fn internal_register_component<
     T,
 >(
     world: impl WorldProvider<'a>,
-    name: *const i8,
+    name: *const c_char,
 ) -> u64
 where
     T: ComponentId,
@@ -34,7 +34,7 @@ where
 #[doc(hidden)]
 pub(crate) fn external_register_component<'a, const COMPONENT_REGISTRATION: bool, T>(
     world: impl WorldProvider<'a>,
-    name: *const i8,
+    name: *const c_char,
 ) -> u64 {
     external_register_component_data::<COMPONENT_REGISTRATION, T>(world.world_ptr_mut(), name)
 }
@@ -205,7 +205,7 @@ where
     let id = if name.is_null() {
         let prev_scope = unsafe { sys::ecs_set_scope(world, 0) };
         let id = unsafe {
-            sys::ecs_lookup_symbol(world, only_type_name.as_ptr() as *const i8, false, false)
+            sys::ecs_lookup_symbol(world, only_type_name.as_ptr() as *const _, false, false)
         };
         unsafe { sys::ecs_set_scope(world, prev_scope) };
         id
@@ -252,7 +252,7 @@ pub(crate) fn external_register_componment_data_explicit<T>(
     let id = if name.is_null() {
         let prev_scope = unsafe { sys::ecs_set_scope(world, 0) };
         let id = unsafe {
-            sys::ecs_lookup_symbol(world, only_type_name.as_ptr() as *const i8, false, false)
+            sys::ecs_lookup_symbol(world, only_type_name.as_ptr() as *const _, false, false)
         };
         unsafe { sys::ecs_set_scope(world, prev_scope) };
         id

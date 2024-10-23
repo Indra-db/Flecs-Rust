@@ -43,7 +43,7 @@ impl<'a> Cursor<'a> {
     /// Move to member by name
     pub fn member(&mut self, name: &str) -> i32 {
         let name = compact_str::format_compact!("{}\0", name);
-        unsafe { sys::ecs_meta_member(&mut self.cursor, name.as_ptr() as *const i8) }
+        unsafe { sys::ecs_meta_member(&mut self.cursor, name.as_ptr() as *const _) }
     }
 
     /// Move to element by index
@@ -97,7 +97,7 @@ impl<'a> Cursor<'a> {
 
     /// Set char value
     pub fn set_char(&mut self, value: char) -> i32 {
-        unsafe { sys::ecs_meta_set_char(&mut self.cursor, value as i8) }
+        unsafe { sys::ecs_meta_set_char(&mut self.cursor, value as std::ffi::c_char) }
     }
 
     /// Set signed int value
@@ -118,13 +118,13 @@ impl<'a> Cursor<'a> {
     /// Set string value
     pub fn set_string(&mut self, value: &str) -> i32 {
         let value = compact_str::format_compact!("{}\0", value);
-        unsafe { sys::ecs_meta_set_string(&mut self.cursor, value.as_ptr() as *const i8) }
+        unsafe { sys::ecs_meta_set_string(&mut self.cursor, value.as_ptr() as *const _) }
     }
 
     /// Set string literal value
     pub fn set_string_literal(&mut self, value: &str) -> i32 {
         let value = compact_str::format_compact!("{}\0", value);
-        unsafe { sys::ecs_meta_set_string_literal(&mut self.cursor, value.as_ptr() as *const i8) }
+        unsafe { sys::ecs_meta_set_string_literal(&mut self.cursor, value.as_ptr() as *const _) }
     }
 
     /// Set entity value
@@ -168,7 +168,7 @@ impl<'a> Cursor<'a> {
     }
 
     /// Get string value
-    pub fn get_string(&self) -> *const i8 {
+    pub fn get_string(&self) -> *const std::ffi::c_char {
         // TODO: Rustify this to return &str
         unsafe { sys::ecs_meta_get_string(&self.cursor) }
     }

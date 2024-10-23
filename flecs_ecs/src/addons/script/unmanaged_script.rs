@@ -13,7 +13,7 @@ use flecs_ecs::sys;
 #[repr(C)]
 pub struct Script<'a> {
     script: *mut sys::ecs_script_t,
-    ast: *mut i8,
+    ast: *mut std::ffi::c_char,
     _phantom: std::marker::PhantomData<&'a ()>,
 }
 
@@ -55,8 +55,8 @@ impl<'a> Script<'a> {
         let ptr = unsafe {
             sys::ecs_script_parse(
                 world_ptr,
-                name.as_ptr() as *const i8,
-                code.as_ptr() as *const i8,
+                name.as_ptr() as *const _,
+                code.as_ptr() as *const _,
             )
         };
         if ptr.is_null() {
@@ -113,8 +113,8 @@ impl<'a> Script<'a> {
         unsafe {
             sys::ecs_script_run(
                 world_ptr,
-                name.as_ptr() as *const i8,
-                code.as_ptr() as *const i8,
+                name.as_ptr() as *const _,
+                code.as_ptr() as *const _,
             ) == 0
         }
     }
@@ -136,7 +136,7 @@ impl<'a> Script<'a> {
         let filename = compact_str::format_compact!("{}\0", filename);
         let world_ptr = world.world_ptr_mut();
 
-        unsafe { sys::ecs_script_run_file(world_ptr, filename.as_ptr() as *const i8) == 0 }
+        unsafe { sys::ecs_script_run_file(world_ptr, filename.as_ptr() as *const _) == 0 }
     }
 
     /// Convert script AST to string.

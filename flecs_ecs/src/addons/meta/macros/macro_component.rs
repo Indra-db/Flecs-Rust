@@ -364,7 +364,10 @@ pub fn opaque_option_struct<T: Default>(world: WorldRef) -> Opaque<Option<T>, T>
     });
 
     // TODO: try to relax the Default requirement.
-    fn ensure_member<T: Default>(data: &mut Option<T>, member: *const i8) -> *mut std::ffi::c_void {
+    fn ensure_member<T: Default>(
+        data: &mut Option<T>,
+        member: *const std::ffi::c_char,
+    ) -> *mut std::ffi::c_void {
         let member = unsafe { std::ffi::CStr::from_ptr(member) };
         if member == c"None" {
             *data = None;

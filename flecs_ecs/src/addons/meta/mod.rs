@@ -217,7 +217,7 @@ impl EcsSerializer for sys::ecs_serializer_t {
     fn member(&self, name: &str) -> i32 {
         let name = compact_str::format_compact!("{}\0", name);
         if let Some(member_func) = self.member {
-            unsafe { member_func(self, name.as_ptr() as *const i8) }
+            unsafe { member_func(self, name.as_ptr() as *const _) }
         } else {
             0
         }
@@ -372,7 +372,7 @@ impl<'a> UntypedComponent<'a> {
         unsafe { sys::ecs_add_id(world, id, flecs::meta::EcsEnum::ID) };
 
         let desc = sys::ecs_entity_desc_t {
-            name: name.as_ptr() as *const i8,
+            name: name.as_ptr() as *const _,
             parent: id,
             ..Default::default()
         };
@@ -418,7 +418,7 @@ impl<'a> UntypedComponent<'a> {
         let unit = *unit.into();
 
         let desc = sys::ecs_entity_desc_t {
-            name: name.as_ptr() as *const i8,
+            name: name.as_ptr() as *const _,
             parent: id,
             ..Default::default()
         };
@@ -544,7 +544,7 @@ impl<'a> UntypedComponent<'a> {
         unsafe { sys::ecs_add_id(world, id, flecs::meta::Bitmask::ID) };
 
         let desc = sys::ecs_entity_desc_t {
-            name: name.as_ptr() as *const i8,
+            name: name.as_ptr() as *const _,
             parent: id,
             ..Default::default()
         };
@@ -698,7 +698,7 @@ impl<'a> EntityView<'a> {
             let symbol = compact_str::format_compact!("{}\0", symbol);
             let desc = sys::ecs_unit_desc_t {
                 entity: *self.id,
-                symbol: symbol.as_ptr() as *const i8,
+                symbol: symbol.as_ptr() as *const _,
                 base: *base.into(),
                 over: *over.into(),
                 prefix: *prefix.into(),
@@ -734,7 +734,7 @@ impl<'a> EntityView<'a> {
         let symbol = compact_str::format_compact!("{}\0", symbol);
         let desc = sys::ecs_unit_prefix_desc_t {
             entity: *self.id,
-            symbol: symbol.as_ptr() as *const i8,
+            symbol: symbol.as_ptr() as *const _,
             translation: sys::ecs_unit_translation_t { factor, power },
         };
 
