@@ -10,7 +10,7 @@ pub const RUST_ECS_COMPONENT_MASK: u64 = !RUST_ecs_id_FLAGS_MASK;
 
 pub type FTimeT = f32;
 
-pub static SEPARATOR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(b"::\0") };
+pub static SEPARATOR: &CStr = c"::";
 
 /// Specify read/write access for term
 /// Specifies the access pattern of a system to a component term.
