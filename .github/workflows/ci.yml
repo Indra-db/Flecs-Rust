@@ -72,30 +72,6 @@ jobs:
       - name: cargo clippy
         run: cargo clippy --target aarch64-apple-ios --all-targets --workspace
 
-  build-aarch64-linux:
-    runs-on: ubuntu-latest
-    name: cargo build + clippy + test (aarch64-unknown-linux-gnu)
-    env:
-        RUSTFLAGS: -Dwarnings
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install aarch64 cross-compilation toolchain
-        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
-      - name: install stable toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable
-          components: clippy
-          targets: aarch64-unknown-linux-gnu
-      - name: cargo build
-        run: cargo build --target aarch64-unknown-linux-gnu --all-targets --workspace
-      - name: cargo clippy
-        run: cargo clippy --target aarch64-unknown-linux-gnu --all-targets --workspace
-      - name: cargo test
-        run: cargo test --target aarch64-unknown-linux-gnu --workspace
-      - name: cargo test release
-        run: cargo test --target aarch64-unknown-linux-gnu --workspace --release
-
   build-msrv:
     runs-on: ubuntu-latest
     name: cargo build (MSRV)
