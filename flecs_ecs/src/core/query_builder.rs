@@ -1,6 +1,7 @@
 //! Builder for [`Query`].
 
 use std::ffi::c_void;
+use std::mem::ManuallyDrop;
 
 use crate::core::internals::*;
 use crate::core::*;
@@ -204,15 +205,10 @@ where
     fn build(&mut self) -> Self::BuiltType {
         let world = self.world;
         let query = Query::<T>::new_from_desc(world, &mut self.desc);
-        for string_parts in self.term_builder.str_ptrs_to_free.iter() {
-            unsafe {
-                String::from_raw_parts(
-                    string_parts.ptr as *mut u8,
-                    string_parts.len,
-                    string_parts.capacity,
-                );
-            }
+        for s in self.term_builder.str_ptrs_to_free.iter_mut() {
+            unsafe { ManuallyDrop::drop(s) };
         }
+        self.term_builder.str_ptrs_to_free.clear();
         query
     }
 }
@@ -298,8 +294,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// * C++ API: `query_builder_i::expr`
     #[doc(alias = "query_builder_i::expr")]
     fn expr(&mut self, expr: &'a str) -> &mut Self {
-        let expr = format!("{}\0", expr);
-        let expr = std::mem::ManuallyDrop::new(expr);
+        let expr = ManuallyDrop::new(format!("{}\0", expr));
         ecs_assert!(
             *self.expr_count_mut() == 0,
             FlecsErrorCode::InvalidOperation,
@@ -308,11 +303,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
 
         self.query_desc_mut().expr = expr.as_ptr() as *const _;
         *self.expr_count_mut() += 1;
-        self.term_builder_mut().str_ptrs_to_free.push(StringToFree {
-            ptr: expr.as_ptr() as *mut _,
-            len: expr.len(),
-            capacity: expr.capacity(),
-        });
+        self.term_builder_mut().str_ptrs_to_free.push(expr);
         self
     }
 

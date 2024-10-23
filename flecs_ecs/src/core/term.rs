@@ -3,8 +3,6 @@
 use crate::core::*;
 use crate::sys;
 
-use self::internals::StringToFree;
-
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 pub enum TermRefMode {
     #[default]
@@ -64,18 +62,13 @@ pub mod internals {
     use crate::core::*;
     use crate::sys;
 
-    pub(crate) struct StringToFree {
-        pub(crate) ptr: *mut std::ffi::c_char,
-        pub(crate) len: usize,
-        pub(crate) capacity: usize,
-    }
     #[derive(Default)]
     pub struct TermBuilder {
         pub(crate) expr_count: i32,
         pub(crate) current_term_index: i32,
         pub(crate) next_term_index: i32,
         pub(crate) term_ref_mode: TermRefMode,
-        pub(crate) str_ptrs_to_free: Vec<StringToFree>,
+        pub(crate) str_ptrs_to_free: Vec<std::mem::ManuallyDrop<String>>,
     }
 
     #[doc(hidden)]
@@ -381,16 +374,11 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// * C++ API: `term_builder_i::name`
     #[doc(alias = "term_builder_i::name")]
     fn name(&mut self, name: &'a str) -> &mut Self {
-        let name = format!("{}\0", name);
-        let name = std::mem::ManuallyDrop::new(name);
+        let name = std::mem::ManuallyDrop::new(format!("{}\0", name));
         let term_ref = self.term_ref_mut();
         term_ref.name = name.as_ptr() as *mut _;
         term_ref.id |= flecs::IsEntity::ID;
-        self.term_builder_mut().str_ptrs_to_free.push(StringToFree {
-            ptr: name.as_ptr() as *mut _,
-            len: name.len(),
-            capacity: name.capacity(),
-        });
+        self.term_builder_mut().str_ptrs_to_free.push(name);
         self
     }
 
@@ -407,16 +395,11 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     fn set_var(&mut self, var_name: &'a str) -> &mut Self {
         check_term_access_validity(self);
 
-        let var_name = format!("{}\0", var_name);
-        let var_name = std::mem::ManuallyDrop::new(var_name);
+        let var_name = std::mem::ManuallyDrop::new(format!("{}\0", var_name));
         let term_ref = self.term_ref_mut();
         term_ref.id |= flecs::IsVariable::ID;
         term_ref.name = var_name.as_ptr() as *mut _;
-        self.term_builder_mut().str_ptrs_to_free.push(StringToFree {
-            ptr: var_name.as_ptr() as *mut _,
-            len: var_name.len(),
-            capacity: var_name.capacity(),
-        });
+        self.term_builder_mut().str_ptrs_to_free.push(var_name);
         self
     }
 

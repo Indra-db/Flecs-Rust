@@ -1,7 +1,6 @@
-use internals::StringToFree;
-
 use crate::core::*;
 use crate::sys;
+use std::mem::ManuallyDrop;
 use std::os::raw::c_char;
 
 /// `MetricBuilder` is a builder pattern for creating metrics.
@@ -9,7 +8,7 @@ pub struct MetricBuilder<'a> {
     world: WorldRef<'a>,
     desc: sys::ecs_metric_desc_t,
     created: bool,
-    str_ptrs_to_free: Vec<StringToFree>,
+    str_ptrs_to_free: Vec<ManuallyDrop<String>>,
 }
 
 impl Drop for MetricBuilder<'_> {
@@ -19,14 +18,8 @@ impl Drop for MetricBuilder<'_> {
                 sys::ecs_metric_init(self.world_ptr_mut(), &self.desc);
             }
         }
-        for string_parts in self.str_ptrs_to_free.iter() {
-            unsafe {
-                String::from_raw_parts(
-                    string_parts.ptr as *mut u8,
-                    string_parts.len,
-                    string_parts.capacity,
-                );
-            }
+        for s in self.str_ptrs_to_free.iter_mut() {
+            unsafe { ManuallyDrop::drop(s) };
         }
         self.str_ptrs_to_free.clear();
     }
@@ -144,17 +137,9 @@ impl<'a> MetricBuilder<'a> {
     ///
     /// * `expr` - The dot-separated member expression.
     pub fn dotmember_named(&mut self, expr: &str) -> &mut Self {
-        let expr_cstr = format!("{}\0", expr);
-        let expr_ptr = expr_cstr.as_ptr() as *const c_char;
-        self.str_ptrs_to_free.push(StringToFree {
-            ptr: expr_ptr as *mut c_char,
-            len: expr_cstr.len(),
-            capacity: expr_cstr.capacity(),
-        });
-        std::mem::forget(expr_cstr);
-
-        self.desc.dotmember = expr_ptr;
-
+        let expr_cstr = ManuallyDrop::new(format!("{}\0", expr));
+        self.desc.dotmember = expr_cstr.as_ptr() as *const c_char;
+        self.str_ptrs_to_free.push(expr_cstr);
         self
     }
 
@@ -171,16 +156,9 @@ impl<'a> MetricBuilder<'a> {
     where
         T: ComponentId,
     {
-        let expr_cstr = format!("{}\0", expr);
-        let expr_ptr = expr_cstr.as_ptr() as *const c_char;
-        self.str_ptrs_to_free.push(StringToFree {
-            ptr: expr_ptr as *mut c_char,
-            len: expr_cstr.len(),
-            capacity: expr_cstr.capacity(),
-        });
-        std::mem::forget(expr_cstr);
-
-        self.desc.dotmember = expr_ptr;
+        let expr_cstr = ManuallyDrop::new(format!("{}\0", expr));
+        self.desc.dotmember = expr_cstr.as_ptr() as *const c_char;
+        self.str_ptrs_to_free.push(expr_cstr);
         self.desc.id = T::id(self.world());
 
         self
@@ -289,14 +267,9 @@ impl<'a> MetricBuilder<'a> {
     ///
     /// * `b` - The brief description.
     pub fn brief(&mut self, brief: &str) -> &mut Self {
-        let brief = format!("{}\0", brief);
-        self.str_ptrs_to_free.push(StringToFree {
-            ptr: brief.as_ptr() as *mut c_char,
-            len: brief.len(),
-            capacity: brief.capacity(),
-        });
+        let brief = ManuallyDrop::new(format!("{}\0", brief));
         self.desc.brief = brief.as_ptr() as *const c_char;
-        std::mem::forget(brief);
+        self.str_ptrs_to_free.push(brief);
         self
     }
 }
