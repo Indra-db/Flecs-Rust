@@ -86,8 +86,8 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     pub fn assign_char(&mut self, func: impl AssignCharFn<T>) -> &mut Self {
         self.desc.type_.assign_char = Some(unsafe {
             std::mem::transmute::<
-                extern "C-unwind" fn(&mut T, i8),
-                unsafe extern "C-unwind" fn(*mut std::ffi::c_void, i8),
+                extern "C-unwind" fn(&mut T, std::ffi::c_char),
+                unsafe extern "C-unwind" fn(*mut std::ffi::c_void, std::ffi::c_char),
             >(func.to_extern_fn())
         });
         self
@@ -130,8 +130,8 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     pub fn assign_string(&mut self, func: impl AssignStringFn<T>) -> &mut Self {
         self.desc.type_.assign_string = Some(unsafe {
             std::mem::transmute::<
-                extern "C-unwind" fn(&mut T, *const i8),
-                unsafe extern "C-unwind" fn(*mut std::ffi::c_void, *const i8),
+                extern "C-unwind" fn(&mut T, *const std::ffi::c_char),
+                unsafe extern "C-unwind" fn(*mut std::ffi::c_void, *const std::ffi::c_char),
             >(func.to_extern_fn())
         });
         self
@@ -189,10 +189,10 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     pub fn ensure_member(&mut self, func: impl EnsureMemberFn<T>) -> &mut Self {
         self.desc.type_.ensure_member = Some(unsafe {
             std::mem::transmute::<
-                extern "C-unwind" fn(&mut T, *const i8) -> *mut std::ffi::c_void,
+                extern "C-unwind" fn(&mut T, *const std::ffi::c_char) -> *mut std::ffi::c_void,
                 unsafe extern "C-unwind" fn(
                     *mut std::ffi::c_void,
-                    *const i8,
+                    *const std::ffi::c_char,
                 ) -> *mut std::ffi::c_void,
             >(func.to_extern_fn())
         });

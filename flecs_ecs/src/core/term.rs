@@ -65,7 +65,7 @@ pub mod internals {
     use crate::sys;
 
     pub(crate) struct StringToFree {
-        pub(crate) ptr: *mut i8,
+        pub(crate) ptr: *mut std::ffi::c_char,
         pub(crate) len: usize,
         pub(crate) capacity: usize,
     }
@@ -384,10 +384,10 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
         let name = format!("{}\0", name);
         let name = std::mem::ManuallyDrop::new(name);
         let term_ref = self.term_ref_mut();
-        term_ref.name = name.as_ptr() as *mut i8;
+        term_ref.name = name.as_ptr() as *mut _;
         term_ref.id |= flecs::IsEntity::ID;
         self.term_builder_mut().str_ptrs_to_free.push(StringToFree {
-            ptr: name.as_ptr() as *mut i8,
+            ptr: name.as_ptr() as *mut _,
             len: name.len(),
             capacity: name.capacity(),
         });
@@ -411,9 +411,9 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
         let var_name = std::mem::ManuallyDrop::new(var_name);
         let term_ref = self.term_ref_mut();
         term_ref.id |= flecs::IsVariable::ID;
-        term_ref.name = var_name.as_ptr() as *mut i8;
+        term_ref.name = var_name.as_ptr() as *mut _;
         self.term_builder_mut().str_ptrs_to_free.push(StringToFree {
-            ptr: var_name.as_ptr() as *mut i8,
+            ptr: var_name.as_ptr() as *mut _,
             len: var_name.len(),
             capacity: var_name.capacity(),
         });

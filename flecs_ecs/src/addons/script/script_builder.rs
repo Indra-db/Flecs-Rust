@@ -32,7 +32,7 @@ impl<'a> ScriptBuilder<'a> {
     pub fn new_named(world: impl WorldProvider<'a>, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
         let entity_desc = sys::ecs_entity_desc_t {
-            name: name.as_ptr() as *const i8,
+            name: name.as_ptr() as *const _,
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
             ..Default::default()
@@ -85,7 +85,7 @@ impl<'a> ScriptBuilder<'a> {
         let filename = compact_str::format_compact!("{}\0", filename);
         let world = self.world.world_ptr_mut();
 
-        self.script.filename = filename.as_ptr() as *const i8;
+        self.script.filename = filename.as_ptr() as *const _;
 
         let result = unsafe { sys::ecs_script_init(world, &self.script) };
 
@@ -114,7 +114,7 @@ impl<'a> ScriptBuilder<'a> {
         let code = compact_str::format_compact!("{}\0", code);
         let world = self.world.world_ptr_mut();
 
-        self.script.code = code.as_ptr() as *const i8;
+        self.script.code = code.as_ptr() as *const _;
 
         let result = unsafe { sys::ecs_script_init(world, &self.script) };
 

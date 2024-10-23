@@ -127,11 +127,11 @@ where
     pub fn message(&mut self, message: &str) -> &mut Self {
         let message = format!("{}\0", message);
         self.str_ptrs_to_free.push(StringToFree {
-            ptr: message.as_ptr() as *mut i8,
+            ptr: message.as_ptr() as *mut _,
             len: message.len(),
             capacity: message.capacity(),
         });
-        self.desc.message = message.as_ptr() as *const i8;
+        self.desc.message = message.as_ptr() as *const _;
         core::mem::forget(message);
         self
     }
@@ -149,11 +149,11 @@ where
     pub fn brief(&mut self, brief: &str) -> &mut Self {
         let brief = format!("{}\0", brief);
         self.str_ptrs_to_free.push(StringToFree {
-            ptr: brief.as_ptr() as *mut i8,
+            ptr: brief.as_ptr() as *mut _,
             len: brief.len(),
             capacity: brief.capacity(),
         });
-        self.desc.brief = brief.as_ptr() as *const i8;
+        self.desc.brief = brief.as_ptr() as *const _;
         core::mem::forget(brief);
         self
     }
@@ -171,11 +171,11 @@ where
     pub fn doc_name(&mut self, doc_name: &str) -> &mut Self {
         let doc_name = format!("{}\0", doc_name);
         self.str_ptrs_to_free.push(StringToFree {
-            ptr: doc_name.as_ptr() as *mut i8,
+            ptr: doc_name.as_ptr() as *mut _,
             len: doc_name.len(),
             capacity: doc_name.capacity(),
         });
-        self.desc.doc_name = doc_name.as_ptr() as *const i8;
+        self.desc.doc_name = doc_name.as_ptr() as *const _;
         core::mem::forget(doc_name);
         self
     }
@@ -256,9 +256,9 @@ where
         filter.with = *with.into();
         if let Some(var) = var {
             let var = format!("{}\0", var);
-            filter.var = var.as_ptr() as *const i8;
+            filter.var = var.as_ptr() as *const _;
             self.str_ptrs_to_free.push(StringToFree {
-                ptr: var.as_ptr() as *mut i8,
+                ptr: var.as_ptr() as *mut _,
                 len: var.as_bytes().len(),
                 capacity: var.as_bytes().len(),
             });
@@ -423,11 +423,11 @@ where
         if let Some(var) = var {
             let var = format!("{}\0", var);
             self.str_ptrs_to_free.push(StringToFree {
-                ptr: var.as_ptr() as *mut i8,
+                ptr: var.as_ptr() as *mut _,
                 len: var.len(),
                 capacity: var.capacity(),
             });
-            self.desc.var = var.as_ptr() as *const i8;
+            self.desc.var = var.as_ptr() as *const _;
             core::mem::forget(var);
         }
 
@@ -447,11 +447,11 @@ where
     pub fn var(&mut self, var: &str) -> &mut Self {
         let var = format!("{}\0", var);
         self.str_ptrs_to_free.push(StringToFree {
-            ptr: var.as_ptr() as *mut i8,
+            ptr: var.as_ptr() as *mut _,
             len: var.len(),
             capacity: var.capacity(),
         });
-        self.desc.var = var.as_ptr() as *const i8;
+        self.desc.var = var.as_ptr() as *const _;
         core::mem::forget(var);
         self
     }

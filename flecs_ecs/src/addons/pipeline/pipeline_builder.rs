@@ -103,7 +103,7 @@ where
         };
 
         let entity_desc: sys::ecs_entity_desc_t = sys::ecs_entity_desc_t {
-            name: name.as_ptr() as *const i8,
+            name: name.as_ptr() as *const _,
             sep: SEPARATOR.as_ptr(),
             ..Default::default()
         };

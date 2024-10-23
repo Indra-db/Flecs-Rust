@@ -68,7 +68,7 @@ impl<'a> ScriptEntityView<'a> {
                 world.world_ptr_mut(),
                 *self.id,
                 instance.map(|e| *e.into()).unwrap_or(0),
-                code.as_ptr() as *const i8,
+                code.as_ptr() as *const _,
             ) == 0
         }
     }

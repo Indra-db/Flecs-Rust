@@ -29,7 +29,7 @@ impl<'a> EntityView<'a> {
         unsafe {
             let type_ = sys::ecs_get_typeid(world, comp);
             if type_ == 0 {
-                //sys::ecs_err(b"id is not a type\0".as_ptr() as *const i8);
+                //sys::ecs_err(b"id is not a type\0".as_ptr() as *const _);
                 //TODO implement ecs_err
                 return self;
             }
@@ -42,13 +42,13 @@ impl<'a> EntityView<'a> {
             );
             let json = compact_str::format_compact!("{}\0", json);
             if let Some(desc) = desc {
-                sys::ecs_ptr_from_json(world, type_, ptr, json.as_ptr() as *const i8, desc);
+                sys::ecs_ptr_from_json(world, type_, ptr, json.as_ptr() as *const _, desc);
             } else {
                 sys::ecs_ptr_from_json(
                     world,
                     type_,
                     ptr,
-                    json.as_ptr() as *const i8,
+                    json.as_ptr() as *const _,
                     std::ptr::null(),
                 );
             }
@@ -128,7 +128,7 @@ impl<'a> EntityView<'a> {
         //TODO we should have an Json Type so we don't need to make these conversions multiple times.
         let json = compact_str::format_compact!("{}\0", json);
         unsafe {
-            sys::ecs_entity_from_json(world, id, json.as_ptr() as *const i8, std::ptr::null());
+            sys::ecs_entity_from_json(world, id, json.as_ptr() as *const _, std::ptr::null());
         }
         self
     }
@@ -224,7 +224,7 @@ impl World {
         let json = compact_str::format_compact!("{}\0", json);
 
         unsafe {
-            sys::ecs_ptr_from_json(world, tid, value, json.as_ptr() as *const i8, desc_ptr);
+            sys::ecs_ptr_from_json(world, tid, value, json.as_ptr() as *const _, desc_ptr);
         }
     }
 
@@ -263,7 +263,7 @@ impl World {
             .unwrap_or(std::ptr::null());
 
         unsafe {
-            sys::ecs_world_from_json(world, json.as_ptr() as *const i8, desc_ptr);
+            sys::ecs_world_from_json(world, json.as_ptr() as *const _, desc_ptr);
         }
 
         self
@@ -288,7 +288,7 @@ impl World {
             .unwrap_or(std::ptr::null());
 
         unsafe {
-            sys::ecs_world_from_json_file(world, json_file.as_ptr() as *const i8, desc_ptr);
+            sys::ecs_world_from_json_file(world, json_file.as_ptr() as *const _, desc_ptr);
         }
 
         self

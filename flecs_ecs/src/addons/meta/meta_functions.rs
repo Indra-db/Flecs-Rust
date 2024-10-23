@@ -1,4 +1,4 @@
-use std::ffi::c_void;
+use std::ffi::{c_char, c_void};
 
 use crate::core::{Entity, WorldRef};
 
@@ -55,22 +55,22 @@ where
 }
 
 pub trait AssignCharFn<T> {
-    fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, i8);
+    fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, c_char);
 }
 
 impl<F, T> AssignCharFn<T> for F
 where
-    F: Fn(&mut T, i8),
+    F: Fn(&mut T, c_char),
 {
-    fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, i8) {
+    fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, c_char) {
         const {
             assert!(std::mem::size_of::<Self>() == 0);
         }
         std::mem::forget(self);
 
-        extern "C-unwind" fn output<F, T>(value: &mut T, data: i8)
+        extern "C-unwind" fn output<F, T>(value: &mut T, data: c_char)
         where
-            F: Fn(&mut T, i8),
+            F: Fn(&mut T, c_char),
         {
             (unsafe { std::mem::transmute_copy::<_, F>(&()) })(value, data);
         }
@@ -155,22 +155,22 @@ where
 }
 
 pub trait AssignStringFn<T> {
-    fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, *const i8);
+    fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, *const c_char);
 }
 
 impl<F, T> AssignStringFn<T> for F
 where
-    F: Fn(&mut T, *const i8),
+    F: Fn(&mut T, *const c_char),
 {
-    fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, *const i8) {
+    fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, *const c_char) {
         const {
             assert!(std::mem::size_of::<Self>() == 0);
         }
         std::mem::forget(self);
 
-        extern "C-unwind" fn output<F, T>(value: &mut T, data: *const i8)
+        extern "C-unwind" fn output<F, T>(value: &mut T, data: *const c_char)
         where
-            F: Fn(&mut T, *const i8),
+            F: Fn(&mut T, *const c_char),
         {
             (unsafe { std::mem::transmute_copy::<_, F>(&()) })(value, data);
         }
@@ -280,22 +280,22 @@ where
 }
 
 pub trait EnsureMemberFn<T> {
-    fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, *const i8) -> *mut c_void;
+    fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, *const c_char) -> *mut c_void;
 }
 
 impl<F, T> EnsureMemberFn<T> for F
 where
-    F: Fn(&mut T, *const i8) -> *mut c_void,
+    F: Fn(&mut T, *const c_char) -> *mut c_void,
 {
-    fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, *const i8) -> *mut c_void {
+    fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, *const c_char) -> *mut c_void {
         const {
             assert!(std::mem::size_of::<Self>() == 0);
         }
         std::mem::forget(self);
 
-        extern "C-unwind" fn output<F, T>(value: &mut T, data: *const i8) -> *mut c_void
+        extern "C-unwind" fn output<F, T>(value: &mut T, data: *const c_char) -> *mut c_void
         where
-            F: Fn(&mut T, *const i8) -> *mut c_void,
+            F: Fn(&mut T, *const c_char) -> *mut c_void,
         {
             (unsafe { std::mem::transmute_copy::<_, F>(&()) })(value, data)
         }

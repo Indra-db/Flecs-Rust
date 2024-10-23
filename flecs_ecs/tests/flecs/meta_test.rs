@@ -22,7 +22,7 @@ fn std_string_support(world: WorldRef) -> Opaque<String> {
     });
 
     // Serialize string into std::string
-    ts.assign_string(|data: &mut String, value: *const i8| {
+    ts.assign_string(|data: &mut String, value: *const std::ffi::c_char| {
         *data = unsafe { CStr::from_ptr(value).to_string_lossy().into_owned() }
     });
 
