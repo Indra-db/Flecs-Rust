@@ -24,3 +24,10 @@ pub mod addons;
 extern crate self as flecs_ecs;
 
 pub mod prelude;
+
+/// Use the crash handler for unit tests
+#[cfg(all(test, feature = "test-with-crash-handler"))]
+#[ctor::ctor]
+fn register_test_crash_handler() {
+    test_crash_handler::register();
+}

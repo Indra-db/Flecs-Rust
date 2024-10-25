@@ -50,9 +50,9 @@ jobs:
       - name: cargo clippy
         run: cargo clippy --all-targets --workspace -- -D warnings
       - name: cargo test
-        run: cargo test --workspace
+        run: cargo test --workspace --features test-with-crash-handler
       - name: cargo test release
-        run: cargo test --workspace --release
+        run: cargo test --workspace --release --features test-with-crash-handler
 
   build-ios:
     runs-on: macos-latest
