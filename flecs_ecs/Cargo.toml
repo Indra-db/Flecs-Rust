@@ -27,6 +27,10 @@ bitflags = "2.6.0"
 compact_str = "0.8.0"
 fxhash = "0.2.1"
 
+# used for backtraces upon hardware exceptions during test
+# only used when "test-with-crash-handler" feature enabled
+test_crash_handler = { version = "0.1.0", path = "../test_crash_handler", optional = true }
+
 [dev-dependencies]
 criterion = "0.5.1"
 seq-macro = "0.3.5"
@@ -38,7 +42,6 @@ insta = { version = "1.38.0", features = ["yaml","filters"] }
 #capture-stdio = "0.1.1" 
 
 [features]
- 
 ######################
 # sys feature flags
 ######################
@@ -142,6 +145,9 @@ flecs_journal = ["flecs_ecs_sys/flecs_journal","flecs_log"]
 
 # When enabled, flecs ecs library will run examples as test cases. Works only in Nightly
 flecs_nightly_tests = []
+
+# enable a backtrace on crashes during tests, used for e.g. debugging intermittent CI failures
+test-with-crash-handler = ["dep:test_crash_handler", "test_crash_handler/crash-handler"]
 
 default = [
     #"flecs_regenerate_binding_c",

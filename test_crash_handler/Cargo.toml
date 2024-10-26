@@ -1,0 +1,17 @@
+[package]
+name = "test_crash_handler"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+crash-handler = { version = "0.6.2", features = ["debug-print"], optional = true }
+
+[lints]
+workspace = true
+
+[features]
+# feature-gated again to protect against workspace builds on unsupported platforms
+crash-handler = ["dep:crash-handler"]

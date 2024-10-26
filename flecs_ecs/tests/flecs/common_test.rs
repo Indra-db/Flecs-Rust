@@ -14,6 +14,10 @@ fn init() {
     unsafe {
         flecs_ecs::sys::ecs_os_init();
     }
+
+    // Use the crash handler for integration tests
+    #[cfg(feature = "test-with-crash-handler")]
+    test_crash_handler::register();
 }
 #[derive(Debug, Component, Clone, Copy)]
 pub struct Count(pub i32);
