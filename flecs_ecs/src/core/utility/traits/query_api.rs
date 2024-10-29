@@ -851,6 +851,7 @@ where
                 *it.entities.add(0)
             }))
         } else {
+            unsafe { sys::ecs_iter_fini(it) };
             None
         }
     }
