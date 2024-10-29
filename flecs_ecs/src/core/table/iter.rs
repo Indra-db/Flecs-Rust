@@ -402,8 +402,8 @@ where
     ///
     /// * C++ API: `iter::src`
     #[doc(alias = "iter::src")]
-    pub fn src(&self, index: i8) -> EntityView<'a> {
-        unsafe { EntityView::new_from(self.world(), sys::ecs_field_src(self.iter, index)) }
+    pub fn src(&self, index: usize) -> EntityView<'a> {
+        unsafe { EntityView::new_from(self.world(), sys::ecs_field_src(self.iter, index as i8)) }
     }
 
     /// Obtain id matched for field.
