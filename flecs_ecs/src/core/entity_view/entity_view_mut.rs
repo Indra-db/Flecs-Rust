@@ -9,17 +9,25 @@ use self::flecs::FlecsTrait;
 
 // functions in here match most of the functions in the c++ entity and entity_builder class
 impl<'a> EntityView<'a> {
-    /// Add an id to an entity.
-    /// This Id can be a component, a pair, a tag or another entity.
+    /// Adds an ID to the entity.
+    ///
+    /// The provided `id` can represent various types, including a component, a pair, a tag, or another entity.
     ///
     /// # Panics
     ///
-    /// Caller must ensure the id is a non ZST types. Otherwise it could cause you to read uninitialized payload data.
-    /// use `set_id` for ZST types.
+    /// This function will panic if the `id` does not meet the following constraints:
+    /// - The `id` must be either a zero-sized type (ZST), an entity, or a type that implements a constructor hook.
+    /// - Types that implement the [`Default`][core::Default] trait automatically fulfill the constructor hook requirement.
     ///
-    /// # See also
+    /// This panic occurs because an invalid `id` type may result in reading uninitialized data, leading to undefined behavior.
     ///
-    /// * C++ API: `entity_builder::add`
+    /// # Usage
+    ///
+    /// For types that are not ZST and do not implement a constructor hook, use the `set_id` method to safely initialize the `id`.
+    ///
+    /// # See Also
+    ///
+    /// * C++ API equivalent: `entity_builder::add`
     #[doc(alias = "entity_builder::add")]
     pub fn add_id(self, id: impl IntoId) -> Self {
         let id = *id.into();
