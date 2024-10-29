@@ -17,7 +17,7 @@ impl<'a> EntityView<'a> {
     ///
     /// This function will panic if the `id` does not meet the following constraints:
     /// - The `id` must be either a zero-sized type (ZST), an entity, or a type that implements a constructor hook.
-    /// - Types that implement the [`Default`][core::Default] trait automatically fulfill the constructor hook requirement.
+    /// - Types that implement the [`Default`][core::default::Default] trait automatically fulfill the constructor hook requirement.
     ///
     /// This panic occurs because an invalid `id` type may result in reading uninitialized data, leading to undefined behavior.
     ///
