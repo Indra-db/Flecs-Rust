@@ -846,12 +846,13 @@ where
         let it = &mut self.retrieve_iter();
 
         if self.iter_next(it) && it.count > 0 {
-            unsafe { sys::ecs_iter_fini(it) };
-            Some(EntityView::new_from(self.world(), unsafe {
+            let ent = Some(EntityView::new_from(self.world(), unsafe {
                 *it.entities.add(0)
-            }))
-        } else {
+            }));
             unsafe { sys::ecs_iter_fini(it) };
+            ent
+        } else {
+            //unsafe { sys::ecs_iter_fini(it) };
             None
         }
     }
