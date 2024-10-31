@@ -1128,6 +1128,7 @@ impl<'a> EntityView<'a> {
     /// # Safety
     ///
     /// Ensure the pointer is valid before use. The caller must know the actual type to cast the pointer correctly.
+    /// The pointer might get invalided if the table alters.
     ///
     /// # See also
     ///
@@ -1155,6 +1156,7 @@ impl<'a> EntityView<'a> {
     /// # Safety
     ///
     /// Ensure the pointer is valid before use. The caller must know the actual type to cast the pointer correctly.
+    /// The pointer might get invalided if the table alters.
     ///
     /// # See also
     ///
@@ -1188,6 +1190,7 @@ impl<'a> EntityView<'a> {
     /// # Safety
     ///
     /// Ensure the pointer is valid before use. The caller must know the actual type to cast the pointer correctly.
+    /// The pointer might get invalided if the table alters.
     ///
     /// # See also
     ///
@@ -1221,8 +1224,8 @@ impl<'a> EntityView<'a> {
     ///
     /// # Safety
     ///
-    /// Ensure the check if the pointer is valid. Casting the pointer to the actual type requires the type
-    /// to be known by the caller.
+    /// Ensure the pointer is valid before use. The caller must know the actual type to cast the pointer correctly.
+    /// The pointer might get invalided if the table alters.
     ///
     /// # See also
     ///
@@ -1250,6 +1253,7 @@ impl<'a> EntityView<'a> {
     /// # Safety
     ///
     /// Ensure the pointer is valid before use. The caller must know the actual type to cast the pointer correctly.
+    /// The pointer might get invalided if the table alters.
     ///
     /// # See also
     ///
@@ -1285,6 +1289,7 @@ impl<'a> EntityView<'a> {
     /// # Safety
     ///
     /// Ensure the pointer is valid before use. The caller must know the actual type to cast the pointer correctly.
+    /// The pointer might get invalided if the table alters.
     ///
     /// # See also
     ///
