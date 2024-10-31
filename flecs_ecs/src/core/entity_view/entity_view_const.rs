@@ -1125,6 +1125,10 @@ impl<'a> EntityView<'a> {
     ///
     /// * `*const c_void` - Pointer to the component value, nullptr if the entity does not have the component
     ///
+    /// # Safety
+    ///
+    /// Ensure the pointer is valid before use. The caller must know the actual type to cast the pointer correctly.
+    ///
     /// # See also
     ///
     /// * C++ API: `entity_view::get`
@@ -1132,6 +1136,76 @@ impl<'a> EntityView<'a> {
     pub fn get_untyped(self, component_id: impl IntoId) -> *const c_void {
         unsafe { sys::ecs_get_id(self.world.world_ptr(), *self.id, *component_id.into()) }
     }
+
+    /// Get the pair value as untyped pointer.
+    /// This function does not cast the pointer to the actual type, that's up to the caller.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First` - The first component type in the pair to get
+    ///
+    /// # Arguments
+    ///
+    /// * `second` - The second entity in the component pair
+    ///
+    /// # Returns
+    ///
+    /// * `*const c_void` - Pointer to the component value, `nullptr` if the entity does not have the component pair
+    ///
+    /// # Safety
+    ///
+    /// Ensure the pointer is valid before use. The caller must know the actual type to cast the pointer correctly.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
+    pub fn get_first_untyped<First: ComponentId>(self, second: impl Into<Entity>) -> *const c_void {
+        unsafe {
+            sys::ecs_get_id(
+                self.world.world_ptr(),
+                *self.id,
+                ecs_pair(First::id(self.world), *second.into()),
+            )
+        }
+    }
+
+    /// Get the pair value as untyped pointer.
+    /// This function does not cast the pointer to the actual type, that's up to the caller.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Second` - The second component type in the pair to get
+    ///
+    /// # Arguments
+    ///
+    /// * `first` - The first entity in the component pair
+    ///
+    /// # Returns
+    ///
+    /// * `*const c_void` - Pointer to the component value, `nullptr` if the entity does not have the component pair
+    ///
+    /// # Safety
+    ///
+    /// Ensure the pointer is valid before use. The caller must know the actual type to cast the pointer correctly.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get`
+    #[doc(alias = "entity_view::get")]
+    pub fn get_second_untyped<Second: ComponentId>(
+        self,
+        first: impl Into<Entity>,
+    ) -> *const c_void {
+        unsafe {
+            sys::ecs_get_id(
+                self.world.world_ptr(),
+                *self.id,
+                ecs_pair(*first.into(), Second::id(self.world)),
+            )
+        }
+    }
+
     /// Get mutable component value or pair (untyped).
     /// This operation returns a mutable ref to the component. If a base entity had
     /// the component, it will be overridden, and the value of the base component
@@ -1145,12 +1219,88 @@ impl<'a> EntityView<'a> {
     ///
     /// Pointer to the component value.
     ///
+    /// # Safety
+    ///
+    /// Ensure the check if the pointer is valid. Casting the pointer to the actual type requires the type
+    /// to be known by the caller.
+    ///
     /// # See also
     ///
     /// * C++ API: `entity_view::get_mut`
     #[doc(alias = "entity_view::get_mut")]
     pub fn get_untyped_mut(self, id: impl IntoId) -> *mut c_void {
         unsafe { sys::ecs_get_mut_id(self.world.world_ptr(), *self.id(), *id.into()) }
+    }
+
+    /// Get mutable pair value as untyped pointer.
+    /// This function does not cast the pointer to the actual type, that's up to the caller.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First` - The first component type in the pair to get
+    ///
+    /// # Arguments
+    ///
+    /// * `second` - The second entity in the component pair
+    ///
+    /// # Returns
+    ///
+    /// * `*mut c_void` - Pointer to the component value, `nullptr` if the entity does not have the component pair
+    ///
+    /// # Safety
+    ///
+    /// Ensure the pointer is valid before use. The caller must know the actual type to cast the pointer correctly.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get_mut`
+    #[doc(alias = "entity_view::get_mut")]
+    pub fn get_first_untyped_mut<First: ComponentId>(
+        self,
+        second: impl Into<Entity>,
+    ) -> *mut c_void {
+        unsafe {
+            sys::ecs_get_mut_id(
+                self.world.world_ptr(),
+                *self.id,
+                ecs_pair(First::id(self.world), *second.into()),
+            )
+        }
+    }
+
+    /// This function does not cast the pointer to the actual type, that's up to the caller.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Second` - The second component type in the pair to get
+    ///
+    /// # Arguments
+    ///
+    /// * `first` - The first entity in the component pair
+    ///
+    /// # Returns
+    ///
+    /// * `*mut c_void` - Pointer to the component value, `nullptr` if the entity does not have the component pair
+    ///
+    /// # Safety
+    ///
+    /// Ensure the pointer is valid before use. The caller must know the actual type to cast the pointer correctly.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_view::get_mut`
+    #[doc(alias = "entity_view::get_mut")]
+    pub fn get_second_untyped_mut<Second: ComponentId>(
+        self,
+        first: impl Into<Entity>,
+    ) -> *mut c_void {
+        unsafe {
+            sys::ecs_get_mut_id(
+                self.world.world_ptr(),
+                *self.id,
+                ecs_pair(*first.into(), Second::id(self.world)),
+            )
+        }
     }
 
     /// Get target for a given pair.
