@@ -525,7 +525,10 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     #[doc(alias = "term_builder_i::first")]
     fn set_first_id(&mut self, id: impl Into<Entity>) -> &mut Self {
         check_term_access_validity(self);
-        self.first().set_id(id)
+        self.first().set_id(id);
+        // reset term ref mode to src, otherwise it stays on second and makes other actions potentially invalid
+        self.set_term_ref_mode(TermRefMode::Src);
+        self
     }
 
     /// Select first identifier, initialize it with id associated with type
@@ -564,10 +567,13 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
 
         self.first();
         if let Some(stripped_name) = strip_prefix_str_raw(name, "$") {
-            self.set_var(stripped_name)
+            self.set_var(stripped_name);
         } else {
-            self.name(name)
+            self.name(name);
         }
+        // reset term ref mode to src, otherwise it stays on second and makes other actions potentially invalid
+        self.set_term_ref_mode(TermRefMode::Src);
+        self
     }
 
     /// Select second identifier, initialize it with entity id
@@ -582,7 +588,10 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     #[doc(alias = "term_builder_i::second")]
     fn set_second_id(&mut self, id: impl Into<Entity>) -> &mut Self {
         check_term_access_validity(self);
-        self.second().set_id(id)
+        self.second().set_id(id);
+        // reset term ref mode to src, otherwise it stays on second and makes other actions potentially invalid
+        self.set_term_ref_mode(TermRefMode::Src);
+        self
     }
 
     /// Select second identifier, initialize it with id associated with type
@@ -620,10 +629,13 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
 
         self.second();
         if let Some(stripped_name) = strip_prefix_str_raw(name, "$") {
-            self.set_var(stripped_name)
+            self.set_var(stripped_name);
         } else {
-            self.name(name)
+            self.name(name);
         }
+        // reset term ref mode to src, otherwise it stays on second and makes other actions potentially invalid
+        self.set_term_ref_mode(TermRefMode::Src);
+        self
     }
 
     /// default up where trav is set to 0.
