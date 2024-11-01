@@ -67,9 +67,9 @@ workspace = false
 
 [tasks.asan-macos]
 condition = { channels = ["nightly"] }
-env = { CC = "/opt/homebrew/opt/llvm/bin/clang", CFLAGS = "-fsanitize=address", RUSTFLAGS = "-Zsanitizer=address -Clink-arg=-fuse-ld=/opt/homebrew/opt/llvm/bin/ld64.lld" }
+env = { CC = "/opt/homebrew/opt/llvm/bin/clang", CFLAGS = "-fsanitize=address", RUSTFLAGS = "-Zsanitizer=address -Clink-arg=-fuse-ld=/opt/homebrew/bin/ld64.lld" }
 command = "cargo"
-args = ["test", "-Zbuild-std", "--target", "aarch64-apple-darwin", "--tests", "--", "--test-threads", "1"]
+args = ["test", "-p", "flecs_ecs", "-Zbuild-std", "--target", "aarch64-apple-darwin", "--tests", "--", "--test-threads", "1"]
 workspace = false
 
 [tasks.fmt]
