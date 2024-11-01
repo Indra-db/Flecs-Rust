@@ -42,6 +42,8 @@ fn generate_bindings() {
         .generate_comments(true)
         // Prefer core::* over std::*
         .use_core()
+        // Don't generate a bunch of `link_name` attributes
+        .trust_clang_mangling(false)
         .clang_arg("-fparse-all-comments")
         .parse_callbacks(Box::new(CommentsCallbacks))
         .blocklist_item("FLECS_HI_COMPONENT_ID")
