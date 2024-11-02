@@ -18,7 +18,7 @@ workspace = true
 libc = "0.2.153"
 
 [build-dependencies]
-bindgen = "0.69.4"
+bindgen = "0.70.1"
 cc = "1.0.83"
 regex = "1.9.5"
 
