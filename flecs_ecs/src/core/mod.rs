@@ -4,6 +4,7 @@ pub mod c_types;
 pub(crate) mod cloned_tuple;
 pub mod component_registration;
 mod components;
+pub mod ecs_os_api;
 mod entity;
 mod entity_view;
 mod event;

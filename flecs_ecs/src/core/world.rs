@@ -57,6 +57,8 @@ unsafe impl Send for World {}
 
 impl Default for World {
     fn default() -> Self {
+        ecs_os_api::ensure_initialized();
+
         let raw_world = NonNull::new(unsafe { sys::ecs_init() }).unwrap();
         let ctx = Box::leak(Box::new(WorldCtx::new()));
         let components = unsafe { NonNull::new_unchecked(&mut ctx.components) };
