@@ -5,6 +5,7 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
+publish = false
 
 [dependencies]
 crash-handler = { version = "0.6.2", features = ["debug-print"], optional = true }
