@@ -3,12 +3,14 @@
 
 mod errors;
 mod functions;
+pub(crate) mod id_map;
 mod log;
 pub mod traits;
 pub mod types;
 
 pub use errors::*;
 pub use functions::*;
+pub(crate) use id_map::*;
 pub use log::*;
 
 #[doc(hidden)]

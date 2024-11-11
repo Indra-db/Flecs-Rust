@@ -55,7 +55,7 @@ pub use table::*;
 pub use term::*;
 #[doc(hidden)]
 pub use utility::*;
+pub(crate) use world::FlecsArray;
 pub use world::World;
 pub use world::WorldGet;
-pub(crate) use world::{FlecsArray, FlecsIdMap};
 pub(crate) use world_ctx::*;

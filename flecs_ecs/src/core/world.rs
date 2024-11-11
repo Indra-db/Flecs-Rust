@@ -1,6 +1,5 @@
 //! World operations.
 
-use std::any::TypeId;
 use std::ffi::CStr;
 use std::{os::raw::c_void, ptr::NonNull};
 
@@ -50,8 +49,6 @@ impl Clone for World {
         }
     }
 }
-
-pub(crate) type FlecsIdMap = hashbrown::HashMap<TypeId, u64>;
 
 unsafe impl Send for World {}
 
