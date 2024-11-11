@@ -22,6 +22,11 @@ clippy.print_stdout = "warn"
 clippy.semicolon_if_nothing_returned = "warn"
 rust.unused_lifetimes = "warn"
 
+[workspace.dependencies]
+flecs_ecs = { version = "0.1.2", path = "flecs_ecs" }
+flecs_ecs_derive = { version = "0.1.0", path = "flecs_ecs_derive" }
+flecs_ecs_sys = { version = "0.1.2", path = "flecs_ecs_sys" }
+
 [profile.release]
 lto = true
 codegen-units = 1
