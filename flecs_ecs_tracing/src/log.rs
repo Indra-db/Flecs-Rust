@@ -56,16 +56,22 @@ pub(crate) unsafe extern "C-unwind" fn log_to_tracing(
     line: i32,
     c_msg: *const i8,
 ) {
+    let level = match level {
+        -4 | -3 => tracing_core::metadata::Level::ERROR,
+        -2 => tracing_core::metadata::Level::WARN,
+        0 => tracing_core::metadata::Level::INFO,
+        1..=3 => tracing_core::metadata::Level::DEBUG,
+        _ => tracing_core::metadata::Level::TRACE,
+    };
+
+    if level < tracing::level_filters::STATIC_MAX_LEVEL {
+        // Early out due to static level constraint
+        return;
+    }
+
     tracing_core::dispatcher::get_default(|dispatch| {
         let file = flecs_str(c_file);
         let msg = flecs_str(c_msg).unwrap_or(Cow::Borrowed(""));
-        let level = match level {
-            -4 | -3 => tracing_core::metadata::Level::ERROR,
-            -2 => tracing_core::metadata::Level::WARN,
-            0 => tracing_core::metadata::Level::INFO,
-            1..=3 => tracing_core::metadata::Level::DEBUG,
-            _ => tracing_core::metadata::Level::TRACE,
-        };
 
         let meta = get_event_meta(dispatch, file, line, level);
         if dispatch.enabled(meta) {

@@ -13,10 +13,10 @@ workspace = true
 flecs_ecs = { workspace = true }
 hashbrown = { workspace = true }
 tracing-core = "0.1.32"
+tracing = { version = "0.1.40", default-features = false }
 
 [dev-dependencies]
 # for doctest/example
-tracing = { version = "0.1.40", default-features = false }
 tracing-subscriber = { version = "0.3.18", features = [
     "env-filter",
 ], default-features = false }

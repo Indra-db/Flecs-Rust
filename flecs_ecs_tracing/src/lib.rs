@@ -85,6 +85,11 @@ pub fn perf_trace_to_tracing(span_level: tracing_core::Level) {
     // Ensure that the registry is initialized now
     perf_trace::init();
 
+    if span_level < tracing::level_filters::STATIC_MAX_LEVEL {
+        // Early out due to static level constraint
+        return;
+    }
+
     // Set the log level of performance tracing spans
     perf_trace::SPAN_LEVEL.get_or_init(|| span_level);
 
