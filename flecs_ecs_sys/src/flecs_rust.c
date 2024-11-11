@@ -109,6 +109,9 @@ int32_t ecs_rust_rel_count(
         return -1;
     }
     ecs_table_record_t *tr = ecs_table_cache_get(&idr->cache, table);
+    if (!tr) {
+        return -1;
+    }
     return tr->count;
 error:
     return -1;
