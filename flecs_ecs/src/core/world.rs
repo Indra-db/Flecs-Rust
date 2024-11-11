@@ -51,7 +51,7 @@ impl Clone for World {
     }
 }
 
-pub(crate) type FlecsIdMap = std::collections::HashMap<TypeId, u64, fxhash::FxBuildHasher>;
+pub(crate) type FlecsIdMap = hashbrown::HashMap<TypeId, u64>;
 
 unsafe impl Send for World {}
 
