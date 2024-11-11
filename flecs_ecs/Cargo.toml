@@ -21,8 +21,8 @@ rustdoc-args = [ "-Zunstable-options", "--generate-link-to-definition"]
 cargo-args = ["-Zunstable-options", "-Zrustdoc-scrape-examples"]
 
 [dependencies]
-flecs_ecs_derive = { version = "0.1.0", path = "../flecs_ecs_derive" }
-flecs_ecs_sys = { version = "0.1.2", path = "../flecs_ecs_sys" }
+flecs_ecs_derive = { workspace = true }
+flecs_ecs_sys = { workspace = true }
 bitflags = "2.6.0"
 compact_str = "0.8.0"
 fxhash = "0.2.1"
