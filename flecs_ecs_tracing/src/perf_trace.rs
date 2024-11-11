@@ -15,7 +15,7 @@ static REGISTRY: LazyLock<RwLock<Registry>> = LazyLock::new(Default::default);
 
 /// Registry of dynamic tracing spans generated from Flecs
 struct Registry {
-    spans: HashMap<String, (tracing_core::span::Id, &'static Metadata<'static>)>,
+    spans: HashMap<String, DynamicSpan>,
 }
 
 impl Default for Registry {
@@ -24,6 +24,12 @@ impl Default for Registry {
             spans: HashMap::with_capacity(256),
         }
     }
+}
+
+#[derive(Clone)]
+struct DynamicSpan {
+    metadata: &'static Metadata<'static>,
+    span: tracing_core::span::Id,
 }
 
 pub(crate) fn init() {
@@ -35,12 +41,12 @@ fn ensure_span(
     filename: Option<Cow<'_, str>>,
     line: usize,
     name: Cow<'_, str>,
-) -> (span::Id, &'static Metadata<'static>, bool) {
+) -> (DynamicSpan, bool) {
     let mut registry = REGISTRY.write().unwrap();
 
     // Double-checked locking (maybe another thread added this span between read unlock and write lock)
-    if let Some((existing, metadata)) = registry.spans.get(name.as_ref()) {
-        return (existing.clone(), metadata, false);
+    if let Some(existing) = registry.spans.get(name.as_ref()) {
+        return (existing.clone(), false);
     }
 
     // "C++-style" names allow Tracy UI to auto-collapse names in short spans
@@ -65,11 +71,10 @@ fn ensure_span(
     // Tell `tracing` subscribers about the new span
     let span = dispatch.new_span(&attributes);
 
-    registry
-        .spans
-        .insert(name.into_owned(), (span.clone(), metadata));
+    let ret = DynamicSpan { metadata, span };
+    registry.spans.insert(name.into_owned(), ret.clone());
 
-    (span, metadata, true)
+    (ret, true)
 }
 
 fn get_span(
@@ -77,10 +82,10 @@ fn get_span(
     filename: Option<Cow<'_, str>>,
     line: usize,
     name: Cow<'_, str>,
-) -> (span::Id, &'static Metadata<'static>, bool) {
-    if let Some((existing, metadata)) = REGISTRY.read().unwrap().spans.get(name.as_ref()) {
+) -> (DynamicSpan, bool) {
+    if let Some(existing) = REGISTRY.read().unwrap().spans.get(name.as_ref()) {
         // existing span - fast path
-        return (existing.clone(), metadata, false);
+        return (existing.clone(), false);
     }
 
     // new span - slow path
@@ -96,9 +101,9 @@ pub(crate) unsafe extern "C-unwind" fn perf_trace_push(
         let filename = flecs_str(c_filename);
         let name = flecs_str(c_name).unwrap_or(Cow::Borrowed("<unknown>"));
 
-        let (span, metadata, _new) = get_span(dispatch, filename, line, name);
-        if dispatch.enabled(metadata) {
-            dispatch.enter(&span);
+        let (span, _new) = get_span(dispatch, filename, line, name);
+        if dispatch.enabled(span.metadata) {
+            dispatch.enter(&span.span);
         }
     });
 }
@@ -112,15 +117,15 @@ pub(crate) unsafe extern "C-unwind" fn perf_trace_pop(
         let filename = flecs_str(c_filename);
         let name = flecs_str(c_name).unwrap_or(Cow::Borrowed("<unknown>"));
 
-        let (span, metadata, new) = get_span(dispatch, filename, line, name);
+        let (span, new) = get_span(dispatch, filename, line, name);
         debug_assert!(
             !new,
             "span being popped must already exist name={:?} line={line} filename={:?}",
             flecs_str(c_filename),
             flecs_str(c_name)
         );
-        if dispatch.enabled(metadata) {
-            dispatch.exit(&span);
+        if dispatch.enabled(span.metadata) {
+            dispatch.exit(&span.span);
         }
     });
 }
