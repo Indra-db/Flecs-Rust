@@ -25,7 +25,7 @@ flecs_ecs_derive = { version = "0.1.0", path = "../flecs_ecs_derive" }
 flecs_ecs_sys = { version = "0.1.2", path = "../flecs_ecs_sys" }
 bitflags = "2.6.0"
 compact_str = "0.8.0"
-fxhash = "0.2.1"
+hashbrown = "0.15.0"
 
 # used for backtraces upon hardware exceptions during test
 # only used when "test-with-crash-handler" feature enabled
