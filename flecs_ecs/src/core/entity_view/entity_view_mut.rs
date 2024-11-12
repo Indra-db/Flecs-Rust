@@ -1464,7 +1464,7 @@ impl<'a> EntityView<'a> {
     pub fn modified<T: ComponentOrPairId>(&self) {
         const {
             assert!(
-                std::mem::size_of::<T>() != 0,
+                std::mem::size_of::<T::CastType>() != 0,
                 "cannot modify zero-sized-type / tag components"
             );
         };
@@ -1513,12 +1513,12 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity::get_ref`
     #[doc(alias = "entity::get_ref")]
-    pub fn get_ref<T>(&self) -> CachedRef<'a, T::UnderlyingType>
+    pub fn get_ref<T>(&self) -> CachedRef<'a, T::CastType>
     where
-        T: ComponentId + DataComponent,
-        T::UnderlyingType: DataComponent,
+        T: ComponentOrPairId,
+        T::CastType: DataComponent,
     {
-        CachedRef::<T::UnderlyingType>::new(self.world, *self.id, T::id(self.world))
+        CachedRef::<T::CastType>::new(self.world, *self.id, T::get_id(self.world))
     }
 
     /// Get a reference to the first component of pair
@@ -1546,11 +1546,20 @@ impl<'a> EntityView<'a> {
         self,
         second: impl Into<Entity>,
     ) -> CachedRef<'a, First> {
-        CachedRef::<First>::new(
-            self.world,
-            *self.id,
-            ecs_pair(First::id(self.world), *second.into()),
-        )
+        let first = First::id(self.world);
+        let second = *second.into();
+        let pair = ecs_pair(first, second);
+        ecs_assert!(
+            !(unsafe { sys::ecs_get_type_info(self.world.world_ptr(), pair,) }.is_null()),
+            FlecsErrorCode::InvalidParameter,
+            "pair is not a component"
+        );
+        ecs_assert!(
+            unsafe { *sys::ecs_get_type_info(self.world.world_ptr(), pair,) }.component == first,
+            FlecsErrorCode::InvalidParameter,
+            "type of pair is not First"
+        );
+        CachedRef::<First>::new(self.world, *self.id, pair)
     }
 
     /// Get a reference to the second component of pair
@@ -1578,11 +1587,21 @@ impl<'a> EntityView<'a> {
         &self,
         first: impl Into<Entity>,
     ) -> CachedRef<Second> {
-        CachedRef::<Second>::new(
-            self.world,
-            *self.id,
-            ecs_pair(*first.into(), Second::id(self.world)),
-        )
+        let first = *first.into();
+        let second = Second::id(self.world);
+        let pair = ecs_pair(first, second);
+        ecs_assert!(
+            !(unsafe { sys::ecs_get_type_info(self.world.world_ptr(), pair,) }.is_null()),
+            FlecsErrorCode::InvalidParameter,
+            "pair is not a component"
+        );
+        ecs_assert!(
+            unsafe { *sys::ecs_get_type_info(self.world.world_ptr(), pair,) }.component == second,
+            FlecsErrorCode::InvalidParameter,
+            "type of pair is not Second"
+        );
+
+        CachedRef::<Second>::new(self.world, *self.id, pair)
     }
 
     /// Clear an entity.
