@@ -8,7 +8,7 @@ pub const FLECS_TERM_COUNT_MAX: u32 = 32;
 
 pub const FLECS_VERSION_MAJOR: u32 = 4;
 pub const FLECS_VERSION_MINOR: u32 = 0;
-pub const FLECS_VERSION_PATCH: u32 = 1;
+pub const FLECS_VERSION_PATCH: u32 = 3;
 pub const FLECS_HI_ID_RECORD_ID: u32 = 1024;
 pub const FLECS_SPARSE_PAGE_BITS: u32 = 12;
 pub const FLECS_ENTITY_PAGE_BITS: u32 = 12;
@@ -97,6 +97,7 @@ pub const EcsQueryHasCacheable: u32 = 16777216;
 pub const EcsQueryIsCacheable: u32 = 33554432;
 pub const EcsQueryHasTableThisVar: u32 = 67108864;
 pub const EcsQueryCacheYieldEmptyTables: u32 = 134217728;
+pub const EcsQueryNested: u32 = 268435456;
 pub const EcsTermMatchAny: u32 = 1;
 pub const EcsTermMatchAnySrc: u32 = 2;
 pub const EcsTermTransitive: u32 = 4;
@@ -116,7 +117,8 @@ pub const EcsObserverIsMonitor: u32 = 4;
 pub const EcsObserverIsDisabled: u32 = 8;
 pub const EcsObserverIsParentDisabled: u32 = 16;
 pub const EcsObserverBypassQuery: u32 = 32;
-pub const EcsObserverYieldOnDelete: u32 = 64;
+pub const EcsObserverYieldOnCreate: u32 = 64;
+pub const EcsObserverYieldOnDelete: u32 = 128;
 pub const EcsTableHasBuiltins: u32 = 2;
 pub const EcsTableIsPrefab: u32 = 4;
 pub const EcsTableHasIsA: u32 = 8;
@@ -2976,6 +2978,10 @@ extern "C-unwind" {
     pub fn ecs_get_entities(world: *const ecs_world_t) -> ecs_entities_t;
 }
 extern "C-unwind" {
+    #[doc = "Get flags set on the world.\n This operation returns the internal flags (see api_flags.h) that are\n set on the world.\n\n @param world The world.\n @return Flags set on the world."]
+    pub fn ecs_world_get_flags(world: *const ecs_world_t) -> ecs_flags32_t;
+}
+extern "C-unwind" {
     #[doc = "Begin frame.\n When an application does not use ecs_progress() to control the main loop, it\n can still use Flecs features such as FPS limiting and time measurements. This\n operation needs to be invoked whenever a new frame is about to get processed.\n\n Calls to ecs_frame_begin() must always be followed by ecs_frame_end().\n\n The function accepts a delta_time parameter, which will get passed to\n systems. This value is also used to compute the amount of time the function\n needs to sleep to ensure it does not exceed the target_fps, when it is set.\n When 0 is provided for delta_time, the time will be measured.\n\n This function should only be ran from the main thread.\n\n @param world The world.\n @param delta_time Time elapsed since the last frame.\n @return The provided delta_time, or measured time if 0 was provided."]
     pub fn ecs_frame_begin(world: *mut ecs_world_t, delta_time: f32) -> f32;
 }
@@ -3568,6 +3574,7 @@ extern "C-unwind" {
         sep: *const ::core::ffi::c_char,
         prefix: *const ::core::ffi::c_char,
         buf: *mut ecs_strbuf_t,
+        escape: bool,
     );
 }
 extern "C-unwind" {
@@ -3858,6 +3865,10 @@ extern "C-unwind" {
 extern "C-unwind" {
     #[doc = "Does query return one or more results.\n\n @param query The query.\n @return True if query matches anything, false if not."]
     pub fn ecs_query_is_true(query: *const ecs_query_t) -> bool;
+}
+extern "C-unwind" {
+    #[doc = "Get query used to populate cache.\n This operation returns the query that is used to populate the query cache.\n For queries that are can be entirely cached, the returned query will be\n equivalent to the query passed to ecs_query_get_cache_query().\n\n @param query The query.\n @return The query used to populate the cache, NULL if query is not cached."]
+    pub fn ecs_query_get_cache_query(query: *const ecs_query_t) -> *const ecs_query_t;
 }
 extern "C-unwind" {
     #[doc = "Send event.\n This sends an event to matching triggers & is the mechanism used by flecs\n itself to send `OnAdd`, `OnRemove`, etc events.\n\n Applications can use this function to send custom events, where a custom\n event can be any regular entity.\n\n Applications should not send builtin flecs events, as this may violate\n assumptions the code makes about the conditions under which those events are\n sent.\n\n Triggers are invoked synchronously. It is therefore safe to use stack-based\n data as event context, which can be set in the \"param\" member.\n\n @param world The world.\n @param desc Event parameters.\n\n @see ecs_enqueue()"]
@@ -4177,6 +4188,10 @@ extern "C-unwind" {
     ) -> i32;
 }
 extern "C-unwind" {
+    #[doc = "Remove all entities in a table. Does not deallocate table memory.\n Retaining table memory can be efficient when planning\n to refill the table with operations like ecs_bulk_init\n\n @param world The world.\n @param table The table to clear."]
+    pub fn ecs_table_clear_entities(world: *mut ecs_world_t, table: *mut ecs_table_t);
+}
+extern "C-unwind" {
     #[doc = "Construct a value in existing storage\n\n @param world The world.\n @param type The type of the value to create.\n @param ptr Pointer to a value of type 'type'\n @return Zero if success, nonzero if failed."]
     pub fn ecs_value_init(
         world: *const ecs_world_t,
@@ -4460,7 +4475,7 @@ pub const ecs_http_method_t_EcsHttpDelete: ecs_http_method_t = 3;
 pub const ecs_http_method_t_EcsHttpOptions: ecs_http_method_t = 4;
 pub const ecs_http_method_t_EcsHttpMethodUnsupported: ecs_http_method_t = 5;
 #[doc = "Supported request methods."]
-pub type ecs_http_method_t = ::core::ffi::c_int;
+pub type ecs_http_method_t = ::core::ffi::c_uint;
 #[doc = "An HTTP request."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -6516,6 +6531,10 @@ extern "C" {
     pub static FLECS_IDEcsDocDescriptionID_: ecs_entity_t;
 }
 extern "C" {
+    #[doc = "Tag for adding a UUID to entities.\n Added to an entity as (EcsDocDescription, EcsUuid) by ecs_doc_set_uuid()."]
+    pub static EcsDocUuid: ecs_entity_t;
+}
+extern "C" {
     #[doc = "Tag for adding brief descriptions to entities.\n Added to an entity as (EcsDocDescription, EcsBrief) by ecs_doc_set_brief()."]
     pub static EcsDocBrief: ecs_entity_t;
 }
@@ -6536,6 +6555,14 @@ extern "C" {
 #[derive(Debug, Copy, Clone)]
 pub struct EcsDocDescription {
     pub value: *mut ::core::ffi::c_char,
+}
+extern "C-unwind" {
+    #[doc = "Add UUID to entity.\n Associate entity with an (external) UUID.\n\n @param world The world.\n @param entity The entity to which to add the UUID.\n @param uuid The UUID to add.\n\n @see ecs_doc_get_uuid()\n @see flecs::doc::set_uuid()\n @see flecs::entity_builder::set_doc_uuid()"]
+    pub fn ecs_doc_set_uuid(
+        world: *mut ecs_world_t,
+        entity: ecs_entity_t,
+        uuid: *const ::core::ffi::c_char,
+    );
 }
 extern "C-unwind" {
     #[doc = "Add human-readable name to entity.\n Contrary to entity names, human readable names do not have to be unique and\n can contain special characters used in the query language like '*'.\n\n @param world The world.\n @param entity The entity to which to add the name.\n @param name The name to add.\n\n @see ecs_doc_get_name()\n @see flecs::doc::set_name()\n @see flecs::entity_builder::set_doc_name()"]
@@ -6576,6 +6603,13 @@ extern "C-unwind" {
         entity: ecs_entity_t,
         color: *const ::core::ffi::c_char,
     );
+}
+extern "C-unwind" {
+    #[doc = "Get UUID from entity.\n @param world The world.\n @param entity The entity from which to get the UUID.\n @return The UUID.\n\n @see ecs_doc_set_uuid()\n @see flecs::doc::get_uuid()\n @see flecs::entity_view::get_doc_uuid()"]
+    pub fn ecs_doc_get_uuid(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+    ) -> *const ::core::ffi::c_char;
 }
 extern "C-unwind" {
     #[doc = "Get human readable name from entity.\n If entity does not have an explicit human readable name, this operation will\n return the entity name.\n\n To test if an entity has a human readable name, use:\n\n @code\n ecs_has_pair(world, e, ecs_id(EcsDocDescription), EcsName);\n @endcode\n\n Or in C++:\n\n @code\n e.has<flecs::doc::Description>(flecs::Name);\n @endcode\n\n @param world The world.\n @param entity The entity from which to get the name.\n @return The name.\n\n @see ecs_doc_set_name()\n @see flecs::doc::get_name()\n @see flecs::entity_view::get_doc_name()"]
