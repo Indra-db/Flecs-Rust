@@ -38,8 +38,8 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     ///
     /// * [`World::get_doc_name()`]
     /// * C++ API: `doc::get_name()`
-    fn get_doc_name(&self) -> Option<String> {
-        self.world().get_doc_name_id(self.clone())
+    fn doc_name(&self) -> Option<String> {
+        self.world().doc_name_id(self.clone())
     }
 
     /// Get brief description for an entity.
@@ -52,8 +52,8 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     ///
     /// * [`World::get_doc_brief()`]
     /// * C++ API: `doc::get_brief()`
-    fn get_doc_brief(&self) -> Option<String> {
-        self.world().get_doc_brief_id(self.clone())
+    fn doc_brief(&self) -> Option<String> {
+        self.world().doc_brief_id(self.clone())
     }
 
     /// Get detailed description for an entity.
@@ -66,8 +66,8 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     ///
     /// * [`World::get_doc_detail()`]
     /// * C++ API: `doc::get_detail()`
-    fn get_doc_detail(&self) -> Option<String> {
-        self.world().get_doc_detail_id(self.clone())
+    fn doc_detail(&self) -> Option<String> {
+        self.world().doc_detail_id(self.clone())
     }
 
     /// Get link to external documentation for an entity.
@@ -80,8 +80,8 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     ///
     /// * [`World::get_doc_link()`]
     /// * C++ API: `doc::get_link()`
-    fn get_doc_link(&self) -> Option<String> {
-        self.world().get_doc_link_id(self.clone())
+    fn doc_link(&self) -> Option<String> {
+        self.world().doc_link_id(self.clone())
     }
 
     /// Get color for an entity.
@@ -94,8 +94,26 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     ///
     /// * [`World::get_doc_color()`]
     /// * C++ API: `doc::get_color()`
-    fn get_doc_color(&self) -> Option<String> {
-        self.world().get_doc_color_id(self.clone())
+    fn doc_color(&self) -> Option<String> {
+        self.world().doc_color_id(self.clone())
+    }
+
+    /// Get UUID for entity
+    ///
+    /// # Returns
+    ///
+    /// The UUID of the entity.
+    ///
+    /// # See also
+    ///
+    /// * [`World::doc_uuid_id()`]
+    /// * [`World::doc_uuid()`]
+    /// * [`Doc::set_doc_uuid()`]
+    /// * [`World::set_doc_uuid_id()`]
+    /// * [`World::set_doc_uuid()`]
+    /// * C++ API: `doc::get_uuid()`
+    fn doc_uuid(&self) -> Option<String> {
+        self.world().doc_uuid_id(self.clone())
     }
 
     //MARK: _setters
@@ -185,6 +203,26 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
         self.world().set_doc_color_id(self.clone(), color);
         self
     }
+
+    /// Set doc UUID.
+    /// This adds `(flecs.doc.Description, flecs.doc.Uuid)` to the entity.
+    ///
+    /// # Arguments
+    ///
+    /// * `uuid` - The UUID to add.
+    ///
+    /// # See also
+    /// * [`World::set_doc_uuid_id()`]
+    /// * [`World::set_doc_uuid()`]
+    /// * [`World::doc_uuid()`]
+    /// * [`World::doc_uuid_id()`]
+    /// * [`Doc::doc_uuid()`]
+    /// C++ API: `entity_builder::set_doc_uuid`
+    #[doc(alias = "entity_builder::set_doc_uuid")]
+    fn set_doc_uuid(&self, uuid: &str) -> &Self {
+        self.world().set_doc_uuid_id(self.clone(), uuid);
+        self
+    }
 }
 
 impl<'a, T> Doc<'a> for T where T: Into<Entity> + WorldProvider<'a> + Clone {}
@@ -220,8 +258,8 @@ impl World {
     /// * C++ API: `doc::get_name()`
     #[doc(alias = "doc::get_name")]
     #[inline(always)]
-    pub fn get_doc_name<T: ComponentId>(&self) -> Option<String> {
-        self.get_doc_name_id(T::get_id(self))
+    pub fn doc_name<T: ComponentId>(&self) -> Option<String> {
+        self.doc_name_id(T::get_id(self))
     }
 
     /// Get human readable name for an entity.
@@ -241,7 +279,7 @@ impl World {
     /// * C++ API: `world::get_doc_name()`
     #[doc(alias = "doc::get_name")]
     #[inline(always)]
-    pub fn get_doc_name_id(&self, entity: impl Into<Entity>) -> Option<String> {
+    pub fn doc_name_id(&self, entity: impl Into<Entity>) -> Option<String> {
         let cstr = NonNull::new(
             unsafe { sys::ecs_doc_get_name(self.world_ptr(), *entity.into()) } as *mut _,
         )
@@ -266,8 +304,8 @@ impl World {
     /// * C++ API: `doc::get_brief()`
     #[doc(alias = "doc::get_brief")]
     #[inline(always)]
-    pub fn get_doc_brief<T: ComponentId>(&self) -> Option<String> {
-        self.get_doc_brief_id(T::get_id(self))
+    pub fn doc_brief<T: ComponentId>(&self) -> Option<String> {
+        self.doc_brief_id(T::get_id(self))
     }
 
     /// Get brief description for an entity.
@@ -287,7 +325,7 @@ impl World {
     /// * C++ API: `doc::get_brief`
     #[doc(alias = "doc::get_brief")]
     #[inline(always)]
-    pub fn get_doc_brief_id(&self, entity: impl Into<Entity>) -> Option<String> {
+    pub fn doc_brief_id(&self, entity: impl Into<Entity>) -> Option<String> {
         let cstr = NonNull::new(
             unsafe { sys::ecs_doc_get_brief(self.world_ptr(), *entity.into()) } as *mut _,
         )
@@ -311,8 +349,8 @@ impl World {
     /// * C++ API: `doc::get_detail()`
     #[doc(alias = "doc::get_detail")]
     #[inline(always)]
-    pub fn get_doc_detail<T: ComponentId>(&self) -> Option<String> {
-        self.get_doc_detail_id(T::get_id(self))
+    pub fn doc_detail<T: ComponentId>(&self) -> Option<String> {
+        self.doc_detail_id(T::get_id(self))
     }
 
     /// Get detailed description for an entity.
@@ -332,7 +370,7 @@ impl World {
     /// * C++ API: `doc::get_detail`
     #[doc(alias = "doc::get_detail")]
     #[inline(always)]
-    pub fn get_doc_detail_id(&self, entity: impl Into<Entity>) -> Option<String> {
+    pub fn doc_detail_id(&self, entity: impl Into<Entity>) -> Option<String> {
         let cstr = NonNull::new(
             unsafe { sys::ecs_doc_get_detail(self.world_ptr(), *entity.into()) } as *mut _,
         )
@@ -357,8 +395,8 @@ impl World {
     /// * C++ API: `doc::get_link()`
     #[doc(alias = "doc::get_link")]
     #[inline(always)]
-    pub fn get_doc_link<T: ComponentId>(&self) -> Option<String> {
-        self.get_doc_link_id(T::get_id(self))
+    pub fn doc_link<T: ComponentId>(&self) -> Option<String> {
+        self.doc_link_id(T::get_id(self))
     }
 
     /// Get link to external documentation for an entity.
@@ -377,7 +415,7 @@ impl World {
     /// * C++ API: `doc::get_link`
     #[doc(alias = "doc::get_link")]
     #[inline(always)]
-    pub fn get_doc_link_id(&self, entity: impl Into<Entity>) -> Option<String> {
+    pub fn doc_link_id(&self, entity: impl Into<Entity>) -> Option<String> {
         let cstr = NonNull::new(
             unsafe { sys::ecs_doc_get_link(self.world_ptr(), *entity.into()) } as *mut _,
         )
@@ -401,8 +439,8 @@ impl World {
     /// * C++ API: `doc::get_color()`
     #[doc(alias = "doc::get_color")]
     #[inline(always)]
-    pub fn get_doc_color<T: ComponentId>(&self) -> Option<String> {
-        self.get_doc_color_id(T::get_id(self))
+    pub fn doc_color<T: ComponentId>(&self) -> Option<String> {
+        self.doc_color_id(T::get_id(self))
     }
 
     /// Get color for an entity.
@@ -421,12 +459,48 @@ impl World {
     /// * C++ API: `doc::get_color`
     #[doc(alias = "doc::get_color")]
     #[inline(always)]
-    pub fn get_doc_color_id(&self, entity: impl Into<Entity>) -> Option<String> {
+    pub fn doc_color_id(&self, entity: impl Into<Entity>) -> Option<String> {
         let cstr = NonNull::new(
             unsafe { sys::ecs_doc_get_color(self.world_ptr(), *entity.into()) } as *mut _,
         )
         .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) });
         cstr.and_then(|s| s.to_str().ok().map(|s| s.to_string()))
+    }
+
+    /// Get UUID for entity
+    ///
+    /// # See Also
+    ///
+    /// * [`World::doc_uuid()`]
+    /// * [`Doc::doc_uuid()`]
+    /// * [`World::set_doc_uuid_id()`]
+    /// * [`Doc::set_doc_uuid()`]
+    /// * C++ API: `doc::get_uuid`
+    #[doc(alias = "doc::get_uuid")]
+    fn doc_uuid_id(&self, entity: impl Into<Entity>) -> Option<String> {
+        let cstr = NonNull::new(
+            unsafe { sys::ecs_doc_get_uuid(self.world_ptr(), *entity.into()) } as *mut _,
+        )
+        .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) });
+        cstr.and_then(|s| s.to_str().ok().map(|s| s.to_string()))
+    }
+
+    /// Get UUID for component
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The component.
+    ///
+    /// # See Also
+    ///
+    /// * [`World::doc_uuid_id()`]
+    /// * [`Doc::doc_uuid()`]
+    /// * [`World::set_doc_uuid_id()`]
+    /// * [`Doc::set_doc_uuid()`]
+    /// * C++ API: `doc::get_uuid`
+    #[doc(alias = "doc::get_uuid")]
+    fn doc_uuid<T: ComponentId>(&self) -> Option<String> {
+        self.doc_uuid_id(T::get_id(self))
     }
 
     //MARK: _World::setters
@@ -601,7 +675,7 @@ impl World {
         unsafe { sys::ecs_doc_set_link(self.ptr_mut(), *entity.into(), link.as_ptr() as *const _) };
     }
 
-    /// Add color to entity.
+    /// Add color to component.
     ///
     /// UIs can use color as hint to improve visualizing entities.
     ///
@@ -645,6 +719,54 @@ impl World {
         unsafe {
             sys::ecs_doc_set_color(self.ptr_mut(), *entity.into(), color.as_ptr() as *const _);
         };
+    }
+
+    /// Add UUID to entity.
+    /// This adds `(flecs.doc.Description, flecs.doc.Uuid)` to the entity.
+    ///
+    /// # Arguments
+    ///
+    /// * `entity` - The entity to which to add the UUID.
+    /// * `uuid` - The UUID to add.
+    ///
+    /// # See also
+    ///
+    /// * [`Doc::set_doc_uuid()`]
+    /// * [`World::set_doc_uuid()`]
+    /// * [`World::doc_uuid()`]
+    /// * [`World::doc_uuid_id()`]
+    /// * [`Doc::doc_uuid()`]
+    /// * C++ API: `entity_builder::set_doc_uuid`
+    #[doc(alias = "entity_builder::set_doc_uuid")]
+    fn set_doc_uuid_id(&self, entity: impl Into<Entity>, uuid: &str) {
+        let uuid = compact_str::format_compact!("{}\0", uuid);
+        unsafe {
+            sys::ecs_doc_set_uuid(self.ptr_mut(), *entity.into(), uuid.as_ptr() as *const _);
+        };
+    }
+
+    /// Add UUID to component
+    /// This adds `(flecs.doc.Description, flecs.doc.Uuid)` to the component
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The component.
+    ///
+    /// # Arguments
+    ///
+    /// * `uuid` - The UUID to add.
+    ///
+    /// # See also
+    ///
+    /// * [`World::set_doc_uuid_id()`]
+    /// * [`Doc::set_doc_uuid()`]
+    /// * [`World::doc_uuid()`]
+    /// * [`World::doc_uuid_id()`]
+    /// * [`Doc::doc_uuid()`]
+    /// C++ API: `entity_builder::set_doc_uuid`
+    #[doc(alias = "entity_builder::set_doc_uuid")]
+    fn set_doc_uuid<T: ComponentId>(&self, uuid: &str) {
+        self.set_doc_uuid_id(T::get_id(self), uuid);
     }
 }
 

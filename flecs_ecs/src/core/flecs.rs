@@ -508,6 +508,7 @@ pub mod doc {
     create_pre_registered_component!(Detail, ECS_DOC_DETAIL);
     create_pre_registered_component!(Link, ECS_DOC_LINK);
     create_pre_registered_component!(Color, ECS_DOC_COLOR);
+    create_pre_registered_component!(UUID, ECS_DOC_UUID);
 }
 
 #[cfg(feature = "flecs_rest")]
