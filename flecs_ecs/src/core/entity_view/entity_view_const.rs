@@ -768,14 +768,73 @@ impl<'a> EntityView<'a> {
     /// assert_eq!(parent.count_children(), 2);
     /// ```
     pub fn count_children(self) -> u32 {
-        let mut it =
-            unsafe { sys::ecs_each_id(self.world_ptr(), ecs_pair(flecs::ChildOf::ID, *self.id)) };
+        let mut it = unsafe { sys::ecs_children(self.world_ptr(), *self.id) };
+        unsafe { sys::ecs_iter_count(&mut it) as u32 }
+    }
 
-        let mut count = 0;
-        while unsafe { sys::ecs_each_next(&mut it) } {
-            count += it.count as u32;
-        }
-        count
+    /// Returns the count of targets for a given relationship.
+    ///
+    /// # Arguments
+    ///
+    /// * `relationship` - The relationship to follow
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// let parent = world.entity();
+    /// let child = world.entity().child_of_id(parent);
+    ///
+    /// assert_eq!(parent.count_relationship::<flecs::ChildOf>(), 1);
+    ///
+    /// let child2 = world.entity().child_of_id(parent);
+    ///
+    /// assert_eq!(parent.count_relationship::<flecs::ChildOf>(), 2);
+    /// ```
+    pub fn count_relationship<T: ComponentId>(self) -> u32 {
+        let world = self.world;
+        let mut it = unsafe {
+            sys::ecs_each_id(
+                world.world_ptr(),
+                ecs_pair(*world.component_id::<T>(), *self.id),
+            )
+        };
+
+        unsafe { sys::ecs_iter_count(&mut it) as u32 }
+    }
+
+    /// Returns the count of targets for a given relationship id.
+    ///
+    /// # Arguments
+    ///
+    /// * `relationship` - The relationship id to follow
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// let parent = world.entity();
+    /// let child = world.entity().child_of_id(parent);
+    ///
+    /// assert_eq!(parent.count_relationship_id(flecs::ChildOf::ID), 1);
+    ///
+    /// let child2 = world.entity().child_of_id(parent);
+    ///
+    /// assert_eq!(parent.count_relationship_id(flecs::ChildOf::ID), 2);
+    /// ```
+    pub fn count_relationship_id(self, relationship: impl Into<Entity>) -> u32 {
+        let world = self.world;
+        let mut it = unsafe {
+            sys::ecs_each_id(world.world_ptr(), ecs_pair(*relationship.into(), *self.id))
+        };
+
+        unsafe { sys::ecs_iter_count(&mut it) as u32 }
     }
 }
 
