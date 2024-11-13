@@ -1006,6 +1006,7 @@ impl<'a> EntityView<'a> {
         let first_id = *first.into();
         let second_id = Second::id(self.world);
         let pair_id = ecs_pair(first_id, second_id);
+        // NOTE: we could this safety check optional
         let data_id = unsafe { sys::ecs_get_typeid(world, pair_id) };
 
         if data_id != second_id {
