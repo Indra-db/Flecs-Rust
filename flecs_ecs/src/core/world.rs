@@ -1976,12 +1976,12 @@ impl World {
     /// * C++ API: `world::get_ref`
     // #[doc(alias = "world::get_ref")]
     // #[inline(always)]
-    pub fn get_ref<T>(&self) -> CachedRef<T::UnderlyingType>
+    pub fn get_ref<T>(&self) -> CachedRef<T::CastType>
     where
-        T: ComponentId + DataComponent,
-        T::UnderlyingType: DataComponent,
+        T: ComponentOrPairId,
+        T::CastType: DataComponent,
     {
-        EntityView::new_from(self, T::id(self)).get_ref::<T>()
+        EntityView::new_from(self, T::get_id(self)).get_ref::<T>()
     }
 
     /// Get singleton entity for type.
