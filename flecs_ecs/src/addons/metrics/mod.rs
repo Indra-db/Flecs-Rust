@@ -17,7 +17,7 @@ impl<'a> UntypedComponent<'a> {
     /// When the member name is `"value"`, the operation will use the name of the component instead.
     ///
     /// If the `brief` parameter is provided, it is set on the metric as if [`set_doc_brief`][crate::addons::doc::Doc::set_doc_brief] was called.
-    /// The brief description can be retrieved using [`get_doc_brief`][crate::addons::doc::Doc::get_doc_brief].
+    /// The brief description can be retrieved using [`get_doc_brief`][crate::addons::doc::Doc::doc_brief].
     ///
     /// # Type Parameters
     ///
@@ -31,7 +31,7 @@ impl<'a> UntypedComponent<'a> {
     ///
     /// # See also
     ///
-    /// * [`get_doc_brief`][crate::addons::doc::Doc::get_doc_brief]
+    /// * [`get_doc_brief`][crate::addons::doc::Doc::doc_brief]
     /// * [`set_doc_brief`][crate::addons::doc::Doc::set_doc_brief]
     pub fn metric<Kind>(
         &self,
