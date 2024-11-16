@@ -29,6 +29,15 @@ bitflags::bitflags! {
     }
 }
 
+bitflags::bitflags! {
+    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+    pub struct ObserverFlags: u32 {
+        const BypassQuery = sys::EcsObserverBypassQuery;
+        const YieldOnCreate = sys::EcsObserverYieldOnCreate;
+        const YieldOnDelete = sys::EcsObserverYieldOnDelete;
+    }
+}
+
 impl<'a, T> QueryBuilder<'a, T>
 where
     T: QueryTuple,

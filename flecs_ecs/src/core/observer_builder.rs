@@ -149,7 +149,7 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
     ///
     /// * C++ API: `query_builder_i::filter_flags`
     #[doc(alias = "query_builder_i::filter_flags")]
-    fn observer_flags(&mut self, flags: QueryFlags) -> &mut Self {
+    fn observer_flags(&mut self, flags: ObserverFlags) -> &mut Self {
         self.desc.flags_ |= flags.bits();
         self
     }
