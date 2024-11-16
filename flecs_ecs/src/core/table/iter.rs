@@ -994,7 +994,7 @@ where
             );
             let target = EntityView::new_from(self.world(), ecs_second(id));
             func(target);
-            i = i + 1;
+            i += 1;
         }
     }
 }

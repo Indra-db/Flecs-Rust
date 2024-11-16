@@ -217,7 +217,7 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     /// * [`World::doc_uuid()`]
     /// * [`World::doc_uuid_id()`]
     /// * [`Doc::doc_uuid()`]
-    /// C++ API: `entity_builder::set_doc_uuid`
+    /// * C++ API: `entity_builder::set_doc_uuid`
     #[doc(alias = "entity_builder::set_doc_uuid")]
     fn set_doc_uuid(&self, uuid: &str) -> &Self {
         self.world().set_doc_uuid_id(self.clone(), uuid);
@@ -763,7 +763,7 @@ impl World {
     /// * [`World::doc_uuid()`]
     /// * [`World::doc_uuid_id()`]
     /// * [`Doc::doc_uuid()`]
-    /// C++ API: `entity_builder::set_doc_uuid`
+    /// * C++ API: `entity_builder::set_doc_uuid`
     #[doc(alias = "entity_builder::set_doc_uuid")]
     fn set_doc_uuid<T: ComponentId>(&self, uuid: &str) {
         self.set_doc_uuid_id(T::get_id(self), uuid);
