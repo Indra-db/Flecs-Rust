@@ -7,7 +7,7 @@ use crate::core::private::internal_SystemAPI;
 use crate::core::*;
 use crate::sys;
 
-/// `ObserverBuilder` is used to configure and build [`Observer`]s.
+/// [`ObserverBuilder`] is used to configure and build [`Observer`]s.
 ///
 /// Observers are systems that react to events.
 /// Observers let applications register callbacks for ECS events.
@@ -139,6 +139,21 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
 }
 
 impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
+    /// set observer flags, which are the same as Query flags
+    ///
+    /// # Arguments
+    ///
+    /// * `flags` - the flags to set
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `query_builder_i::filter_flags`
+    #[doc(alias = "query_builder_i::filter_flags")]
+    fn observer_flags(&mut self, flags: QueryFlags) -> &mut Self {
+        self.desc.flags_ |= flags.bits();
+        self
+    }
+
     /// Specify the event(s) for when the observer should run.
     ///
     /// # Arguments
