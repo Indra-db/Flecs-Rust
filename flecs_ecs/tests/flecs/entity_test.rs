@@ -1476,7 +1476,7 @@ fn entity_path_from_type_custom_sep() {
 
     assert_eq!(
         &grandchild.path_w_sep("_", "?").unwrap(),
-        "?flecs_common_test_Parent_child_grandchild"
+        "?flecs_common\\_test_Parent_child_grandchild"
     );
     assert_eq!(
         &grandchild.path_from_id_w_sep(parent, "_", "::").unwrap(),

@@ -920,6 +920,83 @@ where
             }
         }
     }
+
+    /// Iterate targets for pair field.
+    ///
+    /// # Arguments
+    ///
+    /// * index: the field index
+    /// * func: callback invoked for each target with the signature fn(EntityView entity)
+    ///
+    /// # Example
+    ///
+    /// ```
+    ///
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// let likes = world.entity();
+    /// let pizza = world.entity();
+    /// let salad = world.entity();
+    /// let alice = world.entity().add_id((likes, pizza)).add_id((likes, salad));
+    ///
+    /// let q = world.query::<()>().with_second::<flecs::Any>(likes).build();
+    ///
+    /// let mut count = 0;
+    /// let mut tgt_count = 0;
+    ///
+    /// q.each_iter(|mut it, row, _| {
+    ///     let e = it.entity(row);
+    ///     assert_eq!(e, alice);
+    ///
+    ///     it.targets(0, |tgt| {
+    ///         if tgt_count == 0 {
+    ///             assert_eq!(tgt, pizza);
+    ///         }
+    ///         if tgt_count == 1 {
+    ///             assert_eq!(tgt, salad);
+    ///         }
+    ///         tgt_count += 1;
+    ///     });
+    ///
+    ///     count += 1;
+    /// });
+    ///
+    /// assert_eq!(count, 1);
+    /// assert_eq!(tgt_count, 2);
+    /// ```
+    ///
+    /// # See Also
+    ///
+    /// * C++ API: `iter::targets`
+    #[doc(alias = "iter::targets")]
+    pub fn targets(&mut self, index: i8, mut func: impl FnMut(EntityView)) {
+        ecs_assert!(!self.iter.table.is_null(), FlecsErrorCode::InvalidOperation);
+        ecs_assert!(
+            index < self.iter.field_count,
+            FlecsErrorCode::InvalidOperation
+        );
+        ecs_assert!(
+            unsafe { sys::ecs_field_is_set(self.iter, index) },
+            FlecsErrorCode::InvalidOperation
+        );
+        let table_type = unsafe { sys::ecs_table_get_type(self.iter.table) };
+        let table_record = unsafe { *self.iter.trs.add(index as usize) };
+        let mut i = unsafe { (*table_record).index };
+        let end = i + unsafe { (*table_record).count };
+        while i < end {
+            let id = unsafe { *(*table_type).array.add(i as usize) };
+            ecs_assert!(
+                ecs_is_pair(id),
+                FlecsErrorCode::InvalidParameter,
+                "field does not match a pair"
+            );
+            let target = EntityView::new_from(self.world(), ecs_second(id));
+            func(target);
+            i += 1;
+        }
+    }
 }
 
 impl<'a, P> TableIter<'a, true, P>

@@ -145,7 +145,6 @@ impl World {
     /// * [`World::import()`]
     /// * C++ API: `world::module`
     pub fn module<M: ComponentId>(&self, name: &str) -> EntityView {
-        self.defer_begin();
         let comp = self.component::<M>();
         let id = comp.id();
 
@@ -168,7 +167,7 @@ impl World {
             let mut cur = prev_parent;
             let mut next;
 
-            loop {
+            while cur.id != 0 {
                 next = cur.parent().unwrap_or(EntityView::new_null(self));
 
                 let mut it = unsafe {
@@ -188,7 +187,6 @@ impl World {
                 }
             }
         }
-        self.defer_end();
 
         //self.set_scope_id(id);
         EntityView::new_from(self, *id)

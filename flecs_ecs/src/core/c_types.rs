@@ -477,9 +477,10 @@ pub(crate) const ECS_DOC_BRIEF: u64 = FLECS_HI_COMPONENT_ID + 114;
 pub(crate) const ECS_DOC_DETAIL: u64 = FLECS_HI_COMPONENT_ID + 115;
 pub(crate) const ECS_DOC_LINK: u64 = FLECS_HI_COMPONENT_ID + 116;
 pub(crate) const ECS_DOC_COLOR: u64 = FLECS_HI_COMPONENT_ID + 117;
+pub(crate) const ECS_DOC_UUID: u64 = FLECS_HI_COMPONENT_ID + 118;
 
 // REST module components
-pub(crate) const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 118;
+pub(crate) const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 119;
 
 macro_rules! impl_component_traits_binding_type_w_id {
     ($name:ident, $id:ident) => {
