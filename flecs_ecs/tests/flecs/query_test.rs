@@ -199,6 +199,7 @@ fn query_iter_targets_second_field() {
 
 #[test]
 #[should_panic]
+#[cfg(debug_assertions)]
 fn query_iter_targets_field_out_of_range() {
     let world = World::new();
 
@@ -219,6 +220,7 @@ fn query_iter_targets_field_out_of_range() {
 
 #[test]
 #[should_panic]
+#[cfg(debug_assertions)]
 fn query_iter_targets_field_not_a_pair() {
     let world = World::new();
 
@@ -243,6 +245,7 @@ fn query_iter_targets_field_not_a_pair() {
 
 #[test]
 #[should_panic]
+#[cfg(debug_assertions)]
 fn query_iter_targets_field_not_set() {
     let world = World::new();
 
