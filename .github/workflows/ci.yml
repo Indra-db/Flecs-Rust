@@ -58,7 +58,8 @@ jobs:
     runs-on: macos-latest
     name: cargo build + clippy (iOS)
     env:
-        RUSTFLAGS: -Dwarnings
+        RUSTFLAGS: -Dwarnings,
+        IPHONEOS_DEPLOYMENT_TARGET: "15.0"
     steps:
       - uses: actions/checkout@v4
       - name: install stable toolchain
