@@ -15,12 +15,12 @@ keywords = ["flecs", "ecs", "sys"]
 workspace = true
 
 [dependencies]
-libc = "0.2.153"
+libc = "0.2.167"
 
 [build-dependencies]
 bindgen = "0.70.1"
-cc = "1.0.83"
-regex = "1.9.5"
+cc = "1.2.2"
+regex = "1.11.1"
 
 [features]
 # Regenerate the C binding for flecs C
