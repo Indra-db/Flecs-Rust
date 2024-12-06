@@ -15,7 +15,7 @@ pub struct EntityView<'a> {
     pub(crate) id: Entity,
 }
 
-impl<'a> Deref for EntityView<'a> {
+impl Deref for EntityView<'_> {
     type Target = Entity;
 
     #[inline]
@@ -24,14 +24,14 @@ impl<'a> Deref for EntityView<'a> {
     }
 }
 
-impl<'a> DerefMut for EntityView<'a> {
+impl DerefMut for EntityView<'_> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.id
     }
 }
 
-impl<'a> core::fmt::Display for EntityView<'a> {
+impl core::fmt::Display for EntityView<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         if let Some(name) = self.get_name() {
             write!(f, "#{} | {}", self.id, name)
@@ -41,7 +41,7 @@ impl<'a> core::fmt::Display for EntityView<'a> {
     }
 }
 
-impl<'a> core::fmt::Debug for EntityView<'a> {
+impl core::fmt::Debug for EntityView<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let entity_display = match self.get_name() {
             Some(name_str) => format!("Entity: #{} | \"{}\"", self.id, name_str),
@@ -989,7 +989,7 @@ pub trait EntityViewGet<Return> {
     fn get<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return) -> Return;
 }
 
-impl<'a, Return> EntityViewGet<Return> for EntityView<'a> {
+impl<Return> EntityViewGet<Return> for EntityView<'_> {
     fn try_get<T: GetTuple>(
         self,
         callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return,
@@ -2231,7 +2231,7 @@ impl<'a> EntityView<'a> {
 }
 
 // Event mixin
-impl<'a> EntityView<'a> {
+impl EntityView<'_> {
     /// Emit event for entity.
     ///
     /// # Safety
@@ -2344,7 +2344,7 @@ impl<'a> EntityView<'a> {
 }
 
 // Event/Observe mixin
-impl<'a> EntityView<'a> {
+impl EntityView<'_> {
     /// Register the callback for the entity observer for empty events.
     ///
     /// The "empty" iterator accepts a function that is invoked for each matching event.
@@ -2555,7 +2555,7 @@ impl<'a> EntityView<'a> {
 }
 
 // entity observer creation
-impl<'a> EntityView<'a> {
+impl EntityView<'_> {
     pub(crate) fn entity_observer_create(
         world: *mut sys::ecs_world_t,
         event: sys::ecs_entity_t,

@@ -4625,10 +4625,10 @@ fn query_builder_query_as_move_arg() {
 #[test]
 fn query_builder_filter_as_return() {
     fn query_auto_return(world: &World) -> Query<&SelfRef> {
-        return world
+        world
             .query::<&SelfRef>()
             .set_cache_kind(QueryCacheKind::Auto)
-            .build();
+            .build()
     }
 
     let world = World::new();

@@ -140,7 +140,7 @@ mod eq_operations {
         }
     }
 
-    impl<'a> Eq for EntityView<'a> {}
+    impl Eq for EntityView<'_> {}
 }
 
 mod ord_operations {
@@ -153,21 +153,21 @@ mod ord_operations {
         }
     }
 
-    impl<'a> PartialOrd<u64> for EntityView<'a> {
+    impl PartialOrd<u64> for EntityView<'_> {
         #[inline]
         fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
             Some(self.id.0.cmp(other))
         }
     }
 
-    impl<'a> PartialOrd<Entity> for EntityView<'a> {
+    impl PartialOrd<Entity> for EntityView<'_> {
         #[inline]
         fn partial_cmp(&self, other: &Entity) -> Option<std::cmp::Ordering> {
             Some(self.id.cmp(other))
         }
     }
 
-    impl<'a> PartialOrd<Id> for EntityView<'a> {
+    impl PartialOrd<Id> for EntityView<'_> {
         #[inline]
         fn partial_cmp(&self, other: &Id) -> Option<std::cmp::Ordering> {
             Some(self.id.0.cmp(&other.0))
@@ -205,7 +205,7 @@ mod ord_operations {
         }
     }
 
-    impl<'a> Ord for EntityView<'a> {
+    impl Ord for EntityView<'_> {
         #[inline]
         fn cmp(&self, other: &EntityView) -> std::cmp::Ordering {
             self.id.cmp(&other.id)

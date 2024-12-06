@@ -31,7 +31,7 @@ where
     }
 }
 
-impl<'a, T> DerefMut for Pipeline<'a, T>
+impl<T> DerefMut for Pipeline<'_, T>
 where
     T: QueryTuple,
 {

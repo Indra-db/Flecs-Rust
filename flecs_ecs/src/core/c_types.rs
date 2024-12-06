@@ -251,7 +251,7 @@ pub(crate) const ECS_QUERY: u64 = 5;
 pub(crate) const ECS_OBSERVER: u64 = 6;
 pub(crate) const ECS_SYSTEM: u64 = 7;
 
-///Term id flags
+// Term id flags
 
 ///  The base ID, equivalent to the C #define
 pub(crate) const FLECS_HI_COMPONENT_ID: u64 = 256;
@@ -310,8 +310,8 @@ pub(crate) const IS_SCOPE: u64 = 1 << 8;
 pub(crate) const IS_MEMBER: u64 = 1 << 9;
 pub(crate) const IS_TOGGLE: u64 = 1 << 10;
 
-/// Query flags
-/// Query flags discovered & set during query creation.
+// Query flags
+// Query flags discovered & set during query creation.
 
 /// Query must match prefabs.
 /// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.

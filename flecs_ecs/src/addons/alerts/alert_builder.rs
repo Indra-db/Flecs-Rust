@@ -22,7 +22,7 @@ where
     _phantom: std::marker::PhantomData<&'a T>,
 }
 
-impl<'a, T> Drop for AlertBuilder<'a, T>
+impl<T> Drop for AlertBuilder<'_, T>
 where
     T: QueryTuple,
 {

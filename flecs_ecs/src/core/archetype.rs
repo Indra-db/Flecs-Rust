@@ -26,7 +26,7 @@ pub struct Archetype<'a> {
     lock: Option<TableLock<'a>>,
 }
 
-impl<'a> Display for Archetype<'a> {
+impl Display for Archetype<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(s) = self.to_string() {
             write!(f, "{}", s)
@@ -36,7 +36,7 @@ impl<'a> Display for Archetype<'a> {
     }
 }
 
-impl<'a> Debug for Archetype<'a> {
+impl Debug for Archetype<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(s) = self.to_string() {
             write!(f, "{}", s)

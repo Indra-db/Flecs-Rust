@@ -128,7 +128,7 @@ where
     }
 }
 
-impl<'a, T> QueryAPI<'a, (), T> for Query<T>
+impl<T> QueryAPI<'_, (), T> for Query<T>
 where
     T: QueryTuple,
 {

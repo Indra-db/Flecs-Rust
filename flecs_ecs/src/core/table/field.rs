@@ -42,7 +42,7 @@ impl<'a, T> Field<'a, T> {
     }
 }
 
-impl<'a, T: ComponentId> Deref for Field<'a, T> {
+impl<T: ComponentId> Deref for Field<'_, T> {
     type Target = [T];
 
     fn deref(&self) -> &Self::Target {
@@ -50,7 +50,7 @@ impl<'a, T: ComponentId> Deref for Field<'a, T> {
     }
 }
 
-impl<'a, T: ComponentId> DerefMut for Field<'a, T> {
+impl<T: ComponentId> DerefMut for Field<'_, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.slice_components
     }

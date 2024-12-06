@@ -56,7 +56,7 @@ impl<'a> SystemRunnerFluent<'a> {
     }
 }
 
-impl<'a> Drop for SystemRunnerFluent<'a> {
+impl Drop for SystemRunnerFluent<'_> {
     fn drop(&mut self) {
         if self.stage_count != 0 {
             unsafe {

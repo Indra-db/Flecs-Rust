@@ -65,7 +65,7 @@ pub struct WorldRef<'a> {
     _marker: PhantomData<&'a ()>,
 }
 
-unsafe impl<'a> Send for WorldRef<'a> {}
+unsafe impl Send for WorldRef<'_> {}
 
 impl<'a> WorldRef<'a> {
     #[inline(always)]
@@ -121,7 +121,7 @@ impl<'a> From<&'a *mut sys::ecs_world_t> for &WorldRef<'a> {
     }
 }
 
-impl<'a> Deref for WorldRef<'a> {
+impl Deref for WorldRef<'_> {
     type Target = World;
 
     #[inline(always)]

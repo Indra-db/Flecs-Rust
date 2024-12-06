@@ -24,7 +24,7 @@ impl<'a> Deref for Observer<'a> {
     }
 }
 
-impl<'a> DerefMut for Observer<'a> {
+impl DerefMut for Observer<'_> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.entity

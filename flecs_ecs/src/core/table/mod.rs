@@ -732,7 +732,7 @@ impl<'a> TableLock<'a> {
     }
 }
 
-impl<'a> Drop for TableLock<'a> {
+impl Drop for TableLock<'_> {
     fn drop(&mut self) {
         if std::thread::panicking() {
             return;

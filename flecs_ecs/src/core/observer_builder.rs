@@ -138,7 +138,7 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
     }
 }
 
-impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
+impl<P, T: QueryTuple> ObserverBuilder<'_, P, T> {
     /// set observer flags, which are the same as Query flags
     ///
     /// # Arguments

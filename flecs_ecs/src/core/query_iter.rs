@@ -13,7 +13,7 @@ where
     _phantom: std::marker::PhantomData<&'a (P, T)>,
 }
 
-impl<'a, P, T> QueryIter<'a, P, T>
+impl<P, T> QueryIter<'_, P, T>
 where
     T: QueryTuple,
 {
@@ -147,7 +147,7 @@ where
 }
 
 #[doc(hidden)]
-impl<'a, P, T> IterOperations for QueryIter<'a, P, T>
+impl<P, T> IterOperations for QueryIter<'_, P, T>
 where
     T: QueryTuple,
 {

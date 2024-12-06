@@ -222,7 +222,7 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     }
 }
 
-impl<'a, T, ElemType> Drop for Opaque<'a, T, ElemType> {
+impl<T, ElemType> Drop for Opaque<'_, T, ElemType> {
     /// Finalizes the opaque type descriptor when it is dropped
     fn drop(&mut self) {
         unsafe {

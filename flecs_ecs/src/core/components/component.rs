@@ -15,13 +15,13 @@ pub struct Component<'a, T> {
     _marker: PhantomData<T>,
 }
 
-impl<'a, T> Clone for Component<'a, T> {
+impl<T> Clone for Component<'_, T> {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl<'a, T> Copy for Component<'a, T> {}
+impl<T> Copy for Component<'_, T> {}
 
 impl<'a, T> Deref for Component<'a, T> {
     type Target = UntypedComponent<'a>;
@@ -367,21 +367,21 @@ mod eq_operations {
         }
     }
 
-    impl<'a, T: ComponentId> PartialEq<u64> for Component<'a, T> {
+    impl<T: ComponentId> PartialEq<u64> for Component<'_, T> {
         #[inline]
         fn eq(&self, other: &u64) -> bool {
             self.base.entity.id == *other
         }
     }
 
-    impl<'a, T: ComponentId> PartialEq<Entity> for Component<'a, T> {
+    impl<T: ComponentId> PartialEq<Entity> for Component<'_, T> {
         #[inline]
         fn eq(&self, other: &Entity) -> bool {
             self.base.entity.id == *other
         }
     }
 
-    impl<'a, T: ComponentId> PartialEq<Id> for Component<'a, T> {
+    impl<T: ComponentId> PartialEq<Id> for Component<'_, T> {
         #[inline]
         fn eq(&self, other: &Id) -> bool {
             self.base.entity.id == *other
@@ -409,14 +409,14 @@ mod eq_operations {
         }
     }
 
-    impl<'a, T: ComponentId> PartialEq for Component<'a, T> {
+    impl<T: ComponentId> PartialEq for Component<'_, T> {
         #[inline]
         fn eq(&self, other: &Self) -> bool {
             self.base.entity == other.base.entity
         }
     }
 
-    impl<'a, T: ComponentId> Eq for Component<'a, T> {}
+    impl<T: ComponentId> Eq for Component<'_, T> {}
 
     impl<'a, T: ComponentId> PartialOrd<Component<'a, T>> for u64 {
         #[inline]
@@ -428,21 +428,21 @@ mod eq_operations {
 
 mod ord_operations {
     use super::*;
-    impl<'a, T: ComponentId> PartialOrd<u64> for Component<'a, T> {
+    impl<T: ComponentId> PartialOrd<u64> for Component<'_, T> {
         #[inline]
         fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
             self.base.entity.id.partial_cmp(other)
         }
     }
 
-    impl<'a, T: ComponentId> PartialOrd<Entity> for Component<'a, T> {
+    impl<T: ComponentId> PartialOrd<Entity> for Component<'_, T> {
         #[inline]
         fn partial_cmp(&self, other: &Entity) -> Option<std::cmp::Ordering> {
             self.base.entity.id.partial_cmp(other)
         }
     }
 
-    impl<'a, T: ComponentId> PartialOrd<Id> for Component<'a, T> {
+    impl<T: ComponentId> PartialOrd<Id> for Component<'_, T> {
         #[inline]
         fn partial_cmp(&self, other: &Id) -> Option<std::cmp::Ordering> {
             self.base.entity.id.partial_cmp(other)
@@ -470,14 +470,14 @@ mod ord_operations {
         }
     }
 
-    impl<'a, T: ComponentId> PartialOrd for Component<'a, T> {
+    impl<T: ComponentId> PartialOrd for Component<'_, T> {
         #[inline]
         fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
             Some(self.cmp(other))
         }
     }
 
-    impl<'a, T: ComponentId> Ord for Component<'a, T> {
+    impl<T: ComponentId> Ord for Component<'_, T> {
         #[inline]
         fn cmp(&self, other: &Self) -> std::cmp::Ordering {
             self.base.entity.cmp(&other.base.entity)

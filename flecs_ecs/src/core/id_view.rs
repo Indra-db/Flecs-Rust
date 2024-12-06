@@ -28,19 +28,19 @@ impl<'a> PartialEq<IdView<'a>> for u64 {
     }
 }
 
-impl<'a> PartialEq<u64> for IdView<'a> {
+impl PartialEq<u64> for IdView<'_> {
     fn eq(&self, other: &u64) -> bool {
         self.id == *other
     }
 }
 
-impl<'a> PartialEq<Id> for IdView<'a> {
+impl PartialEq<Id> for IdView<'_> {
     fn eq(&self, other: &Id) -> bool {
         self.id == *other
     }
 }
 
-impl<'a> PartialEq<Entity> for IdView<'a> {
+impl PartialEq<Entity> for IdView<'_> {
     fn eq(&self, other: &Entity) -> bool {
         self.id == *other
     }
@@ -52,7 +52,7 @@ impl<'a> PartialEq<EntityView<'a>> for IdView<'a> {
     }
 }
 
-impl<'a> PartialEq for IdView<'a> {
+impl PartialEq for IdView<'_> {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
@@ -79,19 +79,19 @@ impl<'a> PartialOrd<IdView<'a>> for u64 {
     }
 }
 
-impl<'a> PartialOrd<u64> for IdView<'a> {
+impl PartialOrd<u64> for IdView<'_> {
     fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
         Some(self.id.0.cmp(other))
     }
 }
 
-impl<'a> PartialOrd<Entity> for IdView<'a> {
+impl PartialOrd<Entity> for IdView<'_> {
     fn partial_cmp(&self, other: &Entity) -> Option<std::cmp::Ordering> {
         Some(self.id.0.cmp(&other.0))
     }
 }
 
-impl<'a> PartialOrd<Id> for IdView<'a> {
+impl PartialOrd<Id> for IdView<'_> {
     fn partial_cmp(&self, other: &Id) -> Option<std::cmp::Ordering> {
         Some(self.id.0.cmp(other))
     }
@@ -103,7 +103,7 @@ impl<'a> PartialOrd<EntityView<'a>> for IdView<'a> {
     }
 }
 
-impl<'a> PartialOrd for IdView<'a> {
+impl PartialOrd for IdView<'_> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.id.cmp(&other.id))
     }
@@ -124,13 +124,13 @@ impl<'a> PartialOrd<UntypedComponent<'a>> for IdView<'a> {
     }
 }
 
-impl<'a> Ord for IdView<'a> {
+impl Ord for IdView<'_> {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.id.cmp(&other.id)
     }
 }
 
-impl<'a> std::ops::Deref for IdView<'a> {
+impl std::ops::Deref for IdView<'_> {
     type Target = u64;
 
     #[inline]

@@ -17,7 +17,7 @@ pub struct Script<'a> {
     _phantom: std::marker::PhantomData<&'a ()>,
 }
 
-impl<'a> Drop for Script<'a> {
+impl Drop for Script<'_> {
     fn drop(&mut self) {
         if !self.ast.is_null() {
             unsafe {

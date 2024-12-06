@@ -193,14 +193,14 @@ impl<'a> Deref for Timer<'a> {
     }
 }
 
-impl<'a> DerefMut for Timer<'a> {
+impl DerefMut for Timer<'_> {
     #[inline(always)]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.entity
     }
 }
 
-impl<'a> From<Timer<'a>> for Entity {
+impl From<Timer<'_>> for Entity {
     #[inline]
     fn from(timer: Timer) -> Self {
         timer.id
@@ -280,7 +280,7 @@ impl TimerAPI for System<'_> {
     }
 }
 
-impl<'a> System<'a> {
+impl System<'_> {
     /// Assign tick source to system based on a type.
     /// Systems can be their own tick source, which can be any of the tick sources (one shot timers, interval times and rate filters).
     /// However, in some cases it is must be guaranteed that different systems tick on the exact same frame.
@@ -331,7 +331,7 @@ impl<'a> System<'a> {
     }
 }
 
-impl<'a, T: QueryTuple> SystemBuilder<'a, T> {
+impl<T: QueryTuple> SystemBuilder<'_, T> {
     /// Set system interval.
     ///
     /// This operation will cause the system to be ran at the specified interval.

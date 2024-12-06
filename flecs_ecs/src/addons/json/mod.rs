@@ -15,7 +15,7 @@ pub type WorldToJsonDesc = sys::ecs_world_to_json_desc_t;
 pub type EntityToJsonDesc = sys::ecs_entity_to_json_desc_t;
 pub type IterToJsonDesc = sys::ecs_iter_to_json_desc_t;
 
-impl<'a> EntityView<'a> {
+impl EntityView<'_> {
     /// Set component or pair id from JSON.
     ///
     /// # See also

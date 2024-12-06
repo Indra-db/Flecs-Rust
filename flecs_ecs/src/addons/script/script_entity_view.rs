@@ -19,7 +19,7 @@ impl<'a> Deref for ScriptEntityView<'a> {
     }
 }
 
-impl<'a> DerefMut for ScriptEntityView<'a> {
+impl DerefMut for ScriptEntityView<'_> {
     #[inline(always)]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.entity

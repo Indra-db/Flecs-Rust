@@ -73,21 +73,21 @@ impl IntoId for Id {
     const IS_PAIR: bool = false;
 }
 
-impl<'a> IntoId for IdView<'a> {
+impl IntoId for IdView<'_> {
     const IS_PAIR: bool = false;
 }
 
-impl<'a> IntoId for EntityView<'a> {
+impl IntoId for EntityView<'_> {
     const IS_PAIR: bool = false;
 }
 
-impl<'a, T> IntoId for Component<'a, T>
+impl<T> IntoId for Component<'_, T>
 where
     T: ComponentId,
 {
     const IS_PAIR: bool = false;
 }
 
-impl<'a> IntoId for UntypedComponent<'a> {
+impl IntoId for UntypedComponent<'_> {
     const IS_PAIR: bool = false;
 }

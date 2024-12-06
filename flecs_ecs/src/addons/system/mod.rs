@@ -30,7 +30,7 @@ impl<'a> Deref for System<'a> {
     }
 }
 
-impl<'a> DerefMut for System<'a> {
+impl DerefMut for System<'_> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.entity

@@ -357,7 +357,7 @@ impl<'a, T: 'static> Component<'a, T> {
     }
 }
 
-impl<'a> UntypedComponent<'a> {
+impl UntypedComponent<'_> {
     /// Add constant.
     ///
     /// # See also
@@ -678,7 +678,7 @@ pub fn flecs_entity_support<'a>(world: impl WorldProvider<'a>) -> Opaque<'a, Ent
     opaque
 }
 
-impl<'a> EntityView<'a> {
+impl EntityView<'_> {
     /// Make entity a unit
     ///
     /// # See also

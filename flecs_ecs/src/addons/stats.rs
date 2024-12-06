@@ -37,7 +37,7 @@ impl Module for Stats {
 }
 
 ///////////////////////////
-/// trait implementations
+// trait implementations
 ///////////////////////////
 
 impl flecs_ecs::core::DataComponent for sys::EcsWorldStats {}

@@ -2,7 +2,7 @@ name: CI
 
 env:
   # When changing this, also update the `rust-version` in the workspace `Cargo.toml`
-  RUST_MIN_VER: "1.82"
+  RUST_MIN_VER: "1.83"
 
 on:
   push:

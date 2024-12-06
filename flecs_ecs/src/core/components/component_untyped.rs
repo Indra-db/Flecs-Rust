@@ -80,10 +80,10 @@ impl<'a> UntypedComponent<'a> {
 }
 
 #[cfg(feature = "flecs_meta")]
-impl<'a> UntypedComponent<'a> {}
+impl UntypedComponent<'_> {}
 
 #[cfg(feature = "flecs_metrics")]
-impl<'a> UntypedComponent<'a> {}
+impl UntypedComponent<'_> {}
 
 mod eq_operations {
     use super::*;
@@ -95,21 +95,21 @@ mod eq_operations {
         }
     }
 
-    impl<'a> PartialEq<u64> for UntypedComponent<'a> {
+    impl PartialEq<u64> for UntypedComponent<'_> {
         #[inline]
         fn eq(&self, other: &u64) -> bool {
             self.entity.id == *other
         }
     }
 
-    impl<'a> PartialEq<Entity> for UntypedComponent<'a> {
+    impl PartialEq<Entity> for UntypedComponent<'_> {
         #[inline]
         fn eq(&self, other: &Entity) -> bool {
             self.entity.id == *other
         }
     }
 
-    impl<'a> PartialEq<Id> for UntypedComponent<'a> {
+    impl PartialEq<Id> for UntypedComponent<'_> {
         #[inline]
         fn eq(&self, other: &Id) -> bool {
             self.entity.id == *other
@@ -140,14 +140,14 @@ mod eq_operations {
         }
     }
 
-    impl<'a> PartialEq for UntypedComponent<'a> {
+    impl PartialEq for UntypedComponent<'_> {
         #[inline]
         fn eq(&self, other: &Self) -> bool {
             self.entity == other.entity
         }
     }
 
-    impl<'a> Eq for UntypedComponent<'a> {}
+    impl Eq for UntypedComponent<'_> {}
 }
 
 mod ord_operations {
@@ -160,21 +160,21 @@ mod ord_operations {
         }
     }
 
-    impl<'a> PartialOrd<u64> for UntypedComponent<'a> {
+    impl PartialOrd<u64> for UntypedComponent<'_> {
         #[inline]
         fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
             self.entity.id.partial_cmp(other)
         }
     }
 
-    impl<'a> PartialOrd<Entity> for UntypedComponent<'a> {
+    impl PartialOrd<Entity> for UntypedComponent<'_> {
         #[inline]
         fn partial_cmp(&self, other: &Entity) -> Option<std::cmp::Ordering> {
             self.entity.id.partial_cmp(other)
         }
     }
 
-    impl<'a> PartialOrd<Id> for UntypedComponent<'a> {
+    impl PartialOrd<Id> for UntypedComponent<'_> {
         #[inline]
         fn partial_cmp(&self, other: &Id) -> Option<std::cmp::Ordering> {
             self.entity.id.partial_cmp(other)
@@ -195,14 +195,14 @@ mod ord_operations {
         }
     }
 
-    impl<'a> PartialOrd for UntypedComponent<'a> {
+    impl PartialOrd for UntypedComponent<'_> {
         #[inline]
         fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
             Some(self.entity.cmp(&other.entity))
         }
     }
 
-    impl<'a> Ord for UntypedComponent<'a> {
+    impl Ord for UntypedComponent<'_> {
         #[inline]
         fn cmp(&self, other: &Self) -> std::cmp::Ordering {
             self.entity.cmp(&other.entity)

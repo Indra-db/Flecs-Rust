@@ -42,7 +42,7 @@ pub trait Meta<Component> {
     fn meta(component: flecs_ecs::core::Component<Component>);
 }
 
-impl<'a, T: Meta<T>> crate::core::Component<'a, T> {
+impl<T: Meta<T>> crate::core::Component<'_, T> {
     pub fn meta(self) -> Self {
         #[cfg(feature = "flecs_meta")]
         {

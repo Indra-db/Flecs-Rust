@@ -999,7 +999,7 @@ where
     }
 }
 
-impl<'a, P> TableIter<'a, true, P>
+impl<P> TableIter<'_, true, P>
 where
     P: ComponentId,
 {
@@ -1080,7 +1080,7 @@ pub struct TableRowIter<'a, const IS_RUN: bool, P> {
     index: usize,
 }
 
-impl<'a, const IS_RUN: bool, P> Iterator for TableRowIter<'a, IS_RUN, P>
+impl<const IS_RUN: bool, P> Iterator for TableRowIter<'_, IS_RUN, P>
 where
     P: ComponentId,
 {

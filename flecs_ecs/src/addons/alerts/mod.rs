@@ -27,7 +27,7 @@ impl<'a> Deref for Alert<'a> {
     }
 }
 
-impl<'a> DerefMut for Alert<'a> {
+impl DerefMut for Alert<'_> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.entity
@@ -165,7 +165,7 @@ impl World {
     }
 }
 
-impl<'a> EntityView<'a> {
+impl EntityView<'_> {
     /*
         /** Return number of alerts for entity.
      *
