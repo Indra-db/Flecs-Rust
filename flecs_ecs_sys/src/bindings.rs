@@ -10,7 +10,7 @@ pub const FLECS_VERSION_MAJOR: u32 = 4;
 pub const FLECS_VERSION_MINOR: u32 = 0;
 pub const FLECS_VERSION_PATCH: u32 = 3;
 pub const FLECS_HI_ID_RECORD_ID: u32 = 1024;
-pub const FLECS_SPARSE_PAGE_BITS: u32 = 12;
+pub const FLECS_SPARSE_PAGE_BITS: u32 = 6;
 pub const FLECS_ENTITY_PAGE_BITS: u32 = 12;
 pub const FLECS_ID_DESC_MAX: u32 = 32;
 pub const FLECS_EVENT_DESC_MAX: u32 = 8;
@@ -168,7 +168,7 @@ pub const ECS_COMPONENT_MASK: u64 = 1152921504606846975;
 pub const EcsIterNextYield: u32 = 0;
 pub const EcsIterYield: i32 = -1;
 pub const EcsIterNext: u32 = 1;
-pub const FLECS_SPARSE_PAGE_SIZE: u32 = 4096;
+pub const FLECS_SPARSE_PAGE_SIZE: u32 = 64;
 pub const ECS_STACK_PAGE_SIZE: u32 = 4096;
 pub const ECS_STRBUF_SMALL_STRING_SIZE: u32 = 512;
 pub const ECS_STRBUF_MAX_LIST_DEPTH: u32 = 32;
@@ -182,6 +182,24 @@ pub const EcsIsEntity: u64 = 144115188075855872;
 pub const EcsIsName: u64 = 72057594037927936;
 pub const EcsTraverseFlags: i64 = -576460752303423488;
 pub const EcsTermRefFlags: i64 = -72057594037927936;
+pub const ECS_TYPE_HOOK_CTOR: u32 = 1;
+pub const ECS_TYPE_HOOK_DTOR: u32 = 2;
+pub const ECS_TYPE_HOOK_COPY: u32 = 4;
+pub const ECS_TYPE_HOOK_MOVE: u32 = 8;
+pub const ECS_TYPE_HOOK_COPY_CTOR: u32 = 16;
+pub const ECS_TYPE_HOOK_MOVE_CTOR: u32 = 32;
+pub const ECS_TYPE_HOOK_CTOR_MOVE_DTOR: u32 = 64;
+pub const ECS_TYPE_HOOK_MOVE_DTOR: u32 = 128;
+pub const ECS_TYPE_HOOK_CTOR_ILLEGAL: u32 = 256;
+pub const ECS_TYPE_HOOK_DTOR_ILLEGAL: u32 = 512;
+pub const ECS_TYPE_HOOK_COPY_ILLEGAL: u32 = 1024;
+pub const ECS_TYPE_HOOK_MOVE_ILLEGAL: u32 = 2048;
+pub const ECS_TYPE_HOOK_COPY_CTOR_ILLEGAL: u32 = 4096;
+pub const ECS_TYPE_HOOK_MOVE_CTOR_ILLEGAL: u32 = 8192;
+pub const ECS_TYPE_HOOK_CTOR_MOVE_DTOR_ILLEGAL: u32 = 16384;
+pub const ECS_TYPE_HOOK_MOVE_DTOR_ILLEGAL: u32 = 32768;
+pub const ECS_TYPE_HOOKS: u32 = 255;
+pub const ECS_TYPE_HOOKS_ILLEGAL: u32 = 65280;
 pub const flecs_iter_cache_ids: u32 = 1;
 pub const flecs_iter_cache_trs: u32 = 2;
 pub const flecs_iter_cache_sources: u32 = 4;
@@ -1743,7 +1761,6 @@ pub struct ecs_observer_t {
     #[doc = "< Entity associated with observer"]
     pub entity: ecs_entity_t,
 }
-#[doc = "Type that contains component lifecycle callbacks.\n\n @ingroup components"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_type_hooks_t {
@@ -1763,6 +1780,8 @@ pub struct ecs_type_hooks_t {
     pub ctor_move_dtor: ecs_move_t,
     #[doc = "Move + dtor.\n This combination is typically used when a component is moved from one\n location to an existing location, like what happens during a remove. If\n not set explicitly it will be derived from other callbacks."]
     pub move_dtor: ecs_move_t,
+    #[doc = "Hook flags.\n Indicates which hooks are set for the type, and which hooks are illegal.\n When an ILLEGAL flag is set when calling ecs_set_hooks() a hook callback\n will be set that panics when called."]
+    pub flags: ecs_flags32_t,
     #[doc = "Callback that is invoked when an instance of a component is added. This\n callback is invoked before triggers are invoked."]
     pub on_add: ecs_iter_action_t,
     #[doc = "Callback that is invoked when an instance of the component is set. This\n callback is invoked before triggers are invoked, and enable the component\n to respond to changes on itself before others can."]
@@ -1827,6 +1846,7 @@ pub struct ecs_observable_t {
     pub on_wildcard: ecs_event_record_t,
     #[doc = "sparse<event, ecs_event_record_t>"]
     pub events: ecs_sparse_t,
+    pub last_observer_id: u64,
 }
 #[doc = "Range in table"]
 #[repr(C)]
@@ -2025,28 +2045,6 @@ extern "C-unwind" {
 }
 extern "C-unwind" {
     pub fn flecs_dump_backtrace(stream: *mut ::core::ffi::c_void);
-}
-#[doc = "Suspend/resume readonly state. To fully support implicit registration of\n components, it should be possible to register components while the world is\n in readonly mode. It is not uncommon that a component is used first from\n within a system, which are often ran while in readonly mode.\n\n Suspending readonly mode is only allowed when the world is not multithreaded.\n When a world is multithreaded, it is not safe to (even temporarily) leave\n readonly mode, so a multithreaded application should always explicitly\n register components in advance.\n\n These operations also suspend deferred mode."]
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ecs_suspend_readonly_state_t {
-    pub is_readonly: bool,
-    pub is_deferred: bool,
-    pub defer_count: i32,
-    pub scope: ecs_entity_t,
-    pub with: ecs_entity_t,
-    pub commands: ecs_vec_t,
-    pub defer_stack: ecs_stack_t,
-    pub stage: *mut ecs_stage_t,
-}
-extern "C-unwind" {
-    pub fn flecs_suspend_readonly(
-        world: *const ecs_world_t,
-        state: *mut ecs_suspend_readonly_state_t,
-    ) -> *mut ecs_world_t;
-}
-extern "C-unwind" {
-    pub fn flecs_resume_readonly(world: *mut ecs_world_t, state: *mut ecs_suspend_readonly_state_t);
 }
 extern "C-unwind" {
     pub fn flecs_poly_claim_(poly: *mut ecs_poly_t) -> i32;

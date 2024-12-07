@@ -216,7 +216,7 @@
 #ifdef FLECS_LOW_FOOTPRINT
 #define FLECS_HI_COMPONENT_ID (16)
 #define FLECS_HI_ID_RECORD_ID (16)
-#define FLECS_SPARSE_PAGE_BITS (6)
+#define FLECS_SPARSE_PAGE_BITS (4)
 #define FLECS_ENTITY_PAGE_BITS (6)
 #define FLECS_USE_OS_ALLOC
 #endif
@@ -251,7 +251,7 @@
  * determines the page size, which is (1 << bits).
  * Lower values decrease memory utilization, at the cost of more allocations. */
 #ifndef FLECS_SPARSE_PAGE_BITS
-#define FLECS_SPARSE_PAGE_BITS (12)
+#define FLECS_SPARSE_PAGE_BITS (6)
 #endif
 
 /** @def FLECS_ENTITY_PAGE_BITS
@@ -628,6 +628,13 @@ extern "C" {
     #endif
 #endif
 
+/* Define noreturn attribute only for GCC or Clang. */
+#if defined(ECS_TARGET_GNU) || defined(ECS_TARGET_CLANG)
+    #define ECS_NORETURN __attribute__((noreturn))
+#else
+    #define ECS_NORETURN
+#endif
+
 /* Ignored warnings */
 #if defined(ECS_TARGET_CLANG)
 /* Ignore unknown options so we don't have to care about the compiler version */
@@ -658,6 +665,11 @@ extern "C" {
 /* Useful, but not reliable enough. It can incorrectly flag macro's as unused
  * in standalone builds. */
 #pragma clang diagnostic ignored "-Wunused-macros"
+/* This warning gets thrown by clang even when a code is handling all case
+ * values but not all cases (for example, when the switch contains a LastValue
+ * case). Adding a "default" case fixes the warning, but silences future 
+ * warnings about unhandled cases, which is worse. */
+#pragma clang diagnostic ignored "-Wswitch-default"
 #if __clang_major__ == 13
 /* clang 13 can throw this warning for a define in ctype.h */
 #pragma clang diagnostic ignored "-Wreserved-identifier"
@@ -3517,6 +3529,40 @@ struct ecs_observer_t {
  *
  * @ingroup components
  */
+
+/* Flags that can be used to check which hooks a type has set */
+#define ECS_TYPE_HOOK_CTOR                   (1 << 0)
+#define ECS_TYPE_HOOK_DTOR                   (1 << 1)
+#define ECS_TYPE_HOOK_COPY                   (1 << 2)
+#define ECS_TYPE_HOOK_MOVE                   (1 << 3)
+#define ECS_TYPE_HOOK_COPY_CTOR              (1 << 4)
+#define ECS_TYPE_HOOK_MOVE_CTOR              (1 << 5)
+#define ECS_TYPE_HOOK_CTOR_MOVE_DTOR         (1 << 6)
+#define ECS_TYPE_HOOK_MOVE_DTOR              (1 << 7)
+
+/* Flags that can be used to set/check which hooks of a type are invalid */
+#define ECS_TYPE_HOOK_CTOR_ILLEGAL           (1 << 8)
+#define ECS_TYPE_HOOK_DTOR_ILLEGAL           (1 << 9)
+#define ECS_TYPE_HOOK_COPY_ILLEGAL           (1 << 10)
+#define ECS_TYPE_HOOK_MOVE_ILLEGAL           (1 << 11)
+#define ECS_TYPE_HOOK_COPY_CTOR_ILLEGAL      (1 << 12)
+#define ECS_TYPE_HOOK_MOVE_CTOR_ILLEGAL      (1 << 13)
+#define ECS_TYPE_HOOK_CTOR_MOVE_DTOR_ILLEGAL (1 << 14)
+#define ECS_TYPE_HOOK_MOVE_DTOR_ILLEGAL      (1 << 15)
+
+/* All valid hook flags */
+#define ECS_TYPE_HOOKS (ECS_TYPE_HOOK_CTOR|ECS_TYPE_HOOK_DTOR|\
+    ECS_TYPE_HOOK_COPY|ECS_TYPE_HOOK_MOVE|ECS_TYPE_HOOK_COPY_CTOR|\
+    ECS_TYPE_HOOK_MOVE_CTOR|ECS_TYPE_HOOK_CTOR_MOVE_DTOR|\
+    ECS_TYPE_HOOK_MOVE_DTOR)
+
+/* All invalid hook flags */
+#define ECS_TYPE_HOOKS_ILLEGAL (ECS_TYPE_HOOK_CTOR_ILLEGAL|\
+    ECS_TYPE_HOOK_DTOR_ILLEGAL|ECS_TYPE_HOOK_COPY_ILLEGAL|\
+    ECS_TYPE_HOOK_MOVE_ILLEGAL|ECS_TYPE_HOOK_COPY_CTOR_ILLEGAL|\
+    ECS_TYPE_HOOK_MOVE_CTOR_ILLEGAL|ECS_TYPE_HOOK_CTOR_MOVE_DTOR_ILLEGAL|\
+    ECS_TYPE_HOOK_MOVE_DTOR_ILLEGAL)
+
 struct ecs_type_hooks_t {
     ecs_xtor_t ctor;            /**< ctor */
     ecs_xtor_t dtor;            /**< dtor */
@@ -3541,6 +3587,12 @@ struct ecs_type_hooks_t {
      * not set explicitly it will be derived from other callbacks. */
     ecs_move_t move_dtor;
 
+    /** Hook flags.
+     * Indicates which hooks are set for the type, and which hooks are illegal.
+     * When an ILLEGAL flag is set when calling ecs_set_hooks() a hook callback
+     * will be set that panics when called. */
+    ecs_flags32_t flags;
+
     /** Callback that is invoked when an instance of a component is added. This
      * callback is invoked before triggers are invoked. */
     ecs_iter_action_t on_add;
@@ -3562,7 +3614,6 @@ struct ecs_type_hooks_t {
     ecs_ctx_free_t ctx_free;           /**< Callback to free ctx */
     ecs_ctx_free_t binding_ctx_free;   /**< Callback to free binding_ctx */
     ecs_ctx_free_t lifecycle_ctx_free; /**< Callback to free lifecycle_ctx */
-
 };
 
 /** Type that contains component information (passed to ctors/dtors/...)
@@ -3623,6 +3674,7 @@ struct ecs_observable_t {
     ecs_event_record_t on_set;
     ecs_event_record_t on_wildcard;
     ecs_sparse_t events;  /* sparse<event, ecs_event_record_t> */
+    uint64_t last_observer_id;
 };
 
 /** Range in table */
@@ -3890,39 +3942,6 @@ int32_t flecs_table_observed_count(
 FLECS_DBG_API
 void flecs_dump_backtrace(
     void *stream);
-
-/* Suspend/resume readonly state. To fully support implicit registration of
- * components, it should be possible to register components while the world is
- * in readonly mode. It is not uncommon that a component is used first from
- * within a system, which are often ran while in readonly mode.
- * 
- * Suspending readonly mode is only allowed when the world is not multithreaded.
- * When a world is multithreaded, it is not safe to (even temporarily) leave
- * readonly mode, so a multithreaded application should always explicitly
- * register components in advance. 
- * 
- * These operations also suspend deferred mode.
- */
-typedef struct ecs_suspend_readonly_state_t {
-    bool is_readonly;
-    bool is_deferred;
-    int32_t defer_count;
-    ecs_entity_t scope;
-    ecs_entity_t with;
-    ecs_vec_t commands;
-    ecs_stack_t defer_stack;
-    ecs_stage_t *stage;
-} ecs_suspend_readonly_state_t;
-
-FLECS_API
-ecs_world_t* flecs_suspend_readonly(
-    const ecs_world_t *world,
-    ecs_suspend_readonly_state_t *state);
-
-FLECS_API
-void flecs_resume_readonly(
-    ecs_world_t *world,
-    ecs_suspend_readonly_state_t *state);
 
 FLECS_API
 int32_t flecs_poly_claim_(
@@ -13587,7 +13606,9 @@ typedef struct ecs_entity_to_json_desc_t {
 } ecs_entity_to_json_desc_t;
 
 /** Utility used to initialize JSON entity serializer. */
+#ifndef __cplusplus
 #define ECS_ENTITY_TO_JSON_INIT (ecs_entity_to_json_desc_t){\
+    .serialize_entity_id = false, \
     .serialize_doc = false, \
     .serialize_full_paths = true, \
     .serialize_inherited = false, \
@@ -13598,6 +13619,20 @@ typedef struct ecs_entity_to_json_desc_t {
     .serialize_refs = 0, \
     .serialize_matches = false, \
 }
+#else
+#define ECS_ENTITY_TO_JSON_INIT {\
+    false, \
+    false, \
+    true, \
+    false, \
+    true, \
+    false, \
+    false, \
+    false, \
+    0, \
+    false, \
+}
+#endif
 
 /** Serialize entity into JSON string.
  * This creates a JSON object with the entity's (path) name, which components
@@ -13653,6 +13688,7 @@ typedef struct ecs_iter_to_json_desc_t {
 } ecs_iter_to_json_desc_t;
 
 /** Utility used to initialize JSON iterator serializer. */
+#ifndef __cplusplus
 #define ECS_ITER_TO_JSON_INIT (ecs_iter_to_json_desc_t){\
     .serialize_entity_ids =      false, \
     .serialize_values =          true, \
@@ -13671,7 +13707,30 @@ typedef struct ecs_iter_to_json_desc_t {
     .serialize_alerts =          false, \
     .serialize_refs =            false, \
     .serialize_matches =         false, \
+    .query =                     NULL \
 }
+#else
+#define ECS_ITER_TO_JSON_INIT {\
+    false, \
+    true, \
+    false, \
+    false, \
+    true, \
+    true, \
+    false, \
+    false, \
+    false, \
+    false, \
+    false, \
+    false, \
+    false, \
+    false, \
+    false, \
+    false, \
+    false, \
+    nullptr \
+}
+#endif
 
 /** Serialize iterator into JSON string.
  * This operation will iterate the contents of the iterator and serialize them
@@ -16910,9 +16969,9 @@ namespace _
 struct placement_new_tag_t{};
 constexpr placement_new_tag_t placement_new_tag{};
 template<class Ty> inline void destruct_obj(Ty* _ptr) { _ptr->~Ty(); }
-template<class Ty> inline void free_obj(Ty* _ptr) { 
+template<class Ty> inline void free_obj(void* _ptr) { 
     if (_ptr) {
-        destruct_obj(_ptr); 
+        destruct_obj(static_cast<Ty*>(_ptr)); 
         ecs_os_free(_ptr); 
     }
 }
@@ -20104,37 +20163,6 @@ namespace flecs
 namespace _ 
 {
 
-inline void ecs_ctor_illegal(void *, int32_t, const ecs_type_info_t *ti) {
-    ecs_abort(ECS_INVALID_OPERATION, "invalid constructor for %s", ti->name);
-}
-
-inline void ecs_dtor_illegal(void *, int32_t, const ecs_type_info_t *ti) {
-    ecs_abort(ECS_INVALID_OPERATION, "invalid destructor for %s", ti->name);
-}
-
-inline void ecs_copy_illegal(
-    void *, const void *, int32_t, const ecs_type_info_t *ti)
-{
-    ecs_abort(ECS_INVALID_OPERATION, "invalid copy assignment for %s", ti->name);
-}
-
-inline void ecs_move_illegal(void *, void *, int32_t, const ecs_type_info_t *ti) {
-    ecs_abort(ECS_INVALID_OPERATION, "invalid move assignment for %s", ti->name);
-}
-
-inline void ecs_copy_ctor_illegal(
-    void *, const void *, int32_t, const ecs_type_info_t *ti)
-{
-    ecs_abort(ECS_INVALID_OPERATION, "invalid copy construct for %s", ti->name);
-}
-
-inline void ecs_move_ctor_illegal(
-    void *, void *, int32_t, const ecs_type_info_t *ti)
-{
-    ecs_abort(ECS_INVALID_OPERATION, "invalid move construct for %s", ti->name);
-}
-
-
 // T()
 // Can't coexist with T(flecs::entity) or T(flecs::world, flecs::entity)
 template <typename T>
@@ -20286,28 +20314,29 @@ namespace _
 
 // Trivially constructible
 template <typename T, if_t< std::is_trivially_constructible<T>::value > = 0>
-ecs_xtor_t ctor() {
+ecs_xtor_t ctor(ecs_flags32_t &) {
     return nullptr;
 }
 
 // Not constructible by flecs
 template <typename T, if_t< 
     ! std::is_default_constructible<T>::value > = 0>
-ecs_xtor_t ctor() {
-    return ecs_ctor_illegal;
+ecs_xtor_t ctor(ecs_flags32_t &flags) {
+    flags |= ECS_TYPE_HOOK_CTOR_ILLEGAL;
+    return nullptr;
 }
 
 // Default constructible
 template <typename T, if_t<
     ! std::is_trivially_constructible<T>::value &&
     std::is_default_constructible<T>::value > = 0>
-ecs_xtor_t ctor() {
+ecs_xtor_t ctor(ecs_flags32_t &) {
     return ctor_impl<T>;
 }
 
 // No dtor
 template <typename T, if_t< std::is_trivially_destructible<T>::value > = 0>
-ecs_xtor_t dtor() {
+ecs_xtor_t dtor(ecs_flags32_t &) {
     return nullptr;
 }
 
@@ -20315,21 +20344,22 @@ ecs_xtor_t dtor() {
 template <typename T, if_t<
     std::is_destructible<T>::value &&
     ! std::is_trivially_destructible<T>::value > = 0>
-ecs_xtor_t dtor() {
+ecs_xtor_t dtor(ecs_flags32_t &) {
     return dtor_impl<T>;
 }
 
 // Assert when the type cannot be destructed
 template <typename T, if_not_t< std::is_destructible<T>::value > = 0>
-ecs_xtor_t dtor() {
+ecs_xtor_t dtor(ecs_flags32_t &flags) {
     flecs_static_assert(always_false<T>::value, 
         "component type must be destructible");
-    return ecs_dtor_illegal;
+    flags |= ECS_TYPE_HOOK_DTOR_ILLEGAL;
+    return nullptr;
 }
 
 // Trivially copyable
 template <typename T, if_t< std::is_trivially_copyable<T>::value > = 0>
-ecs_copy_t copy() {
+ecs_copy_t copy(ecs_flags32_t &) {
     return nullptr;
 }
 
@@ -20337,77 +20367,82 @@ ecs_copy_t copy() {
 template <typename T, if_t<
     ! std::is_trivially_copyable<T>::value &&
     ! std::is_copy_assignable<T>::value > = 0>
-ecs_copy_t copy() {
-    return ecs_copy_illegal;
+ecs_copy_t copy(ecs_flags32_t &flags) {
+    flags |= ECS_TYPE_HOOK_COPY_ILLEGAL;
+    return nullptr;
 }
 
 // Copy assignment
 template <typename T, if_t<
     std::is_copy_assignable<T>::value &&
     ! std::is_trivially_copyable<T>::value > = 0>
-ecs_copy_t copy() {
+ecs_copy_t copy(ecs_flags32_t &) {
     return copy_impl<T>;
 }
 
 // Trivially move assignable
 template <typename T, if_t< std::is_trivially_move_assignable<T>::value > = 0>
-ecs_move_t move() {
+ecs_move_t move(ecs_flags32_t &) {
     return nullptr;
 }
 
 // Component types must be move assignable
 template <typename T, if_not_t< std::is_move_assignable<T>::value > = 0>
-ecs_move_t move() {
-    return ecs_move_illegal;
+ecs_move_t move(ecs_flags32_t &flags) {
+    flags |= ECS_TYPE_HOOK_MOVE_ILLEGAL;
+    return nullptr;
 }
 
 // Move assignment
 template <typename T, if_t<
     std::is_move_assignable<T>::value &&
     ! std::is_trivially_move_assignable<T>::value > = 0>
-ecs_move_t move() {
+ecs_move_t move(ecs_flags32_t &) {
     return move_impl<T>;
 }
 
 // Trivially copy constructible
 template <typename T, if_t<
     std::is_trivially_copy_constructible<T>::value > = 0>
-ecs_copy_t copy_ctor() {
+ecs_copy_t copy_ctor(ecs_flags32_t &) {
     return nullptr;
 }
 
 // No copy ctor
 template <typename T, if_t< ! std::is_copy_constructible<T>::value > = 0>
-ecs_copy_t copy_ctor() {
-    return ecs_copy_ctor_illegal;
+ecs_copy_t copy_ctor(ecs_flags32_t &flags) {
+       flags |= ECS_TYPE_HOOK_COPY_CTOR_ILLEGAL;
+    return nullptr;
+
 }
 
 // Copy ctor
 template <typename T, if_t<
     std::is_copy_constructible<T>::value &&
     ! std::is_trivially_copy_constructible<T>::value > = 0>
-ecs_copy_t copy_ctor() {
+ecs_copy_t copy_ctor(ecs_flags32_t &) {
     return copy_ctor_impl<T>;
 }
 
 // Trivially move constructible
 template <typename T, if_t<
     std::is_trivially_move_constructible<T>::value > = 0>
-ecs_move_t move_ctor() {
+ecs_move_t move_ctor(ecs_flags32_t &) {
     return nullptr;
 }
 
 // Component types must be move constructible
 template <typename T, if_not_t< std::is_move_constructible<T>::value > = 0>
-ecs_move_t move_ctor() {
-    return ecs_move_ctor_illegal;
+ecs_move_t move_ctor(ecs_flags32_t &flags) {
+    flags |= ECS_TYPE_HOOK_MOVE_CTOR_ILLEGAL;
+    return nullptr;
 }
 
 // Move ctor
 template <typename T, if_t<
     std::is_move_constructible<T>::value &&
     ! std::is_trivially_move_constructible<T>::value > = 0>
-ecs_move_t move_ctor() {
+ecs_move_t move_ctor(ecs_flags32_t &) {
     return move_ctor_impl<T>;
 }
 
@@ -20415,7 +20450,7 @@ ecs_move_t move_ctor() {
 template <typename T, if_t<
     std::is_trivially_move_constructible<T>::value  &&
     std::is_trivially_destructible<T>::value > = 0>
-ecs_move_t ctor_move_dtor() {
+ecs_move_t ctor_move_dtor(ecs_flags32_t &) {
     return nullptr;
 }
 
@@ -20423,8 +20458,9 @@ ecs_move_t ctor_move_dtor() {
 template <typename T, if_t<
     ! std::is_move_constructible<T>::value ||
     ! std::is_destructible<T>::value > = 0>
-ecs_move_t ctor_move_dtor() {
-    return ecs_move_ctor_illegal;
+ecs_move_t ctor_move_dtor(ecs_flags32_t &flags) {
+    flags |= ECS_TYPE_HOOK_CTOR_MOVE_DTOR_ILLEGAL;
+    return nullptr;
 }
 
 // Merge ctor + dtor
@@ -20433,7 +20469,7 @@ template <typename T, if_t<
       std::is_trivially_destructible<T>::value) &&
     std::is_move_constructible<T>::value &&
     std::is_destructible<T>::value > = 0>
-ecs_move_t ctor_move_dtor() {
+ecs_move_t ctor_move_dtor(ecs_flags32_t &) {
     return ctor_move_dtor_impl<T>;
 }
 
@@ -20441,7 +20477,7 @@ ecs_move_t ctor_move_dtor() {
 template <typename T, if_t<
     std::is_trivially_move_assignable<T>::value  &&
     std::is_trivially_destructible<T>::value > = 0>
-ecs_move_t move_dtor() {
+ecs_move_t move_dtor(ecs_flags32_t &) {
     return nullptr;
 }
 
@@ -20449,8 +20485,9 @@ ecs_move_t move_dtor() {
 template <typename T, if_t<
     ! std::is_move_assignable<T>::value ||
     ! std::is_destructible<T>::value > = 0>
-ecs_move_t move_dtor() {
-    return ecs_move_ctor_illegal;
+ecs_move_t move_dtor(ecs_flags32_t &flags) {
+    flags |= ECS_TYPE_HOOK_MOVE_DTOR_ILLEGAL;
+    return nullptr;
 }
 
 // Merge assign + dtor
@@ -20459,7 +20496,7 @@ template <typename T, if_t<
       std::is_trivially_destructible<T>::value) &&
     std::is_move_assignable<T>::value &&
     std::is_destructible<T>::value > = 0>
-ecs_move_t move_dtor() {
+ecs_move_t move_dtor(ecs_flags32_t &) {
     return move_dtor_impl<T>;
 }
 
@@ -21623,6 +21660,14 @@ struct world {
      * @see ecs_make_alive()
      */
     flecs::entity make_alive(flecs::entity_t e) const;
+
+    /** Set version of entity to provided.
+     * 
+     * @see ecs_set_version()
+     */
+    void set_version(flecs::entity_t e) const {
+        ecs_set_version(world_, e);
+    }
 
     /* Run callback after completing frame */
     void run_post_frame(ecs_fini_action_t action, void *ctx) const {
@@ -26062,7 +26107,7 @@ struct each_delegate : public delegate {
 
     // Function that can be used as callback to free delegate
     static void destruct(void *obj) {
-        _::free_obj<each_delegate>(static_cast<each_delegate*>(obj));
+        _::free_obj<each_delegate>(obj);
     }
 
     // Static function to call for component on_add hook
@@ -26100,9 +26145,6 @@ private:
     static void invoke_callback(
         ecs_iter_t *iter, const Func& func, size_t i, Args... comps) 
     {
-        ecs_assert(iter->count > 0, ECS_INVALID_OPERATION,
-            "no entities returned, use each() without flecs::entity argument");
-
         func(flecs::entity(iter->world, iter->entities[i]),
             (ColumnType< remove_reference_t<Components> >(iter, comps, i)
                 .get_row())...);
@@ -26218,9 +26260,6 @@ private:
         ecs_world_t *world = iter->world;
         size_t count = static_cast<size_t>(iter->count);
         flecs::entity result;
-
-        ecs_assert(count > 0, ECS_INVALID_OPERATION,
-            "no entities returned, use find() without flecs::entity argument");
 
         for (size_t i = 0; i < count; i ++) {
             if (func(flecs::entity(world, iter->entities[i]),
@@ -26801,20 +26840,21 @@ void register_lifecycle_actions(
     ecs_entity_t component)
 {
     ecs_type_hooks_t cl{};
-    cl.ctor = ctor<T>();
-    cl.dtor = dtor<T>();
+    cl.ctor = ctor<T>(cl.flags);
+    cl.dtor = dtor<T>(cl.flags);
 
-    cl.copy = copy<T>();
-    cl.copy_ctor = copy_ctor<T>();
-    cl.move = move<T>();
-    cl.move_ctor = move_ctor<T>();
+    cl.copy = copy<T>(cl.flags);
+    cl.copy_ctor = copy_ctor<T>(cl.flags);
+    cl.move = move<T>(cl.flags);
+    cl.move_ctor = move_ctor<T>(cl.flags);
 
-    cl.ctor_move_dtor = ctor_move_dtor<T>();
-    cl.move_dtor = move_dtor<T>();
+    cl.ctor_move_dtor = ctor_move_dtor<T>(cl.flags);
+    cl.move_dtor = move_dtor<T>(cl.flags);
 
-    ecs_set_hooks_id( world, component, &cl);
+    ecs_set_hooks_id(world, component, &cl);
 
-    if (cl.move == ecs_move_illegal || cl.move_ctor == ecs_move_ctor_illegal) {
+    if (cl.flags & (ECS_TYPE_HOOK_MOVE_ILLEGAL|ECS_TYPE_HOOK_MOVE_CTOR_ILLEGAL))
+    {
         ecs_add_id(world, component, flecs::Sparse);
     }
 }
@@ -27495,8 +27535,7 @@ struct component : untyped_component {
         BindingCtx *ctx = get_binding_ctx(h);
         h.on_add = Delegate::run_add;
         ctx->on_add = FLECS_NEW(Delegate)(FLECS_FWD(func));
-        ctx->free_on_add = reinterpret_cast<ecs_ctx_free_t>(
-            _::free_obj<Delegate>);
+        ctx->free_on_add = _::free_obj<Delegate>;
         ecs_set_hooks_id(world_, id_, &h);
         return *this;
     }
@@ -27512,8 +27551,7 @@ struct component : untyped_component {
         BindingCtx *ctx = get_binding_ctx(h);
         h.on_remove = Delegate::run_remove;
         ctx->on_remove = FLECS_NEW(Delegate)(FLECS_FWD(func));
-        ctx->free_on_remove = reinterpret_cast<ecs_ctx_free_t>(
-            _::free_obj<Delegate>);
+        ctx->free_on_remove = _::free_obj<Delegate>;
         ecs_set_hooks_id(world_, id_, &h);
         return *this;
     }
@@ -27529,8 +27567,7 @@ struct component : untyped_component {
         BindingCtx *ctx = get_binding_ctx(h);
         h.on_set = Delegate::run_set;
         ctx->on_set = FLECS_NEW(Delegate)(FLECS_FWD(func));
-        ctx->free_on_set = reinterpret_cast<ecs_ctx_free_t>(
-            _::free_obj<Delegate>);
+        ctx->free_on_set = _::free_obj<Delegate>;
         ecs_set_hooks_id(world_, id_, &h);
         return *this;
     }
@@ -27582,8 +27619,7 @@ private:
         if (!result) {
             result = FLECS_NEW(BindingCtx);
             h.binding_ctx = result;
-            h.binding_ctx_free = reinterpret_cast<ecs_ctx_free_t>(
-                _::free_obj<BindingCtx>);
+            h.binding_ctx_free = _::free_obj<BindingCtx>;
         }
         return result;
     }
@@ -28271,34 +28307,34 @@ struct iterable {
         return this->iter().first();
     }
 
-    iter_iterable<Components...> set_var(int var_id, flecs::entity_t value) {
+    iter_iterable<Components...> set_var(int var_id, flecs::entity_t value) const {
         return this->iter().set_var(var_id, value);
     }
 
-    iter_iterable<Components...> set_var(const char *name, flecs::entity_t value) {
+    iter_iterable<Components...> set_var(const char *name, flecs::entity_t value) const {
         return this->iter().set_var(name, value);
     }
 
-    iter_iterable<Components...> set_var(const char *name, flecs::table_t *value) {
+    iter_iterable<Components...> set_var(const char *name, flecs::table_t *value) const {
         return this->iter().set_var(name, value);
     }
 
-    iter_iterable<Components...> set_var(const char *name, ecs_table_range_t value) {
+    iter_iterable<Components...> set_var(const char *name, ecs_table_range_t value) const {
         return this->iter().set_var(name, value);
     }
 
-    iter_iterable<Components...> set_var(const char *name, flecs::table_range value) {
+    iter_iterable<Components...> set_var(const char *name, flecs::table_range value) const {
         return this->iter().set_var(name, value);
     }
 
     // Limit results to tables with specified group id (grouped queries only)
-    iter_iterable<Components...> set_group(uint64_t group_id) {
+    iter_iterable<Components...> set_group(uint64_t group_id) const {
         return this->iter().set_group(group_id);
     }
 
     // Limit results to tables with specified group id (grouped queries only)
     template <typename Group>
-    iter_iterable<Components...> set_group() {
+    iter_iterable<Components...> set_group() const {
         return this->iter().template set_group<Group>();
     }
 
@@ -30213,6 +30249,20 @@ struct query_base {
 
     operator query<>() const;
 
+#   ifdef FLECS_JSON
+
+/** Serialize query to JSON.
+ * 
+ * @memberof flecs::query_base
+ * @ingroup cpp_addons_json
+ */
+flecs::string to_json(flecs::iter_to_json_desc_t *desc = nullptr) {
+    ecs_iter_t it = ecs_query_iter(ecs_get_world(query_), query_);
+    char *json = ecs_iter_to_json(&it, desc);
+    return flecs::string(json);
+}
+#   endif
+
 protected:
     query_t *query_ = nullptr;
 };
@@ -30406,8 +30456,7 @@ public:
         auto ctx = FLECS_NEW(Delegate)(FLECS_FWD(func));
         desc_.run = Delegate::run;
         desc_.run_ctx = ctx;
-        desc_.run_ctx_free = reinterpret_cast<
-            ecs_ctx_free_t>(_::free_obj<Delegate>);
+        desc_.run_ctx_free = _::free_obj<Delegate>;
         return T(world_, &desc_);
     }
 
@@ -30419,8 +30468,7 @@ public:
         auto ctx = FLECS_NEW(Delegate)(FLECS_FWD(func));
         desc_.run = Delegate::run;
         desc_.run_ctx = ctx;
-        desc_.run_ctx_free = reinterpret_cast<
-            ecs_ctx_free_t>(_::free_obj<Delegate>);
+        desc_.run_ctx_free = _::free_obj<Delegate>;
         return each(FLECS_FWD(each_func));
     }
 
@@ -30431,8 +30479,7 @@ public:
         auto ctx = FLECS_NEW(Delegate)(FLECS_FWD(func));
         desc_.callback = Delegate::run;
         desc_.callback_ctx = ctx;
-        desc_.callback_ctx_free = reinterpret_cast<
-            ecs_ctx_free_t>(_::free_obj<Delegate>);
+        desc_.callback_ctx_free = _::free_obj<Delegate>;
         return T(world_, &desc_);
     }
 
@@ -30649,8 +30696,7 @@ namespace _ {
         {
             using Delegate = _::entity_observer_delegate<Func>;
             auto ctx = FLECS_NEW(Delegate)(FLECS_FWD(f));
-            entity_observer_create(world, _::type<Evt>::id(world), entity, Delegate::run, ctx, 
-                reinterpret_cast<ecs_ctx_free_t>(_::free_obj<Delegate>));
+            entity_observer_create(world, _::type<Evt>::id(world), entity, Delegate::run, ctx, _::free_obj<Delegate>);
         }
 
         template <typename Evt, if_not_t<is_empty<Evt>::value> = 0>
@@ -30661,8 +30707,7 @@ namespace _ {
         {
             using Delegate = _::entity_payload_observer_delegate<Func, Evt>;
             auto ctx = FLECS_NEW(Delegate)(FLECS_FWD(f));
-            entity_observer_create(world, _::type<Evt>::id(world), entity, Delegate::run, ctx, 
-                reinterpret_cast<ecs_ctx_free_t>(_::free_obj<Delegate>));
+            entity_observer_create(world, _::type<Evt>::id(world), entity, Delegate::run, ctx, _::free_obj<Delegate>);
         }
     };
 }
@@ -30673,8 +30718,7 @@ inline const Self& entity_builder<Self>::observe(flecs::entity_t evt, Func&& f) 
     using Delegate = _::entity_observer_delegate<Func>;
     auto ctx = FLECS_NEW(Delegate)(FLECS_FWD(f));
 
-    _::entity_observer_create(world_, evt, id_, Delegate::run, ctx,
-        reinterpret_cast<ecs_ctx_free_t>(_::free_obj<Delegate>));
+    _::entity_observer_create(world_, evt, id_, Delegate::run, ctx, _::free_obj<Delegate>);
 
     return to_base();
 }
@@ -30824,6 +30868,11 @@ inline flecs::entity world::module(const char *name) const {
                 ecs_iter_t it = ecs_each_id(world_, ecs_pair(EcsChildOf, cur));
                 if (!ecs_iter_is_true(&it)) {
                     cur.destruct();
+
+                    // Prevent increasing the generation count of the temporary
+                    // parent. This allows entities created during 
+                    // initialization to keep non-recycled ids.
+                    this->set_version(cur);
                 }
 
                 cur = next;
@@ -33031,4 +33080,3 @@ inline flecs::scoped_world world::scope(const char* name) const {
 
 
 #endif
-
