@@ -150,7 +150,7 @@ flecs_nightly_tests = []
 test-with-crash-handler = ["dep:test_crash_handler", "test_crash_handler/crash-handler"]
 
 default = [
-    #"flecs_regenerate_binding_c",
+    "flecs_regenerate_binding_c",
     #"flecs_nightly_tests",
     "flecs_module",
     "flecs_script",

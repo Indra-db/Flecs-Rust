@@ -74,6 +74,9 @@ impl World {
     /// * [`World::module()`]
     /// * C++ API: `world::import`
     pub fn import<T: Module>(&self) -> EntityView {
+        // Reset scope
+        let prev_scope = self.set_scope_id(0);
+
         let module = if T::is_registered_with_world(self) {
             self.component::<T>().entity
         } else {
@@ -102,9 +105,6 @@ impl World {
         // guarantees that a module drop / destructor can be reliably used to cleanup
         // module resources.
         module.add_trait::<flecs::Sparse>();
-
-        // Reset scope
-        let prev_scope = self.set_scope_id(0);
 
         // Set scope to our module
         self.set_scope_id(module);
@@ -148,47 +148,53 @@ impl World {
         let comp = self.component::<M>();
         let id = comp.id();
 
-        let name = compact_str::format_compact!("{}\0", name);
-        let prev_parent = comp.parent().unwrap_or(EntityView::new_null(self));
-        unsafe {
-            sys::ecs_add_path_w_sep(
-                self.raw_world.as_ptr(),
-                *id,
-                0,
-                name.as_ptr() as *const _,
-                SEPARATOR.as_ptr(),
-                SEPARATOR.as_ptr(),
-            );
-        }
-        let parent = comp.parent().unwrap_or(EntityView::new_null(self));
+        if !name.is_empty() {
+            let name = compact_str::format_compact!("{}\0", name);
+            let prev_parent = comp.parent().unwrap_or(EntityView::new_null(self));
+            unsafe {
+                sys::ecs_add_path_w_sep(
+                    self.raw_world.as_ptr(),
+                    *id,
+                    0,
+                    name.as_ptr() as *const _,
+                    SEPARATOR.as_ptr(),
+                    SEPARATOR.as_ptr(),
+                );
+            }
+            let parent = comp.parent().unwrap_or(EntityView::new_null(self));
 
-        if parent != prev_parent {
-            // Module was reparented, cleanup old parent(s)
-            let mut cur = prev_parent;
-            let mut next;
+            if parent != prev_parent {
+                // Module was reparented, cleanup old parent(s)
+                let mut cur = prev_parent;
+                let mut next;
 
-            while cur.id != 0 {
-                next = cur.parent().unwrap_or(EntityView::new_null(self));
+                while cur.id != 0 {
+                    next = cur.parent().unwrap_or(EntityView::new_null(self));
 
-                let mut it = unsafe {
-                    sys::ecs_each_id(
-                        self.world_ptr(),
-                        ecs_pair(flecs::ChildOf::ID, cur.id.into()),
-                    )
-                };
-                if !unsafe { sys::ecs_iter_is_true(&mut it) } {
-                    cur.destruct();
-                }
+                    let mut it = unsafe {
+                        sys::ecs_each_id(
+                            self.world_ptr(),
+                            ecs_pair(flecs::ChildOf::ID, cur.id.into()),
+                        )
+                    };
+                    if !unsafe { sys::ecs_iter_is_true(&mut it) } {
+                        cur.destruct();
 
-                cur = next;
+                        // Prevent increasing the generation count of the temporary
+                        // parent. This allows entities created during
+                        // initialization to keep non-recycled ids.
+                        self.set_version(cur);
+                    }
 
-                if cur.id == 0 {
-                    break;
+                    cur = next;
+
+                    if cur.id == 0 {
+                        break;
+                    }
                 }
             }
         }
 
-        //self.set_scope_id(id);
         EntityView::new_from(self, *id)
     }
 }

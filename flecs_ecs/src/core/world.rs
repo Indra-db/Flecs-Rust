@@ -1728,6 +1728,11 @@ impl World {
     {
         self.modified_id(T::id(self));
     }
+
+    /// set the version of the provided entity.
+    pub fn set_version(&self, entity: impl Into<Entity>) {
+        unsafe { sys::ecs_set_version(self.raw_world.as_ptr(), *entity.into()) };
+    }
 }
 
 pub trait WorldGet<Return> {
