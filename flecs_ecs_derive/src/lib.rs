@@ -1193,7 +1193,7 @@ impl Parse for Term {
         let reference = input.parse::<Reference>()?;
         if peek_id(&input) {
             let initial = input.parse::<TermId>()?;
-            if !input.peek(Token![,]) && !input.is_empty() {
+            if !input.peek(Token![,]) && !input.peek(Token![|]) && !input.is_empty() {
                 // Component or pair with explicit source
                 let inner;
                 parenthesized!(inner in input);
@@ -1626,6 +1626,37 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
 /// Other operators all function according to the manual.
 ///
 /// Advanced operations are currently unsupported.
+///
+/// # Examples
+/// ```
+/// use flecs_ecs::prelude::*;
+///
+/// #[derive(Component)]
+/// struct Foo(u8);
+///
+/// #[derive(Component)]
+/// struct Bar(u8);
+///
+/// #[derive(Component)]
+/// struct Bazz;
+///
+/// let mut world = World::new();
+///
+/// // Basic
+/// let builder = world.query::<(&Foo, &Bar)>().with::<Bazz>().build();
+/// let dsl = query!(&mut world, &Foo, &Bar, Bazz).build();
+/// assert_eq!(builder.to_string(), dsl.to_string());
+///
+/// // Logical modifiers
+/// let builder = world.query::<&Foo>()
+///     .with::<Bar>()
+///     .or()
+///     .with::<Bazz>()
+///     .build();
+///
+/// let dsl = query!(&mut world, &Foo, Bar || Bazz).build();
+/// assert_eq!(builder.to_string(), dsl.to_string());
+/// ```
 #[proc_macro]
 pub fn query(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let input = parse_macro_input!(input as Builder);
