@@ -1643,18 +1643,19 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
 /// let mut world = World::new();
 ///
 /// // Basic
-/// let builder = world.query::<(&Foo, &Bar)>().with::<Bazz>().build();
-/// let dsl = query!(&mut world, &Foo, &Bar, Bazz).build();
+/// let builder = world.query::<(&Foo, &mut Bar)>().with::<Bazz>().build();
+/// let dsl = query!(&mut world, &Foo, &mut Bar, Bazz).build();
 /// assert_eq!(builder.to_string(), dsl.to_string());
 ///
 /// // Logical modifiers
-/// let builder = world.query::<&Foo>()
-///     .with::<Bar>()
+/// let builder = world.query::<()>()
+///     .with::<Foo>()
 ///     .or()
-///     .with::<Bazz>()
+///     .with::<Bar>()
+///     .without::<Bazz>()
 ///     .build();
 ///
-/// let dsl = query!(&mut world, &Foo, Bar || Bazz).build();
+/// let dsl = query!(&mut world, Foo || Bar, !Bazz).build();
 /// assert_eq!(builder.to_string(), dsl.to_string());
 /// ```
 #[proc_macro]
@@ -1694,33 +1695,9 @@ pub fn query(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 ///
 /// Returns `&mut SystemBuilder`.
 ///
-/// Diverges from the [flecs query manual](https://github.com/SanderMertens/flecs/blob/v4/docs/FlecsQueryLanguage.md) in the following respects:
+/// See [`query`] for examples & DSL divergences from the flecs spec.
 ///
-/// 1. If the first argument is a string literal it will be used as a name.
-/// 2. The next argument is a value implementing `WorldProvider`
-/// 3. Terms prefixed with `&mut` or `&` will appear in the closure and must appear first:
-/// ```ignore
-/// // Like this:
-/// system!(world, &mut MyComponent);
-/// // Not like this:
-/// system!(world, MyFilter, &mut MyComponent);
-/// ```
-/// 4. String literal terms will be matched by name:
-/// ```ignore
-/// system!(world, "MyComponent");
-/// ```
-/// 5. String literals prefixed by `$` are variables:
-/// ```ignore
-/// system!(world, &mut Location($"my_var"), (LocatedIn, $"my_var"));
-/// ```
-/// 6. Values that implement `Into<Entity>` prefixed by `$` will be used as ids:
-/// ```ignore
-/// system!(world, $my_entity);
-/// ```
-///
-/// Other operators all function according to the manual.
-///
-/// Advanced operations are currently unsupported.
+/// [`query`]: macro@query
 #[proc_macro]
 pub fn system(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let input = parse_macro_input!(input as Builder);
@@ -1791,33 +1768,9 @@ impl Parse for Observer {
 ///
 /// Returns `&mut ObserverBuilder`.
 ///
-/// Diverges from the [flecs query manual](https://github.com/SanderMertens/flecs/blob/v4/docs/FlecsQueryLanguage.md) in the following respects:
+/// See [`query`] for examples & DSL divergences from the flecs spec.
 ///
-/// 1. If the first argument is a string literal it will be used as a name.
-/// 2. The next argument is a value implementing `WorldProvider`
-/// 3. Terms prefixed with `&mut` or `&` will appear in the closure and must appear first:
-/// ```ignore
-/// // Like this:
-/// observer!(world, Event, &mut MyComponent);
-/// // Not like this:
-/// observer!(world, Event, MyFilter, &mut MyComponent);
-/// ```
-/// 4. String literal terms will be matched by name:
-/// ```ignore
-/// observer!(world, Event, "MyComponent");
-/// ```
-/// 5. String literals prefixed by `$` are variables:
-/// ```ignore
-/// observer!(world, Event, &mut Location($"my_var"), (LocatedIn, $"my_var"));
-/// ```
-/// 6. Values that implement `Into<Entity>` prefixed by `$` will be used as ids:
-/// ```ignore
-/// observer!(world, Event, $my_entity);
-/// ```
-///
-/// Other operators all function according to the manual.
-///
-/// Advanced operations are currently unsupported.
+/// [`query`]: macro@query
 #[proc_macro]
 pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let input = parse_macro_input!(input as Observer);
