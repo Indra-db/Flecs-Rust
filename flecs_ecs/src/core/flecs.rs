@@ -265,7 +265,12 @@ create_pre_registered_component!(
     ECS_FINAL,
     "Component trait. This component cannot be used in an [`IsA`] relationship."
 );
-//create_pre_registered_component!(PairIsTag, ECS_PAIR_IS_TAG); //not supported in Flecs Rust
+create_pre_registered_component!(
+    PairIsTag,
+    ECS_PAIR_IS_TAG,
+    "Component trait. A relationship can be marked with PairIsTag in which case
+     a pair with the relationship will never contain data."
+);
 create_pre_registered_component!(
     Exclusive,
     ECS_EXCLUSIVE,

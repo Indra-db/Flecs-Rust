@@ -187,6 +187,15 @@ where
         let table = unsafe { (*record).table };
         let entity = *entity;
         let id = <A::OnlyType as ComponentOrPairId>::get_id(world);
+        
+        if <A::OnlyType as ComponentOrPairId>::IS_PAIR {
+            ecs_assert!(
+                unsafe { sys::ecs_get_typeid(world_ptr, id) } != 0,
+                FlecsErrorCode::InvalidOperation,
+                "Pair is not a (data) component. Possible cause: PairIsTag trait"
+            );
+        }
+
         let mut has_all_components = true;
         
         let component_ptr = if A::OnlyType::IS_ENUM {
@@ -319,6 +328,14 @@ macro_rules! impl_get_tuple {
 
                 $(
                     let id = <$t::OnlyType as ComponentOrPairId>::get_id(world_ref);
+
+                    if <$t::OnlyType as ComponentOrPairId>::IS_PAIR {
+                        ecs_assert!(
+                            unsafe { sys::ecs_get_typeid(world_ptr, id) } != 0,
+                            FlecsErrorCode::InvalidOperation,
+                            "Pair is not a (data) component. Possible cause: PairIsTag trait"
+                        );
+                    }
 
                     let component_ptr = if $t::OnlyType::IS_ENUM {
 

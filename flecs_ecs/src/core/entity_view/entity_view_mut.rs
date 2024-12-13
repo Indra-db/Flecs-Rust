@@ -57,15 +57,8 @@ impl<'a> EntityView<'a> {
     where
         T: ComponentOrPairId,
     {
-        const {
-            if T::CastType::IS_GENERIC {
-                panic!("Adding a generic type requires to use the set function. This is due to Rust type system limitations.");
-            } else if !T::CastType::IS_TAG && !T::CastType::IMPLS_DEFAULT {
-                panic!("Adding an element that is not a Tag / Zero sized type requires to implement Default");
-            }
-        }
         let world = self.world;
-        unsafe { self.add_id_unchecked(T::get_id(world)) }
+        self.add_id(T::get_id(world))
     }
 
     /// Adds a flecs trait.
@@ -955,12 +948,15 @@ impl<'a> EntityView<'a> {
             assert!(!<(First, Second) as ComponentOrPairId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add::<(Tag1, Tag2)()` instead.");
         };
 
-        set_helper(
-            self.world.world_ptr_mut(),
-            *self.id,
-            data,
-            ecs_pair(First::id(self.world), Second::id(self.world)),
+        let pair_id = ecs_pair(First::id(self.world), Second::id(self.world));
+
+        ecs_assert!(
+            unsafe { sys::ecs_get_typeid(self.world.ptr_mut(), pair_id) } != 0,
+            FlecsErrorCode::InvalidOperation,
+            "Pair is not a (data) component. Possible cause: PairIsTag trait"
         );
+
+        set_helper(self.world.world_ptr_mut(), *self.id, data, pair_id);
         self
     }
 
