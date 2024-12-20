@@ -25,7 +25,7 @@ flecs_ecs_derive = { workspace = true }
 flecs_ecs_sys = { workspace = true }
 bitflags = "2.6.0"
 compact_str = "0.8.0"
-hashbrown = "0.15.0"
+hashbrown = { workspace = true }
 
 # used for backtraces upon hardware exceptions during test
 # only used when "test-with-crash-handler" feature enabled
