@@ -75,6 +75,10 @@ impl World {
     ///
     /// * C++ API: `world::cursor`
     pub fn cursor_id(&self, type_id: impl Into<Entity>, ptr: *mut c_void) -> Cursor {
+        if ptr.is_null() {
+            panic!("ptr is null");
+        }
+
         Cursor::new(self, type_id, ptr)
     }
 

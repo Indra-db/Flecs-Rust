@@ -10,7 +10,7 @@ pub struct Cursor<'a> {
 impl<'a> Cursor<'a> {
     /// Creates a new cursor instance
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn new(
+    pub(crate) fn new(
         world: impl WorldProvider<'a>,
         type_id: impl Into<Entity>,
         ptr: *mut std::ffi::c_void,
