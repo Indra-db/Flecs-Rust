@@ -706,26 +706,26 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// Set the relationship as current term and in mode out
-    fn write_first<T: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
-        self.with_first::<T>(second);
+    fn write_first<First: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
+        self.with_first::<First>(second);
         TermBuilderImpl::write_curr(self)
     }
 
     /// Set the relationship as current term and in mode out
-    fn write_first_name<T: ComponentId>(&mut self, second: &'a str) -> &mut Self {
-        self.with_first_name::<T>(second);
+    fn write_first_name<First: ComponentId>(&mut self, second: &'a str) -> &mut Self {
+        self.with_first_name::<First>(second);
         TermBuilderImpl::write_curr(self)
     }
 
     /// Set the relationship as current term and in mode out
-    fn write_second<T: ComponentId>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
-        self.with_second::<T>(first);
+    fn write_second<Second: ComponentId>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
+        self.with_second::<Second>(first);
         TermBuilderImpl::write_curr(self)
     }
 
     /// Set the relationship as current term and in mode out
-    fn write_second_name<T: ComponentId>(&mut self, first: &'a str) -> &mut Self {
-        self.with_second_name::<T>(first);
+    fn write_second_name<Second: ComponentId>(&mut self, first: &'a str) -> &mut Self {
+        self.with_second_name::<Second>(first);
         TermBuilderImpl::write_curr(self)
     }
 
@@ -763,26 +763,26 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// Set the relationship as current term and in mode in
-    fn read_first<T: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
-        self.with_first::<T>(second);
+    fn read_first<First: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
+        self.with_first::<First>(second);
         TermBuilderImpl::read_curr(self)
     }
 
     /// Set the relationship as current term and in mode in
-    fn read_first_name<T: ComponentId>(&mut self, second: &'a str) -> &mut Self {
-        self.with_first_name::<T>(second);
+    fn read_first_name<First: ComponentId>(&mut self, second: &'a str) -> &mut Self {
+        self.with_first_name::<First>(second);
         TermBuilderImpl::read_curr(self)
     }
 
     /// Set the relationship as current term and in mode in
-    fn read_second<T: ComponentId>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
-        self.with_second::<T>(first);
+    fn read_second<Second: ComponentId>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
+        self.with_second::<Second>(first);
         TermBuilderImpl::read_curr(self)
     }
 
     /// Set the relationship as current term and in mode in
-    fn read_second_name<T: ComponentId>(&mut self, first: &'a str) -> &mut Self {
-        self.with_second_name::<T>(first);
+    fn read_second_name<Second: ComponentId>(&mut self, first: &'a str) -> &mut Self {
+        self.with_second_name::<Second>(first);
         TermBuilderImpl::read_curr(self)
     }
 

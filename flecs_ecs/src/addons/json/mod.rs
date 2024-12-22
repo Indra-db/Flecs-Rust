@@ -83,13 +83,13 @@ impl EntityView<'_> {
     ///
     /// * C++ API: `entity_builder::set_json_second`
     #[doc(alias = "entity_builder::set_json_second")]
-    pub fn set_json_second<Target: ComponentId>(
+    pub fn set_json_second<Second: ComponentId>(
         self,
         rel: impl Into<Entity> + Copy,
         json: &str,
         desc: Option<&FromJsonDesc>,
     ) -> Self {
-        self.set_json_id((rel, Target::get_id(self.world)), json, desc)
+        self.set_json_id((rel, Second::get_id(self.world)), json, desc)
     }
 
     /// Serialize entity to JSON.

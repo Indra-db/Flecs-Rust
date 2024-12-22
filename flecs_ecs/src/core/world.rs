@@ -2878,7 +2878,7 @@ impl World {
     ///
     /// * C++ API: `world::delete_with`
     #[doc(alias = "world::delete_with")]
-    pub fn delete_with_id(&self, id: impl IntoId) {
+    pub fn delete_entities_with_id(&self, id: impl IntoId) {
         unsafe {
             sys::ecs_delete_with(self.raw_world.as_ptr(), *id.into());
         }
@@ -2895,7 +2895,7 @@ impl World {
     /// * C++ API: `world::delete_with`
     #[doc(alias = "world::delete_with")]
     pub fn delete_entities_with<T: ComponentOrPairId>(&self) {
-        self.delete_with_id(T::get_id(self));
+        self.delete_entities_with_id(T::get_id(self));
     }
 
     /// Delete all entities with the given pair
@@ -2912,8 +2912,8 @@ impl World {
     ///
     /// * C++ API: `world::delete_with`
     #[doc(alias = "world::delete_with")]
-    pub fn delete_with_second<Second: ComponentId>(&self, first: impl Into<Entity>) {
-        self.delete_with_id(ecs_pair(*first.into(), Second::id(self)));
+    pub fn delete_entities_with_second<Second: ComponentId>(&self, first: impl Into<Entity>) {
+        self.delete_entities_with_id(ecs_pair(*first.into(), Second::id(self)));
     }
 
     /// Delete all entities with the given pair
@@ -2930,8 +2930,8 @@ impl World {
     ///
     /// * C++ API: `world::delete_with`
     #[doc(alias = "world::delete_with")]
-    pub fn delete_entities_with_second_id<First: ComponentId>(&self, second: impl Into<Entity>) {
-        self.delete_with_id(ecs_pair(First::id(self), *second.into()));
+    pub fn delete_entities_with_first<First: ComponentId>(&self, second: impl Into<Entity>) {
+        self.delete_entities_with_id(ecs_pair(First::id(self), *second.into()));
     }
 
     /// Delete all entities with the given enum constant
@@ -2952,7 +2952,7 @@ impl World {
         &self,
         enum_value: T,
     ) {
-        self.delete_with_id(enum_value.id_variant(self));
+        self.delete_entities_with_id(enum_value.id_variant(self));
     }
 
     /// Delete all entities with the given enum tag pair / relationship
@@ -2974,7 +2974,7 @@ impl World {
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        self.delete_with_id(ecs_pair(First::id(self), **enum_value.id_variant(self)));
+        self.delete_entities_with_id(ecs_pair(First::id(self), **enum_value.id_variant(self)));
     }
 
     /// Remove all instances of the given id from entities

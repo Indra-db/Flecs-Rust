@@ -541,9 +541,9 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     ///
     /// * C++ API: `term_builder_i::first`
     #[doc(alias = "term_builder_i::first")]
-    fn set_first<T: ComponentId>(&mut self) -> &mut Self {
+    fn set_first<First: ComponentId>(&mut self) -> &mut Self {
         check_term_access_validity(self);
-        self.set_first_id(T::id(self.world()))
+        self.set_first_id(First::id(self.world()))
     }
 
     /// Select first identifier, initialize it with name. If name starts with a $
@@ -604,9 +604,9 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     ///
     /// * C++ API: `term_builder_i::second`
     #[doc(alias = "term_builder_i::second")]
-    fn set_second<T: ComponentId>(&mut self) -> &mut Self {
+    fn set_second<Second: ComponentId>(&mut self) -> &mut Self {
         check_term_access_validity(self);
-        self.set_second_id(T::id(self.world()))
+        self.set_second_id(Second::id(self.world()))
     }
 
     /// Select second identifier, initialize it with name. If name starts with a $

@@ -269,11 +269,30 @@ pub trait TableOperations<'a>: IntoTable {
     ///
     /// * C++ API: `table::type_index`
     #[doc(alias = "table::type_index")]
-    fn find_type_index_second_id<First: ComponentId>(
-        &self,
-        second: impl Into<Entity>,
-    ) -> Option<i32> {
+    fn find_type_index_first<First: ComponentId>(&self, second: impl Into<Entity>) -> Option<i32> {
         self.find_type_index_pair_ids(First::id(self.world()), second)
+    }
+
+    /// Find type index for pair of component types
+    ///
+    /// # Type parameters
+    ///
+    /// * `Second` - The type of the second component
+    ///
+    /// # Arguments
+    ///
+    /// * `first` - The id of the first component
+    ///
+    /// # Returns
+    ///
+    /// The index of  the pair in the table type, or `None` if the pair is not in the table
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `table::type_index`
+    #[doc(alias = "table::type_index")]
+    fn find_type_index_second<Second: ComponentId>(&self, first: impl Into<Entity>) -> Option<i32> {
+        self.find_type_index_pair_ids(first, Second::id(self.world()))
     }
 
     /// Find index for (component) id in table type
@@ -397,11 +416,36 @@ pub trait TableOperations<'a>: IntoTable {
     ///
     /// * C++ API: `table::column_index`
     #[doc(alias = "table::column_index")]
-    fn find_column_index_second_id<First: ComponentId>(
+    fn find_column_index_first<First: ComponentId>(
         &self,
         second: impl Into<Entity>,
     ) -> Option<i32> {
         self.find_column_index_pair_ids(First::id(self.world()), second)
+    }
+
+    /// Find index for pair of component types in table type
+    ///
+    /// # Type parameters
+    ///
+    /// * `Second` - The type of the second component
+    ///
+    /// # Arguments
+    ///
+    /// * `first` - The id of the first component
+    ///
+    /// # Returns
+    ///
+    /// The index of the pair in the table, or `None` if the pair is not in the table
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `table::column_index`
+    #[doc(alias = "table::column_index")]
+    fn find_column_index_second<Second: ComponentId>(
+        &self,
+        first: impl Into<Entity>,
+    ) -> Option<i32> {
+        self.find_column_index_pair_ids(first, Second::id(self.world()))
     }
 
     /// Test if table has component type

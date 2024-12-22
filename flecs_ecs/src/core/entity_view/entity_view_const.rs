@@ -2057,8 +2057,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    pub fn is_enabled_first<T: ComponentId>(self, second: impl Into<Entity>) -> bool {
-        self.is_enabled_id((T::id(self.world), second.into()))
+    pub fn is_enabled_first<First: ComponentId>(self, second: impl Into<Entity>) -> bool {
+        self.is_enabled_id((First::id(self.world), second.into()))
     }
 
     /// Test if pair is enabled.
@@ -2076,8 +2076,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::enabled`
     #[doc(alias = "entity_view::enabled")]
-    pub fn is_enabled_second<U: ComponentId>(self, first: impl Into<Entity>) -> bool {
-        self.is_enabled_id((first.into(), U::id(self.world)))
+    pub fn is_enabled_second<Second: ComponentId>(self, first: impl Into<Entity>) -> bool {
+        self.is_enabled_id((first.into(), Second::id(self.world)))
     }
 
     /// Clones the current entity to a new or specified entity.

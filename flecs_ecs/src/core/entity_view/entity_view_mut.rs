@@ -1220,9 +1220,28 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_builder::enable`
     #[doc(alias = "entity_builder::enable")]
-    pub fn enable_second<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
+    pub fn enable_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         let world = self.world;
         self.enable_id((First::id(world), second.into()))
+    }
+
+    /// Enables a pair with a specific ID for the first element.
+    ///
+    /// # Type Parameters
+    ///
+    /// - `Second`: The second element of the pair.
+    ///
+    /// # Arguments
+    ///
+    /// - `first`: The ID of the first element of the pair.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `entity_builder::enable`
+    #[doc(alias = "entity_builder::enable")]
+    pub fn enable_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
+        let world = self.world;
+        self.enable_id((first.into(), Second::id(world)))
     }
 
     /// Disables self (entity).
