@@ -1068,6 +1068,12 @@ where
     /// });
     /// ```
     pub fn fini(self) {
+        if self.iter.flags & sys::EcsIterIsValid != 0 && !self.iter.table.is_null() {
+            unsafe {
+                sys::ecs_table_unlock(self.iter.world, self.iter.table);
+            };
+        }
+
         unsafe {
             sys::ecs_iter_fini(self.iter);
         }
