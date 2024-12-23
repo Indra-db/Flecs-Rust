@@ -7,7 +7,34 @@ use crate::core::internals::*;
 use crate::core::*;
 use crate::sys;
 
-/// Fast to iterate, but slower to create than Filter
+/// Builder for [`Query`].
+///
+/// # Example
+///
+/// This example shows how to return a query or query builder from a function. The lifetime `'static`
+/// is required in the type `&'static Foo` to ensure the components accessed by the query
+/// live long enough to be safely used.
+///
+/// ```
+/// use flecs_ecs::prelude::*;
+///
+/// #[derive(Component)]
+/// struct Foo(u8);
+///
+/// fn foo_query(wrld: &World) -> Query<&'static Foo> {
+///     query!(wrld, &Foo).build()
+/// }
+///
+/// fn plugin(wrld: &World) {
+///     let foos = foo_query(wrld);
+///
+///     wrld.system::<()>().each(move |_| {
+///         foos.each(|foo| {
+///             // ..
+///         });
+///     });
+/// }
+/// ```
 pub struct QueryBuilder<'a, T>
 where
     T: QueryTuple,
@@ -207,7 +234,15 @@ where
 
     /// Build the `query_builder` into an query
     ///
-    /// See also
+    /// # Returns
+    ///
+    /// The built query
+    ///
+    /// # Example
+    ///
+    /// * how to return a query / query builder from a function see example in [`QueryBuilder`]
+    ///
+    /// # See also
     ///
     /// * C++ API: `node_builder::build`
     #[doc(alias = "node_builder::build")]

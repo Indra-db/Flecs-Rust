@@ -28,6 +28,10 @@ use crate::sys;
 /// You need to ensure that you're holding no query objects anymore when the world is destroyed.
 /// This will otherwise panic.
 ///
+/// # Example
+///
+/// * how to return a query / query builder from a function see example in [`QueryBuilder`]
+///
 /// # See also
 ///
 /// * [`QueryBuilder`]
