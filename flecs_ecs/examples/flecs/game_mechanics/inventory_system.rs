@@ -94,8 +94,8 @@ fn item_kind(item: EntityView<'_>) -> Option<Entity> {
     result_entity
 }
 
-/// Return the "name of the prefab" (e.g., WoodenSword) if found,
-/// otherwise the more generic kind (e.g., Sword).
+/// Return the "name of the prefab" (e.g., `WoodenSword`) if found,
+/// otherwise the more generic kind (e.g., `Sword`).
 fn item_name(item: EntityView<'_>) -> Option<String> {
     let world = item.world();
     let mut result_name: Option<String> = None;
