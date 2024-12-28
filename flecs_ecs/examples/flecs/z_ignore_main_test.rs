@@ -17,6 +17,7 @@ fn init() {
 pub mod z_ignore_test_common;
 
 mod entities;
+mod game_mechanics;
 mod hello_world;
 mod observers;
 mod prefabs;
