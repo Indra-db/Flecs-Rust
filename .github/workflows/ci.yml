@@ -73,6 +73,28 @@ jobs:
       - name: cargo clippy
         run: cargo clippy --target aarch64-apple-ios --all-targets --workspace
 
+  build-musl:
+    runs-on: ubuntu-latest
+    name: cargo build + test (musl)
+    env:
+        RUSTFLAGS: -Dwarnings
+    steps:
+      - uses: actions/checkout@v4
+      - name: install stable toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: clippy
+          targets: x86_64-unknown-linux-musl
+      - name: Install musl tools
+        run: sudo apt-get install -y musl-tools
+      - name: cargo build
+        run: cargo build --target x86_64-unknown-linux-musl --all-targets --workspace
+      - name: cargo clippy
+        run: cargo clippy --target x86_64-unknown-linux-musl --all-targets --workspace
+      - name: cargo test
+        run: cargo test --target x86_64-unknown-linux-musl --workspace --features test-with-crash-handler
+
   build-msrv:
     runs-on: ubuntu-latest
     name: cargo build (MSRV)
