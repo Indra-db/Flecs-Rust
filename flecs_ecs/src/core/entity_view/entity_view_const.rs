@@ -1094,7 +1094,7 @@ impl<'a> EntityView<'a> {
             panic!("Entity does not have any components");
         }
 
-        let tuple_data = T::create_ptrs::<true>(self.world, record);
+        let tuple_data = T::create_ptrs::<true>(self.world, self.id, record);
         tuple_data.get_tuple()
     }
 
@@ -1163,7 +1163,7 @@ impl<'a> EntityView<'a> {
             return None;
         }
 
-        let tuple_data = T::create_ptrs::<false>(self.world, record);
+        let tuple_data = T::create_ptrs::<false>(self.world, self.id, record);
         //todo we can maybe early return if we don't yet if doesn't have all. Same for try_get
         let has_all_components = tuple_data.has_all_components();
 

@@ -17,6 +17,7 @@ pub struct ComponentsData<T: ClonedTuple, const LEN: usize> {
 pub trait ClonedComponentPointers<T: ClonedTuple> {
     fn new<'a, const SHOULD_PANIC: bool>(
         world: impl WorldProvider<'a>,
+        entity: Entity,
         record: *const ecs_record_t,
     ) -> Self;
 
@@ -28,12 +29,17 @@ pub trait ClonedComponentPointers<T: ClonedTuple> {
 impl<T: ClonedTuple, const LEN: usize> ClonedComponentPointers<T> for ComponentsData<T, LEN> {
     fn new<'a, const SHOULD_PANIC: bool>(
         world: impl WorldProvider<'a>,
+        entity: Entity,
         record: *const ecs_record_t,
     ) -> Self {
         let mut array_components = [std::ptr::null::<c_void>() as *mut c_void; LEN];
 
-        let has_all_components =
-            T::populate_array_ptrs::<SHOULD_PANIC>(world, record, &mut array_components[..]);
+        let has_all_components = T::populate_array_ptrs::<SHOULD_PANIC>(
+            world,
+            entity,
+            record,
+            &mut array_components[..],
+        );
 
         Self {
             array_components,
@@ -108,13 +114,15 @@ pub trait ClonedTuple: Sized {
 
     fn create_ptrs<'a, const SHOULD_PANIC: bool>(
         world: impl WorldProvider<'a>,
+        entity: Entity,
         record: *const ecs_record_t,
     ) -> Self::Pointers {
-        Self::Pointers::new::<'a, SHOULD_PANIC>(world, record)
+        Self::Pointers::new::<'a, SHOULD_PANIC>(world, entity, record)
     }
 
     fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
         world: impl WorldProvider<'a>,
+        entity: Entity,
         record: *const ecs_record_t,
         components: &mut [*mut c_void],
     ) -> bool;
@@ -135,16 +143,16 @@ where
     type TupleType<'e> = A::ActualType;
 
     fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
-        world: impl WorldProvider<'a>, record: *const ecs_record_t, components: &mut [*mut c_void]
+        world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void]
     ) -> bool {
         let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut sys::ecs_world_t };
         let table = unsafe { (*record).table };
+        let entity = *entity;
         let mut has_all_components = true;
 
-        let id = unsafe { sys::ecs_table_get_column_index(world_ptr, table,
-            <A::OnlyType as ComponentOrPairId>::get_id(world)) };
+        let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,<A::OnlyType as ComponentOrPairId>::get_id(world)) };
 
-            if id == -1 {
+            if component_ptr.is_null() {
                 components[0] = std::ptr::null_mut();
                 has_all_components = false;
                 if SHOULD_PANIC && !A::IS_OPTION {
@@ -162,7 +170,7 @@ where
                     std::any::type_name::<A::OnlyType>(), std::any::type_name::<Self>(), std::any::type_name::<A::ActualType>());
                 }
             } else {
-                components[0] = unsafe { sys::ecs_record_get_by_column(record, id, 0) };
+                components[0] = component_ptr;
             }
 
         has_all_components
@@ -227,22 +235,23 @@ macro_rules! impl_cloned_tuple {
 
             #[allow(unused)]
             fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
-                world: impl WorldProvider<'a>, record: *const ecs_record_t, components: &mut [*mut c_void]
+                world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void]
             ) -> bool {
 
                 let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut sys::ecs_world_t };
                 let world_ref = world.world();
                 let table = unsafe { (*record).table };
+                let entity = *entity;
                 let mut index : usize = 0;
                 let mut has_all_components = true;
 
                 $(
-                    let column_index = unsafe { sys::ecs_table_get_column_index(world_ptr, table,
-                        <$t::OnlyType as ComponentOrPairId>::get_id(world_ref)) };
+                    let id = <$t::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
+                    let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record, table, id) };
 
-                    if column_index != -1 {
-                        components[index] = unsafe { sys::ecs_record_get_by_column(record, column_index, 0) };
+                    if !component_ptr.is_null() {
+                        components[index] = component_ptr;
                     } else {
                         components[index] = std::ptr::null_mut();
                         if !$t::IS_OPTION {
