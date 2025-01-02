@@ -671,18 +671,20 @@ impl<'a> EntityView<'a> {
         self,
         relationship: impl Into<Entity>,
         mut func: impl FnMut(EntityView),
-    ) {
+    ) -> bool {
+        let mut count = 0;
         // When the entity is a wildcard, this would attempt to query for all
         //entities with (ChildOf, *) or (ChildOf, _) instead of querying for
         //the children of the wildcard entity.
         if self.id == flecs::Wildcard::ID || self.id == flecs::Any::ID {
             // this is correct, wildcard entities don't have children
-            return;
+            return false;
         }
 
         let mut it: sys::ecs_iter_t =
             unsafe { sys::ecs_each_id(self.world_ptr(), ecs_pair(*relationship.into(), *self.id)) };
         while unsafe { sys::ecs_each_next(&mut it) } {
+            count += it.count;
             for i in 0..it.count as usize {
                 unsafe {
                     let id = it.entities.add(i);
@@ -691,6 +693,8 @@ impl<'a> EntityView<'a> {
                 }
             }
         }
+
+        count > 0
     }
 
     /// Iterate children for entity
@@ -704,11 +708,11 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::children`
     #[doc(alias = "entity_view::children")]
-    pub fn each_child_of<T>(self, func: impl FnMut(EntityView))
+    pub fn each_child_of<T>(self, func: impl FnMut(EntityView)) -> bool
     where
         T: ComponentId,
     {
-        self.each_child_of_id(T::id(self.world), func);
+        self.each_child_of_id(T::id(self.world), func)
     }
 
     /// Iterate children for entity
@@ -721,8 +725,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * C++ API: `entity_view::children`
     #[doc(alias = "entity_view::children")]
-    pub fn each_child(self, func: impl FnMut(EntityView)) {
-        self.each_child_of_id(flecs::ChildOf::ID, func);
+    pub fn each_child(self, func: impl FnMut(EntityView)) -> bool {
+        self.each_child_of_id(flecs::ChildOf::ID, func)
     }
 
     /// Returns if the entity has any children.
