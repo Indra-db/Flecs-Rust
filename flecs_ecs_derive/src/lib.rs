@@ -18,7 +18,7 @@ use syn::{
 /// When a type is decorated with `#[derive(Component)]`, several trait implementations are automatically added based on its structure:
 ///
 /// - Depending on whether the type is a struct or Rust enum or `repr(C)` enum.
-///   when it's a struct or Rust Enum it implements`ComponentType<Struct>` and in a C compatible enum the `ComponentType<Enum>` trait is implemented.
+///   when it's a struct or Rust Enum it implements`ComponentType<Struct>` and in a C compatible enum the `ComponentType<Enum>` trait is also implemented.
 /// - Based on the presence of fields or variants, the type will implement either `TagComponent` or `DataComponent`.
 /// - The `ComponentId` trait is implemented, providing storage mechanisms for the component.
 ///
@@ -817,6 +817,7 @@ fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> proc_macro2::T
 
     quote! {
         impl #impl_generics flecs_ecs::core::ComponentType<flecs_ecs::core::Enum> for #name #type_generics #where_clause {}
+        impl #impl_generics flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for #name #type_generics #where_clause {}
 
         #component_info
 
