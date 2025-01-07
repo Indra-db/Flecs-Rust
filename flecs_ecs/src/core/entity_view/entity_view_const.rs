@@ -717,9 +717,14 @@ impl<'a> EntityView<'a> {
 
     /// Iterate children for entity
     /// This operation follows the `ChildOf` relationship.
+    ///
     /// # Arguments
     ///
     /// * `func` - The function invoked for each child. Must match the signature `FnMut(EntityView)`.
+    ///
+    /// # Returns
+    ///
+    /// Returns `true` if the entity has children, `false` otherwise.
     ///
     /// # See also
     ///
