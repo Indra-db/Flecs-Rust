@@ -1671,7 +1671,7 @@ pub fn query(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
         Some(name) => quote! {
             {
                 #doc
-                #world.query_named::<#iter_type>(#name)
+                (#world).query_named::<#iter_type>(#name)
                 #(
                     #builder_calls
                 )*
@@ -1680,7 +1680,7 @@ pub fn query(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
         None => quote! {
             {
                 #doc
-                #world.query::<#iter_type>()
+                (#world).query::<#iter_type>()
                 #(
                     #builder_calls
                 )*
@@ -1712,7 +1712,7 @@ pub fn system(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
         Some(name) => quote! {
             {
                 #doc
-                #world.system_named::<#iter_type>(#name)
+                (#world).system_named::<#iter_type>(#name)
                 #(
                     #builder_calls
                 )*
@@ -1722,7 +1722,7 @@ pub fn system(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
         None => quote! {
             {
                 #doc
-                #world.system::<#iter_type>()
+                (#world).system::<#iter_type>()
                 #(
                     #builder_calls
                 )*
@@ -1786,7 +1786,7 @@ pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
         Some(name) => quote! {
             {
                 #doc
-                #world.observer_named::<#event_type, #iter_type>(#name)
+                (#world).observer_named::<#event_type, #iter_type>(#name)
                 #(
                     #builder_calls
                 )*
@@ -1795,7 +1795,7 @@ pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
         None => quote! {
             {
                 #doc
-                #world.observer::<#event_type, #iter_type>()
+                (#world).observer::<#event_type, #iter_type>()
                 #(
                     #builder_calls
                 )*
