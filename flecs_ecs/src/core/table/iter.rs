@@ -14,10 +14,12 @@ impl<'a, const IS_RUN: bool, P> TableIter<'a, IS_RUN, P>
 where
     P: ComponentId,
 {
+    /// The world. Can point to stage when in deferred/readonly mode.
     pub fn world(&self) -> WorldRef<'a> {
         unsafe { WorldRef::from_ptr(self.iter.world) }
     }
 
+    /// Actual world. Never points to a stage.
     pub fn real_world(&self) -> WorldRef<'a> {
         unsafe { WorldRef::from_ptr(self.iter.real_world) }
     }
