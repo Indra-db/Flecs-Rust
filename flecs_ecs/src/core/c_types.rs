@@ -304,11 +304,14 @@ pub(crate) const TRANSITIVE: u64 = 1 << 2;
 pub(crate) const REFLEXIVE: u64 = 1 << 3;
 pub(crate) const ID_INHERITED: u64 = 1 << 4;
 pub(crate) const IS_TRIVIAL: u64 = 1 << 5;
-pub(crate) const NO_DATA: u64 = 1 << 6;
 pub(crate) const IS_CACHEABLE: u64 = 1 << 7;
 pub(crate) const IS_SCOPE: u64 = 1 << 8;
 pub(crate) const IS_MEMBER: u64 = 1 << 9;
 pub(crate) const IS_TOGGLE: u64 = 1 << 10;
+pub(crate) const KEEP_ALIVE: u64 = 1 << 11;
+pub(crate) const IS_SPARSE: u64 = 1 << 12;
+pub(crate) const IS_UNION: u64 = 1 << 13;
+pub(crate) const IS_OR: u64 = 1 << 14;
 
 // Query flags
 // Query flags discovered & set during query creation.
