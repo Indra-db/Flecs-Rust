@@ -381,8 +381,6 @@ create_pre_registered_component!(
 );
 create_pre_registered_component!(OnTableCreate, ECS_ON_TABLE_CREATE);
 create_pre_registered_component!(OnTableDelete, ECS_ON_TABLE_DELETE);
-create_pre_registered_component!(OnTableEmpty, ECS_ON_TABLE_EMPTY);
-create_pre_registered_component!(OnTableFill, ECS_ON_TABLE_FILL);
 
 // System
 #[cfg(feature = "flecs_system")]
@@ -813,8 +811,6 @@ mod tests {
             assert_eq!(flecs::OnSet, sys::EcsOnSet);
             assert_eq!(flecs::OnTableCreate, sys::EcsOnTableCreate);
             assert_eq!(flecs::OnTableDelete, sys::EcsOnTableDelete);
-            assert_eq!(flecs::OnTableEmpty, sys::EcsOnTableEmpty);
-            assert_eq!(flecs::OnTableFill, sys::EcsOnTableFill);
 
             // System
             #[cfg(feature = "flecs_system")]

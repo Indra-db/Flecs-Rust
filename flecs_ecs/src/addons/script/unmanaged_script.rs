@@ -47,17 +47,32 @@ impl<'a> Script<'a> {
     ///
     /// * C API: `ecs_script_parse`
     #[doc(alias = "ecs_script_parse")]
-    pub fn parse(world: impl WorldProvider<'a>, name: &str, code: &str) -> Option<Script<'a>> {
+    pub fn parse(
+        world: impl WorldProvider<'a>,
+        name: &str,
+        code: &str,
+        desc: Option<sys::ecs_script_eval_desc_t>,
+    ) -> Option<Script<'a>> {
         let name = compact_str::format_compact!("{}\0", name);
         let code = compact_str::format_compact!("{}\0", code);
         let world_ptr = world.world_ptr_mut();
 
         let ptr = unsafe {
-            sys::ecs_script_parse(
-                world_ptr,
-                name.as_ptr() as *const _,
-                code.as_ptr() as *const _,
-            )
+            if let Some(desc) = desc {
+                sys::ecs_script_parse(
+                    world_ptr,
+                    name.as_ptr() as *const _,
+                    code.as_ptr() as *const _,
+                    &desc,
+                )
+            } else {
+                sys::ecs_script_parse(
+                    world_ptr,
+                    name.as_ptr() as *const _,
+                    code.as_ptr() as *const _,
+                    std::ptr::null(),
+                )
+            }
         };
         if ptr.is_null() {
             None
@@ -80,8 +95,12 @@ impl<'a> Script<'a> {
     ///
     /// * C API: `ecs_script_eval`
     #[doc(alias = "ecs_script_eval")]
-    pub fn eval(&self) -> bool {
-        unsafe { sys::ecs_script_eval(self.script) == 0 }
+    pub fn eval(&self, desc: Option<sys::ecs_script_eval_desc_t>) -> bool {
+        if let Some(desc) = desc {
+            unsafe { sys::ecs_script_eval(self.script, &desc) == 0 }
+        } else {
+            unsafe { sys::ecs_script_eval(self.script, std::ptr::null()) == 0 }
+        }
     }
 
     pub fn destroy(self) {
@@ -152,7 +171,7 @@ impl<'a> Script<'a> {
     /// * C API: `script_ast_to_buf`
     #[doc(alias = "script_ast_to_buf")]
     pub fn ast(&mut self) -> Option<String> {
-        let ast = unsafe { sys::ecs_script_ast_to_str(self.script) };
+        let ast = unsafe { sys::ecs_script_ast_to_str(self.script, false) };
 
         if !ast.is_null() {
             if self.ast.is_null() {

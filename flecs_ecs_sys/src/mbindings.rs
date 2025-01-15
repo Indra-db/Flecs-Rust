@@ -255,7 +255,6 @@ fn compile_test_check_if_any_ecs_world_info_fields_changed() {
         component_id_count: 0,
         pair_id_count: 0,
         table_count: 0,
-        empty_table_count: 0,
         eval_comp_monitors_total: 0,
         cmd: ecs_world_info_t__bindgen_ty_1 {
             add_count: 0,

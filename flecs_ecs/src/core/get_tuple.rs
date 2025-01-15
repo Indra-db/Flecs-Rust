@@ -183,6 +183,7 @@ where
     fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
         world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void]
     ) -> bool {
+        let world = world.world();
         let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut sys::ecs_world_t };
         let table = unsafe { (*record).table };
         let entity = *entity;
@@ -208,18 +209,38 @@ where
                 if !A::IS_IMMUTABLE {
                     ecs_assert!(false, "Enums registered with `add_enum` should be `get` immutable, changing it won't actually change the value.");
                 }
-                
-                // get constant value from constant entity
-                let constant_value = unsafe { sys::ecs_get_id(world_ptr, target, id) } as *mut c_void;
 
-                ecs_assert!(
-                    !constant_value.is_null(),
-                    FlecsErrorCode::InternalError, 
-                    "missing enum constant value {}",
-                    std::any::type_name::<A>()
-                );
+                #[cfg(feature = "flecs_meta")]
+                {
+                    let id_underlying_type = world.component_id::<i32>();
+                    let pair_id = ecs_pair(flecs::meta::Constant::ID, *id_underlying_type);
+                    let constant_value = unsafe { sys::ecs_get_id(world_ptr, target, pair_id) } as *mut c_void;
 
-                unsafe { constant_value }
+                    ecs_assert!(
+                        !constant_value.is_null(),
+                        FlecsErrorCode::InternalError,
+                        "missing enum constant value {}",
+                        std::any::type_name::<A>()
+                    );
+
+                    unsafe { constant_value }
+                }
+
+               // Fallback if we don't have the reflection addon
+               #[cfg(not(feature = "flecs_meta"))]
+               {
+                 // get constant value from constant entity
+                 let constant_value = unsafe { sys::ecs_get_id(world_ptr, target, id) } as *mut c_void;
+
+                 ecs_assert!(
+                     !constant_value.is_null(),
+                     FlecsErrorCode::InternalError,
+                     "missing enum constant value {}",
+                     std::any::type_name::<A>()
+                 );
+
+                 unsafe { constant_value }
+               }
             } else {
                 // if there is no matching pair for (r,*), try just r
                 unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
@@ -348,17 +369,37 @@ macro_rules! impl_get_tuple {
                                 ecs_assert!(false, "Enums registered with `set_enum` should be `get` immutable, changing it won't actually change the value.");
                             }
 
-                            // get constant value from constant entity
-                            let constant_value = unsafe { sys::ecs_get_id(world_ptr, target, id) } as *mut c_void;
+                            #[cfg(feature = "flecs_meta")]
+                            {
+                                let id_underlying_type = world_ref.component_id::<i32>();
+                                let pair_id = ecs_pair(flecs::meta::Constant::ID, *id_underlying_type);
+                                let constant_value = unsafe { sys::ecs_get_id(world_ptr, target, pair_id) } as *mut c_void;
 
-                            ecs_assert!(
-                                !constant_value.is_null(),
-                                FlecsErrorCode::InternalError,
-                                "missing enum constant value {}",
-                                std::any::type_name::<$t>()
-                            );
+                                ecs_assert!(
+                                    !constant_value.is_null(),
+                                    FlecsErrorCode::InternalError,
+                                    "missing enum constant value {}",
+                                    std::any::type_name::<$t>()
+                                );
 
-                            unsafe { constant_value }
+                                unsafe { constant_value }
+                            }
+
+                           // Fallback if we don't have the reflection addon
+                           #[cfg(not(feature = "flecs_meta"))]
+                           {
+                             // get constant value from constant entity
+                             let constant_value = unsafe { sys::ecs_get_id(world_ptr, target, id) } as *mut c_void;
+
+                             ecs_assert!(
+                                 !constant_value.is_null(),
+                                 FlecsErrorCode::InternalError,
+                                 "missing enum constant value {}",
+                                 std::any::type_name::<$t>()
+                             );
+
+                             unsafe { constant_value }
+                           }
                         } else {
                             // if there is no matching pair for (r,*), try just r
                             unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }

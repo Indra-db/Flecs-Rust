@@ -105,6 +105,8 @@ fn test_enum() {
         .add_enum(Color::Green)
         .set(TypeWithEnum { color: Color::Blue });
 
+    dbg!(e);
+
     // Convert TypeWithEnum component to flecs expression string
     e.get::<(&Color, &TypeWithEnum)>(|(color, type_enum)| {
         let expr: String = world.to_expr(color);

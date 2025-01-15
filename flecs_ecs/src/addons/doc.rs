@@ -775,7 +775,8 @@ fn test_compile_doc() {
     #[derive(flecs_ecs_derive::Component)]
     struct Tag;
 
-    let world = World::default();
+    let world = World::new();
+
     let entity = world.entity();
     entity.set_doc_name("name");
 

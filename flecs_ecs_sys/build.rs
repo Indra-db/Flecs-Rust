@@ -65,6 +65,7 @@ fn generate_bindings() {
         .blocklist_function("ecs_parser_errorv_")
         .blocklist_function("ecs_strbuf_vappend")
         .blocklist_function("flecs_vasprintf")
+        .blocklist_function("ecs_parser_warningv_")
         .layout_tests(false)
         .raw_line("#![allow(clippy::all)]")
         .raw_line("#![allow(warnings)]")

@@ -1,5 +1,6 @@
 #![doc(hidden)]
 use std::ffi::c_char;
+use std::os::raw::c_void;
 
 use crate::core::*;
 use crate::sys;
@@ -17,6 +18,7 @@ pub fn internal_register_component<
 where
     T: ComponentId,
 {
+    let world = world.world();
     let world_ptr = world.world_ptr_mut();
 
     let id = if IS_NAMED {
@@ -26,7 +28,9 @@ where
     };
 
     if T::IS_ENUM {
-        register_enum_data::<T>(world_ptr, id);
+        //TODO no full enum support yet with different types
+        let underlying_enum_type_id = world.component_id::<i32>();
+        register_enum_data::<T>(world_ptr, id, *underlying_enum_type_id);
     }
     id
 }
@@ -68,15 +72,18 @@ where
 }
 
 /// registers enum fields with the world.
-pub(crate) fn register_enum_data<T>(world: *mut sys::ecs_world_t, id: sys::ecs_entity_t)
-where
+pub(crate) fn register_enum_data<T>(
+    world: *mut sys::ecs_world_t,
+    id: sys::ecs_entity_t,
+    underlying_type_id: sys::ecs_entity_t,
+) where
     T: ComponentId,
 {
     //TODO we should convert this ecs_cpp functions to rust so if it ever changes, our solution won't break
-    unsafe { sys::ecs_cpp_enum_init(world, id) };
+    unsafe { sys::ecs_cpp_enum_init(world, id, underlying_type_id) };
     let enum_array_ptr = T::UnderlyingEnumType::__enum_data_mut();
 
-    for (index, enum_item) in T::UnderlyingEnumType::iter().enumerate() {
+    for (mut index, enum_item) in T::UnderlyingEnumType::iter().enumerate() {
         let name = enum_item.name_cstr();
         let entity_id: sys::ecs_entity_t = unsafe {
             sys::ecs_cpp_enum_constant_register(
@@ -84,7 +91,9 @@ where
                 id,
                 T::UnderlyingEnumType::id_variant_of_index_unchecked(enum_item.enum_index()),
                 name.as_ptr(),
-                index as i32,
+                &mut index as *mut usize as *mut c_void,
+                underlying_type_id, //hardcoded
+                4,                  //hardcoded
             )
         };
         if !T::UnderlyingEnumType::is_index_registered_as_entity(index) {

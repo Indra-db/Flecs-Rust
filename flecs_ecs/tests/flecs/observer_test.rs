@@ -847,10 +847,10 @@ fn observer_on_add_singleton() {
         .observer::<flecs::OnSet, &Position>()
         .term_at(0)
         .singleton()
-        .each_entity(|e, pos| {
+        .each_iter(|it, _i, pos| {
             assert_eq!(pos.x, 10);
             assert_eq!(pos.y, 20);
-            e.world().get::<&mut Count>(|count| {
+            it.world().get::<&mut Count>(|count| {
                 count.0 += 1;
             });
         });
@@ -875,13 +875,11 @@ fn observer_on_add_pair_singleton() {
             let world = it.world();
             while it.next() {
                 let pos = it.field::<&Position>(0).unwrap();
-                for i in it.iter() {
-                    assert_eq!(pos[i].x, 10);
-                    assert_eq!(pos[i].y, 20);
-                    world.get::<&mut Count>(|count| {
-                        count.0 += 1;
-                    });
-                }
+                assert_eq!(pos[0].x, 10);
+                assert_eq!(pos[0].y, 20);
+                world.get::<&mut Count>(|count| {
+                    count.0 += 1;
+                });
             }
         });
     world.set_first(tgt, Position { x: 10, y: 20 });
@@ -901,10 +899,10 @@ fn observer_on_add_pair_wildcard_singleton() {
         .observer::<flecs::OnSet, &(Position, flecs::Wildcard)>()
         .term_at(0)
         .singleton()
-        .each_entity(|e, pos| {
+        .each_iter(|it, _i, pos| {
             assert_eq!(pos.x, 10);
             assert_eq!(pos.y, 20);
-            e.world().get::<&mut Count>(|count| {
+            it.world().get::<&mut Count>(|count| {
                 count.0 += 1;
             });
         });
@@ -932,8 +930,8 @@ fn observer_on_add_with_pair_singleton() {
         .observer::<flecs::OnSet, ()>()
         .with_first::<Position>(tgt)
         .singleton()
-        .each_entity(|e, _| {
-            e.world().get::<&mut Count>(|count| {
+        .each_iter(|it, _, _| {
+            it.world().get::<&mut Count>(|count| {
                 count.0 += 1;
             });
         });

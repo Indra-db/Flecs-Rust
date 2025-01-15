@@ -4,6 +4,7 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 #![allow(unused)]
+#![allow(unexpected_cfgs)]
 
 // to initialize the OS api for flecs before tests run.
 #[cfg(test)]

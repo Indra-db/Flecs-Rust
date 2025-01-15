@@ -8,7 +8,7 @@ pub const FLECS_TERM_COUNT_MAX: u32 = 32;
 
 pub const FLECS_VERSION_MAJOR: u32 = 4;
 pub const FLECS_VERSION_MINOR: u32 = 0;
-pub const FLECS_VERSION_PATCH: u32 = 3;
+pub const FLECS_VERSION_PATCH: u32 = 4;
 pub const FLECS_HI_ID_RECORD_ID: u32 = 1024;
 pub const FLECS_SPARSE_PAGE_BITS: u32 = 6;
 pub const FLECS_ENTITY_PAGE_BITS: u32 = 12;
@@ -18,6 +18,7 @@ pub const FLECS_VARIABLE_COUNT_MAX: u32 = 64;
 pub const FLECS_TERM_ARG_COUNT_MAX: u32 = 16;
 pub const FLECS_QUERY_VARIABLE_COUNT_MAX: u32 = 64;
 pub const FLECS_QUERY_SCOPE_NESTING_MAX: u32 = 8;
+pub const FLECS_DAG_DEPTH_MAX: u32 = 128;
 pub const EcsWorldQuitWorkers: u32 = 1;
 pub const EcsWorldReadonly: u32 = 2;
 pub const EcsWorldInit: u32 = 4;
@@ -152,7 +153,6 @@ pub const EcsTableHasRemoveActions: u32 = 133128;
 pub const EcsTableEdgeFlags: u32 = 25362432;
 pub const EcsTableAddEdgeFlags: u32 = 25231360;
 pub const EcsTableRemoveEdgeFlags: u32 = 25296896;
-pub const EcsAperiodicEmptyTables: u32 = 2;
 pub const EcsAperiodicComponentMonitors: u32 = 4;
 pub const EcsAperiodicEmptyQueries: u32 = 16;
 pub const ecs_world_t_magic: u32 = 1701016439;
@@ -265,6 +265,7 @@ pub const ECS_HTTP_QUERY_PARAM_COUNT_MAX: u32 = 32;
 pub const ECS_REST_DEFAULT_PORT: u32 = 27750;
 pub const ECS_STAT_WINDOW: u32 = 60;
 pub const ECS_ALERT_MAX_SEVERITY_FILTERS: u32 = 4;
+pub const FLECS_SCRIPT_FUNCTION_ARGS_MAX: u32 = 16;
 pub const ECS_MEMBER_DESC_CACHE_SIZE: u32 = 32;
 pub const ECS_META_MAX_SCOPE_DEPTH: u32 = 32;
 #[doc = "Utility types to indicate usage as bitmask"]
@@ -288,6 +289,15 @@ extern "C-unwind" {
         vec: *mut ecs_vec_t,
         size: ecs_size_t,
         elem_count: i32,
+    );
+}
+extern "C-unwind" {
+    pub fn ecs_vec_init_w_dbg_info(
+        allocator: *mut ecs_allocator_t,
+        vec: *mut ecs_vec_t,
+        size: ecs_size_t,
+        elem_count: i32,
+        type_name: *const ::core::ffi::c_char,
     );
 }
 extern "C-unwind" {
@@ -573,7 +583,6 @@ pub struct ecs_block_allocator_t {
     pub data_size: i32,
     pub chunks_per_block: i32,
     pub block_size: i32,
-    pub alloc_count: i32,
 }
 extern "C-unwind" {
     pub fn flecs_ballocator_init(ba: *mut ecs_block_allocator_t, size: ecs_size_t);
@@ -591,7 +600,19 @@ extern "C-unwind" {
     pub fn flecs_balloc(allocator: *mut ecs_block_allocator_t) -> *mut ::core::ffi::c_void;
 }
 extern "C-unwind" {
+    pub fn flecs_balloc_w_dbg_info(
+        allocator: *mut ecs_block_allocator_t,
+        type_name: *const ::core::ffi::c_char,
+    ) -> *mut ::core::ffi::c_void;
+}
+extern "C-unwind" {
     pub fn flecs_bcalloc(allocator: *mut ecs_block_allocator_t) -> *mut ::core::ffi::c_void;
+}
+extern "C-unwind" {
+    pub fn flecs_bcalloc_w_dbg_info(
+        allocator: *mut ecs_block_allocator_t,
+        type_name: *const ::core::ffi::c_char,
+    ) -> *mut ::core::ffi::c_void;
 }
 extern "C-unwind" {
     pub fn flecs_bfree(allocator: *mut ecs_block_allocator_t, memory: *mut ::core::ffi::c_void);
@@ -608,6 +629,14 @@ extern "C-unwind" {
         dst: *mut ecs_block_allocator_t,
         src: *mut ecs_block_allocator_t,
         memory: *mut ::core::ffi::c_void,
+    ) -> *mut ::core::ffi::c_void;
+}
+extern "C-unwind" {
+    pub fn flecs_brealloc_w_dbg_info(
+        dst: *mut ecs_block_allocator_t,
+        src: *mut ecs_block_allocator_t,
+        memory: *mut ::core::ffi::c_void,
+        type_name: *const ::core::ffi::c_char,
     ) -> *mut ::core::ffi::c_void;
 }
 extern "C-unwind" {
@@ -636,7 +665,7 @@ pub struct ecs_stack_cursor_t {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_stack_t {
-    pub first: ecs_stack_page_t,
+    pub first: *mut ecs_stack_page_t,
     pub tail_page: *mut ecs_stack_page_t,
     pub tail_cursor: *mut ecs_stack_cursor_t,
     pub cursor_count: i32,
@@ -1474,8 +1503,6 @@ pub struct ecs_table_cache_hdr_t {
     pub prev: *mut ecs_table_cache_hdr_t,
     #[doc = "< Next/previous elements for id in table cache."]
     pub next: *mut ecs_table_cache_hdr_t,
-    #[doc = "< Whether element is in empty list."]
-    pub empty: bool,
 }
 #[doc = "Metadata describing where a component id is stored in a table.\n This type is used as element type for the component index table cache. One\n record exists per table/component in the table. Only records for wildcard ids\n can have a count > 1."]
 #[repr(C)]
@@ -1876,10 +1903,12 @@ pub struct ecs_ref_t {
     pub id: ecs_entity_t,
     #[doc = "Table id for detecting ABA issues"]
     pub table_id: u64,
-    #[doc = "Table record for component"]
-    pub tr: *mut ecs_table_record_t,
+    #[doc = "Table version for detecting changes"]
+    pub table_version: u32,
     #[doc = "Entity index record"]
     pub record: *mut ecs_record_t,
+    #[doc = "Cached component pointer"]
+    pub ptr: *mut ::core::ffi::c_void,
 }
 #[doc = "Page-iterator specific data"]
 #[repr(C)]
@@ -1902,7 +1931,8 @@ pub struct ecs_worker_iter_t {
 pub struct ecs_table_cache_iter_t {
     pub cur: *mut ecs_table_cache_hdr_t,
     pub next: *mut ecs_table_cache_hdr_t,
-    pub next_list: *mut ecs_table_cache_hdr_t,
+    pub iter_fill: bool,
+    pub iter_empty: bool,
 }
 #[doc = "Each iterator"]
 #[repr(C)]
@@ -2054,6 +2084,21 @@ extern "C-unwind" {
 }
 extern "C-unwind" {
     pub fn flecs_poly_refcount(poly: *mut ecs_poly_t) -> i32;
+}
+extern "C-unwind" {
+    pub fn flecs_component_ids_index_get() -> i32;
+}
+extern "C-unwind" {
+    pub fn flecs_component_ids_get(world: *const ecs_world_t, index: i32) -> ecs_entity_t;
+}
+extern "C-unwind" {
+    pub fn flecs_component_ids_get_alive(
+        stage_world: *const ecs_world_t,
+        index: i32,
+    ) -> ecs_entity_t;
+}
+extern "C-unwind" {
+    pub fn flecs_component_ids_set(world: *mut ecs_world_t, index: i32, id: ecs_entity_t);
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2512,8 +2557,6 @@ pub struct ecs_world_info_t {
     pub pair_id_count: i32,
     #[doc = "< Number of tables"]
     pub table_count: i32,
-    #[doc = "< Number of tables without entities"]
-    pub empty_table_count: i32,
     #[doc = "< Command statistics."]
     pub cmd: ecs_world_info_t__bindgen_ty_1,
     #[doc = "< Value set by ecs_set_name_prefix(). Used\n to remove library prefixes of symbol\n names (such as `Ecs`, `ecs_`) when\n registering them as names."]
@@ -2816,14 +2859,6 @@ extern "C" {
 extern "C" {
     #[doc = "Event that triggers when a table is deleted."]
     pub static EcsOnTableDelete: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "Event that triggers when a table becomes empty (doesn't emit on creation)."]
-    pub static EcsOnTableEmpty: ecs_entity_t;
-}
-extern "C" {
-    #[doc = "Event that triggers when a table becomes non-empty."]
-    pub static EcsOnTableFill: ecs_entity_t;
 }
 extern "C" {
     #[doc = "Relationship used for specifying cleanup behavior."]
@@ -3131,15 +3166,26 @@ extern "C-unwind" {
     #[doc = "Force aperiodic actions.\n The world may delay certain operations until they are necessary for the\n application to function correctly. This may cause observable side effects\n such as delayed triggering of events, which can be inconvenient when for\n example running a test suite.\n\n The flags parameter specifies which aperiodic actions to run. Specify 0 to\n run all actions. Supported flags start with 'EcsAperiodic'. Flags identify\n internal mechanisms and may change unannounced.\n\n @param world The world.\n @param flags The flags specifying which actions to run."]
     pub fn ecs_run_aperiodic(world: *mut ecs_world_t, flags: ecs_flags32_t);
 }
+#[doc = "Used with ecs_delete_empty_tables()."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_delete_empty_tables_desc_t {
+    #[doc = "Optional component filter for the tables to evaluate."]
+    pub id: ecs_id_t,
+    #[doc = "Free table data when generation > clear_generation."]
+    pub clear_generation: u16,
+    #[doc = "Delete table when generation > delete_generation."]
+    pub delete_generation: u16,
+    #[doc = "Minimum number of component ids the table should have."]
+    pub min_id_count: i32,
+    #[doc = "Amount of time operation is allowed to spend."]
+    pub time_budget_seconds: f64,
+}
 extern "C-unwind" {
-    #[doc = "Cleanup empty tables.\n This operation cleans up empty tables that meet certain conditions. Having\n large amounts of empty tables does not negatively impact performance of the\n ECS, but can take up considerable amounts of memory, especially in\n applications with many components, and many components per entity.\n\n The generation specifies the minimum number of times this operation has\n to be called before an empty table is cleaned up. If a table becomes non\n empty, the generation is reset.\n\n The operation allows for both a \"clear\" generation and a \"delete\"\n generation. When the clear generation is reached, the table's\n resources are freed (like component arrays) but the table itself is not\n deleted. When the delete generation is reached, the empty table is deleted.\n\n By specifying a non-zero id the cleanup logic can be limited to tables with\n a specific (component) id. The operation will only increase the generation\n count of matching tables.\n\n The min_id_count specifies a lower bound for the number of components a table\n should have. Often the more components a table has, the more specific it is\n and therefore less likely to be reused.\n\n The time budget specifies how long the operation should take at most.\n\n @param world The world.\n @param id Optional component filter for the tables to evaluate.\n @param clear_generation Free table data when generation > clear_generation.\n @param delete_generation Delete table when generation > delete_generation.\n @param min_id_count Minimum number of component ids the table should have.\n @param time_budget_seconds Amount of time operation is allowed to spend.\n @return Number of deleted tables."]
+    #[doc = "Cleanup empty tables.\n This operation cleans up empty tables that meet certain conditions. Having\n large amounts of empty tables does not negatively impact performance of the\n ECS, but can take up considerable amounts of memory, especially in\n applications with many components, and many components per entity.\n\n The generation specifies the minimum number of times this operation has\n to be called before an empty table is cleaned up. If a table becomes non\n empty, the generation is reset.\n\n The operation allows for both a \"clear\" generation and a \"delete\"\n generation. When the clear generation is reached, the table's\n resources are freed (like component arrays) but the table itself is not\n deleted. When the delete generation is reached, the empty table is deleted.\n\n By specifying a non-zero id the cleanup logic can be limited to tables with\n a specific (component) id. The operation will only increase the generation\n count of matching tables.\n\n The min_id_count specifies a lower bound for the number of components a table\n should have. Often the more components a table has, the more specific it is\n and therefore less likely to be reused.\n\n The time budget specifies how long the operation should take at most.\n\n @param world The world.\n @param desc Configuration parameters.\n @return Number of deleted tables."]
     pub fn ecs_delete_empty_tables(
         world: *mut ecs_world_t,
-        id: ecs_id_t,
-        clear_generation: u16,
-        delete_generation: u16,
-        min_id_count: i32,
-        time_budget_seconds: f64,
+        desc: *const ecs_delete_empty_tables_desc_t,
     ) -> i32;
 }
 extern "C-unwind" {
@@ -3822,6 +3868,10 @@ extern "C-unwind" {
     pub fn ecs_query_changed(query: *mut ecs_query_t) -> bool;
 }
 extern "C-unwind" {
+    #[doc = "Get query object.\n Returns the query object. Can be used to access various information about\n the query.\n\n @param world The world.\n @param query The query.\n @return The query object."]
+    pub fn ecs_query_get(world: *const ecs_world_t, query: ecs_entity_t) -> *const ecs_query_t;
+}
+extern "C-unwind" {
     #[doc = "Skip a table while iterating.\n This operation lets the query iterator know that a table was skipped while\n iterating. A skipped table will not reset its changed state, and the query\n will not update the dirty flags of the table for its out columns.\n\n Only valid iterators must be provided (next has to be called at least once &\n return true) and the iterator must be a query iterator.\n\n @param it The iterator result to skip."]
     pub fn ecs_iter_skip(it: *mut ecs_iter_t);
 }
@@ -4366,6 +4416,15 @@ extern "C-unwind" {
     );
 }
 extern "C-unwind" {
+    pub fn ecs_parser_warning_(
+        name: *const ::core::ffi::c_char,
+        expr: *const ::core::ffi::c_char,
+        column: i64,
+        fmt: *const ::core::ffi::c_char,
+        ...
+    );
+}
+extern "C-unwind" {
     #[doc = "Enable or disable log.\n This will enable builtin log. For log to work, it will have to be\n compiled in which requires defining one of the following macros:\n\n FLECS_LOG_0 - All log is disabled\n FLECS_LOG_1 - Enable log level 1\n FLECS_LOG_2 - Enable log level 2 and below\n FLECS_LOG_3 - Enable log level 3 and below\n\n If no log level is defined and this is a debug build, FLECS_LOG_3 will\n have been automatically defined.\n\n The provided level corresponds with the log level. If -1 is provided as\n value, warnings are disabled. If -2 is provided, errors are disabled as well.\n\n @param level Desired tracing level.\n @return Previous log level."]
     pub fn ecs_log_set_level(level: ::core::ffi::c_int) -> ::core::ffi::c_int;
 }
@@ -4592,6 +4651,7 @@ extern "C-unwind" {
         srv: *mut ecs_http_server_t,
         method: *const ::core::ffi::c_char,
         req: *const ::core::ffi::c_char,
+        body: *const ::core::ffi::c_char,
         reply_out: *mut ecs_http_reply_t,
     ) -> ::core::ffi::c_int;
 }
@@ -6295,6 +6355,21 @@ extern "C-unwind" {
 extern "C" {
     pub static mut FLECS_IDEcsScriptID_: ecs_entity_t;
 }
+extern "C" {
+    pub static mut EcsScriptTemplate: ecs_entity_t;
+}
+extern "C" {
+    pub static mut FLECS_IDEcsScriptTemplateID_: ecs_entity_t;
+}
+extern "C" {
+    pub static mut FLECS_IDEcsScriptConstVarID_: ecs_entity_t;
+}
+extern "C" {
+    pub static mut FLECS_IDEcsScriptFunctionID_: ecs_entity_t;
+}
+extern "C" {
+    pub static mut FLECS_IDEcsScriptMethodID_: ecs_entity_t;
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_script_template_t {
@@ -6307,12 +6382,15 @@ pub struct ecs_script_var_t {
     pub name: *const ::core::ffi::c_char,
     pub value: ecs_value_t,
     pub type_info: *const ecs_type_info_t,
+    pub sp: i32,
+    pub is_const: bool,
 }
 #[doc = "Script variable scope."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_script_vars_t {
     pub parent: *mut ecs_script_vars_t,
+    pub sp: i32,
     pub var_index: ecs_hashmap_t,
     pub vars: ecs_vec_t,
     pub world: *const ecs_world_t,
@@ -6328,6 +6406,11 @@ pub struct ecs_script_t {
     pub name: *const ::core::ffi::c_char,
     pub code: *const ::core::ffi::c_char,
 }
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_script_runtime_t {
+    _unused: [u8; 0],
+}
 #[doc = "Script component.\n This component is added to the entities of managed scripts and templates."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -6336,17 +6419,81 @@ pub struct EcsScript {
     #[doc = "Only set for template scripts"]
     pub template_: *mut ecs_script_template_t,
 }
+#[doc = "Script function context."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_function_ctx_t {
+    pub world: *mut ecs_world_t,
+    pub function: ecs_entity_t,
+    pub ctx: *mut ::core::ffi::c_void,
+}
+#[doc = "Script function callback."]
+pub type ecs_function_callback_t = ::core::option::Option<
+    unsafe extern "C-unwind" fn(
+        ctx: *const ecs_function_ctx_t,
+        argc: i32,
+        argv: *const ecs_value_t,
+        result: *mut ecs_value_t,
+    ),
+>;
+#[doc = "Function argument type."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_script_parameter_t {
+    pub name: *const ::core::ffi::c_char,
+    pub type_: ecs_entity_t,
+}
+#[doc = "Const component.\n This component describes a const variable that can be used from scripts."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsScriptConstVar {
+    pub value: ecs_value_t,
+    pub type_info: *const ecs_type_info_t,
+}
+#[doc = "Function component.\n This component describes a function that can be called from a script."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsScriptFunction {
+    pub return_type: ecs_entity_t,
+    #[doc = "vec<ecs_script_parameter_t>"]
+    pub params: ecs_vec_t,
+    pub callback: ecs_function_callback_t,
+    pub ctx: *mut ::core::ffi::c_void,
+}
+#[doc = "Method component.\n This component describes a method that can be called from a script. Methods\n are functions that can be called on instances of a type. A method entity is\n stored in the scope of the type it belongs to."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsScriptMethod {
+    pub return_type: ecs_entity_t,
+    #[doc = "vec<ecs_script_parameter_t>"]
+    pub params: ecs_vec_t,
+    pub callback: ecs_function_callback_t,
+    pub ctx: *mut ::core::ffi::c_void,
+}
+#[doc = "Used with ecs_script_parse() and ecs_script_eval()"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_script_eval_desc_t {
+    #[doc = "< Variables used by script"]
+    pub vars: *mut ecs_script_vars_t,
+    #[doc = "< Reusable runtime (optional)"]
+    pub runtime: *mut ecs_script_runtime_t,
+}
 extern "C-unwind" {
-    #[doc = "Parse script.\n This operation parses a script and returns a script object upon success. To\n run the script, call ecs_script_eval().\n\n @param world The world.\n @param name Name of the script (typically a file/module name).\n @param code The script code.\n @return Script object if success, NULL if failed."]
+    #[doc = "Parse script.\n This operation parses a script and returns a script object upon success. To\n run the script, call ecs_script_eval().\n\n If the script uses outside variables, an ecs_script_vars_t object must be\n provided in the vars member of the desc object that defines all variables\n with the correct types.\n\n @param world The world.\n @param name Name of the script (typically a file/module name).\n @param code The script code.\n @param desc Parameters for script runtime.\n @return Script object if success, NULL if failed."]
     pub fn ecs_script_parse(
         world: *mut ecs_world_t,
         name: *const ::core::ffi::c_char,
         code: *const ::core::ffi::c_char,
+        desc: *const ecs_script_eval_desc_t,
     ) -> *mut ecs_script_t;
 }
 extern "C-unwind" {
-    #[doc = "Evaluate script.\n This operation evaluates (runs) a parsed script.\n\n @param script The script.\n @return Zero if success, non-zero if failed."]
-    pub fn ecs_script_eval(script: *mut ecs_script_t) -> ::core::ffi::c_int;
+    #[doc = "Evaluate script.\n This operation evaluates (runs) a parsed script.\n\n If variables were provided to ecs_script_parse(), an application may pass\n a different ecs_script_vars_t object to ecs_script_eval(), as long as the\n object has all referenced variables and they are of the same type.\n\n @param script The script.\n @param desc Parameters for script runtime.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_script_eval(
+        script: *const ecs_script_t,
+        desc: *const ecs_script_eval_desc_t,
+    ) -> ::core::ffi::c_int;
 }
 extern "C-unwind" {
     #[doc = "Free script.\n This operation frees a script object.\n\n Templates created by the script rely upon resources in the script object,\n and for that reason keep the script alive until all templates created by the\n script are deleted.\n\n @param script The script."]
@@ -6368,15 +6515,27 @@ extern "C-unwind" {
     ) -> ::core::ffi::c_int;
 }
 extern "C-unwind" {
+    #[doc = "Create runtime for script.\n A script runtime is a container for any data created during script\n evaluation. By default calling ecs_script_run() or ecs_script_eval() will\n create a runtime on the spot. A runtime can be created in advance and reused\n across multiple script evaluations to improve performance.\n\n When scripts are evaluated on multiple threads, each thread should have its\n own script runtime.\n\n A script runtime must be deleted with ecs_script_runtime_free().\n\n @return A new script runtime."]
+    pub fn ecs_script_runtime_new() -> *mut ecs_script_runtime_t;
+}
+extern "C-unwind" {
+    #[doc = "Free script runtime.\n This operation frees a script runtime created by ecs_script_runtime_new().\n\n @param runtime The runtime to free."]
+    pub fn ecs_script_runtime_free(runtime: *mut ecs_script_runtime_t);
+}
+extern "C-unwind" {
     #[doc = "Convert script AST to string.\n This operation converts the script abstract syntax tree to a string, which\n can be used to debug a script.\n\n @param script The script.\n @param buf The buffer to write to.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_script_ast_to_buf(
         script: *mut ecs_script_t,
         buf: *mut ecs_strbuf_t,
+        colors: bool,
     ) -> ::core::ffi::c_int;
 }
 extern "C-unwind" {
     #[doc = "Convert script AST to string.\n This operation converts the script abstract syntax tree to a string, which\n can be used to debug a script.\n\n @param script The script.\n @return The string if success, NULL if failed."]
-    pub fn ecs_script_ast_to_str(script: *mut ecs_script_t) -> *mut ::core::ffi::c_char;
+    pub fn ecs_script_ast_to_str(
+        script: *mut ecs_script_t,
+        colors: bool,
+    ) -> *mut ::core::ffi::c_char;
 }
 #[doc = "Used with ecs_script_init()"]
 #[repr(C)]
@@ -6446,6 +6605,21 @@ extern "C-unwind" {
     ) -> *mut ecs_script_var_t;
 }
 extern "C-unwind" {
+    #[doc = "Lookup a variable by stack pointer.\n This operation provides a faster way to lookup variables that are always\n declared in the same order in a ecs_script_vars_t scope.\n\n The stack pointer of a variable can be obtained from the ecs_script_var_t\n type. The provided frame offset must be valid for the provided variable\n stack. If the frame offset is not valid, this operation will panic.\n\n @param vars The variable scope.\n @param sp The stack pointer to the variable.\n @return The variable."]
+    pub fn ecs_script_vars_from_sp(
+        vars: *const ecs_script_vars_t,
+        sp: i32,
+    ) -> *mut ecs_script_var_t;
+}
+extern "C-unwind" {
+    #[doc = "Print variables.\n This operation prints all variables in the vars scope and parent scopes.asm\n\n @param vars The variable scope."]
+    pub fn ecs_script_vars_print(vars: *const ecs_script_vars_t);
+}
+extern "C-unwind" {
+    #[doc = "Preallocate space for variables.\n This operation preallocates space for the specified number of variables. This\n is a performance optimization only, and is not necessary before declaring\n variables in a scope.\n\n @param vars The variable scope.\n @param count The number of variables to preallocate space for."]
+    pub fn ecs_script_vars_set_size(vars: *mut ecs_script_vars_t, count: i32);
+}
+extern "C-unwind" {
     #[doc = "Convert iterator to vars\n This operation converts an iterator to a variable array. This allows for\n using iterator results in expressions. The operation only converts a\n single result at a time, and does not progress the iterator.\n\n Iterator fields with data will be made available as variables with as name\n the field index (e.g. \"$1\"). The operation does not check if reflection data\n is registered for a field type. If no reflection data is registered for the\n type, using the field variable in expressions will fail.\n\n Field variables will only contain single elements, even if the iterator\n returns component arrays. The offset parameter can be used to specify which\n element in the component arrays to return. The offset parameter must be\n smaller than it->count.\n\n The operation will create a variable for query variables that contain a\n single entity.\n\n The operation will attempt to use existing variables. If a variable does not\n yet exist, the operation will create it. If an existing variable exists with\n a mismatching type, the operation will fail.\n\n Accessing variables after progressing the iterator or after the iterator is\n destroyed will result in undefined behavior.\n\n If vars contains a variable that is not present in the iterator, the variable\n will not be modified.\n\n @param it The iterator to convert to variables.\n @param vars The variables to write to.\n @param offset The offset to the current element."]
     pub fn ecs_script_vars_from_iter(
         it: *const ecs_iter_t,
@@ -6453,12 +6627,19 @@ extern "C-unwind" {
         offset: ::core::ffi::c_int,
     );
 }
-#[doc = "Used with ecs_script_expr_run()."]
+#[doc = "Used with ecs_expr_run()."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct ecs_script_expr_run_desc_t {
+pub struct ecs_expr_eval_desc_t {
+    #[doc = "< Script name"]
     pub name: *const ::core::ffi::c_char,
+    #[doc = "< Full expression string"]
     pub expr: *const ::core::ffi::c_char,
+    #[doc = "< Variables accessible in expression"]
+    pub vars: *const ecs_script_vars_t,
+    #[doc = "< Type of parsed value (optional)"]
+    pub type_: ecs_entity_t,
+    #[doc = "< Function for resolving entity identifiers"]
     pub lookup_action: ::core::option::Option<
         unsafe extern "C-unwind" fn(
             arg1: *const ecs_world_t,
@@ -6466,17 +6647,41 @@ pub struct ecs_script_expr_run_desc_t {
             ctx: *mut ::core::ffi::c_void,
         ) -> ecs_entity_t,
     >,
+    #[doc = "< Context passed to lookup function"]
     pub lookup_ctx: *mut ::core::ffi::c_void,
-    pub vars: *mut ecs_script_vars_t,
+    #[doc = "Disable constant folding (slower evaluation, faster parsing)"]
+    pub disable_folding: bool,
+    #[doc = "This option instructs the expression runtime to lookup variables by\n stack pointer instead of by name, which improves performance. Only enable\n when provided variables are always declared in the same order."]
+    pub disable_dynamic_variable_binding: bool,
+    #[doc = "Allow for unresolved identifiers when parsing. Useful when entities can\n be created in between parsing & evaluating."]
+    pub allow_unresolved_identifiers: bool,
+    #[doc = "< Reusable runtime (optional)"]
+    pub runtime: *mut ecs_script_runtime_t,
 }
 extern "C-unwind" {
-    #[doc = "Parse standalone expression into value.\n This operation parses a flecs expression into the provided pointer. The\n memory pointed to must be large enough to contain a value of the used type.\n\n If no type and pointer are provided for the value argument, the operation\n will discover the type from the expression and allocate storage for the\n value. The allocated value must be freed with ecs_value_free().\n\n @param world The world.\n @param ptr The pointer to the expression to parse.\n @param value The value containing type & pointer to write to.\n @param desc Configuration parameters for deserializer.\n @return Pointer to the character after the last one read, or NULL if failed."]
-    pub fn ecs_script_expr_run(
+    #[doc = "Run expression.\n This operation runs an expression and stores the result in the provided\n value. If the value contains a type that is different from the type of the\n expression, the expression will be cast to the value.\n\n If the provided value for value.ptr is NULL, the value must be freed with\n ecs_value_free() afterwards.\n\n @param world The world.\n @param ptr The pointer to the expression to parse.\n @param value The value containing type & pointer to write to.\n @param desc Configuration parameters for the parser.\n @return Pointer to the character after the last one read, or NULL if failed."]
+    pub fn ecs_expr_run(
         world: *mut ecs_world_t,
         ptr: *const ::core::ffi::c_char,
         value: *mut ecs_value_t,
-        desc: *const ecs_script_expr_run_desc_t,
+        desc: *const ecs_expr_eval_desc_t,
     ) -> *const ::core::ffi::c_char;
+}
+extern "C-unwind" {
+    #[doc = "Parse expression.\n This operation parses an expression and returns an object that can be\n evaluated multiple times with ecs_expr_eval().\n\n @param world The world.\n @param expr The expression string.\n @param desc Configuration parameters for the parser.\n @return A script object if parsing is successful, NULL if parsing failed."]
+    pub fn ecs_expr_parse(
+        world: *mut ecs_world_t,
+        expr: *const ::core::ffi::c_char,
+        desc: *const ecs_expr_eval_desc_t,
+    ) -> *mut ecs_script_t;
+}
+extern "C-unwind" {
+    #[doc = "Evaluate expression.\n This operation evaluates an expression parsed with ecs_expr_parse()\n and stores the result in the provided value. If the value contains a type\n that is different from the type of the expression, the expression will be\n cast to the value.\n\n If the provided value for value.ptr is NULL, the value must be freed with\n ecs_value_free() afterwards.\n\n @param script The script containing the expression.\n @param value The value in which to store the expression result.\n @param desc Configuration parameters for the parser.\n @return Zero if successful, non-zero if failed."]
+    pub fn ecs_expr_eval(
+        script: *const ecs_script_t,
+        value: *mut ecs_value_t,
+        desc: *const ecs_expr_eval_desc_t,
+    ) -> ::core::ffi::c_int;
 }
 extern "C-unwind" {
     #[doc = "Evaluate interpolated expressions in string.\n This operation evaluates expressions in a string, and replaces them with\n their evaluated result. Supported expression formats are:\n  - $variable_name\n  - {expression}\n\n The $, { and } characters can be escaped with a backslash (\\).\n\n @param world The world.\n @param str The string to evaluate.\n @param vars The variables to use for evaluation."]
@@ -6485,6 +6690,57 @@ extern "C-unwind" {
         str_: *const ::core::ffi::c_char,
         vars: *const ecs_script_vars_t,
     ) -> *mut ::core::ffi::c_char;
+}
+#[doc = "Used with ecs_const_var_init"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_const_var_desc_t {
+    #[doc = "Variable name."]
+    pub name: *const ::core::ffi::c_char,
+    #[doc = "Variable parent (namespace)."]
+    pub parent: ecs_entity_t,
+    #[doc = "Variable type."]
+    pub type_: ecs_entity_t,
+    #[doc = "Pointer to value of variable. The value will be copied to an internal\n storage and does not need to be kept alive."]
+    pub value: *mut ::core::ffi::c_void,
+}
+extern "C-unwind" {
+    #[doc = "Create a const variable that can be accessed by scripts.\n\n @param world The world.\n @param desc Const var parameters.\n @return The const var, or 0 if failed."]
+    pub fn ecs_const_var_init(
+        world: *mut ecs_world_t,
+        desc: *mut ecs_const_var_desc_t,
+    ) -> ecs_entity_t;
+}
+#[doc = "Used with ecs_function_init and ecs_method_init"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_function_desc_t {
+    #[doc = "Function name."]
+    pub name: *const ::core::ffi::c_char,
+    #[doc = "Parent of function. For methods the parent is the type for which the\n method will be registered."]
+    pub parent: ecs_entity_t,
+    #[doc = "Function parameters."]
+    pub params: [ecs_script_parameter_t; 16usize],
+    #[doc = "Function return type."]
+    pub return_type: ecs_entity_t,
+    #[doc = "Function implementation."]
+    pub callback: ecs_function_callback_t,
+    #[doc = "Context passed to function implementation."]
+    pub ctx: *mut ::core::ffi::c_void,
+}
+extern "C-unwind" {
+    #[doc = "Create new function.\n This operation creates a new function that can be called from a script.\n\n @param world The world.\n @param desc Function init parameters.\n @return The function, or 0 if failed."]
+    pub fn ecs_function_init(
+        world: *mut ecs_world_t,
+        desc: *const ecs_function_desc_t,
+    ) -> ecs_entity_t;
+}
+extern "C-unwind" {
+    #[doc = "Create new method.\n This operation creates a new method that can be called from a script. A\n method is like a function, except that it can be called on every instance of\n a type.\n\n Methods automatically receive the instance on which the method is invoked as\n first argument.\n\n @param world Method The world.\n @param desc Method init parameters.\n @return The function, or 0 if failed."]
+    pub fn ecs_method_init(
+        world: *mut ecs_world_t,
+        desc: *const ecs_function_desc_t,
+    ) -> ecs_entity_t;
 }
 extern "C-unwind" {
     #[doc = "Serialize value into expression string.\n This operation serializes a value of the provided type to a string. The\n memory pointed to must be large enough to contain a value of the used type.\n\n @param world The world.\n @param type The type of the value to serialize.\n @param data The value to serialize.\n @return String with expression, or NULL if failed."]
@@ -6519,6 +6775,11 @@ extern "C-unwind" {
         data: *const ::core::ffi::c_void,
         buf: *mut ecs_strbuf_t,
     ) -> ::core::ffi::c_int;
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_expr_node_t {
+    _unused: [u8; 0],
 }
 extern "C-unwind" {
     #[doc = "Script module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsScript)\n @endcode\n\n @param world The world."]
@@ -6922,7 +7183,9 @@ pub struct ecs_enum_constant_t {
     #[doc = "Must be set when used with ecs_enum_desc_t"]
     pub name: *const ::core::ffi::c_char,
     #[doc = "May be set when used with ecs_enum_desc_t"]
-    pub value: i32,
+    pub value: i64,
+    #[doc = "For when the underlying type is unsigned"]
+    pub value_unsigned: u64,
     #[doc = "Should not be set by ecs_enum_desc_t"]
     pub constant: ecs_entity_t,
 }
@@ -6930,6 +7193,7 @@ pub struct ecs_enum_constant_t {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsEnum {
+    pub underlying_type: ecs_entity_t,
     #[doc = "< map<i32_t, ecs_enum_constant_t>"]
     pub constants: ecs_map_t,
 }
@@ -6940,7 +7204,9 @@ pub struct ecs_bitmask_constant_t {
     #[doc = "Must be set when used with ecs_bitmask_desc_t"]
     pub name: *const ::core::ffi::c_char,
     #[doc = "May be set when used with ecs_bitmask_desc_t"]
-    pub value: ecs_flags32_t,
+    pub value: ecs_flags64_t,
+    #[doc = "Keep layout the same with ecs_enum_constant_t"]
+    pub _unused: i64,
     #[doc = "Should not be set by ecs_bitmask_desc_t"]
     pub constant: ecs_entity_t,
 }
@@ -7414,6 +7680,7 @@ pub struct ecs_enum_desc_t {
     pub entity: ecs_entity_t,
     #[doc = "< Enum constants."]
     pub constants: [ecs_enum_constant_t; 32usize],
+    pub underlying_type: ecs_entity_t,
 }
 extern "C-unwind" {
     #[doc = "Create a new enum type.\n\n @param world The world.\n @param desc The type descriptor.\n @return The new type, 0 if failed."]
@@ -7618,7 +7885,7 @@ extern "C-unwind" {
     ) -> *const ::core::ffi::c_char;
 }
 extern "C-unwind" {
-    pub fn ecs_cpp_component_validate(
+    pub fn ecs_cpp_component_find(
         world: *mut ecs_world_t,
         id: ecs_entity_t,
         name: *const ::core::ffi::c_char,
@@ -7626,22 +7893,11 @@ extern "C-unwind" {
         size: usize,
         alignment: usize,
         implicit_name: bool,
-    );
-}
-extern "C-unwind" {
-    pub fn ecs_cpp_component_register(
-        world: *mut ecs_world_t,
-        id: ecs_entity_t,
-        name: *const ::core::ffi::c_char,
-        symbol: *const ::core::ffi::c_char,
-        size: ecs_size_t,
-        alignment: ecs_size_t,
-        implicit_name: bool,
         existing_out: *mut bool,
     ) -> ecs_entity_t;
 }
 extern "C-unwind" {
-    pub fn ecs_cpp_component_register_explicit(
+    pub fn ecs_cpp_component_register(
         world: *mut ecs_world_t,
         s_id: ecs_entity_t,
         id: ecs_entity_t,
@@ -7655,7 +7911,11 @@ extern "C-unwind" {
     ) -> ecs_entity_t;
 }
 extern "C-unwind" {
-    pub fn ecs_cpp_enum_init(world: *mut ecs_world_t, id: ecs_entity_t);
+    pub fn ecs_cpp_enum_init(
+        world: *mut ecs_world_t,
+        id: ecs_entity_t,
+        underlying_type: ecs_entity_t,
+    );
 }
 extern "C-unwind" {
     pub fn ecs_cpp_enum_constant_register(
@@ -7663,14 +7923,10 @@ extern "C-unwind" {
         parent: ecs_entity_t,
         id: ecs_entity_t,
         name: *const ::core::ffi::c_char,
-        value: ::core::ffi::c_int,
+        value: *mut ::core::ffi::c_void,
+        value_type: ecs_entity_t,
+        value_size: usize,
     ) -> ecs_entity_t;
-}
-extern "C-unwind" {
-    pub fn ecs_cpp_reset_count_get() -> i32;
-}
-extern "C-unwind" {
-    pub fn ecs_cpp_reset_count_inc() -> i32;
 }
 extern "C-unwind" {
     pub fn ecs_cpp_last_member(

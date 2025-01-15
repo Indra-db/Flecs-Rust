@@ -49,6 +49,9 @@ disable_build_c = []
 # Flecs C defines / features
 ###############################
 
+# Math functions for flecs script (may require linking with libm) */
+flecs_script_math = []
+
 # Enable flecs performance tracing
 flecs_perf_trace = []
 

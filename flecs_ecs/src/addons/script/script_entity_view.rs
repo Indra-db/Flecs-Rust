@@ -87,7 +87,7 @@ impl<'a> ScriptEntityView<'a> {
     pub fn ast(&mut self) -> Option<String> {
         let script = self.get::<&flecs::Script>(|script| script.script);
 
-        let ast = unsafe { sys::ecs_script_ast_to_str(script) };
+        let ast = unsafe { sys::ecs_script_ast_to_str(script, false) };
 
         if ast.is_null() {
             ecs_assert!(
