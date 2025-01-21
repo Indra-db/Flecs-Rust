@@ -381,7 +381,8 @@ where
         indexes: &mut [i8],
     ) -> IsAnyArray {
         if it.row_fields & (1u32 << 0) != 0 {
-            is_ref[0] = unsafe { *it.sources.add(0) != 0 };
+            // Need to fetch the value with ecs_field_at()
+            is_ref[0] = true;
             is_row[0] = true;
             indexes[0] = 0;
         } else {
@@ -583,8 +584,8 @@ macro_rules! impl_iterable {
                 let mut any_row = false;
                 $(
                     if it.row_fields & (1u32 << index) != 0 {
-                        //components[index] = unsafe { ecs_field_at::<$t::OnlyPairType>(it, index as i8, 0) as *mut u8 };
-                        is_ref[index as usize] =  unsafe { *it.sources.add(index as usize) != 0 };
+                        // Need to fetch the value with ecs_field_at()
+                        is_ref[index as usize] =  true;
                         is_row[index as usize] = true;
                         indexes[index as usize] = index as i8;
                     } else {

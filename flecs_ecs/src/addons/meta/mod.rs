@@ -349,14 +349,40 @@ impl<'a, T: 'static> Component<'a, T> {
         opaque.as_type(copy_id);
         opaque
     }
+}
 
+impl<'a, T: EnumComponentInfo + 'static> Component<'a, T> {
     /// Add constant.
     ///
     /// # See also
     ///
     /// * C++ API: `component::constant`
-    pub fn constant(&self, name: &str, value: impl Into<i32>) -> &Self {
-        UntypedComponent::constant(self, name, value);
+    pub fn constant(&self, name: &str, id: impl Into<Entity>, value: T) -> &Self {
+        unsafe { sys::ecs_add_id(self.world_ptr_mut(), *self.id, flecs::meta::EcsEnum::ID) };
+
+        let name = compact_str::format_compact!("{}\0", name);
+
+        let desc = sys::ecs_entity_desc_t {
+            name: name.as_ptr() as *const _,
+            parent: *self.id,
+            ..Default::default()
+        };
+
+        let eid = unsafe { sys::ecs_entity_init(self.world_ptr_mut(), &desc) };
+
+        ecs_assert!(
+            eid != 0,
+            FlecsErrorCode::InternalError,
+            "failed to create entity"
+        );
+
+        let pair = ecs_pair(flecs::meta::Constant::ID, *id.into());
+
+        unsafe {
+            let ptr = sys::ecs_ensure_id(self.world_ptr_mut(), eid, pair) as *mut i32 as *mut T;
+            *ptr = value;
+            sys::ecs_modified_id(self.world_ptr_mut(), eid, pair);
+        }
         self
     }
 }

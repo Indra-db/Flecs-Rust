@@ -489,6 +489,10 @@ where
     /// The user to pass the correct index + the index being within bounds + optional data
     /// to be valid.
     ///
+    /// This function should not be used in each_iter() callbacks, unless it is to
+    /// access a shared field. For access to non-shared fields in each_iter(), use
+    /// field_at.
+    ///
     /// # Type parameters
     ///
     /// * `T` - The type of component to get the field data for
@@ -514,7 +518,8 @@ where
             index
         );
         ecs_assert!(
-            (self.iter.flags & sys::EcsIterCppEach == 0),
+            (self.iter.flags & sys::EcsIterCppEach == 0)
+                || unsafe { sys::ecs_field_src(self.iter, index) != 0 },
             FlecsErrorCode::InvalidOperation,
             "cannot .field from .each, use .field_at instead",
         );
@@ -546,6 +551,10 @@ where
     ///
     /// Caller must ensure that the field at `index` is accessible as `T`
     ///
+    /// This function should not be used in each_iter() callbacks, unless it is to
+    /// access a shared field. For access to non-shared fields in each_iter(), use
+    /// field_at.
+    ///
     /// # Type parameters
     ///
     /// * `T` - The type of component to get the field data for
@@ -563,7 +572,8 @@ where
     /// * C++ API: `iter::field`
     pub fn field<T: ComponentId>(&self, index: i8) -> Option<Field<T::UnderlyingType>> {
         ecs_assert!(
-            (self.iter.flags & sys::EcsIterCppEach == 0),
+            (self.iter.flags & sys::EcsIterCppEach == 0)
+                || unsafe { sys::ecs_field_src(self.iter, index) != 0 },
             FlecsErrorCode::InvalidOperation,
             "cannot .field from .each, use .field_at instead",
         );
@@ -573,6 +583,13 @@ where
 
     /// Get unchecked access to field data.
     /// Unchecked access is required when a system does not know the type of a field at compile time.
+    /// This function may be used to access shared fields when row is set to 0.
+    ///
+    /// # Safety
+    ///
+    /// This function should not be used in each_iter() callbacks, unless it is to
+    /// access a shared field. For access to non-shared fields in each_iter(), use
+    /// field_at.
     ///
     /// # Arguments
     ///
@@ -600,6 +617,22 @@ where
         self.field_untyped_internal(index)
     }
 
+    /// Get field data for the specified index.
+    /// Unchecked access is required when a system does not know the type of a field at compile time.
+    /// This function may be used to access shared fields when row is set to 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The field index.
+    /// * `row` - The row index.
+    ///
+    /// # Returns
+    ///
+    /// Returns a pointer to the field data.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter::field_at`
     pub fn field_at_untyped(&self, index: i8, row: i32) -> *mut c_void {
         ecs_assert!(
             index < self.iter.field_count,
@@ -614,6 +647,25 @@ where
         unsafe { &mut *(field.array.add(row as usize * field.size)) }
     }
 
+    /// Get field data for the specified index.
+    /// This function may be used to access shared fields when row is set to 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The field index.
+    /// * `row` - The row index.
+    ///
+    /// # Type parameters
+    ///
+    /// * `T` - The type of component to get the field data for
+    ///
+    /// # Returns
+    ///
+    /// An option containing a mutable reference to the field data
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter::field_at`
     pub fn field_at_mut<T>(&self, index: i8, row: usize) -> Option<&mut T::UnderlyingType>
     where
         T: ComponentId,
@@ -641,6 +693,25 @@ where
         }
     }
 
+    /// Get field data for the specified index.
+    /// This function may be used to access shared fields when row is set to 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The field index.
+    /// * `row` - The row index.
+    ///
+    /// # Type parameters
+    ///
+    /// * `T` - The type of component to get the field data for
+    ///
+    /// # Returns
+    ///
+    /// An option containing a reference to the field data
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter::field_at`
     pub fn field_at<T>(&self, index: i8, row: usize) -> Option<&T::UnderlyingType>
     where
         T: ComponentId,

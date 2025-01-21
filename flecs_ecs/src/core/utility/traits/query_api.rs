@@ -103,6 +103,12 @@ where
             iter.flags |= sys::EcsIterCppEach;
 
             while self.iter_next(&mut iter) {
+                ecs_assert!(
+                    iter.entities != std::ptr::null(),
+                    FlecsErrorCode::InvalidParameter,
+                    "query does not return entities ($this variable is not populated)"
+                );
+
                 let mut components_data = T::create_ptrs(&iter);
                 let iter_count = {
                     if iter.count == 0 && iter.table.is_null() {

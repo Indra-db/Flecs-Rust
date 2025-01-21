@@ -3283,8 +3283,24 @@ fn entity_entity_w_type() {
 
     assert_eq!(e.name(), "EntityType");
     assert_eq!(e.path().unwrap(), "::flecs::common_test::EntityType");
-    //assert!(!e.has::<flecs::EcsComponent>());
+    //assert!(!e.has::<flecs::Component>());
     //TODO this assert should work, but we register it a bit different than cpp, no problem though.
+    let e_2 = world.entity_from::<EntityType>();
+    assert_eq!(e, e_2);
+}
+
+#[test]
+fn entity_prefab_w_type() {
+    let world = World::new();
+
+    let e = world.prefab_type::<EntityType>();
+
+    assert_eq!(e.name(), "EntityType");
+    assert_eq!(e.path().unwrap(), "::flecs::common_test::EntityType");
+    //assert!(!e.has::<flecs::Component>());
+    //TODO this assert should work, but we register it a bit different than cpp, no problem though.
+    assert!(e.has::<flecs::Prefab>());
+
     let e_2 = world.entity_from::<EntityType>();
     assert_eq!(e, e_2);
 }
@@ -3853,4 +3869,44 @@ fn entity_delete_w_override_sparse() {
     });
 
     e.destruct();
+}
+
+#[test]
+fn entity_iter_type() {
+    let world = World::new();
+
+    let e = world.entity().add::<Position>().add::<Velocity>();
+
+    let mut count = 0;
+    let mut pos_found = false;
+    let mut velocity_found = false;
+
+    for id in e.archetype().as_slice() {
+        count += 1;
+        if *id == world.id_from::<Position>() {
+            pos_found = true;
+        }
+        if *id == world.id_from::<Velocity>() {
+            velocity_found = true;
+        }
+    }
+
+    assert_eq!(count, 2);
+    assert!(pos_found);
+    assert!(velocity_found);
+}
+
+#[test]
+fn entity_iter_empty_type() {
+    let world = World::new();
+
+    let e = world.entity();
+
+    let mut count = 0;
+
+    for _id in e.archetype().as_slice() {
+        count += 1;
+    }
+
+    assert_eq!(count, 0);
 }

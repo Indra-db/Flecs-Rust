@@ -121,6 +121,48 @@ fn query_each_sparse() {
 }
 
 #[test]
+fn query_each_sparse_many() {
+    let world = World::new();
+
+    world.component::<Position>().add_trait::<flecs::Sparse>();
+    world.component::<Velocity>();
+
+    let mut entities = Vec::new();
+
+    for i in 0..2000 {
+        entities.push(
+            world
+                .entity_named(i.to_string().as_str())
+                .set(Position {
+                    x: 10 + i,
+                    y: 20 + i,
+                })
+                .set(Velocity { x: i, y: i })
+                .id(),
+        );
+    }
+
+    let q = world.query::<(&mut Position, &Velocity)>().build();
+
+    q.each(|(p, v)| {
+        p.x += v.x;
+        p.y += v.y;
+    });
+
+    for i in 0..2000_i32 {
+        let e = world.entity_from_id(entities[i as usize]);
+        e.get::<&Position>(|p| {
+            assert_eq!(p.x, 10 + i * 2);
+            assert_eq!(p.y, 20 + i * 2);
+        });
+        e.get::<&Velocity>(|v| {
+            assert_eq!(v.x, i);
+            assert_eq!(v.y, i);
+        });
+    }
+}
+
+#[test]
 fn query_iter_targets() {
     let world = World::new();
 

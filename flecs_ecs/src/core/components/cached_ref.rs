@@ -48,6 +48,16 @@ impl<'a, T: ComponentId + DataComponent> CachedRef<'a, T> {
             );
         }
 
+        // TODO this is done with FLECS_DEBUG flag normally
+        debug_assert!(
+            {
+                let type_ = unsafe { sys::ecs_get_typeid(world_ptr, id) };
+                let ti = unsafe { sys::ecs_get_type_info(world_ptr, type_) };
+                ti.is_null() || unsafe { (*ti).size } != 0
+            },
+            "Cannot create ref to empty type"
+        );
+
         let component_ref = unsafe { sys::ecs_ref_init_id(world_ptr, *entity.into(), id) };
         assert_ne!(
             component_ref.entity, 0,
@@ -91,8 +101,14 @@ impl<'a, T: ComponentId + DataComponent> CachedRef<'a, T> {
         callback(unsafe { ref_comp.as_mut() })
     }
 
+    /// Return entity associated with reference.
     pub fn entity(&self) -> EntityView<'a> {
         EntityView::new_from(self.world, self.component_ref.entity)
+    }
+
+    /// Return component associated with reference.
+    fn component(&self) -> IdView<'a> {
+        IdView::new_from_id(self.world, self.component_ref.id)
     }
 
     pub fn has(&mut self) -> bool {

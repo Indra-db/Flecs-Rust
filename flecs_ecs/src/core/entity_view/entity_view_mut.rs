@@ -1516,6 +1516,64 @@ impl<'a> EntityView<'a> {
         self.modified_id((First::id(self.world), second.into()));
     }
 
+    /// Get reference to component specified by id.
+    /// A reference allows for quick and safe access to a component value, and is
+    /// a faster alternative to repeatedly calling 'get' for the same component.
+    ///
+    /// The method accepts a component id argument, which can be used to create a
+    /// ref to a component that is different from the provided type. This allows
+    /// for creating a base type ref that points to a derived type:
+    ///
+    /// # Safety
+    ///
+    /// If the provided component id is not binary compatible with the specified
+    /// type, the behavior is undefined.
+    ///
+    /// ```no_run
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Base { x: i32 };
+    /// #[derive(Component)]
+    /// struct Derived { x: i32 };
+    ///
+    /// let world = World::new();
+    ///
+    /// let base = world.component::<Base>();
+    /// let derived = world.component::<Derived>().is_a_id(base);
+    ///
+    /// let entity = world.entity().set(Derived { x: 10 });
+    ///
+    /// let base_ref = entity.get_ref_w_id::<Base>(derived.id());
+    /// ```
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The component for which to get a reference.
+    ///
+    /// # Arguments
+    ///
+    /// * `component` - The component id.
+    ///
+    /// # Returns
+    ///
+    /// The reference.
+    ///
+    /// # See also
+    ///
+    /// * [`EntityView::get_ref()`]
+    /// * [`EntityView::get_ref_first()`]
+    /// * [`EntityView::get_ref_second()`]
+    /// * C++ API: `entity::get_ref_w_id`
+    #[doc(alias = "entity::get_ref_w_id")]
+    pub fn get_ref_w_id<T>(&self, component: impl IntoId) -> CachedRef<'a, T::CastType>
+    where
+        T: ComponentOrPairId,
+        T::CastType: DataComponent,
+    {
+        CachedRef::<T::CastType>::new(self.world, *self.id, *component.into())
+    }
+
     /// Get a reference to a component or pair.
     ///
     /// A reference allows for quick and safe access to a component value, and is

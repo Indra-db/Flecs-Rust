@@ -99,7 +99,7 @@ impl FieldUntyped {
         );
 
         ecs_assert!(
-            !self.is_shared,
+            !self.is_shared || index == 0,
             FlecsErrorCode::InvalidParameter,
             "Column is shared, cannot index"
         );
