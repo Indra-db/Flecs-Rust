@@ -489,9 +489,9 @@ where
     /// The user to pass the correct index + the index being within bounds + optional data
     /// to be valid.
     ///
-    /// This function should not be used in each_iter() callbacks, unless it is to
-    /// access a shared field. For access to non-shared fields in each_iter(), use
-    /// field_at.
+    /// This function should not be used in `each_iter()` callbacks, unless it is to
+    /// access a shared field. For access to non-shared fields in `each_iter()`, use
+    /// `field_at`.
     ///
     /// # Type parameters
     ///
@@ -551,9 +551,9 @@ where
     ///
     /// Caller must ensure that the field at `index` is accessible as `T`
     ///
-    /// This function should not be used in each_iter() callbacks, unless it is to
-    /// access a shared field. For access to non-shared fields in each_iter(), use
-    /// field_at.
+    /// This function should not be used in `each_iter()` callbacks, unless it is to
+    /// access a shared field. For access to non-shared fields in `each_iter()`, use
+    /// `field_at`.
     ///
     /// # Type parameters
     ///
@@ -587,9 +587,9 @@ where
     ///
     /// # Safety
     ///
-    /// This function should not be used in each_iter() callbacks, unless it is to
-    /// access a shared field. For access to non-shared fields in each_iter(), use
-    /// field_at.
+    /// This function should not be used in `each_iter()` callbacks, unless it is to
+    /// access a shared field. For access to non-shared fields in `each_iter()`, use
+    /// `field_at`.
     ///
     /// # Arguments
     ///

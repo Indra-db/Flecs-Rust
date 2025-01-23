@@ -104,7 +104,7 @@ where
 
             while self.iter_next(&mut iter) {
                 ecs_assert!(
-                    iter.entities != std::ptr::null(),
+                    !iter.entities.is_null(),
                     FlecsErrorCode::InvalidParameter,
                     "query does not return entities ($this variable is not populated)"
                 );

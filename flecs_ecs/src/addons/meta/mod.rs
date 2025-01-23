@@ -351,7 +351,7 @@ impl<'a, T: 'static> Component<'a, T> {
     }
 }
 
-impl<'a, T: EnumComponentInfo + 'static> Component<'a, T> {
+impl<T: EnumComponentInfo + 'static> Component<'_, T> {
     /// Add constant.
     ///
     /// # See also
