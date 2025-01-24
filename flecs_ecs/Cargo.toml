@@ -149,25 +149,30 @@ flecs_nightly_tests = []
 # enable a backtrace on crashes during tests, used for e.g. debugging intermittent CI failures
 test-with-crash-handler = ["dep:test_crash_handler", "test_crash_handler/crash-handler"]
 
+# most common base features
+flecs_base = [
+    "flecs_module",
+    "flecs_system",
+    "flecs_pipeline",
+    "flecs_timer",
+    "flecs_os_api_impl",
+]
+
 default = [
     "flecs_regenerate_binding_c",
     #"flecs_nightly_tests",
-    "flecs_module",
+    "flecs_base",
     "flecs_script",
     "flecs_snapshot",
     "flecs_stats",
     "flecs_metrics",
     "flecs_alerts",
-    "flecs_system",
-    "flecs_pipeline",
-    "flecs_timer",
     "flecs_meta",
     "flecs_units",
     "flecs_json",
     "flecs_doc",
     "flecs_log",
     "flecs_app",
-    "flecs_os_api_impl",
     "flecs_http",
     "flecs_rest",
 ]
