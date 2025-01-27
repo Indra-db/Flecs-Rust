@@ -1,6 +1,6 @@
 //! Registering and working with components
 
-use std::{marker::PhantomData, ops::Deref, os::raw::c_void, ptr};
+use std::{fmt::Debug, fmt::Display, marker::PhantomData, ops::Deref, os::raw::c_void, ptr};
 
 use crate::core::*;
 #[cfg(feature = "flecs_meta")]
@@ -9,10 +9,21 @@ use crate::sys;
 
 /// Component class.
 /// Class used to register components and component metadata.
-#[derive(Debug)]
 pub struct Component<'a, T> {
     pub base: UntypedComponent<'a>,
     _marker: PhantomData<T>,
+}
+
+impl<'a, T> Display for Component<'a, T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.base.entity)
+    }
+}
+
+impl<'a, T> Debug for Component<'a, T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.base.entity)
+    }
 }
 
 impl<T> Clone for Component<'_, T> {

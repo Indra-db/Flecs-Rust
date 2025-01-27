@@ -1,11 +1,26 @@
-use std::ops::Deref;
+use std::{
+    fmt::{Debug, Display},
+    ops::Deref,
+};
 
 use crate::core::*;
 
 /// Untyped component class.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
 pub struct UntypedComponent<'a> {
     pub entity: EntityView<'a>,
+}
+
+impl Display for UntypedComponent<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.entity)
+    }
+}
+
+impl Debug for UntypedComponent<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.entity)
+    }
 }
 
 impl<'a> Deref for UntypedComponent<'a> {
