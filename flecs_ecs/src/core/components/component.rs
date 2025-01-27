@@ -14,13 +14,13 @@ pub struct Component<'a, T> {
     _marker: PhantomData<T>,
 }
 
-impl<'a, T> Display for Component<'a, T> {
+impl<T> Display for Component<'_, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.base.entity)
     }
 }
 
-impl<'a, T> Debug for Component<'a, T> {
+impl<T> Debug for Component<'_, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.base.entity)
     }
