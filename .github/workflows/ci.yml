@@ -97,6 +97,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
-      - uses: dtolnay/install@cargo-docs-rs
+        
+      # Compile cargo-docs-rs locally so it links against the runner's glibc.
+      - run: cargo install cargo-docs-rs --locked
+        
       - run: cargo docs-rs -p flecs_ecs
       - run: cargo docs-rs -p flecs_ecs_derive
