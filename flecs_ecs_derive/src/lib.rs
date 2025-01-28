@@ -1849,3 +1849,153 @@ pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
     ProcMacroTokenStream::from(output)
 }
+
+/// Generates a `<TraitName>Trait` component struct with helper methods for Flecs-based dynamic trait registration. You can then:
+/// 1. Register a vtable for each implementor with `register_vtable::<T>()`.
+/// 2. Cast back to a dynamic reference using `cast(entity, id)`.
+///
+/// # Example
+/// ```ignore
+/// use flecs_ecs::prelude::*;
+///
+/// pub trait Shapes {
+///     fn calculate(&self) -> u64;
+/// }
+///
+/// ecs_rust_trait!(Shapes);
+///
+/// #[derive(Component)]
+/// pub struct Circle {
+///     radius: f32,
+/// }
+///
+/// impl Shapes for Circle {
+///     fn calculate(&self) -> u64 {
+///         1
+///     }
+/// }
+///
+/// #[derive(Component)]
+/// pub struct Square {
+///     side: f32,
+/// }
+///
+/// impl Shapes for Square {
+///     fn calculate(&self) -> u64 {
+///         2
+///     }
+/// }
+///
+/// #[derive(Component)]
+/// pub struct Triangle {
+///     side: f32,
+/// }
+///
+/// impl Shapes for Triangle {
+///     fn calculate(&self) -> u64 {
+///         3
+///     }
+/// }
+///
+/// let world = World::new();
+///
+/// // register the vtable per type that implements the trait
+/// ShapesTrait::register_vtable::<Circle>(&world);
+/// ShapesTrait::register_vtable::<Square>(&world);
+/// ShapesTrait::register_vtable::<Triangle>(&world);
+///
+/// world.entity_named("circle").set(Circle { radius: 5.0 });
+/// world.entity_named("square").set(Square { side: 5.0 });
+/// world.entity_named("triangle").set(Triangle { side: 5.0 });
+///
+/// let query = world.query::<()>().with::<ShapesTrait>().build();
+///
+/// query.run(|mut it| {
+///     it.next();
+///     while it.next() {
+///         let world = it.world();
+///         for i in it.iter() {
+///             let e = it.entity(i);
+///             let id = it.id(0);
+///             let shape = ShapesTrait::cast(e, id);
+///             let calc = shape.calculate();
+///             println!("{} - calc: {}", e.name(), calc);
+///         }
+///     }
+/// });
+///
+/// // Output:
+/// // circle - 34
+/// // calc: 1
+/// // square - 35
+/// // calc: 2
+/// // triangle - 36
+/// // calc: 3
+///
+/// ```
+#[proc_macro]
+#[cfg(feature = "flecs_query_rust_traits")]
+pub fn ecs_rust_trait(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
+    let name = parse_macro_input!(input as Ident);
+
+    let struct_name = format_ident!("{}Trait", name);
+
+    let expanded = quote! {
+        #[derive(Component, Default, Clone)]
+        #[on_registration]
+        pub struct #struct_name {
+            vtable: usize,
+        }
+
+        impl flecs_ecs::core::component_registration::registration_traits::OnComponentRegistration for #struct_name {
+            fn on_component_registration(world: flecs_ecs::core::WorldRef, component_id: flecs_ecs::core::Entity) {
+                world.component_untyped_from_id(component_id).add_trait::<flecs::CanToggle>();
+            }
+        }
+
+        impl flecs_ecs::core::component_registration::registration_traits::RustTrait for #struct_name {}
+
+        impl #struct_name {
+
+            pub fn new(vtable: usize) -> Self {
+                Self {
+                    vtable
+                }
+            }
+            pub fn register_vtable<T: #name + flecs_ecs::core::component_registration::registration_traits::ComponentId>(world: &flecs_ecs::core::World) -> usize {
+                let fake_ptr: *const T = std::ptr::null();
+                let trait_obj: &dyn #name = unsafe { &*fake_ptr };
+                let (_, vtable): (usize, usize) = unsafe { std::mem::transmute(trait_obj) };
+                let id = world.component::<T>();
+                id.is_a::<Self>();
+                id.set(Self::new(vtable));
+                id.disable::<Self>();
+                vtable
+            }
+
+            pub fn cast<'a>(entity: flecs_ecs::core::EntityView, derived_id: flecs_ecs::core::IdView) -> &'a dyn #name {
+                let data_ptr = entity.get_untyped(derived_id) as usize;
+                let vtable_ptr = entity
+                    .world()
+                    .component_untyped_from_id(*derived_id)
+                    .cloned::<&Self>()
+                    .vtable;
+
+                unsafe { std::mem::transmute((data_ptr, vtable_ptr)) }
+            }
+        }
+    };
+
+    ProcMacroTokenStream::from(expanded)
+}
+
+#[proc_macro]
+#[cfg(not(feature = "flecs_query_rust_traits"))]
+pub fn ecs_rust_trait(_: ProcMacroTokenStream) -> ProcMacroTokenStream {
+    const {
+        panic!(
+            "The `flecs_query_rust_traits` feature must be enabled to use this procedural macro."
+        )
+    };
+    ProcMacroTokenStream::new()
+}

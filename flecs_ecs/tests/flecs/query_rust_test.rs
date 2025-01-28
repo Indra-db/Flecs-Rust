@@ -42,3 +42,73 @@ fn query_rust_pass_query_to_system() {
 
     sys.run();
 }
+
+#[test]
+fn test_trait_query() {
+    pub trait Shapes {
+        fn calculate(&self) -> u64;
+    }
+
+    ecs_rust_trait!(Shapes);
+
+    #[derive(Component)]
+    pub struct Circle {
+        radius: f32,
+    }
+
+    impl Shapes for Circle {
+        fn calculate(&self) -> u64 {
+            1
+        }
+    }
+
+    #[derive(Component)]
+    pub struct Square {
+        side: f32,
+    }
+
+    impl Shapes for Square {
+        fn calculate(&self) -> u64 {
+            2
+        }
+    }
+
+    #[derive(Component)]
+    pub struct Triangle {
+        side: f32,
+    }
+
+    impl Shapes for Triangle {
+        fn calculate(&self) -> u64 {
+            3
+        }
+    }
+
+    let world = World::new();
+
+    ShapesTrait::register_vtable::<Circle>(&world);
+    ShapesTrait::register_vtable::<Square>(&world);
+    ShapesTrait::register_vtable::<Triangle>(&world);
+
+    world.entity_named("circle").set(Circle { radius: 5.0 });
+    world.entity_named("square").set(Square { side: 5.0 });
+    world.entity_named("triangle").set(Triangle { side: 5.0 });
+
+    let query = world.query::<&ShapesTrait>().build();
+
+    let mut count = 0;
+
+    query.run(|mut it| {
+        while it.next() {
+            for i in it.iter() {
+                let e = it.entity(i);
+                let id = it.id(0);
+                let shape: &dyn Shapes = ShapesTrait::cast(e, id);
+                let calc = shape.calculate();
+                count += calc;
+            }
+        }
+    });
+
+    assert_eq!(count, 6);
+}

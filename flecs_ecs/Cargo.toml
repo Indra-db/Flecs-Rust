@@ -72,6 +72,9 @@ flecs_disable_build_c = ["flecs_ecs_sys/disable_build_c"]
 # Flecs feature flags
 ######################
 
+# Enable query trait for Rust
+flecs_query_rust_traits = ["flecs_ecs_derive/flecs_query_rust_traits"]
+
 # Enable flecs performance tracing
 flecs_perf_trace = ["flecs_ecs_sys/flecs_perf_trace"]
 
@@ -175,6 +178,7 @@ default = [
     "flecs_app",
     "flecs_http",
     "flecs_rest",
+    "flecs_query_rust_traits"
 ]
 
 ######################

@@ -6,6 +6,9 @@ use std::{
 use crate::core::*;
 use crate::sys;
 
+#[cfg(feature = "flecs_query_rust_traits")]
+pub trait RustTrait {}
+
 /// Indicates that the type is a tag component. A tag component is a component that does not have any data. Is a zero-sized type.
 pub trait TagComponent {}
 
