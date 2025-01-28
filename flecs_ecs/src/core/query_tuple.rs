@@ -325,13 +325,13 @@ where
     const COUNT : i32 = 1;
 
     fn populate<'a>(query: &mut impl QueryBuilderImpl<'a>) {
-        let world_ptr = query.world_ptr();
+        let _world_ptr = query.world_ptr();
 
         let id = <A::OnlyType as ComponentOrPairId>::get_id(query.world());
 
         if <A::OnlyType as ComponentOrPairId>::IS_PAIR {
             ecs_assert!(
-                unsafe { sys::ecs_get_typeid(world_ptr, id) } != 0,
+                unsafe { sys::ecs_get_typeid(_world_ptr, id) } != 0,
                 FlecsErrorCode::InvalidOperation,
                 "Pair is not a (data) component. Possible cause: PairIsTag trait"
             );
@@ -340,7 +340,7 @@ where
         ecs_assert!(
         {
             if (id & (sys::ECS_ID_FLAGS_MASK as u64)) == 0 {
-                let ti =  unsafe { sys::ecs_get_type_info(world_ptr, id) };
+                let ti =  unsafe { sys::ecs_get_type_info(_world_ptr, id) };
                 if !ti.is_null() {
                     // Union relationships always return a value of type
                     // flecs::entity_t which holds the target id of the 
@@ -350,7 +350,7 @@ where
                     // functions would accept a parameter of the component
                     // type instead of flecs::entity_t, which would cause
                     // an assert.
-                    (unsafe { (*ti).size == 0 } || !unsafe { sys::ecs_has_id(world_ptr, id, *flecs::Union)})
+                    (unsafe { (*ti).size == 0 } || !unsafe { sys::ecs_has_id(_world_ptr, id, *flecs::Union)})
                 } else { true }
             } else { true }
         }, FlecsErrorCode::InvalidParameter, "use `with` method to add union relationship");

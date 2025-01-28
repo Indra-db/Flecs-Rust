@@ -49,6 +49,7 @@ fn test_trait_query() {
         fn calculate(&self) -> u64;
     }
 
+    // Define a ShapesTrait component with the necessary functionality
     ecs_rust_trait!(Shapes);
 
     #[derive(Component)]
@@ -56,6 +57,7 @@ fn test_trait_query() {
         radius: f32,
     }
 
+    //implement the Shapes trait as you want
     impl Shapes for Circle {
         fn calculate(&self) -> u64 {
             1
@@ -86,6 +88,7 @@ fn test_trait_query() {
 
     let world = World::new();
 
+    // Register a vtable per component that implements the trait through the ShapesTrait component
     ShapesTrait::register_vtable::<Circle>(&world);
     ShapesTrait::register_vtable::<Square>(&world);
     ShapesTrait::register_vtable::<Triangle>(&world);
@@ -94,6 +97,7 @@ fn test_trait_query() {
     world.entity_named("square").set(Square { side: 5.0 });
     world.entity_named("triangle").set(Triangle { side: 5.0 });
 
+    // query for all entities with components that implement the Shapes trait
     let query = world.query::<&ShapesTrait>().build();
 
     let mut count = 0;
@@ -103,7 +107,9 @@ fn test_trait_query() {
             for i in it.iter() {
                 let e = it.entity(i);
                 let id = it.id(0);
+                // cast the component to the Shapes trait
                 let shape: &dyn Shapes = ShapesTrait::cast(e, id);
+                // call the method on the trait
                 let calc = shape.calculate();
                 count += calc;
             }
