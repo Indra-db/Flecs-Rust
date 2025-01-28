@@ -1,5 +1,5 @@
 [workspace]
-members = ["flecs_ecs", "flecs_ecs_derive", "flecs_ecs_sys", "test_crash_handler"]
+members = ["flecs_ecs", "flecs_ecs_derive", "flecs_ecs_sys", "flecs_ecs_tracing", "test_crash_handler"]
 resolver = "2"
 
 exclude = [
@@ -26,6 +26,7 @@ rust.unused_lifetimes = "warn"
 flecs_ecs = { version = "0.1.2", path = "flecs_ecs" }
 flecs_ecs_derive = { version = "0.1.0", path = "flecs_ecs_derive" }
 flecs_ecs_sys = { version = "0.1.2", path = "flecs_ecs_sys" }
+hashbrown = "0.15.0"
 
 [profile.release]
 lto = true
