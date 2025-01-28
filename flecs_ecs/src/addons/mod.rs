@@ -140,6 +140,10 @@ macro_rules! create_pre_registered_extern_component {
                 Self::get_or_init_index(&INDEX)
             }
         }
+
+        impl OnComponentRegistration for $struct_name {
+            fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
+        }
     };
 }
 

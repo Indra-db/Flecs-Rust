@@ -61,3 +61,7 @@ impl<T: ComponentId> ComponentId for Opaque<'static, T> {
         ECS_OPAQUE
     }
 }
+
+impl<T: ComponentId> OnComponentRegistration for Opaque<'static, T> {
+    fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
+}

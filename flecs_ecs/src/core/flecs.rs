@@ -101,6 +101,10 @@ macro_rules! create_pre_registered_component {
                 Self::get_or_init_index(&INDEX)
             }
         }
+
+        impl OnComponentRegistration for $struct_name {
+            fn on_component_registration(_world: WorldRef, _component_id: super::Entity) {}
+        }
     };
 }
 
@@ -562,6 +566,10 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
     type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsATag;
+}
+
+impl OnComponentRegistration for () {
+    fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
 }
 
 impl flecs_ecs::core::component_registration::registration_traits::ComponentId for () {

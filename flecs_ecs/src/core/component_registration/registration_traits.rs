@@ -94,6 +94,10 @@ where
     }
 }
 
+pub trait OnComponentRegistration {
+    fn on_component_registration(world: WorldRef, component_id: Entity);
+}
+
 /// Trait that manages component IDs across multiple worlds & binaries.
 ///
 /// proc macro Component should be used to implement this trait automatically
@@ -119,7 +123,9 @@ where
     message = "`{Self}` is not a flecs component.",
     label = "use `#[derive(Component)]` on `{Self}` to mark it as one."
 )]
-pub trait ComponentId: Sized + ComponentInfo + 'static + Send + Sync {
+pub trait ComponentId:
+    Sized + ComponentInfo + 'static + Send + Sync + OnComponentRegistration
+{
     #[doc(hidden)]
     type UnderlyingType: ComponentId;
     #[doc(hidden)]
@@ -156,6 +162,8 @@ pub trait ComponentId: Sized + ComponentInfo + 'static + Send + Sync {
                         Self,
                     >(world);
 
+                    Self::on_component_registration(world, Entity::new(id));
+
                     components_array[index] = id;
                     #[cfg(feature = "flecs_meta")]
                     {
@@ -182,6 +190,8 @@ pub trait ComponentId: Sized + ComponentInfo + 'static + Send + Sync {
                     MANUAL_REGISTRATION_CHECK,
                     Self,
                 >(world);
+
+                Self::on_component_registration(world, Entity::new(id));
 
                 components_array[index] = id;
                 id
@@ -519,6 +529,20 @@ impl<T: ComponentInfo> ComponentInfo for &mut T {
     const IS_REF: bool = false;
     const IS_MUT: bool = true;
     type TagType = T::TagType;
+}
+
+#[doc(hidden)]
+impl<T: OnComponentRegistration> OnComponentRegistration for &T {
+    fn on_component_registration(world: WorldRef, component_id: Entity) {
+        T::on_component_registration(world, component_id);
+    }
+}
+
+#[doc(hidden)]
+impl<T: OnComponentRegistration> OnComponentRegistration for &mut T {
+    fn on_component_registration(world: WorldRef, component_id: Entity) {
+        T::on_component_registration(world, component_id);
+    }
 }
 
 #[doc(hidden)]

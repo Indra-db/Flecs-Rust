@@ -64,6 +64,10 @@ macro_rules! impl_component_traits_primitive_type {
                 $id
             }
         }
+
+        impl OnComponentRegistration for $name {
+            fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
+        }
     };
 }
 
@@ -148,6 +152,10 @@ impl ComponentId for EntityView<'static> {
     }
 }
 
+impl OnComponentRegistration for EntityView<'static> {
+    fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
+}
+
 // Recursive expansion of Component macro
 // =======================================
 
@@ -198,4 +206,8 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentId f
             );
         }
     }
+}
+
+impl OnComponentRegistration for String {
+    fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
 }

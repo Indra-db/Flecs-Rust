@@ -543,6 +543,10 @@ macro_rules! impl_component_traits_binding_type_w_id {
                 $id
             }
         }
+
+        impl OnComponentRegistration for $name {
+            fn on_component_registration(_world: WorldRef, _component_id: super::Entity) {}
+        }
     };
 }
 
@@ -605,6 +609,10 @@ macro_rules! impl_component_traits_binding_type_w_static_id {
             fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
                 unsafe { $id }
             }
+        }
+
+        impl OnComponentRegistration for $name {
+            fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
         }
     };
 }

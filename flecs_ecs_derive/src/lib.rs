@@ -56,11 +56,16 @@ use syn::{
 ///     Jumping,
 /// }
 /// ```
-#[proc_macro_derive(Component, attributes(meta, skip))]
+#[proc_macro_derive(Component, attributes(meta, skip, on_registration))]
 pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let mut input = parse_macro_input!(input as DeriveInput);
 
     let has_repr_c = check_repr_c(&input);
+    let has_on_registration = input
+        .attrs
+        .iter()
+        .any(|attr| attr.path().is_ident("on_registration"));
+
     let mut generated_impls = vec![];
 
     match input.data.clone() {
@@ -72,15 +77,26 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
             };
             let is_tag = generate_tag_trait(has_fields);
             generated_impls.push(impl_cached_component_data_struct(
-                &mut input, has_fields, &is_tag,
+                &mut input,
+                has_fields,
+                &is_tag,
+                has_on_registration,
             ));
         }
         Data::Enum(_) => {
             let is_tag = generate_tag_trait(!has_repr_c);
             if !has_repr_c {
-                generated_impls.push(impl_cached_component_data_struct(&mut input, true, &is_tag));
+                generated_impls.push(impl_cached_component_data_struct(
+                    &mut input,
+                    true,
+                    &is_tag,
+                    has_on_registration,
+                ));
             } else {
-                generated_impls.push(impl_cached_component_data_enum(&mut input));
+                generated_impls.push(impl_cached_component_data_enum(
+                    &mut input,
+                    has_on_registration,
+                ));
             }
         }
         _ => return quote! { compile_error!("The type is neither a struct nor an enum!"); }.into(),
@@ -243,6 +259,7 @@ fn impl_cached_component_data_struct(
     ast: &mut syn::DeriveInput, // Name of the structure
     has_fields: bool,
     is_tag: &TokenStream,
+    has_on_registration: bool,
 ) -> proc_macro2::TokenStream {
     let is_generic = !ast.generics.params.is_empty();
 
@@ -565,11 +582,22 @@ fn impl_cached_component_data_struct(
         quote! { impl #impl_generics flecs_ecs::core::TagComponent for #name #type_generics #where_clause {} }
     };
 
+    let on_component_registration = if has_on_registration {
+        quote! {}
+    } else {
+        quote! {
+            impl #impl_generics flecs_ecs::core::component_registration::registration_traits::OnComponentRegistration for #name #type_generics {
+                fn on_component_registration(_world: flecs_ecs::core::WorldRef, _component_id: flecs_ecs::core::Entity) {}
+            }
+        }
+    };
+
     // Combine common and specific trait implementations
     quote! {
         #is_empty_component_trait
         #common_traits
         #component_id
+        #on_component_registration
     }
 }
 
@@ -649,7 +677,10 @@ fn generate_variant_match_arm(
     }
 }
 
-fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> proc_macro2::TokenStream {
+fn impl_cached_component_data_enum(
+    ast: &mut syn::DeriveInput,
+    has_on_registration: bool,
+) -> proc_macro2::TokenStream {
     let is_generic = !ast.generics.params.is_empty();
 
     ast.generics.make_where_clause();
@@ -816,6 +847,16 @@ fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> proc_macro2::T
         }
     };
 
+    let on_component_registration = if has_on_registration {
+        quote! {}
+    } else {
+        quote! {
+            impl #impl_generics flecs_ecs::core::component_registration::registration_traits::OnComponentRegistration for #name #type_generics {
+                fn on_component_registration(_world: flecs_ecs::core::WorldRef, _component_id: flecs_ecs::core::Entity) {}
+            }
+        }
+    };
+
     quote! {
         impl #impl_generics flecs_ecs::core::ComponentType<flecs_ecs::core::Enum> for #name #type_generics #where_clause {}
         impl #impl_generics flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for #name #type_generics #where_clause {}
@@ -827,6 +868,8 @@ fn impl_cached_component_data_enum(ast: &mut syn::DeriveInput) -> proc_macro2::T
         #not_empty_trait_or_error
 
         #cached_enum_data
+
+        #on_component_registration
     }
 }
 

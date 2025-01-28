@@ -1,5 +1,6 @@
 //! Periodically tracks statistics for the world and systems.
-use crate::core::{World, WorldProvider};
+
+use crate::core::{Entity, OnComponentRegistration, World, WorldProvider, WorldRef};
 use crate::sys;
 
 #[cfg(feature = "flecs_module")]
@@ -94,6 +95,10 @@ where
     }
 }
 
+impl OnComponentRegistration for sys::EcsWorldStats {
+    fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
+}
+
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
 
@@ -149,6 +154,10 @@ where
             >(type_hooks);
         }
     }
+}
+
+impl OnComponentRegistration for sys::EcsPipelineStats {
+    fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
 }
 
 ///////////////////////////////////////////////
@@ -208,6 +217,10 @@ where
     }
 }
 
+impl OnComponentRegistration for sys::EcsWorldSummary {
+    fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
+}
+
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
 
@@ -263,6 +276,10 @@ where
             >(type_hooks);
         }
     }
+}
+
+impl OnComponentRegistration for sys::EcsSystemStats {
+    fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
 }
 
 ///////////////////////////////////////////////
@@ -321,4 +338,8 @@ where
     ) -> sys::ecs_entity_t {
         Self::__register_or_get_id_named::<MANUAL_REGISTRATION_CHECK>(world, "flecs::stats")
     }
+}
+
+impl OnComponentRegistration for Stats {
+    fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
 }
