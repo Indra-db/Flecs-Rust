@@ -23,9 +23,9 @@ cargo-args = ["-Zunstable-options", "-Zrustdoc-scrape-examples"]
 [dependencies]
 flecs_ecs_derive = { workspace = true }
 flecs_ecs_sys = { workspace = true }
-bitflags = "2.6.0"
-compact_str = "0.8.0"
-hashbrown = "0.15.0"
+bitflags = "2.8.0"
+compact_str = "0.8.1"
+hashbrown = "0.15.2"
 
 # used for backtraces upon hardware exceptions during test
 # only used when "test-with-crash-handler" feature enabled
@@ -34,9 +34,9 @@ test_crash_handler = { version = "0.1.0", path = "../test_crash_handler", option
 [dev-dependencies]
 criterion = "0.5.1"
 seq-macro = "0.3.5"
-rand = "0.8.5"
-ctor = "0.2.7"
-insta = { version = "1.38.0", features = ["yaml","filters"] }
+rand = "0.9.0"
+ctor = "0.2.9"
+insta = { version = "1.42.1", features = ["yaml","filters"] }
 # used for capturing stdout in the examples test cases. Works only on Nightly, meant
 # to be used with flecs_nightly_tests feature flag
 #capture-stdio = "0.1.1" 
