@@ -1942,15 +1942,8 @@ pub fn ecs_rust_trait(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
     let expanded = quote! {
         #[derive(Component, Default, Clone)]
-        #[on_registration]
         pub struct #struct_name {
             vtable: usize,
-        }
-
-        impl flecs_ecs::core::component_registration::registration_traits::OnComponentRegistration for #struct_name {
-            fn on_component_registration(world: flecs_ecs::core::WorldRef, component_id: flecs_ecs::core::Entity) {
-                world.component_untyped_from_id(component_id).add_trait::<flecs::CanToggle>();
-            }
         }
 
         impl flecs_ecs::core::component_registration::registration_traits::RustTrait for #struct_name {}
@@ -1962,14 +1955,15 @@ pub fn ecs_rust_trait(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
                     vtable
                 }
             }
+
             pub fn register_vtable<T: #name + flecs_ecs::core::component_registration::registration_traits::ComponentId>(world: &flecs_ecs::core::World) -> usize {
                 let fake_ptr: *const T = std::ptr::null();
                 let trait_obj: &dyn #name = unsafe { &*fake_ptr };
                 let (_, vtable): (usize, usize) = unsafe { std::mem::transmute(trait_obj) };
                 let id = world.component::<T>();
-                id.is_a::<Self>();
-                id.set(Self::new(vtable));
-                id.disable::<Self>();
+                let id_self = world.component::<Self>();
+                id.is_a_id(id_self);
+                id.set_id(Self::new(vtable), (id_self,id_self));
                 vtable
             }
 
@@ -1978,7 +1972,7 @@ pub fn ecs_rust_trait(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
                 let vtable_ptr = entity
                     .world()
                     .component_untyped_from_id(*derived_id)
-                    .cloned::<&Self>()
+                    .cloned::<&(Self,Self)>()
                     .vtable;
 
                 unsafe { std::mem::transmute((data_ptr, vtable_ptr)) }
