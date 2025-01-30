@@ -2255,7 +2255,7 @@ fn system_randomize_timers() {
     {
         let t = s1.try_cloned::<&flecs::timer::Timer>();
         assert!(t.is_some());
-        assert!(t.unwrap().time == 0.0);
+        assert_eq!(t.unwrap().time, 0.0);
     }
 
     world.randomize_timers();
@@ -2268,13 +2268,23 @@ fn system_randomize_timers() {
     {
         let t = s1.try_cloned::<&flecs::timer::Timer>();
         assert!(t.is_some());
-        assert_ne!(t.unwrap().time, 0.0);
+        assert!(
+            (t.unwrap().time - 0.0).abs() > f32::EPSILON,
+            "Values are too close: left={}, right={}",
+            t.unwrap().time,
+            0.0
+        );
     }
 
     {
         let t = s2.try_cloned::<&flecs::timer::Timer>();
         assert!(t.is_some());
-        assert_ne!(t.unwrap().time, 0.0);
+        assert!(
+            (t.unwrap().time - 0.0).abs() > f32::EPSILON,
+            "Values are too close: left={}, right={}",
+            t.unwrap().time,
+            0.0
+        );
     }
 }
 
