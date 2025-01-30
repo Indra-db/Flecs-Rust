@@ -2255,7 +2255,7 @@ fn system_randomize_timers() {
     {
         let t = s1.try_cloned::<&flecs::timer::Timer>();
         assert!(t.is_some());
-        assert!(t.unwrap().time == 0.0);
+        assert_eq!(t.unwrap().time, 0.0);
     }
 
     world.randomize_timers();
