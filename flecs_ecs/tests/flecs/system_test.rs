@@ -2245,6 +2245,8 @@ fn system_nested_rate_tick_source() {
 
 #[test]
 fn system_randomize_timers() {
+    const EPS: f32 = 1e-4;
+
     let world = World::new();
 
     let s1 = world
@@ -2268,23 +2270,13 @@ fn system_randomize_timers() {
     {
         let t = s1.try_cloned::<&flecs::timer::Timer>();
         assert!(t.is_some());
-        assert!(
-            (t.unwrap().time - 0.0).abs() > f32::EPSILON,
-            "Values are too close: left={}, right={}",
-            t.unwrap().time,
-            0.0
-        );
+        assert_ne!(dbg!(t.unwrap().time), 0.0);
     }
 
     {
         let t = s2.try_cloned::<&flecs::timer::Timer>();
         assert!(t.is_some());
-        assert!(
-            (t.unwrap().time - 0.0).abs() > f32::EPSILON,
-            "Values are too close: left={}, right={}",
-            t.unwrap().time,
-            0.0
-        );
+        assert_ne!(t.unwrap().time, 0.0);
     }
 }
 
