@@ -28271,6 +28271,7 @@ error:
 
 static
 void RandomizeTimers(ecs_iter_t *it) {
+    srand((unsigned)time(NULL));
     printf("RandomizeTimers\n");
     EcsTimer *timer = ecs_field(it, EcsTimer, 0);
     int32_t i;
