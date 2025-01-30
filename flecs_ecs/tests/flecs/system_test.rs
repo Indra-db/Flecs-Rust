@@ -1,3 +1,4 @@
+#![allow(clippy::float_cmp)]
 #![allow(dead_code)]
 
 use std::ffi::c_void;
@@ -587,7 +588,7 @@ fn system_copy_name_on_create() {
         .system_named::<&mut Position>(name)
         .run(|mut it| while it.next() {});
 
-    assert!(system_1.id() != system_2.id());
+    assert_ne!(system_1.id(), system_2.id());
 }
 
 #[test]
@@ -601,11 +602,11 @@ fn system_nested_system() {
     assert_eq!(system_1.name(), "bar");
 
     let e = world.lookup("foo");
-    assert!(e.id() != 0);
+    assert_ne!(e.id(), 0);
     assert_eq!(e.name(), "foo");
 
     let se = e.lookup("bar");
-    assert!(se.id() != 0);
+    assert_ne!(se.id(), 0);
     assert_eq!(se.name(), "bar");
 }
 
@@ -2030,7 +2031,7 @@ fn system_startup_system() {
         .run(|mut it| {
             let world = it.world();
             while it.next() {
-                assert!(it.delta_time() != 0.0);
+                assert_ne!(it.delta_time(), 0.0);
                 world.get::<&mut Count2>(|c| {
                     c.b += 1;
                 });
@@ -2203,7 +2204,7 @@ fn system_nested_rate_tick_source() {
 //         .each([&](flecs::iter& iter, size_t index) {
 //             let e = iter.entity(index);
 //             &Position *p = &iter.table().get<Position>()[index];
-//             assert!(p != nullptr);
+//             assert_ne!(p, nullptr);
 //             assert!(e == e1 || e == e2);
 //             if (e == e1) {
 //                 assert_eq!(p.x, 10);
@@ -2228,7 +2229,7 @@ fn system_nested_rate_tick_source() {
 //         .each([&](flecs::iter& iter, size_t index) {
 //             let e = iter.entity(index);
 //             &Position *p = &iter.range().get<Position>()[index];
-//             assert!(p != nullptr);
+//             assert_ne!(p, nullptr);
 //             assert!(e == e1 || e == e2);
 //             if (e == e1) {
 //                 assert_eq!(p.x, 10);
@@ -2267,13 +2268,13 @@ fn system_randomize_timers() {
     {
         let t = s1.try_cloned::<&flecs::timer::Timer>();
         assert!(t.is_some());
-        assert!(t.unwrap().time != 0.0);
+        assert_ne!(t.unwrap().time, 0.0);
     }
 
     {
         let t = s2.try_cloned::<&flecs::timer::Timer>();
         assert!(t.is_some());
-        assert!(t.unwrap().time != 0.0);
+        assert_ne!(t.unwrap().time, 0.0);
     }
 }
 
