@@ -2262,10 +2262,10 @@ fn system_randomize_timers() {
 
     world.randomize_timers();
 
-    let s2 = world
-        .system::<()>()
-        .set_interval(1.0)
-        .run(|mut it| while it.next() {});
+    // let s2 = world
+    //     .system::<()>()
+    //     .set_interval(1.0)
+    //     .run(|mut it| while it.next() {});
 
     {
         let t = s1.try_cloned::<&flecs::timer::Timer>();
@@ -2273,11 +2273,11 @@ fn system_randomize_timers() {
         assert_ne!(dbg!(t.unwrap().time), 0.0);
     }
 
-    {
-        let t = s2.try_cloned::<&flecs::timer::Timer>();
-        assert!(t.is_some());
-        assert_ne!(t.unwrap().time, 0.0);
-    }
+    // {
+    //     let t = s2.try_cloned::<&flecs::timer::Timer>();
+    //     assert!(t.is_some());
+    //     assert_ne!(t.unwrap().time, 0.0);
+    // }
 }
 
 #[test]

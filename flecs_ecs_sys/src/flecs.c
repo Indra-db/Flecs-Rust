@@ -28271,11 +28271,21 @@ error:
 
 static
 void RandomizeTimers(ecs_iter_t *it) {
+    printf("RandomizeTimers\n");
     EcsTimer *timer = ecs_field(it, EcsTimer, 0);
     int32_t i;
     for (i = 0; i < it->count; i ++) {
+        int rand_value = rand();
+        int rand_max = RAND_MAX;
+        float timeout = timer[i].timeout;
+        printf("timeout: %f\n", timeout);
+        printf("rand_value: %d\n", rand_value);
+        printf("rand_max: %d\n", rand_max);
+        printf("rand_value / rand_max: %f\n", (float)rand_value / (float)rand_max);
+        printf("rand_value / rand_max * timeout: %f\n", (float)rand_value / (float)rand_max * timeout);
+        printf("----------------\n");
         timer[i].time = 
-            ((ecs_ftime_t)rand() / (ecs_ftime_t)RAND_MAX) * timer[i].timeout;
+            ((ecs_ftime_t)rand_value / (ecs_ftime_t)rand_max) * timeout;
     }
 }
 
