@@ -2247,6 +2247,10 @@ fn system_nested_rate_tick_source() {
 fn system_randomize_timers() {
     let world = World::new();
 
+    // on musl builds, the first `rand` call always returns 0, so we need to
+    // call it once to get a non-zero value
+    world.randomize_timers();
+
     let s1 = world
         .system::<()>()
         .set_interval(1.0)
