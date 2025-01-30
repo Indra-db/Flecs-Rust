@@ -2245,8 +2245,6 @@ fn system_nested_rate_tick_source() {
 
 #[test]
 fn system_randomize_timers() {
-    const EPS: f32 = 1e-4;
-
     let world = World::new();
 
     let s1 = world
@@ -2262,22 +2260,22 @@ fn system_randomize_timers() {
 
     world.randomize_timers();
 
-    // let s2 = world
-    //     .system::<()>()
-    //     .set_interval(1.0)
-    //     .run(|mut it| while it.next() {});
+    let s2 = world
+        .system::<()>()
+        .set_interval(1.0)
+        .run(|mut it| while it.next() {});
 
     {
         let t = s1.try_cloned::<&flecs::timer::Timer>();
         assert!(t.is_some());
-        assert_ne!(dbg!(t.unwrap().time), 0.0);
+        assert_ne!(t.unwrap().time, 0.0);
     }
 
-    // {
-    //     let t = s2.try_cloned::<&flecs::timer::Timer>();
-    //     assert!(t.is_some());
-    //     assert_ne!(t.unwrap().time, 0.0);
-    // }
+    {
+        let t = s2.try_cloned::<&flecs::timer::Timer>();
+        assert!(t.is_some());
+        assert_ne!(t.unwrap().time, 0.0);
+    }
 }
 
 #[test]
