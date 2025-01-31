@@ -2247,10 +2247,10 @@ fn system_nested_rate_tick_source() {
 fn system_randomize_timers() {
     let world = World::new();
 
-    // on musl builds, the first `rand` call always returns 0, so we need to
+    // on musl builds, `rand` call always returns 0 until seeded, so we need to
     // call srand to seed the random number generator
     unsafe {
-        let seed = flecs_ecs_sys::time(std::ptr::null_mut()) as u32;
+        let seed = flecs_ecs_sys::time(core::ptr::null_mut()) as u32;
         flecs_ecs_sys::srand(seed);
     }
 
