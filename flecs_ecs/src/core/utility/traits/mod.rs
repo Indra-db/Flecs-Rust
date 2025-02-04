@@ -147,7 +147,7 @@ pub mod private {
             ecs_assert!(
                 !iter.entities.is_null(),
                 FlecsErrorCode::InvalidOperation,
-                "system does not return entities ($this variable is not populated)./nQuery: {:?}",
+                "System does not return entities ($this variable is not populated).\nSystem: {:?}",
                 WorldRef::from_ptr(iter.world).entity_from_id(iter.system)
             );
 

@@ -106,7 +106,7 @@ where
                 ecs_assert!(
                     !iter.entities.is_null(),
                     FlecsErrorCode::InvalidParameter,
-                    "query does not return entities ($this variable is not populated)./nQuery: {:?}",
+                    "Query does not return entities ($this variable is not populated).\nQuery: {:?}",
                     WorldRef::from_ptr(world).entity_from_id((*iter.query).entity)
                 );
 
