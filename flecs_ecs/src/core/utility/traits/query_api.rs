@@ -119,7 +119,7 @@ where
                 };
 
                 ecs_assert!(
-                    iter.count > 0,
+                    iter_count > 0,
                     FlecsErrorCode::InvalidOperation,
                     "no entities returned, use each() without flecs::entity argument",
                 );
