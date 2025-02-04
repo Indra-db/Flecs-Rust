@@ -145,9 +145,10 @@ pub mod private {
             };
 
             ecs_assert!(
-                iter_count > 0,
+                !iter.entities.is_null(),
                 FlecsErrorCode::InvalidOperation,
-                "no entities returned, use each() without flecs::entity argument",
+                "system does not return entities ($this variable is not populated)./nQuery: {:?}",
+                WorldRef::from_ptr(iter.world).entity_from_id(iter.system)
             );
 
             if !CALLED_FROM_RUN {

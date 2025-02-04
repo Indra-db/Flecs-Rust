@@ -106,7 +106,8 @@ where
                 ecs_assert!(
                     !iter.entities.is_null(),
                     FlecsErrorCode::InvalidParameter,
-                    "query does not return entities ($this variable is not populated)"
+                    "query does not return entities ($this variable is not populated)./nQuery: {:?}",
+                    WorldRef::from_ptr(world).entity_from_id((*iter.query).entity)
                 );
 
                 let mut components_data = T::create_ptrs(&iter);
@@ -117,12 +118,6 @@ where
                         iter.count as usize
                     }
                 };
-
-                ecs_assert!(
-                    iter_count > 0,
-                    FlecsErrorCode::InvalidOperation,
-                    "no entities returned, use each() without flecs::entity argument",
-                );
 
                 sys::ecs_table_lock(world, iter.table);
 
