@@ -1,7 +1,7 @@
 //! API for emitting events that trigger [`Observer`]s.
 
-use std::marker::PhantomData;
-use std::{alloc::Layout, os::raw::c_void};
+use core::marker::PhantomData;
+use core::{alloc::Layout, ffi::c_void};
 
 use crate::core::*;
 use crate::sys;
@@ -25,7 +25,7 @@ pub struct EventBuilder<'a, T = ()> {
     pub(crate) desc: sys::ecs_event_desc_t,
     pub(crate) ids: sys::ecs_type_t,
     pub(crate) ids_array: [sys::ecs_id_t; sys::FLECS_EVENT_DESC_MAX as usize],
-    _phantom: std::marker::PhantomData<T>,
+    _phantom: core::marker::PhantomData<T>,
 }
 
 impl<'a, T: ComponentId> EventBuilder<'a, T> {

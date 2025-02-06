@@ -1,7 +1,7 @@
 //! World operations.
 
-use std::ffi::CStr;
-use std::{os::raw::c_void, ptr::NonNull};
+use core::ffi::CStr;
+use core::{ffi::c_void, ptr::NonNull};
 
 #[cfg(feature = "flecs_system")]
 use crate::addons::system::{System, SystemBuilder};
@@ -12,7 +12,7 @@ use crate::addons::pipeline::PipelineBuilder;
 use crate::core::*;
 use crate::sys;
 
-pub(crate) type FlecsArray = std::vec::Vec<u64>;
+pub(crate) type FlecsArray = Vec<u64>;
 
 /// The `World` is the container for all ECS data. It stores the entities and
 /// their components, does queries and runs systems.
@@ -3488,8 +3488,8 @@ impl World {
     /// When meta is enabled, this will also hold ids for components that are registered with the `ComponentId` trait.
     pub(crate) fn component_id_map<T: 'static>(&self) -> u64 {
         *self.components_map()
-            .get(&std::any::TypeId::of::<T>())
-            .unwrap_or_else(|| panic!("Component with name: {} is not registered, pre-register components with `world.component::<T>() or world.component_ext::<T>(id)`", std::any::type_name::<T>()))
+            .get(&core::any::TypeId::of::<T>())
+            .unwrap_or_else(|| panic!("Component with name: {} is not registered, pre-register components with `world.component::<T>() or world.component_ext::<T>(id)`", core::any::type_name::<T>()))
     }
 
     /// Get the id of the provided pair of components.

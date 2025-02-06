@@ -6,7 +6,7 @@ mod iter;
 pub use field::{Field, FieldUntyped};
 pub use iter::{TableIter, TableRowIter};
 
-use std::{ffi::CStr, os::raw::c_void, ptr::NonNull};
+use core::{ffi::c_void, ffi::CStr, ptr::NonNull};
 
 use crate::core::*;
 use crate::sys;
@@ -152,7 +152,7 @@ pub trait TableOperations<'a>: IntoTable {
     fn archetype(&self) -> Archetype<'a> {
         let type_vec = unsafe { sys::ecs_table_get_type(self.table_ptr_mut()) };
         let slice = unsafe {
-            std::slice::from_raw_parts((*type_vec).array as _, (*type_vec).count as usize)
+            core::slice::from_raw_parts((*type_vec).array as _, (*type_vec).count as usize)
         };
         let world = self.world();
         // Safety: we already know table_ptr is NonNull
@@ -569,7 +569,7 @@ pub trait TableOperations<'a>: IntoTable {
     #[doc(alias = "table::get")]
     fn get_mut<T: ComponentId>(&self) -> Option<&mut [T]> {
         self.get_mut_untyped(T::id(self.world())).map(|ptr| unsafe {
-            std::slice::from_raw_parts_mut(ptr as *mut T, (self.count()) as usize)
+            core::slice::from_raw_parts_mut(ptr as *mut T, (self.count()) as usize)
         })
     }
 

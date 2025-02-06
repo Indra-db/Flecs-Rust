@@ -1,7 +1,7 @@
 //! Queries are used to iterate over entities that match a query.
 
 use core::panic;
-use std::{marker::PhantomData, os::raw::c_void, ptr::NonNull};
+use core::{ffi::c_void, marker::PhantomData, ptr::NonNull};
 
 use flecs_ecs_sys::ecs_get_binding_ctx;
 use sys::ecs_get_alive;
@@ -183,7 +183,7 @@ where
         Self {
             query,
             world_ctx,
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         }
     }
 
@@ -392,7 +392,7 @@ where
         if !group_info.is_null() {
             unsafe { (*group_info).ctx }
         } else {
-            std::ptr::null_mut()
+            core::ptr::null_mut()
         }
     }
 }

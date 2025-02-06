@@ -1,5 +1,5 @@
 #![doc(hidden)]
-use std::os::raw::c_void;
+use core::ffi::c_void;
 
 pub type FTime = f32;
 
@@ -129,5 +129,5 @@ impl ObserverEntityBindingCtx {
     }
 }
 
-pub struct ImplementsClone<T>(std::marker::PhantomData<T>);
-pub struct ImplementsDefault<T>(std::marker::PhantomData<T>);
+pub struct ImplementsClone<T>(core::marker::PhantomData<T>);
+pub struct ImplementsDefault<T>(core::marker::PhantomData<T>);

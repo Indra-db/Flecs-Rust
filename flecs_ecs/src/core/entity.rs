@@ -1,8 +1,8 @@
 //! An id that represents either an entity, component, [`Query`], [`Observer`] or [`System`][crate::addons::system::System] in the [`World`].
 
-use std::fmt::Display;
-use std::ops::Deref;
-use std::ops::{BitAnd, BitOr};
+use core::fmt::Display;
+use core::ops::Deref;
+use core::ops::{BitAnd, BitOr};
 
 use crate::core::*;
 
@@ -79,7 +79,7 @@ impl Entity {
 
 //     #[inline(always)]
 //     fn index() -> u32 {
-//         static INDEX: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(u32::MAX);
+//         static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);
 //         Self::get_or_init_index(&INDEX)
 //     }
 
@@ -123,7 +123,7 @@ impl Deref for Entity {
 
 impl Display for Entity {
     #[inline]
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         self.0.fmt(f)
     }
 }
@@ -339,35 +339,35 @@ mod ord_operations {
 
     impl PartialOrd<Entity> for u64 {
         #[inline]
-        fn partial_cmp(&self, other: &Entity) -> Option<std::cmp::Ordering> {
+        fn partial_cmp(&self, other: &Entity) -> Option<core::cmp::Ordering> {
             Some(self.cmp(&other.0))
         }
     }
 
     impl PartialOrd<u64> for Entity {
         #[inline]
-        fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
+        fn partial_cmp(&self, other: &u64) -> Option<core::cmp::Ordering> {
             Some(self.0.cmp(other))
         }
     }
 
     impl PartialOrd<Id> for Entity {
         #[inline]
-        fn partial_cmp(&self, other: &Id) -> Option<std::cmp::Ordering> {
+        fn partial_cmp(&self, other: &Id) -> Option<core::cmp::Ordering> {
             Some(self.0.cmp(&other.0))
         }
     }
 
     impl<'a> PartialOrd<EntityView<'a>> for Entity {
         #[inline]
-        fn partial_cmp(&self, other: &EntityView<'a>) -> Option<std::cmp::Ordering> {
+        fn partial_cmp(&self, other: &EntityView<'a>) -> Option<core::cmp::Ordering> {
             Some(self.0.cmp(&other.id.0))
         }
     }
 
     impl<'a> PartialOrd<IdView<'a>> for Entity {
         #[inline]
-        fn partial_cmp(&self, other: &IdView<'a>) -> Option<std::cmp::Ordering> {
+        fn partial_cmp(&self, other: &IdView<'a>) -> Option<core::cmp::Ordering> {
             Some(self.0.cmp(&other.id.0))
         }
     }
@@ -377,14 +377,14 @@ mod ord_operations {
         T: ComponentId,
     {
         #[inline]
-        fn partial_cmp(&self, other: &Component<'a, T>) -> Option<std::cmp::Ordering> {
+        fn partial_cmp(&self, other: &Component<'a, T>) -> Option<core::cmp::Ordering> {
             Some(self.0.cmp(&other.base.entity.id.0))
         }
     }
 
     impl<'a> PartialOrd<UntypedComponent<'a>> for Entity {
         #[inline]
-        fn partial_cmp(&self, other: &UntypedComponent<'a>) -> Option<std::cmp::Ordering> {
+        fn partial_cmp(&self, other: &UntypedComponent<'a>) -> Option<core::cmp::Ordering> {
             Some(self.0.cmp(&other.entity.id.0))
         }
     }

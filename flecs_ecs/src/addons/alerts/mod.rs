@@ -7,8 +7,8 @@ pub use types::*;
 
 // TODO flecs core: add missing stuff in modules + alert_count should not default to 0 parameter, see ecs_check
 
-use std::ops::Deref;
-use std::ops::DerefMut;
+use core::ops::Deref;
+use core::ops::DerefMut;
 
 use crate::core::*;
 use crate::sys;

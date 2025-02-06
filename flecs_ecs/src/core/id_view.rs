@@ -74,37 +74,37 @@ impl<'a> PartialEq<UntypedComponent<'a>> for IdView<'a> {
 }
 
 impl<'a> PartialOrd<IdView<'a>> for u64 {
-    fn partial_cmp(&self, other: &IdView<'a>) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &IdView<'a>) -> Option<core::cmp::Ordering> {
         Some(self.cmp(&other.id.0))
     }
 }
 
 impl PartialOrd<u64> for IdView<'_> {
-    fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &u64) -> Option<core::cmp::Ordering> {
         Some(self.id.0.cmp(other))
     }
 }
 
 impl PartialOrd<Entity> for IdView<'_> {
-    fn partial_cmp(&self, other: &Entity) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Entity) -> Option<core::cmp::Ordering> {
         Some(self.id.0.cmp(&other.0))
     }
 }
 
 impl PartialOrd<Id> for IdView<'_> {
-    fn partial_cmp(&self, other: &Id) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Id) -> Option<core::cmp::Ordering> {
         Some(self.id.0.cmp(other))
     }
 }
 
 impl<'a> PartialOrd<EntityView<'a>> for IdView<'a> {
-    fn partial_cmp(&self, other: &EntityView<'a>) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &EntityView<'a>) -> Option<core::cmp::Ordering> {
         Some(self.id.0.cmp(&other.id.0))
     }
 }
 
 impl PartialOrd for IdView<'_> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         Some(self.id.cmp(&other.id))
     }
 }
@@ -113,24 +113,24 @@ impl<'a, T> PartialOrd<Component<'a, T>> for IdView<'a>
 where
     T: ComponentId,
 {
-    fn partial_cmp(&self, other: &Component<'a, T>) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Component<'a, T>) -> Option<core::cmp::Ordering> {
         Some(self.id.0.cmp(&other.base.entity.id.0))
     }
 }
 
 impl<'a> PartialOrd<UntypedComponent<'a>> for IdView<'a> {
-    fn partial_cmp(&self, other: &UntypedComponent<'a>) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &UntypedComponent<'a>) -> Option<core::cmp::Ordering> {
         Some(self.id.0.cmp(&other.entity.id.0))
     }
 }
 
 impl Ord for IdView<'_> {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         self.id.cmp(&other.id)
     }
 }
 
-impl std::ops::Deref for IdView<'_> {
+impl core::ops::Deref for IdView<'_> {
     type Target = u64;
 
     #[inline]

@@ -1,5 +1,5 @@
 #![doc(hidden)]
-use std::fmt::{Display, Formatter};
+use core::fmt::{Display, Formatter};
 
 #[doc(hidden)]
 /// Enum representing the error codes that can be used by `ecs_asserts` and `ecs_abort`
@@ -41,7 +41,7 @@ pub enum FlecsErrorCode {
 }
 
 impl Display for FlecsErrorCode {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         write!(
             f,
             "{}",
@@ -142,7 +142,7 @@ macro_rules! ecs_assert {
             if $arg.is_null() {
                 "<null>"
             } else {
-                unsafe { std::ffi::CStr::from_ptr($arg).to_str().unwrap_or("<invalid>") }
+                unsafe { core::ffi::CStr::from_ptr($arg).to_str().unwrap_or("<invalid>") }
             }
         );
     };

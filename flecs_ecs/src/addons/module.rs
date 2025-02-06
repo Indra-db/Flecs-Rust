@@ -82,7 +82,7 @@ impl World {
         } else {
             let id = self.entity_from_id(register_componment_data_explicit::<T, true>(
                 self.raw_world.as_ptr(),
-                std::ptr::null(),
+                core::ptr::null(),
             ));
             let id_u64 = *id.id();
             let index = T::index() as usize;
@@ -91,7 +91,7 @@ impl World {
             #[cfg(feature = "flecs_meta")]
             {
                 self.components_map()
-                    .insert(std::any::TypeId::of::<Self>(), id_u64);
+                    .insert(core::any::TypeId::of::<Self>(), id_u64);
             }
             id
         };
@@ -147,6 +147,11 @@ impl World {
     pub fn module<M: ComponentId>(&self, name: &str) -> EntityView {
         let comp = self.component::<M>();
         let id = comp.id();
+
+        if let Some(existing) = self.try_lookup_recursive(name) {
+            self.set_scope_id(existing);
+            return existing;
+        }
 
         if !name.is_empty() {
             let name = compact_str::format_compact!("{}\0", name);

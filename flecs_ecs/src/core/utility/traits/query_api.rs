@@ -1,4 +1,4 @@
-use std::ffi::c_char;
+use core::ffi::c_char;
 
 use flecs_ecs::core::*;
 use flecs_ecs::sys;
@@ -538,7 +538,7 @@ where
         FuncEach: FnMut(T::TupleType<'_>),
     {
         let mut iter = self.retrieve_iter();
-        iter.callback_ctx = &mut func_each as *mut _ as *mut std::ffi::c_void;
+        iter.callback_ctx = &mut func_each as *mut _ as *mut core::ffi::c_void;
         iter.callback = Some(
             __internal_query_execute_each::<T, FuncEach>
                 as unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t),
@@ -547,7 +547,7 @@ where
         iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
         func(iter_t);
         iter.callback = None;
-        iter.callback_ctx = std::ptr::null_mut();
+        iter.callback_ctx = core::ptr::null_mut();
     }
 
     /// Run iterator with each entity forwarding.
@@ -634,7 +634,7 @@ where
         FuncEachEntity: FnMut(EntityView, T::TupleType<'_>),
     {
         let mut iter = self.retrieve_iter();
-        iter.callback_ctx = &mut func_each as *mut _ as *mut std::ffi::c_void;
+        iter.callback_ctx = &mut func_each as *mut _ as *mut core::ffi::c_void;
         iter.callback = Some(
             __internal_query_execute_each_entity::<T, FuncEachEntity>
                 as unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t),
@@ -643,7 +643,7 @@ where
         iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
         func(iter_t);
         iter.callback = None;
-        iter.callback_ctx = std::ptr::null_mut();
+        iter.callback_ctx = core::ptr::null_mut();
     }
 
     /// Get the entity of the current query
@@ -757,7 +757,7 @@ where
         let query = self.query_ptr();
         let result: *mut c_char = unsafe { sys::ecs_query_str(query as *const _) };
         let rust_string =
-            String::from(unsafe { std::ffi::CStr::from_ptr(result).to_str().unwrap() });
+            String::from(unsafe { core::ffi::CStr::from_ptr(result).to_str().unwrap() });
         unsafe {
             if let Some(free_func) = sys::ecs_os_api.free_ {
                 free_func(result as *mut _);
@@ -782,7 +782,7 @@ where
         let query = self.query_ptr();
         let result: *mut c_char = unsafe { sys::ecs_query_plan(query as *const _) };
         let rust_string =
-            String::from(unsafe { std::ffi::CStr::from_ptr(result).to_str().unwrap() });
+            String::from(unsafe { core::ffi::CStr::from_ptr(result).to_str().unwrap() });
         unsafe {
             if let Some(free_func) = sys::ecs_os_api.free_ {
                 free_func(result as *mut _);
@@ -1266,7 +1266,7 @@ where
     fn to_json(&self, desc: Option<&crate::prelude::json::IterToJsonDesc>) -> Option<String> {
         let desc_ptr = desc
             .map(|d| d as *const crate::prelude::json::IterToJsonDesc)
-            .unwrap_or(std::ptr::null());
+            .unwrap_or(core::ptr::null());
 
         let mut iter = self.retrieve_iter();
 
@@ -1275,11 +1275,11 @@ where
             if json_ptr.is_null() {
                 return None;
             }
-            let json = std::ffi::CStr::from_ptr(json_ptr)
+            let json = core::ffi::CStr::from_ptr(json_ptr)
                 .to_str()
                 .unwrap()
                 .to_string();
-            sys::ecs_os_api.free_.expect("os api is missing")(json_ptr as *mut std::ffi::c_void);
+            sys::ecs_os_api.free_.expect("os api is missing")(json_ptr as *mut core::ffi::c_void);
             Some(json)
         }
     }

@@ -1,6 +1,6 @@
 //! addon for running the main application loop.
 
-use std::ffi::c_void;
+use core::ffi::c_void;
 
 use crate::core::*;
 use crate::sys;

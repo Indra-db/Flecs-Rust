@@ -20,7 +20,7 @@ pub struct FlecsNoneDefaultDummy;
 pub struct FlecsNoneCloneDummy;
 
 pub struct ConditionalTypeSelector<const B: bool, T> {
-    phantom: std::marker::PhantomData<T>,
+    phantom: core::marker::PhantomData<T>,
 }
 
 pub struct ConditionalTypePairSelector<T, First, Second>
@@ -28,5 +28,5 @@ where
     First: ComponentId,
     Second: ComponentId,
 {
-    phantom: std::marker::PhantomData<(T, First, Second)>,
+    phantom: core::marker::PhantomData<(T, First, Second)>,
 }

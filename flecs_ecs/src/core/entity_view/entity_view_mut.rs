@@ -1,4 +1,4 @@
-use std::os::raw::c_void;
+use core::ffi::c_void;
 
 use flecs_ecs::core::*;
 use sys::EcsIsA;
@@ -1132,7 +1132,7 @@ impl<'a> EntityView<'a> {
     /// Removes the name of the entity.
     pub fn remove_name(self) -> Self {
         unsafe {
-            sys::ecs_set_name(self.world.world_ptr_mut(), *self.id, std::ptr::null());
+            sys::ecs_set_name(self.world.world_ptr_mut(), *self.id, core::ptr::null());
         }
         self
     }
@@ -1480,7 +1480,7 @@ impl<'a> EntityView<'a> {
     pub fn modified<T: ComponentOrPairId>(&self) {
         const {
             assert!(
-                std::mem::size_of::<T::CastType>() != 0,
+                core::mem::size_of::<T::CastType>() != 0,
                 "cannot modify zero-sized-type / tag components"
             );
         };
@@ -1507,10 +1507,10 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity::modified")]
     pub fn modified_first<First: ComponentId>(self, second: impl Into<Entity>) {
         ecs_assert!(
-            std::mem::size_of::<First>() != 0,
+            core::mem::size_of::<First>() != 0,
             FlecsErrorCode::InvalidParameter,
             "invalid type: {}",
-            std::any::type_name::<First>()
+            core::any::type_name::<First>()
         );
 
         self.modified_id((First::id(self.world), second.into()));

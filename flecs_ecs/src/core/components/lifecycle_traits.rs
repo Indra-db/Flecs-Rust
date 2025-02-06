@@ -45,7 +45,7 @@
 // Note: C does the same, where the user needs to opt in for non trivial types. We can do the same.
 // Note2: zerobit pattern
 
-use std::{ffi::c_void, mem::MaybeUninit, ptr};
+use core::{ffi::c_void, mem::MaybeUninit, ptr};
 
 use crate::core::*;
 use crate::sys;
@@ -176,8 +176,8 @@ extern "C-unwind" fn copy<T: Clone>(
         unsafe {
             let src_value = &*(src_arr.offset(i)); //get value of src
             let dst_value = dst_arr.offset(i); // get ptr to dest
-            std::ptr::drop_in_place(dst_value); //calls destructor
-            std::ptr::write(dst_value, src_value.clone()); //overwrite the memory of dest with new value
+            core::ptr::drop_in_place(dst_value); //calls destructor
+            core::ptr::write(dst_value, src_value.clone()); //overwrite the memory of dest with new value
         }
     }
 }
@@ -206,7 +206,7 @@ extern "C-unwind" fn copy_ctor<T: Clone>(
         unsafe {
             let src_value = &*(src_arr.offset(i)); //get value of src
             let dst_value = dst_arr.offset(i); // get ptr to dest
-            std::ptr::write(dst_value, src_value.clone()); //overwrite the memory of dest with new value
+            core::ptr::write(dst_value, src_value.clone()); //overwrite the memory of dest with new value
         }
     }
 }
@@ -216,7 +216,7 @@ extern "C-unwind" fn panic_ctor<T>(
     _count: i32,
     _type_info: *const sys::ecs_type_info_t,
 ) {
-    panic!("Default is not implemented for type {} which requires drop and it's being used in an operation which calls the constructor", std::any::type_name::<T>());
+    panic!("Default is not implemented for type {} which requires drop and it's being used in an operation which calls the constructor", core::any::type_name::<T>());
 }
 
 extern "C-unwind" fn panic_copy<T>(
@@ -225,7 +225,7 @@ extern "C-unwind" fn panic_copy<T>(
     _count: i32,
     _type_info: *const sys::ecs_type_info_t,
 ) {
-    panic!("Clone is not implemented for type {} and it's being used in a copy / duplicate operation such as component overriding or duplicating entities / components or prefab copying", std::any::type_name::<T>());
+    panic!("Clone is not implemented for type {} and it's being used in a copy / duplicate operation such as component overriding or duplicating entities / components or prefab copying", core::any::type_name::<T>());
 }
 
 /// This is the generic move for non-trivial types
@@ -253,11 +253,11 @@ extern "C-unwind" fn move_dtor<T>(
             let src_value = src_arr.offset(i); //get value of src
             let dst_value = dst_arr.offset(i); // get ptr to dest
 
-            std::ptr::drop_in_place(dst_value); //calls destructor on dest
+            core::ptr::drop_in_place(dst_value); //calls destructor on dest
 
             //memcpy the bytes of src to dest
             //src value and dest value point to the same thing
-            std::ptr::copy_nonoverlapping(src_value, dst_value, 1);
+            core::ptr::copy_nonoverlapping(src_value, dst_value, 1);
         }
     }
 }
@@ -284,7 +284,7 @@ extern "C-unwind" fn move_ctor<T>(
         //this is safe because src will not get dropped and dst will get dropped
         unsafe {
             // memcpy the bytes from src to dst
-            std::ptr::copy_nonoverlapping(src_arr.offset(i), dst_arr.offset(i), 1);
+            core::ptr::copy_nonoverlapping(src_arr.offset(i), dst_arr.offset(i), 1);
         }
     }
 }
@@ -305,14 +305,14 @@ extern "C-unwind" fn ctor_move_dtor<T>(
         //this is safe because src will not get dropped and dst will get dropped
         unsafe {
             // memcpy the bytes from src to dst
-            std::ptr::copy_nonoverlapping(src_arr.offset(i), dst_arr.offset(i), 1);
+            core::ptr::copy_nonoverlapping(src_arr.offset(i), dst_arr.offset(i), 1);
         }
     }
 }
 
 fn check_type_info<T>(_type_info: *const sys::ecs_type_info_t) -> bool {
     if !_type_info.is_null() {
-        unsafe { (*_type_info).size == std::mem::size_of::<T>() as i32 }
+        unsafe { (*_type_info).size == core::mem::size_of::<T>() as i32 }
     } else {
         true
     }
@@ -320,7 +320,7 @@ fn check_type_info<T>(_type_info: *const sys::ecs_type_info_t) -> bool {
 
 mod tests {
     #![allow(unused_imports)]
-    use std::{mem::MaybeUninit, os::raw::c_void, vec};
+    use core::{ffi::c_void, mem::MaybeUninit};
 
     use crate::core::lifecycle_traits::move_dtor;
 
@@ -353,7 +353,7 @@ mod tests {
                 &mut moved_to as *mut _ as *mut c_void,
                 &mut original as *mut _ as *mut c_void,
                 1,
-                std::ptr::null(),
+                core::ptr::null(),
             );
 
             assert_eq!(original.vec, vec_check); // Original should have remained unchanged
@@ -365,7 +365,7 @@ mod tests {
             assert_eq!(moved_to.value, val_check);
 
             // forget original as that's what happens in C
-            std::mem::forget(original);
+            core::mem::forget(original);
         }
 
         // Moved to should have not been dropped despite original being out of scope
@@ -389,7 +389,7 @@ mod tests {
         //     &mut moved_to as *mut _ as *mut c_void,
         //     &mut original as *mut _ as *mut c_void,
         //     1,
-        //     std::ptr::null(),
+        //     core::ptr::null(),
         // );
 
         // moved_to.vec.push(4);
@@ -419,7 +419,7 @@ mod tests {
         //     &mut copied_to as *mut _ as *mut c_void,
         //     &original as *const _ as *const c_void,
         //     1,
-        //     std::ptr::null(),
+        //     core::ptr::null(),
         // );
 
         // assert_eq!(original.vec, vec![0, 1, 2, 3]); // Original should remain unchanged
@@ -448,7 +448,7 @@ mod tests {
         //     &mut copied_to as *mut _ as *mut c_void,
         //     &original as *const _ as *const c_void,
         //     1,
-        //     std::ptr::null(),
+        //     core::ptr::null(),
         // );
 
         // copied_to.vec.push(4);

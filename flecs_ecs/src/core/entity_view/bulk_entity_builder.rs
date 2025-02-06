@@ -7,7 +7,7 @@ use crate::sys;
 /// optionally adding components and setting data for them.
 pub struct BulkEntityBuilder<'a> {
     desc: sys::ecs_bulk_desc_t,
-    data: [*mut std::ffi::c_void; sys::FLECS_ID_DESC_MAX as usize],
+    data: [*mut core::ffi::c_void; sys::FLECS_ID_DESC_MAX as usize],
     world: WorldRef<'a>,
     current_id_index: u8,
 }
@@ -34,13 +34,13 @@ impl<'a> BulkEntityBuilder<'a> {
             world: world.world(),
             desc: sys::ecs_bulk_desc_t {
                 _canary: 0,
-                entities: std::ptr::null_mut(),
+                entities: core::ptr::null_mut(),
                 count: count as i32,
                 ids: [0; sys::FLECS_ID_DESC_MAX as usize],
-                data: std::ptr::null_mut(),
-                table: std::ptr::null_mut(),
+                data: core::ptr::null_mut(),
+                table: core::ptr::null_mut(),
             },
-            data: [std::ptr::null_mut(); sys::FLECS_ID_DESC_MAX as usize],
+            data: [core::ptr::null_mut(); sys::FLECS_ID_DESC_MAX as usize],
             current_id_index: 0,
         }
     }
@@ -77,10 +77,10 @@ impl<'a> BulkEntityBuilder<'a> {
                 entities: entities.as_ptr() as *mut _,
                 count: entities.len() as i32,
                 ids: [0; sys::FLECS_ID_DESC_MAX as usize],
-                data: std::ptr::null_mut(),
-                table: std::ptr::null_mut(),
+                data: core::ptr::null_mut(),
+                table: core::ptr::null_mut(),
             },
-            data: [std::ptr::null_mut(); sys::FLECS_ID_DESC_MAX as usize],
+            data: [core::ptr::null_mut(); sys::FLECS_ID_DESC_MAX as usize],
             current_id_index: 0,
         }
     }
@@ -201,7 +201,7 @@ impl<'a> BulkEntityBuilder<'a> {
 
         self.desc.ids[self.current_id_index as usize] = id;
         self.data[self.current_id_index as usize] =
-            component_data.as_ptr() as *mut std::ffi::c_void;
+            component_data.as_ptr() as *mut core::ffi::c_void;
         self.current_id_index += 1;
         self
     }
@@ -232,7 +232,7 @@ impl<'a> BulkEntityBuilder<'a> {
     pub fn build(&mut self) -> Vec<Entity> {
         self.desc.data = self.data.as_ptr() as *mut _;
         let entities = unsafe { sys::ecs_bulk_init(self.world.world_ptr_mut(), &self.desc) };
-        unsafe { std::slice::from_raw_parts(entities, self.desc.count as usize) }
+        unsafe { core::slice::from_raw_parts(entities, self.desc.count as usize) }
             .iter()
             .map(|&e| Entity::from(e))
             .collect::<Vec<_>>()
@@ -365,7 +365,7 @@ impl<'a> BulkEntityBuilder<'a> {
 
         self.desc.table = unsafe { table.table.as_mut() };
         let entities = self.build();
-        self.desc.table = std::ptr::null_mut();
+        self.desc.table = core::ptr::null_mut();
         entities
     }
 

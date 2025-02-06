@@ -1,7 +1,7 @@
 //! Builder for [`Query`].
 
-use std::ffi::c_void;
-use std::mem::ManuallyDrop;
+use core::ffi::c_void;
+use core::mem::ManuallyDrop;
 
 use crate::core::internals::*;
 use crate::core::*;
@@ -42,7 +42,7 @@ where
     pub(crate) desc: sys::ecs_query_desc_t,
     pub(crate) term_builder: TermBuilder,
     world: WorldRef<'a>,
-    _phantom: std::marker::PhantomData<T>,
+    _phantom: core::marker::PhantomData<T>,
 }
 
 bitflags::bitflags! {
@@ -84,7 +84,7 @@ where
             desc: Default::default(),
             world: world.world(),
             term_builder: Default::default(),
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         };
 
         T::populate(&mut obj);
@@ -112,7 +112,7 @@ where
             desc,
             term_builder: Default::default(),
             world: world.world(),
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         };
 
         let entity_desc = sys::ecs_entity_desc_t {
@@ -147,7 +147,7 @@ where
             desc: *desc,
             term_builder: Default::default(),
             world: world.world(),
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         };
 
         obj
@@ -180,7 +180,7 @@ where
                 str_ptrs_to_free: Vec::new(),
             },
             world: world.world(),
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         };
 
         T::populate(&mut obj);
@@ -276,7 +276,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
             name: name.as_ptr() as *const _,
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
-            ..std::default::Default::default()
+            ..core::default::Default::default()
         };
         let entity_field_ref = &mut self.query_desc_mut().entity;
         if *entity_field_ref != 0 {
@@ -868,13 +868,13 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         Self: QueryBuilderImpl<'a>,
     {
         let cmp: sys::ecs_order_by_action_t = Some(unsafe {
-            std::mem::transmute::<
+            core::mem::transmute::<
                 extern "C-unwind" fn(Entity, &T, Entity, &T) -> i32,
                 unsafe extern "C-unwind" fn(
                     u64,
-                    *const std::ffi::c_void,
+                    *const core::ffi::c_void,
                     u64,
-                    *const std::ffi::c_void,
+                    *const core::ffi::c_void,
                 ) -> i32,
             >(compare.to_extern_fn())
         });
@@ -913,13 +913,13 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ) -> &mut Self {
         let desc = self.query_desc_mut();
         let cmp: sys::ecs_order_by_action_t = Some(unsafe {
-            std::mem::transmute::<
+            core::mem::transmute::<
                 extern "C-unwind" fn(Entity, *const c_void, Entity, *const c_void) -> i32,
                 unsafe extern "C-unwind" fn(
                     u64,
-                    *const std::ffi::c_void,
+                    *const core::ffi::c_void,
                     u64,
-                    *const std::ffi::c_void,
+                    *const core::ffi::c_void,
                 ) -> i32,
             >(compare.to_extern_fn())
         });
@@ -1086,15 +1086,15 @@ where
 {
     fn to_extern_fn(self) -> extern "C-unwind" fn(Entity, &T, Entity, &T) -> i32 {
         const {
-            assert!(std::mem::size_of::<Self>() == 0);
+            assert!(core::mem::size_of::<Self>() == 0);
         }
-        std::mem::forget(self);
+        core::mem::forget(self);
 
         extern "C-unwind" fn output<F, T>(e1: Entity, e1_data: &T, e2: Entity, e2_data: &T) -> i32
         where
             F: Fn(Entity, &T, Entity, &T) -> i32,
         {
-            (unsafe { std::mem::transmute_copy::<_, F>(&()) })(e1, e1_data, e2, e2_data)
+            (unsafe { core::mem::transmute_copy::<_, F>(&()) })(e1, e1_data, e2, e2_data)
         }
 
         output::<F, T>
@@ -1115,9 +1115,9 @@ where
         self,
     ) -> extern "C-unwind" fn(Entity, *const c_void, Entity, *const c_void) -> i32 {
         const {
-            assert!(std::mem::size_of::<Self>() == 0);
+            assert!(core::mem::size_of::<Self>() == 0);
         }
-        std::mem::forget(self);
+        core::mem::forget(self);
 
         extern "C-unwind" fn output<F>(
             e1: Entity,
@@ -1128,7 +1128,7 @@ where
         where
             F: Fn(Entity, *const c_void, Entity, *const c_void) -> i32,
         {
-            (unsafe { std::mem::transmute_copy::<_, F>(&()) })(e1, e1_data, e2, e2_data)
+            (unsafe { core::mem::transmute_copy::<_, F>(&()) })(e1, e1_data, e2, e2_data)
         }
 
         output::<F>

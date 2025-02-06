@@ -1,7 +1,6 @@
-use std::{ffi::c_void, marker::PhantomData, ops::Deref, ptr::NonNull};
-
 use crate::core::*;
 use crate::sys;
+use core::{ffi::c_void, marker::PhantomData, ops::Deref, ptr::NonNull};
 
 /// Implementations of this trait can provide a reference to a world to operations
 /// needing a world. This allows for easily extracting the world from things that
@@ -117,7 +116,7 @@ impl<'a> From<&'a mut World> for WorldRef<'a> {
 impl<'a> From<&'a *mut sys::ecs_world_t> for &WorldRef<'a> {
     #[inline(always)]
     fn from(value: &'a *mut sys::ecs_world_t) -> Self {
-        unsafe { std::mem::transmute::<&'a *mut sys::ecs_world_t, &WorldRef>(value) }
+        unsafe { core::mem::transmute::<&'a *mut sys::ecs_world_t, &WorldRef>(value) }
     }
 }
 
@@ -126,7 +125,7 @@ impl Deref for WorldRef<'_> {
 
     #[inline(always)]
     fn deref(&self) -> &Self::Target {
-        unsafe { std::mem::transmute::<&WorldRef, &World>(self) }
+        unsafe { core::mem::transmute::<&WorldRef, &World>(self) }
     }
 }
 

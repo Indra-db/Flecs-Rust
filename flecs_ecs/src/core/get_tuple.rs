@@ -1,7 +1,7 @@
 #![allow(unused)]
 
-use std::ffi::c_void;
-use std::marker::PhantomData;
+use core::ffi::c_void;
+use core::marker::PhantomData;
 
 use crate::core::*;
 use crate::sys;
@@ -32,7 +32,7 @@ impl<T: GetTuple, const LEN: usize> GetComponentPointers<T> for ComponentsData<T
         entity: Entity,
         record: *const ecs_record_t,
     ) -> Self {
-        let mut array_components = [std::ptr::null::<c_void>() as *mut c_void; LEN];
+        let mut array_components = [core::ptr::null::<c_void>() as *mut c_void; LEN];
 
         let has_all_components = T::populate_array_ptrs::<SHOULD_PANIC>(
             world,
@@ -220,7 +220,7 @@ where
                         !constant_value.is_null(),
                         FlecsErrorCode::InternalError,
                         "missing enum constant value {}",
-                        std::any::type_name::<A>()
+                        core::any::type_name::<A>()
                     );
 
                     unsafe { constant_value }
@@ -236,7 +236,7 @@ where
                      !constant_value.is_null(),
                      FlecsErrorCode::InternalError,
                      "missing enum constant value {}",
-                     std::any::type_name::<A>()
+                     core::any::type_name::<A>()
                  );
 
                  unsafe { constant_value }
@@ -253,7 +253,7 @@ where
          
         
         if component_ptr.is_null() {
-            components[0] = std::ptr::null_mut();
+            components[0] = core::ptr::null_mut();
             has_all_components = false;
             if SHOULD_PANIC && !A::IS_OPTION {
                 ecs_assert!(false, FlecsErrorCode::OperationFailed,
@@ -261,13 +261,13 @@ where
 with parameters: `{}`. 
 Use `try_get` variant to avoid assert/panicking if you want to handle the error 
 or use `Option<{}> instead to handle individual cases.",
-std::any::type_name::<A::OnlyType>(), std::any::type_name::<Self>(), std::any::type_name::<A::ActualType<'a>>());
+core::any::type_name::<A::OnlyType>(), core::any::type_name::<Self>(), core::any::type_name::<A::ActualType<'a>>());
 panic!("Component `{}` not found on `EntityView::get` operation 
 with parameters: `{}`. 
 Use `try_get` variant to avoid assert/panicking if 
 you want to handle the error or use `Option<{}> 
 instead to handle individual cases.",
-std::any::type_name::<A::OnlyType>(), std::any::type_name::<Self>(), std::any::type_name::<A::ActualType<'a>>());
+core::any::type_name::<A::OnlyType>(), core::any::type_name::<Self>(), core::any::type_name::<A::ActualType<'a>>());
                 }
             } else { 
                 components[0] = component_ptr;
@@ -379,7 +379,7 @@ macro_rules! impl_get_tuple {
                                     !constant_value.is_null(),
                                     FlecsErrorCode::InternalError,
                                     "missing enum constant value {}",
-                                    std::any::type_name::<$t>()
+                                    core::any::type_name::<$t>()
                                 );
 
                                 unsafe { constant_value }
@@ -395,7 +395,7 @@ macro_rules! impl_get_tuple {
                                  !constant_value.is_null(),
                                  FlecsErrorCode::InternalError,
                                  "missing enum constant value {}",
-                                 std::any::type_name::<$t>()
+                                 core::any::type_name::<$t>()
                              );
 
                              unsafe { constant_value }
@@ -414,7 +414,7 @@ macro_rules! impl_get_tuple {
                     if !component_ptr.is_null() {
                         components[index] = component_ptr;
                     } else {
-                        components[index] = std::ptr::null_mut();
+                        components[index] = core::ptr::null_mut();
                         if !$t::IS_OPTION {
                             if SHOULD_PANIC {
                                 ecs_assert!(false, FlecsErrorCode::OperationFailed,
@@ -422,13 +422,13 @@ macro_rules! impl_get_tuple {
 with parameters: `{}`. 
 Use `try_get` variant to avoid assert/panicking if you want to handle 
 the error or use `Option<{}> instead to handle individual cases.",
-std::any::type_name::<$t::OnlyType>(), std::any::type_name::<Self>(),
-std::any::type_name::<$t::ActualType<'a>>());
+core::any::type_name::<$t::OnlyType>(), core::any::type_name::<Self>(),
+core::any::type_name::<$t::ActualType<'a>>());
 panic!("Component `{}` not found on `EntityView::get`operation 
 with parameters: `{}`. 
 Use `try_get` variant to avoid assert/panicking if you want to handle the error 
-or use `Option<{}> instead to handle individual cases.", std::any::type_name::<$t::OnlyType>(),
-std::any::type_name::<Self>(), std::any::type_name::<$t::ActualType<'a>>());
+or use `Option<{}> instead to handle individual cases.", core::any::type_name::<$t::OnlyType>(),
+core::any::type_name::<Self>(), core::any::type_name::<$t::ActualType<'a>>());
                             }
                             has_all_components = false;
                         }

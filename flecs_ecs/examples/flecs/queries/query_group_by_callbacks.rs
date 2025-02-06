@@ -1,8 +1,8 @@
 use crate::z_ignore_test_common::*;
 
+use core::ffi::c_void;
 use flecs_ecs::prelude::*;
 use flecs_ecs::sys;
-use std::ffi::c_void;
 use std::sync::Mutex;
 
 #[derive(Debug, Component)]

@@ -1,5 +1,5 @@
 //! Class that extends the capabilities of a [`Query`] by providing additional operations on the query's iterator.
-use std::ffi::c_void;
+use core::ffi::c_void;
 
 use crate::core::*;
 use crate::sys;
@@ -10,7 +10,7 @@ where
 {
     iter: sys::ecs_iter_t,
     iter_next: unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t) -> bool,
-    _phantom: std::marker::PhantomData<&'a (P, T)>,
+    _phantom: core::marker::PhantomData<&'a (P, T)>,
 }
 
 impl<P, T> QueryIter<'_, P, T>
@@ -24,7 +24,7 @@ where
         Self {
             iter,
             iter_next,
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         }
     }
 

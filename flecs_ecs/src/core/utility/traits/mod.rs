@@ -22,7 +22,7 @@ use crate::core::{ImplementsClone, ImplementsDefault};
 pub mod private {
     use crate::core::*;
     use crate::sys;
-    use std::ffi::c_void;
+    use core::ffi::c_void;
 
     #[allow(non_camel_case_types)]
     #[doc(hidden)]

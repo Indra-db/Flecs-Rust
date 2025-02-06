@@ -1,5 +1,5 @@
 //! Contains flecs traits and pre-registered components.
-use std::ops::Deref;
+use core::ops::Deref;
 
 use crate::core::*;
 use crate::sys;
@@ -96,8 +96,8 @@ macro_rules! create_pre_registered_component {
 
             #[inline(always)]
             fn index() -> u32 {
-                static INDEX: std::sync::atomic::AtomicU32 =
-                    std::sync::atomic::AtomicU32::new(u32::MAX);
+                static INDEX: core::sync::atomic::AtomicU32 =
+                    core::sync::atomic::AtomicU32::new(u32::MAX);
                 Self::get_or_init_index(&INDEX)
             }
         }
@@ -532,16 +532,16 @@ pub mod rest {
         #[doc = "< Port of server (optional, default = 27750)"]
         pub port: u16,
         #[doc = "< Interface address (optional, default = 0.0.0.0)"]
-        pub ipaddr: *mut ::std::os::raw::c_char,
-        pub impl_: *mut ::std::os::raw::c_void,
+        pub ipaddr: *mut ::core::ffi::c_char,
+        pub impl_: *mut ::core::ffi::c_void,
     }
 
     impl Default for Rest {
         fn default() -> Self {
             Self {
                 port: Default::default(),
-                ipaddr: std::ptr::null_mut::<std::os::raw::c_char>(),
-                impl_: std::ptr::null_mut::<std::os::raw::c_void>(),
+                ipaddr: core::ptr::null_mut::<core::ffi::c_char>(),
+                impl_: core::ptr::null_mut::<core::ffi::c_void>(),
             }
         }
     }
@@ -578,7 +578,7 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentId f
 
     #[inline(always)]
     fn index() -> u32 {
-        static INDEX: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(u32::MAX);
+        static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);
         Self::get_or_init_index(&INDEX)
     }
 

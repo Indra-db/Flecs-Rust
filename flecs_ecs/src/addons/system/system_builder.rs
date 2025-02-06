@@ -13,7 +13,7 @@ where
     pub(crate) desc: sys::ecs_system_desc_t,
     term_builder: TermBuilder,
     world: WorldRef<'a>,
-    _phantom: std::marker::PhantomData<&'a T>,
+    _phantom: core::marker::PhantomData<&'a T>,
 }
 
 impl<'a, T> SystemBuilder<'a, T>
@@ -26,7 +26,7 @@ where
             desc: Default::default(),
             term_builder: TermBuilder::default(),
             world: world.into(),
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         };
 
         obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world_ptr_mut(), &Default::default()) };
@@ -51,7 +51,7 @@ where
             desc,
             term_builder: TermBuilder::default(),
             world: world.into(),
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         };
 
         if obj.desc.entity == 0 {
@@ -82,7 +82,7 @@ where
             desc: Default::default(),
             term_builder: TermBuilder::default(),
             world: world.into(),
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         };
 
         let entity_desc: sys::ecs_entity_desc_t = sys::ecs_entity_desc_t {
@@ -251,7 +251,7 @@ where
     fn build(&mut self) -> Self::BuiltType {
         let system = System::new(self.world(), self.desc);
         for s in self.term_builder.str_ptrs_to_free.iter_mut() {
-            unsafe { std::mem::ManuallyDrop::drop(s) };
+            unsafe { core::mem::ManuallyDrop::drop(s) };
         }
         self.term_builder.str_ptrs_to_free.clear();
         system

@@ -1,6 +1,6 @@
 //! builder for [`Observer`].
 
-use std::{default, ffi::c_void};
+use core::{default, ffi::c_void};
 
 use crate::core::internals::*;
 use crate::core::private::internal_SystemAPI;
@@ -18,7 +18,7 @@ pub struct ObserverBuilder<'a, P = (), T: QueryTuple = ()> {
     term_builder: TermBuilder,
     world: WorldRef<'a>,
     event_count: usize,
-    _phantom: std::marker::PhantomData<&'a (T, P)>,
+    _phantom: core::marker::PhantomData<&'a (T, P)>,
 }
 
 impl<'a, P: ComponentId, T: QueryTuple> ObserverBuilder<'a, P, T> {
@@ -39,7 +39,7 @@ impl<'a, P: ComponentId, T: QueryTuple> ObserverBuilder<'a, P, T> {
             term_builder: TermBuilder::default(),
             event_count: 1,
             world: world.world(),
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         };
 
         obj.desc.events[0] = P::UnderlyingType::id(world.world());
@@ -70,7 +70,7 @@ impl<'a, P: ComponentId, T: QueryTuple> ObserverBuilder<'a, P, T> {
             term_builder: TermBuilder::default(),
             event_count: 1,
             world: world.world(),
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         };
         let entity_desc: sys::ecs_entity_desc_t = sys::ecs_entity_desc_t {
             name: name.as_ptr() as *const _,
@@ -95,7 +95,7 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
             term_builder: TermBuilder::default(),
             event_count: 0,
             world: world.world(),
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         };
 
         obj.desc.entity =
@@ -125,7 +125,7 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
             term_builder: TermBuilder::default(),
             event_count: 0,
             world: world.world(),
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         };
 
         if obj.desc.entity == 0 {
@@ -169,7 +169,7 @@ impl<P, T: QueryTuple> ObserverBuilder<'_, P, T> {
         self.desc.events[self.event_count] = event;
         self.event_count += 1;
         // SAFETY: Same layout
-        unsafe { std::mem::transmute(self) }
+        unsafe { core::mem::transmute(self) }
     }
 
     /// Specify the event(s) for when the observer should run.
@@ -190,7 +190,7 @@ impl<P, T: QueryTuple> ObserverBuilder<'_, P, T> {
         self.desc.events[self.event_count] = id;
         self.event_count += 1;
         // SAFETY: Same layout
-        unsafe { std::mem::transmute(self) }
+        unsafe { core::mem::transmute(self) }
     }
 
     /// Invoke observer for anything that matches its query on creation
@@ -255,7 +255,7 @@ where
     fn build(&mut self) -> Self::BuiltType {
         let observer = Observer::new(self.world(), self.desc);
         for s in self.term_builder.str_ptrs_to_free.iter_mut() {
-            unsafe { std::mem::ManuallyDrop::drop(s) };
+            unsafe { core::mem::ManuallyDrop::drop(s) };
         }
         self.term_builder.str_ptrs_to_free.clear();
         observer

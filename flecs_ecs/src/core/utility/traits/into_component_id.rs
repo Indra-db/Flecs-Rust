@@ -41,7 +41,7 @@ where
 
     #[inline]
     fn name() -> &'static str {
-        std::any::type_name::<T>()
+        core::any::type_name::<T>()
     }
 }
 
@@ -68,6 +68,6 @@ where
 
     #[inline]
     fn name() -> &'static str {
-        std::any::type_name::<(T, U)>()
+        core::any::type_name::<(T, U)>()
     }
 }

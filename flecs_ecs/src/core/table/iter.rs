@@ -1,6 +1,6 @@
 //! Iterators used to iterate over tables and table rows in [`Query`], [`System`][crate::addons::system::System] and [`Observer`].
-use std::marker::PhantomData;
-use std::{ffi::CStr, os::raw::c_void, ptr::NonNull};
+use core::marker::PhantomData;
+use core::{ffi::c_void, ffi::CStr, ptr::NonNull};
 
 use crate::core::*;
 use crate::sys;
@@ -812,7 +812,7 @@ where
     #[doc(alias = "iter::entities")]
     pub fn entities(&self) -> Field<Entity> {
         let slice = unsafe {
-            std::slice::from_raw_parts_mut(
+            core::slice::from_raw_parts_mut(
                 self.iter.entities as *mut Entity,
                 self.iter.count as usize,
             )
@@ -907,12 +907,12 @@ where
             self.count()
         };
         let array =
-            unsafe { sys::ecs_field_w_size(self.iter, std::mem::size_of::<T>(), index) as *mut T };
+            unsafe { sys::ecs_field_w_size(self.iter, core::mem::size_of::<T>(), index) as *mut T };
 
         if array.is_null() {
             return None;
         }
-        let slice = unsafe { std::slice::from_raw_parts_mut(array, count) };
+        let slice = unsafe { core::slice::from_raw_parts_mut(array, count) };
 
         Some(Field::<T>::new(slice, is_shared))
     }
@@ -969,13 +969,13 @@ where
             let array = unsafe {
                 sys::ecs_field_at_w_size(
                     self.iter,
-                    std::mem::size_of::<T::UnderlyingType>(),
+                    core::mem::size_of::<T::UnderlyingType>(),
                     index,
                     row,
                 ) as *mut T::UnderlyingType
             };
 
-            let slice = unsafe { std::slice::from_raw_parts_mut(array, self.count()) };
+            let slice = unsafe { core::slice::from_raw_parts_mut(array, self.count()) };
 
             return Some(Field::<T::UnderlyingType>::new(slice, false));
         }

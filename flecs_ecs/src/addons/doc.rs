@@ -3,8 +3,8 @@
 //! added with the doc module can be retrieved at runtime, and can be used by
 //! tooling such as UIs or documentation frameworks.
 
-use std::ffi::CStr;
-use std::ptr::NonNull;
+use core::ffi::CStr;
+use core::ptr::NonNull;
 
 use crate::core::*;
 use crate::sys;

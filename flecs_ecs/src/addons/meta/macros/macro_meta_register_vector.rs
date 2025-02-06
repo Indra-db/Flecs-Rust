@@ -163,12 +163,12 @@ macro_rules! meta_register_vector_func {
             // Let reflection framework know what kind of struct_type this is
             ts.as_type(world.vector::<$struct_type>());
 
-            // Forward std::vector value to (JSON/...) serializer
+            // Forward core::vector value to (JSON/...) serializer
             ts.serialize(|s: &flecs_ecs::addons::meta::Serializer, data: &Vec<$struct_type>| {
                 let world = unsafe { WorldRef::from_ptr(s.world as *mut flecs_ecs::sys::ecs_world_t) };
                 let id = id!(world, $struct_type);
                 for el in data.iter() {
-                    s.value_id(id, el as *const $struct_type as *const std::ffi::c_void);
+                    s.value_id(id, el as *const $struct_type as *const core::ffi::c_void);
                 }
                 0
             });
@@ -204,12 +204,12 @@ macro_rules! meta_register_vector_func {
                 // Let reflection framework know what kind of struct_type this is
                 ts.as_type(world.vector::<$struct_type>());
 
-                // Forward std::vector value to (JSON/...) serializer
+                // Forward core::vector value to (JSON/...) serializer
                 ts.serialize(|s: &flecs_ecs::addons::meta::Serializer, data: &Vec<$struct_type>| {
                     let world = unsafe { WorldRef::from_ptr(s.world as *mut flecs_ecs::sys::ecs_world_t) };
                     let id = id!(world, $struct_type);
                     for el in data.iter() {
-                        s.value_id(id, el as *const $struct_type as *const std::ffi::c_void);
+                        s.value_id(id, el as *const $struct_type as *const core::ffi::c_void);
                     }
                     0
                 });

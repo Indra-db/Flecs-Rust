@@ -350,13 +350,13 @@ pub fn opaque_option_struct<T: Default>(world: WorldRef) -> Opaque<Option<T>, T>
         match data {
             Some(ref value) => {
                 s.member("Some");
-                s.value_id(id, value as *const T as *const std::ffi::c_void);
+                s.value_id(id, value as *const T as *const core::ffi::c_void);
             }
             None => {
                 s.member("None");
                 s.value_id(
                     id!(world, bool),
-                    &false as *const bool as *const std::ffi::c_void,
+                    &false as *const bool as *const core::ffi::c_void,
                 );
             }
         }
@@ -366,22 +366,22 @@ pub fn opaque_option_struct<T: Default>(world: WorldRef) -> Opaque<Option<T>, T>
     // TODO: try to relax the Default requirement.
     fn ensure_member<T: Default>(
         data: &mut Option<T>,
-        member: *const std::ffi::c_char,
-    ) -> *mut std::ffi::c_void {
-        let member = unsafe { std::ffi::CStr::from_ptr(member) };
+        member: *const core::ffi::c_char,
+    ) -> *mut core::ffi::c_void {
+        let member = unsafe { core::ffi::CStr::from_ptr(member) };
         if member == c"None" {
             *data = None;
             static mut BITBUCKET: bool = false;
             // rust analyzer marks it as error, but builds perfectly fine without.
             #[allow(unused_unsafe)]
-            return unsafe { std::ptr::addr_of_mut!(BITBUCKET) } as *mut _;
+            return unsafe { core::ptr::addr_of_mut!(BITBUCKET) } as *mut _;
         } else if member == c"Some" {
             if data.is_none() {
                 *data = Some(T::default());
             }
             return data.as_mut().unwrap() as *mut _ as *mut _;
         }
-        std::ptr::null_mut()
+        core::ptr::null_mut()
     }
 
     ts.ensure_member(ensure_member::<T>);

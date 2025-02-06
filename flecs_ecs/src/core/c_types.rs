@@ -1,7 +1,7 @@
 #![doc(hidden)]
 #![allow(non_upper_case_globals)]
 
-use std::ffi::CStr;
+use core::ffi::CStr;
 
 use crate::sys;
 
@@ -509,8 +509,8 @@ macro_rules! impl_component_traits_binding_type_w_id {
 
             #[inline(always)]
             fn index() -> u32 {
-                static INDEX: std::sync::atomic::AtomicU32 =
-                    std::sync::atomic::AtomicU32::new(u32::MAX);
+                static INDEX: core::sync::atomic::AtomicU32 =
+                    core::sync::atomic::AtomicU32::new(u32::MAX);
                 Self::get_or_init_index(&INDEX)
             }
             fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
@@ -576,8 +576,8 @@ macro_rules! impl_component_traits_binding_type_w_static_id {
 
             #[inline(always)]
             fn index() -> u32 {
-                static INDEX: std::sync::atomic::AtomicU32 =
-                    std::sync::atomic::AtomicU32::new(u32::MAX);
+                static INDEX: core::sync::atomic::AtomicU32 =
+                    core::sync::atomic::AtomicU32::new(u32::MAX);
                 Self::get_or_init_index(&INDEX)
             }
             fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {

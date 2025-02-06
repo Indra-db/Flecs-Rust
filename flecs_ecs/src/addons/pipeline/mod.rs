@@ -3,7 +3,7 @@
 mod pipeline_builder;
 pub use pipeline_builder::*;
 
-use std::ops::{Deref, DerefMut};
+use core::ops::{Deref, DerefMut};
 
 use crate::core::*;
 use crate::sys;
@@ -16,7 +16,7 @@ where
     T: QueryTuple,
 {
     entity: EntityView<'a>,
-    phantom: std::marker::PhantomData<T>,
+    phantom: core::marker::PhantomData<T>,
 }
 
 impl<'a, T> Deref for Pipeline<'a, T>

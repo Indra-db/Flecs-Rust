@@ -1,8 +1,8 @@
 //! Table column API.
 
-use std::{
+use core::{
+    ffi::c_void,
     ops::{Deref, DerefMut},
-    os::raw::c_void,
 };
 
 use crate::core::*;

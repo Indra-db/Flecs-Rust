@@ -1,5 +1,5 @@
-use std::ops::Deref;
-use std::ptr::addr_of;
+use core::ops::Deref;
+use core::ptr::addr_of;
 
 use crate::addons::create_pre_registered_extern_component;
 use crate::core::*;

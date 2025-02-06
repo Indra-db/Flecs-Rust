@@ -1,4 +1,4 @@
-use std::{
+use core::{
     ffi::{c_void, CStr},
     ops::{Deref, DerefMut},
     ptr::{self, NonNull},
@@ -135,11 +135,11 @@ impl<'a> EntityView<'a> {
             _canary: 0,
             id: 0,
             parent: 0,
-            symbol: std::ptr::null(),
+            symbol: core::ptr::null(),
             use_low_id: false,
-            add: std::ptr::null(),
-            add_expr: std::ptr::null(),
-            set: std::ptr::null(),
+            add: core::ptr::null(),
+            add_expr: core::ptr::null(),
+            set: core::ptr::null(),
         };
         let id = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &desc) };
         Self {
@@ -156,11 +156,11 @@ impl<'a> EntityView<'a> {
             _canary: 0,
             id: 0,
             parent: 0,
-            symbol: std::ptr::null(),
+            symbol: core::ptr::null(),
             use_low_id: false,
-            add: std::ptr::null(),
-            add_expr: std::ptr::null(),
-            set: std::ptr::null(),
+            add: core::ptr::null(),
+            add_expr: core::ptr::null(),
+            set: core::ptr::null(),
         };
         let id = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &desc) };
         Self {
@@ -1546,7 +1546,7 @@ impl<'a> EntityView<'a> {
     ) -> *const First {
         let comp_id = First::id(self.world);
         ecs_assert!(
-            std::mem::size_of::<First>() != 0,
+            core::mem::size_of::<First>() != 0,
             FlecsErrorCode::InvalidParameter,
             "First element is size 0"
         );

@@ -1,7 +1,7 @@
 use crate::core::*;
 use crate::sys;
-use std::mem::ManuallyDrop;
-use std::os::raw::c_char;
+use core::ffi::c_char;
+use core::mem::ManuallyDrop;
 
 /// `MetricBuilder` is a builder pattern for creating metrics.
 pub struct MetricBuilder<'a> {
@@ -118,12 +118,12 @@ impl<'a> MetricBuilder<'a> {
                 FlecsErrorCode::InvalidParameter,
                 "member '{}' not found in type '{}'",
                 name,
-                std::any::type_name::<T>()
+                core::any::type_name::<T>()
             );
             // eprintln!(
             //     "member '{}' not found in type '{}'",
             //     name,
-            //     std::any::type_name::<T>()
+            //     core::any::type_name::<T>()
             // );
             return self;
         }

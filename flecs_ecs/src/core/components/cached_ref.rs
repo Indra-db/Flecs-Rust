@@ -1,6 +1,6 @@
 //! Refs are a fast mechanism for referring to a specific entity/component
 
-use std::{marker::PhantomData, os::raw::c_void, ptr::NonNull};
+use core::{marker::PhantomData, ffi::c_void, ptr::NonNull};
 
 use crate::core::*;
 use crate::sys;
@@ -43,7 +43,7 @@ impl<'a, T: ComponentId + DataComponent> CachedRef<'a, T> {
 
         const {
             assert!(
-                std::mem::size_of::<T>() != 0,
+                core::mem::size_of::<T>() != 0,
                 "Tried to create invalid `CachedRef` type. Cached Ref cannot be created for zero-sized types / tags."
             );
         }

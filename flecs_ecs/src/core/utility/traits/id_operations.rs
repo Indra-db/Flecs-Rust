@@ -123,7 +123,7 @@ pub trait IdOperations<'a>: WorldProvider<'a> + IntoId + Sized + Copy {
         // C string with a static lifetime. The caller must ensure this invariant.
         // ecs_id_ptr never returns null, so we don't need to check for that.
         if let Ok(str) =
-            unsafe { std::ffi::CStr::from_ptr(sys::ecs_id_str(self.world_ptr(), *self.into())) }
+            unsafe { core::ffi::CStr::from_ptr(sys::ecs_id_str(self.world_ptr(), *self.into())) }
                 .to_str()
         {
             str
@@ -159,7 +159,7 @@ pub trait IdOperations<'a>: WorldProvider<'a> + IntoId + Sized + Copy {
         let c_str_ptr = unsafe { sys::ecs_id_str(self.world_ptr(), *self.into()) };
 
         // SAFETY: We assume the C string is valid UTF-8. This is risky if not certain.
-        unsafe { std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(c_str_ptr).to_bytes()) }
+        unsafe { core::str::from_utf8_unchecked(core::ffi::CStr::from_ptr(c_str_ptr).to_bytes()) }
     }
 
     /// Convert role of id to string.
@@ -176,7 +176,7 @@ pub trait IdOperations<'a>: WorldProvider<'a> + IntoId + Sized + Copy {
         // C string with a static lifetime. The caller must ensure this invariant.
         // ecs_role_str never returns null, so we don't need to check for that.
         unsafe {
-            std::ffi::CStr::from_ptr(sys::ecs_id_flag_str(*self.into() & RUST_ecs_id_FLAGS_MASK))
+            core::ffi::CStr::from_ptr(sys::ecs_id_flag_str(*self.into() & RUST_ecs_id_FLAGS_MASK))
         }
         .to_str()
         .unwrap_or({
@@ -209,6 +209,6 @@ pub trait IdOperations<'a>: WorldProvider<'a> + IntoId + Sized + Copy {
         let c_str_ptr = unsafe { sys::ecs_id_flag_str(*self.into() & RUST_ecs_id_FLAGS_MASK) };
 
         // SAFETY: We assume the C string is valid UTF-8. This is risky if not certain.
-        unsafe { std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(c_str_ptr).to_bytes()) }
+        unsafe { core::str::from_utf8_unchecked(core::ffi::CStr::from_ptr(c_str_ptr).to_bytes()) }
     }
 }

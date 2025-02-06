@@ -1,6 +1,6 @@
 //! Registering and working with components
 
-use std::{fmt::Debug, fmt::Display, marker::PhantomData, ops::Deref, os::raw::c_void, ptr};
+use core::{ffi::c_void, fmt::Debug, fmt::Display, marker::PhantomData, ops::Deref, ptr};
 
 use crate::core::*;
 #[cfg(feature = "flecs_meta")]
@@ -15,13 +15,13 @@ pub struct Component<'a, T> {
 }
 
 impl<T> Display for Component<'_, T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.base.entity)
     }
 }
 
 impl<T> Debug for Component<'_, T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:?}", self.base.entity)
     }
 }
@@ -218,7 +218,7 @@ impl<'a, T> Component<'a, T> {
             type_hooks.on_add.is_none(),
             FlecsErrorCode::InvalidOperation,
             "on_add hook already set for component {}",
-            std::any::type_name::<T>()
+            core::any::type_name::<T>()
         );
 
         let binding_ctx = Self::get_binding_context(&mut type_hooks);
@@ -247,7 +247,7 @@ impl<'a, T> Component<'a, T> {
             type_hooks.on_remove.is_none(),
             FlecsErrorCode::InvalidOperation,
             "on_remove hook already set for component {}",
-            std::any::type_name::<T>()
+            core::any::type_name::<T>()
         );
 
         let binding_ctx = Self::get_binding_context(&mut type_hooks);
@@ -276,7 +276,7 @@ impl<'a, T> Component<'a, T> {
             type_hooks.on_set.is_none(),
             FlecsErrorCode::InvalidOperation,
             "on_set hook already set for component {}",
-            std::any::type_name::<T>()
+            core::any::type_name::<T>()
         );
 
         let binding_ctx = Self::get_binding_context(&mut type_hooks);
@@ -431,7 +431,7 @@ mod eq_operations {
 
     impl<'a, T: ComponentId> PartialOrd<Component<'a, T>> for u64 {
         #[inline]
-        fn partial_cmp(&self, other: &Component<'a, T>) -> Option<std::cmp::Ordering> {
+        fn partial_cmp(&self, other: &Component<'a, T>) -> Option<core::cmp::Ordering> {
             self.partial_cmp(&other.base.entity.id)
         }
     }
@@ -441,56 +441,56 @@ mod ord_operations {
     use super::*;
     impl<T: ComponentId> PartialOrd<u64> for Component<'_, T> {
         #[inline]
-        fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
+        fn partial_cmp(&self, other: &u64) -> Option<core::cmp::Ordering> {
             self.base.entity.id.partial_cmp(other)
         }
     }
 
     impl<T: ComponentId> PartialOrd<Entity> for Component<'_, T> {
         #[inline]
-        fn partial_cmp(&self, other: &Entity) -> Option<std::cmp::Ordering> {
+        fn partial_cmp(&self, other: &Entity) -> Option<core::cmp::Ordering> {
             self.base.entity.id.partial_cmp(other)
         }
     }
 
     impl<T: ComponentId> PartialOrd<Id> for Component<'_, T> {
         #[inline]
-        fn partial_cmp(&self, other: &Id) -> Option<std::cmp::Ordering> {
+        fn partial_cmp(&self, other: &Id) -> Option<core::cmp::Ordering> {
             self.base.entity.id.partial_cmp(other)
         }
     }
 
     impl<'a, T: ComponentId> PartialOrd<EntityView<'a>> for Component<'a, T> {
         #[inline]
-        fn partial_cmp(&self, other: &EntityView<'a>) -> Option<std::cmp::Ordering> {
+        fn partial_cmp(&self, other: &EntityView<'a>) -> Option<core::cmp::Ordering> {
             self.base.entity.partial_cmp(other)
         }
     }
 
     impl<'a, T: ComponentId> PartialOrd<IdView<'a>> for Component<'a, T> {
         #[inline]
-        fn partial_cmp(&self, other: &IdView<'a>) -> Option<std::cmp::Ordering> {
+        fn partial_cmp(&self, other: &IdView<'a>) -> Option<core::cmp::Ordering> {
             self.base.entity.partial_cmp(&other.id)
         }
     }
 
     impl<'a, T: ComponentId> PartialOrd<UntypedComponent<'a>> for Component<'a, T> {
         #[inline]
-        fn partial_cmp(&self, other: &UntypedComponent<'a>) -> Option<std::cmp::Ordering> {
+        fn partial_cmp(&self, other: &UntypedComponent<'a>) -> Option<core::cmp::Ordering> {
             self.base.entity.partial_cmp(&other.entity)
         }
     }
 
     impl<T: ComponentId> PartialOrd for Component<'_, T> {
         #[inline]
-        fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
             Some(self.cmp(other))
         }
     }
 
     impl<T: ComponentId> Ord for Component<'_, T> {
         #[inline]
-        fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        fn cmp(&self, other: &Self) -> core::cmp::Ordering {
             self.base.entity.cmp(&other.base.entity)
         }
     }

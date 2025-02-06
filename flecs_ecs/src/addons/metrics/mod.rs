@@ -59,7 +59,7 @@ impl<'a> UntypedComponent<'a> {
                     metric_entity = world.entity_named(metric_name);
                 });
             } else {
-                let member_name = unsafe { std::ffi::CStr::from_ptr((*member).name) };
+                let member_name = unsafe { core::ffi::CStr::from_ptr((*member).name) };
                 let member_name_str = member_name.to_str().expect("non valid Utf8 conversion");
                 if member_name_str == "value" || component_name.is_none() {
                     world.run_in_scope_with_id(parent, || {
@@ -71,7 +71,7 @@ impl<'a> UntypedComponent<'a> {
                         let snake_name =
                             unsafe { sys::flecs_to_snake_case(component_name.as_ptr()) };
                         let snake_name_str = unsafe {
-                            std::ffi::CStr::from_ptr(snake_name)
+                            core::ffi::CStr::from_ptr(snake_name)
                                 .to_str()
                                 .expect("non valid Utf8 conversion")
                         };
@@ -80,7 +80,7 @@ impl<'a> UntypedComponent<'a> {
                         });
                         unsafe {
                             sys::ecs_os_api.free_.expect("os api is missing")(
-                                snake_name as *mut std::ffi::c_void,
+                                snake_name as *mut core::ffi::c_void,
                             );
                         };
                     }

@@ -1,4 +1,4 @@
-use std::ffi::CStr;
+use core::ffi::CStr;
 
 use flecs_ecs::core::*;
 use flecs_ecs::sys;
@@ -13,8 +13,8 @@ use flecs_ecs::sys;
 #[repr(C)]
 pub struct Script<'a> {
     script: *mut sys::ecs_script_t,
-    ast: *mut std::ffi::c_char,
-    _phantom: std::marker::PhantomData<&'a ()>,
+    ast: *mut core::ffi::c_char,
+    _phantom: core::marker::PhantomData<&'a ()>,
 }
 
 impl Drop for Script<'_> {
@@ -22,7 +22,7 @@ impl Drop for Script<'_> {
         if !self.ast.is_null() {
             unsafe {
                 sys::ecs_os_api.free_.expect("os api is missing")(
-                    self.ast as *mut std::ffi::c_void,
+                    self.ast as *mut core::ffi::c_void,
                 );
             }
         }
@@ -70,7 +70,7 @@ impl<'a> Script<'a> {
                     world_ptr,
                     name.as_ptr() as *const _,
                     code.as_ptr() as *const _,
-                    std::ptr::null(),
+                    core::ptr::null(),
                 )
             }
         };
@@ -79,8 +79,8 @@ impl<'a> Script<'a> {
         } else {
             Some(Script {
                 script: ptr,
-                ast: std::ptr::null_mut(),
-                _phantom: std::marker::PhantomData::<&'a ()>,
+                ast: core::ptr::null_mut(),
+                _phantom: core::marker::PhantomData::<&'a ()>,
             })
         }
     }
@@ -99,7 +99,7 @@ impl<'a> Script<'a> {
         if let Some(desc) = desc {
             unsafe { sys::ecs_script_eval(self.script, &desc) == 0 }
         } else {
-            unsafe { sys::ecs_script_eval(self.script, std::ptr::null()) == 0 }
+            unsafe { sys::ecs_script_eval(self.script, core::ptr::null()) == 0 }
         }
     }
 
@@ -183,13 +183,15 @@ impl<'a> Script<'a> {
                     "Script AST already exists"
                 );
                 unsafe {
-                    sys::ecs_os_api.free_.expect("os api is missing")(ast as *mut std::ffi::c_void);
+                    sys::ecs_os_api.free_.expect("os api is missing")(
+                        ast as *mut core::ffi::c_void,
+                    );
                 }
             }
             let c_str = unsafe { CStr::from_ptr(ast) };
             let str = c_str.to_str().unwrap().to_owned();
             unsafe {
-                sys::ecs_os_api.free_.expect("os api is missing")(ast as *mut std::ffi::c_void);
+                sys::ecs_os_api.free_.expect("os api is missing")(ast as *mut core::ffi::c_void);
             };
             Some(str)
         } else {
@@ -208,14 +210,16 @@ impl<'a> Script<'a> {
     pub fn to_expr_id(
         world: impl WorldProvider<'a>,
         id_of_value: impl Into<Entity>,
-        value: *const std::ffi::c_void,
+        value: *const core::ffi::c_void,
     ) -> String {
         let id = *id_of_value.into();
         let world = world.world_ptr_mut();
         let expr = unsafe { sys::ecs_ptr_to_expr(world, id, value) };
         let c_str = unsafe { CStr::from_ptr(expr) };
         let str = c_str.to_str().unwrap().to_owned();
-        unsafe { sys::ecs_os_api.free_.expect("os api is missing")(expr as *mut std::ffi::c_void) };
+        unsafe {
+            sys::ecs_os_api.free_.expect("os api is missing")(expr as *mut core::ffi::c_void)
+        };
         str
     }
 
@@ -229,6 +233,6 @@ impl<'a> Script<'a> {
     pub fn to_expr<T: ComponentId>(world: impl WorldProvider<'a>, value: &T) -> String {
         let world = world.world();
         let id = T::get_id(world);
-        Self::to_expr_id(world, id, value as *const T as *const std::ffi::c_void)
+        Self::to_expr_id(world, id, value as *const T as *const core::ffi::c_void)
     }
 }

@@ -1,4 +1,4 @@
-use std::ffi::{c_char, c_void};
+use core::ffi::{c_char, c_void};
 
 use crate::core::{Entity, WorldRef};
 
@@ -14,15 +14,15 @@ where
 {
     fn to_extern_fn(self) -> extern "C-unwind" fn(&Serializer, &T) -> i32 {
         const {
-            assert!(std::mem::size_of::<Self>() == 0);
+            assert!(core::mem::size_of::<Self>() == 0);
         }
-        std::mem::forget(self);
+        core::mem::forget(self);
 
         extern "C-unwind" fn output<F, T>(ser: &Serializer, value: &T) -> i32
         where
             F: Fn(&Serializer, &T) -> i32,
         {
-            (unsafe { std::mem::transmute_copy::<_, F>(&()) })(ser, value)
+            (unsafe { core::mem::transmute_copy::<_, F>(&()) })(ser, value)
         }
 
         output::<F, T>
@@ -39,15 +39,15 @@ where
 {
     fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, bool) {
         const {
-            assert!(std::mem::size_of::<Self>() == 0);
+            assert!(core::mem::size_of::<Self>() == 0);
         }
-        std::mem::forget(self);
+        core::mem::forget(self);
 
         extern "C-unwind" fn output<F, T>(value: &mut T, data: bool)
         where
             F: Fn(&mut T, bool),
         {
-            (unsafe { std::mem::transmute_copy::<_, F>(&()) })(value, data);
+            (unsafe { core::mem::transmute_copy::<_, F>(&()) })(value, data);
         }
 
         output::<F, T>
@@ -64,15 +64,15 @@ where
 {
     fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, c_char) {
         const {
-            assert!(std::mem::size_of::<Self>() == 0);
+            assert!(core::mem::size_of::<Self>() == 0);
         }
-        std::mem::forget(self);
+        core::mem::forget(self);
 
         extern "C-unwind" fn output<F, T>(value: &mut T, data: c_char)
         where
             F: Fn(&mut T, c_char),
         {
-            (unsafe { std::mem::transmute_copy::<_, F>(&()) })(value, data);
+            (unsafe { core::mem::transmute_copy::<_, F>(&()) })(value, data);
         }
 
         output::<F, T>
@@ -89,15 +89,15 @@ where
 {
     fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, i64) {
         const {
-            assert!(std::mem::size_of::<Self>() == 0);
+            assert!(core::mem::size_of::<Self>() == 0);
         }
-        std::mem::forget(self);
+        core::mem::forget(self);
 
         extern "C-unwind" fn output<F, T>(value: &mut T, data: i64)
         where
             F: Fn(&mut T, i64),
         {
-            (unsafe { std::mem::transmute_copy::<_, F>(&()) })(value, data);
+            (unsafe { core::mem::transmute_copy::<_, F>(&()) })(value, data);
         }
 
         output::<F, T>
@@ -114,15 +114,15 @@ where
 {
     fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, u64) {
         const {
-            assert!(std::mem::size_of::<Self>() == 0);
+            assert!(core::mem::size_of::<Self>() == 0);
         }
-        std::mem::forget(self);
+        core::mem::forget(self);
 
         extern "C-unwind" fn output<F, T>(value: &mut T, data: u64)
         where
             F: Fn(&mut T, u64),
         {
-            (unsafe { std::mem::transmute_copy::<_, F>(&()) })(value, data);
+            (unsafe { core::mem::transmute_copy::<_, F>(&()) })(value, data);
         }
 
         output::<F, T>
@@ -139,15 +139,15 @@ where
 {
     fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, f32) {
         const {
-            assert!(std::mem::size_of::<Self>() == 0);
+            assert!(core::mem::size_of::<Self>() == 0);
         }
-        std::mem::forget(self);
+        core::mem::forget(self);
 
         extern "C-unwind" fn output<F, T>(value: &mut T, data: f32)
         where
             F: Fn(&mut T, f32),
         {
-            (unsafe { std::mem::transmute_copy::<_, F>(&()) })(value, data);
+            (unsafe { core::mem::transmute_copy::<_, F>(&()) })(value, data);
         }
 
         output::<F, T>
@@ -164,15 +164,15 @@ where
 {
     fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, *const c_char) {
         const {
-            assert!(std::mem::size_of::<Self>() == 0);
+            assert!(core::mem::size_of::<Self>() == 0);
         }
-        std::mem::forget(self);
+        core::mem::forget(self);
 
         extern "C-unwind" fn output<F, T>(value: &mut T, data: *const c_char)
         where
             F: Fn(&mut T, *const c_char),
         {
-            (unsafe { std::mem::transmute_copy::<_, F>(&()) })(value, data);
+            (unsafe { core::mem::transmute_copy::<_, F>(&()) })(value, data);
         }
 
         output::<F, T>
@@ -189,15 +189,15 @@ where
 {
     fn to_extern_fn(self) -> extern "C-unwind" fn(&'a mut T, WorldRef<'a>, Entity) {
         const {
-            assert!(std::mem::size_of::<Self>() == 0);
+            assert!(core::mem::size_of::<Self>() == 0);
         }
-        std::mem::forget(self);
+        core::mem::forget(self);
 
         extern "C-unwind" fn output<'a, F, T>(value: &'a mut T, world: WorldRef<'a>, entity: Entity)
         where
             F: Fn(&'a mut T, WorldRef<'a>, Entity),
         {
-            (unsafe { std::mem::transmute_copy::<_, F>(&()) })(value, world, entity);
+            (unsafe { core::mem::transmute_copy::<_, F>(&()) })(value, world, entity);
         }
 
         output::<'a, F, T>
@@ -214,15 +214,15 @@ where
 {
     fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T) {
         const {
-            assert!(std::mem::size_of::<Self>() == 0);
+            assert!(core::mem::size_of::<Self>() == 0);
         }
-        std::mem::forget(self);
+        core::mem::forget(self);
 
         extern "C-unwind" fn output<F, T>(value: &mut T)
         where
             F: Fn(&mut T),
         {
-            (unsafe { std::mem::transmute_copy::<_, F>(&()) })(value);
+            (unsafe { core::mem::transmute_copy::<_, F>(&()) })(value);
         }
 
         output::<F, T>
@@ -239,15 +239,15 @@ where
 {
     fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T) {
         const {
-            assert!(std::mem::size_of::<Self>() == 0);
+            assert!(core::mem::size_of::<Self>() == 0);
         }
-        std::mem::forget(self);
+        core::mem::forget(self);
 
         extern "C-unwind" fn output<F, T>(value: &mut T)
         where
             F: Fn(&mut T),
         {
-            (unsafe { std::mem::transmute_copy::<_, F>(&()) })(value);
+            (unsafe { core::mem::transmute_copy::<_, F>(&()) })(value);
         }
 
         output::<F, T>
@@ -264,15 +264,15 @@ where
 {
     fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, usize) -> &mut ElemType {
         const {
-            assert!(std::mem::size_of::<Self>() == 0);
+            assert!(core::mem::size_of::<Self>() == 0);
         }
-        std::mem::forget(self);
+        core::mem::forget(self);
 
         extern "C-unwind" fn output<F, T, ElemType>(value: &mut T, elem: usize) -> &mut ElemType
         where
             F: Fn(&mut T, usize) -> &mut ElemType,
         {
-            (unsafe { std::mem::transmute_copy::<_, F>(&()) })(value, elem)
+            (unsafe { core::mem::transmute_copy::<_, F>(&()) })(value, elem)
         }
 
         output::<F, T, ElemType>
@@ -289,15 +289,15 @@ where
 {
     fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, *const c_char) -> *mut c_void {
         const {
-            assert!(std::mem::size_of::<Self>() == 0);
+            assert!(core::mem::size_of::<Self>() == 0);
         }
-        std::mem::forget(self);
+        core::mem::forget(self);
 
         extern "C-unwind" fn output<F, T>(value: &mut T, data: *const c_char) -> *mut c_void
         where
             F: Fn(&mut T, *const c_char) -> *mut c_void,
         {
-            (unsafe { std::mem::transmute_copy::<_, F>(&()) })(value, data)
+            (unsafe { core::mem::transmute_copy::<_, F>(&()) })(value, data)
         }
 
         output::<F, T>
@@ -314,15 +314,15 @@ where
 {
     fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T) -> usize {
         const {
-            assert!(std::mem::size_of::<Self>() == 0);
+            assert!(core::mem::size_of::<Self>() == 0);
         }
-        std::mem::forget(self);
+        core::mem::forget(self);
 
         extern "C-unwind" fn output<F, T>(value: &mut T) -> usize
         where
             F: Fn(&mut T) -> usize,
         {
-            (unsafe { std::mem::transmute_copy::<_, F>(&()) })(value)
+            (unsafe { core::mem::transmute_copy::<_, F>(&()) })(value)
         }
 
         output::<F, T>
@@ -339,15 +339,15 @@ where
 {
     fn to_extern_fn(self) -> extern "C-unwind" fn(&mut T, usize) {
         const {
-            assert!(std::mem::size_of::<Self>() == 0);
+            assert!(core::mem::size_of::<Self>() == 0);
         }
-        std::mem::forget(self);
+        core::mem::forget(self);
 
         extern "C-unwind" fn output<F, T>(value: &mut T, data: usize)
         where
             F: Fn(&mut T, usize),
         {
-            (unsafe { std::mem::transmute_copy::<_, F>(&()) })(value, data);
+            (unsafe { core::mem::transmute_copy::<_, F>(&()) })(value, data);
         }
 
         output::<F, T>

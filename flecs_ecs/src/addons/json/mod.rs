@@ -49,7 +49,7 @@ impl EntityView<'_> {
                     type_,
                     ptr,
                     json.as_ptr() as *const _,
-                    std::ptr::null(),
+                    core::ptr::null(),
                 );
             }
             sys::ecs_modified_id(world, id, comp);
@@ -103,15 +103,15 @@ impl EntityView<'_> {
         let id = *self.id;
         let desc_ptr = desc
             .map(|d| d as *const EntityToJsonDesc)
-            .unwrap_or(std::ptr::null());
+            .unwrap_or(core::ptr::null());
 
         unsafe {
             let json_ptr = sys::ecs_entity_to_json(world, id, desc_ptr);
-            let json = std::ffi::CStr::from_ptr(json_ptr)
+            let json = core::ffi::CStr::from_ptr(json_ptr)
                 .to_str()
                 .unwrap()
                 .to_string();
-            sys::ecs_os_api.free_.expect("os api is missing")(json_ptr as *mut std::ffi::c_void);
+            sys::ecs_os_api.free_.expect("os api is missing")(json_ptr as *mut core::ffi::c_void);
             json
         }
     }
@@ -128,7 +128,7 @@ impl EntityView<'_> {
         //TODO we should have an Json Type so we don't need to make these conversions multiple times.
         let json = compact_str::format_compact!("{}\0", json);
         unsafe {
-            sys::ecs_entity_from_json(world, id, json.as_ptr() as *const _, std::ptr::null());
+            sys::ecs_entity_from_json(world, id, json.as_ptr() as *const _, core::ptr::null());
         }
         self
     }
@@ -142,7 +142,7 @@ impl World {
     /// * C++ API: `world::to_json`
     #[doc(alias = "world::to_json")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn to_json_id(&self, tid: impl IntoId, value: *const std::ffi::c_void) -> String {
+    pub fn to_json_id(&self, tid: impl IntoId, value: *const core::ffi::c_void) -> String {
         let tid: u64 = *tid.into();
         let world = self.world_ptr();
         unsafe {
@@ -150,7 +150,7 @@ impl World {
             let json = core::ffi::CStr::from_ptr(json_ptr)
                 .to_string_lossy()
                 .into_owned();
-            sys::ecs_os_api.free_.expect("os api is missing")(json_ptr as *mut std::ffi::c_void);
+            sys::ecs_os_api.free_.expect("os api is missing")(json_ptr as *mut core::ffi::c_void);
             json
         }
     }
@@ -164,7 +164,7 @@ impl World {
     pub fn to_json<'a, T: ComponentOrPairId>(&'a self, value: &'a T::CastType) -> String {
         self.to_json_id(
             T::get_id(self),
-            value as *const T::CastType as *const std::ffi::c_void,
+            value as *const T::CastType as *const core::ffi::c_void,
         )
     }
 
@@ -175,7 +175,7 @@ impl World {
     /// * C++ API: `world::to_json`
     #[doc(alias = "world::to_json")]
     pub fn to_json_dyn<'a, T>(&'a self, id: FetchedId<T>, value: &'a T) -> String {
-        self.to_json_id(id.id(), value as *const T as *const std::ffi::c_void)
+        self.to_json_id(id.id(), value as *const T as *const core::ffi::c_void)
     }
 
     /// Serialize world to JSON.
@@ -188,15 +188,15 @@ impl World {
         let world = self.world_ptr_mut();
         let desc_ptr = desc
             .map(|d| d as *const WorldToJsonDesc)
-            .unwrap_or(std::ptr::null());
+            .unwrap_or(core::ptr::null());
 
         unsafe {
             let json_ptr = sys::ecs_world_to_json(world, desc_ptr);
-            let json = std::ffi::CStr::from_ptr(json_ptr)
+            let json = core::ffi::CStr::from_ptr(json_ptr)
                 .to_str()
                 .unwrap()
                 .to_string();
-            sys::ecs_os_api.free_.expect("os api is missing")(json_ptr as *mut std::ffi::c_void);
+            sys::ecs_os_api.free_.expect("os api is missing")(json_ptr as *mut core::ffi::c_void);
             json
         }
     }
@@ -211,7 +211,7 @@ impl World {
     pub fn from_json_id(
         &self,
         tid: impl IntoId,
-        value: *mut std::ffi::c_void,
+        value: *mut core::ffi::c_void,
         json: &str,
         desc: Option<&FromJsonDesc>,
     ) {
@@ -219,7 +219,7 @@ impl World {
         let world = self.ptr_mut();
         let desc_ptr = desc
             .map(|d| d as *const FromJsonDesc)
-            .unwrap_or(std::ptr::null());
+            .unwrap_or(core::ptr::null());
         //TODO json object to prevent multiple conversions
         let json = compact_str::format_compact!("{}\0", json);
 
@@ -242,7 +242,7 @@ impl World {
     ) {
         self.from_json_id(
             T::CastType::get_id(self),
-            value as *mut T::CastType as *mut std::ffi::c_void,
+            value as *mut T::CastType as *mut core::ffi::c_void,
             json,
             desc,
         );
@@ -260,7 +260,7 @@ impl World {
         let json = compact_str::format_compact!("{}\0", json);
         let desc_ptr = desc
             .map(|d| d as *const FromJsonDesc)
-            .unwrap_or(std::ptr::null());
+            .unwrap_or(core::ptr::null());
 
         unsafe {
             sys::ecs_world_from_json(world, json.as_ptr() as *const _, desc_ptr);
@@ -285,7 +285,7 @@ impl World {
         let json_file = compact_str::format_compact!("{}\0", json_file);
         let desc_ptr = desc
             .map(|d| d as *const FromJsonDesc)
-            .unwrap_or(std::ptr::null());
+            .unwrap_or(core::ptr::null());
 
         unsafe {
             sys::ecs_world_from_json_file(world, json_file.as_ptr() as *const _, desc_ptr);

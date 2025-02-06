@@ -1,4 +1,4 @@
-use std::{
+use core::{
     ffi::CStr,
     sync::atomic::{AtomicU32, Ordering},
 };
@@ -172,7 +172,7 @@ pub trait ComponentId:
                     {
                         world
                             .components_map()
-                            .insert(std::any::TypeId::of::<Self>(), id);
+                            .insert(core::any::TypeId::of::<Self>(), id);
                     }
                     return id;
                 }
@@ -181,7 +181,7 @@ pub trait ComponentId:
                 components_array.reserve(len);
                 let capacity = components_array.capacity();
                 unsafe {
-                    std::ptr::write_bytes(
+                    core::ptr::write_bytes(
                         components_array.as_mut_ptr().add(len),
                         0,
                         capacity - len,
@@ -203,7 +203,7 @@ pub trait ComponentId:
             let world = world.world();
             let components_map = world.components_map();
             *(components_map
-                .entry(std::any::TypeId::of::<Self>())
+                .entry(core::any::TypeId::of::<Self>())
                 .or_insert_with(|| {
                     if MANUAL_REGISTRATION_CHECK {
                         #[cfg(feature = "flecs_manual_registration")]
@@ -261,7 +261,7 @@ pub trait ComponentId:
                     {
                         world
                             .components_map()
-                            .insert(std::any::TypeId::of::<Self>(), id);
+                            .insert(core::any::TypeId::of::<Self>(), id);
                     }
                     return id;
                 }
@@ -270,7 +270,7 @@ pub trait ComponentId:
                 components_array.reserve(len);
                 let capacity = components_array.capacity();
                 unsafe {
-                    std::ptr::write_bytes(
+                    core::ptr::write_bytes(
                         components_array.as_mut_ptr().add(len),
                         0,
                         capacity - len,
@@ -288,7 +288,7 @@ pub trait ComponentId:
             let world = world.world();
             let components_map = world.components_map();
             *(components_map
-                .entry(std::any::TypeId::of::<Self>())
+                .entry(core::any::TypeId::of::<Self>())
                 .or_insert_with(|| {
                     if MANUAL_REGISTRATION_CHECK {
                         #[cfg(feature = "flecs_manual_registration")]
@@ -327,7 +327,7 @@ pub trait ComponentId:
         } else {
             let world = world.world();
             let components_map = world.components_map();
-            components_map.contains_key(&std::any::TypeId::of::<Self>())
+            components_map.contains_key(&core::any::TypeId::of::<Self>())
         }
     }
 
@@ -420,7 +420,7 @@ pub trait ComponentInfo: Sized {
     const IS_GENERIC: bool;
     const IS_ENUM: bool;
     const IS_TAG: bool;
-    const NEEDS_DROP: bool = std::mem::needs_drop::<Self>();
+    const NEEDS_DROP: bool = core::mem::needs_drop::<Self>();
     const IMPLS_CLONE: bool;
     const IMPLS_DEFAULT: bool;
     #[doc(hidden)]

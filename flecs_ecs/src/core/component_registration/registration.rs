@@ -1,6 +1,6 @@
 #![doc(hidden)]
-use std::ffi::c_char;
-use std::os::raw::c_void;
+use core::ffi::c_char;
+use core::ffi::c_void;
 
 use crate::core::*;
 use crate::sys;
@@ -52,7 +52,7 @@ where
     T: ComponentId,
 {
     const NAMED: bool = false;
-    internal_register_component::<NAMED, COMPONENT_REGISTRATION, T>(world, std::ptr::null())
+    internal_register_component::<NAMED, COMPONENT_REGISTRATION, T>(world, core::ptr::null())
 }
 
 #[inline(always)]
@@ -153,7 +153,7 @@ where
         0
     };
 
-    let id = register_componment_data_explicit::<T, false>(world, std::ptr::null());
+    let id = register_componment_data_explicit::<T, false>(world, core::ptr::null());
 
     if !COMPONENT_REGISTRATION {
         if prev_with != 0 {

@@ -84,7 +84,7 @@ impl World {
     pub fn to_expr_id(
         &self,
         id_of_value: impl Into<Entity>,
-        value: *const std::ffi::c_void,
+        value: *const core::ffi::c_void,
     ) -> String {
         Script::to_expr_id(self, id_of_value, value)
     }

@@ -7,7 +7,7 @@ use crate::sys;
 use super::Alert;
 use super::SeverityAlert;
 
-use std::mem::ManuallyDrop;
+use core::mem::ManuallyDrop;
 
 /// [`AlertBuilder`] is a builder pattern for creating [`Alert`]s.
 pub struct AlertBuilder<'a, T>
@@ -19,7 +19,7 @@ where
     world: WorldRef<'a>,
     severity_filter_count: i32,
     str_ptrs_to_free: Vec<ManuallyDrop<String>>,
-    _phantom: std::marker::PhantomData<&'a T>,
+    _phantom: core::marker::PhantomData<&'a T>,
 }
 
 impl<T> Drop for AlertBuilder<'_, T>
@@ -46,7 +46,7 @@ where
             world: world.into(),
             severity_filter_count: 0,
             str_ptrs_to_free: Vec::new(),
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         };
 
         T::populate(&mut obj);
@@ -61,7 +61,7 @@ where
             world: world.into(),
             severity_filter_count: 0,
             str_ptrs_to_free: Vec::new(),
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         };
 
         if obj.desc.entity == 0 {
@@ -94,7 +94,7 @@ where
             world: world.into(),
             severity_filter_count: 0,
             str_ptrs_to_free: Vec::new(),
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         };
 
         let entity_desc = sys::ecs_entity_desc_t {

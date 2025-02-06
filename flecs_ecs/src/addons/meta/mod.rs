@@ -10,7 +10,7 @@ mod meta_functions;
 mod meta_traits;
 mod opaque;
 
-use std::ffi::{c_void, CStr};
+use core::ffi::{c_void, CStr};
 
 pub use builtin::*;
 pub use component_id_fetcher::*;
@@ -160,11 +160,11 @@ impl World {
             _canary: 0,
             id: 0,
             parent: 0,
-            symbol: std::ptr::null(),
+            symbol: core::ptr::null(),
             use_low_id: false,
-            add: std::ptr::null(),
-            add_expr: std::ptr::null(),
-            set: std::ptr::null(),
+            add: core::ptr::null(),
+            add_expr: core::ptr::null(),
+            set: core::ptr::null(),
         };
         let id = unsafe { sys::ecs_entity_init(self.world_ptr_mut(), &desc) };
 
@@ -418,7 +418,7 @@ impl UntypedComponent<'_> {
                 world,
                 eid,
                 ecs_pair(flecs::meta::Constant::ID, flecs::meta::I32::ID),
-                std::mem::size_of::<i32>(),
+                core::mem::size_of::<i32>(),
                 &value as *const i32 as *const c_void,
             );
         };
@@ -537,28 +537,28 @@ impl UntypedComponent<'_> {
 
     /*
     /** Add member using pointer-to-member. */
-    template <typename MemberType, typename ComponentType, typename RealType = typename std::remove_extent<MemberType>::type>
+    template <typename MemberType, typename ComponentType, typename RealType = typename core::remove_extent<MemberType>::type>
     untyped_component& member(const char* name, const MemberType ComponentType::* ptr) {
         flecs::entity_t type_id = _::type<RealType>::id(world_);
         size_t offset = reinterpret_cast<size_t>(&(static_cast<ComponentType*>(nullptr)->*ptr));
-        return member(type_id, name, std::extent<MemberType>::value, offset);
+        return member(type_id, name, core::extent<MemberType>::value, offset);
     }
 
     /** Add member with unit using pointer-to-member. */
-    template <typename MemberType, typename ComponentType, typename RealType = typename std::remove_extent<MemberType>::type>
+    template <typename MemberType, typename ComponentType, typename RealType = typename core::remove_extent<MemberType>::type>
     untyped_component& member(flecs::entity_t unit, const char* name, const MemberType ComponentType::* ptr) {
         flecs::entity_t type_id = _::type<RealType>::id(world_);
         size_t offset = reinterpret_cast<size_t>(&(static_cast<ComponentType*>(nullptr)->*ptr));
-        return member(type_id, unit, name, std::extent<MemberType>::value, offset);
+        return member(type_id, unit, name, core::extent<MemberType>::value, offset);
     }
 
     /** Add member with unit using pointer-to-member. */
-    template <typename UnitType, typename MemberType, typename ComponentType, typename RealType = typename std::remove_extent<MemberType>::type>
+    template <typename UnitType, typename MemberType, typename ComponentType, typename RealType = typename core::remove_extent<MemberType>::type>
     untyped_component& member(const char* name, const MemberType ComponentType::* ptr) {
         flecs::entity_t type_id = _::type<RealType>::id(world_);
         flecs::entity_t unit_id = _::type<UnitType>::id(world_);
         size_t offset = reinterpret_cast<size_t>(&(static_cast<ComponentType*>(nullptr)->*ptr));
-        return member(type_id, unit_id, name, std::extent<MemberType>::value, offset);
+        return member(type_id, unit_id, name, core::extent<MemberType>::value, offset);
              */
 
     /// Add bitmask constant
@@ -592,7 +592,7 @@ impl UntypedComponent<'_> {
                 world,
                 eid,
                 ecs_pair(flecs::meta::Constant::ID, flecs::meta::U32::ID),
-                std::mem::size_of::<u32>(),
+                core::mem::size_of::<u32>(),
                 &value as *const u32 as *const c_void,
             );
         };
@@ -740,7 +740,7 @@ impl EntityView<'_> {
         } else {
             let desc = sys::ecs_unit_desc_t {
                 entity: *self.id,
-                symbol: std::ptr::null(),
+                symbol: core::ptr::null(),
                 base: *base.into(),
                 over: *over.into(),
                 prefix: *prefix.into(),
@@ -850,8 +850,8 @@ mod tests {
 
     //     world
     //         .component::<Position>()
-    //         .member::<f32>("x", 1, std::mem::offset_of!(Position, x) as i32)
-    //         .member::<f32>("y", 1, std::mem::offset_of!(Position, y) as i32);
+    //         .member::<f32>("x", 1, core::mem::offset_of!(Position, x) as i32)
+    //         .member::<f32>("y", 1, core::mem::offset_of!(Position, y) as i32);
 
     //     let e = world.entity().set(Position { x: 10.0, y: 20.0 });
 

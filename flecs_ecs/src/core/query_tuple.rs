@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 use crate::core::*;
 use crate::sys;
@@ -34,7 +34,7 @@ pub trait ComponentPointers<T: QueryTuple> {
 
 impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T, LEN> {
     fn new(iter: &sys::ecs_iter_t) -> Self {
-        let mut array_components = [std::ptr::null::<u8>() as *mut u8; LEN];
+        let mut array_components = [core::ptr::null::<u8>() as *mut u8; LEN];
         let mut is_ref_array_components = [false; LEN];
         let mut is_row_array_components = [false; LEN];
         let mut index_array_components = [0; LEN];

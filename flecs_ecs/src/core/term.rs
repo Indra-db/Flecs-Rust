@@ -68,7 +68,7 @@ pub mod internals {
         pub(crate) current_term_index: i32,
         pub(crate) next_term_index: i32,
         pub(crate) term_ref_mode: TermRefMode,
-        pub(crate) str_ptrs_to_free: Vec<std::mem::ManuallyDrop<String>>,
+        pub(crate) str_ptrs_to_free: Vec<core::mem::ManuallyDrop<String>>,
     }
 
     #[doc(hidden)]
@@ -374,7 +374,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// * C++ API: `term_builder_i::name`
     #[doc(alias = "term_builder_i::name")]
     fn name(&mut self, name: &'a str) -> &mut Self {
-        let name = std::mem::ManuallyDrop::new(format!("{}\0", name));
+        let name = core::mem::ManuallyDrop::new(format!("{}\0", name));
         let term_ref = self.term_ref_mut();
         term_ref.name = name.as_ptr() as *mut _;
         term_ref.id |= flecs::IsEntity::ID;
@@ -395,7 +395,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     fn set_var(&mut self, var_name: &'a str) -> &mut Self {
         check_term_access_validity(self);
 
-        let var_name = std::mem::ManuallyDrop::new(format!("{}\0", var_name));
+        let var_name = core::mem::ManuallyDrop::new(format!("{}\0", var_name));
         let term_ref = self.term_ref_mut();
         term_ref.id |= flecs::IsVariable::ID;
         term_ref.name = var_name.as_ptr() as *mut _;

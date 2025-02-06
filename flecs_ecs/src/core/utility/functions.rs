@@ -1,10 +1,10 @@
 #![doc(hidden)]
 //! (internal) utility functions for dealing with ECS identifiers. This module is mostly used internally by the library.
 //! but can be used by the user if needed.
-use std::{ffi::CString, os::raw::c_char};
-
 use crate::core::*;
 use crate::sys;
+use core::ffi::c_char;
+use std::ffi::CString;
 
 const ECS_GENERATION_MASK: u64 = u32::MAX as u64;
 
@@ -160,7 +160,7 @@ pub fn ecs_entity_id_high(value: impl IntoId) -> u64 {
 }
 
 pub fn type_name_cstring<T>() -> CString {
-    CString::new(std::any::type_name::<T>()).unwrap()
+    CString::new(core::any::type_name::<T>()).unwrap()
 }
 
 /// Get the type name of the given type.
@@ -187,7 +187,7 @@ pub fn type_name_cstring<T>() -> CString {
 /// ```
 #[inline(always)]
 pub fn get_only_type_name<T>() -> &'static str {
-    use std::any::type_name;
+    use core::any::type_name;
     let name = type_name::<T>();
     let split_name = name.split("::").last().unwrap_or(name);
     //for nested types like vec<String> we need to remove the last `>`
@@ -201,7 +201,7 @@ pub fn get_only_type_name<T>() -> &'static str {
 /// * `T`: The type to check.
 #[inline(always)]
 pub const fn is_empty_type<T>() -> bool {
-    std::mem::size_of::<T>() == 0
+    core::mem::size_of::<T>() == 0
 }
 
 /// Extracts a row index from an ECS record identifier.
@@ -243,7 +243,7 @@ pub(crate) fn set_helper<T: ComponentId>(
 ) {
     const {
         assert!(
-            std::mem::size_of::<T>() != 0,
+            core::mem::size_of::<T>() != 0,
             "cannot set zero-sized-type / tag components"
         );
     };
@@ -256,16 +256,16 @@ pub(crate) fn set_helper<T: ComponentId>(
                     //use set batching //faster performance, no panic possible
                     let comp = sys::ecs_ensure_modified_id(world, entity, id) as *mut T;
                     //SAFETY: ecs_ensure_modified_id will default initialize the component
-                    std::ptr::drop_in_place(comp);
-                    std::ptr::write(comp, value);
+                    core::ptr::drop_in_place(comp);
+                    core::ptr::write(comp, value);
                 } else {
                     //when it has the component, we know it won't panic using set and impl drop.
                     if sys::ecs_has_id(world, entity, id) {
                         //use set batching //faster performance, no panic possible since it's already present
                         let comp = sys::ecs_ensure_modified_id(world, entity, id) as *mut T;
                         //SAFETY: ecs_ensure_modified_id will default initialize the component
-                        std::ptr::drop_in_place(comp);
-                        std::ptr::write(comp, value);
+                        core::ptr::drop_in_place(comp);
+                        core::ptr::write(comp, value);
                         return;
                     }
 
@@ -274,16 +274,16 @@ pub(crate) fn set_helper<T: ComponentId>(
                     let ptr = sys::ecs_emplace_id(world, entity, id, &mut is_new) as *mut T;
 
                     if !is_new {
-                        std::ptr::drop_in_place(ptr);
+                        core::ptr::drop_in_place(ptr);
                     }
-                    std::ptr::write(ptr, value);
+                    core::ptr::write(ptr, value);
                     sys::ecs_modified_id(world, entity, id);
                 }
             } else {
                 //if not needs drop, use set batching, faster performance
                 let comp = sys::ecs_ensure_modified_id(world, entity, id) as *mut T;
-                std::ptr::drop_in_place(comp);
-                std::ptr::write(comp, value);
+                core::ptr::drop_in_place(comp);
+                core::ptr::write(comp, value);
             }
         } else
         /* not deferred */
@@ -291,9 +291,9 @@ pub(crate) fn set_helper<T: ComponentId>(
             let ptr = sys::ecs_emplace_id(world, entity, id, &mut is_new) as *mut T;
 
             if !is_new {
-                std::ptr::drop_in_place(ptr);
+                core::ptr::drop_in_place(ptr);
             }
-            std::ptr::write(ptr, value);
+            core::ptr::write(ptr, value);
             sys::ecs_modified_id(world, entity, id);
         }
     }
@@ -367,7 +367,7 @@ pub fn get_generation(entity: impl Into<Entity>) -> u32 {
 /// ```
 #[inline(always)]
 pub unsafe fn ecs_field<T>(it: *const sys::ecs_iter_t, index: i8) -> *mut T {
-    let size = std::mem::size_of::<T>();
+    let size = core::mem::size_of::<T>();
 
     ecs_assert!(
         size != 0,
@@ -381,7 +381,7 @@ pub unsafe fn ecs_field<T>(it: *const sys::ecs_iter_t, index: i8) -> *mut T {
 
 #[inline(always)]
 pub(crate) unsafe fn ecs_field_at<T>(it: *const sys::ecs_iter_t, index: i8, row: i32) -> *mut T {
-    let size = std::mem::size_of::<T>();
+    let size = core::mem::size_of::<T>();
     sys::ecs_field_at_w_size(it, size, index, row) as *mut T
 }
 
@@ -455,7 +455,7 @@ pub(crate) unsafe fn print_c_string(c_string: *const c_char) {
     assert!(!c_string.is_null(), "Null pointer passed to print_c_string");
 
     // Create a CStr from the raw pointer
-    let c_str = std::ffi::CStr::from_ptr(c_string);
+    let c_str = core::ffi::CStr::from_ptr(c_string);
 
     // Convert CStr to a Rust string slice (&str)
     // This can fail if the C string is not valid UTF-8, so handle errors appropriately
@@ -478,7 +478,7 @@ pub(crate) fn strip_prefix_str_raw<'a>(str: &'a str, prefix: &str) -> Option<&'a
         // with `prefix_bytes`, and we only slice off `prefix_bytes`, so the rest
         // remains a valid C string.
         Some(
-            std::str::from_utf8(&str_bytes[prefix_bytes.len()..])
+            core::str::from_utf8(&str_bytes[prefix_bytes.len()..])
                 .expect("error: pass valid utf strings"),
         )
     } else {

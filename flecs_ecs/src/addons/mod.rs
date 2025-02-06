@@ -135,8 +135,8 @@ macro_rules! create_pre_registered_extern_component {
 
             #[inline(always)]
             fn index() -> u32 {
-                static INDEX: std::sync::atomic::AtomicU32 =
-                    std::sync::atomic::AtomicU32::new(u32::MAX);
+                static INDEX: core::sync::atomic::AtomicU32 =
+                    core::sync::atomic::AtomicU32::new(u32::MAX);
                 Self::get_or_init_index(&INDEX)
             }
         }

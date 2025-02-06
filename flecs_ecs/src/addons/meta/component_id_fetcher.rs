@@ -1,13 +1,13 @@
 use flecs_ecs::prelude::*;
 
 pub struct ComponentIdFetcher<T> {
-    pub phantom: std::marker::PhantomData<T>,
+    pub phantom: core::marker::PhantomData<T>,
 }
 
 #[derive(Debug)]
 pub struct FetchedId<T> {
     pub id: u64,
-    phantom: std::marker::PhantomData<T>,
+    phantom: core::marker::PhantomData<T>,
 }
 
 impl<T> Clone for FetchedId<T> {
@@ -34,7 +34,7 @@ impl<T> FetchedId<T> {
     pub fn new(id: u64) -> Self {
         Self {
             id,
-            phantom: std::marker::PhantomData,
+            phantom: core::marker::PhantomData,
         }
     }
 
@@ -61,7 +61,7 @@ impl<T: 'static> ExternalComponent<T> for &ComponentIdFetcher<T> {
     fn deref_id<'a>(&self, world: impl WorldProvider<'a>) -> FetchedId<T> {
         let world = world.world();
         let map = world.components_map();
-        let id = *(map.entry(std::any::TypeId::of::<T>()).or_insert_with(|| {
+        let id = *(map.entry(core::any::TypeId::of::<T>()).or_insert_with(|| {
             let type_name = get_only_type_name::<T>();
             let name = compact_str::format_compact!("external_components::{}\0", type_name);
             external_register_component::<true, T>(world, name.as_ptr() as *const _)
@@ -84,7 +84,7 @@ impl<T: 'static> ExternalComponent<T> for &ComponentIdFetcher<T> {
 macro_rules! id {
     ($world:expr, $type:ty) => {
         (&&&flecs_ecs::addons::meta::ComponentIdFetcher::<$type> {
-            phantom: std::marker::PhantomData,
+            phantom: core::marker::PhantomData,
         })
             .deref_id($world)
     };

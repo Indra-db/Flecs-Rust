@@ -1,6 +1,6 @@
 #![doc(hidden)]
 
-use std::ffi::c_char;
+use core::ffi::c_char;
 
 use crate::core::*;
 use crate::sys;
@@ -21,7 +21,7 @@ where
     T: ComponentId,
 {
     let size = {
-        let size = std::mem::size_of::<T>();
+        let size = core::mem::size_of::<T>();
         if ALLOCATE_TAG && size == 0 {
             1
         } else {
@@ -30,7 +30,7 @@ where
     };
 
     let alignment = if size != 0 {
-        std::mem::align_of::<T>()
+        core::mem::align_of::<T>()
     } else {
         0
     };
@@ -63,7 +63,7 @@ where
     //     let box_registers_panic_hooks = Box::<RegistersPanicHooks>::new(registered_hooks);
     //     let box_registers_panic_hooks_ptr = Box::into_raw(box_registers_panic_hooks);
     //     // we registered a panic hook
-    //     hooks.binding_ctx = box_registers_panic_hooks_ptr as *mut std::ffi::c_void;
+    //     hooks.binding_ctx = box_registers_panic_hooks_ptr as *mut core::ffi::c_void;
     //     hooks.binding_ctx_free = Some(register_panic_hooks_free_ctx);
     // }
 
@@ -72,7 +72,7 @@ where
         alignment: alignment as i32,
         hooks,
         component: 0,
-        name: std::ptr::null(),
+        name: core::ptr::null(),
     };
     type_info
 }
@@ -87,25 +87,25 @@ pub(crate) fn create_entity_desc(
         parent: 0,
         name,
         sep: SEPARATOR.as_ptr(),
-        root_sep: std::ptr::null(),
+        root_sep: core::ptr::null(),
         symbol,
         use_low_id: true,
-        add: std::ptr::null(),
-        add_expr: std::ptr::null(),
-        set: std::ptr::null(),
+        add: core::ptr::null(),
+        add_expr: core::ptr::null(),
+        set: core::ptr::null(),
     };
     entity_desc
 }
 
 pub(crate) fn external_create_type_info<T>() -> flecs_ecs_sys::ecs_type_info_t {
-    let size = std::mem::size_of::<T>();
+    let size = core::mem::size_of::<T>();
     let alignment = if size != 0 {
-        std::mem::align_of::<T>()
+        core::mem::align_of::<T>()
     } else {
         0
     };
     let mut hooks = Default::default();
-    if size != 0 && const { std::mem::needs_drop::<T>() } {
+    if size != 0 && const { core::mem::needs_drop::<T>() } {
         // Register lifecycle callbacks, but only if the component has a
         // size and requires initialization of heap memory / needs drop.
         // Components that don't have a size are tags, and tags don't
@@ -118,7 +118,7 @@ pub(crate) fn external_create_type_info<T>() -> flecs_ecs_sys::ecs_type_info_t {
         alignment: alignment as i32,
         hooks,
         component: 0,
-        name: std::ptr::null(),
+        name: core::ptr::null(),
     };
     type_info
 }

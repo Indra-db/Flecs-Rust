@@ -1,6 +1,6 @@
 //! An [`Archetype`] type can be used to describe what types of components an entity has.
 
-use std::{
+use core::{
     ffi::CStr,
     fmt::{Debug, Display},
     ptr::NonNull,
@@ -27,7 +27,7 @@ pub struct Archetype<'a> {
 }
 
 impl Display for Archetype<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         if let Some(s) = self.to_string() {
             write!(f, "{}", s)
         } else {
@@ -37,7 +37,7 @@ impl Display for Archetype<'_> {
 }
 
 impl Debug for Archetype<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         if let Some(s) = self.to_string() {
             write!(f, "{}", s)
         } else {

@@ -93,7 +93,7 @@ pub enum AddInitHookError {
 }
 
 impl core::fmt::Display for AddInitHookError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             AddInitHookError::LockPoisoned => {
                 write!(f, "Internal Flecs OS API hook list lock was poisoned")
@@ -106,7 +106,7 @@ impl core::fmt::Display for AddInitHookError {
     }
 }
 
-impl std::error::Error for AddInitHookError {}
+impl core::error::Error for AddInitHookError {}
 
 /// If the Flecs OS API has not already been initialized, add a hook
 /// for modifying it, which runs during [`ensure_initialized`].

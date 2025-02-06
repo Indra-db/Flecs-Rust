@@ -9,8 +9,8 @@ mod system_runner_fluent;
 pub use system_builder::*;
 pub use system_runner_fluent::*;
 
-use std::ops::DerefMut;
-use std::{ops::Deref, os::raw::c_void, ptr::NonNull};
+use core::ops::DerefMut;
+use core::{ffi::c_void, ops::Deref, ptr::NonNull};
 
 use crate::core::*;
 use crate::sys;
@@ -154,7 +154,7 @@ impl<'a> System<'a> {
     #[doc(alias = "system::run")]
     #[inline]
     pub fn run_dt(&self, delta_time: FTime) -> SystemRunnerFluent {
-        self.run_dt_param(delta_time, std::ptr::null_mut())
+        self.run_dt_param(delta_time, core::ptr::null_mut())
     }
 
     /// Run the system
@@ -165,7 +165,7 @@ impl<'a> System<'a> {
     #[doc(alias = "system::run")]
     #[inline]
     pub fn run(&self) -> SystemRunnerFluent {
-        self.run_dt_param(0.0, std::ptr::null_mut())
+        self.run_dt_param(0.0, core::ptr::null_mut())
     }
 
     /// Run the system worker

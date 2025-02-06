@@ -18,8 +18,8 @@ impl<'a> ScriptBuilder<'a> {
         ScriptBuilder {
             script: sys::ecs_script_desc_t {
                 entity: 0,
-                filename: std::ptr::null(),
-                code: std::ptr::null(),
+                filename: core::ptr::null(),
+                code: core::ptr::null(),
             },
             world: world.world(),
         }
@@ -40,8 +40,8 @@ impl<'a> ScriptBuilder<'a> {
         ScriptBuilder {
             script: sys::ecs_script_desc_t {
                 entity: unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) },
-                filename: std::ptr::null(),
-                code: std::ptr::null(),
+                filename: core::ptr::null(),
+                code: core::ptr::null(),
             },
             world: world.world(),
         }
@@ -56,8 +56,8 @@ impl<'a> ScriptBuilder<'a> {
         ScriptBuilder {
             script: sys::ecs_script_desc_t {
                 entity: entity.into().into(),
-                filename: std::ptr::null(),
-                code: std::ptr::null(),
+                filename: core::ptr::null(),
+                code: core::ptr::null(),
             },
             world: world.world(),
         }

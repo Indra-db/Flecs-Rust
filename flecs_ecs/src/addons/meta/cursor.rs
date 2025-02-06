@@ -4,7 +4,7 @@ use flecs_ecs::sys;
 /// Class for reading/writing dynamic values
 pub struct Cursor<'a> {
     cursor: sys::ecs_meta_cursor_t,
-    phantom: std::marker::PhantomData<&'a ()>,
+    phantom: core::marker::PhantomData<&'a ()>,
 }
 
 impl<'a> Cursor<'a> {
@@ -13,14 +13,14 @@ impl<'a> Cursor<'a> {
     pub(crate) fn new(
         world: impl WorldProvider<'a>,
         type_id: impl Into<Entity>,
-        ptr: *mut std::ffi::c_void,
+        ptr: *mut core::ffi::c_void,
     ) -> Self {
         let world = world.world_ptr();
         let type_id = *type_id.into();
         let cursor = unsafe { sys::ecs_meta_cursor(world, type_id, ptr) };
         Self {
             cursor,
-            phantom: std::marker::PhantomData,
+            phantom: core::marker::PhantomData,
         }
     }
 
@@ -59,7 +59,7 @@ impl<'a> Cursor<'a> {
     /// Get member name
     pub fn get_member(&self) -> &str {
         unsafe {
-            std::ffi::CStr::from_ptr(sys::ecs_meta_get_member(&self.cursor))
+            core::ffi::CStr::from_ptr(sys::ecs_meta_get_member(&self.cursor))
                 .to_str()
                 .unwrap()
         }
@@ -86,7 +86,7 @@ impl<'a> Cursor<'a> {
     }
 
     /// Get untyped pointer to value
-    pub fn get_ptr(&mut self) -> *mut std::ffi::c_void {
+    pub fn get_ptr(&mut self) -> *mut core::ffi::c_void {
         unsafe { sys::ecs_meta_get_ptr(&mut self.cursor) }
     }
 
@@ -97,7 +97,7 @@ impl<'a> Cursor<'a> {
 
     /// Set char value
     pub fn set_char(&mut self, value: char) -> i32 {
-        unsafe { sys::ecs_meta_set_char(&mut self.cursor, value as std::ffi::c_char) }
+        unsafe { sys::ecs_meta_set_char(&mut self.cursor, value as core::ffi::c_char) }
     }
 
     /// Set signed int value
@@ -168,7 +168,7 @@ impl<'a> Cursor<'a> {
     }
 
     /// Get string value
-    pub fn get_string(&self) -> *const std::ffi::c_char {
+    pub fn get_string(&self) -> *const core::ffi::c_char {
         // TODO: Rustify this to return &str
         unsafe { sys::ecs_meta_get_string(&self.cursor) }
     }
