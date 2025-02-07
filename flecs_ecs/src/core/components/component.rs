@@ -7,6 +7,12 @@ use crate::core::*;
 use crate::prelude::FetchedId;
 use crate::sys;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::boxed::Box;
+
 /// Component class.
 /// Class used to register components and component metadata.
 pub struct Component<'a, T> {

@@ -4,6 +4,12 @@ use core::ops::DerefMut;
 use flecs_ecs::core::*;
 use flecs_ecs::sys;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::{borrow::ToOwned, string::String};
+
 /// [`ScriptEntityView`] is a wrapper around an entity that is associated with a script.
 #[derive(Clone, Copy)]
 pub struct ScriptEntityView<'a> {

@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use std::ffi::c_void;
+use core::ffi::c_void;
 
 use crate::common_test::*;
 
@@ -407,7 +407,7 @@ fn entity_set_generic() {
     let entity = unsafe {
         world.entity().set_ptr_w_size(
             position.id(),
-            std::mem::size_of::<Position>(),
+            core::mem::size_of::<Position>(),
             &pos as *const _ as *const c_void,
         )
     };

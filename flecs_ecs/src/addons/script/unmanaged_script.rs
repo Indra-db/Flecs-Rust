@@ -3,6 +3,12 @@ use core::ffi::CStr;
 use flecs_ecs::core::*;
 use flecs_ecs::sys;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::{borrow::ToOwned, string::String};
+
 /// A Script object is not associated to an entity and will be automatically deleted when it goes out of scope.
 /// For scripts that are associated with an entity, use [`ScriptBuilder`][super::ScriptBuilder] alongside [`ScriptEntityView`][super::ScriptEntityView].
 ///
@@ -218,7 +224,7 @@ impl<'a> Script<'a> {
         let c_str = unsafe { CStr::from_ptr(expr) };
         let str = c_str.to_str().unwrap().to_owned();
         unsafe {
-            sys::ecs_os_api.free_.expect("os api is missing")(expr as *mut core::ffi::c_void)
+            sys::ecs_os_api.free_.expect("os api is missing")(expr as *mut core::ffi::c_void);
         };
         str
     }

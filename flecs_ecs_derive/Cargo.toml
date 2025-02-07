@@ -30,5 +30,5 @@ cargo-args = ["-Zunstable-options", "-Zrustdoc-scrape-examples"]
 
 flecs_meta = []
 flecs_query_rust_traits = []
-
+std = []
 default = []

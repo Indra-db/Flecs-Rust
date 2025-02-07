@@ -2,6 +2,12 @@ use core::ffi::CStr;
 use flecs_ecs::prelude::*;
 use flecs_ecs::sys;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::{format, string::String, vec::Vec};
+
 macro_rules! generate_vec_meta_registration {
     ($world:ident, $($t:ty),*) => {
         $(

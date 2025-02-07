@@ -5,8 +5,8 @@ use flecs_ecs::prelude::*;
 
 #[test]
 fn hooks() {
+    use core::sync::atomic::{AtomicU32, Ordering};
     use flecs_ecs::prelude::*;
-    use std::sync::atomic::{AtomicU32, Ordering};
 
     let n = Box::leak(Box::new(AtomicU32::new(0)));
 

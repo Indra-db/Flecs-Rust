@@ -1,5 +1,12 @@
 use crate::prelude::*;
 use crate::sys;
+
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::vec::Vec;
+
 // TODO: Would be great to have a set that sets all the data to the same, no need for multiple entries
 /// A builder for creating multiple entities in bulk, optionally adding components and data.
 ///

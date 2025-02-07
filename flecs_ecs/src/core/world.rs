@@ -12,6 +12,12 @@ use crate::addons::pipeline::PipelineBuilder;
 use crate::core::*;
 use crate::sys;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::{boxed::Box, vec::Vec};
+
 pub(crate) type FlecsArray = Vec<u64>;
 
 /// The `World` is the container for all ECS data. It stores the entities and

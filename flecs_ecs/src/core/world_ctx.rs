@@ -1,6 +1,12 @@
 use super::{FlecsArray, FlecsIdMap, World};
 use crate::sys;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::vec;
+
 pub(crate) struct WorldCtx {
     query_ref_count: i32,
     pub(crate) components: FlecsIdMap,

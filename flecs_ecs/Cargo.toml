@@ -41,10 +41,13 @@ insta = { version = "1.42.1", features = ["yaml","filters"] }
 # to be used with flecs_nightly_tests feature flag
 #capture-stdio = "0.1.1" 
 
-[features]
+[features] 
 ######################
 # sys feature flags
 ######################
+
+# use std
+std = ["flecs_ecs_derive/std"]
 
 # Regenerate the C binding for flecs C
 flecs_regenerate_binding_c = ["flecs_ecs_sys/regenerate_binding"]
@@ -154,6 +157,8 @@ test-with-crash-handler = ["dep:test_crash_handler", "test_crash_handler/crash-h
 
 # most common base features
 flecs_base = [
+   # this is commented since `no_std` is not ready yet
+    "std",
     "flecs_module",
     "flecs_system",
     "flecs_pipeline",

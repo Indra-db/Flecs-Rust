@@ -8,6 +8,13 @@ use crate::sys;
 use flecs_ecs::core::*;
 use sys::ecs_get_with;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+#[allow(unused_imports)] //meant for no_std, not ready yet
+use alloc::{borrow::ToOwned, boxed::Box, format, string::String, string::ToString, vec, vec::Vec};
+
 /// `EntityView` is a wrapper around an entity id with the world. It provides methods to interact with entities.
 #[derive(Clone, Copy)]
 pub struct EntityView<'a> {
@@ -44,12 +51,12 @@ impl core::fmt::Display for EntityView<'_> {
 impl core::fmt::Debug for EntityView<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let entity_display = match self.get_name() {
-            Some(name_str) => format!("Entity: #{} | \"{}\"", self.id, name_str),
+            Some(name_str) => alloc::format!("Entity: #{} | \"{}\"", self.id, name_str),
             None => format!("Entity: #{}", self.id),
         };
         let archetype_types_str = debug_separate_archetype_types_into_strings(&self.archetype());
 
-        let mut children = vec![];
+        let mut children = alloc::vec![];
         self.each_child(|child| {
             children.push({
                 match child.get_name() {
@@ -252,7 +259,7 @@ impl<'a> EntityView<'a> {
         let cstr =
             NonNull::new(unsafe { sys::ecs_get_name(self.world.world_ptr(), *self.id) } as *mut _)
                 .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) });
-        cstr.and_then(|s| s.to_str().ok().map(|s| s.to_string()))
+        cstr.and_then(|s| s.to_str().ok().map(ToString::to_string))
     }
 
     // /// Returns the entity name as a `CStr`.
@@ -304,7 +311,7 @@ impl<'a> EntityView<'a> {
         let cstr = unsafe { CStr::from_ptr(sys::ecs_get_symbol(self.world.world_ptr(), *self.id)) };
         cstr.to_str()
             .ok()
-            .map(|s| s.to_string())
+            .map(ToString::to_string)
             .unwrap_or_default()
     }
 

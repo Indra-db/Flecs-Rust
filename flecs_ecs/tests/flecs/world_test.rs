@@ -7,7 +7,7 @@ fn world_no_panic_clone_test() {
     let world = World::default();
     let world2 = world.clone();
     let _query = world.new_query::<()>();
-    std::mem::drop(world);
+    core::mem::drop(world);
     let _query2 = world2.new_query::<()>();
 }
 
@@ -24,7 +24,7 @@ fn world_reset_panic_lingering_world_refs() {
 fn world_panic_lingering_query_handles() {
     let world = World::default();
     let _query = world.new_query::<()>();
-    std::mem::drop(world);
+    core::mem::drop(world);
 }
 
 #[test]

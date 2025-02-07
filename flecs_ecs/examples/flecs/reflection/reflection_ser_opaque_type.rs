@@ -1,4 +1,4 @@
-use std::ffi::c_char;
+use core::ffi::c_char;
 
 use crate::z_ignore_test_common::*;
 
@@ -40,11 +40,11 @@ fn main() {
         .ensure_member(|dst: &mut Sum, member: *const c_char| {
             let member = unsafe { core::ffi::CStr::from_ptr(member) };
             if member != c"a" {
-                &mut dst.a as *mut i32 as *mut std::ffi::c_void
+                &mut dst.a as *mut i32 as *mut core::ffi::c_void
             } else if member != c"b" {
-                &mut dst.b as *mut i32 as *mut std::ffi::c_void
+                &mut dst.b as *mut i32 as *mut core::ffi::c_void
             } else {
-                std::ptr::null_mut() // We can't serialize into fake result member
+                core::ptr::null_mut() // We can't serialize into fake result member
             }
         });
 

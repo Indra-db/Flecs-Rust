@@ -9,6 +9,12 @@ use core::ptr::NonNull;
 use crate::core::*;
 use crate::sys;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::string::{String, ToString};
+
 //MARK: trait::Doc
 ///
 ///
@@ -284,7 +290,7 @@ impl World {
             unsafe { sys::ecs_doc_get_name(self.world_ptr(), *entity.into()) } as *mut _,
         )
         .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) });
-        cstr.and_then(|s| s.to_str().ok().map(|s| s.to_string()))
+        cstr.and_then(|s| s.to_str().ok().map(ToString::to_string))
     }
 
     /// Get brief description for an entity.
@@ -330,7 +336,7 @@ impl World {
             unsafe { sys::ecs_doc_get_brief(self.world_ptr(), *entity.into()) } as *mut _,
         )
         .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) });
-        cstr.and_then(|s| s.to_str().ok().map(|s| s.to_string()))
+        cstr.and_then(|s| s.to_str().ok().map(ToString::to_string))
     }
 
     /// Get detailed description for an entity.
@@ -375,7 +381,7 @@ impl World {
             unsafe { sys::ecs_doc_get_detail(self.world_ptr(), *entity.into()) } as *mut _,
         )
         .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) });
-        cstr.and_then(|s| s.to_str().ok().map(|s| s.to_string()))
+        cstr.and_then(|s| s.to_str().ok().map(ToString::to_string))
     }
 
     /// Get link to external documentation for an entity.
@@ -420,7 +426,7 @@ impl World {
             unsafe { sys::ecs_doc_get_link(self.world_ptr(), *entity.into()) } as *mut _,
         )
         .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) });
-        cstr.and_then(|s| s.to_str().ok().map(|s| s.to_string()))
+        cstr.and_then(|s| s.to_str().ok().map(ToString::to_string))
     }
 
     /// Get color for an entity.
@@ -464,7 +470,7 @@ impl World {
             unsafe { sys::ecs_doc_get_color(self.world_ptr(), *entity.into()) } as *mut _,
         )
         .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) });
-        cstr.and_then(|s| s.to_str().ok().map(|s| s.to_string()))
+        cstr.and_then(|s| s.to_str().ok().map(ToString::to_string))
     }
 
     /// Get UUID for entity
@@ -482,7 +488,7 @@ impl World {
             unsafe { sys::ecs_doc_get_uuid(self.world_ptr(), *entity.into()) } as *mut _,
         )
         .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) });
-        cstr.and_then(|s| s.to_str().ok().map(|s| s.to_string()))
+        cstr.and_then(|s| s.to_str().ok().map(ToString::to_string))
     }
 
     /// Get UUID for component

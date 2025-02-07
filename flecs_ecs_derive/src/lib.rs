@@ -1,6 +1,15 @@
+//#![cfg_attr(not(feature = "std"), no_std)] // Enable `no_std` if `std` feature is disabled
+
 extern crate proc_macro;
 
-use std::collections::HashMap;
+//#[cfg(feature = "std")]
+extern crate std;
+
+#[allow(unused_imports)]
+#[macro_use]
+extern crate alloc;
+
+use alloc::{format, string::ToString, vec::Vec};
 
 use proc_macro::TokenStream as ProcMacroTokenStream;
 use proc_macro2::{Span, TokenStream};
@@ -66,7 +75,7 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
         .iter()
         .any(|attr| attr.path().is_ident("on_registration"));
 
-    let mut generated_impls = vec![];
+    let mut generated_impls: Vec<TokenStream> = Vec::new();
 
     match input.data.clone() {
         Data::Struct(data_struct) => {
@@ -272,41 +281,36 @@ fn impl_cached_component_data_struct(
     let iter_where = where_clause.iter();
     let mut contains_lifetime_bound = false;
 
-    let mut type_info_map: HashMap<Ident, GenericTypeInfo> = HashMap::new();
+    let mut type_info_vec: Vec<(syn::Ident, GenericTypeInfo)> = Vec::new();
 
     //populate map with all the type generics
     iter.clone().for_each(|param| {
         if let syn::GenericParam::Type(type_param) = param {
-            type_info_map.insert(type_param.ident.clone(), Default::default());
+            type_info_vec.push((type_param.ident.clone(), Default::default()));
         }
     });
 
     iter.clone().for_each(|param| {
         if let syn::GenericParam::Type(type_param) = param {
-            type_info_map
-                .get_mut(&type_param.ident)
-                .unwrap()
-                .set_contains_generic_type();
-            if !type_param.bounds.empty_or_trailing() {
-                type_info_map
-                    .get_mut(&type_param.ident)
-                    .unwrap()
-                    .set_contains_type_bound();
-                type_param.bounds.iter().for_each(|bound| {
-                    if let syn::TypeParamBound::Trait(trait_bound) = bound {
-                        if trait_bound.path.is_ident("Default") {
-                            type_info_map
-                                .get_mut(&type_param.ident)
-                                .unwrap()
-                                .set_is_bound_default();
-                        } else if trait_bound.path.is_ident("Clone") {
-                            type_info_map
-                                .get_mut(&type_param.ident)
-                                .unwrap()
-                                .set_is_bound_clone();
+            // Find the corresponding entry in the vector.
+            if let Some((_, type_info)) = type_info_vec
+                .iter_mut()
+                .find(|(id, _)| *id == type_param.ident)
+            {
+                type_info.set_contains_generic_type();
+
+                if !type_param.bounds.empty_or_trailing() {
+                    type_info.set_contains_type_bound();
+                    type_param.bounds.iter().for_each(|bound| {
+                        if let syn::TypeParamBound::Trait(trait_bound) = bound {
+                            if trait_bound.path.is_ident("Default") {
+                                type_info.set_is_bound_default();
+                            } else if trait_bound.path.is_ident("Clone") {
+                                type_info.set_is_bound_clone();
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
         } else if let syn::GenericParam::Lifetime(_) = param {
             contains_lifetime_bound = true;
@@ -323,11 +327,15 @@ fn impl_cached_component_data_struct(
                         for bound in predicate_type.bounds.iter() {
                             if let syn::TypeParamBound::Trait(trait_bound) = bound {
                                 if trait_bound.path.is_ident("Default") {
-                                    if let Some(gtype_info) = type_info_map.get_mut(type_ident) {
+                                    if let Some((_, gtype_info)) =
+                                        type_info_vec.iter_mut().find(|(id, _)| *id == *type_ident)
+                                    {
                                         gtype_info.set_is_bound_default();
                                     }
                                 } else if trait_bound.path.is_ident("Clone") {
-                                    if let Some(gtype_info) = type_info_map.get_mut(type_ident) {
+                                    if let Some((_, gtype_info)) =
+                                        type_info_vec.iter_mut().find(|(id, _)| *id == *type_ident)
+                                    {
                                         gtype_info.set_is_bound_clone();
                                     }
                                 }
@@ -344,15 +352,15 @@ fn impl_cached_component_data_struct(
     let mut contains_all_default_bound = true;
     let mut contains_all_clone_bound = true;
 
-    type_info_map.iter().for_each(|(_, type_info)| {
+    type_info_vec.iter().for_each(|(_, type_info)| {
         if type_info.contains_type_bound {
             contains_any_type_bound = true;
         }
         if type_info.contains_generic_type {
             contains_any_generic_type = true;
         }
-        contains_all_default_bound = contains_all_default_bound && type_info.is_bound_default;
-        contains_all_clone_bound = contains_all_clone_bound && type_info.is_bound_clone;
+        contains_all_default_bound &= type_info.is_bound_default;
+        contains_all_clone_bound &= type_info.is_bound_clone;
     });
 
     let mut contains_where_bound = false;
@@ -483,7 +491,7 @@ fn impl_cached_component_data_struct(
     let component_info_impl = quote! {
         #[inline(always)]
         fn index() -> u32 {
-            static INDEX: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(u32::MAX);
+            static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);
             Self::get_or_init_index(&INDEX)
         }
 
@@ -645,7 +653,7 @@ fn generate_variant_match_arm(
         quote! {
             unsafe {
                 let slice = concat!(stringify!(#variant_ident), "\0").as_bytes();
-                std::ffi::CStr::from_bytes_with_nul_unchecked(slice)
+                core::ffi::CStr::from_bytes_with_nul_unchecked(slice)
             }
         }
     };
@@ -723,14 +731,14 @@ fn impl_cached_component_data_enum(
         const SIZE_ENUM_FIELDS: u32 = #size_variants;
         type VariantIterator = std::vec::IntoIter<#name #impl_generics>;
 
-        fn name_cstr(&self) -> &std::ffi::CStr {
+        fn name_cstr(&self) -> &core::ffi::CStr {
             match self {
                 #(#variant_name_arms),*
             }
         }
 
         fn enum_index(&self) -> usize {
-            const _: () = assert!(std::mem::size_of::<#name>()  == 4, "Enum size is not 4 bytes. For Flecs enum behaviour, the enum size must be 4 bytes");
+            const _: () = assert!(core::mem::size_of::<#name>()  == 4, "Enum size is not 4 bytes. For Flecs enum behaviour, the enum size must be 4 bytes");
             match self {
                 #(#variant_index_arms),*
             }
@@ -756,7 +764,7 @@ fn impl_cached_component_data_enum(
     let component_info_impl = quote! {
             #[inline(always)]
             fn index() -> u32 {
-                static INDEX: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(u32::MAX);
+                static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);
                 Self::get_or_init_index(&INDEX)
             }
 
@@ -914,7 +922,7 @@ impl Parse for Tuples {
         let start = input.parse::<LitInt>()?.base10_parse()?;
         input.parse::<Comma>()?;
         let end = input.parse::<LitInt>()?.base10_parse()?;
-        let mut idents = vec![];
+        let mut idents: Vec<Ident> = Vec::new();
         while input.parse::<Comma>().is_ok() {
             let ident = input.parse::<Ident>()?;
             idents.push(ident);
@@ -1957,9 +1965,9 @@ pub fn ecs_rust_trait(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
             }
 
             pub fn register_vtable<T: #name + flecs_ecs::core::component_registration::registration_traits::ComponentId>(world: &flecs_ecs::core::World) -> usize {
-                let fake_ptr: *const T = std::ptr::null();
+                let fake_ptr: *const T = core::ptr::null();
                 let trait_obj: &dyn #name = unsafe { &*fake_ptr };
-                let (_, vtable): (usize, usize) = unsafe { std::mem::transmute(trait_obj) };
+                let (_, vtable): (usize, usize) = unsafe { core::mem::transmute(trait_obj) };
                 let id = world.component::<T>();
                 let id_self = world.component::<Self>();
                 id.is_a_id(id_self);
@@ -1975,7 +1983,7 @@ pub fn ecs_rust_trait(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
                     .cloned::<&(Self,Self)>()
                     .vtable;
 
-                unsafe { std::mem::transmute((data_ptr, vtable_ptr)) }
+                unsafe { core::mem::transmute((data_ptr, vtable_ptr)) }
             }
         }
     };

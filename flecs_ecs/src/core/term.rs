@@ -3,6 +3,12 @@
 use crate::core::*;
 use crate::sys;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::format;
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 pub enum TermRefMode {
     #[default]
@@ -61,6 +67,12 @@ impl<'a> TermRef<'a> {
 pub mod internals {
     use crate::core::*;
     use crate::sys;
+
+    #[cfg(feature = "std")]
+    extern crate std;
+
+    extern crate alloc;
+    use alloc::{string::String, vec::Vec};
 
     #[derive(Default)]
     pub struct TermBuilder {

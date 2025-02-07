@@ -4,6 +4,8 @@
 //!
 //! [Flecs]: https://www.flecs.dev/
 
+//this is commented since `no_std` is not ready yet
+//#![cfg_attr(not(feature = "std"), no_std)] // Enable `no_std` if `std` feature is disabled
 #![allow(dead_code)]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
@@ -12,6 +14,15 @@
     feature = "flecs_force_build_debug_c"
 ))]
 compile_error!("Features 'flecs_force_build_release_c' and 'flecs_force_build_debug_c' cannot be enabled at the same time.");
+
+#[cfg(not(feature = "std"))]
+const _: () = panic!("no_std is not ready yet");
+
+#[cfg(feature = "std")]
+extern crate std;
+
+#[macro_use]
+extern crate alloc;
 
 pub use flecs_ecs_derive as macros;
 pub use flecs_ecs_sys as sys;

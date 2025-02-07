@@ -1,5 +1,5 @@
 #![allow(clippy::float_cmp)]
-use std::ffi::CStr;
+use core::ffi::CStr;
 
 use core::mem::offset_of;
 use flecs_ecs::prelude::meta::*;
@@ -16,12 +16,12 @@ fn std_string_support(world: WorldRef) -> Opaque<String> {
     ts.serialize(|s: &Serializer, data: &String| {
         s.value_id(
             flecs::meta::String,
-            &data.as_ptr() as *const *const u8 as *const std::ffi::c_void,
+            &data.as_ptr() as *const *const u8 as *const core::ffi::c_void,
         )
     });
 
     // Serialize string into std::string
-    ts.assign_string(|data: &mut String, value: *const std::ffi::c_char| {
+    ts.assign_string(|data: &mut String, value: *const core::ffi::c_char| {
         *data = unsafe { CStr::from_ptr(value).to_string_lossy().into_owned() }
     });
 
@@ -40,7 +40,7 @@ fn std_vector_support<T: Default>(world: WorldRef) -> Opaque<Vec<T>, T> {
         let world = unsafe { WorldRef::from_ptr(s.world as *mut ecs_world_t) };
         let id = id!(world, T);
         for el in data.iter() {
-            s.value_id(id, el as *const T as *const std::ffi::c_void);
+            s.value_id(id, el as *const T as *const core::ffi::c_void);
         }
         0
     });

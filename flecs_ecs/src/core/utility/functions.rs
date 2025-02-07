@@ -4,7 +4,17 @@
 use crate::core::*;
 use crate::sys;
 use core::ffi::c_char;
-use std::ffi::CString;
+
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::{
+    ffi::CString,
+    format,
+    string::{String, ToString},
+    vec::Vec,
+};
 
 const ECS_GENERATION_MASK: u64 = u32::MAX as u64;
 
@@ -450,6 +460,7 @@ pub(crate) fn copy_and_allocate_c_char_from_rust_str(data: &str) -> *mut c_char 
 /// # Note
 ///
 /// This function is for development purposes. It is not intended to be used in production code.
+#[cfg(feature = "std")]
 pub(crate) unsafe fn print_c_string(c_string: *const c_char) {
     // Ensure the pointer is not null
     assert!(!c_string.is_null(), "Null pointer passed to print_c_string");
@@ -522,7 +533,7 @@ pub fn debug_separate_archetype_types_into_strings(archetype: &Archetype) -> Vec
         .to_string()
         .unwrap_or_else(|| "empty entity | no components".to_string());
 
-    let parts: Vec<&str> = archetype_str.split(',').map(|s| s.trim()).collect();
+    let parts: Vec<&str> = archetype_str.split(',').map(str::trim).collect();
 
     for i in 0..parts.len() {
         if skip_next {

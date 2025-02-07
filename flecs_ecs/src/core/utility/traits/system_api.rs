@@ -1,6 +1,12 @@
-use std::ffi::c_void;
+use core::ffi::c_void;
 
 use crate::core::*;
+
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::boxed::Box;
 
 pub trait SystemAPI<'a, P, T>: Builder<'a> + private::internal_SystemAPI<'a, P, T>
 where

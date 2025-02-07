@@ -8,6 +8,12 @@ pub use unmanaged_script::*;
 
 use flecs_ecs::core::*;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::string::String;
+
 /// Script mixin implementation
 impl World {
     /// Create a new script builder.

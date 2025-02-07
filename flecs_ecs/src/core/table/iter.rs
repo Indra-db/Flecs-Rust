@@ -932,7 +932,7 @@ where
         };
 
         FieldUntyped::new(
-            unsafe { sys::ecs_field_w_size(self.iter, 0, index) as *mut c_void },
+            unsafe { sys::ecs_field_w_size(self.iter, 0, index) },
             size,
             count,
             is_shared,
@@ -943,7 +943,7 @@ where
         let size = unsafe { sys::ecs_field_size(self.iter, index) };
 
         FieldUntyped::new(
-            unsafe { sys::ecs_field_at_w_size(self.iter, 0, index, row) as *mut c_void },
+            unsafe { sys::ecs_field_at_w_size(self.iter, 0, index, row) },
             size,
             1,
             false,

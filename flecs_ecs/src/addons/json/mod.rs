@@ -10,6 +10,13 @@ use crate::core::*;
 
 use super::meta::FetchedId;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::string::String;
+use alloc::string::ToString;
+
 pub type FromJsonDesc = sys::ecs_from_json_desc_t;
 pub type WorldToJsonDesc = sys::ecs_world_to_json_desc_t;
 pub type EntityToJsonDesc = sys::ecs_entity_to_json_desc_t;

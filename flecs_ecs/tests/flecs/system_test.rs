@@ -1,7 +1,7 @@
 #![allow(clippy::float_cmp)]
 #![allow(dead_code)]
 
-use std::ffi::c_void;
+use core::ffi::c_void;
 
 use flecs_ecs::core::*;
 use flecs_ecs::macros::*;

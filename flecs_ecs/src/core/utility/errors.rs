@@ -147,7 +147,12 @@ macro_rules! ecs_assert {
         );
     };
     ($condition:expr $(,)?, $error_code:expr, $fmt:expr, $($arg:tt)+) => {
-        assert!($condition, "{}: {}", $error_code, format!($fmt, $($arg)+));
+        #[cfg(feature = "std")]
+        extern crate std;
+
+        extern crate alloc;
+
+        assert!($condition, "{}: {}", $error_code, alloc::format!($fmt, $($arg)+));
     };
 }
 
@@ -160,6 +165,11 @@ macro_rules! ecs_assert {
 #[allow(unused_macros)]
 macro_rules! ecs_abort {
     ($error_code:expr $(,)?) => {
+        #[cfg(feature = "std")]
+        extern crate std;
+
+        extern crate alloc;
+
         let file = file!();
         let line = line!();
 

@@ -6,6 +6,12 @@ use core::{alloc::Layout, ffi::c_void};
 use crate::core::*;
 use crate::sys;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::{alloc::dealloc, boxed::Box};
+
 /// A strongly-typed or dynamic interface wrapper for constructing events with specific data.
 ///
 /// # Type parameters
@@ -235,7 +241,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         unsafe {
             sys::ecs_enqueue(world.world_ptr_mut(), desc);
             if !T::IS_TAG {
-                std::alloc::dealloc(desc.param as *mut u8, Layout::new::<T>());
+                dealloc(desc.param as *mut u8, Layout::new::<T>());
             }
         };
     }

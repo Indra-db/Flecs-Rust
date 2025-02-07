@@ -50,6 +50,12 @@ use core::{ffi::c_void, mem::MaybeUninit, ptr};
 use crate::core::*;
 use crate::sys;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::boxed::Box;
+
 #[derive(Default)]
 pub(crate) struct RegistersPanicHooks {
     pub(crate) ctor: bool,
@@ -319,10 +325,19 @@ fn check_type_info<T>(_type_info: *const sys::ecs_type_info_t) -> bool {
 }
 
 mod tests {
-    #![allow(unused_imports)]
-    use core::{ffi::c_void, mem::MaybeUninit};
+    use core::ffi::c_void;
 
     use crate::core::lifecycle_traits::move_dtor;
+
+    #[cfg(feature = "std")]
+    extern crate std;
+
+    extern crate alloc;
+    use alloc::{
+        string::{String, ToString},
+        vec,
+        vec::Vec,
+    };
 
     #[derive(Default, Debug, Clone)]
     struct MyType {

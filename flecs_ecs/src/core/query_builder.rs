@@ -7,6 +7,12 @@ use crate::core::internals::*;
 use crate::core::*;
 use crate::sys;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::{format, vec::Vec};
+
 /// Builder for [`Query`].
 ///
 /// # Example

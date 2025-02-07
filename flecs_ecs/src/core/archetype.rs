@@ -9,6 +9,12 @@ use core::{
 use crate::core::*;
 use crate::sys;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::{string::String, vec::Vec};
+
 /// An archetype is a vector of component [ids](Id) which can be requested from [entities] or [tables].
 ///
 /// # See also

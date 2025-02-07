@@ -146,10 +146,10 @@ mod tests {
 
         let fetcher = id!(&world, Position);
         let id = get_id_from_fetcher(fetcher);
-        assert_eq!(dbg!(id), dbg!(world.component_id::<Position>()));
+        assert_eq!(id, world.component_id::<Position>());
 
         let fetcher_ext = id!(&world, ExternalPosition);
         let id_ext = get_id_from_fetcher(fetcher_ext);
-        assert_ne!(dbg!(id_ext), id);
+        assert_ne!(id_ext, id);
     }
 }

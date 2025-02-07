@@ -11,6 +11,12 @@ use core::{ffi::c_void, ffi::CStr, ptr::NonNull};
 use crate::core::*;
 use crate::sys;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::{string::String, vec::Vec};
+
 /// A wrapper class that gives direct access to the component arrays of a table, the table data
 #[derive(Debug, Clone, Copy, Eq)]
 pub struct Table<'a> {

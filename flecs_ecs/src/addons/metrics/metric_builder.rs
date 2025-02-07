@@ -3,6 +3,13 @@ use crate::sys;
 use core::ffi::c_char;
 use core::mem::ManuallyDrop;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::format;
+use alloc::{string::String, vec::Vec};
+
 /// `MetricBuilder` is a builder pattern for creating metrics.
 pub struct MetricBuilder<'a> {
     world: WorldRef<'a>,

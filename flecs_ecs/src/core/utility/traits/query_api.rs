@@ -3,6 +3,12 @@ use core::ffi::c_char;
 use flecs_ecs::core::*;
 use flecs_ecs::sys;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::string::{String, ToString};
+
 /// Custom error type for `try_first_only` failures.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum FirstOnlyError {

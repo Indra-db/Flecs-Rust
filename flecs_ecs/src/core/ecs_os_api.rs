@@ -4,6 +4,13 @@
 //! This module provides a basic structure for hooking into the initialization
 //! of that API, which allows, for example, customizing how Flecs sends log
 //! messages.
+//!
+//!
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::{boxed::Box, vec::Vec};
 
 use std::sync::LazyLock;
 use std::sync::Mutex;

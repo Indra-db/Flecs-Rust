@@ -1,4 +1,10 @@
-use std::sync::{Arc, Mutex};
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::sync::Arc;
+
+use std::sync::Mutex;
 
 #[cfg(feature = "flecs_nightly_tests")]
 pub use capture_stdio::*;

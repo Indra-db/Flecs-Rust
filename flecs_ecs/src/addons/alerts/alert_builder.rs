@@ -9,6 +9,12 @@ use super::SeverityAlert;
 
 use core::mem::ManuallyDrop;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::{format, string::String, vec::Vec};
+
 /// [`AlertBuilder`] is a builder pattern for creating [`Alert`]s.
 pub struct AlertBuilder<'a, T>
 where

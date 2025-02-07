@@ -1,6 +1,6 @@
 #![allow(dead_code)]
-use std::cell::Cell;
-use std::ffi::c_void;
+use core::cell::Cell;
+use core::ffi::c_void;
 
 use crate::common_test::*;
 use flecs_ecs::sys;
@@ -2436,9 +2436,9 @@ extern "C-unwind" fn callback_group_create(
     group_id: u64,
     group_by_ctx: *mut c_void,
 ) -> *mut c_void {
-    assert_ne!(world, std::ptr::null_mut());
+    assert_ne!(world, core::ptr::null_mut());
     assert_ne!(group_id, 0);
-    assert_ne!(group_by_ctx, std::ptr::null_mut());
+    assert_ne!(group_by_ctx, core::ptr::null_mut());
     let cell_count = unsafe { &mut *(group_by_ctx as *mut Cell<u64>) };
     assert_eq!(cell_count.get(), 5);
     let group_id = Box::new(group_id);
@@ -2450,12 +2450,12 @@ extern "C-unwind" fn callback_group_delete(
     ctx: *mut c_void,
     group_by_ctx: *mut c_void,
 ) {
-    assert_ne!(world, std::ptr::null_mut());
+    assert_ne!(world, core::ptr::null_mut());
     assert_ne!(group_id, 0);
-    assert_ne!(group_by_ctx, std::ptr::null_mut());
+    assert_ne!(group_by_ctx, core::ptr::null_mut());
     let cell_count = unsafe { &mut *(group_by_ctx as *mut Cell<u64>) };
     assert_eq!(cell_count.get(), 5);
-    assert_ne!(ctx, std::ptr::null_mut());
+    assert_ne!(ctx, core::ptr::null_mut());
     let group_id_ctx = unsafe { *(ctx as *mut u64) };
     assert_eq!(group_id_ctx, group_id);
     let _box = unsafe { Box::from_raw(ctx as *mut u64) };

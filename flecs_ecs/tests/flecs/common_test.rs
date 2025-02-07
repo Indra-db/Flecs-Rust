@@ -2,10 +2,8 @@
 #![allow(unused_imports)]
 #![allow(unexpected_cfgs)]
 
-use std::{
-    collections::HashMap,
-    ops::{Deref, DerefMut},
-};
+use core::ops::{Deref, DerefMut};
+use std::collections::HashMap;
 
 pub use flecs_ecs::prelude::*;
 
@@ -308,7 +306,7 @@ pub fn create_world_with_flags<T: ComponentId + Default + DataComponent + Compon
 ) -> World {
     let world = World::new();
 
-    internal_register_component::<false, false, T>(&world, std::ptr::null());
+    internal_register_component::<false, false, T>(&world, core::ptr::null());
     world.set(T::default());
 
     world

@@ -173,6 +173,7 @@ fn transfer_item(container: EntityView<'_>, item: EntityView<'_>) {
 
     let amt = item.try_cloned::<&Amount>().unwrap_or(Amount { amount: 1 });
 
+    #[allow(clippy::redundant_else)]
     if amt.amount > 0 {
         // If item has amount we need to check if the container already has an
         // item of this kind, and increase the value.

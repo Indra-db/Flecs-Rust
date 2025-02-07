@@ -1,11 +1,8 @@
 use crate::z_ignore_test_common::*;
 
+use core::{borrow::Borrow, ffi::c_void};
 use flecs_ecs::prelude::*;
-use std::{
-    borrow::Borrow,
-    ffi::c_void,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Component)]
 pub struct Position {

@@ -24,6 +24,12 @@ pub mod private {
     use crate::sys;
     use core::ffi::c_void;
 
+    #[cfg(feature = "std")]
+    extern crate std;
+
+    extern crate alloc;
+    use alloc::boxed::Box;
+
     #[allow(non_camel_case_types)]
     #[doc(hidden)]
     pub trait internal_SystemAPI<'a, P, T>

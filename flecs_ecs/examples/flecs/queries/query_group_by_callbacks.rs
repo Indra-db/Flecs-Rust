@@ -52,7 +52,7 @@ extern "C-unwind" fn callback_group_create(
     // Return data that will be associated with the group
     let ctx = Box::new(GroupCtx { counter: *counter });
 
-    Box::into_raw(ctx) as *mut std::ffi::c_void // Cast to make sure function type matches
+    Box::into_raw(ctx) as *mut core::ffi::c_void // Cast to make sure function type matches
 }
 
 // Callbacks need to be `extern "C-unwind"` to be callable from C and allow safe unwinding across FFI boundaries.

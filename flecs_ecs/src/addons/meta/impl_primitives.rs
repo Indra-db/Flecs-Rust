@@ -1,6 +1,12 @@
 use flecs_ecs::prelude::*;
 use flecs_ecs::sys;
 
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+use alloc::string::String;
+
 #[macro_export]
 macro_rules! impl_component_traits_primitive_type {
     ($name:ident, $id:ident) => {
