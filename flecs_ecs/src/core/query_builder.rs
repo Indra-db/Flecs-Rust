@@ -862,7 +862,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// # Arguments
     ///
     /// * `compare`: The compare function used to sort the components.
-    ///     The signature of the function must be `fn(Entity, &T, Entity, &T) -> i32`.
+    ///   The signature of the function must be `fn(Entity, &T, Entity, &T) -> i32`.
     ///
     /// # See also
     ///

@@ -1752,8 +1752,8 @@ pub trait WorldGet<Return> {
     /// use `Option` wrapper to indicate if the component is optional.
     ///
     /// - `try_get` assumes when not using `Option` wrapper, that the entity has the component.
-    ///    If it does not, it will not run the callback.
-    ///    If unsure and you still want to have the callback be ran, use `Option` wrapper instead.
+    ///   If it does not, it will not run the callback.
+    ///   If unsure and you still want to have the callback be ran, use `Option` wrapper instead.
     ///
     /// # Note
     ///
