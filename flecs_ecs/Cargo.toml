@@ -24,7 +24,7 @@ cargo-args = ["-Zunstable-options", "-Zrustdoc-scrape-examples"]
 flecs_ecs_derive = { workspace = true }
 flecs_ecs_sys = { workspace = true }
 bitflags = "2.8.0"
-compact_str = "0.8.1"
+compact_str = { version = "0.8.1", default-features = false }
 hashbrown = "0.15.2"
 
 # used for backtraces upon hardware exceptions during test
@@ -47,7 +47,7 @@ insta = { version = "1.42.1", features = ["yaml","filters"] }
 ######################
 
 # use std
-std = ["flecs_ecs_derive/std"]
+std = ["flecs_ecs_derive/std", "compact_str/std"]
 
 # Regenerate the C binding for flecs C
 flecs_regenerate_binding_c = ["flecs_ecs_sys/regenerate_binding"]
