@@ -7,7 +7,10 @@ use flecs_ecs::sys;
 extern crate std;
 
 extern crate alloc;
-use alloc::string::{String, ToString};
+use alloc::string::String;
+
+#[cfg(feature = "flecs_json")]
+use alloc::string::ToString;
 
 /// Custom error type for `try_first_only` failures.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

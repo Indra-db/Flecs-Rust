@@ -86,7 +86,8 @@ impl_component_traits_primitive_type!(u64, ECS_U64_T);
 impl_component_traits_primitive_type!(usize, ECS_UPTR_T);
 impl_component_traits_primitive_type!(i8, ECS_I8_T);
 impl_component_traits_primitive_type!(i16, ECS_I16_T);
-impl_component_traits_primitive_type!(i32, ECS_I32_T);
+//exposed in core, due to enum registration changes
+//impl_component_traits_primitive_type!(i32, ECS_I32_T);
 impl_component_traits_primitive_type!(i64, ECS_I64_T);
 impl_component_traits_primitive_type!(isize, ECS_IPTR_T);
 impl_component_traits_primitive_type!(f32, ECS_F32_T);
