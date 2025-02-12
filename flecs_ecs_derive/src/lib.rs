@@ -3,12 +3,11 @@
 extern crate proc_macro;
 
 //#[cfg(feature = "std")]
-extern crate std;
+//extern crate std;
 
 #[allow(unused_imports)]
 #[macro_use]
 extern crate alloc;
-extern crate core;
 
 use alloc::{format, string::ToString, vec::Vec};
 
@@ -492,7 +491,7 @@ fn impl_cached_component_data_struct(
     let component_info_impl = quote! {
         #[inline(always)]
         fn index() -> u32 {
-            static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);
+            static INDEX: ::core::sync::atomic::AtomicU32 = ::core::sync::atomic::AtomicU32::new(u32::MAX);
             Self::get_or_init_index(&INDEX)
         }
 
@@ -765,7 +764,7 @@ fn impl_cached_component_data_enum(
     let component_info_impl = quote! {
             #[inline(always)]
             fn index() -> u32 {
-                static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);
+                static INDEX: ::core::sync::atomic::AtomicU32 = ::core::sync::atomic::AtomicU32::new(u32::MAX);
                 Self::get_or_init_index(&INDEX)
             }
 
