@@ -880,11 +880,11 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
+    /// * [`EntityView::add`]
+    /// * [`EntityView::add_id`]
+    /// * [`EntityView::set`]
+    /// * [`EntityView::set_pair`]
     /// * C++ API: `entity_builder::set`
-    ///     [`EntityView::add`]
-    ///     [`EntityView::add_id`]
-    ///     [`EntityView::set`]
-    ///     [`EntityView::set_pair`]
     #[doc(alias = "entity_builder::set")]
     pub fn set_id<T>(self, data: T, id: impl IntoId) -> Self
     where
