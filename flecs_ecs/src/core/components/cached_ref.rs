@@ -1,6 +1,6 @@
 //! Refs are a fast mechanism for referring to a specific entity/component
 
-use core::{marker::PhantomData, ffi::c_void, ptr::NonNull};
+use core::{ffi::c_void, marker::PhantomData, ptr::NonNull};
 
 use crate::core::*;
 use crate::sys;
