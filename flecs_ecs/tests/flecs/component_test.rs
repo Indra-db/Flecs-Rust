@@ -151,3 +151,67 @@ fn on_component_registration() {
         assert_eq!(count.0, 2);
     });
 }
+
+#[test]
+fn on_component_registration_named() {
+    #[derive(Component)]
+    #[on_registration]
+    struct OnRegistration {
+        x: i32,
+    }
+
+    impl OnComponentRegistration for OnRegistration {
+        fn on_component_registration(world: WorldRef, component_id: Entity) {
+            world.get::<&mut Count>(|count| {
+                count.0 += 1;
+            });
+
+            world
+                .component_untyped_from_id(component_id)
+                .add_trait::<flecs::Prefab>();
+        }
+    }
+
+    #[derive(Component)]
+    #[on_registration]
+    struct OnRegistrationTag {
+        x: i32,
+    }
+
+    impl OnComponentRegistration for OnRegistrationTag {
+        fn on_component_registration(world: WorldRef, _component_id: Entity) {
+            world.get::<&mut Count>(|count| {
+                count.0 += 1;
+            });
+        }
+    }
+
+    #[derive(Component)]
+    struct NoOnRegistration {
+        x: i32,
+    }
+
+    let world = World::new();
+
+    world.set(Count(0));
+
+    world.component_named::<OnRegistration>("OnRegistration");
+
+    world.get::<&Count>(|count| {
+        assert_eq!(count.0, 1);
+    });
+
+    assert!(world.component::<OnRegistration>().has::<flecs::Prefab>());
+
+    world.component::<OnRegistrationTag>();
+
+    world.get::<&Count>(|count| {
+        assert_eq!(count.0, 2);
+    });
+
+    world.component::<NoOnRegistration>();
+
+    world.get::<&Count>(|count| {
+        assert_eq!(count.0, 2);
+    });
+}

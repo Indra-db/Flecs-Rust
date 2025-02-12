@@ -217,9 +217,13 @@ pub trait ComponentId:
                         }
                     }
 
-                    registration_traits::try_register_component::<MANUAL_REGISTRATION_CHECK, Self>(
-                        world,
-                    )
+                    let id = registration_traits::try_register_component::<
+                        MANUAL_REGISTRATION_CHECK,
+                        Self,
+                    >(world);
+
+                    Self::on_component_registration(world, Entity::new(id));
+                    id
                 }))
         }
     }
@@ -256,6 +260,8 @@ pub trait ComponentId:
                         Self,
                     >(world, name);
 
+                    Self::on_component_registration(world, Entity::new(id));
+
                     components_array[index] = id;
                     #[cfg(feature = "flecs_meta")]
                     {
@@ -281,6 +287,9 @@ pub trait ComponentId:
                     MANUAL_REGISTRATION_CHECK,
                     Self,
                 >(world, name);
+
+                Self::on_component_registration(world, Entity::new(id));
+
                 components_array[index] = id;
                 id
             }
@@ -301,10 +310,13 @@ pub trait ComponentId:
                             );
                         }
                     }
-                    registration_traits::try_register_component_named::<
+                    let id = registration_traits::try_register_component_named::<
                         MANUAL_REGISTRATION_CHECK,
                         Self,
-                    >(world, name)
+                    >(world, name);
+
+                    Self::on_component_registration(world, Entity::new(id));
+                    id
                 }))
         }
     }
