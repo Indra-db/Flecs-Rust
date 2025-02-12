@@ -15,5 +15,3 @@ mod mbindings;
 
 pub use bindings::*;
 pub use mbindings::*;
-//exposed for musl test case (system_randomize_timers)
-pub use libc::{srand, time};

@@ -37,6 +37,7 @@ seq-macro = "0.3.5"
 rand = "0.9.0"
 ctor = "0.3.0"
 insta = { version = "1.42.1", features = ["yaml","filters"] }
+libc.workspace = true
 # used for capturing stdout in the examples test cases. Works only on Nightly, meant
 # to be used with flecs_nightly_tests feature flag
 #capture-stdio = "0.1.1" 
