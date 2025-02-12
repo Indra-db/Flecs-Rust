@@ -2250,8 +2250,8 @@ fn system_randomize_timers() {
     // on musl builds, `rand` call always returns 0 until seeded, so we need to
     // call srand to seed the random number generator
     unsafe {
-        let seed = flecs_ecs_sys::time(core::ptr::null_mut()) as u32;
-        flecs_ecs_sys::srand(seed);
+        let seed = libc::time(core::ptr::null_mut()) as u32;
+        libc::srand(seed);
     }
 
     let s1 = world

@@ -15,7 +15,7 @@ keywords = ["flecs", "ecs", "sys"]
 workspace = true
 
 [dependencies]
-libc = "0.2.167"
+libc.workspace = true
 
 [build-dependencies]
 bindgen = "0.71.1"
