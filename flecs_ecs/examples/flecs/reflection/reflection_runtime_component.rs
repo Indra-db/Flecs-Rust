@@ -10,9 +10,15 @@ fn main() {
         .member::<f32>("x")
         .member::<f32>("y");
 
-    // Create entity, set value of position using reflection API
-    let e = world.entity().add_id(position);
+    // Create entity
+    let e = world.entity();
 
+    // unchecked add id due to position being uninitialized and not having a ctor.
+    unsafe {
+        e.add_id_unchecked(position);
+    }
+
+    // set value of position using reflection API
     let ptr = e.get_untyped_mut(position);
 
     let mut cur = world.cursor_id(position, ptr);

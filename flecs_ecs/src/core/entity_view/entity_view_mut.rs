@@ -39,7 +39,7 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    pub(crate) unsafe fn add_id_unchecked(self, id: impl IntoId) -> Self {
+    pub unsafe fn add_id_unchecked(self, id: impl IntoId) -> Self {
         let id = *id.into();
         let world = self.world.world_ptr_mut();
 
