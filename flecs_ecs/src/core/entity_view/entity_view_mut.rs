@@ -39,6 +39,21 @@ impl<'a> EntityView<'a> {
         self
     }
 
+    /// Adds an ID to the entity unchecked. Useful for run-time components.
+    ///
+    /// The provided `id` can represent various types, including a component, a pair, a tag, or another entity.
+    ///
+    /// # Safety
+    /// Caller must ensure the `id` is a valid type.
+    /// This function is unsafe because it does not check if the `id` is a valid type nor if
+    /// the `id` implements a constructor hook if it is not a zero-sized type (ZST).
+    /// if the id is a type without a constructor hook, it could cause you to read uninitialized data.
+    /// the caller must ensure to initialize the component data before using it.
+    ///
+    /// # See Also
+    ///
+    /// * [`add_id`](Self::add_id)
+    /// * [`set_id`](Self::set_id)
     pub unsafe fn add_id_unchecked(self, id: impl IntoId) -> Self {
         let id = *id.into();
         let world = self.world.world_ptr_mut();
