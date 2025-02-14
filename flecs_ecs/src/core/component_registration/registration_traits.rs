@@ -6,6 +6,8 @@ use core::{
 use crate::core::*;
 use crate::sys;
 
+use hashbrown::hash_map::Entry;
+
 #[cfg(feature = "flecs_query_rust_traits")]
 pub trait RustTrait {}
 
@@ -165,8 +167,6 @@ pub trait ComponentId:
                         Self,
                     >(world);
 
-                    Self::on_component_registration(world, Entity::new(id));
-
                     components_array[index] = id;
                     #[cfg(feature = "flecs_meta")]
                     {
@@ -174,6 +174,9 @@ pub trait ComponentId:
                             .components_map()
                             .insert(core::any::TypeId::of::<Self>(), id);
                     }
+
+                    Self::on_component_registration(world, Entity::new(id));
+
                     return id;
                 }
                 components_array[index]
@@ -194,17 +197,19 @@ pub trait ComponentId:
                     Self,
                 >(world);
 
+                components_array[index] = id;
+
                 Self::on_component_registration(world, Entity::new(id));
 
-                components_array[index] = id;
                 id
             }
         } else {
             let world = world.world();
             let components_map = world.components_map();
-            *(components_map
-                .entry(core::any::TypeId::of::<Self>())
-                .or_insert_with(|| {
+
+            *match components_map.entry(core::any::TypeId::of::<Self>()) {
+                Entry::Occupied(entry) => entry.into_mut(),
+                Entry::Vacant(entry) => {
                     if MANUAL_REGISTRATION_CHECK {
                         #[cfg(feature = "flecs_manual_registration")]
                         {
@@ -222,9 +227,12 @@ pub trait ComponentId:
                         Self,
                     >(world);
 
-                    Self::on_component_registration(world, Entity::new(id));
+                    let id = entry.insert(id);
+
+                    Self::on_component_registration(world, Entity::new(*id));
                     id
-                }))
+                }
+            }
         }
     }
 
@@ -260,15 +268,17 @@ pub trait ComponentId:
                         Self,
                     >(world, name);
 
-                    Self::on_component_registration(world, Entity::new(id));
-
                     components_array[index] = id;
+
                     #[cfg(feature = "flecs_meta")]
                     {
                         world
                             .components_map()
                             .insert(core::any::TypeId::of::<Self>(), id);
                     }
+
+                    Self::on_component_registration(world, Entity::new(id));
+
                     return id;
                 }
                 components_array[index]
@@ -288,17 +298,19 @@ pub trait ComponentId:
                     Self,
                 >(world, name);
 
+                components_array[index] = id;
+
                 Self::on_component_registration(world, Entity::new(id));
 
-                components_array[index] = id;
                 id
             }
         } else {
             let world = world.world();
             let components_map = world.components_map();
-            *(components_map
-                .entry(core::any::TypeId::of::<Self>())
-                .or_insert_with(|| {
+
+            *match components_map.entry(core::any::TypeId::of::<Self>()) {
+                Entry::Occupied(entry) => entry.into_mut(),
+                Entry::Vacant(entry) => {
                     if MANUAL_REGISTRATION_CHECK {
                         #[cfg(feature = "flecs_manual_registration")]
                         {
@@ -310,14 +322,18 @@ pub trait ComponentId:
                             );
                         }
                     }
+
                     let id = registration_traits::try_register_component_named::<
                         MANUAL_REGISTRATION_CHECK,
                         Self,
                     >(world, name);
 
-                    Self::on_component_registration(world, Entity::new(id));
+                    let id = entry.insert(id);
+
+                    Self::on_component_registration(world, Entity::new(*id));
                     id
-                }))
+                }
+            }
         }
     }
 
