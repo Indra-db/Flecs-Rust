@@ -9986,7 +9986,7 @@ void ecs_enable(
                  // - `id != entity` check for prefab types, where they have each other added.
                  // without it, it would fall into infinite recursion and stack overflow
                  // - `id & ECS_TOGGLE` check is to prevent enabling/disabling of toggles which fails the ecs_is_alive check
-                if (id != entity && !(ecs_id_get_flags(world, id) & EcsIdOnInstantiateDontInherit) && (id & ECS_TOGGLE) == 0){
+                if (id != entity && !(ecs_id_get_flags(world, id) & EcsIdOnInstantiateDontInherit) && ecs_is_alive(world,id)){
                     ecs_enable(world, id, enabled);
                 }
             }
@@ -9994,7 +9994,7 @@ void ecs_enable(
             for (i = 0; i < count; i ++) {
                 ecs_id_t id = ids[i];
                  // - `id & ECS_TOGGLE` check is to prevent enabling/disabling of toggles which fails the ecs_is_alive check
-                if (!(ecs_id_get_flags(world, id) & EcsIdOnInstantiateDontInherit) && (id & ECS_TOGGLE) == 0){
+                if (!(ecs_id_get_flags(world, id) & EcsIdOnInstantiateDontInherit) && ecs_is_alive(world,id)){
                     ecs_enable(world, id, enabled);
                 }
             }
