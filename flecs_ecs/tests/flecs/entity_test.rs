@@ -2094,8 +2094,6 @@ fn entity_with_relation_type_self() {
         e3.set(SelfRef { value: e3.into() });
     });
 
-    dbg!(bob);
-
     assert!(!world.component::<SelfRef>().has_first::<Likes>(bob));
 
     let mut count = 0;
@@ -3729,7 +3727,6 @@ fn entity_children_from_root() {
 
     let mut count = 0;
     world.entity_from_id(0).each_child(|e| {
-        dbg!(e.name());
         assert!((e.name() == "flecs") || (e.name() == "()"));
         count += 1;
     });

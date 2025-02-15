@@ -533,6 +533,10 @@ pub fn debug_separate_archetype_types_into_strings(archetype: &Archetype) -> Vec
         .to_string()
         .unwrap_or_else(|| "empty entity | no components".to_string());
 
+    if archetype.count() == 0 {
+        return vec![archetype_str];
+    }
+
     let parts: Vec<&str> = archetype_str.split(',').map(str::trim).collect();
 
     let ids = archetype.as_slice();
