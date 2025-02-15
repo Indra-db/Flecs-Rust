@@ -535,6 +535,9 @@ pub fn debug_separate_archetype_types_into_strings(archetype: &Archetype) -> Vec
 
     let parts: Vec<&str> = archetype_str.split(',').map(str::trim).collect();
 
+    let ids = archetype.as_slice();
+    let mut i_ids = 0;
+
     for i in 0..parts.len() {
         if skip_next {
             skip_next = false;
@@ -542,15 +545,17 @@ pub fn debug_separate_archetype_types_into_strings(archetype: &Archetype) -> Vec
         }
 
         let part = parts[i];
+        let id = ids[i_ids];
 
         if part.starts_with('(') {
             // Join this part with the next one
-            let combined = format!("{}, {}", part, parts[i + 1]);
+            let combined = format!("{}, {} : {}", part, parts[i + 1], id);
             result.push(combined);
             skip_next = true; // Skip the next part since it's already used
         } else {
-            result.push(part.to_string());
+            result.push(format!("{} : {}", part, id));
         }
+        i_ids += 1;
     }
 
     result
