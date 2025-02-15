@@ -9981,17 +9981,20 @@ void ecs_enable(
         int32_t i, count = type->count;
         if (ecs_has_id(world, entity, ecs_id(EcsComponent))) {
             for (i = 0; i < count; i ++) {
-                ecs_id_t id = ids[i];
-                 // id != entity check for prefab types, where they have each other added.
+                ecs_id_t id = ids[i]; 
+
+                 // - `id != entity` check for prefab types, where they have each other added.
                  // without it, it would fall into infinite recursion and stack overflow
-                if (id != entity && !(ecs_id_get_flags(world, id) & EcsIdOnInstantiateDontInherit)){
+                 // - `id & ECS_TOGGLE` check is to prevent enabling/disabling of toggles which fails the ecs_is_alive check
+                if (id != entity && !(ecs_id_get_flags(world, id) & EcsIdOnInstantiateDontInherit) && (id & ECS_TOGGLE) == 0){
                     ecs_enable(world, id, enabled);
                 }
             }
         } else { 
             for (i = 0; i < count; i ++) {
                 ecs_id_t id = ids[i];
-                if (!(ecs_id_get_flags(world, id) & EcsIdOnInstantiateDontInherit)){
+                 // - `id & ECS_TOGGLE` check is to prevent enabling/disabling of toggles which fails the ecs_is_alive check
+                if (!(ecs_id_get_flags(world, id) & EcsIdOnInstantiateDontInherit) && (id & ECS_TOGGLE) == 0){
                     ecs_enable(world, id, enabled);
                 }
             }
