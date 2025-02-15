@@ -1523,8 +1523,8 @@ impl World {
     #[doc(alias = "world::lookup")]
     #[inline(always)]
     pub fn lookup_recursive(&self, name: &str) -> EntityView {
-        self.try_lookup_recursive(name)
-            .expect("Entity not found, when unsure, use try_lookup_recursive")
+        self.try_lookup_recursive(name).unwrap_or_else(|| panic!("Entity {} not found, when unsure, use try_lookup_recursive",
+                name))
     }
 
     /// Lookup entity by name, only the current scope is searched
@@ -1553,7 +1553,7 @@ impl World {
     #[inline(always)]
     pub fn lookup(&self, name: &str) -> EntityView {
         self.try_lookup(name)
-            .expect("Entity not found, when unsure, use try_lookup")
+            .unwrap_or_else(|| panic!("Entity {} not found, when unsure, use try_lookup", name))
     }
 
     /// Helper function for [`World::try_lookup()`] and [`World::try_lookup_recursive()`].

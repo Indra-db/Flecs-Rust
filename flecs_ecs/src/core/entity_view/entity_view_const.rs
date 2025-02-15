@@ -1741,8 +1741,8 @@ impl<'a> EntityView<'a> {
     #[doc(alias = "entity_view::lookup")]
     #[inline(always)]
     pub fn lookup_recursive(&self, name: &str) -> EntityView {
-        self.try_lookup_recursive(name)
-            .expect("Entity not found, when unsure, use try_lookup_recursive")
+        self.try_lookup_recursive(name).unwrap_or_else(|| panic!("Entity {} not found, when unsure, use try_lookup_recursive",
+                name))
     }
 
     /// Lookup an entity by name, only in the current scope of the entity.
@@ -1770,7 +1770,7 @@ impl<'a> EntityView<'a> {
     #[inline(always)]
     pub fn lookup(&self, name: &str) -> EntityView {
         self.try_lookup(name)
-            .expect("Entity not found, when unsure, use try_lookup")
+            .unwrap_or_else(|| panic!("Entity {} not found, when unsure, use try_lookup", name))
     }
 
     /// Test if an entity has an id.
