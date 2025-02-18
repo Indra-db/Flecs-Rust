@@ -12,7 +12,7 @@ git-repository-url = "https://github.com/Indra-db/Flecs-Rust"
 edit-url-template = "https://github.com/Indra-db/Flecs-Rust/edit/main/flecs_ecs/doc/{path}"
 additional-css = ["theme/tabs.css", "theme/mdbook-admonish.css", "theme/mdbook-admonish.css"]
 additional-js = ["theme/tabs.js"]
-default-theme = "Navy"
+default-theme = "ayu"
 
 [output.html.playground]
 runnable = false

@@ -80,7 +80,7 @@ A component is a type of which instances can be added and removed to entities. E
 struct Position { x: f32, y: f32 }
 #[derive(Default, Component)]
 struct Velocity { x: f32, y: f32 }
-# 
+ 
 # fn main() {
 # let world = World::new();
 let e = world.entity();
