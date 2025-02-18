@@ -19,6 +19,16 @@ jobs:
         with:
           mdbook-version: '0.4.45'
 
+      - name: Install mdbook preprocessors
+        run: |
+          cargo install mdbook-admonish
+          cargo install mdbook-tabs
+
+      - name: Setup theme directory
+        run: |
+          mkdir -p flecs_ecs/doc/flecs/theme
+          touch flecs_ecs/doc/flecs/theme/tabs.css
+
       - name: Build Book
         run: |
           cd flecs_ecs/doc/flecs
