@@ -1,152 +1,104 @@
-pre code.hljs {
-    display: block;
-    overflow-x: auto;
-    padding: 1em
-  }
-  code.hljs {
-    padding: 3px 5px
-  }
-  /*!
-    Theme: GitHub Dark
-    Description: Dark theme as seen on github.com
-    Author: github.com
-    Maintainer: @Hirse
-    Updated: 2021-05-15
-  
-    Outdated base version: https://github.com/primer/github-syntax-dark
-    Current colors taken from GitHub's CSS
-  */
-  .hljs {
-    color: #c9d1d9;
-    background: #0d1117
-  }
-  .hljs-doctag,
-  .hljs-keyword,
-  .hljs-meta .hljs-keyword,
-  .hljs-template-tag,
-  .hljs-template-variable,
-  .hljs-type,
-  .hljs-variable.language_ {
-    /* prettylights-syntax-keyword */
-    color: #ff7b72
-  }
-  .hljs-title,
-  .hljs-title.class_,
-  .hljs-title.class_.inherited__,
-  .hljs-title.function_ {
-    /* prettylights-syntax-entity */
-    color: #ffffff
-  }
-  .hljs-attr,
-  .hljs-attribute,
-  .hljs-literal,
-  .hljs-meta,
-  .hljs-number,
-  .hljs-operator,
-  .hljs-variable,
-  .hljs-selector-attr,
-  .hljs-selector-class,
-  .hljs-selector-id {
-    /* prettylights-syntax-constant */
-    color: #79c0ff
-  }
-  .hljs-regexp,
-  .hljs-string,
-  .hljs-meta .hljs-string {
-    /* prettylights-syntax-string */
-    color: #a5d6ff
-  }
-  .hljs-built_in,
-  .hljs-symbol {
-    /* prettylights-syntax-variable */
-    color: #ffa657
-  }
-  .hljs-comment,
-  .hljs-code,
-  .hljs-formula {
-    /* prettylights-syntax-comment */
-    color: #8b949e
-  }
-  .hljs-name,
-  .hljs-quote,
-  .hljs-selector-tag,
-  .hljs-selector-pseudo {
-    /* prettylights-syntax-entity-tag */
-    color: #7ee787
-  }
-  .hljs-subst {
-    /* prettylights-syntax-storage-modifier-import */
-    color: #c9d1d9
-  }
-  .hljs-section {
-    /* prettylights-syntax-markup-heading */
-    color: #1f6feb;
-    font-weight: bold
-  }
-  .hljs-bullet {
-    /* prettylights-syntax-markup-list */
-    color: #f2cc60
-  }
-  .hljs-emphasis {
-    /* prettylights-syntax-markup-italic */
-    color: #c9d1d9;
-    font-style: italic
-  }
-  .hljs-strong {
-    /* prettylights-syntax-markup-bold */
-    color: #c9d1d9;
-    font-weight: bold
-  }
-  .hljs-addition {
-    /* prettylights-syntax-markup-inserted */
-    color: #aff5b4;
-    background-color: #033a16
-  }
-  .hljs-deletion {
-    /* prettylights-syntax-markup-deleted */
-    color: #ffdcd7;
-    background-color: #67060c
-  }
-  .hljs-char.escape_,
-  .hljs-link,
-  .hljs-params,
-  .hljs-property,
-  .hljs-punctuation,
-  .hljs-tag {
-    /* prettylights-syntax-punctuation */
-    color: #e6197f
-    
-  }
-  
-  /* 1) White for types (e.g. f32, Position) */
-  .hljs-type {
-    color: #f6efef !important;
-  }
-  
-  /* 2) Attributes (#[]): light blue overall, with derive(...) contents in orange */
-  .hljs-meta {
-    color: rgb(137, 190, 250) !important; 
-  }
-  .hljs-meta-derive {
-    color: rgb(242, 170, 101) !important;
-  }
-  
-  /* Color the function name (e.g. `new`) in purple */
-  .hljs-function.call {
-    color: rgb(203, 179, 249) !important;
-  }
-  
-  .hljs-field.name {
-    color: rgb(243, 248, 247) !important;
-  } 
-  .hljs-field.type {
-    color: rgb(137, 190, 250) !important;
-  }
-  
-  .hljs-asterisk {
-    color: rgb(137, 190, 250) !important;
-  }
-  
-  .hljs-function .hljs-title {
-    color: rgb(203, 179, 249) !important; /* Replace with your desired color */
-  }
+/* Tomorrow Night Theme */
+/* https://github.com/jmblog/color-themes-for-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+/* https://github.com/jmblog/color-themes-for-highlightjs */
+
+/* Tomorrow Comment */
+.hljs-comment {
+  color: #969896;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-attribute,
+.hljs-attr,
+.hljs-tag,
+.hljs-regexp,
+.ruby .hljs-constant,
+.xml .hljs-tag .hljs-title,
+.xml .hljs-pi,
+.xml .hljs-doctype,
+.html .hljs-doctype,
+.css .hljs-id,
+.css .hljs-class,
+.css .hljs-pseudo {
+  color: #cc6666;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-preprocessor,
+.hljs-pragma,
+.hljs-built_in,
+.hljs-literal,
+.hljs-params,
+.hljs-constant {
+  color: #de935f;
+}
+
+/* Tomorrow Yellow */
+.ruby .hljs-class .hljs-title,
+.css .hljs-rule .hljs-attribute {
+  color: #f0c674;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-value,
+.hljs-inheritance,
+.hljs-header,
+.hljs-name,
+.ruby .hljs-symbol,
+.xml .hljs-cdata {
+  color: #b5bd68;
+}
+
+/* Tomorrow Aqua */
+.hljs-title,
+.hljs-section,
+.css .hljs-hexcolor {
+  color: #8abeb7;
+}
+
+/* Tomorrow Blue */
+.hljs-function,
+.python .hljs-decorator,
+.python .hljs-title,
+.ruby .hljs-function .hljs-title,
+.ruby .hljs-title .hljs-keyword,
+.perl .hljs-sub,
+.javascript .hljs-title,
+.coffeescript .hljs-title {
+  color: #81a2be;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.javascript .hljs-function {
+  color: #b294bb;
+}
+
+.hljs {
+  display: block;
+  overflow-x: auto;
+  background: #1d1f21;
+  color: #c5c8c6;
+}
+
+.coffeescript .javascript,
+.javascript .xml,
+.tex .hljs-formula,
+.xml .javascript,
+.xml .vbscript,
+.xml .css,
+.xml .hljs-cdata {
+  opacity: 0.5;
+}
+
+.hljs-addition {
+  color: #718c00;
+}
+
+.hljs-deletion {
+  color: #c82829;
+}

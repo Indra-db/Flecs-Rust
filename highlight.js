@@ -117,7 +117,7 @@ hljs.registerLanguage("rust", function() {
         {
           // Matches a struct field name: an identifier followed by optional whitespace, a colon, and whitespace.
           className: "field name",
-          begin: /(?<=(?<!:):(?!:)\s*)[A-Za-z_]\w*(?=\s*(?:,|$))/,
+          begin: /(?<=(?<!:):(?!:)\s*)[A-Za-z_]\w*(?=\s*(?:,|\}|$))/,
 
         },  
         {

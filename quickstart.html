@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<html lang="en" class="navy sidebar-visible" dir="ltr">
+<html lang="en" class="ayu sidebar-visible" dir="ltr">
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
@@ -37,7 +37,7 @@
         <!-- Provide site root to javascript -->
         <script>
             var path_to_root = "";
-            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "navy";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "ayu";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc.js"></script>
@@ -66,7 +66,7 @@
             try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
             if (theme === null || theme === undefined) { theme = default_theme; }
             const html = document.documentElement;
-            html.classList.remove('navy')
+            html.classList.remove('ayu')
             html.classList.add(theme);
             html.classList.add("js");
         </script>
@@ -210,8 +210,8 @@ println!("Entity name: {}", e.name());
 struct Position { x: f32, y: f32 }
 #[derive(Default, Component)]
 struct Velocity { x: f32, y: f32 }
-<span class="boring">
-</span><span class="boring">fn main() {
+ 
+<span class="boring">fn main() {
 </span><span class="boring">let world = World::new();
 </span>let e = world.entity();
 
