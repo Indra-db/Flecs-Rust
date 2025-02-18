@@ -16,11 +16,20 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install cargo-make
-        uses: davidB/rust-cargo-make@v1
+      - name: Setup mdBook
+        uses: peaceiris/actions-mdbook@v1
+        with:
+          mdbook-version: 'latest'
 
-      - name: Build book
-        run: cargo make build-book
+      - name: Install mdbook-admonish
+        uses: taiki-e/install-action@v2
+        with:
+          tool: mdbook-admonish
+
+      - name: Build Book
+        run: |
+          cd flecs_ecs/doc/flecs
+          mdbook build
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
