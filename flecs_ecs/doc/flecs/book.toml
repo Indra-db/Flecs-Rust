@@ -1,0 +1,24 @@
+[book]
+name = "Flecs Rust"
+authors = ["Indradb"]
+description = "Documentation for the Rust bindings of Flecs ECS"
+language = "en"
+multilingual = false
+src = "src"
+title = "Flecs Rust"
+
+[output.html]
+git-repository-url = "https://github.com/Indra-db/Flecs-Rust"
+edit-url-template = "https://github.com/Indra-db/Flecs-Rust/edit/main/flecs_ecs/doc/{path}"
+additional-css = ["theme/tabs.css", "theme/mdbook-admonish.css"]
+additional-js = ["theme/tabs.js"]
+default-theme = "ayu"
+
+[output.html.playground]
+runnable = false
+
+[preprocessor.tabs]
+
+[preprocessor.admonish]
+command = "mdbook-admonish"
+assets_version = "3.0.3" # do not edit: managed by `mdbook-admonish install`
