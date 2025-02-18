@@ -19,12 +19,6 @@ jobs:
         with:
           mdbook-version: '0.4.45'
 
-      - name: Install mdbook-admonish
-        run: cargo install mdbook-admonish --version 1.15.0
-
-      - name: Install mdbook-tabs
-        run: cargo install mdbook-tabs --version 0.1.2
-
       - name: Build Book
         run: |
           cd flecs_ecs/doc/flecs
