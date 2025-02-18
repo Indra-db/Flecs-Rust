@@ -83,3 +83,27 @@ description = "Test the flecs rust book"
 command = "mdbook"
 args = ["test", "flecs_ecs/doc/flecs", "--library-path", "target/debug/deps"]
 workspace = false
+
+[tasks.install-mdbook]
+install_crate = { crate_name = "mdbook", binary = "mdbook", test_arg = "--version" }
+
+[tasks.install-mdbook-admonish]
+install_crate = { crate_name = "mdbook-admonish", binary = "mdbook-admonish", test_arg = "--version" }
+
+[tasks.install-book-deps]
+dependencies = [
+    "install-mdbook",
+    "install-mdbook-admonish"
+]
+
+[tasks.build-book]
+dependencies = ["install-book-deps"]
+cwd = "./flecs_ecs/doc/flecs"
+command = "mdbook"
+args = ["build"]
+
+[tasks.serve-book]
+dependencies = ["install-book-deps"]
+cwd = "./flecs_ecs/doc/flecs"
+command = "mdbook"
+args = ["serve", "--open"]
