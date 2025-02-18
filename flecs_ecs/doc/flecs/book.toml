@@ -14,6 +14,9 @@ additional-css = ["theme/tabs.css", "theme/mdbook-admonish.css"]
 additional-js = ["theme/tabs.js"]
 default-theme = "ayu"
 
+[output.html.playground]
+runnable = false
+
 [preprocessor.tabs]
 
 [preprocessor.admonish]
