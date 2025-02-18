@@ -3,6 +3,8 @@ extend-exclude = [
   "flecs_ecs_sys/**/*",
   "target/**/*",
   "flecs_ecs/examples/flecs/z_ignore_test_snapshots/**/*",
+  "flecs_ecs/doc/flecs/theme/**/*",
+  "flecs_ecs/doc/flecs/book/**/*",
 ]
 
 [default.extend-words]
