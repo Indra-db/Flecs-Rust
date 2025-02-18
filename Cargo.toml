@@ -3,7 +3,8 @@ members = ["flecs_ecs", "flecs_ecs_derive", "flecs_ecs_sys", "test_crash_handler
 resolver = "2"
 
 exclude = [
-    "flecs_ecs_test"
+    "flecs_ecs_test",
+    "docreplace"
 ] 
 
 [workspace.package]
