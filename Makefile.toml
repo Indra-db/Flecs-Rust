@@ -78,4 +78,8 @@ command = "rustup"
 args = ["run", "nightly", "cargo", "fmt", "--", "--config", "format_code_in_doc_comments=true"]
 workspace = false
 
-
+[tasks.test-book]
+description = "Test the flecs rust book"
+command = "mdbook"
+args = ["test", "flecs_ecs/doc/flecs", "--library-path", "target/debug/deps"]
+workspace = false
