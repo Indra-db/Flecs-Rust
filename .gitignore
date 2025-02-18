@@ -8,3 +8,7 @@ flecs_ecs/src/main.rs
 flecs_ecs_test/
 flecs_ecs/benches/fbench_log/
 flecs_ecs/src/old_cached_code/
+flecs_ecs/doc/flecs/docreplace
+flecs_ecs/doc/flecs/book/
+docreplace/
+theme/
