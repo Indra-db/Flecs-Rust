@@ -971,7 +971,6 @@ impl<'a> EntityView<'a> {
     ///
     /// * [`EntityView::each_component()`] - Iterate over all components
     /// * [`EntityView::each_target()`] - Iterate over relationship targets
-    /// * [`EntityView::has_pair()`] - Check for specific pair
     #[doc(alias = "entity_view::each")]
     pub fn each_pair(
         &self,
@@ -1117,7 +1116,6 @@ impl<'a> EntityView<'a> {
     ///
     /// * [`EntityView::target_count()`] - Type-safe version
     /// * [`EntityView::each_target_id()`] - Iterate over targets
-    /// * [`EntityView::has_pair()`] - Check for specific pair
     pub fn target_id_count(self, relationship: impl Into<Entity>) -> Option<i32> {
         let world = self.world.real_world().ptr_mut();
         let id = ecs_pair(*relationship.into(), ECS_WILDCARD);
