@@ -1701,7 +1701,8 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
 /// assert_eq!(builder.to_string(), dsl.to_string());
 ///
 /// // Logical modifiers
-/// let builder = world.query::<()>()
+/// let builder = world
+///     .query::<()>()
 ///     .with::<Foo>()
 ///     .or()
 ///     .with::<Bar>()
@@ -1939,7 +1940,6 @@ pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 /// // calc: 2
 /// // triangle - 36
 /// // calc: 3
-///
 /// ```
 #[proc_macro]
 #[cfg(feature = "flecs_query_rust_traits")]

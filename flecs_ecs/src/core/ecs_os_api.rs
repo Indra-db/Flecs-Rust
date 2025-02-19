@@ -5,7 +5,6 @@
 //! of that API, which allows, for example, customizing how Flecs sends log
 //! messages.
 //!
-//!
 #[cfg(feature = "std")]
 extern crate std;
 

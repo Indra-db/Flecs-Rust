@@ -1004,7 +1004,6 @@ where
     /// # Example
     ///
     /// ```
-    ///
     /// use flecs_ecs::prelude::*;
     ///
     /// let world = World::new();

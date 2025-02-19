@@ -15,7 +15,76 @@ extern crate alloc;
 #[allow(unused_imports)] //meant for no_std, not ready yet
 use alloc::{borrow::ToOwned, boxed::Box, format, string::String, string::ToString, vec, vec::Vec};
 
-/// `EntityView` is a wrapper around an entity id with the world. It provides methods to interact with entities.
+/// A view into an entity in the world that provides both read and write access to components and relationships.
+///
+/// `EntityView` is a wrapper around an entity ID that provides a safe interface for:
+/// - Getting and setting component data
+/// - Adding and removing components
+/// - Managing relationships between entities
+/// - Working with hierarchies (parent/child relationships)
+/// - Querying entity metadata like names and paths
+///
+/// # Examples
+///
+/// Basic usage:
+/// ```rust
+/// use flecs_ecs::prelude::*;
+///
+/// // Define some components
+/// #[derive(Component)]
+/// struct Position {
+///     x: f32,
+///     y: f32,
+/// }
+///
+/// #[derive(Component)]
+/// struct Velocity {
+///     x: f32,
+///     y: f32,
+/// }
+///
+/// #[derive(Component)]
+/// struct Walking;
+///
+/// let world = World::new();
+///
+/// // Create an entity and add components
+/// let player = world
+///     .entity_named("Player")
+///     .set(Position { x: 10.0, y: 20.0 })
+///     .set(Velocity { x: 1.0, y: 0.0 })
+///     .add::<Walking>();
+///
+/// // Get component data
+/// player.get::<&Position>(|pos| {
+///     println!("Position: ({}, {})", pos.x, pos.y);
+/// });
+///
+/// // Check for components
+/// assert!(player.has::<Walking>());
+///
+/// // Remove components
+/// player.remove::<Walking>();
+/// ```
+///
+/// Working with hierarchies:
+/// ```rust
+/// use flecs_ecs::prelude::*;
+///
+/// let world = World::new();
+///
+/// let parent = world.entity_named("parent");
+/// let child = world.entity_named("child").child_of_id(parent);
+///
+/// assert!(parent.has_children());
+/// assert_eq!(child.path().unwrap(), "::parent::child");
+/// ```
+///
+/// # See also
+///
+/// - [`World::entity()`] - Create a new entity
+/// - [`World::entity_named()`] - Create a new named entity
+/// - [`Entity`] - The underlying entity identifier type
 #[derive(Clone, Copy)]
 pub struct EntityView<'a> {
     pub(crate) world: WorldRef<'a>,
@@ -86,11 +155,24 @@ impl core::fmt::Debug for EntityView<'_> {
 }
 
 impl<'a> EntityView<'a> {
-    /// Create new entity.
+    /// Create a new entity.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// let world = World::new();
+    ///
+    /// let entity = world.entity(); // Creates new unnamed entity
+    /// assert!(entity.is_alive());
+    /// assert!(entity.id() != 0);
+    /// ```
     ///
     /// # See also
     ///
-    /// * C++ API: `entity::entity`
+    /// * [`EntityView::new_named()`] - Create a named entity
+    /// * [`EntityView::new_from()`] - Create from existing ID
+    /// * [`World::entity()`] - Preferred way to create entities
     #[doc(alias = "entity::entity")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub(crate) fn new(world: impl WorldProvider<'a>) -> Self {
@@ -109,9 +191,24 @@ impl<'a> EntityView<'a> {
 
     /// Creates a wrapper around an existing entity / id.
     ///
+    /// This is useful when you have an entity ID and need to perform operations on it.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// let world = World::new();
+    ///
+    /// let id = world.entity().id();
+    /// let entity_view = EntityView::new_from(&world, id);
+    ///
+    /// assert_eq!(entity_view.id(), id);
+    /// ```
+    ///
     /// # See also
     ///
-    /// * C++ API: `entity::entity`
+    /// * [`Entity::entity_view()`] - Convert Entity to EntityView
+    /// * [`World::entity_from_id()`] - Get entity view from ID
     #[doc(alias = "entity::entity")]
     #[doc(hidden)] //public due to macro newtype_of and world.entity_from_id has lifetime issues.
     pub fn new_from(world: impl WorldProvider<'a>, id: impl Into<Entity>) -> Self {
@@ -123,14 +220,31 @@ impl<'a> EntityView<'a> {
 
     /// Create a named entity.
     ///
-    /// Named entities can be looked up with the lookup functions. Entity names
-    /// may be scoped, where each element in the name is separated by "::".
-    /// For example: "`Foo::Bar`". If parts of the hierarchy in the scoped name do
-    /// not yet exist, they will be automatically created.
+    /// Creates a new entity with the specified name. Named entities can be looked up using
+    /// lookup functions. Entity names may be scoped with "::" separator.
+    /// Parts of the hierarchy that don't exist will be automatically created.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// let world = World::new();
+    ///
+    /// // Create simple named entity
+    /// let bob = world.entity_named("Bob");
+    /// assert_eq!(bob.name(), "Bob");
+    ///
+    /// // Create entity with hierarchical name
+    /// let weapon = world.entity_named("Characters::Bob::Weapon");
+    /// assert_eq!(weapon.path(), Some("::Characters::Bob::Weapon".to_string()));
+    /// ```
     ///
     /// # See also
     ///
-    /// * C++ API: `entity::entity`
+    /// * [`World::entity_named()`] - Preferred way to create named entities
+    /// * [`EntityView::name()`] - Get entity name
+    /// * [`EntityView::path()`] - Get full hierarchical path
+    /// * [`World::lookup()`] - Look up named entities
     #[doc(alias = "entity::entity")]
     pub(crate) fn new_named(world: impl WorldProvider<'a>, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
@@ -176,59 +290,104 @@ impl<'a> EntityView<'a> {
         }
     }
 
-    /// Entity id 0.
-    /// This function is useful when the API must provide an entity that
-    /// belongs to a world, but the entity id is 0.
+    /// Creates a null entity (ID 0) associated with the given world.
+    ///
+    /// This is useful when you need an entity reference that belongs to a world
+    /// but represents "no entity" (ID 0).
     ///
     /// # See also
     ///
-    /// * C++ API: `entity::null`
+    /// * [`Entity::null()`] - Create null entity ID
+    /// * [`EntityView::is_valid()`] - Check if entity is valid
     #[doc(alias = "entity::null")]
     pub(crate) fn new_null(world: &'a World) -> EntityView<'a> {
         Self::new_from(world, 0)
     }
 
-    /// Get the [`IdView`] representation of the `entity_view`.
-    pub fn id_view(&self) -> IdView {
-        IdView::new_from_id(self.world, *self.id)
-    }
-
-    /// checks if entity is valid
+    /// Get the [`IdView`] representation of the entity.
     ///
-    /// # Example
+    /// Converts the entity view to an ID view, which provides operations
+    /// for working with the entity as a component identifier.
+    ///
+    /// # Examples
     ///
     /// ```
-    /// use flecs_ecs::prelude::*;
-    ///
+    /// # use flecs_ecs::prelude::*;
     /// let world = World::new();
-    ///
     /// let entity = world.entity();
-    /// let entity_rust_copy = entity; //this is a rust copy, not an entity clone, these have the same id.
-    /// let entity_cloned = entity.duplicate(false); //this is an entity clone, these have different ids.
     ///
-    /// assert!(entity.is_valid());
-    /// assert!(entity_rust_copy.is_valid());
-    /// assert!(entity_cloned.is_valid());
-    ///
-    /// entity.destruct(); //takes self, entity becomes not useable
-    ///
-    /// assert!(!entity_rust_copy.is_valid());
-    /// assert!(entity_cloned.is_valid());
+    /// let id_view = entity.id_view();
+    /// assert_eq!(id_view.id(), entity.id());
     /// ```
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::is_valid`
+    /// * [`Entity::id_view()`] - Convert Entity to [`IdView`]
+    pub fn id_view(&self) -> IdView {
+        IdView::new_from_id(self.world, *self.id)
+    }
+
+    /// Check if entity is valid.
+    ///
+    /// Entities are valid if they are not 0 and if they are alive. This function
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// let world = World::new();
+    ///
+    /// let entity = world.entity();
+    /// let entity_copy = entity; // Creates a copy with same ID
+    /// let entity_clone = entity.duplicate(false); // Creates new entity with different ID
+    ///
+    /// assert!(entity.is_valid());
+    /// assert!(entity_copy.is_valid());
+    /// assert!(entity_clone.is_valid());
+    ///
+    /// entity.destruct();
+    ///
+    /// assert!(!entity_copy.is_valid()); // Copy refers to same (now deleted) entity
+    /// assert!(entity_clone.is_valid()); // Clone is a different entity
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`EntityView::is_alive()`] - Check if entity exists in world
+    /// * [`EntityView::duplicate()`] - Create copy of entity
     #[doc(alias = "entity_view::is_valid")]
     pub fn is_valid(self) -> bool {
         unsafe { sys::ecs_is_valid(self.world.world_ptr(), *self.id) }
     }
 
-    /// Checks if entity is alive.
+    /// Check if entity is alive.
+    ///
+    /// An entity is alive if it exists in the world. This is different from
+    /// valid, as an entity that is not alive can still be valid if it has been
+    /// deferred for deletion.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// let world = World::new();
+    ///
+    /// let entity = world.entity();
+    /// assert!(entity.is_alive());
+    ///
+    /// world.defer(|| {
+    ///     entity.destruct(); // Deferred deletion
+    ///     assert!(entity.is_alive()); // still alive since deferred
+    /// });
+    ///
+    /// assert!(!entity.is_alive());
+    /// ```
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::is_alive`
+    /// * [`EntityView::is_valid()`] - Check if entity is valid
+    /// * [`World::defer()`] - Defer operations
     #[doc(alias = "entity_view::is_alive")]
     pub fn is_alive(self) -> bool {
         unsafe { sys::ecs_is_alive(self.world.world_ptr(), *self.id) }
@@ -236,23 +395,53 @@ impl<'a> EntityView<'a> {
 
     /// Returns the entity name.
     ///
-    /// if the entity has no name, this will return an empty string
+    /// Returns the name of the entity if one was assigned, or an empty string if
+    /// the entity has no name.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// let world = World::new();
+    ///
+    /// let bob = world.entity_named("Bob");
+    /// assert_eq!(bob.name(), "Bob");
+    ///
+    /// let unnamed = world.entity();
+    /// assert_eq!(unnamed.name(), "");
+    /// ```
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::name`
+    /// * [`EntityView::get_name()`] - Get name as Option
+    /// * [`EntityView::path()`] - Get full hierarchical path
+    /// * [`World::entity_named()`] - Create named entity
     #[doc(alias = "entity_view::name")]
     pub fn name(self) -> String {
         self.get_name().unwrap_or("".to_string())
     }
 
-    /// Returns the entity name.
+    /// Returns the entity name as an Option.
     ///
-    /// if the entity has no name, this will return none
+    /// Similar to [`name()`][EntityView::name] but returns None if the entity has no name instead of an empty string.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// let world = World::new();
+    ///
+    /// let bob = world.entity_named("Bob");
+    /// assert_eq!(bob.get_name(), Some("Bob".to_string()));
+    ///
+    /// let unnamed = world.entity();
+    /// assert_eq!(unnamed.get_name(), None);
+    /// ```
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::name`
+    /// * [`EntityView::name()`] - Get name, returns empty string if unnamed
+    /// * [`EntityView::path()`] - Get full hierarchical path
     #[doc(alias = "entity_view::name")]
     pub fn get_name(self) -> Option<String> {
         // self.get_name_cstr().and_then(|s| s.to_str().ok())
@@ -290,16 +479,6 @@ impl<'a> EntityView<'a> {
             .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) })
     }
 
-    // /// Returns the entity symbol.
-    // ///
-    // /// # See also
-    // ///
-    // /// * C++ API: `entity_view::symbol`
-    // #[doc(alias = "entity_view::symbol")]
-    // pub fn symbol_cstr(self) -> &'a CStr {
-    //     unsafe { CStr::from_ptr(sys::ecs_get_symbol(self.world.world_ptr(), *self.id)) }
-    // }
-
     /// Returns the entity symbol.
     ///
     /// # See also
@@ -316,13 +495,40 @@ impl<'a> EntityView<'a> {
     }
 
     /// Return the hierarchical entity path.
+    ///
+    /// Returns the full hierarchical path of the entity, with path elements separated
+    /// by the specified separators.
+    ///
     /// # Note
-    /// if you're using the default separator "::" you can use `get_hierarchy_path_default`
-    /// which does no extra heap allocations to communicate with C
+    ///
+    /// if you're using the default separator "::" you can use the non-allocating no `w_sep` version
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// let world = World::new();
+    ///
+    /// // Create parent entity
+    /// let parent = world.entity_named("Parent");
+    ///
+    /// // Create child entity
+    /// let child = world.entity_named("Child").child_of_id(parent);
+    ///
+    /// assert_eq!(
+    ///     child.path_w_sep("::", "::"),
+    ///     Some("::Parent::Child".to_string())
+    /// );
+    /// assert_eq!(
+    ///     child.path_w_sep("/", "/"),
+    ///     Some("/Parent/Child".to_string())
+    /// );
+    /// ```
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::path`
+    /// * [`EntityView::path()`] - Get path with default separator
+    /// * [`EntityView::name()`] - Get entity name only
     #[doc(alias = "entity_view::path")]
     pub fn path_w_sep(self, sep: &str, init_sep: &str) -> Option<String> {
         self.path_from_id_w_sep(0, sep, init_sep)
@@ -330,9 +536,22 @@ impl<'a> EntityView<'a> {
 
     /// Return the hierarchical entity path using the default separator "::".
     ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// let world = World::new();
+    ///
+    /// let parent = world.entity_named("Parent");
+    /// let child = world.entity_named("Child").child_of_id(parent);
+    ///
+    /// assert_eq!(child.path(), Some("::Parent::Child".to_string()));
+    /// ```
+    ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::path`
+    /// * [`EntityView::path_w_sep()`] - Get path with custom separator
+    /// * [`EntityView::path_from()`] - Get path relative to parent
     #[doc(alias = "entity_view::path")]
     pub fn path(self) -> Option<String> {
         self.path_from_id(0)
@@ -340,12 +559,40 @@ impl<'a> EntityView<'a> {
 
     /// Return the hierarchical entity path relative to a parent.
     ///
-    /// if you're using the default separator "::" you can use `get_hierarchy_path_default`
-    /// which does no extra heap allocations to communicate with C
+    /// Returns the path of the entity relative to the specified parent entity.
+    /// Supports custom separators for path elements.
+    ///
+    /// # Note
+    ///
+    /// if you're using the default separator "::" you can use the non-allocating no `w_sep` version
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// let world = World::new();
+    ///
+    /// let root = world.entity_named("Root");
+    /// let parent = world.entity_named("Parent").child_of_id(root);
+    /// let child = world.entity_named("Child").child_of_id(parent);
+    ///
+    /// // Get path relative to root
+    /// assert_eq!(
+    ///     child.path_from_id_w_sep(root, "::", "::"),
+    ///     Some("Parent::Child".to_string())
+    /// );
+    ///
+    /// // Get path relative to parent
+    /// assert_eq!(
+    ///     child.path_from_id_w_sep(parent, "::", "::"),
+    ///     Some("Child".to_string())
+    /// );
+    /// ```
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::path_from`
+    /// * [`EntityView::path_from()`] - Get path relative to parent type
+    /// * [`EntityView::path()`] - Get full path
     #[doc(alias = "entity_view::path_from")]
     pub fn path_from_id_w_sep(
         &self,
@@ -393,9 +640,23 @@ impl<'a> EntityView<'a> {
 
     /// Return the hierarchical entity path relative to a parent id using the default separator "::".
     ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// let world = World::new();
+    ///
+    /// let root = world.entity_named("Root");
+    /// let parent = world.entity_named("Parent").child_of_id(root);
+    /// let child = world.entity_named("Child").child_of_id(parent);
+    ///
+    /// assert_eq!(child.path_from_id(root), Some("Parent::Child".to_string()));
+    /// ```
+    ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::path_from`
+    /// * [`EntityView::path_from_id_w_sep()`] - Get path with custom separator
+    /// * [`EntityView::path_from()`] - Get path relative to parent type
     #[doc(alias = "entity_view::path_from")]
     pub fn path_from_id(self, parent: impl Into<Entity>) -> Option<String> {
         NonNull::new(unsafe {
@@ -417,18 +678,57 @@ impl<'a> EntityView<'a> {
     }
 
     /// Return the hierarchical entity path relative to a parent type.
-    /// # Note
-    /// if you're using the default separator "::" you can use `get_hierarchy_path_default`
-    /// which does no extra heap allocations to communicate with C
+    ///
+    /// Gets the path relative to an entity of the specified component type.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// #[derive(Component)]
+    /// struct Earth;
+    ///
+    /// let world = World::new();
+    /// let sun = world.entity_named("Sun");
+    /// let earth = world.component::<Earth>().child_of_id(sun);
+    /// let moon = world.entity_named("Moon").child_of_id(earth);
+    ///
+    /// // Get moon's path relative to nearest Planet
+    /// assert_eq!(moon.path_from::<Earth>(), Some("Moon".to_string()));
+    /// ```
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::path_from`
+    /// * [`EntityView::path_from_id()`] - Get path relative to specific entity
+    /// * [`EntityView::path()`] - Get full path
     #[doc(alias = "entity_view::path_from")]
     pub fn path_from<T: ComponentId>(self) -> Option<String> {
         self.path_from_id_default_sep(T::id(self.world))
     }
-
+    /// Return the hierarchical entity path relative to a parent type with custom separators.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// #[derive(Component)]
+    /// struct Sun;
+    ///
+    /// let world = World::new();
+    /// let sun = world.component::<Sun>();
+    /// let earth = world.entity_named("Earth").child_of_id(sun);
+    /// let moon = world.entity_named("Moon").child_of_id(earth);
+    ///
+    /// assert_eq!(
+    ///     moon.path_from_w_sep::<Sun>("/", "/"),
+    ///     Some("Earth/Moon".to_string())
+    /// );
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`EntityView::path_from()`] - Get path with default separator
+    /// * [`EntityView::path_from_id_w_sep()`] - Get path relative to ID with custom separator
     pub fn path_from_w_sep<T: ComponentId>(&self, sep: &str, init_sep: &str) -> Option<String> {
         self.path_from_id_w_sep(T::id(self.world), sep, init_sep)
     }
@@ -459,10 +759,47 @@ impl<'a> EntityView<'a> {
 
     /// Get the entity's archetype.
     ///
+    /// An archetype represents the structural type of an entity - the exact set of
+    /// components and relationships it has.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use flecs_ecs::prelude::*;
+    /// #[derive(Component)]
+    /// struct Position {
+    ///     x: f32,
+    ///     y: f32,
+    /// }
+    /// #[derive(Component)]
+    /// struct Velocity {
+    ///     x: f32,
+    ///     y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    /// let entity = world
+    ///     .entity()
+    ///     .set(Position { x: 0.0, y: 0.0 })
+    ///     .set(Velocity { x: 1.0, y: 1.0 });
+    ///
+    /// // Get archetype and inspect components
+    /// let archetype = entity.archetype();
+    /// for id in archetype.as_slice() {
+    ///     println!("Component in archetype: {}", id);
+    /// }
+    /// ```
+    ///
+    /// # Returns
+    ///
+    /// The archetype of the entity. If the entity is not in a table,
+    /// returns an empty archetype.
+    ///
     /// # See also
     ///
-    /// * [`Table::archetype()`]
-    /// * C++ API: `entity_view::type`
+    /// * [`EntityView::table()`] - Get entity's table
+    /// * [`EntityView::each_component()`] - Iterate components
+    /// * [`Archetype::as_slice()`] - Get component IDs in archetype
     #[doc(alias = "entity_view::type")]
     #[inline(always)]
     pub fn archetype(self) -> Archetype<'a> {
@@ -473,9 +810,39 @@ impl<'a> EntityView<'a> {
 
     /// Get the entity's type/table.
     ///
+    /// A table stores entities that share the same archetype (same set of components).
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use flecs_ecs::prelude::*;
+    /// #[derive(Component, Default)]
+    /// struct Position {
+    ///     x: f32,
+    ///     y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    /// let entity = world.entity().add::<Position>();
+    ///
+    /// if let Some(table) = entity.table() {
+    ///     println!(
+    ///         "Entity is stored in table with {} total entities",
+    ///         table.count()
+    ///     );
+    /// }
+    /// ```
+    ///
+    /// # Returns
+    ///
+    /// The table containing the entity, or None if the entity is not stored
+    /// in a table.
+    ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::table`
+    /// * [`EntityView::archetype()`] - Get entity's archetype
+    /// * [`EntityView::range()`] - Get entity's position in table
+    /// * [`Table::count()`] - Get number of entities in table
     #[doc(alias = "entity_view::table")]
     #[inline(always)]
     pub fn table(self) -> Option<Table<'a>> {
@@ -485,14 +852,38 @@ impl<'a> EntityView<'a> {
 
     /// Get table range for the entity.
     ///
+    /// A table range represents the location of an entity within its table.
+    /// This is useful for bulk operations on entities that share the same components.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component, Default)]
+    /// struct Position {
+    ///     x: f32,
+    ///     y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    /// let entity = world.entity().add::<Position>();
+    ///
+    /// if let Some(range) = entity.range() {
+    ///     println!("Entity is at row {} in its table", range.offset());
+    /// }
+    /// ```
+    ///
     /// # Returns
     ///
-    /// Returns a range with the entity's row as offset and count set to 1. If
-    /// the entity is not stored in a table, the function returns `None`.
+    /// A range with the entity's row as offset and count set to 1.
+    /// Returns None if the entity is not stored in a table.
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::range`
+    /// * [`EntityView::table()`] - Get entity's table
+    /// * [`TableRange::offset()`] - Get starting row in table
+    /// * [`TableRange::count()`] - Get number of rows in range
     #[doc(alias = "entity_view::range")]
     #[inline]
     pub fn range(self) -> Option<TableRange<'a>> {
@@ -510,12 +901,38 @@ impl<'a> EntityView<'a> {
 
     /// Iterate over component ids of an entity.
     ///
-    /// # Arguments
-    /// * `func` - The closure invoked for each matching ID. Must match the signature `FnMut(IdView)`.
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use flecs_ecs::prelude::*;
+    /// #[derive(Component)]
+    /// struct Position {
+    ///     x: f32,
+    ///     y: f32,
+    /// }
+    /// #[derive(Component)]
+    /// struct Velocity {
+    ///     x: f32,
+    ///     y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    /// let entity = world
+    ///     .entity()
+    ///     .set(Position { x: 0.0, y: 0.0 })
+    ///     .set(Velocity { x: 1.0, y: 1.0 });
+    ///
+    /// // Print all component ids
+    /// entity.each_component(|id| {
+    ///     println!("Component: {}", id.id());
+    /// });
+    /// ```
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::each`
+    /// * [`EntityView::each_pair()`] - Iterate over pairs
+    /// * [`EntityView::each_target()`] - Iterate over relationship targets
+    /// * [`EntityView::archetype()`] - Get entity's archetype
     #[doc(alias = "entity_view::each")]
     pub fn each_component(self, mut func: impl FnMut(IdView)) {
         let archetype = self.archetype();
@@ -528,15 +945,33 @@ impl<'a> EntityView<'a> {
 
     /// Iterates over matching pair IDs of an entity.
     ///
-    /// # Arguments
+    /// # Examples
     ///
-    /// * `first` - The first ID to match against.
-    /// * `second` - The second ID to match against.
-    /// * `func` - The closure invoked for each matching ID. Must match the signature `FnMut(IdView)`.
+    /// ```rust
+    /// # use flecs_ecs::prelude::*;
+    /// #[derive(Component)]
+    /// struct Likes;
+    ///
+    /// let world = World::new();
+    /// let apple = world.entity_named("Apple");
+    /// let banana = world.entity_named("Banana");
+    ///
+    /// let entity = world
+    ///     .entity()
+    ///     .add_first::<Likes>(apple)
+    ///     .add_first::<Likes>(banana);
+    ///
+    /// // Iterate over all "Likes" relationships
+    /// entity.each_pair(world.component_id::<Likes>(), flecs::Wildcard::ID, |id| {
+    ///     println!("Entity likes: {}", id.second_id().name());
+    /// });
+    /// ```
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::each`
+    /// * [`EntityView::each_component()`] - Iterate over all components
+    /// * [`EntityView::each_target()`] - Iterate over relationship targets
+    /// * [`EntityView::has_pair()`] - Check for specific pair
     #[doc(alias = "entity_view::each")]
     pub fn each_pair(
         &self,
@@ -585,14 +1020,28 @@ impl<'a> EntityView<'a> {
 
     /// Iterate over targets for a given relationship.
     ///
-    /// # Arguments
+    /// # Examples
     ///
-    /// * `relationship` - The relationship for which to iterate the targets.
-    /// * `func` - The closure invoked for each target. Must match the signature `FnMut(EntityView)`.
+    /// ```rust
+    /// # use flecs_ecs::prelude::*;
+    /// let world = World::new();
+    /// let parent = world.entity_named("Parent");
+    ///
+    /// // Create some child entities
+    /// let child1 = world.entity_named("Child1").child_of_id(parent);
+    /// let child2 = world.entity_named("Child2").child_of_id(parent);
+    ///
+    /// // Iterate over all children
+    /// parent.each_target_id(flecs::ChildOf::ID, |child| {
+    ///     println!("Found child: {}", child.name());
+    /// });
+    /// ```
     ///
     /// # See also
     ///
-    /// * C++ API: `entity_view::each`
+    /// * [`EntityView::each_component()`] - Iterate over all components
+    /// * [`EntityView::each_pair()`] - Iterate over pairs
+    /// * [`EntityView::target_id_count()`] - Get number of targets
     #[doc(alias = "entity_view::each")]
     pub fn each_target_id(self, relationship: impl Into<Entity>, mut func: impl FnMut(EntityView)) {
         self.each_pair(relationship.into(), ECS_WILDCARD, |id| {
@@ -601,16 +1050,74 @@ impl<'a> EntityView<'a> {
         });
     }
 
+    /// Iterate over targets for a given relationship type.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Likes;
+    ///
+    /// let world = World::new();
+    /// let entity = world.entity();
+    /// let apple = world.entity_named("Apple");
+    /// let banana = world.entity_named("Banana");
+    ///
+    /// entity.add_first::<Likes>(apple).add_first::<Likes>(banana);
+    ///
+    /// entity.each_target::<Likes>(|target| {
+    ///    println!("Entity likes: {}", target.name());
+    /// });
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`EntityView::each_component()`] - Iterate over all components
+    /// * [`EntityView::each_pair()`] - Iterate over pairs
+    /// * [`EntityView::target_count()`] - Get number of targets
+    /// * [`EntityView::each_target_id()`] - Iterate over targets for a specific relationship
+    pub fn each_target<T>(self, func: impl FnMut(EntityView))
+    where
+        T: ComponentId,
+    {
+        self.each_target_id(EntityView::new_from(self.world, T::id(self.world)), func);
+    }
+
     /// Get the count of targets for a given relationship.
     ///
-    /// # Arguments
+    /// Returns the number of entities that are targets of the specified relationship.
     ///
-    /// * `relationship` - The relationship for which to get the target count.
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// let entity = world.entity();
+    ///
+    /// let likes = world.entity();
+    ///
+    /// let apple = world.entity_named("Apple");
+    /// let banana = world.entity_named("Banana");
+    ///
+    /// entity.add_id((likes,apple)).add_id((likes,banana));
+    ///
+    /// assert_eq!(entity.target_id_count(likes), Some(2));
+    /// ```
     ///
     /// # Returns
     ///
-    /// The count of targets for the given relationship.
-    /// If it doesn't have the relationship, this function will return `None`.
+    /// * `Some(count)` if the entity has the relationship
+    /// * `None` if the entity doesn't have the relationship
+    ///
+    /// # See also
+    ///
+    /// * [`EntityView::target_count()`] - Type-safe version
+    /// * [`EntityView::each_target_id()`] - Iterate over targets
+    /// * [`EntityView::has_pair()`] - Check for specific pair
     pub fn target_id_count(self, relationship: impl Into<Entity>) -> Option<i32> {
         let world = self.world.real_world().ptr_mut();
         let id = ecs_pair(*relationship.into(), ECS_WILDCARD);
@@ -625,37 +1132,38 @@ impl<'a> EntityView<'a> {
         }
     }
 
-    /// Iterate over targets for a given relationship.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Relationship` - The relationship for which to iterate the targets.
-    ///
-    /// # Arguments
-    ///
-    /// * `func` - The function invoked for each target.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::each`
-    #[doc(alias = "entity_view::each")]
-    pub fn each_target<T>(self, func: impl FnMut(EntityView))
-    where
-        T: ComponentId,
-    {
-        self.each_target_id(EntityView::new_from(self.world, T::id(self.world)), func);
-    }
-
     /// Get the count of targets for a given relationship.
+    /// Typed version of [`EntityView::target_id_count()`].
     ///
-    /// # Type Parameters
+    /// Returns the number of entities that are targets of the specified relationship type.
     ///
-    /// * `T` - The relationship for which to get the target count.
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use flecs_ecs::prelude::*;
+    /// #[derive(Component)]
+    /// struct Likes;
+    ///
+    /// let world = World::new();
+    /// let entity = world.entity();
+    /// let apple = world.entity_named("Apple");
+    /// let banana = world.entity_named("Banana");
+    ///
+    /// entity.add_first::<Likes>(apple).add_first::<Likes>(banana);
+    ///
+    /// assert_eq!(entity.target_count::<Likes>(), Some(2));
+    /// ```
     ///
     /// # Returns
     ///
-    /// The count of targets for the given relationship.
-    /// If it doesn't have the relationship, this function will return `None`.
+    /// * `Some(count)` if the entity has the relationship
+    /// * `None` if the entity doesn't have the relationship
+    ///
+    /// # See also
+    ///
+    /// * [`EntityView::target_id_count()`] - Non-type-safe version
+    /// * [`EntityView::each_target()`] - Iterate over targets
+    /// * [`EntityView::has()`] - Check for component/relationship
     pub fn target_count<T>(self) -> Option<i32>
     where
         T: ComponentId,

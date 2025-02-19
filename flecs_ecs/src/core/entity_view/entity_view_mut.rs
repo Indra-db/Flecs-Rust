@@ -1548,9 +1548,13 @@ impl<'a> EntityView<'a> {
     /// use flecs_ecs::prelude::*;
     ///
     /// #[derive(Component)]
-    /// struct Base { x: i32 };
+    /// struct Base {
+    ///     x: i32,
+    /// };
     /// #[derive(Component)]
-    /// struct Derived { x: i32 };
+    /// struct Derived {
+    ///     x: i32,
+    /// };
     ///
     /// let world = World::new();
     ///
