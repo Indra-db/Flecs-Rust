@@ -1082,16 +1082,18 @@ impl World {
     ///
     /// let stage = world.stage(0);
     ///
-    /// let world_ref = stage.get_world();
+    /// let world_ref = stage.real_world();
     ///
     /// assert!(!world_ref.is_stage());
     /// ```
     ///
     /// # See also
     ///
-    /// * C++ API: `world::get_world`
+    /// * [`World::is_stage()`]
+    /// * [`World::stage()`]
+    /// * [`WorldRef`]
     #[doc(alias = "world::get_world")]
-    pub fn get_world(&self) -> WorldRef {
+    pub fn real_world(&self) -> WorldRef {
         self.world().real_world()
     }
 

@@ -116,7 +116,7 @@ mod tests {
         assert_ne!(id_ext, id);
 
         //compile test
-        let world_ref = world.get_world();
+        let world_ref = world.real_world();
 
         let id_world_ref = id!(world_ref, Position).id();
         assert_eq!(id_world_ref, id);
