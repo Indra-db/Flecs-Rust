@@ -516,10 +516,14 @@ pub(crate) fn has_default_hook(world: *const sys::ecs_world_t, id: u64) -> bool 
     let ctor_hooks =
         unsafe { (*hooks).ctor }.expect("ctor hook is always implemented, either in Rust of C");
 
-    !std::ptr::fn_addr_eq(
+    !core::ptr::fn_addr_eq(
         ctor_hooks,
         sys::flecs_default_ctor
-            as unsafe extern "C-unwind" fn(*mut std::ffi::c_void, i32, *const sys::ecs_type_info_t),
+            as unsafe extern "C-unwind" fn(
+                *mut core::ffi::c_void,
+                i32,
+                *const sys::ecs_type_info_t,
+            ),
     )
 }
 
