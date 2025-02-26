@@ -1321,6 +1321,7 @@ impl Parse for Dsl {
         let doc = syn::parse_str::<TokenStream>(&format!("#[doc = \"{string}\"]")).ok();
         let doc = doc.map(|doc| {
             quote! {
+                #[allow(clippy::suspicious_doc_comments)]
                 #doc
                 const _: () = ();
             }
