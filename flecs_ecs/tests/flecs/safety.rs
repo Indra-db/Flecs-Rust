@@ -2,7 +2,7 @@
 use flecs_ecs::core::*;
 use flecs_ecs::macros::*;
 
-#[derive(Component)]
+#[derive(Clone, Component)]
 struct Foo(u8);
 
 #[derive(Component)]
@@ -52,6 +52,295 @@ fn running_conflicting_queries_no_violations() {
     read.each_iter(|_, _, _| {});
     write0.each_iter(|_, _, _| {});
     write1.each_iter(|_, _, _| {});
+}
+
+mod entity_view {
+    use super::*;
+
+    fn read_write() {
+        let world = World::new();
+        let entity = world.entity().set(Foo(0));
+        entity.get::<&Foo>(|_| {
+            entity.get::<&mut Foo>(|_| {});
+        });
+    }
+
+    fn write_read() {
+        let world = World::new();
+        let entity = world.entity().set(Foo(0));
+        entity.get::<&mut Foo>(|_| {
+            entity.get::<&Foo>(|_| {});
+        });
+    }
+
+    fn write_cloned() {
+        let world = World::new();
+        let entity = world.entity().set(Foo(0));
+        entity.get::<&mut Foo>(|_| {
+            let _ = entity.cloned::<&Foo>();
+        });
+    }
+
+    fn write_write() {
+        let world = World::new();
+        let entity = world.entity().set(Foo(0));
+        entity.get::<&mut Foo>(|_| {
+            entity.get::<&mut Foo>(|_| {});
+        });
+    }
+
+    mod from_query {
+        use super::*;
+
+        #[test]
+        #[should_panic]
+        fn query_write_view_clone() {
+            let world = World::new();
+            world.entity().set(Foo(0));
+            query!(world, &mut Foo).build().each_entity(|entity, _| {
+                let _ = entity.cloned::<&Foo>();
+            });
+        }
+
+        mod get {
+            use super::*;
+
+            #[test]
+            #[should_panic]
+            fn query_read_view_write() {
+                let world = World::new();
+                world.entity().set(Foo(0));
+                query!(world, &Foo).build().each_entity(|entity, _| {
+                    entity.get::<&mut Foo>(|_| {});
+                });
+            }
+
+            #[test]
+            #[should_panic]
+            fn query_write_view_read() {
+                let world = World::new();
+                world.entity().set(Foo(0));
+                query!(world, &mut Foo).build().each_entity(|entity, _| {
+                    entity.get::<&Foo>(|_| {});
+                });
+            }
+
+            #[test]
+            #[should_panic]
+            fn query_write_view_write() {
+                let world = World::new();
+                world.entity().set(Foo(0));
+                query!(world, &mut Foo).build().each_entity(|entity, _| {
+                    entity.get::<&mut Foo>(|_| {});
+                });
+            }
+        }
+
+        mod try_get {
+            use super::*;
+
+            #[test]
+            #[should_panic]
+            fn query_read_view_write() {
+                let world = World::new();
+                world.entity().set(Foo(0));
+                query!(world, &Foo).build().each_entity(|entity, _| {
+                    entity.try_get::<&mut Foo>(|_| {});
+                });
+            }
+
+            #[test]
+            #[should_panic]
+            fn query_write_view_read() {
+                let world = World::new();
+                world.entity().set(Foo(0));
+                query!(world, &mut Foo).build().each_entity(|entity, _| {
+                    entity.try_get::<&Foo>(|_| {});
+                });
+            }
+
+            #[test]
+            #[should_panic]
+            fn query_write_view_write() {
+                let world = World::new();
+                world.entity().set(Foo(0));
+                query!(world, &mut Foo).build().each_entity(|entity, _| {
+                    entity.try_get::<&mut Foo>(|_| {});
+                });
+            }
+        }
+    }
+
+    mod from_system {
+        use super::*;
+
+        #[test]
+        #[should_panic]
+        fn system_write_view_clone() {
+            let world = World::new();
+            world.entity().set(Foo(0));
+            system!(world, &mut Foo).each_entity(|entity, _| {
+                let _ = entity.cloned::<&Foo>();
+            });
+            world.progress();
+        }
+
+        mod get {
+            use super::*;
+
+            #[test]
+            #[should_panic]
+            fn system_read_view_write() {
+                let world = World::new();
+                world.entity().set(Foo(0));
+                system!(world, &Foo).each_entity(|entity, _| {
+                    entity.get::<&mut Foo>(|_| {});
+                });
+                world.progress();
+            }
+
+            #[test]
+            #[should_panic]
+            fn system_write_view_read() {
+                let world = World::new();
+                world.entity().set(Foo(0));
+                system!(world, &mut Foo).each_entity(|entity, _| {
+                    entity.get::<&Foo>(|_| {});
+                });
+                world.progress();
+            }
+
+            #[test]
+            #[should_panic]
+            fn system_write_view_write() {
+                let world = World::new();
+                world.entity().set(Foo(0));
+                system!(world, &mut Foo).each_entity(|entity, _| {
+                    entity.get::<&mut Foo>(|_| {});
+                });
+                world.progress();
+            }
+        }
+
+        mod try_get {
+            use super::*;
+
+            #[test]
+            #[should_panic]
+            fn system_read_view_write() {
+                let world = World::new();
+                world.entity().set(Foo(0));
+                system!(world, &Foo).each_entity(|entity, _| {
+                    entity.try_get::<&mut Foo>(|_| {});
+                });
+                world.progress();
+            }
+
+            #[test]
+            #[should_panic]
+            fn system_write_view_read() {
+                let world = World::new();
+                world.entity().set(Foo(0));
+                system!(world, &mut Foo).each_entity(|entity, _| {
+                    entity.try_get::<&Foo>(|_| {});
+                });
+                world.progress();
+            }
+
+            #[test]
+            #[should_panic]
+            fn system_write_view_write() {
+                let world = World::new();
+                world.entity().set(Foo(0));
+                system!(world, &mut Foo).each_entity(|entity, _| {
+                    entity.try_get::<&mut Foo>(|_| {});
+                });
+                world.progress();
+            }
+        }
+    }
+
+    mod from_observer {
+        use super::*;
+
+        #[test]
+        #[should_panic]
+        fn observer_write_view_clone() {
+            let world = World::new();
+            observer!(world, flecs::OnSet, &mut Foo).each_entity(|entity, _| {
+                let _ = entity.cloned::<&Foo>();
+            });
+            world.entity().set(Foo(0));
+        }
+
+        mod get {
+            use super::*;
+
+            #[test]
+            #[should_panic]
+            fn observer_read_view_write() {
+                let world = World::new();
+                observer!(world, flecs::OnSet, &Foo).each_entity(|entity, _| {
+                    entity.get::<&mut Foo>(|_| {});
+                });
+                world.entity().set(Foo(0));
+            }
+
+            #[test]
+            #[should_panic]
+            fn observer_write_view_read() {
+                let world = World::new();
+                observer!(world, flecs::OnSet, &mut Foo).each_entity(|entity, _| {
+                    entity.get::<&Foo>(|_| {});
+                });
+                world.entity().set(Foo(0));
+            }
+
+            #[test]
+            #[should_panic]
+            fn observer_write_view_write() {
+                let world = World::new();
+                observer!(world, flecs::OnSet, &mut Foo).each_entity(|entity, _| {
+                    entity.get::<&mut Foo>(|_| {});
+                });
+                world.entity().set(Foo(0));
+            }
+        }
+
+        mod try_get {
+            use super::*;
+
+            #[test]
+            #[should_panic]
+            fn observer_read_view_write() {
+                let world = World::new();
+                observer!(world, flecs::OnSet, &Foo).each_entity(|entity, _| {
+                    entity.try_get::<&mut Foo>(|_| {});
+                });
+                world.entity().set(Foo(0));
+            }
+
+            #[test]
+            #[should_panic]
+            fn observer_write_view_read() {
+                let world = World::new();
+                observer!(world, flecs::OnSet, &mut Foo).each_entity(|entity, _| {
+                    entity.try_get::<&Foo>(|_| {});
+                });
+                world.entity().set(Foo(0));
+            }
+
+            #[test]
+            #[should_panic]
+            fn observer_write_view_write() {
+                let world = World::new();
+                observer!(world, flecs::OnSet, &mut Foo).each_entity(|entity, _| {
+                    entity.try_get::<&mut Foo>(|_| {});
+                });
+                world.entity().set(Foo(0));
+            }
+        }
+    }
 }
 
 mod query_in_query {
