@@ -9,6 +9,9 @@ struct Foo(u8);
 struct Bar(u8);
 
 #[derive(Component)]
+struct Event;
+
+#[derive(Component)]
 struct A;
 
 #[derive(Component)]
@@ -397,6 +400,54 @@ mod entity_view {
     }
 }
 
+mod table_iter {
+    use super::*;
+
+    mod from_query {
+        use super::*;
+
+        #[test]
+        fn field() {
+            let world = World::new();
+            world.entity().set(Foo(0));
+            query!(world, Foo).build().each_iter(|iter, _, _| {
+                iter.field::<Foo>(0);
+            });
+        }
+
+        #[test]
+        #[should_panic]
+        fn field_field() {
+            let world = World::new();
+            world.entity().set(Foo(0));
+            query!(world, Foo).build().each_iter(|iter, _, _| {
+                iter.field::<Foo>(0);
+                iter.field::<Foo>(0);
+            });
+        }
+
+        #[test]
+        #[should_panic]
+        fn query_read_field() {
+            let world = World::new();
+            world.entity().set(Foo(0));
+            query!(world, &Foo).build().each_iter(|iter, _, _| {
+                iter.field::<Foo>(0);
+            });
+        }
+
+        #[test]
+        #[should_panic]
+        fn query_write_field() {
+            let world = World::new();
+            world.entity().set(Foo(0));
+            query!(world, &mut Foo).build().each_iter(|iter, _, _| {
+                iter.field::<Foo>(0);
+            });
+        }
+    }
+}
+
 mod query_in_query {
     use super::*;
 
@@ -407,6 +458,7 @@ mod query_in_query {
         #[should_panic]
         fn run_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query0 = query!(world, &Foo).build();
             let query1 = query!(world, &mut Foo).build();
             query0.run(|iter| {
@@ -421,6 +473,7 @@ mod query_in_query {
         #[should_panic]
         fn each_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query0 = query!(world, &Foo).build();
             let query1 = query!(world, &mut Foo).build();
             query0.each(|_| {
@@ -432,6 +485,7 @@ mod query_in_query {
         #[should_panic]
         fn each_entity_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query0 = query!(world, &Foo).build();
             let query1 = query!(world, &mut Foo).build();
             query0.each_entity(|_, _| {
@@ -443,6 +497,7 @@ mod query_in_query {
         #[should_panic]
         fn each_iter_query_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query0 = query!(world, &Foo).build();
             let query1 = query!(world, &mut Foo).build();
             query0.each_iter(|_, _, _| {
@@ -458,6 +513,7 @@ mod query_in_query {
         #[should_panic]
         fn run_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query0 = query!(world, &mut Foo).build();
             let query1 = query!(world, &Foo).build();
             query0.run(|iter| {
@@ -472,6 +528,7 @@ mod query_in_query {
         #[should_panic]
         fn each_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query0 = query!(world, &mut Foo).build();
             let query1 = query!(world, &Foo).build();
             query0.each(|_| {
@@ -483,6 +540,7 @@ mod query_in_query {
         #[should_panic]
         fn each_entity_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query0 = query!(world, &mut Foo).build();
             let query1 = query!(world, &Foo).build();
             query0.each_entity(|_, _| {
@@ -509,6 +567,7 @@ mod query_in_query {
         #[should_panic]
         fn run_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query0 = query!(world, &mut Foo).build();
             let query1 = query!(world, &mut Foo).build();
             query0.run(|iter| {
@@ -523,6 +582,7 @@ mod query_in_query {
         #[should_panic]
         fn each_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query0 = query!(world, &mut Foo).build();
             let query1 = query!(world, &mut Foo).build();
             query0.each(|_| {
@@ -534,6 +594,7 @@ mod query_in_query {
         #[should_panic]
         fn each_entity_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query0 = query!(world, &mut Foo).build();
             let query1 = query!(world, &mut Foo).build();
             query0.each_entity(|_, _| {
@@ -545,6 +606,7 @@ mod query_in_query {
         #[should_panic]
         fn each_iter_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query0 = query!(world, &mut Foo).build();
             let query1 = query!(world, &mut Foo).build();
             query0.each_iter(|_, _, _| {
@@ -854,6 +916,7 @@ mod query_in_system {
         #[should_panic]
         fn run_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query = query!(world, &mut Foo).build();
             system!(world, &Foo).run(move |iter| {
                 query.run(|iter| {
@@ -868,6 +931,7 @@ mod query_in_system {
         #[should_panic]
         fn each_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query = query!(world, &mut Foo).build();
             system!(world, &Foo).each(move |_| {
                 query.each(|_| {});
@@ -879,6 +943,7 @@ mod query_in_system {
         #[should_panic]
         fn each_entity_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query = query!(world, &mut Foo).build();
             system!(world, &Foo).each_entity(move |_, _| {
                 query.each_entity(|_, _| {});
@@ -890,6 +955,7 @@ mod query_in_system {
         #[should_panic]
         fn each_iter_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query = query!(world, &mut Foo).build();
             system!(world, &Foo).each_iter(move |_, _, _| {
                 query.each_iter(|_, _, _| {});
@@ -905,6 +971,7 @@ mod query_in_system {
         #[should_panic]
         fn run_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query = query!(world, &Foo).build();
             system!(world, &mut Foo).run(move |iter| {
                 query.run(|iter| {
@@ -919,6 +986,7 @@ mod query_in_system {
         #[should_panic]
         fn each_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query = query!(world, &Foo).build();
             system!(world, &mut Foo).each(move |_| {
                 query.each(|_| {});
@@ -930,6 +998,7 @@ mod query_in_system {
         #[should_panic]
         fn each_entity_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query = query!(world, &Foo).build();
             system!(world, &mut Foo).each_entity(move |_, _| {
                 query.each_entity(|_, _| {});
@@ -941,6 +1010,7 @@ mod query_in_system {
         #[should_panic]
         fn each_iter_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query = query!(world, &Foo).build();
             system!(world, &mut Foo).each_iter(move |_, _, _| {
                 query.each_iter(|_, _, _| {});
@@ -956,6 +1026,7 @@ mod query_in_system {
         #[should_panic]
         fn run_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query = query!(world, &mut Foo).build();
             system!(world, &mut Foo).run(move |iter| {
                 query.run(|iter| {
@@ -970,6 +1041,7 @@ mod query_in_system {
         #[should_panic]
         fn each_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query = query!(world, &mut Foo).build();
             system!(world, &mut Foo).each(move |_| {
                 query.each(|_| {});
@@ -981,6 +1053,7 @@ mod query_in_system {
         #[should_panic]
         fn each_entity_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query = query!(world, &mut Foo).build();
             system!(world, &mut Foo).each_entity(move |_, _| {
                 query.each_entity(|_, _| {});
@@ -992,6 +1065,7 @@ mod query_in_system {
         #[should_panic]
         fn each_iter_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query = query!(world, &mut Foo).build();
             system!(world, &mut Foo).each_iter(move |_, _, _| {
                 query.each_iter(|_, _, _| {});
@@ -1011,23 +1085,11 @@ mod observer_in_system {
         #[should_panic]
         fn run_violation() {
             let world = World::new();
-            let query = query!(world, &mut Foo).build();
+            world.entity().set(Foo(0));
+            observer!(world, Event, &mut Foo).each(|_| {});
             system!(world, &Foo).run(move |iter| {
-                query.run(|iter| {
-                    iter.fini();
-                });
+                iter.entity(0).emit(&Event);
                 iter.fini();
-            });
-            world.progress();
-        }
-
-        #[test]
-        #[should_panic]
-        fn each_violation() {
-            let world = World::new();
-            let query = query!(world, &mut Foo).build();
-            system!(world, &Foo).each(move |_| {
-                query.each(|_| {});
             });
             world.progress();
         }
@@ -1036,9 +1098,10 @@ mod observer_in_system {
         #[should_panic]
         fn each_entity_violation() {
             let world = World::new();
-            let query = query!(world, &mut Foo).build();
-            system!(world, &Foo).each_entity(move |_, _| {
-                query.each_entity(|_, _| {});
+            world.entity().set(Foo(0));
+            observer!(world, Event, &mut Foo).each(|_| {});
+            system!(world, &Foo).each_entity(move |entity, _| {
+                entity.emit(&Event);
             });
             world.progress();
         }
@@ -1047,9 +1110,10 @@ mod observer_in_system {
         #[should_panic]
         fn each_iter_violation() {
             let world = World::new();
-            let query = query!(world, &mut Foo).build();
-            system!(world, &Foo).each_iter(move |_, _, _| {
-                query.each_iter(|_, _, _| {});
+            world.entity().set(Foo(0));
+            observer!(world, Event, &mut Foo).each(|_| {});
+            system!(world, &Foo).each_iter(move |iter, _, _| {
+                iter.entity(0).emit(&Event);
             });
             world.progress();
         }
@@ -1062,23 +1126,11 @@ mod observer_in_system {
         #[should_panic]
         fn run_violation() {
             let world = World::new();
-            let query = query!(world, &Foo).build();
+            world.entity().set(Foo(0));
+            observer!(world, Event, &Foo).each(|_| {});
             system!(world, &mut Foo).run(move |iter| {
-                query.run(|iter| {
-                    iter.fini();
-                });
+                iter.entity(0).emit(&Event);
                 iter.fini();
-            });
-            world.progress();
-        }
-
-        #[test]
-        #[should_panic]
-        fn each_violation() {
-            let world = World::new();
-            let query = query!(world, &Foo).build();
-            system!(world, &mut Foo).each(move |_| {
-                query.each(|_| {});
             });
             world.progress();
         }
@@ -1087,9 +1139,10 @@ mod observer_in_system {
         #[should_panic]
         fn each_entity_violation() {
             let world = World::new();
-            let query = query!(world, &Foo).build();
-            system!(world, &mut Foo).each_entity(move |_, _| {
-                query.each_entity(|_, _| {});
+            world.entity().set(Foo(0));
+            observer!(world, Event, &Foo).each(|_| {});
+            system!(world, &mut Foo).each_entity(move |entity, _| {
+                entity.emit(&Event);
             });
             world.progress();
         }
@@ -1098,9 +1151,10 @@ mod observer_in_system {
         #[should_panic]
         fn each_iter_violation() {
             let world = World::new();
-            let query = query!(world, &Foo).build();
-            system!(world, &mut Foo).each_iter(move |_, _, _| {
-                query.each_iter(|_, _, _| {});
+            world.entity().set(Foo(0));
+            observer!(world, Event, &Foo).each(|_| {});
+            system!(world, &mut Foo).each_iter(move |iter, _, _| {
+                iter.entity(0).emit(&Event);
             });
             world.progress();
         }
@@ -1113,23 +1167,11 @@ mod observer_in_system {
         #[should_panic]
         fn run_violation() {
             let world = World::new();
-            let query = query!(world, &mut Foo).build();
+            world.entity().set(Foo(0));
+            observer!(world, Event, &mut Foo).each(|_| {});
             system!(world, &mut Foo).run(move |iter| {
-                query.run(|iter| {
-                    iter.fini();
-                });
+                iter.entity(0).emit(&Event);
                 iter.fini();
-            });
-            world.progress();
-        }
-
-        #[test]
-        #[should_panic]
-        fn each_violation() {
-            let world = World::new();
-            let query = query!(world, &mut Foo).build();
-            system!(world, &mut Foo).each(move |_| {
-                query.each(|_| {});
             });
             world.progress();
         }
@@ -1138,9 +1180,10 @@ mod observer_in_system {
         #[should_panic]
         fn each_entity_violation() {
             let world = World::new();
-            let query = query!(world, &mut Foo).build();
-            system!(world, &mut Foo).each_entity(move |_, _| {
-                query.each_entity(|_, _| {});
+            world.entity().set(Foo(0));
+            observer!(world, Event, &mut Foo).each(|_| {});
+            system!(world, &mut Foo).each_entity(move |entity, _| {
+                entity.emit(&Event);
             });
             world.progress();
         }
@@ -1149,9 +1192,10 @@ mod observer_in_system {
         #[should_panic]
         fn each_iter_violation() {
             let world = World::new();
-            let query = query!(world, &mut Foo).build();
-            system!(world, &mut Foo).each_iter(move |_, _, _| {
-                query.each_iter(|_, _, _| {});
+            world.entity().set(Foo(0));
+            observer!(world, Event, &mut Foo).each(|_| {});
+            system!(world, &mut Foo).each_iter(move |iter, _, _| {
+                iter.entity(0).emit(&Event);
             });
             world.progress();
         }
