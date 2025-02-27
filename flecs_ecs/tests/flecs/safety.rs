@@ -403,7 +403,7 @@ mod entity_view {
 mod table_iter {
     use super::*;
 
-    mod from_query {
+    mod field {
         use super::*;
 
         #[test]
@@ -417,7 +417,7 @@ mod table_iter {
 
         #[test]
         #[should_panic]
-        fn field_field() {
+        fn double_field() {
             let world = World::new();
             world.entity().set(Foo(0));
             query!(world, Foo).build().each_iter(|iter, _, _| {
@@ -443,6 +443,82 @@ mod table_iter {
             world.entity().set(Foo(0));
             query!(world, &mut Foo).build().each_iter(|iter, _, _| {
                 iter.field::<Foo>(0);
+            });
+        }
+    }
+
+    mod field_at {
+        use super::*;
+
+        #[test]
+        fn filter() {
+            let world = World::new();
+            world.entity().set(Foo(0));
+            query!(world, Foo).build().each_iter(|iter, _, _| {
+                iter.field_at::<Foo>(0, 0);
+            });
+        }
+
+        #[test]
+        fn query_read() {
+            let world = World::new();
+            world.entity().set(Foo(0));
+            query!(world, &Foo).build().each_iter(|iter, _, _| {
+                iter.field_at::<Foo>(0, 0);
+            });
+        }
+
+        #[test]
+        #[should_panic]
+        fn query_write() {
+            let world = World::new();
+            world.entity().set(Foo(0));
+            query!(world, &mut Foo).build().each_iter(|iter, _, _| {
+                iter.field_at::<Foo>(0, 0);
+            });
+        }
+    }
+
+    mod field_at_mut {
+        use super::*;
+
+        #[test]
+        fn filter() {
+            let world = World::new();
+            world.entity().set(Foo(0));
+            query!(world, Foo).build().each_iter(|iter, _, _| {
+                iter.field_at_mut::<Foo>(0, 0);
+            });
+        }
+
+        #[test]
+        #[should_panic]
+        fn filter_double_field_at_mut() {
+            let world = World::new();
+            world.entity().set(Foo(0));
+            query!(world, Foo).build().each_iter(|iter, _, _| {
+                iter.field_at_mut::<Foo>(0, 0);
+                iter.field_at_mut::<Foo>(0, 0);
+            });
+        }
+
+        #[test]
+        #[should_panic]
+        fn query_read() {
+            let world = World::new();
+            world.entity().set(Foo(0));
+            query!(world, &Foo).build().each_iter(|iter, _, _| {
+                iter.field_at_mut::<Foo>(0, 0);
+            });
+        }
+
+        #[test]
+        #[should_panic]
+        fn query_write() {
+            let world = World::new();
+            world.entity().set(Foo(0));
+            query!(world, &mut Foo).build().each_iter(|iter, _, _| {
+                iter.field_at::<Foo>(0, 0);
             });
         }
     }
