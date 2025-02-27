@@ -2,20 +2,19 @@
 use flecs_ecs::core::*;
 use flecs_ecs::macros::*;
 
+mod pairs;
+
 #[derive(Clone, Component)]
 struct Foo(u8);
 
 #[derive(Component)]
-struct Bar(u8);
+struct Bar;
 
 #[derive(Component)]
-struct Event;
+struct EventA;
 
 #[derive(Component)]
-struct A;
-
-#[derive(Component)]
-struct B;
+struct EventB;
 
 #[test]
 fn building_conflicting_queries_no_violations() {
@@ -703,14 +702,14 @@ mod observer_in_observer {
         fn run_violation() {
             let world = World::new();
             let e = world.entity().set(Foo(0)).id();
-            observer!(world, A, &Foo).run(|iter| {
+            observer!(world, EventA, &Foo).run(|iter| {
                 iter.fini();
             });
-            observer!(world, B, &mut Foo).run(move |iter| {
-                iter.world().event().add::<Foo>().entity(e).emit(&A);
+            observer!(world, EventB, &mut Foo).run(move |iter| {
+                iter.world().event().add::<Foo>().entity(e).emit(&EventA);
                 iter.fini();
             });
-            world.event().add::<Foo>().entity(e).emit(&B);
+            world.event().add::<Foo>().entity(e).emit(&EventB);
         }
 
         #[test]
@@ -718,11 +717,11 @@ mod observer_in_observer {
         fn each_entity_violation() {
             let world = World::new();
             let e = world.entity().set(Foo(0)).id();
-            observer!(world, A, &Foo).each_entity(|_, _| {});
-            observer!(world, B, &mut Foo).each_entity(move |entity, _| {
-                entity.world().event().add::<Foo>().entity(e).emit(&A);
+            observer!(world, EventA, &Foo).each_entity(|_, _| {});
+            observer!(world, EventB, &mut Foo).each_entity(move |entity, _| {
+                entity.world().event().add::<Foo>().entity(e).emit(&EventA);
             });
-            world.event().add::<Foo>().entity(e).emit(&B);
+            world.event().add::<Foo>().entity(e).emit(&EventB);
         }
 
         #[test]
@@ -730,11 +729,11 @@ mod observer_in_observer {
         fn each_iter_violation() {
             let world = World::new();
             let e = world.entity().set(Foo(0)).id();
-            observer!(world, A, &Foo).each_iter(|_, _, _| {});
-            observer!(world, B, &mut Foo).each_iter(move |iter, _, _| {
-                iter.world().event().add::<Foo>().entity(e).emit(&A);
+            observer!(world, EventA, &Foo).each_iter(|_, _, _| {});
+            observer!(world, EventB, &mut Foo).each_iter(move |iter, _, _| {
+                iter.world().event().add::<Foo>().entity(e).emit(&EventA);
             });
-            world.event().add::<Foo>().entity(e).emit(&B);
+            world.event().add::<Foo>().entity(e).emit(&EventB);
         }
     }
 
@@ -746,14 +745,14 @@ mod observer_in_observer {
         fn run_violation() {
             let world = World::new();
             let e = world.entity().set(Foo(0)).id();
-            observer!(world, A, &mut Foo).run(|iter| {
+            observer!(world, EventA, &mut Foo).run(|iter| {
                 iter.fini();
             });
-            observer!(world, B, &Foo).run(move |iter| {
-                iter.world().event().add::<Foo>().entity(e).emit(&A);
+            observer!(world, EventB, &Foo).run(move |iter| {
+                iter.world().event().add::<Foo>().entity(e).emit(&EventA);
                 iter.fini();
             });
-            world.event().add::<Foo>().entity(e).emit(&B);
+            world.event().add::<Foo>().entity(e).emit(&EventB);
         }
 
         #[test]
@@ -761,11 +760,11 @@ mod observer_in_observer {
         fn each_entity_violation() {
             let world = World::new();
             let e = world.entity().set(Foo(0)).id();
-            observer!(world, A, &mut Foo).each_entity(|_, _| {});
-            observer!(world, B, &Foo).each_entity(move |entity, _| {
-                entity.world().event().add::<Foo>().entity(e).emit(&A);
+            observer!(world, EventA, &mut Foo).each_entity(|_, _| {});
+            observer!(world, EventB, &Foo).each_entity(move |entity, _| {
+                entity.world().event().add::<Foo>().entity(e).emit(&EventA);
             });
-            world.event().add::<Foo>().entity(e).emit(&B);
+            world.event().add::<Foo>().entity(e).emit(&EventB);
         }
 
         #[test]
@@ -773,11 +772,11 @@ mod observer_in_observer {
         fn each_iter_violation() {
             let world = World::new();
             let e = world.entity().set(Foo(0)).id();
-            observer!(world, A, &mut Foo).each_iter(|_, _, _| {});
-            observer!(world, B, &Foo).each_iter(move |iter, _, _| {
-                iter.world().event().add::<Foo>().entity(e).emit(&A);
+            observer!(world, EventA, &mut Foo).each_iter(|_, _, _| {});
+            observer!(world, EventB, &Foo).each_iter(move |iter, _, _| {
+                iter.world().event().add::<Foo>().entity(e).emit(&EventA);
             });
-            world.event().add::<Foo>().entity(e).emit(&B);
+            world.event().add::<Foo>().entity(e).emit(&EventB);
         }
     }
 
@@ -789,14 +788,14 @@ mod observer_in_observer {
         fn run_violation() {
             let world = World::new();
             let e = world.entity().set(Foo(0)).id();
-            observer!(world, A, &mut Foo).run(|iter| {
+            observer!(world, EventA, &mut Foo).run(|iter| {
                 iter.fini();
             });
-            observer!(world, B, &mut Foo).run(move |iter| {
-                iter.world().event().add::<Foo>().entity(e).emit(&A);
+            observer!(world, EventB, &mut Foo).run(move |iter| {
+                iter.world().event().add::<Foo>().entity(e).emit(&EventA);
                 iter.fini();
             });
-            world.event().add::<Foo>().entity(e).emit(&B);
+            world.event().add::<Foo>().entity(e).emit(&EventB);
         }
 
         #[test]
@@ -804,11 +803,11 @@ mod observer_in_observer {
         fn each_entity_violation() {
             let world = World::new();
             let e = world.entity().set(Foo(0)).id();
-            observer!(world, A, &mut Foo).each_entity(|_, _| {});
-            observer!(world, B, &mut Foo).each_entity(move |entity, _| {
-                entity.world().event().add::<Foo>().entity(e).emit(&A);
+            observer!(world, EventA, &mut Foo).each_entity(|_, _| {});
+            observer!(world, EventB, &mut Foo).each_entity(move |entity, _| {
+                entity.world().event().add::<Foo>().entity(e).emit(&EventA);
             });
-            world.event().add::<Foo>().entity(e).emit(&B);
+            world.event().add::<Foo>().entity(e).emit(&EventB);
         }
 
         #[test]
@@ -816,11 +815,11 @@ mod observer_in_observer {
         fn each_iter_violation() {
             let world = World::new();
             let e = world.entity().set(Foo(0)).id();
-            observer!(world, A, &mut Foo).each_iter(|_, _, _| {});
-            observer!(world, B, &mut Foo).each_iter(move |iter, _, _| {
-                iter.world().event().add::<Foo>().entity(e).emit(&A);
+            observer!(world, EventA, &mut Foo).each_iter(|_, _, _| {});
+            observer!(world, EventB, &mut Foo).each_iter(move |iter, _, _| {
+                iter.world().event().add::<Foo>().entity(e).emit(&EventA);
             });
-            world.event().add::<Foo>().entity(e).emit(&B);
+            world.event().add::<Foo>().entity(e).emit(&EventB);
         }
     }
 }
@@ -1162,9 +1161,9 @@ mod observer_in_system {
         fn run_violation() {
             let world = World::new();
             world.entity().set(Foo(0));
-            observer!(world, Event, &mut Foo).each(|_| {});
+            observer!(world, EventA, &mut Foo).each(|_| {});
             system!(world, &Foo).run(move |iter| {
-                iter.entity(0).emit(&Event);
+                iter.entity(0).emit(&EventA);
                 iter.fini();
             });
             world.progress();
@@ -1175,9 +1174,9 @@ mod observer_in_system {
         fn each_entity_violation() {
             let world = World::new();
             world.entity().set(Foo(0));
-            observer!(world, Event, &mut Foo).each(|_| {});
+            observer!(world, EventA, &mut Foo).each(|_| {});
             system!(world, &Foo).each_entity(move |entity, _| {
-                entity.emit(&Event);
+                entity.emit(&EventA);
             });
             world.progress();
         }
@@ -1187,9 +1186,9 @@ mod observer_in_system {
         fn each_iter_violation() {
             let world = World::new();
             world.entity().set(Foo(0));
-            observer!(world, Event, &mut Foo).each(|_| {});
+            observer!(world, EventA, &mut Foo).each(|_| {});
             system!(world, &Foo).each_iter(move |iter, _, _| {
-                iter.entity(0).emit(&Event);
+                iter.entity(0).emit(&EventA);
             });
             world.progress();
         }
@@ -1203,9 +1202,9 @@ mod observer_in_system {
         fn run_violation() {
             let world = World::new();
             world.entity().set(Foo(0));
-            observer!(world, Event, &Foo).each(|_| {});
+            observer!(world, EventA, &Foo).each(|_| {});
             system!(world, &mut Foo).run(move |iter| {
-                iter.entity(0).emit(&Event);
+                iter.entity(0).emit(&EventA);
                 iter.fini();
             });
             world.progress();
@@ -1216,9 +1215,9 @@ mod observer_in_system {
         fn each_entity_violation() {
             let world = World::new();
             world.entity().set(Foo(0));
-            observer!(world, Event, &Foo).each(|_| {});
+            observer!(world, EventA, &Foo).each(|_| {});
             system!(world, &mut Foo).each_entity(move |entity, _| {
-                entity.emit(&Event);
+                entity.emit(&EventA);
             });
             world.progress();
         }
@@ -1228,9 +1227,9 @@ mod observer_in_system {
         fn each_iter_violation() {
             let world = World::new();
             world.entity().set(Foo(0));
-            observer!(world, Event, &Foo).each(|_| {});
+            observer!(world, EventA, &Foo).each(|_| {});
             system!(world, &mut Foo).each_iter(move |iter, _, _| {
-                iter.entity(0).emit(&Event);
+                iter.entity(0).emit(&EventA);
             });
             world.progress();
         }
@@ -1244,9 +1243,9 @@ mod observer_in_system {
         fn run_violation() {
             let world = World::new();
             world.entity().set(Foo(0));
-            observer!(world, Event, &mut Foo).each(|_| {});
+            observer!(world, EventA, &mut Foo).each(|_| {});
             system!(world, &mut Foo).run(move |iter| {
-                iter.entity(0).emit(&Event);
+                iter.entity(0).emit(&EventA);
                 iter.fini();
             });
             world.progress();
@@ -1257,9 +1256,9 @@ mod observer_in_system {
         fn each_entity_violation() {
             let world = World::new();
             world.entity().set(Foo(0));
-            observer!(world, Event, &mut Foo).each(|_| {});
+            observer!(world, EventA, &mut Foo).each(|_| {});
             system!(world, &mut Foo).each_entity(move |entity, _| {
-                entity.emit(&Event);
+                entity.emit(&EventA);
             });
             world.progress();
         }
@@ -1269,9 +1268,9 @@ mod observer_in_system {
         fn each_iter_violation() {
             let world = World::new();
             world.entity().set(Foo(0));
-            observer!(world, Event, &mut Foo).each(|_| {});
+            observer!(world, EventA, &mut Foo).each(|_| {});
             system!(world, &mut Foo).each_iter(move |iter, _, _| {
-                iter.entity(0).emit(&Event);
+                iter.entity(0).emit(&EventA);
             });
             world.progress();
         }
