@@ -57,36 +57,90 @@ fn running_conflicting_queries_no_violations() {
 mod entity_view {
     use super::*;
 
-    fn read_write() {
-        let world = World::new();
-        let entity = world.entity().set(Foo(0));
-        entity.get::<&Foo>(|_| {
-            entity.get::<&mut Foo>(|_| {});
-        });
+    mod get {
+        use super::*;
+        #[test]
+        #[should_panic]
+        fn read_write() {
+            let world = World::new();
+            let entity = world.entity().set(Foo(0));
+            entity.get::<&Foo>(|_| {
+                entity.get::<&mut Foo>(|_| {});
+            });
+        }
+
+        #[test]
+        #[should_panic]
+        fn write_read() {
+            let world = World::new();
+            let entity = world.entity().set(Foo(0));
+            entity.get::<&mut Foo>(|_| {
+                entity.get::<&Foo>(|_| {});
+            });
+        }
+
+        #[test]
+        #[should_panic]
+        fn write_cloned() {
+            let world = World::new();
+            let entity = world.entity().set(Foo(0));
+            entity.get::<&mut Foo>(|_| {
+                let _ = entity.cloned::<&Foo>();
+            });
+        }
+
+        #[test]
+        #[should_panic]
+        fn write_write() {
+            let world = World::new();
+            let entity = world.entity().set(Foo(0));
+            entity.get::<&mut Foo>(|_| {
+                entity.get::<&mut Foo>(|_| {});
+            });
+        }
     }
 
-    fn write_read() {
-        let world = World::new();
-        let entity = world.entity().set(Foo(0));
-        entity.get::<&mut Foo>(|_| {
-            entity.get::<&Foo>(|_| {});
-        });
-    }
+    mod try_get {
+        use super::*;
+        #[test]
+        #[should_panic]
+        fn read_write() {
+            let world = World::new();
+            let entity = world.entity().set(Foo(0));
+            entity.try_get::<&Foo>(|_| {
+                entity.try_get::<&mut Foo>(|_| {});
+            });
+        }
 
-    fn write_cloned() {
-        let world = World::new();
-        let entity = world.entity().set(Foo(0));
-        entity.get::<&mut Foo>(|_| {
-            let _ = entity.cloned::<&Foo>();
-        });
-    }
+        #[test]
+        #[should_panic]
+        fn write_read() {
+            let world = World::new();
+            let entity = world.entity().set(Foo(0));
+            entity.try_get::<&mut Foo>(|_| {
+                entity.try_get::<&Foo>(|_| {});
+            });
+        }
 
-    fn write_write() {
-        let world = World::new();
-        let entity = world.entity().set(Foo(0));
-        entity.get::<&mut Foo>(|_| {
-            entity.get::<&mut Foo>(|_| {});
-        });
+        #[test]
+        #[should_panic]
+        fn write_cloned() {
+            let world = World::new();
+            let entity = world.entity().set(Foo(0));
+            entity.try_get::<&mut Foo>(|_| {
+                let _ = entity.cloned::<&Foo>();
+            });
+        }
+
+        #[test]
+        #[should_panic]
+        fn write_write() {
+            let world = World::new();
+            let entity = world.entity().set(Foo(0));
+            entity.try_get::<&mut Foo>(|_| {
+                entity.try_get::<&mut Foo>(|_| {});
+            });
+        }
     }
 
     mod from_query {
