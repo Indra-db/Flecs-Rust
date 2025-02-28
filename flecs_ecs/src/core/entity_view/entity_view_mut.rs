@@ -24,11 +24,6 @@ impl<'a> EntityView<'a> {
     /// # Usage
     ///
     /// For types that are not ZST and do not implement a constructor hook, use the `set_id` method to safely initialize the `id`.
-    ///
-    /// # See Also
-    ///
-    /// * C++ API equivalent: `entity_builder::add`
-    #[doc(alias = "entity_builder::add")]
     pub fn add_id(self, id: impl IntoId) -> Self {
         let id = *id.into();
         let world = self.world.world_ptr_mut();
@@ -44,16 +39,18 @@ impl<'a> EntityView<'a> {
     /// The provided `id` can represent various types, including a component, a pair, a tag, or another entity.
     ///
     /// # Safety
-    /// Caller must ensure the `id` is a valid type.
     /// This function is unsafe because it does not check if the `id` is a valid type nor if
     /// the `id` implements a constructor hook if it is not a zero-sized type (ZST).
-    /// if the id is a type without a constructor hook, it could cause you to read uninitialized data.
-    /// the caller must ensure to initialize the component data before using it.
-    ///
+    /// If the id is a type without a constructor hook, it could cause you to read uninitialized data.
+    /// The caller must ensure:
+    /// - The `id` is a valid type
+    /// - Component data is initialized before use if the type is not a ZST
+ 
+
     /// # See Also
     ///
-    /// * [`add_id`](Self::add_id)
-    /// * [`set_id`](Self::set_id)
+    /// * [`add_id`](Self::add_id) - The safe version of this function
+    /// * [`set_id`](Self::set_id) - For setting component data
     pub unsafe fn add_id_unchecked(self, id: impl IntoId) -> Self {
         let id = *id.into();
         let world = self.world.world_ptr_mut();
@@ -62,12 +59,18 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Add a Tag or Tags relationship to an entity.
+  
+
+    /// Add a component or pair to an entity.
     ///
-    /// # See also
+    /// This is a type-safe way to add a component or relationship to an entity.
     ///
-    /// * C++ API: `entity_builder::add`
-    #[doc(alias = "entity_builder::add")]
+ 
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: The component or pair to add
+    
     pub fn add<T>(self) -> Self
     where
         T: ComponentOrPairId,
@@ -76,12 +79,15 @@ impl<'a> EntityView<'a> {
         self.add_id(T::get_id(world))
     }
 
-    /// Adds a flecs trait.
+    /// Adds a flecs trait to the entity.
     ///
-    /// # See also
+    /// Traits are special components that can be added to an entity to 
+    /// provide additional functionality.
+      
+    /// # Type Parameters
     ///
-    /// * C++ API: `entity_builder::add`
-    #[doc(alias = "entity_builder::add")]
+    /// * `T`: The trait component to add, must implement `FlecsTrait`
+   
     pub fn add_trait<T>(self) -> Self
     where
         T: ComponentOrPairId,
@@ -92,11 +98,18 @@ impl<'a> EntityView<'a> {
     }
 
     /// Override a component on an entity.
-    /// This is useful if you want to override a component that is inherited by a prefab on a per entity basis
+    /// 
+    /// This is useful when you want to override a component that is inherited from a prefab
+    /// on a per-entity basis.
     ///
     /// # Panics
     ///
-    /// Caller must ensure the entity has the component to override.
+    /// This function panics if the entity does not have the component to override
+    /// (typically through inheritance from a prefab).
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: The component type to override
     pub fn override_type<T>(self) -> Self
     where
         T: ComponentOrPairId,
@@ -110,17 +123,20 @@ impl<'a> EntityView<'a> {
         unsafe { self.add_id_unchecked(id) }
     }
 
-    /// Adds a pair to the entity
+    /// Adds a pair to the entity using a component for the first element.
+    ///
+    /// This creates a relationship where the first element is the specified component type
+    /// and the second element is the provided entity.
     ///
     /// # Panics
     ///
-    /// Caller must ensure the id is a non ZST types. Otherwise it could cause you to read uninitialized payload data.
-    /// use `set_first` for ZST types.
+    /// This function panics if:
+    /// - The first element is not a tag (zero-sized type) and does not implement Default
+    /// - The second element is not a valid component or entity
     ///
-    /// # See also
+    /// # Type Parameters
     ///
-    /// * C++ API: `entity_builder::add`
-    #[doc(alias = "entity_builder::add")]
+    /// * `First`: Component type for the first element of the pair
     pub fn add_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         const {
             if !First::IS_TAG && !First::IMPLS_DEFAULT {
@@ -151,17 +167,20 @@ impl<'a> EntityView<'a> {
         unsafe { self.add_id_unchecked((First::id(world), second)) }
     }
 
-    /// Adds a pair to the entity
+    /// Adds a pair to the entity using a component for the second element.
     ///
+    /// This creates a relationship where the first element is the provided entity
+    /// and the second element is the specified component type.
     /// # Safety
     ///
-    /// Caller must ensure the id is a non ZST types. Otherwise it could cause you to read uninitialized payload data.
-    /// use `set_second` for ZST types.
+    /// Caller must ensure the id is a non-ZST type or implements Default.
+    /// Otherwise, it could cause you to read uninitialized payload data.
+    /// Use `set_second` for non-ZST types without Default.
+    
     ///
-    /// # See also
+    /// # Type Parameters
     ///
-    /// * C++ API: `entity_builder::add`
-    #[doc(alias = "entity_builder::add")]
+    /// * `Second`: Component type for the second element of the pair
     pub fn add_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
         let world = self.world;
         let world_ptr = world.world_ptr();
@@ -189,12 +208,15 @@ impl<'a> EntityView<'a> {
         self.add_id((first, Second::id(world)))
     }
 
-    /// Adds a pair to the entity composed of a tag and an (C) flecs enum constant.
+    /// Adds a pair to the entity composed of a tag and an enum constant.
     ///
-    /// # See also
+    /// This method is specifically designed for working with Flecs enums,
+    /// where the first element is a tag and the second element is an enum value.
     ///
-    /// * C++ API: `entity_builder::add`
-    #[doc(alias = "entity_builder::add")]
+    /// # Type Parameters
+    ///
+    /// * `First`: The tag component type (first element of pair)
+    /// * `Second`: The enum component type (second element of pair)
     pub fn add_pair_enum<First, Second>(self, enum_value: Second) -> Self
     where
         First: ComponentId,
@@ -210,23 +232,16 @@ impl<'a> EntityView<'a> {
         unsafe { self.add_id_unchecked((First::id(world), enum_id)) }
     }
 
-    /// Adds a pair to the entity where the first element is the enumeration type,
-    /// and the second element is the enumeration constant.
+   
+    /// Adds an enum constant to an entity.
     ///
+    /// Creates a pair where the first element is the enum type,
+    /// and the second element is the specific enum constant.
     /// This function works only with regular (C style) enumerations.
     ///
     /// # Type Parameters
     ///
-    /// - `T`: The enumeration type, which derives from `ComponentId`, `ComponentType<Enum>`, and `EnumComponentInfo`.
-    ///
-    /// # Arguments
-    ///
-    /// - `enum_value`: The enumeration value.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add`
-    #[doc(alias = "entity_builder::add")]
+    /// * `T`: The enum type with required trait implementations
     pub fn add_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         self,
         enum_value: T,
@@ -243,18 +258,20 @@ impl<'a> EntityView<'a> {
         unsafe { self.add_id_unchecked((first, second)) }
     }
 
-    /// Conditional add.
-    /// This operation adds if condition is true, removes if condition is false.
+   
+    /// Conditionally adds or removes an ID based on a condition.
+    ///
+    /// This operation adds the ID if the condition is true, and removes it if false.
+    /// This provides a convenient way to toggle components based on runtime conditions.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: Type that can be converted to an ID
     ///
     /// # Arguments
     ///
-    /// * `condition`: The condition to evaluate.
-    /// * `component`: The component to add.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add_if`
-    #[doc(alias = "entity_builder::add_if")]
+    /// * `id`: The ID to conditionally add or remove
+    /// * `condition`: Whether to add the ID (true) or remove it (false)
     pub fn add_id_if<T>(self, id: T, condition: bool) -> Self
     where
         T: IntoId,
@@ -282,21 +299,18 @@ impl<'a> EntityView<'a> {
         }
     }
 
-    /// Conditional add.
-    /// This operation adds if condition is true, removes if condition is false.
+    /// Conditionally adds or removes a component based on a condition.
     ///
-    /// # Type Parameters
+    /// This operation adds the component if the condition is true, and removes it if false.
+    /// This provides a type-safe way to toggle components based on runtime conditions.
+   
+    /// /// # Type Parameters
     ///
-    /// * `T`: The component to add.
+    /// * `T`: The component type to conditionally add or remove
     ///
     /// # Arguments
     ///
-    /// * `condition`: The condition to evaluate.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add_if`
-    #[doc(alias = "entity_builder::add_if")]
+    /// * `condition`: Whether to add the component (true) or remove it (false)
     pub fn add_if<T: ComponentOrPairId>(self, condition: bool) -> Self {
         let world = self.world;
         if condition {
@@ -323,22 +337,18 @@ impl<'a> EntityView<'a> {
         }
     }
 
-    /// Conditional add.
-    /// This operation adds if condition is true, removes if condition is false.
+    /// Conditionally adds or removes a pair with a specified first element.
     ///
-    /// # Type Parameters
+    /// This operation adds the pair if the condition is true, and removes it if false.
+    /// The pair consists of the specified first element and second entity.
+    ///  # Type Parameters
     ///
-    /// * `First`: The first element of the pair
+    /// * `First`: The component type for the first element of the pair
     ///
     /// # Arguments
     ///
-    /// * `condition`: The condition to evaluate.
-    /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add_if`
-    #[doc(alias = "entity_builder::add_if")]
+    /// * `second`: The entity to use as the second element of the pair
+    /// * `condition`: Whether to add the pair (true) or remove it (false)
     pub fn add_first_if<First: ComponentId>(
         self,
         second: impl Into<Entity>,
@@ -348,22 +358,19 @@ impl<'a> EntityView<'a> {
         self.add_id_if((First::id(world), second.into()), condition)
     }
 
-    /// Conditional add.
-    /// This operation adds if condition is true, removes if condition is false.
+    /// Conditionally adds or removes a pair with a specified second element.
     ///
-    /// # Type Parameters
+    /// This operation adds the pair if the condition is true, and removes it if false.
+    /// The pair consists of the specified entity as first element and the component type as second.
     ///
-    /// * `Second`: The second element of the pair
+    ///  # Type Parameters
+    ///
+    /// * `Second`: The component type for the second element of the pair
     ///
     /// # Arguments
     ///
-    /// * `condition`: The condition to evaluate.
-    /// * `first`: The first element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add_if`
-    #[doc(alias = "entity_builder::add_if")]
+    /// * `first`: The entity to use as the first element of the pair
+    /// * `condition`: Whether to add the pair (true) or remove it (false)
     pub fn add_second_if<Second: ComponentId>(
         self,
         first: impl Into<Entity>,
@@ -373,22 +380,19 @@ impl<'a> EntityView<'a> {
         self.add_id_if((first.into(), Second::id(world)), condition)
     }
 
-    /// Conditional add.
-    /// This operation adds if condition is true, removes if condition is false.
+    /// Conditionally adds or removes an enum value based on a condition.
+    ///
+    /// This operation adds the enum value if the condition is true, and removes it if false.
+    /// Creates a relationship between the enum type and the specific enum constant.
     ///
     /// # Type Parameters
     ///
-    /// * `T`: enum type
+    /// * `T`: The enum type with required trait implementations
     ///
     /// # Arguments
     ///
-    /// * `condition`: The condition to evaluate.
-    /// * `enum_value`: The enumeration constant.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add_if`
-    #[doc(alias = "entity_builder::add_if")]
+    /// * `enum_value`: The enum value to conditionally add
+    /// * `condition`: Whether to add the enum value (true) or remove it (false)
     pub fn add_enum_if<T>(self, enum_value: T, condition: bool) -> Self
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
@@ -403,31 +407,26 @@ impl<'a> EntityView<'a> {
         )
     }
 
-    /// Remove an entity from an entity.
+    /// Removes an ID from an entity.
+    ///
+    /// This function removes the specified ID (component, pair, tag, or entity)
+    /// from the entity.
     ///
     /// # Arguments
     ///
-    /// * `component_id`: The entity to remove.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::remove`
-    #[doc(alias = "entity_builder::remove")]
+    /// * `id`: The ID to remove from the entity
     pub fn remove_id(self, id: impl IntoId) -> Self {
         unsafe { sys::ecs_remove_id(self.world.world_ptr_mut(), *self.id, *id.into()) }
         self
     }
 
-    /// Remove a component from an entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: the type of the component to remove.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::remove`
-    #[doc(alias = "entity_builder::remove")]
+   /// Removes a component or pair from an entity.
+   ///
+   /// This is a type-safe way to remove a component or relationship from an entity.
+   ///
+   /// # Type Parameters
+   ///
+   /// * `T`: The component or pair type to remove
     pub fn remove<T: ComponentOrPairId>(self) -> Self {
         let world = self.world;
 
@@ -439,22 +438,20 @@ impl<'a> EntityView<'a> {
         }
     }
 
-    /// Remove a pair.
-    /// This operation removes a pair to the entity.
+
+    /// Removes a pair of tag and enum constant from an entity.
     ///
-    /// # Type Parameters
+    /// This function specifically removes a relationship where the first element
+    /// is a tag component and the second element is an enum constant.
     ///
-    /// * `T`: The type of the first element of the pair.
-    /// * `U`: The type of the second element of the pair.
+     /// # Type Parameters
+    ///
+    /// * `First`: The tag component type (first element of pair)
+    /// * `Second`: The enum component type (second element of pair)
     ///
     /// # Arguments
     ///
-    /// * `enum_value`: the enum constant.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::remove`
-    #[doc(alias = "entity_builder::remove")]
+    /// * `enum_value`: The enum constant to remove
     pub fn remove_enum_tag<First, Second>(self, enum_value: Second) -> Self
     where
         First: ComponentId,
@@ -464,147 +461,132 @@ impl<'a> EntityView<'a> {
         self.remove_id((First::id(world), enum_value.id_variant(world)))
     }
 
-    /// Removes a pair.
-    /// This operation removes a pair from the entity.
+    /// Removes a pair with a specified first element from an entity.
     ///
-    /// # Type Parameters
+    /// This function removes a relationship where the first element
+    /// is the specified component type and the second element is the provided entity.
     ///
-    /// * `First`: The first element of the pair.
+    ///  # Type Parameters
+    ///
+    /// * `First`: Component type for the first element of the pair
     ///
     /// # Arguments
     ///
-    /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::remove_second`
-    #[doc(alias = "entity_builder::remove_second")]
+    /// * `second`: The entity used as the second element of the pair
     pub fn remove_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         let world = self.world;
         self.remove_id((First::id(world), second.into()))
     }
 
-    /// Removes a pair.
-    /// This operation removes a pair from the entity.
+    /// Removes a pair with a specified second element from an entity.
     ///
-    /// # Type Parameters
+    /// This function removes a relationship where the first element
+    /// is the provided entity and the second element is the specified component type.
     ///
-    /// * `Second`: The second element of the pair.
+    ///  # Type Parameters
+    ///
+    /// * `Second`: Component type for the second element of the pair
     ///
     /// # Arguments
     ///
-    /// * `first`: The first element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::remove_second`
-    #[doc(alias = "entity_builder::remove_second")]
+    /// * `first`: The entity used as the first element of the pair
     pub fn remove_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
         let world = self.world;
         self.remove_id((first.into(), Second::id(world)))
     }
 
-    /// Shortcut for `add((flecs::IsA, id))`.
+    /// Establishes an inheritance relationship with another entity.
+    ///
+    /// This is a shortcut for adding a pair of (IsA, entity). The entity will inherit
+    /// all components and tags from the target entity, similar to how a class inherits
+    /// from a parent class.
     ///
     /// # Arguments
     ///
-    /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::is_a`
-    #[doc(alias = "entity_builder::is_a")]
+    /// * `second`: The entity to inherit from
     pub fn is_a_id(self, second: impl Into<Entity>) -> Self {
         unsafe { self.add_id_unchecked((ECS_IS_A, second.into())) }
     }
 
-    /// Shortcut for `add_id((flecs::IsA::ID, entity))`.
+    /// Establishes an inheritance relationship with an entity associated with a component type.
     ///
-    /// # Type Parameters
+    /// This is a type-safe shortcut for `is_a_id` where the target entity
+    /// is the one associated with the specified component type.
     ///
-    /// * `T`: the type associated with the entity.
+    ///  # Type Parameters
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::is_a`
-    #[doc(alias = "entity_builder::is_a")]
+    /// * `T`: The component type whose associated entity will be inherited from
     pub fn is_a<T: ComponentId>(self) -> Self {
         let world = self.world;
         self.is_a_id(T::id(world))
     }
 
-    /// Shortcut for `add_id((flecs::ChildOf::ID, entity))`.
+
+    ///  Establishes a parent-child relationship with another entity.
+    /// This is a shortcut for adding a pair of (ChildOf, entity) [`add_id((flecs::ChildOf::ID, entity))`]. This relationship
+    /// creates a hierarchical structure where the current entity becomes a child
+    /// of the specified parent entity.
     ///
     /// # Arguments
-    ///
-    /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::child_of`
-    #[doc(alias = "entity_builder::child_of")]
+    /// * `parent`: The entity to set as parent
     pub fn child_of_id(self, parent: impl Into<Entity>) -> Self {
         unsafe { self.add_id_unchecked((ECS_CHILD_OF, parent.into())) }
     }
 
-    /// Shortcut for `add_id((flecs::ChildOf::ID, entity))`.
+    /// Establishes a parent-child relationship with an entity associated with a component type.
+    ///
+    /// This is a type-safe shortcut for `child_of_id` where the parent entity
+    /// is the one associated with the specified component type.
     ///
     /// # Type Parameters
     ///
-    /// * `T`: the type associated with the entity.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::child_of`
-    #[doc(alias = "entity_builder::child_of")]
+    /// * `T`: The component type whose associated entity will be the parent
     pub fn child_of<T: ComponentId>(self) -> Self {
         let world = self.world;
         self.child_of_id(T::id(world))
     }
 
-    /// Shortcut for `add_id((flecs::DependsOn::ID, entity))`.
+    /// Establishes a dependency relationship with another entity.
     ///
-    /// # Arguments
+    /// This is a shortcut for adding a pair of (DependsOn, entity). 
+    /// This relationship creates a dependency where the current entity 
+    /// depends on the specified entity.
     ///
-    /// * `second`: The second element of the pair.
+    /// /// # Arguments
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::depends_on`
-    #[doc(alias = "entity_builder::depends_on")]
+    /// * `second`: The entity that the current entity depends on
     pub fn depends_on_id(self, second: impl Into<Entity>) -> Self {
         unsafe { self.add_id_unchecked((ECS_DEPENDS_ON, second.into())) }
     }
 
-    /// Shortcut for `add_id((flecs::ependsOn::ID, entity))`.
+    ///  Establishes a dependency relationship with an entity associated with a component type.
+
+    /// This is a type-safe shortcut for `depends_on_id [add_id((flecs::Dependency::ID, entity))]` where the dependency
+    /// is associated with the specified component type.
     ///
     /// # Type Parameters
     ///
-    /// * `T`: the type associated with the entity.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::depends_on`
-    #[doc(alias = "entity_builder::depends_on")]
+    /// * `T`: The component type whose associated entity will be depended on
+  
     pub fn depends_on<T: ComponentId + ComponentType<Struct>>(self) -> Self {
         let world = self.world;
         self.depends_on_id(T::id(world))
     }
 
-    /// Shortcut for `add_id((flecs::Dependency::ID, entity))`for Enums.
+   
+    /// Establishes a dependency relationship with an enum value.
     ///
-    /// # Type Parameters
+    /// Creates a dependency where the current entity depends on
+    /// the entity associated with the specified enum constant.
     ///
-    /// * `T`: The enum type.
+    ///  # Type Parameters
+    ///
+    /// * `T`: The enum type with required trait implementations
     ///
     /// # Arguments
     ///
-    /// * `enum_value`: The enum constant.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::depends_on`
-    #[doc(alias = "entity_builder::depends_on")]
+    /// * `enum_value`: The enum value to depend on
+
     pub fn depends_on_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         self,
         enum_value: T,
@@ -613,41 +595,43 @@ impl<'a> EntityView<'a> {
         self.depends_on_id(enum_value.id_variant(world))
     }
 
-    /// Shortcut for `add_id((flecs::SlotOf::ID, entity))`.
+    /// Establishes a slot relationship with another entity.
     ///
-    /// # Arguments
+    /// This is a shortcut for adding a pair of (SlotOf, entity).
+    /// Slots are used in prefab hierarchies to mark specific places where
+    /// entities can be instantiated.
     ///
-    /// * `second`: The second element of the pair.
+    ///  # Arguments
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::slot_of`
-    #[doc(alias = "entity_builder::slot_of")]
+    /// * `second`: The entity to create a slot for
     pub fn slot_of_id(self, second: impl Into<Entity>) -> Self {
         unsafe { self.add_id_unchecked((ECS_SLOT_OF, second.into())) }
     }
 
-    /// Shortcut for `add_id((flecs::SlotOf::ID, entity))`.
+   
+    /// Establishes a slot relationship with an entity associated with a component type.
     ///
-    /// # Type Parameters
+    /// This is a type-safe shortcut for `slot_of_id [add_id((flecs::SlotOf::ID, entity))]` where the entity
+    /// is the one associated with the specified component type.
     ///
-    /// * `T`: the type associated with the entity.
+     /// # Type Parameters
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::slot_of`
-    #[doc(alias = "entity_builder::slot_of")]
+    /// * `T`: The component type whose associated entity will have this slot
     pub fn slot_of<T: ComponentId>(self) -> Self {
         let world = self.world;
         self.slot_of_id(T::id(world))
     }
 
-    /// Shortcut for `add_id((flecs::SlotOf::ID, target(ChildOf)))`.
+    
+    /// Creates a slot for the current entity's parent.
     ///
-    /// # See also
+    /// This is a shortcut for `add_id((flecs::SlotOf::ID, target(ChildOf)))`. It automatically
+    /// creates a slot relationship with the entity that is the parent of
+    /// the current entity via the ChildOf relationship.
     ///
-    /// * C++ API: `entity_builder::slot`
-    #[doc(alias = "entity_builder::slot")]
+    /// # Panics
+    ///
+    /// This function panics if the entity does not have a ChildOf relationship.
     pub fn slot(self) -> Self {
         ecs_assert!(
             self.target::<flecs::ChildOf>(0).is_some(),
@@ -658,53 +642,47 @@ impl<'a> EntityView<'a> {
         self.slot_of_id(id.expect("ChildOf pair not found"))
     }
 
-    /// Mark id for auto-overriding.
+    /// Marks an ID for auto-overriding in inherited entities.
     ///
-    /// When an entity inherits from a base entity (using the `IsA` relationship)
-    /// any ids marked for auto-overriding on the base will be overridden
-    /// automatically by the entity.
+    /// When an entity inherits from a base entity (using the `IsA` relationship),
+    /// any IDs marked for auto-overriding on the base will be automatically
+    /// overridden by the inheriting entity, preventing them from being shared.
     ///
     /// # Arguments
+  
     ///
-    /// * `id`: The id to mark for overriding.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::override`
-    #[doc(alias = "entity_builder::override")]
+    /// * `id`: The ID to mark for auto-overriding
     pub fn auto_override_id(self, id: impl IntoId) -> Self {
         unsafe { self.add_id_unchecked(ECS_AUTO_OVERRIDE | id.into()) }
     }
 
-    /// Mark component for auto-overriding.
+     /// Marks a component for auto-overriding in inherited entities.
+    ///
+    /// This is a type-safe version of `auto_override_id`. When an entity inherits 
+    /// from a base entity, components marked for auto-overriding will be 
+    /// automatically overridden, preventing them from being shared.
     ///
     /// # Type Parameters
     ///
-    /// * `T`: The component to mark for overriding.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::override`
-    #[doc(alias = "entity_builder::override")]
+    /// * `T`: The component type to mark for auto-overriding
     pub fn auto_override<T: ComponentOrPairId>(self) -> Self {
         let world = self.world;
         self.auto_override_id(T::get_id(world))
     }
 
-    /// Mark pair for auto-overriding with a given second ID.
+    /// Marks a pair for auto-overriding where the first element is a specific component.
     ///
-    /// # Type Parameters
+    /// When an entity inherits from a base entity, pairs marked for auto-overriding 
+    /// will be automatically overridden by the inheriting entity, preventing them from
+    /// being shared.
     ///
-    /// * `First`: The first element of the pair.
+    ///  # Type Parameters
+    ///
+    /// * `First`: The component type for the first element of the pair
     ///
     /// # Arguments
     ///
-    /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::override`
-    #[doc(alias = "entity_builder::override")]
+    /// * `second`: The entity to use as the second element of the pair
     pub fn auto_override_first<First: ComponentId + DataComponent>(
         self,
         second: impl Into<Entity>,
@@ -714,20 +692,18 @@ impl<'a> EntityView<'a> {
         self.auto_override_id(pair_id)
     }
 
-    /// Mark pair for auto-overriding with a given first ID.
+    /// Marks a pair for auto-overriding where the second element is a specific component.  
     ///
-    /// # Type Parameters
+    /// When an entity inherits from a base entity, pairs marked for auto-overriding 
+    /// will be automatically overridden by the inheriting entity, preventing them from
+    /// being shared.
+    ///  # Type Parameters
     ///
-    /// * `Second`: The second element of the pair.
+    /// * `Second`: The component type for the second element of the pair
     ///
     /// # Arguments
     ///
-    /// * `first`: The first element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::override`
-    #[doc(alias = "entity_builder::override")]
+    /// * `first`: The entity to use as the first element of the pair
     pub fn auto_override_second<Second: ComponentId + DataComponent>(
         self,
         first: impl Into<Entity>,
@@ -737,16 +713,14 @@ impl<'a> EntityView<'a> {
         self.auto_override_id(pair_id)
     }
 
-    /// Sets a component for an entity and marks it as overridden.
+    /// Sets a component for an entity and marks it for auto-overriding.
     ///
-    /// This function sets a component for an entity and marks the component
-    /// as overridden, meaning that it will not be updated by systems that
-    /// typically update this component.
+    /// This function combines setting a component and marking it for 
+    /// auto-overriding in a single operation.
     ///
-    /// # See also
+    /// # Arguments
     ///
-    /// * C++ API: `entity_builder::set_auto_override`
-    #[doc(alias = "entity_builder::set_auto_override")]
+    /// * `id`: The component ID to set and mark for auto-overriding
     pub fn set_auto_override_id(self, id: impl IntoId) -> Self {
         unsafe {
             sys::ecs_add_id(
@@ -758,12 +732,19 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Sets a component mark override for the entity and sets the component data.
+     /// Sets a component value and marks it for auto-overriding.
     ///
-    /// # See also
+    /// This function combines setting a component's data and marking it for 
+    /// auto-overriding in a single operation. This is useful for prefabs where
+    /// you want to provide a default value but ensure each instance gets its own copy.
     ///
-    /// * C++ API: `entity_builder::set_auto_override`
-    #[doc(alias = "entity_builder::set_auto_override")]
+    ///  # Type Parameters
+    ///
+    /// * `T`: The component type to set and mark for auto-overriding
+    ///
+    /// # Arguments
+    ///
+    /// * `component`: The component data to set
     pub fn set_auto_override<T: ComponentId + DataComponent + ComponentType<Struct>>(
         self,
         component: T,
@@ -771,11 +752,19 @@ impl<'a> EntityView<'a> {
         self.auto_override::<T>().set(component)
     }
 
-    /// Sets a pair, mark component for auto-overriding.
+    /// Sets a pair value and marks it for auto-overriding.
     ///
-    /// # See also
+    /// This function combines setting a pair's data and marking it for 
+    /// auto-overriding in a single operation.
     ///
-    /// * C++ API: `entity_builder::set_auto_override`
+    ///  # Type Parameters
+    ///
+    /// * `First`: The component type for the first element of the pair
+    /// * `Second`: The component type for the second element of the pair
+    ///
+    /// # Arguments
+    ///
+    /// * `data`: The data to set for the pair
     pub fn set_pair_override<First, Second>(
         self,
         data: <(First, Second) as ComponentOrPairId>::CastType,
@@ -790,16 +779,23 @@ impl<'a> EntityView<'a> {
         self.auto_override_id(id_pair).set_id(data, id_pair)
     }
 
-    /// Sets a pair, mark component for auto-overriding.
+    /// Sets a pair where the first element is a component and marks it for auto-overriding.
     ///
-    /// # Safety
+    /// This function sets data for a pair with the first element as the specified component
+    /// and the second element as the provided entity, then marks it for auto-overriding.
     ///
-    /// Caller must ensure that `First` and `second` pair id data type is the one provided.
+    ///  # Safety
     ///
-    /// # See also
+    /// Caller must ensure that `First` and `second` pair id data type match the provided data.
     ///
-    /// * C++ API: `entity_builder::set_auto_override`
-    #[doc(alias = "entity_builder::set_auto_override")]
+    /// # Type Parameters
+    ///
+    /// * `First`: The component type for the first element of the pair
+    ///
+    /// # Arguments
+    ///
+    /// * `first`: The component data to set
+    /// * `second`: The entity to use as the second element of the pair
     pub unsafe fn set_auto_override_first<First>(
         self,
         first: First,
@@ -814,16 +810,23 @@ impl<'a> EntityView<'a> {
         self.auto_override_id(pair_id).set_id(first, pair_id)
     }
 
-    /// Sets a pair, mark component for auto-overriding.
+    /// Sets a pair where the second element is a component and marks it for auto-overriding.
     ///
-    /// # Safety
+    /// This function sets data for a pair with the first element as the provided entity
+    /// and the second element as the specified component, then marks it for auto-overriding.
     ///
-    /// Caller must ensure that `Sirst` and `fecond` pair id data type is the one provided.
+    ///  # Safety
     ///
-    /// # See also
+    /// Caller must ensure that `first` and `Second` pair id data type match the provided data.
     ///
-    /// * C++ API: `entity_builder::set_auto_override`
-    #[doc(alias = "entity_builder::set_auto_override")]
+    /// # Type Parameters
+    ///
+    /// * `Second`: The component type for the second element of the pair
+    ///
+    /// # Arguments
+    ///
+    /// * `second`: The component data to set
+    /// * `first`: The entity to use as the first element of the pair
     pub unsafe fn set_auto_override_second<Second>(
         self,
         second: Second,
@@ -838,16 +841,18 @@ impl<'a> EntityView<'a> {
         self.auto_override_id(pair_id).set_id(second, pair_id)
     }
 
-    /// Sets a component of type `T` on the entity.
+    /// Sets a component value for the entity.
+    ///
+    /// If the entity does not have the component, it will be added.
+    /// If it already has the component, the value will be updated.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: The component type to set
     ///
     /// # Arguments
     ///
-    /// * `component` - The component to set on the entity.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set`
-    #[doc(alias = "entity_builder::set")]
+    /// * `component`: The component data to set
     pub fn set<T: ComponentId + DataComponent>(self, component: T) -> Self {
         set_helper(
             self.world.world_ptr_mut(),
@@ -858,8 +863,11 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Sets the data of the specified id. Can be a pair or Component.
+    /// Sets the data of a component specified by ID.
     ///
+    ///  This function allows setting data for components or pairs specified by their ID.
+    /// It provides more flexibility than the `set` method for working with runtime IDs.
+    
     /// # Safety
     ///
     /// Caller must ensure that `data` is a valid data for the id.
@@ -899,8 +907,21 @@ impl<'a> EntityView<'a> {
     /// * [`EntityView::add_id`]
     /// * [`EntityView::set`]
     /// * [`EntityView::set_pair`]
-    /// * C++ API: `entity_builder::set`
-    #[doc(alias = "entity_builder::set")]
+    /// 
+    
+    /// # Type Parameters
+    ///
+    /// * `T`: The type of data to set
+    ///
+    /// # Arguments
+    ///
+    /// * `data`: The component data to set
+    /// * `id`: The ID (component or pair) to set the data for
+    ///
+    /// # Panics
+    ///
+    /// This function panics if the data type does not match the type associated with the ID.
+    /// For pairs, this is the first non-ZST element type.
     pub fn set_id<T>(self, data: T, id: impl IntoId) -> Self
     where
         T: ComponentId + DataComponent,
@@ -918,11 +939,13 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Set a pair for an entity.
-    /// This operation sets the pair value, and uses the first non tag / ZST as type.
-    /// If the data is an flecs enum (Repr(C)), it will use the enum variant id.
+   /// Sets a pair value for an entity.
     ///
-    /// If the entity did not yet have the pair, it will be added, otherwise overridden.
+    /// This is a type-safe way to set data for a relationship pair.
+    /// If the entity does not have the pair, it will be added.
+    /// If it already has the pair, the value will be updated.
+    ///
+    /// # Example
     ///
     /// ```no_run
     /// use flecs_ecs::prelude::*;
@@ -946,10 +969,19 @@ impl<'a> EntityView<'a> {
     ///     // ...
     /// });
     /// ```
-    /// # See also
+    /// # Type Parameters
     ///
-    /// * C++ API: `entity_builder::set`
-    #[doc(alias = "entity_builder::set")]
+    /// * `First`: The component type for the first element of the pair
+    /// * `Second`: The component type for the second element of the pair
+    ///
+    /// # Arguments
+    ///
+    /// * `data`: The data to set for the pair
+    ///
+    /// # Panics
+    ///
+    /// This function panics if both elements of the pair are tags (zero-sized types).
+    /// For tag relationships, use `add::<(Tag1, Tag2)>()` instead.
     pub fn set_pair<First, Second>(
         self,
         data: <(First, Second) as ComponentOrPairId>::CastType,
@@ -975,12 +1007,24 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Set a pair for an entity using the first element type and a second component ID.
+    /// Sets a pair where the first element is a component with data.
     ///
-    /// # See also
+    /// This function sets data for a pair where the first element is the specified component
+    /// and the second element is the provided entity.
     ///
-    /// * C++ API: `entity_builder::set`
-    #[doc(alias = "entity_builder::set")]
+    ///
+    /// # Type Parameters
+    ///
+    /// * `First`: The component type for the first element of the pair
+    ///
+    /// # Arguments
+    ///
+    /// * `first`: The component data to set
+    /// * `second`: The entity to use as the second element of the pair
+    ///
+    /// # Panics
+    ///
+    /// This function panics if the first type does not match the data type of the pair.
     pub fn set_first<First>(self, first: First, second: impl Into<Entity>) -> Self
     where
         First: ComponentId + DataComponent,
@@ -999,16 +1043,23 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Set a pair for an entity using the second element type and a first id.
+    /// Sets a pair where the second element is a component with data.
+    ///
+    /// This function sets data for a pair where the first element is the provided entity
+    /// and the second element is the specified component.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Second`: The component type for the second element of the pair
+    ///
+    /// # Arguments
+    ///
+    /// * `first`: The entity to use as the first element of the pair
+    /// * `second`: The component data to set
     ///
     /// # Panics
     ///
-    /// Caller must ensure that first is a zero-sized type (ZST) or entity and not a pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set_second`
-    #[doc(alias = "entity_builder::set_second")]
+    /// This function panics if the second type does not match the data type of the pair.
     pub fn set_second<Second>(self, first: impl Into<Entity>, second: Second) -> Self
     where
         Second: ComponentId + ComponentType<Struct> + DataComponent,
@@ -1028,24 +1079,20 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Set a pair for an entity.
-    /// This operation sets the pair value, and uses First as type. If the
-    /// entity did not yet have the pair, it will be added.
+    /// Sets a pair where the first element is a component and the second is an enum constant.
     ///
-    /// # Type Parameters
+    /// This function sets data for a pair where the first element is the specified component
+    /// and the second element is the enum constant.
     ///
-    /// * `First`: The first element of the pair.
-    /// * `Second`: The second element of the pair.
+   /// # Type Parameters
+    ///
+    /// * `First`: The component type for the first element of the pair
+    /// * `Second`: The enum type for the second element of the pair
     ///
     /// # Arguments
     ///
-    /// * `constant`: The enum constant.
-    /// * `value`: The value to set.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set`
-    #[doc(alias = "entity_builder::set")]
+    /// * `enum_variant`: The enum constant to use as the second element
+    /// * `first`: The component data to set
     pub fn set_pair_enum<First, Second>(self, enum_variant: Second, first: First) -> Self
     where
         First: ComponentId + ComponentType<Struct> + DataComponent,
@@ -1060,10 +1107,14 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Sets a pointer to a component of an entity with a given component ID and size.
+    /// Sets a pointer to a component with a given ID and size.
+    ///
+    /// This is a low-level function that allows setting component data from a raw pointer.
     ///
     /// # Safety
-    /// Caller must ensure that `ptr` points to data that can be accessed as the type associated with `id`
+    /// 
+    /// Caller must ensure that `ptr` points to data that can be accessed as the type 
+    /// associated with `id`, and that the size matches the expected size of that type.
     ///
     /// # Arguments
     ///
@@ -1072,10 +1123,6 @@ impl<'a> EntityView<'a> {
     /// * `size` - The size of the component.
     /// * `ptr` - A pointer to the component.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set_ptr`
-    #[doc(alias = "entity_builder::set_ptr")]
     pub unsafe fn set_ptr_w_size(
         self,
         id: impl Into<Entity>,
@@ -1086,10 +1133,16 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Sets a pointer to a component of an entity with a given component ID.
+    /// Sets a pointer to a component with a given ID.
     ///
+    /// This is a low-level function that allows setting component data from a raw pointer.
+    /// Unlike `set_ptr_w_size`, this function automatically retrieves the correct size
+    /// for the component.
+    ///
+    /// 
     /// # Safety
-    /// Caller must ensure that `ptr` points to data that can be accessed as the type associated with `id`
+    /// Caller must ensure that `ptr` points to data that can be accessed as the type 
+    /// associated with `id`.
     ///
     /// # Arguments
     ///
@@ -1097,10 +1150,9 @@ impl<'a> EntityView<'a> {
     /// * `component_id` - The ID of the component to set the pointer to.
     /// * `ptr` - A pointer to the component.
     ///
-    /// # See also
+    /// # Panics
     ///
-    /// * C++ API: `entity_builder::set_ptr`
-    #[doc(alias = "entity_builder::set_ptr")]
+    /// This function panics if the provided ID is not a valid component ID.
     pub unsafe fn set_ptr(self, id: impl Into<Entity>, ptr: *const c_void) -> Self {
         let id = id.into();
         let cptr: *const sys::EcsComponent = unsafe {
@@ -1123,14 +1175,12 @@ impl<'a> EntityView<'a> {
 
     /// Sets the name of the entity.
     ///
+    /// The name can be used to lookup the entity using `world.lookup()`.
+    ///
     /// # Arguments
     ///
     /// * `name` - A string slice that holds the name to be set.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set_name`
-    #[doc(alias = "entity_builder::set_name")]
     pub fn set_name(self, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
 
@@ -1145,6 +1195,10 @@ impl<'a> EntityView<'a> {
     }
 
     /// Removes the name of the entity.
+    ///
+    /// After calling this method, the entity will no longer be accessible 
+    /// via name-based lookups.
+    ///
     pub fn remove_name(self) -> Self {
         unsafe {
             sys::ecs_set_name(self.world.world_ptr_mut(), *self.id, core::ptr::null());
@@ -1152,16 +1206,15 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Sets the alias name of the entity.
+    /// Sets an alias name for the entity.
+    ///
+    /// An alias is an alternative name that can be used to look up the entity.
+    /// Entities can have both a primary name (set with `set_name`) and multiple aliases.
     ///
     /// # Arguments
     ///
     /// * `name` - A string slice that holds the alias name to be set.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set_alias`
-    #[doc(alias = "entity_builder::set_alias")]
     pub fn set_alias(self, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
 
@@ -1175,53 +1228,49 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Enables itself (the entity).
+    /// Enables the entity.
     ///
-    /// Enabled entities are matched with systems and can be searched with queries.
+    /// Enabled entities are matched with systems and can be found with queries.
+    /// By default, entities are enabled when created. This method is useful
+    /// to re-enable an entity that was previously disabled.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::enable`
-    #[doc(alias = "entity_builder::enable")]
     pub fn enable_self(self) -> Self {
         unsafe { sys::ecs_enable(self.world.world_ptr_mut(), *self.id, true) }
         self
     }
-    /// Enables an ID which represents a component or pair.
+    /// Enables a component or pair on the entity.
     ///
-    /// This sets the enabled bit for this component. If this is the first time the component is
-    /// enabled or disabled, the bitset is added.
+    /// This allows for selectively enabling specific components or relationships on an entity.
+    /// When a component is disabled, it won't be matched by queries unless they explicitly
+    /// include disabled components.
     ///
     /// # Arguments
     ///
-    /// - `component_id`: The ID to enable.
-    /// - `toggle`: True to enable, false to disable (default = true).
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::enable`
-    #[doc(alias = "entity_builder::enable")]
+    /// * `id`: The ID of the component or pair to enable
     pub fn enable_id(self, id: impl IntoId) -> Self {
         unsafe { sys::ecs_enable_id(self.world.world_ptr_mut(), *self.id, *id.into(), true) }
         self
     }
 
-    /// Enables a component or pair.
+    /// Enables a component or pair on the entity.
+    ///
+    /// This is a type-safe version of `enable_id` that works with component or pair types.
+    /// When a component is disabled, it won't be matched by queries unless they explicitly
+    /// include disabled components.
     ///
     /// # Type Parameters
     ///
-    /// - `T`: The component to enable.
+    /// - `T`: The component or pair type to enable.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::enable`
-    #[doc(alias = "entity_builder::enable")]
     pub fn enable<T: ComponentOrPairId>(self) -> Self {
         let world = self.world;
         self.enable_id(T::get_id(world))
     }
 
-    /// Enables a pair with a specific ID for the second element.
+    /// Enables a pair with a specific component as the first element.
+    ///
+    /// This allows for selectively enabling a relationship pair where the first element
+    /// is a component and the second element is an entity.
     ///
     /// # Type Parameters
     ///
@@ -1231,110 +1280,103 @@ impl<'a> EntityView<'a> {
     ///
     /// - `second`: The ID of the second element of the pair.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::enable`
-    #[doc(alias = "entity_builder::enable")]
     pub fn enable_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         let world = self.world;
         self.enable_id((First::id(world), second.into()))
     }
 
-    /// Enables a pair with a specific ID for the first element.
+    /// Enables a pair with a specific component as the second element.
+    ///
+    /// This allows for selectively enabling a relationship pair where the first element
+    /// is an entity and the second element is a component.
+    ///
     ///
     /// # Type Parameters
     ///
-    /// - `Second`: The second element of the pair.
+    /// - `Second`: The component type for the second element of the pair
     ///
     /// # Arguments
     ///
-    /// - `first`: The ID of the first element of the pair.
+    /// - `first`: The entity to use as the first element of the pair.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::enable`
-    #[doc(alias = "entity_builder::enable")]
+  
     pub fn enable_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
         let world = self.world;
         self.enable_id((first.into(), Second::id(world)))
     }
 
-    /// Disables self (entity).
+    /// Disables the entity.
     ///
-    /// Disabled entities are not matched with systems and cannot be searched with queries,
-    /// unless explicitly specified in the query expression.
+    /// Disabled entities are not matched with systems and cannot be found with queries
+    /// unless explicitly specified in the query. This is useful for temporarily removing
+    /// an entity from processing without deleting it.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::disable`
-    #[doc(alias = "entity_builder::disable")]
+  
     pub fn disable_self(self) -> Self {
         unsafe { sys::ecs_enable(self.world.world_ptr_mut(), *self.id, false) }
         self
     }
 
-    /// Disables an ID which represents a component or pair.
+    /// Disables a component or pair on the entity.
     ///
-    /// This sets the enabled bit for this ID. If this is the first time the ID is
-    /// enabled or disabled, the bitset is added.
+    /// This allows for selectively disabling specific components or relationships on an entity.
+    /// When a component is disabled, it won't be matched by queries unless they explicitly
+    // include disabled components.
     ///
     /// # Arguments
     ///
-    /// - `component_id`: The ID to disable.
+    /// - * `id`: The ID of the component or pair to disable
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::disable`
-    #[doc(alias = "entity_builder::disable")]
+  
     pub fn disable_id(self, id: impl IntoId) -> Self {
         unsafe { sys::ecs_enable_id(self.world.world_ptr_mut(), *self.id, *id.into(), false) }
         self
     }
 
-    /// Disables a component or pair.
+    /// Disables a component or pair on the entity.
+    ///
+    /// This is a type-safe version of `disable_id` that works with component or pair types.
+    /// When a component is disabled, it won't be matched by queries unless they explicitly
+    /// include disabled components.
+    ///
     ///
     /// # Type Parameters
     ///
-    /// - `T`: The component to disable.
+    /// - `T`: The component or pair type to disable
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::disable`
-    #[doc(alias = "entity_builder::disable")]
+
     pub fn disable<T: ComponentOrPairId>(self) -> Self {
         let world = self.world;
         self.disable_id(T::get_id(world))
     }
 
-    /// Disables a pair with a specific ID for the second element.
+    /// Disables a pair with a specific component as the first element.
+    ///
+    /// This allows for selectively disabling a relationship pair where the first element
+    /// is a component and the second element is an entity.
     ///
     /// # Type Parameters
     ///
-    /// - `First`: The first element of the pair.
+    /// - `First`: The component type for the first element of the pair.
     ///
     /// # Arguments
     ///
-    /// - `second`: The ID of the second element of the pair.
+    /// - `second`: The entity to use as the second element of the pair.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::disable`
-    #[doc(alias = "entity_builder::disable")]
     pub fn disable_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         let world = self.world;
         self.disable_id((First::id(world), second.into()))
     }
-    /// Entities created in the function will have the current entity.
-    /// This operation is thread safe.
+
+
+    /// Sets the entity as the default for new entities created within the provided function.
     ///
+    /// Any entities created within the function will automatically have this entity added
+    /// to them. This is a thread-safe operation.
+    /// 
     /// # Arguments
     ///
-    /// - `func`: The function to call.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::with`
-    #[doc(alias = "entity_builder::with")]
+    /// - `func`: TThe function to execute with this entity as the default.
     pub fn with(self, func: impl FnOnce()) -> Self {
         unsafe {
             let prev = sys::ecs_set_with(self.world.world_ptr_mut(), *self.id);
@@ -1344,17 +1386,17 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Entities created in the function will have a pair consisting of a specified ID and the current entity.
-    /// This operation is thread safe.
+    /// Sets a pair with this entity as the second element as the default for new entities.
+    ///
+    /// Any entities created within the function will automatically have this pair added
+    /// to them, where the first element is the specified entity and the second element
+    /// is the current entity. This is a thread-safe operation.
     ///
     /// # Arguments
     ///
-    /// - `first`: The first element of the pair.
-    /// - `func`: The function to call.///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::with`
-    #[doc(alias = "entity_builder::with")]
+    /// * `first`: The entity to use as the first element of the pair
+    /// * `func`: The function to execute with this pair as the default
+
     pub fn with_first_id(self, first: impl Into<Entity>, func: impl FnOnce()) -> Self {
         unsafe {
             let prev = sys::ecs_set_with(
@@ -1367,18 +1409,17 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Entities created in the function will have a pair consisting of the current entity and a specified ID.
-    /// This operation is thread safe.
+    /// Sets a pair with this entity as the first element as the default for new entities.
+    ///
+    /// Any entities created within the function will automatically have this pair added
+    /// to them, where the first element is the current entity and the second element
+    /// is the specified entity. This is a thread-safe operation.
     ///
     /// # Arguments
     ///
-    /// - `second`: The second element of the pair.
-    /// - `func`: The function to call.
+     /// * `second`: The entity to use as the second element of the pair
+    /// * `func`: The function to execute with this pair as the default
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::with`
-    #[doc(alias = "entity_builder::with")]
     pub fn with_second_id(self, second: impl Into<Entity>, func: impl FnOnce()) -> Self {
         unsafe {
             let prev = sys::ecs_set_with(
@@ -1391,56 +1432,54 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Entities created in the function will have (First, self).
-    /// This operation is thread safe.
+    /// Sets a pair with a component as first element and this entity as second element
+    /// as the default for new entities.
+    ///
+    /// Any entities created within the function will automatically have this pair added
+    /// to them. This is a thread-safe operation.
     ///
     /// # Type Parameters
     ///
-    /// - `First`: The first element of the pair.
+    /// - `First`: The component type for the first element of the pair.
     ///
     /// # Arguments
     ///
-    /// - `func`: The function to call.
+    /// - `func`: The function to execute with this pair as the default.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::with`
-    #[doc(alias = "entity_builder::with")]
     pub fn with_first<First: ComponentId>(self, func: impl FnOnce()) -> Self {
         let world = self.world;
         self.with_first_id(First::id(world), func)
     }
 
-    /// Entities created in the function will have (self, Second)
-    /// This operation is thread safe.
+    /// Sets a pair with this entity as first element and a component as second element
+    /// as the default for new entities.
+    ///
+    /// Any entities created within the function will automatically have this pair added
+    /// to them. This is a thread-safe operation.
     ///
     /// # Type Parameters
     ///
-    /// - `Second`: The second element of the pair.
+    /// - `Second`: The component type for the second element of the pair.
     ///
     /// # Arguments
     ///
-    /// - `func`: The function to call.
+    /// - `func`: The function to execute with this pair as the default.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::with`
-    #[doc(alias = "entity_builder::with")]
     pub fn with_second<Second: ComponentId>(self, func: impl FnOnce()) -> Self {
         let world = self.world;
         self.with_second_id(Second::id(world), func)
     }
 
-    /// The function will be ran with the scope set to the current entity.
+    /// Runs a function with the current entity set as the parent scope.
+    ///
+    /// This creates a new scope where all entities created within the function
+    /// will automatically be children of the current entity (they'll have a ChildOf
+    /// relationship with it). This is a thread-safe operation.
     ///
     /// # Arguments
     ///
-    /// - `func`: The function to call.
+    /// - `func`: The function to execute with this entity as the scope.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::scope`
-    #[doc(alias = "entity_builder::scope")]
     pub fn run_in_scope(self, func: impl FnOnce()) -> Self {
         unsafe {
             let prev = sys::ecs_set_scope(self.world.world_ptr_mut(), *self.id);
@@ -1450,48 +1489,62 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Calls the provided function with a world scoped to entity
+    /// Calls the provided function with a world scoped to the entity.
     ///
-    /// # See also
+    /// This creates a new scope where all entities created within the function
+    /// will automatically be children of the current entity. Unlike `run_in_scope`,
+    /// this method passes the world to the function.
     ///
-    /// * C++ API: `entity_builder::scope`
-    #[doc(alias = "entity_builder::scope")]
+    ///  # Arguments
+    ///
+    /// * `f`: The function to execute with a world scoped to this entity
+   
     pub fn scope(self, f: impl FnMut(&World)) -> Self {
         let world = &*self.world;
         world.scope_id(self.id, f);
         self
     }
 
-    /// Signal that component or pair was modified.
+    /// Notifies the ECS that a component or pair identified by ID was modified.
+    ///
+    /// This is important for triggering OnSet systems and other observers that 
+    /// depend on knowing when component values change. When using `set` methods, 
+    /// this is called automatically, but when modifying component data directly
+    /// (e.g., through a mutable reference), you should call this manually.
+    ///
     ///
     /// # Arguments
     ///
-    /// * `comp` - The component that was modified.
+    /// * `id`: The ID of the component or pair that was modified.
     ///
     /// # See also
     ///
     /// * [`EntityView::modified()`]
     /// * [`EntityView::modified_first()`]
     /// * [`World::modified()`]
-    /// * C++ API: `entity::modified`
-    #[doc(alias = "entity::modified")]
     pub fn modified_id(self, id: impl IntoId) {
         unsafe { sys::ecs_modified_id(self.world.world_ptr_mut(), *self.id, *id.into()) }
     }
 
-    /// Signal that component was modified.
+    /// Notifies the ECS that a component was modified.
+    ///
+    /// This is a type-safe version of `modified_id`. It notifies the ECS that
+    /// a component or pair of the specified type was modified on this entity.
+    ///
     ///
     /// # Type Parameters
     ///
     /// * `T` - The type of the component that was modified.
     ///
+    /// # Panics
+    ///
+    /// This function panics if `T` is a zero-sized type, as those can't be modified.
+    /// 
     /// # See also
     ///
     /// * [`EntityView::modified_first()`]
     /// * [`EntityView::modified_id()`]
     /// * [`World::modified()`]
-    /// * C++ API: `entity::modified`
-    #[doc(alias = "entity::modified")]
     pub fn modified<T: ComponentOrPairId>(&self) {
         const {
             assert!(
@@ -1503,23 +1556,29 @@ impl<'a> EntityView<'a> {
         self.modified_id(T::get_id(self.world));
     }
 
-    /// Signal that the first part of a pair was modified.
+    /// Notifies the ECS that a pair with a specified first element was modified.
+    ///
+    /// This notifies the ECS that a pair where the first element is the specified
+    /// component type and the second element is the provided entity was modified.
+    ///
     ///
     /// # Type Parameters
     ///
-    /// * `First` - The first part of the pair.
+    /// * `First` - The component type for the first element of the pair.
     ///
     /// # Arguments
     ///
-    /// * `second` - The second element of the pair.
+    /// * `second` - The entity used as the second element of the pair.
     ///
+    ///  # Panics
+    ///
+    /// This function panics if `First` is a zero-sized type, as those can't be modified.
+    /// 
     /// # See also
     ///
     /// * [`EntityView::modified()`]
     /// * [`EntityView::modified_id()`]
     /// * [`World::modified()`]
-    /// * C++ API: `entity::modified`
-    #[doc(alias = "entity::modified")]
     pub fn modified_first<First: ComponentId>(self, second: impl Into<Entity>) {
         ecs_assert!(
             core::mem::size_of::<First>() != 0,
@@ -1583,8 +1642,6 @@ impl<'a> EntityView<'a> {
     /// * [`EntityView::get_ref()`]
     /// * [`EntityView::get_ref_first()`]
     /// * [`EntityView::get_ref_second()`]
-    /// * C++ API: `entity::get_ref_w_id`
-    #[doc(alias = "entity::get_ref_w_id")]
     pub fn get_ref_w_id<T>(&self, component: impl IntoId) -> CachedRef<'a, T::CastType>
     where
         T: ComponentOrPairId,
@@ -1602,10 +1659,6 @@ impl<'a> EntityView<'a> {
     ///
     /// Returns: The reference component.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::get_ref`
-    #[doc(alias = "entity::get_ref")]
     pub fn get_ref<T>(&self) -> CachedRef<'a, T::CastType>
     where
         T: ComponentOrPairId,
@@ -1630,11 +1683,6 @@ impl<'a> EntityView<'a> {
     /// # Returns
     ///
     /// A reference to the first component in the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::get_ref`
-    #[doc(alias = "entity::get_ref")]
     pub fn get_ref_first<First: ComponentId + DataComponent>(
         self,
         second: impl Into<Entity>,
@@ -1672,10 +1720,6 @@ impl<'a> EntityView<'a> {
     ///
     /// A reference to the first component in the pair.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::get_ref`
-    #[doc(alias = "entity::get_ref")]
     pub fn get_ref_second<Second: ComponentId + DataComponent>(
         &self,
         first: impl Into<Entity>,
@@ -1697,15 +1741,11 @@ impl<'a> EntityView<'a> {
         CachedRef::<Second>::new(self.world, *self.id, pair)
     }
 
-    /// Clear an entity.
+    /// Removes all components from an entity without deleting it.
     ///
-    /// This operation removes all components from an entity without recycling
-    /// the entity id.
+    /// This operation leaves the entity ID intact but removes all of its components.
+    /// The entity will continue to exist but will have no components associated with it.
     ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::clear`
-    #[doc(alias = "entity::clear")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn clear(&self) {
         unsafe { sys::ecs_clear(self.world.world_ptr_mut(), *self.id) }
@@ -1713,13 +1753,9 @@ impl<'a> EntityView<'a> {
 
     /// Delete an entity.
     ///
-    /// Entities have to be deleted explicitly, and are not deleted when the
-    /// entity object goes out of scope.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::destruct`
-    #[doc(alias = "entity::destruct")]
+    /// This operation permanently removes the entity and all its components
+    /// from the world. After calling this method, the entity ID will eventually
+    /// be recycled for new entities.
     pub fn destruct(self) {
         unsafe { sys::ecs_delete(self.world.world_ptr_mut(), *self.id) }
     }
