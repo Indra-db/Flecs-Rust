@@ -24,7 +24,7 @@ cargo-args = ["-Zunstable-options", "-Zrustdoc-scrape-examples"]
 flecs_ecs_derive = { workspace = true }
 flecs_ecs_sys = { workspace = true }
 bitflags = "2.8.0"
-compact_str = { version = "0.8.1", default-features = false }
+compact_str = { version = "0.9.0", default-features = false }
 hashbrown = "0.15.2"
 
 # used for backtraces upon hardware exceptions during test
@@ -35,7 +35,7 @@ test_crash_handler = { version = "0.1.0", path = "../test_crash_handler", option
 criterion = "0.5.1"
 seq-macro = "0.3.5"
 rand = "0.9.0"
-ctor = "0.3.0"
+ctor = "0.4.0"
 insta = { version = "1.42.1", features = ["yaml","filters"] }
 libc.workspace = true
 # used for capturing stdout in the examples test cases. Works only on Nightly, meant
