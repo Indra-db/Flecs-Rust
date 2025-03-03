@@ -84,7 +84,10 @@ pub mod private {
                 );
             }
 
+            let world = WorldRef::from_ptr(unsafe { (*iter).world });
             let iter = unsafe { &mut *iter };
+            let components_access = world.components_access_map();
+            components_access.increment_counters_from_iter(iter);
             iter.flags |= sys::EcsIterCppEach;
 
             let each = &mut *(iter.callback_ctx as *mut Func);
@@ -110,6 +113,7 @@ pub mod private {
             if !CALLED_FROM_RUN {
                 sys::ecs_table_unlock(iter.world, iter.table);
             }
+            components_access.decrement_counters_from_iter(iter);
         }
 
         /// Callback of the `each_entity` functionality
@@ -134,7 +138,10 @@ pub mod private {
                 );
             }
 
+            let world = WorldRef::from_ptr(unsafe { (*iter).world });
             let iter = unsafe { &mut *iter };
+            let components_access = world.components_access_map();
+            components_access.increment_counters_from_iter(iter);
             iter.flags |= sys::EcsIterCppEach;
 
             let each_entity = &mut *(iter.callback_ctx as *mut Func);
@@ -172,6 +179,7 @@ pub mod private {
             if !CALLED_FROM_RUN {
                 sys::ecs_table_unlock(iter.world, iter.table);
             }
+            components_access.decrement_counters_from_iter(iter);
         }
 
         /// Callback of the `each_iter` functionality
@@ -194,8 +202,10 @@ pub mod private {
                     "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
                 );
             }
-
+            let world = WorldRef::from_ptr(unsafe { (*iter).world });
             let iter = unsafe { &mut *iter };
+            let components_access = world.components_access_map();
+            components_access.increment_counters_from_iter(iter);
             iter.flags |= sys::EcsIterCppEach;
 
             let each_iter = &mut *(iter.callback_ctx as *mut Func);
@@ -217,6 +227,7 @@ pub mod private {
                 each_iter(iter_t, i, tuple);
             }
             sys::ecs_table_unlock(iter.world, iter.table);
+            components_access.decrement_counters_from_iter(iter);
         }
 
         /// Callback of the `iter_only` functionality

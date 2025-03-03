@@ -409,8 +409,10 @@ mod table_iter {
         fn field() {
             let world = World::new();
             world.entity().set(Foo(0));
-            query!(world, Foo).build().each_iter(|iter, _, _| {
-                iter.field::<Foo>(0);
+            query!(world, Foo).build().run(|mut iter| {
+                while iter.next() {
+                    let _ = iter.field::<Foo>(0);
+                }
             });
         }
 
@@ -419,9 +421,11 @@ mod table_iter {
         fn double_field() {
             let world = World::new();
             world.entity().set(Foo(0));
-            query!(world, Foo).build().each_iter(|iter, _, _| {
-                iter.field::<Foo>(0);
-                iter.field::<Foo>(0);
+            query!(world, Foo).build().run(|mut iter| {
+                while iter.next() {
+                    let _x = iter.field_mut::<Foo>(0);
+                    let _y = iter.field_mut::<Foo>(0);
+                }
             });
         }
 
@@ -430,18 +434,22 @@ mod table_iter {
         fn query_read_field() {
             let world = World::new();
             world.entity().set(Foo(0));
-            query!(world, &Foo).build().each_iter(|iter, _, _| {
-                iter.field::<Foo>(0);
+            query!(world, &Foo).build().run(|mut iter| {
+                while iter.next() {
+                    let _x = iter.field::<Foo>(0);
+                    let _y = iter.field_mut::<Foo>(0);
+                }
             });
         }
 
         #[test]
-        #[should_panic]
         fn query_write_field() {
             let world = World::new();
             world.entity().set(Foo(0));
-            query!(world, &mut Foo).build().each_iter(|iter, _, _| {
-                iter.field::<Foo>(0);
+            query!(world, &mut Foo).build().run(|mut iter| {
+                while iter.next() {
+                    let _ = iter.field_mut::<Foo>(0);
+                }
             });
         }
     }
@@ -450,8 +458,11 @@ mod table_iter {
         use super::*;
 
         #[test]
+        #[ignore = "internal error, check flecs update if it's fixed"]
         fn filter() {
             let world = World::new();
+
+            world.component::<Foo>().add_trait::<flecs::Sparse>();
             world.entity().set(Foo(0));
             query!(world, Foo).build().each_iter(|iter, _, _| {
                 iter.field_at::<Foo>(0, 0);
@@ -461,9 +472,12 @@ mod table_iter {
         #[test]
         fn query_read() {
             let world = World::new();
+            world.component::<Foo>().add_trait::<flecs::Sparse>();
             world.entity().set(Foo(0));
-            query!(world, &Foo).build().each_iter(|iter, _, _| {
-                iter.field_at::<Foo>(0, 0);
+            query!(world, &Foo).build().run(|mut iter| {
+                while iter.next() {
+                    iter.field_at::<Foo>(0, 0);
+                }
             });
         }
 
@@ -471,6 +485,7 @@ mod table_iter {
         #[should_panic]
         fn query_write() {
             let world = World::new();
+            world.component::<Foo>().add_trait::<flecs::Sparse>();
             world.entity().set(Foo(0));
             query!(world, &mut Foo).build().each_iter(|iter, _, _| {
                 iter.field_at::<Foo>(0, 0);
@@ -482,6 +497,7 @@ mod table_iter {
         use super::*;
 
         #[test]
+        #[ignore = "internal error, check flecs update if it's fixed, https://discord.com/channels/633826290415435777/1345832462940504155/1345832462940504155"]
         fn filter() {
             let world = World::new();
             world.entity().set(Foo(0));
@@ -491,13 +507,15 @@ mod table_iter {
         }
 
         #[test]
+        #[ignore = "internal error, check flecs update if it's fixed, https://discord.com/channels/633826290415435777/1345832462940504155/1345832462940504155"]
         #[should_panic]
         fn filter_double_field_at_mut() {
             let world = World::new();
+            world.component::<Foo>().add_trait::<flecs::Sparse>();
             world.entity().set(Foo(0));
             query!(world, Foo).build().each_iter(|iter, _, _| {
-                iter.field_at_mut::<Foo>(0, 0);
-                iter.field_at_mut::<Foo>(0, 0);
+                let _x = iter.field_at_mut::<Foo>(0, 0);
+                let _y = iter.field_at_mut::<Foo>(0, 0);
             });
         }
 
@@ -505,6 +523,7 @@ mod table_iter {
         #[should_panic]
         fn query_read() {
             let world = World::new();
+            world.component::<Foo>().add_trait::<flecs::Sparse>();
             world.entity().set(Foo(0));
             query!(world, &Foo).build().each_iter(|iter, _, _| {
                 iter.field_at_mut::<Foo>(0, 0);
@@ -515,6 +534,7 @@ mod table_iter {
         #[should_panic]
         fn query_write() {
             let world = World::new();
+            world.component::<Foo>().add_trait::<flecs::Sparse>();
             world.entity().set(Foo(0));
             query!(world, &mut Foo).build().each_iter(|iter, _, _| {
                 iter.field_at::<Foo>(0, 0);
@@ -530,8 +550,7 @@ mod query_in_query {
         use super::*;
 
         #[test]
-        #[should_panic]
-        fn run_violation() {
+        fn run_no_fields_ok() {
             let world = World::new();
             world.entity().set(Foo(0));
             let query0 = query!(world, &Foo).build();
@@ -585,8 +604,7 @@ mod query_in_query {
         use super::*;
 
         #[test]
-        #[should_panic]
-        fn run_violation() {
+        fn run_no_fields_ok() {
             let world = World::new();
             world.entity().set(Foo(0));
             let query0 = query!(world, &mut Foo).build();
@@ -627,6 +645,7 @@ mod query_in_query {
         #[should_panic]
         fn each_iter_violation() {
             let world = World::new();
+            world.entity().set(Foo(0));
             let query0 = query!(world, &mut Foo).build();
             let query1 = query!(world, &Foo).build();
             query0.each_iter(|_, _, _| {
@@ -639,8 +658,7 @@ mod query_in_query {
         use super::*;
 
         #[test]
-        #[should_panic]
-        fn run_violation() {
+        fn run_no_fields_ok() {
             let world = World::new();
             world.entity().set(Foo(0));
             let query0 = query!(world, &mut Foo).build();
@@ -698,8 +716,7 @@ mod observer_in_observer {
         use super::*;
 
         #[test]
-        #[should_panic]
-        fn run_violation() {
+        fn run_no_fields_ok() {
             let world = World::new();
             let e = world.entity().set(Foo(0)).id();
             observer!(world, EventA, &Foo).run(|iter| {
@@ -741,8 +758,7 @@ mod observer_in_observer {
         use super::*;
 
         #[test]
-        #[should_panic]
-        fn run_violation() {
+        fn run_no_fields_ok() {
             let world = World::new();
             let e = world.entity().set(Foo(0)).id();
             observer!(world, EventA, &mut Foo).run(|iter| {
@@ -784,8 +800,7 @@ mod observer_in_observer {
         use super::*;
 
         #[test]
-        #[should_panic]
-        fn run_violation() {
+        fn run_no_fields_ok() {
             let world = World::new();
             let e = world.entity().set(Foo(0)).id();
             observer!(world, EventA, &mut Foo).run(|iter| {
@@ -831,8 +846,7 @@ mod query_in_observer {
         use super::*;
 
         #[test]
-        #[should_panic]
-        fn run_violation() {
+        fn run_no_fields_ok() {
             let world = World::new();
             let query = query!(world, &mut Foo).build();
             observer!(world, flecs::OnSet, &Foo).run(move |iter| {
@@ -882,8 +896,7 @@ mod query_in_observer {
         use super::*;
 
         #[test]
-        #[should_panic]
-        fn run_violation() {
+        fn run_no_fields_ok() {
             let world = World::new();
             let query = query!(world, &Foo).build();
             observer!(world, flecs::OnSet, &mut Foo).run(move |iter| {
@@ -933,8 +946,7 @@ mod query_in_observer {
         use super::*;
 
         #[test]
-        #[should_panic]
-        fn run_violation() {
+        fn run_no_fields_ok() {
             let world = World::new();
             let query = query!(world, &mut Foo).build();
             observer!(world, flecs::OnSet, &mut Foo).run(move |iter| {
@@ -988,8 +1000,7 @@ mod query_in_system {
         use super::*;
 
         #[test]
-        #[should_panic]
-        fn run_violation() {
+        fn run_no_fields_ok() {
             let world = World::new();
             world.entity().set(Foo(0));
             let query = query!(world, &mut Foo).build();
@@ -1043,8 +1054,7 @@ mod query_in_system {
         use super::*;
 
         #[test]
-        #[should_panic]
-        fn run_violation() {
+        fn run_no_fields_ok() {
             let world = World::new();
             world.entity().set(Foo(0));
             let query = query!(world, &Foo).build();
@@ -1098,8 +1108,7 @@ mod query_in_system {
         use super::*;
 
         #[test]
-        #[should_panic]
-        fn run_violation() {
+        fn run_no_fields_ok() {
             let world = World::new();
             world.entity().set(Foo(0));
             let query = query!(world, &mut Foo).build();
@@ -1157,12 +1166,12 @@ mod observer_in_system {
         use super::*;
 
         #[test]
-        #[should_panic]
-        fn run_violation() {
+        fn run_no_fields_ok() {
             let world = World::new();
             world.entity().set(Foo(0));
             observer!(world, EventA, &mut Foo).each(|_| {});
-            system!(world, &Foo).run(move |iter| {
+            system!(world, &Foo).run(move |mut iter| {
+                iter.next();
                 iter.entity(0).emit(&EventA);
                 iter.fini();
             });
@@ -1175,9 +1184,14 @@ mod observer_in_system {
             let world = World::new();
             world.entity().set(Foo(0));
             observer!(world, EventA, &mut Foo).each(|_| {});
-            system!(world, &Foo).each_entity(move |entity, _| {
-                entity.emit(&EventA);
-            });
+            system!(world, &Foo)
+                .immediate(true)
+                .each_entity(move |entity, _| {
+                    let world = entity.world();
+                    world.defer_suspend();
+                    world.event().add::<Foo>().entity(entity).emit(&EventA);
+                    world.defer_resume();
+                });
             world.progress();
         }
 
@@ -1187,9 +1201,18 @@ mod observer_in_system {
             let world = World::new();
             world.entity().set(Foo(0));
             observer!(world, EventA, &mut Foo).each(|_| {});
-            system!(world, &Foo).each_iter(move |iter, _, _| {
-                iter.entity(0).emit(&EventA);
-            });
+            system!(world, &Foo)
+                .immediate(true)
+                .each_iter(move |iter, _, _| {
+                    let world = iter.world();
+                    world.defer_suspend();
+                    world
+                        .event()
+                        .add::<Foo>()
+                        .entity(iter.entity(0))
+                        .emit(&EventA);
+                    world.defer_resume();
+                });
             world.progress();
         }
     }
@@ -1198,15 +1221,17 @@ mod observer_in_system {
         use super::*;
 
         #[test]
-        #[should_panic]
-        fn run_violation() {
+        fn run_no_fields_ok() {
             let world = World::new();
             world.entity().set(Foo(0));
             observer!(world, EventA, &Foo).each(|_| {});
-            system!(world, &mut Foo).run(move |iter| {
-                iter.entity(0).emit(&EventA);
-                iter.fini();
-            });
+            system!(world, &mut Foo)
+                .immediate(true)
+                .run(move |mut iter| {
+                    iter.next();
+                    iter.entity(0).emit(&EventA);
+                    iter.fini();
+                });
             world.progress();
         }
 
@@ -1216,9 +1241,14 @@ mod observer_in_system {
             let world = World::new();
             world.entity().set(Foo(0));
             observer!(world, EventA, &Foo).each(|_| {});
-            system!(world, &mut Foo).each_entity(move |entity, _| {
-                entity.emit(&EventA);
-            });
+            system!(world, &mut Foo)
+                .immediate(true)
+                .each_entity(move |entity, _| {
+                    let world = entity.world();
+                    world.defer_suspend();
+                    world.event().add::<Foo>().entity(entity).emit(&EventA);
+                    world.defer_resume();
+                });
             world.progress();
         }
 
@@ -1228,9 +1258,18 @@ mod observer_in_system {
             let world = World::new();
             world.entity().set(Foo(0));
             observer!(world, EventA, &Foo).each(|_| {});
-            system!(world, &mut Foo).each_iter(move |iter, _, _| {
-                iter.entity(0).emit(&EventA);
-            });
+            system!(world, &mut Foo)
+                .immediate(true)
+                .each_iter(move |iter, _, _| {
+                    let world = iter.world();
+                    world.defer_suspend();
+                    world
+                        .event()
+                        .add::<Foo>()
+                        .entity(iter.entity(0))
+                        .emit(&EventA);
+                    world.defer_resume();
+                });
             world.progress();
         }
     }
@@ -1239,12 +1278,12 @@ mod observer_in_system {
         use super::*;
 
         #[test]
-        #[should_panic]
-        fn run_violation() {
+        fn run_no_fields_ok() {
             let world = World::new();
             world.entity().set(Foo(0));
             observer!(world, EventA, &mut Foo).each(|_| {});
-            system!(world, &mut Foo).run(move |iter| {
+            system!(world, &mut Foo).run(move |mut iter| {
+                iter.next();
                 iter.entity(0).emit(&EventA);
                 iter.fini();
             });
@@ -1257,9 +1296,14 @@ mod observer_in_system {
             let world = World::new();
             world.entity().set(Foo(0));
             observer!(world, EventA, &mut Foo).each(|_| {});
-            system!(world, &mut Foo).each_entity(move |entity, _| {
-                entity.emit(&EventA);
-            });
+            system!(world, &mut Foo)
+                .immediate(true)
+                .each_entity(move |entity, _| {
+                    let world = entity.world();
+                    world.defer_suspend();
+                    world.event().add::<Foo>().entity(entity).emit(&EventA);
+                    world.defer_resume();
+                });
             world.progress();
         }
 
@@ -1269,9 +1313,18 @@ mod observer_in_system {
             let world = World::new();
             world.entity().set(Foo(0));
             observer!(world, EventA, &mut Foo).each(|_| {});
-            system!(world, &mut Foo).each_iter(move |iter, _, _| {
-                iter.entity(0).emit(&EventA);
-            });
+            system!(world, &mut Foo)
+                .immediate(true)
+                .each_iter(move |iter, _, _| {
+                    let world = iter.world();
+                    world.defer_suspend();
+                    world
+                        .event()
+                        .add::<Foo>()
+                        .entity(iter.entity(0))
+                        .emit(&EventA);
+                    world.defer_resume();
+                });
             world.progress();
         }
     }

@@ -105,7 +105,7 @@ fn main() {
 
     query.run(|mut it| {
         while it.next() {
-            let pos = it.field::<Position>(0).unwrap();
+            let pos = it.field_mut::<Position>(0).unwrap();
 
             let group = world.entity_from_id(it.group_id());
             println!(

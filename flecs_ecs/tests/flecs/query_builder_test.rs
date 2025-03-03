@@ -3250,7 +3250,7 @@ fn query_builder_name_arg() {
 
     f.run(|mut it| {
         while it.next() {
-            let p = it.field::<Position>(0).unwrap();
+            let p = it.field_mut::<Position>(0).unwrap();
             assert_eq!(p[0].x, 10);
             assert_eq!(p[0].y, 20);
             assert_eq!(it.src(0), e);
@@ -3276,7 +3276,7 @@ fn query_builder_const_in_term() {
     let mut count = 0;
     f.run(|mut it| {
         while it.next() {
-            let p = it.field::<Position>(0).unwrap();
+            let p = it.field_mut::<Position>(0).unwrap();
             assert!(it.is_readonly(0));
             for i in it.iter() {
                 count += 1;
@@ -3307,7 +3307,7 @@ fn query_builder_const_optional() {
         while it.next() {
             assert_eq!(it.count(), 1);
             if it.is_set(1) {
-                let p = &it.field::<Position>(1).unwrap()[0];
+                let p = &it.field_mut::<Position>(1).unwrap()[0];
                 assert!(it.is_readonly(1));
                 assert_eq!(p.x, 10);
                 assert_eq!(p.y, 20);
@@ -3487,7 +3487,7 @@ fn query_builder_iter_column_w_const_as_array() {
     let mut count = 0;
     f.run(|mut it| {
         while it.next() {
-            let mut p = it.field::<Position>(0).unwrap();
+            let mut p = it.field_mut::<Position>(0).unwrap();
             for i in it.iter() {
                 p[i].x += 1;
                 p[i].y += 2;
@@ -3526,7 +3526,7 @@ fn query_builder_iter_column_w_const_as_ptr() {
     let mut count = 0;
     f.run(|mut it| {
         while it.next() {
-            let p = &it.field::<Position>(0).unwrap()[0];
+            let p = &it.field_mut::<Position>(0).unwrap()[0];
             for _i in it.iter() {
                 assert_eq!(p.x, 10);
                 assert_eq!(p.y, 20);

@@ -1527,10 +1527,28 @@ impl<Return> EntityViewGet<Return> for EntityView<'_> {
 
         if has_all_components {
             let tuple = tuple_data.get_tuple();
-            self.world.defer_begin();
-            let ret = callback(tuple);
-            self.world.defer_end();
-            Some(ret)
+
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            {
+                let ids = tuple_data.read_write_ids();
+                let components_access = self.world().components_access_map();
+                components_access.increment_counters_from_ids(ids);
+
+                self.world.defer_begin();
+                let ret = callback(tuple);
+                self.world.defer_end();
+
+                components_access.decrement_counters_from_ids(ids);
+                Some(ret)
+            }
+
+            #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+            {
+                self.world.defer_begin();
+                let ret = callback(tuple);
+                self.world.defer_end();
+                Some(ret)
+            }
         } else {
             None
         }
@@ -1546,10 +1564,27 @@ impl<Return> EntityViewGet<Return> for EntityView<'_> {
         let tuple_data = T::create_ptrs::<true>(self.world, self.id, record);
         let tuple = tuple_data.get_tuple();
 
-        self.world.defer_begin();
-        let ret = callback(tuple);
-        self.world.defer_end();
-        ret
+        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        {
+            let ids = tuple_data.read_write_ids();
+            let components_access = self.world().components_access_map();
+            components_access.increment_counters_from_ids(ids);
+
+            self.world.defer_begin();
+            let ret = callback(tuple);
+            self.world.defer_end();
+
+            components_access.decrement_counters_from_ids(ids);
+            ret
+        }
+
+        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+        {
+            self.world.defer_begin();
+            let ret = callback(tuple);
+            self.world.defer_end();
+            ret
+        }
     }
 }
 
@@ -1617,6 +1652,13 @@ impl<'a> EntityView<'a> {
         }
 
         let tuple_data = T::create_ptrs::<true>(self.world, self.id, record);
+
+        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        {
+            let read_ids = tuple_data.read_ids();
+            let components_access = self.world().components_access_map();
+            components_access.panic_if_any_write_is_set(read_ids);
+        }
         tuple_data.get_tuple()
     }
 

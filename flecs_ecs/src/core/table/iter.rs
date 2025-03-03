@@ -5,6 +5,8 @@ use core::{ffi::c_void, ffi::CStr, ptr::NonNull};
 use crate::core::*;
 use crate::sys;
 
+use super::field::{FieldAt, FieldAtMut, FieldMut};
+
 pub struct TableIter<'a, const IS_RUN: bool = true, P = ()> {
     pub(crate) iter: &'a mut sys::ecs_iter_t,
     marker: PhantomData<P>,
@@ -68,7 +70,7 @@ where
     ///         //for each different table
     ///         for i in it.iter() {
     ///             //for each entity in the table
-    ///             let pos = it.field::<Position>(0).unwrap();
+    ///             let pos = it.field_mut::<Position>(0).unwrap();
     ///             assert_eq!(pos[0].x, 1.0);
     ///             assert_eq!(pos[0].y, 2.0);
     ///         }
@@ -511,7 +513,7 @@ where
     #[doc(alias = "iter::field")]
     // TODO? in C++ API there is a mutable and immutable version of this function
     // Maybe we should create a ColumnView struct that is immutable and use the Column struct for mutable access?
-    pub unsafe fn field_unchecked<T>(&self, index: i8) -> Field<T> {
+    pub unsafe fn field_unchecked<T>(&self, index: i8, id: Entity) -> Field<T> {
         ecs_assert!(
             index < self.iter.field_count,
             FlecsErrorCode::InvalidParameter,
@@ -523,7 +525,49 @@ where
             FlecsErrorCode::InvalidOperation,
             "cannot .field from .each, use .field_at instead",
         );
-        self.field_internal::<T>(index).unwrap()
+        self.field_internal::<T>(index, id).unwrap()
+    }
+
+    fn field_checked_mut<T: ComponentId>(&self, index: i8) -> Option<FieldMut<T::UnderlyingType>> {
+        let id = <T::UnderlyingType as ComponentId>::id(self.world());
+
+        if index > self.iter.field_count {
+            return None;
+        }
+
+        let term_id = unsafe { sys::ecs_field_id(self.iter, index) };
+        let is_pair = unsafe { sys::ecs_id_is_pair(term_id) };
+        let is_id_correct = id == term_id;
+
+        if is_id_correct || is_pair {
+            return unsafe { self.field_internal_mut::<T::UnderlyingType>(index, Entity(term_id)) };
+        }
+
+        None
+    }
+
+    fn field_at_checked_mut<T: ComponentId>(
+        &self,
+        index: i8,
+        row: usize,
+    ) -> Option<FieldAtMut<T::UnderlyingType>> {
+        let id = <T::UnderlyingType as ComponentId>::id(self.world());
+
+        if index > self.iter.field_count {
+            return None;
+        }
+
+        let term_id = unsafe { sys::ecs_field_id(self.iter, index) };
+        let is_pair = unsafe { sys::ecs_id_is_pair(term_id) };
+        let is_id_correct = id == term_id;
+
+        if is_id_correct || is_pair {
+            return unsafe {
+                self.field_at_internal_mut::<T::UnderlyingType>(index, row, Entity(term_id))
+            };
+        }
+
+        None
     }
 
     fn field_checked<T: ComponentId>(&self, index: i8) -> Option<Field<T::UnderlyingType>> {
@@ -538,12 +582,37 @@ where
         let is_id_correct = id == term_id;
 
         if is_id_correct || is_pair {
-            return unsafe { self.field_internal::<T::UnderlyingType>(index) };
+            return unsafe { self.field_internal::<T::UnderlyingType>(index, Entity(term_id)) };
         }
 
         None
     }
-    /// Get read/write access to field data.
+
+    fn field_at_checked<T: ComponentId>(
+        &self,
+        index: i8,
+        row: usize,
+    ) -> Option<FieldAt<T::UnderlyingType>> {
+        let id = <T::UnderlyingType as ComponentId>::id(self.world());
+
+        if index > self.iter.field_count {
+            return None;
+        }
+
+        let term_id = unsafe { sys::ecs_field_id(self.iter, index) };
+        let is_pair = unsafe { sys::ecs_id_is_pair(term_id) };
+        let is_id_correct = id == term_id;
+
+        if is_id_correct || is_pair {
+            return unsafe {
+                self.field_at_internal::<T::UnderlyingType>(index, row, Entity(term_id))
+            };
+        }
+
+        None
+    }
+
+    /// Get read access to field data.
     /// If the matched id for the specified field does not match with the provided
     /// type or if the field is readonly, the function will assert.
     ///
@@ -579,6 +648,44 @@ where
         );
 
         self.field_checked::<T>(index)
+    }
+
+    /// Get read/write access to field data.
+    /// If the matched id for the specified field does not match with the provided
+    /// type or if the field is readonly, the function will assert.
+    ///
+    /// # Safety
+    ///
+    /// Caller must ensure that the field at `index` is accessible as `T`
+    ///
+    /// This function should not be used in `each_iter()` callbacks, unless it is to
+    /// access a shared field. For access to non-shared fields in `each_iter()`, use
+    /// `field_at`.
+    ///
+    /// # Type parameters
+    ///
+    /// * `T` - The type of component to get the field data for
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The field index.
+    ///
+    /// # Returns
+    ///
+    /// Returns a column object that can be used to access the field data.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter::field`
+    pub fn field_mut<T: ComponentId>(&self, index: i8) -> Option<FieldMut<T::UnderlyingType>> {
+        ecs_assert!(
+            (self.iter.flags & sys::EcsIterCppEach == 0)
+                || unsafe { sys::ecs_field_src(self.iter, index) != 0 },
+            FlecsErrorCode::InvalidOperation,
+            "cannot .field from .each, use .field_at instead",
+        );
+
+        self.field_checked_mut::<T>(index)
     }
 
     /// Get unchecked access to field data.
@@ -666,7 +773,11 @@ where
     /// # See also
     ///
     /// * C++ API: `iter::field_at`
-    pub fn field_at_mut<T>(&self, index: i8, row: usize) -> Option<&mut T::UnderlyingType>
+    pub fn field_at_mut<T>(
+        &self,
+        index: i8,
+        row: usize,
+    ) -> Option<FieldAtMut<'_, T::UnderlyingType>>
     where
         T: ComponentId,
     {
@@ -681,15 +792,9 @@ where
             "field is readonly, check if your specified query terms are set &mut"
         );
         if self.iter.row_fields & (1u32 << index) != 0 {
-            if let Some(field) = self.get_field_at_internal::<T>(index, row as i32) {
-                Some(&mut field.slice_components[0])
-            } else {
-                None
-            }
-        } else if let Some(field) = self.field_checked::<T>(index) {
-            Some(&mut field.slice_components[row])
+            self.get_field_at_internal_mut::<T>(index, row as i32)
         } else {
-            None
+            self.field_at_checked_mut::<T>(index, row)
         }
     }
 
@@ -712,7 +817,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iter::field_at`
-    pub fn field_at<T>(&self, index: i8, row: usize) -> Option<&T::UnderlyingType>
+    pub fn field_at<T>(&self, index: i8, row: usize) -> Option<FieldAt<T::UnderlyingType>>
     where
         T: ComponentId,
     {
@@ -721,20 +826,11 @@ where
             FlecsErrorCode::InvalidParameter,
             index
         );
-        ecs_assert!(
-            !unsafe { sys::ecs_field_is_readonly(self.iter, index) },
-            FlecsErrorCode::AccessViolation,
-        );
+
         if self.iter.row_fields & (1u32 << index) != 0 {
-            if let Some(field) = self.get_field_at_internal::<T>(index, row as i32) {
-                Some(&field.slice_components[0])
-            } else {
-                None
-            }
-        } else if let Some(field) = self.field_checked::<T>(index) {
-            Some(&field.slice_components[row])
+            self.get_field_at_internal::<T>(index, row as i32)
         } else {
-            None
+            self.field_at_checked::<T>(index, row)
         }
     }
 
@@ -817,7 +913,19 @@ where
                 self.iter.count as usize,
             )
         };
-        Field::<Entity>::new(slice, false)
+
+        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+        {
+            Field::<Entity>::new(slice, false)
+        }
+
+        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        {
+            let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
+            let components_access = world_ref.component_access;
+            //Dummy id
+            Field::<Entity>::new(slice, false, Entity(0), components_access)
+        }
     }
 
     /// Check if the current table has changed since the last iteration.
@@ -893,7 +1001,68 @@ where
         self.iter.group_id
     }
 
-    unsafe fn field_internal<T>(&self, index: i8) -> Option<Field<T>> {
+    unsafe fn field_internal<T>(&self, index: i8, _id: Entity) -> Option<Field<T>> {
+        let is_shared = !self.is_self(index);
+
+        // If a shared column is retrieved with 'column', there will only be a
+        // single value. Ensure that the application does not accidentally read
+        // out of bounds.
+        let count = if is_shared {
+            1
+        } else {
+            // If column is owned, there will be as many values as there are
+            // entities.
+            self.count()
+        };
+        let array = unsafe {
+            sys::ecs_field_w_size(self.iter, core::mem::size_of::<T>(), index) as *const T
+        };
+
+        if array.is_null() {
+            return None;
+        }
+        let slice = unsafe { core::slice::from_raw_parts(array, count) };
+
+        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+        {
+            Some(Field::<T>::new(slice, is_shared))
+        }
+
+        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        {
+            let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
+            let components_access = world_ref.component_access;
+            Some(Field::<T>::new(slice, is_shared, _id, components_access))
+        }
+    }
+
+    unsafe fn field_at_internal<T>(&self, index: i8, row: usize, _id: Entity) -> Option<FieldAt<T>>
+    where
+        T: ComponentId,
+    {
+        let component =
+            sys::ecs_field_at_w_size(self.iter, core::mem::size_of::<T>(), index, row as i32)
+                as *const T;
+
+        if component.is_null() {
+            return None;
+        }
+        let component_ref = &*component;
+
+        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+        {
+            Some(FieldAt::<T>::new(component_ref, false))
+        }
+
+        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        {
+            let world_ref = WorldRef::from_ptr(self.iter.world);
+            let components_access = world_ref.component_access;
+            Some(FieldAt::<T>::new(component_ref, _id, components_access))
+        }
+    }
+
+    unsafe fn field_internal_mut<T>(&self, index: i8, _id: Entity) -> Option<FieldMut<T>> {
         let is_shared = !self.is_self(index);
 
         // If a shared column is retrieved with 'column', there will only be a
@@ -914,7 +1083,48 @@ where
         }
         let slice = unsafe { core::slice::from_raw_parts_mut(array, count) };
 
-        Some(Field::<T>::new(slice, is_shared))
+        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+        {
+            Some(FieldMut::<T>::new(slice, is_shared))
+        }
+
+        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        {
+            let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
+            let components_access = world_ref.component_access;
+            Some(FieldMut::<T>::new(slice, is_shared, _id, components_access))
+        }
+    }
+
+    unsafe fn field_at_internal_mut<T>(
+        &self,
+        index: i8,
+        row: usize,
+        _id: Entity,
+    ) -> Option<FieldAtMut<T>>
+    where
+        T: ComponentId,
+    {
+        let component =
+            sys::ecs_field_at_w_size(self.iter, core::mem::size_of::<T>(), index, row as i32)
+                as *mut T;
+
+        if component.is_null() {
+            return None;
+        }
+        let component_ref = &mut *component;
+
+        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+        {
+            Some(FieldAtMut::<T>::new(component_ref, false))
+        }
+
+        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        {
+            let world_ref = WorldRef::from_ptr(self.iter.world);
+            let components_access = world_ref.component_access;
+            Some(FieldAtMut::<T>::new(component_ref, _id, components_access))
+        }
     }
 
     fn field_untyped_internal(&self, index: i8) -> FieldUntyped {
@@ -951,7 +1161,7 @@ where
     }
 
     // get field, check if correct type is used
-    fn get_field_at_internal<T>(&self, index: i8, row: i32) -> Option<Field<T::UnderlyingType>>
+    fn get_field_at_internal<T>(&self, index: i8, row: i32) -> Option<FieldAt<T::UnderlyingType>>
     where
         T: ComponentId,
     {
@@ -966,7 +1176,61 @@ where
         let is_id_correct = id == term_id;
 
         if is_id_correct || is_pair {
-            let array = unsafe {
+            let component = unsafe {
+                sys::ecs_field_at_w_size(
+                    self.iter,
+                    core::mem::size_of::<T::UnderlyingType>(),
+                    index,
+                    row,
+                ) as *const T::UnderlyingType
+            };
+
+            if component.is_null() {
+                return None;
+            }
+
+            let component_ref = unsafe { &*component };
+
+            #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+            {
+                return Some(FieldAt::<T::UnderlyingType>::new(component_ref));
+            }
+
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            {
+                let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
+                let components_access = world_ref.component_access;
+                return Some(FieldAt::<T::UnderlyingType>::new(
+                    component_ref,
+                    Entity(term_id),
+                    components_access,
+                ));
+            }
+        }
+
+        None
+    }
+
+    fn get_field_at_internal_mut<T>(
+        &self,
+        index: i8,
+        row: i32,
+    ) -> Option<FieldAtMut<T::UnderlyingType>>
+    where
+        T: ComponentId,
+    {
+        let id = <T::UnderlyingType as ComponentId>::id(self.world());
+
+        if index > self.iter.field_count {
+            return None;
+        }
+
+        let term_id = unsafe { sys::ecs_field_id(self.iter, index) };
+        let is_pair = unsafe { sys::ecs_id_is_pair(term_id) };
+        let is_id_correct = id == term_id;
+
+        if is_id_correct || is_pair {
+            let component = unsafe {
                 sys::ecs_field_at_w_size(
                     self.iter,
                     core::mem::size_of::<T::UnderlyingType>(),
@@ -975,9 +1239,27 @@ where
                 ) as *mut T::UnderlyingType
             };
 
-            let slice = unsafe { core::slice::from_raw_parts_mut(array, self.count()) };
+            if component.is_null() {
+                return None;
+            }
 
-            return Some(Field::<T::UnderlyingType>::new(slice, false));
+            let component_ref = unsafe { &mut *component };
+
+            #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+            {
+                return Some(FieldAtMut::<T::UnderlyingType>::new(component_ref));
+            }
+
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            {
+                let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
+                let components_access = world_ref.component_access;
+                return Some(FieldAtMut::<T::UnderlyingType>::new(
+                    component_ref,
+                    Entity(term_id),
+                    components_access,
+                ));
+            }
         }
 
         None

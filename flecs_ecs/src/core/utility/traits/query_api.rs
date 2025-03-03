@@ -63,7 +63,15 @@ where
         }
 
         unsafe {
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let world = self.world();
+            let world_ptr = self.world_ptr_mut();
             let mut iter = self.retrieve_iter();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let components_access = world.components_access_map();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let indices = components_access.increment_counters_from_iter(&iter);
+
             iter.flags |= sys::EcsIterCppEach;
 
             while self.iter_next(&mut iter) {
@@ -76,15 +84,35 @@ where
                     }
                 };
 
-                sys::ecs_table_lock(self.world_ptr_mut(), iter.table);
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                {
+                    let ids = components_data.ids();
+                    for index in &indices {
+                        let id = ids[*index as usize];
+                        components_access.increment_counters_from_id(id);
+                    }
+                }
+
+                sys::ecs_table_lock(world_ptr, iter.table);
 
                 for i in 0..iter_count {
                     let tuple = components_data.get_tuple(&iter, i);
                     func(tuple);
                 }
 
-                sys::ecs_table_unlock(self.world_ptr_mut(), iter.table);
+                sys::ecs_table_unlock(world_ptr, iter.table);
+
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                {
+                    let ids = components_data.ids();
+                    for index in &indices {
+                        let id = ids[*index as usize];
+                        components_access.decrement_counters_from_id(id);
+                    }
+                }
             }
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            components_access.decrement_counters_from_iter(&iter);
         }
     }
 
@@ -107,8 +135,15 @@ where
         }
 
         unsafe {
-            let world = self.world_ptr_mut();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let world = self.world();
+            let world_ptr = self.world_ptr_mut();
             let mut iter = self.retrieve_iter();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let components_access = world.components_access_map();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let indices = components_access.increment_counters_from_iter(&iter);
+
             iter.flags |= sys::EcsIterCppEach;
 
             while self.iter_next(&mut iter) {
@@ -116,7 +151,7 @@ where
                     !iter.entities.is_null(),
                     FlecsErrorCode::InvalidParameter,
                     "Query does not return entities ($this variable is not populated).\nQuery: {:?}",
-                    WorldRef::from_ptr(world).entity_from_id((*iter.query).entity)
+                    WorldRef::from_ptr(world_ptr).entity_from_id((*iter.query).entity)
                 );
 
                 let mut components_data = T::create_ptrs(&iter);
@@ -128,7 +163,16 @@ where
                     }
                 };
 
-                sys::ecs_table_lock(world, iter.table);
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                {
+                    let ids = components_data.ids();
+                    for index in &indices {
+                        let id = ids[*index as usize];
+                        components_access.increment_counters_from_id(id);
+                    }
+                }
+
+                sys::ecs_table_lock(world_ptr, iter.table);
 
                 // TODO random thought, I think I can determine the elements is a ref or not before the for loop and then pass two arrays with the indices of the ref and non ref elements
                 // I will come back to this in the future, my thoughts are somewhere else right now. If my assumption is correct, this will get rid of the branch in the for loop
@@ -142,8 +186,19 @@ where
                     func(EntityView::new_from(world, *iter.entities.add(i)), tuple);
                 }
 
-                sys::ecs_table_unlock(world, iter.table);
+                sys::ecs_table_unlock(world_ptr, iter.table);
+
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                {
+                    let ids = components_data.ids();
+                    for index in &indices {
+                        let id = ids[*index as usize];
+                        components_access.decrement_counters_from_id(id);
+                    }
+                }
             }
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            components_access.decrement_counters_from_iter(&iter);
         }
     }
 
@@ -198,8 +253,15 @@ where
         }
 
         unsafe {
-            let world = self.world_ptr_mut();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let world = self.world();
+            let world_ptr = self.world_ptr_mut();
             let mut iter = self.retrieve_iter();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let components_access = world.components_access_map();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let indices = components_access.increment_counters_from_iter(&iter);
+
             iter.flags |= sys::EcsIterCppEach;
 
             while self.iter_next(&mut iter) {
@@ -212,7 +274,16 @@ where
                     }
                 };
 
-                sys::ecs_table_lock(world, iter.table);
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                {
+                    let ids = components_data.ids();
+                    for index in &indices {
+                        let id = ids[*index as usize];
+                        components_access.increment_counters_from_id(id);
+                    }
+                }
+
+                sys::ecs_table_lock(world_ptr, iter.table);
 
                 for i in 0..iter_count {
                     let tuple = components_data.get_tuple(&iter, i);
@@ -221,8 +292,19 @@ where
                     func(iter_t, i, tuple);
                 }
 
-                sys::ecs_table_unlock(world, iter.table);
+                sys::ecs_table_unlock(world_ptr, iter.table);
+
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                {
+                    let ids = components_data.ids();
+                    for index in &indices {
+                        let id = ids[*index as usize];
+                        components_access.decrement_counters_from_id(id);
+                    }
+                }
             }
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            components_access.decrement_counters_from_iter(&iter);
         }
     }
 
@@ -244,13 +326,28 @@ where
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity: Option<EntityView> = None;
-            let world = self.world_ptr_mut();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let world = self.world();
+            let world_ptr = self.world_ptr_mut();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let components_access = world.components_access_map();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let indices = components_access.increment_counters_from_iter(&iter);
 
             while self.iter_next(&mut iter) {
                 let mut components_data = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
 
-                sys::ecs_table_lock(world, iter.table);
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                {
+                    let ids = components_data.ids();
+                    for index in &indices {
+                        let id = ids[*index as usize];
+                        components_access.increment_counters_from_id(id);
+                    }
+                }
+
+                sys::ecs_table_lock(world_ptr, iter.table);
 
                 for i in 0..iter_count {
                     let world = self.world();
@@ -261,8 +358,19 @@ where
                     }
                 }
 
-                sys::ecs_table_unlock(world, iter.table);
+                sys::ecs_table_unlock(world_ptr, iter.table);
+
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                {
+                    let ids = components_data.ids();
+                    for index in &indices {
+                        let id = ids[*index as usize];
+                        components_access.decrement_counters_from_id(id);
+                    }
+                }
             }
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            components_access.decrement_counters_from_iter(&iter);
             entity
         }
     }
@@ -288,13 +396,28 @@ where
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity_result: Option<EntityView> = None;
-            let world = self.world_ptr_mut();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let world = self.world();
+            let world_ptr = self.world_ptr_mut();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let components_access = world.components_access_map();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let indices = components_access.increment_counters_from_iter(&iter);
 
             while self.iter_next(&mut iter) {
                 let mut components_data = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
 
-                sys::ecs_table_lock(world, iter.table);
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                {
+                    let ids = components_data.ids();
+                    for index in &indices {
+                        let id = ids[*index as usize];
+                        components_access.increment_counters_from_id(id);
+                    }
+                }
+
+                sys::ecs_table_lock(world_ptr, iter.table);
 
                 for i in 0..iter_count {
                     let world = self.world();
@@ -307,8 +430,19 @@ where
                     }
                 }
 
-                sys::ecs_table_unlock(world, iter.table);
+                sys::ecs_table_unlock(world_ptr, iter.table);
+
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                {
+                    let ids = components_data.ids();
+                    for index in &indices {
+                        let id = ids[*index as usize];
+                        components_access.decrement_counters_from_id(id);
+                    }
+                }
             }
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            components_access.decrement_counters_from_iter(&iter);
             entity_result
         }
     }
@@ -337,6 +471,12 @@ where
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity_result: Option<EntityView> = None;
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let world = self.world();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let components_access = world.components_access_map();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let indices = components_access.increment_counters_from_iter(&iter);
             let world = self.world_ptr_mut();
 
             while self.iter_next(&mut iter) {
@@ -348,6 +488,15 @@ where
                         iter.count as usize
                     }
                 };
+
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                {
+                    let ids = components_data.ids();
+                    for index in &indices {
+                        let id = ids[*index as usize];
+                        components_access.increment_counters_from_id(id);
+                    }
+                }
 
                 sys::ecs_table_lock(world, iter.table);
 
@@ -362,7 +511,18 @@ where
                 }
 
                 sys::ecs_table_unlock(world, iter.table);
+
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                {
+                    let ids = components_data.ids();
+                    for index in &indices {
+                        let id = ids[*index as usize];
+                        components_access.decrement_counters_from_id(id);
+                    }
+                }
             }
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            components_access.decrement_counters_from_iter(&iter);
             entity_result
         }
     }
@@ -546,7 +706,13 @@ where
         P: ComponentId,
         FuncEach: FnMut(T::TupleType<'_>),
     {
+        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        let world = self.world();
         let mut iter = self.retrieve_iter();
+        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        let components_access = world.components_access_map();
+        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        let indices = components_access.increment_counters_from_iter(&iter);
         iter.callback_ctx = &mut func_each as *mut _ as *mut core::ffi::c_void;
         iter.callback = Some(
             __internal_query_execute_each::<T, FuncEach>
@@ -557,6 +723,8 @@ where
         func(iter_t);
         iter.callback = None;
         iter.callback_ctx = core::ptr::null_mut();
+        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        components_access.decrement_counters_from_iter(&iter);
     }
 
     /// Run iterator with each entity forwarding.
@@ -642,7 +810,10 @@ where
         P: ComponentId,
         FuncEachEntity: FnMut(EntityView, T::TupleType<'_>),
     {
+        let world = self.world();
         let mut iter = self.retrieve_iter();
+        let components_access = world.components_access_map();
+        components_access.increment_counters_from_iter(&iter);
         iter.callback_ctx = &mut func_each as *mut _ as *mut core::ffi::c_void;
         iter.callback = Some(
             __internal_query_execute_each_entity::<T, FuncEachEntity>
@@ -653,6 +824,7 @@ where
         func(iter_t);
         iter.callback = None;
         iter.callback_ctx = core::ptr::null_mut();
+        components_access.decrement_counters_from_iter(&iter);
     }
 
     /// Get the entity of the current query
@@ -853,15 +1025,20 @@ where
     #[doc(alias = "iterable::first")]
     #[doc(alias = "iter_iterable::first")]
     fn try_first_entity(&self) -> Option<EntityView<'a>> {
+        let world = self.world();
         let it = &mut self.retrieve_iter();
+        let components_access = world.components_access_map();
+        components_access.increment_counters_from_iter(&it);
 
         if self.iter_next(it) && it.count > 0 {
             let ent = Some(EntityView::new_from(self.world(), unsafe {
                 *it.entities.add(0)
             }));
             unsafe { sys::ecs_iter_fini(it) };
+            components_access.decrement_counters_from_iter(&it);
             ent
         } else {
+            components_access.decrement_counters_from_iter(&it);
             //unsafe { sys::ecs_iter_fini(it) };
             None
         }
@@ -952,7 +1129,10 @@ where
     /// * [`Query::try_first_only`]
     /// * [`Query::first_only`]
     fn try_first<R>(&self, func: impl FnOnce(T::TupleType<'_>) -> R) -> Option<R> {
+        let world = self.world();
         let mut it = self.retrieve_iter();
+        let components_access = world.components_access_map();
+        components_access.increment_counters_from_iter(&it);
 
         // Proceed only if there is at least one entity in the iterator
         if self.iter_next(&mut it) && it.count > 0 {
@@ -962,9 +1142,10 @@ where
             let result = Some(func(tuple));
             // Clean up iterator resources safely
             unsafe { sys::ecs_iter_fini(&mut it) };
-
+            components_access.decrement_counters_from_iter(&it);
             result
         } else {
+            components_access.decrement_counters_from_iter(&it);
             None
         }
     }
@@ -1059,8 +1240,10 @@ where
         &self,
         func: impl FnOnce(T::TupleType<'_>) -> R,
     ) -> Result<R, FirstOnlyError> {
+        let world = self.world();
         let mut it = self.retrieve_iter();
-
+        let components_access = world.components_access_map();
+        components_access.increment_counters_from_iter(&it);
         // Proceed only if we can iterate
         if self.iter_next(&mut it) {
             if it.count == 1 {
@@ -1070,14 +1253,16 @@ where
                 // Clean up iterator resources safely
                 let result = func(tuple);
                 unsafe { sys::ecs_iter_fini(&mut it) };
-
+                components_access.decrement_counters_from_iter(&it);
                 Ok(result)
             } else {
                 // More than one entity
                 unsafe { sys::ecs_iter_fini(&mut it) };
+                components_access.decrement_counters_from_iter(&it);
                 Err(FirstOnlyError::MoreThanOneEntity)
             }
         } else {
+            components_access.decrement_counters_from_iter(&it);
             // No entities in the iterator
             Err(FirstOnlyError::NoEntities)
         }
