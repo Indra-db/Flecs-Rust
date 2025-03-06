@@ -12956,6 +12956,7 @@ char* flecs_to_snake_case(const char *str) {
 char* flecs_load_from_file(
     const char *filename)
 {
+#if 0
     FILE* file;
     char* content = NULL;
     int32_t bytes;
@@ -12997,6 +12998,10 @@ error:
     }
     ecs_os_free(content);
     return NULL;
+#else
+    (void)filename;
+    return NULL;
+#endif
 }
 
 char* flecs_chresc(
@@ -16110,12 +16115,15 @@ void ecs_os_fini(void) {
 
 /* Assume every non-glibc Linux target has no execinfo.
    This mainly fixes musl support, as musl doesn't define any preprocessor macro specifying its presence. */ 
+#define HAVE_EXECINFO 0
+#if 0
 #if defined(ECS_TARGET_LINUX) && !defined(__GLIBC__)
 #define HAVE_EXECINFO 0
 #elif !defined(ECS_TARGET_WINDOWS) && !defined(ECS_TARGET_EM) && !defined(ECS_TARGET_ANDROID)
 #define HAVE_EXECINFO 1
 #else
 #define HAVE_EXECINFO 0
+#endif
 #endif
 
 #if HAVE_EXECINFO
@@ -16158,6 +16166,7 @@ void flecs_log_msg(
     int32_t line,  
     const char *msg)
 {
+#if NOPE_NOPE_NOPE
     FILE *stream = ecs_os_api.log_out_;
     if (!stream) {
         stream = stdout;
@@ -16276,6 +16285,12 @@ void flecs_log_msg(
     if (level == -4) {
         flecs_dump_backtrace(stream);
     }
+#else
+    (void)level;
+    (void)file;
+    (void)line;
+    (void)msg;
+#endif
 }
 
 void ecs_os_dbg(
@@ -51342,7 +51357,9 @@ int flecs_add_constant_to_enum(
                     ecs_err("conflicting constant value %d for '%s' (other is '%s')",
                         value, path, c->name);
                     ecs_os_free(path);
+#ifndef ECS_TARGET_WUU
                     flecs_dump_backtrace(stdout);
+#endif
                     return -1;
                 }
             } else {
@@ -51714,7 +51731,9 @@ void flecs_set_custom_type(ecs_iter_t *it) {
         if (!comp || !comp->size || !comp->alignment) {
             ecs_err("custom type '%s' has no size/alignment, register as component first",
                 ecs_get_name(world, e));
+#ifndef ECS_TARGET_WUU
             flecs_dump_backtrace(stdout);
+#endif
             continue;
         }
 
@@ -53216,7 +53235,7 @@ void ecs_meta_type_serialized_init(
  */
 
 
-#ifdef FLECS_OS_API_IMPL
+#if defined(FLECS_OS_API_IMPL) && !defined(ECS_TARGET_WUU)
 #ifdef ECS_TARGET_WINDOWS
 /**
  * @file addons/os_api_impl/posix_impl.inl
@@ -61564,7 +61583,9 @@ error:
         char *idstr = ecs_id_str(v->world, id);
         flecs_script_eval_error(v, node, 
             "cannot set value of '%s': not a component", idstr);
+#ifndef ECS_TARGET_WUU
         flecs_dump_backtrace(stdout);
+#endif
         ecs_os_free(idstr);
     }
     return NULL;
@@ -66828,7 +66849,9 @@ ecs_var_id_t flecs_query_find_var_id(
                 return 0;
             } else {
                 printf("VARNONE\n");
+#ifndef ECS_TARGET_WUU
                 flecs_dump_backtrace(stdout);
+#endif
                 return EcsVarNone;
             }
         }
