@@ -15,11 +15,11 @@ use proc_macro::TokenStream as ProcMacroTokenStream;
 use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote, quote_spanned};
 use syn::{
-    bracketed, parenthesized,
+    Data, DeriveInput, Expr, Fields, Ident, LitInt, LitStr, Path, Result, Token, Type, bracketed,
+    parenthesized,
     parse::{Parse, ParseStream},
     parse_macro_input,
     token::{Bracket, Comma},
-    Data, DeriveInput, Expr, Fields, Ident, LitInt, LitStr, Path, Result, Token, Type,
 };
 
 /// `Component` macro for defining Flecs ECS components.
@@ -1306,7 +1306,8 @@ impl Parse for Term {
 
 struct Dsl {
     terms: Vec<Term>,
-    doc: Option<TokenStream>,
+    //TODO 2024 edition doesn't support it anymore. Need to find workaround
+    _doc: Option<TokenStream>,
 }
 
 impl Parse for Dsl {
@@ -1321,6 +1322,7 @@ impl Parse for Dsl {
         let doc = syn::parse_str::<TokenStream>(&format!("#[doc = \"{string}\"]")).ok();
         let doc = doc.map(|doc| {
             quote! {
+                #[allow(clippy::suspicious_doc_comments)]
                 #doc
                 const _: () = ();
             }
@@ -1344,7 +1346,7 @@ impl Parse for Dsl {
             terms.push(input.parse::<Term>()?);
         }
 
-        Ok(Dsl { terms, doc })
+        Ok(Dsl { terms, _doc: doc })
     }
 }
 
@@ -1719,25 +1721,26 @@ pub fn query(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
     let (iter_type, builder_calls) = expand_dsl(&mut terms);
     let world = input.world;
-    let doc = input.dsl.doc;
+    //TODO 2024 edition doesn't support it anymore. Need to find workaround
+    //let doc = input.dsl.doc;
     let output = match input.name {
         Some(name) => quote! {
-            {
-                #doc
+            //{
+                //#doc
                 (#world).query_named::<#iter_type>(#name)
                 #(
                     #builder_calls
                 )*
-            }
+            //}
         },
         None => quote! {
-            {
-                #doc
+            //{
+                //#doc
                 (#world).query::<#iter_type>()
                 #(
                     #builder_calls
                 )*
-            }
+            //}
         },
     };
     ProcMacroTokenStream::from(output)
@@ -1760,26 +1763,27 @@ pub fn system(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let (iter_type, builder_calls) = expand_dsl(&mut terms);
     let world = input.world;
 
-    let doc = input.dsl.doc;
+    //TODO 2024 edition doesn't support it anymore. Need to find workaround
+    //let doc = input.dsl.doc;
     let output = match input.name {
         Some(name) => quote! {
-            {
-                #doc
+            //{
+                //#doc
                 (#world).system_named::<#iter_type>(#name)
                 #(
                     #builder_calls
                 )*
-            }
+            //}
 
         },
         None => quote! {
-            {
-                #doc
+            //{
+                //#doc
                 (#world).system::<#iter_type>()
                 #(
                     #builder_calls
                 )*
-            }
+            //}
         },
     };
     ProcMacroTokenStream::from(output)
@@ -1834,25 +1838,26 @@ pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let event_type = input.event;
     let world = input.world;
 
-    let doc = input.dsl.doc;
+    //TODO 2024 edition doesn't support it anymore. Need to find workaround
+    //let doc = input.dsl.doc;
     let output = match input.name {
         Some(name) => quote! {
-            {
-                #doc
+            //{
+                //#doc
                 (#world).observer_named::<#event_type, #iter_type>(#name)
                 #(
                     #builder_calls
                 )*
-            }
+            //}
         },
         None => quote! {
-            {
-                #doc
+            //{
+                //#doc
                 (#world).observer::<#event_type, #iter_type>()
                 #(
                     #builder_calls
                 )*
-            }
+            //}
         },
     };
 

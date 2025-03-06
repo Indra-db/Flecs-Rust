@@ -9,7 +9,7 @@ use std::sync::Mutex;
 #[cfg(feature = "flecs_nightly_tests")]
 pub use capture_stdio::*;
 #[cfg(feature = "flecs_nightly_tests")]
-use std::io::{set_output_capture, Error};
+use std::io::{Error, set_output_capture};
 
 /// Wrap `std::io::set_output_capture`
 #[cfg(feature = "flecs_nightly_tests")]

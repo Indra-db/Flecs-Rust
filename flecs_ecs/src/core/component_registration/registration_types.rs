@@ -6,8 +6,8 @@ use super::{
     OnComponentRegistration,
 };
 use crate::core::{
-    register_copy_lifecycle_action, register_ctor_lifecycle_actions, Entity, FlecsConstantId,
-    WorldProvider, WorldRef, ECS_I32_T,
+    ECS_I32_T, Entity, FlecsConstantId, WorldProvider, WorldRef, register_copy_lifecycle_action,
+    register_ctor_lifecycle_actions,
 };
 use flecs_ecs_sys as sys;
 

@@ -62,7 +62,7 @@ impl MetaMember for (&'static str, Count) {
 
     #[inline(always)]
     fn count(&self) -> i32 {
-        self.1 .0
+        self.1.0
     }
 
     #[inline(always)]
@@ -81,7 +81,7 @@ impl MetaMember for (&'static str, Count, usize) {
 
     #[inline(always)]
     fn count(&self) -> i32 {
-        self.1 .0
+        self.1.0
     }
 
     #[inline(always)]

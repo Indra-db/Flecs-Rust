@@ -6,7 +6,7 @@ mod iter;
 pub use field::{Field, FieldUntyped};
 pub use iter::{TableIter, TableRowIter};
 
-use core::{ffi::c_void, ffi::CStr, ptr::NonNull};
+use core::{ffi::CStr, ffi::c_void, ptr::NonNull};
 
 use crate::core::*;
 use crate::sys;
@@ -189,11 +189,7 @@ pub trait TableOperations<'a>: IntoTable {
         let index = unsafe {
             sys::ecs_table_get_type_index(self.world().world_ptr(), self.table_ptr_mut(), id)
         };
-        if index == -1 {
-            None
-        } else {
-            Some(index)
-        }
+        if index == -1 { None } else { Some(index) }
     }
 
     /// Find type index for component type
@@ -324,11 +320,7 @@ pub trait TableOperations<'a>: IntoTable {
         let index = unsafe {
             sys::ecs_table_get_column_index(self.world().world_ptr(), self.table_ptr_mut(), id)
         };
-        if index == -1 {
-            None
-        } else {
-            Some(index)
-        }
+        if index == -1 { None } else { Some(index) }
     }
 
     /// Find column index for component type in table
@@ -552,11 +544,7 @@ pub trait TableOperations<'a>: IntoTable {
     #[doc(alias = "table::get_column")]
     fn column_untyped(&self, index: i32) -> Option<*mut c_void> {
         let ptr = unsafe { sys::ecs_table_get_column(self.table_ptr_mut(), index, self.offset()) };
-        if ptr.is_null() {
-            None
-        } else {
-            Some(ptr)
-        }
+        if ptr.is_null() { None } else { Some(ptr) }
     }
 
     /// Get column, components array ptr from table by component type.

@@ -288,9 +288,21 @@ create_pre_registered_component!(
     ECS_ACYCLIC,
     "Component trait. Indicates that the relationship cannot contain cycles."
 );
-create_pre_registered_component!(Traversable, ECS_TRAVERSABLE, "Component trait. This relationship can be traversed automatically by queries, e.g. using [`Up`].");
-create_pre_registered_component!(With, ECS_WITH, "Component trait. Indicates that this relationship must always come together with another component.");
-create_pre_registered_component!(OneOf, ECS_ONE_OF, "Component trait. Enforces that the target of the relationship is a child of a specified entity.");
+create_pre_registered_component!(
+    Traversable,
+    ECS_TRAVERSABLE,
+    "Component trait. This relationship can be traversed automatically by queries, e.g. using [`Up`]."
+);
+create_pre_registered_component!(
+    With,
+    ECS_WITH,
+    "Component trait. Indicates that this relationship must always come together with another component."
+);
+create_pre_registered_component!(
+    OneOf,
+    ECS_ONE_OF,
+    "Component trait. Enforces that the target of the relationship is a child of a specified entity."
+);
 create_pre_registered_component!(
     CanToggle,
     ECS_CAN_TOGGLE,

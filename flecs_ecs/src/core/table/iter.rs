@@ -1,6 +1,6 @@
 //! Iterators used to iterate over tables and table rows in [`Query`], [`System`][crate::addons::system::System] and [`Observer`].
 use core::marker::PhantomData;
-use core::{ffi::c_void, ffi::CStr, ptr::NonNull};
+use core::{ffi::CStr, ffi::c_void, ptr::NonNull};
 
 use crate::core::*;
 use crate::sys;
@@ -525,7 +525,7 @@ where
             FlecsErrorCode::InvalidOperation,
             "cannot .field from .each, use .field_at instead",
         );
-        self.field_internal::<T>(index, id).unwrap()
+        unsafe { self.field_internal::<T>(index, id).unwrap() }
     }
 
     fn field_checked_mut<T: ComponentId>(&self, index: i8) -> Option<FieldMut<T::UnderlyingType>> {
@@ -1047,31 +1047,33 @@ where
     where
         T: ComponentId,
     {
-        let component =
-            sys::ecs_field_at_w_size(self.iter, core::mem::size_of::<T>(), index, row as i32)
-                as *const T;
+        unsafe {
+            let component =
+                sys::ecs_field_at_w_size(self.iter, core::mem::size_of::<T>(), index, row as i32)
+                    as *const T;
 
-        if component.is_null() {
-            return None;
-        }
-        let component_ref = &*component;
+            if component.is_null() {
+                return None;
+            }
+            let component_ref = &*component;
 
-        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
-        {
-            Some(FieldAt::<T>::new(component_ref, false))
-        }
+            #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+            {
+                Some(FieldAt::<T>::new(component_ref, false))
+            }
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
-        {
-            let table_id = unsafe { sys::ecs_rust_table_id(self.iter.table) };
-            let world_ref = WorldRef::from_ptr(self.iter.world);
-            let components_access = world_ref.component_access;
-            Some(FieldAt::<T>::new(
-                component_ref,
-                _id,
-                table_id,
-                components_access,
-            ))
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            {
+                let table_id = sys::ecs_rust_table_id(self.iter.table);
+                let world_ref = WorldRef::from_ptr(self.iter.world);
+                let components_access = world_ref.component_access;
+                Some(FieldAt::<T>::new(
+                    component_ref,
+                    _id,
+                    table_id,
+                    components_access,
+                ))
+            }
         }
     }
 
@@ -1125,31 +1127,33 @@ where
     where
         T: ComponentId,
     {
-        let component =
-            sys::ecs_field_at_w_size(self.iter, core::mem::size_of::<T>(), index, row as i32)
-                as *mut T;
+        unsafe {
+            let component =
+                sys::ecs_field_at_w_size(self.iter, core::mem::size_of::<T>(), index, row as i32)
+                    as *mut T;
 
-        if component.is_null() {
-            return None;
-        }
-        let component_ref = &mut *component;
+            if component.is_null() {
+                return None;
+            }
+            let component_ref = &mut *component;
 
-        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
-        {
-            Some(FieldAtMut::<T>::new(component_ref, false))
-        }
+            #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+            {
+                Some(FieldAtMut::<T>::new(component_ref, false))
+            }
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
-        {
-            let world_ref = WorldRef::from_ptr(self.iter.world);
-            let components_access = world_ref.component_access;
-            let table_id = unsafe { sys::ecs_rust_table_id(self.iter.table) };
-            Some(FieldAtMut::<T>::new(
-                component_ref,
-                _id,
-                table_id,
-                components_access,
-            ))
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            {
+                let world_ref = WorldRef::from_ptr(self.iter.world);
+                let components_access = world_ref.component_access;
+                let table_id = sys::ecs_rust_table_id(self.iter.table);
+                Some(FieldAtMut::<T>::new(
+                    component_ref,
+                    _id,
+                    table_id,
+                    components_access,
+                ))
+            }
         }
     }
 

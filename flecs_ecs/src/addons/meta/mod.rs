@@ -10,7 +10,7 @@ mod meta_functions;
 mod meta_traits;
 mod opaque;
 
-use core::ffi::{c_void, CStr};
+use core::ffi::{CStr, c_void};
 
 pub use builtin::*;
 pub use component_id_fetcher::*;

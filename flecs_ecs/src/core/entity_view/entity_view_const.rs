@@ -1,5 +1,5 @@
 use core::{
-    ffi::{c_void, CStr},
+    ffi::{CStr, c_void},
     ops::{Deref, DerefMut},
     ptr::{self, NonNull},
 };
@@ -1124,11 +1124,7 @@ impl<'a> EntityView<'a> {
 
         let count = unsafe { sys::ecs_rust_rel_count(world, id, table) };
 
-        if count == -1 {
-            None
-        } else {
-            Some(count)
-        }
+        if count == -1 { None } else { Some(count) }
     }
 
     /// Get the count of targets for a given relationship.
@@ -2825,7 +2821,9 @@ impl EntityView<'_> {
     /// * C++ API: `entity_view::emit`
     #[doc(alias = "entity_view::emit")]
     pub unsafe fn emit_id(self, event: impl Into<Entity>) {
-        self.world().event_id(event).entity(self).emit(&());
+        unsafe {
+            self.world().event_id(event).entity(self).emit(&());
+        }
     }
 
     /// Emit event with an immutable payload for entity.
@@ -2870,7 +2868,9 @@ impl EntityView<'_> {
     /// * C++ API: `entity_view::enqueue`
     #[doc(alias = "entity_view::enqueue")]
     pub unsafe fn enqueue_id(self, event: impl Into<Entity>) {
-        self.world().event_id(event).entity(self).enqueue(());
+        unsafe {
+            self.world().event_id(event).entity(self).enqueue(());
+        }
     }
 
     /// Enqueue event for entity.
@@ -3161,18 +3161,20 @@ impl EntityView<'_> {
     where
         Func: FnMut(),
     {
-        let ctx: *mut ObserverEntityBindingCtx = (*iter).callback_ctx as *mut _;
-        let empty = (*ctx).empty.unwrap();
-        let empty = &mut *(empty as *mut Func);
-        let iter_count = (*iter).count as usize;
+        unsafe {
+            let ctx: *mut ObserverEntityBindingCtx = (*iter).callback_ctx as *mut _;
+            let empty = (*ctx).empty.unwrap();
+            let empty = &mut *(empty as *mut Func);
+            let iter_count = (*iter).count as usize;
 
-        sys::ecs_table_lock((*iter).world, (*iter).table);
+            sys::ecs_table_lock((*iter).world, (*iter).table);
 
-        for _i in 0..iter_count {
-            empty();
+            for _i in 0..iter_count {
+                empty();
+            }
+
+            sys::ecs_table_unlock((*iter).world, (*iter).table);
         }
-
-        sys::ecs_table_unlock((*iter).world, (*iter).table);
     }
 
     /// Callback of the observe functionality
@@ -3189,22 +3191,24 @@ impl EntityView<'_> {
     where
         Func: FnMut(&mut EntityView),
     {
-        let ctx: *mut ObserverEntityBindingCtx = (*iter).callback_ctx as *mut _;
-        let empty = (*ctx).empty_entity.unwrap();
-        let empty = &mut *(empty as *mut Func);
-        let iter_count = (*iter).count as usize;
+        unsafe {
+            let ctx: *mut ObserverEntityBindingCtx = (*iter).callback_ctx as *mut _;
+            let empty = (*ctx).empty_entity.unwrap();
+            let empty = &mut *(empty as *mut Func);
+            let iter_count = (*iter).count as usize;
 
-        sys::ecs_table_lock((*iter).world, (*iter).table);
+            sys::ecs_table_lock((*iter).world, (*iter).table);
 
-        for _i in 0..iter_count {
-            let world = WorldRef::from_ptr((*iter).world);
-            empty(&mut EntityView::new_from(
-                world,
-                sys::ecs_field_src(iter, 0),
-            ));
+            for _i in 0..iter_count {
+                let world = WorldRef::from_ptr((*iter).world);
+                empty(&mut EntityView::new_from(
+                    world,
+                    sys::ecs_field_src(iter, 0),
+                ));
+            }
+
+            sys::ecs_table_unlock((*iter).world, (*iter).table);
         }
-
-        sys::ecs_table_unlock((*iter).world, (*iter).table);
     }
 
     /// Callback of the observe functionality
@@ -3221,20 +3225,22 @@ impl EntityView<'_> {
     where
         Func: FnMut(&C),
     {
-        let ctx: *mut ObserverEntityBindingCtx = (*iter).callback_ctx as *mut _;
-        let empty = (*ctx).payload.unwrap();
-        let empty = &mut *(empty as *mut Func);
-        let iter_count = (*iter).count as usize;
+        unsafe {
+            let ctx: *mut ObserverEntityBindingCtx = (*iter).callback_ctx as *mut _;
+            let empty = (*ctx).payload.unwrap();
+            let empty = &mut *(empty as *mut Func);
+            let iter_count = (*iter).count as usize;
 
-        sys::ecs_table_lock((*iter).world, (*iter).table);
+            sys::ecs_table_lock((*iter).world, (*iter).table);
 
-        for _i in 0..iter_count {
-            let data = (*iter).param as *mut C;
-            let data_ref = &mut *data;
-            empty(data_ref);
+            for _i in 0..iter_count {
+                let data = (*iter).param as *mut C;
+                let data_ref = &mut *data;
+                empty(data_ref);
+            }
+
+            sys::ecs_table_unlock((*iter).world, (*iter).table);
         }
-
-        sys::ecs_table_unlock((*iter).world, (*iter).table);
     }
 
     /// Callback of the observe functionality
@@ -3251,24 +3257,26 @@ impl EntityView<'_> {
     where
         Func: FnMut(&mut EntityView, &C),
     {
-        let ctx: *mut ObserverEntityBindingCtx = (*iter).callback_ctx as *mut _;
-        let empty = (*ctx).payload_entity.unwrap();
-        let empty = &mut *(empty as *mut Func);
-        let iter_count = (*iter).count as usize;
+        unsafe {
+            let ctx: *mut ObserverEntityBindingCtx = (*iter).callback_ctx as *mut _;
+            let empty = (*ctx).payload_entity.unwrap();
+            let empty = &mut *(empty as *mut Func);
+            let iter_count = (*iter).count as usize;
 
-        sys::ecs_table_lock((*iter).world, (*iter).table);
+            sys::ecs_table_lock((*iter).world, (*iter).table);
 
-        for _i in 0..iter_count {
-            let data = (*iter).param as *mut C;
-            let data_ref = &mut *data;
-            let world = WorldRef::from_ptr((*iter).world);
-            empty(
-                &mut EntityView::new_from(world, sys::ecs_field_src(iter, 0)),
-                data_ref,
-            );
+            for _i in 0..iter_count {
+                let data = (*iter).param as *mut C;
+                let data_ref = &mut *data;
+                let world = WorldRef::from_ptr((*iter).world);
+                empty(
+                    &mut EntityView::new_from(world, sys::ecs_field_src(iter, 0)),
+                    data_ref,
+                );
+            }
+
+            sys::ecs_table_unlock((*iter).world, (*iter).table);
         }
-
-        sys::ecs_table_unlock((*iter).world, (*iter).table);
     }
 
     /// Callback to free the memory of the `empty` callback

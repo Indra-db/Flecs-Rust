@@ -222,7 +222,10 @@ extern "C-unwind" fn panic_ctor<T>(
     _count: i32,
     _type_info: *const sys::ecs_type_info_t,
 ) {
-    panic!("Default is not implemented for type {} which requires drop and it's being used in an operation which calls the constructor", core::any::type_name::<T>());
+    panic!(
+        "Default is not implemented for type {} which requires drop and it's being used in an operation which calls the constructor",
+        core::any::type_name::<T>()
+    );
 }
 
 extern "C-unwind" fn panic_copy<T>(
@@ -231,7 +234,10 @@ extern "C-unwind" fn panic_copy<T>(
     _count: i32,
     _type_info: *const sys::ecs_type_info_t,
 ) {
-    panic!("Clone is not implemented for type {} and it's being used in a copy / duplicate operation such as component overriding or duplicating entities / components or prefab copying", core::any::type_name::<T>());
+    panic!(
+        "Clone is not implemented for type {} and it's being used in a copy / duplicate operation such as component overriding or duplicating entities / components or prefab copying",
+        core::any::type_name::<T>()
+    );
 }
 
 /// This is the generic move for non-trivial types

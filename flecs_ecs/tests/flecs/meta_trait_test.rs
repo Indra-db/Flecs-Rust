@@ -131,9 +131,11 @@ fn test_type_w_string() {
     // Register the Type containing String component
     world.component::<TypeWithString>().meta();
 
-    assert!(world
-        .component::<TypeWithString>()
-        .has::<flecs::meta::Type>());
+    assert!(
+        world
+            .component::<TypeWithString>()
+            .has::<flecs::meta::Type>()
+    );
 
     // Create a new entity
     let e = world.entity().set(TypeWithString {
@@ -162,9 +164,11 @@ fn test_type_w_vec_string() {
     // Register the Type containing Vec<String> component
     world.component::<TypeWithVecString>().meta();
 
-    assert!(world
-        .component::<TypeWithVecString>()
-        .has::<flecs::meta::Type>());
+    assert!(
+        world
+            .component::<TypeWithVecString>()
+            .has::<flecs::meta::Type>()
+    );
 
     // Create a new entity
     let e = world.entity().set(TypeWithVecString {

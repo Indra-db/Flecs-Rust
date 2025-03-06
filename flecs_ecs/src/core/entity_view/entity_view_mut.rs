@@ -124,7 +124,9 @@ impl<'a> EntityView<'a> {
     pub fn add_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         const {
             if !First::IS_TAG && !First::IMPLS_DEFAULT {
-                panic!("Adding an element that is not a Tag / Zero sized type requires to implement Default");
+                panic!(
+                    "Adding an element that is not a Tag / Zero sized type requires to implement Default"
+                );
             }
         }
 
@@ -143,7 +145,10 @@ impl<'a> EntityView<'a> {
             let is_second_not_tag = unsafe { sys::ecs_get_typeid(world_ptr, second) != 0 };
 
             if is_second_not_tag {
-                assert!(has_default_hook(world_ptr,second),"second id is not a zero-sized type (ZST) such as a Tag or Entity or does not implement the Default hook for a non ZST type. Default hooks are automatically implemented if the type has a Default trait.");
+                assert!(
+                    has_default_hook(world_ptr, second),
+                    "second id is not a zero-sized type (ZST) such as a Tag or Entity or does not implement the Default hook for a non ZST type. Default hooks are automatically implemented if the type has a Default trait."
+                );
             }
         }
 
@@ -178,7 +183,9 @@ impl<'a> EntityView<'a> {
 
         if is_first_tag {
             if !Second::IS_TAG && !Second::IMPLS_DEFAULT {
-                panic!("first id is a tag type such as a Tag or Entity, but second id is not a zero-sized type (ZST) such as a Tag or Entity or does not implement the Default hook for a non ZST type. Default hooks are automatically implemented if the type has a Default trait.");
+                panic!(
+                    "first id is a tag type such as a Tag or Entity, but second id is not a zero-sized type (ZST) such as a Tag or Entity or does not implement the Default hook for a non ZST type. Default hooks are automatically implemented if the type has a Default trait."
+                );
             }
         } else {
             assert!(has_default_hook(world_ptr,first),"first id is not a zero-sized type (ZST) such as a Tag or Entity and does not implement the Default hook.  Default hooks are automatically implemented if the type has a Default trait.
@@ -202,7 +209,9 @@ impl<'a> EntityView<'a> {
     {
         const {
             if !First::IS_TAG && !First::IMPLS_DEFAULT {
-                panic!("Adding an element that is not a Tag / Zero sized type requires to implement Default");
+                panic!(
+                    "Adding an element that is not a Tag / Zero sized type requires to implement Default"
+                );
             }
         }
         let world = self.world;
@@ -911,7 +920,9 @@ impl<'a> EntityView<'a> {
         let id_data_id = unsafe { sys::ecs_get_typeid(world, id) };
 
         if data_id != id_data_id {
-            panic!("Data type does not match id type. For pairs this is the first element occurrence that is not a zero-sized type (ZST).");
+            panic!(
+                "Data type does not match id type. For pairs this is the first element occurrence that is not a zero-sized type (ZST)."
+            );
         }
 
         set_helper(world, *self.id, data, id);
@@ -960,7 +971,10 @@ impl<'a> EntityView<'a> {
         (First, Second): ComponentOrPairId,
     {
         const {
-            assert!(!<(First, Second) as ComponentOrPairId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add::<(Tag1, Tag2)()` instead.");
+            assert!(
+                !<(First, Second) as ComponentOrPairId>::IS_TAGS,
+                "setting tag relationships is not possible with `set_pair`. use `add::<(Tag1, Tag2)()` instead."
+            );
         };
 
         let pair_id = ecs_pair(First::id(self.world), Second::id(self.world));
@@ -992,7 +1006,9 @@ impl<'a> EntityView<'a> {
         let data_id = unsafe { sys::ecs_get_typeid(world_ptr, pair_id) };
 
         if data_id != first_id {
-            panic!("First type does not match id data type. For pairs this is the first element occurrence that is not a zero-sized type (ZST).");
+            panic!(
+                "First type does not match id data type. For pairs this is the first element occurrence that is not a zero-sized type (ZST)."
+            );
         }
 
         set_helper(world_ptr, *self.id, first, pair_id);
@@ -1021,7 +1037,9 @@ impl<'a> EntityView<'a> {
         let data_id = unsafe { sys::ecs_get_typeid(world, pair_id) };
 
         if data_id != second_id {
-            panic!("Second type does not match id data type. For pairs this is the first element occurrence that is not a zero-sized type (ZST).");
+            panic!(
+                "Second type does not match id data type. For pairs this is the first element occurrence that is not a zero-sized type (ZST)."
+            );
         }
 
         set_helper(world, *self.id, second, pair_id);
@@ -1082,8 +1100,10 @@ impl<'a> EntityView<'a> {
         size: usize,
         ptr: *const c_void,
     ) -> Self {
-        sys::ecs_set_id(self.world.world_ptr_mut(), *self.id, *id.into(), size, ptr);
-        self
+        unsafe {
+            sys::ecs_set_id(self.world.world_ptr_mut(), *self.id, *id.into(), size, ptr);
+            self
+        }
     }
 
     /// Sets a pointer to a component of an entity with a given component ID.
@@ -1102,23 +1122,23 @@ impl<'a> EntityView<'a> {
     /// * C++ API: `entity_builder::set_ptr`
     #[doc(alias = "entity_builder::set_ptr")]
     pub unsafe fn set_ptr(self, id: impl Into<Entity>, ptr: *const c_void) -> Self {
-        let id = id.into();
-        let cptr: *const sys::EcsComponent = unsafe {
-            sys::ecs_get_id(
+        unsafe {
+            let id = id.into();
+            let cptr: *const sys::EcsComponent = sys::ecs_get_id(
                 self.world.world_ptr_mut(),
                 *id,
                 sys::FLECS_IDEcsComponentID_,
-            )
-        } as *const sys::EcsComponent;
+            ) as *const sys::EcsComponent;
 
-        ecs_assert!(
-            !cptr.is_null(),
-            FlecsErrorCode::InvalidParameter,
-            "invalid component id: {:?}",
-            id
-        );
+            ecs_assert!(
+                !cptr.is_null(),
+                FlecsErrorCode::InvalidParameter,
+                "invalid component id: {:?}",
+                id
+            );
 
-        self.set_ptr_w_size(id, unsafe { (*cptr).size } as usize, ptr)
+            self.set_ptr_w_size(id, (*cptr).size as usize, ptr)
+        }
     }
 
     /// Sets the name of the entity.

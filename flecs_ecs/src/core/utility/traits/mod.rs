@@ -77,12 +77,13 @@ pub mod private {
         ) where
             Func: FnMut(T::TupleType<'_>),
         {
-            const {
-                assert!(
-                    !T::CONTAINS_ANY_TAG_TERM,
-                    "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
-                );
-            }
+            unsafe {
+                const {
+                    assert!(
+                        !T::CONTAINS_ANY_TAG_TERM,
+                        "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
+                    );
+                }
 
             let world = WorldRef::from_ptr(unsafe { (*iter).world });
             let iter = unsafe { &mut *iter };
@@ -90,25 +91,25 @@ pub mod private {
             components_access.increment_counters_from_iter(iter);
             iter.flags |= sys::EcsIterCppEach;
 
-            let each = &mut *(iter.callback_ctx as *mut Func);
+                let each = &mut *(iter.callback_ctx as *mut Func);
 
-            let mut components_data = T::create_ptrs(&*iter);
-            let iter_count = {
-                if iter.count == 0 && iter.table.is_null() {
-                    1_usize
-                } else {
-                    iter.count as usize
+                let mut components_data = T::create_ptrs(&*iter);
+                let iter_count = {
+                    if iter.count == 0 && iter.table.is_null() {
+                        1_usize
+                    } else {
+                        iter.count as usize
+                    }
+                };
+
+                if !CALLED_FROM_RUN {
+                    sys::ecs_table_lock(iter.world, iter.table);
                 }
-            };
 
-            if !CALLED_FROM_RUN {
-                sys::ecs_table_lock(iter.world, iter.table);
-            }
-
-            for i in 0..iter_count {
-                let tuple = components_data.get_tuple(&*iter, i);
-                each(tuple);
-            }
+                for i in 0..iter_count {
+                    let tuple = components_data.get_tuple(&*iter, i);
+                    each(tuple);
+                }
 
             if !CALLED_FROM_RUN {
                 sys::ecs_table_unlock(iter.world, iter.table);
@@ -131,12 +132,13 @@ pub mod private {
         ) where
             Func: FnMut(EntityView, T::TupleType<'_>),
         {
-            const {
-                assert!(
-                    !T::CONTAINS_ANY_TAG_TERM,
-                    "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
-                );
-            }
+            unsafe {
+                const {
+                    assert!(
+                        !T::CONTAINS_ANY_TAG_TERM,
+                        "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
+                    );
+                }
 
             let world = WorldRef::from_ptr(unsafe { (*iter).world });
             let iter = unsafe { &mut *iter };
@@ -144,37 +146,37 @@ pub mod private {
             components_access.increment_counters_from_iter(iter);
             iter.flags |= sys::EcsIterCppEach;
 
-            let each_entity = &mut *(iter.callback_ctx as *mut Func);
+                let each_entity = &mut *(iter.callback_ctx as *mut Func);
 
-            let mut components_data = T::create_ptrs(&*iter);
-            let iter_count = {
-                if iter.count == 0 && iter.table.is_null() {
-                    // If query has no This terms, count can be 0. Since each does not
-                    // have an entity parameter, just pass through components
-                    1_usize
-                } else {
-                    iter.count as usize
+                let mut components_data = T::create_ptrs(&*iter);
+                let iter_count = {
+                    if iter.count == 0 && iter.table.is_null() {
+                        // If query has no This terms, count can be 0. Since each does not
+                        // have an entity parameter, just pass through components
+                        1_usize
+                    } else {
+                        iter.count as usize
+                    }
+                };
+
+                ecs_assert!(
+                    !iter.entities.is_null(),
+                    FlecsErrorCode::InvalidOperation,
+                    "System does not return entities ($this variable is not populated).\nSystem: {:?}",
+                    WorldRef::from_ptr(iter.world).entity_from_id(iter.system)
+                );
+
+                if !CALLED_FROM_RUN {
+                    sys::ecs_table_lock(iter.world, iter.table);
                 }
-            };
 
-            ecs_assert!(
-                !iter.entities.is_null(),
-                FlecsErrorCode::InvalidOperation,
-                "System does not return entities ($this variable is not populated).\nSystem: {:?}",
-                WorldRef::from_ptr(iter.world).entity_from_id(iter.system)
-            );
+                for i in 0..iter_count {
+                    let world = WorldRef::from_ptr(iter.world);
+                    let entity = EntityView::new_from(world, *iter.entities.add(i));
+                    let tuple = components_data.get_tuple(&*iter, i);
 
-            if !CALLED_FROM_RUN {
-                sys::ecs_table_lock(iter.world, iter.table);
-            }
-
-            for i in 0..iter_count {
-                let world = WorldRef::from_ptr(iter.world);
-                let entity = EntityView::new_from(world, *iter.entities.add(i));
-                let tuple = components_data.get_tuple(&*iter, i);
-
-                each_entity(entity, tuple);
-            }
+                    each_entity(entity, tuple);
+                }
 
             if !CALLED_FROM_RUN {
                 sys::ecs_table_unlock(iter.world, iter.table);
@@ -208,21 +210,21 @@ pub mod private {
             components_access.increment_counters_from_iter(iter);
             iter.flags |= sys::EcsIterCppEach;
 
-            let each_iter = &mut *(iter.callback_ctx as *mut Func);
-            let mut components_data = T::create_ptrs(&*iter);
-            let iter_count = {
-                if iter.count == 0 && iter.table.is_null() {
-                    1_usize
-                } else {
-                    iter.count as usize
-                }
-            };
+                let each_iter = &mut *(iter.callback_ctx as *mut Func);
+                let mut components_data = T::create_ptrs(&*iter);
+                let iter_count = {
+                    if iter.count == 0 && iter.table.is_null() {
+                        1_usize
+                    } else {
+                        iter.count as usize
+                    }
+                };
 
-            sys::ecs_table_lock(iter.world, iter.table);
+                sys::ecs_table_lock(iter.world, iter.table);
 
-            for i in 0..iter_count {
-                let tuple = components_data.get_tuple(&*iter, i);
-                let iter_t = TableIter::new(iter);
+                for i in 0..iter_count {
+                    let tuple = components_data.get_tuple(&*iter, i);
+                    let iter_t = TableIter::new(iter);
 
                 each_iter(iter_t, i, tuple);
             }
