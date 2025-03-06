@@ -348,7 +348,7 @@ pub fn opaque_option_struct<T: Default>(world: WorldRef) -> Opaque<Option<T>, T>
         let world = unsafe { WorldRef::from_ptr(s.world as *mut flecs_ecs::sys::ecs_world_t) };
         let id = id!(world, T);
         match data {
-            Some(ref value) => {
+            Some(value) => {
                 s.member("Some");
                 s.value_id(id, value as *const T as *const core::ffi::c_void);
             }

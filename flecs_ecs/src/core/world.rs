@@ -1473,7 +1473,7 @@ impl World {
     #[doc(alias = "world::set_lookup_path")]
     #[doc(alias = "wsys::ecs_set_lookup_path")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
-                                               // TODO we need to improve this function somehow, it's not very ergonomic
+    // TODO we need to improve this function somehow, it's not very ergonomic
     pub fn set_lookup_path(&self, search_path: impl Into<Entity>) -> *mut sys::ecs_entity_t {
         unsafe { sys::ecs_set_lookup_path(self.raw_world.as_ptr(), &*search_path.into()) }
     }
@@ -1697,7 +1697,10 @@ impl World {
         (First, Second): ComponentOrPairId,
     {
         const {
-            assert!(!<(First, Second) as ComponentOrPairId>::IS_TAGS, "setting tag relationships is not possible with `set_pair`. use `add_pair` instead.");
+            assert!(
+                !<(First, Second) as ComponentOrPairId>::IS_TAGS,
+                "setting tag relationships is not possible with `set_pair`. use `add_pair` instead."
+            );
         };
 
         let entity = EntityView::new_from(
@@ -3784,7 +3787,6 @@ impl World {
     /// * [`EntityView::enqueue()`]
     /// * [`World::event()`]
     /// * C++ API: `world::event`
-    #[doc(alias = "world::event")]
     pub unsafe fn event_id(&self, event: impl Into<Entity>) -> EventBuilder<()> {
         EventBuilder::<()>::new_untyped(self, event)
     }

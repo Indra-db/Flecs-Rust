@@ -71,7 +71,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     /// * [`EventBuilder::new()`]
     /// * C++ API: `event_builder_base::event_builder_base`
     #[doc(alias = "event_builder_base::event_builder_base")]
-    pub(crate) unsafe fn new_untyped(
+    pub(crate) fn new_untyped(
         world: impl WorldProvider<'a>,
         event: impl Into<Entity>,
     ) -> EventBuilder<'a, ()> {

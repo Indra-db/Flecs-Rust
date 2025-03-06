@@ -1229,7 +1229,7 @@ fn flecs_entities_components_docs_compile_test() {
     let e1 = world.entity(); // Returns 500v0
     e1.destruct(); // Recycles 500
     let e2 = world.entity(); // Returns 500v1
-                             // Fails, 500v0 is not alive
+    // Fails, 500v0 is not alive
     e1.add::<Npc>();
     // OK, 500v1 is alive
     e2.add::<Npc>();
@@ -1285,7 +1285,7 @@ fn flecs_entities_components_docs_compile_test() {
     let e = world.entity_named("Child").child_of_id(p);
     // Returns entity name, does not allocate
     println!("{}", e.name()); // Child
-                              // Returns entity path, does allocate
+    // Returns entity path, does allocate
     println!("{}", e.path().unwrap()); // Parent.Child
 
     let e1 = world.entity_named("Parent::Child");
@@ -1437,7 +1437,7 @@ fn flecs_entities_components_docs_compile_test() {
     // Disable component
     e.disable::<Position>();
     assert!(!e.is_enabled::<Position>()); // False
-                                          // Enable component
+    // Enable component
     e.enable::<Position>();
     assert!(e.is_enabled::<Position>()); // True
 }
@@ -1535,8 +1535,8 @@ fn flecs_docs_relationships_compile_test() {
     // Begin is a tags and Position is a type, so (Begin, Position) has type Position
     e.set_pair::<Begin, Position>(Position { x: 10.0, y: 20.0 });
     e.set_pair::<End, Position>(Position { x: 100.0, y: 20.0 }); // Same for End
-                                                                 // ChildOf has the Tag property, so even though Position is a type, the pair
-                                                                 // does not assume the Position type
+    // ChildOf has the Tag property, so even though Position is a type, the pair
+    // does not assume the Position type
     e.add_id((flecs::ChildOf::ID, world.component_id::<Position>()));
     e.add::<(flecs::ChildOf, Position)>();
 
@@ -2563,7 +2563,7 @@ fn flecs_docs_component_traits_compile_test() {
         .entity()
         .set(Position { x: 10.0, y: 20.9 })
         .add_trait::<(Serializable, Position)>(); // Because Serializable is a tag, the pair
-                                                  // has a value of type Position
+    // has a value of type Position
 
     // Gets value from Position component
     e.get::<&Position>(|pos| {

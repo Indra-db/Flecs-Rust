@@ -1,6 +1,6 @@
 //! Iterators used to iterate over tables and table rows in [`Query`], [`System`][crate::addons::system::System] and [`Observer`].
 use core::marker::PhantomData;
-use core::{ffi::c_void, ffi::CStr, ptr::NonNull};
+use core::{ffi::CStr, ffi::c_void, ptr::NonNull};
 
 use crate::core::*;
 use crate::sys;
@@ -512,18 +512,20 @@ where
     // TODO? in C++ API there is a mutable and immutable version of this function
     // Maybe we should create a ColumnView struct that is immutable and use the Column struct for mutable access?
     pub unsafe fn field_unchecked<T>(&self, index: i8) -> Field<T> {
-        ecs_assert!(
-            index < self.iter.field_count,
-            FlecsErrorCode::InvalidParameter,
-            index
-        );
-        ecs_assert!(
-            (self.iter.flags & sys::EcsIterCppEach == 0)
-                || unsafe { sys::ecs_field_src(self.iter, index) != 0 },
-            FlecsErrorCode::InvalidOperation,
-            "cannot .field from .each, use .field_at instead",
-        );
-        self.field_internal::<T>(index).unwrap()
+        unsafe {
+            ecs_assert!(
+                index < self.iter.field_count,
+                FlecsErrorCode::InvalidParameter,
+                index
+            );
+            ecs_assert!(
+                (self.iter.flags & sys::EcsIterCppEach == 0)
+                    || sys::ecs_field_src(self.iter, index) != 0,
+                FlecsErrorCode::InvalidOperation,
+                "cannot .field from .each, use .field_at instead",
+            );
+            self.field_internal::<T>(index).unwrap()
+        }
     }
 
     fn field_checked<T: ComponentId>(&self, index: i8) -> Option<Field<T::UnderlyingType>> {

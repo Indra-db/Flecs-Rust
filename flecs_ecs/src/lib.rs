@@ -13,7 +13,9 @@
     feature = "flecs_force_build_release_c",
     feature = "flecs_force_build_debug_c"
 ))]
-compile_error!("Features 'flecs_force_build_release_c' and 'flecs_force_build_debug_c' cannot be enabled at the same time.");
+compile_error!(
+    "Features 'flecs_force_build_release_c' and 'flecs_force_build_debug_c' cannot be enabled at the same time."
+);
 
 #[cfg(not(feature = "std"))]
 const _: () = panic!("no_std is not ready yet");

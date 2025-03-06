@@ -2004,8 +2004,10 @@ unsafe extern "C-unwind" fn group_by_first_id(
     _id: u64,
     _ctx: *mut c_void,
 ) -> u64 {
-    let table_type: *const sys::ecs_type_t = sys::ecs_table_get_type(table);
-    *(*table_type).array.add(0)
+    unsafe {
+        let table_type: *const sys::ecs_type_t = sys::ecs_table_get_type(table);
+        *(*table_type).array.add(0)
+    }
 }
 
 unsafe extern "C-unwind" fn group_by_first_id_negated(
@@ -2014,7 +2016,7 @@ unsafe extern "C-unwind" fn group_by_first_id_negated(
     id: u64,
     ctx: *mut c_void,
 ) -> u64 {
-    !group_by_first_id(world, table, id, ctx)
+    unsafe { !group_by_first_id(world, table, id, ctx) }
 }
 
 #[test]
@@ -2149,12 +2151,14 @@ unsafe extern "C-unwind" fn group_by_rel(
     id: u64,
     _ctx: *mut c_void,
 ) -> u64 {
-    let mut id_matched: u64 = 0;
-    let ref_id = &mut id_matched;
-    if sys::ecs_search(world, table, ecs_pair(id, *flecs::Wildcard), ref_id) != -1 {
-        return *ecs_second(id_matched);
+    unsafe {
+        let mut id_matched: u64 = 0;
+        let ref_id = &mut id_matched;
+        if sys::ecs_search(world, table, ecs_pair(id, *flecs::Wildcard), ref_id) != -1 {
+            return *ecs_second(id_matched);
+        }
+        0
     }
-    0
 }
 
 #[test]

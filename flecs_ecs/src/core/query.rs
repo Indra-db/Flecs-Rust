@@ -174,16 +174,18 @@ where
     #[doc(alias = "query::query")]
     #[inline]
     pub unsafe fn new_from(query: NonNull<sys::ecs_query_t>) -> Self {
-        sys::flecs_poly_claim_(query.as_ptr() as *mut c_void);
+        unsafe {
+            sys::flecs_poly_claim_(query.as_ptr() as *mut c_void);
 
-        let world_ctx = ecs_get_binding_ctx((*query.as_ptr()).world) as *mut WorldCtx;
-        (*world_ctx).inc_query_ref_count();
-        let world_ctx = NonNull::new_unchecked(world_ctx);
+            let world_ctx = ecs_get_binding_ctx((*query.as_ptr()).world) as *mut WorldCtx;
+            (*world_ctx).inc_query_ref_count();
+            let world_ctx = NonNull::new_unchecked(world_ctx);
 
-        Self {
-            query,
-            world_ctx,
-            _phantom: core::marker::PhantomData,
+            Self {
+                query,
+                world_ctx,
+                _phantom: core::marker::PhantomData,
+            }
         }
     }
 
@@ -237,7 +239,9 @@ where
         let query_ptr = unsafe { sys::ecs_query_init(world_ptr, desc) };
 
         if query_ptr.is_null() {
-            panic!("Failed to create query, this is due to the user creating an invalid query. Most likely by using `expr` with a wrong expression.");
+            panic!(
+                "Failed to create query, this is due to the user creating an invalid query. Most likely by using `expr` with a wrong expression."
+            );
         }
 
         unsafe {

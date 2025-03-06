@@ -80,11 +80,15 @@ impl<'a> WorldRef<'a> {
     /// Caller must ensure `raw_world` points to a valid `sys::ecs_world_t`
     #[inline(always)]
     pub unsafe fn from_ptr(raw_world: *mut sys::ecs_world_t) -> Self {
-        WorldRef {
-            raw_world: NonNull::new_unchecked(raw_world),
-            components: NonNull::new_unchecked(World::get_components_map_ptr(raw_world)),
-            components_array: NonNull::new_unchecked(World::get_components_array_ptr(raw_world)),
-            _marker: PhantomData,
+        unsafe {
+            WorldRef {
+                raw_world: NonNull::new_unchecked(raw_world),
+                components: NonNull::new_unchecked(World::get_components_map_ptr(raw_world)),
+                components_array: NonNull::new_unchecked(World::get_components_array_ptr(
+                    raw_world,
+                )),
+                _marker: PhantomData,
+            }
         }
     }
 }

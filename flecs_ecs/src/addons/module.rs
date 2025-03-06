@@ -4,8 +4,8 @@
 //! * To import a module, see [`World::import()`].
 //! * To override the name of a module, see [`World::module()`].
 use crate::core::{
-    ecs_pair, flecs, register_componment_data_explicit, ComponentId, EntityView, FlecsConstantId,
-    IdOperations, World, WorldProvider, SEPARATOR,
+    ComponentId, EntityView, FlecsConstantId, IdOperations, SEPARATOR, World, WorldProvider,
+    ecs_pair, flecs, register_componment_data_explicit,
 };
 use crate::sys;
 

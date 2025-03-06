@@ -1299,14 +1299,16 @@ where
     T: QueryTuple,
     Func: FnMut(T::TupleType<'_>),
 {
-    let func = &mut *((*iter).callback_ctx as *mut Func);
+    unsafe {
+        let func = &mut *((*iter).callback_ctx as *mut Func);
 
-    let mut components_data = T::create_ptrs(&*iter);
-    let iter_count = (*iter).count as usize;
+        let mut components_data = T::create_ptrs(&*iter);
+        let iter_count = (*iter).count as usize;
 
-    for i in 0..iter_count {
-        let tuple = components_data.get_tuple(&unsafe { *iter }, i);
-        func(tuple);
+        for i in 0..iter_count {
+            let tuple = components_data.get_tuple(&*iter, i);
+            func(tuple);
+        }
     }
 }
 
@@ -1316,15 +1318,17 @@ unsafe extern "C-unwind" fn __internal_query_execute_each_entity<T, Func>(
     T: QueryTuple,
     Func: FnMut(EntityView, T::TupleType<'_>),
 {
-    let func = &mut *((*iter).callback_ctx as *mut Func);
+    unsafe {
+        let func = &mut *((*iter).callback_ctx as *mut Func);
 
-    let mut components_data = T::create_ptrs(&*iter);
-    let iter_count = (*iter).count as usize;
-    let world = WorldRef::from_ptr((*iter).world);
+        let mut components_data = T::create_ptrs(&*iter);
+        let iter_count = (*iter).count as usize;
+        let world = WorldRef::from_ptr((*iter).world);
 
-    for i in 0..iter_count {
-        let tuple = components_data.get_tuple(&*iter, i);
+        for i in 0..iter_count {
+            let tuple = components_data.get_tuple(&*iter, i);
 
-        func(EntityView::new_from(world, *(*iter).entities.add(i)), tuple);
+            func(EntityView::new_from(world, *(*iter).entities.add(i)), tuple);
+        }
     }
 }

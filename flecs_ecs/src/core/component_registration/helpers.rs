@@ -22,11 +22,7 @@ where
 {
     let size = {
         let size = core::mem::size_of::<T>();
-        if ALLOCATE_TAG && size == 0 {
-            1
-        } else {
-            size
-        }
+        if ALLOCATE_TAG && size == 0 { 1 } else { size }
     };
 
     let alignment = if size != 0 {

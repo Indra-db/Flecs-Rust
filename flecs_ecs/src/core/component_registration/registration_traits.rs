@@ -383,7 +383,11 @@ pub trait ComponentId:
     where
         Self: Default,
     {
-        ecs_assert!(Self::IS_GENERIC, FlecsErrorCode::InvalidOperation, "There is no need to register default hooks for non generic components. This is done automatically if a type has Default implemented");
+        ecs_assert!(
+            Self::IS_GENERIC,
+            FlecsErrorCode::InvalidOperation,
+            "There is no need to register default hooks for non generic components. This is done automatically if a type has Default implemented"
+        );
         let world_ptr = world.world_ptr_mut();
         let id = Self::id(world);
         let hooks = unsafe { flecs_ecs_sys::ecs_get_hooks_id(world_ptr, id) };
@@ -402,7 +406,11 @@ pub trait ComponentId:
     where
         Self: Clone,
     {
-        ecs_assert!(Self::IS_GENERIC, FlecsErrorCode::InvalidOperation, "There is no need to register clone hooks for non generic components. This is done automatically if a type has Clone implemented");
+        ecs_assert!(
+            Self::IS_GENERIC,
+            FlecsErrorCode::InvalidOperation,
+            "There is no need to register clone hooks for non generic components. This is done automatically if a type has Clone implemented"
+        );
         let world_ptr = world.world_ptr_mut();
         let id = Self::id(world);
         let hooks = unsafe { flecs_ecs_sys::ecs_get_hooks_id(world_ptr, id) };

@@ -123,9 +123,13 @@ impl<'a> BulkEntityBuilder<'a> {
     {
         const {
             if T::CastType::IS_GENERIC {
-                panic!("Adding a generic type requires to use the set function. This is due to Rust type system limitations.");
+                panic!(
+                    "Adding a generic type requires to use the set function. This is due to Rust type system limitations."
+                );
             } else if !T::CastType::IS_TAG && !T::CastType::IMPLS_DEFAULT {
-                panic!("Adding an element that is not a Tag / Zero sized type requires to implement Default");
+                panic!(
+                    "Adding an element that is not a Tag / Zero sized type requires to implement Default"
+                );
             }
         }
         self.add_id_unchecked(T::get_id(self.world))

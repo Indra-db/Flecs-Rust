@@ -156,7 +156,9 @@ where
     }
 
     fn retrieve_iter_stage<'w>(&self, _stage: impl WorldProvider<'w>) -> sys::ecs_iter_t {
-        panic!("Cannot change the stage of an iterator that already exists. Use retrieve_iter_stage on the underlying query instead.");
+        panic!(
+            "Cannot change the stage of an iterator that already exists. Use retrieve_iter_stage on the underlying query instead."
+        );
     }
 
     fn iter_next(&self, iter: &mut sys::ecs_iter_t) -> bool {

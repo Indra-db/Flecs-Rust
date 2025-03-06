@@ -377,22 +377,26 @@ pub fn get_generation(entity: impl Into<Entity>) -> u32 {
 /// ```
 #[inline(always)]
 pub unsafe fn ecs_field<T>(it: *const sys::ecs_iter_t, index: i8) -> *mut T {
-    let size = core::mem::size_of::<T>();
+    unsafe {
+        let size = core::mem::size_of::<T>();
 
-    ecs_assert!(
-        size != 0,
-        FlecsErrorCode::NotAComponent,
-        "{}: cannot fetch terms that are Tags / zero-sized. With queries, either switch the signature from using the type signature to `.with`",
-        core::any::type_name::<T>()
-    );
+        ecs_assert!(
+            size != 0,
+            FlecsErrorCode::NotAComponent,
+            "{}: cannot fetch terms that are Tags / zero-sized. With queries, either switch the signature from using the type signature to `.with`",
+            core::any::type_name::<T>()
+        );
 
-    sys::ecs_field_w_size(it, size, index) as *mut T
+        sys::ecs_field_w_size(it, size, index) as *mut T
+    }
 }
 
 #[inline(always)]
 pub(crate) unsafe fn ecs_field_at<T>(it: *const sys::ecs_iter_t, index: i8, row: i32) -> *mut T {
-    let size = core::mem::size_of::<T>();
-    sys::ecs_field_at_w_size(it, size, index, row) as *mut T
+    unsafe {
+        let size = core::mem::size_of::<T>();
+        sys::ecs_field_at_w_size(it, size, index, row) as *mut T
+    }
 }
 
 /// Get the `OperKind` for the given type.
@@ -462,18 +466,20 @@ pub(crate) fn copy_and_allocate_c_char_from_rust_str(data: &str) -> *mut c_char 
 /// This function is for development purposes. It is not intended to be used in production code.
 #[cfg(feature = "std")]
 pub(crate) unsafe fn print_c_string(c_string: *const c_char) {
-    // Ensure the pointer is not null
-    assert!(!c_string.is_null(), "Null pointer passed to print_c_string");
+    unsafe {
+        // Ensure the pointer is not null
+        assert!(!c_string.is_null(), "Null pointer passed to print_c_string");
 
-    // Create a CStr from the raw pointer
-    let c_str = core::ffi::CStr::from_ptr(c_string);
+        // Create a CStr from the raw pointer
+        let c_str = core::ffi::CStr::from_ptr(c_string);
 
-    // Convert CStr to a Rust string slice (&str)
-    // This can fail if the C string is not valid UTF-8, so handle errors appropriately
-    #[allow(clippy::print_stdout)]
-    match c_str.to_str() {
-        Ok(s) => println!("{}", s),
-        Err(_) => println!("Failed to convert C string to Rust string"),
+        // Convert CStr to a Rust string slice (&str)
+        // This can fail if the C string is not valid UTF-8, so handle errors appropriately
+        #[allow(clippy::print_stdout)]
+        match c_str.to_str() {
+            Ok(s) => println!("{}", s),
+            Err(_) => println!("Failed to convert C string to Rust string"),
+        }
     }
 }
 
@@ -507,10 +513,14 @@ pub(crate) fn check_add_id_validity(world: *const sys::ecs_world_t, id: u64) {
     let is_not_tag = unsafe { sys::ecs_get_typeid(world, id) != 0 };
 
     if is_not_tag {
-        assert!(has_default_hook(world,id),"Id is not a zero-sized type (ZST) such as a Tag or Entity or does not implement the Default hook for a non ZST type. Default hooks are automatically implemented if the type has a Default trait.");
+        assert!(
+            has_default_hook(world, id),
+            "Id is not a zero-sized type (ZST) such as a Tag or Entity or does not implement the Default hook for a non ZST type. Default hooks are automatically implemented if the type has a Default trait."
+        );
     }
 }
 
+#[inline(never)]
 pub(crate) fn has_default_hook(world: *const sys::ecs_world_t, id: u64) -> bool {
     let hooks = unsafe { sys::ecs_get_hooks_id(world, id) };
     let ctor_hooks =

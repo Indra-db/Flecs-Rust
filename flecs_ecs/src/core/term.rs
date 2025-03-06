@@ -167,7 +167,9 @@ fn check_term_access_validity<'a>(term: &impl TermBuilderImpl<'a>) {
     if term.current_term_index() < term.count_generic_terms()
         && term.current_term_ref_mode() != TermRefMode::Src
     {
-        panic!("This function should only be used on terms that are not part of the generic type signature. ")
+        panic!(
+            "This function should only be used on terms that are not part of the generic type signature. "
+        )
     }
 }
 /// Term builder interface for building queries, observers and systems.
@@ -916,7 +918,9 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     #[inline(always)]
     fn set_in(&mut self) -> &mut Self {
         if self.current_term_index() < self.count_generic_terms() {
-            panic!("This function should only be used on terms that are not part of the generic type signature. use &T instead")
+            panic!(
+                "This function should only be used on terms that are not part of the generic type signature. use &T instead"
+            )
         }
         self.set_inout_kind(InOutKind::In)
     }
@@ -932,7 +936,9 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     #[inline(always)]
     fn set_out(&mut self) -> &mut Self {
         if self.current_term_index() < self.count_generic_terms() {
-            panic!("This function should only be used on terms that are not part of the generic type signature. Use &mut T instead.")
+            panic!(
+                "This function should only be used on terms that are not part of the generic type signature. Use &mut T instead."
+            )
         }
         self.set_inout_kind(InOutKind::Out)
     }
@@ -948,7 +954,9 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     #[inline(always)]
     fn set_inout(&mut self) -> &mut Self {
         if self.current_term_index() < self.count_generic_terms() {
-            panic!("This function should only be used on terms that are not part of the generic type signature. Use &mut T instead.")
+            panic!(
+                "This function should only be used on terms that are not part of the generic type signature. Use &mut T instead."
+            )
         }
         self.set_inout_kind(InOutKind::InOut)
     }
@@ -1039,7 +1047,9 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     #[inline(always)]
     fn optional(&mut self) -> &mut Self {
         if self.current_term_index() < self.count_generic_terms() {
-            panic!("This function should only be used on terms that are not part of the generic type signature. Use Option<> instead.")
+            panic!(
+                "This function should only be used on terms that are not part of the generic type signature. Use Option<> instead."
+            )
         }
         self.set_oper(OperKind::Optional)
     }
