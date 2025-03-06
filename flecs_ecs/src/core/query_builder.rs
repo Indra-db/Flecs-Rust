@@ -27,14 +27,14 @@ use alloc::{format, vec::Vec};
 /// #[derive(Component)]
 /// struct Foo(u8);
 ///
-/// fn foo_query(wrld: &World) -> Query<&'static Foo> {
-///     query!(wrld, &Foo).build()
+/// fn foo_query(world: &World) -> Query<&'static Foo> {
+///     query!(world, &Foo).build()
 /// }
 ///
-/// fn plugin(wrld: &World) {
-///     let foos = foo_query(wrld);
+/// fn plugin(world: &World) {
+///     let foos = foo_query(world);
 ///
-///     wrld.system::<()>().each(move |_| {
+///     world.system::<()>().each(move |_| {
 ///         foos.each(|foo| {
 ///             // ..
 ///         });
