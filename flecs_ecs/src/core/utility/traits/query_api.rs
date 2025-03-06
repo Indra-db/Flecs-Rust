@@ -69,12 +69,19 @@ where
             let mut iter = self.retrieve_iter();
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             let components_access = world.components_access_map();
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
-            let indices = components_access.increment_counters_from_iter(&iter);
 
             iter.flags |= sys::EcsIterCppEach;
 
-            while self.iter_next(&mut iter) {
+            if self.iter_next(&mut iter) {
+                return;
+            }
+
+            //TODO this has to be feature gated...
+            let read_write_cache = determine_ids_plus_indices_for_wildcard_terms(&iter);
+
+            let mut table_id = sys::ecs_rust_table_id(iter.table);
+
+            loop {
                 let mut components_data = T::create_ptrs(&iter);
                 let iter_count = {
                     if iter.count == 0 && iter.table.is_null() {
@@ -87,9 +94,21 @@ where
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
                     let ids = components_data.ids();
-                    for index in &indices {
+
+                    for index in &read_write_cache.variable_reads {
+                        //TODO I believe this doesn't need to be split between read,write? the ReadWriteId structs
                         let id = ids[*index as usize];
-                        components_access.increment_counters_from_id(id);
+                        components_access.increment_read(*id, table_id);
+                    }
+                    for index in &read_write_cache.variable_writes {
+                        let id = ids[*index as usize];
+                        components_access.set_write(*id, table_id);
+                    }
+                    for id in &read_write_cache.read_ids {
+                        components_access.increment_read(*id, table_id);
+                    }
+                    for id in &read_write_cache.write_ids {
+                        components_access.set_write(*id, table_id);
                     }
                 }
 
@@ -105,14 +124,31 @@ where
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
                     let ids = components_data.ids();
-                    for index in &indices {
+                    for index in &read_write_cache.variable_reads {
                         let id = ids[*index as usize];
-                        components_access.decrement_counters_from_id(id);
+                        components_access.decrement_read(*id, table_id);
+                    }
+                    for index in &read_write_cache.variable_writes {
+                        let id = ids[*index as usize];
+                        components_access.clear_write(*id, table_id);
+                    }
+                    for id in &read_write_cache.read_ids {
+                        components_access.decrement_read(*id, table_id);
+                    }
+                    for id in &read_write_cache.write_ids {
+                        components_access.clear_write(*id, table_id);
                     }
                 }
+
+                if self.iter_next(&mut iter) {
+                    #[cfg(feature = "flecs_safety_readwrite_locks")]
+                    {
+                        table_id = sys::ecs_rust_table_id(iter.table);
+                    }
+                } else {
+                    break;
+                }
             }
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
-            components_access.decrement_counters_from_iter(&iter);
         }
     }
 
@@ -141,12 +177,19 @@ where
             let mut iter = self.retrieve_iter();
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             let components_access = world.components_access_map();
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
-            let indices = components_access.increment_counters_from_iter(&iter);
 
             iter.flags |= sys::EcsIterCppEach;
 
-            while self.iter_next(&mut iter) {
+            if self.iter_next(&mut iter) {
+                return;
+            }
+
+            //TODO this has to be feature gated...
+            let read_write_cache = determine_ids_plus_indices_for_wildcard_terms(&iter);
+
+            let mut table_id = sys::ecs_rust_table_id(iter.table);
+
+            loop {
                 ecs_assert!(
                     !iter.entities.is_null(),
                     FlecsErrorCode::InvalidParameter,
@@ -166,24 +209,30 @@ where
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
                     let ids = components_data.ids();
-                    for index in &indices {
+
+                    for index in &read_write_cache.variable_reads {
+                        //TODO I believe this doesn't need to be split between read,write? the ReadWriteId structs
                         let id = ids[*index as usize];
-                        components_access.increment_counters_from_id(id);
+                        components_access.increment_read(*id, table_id);
+                    }
+                    for index in &read_write_cache.variable_writes {
+                        let id = ids[*index as usize];
+                        components_access.set_write(*id, table_id);
+                    }
+                    for id in &read_write_cache.read_ids {
+                        components_access.increment_read(*id, table_id);
+                    }
+                    for id in &read_write_cache.write_ids {
+                        components_access.set_write(*id, table_id);
                     }
                 }
 
                 sys::ecs_table_lock(world_ptr, iter.table);
 
-                // TODO random thought, I think I can determine the elements is a ref or not before the for loop and then pass two arrays with the indices of the ref and non ref elements
-                // I will come back to this in the future, my thoughts are somewhere else right now. If my assumption is correct, this will get rid of the branch in the for loop
-                // and potentially allow for more conditions for vectorization to happen. This could potentially offer a (small) performance boost since the branch predictor avoids probably
-                // most of the cost since the branch is almost always the same.
-                // update: I believe it's not possible due to not knowing the order of the components in the tuple. I will leave this here for now, maybe I will come back to it in the future.
                 for i in 0..iter_count {
-                    let world = self.world();
+                    let entity = EntityView::new_from(self.world(), *iter.entities.add(i));
                     let tuple = components_data.get_tuple(&iter, i);
-
-                    func(EntityView::new_from(world, *iter.entities.add(i)), tuple);
+                    func(entity, tuple);
                 }
 
                 sys::ecs_table_unlock(world_ptr, iter.table);
@@ -191,14 +240,31 @@ where
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
                     let ids = components_data.ids();
-                    for index in &indices {
+                    for index in &read_write_cache.variable_reads {
                         let id = ids[*index as usize];
-                        components_access.decrement_counters_from_id(id);
+                        components_access.decrement_read(*id, table_id);
+                    }
+                    for index in &read_write_cache.variable_writes {
+                        let id = ids[*index as usize];
+                        components_access.clear_write(*id, table_id);
+                    }
+                    for id in &read_write_cache.read_ids {
+                        components_access.decrement_read(*id, table_id);
+                    }
+                    for id in &read_write_cache.write_ids {
+                        components_access.clear_write(*id, table_id);
                     }
                 }
+
+                if self.iter_next(&mut iter) {
+                    #[cfg(feature = "flecs_safety_readwrite_locks")]
+                    {
+                        table_id = sys::ecs_rust_table_id(iter.table);
+                    }
+                } else {
+                    break;
+                }
             }
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
-            components_access.decrement_counters_from_iter(&iter);
         }
     }
 
@@ -259,12 +325,19 @@ where
             let mut iter = self.retrieve_iter();
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             let components_access = world.components_access_map();
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
-            let indices = components_access.increment_counters_from_iter(&iter);
 
             iter.flags |= sys::EcsIterCppEach;
 
-            while self.iter_next(&mut iter) {
+            if self.iter_next(&mut iter) {
+                return;
+            }
+
+            //TODO this has to be feature gated...
+            let read_write_cache = determine_ids_plus_indices_for_wildcard_terms(&iter);
+
+            let mut table_id = sys::ecs_rust_table_id(iter.table);
+
+            loop {
                 let mut components_data = T::create_ptrs(&iter);
                 let iter_count = {
                     if iter.count == 0 && iter.table.is_null() {
@@ -277,9 +350,21 @@ where
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
                     let ids = components_data.ids();
-                    for index in &indices {
+
+                    for index in &read_write_cache.variable_reads {
+                        //TODO I believe this doesn't need to be split between read,write? the ReadWriteId structs
                         let id = ids[*index as usize];
-                        components_access.increment_counters_from_id(id);
+                        components_access.increment_read(*id, table_id);
+                    }
+                    for index in &read_write_cache.variable_writes {
+                        let id = ids[*index as usize];
+                        components_access.set_write(*id, table_id);
+                    }
+                    for id in &read_write_cache.read_ids {
+                        components_access.increment_read(*id, table_id);
+                    }
+                    for id in &read_write_cache.write_ids {
+                        components_access.set_write(*id, table_id);
                     }
                 }
 
@@ -288,7 +373,6 @@ where
                 for i in 0..iter_count {
                     let tuple = components_data.get_tuple(&iter, i);
                     let iter_t = TableIter::new(&mut iter);
-
                     func(iter_t, i, tuple);
                 }
 
@@ -297,14 +381,22 @@ where
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
                     let ids = components_data.ids();
-                    for index in &indices {
+                    for index in &read_write_cache.variable_reads {
                         let id = ids[*index as usize];
-                        components_access.decrement_counters_from_id(id);
+                        components_access.decrement_read(*id, table_id);
+                    }
+                    for index in &read_write_cache.variable_writes {
+                        let id = ids[*index as usize];
+                        components_access.clear_write(*id, table_id);
+                    }
+                    for id in &read_write_cache.read_ids {
+                        components_access.decrement_read(*id, table_id);
+                    }
+                    for id in &read_write_cache.write_ids {
+                        components_access.clear_write(*id, table_id);
                     }
                 }
             }
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
-            components_access.decrement_counters_from_iter(&iter);
         }
     }
 
@@ -331,26 +423,43 @@ where
             let world_ptr = self.world_ptr_mut();
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             let components_access = world.components_access_map();
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
-            let indices = components_access.increment_counters_from_iter(&iter);
 
-            while self.iter_next(&mut iter) {
+            if self.iter_next(&mut iter) {
+                return None;
+            }
+
+            //TODO this has to be feature gated...
+            let read_write_cache = determine_ids_plus_indices_for_wildcard_terms(&iter);
+
+            let mut table_id = sys::ecs_rust_table_id(iter.table);
+
+            loop {
                 let mut components_data = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
                     let ids = components_data.ids();
-                    for index in &indices {
+
+                    for index in &read_write_cache.variable_reads {
                         let id = ids[*index as usize];
-                        components_access.increment_counters_from_id(id);
+                        components_access.increment_read(*id, table_id);
+                    }
+                    for index in &read_write_cache.variable_writes {
+                        let id = ids[*index as usize];
+                        components_access.set_write(*id, table_id);
+                    }
+                    for id in &read_write_cache.read_ids {
+                        components_access.increment_read(*id, table_id);
+                    }
+                    for id in &read_write_cache.write_ids {
+                        components_access.set_write(*id, table_id);
                     }
                 }
 
                 sys::ecs_table_lock(world_ptr, iter.table);
 
                 for i in 0..iter_count {
-                    let world = self.world();
                     let tuple = components_data.get_tuple(&iter, i);
                     if func(tuple) {
                         entity = Some(EntityView::new_from(world, *iter.entities.add(i)));
@@ -363,14 +472,31 @@ where
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
                     let ids = components_data.ids();
-                    for index in &indices {
+                    for index in &read_write_cache.variable_reads {
                         let id = ids[*index as usize];
-                        components_access.decrement_counters_from_id(id);
+                        components_access.decrement_read(*id, table_id);
+                    }
+                    for index in &read_write_cache.variable_writes {
+                        let id = ids[*index as usize];
+                        components_access.clear_write(*id, table_id);
+                    }
+                    for id in &read_write_cache.read_ids {
+                        components_access.decrement_read(*id, table_id);
+                    }
+                    for id in &read_write_cache.write_ids {
+                        components_access.clear_write(*id, table_id);
                     }
                 }
+
+                if self.iter_next(&mut iter) {
+                    #[cfg(feature = "flecs_safety_readwrite_locks")]
+                    {
+                        table_id = sys::ecs_rust_table_id(iter.table);
+                    }
+                } else {
+                    break;
+                }
             }
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
-            components_access.decrement_counters_from_iter(&iter);
             entity
         }
     }
@@ -401,28 +527,44 @@ where
             let world_ptr = self.world_ptr_mut();
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             let components_access = world.components_access_map();
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
-            let indices = components_access.increment_counters_from_iter(&iter);
 
-            while self.iter_next(&mut iter) {
+            if self.iter_next(&mut iter) {
+                return None;
+            }
+
+            //TODO this has to be feature gated...
+            let read_write_cache = determine_ids_plus_indices_for_wildcard_terms(&iter);
+
+            let mut table_id = sys::ecs_rust_table_id(iter.table);
+
+            loop {
                 let mut components_data = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
                     let ids = components_data.ids();
-                    for index in &indices {
+
+                    for index in &read_write_cache.variable_reads {
                         let id = ids[*index as usize];
-                        components_access.increment_counters_from_id(id);
+                        components_access.increment_read(*id, table_id);
+                    }
+                    for index in &read_write_cache.variable_writes {
+                        let id = ids[*index as usize];
+                        components_access.set_write(*id, table_id);
+                    }
+                    for id in &read_write_cache.read_ids {
+                        components_access.increment_read(*id, table_id);
+                    }
+                    for id in &read_write_cache.write_ids {
+                        components_access.set_write(*id, table_id);
                     }
                 }
 
                 sys::ecs_table_lock(world_ptr, iter.table);
 
                 for i in 0..iter_count {
-                    let world = self.world();
                     let entity = EntityView::new_from(world, *iter.entities.add(i));
-
                     let tuple = components_data.get_tuple(&iter, i);
                     if func(entity, tuple) {
                         entity_result = Some(entity);
@@ -435,14 +577,31 @@ where
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
                     let ids = components_data.ids();
-                    for index in &indices {
+                    for index in &read_write_cache.variable_reads {
                         let id = ids[*index as usize];
-                        components_access.decrement_counters_from_id(id);
+                        components_access.decrement_read(*id, table_id);
+                    }
+                    for index in &read_write_cache.variable_writes {
+                        let id = ids[*index as usize];
+                        components_access.clear_write(*id, table_id);
+                    }
+                    for id in &read_write_cache.read_ids {
+                        components_access.decrement_read(*id, table_id);
+                    }
+                    for id in &read_write_cache.write_ids {
+                        components_access.clear_write(*id, table_id);
                     }
                 }
+
+                if self.iter_next(&mut iter) {
+                    #[cfg(feature = "flecs_safety_readwrite_locks")]
+                    {
+                        table_id = sys::ecs_rust_table_id(iter.table);
+                    }
+                } else {
+                    break;
+                }
             }
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
-            components_access.decrement_counters_from_iter(&iter);
             entity_result
         }
     }
@@ -475,11 +634,18 @@ where
             let world = self.world();
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             let components_access = world.components_access_map();
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
-            let indices = components_access.increment_counters_from_iter(&iter);
             let world = self.world_ptr_mut();
 
-            while self.iter_next(&mut iter) {
+            if self.iter_next(&mut iter) {
+                return None;
+            }
+
+            //TODO this has to be feature gated...
+            let read_write_cache = determine_ids_plus_indices_for_wildcard_terms(&iter);
+
+            let mut table_id = sys::ecs_rust_table_id(iter.table);
+
+            loop {
                 let mut components_data = T::create_ptrs(&iter);
                 let iter_count = {
                     if iter.count == 0 {
@@ -492,9 +658,20 @@ where
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
                     let ids = components_data.ids();
-                    for index in &indices {
+
+                    for index in &read_write_cache.variable_reads {
                         let id = ids[*index as usize];
-                        components_access.increment_counters_from_id(id);
+                        components_access.increment_read(*id, table_id);
+                    }
+                    for index in &read_write_cache.variable_writes {
+                        let id = ids[*index as usize];
+                        components_access.set_write(*id, table_id);
+                    }
+                    for id in &read_write_cache.read_ids {
+                        components_access.increment_read(*id, table_id);
+                    }
+                    for id in &read_write_cache.write_ids {
+                        components_access.set_write(*id, table_id);
                     }
                 }
 
@@ -515,14 +692,32 @@ where
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
                     let ids = components_data.ids();
-                    for index in &indices {
+                    for index in &read_write_cache.variable_reads {
                         let id = ids[*index as usize];
-                        components_access.decrement_counters_from_id(id);
+                        components_access.decrement_read(*id, table_id);
+                    }
+                    for index in &read_write_cache.variable_writes {
+                        let id = ids[*index as usize];
+                        components_access.clear_write(*id, table_id);
+                    }
+                    for id in &read_write_cache.read_ids {
+                        components_access.decrement_read(*id, table_id);
+                    }
+                    for id in &read_write_cache.write_ids {
+                        components_access.clear_write(*id, table_id);
                     }
                 }
+
+                if self.iter_next(&mut iter) {
+                    #[cfg(feature = "flecs_safety_readwrite_locks")]
+                    {
+                        table_id = sys::ecs_rust_table_id(iter.table);
+                    }
+                } else {
+                    break;
+                }
             }
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
-            components_access.decrement_counters_from_iter(&iter);
+
             entity_result
         }
     }
@@ -1512,4 +1707,60 @@ unsafe extern "C-unwind" fn __internal_query_execute_each_entity<T, Func>(
 
         func(EntityView::new_from(world, *(*iter).entities.add(i)), tuple);
     }
+}
+
+/// This struct holds indices for terms that are variable.
+/// e.g. wildcard pairs, which need to be determined on a per table iteration
+/// set to 320 bytes, 5 full cache lines, hopefully logically distributed.
+#[derive(Default)]
+struct ReadWriteCachedInstructions {
+    // we expect more reads than writes, hence the 20 to 8 split
+    read_ids: smallvec::SmallVec<[u64; 20]>,
+    write_ids: smallvec::SmallVec<[u64; 8]>,
+    //u8 to cache the variable indices because we never expect there to be more than 256 terms.
+    variable_reads: smallvec::SmallVec<[u8; 10]>,
+    variable_writes: smallvec::SmallVec<[u8; 10]>,
+}
+
+// TODO might be able to optimize this by only iterating the terms? Find the value that determines if the term
+// idea is not final
+/// This function is to cache which ids are meant for read and write operations
+/// and which ids need to be re-fetched on a per table iteration basis.
+fn determine_ids_plus_indices_for_wildcard_terms(
+    iter: &sys::ecs_iter_t,
+) -> ReadWriteCachedInstructions {
+    let terms = unsafe { (*iter.query).terms };
+    let terms_count = unsafe { (*iter.query).term_count };
+    let ids = unsafe { core::slice::from_raw_parts(iter.ids, terms_count as usize) };
+
+    let mut read_write = ReadWriteCachedInstructions::default();
+
+    for i in 0..terms_count as usize {
+        let id = ids[i];
+        let term = terms[i];
+        if id == 0 {
+            match term.inout as u32 {
+                sys::ecs_inout_kind_t_EcsIn => {
+                    read_write.variable_reads.push(i as u8);
+                }
+                sys::ecs_inout_kind_t_EcsInOut | sys::ecs_inout_kind_t_EcsOut => {
+                    read_write.variable_writes.push(i as u8);
+                }
+                _ => {}
+            }
+
+            continue;
+        }
+
+        match term.inout as u32 {
+            sys::ecs_inout_kind_t_EcsIn => {
+                read_write.read_ids.push(term.id);
+            }
+            sys::ecs_inout_kind_t_EcsInOut | sys::ecs_inout_kind_t_EcsOut => {
+                read_write.write_ids.push(term.id);
+            }
+            _ => {}
+        }
+    }
+    read_write
 }

@@ -923,8 +923,8 @@ where
         {
             let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
             let components_access = world_ref.component_access;
-            //Dummy id
-            Field::<Entity>::new(slice, false, Entity(0), components_access)
+            //Dummy id and table id since we're not accessing any data
+            Field::<Entity>::new(slice, false, Entity(0), 0, components_access)
         }
     }
 
@@ -1030,9 +1030,16 @@ where
 
         #[cfg(feature = "flecs_safety_readwrite_locks")]
         {
+            let table_id = unsafe { sys::ecs_rust_table_id(self.iter.table) };
             let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
             let components_access = world_ref.component_access;
-            Some(Field::<T>::new(slice, is_shared, _id, components_access))
+            Some(Field::<T>::new(
+                slice,
+                is_shared,
+                _id,
+                table_id,
+                components_access,
+            ))
         }
     }
 
@@ -1056,9 +1063,15 @@ where
 
         #[cfg(feature = "flecs_safety_readwrite_locks")]
         {
+            let table_id = unsafe { sys::ecs_rust_table_id(self.iter.table) };
             let world_ref = WorldRef::from_ptr(self.iter.world);
             let components_access = world_ref.component_access;
-            Some(FieldAt::<T>::new(component_ref, _id, components_access))
+            Some(FieldAt::<T>::new(
+                component_ref,
+                _id,
+                table_id,
+                components_access,
+            ))
         }
     }
 
@@ -1090,9 +1103,16 @@ where
 
         #[cfg(feature = "flecs_safety_readwrite_locks")]
         {
+            let table_id = unsafe { sys::ecs_rust_table_id(self.iter.table) };
             let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
             let components_access = world_ref.component_access;
-            Some(FieldMut::<T>::new(slice, is_shared, _id, components_access))
+            Some(FieldMut::<T>::new(
+                slice,
+                is_shared,
+                _id,
+                table_id,
+                components_access,
+            ))
         }
     }
 
@@ -1123,7 +1143,13 @@ where
         {
             let world_ref = WorldRef::from_ptr(self.iter.world);
             let components_access = world_ref.component_access;
-            Some(FieldAtMut::<T>::new(component_ref, _id, components_access))
+            let table_id = unsafe { sys::ecs_rust_table_id(self.iter.table) };
+            Some(FieldAtMut::<T>::new(
+                component_ref,
+                _id,
+                table_id,
+                components_access,
+            ))
         }
     }
 
@@ -1198,11 +1224,13 @@ where
 
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             {
+                let table_id = unsafe { sys::ecs_rust_table_id(self.iter.table) };
                 let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
                 let components_access = world_ref.component_access;
                 return Some(FieldAt::<T::UnderlyingType>::new(
                     component_ref,
                     Entity(term_id),
+                    table_id,
                     components_access,
                 ));
             }
@@ -1252,11 +1280,13 @@ where
 
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             {
+                let table_id = unsafe { sys::ecs_rust_table_id(self.iter.table) };
                 let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
                 let components_access = world_ref.component_access;
                 return Some(FieldAtMut::<T::UnderlyingType>::new(
                     component_ref,
                     Entity(term_id),
+                    table_id,
                     components_access,
                 ));
             }

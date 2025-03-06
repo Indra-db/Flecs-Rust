@@ -20,6 +20,8 @@ pub struct Field<'a, T> {
     pub(crate) component_access: NonNull<ReadWriteComponentsMap>,
     #[cfg(feature = "flecs_safety_readwrite_locks")]
     pub(crate) id: Entity,
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) table_id: u64,
 }
 
 #[cfg(feature = "flecs_safety_readwrite_locks")]
@@ -27,7 +29,7 @@ impl<'a, T> Drop for Field<'a, T> {
     fn drop(&mut self) {
         unsafe {
             let component_access = self.component_access.as_mut();
-            component_access.decrement_read(*self.id);
+            component_access.decrement_read(*self.id, self.table_id);
         }
     }
 }
@@ -68,17 +70,19 @@ impl<'a, T> Field<'a, T> {
         slice_components: &'a [T],
         is_shared: bool,
         id: Entity,
+        table_id: u64,
         mut component_access: NonNull<ReadWriteComponentsMap>,
     ) -> Self {
         unsafe {
             let component_access = component_access.as_mut();
-            component_access.increment_read(*id);
+            component_access.increment_read(*id, table_id);
         }
         Self {
             slice_components,
             is_shared,
             component_access,
             id,
+            table_id,
         }
     }
 
@@ -110,6 +114,8 @@ pub struct FieldMut<'a, T> {
     pub(crate) component_access: NonNull<ReadWriteComponentsMap>,
     #[cfg(feature = "flecs_safety_readwrite_locks")]
     pub(crate) id: Entity,
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) table_id: u64,
 }
 
 #[cfg(feature = "flecs_safety_readwrite_locks")]
@@ -117,7 +123,7 @@ impl<'a, T> Drop for FieldMut<'a, T> {
     fn drop(&mut self) {
         unsafe {
             let component_access = self.component_access.as_mut();
-            component_access.clear_write(*self.id);
+            component_access.clear_write(*self.id, self.table_id);
         }
     }
 }
@@ -158,17 +164,19 @@ impl<'a, T> FieldMut<'a, T> {
         slice_components: &'a mut [T],
         is_shared: bool,
         id: Entity,
+        table_id: u64,
         mut component_access: NonNull<ReadWriteComponentsMap>,
     ) -> Self {
         unsafe {
             let component_access = component_access.as_mut();
-            component_access.set_write(*id);
+            component_access.set_write(*id, table_id);
         }
         Self {
             slice_components,
             is_shared,
             component_access,
             id,
+            table_id,
         }
     }
 
@@ -200,6 +208,8 @@ pub struct FieldAt<'a, T> {
     pub(crate) component_access: NonNull<ReadWriteComponentsMap>,
     #[cfg(feature = "flecs_safety_readwrite_locks")]
     pub(crate) id: Entity,
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) table_id: u64,
 }
 
 #[cfg(feature = "flecs_safety_readwrite_locks")]
@@ -207,7 +217,7 @@ impl<'a, T> Drop for FieldAt<'a, T> {
     fn drop(&mut self) {
         unsafe {
             let component_access = self.component_access.as_mut();
-            component_access.decrement_read(*self.id);
+            component_access.decrement_read(*self.id, self.table_id);
         }
     }
 }
@@ -230,16 +240,18 @@ impl<'a, T> FieldAt<'a, T> {
     pub(crate) fn new(
         component: &'a T,
         id: Entity,
+        table_id: u64,
         mut component_access: NonNull<ReadWriteComponentsMap>,
     ) -> Self {
         unsafe {
             let component_access = component_access.as_mut();
-            component_access.increment_read(*id);
+            component_access.increment_read(*id, table_id);
         }
         Self {
             component,
             component_access,
             id,
+            table_id,
         }
     }
 }
@@ -250,6 +262,8 @@ pub struct FieldAtMut<'a, T> {
     pub(crate) component_access: NonNull<ReadWriteComponentsMap>,
     #[cfg(feature = "flecs_safety_readwrite_locks")]
     pub(crate) id: Entity,
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) table_id: u64,
 }
 
 #[cfg(feature = "flecs_safety_readwrite_locks")]
@@ -257,7 +271,7 @@ impl<'a, T> Drop for FieldAtMut<'a, T> {
     fn drop(&mut self) {
         unsafe {
             let component_access = self.component_access.as_mut();
-            component_access.clear_write(*self.id);
+            component_access.clear_write(*self.id, self.table_id);
         }
     }
 }
@@ -286,16 +300,18 @@ impl<'a, T> FieldAtMut<'a, T> {
     pub(crate) fn new(
         component: &'a mut T,
         id: Entity,
+        table_id: u64,
         mut component_access: NonNull<ReadWriteComponentsMap>,
     ) -> Self {
         unsafe {
             let component_access = component_access.as_mut();
-            component_access.set_write(*id);
+            component_access.set_write(*id, table_id);
         }
         Self {
             component,
             component_access,
             id,
+            table_id,
         }
     }
 }

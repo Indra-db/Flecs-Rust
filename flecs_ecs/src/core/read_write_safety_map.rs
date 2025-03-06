@@ -2,24 +2,33 @@ use dashmap::DashMap;
 use flecs_ecs::sys;
 use smallvec::{smallvec, SmallVec};
 
-use core::sync::atomic::{AtomicU32, Ordering};
+use core::sync::atomic::{AtomicU16, Ordering};
 
 use super::ReadWriteId;
 
 /// Reserve the highest bit as the write flag.
-const WRITE_FLAG: u32 = 1 << 31;
+const WRITE_FLAG: u16 = 1 << 15;
 /// The remaining bits hold the read count.
-const READ_MASK: u32 = WRITE_FLAG - 1;
+const READ_MASK: u16 = WRITE_FLAG - 1;
 
-type EntityId = u64;
+type ComponentOrPairId = u64;
+type TableId = u64;
+
+// we use u128 over (u64, u64) to avoid the extra hash calculation and slightly better memory footprint.
+type ComponentOrPairIdAndTableId = u128;
+
+pub(crate) fn combone_ids(id: ComponentOrPairId, table_id: TableId) -> ComponentOrPairIdAndTableId {
+    ((id as u128) << 64) | (table_id as u128)
+}
+
 pub(crate) struct ReadWriteCounter {
-    counter: AtomicU32,
+    counter: AtomicU16,
 }
 
 impl ReadWriteCounter {
     pub(crate) fn new() -> Self {
         Self {
-            counter: AtomicU32::new(0),
+            counter: AtomicU16::new(0),
         }
     }
 
@@ -94,7 +103,7 @@ impl core::panic::RefUnwindSafe for ReadWriteComponentsMap {}
 /// A thread-safe map to track entity access
 pub(crate) struct ReadWriteComponentsMap {
     // Maps entity ID to number of readers
-    pub(crate) read_write: DashMap<EntityId, ReadWriteCounter, super::NoOpHash>,
+    pub(crate) read_write: DashMap<ComponentOrPairIdAndTableId, ReadWriteCounter, super::NoOpHash>,
 }
 
 impl ReadWriteComponentsMap {
@@ -104,46 +113,53 @@ impl ReadWriteComponentsMap {
         }
     }
 
-    pub(crate) fn add_entry(&self, entity: EntityId) {
-        self.read_write.insert(entity, ReadWriteCounter::new());
+    pub(crate) fn add_entry(&self, id: ComponentOrPairId, table_id: TableId) {
+        self.read_write
+            .insert(combone_ids(id, table_id), ReadWriteCounter::new());
     }
 
-    pub(crate) fn add_entry_with(&self, entity: EntityId, counter: ReadWriteCounter) {
-        self.read_write.insert(entity, counter);
+    pub(crate) fn add_entry_with(
+        &self,
+        id: ComponentOrPairIdAndTableId,
+        counter: ReadWriteCounter,
+    ) {
+        self.read_write.insert(id, counter);
     }
 
-    pub(crate) fn remove_entry(&self, entity: EntityId) {
-        self.read_write.remove(&entity);
+    pub(crate) fn remove_entry(&self, id: ComponentOrPairId, table_id: TableId) {
+        self.read_write.remove(&combone_ids(id, table_id));
     }
 
-    pub(crate) fn increment_read(&self, entity: EntityId) {
-        if let Some(counter) = self.read_write.get(&entity) {
+    pub(crate) fn increment_read(&self, id: ComponentOrPairId, table_id: TableId) {
+        let id = combone_ids(id, table_id);
+        if let Some(counter) = self.read_write.get(&id) {
             counter.increment_read();
         } else {
             let counter = ReadWriteCounter::new();
             counter.increment_read();
-            self.add_entry_with(entity, counter);
+            self.add_entry_with(id, counter);
         }
     }
 
-    pub(crate) fn decrement_read(&self, entity: EntityId) {
-        if let Some(counter) = self.read_write.get(&entity) {
+    pub(crate) fn decrement_read(&self, id: ComponentOrPairId, table_id: TableId) {
+        if let Some(counter) = self.read_write.get(&combone_ids(id, table_id)) {
             counter.decrement_read();
         }
     }
 
-    pub(crate) fn set_write(&self, entity: EntityId) {
-        if let Some(counter) = self.read_write.get(&entity) {
+    pub(crate) fn set_write(&self, id: ComponentOrPairId, table_id: TableId) {
+        let id = combone_ids(id, table_id);
+        if let Some(counter) = self.read_write.get(&id) {
             counter.set_write();
         } else {
             let counter = ReadWriteCounter::new();
             counter.set_write();
-            self.add_entry_with(entity, counter);
+            self.add_entry_with(id, counter);
         }
     }
 
-    pub(crate) fn clear_write(&self, entity: EntityId) {
-        if let Some(counter) = self.read_write.get(&entity) {
+    pub(crate) fn clear_write(&self, id: ComponentOrPairId, table_id: TableId) {
+        if let Some(counter) = self.read_write.get(&combone_ids(id, table_id)) {
             counter.clear_write();
         }
     }
@@ -155,7 +171,9 @@ impl ReadWriteComponentsMap {
         let terms = unsafe { (*iter.query).terms };
         let terms_count = unsafe { (*iter.query).term_count };
         let ids = unsafe { core::slice::from_raw_parts(iter.ids, terms_count as usize) };
+        let table_id = unsafe { sys::ecs_rust_table_id(iter.table) };
         // we don't expect more than 20 indices
+        //TODO we can put this outside the while loop, optimize later
         let mut indices = smallvec![0_u8; 20 as usize];
         for i in 0..terms_count as usize {
             let id = ids[i];
@@ -167,10 +185,10 @@ impl ReadWriteComponentsMap {
 
             match term.inout as u32 {
                 sys::ecs_inout_kind_t_EcsIn => {
-                    self.increment_read(term.id);
+                    self.increment_read(term.id, table_id);
                 }
                 sys::ecs_inout_kind_t_EcsInOut | sys::ecs_inout_kind_t_EcsOut => {
-                    self.set_write(term.id);
+                    self.set_write(term.id, table_id);
                 }
                 _ => {}
             }
@@ -179,6 +197,7 @@ impl ReadWriteComponentsMap {
     }
 
     pub(crate) fn decrement_counters_from_iter(&self, iter: &sys::ecs_iter_t) {
+        let table_id = unsafe { sys::ecs_rust_table_id(iter.table) };
         let terms = unsafe { (*iter.query).terms };
         let terms_count = unsafe { (*iter.query).term_count };
 
@@ -187,67 +206,67 @@ impl ReadWriteComponentsMap {
 
             match term.inout as u32 {
                 sys::ecs_inout_kind_t_EcsIn => {
-                    self.decrement_read(term.id);
+                    self.decrement_read(term.id, table_id);
                 }
                 sys::ecs_inout_kind_t_EcsInOut | sys::ecs_inout_kind_t_EcsOut => {
-                    self.clear_write(term.id);
+                    self.clear_write(term.id, table_id);
                 }
                 _ => {}
             }
         }
     }
 
-    pub(crate) fn increment_counters_from_id(&self, id: ReadWriteId) {
+    pub(crate) fn increment_counters_from_id(&self, id: ReadWriteId, table_id: TableId) {
         match id {
             ReadWriteId::Read(id) => {
-                self.increment_read(id);
+                self.increment_read(id, table_id);
             }
             ReadWriteId::Write(id) => {
-                self.set_write(id);
+                self.set_write(id, table_id);
             }
         }
     }
 
-    pub(crate) fn increment_counters_from_ids(&self, ids: &[ReadWriteId]) {
+    pub(crate) fn increment_counters_from_ids(&self, ids: &[ReadWriteId], table_id: TableId) {
         for id in ids {
             match id {
                 ReadWriteId::Read(id) => {
-                    self.increment_read(*id);
+                    self.increment_read(*id, table_id);
                 }
                 ReadWriteId::Write(id) => {
-                    self.set_write(*id);
+                    self.set_write(*id, table_id);
                 }
             }
         }
     }
 
-    pub(crate) fn decrement_counters_from_id(&self, id: ReadWriteId) {
+    pub(crate) fn decrement_counters_from_id(&self, id: ReadWriteId, table_id: TableId) {
         match id {
             ReadWriteId::Read(id) => {
-                self.decrement_read(id);
+                self.decrement_read(id, table_id);
             }
             ReadWriteId::Write(id) => {
-                self.clear_write(id);
+                self.clear_write(id, table_id);
             }
         }
     }
 
-    pub(crate) fn decrement_counters_from_ids(&self, ids: &[ReadWriteId]) {
+    pub(crate) fn decrement_counters_from_ids(&self, ids: &[ReadWriteId], table_id: TableId) {
         for id in ids {
             match id {
                 ReadWriteId::Read(id) => {
-                    self.decrement_read(*id);
+                    self.decrement_read(*id, table_id);
                 }
                 ReadWriteId::Write(id) => {
-                    self.clear_write(*id);
+                    self.clear_write(*id, table_id);
                 }
             }
         }
     }
 
-    pub(crate) fn panic_if_any_write_is_set(&self, ids: &[u64]) {
+    pub(crate) fn panic_if_any_write_is_set(&self, ids: &[u64], table_id: TableId) {
         for id in ids {
-            if let Some(counter) = self.read_write.get(id) {
+            if let Some(counter) = self.read_write.get(&combone_ids(*id, table_id)) {
                 if counter.counter.load(Ordering::Relaxed) & WRITE_FLAG != 0 {
                     panic!("Write already set");
                 }

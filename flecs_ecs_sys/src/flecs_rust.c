@@ -167,4 +167,10 @@ ecs_entity_t ecs_rust_get_typeid(
     }
 error:
     return 0;
+} 
+
+uint64_t ecs_rust_table_id(
+    const ecs_table_t* table)
+{
+    return table->id;
 }

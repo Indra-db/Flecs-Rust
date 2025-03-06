@@ -47,6 +47,10 @@ extern "C-unwind" {
     ) -> ecs_entity_t;
 }
 
+extern "C-unwind" {
+    pub fn ecs_rust_table_id(table: *const ecs_table_t) -> u64;
+}
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 //#[cfg(feature = "flecs_alerts")] //TODO flecs ecs_alert_init not properly defined in flecs c api.

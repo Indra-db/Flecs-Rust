@@ -175,11 +175,6 @@ pub trait ComponentId:
                             .insert(core::any::TypeId::of::<Self>(), id);
                     }
 
-                    #[cfg(feature = "flecs_safety_readwrite_locks")]
-                    {
-                        world.components_access_map().add_entry(id);
-                    }
-
                     Self::on_component_registration(world, Entity::new(id));
 
                     return id;
@@ -211,11 +206,6 @@ pub trait ComponentId:
                         .insert(core::any::TypeId::of::<Self>(), id);
                 }
 
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
-                {
-                    world.components_access_map().add_entry(id);
-                }
-
                 Self::on_component_registration(world, Entity::new(id));
 
                 id
@@ -245,11 +235,6 @@ pub trait ComponentId:
                     >(world);
 
                     let id = entry.insert(id);
-
-                    #[cfg(feature = "flecs_safety_readwrite_locks")]
-                    {
-                        world.components_access_map().add_entry(*id);
-                    }
 
                     Self::on_component_registration(world, Entity::new(*id));
                     id
@@ -299,11 +284,6 @@ pub trait ComponentId:
                             .insert(core::any::TypeId::of::<Self>(), id);
                     }
 
-                    #[cfg(feature = "flecs_safety_readwrite_locks")]
-                    {
-                        world.components_access_map().add_entry(id);
-                    }
-
                     Self::on_component_registration(world, Entity::new(id));
 
                     return id;
@@ -332,11 +312,6 @@ pub trait ComponentId:
                     world
                         .components_map()
                         .insert(core::any::TypeId::of::<Self>(), id);
-                }
-
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
-                {
-                    world.components_access_map().add_entry(id);
                 }
 
                 Self::on_component_registration(world, Entity::new(id));
@@ -368,11 +343,6 @@ pub trait ComponentId:
                     >(world, name);
 
                     let id = entry.insert(id);
-
-                    #[cfg(feature = "flecs_safety_readwrite_locks")]
-                    {
-                        world.components_access_map().add_entry(*id);
-                    }
 
                     Self::on_component_registration(world, Entity::new(*id));
                     id

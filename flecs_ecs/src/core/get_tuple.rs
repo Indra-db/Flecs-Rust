@@ -16,6 +16,18 @@ pub enum ReadWriteId {
     Write(u64),
 }
 
+impl core::ops::Deref for ReadWriteId {
+    type Target = u64;
+
+    #[inline(always)]
+    fn deref(&self) -> &Self::Target {
+        match self {
+            ReadWriteId::Read(id) => id,
+            ReadWriteId::Write(id) => id,
+        }
+    }
+}
+
 pub struct ComponentsData<T: GetTuple, const LEN: usize> {
     pub array_components: [*mut c_void; LEN],
     pub has_all_components: bool,
