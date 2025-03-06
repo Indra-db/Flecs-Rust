@@ -42,6 +42,11 @@ libc.workspace = true
 # to be used with flecs_nightly_tests feature flag
 #capture-stdio = "0.1.1" 
 
+[target.wasm32-unknown-unknown.dev-dependencies]
+# We have a transitive dependency on getrandom and it does not automatically
+# support wasm32-unknown-unknown. We need to enable the wasm_js feature.
+getrandom = { version = "0.3.1", features = ["wasm_js"] }
+
 [features] 
 ######################
 # sys feature flags
