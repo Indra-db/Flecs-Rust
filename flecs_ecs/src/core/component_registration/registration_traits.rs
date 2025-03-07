@@ -66,6 +66,7 @@ impl<T> ComponentType<Enum> for &T where T: ComponentType<Enum> {}
 #[doc(hidden)]
 impl<T> ComponentType<Enum> for &mut T where T: ComponentType<Enum> {}
 
+#[inline(never)]
 fn try_register_component<'a, const MANUAL_REGISTRATION_CHECK: bool, T>(
     world: impl WorldProvider<'a>,
 ) -> sys::ecs_entity_t
@@ -82,6 +83,7 @@ where
     }
 }
 
+#[inline(never)]
 fn try_register_component_named<'a, const MANUAL_REGISTRATION_CHECK: bool, T>(
     world: impl WorldProvider<'a>,
     name: &str,
@@ -138,7 +140,7 @@ pub trait ComponentId:
 
     /// attempts to register the component with the world. If it's already registered, it does nothing.
     #[doc(hidden)]
-    #[inline(always)]
+    #[inline(never)]
     fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
         world: impl WorldProvider<'a>,
     ) -> sys::ecs_entity_t {

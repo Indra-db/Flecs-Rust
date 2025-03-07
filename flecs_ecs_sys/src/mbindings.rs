@@ -31,7 +31,7 @@ unsafe extern "C-unwind" {
     ) -> i32;
 }
 
-extern "C-unwind" {
+unsafe extern "C-unwind" {
     pub fn ecs_rust_get_type_info_from_record(
         world: *const ecs_world_t,
         id: ecs_id_t,
@@ -39,7 +39,7 @@ extern "C-unwind" {
     ) -> *const ecs_type_info_t;
 }
 
-extern "C-unwind" {
+unsafe extern "C-unwind" {
     pub fn ecs_rust_get_typeid(
         world: *const ecs_world_t,
         id: ecs_id_t,
@@ -47,8 +47,12 @@ extern "C-unwind" {
     ) -> ecs_entity_t;
 }
 
-extern "C-unwind" {
+unsafe extern "C-unwind" {
     pub fn ecs_rust_table_id(table: *const ecs_table_t) -> u64;
+}
+
+unsafe extern "C-unwind" {
+    pub fn ecs_rust_is_sparse_idr(idr: *const ecs_id_record_t) -> bool;
 }
 
 #[repr(C)]

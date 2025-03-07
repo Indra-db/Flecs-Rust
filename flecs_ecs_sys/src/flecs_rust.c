@@ -174,3 +174,9 @@ uint64_t ecs_rust_table_id(
 {
     return table->id;
 }
+
+bool ecs_rust_is_sparse_idr(
+    const ecs_id_record_t* idr)
+{
+    return idr->flags & EcsIdIsSparse;
+}

@@ -20,6 +20,7 @@ use crate::core::{ImplementsClone, ImplementsDefault};
 
 #[doc(hidden)]
 pub mod private {
+    use crate::core::traits::INCREMENT;
     use crate::core::*;
     use crate::sys;
     use core::ffi::c_void;
@@ -29,6 +30,8 @@ pub mod private {
 
     extern crate alloc;
     use alloc::boxed::Box;
+
+    use super::DECREMENT;
 
     #[allow(non_camel_case_types)]
     #[doc(hidden)]
@@ -85,11 +88,11 @@ pub mod private {
                     );
                 }
 
-            let world = WorldRef::from_ptr(unsafe { (*iter).world });
-            let iter = unsafe { &mut *iter };
-            let components_access = world.components_access_map();
-            components_access.increment_counters_from_iter(iter);
-            iter.flags |= sys::EcsIterCppEach;
+                let world = WorldRef::from_ptr((*iter).world);
+                let iter = &mut *iter;
+                let components_access = world.components_access_map();
+
+                iter.flags |= sys::EcsIterCppEach;
 
                 let each = &mut *(iter.callback_ctx as *mut Func);
 
@@ -102,6 +105,11 @@ pub mod private {
                     }
                 };
 
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                {
+                    do_read_write_locks::<INCREMENT>(&iter, components_access);
+                }
+
                 if !CALLED_FROM_RUN {
                     sys::ecs_table_lock(iter.world, iter.table);
                 }
@@ -111,10 +119,15 @@ pub mod private {
                     each(tuple);
                 }
 
-            if !CALLED_FROM_RUN {
-                sys::ecs_table_unlock(iter.world, iter.table);
+                if !CALLED_FROM_RUN {
+                    sys::ecs_table_unlock(iter.world, iter.table);
+                }
+
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                {
+                    do_read_write_locks::<DECREMENT>(&iter, components_access);
+                }
             }
-            components_access.decrement_counters_from_iter(iter);
         }
 
         /// Callback of the `each_entity` functionality
@@ -140,11 +153,11 @@ pub mod private {
                     );
                 }
 
-            let world = WorldRef::from_ptr(unsafe { (*iter).world });
-            let iter = unsafe { &mut *iter };
-            let components_access = world.components_access_map();
-            components_access.increment_counters_from_iter(iter);
-            iter.flags |= sys::EcsIterCppEach;
+                let world = WorldRef::from_ptr((*iter).world);
+                let iter = &mut *iter;
+                let components_access = world.components_access_map();
+
+                iter.flags |= sys::EcsIterCppEach;
 
                 let each_entity = &mut *(iter.callback_ctx as *mut Func);
 
@@ -166,6 +179,11 @@ pub mod private {
                     WorldRef::from_ptr(iter.world).entity_from_id(iter.system)
                 );
 
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                {
+                    do_read_write_locks::<INCREMENT>(&iter, components_access);
+                }
+
                 if !CALLED_FROM_RUN {
                     sys::ecs_table_lock(iter.world, iter.table);
                 }
@@ -178,10 +196,15 @@ pub mod private {
                     each_entity(entity, tuple);
                 }
 
-            if !CALLED_FROM_RUN {
-                sys::ecs_table_unlock(iter.world, iter.table);
+                if !CALLED_FROM_RUN {
+                    sys::ecs_table_unlock(iter.world, iter.table);
+                }
+
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                {
+                    do_read_write_locks::<DECREMENT>(&iter, components_access);
+                }
             }
-            components_access.decrement_counters_from_iter(iter);
         }
 
         /// Callback of the `each_iter` functionality
@@ -198,17 +221,18 @@ pub mod private {
         where
             Func: FnMut(TableIter<false, P>, usize, T::TupleType<'_>),
         {
-            const {
-                assert!(
-                    !T::CONTAINS_ANY_TAG_TERM,
-                    "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
-                );
-            }
-            let world = WorldRef::from_ptr(unsafe { (*iter).world });
-            let iter = unsafe { &mut *iter };
-            let components_access = world.components_access_map();
-            components_access.increment_counters_from_iter(iter);
-            iter.flags |= sys::EcsIterCppEach;
+            unsafe {
+                const {
+                    assert!(
+                        !T::CONTAINS_ANY_TAG_TERM,
+                        "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
+                    );
+                }
+                let world = WorldRef::from_ptr((*iter).world);
+                let iter = &mut *iter;
+                let components_access = world.components_access_map();
+
+                iter.flags |= sys::EcsIterCppEach;
 
                 let each_iter = &mut *(iter.callback_ctx as *mut Func);
                 let mut components_data = T::create_ptrs(&*iter);
@@ -220,16 +244,26 @@ pub mod private {
                     }
                 };
 
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                {
+                    do_read_write_locks::<INCREMENT>(&iter, components_access);
+                }
+
                 sys::ecs_table_lock(iter.world, iter.table);
 
                 for i in 0..iter_count {
                     let tuple = components_data.get_tuple(&*iter, i);
                     let iter_t = TableIter::new(iter);
 
-                each_iter(iter_t, i, tuple);
+                    each_iter(iter_t, i, tuple);
+                }
+                sys::ecs_table_unlock(iter.world, iter.table);
+
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                {
+                    do_read_write_locks::<DECREMENT>(&iter, components_access);
+                }
             }
-            sys::ecs_table_unlock(iter.world, iter.table);
-            components_access.decrement_counters_from_iter(iter);
         }
 
         /// Callback of the `iter_only` functionality

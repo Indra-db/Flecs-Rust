@@ -169,6 +169,7 @@ pub fn ecs_entity_id_high(value: impl IntoId) -> u64 {
     (*value.into()) >> 32
 }
 
+#[inline(never)]
 pub fn type_name_cstring<T>() -> CString {
     CString::new(core::any::type_name::<T>()).unwrap()
 }
@@ -195,7 +196,7 @@ pub fn type_name_cstring<T>() -> CString {
 /// let name = get_only_type_name::<Bar::Foo>();
 /// assert_eq!(name, "Foo");
 /// ```
-#[inline(always)]
+#[inline(never)]
 pub fn get_only_type_name<T>() -> &'static str {
     use core::any::type_name;
     let name = type_name::<T>();
@@ -209,7 +210,7 @@ pub fn get_only_type_name<T>() -> &'static str {
 /// # Type Parameters
 ///
 /// * `T`: The type to check.
-#[inline(always)]
+#[inline(never)]
 pub const fn is_empty_type<T>() -> bool {
     core::mem::size_of::<T>() == 0
 }

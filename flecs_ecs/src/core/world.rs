@@ -63,6 +63,7 @@ impl Clone for World {
 unsafe impl Send for World {}
 
 impl Default for World {
+    #[inline(never)]
     fn default() -> Self {
         ecs_os_api::ensure_initialized();
 
@@ -128,10 +129,12 @@ impl Drop for World {
 
 impl World {
     /// Creates a new world, same as `default()`
+    #[inline(never)]
     pub fn new() -> Self {
         Self::default()
     }
 
+    #[inline(never)]
     fn init_builtin_components(&self) {
         // used for event handling with no data
         self.component_named::<()>("flecs::rust::() - None");
@@ -3658,6 +3661,7 @@ impl World {
     ///
     /// * C++ API: `world::component`
     #[doc(alias = "world::component")]
+    #[inline(never)]
     pub fn component<T: ComponentId>(&self) -> Component<T::UnderlyingType> {
         Component::<T::UnderlyingType>::new(self)
     }

@@ -1,6 +1,7 @@
 use dashmap::DashMap;
 use flecs_ecs::sys;
-use smallvec::{smallvec, SmallVec};
+use foldhash::fast::RandomState;
+use smallvec::{SmallVec, smallvec};
 
 use core::sync::atomic::{AtomicU16, Ordering};
 
@@ -103,19 +104,14 @@ impl core::panic::RefUnwindSafe for ReadWriteComponentsMap {}
 /// A thread-safe map to track entity access
 pub(crate) struct ReadWriteComponentsMap {
     // Maps entity ID to number of readers
-    pub(crate) read_write: DashMap<ComponentOrPairIdAndTableId, ReadWriteCounter, super::NoOpHash>,
+    pub(crate) read_write: DashMap<ComponentOrPairIdAndTableId, ReadWriteCounter, RandomState>,
 }
 
 impl ReadWriteComponentsMap {
     pub(crate) fn new() -> Self {
         Self {
-            read_write: Default::default(),
+            read_write: DashMap::with_hasher(RandomState::default()),
         }
-    }
-
-    pub(crate) fn add_entry(&self, id: ComponentOrPairId, table_id: TableId) {
-        self.read_write
-            .insert(combone_ids(id, table_id), ReadWriteCounter::new());
     }
 
     pub(crate) fn add_entry_with(
