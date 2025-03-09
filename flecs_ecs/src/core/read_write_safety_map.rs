@@ -269,6 +269,59 @@ impl ReadWriteComponentsMap {
     }
 }
 
+#[cfg(feature = "flecs_safety_readwrite_locks")]
+pub(super) const INCREMENT: bool = true;
+#[cfg(feature = "flecs_safety_readwrite_locks")]
+pub(super) const DECREMENT: bool = false;
+
+#[cfg(feature = "flecs_safety_readwrite_locks")]
+pub(crate) fn do_read_write_locks<const INCREMENT: bool>(
+    iter: &sys::ecs_iter_t,
+    components_access: &ReadWriteComponentsMap,
+    count: usize,
+) {
+    unsafe {
+        for i in 0..count {
+            if !sys::ecs_field_is_set(iter, i as i8) {
+                continue;
+            }
+
+            let tr = *iter.trs.add(i);
+
+            // when it's a `not` term, the table does not have the component
+            if tr.is_null() {
+                continue;
+            }
+
+            let component_id = *iter.ids.add(i);
+            let idr = (*tr).hdr.cache as *const sys::ecs_id_record_t;
+
+            // don't bother with tags
+            if (*tr).column == -1 && !sys::ecs_rust_is_sparse_idr(idr) {
+                continue;
+            }
+
+            let table = (*tr).hdr.table;
+
+            if !sys::ecs_id_is_wildcard(component_id) {
+                if sys::ecs_field_is_readonly(iter, i as i8) {
+                    if INCREMENT {
+                        components_access
+                            .increment_read(component_id, sys::ecs_rust_table_id(table));
+                    } else {
+                        components_access
+                            .decrement_read(component_id, sys::ecs_rust_table_id(table));
+                    }
+                } else if INCREMENT {
+                    components_access.set_write(component_id, sys::ecs_rust_table_id(table));
+                } else {
+                    components_access.clear_write(component_id, sys::ecs_rust_table_id(table));
+                }
+            }
+        }
+    }
+}
+
 #[test]
 fn read_write_counter() {
     dbg!(crate::core::InOutKind::InOut as u32);

@@ -21,7 +21,9 @@ use crate::core::{ImplementsClone, ImplementsDefault};
 #[doc(hidden)]
 pub mod private {
     #[cfg(feature = "flecs_safety_readwrite_locks")]
-    use crate::core::traits::INCREMENT;
+    use crate::core::DECREMENT;
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    use crate::core::INCREMENT;
     use crate::core::*;
     use crate::sys;
     use core::ffi::c_void;
@@ -31,9 +33,6 @@ pub mod private {
 
     extern crate alloc;
     use alloc::boxed::Box;
-
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    use super::DECREMENT;
 
     #[allow(non_camel_case_types)]
     #[doc(hidden)]
