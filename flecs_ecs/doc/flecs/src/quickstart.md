@@ -494,7 +494,7 @@ q.each_entity(|e, p| {
 // Option 2: the run() callback offers more control over the iteration
 q.run(|mut it| {
     while it.next() {
-        let p = it.field::<Position>(0).unwrap();
+        let p = it.field_mut::<Position>(0).unwrap();
 
         for i in it.iter() {
             println!("{}: ({}, {})", it.entity(i).name(), p[i].x, p[i].y);

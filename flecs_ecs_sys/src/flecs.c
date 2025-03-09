@@ -15080,6 +15080,7 @@ void flecs_observer_invoke(
     ecs_observer_t *o,
     ecs_iter_t *it)
 {
+    
     if (o->run) {
         it->next = flecs_default_next_callback;
         it->callback = o->callback;
@@ -15105,6 +15106,7 @@ void flecs_uni_observer_invoke(
     ecs_entity_t trav)
 {
     ecs_query_t *query = o->query;
+    it->set_fields = query->set_fields;
     ecs_term_t *term = &query->terms[0];
     if (flecs_ignore_observer(o, table, it)) {
         return;

@@ -1,6 +1,9 @@
 use super::{FlecsArray, FlecsIdMap, World};
 use crate::sys;
 
+#[cfg(feature = "flecs_safety_readwrite_locks")]
+use super::ReadWriteComponentsMap;
+
 #[cfg(feature = "std")]
 extern crate std;
 
@@ -12,6 +15,9 @@ pub(crate) struct WorldCtx {
     pub(crate) components: FlecsIdMap,
     pub(crate) components_array: FlecsArray,
     is_panicking: bool,
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    // Track entity reads and writes for thread safety
+    pub(crate) component_access: ReadWriteComponentsMap,
 }
 
 impl WorldCtx {
@@ -21,6 +27,8 @@ impl WorldCtx {
             components: Default::default(),
             components_array: vec![0; 500],
             is_panicking: false,
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            component_access: ReadWriteComponentsMap::new(),
         }
     }
 
@@ -76,7 +84,7 @@ impl World {
     }
 }
 
-//#[test]
+#[test]
 fn query_ref_count() {
     unsafe {
         flecs_ecs::sys::ecs_os_init();

@@ -3481,7 +3481,7 @@ fn query_builder_iter_column_w_const_as_array() {
     let world = World::new();
 
     let f = world
-        .query::<&Position>()
+        .query::<&mut Position>()
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3491,7 +3491,7 @@ fn query_builder_iter_column_w_const_as_array() {
     let mut count = 0;
     f.run(|mut it| {
         while it.next() {
-            let mut p = it.field::<Position>(0).unwrap();
+            let mut p = it.field_mut::<Position>(0).unwrap();
             for i in it.iter() {
                 p[i].x += 1;
                 p[i].y += 2;

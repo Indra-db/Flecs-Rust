@@ -117,3 +117,66 @@ error:
     return -1;
 }
 
+const ecs_type_info_t* ecs_rust_get_type_info_from_record(
+    const ecs_world_t *world,
+    ecs_id_t id,
+    const ecs_id_record_t* idr)
+{
+    ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
+    ecs_check(id != 0, ECS_INVALID_PARAMETER, NULL);
+
+    if (!idr && ECS_IS_PAIR(id)) {
+        world = ecs_get_world(world);
+        idr = flecs_id_record_get(world, 
+            ecs_pair(ECS_PAIR_FIRST(id), EcsWildcard));
+        if (!idr || !idr->type_info) {
+            idr = NULL;
+        }
+        if (!idr) {
+            ecs_entity_t first = ecs_pair_first(world, id);
+            if (!first || !ecs_has_id(world, first, EcsPairIsTag)) {
+                idr = flecs_id_record_get(world, 
+                    ecs_pair(EcsWildcard, ECS_PAIR_SECOND(id)));
+                if (!idr || !idr->type_info) {
+                    idr = NULL;
+                }
+            }
+        }
+    }
+
+    if (idr) {
+        return idr->type_info;
+    } else if (!(id & ECS_ID_FLAGS_MASK)) {
+        world = ecs_get_world(world);
+        return flecs_type_info_get(world, id);
+    }
+error:
+    return NULL;
+}
+
+ecs_entity_t ecs_rust_get_typeid(
+    const ecs_world_t *world,
+    ecs_id_t id,
+    const ecs_id_record_t* idr)     
+{
+    ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
+    const ecs_type_info_t *ti = ecs_rust_get_type_info_from_record(world, id, idr);
+    if (ti) {
+        ecs_assert(ti->component != 0, ECS_INTERNAL_ERROR, NULL);
+        return ti->component;
+    }
+error:
+    return 0;
+} 
+
+uint64_t ecs_rust_table_id(
+    const ecs_table_t* table)
+{
+    return table->id;
+}
+
+bool ecs_rust_is_sparse_idr(
+    const ecs_id_record_t* idr)
+{
+    return idr->flags & EcsIdIsSparse;
+}

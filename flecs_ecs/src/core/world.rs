@@ -43,6 +43,8 @@ pub struct World {
     pub(crate) raw_world: NonNull<sys::ecs_world_t>,
     pub(crate) components: NonNull<FlecsIdMap>,
     pub(crate) components_array: NonNull<FlecsArray>,
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) component_access: NonNull<ReadWriteComponentsMap>,
 }
 
 impl Clone for World {
@@ -52,6 +54,8 @@ impl Clone for World {
             raw_world: self.raw_world,
             components: self.components,
             components_array: self.components_array,
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            component_access: self.component_access,
         }
     }
 }
@@ -59,6 +63,7 @@ impl Clone for World {
 unsafe impl Send for World {}
 
 impl Default for World {
+    #[inline(never)]
     fn default() -> Self {
         ecs_os_api::ensure_initialized();
 
@@ -66,10 +71,14 @@ impl Default for World {
         let ctx = Box::leak(Box::new(WorldCtx::new()));
         let components = unsafe { NonNull::new_unchecked(&mut ctx.components) };
         let components_array = unsafe { NonNull::new_unchecked(&mut ctx.components_array) };
+        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        let components_access = unsafe { NonNull::new_unchecked(&mut ctx.component_access) };
         let world = Self {
             raw_world,
             components,
             components_array,
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            component_access: components_access,
         };
         unsafe {
             sys::ecs_set_binding_ctx(
@@ -120,10 +129,12 @@ impl Drop for World {
 
 impl World {
     /// Creates a new world, same as `default()`
+    #[inline(never)]
     pub fn new() -> Self {
         Self::default()
     }
 
+    #[inline(never)]
     fn init_builtin_components(&self) {
         // used for event handling with no data
         self.component_named::<()>("flecs::rust::() - None");
@@ -1183,6 +1194,18 @@ impl World {
 
     pub(crate) fn components_array(&self) -> &'static mut FlecsArray {
         unsafe { &mut (*(self.components_array.as_ptr())) }
+    }
+
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) fn get_components_access_map(
+        world: *mut sys::ecs_world_t,
+    ) -> &'static mut ReadWriteComponentsMap {
+        unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).component_access }
+    }
+
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) fn components_access_map(&self) -> &'static mut ReadWriteComponentsMap {
+        unsafe { &mut (*(self.component_access.as_ptr())) }
     }
 
     /// Set world binding context
@@ -3638,6 +3661,7 @@ impl World {
     ///
     /// * C++ API: `world::component`
     #[doc(alias = "world::component")]
+    #[inline(never)]
     pub fn component<T: ComponentId>(&self) -> Component<T::UnderlyingType> {
         Component::<T::UnderlyingType>::new(self)
     }
