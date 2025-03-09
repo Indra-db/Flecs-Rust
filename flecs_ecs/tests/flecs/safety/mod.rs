@@ -1329,3 +1329,17 @@ mod observer_in_system {
         }
     }
 }
+
+#[test]
+fn filter_does_not_panic() {
+    let world = World::new();
+
+    #[derive(Component, Clone)]
+    struct Foo(pub i32);
+
+    world.entity().set(Foo(0));
+
+    query!(world, Foo).build().each_entity(|entity, _| {
+        let _ = entity.cloned::<&Foo>();
+    });
+}

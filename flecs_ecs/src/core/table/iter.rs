@@ -70,7 +70,7 @@ where
     ///         //for each different table
     ///         for i in it.iter() {
     ///             //for each entity in the table
-    ///             let pos = it.field_mut::<Position>(0).unwrap();
+    ///             let pos = it.field::<Position>(0).unwrap();
     ///             assert_eq!(pos[0].x, 1.0);
     ///             assert_eq!(pos[0].y, 2.0);
     ///         }
@@ -683,6 +683,11 @@ where
                 || unsafe { sys::ecs_field_src(self.iter, index) != 0 },
             FlecsErrorCode::InvalidOperation,
             "cannot .field from .each, use .field_at instead",
+        );
+        ecs_assert!(
+            !unsafe { sys::ecs_field_is_readonly(self.iter, index) },
+            FlecsErrorCode::AccessViolation,
+            "field is readonly, check if your specified query terms are set &mut"
         );
 
         self.field_checked_mut::<T>(index)
