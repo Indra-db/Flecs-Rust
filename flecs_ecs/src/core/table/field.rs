@@ -212,6 +212,15 @@ pub struct FieldAt<'a, T> {
     pub(crate) table_id: u64,
 }
 
+impl<'a, T> core::fmt::Debug for FieldAt<'a, T>
+where
+    T: core::fmt::Debug,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:?}", self.component)
+    }
+}
+
 #[cfg(feature = "flecs_safety_readwrite_locks")]
 impl<'a, T> Drop for FieldAt<'a, T> {
     fn drop(&mut self) {
@@ -264,6 +273,15 @@ pub struct FieldAtMut<'a, T> {
     pub(crate) id: Entity,
     #[cfg(feature = "flecs_safety_readwrite_locks")]
     pub(crate) table_id: u64,
+}
+
+impl<'a, T> core::fmt::Debug for FieldAtMut<'a, T>
+where
+    T: core::fmt::Debug,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:?}", self.component)
+    }
 }
 
 #[cfg(feature = "flecs_safety_readwrite_locks")]

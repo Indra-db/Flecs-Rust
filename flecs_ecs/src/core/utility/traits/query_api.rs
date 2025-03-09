@@ -1560,8 +1560,14 @@ pub(crate) fn do_read_write_locks<const INCREMENT: bool>(
             }
 
             let tr = *iter.trs.add(i);
-            let idr = (*tr).hdr.cache as *const sys::ecs_id_record_t;
+
+            // when it's a `not` term, the table does not have the component
+            if tr.is_null() {
+                continue;
+            }
+
             let component_id = *iter.ids.add(i);
+            let idr = (*tr).hdr.cache as *const sys::ecs_id_record_t;
 
             // don't bother with tags
             if (*tr).column == -1 && !sys::ecs_rust_is_sparse_idr(idr) {

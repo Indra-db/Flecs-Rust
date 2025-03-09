@@ -239,7 +239,7 @@ where
         if <A::OnlyType as ComponentOrPairId>::IS_PAIR {
             assert!(
                 {
-                    let id = unsafe { sys::ecs_rust_get_typeid(world_ptr, id, (*record).idr) };
+                    let id = unsafe { sys::ecs_get_typeid(world_ptr, id) };
                     let cast_id = world.component_id::<<A::OnlyType as ComponentOrPairId>::CastType>();
                     //TODO: this seems bugged with (flecs::wildcard, bar) where it matches (foo,bar), but says bar is the typeid when it should be foo
                     id != 0 && id == cast_id
