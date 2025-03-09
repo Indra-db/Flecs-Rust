@@ -170,7 +170,7 @@ impl ReadWriteComponentsMap {
         let table_id = unsafe { sys::ecs_rust_table_id(iter.table) };
         // we don't expect more than 20 indices
         //TODO we can put this outside the while loop, optimize later
-        let mut indices = smallvec![0_u8; 20 as usize];
+        let mut indices = smallvec![0_u8; 20_usize];
         for i in 0..terms_count as usize {
             let id = ids[i];
             if id == 0 {
@@ -197,9 +197,7 @@ impl ReadWriteComponentsMap {
         let terms = unsafe { (*iter.query).terms };
         let terms_count = unsafe { (*iter.query).term_count };
 
-        for i in 0..terms_count as usize {
-            let term = terms[i];
-
+        for term in terms.iter().take(terms_count as usize) {
             match term.inout as u32 {
                 sys::ecs_inout_kind_t_EcsIn => {
                     self.decrement_read(term.id, table_id);

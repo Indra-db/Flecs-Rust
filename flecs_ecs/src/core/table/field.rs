@@ -25,7 +25,7 @@ pub struct Field<'a, T> {
 }
 
 #[cfg(feature = "flecs_safety_readwrite_locks")]
-impl<'a, T> Drop for Field<'a, T> {
+impl<T> Drop for Field<'_, T> {
     fn drop(&mut self) {
         unsafe {
             let component_access = self.component_access.as_mut();
@@ -119,7 +119,7 @@ pub struct FieldMut<'a, T> {
 }
 
 #[cfg(feature = "flecs_safety_readwrite_locks")]
-impl<'a, T> Drop for FieldMut<'a, T> {
+impl<T> Drop for FieldMut<'_, T> {
     fn drop(&mut self) {
         unsafe {
             let component_access = self.component_access.as_mut();
@@ -212,7 +212,7 @@ pub struct FieldAt<'a, T> {
     pub(crate) table_id: u64,
 }
 
-impl<'a, T> core::fmt::Debug for FieldAt<'a, T>
+impl<T> core::fmt::Debug for FieldAt<'_, T>
 where
     T: core::fmt::Debug,
 {
@@ -222,7 +222,7 @@ where
 }
 
 #[cfg(feature = "flecs_safety_readwrite_locks")]
-impl<'a, T> Drop for FieldAt<'a, T> {
+impl<T> Drop for FieldAt<'_, T> {
     fn drop(&mut self) {
         unsafe {
             let component_access = self.component_access.as_mut();
@@ -275,7 +275,7 @@ pub struct FieldAtMut<'a, T> {
     pub(crate) table_id: u64,
 }
 
-impl<'a, T> core::fmt::Debug for FieldAtMut<'a, T>
+impl<T> core::fmt::Debug for FieldAtMut<'_, T>
 where
     T: core::fmt::Debug,
 {
@@ -285,7 +285,7 @@ where
 }
 
 #[cfg(feature = "flecs_safety_readwrite_locks")]
-impl<'a, T> Drop for FieldAtMut<'a, T> {
+impl<T> Drop for FieldAtMut<'_, T> {
     fn drop(&mut self) {
         unsafe {
             let component_access = self.component_access.as_mut();

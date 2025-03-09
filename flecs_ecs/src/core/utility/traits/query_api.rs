@@ -1433,14 +1433,14 @@ where
         let iter_count = iter.count as usize;
 
         #[cfg(feature = "flecs_safety_readwrite_locks")]
-        let world = WorldRef::from_ptr((*iter).world);
+        let world = WorldRef::from_ptr(iter.world);
 
         #[cfg(feature = "flecs_safety_readwrite_locks")]
         let components_access = world.components_access_map();
 
         #[cfg(feature = "flecs_safety_readwrite_locks")]
         {
-            do_read_write_locks::<INCREMENT>(iter, &components_access);
+            do_read_write_locks::<INCREMENT>(iter, components_access);
         }
 
         for i in 0..iter_count {
@@ -1474,7 +1474,7 @@ unsafe extern "C-unwind" fn __internal_query_execute_each_entity<T, Func>(
 
         #[cfg(feature = "flecs_safety_readwrite_locks")]
         {
-            do_read_write_locks::<INCREMENT>(iter, &components_access);
+            do_read_write_locks::<INCREMENT>(iter, components_access);
         }
 
         for i in 0..iter_count {
@@ -1485,7 +1485,7 @@ unsafe extern "C-unwind" fn __internal_query_execute_each_entity<T, Func>(
 
         #[cfg(feature = "flecs_safety_readwrite_locks")]
         {
-            do_read_write_locks::<DECREMENT>(iter, &components_access);
+            do_read_write_locks::<DECREMENT>(iter, components_access);
         }
     }
 }
@@ -1585,12 +1585,10 @@ pub(crate) fn do_read_write_locks<const INCREMENT: bool>(
                         components_access
                             .decrement_read(component_id, sys::ecs_rust_table_id(table));
                     }
+                } else if INCREMENT {
+                    components_access.set_write(component_id, sys::ecs_rust_table_id(table));
                 } else {
-                    if INCREMENT {
-                        components_access.set_write(component_id, sys::ecs_rust_table_id(table));
-                    } else {
-                        components_access.clear_write(component_id, sys::ecs_rust_table_id(table));
-                    }
+                    components_access.clear_write(component_id, sys::ecs_rust_table_id(table));
                 }
             }
         }

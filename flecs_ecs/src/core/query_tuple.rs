@@ -106,7 +106,7 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
 
     #[cfg(feature = "flecs_safety_readwrite_locks")]
     fn ids(&self) -> &[ReadWriteId] {
-        return &self.ids[..];
+        &self.ids[..]
     }
 }
 
