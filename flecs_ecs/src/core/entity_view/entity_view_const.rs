@@ -1530,8 +1530,9 @@ impl<Return> EntityViewGet<Return> for EntityView<'_> {
             {
                 let table_id = unsafe { ecs_rust_table_id((*record).table) };
                 let ids = tuple_data.read_write_ids();
-                let components_access = self.world().components_access_map();
-                components_access.increment_counters_from_ids(ids, table_id);
+                let world = self.world();
+                let components_access = world.components_access_map();
+                components_access.increment_counters_from_ids(ids, table_id, &world);
 
                 self.world.defer_begin();
                 let ret = callback(tuple);
@@ -1567,8 +1568,9 @@ impl<Return> EntityViewGet<Return> for EntityView<'_> {
         {
             let table_id = unsafe { ecs_rust_table_id((*record).table) };
             let ids = tuple_data.read_write_ids();
-            let components_access = self.world().components_access_map();
-            components_access.increment_counters_from_ids(ids, table_id);
+            let world = self.world();
+            let components_access = world.components_access_map();
+            components_access.increment_counters_from_ids(ids, table_id, &world);
 
             self.world.defer_begin();
             let ret = callback(tuple);

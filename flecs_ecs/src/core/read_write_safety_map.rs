@@ -1,9 +1,11 @@
+use crate::core::{IdOperations, IdView};
+
+use super::WorldRef;
+use core::sync::atomic::{AtomicU16, Ordering};
 use dashmap::DashMap;
 use flecs_ecs::sys;
 use foldhash::fast::RandomState;
 use smallvec::{SmallVec, smallvec};
-
-use core::sync::atomic::{AtomicU16, Ordering};
 
 use super::ReadWriteId;
 
@@ -33,11 +35,11 @@ impl ReadWriteCounter {
         }
     }
 
-    pub(crate) fn increment_read(&self) {
+    pub(crate) fn increment_read(&self) -> Result<(), ()> {
         loop {
             let curr = self.counter.load(Ordering::Relaxed);
             if curr & WRITE_FLAG != 0 {
-                panic!("Cannot increment read: write already set");
+                return Err(());
             }
 
             if self
@@ -45,7 +47,7 @@ impl ReadWriteCounter {
                 .compare_exchange_weak(curr, curr + 1, Ordering::Relaxed, Ordering::Relaxed)
                 .is_ok()
             {
-                break;
+                return Ok(());
             }
         }
     }
@@ -66,18 +68,18 @@ impl ReadWriteCounter {
         }
     }
 
-    pub(crate) fn set_write(&self) {
+    pub(crate) fn set_write(&self) -> Result<(), ()> {
         loop {
             let curr = self.counter.load(Ordering::Relaxed);
             if curr != 0 {
-                panic!("Cannot set write: reads already present or write already set");
+                return Err(());
             }
             if self
                 .counter
                 .compare_exchange_weak(curr, WRITE_FLAG, Ordering::Relaxed, Ordering::Relaxed)
                 .is_ok()
             {
-                break;
+                return Ok(());
             }
         }
     }
@@ -126,13 +128,35 @@ impl ReadWriteComponentsMap {
         self.read_write.remove(&combone_ids(id, table_id));
     }
 
-    pub(crate) fn increment_read(&self, id: ComponentOrPairId, table_id: TableId) {
-        let id = combone_ids(id, table_id);
+    pub(crate) fn increment_read(
+        &self,
+        comp_id: ComponentOrPairId,
+        table_id: TableId,
+        world: &WorldRef,
+    ) {
+        let id = combone_ids(comp_id, table_id);
         if let Some(counter) = self.read_write.get(&id) {
-            counter.increment_read();
+            if counter.increment_read().is_err() {
+                panic!(
+                    "Cannot increment read: write already set for component: {} with table id: {}",
+                    {
+                        let id = IdView::new_from_id(world, comp_id);
+                        if id.is_pair() {
+                            format!(
+                                "({}, {})",
+                                world.entity_from_id(id.first_id()),
+                                world.entity_from_id(id.second_id())
+                            )
+                        } else {
+                            format!("{}", id.entity_view())
+                        }
+                    },
+                    table_id
+                );
+            }
         } else {
             let counter = ReadWriteCounter::new();
-            counter.increment_read();
+            let _ = counter.increment_read();
             self.add_entry_with(id, counter);
         }
     }
@@ -143,13 +167,35 @@ impl ReadWriteComponentsMap {
         }
     }
 
-    pub(crate) fn set_write(&self, id: ComponentOrPairId, table_id: TableId) {
-        let id = combone_ids(id, table_id);
+    pub(crate) fn set_write(
+        &self,
+        comp_id: ComponentOrPairId,
+        table_id: TableId,
+        world: &WorldRef,
+    ) {
+        let id = combone_ids(comp_id, table_id);
         if let Some(counter) = self.read_write.get(&id) {
-            counter.set_write();
+            if counter.set_write().is_err() {
+                panic!(
+                    "Cannot set write: reads already present or write already set for component: {} with table id: {}",
+                    {
+                        let id = IdView::new_from_id(world, comp_id);
+                        if id.is_pair() {
+                            format!(
+                                "({}, {})",
+                                world.entity_from_id(id.first_id()),
+                                world.entity_from_id(id.second_id())
+                            )
+                        } else {
+                            format!("{}", id.entity_view())
+                        }
+                    },
+                    table_id
+                );
+            }
         } else {
             let counter = ReadWriteCounter::new();
-            counter.set_write();
+            let _ = counter.set_write();
             self.add_entry_with(id, counter);
         }
     }
@@ -163,6 +209,7 @@ impl ReadWriteComponentsMap {
     pub(crate) fn increment_counters_from_iter(
         &self,
         iter: &sys::ecs_iter_t,
+        world: &WorldRef,
     ) -> SmallVec<[u8; 10]> {
         let terms = unsafe { (*iter.query).terms };
         let terms_count = unsafe { (*iter.query).term_count };
@@ -181,10 +228,10 @@ impl ReadWriteComponentsMap {
 
             match term.inout as u32 {
                 sys::ecs_inout_kind_t_EcsIn => {
-                    self.increment_read(term.id, table_id);
+                    self.increment_read(term.id, table_id, world);
                 }
                 sys::ecs_inout_kind_t_EcsInOut | sys::ecs_inout_kind_t_EcsOut => {
-                    self.set_write(term.id, table_id);
+                    self.set_write(term.id, table_id, world);
                 }
                 _ => {}
             }
@@ -210,25 +257,35 @@ impl ReadWriteComponentsMap {
         }
     }
 
-    pub(crate) fn increment_counters_from_id(&self, id: ReadWriteId, table_id: TableId) {
+    pub(crate) fn increment_counters_from_id(
+        &self,
+        id: ReadWriteId,
+        table_id: TableId,
+        world: &WorldRef,
+    ) {
         match id {
             ReadWriteId::Read(id) => {
-                self.increment_read(id, table_id);
+                self.increment_read(id, table_id, world);
             }
             ReadWriteId::Write(id) => {
-                self.set_write(id, table_id);
+                self.set_write(id, table_id, world);
             }
         }
     }
 
-    pub(crate) fn increment_counters_from_ids(&self, ids: &[ReadWriteId], table_id: TableId) {
+    pub(crate) fn increment_counters_from_ids(
+        &self,
+        ids: &[ReadWriteId],
+        table_id: TableId,
+        world: &WorldRef,
+    ) {
         for id in ids {
             match id {
                 ReadWriteId::Read(id) => {
-                    self.increment_read(*id, table_id);
+                    self.increment_read(*id, table_id, world);
                 }
                 ReadWriteId::Write(id) => {
-                    self.set_write(*id, table_id);
+                    self.set_write(*id, table_id, world);
                 }
             }
         }
@@ -279,6 +336,7 @@ pub(crate) fn do_read_write_locks<const INCREMENT: bool>(
     iter: &sys::ecs_iter_t,
     components_access: &ReadWriteComponentsMap,
     count: usize,
+    world: &WorldRef,
 ) {
     unsafe {
         for i in 0..count {
@@ -306,14 +364,17 @@ pub(crate) fn do_read_write_locks<const INCREMENT: bool>(
             if !sys::ecs_id_is_wildcard(component_id) {
                 if sys::ecs_field_is_readonly(iter, i as i8) {
                     if INCREMENT {
-                        components_access
-                            .increment_read(component_id, sys::ecs_rust_table_id(table));
+                        components_access.increment_read(
+                            component_id,
+                            sys::ecs_rust_table_id(table),
+                            world,
+                        );
                     } else {
                         components_access
                             .decrement_read(component_id, sys::ecs_rust_table_id(table));
                     }
                 } else if INCREMENT {
-                    components_access.set_write(component_id, sys::ecs_rust_table_id(table));
+                    components_access.set_write(component_id, sys::ecs_rust_table_id(table), world);
                 } else {
                     components_access.clear_write(component_id, sys::ecs_rust_table_id(table));
                 }
@@ -324,28 +385,24 @@ pub(crate) fn do_read_write_locks<const INCREMENT: bool>(
 
 #[test]
 fn read_write_counter() {
-    dbg!(crate::core::InOutKind::InOut as u32);
-    dbg!(crate::core::InOutKind::In as u32);
-    dbg!(crate::core::InOutKind::Out as u32);
     let counter = ReadWriteCounter::new();
-    counter.increment_read();
-    counter.increment_read();
-    counter.increment_read();
+    assert!(counter.increment_read().is_ok());
+    assert!(counter.increment_read().is_ok());
+    assert!(counter.increment_read().is_ok());
     counter.decrement_read();
     counter.decrement_read();
     counter.decrement_read();
-    counter.set_write();
+    assert!(counter.set_write().is_ok());
     counter.clear_write();
-    counter.increment_read();
-    counter.increment_read();
+    assert!(counter.increment_read().is_ok());
+    assert!(counter.increment_read().is_ok());
     counter.decrement_read();
     counter.decrement_read();
 }
 
 #[test]
-#[should_panic]
 fn read_write_counter_panic() {
     let counter = ReadWriteCounter::new();
-    counter.increment_read();
-    counter.set_write();
+    let _ = counter.increment_read();
+    assert!(counter.set_write().is_err());
 }

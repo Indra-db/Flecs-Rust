@@ -81,10 +81,11 @@ impl<'a, T> Field<'a, T> {
         id: Entity,
         table_id: u64,
         mut component_access: NonNull<ReadWriteComponentsMap>,
+        world: &WorldRef,
     ) -> Self {
         unsafe {
             let component_access = component_access.as_mut();
-            component_access.increment_read(*id, table_id);
+            component_access.increment_read(*id, table_id, world);
         }
         Self {
             slice_components,
@@ -184,10 +185,11 @@ impl<'a, T> FieldMut<'a, T> {
         id: Entity,
         table_id: u64,
         mut component_access: NonNull<ReadWriteComponentsMap>,
+        world: &WorldRef,
     ) -> Self {
         unsafe {
             let component_access = component_access.as_mut();
-            component_access.set_write(*id, table_id);
+            component_access.set_write(*id, table_id, world);
         }
         Self {
             slice_components,
@@ -269,10 +271,11 @@ impl<'a, T> FieldAt<'a, T> {
         id: Entity,
         table_id: u64,
         mut component_access: NonNull<ReadWriteComponentsMap>,
+        world: &WorldRef,
     ) -> Self {
         unsafe {
             let component_access = component_access.as_mut();
-            component_access.increment_read(*id, table_id);
+            component_access.increment_read(*id, table_id, world);
         }
         Self {
             component,
@@ -338,10 +341,11 @@ impl<'a, T> FieldAtMut<'a, T> {
         id: Entity,
         table_id: u64,
         mut component_access: NonNull<ReadWriteComponentsMap>,
+        world: &WorldRef,
     ) -> Self {
         unsafe {
             let component_access = component_access.as_mut();
-            component_access.set_write(*id, table_id);
+            component_access.set_write(*id, table_id, world);
         }
         Self {
             component,

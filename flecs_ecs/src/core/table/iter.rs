@@ -929,7 +929,7 @@ where
             let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
             let components_access = world_ref.component_access;
             //Dummy id and table id since we're not accessing any data
-            Field::<Entity>::new(slice, false, Entity(0), 0, components_access)
+            Field::<Entity>::new(slice, false, Entity(0), 0, components_access, &world_ref)
         }
     }
 
@@ -1050,6 +1050,7 @@ where
                     _id,
                     table_id,
                     components_access,
+                    &world_ref,
                 ))
             }
         }
@@ -1090,6 +1091,7 @@ where
                     _id,
                     table_id,
                     components_access,
+                    &world_ref,
                 ))
             }
         }
@@ -1139,6 +1141,7 @@ where
                     _id,
                     table_id,
                     components_access,
+                    &world_ref,
                 ))
             }
         }
@@ -1184,6 +1187,7 @@ where
                     _id,
                     table_id,
                     components_access,
+                    &world_ref,
                 ))
             }
         }
@@ -1273,6 +1277,7 @@ where
                         Entity(term_id),
                         table_id,
                         components_access,
+                        &world_ref,
                     ));
                 }
             }
@@ -1335,6 +1340,7 @@ where
                         Entity(term_id),
                         table_id,
                         components_access,
+                        &world_ref,
                     ));
                 }
             }
