@@ -6,6 +6,7 @@ use core::{
 
 use crate::sys;
 use flecs_ecs::core::*;
+#[cfg(feature = "flecs_safety_readwrite_locks")]
 use flecs_ecs_sys::ecs_rust_table_id;
 use sys::ecs_get_with;
 

@@ -1,12 +1,12 @@
 //! Table column API.
 
+use crate::core::*;
+#[cfg(feature = "flecs_safety_readwrite_locks")]
+use core::ptr::NonNull;
 use core::{
     ffi::c_void,
     ops::{Deref, DerefMut},
-    ptr::NonNull,
 };
-
-use crate::core::*;
 
 /// Wrapper class around an immutable table column.
 ///

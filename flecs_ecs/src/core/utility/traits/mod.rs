@@ -20,6 +20,7 @@ use crate::core::{ImplementsClone, ImplementsDefault};
 
 #[doc(hidden)]
 pub mod private {
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
     use crate::core::traits::INCREMENT;
     use crate::core::*;
     use crate::sys;
@@ -31,6 +32,7 @@ pub mod private {
     extern crate alloc;
     use alloc::boxed::Box;
 
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
     use super::DECREMENT;
 
     #[allow(non_camel_case_types)]
@@ -87,9 +89,10 @@ pub mod private {
                         "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
                     );
                 }
-
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
                 let world = WorldRef::from_ptr((*iter).world);
                 let iter = &mut *iter;
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
                 let components_access = world.components_access_map();
 
                 iter.flags |= sys::EcsIterCppEach;
@@ -152,9 +155,10 @@ pub mod private {
                         "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
                     );
                 }
-
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
                 let world = WorldRef::from_ptr((*iter).world);
                 let iter = &mut *iter;
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
                 let components_access = world.components_access_map();
 
                 iter.flags |= sys::EcsIterCppEach;
@@ -228,8 +232,10 @@ pub mod private {
                         "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
                     );
                 }
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
                 let world = WorldRef::from_ptr((*iter).world);
                 let iter = &mut *iter;
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
                 let components_access = world.components_access_map();
 
                 iter.flags |= sys::EcsIterCppEach;

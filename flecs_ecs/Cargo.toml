@@ -171,7 +171,7 @@ flecs_base = [
     "flecs_pipeline",
     "flecs_timer",
     "flecs_os_api_impl",
-    "flecs_safety_readwrite_locks",
+    #"flecs_safety_readwrite_locks",
 ]
 
 default = [

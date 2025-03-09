@@ -16,6 +16,7 @@ pub enum ReadWriteId {
     Write(u64),
 }
 
+#[cfg(feature = "flecs_safety_readwrite_locks")]
 impl core::ops::Deref for ReadWriteId {
     type Target = u64;
 

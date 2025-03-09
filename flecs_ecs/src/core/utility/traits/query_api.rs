@@ -950,6 +950,7 @@ where
         let it = &mut self.retrieve_iter();
 
         if self.iter_next(it) && it.count > 0 {
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
             let world = self.world();
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             let components_access = world.components_access_map();
@@ -1060,6 +1061,7 @@ where
 
         // Proceed only if there is at least one entity in the iterator
         if self.iter_next(&mut it) && it.count > 0 {
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
             let world = self.world();
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             let components_access = world.components_access_map();
@@ -1545,10 +1547,12 @@ fn _determine_ids_plus_indices_for_wildcard_terms(
     }
     read_write
 }
-
+#[cfg(feature = "flecs_safety_readwrite_locks")]
 pub(super) const INCREMENT: bool = true;
+#[cfg(feature = "flecs_safety_readwrite_locks")]
 pub(super) const DECREMENT: bool = false;
 
+#[cfg(feature = "flecs_safety_readwrite_locks")]
 pub(crate) fn do_read_write_locks<const INCREMENT: bool>(
     iter: &sys::ecs_iter_t,
     components_access: &ReadWriteComponentsMap,

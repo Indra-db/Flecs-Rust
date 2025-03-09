@@ -1071,7 +1071,7 @@ where
 
             #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
             {
-                Some(FieldAt::<T>::new(component_ref, false))
+                Some(FieldAt::<T>::new(component_ref))
             }
 
             #[cfg(feature = "flecs_safety_readwrite_locks")]
@@ -1165,7 +1165,7 @@ where
 
             #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
             {
-                Some(FieldAtMut::<T>::new(component_ref, false))
+                Some(FieldAtMut::<T>::new(component_ref))
             }
 
             #[cfg(feature = "flecs_safety_readwrite_locks")]
