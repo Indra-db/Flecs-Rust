@@ -180,3 +180,59 @@ bool ecs_rust_is_sparse_idr(
 {
     return idr->flags & EcsIdIsSparse;
 }
+
+ecs_id_record_t* ecs_id_record_get(
+    const ecs_world_t *world,
+    ecs_id_t id)
+{
+    flecs_poly_assert(world, ecs_world_t);
+    if (id == ecs_pair(EcsIsA, EcsWildcard)) {
+        return world->idr_isa_wildcard;
+    } else if (id == ecs_pair(EcsChildOf, EcsWildcard)) {
+        return world->idr_childof_wildcard;
+    } else if (id == ecs_pair_t(EcsIdentifier, EcsName)) {
+        return world->idr_identifier_name;
+    }
+
+    ecs_id_t hash = flecs_id_record_hash(id);
+    ecs_id_record_t *idr = NULL;
+    if (hash >= FLECS_HI_ID_RECORD_ID) {
+        idr = ecs_map_get_deref(&world->id_index_hi, ecs_id_record_t, hash);
+    } else {
+        idr = world->id_index_lo[hash];
+    }
+
+    return idr;
+}
+
+int32_t ecs_table_get_column_index_w_idr(
+    const ecs_world_t *world,
+    const ecs_table_t *table,
+    ecs_id_t id,
+    ecs_id_record_t* idr)
+{
+    flecs_poly_assert(world, ecs_world_t);
+    ecs_check(table != NULL, ECS_INVALID_PARAMETER, NULL);
+    ecs_check(ecs_id_is_valid(world, id), ECS_INVALID_PARAMETER, NULL);
+
+    if (id < FLECS_HI_COMPONENT_ID) {
+        int16_t res = table->component_map[id];
+        if (res > 0) {
+            return res - 1;
+        }
+        return -1;
+    }
+
+    if (!idr) {
+        return -1;
+    }
+
+    ecs_table_record_t *tr = flecs_id_record_get_table(idr, table);
+    if (!tr) {
+        return -1;
+    }
+
+    return tr->column;
+error:
+    return -1;
+}

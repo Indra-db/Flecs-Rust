@@ -1,13 +1,13 @@
 use crate::core::{IdOperations, IdView};
 
+use super::ReadWriteId;
 use super::WorldRef;
 use core::sync::atomic::{AtomicU16, Ordering};
 use dashmap::DashMap;
 use flecs_ecs::sys;
+use flecs_ecs_sys::{ecs_table_column_lock_write_begin, ecs_table_column_lock_write_end};
 use foldhash::fast::RandomState;
 use smallvec::{SmallVec, smallvec};
-
-use super::ReadWriteId;
 
 /// Reserve the highest bit as the write flag.
 const WRITE_FLAG: u16 = 1 << 15;
@@ -334,7 +334,6 @@ pub(super) const DECREMENT: bool = false;
 #[cfg(feature = "flecs_safety_readwrite_locks")]
 pub(crate) fn do_read_write_locks<const INCREMENT: bool>(
     iter: &sys::ecs_iter_t,
-    components_access: &ReadWriteComponentsMap,
     count: usize,
     world: &WorldRef,
 ) {
@@ -352,34 +351,181 @@ pub(crate) fn do_read_write_locks<const INCREMENT: bool>(
             }
 
             let component_id = *iter.ids.add(i);
-            let idr = (*tr).hdr.cache as *const sys::ecs_id_record_t;
 
-            // don't bother with tags
-            if (*tr).column == -1 && !sys::ecs_rust_is_sparse_idr(idr) {
+            if sys::ecs_id_is_wildcard(component_id) {
+                continue;
+            }
+            let idr = (*tr).hdr.cache as *mut sys::ecs_id_record_t;
+
+            // don't bother with tags, but we still need to lock the sparse components
+            if (*tr).column == -1 {
+                //sparse components are not stored in tables so check for that
+                if sys::ecs_rust_is_sparse_idr(idr) {
+                    if sys::ecs_field_is_readonly(iter, i as i8) {
+                        if INCREMENT {
+                            sparse_id_record_lock_read_begin(world, idr);
+                        } else {
+                            sparse_id_record_lock_read_end(idr);
+                        }
+                    } else if INCREMENT {
+                        sparse_id_record_lock_write_begin(world, idr);
+                    } else {
+                        sparse_id_record_lock_write_end(idr);
+                    }
+                }
                 continue;
             }
 
             let table = (*tr).hdr.table;
 
-            if !sys::ecs_id_is_wildcard(component_id) {
-                if sys::ecs_field_is_readonly(iter, i as i8) {
-                    if INCREMENT {
-                        components_access.increment_read(
-                            component_id,
-                            sys::ecs_rust_table_id(table),
-                            world,
-                        );
-                    } else {
-                        components_access
-                            .decrement_read(component_id, sys::ecs_rust_table_id(table));
-                    }
-                } else if INCREMENT {
-                    components_access.set_write(component_id, sys::ecs_rust_table_id(table), world);
+            if sys::ecs_field_is_readonly(iter, i as i8) {
+                if INCREMENT {
+                    table_column_lock_read_begin(world, table, (*tr).column, world.stage_id());
                 } else {
-                    components_access.clear_write(component_id, sys::ecs_rust_table_id(table));
+                    table_column_lock_read_end(table, (*tr).column, world.stage_id());
                 }
+            } else if INCREMENT {
+                table_column_lock_write_begin(world, table, (*tr).column, world.stage_id());
+            } else {
+                table_column_lock_write_end(table, (*tr).column, world.stage_id());
             }
         }
+    }
+}
+
+fn component_id_from_table_column(table: *mut sys::ecs_table_t, column: i16) -> u64 {
+    unsafe {
+        *(*sys::ecs_table_get_type(table))
+            .array
+            .add(sys::ecs_table_column_to_type_index(table, column as i32) as usize)
+    }
+}
+
+pub(crate) fn sparse_id_record_lock_read_begin(world: &WorldRef, idr: *mut sys::ecs_id_record_t) {
+    unsafe {
+        if sys::ecs_sparse_id_record_lock_read_begin(idr) {
+            panic!(
+                "Cannot increment read: write already set for component: {}",
+                {
+                    let id = IdView::new_from_id(world, sys::ecs_id_from_id_record(idr));
+                    if id.is_pair() {
+                        format!(
+                            "({}, {})",
+                            world.entity_from_id(id.first_id()),
+                            world.entity_from_id(id.second_id())
+                        )
+                    } else {
+                        format!("{}", id.entity_view())
+                    }
+                },
+            );
+        }
+    }
+}
+
+pub(crate) fn sparse_id_record_lock_read_end(idr: *mut sys::ecs_id_record_t) {
+    unsafe {
+        sys::ecs_sparse_id_record_lock_read_end(idr);
+    }
+}
+
+pub(crate) fn sparse_id_record_lock_write_begin(world: &WorldRef, idr: *mut sys::ecs_id_record_t) {
+    unsafe {
+        if sys::ecs_sparse_id_record_lock_write_begin(idr) {
+            panic!(
+                "Cannot set write: reads already present or write already set for component: {}",
+                {
+                    let id = IdView::new_from_id(world, sys::ecs_id_from_id_record(idr));
+                    if id.is_pair() {
+                        format!(
+                            "({}, {})",
+                            world.entity_from_id(id.first_id()),
+                            world.entity_from_id(id.second_id())
+                        )
+                    } else {
+                        format!("{}", id.entity_view())
+                    }
+                },
+            );
+        }
+    }
+}
+
+pub(crate) fn sparse_id_record_lock_write_end(idr: *mut sys::ecs_id_record_t) {
+    unsafe {
+        sys::ecs_sparse_id_record_lock_write_end(idr);
+    }
+}
+
+pub(crate) fn table_column_lock_read_begin(
+    world: &WorldRef,
+    table: *mut sys::ecs_table_t,
+    column: i16,
+    stage_id: i32,
+) {
+    unsafe {
+        if sys::ecs_table_column_lock_read_begin(table, column, stage_id) {
+            panic!(
+                "Cannot increment read: write already set for component: {}",
+                {
+                    let id =
+                        IdView::new_from_id(world, component_id_from_table_column(table, column));
+                    if id.is_pair() {
+                        format!(
+                            "({}, {})",
+                            world.entity_from_id(id.first_id()),
+                            world.entity_from_id(id.second_id())
+                        )
+                    } else {
+                        format!("{}", id.entity_view())
+                    }
+                },
+            );
+        }
+    }
+}
+
+pub(crate) fn table_column_lock_read_end(table: *mut sys::ecs_table_t, column: i16, stage_id: i32) {
+    unsafe {
+        sys::ecs_table_column_lock_read_end(table, column, stage_id);
+    }
+}
+
+pub(crate) fn table_column_lock_write_begin(
+    world: &WorldRef,
+    table: *mut sys::ecs_table_t,
+    column: i16,
+    stage_id: i32,
+) {
+    unsafe {
+        if ecs_table_column_lock_write_begin(table, column, stage_id) {
+            panic!(
+                "Cannot set write: reads already present or write already set for component: {}",
+                {
+                    let id =
+                        IdView::new_from_id(world, component_id_from_table_column(table, column));
+                    if id.is_pair() {
+                        format!(
+                            "({}, {})",
+                            world.entity_from_id(id.first_id()),
+                            world.entity_from_id(id.second_id())
+                        )
+                    } else {
+                        format!("{}", id.entity_view())
+                    }
+                },
+            );
+        }
+    }
+}
+
+pub(crate) fn table_column_lock_write_end(
+    table: *mut sys::ecs_table_t,
+    column: i16,
+    stage_id: i32,
+) {
+    unsafe {
+        ecs_table_column_lock_write_end(table, column, stage_id);
     }
 }
 
