@@ -2007,7 +2007,7 @@ pub union ecs_iter_private_t__bindgen_ty_1 {
 }
 unsafe extern "C-unwind" {
     pub fn flecs_module_path_from_c(c_name: *const ::core::ffi::c_char)
-        -> *mut ::core::ffi::c_char;
+    -> *mut ::core::ffi::c_char;
 }
 unsafe extern "C-unwind" {
     pub fn flecs_identifier_is_0(id: *const ::core::ffi::c_char) -> bool;
@@ -3223,7 +3223,7 @@ unsafe extern "C-unwind" {
 unsafe extern "C-unwind" {
     #[doc = "Find or create an entity.\n This operation creates a new entity, or modifies an existing one. When a name\n is set in the ecs_entity_desc_t::name field and ecs_entity_desc_t::entity is\n not set, the operation will first attempt to find an existing entity by that\n name. If no entity with that name can be found, it will be created.\n\n If both a name and entity handle are provided, the operation will check if\n the entity name matches with the provided name. If the names do not match,\n the function will fail and return 0.\n\n If an id to a non-existing entity is provided, that entity id become alive.\n\n See the documentation of ecs_entity_desc_t for more details.\n\n @param world The world.\n @param desc Entity init parameters.\n @return A handle to the new or existing entity, or 0 if failed."]
     pub fn ecs_entity_init(world: *mut ecs_world_t, desc: *const ecs_entity_desc_t)
-        -> ecs_entity_t;
+    -> ecs_entity_t;
 }
 unsafe extern "C-unwind" {
     #[doc = "Bulk create/populate new entities.\n This operation bulk inserts a list of new or predefined entities into a\n single table.\n\n The operation does not take ownership of component arrays provided by the\n application. Components that are non-trivially copyable will be moved into\n the storage.\n\n The operation will emit OnAdd events for each added id, and OnSet events for\n each component that has been set.\n\n If no entity ids are provided by the application, the returned array of ids\n points to an internal data structure which changes when new entities are\n created/deleted.\n\n If as a result of the operation triggers are invoked that deletes\n entities and no entity ids were provided by the application, the returned\n array of identifiers may be incorrect. To avoid this problem, an application\n can first call ecs_bulk_init() to create empty entities, copy the array to one\n that is owned by the application, and then use this array to populate the\n entities.\n\n @param world The world.\n @param desc Bulk creation parameters.\n @return Array with the list of entity ids created/populated."]
@@ -3296,7 +3296,7 @@ unsafe extern "C-unwind" {
 unsafe extern "C-unwind" {
     #[doc = "Test if component is enabled.\n Test whether a component is currently enabled or disabled. This operation\n will return true when the entity has the component and if it has not been\n disabled by ecs_enable_component().\n\n @param world The world.\n @param entity The entity.\n @param id The component.\n @return True if the component is enabled, otherwise false."]
     pub fn ecs_is_enabled_id(world: *const ecs_world_t, entity: ecs_entity_t, id: ecs_id_t)
-        -> bool;
+    -> bool;
 }
 unsafe extern "C-unwind" {
     #[doc = "Get an immutable pointer to a component.\n This operation obtains a const pointer to the requested component. The\n operation accepts the component entity id.\n\n This operation can return inherited components reachable through an `IsA`\n relationship.\n\n @param world The world.\n @param entity The entity.\n @param id The id of the component to get.\n @return The component pointer, NULL if the entity does not have the component.\n\n @see ecs_get_mut_id()"]
@@ -3523,7 +3523,7 @@ unsafe extern "C-unwind" {
 unsafe extern "C-unwind" {
     #[doc = "Return depth for entity in tree for the specified relationship.\n Depth is determined by counting the number of targets encountered while\n traversing up the relationship tree for rel. Only acyclic relationships are\n supported.\n\n @param world The world.\n @param entity The entity.\n @param rel The relationship.\n @return The depth of the entity in the tree."]
     pub fn ecs_get_depth(world: *const ecs_world_t, entity: ecs_entity_t, rel: ecs_entity_t)
-        -> i32;
+    -> i32;
 }
 unsafe extern "C-unwind" {
     #[doc = "Count entities that have the specified id.\n Returns the number of entities that have the specified id.\n\n @param world The world.\n @param entity The id to search for.\n @return The number of entities that have the id."]
@@ -3690,7 +3690,7 @@ unsafe extern "C-unwind" {
 unsafe extern "C-unwind" {
     #[doc = "Get hooks for component.\n\n @param world The world.\n @param id The component id for which to retrieve the hooks.\n @return The hooks for the component, or NULL if not registered."]
     pub fn ecs_get_hooks_id(world: *const ecs_world_t, id: ecs_entity_t)
-        -> *const ecs_type_hooks_t;
+    -> *const ecs_type_hooks_t;
 }
 unsafe extern "C-unwind" {
     #[doc = "Returns whether specified id a tag.\n This operation returns whether the specified type is a tag (a component\n without data/size).\n\n An id is a tag when:\n - it is an entity without the EcsComponent component\n - it has an EcsComponent with size member set to 0\n - it is a pair where both elements are a tag\n - it is a pair where the first element has the #EcsPairIsTag tag\n\n @param world The world.\n @param id The id.\n @return Whether the provided id is a tag."]
@@ -3739,7 +3739,7 @@ unsafe extern "C-unwind" {
 unsafe extern "C-unwind" {
     #[doc = "Convert string to a (component) id.\n This operation is the reverse of ecs_id_str(). The FLECS_SCRIPT addon\n is required for this operation to work.\n\n @param world The world.\n @param expr The string to convert to an id."]
     pub fn ecs_id_from_str(world: *const ecs_world_t, expr: *const ::core::ffi::c_char)
-        -> ecs_id_t;
+    -> ecs_id_t;
 }
 unsafe extern "C-unwind" {
     #[doc = "Test whether term id is set.\n\n @param id The term id.\n @return True when set, false when not set."]
@@ -3802,7 +3802,7 @@ unsafe extern "C-unwind" {
 unsafe extern "C-unwind" {
     #[doc = "Get variable name.\n This operation returns the variable name for an index.\n\n @param query The query.\n @param var_id The variable index.\n @return The variable name."]
     pub fn ecs_query_var_name(query: *const ecs_query_t, var_id: i32)
-        -> *const ::core::ffi::c_char;
+    -> *const ::core::ffi::c_char;
 }
 unsafe extern "C-unwind" {
     #[doc = "Test if variable is an entity.\n Internally the query engine has entity variables and table variables. When\n iterating through query variables (by using ecs_query_variable_count()) only\n the values for entity variables are accessible. This operation enables an\n application to check if a variable is an entity variable.\n\n @param query The query.\n @param var_id The variable id.\n @return Whether the variable is an entity variable."]
@@ -4940,7 +4940,7 @@ pub struct ecs_system_desc_t {
 unsafe extern "C-unwind" {
     #[doc = "Create a system"]
     pub fn ecs_system_init(world: *mut ecs_world_t, desc: *const ecs_system_desc_t)
-        -> ecs_entity_t;
+    -> ecs_entity_t;
 }
 #[doc = "System type, get with ecs_system_get()"]
 #[repr(C)]
@@ -5593,7 +5593,7 @@ pub struct ecs_metric_desc_t {
 unsafe extern "C-unwind" {
     #[doc = "Create a new metric.\n Metrics are entities that store values measured from a range of different\n properties in the ECS storage. Metrics provide a single unified interface to\n discovering and reading these values, which can be useful for monitoring\n utilities, or for debugging.\n\n Examples of properties that can be measured by metrics are:\n  - Component member values\n  - How long an entity has had a specific component\n  - How long an entity has had a specific target for a relationship\n  - How many entities have a specific component\n\n Metrics can either be created as a \"gauge\" or \"counter\". A gauge is a metric\n that represents the value of something at a specific point in time, for\n example \"velocity\". A counter metric represents a value that is monotonically\n increasing, for example \"miles driven\".\n\n There are three different kinds of counter metric kinds:\n - EcsCounter\n   When combined with a member, this will store the actual value of the member\n   in the metric. This is useful for values that are already counters, such as\n   a MilesDriven component.\n   This kind creates a metric per entity that has the member/id.\n\n - EcsCounterIncrement\n   When combined with a member, this will increment the value of the metric by\n   the value of the member * delta_time. This is useful for values that are\n   not counters, such as a Velocity component.\n   This kind creates a metric per entity that has the member.\n\n - EcsCounterId\n   This metric kind will count the number of entities with a specific\n   (component) id. This kind creates a single metric instance for regular ids,\n   and a metric instance per target for wildcard ids when targets is set.\n\n @param world The world.\n @param desc Metric description.\n @return The metric entity."]
     pub fn ecs_metric_init(world: *mut ecs_world_t, desc: *const ecs_metric_desc_t)
-        -> ecs_entity_t;
+    -> ecs_entity_t;
 }
 unsafe extern "C-unwind" {
     #[doc = "Metrics module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsMetrics)\n @endcode\n\n @param world The world."]
@@ -6594,7 +6594,7 @@ pub struct ecs_script_desc_t {
 unsafe extern "C-unwind" {
     #[doc = "Load managed script.\n A managed script tracks which entities it creates, and keeps those entities\n synchronized when the contents of the script are updated. When the script is\n updated, entities that are no longer in the new version will be deleted.\n\n This feature is experimental.\n\n @param world The world.\n @param desc Script descriptor."]
     pub fn ecs_script_init(world: *mut ecs_world_t, desc: *const ecs_script_desc_t)
-        -> ecs_entity_t;
+    -> ecs_entity_t;
 }
 unsafe extern "C-unwind" {
     #[doc = "Update script with new code.\n\n @param world The world.\n @param script The script entity.\n @param instance An template instance (optional).\n @param code The script code."]
@@ -7772,7 +7772,7 @@ pub struct ecs_vector_desc_t {
 unsafe extern "C-unwind" {
     #[doc = "Create a new vector type.\n\n @param world The world.\n @param desc The type descriptor.\n @return The new type, 0 if failed."]
     pub fn ecs_vector_init(world: *mut ecs_world_t, desc: *const ecs_vector_desc_t)
-        -> ecs_entity_t;
+    -> ecs_entity_t;
 }
 #[doc = "Used with ecs_struct_init()."]
 #[repr(C)]
@@ -7786,7 +7786,7 @@ pub struct ecs_struct_desc_t {
 unsafe extern "C-unwind" {
     #[doc = "Create a new struct type.\n\n @param world The world.\n @param desc The type descriptor.\n @return The new type, 0 if failed."]
     pub fn ecs_struct_init(world: *mut ecs_world_t, desc: *const ecs_struct_desc_t)
-        -> ecs_entity_t;
+    -> ecs_entity_t;
 }
 #[doc = "Used with ecs_opaque_init()."]
 #[repr(C)]
@@ -7800,7 +7800,7 @@ pub struct ecs_opaque_desc_t {
 unsafe extern "C-unwind" {
     #[doc = "Create a new opaque type.\n Opaque types are types of which the layout doesn't match what can be modelled\n with the primitives of the meta framework, but which have a structure\n that can be described with meta primitives. Typical examples are STL types\n such as std::string or std::vector, types with a nontrivial layout, and types\n that only expose getter/setter methods.\n\n An opaque type is a combination of a serialization function, and a handle to\n a meta type which describes the structure of the serialized output. For\n example, an opaque type for std::string would have a serializer function that\n accesses .c_str(), and with type ecs_string_t.\n\n The serializer callback accepts a serializer object and a pointer to the\n value of the opaque type to be serialized. The serializer has two methods:\n\n - value, which serializes a value (such as .c_str())\n - member, which specifies a member to be serialized (in the case of a struct)\n\n @param world The world.\n @param desc The type descriptor.\n @return The new type, 0 if failed."]
     pub fn ecs_opaque_init(world: *mut ecs_world_t, desc: *const ecs_opaque_desc_t)
-        -> ecs_entity_t;
+    -> ecs_entity_t;
 }
 #[doc = "Used with ecs_unit_init()."]
 #[repr(C)]
