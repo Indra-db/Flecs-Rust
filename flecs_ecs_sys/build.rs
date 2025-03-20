@@ -30,7 +30,6 @@ fn generate_bindings() {
 
     let mut bindings = bindgen::Builder::default()
         .header("src/flecs_rust.h")
-        .header("src/flecs.h")
         // Only keep things that we've allowlisted rather than
         // recursively keeping nested uses around.
         .allowlist_file("src/flecs.h")

@@ -117,6 +117,11 @@ pub trait TableOperations<'a>: IntoTable {
     fn offset(&self) -> i32;
     fn world(&self) -> WorldRef<'a>;
 
+    /// Returns the table id
+    fn id(&self) -> u64 {
+        unsafe { sys::ecs_rust_table_id(self.table_ptr_mut()) }
+    }
+
     /// Returns the table count
     ///
     /// # See also

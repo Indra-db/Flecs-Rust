@@ -6,8 +6,6 @@ use core::{
 
 use crate::sys;
 use flecs_ecs::core::*;
-#[cfg(feature = "flecs_safety_readwrite_locks")]
-use flecs_ecs_sys::ecs_rust_table_id;
 use sys::ecs_get_with;
 
 #[cfg(feature = "std")]
@@ -1358,7 +1356,95 @@ impl<'a> EntityView<'a> {
     }
 }
 
-pub trait EntityViewGet<Return> {
+#[cfg(feature = "flecs_safety_readwrite_locks")]
+fn get_rw_lock<T: GetTuple, Return>(
+    world: &WorldRef,
+    callback: impl FnOnce(<T as GetTuple>::TupleType<'_>) -> Return,
+    record: *mut flecs_ecs_sys::ecs_record_t,
+    tuple_data: <T as GetTuple>::Pointers,
+    tuple: <T as GetTuple>::TupleType<'_>,
+) -> Return {
+    let table = unsafe { (*record).table };
+    let ids = tuple_data.read_write_ids();
+    let world = world.real_world();
+    let world_ptr = world.world_ptr();
+    let stage_id = world.stage_id();
+    let mut arr_component_info: T::ArrayColumnIndex = T::ArrayColumnIndex::init();
+    let component_info_arr = arr_component_info.column_indices_mut();
+    let mut i = 0;
+    for id in ids {
+        let raw_id = **id;
+        let idr = unsafe { sys::ecs_id_record_get(world_ptr, raw_id) };
+        if unsafe { sys::ecs_rust_is_sparse_idr(idr) } {
+            //TODO this does locking regardless if the entity has the component or not
+            component_info_arr[i] = ComponentTypeRWLock::Sparse((idr, *id));
+            match id {
+                ReadWriteId::Read(_) => {
+                    sparse_id_record_lock_read_begin(&world, idr);
+                }
+                ReadWriteId::Write(_) => {
+                    sparse_id_record_lock_write_begin(&world, idr);
+                }
+            }
+            i += 1;
+            continue;
+        }
+        let column_index = unsafe {
+            sys::ecs_table_get_column_index_w_idr(world_ptr, (*record).table, raw_id, idr)
+        };
+
+        component_info_arr[i] = ComponentTypeRWLock::Dense((column_index as i16, *id));
+        i += 1;
+
+        //does not have the component
+        if column_index == -1 {
+            continue;
+        }
+        match id {
+            ReadWriteId::Read(_) => {
+                table_column_lock_read_begin(&world, table, column_index as i16, stage_id);
+            }
+            ReadWriteId::Write(_) => {
+                table_column_lock_write_begin(&world, table, column_index as i16, stage_id);
+            }
+        }
+    }
+    world.defer_begin();
+    let ret = callback(tuple);
+    world.defer_end();
+
+    for id_info in component_info_arr.iter() {
+        match id_info {
+            ComponentTypeRWLock::Sparse((idr, id)) => match id {
+                ReadWriteId::Read(_) => {
+                    sparse_id_record_lock_read_end(*idr);
+                }
+                ReadWriteId::Write(_) => {
+                    sparse_id_record_lock_write_end(*idr);
+                }
+            },
+            ComponentTypeRWLock::Dense((column_index, id)) => match id {
+                ReadWriteId::Read(_) => {
+                    //does not have the component
+                    if *column_index == -1 {
+                        continue;
+                    }
+                    table_column_lock_read_end(table, *column_index, stage_id);
+                }
+                ReadWriteId::Write(_) => {
+                    //does not have the component
+                    if *column_index == -1 {
+                        continue;
+                    }
+                    table_column_lock_write_end(table, *column_index, stage_id);
+                }
+            },
+        }
+    }
+    ret
+}
+
+pub trait EntityViewGet<'a, Return>: WorldProvider<'a> + Sized {
     /// gets mutable or immutable component(s) and/or relationship(s) from an entity in a callback and return a value.
     /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
     /// use `Option` wrapper to indicate if the component is optional.
@@ -1509,7 +1595,7 @@ pub trait EntityViewGet<Return> {
     fn get<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return) -> Return;
 }
 
-impl<Return> EntityViewGet<Return> for EntityView<'_> {
+impl<'a, Return> EntityViewGet<'a, Return> for EntityView<'a> {
     fn try_get<T: GetTuple>(
         self,
         callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return,
@@ -1528,18 +1614,13 @@ impl<Return> EntityViewGet<Return> for EntityView<'_> {
 
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             {
-                let table_id = unsafe { ecs_rust_table_id((*record).table) };
-                let ids = tuple_data.read_write_ids();
-                let world = self.world();
-                let components_access = world.components_access_map();
-                components_access.increment_counters_from_ids(ids, table_id, &world);
-
-                self.world.defer_begin();
-                let ret = callback(tuple);
-                self.world.defer_end();
-
-                components_access.decrement_counters_from_ids(ids, table_id);
-                Some(ret)
+                Some(get_rw_lock::<T, Return>(
+                    &self.world,
+                    callback,
+                    record,
+                    tuple_data,
+                    tuple,
+                ))
             }
 
             #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
@@ -1566,18 +1647,7 @@ impl<Return> EntityViewGet<Return> for EntityView<'_> {
 
         #[cfg(feature = "flecs_safety_readwrite_locks")]
         {
-            let table_id = unsafe { ecs_rust_table_id((*record).table) };
-            let ids = tuple_data.read_write_ids();
-            let world = self.world();
-            let components_access = world.components_access_map();
-            components_access.increment_counters_from_ids(ids, table_id, &world);
-
-            self.world.defer_begin();
-            let ret = callback(tuple);
-            self.world.defer_end();
-
-            components_access.decrement_counters_from_ids(ids, table_id);
-            ret
+            get_rw_lock::<T, Return>(&self.world, callback, record, tuple_data, tuple)
         }
 
         #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
@@ -1657,10 +1727,27 @@ impl<'a> EntityView<'a> {
 
         #[cfg(feature = "flecs_safety_readwrite_locks")]
         {
-            let table_id = unsafe { ecs_rust_table_id((*record).table) };
+            let world = self.world.real_world();
+            let world_ptr = world.ptr_mut();
+            let table = unsafe { (*record).table };
             let read_ids = tuple_data.read_ids();
-            let components_access = self.world().components_access_map();
-            components_access.panic_if_any_write_is_set(read_ids, table_id);
+            let stage_id = self.world.stage_id();
+            for id in read_ids {
+                let idr = unsafe { sys::ecs_id_record_get(world_ptr, *id) };
+                if unsafe { sys::ecs_rust_is_sparse_idr(idr) } {
+                    //check if no writes are present so we can clone
+                    sparse_id_record_lock_read_begin(&world, idr);
+                    sparse_id_record_lock_read_end(idr);
+                    continue;
+                }
+
+                let column_index = unsafe {
+                    sys::ecs_table_get_column_index_w_idr(world_ptr, (*record).table, *id, idr)
+                };
+                //check if no writes are present so we can clone
+                table_column_lock_read_begin(&world, table, column_index as i16, stage_id);
+                table_column_lock_read_end(table, column_index as i16, stage_id);
+            }
         }
         tuple_data.get_tuple()
     }
@@ -1731,6 +1818,38 @@ impl<'a> EntityView<'a> {
         }
 
         let tuple_data = T::create_ptrs::<false>(self.world, self.id, record);
+
+        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        {
+            let world = self.world.real_world();
+            let world_ptr = world.ptr_mut();
+            let table = unsafe { (*record).table };
+            let read_ids = tuple_data.read_ids();
+            let stage_id = self.world.stage_id();
+            for id in read_ids {
+                let idr = unsafe { sys::ecs_id_record_get(world_ptr, *id) };
+                if unsafe { sys::ecs_rust_is_sparse_idr(idr) } {
+                    //TODO this does locking regardless if the entity has the component or not
+                    //check if no writes are present so we can clone
+                    sparse_id_record_lock_read_begin(&world, idr);
+                    sparse_id_record_lock_read_end(idr);
+                    continue;
+                }
+
+                let column_index = unsafe {
+                    sys::ecs_table_get_column_index_w_idr(world_ptr, (*record).table, *id, idr)
+                };
+                //does not have the component
+                if column_index == -1 {
+                    continue;
+                }
+
+                //check if no writes are present so we can clone
+                table_column_lock_read_begin(&world, table, column_index as i16, stage_id);
+                table_column_lock_read_end(table, column_index as i16, stage_id);
+            }
+        }
+
         //todo we can maybe early return if we don't yet if doesn't have all. Same for try_get
         let has_all_components = tuple_data.has_all_components();
 
@@ -1741,7 +1860,7 @@ impl<'a> EntityView<'a> {
         }
     }
 
-    /// Get component value or pair as untyped pointer
+    /// Get component value or pair as untyped pointer. This is not borrow checked as it's a ptr return.
     ///
     /// # Arguments
     ///
@@ -2917,7 +3036,6 @@ impl EntityView<'_> {
         self.world().event().entity(self).enqueue(event);
     }
 }
-
 // Event/Observe mixin
 impl EntityView<'_> {
     /// Register the callback for the entity observer for empty events.
