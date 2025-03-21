@@ -2,9 +2,11 @@
 
 mod field;
 mod iter;
+mod multi_src_get;
 
 pub use field::{Field, FieldUntyped};
 pub use iter::{TableIter, TableRowIter};
+pub use multi_src_get::*;
 
 use core::{ffi::CStr, ffi::c_void, ptr::NonNull};
 
