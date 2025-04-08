@@ -46,6 +46,33 @@ impl<T, const LOCK: bool> Drop for Field<'_, T, LOCK> {
     }
 }
 
+impl<'a, T> Field<'a, T, false> {
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) fn new_lockless(
+        slice_components: &'a [T],
+        is_shared: bool,
+        stage_id: i32,
+        column_index: i16,
+        table: NonNull<ecs_table_t>,
+    ) -> Self {
+        Self {
+            slice_components,
+            is_shared,
+            table,
+            stage_id,
+            column_index,
+        }
+    }
+
+    #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+    pub(crate) fn new_lockless(slice_components: &'a [T], is_shared: bool) -> Self {
+        Self {
+            slice_components,
+            is_shared,
+        }
+    }
+}
+
 impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
     /// Create a new column from component array.
     ///
@@ -106,7 +133,7 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
     }
 }
 
-impl<T: ComponentId, const LOCK: bool> Deref for Field<'_, T, LOCK> {
+impl<T: ComponentId> Deref for Field<'_, T, true> {
     type Target = [T];
 
     fn deref(&self) -> &Self::Target {
@@ -119,7 +146,8 @@ impl<T: ComponentId, const LOCK: bool> Deref for Field<'_, T, LOCK> {
 /// # Type parameters
 ///
 /// * `T`: The type of the column.
-pub struct FieldMut<'a, T> {
+
+pub struct FieldMut<'a, T, const LOCK: bool> {
     pub(crate) slice_components: &'a mut [T],
     pub(crate) is_shared: bool,
     #[cfg(feature = "flecs_safety_readwrite_locks")]
@@ -130,7 +158,7 @@ pub struct FieldMut<'a, T> {
     pub(crate) column_index: i16,
 }
 
-impl<T> core::fmt::Debug for FieldMut<'_, T>
+impl<T, const LOCK: bool> core::fmt::Debug for FieldMut<'_, T, LOCK>
 where
     T: core::fmt::Debug,
 {
@@ -139,16 +167,45 @@ where
     }
 }
 
-#[cfg(feature = "flecs_safety_readwrite_locks")]
-impl<T> Drop for FieldMut<'_, T> {
-    fn drop(&mut self) {
-        unsafe {
-            table_column_lock_write_end(self.table.as_mut(), self.column_index, self.stage_id);
+// #[cfg(feature = "flecs_safety_readwrite_locks")]
+// impl<T, const LOCK: bool> Drop for FieldMut<'_, T, LOCK> {
+//     fn drop(&mut self) {
+//         if LOCK {
+//             unsafe {
+//                 table_column_lock_write_end(self.table.as_mut(), self.column_index, self.stage_id);
+//             }
+//         }
+//     }
+// }
+
+impl<'a, T> FieldMut<'a, T, false> {
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) fn new_lockless(
+        slice_components: &'a mut [T],
+        is_shared: bool,
+        stage_id: i32,
+        column_index: i16,
+        table: NonNull<ecs_table_t>,
+    ) -> Self {
+        Self {
+            slice_components,
+            is_shared,
+            table,
+            stage_id,
+            column_index,
+        }
+    }
+
+    #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+    pub(crate) fn new_lockless(slice_components: &'a mut [T], is_shared: bool) -> Self {
+        Self {
+            slice_components,
+            is_shared,
         }
     }
 }
 
-impl<'a, T> FieldMut<'a, T> {
+impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
     /// Create a new column from component array.
     ///
     /// # Arguments
@@ -188,7 +245,9 @@ impl<'a, T> FieldMut<'a, T> {
         table: NonNull<ecs_table_t>,
         world: &WorldRef,
     ) -> Self {
-        table_column_lock_write_begin(world, table.as_ptr(), column_index, stage_id);
+        if LOCK {
+            table_column_lock_write_begin(world, table.as_ptr(), column_index, stage_id);
+        }
 
         Self {
             slice_components,
@@ -207,7 +266,7 @@ impl<'a, T> FieldMut<'a, T> {
     }
 }
 
-impl<T: ComponentId> Deref for FieldMut<'_, T> {
+impl<T: ComponentId, const LOCK: bool> Deref for FieldMut<'_, T, LOCK> {
     type Target = [T];
 
     fn deref(&self) -> &Self::Target {
@@ -215,7 +274,7 @@ impl<T: ComponentId> Deref for FieldMut<'_, T> {
     }
 }
 
-impl<T: ComponentId> DerefMut for FieldMut<'_, T> {
+impl<T: ComponentId, const LOCK: bool> DerefMut for FieldMut<'_, T, LOCK> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.slice_components
     }

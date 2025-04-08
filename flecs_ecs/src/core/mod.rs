@@ -8,6 +8,7 @@ pub mod ecs_os_api;
 mod entity;
 mod entity_view;
 mod event;
+pub(crate) mod fields_tuple;
 pub mod flecs;
 pub(crate) mod get_tuple;
 mod id;
