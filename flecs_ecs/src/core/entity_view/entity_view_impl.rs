@@ -18,9 +18,8 @@ impl<'a> IdOperations<'a> for EntityView<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `Id::Id`
+    /// * [`IdOperations::new_from_str()`]
     #[doc(alias = "Id::Id")]
-    /// * C API: `ecs_id_t`
     #[doc(alias = "ecs_id_t")]
     fn new_from_id(world: impl WorldProvider<'a>, id: impl IntoId) -> Self {
         Self {
@@ -38,7 +37,7 @@ impl<'a> IdOperations<'a> for EntityView<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `Id::Id`
+    /// * [`IdOperations::new_from_id()`]
     #[doc(alias = "Id::Id")]
     fn new_from_str(world: impl WorldProvider<'a>, expr: &str) -> Self {
         let expr = compact_str::format_compact!("{}\0", expr);
