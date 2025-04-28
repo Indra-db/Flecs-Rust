@@ -7,4 +7,5 @@ mod entity_view_mut;
 mod macros;
 
 pub use entity_view_const::EntityView;
+pub use entity_view_const::EntityViewFetch;
 pub use entity_view_const::EntityViewGet;
