@@ -1,3 +1,6 @@
+extern crate alloc;
+#[cfg(feature = "std")]
+extern crate std;
 use core::{
     ffi::{CStr, c_void},
     ops::{Deref, DerefMut},
@@ -8,12 +11,9 @@ use crate::sys;
 use flecs_ecs::core::*;
 use sys::ecs_get_with;
 
-#[cfg(feature = "std")]
-extern crate std;
-
-extern crate alloc;
 #[allow(unused_imports)] //meant for no_std, not ready yet
 use alloc::{borrow::ToOwned, boxed::Box, format, string::String, string::ToString, vec, vec::Vec};
+use flecs_ecs_sys::ecs_table_t;
 
 /// A view into an entity in the world that provides both read and write access to components and relationships.
 ///
@@ -1444,6 +1444,10 @@ fn get_rw_lock<T: GetTuple, Return>(
     ret
 }
 
+pub trait EntityViewFetch<'a>: WorldProvider<'a> + Sized {
+    fn fetch<T: GetTuple>(self) -> TableLock<'a, T>;
+}
+
 pub trait EntityViewGet<'a, Return>: WorldProvider<'a> + Sized {
     /// gets mutable or immutable component(s) and/or relationship(s) from an entity in a callback and return a value.
     /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
@@ -1656,6 +1660,149 @@ impl<'a, Return> EntityViewGet<'a, Return> for EntityView<'a> {
             let ret = callback(tuple);
             self.world.defer_end();
             ret
+        }
+    }
+}
+
+impl<'a> EntityViewFetch<'a> for EntityView<'a> {
+    fn fetch<T: GetTuple>(self) -> TableLock<'a, T> {
+        init_locked::<T>(self)
+    }
+}
+
+pub struct TableLock<'a, T: GetTuple> {
+    world: WorldRef<'a>,
+    arr_component_info: T::ArrayColumnIndex,
+    data: T::TupleType<'a>,
+    table: *mut ecs_table_t,
+    stage_id: i32,
+}
+
+impl<'a, T: GetTuple> Deref for TableLock<'a, T> {
+    type Target = T::TupleType<'a>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+
+impl<'a, T: GetTuple> core::fmt::Debug for TableLock<'a, T>
+where
+    T::TupleType<'a>: core::fmt::Debug,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("TableLock")
+            .field("data", &self.data)
+            .finish()
+    }
+}
+
+impl<'a, T: GetTuple> DerefMut for TableLock<'a, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.data
+    }
+}
+
+fn init_locked<T: GetTuple>(view: EntityView<'_>) -> TableLock<'_, T> {
+    let record = unsafe { sys::ecs_record_find(view.world.world_ptr(), *view.id) };
+    let table = unsafe { (*record).table };
+
+    if unsafe { (*record).table.is_null() } {
+        panic!("Entity does not have any components");
+    }
+
+    let tuple_data = T::create_ptrs::<true>(view.world, view.id, record);
+    let tuple = tuple_data.get_tuple();
+
+    let ids = tuple_data.read_write_ids();
+    let world = view.world.real_world();
+    let world_ptr = world.world_ptr();
+    let stage_id = world.stage_id();
+    let mut arr_component_info: T::ArrayColumnIndex = T::ArrayColumnIndex::init();
+    let component_info_arr = arr_component_info.column_indices_mut();
+    let mut i = 0;
+    for id in ids {
+        let raw_id = **id;
+        let idr = unsafe { sys::ecs_id_record_get(world_ptr, raw_id) };
+        if unsafe { sys::ecs_rust_is_sparse_idr(idr) } {
+            //TODO this does locking regardless if the entity has the component or not
+            component_info_arr[i] = ComponentTypeRWLock::Sparse((idr, *id));
+            match id {
+                ReadWriteId::Read(_) => {
+                    sparse_id_record_lock_read_begin(&world, idr);
+                }
+                ReadWriteId::Write(_) => {
+                    sparse_id_record_lock_write_begin(&world, idr);
+                }
+            }
+            i += 1;
+            continue;
+        }
+        let column_index = unsafe {
+            sys::ecs_table_get_column_index_w_idr(world_ptr, (*record).table, raw_id, idr)
+        };
+
+        component_info_arr[i] = ComponentTypeRWLock::Dense((column_index as i16, *id));
+        i += 1;
+
+        //does not have the component
+        if column_index == -1 {
+            continue;
+        }
+        match id {
+            ReadWriteId::Read(_) => {
+                table_column_lock_read_begin(&world, table, column_index as i16, stage_id);
+            }
+            ReadWriteId::Write(_) => {
+                table_column_lock_write_begin(&world, table, column_index as i16, stage_id);
+            }
+        }
+    }
+    world.defer_begin();
+
+    // let ret = callback(tuple);
+
+    TableLock {
+        world,
+        arr_component_info,
+        data: tuple,
+        table,
+        stage_id,
+    }
+}
+
+impl<'a, T: GetTuple> Drop for TableLock<'a, T> {
+    fn drop(&mut self) {
+        self.world.defer_end();
+
+        let component_info_arr = self.arr_component_info.column_indices_mut();
+        for id_info in component_info_arr.iter() {
+            match id_info {
+                ComponentTypeRWLock::Sparse((idr, id)) => match id {
+                    ReadWriteId::Read(_) => {
+                        sparse_id_record_lock_read_end(*idr);
+                    }
+                    ReadWriteId::Write(_) => {
+                        sparse_id_record_lock_write_end(*idr);
+                    }
+                },
+                ComponentTypeRWLock::Dense((column_index, id)) => match id {
+                    ReadWriteId::Read(_) => {
+                        //does not have the component
+                        if *column_index == -1 {
+                            continue;
+                        }
+                        table_column_lock_read_end(self.table, *column_index, self.stage_id);
+                    }
+                    ReadWriteId::Write(_) => {
+                        //does not have the component
+                        if *column_index == -1 {
+                            continue;
+                        }
+                        table_column_lock_write_end(self.table, *column_index, self.stage_id);
+                    }
+                },
+            }
         }
     }
 }

@@ -13,6 +13,7 @@ mod entity_rust_test;
 mod entity_test;
 mod enum_test;
 mod eq_test;
+mod fetch_test;
 mod flecs_docs_test;
 mod is_ref_test;
 mod meta_macro_test;
