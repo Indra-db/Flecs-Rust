@@ -1686,9 +1686,9 @@ impl<'a, T: GetTuple> Deref for TableLock<'a, T> {
     }
 }
 
-impl<'a, T: GetTuple> core::fmt::Debug for TableLock<'a, T>
+impl<T: GetTuple> core::fmt::Debug for TableLock<'_, T>
 where
-    T::TupleType<'a>: core::fmt::Debug,
+    T::TupleType<'_>: core::fmt::Debug,
 {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("TableLock")
@@ -1771,7 +1771,7 @@ fn init_locked<T: GetTuple>(view: EntityView<'_>) -> TableLock<'_, T> {
     }
 }
 
-impl<'a, T: GetTuple> Drop for TableLock<'a, T> {
+impl<T: GetTuple> Drop for TableLock<'_, T> {
     fn drop(&mut self) {
         self.world.defer_end();
 
