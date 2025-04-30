@@ -109,12 +109,7 @@ pub mod private {
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<INCREMENT>(
-                        iter,
-                        components_access,
-                        T::COUNT as usize,
-                        &world,
-                    );
+                    do_read_write_locks::<INCREMENT>(iter, components_access, T::COUNT as usize);
                 }
 
                 if !CALLED_FROM_RUN {
@@ -132,12 +127,7 @@ pub mod private {
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<DECREMENT>(
-                        iter,
-                        components_access,
-                        T::COUNT as usize,
-                        &world,
-                    );
+                    do_read_write_locks::<DECREMENT>(iter, components_access, T::COUNT as usize);
                 }
             }
         }
@@ -194,12 +184,7 @@ pub mod private {
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<INCREMENT>(
-                        iter,
-                        components_access,
-                        T::COUNT as usize,
-                        &world,
-                    );
+                    do_read_write_locks::<INCREMENT>(iter, components_access, T::COUNT as usize);
                 }
 
                 if !CALLED_FROM_RUN {
@@ -220,12 +205,7 @@ pub mod private {
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<DECREMENT>(
-                        iter,
-                        components_access,
-                        T::COUNT as usize,
-                        &world,
-                    );
+                    do_read_write_locks::<DECREMENT>(iter, components_access, T::COUNT as usize);
                 }
             }
         }
@@ -271,12 +251,7 @@ pub mod private {
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<INCREMENT>(
-                        iter,
-                        components_access,
-                        T::COUNT as usize,
-                        &world,
-                    );
+                    do_read_write_locks::<INCREMENT>(iter, components_access, T::COUNT as usize);
                 }
 
                 sys::ecs_table_lock(iter.world, iter.table);
@@ -291,12 +266,7 @@ pub mod private {
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<DECREMENT>(
-                        iter,
-                        components_access,
-                        T::COUNT as usize,
-                        &world,
-                    );
+                    do_read_write_locks::<DECREMENT>(iter, components_access, T::COUNT as usize);
                 }
             }
         }
