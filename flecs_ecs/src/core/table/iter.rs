@@ -1016,6 +1016,15 @@ where
         Id::new(id)
     }
 
+    pub fn sources(&self) -> &[Entity] {
+        unsafe {
+            core::slice::from_raw_parts(
+                self.iter.sources as *const Entity,
+                self.iter.field_count as usize,
+            )
+        }
+    }
+
     /// Get readonly access to entity ids.
     ///
     /// # Returns
@@ -1026,24 +1035,12 @@ where
     ///
     /// * C++ API: `iter::entities`
     #[doc(alias = "iter::entities")]
-    pub fn entities(&self) -> Field<Entity, false> {
-        let slice = unsafe {
+    pub fn entities(&self) -> &[Entity] {
+        unsafe {
             core::slice::from_raw_parts_mut(
                 self.iter.entities as *mut Entity,
                 self.iter.count as usize,
             )
-        };
-
-        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
-        {
-            Field::<Entity, false>::new(slice, false)
-        }
-
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
-        {
-            let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
-            //Dummy id and table id since we're not accessing any data
-            Field::<Entity, false>::new(slice, false, 0, 0, NonNull::dangling(), &world_ref)
         }
     }
 
@@ -1162,6 +1159,7 @@ where
                     is_shared,
                     world_ref.stage_id(),
                     (*tr).column,
+                    index,
                     NonNull::new_unchecked(table),
                     &world_ref,
                 ))
@@ -1245,6 +1243,7 @@ where
                     is_shared,
                     world_ref.stage_id(),
                     column_index,
+                    index,
                     NonNull::new_unchecked(table),
                     &world_ref,
                 ))

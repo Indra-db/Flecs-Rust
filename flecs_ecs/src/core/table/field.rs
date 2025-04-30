@@ -21,6 +21,8 @@ pub struct Field<'a, T, const LOCK: bool> {
     #[cfg(feature = "flecs_safety_readwrite_locks")]
     pub(crate) table: NonNull<ecs_table_t>,
     #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) field_index: i8,
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
     pub(crate) stage_id: i32,
     #[cfg(feature = "flecs_safety_readwrite_locks")]
     pub(crate) column_index: i16,
@@ -53,12 +55,14 @@ impl<'a, T> Field<'a, T, false> {
         is_shared: bool,
         stage_id: i32,
         column_index: i16,
+        field_index: i8,
         table: NonNull<ecs_table_t>,
     ) -> Self {
         Self {
             slice_components,
             is_shared,
             table,
+            field_index,
             stage_id,
             column_index,
         }
@@ -110,6 +114,7 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
         is_shared: bool,
         stage_id: i32,
         column_index: i16,
+        field_index: i8,
         table: NonNull<ecs_table_t>,
         world: &WorldRef,
     ) -> Self {
@@ -120,9 +125,25 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
             slice_components,
             is_shared,
             table,
+            field_index,
             stage_id,
             column_index,
         }
+    }
+
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) fn lock_table(&self, world: &WorldRef) {
+        table_column_lock_read_begin(world, self.table.as_ptr(), self.column_index, self.stage_id);
+    }
+
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) fn unlock_table(&self) {
+        table_column_lock_read_end(self.table.as_ptr(), self.column_index, self.stage_id);
+    }
+
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub fn table_id(&self) -> u64 {
+        unsafe { flecs_ecs_sys::ecs_rust_table_id(self.table.as_ptr()) }
     }
 
     pub fn drop(self) {}
@@ -153,6 +174,8 @@ pub struct FieldMut<'a, T, const LOCK: bool> {
     #[cfg(feature = "flecs_safety_readwrite_locks")]
     pub(crate) table: NonNull<ecs_table_t>,
     #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) field_index: i8,
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
     pub(crate) stage_id: i32,
     #[cfg(feature = "flecs_safety_readwrite_locks")]
     pub(crate) column_index: i16,
@@ -167,16 +190,16 @@ where
     }
 }
 
-// #[cfg(feature = "flecs_safety_readwrite_locks")]
-// impl<T, const LOCK: bool> Drop for FieldMut<'_, T, LOCK> {
-//     fn drop(&mut self) {
-//         if LOCK {
-//             unsafe {
-//                 table_column_lock_write_end(self.table.as_mut(), self.column_index, self.stage_id);
-//             }
-//         }
-//     }
-// }
+#[cfg(feature = "flecs_safety_readwrite_locks")]
+impl<T, const LOCK: bool> Drop for FieldMut<'_, T, LOCK> {
+    fn drop(&mut self) {
+        if LOCK {
+            unsafe {
+                table_column_lock_write_end(self.table.as_mut(), self.column_index, self.stage_id);
+            }
+        }
+    }
+}
 
 impl<'a, T> FieldMut<'a, T, false> {
     #[cfg(feature = "flecs_safety_readwrite_locks")]
@@ -185,12 +208,14 @@ impl<'a, T> FieldMut<'a, T, false> {
         is_shared: bool,
         stage_id: i32,
         column_index: i16,
+        field_index: i8,
         table: NonNull<ecs_table_t>,
     ) -> Self {
         Self {
             slice_components,
             is_shared,
             table,
+            field_index,
             stage_id,
             column_index,
         }
@@ -242,6 +267,7 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
         is_shared: bool,
         stage_id: i32,
         column_index: i16,
+        field_index: i8,
         table: NonNull<ecs_table_t>,
         world: &WorldRef,
     ) -> Self {
@@ -253,9 +279,25 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
             slice_components,
             is_shared,
             table,
+            field_index,
             stage_id,
             column_index,
         }
+    }
+
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) fn lock_table(&self, world: &WorldRef) {
+        table_column_lock_write_begin(world, self.table.as_ptr(), self.column_index, self.stage_id);
+    }
+
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) fn unlock_table(&self) {
+        table_column_lock_write_end(self.table.as_ptr(), self.column_index, self.stage_id);
+    }
+
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub fn table_id(&self) -> u64 {
+        unsafe { flecs_ecs_sys::ecs_rust_table_id(self.table.as_ptr()) }
     }
 
     pub fn drop(self) {}
