@@ -481,14 +481,14 @@ where
         unsafe { CStr::from_ptr(c_str) }
     }
 
-    /// Get read access to field data.
-    ///
-    /// if the field is readonly, the function will assert.
+    /// Get read/write access to field data.
+    /// If the matched id for the specified field does not match with the provided
+    /// type or if the field is readonly, the function will assert.
     ///
     /// # Safety
     ///
     /// This function is unsafe because it casts `c_void` data to a type T expecting
-    /// The user to pass the correct index and type + the index being within bounds + optional data
+    /// The user to pass the correct index + the index being within bounds + optional data
     /// to be valid.
     ///
     /// This function should not be used in `each_iter()` callbacks, unless it is to
@@ -511,7 +511,9 @@ where
     ///
     /// * C++ API: `iter::field`
     #[doc(alias = "iter::field")]
-    pub unsafe fn field_unchecked<T>(&self, index: i8) -> Field<T> {
+    // TODO? in C++ API there is a mutable and immutable version of this function
+    // Maybe we should create a ColumnView struct that is immutable and use the Column struct for mutable access?
+    pub unsafe fn field_unchecked<T>(&self, index: i8, id: Entity) -> Field<T> {
         ecs_assert!(
             index < self.iter.field_count,
             FlecsErrorCode::InvalidParameter,
@@ -523,52 +525,7 @@ where
             FlecsErrorCode::InvalidOperation,
             "cannot .field from .each, use .field_at instead",
         );
-        let id = unsafe { *self.iter.ids.add(index as usize) };
-        unsafe { self.field_internal::<T>(index, Entity(id)).unwrap() }
-    }
-
-    /// Get write access to field data.
-    ///
-    /// # Safety
-    ///
-    /// This function is unsafe because it casts `c_void` data to a type T expecting
-    /// The user to pass the correct index and type + the index being within bounds + optional data
-    /// to be valid.
-    ///
-    /// This function should not be used in `each_iter()` callbacks, unless it is to
-    /// access a shared field. For access to non-shared fields in `each_iter()`, use
-    /// `field_at`.
-    ///
-    /// # Type parameters
-    ///
-    /// * `T` - The type of component to get the field data for
-    ///
-    /// # Arguments
-    ///
-    /// * `index` - The field index.
-    ///
-    /// # Returns
-    ///
-    /// Returns a column object that can be used to access the field data.
-    pub unsafe fn field_unchecked_mut<T>(&self, index: i8) -> FieldMut<T> {
-        ecs_assert!(
-            index < self.iter.field_count,
-            FlecsErrorCode::InvalidParameter,
-            index
-        );
-        ecs_assert!(
-            (self.iter.flags & sys::EcsIterCppEach == 0)
-                || unsafe { sys::ecs_field_src(self.iter, index) != 0 },
-            FlecsErrorCode::InvalidOperation,
-            "cannot .field from .each, use .field_at instead",
-        );
-        ecs_assert!(
-            !unsafe { sys::ecs_field_is_readonly(self.iter, index) },
-            FlecsErrorCode::AccessViolation,
-            "field is readonly, check if your specified query terms are set &mut"
-        );
-        let id = unsafe { *self.iter.ids.add(index as usize) };
-        unsafe { self.field_internal_mut::<T>(index, Entity(id)).unwrap() }
+        unsafe { self.field_internal::<T>(index, id).unwrap() }
     }
 
     fn field_checked_mut<T: ComponentId>(&self, index: i8) -> Option<FieldMut<T::UnderlyingType>> {
