@@ -20,10 +20,6 @@ use crate::core::{ImplementsClone, ImplementsDefault};
 
 #[doc(hidden)]
 pub mod private {
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    use crate::core::DECREMENT;
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    use crate::core::INCREMENT;
     use crate::core::*;
     use crate::sys;
     use core::ffi::c_void;
@@ -88,12 +84,8 @@ pub mod private {
                         "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
                     );
                 }
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
-                let world = WorldRef::from_ptr((*iter).world);
-                let iter = &mut *iter;
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
-                let components_access = world.components_access_map();
 
+                let iter = &mut *iter;
                 iter.flags |= sys::EcsIterCppEach;
 
                 let each = &mut *(iter.callback_ctx as *mut Func);
@@ -107,11 +99,6 @@ pub mod private {
                     }
                 };
 
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
-                {
-                    do_read_write_locks::<INCREMENT>(iter, components_access, T::COUNT as usize);
-                }
-
                 if !CALLED_FROM_RUN {
                     sys::ecs_table_lock(iter.world, iter.table);
                 }
@@ -123,11 +110,6 @@ pub mod private {
 
                 if !CALLED_FROM_RUN {
                     sys::ecs_table_unlock(iter.world, iter.table);
-                }
-
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
-                {
-                    do_read_write_locks::<DECREMENT>(iter, components_access, T::COUNT as usize);
                 }
             }
         }
@@ -154,12 +136,8 @@ pub mod private {
                         "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
                     );
                 }
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
-                let world = WorldRef::from_ptr((*iter).world);
-                let iter = &mut *iter;
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
-                let components_access = world.components_access_map();
 
+                let iter = &mut *iter;
                 iter.flags |= sys::EcsIterCppEach;
 
                 let each_entity = &mut *(iter.callback_ctx as *mut Func);
@@ -182,11 +160,6 @@ pub mod private {
                     WorldRef::from_ptr(iter.world).entity_from_id(iter.system)
                 );
 
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
-                {
-                    do_read_write_locks::<INCREMENT>(iter, components_access, T::COUNT as usize);
-                }
-
                 if !CALLED_FROM_RUN {
                     sys::ecs_table_lock(iter.world, iter.table);
                 }
@@ -201,11 +174,6 @@ pub mod private {
 
                 if !CALLED_FROM_RUN {
                     sys::ecs_table_unlock(iter.world, iter.table);
-                }
-
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
-                {
-                    do_read_write_locks::<DECREMENT>(iter, components_access, T::COUNT as usize);
                 }
             }
         }
@@ -231,12 +199,8 @@ pub mod private {
                         "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
                     );
                 }
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
-                let world = WorldRef::from_ptr((*iter).world);
-                let iter = &mut *iter;
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
-                let components_access = world.components_access_map();
 
+                let iter = &mut *iter;
                 iter.flags |= sys::EcsIterCppEach;
 
                 let each_iter = &mut *(iter.callback_ctx as *mut Func);
@@ -249,11 +213,6 @@ pub mod private {
                     }
                 };
 
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
-                {
-                    do_read_write_locks::<INCREMENT>(iter, components_access, T::COUNT as usize);
-                }
-
                 sys::ecs_table_lock(iter.world, iter.table);
 
                 for i in 0..iter_count {
@@ -263,11 +222,6 @@ pub mod private {
                     each_iter(iter_t, i, tuple);
                 }
                 sys::ecs_table_unlock(iter.world, iter.table);
-
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
-                {
-                    do_read_write_locks::<DECREMENT>(iter, components_access, T::COUNT as usize);
-                }
             }
         }
 

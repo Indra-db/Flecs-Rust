@@ -82,7 +82,7 @@ fn query_run_sparse() {
             let v = it.field::<Velocity>(1).unwrap();
 
             for i in it.iter() {
-                let mut p = it.field_at_mut::<Position>(0, i).unwrap();
+                let p = it.field_at_mut::<Position>(0, i).unwrap();
                 p.x += v[i].x;
                 p.y += v[i].y;
             }

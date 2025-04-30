@@ -110,7 +110,7 @@ fn main() {
     query_write.run(|mut it| {
         while it.next() {
             let dirty = it.field::<Dirty>(0).unwrap();
-            let mut pos = it.field_mut::<Position>(1).unwrap();
+            let mut pos = it.field::<Position>(1).unwrap();
 
             println!("iterate table [{}]", it.archetype().unwrap());
 
@@ -121,9 +121,8 @@ fn main() {
 
                 // If the dirty flag is false, skip the table. This way the table's
                 // dirty state is not updated by the query.
-                dirty.drop();
-                pos.drop();
                 it.skip();
+
                 continue;
             }
 

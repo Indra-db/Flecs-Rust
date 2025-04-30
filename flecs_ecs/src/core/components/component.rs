@@ -59,7 +59,6 @@ impl<'a, T: ComponentId> Component<'a, T> {
     ///
     /// * C++ API: `component::component`
     #[doc(alias = "component::component")]
-    #[inline(never)]
     pub fn new(world: impl WorldProvider<'a>) -> Self {
         let world = world.world();
         let id = T::__register_or_get_id::<false>(world);

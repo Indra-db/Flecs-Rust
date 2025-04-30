@@ -1,46 +1,20 @@
 //! Table column API.
 
-use crate::core::*;
-#[cfg(feature = "flecs_safety_readwrite_locks")]
-use core::ptr::NonNull;
 use core::{
     ffi::c_void,
     ops::{Deref, DerefMut},
 };
 
-/// Wrapper class around an immutable table column.
+use crate::core::*;
+
+/// Wrapper class around a table column.
 ///
 /// # Type parameters
 ///
 /// * `T`: The type of the column.
 pub struct Field<'a, T> {
-    pub(crate) slice_components: &'a [T],
+    pub(crate) slice_components: &'a mut [T],
     pub(crate) is_shared: bool,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) component_access: NonNull<ReadWriteComponentsMap>,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) id: Entity,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) table_id: u64,
-}
-
-impl<T> core::fmt::Debug for Field<'_, T>
-where
-    T: core::fmt::Debug,
-{
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:?}", self.slice_components)
-    }
-}
-
-#[cfg(feature = "flecs_safety_readwrite_locks")]
-impl<T> Drop for Field<'_, T> {
-    fn drop(&mut self) {
-        unsafe {
-            let component_access = self.component_access.as_mut();
-            component_access.decrement_read(*self.id, self.table_id);
-        }
-    }
 }
 
 impl<'a, T> Field<'a, T> {
@@ -55,47 +29,12 @@ impl<'a, T> Field<'a, T> {
     ///
     /// * C++ API: `field::field`
     #[doc(alias = "field::field")]
-    #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
-    pub(crate) fn new(slice_components: &'a [T], is_shared: bool) -> Self {
+    pub fn new(slice_components: &'a mut [T], is_shared: bool) -> Self {
         Self {
             slice_components,
             is_shared,
         }
     }
-
-    /// Create a new column from component array.
-    ///
-    /// # Arguments
-    ///
-    /// * `slice_components`: pointer to the component array.
-    /// * `is_shared`: whether the component is shared.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `field::field`
-    #[doc(alias = "field::field")]
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) fn new(
-        slice_components: &'a [T],
-        is_shared: bool,
-        id: Entity,
-        table_id: u64,
-        mut component_access: NonNull<ReadWriteComponentsMap>,
-    ) -> Self {
-        unsafe {
-            let component_access = component_access.as_mut();
-            component_access.increment_read(*id, table_id);
-        }
-        Self {
-            slice_components,
-            is_shared,
-            component_access,
-            id,
-            table_id,
-        }
-    }
-
-    pub fn drop(self) {}
 
     /// whether the column / component is shared.
     pub fn is_shared(&self) -> bool {
@@ -111,244 +50,9 @@ impl<T: ComponentId> Deref for Field<'_, T> {
     }
 }
 
-/// Wrapper class around a mutable table column.
-///
-/// # Type parameters
-///
-/// * `T`: The type of the column.
-pub struct FieldMut<'a, T> {
-    pub(crate) slice_components: &'a mut [T],
-    pub(crate) is_shared: bool,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) component_access: NonNull<ReadWriteComponentsMap>,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) id: Entity,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) table_id: u64,
-}
-
-impl<T> core::fmt::Debug for FieldMut<'_, T>
-where
-    T: core::fmt::Debug,
-{
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:?}", self.slice_components)
-    }
-}
-
-#[cfg(feature = "flecs_safety_readwrite_locks")]
-impl<T> Drop for FieldMut<'_, T> {
-    fn drop(&mut self) {
-        unsafe {
-            let component_access = self.component_access.as_mut();
-            component_access.clear_write(*self.id, self.table_id);
-        }
-    }
-}
-
-impl<'a, T> FieldMut<'a, T> {
-    /// Create a new column from component array.
-    ///
-    /// # Arguments
-    ///
-    /// * `slice_components`: pointer to the component array.
-    /// * `is_shared`: whether the component is shared.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `field::field`
-    #[doc(alias = "field::field")]
-    #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
-    pub(crate) fn new(slice_components: &'a mut [T], is_shared: bool) -> Self {
-        Self {
-            slice_components,
-            is_shared,
-        }
-    }
-
-    /// Create a new column from component array.
-    ///
-    /// # Arguments
-    ///
-    /// * `slice_components`: pointer to the component array.
-    /// * `is_shared`: whether the component is shared.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `field::field`
-    #[doc(alias = "field::field")]
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) fn new(
-        slice_components: &'a mut [T],
-        is_shared: bool,
-        id: Entity,
-        table_id: u64,
-        mut component_access: NonNull<ReadWriteComponentsMap>,
-    ) -> Self {
-        unsafe {
-            let component_access = component_access.as_mut();
-            component_access.set_write(*id, table_id);
-        }
-        Self {
-            slice_components,
-            is_shared,
-            component_access,
-            id,
-            table_id,
-        }
-    }
-
-    pub fn drop(self) {}
-
-    /// whether the column / component is shared.
-    pub fn is_shared(&self) -> bool {
-        self.is_shared
-    }
-}
-
-impl<T: ComponentId> Deref for FieldMut<'_, T> {
-    type Target = [T];
-
-    fn deref(&self) -> &Self::Target {
-        self.slice_components
-    }
-}
-
-impl<T: ComponentId> DerefMut for FieldMut<'_, T> {
+impl<T: ComponentId> DerefMut for Field<'_, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.slice_components
-    }
-}
-
-pub struct FieldAt<'a, T> {
-    pub(crate) component: &'a T,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) component_access: NonNull<ReadWriteComponentsMap>,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) id: Entity,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) table_id: u64,
-}
-
-impl<T> core::fmt::Debug for FieldAt<'_, T>
-where
-    T: core::fmt::Debug,
-{
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:?}", self.component)
-    }
-}
-
-#[cfg(feature = "flecs_safety_readwrite_locks")]
-impl<T> Drop for FieldAt<'_, T> {
-    fn drop(&mut self) {
-        unsafe {
-            let component_access = self.component_access.as_mut();
-            component_access.decrement_read(*self.id, self.table_id);
-        }
-    }
-}
-
-impl<T: ComponentId> Deref for FieldAt<'_, T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        self.component
-    }
-}
-
-impl<'a, T> FieldAt<'a, T> {
-    #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
-    pub(crate) fn new(component: &'a T) -> Self {
-        Self { component }
-    }
-
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) fn new(
-        component: &'a T,
-        id: Entity,
-        table_id: u64,
-        mut component_access: NonNull<ReadWriteComponentsMap>,
-    ) -> Self {
-        unsafe {
-            let component_access = component_access.as_mut();
-            component_access.increment_read(*id, table_id);
-        }
-        Self {
-            component,
-            component_access,
-            id,
-            table_id,
-        }
-    }
-}
-
-pub struct FieldAtMut<'a, T> {
-    pub(crate) component: &'a mut T,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) component_access: NonNull<ReadWriteComponentsMap>,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) id: Entity,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) table_id: u64,
-}
-
-impl<T> core::fmt::Debug for FieldAtMut<'_, T>
-where
-    T: core::fmt::Debug,
-{
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:?}", self.component)
-    }
-}
-
-#[cfg(feature = "flecs_safety_readwrite_locks")]
-impl<T> Drop for FieldAtMut<'_, T> {
-    fn drop(&mut self) {
-        unsafe {
-            let component_access = self.component_access.as_mut();
-            component_access.clear_write(*self.id, self.table_id);
-        }
-    }
-}
-
-impl<T: ComponentId> Deref for FieldAtMut<'_, T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        self.component
-    }
-}
-
-impl<T: ComponentId> DerefMut for FieldAtMut<'_, T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.component
-    }
-}
-
-impl<'a, T> FieldAtMut<'a, T> {
-    #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
-    pub(crate) fn new(component: &'a mut T) -> Self {
-        Self { component }
-    }
-
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) fn new(
-        component: &'a mut T,
-        id: Entity,
-        table_id: u64,
-        mut component_access: NonNull<ReadWriteComponentsMap>,
-    ) -> Self {
-        unsafe {
-            let component_access = component_access.as_mut();
-            component_access.set_write(*id, table_id);
-        }
-        Self {
-            component,
-            component_access,
-            id,
-            table_id,
-        }
     }
 }
 

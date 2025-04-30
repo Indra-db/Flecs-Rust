@@ -874,7 +874,7 @@ fn observer_on_add_pair_singleton() {
         .run(|mut it| {
             let world = it.world();
             while it.next() {
-                let pos = it.field::<Position>(0).unwrap();
+                let pos = it.field::<&Position>(0).unwrap();
                 assert_eq!(pos[0].x, 10);
                 assert_eq!(pos[0].y, 20);
                 world.get::<&mut Count>(|count| {

@@ -5,7 +5,6 @@ use core::ffi::c_char;
 use crate::core::*;
 use crate::sys;
 
-#[inline(never)]
 pub(crate) fn create_component_desc(
     entity: sys::ecs_entity_t,
     type_info: flecs_ecs_sys::ecs_type_info_t,
@@ -17,7 +16,6 @@ pub(crate) fn create_component_desc(
     }
 }
 
-#[inline(never)]
 pub(crate) fn create_type_info<T, const ALLOCATE_TAG: bool>() -> flecs_ecs_sys::ecs_type_info_t
 where
     T: ComponentId,

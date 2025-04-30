@@ -77,7 +77,6 @@ impl<'a> UntypedComponent<'a> {
     ///
     /// * C++ API: `untyped_component::untyped_component`
     #[doc(alias = "untyped_component::untyped_component")]
-    #[inline(never)]
     pub(crate) fn new_from(world: impl WorldProvider<'a>, id: impl Into<Entity>) -> Self {
         UntypedComponent {
             entity: EntityView::new_from(world, id),

@@ -6,7 +6,6 @@ use crate::core::*;
 use crate::sys;
 
 #[doc(hidden)]
-#[inline(never)]
 pub fn internal_register_component<
     'a,
     const IS_NAMED: bool,
@@ -44,7 +43,7 @@ pub(crate) fn external_register_component<'a, const COMPONENT_REGISTRATION: bool
     external_register_component_data::<COMPONENT_REGISTRATION, T>(world.world_ptr_mut(), name)
 }
 
-#[inline(never)]
+#[inline(always)]
 /// attempts to register the component with the world. If it's already registered, it does nothing.
 pub(crate) fn try_register_component<'a, const COMPONENT_REGISTRATION: bool, T>(
     world: impl WorldProvider<'a>,
@@ -56,7 +55,7 @@ where
     internal_register_component::<NAMED, COMPONENT_REGISTRATION, T>(world, core::ptr::null())
 }
 
-#[inline(never)]
+#[inline(always)]
 pub(crate) fn try_register_component_named<'a, const COMPONENT_REGISTRATION: bool, T>(
     world: impl WorldProvider<'a>,
     name: &str,
@@ -136,7 +135,6 @@ where
 }
 
 /// registers the component with the world.
-#[inline(never)]
 pub(crate) fn register_component_data<const COMPONENT_REGISTRATION: bool, T>(
     world: *mut sys::ecs_world_t,
 ) -> sys::ecs_entity_t
@@ -201,7 +199,6 @@ pub(crate) fn external_register_component_data<const COMPONENT_REGISTRATION: boo
 }
 
 /// registers the component with the world.
-#[inline(never)]
 pub(crate) fn register_componment_data_explicit<T, const ALLOCATE_TAG: bool>(
     world: *mut sys::ecs_world_t,
     name: *const c_char,

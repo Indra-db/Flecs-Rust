@@ -26,9 +26,6 @@ flecs_ecs_sys = { workspace = true }
 bitflags = "2.8.0"
 compact_str = { version = "0.9.0", default-features = false }
 hashbrown = "0.15.2"
-dashmap = "6.1.0"
-smallvec = "1.14.0"
-foldhash = "0.1.4"
 
 # used for backtraces upon hardware exceptions during test
 # only used when "test-with-crash-handler" feature enabled
@@ -49,9 +46,6 @@ libc.workspace = true
 ######################
 # sys feature flags
 ######################
-
-# Read write locks for components
-flecs_safety_readwrite_locks = []
 
 # use std
 std = ["flecs_ecs_derive/std", "compact_str/std"]
@@ -171,7 +165,6 @@ flecs_base = [
     "flecs_pipeline",
     "flecs_timer",
     "flecs_os_api_impl",
-    "flecs_safety_readwrite_locks",
 ]
 
 default = [

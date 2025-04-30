@@ -3,7 +3,4 @@
     //     "./flecs_ecs/Cargo.toml"
     // ],
     // "rust-analyzer.showUnlinkedFileNotification": false
-    
-    "rust-analyzer.cargo.targetDir": true,
-      
 }

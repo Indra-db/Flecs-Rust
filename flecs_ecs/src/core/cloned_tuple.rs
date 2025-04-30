@@ -11,8 +11,6 @@ use sys::ecs_record_t;
 pub struct ComponentsData<T: ClonedTuple, const LEN: usize> {
     pub array_components: [*mut c_void; LEN],
     pub has_all_components: bool,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) read_ids: [u64; LEN],
     _marker: PhantomData<T>,
 }
 
@@ -26,9 +24,6 @@ pub trait ClonedComponentPointers<T: ClonedTuple> {
     fn get_tuple<'a>(&self) -> T::TupleType<'a>;
 
     fn has_all_components(&self) -> bool;
-
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    fn read_ids(&self) -> &[u64];
 }
 
 impl<T: ClonedTuple, const LEN: usize> ClonedComponentPointers<T> for ComponentsData<T, LEN> {
@@ -39,23 +34,16 @@ impl<T: ClonedTuple, const LEN: usize> ClonedComponentPointers<T> for Components
     ) -> Self {
         let mut array_components = [core::ptr::null::<c_void>() as *mut c_void; LEN];
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
-        let mut read_ids = [0; LEN];
-
         let has_all_components = T::populate_array_ptrs::<SHOULD_PANIC>(
             world,
             entity,
             record,
             &mut array_components[..],
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
-            &mut read_ids,
         );
 
         Self {
             array_components,
             has_all_components,
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
-            read_ids,
             _marker: PhantomData::<T>,
         }
     }
@@ -66,11 +54,6 @@ impl<T: ClonedTuple, const LEN: usize> ClonedComponentPointers<T> for Components
 
     fn has_all_components(&self) -> bool {
         self.has_all_components
-    }
-
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    fn read_ids(&self) -> &[u64] {
-        &self.read_ids
     }
 }
 
@@ -142,7 +125,6 @@ pub trait ClonedTuple: Sized {
         entity: Entity,
         record: *const ecs_record_t,
         components: &mut [*mut c_void],
-        #[cfg(feature = "flecs_safety_readwrite_locks")] ids: &mut [u64],
     ) -> bool;
 
     fn create_tuple<'a>(array_components: &[*mut c_void]) -> Self::TupleType<'a>;
@@ -161,24 +143,14 @@ where
     type TupleType<'e> = A::ActualType;
 
     fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
-        world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void],
-        #[cfg(feature = "flecs_safety_readwrite_locks")] ids: &mut [u64]
+        world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void]
     ) -> bool {
         let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut sys::ecs_world_t };
-        let world_ref = world.world();
         let table = unsafe { (*record).table };
         let entity = *entity;
         let mut has_all_components = true;
-        
-        let id = <A::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
-        { 
-            ids[0] = id;
-            
-        }
-
-        let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) };
+        let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,<A::OnlyType as ComponentOrPairId>::get_id(world)) };
 
             if component_ptr.is_null() {
                 components[0] = core::ptr::null_mut();
@@ -263,8 +235,7 @@ macro_rules! impl_cloned_tuple {
 
             #[allow(unused)]
             fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
-                world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void],
-                #[cfg(feature = "flecs_safety_readwrite_locks")] ids : &mut [u64]
+                world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void]
             ) -> bool {
 
                 let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut sys::ecs_world_t };
@@ -276,11 +247,6 @@ macro_rules! impl_cloned_tuple {
 
                 $(
                     let id = <$t::OnlyType as ComponentOrPairId>::get_id(world_ref);
-
-                    #[cfg(feature = "flecs_safety_readwrite_locks")]
-                    {
-                        ids[index] = id;
-                    }
 
                     let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record, table, id) };
 

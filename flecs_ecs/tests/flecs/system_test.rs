@@ -25,7 +25,7 @@ fn system_iter() {
         .system::<(&mut Position, &mut Velocity)>()
         .run(|mut it| {
             while it.next() {
-                let mut p = it.field_mut::<Position>(0).unwrap();
+                let mut p = it.field::<Position>(0).unwrap();
                 let v = it.field::<Velocity>(1).unwrap();
                 for i in it.iter() {
                     p[i].x += v[i].x;
@@ -55,7 +55,7 @@ fn system_iter_macro() {
 
     system!(world, &mut Position, &Velocity).run(|mut it| {
         while it.next() {
-            let mut p = it.field_mut::<Position>(0).unwrap();
+            let mut p = it.field::<Position>(0).unwrap();
             let v = it.field::<Velocity>(1).unwrap();
             for i in it.iter() {
                 p[i].x += v[i].x;
@@ -85,7 +85,7 @@ fn system_iter_const() {
 
     world.system::<(&mut Position, &Velocity)>().run(|mut it| {
         while it.next() {
-            let mut p = it.field_mut::<Position>(0).unwrap();
+            let mut p = it.field::<Position>(0).unwrap();
             let v = it.field::<&Velocity>(1).unwrap();
             for i in it.iter() {
                 p[i].x += v[i].x;
@@ -132,7 +132,7 @@ fn system_iter_shared() {
         .expr("flecs.common_test.Velocity(self|up IsA)")
         .run(|mut it| {
             while it.next() {
-                let mut p = it.field_mut::<Position>(0).unwrap();
+                let mut p = it.field::<Position>(0).unwrap();
                 let v = it.field::<&Velocity>(1).unwrap();
 
                 if !it.is_self(1) {
@@ -187,7 +187,7 @@ fn system_iter_optional() {
         .system::<(&mut Position, Option<&mut Velocity>, Option<&mut Mass>)>()
         .run(|mut it| {
             while it.next() {
-                let mut p = it.field_mut::<Position>(0).unwrap();
+                let mut p = it.field::<Position>(0).unwrap();
 
                 if it.is_set(1) && it.is_set(2) {
                     let v = it.field::<Velocity>(1).unwrap();
@@ -388,7 +388,7 @@ fn system_signature() {
         .expr("flecs.common_test.Position, flecs.common_test.Velocity")
         .run(|mut it| {
             while it.next() {
-                let mut p = it.field_mut::<Position>(0).unwrap();
+                let mut p = it.field::<Position>(0).unwrap();
                 let v = it.field::<Velocity>(1).unwrap();
 
                 for i in it.iter() {
@@ -425,7 +425,7 @@ fn system_signature_const() {
         .expr("flecs.common_test.Position, [in] flecs.common_test.Velocity")
         .run(|mut it| {
             while it.next() {
-                let mut p = it.field_mut::<Position>(0).unwrap();
+                let mut p = it.field::<Position>(0).unwrap();
                 let v = it.field::<Velocity>(1).unwrap();
 
                 for i in it.iter() {
@@ -476,7 +476,7 @@ fn system_signature_shared() {
         .expr("flecs.common_test.Position, [in] flecs.common_test.Velocity(self|up IsA)")
         .run(|mut it| {
             while it.next() {
-                let mut p = it.field_mut::<Position>(0).unwrap();
+                let mut p = it.field::<Position>(0).unwrap();
                 let v = it.field::<Velocity>(1).unwrap();
 
                 if !it.is_self(1) {
@@ -532,7 +532,7 @@ fn system_signature_optional() {
         .expr("flecs.common_test.Position, ?flecs.common_test.Velocity, ?Mass")
         .run(|mut it| {
             while it.next() {
-                let mut p = it.field_mut::<Position>(0).unwrap();
+                let mut p = it.field::<Position>(0).unwrap();
 
                 if it.is_set(1) && it.is_set(2) {
                     let v = it.field::<Velocity>(1).unwrap();
@@ -1495,7 +1495,7 @@ fn system_test_let_defer_iter() {
 
     let s = world.system::<&mut Value>().with::<Tag>().run(|mut it| {
         while it.next() {
-            let mut v = it.field_mut::<Value>(0).unwrap();
+            let mut v = it.field::<Value>(0).unwrap();
             for i in it.iter() {
                 v[i].value += 1;
                 it.entity(i).remove::<Tag>();
