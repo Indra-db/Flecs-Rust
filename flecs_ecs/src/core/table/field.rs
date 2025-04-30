@@ -7,26 +7,24 @@ use core::{
     ffi::c_void,
     ops::{Deref, DerefMut},
 };
-#[cfg(feature = "flecs_safety_readwrite_locks")]
-use flecs_ecs_sys::{ecs_id_record_t, ecs_table_t};
 
 /// Wrapper class around an immutable table column.
 ///
 /// # Type parameters
 ///
 /// * `T`: The type of the column.
-pub struct Field<'a, T, const LOCK: bool> {
+pub struct Field<'a, T> {
     pub(crate) slice_components: &'a [T],
     pub(crate) is_shared: bool,
     #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) table: NonNull<ecs_table_t>,
+    pub(crate) component_access: NonNull<ReadWriteComponentsMap>,
     #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) stage_id: i32,
+    pub(crate) id: Entity,
     #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) column_index: i16,
+    pub(crate) table_id: u64,
 }
 
-impl<T, const LOCK: bool> core::fmt::Debug for Field<'_, T, LOCK>
+impl<T> core::fmt::Debug for Field<'_, T>
 where
     T: core::fmt::Debug,
 {
@@ -36,17 +34,16 @@ where
 }
 
 #[cfg(feature = "flecs_safety_readwrite_locks")]
-impl<T, const LOCK: bool> Drop for Field<'_, T, LOCK> {
+impl<T> Drop for Field<'_, T> {
     fn drop(&mut self) {
-        if LOCK {
-            unsafe {
-                table_column_lock_read_end(self.table.as_mut(), self.column_index, self.stage_id);
-            }
+        unsafe {
+            let component_access = self.component_access.as_mut();
+            component_access.decrement_read(*self.id, self.table_id);
         }
     }
 }
 
-impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
+impl<'a, T> Field<'a, T> {
     /// Create a new column from component array.
     ///
     /// # Arguments
@@ -81,20 +78,21 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
     pub(crate) fn new(
         slice_components: &'a [T],
         is_shared: bool,
-        stage_id: i32,
-        column_index: i16,
-        table: NonNull<ecs_table_t>,
+        id: Entity,
+        table_id: u64,
+        mut component_access: NonNull<ReadWriteComponentsMap>,
         world: &WorldRef,
     ) -> Self {
-        if LOCK {
-            table_column_lock_read_begin(world, table.as_ptr(), column_index, stage_id);
+        unsafe {
+            let component_access = component_access.as_mut();
+            component_access.increment_read(*id, table_id, world);
         }
         Self {
             slice_components,
             is_shared,
-            table,
-            stage_id,
-            column_index,
+            component_access,
+            id,
+            table_id,
         }
     }
 
@@ -106,7 +104,7 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
     }
 }
 
-impl<T: ComponentId, const LOCK: bool> Deref for Field<'_, T, LOCK> {
+impl<T: ComponentId> Deref for Field<'_, T> {
     type Target = [T];
 
     fn deref(&self) -> &Self::Target {
@@ -123,11 +121,11 @@ pub struct FieldMut<'a, T> {
     pub(crate) slice_components: &'a mut [T],
     pub(crate) is_shared: bool,
     #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) table: NonNull<ecs_table_t>,
+    pub(crate) component_access: NonNull<ReadWriteComponentsMap>,
     #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) stage_id: i32,
+    pub(crate) id: Entity,
     #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) column_index: i16,
+    pub(crate) table_id: u64,
 }
 
 impl<T> core::fmt::Debug for FieldMut<'_, T>
@@ -143,7 +141,8 @@ where
 impl<T> Drop for FieldMut<'_, T> {
     fn drop(&mut self) {
         unsafe {
-            table_column_lock_write_end(self.table.as_mut(), self.column_index, self.stage_id);
+            let component_access = self.component_access.as_mut();
+            component_access.clear_write(*self.id, self.table_id);
         }
     }
 }
@@ -183,19 +182,21 @@ impl<'a, T> FieldMut<'a, T> {
     pub(crate) fn new(
         slice_components: &'a mut [T],
         is_shared: bool,
-        stage_id: i32,
-        column_index: i16,
-        table: NonNull<ecs_table_t>,
+        id: Entity,
+        table_id: u64,
+        mut component_access: NonNull<ReadWriteComponentsMap>,
         world: &WorldRef,
     ) -> Self {
-        table_column_lock_write_begin(world, table.as_ptr(), column_index, stage_id);
-
+        unsafe {
+            let component_access = component_access.as_mut();
+            component_access.set_write(*id, table_id, world);
+        }
         Self {
             slice_components,
             is_shared,
-            table,
-            stage_id,
-            column_index,
+            component_access,
+            id,
+            table_id,
         }
     }
 
@@ -224,7 +225,11 @@ impl<T: ComponentId> DerefMut for FieldMut<'_, T> {
 pub struct FieldAt<'a, T> {
     pub(crate) component: &'a T,
     #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) idr: NonNull<ecs_id_record_t>,
+    pub(crate) component_access: NonNull<ReadWriteComponentsMap>,
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) id: Entity,
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) table_id: u64,
 }
 
 impl<T> core::fmt::Debug for FieldAt<'_, T>
@@ -240,7 +245,8 @@ where
 impl<T> Drop for FieldAt<'_, T> {
     fn drop(&mut self) {
         unsafe {
-            sparse_id_record_lock_read_end(self.idr.as_mut());
+            let component_access = self.component_access.as_mut();
+            component_access.decrement_read(*self.id, self.table_id);
         }
     }
 }
@@ -262,18 +268,32 @@ impl<'a, T> FieldAt<'a, T> {
     #[cfg(feature = "flecs_safety_readwrite_locks")]
     pub(crate) fn new(
         component: &'a T,
+        id: Entity,
+        table_id: u64,
+        mut component_access: NonNull<ReadWriteComponentsMap>,
         world: &WorldRef,
-        mut idr: NonNull<ecs_id_record_t>,
     ) -> Self {
-        sparse_id_record_lock_read_begin(world, unsafe { idr.as_mut() });
-        Self { component, idr }
+        unsafe {
+            let component_access = component_access.as_mut();
+            component_access.increment_read(*id, table_id, world);
+        }
+        Self {
+            component,
+            component_access,
+            id,
+            table_id,
+        }
     }
 }
 
 pub struct FieldAtMut<'a, T> {
     pub(crate) component: &'a mut T,
     #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub(crate) idr: NonNull<ecs_id_record_t>,
+    pub(crate) component_access: NonNull<ReadWriteComponentsMap>,
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) id: Entity,
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) table_id: u64,
 }
 
 impl<T> core::fmt::Debug for FieldAtMut<'_, T>
@@ -289,7 +309,8 @@ where
 impl<T> Drop for FieldAtMut<'_, T> {
     fn drop(&mut self) {
         unsafe {
-            sparse_id_record_lock_write_end(self.idr.as_mut());
+            let component_access = self.component_access.as_mut();
+            component_access.clear_write(*self.id, self.table_id);
         }
     }
 }
@@ -317,11 +338,21 @@ impl<'a, T> FieldAtMut<'a, T> {
     #[cfg(feature = "flecs_safety_readwrite_locks")]
     pub(crate) fn new(
         component: &'a mut T,
+        id: Entity,
+        table_id: u64,
+        mut component_access: NonNull<ReadWriteComponentsMap>,
         world: &WorldRef,
-        mut idr: NonNull<ecs_id_record_t>,
     ) -> Self {
-        sparse_id_record_lock_write_begin(world, unsafe { idr.as_mut() });
-        Self { component, idr }
+        unsafe {
+            let component_access = component_access.as_mut();
+            component_access.set_write(*id, table_id, world);
+        }
+        Self {
+            component,
+            component_access,
+            id,
+            table_id,
+        }
     }
 }
 

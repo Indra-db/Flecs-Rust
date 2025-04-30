@@ -67,6 +67,8 @@ where
             let world = self.world();
             let world_ptr = self.world_ptr_mut();
             let mut iter = self.retrieve_iter();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let components_access = world.components_access_map();
 
             iter.flags |= sys::EcsIterCppEach;
 
@@ -83,7 +85,12 @@ where
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<INCREMENT>(&iter, T::COUNT as usize, &world);
+                    do_read_write_locks::<INCREMENT>(
+                        &iter,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
 
                 sys::ecs_table_lock(world_ptr, iter.table);
@@ -97,7 +104,12 @@ where
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<DECREMENT>(&iter, T::COUNT as usize, &world);
+                    do_read_write_locks::<DECREMENT>(
+                        &iter,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
             }
         }
@@ -126,6 +138,8 @@ where
             let world = self.world();
             let world_ptr = self.world_ptr_mut();
             let mut iter = self.retrieve_iter();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let components_access = world.components_access_map();
 
             iter.flags |= sys::EcsIterCppEach;
 
@@ -148,7 +162,12 @@ where
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<INCREMENT>(&iter, T::COUNT as usize, &world);
+                    do_read_write_locks::<INCREMENT>(
+                        &iter,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
 
                 sys::ecs_table_lock(world_ptr, iter.table);
@@ -169,7 +188,12 @@ where
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<DECREMENT>(&iter, T::COUNT as usize, &world);
+                    do_read_write_locks::<DECREMENT>(
+                        &iter,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
             }
         }
@@ -230,6 +254,8 @@ where
             let world = self.world();
             let world_ptr = self.world_ptr_mut();
             let mut iter = self.retrieve_iter();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let components_access = world.components_access_map();
 
             iter.flags |= sys::EcsIterCppEach;
 
@@ -245,7 +271,12 @@ where
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<INCREMENT>(&iter, T::COUNT as usize, &world);
+                    do_read_write_locks::<INCREMENT>(
+                        &iter,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
 
                 sys::ecs_table_lock(world_ptr, iter.table);
@@ -261,7 +292,12 @@ where
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<DECREMENT>(&iter, T::COUNT as usize, &world);
+                    do_read_write_locks::<DECREMENT>(
+                        &iter,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
             }
         }
@@ -288,6 +324,8 @@ where
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             let world = self.world();
             let world_ptr = self.world_ptr_mut();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let components_access = world.components_access_map();
 
             while self.iter_next(&mut iter) {
                 let mut components_data = T::create_ptrs(&iter);
@@ -295,7 +333,12 @@ where
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<INCREMENT>(&iter, T::COUNT as usize, &world);
+                    do_read_write_locks::<INCREMENT>(
+                        &iter,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
 
                 sys::ecs_table_lock(world_ptr, iter.table);
@@ -313,7 +356,12 @@ where
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<DECREMENT>(&iter, T::COUNT as usize, &world);
+                    do_read_write_locks::<DECREMENT>(
+                        &iter,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
             }
 
@@ -345,6 +393,8 @@ where
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             let world = self.world();
             let world_ptr = self.world_ptr_mut();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let components_access = world.components_access_map();
 
             while self.iter_next(&mut iter) {
                 let mut components_data = T::create_ptrs(&iter);
@@ -352,7 +402,12 @@ where
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<INCREMENT>(&iter, T::COUNT as usize, &world);
+                    do_read_write_locks::<INCREMENT>(
+                        &iter,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
 
                 sys::ecs_table_lock(world_ptr, iter.table);
@@ -372,7 +427,12 @@ where
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<DECREMENT>(&iter, T::COUNT as usize, &world);
+                    do_read_write_locks::<DECREMENT>(
+                        &iter,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
             }
 
@@ -406,6 +466,8 @@ where
             let mut entity_result: Option<EntityView> = None;
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             let world = self.world();
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let components_access = world.components_access_map();
 
             let world_ptr = self.world_ptr_mut();
 
@@ -421,7 +483,12 @@ where
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<INCREMENT>(&iter, T::COUNT as usize, &world);
+                    do_read_write_locks::<INCREMENT>(
+                        &iter,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
 
                 sys::ecs_table_lock(world_ptr, iter.table);
@@ -440,7 +507,12 @@ where
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<DECREMENT>(&iter, T::COUNT as usize, &world);
+                    do_read_write_locks::<DECREMENT>(
+                        &iter,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
             }
 
@@ -940,17 +1012,18 @@ where
         if self.iter_next(it) && it.count > 0 {
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             let world = self.world();
-
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let components_access = world.components_access_map();
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             {
-                do_read_write_locks::<INCREMENT>(it, T::COUNT as usize, &world);
+                do_read_write_locks::<INCREMENT>(it, components_access, T::COUNT as usize, &world);
             }
             let ent = Some(EntityView::new_from(self.world(), unsafe {
                 *it.entities.add(0)
             }));
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             {
-                do_read_write_locks::<DECREMENT>(it, T::COUNT as usize, &world);
+                do_read_write_locks::<DECREMENT>(it, components_access, T::COUNT as usize, &world);
             }
             unsafe { sys::ecs_iter_fini(it) };
             ent
@@ -1050,10 +1123,11 @@ where
         if self.iter_next(&mut it) && it.count > 0 {
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             let world = self.world();
-
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let components_access = world.components_access_map();
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             {
-                do_read_write_locks::<INCREMENT>(&it, T::COUNT as usize, &world);
+                do_read_write_locks::<INCREMENT>(&it, components_access, T::COUNT as usize, &world);
             }
 
             let mut components_data = T::create_ptrs(&it);
@@ -1063,7 +1137,7 @@ where
             // Clean up iterator resources safely
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             {
-                do_read_write_locks::<DECREMENT>(&it, T::COUNT as usize, &world);
+                do_read_write_locks::<DECREMENT>(&it, components_access, T::COUNT as usize, &world);
             }
             unsafe { sys::ecs_iter_fini(&mut it) };
             result
@@ -1168,11 +1242,17 @@ where
         if self.iter_next(&mut it) {
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             let world = self.world();
-
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            let components_access = world.components_access_map();
             if it.count == 1 {
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<INCREMENT>(&it, T::COUNT as usize, &world);
+                    do_read_write_locks::<INCREMENT>(
+                        &it,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
                 let mut components_data = T::create_ptrs(&it);
                 let tuple = components_data.get_tuple(&it, 0);
@@ -1181,7 +1261,12 @@ where
                 let result = func(tuple);
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<DECREMENT>(&it, T::COUNT as usize, &world);
+                    do_read_write_locks::<DECREMENT>(
+                        &it,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
                 unsafe { sys::ecs_iter_fini(&mut it) };
                 Ok(result)
@@ -1423,8 +1508,11 @@ where
         let world = WorldRef::from_ptr(iter.world);
 
         #[cfg(feature = "flecs_safety_readwrite_locks")]
+        let components_access = world.components_access_map();
+
+        #[cfg(feature = "flecs_safety_readwrite_locks")]
         {
-            do_read_write_locks::<INCREMENT>(iter, T::COUNT as usize, &world);
+            do_read_write_locks::<INCREMENT>(iter, components_access, T::COUNT as usize, &world);
         }
 
         for i in 0..iter_count {
@@ -1434,7 +1522,7 @@ where
 
         #[cfg(feature = "flecs_safety_readwrite_locks")]
         {
-            do_read_write_locks::<DECREMENT>(iter, T::COUNT as usize, &world);
+            do_read_write_locks::<DECREMENT>(iter, components_access, T::COUNT as usize, &world);
         }
     }
 }
@@ -1454,8 +1542,11 @@ unsafe extern "C-unwind" fn __internal_query_execute_each_entity<T, Func>(
         let world = WorldRef::from_ptr(iter.world);
 
         #[cfg(feature = "flecs_safety_readwrite_locks")]
+        let components_access = world.components_access_map();
+
+        #[cfg(feature = "flecs_safety_readwrite_locks")]
         {
-            do_read_write_locks::<INCREMENT>(iter, T::COUNT as usize, &world);
+            do_read_write_locks::<INCREMENT>(iter, components_access, T::COUNT as usize, &world);
         }
 
         for i in 0..iter_count {
@@ -1466,7 +1557,7 @@ unsafe extern "C-unwind" fn __internal_query_execute_each_entity<T, Func>(
 
         #[cfg(feature = "flecs_safety_readwrite_locks")]
         {
-            do_read_write_locks::<DECREMENT>(iter, T::COUNT as usize, &world);
+            do_read_write_locks::<DECREMENT>(iter, components_access, T::COUNT as usize, &world);
         }
     }
 }

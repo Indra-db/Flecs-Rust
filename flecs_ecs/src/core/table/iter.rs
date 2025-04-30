@@ -511,7 +511,7 @@ where
     ///
     /// * C++ API: `iter::field`
     #[doc(alias = "iter::field")]
-    pub unsafe fn field_unchecked<T>(&self, index: i8) -> Field<T, true> {
+    pub unsafe fn field_unchecked<T>(&self, index: i8) -> Field<T> {
         ecs_assert!(
             index < self.iter.field_count,
             FlecsErrorCode::InvalidParameter,
@@ -613,7 +613,7 @@ where
         None
     }
 
-    fn field_checked<T: ComponentId>(&self, index: i8) -> Option<Field<T::UnderlyingType, true>> {
+    fn field_checked<T: ComponentId>(&self, index: i8) -> Option<Field<T::UnderlyingType>> {
         let id = <T::UnderlyingType as ComponentId>::id(self.world());
 
         if index > self.iter.field_count {
@@ -682,7 +682,7 @@ where
     /// # See also
     ///
     /// * C++ API: `iter::field`
-    pub fn field<T: ComponentId>(&self, index: i8) -> Option<Field<T::UnderlyingType, true>> {
+    pub fn field<T: ComponentId>(&self, index: i8) -> Option<Field<T::UnderlyingType>> {
         ecs_assert!(
             (self.iter.flags & sys::EcsIterCppEach == 0)
                 || unsafe { sys::ecs_field_src(self.iter, index) != 0 },
@@ -954,7 +954,7 @@ where
     ///
     /// * C++ API: `iter::entities`
     #[doc(alias = "iter::entities")]
-    pub fn entities(&self) -> Field<Entity, false> {
+    pub fn entities(&self) -> Field<Entity> {
         let slice = unsafe {
             core::slice::from_raw_parts_mut(
                 self.iter.entities as *mut Entity,
@@ -964,14 +964,15 @@ where
 
         #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
         {
-            Field::<Entity, false>::new(slice, false)
+            Field::<Entity>::new(slice, false)
         }
 
         #[cfg(feature = "flecs_safety_readwrite_locks")]
         {
             let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
+            let components_access = world_ref.component_access;
             //Dummy id and table id since we're not accessing any data
-            Field::<Entity, false>::new(slice, false, 0, 0, NonNull::dangling(), &world_ref)
+            Field::<Entity>::new(slice, false, Entity(0), 0, components_access, &world_ref)
         }
     }
 
@@ -1048,7 +1049,7 @@ where
         self.iter.group_id
     }
 
-    unsafe fn field_internal<T>(&self, index: i8, _id: Entity) -> Option<Field<T, true>> {
+    unsafe fn field_internal<T>(&self, index: i8, _id: Entity) -> Option<Field<T>> {
         unsafe {
             let is_shared = !self.is_self(index);
 
@@ -1072,21 +1073,26 @@ where
 
             #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
             {
-                //does not actually do any locking
-                Some(Field::<T, true>::new(slice, is_shared))
+                Some(Field::<T>::new(slice, is_shared))
             }
 
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             {
-                let tr = *self.iter.trs.add(index as usize);
-                let table = (*tr).hdr.table;
+                // TODO maybe we can just always use trs to retrieve the table here
+                let table_id = if !self.iter.table.is_null() {
+                    sys::ecs_rust_table_id(self.iter.table)
+                } else {
+                    let table = (**self.iter.trs.add(index as usize)).hdr.table;
+                    sys::ecs_rust_table_id(table)
+                };
                 let world_ref = WorldRef::from_ptr(self.iter.world);
-                Some(Field::<T, true>::new(
+                let components_access = world_ref.component_access;
+                Some(Field::<T>::new(
                     slice,
                     is_shared,
-                    world_ref.stage_id(),
-                    (*tr).column,
-                    NonNull::new_unchecked(table),
+                    _id,
+                    table_id,
+                    components_access,
                     &world_ref,
                 ))
             }
@@ -1114,14 +1120,21 @@ where
 
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             {
-                let tr = *self.iter.trs.add(index as usize);
-                let idr = (*tr).hdr.cache as *mut sys::ecs_id_record_t;
+                // TODO maybe we can just always use trs to retrieve the table here
+                let table_id = if !self.iter.table.is_null() {
+                    sys::ecs_rust_table_id(self.iter.table)
+                } else {
+                    let table = (**self.iter.trs.add(index as usize)).hdr.table;
+                    sys::ecs_rust_table_id(table)
+                };
                 let world_ref = WorldRef::from_ptr(self.iter.world);
-
+                let components_access = world_ref.component_access;
                 Some(FieldAt::<T>::new(
                     component_ref,
+                    _id,
+                    table_id,
+                    components_access,
                     &world_ref,
-                    NonNull::new_unchecked(idr),
                 ))
             }
         }
@@ -1156,16 +1169,21 @@ where
 
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             {
-                let tr = *self.iter.trs.add(index as usize);
-                let table = (*tr).hdr.table;
+                // TODO maybe we can just always use trs to retrieve the table here
+                let table_id = if !self.iter.table.is_null() {
+                    sys::ecs_rust_table_id(self.iter.table)
+                } else {
+                    let table = (**self.iter.trs.add(index as usize)).hdr.table;
+                    sys::ecs_rust_table_id(table)
+                };
                 let world_ref = WorldRef::from_ptr(self.iter.world);
-                let column_index = (*tr).column;
+                let components_access = world_ref.component_access;
                 Some(FieldMut::<T>::new(
                     slice,
                     is_shared,
-                    world_ref.stage_id(),
-                    column_index,
-                    NonNull::new_unchecked(table),
+                    _id,
+                    table_id,
+                    components_access,
                     &world_ref,
                 ))
             }
@@ -1199,12 +1217,20 @@ where
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             {
                 let world_ref = WorldRef::from_ptr(self.iter.world);
-                let tr = *self.iter.trs.add(index as usize);
-                let idr = (*tr).hdr.cache as *mut sys::ecs_id_record_t;
+                let components_access = world_ref.component_access;
+                // TODO maybe we can just always use trs to retrieve the table here
+                let table_id = if !self.iter.table.is_null() {
+                    sys::ecs_rust_table_id(self.iter.table)
+                } else {
+                    let table = (**self.iter.trs.add(index as usize)).hdr.table;
+                    sys::ecs_rust_table_id(table)
+                };
                 Some(FieldAtMut::<T>::new(
                     component_ref,
+                    _id,
+                    table_id,
+                    components_access,
                     &world_ref,
-                    NonNull::new_unchecked(idr),
                 ))
             }
         }
@@ -1280,13 +1306,21 @@ where
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    let tr = *self.iter.trs.add(index as usize);
-                    let idr = (*tr).hdr.cache as *mut sys::ecs_id_record_t;
+                    // TODO maybe we can just always use trs to retrieve the table here
+                    let table_id = if !self.iter.table.is_null() {
+                        sys::ecs_rust_table_id(self.iter.table)
+                    } else {
+                        let table = (**self.iter.trs.add(index as usize)).hdr.table;
+                        sys::ecs_rust_table_id(table)
+                    };
                     let world_ref = WorldRef::from_ptr(self.iter.world);
+                    let components_access = world_ref.component_access;
                     return Some(FieldAt::<T::UnderlyingType>::new(
                         component_ref,
+                        Entity(term_id),
+                        table_id,
+                        components_access,
                         &world_ref,
-                        NonNull::new_unchecked(idr),
                     ));
                 }
             }
@@ -1335,13 +1369,21 @@ where
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    let tr = *self.iter.trs.add(index as usize);
-                    let idr = (*tr).hdr.cache as *mut sys::ecs_id_record_t;
+                    // TODO maybe we can just always use trs to retrieve the table here
+                    let table_id = if !self.iter.table.is_null() {
+                        sys::ecs_rust_table_id(self.iter.table)
+                    } else {
+                        let table = (**self.iter.trs.add(index as usize)).hdr.table;
+                        sys::ecs_rust_table_id(table)
+                    };
                     let world_ref = WorldRef::from_ptr(self.iter.world);
+                    let components_access = world_ref.component_access;
                     return Some(FieldAtMut::<T::UnderlyingType>::new(
                         component_ref,
+                        Entity(term_id),
+                        table_id,
+                        components_access,
                         &world_ref,
-                        NonNull::new_unchecked(idr),
                     ));
                 }
             }

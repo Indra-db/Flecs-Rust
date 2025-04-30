@@ -17,14 +17,6 @@ pub enum ReadWriteId {
 }
 
 #[cfg(feature = "flecs_safety_readwrite_locks")]
-impl Default for ReadWriteId {
-    #[inline]
-    fn default() -> Self {
-        ReadWriteId::Read(0)
-    }
-}
-
-#[cfg(feature = "flecs_safety_readwrite_locks")]
 impl core::ops::Deref for ReadWriteId {
     type Target = u64;
 
@@ -34,21 +26,6 @@ impl core::ops::Deref for ReadWriteId {
             ReadWriteId::Read(id) => id,
             ReadWriteId::Write(id) => id,
         }
-    }
-}
-
-#[cfg(feature = "flecs_safety_readwrite_locks")]
-pub trait ColumnIndexArray {
-    fn init() -> Self;
-    fn column_indices_mut(&mut self) -> &mut [ComponentTypeRWLock];
-}
-#[cfg(feature = "flecs_safety_readwrite_locks")]
-impl<const LEN: usize> ColumnIndexArray for [ComponentTypeRWLock; LEN] {
-    fn init() -> Self {
-        [ComponentTypeRWLock::Dense((0, ReadWriteId::default())); LEN]
-    }
-    fn column_indices_mut(&mut self) -> &mut [ComponentTypeRWLock] {
-        self
     }
 }
 
@@ -208,8 +185,6 @@ where
 pub trait GetTuple: Sized {
     type Pointers: GetComponentPointers<Self>;
     type TupleType<'a>;
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    type ArrayColumnIndex: ColumnIndexArray;
     const ALL_IMMUTABLE: bool;
 
     fn create_ptrs<'a, const SHOULD_PANIC: bool>(
@@ -242,8 +217,6 @@ where
 {
     type Pointers = ComponentsData<A, 1>;
     type TupleType<'e> = A::ActualType<'e>;
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    type ArrayColumnIndex = [ComponentTypeRWLock; 1];
     const ALL_IMMUTABLE: bool = A::IS_IMMUTABLE;
 
     fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
@@ -431,8 +404,7 @@ macro_rules! impl_get_tuple {
             )*);
 
             type Pointers = ComponentsData<Self, { tuple_count!($($t),*) }>;
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
-            type ArrayColumnIndex = [ComponentTypeRWLock; { tuple_count!($($t),*) }];
+
             const ALL_IMMUTABLE: bool = { $($t::IS_IMMUTABLE &&)* true };
 
             #[allow(unused)]

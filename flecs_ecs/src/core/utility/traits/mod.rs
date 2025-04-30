@@ -91,6 +91,8 @@ pub mod private {
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 let world = WorldRef::from_ptr((*iter).world);
                 let iter = &mut *iter;
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                let components_access = world.components_access_map();
 
                 iter.flags |= sys::EcsIterCppEach;
 
@@ -107,7 +109,12 @@ pub mod private {
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<INCREMENT>(iter, T::COUNT as usize, &world);
+                    do_read_write_locks::<INCREMENT>(
+                        iter,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
 
                 if !CALLED_FROM_RUN {
@@ -125,7 +132,12 @@ pub mod private {
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<DECREMENT>(iter, T::COUNT as usize, &world);
+                    do_read_write_locks::<DECREMENT>(
+                        iter,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
             }
         }
@@ -155,6 +167,8 @@ pub mod private {
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 let world = WorldRef::from_ptr((*iter).world);
                 let iter = &mut *iter;
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                let components_access = world.components_access_map();
 
                 iter.flags |= sys::EcsIterCppEach;
 
@@ -180,7 +194,12 @@ pub mod private {
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<INCREMENT>(iter, T::COUNT as usize, &world);
+                    do_read_write_locks::<INCREMENT>(
+                        iter,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
 
                 if !CALLED_FROM_RUN {
@@ -201,7 +220,12 @@ pub mod private {
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<DECREMENT>(iter, T::COUNT as usize, &world);
+                    do_read_write_locks::<DECREMENT>(
+                        iter,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
             }
         }
@@ -230,6 +254,8 @@ pub mod private {
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 let world = WorldRef::from_ptr((*iter).world);
                 let iter = &mut *iter;
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                let components_access = world.components_access_map();
 
                 iter.flags |= sys::EcsIterCppEach;
 
@@ -245,7 +271,12 @@ pub mod private {
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<INCREMENT>(iter, T::COUNT as usize, &world);
+                    do_read_write_locks::<INCREMENT>(
+                        iter,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
 
                 sys::ecs_table_lock(iter.world, iter.table);
@@ -260,7 +291,12 @@ pub mod private {
 
                 #[cfg(feature = "flecs_safety_readwrite_locks")]
                 {
-                    do_read_write_locks::<DECREMENT>(iter, T::COUNT as usize, &world);
+                    do_read_write_locks::<DECREMENT>(
+                        iter,
+                        components_access,
+                        T::COUNT as usize,
+                        &world,
+                    );
                 }
             }
         }
