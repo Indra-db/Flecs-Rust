@@ -1970,9 +1970,8 @@ pub fn ecs_rust_trait(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
             }
 
             pub fn register_vtable<T: #name + flecs_ecs::core::component_registration::registration_traits::ComponentId>(world: &flecs_ecs::core::World) -> usize {
-                let fake_ptr: *const T = core::ptr::null();
-                let trait_obj: &dyn #name = unsafe { &*fake_ptr };
-                let (_, vtable): (usize, usize) = unsafe { core::mem::transmute(trait_obj) };
+                let trait_obj_ptr = std::ptr::NonNull::<T>::dangling() as std::ptr::NonNull<dyn #name>;
+                let (_, vtable): (usize, usize) = unsafe { core::mem::transmute(trait_obj_ptr) };
                 let id = world.component::<T>();
                 let id_self = world.component::<Self>();
                 id.is_a_id(id_self);
