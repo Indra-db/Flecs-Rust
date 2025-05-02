@@ -489,8 +489,6 @@ struct ecs_data_t {
     int32_t size;
 };
 
-typedef uint64_t entity_lock_t[4];
-
 /** A table is the Flecs equivalent of an archetype. Tables store all entities
  * with a specific set of components. Tables are automatically created when an
  * entity has a set of components not previously observed before. When a new
@@ -512,8 +510,6 @@ struct ecs_table_t {
                                       */
 
     int32_t *column_lock;            /* Lock columns for writing and reading */
-
-    entity_lock_t *entity_lock; // = malloc(sizeof(entity_lock_t) * row_count);
 
     ecs_table__t *_;                 /* Infrequently accessed table metadata */
 };
@@ -37542,50 +37538,6 @@ void flecs_table_init_column_locks(
     }
 }
 
-/* init entity locks */
-void flecs_table_init_entity_locks(
-    ecs_world_t *world,
-    ecs_table_t *table) {
-    flecs_poly_assert(world, ecs_world_t);
-    ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
-    if (!table->entity_lock) {
-        int32_t size = ecs_table_size(table);
-        table->entity_lock = flecs_alloc_n(&world->allocator,
-            entity_lock_t, size);
-        ecs_assert(
-            (size != 0 && table->entity_lock != NULL) ||
-            (size == 0 && table->entity_lock == NULL)
-            , ECS_INTERNAL_ERROR, NULL);
-        for (int i = 0; i < size; i ++) {
-            table->entity_lock[i] = 0;
-        }
-    }
-}
-
-/* resize entity locks */
-void flecs_table_resize_entity_locks(
-    ecs_world_t *world,
-    ecs_table_t *table,
-    int32_t previous_size)
-{
-    flecs_poly_assert(world, ecs_world_t);
-    ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
-    if (table->entity_lock) {
-        int32_t new_size = ecs_table_size(table);
-        table->entity_lock = flecs_realloc_n(&world->allocator,
-            entity_lock_t, new_size, previous_size, table->entity_lock);
-        ecs_assert(
-            ((new_size != 0 && previous_size != 0) && table->entity_lock != NULL) ||
-            ((new_size == 0 || previous_size == 0) && table->entity_lock == NULL)
-            , ECS_INTERNAL_ERROR, NULL);
-        for (int i = 0; i < new_size; i ++) {
-            table->entity_lock[i] = 0;
-        }
-    } else {
-        flecs_table_init_entity_locks(world, table);
-    }
-}
-
 void flecs_table_resize_column_locks(
     ecs_world_t *world,
     ecs_table_t *table,
@@ -37679,56 +37631,6 @@ bool ecs_sparse_id_record_lock_write_end(
     return flecs_sparse_id_record_lock_inc(idr) != 0;
 }
 
-static inline int32_t _bit_lock_inc(
-    entity_lock_t masks,
-    int32_t       type_index)
-{
-    // which 64-bit word
-    size_t block   = (size_t)type_index >> 6;
-    // which bit in that word
-    size_t bit_pos = (size_t)type_index & 63;
-    uint64_t mask  = (uint64_t)1 << bit_pos;
-
-    // capture previous state
-    int32_t was_set = (masks[block] & mask) ? 1 : 0;
-    // set the bit
-    masks[block] |= mask;
-    return was_set;
-}
-
-static inline int32_t flecs_clear_entity_lock(
-    ecs_table_t *table,
-    const int32_t row,
-    const int32_t type_index)
-{
-    size_t block   = (size_t)type_index >> 6; //divide by 64
-    size_t bit_pos = (size_t)type_index & 63; //modulus 64
-    uint64_t mask  = (uint64_t)1 << bit_pos;
-
-    // capture previous state
-    int32_t was_set = (table->entity_lock[row][block] & mask) ? 1 : 0;
-
-    // clear the bit
-    table->entity_lock[row][block] &= ~mask;
-    return was_set;
-}
-
-static inline int32_t flecs_set_entity_lock(
-    ecs_table_t *table,
-    const int32_t row,
-    const int32_t type_index)
-{
-    size_t block   = (size_t)type_index >> 6; //divide by 64
-    size_t bit_pos = (size_t)type_index & 63; //modulus 64
-    uint64_t mask  = (uint64_t)1 << bit_pos;
-
-    // capture previous state
-    int32_t was_set = (table->entity_lock[row][block] & mask) ? 1 : 0;
-    // set the bit
-    table->entity_lock[row][block] |= mask;
-    return was_set;
-}
-
 int32_t flecs_table_column_lock_inc(
     ecs_table_t *table,
     const int16_t column_index,
@@ -37794,7 +37696,6 @@ void flecs_table_init_data(
 {
     flecs_table_init_columns(world, table, table->column_count);
     flecs_table_init_column_locks(world, table,ecs_get_stage_count(world));
-    flecs_table_init_entity_locks(world, table);
 
     ecs_table__t *meta = table->_;
     int32_t i, bs_count = meta->bs_count;
@@ -38520,10 +38421,6 @@ void flecs_table_fini_data(
                 flecs_wfree_n(world, int32_t, ecs_get_stage_count(world) * column_count, table->column_lock);
                 table->column_lock = NULL;
             }
-            if(table->entity_lock) {
-                flecs_wfree_n(world, entity_lock_t, table->data.size, table->entity_lock);
-                table->entity_lock = NULL;
-            }
         }
     }
 
@@ -38962,8 +38859,6 @@ int32_t flecs_table_grow_data(
     table->data.count = v_entities.count;
     table->data.size = v_entities.size;
 
-    flecs_table_resize_entity_locks(world, table, prev_size);
-
     /* Initialize entity ids and record ptrs */
     int32_t i;
     if (ids) {
@@ -39056,11 +38951,9 @@ int32_t flecs_table_append(
 
     /* Fast path: no switch columns, no lifecycle actions */
     if (!(table->flags & EcsTableIsComplex)) {
-        int32_t prev_size = table->data.size;
         flecs_table_fast_append(world, table);
         table->data.count = v_entities.count;
         table->data.size = v_entities.size;
-        flecs_table_resize_entity_locks(world, table, prev_size);
         return count;
     }
 
@@ -39071,8 +38964,6 @@ int32_t flecs_table_append(
         ECS_INTERNAL_ERROR, NULL);
     table->data.count = v_entities.count;
     table->data.size = v_entities.size;
-
-    flecs_table_resize_entity_locks(world, table, prev_size);
 
     /* Reobtain size to ensure that the columns have the same size as the 
      * entities and record vectors. This keeps reasoning about when allocations
@@ -39439,13 +39330,9 @@ bool flecs_table_shrink(
         column->data = v_column.array;
     }
 
-    int32_t prev_size = table->data.size;
-
     table->data.count = v_entities.count;
     table->data.size = v_entities.size;
     table->data.entities = v_entities.array;
-
-    flecs_table_resize_entity_locks(world, table, prev_size);
 
     flecs_table_check_sanity(world, table);
 
@@ -39731,9 +39618,6 @@ void flecs_table_merge_data(
     /* Mark entity column as dirty */
     flecs_table_mark_table_dirty(world, dst_table, 0);
 
-    int32_t dst_prev_size = dst_table->data.size;
-    int32_t src_prev_size = src_table->data.size;
-
     dst_table->data.entities = dst_entities.array;
     dst_table->data.count = dst_entities.count;
     dst_table->data.size = dst_entities.size;
@@ -39741,9 +39625,6 @@ void flecs_table_merge_data(
     src_table->data.entities = src_entities.array;
     src_table->data.count = src_entities.count;
     src_table->data.size = src_entities.size;
-
-    flecs_table_resize_entity_locks(world, dst_table, dst_prev_size);
-    flecs_table_resize_entity_locks(world, src_table, src_prev_size);
 }
 
 /* Merge source table into destination table. This typically happens as result
