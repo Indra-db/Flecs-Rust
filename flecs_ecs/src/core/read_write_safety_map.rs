@@ -487,7 +487,7 @@ pub(crate) fn get_table_column_lock_read_begin(
 
 /// returning true, means write is already set
 pub(crate) fn table_column_lock_read_begin(
-    world: &WorldRef,
+    _world: &WorldRef,
     table: *mut sys::ecs_table_t,
     column: i16,
     stage_id: i32,
@@ -503,7 +503,7 @@ pub(crate) fn table_column_lock_read_end(table: *mut sys::ecs_table_t, column: i
 
 /// returning true means a read or write is already set
 pub(crate) fn table_column_lock_write_begin(
-    world: &WorldRef,
+    _world: &WorldRef,
     table: *mut sys::ecs_table_t,
     column: i16,
     stage_id: i32,

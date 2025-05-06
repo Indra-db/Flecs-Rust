@@ -1,12 +1,10 @@
 //! Table is a wrapper class that gives direct access to the component arrays of a table, the table data
 
 mod field;
-mod fields;
 mod iter;
 mod multi_src_get;
 
 pub use field::*;
-pub use fields::*;
 pub use iter::{TableIter, TableRowIter};
 pub use multi_src_get::*;
 

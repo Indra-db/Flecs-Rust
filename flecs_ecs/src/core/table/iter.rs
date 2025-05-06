@@ -7,6 +7,12 @@ use crate::sys;
 
 use super::field::{FieldAt, FieldAtMut, FieldMut};
 
+pub enum FieldError {
+    InvalidIndex,
+    WrongType,
+    Locked,
+}
+
 pub struct TableIter<'a, const IS_RUN: bool = true, P = ()> {
     pub(crate) iter: &'a mut sys::ecs_iter_t,
     marker: PhantomData<P>,
@@ -623,11 +629,11 @@ where
     fn field_checked_mut_result<T: ComponentId>(
         &self,
         index: i8,
-    ) -> Result<FieldMut<T::UnderlyingType, true>, ()> {
+    ) -> Result<FieldMut<T::UnderlyingType, true>, FieldError> {
         let id = <T::UnderlyingType as ComponentId>::id(self.world());
 
         if index > self.iter.field_count {
-            return Err(());
+            return Err(FieldError::InvalidIndex);
         }
 
         let term_id = unsafe { sys::ecs_field_id(self.iter, index) };
@@ -640,7 +646,7 @@ where
             };
         }
 
-        Err(())
+        Err(FieldError::WrongType)
     }
 
     fn field_at_checked_mut<T: ComponentId>(
@@ -693,11 +699,11 @@ where
     fn field_checked_result<T: ComponentId, const LOCK: bool>(
         &self,
         index: i8,
-    ) -> Result<Field<T::UnderlyingType, LOCK>, ()> {
+    ) -> Result<Field<T::UnderlyingType, LOCK>, FieldError> {
         let id = <T::UnderlyingType as ComponentId>::id(self.world());
 
         if index > self.iter.field_count {
-            return Err(());
+            return Err(FieldError::InvalidIndex);
         }
 
         let term_id = unsafe { sys::ecs_field_id(self.iter, index) };
@@ -710,7 +716,7 @@ where
             };
         }
 
-        Err(())
+        Err(FieldError::WrongType)
     }
 
     fn field_at_checked<T: ComponentId>(
@@ -805,7 +811,7 @@ where
     pub(crate) fn field_result<T: ComponentId>(
         &self,
         index: i8,
-    ) -> Result<Field<T::UnderlyingType, true>, ()> {
+    ) -> Result<Field<T::UnderlyingType, true>, FieldError> {
         ecs_assert!(
             (self.iter.flags & sys::EcsIterCppEach == 0)
                 || unsafe { sys::ecs_field_src(self.iter, index) != 0 },
@@ -906,7 +912,7 @@ where
     pub fn field_mut_result<T: ComponentId>(
         &self,
         index: i8,
-    ) -> Result<FieldMut<T::UnderlyingType, true>, ()> {
+    ) -> Result<FieldMut<T::UnderlyingType, true>, FieldError> {
         ecs_assert!(
             (self.iter.flags & sys::EcsIterCppEach == 0)
                 || unsafe { sys::ecs_field_src(self.iter, index) != 0 },
@@ -1304,7 +1310,7 @@ where
         &self,
         index: i8,
         _id: Entity,
-    ) -> Result<Field<T, LOCK>, ()> {
+    ) -> Result<Field<T, LOCK>, FieldError> {
         unsafe {
             let is_shared = !self.is_self(index);
 
@@ -1322,7 +1328,7 @@ where
                 sys::ecs_field_w_size(self.iter, core::mem::size_of::<T>(), index) as *const T;
 
             if array.is_null() {
-                return Err(());
+                return Err(FieldError::InvalidIndex);
             }
             let slice = core::slice::from_raw_parts(array, count);
 
@@ -1438,7 +1444,7 @@ where
         &self,
         index: i8,
         _id: Entity,
-    ) -> Result<FieldMut<T, LOCK>, ()> {
+    ) -> Result<FieldMut<T, LOCK>, FieldError> {
         unsafe {
             let is_shared = !self.is_self(index);
 
@@ -1456,7 +1462,7 @@ where
                 sys::ecs_field_w_size(self.iter, core::mem::size_of::<T>(), index) as *mut T;
 
             if array.is_null() {
-                return Err(());
+                return Err(FieldError::InvalidIndex);
             }
             let slice = core::slice::from_raw_parts_mut(array, count);
 

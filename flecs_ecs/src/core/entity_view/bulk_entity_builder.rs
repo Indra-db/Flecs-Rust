@@ -145,7 +145,7 @@ impl<'a> BulkEntityBuilder<'a> {
     ///
     /// * This function will panic if `id` is invalid in the current world.
     /// * If the ID is not a tag and does not implement `Default`.
-    ///     // TODO: `set_pair`
+    ///   // TODO: `set_pair`
     ///
     /// # Examples
     ///

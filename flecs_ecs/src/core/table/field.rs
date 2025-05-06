@@ -1,5 +1,7 @@
 //! Table column API.
 
+#[cfg(feature = "flecs_safety_readwrite_locks")]
+use super::iter::FieldError;
 use crate::core::*;
 #[cfg(feature = "flecs_safety_readwrite_locks")]
 use core::ptr::NonNull;
@@ -151,20 +153,18 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
         field_index: i8,
         table: NonNull<ecs_table_t>,
         world: &WorldRef,
-    ) -> Result<Self, ()> {
-        if LOCK {
-            if table_column_lock_read_begin(world, table.as_ptr(), column_index, stage_id) {
-                return Err(());
-            }
+    ) -> Result<Self, FieldError> {
+        if LOCK && table_column_lock_read_begin(world, table.as_ptr(), column_index, stage_id) {
+            return Err(FieldError::Locked);
         }
-        return Ok(Self {
+        Ok(Self {
             slice_components,
             is_shared,
             table,
             field_index,
             stage_id,
             column_index,
-        });
+        })
     }
 
     #[cfg(feature = "flecs_safety_readwrite_locks")]
@@ -208,7 +208,6 @@ impl<T: ComponentId> Deref for Field<'_, T, true> {
 /// # Type parameters
 ///
 /// * `T`: The type of the column.
-
 pub struct FieldMut<'a, T, const LOCK: bool> {
     pub slice_components: &'a mut [T],
     pub(crate) is_shared: bool,
@@ -346,11 +345,9 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
         field_index: i8,
         table: NonNull<ecs_table_t>,
         world: &WorldRef,
-    ) -> Result<Self, ()> {
-        if LOCK {
-            if table_column_lock_write_begin(world, table.as_ptr(), column_index, stage_id) {
-                return Err(());
-            }
+    ) -> Result<Self, FieldError> {
+        if LOCK && table_column_lock_write_begin(world, table.as_ptr(), column_index, stage_id) {
+            return Err(FieldError::Locked);
         }
 
         Ok(Self {
