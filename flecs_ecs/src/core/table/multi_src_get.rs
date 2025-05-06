@@ -345,6 +345,534 @@ fn test_so() {
 }
 
 #[test]
+fn test_something_final2() {
+    impl<'a, const IS_RUN: bool, P> TableIter<'a, IS_RUN, P>
+    where
+        P: ComponentId,
+    {
+        pub fn getx2<'w, T: ComponentId, F>(&'w self, fields_indices: F) -> F::TupleType<'w>
+        where
+            F: FieldsTuple2<T> + 'w,
+        {
+            let world = self.world();
+            fields_indices.get_tuple(&world, self)
+        }
+
+        pub fn getx3<'w, T: ComponentId, F>(&'w self, fields_indices: F) -> F::TupleType<'w>
+        where
+            F: FieldsTuple2<T> + 'w,
+        {
+            let world = self.world();
+            fields_indices.get_tuple(&world, self)
+        }
+    }
+
+    #[derive(Component, Debug)]
+    struct TP {
+        x: i32,
+    }
+
+    #[derive(Component, Debug)]
+    struct Relx;
+
+    let world = World::new();
+
+    let parent = world.entity().set(TP { x: 1 });
+    parent.add_first::<Relx>(parent);
+    let e = world.entity().set(TP { x: 4 }).add_first::<Relx>(parent);
+    world
+        .query::<(&mut TP, &TP)>()
+        .with_first_name::<Relx>("$parent")
+        .term_at(1)
+        .set_src_name("$parent")
+        .build()
+        .run(|mut it| {
+            while it.next() {
+                match it.getx2::<TP, _>((Mut(0), 1)) {
+                    (Ok(val), Ok(val2)) => {
+                        println!("val: {:?}, val2: {:?}", val, val2);
+                    }
+                    (Ok(val), Err(e)) => {
+                        println!("val: {:?}, Error: {:?}", val, e);
+                    }
+                    _ => {
+                        unreachable!();
+                    }
+                }
+            }
+        });
+
+    pub struct Fields<
+        'a,
+        T: ComponentId,
+        const NI: usize,
+        const NM: usize,
+        const Total: usize,
+        const HALF_TOTAL: usize,
+    >
+    where
+        [u64; HALF_TOTAL]: smallvec::Array<Item = u64>,
+        [u64; NI]: smallvec::Array<Item = u64>,
+        [u64; NM]: smallvec::Array<Item = u64>,
+    {
+        pub(crate) immut_fields: [Field<'a, T::UnderlyingType, false>; NI],
+        mut_fields: [FieldMut<'a, T::UnderlyingType, false>; NM],
+        has_any_tables_the_same: bool,
+        duplicate_table_ids: smallvec::SmallVec<[u64; HALF_TOTAL]>,
+    }
+
+    pub(crate) trait FieldContainer<'a, T: ComponentId> {
+        const TOTAL: usize;
+
+        fn lock_tables(&self, world: &WorldRef);
+
+        fn unlock_tables(&self);
+
+        fn duplicate_table_ids(&self) -> &[u64];
+
+        fn get(&self, index_field: usize, index_slice_components: usize) -> &T::UnderlyingType;
+
+        fn get_mut(
+            &mut self,
+            index_field: usize,
+            index_slice_components: usize,
+        ) -> &mut T::UnderlyingType;
+
+        fn get_field(&self, index_field: usize) -> &Field<'a, T::UnderlyingType, false>;
+
+        fn get_field_mut(
+            &mut self,
+            index_field: usize,
+        ) -> &mut FieldMut<'a, T::UnderlyingType, false>;
+    }
+
+    impl<
+        'a,
+        T: ComponentId,
+        const NI: usize,
+        const NM: usize,
+        const Total: usize,
+        const HALF_TOTAL: usize,
+    > Drop for Fields<'a, T, NI, NM, Total, HALF_TOTAL>
+    where
+        [u64; HALF_TOTAL]: smallvec::Array<Item = u64>,
+        [u64; NI]: smallvec::Array<Item = u64>,
+        [u64; NM]: smallvec::Array<Item = u64>,
+    {
+        fn drop(&mut self) {
+            self.unlock_tables();
+        }
+    }
+
+    impl<
+        'a,
+        T: ComponentId,
+        const NI: usize,
+        const NM: usize,
+        const Total: usize,
+        const HALF_TOTAL: usize,
+    > FieldContainer<'a, T> for Fields<'a, T, NI, NM, Total, HALF_TOTAL>
+    where
+        [u64; HALF_TOTAL]: smallvec::Array,
+        [u64; HALF_TOTAL]: smallvec::Array<Item = u64>,
+        [u64; NI]: smallvec::Array<Item = u64>,
+        [u64; NM]: smallvec::Array<Item = u64>,
+    {
+        const TOTAL: usize = Total;
+
+        fn lock_tables(&self, world: &WorldRef) {
+            let mut fields_tables = smallvec::SmallVec::<[u64; NI]>::new();
+            let mut fields_tables_mut = smallvec::SmallVec::<[u64; NM]>::new();
+
+            for i in 0..NI {
+                let field = &self.immut_fields[i];
+                let table_id = field.table_id();
+                if !fields_tables.contains(&table_id) {
+                    fields_tables.push(field.table_id());
+                    field.lock_table(world);
+                }
+            }
+
+            for i in 0..NM {
+                let field = &self.mut_fields[i];
+                let table_id = field.table_id();
+                if !fields_tables_mut.contains(&table_id) {
+                    fields_tables_mut.push(field.table_id());
+                    field.lock_table(world);
+                }
+            }
+        }
+
+        fn unlock_tables(&self) {
+            let mut fields_tables = smallvec::SmallVec::<[u64; NI]>::new();
+            let mut fields_tables_mut = smallvec::SmallVec::<[u64; NM]>::new();
+
+            for i in 0..NI {
+                let field = &self.immut_fields[i];
+                let table_id = field.table_id();
+                if !fields_tables.contains(&table_id) {
+                    fields_tables.push(field.table_id());
+                    field.unlock_table();
+                }
+            }
+
+            for i in 0..NM {
+                let field = &self.mut_fields[i];
+                let table_id = field.table_id();
+                if !fields_tables_mut.contains(&table_id) {
+                    fields_tables_mut.push(field.table_id());
+                    field.unlock_table();
+                }
+            }
+        }
+
+        fn duplicate_table_ids(&self) -> &[u64] {
+            &self.duplicate_table_ids
+        }
+
+        fn get(&self, index_field: usize, index_slice_components: usize) -> &T::UnderlyingType {
+            &self.immut_fields[index_field].slice_components[index_slice_components]
+        }
+
+        fn get_mut(
+            &mut self,
+            index_field: usize,
+            index_slice_components: usize,
+        ) -> &mut T::UnderlyingType {
+            &mut self.mut_fields[index_field].slice_components[index_slice_components]
+        }
+
+        fn get_field(&self, index_field: usize) -> &Field<'a, T::UnderlyingType, false> {
+            &self.immut_fields[index_field]
+        }
+
+        fn get_field_mut(
+            &mut self,
+            index_field: usize,
+        ) -> &mut FieldMut<'a, T::UnderlyingType, false> {
+            &mut self.mut_fields[index_field]
+        }
+    }
+
+    impl<
+        'a,
+        T: ComponentId,
+        const NI: usize,
+        const NM: usize,
+        const Total: usize,
+        const HALF_TOTAL: usize,
+    > Fields<'a, T, NI, NM, Total, HALF_TOTAL>
+    where
+        [u64; HALF_TOTAL]: smallvec::Array,
+        [u64; HALF_TOTAL]: smallvec::Array<Item = u64>,
+        [u64; NI]: smallvec::Array<Item = u64>,
+        [u64; NM]: smallvec::Array<Item = u64>,
+    {
+        unsafe fn to_initialized_array<Field, const NR: usize>(
+            array: [MaybeUninit<Field>; NR],
+        ) -> [Field; NR] {
+            unsafe { array.as_ptr().cast::<[Field; NR]>().read() }
+        }
+
+        pub fn new(
+            iter: &'a TableIter,
+            immut_fields: [usize; NI],
+            mut_fields: [usize; NM],
+        ) -> Self {
+            let mut fields_mut_array: [MaybeUninit<FieldMut<'_, T::UnderlyingType, false>>; NM] =
+                unsafe { MaybeUninit::uninit().assume_init() };
+
+            for i in 0..NM {
+                fields_mut_array[i] = MaybeUninit::new(
+                    iter.field_mut_lockless::<T>(mut_fields[i] as i8)
+                        .expect("Field is not present or not correct type"),
+                );
+            }
+
+            let mut_fields = unsafe { Self::to_initialized_array(fields_mut_array) };
+
+            let mut fields_immut_array: [MaybeUninit<Field<'_, T::UnderlyingType, false>>; NI] =
+                unsafe { MaybeUninit::uninit().assume_init() };
+            for i in 0..NI {
+                fields_immut_array[i] = MaybeUninit::new(
+                    iter.field_lockless::<T>(immut_fields[i] as i8)
+                        .expect("Field is not present or not correct type"),
+                );
+            }
+
+            let immut_fields = unsafe { Self::to_initialized_array(fields_immut_array) };
+            let mut immut_fields_table_ids = [0; NI];
+            for i in 0..NI {
+                immut_fields_table_ids[i] = immut_fields[i].table_id();
+            }
+
+            let mut mut_fields_table_ids = [0; NM];
+            for i in 0..NM {
+                mut_fields_table_ids[i] = mut_fields[i].table_id();
+            }
+
+            // check all table ids in the mutable and immutable fields and store the duplicates, make sure not to store duplicates twice
+            // we have to check the table ids of the two arrays as well as itself the array
+            let mut duplicate_table_ids = smallvec::SmallVec::<[u64; HALF_TOTAL]>::new();
+            let mut has_any_tables_the_same = false;
+
+            for i in 0..NI {
+                for j in (i + 1)..NI {
+                    let immut_field_table_id = immut_fields_table_ids[i];
+                    if immut_field_table_id == immut_fields_table_ids[j] {
+                        has_any_tables_the_same = true;
+                        if !duplicate_table_ids.contains(&immut_field_table_id) {
+                            duplicate_table_ids.push(immut_fields_table_ids[i]);
+                        }
+                    }
+                }
+            }
+
+            for i in 0..NM {
+                for j in (i + 1)..NM {
+                    let mut_field_table_id = mut_fields_table_ids[i];
+                    if mut_field_table_id == mut_fields_table_ids[j] {
+                        has_any_tables_the_same = true;
+                        if !duplicate_table_ids.contains(&mut_field_table_id) {
+                            duplicate_table_ids.push(mut_fields_table_ids[i]);
+                        }
+                    }
+                }
+            }
+
+            for i in 0..NI {
+                for j in 0..NM {
+                    let immut_field_table_id = immut_fields_table_ids[i];
+                    let mut_field_table_id = mut_fields_table_ids[j];
+                    if immut_field_table_id == mut_field_table_id {
+                        has_any_tables_the_same = true;
+                        if !duplicate_table_ids.contains(&immut_field_table_id) {
+                            duplicate_table_ids.push(immut_field_table_id);
+                        }
+                    }
+                }
+            }
+
+            let fields = Self {
+                immut_fields,
+                mut_fields,
+                has_any_tables_the_same,
+                duplicate_table_ids,
+            };
+
+            fields.lock_tables(&iter.world());
+
+            fields
+        }
+
+        pub fn get<'w, F, Func, const IS_RUN: bool, P: ComponentId>(
+            &self,
+            iter: &'w TableIter<'_, IS_RUN, P>,
+            fields_indices: F,
+            mut func: Func,
+        ) where
+            F: FieldsTuple2<T> + 'w,
+            Func: FnMut(F::TupleType<'w>) + 'w,
+        {
+            let world = iter.world();
+            let tuple = fields_indices.get_tuple(&world, iter);
+            func(tuple);
+        }
+
+        // pub fn get<'f, F: FieldsTuple<T>, Func: FnMut(F::TupleType<'f>)>(
+        //     &self,
+        //     fields: F,
+        //     mut func: Func,
+        // ) {
+        //     // let tuple = F::create_tuple();
+        //     //func(tuple);
+        // }
+    }
+
+    struct Mut(usize);
+
+    impl<A, B, T> FieldsTuple2<T> for (A, B)
+    where
+        T: 'static + ComponentId,
+        A: IterableTypeFieldOperation2<T>,
+        B: IterableTypeFieldOperation2<T>,
+    {
+        type TupleType<'w>
+            = (
+            <A as IterableTypeFieldOperation2<T>>::ActualType<'w>,
+            <B as IterableTypeFieldOperation2<T>>::ActualType<'w>,
+        )
+        where
+            Self: 'w;
+
+        fn get_tuple<'a, const IS_RUN: bool, P: ComponentId>(
+            self,
+            world: &WorldRef,
+            iter: &'a TableIter<'a, IS_RUN, P>,
+        ) -> Self::TupleType<'a> {
+            (self.0.get_data(iter), self.1.get_data(iter))
+            // const {
+            //     // if FIELDS::TOTAL != 2 {
+            //     //     panic!("total indices should be {}", FIELDS::TOTAL);
+            //     // }
+            // }
+            // let duplicates = fields.duplicate_table_ids();
+            // let any_duplicates = !duplicates.is_empty();
+            // unimplemented!()
+            // if !any_duplicates {
+            //     // self.0.lock_column(world);
+            //     // self.1.lock_column(world);
+            //     return (self.0.get_data(0, fields), self.1.get_data(1, fields));
+            // } else {
+            //     let mut locked_entities: smallvec::SmallVec<[Entity; 2]> =
+            //         smallvec::SmallVec::new();
+            //     let sources = iter.sources();
+            //     let entities = iter.entities();
+            //     let table_id = self.0.table_id(fields, 0);
+            //     let field_index = self.0.field_index(fields, 0);
+            //     let src_field_index = sources[field_index as usize];
+            //     let entity_id = if src_field_index == 0 {
+            //         entities[field_index as usize]
+            //     } else {
+            //         src_field_index
+            //     };
+
+            //     if duplicates.contains(&table_id) {
+            //         let was_locked = locked_entities.iter().any(|&id| id == entity_id);
+
+            //         if was_locked {
+            //             panic!("Entity already locked");
+            //         }
+            //         locked_entities.push(entity_id);
+            //     }
+            // }
+            // (self.0.get_data(0, fields), self.1.get_data(1, fields))
+        }
+    }
+
+    pub trait FieldsTuple2<T: ComponentId>: Sized {
+        type TupleType<'w>
+        where
+            Self: 'w;
+
+        fn get_tuple<'a, const IS_RUN: bool, P: ComponentId>(
+            self,
+            world: &WorldRef,
+            iter: &'a TableIter<'a, IS_RUN, P>,
+        ) -> Self::TupleType<'a>;
+    }
+
+    pub trait IterableTypeFieldOperation2<T: 'static + ComponentId> {
+        type ActualType<'w>
+        where
+            Self: 'w;
+
+        fn get_data<'a, const IS_RUN: bool, P: ComponentId>(
+            self,
+            iter: &'a TableIter<'a, IS_RUN, P>,
+        ) -> Self::ActualType<'a>
+        where
+            Self: 'a;
+
+        // fn table_id<'a, FIELDS: FieldContainer<'a, T>>(
+        //     &self,
+        //     fields: &'a mut FIELDS,
+        //     index: usize,
+        // ) -> u64;
+
+        // fn field_index<'a, FIELDS: FieldContainer<'a, T>>(
+        //     &self,
+        //     fields: &'a mut FIELDS,
+        //     index: usize,
+        // ) -> i8;
+    }
+
+    impl<T: 'static + ComponentId> IterableTypeFieldOperation2<T> for usize {
+        type ActualType<'w>
+            = Result<Field<'w, T::UnderlyingType, true>, ()>
+        where
+            Self: 'w;
+
+        fn get_data<'a, const IS_RUN: bool, P: ComponentId>(
+            self,
+            iter: &'a TableIter<'a, IS_RUN, P>,
+        ) -> Self::ActualType<'a>
+        where
+            Self: 'a,
+        {
+            iter.field_result::<T>(self as i8)
+        }
+
+        // fn field_index<'w, FIELDS: FieldContainer<'w, T>>(
+        //     &self,
+        //     fields: &'w mut FIELDS,
+        //     index: usize,
+        // ) -> i8 {
+        //     fields.get_field(index).field_index
+        // }
+
+        // fn table_id<'a, FIELDS: FieldContainer<'a, T>>(
+        //     &self,
+        //     fields: &'a mut FIELDS,
+        //     index: usize,
+        // ) -> u64 {
+        //     fields.get_field(index).table_id()
+        // }
+
+        // fn lock_column(&self, world: &WorldRef) {
+        //     get_table_column_lock_read_begin(
+        //         world,
+        //         self.0.table.as_ptr(),
+        //         self.0.column_index,
+        //         self.0.stage_id,
+        //     );
+        // }
+    }
+
+    impl<T: 'static + ComponentId> IterableTypeFieldOperation2<T> for Mut {
+        type ActualType<'w>
+            = Result<FieldMut<'w, T::UnderlyingType, true>, ()>
+        where
+            Self: 'w;
+
+        fn get_data<'a, const IS_RUN: bool, P: ComponentId>(
+            self,
+            iter: &'a TableIter<'a, IS_RUN, P>,
+        ) -> Self::ActualType<'a>
+        where
+            Self: 'a,
+        {
+            iter.field_mut_result::<T>(self.0 as i8)
+        }
+
+        // fn field_index<'w, FIELDS: FieldContainer<'w, T>>(
+        //     &self,
+        //     fields: &'w mut FIELDS,
+        //     index: usize,
+        // ) -> i8 {
+        //     fields.get_field_mut(index).field_index
+        // }
+
+        // fn table_id<'a, FIELDS: FieldContainer<'a, T>>(
+        //     &self,
+        //     fields: &'a mut FIELDS,
+        //     index: usize,
+        // ) -> u64 {
+        //     fields.get_field_mut(index).table_id()
+        // }
+
+        // fn lock_column(&self, world: &WorldRef) {
+        //     get_table_column_lock_write_begin(
+        //         world,
+        //         self.0.table.as_ptr(),
+        //         self.0.column_index,
+        //         self.0.stage_id,
+        //     );
+        // }
+    }
+}
+
+#[test]
 fn test_something_final() {
     impl<'a, const IS_RUN: bool, P> TableIter<'a, IS_RUN, P>
     where
@@ -798,7 +1326,7 @@ fn test_something_final() {
         // }
 
         // fn lock_column(&self, world: &WorldRef) {
-        //     table_column_lock_read_begin(
+        //     get_table_column_lock_read_begin(
         //         world,
         //         self.0.table.as_ptr(),
         //         self.0.column_index,
@@ -841,7 +1369,7 @@ fn test_something_final() {
         // }
 
         // fn lock_column(&self, world: &WorldRef) {
-        //     table_column_lock_write_begin(
+        //     get_table_column_lock_write_begin(
         //         world,
         //         self.0.table.as_ptr(),
         //         self.0.column_index,
@@ -1295,7 +1823,7 @@ fn test_something_not_final() {
         }
 
         // fn lock_column(&self, world: &WorldRef) {
-        //     table_column_lock_read_begin(
+        //     get_table_column_lock_read_begin(
         //         world,
         //         self.0.table.as_ptr(),
         //         self.0.column_index,
@@ -1338,7 +1866,7 @@ fn test_something_not_final() {
         }
 
         // fn lock_column(&self, world: &WorldRef) {
-        //     table_column_lock_write_begin(
+        //     get_table_column_lock_write_begin(
         //         world,
         //         self.0.table.as_ptr(),
         //         self.0.column_index,
@@ -1791,7 +2319,7 @@ fn test_something_not_final2() {
     //         }
 
     //         // fn lock_column(&self, world: &WorldRef) {
-    //         //     table_column_lock_read_begin(
+    //         //     get_table_column_lock_read_begin(
     //         //         world,
     //         //         self.0.table.as_ptr(),
     //         //         self.0.column_index,
@@ -1834,7 +2362,7 @@ fn test_something_not_final2() {
     //         }
 
     //         // fn lock_column(&self, world: &WorldRef) {
-    //         //     table_column_lock_write_begin(
+    //         //     get_table_column_lock_write_begin(
     //         //         world,
     //         //         self.0.table.as_ptr(),
     //         //         self.0.column_index,
@@ -2287,7 +2815,7 @@ fn test_something_not_final2() {
     //         }
 
     //         // fn lock_column(&self, world: &WorldRef) {
-    //         //     table_column_lock_read_begin(
+    //         //     get_table_column_lock_read_begin(
     //         //         world,
     //         //         self.0.table.as_ptr(),
     //         //         self.0.column_index,
@@ -2330,7 +2858,7 @@ fn test_something_not_final2() {
     //         }
 
     //         // fn lock_column(&self, world: &WorldRef) {
-    //         //     table_column_lock_write_begin(
+    //         //     get_table_column_lock_write_begin(
     //         //         world,
     //         //         self.0.table.as_ptr(),
     //         //         self.0.column_index,
@@ -2408,7 +2936,7 @@ fn test_something_not_final2() {
         }
 
         fn lock_column(&self, world: &WorldRef) {
-            table_column_lock_read_begin(
+            get_table_column_lock_read_begin(
                 world,
                 self.0.table.as_ptr(),
                 self.0.column_index,
@@ -2439,7 +2967,7 @@ fn test_something_not_final2() {
         }
 
         fn lock_column(&self, world: &WorldRef) {
-            table_column_lock_write_begin(
+            get_table_column_lock_write_begin(
                 world,
                 self.0.table.as_ptr(),
                 self.0.column_index,
@@ -2622,7 +3150,7 @@ fn test_something() {
         }
 
         fn lock_column(&self, world: &WorldRef) {
-            table_column_lock_read_begin(
+            get_table_column_lock_read_begin(
                 world,
                 self.0.table.as_ptr(),
                 self.0.column_index,
@@ -2653,7 +3181,7 @@ fn test_something() {
         }
 
         fn lock_column(&self, world: &WorldRef) {
-            table_column_lock_write_begin(
+            get_table_column_lock_write_begin(
                 world,
                 self.0.table.as_ptr(),
                 self.0.column_index,

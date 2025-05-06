@@ -1402,10 +1402,10 @@ fn get_rw_lock<T: GetTuple, Return>(
         }
         match id {
             ReadWriteId::Read(_) => {
-                table_column_lock_read_begin(&world, table, column_index as i16, stage_id);
+                get_table_column_lock_read_begin(&world, table, column_index as i16, stage_id);
             }
             ReadWriteId::Write(_) => {
-                table_column_lock_write_begin(&world, table, column_index as i16, stage_id);
+                get_table_column_lock_write_begin(&world, table, column_index as i16, stage_id);
             }
         }
     }
@@ -1745,7 +1745,7 @@ impl<'a> EntityView<'a> {
                     sys::ecs_table_get_column_index_w_idr(world_ptr, (*record).table, *id, idr)
                 };
                 //check if no writes are present so we can clone
-                table_column_lock_read_begin(&world, table, column_index as i16, stage_id);
+                get_table_column_lock_read_begin(&world, table, column_index as i16, stage_id);
                 table_column_lock_read_end(table, column_index as i16, stage_id);
             }
         }
@@ -1845,7 +1845,7 @@ impl<'a> EntityView<'a> {
                 }
 
                 //check if no writes are present so we can clone
-                table_column_lock_read_begin(&world, table, column_index as i16, stage_id);
+                get_table_column_lock_read_begin(&world, table, column_index as i16, stage_id);
                 table_column_lock_read_end(table, column_index as i16, stage_id);
             }
         }

@@ -119,7 +119,7 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
         world: &WorldRef,
     ) -> Self {
         if LOCK {
-            table_column_lock_read_begin(world, table.as_ptr(), column_index, stage_id);
+            get_table_column_lock_read_begin(world, table.as_ptr(), column_index, stage_id);
         }
         Self {
             slice_components,
@@ -131,9 +131,50 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
         }
     }
 
+    /// Create a new column from component array.
+    ///
+    /// # Arguments
+    ///
+    /// * `slice_components`: pointer to the component array.
+    /// * `is_shared`: whether the component is shared.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `field::field`
+    #[doc(alias = "field::field")]
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) fn new_result(
+        slice_components: &'a [T],
+        is_shared: bool,
+        stage_id: i32,
+        column_index: i16,
+        field_index: i8,
+        table: NonNull<ecs_table_t>,
+        world: &WorldRef,
+    ) -> Result<Self, ()> {
+        if LOCK {
+            if table_column_lock_read_begin(world, table.as_ptr(), column_index, stage_id) {
+                return Err(());
+            }
+        }
+        return Ok(Self {
+            slice_components,
+            is_shared,
+            table,
+            field_index,
+            stage_id,
+            column_index,
+        });
+    }
+
     #[cfg(feature = "flecs_safety_readwrite_locks")]
     pub(crate) fn lock_table(&self, world: &WorldRef) {
-        table_column_lock_read_begin(world, self.table.as_ptr(), self.column_index, self.stage_id);
+        get_table_column_lock_read_begin(
+            world,
+            self.table.as_ptr(),
+            self.column_index,
+            self.stage_id,
+        );
     }
 
     #[cfg(feature = "flecs_safety_readwrite_locks")]
@@ -169,7 +210,7 @@ impl<T: ComponentId> Deref for Field<'_, T, true> {
 /// * `T`: The type of the column.
 
 pub struct FieldMut<'a, T, const LOCK: bool> {
-    pub(crate) slice_components: &'a mut [T],
+    pub slice_components: &'a mut [T],
     pub(crate) is_shared: bool,
     #[cfg(feature = "flecs_safety_readwrite_locks")]
     pub(crate) table: NonNull<ecs_table_t>,
@@ -272,7 +313,7 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
         world: &WorldRef,
     ) -> Self {
         if LOCK {
-            table_column_lock_write_begin(world, table.as_ptr(), column_index, stage_id);
+            get_table_column_lock_write_begin(world, table.as_ptr(), column_index, stage_id);
         }
 
         Self {
@@ -285,9 +326,51 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
         }
     }
 
+    /// Create a new column from component array.
+    ///
+    /// # Arguments
+    ///
+    /// * `slice_components`: pointer to the component array.
+    /// * `is_shared`: whether the component is shared.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `field::field`
+    #[doc(alias = "field::field")]
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) fn new_result(
+        slice_components: &'a mut [T],
+        is_shared: bool,
+        stage_id: i32,
+        column_index: i16,
+        field_index: i8,
+        table: NonNull<ecs_table_t>,
+        world: &WorldRef,
+    ) -> Result<Self, ()> {
+        if LOCK {
+            if table_column_lock_write_begin(world, table.as_ptr(), column_index, stage_id) {
+                return Err(());
+            }
+        }
+
+        Ok(Self {
+            slice_components,
+            is_shared,
+            table,
+            field_index,
+            stage_id,
+            column_index,
+        })
+    }
+
     #[cfg(feature = "flecs_safety_readwrite_locks")]
     pub(crate) fn lock_table(&self, world: &WorldRef) {
-        table_column_lock_write_begin(world, self.table.as_ptr(), self.column_index, self.stage_id);
+        get_table_column_lock_write_begin(
+            world,
+            self.table.as_ptr(),
+            self.column_index,
+            self.stage_id,
+        );
     }
 
     #[cfg(feature = "flecs_safety_readwrite_locks")]

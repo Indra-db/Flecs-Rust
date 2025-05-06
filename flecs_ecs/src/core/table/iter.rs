@@ -620,6 +620,29 @@ where
         None
     }
 
+    fn field_checked_mut_result<T: ComponentId>(
+        &self,
+        index: i8,
+    ) -> Result<FieldMut<T::UnderlyingType, true>, ()> {
+        let id = <T::UnderlyingType as ComponentId>::id(self.world());
+
+        if index > self.iter.field_count {
+            return Err(());
+        }
+
+        let term_id = unsafe { sys::ecs_field_id(self.iter, index) };
+        let is_pair = unsafe { sys::ecs_id_is_pair(term_id) };
+        let is_id_correct = id == term_id;
+
+        if is_id_correct || is_pair {
+            return unsafe {
+                self.field_internal_mut_result::<T::UnderlyingType, true>(index, Entity(term_id))
+            };
+        }
+
+        Err(())
+    }
+
     fn field_at_checked_mut<T: ComponentId>(
         &self,
         index: i8,
@@ -665,6 +688,29 @@ where
         }
 
         None
+    }
+
+    fn field_checked_result<T: ComponentId, const LOCK: bool>(
+        &self,
+        index: i8,
+    ) -> Result<Field<T::UnderlyingType, LOCK>, ()> {
+        let id = <T::UnderlyingType as ComponentId>::id(self.world());
+
+        if index > self.iter.field_count {
+            return Err(());
+        }
+
+        let term_id = unsafe { sys::ecs_field_id(self.iter, index) };
+        let is_pair = unsafe { sys::ecs_id_is_pair(term_id) };
+        let is_id_correct = id == term_id;
+
+        if is_id_correct || is_pair {
+            return unsafe {
+                self.field_internal_result::<T::UnderlyingType, LOCK>(index, Entity(term_id))
+            };
+        }
+
+        Err(())
     }
 
     fn field_at_checked<T: ComponentId>(
@@ -729,6 +775,47 @@ where
         self.field_checked::<T, true>(index)
     }
 
+    /// Get read access to field data.
+    /// If the matched id for the specified field does not match with the provided
+    /// type or if the field is readonly, the function will assert.
+    ///
+    /// # Safety
+    ///
+    /// Caller must ensure that the field at `index` is accessible as `T`
+    ///
+    /// This function should not be used in `each_iter()` callbacks, unless it is to
+    /// access a shared field. For access to non-shared fields in `each_iter()`, use
+    /// `field_at`.
+    ///
+    /// # Type parameters
+    ///
+    /// * `T` - The type of component to get the field data for
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The field index.
+    ///
+    /// # Returns
+    ///
+    /// Returns a column object that can be used to access the field data.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter::field`
+    pub(crate) fn field_result<T: ComponentId>(
+        &self,
+        index: i8,
+    ) -> Result<Field<T::UnderlyingType, true>, ()> {
+        ecs_assert!(
+            (self.iter.flags & sys::EcsIterCppEach == 0)
+                || unsafe { sys::ecs_field_src(self.iter, index) != 0 },
+            FlecsErrorCode::InvalidOperation,
+            "cannot .field from .each, use .field_at instead",
+        );
+
+        self.field_checked_result::<T, true>(index)
+    }
+
     pub(crate) fn field_lockless<T: ComponentId>(
         &self,
         index: i8,
@@ -787,6 +874,52 @@ where
         );
 
         self.field_checked_mut::<T>(index)
+    }
+
+    /// Get read/write access to field data.
+    /// If the matched id for the specified field does not match with the provided
+    /// type or if the field is readonly, the function will assert.
+    ///
+    /// # Safety
+    ///
+    /// Caller must ensure that the field at `index` is accessible as `T`
+    ///
+    /// This function should not be used in `each_iter()` callbacks, unless it is to
+    /// access a shared field. For access to non-shared fields in `each_iter()`, use
+    /// `field_at`.
+    ///
+    /// # Type parameters
+    ///
+    /// * `T` - The type of component to get the field data for
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The field index.
+    ///
+    /// # Returns
+    ///
+    /// Returns a column object that can be used to access the field data.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `iter::field`
+    pub fn field_mut_result<T: ComponentId>(
+        &self,
+        index: i8,
+    ) -> Result<FieldMut<T::UnderlyingType, true>, ()> {
+        ecs_assert!(
+            (self.iter.flags & sys::EcsIterCppEach == 0)
+                || unsafe { sys::ecs_field_src(self.iter, index) != 0 },
+            FlecsErrorCode::InvalidOperation,
+            "cannot .field from .each, use .field_at instead",
+        );
+        ecs_assert!(
+            !unsafe { sys::ecs_field_is_readonly(self.iter, index) },
+            FlecsErrorCode::AccessViolation,
+            "field is readonly, check if your specified query terms are set &mut"
+        );
+
+        self.field_checked_mut_result::<T>(index)
     }
 
     pub(crate) fn field_mut_lockless<T: ComponentId>(
@@ -1167,6 +1300,56 @@ where
         }
     }
 
+    unsafe fn field_internal_result<T, const LOCK: bool>(
+        &self,
+        index: i8,
+        _id: Entity,
+    ) -> Result<Field<T, LOCK>, ()> {
+        unsafe {
+            let is_shared = !self.is_self(index);
+
+            // If a shared column is retrieved with 'column', there will only be a
+            // single value. Ensure that the application does not accidentally read
+            // out of bounds.
+            let count = if is_shared {
+                1
+            } else {
+                // If column is owned, there will be as many values as there are
+                // entities.
+                self.count()
+            };
+            let array =
+                sys::ecs_field_w_size(self.iter, core::mem::size_of::<T>(), index) as *const T;
+
+            if array.is_null() {
+                return Err(());
+            }
+            let slice = core::slice::from_raw_parts(array, count);
+
+            #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+            {
+                //does not actually do any locking
+                Ok(Field::<T, LOCK>::new(slice, is_shared))
+            }
+
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            {
+                let tr = *self.iter.trs.add(index as usize);
+                let table = (*tr).hdr.table;
+                let world_ref = WorldRef::from_ptr(self.iter.world);
+                Field::<T, LOCK>::new_result(
+                    slice,
+                    is_shared,
+                    world_ref.stage_id(),
+                    (*tr).column,
+                    index,
+                    NonNull::new_unchecked(table),
+                    &world_ref,
+                )
+            }
+        }
+    }
+
     unsafe fn field_at_internal<T>(&self, index: i8, row: usize, _id: Entity) -> Option<FieldAt<T>>
     where
         T: ComponentId,
@@ -1247,6 +1430,56 @@ where
                     NonNull::new_unchecked(table),
                     &world_ref,
                 ))
+            }
+        }
+    }
+
+    unsafe fn field_internal_mut_result<T, const LOCK: bool>(
+        &self,
+        index: i8,
+        _id: Entity,
+    ) -> Result<FieldMut<T, LOCK>, ()> {
+        unsafe {
+            let is_shared = !self.is_self(index);
+
+            // If a shared column is retrieved with 'column', there will only be a
+            // single value. Ensure that the application does not accidentally read
+            // out of bounds.
+            let count = if is_shared {
+                1
+            } else {
+                // If column is owned, there will be as many values as there are
+                // entities.
+                self.count()
+            };
+            let array =
+                sys::ecs_field_w_size(self.iter, core::mem::size_of::<T>(), index) as *mut T;
+
+            if array.is_null() {
+                return Err(());
+            }
+            let slice = core::slice::from_raw_parts_mut(array, count);
+
+            #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+            {
+                Ok(FieldMut::<T>::new(slice, is_shared))
+            }
+
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            {
+                let tr = *self.iter.trs.add(index as usize);
+                let table = (*tr).hdr.table;
+                let world_ref = WorldRef::from_ptr(self.iter.world);
+                let column_index = (*tr).column;
+                FieldMut::<T, LOCK>::new_result(
+                    slice,
+                    is_shared,
+                    world_ref.stage_id(),
+                    column_index,
+                    index,
+                    NonNull::new_unchecked(table),
+                    &world_ref,
+                )
             }
         }
     }
