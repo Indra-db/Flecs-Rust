@@ -29,7 +29,6 @@ hashbrown = "0.15.2"
 dashmap = "6.1.0"
 smallvec = "1.14.0"
 foldhash = "0.1.4"
-crabtime = "1.1.3"
 
 # used for backtraces upon hardware exceptions during test
 # only used when "test-with-crash-handler" feature enabled
@@ -172,7 +171,7 @@ flecs_base = [
     "flecs_pipeline",
     "flecs_timer",
     "flecs_os_api_impl",
-    "flecs_safety_readwrite_locks",
+    #"flecs_safety_readwrite_locks",
 ]
 
 default = [

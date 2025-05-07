@@ -7,6 +7,7 @@ use crate::sys;
 
 use super::field::{FieldAt, FieldAtMut, FieldMut};
 
+/// Field fetching errors when using [`TableIter::get()`]
 pub enum FieldError {
     InvalidIndex,
     WrongType,
@@ -1155,6 +1156,7 @@ where
         Id::new(id)
     }
 
+    /// Get readonly access to entity ids of the sources.
     pub fn sources(&self) -> &[Entity] {
         unsafe {
             core::slice::from_raw_parts(
@@ -1418,7 +1420,7 @@ where
 
             #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
             {
-                Some(FieldMut::<T>::new(slice, is_shared))
+                Some(FieldMut::<T, LOCK>::new(slice, is_shared))
             }
 
             #[cfg(feature = "flecs_safety_readwrite_locks")]
@@ -1468,7 +1470,7 @@ where
 
             #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
             {
-                Ok(FieldMut::<T>::new(slice, is_shared))
+                Ok(FieldMut::<T, LOCK>::new(slice, is_shared))
             }
 
             #[cfg(feature = "flecs_safety_readwrite_locks")]

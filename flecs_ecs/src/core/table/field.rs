@@ -182,6 +182,7 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
         table_column_lock_read_end(self.table.as_ptr(), self.column_index, self.stage_id);
     }
 
+    //// Get the table id of the column.
     #[cfg(feature = "flecs_safety_readwrite_locks")]
     pub fn table_id(&self) -> u64 {
         unsafe { flecs_ecs_sys::ecs_rust_table_id(self.table.as_ptr()) }
@@ -375,6 +376,7 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
         table_column_lock_write_end(self.table.as_ptr(), self.column_index, self.stage_id);
     }
 
+    //// Get the table id of the column.
     #[cfg(feature = "flecs_safety_readwrite_locks")]
     pub fn table_id(&self) -> u64 {
         unsafe { flecs_ecs_sys::ecs_rust_table_id(self.table.as_ptr()) }
