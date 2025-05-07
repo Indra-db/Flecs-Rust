@@ -30,8 +30,6 @@ impl<'a, P: ComponentId, T: QueryTuple> ObserverBuilder<'a, P, T> {
     ///
     /// See also
     ///
-    /// * C++ API: `observer_builder::observer_builder`
-    #[doc(alias = "observer_builder::observer_builder")]
     pub(crate) fn new(world: impl WorldProvider<'a>) -> Self {
         let desc = Default::default();
         let mut obj = Self {
@@ -59,8 +57,6 @@ impl<'a, P: ComponentId, T: QueryTuple> ObserverBuilder<'a, P, T> {
     ///
     /// See also
     ///
-    /// * C++ API: `node_builder::node_builder`
-    #[doc(alias = "node_builder::node_builder")]
     pub fn new_named(world: impl WorldProvider<'a>, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
 
@@ -114,8 +110,6 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
     ///
     /// See also
     ///
-    /// * C++ API: `observer_builder::observer_builder`
-    #[doc(alias = "observer_builder::observer_builder")]
     pub(crate) fn new_from_desc(
         world: impl WorldProvider<'a>,
         desc: sys::ecs_observer_desc_t,
@@ -144,11 +138,6 @@ impl<P, T: QueryTuple> ObserverBuilder<'_, P, T> {
     /// # Arguments
     ///
     /// * `flags` - the flags to set
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::filter_flags`
-    #[doc(alias = "query_builder_i::filter_flags")]
     fn observer_flags(&mut self, flags: ObserverFlags) -> &mut Self {
         self.desc.flags_ |= flags.bits();
         self
@@ -159,11 +148,6 @@ impl<P, T: QueryTuple> ObserverBuilder<'_, P, T> {
     /// # Arguments
     ///
     /// * `event` - The event to add
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `observer_builder_i::event`
-    #[doc(alias = "observer_builder_i::event")]
     pub fn add_event_id(&mut self, event: impl Into<Entity>) -> &mut ObserverBuilder<(), T> {
         let event = *event.into();
         self.desc.events[self.event_count] = event;
@@ -177,11 +161,6 @@ impl<P, T: QueryTuple> ObserverBuilder<'_, P, T> {
     /// # Type parameters
     ///
     /// * `T` - The type of the event
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `observer_builder_i::event`
-    #[doc(alias = "observer_builder_i::event")]
     pub fn add_event<E>(&mut self) -> &mut ObserverBuilder<(), T>
     where
         E: ComponentId,
@@ -198,11 +177,6 @@ impl<P, T: QueryTuple> ObserverBuilder<'_, P, T> {
     /// # Arguments
     ///
     /// * `should_yield` - If true, the observer will be invoked for all existing entities that match its query
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `observer_builder_i::yield_existing`
-    #[doc(alias = "observer_builder_i::yield_existing")]
     pub fn yield_existing(&mut self) -> &mut Self {
         self.desc.yield_existing = true;
         self
@@ -250,8 +224,6 @@ where
     ///
     /// See also
     ///
-    /// * C++ API: `node_builder::build`
-    #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
         let observer = Observer::new(self.world(), self.desc);
         for s in self.term_builder.str_ptrs_to_free.iter_mut() {

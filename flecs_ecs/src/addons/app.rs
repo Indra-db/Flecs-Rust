@@ -23,8 +23,6 @@ impl<'a> App<'a> {
     /// # See also
     ///
     /// * [`World::app()`]
-    /// * C++ API: `app_builder::app_builder`
-    #[doc(alias = "app_builder::app_builder")]
     pub(crate) fn new(world: impl WorldProvider<'a>) -> Self {
         let mut obj = Self {
             world: world.world(),
@@ -45,11 +43,6 @@ impl<'a> App<'a> {
     /// # Arguments
     ///
     /// * `fps` - The target frames per second.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `app_builder::target_fps`
-    #[doc(alias = "app_builder::target_fps")]
     pub fn set_target_fps(&mut self, fps: FTime) -> &mut Self {
         self.desc.target_fps = fps;
         self
@@ -60,11 +53,6 @@ impl<'a> App<'a> {
     /// # Arguments
     ///
     /// * `delta_time` - The time delta.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `app_builder::delta_time`
-    #[doc(alias = "app_builder::delta_time")]
     pub fn set_delta_time(&mut self, delta_time: FTime) -> &mut Self {
         self.desc.delta_time = delta_time;
         self
@@ -75,11 +63,6 @@ impl<'a> App<'a> {
     /// # Arguments
     ///
     /// * `threads` - The number of threads.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `app_builder::threads`
-    #[doc(alias = "app_builder::threads")]
     pub fn set_threads(&mut self, threads: i32) -> &mut Self {
         self.desc.threads = threads;
         self
@@ -90,11 +73,6 @@ impl<'a> App<'a> {
     /// # Arguments
     ///
     /// * `frames` - The number of frames.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `app_builder::frames`
-    #[doc(alias = "app_builder::frames")]
     pub fn set_frames(&mut self, frames: i32) -> &mut Self {
         self.desc.frames = frames;
         self
@@ -105,12 +83,7 @@ impl<'a> App<'a> {
     /// # Arguments
     ///
     /// * `port` - The port to listen on.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `app_builder::enable_rest`
-    #[doc(alias = "app_builder::enable_rest")]
-    #[cfg(feature = "flecs_rest")]
+#[cfg(feature = "flecs_rest")]
     pub fn enable_rest(&mut self, port: u16) -> &mut Self {
         self.desc.enable_rest = true;
         self.desc.port = port;
@@ -126,8 +99,6 @@ impl<'a> App<'a> {
     /// # See also
     ///
     /// * [`addons::stats`](crate::addons::stats)
-    /// * C++ API: `app_builder::enable_stats`
-    #[doc(alias = "app_builder::enable_stats")]
     #[cfg(feature = "flecs_stats")]
     pub fn enable_stats(&mut self, enable: bool) -> &mut Self {
         self.desc.enable_stats = enable;
@@ -140,11 +111,6 @@ impl<'a> App<'a> {
     /// # Arguments
     ///
     /// * `value` - The init action.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `app_builder::init`
-    #[doc(alias = "app_builder::init")]
     pub fn init(&mut self, value: sys::ecs_app_init_action_t) -> &mut Self {
         self.desc.init = value;
         self
@@ -155,11 +121,6 @@ impl<'a> App<'a> {
     /// # Arguments
     ///
     /// * `ctx` - The context.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `app_builder::ctx`
-    #[doc(alias = "app_builder::ctx")]
     pub fn context(&mut self, ctx: *mut c_void) -> &mut Self {
         self.desc.ctx = ctx;
         self
@@ -173,11 +134,6 @@ impl<'a> App<'a> {
     /// # Returns
     ///
     /// The exit code of the application.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `app_builder::run`
-    #[doc(alias = "app_builder::run")]
     pub fn run(&mut self) -> i32 {
         let world_ptr = self.world.ptr_mut();
         let result = unsafe { sys::ecs_app_run(world_ptr, &mut self.desc) };
@@ -206,8 +162,6 @@ impl World {
     /// # See also
     ///
     /// * [`addons::app`](crate::addons::app)
-    /// * C++ API: `world::app`
-    #[doc(alias = "world::app")]
     #[inline(always)]
     pub fn app(&self) -> App {
         App::new(self)

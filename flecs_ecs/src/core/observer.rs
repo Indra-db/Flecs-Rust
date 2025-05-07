@@ -40,11 +40,6 @@ impl<'a> WorldProvider<'a> for Observer<'a> {
 
 impl<'a> Observer<'a> {
     /// Create a new observer
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `observer::observer`
-    #[doc(alias = "observer::observer")]
     pub(crate) fn new(world: impl WorldProvider<'a>, desc: sys::ecs_observer_desc_t) -> Self {
         for event in desc.events {
             if event == 0 {
@@ -106,11 +101,6 @@ impl<'a> Observer<'a> {
     }
 
     /// Set the context for the observer
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `observer::ctx`
-    #[doc(alias = "observer::ctx")]
     pub fn set_context(&mut self, context: *mut c_void) {
         let desc: sys::ecs_observer_desc_t = sys::ecs_observer_desc_t {
             entity: *self.id,
@@ -124,21 +114,11 @@ impl<'a> Observer<'a> {
     }
 
     /// Get the context for the observer
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `observer::ctx`
-    #[doc(alias = "observer::ctx")]
     pub fn context(&self) -> *mut c_void {
         unsafe { (*sys::ecs_observer_get(self.world.world_ptr_mut(), *self.id)).ctx }
     }
 
     /// Get the query for the observer
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `observer::query`
-    #[doc(alias = "observer::query")]
     pub fn query(&mut self) -> Query<()> {
         unsafe {
             Query::<()>::new_from(NonNull::new_unchecked(
@@ -148,11 +128,6 @@ impl<'a> Observer<'a> {
     }
 
     /// Get the observer's entity
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `observer::entity`
-    #[doc(alias = "observer::entity")]
     pub fn entity(&self) -> EntityView<'a> {
         self.entity
     }

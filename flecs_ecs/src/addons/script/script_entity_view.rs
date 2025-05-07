@@ -61,7 +61,6 @@ impl<'a> ScriptEntityView<'a> {
     /// # See also
     ///
     /// * C API: `ecs_script_update`
-    #[doc(alias = "ecs_script_update")]
     pub fn update(
         &self,
         world: impl WorldProvider<'a>,
@@ -89,7 +88,6 @@ impl<'a> ScriptEntityView<'a> {
     /// # See also
     ///
     /// * C API: `script_ast_to_buf`
-    #[doc(alias = "script_ast_to_buf")]
     pub fn ast(&mut self) -> Option<String> {
         let script = self.get::<&flecs::Script>(|script| script.script);
 

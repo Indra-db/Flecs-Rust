@@ -21,11 +21,6 @@ impl<'a, T: ComponentId + DataComponent> CachedRef<'a, T> {
     /// * `world`: the world.
     /// * `entity`: the entity to reference.
     /// * `id`: the id of the component to reference.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `ref::ref`
-    #[doc(alias = "ref::ref")]
     pub fn new(
         world: impl WorldProvider<'a>,
         entity: impl Into<Entity>,
@@ -71,11 +66,6 @@ impl<'a, T: ComponentId + DataComponent> CachedRef<'a, T> {
     }
 
     /// Try to get component from ref.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `ref::try_get`
-    #[doc(alias = "ref::try_get")]
     pub fn try_get<R>(&mut self, callback: impl FnOnce(&mut T) -> R) -> Option<R> {
         NonNull::new(unsafe {
             sys::ecs_ref_get_id(

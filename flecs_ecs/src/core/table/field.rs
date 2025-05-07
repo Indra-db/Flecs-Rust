@@ -24,11 +24,6 @@ impl<'a, T> Field<'a, T> {
     ///
     /// * `slice_components`: pointer to the component array.
     /// * `is_shared`: whether the component is shared.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `field::field`
-    #[doc(alias = "field::field")]
     pub fn new(slice_components: &'a mut [T], is_shared: bool) -> Self {
         Self {
             slice_components,
@@ -78,7 +73,6 @@ pub struct FieldUntyped {
 ///
 /// # See also
 ///
-/// * C++ API: `untyped_field::untyped_column`
 impl FieldUntyped {
     pub(crate) fn new(array: *mut c_void, size: usize, count: usize, is_shared: bool) -> Self {
         Self {

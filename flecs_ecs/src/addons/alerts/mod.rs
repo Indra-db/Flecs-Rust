@@ -49,11 +49,6 @@ impl<'a> Alert<'a> {
     ///
     /// * `world` - The world to create the alert in.
     /// * `desc` - The alert description.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `alert::alert`
-    #[doc(alias = "alert::alert")]
     pub fn new(world: impl WorldProvider<'a>, desc: sys::ecs_alert_desc_t) -> Self {
         let id = unsafe { sys::ecs_alert_init(world.world_ptr_mut(), &desc) };
         let entity = EntityView::new_from(world.world(), id);
@@ -67,11 +62,6 @@ impl<'a> Alert<'a> {
     ///
     /// * `world` - The world the alert is in.
     /// * `alert_entity` - The entity of the alert.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `alert::alert`
-    #[doc(alias = "alert::alert")]
     pub fn new_from_existing(alert_entity: EntityView<'a>) -> Self {
         Self {
             entity: alert_entity,
@@ -87,11 +77,6 @@ impl World {
     ///
     /// # Arguments
     /// * `entity` - An `EntityView` that represents a alert within the world.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::alert`
-    #[doc(alias = "world::alert")]
     pub fn alert_from<'a>(&'a self, entity: EntityView<'a>) -> Alert<'a> {
         Alert::new_from_existing(entity)
     }
@@ -107,8 +92,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::alert_named()`]
-    /// * C++ API: `world::alert_builder`
-    #[doc(alias = "world::alert_builder")]
     pub fn alert<Components>(&self) -> AlertBuilder<Components>
     where
         Components: QueryTuple,
@@ -130,8 +113,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::alert()`]
-    /// * C++ API: `world::alert_builder`
-    #[doc(alias = "world::alert_builder")]
     pub fn alert_named<'a, Components>(&'a self, name: &str) -> AlertBuilder<'a, Components>
     where
         Components: QueryTuple,
@@ -149,11 +130,6 @@ impl World {
     ///
     /// # Type Parameters
     /// - `Components`: The components to match on. Must implement the `QueryTuple` trait.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::alert_builder`
-    #[doc(alias = "world::alert_builder")]
     pub fn alert_builder_from_desc<Components>(
         &self,
         desc: sys::ecs_alert_desc_t,
@@ -183,11 +159,6 @@ impl EntityView<'_> {
     /// # Arguments
     ///
     /// * `alert` - The alert to count. If 0, counts all alerts.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::alert_count`
-    #[doc(alias = "entity_view::alert_count")]
     pub fn alert_count(&self, alert: impl Into<Entity>) -> i32 {
         unsafe { sys::ecs_get_alert_count(self.world_ptr(), *self.id(), *alert.into()) }
     }

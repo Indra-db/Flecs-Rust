@@ -38,11 +38,6 @@ impl<'a> UntypedComponent<'a> {
     ///
     /// * `world`: the world.
     /// * `id`: the id of the component to reference.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `untyped_component::untyped_component`
-    #[doc(alias = "untyped_component::untyped_component")]
     pub(crate) fn new(world: impl WorldProvider<'a>) -> Self {
         UntypedComponent {
             entity: EntityView::new(world),
@@ -55,11 +50,6 @@ impl<'a> UntypedComponent<'a> {
     ///
     /// * `world`: the world.
     /// * `id`: the id of the component to reference.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `untyped_component::untyped_component`
-    #[doc(alias = "untyped_component::untyped_component")]
     pub(crate) fn new_named(world: impl WorldProvider<'a>, name: &str) -> Self {
         UntypedComponent {
             entity: EntityView::new_named(world, name),
@@ -72,11 +62,6 @@ impl<'a> UntypedComponent<'a> {
     ///
     /// * `world`: the world.
     /// * `id`: the id of the component to reference.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `untyped_component::untyped_component`
-    #[doc(alias = "untyped_component::untyped_component")]
     pub(crate) fn new_from(world: impl WorldProvider<'a>, id: impl Into<Entity>) -> Self {
         UntypedComponent {
             entity: EntityView::new_from(world, id),
@@ -84,11 +69,6 @@ impl<'a> UntypedComponent<'a> {
     }
 
     /// Get the id of the component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `untyped_component::entity`
-    #[doc(alias = "untyped_component::entity")]
     pub fn as_entity(&self) -> EntityView<'a> {
         self.entity
     }

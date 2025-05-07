@@ -21,11 +21,9 @@ use alloc::{string::String, vec::Vec};
 ///
 /// * [`EntityView::archetype()`]
 /// * [`Table::archetype()`]
-/// * C++ API: `type`
 ///
 /// [entities]: EntityView::archetype
 /// [tables]: Table::archetype
-#[doc(alias = "type")]
 pub struct Archetype<'a> {
     world: WorldRef<'a>,
     type_vec: &'a [Id],
@@ -78,11 +76,6 @@ impl<'a> Archetype<'a> {
     /// # Returns
     ///
     /// `Some(String)` - if the type is not null. `None` - if the type is null.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `Type::str()`
-    #[doc(alias = "Type::str()")]
     pub fn to_string(&self) -> Option<String> {
         NonNull::new(unsafe {
             sys::ecs_type_str(
@@ -102,11 +95,6 @@ impl<'a> Archetype<'a> {
     }
 
     /// Return the number of elements in the type.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `Type::count()`
-    #[doc(alias = "Type::count()")]
     pub fn count(&self) -> usize {
         self.type_vec.len()
     }
@@ -124,11 +112,6 @@ impl<'a> Archetype<'a> {
     /// while the slice is in use and the elements are valid [`Id`] instances. The caller must ensure
     /// that the `EcsType` instance (or the underlying `type_vec` data it points to) lives at least as
     /// long as the returned slice to avoid dangling references.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `type::array()`
-    #[doc(alias = "type::array()")]
     pub fn as_slice(&self) -> &[Id] {
         self.type_vec
     }
@@ -144,10 +127,8 @@ impl<'a> Archetype<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `type::get`
     ///
     /// [`Some(IdView)`]: IdView
-    #[doc(alias = "type::get")]
     pub fn get(&self, index: usize) -> Option<IdView> {
         if index < self.count() {
             Some(IdView::new_from_id(self.world, self.type_vec[index]))

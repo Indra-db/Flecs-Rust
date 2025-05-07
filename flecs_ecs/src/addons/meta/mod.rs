@@ -38,11 +38,6 @@ impl World {
     /// # Returns
     ///
     /// The found or registered component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::component`
-    #[doc(alias = "world::component")]
     pub fn component_ext<T>(&self, id: FetchedId<T>) -> Component<T> {
         Component::<T>::new_id(self, id)
     }
@@ -60,20 +55,11 @@ impl World {
     /// # Returns
     ///
     /// The found or registered component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::component`
-    #[doc(alias = "world::component")]
     pub fn component_named_ext<'a, T>(&'a self, id: FetchedId<T>, name: &str) -> Component<'a, T> {
         Component::<T>::new_named_id(self, id, name)
     }
 
     /// Return meta cursor to value
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::cursor`
     pub fn cursor_id(&self, type_id: impl Into<Entity>, ptr: *mut c_void) -> Cursor {
         if ptr.is_null() {
             panic!("ptr is null");
@@ -83,20 +69,12 @@ impl World {
     }
 
     /// Return meta cursor to value
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::cursor`
     pub fn cursor<T: ComponentId>(&self, data: &mut T) -> Cursor {
         let type_id = T::get_id(self.world());
         Cursor::new(self, type_id, data as *mut T as *mut c_void)
     }
 
     /// Create primitive type
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::primitive`
     pub fn primitive(&self, kind: EcsPrimitiveKind) -> EntityView {
         let desc = sys::ecs_primitive_desc_t {
             kind: kind as sys::ecs_primitive_kind_t,
@@ -113,10 +91,6 @@ impl World {
     }
 
     /// Create array type
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::array`
     pub fn array_id(&self, elem_id: impl Into<Entity>, array_count: i32) -> EntityView {
         let desc = sys::ecs_array_desc_t {
             type_: *elem_id.into(),
@@ -134,19 +108,11 @@ impl World {
     }
 
     /// Create array type
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::array`
     pub fn array<T: ComponentId>(&self, array_count: i32) -> EntityView {
         self.array_id(T::get_id(self.world()), array_count)
     }
 
     /// Create vector type
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::vector`
     pub fn vector_id(&self, elem_id: impl Into<Entity>) -> EntityView {
         let elem_id: u64 = *elem_id.into();
         let name_elem = unsafe { sys::ecs_get_name(self.world_ptr(), elem_id) };
@@ -185,10 +151,6 @@ impl World {
     }
 
     /// Create vector type
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::vector`
     pub fn vector<T: 'static>(&self) -> EntityView {
         let id = self.component_id_map::<T>();
         self.vector_id(id)
@@ -232,8 +194,6 @@ impl EcsSerializer for sys::ecs_serializer_t {
 impl<'a, T: 'static> Component<'a, T> {
     /// # See also
     ///
-    /// * C++ API: `component::opaque`
-    #[doc(alias = "component::opaque")]
     pub fn opaque_func<Func>(&self, func: Func) -> &Self
     where
         Func: FnOnce(WorldRef<'a>) -> Opaque<'a, T>,
@@ -246,8 +206,6 @@ impl<'a, T: 'static> Component<'a, T> {
 
     /// # See also
     ///
-    /// * C++ API: `component::opaque`
-    #[doc(alias = "component::opaque")]
     pub fn opaque_func_id<Func, Elem>(&self, id: impl Into<Entity>, func: Func) -> &Self
     where
         Func: FnOnce(WorldRef<'a>) -> Opaque<'a, T, Elem>,
@@ -260,8 +218,6 @@ impl<'a, T: 'static> Component<'a, T> {
 
     /// # See also
     ///
-    /// * C++ API: `component::opaque`
-    #[doc(alias = "component::opaque")]
     pub fn opaque<Type: 'static>(&self) -> Opaque<'a, T> {
         let id = self.world().component_id_map::<Type>();
         let mut opaque = Opaque::<T>::new(self.world());
@@ -271,8 +227,6 @@ impl<'a, T: 'static> Component<'a, T> {
 
     /// # See also
     ///
-    /// * C++ API: `component::opaque`
-    #[doc(alias = "component::opaque")]
     pub fn opaque_id(&self, id: impl Into<Entity>) -> Opaque<'a, T> {
         let id = id.into();
         let mut opaque = Opaque::<T>::new(self.world());
@@ -282,8 +236,6 @@ impl<'a, T: 'static> Component<'a, T> {
 
     /// # See also
     ///
-    /// * C++ API: `component::opaque`
-    #[doc(alias = "component::opaque")]
     pub fn opaque_dyn_id<E>(&self, id_type: E, id_field: E) -> Opaque<'a, T>
     where
         E: Into<Entity> + Copy,
@@ -308,10 +260,6 @@ impl<'a, T: 'static> Component<'a, T> {
     ///     .component::<SerVec>()
     ///     .opaque_collection_vector::<i32>();
     /// ```
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `component::opaque`
     pub fn opaque_collection_vector<ElemType: 'static>(&self) -> Opaque<'a, T, ElemType> {
         let world = self.world();
         let mut opaque = Opaque::<T, ElemType>::new(self.world());
@@ -335,10 +283,6 @@ impl<'a, T: 'static> Component<'a, T> {
     ///     .component::<SerVec>()
     ///     .opaque_collection_dyn::<i32>(world.vector::<i32>());
     /// ```
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `component::opaque`
     pub fn opaque_collection_dyn<ElemType>(
         &self,
         id: impl Into<Entity>,
@@ -353,10 +297,6 @@ impl<'a, T: 'static> Component<'a, T> {
 
 impl<T: EnumComponentInfo + 'static> Component<'_, T> {
     /// Add constant.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `component::constant`
     pub fn constant(&self, name: &str, id: impl Into<Entity>, value: T) -> &Self {
         unsafe { sys::ecs_add_id(self.world_ptr_mut(), *self.id, flecs::meta::EcsEnum::ID) };
 
@@ -389,10 +329,6 @@ impl<T: EnumComponentInfo + 'static> Component<'_, T> {
 
 impl UntypedComponent<'_> {
     /// Add constant.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `untyped_component::constant`
     pub fn constant(&self, name: &str, value: impl Into<i32>) -> &Self {
         let name = compact_str::format_compact!("{}\0", name);
         let value: i32 = value.into();
@@ -431,10 +367,6 @@ impl UntypedComponent<'_> {
     /// (name : &'static str,),
     /// (name: &'static str, count: i32),
     /// (name: &'static str, count: i32, offset: i32)
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `untyped_component::member`
     pub fn member_id_unit<Meta: MetaMember>(
         self,
         type_id: impl Into<Entity>,
@@ -479,10 +411,6 @@ impl UntypedComponent<'_> {
     /// (name : &'static str,),
     /// (name: &'static str, count: i32),
     /// (name: &'static str, count: i32, offset: i32)
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `untyped_component::member`
     pub fn member_id(self, type_id: impl Into<Entity>, data: impl MetaMember) -> Self {
         self.member_id_unit(type_id, 0, data)
     }
@@ -493,10 +421,6 @@ impl UntypedComponent<'_> {
     /// (name : &'static str,),
     /// (name: &'static str, count: i32),
     /// (name: &'static str, count: i32, offset: i32)
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `untyped_component::member`
     pub fn member<T: ComponentId>(self, data: impl MetaMember) -> Self {
         self.member_id(T::get_id(self.world()), data)
     }
@@ -507,10 +431,6 @@ impl UntypedComponent<'_> {
     /// (name : &'static str,),
     /// (name: &'static str, count: i32),
     /// (name: &'static str, count: i32, offset: i32)
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `untyped_component::member`
     pub fn member_unit<T: ComponentId>(
         self,
         unit: impl Into<Entity>,
@@ -525,10 +445,6 @@ impl UntypedComponent<'_> {
     /// (name : &'static str,),
     /// (name: &'static str, count: i32),
     /// (name: &'static str, count: i32, offset: i32)
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `untyped_component::member`
     pub fn member_unit_type<T: ComponentId, U: ComponentId>(self, data: impl MetaMember) -> Self {
         self.member_id_unit(T::get_id(self.world()), U::get_id(self.world()), data)
     }
@@ -562,10 +478,6 @@ impl UntypedComponent<'_> {
              */
 
     /// Add bitmask constant
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `untyped_component::bit`
     pub fn bit(self, name: &str, value: u32) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
         let world = self.world_ptr_mut();
@@ -600,10 +512,6 @@ impl UntypedComponent<'_> {
     }
 
     /// register array metadata for component
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `untyped_component::array`
     pub fn array<ElemType: ComponentId>(self, elem_count: i32) -> Self {
         let desc = sys::ecs_array_desc_t {
             entity: *self.id,
@@ -616,10 +524,6 @@ impl UntypedComponent<'_> {
     }
 
     /// add member value range
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `untyped_component::range`
     pub fn range(self, min: f64, max: f64) -> Self {
         let m = unsafe { sys::ecs_cpp_last_member(self.world_ptr(), *self.id) };
         if m.is_null() {
@@ -642,10 +546,6 @@ impl UntypedComponent<'_> {
     }
 
     /// add member warning range
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `untyped_component::warning_range`
     pub fn warning_range(self, min: f64, max: f64) -> Self {
         let m = unsafe { sys::ecs_cpp_last_member(self.world_ptr(), *self.id) };
         if m.is_null() {
@@ -668,10 +568,6 @@ impl UntypedComponent<'_> {
     }
 
     /// add member error range
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `untyped_component::error_range`
     pub fn error_range(self, min: f64, max: f64) -> Self {
         let m = unsafe { sys::ecs_cpp_last_member(self.world_ptr(), *self.id) };
         if m.is_null() {
@@ -710,11 +606,6 @@ pub fn flecs_entity_support<'a>(world: impl WorldProvider<'a>) -> Opaque<'a, Ent
 
 impl EntityView<'_> {
     /// Make entity a unit
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::unit`
-    #[doc(alias = "entity_builder::unit")]
     pub fn unit(
         &self,
         symbol: Option<&str>,
@@ -755,11 +646,6 @@ impl EntityView<'_> {
     }
 
     /// Make entity an unit prefix
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::unit_prefix`
-    #[doc(alias = "entity_builder::unit_prefix")]
     pub fn unit_prefix(&self, symbol: &str, factor: i32, power: i32) -> &Self {
         let symbol = compact_str::format_compact!("{}\0", symbol);
         let desc = sys::ecs_unit_prefix_desc_t {
@@ -774,10 +660,6 @@ impl EntityView<'_> {
     }
 
     /// Add quantity to unit
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::quantity`
     pub fn quantity_id(&self, quantity: impl Into<Entity>) -> &Self {
         unsafe {
             sys::ecs_add_id(
@@ -790,21 +672,11 @@ impl EntityView<'_> {
     }
 
     /// Add quantity to unit
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::quantity`
-    #[doc(alias = "entity_builder::quantity")]
     pub fn quantity<T: ComponentId>(&self) -> &Self {
         self.quantity_id(T::get_id(self.world()))
     }
 
     /// Make entity a quantity
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::quantity`
-    #[doc(alias = "entity_builder::quantity")]
     pub fn quantity_self(&self) -> &Self {
         unsafe { sys::ecs_add_id(self.world_ptr_mut(), *self.id, flecs::meta::Quantity::ID) };
         self

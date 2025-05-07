@@ -103,8 +103,6 @@ impl World {
     /// # See also
     ///
     /// * [`UntypedComponent::metric()`]
-    /// * C++ API: `world::metric`
-    #[doc(alias = "world::metric")]
     pub fn metric(&self, entity: impl Into<Entity>) -> MetricBuilder {
         MetricBuilder::new(self, entity.into())
     }

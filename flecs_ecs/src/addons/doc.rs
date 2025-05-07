@@ -43,7 +43,6 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     /// # See also
     ///
     /// * [`World::doc_name()`]
-    /// * C++ API: `doc::get_name()`
     fn doc_name(&self) -> Option<String> {
         self.world().doc_name_id(self.clone())
     }
@@ -57,7 +56,6 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     /// # See also
     ///
     /// * [`World::doc_brief()`]
-    /// * C++ API: `doc::get_brief()`
     fn doc_brief(&self) -> Option<String> {
         self.world().doc_brief_id(self.clone())
     }
@@ -71,7 +69,6 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     /// # See also
     ///
     /// * [`World::doc_detail()`]
-    /// * C++ API: `doc::get_detail()`
     fn doc_detail(&self) -> Option<String> {
         self.world().doc_detail_id(self.clone())
     }
@@ -85,7 +82,6 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     /// # See also
     ///
     /// * [`World::doc_link()`]
-    /// * C++ API: `doc::get_link()`
     fn doc_link(&self) -> Option<String> {
         self.world().doc_link_id(self.clone())
     }
@@ -99,7 +95,6 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     /// # See also
     ///
     /// * [`World::doc_color()`]
-    /// * C++ API: `doc::get_color()`
     fn doc_color(&self) -> Option<String> {
         self.world().doc_color_id(self.clone())
     }
@@ -117,7 +112,6 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     /// * [`Doc::set_doc_uuid()`]
     /// * [`World::set_doc_uuid_id()`]
     /// * [`World::set_doc_uuid()`]
-    /// * C++ API: `doc::get_uuid()`
     fn doc_uuid(&self) -> Option<String> {
         self.world().doc_uuid_id(self.clone())
     }
@@ -137,7 +131,6 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     ///
     /// * [`World::set_doc_name()`]
     /// * [`World::set_doc_name_id()`]
-    /// * C++ API: `doc::set_name()`
     fn set_doc_name(&self, name: &str) -> &Self {
         self.world().set_doc_name_id(self.clone(), name);
         self
@@ -153,7 +146,6 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     ///
     /// * [`World::set_doc_brief()`]
     /// * [`World::set_doc_brief_id()`]
-    /// * C++ API: `doc::set_brief()`
     fn set_doc_brief(&self, brief: &str) -> &Self {
         self.world().set_doc_brief_id(self.clone(), brief);
         self
@@ -169,7 +161,6 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     ///
     /// * [`World::set_doc_detail()`]
     /// * [`World::set_doc_detail_id()`]
-    /// * C++ API: `doc::set_detail()`
     fn set_doc_detail(&self, detail: &str) -> &Self {
         self.world().set_doc_detail_id(self.clone(), detail);
         self
@@ -185,7 +176,6 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     ///
     /// * [`World::set_doc_link()`]
     /// * [`World::set_doc_link_id()`]
-    /// * C++ API: `doc::set_link()`
     fn set_doc_link(&self, link: &str) -> &Self {
         self.world().set_doc_link_id(self.clone(), link);
         self
@@ -204,7 +194,6 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     ///
     /// * [`World::set_doc_color()`]
     /// * [`World::set_doc_color_id()`]
-    /// * C++ API: `doc::set_color()`
     fn set_doc_color(&self, color: &str) -> &Self {
         self.world().set_doc_color_id(self.clone(), color);
         self
@@ -223,8 +212,6 @@ pub trait Doc<'a>: WorldProvider<'a> + Into<Entity> + Clone {
     /// * [`World::doc_uuid()`]
     /// * [`World::doc_uuid_id()`]
     /// * [`Doc::doc_uuid()`]
-    /// * C++ API: `entity_builder::set_doc_uuid`
-    #[doc(alias = "entity_builder::set_doc_uuid")]
     fn set_doc_uuid(&self, uuid: &str) -> &Self {
         self.world().set_doc_uuid_id(self.clone(), uuid);
         self
@@ -261,8 +248,6 @@ impl World {
     ///
     /// * [`Doc::doc_name()`]
     /// * [`World::doc_name_id()`]
-    /// * C++ API: `doc::get_name()`
-    #[doc(alias = "doc::get_name")]
     #[inline(always)]
     pub fn doc_name<T: ComponentId>(&self) -> Option<String> {
         self.doc_name_id(T::get_id(self))
@@ -282,8 +267,6 @@ impl World {
     ///
     /// * [`Doc::doc_name()`]
     /// * [`World::doc_name()`]
-    /// * C++ API: `world::get_doc_name()`
-    #[doc(alias = "doc::get_name")]
     #[inline(always)]
     pub fn doc_name_id(&self, entity: impl Into<Entity>) -> Option<String> {
         let cstr = NonNull::new(
@@ -307,8 +290,6 @@ impl World {
     ///
     /// * [`Doc::doc_brief()`]
     /// * [`World::doc_brief_id()`]
-    /// * C++ API: `doc::get_brief()`
-    #[doc(alias = "doc::get_brief")]
     #[inline(always)]
     pub fn doc_brief<T: ComponentId>(&self) -> Option<String> {
         self.doc_brief_id(T::get_id(self))
@@ -328,8 +309,6 @@ impl World {
     ///
     /// * [`Doc::doc_brief()`]
     /// * [`World::doc_brief()`]
-    /// * C++ API: `doc::get_brief`
-    #[doc(alias = "doc::get_brief")]
     #[inline(always)]
     pub fn doc_brief_id(&self, entity: impl Into<Entity>) -> Option<String> {
         let cstr = NonNull::new(
@@ -352,8 +331,6 @@ impl World {
     ///
     /// * [`Doc::doc_detail()`]
     /// * [`World::doc_detail_id()`]
-    /// * C++ API: `doc::get_detail()`
-    #[doc(alias = "doc::get_detail")]
     #[inline(always)]
     pub fn doc_detail<T: ComponentId>(&self) -> Option<String> {
         self.doc_detail_id(T::get_id(self))
@@ -373,8 +350,6 @@ impl World {
     ///
     /// * [`Doc::doc_detail()`]
     /// * [`World::doc_detail()`]
-    /// * C++ API: `doc::get_detail`
-    #[doc(alias = "doc::get_detail")]
     #[inline(always)]
     pub fn doc_detail_id(&self, entity: impl Into<Entity>) -> Option<String> {
         let cstr = NonNull::new(
@@ -398,8 +373,6 @@ impl World {
     ///
     /// * [`Doc::doc_link()`]
     /// * [`World::doc_link_id()`]
-    /// * C++ API: `doc::get_link()`
-    #[doc(alias = "doc::get_link")]
     #[inline(always)]
     pub fn doc_link<T: ComponentId>(&self) -> Option<String> {
         self.doc_link_id(T::get_id(self))
@@ -418,8 +391,6 @@ impl World {
     ///
     /// * [`Doc::doc_link()`]
     /// * [`World::doc_link()`]
-    /// * C++ API: `doc::get_link`
-    #[doc(alias = "doc::get_link")]
     #[inline(always)]
     pub fn doc_link_id(&self, entity: impl Into<Entity>) -> Option<String> {
         let cstr = NonNull::new(
@@ -442,8 +413,6 @@ impl World {
     ///
     /// * [`Doc::doc_color()`]
     /// * [`World::doc_color_id()`]
-    /// * C++ API: `doc::get_color()`
-    #[doc(alias = "doc::get_color")]
     #[inline(always)]
     pub fn doc_color<T: ComponentId>(&self) -> Option<String> {
         self.doc_color_id(T::get_id(self))
@@ -462,8 +431,6 @@ impl World {
     ///
     /// * [`Doc::doc_color()`]
     /// * [`World::doc_color()`]
-    /// * C++ API: `doc::get_color`
-    #[doc(alias = "doc::get_color")]
     #[inline(always)]
     pub fn doc_color_id(&self, entity: impl Into<Entity>) -> Option<String> {
         let cstr = NonNull::new(
@@ -481,8 +448,6 @@ impl World {
     /// * [`Doc::doc_uuid()`]
     /// * [`World::set_doc_uuid_id()`]
     /// * [`Doc::set_doc_uuid()`]
-    /// * C++ API: `doc::get_uuid`
-    #[doc(alias = "doc::get_uuid")]
     pub fn doc_uuid_id(&self, entity: impl Into<Entity>) -> Option<String> {
         let cstr = NonNull::new(
             unsafe { sys::ecs_doc_get_uuid(self.world_ptr(), *entity.into()) } as *mut _,
@@ -503,8 +468,6 @@ impl World {
     /// * [`Doc::doc_uuid()`]
     /// * [`World::set_doc_uuid_id()`]
     /// * [`Doc::set_doc_uuid()`]
-    /// * C++ API: `doc::get_uuid`
-    #[doc(alias = "doc::get_uuid")]
     pub fn doc_uuid<T: ComponentId>(&self) -> Option<String> {
         self.doc_uuid_id(T::get_id(self))
     }
@@ -528,8 +491,6 @@ impl World {
     ///
     /// * [`Doc::set_doc_name()`]
     /// * [`World::set_doc_name_id()`]
-    /// * C++ API: `doc::get_name()`
-    #[doc(alias = "world::set_doc_name")]
     #[inline(always)]
     pub fn set_doc_name<T: ComponentId>(&self, name: &str) {
         self.set_doc_name_id(T::get_id(self), name);
@@ -549,8 +510,6 @@ impl World {
     ///
     /// * [`Doc::set_doc_name()`]
     /// * [`World::set_doc_name()`]
-    /// * C++ API: `world::set_doc_name()`
-    #[doc(alias = "world::set_doc_name")]
     #[inline(always)]
     pub fn set_doc_name_id(&self, entity: impl Into<Entity>, name: &str) {
         let name = compact_str::format_compact!("{}\0", name);
@@ -571,8 +530,6 @@ impl World {
     ///
     /// * [`Doc::set_doc_brief()`]
     /// * [`World::set_doc_brief_id()`]
-    /// * C++ API: `world::set_doc_brief()`
-    #[doc(alias = "world::set_doc_brief")]
     #[inline(always)]
     pub fn set_doc_brief<T: ComponentId>(&self, brief: &str) {
         self.set_doc_brief_id(T::get_id(self), brief);
@@ -589,8 +546,6 @@ impl World {
     ///
     /// * [`Doc::set_doc_brief()`]
     /// * [`World::set_doc_brief()`]
-    /// * C++ API: `world::set_doc_brief()`
-    #[doc(alias = "world::set_doc_brief")]
     #[inline(always)]
     pub fn set_doc_brief_id(&self, entity: impl Into<Entity>, brief: &str) {
         let brief = compact_str::format_compact!("{}\0", brief);
@@ -613,8 +568,6 @@ impl World {
     ///
     /// * [`Doc::set_doc_detail()`]
     /// * [`World::set_doc_detail_id()`]
-    /// * C++ API: `world::set_doc_detail()`
-    #[doc(alias = "world::set_doc_detail")]
     #[inline(always)]
     pub fn set_doc_detail<T: ComponentId>(&self, detail: &str) {
         self.set_doc_detail_id(T::get_id(self), detail);
@@ -631,8 +584,6 @@ impl World {
     ///
     /// * [`Doc::set_doc_detail()`]
     /// * [`World::set_doc_detail()`]
-    /// * C++ API: `world::set_doc_detail()`
-    #[doc(alias = "world::set_doc_detail")]
     #[inline(always)]
     pub fn set_doc_detail_id(&self, entity: impl Into<Entity>, detail: &str) {
         let detail = compact_str::format_compact!("{}\0", detail);
@@ -655,8 +606,6 @@ impl World {
     ///
     /// * [`Doc::set_doc_link()`]
     /// * [`World::set_doc_link_id()`]
-    /// * C++ API: `world::set_doc_link()`
-    #[doc(alias = "world::set_doc_link")]
     #[inline(always)]
     pub fn set_doc_link<T: ComponentId>(&self, link: &str) {
         self.set_doc_link_id(T::get_id(self), link);
@@ -673,8 +622,6 @@ impl World {
     ///
     /// * [`Doc::set_doc_link()`]
     /// * [`World::set_doc_link()`]
-    /// * C++ API: `world::set_doc_link()`
-    #[doc(alias = "world::set_doc_link")]
     #[inline(always)]
     pub fn set_doc_link_id(&self, entity: impl Into<Entity>, link: &str) {
         let link = compact_str::format_compact!("{}\0", link);
@@ -697,8 +644,6 @@ impl World {
     ///
     /// * [`Doc::set_doc_color()`]
     /// * [`World::set_doc_color_id()`]
-    /// * C++ API: `world::set_doc_color()`
-    #[doc(alias = "world::set_doc_color")]
     #[inline(always)]
     pub fn set_doc_color<T: ComponentId>(&self, color: &str) {
         self.set_doc_color_id(T::get_id(self), color);
@@ -717,8 +662,6 @@ impl World {
     ///
     /// * [`Doc::set_doc_color()`]
     /// * [`World::set_doc_color()`]
-    /// * C++ API: `world::set_doc_color()`
-    #[doc(alias = "world::set_doc_color")]
     #[inline(always)]
     pub fn set_doc_color_id(&self, entity: impl Into<Entity>, color: &str) {
         let color = compact_str::format_compact!("{}\0", color);
@@ -742,8 +685,6 @@ impl World {
     /// * [`World::doc_uuid()`]
     /// * [`World::doc_uuid_id()`]
     /// * [`Doc::doc_uuid()`]
-    /// * C++ API: `entity_builder::set_doc_uuid`
-    #[doc(alias = "entity_builder::set_doc_uuid")]
     pub fn set_doc_uuid_id(&self, entity: impl Into<Entity>, uuid: &str) {
         let uuid = compact_str::format_compact!("{}\0", uuid);
         unsafe {
@@ -769,8 +710,6 @@ impl World {
     /// * [`World::doc_uuid()`]
     /// * [`World::doc_uuid_id()`]
     /// * [`Doc::doc_uuid()`]
-    /// * C++ API: `entity_builder::set_doc_uuid`
-    #[doc(alias = "entity_builder::set_doc_uuid")]
     pub fn set_doc_uuid<T: ComponentId>(&self, uuid: &str) {
         self.set_doc_uuid_id(T::get_id(self), uuid);
     }

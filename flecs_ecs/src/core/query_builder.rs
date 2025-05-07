@@ -83,8 +83,6 @@ where
     ///
     /// See also
     ///
-    /// * C++ API: `builder::builder`
-    #[doc(alias = "builder::builder")]
     pub fn new(world: &'a World) -> Self {
         let mut obj = Self {
             desc: Default::default(),
@@ -107,8 +105,6 @@ where
     ///
     /// See also
     ///
-    /// * C++ API: `query_builder::query_builder`
-    #[doc(alias = "query_builder::query_builder")]
     pub fn new_named(world: &'a World, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
 
@@ -143,8 +139,6 @@ where
     ///
     /// See also
     ///
-    /// * C++ API: `query_builder_i::query_builder_i`
-    #[doc(alias = "query_builder_i::query_builder_i")]
     pub(crate) fn new_from_desc(
         world: impl WorldProvider<'a>,
         desc: &mut sys::ecs_query_desc_t,
@@ -169,8 +163,6 @@ where
     ///
     /// See also
     ///
-    /// * C++ API: `query_builder_i::query_builder_i`
-    #[doc(alias = "query_builder_i::query_builder_i")]
     pub(crate) fn new_from_desc_term_index(
         world: &'a World,
         desc: &mut sys::ecs_query_desc_t,
@@ -247,12 +239,7 @@ where
     /// # Example
     ///
     /// * how to return a query / query builder from a function see example in [`QueryBuilder`]
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `node_builder::build`
-    #[doc(alias = "node_builder::build")]
-    fn build(&mut self) -> Self::BuiltType {
+fn build(&mut self) -> Self::BuiltType {
         let world = self.world;
         let query = Query::<T>::new_from_desc(world, &mut self.desc);
         for s in self.term_builder.str_ptrs_to_free.iter_mut() {
@@ -298,12 +285,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// # Arguments
     ///
     /// * `flags` - the flags to set
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::filter_flags`
-    #[doc(alias = "query_builder_i::filter_flags")]
-    fn query_flags(&mut self, flags: QueryFlags) -> &mut Self {
+fn query_flags(&mut self, flags: QueryFlags) -> &mut Self {
         self.query_desc_mut().flags |= flags.bits();
         self
     }
@@ -313,23 +295,13 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// # Arguments
     ///
     /// * `kind` - the cache kind to set
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::cache_kind`
-    #[doc(alias = "query_builder_i::cache_kind")]
-    fn set_cache_kind(&mut self, kind: QueryCacheKind) -> &mut Self {
+fn set_cache_kind(&mut self, kind: QueryCacheKind) -> &mut Self {
         self.query_desc_mut().cache_kind = kind as sys::ecs_query_cache_kind_t;
         self
     }
 
     /// Set the cache method to cached
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::cached`
-    #[doc(alias = "query_builder_i::cached")]
-    fn set_cached(&mut self) -> &mut Self {
+fn set_cached(&mut self) -> &mut Self {
         self.set_cache_kind(QueryCacheKind::Auto)
     }
 
@@ -338,12 +310,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// # Arguments
     ///
     /// * `expr` - the expression to set
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::expr`
-    #[doc(alias = "query_builder_i::expr")]
-    fn expr(&mut self, expr: &'a str) -> &mut Self {
+fn expr(&mut self, expr: &'a str) -> &mut Self {
         let expr = ManuallyDrop::new(format!("{}\0", expr));
         ecs_assert!(
             *self.expr_count_mut() == 0,
@@ -358,12 +325,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// set term with Id
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::with`
-    #[doc(alias = "query_builder_i::with")]
-    fn with_id(&mut self, id: impl IntoId) -> &mut Self {
+fn with_id(&mut self, id: impl IntoId) -> &mut Self {
         self.term();
         self.init_current_term(id);
         self
@@ -400,12 +362,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///     .with::<&mut Mass>() //equivalent to .with::<Mass>().set_inout()
     ///     .build();
     /// ```
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::with`
-    #[doc(alias = "query_builder_i::with")]
-    fn with<T: ComponentOrPairId>(&mut self) -> &mut Self {
+fn with<T: ComponentOrPairId>(&mut self) -> &mut Self {
         if <T as ComponentOrPairId>::IS_PAIR {
             self.with_id(<T as ComponentOrPairId>::get_id(self.world()));
         } else {
@@ -423,12 +380,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// set term with enum
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::with`
-    #[doc(alias = "query_builder_i::with")]
-    fn with_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
+fn with_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &mut self,
         value: T,
     ) -> &mut Self {
@@ -438,74 +390,39 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// set term with enum wildcard
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::with`
-    #[doc(alias = "query_builder_i::with")]
-    fn with_enum_wildcard<T: ComponentType<Enum> + ComponentId>(&mut self) -> &mut Self {
+fn with_enum_wildcard<T: ComponentType<Enum> + ComponentId>(&mut self) -> &mut Self {
         self.with_first::<T>(flecs::Wildcard::ID)
     }
 
     /// set term with pairs
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::with`
-    #[doc(alias = "query_builder_i::with")]
-    fn with_first<First: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
+fn with_first<First: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
         self.with_id((First::id(self.world()), second))
     }
 
     /// set term with pairs
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::with`
-    #[doc(alias = "query_builder_i::with")]
-    fn with_first_name<First: ComponentId>(&mut self, second: &'a str) -> &mut Self {
+fn with_first_name<First: ComponentId>(&mut self, second: &'a str) -> &mut Self {
         self.with_first_id(First::id(self.world()), second)
     }
 
     /// set term with pairs
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::with`
-    #[doc(alias = "query_builder_i::with")]
-    fn with_second<Second: ComponentId>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
+fn with_second<Second: ComponentId>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
         self.with_id((first, Second::id(self.world())))
     }
 
     /// set term with pairs
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::with`
-    #[doc(alias = "query_builder_i::with")]
-    fn with_second_name<Second: ComponentId>(&mut self, first: &'a str) -> &mut Self {
+fn with_second_name<Second: ComponentId>(&mut self, first: &'a str) -> &mut Self {
         self.with_second_id(first, Second::id(self.world()))
     }
 
     /// set term with Name
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::term`
-    #[doc(alias = "query_builder_i::with")]
-    fn with_name(&mut self, name: &'a str) -> &mut Self {
+fn with_name(&mut self, name: &'a str) -> &mut Self {
         self.term();
         self.set_first_name(name);
         self
     }
 
     /// set term with pair names
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::term`
-    #[doc(alias = "query_builder_i::with")]
-    fn with_names(&mut self, first: &'a str, second: &'a str) -> &mut Self {
+fn with_names(&mut self, first: &'a str, second: &'a str) -> &mut Self {
         self.term();
         self.set_first_name(first).set_second_name(second);
         self
@@ -529,32 +446,17 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /* Without methods, shorthand for .with(...).not() */
 
     /// set term without Id
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::without`
-    #[doc(alias = "query_builder_i::without")]
-    fn without_id(&mut self, id: impl IntoId) -> &mut Self {
+fn without_id(&mut self, id: impl IntoId) -> &mut Self {
         self.with_id(id).not()
     }
 
     /// set term without type
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::without`
-    #[doc(alias = "query_builder_i::without")]
-    fn without<T: ComponentOrPairId>(&mut self) -> &mut Self {
+fn without<T: ComponentOrPairId>(&mut self) -> &mut Self {
         self.with::<T>().not()
     }
 
     /// set term without enum
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::without`
-    #[doc(alias = "query_builder_i::without")]
-    fn without_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
+fn without_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &mut self,
         value: T,
     ) -> &mut Self {
@@ -562,44 +464,24 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// set term without enum wildcard
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::without`
-    #[doc(alias = "query_builder_i::without")]
-    fn without_enum_wildcard<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
+fn without_enum_wildcard<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &mut self,
     ) -> &mut Self {
         self.with_enum_wildcard::<T>().not()
     }
 
     /// set term without pairs
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::without`
-    #[doc(alias = "query_builder_i::without")]
-    fn without_first<First: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
+fn without_first<First: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
         self.with_first::<First>(second).not()
     }
 
     /// set term without pairs
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::without`
-    #[doc(alias = "query_builder_i::without")]
-    fn without_first_name<First: ComponentId>(&mut self, second: &'a str) -> &mut Self {
+fn without_first_name<First: ComponentId>(&mut self, second: &'a str) -> &mut Self {
         self.with_first_name::<First>(second).not()
     }
 
     /// set term without pairs
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::without`
-    #[doc(alias = "query_builder_i::without")]
-    fn without_second<Second: ComponentId>(
+fn without_second<Second: ComponentId>(
         &mut self,
         first: impl Into<Entity> + Copy,
     ) -> &mut Self {
@@ -607,62 +489,32 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// set term without pairs
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::without`
-    #[doc(alias = "query_builder_i::without")]
-    fn without_second_name<Second: ComponentId>(&mut self, first: &'a str) -> &mut Self {
+fn without_second_name<Second: ComponentId>(&mut self, first: &'a str) -> &mut Self {
         self.with_second_name::<Second>(first).not()
     }
 
     /// set term without Name
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::term`
-    #[doc(alias = "query_builder_i::without")]
-    fn without_name(&mut self, name: &'a str) -> &mut Self {
+fn without_name(&mut self, name: &'a str) -> &mut Self {
         self.with_name(name).not()
     }
 
     /// set term without pair names
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::term`
-    #[doc(alias = "query_builder_i::without")]
-    fn without_names(&mut self, first: &'a str, second: &'a str) -> &mut Self {
+fn without_names(&mut self, first: &'a str, second: &'a str) -> &mut Self {
         self.with_names(first, second).not()
     }
 
     /// set term without first id and second name
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::without`
-    #[doc(alias = "query_builder_i::without")]
-    fn without_first_id(&mut self, first: impl Into<Entity>, second: &'a str) -> &mut Self {
+fn without_first_id(&mut self, first: impl Into<Entity>, second: &'a str) -> &mut Self {
         self.with_first_id(first, second).not()
     }
 
     /// set term without second id and first name
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::without`
-    #[doc(alias = "query_builder_i::without")]
-    fn without_second_id(&mut self, first: &'a str, second: impl Into<Entity>) -> &mut Self {
+fn without_second_id(&mut self, first: &'a str, second: impl Into<Entity>) -> &mut Self {
         self.with_second_id(first, second).not()
     }
 
     /// Term notation for more complex query features
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::term`
-    #[doc(alias = "query_builder_i::term")]
-    fn term(&mut self) -> &mut Self {
+fn term(&mut self) -> &mut Self {
         //let index = *self.current_term_index();
 
         let current_index = self.current_term_index();
@@ -694,12 +546,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// Term notation for more complex query features
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::term_at`
-    #[doc(alias = "query_builder_i::term_at")]
-    fn term_at(&mut self, index: u32) -> &mut Self {
+fn term_at(&mut self, index: u32) -> &mut Self {
         ecs_assert!(
             index < sys::FLECS_TERM_COUNT_MAX,
             FlecsErrorCode::InvalidParameter,
@@ -863,12 +710,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * `compare`: The compare function used to sort the components.
     ///   The signature of the function must be `fn(Entity, &T, Entity, &T) -> i32`.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::order_by`
-    #[doc(alias = "query_builder_i::order_by")]
-    fn order_by<T>(&mut self, compare: impl OrderByFn<T>) -> &mut Self
+fn order_by<T>(&mut self, compare: impl OrderByFn<T>) -> &mut Self
     where
         T: ComponentId,
         Self: QueryBuilderImpl<'a>,
@@ -910,8 +752,6 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// * `compare`: The compare function used to sort the components.
     /// # See also
     ///
-    /// * C++ API: `query_builder_i::order_by`
-    #[doc(alias = "query_builder_i::order_by")]
     fn order_by_id(
         &mut self,
         component: impl Into<Entity>,
@@ -941,12 +781,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// # Type Parameters
     ///
     /// * `T`: The component used to determine the group rank.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::group_by`
-    #[doc(alias = "query_builder_i::group_by")]
-    fn group_by<T>(&mut self) -> &mut Self
+fn group_by<T>(&mut self) -> &mut Self
     where
         T: ComponentId,
     {
@@ -975,12 +810,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// # Arguments
     ///
     /// * `group_by_action`: Callback that determines group id for table.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::group_by`
-    #[doc(alias = "query_builder_i::group_by")]
-    fn group_by_fn<T>(&mut self, group_by_action: sys::ecs_group_by_action_t) -> &mut Self
+fn group_by_fn<T>(&mut self, group_by_action: sys::ecs_group_by_action_t) -> &mut Self
     where
         T: ComponentId,
     {
@@ -996,12 +826,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * `component`: The component used to determine the group rank.
     /// * `group_by_action`: Callback that determines group id for table.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::group_by`
-    #[doc(alias = "query_builder_i::group_by")]
-    fn group_by_id_fn(
+fn group_by_id_fn(
         &mut self,
         component: impl Into<Entity>,
         group_by_action: sys::ecs_group_by_action_t,
@@ -1019,12 +844,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// # Arguments
     ///
     /// * `component`: The component used to determine the group rank.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::group_by`
-    #[doc(alias = "query_builder_i::group_by")]
-    fn group_by_id(&mut self, component: impl Into<Entity>) -> &mut Self {
+fn group_by_id(&mut self, component: impl Into<Entity>) -> &mut Self {
         self.group_by_id_fn(component, None)
     }
 
@@ -1034,12 +854,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * `ctx`: Context to pass to the `group_by` function.
     /// * `ctx_free`: Function to clean up the context (called when the query is deleted).
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::group_by_ctx`
-    #[doc(alias = "query_builder_i::group_by_ctx")]
-    fn group_by_ctx(&mut self, ctx: *mut c_void, ctx_free: sys::ecs_ctx_free_t) -> &mut Self {
+fn group_by_ctx(&mut self, ctx: *mut c_void, ctx_free: sys::ecs_ctx_free_t) -> &mut Self {
         let desc = self.query_desc_mut();
         desc.group_by_ctx = ctx;
         desc.group_by_ctx_free = ctx_free;
@@ -1051,12 +866,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// # Arguments
     ///
     /// * `action`: The action to execute when a group is created.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::on_group_create`
-    #[doc(alias = "query_builder_i::on_group_create")]
-    fn on_group_create(&mut self, action: sys::ecs_group_create_action_t) -> &mut Self {
+fn on_group_create(&mut self, action: sys::ecs_group_create_action_t) -> &mut Self {
         let desc = self.query_desc_mut();
         desc.on_group_create = action;
         self
@@ -1067,12 +877,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// # Arguments
     ///
     /// * `action`: The action to execute when a group is deleted.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_builder_i::on_group_delete`
-    #[doc(alias = "query_builder_i::on_group_delete")]
-    fn on_group_delete(&mut self, action: sys::ecs_group_delete_action_t) -> &mut Self {
+fn on_group_delete(&mut self, action: sys::ecs_group_delete_action_t) -> &mut Self {
         let desc = self.query_desc_mut();
         desc.on_group_delete = action;
         self

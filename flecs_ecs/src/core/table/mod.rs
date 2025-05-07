@@ -37,11 +37,6 @@ impl<'a> Table<'a> {
     ///
     /// * `world` - The world the table is in
     /// * `table` - The table to wrap
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::table`
-    #[doc(alias = "table::table")]
     pub fn new(world: impl WorldProvider<'a>, table: NonNull<sys::ecs_table_t>) -> Self {
         Self {
             world: world.world(),
@@ -69,11 +64,6 @@ impl<'a> TableRange<'a> {
     /// # Returns
     ///
     /// A new table range
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table_range::table_range`
-    #[doc(alias = "table_range::table_range")]
     pub fn new(table: Table<'a>, offset: i32, count: i32) -> Self {
         Self {
             table,
@@ -118,20 +108,10 @@ pub trait TableOperations<'a>: IntoTable {
     fn world(&self) -> WorldRef<'a>;
 
     /// Returns the table count
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::count`
-    #[doc(alias = "table::count")]
-    fn count(&self) -> i32;
+fn count(&self) -> i32;
 
     /// Converts table type to string
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::str`
-    #[doc(alias = "table::str")]
-    fn to_string(&self) -> Option<String> {
+fn to_string(&self) -> Option<String> {
         unsafe {
             let raw_ptr = sys::ecs_table_str(self.world().world_ptr(), self.table_ptr_mut());
 
@@ -150,12 +130,7 @@ pub trait TableOperations<'a>: IntoTable {
     }
 
     /// Returns the type of the table
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::type`
-    #[doc(alias = "table::type")]
-    fn archetype(&self) -> Archetype<'a> {
+fn archetype(&self) -> Archetype<'a> {
         let type_vec = unsafe { sys::ecs_table_get_type(self.table_ptr_mut()) };
         let slice = unsafe {
             core::slice::from_raw_parts((*type_vec).array as _, (*type_vec).count as usize)
@@ -180,12 +155,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// The index of the id in the table type, or `None` if the id is not found
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::type_index`
-    #[doc(alias = "table::type_index")]
-    fn find_type_index_id(&self, id: sys::ecs_id_t) -> Option<i32> {
+fn find_type_index_id(&self, id: sys::ecs_id_t) -> Option<i32> {
         let index = unsafe {
             sys::ecs_table_get_type_index(self.world().world_ptr(), self.table_ptr_mut(), id)
         };
@@ -201,12 +171,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// The index of the component in the table type, or `None` if the component is not in the table
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::type_index`
-    #[doc(alias = "table::type_index")]
-    fn find_type_index<T: ComponentId>(&self) -> Option<i32> {
+fn find_type_index<T: ComponentId>(&self) -> Option<i32> {
         self.find_type_index_id(T::id(self.world()))
     }
 
@@ -220,12 +185,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// The index of the pair in the table type, or `None` if the pair is not in the table
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::type_index`
-    #[doc(alias = "table::type_index")]
-    fn find_type_index_pair_ids(
+fn find_type_index_pair_ids(
         &self,
         first: impl Into<Entity>,
         second: impl Into<Entity>,
@@ -243,12 +203,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// The index of the pair in the table type, or `None` if the pair is not in the table
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::type_index`
-    #[doc(alias = "table::type_index")]
-    fn find_type_index_pair<First: ComponentId, Second: ComponentId>(&self) -> Option<i32> {
+fn find_type_index_pair<First: ComponentId, Second: ComponentId>(&self) -> Option<i32> {
         let world = self.world();
         self.find_type_index_pair_ids(First::id(world), Second::id(world))
     }
@@ -266,12 +221,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// The index of  the pair in the table type, or `None` if the pair is not in the table
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::type_index`
-    #[doc(alias = "table::type_index")]
-    fn find_type_index_first<First: ComponentId>(&self, second: impl Into<Entity>) -> Option<i32> {
+fn find_type_index_first<First: ComponentId>(&self, second: impl Into<Entity>) -> Option<i32> {
         self.find_type_index_pair_ids(First::id(self.world()), second)
     }
 
@@ -288,12 +238,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// The index of  the pair in the table type, or `None` if the pair is not in the table
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::type_index`
-    #[doc(alias = "table::type_index")]
-    fn find_type_index_second<Second: ComponentId>(&self, first: impl Into<Entity>) -> Option<i32> {
+fn find_type_index_second<Second: ComponentId>(&self, first: impl Into<Entity>) -> Option<i32> {
         self.find_type_index_pair_ids(first, Second::id(self.world()))
     }
 
@@ -311,12 +256,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// The index of the id in the table, or `None` if the id is not in the table
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::column_index`
-    #[doc(alias = "table::column_index")]
-    fn find_column_index_id(&self, id: sys::ecs_id_t) -> Option<i32> {
+fn find_column_index_id(&self, id: sys::ecs_id_t) -> Option<i32> {
         let index = unsafe {
             sys::ecs_table_get_column_index(self.world().world_ptr(), self.table_ptr_mut(), id)
         };
@@ -336,12 +276,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// The index of the component in the table, or `None` if the component is not in the table
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::column_index`
-    #[doc(alias = "table::column_index")]
-    fn find_column_index<T: ComponentId>(&self) -> Option<i32> {
+fn find_column_index<T: ComponentId>(&self) -> Option<i32> {
         self.find_column_index_id(T::id(self.world()))
     }
 
@@ -359,12 +294,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// The index of the pair in the table, or `None` if the pair is not in the table
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::column_index`
-    #[doc(alias = "table::column_index")]
-    fn find_column_index_pair<First: ComponentId, Second: ComponentId>(&self) -> Option<i32> {
+fn find_column_index_pair<First: ComponentId, Second: ComponentId>(&self) -> Option<i32> {
         let world = self.world();
         self.find_column_index_id(ecs_pair(First::id(world), Second::id(world)))
     }
@@ -383,12 +313,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// The index of the pair in the table, or `None` if the pair is not in the table
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::column_index`
-    #[doc(alias = "table::column_index")]
-    fn find_column_index_pair_ids(
+fn find_column_index_pair_ids(
         &self,
         first: impl Into<Entity>,
         second: impl Into<Entity>,
@@ -409,12 +334,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// The index of the pair in the table, or `None` if the pair is not in the table
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::column_index`
-    #[doc(alias = "table::column_index")]
-    fn find_column_index_first<First: ComponentId>(
+fn find_column_index_first<First: ComponentId>(
         &self,
         second: impl Into<Entity>,
     ) -> Option<i32> {
@@ -434,12 +354,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// The index of the pair in the table, or `None` if the pair is not in the table
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::column_index`
-    #[doc(alias = "table::column_index")]
-    fn find_column_index_second<Second: ComponentId>(
+fn find_column_index_second<Second: ComponentId>(
         &self,
         first: impl Into<Entity>,
     ) -> Option<i32> {
@@ -457,12 +372,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// True if the table has the component type, false otherwise
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::has`
-    #[doc(alias = "table::has")]
-    fn has_type<T: ComponentId>(&self) -> bool {
+fn has_type<T: ComponentId>(&self) -> bool {
         self.find_type_index::<T>().is_some()
     }
 
@@ -477,12 +387,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// True if the table has the component id, false otherwise
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::has`
-    #[doc(alias = "table::has")]
-    fn has_type_id(&self, id: sys::ecs_id_t) -> bool {
+fn has_type_id(&self, id: sys::ecs_id_t) -> bool {
         self.find_type_index_id(id).is_some()
     }
 
@@ -498,12 +403,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// True if the table has the pair of component types, false otherwise
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::has`
-    #[doc(alias = "table::has")]
-    fn has_pair<First: ComponentId, Second: ComponentId>(&self) -> bool {
+fn has_pair<First: ComponentId, Second: ComponentId>(&self) -> bool {
         self.find_type_index_pair::<First, Second>().is_some()
     }
 
@@ -519,12 +419,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// True if the table has the pair of component ids, false otherwise
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::has`
-    #[doc(alias = "table::has")]
-    fn has_pair_ids(&self, first: impl Into<Entity>, second: impl Into<Entity>) -> bool {
+fn has_pair_ids(&self, first: impl Into<Entity>, second: impl Into<Entity>) -> bool {
         self.find_type_index_pair_ids(first, second).is_some()
     }
 
@@ -537,12 +432,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// Some(Pointer) to the column, or `None` if not a component
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::get_column`
-    #[doc(alias = "table::get_column")]
-    fn column_untyped(&self, index: i32) -> Option<*mut c_void> {
+fn column_untyped(&self, index: i32) -> Option<*mut c_void> {
         let ptr = unsafe { sys::ecs_table_get_column(self.table_ptr_mut(), index, self.offset()) };
         if ptr.is_null() { None } else { Some(ptr) }
     }
@@ -556,12 +446,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// Some(Pointer) to the column, or `None` if not found
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::get`
-    #[doc(alias = "table::get")]
-    fn get_mut<T: ComponentId>(&self) -> Option<&mut [T]> {
+fn get_mut<T: ComponentId>(&self) -> Option<&mut [T]> {
         self.get_mut_untyped(T::id(self.world())).map(|ptr| unsafe {
             core::slice::from_raw_parts_mut(ptr as *mut T, (self.count()) as usize)
         })
@@ -576,11 +461,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// Some(Pointer) to the column, or `None` if not found
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::get`
-    fn get_mut_untyped(&self, id: sys::ecs_id_t) -> Option<*mut c_void> {
+fn get_mut_untyped(&self, id: sys::ecs_id_t) -> Option<*mut c_void> {
         if let Some(index) = self.find_column_index_id(id) {
             self.column_untyped(index)
         } else {
@@ -598,12 +479,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// Some(Pointer) to the column, or `None` if not found
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::get`
-    #[doc(alias = "table::get")]
-    fn get_pair_ids_mut_untyped(
+fn get_pair_ids_mut_untyped(
         &self,
         first: impl Into<Entity>,
         second: impl Into<Entity>,
@@ -621,12 +497,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// Some(Pointer) to the column, or `None` if not found
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::get`
-    #[doc(alias = "table::get")]
-    fn get_pair_mut_untyped<First: ComponentId, Second: ComponentId>(&self) -> Option<*mut c_void> {
+fn get_pair_mut_untyped<First: ComponentId, Second: ComponentId>(&self) -> Option<*mut c_void> {
         let world = self.world();
         self.get_pair_ids_mut_untyped(First::id(world), Second::id(world))
     }
@@ -640,12 +511,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// The size of the column
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::column_size`
-    #[doc(alias = "table::column_size")]
-    fn column_size(&self, index: i32) -> usize {
+fn column_size(&self, index: i32) -> usize {
         unsafe { sys::ecs_table_get_column_size(self.table_ptr_mut(), index) }
     }
 
@@ -660,12 +526,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// The depth of the relationship
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::depth`
-    #[doc(alias = "table::depth")]
-    fn depth<Rel: ComponentId>(&self) -> i32 {
+fn depth<Rel: ComponentId>(&self) -> i32 {
         self.depth_id(Rel::id(self.world()))
     }
 
@@ -680,12 +541,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// The depth of the relationship
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::depth`
-    #[doc(alias = "table::depth")]
-    fn depth_id(&self, rel: impl Into<Entity>) -> i32 {
+fn depth_id(&self, rel: impl Into<Entity>) -> i32 {
         unsafe {
             sys::ecs_table_get_depth(
                 self.world().world_ptr_mut(),
@@ -710,12 +566,7 @@ impl<'a> TableOperations<'a> for Table<'a> {
     }
 
     /// Returns the table count
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `table::count`
-    #[doc(alias = "table::count")]
-    fn count(&self) -> i32 {
+fn count(&self) -> i32 {
         unsafe { sys::ecs_table_count(self.table_ptr_mut()) }
     }
 }
@@ -736,8 +587,6 @@ impl<'a> TableOperations<'a> for TableRange<'a> {
     /// Returns the table range count
     ///
     /// # See also
-    /// * C++ API: `table_range::count`
-    #[doc(alias = "table_range::count")]
     fn count(&self) -> i32 {
         self.count
     }
