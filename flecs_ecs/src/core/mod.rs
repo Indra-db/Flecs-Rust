@@ -10,7 +10,7 @@ mod entity_view;
 mod event;
 pub mod flecs;
 pub(crate) mod get_tuple;
-mod id;
+pub mod id;
 mod id_view;
 mod observer;
 mod observer_builder;

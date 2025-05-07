@@ -24,12 +24,8 @@ impl<'a> EntityView<'a> {
     /// # Usage
     ///
     /// For types that are not ZST and do not implement a constructor hook, use the `set_id` method to safely initialize the `id`.
-    ///
-    /// # See Also
-    ///
-    /// * C++ API equivalent: `entity_builder::add`
     pub fn add_id(self, id: impl IntoId) -> Self {
-        let id = *id.into();
+        let id = *id.into_id(self.world);
         let world = self.world.world_ptr_mut();
 
         check_add_id_validity(world, id);
@@ -54,7 +50,7 @@ impl<'a> EntityView<'a> {
     /// * [`add_id`](Self::add_id)
     /// * [`set_id`](Self::set_id)
     pub unsafe fn add_id_unchecked(self, id: impl IntoId) -> Self {
-        let id = *id.into();
+        let id = *id.into_id(self.world);
         let world = self.world.world_ptr_mut();
 
         unsafe { sys::ecs_add_id(world, *self.id, id) }
@@ -241,8 +237,9 @@ impl<'a> EntityView<'a> {
                 // second which will remove all instances of the relationship.
                 // Replacing 0 with Wildcard will make it possible to use the second
                 // as the condition.
-                let first = id.get_id_first();
-                let mut second = id.get_id_second();
+                let id = id.into_id(self.world);
+                let first = id.get_id_first(self.world);
+                let mut second = id.get_id_second(self.world);
                 if second == 0
                     || unsafe { sys::ecs_has_id(self.world.world_ptr(), *first, ECS_EXCLUSIVE) }
                 {
@@ -277,8 +274,8 @@ impl<'a> EntityView<'a> {
                 // second which will remove all instances of the relationship.
                 // Replacing 0 with Wildcard will make it possible to use the second
                 // as the condition.
-                let first = ecs_first(id);
-                let mut second = ecs_second(id);
+                let first = ecs_first(id, world);
+                let mut second = ecs_second(id, world);
                 if second == 0
                     || unsafe { sys::ecs_has_id(self.world.world_ptr(), *first, ECS_EXCLUSIVE) }
                 {
@@ -362,7 +359,13 @@ impl<'a> EntityView<'a> {
     ///
     /// * `component_id`: The entity to remove.
     pub fn remove_id(self, id: impl IntoId) -> Self {
-        unsafe { sys::ecs_remove_id(self.world.world_ptr_mut(), *self.id, *id.into()) }
+        unsafe {
+            sys::ecs_remove_id(
+                self.world.world_ptr_mut(),
+                *self.id,
+                *id.into_id(self.world),
+            )
+        }
         self
     }
 
@@ -546,7 +549,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * `id`: The id to mark for overriding.
     pub fn auto_override_id(self, id: impl IntoId) -> Self {
-        unsafe { self.add_id_unchecked(ECS_AUTO_OVERRIDE | id.into()) }
+        unsafe { self.add_id_unchecked(ECS_AUTO_OVERRIDE | id.into_id(self.world)) }
     }
 
     /// Mark component for auto-overriding.
@@ -605,7 +608,7 @@ impl<'a> EntityView<'a> {
             sys::ecs_add_id(
                 self.world.world_ptr_mut(),
                 *self.id,
-                ECS_AUTO_OVERRIDE | *id.into(),
+                ECS_AUTO_OVERRIDE | *id.into_id(self.world),
             );
         }
         self
@@ -733,7 +736,7 @@ impl<'a> EntityView<'a> {
         T: ComponentId + DataComponent,
     {
         let world = self.world.world_ptr_mut();
-        let id = *id.into();
+        let id = *id.into_id(self.world);
         let data_id = T::id(self.world);
         let id_data_id = unsafe { sys::ecs_get_typeid(world, id) };
 
@@ -993,7 +996,14 @@ impl<'a> EntityView<'a> {
     /// - `component_id`: The ID to enable.
     /// - `toggle`: True to enable, false to disable (default = true).
     pub fn enable_id(self, id: impl IntoId) -> Self {
-        unsafe { sys::ecs_enable_id(self.world.world_ptr_mut(), *self.id, *id.into(), true) }
+        unsafe {
+            sys::ecs_enable_id(
+                self.world.world_ptr_mut(),
+                *self.id,
+                *id.into_id(self.world),
+                true,
+            )
+        }
         self
     }
 
@@ -1053,7 +1063,14 @@ impl<'a> EntityView<'a> {
     ///
     /// - `component_id`: The ID to disable.
     pub fn disable_id(self, id: impl IntoId) -> Self {
-        unsafe { sys::ecs_enable_id(self.world.world_ptr_mut(), *self.id, *id.into(), false) }
+        unsafe {
+            sys::ecs_enable_id(
+                self.world.world_ptr_mut(),
+                *self.id,
+                *id.into_id(self.world),
+                false,
+            )
+        }
         self
     }
 
@@ -1198,7 +1215,13 @@ impl<'a> EntityView<'a> {
     /// * [`EntityView::modified_first()`]
     /// * [`World::modified()`]
     pub fn modified_id(self, id: impl IntoId) {
-        unsafe { sys::ecs_modified_id(self.world.world_ptr_mut(), *self.id, *id.into()) }
+        unsafe {
+            sys::ecs_modified_id(
+                self.world.world_ptr_mut(),
+                *self.id,
+                *id.into_id(self.world),
+            )
+        }
     }
 
     /// Signal that component was modified.
@@ -1306,7 +1329,7 @@ impl<'a> EntityView<'a> {
         T: ComponentOrPairId,
         T::CastType: DataComponent,
     {
-        CachedRef::<T::CastType>::new(self.world, *self.id, *component.into())
+        CachedRef::<T::CastType>::new(self.world, *self.id, *component.into_id(self.world))
     }
 
     /// Get a reference to a component or pair.

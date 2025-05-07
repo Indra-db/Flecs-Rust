@@ -159,7 +159,7 @@ impl<'a> BulkEntityBuilder<'a> {
     /// let entities_created = world.entity_bulk(10).add_id(entity).build();
     /// ```
     pub fn add_id(&mut self, id: impl IntoId) -> &mut Self {
-        let id = *id.into();
+        let id = *id.into_id(self.world);
         let world = self.world.world_ptr_mut();
 
         check_add_id_validity(world, id);

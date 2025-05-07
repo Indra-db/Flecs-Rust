@@ -134,7 +134,14 @@ impl<'a> Cursor<'a> {
 
     /// Set (component) id value
     pub fn set_id(&mut self, value: impl IntoId) -> i32 {
-        unsafe { sys::ecs_meta_set_id(&mut self.cursor, *value.into()) }
+        unsafe {
+            sys::ecs_meta_set_id(
+                &mut self.cursor,
+                *value.into_id(WorldRef::from_ptr(
+                    self.cursor.world as *mut sys::ecs_world_t,
+                )),
+            )
+        }
     }
 
     /// Set null value

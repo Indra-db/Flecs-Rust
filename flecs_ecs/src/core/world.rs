@@ -1306,7 +1306,7 @@ impl World {
     #[inline(always)]
     pub fn set_scope_id(&self, id: impl IntoId) -> EntityView {
         EntityView::new_from(self, unsafe {
-            sys::ecs_set_scope(self.raw_world.as_ptr(), *id.into())
+            sys::ecs_set_scope(self.raw_world.as_ptr(), *id.into_id(self))
         })
     }
 
@@ -1970,9 +1970,14 @@ impl World {
     /// * [`World::has()`]
     /// * [`World::has_enum()`]
     #[inline(always)]
-    pub fn has_id(&self, id: impl IntoId) -> bool {
-        let id = *id.into();
-        EntityView::new_from(self, id).has_id(id)
+    pub fn has_id<T: IntoId>(&self, id: T) -> bool {
+        let id = *id.into_id(self);
+        if T::IS_PAIR {
+            let first_id = id.get_id_first(self);
+            EntityView::new_from(self, first_id).has_id(id)
+        } else {
+            EntityView::new_from(self, id).has_id(id)
+        }
     }
 
     /// Check if world has the provided type (enum,pair,struct).
@@ -2039,10 +2044,10 @@ impl World {
     where
         T: IntoId,
     {
-        let id = *id.into();
+        let id = *id.into_id(self);
         // this branch will compile out in release mode
         if T::IS_PAIR {
-            let first_id = id.get_id_first();
+            let first_id = id.get_id_first(self);
             EntityView::new_from(self, first_id).add_id(id)
         } else {
             EntityView::new_from(self, id).add_id(id)
@@ -2148,9 +2153,9 @@ impl World {
     where
         T: IntoId,
     {
-        let id = *id.into();
+        let id = *id.into_id(self);
         if T::IS_PAIR {
-            let first_id = id.get_id_first();
+            let first_id = id.get_id_first(self);
             EntityView::new_from(self, first_id).remove_id(id)
         } else {
             EntityView::new_from(self, id).remove_id(id)
@@ -2327,7 +2332,7 @@ impl World {
     ///
     /// The number of entities with the provided id.
     pub fn count_id(&self, id: impl IntoId) -> i32 {
-        unsafe { sys::ecs_count_id(self.raw_world.as_ptr(), *id.into()) }
+        unsafe { sys::ecs_count_id(self.raw_world.as_ptr(), *id.into_id(self)) }
     }
 
     /// Count entities with the provided component.
@@ -2507,7 +2512,8 @@ impl World {
     /// * `id`: The id to create entities with.
     /// * `func`: The function to run.
     pub fn with_id(&self, id: impl IntoId, mut func: impl FnMut()) {
-        let prev: sys::ecs_id_t = unsafe { sys::ecs_set_with(self.raw_world.as_ptr(), *id.into()) };
+        let prev: sys::ecs_id_t =
+            unsafe { sys::ecs_set_with(self.raw_world.as_ptr(), *id.into_id(self)) };
         func();
         unsafe {
             sys::ecs_set_with(self.raw_world.as_ptr(), prev);
@@ -2601,7 +2607,7 @@ impl World {
     /// * `id`: The id to delete.
     pub fn delete_entities_with_id(&self, id: impl IntoId) {
         unsafe {
-            sys::ecs_delete_with(self.raw_world.as_ptr(), *id.into());
+            sys::ecs_delete_with(self.raw_world.as_ptr(), *id.into_id(self));
         }
     }
 
@@ -2685,7 +2691,7 @@ impl World {
     /// * `id`: The id to remove.
     pub fn remove_all_id(&self, id: impl IntoId) {
         unsafe {
-            sys::ecs_remove_all(self.raw_world.as_ptr(), *id.into());
+            sys::ecs_remove_all(self.raw_world.as_ptr(), *id.into_id(self));
         }
     }
 
@@ -3118,12 +3124,12 @@ impl World {
     where
         Id: IntoId,
     {
-        let id = *id.into();
+        let id = *id.into_id(self);
         if Id::IS_PAIR {
             ecs_assert!(
                 {
-                    let first = ecs_first(id);
-                    let second = ecs_second(id);
+                    let first = ecs_first(id, self);
+                    let second = ecs_second(id, self);
                     !ecs_is_pair(first) && !ecs_is_pair(second)
                 },
                 FlecsErrorCode::InvalidParameter,

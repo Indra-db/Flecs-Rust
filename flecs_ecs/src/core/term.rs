@@ -184,7 +184,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     where
         T: IntoId,
     {
-        let id = id.into();
+        let id = id.into_id(self.world());
         let term = self.current_term_mut();
 
         #[allow(clippy::collapsible_else_if)]
@@ -632,7 +632,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     ///
     /// * `flags` - The direction to traverse.
     fn id_flags(&mut self, flags: impl IntoId) -> &mut Self {
-        self.term_ref_mut().id |= *flags.into();
+        self.term_ref_mut().id |= *flags.into_id(self.world());
         self
     }
 
@@ -892,7 +892,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
                 self.current_term_mut().src.id = sid;
             } else {
                 self.current_term_mut().src.id =
-                    sys::ecs_get_alive(self.world_ptr_mut(), *ecs_first(sid));
+                    sys::ecs_get_alive(self.world_ptr_mut(), *ecs_first(sid, self.world()));
             }
         }
         self

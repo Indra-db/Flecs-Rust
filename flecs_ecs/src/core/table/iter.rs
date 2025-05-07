@@ -649,7 +649,7 @@ where
         );
 
         let id = unsafe { self.iter.ids.add(index as usize).read() };
-        Id::new(id)
+        crate::core::Id::new(id)
     }
 
     /// Get readonly access to entity ids.
@@ -894,7 +894,10 @@ where
                 FlecsErrorCode::InvalidParameter,
                 "field does not match a pair"
             );
-            let target = EntityView::new_from(self.world(), ecs_second(id));
+            let target = EntityView::new_from(
+                self.world(),
+                ecs_second(id, unsafe { WorldRef::from_ptr(self.iter.world) }),
+            );
             func(target);
             i += 1;
         }

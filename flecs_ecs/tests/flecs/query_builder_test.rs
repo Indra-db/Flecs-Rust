@@ -2155,7 +2155,7 @@ unsafe extern "C-unwind" fn group_by_rel(
         let mut id_matched: u64 = 0;
         let ref_id = &mut id_matched;
         if sys::ecs_search(world, table, ecs_pair(id, *flecs::Wildcard), ref_id) != -1 {
-            return *ecs_second(id_matched);
+            return *ecs_second(id_matched, world);
         }
         0
     }

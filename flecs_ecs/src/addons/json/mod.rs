@@ -25,7 +25,7 @@ pub type IterToJsonDesc = sys::ecs_iter_to_json_desc_t;
 impl EntityView<'_> {
     /// Set component or pair id from JSON.
     pub fn set_json_id(self, comp: impl IntoId, json: &str, desc: Option<&FromJsonDesc>) -> Self {
-        let comp: u64 = *comp.into();
+        let comp: u64 = *comp.into_id(self.world);
         let world = self.world_ptr_mut();
         let id = *self.id;
         unsafe {
@@ -120,7 +120,7 @@ impl World {
     /// Serialize untyped value to JSON.
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn to_json_id(&self, tid: impl IntoId, value: *const core::ffi::c_void) -> String {
-        let tid: u64 = *tid.into();
+        let tid: u64 = *tid.into_id(self);
         let world = self.world_ptr();
         unsafe {
             let json_ptr = sys::ecs_ptr_to_json(world, tid, value);
@@ -172,7 +172,7 @@ impl World {
         json: &str,
         desc: Option<&FromJsonDesc>,
     ) {
-        let tid: u64 = *tid.into();
+        let tid: u64 = *tid.into_id(self);
         let world = self.ptr_mut();
         let desc_ptr = desc
             .map(|d| d as *const FromJsonDesc)

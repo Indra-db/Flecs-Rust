@@ -88,7 +88,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     ///
     /// * `id` - The id of the component to add to the event
     pub fn add_id(&mut self, id: impl IntoId) -> &mut Self {
-        let id = *id.into();
+        let id = *id.into_id(self.world);
         let ids = &mut self.ids;
         let ids_array = &mut self.ids_array;
         ids.array = ids_array.as_mut_ptr();

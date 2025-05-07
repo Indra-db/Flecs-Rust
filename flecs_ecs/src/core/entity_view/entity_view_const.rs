@@ -446,10 +446,6 @@ impl<'a> EntityView<'a> {
     // /// Returns the entity name as a `CStr`.
     // ///
     // /// if the entity has no name, this will return an empty string
-    // ///
-    // /// # See also
-    // ///
-    // /// * C++ API: `entity_view::name`
     // pub fn name_cstr(self) -> &'a CStr {
     //     self.get_name_cstr().unwrap_or(c"")
     // }
@@ -1654,7 +1650,13 @@ impl<'a> EntityView<'a> {
     /// Ensure the pointer is valid before use. The caller must know the actual type to cast the pointer correctly.
     /// The pointer might get invalided if the table alters.
     pub fn get_untyped(self, component_id: impl IntoId) -> *const c_void {
-        unsafe { sys::ecs_get_id(self.world.world_ptr(), *self.id, *component_id.into()) }
+        unsafe {
+            sys::ecs_get_id(
+                self.world.world_ptr(),
+                *self.id,
+                *component_id.into_id(self),
+            )
+        }
     }
 
     /// Get the pair value as untyped pointer.
@@ -1736,7 +1738,7 @@ impl<'a> EntityView<'a> {
     /// Ensure the pointer is valid before use. The caller must know the actual type to cast the pointer correctly.
     /// The pointer might get invalided if the table alters.
     pub fn get_untyped_mut(self, id: impl IntoId) -> *mut c_void {
-        unsafe { sys::ecs_get_mut_id(self.world.world_ptr(), *self.id(), *id.into()) }
+        unsafe { sys::ecs_get_mut_id(self.world.world_ptr(), *self.id(), *id.into_id(self)) }
     }
 
     /// Get mutable pair value as untyped pointer.
@@ -1880,7 +1882,7 @@ impl<'a> EntityView<'a> {
                 self.world.world_ptr(),
                 *self.id,
                 *relationship.into(),
-                *component_id.into(),
+                *component_id.into_id(self.world),
             )
         };
         if id == 0 {
@@ -2155,7 +2157,7 @@ impl<'a> EntityView<'a> {
     /// * [`EntityView::has()`]
     #[inline(always)]
     pub fn has_id(self, id: impl IntoId) -> bool {
-        unsafe { sys::ecs_has_id(self.world.world_ptr(), *self.id, *id.into()) }
+        unsafe { sys::ecs_has_id(self.world.world_ptr(), *self.id, *id.into_id(self.world)) }
     }
 
     /// Check if entity has the provided component.
@@ -2286,7 +2288,13 @@ impl<'a> EntityView<'a> {
     /// # Returns
     /// - `true` if the entity owns the provided entity, `false` otherwise.
     pub fn owns_id(self, entity_id: impl IntoId) -> bool {
-        unsafe { sys::ecs_owns_id(self.world.world_ptr(), *self.id, *entity_id.into()) }
+        unsafe {
+            sys::ecs_owns_id(
+                self.world.world_ptr(),
+                *self.id,
+                *entity_id.into_id(self.world),
+            )
+        }
     }
 
     /// Check if the entity owns the provided component.
@@ -2357,7 +2365,7 @@ impl<'a> EntityView<'a> {
     /// # Returns
     /// - `true` if enabled, `false` if not.
     pub fn is_enabled_id(self, id: impl IntoId) -> bool {
-        unsafe { sys::ecs_is_enabled_id(self.world.world_ptr(), *self.id, *id.into()) }
+        unsafe { sys::ecs_is_enabled_id(self.world.world_ptr(), *self.id, *id.into_id(self.world)) }
     }
 
     /// Test if component is enabled.

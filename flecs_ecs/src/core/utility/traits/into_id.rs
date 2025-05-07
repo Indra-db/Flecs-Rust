@@ -1,21 +1,29 @@
 use crate::core::*;
-use crate::sys;
 
 /// Extracts the Ecs ID from a type.
 /// Extension trait from [`Into<Entity>`] for tuples that implement `Into<Entity>`.
 /// These types can be [`Id`], [`IdView`], [`Entity`], [`EntityView`], [`Component`], [`UntypedComponent`].
-pub trait IntoId: Into<Id> {
+pub trait IntoId
+where
+    Self: Sized,
+{
     /// # Safety
     /// This is used to determine if the type is a pair or not.
     /// not if the underlying id represents a pair.
     /// This should generally not be used by the user.
     const IS_PAIR: bool;
 
+    #[doc(hidden)] // not meant to be used by the user
+    #[inline]
+    fn into_id<'a>(self, _world: impl WorldProvider<'a>) -> Id {
+        Id(0)
+    }
+
     /// This will return the id of the first part of a pair.
     /// If this is called on a non_pair, it will return the same as get_id.
     #[doc(hidden)] // not meant to be used by the user
     #[inline]
-    fn get_id_first(&self) -> Entity {
+    fn get_id_first<'a>(self, _world: impl WorldProvider<'a>) -> Entity {
         Entity(0)
     }
 
@@ -23,71 +31,129 @@ pub trait IntoId: Into<Id> {
     /// If this is called on a non_pair, it will return the same as get_id.
     #[doc(hidden)]
     #[inline]
-    fn get_id_second(&self) -> Entity {
+    fn get_id_second<'a>(self, _world: impl WorldProvider<'a>) -> Entity {
         Entity::new(0)
     }
 }
 
-impl<T, U> From<(T, U)> for Id
-where
-    T: Into<Entity>,
-    U: Into<Entity>,
-{
-    fn from(pair: (T, U)) -> Self {
-        ecs_pair(*pair.0.into(), *pair.1.into()).into()
-    }
-}
+// impl<T, U> From<(T, U)> for Id
+// where
+//     T: IntoEntity,
+//     U: IntoEntity,
+// {
+//     fn from(pair: (T, U)) -> Self {
+//         ecs_pair(*pair.0.into_entity(), *pair.1.into()).into()
+//     }
+// }
 
 impl<T, U> IntoId for (T, U)
 where
-    T: Into<Entity> + Copy,
-    U: Into<Entity> + Copy,
+    T: IntoEntity + Copy,
+    U: IntoEntity + Copy,
 {
     const IS_PAIR: bool = true;
 
-    #[doc(hidden)] // not meant to be used by the user
+    #[doc(hidden)] // not meant to be used by the use
     #[inline]
-    fn get_id_first(&self) -> Entity {
-        self.0.into()
+    fn into_id<'a>(self, world: impl WorldProvider<'a>) -> Id {
+        let world = world.world();
+        Id(ecs_pair(
+            *(self.0.into_entity(world)),
+            *(self.1.into_entity(world)),
+        ))
     }
 
     #[doc(hidden)] // not meant to be used by the user
     #[inline]
-    fn get_id_second(&self) -> Entity {
-        self.1.into()
+    fn get_id_first<'a>(self, world: impl WorldProvider<'a>) -> Entity {
+        self.0.into_entity(world)
+    }
+
+    #[doc(hidden)] // not meant to be used by the user
+    #[inline]
+    fn get_id_second<'a>(self, world: impl WorldProvider<'a>) -> Entity {
+        self.1.into_entity(world)
     }
 }
 
-// // We can not implement for T where T : `Into<Entity>`, because it would essentially extend the trait, which we don't want
-// // so we have to implement for each type that implements `Into<Entity>` separately.
-
-impl IntoId for sys::ecs_id_t {
+impl<T: IntoEntity> IntoId for T {
     const IS_PAIR: bool = false;
+
+    #[doc(hidden)] // not meant to be used by the user
+    #[inline]
+    fn into_id<'a>(self, world: impl WorldProvider<'a>) -> Id {
+        Id(*(self.into_entity(world)))
+    }
+
+    #[doc(hidden)] // not meant to be used by the user
+    #[inline]
+    fn get_id_first<'a>(self, world: impl WorldProvider<'a>) -> Entity {
+        let world = world.world();
+        ecs_first(self.into_entity(world), world)
+    }
+    fn get_id_second<'a>(self, world: impl WorldProvider<'a>) -> Entity {
+        let world = world.world();
+        ecs_second(self.into_entity(world), world)
+    }
 }
 
-impl IntoId for Entity {
-    const IS_PAIR: bool = false;
-}
+// impl IntoId for Entity {
+//     const IS_PAIR: bool = false;
+// }
 
 impl IntoId for Id {
     const IS_PAIR: bool = false;
+
+    #[doc(hidden)] // not meant to be used by the user
+    #[inline]
+    fn into_id<'a>(self, _world: impl WorldProvider<'a>) -> Id {
+        self
+    }
+    #[doc(hidden)] // not meant to be used by the user
+    #[inline]
+    fn get_id_first<'a>(self, world: impl WorldProvider<'a>) -> Entity {
+        ecs_first(*self, world)
+    }
+
+    #[doc(hidden)] // not meant to be used by the user
+    #[inline]
+    fn get_id_second<'a>(self, world: impl WorldProvider<'a>) -> Entity {
+        ecs_second(*self, world)
+    }
 }
 
 impl IntoId for IdView<'_> {
     const IS_PAIR: bool = false;
+
+    #[doc(hidden)] // not meant to be used by the user
+    #[inline]
+    fn into_id<'a>(self, _world: impl WorldProvider<'a>) -> Id {
+        self.id
+    }
+
+    #[doc(hidden)] // not meant to be used by the user
+    #[inline]
+    fn get_id_first<'a>(self, world: impl WorldProvider<'a>) -> Entity {
+        ecs_first(self.id, world)
+    }
+    #[doc(hidden)] // not meant to be used by the user
+    #[inline]
+    fn get_id_second<'a>(self, world: impl WorldProvider<'a>) -> Entity {
+        ecs_second(self.id, world)
+    }
 }
 
-impl IntoId for EntityView<'_> {
-    const IS_PAIR: bool = false;
-}
+// impl IntoId for EntityView<'_> {
+//     const IS_PAIR: bool = false;
+// }
 
-impl<T> IntoId for Component<'_, T>
-where
-    T: ComponentId,
-{
-    const IS_PAIR: bool = false;
-}
+// impl<T> IntoId for Component<'_, T>
+// where
+//     T: ComponentId,
+// {
+//     const IS_PAIR: bool = false;
+// }
 
-impl IntoId for UntypedComponent<'_> {
-    const IS_PAIR: bool = false;
-}
+// impl IntoId for UntypedComponent<'_> {
+//     const IS_PAIR: bool = false;
+// }
