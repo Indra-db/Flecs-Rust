@@ -911,7 +911,7 @@ where
     ///
     /// This operation is valid inside a `run()` callback. An example of an
     /// invalid context is inside an `each()` callback.
-#[allow(clippy::should_implement_trait)]
+    #[allow(clippy::should_implement_trait)]
     pub fn next(&mut self) -> bool {
         if self.iter.flags & sys::EcsIterIsValid != 0 && !self.iter.table.is_null() {
             unsafe {

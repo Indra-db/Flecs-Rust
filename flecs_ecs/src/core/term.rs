@@ -180,7 +180,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// # Arguments
     ///
     /// * `id` - The id to use of pair or component
-fn init_current_term<T>(&mut self, id: T)
+    fn init_current_term<T>(&mut self, id: T)
     where
         T: IntoId,
     {
@@ -204,7 +204,7 @@ fn init_current_term<T>(&mut self, id: T)
     /// # Type Arguments
     ///
     /// * `T` - The type of component to use.
-fn init_term_from<T: ComponentOrPairId>(&mut self) {
+    fn init_term_from<T: ComponentOrPairId>(&mut self) {
         if !T::IS_PAIR {
             let id: sys::ecs_id_t = T::First::id(self.world());
             self.init_current_term(id);
@@ -217,7 +217,7 @@ fn init_term_from<T: ComponentOrPairId>(&mut self) {
     }
 
     /// Reset the term
-fn reset(&mut self) {
+    fn reset(&mut self) {
         check_term_access_validity(self);
 
         // we don't for certain if this causes any side effects not using the nullptr and just using the default value.
@@ -233,7 +233,7 @@ fn reset(&mut self) {
     /// An application generally does not need to invoke this operation.
     /// It is useful when initializing a 0-initialized array of terms (like in `sys::ecs_term_desc_t`)
     /// as this operation can be used to find the last initialized element.
-fn is_set(&mut self) -> bool {
+    fn is_set(&mut self) -> bool {
         unsafe { sys::ecs_term_is_initialized(self.current_term()) }
     }
 
@@ -242,34 +242,34 @@ fn is_set(&mut self) -> bool {
     /// # Returns
     ///
     /// The term id as `Id`.
-fn id(&self) -> Id {
+    fn id(&self) -> Id {
         Id(self.current_term().id)
     }
 
     /// Get the inout type of term of the current term set
-fn inout(&self) -> InOutKind {
+    fn inout(&self) -> InOutKind {
         self.current_term().inout.into()
     }
 
     /// Get the operator of term of the current term set
-fn oper(&self) -> OperKind {
+    fn oper(&self) -> OperKind {
         self.current_term().oper.into()
     }
 
     /// Get the src id of term of the current term set
-fn src_id(&self) -> Entity {
+    fn src_id(&self) -> Entity {
         let id = self.current_term().src.id & !flecs::TermRefFlags::ID;
         Entity(id)
     }
 
     /// Get the first of term of the current term set
-fn first_id(&self) -> Entity {
+    fn first_id(&self) -> Entity {
         let id = self.current_term().first.id & !flecs::TermRefFlags::ID;
         Entity(id)
     }
 
     /// Get the second of term of the current term set
-fn second_id(&self) -> Entity {
+    fn second_id(&self) -> Entity {
         let id = self.current_term().second.id & !flecs::TermRefFlags::ID;
         Entity(id)
     }
@@ -287,7 +287,7 @@ fn second_id(&self) -> Entity {
     /// # Arguments
     ///
     /// * `id` - The id to set.
-fn set_id(&mut self, id: impl Into<Entity>) -> &mut Self {
+    fn set_id(&mut self, id: impl Into<Entity>) -> &mut Self {
         if self.current_term_ref_mode() != TermRefMode::Src {
             check_term_access_validity(self);
         }
@@ -308,7 +308,7 @@ fn set_id(&mut self, id: impl Into<Entity>) -> &mut Self {
     /// # Arguments
     ///
     /// * `id` - The id to set.
-fn entity(&mut self, entity: impl Into<Entity>) -> &mut Self {
+    fn entity(&mut self, entity: impl Into<Entity>) -> &mut Self {
         check_term_access_validity(self);
 
         self.term_ref_mut().id = *entity.into() | ECS_IS_ENTITY;
@@ -320,7 +320,7 @@ fn entity(&mut self, entity: impl Into<Entity>) -> &mut Self {
     /// # Arguments
     ///
     /// * `name` - The name to set.
-fn name(&mut self, name: &'a str) -> &mut Self {
+    fn name(&mut self, name: &'a str) -> &mut Self {
         let name = core::mem::ManuallyDrop::new(format!("{}\0", name));
         let term_ref = self.term_ref_mut();
         term_ref.name = name.as_ptr() as *mut _;
@@ -334,7 +334,7 @@ fn name(&mut self, name: &'a str) -> &mut Self {
     /// # Arguments
     ///
     /// * `var_name` - The name of the variable.
-fn set_var(&mut self, var_name: &'a str) -> &mut Self {
+    fn set_var(&mut self, var_name: &'a str) -> &mut Self {
         check_term_access_validity(self);
 
         let var_name = core::mem::ManuallyDrop::new(format!("{}\0", var_name));
@@ -350,7 +350,7 @@ fn set_var(&mut self, var_name: &'a str) -> &mut Self {
     /// # Arguments
     ///
     /// * `flags` - The flags to set.
-fn flags(&mut self, flags: u64) -> &mut Self {
+    fn flags(&mut self, flags: u64) -> &mut Self {
         check_term_access_validity(self);
 
         self.term_ref_mut().id = flags;
@@ -358,7 +358,7 @@ fn flags(&mut self, flags: u64) -> &mut Self {
     }
 
     /// Call prior to setting values for src identifier
-fn src(&mut self) -> &mut Self {
+    fn src(&mut self) -> &mut Self {
         self.set_term_ref_mode(TermRefMode::Src);
         self
     }
@@ -366,7 +366,7 @@ fn src(&mut self) -> &mut Self {
     /// Call prior to setting values for first identifier. This is either the
     /// component identifier, or first element of a pair (in case second is
     /// populated as well).
-fn first(&mut self) -> &mut Self {
+    fn first(&mut self) -> &mut Self {
         check_term_access_validity(self);
 
         self.set_term_ref_mode(TermRefMode::First);
@@ -375,7 +375,7 @@ fn first(&mut self) -> &mut Self {
 
     /// Call prior to setting values for second identifier. This is the second
     /// element of a pair. Requires that `first()` is populated as well.
-fn second(&mut self) -> &mut Self {
+    fn second(&mut self) -> &mut Self {
         check_term_access_validity(self);
         self.set_term_ref_mode(TermRefMode::Second);
         self
@@ -386,7 +386,7 @@ fn second(&mut self) -> &mut Self {
     /// # Arguments
     ///
     /// * `id` - The id to set.
-fn set_src_id(&mut self, id: impl Into<Entity>) -> &mut Self {
+    fn set_src_id(&mut self, id: impl Into<Entity>) -> &mut Self {
         self.src().set_id(id)
     }
 
@@ -395,7 +395,7 @@ fn set_src_id(&mut self, id: impl Into<Entity>) -> &mut Self {
     /// # Type Arguments
     ///
     /// * `T` - The type to use.
-fn set_src<T: ComponentId>(&mut self) -> &mut Self {
+    fn set_src<T: ComponentId>(&mut self) -> &mut Self {
         self.set_src_id(T::id(self.world()))
     }
 
@@ -405,7 +405,7 @@ fn set_src<T: ComponentId>(&mut self) -> &mut Self {
     /// # Arguments
     ///
     /// * `name` - The name to set.
-fn set_src_name(&mut self, name: &'a str) -> &mut Self {
+    fn set_src_name(&mut self, name: &'a str) -> &mut Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
@@ -425,7 +425,7 @@ fn set_src_name(&mut self, name: &'a str) -> &mut Self {
     /// # Arguments
     ///
     /// * `id` - The id to set.
-fn set_first_id(&mut self, id: impl Into<Entity>) -> &mut Self {
+    fn set_first_id(&mut self, id: impl Into<Entity>) -> &mut Self {
         check_term_access_validity(self);
         self.first().set_id(id);
         // reset term ref mode to src, otherwise it stays on second and makes other actions potentially invalid
@@ -438,7 +438,7 @@ fn set_first_id(&mut self, id: impl Into<Entity>) -> &mut Self {
     /// # Type Arguments
     ///
     /// * `T` - The type to use.
-fn set_first<First: ComponentId>(&mut self) -> &mut Self {
+    fn set_first<First: ComponentId>(&mut self) -> &mut Self {
         check_term_access_validity(self);
         self.set_first_id(First::id(self.world()))
     }
@@ -449,7 +449,7 @@ fn set_first<First: ComponentId>(&mut self) -> &mut Self {
     /// # Arguments
     ///
     /// * `name` - The name to set.
-fn set_first_name(&mut self, name: &'a str) -> &mut Self {
+    fn set_first_name(&mut self, name: &'a str) -> &mut Self {
         check_term_access_validity(self);
         ecs_assert!(
             !name.is_empty(),
@@ -473,7 +473,7 @@ fn set_first_name(&mut self, name: &'a str) -> &mut Self {
     /// # Arguments
     ///
     /// * `id` - The id to set.
-fn set_second_id(&mut self, id: impl Into<Entity>) -> &mut Self {
+    fn set_second_id(&mut self, id: impl Into<Entity>) -> &mut Self {
         check_term_access_validity(self);
         self.second().set_id(id);
         // reset term ref mode to src, otherwise it stays on second and makes other actions potentially invalid
@@ -486,7 +486,7 @@ fn set_second_id(&mut self, id: impl Into<Entity>) -> &mut Self {
     /// # Type Arguments
     ///
     /// * `T` - The type to use.
-fn set_second<Second: ComponentId>(&mut self) -> &mut Self {
+    fn set_second<Second: ComponentId>(&mut self) -> &mut Self {
         check_term_access_validity(self);
         self.set_second_id(Second::id(self.world()))
     }
@@ -497,7 +497,7 @@ fn set_second<Second: ComponentId>(&mut self) -> &mut Self {
     /// # Arguments
     ///
     /// * `name` - The name to set.
-fn set_second_name(&mut self, name: &'a str) -> &mut Self {
+    fn set_second_name(&mut self, name: &'a str) -> &mut Self {
         ecs_assert!(
             !name.is_empty(),
             FlecsErrorCode::InvalidParameter,
@@ -519,7 +519,7 @@ fn set_second_name(&mut self, name: &'a str) -> &mut Self {
     /// The up flag indicates that the term identifier may be substituted by
     /// traversing a relationship upwards. For example: substitute the identifier
     /// with its parent by traversing the `ChildOf` relationship.
-#[inline]
+    #[inline]
     fn up(&mut self) -> &mut Self {
         ecs_assert!(
             self.current_term_ref_mode() == TermRefMode::Src,
@@ -531,7 +531,7 @@ fn set_second_name(&mut self, name: &'a str) -> &mut Self {
     }
 
     /// same as [`up`](crate::core::term)
-#[inline]
+    #[inline]
     fn parent(&mut self) -> &mut Self {
         self.up()
     }
@@ -543,7 +543,7 @@ fn set_second_name(&mut self, name: &'a str) -> &mut Self {
     /// # Arguments
     ///
     /// * `traverse_relationship` - The relationship to traverse.
-fn up_id(&mut self, traverse_relationship: impl Into<Entity>) -> &mut Self {
+    fn up_id(&mut self, traverse_relationship: impl Into<Entity>) -> &mut Self {
         ecs_assert!(
             self.current_term_ref_mode() == TermRefMode::Src,
             FlecsErrorCode::InvalidParameter,
@@ -562,7 +562,7 @@ fn up_id(&mut self, traverse_relationship: impl Into<Entity>) -> &mut Self {
     /// # Type Arguments
     ///
     /// * `TravRel` - The relationship to traverse.
-fn up_type<TravRel: ComponentId>(&mut self) -> &mut Self {
+    fn up_type<TravRel: ComponentId>(&mut self) -> &mut Self {
         ecs_assert!(
             self.current_term_ref_mode() == TermRefMode::Src,
             FlecsErrorCode::InvalidParameter,
@@ -576,7 +576,7 @@ fn up_type<TravRel: ComponentId>(&mut self) -> &mut Self {
     /// Cascade iterates a hierarchy in top to bottom order (breadth first search)
     /// The cascade flag is like up, but returns results in breadth-first order.
     /// Only supported for `flecs::query`.
-fn cascade(&mut self) -> &mut Self {
+    fn cascade(&mut self) -> &mut Self {
         self.up();
         self.term_ref_mut().id |= ECS_CASCADE;
         self
@@ -589,7 +589,7 @@ fn cascade(&mut self) -> &mut Self {
     /// # Arguments
     ///
     /// * `traverse_relationship` - The optional relationship to traverse.
-fn cascade_id(&mut self, traverse_relationship: impl Into<Entity>) -> &mut Self {
+    fn cascade_id(&mut self, traverse_relationship: impl Into<Entity>) -> &mut Self {
         self.up_id(traverse_relationship);
         self.term_ref_mut().id |= ECS_CASCADE;
         self
@@ -602,7 +602,7 @@ fn cascade_id(&mut self, traverse_relationship: impl Into<Entity>) -> &mut Self 
     /// # Type Arguments
     ///
     /// * `TravRel` - The relationship to traverse.
-fn cascade_type<TravRel: ComponentId>(&mut self) -> &mut Self {
+    fn cascade_type<TravRel: ComponentId>(&mut self) -> &mut Self {
         self.up_type::<TravRel>();
         self.term_ref_mut().id |= ECS_CASCADE;
         self
@@ -620,7 +620,7 @@ fn cascade_type<TravRel: ComponentId>(&mut self) -> &mut Self {
     ///
     /// * `traverse_relationship` - The relationship to traverse.
     /// * `flags` - The direction to traverse.
-fn trav(&mut self, traverse_relationship: impl Into<Entity>, flags: u64) -> &mut Self {
+    fn trav(&mut self, traverse_relationship: impl Into<Entity>, flags: u64) -> &mut Self {
         self.current_term_mut().trav = *traverse_relationship.into();
         self.term_ref_mut().id |= flags;
         self
@@ -631,7 +631,7 @@ fn trav(&mut self, traverse_relationship: impl Into<Entity>, flags: u64) -> &mut
     /// # Arguments
     ///
     /// * `flags` - The direction to traverse.
-fn id_flags(&mut self, flags: impl IntoId) -> &mut Self {
+    fn id_flags(&mut self, flags: impl IntoId) -> &mut Self {
         self.term_ref_mut().id |= *flags.into();
         self
     }
@@ -641,7 +641,7 @@ fn id_flags(&mut self, flags: impl IntoId) -> &mut Self {
     /// # Arguments
     ///
     /// * `inout` - The inout to set.
-fn set_inout_kind(&mut self, inout: InOutKind) -> &mut Self {
+    fn set_inout_kind(&mut self, inout: InOutKind) -> &mut Self {
         check_term_access_validity(self);
         self.current_term_mut().inout = inout.into();
         self
@@ -658,7 +658,7 @@ fn set_inout_kind(&mut self, inout: InOutKind) -> &mut Self {
     /// # Arguments
     ///
     /// * 'inout' - The inout to set.
-fn inout_stage(&mut self, inout: InOutKind) -> &mut Self {
+    fn inout_stage(&mut self, inout: InOutKind) -> &mut Self {
         check_term_access_validity(self);
         self.set_inout_kind(inout);
         if self.current_term_mut().oper != OperKind::Not as i16 {
@@ -775,7 +775,7 @@ fn inout_stage(&mut self, inout: InOutKind) -> &mut Self {
     /// # Arguments
     ///
     /// * `oper` - The operator to set.
-#[inline(always)]
+    #[inline(always)]
     fn set_oper(&mut self, oper: OperKind) -> &mut Self {
         check_term_access_validity(self);
         self.current_term_mut().oper = oper as i16;
@@ -872,7 +872,7 @@ fn inout_stage(&mut self, inout: InOutKind) -> &mut Self {
     }
 
     /// Match singleton
-fn singleton(&mut self) -> &mut Self {
+    fn singleton(&mut self) -> &mut Self {
         ecs_assert!(
             self.current_term_mut().id != 0 || self.current_term_mut().first.id != 0,
             FlecsErrorCode::InvalidParameter,
@@ -899,7 +899,7 @@ fn singleton(&mut self) -> &mut Self {
     }
 
     /// Query terms are not triggered on by observers
-#[inline(always)]
+    #[inline(always)]
     fn filter(&mut self) -> &mut Self {
         self.current_term_mut().inout = InOutKind::Filter as i16;
         self

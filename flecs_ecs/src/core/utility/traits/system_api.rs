@@ -14,7 +14,7 @@ where
     P: ComponentId,
 {
     /// Set context
-fn set_context(&mut self, context: *mut c_void) -> &mut Self;
+    fn set_context(&mut self, context: *mut c_void) -> &mut Self;
 
     fn each<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
@@ -198,7 +198,7 @@ fn set_context(&mut self, context: *mut c_void) -> &mut Self;
     /// //  Entity name:  -- id: 512 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position, flecs_ecs.main.Velocity: Position { x: 0, y: 0 }
     /// //  end operations
     /// ```
-fn run<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
+    fn run<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: FnMut(TableIter<true, P>) + 'static,
     {
@@ -292,7 +292,7 @@ fn run<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     /// //  Position { x: 0, y: 0 }
     /// //  end operations
     /// ```
-fn run_each<Func, FuncEach>(
+    fn run_each<Func, FuncEach>(
         &mut self,
         func: Func,
         func_each: FuncEach,
@@ -402,7 +402,7 @@ fn run_each<Func, FuncEach>(
     /// //  Entity name:  -- id: 512 -- archetype: flecs_ecs.main.Position, flecs_ecs.main.Velocity: Position { x: 0, y: 0 }
     /// //  end operations
     /// ```
-fn run_each_entity<Func, FuncEachEntity>(
+    fn run_each_entity<Func, FuncEachEntity>(
         &mut self,
         func: Func,
         func_each_entity: FuncEachEntity,

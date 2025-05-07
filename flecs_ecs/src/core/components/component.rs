@@ -87,7 +87,7 @@ impl<'a, T> Component<'a, T> {
     /// # Arguments
     ///
     /// * `world`: the world.
-#[cfg(feature = "flecs_meta")]
+    #[cfg(feature = "flecs_meta")]
     pub(crate) fn new_id(world: impl WorldProvider<'a>, id: FetchedId<T>) -> Self {
         let world = world.world();
 
@@ -104,7 +104,7 @@ impl<'a, T> Component<'a, T> {
     /// * `world`: the world.
     /// * `name`: the name of the component.
     ///   Return the component as an entity
-#[cfg(feature = "flecs_meta")]
+    #[cfg(feature = "flecs_meta")]
     pub fn new_named_id(world: impl WorldProvider<'a>, id: FetchedId<T>, name: &str) -> Self {
         let _name = compact_str::format_compact!("{}\0", name);
         let world = world.world();
@@ -126,7 +126,7 @@ impl<'a, T> Component<'a, T> {
         }
     }
     /// Return the component as an entity
-#[inline(always)]
+    #[inline(always)]
     pub fn entity(self) -> EntityView<'a> {
         self.base.entity
     }
@@ -136,7 +136,7 @@ impl<'a, T> Component<'a, T> {
     /// # Arguments
     ///
     /// * `type_hooks`: the type hooks.
-fn get_binding_context(type_hooks: &mut sys::ecs_type_hooks_t) -> &mut ComponentBindingCtx {
+    fn get_binding_context(type_hooks: &mut sys::ecs_type_hooks_t) -> &mut ComponentBindingCtx {
         let mut binding_ctx: *mut ComponentBindingCtx = type_hooks.binding_ctx as *mut _;
 
         if binding_ctx.is_null() {

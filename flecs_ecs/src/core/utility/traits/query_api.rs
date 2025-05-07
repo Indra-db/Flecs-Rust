@@ -231,7 +231,7 @@ where
     /// # Returns
     ///
     /// * `Some(EntityView<'_>)` if the entity was found, `None` if no entity was found.
-fn find(&self, mut func: impl FnMut(T::TupleType<'_>) -> bool) -> Option<EntityView<'a>> {
+    fn find(&self, mut func: impl FnMut(T::TupleType<'_>) -> bool) -> Option<EntityView<'a>> {
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity: Option<EntityView> = None;
@@ -267,7 +267,7 @@ fn find(&self, mut func: impl FnMut(T::TupleType<'_>) -> bool) -> Option<EntityV
     /// # Returns
     ///
     /// * `Some(EntityView<'_>)` if the entity was found, `None` if no entity was found.
-fn find_entity(
+    fn find_entity(
         &self,
         mut func: impl FnMut(EntityView, T::TupleType<'_>) -> bool,
     ) -> Option<EntityView<'a>> {
@@ -308,7 +308,7 @@ fn find_entity(
     /// # Returns
     ///
     /// * `Some(EntityView<'_>)` if the entity was found, `None` if no entity was found.
-fn find_iter(
+    fn find_iter(
         &self,
         mut func: impl FnMut(TableIter<false, P>, usize, T::TupleType<'_>) -> bool,
     ) -> Option<EntityView<'a>>
@@ -417,7 +417,7 @@ fn find_iter(
     /// //  Entity name:  -- id: 512 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position, flecs_ecs.main.Velocity: Position { x: 0, y: 0 }
     /// //  end operations
     /// ```
-fn run(&self, mut func: impl FnMut(TableIter<true, P>))
+    fn run(&self, mut func: impl FnMut(TableIter<true, P>))
     where
         P: ComponentId,
     {
@@ -512,7 +512,7 @@ fn run(&self, mut func: impl FnMut(TableIter<true, P>))
     /// //  Tag, Position { x: 0, y: 0 }
     /// //  end operations
     /// ```
-fn run_each<FuncEach>(&self, mut func: impl FnMut(TableIter<true, P>), mut func_each: FuncEach)
+    fn run_each<FuncEach>(&self, mut func: impl FnMut(TableIter<true, P>), mut func_each: FuncEach)
     where
         P: ComponentId,
         FuncEach: FnMut(T::TupleType<'_>),
@@ -600,7 +600,7 @@ fn run_each<FuncEach>(&self, mut func: impl FnMut(TableIter<true, P>), mut func_
     /// //  Entity name:  -- id: 512 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position, flecs_ecs.main.Velocity : Position { x: 0, y: 0 }
     /// //  end operations
     /// ```
-fn run_each_entity<FuncEachEntity>(
+    fn run_each_entity<FuncEachEntity>(
         &self,
         mut func: impl FnMut(TableIter<true, P>),
         mut func_each: FuncEachEntity,
@@ -630,13 +630,13 @@ fn run_each_entity<FuncEachEntity>(
     /// # Returns
     ///
     /// The entity of the current query
-fn entity(&self) -> EntityView;
+    fn entity(&self) -> EntityView;
 
     /// Each term iterator.
     /// The `each_term` iterator accepts a function that is invoked for each term
     /// in the query. The following function signature is valid:
     ///  - func(term: &mut Term)
-fn each_term(&self, mut func: impl FnMut(&TermRef)) {
+    fn each_term(&self, mut func: impl FnMut(&TermRef)) {
         let query = self.query_ptr();
         ecs_assert!(
             !query.is_null(),
@@ -661,7 +661,7 @@ fn each_term(&self, mut func: impl FnMut(&TermRef)) {
     /// # Returns
     ///
     /// The term requested
-fn term(&self, index: usize) -> TermRef<'_> {
+    fn term(&self, index: usize) -> TermRef<'_> {
         let query = self.query_ptr();
         ecs_assert!(
             !query.is_null(),
@@ -681,7 +681,7 @@ fn term(&self, index: usize) -> TermRef<'_> {
     /// # Returns
     ///
     /// The field count of the current query
-fn field_count(&self) -> i8 {
+    fn field_count(&self) -> i8 {
         let query = self.query_ptr();
         unsafe { (*query).field_count }
     }
@@ -702,7 +702,7 @@ fn field_count(&self) -> i8 {
     /// # Returns
     ///
     /// The string representation of the query
-#[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
+    #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
     fn to_string(&self) -> String {
         let query = self.query_ptr();
         let result: *mut c_char = unsafe { sys::ecs_query_str(query as *const _) };
@@ -1081,7 +1081,7 @@ fn field_count(&self) -> i8 {
     /// # Returns
     ///
     /// The total number of entities in the result
-fn count(&self) -> i32 {
+    fn count(&self) -> i32 {
         let mut it = self.retrieve_iter();
         let mut result = 0;
         while self.iter_next(&mut it) {
@@ -1095,7 +1095,7 @@ fn count(&self) -> i32 {
     /// # Arguments
     ///
     /// * `group_id`: the group id to set
-fn set_group_id(&self, group_id: impl Into<Entity>) -> QueryIter<P, T> {
+    fn set_group_id(&self, group_id: impl Into<Entity>) -> QueryIter<P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_group_id(&mut iter, group_id);
         iter
@@ -1106,7 +1106,7 @@ fn set_group_id(&self, group_id: impl Into<Entity>) -> QueryIter<P, T> {
     /// # Type parameters
     ///
     /// * `Group`: the group to set
-fn set_group<Group: ComponentId>(&self) -> QueryIter<P, T> {
+    fn set_group<Group: ComponentId>(&self) -> QueryIter<P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_group::<Group>(&mut iter);
         iter
@@ -1119,7 +1119,7 @@ fn set_group<Group: ComponentId>(&self) -> QueryIter<P, T> {
     /// * `var_id`: the variable id to set
     ///
     /// * `value`: the value to set
-#[must_use = "This method returns a new query iterator that should be used"]
+    #[must_use = "This method returns a new query iterator that should be used"]
     fn set_var(&self, var_id: i32, value: impl Into<Entity>) -> QueryIter<P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_var(&mut iter, var_id, value);
@@ -1133,7 +1133,7 @@ fn set_group<Group: ComponentId>(&self) -> QueryIter<P, T> {
     /// * `var_id`: the variable id to set
     ///
     /// * `range`: the range to set
-fn set_var_table(&self, var_id: i32, table: impl IntoTableRange) -> QueryIter<P, T> {
+    fn set_var_table(&self, var_id: i32, table: impl IntoTableRange) -> QueryIter<P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_var_table(&mut iter, var_id, table);
         iter
@@ -1145,7 +1145,7 @@ fn set_var_table(&self, var_id: i32, table: impl IntoTableRange) -> QueryIter<P,
     ///
     /// * `name`: the name of the variable to set
     /// * `value`: the value to set
-fn set_var_expr(&self, name: &str, value: impl Into<Entity>) -> QueryIter<P, T> {
+    fn set_var_expr(&self, name: &str, value: impl Into<Entity>) -> QueryIter<P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_var_expr(&mut iter, name, value);
         iter
@@ -1157,14 +1157,14 @@ fn set_var_expr(&self, name: &str, value: impl Into<Entity>) -> QueryIter<P, T> 
     ///
     /// * `name`: the name of the variable to set
     /// * `range`: the range to set
-fn set_var_table_expr(&self, name: &str, table: impl IntoTableRange) -> QueryIter<P, T> {
+    fn set_var_table_expr(&self, name: &str, table: impl IntoTableRange) -> QueryIter<P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_var_table_expr(&mut iter, name, table);
         iter
     }
 
     /// Serialize iterator result to JSON.
-#[cfg(feature = "flecs_json")]
+    #[cfg(feature = "flecs_json")]
     fn to_json(&self, desc: Option<&crate::prelude::json::IterToJsonDesc>) -> Option<String> {
         let desc_ptr = desc
             .map(|d| d as *const crate::prelude::json::IterToJsonDesc)

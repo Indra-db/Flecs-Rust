@@ -118,7 +118,7 @@ impl EntityView<'_> {
 
 impl World {
     /// Serialize untyped value to JSON.
-#[allow(clippy::not_unsafe_ptr_arg_deref)]
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn to_json_id(&self, tid: impl IntoId, value: *const core::ffi::c_void) -> String {
         let tid: u64 = *tid.into();
         let world = self.world_ptr();
@@ -164,7 +164,7 @@ impl World {
     }
 
     /// Deserialize value from JSON.
-#[allow(clippy::not_unsafe_ptr_arg_deref)]
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn from_json_id(
         &self,
         tid: impl IntoId,

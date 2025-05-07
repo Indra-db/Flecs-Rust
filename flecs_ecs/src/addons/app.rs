@@ -83,7 +83,7 @@ impl<'a> App<'a> {
     /// # Arguments
     ///
     /// * `port` - The port to listen on.
-#[cfg(feature = "flecs_rest")]
+    #[cfg(feature = "flecs_rest")]
     pub fn enable_rest(&mut self, port: u16) -> &mut Self {
         self.desc.enable_rest = true;
         self.desc.port = port;

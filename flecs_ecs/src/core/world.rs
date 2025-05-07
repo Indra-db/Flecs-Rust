@@ -3280,10 +3280,6 @@ impl World {
     // /// # Returns
     // ///
     // /// The term for the component type.
-    // ///
-    // /// # See also
-    // ///
-    // /// * C++ API: `world::term`
     // #[doc(alias = "world::term")]
     // pub fn term<T: ComponentOrPairId>(&self) -> Term {
     //     Term::new_type::<T>(self)
