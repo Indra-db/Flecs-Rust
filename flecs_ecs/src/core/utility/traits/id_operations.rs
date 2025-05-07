@@ -20,14 +20,14 @@ pub trait IdOperations<'a>: WorldProvider<'a> + IntoId + Sized + Copy {
     }
 
     /// Return id with role added
-#[inline(always)]
+    #[inline(always)]
     fn add_flags(self, flags: impl IntoId) -> Self {
         Self::new_from_id(self.world(), self.into() | flags.into())
     }
 
     /// Return id with role removed.
     /// This function checks if the id has the specified role, and if it does not, the function will assert.
-#[inline(always)]
+    #[inline(always)]
     fn remove_flags_checked(self, _flags: impl IntoId) -> Self {
         ecs_assert!(
             self.into() & RUST_ecs_id_FLAGS_MASK == _flags.into(),
@@ -38,7 +38,7 @@ pub trait IdOperations<'a>: WorldProvider<'a> + IntoId + Sized + Copy {
     }
 
     /// Return id with role removed
-#[inline(always)]
+    #[inline(always)]
     fn remove_flags(self) -> Self {
         Self::new_from_id(self.world(), self.into() & RUST_ECS_COMPONENT_MASK)
     }
@@ -48,25 +48,25 @@ pub trait IdOperations<'a>: WorldProvider<'a> + IntoId + Sized + Copy {
     /// # Returns
     ///
     /// The flags associated with the id or 0 Entity if the id is not in use
-#[inline(always)]
+    #[inline(always)]
     fn flags(self) -> Self {
         Self::new_from_id(self.world(), self.into() & RUST_ecs_id_FLAGS_MASK)
     }
 
     /// Test if id has specified role
-#[inline(always)]
+    #[inline(always)]
     fn has_flags_for(self, flags: u64) -> bool {
         self.into() & flags == flags
     }
 
     /// Test if id has any role
-#[inline(always)]
+    #[inline(always)]
     fn has_any_flags(self) -> bool {
         self.into() & RUST_ecs_id_FLAGS_MASK != 0
     }
 
     /// Return id without role
-#[inline(always)]
+    #[inline(always)]
     fn remove_generation(self) -> EntityView<'a> {
         EntityView::new_from(self.world(), *self.into() as u32 as u64)
     }

@@ -23,7 +23,7 @@ pub trait TimerAPI: Sized {
     /// Tick sources can be read by getting the [`flecs::TickSource`](crate::core::flecs::system::TickSource) component.
     /// If the tick source ticked this frame, the 'tick' member will be true.
     /// When the tick source is a system, the system will tick when the timer ticks.
-fn set_interval(self, interval: f32) -> Self {
+    fn set_interval(self, interval: f32) -> Self {
         unsafe { sys::ecs_set_interval(self.world_ptr_mut(), *self.id(), interval) };
         self
     }
@@ -35,7 +35,7 @@ fn set_interval(self, interval: f32) -> Self {
     /// # Returns
     ///
     /// The interval. If the entity is not a timer, the operation will return 0.
-fn interval(&self) -> f32 {
+    fn interval(&self) -> f32 {
         unsafe { sys::ecs_get_interval(self.world_ptr(), *self.id()) }
     }
 
@@ -50,7 +50,7 @@ fn interval(&self) -> f32 {
     /// Tick sources can be read by getting the [`flecs::TickSource`](crate::core::flecs::system::TickSource) component.
     /// If the tick source ticked this frame, the 'tick' member will be true.
     /// When the tick source is a system, the system will tick when the timer ticks.
-fn set_timeout(self, timeout: f32) -> Self {
+    fn set_timeout(self, timeout: f32) -> Self {
         unsafe { sys::ecs_set_timeout(self.world_ptr_mut(), *self.id(), timeout) };
         self
     }
@@ -71,7 +71,7 @@ fn set_timeout(self, timeout: f32) -> Self {
     /// # Returns
     ///
     /// The timeout. If no timer is active for this entity, the operation returns 0.
-fn timeout(&self) -> f32 {
+    fn timeout(&self) -> f32 {
         unsafe { sys::ecs_get_timeout(self.world_ptr(), *self.id()) }
     }
 
@@ -134,13 +134,13 @@ fn timeout(&self) -> f32 {
 
     /// Start timer.
     /// This operation resets the timer and starts it with the specified timeout.
-fn start(&self) {
+    fn start(&self) {
         unsafe { sys::ecs_start_timer(self.world_ptr_mut(), *self.id()) };
     }
 
     /// Stop timer.
     /// This operation stops a timer from triggering.
-fn stop(&self) {
+    fn stop(&self) {
         unsafe { sys::ecs_stop_timer(self.world_ptr_mut(), *self.id()) };
     }
 }

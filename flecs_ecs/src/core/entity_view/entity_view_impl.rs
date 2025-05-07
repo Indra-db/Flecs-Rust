@@ -32,7 +32,7 @@ impl<'a> IdOperations<'a> for EntityView<'a> {
     ///
     /// * `world` - The optional world to the id belongs to
     /// * `expr` - The expression to wrap
-fn new_from_str(world: impl WorldProvider<'a>, expr: &str) -> Self {
+    fn new_from_str(world: impl WorldProvider<'a>, expr: &str) -> Self {
         let expr = compact_str::format_compact!("{}\0", expr);
         let id = unsafe { sys::ecs_id_from_str(world.world_ptr(), expr.as_ptr() as *const _) };
         Self {

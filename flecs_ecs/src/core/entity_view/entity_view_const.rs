@@ -2146,7 +2146,7 @@ impl<'a> EntityView<'a> {
     /// # Returns
     ///
     /// * The depth of the relationship.
-#[inline(always)]
+    #[inline(always)]
     pub fn depth_id(self, relationship: impl Into<Entity>) -> i32 {
         unsafe { sys::ecs_get_depth(self.world.world_ptr(), *self.id, *relationship.into()) }
     }
@@ -2163,7 +2163,7 @@ impl<'a> EntityView<'a> {
     /// # Returns
     ///
     /// * The depth of the relationship.
-#[inline(always)]
+    #[inline(always)]
     pub fn depth<T: ComponentId>(self) -> i32 {
         self.depth_id(T::id(self.world))
     }
@@ -2175,7 +2175,7 @@ impl<'a> EntityView<'a> {
     /// # Returns
     ///
     /// * The parent of the entity.
-#[inline(always)]
+    #[inline(always)]
     pub fn parent(self) -> Option<EntityView<'a>> {
         self.target_id(ECS_CHILD_OF, 0)
     }
@@ -2193,7 +2193,7 @@ impl<'a> EntityView<'a> {
     /// # Returns
     ///
     /// The entity if found, otherwise `None`.
-#[inline(always)]
+    #[inline(always)]
     fn try_lookup_impl(self, name: &str, recursively: bool) -> Option<EntityView<'a>> {
         let name = compact_str::format_compact!("{}\0", name);
 
@@ -2234,7 +2234,7 @@ impl<'a> EntityView<'a> {
     /// # Returns
     ///
     /// The entity if found, otherwise `None`.
-#[inline(always)]
+    #[inline(always)]
     pub fn try_lookup_recursive(&self, name: &str) -> Option<EntityView> {
         self.try_lookup_impl(name, true)
     }
@@ -2251,7 +2251,7 @@ impl<'a> EntityView<'a> {
     /// # Returns
     ///
     /// The entity if found, otherwise `None`.
-#[inline(always)]
+    #[inline(always)]
     pub fn try_lookup(&self, name: &str) -> Option<EntityView> {
         self.try_lookup_impl(name, false)
     }
@@ -2275,7 +2275,7 @@ impl<'a> EntityView<'a> {
     /// # Returns
     ///
     /// The entity, entity id will be 0 if not found.
-#[inline(always)]
+    #[inline(always)]
     pub fn lookup_recursive(&self, name: &str) -> EntityView {
         self.try_lookup_recursive(name).unwrap_or_else(|| {
             panic!(
@@ -2302,7 +2302,7 @@ impl<'a> EntityView<'a> {
     /// # Returns
     ///
     /// The entity, entity id will be 0 if not found.
-#[inline(always)]
+    #[inline(always)]
     pub fn lookup(&self, name: &str) -> EntityView {
         self.try_lookup(name)
             .unwrap_or_else(|| panic!("Entity {} not found, when unsure, use try_lookup", name))
@@ -2583,7 +2583,7 @@ impl<'a> EntityView<'a> {
     ///
     /// # Returns
     /// - An `Entity` object representing the destination entity.
-#[inline(always)]
+    #[inline(always)]
     pub fn duplicate(self, copy_value: bool) -> EntityView<'a> {
         let dest_entity = EntityView::new(self.world());
         unsafe {
@@ -2617,7 +2617,7 @@ impl<'a> EntityView<'a> {
     /// # Safety
     /// This function makes use of `unsafe` operations to interact with the underlying ECS.
     /// Ensure that the provided `dest_id` is valid or zero
-#[inline(always)]
+    #[inline(always)]
     pub fn duplicate_into(self, copy_value: bool, dest_id: impl Into<Entity>) -> EntityView<'a> {
         let mut dest_id = *dest_id.into();
         if dest_id == 0 {
@@ -2686,7 +2686,7 @@ impl<'a> EntityView<'a> {
     }
 
     //might not be needed, in the original c++ impl it was used in the get_mut functions.
-#[doc(hidden)]
+    #[doc(hidden)]
     fn set_stage(self, stage: impl WorldProvider<'a>) -> EntityView<'a> {
         EntityView::new_from(stage, *self.id)
     }

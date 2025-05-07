@@ -239,7 +239,7 @@ where
     /// # Example
     ///
     /// * how to return a query / query builder from a function see example in [`QueryBuilder`]
-fn build(&mut self) -> Self::BuiltType {
+    fn build(&mut self) -> Self::BuiltType {
         let world = self.world;
         let query = Query::<T>::new_from_desc(world, &mut self.desc);
         for s in self.term_builder.str_ptrs_to_free.iter_mut() {
@@ -285,7 +285,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// # Arguments
     ///
     /// * `flags` - the flags to set
-fn query_flags(&mut self, flags: QueryFlags) -> &mut Self {
+    fn query_flags(&mut self, flags: QueryFlags) -> &mut Self {
         self.query_desc_mut().flags |= flags.bits();
         self
     }
@@ -295,13 +295,13 @@ fn query_flags(&mut self, flags: QueryFlags) -> &mut Self {
     /// # Arguments
     ///
     /// * `kind` - the cache kind to set
-fn set_cache_kind(&mut self, kind: QueryCacheKind) -> &mut Self {
+    fn set_cache_kind(&mut self, kind: QueryCacheKind) -> &mut Self {
         self.query_desc_mut().cache_kind = kind as sys::ecs_query_cache_kind_t;
         self
     }
 
     /// Set the cache method to cached
-fn set_cached(&mut self) -> &mut Self {
+    fn set_cached(&mut self) -> &mut Self {
         self.set_cache_kind(QueryCacheKind::Auto)
     }
 
@@ -310,7 +310,7 @@ fn set_cached(&mut self) -> &mut Self {
     /// # Arguments
     ///
     /// * `expr` - the expression to set
-fn expr(&mut self, expr: &'a str) -> &mut Self {
+    fn expr(&mut self, expr: &'a str) -> &mut Self {
         let expr = ManuallyDrop::new(format!("{}\0", expr));
         ecs_assert!(
             *self.expr_count_mut() == 0,
@@ -325,7 +325,7 @@ fn expr(&mut self, expr: &'a str) -> &mut Self {
     }
 
     /// set term with Id
-fn with_id(&mut self, id: impl IntoId) -> &mut Self {
+    fn with_id(&mut self, id: impl IntoId) -> &mut Self {
         self.term();
         self.init_current_term(id);
         self
@@ -362,7 +362,7 @@ fn with_id(&mut self, id: impl IntoId) -> &mut Self {
     ///     .with::<&mut Mass>() //equivalent to .with::<Mass>().set_inout()
     ///     .build();
     /// ```
-fn with<T: ComponentOrPairId>(&mut self) -> &mut Self {
+    fn with<T: ComponentOrPairId>(&mut self) -> &mut Self {
         if <T as ComponentOrPairId>::IS_PAIR {
             self.with_id(<T as ComponentOrPairId>::get_id(self.world()));
         } else {
@@ -380,7 +380,7 @@ fn with<T: ComponentOrPairId>(&mut self) -> &mut Self {
     }
 
     /// set term with enum
-fn with_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
+    fn with_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &mut self,
         value: T,
     ) -> &mut Self {
@@ -390,39 +390,39 @@ fn with_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
     }
 
     /// set term with enum wildcard
-fn with_enum_wildcard<T: ComponentType<Enum> + ComponentId>(&mut self) -> &mut Self {
+    fn with_enum_wildcard<T: ComponentType<Enum> + ComponentId>(&mut self) -> &mut Self {
         self.with_first::<T>(flecs::Wildcard::ID)
     }
 
     /// set term with pairs
-fn with_first<First: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
+    fn with_first<First: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
         self.with_id((First::id(self.world()), second))
     }
 
     /// set term with pairs
-fn with_first_name<First: ComponentId>(&mut self, second: &'a str) -> &mut Self {
+    fn with_first_name<First: ComponentId>(&mut self, second: &'a str) -> &mut Self {
         self.with_first_id(First::id(self.world()), second)
     }
 
     /// set term with pairs
-fn with_second<Second: ComponentId>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
+    fn with_second<Second: ComponentId>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
         self.with_id((first, Second::id(self.world())))
     }
 
     /// set term with pairs
-fn with_second_name<Second: ComponentId>(&mut self, first: &'a str) -> &mut Self {
+    fn with_second_name<Second: ComponentId>(&mut self, first: &'a str) -> &mut Self {
         self.with_second_id(first, Second::id(self.world()))
     }
 
     /// set term with Name
-fn with_name(&mut self, name: &'a str) -> &mut Self {
+    fn with_name(&mut self, name: &'a str) -> &mut Self {
         self.term();
         self.set_first_name(name);
         self
     }
 
     /// set term with pair names
-fn with_names(&mut self, first: &'a str, second: &'a str) -> &mut Self {
+    fn with_names(&mut self, first: &'a str, second: &'a str) -> &mut Self {
         self.term();
         self.set_first_name(first).set_second_name(second);
         self
@@ -446,17 +446,17 @@ fn with_names(&mut self, first: &'a str, second: &'a str) -> &mut Self {
     /* Without methods, shorthand for .with(...).not() */
 
     /// set term without Id
-fn without_id(&mut self, id: impl IntoId) -> &mut Self {
+    fn without_id(&mut self, id: impl IntoId) -> &mut Self {
         self.with_id(id).not()
     }
 
     /// set term without type
-fn without<T: ComponentOrPairId>(&mut self) -> &mut Self {
+    fn without<T: ComponentOrPairId>(&mut self) -> &mut Self {
         self.with::<T>().not()
     }
 
     /// set term without enum
-fn without_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
+    fn without_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &mut self,
         value: T,
     ) -> &mut Self {
@@ -464,24 +464,24 @@ fn without_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
     }
 
     /// set term without enum wildcard
-fn without_enum_wildcard<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
+    fn without_enum_wildcard<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &mut self,
     ) -> &mut Self {
         self.with_enum_wildcard::<T>().not()
     }
 
     /// set term without pairs
-fn without_first<First: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
+    fn without_first<First: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
         self.with_first::<First>(second).not()
     }
 
     /// set term without pairs
-fn without_first_name<First: ComponentId>(&mut self, second: &'a str) -> &mut Self {
+    fn without_first_name<First: ComponentId>(&mut self, second: &'a str) -> &mut Self {
         self.with_first_name::<First>(second).not()
     }
 
     /// set term without pairs
-fn without_second<Second: ComponentId>(
+    fn without_second<Second: ComponentId>(
         &mut self,
         first: impl Into<Entity> + Copy,
     ) -> &mut Self {
@@ -489,32 +489,32 @@ fn without_second<Second: ComponentId>(
     }
 
     /// set term without pairs
-fn without_second_name<Second: ComponentId>(&mut self, first: &'a str) -> &mut Self {
+    fn without_second_name<Second: ComponentId>(&mut self, first: &'a str) -> &mut Self {
         self.with_second_name::<Second>(first).not()
     }
 
     /// set term without Name
-fn without_name(&mut self, name: &'a str) -> &mut Self {
+    fn without_name(&mut self, name: &'a str) -> &mut Self {
         self.with_name(name).not()
     }
 
     /// set term without pair names
-fn without_names(&mut self, first: &'a str, second: &'a str) -> &mut Self {
+    fn without_names(&mut self, first: &'a str, second: &'a str) -> &mut Self {
         self.with_names(first, second).not()
     }
 
     /// set term without first id and second name
-fn without_first_id(&mut self, first: impl Into<Entity>, second: &'a str) -> &mut Self {
+    fn without_first_id(&mut self, first: impl Into<Entity>, second: &'a str) -> &mut Self {
         self.with_first_id(first, second).not()
     }
 
     /// set term without second id and first name
-fn without_second_id(&mut self, first: &'a str, second: impl Into<Entity>) -> &mut Self {
+    fn without_second_id(&mut self, first: &'a str, second: impl Into<Entity>) -> &mut Self {
         self.with_second_id(first, second).not()
     }
 
     /// Term notation for more complex query features
-fn term(&mut self) -> &mut Self {
+    fn term(&mut self) -> &mut Self {
         //let index = *self.current_term_index();
 
         let current_index = self.current_term_index();
@@ -546,7 +546,7 @@ fn term(&mut self) -> &mut Self {
     }
 
     /// Term notation for more complex query features
-fn term_at(&mut self, index: u32) -> &mut Self {
+    fn term_at(&mut self, index: u32) -> &mut Self {
         ecs_assert!(
             index < sys::FLECS_TERM_COUNT_MAX,
             FlecsErrorCode::InvalidParameter,
@@ -710,7 +710,7 @@ fn term_at(&mut self, index: u32) -> &mut Self {
     ///
     /// * `compare`: The compare function used to sort the components.
     ///   The signature of the function must be `fn(Entity, &T, Entity, &T) -> i32`.
-fn order_by<T>(&mut self, compare: impl OrderByFn<T>) -> &mut Self
+    fn order_by<T>(&mut self, compare: impl OrderByFn<T>) -> &mut Self
     where
         T: ComponentId,
         Self: QueryBuilderImpl<'a>,
@@ -781,7 +781,7 @@ fn order_by<T>(&mut self, compare: impl OrderByFn<T>) -> &mut Self
     /// # Type Parameters
     ///
     /// * `T`: The component used to determine the group rank.
-fn group_by<T>(&mut self) -> &mut Self
+    fn group_by<T>(&mut self) -> &mut Self
     where
         T: ComponentId,
     {
@@ -810,7 +810,7 @@ fn group_by<T>(&mut self) -> &mut Self
     /// # Arguments
     ///
     /// * `group_by_action`: Callback that determines group id for table.
-fn group_by_fn<T>(&mut self, group_by_action: sys::ecs_group_by_action_t) -> &mut Self
+    fn group_by_fn<T>(&mut self, group_by_action: sys::ecs_group_by_action_t) -> &mut Self
     where
         T: ComponentId,
     {
@@ -826,7 +826,7 @@ fn group_by_fn<T>(&mut self, group_by_action: sys::ecs_group_by_action_t) -> &mu
     ///
     /// * `component`: The component used to determine the group rank.
     /// * `group_by_action`: Callback that determines group id for table.
-fn group_by_id_fn(
+    fn group_by_id_fn(
         &mut self,
         component: impl Into<Entity>,
         group_by_action: sys::ecs_group_by_action_t,
@@ -844,7 +844,7 @@ fn group_by_id_fn(
     /// # Arguments
     ///
     /// * `component`: The component used to determine the group rank.
-fn group_by_id(&mut self, component: impl Into<Entity>) -> &mut Self {
+    fn group_by_id(&mut self, component: impl Into<Entity>) -> &mut Self {
         self.group_by_id_fn(component, None)
     }
 
@@ -854,7 +854,7 @@ fn group_by_id(&mut self, component: impl Into<Entity>) -> &mut Self {
     ///
     /// * `ctx`: Context to pass to the `group_by` function.
     /// * `ctx_free`: Function to clean up the context (called when the query is deleted).
-fn group_by_ctx(&mut self, ctx: *mut c_void, ctx_free: sys::ecs_ctx_free_t) -> &mut Self {
+    fn group_by_ctx(&mut self, ctx: *mut c_void, ctx_free: sys::ecs_ctx_free_t) -> &mut Self {
         let desc = self.query_desc_mut();
         desc.group_by_ctx = ctx;
         desc.group_by_ctx_free = ctx_free;
@@ -866,7 +866,7 @@ fn group_by_ctx(&mut self, ctx: *mut c_void, ctx_free: sys::ecs_ctx_free_t) -> &
     /// # Arguments
     ///
     /// * `action`: The action to execute when a group is created.
-fn on_group_create(&mut self, action: sys::ecs_group_create_action_t) -> &mut Self {
+    fn on_group_create(&mut self, action: sys::ecs_group_create_action_t) -> &mut Self {
         let desc = self.query_desc_mut();
         desc.on_group_create = action;
         self
@@ -877,7 +877,7 @@ fn on_group_create(&mut self, action: sys::ecs_group_create_action_t) -> &mut Se
     /// # Arguments
     ///
     /// * `action`: The action to execute when a group is deleted.
-fn on_group_delete(&mut self, action: sys::ecs_group_delete_action_t) -> &mut Self {
+    fn on_group_delete(&mut self, action: sys::ecs_group_delete_action_t) -> &mut Self {
         let desc = self.query_desc_mut();
         desc.on_group_delete = action;
         self
