@@ -175,17 +175,19 @@ where
     }
 
     /// Specify whether system can run on multiple threads.
-    ///
-    /// # Arguments
-    ///
-    /// * `value` - if false, the system will always run on a single thread.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system_builder_i::multi_threaded`
     #[doc(alias = "system_builder_i::multi_threaded")]
     pub fn multi_threaded(&mut self) -> &mut Self {
         self.desc.multi_threaded = true;
+        self
+    }
+
+    /// Set the system to not run on multiple threads.
+    ///
+    /// This is the default behavior. If not previously set through [`SystemBuilder::multi_threaded()`],
+    /// then there is no need to call this method.
+    #[doc(alias = "system_builder_i::multi_threaded")]
+    pub fn disable_multi_threaded(&mut self) -> &mut Self {
+        self.desc.multi_threaded = false;
         self
     }
 
