@@ -380,12 +380,12 @@ pub(crate) fn do_read_write_locks<const INCREMENT: bool>(
 
             if sys::ecs_field_is_readonly(iter, i as i8) {
                 if INCREMENT {
-                    table_column_lock_read_begin(world, table, (*tr).column, world.stage_id());
+                    get_table_column_lock_read_begin(world, table, (*tr).column, world.stage_id());
                 } else {
                     table_column_lock_read_end(table, (*tr).column, world.stage_id());
                 }
             } else if INCREMENT {
-                table_column_lock_write_begin(world, table, (*tr).column, world.stage_id());
+                get_table_column_lock_write_begin(world, table, (*tr).column, world.stage_id());
             } else {
                 table_column_lock_write_end(table, (*tr).column, world.stage_id());
             }
@@ -457,7 +457,7 @@ pub(crate) fn sparse_id_record_lock_write_end(idr: *mut sys::ecs_id_record_t) {
     }
 }
 
-pub(crate) fn table_column_lock_read_begin(
+pub(crate) fn get_table_column_lock_read_begin(
     world: &WorldRef,
     table: *mut sys::ecs_table_t,
     column: i16,
@@ -485,13 +485,33 @@ pub(crate) fn table_column_lock_read_begin(
     }
 }
 
+/// returning true, means write is already set
+pub(crate) fn table_column_lock_read_begin(
+    _world: &WorldRef,
+    table: *mut sys::ecs_table_t,
+    column: i16,
+    stage_id: i32,
+) -> bool {
+    unsafe { sys::ecs_table_column_lock_read_begin(table, column, stage_id) }
+}
+
 pub(crate) fn table_column_lock_read_end(table: *mut sys::ecs_table_t, column: i16, stage_id: i32) {
     unsafe {
         sys::ecs_table_column_lock_read_end(table, column, stage_id);
     }
 }
 
+/// returning true means a read or write is already set
 pub(crate) fn table_column_lock_write_begin(
+    _world: &WorldRef,
+    table: *mut sys::ecs_table_t,
+    column: i16,
+    stage_id: i32,
+) -> bool {
+    unsafe { ecs_table_column_lock_write_begin(table, column, stage_id) }
+}
+
+pub(crate) fn get_table_column_lock_write_begin(
     world: &WorldRef,
     table: *mut sys::ecs_table_t,
     column: i16,
